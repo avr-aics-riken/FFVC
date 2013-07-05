@@ -15,18 +15,12 @@
  */
 
 
-UPDATE HISTORY
-==============
+REVISION HISTORY
+================
 
--------------
-Version 1.1.8    2013-07-04
-  - パッケージ形式をautotoolsを利用したインストールに合わせて変更開始
-  - Cutlib-3.1.1対応のため，GridAccessorクラスを用いたインターフェイスに変更
-    setup_Polygon2CutInfo()でpoly_org, poly_dxをdoubleへ変更
-
+       
 -------------
 Version 1.1.7    2013-06-15
-  - PMlibを外部ライブラリとしてパッケージを構成
   - CIOlib導入による修正
     リスタート関連のメソッドをコメントアウト ffv_Restart.C
     DFIはCIOlibでハンドリングしているので，既存のDFIクラスをインクルードから外す
@@ -136,3 +130,2312 @@ Version 0.6.0    2012-07-30
 Version 0.2.0    2013-06-30
   - 関数名を再構築
   - CPMライブラリを用いて並列管理テスト
+
+
+  
+----------------------------
+2013-07-05
+
+    r989 
+    - ffvc-mini app.の整備過程で発見した修正
+      NS_FS_E_Binary.C
+        res_initがsqrtされていない
+        未初期化のconvergence_prevを参照
+      ffv_velocity_binary.f90
+        pvec_musclで、FIRSTPRIVATEに指定しているdhがdoループ内で未使用(Intelコンパイラで-O0で実行するとセグメント違反で落ちる)
+      ffv_LS.C
+        tm_poi_src_nrmのflop_countに，直前の最後のPoisson反復でのtm_poi_SOR2SMAのfloop_countが混入
+
+----------------------------
+Date:    Jul 4 18:17:38 2013 
+
+    r988 Cutlib-3.1.1
+    - Cutlib-3.1.1対応のため，GridAccessorクラスを用いたインターフェイスに変更
+      setup_Polygon2CutInfo()でpoly_org, poly_dxをdoubleへ変更
+
+----------------------------
+Date:    Jul 3 23:06:08 2013 
+
+    r987 update copyright for all source
+
+----------------------------
+Date:    Jul 3 18:55:25 2013 
+
+    r986 change makefiles
+
+----------------------------
+Date:    Jul 3 09:06:17 2013 
+
+    r985 packaging adjustment
+    - パッケージ形式をautotoolsを利用したインストールに合わせて変更開始
+
+----------------------------
+Date:    Jun 22 15:35:54 2013 
+
+r984 move doc.tex to doc.git
+
+----------------------------
+Date:    Jun 22 14:37:37 2013 
+
+    r983 add README.md
+
+----------------------------
+Date:    Jun 15 16:39:52 2013 
+
+    r982 correct release note
+
+----------------------------
+Date:    Jun 15 16:38:49 2013 
+
+    r981 correct revision number
+
+----------------------------
+Date:    Jun 15 16:38:06 2013 
+
+    r980 PMlib is handled as outside library
+
+----------------------------
+Date:    Jun 13 12:00:23 2013 
+
+    r979 change Makefile of Polylib cpp  > cpp
+
+----------------------------
+Date:    Jun 12 10:52:55 2013 
+
+    r978 add License files
+
+----------------------------
+Date:    Jun 12 09:57:41 2013 
+
+    r977 restart mode fixed
+
+----------------------------
+Date:    Jun 11 23:49:04 2013 
+
+    r976 compiled
+
+----------------------------
+Date:    Jun 11 23:44:31 2013 
+
+    r975 restart mode change
+
+----------------------------
+Date:    Jun 11 18:50:49 2013 
+
+    r974 check
+
+----------------------------
+Date:    Jun 11 18:12:37 2013 
+
+    r973 working
+
+----------------------------
+Date:    Jun 11 13:22:43 2013 
+
+    r972 link-off dfi.C dfiinfo.C and PLOT3D class
+
+----------------------------
+Date:    Jun 10 18:48:51 2013 
+
+    r971 compile & run
+
+----------------------------
+Date:    Jun 10 08:11:32 2013 
+
+    r970 fix comment
+
+Date:    Jun 8 17:52:49 2013 
+
+    r969 CIOlib-1.1 compiled
+
+Date:    Jun 8 17:35:12 2013 
+
+    r968 CIOlib-1.1 & modify from r963 by FE, but ambigious
+
+Date:    Jun 8 12:38:56 2013 
+
+    r967 Modify division policy again
+
+Date:    Jun 8 12:38:08 2013 
+
+    r966 Modify division policy
+
+Date:    Jun 6 08:24:33 2013 
+
+    r965 check >> Both global voxel and pitch...
+
+Date:    Jun 3 23:00:55 2013 
+
+    r964 Jet dimension
+
+Date:    May 14 18:10:35 2013 
+
+    r963 PPLT2D
+
+Date:    May 9 09:23:20 2013 
+
+    r962 Makefile modify
+
+Date:    May 8 20:43:25 2013 
+
+    r961 Polylib-2.4
+
+Date:    May 8 17:38:02 2013 
+
+    r960 CIO Lisence
+
+Date:    May 8 17:37:25 2013 
+
+    r959 PMlib-1.7 kai & CIOlib update
+
+Date:    May 8 16:47:18 2013 
+
+    r958 PMlib-1.7
+
+Date:    May 8 14:15:43 2013 
+
+    r957 fix restart interval
+
+Date:    Apr 30 11:36:27 2013 
+
+    r956 PMlib
+
+Date:    Apr 26 04:53:37 2013 
+
+    r955 double C.Tscale
+
+Date:    Apr 15 12:19:32 2013 
+
+    r954 CIOlib
+
+Date:    Apr 13 16:49:16 2013 
+
+    r953 working
+
+Date:    Apr 13 16:31:14 2013 
+
+    r952 compile ok includs CIOlib
+
+Date:    Apr 13 16:01:19 2013 
+
+    r951 pmlib1.6+
+
+Date:    Apr 13 15:29:14 2013 
+
+    r950 pmlib1.6
+
+Date:    Apr 13 15:27:39 2013 
+
+    r949 PMlib-1.6
+
+Date:    Apr 13 13:40:27 2013 
+
+    r948 CIOlib working
+
+Date:    Apr 5 14:25:58 2013 
+
+    r947FaceVel
+
+Date:    Apr 4 18:24:13 2013 
+
+    r946 working
+
+Date:    Apr 2 18:33:10 2013 
+
+    r945 vbc
+
+Date:    Apr 2 17:56:22 2013 
+
+    r944 vobc_gc
+
+Date:    Apr 2 00:09:56 2013 
+
+    r943 Jet
+
+Date:    Apr 1 18:34:32 2013 
+
+    r942 new outflow & farfield
+
+Date:    Apr 1 16:47:00 2013 
+
+    r941 outflow change
+
+Date:    Apr 1 15:45:50 2013 
+
+    r940 jet
+
+Date:    Apr 1 13:50:30 2013 
+
+    r939 fix periodic
+
+Date:    Mar 31 22:49:55 2013 
+
+    r938 prdc
+
+Date:    Mar 31 17:57:03 2013 
+
+    r937 beautify
+
+Date:    Mar 31 17:12:32 2013 
+
+    r936 modify intrinsic
+
+Date:    Mar 31 13:41:50 2013 
+
+    r935 init mod
+
+Date:    Mar 28 00:51:13 2013 
+
+    r934 pmlib label
+
+Date:    Mar 26 23:41:09 2013 
+
+    r933 Polylib-2.3 ref2
+
+Date:    Mar 26 23:25:28 2013 
+
+    r932 Polylib-2.3 rev
+
+Date:    Mar 26 23:24:13 2013 
+
+    r931 Polylib-2.3
+
+Date:    Mar 26 00:12:55 2013 
+
+    r930 domain itor jet
+
+Date:    Mar 25 19:47:57 2013 
+
+    r929 farfield
+
+Date:    Mar 25 13:12:55 2013 
+
+    r928 modify division policy
+
+Date:    Mar 24 23:15:59 2013 
+
+    r927 tfree modify
+
+Date:    Mar 24 13:23:07 2013 
+
+    r926 dirichlet p
+
+Date:    Mar 24 11:42:40 2013 
+
+    r925 outflow
+
+Date:    Mar 23 17:34:25 2013 
+
+    r924 bc modify
+
+Date:    Mar 23 14:26:34 2013 
+
+    rr923 jet 1
+
+Merge: 1f43415 52fa63e
+Date:    Mar 21 10:10:03 2013 
+
+
+Date:    Mar 20 17:58:54 2013 
+
+    r921 jetbc
+
+Date:    Mar 20 15:06:22 2013 
+
+    r920 jet
+
+Date:    Mar 18 22:50:38 2013 
+
+    r920 working
+
+Date:    Mar 18 19:14:23 2013 
+
+    r919 jet-bit
+
+Date:    Mar 17 16:36:30 2013 
+
+    r918 jet vbc
+
+Date:    Mar 16 17:51:51 2013 
+
+    r917 modify vbc
+
+Date:    Mar 16 14:45:29 2013 
+
+    r916 modify domainitor
+
+Date:    Mar 16 09:02:04 2013 
+
+    r915 jetbc 2
+
+Date:    Mar 10 17:19:49 2013 
+
+    r914 jet bc working
+
+Date:    Mar 10 10:45:47 2013 
+
+    r913 jet bc
+
+Date:    Mar 6 17:14:00 2013 
+
+    r912 jet
+
+Date:    Feb 17 17:44:19 2013 
+
+    r911 hierarchical directory createion
+
+Date:    Feb 17 16:14:23 2013 
+
+    r910 update tp files
+
+Date:    Feb 17 14:20:43 2013 
+
+    r909 plot3d refine
+
+Date:    Feb 16 18:18:13 2013 
+
+    r908 working
+
+Date:    Jan 29 08:59:10 2013 
+
+    r907 working
+
+Date:    Jan 26 17:39:16 2013 
+
+    r906 Jet working
+
+Date:    Jan 26 14:13:19 2013 
+
+    r905 signal handler
+
+Date:    Jan 19 17:53:36 2013 
+
+    r904 avr output
+
+Date:    Jan 19 17:00:55 2013 
+
+    r903 dfi new
+
+Date:    Jan 15 19:09:08 2013 
+
+    r902 dfi output ok
+
+Date:    Jan 15 18:58:00 2013 
+
+    r901 revision up
+
+Date:    Jan 15 16:22:42 2013 
+
+    r900 dfi serial ok
+
+Date:    Jan 15 10:48:01 2013 
+
+    r899 working IOmode
+
+Date:    Jan 14 23:43:04 2013 
+
+    r898 working dfi
+
+Date:    Jan 14 17:49:11 2013 
+
+    r897 write check DFI
+
+Date:    Jan 14 17:21:13 2013 
+
+    r896 new dfi
+
+Date:    Jan 13 18:12:12 2013 
+
+    r895 working dfi
+
+Date:    Jan 13 16:48:19 2013 
+
+    r894 fileout is 1 step before
+
+Date:    Jan 13 16:01:10 2013 
+
+    r893 change IntervalManager class
+
+Date:    Jan 13 11:43:58 2013 
+
+    r892 date update
+
+Date:    Jan 13 11:25:27 2013 
+
+    r891 put velocity array of file back in place
+
+Date:    Dec 25 17:28:00 2012 
+
+    r890 outflow check ok
+
+Date:    Dec 24 21:37:27 2012 
+
+    r889 introduce w_w intot divergence()
+
+Date:    Dec 23 17:37:20 2012 
+
+    r888 working symmetric
+
+Date:    Dec 12 23:36:16 2012 
+
+    r887 vobc
+
+Date:    Dec 12 22:37:44 2012 
+
+    r886 modify wall condition
+
+Date:    Dec 11 00:00:58 2012 
+
+    r885 farfield
+
+Date:    Dec 10 19:51:14 2012 
+
+    r884 far field
+
+Date:    Dec 10 16:53:16 2012 
+
+    r883 outflow working
+
+Date:    Dec 10 12:38:32 2012 
+
+    r882 outflow ?
+
+Date:    Dec 9 23:56:19 2012 
+
+    r881 pvec_vobc_symmetric
+
+Date:    Dec 9 18:37:44 2012 
+
+    r880 step
+
+Date:    Dec 9 14:20:34 2012 
+
+    r879 modify comsph and layout util
+
+Date:    Dec 6 07:17:36 2012 
+
+    r878 working rm ref.vel
+
+Date:    Dec 5 19:05:49 2012 
+
+    r877 for RC seminar
+
+Date:    Dec 5 15:46:35 2012 
+
+    r876 sphere ocsilation
+
+Date:    Dec 4 16:17:23 2012 
+
+    r875 origin medium
+
+Date:    Dec 4 08:03:19 2012 
+
+    r874 ROUND_EPS
+
+Date:    Dec 1 18:16:07 2012 
+
+    r873 MediumTable ID COLOR
+
+Date:    Dec 1 15:16:50 2012 
+
+    r872 fix bid_fill and Polylib-2.2 & TextParser-1.2
+
+Date:    Nov 29 18:09:01 2012 
+
+    r871 working
+
+Date:    Nov 27 01:03:11 2012 
+
+    r870 heat
+
+Date:    Nov 21 14:42:49 2012 
+
+    r869 plot3d tp
+
+Merge: b875e5a a3ae403
+Date:    Nov 20 23:34:18 2012 
+
+    Merge branch 'master' of ssh://hpcpf-dev.iis.u-tokyo.ac.jp/home/keno/cbc_git
+    
+    working both irigium and strontium
+
+Date:    Nov 20 23:33:54 2012 
+
+    r867 fix underscore
+
+Date:    Nov 19 19:11:23 2012 
+
+    r867 add ldc.tp
+
+Date:    Nov 17 15:39:45 2012 
+
+    r866 cell face velocity
+
+Date:    Nov 17 01:10:15 2012 
+
+    r865 change delimiter of tp from _ to UpperLowerCase
+
+Date:    Nov 16 21:43:00 2012 
+
+    r864 v(i,j,k,3) for PLOT3D
+
+Date:    Nov 15 02:22:54 2012 
+
+    r863 change makefile
+
+Date:    Nov 14 00:58:22 2012 
+
+    r862 make FFVCoption
+
+Date:    Nov 14 00:51:23 2012 
+
+    r861 omp do static
+
+Date:    Nov 13 22:30:28 2012 
+
+    r860 cavity result is agree with r858
+
+Date:    Nov 13 21:10:23 2012 
+
+    r859 make cahnge
+
+Date:    Nov 11 17:04:49 2012 
+
+    r858 PCG/BICGSTAB
+
+Date:    Nov 11 16:55:08 2012 
+
+    r857 CG
+
+Date:    Nov 11 15:40:52 2012 
+
+    r856 plot3d
+
+Date:    Nov 11 15:16:53 2012 
+
+    r855 plot3d library
+
+Date:    Nov 7 09:20:08 2012 
+
+    r854 university
+
+Date:    Nov 7 02:10:32 2012 
+
+    r853 PLOT3D
+
+Date:    Nov 7 02:03:21 2012 
+
+    r852 off PLOT3D
+
+Date:    Nov 6 00:57:50 2012 
+
+    r851 working
+
+Date:    Nov 4 22:33:55 2012 
+
+    r850 introduce libPLOT3D
+
+Date:    Nov 4 21:26:38 2012 
+
+    r849 tex update
+
+Date:    Oct 18 18:35:01 2012 
+
+    r848 restart staging option
+
+Date:    Oct 18 02:18:11 2012 
+
+    r847 write HPCPF_EXIT_STATUS file
+
+Date:    Oct 18 00:36:06 2012 
+
+    r846 add HPCPF status
+
+Date:    Oct 16 08:37:26 2012 
+
+    r845 FFV088
+
+Date:    Oct 16 08:25:11 2012 
+
+    r844 modify make
+
+Date:    Oct 16 08:16:33 2012 
+
+    r843 PMli-1.5
+
+Date:    Oct 16 08:13:57 2012 
+
+    r842 PM1.5
+
+Date:    Oct 16 08:13:17 2012 
+
+    r841 modify r840 by haamguchi + make
+
+Date:    Oct 14 14:49:36 2012 
+
+    r840 modify r838 haamguchi
+
+Date:    Oct 14 14:01:20 2012 
+
+    r834 comment
+
+Date:    Oct 8 23:00:29 2012 
+
+    r838 FFV87/FB103
+
+Date:    Oct 8 19:41:18 2012 
+
+    r837 compsph/layout Makefile
+
+Date:    Oct 8 18:04:48 2012 
+
+    r836 working
+
+Date:    Oct 8 14:35:02 2012 
+
+    r833 working
+
+Date:    Oct 8 10:52:24 2012 
+
+    r834 working
+
+Date:    Oct 7 00:27:44 2012 
+
+    r833 modify r831 by hamaguchi
+
+Date:    Oct 6 17:59:56 2012 
+
+    r832 under construction : r831 hamaguchi
+
+Date:    Oct 4 16:47:15 2012 
+
+    r831 ffvc-0.9.2
+
+Date:    Oct 4 16:43:25 2012 
+
+    r830 read3
+
+Date:    Oct 3 19:29:36 2012 
+
+    r829 add read3
+
+Date:    Oct 2 18:34:34 2012 
+
+    r828 lower limit itr=2
+
+Date:    Oct 2 18:16:04 2012 
+
+    r827 restart mem disp
+
+Date:    Oct 2 17:25:50 2012 
+
+    r826 gemini
+
+Date:    Oct 2 13:14:31 2012 
+
+    r825 example update
+
+Date:    Oct 2 13:03:27 2012 
+
+    r824 fix r0
+
+Date:    Oct 1 23:01:21 2012 
+
+    r823 uni file
+
+Date:    Oct 1 19:34:29 2012 
+
+    r822 time slice
+
+Date:    Oct 1 12:48:31 2012 
+
+    r821 out dir
+
+Date:    Sep 30 23:39:09 2012 
+
+    r820 c_mkdir()
+
+Date:    Sep 30 17:09:12 2012 
+
+    r819 new iteration process
+
+Date:    Sep 30 09:31:33 2012 
+
+    r818 inside
+
+Date:    Sep 26 18:00:21 2012 
+
+    r817 ax=b
+
+Date:    Sep 26 00:12:52 2012 
+
+    r816 K-1
+
+Date:    Sep 25 19:49:57 2012 
+
+    r815 fgmres
+
+Date:    Sep 25 17:00:30 2012 
+
+    r814 unit conversion for array
+
+Date:    Sep 25 14:51:31 2012 
+
+    r813 arrayops
+
+Date:    Sep 25 08:33:38 2012 
+
+    r812 xcopy
+
+Date:    Sep 24 19:40:54 2012 
+
+    r811 iteration
+
+Date:    Sep 24 07:34:45 2012 
+
+    r810 working
+
+Date:    Sep 21 13:57:30 2012 
+
+    r809 working fgmres
+
+Date:    Sep 18 10:50:46 2012 
+
+    r808 fgmres
+
+Date:    Sep 18 00:13:42 2012 
+
+    r807 add algoritms
+
+Date:    Sep 18 00:12:10 2012 
+
+    r806 modify inside_ffvc
+
+Date:    Sep 16 01:53:21 2012 
+
+    r805 working
+
+Date:    Sep 15 16:26:47 2012 
+
+    r804 add doc
+
+Date:    Sep 14 22:12:02 2012 
+
+    r803 ffvc-0.9.1
+
+Date:    Sep 12 18:31:56 2012 
+
+    r802 itor
+
+Date:    Sep 12 12:56:53 2012 
+
+    r801 itor
+
+Date:    Sep 11 20:22:18 2012 
+
+    r800 gmres
+
+Date:    Sep 11 19:17:57 2012 
+
+    r799 add gmres pm
+
+Date:    Sep 11 18:32:55 2012 
+
+    r798 gmres para
+
+Date:    Sep 11 17:05:22 2012 
+
+    r797 gmres check
+
+Date:    Sep 11 00:24:18 2012 
+
+    r796 sleepy
+
+Date:    Sep 11 00:12:51 2012 
+
+    r795 gmres
+
+Date:    Sep 10 10:22:45 2012 
+
+    r794 still gmres
+
+Date:    Sep 10 08:55:56 2012 
+
+    r793 gmres...
+
+Date:    Sep 9 17:49:34 2012 
+
+    r792 gmres working
+
+Date:    Sep 9 07:32:37 2012 
+
+    r791 working
+
+Date:    Sep 8 19:06:23 2012 
+
+    r790 vinas src
+
+Date:    Sep 8 18:13:04 2012 
+
+    r789 add BG/P make setting
+
+Date:    Sep 8 16:47:50 2012 
+
+    r788 fix time ocntrol
+
+Date:    Sep 7 19:35:35 2012 
+
+    r787 working
+
+Date:    Sep 7 00:41:15 2012 
+
+    r786 ffv-0.9
+
+Date:    Sep 7 00:02:17 2012 
+
+    r785 Poly, PM update
+
+Date:    Sep 6 20:31:49 2012 
+
+    r784 PMlib-1.4
+
+Date:    Sep 6 19:31:32 2012 
+
+    r783 ffv-82 / fb-99
+
+Date:    Sep 6 11:38:12 2012 
+
+    r782 scaling postpone
+
+Date:    Sep 6 00:11:10 2012 
+
+    r781 polygon scaling working
+
+Date:    Sep 5 20:08:15 2012 
+
+    r780 history time out
+
+Date:    Sep 5 12:08:44 2012 
+
+    r779 change div method
+
+Date:    Sep 5 11:32:51 2012 
+
+    r778 pointset under way
+
+Date:    Sep 5 06:22:18 2012 
+
+    r777 package
+
+Date:    Sep 5 06:12:49 2012 
+
+    r776 HT_SN
+
+Date:    Sep 5 04:44:51 2012 
+
+    r775 change lbc format
+
+Date:    Sep 4 18:28:11 2012 
+
+    r774 LBC working
+
+Date:    Sep 4 13:45:50 2012 
+
+    r773 voxel output
+
+Date:    Sep 4 13:29:45 2012 
+
+    r772 vox out control
+
+Date:    Sep 4 12:04:03 2012 
+
+    r771 modify on K
+
+Date:    Sep 4 10:24:52 2012 
+
+    r770 package
+
+Date:    Sep 4 09:58:30 2012 
+
+    FB-97/ffv-80
+
+Date:    Sep 3 20:17:17 2012 
+
+    r768 working
+
+Date:    Sep 3 16:53:06 2012 
+
+    r767 burner ok
+
+Date:    Sep 3 13:38:51 2012 
+
+    r766 working
+
+Date:    Sep 3 10:49:03 2012 
+
+    r765 clean
+
+Date:    Sep 3 10:03:27 2012 
+
+    r764 cds compiled
+
+Date:    Sep 3 07:23:22 2012 
+
+    r763 pscalar working
+
+Date:    Sep 2 22:57:59 2012 
+
+    r762 cds
+
+Date:    Sep 2 18:26:15 2012 
+
+    r761 vspec reverse
+
+Date:    Sep 2 17:04:23 2012 
+
+    r760 vspec
+
+Date:    Sep 2 10:40:02 2012 
+
+    r759 wk
+
+Date:    Sep 2 10:28:40 2012 
+
+    r758 fill omp
+
+Date:    Sep 2 08:16:03 2012 
+
+    r757 symmetric fill
+
+Date:    Sep 1 16:21:17 2012 
+
+    r756 solid-from-cut working
+
+Date:    Sep 1 11:16:08 2012 
+
+    r755 Polylib-2.1
+
+Date:    Aug 31 11:23:39 2012 
+
+    r754
+
+Date:    Aug 31 11:09:49 2012 
+
+    r753 specv working
+
+Date:    Aug 31 09:00:39 2012 
+
+    r752 wrk
+
+Date:    Aug 30 19:30:27 2012 
+
+    r751 fake
+
+Date:    Aug 30 19:27:23 2012 
+
+    r750 rm Polylib b+
+
+Date:    Aug 30 19:26:25 2012 
+
+    r746 local bc label
+
+Date:    Aug 30 18:06:58 2012 
+
+    r745 Polylib_f
+
+Date:    Aug 30 10:23:15 2012 
+
+    r747 init last
+
+Date:    Aug 29 06:58:21 2012 
+
+    r746 polylib b+
+
+Date:    Aug 27 11:32:02 2012 
+
+    r745 rm CPM105
+
+Date:    Aug 25 23:06:20 2012 
+
+    r744 CPMlib106
+
+Date:    Aug 25 09:44:58 2012 
+
+    r743 makefile
+
+Date:    Aug 23 21:00:20 2012 
+
+    r742 credit
+
+Date:    Aug 22 21:47:32 2012 
+
+    r741 restart fix
+
+Date:    Aug 22 20:47:49 2012 
+
+    r740 debug write off
+
+Date:    Aug 22 19:49:20 2012 
+
+    r739 copyright 2012
+
+Date:    Aug 22 19:33:11 2012 
+
+    r738 1step elapse
+
+Date:    Aug 22 18:55:01 2012 
+
+    r737 plot3d related fix
+
+Date:    Aug 22 17:27:30 2012 
+
+    r736 interval fix
+
+Date:    Aug 21 19:43:56 2012 
+
+    r735 fill check
+
+Date:    Aug 20 20:28:07 2012 
+
+    r734 IP cyl
+
+Date:    Aug 20 19:50:18 2012 
+
+    r733 add sphere
+
+Date:    Aug 20 01:23:03 2012 
+
+    r732 medium check
+
+Date:    Aug 20 01:04:03 2012 
+
+    r731 fix spacing issue
+
+Date:    Aug 19 22:00:50 2012 
+
+    r730 fix Hostonly issue
+
+Date:    Aug 19 21:17:46 2012 
+
+    r729 IP_Polygon ijk loop
+
+Date:    Aug 19 20:50:45 2012 
+
+    r728 try BG/P
+
+Date:    Aug 19 05:17:19 2012 
+
+    r727 ucd
+
+Date:    Aug 19 02:23:34 2012 
+
+    r726 fix spacing
+
+Date:    Aug 19 01:29:27 2012 
+
+    r725 dfi serial
+
+Date:    Aug 17 12:54:18 2012 
+
+    r724 dfi ok
+
+Date:    Aug 15 17:49:32 2012 
+
+    r723 dfi3
+
+Date:    Aug 15 13:21:51 2012 
+
+    r722 dfi2
+
+Date:    Aug 15 00:43:29 2012 
+
+    r721 dfi
+
+Date:    Aug 15 00:21:04 2012 
+
+    r720 dfi head/tail
+
+Date:    Aug 14 18:47:08 2012 
+
+    r719 change dfi to tp
+
+Date:    Aug 14 16:13:33 2012 
+
+    r718 intel compiler xe 2011
+
+Date:    Aug 13 17:59:09 2012 
+
+    r717 outflow issue?
+
+Date:    Aug 13 16:06:51 2012 
+
+    r716 fix IO_Gather bug
+
+Date:    Aug 13 02:02:42 2012 
+
+    r715 change order of func. in Control.C
+
+Date:    Aug 12 19:31:47 2012 
+
+    r714 change get*Index() to Macro
+
+Date:    Aug 12 16:56:51 2012 
+
+    r713 introduce fill hint
+
+Date:    Aug 12 13:10:52 2012 
+
+    r712 beautify VoxInfo
+
+Date:    Aug 12 12:40:07 2012 
+
+    r711 modify halo region to 6
+
+Date:    Aug 12 11:17:30 2012 
+
+    r710 rm textparser
+
+Date:    Aug 12 11:16:35 2012 
+
+    r709 rm libttfx
+
+Date:    Aug 12 10:57:25 2012 
+
+    r708 check
+
+Date:    Aug 10 13:48:48 2012 
+
+    r707 BndCommS4DEx() error
+
+Date:    Aug 8 09:36:57 2012 
+
+    r706 update 705 rev by vinas
+
+Date:    Aug 5 02:16:56 2012 
+
+    r705 double compile
+
+Date:    Aug 4 23:43:03 2012 
+
+    r704 K modify
+
+Date:    Aug 4 12:47:47 2012 
+
+    r703 pmt.tp
+
+Date:    Aug 4 12:44:31 2012 
+
+    r702 cpm105
+
+Date:    Aug 4 11:44:15 2012 
+
+    r701 fix statistics
+
+Date:    Aug 3 17:22:05 2012 
+
+    r700 medium on GC
+
+Date:    Aug 1 17:56:43 2012 
+
+    r699 replace allreduce int to ulong in Compo
+
+Date:    Jul 31 23:44:12 2012 
+
+    r698 fill
+
+Date:    Jul 30 16:35:16 2012 
+
+    r697 snapshot PM
+
+Date:    Jul 30 14:42:52 2012 
+
+    r696 update polylib
+
+Date:    Jul 30 12:53:23 2012 
+
+    r695 openmp?
+
+Date:    Jul 30 00:08:07 2012 
+
+    r694 check cut
+
+Date:    Jul 29 19:20:00 2012 
+
+    r693 polylib working
+
+Date:    Jul 29 14:02:04 2012 
+
+    r692 polylib
+
+Date:    Jul 28 19:48:12 2012 
+
+    r691 modify r690 by hamaguchi
+
+Date:    Jul 23 16:10:49 2012 
+
+    r690 add PMlib1.3
+
+Date:    Jul 23 16:04:50 2012 
+
+    r689 FB92/FFV50
+
+Date:    Jul 23 14:37:34 2012 
+
+    r688 fix cutlib include
+
+Date:    Jul 23 12:24:24 2012 
+
+    r687 rm Polylib_203
+
+Date:    Jul 23 12:16:57 2012 
+
+    r686 modified r683 compiled
+
+Date:    Jul 23 11:23:32 2012 
+
+    r685 modify hamaguchi r683
+
+Date:    Jul 21 18:50:03 2012 
+
+    r684 working r683 plot3d
+
+Date:    Jul 17 19:55:47 2012 
+
+    r683 p average
+
+Date:    Jul 17 00:13:09 2012 
+
+    r682 working
+
+Date:    Jul 16 18:39:30 2012 
+
+    r681 sma comm
+
+Date:    Jul 16 10:28:49 2012 
+
+    r680 sma?
+
+Date:    Jul 14 18:05:21 2012 
+
+    r679 modify voxel init
+
+Date:    Jul 14 16:39:00 2012 
+
+    r678 fix domainflux
+
+Date:    Jul 14 15:12:04 2012 
+
+    r677 fix sync bug
+
+Date:    Jul 11 20:32:27 2012 
+
+    r676 FB090/FFV040
+
+Date:    Jul 11 20:28:53 2012 
+
+    r675 PMlib 1.2
+
+Date:    Jul 11 18:16:16 2012 
+
+    r674 comm
+
+Date:    Jul 10 17:38:31 2012 
+
+    r673 sma comm
+
+Date:    Jul 10 11:40:46 2012 
+
+    r672 parseBC cmp
+
+Date:    Jul 10 00:41:02 2012 
+
+    r671 comm sor
+
+Date:    Jul 9 19:28:22 2012 
+
+    r670 rm class pointer
+
+Date:    Jul 9 14:51:31 2012 
+
+    r699 run
+
+Date:    Jul 9 11:53:59 2012 
+
+    r698 LS
+
+Date:    Jul 8 22:45:51 2012 
+
+    r697 sor2sma thinking
+
+Date:    Jul 8 07:52:27 2012 
+
+    r696 binary
+
+Date:    Jul 7 18:35:47 2012 
+
+    r695 NS_binary
+
+Date:    Jul 7 16:30:02 2012 
+
+    r694 timestamp
+
+Date:    Jul 7 14:45:51 2012 
+
+    r693 initilize
+
+Date:    Jul 7 13:44:37 2012 
+
+    r692 init compile
+
+Date:    Jul 6 19:01:59 2012 
+
+    r692 working
+
+Date:    Jul 5 19:58:17 2012 
+
+    r691 update CPMlib 103
+
+Date:    Jul 3 23:37:28 2012 
+
+    r690 compiling
+
+Date:    Jul 3 20:16:53 2012 
+
+    r689 add ffv_Restart.C
+
+Date:    Jul 3 18:05:58 2012 
+
+    r688 initilize
+
+Date:    Jul 2 22:44:05 2012 
+
+    r687 restart
+
+Date:    Jul 2 18:28:44 2012 
+
+    r686 dfi
+
+Date:    Jul 2 16:55:32 2012 
+
+    r685 2d alloc
+
+Date:    Jul 2 12:40:12 2012 
+
+    r684 voxencode
+
+Date:    Jul 2 10:14:11 2012 
+
+    r683 INDEX
+
+Date:    Jul 1 11:05:31 2012 
+
+    r682 /day morning
+
+Date:    Jul 1 01:41:04 2012 
+
+    r681 indexing
+
+Date:    Jun 30 18:27:29 2012 
+
+    r680 CompoFraction
+
+Date:    Jun 30 16:52:18 2012 
+
+    r679 medium ok
+
+Date:    Jun 30 14:07:51 2012 
+
+    r678 ffv20/fb80
+
+Date:    Jun 30 14:01:30 2012 
+
+    r677 compiled
+
+Date:    Jun 30 12:36:01 2012 
+
+    r676 rename fortran routines
+
+Date:    Jun 29 18:19:48 2012 
+
+    r675 allreduce error
+
+Date:    Jun 29 17:43:48 2012 
+
+    r674 add SetBC3D
+
+Date:    Jun 29 17:42:56 2012 
+
+    r673 working
+
+Date:    Jun 29 14:11:46 2012 
+
+    r672 rm IP_Users
+
+Date:    Jun 29 14:08:47 2012 
+
+    r671 rm IP::setControlVars
+
+Date:    Jun 29 13:26:46 2012 
+
+    r670 add polylib 2.1.0-dev-a
+
+Date:    Jun 29 13:03:35 2012 
+
+    r669 check 1
+
+Date:    Jun 29 00:55:09 2012 
+
+    r668 working
+
+Date:    Jun 28 20:02:56 2012 
+
+    r667 domaininfo
+
+Date:    Jun 28 00:26:16 2012 
+
+    r666 polylib 2.1.0 dev
+
+Date:    Jun 27 20:05:39 2012 
+
+    r665 working
+
+Date:    Jun 27 10:17:38 2012 
+
+    r664 change uint 2 int
+
+Date:    Jun 27 01:00:29 2012 
+
+    r663 vinfo int
+
+Date:    Jun 26 21:33:29 2012 
+
+    r662 shinkansen
+
+Date:    Jun 26 08:47:46 2012 
+
+    r661 working
+
+Date:    Jun 25 23:02:41 2012 
+
+    r660 working
+
+Date:    Jun 25 19:12:25 2012 
+
+    r659 load medium
+
+Date:    Jun 25 18:57:40 2012 
+
+    r658 laod aprameters
+
+Date:    Jun 24 23:14:40 2012 
+
+    r657 compiling...
+
+Date:    Jun 23 22:18:30 2012 
+
+    r656 compiling
+
+Date:    Jun 23 18:18:12 2012 
+
+    r655 working
+
+Date:    Jun 23 16:16:28 2012 
+
+    r654 move new Makefile
+
+Date:    Jun 23 16:11:07 2012 
+
+    r653 working make
+
+Date:    Jun 23 15:32:35 2012 
+
+    r652 change make
+
+Date:    Jun 23 14:56:59 2012 
+
+    r651 rm parallel_info.h
+
+Date:    Jun 23 13:16:37 2012 
+
+    r650 add bin
+
+Date:    Jun 22 19:33:54 2012 
+
+    r649 ffv class
+
+Date:    Jun 22 16:27:41 2012 
+
+    r648 run cpmlib
+
+Date:    Jun 22 14:22:26 2012 
+
+    r647 rm CPMlib
+
+Date:    Jun 22 13:41:38 2012 
+
+    r646 add cpm
+
+Date:    Jun 21 23:37:50 2012 
+
+    r645 working
+
+Date:    Jun 21 00:00:18 2012 
+
+    r644 outerbc alias
+
+Date:    Jun 20 14:00:15 2012 
+
+    r643 working
+
+Date:    Jun 18 19:46:04 2012 
+
+    r642 working
+
+Date:    Jun 18 18:09:01 2012 
+
+    r641 working
+
+Date:    Jun 16 18:52:36 2012 
+
+    r640 rm IDtable.h
+
+Date:    Jun 16 13:41:09 2012 
+
+    r639 rm textparser0.9
+
+Date:    Jun 16 11:51:50 2012 
+
+    r638 change initialize
+
+Date:    Jun 11 19:15:22 2012 
+
+    r637 IP
+
+Date:    Jun 11 08:29:15 2012 
+
+    r636 working
+
+Date:    Jun 7 20:21:45 2012 
+
+    r635 parser changing
+
+Date:    Jun 7 12:14:03 2012 
+
+    r634 compile ok
+
+Date:    Jun 7 11:27:36 2012 
+
+    r633 build cpmlib, tplib
+
+Date:    Jun 7 00:09:17 2012 
+
+    r632 add CPMlib in project_local_settings
+
+Date:    Jun 7 00:03:50 2012 
+
+    r631 build CPMlib
+
+Date:    Jun 6 23:53:44 2012 
+
+    r630 add CPMlib
+
+Date:    Jun 6 23:48:29 2012 
+
+    r629 change TP in project_local_setting
+
+Date:    Jun 6 23:40:25 2012 
+
+    r628 add TP/include
+
+Date:    Jun 6 23:20:07 2012 
+
+    r627 add tp & TPControl class
+
+Date:    Jun 3 18:16:11 2012 
+
+    r626 caeru branch compile option
+
+Date:    Jun 3 17:25:55 2012 
+
+    r625 add FX/K compile option
+
+Date:    Jun 3 16:55:14 2012 
+
+    r624 modify min -> if
+
+Date:    Jun 2 18:56:10 2012 
+
+    r623 fix min_distance
+
+Date:    May 29 19:51:13 2012 
+
+    r622 cutinfo check
+
+Date:    May 29 16:55:21 2012 
+
+    r621 modify ulong
+
+Date:    May 29 16:21:38 2012 
+
+    r620 change ulong
+
+Date:    May 26 15:57:18 2012 
+
+    r619 gather has problem
+
+Date:    May 26 14:26:52 2012 
+
+    r618 sphere ok
+
+Date:    May 26 00:02:41 2012 
+
+    r617 u-nn
+
+Date:    May 25 17:23:25 2012 
+
+    r616 change scancell algorithm
+
+Date:    May 24 21:38:58 2012 
+
+    r615 int_array_allreduce
+
+Date:    May 24 20:20:30 2012 
+
+    r614 ghost mpi allreduce
+
+Date:    May 24 15:08:50 2012 
+
+    r613 change MPI-comm in Voxinfo
+
+Date:    May 24 11:05:41 2012 
+
+    r612 modify cbc_helicity & avr/rms
+
+Date:    May 23 21:07:24 2012 
+
+    r611 unsigned
+
+Date:    May 23 19:55:02 2012 
+
+    r610 char(dim)
+
+Date:    May 23 15:49:09 2012 
+
+    r609 add cbc_force
+
+Date:    May 23 15:02:14 2012 
+
+    r608 id_sph
+
+Date:    May 22 22:29:44 2012 
+
+    r607 PMT silent
+
+Date:    May 22 22:08:16 2012 
+
+    r606 modify write index
+
+Date:    May 22 20:07:29 2012 
+
+    r605 coarse restart ok
+
+Date:    May 21 17:56:18 2012 
+
+    r604 coarse git l5
+
+Date:    May 21 13:32:12 2012 
+
+    r603 166/260
+
+Date:    May 21 13:23:53 2012 
+
+    r602 coarse restart
+
+Date:    May 21 00:16:40 2012 
+
+    r601 still
+
+Date:    May 20 23:16:32 2012 
+
+    r600 coarse problem
+
+Date:    May 20 18:34:37 2012 
+
+    r598 still restart problem
+
+Date:    May 20 14:45:51 2012 
+
+    r598 restart
+
+Date:    May 20 00:34:13 2012 
+
+    r597 dfi bug aruyo
+
+Date:    May 19 22:05:24 2012 
+
+    r596 add FB/dfi
+
+Date:    May 19 22:04:40 2012 
+
+    r595 mv dfi to FB
+
+Date:    May 19 19:14:16 2012 
+
+    r594 dfi working
+
+Date:    May 19 18:18:35 2012 
+
+    r593 dfi vsph free
+
+Date:    May 19 13:49:13 2012 
+
+    r592 dfi class
+
+Date:    May 19 11:28:05 2012 
+
+    r591 rm Control_Rect
+
+Date:    May 18 20:07:18 2012 
+
+    r590 dfi working
+
+Date:    May 17 15:00:28 2012 
+
+    r589 add dfi func
+
+Date:    May 16 15:20:55 2012 
+
+    r588 modify dfi load
+
+Date:    May 16 10:24:09 2012 
+
+    r587 rough restart serial ok
+
+Date:    May 16 00:51:00 2012 
+
+    r586 rough working
+
+Date:    May 15 20:02:40 2012 
+
+    r585 working
+
+Date:    May 15 14:51:22 2012 
+
+    r584 restart change
+
+Date:    May 15 08:59:57 2012 
+
+    r583 working
+
+Date:    May 14 20:03:54 2012 
+
+    r582 change file io on the way
+
+Date:    May 14 14:22:14 2012 
+
+    r581 seg fault
+
+Date:    May 12 08:26:59 2012 
+
+    r580 check_fill is modified to mpi
+
+Date:    May 11 15:57:32 2012 
+
+    r579 modify 1/h
+
+Date:    May 10 20:05:05 2012 
+
+    r578 working
+
+Date:    May 10 17:11:58 2012 
+
+    r577 fill mpi parallel ok
+
+Date:    May 9 22:53:11 2012 
+
+    r576 cal. force
+
+Date:    May 8 14:12:57 2012 
+
+    r575 cds upwinding neighboring to solid
+
+Date:    May 7 22:38:22 2012 
+
+    r574 rough interpolation ok
+
+Date:    May 7 19:26:37 2012 
+
+    r573 rough check
+
+Date:    May 7 17:26:05 2012 
+
+    r572 rough load
+
+Date:    May 7 14:31:17 2012 
+
+    r571 test SZ
+
+Date:    May 6 23:56:29 2012 
+
+    r570 move doc
+
+Date:    May 6 18:28:43 2012 
+
+    r569 rough interpolation
+
+Date:    May 4 16:57:15 2012 
+
+    r568 filled
+
+Date:    May 2 19:59:52 2012 
+
+    r567 fill cut
+
+Date:    May 2 16:13:22 2012 
+
+    r566 update PMlib doc
+
+Date:    May 1 19:23:48 2012 
+
+    r565 fill....
+
+Date:    May 1 07:23:51 2012 
+
+    r564 till working fill
+
+Date:    Apr 29 22:47:19 2012 
+
+    r563 working fill
+
+Date:    Apr 28 19:04:28 2012 
+
+    r562 working fill
+
+Date:    Apr 28 15:07:18 2012 
+
+    r561 PMlib manual
+
+Date:    Apr 28 13:46:14 2012 
+
+    r560 independent PMlib
+
+Date:    Apr 27 00:57:25 2012 
+
+    r559 alternate c++ omp ruduction min
+
+Date:    Apr 24 07:26:18 2012 
+
+    r558 working fill
+
+Date:    Apr 22 10:58:44 2012 
+
+    r557 Polylib/Cutlib 2.0.3
+
+Date:    Apr 21 23:07:30 2012 
+
+    r556 modify viscous term
+
+Date:    Apr 21 19:05:34 2012 
+
+    r555 check
+
+Date:    Apr 20 20:18:42 2012 
+
+     r554 cut-binary
+
+Date:    Apr 20 19:39:58 2012 
+
+    r553 BCvec bug fix
+
+Date:    Apr 20 18:53:41 2012 
+
+    r552 modify intrinsic class treatment
+
+Date:    Apr 19 18:54:39 2012 
+
+    r551 K cimpiler option & fb_util.f90
+
+Date:    Apr 18 18:04:47 2012 
+
+    r550 modify buffer
+
+Date:    Apr 18 16:39:30 2012 
+
+    r549 fapp
+
+Date:    Apr 18 15:20:09 2012 
+
+    r548 pre release 150
+
+Date:    Apr 15 16:39:08 2012 
+
+    r547 fix getFindex3Dex in Sampling.h
+
+Date:    Apr 15 15:46:45 2012 
+
+    r546 unit ocnversion
+
+Date:    Apr 15 15:12:31 2012 
+
+    r545 fix average
+
+Date:    Apr 15 15:04:53 2012 
+
+    r544 itor test
+
+Date:    Apr 15 11:10:06 2012 
+
+    r543 debug func
+
+Date:    Apr 15 10:02:20 2012 
+
+    r542 stil working itor
+
+Date:    Apr 14 18:39:10 2012 
+
+    r541 bug! itor
+
+Date:    Apr 13 10:12:52 2012 
+
+    r540 fix para_mode
+
+Date:    Apr 12 23:28:20 2012 
+
+    r539 add parallel mode to PM class
+
+Date:    Apr 12 19:14:15 2012 
+
+    r538 pressure shift
+
+Date:    Apr 12 15:21:24 2012 
+
+    r537 BCvec_cc openMP
+
+Date:    Apr 9 19:02:34 2012 
+
+    r536 neumann BC
+
+Date:    Apr 8 23:04:30 2012 
+
+    r535 tfree for fluid face
+
+Date:    Apr 8 17:43:22 2012 
+
+    r534 tfree bug
+
+Date:    Apr 7 18:57:11 2012 
+
+    r533 working cds
+
+Date:    Apr 7 15:35:48 2012 
+
+    r532 change torelance of cut
+
+Date:    Apr 1 17:55:45 2012 
+
+    r531 div?
+
+Date:    Apr 1 14:26:45 2012 
+
+    r530 take cut effect into velocity at cell face
+
+Date:    Apr 1 12:13:56 2012 
+
+    r529 intro CompoList::bc_dir
+
+Date:    Mar 31 17:40:43 2012 
+
+    r528 working vspec
+
+Date:    Mar 31 16:57:32 2012 
+
+    r527 add func to Polylib
+
+Date:    Mar 30 16:16:42 2012 
+
+    r526 encVbit_IBC_Cut() working
+
+Date:    Mar 30 15:53:41 2012 
+
+    r525 CDS vspec
+
+Date:    Mar 29 16:56:25 2012 
+
+    r524 working
+
+Date:    Mar 29 13:44:44 2012 
+
+    r523 singleton
+
+Date:    Mar 28 23:58:25 2012 
+
+    r522 some classes are merged in Control
+
+Date:    Mar 27 19:22:29 2012 
+
+    r521 singleton parseMat
+
+Date:    Mar 27 18:59:20 2012 
+
+    r520 singleton Control class
+
+Date:    Mar 25 18:22:55 2012 
+
+    r519 stil step issue
+
+Date:    Mar 25 09:18:07 2012 
+
+    r517 check
+
+Date:    Mar 24 18:58:01 2012 
+
+    r516 sphere ok?
+
+Date:    Mar 22 18:52:02 2012 
+
+    r515 cut
+
+Date:    Mar 21 23:37:05 2012 
+
+    r514 modify parabolic solution
+
+Date:    Mar 21 19:24:20 2012 
+
+    r513 working
+
+Date:    Mar 21 11:52:08 2012 
+
+    r512 introduce IP_Sphere
+
+Date:    Mar 20 16:43:37 2012 
+
+    r511 cds_vector
+
+Date:    Mar 20 13:01:08 2012 
+
+    r510 cds working
+
+Date:    Mar 18 18:03:33 2012 
+
+    r509 cds working
+
+Date:    Mar 18 14:07:23 2012 
+
+    done component array
+
+Date:    Mar 18 09:52:50 2012 
+
+    r507 working component array
+
+Date:    Mar 17 18:25:31 2012 
+
+    r506 introducing component array
+
+Date:    Mar 17 17:31:43 2012 
+
+    r505 forcing...
+
+Date:    Mar 16 18:17:24 2012 
+
+    r504 forcing modify
+
+Date:    Mar 15 19:40:23 2012 
+
+    r503 forcing
+
+Date:    Mar 15 14:48:04 2012 
+
+    r502 add tm_prj_vec_bc_comm
+
+Date:    Mar 15 12:16:41 2012 
+
+    openmp static
+
+Date:    Mar 11 17:13:34 2012 
+
+    r500 omp pokayoke
+
+Date:    Mar 11 08:02:10 2012 
+
+    r499 omp
+
+Date:    Mar 7 17:52:01 2012 
+
+    r498 omp static test
+
+Date:    Mar 7 00:20:27 2012 
+
+    r497 rm omp*.h
+
+Date:    Mar 6 19:45:10 2012 
+
+    introduce omp_head/tail
+
+Date:    Mar 3 18:10:19 2012 
+
+    add unused.f90
+
+Date:    Mar 3 17:03:16 2012 
+
+    r494 reduce index function
+
+Date:    Mar 3 12:03:16 2012 
+
+    r493 complete component VF
+
+Date:    Mar 3 00:08:13 2012 
+
+    r492 under construction
+
+Date:    Mar 2 18:19:37 2012 
+
+    r491 compo rad/fan modify
+
+Date:    Mar 1 17:27:10 2012 
+
+    r490 shape min/max
+
+Date:    Feb 29 14:01:31 2012 
+
+    r489 IBC outflow requires nv
+
+Date:    Feb 28 19:21:33 2012 
+
+    r484 Hex Parser
+
+Date:    Feb 28 11:08:47 2012 
+
+    r483 CompoFraction OK
+
+Date:    Feb 27 21:35:59 2012 
+
+    r482 rotate + translation
+
+Date:    Feb 27 19:27:59 2012 
+
+    r481 try & error geometry
+
+Date:    Feb 26 22:46:34 2012 
+
+    r480 modify judge_cylinder()
+
+Date:    Feb 26 18:24:48 2012 
+
+    add center in CompoFraction class
+
+Date:    Feb 24 19:43:08 2012 
+
+    assert(0) >> Exit(0)
+
+Date:    Feb 22 18:13:45 2012 
+
+    r476 remove Skl.h from FB class
+
+Date:    Feb 22 17:28:46 2012 
+
+    r457 change SKL_REAL to REAL_TYPE
+
+Date:    Feb 22 10:35:28 2012 
+
+    r474 move shiftVin/out to FileIO class
+
+Date:    Feb 22 00:19:07 2012 
+
+    r473 component VF implementation
+
+Date:    Feb 20 18:58:06 2012 
+
+    r472 add CompoFraction class
+
+Date:    Feb 20 08:47:50 2012 
+
+    r471 flop counting update
+
+Date:    Feb 16 09:59:17 2012 
+
+    r470 remove Core_Util class -> fb_util.f90 and FBUtility class
+
+Date:    Feb 15 19:03:43 2012 
+
+    r469 cbc_util
+
+Date:    Feb 15 18:40:52 2012 
+
+    r468 fb_util
+
+Date:    Feb 15 18:16:01 2012 
+
+    r467 mv cbc_f_params.h
+
+Date:    Feb 14 18:06:17 2012 
+
+    r466 add false to tm_statistic
+
+Merge: 6015955 1ef64bd
+Date:    Feb 14 16:04:47 2012 
+
+    Merge branch '3DEx'
+    
+    Conflicts:
+    	src/PRJ_CBC/CBC/SklSolverCBC.C
+
+Date:    Feb 14 15:52:01 2012 
+
+    r464 SklVector3D to SklVector3DEx
+
+Date:    Feb 14 09:06:10 2012 
+
+    r463 add tm_statistic
+
+Date:    Feb 13 11:45:17 2012 
+
+    replace constant u_bc_ref2 in cbc_pvec_vobc_wall
+
+Date:    Feb 13 11:24:35 2012 
+
+    r461 enhance muscl by replacing constant
+
+Date:    Feb 13 00:21:49 2012 
+
+    r460 change counting cbc_ee, vobc_wall, muscl
+
+Date:    Feb 12 17:38:01 2012 
+
+    r459 replace version 151-247 of PMT
+
+Date:    Feb 12 17:30:29 2012 
+
+    add empty directory
+
+Date:    Feb 12 17:28:35 2012 
+
+    recount flop based on PA info on K
+
+Date:    Feb 9 22:47:36 2012 
+
+    r456 re-count flops
+
+Date:    Feb 8 17:57:40 2012 
+
+    r455 add pm_3840.xml
+
+Date:    Feb 8 17:52:38 2012 
+
+    Merge branch 'master' of ssh://hpcpf-dev.iis.u-tokyo.ac.jp/home/keno/cbc_git
+
+Date:    Feb 8 17:52:12 2012 
+
+    change label cbc_norm_v_div_max
+
+Date:    Feb 3 19:30:39 2012 
+
+    r453 change remark of cbc_norm_vmax_div
+
+Date:    Feb 2 22:15:04 2012 
+
+    r452
+
+Date:    Feb 1 15:07:28 2012 
+
+    r451 change
+

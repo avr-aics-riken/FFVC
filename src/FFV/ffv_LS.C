@@ -276,6 +276,7 @@ int FFV::Point_SOR(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm,
         
         TIMING_start(tm_poi_src_nrm);
         res = 0.0;
+        flop_count = 0.0;
         poi_residual_(&res, size, &guide, x, b, d_bcp, &flop_count);
         TIMING_stop(tm_poi_src_nrm, flop_count);
         

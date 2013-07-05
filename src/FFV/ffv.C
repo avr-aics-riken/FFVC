@@ -44,6 +44,8 @@ FFV::FFV()
   CurrentStep = 0;
   CurrentStep_Avr = 0;
   
+  convergence_prev = 0.0;
+  
   deltaT = 0.0;
   
   for (int i=0; i<3; i++) 

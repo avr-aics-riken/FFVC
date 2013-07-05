@@ -139,12 +139,12 @@
     flop = flop + dble(ix)*dble(jx)*dble(kx)*798.0d0
     ! flop = flop + dble(ix)*dble(jx)*dble(kx)*991.0d0 ! DP
     
-    vflop = 0.0d0;
+    vflop = 0.0d0
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:vflop) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dh1, dh2, qtz, vcs, b, ck, ss_4, ss, cm1, cm2, wls) &
-!$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, wm1, wm2, rei, dh, v_mode) &
+!$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, wm1, wm2, rei, v_mode) &
 !$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bpx, uq, vq, wq, tmp1, tmp2, bdx) &
 !$OMP PRIVATE(Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2) &
 !$OMP PRIVATE(Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2) &
@@ -596,7 +596,7 @@
         endif
       endif 
       
-      beta = 1.0;
+      beta = 1.0
       bdx = bd(i,j,k)
       if (ibits(bdx, forcing_bit, 1) == 1) then ! 圧力損失コンポの場合
         ! beta = 1.0 - real(ibits( bdx, top_vf, bitw_8 )) * qtz ! 1-体積率
