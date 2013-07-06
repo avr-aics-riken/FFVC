@@ -53,7 +53,6 @@ $(TARGET):$(OBJS)
 	$(CC) $(CFLAGS) $(UDEF_INC_PATH) -o $@ -c $<
 
 .C.o:
-	$(info UDEF_INC_PATH)
 	$(CXX) $(CXXFLAGS) $(UDEF_INC_PATH) -o $@ -c $<
 
 .f90.o:

@@ -15,10 +15,10 @@
 #
 #! /bin/sh
 
-prefix=@prefix@
-exec_prefix=@exec_prefix@
-includedir=@includedir@
-libdir=@libdir@
+prefix=/usr/local/FFVC
+exec_prefix=${prefix}
+includedir=${prefix}/include
+libdir=${exec_prefix}/lib
 
 usage()
 {
@@ -59,7 +59,7 @@ while test $# -gt 0; do
     --version)
 cat <<EOF
 
-# FFV-C : Frontflow / violet Cartesian  Ver. @VERSION@  (@FFVC_REVISION@)
+# FFV-C : Frontflow / violet Cartesian  Ver. 1.2.0  (20130706_1500)
 #
 # Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
 # All rights reserved.
@@ -79,31 +79,31 @@ EOF
       ;;
 
     --cflags)
-      echo @FFVC_CFLAGS@ @MPICH_LIBS@
+      echo @FFVC_CFLAGS@ 
       ;;
 
     --cxx)
-      echo @FFVC_CXX@
+      echo mpicxx
       ;;
 
     --fc)
-      echo @FFVC_FC@
+      echo mpif90
       ;;
 
     --fcflags)
-      echo @FFVC_CFLAGS@ @FREALOPT@ @MPICH_FCFLAGS@
+      echo @FFVC_CFLAGS@  @MPICH_FCFLAGS@
       ;;
 
     --fclibs)
-      echo @FFVC_LDFLAGS@ @FFVC_LIBS@ @MPICH_FCLIBS@
+      echo   -lifport -lifcore 
       ;;
 
     --fclink)
-      echo @FFVC_FC_LD@
+      echo 
       ;;
 
     --libs)
-      echo @FFVC_LIBS@
+      echo  -lifport -lifcore
       ;;
 
     *)

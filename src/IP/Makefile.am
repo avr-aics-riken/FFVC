@@ -13,7 +13,9 @@
 #
 ###################################################################################
 
-lib_LIBRARIES = libIP.a
+noinst_lib_LIBRARIES = libIP.a
+
+noinst_libdir = ../lib
 
 libIP_a_CXXFLAGS = \
   -I. \
@@ -37,8 +39,6 @@ libIP_a_SOURCES = \
   IP_PPLT2D.h \
   IP_Polygon.C \
   IP_Polygon.h \
-  IP_RSP.C \
-  IP_RSP.h \
   IP_Rect.C \
   IP_Rect.h \
   IP_SHC1D.C \
@@ -48,4 +48,4 @@ libIP_a_SOURCES = \
   IP_Step.C \
   IP_Step.h
 
-EXTRA_DIST = Makefile_hand depend.inc ReleaseNote_IP.txt
+EXTRA_DIST = Makefile_hand depend.inc ReleaseNote_IP.txt IP_RSP.C IP_RSP.h

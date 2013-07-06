@@ -15,9 +15,11 @@
 
 bin_PROGRAMS = ffvc
 
+
 ffvc_CXXFLAGS = \
   -I. \
   -I../FB \
+  -I../F_CORE \
   -I../IP \
   -I../PLOT3D \
   @CPM_CFLAGS@ \
@@ -58,10 +60,13 @@ ffvc_LDADD = \
   @CUT_LDFLAGS@ \
   @MPICH_LDFLAGS@ \
   @MPICH_LIBS@ \
-  @MPICH_FCLIBS@
-
-ffvc_LINK = \
-  @FFVC_FC_LD@ $(FCFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+  @MPICH_FCLIBS@ \
+  @FFVC_LIBS@ \
+  @FFVC_FC_LD@ \
+  -L../FB -lFB \
+  -L../IP -lIP \
+  -L../F_CORE -lFCORE \
+  -L../PLOT3D -lPLOT3D
 
 
 EXTRA_DIST = Makefile_hand depend.inc

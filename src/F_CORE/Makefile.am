@@ -13,11 +13,14 @@
 #
 ###################################################################################
 
-lib_LIBRARIES = libFCORE.a
+noinst_lib_LIBRARIES = libFCORE.a
+
+noinst_libdir = ../lib
 
 libFCORE_a_FCFLAGS = \
   -I. \
   -I../FB \
+  @CPM_CFLAGS@ \
   @MPICH_CFLAGS@ \
   @FREALOPT@ 
 
@@ -29,15 +32,14 @@ libFCORE_a_SOURCES = \
   ffv_pbc.f90 \
   ffv_poisson.f90 \
   ffv_poisson2.f90 \
-  ffv_poisson_cds.f90 \
   ffv_pscalar.f90 \
   ffv_utility.f90 \
   ffv_vbc_inner.f90 \
   ffv_vbc_outer.f90 \
   ffv_velocity_binary.f90 \
-  ffv_velocity_cds.f90 \
   force.h \
   load_var_stencil5.h \
-  muscl.h
+  muscl.h \
+  ffv_velocity_cds.f90
 
-EXTRA_DIST = Makefile_hand depend.inc unused.f90
+EXTRA_DIST = Makefile_hand depend.inc unused.f90 ffv_poisson_cds.f90 

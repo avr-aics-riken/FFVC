@@ -131,15 +131,15 @@ ifeq ($(ARCH),intel)
   MPI_DIR     = /opt/openmpi
   OMP_FLAGS   = -openmp -par-report=3 -vec-report=2
   UDEF_OPT    =
-  CC          = icc
+  CC          = mpicc
   CFLAGS      = -O3
-  CXX         = icpc
+  CXX         = mpicxx
   CXXFLAGS    = -O3 $(OMP_FLAGS)
-  FC          = ifort
-  FCFLAGS     = -O3
-  F90         = ifort
+#  FC          = ifort
+#  FCFLAGS     = -O3
+  F90         = mpif90
   F90FLAGS    = -O3 -Warn unused -fpp $(OMP_FLAGS)
-  LDFLAGS     = -L/opt/intel/composerxe/lib
+  LDFLAGS     =
   LIBS        = -lifport -lifcore
   UDEF_LIB_PATH_SPEC =
   UDEF_LIBS_SPEC     =
@@ -150,6 +150,16 @@ ifeq ($(ARCH),intel)
 #CXXFLAGS   += -D_REAL_IS_DOUBLE_
 #FCFLAGS    += 
 #F90FLAGS   += 
+
+#  CC          = icc
+#  CFLAGS      = -O3
+#  CXX         = icpc
+#  CXXFLAGS    = -O3 $(OMP_FLAGS)
+#  FC          = ifort
+#  FCFLAGS     = -O3
+#  F90         = ifort
+#  F90FLAGS    = -O3 -Warn unused -fpp $(OMP_FLAGS)
+#  LDFLAGS     = -L/opt/intel/composerxe/lib
 
 endif
 
@@ -171,10 +181,10 @@ UDEF_INC_PATH=`$(TP_DIR)/bin/tp-config --cflags`  \
 
               
 UDEF_LIB_PATH=-L$(MPI_DIR)/lib \
-              -L../FB \
-              -L../IP \
-              -L../F_CORE \
-              -L../PLOT3D \
+              -L../FB -lFB \
+              -L../IP -lIP \
+              -L../F_CORE -lFCORE \
+              -L../PLOT3D -lPLOT3D \
               `$(TP_DIR)/bin/tp-config --libs`  \
               `$(PM_DIR)/bin/pm-config --libs` \
               `$(POLY_DIR)/bin/polylib-config --libs` \
@@ -190,6 +200,6 @@ UDEF_LIB_PATH=-L$(MPI_DIR)/lib \
 #UDEF_LIBS_UTIL = -lmpi -lPLOT3D -lFB $(UDEF_LIBS_SPEC)
 
 
-UDEF_LIBS = -lmpi -lPLOT3D -lFB -lIP -lFCORE $(UDEF_LIBS_SPEC)
+UDEF_LIBS = -lmpi $(UDEF_LIBS_SPEC)
 
-UDEF_LIBS_UTIL = -lmpi -lFB $(UDEF_LIBS_SPEC)
+UDEF_LIBS_UTIL = -lmpi $(UDEF_LIBS_SPEC)

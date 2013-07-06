@@ -79,7 +79,7 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_layout_OBJECTS = layout-layout.$(OBJEXT) layout-main.$(OBJEXT)
 layout_OBJECTS = $(am_layout_OBJECTS)
-layout_LDADD = $(LDADD)
+layout_DEPENDENCIES =
 layout_LINK = $(CXXLD) $(layout_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
@@ -117,7 +117,6 @@ CFLAGS = @CFLAGS@
 CIO_CFLAGS = @CIO_CFLAGS@
 CIO_DIR = @CIO_DIR@
 CIO_LDFLAGS = @CIO_LDFLAGS@
-COMPILER_LIBS = @COMPILER_LIBS@
 CPM_CFLAGS = @CPM_CFLAGS@
 CPM_DIR = @CPM_DIR@
 CPM_LDFLAGS = @CPM_LDFLAGS@
@@ -142,10 +141,9 @@ FC = @FC@
 FCFLAGS = @FCFLAGS@
 FFLAGS = @FFLAGS@
 FFVC_CXX = @FFVC_CXX@
-FFVC_DEVICE = @FFVC_DEVICE@
-FFVC_FAPI = @FFVC_FAPI@
 FFVC_FC = @FFVC_FC@
 FFVC_FC_LD = @FFVC_FC_LD@
+FFVC_LDFLAGS = @FFVC_LDFLAGS@
 FFVC_LIBS = @FFVC_LIBS@
 FFVC_REVISION = @FFVC_REVISION@
 FREALOPT = @FREALOPT@
@@ -187,6 +185,7 @@ REALOPT = @REALOPT@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
+TGT_DEVICE = @TGT_DEVICE@
 TP_CFLAGS = @TP_CFLAGS@
 TP_DIR = @TP_DIR@
 TP_LDFLAGS = @TP_LDFLAGS@
@@ -240,17 +239,29 @@ layout_CXXFLAGS = \
   -I. \
   -I../FB \
   @CPM_CFLAGS@ \
-  @CIO_CFLAGS@ \
   @TP_CFLAGS@ \
   @PM_CFLAGS@ \
   @MPICH_CFLAGS@ \
-  @REALOPT@
+  @REALOPT@ \
+  @FREALOPT@
 
 layout_SOURCES = \
   LAYOUT_Define.h \
   layout.C \
   layout.h \
   main.C
+
+layout_LDADD = \
+  @CPM_LDFLAGS@ \
+  @TP_LDFLAGS@ \
+  @PM_LDFLAGS@ \
+  @MPICH_LDFLAGS@ \
+  @MPICH_LIBS@ \
+  @MPICH_FCLIBS@ \
+  @FFVC_LIBS@ \
+  @FFVC_FC_LD@ \
+  -L../FB -lFB \
+  -L../PLOT3D -lPLOT3D
 
 EXTRA_DIST = Makefile_hand depend.inc README
 all: all-am

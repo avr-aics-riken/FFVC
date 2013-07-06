@@ -16,7 +16,8 @@
 
 SUBDIRS = @MAKE_SUB_DIRS@
 
-bin_SCRIPTS = ffvc-config
+bin_SCRIPTS    = ffvc-config
+CLEANFILES     = $(bin_SCRIPTS)
 EXTRA_DIST     = LICENSE Makefile_hand chk-uname doc doxygen examples ffvc-config \
                  src/Makefile_hand src/make_setting src/F_VOF
 dist_data_DATA = AUTHORS COPYING ChangeLog README LICENSE

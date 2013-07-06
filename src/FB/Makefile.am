@@ -13,14 +13,17 @@
 #
 ###################################################################################
 
-lib_LIBRARIES = libFB.a
+noinst_lib_LIBRARIES = libFB.a
+
+noinst_libdir = ../lib
 
 libFB_a_CXXFLAGS = \
   -I. \
   @CPM_CFLAGS@ \
   @TP_CFLAGS@ \
   @MPICH_CFLAGS@ \
-  @REALOPT@ 
+  @REALOPT@ \
+  @FREALOPT@
 
 libFB_a_SOURCES = \
   Alloc.C \

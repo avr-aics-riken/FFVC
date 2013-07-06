@@ -20,11 +20,11 @@ combsph_CXXFLAGS = \
   -I../FB \
   -I../PLOT3D \
   @CPM_CFLAGS@ \
-  @CIO_CFLAGS@ \
   @TP_CFLAGS@ \
   @PM_CFLAGS@ \
   @MPICH_CFLAGS@ \
-  @REALOPT@
+  @REALOPT@ \
+  @FREALOPT@
 
 combsph_SOURCES = \
   COMB_Define.h \
@@ -38,6 +38,18 @@ combsph_SOURCES = \
   endianUtil.h \
   main.C \
   util_Path.h
+
+combsph_LDADD = \
+  @CPM_LDFLAGS@ \
+  @TP_LDFLAGS@ \
+  @PM_LDFLAGS@ \
+  @MPICH_LDFLAGS@ \
+  @MPICH_LIBS@ \
+  @MPICH_FCLIBS@ \
+  @FFVC_LIBS@ \
+  @FFVC_FC_LD@ \
+  -L../FB -lFB \
+  -L../PLOT3D -lPLOT3D
 
 
 EXTRA_DIST = Makefile_hand depend.inc README

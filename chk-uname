@@ -2,14 +2,11 @@
 
 ###################################################################
 #
-# CPMlib - Cartesian Partition Manager Library
-# 
-# Copyright (C) 2012-2013 Institute of Industrial Science, The University of Tokyo.
-# All right reserved.
+# keno@riken.jp
 #
 ##################################################################
 
-# cpm-uname : This script examines the kind of OS for CPMlib
+# chk-uname : This script examines the kind of OS
 
 # for Linux
 if test `uname` = "Linux" ; then

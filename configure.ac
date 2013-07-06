@@ -25,49 +25,40 @@ AC_CONFIG_HEADERS([config.h])
 #
 # revision No.
 #
-FFVC_REVISION="20130705_1700"
+FFVC_REVISION="20130706_1500"
 AC_SUBST(FFVC_REVISION)
 
 
 #
 # platform
 #
-FFVC_DEVICE="$($SHELL ./chk-uname)"
-AC_SUBST(FFVC_DEVICE)
+TGT_DEVICE="$($SHELL ./chk-uname)"
+AC_SUBST(TGT_DEVICE)
 
 
 #
-# FORTRAN API
+# FORTRAN
 #
-enable_fapi="yes"
 
-# FFVC_FAPI is true, if measure timing
-AC_SUBST(FFVC_FAPI)
-AM_CONDITIONAL([FFVC_FAPI], [test x"${enable_fapi}" = x"yes"])
 FC=$F90
 FCFLAGS=$F90FLAGS
 
 
 
 #
-# compiler libs   // Fortranのコンパイルのためのオプション
+# compiler
 #
 AC_ARG_WITH(comp, [AC_HELP_STRING([--with-comp=(INTEL|FJ)],[Specify Compiler type])], , with_comp=none)
-AC_SUBST(COMPILER_LIBS)
-case "$with_comp" in
-  "INTEL") COMPILER_LIBS="-lifport -lifcore" ;;
-  "FJ")    COMPILER_LIBS="--linkfortran" ;;
-esac
 
 
 
 #
-# REAL environment for Fortran90
+# REAL type
 #
-AC_ARG_WITH(f90real, [AC_HELP_STRING([--with-f90real=(4|8)],[Specify Fortran90 REAL size [4byte]])], , with_f90real=4)
+AC_ARG_WITH(precision, [AC_HELP_STRING([--with-precision=(single|double)],[Specify REAL type [single]])], , with_precision=single)
 AC_SUBST(REALOPT)
 AC_SUBST(FREALOPT)
-if test "$with_f90real" = "8" ; then
+if test "$with_precision" = "double" ; then
   REALOPT=-D_REAL_IS_DOUBLE_
   if test "$with_comp" = "INTEL" ; then
     FREALOPT="-r8"
@@ -76,47 +67,75 @@ if test "$with_f90real" = "8" ; then
   fi
 else
   REALOPT=
+  FREALOPT=
 fi
 
 
 
-# MPI setting
+#
+# MPI setting. wrappers like mpicxx, mpicc, mpiCC, mpic++, mpiFCCpx are taking into consideration, if not add in case.
+#
+
 enable_mpi="none"
 
 
+FFVC_CXX="$CXX"
+AC_SUBST(FFVC_CXX)
+
+case "$FFVC_CXX" in
+  mpicxx)   enable_mpi="wrappermpi" ;;
+  mpicc)    enable_mpi="wrappermpi" ;;
+  mpiCC)    enable_mpi="wrappermpi" ;;
+  mpic++)   enable_mpi="wrappermpi" ;;
+  mpiFCCpx) enable_mpi="wrappermpi" ;;
+esac
+
+
 #
-# MPICH environment  // mpichが指定されていれば変数をセット
+# MPICH environment
 #
 AC_SUBST(MPICH_DIR)
 AC_SUBST(MPICH_CFLAGS)
 AC_SUBST(MPICH_LDFLAGS)
 AC_SUBST(MPICH_LIBS)
 AC_SUBST(MPICH_FCLIBS)
-AC_ARG_WITH(mpich, [AC_HELP_STRING([--with-mpich=dir],[Specify MPICH install directory])], , with_mpich=none)
-if test "$with_mpich" != "none" ; then
-  MPICH_DIR=$with_mpich;
-  MPICH_CFLAGS=-I$MPICH_DIR/include
-  MPICH_LDFLAGS=-L$MPICH_DIR/lib
-  enable_mpi="mpich"
-fi
+
+
 
 #
-# OpenMPI environment  // mpichが指定されておらず，かつ，ompが指定されていれば変数をセット
+# if wrapper compiler is specified, skip this part
 #
-if test "$with_mpich" = "none" ; then
-  AC_ARG_WITH(ompi, [AC_HELP_STRING([--with-ompi=dir],[Specify OpenMPI install directory])], , with_ompi=none)
-  if test "$with_ompi" != "none" ; then
-    MPICH_DIR=$with_ompi;
+
+if test "$enable_mpi" = "none" ; then
+
+# MPICH
+  AC_ARG_WITH(mpich, [AC_HELP_STRING([--with-mpich=dir],[Specify MPICH install directory])], , with_mpich=none)
+
+  if test "$with_mpich" != "none" ; then
+    MPICH_DIR=$with_mpich;
     MPICH_CFLAGS=-I$MPICH_DIR/include
     MPICH_LDFLAGS=-L$MPICH_DIR/lib
-    enable_mpi="ompi"
+    enable_mpi="mpich"
   fi
+
+# OpenMPI // mpichが指定されておらず，かつ，ompが指定されていれば変数をセット
+  if test "$with_mpich" = "none" ; then
+    AC_ARG_WITH(ompi, [AC_HELP_STRING([--with-ompi=dir],[Specify OpenMPI install directory])], , with_ompi=none)
+
+    if test "$with_ompi" != "none" ; then
+      MPICH_DIR=$with_ompi;
+      MPICH_CFLAGS=-I$MPICH_DIR/include
+      MPICH_LDFLAGS=-L$MPICH_DIR/lib
+      enable_mpi="ompi"
+    fi
+  fi
+
 fi
 
 
 
 #
-# MPI Library  // Fortran用のライブラリ
+# MPI Library  // for Fortran
 #
 
 if test "$with_comp" = "FJ" ; then
@@ -127,22 +146,45 @@ if test "$with_comp" = "FJ" ; then
 elif test "$enable_mpi" = "mpich" ; then
   MPICH_LIBS="-lmpich"
   MPICH_FCLIBS="$MPICH_LIBS"" -lfmpich"
-  case "$CPM_DEVICE" in
+  case "$TGT_DEVICE" in
     "Lion"|"Snow_Leopard"|"Leopard"|"Mountain_Lion") ;;
   esac
 elif test "$enable_mpi" = "ompi" ; then
   MPICH_LIBS="-lmpi"
   MPICH_FCLIBS="$MPICH_LIBS"" -lmpi_f77 -lmpi_f90"
-  case "$CPM_DEVICE" in
+  case "$TGT_DEVICE" in
     "Lion"|"Snow_Leopard"|"Leopard"|"Mountain_Lion") ;;
   esac
 fi
 
 
+
+# warning. if a wrapper compiler is used, "enable_mpi" is empty, but parallel.
+#
 if test "$enable_mpi" = "none" ; then
   echo "  Warning: Neither MPICH nor OpenMPI library is not specified."
   echo "           If compilation error occurs about MPI, specify --with-mpich or --with-ompi option."
 fi
+
+
+
+FFVC_FC="$FC"
+AC_SUBST(FFVC_FC)
+
+FFVC_LIBS=""
+AC_SUBST(FFVC_LIBS)
+
+FFVC_FC_LD=""
+AC_SUBST(FFVC_FC_LD)
+
+if test "$with_comp" = "FJ"; then
+  FFVC_FC_LD="$CXX"" --linkfortran"
+else
+  FFVC_LIBS="$FFVC_LIBS"" -lifport -lifcore"
+fi
+
+FFVC_LDFLAGS=""
+AC_SUBST(FFVC_LDFLAGS)
 
 
 #
@@ -275,54 +317,12 @@ fi
 
 
 
-#
-# Special flags
-#
-
-FFVC_CXX="$CXX"
-AC_SUBST(FFVC_CXX)
-
-# if a wrapper compiler is used, "enable_mpi" is empty, but parallel.
-# wrappers like mpicxx, mpicc, mpiCC, mpic++, mpiFCCpx are taking into consideration, if not add in case.
-
-case "$FFVC_CXX" in
-  mpicxx)   enable_mpi="mpi" ;;
-  mpicc)    enable_mpi="mpi" ;;
-  mpiCC)    enable_mpi="mpi" ;;
-  mpic++)   enable_mpi="mpi" ;;
-  mpiFCCpx) enable_mpi="mpi" ;;
-esac
-
-
-if test "$enable_mpi" = "none" ; then
-  FFVC_LIBS=""
-else
-  FFVC_LIBS=""
-fi
-AC_SUBST(FFVC_LIBS)
-
-
-
-FFVC_FC="$FC"
-AC_SUBST(FFVC_FC)
-
-if test x"${enable_fapi}" = x"yes" ; then
-  FFVC_FC_LD="$FC"
-  if test "$with_comp" = "FJ"; then
-    FFVC_FC_LD="$CXX"" --linkfortran"
-  else
-    FFVC_LIBS="$FFVC_LIBS"" -lstdc++"
-  fi
-  AC_SUBST(FFVC_FC_LD)
-fi
-
-
 
 #
 # MAKE_SUB_DIRS
 #
 AC_SUBST(MAKE_SUB_DIRS)
-MAKE_SUB_DIRS="src doc"
+MAKE_SUB_DIRS="src/IP src/FB src/F_CORE src/PLOT3D src/FFV src/Util_Combsph src/Util_Layout doc"
 
 
 
@@ -334,7 +334,6 @@ AC_PROG_CC
 AC_PROG_F77
 AC_PROG_FC
 AC_PROG_RANLIB
-
 
 
 #
@@ -368,14 +367,18 @@ AC_CHECK_FUNCS([floor memset mkdir pow realpath sqrt strcasecmp strchr strdup st
 
 
 
-AC_CONFIG_FILES([doc/Makefile \
+AC_CONFIG_FILES([Makefile \
+                 doc/Makefile \
                  src/F_CORE/Makefile \
                  src/FB/Makefile \
-                 src/FFV/Makefile \
                  src/IP/Makefile \
                  src/PLOT3D/Makefile \
+                 src/FFV/Makefile \
                  src/Util_Combsph/Makefile \
                  src/Util_Layout/Makefile \
+                 ffvc-config \
                 ])
 
 AC_OUTPUT
+
+chmod +x ./ffvc-config

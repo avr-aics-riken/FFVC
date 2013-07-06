@@ -37,6 +37,13 @@ $ make
 $ make install
 
 
+It is strongly recommended to use wrapper compiler for convenience. For instance, if you
+                           ^^^^^^^^^^^^^^^^^^^^^^^
+want to compile with OpenMPI, which is compiled by Intel compiler, compile OpenMPI library 
+by Intel compiler before install related libraries (See section 3).
+
+
+
 Configure options:
 
  --host=hostname
@@ -58,9 +65,9 @@ Configure options:
  --with-cut=CUTLIB_DIR
     Specify the directory path that Cut information library is installed.
 
- --with-f90real=(4|8)
-    Specify the REAL macro by selecting 4(float) or 8(double). If this option is 
-    omitted, float type will be used.
+ --with-precision=(single|double)
+    Specify the REAL macro by selecting single(4bytes) or double(8bytes). If this 
+    option is omitted, single precision will be applied.
 
  --with-mpich=MPICH_DIR
     If you will use a MPICH library, specify the directory that MPICH library is
@@ -94,12 +101,6 @@ Configure options:
  CXXFLAGS=CXX_OPTIONS
     Specify compiler options.
 
- FC=FORTRAN90_COMPILER
-    Specify a fortran compiler.
-
- FCFLAGS=FORTRAN_OPTIONS
-    Specify compiler options.
-
  F90=FORTRAN90_COMPILER
     Specify a fortran90 compiler.
 
@@ -112,6 +113,46 @@ Configure options:
 
 
 Here is examples.
+
+
+## for OpenMPI compiled by INTEL compiler, wrapper compiler, openmp.
+
+  $ ./configure \
+      --with-cpm=/usr/local/CPMlib \
+      --with-cio=/usr/local/CIOlib \
+      --with-cut=/usr/local/Cutlib \
+      --with-pm=/usr/local/PMlib \
+      --with-polylib=/usr/local/Polylib \
+      --with-parser=/usr/local/TextParser \
+      --with-comp=INTEL \
+      CC=mpicc \
+      CFLAGS=-O3 \
+      CXX=mpicxx \
+      CXXFLAGS="-O3 -openmp -par-report=3 -vec-report=2" \
+      F90=mpif90 \
+      F90FLAGS="-O3 -Warn unused -fpp -openmp -par-report=3 -vec-report=2"
+
+
+## for OpenMPI compiled by INTEL compiler, double precision, openmp.
+
+  $ ./configure \
+      --with-cpm=/usr/local/CPMlib \
+      --with-cio=/usr/local/CIOlib \
+      --with-cut=/usr/local/Cutlib \
+      --with-pm=/usr/local/PMlib \
+      --with-polylib=/usr/local/Polylib \
+      --with-parser=/usr/local/TextParser \
+      --with-comp=INTEL \
+      --with-precision=double \
+      CC=mpicc \
+      CFLAGS=-O3 \
+      CXX=mpicxx \
+      CXXFLAGS="-O3 -openmp -par-report=3 -vec-report=2" \
+      F90=mpif90 \
+      F90FLAGS="-O3 -Warn unused -fpp -openmp -par-report=3 -vec-report=2" \
+      LIBS="-lifport -lifcore" \
+      LDFLAGS=-L/opt/intel/composerxe/lib
+
 
 ## for GNU compiler and MPICH.
 
@@ -127,36 +168,10 @@ Here is examples.
       CFLAGS=-O3 \
       CXX=mpicxx \
       CXXFLAGS="-O3 -fopenmp" \
-      FC=mpif90 \
-      FCFLAGS="-O3 -ffree-form" \
       F90=mpif90 \
       F90FLAGS="-O3 -cpp -fopenmp -ffree-form" \
       LIBS=-lgfortran \
       LDFLAGS=
-
-
-## for OpenMPI compiled by INTEL compile, wrapper compiler, double precision, openmp.
-
-  $ ./configure \
-      --with-cpm=/usr/local/CPMlib \
-      --with-cio=/usr/local/CIOlib \
-      --with-cut=/usr/local/Cutlib \
-      --with-pm=/usr/local/PMlib \
-      --with-polylib=/usr/local/Polylib \
-      --with-parser=/usr/local/TextParser \
-      --with-comp=INTEL \
-      --with-f90real=8 \
-      CC=mpicc \
-      CFLAGS=-O3 \
-      CXX=mpicxx \
-      CXXFLAGS="-O3 -openmp -par-report=3 -vec-report=2" \
-      FC=mpif90 \
-      FCFLAGS=-O3 \
-      F90=mpif90 \
-      F90FLAGS="-O3 -Warn unused -fpp -openmp -par-report=3 -vec-report=2" \
-      LIBS="-lifport -lifcore" \
-      LDFLAGS=-L/opt/intel/composerxe/lib
-
 
 
 ## for K-computer.
@@ -175,8 +190,6 @@ Here is examples.
       CFLAGS="-Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp -Nsrc" \
       CXX=mpiFCCpx \
       CXXFLAGS="-Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp,optmsg=2 -V -Nsrc"
-      FC="mpifrtpx" \
-      FCFLAGS="-Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt" \
       F90=mpifrtpx \
       F90FLAGS="-Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt" \
       LDFLAGS="--linkfortran" \
@@ -191,6 +204,11 @@ Here is examples.
 If a provided configure does not work, use Makefile_hand to build this library. At first,
 edit a make_setting file to tell your machine environment.
 
-	
+
+
+3. OpenMPI compile with Intel compiler
+
+$ ./configure --prefix=/opt/openmpi CC=icc CFLAGS=-O3 CXX=icpc CXXFLAGS=-O3 \
+       F77=ifort FFLAGS=-O3 FC=ifort FCFLAGS=-O3
 
 

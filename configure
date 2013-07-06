@@ -661,10 +661,6 @@ LDFLAGS
 CXXFLAGS
 CXX
 MAKE_SUB_DIRS
-FFVC_FC_LD
-FFVC_FC
-FFVC_LIBS
-FFVC_CXX
 CUT_LDFLAGS
 CUT_CFLAGS
 CUT_DIR
@@ -683,18 +679,19 @@ CIO_DIR
 CPM_LDFLAGS
 CPM_CFLAGS
 CPM_DIR
+FFVC_LDFLAGS
+FFVC_FC_LD
+FFVC_LIBS
+FFVC_FC
 MPICH_FCLIBS
 MPICH_LIBS
 MPICH_LDFLAGS
 MPICH_CFLAGS
 MPICH_DIR
+FFVC_CXX
 FREALOPT
 REALOPT
-COMPILER_LIBS
-FFVC_FAPI_FALSE
-FFVC_FAPI_TRUE
-FFVC_FAPI
-FFVC_DEVICE
+TGT_DEVICE
 FFVC_REVISION
 am__untar
 am__tar
@@ -761,7 +758,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 with_comp
-with_f90real
+with_precision
 with_mpich
 with_ompi
 with_cpm
@@ -1411,7 +1408,8 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-comp=(INTEL|FJ)  Specify Compiler type
-  --with-f90real=(4|8)    Specify Fortran90 REAL size [4byte]
+  --with-precision=(single|double)
+                          Specify REAL type [single]
   --with-mpich=dir        Specify MPICH install directory
   --with-ompi=dir         Specify OpenMPI install directory
   --with-cpm=dir          Specify CPMlib installed directory
@@ -2993,31 +2991,20 @@ ac_config_headers="$ac_config_headers config.h"
 #
 # revision No.
 #
-FFVC_REVISION="20130705_1700"
+FFVC_REVISION="20130706_1500"
 
 
 
 #
 # platform
 #
-FFVC_DEVICE="$($SHELL ./chk-uname)"
+TGT_DEVICE="$($SHELL ./chk-uname)"
 
 
 
 #
-# FORTRAN API
+# FORTRAN
 #
-enable_fapi="yes"
-
-# FFVC_FAPI is true, if measure timing
-
- if test x"${enable_fapi}" = x"yes"; then
-  FFVC_FAPI_TRUE=
-  FFVC_FAPI_FALSE='#'
-else
-  FFVC_FAPI_TRUE='#'
-  FFVC_FAPI_FALSE=
-fi
 
 FC=$F90
 FCFLAGS=$F90FLAGS
@@ -3025,7 +3012,7 @@ FCFLAGS=$F90FLAGS
 
 
 #
-# compiler libs   // Fortranのコンパイルのためのオプション
+# compiler
 #
 
 # Check whether --with-comp was given.
@@ -3036,27 +3023,22 @@ else
 fi
 
 
-case "$with_comp" in
-  "INTEL") COMPILER_LIBS="-lifport -lifcore" ;;
-  "FJ")    COMPILER_LIBS="--linkfortran" ;;
-esac
-
 
 
 #
-# REAL environment for Fortran90
+# REAL type
 #
 
-# Check whether --with-f90real was given.
-if test "${with_f90real+set}" = set; then :
-  withval=$with_f90real;
+# Check whether --with-precision was given.
+if test "${with_precision+set}" = set; then :
+  withval=$with_precision;
 else
-  with_f90real=4
+  with_precision=single
 fi
 
 
 
-if test "$with_f90real" = "8" ; then
+if test "$with_precision" = "double" ; then
   REALOPT=-D_REAL_IS_DOUBLE_
   if test "$with_comp" = "INTEL" ; then
     FREALOPT="-r8"
@@ -3065,22 +3047,48 @@ if test "$with_f90real" = "8" ; then
   fi
 else
   REALOPT=
+  FREALOPT=
 fi
 
 
 
-# MPI setting
+#
+# MPI setting. wrappers like mpicxx, mpicc, mpiCC, mpic++, mpiFCCpx are taking into consideration, if not add in case.
+#
+
 enable_mpi="none"
 
 
+FFVC_CXX="$CXX"
+
+
+case "$FFVC_CXX" in
+  mpicxx)   enable_mpi="wrappermpi" ;;
+  mpicc)    enable_mpi="wrappermpi" ;;
+  mpiCC)    enable_mpi="wrappermpi" ;;
+  mpic++)   enable_mpi="wrappermpi" ;;
+  mpiFCCpx) enable_mpi="wrappermpi" ;;
+esac
+
+
 #
-# MPICH environment  // mpichが指定されていれば変数をセット
+# MPICH environment
 #
 
 
 
 
 
+
+
+
+#
+# if wrapper compiler is specified, skip this part
+#
+
+if test "$enable_mpi" = "none" ; then
+
+# MPICH
 
 # Check whether --with-mpich was given.
 if test "${with_mpich+set}" = set; then :
@@ -3089,17 +3097,16 @@ else
   with_mpich=none
 fi
 
-if test "$with_mpich" != "none" ; then
-  MPICH_DIR=$with_mpich;
-  MPICH_CFLAGS=-I$MPICH_DIR/include
-  MPICH_LDFLAGS=-L$MPICH_DIR/lib
-  enable_mpi="mpich"
-fi
 
-#
-# OpenMPI environment  // mpichが指定されておらず，かつ，ompが指定されていれば変数をセット
-#
-if test "$with_mpich" = "none" ; then
+  if test "$with_mpich" != "none" ; then
+    MPICH_DIR=$with_mpich;
+    MPICH_CFLAGS=-I$MPICH_DIR/include
+    MPICH_LDFLAGS=-L$MPICH_DIR/lib
+    enable_mpi="mpich"
+  fi
+
+# OpenMPI // mpichが指定されておらず，かつ，ompが指定されていれば変数をセット
+  if test "$with_mpich" = "none" ; then
 
 # Check whether --with-ompi was given.
 if test "${with_ompi+set}" = set; then :
@@ -3108,18 +3115,21 @@ else
   with_ompi=none
 fi
 
-  if test "$with_ompi" != "none" ; then
-    MPICH_DIR=$with_ompi;
-    MPICH_CFLAGS=-I$MPICH_DIR/include
-    MPICH_LDFLAGS=-L$MPICH_DIR/lib
-    enable_mpi="ompi"
+
+    if test "$with_ompi" != "none" ; then
+      MPICH_DIR=$with_ompi;
+      MPICH_CFLAGS=-I$MPICH_DIR/include
+      MPICH_LDFLAGS=-L$MPICH_DIR/lib
+      enable_mpi="ompi"
+    fi
   fi
+
 fi
 
 
 
 #
-# MPI Library  // Fortran用のライブラリ
+# MPI Library  // for Fortran
 #
 
 if test "$with_comp" = "FJ" ; then
@@ -3130,22 +3140,45 @@ if test "$with_comp" = "FJ" ; then
 elif test "$enable_mpi" = "mpich" ; then
   MPICH_LIBS="-lmpich"
   MPICH_FCLIBS="$MPICH_LIBS"" -lfmpich"
-  case "$CPM_DEVICE" in
+  case "$TGT_DEVICE" in
     "Lion"|"Snow_Leopard"|"Leopard"|"Mountain_Lion") ;;
   esac
 elif test "$enable_mpi" = "ompi" ; then
   MPICH_LIBS="-lmpi"
   MPICH_FCLIBS="$MPICH_LIBS"" -lmpi_f77 -lmpi_f90"
-  case "$CPM_DEVICE" in
+  case "$TGT_DEVICE" in
     "Lion"|"Snow_Leopard"|"Leopard"|"Mountain_Lion") ;;
   esac
 fi
 
 
+
+# warning. if a wrapper compiler is used, "enable_mpi" is empty, but parallel.
+#
 if test "$enable_mpi" = "none" ; then
   echo "  Warning: Neither MPICH nor OpenMPI library is not specified."
   echo "           If compilation error occurs about MPI, specify --with-mpich or --with-ompi option."
 fi
+
+
+
+FFVC_FC="$FC"
+
+
+FFVC_LIBS=""
+
+
+FFVC_FC_LD=""
+
+
+if test "$with_comp" = "FJ"; then
+  FFVC_FC_LD="$CXX"" --linkfortran"
+else
+  FFVC_LIBS="$FFVC_LIBS"" -lifport -lifcore"
+fi
+
+FFVC_LDFLAGS=""
+
 
 
 #
@@ -3320,54 +3353,12 @@ fi
 
 
 
-#
-# Special flags
-#
-
-FFVC_CXX="$CXX"
-
-
-# if a wrapper compiler is used, "enable_mpi" is empty, but parallel.
-# wrappers like mpicxx, mpicc, mpiCC, mpic++, mpiFCCpx are taking into consideration, if not add in case.
-
-case "$FFVC_CXX" in
-  mpicxx)   enable_mpi="mpi" ;;
-  mpicc)    enable_mpi="mpi" ;;
-  mpiCC)    enable_mpi="mpi" ;;
-  mpic++)   enable_mpi="mpi" ;;
-  mpiFCCpx) enable_mpi="mpi" ;;
-esac
-
-
-if test "$enable_mpi" = "none" ; then
-  FFVC_LIBS=""
-else
-  FFVC_LIBS=""
-fi
-
-
-
-
-FFVC_FC="$FC"
-
-
-if test x"${enable_fapi}" = x"yes" ; then
-  FFVC_FC_LD="$FC"
-  if test "$with_comp" = "FJ"; then
-    FFVC_FC_LD="$CXX"" --linkfortran"
-  else
-    FFVC_LIBS="$FFVC_LIBS"" -lstdc++"
-  fi
-
-fi
-
-
 
 #
 # MAKE_SUB_DIRS
 #
 
-MAKE_SUB_DIRS="src doc"
+MAKE_SUB_DIRS="src/IP src/FB src/F_CORE src/PLOT3D src/FFV src/Util_Combsph src/Util_Layout doc"
 
 
 
@@ -5255,7 +5246,6 @@ fi
 
 
 
-
 #
 # Checks for libraries.
 #
@@ -5931,7 +5921,7 @@ done
 
 
 
-ac_config_files="$ac_config_files doc/Makefile src/F_CORE/Makefile src/FB/Makefile src/FFV/Makefile src/IP/Makefile src/PLOT3D/Makefile src/Util_Combsph/Makefile src/Util_Layout/Makefile"
+ac_config_files="$ac_config_files Makefile doc/Makefile src/F_CORE/Makefile src/FB/Makefile src/IP/Makefile src/PLOT3D/Makefile src/FFV/Makefile src/Util_Combsph/Makefile src/Util_Layout/Makefile ffvc-config"
 
 
 cat >confcache <<\_ACEOF
@@ -6059,10 +6049,6 @@ else
   am__EXEEXT_FALSE=
 fi
 
-if test -z "${FFVC_FAPI_TRUE}" && test -z "${FFVC_FAPI_FALSE}"; then
-  as_fn_error $? "conditional \"FFVC_FAPI\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 if test -z "${AMDEP_TRUE}" && test -z "${AMDEP_FALSE}"; then
   as_fn_error $? "conditional \"AMDEP\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -6669,14 +6655,16 @@ do
   case $ac_config_target in
     "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
+    "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
     "src/F_CORE/Makefile") CONFIG_FILES="$CONFIG_FILES src/F_CORE/Makefile" ;;
     "src/FB/Makefile") CONFIG_FILES="$CONFIG_FILES src/FB/Makefile" ;;
-    "src/FFV/Makefile") CONFIG_FILES="$CONFIG_FILES src/FFV/Makefile" ;;
     "src/IP/Makefile") CONFIG_FILES="$CONFIG_FILES src/IP/Makefile" ;;
     "src/PLOT3D/Makefile") CONFIG_FILES="$CONFIG_FILES src/PLOT3D/Makefile" ;;
+    "src/FFV/Makefile") CONFIG_FILES="$CONFIG_FILES src/FFV/Makefile" ;;
     "src/Util_Combsph/Makefile") CONFIG_FILES="$CONFIG_FILES src/Util_Combsph/Makefile" ;;
     "src/Util_Layout/Makefile") CONFIG_FILES="$CONFIG_FILES src/Util_Layout/Makefile" ;;
+    "ffvc-config") CONFIG_FILES="$CONFIG_FILES ffvc-config" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
@@ -7403,3 +7391,5 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
+
+chmod +x ./ffvc-config

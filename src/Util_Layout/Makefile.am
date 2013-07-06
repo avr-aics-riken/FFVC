@@ -15,21 +15,35 @@
 
 bin_PROGRAMS = layout
 
+
+
 layout_CXXFLAGS = \
   -I. \
   -I../FB \
   @CPM_CFLAGS@ \
-  @CIO_CFLAGS@ \
   @TP_CFLAGS@ \
   @PM_CFLAGS@ \
   @MPICH_CFLAGS@ \
-  @REALOPT@
+  @REALOPT@ \
+  @FREALOPT@
 
 layout_SOURCES = \
   LAYOUT_Define.h \
   layout.C \
   layout.h \
   main.C
+
+layout_LDADD = \
+  @CPM_LDFLAGS@ \
+  @TP_LDFLAGS@ \
+  @PM_LDFLAGS@ \
+  @MPICH_LDFLAGS@ \
+  @MPICH_LIBS@ \
+  @MPICH_FCLIBS@ \
+  @FFVC_LIBS@ \
+  @FFVC_FC_LD@ \
+  -L../FB -lFB \
+  -L../PLOT3D -lPLOT3D
 
 
 EXTRA_DIST = Makefile_hand depend.inc README

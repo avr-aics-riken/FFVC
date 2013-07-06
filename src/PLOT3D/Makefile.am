@@ -13,33 +13,28 @@
 #
 ###################################################################################
 
-lib_LIBRARIES = libPLT3D.a libPLT3DF.a
+noinst_lib_LIBRARIES = libPLOT3D.a
 
+noinst_libdir = ../lib
 
-libPLT3D_a_CXXFLAGS = \
+libPLOT3D_a_CXXFLAGS = \
   -I. \
   -I../FB \
+  -I../F_CORE \
+  @CPM_CFLAGS@ \
   @MPICH_CFLAGS@ \
-  @REALOPT@ 
+  @REALOPT@ \
+  @FREALOPT@ 
 
-libPLT3D_a_SOURCES = \
+libPLOT3D_a_SOURCES = \
   PLOT3D.C \
   PLOT3D.h \
   PLOT3D_read.C \
   PLOT3D_read.h \
   PLOT3D_write.C \
   PLOT3D_write.h \
-  ffv_PLOT3D.C
-
-
-
-libPLT3DF_a_FCFLAGS = \
-  -I. \
-  -I../FB \
-  @MPICH_CFLAGS@ \
-  @FREALOPT@ 
-
-libPLT3DF_a_SOURCES = \
+  ffv_PLOT3D.C \
+  ffv_PLOT3D.h \
   PLT3D.f90 \
   PLT3D_read.f90 \
   PLT3D_write.f90

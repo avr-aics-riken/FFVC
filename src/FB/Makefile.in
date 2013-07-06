@@ -101,8 +101,8 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-am__installdirs = "$(DESTDIR)$(libdir)"
-LIBRARIES = $(lib_LIBRARIES)
+am__installdirs = "$(DESTDIR)$(noinst_libdir)"
+LIBRARIES = $(noinst_lib_LIBRARIES)
 AR = ar
 ARFLAGS = cru
 libFB_a_AR = $(AR) $(ARFLAGS)
@@ -159,7 +159,6 @@ CFLAGS = @CFLAGS@
 CIO_CFLAGS = @CIO_CFLAGS@
 CIO_DIR = @CIO_DIR@
 CIO_LDFLAGS = @CIO_LDFLAGS@
-COMPILER_LIBS = @COMPILER_LIBS@
 CPM_CFLAGS = @CPM_CFLAGS@
 CPM_DIR = @CPM_DIR@
 CPM_LDFLAGS = @CPM_LDFLAGS@
@@ -184,10 +183,9 @@ FC = @FC@
 FCFLAGS = @FCFLAGS@
 FFLAGS = @FFLAGS@
 FFVC_CXX = @FFVC_CXX@
-FFVC_DEVICE = @FFVC_DEVICE@
-FFVC_FAPI = @FFVC_FAPI@
 FFVC_FC = @FFVC_FC@
 FFVC_FC_LD = @FFVC_FC_LD@
+FFVC_LDFLAGS = @FFVC_LDFLAGS@
 FFVC_LIBS = @FFVC_LIBS@
 FFVC_REVISION = @FFVC_REVISION@
 FREALOPT = @FREALOPT@
@@ -229,6 +227,7 @@ REALOPT = @REALOPT@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
+TGT_DEVICE = @TGT_DEVICE@
 TP_CFLAGS = @TP_CFLAGS@
 TP_DIR = @TP_DIR@
 TP_LDFLAGS = @TP_LDFLAGS@
@@ -278,13 +277,15 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-lib_LIBRARIES = libFB.a
+noinst_lib_LIBRARIES = libFB.a
+noinst_libdir = ../lib
 libFB_a_CXXFLAGS = \
   -I. \
   @CPM_CFLAGS@ \
   @TP_CFLAGS@ \
   @MPICH_CFLAGS@ \
-  @REALOPT@ 
+  @REALOPT@ \
+  @FREALOPT@
 
 libFB_a_SOURCES = \
   Alloc.C \
@@ -381,37 +382,37 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
-install-libLIBRARIES: $(lib_LIBRARIES)
+install-noinst_libLIBRARIES: $(noinst_lib_LIBRARIES)
 	@$(NORMAL_INSTALL)
-	@list='$(lib_LIBRARIES)'; test -n "$(libdir)" || list=; \
+	@list='$(noinst_lib_LIBRARIES)'; test -n "$(noinst_libdir)" || list=; \
 	list2=; for p in $$list; do \
 	  if test -f $$p; then \
 	    list2="$$list2 $$p"; \
 	  else :; fi; \
 	done; \
 	test -z "$$list2" || { \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(libdir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(libdir)" || exit 1; \
-	  echo " $(INSTALL_DATA) $$list2 '$(DESTDIR)$(libdir)'"; \
-	  $(INSTALL_DATA) $$list2 "$(DESTDIR)$(libdir)" || exit $$?; }
+	  echo " $(MKDIR_P) '$(DESTDIR)$(noinst_libdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(noinst_libdir)" || exit 1; \
+	  echo " $(INSTALL_DATA) $$list2 '$(DESTDIR)$(noinst_libdir)'"; \
+	  $(INSTALL_DATA) $$list2 "$(DESTDIR)$(noinst_libdir)" || exit $$?; }
 	@$(POST_INSTALL)
-	@list='$(lib_LIBRARIES)'; test -n "$(libdir)" || list=; \
+	@list='$(noinst_lib_LIBRARIES)'; test -n "$(noinst_libdir)" || list=; \
 	for p in $$list; do \
 	  if test -f $$p; then \
 	    $(am__strip_dir) \
-	    echo " ( cd '$(DESTDIR)$(libdir)' && $(RANLIB) $$f )"; \
-	    ( cd "$(DESTDIR)$(libdir)" && $(RANLIB) $$f ) || exit $$?; \
+	    echo " ( cd '$(DESTDIR)$(noinst_libdir)' && $(RANLIB) $$f )"; \
+	    ( cd "$(DESTDIR)$(noinst_libdir)" && $(RANLIB) $$f ) || exit $$?; \
 	  else :; fi; \
 	done
 
-uninstall-libLIBRARIES:
+uninstall-noinst_libLIBRARIES:
 	@$(NORMAL_UNINSTALL)
-	@list='$(lib_LIBRARIES)'; test -n "$(libdir)" || list=; \
+	@list='$(noinst_lib_LIBRARIES)'; test -n "$(noinst_libdir)" || list=; \
 	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	dir='$(DESTDIR)$(libdir)'; $(am__uninstall_files_from_dir)
+	dir='$(DESTDIR)$(noinst_libdir)'; $(am__uninstall_files_from_dir)
 
-clean-libLIBRARIES:
-	-test -z "$(lib_LIBRARIES)" || rm -f $(lib_LIBRARIES)
+clean-noinst_libLIBRARIES:
+	-test -z "$(noinst_lib_LIBRARIES)" || rm -f $(noinst_lib_LIBRARIES)
 libFB.a: $(libFB_a_OBJECTS) $(libFB_a_DEPENDENCIES) $(EXTRA_libFB_a_DEPENDENCIES) 
 	-rm -f libFB.a
 	$(libFB_a_AR) libFB.a $(libFB_a_OBJECTS) $(libFB_a_LIBADD)
@@ -859,7 +860,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(LIBRARIES)
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)"; do \
+	for dir in "$(DESTDIR)$(noinst_libdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -894,7 +895,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libLIBRARIES mostlyclean-am
+clean-am: clean-generic clean-noinst_libLIBRARIES mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -914,13 +915,13 @@ info: info-am
 
 info-am:
 
-install-data-am:
+install-data-am: install-noinst_libLIBRARIES
 
 install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-libLIBRARIES
+install-exec-am:
 
 install-html: install-html-am
 
@@ -959,22 +960,23 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-libLIBRARIES
+uninstall-am: uninstall-noinst_libLIBRARIES
 
 .MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
-	clean-libLIBRARIES cscopelist ctags distclean \
+	clean-noinst_libLIBRARIES cscopelist ctags distclean \
 	distclean-compile distclean-generic distclean-tags distdir dvi \
 	dvi-am html html-am info info-am install install-am \
 	install-data install-data-am install-dvi install-dvi-am \
 	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-libLIBRARIES install-man \
-	install-pdf install-pdf-am install-ps install-ps-am \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-libLIBRARIES
+	install-info install-info-am install-man \
+	install-noinst_libLIBRARIES install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic pdf pdf-am ps ps-am tags uninstall \
+	uninstall-am uninstall-noinst_libLIBRARIES
 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

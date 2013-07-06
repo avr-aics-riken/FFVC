@@ -82,7 +82,7 @@ am_combsph_OBJECTS = combsph-FileIO_read_sph.$(OBJEXT) \
 	combsph-comb_plot3d.$(OBJEXT) combsph-comb_sph.$(OBJEXT) \
 	combsph-main.$(OBJEXT)
 combsph_OBJECTS = $(am_combsph_OBJECTS)
-combsph_LDADD = $(LDADD)
+combsph_DEPENDENCIES =
 combsph_LINK = $(CXXLD) $(combsph_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
@@ -120,7 +120,6 @@ CFLAGS = @CFLAGS@
 CIO_CFLAGS = @CIO_CFLAGS@
 CIO_DIR = @CIO_DIR@
 CIO_LDFLAGS = @CIO_LDFLAGS@
-COMPILER_LIBS = @COMPILER_LIBS@
 CPM_CFLAGS = @CPM_CFLAGS@
 CPM_DIR = @CPM_DIR@
 CPM_LDFLAGS = @CPM_LDFLAGS@
@@ -145,10 +144,9 @@ FC = @FC@
 FCFLAGS = @FCFLAGS@
 FFLAGS = @FFLAGS@
 FFVC_CXX = @FFVC_CXX@
-FFVC_DEVICE = @FFVC_DEVICE@
-FFVC_FAPI = @FFVC_FAPI@
 FFVC_FC = @FFVC_FC@
 FFVC_FC_LD = @FFVC_FC_LD@
+FFVC_LDFLAGS = @FFVC_LDFLAGS@
 FFVC_LIBS = @FFVC_LIBS@
 FFVC_REVISION = @FFVC_REVISION@
 FREALOPT = @FREALOPT@
@@ -190,6 +188,7 @@ REALOPT = @REALOPT@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
+TGT_DEVICE = @TGT_DEVICE@
 TP_CFLAGS = @TP_CFLAGS@
 TP_DIR = @TP_DIR@
 TP_LDFLAGS = @TP_LDFLAGS@
@@ -244,11 +243,11 @@ combsph_CXXFLAGS = \
   -I../FB \
   -I../PLOT3D \
   @CPM_CFLAGS@ \
-  @CIO_CFLAGS@ \
   @TP_CFLAGS@ \
   @PM_CFLAGS@ \
   @MPICH_CFLAGS@ \
-  @REALOPT@
+  @REALOPT@ \
+  @FREALOPT@
 
 combsph_SOURCES = \
   COMB_Define.h \
@@ -262,6 +261,18 @@ combsph_SOURCES = \
   endianUtil.h \
   main.C \
   util_Path.h
+
+combsph_LDADD = \
+  @CPM_LDFLAGS@ \
+  @TP_LDFLAGS@ \
+  @PM_LDFLAGS@ \
+  @MPICH_LDFLAGS@ \
+  @MPICH_LIBS@ \
+  @MPICH_FCLIBS@ \
+  @FFVC_LIBS@ \
+  @FFVC_FC_LD@ \
+  -L../FB -lFB \
+  -L../PLOT3D -lPLOT3D
 
 EXTRA_DIST = Makefile_hand depend.inc README
 all: all-am
