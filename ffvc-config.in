@@ -79,7 +79,7 @@ EOF
       ;;
 
     --cflags)
-      echo @FFVC_CFLAGS@ @MPICH_LIBS@
+      echo @FFVC_CFLAGS@
       ;;
 
     --cxx)
@@ -91,11 +91,11 @@ EOF
       ;;
 
     --fcflags)
-      echo @FFVC_CFLAGS@ @FREALOPT@ @MPICH_FCFLAGS@
+      echo @FFVC_CFLAGS@ @FREALOPT@
       ;;
 
     --fclibs)
-      echo @FFVC_LDFLAGS@ @FFVC_LIBS@ @MPICH_FCLIBS@
+      echo @FFVC_LDFLAGS@ @FFVC_LIBS@
       ;;
 
     --fclink)

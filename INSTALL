@@ -15,8 +15,9 @@
  */
 
 
-PREREQUISITE
-============
+SOFTWARE REQUIREMENT
+====================
+
 - MPI library
 - Cartesian partition library
 - Text parser library

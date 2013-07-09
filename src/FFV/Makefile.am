@@ -52,6 +52,10 @@ ffvc_SOURCES = \
   main.C
 
 ffvc_LDADD = \
+  -L../FB -lFB \
+  -L../IP -lIP \
+  -L../F_CORE -lFCORE \
+  -L../PLOT3D -lPLOT3D \
   @CPM_LDFLAGS@ \
   @CIO_LDFLAGS@ \
   @TP_LDFLAGS@ \
@@ -62,11 +66,8 @@ ffvc_LDADD = \
   @MPICH_LIBS@ \
   @MPICH_FCLIBS@ \
   @FFVC_LIBS@ \
-  @FFVC_FC_LD@ \
-  -L../FB -lFB \
-  -L../IP -lIP \
-  -L../F_CORE -lFCORE \
-  -L../PLOT3D -lPLOT3D
+  @FFVC_FC_LD@
+
 
 
 EXTRA_DIST = Makefile_hand depend.inc

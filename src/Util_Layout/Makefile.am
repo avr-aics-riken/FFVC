@@ -34,6 +34,8 @@ layout_SOURCES = \
   main.C
 
 layout_LDADD = \
+  -L../FB -lFB \
+  -L../PLOT3D -lPLOT3D \
   @CPM_LDFLAGS@ \
   @TP_LDFLAGS@ \
   @PM_LDFLAGS@ \
@@ -41,9 +43,7 @@ layout_LDADD = \
   @MPICH_LIBS@ \
   @MPICH_FCLIBS@ \
   @FFVC_LIBS@ \
-  @FFVC_FC_LD@ \
-  -L../FB -lFB \
-  -L../PLOT3D -lPLOT3D
+  @FFVC_FC_LD@
 
 
 EXTRA_DIST = Makefile_hand depend.inc README
