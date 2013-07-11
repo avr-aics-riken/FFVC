@@ -332,7 +332,7 @@ int Control::find_ID_from_Label(MediumList* mat, const int Nmax, const std::stri
 
   for (int i=1; i<=Nmax; i++) 
   {
-    if ( !strcasecmp(str.c_str(), mat[i].getLabel().c_str()) ) return i;
+    if ( !strcasecmp(str.c_str(), mat[i].getAlias().c_str()) ) return i;
   }
 
   return 0;
@@ -1204,7 +1204,7 @@ void Control::get_Iteration(ItrCtl* IC)
   }
   
   // Instance of candidates
-  NoBaseCriterion = couunter;
+  NoBaseCriterion = counter;
   Criteria = new ConveregenceCriterion[NoBaseCriterion];
   
   
@@ -2848,7 +2848,7 @@ void Control::printParaConditions(FILE* fp, const MediumList* mat)
   fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   fprintf(fp,"\n\t>> Simulation Parameters\n\n");
   
-  fprintf(fp,"\tReference ID              [-]         :  %s\n", mat[RefMat].getLabel().c_str());
+  fprintf(fp,"\tReference ID              [-]         :  %s\n", mat[RefMat].getAlias().c_str());
   fprintf(fp,"\n");
   
   // Reference values
@@ -3715,6 +3715,8 @@ void Control::setCriteria(const string key, const int order, ItrCtl* IC)
         IC->set_eps( (double)Criteria[i].get_Criterion() );
         
         // normのタイプ
+        str = Criteria[i].get_NormType();
+        
         switch (order)
         {
           case ItrCtl::ic_prs_pr: // Predictor phase
@@ -3779,26 +3781,30 @@ void Control::setCriteria(const string key, const int order, ItrCtl* IC)
   
     
   // 線形ソルバーの種類
-  label = base + "/LinearSolver";
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( order != ItrCtl::ic_div )
   {
-    Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
-    Exit(0);
+    label = base + "/LinearSolver";
+    if ( !(tpCntl->GetValue(label, &str )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
+      Exit(0);
+    }
+    
+    if     ( !strcasecmp(str.c_str(), "SOR") )         IC->set_LS(SOR);
+    else if( !strcasecmp(str.c_str(), "SOR2SMA") )     IC->set_LS(SOR2SMA);
+    else if( !strcasecmp(str.c_str(), "SOR2CMA") )     IC->set_LS(SOR2CMA);
+    else if( !strcasecmp(str.c_str(), "JACOBI") )      IC->set_LS(JACOBI);
+    else if( !strcasecmp(str.c_str(), "GMRES") )       IC->set_LS(GMRES);
+    else if( !strcasecmp(str.c_str(), "RBGS") )        IC->set_LS(RBGS);
+    else if( !strcasecmp(str.c_str(), "PCG") )         IC->set_LS(PCG);
+    else if( !strcasecmp(str.c_str(), "PBiCGSTAB") )   IC->set_LS(PBiCGSTAB);
+    else
+    {
+      Hostonly_ stamped_printf("\tInvalid keyword is described for Linear_Solver\n");
+      Exit(0);
+    }
   }
-  
-  if     ( !strcasecmp(str.c_str(), "SOR") )         IC->set_LS(SOR);
-  else if( !strcasecmp(str.c_str(), "SOR2SMA") )     IC->set_LS(SOR2SMA);
-  else if( !strcasecmp(str.c_str(), "SOR2CMA") )     IC->set_LS(SOR2CMA);
-  else if( !strcasecmp(str.c_str(), "JACOBI") )      IC->set_LS(JACOBI);
-  else if( !strcasecmp(str.c_str(), "GMRES") )       IC->set_LS(GMRES);
-  else if( !strcasecmp(str.c_str(), "RBGS") )        IC->set_LS(RBGS);
-  else if( !strcasecmp(str.c_str(), "PCG") )         IC->set_LS(PCG);
-  else if( !strcasecmp(str.c_str(), "PBiCGSTAB") )   IC->set_LS(PBiCGSTAB);
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for Linear_Solver\n");
-    Exit(0);
-  }
+
 
   
   // 反復法固有のパラメータ
@@ -3817,19 +3823,19 @@ void Control::setCriteria(const string key, const int order, ItrCtl* IC)
       setPara_SOR2(base, IC);
       break;
       
-    case GMRES;
+    case GMRES:
       setPara_Gmres(base, IC);
       break;
       
-    case RBGS;
+    case RBGS:
       setPara_RBGS(base, IC);
       break;
       
-    case PCG;
+    case PCG:
       setPara_PCG(base, IC);
       break;
       
-    case PBiCGSTAB;
+    case PBiCGSTAB:
       setPara_PBiCGSTAB(base, IC);
       break;
       

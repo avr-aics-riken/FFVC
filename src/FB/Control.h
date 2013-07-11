@@ -1179,25 +1179,16 @@ protected:
   void setPara_SOR2(const string base, ItrCtl* IC);
   
   // @brief Gmres反復固有のパラメータを指定する
-  void setPara_Gmres(const string base, ItrCtl* IC)
-  {
-    ;
-  }
+  void setPara_Gmres(const string base, ItrCtl* IC);
   
   // @brief RBGS反復固有のパラメータを指定する
-  void setPara_RBGS(const string base, ItrCtl* IC)
-  {
-    ;
-  }
+  void setPara_RBGS(const string base, ItrCtl* IC);
   
   // @brief PCG反復固有のパラメータを指定する
-  void setPara_PCG(const string base, ItrCtl* IC)
-  {
-    ;
-  }
+  void setPara_PCG(const string base, ItrCtl* IC);
   
   //@brief PBiCGSTAB反復固有のパラメータを指定する
-  void setPara_PBiCGSTAB(const string base, ItrCtl* IC)
+  void setPara_PBiCGSTAB(const string base, ItrCtl* IC);
   
 public:
   

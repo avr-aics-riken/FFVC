@@ -1055,7 +1055,6 @@ public:
    int* block
    );
    
-   
    // 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
    bool getCoarseResult2(int i, int j, int k,
    std::string& coarse_dfi_fname,
@@ -1070,10 +1069,8 @@ public:
    // @brief オーバーラップ領域を計算
    void CalOverlap(int* overlap_h, int* overlap_t, int* h, int* t, int* head, int* tail);
    
-   
    // @brief 粗格子から密格子へ内挿
    void Interpolation_from_coarse_initial(const int* m_st, const int* m_bk);
-   
    
   */
 };

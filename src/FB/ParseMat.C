@@ -27,7 +27,7 @@
 bool ParseMat::chkDuplicateLabel(MediumList* mat, const int n, const std::string m_label)
 {
 	for (int i=0; i<n; i++){
-    if ( mat[i].getLabel() == m_label ) return false;
+    if ( mat[i].getAlias() == m_label ) return false;
 	}
 	return true;
 }
@@ -118,7 +118,7 @@ bool ParseMat::chkList4Solver(MediumList* mat, const int m)
 void ParseMat::copyProperty(MediumList* mat, const int n)
 {
 	int nfval = MTITP[n].m_fval.size();
-  
+
 	if ( nfval > property_END ) Exit(0);
   
   // clear for each medium
@@ -133,7 +133,10 @@ void ParseMat::copyProperty(MediumList* mat, const int n)
 		REAL_TYPE   a2 = itr->second;  // 値取得
     
     int key = MediumList::getKey(a1.c_str());
-    
+    if (key<0) {
+      printf("Invalid keyword [%s]\n", a1.c_str());
+    }
+
 		mat[n].P[key]=a2;
     ChkList[key] = true;
 	}
@@ -249,20 +252,21 @@ bool ParseMat::makeMediumList(MediumList* mat, const int NoMedium)
     
     type  = MTITP[i].type;
     label = MTITP[i].label;
-    
+
     // すでに登録されているかどうか調べる
     if ( !chkDuplicateLabel(mat, i, label) ) {
       return false;
     }
-    
+
     // state
     mat[i].setState(type);
-    
+
     // Medium name
-    mat[i].setLabel(label);
-    
+    mat[i].setAlias(label);
+
     // set medium value
     copyProperty(mat, i);
+
   }
   
   return true;
@@ -275,7 +279,7 @@ bool ParseMat::makeMediumList(MediumList* mat, const int NoMedium)
 int ParseMat::missingMessage(MediumList* mat, const int m, const int key)
 {
   printf("\tMissing keyword '%s' for '%s' in %s phase\n", 
-         MediumList::getPropertyName(key).c_str(), mat[m].getLabel().c_str(),
+         MediumList::getPropertyName(key).c_str(), mat[m].getAlias().c_str(),
          ( mat[m].getState() == SOLID ) ? "solid" : "fluid" );
   return 1; 
 }
@@ -290,7 +294,7 @@ void ParseMat::printMatList(FILE* fp, MediumList* mat, const int NoMedium)
   fprintf(fp, "\t  no :           Medium  Properties\n");
   
   for (int n=1; n<=NoMedium; n++) {
-    fprintf(fp,"\t%4d : %16s\n", n, mat[n].getLabel().c_str());
+    fprintf(fp,"\t%4d : %16s\n", n, mat[n].getAlias().c_str());
     
     if ( mat[n].getState() == FLUID ) {
       fprintf(fp, "\t\t\t\t mass density         %12.6e [kg/m^3]\n",   mat[n].P[p_density]);
@@ -326,7 +330,7 @@ void ParseMat::printRelation(FILE* fp, CompoList* compo, MediumList* mat)
   for (int i=1; i<=NoCompo; i++) {
     if ( compo[i].getState() != -1 ) {  // is Medium
       odr = compo[i].getMatOdr();
-      fprintf(fp,"\t\t\t%4d : %8d            %2d  %5d  %16s  : %s\n", i, compo[i].getMatOdr(), odr, odr, mat[odr].getLabel().c_str(),
+      fprintf(fp,"\t\t\t%4d : %8d            %2d  %5d  %16s  : %s\n", i, compo[i].getMatOdr(), odr, odr, mat[odr].getAlias().c_str(),
               (mat[odr].getState() == FLUID ) ? "Fluid" : "Solid" );
     }
     else {

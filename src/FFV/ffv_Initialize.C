@@ -106,37 +106,37 @@ int FFV::Initialize(int argc, char **argv)
     printf(    "\n\t>> Medium List\n\n");
     fprintf(fp,"\n\t>> Medium List\n\n");
   }
-  
+
   // 媒質情報をロードし、 MediumTableタグ内の媒質数を保持
   C.NoMedium = M.get_MediumTable();
-  
+
   // 媒質リストをインスタンス
   mat = new MediumList[C.NoMedium+1];
-  
+  mark();
   
   // 媒質情報を設定
   setMediumList(fp);
-  
+  mark();
   
   // パラメータファイルから C.NoBC, C.NoCompoを取得
   C.NoBC    = B.getNoLocalBC();    // LocalBoundaryタグ内の境界条件の個数
   C.NoCompo = C.NoBC + C.NoMedium; // コンポーネントの数の定義
-
+  mark();
   // ParseMatクラスの環境設定 
   M.setControlVars(C.NoCompo, C.NoBC, C.Unit.Temp, C.KindOfSolver);
-  
+  mark();
   V.setNoCompo_BC(C.NoBC, C.NoCompo);
   V.setIntrinsic(Ex);
-  
+  mark();
   B.setControlVars(&C);
-  
+  mark();
   B.countMedium(&C, mat);
-  
+  mark();
   // CompoListクラスをインスタンス．[0]はダミーとして利用しないので，配列の大きさはプラス１する
   cmp = new CompoList[C.NoCompo+1];
 
   
-  
+  mark();
   
 
   
@@ -1377,8 +1377,8 @@ void FFV::fill(FILE* fp)
   // 指定された媒質を使って、指定シード点を与える
   Hostonly_
   {
-    printf    ("\t\tFilled by medium     : %s\n", mat[C.Fill_Fluid].getLabel().c_str());
-    fprintf(fp,"\t\tFilled by medium     : %s\n", mat[C.Fill_Fluid].getLabel().c_str());
+    printf    ("\t\tFilled by medium     : %s\n", mat[C.Fill_Fluid].getAlias().c_str());
+    fprintf(fp,"\t\tFilled by medium     : %s\n", mat[C.Fill_Fluid].getAlias().c_str());
   }
   
   
@@ -3988,16 +3988,17 @@ void FFV::setLocalCmpIdx_Binary()
 void FFV::setMediumList(FILE* fp)
 {
   if ( !mat ) Exit(0);
-  
+  mark();
   if ( !M.makeMediumList(mat, C.NoMedium) ) {
     Hostonly_ stamped_printf("Error : Duplicate label in Material Table\n");
   }
-  
+  mark();
   // 媒質テーブルの表示
   Hostonly_ {
     M.printMatList(stdout, mat, C.NoMedium);
     M.printMatList(fp, mat, C.NoMedium);
   }
+  mark();
 }
 
 

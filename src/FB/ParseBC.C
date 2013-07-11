@@ -1241,7 +1241,7 @@ void ParseBC::get_Neighbor(const string label_base, const int n, CompoList* cmp,
   
   bool flag = false;
   for (int i=1; i<=NoMedium; i++) {
-    if ( FBUtility::compare(str, mat[i].getLabel()) )
+    if ( FBUtility::compare(str, mat[i].getAlias()) )
     {
       cmp[n].setDef(i);
       flag = true;
@@ -2284,7 +2284,7 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Co
           bool flag = false;
           
           for (int i=1; i<=NoMedium; i++) {
-            if ( FBUtility::compare(m_mat, mat[i].getLabel()) )
+            if ( FBUtility::compare(m_mat, mat[i].getAlias()) )
             {
               cmp[odr].setState(mat[i].getState());
               cmp[odr].setMatOdr(i);
@@ -2435,7 +2435,7 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Co
   // 媒質情報の登録
   for (int i=1; i<=NoMedium; i++) {
     cmp[NoBC+i].setState( mat[i].getState() );
-    cmp[NoBC+i].setLabel( mat[i].getLabel() );
+    cmp[NoBC+i].setLabel( mat[i].getAlias() );
     cmp[NoBC+i].setMatOdr(i);
   }
 }
@@ -3376,7 +3376,7 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
   }
   else
   {
-    fprintf(fp,"\t\t\tGuide Cell Medium = %s\n", mat[ref->get_GuideMedium()].getLabel().c_str());
+    fprintf(fp,"\t\t\tGuide Cell Medium = %s\n", mat[ref->get_GuideMedium()].getAlias().c_str());
   }
   switch ( ref->get_Class() ) {
     case OBC_WALL:

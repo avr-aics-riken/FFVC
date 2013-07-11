@@ -19,6 +19,10 @@ RELEASE
 =======
 
 -------------
+Version 1.2.2    2013-07-11
+  - Change parameter format
+
+-------------
 Version 1.2.1    2013-07-10
   - Bug fix at linking
 

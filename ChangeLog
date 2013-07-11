@@ -22,6 +22,8 @@ REVISION HISTORY
 --------------------------
 2013-07-11
 
+- r998 keyword error trap in MediumTable
+
 - r997 change parameter format
  - BCTable/FaceBC/Xminus/Alias  ->  AssignedAlias
  - Change parameter structure of Iteration
