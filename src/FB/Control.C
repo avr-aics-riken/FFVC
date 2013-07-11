@@ -240,6 +240,19 @@ void ReferenceFrame::setV00(const double time, const bool init)
 
 
 
+// #################################################################
+/**
+ * @brief ラベルの重複を調べる
+ * @param [in] n       テストするCriteriaの格納番号の最大値
+ * @param [in] m_label テストラベル
+ */
+bool Control::chkDuplicate(const int n, const string m_label)
+{
+	for (int i=0; i<n; i++){
+    if ( Criteria[i].get_Alias() == m_label ) return false;
+	}
+	return true;
+}
 
 
 
@@ -325,165 +338,6 @@ int Control::find_ID_from_Label(MediumList* mat, const int Nmax, const std::stri
   return 0;
 }
 
-
-// #################################################################
-// 反復の収束判定パラメータを取得
-void Control::findCriteria(const string label0, const int order, ItrCtl* IC)
-{
-  int itr=0;
-  REAL_TYPE tmp=0.0;
-  string str, label;
-  
-  if ( tpCntl->chkNode(label0) )
-  {
-    label = label0 + "/Iteration";
-    if ( !(tpCntl->GetValue(label, &itr )) ) 
-    {
-      Hostonly_ stamped_printf("\tParsing error : Invalid integer value for '%s'\n", label.c_str());
-      Exit(0);
-    }
-    IC->set_ItrMax(itr);
-    
-    if (order == ItrCtl::ic_div)
-    {
-      if (itr == 1)
-      {
-        IC->set_ItrMax(2); // minimum 2
-      }
-    }
-    
-    
-    label = label0 + "/Epsilon";
-    if ( !(tpCntl->GetValue(label, &tmp )) ) 
-    {
-      Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
-      Exit(0);
-    }
-    IC->set_eps((double)tmp);
-    
-    
-    label = label0 + "/norm";
-    if ( !(tpCntl->GetValue(label, &str )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
-      Exit(0);
-    }
-    
-    
-    
-    // normのタイプ
-    switch (order)
-    {
-      case ItrCtl::ic_prs_pr: // Predictor phase
-      case ItrCtl::ic_prs_cr: // Corrector phase
-      case ItrCtl::ic_vis_cn: // Velocity Crank-Nicolosn
-      case ItrCtl::ic_tdf_ei: // Temperature Euler Implicit
-        
-        if ( !strcasecmp(str.c_str(), "DXbyB") )
-        {
-          IC->set_normType(ItrCtl::dx_b);
-        }
-        else if ( !strcasecmp(str.c_str(), "RbyB") )
-        {
-          IC->set_normType(ItrCtl::r_b);
-        }
-        else if ( !strcasecmp(str.c_str(), "RbyR0") )
-        {
-          IC->set_normType(ItrCtl::r_r0);
-        }
-        else
-        {
-          Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' of Norm for Poisson iteration\n", str.c_str());
-          Exit(0);
-        }
-        break;
-        
-      case ItrCtl::ic_div: // VP iteration
-        if ( !strcasecmp(str.c_str(), "VdivMax") )
-        {
-          IC->set_normType(ItrCtl::v_div_max);
-        }
-        else if ( !strcasecmp(str.c_str(), "VdivDbg") )
-        {
-          IC->set_normType(ItrCtl::v_div_dbg);
-          Mode.Log_Itr == ON;
-        }
-        else
-        {
-          Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' for heat iteration\n", str.c_str());
-          Exit(0);
-        }
-        break;
-        
-        default:
-          Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' for heat iteration\n", str.c_str());
-          Exit(0);
-    }
-    
-    
-    if ( order != ItrCtl::ic_div )
-    {
-      label = label0 + "/Omega";
-      if ( !(tpCntl->GetValue(label, &tmp )) )
-      {
-        Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
-        Exit(0);
-      }
-      IC->set_omg(tmp);
-      
-      
-      label = label0 + "/commMode";
-      if ( !(tpCntl->GetValue(label, &str )) )
-      {
-        Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
-        Exit(0);
-      }
-      if ( !strcasecmp(str.c_str(), "sync") )
-      {
-        IC->set_SyncMode(comm_sync);
-      }
-      else if ( !strcasecmp(str.c_str(), "async") )
-      {
-        IC->set_SyncMode(comm_async);
-      }
-      else
-      {
-        Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
-        Exit(0);
-      }
-      
-
-      label = label0 + "/LinearSolver";
-      if ( !(tpCntl->GetValue(label, &str )) )
-      {
-        Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
-        Exit(0);
-      }
-      
-      // 線形ソルバーの種類
-      if     ( !strcasecmp(str.c_str(), "SOR") )         IC->set_LS(SOR);
-      else if( !strcasecmp(str.c_str(), "SOR2SMA") )     IC->set_LS(SOR2SMA);
-      else if( !strcasecmp(str.c_str(), "SOR2CMA") )     IC->set_LS(SOR2CMA);
-      else if( !strcasecmp(str.c_str(), "JACOBI") )      IC->set_LS(JACOBI);
-      else if( !strcasecmp(str.c_str(), "GMRES") )       IC->set_LS(GMRES);
-      else if( !strcasecmp(str.c_str(), "RBGS") )        IC->set_LS(RBGS);
-      else if( !strcasecmp(str.c_str(), "PCG") )         IC->set_LS(PCG);
-      else if( !strcasecmp(str.c_str(), "PBiCGSTAB") )   IC->set_LS(PBiCGSTAB);
-      else
-      {
-        Hostonly_ stamped_printf("\tInvalid keyword is described for Linear_Solver\n");
-        Exit(0);
-      }
-    }
-    
-  }
-  else 
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid keyword of '%s'\n", label.c_str());
-    Exit(0);
-  }
-
-}
 
 
 
@@ -1315,47 +1169,120 @@ void Control::get_Geometry(const MediumTableInfo *MTITP)
 void Control::get_Iteration(ItrCtl* IC)
 {
   string str;
-  string label;
+  string base, label, leaf;
+  int i_val=0;
+  REAL_TYPE f_val=0.0;
   
-  label = "/Steer/Iteration";
+  base = "/Steer/Iteration";
   
   // Iteration
-  if( !tpCntl->chkNode(label) )
+  if( !tpCntl->chkNode(base) )
   {
-    Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", label.c_str());
+    Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", base.c_str());
     Exit(0);
   }
   
-  label = "/Steer/Iteration/Flow";
-  
-  // Flow
-  if( !tpCntl->chkNode(label) )
+  // タグ内のラベル数をチェック
+  int nnode = tpCntl->countLabels(base);
+  if ( nnode == 0 )
   {
-    Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", label.c_str());
-    Exit(0);
+    Hostonly_ stamped_printf("\tNo labels inside /Steer/Iteration\n");
+    return;
+  }
+  
+  // Criterionの個数を取得
+  int counter=0;
+  for (int i=1; i<=nnode; i++) {
+    
+    if ( !tpCntl->GetNodeStr(base, i, &str) )
+    {
+      Hostonly_ stamped_printf("\tGetNodeStr error\n");
+      Exit(0);
+    }
+    
+    if( !strcasecmp(str.substr(0,20).c_str(), "ConvergenceCriterion") ) counter++;
+  }
+  
+  // Instance of candidates
+  NoBaseCriterion = couunter;
+  Criteria = new ConveregenceCriterion[NoBaseCriterion];
+  
+  
+  // get criterion
+  for (int i=0; i<NoBaseCriterion; i++) {
+    
+    if ( !tpCntl->GetNodeStr(base, i+1, &str) )
+    {
+      Hostonly_ printf("\tParsing error : Missing 'ConvergenceCriterion'\n");
+      Exit(0);
+    }
+    
+    if( strcasecmp(str.substr(0,20).c_str(), "ConvergenceCriterion") ) continue;
+    
+    // alias ユニークな名称であること
+    leaf = base + "/" + str;
+    label = leaf + "/Alias";
+    
+    if ( !(tpCntl->GetValue(label, &str )) )
+    {
+      Hostonly_ printf("\tParsing error : No '%s'\n", label.c_str());
+      Exit(0);
+    }
+    if ( !chkDuplicate(i, str) )
+    {
+      Hostonly_ printf("\tParsing error : 'Alias' must be unique\n");
+      Exit(0);
+    }
+    Criteria[i].set_Alias(str);
+    
+    
+    label = leaf + "/NormType";
+    if ( !(tpCntl->GetValue(label, &str )) )
+    {
+      Hostonly_ printf("\tParsing error : No '%s'\n", label.c_str());
+      Exit(0);
+    }
+    Criteria[i].set_NormType(str);
+    
+    label = leaf + "/Iteration";
+    if ( !(tpCntl->GetValue(label, &i_val )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    Criteria[i].set_IterationMax(i_val);
+    
+    label = leaf + "/Epsilon";
+    if ( !(tpCntl->GetValue(label, &f_val )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    Criteria[i].set_Criterion(f_val);
   }
   
   
-  // Flow
+  
+  
   switch (AlgorithmF)
   {
     case Flow_FS_EE_EE:
     case Flow_FS_AB2:
-      findCriteria("/Steer/Iteration/Flow/Poisson", ItrCtl::ic_prs_pr, &IC[ItrCtl::ic_prs_pr]);
-      findCriteria("/Steer/Iteration/Flow/VP",      ItrCtl::ic_div,    &IC[ItrCtl::ic_div]);
+      setCriteria("Pressure",    ItrCtl::ic_prs_pr, &IC[ItrCtl::ic_prs_pr]);
+      setCriteria("VPiteration", ItrCtl::ic_div,    &IC[ItrCtl::ic_div]);
       break;
       
     case Flow_FS_AB_CN:
-      findCriteria("/Steer/Iteration/Flow/Poisson", ItrCtl::ic_prs_pr, &IC[ItrCtl::ic_prs_pr]);
-      findCriteria("/Steer/Iteration/Flow/NSCN",    ItrCtl::ic_vis_cn, &IC[ItrCtl::ic_vis_cn]);
-      findCriteria("/Steer/Iteration/Flow/VP",      ItrCtl::ic_div,    &IC[ItrCtl::ic_div]);
+      setCriteria("Pressure",    ItrCtl::ic_prs_pr, &IC[ItrCtl::ic_prs_pr]);
+      setCriteria("NSCN",        ItrCtl::ic_vis_cn, &IC[ItrCtl::ic_vis_cn]);
+      setCriteria("VPiteration", ItrCtl::ic_div,    &IC[ItrCtl::ic_div]);
       break;
       
     case Flow_FS_RK_CN:
-      findCriteria("/Steer/Iteration/Flow/Poisson",    ItrCtl::ic_prs_pr, &IC[ItrCtl::ic_prs_pr]);
-      findCriteria("/Steer/Iteration/Flow/Poisson_2nd",ItrCtl::ic_prs_cr, &IC[ItrCtl::ic_prs_cr]);
-      findCriteria("/Steer/Iteration/Flow/NSCN",       ItrCtl::ic_vis_cn, &IC[ItrCtl::ic_vis_cn]);
-      findCriteria("/Steer/Iteration/Flow/VP",         ItrCtl::ic_div,    &IC[ItrCtl::ic_div]);
+      setCriteria("Pressure",    ItrCtl::ic_prs_pr, &IC[ItrCtl::ic_prs_pr]);
+      setCriteria("Pressure2nd", ItrCtl::ic_prs_cr, &IC[ItrCtl::ic_prs_cr]);
+      setCriteria("NSCN",        ItrCtl::ic_vis_cn, &IC[ItrCtl::ic_vis_cn]);
+      setCriteria("VPiteration", ItrCtl::ic_div,    &IC[ItrCtl::ic_div]);
       break;
       
     default:
@@ -1364,15 +1291,10 @@ void Control::get_Iteration(ItrCtl* IC)
   }
   
   // Heat
-  label = "/Steer/Iteration/Heat";
+  label = base + "/Temperature";
   
   if ( isHeatProblem() )
   {
-    if( !tpCntl->chkNode(label) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", label.c_str());
-      Exit(0);
-    }
     
     switch (AlgorithmH)
     {
@@ -1380,7 +1302,12 @@ void Control::get_Iteration(ItrCtl* IC)
         break;
         
       case Heat_EE_EI:
-        findCriteria("/Steer/Iteration/Heat/EulerImplicit", ItrCtl::ic_tdf_ei, &IC[ItrCtl::ic_tdf_ei]);
+        if ( !tpCntl->chkNode(label) )
+        {
+          Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", label.c_str());
+          Exit(0);
+        }
+        setCriteria("Temperature", ItrCtl::ic_tdf_ei, &IC[ItrCtl::ic_tdf_ei]);
         break;
         
       default:
@@ -2229,7 +2156,7 @@ void Control::get_start_condition()
   if ( Start == initial_start )
   {
     // Density
-    label="/Steer/StartCondition/InitialState/Density";
+    label="/Steer/StartCondition/InitialState/MassDensity";
     
     if ( !(tpCntl->GetValue(label, &iv.Density )) )
     {
@@ -2829,7 +2756,7 @@ void Control::printInitValues(FILE* fp)
   fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   fprintf(fp,"\n\t>> Initial Values for Physical Variables\n\n");
   
-  fprintf(fp,"\tInitial  Density     [kg/m^3]/ [-]   : %12.5e / %12.5e\n", iv.Density, iv.Density/RefDensity);
+  fprintf(fp,"\tInitial  MassDensity [kg/m^3]/ [-]   : %12.5e / %12.5e\n", iv.Density, iv.Density/RefDensity);
   fprintf(fp,"\tInitial  Velocity.U  [m/s]   / [-]   : %12.5e / %12.5e\n", iv.VecU,    iv.VecU/RefVelocity);
   fprintf(fp,"\tInitial          .V  [m/s]   / [-]   : %12.5e / %12.5e\n", iv.VecV,    iv.VecV/RefVelocity);
   fprintf(fp,"\tInitial          .W  [m/s]   / [-]   : %12.5e / %12.5e\n", iv.VecW,    iv.VecW/RefVelocity);
@@ -2928,12 +2855,12 @@ void Control::printParaConditions(FILE* fp, const MediumList* mat)
   fprintf(fp,"\tRef. Length               [m]         : %12.5e\n", RefLength);
   fprintf(fp,"\tRef. Velocity             [m/s]       : %12.5e\n", RefVelocity);
 	fprintf(fp,"\tBase Pressure             [Pa]        : %12.5e\n", BasePrs);
-  fprintf(fp,"\tRef. Density              [kg/m^3]    : %12.5e\n", RefDensity);
+  fprintf(fp,"\tRef. Mass Density         [kg/m^3]    : %12.5e\n", RefDensity);
   fprintf(fp,"\tRef. Viscosity            [Pa s]      : %12.5e\n", RefViscosity);
   fprintf(fp,"\tRef. Knmtc Viscosity      [m^2/s]     : %12.5e\n", RefKviscosity);
   fprintf(fp,"\tRef. Specific Heat        [J/(kg K)]  : %12.5e\n", RefSpecificHeat);
   fprintf(fp,"\tRef. Thermal Conductivity [W/(m K)]   : %12.5e\n", RefLambda);
-  fprintf(fp,"\tRef. Sound Speed          [m/s]       : %12.5e\n", RefSoundSpeed);
+  fprintf(fp,"\tRef. Speed of Sound       [m/s]       : %12.5e\n", RefSoundSpeed);
   fprintf(fp,"\tGravity                   [m/s^2]     : %12.5e\n", Gravity);
   fprintf(fp,"\n");
   
@@ -3336,7 +3263,7 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
       break;
       
     case DTcntl::dt_cfl_max_v_cp:
-      fprintf(fp,"\t     Time Increment dt        :   %12.5e [sec] / %12.5e [-] : CFL (/w Sound Speed) & Diffusion number with Maximum velocity\n", dt*Tscale, dt);
+      fprintf(fp,"\t     Time Increment dt        :   %12.5e [sec] / %12.5e [-] : CFL (/w Speed of Sound) & Diffusion number with Maximum velocity\n", dt*Tscale, dt);
       break;
       
     default:
@@ -3758,6 +3685,275 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
 
 // #################################################################
 /**
+ * @brief 反復の収束判定パラメータを指定する
+ * @param [in]     key     反復対象ラベル
+ * @param [in]     order   格納番号
+ * @param [in,out] IC      反復制御用クラスの配列
+ */
+void Control::setCriteria(const string key, const int order, ItrCtl* IC)
+{
+  int itr=0;
+  REAL_TYPE tmp=0.0;
+  string str, label, base;
+  
+  base = "/Steer/Iteration/" + key;
+  
+  if ( tpCntl->chkNode(base) )
+  {
+    label = base + "/AssignedCriterion";
+    if ( !(tpCntl->GetValue(label, &str )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid integer value for '%s'\n", label.c_str());
+      Exit(0);
+    }
+    
+    // Aliasでサーチ
+    for (int i=0; i<NoBaseCriterion; i++) {
+      if ( !strcasecmp( str.c_str(), Criteria[i].get_Alias().c_str() ) )
+      {
+        IC->set_ItrMax( Criteria[i].get_IteratinMax() );
+        IC->set_eps( (double)Criteria[i].get_Criterion() );
+        
+        // normのタイプ
+        switch (order)
+        {
+          case ItrCtl::ic_prs_pr: // Predictor phase
+          case ItrCtl::ic_prs_cr: // Corrector phase
+          case ItrCtl::ic_vis_cn: // Velocity Crank-Nicolosn
+          case ItrCtl::ic_tdf_ei: // Temperature Euler Implicit
+            
+            if ( !strcasecmp(str.c_str(), "DXbyB") )
+            {
+              IC->set_normType(ItrCtl::dx_b);
+            }
+            else if ( !strcasecmp(str.c_str(), "RbyB") )
+            {
+              IC->set_normType(ItrCtl::r_b);
+            }
+            else if ( !strcasecmp(str.c_str(), "RbyR0") )
+            {
+              IC->set_normType(ItrCtl::r_r0);
+            }
+            else
+            {
+              Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' of Norm for Poisson iteration\n", str.c_str());
+              Exit(0);
+            }
+            break;
+            
+          case ItrCtl::ic_div: // VP iteration
+            if ( !strcasecmp(str.c_str(), "VdivMax") )
+            {
+              IC->set_normType(ItrCtl::v_div_max);
+            }
+            else if ( !strcasecmp(str.c_str(), "VdivDbg") )
+            {
+              IC->set_normType(ItrCtl::v_div_dbg);
+              Mode.Log_Itr == ON;
+            }
+            else
+            {
+              Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' for heat iteration\n", str.c_str());
+              Exit(0);
+            }
+            break;
+            
+          default:
+            Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' for heat iteration\n", str.c_str());
+            Exit(0);
+        }
+        
+        break;
+      }
+      else
+      {
+        if ( i == NoBaseCriterion-1 ) // 最後までみつからない
+        {
+          Hostonly_ printf("\tParsing error : [%d] '%s' is not listed in 'Criteria'\n", i+1, str.c_str());
+          Exit(0);
+        }
+      }
+    }
+    
+  }
+  
+    
+  // 線形ソルバーの種類
+  label = base + "/LinearSolver";
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "SOR") )         IC->set_LS(SOR);
+  else if( !strcasecmp(str.c_str(), "SOR2SMA") )     IC->set_LS(SOR2SMA);
+  else if( !strcasecmp(str.c_str(), "SOR2CMA") )     IC->set_LS(SOR2CMA);
+  else if( !strcasecmp(str.c_str(), "JACOBI") )      IC->set_LS(JACOBI);
+  else if( !strcasecmp(str.c_str(), "GMRES") )       IC->set_LS(GMRES);
+  else if( !strcasecmp(str.c_str(), "RBGS") )        IC->set_LS(RBGS);
+  else if( !strcasecmp(str.c_str(), "PCG") )         IC->set_LS(PCG);
+  else if( !strcasecmp(str.c_str(), "PBiCGSTAB") )   IC->set_LS(PBiCGSTAB);
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for Linear_Solver\n");
+    Exit(0);
+  }
+
+  
+  // 反復法固有のパラメータ
+  switch (IC->get_LS()) {
+
+    case JACOBI:
+      setPara_Jacobi(base, IC);
+      break;
+      
+    case SOR:
+      setPara_SOR(base, IC);
+      break;
+      
+    case SOR2SMA:
+    case SOR2CMA:
+      setPara_SOR2(base, IC);
+      break;
+      
+    case GMRES;
+      setPara_Gmres(base, IC);
+      break;
+      
+    case RBGS;
+      setPara_RBGS(base, IC);
+      break;
+      
+    case PCG;
+      setPara_PCG(base, IC);
+      break;
+      
+    case PBiCGSTAB;
+      setPara_PBiCGSTAB(base, IC);
+      break;
+      
+    default:
+      break;
+  }
+  
+  
+}
+
+// #################################################################
+/**
+ * @brief Gmres反復固有のパラメータを指定する
+ * @param [in]     base    ラベル
+ * @param [in,out] IC      反復制御用クラスの配列
+ */
+void Control::setPara_Gmres(const string base, ItrCtl* IC)
+{
+  ;
+}
+
+// #################################################################
+/**
+ * @brief RBGS反復固有のパラメータを指定する
+ * @param [in]     base    ラベル
+ * @param [in,out] IC      反復制御用クラスの配列
+ */
+void Control::setPara_RBGS(const string base, ItrCtl* IC)
+{
+  ;
+}
+
+// #################################################################
+/**
+ * @brief PCG反復固有のパラメータを指定する
+ * @param [in]     base    ラベル
+ * @param [in,out] IC      反復制御用クラスの配列
+ */
+void Control::setPara_PCG(const string base, ItrCtl* IC)
+{
+  ;
+}
+
+// #################################################################
+/**
+ * @brief PBiCGSTAB反復固有のパラメータを指定する
+ * @param [in]     base    ラベル
+ * @param [in,out] IC      反復制御用クラスの配列
+ */
+void Control::setPara_PBiCGSTAB(const string base, ItrCtl* IC)
+{
+  ;
+}
+
+// #################################################################
+/**
+ * @brief Jacobi反復固有のパラメータを指定する
+ * @param [in]     base    ラベル
+ * @param [in,out] IC      反復制御用クラスの配列
+ */
+void Control::setPara_Jacobi(const string base, ItrCtl* IC)
+{
+  string str, label;
+  REAL_TYPE tmp=0.0; // 加速係数
+  
+  label = base + "/Omega";
+  
+  if ( !(tpCntl->GetValue(label, &tmp )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  IC->set_omg(tmp);
+  
+}
+
+// #################################################################
+/**
+ * @brief SOR反復固有のパラメータを指定する
+ * @param [in]     base    ラベル
+ * @param [in,out] IC      反復制御用クラスの配列
+ */
+void Control::setPara_SOR(const string base, ItrCtl* IC)
+{
+  setPara_Jacobi(base, IC);
+}
+
+
+// #################################################################
+/**
+ * @brief RB-SOR反復固有のパラメータを指定する
+ * @param [in]     base    ラベル
+ * @param [in,out] IC      反復制御用クラスの配列
+ */
+void Control::setPara_SOR2(const string base, ItrCtl* IC)
+{
+  string str, label;
+  
+  setPara_Jacobi(base, IC);
+  
+  label = base + "/commMode";
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  if ( !strcasecmp(str.c_str(), "sync") )
+  {
+    IC->set_SyncMode(comm_sync);
+  }
+  else if ( !strcasecmp(str.c_str(), "async") )
+  {
+    IC->set_SyncMode(comm_async);
+  }
+  else
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
+    Exit(0);
+  }
+
+}
+
+// #################################################################
+/**
  @brief 無次元パラメータを各種モードに応じて設定する
  @param mat
  @param cmp
@@ -3793,7 +3989,7 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
         cp    = mat[m].P[p_specific_heat];
         lambda= mat[m].P[p_thermal_conductivity];
         beta  = mat[m].P[p_vol_expansion]; // can be replaced by 1/K in the case of gas
-        snd_spd = mat[m].P[p_sound_of_speed];
+        snd_spd = mat[m].P[p_speed_of_sound];
       }
       else
       {

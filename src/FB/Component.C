@@ -31,12 +31,12 @@ const char* CompoList::getVarStr()
   if ( isVarEncoded(var_Velocity) )         var += "Velocity ";              // 0
   if ( isVarEncoded(var_Pressure) )         var += "Pressure ";              // 1
   if ( isVarEncoded(var_Temperature) )      var += "Temperature ";           // 2
-  if ( isVarEncoded(var_Density) )          var += "Density ";               // 3
+  if ( isVarEncoded(var_Density) )          var += "MassDensity ";           // 3
   if ( isVarEncoded(var_TotalP) )           var += "TotalPressure ";         // 4
   if ( isVarEncoded(var_Velocity_Avr) )     var += "Averaged Velocity ";     // 5
   if ( isVarEncoded(var_Pressure_Avr) )     var += "Averaged Pressure ";     // 6
   if ( isVarEncoded(var_Temperature_Avr) )  var += "Averaged Temperature ";  // 7
-  if ( isVarEncoded(var_Density_Avr) )      var += "Averaged Density ";      // 8
+  if ( isVarEncoded(var_Density_Avr) )      var += "Averaged MassDensity ";  // 8
   if ( isVarEncoded(var_TotalP_Avr) )       var += "Averaged TotalPressure ";// 9
   
   return var.c_str();

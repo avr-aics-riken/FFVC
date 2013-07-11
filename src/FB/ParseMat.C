@@ -100,7 +100,7 @@ bool ParseMat::chkList4Solver(MediumList* mat, const int m)
     if ( !ChkList[p_viscosity] )              c += missingMessage(mat, m, p_viscosity);
     if ( !ChkList[p_thermal_conductivity] )   c += missingMessage(mat, m, p_thermal_conductivity);
     if ( !ChkList[p_specific_heat] )          c += missingMessage(mat, m, p_specific_heat);
-    if ( !ChkList[p_sound_of_speed] )         c += missingMessage(mat, m, p_sound_of_speed);
+    if ( !ChkList[p_speed_of_sound] )         c += missingMessage(mat, m, p_speed_of_sound);
     if ( !ChkList[p_vol_expansion] )          c += missingMessage(mat, m, p_vol_expansion);
   }
   else {  // solid
@@ -200,7 +200,7 @@ int ParseMat::get_MediumTable()
           }
         }
       }
-      else if( !strcasecmp(str.c_str(), "label") )
+      else if( !strcasecmp(str.c_str(), "alias") )
       {
         if ( !(tpCntl->GetValue(label_leaf, &label)) )
         {
@@ -293,16 +293,16 @@ void ParseMat::printMatList(FILE* fp, MediumList* mat, const int NoMedium)
     fprintf(fp,"\t%4d : %16s\n", n, mat[n].getLabel().c_str());
     
     if ( mat[n].getState() == FLUID ) {
-      fprintf(fp, "\t\t\t\t density              %12.6e [kg/m^3]\n",   mat[n].P[p_density]);
+      fprintf(fp, "\t\t\t\t mass density         %12.6e [kg/m^3]\n",   mat[n].P[p_density]);
       fprintf(fp, "\t\t\t\t kinematic viscosity  %12.6e [m^2/s]\n",    mat[n].P[p_kinematic_viscosity]);
       fprintf(fp, "\t\t\t\t viscosity            %12.6e [Pa s]\n",     mat[n].P[p_viscosity]);
       fprintf(fp, "\t\t\t\t specific heat        %12.6e [J/(Kg K)]\n", mat[n].P[p_specific_heat]);
       fprintf(fp, "\t\t\t\t thermal conductivity %12.6e [W/(m K)]\n",  mat[n].P[p_thermal_conductivity]);
-      fprintf(fp, "\t\t\t\t sound of speed       %12.6e [m/s]\n",      mat[n].P[p_sound_of_speed]);
+      fprintf(fp, "\t\t\t\t speed of sound       %12.6e [m/s]\n",      mat[n].P[p_speed_of_sound]);
       fprintf(fp, "\t\t\t\t volume expansion     %12.6e [1/K]\n",      mat[n].P[p_vol_expansion]);
     }
     else {  // solid
-      fprintf(fp, "\t\t\t\t density              %12.6e [kg/m^3]\n",   mat[n].P[p_density]);
+      fprintf(fp, "\t\t\t\t mass density         %12.6e [kg/m^3]\n",   mat[n].P[p_density]);
       fprintf(fp, "\t\t\t\t specific heat        %12.6e [J/(Kg K)]\n", mat[n].P[p_specific_heat]);
       fprintf(fp, "\t\t\t\t thermal conductivity %12.6e [W/(m K)]\n",  mat[n].P[p_thermal_conductivity]);
     }

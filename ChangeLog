@@ -18,6 +18,19 @@
 REVISION HISTORY
 ================
 
+
+--------------------------
+2013-07-11
+
+- r997 change parameter format
+ - BCTable/FaceBC/Xminus/Alias  ->  AssignedAlias
+ - Change parameter structure of Iteration
+ - Add ConveregenceCriterion class in Control.h
+ - Control::findCriteria() -> Control::setCriteria()
+ - Add Control::setPara_*() for iterative methods
+ - change /Meidum/label -> alias
+ - Density -> MassDensity
+
 --------------------------
 2013-07-10
 

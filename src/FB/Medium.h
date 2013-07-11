@@ -35,7 +35,7 @@ enum property_list
   p_thermal_conductivity, // 3
   p_thermal_diffusivity,  // 4
   p_specific_heat,        // 5
-  p_sound_of_speed,       // 6
+  p_speed_of_sound,       // 6
   p_vol_expansion,        // 7
   property_END
 };
@@ -70,7 +70,7 @@ public:
    * @brief ラベルを取得
    * @return 文字列
    */
-  std::string getLabel() const
+  std::string getAlias() const
   { 
     return name; 
   }
@@ -90,7 +90,7 @@ public:
    * @brief ラベルをセット
    * @param[in] key 文字列
    */
-  void setLabel(const std::string key) 
+  void setAlias(const std::string key)
   {
     name = key;
   }
@@ -105,13 +105,13 @@ public:
   {
     int key=-1;
     
-    if      ( !(strcasecmp(p, "Density")) )             key = p_density;
+    if      ( !(strcasecmp(p, "MassDensity")) )         key = p_density;
     else if ( !(strcasecmp(p, "KinematicViscosity")) )  key = p_kinematic_viscosity;
     else if ( !(strcasecmp(p, "Viscosity")) )           key = p_viscosity;
     else if ( !(strcasecmp(p, "ThermalConductivity")) ) key = p_thermal_conductivity;
     else if ( !(strcasecmp(p, "ThermalDiffusivity")) )  key = p_thermal_diffusivity;
     else if ( !(strcasecmp(p, "SpecificHeat")) )        key = p_specific_heat;
-    else if ( !(strcasecmp(p, "SoundOfSpeed")) )        key = p_sound_of_speed;
+    else if ( !(strcasecmp(p, "SpeedOfSound")) )        key = p_speed_of_sound;
     else if ( !(strcasecmp(p, "VolumeExpansion")) )     key = p_vol_expansion;
     
     return key;
@@ -129,7 +129,7 @@ public:
     
     switch (key) {
       case p_density:
-        name = "Density";
+        name = "MassDensity";
         break;
       case p_kinematic_viscosity:
         name = "KinematicViscosity";
@@ -146,8 +146,8 @@ public:
       case p_specific_heat:
         name = "SpecificHeat";
         break;
-      case p_sound_of_speed:
-        name = "SoundOfSpeed";
+      case p_speed_of_sound:
+        name = "SpeedOfSound";
         break;
       case p_vol_expansion:
         name = "VolumeExpansion";

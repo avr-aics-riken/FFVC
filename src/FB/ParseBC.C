@@ -2567,7 +2567,7 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, Comp
     label_leaf = label_base + "/" + str;
     
     // 指定の境界条件を探してBaseBC[]からbc[]へ内容のコピー
-    label = label_leaf + "/alias";
+    label = label_leaf + "/AssignedAlias";
     
     if ( !(tpCntl->GetValue(label, &str)) ) 
     {
@@ -3727,7 +3727,7 @@ void ParseBC::setRefMediumProperty(const MediumList* mat, const CompoList* cmp, 
         lambda = mat[m].P[p_thermal_conductivity];
         beta   = mat[m].P[p_vol_expansion]; // can be replaced by 1/K in the case of gas
         //mu    = mat[m].P[p_viscosity];
-        //snd_spd = mat[m].P[p_sound_of_speed];
+        //snd_spd = mat[m].P[p_speed_of_sound];
       }
       else 
       {

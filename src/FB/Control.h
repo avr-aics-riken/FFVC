@@ -42,6 +42,74 @@
 
 using namespace std;
 
+
+// #################################################################
+class ConveregenceCriterion {
+private:
+  int NoIteration;       ///< 最大反復数
+  REAL_TYPE Epsilon;     ///< 収束閾値
+  std::string normtype;  ///< Normラベル
+  std::string alias;     ///< 別名
+  
+public:
+  
+  /** コンストラクタ */
+  ConveregenceCriterion()
+  {
+    NoIteration = 0;
+		Epsilon = 0.0;
+  }
+  
+  /**　デストラクタ */
+  ~ConveregenceCriterion() {}
+  
+  
+  std::string get_NormType() const
+  {
+    return normtype;
+  }
+  
+  std::string get_Alias() const
+  {
+    return alias;
+  }
+  
+  int get_IteratinMax() const
+  {
+    return NoIteration;
+  }
+  
+  REAL_TYPE get_Criterion() const
+  {
+    return Epsilon;
+  }
+  
+  // ラベルを設定
+  void set_NormType(std::string key)
+  {
+    normtype = key;
+  }
+  
+  // @brief aliasを設定する
+  void set_Alias(std::string key)
+  {
+    alias = key;
+  }
+  
+  // @brief 収束域値の指定
+  void set_Criterion(REAL_TYPE m_eps)
+  {
+    Epsilon = m_eps;
+  }
+  
+  // @brief 最大反復回数の指定
+  void set_IterationMax(int key)
+  {
+    NoIteration = key;
+  }
+};
+
+
 // #################################################################
 class DTcntl {
 public:
@@ -645,6 +713,7 @@ public:
   int KindOfSolver;
   int Limiter;
   int MarchingScheme;
+  int NoBaseCriterion;
   int NoBC;
   int NoCompo;
   int NoMedium;       ///< 媒質数
@@ -709,6 +778,8 @@ public:
   
   // class
   Interval_Manager  Interval[Interval_Manager::tg_END];
+  
+  ConveregenceCriterion* Criteria; ///< 反復解法の収束判定パラメータ
   
   string file_fmt_ext;
   
@@ -777,6 +848,7 @@ public:
     KindOfSolver = 0;
     Limiter = 0;
     MarchingScheme = 0;
+    NoBaseCriterion = 0;
     NoBC = 0;
     NoCompo = 0;
     NoMedium = 0;
@@ -879,12 +951,19 @@ public:
     EnsCompo.fraction= 0;
     EnsCompo.monitor = 0;
     EnsCompo.tfree   = 0;
+    
+    Criteria = NULL;
   }
   
   /**　デストラクタ */
-  virtual ~Control() {}
+  virtual ~Control() {
+    if (Criteria) delete [] Criteria;
+  }
   
 protected:
+  
+  // ラベルの重複チェック
+  bool chkDuplicate(const int n, const string m_label);
   
   /**
    * @brief 熱交換器パラメータの変換（Pa）
@@ -899,15 +978,6 @@ protected:
    * @param [in]  Density ヘッドの単位
    */
   void convertHexCoef(REAL_TYPE* cf, const REAL_TYPE DensityMode);
-  
-  
-  /**
-   * @brief 反復の収束判定パラメータを取得
-   * @param [in]     label0  Nodeのラベル
-   * @param [in]     order   格納番号
-   * @param [in,out] IC      反復制御用クラスの配列
-   */
-  void findCriteria(const string label0, const int order, ItrCtl* IC);
   
   
   /** 
@@ -1094,6 +1164,40 @@ protected:
    *
   void get_PLOT3D(FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_WRITE* FP3DW);
    */
+  
+  
+  // @brief 反復の収束判定パラメータを指定する
+  void setCriteria(const string label0, const int order, ItrCtl* IC);
+  
+  // @brief Jacobi反復固有のパラメータを指定する
+  void setPara_Jacobi(const string base, ItrCtl* IC);
+  
+  // @brief SOR反復固有のパラメータを指定する
+  void setPara_SOR(const string base, ItrCtl* IC);
+  
+  // @brief RB-SOR反復固有のパラメータを指定する
+  void setPara_SOR2(const string base, ItrCtl* IC);
+  
+  // @brief Gmres反復固有のパラメータを指定する
+  void setPara_Gmres(const string base, ItrCtl* IC)
+  {
+    ;
+  }
+  
+  // @brief RBGS反復固有のパラメータを指定する
+  void setPara_RBGS(const string base, ItrCtl* IC)
+  {
+    ;
+  }
+  
+  // @brief PCG反復固有のパラメータを指定する
+  void setPara_PCG(const string base, ItrCtl* IC)
+  {
+    ;
+  }
+  
+  //@brief PBiCGSTAB反復固有のパラメータを指定する
+  void setPara_PBiCGSTAB(const string base, ItrCtl* IC)
   
 public:
   
