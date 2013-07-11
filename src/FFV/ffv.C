@@ -220,7 +220,7 @@ void FFV::AverageOutput(double& flop)
   }
   
   // 最大値と最小値
-  REAL_TYPE f_min, f_max, min_tmp, max_tmp;
+  REAL_TYPE f_min, f_max, min_tmp, max_tmp, vec_min[4], vec_max[4];
   
   fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
   
@@ -252,26 +252,27 @@ void FFV::AverageOutput(double& flop)
   if ( DFI_OUT_VELA->DFI_Finfo.ArrayShape == "nijk" )
   {
     fb_vout_nijk_(d_wo, d_av, size, &guide, v00, &scale, &unit_velocity, &flop); // 配列並びを変換
-    fb_minmax_vex_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+    fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
   }
   else // "ijkn"
   {
     fb_vout_ijkn_(d_wo, d_av, size, &guide, v00, &scale, &unit_velocity, &flop); // 並び変換なし
-    fb_minmax_v_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+    fb_minmax_v_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
   }
   
   
   if ( numProc > 1 )
   {
-    min_tmp = f_min;
-    if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+    REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
+    if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
     
-    max_tmp = f_max;
-    if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
+    if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
   }
   
-  minmax[0] = f_min;
-  minmax[1] = f_max;
+  // ここはminmax[]の大きさをvec_min[4],vec_max[4]に合わせて，DFI_OUT_VELAのインターフェイスを変更
+  minmax[0] = vec_min[0];
+  minmax[1] = vec_max[0];
 
   DFI_OUT_VELA->WriteData(m_step,
                           guide,
@@ -500,7 +501,7 @@ void FFV::FileOutput(double& flop, const bool refinement)
    */
 
   // 最大値と最小値
-  REAL_TYPE f_min, f_max, min_tmp, max_tmp;
+  REAL_TYPE f_min, f_max, min_tmp, max_tmp, vec_min[4], vec_max[4];
   REAL_TYPE minmax[2];
   
   // 出力間隔
@@ -584,24 +585,26 @@ void FFV::FileOutput(double& flop, const bool refinement)
   if( DFI_OUT_VEL->DFI_Finfo.ArrayShape == "nijk" )
   {
     fb_vout_nijk_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
-    fb_minmax_vex_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+    fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
   }
   else
   {
     fb_vout_ijkn_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
-    fb_minmax_v_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+    fb_minmax_v_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
   }
   
   if ( numProc > 1 )
   {
-    min_tmp = f_min;
-    if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+    REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
+    if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
     
-    max_tmp = f_max;
-    if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
+    if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
   }
-  minmax[0] = f_min;
-  minmax[1] = f_max;
+  
+  // ここはminmax[]の大きさをvec_min[4],vec_max[4]に合わせて，DFI_OUT_VELのインターフェイスを変更
+  minmax[0] = vec_min[0];
+  minmax[1] = vec_max[0];
 
   DFI_OUT_VEL->WriteData(m_step,
                          guide,
@@ -711,24 +714,26 @@ void FFV::FileOutput(double& flop, const bool refinement)
     if ( DFI_OUT_VRT->DFI_Finfo.ArrayShape == "nijk" )
     {
       fb_vout_nijk_(d_wo, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
-      fb_minmax_vex_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+      fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
     }
     else
     {
       fb_vout_ijkn_(d_wo, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
-      fb_minmax_v_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+      fb_minmax_v_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
     }
     
     if ( numProc > 1 )
     {
-      min_tmp = f_min;
-      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
+      if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
       
-      max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
+      if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
-    minmax[0] = f_min;
-    minmax[1] = f_max;
+    
+    // ここはminmax[]の大きさをvec_min[4],vec_max[4]に合わせて，DFI_OUT_VRTのインターフェイスを変更
+    minmax[0] = vec_min[0];
+    minmax[1] = vec_max[0];
     
     DFI_OUT_VRT->WriteData(m_step,
                            guide,
@@ -817,24 +822,26 @@ void FFV::FileOutput(double& flop, const bool refinement)
     if ( DFI_OUT_FVEL->DFI_Finfo.ArrayShape == "nijk" )
     {
       fb_vout_nijk_(d_wo, d_vf, size, &guide, v00, &scale, &unit_velocity, &flop);
-      fb_minmax_vex_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+      fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
     }
     else
     {
       fb_vout_ijkn_(d_wo, d_vf, size, &guide, v00, &scale, &unit_velocity, &flop);
-      fb_minmax_v_ (&f_min, &f_max, size, &guide, v00, d_wo, &flop);
+      fb_minmax_v_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
     }
     
     if ( numProc > 1 )
     {
-      min_tmp = f_min;
-      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
+      if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
       
-      max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
+      if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
-    minmax[0] = f_min;
-    minmax[1] = f_max;
+    
+    // ここはminmax[]の大きさをvec_min[4],vec_max[4]に合わせて，DFI_OUT_VRTのインターフェイスを変更
+    minmax[0] = vec_min[0];
+    minmax[1] = vec_max[0];
 
 // CIOlib debug
 //  int IUNIT=m_step+10;

@@ -22,7 +22,10 @@ REVISION HISTORY
 --------------------------
 2013-07-11
 
-- r998 keyword error trap in MediumTable
+- r999 extend min/max calculation [1.2.3]
+ - fb_minmax_v(), fb_minmax_vex()
+
+- r998 keyword error trap in MediumTable [1.2.2]
 
 - r997 change parameter format
  - BCTable/FaceBC/Xminus/Alias  ->  AssignedAlias

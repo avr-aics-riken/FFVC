@@ -95,22 +95,22 @@ void FFV::Restart_display_minmax(FILE* fp, double& flop)
 {
   Hostonly_ fprintf(stdout, "\n\tNon-dimensional value\n");
   Hostonly_ fprintf(fp, "\n\tNon-dimensional value\n");
-  REAL_TYPE f_min, f_max, min_tmp, max_tmp;
+  REAL_TYPE f_min, f_max, min_tmp, max_tmp, vec_min[4], vec_max[4];
   
   // Velocity
-  fb_minmax_v_ (&f_min, &f_max, size, &guide, v00, d_v, &flop); // allreduceすること
+  fb_minmax_v_ (vec_min, vec_max, size, &guide, v00, d_v, &flop); // allreduceすること
   
   if ( numProc > 1 )
   {
-    min_tmp = f_min;
-    if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+    REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
+    if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
     
-    max_tmp = f_max;
-    if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
+    if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
   }
   
-  Hostonly_ fprintf(stdout, "\t\tV : min=%13.6e / max=%13.6e\n", f_min, f_max);
-  Hostonly_ fprintf(fp, "\t\tV : min=%13.6e / max=%13.6e\n", f_min, f_max);
+  Hostonly_ fprintf(stdout, "\t\tV : min=%13.6e / max=%13.6e\n", vec_min[0], vec_max[0]);
+  Hostonly_ fprintf(fp, "\t\tV : min=%13.6e / max=%13.6e\n", vec_min[0], vec_max[0]);
   
   
   // Pressure
@@ -127,6 +127,7 @@ void FFV::Restart_display_minmax(FILE* fp, double& flop)
   
   Hostonly_ fprintf(stdout, "\t\tP : min=%13.6e / max=%13.6e\n", f_min, f_max);
   Hostonly_ fprintf(fp, "\t\tP : min=%13.6e / max=%13.6e\n", f_min, f_max);
+  
   
   // temperature
   if ( C.isHeatProblem() )
