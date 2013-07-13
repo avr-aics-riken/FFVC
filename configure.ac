@@ -17,7 +17,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([FFVC], [1.2.3], [keno@riken.jp], [FFVC])
+AC_INIT([FFVC], [1.2.4], [keno@riken.jp], [FFVC])
 AM_INIT_AUTOMAKE()
 AC_CONFIG_SRCDIR([src/FB/Alloc.C])
 AC_CONFIG_HEADERS([config.h])
@@ -25,7 +25,7 @@ AC_CONFIG_HEADERS([config.h])
 #
 # revision No.
 #
-FFVC_REVISION="20130711_2300"
+FFVC_REVISION="20130713_1800"
 AC_SUBST(FFVC_REVISION)
 
 
@@ -150,7 +150,7 @@ elif test "$enable_mpi" = "mpich" ; then
     "Lion"|"Snow_Leopard"|"Leopard"|"Mountain_Lion") ;;
   esac
 elif test "$enable_mpi" = "ompi" ; then
-  MPICH_LIBS="-lmpi"
+  MPICH_LIBS="-lmpi -lmpi_cxx"
   MPICH_FCLIBS="$MPICH_LIBS"" -lmpi_f77 -lmpi_f90"
   case "$TGT_DEVICE" in
     "Lion"|"Snow_Leopard"|"Leopard"|"Mountain_Lion") ;;

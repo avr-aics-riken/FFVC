@@ -24,6 +24,8 @@ POLY_DIR = /usr/local/Polylib
 CUT_DIR  = /usr/local/Cutlib
 PM_DIR   = /usr/local/PMlib
 
+FFVC_DIR = /usr/local/FFVC
+
 
 #########################
 # Architecture assignment

@@ -1548,7 +1548,6 @@ void ParseBC::get_OBC_Outflow(const string label_base, const int n)
   BaseBc[n].set_pType(P_GRAD_ZERO);
   BaseBc[n].p = 0.0; // ダミー値
   
-  // Hidden option
   label = label_base + "/PressureType";
   
   if ( !(tpCntl->GetValue(label, &str )) )

@@ -42,6 +42,8 @@ OBJS  = $(CXXOBJS)
 $(TARGET):$(OBJS)
 	$(CXX) $(CXXFLAGS) $(UDEF_INC_PATH) -o $(TARGET) $(OBJS) \
 	$(UDEF_LIB_PATH) $(LIBS) $(UDEF_LIBS) $(UDEF_LIB_PATH_SPEC) $(LDFLAGS) 
+	-mkdir -p $(FFVC_DIR)/bin
+	mv $(TARGET) $(FFVC_DIR)/bin
 
 .C.o:
 	$(CXX) $(CXXFLAGS) $(UDEF_OPT) $(UDEF_INC_PATH) -c $<

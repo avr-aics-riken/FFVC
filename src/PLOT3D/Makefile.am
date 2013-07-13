@@ -24,6 +24,7 @@ libPLOT3D_a_CXXFLAGS = \
   @CPM_CFLAGS@ \
   @MPICH_CFLAGS@ \
   @REALOPT@ \
+  @TP_CFLAGS@
   @FREALOPT@ 
 
 libPLOT3D_a_SOURCES = \

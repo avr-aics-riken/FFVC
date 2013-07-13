@@ -18,14 +18,21 @@
 REVISION HISTORY
 ================
 
+--------------------------
+2013-07-13
+
+- r1000 confirm operation /w Polylib-2.6.4 and Cutlib-3.1.2 [ver 1.2.4]
+ - modify configure.ac for GNU fortran /w openMPI 1.6 or later
+ - change poly_org/poly_dx from double to float, and add cut_org/cut_dx
+ - Polylib and Cutlib check for binary voxel
 
 --------------------------
 2013-07-11
 
-- r999 extend min/max calculation [1.2.3]
+- r999 extend min/max calculation [ver 1.2.3]
  - fb_minmax_v(), fb_minmax_vex()
 
-- r998 keyword error trap in MediumTable [1.2.2]
+- r998 keyword error trap in MediumTable [ver 1.2.2]
 
 - r997 change parameter format
  - BCTable/FaceBC/Xminus/Alias  ->  AssignedAlias

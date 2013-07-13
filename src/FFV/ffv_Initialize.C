@@ -112,31 +112,30 @@ int FFV::Initialize(int argc, char **argv)
 
   // 媒質リストをインスタンス
   mat = new MediumList[C.NoMedium+1];
-  mark();
+
   
   // 媒質情報を設定
   setMediumList(fp);
-  mark();
+
   
   // パラメータファイルから C.NoBC, C.NoCompoを取得
   C.NoBC    = B.getNoLocalBC();    // LocalBoundaryタグ内の境界条件の個数
   C.NoCompo = C.NoBC + C.NoMedium; // コンポーネントの数の定義
-  mark();
+
   // ParseMatクラスの環境設定 
   M.setControlVars(C.NoCompo, C.NoBC, C.Unit.Temp, C.KindOfSolver);
-  mark();
+
   V.setNoCompo_BC(C.NoBC, C.NoCompo);
   V.setIntrinsic(Ex);
-  mark();
+
   B.setControlVars(&C);
-  mark();
+
   B.countMedium(&C, mat);
-  mark();
+
   // CompoListクラスをインスタンス．[0]はダミーとして利用しないので，配列の大きさはプラス１する
   cmp = new CompoList[C.NoCompo+1];
 
-  
-  mark();
+
   
 
   
@@ -3988,17 +3987,17 @@ void FFV::setLocalCmpIdx_Binary()
 void FFV::setMediumList(FILE* fp)
 {
   if ( !mat ) Exit(0);
-  mark();
+
   if ( !M.makeMediumList(mat, C.NoMedium) ) {
     Hostonly_ stamped_printf("Error : Duplicate label in Material Table\n");
   }
-  mark();
+
   // 媒質テーブルの表示
   Hostonly_ {
     M.printMatList(stdout, mat, C.NoMedium);
     M.printMatList(fp, mat, C.NoMedium);
   }
-  mark();
+
 }
 
 
@@ -4267,7 +4266,7 @@ string FFV::setupDomain(TPControl* tpf, FILE* fp)
   else if( FBUtility::compare(keyword, "Rectangular") )       C.Mode.Example = id_Rect;
   else if( FBUtility::compare(keyword, "Cylinder") )          C.Mode.Example = id_Cylinder;
   else if( FBUtility::compare(keyword, "BackStep") )          C.Mode.Example = id_Step;
-  else if( FBUtility::compare(keyword, "Users") )             C.Mode.Example = id_Polygon;
+  else if( FBUtility::compare(keyword, "Polygon") )           C.Mode.Example = id_Polygon;
   else if( FBUtility::compare(keyword, "Sphere") )            C.Mode.Example = id_Sphere;
   else if( FBUtility::compare(keyword, "Jet") )               C.Mode.Example = id_Jet;
   else
@@ -4367,18 +4366,20 @@ string FFV::setupDomain(TPControl* tpf, FILE* fp)
  */
 void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
 {
-  unsigned poly_gc[3];
-  double poly_org[3];
-  double poly_dx[3];
-  poly_gc[0]  = poly_gc[1] = poly_gc[2] = (unsigned)guide;
+  unsigned poly_gc[3] = {guide, guide, guide};
+  
+  // float で定義すること
+  float poly_org[3];
+  float poly_dx[3];
+
   
   // 有次元に変換 Polylib: 並列計算領域情報　ポリゴンは実スケールで，ガイドセル領域部分も含めて指定する
-  poly_dx[0]  = (double)(pitch[0] * C.RefLength);
-  poly_dx[1]  = (double)(pitch[1] * C.RefLength);
-  poly_dx[2]  = (double)(pitch[2] * C.RefLength);
-  poly_org[0] = (double)(origin[0]* C.RefLength);
-  poly_org[1] = (double)(origin[1]* C.RefLength);
-  poly_org[2] = (double)(origin[2]* C.RefLength);
+  poly_dx[0]  = pitch[0] * C.RefLength;
+  poly_dx[1]  = pitch[1] * C.RefLength;
+  poly_dx[2]  = pitch[2] * C.RefLength;
+  poly_org[0] = origin[0]* C.RefLength;
+  poly_org[1] = origin[1]* C.RefLength;
+  poly_org[2] = origin[2]* C.RefLength;
   
   Hostonly_
   {
@@ -4398,11 +4399,11 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   //PL->set_factory( new MyPolygonGroupFactory() );
   
   // Polylib: 並列計算領域情報を設定
-  poly_stat = PL->init_parallel_info( MPI_COMM_WORLD,
-                                     (float*)poly_org, // 自ランクの基点座標
+  poly_stat = PL->init_parallel_info(MPI_COMM_WORLD,
+                                     poly_org,         // 自ランクの基点座標
                                      (unsigned*)size,  // 自ランクの分割数
                                      poly_gc,          // ガイドセル数
-                                     (float*)poly_dx   // 格子幅
+                                     poly_dx           // 格子幅
                                      );
   if ( poly_stat != PLSTAT_OK )
   {
@@ -4458,7 +4459,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   TIMING_stop(tm_polygon_load);
   
-  // 階層情報表示 debug
+  // 階層情報表示 debug brief hierarchy
 // ##########
 #if 0
   PL->show_group_hierarchy();
@@ -4517,7 +4518,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
       fprintf(fp,"\t %9d %16s : %12d : %20s : %e\n", m_id, m_mat.c_str(), ntria, m_pg.c_str(), area);
     }
     
-// ##########
+// ########## show corrdinates and area
 #if 0
     PL->show_group_info(m_pg); //debug
 #endif
@@ -4560,7 +4561,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   // Triangle display >> Debug
 // ##########
 #if 0
-  PolylibNS::Vec3f m_min, m_max, t1(poly_org), t2(poly_dx), t3;
+  PolylibNS::Vec3f m_min, m_max, t1((float*)poly_org), t2((float*)poly_dx), t3;
   t3.assign((float)size[0]*t2.t[0], (float)size[1]*t2.t[1], (float)size[2]*t2.t[2]);
   m_min = t1 - t2;      // 1層外側まで
   m_max = t1 + t3 + t2; //
@@ -4569,7 +4570,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   vector<Triangle*>* trias = PL->search_polygons("Tube", m_min, m_max, false); // false; ポリゴンが一部でもかかる場合
   
   PolylibNS::Vec3f *p, nrl, n;
-  int c=0;
+  c=0;
   vector<Triangle*>::iterator it2;
   for (it2 = trias->begin(); it2 != trias->end(); it2++) {
     p = (*it2)->get_vertex();
@@ -4634,15 +4635,28 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   }
   
   size_t n_cell[3];
+  
+  unsigned cut_gc[3] = {guide, guide, guide};
+  double cut_org[3];
+  double cut_dx[3];
+  
+  // 有次元に変換 Polylib: 並列計算領域情報　ポリゴンは実スケール
+  cut_dx[0]  = (double)(pitch[0] * C.RefLength);
+  cut_dx[1]  = (double)(pitch[1] * C.RefLength);
+  cut_dx[2]  = (double)(pitch[2] * C.RefLength);
+  cut_org[0] = (double)(origin[0]* C.RefLength);
+  cut_org[1] = (double)(origin[1]* C.RefLength);
+  cut_org[2] = (double)(origin[2]* C.RefLength);
 
   /*
    
-     Outer < | > Inner
-        +----+----+--
-      0 |    |    |
-        |    |    |
-        +----+----+--
-        ^ 0    1    2   ...
+          Outer < | >     Inner      < | > Outer
+        +----+----+----+----+-...-+----+----+----+
+      0 |    |    |    |    |     |    |    |    |
+        |    |    |    |    |     |    |    |    |
+        +----+----+----+----+-...-+----+----+----+
+        ^ -1   0    1    2    ...   ix  ix+1 ix+2
+          sx                                  ex
    
    グリッド情報アクセッサクラスCell(const double org[3], const double pitch[3])
    のコンストラクタに渡す引数
@@ -4652,7 +4666,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   for ( int i=0; i<3; i++) {
     n_cell[i] = (size_t)(size[i] + 2*guide);  // 分割数+ガイドセル両側
-    poly_org[i] -= poly_dx[i];  // (0,0,0)へはセル1つ分だけシフト
+    cut_org[i] -= cut_dx[i]*(double)guide;    // ガイドセルを含む領域のマイナス側頂点の座標
   }
   
   size_t size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
@@ -4668,23 +4682,16 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   }
   
   
+  
   // Cutlibの配列は各方向(引数)のサイズ
   TIMING_start(tm_init_alloc);
-  int sx, sy, sz;
-  int ex, ey, ez;
-  sx = sy = sz = 1-guide;
-  ex = size[0];
-  ey = size[1];
-  ez = size[2];
-  //cutPos = new CutPos32Array(n_cell); // 6*(float)
-  //cutBid = new CutBid5Array(n_cell);  // (int32_t)
-  cutPos = new CutPos32Array(sx, sy, sz, ex, ey, ez); // 6*(float)
-  cutBid = new CutBid5Array (sx, sy, sz, ex, ey, ez);  // (int32_t)
+  cutPos = new CutPos32Array(n_cell); // 6*(float)
+  cutBid = new CutBid5Array (n_cell); // (int32_t)
   TIMING_stop(tm_init_alloc);
   
   
   // グリッド情報アクセッサクラス
-  GridAccessor* GRID = new Cell(poly_org, poly_dx);
+  GridAccessor* GRID = new Cell(cut_org, cut_dx);
   
   
   // 交点計算
@@ -4707,7 +4714,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   d_cut = (float*)cutPos->getDataPointer();
   d_bid = (int*)cutBid->getDataPointer();
   
-
+  
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
@@ -4716,11 +4723,11 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   // カットの最小値を求める
   float f_min=1.0;
   
-#pragma omp parallel firstprivate(ix, jx, kx, gd)
+//#pragma omp parallel firstprivate(ix, jx, kx, gd)
   {
     float th_min = 1.0;
     
-#pragma omp parallel for schedule(static)
+//#pragma omp parallel for schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
@@ -4729,13 +4736,12 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
           size_t mb = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
           int bd = d_bid[mb];
           
-          if ( TEST_BC(bd) ) // カットがあるか，IDによる判定
+          //if ( TEST_BC(bd) ) // カットがあるか，IDによる判定
           //if ( (d_cut[mp+0]+d_cut[mp+1]+d_cut[mp+2]+d_cut[mp+3]+d_cut[mp+4]+d_cut[mp+5]) < 6.0 ) // 距離による判定
-          {
+          //{
             for (size_t n=0; n<6; n++) {
-              
               th_min = min(th_min, d_cut[mp+n]);
-              
+              th_min = min(th_min, cutPos->getPos(i+1,j+1,k+1,n));
             }
             
 // ##########            
@@ -4756,17 +4762,17 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
                    b0, b1, b2, b3, b4, b5);
 #endif
 // ##########            
-          }
+          //}
         }
       }
     }
 
-#pragma omp critical
+//#pragma omp critical
     {
       f_min = min(f_min, th_min);
     }
   }
-
+  
   
   if ( numProc > 1 )
   {
@@ -4776,12 +4782,13 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   Hostonly_
   {
-    printf(    "\n\tMinimum dist. = %5.3e  \n", f_min);
-    fprintf(fp,"\n\tMinimum dist. = %5.3e  \n", f_min);
+    printf(    "\n\tMinimum dist. = %5.3e \n", f_min);
+    fprintf(fp,"\n\tMinimum dist. = %5.3e \n", f_min);
   }
   
   // カットの最小値
   min_distance(d_cut, fp);
+  
 }
 
 
