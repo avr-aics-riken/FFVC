@@ -3616,7 +3616,7 @@ void VoxInfo::encQfaceSVO(int order, int id, int* mid, int* bcd, int* bh1, int* 
  * @param [in,out] bv     BCindex V
  * @param [in,out] bp     BCindex P
  * @param [in]     vec    法線ベクトル
- * @param [in]     bc_dir 境界条件の方向
+ * @param [in]     bc_dir 境界条件の方向 same_direction=1, opposite_direction=2
  */
 unsigned long VoxInfo::encVbit_IBC(const int order,
                                    const int target,
@@ -3745,35 +3745,37 @@ unsigned long VoxInfo::encVbit_IBC(const int order,
 
 // #################################################################
 /**
- @brief bv[]にVBCの境界条件に必要な情報をエンコードし，流入流出の場合にbp[]の隣接壁の方向フラグを除く．境界条件指定キーセルのSTATEを流体に変更する
- @retval エンコードしたセル数
- @param order cmp[]のインデクス
- @param id 境界条件ID
- @param bv BCindex V
- @param bp BCindex P
- @param cut 距離情報
- @param cut_id カット点ID
- @param vec 境界面の法線
- @param bc_dir BCの位置，指定法線と同じ側(1)か反対側(2)
- @note 指定法線とセルのカット方向ベクトルの内積で判断，vspecとoutflowなのでbp[]のVBC_UWDにマスクビットを立てる
+ * @brief bv[]にVBCの境界条件に必要な情報をエンコードし，流入流出の場合にbp[]の隣接壁の方向フラグを除く．
+ *        境界条件指定キーセルのSTATEを流体に変更する
+ * @retval エンコードしたセル数
+ * @param [in]     order  cmp[]のエントリ番号
+ * @param [in]     target 境界条件ID
+ * @param [in,out] bv     BCindex V
+ * @param [in,out] bp     BCindex P
+ * @param [in]     cut    距離情報
+ * @param [in]     bid    カット点ID
+ * @param [in]     vec    法線ベクトル
+ * @param [in]     bc_dir 境界条件の方向 same_direction=1, opposite_direction=2
+ * @note 指定法線とセルのカット方向ベクトルの内積で判断，vspecとoutflowなのでbp[]のVBC_UWDにマスクビットを立てる
  */
 unsigned long VoxInfo::encVbit_IBC_Cut(const int order, 
                                        const int target,
                                        int* bv, 
                                        int* bp, 
                                        const float* cut, 
-                                       const int* cut_id, 
+                                       const int* bid,
                                        const float* vec, 
                                        const int bc_dir)
 {
   unsigned long g=0;
   
-  int s, q;
-  const float *pos;
-  int    bid;
-  size_t m_p, m_c;
-  int    id_e, id_w, id_n, id_s, id_t, id_b;
-  float pp;
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  int tg = target;
+  int odr = order;
   
   FB::Vec3f nv(vec);
   
@@ -3789,42 +3791,38 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
   FB::Vec3f e_b( 0.0,  0.0, -1.0);
   FB::Vec3f e_t( 0.0,  0.0, +1.0);
   
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  int tg = target;
-  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, odr) \
+        firstprivate(e_w, e_e, e_s, e_n, e_b, e_t, nv) \
+        schedule(static) reduction(+:g)
 
-  
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         
-        m_c = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
-        pos = &cut[m_c];
-        pp = pos[0]+pos[1]+pos[2]+pos[3]+pos[4]+pos[5];
+        size_t mc = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
+        const float* pos = &cut[mc];
+        float pp = pos[0]+pos[1]+pos[2]+pos[3]+pos[4]+pos[5];
         
-        if ( pp < 6.0 ) { // 6方向のうちいずれかにカットがある
-
-          m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          bid = cut_id[m_p];
-          s   = bv[m_p];
-          q   = bp[m_p];
+        size_t mp = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int bd = bid[mp];
+        
+        if ( TEST_BC(bd) ) { // 6方向のうちいずれかにカットがある
+          
+          int s = bv[mp];
+          int q = bp[mp];
           
           if ( IS_FLUID(s) ) { // 流体セルがテスト対象
             // 各方向のID
-            id_w = get_BID5(X_MINUS, bid);
-            id_e = get_BID5(X_PLUS,  bid);
-            id_s = get_BID5(Y_MINUS, bid);
-            id_n = get_BID5(Y_PLUS,  bid);
-            id_b = get_BID5(Z_MINUS, bid);
-            id_t = get_BID5(Z_PLUS,  bid);
+            int id_w = get_BID5(X_MINUS, bd);
+            int id_e = get_BID5(X_PLUS,  bd);
+            int id_s = get_BID5(Y_MINUS, bd);
+            int id_n = get_BID5(Y_PLUS,  bd);
+            int id_b = get_BID5(Z_MINUS, bd);
+            int id_t = get_BID5(Z_PLUS,  bd);
             
             // X-
             if ( (id_w == tg) && (dot(e_w, nv) < 0.0) ) {
-              s |= (order << BC_FACE_W);
+              s |= (odr << BC_FACE_W);
               q = offBit(q, FACING_W);
               q = onBit(q, VBC_UWD);
               g++;
@@ -3832,7 +3830,7 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
             
             // X+
             if ( (id_e == tg) && (dot(e_e, nv) < 0.0) ) {
-              s |= (order << BC_FACE_E);
+              s |= (odr << BC_FACE_E);
               q = offBit(q, FACING_E);
               q = onBit(q, VBC_UWD);
               g++;
@@ -3840,7 +3838,7 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
             
             // Y-
             if ( (id_s == tg) && (dot(e_s, nv) < 0.0) ) {
-              s |= (order << BC_FACE_S);
+              s |= (odr << BC_FACE_S);
               q = offBit(q, FACING_S);
               q = onBit(q, VBC_UWD);
               g++;
@@ -3848,7 +3846,7 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
             
             // Y+
             if ( (id_n == tg) && (dot(e_n, nv) < 0.0) ) {
-              s |= (order << BC_FACE_N);
+              s |= (odr << BC_FACE_N);
               q = offBit(q, FACING_N);
               q = onBit(q, VBC_UWD);
               g++;
@@ -3856,7 +3854,7 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
             
             // Z-
             if ( (id_b == tg) && (dot(e_b, nv) < 0.0) ) {
-              s |= (order << BC_FACE_B);
+              s |= (odr << BC_FACE_B);
               q = offBit(q, FACING_B);
               q = onBit(q, VBC_UWD);
               g++;
@@ -3864,17 +3862,17 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
             
             // Z+
             if ( (id_t == tg) && (dot(e_t, nv) < 0.0) ) {
-              s |= (order << BC_FACE_T);
+              s |= (odr << BC_FACE_T);
               q = offBit(q, FACING_T);
               q = onBit(q, VBC_UWD);
               g++;
             }
           } // if fluid
           
-          bv[m_p] = s;
-          bp[m_p] = q;
+          bv[mp] = s;
+          bp[mp] = q;
           
-        } // if cut
+        } // if TEST_BC()
         
       } // i-loop
     }
@@ -3888,17 +3886,17 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         
-        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        s = bv[m_p];
+        mp = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        s = bv[mp];
         
         m_flag = 0;
         
-        if ( GET_FACE_BC(s, BC_FACE_W) == order ) m_flag = 1;
-        if ( GET_FACE_BC(s, BC_FACE_E) == order ) m_flag = 2;
-        if ( GET_FACE_BC(s, BC_FACE_S) == order ) m_flag = 3;
-        if ( GET_FACE_BC(s, BC_FACE_N) == order ) m_flag = 4;
-        if ( GET_FACE_BC(s, BC_FACE_B) == order ) m_flag = 5;
-        if ( GET_FACE_BC(s, BC_FACE_T) == order ) m_flag = 6;
+        if ( GET_FACE_BC(s, BC_FACE_W) == odr ) m_flag = 1;
+        if ( GET_FACE_BC(s, BC_FACE_E) == odr ) m_flag = 2;
+        if ( GET_FACE_BC(s, BC_FACE_S) == odr ) m_flag = 3;
+        if ( GET_FACE_BC(s, BC_FACE_N) == odr ) m_flag = 4;
+        if ( GET_FACE_BC(s, BC_FACE_B) == odr ) m_flag = 5;
+        if ( GET_FACE_BC(s, BC_FACE_T) == odr ) m_flag = 6;
         
         if ( m_flag != 0 ) printf("%3d %3d %3d >> %d\n", i, j, k, m_flag);
       }
@@ -5807,7 +5805,7 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
   
   for (int n=1; n<=NoBC; n++) {
     int id = cmp[n].getMatOdr();
-    int m_dir = cmp[n].getBClocation();
+    int m_dir = cmp[n].getBClocation(); // same_direction=1, opposite_direction=2
     float vec[3] = { (float)cmp[n].nv[0], (float)cmp[n].nv[1], (float)cmp[n].nv[2] };
 
     switch ( cmp[n].getType() )
@@ -5815,12 +5813,12 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
       case SPEC_VEL:
       case SPEC_VEL_WH:
       case OUTFLOW:
-        if (isCDS) { // cut
+        //if (isCDS) { // cut
           cmp[n].setElement( encVbit_IBC_Cut(n, id, bv, bp, cut, bid, vec, m_dir) );
-        }
-        else { // binary
-          cmp[n].setElement( encVbit_IBC(n, id, mid, bv, bp, vec, m_dir) ); // bdへのエンコードはsetBCindexP()で済み
-        }
+        //}
+        //else { // binary
+        //  cmp[n].setElement( encVbit_IBC(n, id, mid, bv, bp, vec, m_dir) ); // bdへのエンコードはsetBCindexP()で済み
+        //}
         break;
     }    
   }
@@ -6102,6 +6100,8 @@ void VoxInfo::setShapeMonitor(int* mid, ShapeMonitor* SM, CompoList* cmp, const 
       m_width = cmp[n].shp_p1/(float)RefL;
       m_height= cmp[n].shp_p2/(float)RefL;
       
+      printf("cmp=%d sahpe=%d\n", n, cmp[n].get_Shape() );
+      
       switch ( cmp[n].get_Shape() )
       {
         case SHAPE_BOX:
@@ -6145,7 +6145,7 @@ void VoxInfo::setShapeMonitor(int* mid, ShapeMonitor* SM, CompoList* cmp, const 
  * @param [in,out] mid    セルID
  * @param [in]     bid    カットID情報
  * @param [in]     cut    距離情報
- * @param [in]     target ターゲットID
+ * @param [in]     target ターゲットID 媒質テーブルの格納番号 >> ParseBC::loadBC_Local()
  * @retval 固体セル数
  * @attention 距離情報は，0.5付近で曖昧さがある．単精度の丸め誤差を考慮した判定
  */
@@ -6181,7 +6181,7 @@ unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut
             }
           }
           
-          if ( paint > 0 )
+          if ( paint > 0 ) // c はペイントされたセル数
           {
             mid[m] = tg;
             c++;

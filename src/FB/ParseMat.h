@@ -62,38 +62,22 @@ public:
   
 private:
 
-  /**
-   * @brief ラベルの重複を調べる
-   * @param [in] mat     MediumList
-   * @param [in] n       現在までに登録した媒質リストの格納番号
-   * @param [in] m_label 検査するラベル名
-   */
+  // ラベルの重複を調べる
   bool chkDuplicateLabel(MediumList* mat, const int n, const std::string m_label);
   
-  /**
-   * @brief 媒質情報の内容物をチェックする
-   * @param [in] mat MediumList
-   * @param [in] m   媒質リストの格納番号
-   */
+  
+  // 媒質情報の内容物をチェックする
   bool chkList4Solver(MediumList* mat, const int m);
   
   
-  /**
-   * @brief 警告メッセージの表示
-   * @param [in] mat MediumList
-   * @param [in] m   媒質リストの格納番号
-   * @param [in] key キーワードの登録番号
-   */
+  // 警告メッセージの表示
   int missingMessage(MediumList* mat, const int m, const int key);
   
   
-  /**
-   * @brief matの変数値を格納する
-   * @param [in] mat MediumList
-   * @param [in] n   媒質リストの格納番号
-   */
+  // matの変数値を格納する
   void copyProperty(MediumList* mat, const int n);
-    
+  
+  
 public:
   /**
    * @brief MTITPのポインタをエキスポート

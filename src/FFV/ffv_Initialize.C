@@ -1965,7 +1965,7 @@ void FFV::generate_Solid(FILE* fp)
     
     if ( cmp[m].getState() == SOLID )
     {
-      int tgt = cmp[m].getMatOdr();
+      int tgt = cmp[m].getMatOdr(); // 媒質テーブルの格納番号 >> ParseBC::loadBC_Local()
       
       zc += V.Solid_from_Cut(d_mid, d_bid, d_cut, tgt);
     }
@@ -2015,17 +2015,9 @@ void FFV::get_Compo_Area()
       
       for (int i=0; i<C.num_of_polygrp; i++) {
         
-        if ( FBUtility::compare(poly_prop[i].label_grp, label) )
+        if ( FBUtility::compare(PolyPP[i].get_Material(), label) )
         {
-          area = poly_prop[i].area;
-          
-          if ( numProc > 1 )
-          {
-            float ta = area;
-            if ( paraMngr->Allreduce(&ta, &area, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-          }
-          
-          cmp[n].area = area;
+          cmp[n].area = PolyPP[i].get_Garea();
         }
       }
 
@@ -3098,9 +3090,10 @@ void FFV::init_Interval()
 // #################################################################
 /* @brief 距離の最小値を求める
  * @param [in,out] cut カット情報の配列
+ * @param [in]     bid カット情報の配列
  * @param [in]     fp  file pointer
  */
-void FFV::min_distance(float* cut, FILE* fp)
+void FFV::min_distance(float* cut, int* bid, FILE* fp)
 {
   float global_min;
   float local_min = 1.0;
@@ -3112,6 +3105,8 @@ void FFV::min_distance(float* cut, FILE* fp)
   int kx = size[2];
   int gd = guide;
   
+  TIMING_start(tm_cut_min);
+  
 #pragma omp parallel firstprivate(ix, jx, kx, eps, gd)
   {
     float th_min = 1.0;
@@ -3121,19 +3116,42 @@ void FFV::min_distance(float* cut, FILE* fp)
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
           
-          for (int l=0; l<6; l++) {
-            size_t m = _F_IDX_S4DEX(l, i, j, k, 6, ix, jx, kx, gd);
-            float c = cut[m];
-            
-            th_min = min(th_min, c); //if ( local_min > c ) local_min = c;
-            
-            if ( (c > 0.0) && (c <= eps) )
-            {
-              cut[m] = eps;
-              g++;
+          size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
+          size_t mb = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          int bd = bid[mb];
+          
+          if ( TEST_BC(bd) ) // カットがあるか，IDによる判定
+          {
+            for (size_t n=0; n<6; n++) {
+              float c = cut[mp+n];
+              th_min = min(th_min, c);
+              //th_min = min(th_min, cutPos->getPos(i+1,j+1,k+1,n)); slower than above inplementation
+              
+              if ( (c > 0.0) && (c <= eps) )
+              {
+                cut[mp+n] = eps;
+                g++;
+              }
             }
           }
-          
+// ##########
+#if 0 // debug
+          int b0 = (bd >> 0)  & MASK_5;
+          int b1 = (bd >> 5)  & MASK_5;
+          int b2 = (bd >> 10) & MASK_5;
+          int b3 = (bd >> 15) & MASK_5;
+          int b4 = (bd >> 20) & MASK_5;
+          int b5 = (bd >> 25) & MASK_5;
+          printf("%3d %3d %3d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n", i,j,k,
+                 d_cut[mp+0],
+                 d_cut[mp+1],
+                 d_cut[mp+2],
+                 d_cut[mp+3],
+                 d_cut[mp+4],
+                 d_cut[mp+5],
+                 b0, b1, b2, b3, b4, b5);
+#endif
+// ##########
         }
       }
     }
@@ -3157,13 +3175,15 @@ void FFV::min_distance(float* cut, FILE* fp)
     unsigned long tmp_g = gl;
     if ( paraMngr->Allreduce(&tmp_g, &gl, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
+  
+  TIMING_stop(tm_cut_min);
 
   if ( gl > 0 )
   {
     Hostonly_
     {
-      fprintf(fp, "\n\tMinimum non-dimnensional distance is %e and replaced to %e : num = %ld\n\n", global_min, eps, gl);
-      printf     ("\n\tMinimum non-dimnensional distance is %e and replaced to %e : num = %ld\n\n", global_min, eps, gl);
+      fprintf(fp, "\tMinimum non-dimnensional distance is %e and replaced to %e : num = %ld\n\n", global_min, eps, gl);
+      printf     ("\tMinimum non-dimnensional distance is %e and replaced to %e : num = %ld\n\n", global_min, eps, gl);
     }
   }
 
@@ -3468,12 +3488,13 @@ void FFV::resizeCompoBV(const int kos, const bool isHeat)
  */
 void FFV::setBCinfo()
 {
+
   // パラメータファイルをパースして，外部境界条件を保持する　>> VoxScan()以前に処理
   B.loadBC_Outer( BC.export_OBC(), M.export_MTI(), cmp );
-  
+
   
   // パラメータファイルの情報を元にCompoListの情報を設定する
-  B.loadBC_Local(&C, mat, cmp, poly_prop);
+  B.loadBC_Local(&C, mat, cmp, PolyPP);
   
   
   // 各コンポーネントが存在するかどうかを保持しておく
@@ -4461,7 +4482,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   // 階層情報表示 debug brief hierarchy
 // ##########
-#if 0
+#if 1
   PL->show_group_hierarchy();
   PL->show_group_hierarchy(fp);
 #endif
@@ -4475,48 +4496,67 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   // Polygon Groupの数
   C.num_of_polygrp = pg_roots->size();
   
-  // ポリゴングループの属性保持のstruct array
-  poly_prop = new Control::Polygon_property[C.num_of_polygrp];
+  if ( C.num_of_polygrp < 1) {
+    printf("\tError : Numbe of polygon group must be greater than 1.\n");
+    Exit(0);
+  }
+  
+  // ポリゴングループの属性保持
+  PolyPP = new PolygonProperty[C.num_of_polygrp];
   
   Hostonly_
   {
     printf(     "\tNumber of Polygon Group = %d\n\n", C.num_of_polygrp);
     fprintf(fp, "\tNumber of Polygon Group = %d\n\n", C.num_of_polygrp);
     
-    printf(     "\t Medium ID         Material :          No. :  Polygon Group Label :         Area\n");
-    fprintf(fp, "\t        ID         Material :          No. :  Polygon Group Label :         Area\n");
+    printf(     "\t   Polygon Group Label  Mat. Odr       Mat. Alias       Element        Area\n");
+    fprintf(fp, "\t   Polygon Group Label  Mat. Odr       Mat. Alias       Element        Area\n");
   }
   
   
-  // ポリゴン情報の表示
+  // ポリゴン情報の表示と管理クラスへのコピー
   int c = 0;
   for (it = pg_roots->begin(); it != pg_roots->end(); it++) {
+    
     std::string m_pg = (*it)->get_name();
     int m_id = (*it)->get_id();
     int ntria= (*it)->get_group_num_tria();
     std::string m_mat = (*it)->get_label();
-    float area = (*it)->get_group_area();
+    REAL_TYPE area = (*it)->get_group_area();
     
-    poly_prop[c].mat_id    = m_id;  // polylib.tpのID
-    poly_prop[c].label_grp = m_pg;  // グループラベル
-    poly_prop[c].label_mat = m_mat; // 媒質ラベル
-    poly_prop[c].area      = area;  // ポリゴンの総面積
-    c++;
-
+    PolyPP[c].set_MatOdr(m_id);    // polylib.tpのID 直接は使わず，媒質ラベルのMediumTableの格納番号を利用
+    PolyPP[c].set_Group(m_pg);     // グループラベル
+    PolyPP[c].set_Material(m_mat); // 媒質ラベル
+    PolyPP[c].set_Lntria(ntria);   // ローカルのポリゴン数
+    PolyPP[c].set_Larea(area);     // ローカルのポリゴン面積
+    
     if ( numProc > 1 )
     {
       int tmp = ntria;
       if ( paraMngr->Allreduce(&tmp, &ntria, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
       
-      float ta = area;
+      REAL_TYPE ta = area;
       if ( paraMngr->Allreduce(&ta, &area, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
     }
     
+    PolyPP[c].set_Gntria(ntria);   // グローバルなポリゴン数
+    PolyPP[c].set_Garea(area);     // グローバルなポリゴン面積
+    
     Hostonly_
     {
-      printf(    "\t %9d %16s : %12d : %20s : %e\n", m_id, m_mat.c_str(), ntria, m_pg.c_str(), area);
-      fprintf(fp,"\t %9d %16s : %12d : %20s : %e\n", m_id, m_mat.c_str(), ntria, m_pg.c_str(), area);
+      printf(    "\t  %20s %9d %16s  %12d  %e\n", PolyPP[c].get_Group().c_str(),
+                                                  PolyPP[c].get_MatOdr(),
+                                                  PolyPP[c].get_Material().c_str(),
+                                                  PolyPP[c].get_Gntria(),
+                                                  PolyPP[c].get_Garea());
+      fprintf(fp,"\t  %20s %9d %16s  %12d  %e\n", PolyPP[c].get_Group().c_str(),
+                                                  PolyPP[c].get_MatOdr(),
+                                                  PolyPP[c].get_Material().c_str(),
+                                                  PolyPP[c].get_Gntria(),
+                                                  PolyPP[c].get_Garea());
     }
+    
+    c++;
     
 // ########## show corrdinates and area
 #if 0
@@ -4534,7 +4574,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     fprintf(fp, "\n");
   }
   
-  
+
   /* PolygonGroupの媒質数は，1以上、MediumTableの数以下であること
   if ( (C.num_of_polygrp < 1) || (C.num_of_polygrp > C.NoMedium) )
   {
@@ -4715,79 +4755,8 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   d_bid = (int*)cutBid->getDataPointer();
   
   
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  // カットの最小値を求める
-  float f_min=1.0;
-  
-//#pragma omp parallel firstprivate(ix, jx, kx, gd)
-  {
-    float th_min = 1.0;
-    
-//#pragma omp parallel for schedule(static)
-    for (int k=1; k<=kx; k++) {
-      for (int j=1; j<=jx; j++) {
-        for (int i=1; i<=ix; i++) {
-          
-          size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
-          size_t mb = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          int bd = d_bid[mb];
-          
-          //if ( TEST_BC(bd) ) // カットがあるか，IDによる判定
-          //if ( (d_cut[mp+0]+d_cut[mp+1]+d_cut[mp+2]+d_cut[mp+3]+d_cut[mp+4]+d_cut[mp+5]) < 6.0 ) // 距離による判定
-          //{
-            for (size_t n=0; n<6; n++) {
-              th_min = min(th_min, d_cut[mp+n]);
-              th_min = min(th_min, cutPos->getPos(i+1,j+1,k+1,n));
-            }
-            
-// ##########            
-#if 0 // debug
-            int b0 = (bd >> 0)  & MASK_5;
-            int b1 = (bd >> 5)  & MASK_5;
-            int b2 = (bd >> 10) & MASK_5;
-            int b3 = (bd >> 15) & MASK_5;
-            int b4 = (bd >> 20) & MASK_5;
-            int b5 = (bd >> 25) & MASK_5;
-            printf("%3d %3d %3d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n", i,j,k,
-                   d_cut[mp+0],
-                   d_cut[mp+1],
-                   d_cut[mp+2],
-                   d_cut[mp+3],
-                   d_cut[mp+4],
-                   d_cut[mp+5],
-                   b0, b1, b2, b3, b4, b5);
-#endif
-// ##########            
-          //}
-        }
-      }
-    }
-
-//#pragma omp critical
-    {
-      f_min = min(f_min, th_min);
-    }
-  }
-  
-  
-  if ( numProc > 1 )
-  {
-    float tmp = f_min;
-    if ( paraMngr->Allreduce(&tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  Hostonly_
-  {
-    printf(    "\n\tMinimum dist. = %5.3e \n", f_min);
-    fprintf(fp,"\n\tMinimum dist. = %5.3e \n", f_min);
-  }
-  
   // カットの最小値
-  min_distance(d_cut, fp);
+  min_distance(d_cut, d_bid, fp);
   
 }
 
@@ -4871,14 +4840,14 @@ void FFV::VoxEncode()
   
   
   // BCIndexV に速度計算のビット情報をエンコードする -----
-  if ( C.isCDS() ) 
-  {
+  //if ( C.isCDS() )
+  //{
     V.setBCIndexV(d_bcv, d_mid, d_bcp, &BC, cmp, C.Mode.Example, true, d_cut, d_bid);
-  }
-  else // binary
-  {
+  //}
+  //else // binary
+  //{
     V.setBCIndexV(d_bcv, d_mid, d_bcp, &BC, cmp, C.Mode.Example);
-  }
+  //}
   
 
 

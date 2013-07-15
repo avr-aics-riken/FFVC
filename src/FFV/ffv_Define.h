@@ -34,6 +34,7 @@ enum timing_key {
       tm_voxel_load,
       tm_polygon_load,
       tm_cutinfo,
+      tm_cut_min,
   
     tm_cmp_vertex8,
     tm_cmp_subdivision,

@@ -2197,12 +2197,12 @@ bool ParseBC::isLabelinCompo(const string candidate, const int now, const CompoL
  * @param [in]  C     Control
  * @param [in]  mat   MediumList
  * @param [out] cmp   CompoList
- * @param [in]  polyP ポリゴン管理構造体
+ * @param [in]  PP    ポリゴン属性管理クラス [0]-[n-1]
  * @note 最初にBCの情報を登録，その後IDの情報を登録
  * @note パラメータファイルから各内部BCのidをパースし，cmpに保持する
  * @note 格納番号は1からスタート
  */
-void ParseBC::loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Control::Polygon_property* polyP)
+void ParseBC::loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, PolygonProperty* PP)
 { 
   string str, label;
   string label_base, label_ename, label_leaf;
@@ -2268,13 +2268,13 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Co
     // Aliasで設定したラベルに対する属性の取得（Polylib.tpの情報を利用する場合）
     if ( C->Mode.Example == id_Polygon )
     {
-      string m_pg, m_mat;
       
       for (int i=0; i<C->num_of_polygrp; i++) {
         
-        m_pg  = polyP[i].label_grp; // ポリゴンラベル
-        m_mat = polyP[i].label_mat; // ポリゴンの媒質ラベル
-        printf("mat=%s  grp=%s\n", m_mat.c_str(), m_pg.c_str());
+        string m_pg  = PP[i].get_Group();    // ポリゴングループ名
+        string m_mat = PP[i].get_Material(); // ポリゴンの媒質ラベル
+        int m_id = PP[i].get_MatOdr();
+
         
         // ポリゴンのラベルとコンポーネントの登録ラベル(alias)が一致する場合
         if ( FBUtility::compare(m_pg, cmp[odr].getLabel()) )

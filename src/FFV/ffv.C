@@ -1026,6 +1026,7 @@ void FFV::set_timing_label()
   set_label(tm_voxel_load,         "Loading_Voxel_File",      PerfMonitor::CALC);
   set_label(tm_polygon_load,       "Loading_Polygon_File",    PerfMonitor::CALC);
   set_label(tm_cutinfo,            "Cut_Information",         PerfMonitor::CALC);
+  set_label(tm_cut_min,            "Cut_Minimum_search",      PerfMonitor::CALC);
   set_label(tm_cmp_vertex8,        "Compo_Vertex8",           PerfMonitor::CALC);
   set_label(tm_cmp_subdivision,    "Compo_Subdivision",       PerfMonitor::CALC);
   // end of Voxel Prep. Section

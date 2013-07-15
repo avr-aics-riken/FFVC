@@ -442,7 +442,7 @@ public:
   
   
   // CompoListに内部境界条件の情報を設定する
-  void loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Control::Polygon_property* polyP);
+  void loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, PolygonProperty* polyPP);
   
   
   // パラメータファイルをパースして，外部境界条件を取得，保持する

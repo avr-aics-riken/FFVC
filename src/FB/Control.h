@@ -43,6 +43,102 @@
 using namespace std;
 
 
+
+// #################################################################
+class PolygonProperty {
+  
+private:
+  int mat_id;        ///< Mediumtable[@]の格納番号
+  int l_ntria;       ///< ローカルなポリゴン数
+  int g_ntria;       ///< グローバルなポリゴン数
+  REAL_TYPE l_area;  ///< ローカルな面積
+  REAL_TYPE g_area;  ///< グローバルな面積
+  string group;      ///< ポリゴングループ名
+  string material;   ///< Mediumtable[@]のalias
+  
+public:
+  PolygonProperty() {
+    mat_id = -1;
+    l_area = 0.0;
+    l_ntria= 0;
+    g_area = 0.0;
+    g_ntria= 0;
+  }
+  
+  ~PolygonProperty() {}
+  
+  string get_Group() const
+  {
+    return group;
+  }
+  
+  string get_Material() const
+  {
+    return material;
+  }
+
+  int get_MatOdr() const
+  {
+    return mat_id;
+  }
+  
+  int get_Lntria() const
+  {
+    return l_ntria;
+  }
+  
+  REAL_TYPE get_Larea() const
+  {
+    return l_area;
+  }
+  
+  int get_Gntria() const
+  {
+    return g_ntria;
+  }
+  
+  REAL_TYPE get_Garea() const
+  {
+    return g_area;
+  }
+  
+  void set_Group(string key)
+  {
+    group = key;
+  }
+  
+  void set_Material(string key)
+  {
+    material = key;
+  }
+  
+  void set_MatOdr(int val)
+  {
+    mat_id = val;
+  }
+  
+  void set_Lntria(int val)
+  {
+    l_ntria = val;
+  }
+  
+  void set_Larea(REAL_TYPE val)
+  {
+    l_area = val;
+  }
+  
+  void set_Gntria(int val)
+  {
+    g_ntria = val;
+  }
+  
+  void set_Garea(REAL_TYPE val)
+  {
+    g_area = val;
+  }
+};
+
+
 // #################################################################
 class ConveregenceCriterion {
 private:
@@ -593,16 +689,6 @@ public:
     int monitor;
     int tfree;
   } Ens_of_Compo;
-  
-  
-  // polygon gourp
-  typedef struct {
-    int mat_id;
-    string label_grp;
-    string label_mat;
-    float area;
-  } Polygon_property;
-  
   
   
   /** 偏微分方程式の型 */

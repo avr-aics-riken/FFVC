@@ -232,9 +232,6 @@ private:
   
   int* compo_global_bbox; ///< グローバルなコンポーネントBbox 表示に利用
   
-  // PolygonGroupの管理
-  Control::Polygon_property* poly_prop;
-  
   // カット
   CutPos32Array *cutPos;
   CutBid5Array  *cutBid;
@@ -268,6 +265,7 @@ private:
   POLYLIB_STAT poly_stat;    ///< Polylibの戻り値
   FBUtility U;               ///< ユーティリティクラス
   MonitorList MO;            ///< Monitorクラス
+  PolygonProperty* PolyPP;   ///< PolygonGroupの管理
   
   // 20130611 ::DFI DFI;                 ///< 分散ファイルインデクス管理クラス
   // 20130611 Plot3D PLT3D;              ///< PLOT3Dクラス
@@ -452,7 +450,7 @@ private:
   
   
   // 距離の最小値を求める
-  void min_distance(float* cut, FILE* fp);
+  void min_distance(float* cut, int* bid, FILE* fp);
   
   
   // 履歴の出力準備

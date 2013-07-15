@@ -23,7 +23,12 @@
 
 
 // #################################################################
-// ラベルの重複を調べる
+/**
+ * @brief ラベルの重複を調べる
+ * @param [in] mat     MediumList
+ * @param [in] n       現在までに登録した媒質リストの格納番号
+ * @param [in] m_label 検査するラベル名
+ */
 bool ParseMat::chkDuplicateLabel(MediumList* mat, const int n, const std::string m_label)
 {
 	for (int i=0; i<n; i++){
@@ -90,7 +95,11 @@ void ParseMat::chkList(FILE* fp, CompoList* compo, const int basicEq)
 
 
 // #################################################################
-// 媒質情報の内容物をチェックする
+/**
+ * @brief 媒質情報の内容物をチェックする
+ * @param [in] mat MediumList
+ * @param [in] m   媒質リストの格納番号
+ */
 bool ParseMat::chkList4Solver(MediumList* mat, const int m)
 {
   int c=0;
@@ -114,7 +123,11 @@ bool ParseMat::chkList4Solver(MediumList* mat, const int m)
 
 
 // #################################################################
-// matの変数値を格納する
+/**
+ * @brief matの変数値を格納する
+ * @param [in] mat MediumList
+ * @param [in] n   媒質リストの格納番号
+ */
 void ParseMat::copyProperty(MediumList* mat, const int n)
 {
 	int nfval = MTITP[n].m_fval.size();
@@ -135,6 +148,7 @@ void ParseMat::copyProperty(MediumList* mat, const int n)
     int key = MediumList::getKey(a1.c_str());
     if (key<0) {
       printf("Invalid keyword [%s]\n", a1.c_str());
+      Exit(0);
     }
 
 		mat[n].P[key]=a2;
@@ -214,11 +228,11 @@ int ParseMat::get_MediumTable()
           MTITP[i1].label = label;
         }
       }
-      else if( !strcasecmp(str.c_str(), "fxgencolor") )
+      else if( !strcasecmp(str.c_str(), "color") )
       {
         ; // FXgenが吐き出す情報でffvcでは不使用
       }
-      else if( !strcasecmp(str.c_str(), "fxgenid") )
+      else if( !strcasecmp(str.c_str(), "id") )
       {
         ; // FXgenが吐き出す情報でffvcでは不使用
       }
@@ -275,7 +289,12 @@ bool ParseMat::makeMediumList(MediumList* mat, const int NoMedium)
 
 
 // #################################################################
-// 警告メッセージの表示
+/**
+ * @brief 警告メッセージの表示
+ * @param [in] mat MediumList
+ * @param [in] m   媒質リストの格納番号
+ * @param [in] key キーワードの登録番号
+ */
 int ParseMat::missingMessage(MediumList* mat, const int m, const int key)
 {
   printf("\tMissing keyword '%s' for '%s' in %s phase\n", 
