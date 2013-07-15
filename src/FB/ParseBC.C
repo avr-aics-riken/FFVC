@@ -22,11 +22,7 @@
 
 
 // #################################################################
-/**
- * @brief KOSと境界条件数の整合性をチェックする
- * @param [in] kos KindOfSolver
- * @param [in] cmp CompListクラスのポインタ
- */
+// KOSと境界条件数の整合性をチェックする 
 void ParseBC::chkBCconsistency(const int kos, CompoList* cmp)
 {
   if (kos == FLOW_ONLY) 
@@ -68,11 +64,7 @@ bool ParseBC::chkDuplicate(const int n, const string m_label)
 
 
 // #################################################################
-/**
- * @brief KOSと媒質の状態の整合性をチェックし，媒質数をカウント，C.NoMediumFluid, C.NoMediumSolidをセット
- * @param [in] Cref Controlクラス
- * @param [in] mat  MediumList
- */
+// KOSと媒質の状態の整合性をチェックし，媒質数をカウント，C.NoMediumFluid, C.NoMediumSolidをセット
 void ParseBC::countMedium(Control* Cref, const MediumList* mat)
 {
   // check at least one fluid
@@ -203,7 +195,12 @@ void ParseBC::get_Center(const string label_base, REAL_TYPE* v)
 
 
 // #################################################################
-// Darcyのパラメータを取得する
+/**
+ * @brief
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ */
 void ParseBC::get_Darcy(const string label_base, const int n, CompoList* cmp)
 {
   REAL_TYPE v[3];
@@ -250,7 +247,12 @@ void ParseBC::get_Dir(const string label_base, REAL_TYPE* v)
 
 
 // #################################################################
-// Const_Temperatureのパラメータを取得する
+/**
+ * @brief Const_Temperatureのパラメータを取得する
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ */
 void ParseBC::get_IBC_CnstTemp(const string label_base, const int n, CompoList* cmp)
 {
   string label = label_base + "/Temperature";
@@ -262,7 +264,12 @@ void ParseBC::get_IBC_CnstTemp(const string label_base, const int n, CompoList* 
 
 
 // #################################################################
-// Fanのパラメータを取得する
+/**
+ * @brief Fanのパラメータを取得する
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ */
 void ParseBC::get_IBC_Fan(const string label_base, const int n, CompoList* cmp)
 {
   string str,str_u;
@@ -320,7 +327,12 @@ void ParseBC::get_IBC_Fan(const string label_base, const int n, CompoList* cmp)
 
 
 // #################################################################
-// Direct_Fluxのパラメータを取得する
+/**
+ * @brief Direct_Fluxのパラメータを取得する
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ */
 void ParseBC::get_IBC_HeatFlux(const string label_base, const int n, CompoList* cmp)
 {
   string label = label_base + "/HeatFlux";
@@ -330,7 +342,12 @@ void ParseBC::get_IBC_HeatFlux(const string label_base, const int n, CompoList* 
 
 
 // #################################################################
-// Heat_Generationのパラメータを取得する
+/**
+ * @brief Heat_Generationのパラメータを取得する
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ */
 void ParseBC::get_IBC_HeatSrc(const string label_base, const int n, CompoList* cmp)
 {
   REAL_TYPE hsrc=0.0f;
@@ -382,7 +399,12 @@ void ParseBC::get_IBC_HeatSrc(const string label_base, const int n, CompoList* c
 
 
 // #################################################################
-// HeatTransfer_Nのパラメータを取得する
+/**
+ * @brief HeatTransfer_Nのパラメータを取得する
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ */
 void ParseBC::get_IBC_HT_N(const string label_base, const int n, CompoList* cmp)
 {
   // 熱伝達係数
@@ -393,7 +415,13 @@ void ParseBC::get_IBC_HT_N(const string label_base, const int n, CompoList* cmp)
 
 
 // #################################################################
-// HeatTransfer_Sのパラメータを取得す
+/**
+ * @brief HeatTransfer_Sのパラメータを取得
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ * @param [in]  mat        MediumList
+ */
 void ParseBC::get_IBC_HT_S(const string label_base, const int n, CompoList* cmp, const MediumList* mat)
 {
   string label;
@@ -415,7 +443,13 @@ void ParseBC::get_IBC_HT_S(const string label_base, const int n, CompoList* cmp,
 
 
 // #################################################################
-// HeatTransfer_SNのパラメータを取得する
+/**
+ * @brief HeatTransfer_SNのパラメータを取得する
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ * @param [in]  mat        MediumList
+ */
 void ParseBC::get_IBC_HT_SN(const string label_base, const int n, CompoList* cmp, const MediumList* mat)
 {
   string str;
@@ -490,7 +524,12 @@ void ParseBC::get_IBC_HT_SN(const string label_base, const int n, CompoList* cmp
 
 
 // #################################################################
-// HeatTransfer_SFのパラメータを取得する
+/**
+ * @brief HeatTransfer_SFのパラメータを取得する
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ */
 void ParseBC::get_IBC_HT_SF(const string label_base, const int n, CompoList* cmp)
 {
   string str;
@@ -529,7 +568,12 @@ void ParseBC::get_IBC_HT_SF(const string label_base, const int n, CompoList* cmp
 
 
 // #################################################################
-// HeatTransfer_Bのパラメータを取得する
+/**
+ * @brief HeatTransfer_Bのパラメータを取得する
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ */
 void ParseBC::get_IBC_HT_B(const string label_base, const int n, CompoList* cmp)
 {
   string label;
@@ -546,7 +590,12 @@ void ParseBC::get_IBC_HT_B(const string label_base, const int n, CompoList* cmp)
 
 
 // #################################################################
-// Direct Forcingのパラメータを取得する
+/**
+ * @brief Direct Forcingのパラメータを取得する
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ */
 void ParseBC::get_IBC_IBM_DF(const string label_base, const int n, CompoList* cmp)
 {
   int d;
@@ -576,7 +625,12 @@ void ParseBC::get_IBC_IBM_DF(const string label_base, const int n, CompoList* cm
 
 
 // #################################################################
-// 境界条件IsoThermalのパラメータを取得し保持する
+/**
+ * @brief 境界条件IsoThermalのパラメータを取得し保持する
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ */
 void ParseBC::get_IBC_IsoTherm(const string label_base, const int n, CompoList* cmp)
 {
   string label;
@@ -589,7 +643,12 @@ void ParseBC::get_IBC_IsoTherm(const string label_base, const int n, CompoList* 
 
 
 // #################################################################
-// Monitorの設定内容をパースし，パラメータを保持する
+/**
+ * @brief Monitorの設定内容をパースし，パラメータを保持する
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ */
 void ParseBC::get_IBC_Monitor(const string label_base, const int n, CompoList* cmp)
 {
   int nvc = 0;
@@ -849,7 +908,12 @@ void ParseBC::get_IBC_Monitor(const string label_base, const int n, CompoList* c
 
 
 // #################################################################
-// 内部の流出境界のパラメータを取得する
+/**
+ * @brief 内部の流出境界のパラメータを取得する
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ */
 void ParseBC::get_IBC_Outflow(const string label_base, const int n, CompoList* cmp)
 {
   int def;
@@ -893,7 +957,12 @@ void ParseBC::get_IBC_Outflow(const string label_base, const int n, CompoList* c
 
 
 // #################################################################
-// 内部の周期境界のパラメータを取得する
+/**
+ * @brief 内部の周期境界のパラメータを取得する
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ */
 void ParseBC::get_IBC_Periodic(const string label_base, const int n, CompoList* cmp)
 {
   int dir=0;
@@ -957,9 +1026,14 @@ void ParseBC::get_IBC_Periodic(const string label_base, const int n, CompoList* 
 
 
 // #################################################################
-// HeatExchangerのパラメータを取得する
-///> @note この時点ではRefDensityの値が未定なので，あとでパラメータ処理
-///> @see Control::setParameters()
+/**
+ * @brief HeatExchangerのパラメータを取得する
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ * @note この時点ではRefDensityの値が未定なので，あとでパラメータ処理
+ * @see Control::setParameters()
+ */
 void ParseBC::get_IBC_PrsLoss(const string label_base, const int n, CompoList* cmp)
 {
   string str,str_u;
@@ -1050,8 +1124,13 @@ void ParseBC::get_IBC_PrsLoss(const string label_base, const int n, CompoList* c
 
 
 // #################################################################
-// 境界条件Radiantのパラメータを取得し保持する
-// 境界条件自体は未実装
+/** 境界条件Radiantのパラメータを取得し保持する
+ * @brief
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ * @note 境界条件自体は未実装
+ */
 void ParseBC::get_IBC_Radiant(const string label_base, const int n, CompoList* cmp)
 {
   string label;
@@ -1068,8 +1147,13 @@ void ParseBC::get_IBC_Radiant(const string label_base, const int n, CompoList* c
 
 
 // #################################################################
-// 内部の流入境界のパラメータを取得する
-// Control::setparameters()でcmp[].ca[]に値をセットする
+/**
+ * @brief 内部の流入境界のパラメータを取得する
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ * @note Control::setparameters()でcmp[].ca[]に値をセットする
+ */
 void ParseBC::get_IBC_SpecVel(const string label_base, const int n, CompoList* cmp)
 {
   string str;
@@ -1162,10 +1246,7 @@ void ParseBC::get_IBC_SpecVel(const string label_base, const int n, CompoList* c
 
 
 // #################################################################
-/**
- * @brief 温度計算の場合の各媒質の初期値を取得する
- * @param [in,out] cmp    CompoList
- */
+// 温度計算の場合の各媒質の初期値を取得する
 void ParseBC::get_Medium_InitTemp(CompoList* cmp)
 {  
   string label, label_base;
@@ -1389,12 +1470,11 @@ void ParseBC::get_OBC_FarField(const string label_base, const int n)
 
 
 // #################################################################
-/*
- @fn void ParseBC::get_OBC_HT(const string label_base, const int n, const string kind)
- @brief 外部の壁面熱伝達境界のパラメータを取得する
- @param label_base
- @param n 面番号
- @param kind 熱伝達境界の種類
+/**
+ * @brief 外部の壁面熱伝達境界のパラメータを取得する
+ * @param [in] label_base ラベルディレクトリ
+ * @param [in] n          面番号
+ * @param [in] kind       熱伝達境界の種類
  */
 void ParseBC::get_OBC_HT(const string label_base, const int n, const string kind)
 {
@@ -1914,10 +1994,7 @@ void ParseBC::get_OBC_Wall(const string label_base, const int n)
 
 
 // #################################################################
-/**
- * @brief 2相流問題で気相か液相かを取得する
- * @param [out] cmp   CompoList
- */
+// 2相流問題で気相か液相かを取得する
 void ParseBC::get_Phase(CompoList* cmp)
 {
   int m_phase;
@@ -2130,10 +2207,7 @@ void ParseBC::get_Vel_Params(const string label_base, const int prof, REAL_TYPE*
 
 
 // #################################################################
-/**
- * @brief TPのポインタを受け取る
- * @param [in] tp  TPControlクラスのポインタ
- */
+// TPのポインタを受け取る
 void ParseBC::importTP(TPControl* tp)
 { 
   if ( !tp ) Exit(0);
@@ -2174,13 +2248,7 @@ bool ParseBC::isCompoTransfer(const int label, const CompoList* cmp)
 
 
 // #################################################################
-/**
- * @brief 同じラベルが既にコンポーネントに登録されているかを調べる
- * @retval 重複していればfalseを返す
- * @param [in] candidate テストするラベル
- * @param [in] now       コンポーネントリストの現在までのエントリ番号
- * @param [in] cmp       CompoList
- */
+// 同じラベルが既にコンポーネントに登録されているかを調べる
 bool ParseBC::isLabelinCompo(const string candidate, const int now, const CompoList* cmp)
 {
   for (int i=1; i<now; i++) {
@@ -2192,12 +2260,8 @@ bool ParseBC::isLabelinCompo(const string candidate, const int now, const CompoL
 
 
 // #################################################################
+// CompoListに内部境界条件の情報を設定する
 /**
- * @brief CompoListに内部境界条件の情報を設定する
- * @param [in]  C     Control
- * @param [in]  mat   MediumList
- * @param [out] cmp   CompoList
- * @param [in]  PP    ポリゴン属性管理クラス [0]-[n-1]
  * @note 最初にBCの情報を登録，その後IDの情報を登録
  * @note パラメータファイルから各内部BCのidをパースし，cmpに保持する
  * @note 格納番号は1からスタート
@@ -2441,12 +2505,7 @@ void ParseBC::loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, Po
 
 
 // #################################################################
-/**
- * @brief パラメータファイルをパースして，外部境界条件を取得，保持する
- * @param [in,out] bc     BoundaryOuter
- * @param [in]     MTITP  MediumTableInfo
- * @param [out]    cmp    CompoList
- */
+// パラメータファイルをパースして，外部境界条件を取得，保持する
 void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, CompoList* cmp)
 {
   string label_base, label_leaf, label;
@@ -2744,14 +2803,7 @@ int ParseBC::oppositeDir(const int dir)
 
 
 // #################################################################
-/**
- * @brief コンポーネントの情報を表示する
- * @param [in] fp  ファイルポインタ
- * @param [in] gci グローバルなコンポーネントのインデクス
- * @param [in] mat MediumList
- * @param [in] cmp CompoList
- * @param [in] bc  BoundaryOuter
- */
+// コンポーネントの情報を表示する
 void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoList* cmp, const BoundaryOuter* bc)
 {
   int n, m;
@@ -3334,13 +3386,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
 
 
 // #################################################################
-/**
- * @brief 外部境界条件の各面の情報を表示する
- * @param [in] fp    ファイルポインタ
- * @param [in] G_reg グローバルの領域の大きさ
- * @param [in] bc    BoundaryOuter
- * @param [in] mat   MediumList
- */
+// 外部境界条件の各面の情報を表示する
 void ParseBC::printFaceOBC(FILE* fp, const REAL_TYPE* G_reg, const BoundaryOuter* bc, const MediumList* mat)
 {
   for (int i=0; i<NOFACE; i++) {
@@ -3563,7 +3609,7 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
 
 
 // #################################################################
-//@brief 変数の初期化
+// 必要な変数をセットする
 void ParseBC::setControlVars(Control* Cref)
 {
   RefVelocity = Cref->RefVelocity;
@@ -3703,12 +3749,7 @@ void ParseBC::setKeywordOBC(const string keyword, const int m)
 
 
 // #################################################################
-/**
- * @brief 指定した媒質IDから参照物理量を設定する
- * @param [in] mat MediumList
- * @param [in] cmp CompoList
- * @param [in] Ref 参照媒質番号
- */
+// 指定した媒質IDから参照物理量を設定する
 void ParseBC::setRefMediumProperty(const MediumList* mat, const CompoList* cmp, const int Ref)
 {
   int m;

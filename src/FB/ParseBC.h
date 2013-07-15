@@ -177,167 +177,75 @@ private:
   string get_Origin(const string label_base);
   
   
-  /**
-   * @brief Const_Temperatureのパラメータを取得する
-   * @param [in]  label_base ラベルディレクトリ
-   * @param [in]  n          コンポーネントリストの格納番号
-   * @param [out] cmp        CompoList
-   */
+  // Const_Temperatureのパラメータを取得する
   void get_IBC_CnstTemp(const string label_base, const int n, CompoList* cmp);
   
   
-  /**
-   * @brief Fanのパラメータを取得する
-   * @param [in]  label_base ラベルディレクトリ
-   * @param [in]  n          コンポーネントリストの格納番号
-   * @param [out] cmp        CompoList
-   */
+  // Fanのパラメータを取得する
   void get_IBC_Fan(const string label_base, const int n, CompoList* cmp);
   
   
-  /**
-   * @brief Direct Forcingのパラメータを取得する
-   * @param [in]  label_base ラベルディレクトリ
-   * @param [in]  n          コンポーネントリストの格納番号
-   * @param [out] cmp        CompoList
-   */
+  // Direct Forcingのパラメータを取得する
   void get_IBC_IBM_DF(const string label_base, const int n, CompoList* cmp);
   
   
-  /**
-   * @brief Direct_Fluxのパラメータを取得する
-   * @param [in]  label_base ラベルディレクトリ
-   * @param [in]  n          コンポーネントリストの格納番号
-   * @param [out] cmp        CompoList
-   */
+  // Direct_Fluxのパラメータを取得する
   void get_IBC_HeatFlux(const string label_base, const int n, CompoList* cmp);
   
   
-  /**
-   * @brief Heat_Generationのパラメータを取得する
-   * @param [in]  label_base ラベルディレクトリ
-   * @param [in]  n          コンポーネントリストの格納番号
-   * @param [out] cmp        CompoList
-   */
+  // Heat_Generationのパラメータを取得する
   void get_IBC_HeatSrc(const string label_base, const int n, CompoList* cmp);
   
   
-  /**
-   * @brief HeatTransfer_Bのパラメータを取得する
-   * @param [in]  label_base ラベルディレクトリ
-   * @param [in]  n          コンポーネントリストの格納番号
-   * @param [out] cmp        CompoList
-   */
+  // HeatTransfer_Bのパラメータを取得する
   void get_IBC_HT_B(const string label_base, const int n, CompoList* cmp);
   
   
-  /**
-   * @brief HeatTransfer_Nのパラメータを取得する
-   * @param [in]  label_base ラベルディレクトリ
-   * @param [in]  n          コンポーネントリストの格納番号
-   * @param [out] cmp        CompoList
-   */
+  // HeatTransfer_Nのパラメータを取得する
   void get_IBC_HT_N(const string label_base, const int n, CompoList* cmp);
   
   
-  /**
-   * @brief HeatTransfer_Sのパラメータを取得す
-   * @param [in]  label_base ラベルディレクトリ
-   * @param [in]  n          コンポーネントリストの格納番号
-   * @param [out] cmp        CompoList
-   * @param [in]  mat        MediumList
-   */
+  // HeatTransfer_Sのパラメータを取得
   void get_IBC_HT_S(const string label_base, const int n, CompoList* cmp, const MediumList* mat);
   
   
-  /**
-   * @brief HeatTransfer_SFのパラメータを取得する
-   * @param [in]  label_base ラベルディレクトリ
-   * @param [in]  n          コンポーネントリストの格納番号
-   * @param [out] cmp        CompoList
-   */
+  // HeatTransfer_SFのパラメータを取得する
   void get_IBC_HT_SF(const string label_base, const int n, CompoList* cmp);
   
   
-  /**
-   * @brief HeatTransfer_SNのパラメータを取得する
-   * @param [in]  label_base ラベルディレクトリ
-   * @param [in]  n          コンポーネントリストの格納番号
-   * @param [out] cmp        CompoList
-   * @param [in]  mat        MediumList
-   */
+  // HeatTransfer_SNのパラメータを取得する
   void get_IBC_HT_SN(const string label_base, const int n, CompoList* cmp, const MediumList* mat);
   
   
-  /**
-   * @brief 境界条件IsoThermalのパラメータを取得し保持する
-   * @param [in]  label_base ラベルディレクトリ
-   * @param [in]  n          コンポーネントリストの格納番号
-   * @param [out] cmp        CompoList
-   */
+  // 境界条件IsoThermalのパラメータを取得し保持する
   void get_IBC_IsoTherm(const string label_base, const int n, CompoList* cmp);
   
   
-  /**
-   * @brief Monitorの設定内容をパースし，パラメータを保持する
-   * @param [in]  label_base ラベルディレクトリ
-   * @param [in]  n          コンポーネントリストの格納番号
-   * @param [out] cmp        CompoList
-   */
+  // Monitorの設定内容をパースし，パラメータを保持する
   void get_IBC_Monitor(const string label_base, const int n, CompoList* cmp);
   
   
-  /**
-   * @brief 内部の流出境界のパラメータを取得する
-   * @param [in]  label_base ラベルディレクトリ
-   * @param [in]  n          コンポーネントリストの格納番号
-   * @param [out] cmp        CompoList
-   */
+  // 内部の流出境界のパラメータを取得する
   void get_IBC_Outflow(const string label_base, const int n, CompoList* cmp);
   
   
-  /**
-   * @brief 内部の周期境界のパラメータを取得する
-   * @param [in]  label_base ラベルディレクトリ
-   * @param [in]  n          コンポーネントリストの格納番号
-   * @param [out] cmp        CompoList
-   */
+  // 内部の周期境界のパラメータを取得する
   void get_IBC_Periodic(const string label_base, const int n, CompoList* cmp);
   
   
-  /**
-   * @brief HeatExchangerのパラメータを取得する
-   * @param [in]  label_base ラベルディレクトリ
-   * @param [in]  n          コンポーネントリストの格納番号
-   * @param [out] cmp        CompoList
-   */
+  // HeatExchangerのパラメータを取得する
   void get_IBC_PrsLoss(const string label_base, const int n, CompoList* cmp);
   
   
-  /** 境界条件Radiantのパラメータを取得し保持する
-   * @brief 
-   * @param [in]  label_base ラベルディレクトリ
-   * @param [in]  n          コンポーネントリストの格納番号
-   * @param [out] cmp        CompoList
-   */
+  // 境界条件Radiantのパラメータを取得し保持する
   void get_IBC_Radiant(const string label_base, const int n, CompoList* cmp);
   
   
-  /**
-   * @brief 内部の流入境界のパラメータを取得する
-   * @param [in]  label_base ラベルディレクトリ
-   * @param [in]  n          コンポーネントリストの格納番号
-   * @param [out] cmp        CompoList
-   */
+  // 内部の流入境界のパラメータを取得する
   void get_IBC_SpecVel(const string label_base, const int n, CompoList* cmp);
   
   
-  /**
-   * @brief 
-   * @param [in]  label_base ラベルディレクトリ
-   * @param [in]  n          コンポーネントリストの格納番号
-   * @param [out] cmp        CompoList
-   */
+  // Darcyのパラメータを取得する
   void get_Darcy(const string label_base, const int n, CompoList* cmp);
   
   
@@ -345,12 +253,7 @@ private:
   void get_OBC_FarField (const string label_base, const int n);
   
   
-  /**
-   * @brief 外部の壁面熱伝達境界のパラメータを取得する
-   * @param [in] label_base ラベルディレクトリ
-   * @param [in] n          面番号
-   * @param [in] kind       熱伝達境界の種類
-   */
+  // 外部の壁面熱伝達境界のパラメータを取得する
   void get_OBC_HT (const string label_base, const int n, const string kind);
   
   
@@ -413,11 +316,19 @@ private:
   
 public:
 
-  // KOSと境界条件数の整合性をチェックする  
+  /**
+   * @brief KOSと境界条件数の整合性をチェックする
+   * @param [in] kos KindOfSolver
+   * @param [in] cmp CompListクラスのポインタ
+   */
   void chkBCconsistency(const int kos, CompoList* cmp);
   
   
-  // KOSと媒質の状態の整合性をチェックし，媒質数をカウント，C.NoMediumFluid, C.NoMediumSolidをセット
+  /**
+   * @brief KOSと媒質の状態の整合性をチェックし，媒質数をカウント，C.NoMediumFluid, C.NoMediumSolidをセット
+   * @param [in] Cref Controlクラス
+   * @param [in] mat  MediumList
+   */
   void countMedium(Control* Cref, const MediumList* mat);
   
   
@@ -425,43 +336,93 @@ public:
   int getNoLocalBC();
   
   
-  // 2相流問題で気相か液相かを取得する
+  /**
+   * @brief 2相流問題で気相か液相かを取得する
+   * @param [out] cmp   CompoList
+   */
   void get_Phase(CompoList* cmp);
   
   
-  // 温度計算の場合の各媒質の初期値を取得する
+  /**
+   * @brief 温度計算の場合の各媒質の初期値を取得する
+   * @param [in,out] cmp    CompoList
+   */
   void get_Medium_InitTemp(CompoList* cmp);
   
   
-  // TPのポインタを受け取る
+  /**
+   * @brief TPのポインタを受け取る
+   * @param [in] tp  TPControlクラスのポインタ
+   */
   void importTP(TPControl* tp);
   
   
-  // 同じラベルが既にコンポーネントに登録されているかを調べる
+  /**
+   * @brief 同じラベルが既にコンポーネントに登録されているかを調べる
+   * @retval 重複していればfalseを返す
+   * @param [in] candidate テストするラベル
+   * @param [in] now       コンポーネントリストの現在までのエントリ番号
+   * @param [in] cmp       CompoList
+   */
   bool isLabelinCompo(const string candidate, const int now, const CompoList* cmp);
   
   
-  // CompoListに内部境界条件の情報を設定する
+  /**
+   * @brief CompoListに内部境界条件の情報を設定する
+   * @param [in]  C     Control
+   * @param [in]  mat   MediumList
+   * @param [out] cmp   CompoList
+   * @param [in]  PP    ポリゴン属性管理クラス [0]-[n-1]
+   * @note 最初にBCの情報を登録，その後IDの情報を登録
+   * @note パラメータファイルから各内部BCのidをパースし，cmpに保持する
+   * @note 格納番号は1からスタート
+   */
   void loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, PolygonProperty* polyPP);
   
   
-  // パラメータファイルをパースして，外部境界条件を取得，保持する
+  /**
+   * @brief パラメータファイルをパースして，外部境界条件を取得，保持する
+   * @param [in,out] bc     BoundaryOuter
+   * @param [in]     MTITP  MediumTableInfo
+   * @param [out]    cmp    CompoList
+   */
   void loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, CompoList* cmp);
   
   
-  // コンポーネントの情報を表示する
+  /**
+   * @brief コンポーネントの情報を表示する
+   * @param [in] fp  ファイルポインタ
+   * @param [in] gci グローバルなコンポーネントのインデクス
+   * @param [in] mat MediumList
+   * @param [in] cmp CompoList
+   * @param [in] bc  BoundaryOuter
+   */
   void printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoList* cmp, const BoundaryOuter* bc);
   
   
-  // 外部境界条件の各面の情報を表示する
+  /**
+   * @brief 外部境界条件の各面の情報を表示する
+   * @param [in] fp    ファイルポインタ
+   * @param [in] G_reg グローバルの領域の大きさ
+   * @param [in] bc    BoundaryOuter
+   * @param [in] mat   MediumList
+   */
   void printFaceOBC(FILE* fp, const REAL_TYPE* G_reg, const BoundaryOuter* bc, const MediumList* mat);
   
   
-  // 必要な変数をセットする
+  /**
+   * @brief 変数の初期化
+   * param [in] Cref Control class
+   */
   void setControlVars(Control* Cref);
   
   
-  // 指定した媒質IDから参照物理量を設定する
+  /**
+   * @brief 指定した媒質IDから参照物理量を設定する
+   * @param [in] mat MediumList
+   * @param [in] cmp CompoList
+   * @param [in] Ref 参照媒質番号
+   */
   void setRefMediumProperty(const MediumList* mat, const CompoList* cmp, const int Ref);
   
 };

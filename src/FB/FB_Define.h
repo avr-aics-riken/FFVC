@@ -24,7 +24,7 @@
 
 #include "mydebug.h"
 
-#define FB_VERS 130
+#define FB_VERS 131
 
 #define MODEL_ID_MAX 255
 

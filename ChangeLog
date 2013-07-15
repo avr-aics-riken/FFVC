@@ -18,8 +18,16 @@
 REVISION HISTORY
 ================
 
+--------------------------
+2013-07-15
+
+- r1002 add calcBboxfromPolygonGroup()
+  - CompoFraction::get_min/maxをstaticに変更
+  - PolygonProperty::min, maxとsetter/getterを追加
+  - calcBboxfromPolygonGroup()を追加
+
 - r1001 BC recognition by cut info
- - FFV::setup_Polygon2CutInfo(), FFV::min_distance()の整理
+  - FFV::setup_Polygon2CutInfo(), FFV::min_distance()の整理
   - Cutの最小値計算時間の比較 CutPos->getPos()よりインデクスの直接計算の方が高速
   - PorygonPropertyクラスによりポリゴンの情報管理(Control.h)
   - encVBC_Cut()の修正，テスト中

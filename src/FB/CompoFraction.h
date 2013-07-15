@@ -170,32 +170,7 @@ protected:
   {
     return FB::Vec3f(index.x+h, index.y+h, index.z+h); 
   }
-  
-  
-  /**
-   * @brief ベクトルの最小成分
-   * @param [in,out] mn 比較して小さい成分
-   * @param [in]     p  参照ベクトル
-   */
-  inline void get_min(FB::Vec3f& mn, const FB::Vec3f p) 
-  {
-    mn.x = (mn.x < p.x) ? mn.x : p.x;
-    mn.y = (mn.y < p.y) ? mn.y : p.y;
-    mn.z = (mn.z < p.z) ? mn.z : p.z;
-  }
-  
-  
-  /**
-   * @brief ベクトルの最大値成分
-   * @param [in,out] mx 比較して大きい成分
-   * @param [in]     p  参照ベクトル
-   */
-  inline void get_max(FB::Vec3f& mx, const FB::Vec3f p) 
-  {
-    mx.x = (mx.x > p.x) ? mx.x : p.x;
-    mx.y = (mx.y > p.y) ? mx.y : p.y;
-    mx.z = (mx.z > p.z) ? mx.z : p.z;
-  }
+
   
   /**
    * @brief 円筒形状の内外判定
@@ -349,6 +324,33 @@ public:
    * @param [in,out] flop  浮動小数点演算数
    */
   void vertex8(const int st[], const int ed[], float* vf, double& flop);
+  
+  
+  /**
+   * @brief ベクトルの最小成分
+   * @param [in,out] mn 比較して小さい成分
+   * @param [in]     p  参照ベクトル
+   */
+  static inline void get_min(FB::Vec3f& mn, const FB::Vec3f p)
+  {
+    mn.x = (mn.x < p.x) ? mn.x : p.x;
+    mn.y = (mn.y < p.y) ? mn.y : p.y;
+    mn.z = (mn.z < p.z) ? mn.z : p.z;
+  }
+  
+  
+  /**
+   * @brief ベクトルの最大値成分
+   * @param [in,out] mx 比較して大きい成分
+   * @param [in]     p  参照ベクトル
+   */
+  static inline void get_max(FB::Vec3f& mx, const FB::Vec3f p)
+  {
+    mx.x = (mx.x > p.x) ? mx.x : p.x;
+    mx.y = (mx.y > p.y) ? mx.y : p.y;
+    mx.z = (mx.z > p.z) ? mx.z : p.z;
+  }
+  
 };
 
 

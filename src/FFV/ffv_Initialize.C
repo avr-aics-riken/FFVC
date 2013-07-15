@@ -857,6 +857,94 @@ void FFV::Bbox_IBC()
 
 
 // #################################################################
+// @brief ポリゴングループの座標値からboxを計算する
+void FFV::calcBboxfromPolygonGroup()
+{
+  // float で定義すること
+  float poly_org[3];
+  float poly_dx[3];
+  
+  // 有次元に変換 Polylib: 並列計算領域情報　ポリゴンは実スケールで，ガイドセル領域部分も含めて指定する
+  poly_dx[0]  = pitch[0] * C.RefLength;
+  poly_dx[1]  = pitch[1] * C.RefLength;
+  poly_dx[2]  = pitch[2] * C.RefLength;
+  poly_org[0] = origin[0]* C.RefLength;
+  poly_org[1] = origin[1]* C.RefLength;
+  poly_org[2] = origin[2]* C.RefLength;
+  
+  
+  // ポリゴン情報へのアクセス
+  vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
+  vector<PolygonGroup*>::iterator it;
+  
+  PolylibNS::Vec3f m_min, m_max;
+  PolylibNS::Vec3f t1(poly_org), t2(poly_dx), t3;
+  
+  t3.assign((float)size[0]*t2.t[0], (float)size[1]*t2.t[1], (float)size[2]*t2.t[2]);
+  
+  // サブドメインの1層外側までをサーチ対象とする
+  m_min = t1 - t2;      
+  m_max = t1 + t3 + t2;
+  printf("Search area Bbox min : %f %f %f\n", m_min.t[0], m_min.t[1], m_min.t[2]);
+  printf("Search area Bbox max : %f %f %f\n", m_max.t[0], m_max.t[1], m_max.t[2]);
+  
+  
+  // ポリゴングループのループ
+  int m=0;
+  for (it = pg_roots->begin(); it != pg_roots->end(); it++)
+  {
+    string m_pg = PolyPP[m].get_Group();
+    
+    // false; ポリゴンが一部でもかかればピックアップ
+    vector<Triangle*>* trias = PL->search_polygons(m_pg, m_min, m_max, false);
+    
+    PolylibNS::Vec3f *p;
+    FB::Vec3f bbox_min( 1.0e6,  1.0e6,  1.0e6);
+    FB::Vec3f bbox_max(-1.0e6, -1.0e6, -1.0e6);
+    unsigned c=0;
+    vector<Triangle*>::iterator it2;
+    
+    for (it2 = trias->begin(); it2 != trias->end(); it2++)
+    {
+      p = (*it2)->get_vertex();
+      
+      // PolulibNS::Vec3f >> FB::Vec3f
+      FB::Vec3f p0(p[0].t[0], p[0].t[1], p[0].t[2]);
+      FB::Vec3f p1(p[1].t[0], p[1].t[1], p[1].t[2]);
+      FB::Vec3f p2(p[2].t[0], p[2].t[1], p[2].t[2]);
+      
+      CompoFraction::get_min(bbox_min, p0);
+      CompoFraction::get_min(bbox_min, p1);
+      CompoFraction::get_min(bbox_min, p2);
+      
+      CompoFraction::get_max(bbox_max, p0);
+      CompoFraction::get_max(bbox_max, p1);
+      CompoFraction::get_max(bbox_max, p2);
+      
+#if 0
+      printf("%d : p0=(%6.3e %6.3e %6.3e)  p1=(%6.3e %6.3e %6.3e) p2=(%6.3e %6.3e %6.3e) n=(%6.3e %6.3e %6.3e)\n", c++,
+             p[0].t[0], p[0].t[1], p[0].t[2],
+             p[1].t[0], p[1].t[1], p[1].t[2],
+             p[2].t[0], p[2].t[1], p[2].t[2],
+             n.t[0], n.t[1], n.t[2]);
+#endif
+    }
+    
+    PolyPP[m].set_Min(bbox_min);
+    PolyPP[m].set_Max(bbox_max);
+    
+    printf("%20s : (%6.3e %6.3e %6.3e) - (%6.3e %6.3e %6.3e)\n",
+           m_pg.c_str(), bbox_min.x, bbox_min.y, bbox_min.z,
+           bbox_max.x, bbox_max.y, bbox_max.z);
+    
+    delete trias; // 後始末
+    m++;
+  }
+  
+}
+
+
+// #################################################################
 /* @brief 全Voxelモデルの媒質数とKOSの整合性をチェック
  * @retval エラーコード
  */
@@ -4596,12 +4684,13 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   display_memory_info(fp, G_poly_mem, poly_mem, "Polygon");
   
 
+  calcBboxfromPolygonGroup();
   
   
   // Triangle display >> Debug
 // ##########
 #if 0
-  PolylibNS::Vec3f m_min, m_max, t1((float*)poly_org), t2((float*)poly_dx), t3;
+  PolylibNS::Vec3f m_min, m_max, t1(poly_org), t2(poly_dx), t3;
   t3.assign((float)size[0]*t2.t[0], (float)size[1]*t2.t[1], (float)size[2]*t2.t[2]);
   m_min = t1 - t2;      // 1層外側まで
   m_max = t1 + t3 + t2; //

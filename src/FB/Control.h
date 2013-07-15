@@ -34,6 +34,7 @@
 #include "BndOuter.h"
 #include "Interval_Mngr.h"
 #include "TPControl.h"
+#include "CompoFraction.h"
 
 /* 20130611 commentout
 #include "PLOT3D_read.h"
@@ -55,6 +56,8 @@ private:
   REAL_TYPE g_area;  ///< グローバルな面積
   string group;      ///< ポリゴングループ名
   string material;   ///< Mediumtable[@]のalias
+  FB::Vec3f min;     ///< Bboxのmin
+  FB::Vec3f max;     ///< Bboxのmax
   
 public:
   PolygonProperty() {
@@ -63,6 +66,8 @@ public:
     l_ntria= 0;
     g_area = 0.0;
     g_ntria= 0;
+    min.x = min.y = min.z = 0.0;
+    max.x = max.y = max.z = 0.0;
   }
   
   ~PolygonProperty() {}
@@ -102,6 +107,16 @@ public:
     return g_area;
   }
   
+  FB::Vec3f get_Min() const
+  {
+    return min;
+  }
+  
+  FB::Vec3f get_Max() const
+  {
+    return max;
+  }
+  
   void set_Group(string key)
   {
     group = key;
@@ -135,6 +150,16 @@ public:
   void set_Garea(REAL_TYPE val)
   {
     g_area = val;
+  }
+  
+  void set_Min(FB::Vec3f val)
+  {
+    min = val;
+  }
+  
+  void set_Max(FB::Vec3f val)
+  {
+    max = val;
   }
 };
 
