@@ -21,6 +21,10 @@ REVISION HISTORY
 
 --------------------------
 2013-07-16
+
+- r1004 configure.ac for non-intel compiler
+  - Intelコンパイラ固有のオプション制御 ifport ifcore
+
 - r1003 modify fill for solid-cut only
   - comment out: Solid_from_Cut(int* mid, ..., const int target)
   - Solid cutのみを対象とする > fill_by_mid(), fill_seed(), fill_by_bid(), 
