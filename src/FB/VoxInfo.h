@@ -356,8 +356,9 @@ public:
    * @param [in,out] cut      カット情報
    * @param [in]     tgt_id   フィルする流体ID
    * @param [in]     solid_id 固体ID
+   * @param [in]     cmp      CompoList
    */
-  unsigned fill_by_bid(int* bid, int* mid, float* cut, const int tgt_id, const int solid_id);
+  unsigned fill_by_bid(int* bid, int* mid, float* cut, const int tgt_id, const int solid_id, CompoList* cmp);
   
   
   /**
@@ -367,8 +368,9 @@ public:
    * @param [in,out] cut      カット情報
    * @param [in]     tgt_id   フィルする流体ID
    * @param [in]     solid_id 固体ID
+   * @param [in]     cmp      CompoList
    */
-  unsigned fill_by_mid(int* bid, int* mid, float* cut, const int tgt_id, const int solid_id);
+  unsigned fill_by_mid(int* bid, int* mid, float* cut, const int tgt_id, const int solid_id, CompoList* cmp);
   
   
   /**
@@ -385,8 +387,9 @@ public:
    * @param [in]     face   ヒント面
    * @param [in]     target ペイントするID
    * @param [in]     cut    距離情報
+   * @param [in]     cmp      CompoList
    */
-  unsigned long fill_seed(int* mid, const int face, const int target, const float* cut);
+  unsigned long fill_seed(int* mid, const int face, const int target, const float* cut, CompoList* cmp);
   
   
   unsigned long flip_InActive(unsigned long& L,
@@ -506,7 +509,7 @@ public:
   
   
   // カット情報を用いて，指定IDからバイナリボクセルを作成する
-  unsigned long Solid_from_Cut(int* mid, const int* bid, const float* cut, const int target);
+  //unsigned long Solid_from_Cut(int* mid, const int* bid, const float* cut, const int target);
   
   
   // ボクセルモデルにカット情報から得られた固体情報を転写する

@@ -746,16 +746,8 @@ void ParseBC::get_IBC_Monitor(const string label_base, const int n, CompoList* c
   }
   
   
-  // Variables
-  label_leaf = label_base + "/Variables";
-  if ( !(tpCntl->chkNode(label_leaf)) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : No 'Variables' keyword in '%s'\n", label_leaf.c_str());
-    Exit(0);
-  }
-  
   // サンプリングモード
-  label = label_leaf + "/SamplingMode";
+  label = label_base + "/SamplingMode";
   if ( !(tpCntl->GetValue(label, &pnt )) )
   {
     ;
@@ -782,7 +774,7 @@ void ParseBC::get_IBC_Monitor(const string label_base, const int n, CompoList* c
   }
   
   // サンプリング方法
-  label = label_leaf + "/SamplingMethod";
+  label = label_base + "/SamplingMethod";
   if ( !(tpCntl->GetValue(label, &pnt )) )
   {
   }
@@ -806,6 +798,15 @@ void ParseBC::get_IBC_Monitor(const string label_base, const int n, CompoList* c
       Exit(0);
     }
   }
+  
+  // Variables
+  label_leaf = label_base + "/Variables";
+  if ( !(tpCntl->chkNode(label_leaf)) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : No 'Variables' keyword in '%s'\n", label_leaf.c_str());
+    Exit(0);
+  }
+  
   
   // モニタする変数と数を取得
   nvc = 0;

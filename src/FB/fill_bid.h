@@ -36,6 +36,7 @@ zn = mid[m_n];
 zb = mid[m_b];
 zt = mid[m_t];
 
+
 // 未ペイントの場合にテスト
 if ( zp == 0 )
 {
@@ -48,6 +49,44 @@ if ( zp == 0 )
   qn = get_BID5(Y_PLUS,  qq);
   qb = get_BID5(Z_MINUS, qq);
   qt = get_BID5(Z_PLUS,  qq);
+  
+  // Solid cutのみを対象とする
+  int ff = 0;
+  for (int n=1; n<=NoBC; n++) {
+    if ( list[n] == qw ) ff++; // Solid cutであれば ff>0
+  }
+  if ( ff == 0 ) qw=0; // Fluid cutの場合にはカットなし
+  
+  ff = 0;
+  for (int n=1; n<=NoBC; n++) {
+    if ( list[n] == qe ) ff++;
+  }
+  if ( ff == 0 ) qe=0;
+
+  ff = 0;
+  for (int n=1; n<=NoBC; n++) {
+    if ( list[n] == qs ) ff++;
+  }
+  if ( ff == 0 ) qs=0;
+  
+  ff = 0;
+  for (int n=1; n<=NoBC; n++) {
+    if ( list[n] == qn ) ff++;
+  }
+  if ( ff == 0 ) qn=0;
+    
+  ff = 0;
+  for (int n=1; n<=NoBC; n++) {
+    if ( list[n] == qb ) ff++;
+  }
+  if ( ff == 0 ) qb=0;
+    
+  ff = 0;
+  for (int n=1; n<=NoBC; n++) {
+    if ( list[n] == qt ) ff++;
+  }
+  if ( ff == 0 ) qt=0;
+    
   
   // 各方向のテスト
   // 例えば、W側をみてテストするとき、次の2つを満たす場合のみがフィルの候補となる

@@ -3800,8 +3800,8 @@ unsigned long VoxInfo::encVbit_IBC_Cut(const int order,
       for (int i=1; i<=ix; i++) {
         
         size_t mc = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
-        const float* pos = &cut[mc];
-        float pp = pos[0]+pos[1]+pos[2]+pos[3]+pos[4]+pos[5];
+        //const float* pos = &cut[mc];
+        //float pp = pos[0]+pos[1]+pos[2]+pos[3]+pos[4]+pos[5];
         
         size_t mp = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         int bd = bid[mp];
@@ -4253,7 +4253,7 @@ int VoxInfo::fill_check(const int* mid)
 // #################################################################
 // カットID情報に基づく流体媒質のフィルを実行
 // Symmetric fillにより反復回数を減少
-unsigned VoxInfo::fill_by_bid(int* bid, int* mid, float* cut, const int tgt_id, const int solid_id)
+unsigned VoxInfo::fill_by_bid(int* bid, int* mid, float* cut, const int tgt_id, const int solid_id, CompoList* cmp)
 {
   size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
   int qw, qe, qs, qn, qb, qt, qq;
@@ -4268,7 +4268,14 @@ unsigned VoxInfo::fill_by_bid(int* bid, int* mid, float* cut, const int tgt_id, 
   unsigned c = 0; /// painted count
   float cpos = 0.5;
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, sd, cpos) \
+  // チェック用のリスト Fluid属性のコンポーネントはカットとみなさない
+  int* list = new int[NoBC+1];
+  
+  for (int n=1; n<=NoBC; n++) {
+    if ( cmp[n].getState() == SOLID ) list[n] = cmp[n].getMatOdr();
+  }
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, sd, cpos, list) \
 private(m_p, m_e, m_w, m_n, m_s, m_t, m_b) \
 private(qw, qe, qs, qn, qb, qt, qq) \
 private(zw, ze, zs, zn, zb, zt, zp) \
@@ -4285,7 +4292,7 @@ schedule(static) reduction(+:c)
   }
   
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, sd, cpos) \
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, sd, cpos, list) \
 private(m_p, m_e, m_w, m_n, m_s, m_t, m_b) \
 private(qw, qe, qs, qn, qb, qt, qq) \
 private(zw, ze, zs, zn, zb, zt, zp) \
@@ -4301,13 +4308,15 @@ schedule(static) reduction(+:c)
     }
   }
   
+  if ( list ) delete [] list;
+
   return c;
 }
 
 // #################################################################
 // 媒質ID情報に基づく流体媒質のフィルを実行
 // Symmetric fillにより反復回数を減少
-unsigned VoxInfo::fill_by_mid(int* bid, int* mid, float* cut, const int tgt_id, const int solid_id)
+unsigned VoxInfo::fill_by_mid(int* bid, int* mid, float* cut, const int tgt_id, const int solid_id, CompoList* cmp)
 {
   size_t m_p, m_e, m_w, m_n, m_s, m_t, m_b;
   int qw, qe, qs, qn, qb, qt, qq;
@@ -4322,7 +4331,16 @@ unsigned VoxInfo::fill_by_mid(int* bid, int* mid, float* cut, const int tgt_id, 
   unsigned c = 0; /// painted count
   float cpos = 0.5;
 
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, sd, cpos) \
+  
+  // チェック用のリスト Fluid属性のコンポーネントはカットとみなさない
+  int* list = new int[NoBC+1];
+  
+  for (int n=1; n<=NoBC; n++) {
+    if ( cmp[n].getState() == SOLID ) list[n] = cmp[n].getMatOdr();
+  }
+  
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, sd, cpos, list) \
   private(m_p, m_e, m_w, m_n, m_s, m_t, m_b) \
   private(qw, qe, qs, qn, qb, qt, qq) \
   private(zw, ze, zs, zn, zb, zt, zp) \
@@ -4338,7 +4356,7 @@ unsigned VoxInfo::fill_by_mid(int* bid, int* mid, float* cut, const int tgt_id, 
     }
   }
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, sd, cpos) \
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, sd, cpos, list) \
 private(m_p, m_e, m_w, m_n, m_s, m_t, m_b) \
 private(qw, qe, qs, qn, qb, qt, qq) \
 private(zw, ze, zs, zn, zb, zt, zp) \
@@ -4353,6 +4371,8 @@ schedule(static) reduction(+:c)
       }
     }
   }
+  
+  if ( list ) delete [] list;
   
   return c;
 }
@@ -4399,7 +4419,7 @@ unsigned VoxInfo::fill_inside(int* mid, const int target, const int fill_id)
 // シード点をペイントする
 // ヒントとして与えられた外部境界面に接するセルにおいて，確実に流体セルであるセルをフィルする
 // もし，ヒント面に固体候補があれば、ぬれ面はフィルしない
-unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, const float* cut)
+unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, const float* cut, CompoList* cmp)
 {
   int ix = size[0];
   int jx = size[1];
@@ -4408,13 +4428,20 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
   int tg = target;
   unsigned long c = 0;
   
+  // チェック用のリスト Fluid属性のコンポーネントはカットとみなさない
+  int* list = new int[NoBC+1];
+  
+  for (int n=1; n<=NoBC; n++) {
+    if ( cmp[n].getState() == SOLID ) list[n] = cmp[n].getMatOdr();
+  }
+  
   
   switch (face)
   {
     case X_MINUS:
       if ( nID[face] < 0 )
       {
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, list) schedule(static) reduction(+:c)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
@@ -4426,7 +4453,11 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
             for (int l=0; l<6; l++) {
               if ( (pos[l] - ROUND_EPS) <= 0.5) // 誤差を許容してテストする
               {
-                flag++;
+                int ff = 0;
+                for (int n=1; n<=NoBC; n++) {
+                  if ( list[n] == tg ) ff++; // Solid cutがあれば ff>0
+                }
+                if ( ff == 0 ) flag++; // Fluid cutなので候補フラグを立てる
               }
             }
             
@@ -4445,7 +4476,7 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
     case X_PLUS:
       if ( nID[face] < 0 )
       {
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, list) schedule(static) reduction(+:c)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             size_t m = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
@@ -4456,7 +4487,11 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
             for (int l=0; l<6; l++) {
               if ( (pos[l] - ROUND_EPS) <= 0.5 )
               {
-                flag++;
+                int ff = 0;
+                for (int n=1; n<=NoBC; n++) {
+                  if ( list[n] == tg ) ff++; // 除外IDがあれば ff>0
+                }
+                if ( ff == 0 ) flag++; // 除外IDがないのでフラグを立てる
               }
             }
             
@@ -4473,7 +4508,7 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
     case Y_MINUS:
       if ( nID[face] < 0 )
       {
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, list) schedule(static) reduction(+:c)
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
             size_t m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
@@ -4484,7 +4519,11 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
             for (int l=0; l<6; l++) {
               if ( (pos[l] - ROUND_EPS) <= 0.5 )
               {
-                flag++;
+                int ff = 0;
+                for (int n=1; n<=NoBC; n++) {
+                  if ( list[n] == tg ) ff++; // 除外IDがあれば ff>0
+                }
+                if ( ff == 0 ) flag++; // 除外IDがないのでフラグを立てる
               }
             }
             
@@ -4501,7 +4540,7 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
     case Y_PLUS:
       if ( nID[face] < 0 )
       {
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, list) schedule(static) reduction(+:c)
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
             size_t m = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
@@ -4512,7 +4551,11 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
             for (int l=0; l<6; l++) {
               if ( (pos[l] - ROUND_EPS) <= 0.5 )
               {
-                flag++;
+                int ff = 0;
+                for (int n=1; n<=NoBC; n++) {
+                  if ( list[n] == tg ) ff++; // 除外IDがあれば ff>0
+                }
+                if ( ff == 0 ) flag++; // 除外IDがないのでフラグを立てる
               }
             }
             
@@ -4530,7 +4573,7 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
     case Z_MINUS:
       if ( nID[face] < 0 )
       {
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, list) schedule(static) reduction(+:c)
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
             size_t m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
@@ -4541,7 +4584,11 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
             for (int l=0; l<6; l++) {
               if ( (pos[l] - ROUND_EPS) <= 0.5 )
               {
-                flag++;
+                int ff = 0;
+                for (int n=1; n<=NoBC; n++) {
+                  if ( list[n] == tg ) ff++; // 除外IDがあれば ff>0
+                }
+                if ( ff == 0 ) flag++; // 除外IDがないのでフラグを立てる
               }
             }
             
@@ -4559,7 +4606,7 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
     case Z_PLUS:
       if ( nID[face] < 0 )
       {
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, list) schedule(static) reduction(+:c)
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
             size_t m = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
@@ -4570,7 +4617,11 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
             for (int l=0; l<6; l++) {
               if ( (pos[l] - ROUND_EPS) <= 0.5 )
               {
-                flag++;
+                int ff = 0;
+                for (int n=1; n<=NoBC; n++) {
+                  if ( list[n] == tg ) ff++; // 除外IDがあれば ff>0
+                }
+                if ( ff == 0 ) flag++; // 除外IDがないのでフラグを立てる
               }
             }
             
@@ -4587,6 +4638,8 @@ unsigned long VoxInfo::fill_seed(int* mid, const int face, const int target, con
       
   } // end of switch
 
+  if ( list ) delete [] list;
+  
   return c;
 }
 
@@ -4692,7 +4745,7 @@ int VoxInfo::find_mat_odr(const int mat_id, CompoList* cmp)
 
 
 // #################################################################
-// VBCのbboxを取得する
+// IBCのbboxを取得する
 // 1セル内に対象IDがあるかどうかを判断する
 bool VoxInfo::find_IBC_bbox(const int tgt, const int* bid, const float* cut, int* st, int* ed)
 {
@@ -6112,6 +6165,9 @@ void VoxInfo::setShapeMonitor(int* mid, ShapeMonitor* SM, CompoList* cmp, const 
           SM->setShapeParam(nv, ctr, m_depth, m_radius);
           break;
           
+        case SHAPE_VOXEL:
+          break;
+          
         default:
           Exit(0);
           break;
@@ -6148,7 +6204,7 @@ void VoxInfo::setShapeMonitor(int* mid, ShapeMonitor* SM, CompoList* cmp, const 
  * @param [in]     target ターゲットID 媒質テーブルの格納番号 >> ParseBC::loadBC_Local()
  * @retval 固体セル数
  * @attention 距離情報は，0.5付近で曖昧さがある．単精度の丸め誤差を考慮した判定
- */
+ 
 unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut, const int target)
 {
   unsigned long c=0;
@@ -6222,7 +6278,7 @@ unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut
   
   return cl;
 }
-
+*/
 
 // #################################################################
 /**
@@ -6244,8 +6300,8 @@ unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut
   int gd = guide;
   
   // チェック用のリスト
-  int* list=NULL;
-  list = new int[NoBC+1];
+  int* list = new int[NoBC+1];
+  
   for (int n=1; n<=NoBC; n++) {
     list[n] = cmp[n].getMatOdr();
   }
@@ -6266,36 +6322,27 @@ unsigned long VoxInfo::Solid_from_Cut(int* mid, const int* bid, const float* cut
           size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
           const float* pos = &cut[mp];
           int tgt=0;
-          int paint=0;
           
           for (int l=0; l<6; l++) {
             if ( (pos[l] - ROUND_EPS) <= 0.5 ) // セル内部にカットが存在する
             {
               bx = (bd >> l*5)  & MASK_5; // カット面のID，カットがなければゼロ
               tgt = max( tgt, bx ); // 6方向のカット面のIDのうち最大のものを使う
-              paint++;
             }
           }
           
-          if ( paint > 0 )
+          if ( tgt > 0 )
           {
-            if ( tgt != 0 )
-            {
-              // 除外IDの確認
-              int flag = 0;
-              for (int n=1; n<=NoBC; n++) {
-                if ( list[n] == tgt ) flag++;
-              }
-
-              if ( flag == 0 )
-              {
-                mid[m] = tgt;
-                c++;
-              }
+            // 除外IDの確認
+            int flag = 0;
+            for (int n=1; n<=NoBC; n++) {
+              if ( list[n] == tgt ) flag++; // 除外IDがあれば
             }
-            else // 交点があるのに，IDがない
+            
+            if ( flag == 0 )
             {
-              Exit(0);
+              mid[m] = tgt;
+              c++;
             }
             
           }

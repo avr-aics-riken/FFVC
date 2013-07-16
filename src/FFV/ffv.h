@@ -386,7 +386,7 @@ private:
   
   
   // ポリゴングループの座標値からboxを計算する
-  void calcBboxfromPolygonGroup();
+  //void calcBboxfromPolygonGroup();
   
   // 全Voxelモデルの媒質数とKOSの整合性をチェック
   bool chkMediumConsistency();

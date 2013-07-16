@@ -52,6 +52,44 @@ if ( zp == tg )
   qb = get_BID5(Z_MINUS, qq);
   qt = get_BID5(Z_PLUS,  qq);
   
+  // Solid cutのみを対象とする
+  int ff = 0;
+  for (int n=1; n<=NoBC; n++) {
+    if ( list[n] == qw ) ff++; // Solid cutであれば ff>0
+  }
+  if ( ff == 0 ) qw=0; // Fluid cutの場合にはカットなし
+    
+  ff = 0;
+  for (int n=1; n<=NoBC; n++) {
+    if ( list[n] == qe ) ff++;
+  }
+  if ( ff == 0 ) qe=0;
+    
+  ff = 0;
+  for (int n=1; n<=NoBC; n++) {
+    if ( list[n] == qs ) ff++;
+  }
+  if ( ff == 0 ) qs=0;
+    
+  ff = 0;
+  for (int n=1; n<=NoBC; n++) {
+    if ( list[n] == qn ) ff++;
+  }
+  if ( ff == 0 ) qn=0;
+    
+  ff = 0;
+  for (int n=1; n<=NoBC; n++) {
+    if ( list[n] == qb ) ff++;
+  }
+  if ( ff == 0 ) qb=0;
+    
+  ff = 0;
+  for (int n=1; n<=NoBC; n++) {
+    if ( list[n] == qt ) ff++;
+  }
+  if ( ff == 0 ) qt=0;
+    
+    
   
   if ( ((zs != 0) && (zs != tg)  &&  // X平面：ゼロでなく、かつ、targetでもない ==> 固体
         (zn != 0) && (zn != tg)) ||  // n-sセルの両方が固体の場合

@@ -308,7 +308,6 @@ int FFV::Initialize(int argc, char **argv)
     return -1;
 	}
 
-
   
   
   // Cell_Monitorの指定がある場合，モニタ位置をセット
@@ -856,7 +855,7 @@ void FFV::Bbox_IBC()
 }
 
 
-// #################################################################
+/* #################################################################
 // @brief ポリゴングループの座標値からboxを計算する
 void FFV::calcBboxfromPolygonGroup()
 {
@@ -942,7 +941,7 @@ void FFV::calcBboxfromPolygonGroup()
   }
   
 }
-
+*/
 
 // #################################################################
 /* @brief 全Voxelモデルの媒質数とKOSの整合性をチェック
@@ -1477,7 +1476,7 @@ void FFV::fill(FILE* fp)
   
   if ( C.Fill_Hint >= 0 )
   {
-    fs = V.fill_seed(d_mid, C.Fill_Hint, C.Fill_Fluid, d_cut);
+    fs = V.fill_seed(d_mid, C.Fill_Hint, C.Fill_Fluid, d_cut, cmp);
 
     if ( numProc > 1 )
     {
@@ -1518,7 +1517,7 @@ void FFV::fill(FILE* fp)
   int c=0;
   while (fill_count > 0) {
     
-    fc = (unsigned long)V.fill_by_bid(d_bid, d_mid, d_cut, C.Fill_Fluid, C.Fill_Solid);
+    fc = (unsigned long)V.fill_by_bid(d_bid, d_mid, d_cut, C.Fill_Fluid, C.Fill_Solid, cmp);
     
     if ( numProc > 1 )
     {
@@ -1555,7 +1554,7 @@ void FFV::fill(FILE* fp)
   
   while (fill_count > 0) {
     
-    z1 = (unsigned long)V.fill_by_mid(d_bid, d_mid, d_cut, C.Fill_Fluid, C.Fill_Solid);
+    z1 = (unsigned long)V.fill_by_mid(d_bid, d_mid, d_cut, C.Fill_Fluid, C.Fill_Solid, cmp);
     
     if ( numProc > 1 )
     {
@@ -1609,7 +1608,7 @@ void FFV::fill(FILE* fp)
   
   if ( C.Fill_Hint >= 0 ) // ヒントが与えられている場合
   {
-    fs = V.fill_seed(d_mid, C.Fill_Hint, C.Fill_Fluid, d_cut);
+    fs = V.fill_seed(d_mid, C.Fill_Hint, C.Fill_Fluid, d_cut, cmp);
     
     if ( numProc > 1 )
     {
@@ -1634,7 +1633,7 @@ void FFV::fill(FILE* fp)
   c = 0;
   while (fill_count > 0) {
     
-    fc = (unsigned long)V.fill_by_bid(d_bid, d_mid, d_cut, C.Fill_Fluid, C.Fill_Solid);
+    fc = (unsigned long)V.fill_by_bid(d_bid, d_mid, d_cut, C.Fill_Fluid, C.Fill_Solid, cmp);
     
     if ( numProc > 1 )
     {
@@ -2055,7 +2054,8 @@ void FFV::generate_Solid(FILE* fp)
     {
       int tgt = cmp[m].getMatOdr(); // 媒質テーブルの格納番号 >> ParseBC::loadBC_Local()
       
-      zc += V.Solid_from_Cut(d_mid, d_bid, d_cut, tgt);
+      //zc += V.Solid_from_Cut(d_mid, d_bid, d_cut, tgt);
+      zc += V.Solid_from_Cut(d_mid, d_bid, d_cut, cmp);
     }
   }
   
@@ -4684,7 +4684,7 @@ void FFV::setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   display_memory_info(fp, G_poly_mem, poly_mem, "Polygon");
   
 
-  calcBboxfromPolygonGroup();
+  //calcBboxfromPolygonGroup();
   
   
   // Triangle display >> Debug
@@ -4935,7 +4935,7 @@ void FFV::VoxEncode()
   //}
   //else // binary
   //{
-    V.setBCIndexV(d_bcv, d_mid, d_bcp, &BC, cmp, C.Mode.Example);
+  //  V.setBCIndexV(d_bcv, d_mid, d_bcp, &BC, cmp, C.Mode.Example);
   //}
   
 
