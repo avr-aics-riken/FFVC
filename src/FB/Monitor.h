@@ -48,41 +48,54 @@ public:
   };
   
 protected:
-  OutputType outputType;  ///< 出力タイプ
   
-  int nGroup;    ///< モニタリンググループ数
-  vector<MonitorCompo*> monGroup;  ///< モニタリンググループ配列
-  
+  int nGroup;            ///< モニタリンググループ数
+  int num_process;       ///< プロセス数
   FB::Vec3r org;         ///< ローカル基点座標
   FB::Vec3r pch;         ///< セル幅
   FB::Vec3r box;         ///< ローカル領域サイズ
-  
   FB::Vec3r g_org;       ///< グローバル基点座標
   FB::Vec3r g_box;       ///< グローバル領域サイズ
+  int* bcd;              ///< BCindex ID
+  TPControl* tpCntl;     ///< テキストパーサへのポインタ
   
+  OutputType outputType; ///< 出力タイプ
+  vector<MonitorCompo*> monGroup;  ///< モニタリンググループ配列
   MonitorCompo:: ReferenceVariables refVar;  ///< 参照用パラメータ変数
+
   
-  int* bcd;     ///< BCindex ID
-  int num_process;
   
-  TPControl* tpCntl;   ///< テキストパーサへのポインタ
   
 public:
   /// コンストラクタ
-  MonitorList() {
+  MonitorList()
+  {
     nGroup = 0;
     outputType = NONE;
+    num_process = 0;
   }
   
   /// デストラクタ
-  ~MonitorList() { for (int i = 0; i < nGroup; i++) delete monGroup[i]; }
+  ~MonitorList()
+  {
+    for (int i = 0; i < nGroup; i++) delete monGroup[i];
+  }
+  
+  
+  /// 出力ファイルクローズ.
+  ///
+  ///    @note 出力タイプによらず全プロセスから呼んでも問題ない
+  ///
+  void closeFile();
+
   
   
   /**
    @brief TPに記述されたモニタ座標情報を取得し，リストに保持する
    @param [in] C  Control クラスオブジェクトのポインタ
    */
-  void get_Monitor(Control* C); //未完成
+  void getMonitor(Control* C);
+  
   
   /**
    @brief TPに記述されたモニタ座標情報(Line)を取得
@@ -116,81 +129,6 @@ public:
   void importTP(TPControl* tp);
   
   
-  /// PointSet登録.
-  ///
-  ///   @param[in] str ラベル文字列
-  ///   @param[in] variables モニタ変数vector
-  ///   @param[in] method method文字列
-  ///   @param[in] mode   mode文字列
-  ///   @param[in] pointSet  PointSet
-  ///
-  void setPointSet(const char* labelStr, vector<string>& variables,
-                   const char* methodStr, const char* modeStr,
-                   vector<MonitorCompo::MonitorPoint>& pointSet);
-  
-  /// Line登録.
-  ///
-  ///   @param[in] str ラベル文字列
-  ///   @param[in] variables モニタ変数vector
-  ///   @param[in] method method文字列
-  ///   @param[in] mode   mode文字列
-  ///   @param[in] from Line始点
-  ///   @param[in] to   Line終点
-  ///   @param[in] nDivision 分割数(モニタ点数-1)
-  ///
-  void setLine(const char* labelStr, vector<string>& variables,
-               const char* methodStr, const char* modeStr,
-               REAL_TYPE from[3], REAL_TYPE to[3], int nDivision);
-  
-  /// 内部境界条件としてモニタ点を登録.
-  ///
-  ///   @param[in] cmp コンポーネント配列
-  ///   @param[in] nBC コンポーネント数
-  ///
-  void setInnerBoundary(CompoList* cmp, int nBC);
-  
-  /// モニタ情報を出力.
-  ///   @param[in] str 出力ファイルの基本名
-  void printMonitorInfo(FILE* fp, const char* str, const bool verbose);
-  
-  /// 必要なパラメータのコピー.
-  ///
-  ///   @param[in] bcd BCindex ID
-  ///   @param[in] refVelocity    代表速度
-  ///   @param[in] baseTemp       基準温度
-  ///   @param[in] diffTemp       代表温度差
-  ///   @param[in] refDensity     基準密度
-  ///   @param[in] refLength      代表長さ
-  ///   @param[in] basePrs        基準圧力
-  ///   @param[in] unitTemp       温度単位指定フラグ (Kelvin / Celsius)
-  ///   @param[in] modePrecision  出力精度指定フラグ (単精度，倍精度)
-  ///   @param[in] unitPrs        圧力単位指定フラグ (絶対値，ゲージ圧)
-  ///
-  void setControlVars(int* bcd,
-                      REAL_TYPE refVelocity, REAL_TYPE baseTemp, REAL_TYPE diffTemp,
-                      REAL_TYPE refDensity, REAL_TYPE refLength, REAL_TYPE basePrs,
-                      int unitTemp, int modePrecision, int unitPrs,int num_process);
-  
-  /// 参照速度のコピー
-  ///   @param[in] v00 座標系移動速度
-  void set_V00(REAL_TYPE v00[4]);
-  
-  /// サンプリング元データの登録.
-  ///
-  ///   @param[in] v 速度変数配列
-  ///   @param[in] p 圧力変数配列
-  ///   @param[in] t 温度変数配列
-  ///
-  void setDataPtrs(REAL_TYPE* v, REAL_TYPE* p, REAL_TYPE* t=NULL) {
-    for (int i = 0; i < nGroup; i++) monGroup[i]->setDataPtrs(v, p, t);
-  }
-  
-  /// 出力タイプの設定.
-  void setOutputType(OutputType type) { outputType = type; }
-  
-  /// サンプリングと出力の次元の設定
-  /// @param[in] modeUnit       出力単位指定フラグ (有次元，無次元)
-  void setSamplingUnit(int unit) { refVar.modeUnit = unit; }
   
   /// 出力ファイルオープン.
   ///
@@ -200,20 +138,34 @@ public:
   ///
   void openFile(const char* str);
   
-  /// 出力ファイルクローズ.
+  
+  /// モニタ結果出力(Line, PointSet指定).
   ///
-  ///    @note 出力タイプによらず全プロセスから呼んでも問題ない
+  ///   @param [in] step サンプリング時の計算ステップ
+  ///   @param [in] tm   サンプリング時の計算時刻
   ///
-  void closeFile();
+  ///   @note gatherの場合も全プロセスから呼ぶこと
+  ///
+  void print(unsigned step, REAL_TYPE tm);
+  
+  
+  /// モニタ情報を出力.
+  ///   @param [in] str 出力ファイルの基本名
+  void printMonitorInfo(FILE* fp, const char* str, const bool verbose);
+  
   
   /// サンプリング(Line, PointSet指定).
-  void sampling() {
-    for (int i = 0; i < nGroup; i++) {
-      if (monGroup[i]->getType() != MonitorCompo::INNER_BOUNDARY) {
+  void sampling()
+  {
+    for (int i = 0; i < nGroup; i++)
+    {
+      if (monGroup[i]->getType() != MonitorCompo::INNER_BOUNDARY)
+      {
         monGroup[i]->sampling();
       }
     }
   }
+  
   
   /// サンプリング(内部境界条件指定).
   ///
@@ -221,44 +173,148 @@ public:
   ///   速度は法線ベクトルとの内積をとる．
   ///   結果はコンポーネントcmpに格納.
   ///
-  void samplingInnerBoundary() {
-    for (int i = 0; i < nGroup; i++) {
-      if (monGroup[i]->getType() == MonitorCompo::INNER_BOUNDARY) {
+  void samplingInnerBoundary()
+  {
+    for (int i = 0; i < nGroup; i++)
+    {
+      if (monGroup[i]->getType() == MonitorCompo::INNER_BOUNDARY)
+      {
         monGroup[i]->samplingInnerBoundary();
       }
     }
   }
   
-  /// モニタ結果出力(Line, PointSet指定).
+  
+  /// 必要なパラメータのコピー.
   ///
-  ///   @param[in] step サンプリング時の計算ステップ
-  ///   @param[in] tm   サンプリング時の計算時刻
+  ///   @param [in] bcd            BCindex ID
+  ///   @param [in] refVelocity    代表速度
+  ///   @param [in] baseTemp       基準温度
+  ///   @param [in] diffTemp       代表温度差
+  ///   @param [in] refDensity     基準密度
+  ///   @param [in] refLength      代表長さ
+  ///   @param [in] basePrs        基準圧力
+  ///   @param [in] unitTemp       温度単位指定フラグ (Kelvin / Celsius)
+  ///   @param [in] modePrecision  出力精度指定フラグ (単精度，倍精度)
+  ///   @param [in] unitPrs        圧力単位指定フラグ (絶対値，ゲージ圧)
+  ///   @param [in] num_process    プロセス数
   ///
-  ///   @note gatherの場合も全プロセスから呼ぶこと
+  void setControlVars(int* bcd,
+                      const REAL_TYPE refVelocity,
+                      const REAL_TYPE baseTemp,
+                      const REAL_TYPE diffTemp,
+                      const REAL_TYPE refDensity,
+                      const REAL_TYPE refLength,
+                      const REAL_TYPE basePrs,
+                      const int unitTemp,
+                      const int modePrecision,
+                      const int unitPrs,
+                      const int num_process);
+  
+  
+  /// サンプリング元データの登録.
   ///
-  void print(unsigned step, REAL_TYPE tm);
+  ///   @param [in] v 速度変数配列
+  ///   @param [in] p 圧力変数配列
+  ///   @param [in] t 温度変数配列
+  ///
+  void setDataPtrs(REAL_TYPE* v, REAL_TYPE* p, REAL_TYPE* t=NULL)
+  {
+    for (int i = 0; i < nGroup; i++) monGroup[i]->setDataPtrs(v, p, t);
+  }
+  
+  
+  /// 内部境界条件としてモニタ点を登録.
+  ///
+  ///   @param [in] cmp コンポーネント配列
+  ///   @param [in] nBC コンポーネント数
+  ///
+  void setInnerBoundary(CompoList* cmp, const int nBC);
+  
+  
+  
+  /// Line登録.
+  ///
+  ///   @param [in] str ラベル文字列
+  ///   @param [in] variables モニタ変数vector
+  ///   @param [in] method method文字列
+  ///   @param [in] mode   mode文字列
+  ///   @param [in] from Line始点
+  ///   @param [in] to   Line終点
+  ///   @param [in] nDivision 分割数(モニタ点数-1)
+  ///
+  void setLine(const char* labelStr,
+               vector<string>& variables,
+               const char* methodStr,
+               const char* modeStr,
+               REAL_TYPE from[3],
+               REAL_TYPE to[3],
+               int nDivision);
+  
+  
+  /// 出力タイプの設定.
+  void setOutputType(OutputType type)
+  {
+    outputType = type;
+  }
+  
+  
+  /// PointSet登録.
+  ///
+  ///   @param [in] str ラベル文字列
+  ///   @param [in] variables モニタ変数vector
+  ///   @param [in] method method文字列
+  ///   @param [in] mode   mode文字列
+  ///   @param [in] pointSet  PointSet
+  ///
+  void setPointSet(const char* labelStr,
+                   vector<string>& variables,
+                   const char* methodStr,
+                   const char* modeStr,
+                   vector<MonitorCompo::MonitorPoint>& pointSet);
+  
+
+  /// サンプリングと出力の次元の設定
+  /// @param [in] modeUnit       出力単位指定フラグ (有次元，無次元)
+  void setSamplingUnit(const int unit)
+  {
+    refVar.modeUnit = unit;
+  }
+  
+  
+  /// 参照速度のコピー
+  ///   @param [in] v00 座標系移動速度
+  void set_V00(REAL_TYPE v00[4]);
+
+
   
   /// 指定されるモニタ点位置にID=255を書き込む.
   ///
-  ///   @param[in] id セルID配列
+  ///   @param [in] id セルID配列
   ///
-  void write_ID(int* id);
+  void writeID(int* id);
+  
+  
+  
+  
   
 protected:
   
   /// Line指定の端点座標をグローバル計算領域内にクリッピング.
   ///
-  ///   @param[in,out] from Line始点
-  ///   @param[in,out] to   Line終点
+  ///   @param [in,out] from Line始点
+  ///   @param [in,out] to   Line終点
   ///
   void clipLine(REAL_TYPE from[3], REAL_TYPE to[3]);
+  
   
   /// 出力タイプ文字列の取得.
   string getOutputTypeStr();
   
 
-  //@brief 座標値を無次元化する
-  void normalizeCord(REAL_TYPE RefLength, REAL_TYPE x[3]) {
+  /// @brief 座標値を無次元化する
+  void normalizeCord(REAL_TYPE RefLength, REAL_TYPE x[3])
+  {
     x[0] /= RefLength;
     x[1] /= RefLength;
     x[2] /= RefLength;

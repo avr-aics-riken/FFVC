@@ -190,13 +190,13 @@ void IP_Cylinder::printPara(FILE* fp, const Control* R)
 // #################################################################
 /*
  * @brief Cylinderの計算領域のセルIDを設定する
- * @param [in,out] mid   媒質情報の配列
- * @param [in]     R     Controlクラスのポインタ
- * @param [in]     G_org グローバルな原点（無次元）
- * @param [in]     Nmax  Controlクラスのポインタ
- * @param [in]     mat   MediumListクラスのポインタ
+ * @param [in,out] mid   　　媒質情報の配列
+ * @param [in]     R     　　Controlクラスのポインタ
+ * @param [in]     G_org 　　グローバルな原点（無次元）
+ * @param [in]     NoMedium 媒質数
+ * @param [in]     mat   　　MediumListクラスのポインタ
  */
-void IP_Cylinder::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
+void IP_Cylinder::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat)
 {
   int mid_fluid;        ///< 流体
   int mid_solid;        ///< 固体
@@ -227,13 +227,13 @@ void IP_Cylinder::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, 
   len= drv_length/R->RefLength;
   ht = height/R->RefLength;
   
-  if ( (mid_fluid = R->find_ID_from_Label(mat, Nmax, m_fluid)) == 0 )
+  if ( (mid_fluid = R->find_ID_from_Label(mat, NoMedium, m_fluid)) == 0 )
   {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_fluid.c_str());
     Exit(0);
   }
   
-  if ( (mid_solid = R->find_ID_from_Label(mat, Nmax, m_solid)) == 0 )
+  if ( (mid_solid = R->find_ID_from_Label(mat, NoMedium, m_solid)) == 0 )
   {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_solid.c_str());
     Exit(0);
@@ -256,13 +256,13 @@ void IP_Cylinder::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, 
   if ( drv_mode == OFF ) return;
   
   
-  if ( (mid_driver = R->find_ID_from_Label(mat, Nmax, m_driver)) == 0 )
+  if ( (mid_driver = R->find_ID_from_Label(mat, NoMedium, m_driver)) == 0 )
   {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver.c_str());
     Exit(0);
   }
   
-  if ( (mid_driver_face = R->find_ID_from_Label(mat, Nmax, m_driver_face)) == 0 )
+  if ( (mid_driver_face = R->find_ID_from_Label(mat, NoMedium, m_driver_face)) == 0 )
   {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver_face.c_str());
     Exit(0);

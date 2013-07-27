@@ -32,68 +32,48 @@ class  ParseMat {
 private:
   bool ChkList[property_END];  // # of parameters in MediumList must be less than # of property_END
   
-  int NoCompo;   ///< コンポーネントの数
-  int NoBC;      ///< 境界条件の数
-  int Unit_Temp; ///< 温度単位
-  int KOS;       ///< 支配方程式の種類
+  int NoMedium;    ///< コンポーネントの数
   
-  MediumTableInfo *MTITP;
   TPControl* tpCntl;
+  
   
 public:
   
   /** コンストラクタ */
   ParseMat() {
-    NoCompo    = 0;
-    NoBC       = 0;
-    Unit_Temp  = 0;
-    KOS        = 0;
-    MTITP      = NULL;
+    NoMedium   = 0;
     tpCntl     = NULL;
     
     for (int i=0; i<property_END; i++) ChkList[i]=false;
   }
   
   /**　デストラクタ */
-  ~ParseMat() 
-  {
-    if ( MTITP ) delete [] MTITP;
-  }
+  ~ParseMat() {}
   
 private:
-
+  
+  // mat[]に値を格納する
+  void addVaues(MediumList* mat, const int m, const property_list key, const REAL_TYPE fval);
+  
   // ラベルの重複を調べる
-  bool chkDuplicateLabel(MediumList* mat, const int n, const std::string m_label);
+  bool chkDuplicateLabel(const MediumList* mat, const int n, const std::string m_label);
   
   
   // 媒質情報の内容物をチェックする
-  bool chkList4Solver(MediumList* mat, const int m);
+  bool chkList4Solver(const MediumList* mat, const int m);
   
   
   // 警告メッセージの表示
-  int missingMessage(MediumList* mat, const int m, const int key);
-  
-  
-  // matの変数値を格納する
-  void copyProperty(MediumList* mat, const int n);
+  int missingMessage(const MediumList* mat, const int m, const int key);
   
   
 public:
-  /**
-   * @brief MTITPのポインタをエキスポート
-   */
-  MediumTableInfo* export_MTI() 
-  {
-    return MTITP;
-  }
-  
 
   /**
-   * @brief MediumListを作成する
+   * @brief MediumListのチェック
    * @param [in] mat      MediumList
-   * @param [in] NoMedium 媒質リストの数
    */
-  bool makeMediumList(MediumList* mat, const int NoMedium);
+  bool check(const MediumList* mat);
   
   
   /**
@@ -104,9 +84,11 @@ public:
   
   
   /**
-   * @brief MediumTableを読んでMediumTableInfoクラスオブジェクトに格納
+   * @brief MediumTableをロードしてmat[]に保持
+   * @param [in]     m_NoMedium  媒質数
+   * @param [in,out] mat         MediumList
    */
-  int get_MediumTable();
+  void getMediumTable(const int m_NoMedium, MediumList* mat);
   
   
   /**
@@ -116,36 +98,16 @@ public:
    * @param [in] basicEq 基礎方程式の種類
    * @note Hostonly
    */
-  void chkList(FILE* fp, CompoList* compo, const int basicEq);
+  void chkList(FILE* fp, const CompoList* compo, const int basicEq);
   
  
   /**
    * @brief 媒質情報の表示
    * @param [in] fp       ファイルポインタ
    * @param [in] mat      MediumList
-   * @param [in] NoMedium 媒質リストの数
    * @note Hostonly
    */
-  void printMatList(FILE* fp, MediumList* mat, const int NoMedium);
-  
-  
-  /**
-   * @brief CompoList[]とMediumList[]のチェック
-   * @param [in] fp    ファイルポインタ
-   * @param [in] compo CompoList
-   * @param [in] mat   MediumList
-   * @note debug function
-   */
-  void printRelation(FILE* fp, CompoList* compo, MediumList* mat);
-  
-  /**
-   * @brief CompoList[]とMediumList[]のチェック
-   * @param [in] m_NoCompo         コンポーネントの数
-   * @param [in] m_NoBC CompoList  境界条件の数
-   * @param [in] m_Unit_Temp       温度単位
-   * @param [in] m_KOS             支配方程式の種類
-   */
-  void setControlVars(const int m_NoCompo, const int m_NoBC, const int m_Unit_Temp, const int m_KOS);
+  void printMatList(FILE* fp, const MediumList* mat);
 
 };
 

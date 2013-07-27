@@ -292,17 +292,6 @@ void Control::convertHexCoef(REAL_TYPE* cf)
 }
 
 
-// #################################################################
-// labelのコンポーネント数を返す
-int Control::countCompo(CompoList* cmp, const int label)
-{
-  int cnt=0;
-  
-  for (int i=1; i<=NoBC; i++) {
-    if ( cmp[i].getType() == label ) cnt++;
-  }
-  return cnt;
-}
 
 
 // #################################################################
@@ -326,7 +315,7 @@ void Control::displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, Referenc
 
 // #################################################################
 // MediumList中に登録されているkeyに対するIDを返す。発見できない場合はzero 
-int Control::find_ID_from_Label(MediumList* mat, const int Nmax, const std::string key)
+int Control::find_ID_from_Label(const MediumList* mat, const int Nmax, const std::string key)
 {
   std::string str = key;
 
@@ -1046,7 +1035,7 @@ void Control::get_FileIO()
 
 // #################################################################
 // モデル形状情報
-void Control::get_Geometry(const MediumTableInfo *MTITP)
+void Control::getGeometry(const MediumList* mat)
 {
   string str;
   string label;
@@ -1072,9 +1061,9 @@ void Control::get_Geometry(const MediumTableInfo *MTITP)
   }
   
   // ラベル名が媒質リストにあるか否かを確認
-  for (int i=1; i<=NoMedium; i++) {
-    
-    if ( !strcasecmp( str.c_str(), MTITP[i].label.c_str() ) )
+  for (int i=1; i<=NoMedium; i++)
+  {
+    if ( !strcasecmp( str.c_str(), mat[i].getAlias().c_str() ) )
     {
       Fill_Fluid = i;
       break;
@@ -1099,9 +1088,9 @@ void Control::get_Geometry(const MediumTableInfo *MTITP)
   }
   
   // ラベル名が媒質リストにあるか否かを確認
-  for (int i=1; i<=NoMedium; i++) {
-    
-    if ( !strcasecmp( str.c_str(), MTITP[i].label.c_str() ) )
+  for (int i=1; i<=NoMedium; i++)
+  {
+    if ( !strcasecmp( str.c_str(), mat[i].getAlias().c_str() ) )
     {
       Fill_Solid = i;
       break;
@@ -1126,7 +1115,7 @@ void Control::get_Geometry(const MediumTableInfo *MTITP)
   }
   else
   {
-    if     ( !strcasecmp(str.c_str(), "no" ) )      Fill_Hint = -1;
+    if     ( !strcasecmp(str.c_str(), "no" ) )     Fill_Hint = -1;
     else if( !strcasecmp(str.c_str(), "xminus" ) ) Fill_Hint = X_MINUS;
     else if( !strcasecmp(str.c_str(), "xplus" ) )  Fill_Hint = X_PLUS;
     else if( !strcasecmp(str.c_str(), "yminus" ) ) Fill_Hint = Y_MINUS;
@@ -1447,23 +1436,6 @@ void Control::get_Log()
   string str;
   string label;
   
-  /* 出力単位 >> Unitで一括指定
-  label="/Steer/Log/UnitOfLog";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "Dimensional") )     Unit.Log = DIMENSIONAL;
-  else if( !strcasecmp(str.c_str(), "NonDimensional") )  Unit.Log = NONDIMENSIONAL;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described at '%s'\n", label.c_str());
-    Exit(0);
-  }
-  */
   
   // Log_Base
   label="/Steer/Log/LogBase";
@@ -1618,6 +1590,85 @@ void Control::get_Log()
 
 
 // #################################################################
+// モニタリングのON/OFFとセルモニタの有無のみを取得　詳細パラメータは後ほど
+void Control::getMonitorList()
+{
+  string str;
+  string label;
+  
+  // ログ出力
+  label = "/Steer/MonitorList/log";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
+	  Exit(0);
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "on") )   Sampling.log = ON;
+  else if( !strcasecmp(str.c_str(), "off") )  Sampling.log = OFF;
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  // セルモニターの指定
+  /// @see Initialize.C setEnsComponent()
+  if ( Sampling.log == ON )
+  {
+	  label = "/Steer/MonitorList/CellMonitor";
+    
+	  if ( !(tpCntl->GetValue(label, &str )) )
+    {
+		  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
+		  Exit(0);
+	  }
+    
+	  if     ( !strcasecmp(str.c_str(), "on") )   EnsCompo.monitor = ON;
+	  else if( !strcasecmp(str.c_str(), "off") )  EnsCompo.monitor = OFF;
+	  else
+    {
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+		  Exit(0);
+	  }
+  }
+  
+}
+
+
+
+
+// #################################################################
+// コンポーネント数，媒質数，境界条件数を取得
+void Control::getNoOfComponent()
+{
+  std::string label;
+  
+  // 媒質の個数
+  label = "/MediumTable";
+  NoMedium = tpCntl->countLabels(label);
+  
+  if ( NoMedium < 0)
+  {
+    Hostonly_ stamped_printf("\tError : Empty MediumTable\n");
+    Exit(0);
+  }
+  
+  
+  // 境界条件数
+  label = "/BcTable/LocalBoundary";
+  
+  if ( tpCntl->chkNode(label) )  //nodeがあれば
+  {
+	  NoBC = tpCntl->countLabels(label);
+  }
+  
+  NoCompo = NoMedium + NoBC;
+}
+
+
+// #################################################################
 // ノルムのラベルを返す
 string Control::getNormString(const int d)
 {
@@ -1730,7 +1781,7 @@ void Control::get_Para_Ref()
     Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
 	  Exit(0);
   }
-  Ref_Medium = str;
+  RefMedium = str;
 }
 
 
@@ -1835,55 +1886,6 @@ void Control::get_ReferenceFrame(ReferenceFrame* RF)
     Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
     Exit(0);
   }
-}
-
-
-
-// #################################################################
-// モニタリングのON/OFFとセルモニタの有無のみを取得　詳細パラメータは後ほど
-void Control::get_Sampling()
-{
-  string str;
-  string label;
-  
-  // ログ出力
-  label = "/Steer/MonitorList/log";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "on") )   Sampling.log = ON;
-  else if( !strcasecmp(str.c_str(), "off") )  Sampling.log = OFF;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  // セルモニターの指定
-  /// @see Initialize.C setEnsComponent()
-  if ( Sampling.log == ON )
-  {
-	  label = "/Steer/MonitorList/CellMonitor";
-    
-	  if ( !(tpCntl->GetValue(label, &str )) )
-    {
-		  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
-		  Exit(0);
-	  }
-    
-	  if     ( !strcasecmp(str.c_str(), "on") )   EnsCompo.monitor = ON;
-	  else if( !strcasecmp(str.c_str(), "off") )  EnsCompo.monitor = OFF;
-	  else
-    {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-		  Exit(0);
-	  }
-  }
-  
 }
 
 
@@ -2214,7 +2216,7 @@ void Control::get_start_condition()
  * @note 他のパラメータ取得に先んじて処理しておくもの
  */
 //void Control::get_Steer_1(DTcntl* DT, FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_WRITE* FP3DW) // 20130611
-void Control::get_Steer_1(DTcntl* DT)
+void Control::get1stParameter(DTcntl* DT)
 {
   
   // ソルバーの具体的な種類を決めるパラメータを取得し，ガイドセルの値を設定する
@@ -2233,8 +2235,8 @@ void Control::get_Steer_1(DTcntl* DT)
   // パラメータチェック
   get_CheckParameter();
   
-  // モニターのON/OFF 詳細パラメータはget_Monitor()で行う
-  get_Sampling();
+  // モニターのON/OFF 詳細パラメータはMonitorList::getMonitor()で行う
+  getMonitorList();
   
   // ファイル入出力に関するパラメータ
   get_FileIO();
@@ -2252,7 +2254,7 @@ void Control::get_Steer_1(DTcntl* DT)
  * @param [in] IC  反復制御クラス
  * @param [in] RF  ReferenceFrameクラス
  */
-void Control::get_Steer_2(ItrCtl* IC, ReferenceFrame* RF)
+void Control::get2ndParameter(ItrCtl* IC, ReferenceFrame* RF)
 {
   // 流体の解法アルゴリズムを取得
   get_Algorithm();
@@ -2919,6 +2921,16 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   double dt = DT->get_DT();
   bool  err=true;
   double itm=0.0;
+  
+  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  fprintf(fp,"\n\t>> Library Information\n\n");
+  fprintf(fp,"\t     CPMlib     Version %s\n", ver_CPM.c_str());
+  fprintf(fp,"\t     CIOlib     Version %s\n", ver_CIO.c_str());
+  fprintf(fp,"\t     Polylib    Version %s\n", ver_Poly.c_str());
+  fprintf(fp,"\t     Cutlib     Version %s\n", ver_CUT.c_str());
+  fprintf(fp,"\t     PMlib      Version %s\n", ver_PM.c_str());
+  fprintf(fp,"\t     TextParser Version %s\n", ver_TP.c_str());
+  fprintf(fp,"\n");
   
   fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   fprintf(fp,"\n\t>> Solver Control Parameters\n\n");
@@ -3982,26 +3994,25 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   int m;
   
   // get reference values
-  for (int n=NoBC+1; n<=NoCompo; n++) {
-    
-    if ( cmp[n].getMatOdr() == RefMat )
+  for (int n=1; n<=NoMedium; n++)
+  {
+    if ( n == RefMat )
     {
-      m = cmp[n].getMatOdr();
-      if ( mat[m].getState() == FLUID )
+      if ( mat[n].getState() == FLUID )
       {
-        rho   = mat[m].P[p_density];
-        mu    = mat[m].P[p_viscosity];
-        nyu   = mat[m].P[p_kinematic_viscosity];
-        cp    = mat[m].P[p_specific_heat];
-        lambda= mat[m].P[p_thermal_conductivity];
-        beta  = mat[m].P[p_vol_expansion]; // can be replaced by 1/K in the case of gas
-        snd_spd = mat[m].P[p_speed_of_sound];
+        rho     = mat[n].P[p_density];
+        mu      = mat[n].P[p_viscosity];
+        nyu     = mat[n].P[p_kinematic_viscosity];
+        cp      = mat[n].P[p_specific_heat];
+        lambda  = mat[n].P[p_thermal_conductivity];
+        beta    = mat[n].P[p_vol_expansion]; // can be replaced by 1/K in the case of gas
+        snd_spd = mat[n].P[p_speed_of_sound];
       }
       else
       {
-        rho   = mat[m].P[p_density];
-        cp    = mat[m].P[p_specific_heat];
-        lambda = mat[m].P[p_thermal_conductivity];
+        rho    = mat[n].P[p_density];
+        cp     = mat[n].P[p_specific_heat];
+        lambda = mat[n].P[p_thermal_conductivity];
       }
     }
   }
@@ -4033,7 +4044,8 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
       Prandtl  = rho * cp * nyu / lambda;
     }
   }
-	else if (KindOfSolver==THERMAL_FLOW) {
+	else if (KindOfSolver==THERMAL_FLOW)
+  {
     switch (Mode.Buoyancy)
     {
       case NO_BUOYANCY:
@@ -4123,7 +4135,8 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   }
   
   // コンポーネントの指定速度
-  for (int n=1; n<=NoBC; n++) {
+  for (int n=1; n<=NoCompo; n++)
+  {
     if ( (cmp[n].getType()==SPEC_VEL_WH) || (cmp[n].getType()==SPEC_VEL) )
     {
 			if ( cmp[n].isPolicy_Massflow() ) //ポリシーが流量の場合
@@ -4153,19 +4166,17 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
         }
       }
 		}
-  } // end of NoBC
+  }
 	
   // 発熱密度の計算(有次元) -- 発熱量と発熱密度
   REAL_TYPE a, vol;
   a = deltaX*RefLength;
   vol = a*a*a;
   
-  for (int n=1; n<=NoBC; n++) {
-    
+  for (int n=1; n<=NoCompo; n++)
+  {
     if ( cmp[n].getType()==HEAT_SRC )
     {
-      m = cmp[n].getMatOdr();
-      
       if (cmp[n].get_sw_Heatgen() == CompoList::hsrc_watt)
       {
         cmp[n].set_HeatDensity( cmp[n].get_HeatValue() / ((REAL_TYPE)cmp[n].getElement()*vol) );
@@ -4180,12 +4191,11 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   // Darcy係数（単媒質）
   // C[0-2]; 有次元，C[3-5]; 無次元係数
   REAL_TYPE ki;
-  for (int n=1; n<=NoBC; n++) {
-    
+  for (int n=1; n<=NoCompo; n++)
+  {
     if ( cmp[n].getType()==DARCY )
     {
-      m = cmp[n].getMatOdr();
-      ki = (mat[m].P[p_viscosity]*RefLength) / (mat[m].P[p_density]*RefVelocity);
+      ki = (mat[m].P[p_viscosity]*RefLength) / (mat[n].P[p_density]*RefVelocity);
       cmp[n].ca[3] = ki / cmp[n].ca[0];
       cmp[n].ca[4] = ki / cmp[n].ca[1];
       cmp[n].ca[5] = ki / cmp[n].ca[2];
@@ -4194,11 +4204,10 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   
   // Pressure Loss
   REAL_TYPE DensityOfMedium, cf[6];
-  for (int n=1; n<=NoBC; n++) {
+  for (int n=1; n<=NoCompo; n++) {
     
     if ( cmp[n].getType()==HEX )
     {
-      m = cmp[n].getMatOdr();
       for (int i=0; i<6; i++) cf[i] = cmp[n].ca[i];
       
       // 流量と圧力損失量計算の有次元化の係数

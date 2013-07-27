@@ -379,14 +379,7 @@ private:
   
   // 主計算に用いる配列の確保
   void allocate_Main(double &total);
-  
-  
-  // ポリゴンのカット情報からVBCのboxをセット
-  void Bbox_IBC();
-  
-  
-  // ポリゴングループの座標値からboxを計算する
-  //void calcBboxfromPolygonGroup();
+
   
   // 全Voxelモデルの媒質数とKOSの整合性をチェック
   bool chkMediumConsistency();
@@ -396,20 +389,28 @@ private:
   void copyV00fromRF(double m_time);
   
   
-  // コンポーネントの内容リストを表示する
-  void display_Compo_Info(FILE* fp);
+  // mat[], cmp[]のテーブルを作成
+  void createTable(FILE* fp);
   
   
-  // CompoListの内容とセル数の情報を表示する
-  void display_CompoList(FILE* fp);
+  // CompoListの情報を表示する
+  void displayCompoInfo(FILE* fp);
+  
+  
+  // メモリ使用量の表示
+  void displayMemoryInfo(FILE* fp, double G_mem, double L_mem, const char* str);
   
   
   // 制御パラメータ，物理パラメータの表示
-  void display_Parameters(FILE* fp);
+  void displayParameters(FILE* fp);
   
   
   // 計算領域情報を設定する
   void DomainInitialize(TPControl* tp_dom);
+  
+  
+  // BCIndexにビット情報をエンコードする
+  void encodeBCindex();
   
   
   //初期インデクスの情報を元に，一層拡大したインデクス値を返す
@@ -421,27 +422,27 @@ private:
   
   
   // 固定パラメータの設定
-  void fixed_parameters();
-  
-  
-  // メモリ使用量の表示
-  void display_memory_info(FILE* fp, double G_mem, double L_mem, const char* str);
+  void fixedParameters();
   
   
   // 並列処理時の各ノードの分割数を集めてファイルに保存する
-  void gather_DomainInfo();
+  void gatherDomainInfo();
   
   
   // Binary voxelをカット情報から生成
-  void generate_Solid(FILE* fp);
+  void generateSolid(FILE* fp);
   
   
   // コンポーネントの面積を計算する
-  void get_Compo_Area();
+  void getCompoArea();
   
   
   // グローバルな領域情報を取得
-  int get_DomainInfo(TPControl* tp_dom);
+  int getDomainInfo(TPControl* tp_dom);
+  
+  
+  // Intrinsic Classの同定
+  void identifyExample(TPControl* tpf, FILE* fp);
   
   
   // 出力ファイルの初期化
@@ -453,7 +454,7 @@ private:
   
   
   // 距離の最小値を求める
-  void min_distance(float* cut, int* bid, FILE* fp);
+  void minDistance(float* cut, int* bid, FILE* fp);
   
   
   // 履歴の出力準備
@@ -464,16 +465,16 @@ private:
   void printDomainInfo();
   
   
-  // コンポーネントリストに登録されたセル要素BCのBV情報をリサイズする
-  void resizeBVface(const int* st, const int* ed, const int n, const int* bx);
+  // セルフェイスBCのBbox情報をリサイズする
+  void resizeBbox4Face(const int n, const int* bx);
   
   
-  // コンポーネントリストに登録されたセル要素BCのBV情報をリサイズする
-  void resizeBVcell(const int* st, const int* ed, const int n, const int* bx);
+  // セルBCのBbox情報をリサイズする
+  void resizeBbox4Cell(const int n, const int* bx);
   
   
-  // コンポーネントリストに登録されたBV情報をリサイズする
-  void resizeCompoBV(const int kos, const bool isHeat);
+  // コンポーネントリストに登録されたBbox情報をリサイズする
+  void resizeCompoBbox();
   
   
   // リスタートモードの選択
@@ -512,6 +513,10 @@ private:
   void setModel(double& PrepMemory, double& TotalMemory, FILE* fp);
   
   
+  // MonitorListのセットアップ
+  void setMonitorList();
+  
+  
   // 並列化と分割の方法を保持
   string setParallelism();
   
@@ -520,24 +525,24 @@ private:
   void setParameters();
   
   
+  // BCで指定するCELL_MINITORのIDをmid[]にセットする
+  void setupCellMonitor();
+  
+  
   // IP用にカット領域をアロケートする
-  void setup_CutInfo4IP(double& m_prep, double& m_total, FILE* fp);
+  void setupCutInfo4IP(double& m_prep, double& m_total, FILE* fp);
   
   
   // パラメータのロードと計算領域を初期化し，並列モードを返す
-  string setupDomain(TPControl* tpf, FILE* fp);
+  string setupDomain(TPControl* tpf);
   
   
   // 幾何形状情報を準備し，交点計算を行う
-  void setup_Polygon2CutInfo(double& m_prep, double& m_total, FILE* fp);
-  
-  
-  // BCIndexにビット情報をエンコードする
-  void VoxEncode();
+  void setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp);
   
   
   // ボクセルをスキャンし情報を表示する
-  void VoxScan(FILE* fp);
+  void scanVoxel(FILE* fp);
   
   
   

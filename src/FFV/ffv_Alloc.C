@@ -137,9 +137,9 @@ void FFV::allocArray_Forcing(double& m_prep, double& m_total, FILE* fp)
 {
   
   // 管理用のポインタ配列の確保
-  component_array = new REAL_TYPE* [C.NoBC];
+  component_array = new REAL_TYPE* [C.NoCompo];
   
-  for (int i=0; i<C.NoBC; i++) 
+  for (int i=0; i<C.NoCompo; i++)
   {
     component_array[i] = NULL;
   }
@@ -150,7 +150,7 @@ void FFV::allocArray_Forcing(double& m_prep, double& m_total, FILE* fp)
   int gd=2;    // ガイドセルは，両側それぞれ2セル
   size_t m_cmp_size=0;
   
-  for (int n=1; n<=C.NoBC; n++) 
+  for (int n=1; n<=C.NoCompo; n++)
   {
     
     if ( cmp[n].isFORCING() ) 

@@ -359,7 +359,7 @@ extern "C" {
   void ps_buoyancy_   (REAL_TYPE* v, int* sz, int* g, REAL_TYPE* dgr, REAL_TYPE* t, int* bd, double* flop);
   void ps_diff_ee_    (REAL_TYPE* t, int* sz, int* g, REAL_TYPE* res, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* pei, REAL_TYPE* qbc, 
                        int* bh, REAL_TYPE* ws, double* flop);
-  void hbc_drchlt_    (REAL_TYPE* t,  int* sz, int* g, int* st, int* ed, int* bh, int* odr, REAL_TYPE* tc);
+  void hbc_drchlt_ (REAL_TYPE* t, int* sz, int* g, int* st, int* ed, int* bh, int* odr, REAL_TYPE* tc);
   
   
   

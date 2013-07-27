@@ -40,13 +40,13 @@ public:
   
   
   /** 矩形の計算領域のセルIDを設定する
-   * @param [in,out] mid   媒質情報の配列
-   * @param [in]     R     Controlクラスのポインタ
-   * @param [in]     G_org グローバルな原点（無次元）
-   * @param [in]     Nmax  Controlクラスのポインタ
-   * @param [in]     mat   MediumListクラスのポインタ
+   * @param [in,out] mid      媒質情報の配列
+   * @param [in]     R        Controlクラスのポインタ
+   * @param [in]     G_org    グローバルな原点（無次元）
+   * @param [in]     NoMedium 媒質数
+   * @param [in]     mat      MediumListクラスのポインタ
    */
-  void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat);
+  void setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat);
   
   
   /** 

@@ -301,7 +301,7 @@
     je = ed(2)
     ks = st(3)
     ke = ed(3)
-    
+
     dh1= 1.0/dh
     dh2= rei*dh1*dh1
 
@@ -353,7 +353,7 @@
         Up0 = v(i,j,k,1)
         Vp0 = v(i,j,k,2)
         Wp0 = v(i,j,k,3)
-      
+
         Uw1 = 0.0
         Ue1 = 0.0
         Us1 = 0.0

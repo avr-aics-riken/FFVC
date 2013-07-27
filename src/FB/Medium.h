@@ -42,28 +42,19 @@ enum property_list
 
 class MediumList {
 private:
-  int  state;         ///< solid or fluid
-  std::string name;   ///< ラベル
+  int state;          ///< solid or fluid
+  std::string alias;  ///< ラベル
 
 public:
   REAL_TYPE P[property_END]; ///< プロパティリスト
   
   MediumList() {
-    state  = -1;
+    state = -1;
     for (int i=0; i<property_END; i++) P[i] = 0.0;
   }
   ~MediumList() {}
   
 public:
-
-  /**
-   * @brief 媒質の属性を取得
-   * @return Fluid or Solid
-   */
-  int getState() const
-  { 
-    return state; 
-  }
   
   
   /**
@@ -72,27 +63,7 @@ public:
    */
   std::string getAlias() const
   { 
-    return name; 
-  }
-  
-  
-  /**
-   * @brief 状態をセット
-   * @param[in] key fluid(1) or solid(0)
-   */
-  void setState(const int key) 
-  { 
-    state = key; 
-  }
-  
-  
-  /**
-   * @brief ラベルをセット
-   * @param[in] key 文字列
-   */
-  void setAlias(const std::string key)
-  {
-    name = key;
+    return alias;
   }
   
   
@@ -101,7 +72,7 @@ public:
    * @param p[in] 文字列
    * @return キー
    */
-  static int getKey(const char* p) 
+  static int getKey(const char* p)
   {
     int key=-1;
     
@@ -123,7 +94,7 @@ public:
    * @param[in] key キー番号
    * @return ラベル
    */
-  static std::string getPropertyName(const int key) 
+  static std::string getPropertyName(const int key)
   {
     std::string name;
     
@@ -154,6 +125,36 @@ public:
         break;
     }
     return name;
+  }
+  
+  
+  /**
+   * @brief 媒質の属性を取得
+   * @return Fluid or Solid
+   */
+  int getState() const
+  {
+    return state;
+  }
+  
+  
+  /**
+   * @brief ラベルをセット
+   * @param [in] key 文字列
+   */
+  void setAlias(const std::string key)
+  {
+    alias = key;
+  }
+  
+  
+  /**
+   * @brief 状態をセット
+   * @param [in] key fluid(1) or solid(0)
+   */
+  void setState(const int key)
+  {
+    state = key;
   }
   
 };

@@ -23,11 +23,7 @@
 #include "SetBC.h"
 
 // #################################################################
-/**
- * @brief クラスのポインタコピー
- * @param [in] m_CMP        CompoListクラス
- * @param [in] m_MAT        MediumListクラス
- */
+// 作業用ポインタのコピー
 void SetBC::importCMP_MAT(CompoList* m_CMP, MediumList* m_MAT)
 {
   if ( !m_CMP ) Exit(0);
@@ -39,15 +35,8 @@ void SetBC::importCMP_MAT(CompoList* m_CMP, MediumList* m_MAT)
 
 
 // #################################################################
-/**
- * @brief クラスに必要な変数のコピー
- * @param [in] Cref       Controlクラス
- * @param [in] mat        MediumListクラス
- * @param [in] cmp        Componentクラス
- * @param [in] RF         ReferenceFrameクラス
- * @param [in] ExRef      Intrinsicクラス
- */
-void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, ReferenceFrame* RF, Intrinsic* ExRef)
+// クラスに必要な変数のコピー
+void SetBC::setControlVars(Control* Cref, const MediumList* mat, const ReferenceFrame* RF, Intrinsic* ExRef)
 {
   Reynolds  = Cref->Reynolds;
   rei       = Cref->getRcpReynolds();
@@ -62,10 +51,11 @@ void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, Refer
 	Unit_Temp = Cref->Unit.Temp;
   Unit_Prs  = Cref->Unit.Prs;
 	BasePrs   = Cref->BasePrs;
-  NoBC      = Cref->NoBC;
   Rayleigh  = Cref->Rayleigh;
   Grashof   = Cref->Grashof;
   Prandtl   = Cref->Prandtl;
+  NoCompo   = Cref->NoCompo;
+  NoMedium  = Cref->NoMedium;
   
   isCDS = Cref->isCDS();
   
@@ -78,22 +68,23 @@ void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, Refer
   
   // get reference values >> 媒質はIDがユニークに定まる
 
-  for (int n=Cref->NoBC+1; n<=Cref->NoCompo; n++) {
-    if ( cmp[n].getMatOdr() == Cref->RefMat ) {
-      
-      int m = cmp[n].getMatOdr();
-      
-      if ( mat[m].getState() == FLUID ) {
-        rho    = mat[m].P[p_density];
-        nyu    = mat[m].P[p_kinematic_viscosity];
-        cp     = mat[m].P[p_specific_heat];
-        lambda = mat[m].P[p_thermal_conductivity];
-        beta   = mat[m].P[p_vol_expansion]; // can be replaced by 1/K in the case of gas
+  for (int n=1; n<=NoMedium; n++)
+  {
+    if ( n == Cref->RefMat )
+    {
+      if ( mat[n].getState() == FLUID )
+      {
+        rho    = mat[n].P[p_density];
+        nyu    = mat[n].P[p_kinematic_viscosity];
+        cp     = mat[n].P[p_specific_heat];
+        lambda = mat[n].P[p_thermal_conductivity];
+        beta   = mat[n].P[p_vol_expansion]; // can be replaced by 1/K in the case of gas
       }
-      else {
-        rho    = mat[m].P[p_density];
-        cp     = mat[m].P[p_specific_heat];
-        lambda = mat[m].P[p_thermal_conductivity];
+      else
+      {
+        rho    = mat[n].P[p_density];
+        cp     = mat[n].P[p_specific_heat];
+        lambda = mat[n].P[p_thermal_conductivity];
       }
     }
   }
@@ -102,12 +93,7 @@ void SetBC::setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, Refer
 
 
 // #################################################################
-/**
- * @brief 静止座標系のときの流出速度制御の値を計算する
- * @param [in] tm 時刻
- * @retval 流出境界速度
- * @todo experimental
- */
+// 静止座標系のときの流出速度制御の値を計算する
 REAL_TYPE SetBC::getVrefOut(const REAL_TYPE tm)
 {
 	REAL_TYPE u0;

@@ -257,46 +257,45 @@ void History::printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Contr
     fprintf(fp, "    step        time[-]");
   }
 
-  for (int i=1; i<=C->NoBC; i++) {
-    cid = cmp[i].getMatOdr();
+  for (int i=1; i<=C->NoCompo; i++) {
     def = cmp[i].getDef();
     
     switch ( cmp[i].getType() ) {
       case SPEC_VEL:
-        fprintf(fp, "  V[%03d:%03d]", cid, def);
+        fprintf(fp, "  V[%03d:%03d]", i, def);
         break;
         
       case SPEC_VEL_WH:
-        fprintf(fp, "  V[%03d:%03d]  Q[%03d:%03d] qa[%03d:%03d]", cid, def, cid, def, cid, def);
+        fprintf(fp, "  V[%03d:%03d]  Q[%03d:%03d] qa[%03d:%03d]", i, def, cid, def, cid, def);
         break;
         
       case OUTFLOW:
-        fprintf(fp, "  V[%03d:%03d]", cid, def);
+        fprintf(fp, "  V[%03d:%03d]", i, def);
         if ( C->isHeatProblem() ) {
-          fprintf(fp, "  Q[%03d:%03d] qa[%03d:%03d]", cid, def, cid, def);
+          fprintf(fp, "  Q[%03d:%03d] qa[%03d:%03d]", i, def, i, def);
         }
         break;
         
       case HEX:
-        fprintf(fp, "     Va[%03d]    DPa[%03d]", cid, cid);
+        fprintf(fp, "     Va[%03d]    DPa[%03d]", i, i);
         break;
         
       case DARCY:
-        fprintf(fp, "      U[%03d]      V[%03d]      W[%03d]", cid, cid, cid);
+        fprintf(fp, "      U[%03d]      V[%03d]      W[%03d]", i, i, i);
         break;
         
       case HEATFLUX:
       case TRANSFER:
       case ISOTHERMAL:
       case RADIANT:
-        fprintf(fp, "  Q[%03d:%03d] qa[%03d:%03d]", cid, def, cid, def);
+        fprintf(fp, "  Q[%03d:%03d] qa[%03d:%03d]", i, def, i, def);
         break;
       
       case CELL_MONITOR:
-        if ( cmp[i].isVarEncoded(var_Velocity) )     fprintf(fp, "      V[%03d]", cid);         
-        if ( cmp[i].isVarEncoded(var_Pressure) )     fprintf(fp, "      P[%03d]", cid);
-        if ( cmp[i].isVarEncoded(var_Temperature) )  fprintf(fp, "      T[%03d]", cid);
-        if ( cmp[i].isVarEncoded(var_TotalP) )       fprintf(fp, "     TP[%03d]", cid);
+        if ( cmp[i].isVarEncoded(var_Velocity) )     fprintf(fp, "      V[%03d]", i);
+        if ( cmp[i].isVarEncoded(var_Pressure) )     fprintf(fp, "      P[%03d]", i);
+        if ( cmp[i].isVarEncoded(var_Temperature) )  fprintf(fp, "      T[%03d]", i);
+        if ( cmp[i].isVarEncoded(var_TotalP) )       fprintf(fp, "     TP[%03d]", i);
         break;
     }
   }
@@ -319,7 +318,7 @@ void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C
   
   fprintf(fp, "%8d %14.6e", step, printTime());
   
-  for (int i=1; i<=C->NoBC; i++) {
+  for (int i=1; i<=C->NoCompo; i++) {
     switch ( cmp[i].getType() ) {
       case SPEC_VEL:
         fprintf(fp, " %11.4e", printVel(cmp[i].val[var_Velocity]) );

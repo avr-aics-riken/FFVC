@@ -41,8 +41,13 @@ protected:
   REAL_TYPE Lbx[3], Rayleigh, Grashof, Prandtl;
   REAL_TYPE rho, nyu, cp, lambda, beta;
   
-  int Example, NoBC, Unit_Temp, Unit_Prs;
-  bool     inout_flag, isCDS;
+  int NoCompo;     ///< コンポーネント数
+  int NoMedium;    ///< 媒質数
+  int Example;     ///<
+  int Unit_Temp;   ///<
+  int Unit_Prs;    ///<
+  bool inout_flag; ///<
+  bool isCDS;      ///<
   
   BoundaryOuter   obc[NOFACE];
   CompoList       *cmp;
@@ -66,7 +71,7 @@ public:
     rei = accel = Dp1 = Dp2 = mach = RefV = RefL = DiffTemp = BaseTemp = pei = 0.0;
     rho = nyu = cp = lambda = beta = BasePrs = 0.0;
     Peclet = Reynolds = Rayleigh = Grashof = Prandtl = 0.0;
-    Example = NoBC = Unit_Temp = Unit_Prs = 0;
+    Example = Unit_Temp = Unit_Prs = NoCompo = NoMedium = 0;
     inout_flag = isCDS = false;
     
     cmp = NULL;
@@ -85,33 +90,51 @@ protected:
 
 public:
   
-  // 静止座標系のときの流出速度制御の値を計算する
+  /**
+   * @brief 静止座標系のときの流出速度制御の値を計算する
+   * @param [in] tm 時刻
+   * @retval 流出境界速度
+   * @todo experimental
+   */
 	REAL_TYPE getVrefOut (const REAL_TYPE tm);
   
   
-  // クラスに必要な変数のコピー
-  void setControlVars(Control* Cref, MediumList* mat, CompoList* cmp, ReferenceFrame* RF, Intrinsic* ExRef);
+  /**
+   * @brief クラスに必要な変数のコピー
+   * @param [in,out] Cref       Controlクラス
+   * @param [in]     mat        MediumListクラス
+   * @param [in]     RF         ReferenceFrameクラス
+   * @param [in,out] ExRef      Intrinsicクラス
+   */
+  void setControlVars(Control* Cref, const MediumList* mat, const ReferenceFrame* RF, Intrinsic* ExRef);
   
   
-  // 作業用ポインタのコピー
+  /**
+   * @brief クラスのポインタコピー
+   * @param [in] m_CMP        CompoListクラス
+   * @param [in] m_MAT        MediumListクラス
+   */
   void importCMP_MAT(CompoList* m_CMP, MediumList* m_MAT);
   
   
   // @brief 流入出境界条件が設定されている場合にtrueを返す
-  bool has_InOut(void) 
+  bool has_InOut() 
   { 
     return inout_flag; 
   }
   
   
-  /** 外部境界リストのポインタを返す */
+  /** 
+   * @brief 外部境界リストのポインタを返す 
+   */
   BoundaryOuter* export_OBC()
   { 
     return obc;
   }
   
   
-  /** 引数の外部境界面の外部境界リストのポインタを返す
+  /** 
+   * @brief 引数の外部境界面の外部境界リストのポインタを返す
    * @param [in] face 面番号
    */
   BoundaryOuter* export_OBC(const int face)

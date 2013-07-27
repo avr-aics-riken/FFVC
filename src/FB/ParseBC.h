@@ -41,21 +41,20 @@ using namespace std;
 class ParseBC : public DomainInfo {
 private:
   
-  // NoCompo = NoBC + NoMedium
   int NoBC;        ///< LocalBCの数
   int NoBaseBC;    ///< 入力ファイルに記載された外部境界条件の指定種類数
-  int NoMedium;    ///< 媒質数
   int NoCompo;     ///< コンポーネントリストの全登録数
+  int NoMedium;    ///< 媒質数
+  int Unit_Temp;   ///< 温度単位
+  int Unit_Prs;    ///< 圧力単位      
   
   REAL_TYPE RefVelocity, BaseTemp, DiffTemp, RefDensity, RefSpecificHeat;
   REAL_TYPE RefLength, BasePrs;
   REAL_TYPE rho, nyu, cp, lambda, beta; // 無次元化の参照値
 
-  int KindOfSolver;
+  int KindOfSolver; ///< 支配方程式の種類
   int Unit_Param;
   int monitor;
-  int Unit_Temp;
-  int Unit_Prs;
   int Mode_Gradp;
   bool HeatProblem;
   bool isCDS;
@@ -78,9 +77,10 @@ public:
     HeatProblem = isCDS = false;
     NoBaseBC = 0;
     NoBC     = 0;
-    NoCompo  = 0; 
+    NoCompo  = 0;
     NoMedium = 0;
     
+    tpCntl = NULL;
     BaseBc = NULL;
   }
   
@@ -105,6 +105,38 @@ private:
     dst[0] = src[0];
     dst[1] = src[1];
     dst[2] = src[2];
+  }
+  
+  
+  /**
+   * @brief コンポーネントが存在するかどうかを調べる
+   * @param [in] label  テストするラベル
+   * @param [in] cmp    CompoList
+   * @retval bool値
+   */
+  bool existComponent(const int label, const CompoList* cmp) const
+  {
+    for (int n=1; n<=NoCompo; n++)
+    {
+      if ( cmp[n].getType() == label ) return true;
+    }
+    return false;
+  }
+  
+  
+  /**
+   * @brief HTコンポーネントが存在するかどうかを調べる
+   * @param [in] label  テストするラベル
+   * @param [in] cmp    CompoList
+   * @retval bool値
+   */
+  bool existCompoTransfer(const int label, const CompoList* cmp) const
+  {
+    for (int n=1; n<=NoCompo; n++)
+    {
+      if ( cmp[n].getHtype() == label ) return true;
+    }
+    return false;
   }
   
   
@@ -287,14 +319,7 @@ private:
   
   // 速度のパラメータを取得する
   void get_Vel_Params(const string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy=false);
-  
-  
-  // コンポーネントが存在するかどうかを調べる
-  bool isComponent(const int label, const CompoList* cmp);
-  
-  
-  // HTコンポーネントが存在するかどうかを調べる
-  bool isCompoTransfer(const int label, const CompoList* cmp);
+
   
   
   // 外部境界面の反対方向を返す
@@ -317,11 +342,18 @@ private:
 public:
 
   /**
+   * @brief テーブルのチェック（デバッグ用）
+   * @param [in] mat  MediumList
+   * @param [out] cmp   CompoList
+   */
+  void checkList(const MediumList* mat, const CompoList* cmp);
+  
+  /**
    * @brief KOSと境界条件数の整合性をチェックする
    * @param [in] kos KindOfSolver
    * @param [in] cmp CompListクラスのポインタ
    */
-  void chkBCconsistency(const int kos, CompoList* cmp);
+  void chkBCconsistency(const int kos, const CompoList* cmp);
   
   
   /**
@@ -330,10 +362,6 @@ public:
    * @param [in] mat  MediumList
    */
   void countMedium(Control* Cref, const MediumList* mat);
-  
-  
-  // LocalBoundaryタグ直下のBCの個数（内部境界条件数）を返す
-  int getNoLocalBC();
   
   
   /**
@@ -355,38 +383,27 @@ public:
    * @param [in] tp  TPControlクラスのポインタ
    */
   void importTP(TPControl* tp);
-  
-  
-  /**
-   * @brief 同じラベルが既にコンポーネントに登録されているかを調べる
-   * @retval 重複していればfalseを返す
-   * @param [in] candidate テストするラベル
-   * @param [in] now       コンポーネントリストの現在までのエントリ番号
-   * @param [in] cmp       CompoList
-   */
-  bool isLabelinCompo(const string candidate, const int now, const CompoList* cmp);
+
   
   
   /**
    * @brief CompoListに内部境界条件の情報を設定する
-   * @param [in]  C     Control
-   * @param [in]  mat   MediumList
-   * @param [out] cmp   CompoList
-   * @param [in]  PP    ポリゴン属性管理クラス [0]-[n-1]
-   * @note 最初にBCの情報を登録，その後IDの情報を登録
-   * @note パラメータファイルから各内部BCのidをパースし，cmpに保持する
+   * @param [in]      C     Control
+   * @param [in,out]  mat   MediumList
+   * @param [out]     cmp   CompoList
+   * @param [in]      PP    ポリゴン属性管理クラス [0]-[n-1]
    * @note 格納番号は1からスタート
    */
-  void loadBC_Local(Control* C, const MediumList* mat, CompoList* cmp, PolygonProperty* polyPP);
+  void loadBC_Local(Control* C, MediumList* mat, CompoList* cmp, PolygonProperty* polyPP);
   
   
   /**
    * @brief パラメータファイルをパースして，外部境界条件を取得，保持する
-   * @param [in,out] bc     BoundaryOuter
-   * @param [in]     MTITP  MediumTableInfo
-   * @param [out]    cmp    CompoList
+   * @param [in,out] bc   BoundaryOuter
+   * @param [in]     mat  MediumList
+   * @param [out]    cmp  CompoList
    */
-  void loadBC_Outer(BoundaryOuter* bc, const MediumTableInfo *MTITP, CompoList* cmp);
+  void loadBC_Outer(BoundaryOuter* bc, const MediumList* mat, CompoList* cmp);
   
   
   /**
@@ -398,6 +415,16 @@ public:
    * @param [in] bc  BoundaryOuter
    */
   void printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoList* cmp, const BoundaryOuter* bc);
+  
+  
+  /**
+   * @brief 取得したCompoList[]の内容を表示する
+   * @param [in] fp      ファイルポインタ
+   * @param [in] compo   CompoList
+   * @param [in] basicEq 基礎方程式の種類
+   * @note Hostonly
+   */
+  void printCompoSummary(FILE* fp, const CompoList* cmp, const int basicEq);
   
   
   /**
@@ -420,10 +447,9 @@ public:
   /**
    * @brief 指定した媒質IDから参照物理量を設定する
    * @param [in] mat MediumList
-   * @param [in] cmp CompoList
-   * @param [in] Ref 参照媒質番号
+   * @param [in] Ref 参照媒質の格納順
    */
-  void setRefMediumProperty(const MediumList* mat, const CompoList* cmp, const int Ref);
+  void setRefMediumProperty(const MediumList* mat, const int Ref);
   
 };
 

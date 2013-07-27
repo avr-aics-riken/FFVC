@@ -37,27 +37,6 @@
 using namespace std;
 
 
-class MediumTableInfo {
-public:
-  int type;
-  string label;
-  map<string, REAL_TYPE> m_fval;
-
-public:
-  /** コンストラクタ */
-  MediumTableInfo() 
-  {
-    type = -1;
-  }
-  
-  /**　デストラクタ */
-  ~MediumTableInfo() {}
-  
-};
-
-
-
-
 class TPControl {
 
 private:
@@ -171,6 +150,11 @@ public:
   int remove()
   {
     return tp->remove();
+  }
+  
+  string getVersionInfo()
+  {
+    return tp->getVersionInfo();
   }
 
 };

@@ -850,7 +850,7 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
   
   allocArray_CoarseMesh(r_size, c_mem);
   
-  display_memory_info(fp, G_c_mem, c_mem, "Coarse Mesh reading");
+  displayMemoryInfo(fp, G_c_mem, c_mem, "Coarse Mesh reading");
   
   
   // ガイド出力
@@ -1743,7 +1743,7 @@ void FFV::Restart_different(FILE* fp, double& flop)
     printf("\tsize error : wkmaxsize>INT_MAX\n");
     Exit(0);
   }
-  display_memory_info(fp, G_d_mem, mc, "Different Nproc Mesh reading");
+  displayMemoryInfo(fp, G_d_mem, mc, "Different Nproc Mesh reading");
   
   
   // ワークエリアの確保

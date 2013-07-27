@@ -110,7 +110,7 @@ public:
     return drv_lid; 
   }
   
-  int get_GuideMedium() const
+  int getGuideMedium() const
   { 
     return gc_medium; 
   }
@@ -246,17 +246,22 @@ public:
   }
   
   
-  // @brief 熱流束の保持
-  void set_Heatflux(REAL_TYPE val)
-  {
-    var1 = val;
-  }
-  
-  
   // @brief 周期境界のときの面の状況をセット
   void set_FaceMode(int key)
   {
     Face_mode = key;
+  }
+  
+  // @brief ガイドセルの媒質IDをセットする
+  void setGuideMedium(int key)
+  {
+    gc_medium = key;
+  }
+  
+  // @brief 熱流束の保持
+  void set_Heatflux(REAL_TYPE val)
+  {
+    var1 = val;
   }
   
   
@@ -278,13 +283,6 @@ public:
   void set_DriverIndex(int key)
   {
     drv_lid = key;
-  }
-  
-  
-  // @brief ガイドセルの媒質IDをセットする
-  void set_GuideMedium(int key)
-  {
-    gc_medium = key;
   }
   
   

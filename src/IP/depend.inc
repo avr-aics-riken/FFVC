@@ -44,8 +44,9 @@ IP_PMT.o: IP_PMT.C IP_PMT.h ../FB/Intrinsic.h \
  ../FB/FB_Define.h ../FB/mydebug.h ../FB/BndOuter.h ../FB/Control.h \
  ../FB/Medium.h ../FB/Component.h ../FB/FBUtility.h ../FB/Interval_Mngr.h \
  ../FB/TPControl.h /usr/local/TextParser/include/TextParser.h \
- /usr/local/TextParser/include/TextParserCommon.h ../FB/vec3.h ../FB/vec3_func.h \
- ../FB/vec3f_func.h IP_Define.h
+ /usr/local/TextParser/include/TextParserCommon.h \
+ /usr/local/TextParser/include/Version.h ../FB/CompoFraction.h ../FB/vec3.h \
+ ../FB/vec3_func.h ../FB/vec3f_func.h IP_Define.h
 IP_Rect.o: IP_Rect.C IP_Rect.h ../FB/Intrinsic.h \
  /usr/local/CPMlib/include/cpm_ParaManager.h /usr/local/CPMlib/include/cpm_Base.h \
  /usr/local/CPMlib/include/cpm_Define.h /opt/openmpi/include/mpi.h \
@@ -92,8 +93,9 @@ IP_Rect.o: IP_Rect.C IP_Rect.h ../FB/Intrinsic.h \
  ../FB/FB_Define.h ../FB/mydebug.h ../FB/BndOuter.h ../FB/Control.h \
  ../FB/Medium.h ../FB/Component.h ../FB/FBUtility.h ../FB/Interval_Mngr.h \
  ../FB/TPControl.h /usr/local/TextParser/include/TextParser.h \
- /usr/local/TextParser/include/TextParserCommon.h ../FB/vec3.h ../FB/vec3_func.h \
- ../FB/vec3f_func.h IP_Define.h
+ /usr/local/TextParser/include/TextParserCommon.h \
+ /usr/local/TextParser/include/Version.h ../FB/CompoFraction.h ../FB/vec3.h \
+ ../FB/vec3_func.h ../FB/vec3f_func.h IP_Define.h
 IP_Polygon.o: IP_Polygon.C IP_Polygon.h ../FB/Intrinsic.h \
  /usr/local/CPMlib/include/cpm_ParaManager.h /usr/local/CPMlib/include/cpm_Base.h \
  /usr/local/CPMlib/include/cpm_Define.h /opt/openmpi/include/mpi.h \
@@ -140,8 +142,9 @@ IP_Polygon.o: IP_Polygon.C IP_Polygon.h ../FB/Intrinsic.h \
  ../FB/FB_Define.h ../FB/mydebug.h ../FB/BndOuter.h ../FB/Control.h \
  ../FB/Medium.h ../FB/Component.h ../FB/FBUtility.h ../FB/Interval_Mngr.h \
  ../FB/TPControl.h /usr/local/TextParser/include/TextParser.h \
- /usr/local/TextParser/include/TextParserCommon.h ../FB/vec3.h ../FB/vec3_func.h \
- ../FB/vec3f_func.h IP_Define.h
+ /usr/local/TextParser/include/TextParserCommon.h \
+ /usr/local/TextParser/include/Version.h ../FB/CompoFraction.h ../FB/vec3.h \
+ ../FB/vec3_func.h ../FB/vec3f_func.h IP_Define.h
 IP_Cylinder.o: IP_Cylinder.C IP_Cylinder.h ../FB/Intrinsic.h \
  /usr/local/CPMlib/include/cpm_ParaManager.h /usr/local/CPMlib/include/cpm_Base.h \
  /usr/local/CPMlib/include/cpm_Define.h /opt/openmpi/include/mpi.h \
@@ -188,8 +191,9 @@ IP_Cylinder.o: IP_Cylinder.C IP_Cylinder.h ../FB/Intrinsic.h \
  ../FB/FB_Define.h ../FB/mydebug.h ../FB/BndOuter.h ../FB/Control.h \
  ../FB/Medium.h ../FB/Component.h ../FB/FBUtility.h ../FB/Interval_Mngr.h \
  ../FB/TPControl.h /usr/local/TextParser/include/TextParser.h \
- /usr/local/TextParser/include/TextParserCommon.h ../FB/vec3.h ../FB/vec3_func.h \
- ../FB/vec3f_func.h IP_Define.h
+ /usr/local/TextParser/include/TextParserCommon.h \
+ /usr/local/TextParser/include/Version.h ../FB/CompoFraction.h ../FB/vec3.h \
+ ../FB/vec3_func.h ../FB/vec3f_func.h IP_Define.h
 IP_Step.o: IP_Step.C IP_Step.h ../FB/Intrinsic.h \
  /usr/local/CPMlib/include/cpm_ParaManager.h /usr/local/CPMlib/include/cpm_Base.h \
  /usr/local/CPMlib/include/cpm_Define.h /opt/openmpi/include/mpi.h \
@@ -236,8 +240,9 @@ IP_Step.o: IP_Step.C IP_Step.h ../FB/Intrinsic.h \
  ../FB/FB_Define.h ../FB/mydebug.h ../FB/BndOuter.h ../FB/Control.h \
  ../FB/Medium.h ../FB/Component.h ../FB/FBUtility.h ../FB/Interval_Mngr.h \
  ../FB/TPControl.h /usr/local/TextParser/include/TextParser.h \
- /usr/local/TextParser/include/TextParserCommon.h ../FB/vec3.h ../FB/vec3_func.h \
- ../FB/vec3f_func.h IP_Define.h
+ /usr/local/TextParser/include/TextParserCommon.h \
+ /usr/local/TextParser/include/Version.h ../FB/CompoFraction.h ../FB/vec3.h \
+ ../FB/vec3_func.h ../FB/vec3f_func.h IP_Define.h
 IP_PPLT2D.o: IP_PPLT2D.C IP_PPLT2D.h ../FB/Intrinsic.h \
  /usr/local/CPMlib/include/cpm_ParaManager.h /usr/local/CPMlib/include/cpm_Base.h \
  /usr/local/CPMlib/include/cpm_Define.h /opt/openmpi/include/mpi.h \
@@ -284,8 +289,9 @@ IP_PPLT2D.o: IP_PPLT2D.C IP_PPLT2D.h ../FB/Intrinsic.h \
  ../FB/FB_Define.h ../FB/mydebug.h ../FB/BndOuter.h ../FB/Control.h \
  ../FB/Medium.h ../FB/Component.h ../FB/FBUtility.h ../FB/Interval_Mngr.h \
  ../FB/TPControl.h /usr/local/TextParser/include/TextParser.h \
- /usr/local/TextParser/include/TextParserCommon.h ../FB/vec3.h ../FB/vec3_func.h \
- ../FB/vec3f_func.h IP_Define.h
+ /usr/local/TextParser/include/TextParserCommon.h \
+ /usr/local/TextParser/include/Version.h ../FB/CompoFraction.h ../FB/vec3.h \
+ ../FB/vec3_func.h ../FB/vec3f_func.h IP_Define.h
 IP_Duct.o: IP_Duct.C IP_Duct.h ../FB/Intrinsic.h \
  /usr/local/CPMlib/include/cpm_ParaManager.h /usr/local/CPMlib/include/cpm_Base.h \
  /usr/local/CPMlib/include/cpm_Define.h /opt/openmpi/include/mpi.h \
@@ -332,8 +338,9 @@ IP_Duct.o: IP_Duct.C IP_Duct.h ../FB/Intrinsic.h \
  ../FB/FB_Define.h ../FB/mydebug.h ../FB/BndOuter.h ../FB/Control.h \
  ../FB/Medium.h ../FB/Component.h ../FB/FBUtility.h ../FB/Interval_Mngr.h \
  ../FB/TPControl.h /usr/local/TextParser/include/TextParser.h \
- /usr/local/TextParser/include/TextParserCommon.h ../FB/vec3.h ../FB/vec3_func.h \
- ../FB/vec3f_func.h IP_Define.h
+ /usr/local/TextParser/include/TextParserCommon.h \
+ /usr/local/TextParser/include/Version.h ../FB/CompoFraction.h ../FB/vec3.h \
+ ../FB/vec3_func.h ../FB/vec3f_func.h IP_Define.h
 IP_SHC1D.o: IP_SHC1D.C IP_SHC1D.h ../FB/Intrinsic.h \
  /usr/local/CPMlib/include/cpm_ParaManager.h /usr/local/CPMlib/include/cpm_Base.h \
  /usr/local/CPMlib/include/cpm_Define.h /opt/openmpi/include/mpi.h \
@@ -380,8 +387,9 @@ IP_SHC1D.o: IP_SHC1D.C IP_SHC1D.h ../FB/Intrinsic.h \
  ../FB/FB_Define.h ../FB/mydebug.h ../FB/BndOuter.h ../FB/Control.h \
  ../FB/Medium.h ../FB/Component.h ../FB/FBUtility.h ../FB/Interval_Mngr.h \
  ../FB/TPControl.h /usr/local/TextParser/include/TextParser.h \
- /usr/local/TextParser/include/TextParserCommon.h ../FB/vec3.h ../FB/vec3_func.h \
- ../FB/vec3f_func.h IP_Define.h
+ /usr/local/TextParser/include/TextParserCommon.h \
+ /usr/local/TextParser/include/Version.h ../FB/CompoFraction.h ../FB/vec3.h \
+ ../FB/vec3_func.h ../FB/vec3f_func.h IP_Define.h
 IP_Sphere.o: IP_Sphere.C IP_Sphere.h ../FB/Intrinsic.h \
  /usr/local/CPMlib/include/cpm_ParaManager.h /usr/local/CPMlib/include/cpm_Base.h \
  /usr/local/CPMlib/include/cpm_Define.h /opt/openmpi/include/mpi.h \
@@ -428,8 +436,9 @@ IP_Sphere.o: IP_Sphere.C IP_Sphere.h ../FB/Intrinsic.h \
  ../FB/FB_Define.h ../FB/mydebug.h ../FB/BndOuter.h ../FB/Control.h \
  ../FB/Medium.h ../FB/Component.h ../FB/FBUtility.h ../FB/Interval_Mngr.h \
  ../FB/TPControl.h /usr/local/TextParser/include/TextParser.h \
- /usr/local/TextParser/include/TextParserCommon.h ../FB/vec3.h ../FB/vec3_func.h \
- ../FB/vec3f_func.h IP_Define.h
+ /usr/local/TextParser/include/TextParserCommon.h \
+ /usr/local/TextParser/include/Version.h ../FB/CompoFraction.h ../FB/vec3.h \
+ ../FB/vec3_func.h ../FB/vec3f_func.h IP_Define.h
 IP_Jet.o: IP_Jet.C IP_Jet.h ../FB/Intrinsic.h \
  /usr/local/CPMlib/include/cpm_ParaManager.h /usr/local/CPMlib/include/cpm_Base.h \
  /usr/local/CPMlib/include/cpm_Define.h /opt/openmpi/include/mpi.h \
@@ -476,5 +485,6 @@ IP_Jet.o: IP_Jet.C IP_Jet.h ../FB/Intrinsic.h \
  ../FB/FB_Define.h ../FB/mydebug.h ../FB/BndOuter.h ../FB/Control.h \
  ../FB/Medium.h ../FB/Component.h ../FB/FBUtility.h ../FB/Interval_Mngr.h \
  ../FB/TPControl.h /usr/local/TextParser/include/TextParser.h \
- /usr/local/TextParser/include/TextParserCommon.h ../FB/vec3.h ../FB/vec3_func.h \
- ../FB/vec3f_func.h IP_Define.h
+ /usr/local/TextParser/include/TextParserCommon.h \
+ /usr/local/TextParser/include/Version.h ../FB/CompoFraction.h ../FB/vec3.h \
+ ../FB/vec3_func.h ../FB/vec3f_func.h IP_Define.h

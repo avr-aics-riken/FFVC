@@ -114,26 +114,24 @@ public:
 
   
 private:
+  
   unsigned long element; ///< 要素数
   
-  int type;              /// 
+  int type;              ///< 境界条件の種類 媒質の場合には-1
   int attrb;             /// 
   int h_type;            /// 
   int variable;          ///
-  int ens;               /// 
-  int phase;             /// 
+  int ens;               ///
+  int phase;             ///
   int var_u1;            /// 内部周期境界の方向，圧力単位指定，セルモニタの状態
   int bc_dir;            /// VBCの指定方向
-  int state;             /// Fluid(1) or Solid(0)
+  int state;             ///< Fluid(1) or Solid(0)
   int st[3];             /// コンポーネントインデクスBV範囲の始点
   int ed[3];             /// コンポーネントインデクスBV範囲の終点
   int c_size[3];         /// コンポーネントワーク配列の大きさ
   int def;               /// BC指定時の面を挟む相手先のセルID
-  int mat_odr;           /// 媒質リストのインデクス
-  int mat_id;            /// 媒質ID
   int shape;             /// 形状パラメータ
-  int sampling_method;   /// サンプリングの方法（NEAREST, INTERPOLATION, SMOOTHING）
-  int sampling_mode;     /// サンプリングモード（ALL, FLOW, SOLID）
+  int sampling_width;    /// セルモニターの場合のセル幅
   int usw;               /// 汎用変数
   
   REAL_TYPE var1;        /// パラメータ保持 (Velocity, Pressure, Massflow, Epsiolon of Radiation)
@@ -142,8 +140,8 @@ private:
   REAL_TYPE var_m;       /// モニタの値を保持
   REAL_TYPE temp_init;   /// 温度の初期値
   
-  std::string name;      ///< ラベル
-  
+  std::string alias;     ///< 局所境界条件の別名
+  std::string medium;    ///< Alias of Medium
   
 public:
   REAL_TYPE area;           ///< 断面積
@@ -160,9 +158,8 @@ public:
   /** コンストラクタ */
   CompoList() {
     element = 0;
-    type = variable = attrb = bc_dir = 0;
-    mat_odr = 0;
-    mat_id = 0;
+    type = -1;
+    variable = attrb = bc_dir = 0;
     h_type = 0;
     state = shape = -1;
     def = 0;
@@ -189,14 +186,77 @@ public:
   ~CompoList() {}
   
 public:
-  bool isFORCING   (); 
-  bool isHBC       ();
-  bool isHsrc      ();
-  bool isMONITOR   ();
-  bool isVBC       ();
-  bool isVBC_IO    ();
-  bool isVecForcing();
-  bool isVFraction ();
+  
+  //@brief メンバ変数variableに変数の種類をエンコードする
+  //@param var 変数タイプを表すビット数
+  void encodeVarType (const int var)
+  {
+    variable |= (0x1 << var);
+  }
+  
+  
+  /**
+   * @brief ラベル名を返す
+   */
+  std::string getAlias() const
+  {
+    return alias;
+  }
+  
+  /**
+   * @brief 媒質名を返す
+   */
+  std::string getMedium() const
+  {
+    return medium;
+  }
+  
+  int getAttrb() const
+  {
+    return attrb;
+  }
+  
+  
+  //@brief コンポーネントのBV情報を返す
+  inline void getBbox(int* m_st, int* m_ed)
+  {
+    m_st[0] = st[0];
+    m_st[1] = st[1];
+    m_st[2] = st[2];
+    m_ed[0] = ed[0];
+    m_ed[1] = ed[1];
+    m_ed[2] = ed[2];
+  }
+  
+  
+  //@brief コンポーネントのBV情報edのアドレスを返す
+  int* getBbox_ed()
+  {
+    return ed;
+  }
+  
+  
+  //@brief コンポーネントのBV情報stのアドレスを返す
+  int* getBbox_st()
+  {
+    return st;
+  }
+  
+  
+  /**
+   * @brief BCのラベル名を返す
+   */
+  std::string getBCstr() const;
+  
+  
+  //@brief コンポーネントのサイズを返す
+  void get_cmp_sz(int* m_sz)
+  {
+    m_sz[0] = c_size[0];
+    m_sz[1] = c_size[1];
+    m_sz[2] = c_size[2];
+  }
+  
   
   REAL_TYPE get_CoefRadEps() const
   { 
@@ -238,6 +298,12 @@ public:
     return var2; 
   }
   
+  REAL_TYPE getInitTemp() const
+  {
+    return temp_init;
+  }
+  
+  
   REAL_TYPE get_Massflow() const
   { 
     return var1; 
@@ -258,10 +324,33 @@ public:
     return var_m; 
   }
   
+  //@brief return pahse ID (SOLID=0, FLUID=1, GAS=2, LIQUID=3)
+  int getPhase() const
+  {
+    return phase;
+  }
+  
+  
   REAL_TYPE get_Pressure() const
   { 
     return var1; 
   }
+  
+  int get_sw_Heatgen() const
+  {
+    return usw;
+  }
+  
+  int get_sw_HexDir() const
+  {
+    return usw;
+  }
+  
+  int get_sw_HTmodeRef() const
+  {
+    return usw;
+  }
+  
   
   REAL_TYPE get_Temp() const
   { 
@@ -272,7 +361,7 @@ public:
   { 
     return var1; 
   }
-  
+
   
   /**
    * @brief 変数名を返す
@@ -280,240 +369,245 @@ public:
   const char* getVarStr();
   
   
-  /**
-   * @brief BCのラベル名を返す
-   */
-  std::string getBCstr();
   
   
-  /**
-   * @brief ラベル名を返す
-   */
-  std::string getLabel() const
-  { 
-    return name; 
+  int get_P_BCtype() const
+  {
+    return usw;
   }
+  
+  int get_V_Profile() const
+  {
+    return usw;
+  }
+  
+  int getDef() const
+  {
+    return def;
+  }
+  
+  int getState() const
+  {
+    return state;
+  }
+  
+  int get_Shape() const
+  {
+    return shape;
+  }
+  
+  int getSamplingWidth() const
+  {
+    return sampling_width;
+  }
+  
+  
+  int getBClocation() const
+  {
+    return bc_dir;
+  }
+  
+  int getPeriodicDir() const
+  {
+    return var_u1;
+  }
+  
+  int getPrsUnit() const
+  {
+    return var_u1;
+  }
+  
+  int getStateCellMonitor() const
+  {
+    return var_u1;
+  }
+  
+  int getType () const
+  {
+    return type;
+  }
+  
+  int getHtype () const
+  {
+    return h_type;
+  }
+  
+  
+  unsigned long getElement() const
+  {
+    return element;
+  }
+  
+  
+  // サブドメインにコンポーネントが存在するかどうかを返す
+  bool isEnsLocal() const
+  {
+    return ( (ens == ON) ? true : false );
+  }
+  
+  
+  /**
+   * @brief 流体要素であればtrue
+   */
+  bool isFluid() const
+  {
+    return (state == FLUID) ? true : false;
+  }
+  
+  
+  /**
+   @brief 境界条件タイプがFORCINGかどうかを調べる
+   */
+  bool isFORCING() const
+  {
+    if ((type == HEX) ||
+        (type == FAN) ||
+        (type == DARCY) ) return true;
+    return false;
+  }
+  
+
+  bool isHBC() const;
+  
+  bool isHsrc() const;
+  
+  
+  /**
+   * @brief typeがコンポーネントであればtrue
+   * @note OBSTACLE=1, BCは2以上，非設定=-1（媒質）
+   */
+  bool isKindCompo() const
+  {
+    return (type > OBSTACLE) ? true : false;
+  }
+  
+  
+  /**
+   * @brief typeが媒質であればtrue
+   */
+  bool isKindMedium() const
+  {
+    return (type == -1) ? true : false;
+  }
+  
+  
+  /**
+   * @brief typeがOBSTACLEであればtrue
+   */
+  bool isKindObstacle() const
+  {
+    return (type == OBSTACLE) ? true : false;
+  }
+  
+  
+  /**
+   @brief コンポーネントタイプがモニタかどうかを調べる
+   @retval モニタであればtrue
+   */
+  bool isMONITOR() const
+  {
+    return (type == CELL_MONITOR) ? true : false;
+  }
+  
+  bool isPolicy_HeatDensity() const
+  {
+    return (usw==hsrc_density) ? true : false;
+  }
+  
+  
+  bool isPolicy_Massflow() const
+  {
+    return (attrb==BC_type_massflow) ? true : false;
+  }
+
+  bool isVBC       () const ;
+  
+  
+  /// @brief コンポーネントが速度規定 
+  bool isVBC_IO() const
+  {
+    if ((type == SPEC_VEL) ||
+        (type == SPEC_VEL_WH) ||
+        (type == OUTFLOW) ) return true;
+    return false;
+  }
+  
+  
+  //@brief メンバ変数variableにエンコードされた変数タイプとの照合を行う
+  //@param var 変数タイプのビット数
+  bool isVarEncoded (const int var) const
+  {
+    return ( ( 0x1 & (variable >> var)) ? true : false );
+  }
+  
+  
+  /**
+   @brief ベクトル強制をするかどうかを調べる
+   @retval ベクトルを強制する場合true
+   */
+  bool isVecForcing() const
+  {
+    if ( isFORCING() && usw==ON ) return true;
+    
+    return false;
+  }
+
+  
+  bool isVFraction () const;
+  
+  
+
+  void setAlias            (const std::string pnt);
   
   void setAttrb            (const int key);
   void setBClocation       (const int key);
   void setBbox             (const int m_st[], const int m_ed[]);
-  void setDef              (const int key);
-  void setElement          (const unsigned long key);
-  void setEns              (const int key);
-  void setHtype            (const int key);
-  void setInitTemp         (const REAL_TYPE var);
-  void setMatOdr           (const int key);
-  void setLabel            (const std::string pnt);
-  void setPeriodicDir      (const int key);
-  void setPrsUnit          (const int key);
-  void setPhase            (const int m_phase);
-  void setState            (const int key);
-  void setStateCellMonitor (const int key);
-  void setType             (const int key);
   void set_CoefMassflow    (const REAL_TYPE var);
   void set_CoefHT          (const REAL_TYPE var);
   void set_CoefPrsLoss     (const REAL_TYPE var);
   void set_CoefRadEps      (const REAL_TYPE var);
   void set_CoefRadPrj      (const REAL_TYPE var);
   void set_cmp_sz          ();
+  void setDef              (const int key);
+  void setElement          (const unsigned long key);
+  
+  // サブドメインにコンポーネントが存在するかどうかを設定
+  void setEnsLocal(const int key);
+  
   void set_Heatflux        (const REAL_TYPE var);
   void set_HeatDensity     (const REAL_TYPE var);
   void set_HeatValue       (const REAL_TYPE var);
   void set_HSRC_policy     (const bool kind);
+  void setHtype            (const int key);
+  void setInitTemp         (const REAL_TYPE var);
+  
   void set_Massflow        (const REAL_TYPE var);
+  void setMedium           (const std::string pnt);
   void set_Mon_Calorie     (const REAL_TYPE var);
   void set_Mon_Heatflux    (const REAL_TYPE var);
   void set_Mon_Temp        (const REAL_TYPE var);
+  
+  void set_P_BCtype        (const int key);
+  void setPeriodicDir      (const int key);
+  void setPhase            (const int m_phase);
   void set_Pressure        (const REAL_TYPE var);
-  void set_SamplingMethod  (const int key);
-  void set_SamplingMode    (const int key);
+  void setPrsUnit          (const int key);
+  void setSamplingWidth    (const int key);
   void set_Shape           (const int key);
+  void setState            (const int key);
+  void setStateCellMonitor (const int key);
+  void setType             (const int key);
+
   void set_sw_Heatgen      (const int key);
   void set_sw_HexDir       (const int key);
   void set_sw_HTmodeRef    (const int key);
-  void set_P_BCtype        (const int key);
+  
   void set_Temp            (const REAL_TYPE var);
   void set_V_profile       (const int key);
   void set_VBC_policy      (const bool kind);
   void set_Velocity        (const REAL_TYPE var);
   
-  REAL_TYPE getInitTemp() const
-  { 
-    return temp_init; 
-  }
-  
-  int get_sw_Heatgen() const
-  { 
-    return usw; 
-  }
-  
-  int get_sw_HexDir() const
-  { 
-    return usw; 
-  }
-  
-  int get_sw_HTmodeRef() const
-  { 
-    return usw; 
-  }
-  
-  int get_P_BCtype() const
-  {
-    return usw; 
-  }
-  
-  int get_V_Profile() const
-  { 
-    return usw; 
-  }
-  
-  int getDef() const
-  { 
-    return def; 
-  }
-  
-  int getState() const
-  { 
-    return state; 
-  }
-  
-  int get_Shape() const
-  { 
-    return shape; 
-  }
-  
-  int get_SamplingMethod() const
-  { 
-    return sampling_method; 
-  }
-  
-  int get_SamplingMode() const
-  { 
-    return sampling_mode; 
-  }
-  
-  int getMatID() const
-  {
-    return mat_id;
-  }
-  
-  int getMatOdr() const
-  { 
-    return mat_odr;
-  }
-  
-  int getBClocation() const
-  { 
-    return bc_dir; 
-  }
-  
-  int getPeriodicDir() const
-  { 
-    return var_u1; 
-  }
-  
-  int getPrsUnit() const
-  { 
-    return var_u1; 
-  }
-  
-  int getStateCellMonitor() const 
-  { 
-    return var_u1; 
-  }
-  
-  int getType () const
-  { 
-    return type; 
-  }
-  
-  int getHtype () const
-  { 
-    return h_type; 
-  }
-  
-  int getAttrb() const
-  { 
-    return attrb; 
-  }
-  
-  unsigned long getElement() const
-  { 
-    return element; 
-  }
-  
-  bool isPolicy_Massflow() const
-  { 
-    return (attrb==BC_type_massflow) ? true : false; 
-  }
-  
-  bool isPolicy_HeatDensity() const
-  { 
-    return (usw==hsrc_density) ? true : false; 
-  }
-  
-  bool isEns() const
-  { 
-    return ( (ens == ON) ? true : false ); 
-  }
-  
 
-  //@brief return pahse ID (SOLID=0, FLUID=1, GAS=2, LIQUID=3)
-  int getPhase() const
-  { 
-    return phase; 
-  }
-  
-
-  //@brief メンバ変数variableに変数の種類をエンコードする
-  //@param var 変数タイプを表すビット数
-  void encodeVarType (const int var)
-  { 
-    variable |= (0x1 << var); 
-  }
-  
-
-  //@brief メンバ変数variableにエンコードされた変数タイプとの照合を行う
-  //@param var 変数タイプのビット数
-  bool isVarEncoded (const int var) const
-  { 
-    return ( ( 0x1 & (variable >> var)) ? true : false ); 
-  }
-
-
-  //@brief コンポーネントのBV情報を返す
-  inline void getBbox(int* m_st, int* m_ed) 
-  {
-    m_st[0] = st[0];
-    m_st[1] = st[1];
-    m_st[2] = st[2];
-    m_ed[0] = ed[0];
-    m_ed[1] = ed[1];
-    m_ed[2] = ed[2];
-  }
-  
-
-  //@brief コンポーネントのBV情報stのアドレスを返す
-  int* getBbox_st()
-  { 
-    return st; 
-  }
-  
-
-  //@brief コンポーネントのBV情報edのアドレスを返す
-  int* getBbox_ed() 
-  { 
-    return ed; 
-  }
-  
-
-  //@brief コンポーネントのサイズを返す
-  void get_cmp_sz(int* m_sz) 
-  { 
-    m_sz[0] = c_size[0];
-    m_sz[1] = c_size[1];
-    m_sz[2] = c_size[2];
-  }
 };
 
 #endif // _FB_COMPO_H_

@@ -112,13 +112,13 @@ void IP_SHC1D::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REA
 // #################################################################
 /*
  * @brief 矩形の計算領域のセルIDを設定する
- * @param [in,out] mid   媒質情報の配列
- * @param [in]     R     Controlクラスのポインタ
- * @param [in]     G_org グローバルな原点（無次元）
- * @param [in]     Nmax  Controlクラスのポインタ
- * @param [in]     mat   MediumListクラスのポインタ
+ * @param [in,out] mid      媒質情報の配列
+ * @param [in]     R        Controlクラスのポインタ
+ * @param [in]     G_org    グローバルな原点（無次元）
+ * @param [in]     NoMedium 媒質数
+ * @param [in]     mat      MediumListクラスのポインタ
  */
-void IP_SHC1D::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
+void IP_SHC1D::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat)
 {
   
   // ローカルにコピー
@@ -129,19 +129,19 @@ void IP_SHC1D::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, Med
 
   int id_fluid, id_solid, id_solid_inactive;
   
-  if ( (id_fluid = R->find_ID_from_Label(mat, Nmax, m_fluid)) == 0 )
+  if ( (id_fluid = R->find_ID_from_Label(mat, NoMedium, m_fluid)) == 0 )
   {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_fluid.c_str());
     Exit(0);
   }
   
-  if ( (id_solid = R->find_ID_from_Label(mat, Nmax, m_solid)) == 0 )
+  if ( (id_solid = R->find_ID_from_Label(mat, NoMedium, m_solid)) == 0 )
   {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_solid.c_str());
     Exit(0);
   }
   
-  if ( (id_solid_inactive = R->find_ID_from_Label(mat, Nmax, m_inactive)) == 0 )
+  if ( (id_solid_inactive = R->find_ID_from_Label(mat, NoMedium, m_inactive)) == 0 )
   {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_inactive.c_str());
     Exit(0);

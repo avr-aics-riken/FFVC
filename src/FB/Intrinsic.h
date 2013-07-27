@@ -108,7 +108,7 @@ public:
   
   
   // 計算領域の媒質情報を設定する
-  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat) {};
+  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, const MediumList* mat) {};
   
   
   

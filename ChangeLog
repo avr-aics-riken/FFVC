@@ -20,6 +20,19 @@ REVISION HISTORY
 
 
 --------------------------
+2013-07-27
+
+- r1005 polygon problem
+  - FXgenからのパラメータの流れを整理
+  - NoMedium, NoBC, NoCompo > cmp[], mat[]の配列の大きさはNoCompoで統一
+  - Libraryのバージョン番号を表示
+  - 媒質テーブルのロードを変更
+  - setMonitorCellID()の追加
+  - VoxScan(), scalCell()のアルゴリズム変更
+  - BCindexの不要部分抑制 MediumとMatOdrは同じに，CellIDは不要
+  - セルモニターの幅を指定
+  
+--------------------------
 2013-07-16
 
 - r1004 configure.ac for non-intel compiler

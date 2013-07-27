@@ -42,6 +42,18 @@ int main( int argc, char **argv )
   
   // FFV classのインスタンス
   FFV ffv;
+  
+  // 引数チェック
+  if ( argc != 2 )
+  {
+    if ( ffv.IsMaster() )
+    {
+      printf("\n\tusage\n");
+      printf("\n\t$ ffvc <input_file>\n");
+    }
+    if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
+    return 1;
+  }
 
   // ##################################################################
   // 初期化
@@ -64,25 +76,6 @@ int main( int argc, char **argv )
       hpcpf_status(1);
       return 1;
     }
-  }
-  
-  // CIO lib version
-  if (cpm_ParaManager::get_instance()->GetMyRankID()==0)
-  {
-    cio_DFI::VersionInfo(std::cout);
-  }
-  
-  
-  // 引数チェック
-  if ( argc != 2 )
-  {
-    if ( ffv.IsMaster() )
-    {
-      printf("\n\tusage\n");
-      printf("\n\t$ ffvc <input_file>\n");
-    }
-    if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
-    return 1;
   }
   
   
@@ -117,6 +110,7 @@ int main( int argc, char **argv )
   
   // シグナルハンドラの初期化
   FFV_TerminateCtrl::initialize(); 
+  
   
   
   // ##################################################################

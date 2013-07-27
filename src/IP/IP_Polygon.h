@@ -41,7 +41,7 @@ public:
 
 public:
   
-  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat);
+  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat);
   
 };
 #endif // _IP_POLYGON_H_

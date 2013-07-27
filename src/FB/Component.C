@@ -45,10 +45,12 @@ const char* CompoList::getVarStr()
 
 // #################################################################
 //BCのラベル名を返す
-std::string CompoList::getBCstr()
+std::string CompoList::getBCstr() const
 {
   std::string bc;
+  
   if      ( type == ADIABATIC )     bc = "Adiabatic";
+  else if ( type == OBSTACLE )      bc = "Obstacle";
   else if ( type == HEATFLUX )      bc = "Direct Heat Flux";
   else if ( type == ISOTHERMAL )    bc = "Isothermal";
   else if ( type == RADIANT )       bc = "Radiant";
@@ -64,37 +66,26 @@ std::string CompoList::getBCstr()
   else if ( type == CELL_MONITOR )  bc = "Cell Monitor";
   else if ( type == PERIODIC )      bc = "Periodic";
   else if ( type == INACTIVE )      bc = "Inactive";
-  else if ( type == TRANSFER ) {
+  else if ( type == TRANSFER )
+  {
     if      ( h_type == HT_N )      bc = "Heat Transfer type N";
     else if ( h_type == HT_S )      bc = "Heat Transfer type S";
     else if ( h_type == HT_SN)      bc = "Heat Transfer type SN (Natural convection)";
     else if ( h_type == HT_SF)      bc = "Heat Transfer type SF (Forced convection)";
     else if ( h_type == HT_B )      bc = "Heat Transfer type B";
   }
-  else                              bc = "";
+  else                              bc = "Medium";
+  
   return bc;
 }
 
 
 // #################################################################
 /**
- @brief 境界条件タイプがFORCINGかどうかを調べる
- @retval FORCINGであればtrue
- */
-bool CompoList::isFORCING()
-{
-  if ((type == HEX) || 
-      (type == FAN) || 
-      (type == DARCY) ) return true;
-  return false;
-}
-
-// #################################################################
-/**
  @brief 境界条件タイプが熱境界条件かどうかを調べる
  @retval HBCであればtrue
  */
-bool CompoList::isHBC()
+bool CompoList::isHBC() const
 {
   if ((type == ADIABATIC)  || 
       (type == HEATFLUX)   ||
@@ -112,33 +103,13 @@ bool CompoList::isHBC()
  @brief 境界条件タイプが熱源かどうかを調べる
  @retval FORCINGであればtrue
  */
-bool CompoList::isHsrc()
+bool CompoList::isHsrc() const
 {
   if ((type == HEAT_SRC) || 
       (type == CNST_TEMP) ) return true;
   return false;
 }
 
-
-// #################################################################
-bool CompoList::isVBC_IO()
-{
-  if ((type == SPEC_VEL) ||
-      (type == SPEC_VEL_WH) ||
-      (type == OUTFLOW) ) return true;
-  return false;
-}
-
-
-// #################################################################
-/**
- @brief コンポーネントタイプがモニタかどうかを調べる
- @retval モニタであればtrue
- */
-bool CompoList::isMONITOR()
-{
-  return ( (type == CELL_MONITOR) ? true : false );
-}
 
 
 // #################################################################
@@ -147,7 +118,7 @@ bool CompoList::isMONITOR()
  @brief 内部境界条件タイプが速度指定かどうかを調べる
  @retval VBCであればtrue
  */
-bool CompoList::isVBC()
+bool CompoList::isVBC() const
 {
   if ((type == SPEC_VEL) ||
       (type == SPEC_VEL_WH) ||
@@ -160,23 +131,10 @@ bool CompoList::isVBC()
 }
 
 
-// #################################################################
-/**
- @brief ベクトル強制をするかどうかを調べる
- @retval ベクトルを強制する場合true
- */
-bool CompoList::isVecForcing()
-{
-  if ( isFORCING() ) {
-    if ( usw==ON) return true;
-  }
-  return false;
-}
-
 
 // #################################################################
 //@brief 体積率の必要なコンポーネントかどうか
-bool CompoList::isVFraction()
+bool CompoList::isVFraction() const 
 {
   if ((type == HEAT_SRC) ||
       (type == CNST_TEMP) ||
@@ -186,6 +144,15 @@ bool CompoList::isVFraction()
       (type == DARCY) )  return true;
   return false;
 }
+
+
+// #################################################################
+//@brief エイリアス名をセットする
+void CompoList::setAlias(const std::string pnt)
+{
+  alias = pnt;
+}
+
 
 
 // #################################################################
@@ -216,136 +183,6 @@ void CompoList::setBbox(const int m_st[], const int m_ed[])
   ed[0] = m_ed[0];
   ed[1] = m_ed[1];
   ed[2] = m_ed[2];
-}
-
-
-// #################################################################
-//@brief 指定セルを保持する
-void CompoList::setDef(const int key) 
-{
-  def = key;
-}
-
-
-// #################################################################
-//@brief elementをセットする
-//@param key 要素数 element
-void CompoList::setElement(const unsigned long key) 
-{ 
-  element = key; 
-}
-
-
-// #################################################################
-//@brief コンポーネントが自ノードに存在しているかどうかをセットする
-void CompoList::setEns(const int key) 
-{
-  ens = key;
-}
-
-
-// #################################################################
-//@brief h_typeをセットする
-//@param key 境界条件の種類
-void CompoList::setHtype(const int key) 
-{ 
-  h_type = key; 
-}
-
-
-// #################################################################
-//@brief 初期温度の指定
-void CompoList::setInitTemp(const REAL_TYPE key) 
-{
-  temp_init = key;
-}
-
-
-// #################################################################
-//@brief mat_odrをセットする
-//@param key MediumListのエントリ番号
-void CompoList::setMatOdr(const int key) 
-{ 
-  mat_odr = key; 
-}
-
-
-// #################################################################
-//@brief ラベル名をセットする
-void CompoList::setLabel(const std::string pnt) 
-{ 
-  name = pnt; 
-}
-
-
-// #################################################################
-//@brief 周期境界の上流方向を保持する
-void CompoList::setPeriodicDir(const int key) 
-{
-  var_u1 = key;
-}
-
-
-// #################################################################
-//@brief set pahse ID (SOLID=0, FLUID=1, GAS=2, LIQUID=3)
-void CompoList::setPhase(const int m_phase) 
-{
-  phase = m_phase;
-}
-
-
-// #################################################################
-//@brief 圧力の単位を指定する
-void CompoList::setPrsUnit(const int key) 
-{
-  var_u1 = key;
-}
-
-
-// #################################################################
-void CompoList::set_SamplingMethod(const int key) 
-{ 
-  sampling_method = key; 
-}
-
-
-// #################################################################
-void CompoList::set_SamplingMode(const int key) 
-{ 
-  sampling_mode = key; 
-}
-
-
-// #################################################################
-void CompoList::set_Shape(const int key) 
-{ 
-  shape = key; 
-}
-
-
-// #################################################################
-//@brief stateをセットする
-//@param key セルの状態 SOLID/FLUID
-void CompoList::setState(const int key) 
-{ 
-  state = key; 
-}
-
-
-// #################################################################
-//@brief セルモニタスイッチ ON/OFF
-void CompoList::setStateCellMonitor(const int key) 
-{
-  var_u1 = key;
-}
-
-
-// #################################################################
-//@brief typeをセットする
-//@param key 境界条件の種類
-void CompoList::setType(const int key) 
-{ 
-  type = key; 
 }
 
 
@@ -400,6 +237,32 @@ void CompoList::set_CoefPrsLoss(const REAL_TYPE var)
 
 
 // #################################################################
+//@brief 指定セルを保持する
+void CompoList::setDef(const int key)
+{
+  def = key;
+}
+
+
+// #################################################################
+//@brief elementをセットする
+//@param key 要素数 element
+void CompoList::setElement(const unsigned long key)
+{
+  element = key;
+}
+
+
+// #################################################################
+//@brief コンポーネントが自ノードに存在しているかどうかをセットする
+void CompoList::setEnsLocal(const int key)
+{
+  ens = key;
+}
+
+
+
+// #################################################################
 //@brief 吸発熱密度の保持
 void CompoList::set_HeatDensity(const REAL_TYPE var) 
 {
@@ -433,10 +296,37 @@ void CompoList::set_HSRC_policy(const bool kind)
 
 
 // #################################################################
+//@brief h_typeをセットする
+//@param key 境界条件の種類
+void CompoList::setHtype(const int key)
+{
+  h_type = key;
+}
+
+
+// #################################################################
+//@brief 初期温度の指定
+void CompoList::setInitTemp(const REAL_TYPE key)
+{
+  temp_init = key;
+}
+
+
+
+// #################################################################
 //@brief 流量の保持
 void CompoList::set_Massflow(const REAL_TYPE var) 
 {
   var1 = var;
+}
+
+
+
+// #################################################################
+//@brief 媒質名をセットする
+void CompoList::setMedium(const std::string pnt)
+{
+  medium = pnt;
 }
 
 
@@ -465,6 +355,30 @@ void CompoList::set_Mon_Calorie(const REAL_TYPE var)
 
 
 // #################################################################
+//@brief 圧力境界条件タイプ指定モードの保持
+void CompoList::set_P_BCtype(const int key)
+{
+  usw = key;
+}
+
+
+// #################################################################
+//@brief 周期境界の上流方向を保持する
+void CompoList::setPeriodicDir(const int key)
+{
+  var_u1 = key;
+}
+
+
+// #################################################################
+//@brief set pahse ID (SOLID=0, FLUID=1, GAS=2, LIQUID=3)
+void CompoList::setPhase(const int m_phase)
+{
+  phase = m_phase;
+}
+
+
+// #################################################################
 //@brief 圧力値の保持
 void CompoList::set_Pressure(const REAL_TYPE var) 
 {
@@ -473,18 +387,41 @@ void CompoList::set_Pressure(const REAL_TYPE var)
 
 
 // #################################################################
-//@brief 速度プロファイル指定モードの保持
-void CompoList::set_V_profile(const int key) 
+//@brief 圧力の単位を指定する
+void CompoList::setPrsUnit(const int key)
 {
-  usw = key;
+  var_u1 = key;
 }
 
 
 // #################################################################
-//@brief 圧力境界条件タイプ指定モードの保持
-void CompoList::set_P_BCtype(const int key) 
+void CompoList::setSamplingWidth(const int key)
 {
-  usw = key;
+  sampling_width = key;
+}
+
+
+// #################################################################
+void CompoList::set_Shape(const int key)
+{
+  shape = key;
+}
+
+
+// #################################################################
+//@brief stateをセットする
+//@param key セルの状態 SOLID/FLUID
+void CompoList::setState(const int key)
+{
+  state = key;
+}
+
+
+// #################################################################
+//@brief セルモニタスイッチ ON/OFF
+void CompoList::setStateCellMonitor(const int key)
+{
+  var_u1 = key;
 }
 
 
@@ -521,10 +458,11 @@ void CompoList::set_Temp(const REAL_TYPE var)
 
 
 // #################################################################
-//@brief 速度の保持
-void CompoList::set_Velocity(const REAL_TYPE var) 
+//@brief typeをセットする
+//@param key 境界条件の種類
+void CompoList::setType(const int key)
 {
-  var1 = var;
+  type = key;
 }
 
 
@@ -535,3 +473,20 @@ void CompoList::set_VBC_policy(const bool kind)
 {
   attrb = ( kind ) ? BC_type_velocity : BC_type_massflow;
 }
+
+
+// #################################################################
+//@brief 速度の保持
+void CompoList::set_Velocity(const REAL_TYPE var) 
+{
+  var1 = var;
+}
+
+
+// #################################################################
+//@brief 速度プロファイル指定モードの保持
+void CompoList::set_V_profile(const int key)
+{
+  usw = key;
+}
+

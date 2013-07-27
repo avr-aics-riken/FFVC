@@ -19,6 +19,14 @@ RELEASE
 =======
 
 -------------
+Version 1.2.6    2013-07-27
+  - Polygon problem has been able to compute.
+  
+-------------
+Version 1.2.5    2013-07-16
+  - Binary model generated from cut info.
+
+-------------
 Version 1.2.4    2013-07-13
   - confirm operation /w Polylib-2.6.4 and Cutlib-3.1.2
 

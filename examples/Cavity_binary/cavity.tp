@@ -44,21 +44,21 @@ Steer {
   Example = "Rectangular"
 
   FileIO {
-    IOmode               = "distributed"
     GuideOut             = "Without"
     DebugDivergence      = "Off"
     InstantIntervalType  = "step"
     InstantInterval      = 10
     VoxelOutput          = "off"
-    FileFormat           = "sph"
-    Directory {
-      InputPath       = "hoge"
-      OutputPath      = "hoge"
-      TimeSlice       = "off"
-    }
-    Plot3d {
-      IntervalType       = "step"
-      Interval           = 10
+
+    Output {
+      FileFormat         = "sph"
+      DirectoryPath      = "hoge"
+      TimeSlice          = "off"
+      DFIfiles {
+        Velocity    = "vel1.dfi" // defaultは vel.dfi
+        Pressure    = "prs1.dfi" 
+        Temperature = ""
+      }
     }
   }
 
@@ -70,31 +70,46 @@ Steer {
   }
 
   Iteration {
-    Flow {
-      Poisson {
-        Iteration    = 50
-        Epsilon      = 1.0e-4
-        Omega        = 1.1
-        Norm         = "RbyR0"
-        LinearSolver = "sor2sma"
-        CommMode     = "async"
-      }
-      VP {
-        Iteration    = 100
-        Epsilon      = 1.0e-4
-        Norm         = "VdivMax"
-      }
+    ConvergenceCriterion[@] {
+      Alias        = "prs"
+      Iteration    = 50
+      Epsilon      = 1.0e-4
+      NormType     = "RbyR0"
     }
-    Heat {
-      EulerImplicit {
-        Iteration    = 30
-        Epsilon      = 1.0e-2
-        Omega        = 1.1
-        Norm         = "TResL2Absolute"
-        LinearSolver = "SOR"
-        CommMode     = "sync"
-      }     
-    }     
+    ConvergenceCriterion[@] {
+      Alias        = "vp"
+      Iteration    = 100
+      Epsilon      = 1.0e-4
+      NormType     = "VdivMax"
+    }
+    ConvergenceCriterion[@] {
+      Alias        = "temp"
+      Iteration    = 30
+      Epsilon      = 1.0e-2
+      NormType     = "TResL2Absolute"
+    }
+
+    Pressure {
+      AssignedCriterion = "prs"
+      LinearSolver      = "sor2sma"
+      Omega             = 1.1
+      CommMode          = "async"
+    }
+
+    Velocity {
+      AssignedCriterion = ""
+    }
+
+    VPiteration {
+      AssignedCriterion = "vp"
+    }
+
+    Temperature {
+      AssignedCriterion = "temp"
+      LinearSolver      = "SOR"
+      Omega             = 1.1
+      CommMode          = "sync"
+    }    
   }
 
   LESoption {
@@ -144,24 +159,6 @@ Steer {
     }
   }
 
-  PLOT3DOptions {
-    FileNameGrid    = ""
-    FileNameFunc    = ""
-    GridKind        = "MultiGrid"
-    GridMobility    = "immovable"
-    StateOfTime     = "unsteady"
-    SetIblankFlag   = "on"
-    Dimension       = "3D"
-    FormatType      = "Unformatted"
-    OutputXyz       = "on"
-    OutputQ         = "off"
-    OutputFunction  = "on"
-    OutputFuncName  = "on"
-    OutputFvbnd     = "off"
-    DivideFunc      = "off"
-    RealType        = "float"
-  }
-
   ReferenceFrame {
     ReferenceFrameType = "Stationary"
   }
@@ -170,31 +167,19 @@ Steer {
     StartType         = "initial"
 
     Restart {
-      Step        = 200
+      Step        = 100
       AverageStep = 400
+      Staging     = "off"
 
-      Refinement {
-        PrefixOfPressure  = "prs_64_"
-        PrefixOfVelocity  = "vel_64_"
-        PrefixOfFvelocity = "fvel_64_"
-        DFIofPressure     = "prs.dfi"
-        DFIofVelocity     = "vel.dfi"
-        DFIofFvelocity    = "fvel.dfi"
-      }
-
-      DifferentProcess {
-        Staging  = "off"
-        PrefixOfPressure  = "prs_64_"
-        PrefixOfVelocity  = "vel_64_"
-        PrefixOfFvelocity = "fvel_64_"
-        DFIofPressure     = "prs.dfi"
-        DFIofVelocity     = "vel.dfi"
-        DFIofFvelocity    = "fvel.dfi"
+      DFIfiles {
+        Velocity    = "vel0.dfi"  // Velocityのdfiファイル名
+        Pressure    = "prs0.dfi"  // Pressureのdfiファイル名
+        Fvelocity   = "fvel.dfi" // Fvelocityのdfiファイル名
       }
     }
 
     InitialState {
-      Density     = 1.0
+      MassDensity = 1.0
       Pressure    = 0.0
       Temperature = 20.0
       Velocity    = (0.0, 0.0, 0.0)
@@ -263,21 +248,21 @@ Parameter {
 MediumTable {
 
   Medium[@] {
-    type                = "Fluid"
-    label               = "Air"
-    Density             = 1.1763
+    state               = "Fluid"
+    alias               = "Air"
+    MassDensity         = 1.1763
     SpecificHeat        = 1007
     ThermalConductivity = 2.614e-02
     KinematicViscosity  = 15.83e-06
     Viscosity           = 18.62e-06
-    SoundOfSpeed        = 340.0
+    SpeedOfSound        = 340.0
     VolumeExpansion     = 0.04e-3
   }
 
   Medium[@] {
-    Type                = "Solid"
-    label               = "Fe"
-    Density             = 7870.0
+    state               = "Solid"
+    alias               = "Fe"
+    MassDensity         = 7870.0
     SpecificHeat        = 442.0
     ThermalConductivity = 80.3
   }
@@ -315,27 +300,27 @@ BcTable {
     //外部境界条件
     FaceBC {
       Xminus {
-        alias   = "outer_wall"
+        AssignedAlias     = "outer_wall"
         MediumOnGuideCell = "Fe"
       }
       Xplus {
-        alias   = "outer_wall"
+        AssignedAlias     = "outer_wall"
         MediumOnGuideCell = "Fe"
       }
       Yminus {
-        alias   = "outer_wall"
+        AssignedAlias     = "outer_wall"
         MediumOnGuideCell = "Fe"
       }
       Yplus {
-        alias   = "outer_wall"
+        AssignedAlias     = "outer_wall"
         MediumOnGuideCell = "Fe"
       }
       Zminus {
-        alias   = "outer_wall"
+        AssignedAlias     = "outer_wall"
         MediumOnGuideCell = "Fe"
       }
       Zplus {
-        alias   = "slide_wall"
+        AssignedAlias     = "slide_wall"
         MediumOnGuideCell = "Fe"
       }
     }

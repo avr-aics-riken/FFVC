@@ -77,14 +77,14 @@ void IP_RSP::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_
 }
 
 /**
- @fn void IP_RSP::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
+ @fn void IP_RSP::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, MediumList* mat)
  @brief RSPの計算領域のセルIDを設定する
  @param mid IDの配列
  @param R Controlクラスのポインタ
  @param G_org グローバルな原点（無次元）
  @param mat
  */
-void IP_RSP::setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, MediumList* mat)
+void IP_RSP::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat)
 {
   size_t m;
   

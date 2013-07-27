@@ -49,118 +49,93 @@ using namespace std;
 class PolygonProperty {
   
 private:
-  int mat_id;        ///< Mediumtable[@]の格納番号
   int l_ntria;       ///< ローカルなポリゴン数
   int g_ntria;       ///< グローバルなポリゴン数
   REAL_TYPE l_area;  ///< ローカルな面積
   REAL_TYPE g_area;  ///< グローバルな面積
   string group;      ///< ポリゴングループ名
   string material;   ///< Mediumtable[@]のalias
-  FB::Vec3f min;     ///< Bboxのmin
-  FB::Vec3f max;     ///< Bboxのmax
+  string bc;         ///< BCのラベル
   
 public:
   PolygonProperty() {
-    mat_id = -1;
     l_area = 0.0;
     l_ntria= 0;
     g_area = 0.0;
     g_ntria= 0;
-    min.x = min.y = min.z = 0.0;
-    max.x = max.y = max.z = 0.0;
   }
   
   ~PolygonProperty() {}
   
-  string get_Group() const
+  string getGroup() const
   {
     return group;
   }
   
-  string get_Material() const
+  string getMaterial() const
   {
     return material;
   }
-
-  int get_MatOdr() const
+  
+  string getBClabel() const
   {
-    return mat_id;
+    return bc;
   }
   
-  int get_Lntria() const
+  int getLntria() const
   {
     return l_ntria;
   }
   
-  REAL_TYPE get_Larea() const
+  REAL_TYPE getLarea() const
   {
     return l_area;
   }
   
-  int get_Gntria() const
+  int getGntria() const
   {
     return g_ntria;
   }
   
-  REAL_TYPE get_Garea() const
+  REAL_TYPE getGarea() const
   {
     return g_area;
   }
   
-  FB::Vec3f get_Min() const
-  {
-    return min;
-  }
-  
-  FB::Vec3f get_Max() const
-  {
-    return max;
-  }
-  
-  void set_Group(string key)
+  void setGroup(string key)
   {
     group = key;
   }
   
-  void set_Material(string key)
+  void setMaterial(string key)
   {
     material = key;
   }
-  
-  void set_MatOdr(int val)
+  void setBClabel(string key)
   {
-    mat_id = val;
+    bc = key;
   }
   
-  void set_Lntria(int val)
+  void setLntria(int val)
   {
     l_ntria = val;
   }
   
-  void set_Larea(REAL_TYPE val)
+  void setLarea(REAL_TYPE val)
   {
     l_area = val;
   }
   
-  void set_Gntria(int val)
+  void setGntria(int val)
   {
     g_ntria = val;
   }
   
-  void set_Garea(REAL_TYPE val)
+  void setGarea(REAL_TYPE val)
   {
     g_area = val;
   }
   
-  void set_Min(FB::Vec3f val)
-  {
-    min = val;
-  }
-  
-  void set_Max(FB::Vec3f val)
-  {
-    max = val;
-  }
 };
 
 
@@ -713,6 +688,7 @@ public:
     int fraction;
     int monitor;
     int tfree;
+    int vspec;
   } Ens_of_Compo;
   
   
@@ -825,18 +801,18 @@ public:
   int Limiter;
   int MarchingScheme;
   int NoBaseCriterion;
-  int NoBC;
-  int NoCompo;
+  int NoBC;           ///< 境界条件数
+  int NoCompo;        ///< コンポーネント数
   int NoMedium;       ///< 媒質数
-  int NoMediumFluid;
-  int NoMediumSolid;
-  int num_process;
-  int num_thread;
-  int num_of_polygrp;
-  int Parallelism;
-  int RefMat;     ///< 参照媒質インデクス
+  int NoMediumFluid;  ///< 流体の媒質数
+  int NoMediumSolid;  ///< 固体の媒質数
+  int num_process;    ///< プロセス数
+  int num_thread;     ///< スレッド数
+  int num_of_polygrp; ///< ポリゴングループ数
+  int Parallelism;    ///< 並列モード
+  int RefMat;         ///< 参照媒質インデクス
   int Start;
-  int version;    ///< FFVバージョン番号
+  int version;        ///< FFVバージョン番号
   
   unsigned Restart_staging;    ///< リスタート時にリスタートファイルがSTAGINGされているか
   unsigned Restart_step;       ///< リスタートステップ
@@ -940,8 +916,15 @@ public:
   string f_Vorticity;
   string f_Fvelocity;
   
-  string Ref_Medium;
+  string RefMedium;    ///< 参照媒質名 -> int RefMat
   string OperatorName;
+  
+  string ver_TP;   ///< TextPerser version no.
+  string ver_CPM;  ///< CPMlib
+  string ver_CIO;  ///< CIOlib
+  string ver_PM;   ///< PMlib
+  string ver_Poly; ///< Polylib
+  string ver_CUT;  ///< Cutlib
   
   
   /** コンストラクタ */
@@ -1301,40 +1284,9 @@ protected:
   //@brief PBiCGSTAB反復固有のパラメータを指定する
   void setPara_PBiCGSTAB(const string base, ItrCtl* IC);
   
+  
+  
 public:
-  
-  /** MediumList中に登録されているkeyに対するIDを返す
-   * @param [in] mat  MediumListクラス
-   * @param [in] Namx リストの最大数
-   * @param [in] key  探査するラベル
-   * @return keyに対するIDを返す。発見できない場合はzero
-   */
-  int find_ID_from_Label(MediumList* mat, const int Nmax, const std::string key);
-  
-  
-  /**
-   * @brief 計算内部領域の全セル数を返す
-   * @param [in] G_size 計算領域全体の分割数
-   */
-  REAL_TYPE getCellSize(const int* m_size);
-  
-  
-  /**
-   * @brief モデルの形状情報
-   * @param [in] MTITP 媒質情報テーブル
-   */
-  void get_Geometry(const MediumTableInfo *MTITP);
-  
-  
-  /**
-   * @brief 外部境界の各方向の開口率（流体部分の比率）
-   * @retval 開口率
-   * @param [in] dir    方向
-   * @param [in] area   計算外部領域の各面の開口率
-   * @param [in] G_size 計算領域全体の分割数
-   */
-  REAL_TYPE OpenDomainRatio(const int dir, const REAL_TYPE area, const int* G_size);
-	
   
   /** 20130611
    * @brief 制御，計算パラメータ群の表示
@@ -1348,7 +1300,172 @@ public:
    */
   //void displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat, FileIO_PLOT3D_WRITE* FP3DW);
   void displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat);
+  
+  
+  /** MediumList中に登録されているkeyに対するIDを返す
+   * @param [in] mat  MediumListクラス
+   * @param [in] Namx リストの最大数
+   * @param [in] key  探査するラベル
+   * @return keyに対するIDを返す。発見できない場合はzero
+   */
+  int find_ID_from_Label(const MediumList* mat, const int Nmax, const std::string key);
+  
+  
+  // 制御，計算パラメータ群の取得 20130611
+  //void get_Steer_1(DTcntl* DT, FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_WRITE* FP3DW);
+  void get1stParameter(DTcntl* DT);
+  
+  
+  // 制御，計算パラメータ群の取得
+  void get2ndParameter(ItrCtl* IC, ReferenceFrame* RF);
+  
+  
+  /**
+   * @brief 計算内部領域の全セル数を返す
+   * @param [in] G_size 計算領域全体の分割数
+   */
+  REAL_TYPE getCellSize(const int* m_size);
+  
+  
+  /**
+   * @brief コンポーネント数，媒質数，境界条件数を取得
+   */
+  void getNoOfComponent();
+  
+  
+  /**
+   * @brief モデルの形状情報
+   * @param [in] mat 媒質情報テーブル
+   */
+  void getGeometry(const MediumList* mat);
+  
+  
+  // モニタリングのON/OFFとセルモニタの有無のみを取得
+  void getMonitorList();
+  
+  
+  /**
+   * @brief ノルムのタイプを返す
+   * @param [in] d ノルムの種類
+   * @retval ノルムのラベル
+   */
+  string getNormString(const int d);
+  
+  
+  /**
+   * @brief ペクレ数の逆数を計算
+   * @note Eulerの時にはゼロ
+   */
+  REAL_TYPE getRcpPeclet() const
+  {
+    return ( (Mode.PDE == PDE_NS) ? (1.0 / Peclet) : 0.0 );
+  }
+  
+  
+  /**
+   * @brief レイノルズ数の逆数を計算
+   * @note Eulerの時にはゼロ
+   */
+  REAL_TYPE getRcpReynolds() const
+  {
+    return ( (Mode.PDE == PDE_NS) ? (1.0 / Reynolds) : 0.0 );
+  }
+  
+  
+  /**
+   * @brief TPのポインタを受け取る
+   * @param [in] tp TPControl
+   */
+  void importTP(TPControl* tp);
+  
+  
+  /**
+   * @brief ソルバーがCDSタイプかどうかを返す
+   * @retval CDSであればtrue
+   */
+  bool isCDS() const
+  {
+    return ( CUT_INFO == Mode.ShapeAprx ) ? true : false;
+  }
+  
+  
+  //@brief Forcingコンポーネントがあれば1を返す
+  int isForcing() const
+  {
+    return EnsCompo.forcing;
+  }
+  
+  
+  //@brief 熱問題かどうかを返す
+  bool isHeatProblem() const
+  {
+    return ( ( KindOfSolver != FLOW_ONLY ) ? true : false );
+  }
+  
+  
+  //@brief Hsrcコンポーネントがあれば1を返す
+  int isHsrc() const
+  {
+    return EnsCompo.hsrc;
+  }
+  
+  
+  //@brief モニタコンポーネントがあれば1を返す
+  int isMonitor() const
+  {
+    return EnsCompo.monitor;
+  }
+  
+  
+  //@brief 流出コンポーネントがあれば1を返す
+  int isOutflow() const
+  {
+    return EnsCompo.outflow;
+  }
+  
+  
+  //@brief 部分周期境界コンポーネントがあれば1を返す
+  int isPeriodic() const
+  {
+    return EnsCompo.periodic;
+  }
+  
+  
+  //@brief トラクションフリー境界があれば1を返す
+  int isTfree() const
+  {
+    return EnsCompo.tfree;
+  }
+  
+  
+  //@brief 体積率コンポーネントがあれば1を返す
+  int isVfraction() const
+  {
+    return EnsCompo.fraction;
+  }
 
+  
+  /**
+   * @brief 座標値を無次元化する
+   * @param [in,out] x 座標値
+   */
+  void normalizeCord(REAL_TYPE x[3])
+  {
+    x[0] /= RefLength;
+    x[1] /= RefLength;
+    x[2] /= RefLength;
+  }
+  
+  
+  /**
+   * @brief 外部境界の各方向の開口率（流体部分の比率）
+   * @retval 開口率
+   * @param [in] dir    方向
+   * @param [in] area   計算外部領域の各面の開口率
+   * @param [in] G_size 計算領域全体の分割数
+   */
+  REAL_TYPE OpenDomainRatio(const int dir, const REAL_TYPE area, const int* G_size);
+	
   
   /**
    * @brief 全計算領域の有効セル数と外部境界面の開口率を表示する
@@ -1377,146 +1494,9 @@ public:
    */
   void printNoCompo(FILE* fp);
   
-  
 
   // @brief 無次元パラメータを各種モードに応じて設定する
   void setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF, BoundaryOuter* BO);
-  
-  
-  /**
-   * @brief ノルムのタイプを返す
-   * @param [in] d ノルムの種類
-   * @retval ノルムのラベル
-   */
-  string getNormString(const int d);
-  
-  
-  /**
-   * @brief labelのコンポーネント数を返す
-   * @param [in] cmp   CompoListクラス
-   * @param [in] label コンポーネントID
-   */
-  int countCompo(CompoList* cmp, const int label);
-  
-
-  //@brief Forcingコンポーネントがあれば1を返す
-  int isForcing() const 
-  {
-    return EnsCompo.forcing;
-  }
-  
-
-  //@brief Hsrcコンポーネントがあれば1を返す
-  int isHsrc() const 
-  {
-    return EnsCompo.hsrc;
-  }
-  
-
-  //@brief 部分周期境界コンポーネントがあれば1を返す
-  int isPeriodic() const 
-  {
-    return EnsCompo.periodic;
-  }
-
-
-  //@brief モニタコンポーネントがあれば1を返す
-  int isMonitor() const 
-  {
-    return EnsCompo.monitor;
-  }
-  
-
-  //@brief 流出コンポーネントがあれば1を返す
-  int isOutflow() const 
-  {
-    return EnsCompo.outflow;
-  }
-  
-
-  //@brief 体積率コンポーネントがあれば1を返す
-  int isVfraction() const 
-  {
-    return EnsCompo.fraction;
-  }
-  
-
-  //@brief 熱問題かどうかを返す
-  bool isHeatProblem() const 
-  {
-    return ( ( KindOfSolver != FLOW_ONLY ) ? true : false );
-  }
-  
-  //@brief トラクションフリー境界があれば1を返す
-  int isTfree() const
-  {
-    return EnsCompo.tfree;
-  }
-  
-
-  /**
-   * @brief ソルバーがCDSタイプかどうかを返す
-   * @retval CDSであればtrue
-   */
-  bool isCDS() const 
-  {
-    return ( CUT_INFO == Mode.ShapeAprx ) ? true : false;
-  }
-  
-
-  /**
-   * @brief ペクレ数の逆数を計算
-   * @note Eulerの時にはゼロ
-   */
-  REAL_TYPE getRcpPeclet() const 
-  {
-    return ( (Mode.PDE == PDE_NS) ? (1.0 / Peclet) : 0.0 );
-  }
-  
-
-  /**
-   * @brief レイノルズ数の逆数を計算
-   * @note Eulerの時にはゼロ
-   */
-  REAL_TYPE getRcpReynolds() const 
-  {
-    return ( (Mode.PDE == PDE_NS) ? (1.0 / Reynolds) : 0.0 );
-  }
-
-
-  /**
-   * @brief 座標値を無次元化する
-   * @param [in,out] x 座標値
-   */
-  void normalizeCord(REAL_TYPE x[3]) 
-  {
-    x[0] /= RefLength;
-    x[1] /= RefLength;
-    x[2] /= RefLength;
-  }
-  
-  
-  
-  /**
-   * @brief TPのポインタを受け取る
-   * @param [in] tp TPControl
-   */
-  void importTP(TPControl* tp);
-  
-  
-  /**  モニタリングのON/OFFとセルモニタの有無のみを取得  */
-  void get_Sampling();
-  
-  
-  // 制御，計算パラメータ群の取得 20130611
-  //void get_Steer_1(DTcntl* DT, FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_WRITE* FP3DW);
-  void get_Steer_1(DTcntl* DT);
-  
-
-  // 制御，計算パラメータ群の取得
-  void get_Steer_2(ItrCtl* IC, ReferenceFrame* RF);
-  
- 
 
 };
 

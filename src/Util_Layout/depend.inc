@@ -32,8 +32,9 @@ main.o: main.C layout.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/win_inln.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/file_inln.h \
  /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
- /usr/local/CPMlib/include/cpm_ParaManager.h /usr/local/CPMlib/include/cpm_Base.h \
- /usr/local/CPMlib/include/cpm_Define.h /usr/local/CPMlib/include/cpm_Version.h \
+ /usr/local/PMlib/include/Version.h /usr/local/CPMlib/include/cpm_ParaManager.h \
+ /usr/local/CPMlib/include/cpm_Base.h /usr/local/CPMlib/include/cpm_Define.h \
+ /usr/local/CPMlib/include/cpm_Version.h \
  /usr/local/CPMlib/include/cpm_DomainInfo.h \
  /usr/local/CPMlib/include/cpm_EndianUtil.h \
  /usr/local/CPMlib/include/cpm_VoxelInfo.h \
@@ -42,8 +43,9 @@ main.o: main.C layout.h /opt/openmpi/include/mpi.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h ../FB/FB_Define.h \
  ../FB/mydebug.h ../FB/TPControl.h /usr/local/TextParser/include/TextParser.h \
- /usr/local/TextParser/include/TextParserCommon.h ../FB/dfiinfo.h \
- ../FB/DomainInfo.h LAYOUT_Define.h
+ /usr/local/TextParser/include/TextParserCommon.h \
+ /usr/local/TextParser/include/Version.h ../FB/dfiinfo.h ../FB/DomainInfo.h \
+ LAYOUT_Define.h
 layout.o: layout.C layout.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/mpi_portable_platform.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/mpicxx.h /opt/openmpi/include/mpi.h \
@@ -78,8 +80,9 @@ layout.o: layout.C layout.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/win_inln.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/file_inln.h \
  /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
- /usr/local/CPMlib/include/cpm_ParaManager.h /usr/local/CPMlib/include/cpm_Base.h \
- /usr/local/CPMlib/include/cpm_Define.h /usr/local/CPMlib/include/cpm_Version.h \
+ /usr/local/PMlib/include/Version.h /usr/local/CPMlib/include/cpm_ParaManager.h \
+ /usr/local/CPMlib/include/cpm_Base.h /usr/local/CPMlib/include/cpm_Define.h \
+ /usr/local/CPMlib/include/cpm_Version.h \
  /usr/local/CPMlib/include/cpm_DomainInfo.h \
  /usr/local/CPMlib/include/cpm_EndianUtil.h \
  /usr/local/CPMlib/include/cpm_VoxelInfo.h \
@@ -88,5 +91,6 @@ layout.o: layout.C layout.h /opt/openmpi/include/mpi.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h ../FB/FB_Define.h \
  ../FB/mydebug.h ../FB/TPControl.h /usr/local/TextParser/include/TextParser.h \
- /usr/local/TextParser/include/TextParserCommon.h ../FB/dfiinfo.h \
- ../FB/DomainInfo.h LAYOUT_Define.h
+ /usr/local/TextParser/include/TextParserCommon.h \
+ /usr/local/TextParser/include/Version.h ../FB/dfiinfo.h ../FB/DomainInfo.h \
+ LAYOUT_Define.h

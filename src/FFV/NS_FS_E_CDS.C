@@ -45,9 +45,9 @@ void FFV::NS_FS_E_CDS()
   
   
   // 境界処理用
-  Gemini_R* m_buf = new Gemini_R [C.NoBC];
-  REAL_TYPE* m_snd = new REAL_TYPE [C.NoBC*2];
-  REAL_TYPE* m_rcv = new REAL_TYPE [C.NoBC*2];
+  Gemini_R* m_buf = new Gemini_R [C.NoCompo];
+  REAL_TYPE* m_snd = new REAL_TYPE [C.NoCompo*2];
+  REAL_TYPE* m_rcv = new REAL_TYPE [C.NoCompo*2];
   
   comm_size = count_comm_size(size, 1);
   
@@ -446,22 +446,25 @@ void FFV::NS_FS_E_CDS()
       {
         if ( numProc > 1 )
         {
-          for (int n=0; n<C.NoBC; n++) {
+          for (int n=0; n<C.NoCompo; n++)
+          {
             m_snd[2*n]   = m_rcv[2*n]   = m_buf[n].p0; // 積算速度
             m_snd[2*n+1] = m_rcv[2*n+1] = m_buf[n].p1; // 積算回数
           }
           
           TIMING_start(tm_prj_vec_bc_comm);
-          if ( paraMngr->Allreduce(m_snd, m_rcv, 2*C.NoBC, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-          TIMING_stop(tm_prj_vec_bc_comm, 2.0*C.NoBC*numProc*sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数 x 変数
+          if ( paraMngr->Allreduce(m_snd, m_rcv, 2*C.NoCompo, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+          TIMING_stop(tm_prj_vec_bc_comm, 2.0*C.NoCompo*numProc*sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数 x 変数
           
-          for (int n=0; n<C.NoBC; n++) {
+          for (int n=0; n<C.NoCompo; n++)
+          {
             m_buf[n].p0 = m_rcv[2*n];
             m_buf[n].p1 = m_rcv[2*n+1];
           }
         }
         
-        for (int n=1; n<=C.NoBC; n++) {
+        for (int n=1; n<=C.NoCompo; n++)
+        {
           if ( cmp[n].getType() == OUTFLOW )
           {
             cmp[n].val[var_Velocity] = m_buf[n-1].p0 / m_buf[n-1].p1; // 無次元平均流速
@@ -485,22 +488,25 @@ void FFV::NS_FS_E_CDS()
       // 通信部分
       if ( numProc > 1 )
       {
-        for (int n=0; n<C.NoBC; n++) {
+        for (int n=0; n<C.NoCompo; n++)
+        {
           m_snd[2*n]   = m_rcv[2*n]   = m_buf[n].p0; // 積算速度
           m_snd[2*n+1] = m_rcv[2*n+1] = m_buf[n].p1; // 積算圧力損失
         }
         
         TIMING_start(tm_prj_frc_mod_comm);
-        if ( paraMngr->Allreduce(m_snd, m_rcv, 2*C.NoBC, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-        TIMING_stop(tm_prj_frc_mod_comm, 2.0*C.NoBC*numProc*sizeof(REAL_TYPE)*2.0);
+        if ( paraMngr->Allreduce(m_snd, m_rcv, 2*C.NoCompo, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        TIMING_stop(tm_prj_frc_mod_comm, 2.0*C.NoCompo*numProc*sizeof(REAL_TYPE)*2.0);
         
-        for (int n=0; n<C.NoBC; n++) {
+        for (int n=0; n<C.NoCompo; n++)
+        {
           m_buf[n].p0 = m_rcv[2*n];
           m_buf[n].p1 = m_rcv[2*n+1];
         }
       }
       
-      for (int n=1; n<=C.NoBC; n++) {
+      for (int n=1; n<=C.NoCompo; n++)
+      {
         if ( cmp[n].isFORCING() )
         {
           REAL_TYPE aa = (REAL_TYPE)cmp[n].getElement();

@@ -111,9 +111,6 @@ protected:
    */
   REAL_TYPE ps_IBC_Transfer_SN_SM (REAL_TYPE* d_qbc, const int* d_bh1, const int n, REAL_TYPE* d_t, const REAL_TYPE* d_t0);
   
-
-  
-  
   REAL_TYPE ps_OBC_Free           (REAL_TYPE* d_ws,  int* d_bh1, const int face, REAL_TYPE* d_v, REAL_TYPE* d_t, REAL_TYPE* v00, double& flop);
   REAL_TYPE ps_OBC_Heatflux       (REAL_TYPE* d_qbc, int* d_bh1, const int face, double& flop);
   
@@ -147,12 +144,36 @@ protected:
   
   
 public:
-  void assign_Temp (REAL_TYPE* d_t, int* d_bh, const double tm, Control* C);
   
-  // 境界条件速度をセットする
+  /**
+   * @brief 温度指定境界条件に必要な温度をセットする
+   * @param [in,out] d_t  温度場
+   * @param [in]     bh   BCindex H1
+   * @param [in]     tm   無次元時刻
+   * @param [in]     C    Control class
+   */
+  void assign_Temp (REAL_TYPE* d_t, int* d_bh1, const double tm, const Control* C);
+  
+  
+  /**
+   * @brief 速度指定境界条件に必要な参照速度をセットする
+   * @param [in,out] d_v   セルセンタ速度ベクトル (n step)
+   * @param [in]     bv    BCindex V
+   * @param [in]     tm    無次元時刻
+   * @param [in]     v00   参照速度
+   * @param [in]     clear trueのとき，出力時に速度を壁面速度にする（デフォルトfalse）
+   */
   void assignVelocity (REAL_TYPE* d_v, int* d_bv, const double tm, REAL_TYPE* v00, bool clear=false);
   
+  /**
+   * @brief ドライバ指定のチェック
+   * @param [in] fp
+   * @note コンポーネントと外部境界で指定された，方向と位置の情報が一致するかをチェック
+   */
   void checkDriver          (FILE* fp);
+  
+  
+  
   void InnerPBC_Periodic    (REAL_TYPE* d_p, int* d_bcd);
   void InnerTBCface         (REAL_TYPE* d_qbc, int* d_bx, REAL_TYPE* d_t, REAL_TYPE* d_t0, double& flop);
   void InnerTBCvol          (REAL_TYPE* d_t, int* d_bx, REAL_TYPE dt, double& flop);
@@ -277,7 +298,14 @@ public:
   void setBCIperiodic (int* d_bx);
   
   
-  void setInitialTemp_Compo (int n, int* d_bx, REAL_TYPE* d_t);
+  /**
+   * @brief 初期温度を代入
+   * @param [in]     n    エントリ
+   * @param [in]     d_bx BCindex ID
+   * @param [in,out] d_t  温度
+   */
+  void setInitialTempCompo (const int n, const int* d_bx, REAL_TYPE* d_t);
+  
   
   REAL_TYPE setDirectForcing (REAL_TYPE* d_v, int* d_bx, int n, REAL_TYPE v00);
   

@@ -23,32 +23,23 @@
 
 
 // #################################################################
-/**
- @brief 温度指定境界条件に必要な温度をセットする
- @param t 温度場
- @param bh BCindex H1
- @param tm 無次元時刻
- @param C
- */
-void SetBC3D::assign_Temp(REAL_TYPE* d_t, int* d_bh1, const double tm, Control* C)
+// @brief 温度指定境界条件に必要な温度をセットする
+void SetBC3D::assign_Temp(REAL_TYPE* d_t, int* d_bh1, const double tm, const Control* C)
 {
   REAL_TYPE tc;
   
   // 内部境界条件による修正
-  for (int n=1; n<=NoBC; n++) {
-    
+  for (int n=1; n<=NoCompo; n++)
+  {
     int st[3], ed[3];
-    
-    int typ = cmp[n].getType();
 
     cmp[n].getBbox(st, ed);
     
-    switch (typ)
+    if ( cmp[n].getType() == SPEC_VEL_WH )
     {
-      case SPEC_VEL_WH:
-        tc = FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp); // difference form BaseTemp 
-        hbc_drchlt_(d_t, size, &guide, st, ed, d_bh1, &n, &tc);
-        break;
+      tc = FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp); // difference form BaseTemp
+      hbc_drchlt_(d_t, size, &guide, st, ed, d_bh1, &n, &tc);
+      break;
     }
   }
   /*
@@ -78,14 +69,7 @@ void SetBC3D::assign_Temp(REAL_TYPE* d_t, int* d_bh1, const double tm, Control* 
 
 
 // #################################################################
-/**
- @brief 速度指定境界条件に必要な参照速度をセットする
- @param [in,out] v   セルセンタ速度ベクトル (n step)
- @param [in]     bv  BCindex V
- @param [in]     tm  無次元時刻
- @param [in]     v00 参照速度
- @param clear trueのとき，出力時に速度を壁面速度にする（デフォルトfalse）
- */
+// 速度指定境界条件に必要な参照速度をセットする
 void SetBC3D::assignVelocity(REAL_TYPE* d_v, int* d_bv, const double tm, REAL_TYPE* v00, bool clear)
 {
   double flop;
@@ -96,7 +80,7 @@ void SetBC3D::assignVelocity(REAL_TYPE* d_v, int* d_bv, const double tm, REAL_TY
   REAL_TYPE dummy;
   
   // 内部境界条件による修正
-  for (int n=1; n<=NoBC; n++) {
+  for (int n=1; n<=NoCompo; n++) {
     typ = cmp[n].getType();
     
     cmp[n].getBbox(st, ed);
@@ -145,11 +129,7 @@ void SetBC3D::assignVelocity(REAL_TYPE* d_v, int* d_bv, const double tm, REAL_TY
 
 
 // #################################################################
-/**
- @brief ドライバ指定のチェック
- @param fp
- @note コンポーネントと外部境界で指定された，方向と位置の情報が一致するかをチェック
- */
+// ドライバ指定のチェック
 void SetBC3D::checkDriver(FILE* fp)
 {
   int o_dir, c_dir;
@@ -170,7 +150,7 @@ void SetBC3D::checkDriver(FILE* fp)
     if ( (obc[face].get_Class() == OBC_PERIODIC) && (obc[face].get_PrdcMode() == BoundaryOuter::prdc_Driver) )
     {
 
-      for (int n=1; n<=NoBC; n++) {
+      for (int n=1; n<=NoCompo; n++) {
         if ( cmp[n].getType() == PERIODIC )
         {
           // 方向のチェック
@@ -288,7 +268,7 @@ REAL_TYPE SetBC3D::extractVel_OBC(const int n, REAL_TYPE* vec, const double tm, 
  */
 void SetBC3D::InnerTBCvol(REAL_TYPE* d_t, int* d_bh2, REAL_TYPE dt, double& flop)
 {
-  for (int n=1; n<=NoBC; n++) {
+  for (int n=1; n<=NoCompo; n++) {
     
     switch ( cmp[n].getType() )
     {
@@ -315,7 +295,7 @@ void SetBC3D::InnerVBC_Periodic(REAL_TYPE* d_v, int* d_bd)
   
   int st[3], ed[3];
   
-  for (int n=1; n<=NoBC; n++) {
+  for (int n=1; n<=NoCompo; n++) {
     cmp[n].getBbox(st, ed);
     
     if ( cmp[n].getType() == PERIODIC )
@@ -344,7 +324,7 @@ void SetBC3D::InnerVBC(REAL_TYPE* d_v, int* d_bv, const double tm, REAL_TYPE* v0
   
   if ( isCDS ) // Cut-Distance
   {
-    for (int n=1; n<=NoBC; n++) {
+    for (int n=1; n<=NoCompo; n++) {
       cmp[n].getBbox(st, ed);
       
       switch ( cmp[n].getType() )
@@ -363,7 +343,7 @@ void SetBC3D::InnerVBC(REAL_TYPE* d_v, int* d_bv, const double tm, REAL_TYPE* v0
   }
   else // Binary
   {
-    for (int n=1; n<=NoBC; n++) {
+    for (int n=1; n<=NoCompo; n++) {
       cmp[n].getBbox(st, ed);
       
       switch ( cmp[n].getType() )
@@ -402,7 +382,8 @@ void SetBC3D::InnerTBCface(REAL_TYPE* d_qbc, int* d_bh1, REAL_TYPE* d_t, REAL_TY
 {
   int F, H;
   
-  for (int n=1; n<=NoBC; n++) {
+  for (int n=1; n<=NoCompo; n++)
+  {
     F = cmp[n].getType();
     
     switch ( F )
@@ -444,7 +425,8 @@ void SetBC3D::InnerPBC_Periodic(REAL_TYPE* d_p, int* d_bcd)
   int st[3], ed[3];
   REAL_TYPE pv;
   
-  for (int n=1; n<=NoBC; n++) {
+  for (int n=1; n<=NoCompo; n++)
+  {
     cmp[n].getBbox(st, ed);
     dir = cmp[n].getPeriodicDir();
     pv = FBUtility::convD2ND_P(cmp[n].ca[0], BasePrs, rho, RefV, Unit_Prs);
@@ -486,7 +468,8 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, double tm, REAL_TYPE* v00, Gemini_
   // 内部境界条件による修正
   if ( isCDS ) // Cut-Distance
   {
-    for (int n=1; n<=NoBC; n++) {
+    for (int n=1; n<=NoCompo; n++)
+    {
       typ = cmp[n].getType();
       
       cmp[n].getBbox(st, ed);
@@ -510,7 +493,7 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, double tm, REAL_TYPE* v00, Gemini_
   }
   else // Binary
   {
-    for (int n=1; n<=NoBC; n++) {
+    for (int n=1; n<=NoCompo; n++) {
       typ = cmp[n].getType();
       
       cmp[n].getBbox(st, ed);
@@ -591,7 +574,7 @@ void SetBC3D::mod_Dir_Forcing(REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE
   REAL_TYPE vec[3];
   int gd = guide;
   
-  for (int n=1; n<=NoBC; n++) {
+  for (int n=1; n<=NoCompo; n++) {
     if ( cmp[n].isFORCING() )
     {
       cmp[n].getBbox(st, ed);
@@ -639,7 +622,7 @@ void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, float
   REAL_TYPE vec[3];
   int gd = guide;
   
-  for (int n=1; n<=NoBC; n++) {
+  for (int n=1; n<=NoCompo; n++) {
     vec[0] = cmp[n].nv[0];
     vec[1] = cmp[n].nv[1];
     vec[2] = cmp[n].nv[2];
@@ -676,7 +659,7 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* s_1, REAL_TYPE* v, int* bd, float* cvf
   int gd = guide;
   REAL_TYPE* w_ptr=NULL;
   
-  for (int n=1; n<=NoBC; n++) {
+  for (int n=1; n<=NoCompo; n++) {
     vec[0] = cmp[n].nv[0];
     vec[1] = cmp[n].nv[1];
     vec[2] = cmp[n].nv[2];
@@ -721,7 +704,7 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, int* bd, float* cvf, REAL_TYPE* dv,
   int gd = guide;
   REAL_TYPE aa[2];
   
-  for (int n=1; n<=NoBC; n++) {
+  for (int n=1; n<=NoCompo; n++) {
     if ( cmp[n].isFORCING() )
     {
       cmp[n].getBbox(st, ed);
@@ -779,9 +762,9 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, const double t
   // 内部境界（流束形式）
   if ( isCDS ) // Cut-Distance
   {
-    for (int n=1; n<=NoBC; n++) {
+    for (int n=1; n<=NoCompo; n++) {
       
-      if ( cmp[n].isEns() )
+      if ( cmp[n].isEnsLocal() )
       {
         typ = cmp[n].getType();
         cmp[n].getBbox(st, ed);
@@ -800,9 +783,9 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, const double t
   }
   else // Binary
   {
-    for (int n=1; n<=NoBC; n++) {
+    for (int n=1; n<=NoCompo; n++) {
       
-      if( cmp[n].isEns() )
+      if( cmp[n].isEnsLocal() )
       {
         typ = cmp[n].getType();
         cmp[n].getBbox(st, ed);
@@ -882,7 +865,7 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
   // 内部境界条件による修正
   if ( isCDS ) // Cut-Distance
   {
-    for (int n=1; n<=NoBC; n++) {
+    for (int n=1; n<=NoCompo; n++) {
       typ = cmp[n].getType();
       cmp[n].getBbox(st, ed);
 
@@ -906,7 +889,7 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
   }
   else // Binary
   {
-    for (int n=1; n<=NoBC; n++) {
+    for (int n=1; n<=NoCompo; n++) {
       typ = cmp[n].getType();
       cmp[n].getBbox(st, ed);
       
@@ -990,7 +973,7 @@ void SetBC3D::mod_Vis_EE(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE cf, int* d_
   int typ;
   int gd = guide;
   
-  for (int n=1; n<=NoBC; n++) {
+  for (int n=1; n<=NoCompo; n++) {
     typ = cmp[n].getType();
     
     if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) )
@@ -1898,8 +1881,8 @@ void SetBC3D::ps_BC_Convection(REAL_TYPE* d_ws, int* d_bh1, REAL_TYPE* d_v, REAL
   REAL_TYPE dummy;
   
   // 外部
-  for (int face=0; face<NOFACE; face++) {
-    
+  for (int face=0; face<NOFACE; face++)
+  {
     // 各メソッド内で通信が発生するために，計算領域の最外郭領域でないときに境界処理をスキップする処理はメソッド内で行う
     
     switch ( obc[face].get_Class() )
@@ -1920,8 +1903,8 @@ void SetBC3D::ps_BC_Convection(REAL_TYPE* d_ws, int* d_bh1, REAL_TYPE* d_v, REAL
   }
 
   // 内部
-  for (int n=1; n<=NoBC; n++) {
-    
+  for (int n=1; n<=NoCompo; n++)
+  {
     switch ( cmp[n].getType() )
     {
       case SPEC_VEL_WH:
@@ -3652,7 +3635,7 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_S_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, REA
   REAL_TYPE ht, sf, va=0.0, q;
   int st[3], ed[3];
 
-  odr= cmp[n].getMatOdr();
+  //odr= cmp[n].getMatOdr();
   //ht = cmp[n].get_CoefHT() / (RefV*mat[odr].P[p_density]*mat[odr].P[p_specific_heat]); // 固体セルで指定される物性値
   ht = cmp[n].get_CoefHT() / (RefV*rho*cp); // Ref_IDで指定される物性値
   sf = FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp); // 保持されている温度はKelvin
@@ -4297,7 +4280,7 @@ REAL_TYPE SetBC3D::ps_IBC_IsoThermal_SM(REAL_TYPE* d_qbc, int* d_bh1, int n, REA
   REAL_TYPE dh = deltaX;
   int st[3], ed[3];
 
-  odr= cmp[n].getMatOdr();
+  //odr= cmp[n].getMatOdr();
   sf = FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp); // 保持されている温度はKelvin
   //pp = (2.0*mat[odr].P[p_thermal_conductivity]) / (dh*RefV*RefL*mat[odr].P[p_density]*mat[odr].P[p_specific_heat]); // property of solid cell
   pp = (2.0*lambda) / (dh*RefV*rho*cp); // Ref_IDで指定される物性値
@@ -4453,14 +4436,9 @@ REAL_TYPE SetBC3D::setIsoThermal(REAL_TYPE* qbc, REAL_TYPE* t, int* bx, int n, R
 }*/
 
 
-
-/**
- @brief 初期温度を代入
- @param n エントリ
- @param bx BCindex ID
- @param d_t 
- */
-void SetBC3D::setInitialTemp_Compo(int n, int* d_bx, REAL_TYPE* d_t)
+// #################################################################
+// 初期温度を代入
+void SetBC3D::setInitialTempCompo(const int n, const int* d_bx, REAL_TYPE* d_t)
 {
   int ix = size[0];
   int jx = size[1];
@@ -4468,13 +4446,13 @@ void SetBC3D::setInitialTemp_Compo(int n, int* d_bx, REAL_TYPE* d_t)
   int gd = guide;
   
   REAL_TYPE ref = FBUtility::convK2ND(cmp[n].getInitTemp(), BaseTemp, DiffTemp);
-  int id = cmp[n].getMatOdr();
 	
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        if ( DECODE_ID(d_bx[m]) == id ) {
+        if ( DECODE_CMP(d_bx[m]) == n )
+        {
           d_t[m] = ref; 
         }
       }
@@ -4685,7 +4663,7 @@ void SetBC3D::mod_Vis_CN(REAL_TYPE* vc, REAL_TYPE* wv, REAL_TYPE cf, int* bx, RE
   int typ;
   const REAL_TYPE c_pai = (REAL_TYPE)(2.0*asin(1.0));
   
-  for (int n=1; n<=NoBC; n++) {
+  for (int n=1; n<=NoCompo; n++) {
     if ( cmp[n].isVBC() ) {
       
       cmp[n].getBbox(st, ed);

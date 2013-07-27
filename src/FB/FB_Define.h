@@ -24,9 +24,8 @@
 
 #include "mydebug.h"
 
-#define FB_VERS 131
+#define FB_VERS 132
 
-#define MODEL_ID_MAX 255
 
 // precision
 #ifdef _REAL_IS_DOUBLE_
@@ -195,23 +194,25 @@
 #define H_DIAG       15
 
 // Component Type
-#define ADIABATIC    1
-#define HEATFLUX     2
-#define TRANSFER     3
-#define ISOTHERMAL   4
-#define RADIANT      5
-#define SPEC_VEL_WH  6
-#define SPEC_VEL     7
-#define OUTFLOW      8
-#define IBM_DF       9
-#define HEAT_SRC     10 // Hsrc
-#define CNST_TEMP    11
-#define HEX          12 // Forcing
-#define FAN          13
-#define DARCY        14
-#define CELL_MONITOR 15 // Monitor
-#define PERIODIC     16
-#define INACTIVE     17
+#define OBSTACLE     1
+#define CELL_MONITOR 2 // Monitor
+#define ADIABATIC    3
+#define HEATFLUX     4
+#define TRANSFER     5
+#define ISOTHERMAL   6
+#define RADIANT      7
+#define SPEC_VEL_WH  8
+#define SPEC_VEL     9
+#define OUTFLOW      10
+#define IBM_DF       11
+#define HEAT_SRC     12 // Hsrc
+#define CNST_TEMP    13
+#define HEX          14 // Forcing
+#define FAN          15
+#define DARCY        16
+#define PERIODIC     17
+#define INACTIVE     18
+
 
 // 熱伝達係数のモード コンポーネントタイプと並列
 #define HT_N     21
@@ -250,6 +251,10 @@
 #define SAMPLING_FLUID_ONLY 2 ///< 流体セルのみを対象
 #define SAMPLING_SOLID_ONLY 3 ///< 固体セルのみを対象
 
+// セルモニターの場合のサンプリング幅
+#define SINGLE_CELL    1 ///< 指定面を含むセルのみ
+#define NEIGHBOR_CELL  2 ///< 指定面の両側のセル
+
 
 // GRIDの種類
 #define SINGLE_GRID 0
@@ -281,13 +286,13 @@
 #define BIT_SHIFT(a,b) ( (a >> b) & 0x1 )
 
 // コンポーネントエントリを返す (uint a)
-#define DECODE_CMP(a) ( (a >> TOP_CMP_ID) & MASK_6 )
+#define DECODE_CMP(a) ( a & MASK_6 )
 
 // ID番号を返す (uint a)
-#define DECODE_ID(a) ( (a >> TOP_CELL_ID) & MASK_8 )
+//#define DECODE_ID(a) ( (a >> TOP_CELL_ID) & MASK_8 )
 
 // MediumListへのエントリを返す (uint a)
-#define DECODE_MAT(a) ( (a >> TOP_MATERIAL) & MASK_6 )
+//#define DECODE_MAT(a) ( (a >> TOP_MATERIAL) & MASK_6 )
 
 // Volume Fraction[0-255]を返す (uint a)
 #define DECODE_VF(a) ( (a >> TOP_VF) & MASK_8 )
