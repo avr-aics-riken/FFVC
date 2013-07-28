@@ -227,13 +227,13 @@ void IP_Cylinder::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedi
   len= drv_length/R->RefLength;
   ht = height/R->RefLength;
   
-  if ( (mid_fluid = R->find_ID_from_Label(mat, NoMedium, m_fluid)) == 0 )
+  if ( (mid_fluid = R->findIDfromLabel(mat, NoMedium, m_fluid)) == 0 )
   {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_fluid.c_str());
     Exit(0);
   }
   
-  if ( (mid_solid = R->find_ID_from_Label(mat, NoMedium, m_solid)) == 0 )
+  if ( (mid_solid = R->findIDfromLabel(mat, NoMedium, m_solid)) == 0 )
   {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_solid.c_str());
     Exit(0);
@@ -256,13 +256,13 @@ void IP_Cylinder::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedi
   if ( drv_mode == OFF ) return;
   
   
-  if ( (mid_driver = R->find_ID_from_Label(mat, NoMedium, m_driver)) == 0 )
+  if ( (mid_driver = R->findIDfromLabel(mat, NoMedium, m_driver)) == 0 )
   {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver.c_str());
     Exit(0);
   }
   
-  if ( (mid_driver_face = R->find_ID_from_Label(mat, NoMedium, m_driver_face)) == 0 )
+  if ( (mid_driver_face = R->findIDfromLabel(mat, NoMedium, m_driver_face)) == 0 )
   {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver_face.c_str());
     Exit(0);

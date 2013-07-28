@@ -107,16 +107,9 @@ public:
    * @param [in] str  名称
    * @param [in] ver  バージョン番号
    */
-  static void printVersion(FILE* fp, const string str, const int ver)
+  static void printVersion(FILE* fp, const string str, const string ver)
   {
-    int a, b, c;
-    a = b = c = 0;
-    
-    a = ver / 100;
-    b = (ver - a*100) / 10;
-    c = ver - a*100 - b*10;
-    
-    fprintf(fp, "\n\t%s \tVersion %d.%d.%d\n", str.c_str(), a, b, c);
+    fprintf(fp, "\n\t%s \tVersion %s\n", str.c_str(), ver.c_str());
   }
 
   

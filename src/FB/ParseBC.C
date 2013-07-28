@@ -1124,11 +1124,11 @@ void ParseBC::get_IBC_SpecVel(const string label_base, const int n, CompoList* c
   }
   
   // 速度指定タイプ
-  cmp[n].set_V_profile( get_Vel_profile(label_base) );
+  cmp[n].set_V_profile( getVprofile(label_base) );
   
   
   // 速度パラメータの読み込み
-  get_Vel_Params(label_base, cmp[n].get_V_Profile(), cmp[n].ca, "LocalBoundary", cmp[n].isPolicy_Massflow());
+  getVelocity(label_base, cmp[n].get_V_Profile(), cmp[n].ca, "LocalBoundary", cmp[n].isPolicy_Massflow());
 
   
   // 法線ベクトル
@@ -1326,25 +1326,6 @@ string ParseBC::getOBCstr(const int id)
 }
 
 
-// #################################################################
-/**
- * @brief Originのキーワードに対する文字列をパースし，返す
- * @param [in] label_base ラベルディレクトリ
- */
-string ParseBC::get_Origin(const string label_base)
-{
-  string label = label_base + "/Origin";
-  string str;
-  
-  if ( !tpCntl->GetValue(label, &str) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid keyword of '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  return str;
-}
-
 
 // #################################################################
 /**
@@ -1352,7 +1333,7 @@ string ParseBC::get_Origin(const string label_base)
  * @param [in] label_base ラベルディレクトリ
  * @param [in] n          面番号
  */
-void ParseBC::get_OBC_FarField(const string label_base, const int n)
+void ParseBC::getObcFarField(const string label_base, const int n)
 {
   string str;
   string label;
@@ -1440,7 +1421,7 @@ void ParseBC::get_OBC_FarField(const string label_base, const int n)
  * @param [in] n          面番号
  * @param [in] kind       熱伝達境界の種類
  */
-void ParseBC::get_OBC_HT(const string label_base, const int n, const string kind)
+void ParseBC::getObcHeatTransfer(const string label_base, const int n, const string kind)
 {
   string label;
   string str;
@@ -1508,7 +1489,8 @@ void ParseBC::get_OBC_HT(const string label_base, const int n, const string kind
     label = label_base + "/Gamma";
     BaseBc[n].ca[2] = get_BCval_real(label);
   }
-  else if ( !strcasecmp(kind.c_str(), "HeatTransferSN") ) {
+  else if ( !strcasecmp(kind.c_str(), "HeatTransferSN") )
+  {
     BaseBc[n].set_HTmode(HT_SN);
     label = label_base + "/SurfaceTemperature";
     BaseBc[n].set_Temp( get_BCval_real(label) );
@@ -1581,7 +1563,7 @@ void ParseBC::get_OBC_HT(const string label_base, const int n, const string kind
  * @param [in] n          面番号
  * @note 圧力の値は，Control::setParameters()で無次元化する
  */
-void ParseBC::get_OBC_Outflow(const string label_base, const int n)
+void ParseBC::getObcOutflow(const string label_base, const int n)
 {
   string str;
   string label;
@@ -1645,7 +1627,7 @@ void ParseBC::get_OBC_Outflow(const string label_base, const int n)
  * @param [in] n          面番号
  * @note 圧力の値は，Control::setParameters()で無次元化する
  */
-void ParseBC::get_OBC_Periodic(const string label_base, const int n)
+void ParseBC::getObcPeriodic(const string label_base, const int n)
 {
   REAL_TYPE ct;
   int def;
@@ -1773,11 +1755,11 @@ void ParseBC::get_OBC_Periodic(const string label_base, const int n)
  * @param [in] label_base ラベルディレクトリ
  * @param [in] n          面番号
  */
-void ParseBC::get_OBC_SpecVH(const string label_base, const int n)
+void ParseBC::getObcSpecVH(const string label_base, const int n)
 {
   
   // 速度境界条件のプロファイル
-  BaseBc[n].set_V_Profile( get_Vel_profile(label_base) );
+  BaseBc[n].set_V_Profile( getVprofile(label_base) );
   
   // 法線ベクトル
   if ( BaseBc[n].get_V_Profile() != CompoList::vel_zero )
@@ -1788,7 +1770,7 @@ void ParseBC::get_OBC_SpecVH(const string label_base, const int n)
   }
   
   // 速度のパラメータ読み込み
-  get_Vel_Params(label_base, BaseBc[n].get_V_Profile(), BaseBc[n].ca, "OuterBoundary");
+  getVelocity(label_base, BaseBc[n].get_V_Profile(), BaseBc[n].ca, "OuterBoundary");
 
   
   // heat problem
@@ -1823,7 +1805,7 @@ void ParseBC::get_OBC_SpecVH(const string label_base, const int n)
  * @param [in] label_base ラベルディレクトリ
  * @param [in] n          面番号
  */
-void ParseBC::get_OBC_Trcfree(const string label_base, const int n)
+void ParseBC::getObcTrcfree(const string label_base, const int n)
 {
   BaseBc[n].set_pType(P_DIRICHLET);
   BaseBc[n].p = 0.0; // ゲージ圧zero 固定
@@ -1857,7 +1839,7 @@ void ParseBC::get_OBC_Trcfree(const string label_base, const int n)
  * @param [in] label_base ラベルディレクトリ
  * @param [in] n          面番号
  */
-void ParseBC::get_OBC_Wall(const string label_base, const int n)
+void ParseBC::getObcWall(const string label_base, const int n)
 {
   REAL_TYPE vel, ct;
   REAL_TYPE v[3];
@@ -1881,7 +1863,7 @@ void ParseBC::get_OBC_Wall(const string label_base, const int n)
   else if ( !strcasecmp("slide", str.c_str()) )
   {
 	  BaseBc[n].set_wallType(BoundaryOuter::slide);
-    BaseBc[n].set_V_Profile( get_Vel_profile(label_base) );
+    BaseBc[n].set_V_Profile( getVprofile(label_base) );
   }
   else
   {
@@ -1897,7 +1879,7 @@ void ParseBC::get_OBC_Wall(const string label_base, const int n)
   }
   
   // 速度のパラメータ読み込み
-  get_Vel_Params(label_base, BaseBc[n].get_V_Profile(), BaseBc[n].ca, "OuterBoundary");
+  getVelocity(label_base, BaseBc[n].get_V_Profile(), BaseBc[n].ca, "OuterBoundary");
   
   
   
@@ -1925,7 +1907,7 @@ void ParseBC::get_OBC_Wall(const string label_base, const int n)
     else if( !strcasecmp(str.substr(0,12).c_str(), "HeatTransfer") )
     {
       BaseBc[n].set_hType(TRANSFER);
-      get_OBC_HT(label, n, str);
+      getObcHeatTransfer(label, n, str);
     }
     else if( !strcasecmp(str.c_str(), "HeatFlux") )
     {
@@ -2080,7 +2062,7 @@ void ParseBC::getUnitVec(REAL_TYPE* v)
 
 // #################################################################
 //@brief 外部境界の速度境界条件のタイプを取得し，返す
-int ParseBC::get_Vel_profile(const string label_base)
+int ParseBC::getVprofile(const string label_base)
 {
   string label, str;
   
@@ -2115,7 +2097,7 @@ int ParseBC::get_Vel_profile(const string label_base)
  - 速度プロファイルは単振動と一定値の場合で係数の保持パターンが異なる
  - 内部境界の場合には，流量指定と速度指定があるので分岐処理（未実装）
  */
-void ParseBC::get_Vel_Params(const string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy)
+void ParseBC::getVelocity(const string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy)
 {
   string label;
   REAL_TYPE ct=0.0, vel;
@@ -2521,27 +2503,27 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumList* mat, CompoList* 
     switch ( BaseBc[i].get_Class() )
     {
       case OBC_WALL:
-        get_OBC_Wall(label_leaf, i);
+        getObcWall(label_leaf, i);
         break;
         
       case OBC_OUTFLOW:
-        get_OBC_Outflow(label_leaf, i);
+        getObcOutflow(label_leaf, i);
         break;
         
       case OBC_SPEC_VEL:
-        get_OBC_SpecVH(label_leaf, i);
+        getObcSpecVH(label_leaf, i);
         break;
         
       case OBC_TRC_FREE:
-        get_OBC_Trcfree(label_leaf, i);
+        getObcTrcfree(label_leaf, i);
         break;
         
       case OBC_FAR_FIELD:
-        get_OBC_FarField(label_leaf, i);
+        getObcFarField(label_leaf, i);
         break;
         
       case OBC_PERIODIC:
-        get_OBC_Periodic(label_leaf, i);
+        getObcPeriodic(label_leaf, i);
         break;
         
       case OBC_SYMMETRIC:
@@ -2777,18 +2759,18 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   if ( existComponent(SPEC_VEL, cmp) || existComponent(SPEC_VEL_WH, cmp) )
   {
     fprintf(fp, "\n\t[Specified_Velocity]\n");
-    fprintf(fp, "\t no                    Label    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]\n");
+    fprintf(fp, "\t no                    Label    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]    Elements\n");
     
     for (int n=1; n<=NoCompo; n++)
     {
       if ( (cmp[n].getType() == SPEC_VEL) || (cmp[n].getType() == SPEC_VEL_WH) )
       {
-        fprintf(fp,"\t%3d %24s %7d %7d %7d %7d %7d %7d %11.4e\n\n",
+        fprintf(fp,"\t%3d %24s %7d %7d %7d %7d %7d %7d %11.4e %11ld\n\n",
                 n, cmp[n].getAlias().c_str(),
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
-                cmp[n].area);
+                cmp[n].area, cmp[n].getElement());
         fprintf(fp, "\t                     normal_x    normal_y    normal_z       Direction");
         
         if ( cmp[n].get_V_Profile() == CompoList::vel_zero )
@@ -3335,30 +3317,31 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   // Monitor ---------------------------------------------------
   if ( existComponent(CELL_MONITOR, cmp) ) {
     fprintf(fp, "\n\t[Monitor]\n");
-    fprintf(fp, "\t no                    Label    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]  Variables\n");
+    fprintf(fp, "\t no                    Label    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]    Elements\n");
     
     for (int n=1; n<=NoCompo; n++)
     {
       if ( cmp[n].getType() == CELL_MONITOR )
       {
-        fprintf(fp, "\t%3d %24s %7d %7d %7d %7d %7d %7d %11.4e  %s\n", 
+        fprintf(fp, "\t%3d %24s %7d %7d %7d %7d %7d %7d %11.4e %11ld\n", 
                 n, cmp[n].getAlias().c_str(),
                 getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
                 getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
                 getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
-								cmp[n].area, cmp[n].getVarStr() );
+								cmp[n].area, cmp[n].getElement());
       }
     }
     fprintf(fp, "\n");
     
-    fprintf(fp, "\t                     normal_x    normal_y    normal_z       Reference\n");
+    fprintf(fp, "\t                     normal_x    normal_y    normal_z       Reference  Variables\n");
     for (int n=1; n<=NoCompo; n++)
     {
       if ( cmp[n].getType() == CELL_MONITOR )
       {
-        fprintf(fp,"\t\t\t   %10.3e  %10.3e  %10.3e  %14s\n",
+        fprintf(fp,"\t\t\t   %10.3e  %10.3e  %10.3e  %14s  %s\n",
                 cmp[n].nv[0], cmp[n].nv[1], cmp[n].nv[2],
-                (cmp[n].getStateCellMonitor()==ON) ? "yes" : "no");
+                (cmp[n].getStateCellMonitor()==ON) ? "yes" : "no",
+                cmp[n].getVarStr() );
       }
     }
   }

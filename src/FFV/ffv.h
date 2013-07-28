@@ -54,6 +54,7 @@
 #include "TPControl.h"
 #include "ffv_SetBC.h"
 #include "CompoFraction.h"
+#include "ffv_Version.h"
 
 /* 20130606 commentout 
 #include "dfi.h"
@@ -138,6 +139,8 @@ private:
   unsigned Session_StartStep;   ///< セッションの開始ステップ
   unsigned Session_CurrentStep; ///< セッションの現在のステップ
   unsigned Session_LastStep;    ///< セッションで計算するステップ数
+  
+  double face_comm_size;       ///< 全ノードについて，ローカルノード1面・一層あたりの通信量の和
   
   REAL_TYPE convergence_prev;  ///< 前回の反復の収束値
   REAL_TYPE convergence_rate;  ///< 収束値の増減比
@@ -414,7 +417,7 @@ private:
   
   
   //初期インデクスの情報を元に，一層拡大したインデクス値を返す
-  void EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, const int m_x, const int dir, const int m_id);
+  //void EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, const int m_x, const int dir, const int m_id);
   
   
   // ポリゴンの場合のフィル操作
@@ -450,7 +453,7 @@ private:
   
   
   // インターバルの初期化
-  void init_Interval();
+  void initInterval();
   
   
   // 距離の最小値を求める
@@ -502,7 +505,7 @@ private:
   
   
   // midの情報から各BCコンポーネントのローカルなインデクスを取得する
-  void setLocalCmpIdx_Binary();
+  //void setLocalCmpIdx_Binary();
   
   
   // ParseMatクラスをセットアップし，媒質情報を入力ファイルから読み込み，媒質リストを作成する

@@ -236,7 +236,6 @@ int FFV::Point_SOR(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm,
 	// b     RHS vector
 	// d_bcp ビットフラグ
   
-  
   TIMING_start(tm_poi_itr_sct_2); // >>> Poisson Iteration section 2
   
   for (lc=0; lc<IC->get_ItrMax(); lc++)
@@ -300,15 +299,15 @@ int FFV::Point_SOR(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm,
     switch ( IC->get_normType() )
     {
       case ItrCtl::dx_b:
-        IC->set_normValue( res/rhs_nrm );
+        IC->set_normValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
         break;
         
       case ItrCtl::r_b:
-        IC->set_normValue( res/rhs_nrm );
+        IC->set_normValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
         break;
         
       case ItrCtl::r_r0:
-        IC->set_normValue( res/r0 );
+        IC->set_normValue( (r0==0.0) ? res : res/r0 );
         break;
         
       default:
@@ -336,9 +335,6 @@ void FFV::Sync_Scalar(ItrCtl* IC, REAL_TYPE* d_class, const int num_layer)
   {
     TIMING_start(tm_poi_comm);
     
-    /// 通信面1面あたりの通信量
-    double comm_size = count_comm_size(size, guide);
-    
     if (IC->get_SyncMode() == comm_sync )
     {
       if ( paraMngr->BndCommS3D(d_class, size[0], size[1], size[2], guide, num_layer) != CPM_SUCCESS ) Exit(0);
@@ -351,7 +347,7 @@ void FFV::Sync_Scalar(ItrCtl* IC, REAL_TYPE* d_class, const int num_layer)
       if ( paraMngr->BndCommS3D_nowait(d_class, size[0], size[1], size[2], guide, num_layer, req ) != CPM_SUCCESS ) Exit(0);
       if ( paraMngr->wait_BndCommS3D  (d_class, size[0], size[1], size[2], guide, num_layer, req ) != CPM_SUCCESS ) Exit(0);
     }
-    TIMING_stop(tm_poi_comm, comm_size*(double)num_layer);
+    TIMING_stop(tm_poi_comm, face_comm_size*(double)num_layer);
   }
 }
 
@@ -371,7 +367,7 @@ int FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm,
   // x     圧力 p^{n+1}
   // b     RHS vector
 	// d_bcp ビットフラグ
-  
+
   
   TIMING_start(tm_poi_itr_sct_2); // >>> Poisson Iteration section 2
   
@@ -418,8 +414,6 @@ int FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm,
       {
         TIMING_start(tm_poi_comm);
         
-        /// 通信面1面あたりの通信量
-        double comm_size = count_comm_size(size, guide);
         
         if (IC->get_SyncMode() == comm_sync )
         {
@@ -435,7 +429,7 @@ int FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm,
           sma_comm_     (x, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, ireq, nID);
           sma_comm_wait_(x, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, ireq);
         }
-        TIMING_stop(tm_poi_comm, comm_size*0.5);
+        TIMING_stop(tm_poi_comm, face_comm_size*0.5);
       }
     }
     
@@ -472,15 +466,15 @@ int FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm,
     switch ( IC->get_normType() )
     {
       case ItrCtl::dx_b:
-        IC->set_normValue( res/rhs_nrm );
+        IC->set_normValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
         break;
         
       case ItrCtl::r_b:
-        IC->set_normValue( res/rhs_nrm );
+        IC->set_normValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
         break;
         
       case ItrCtl::r_r0:
-        IC->set_normValue( res/r0 );
+        IC->set_normValue( (r0==0.0) ? res : res/r0 );
         break;
         
       default:
@@ -960,25 +954,26 @@ jump_4:
 
 // #################################################################
 // RBGS
-int FFV::Frbgs(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0) {
+int FFV::Frbgs(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
+{
   REAL_TYPE omg = IC->get_omg();
   int lc=0;                      /// ループカウント
-  for (lc=0; lc<IC->get_ItrMax(); lc++) {
+  for (lc=0; lc<IC->get_ItrMax(); lc++)
+  {
 		Fsmoother(x, b, omg);
     
 		REAL_TYPE rr = 0.0;
 		blas_calcr2_(&rr, x, b, d_bcp, size, &guide);
     
-    if ( numProc > 1 ) {
+    if ( numProc > 1 )
+    {
       REAL_TYPE m_tmp = rr;
       if ( paraMngr->Allreduce(&m_tmp, &rr, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
     }
     
     REAL_TYPE res = sqrt(rr);
     
-		if( Fcheck(IC, res, rhs_nrm, r0) == true ) {
-			break;
-		}
+		if ( Fcheck(IC, res, rhs_nrm, r0) == true ) break;
     
 	}
 	Sync_Scalar(IC, x, 1);
@@ -988,7 +983,8 @@ int FFV::Frbgs(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, con
 
 // #################################################################
 // PCG
-int FFV::Fpcg(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0) {
+int FFV::Fpcg(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
+{
 	REAL_TYPE res = 0.0;
   REAL_TYPE omg = IC->get_omg();
   
@@ -1003,7 +999,9 @@ int FFV::Fpcg(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, cons
 	REAL_TYPE rr0 = 1.0;
 	REAL_TYPE rr1 = 0.0;
   int lc=0;                      /// ループカウント
-  for (lc=0; lc<IC->get_ItrMax(); lc++) {
+  
+  for (lc=0; lc<IC->get_ItrMax(); lc++)
+  {
 		blas_clear_(d_pcg_z, size, &guide);
 		Fpreconditioner(IC, d_pcg_z, d_pcg_r);
     
@@ -1018,9 +1016,12 @@ int FFV::Fpcg(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, cons
     
 		REAL_TYPE beta = rr1/rr0;
     
-		if( lc == 1 ) {
+		if ( lc == 1 )
+    {
 			blas_copy_(d_pcg_p, d_pcg_z, size, &guide);
-		} else {
+		}
+    else
+    {
 			blas_xpay_(d_pcg_p, d_pcg_z, &beta, size, &guide);
 		}
 		Sync_Scalar(IC, d_pcg_p, 1);
@@ -1042,16 +1043,18 @@ int FFV::Fpcg(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, cons
     
     res = sqrt(rr);
     
-		if( Fcheck(IC, res, rhs_nrm, r0) == true ) {
-			break;
-		}
+		if( Fcheck(IC, res, rhs_nrm, r0) == true ) break;
     
 		rr0 = rr1;
 	}
+  
 	BC.OuterPBC(x);
-	if ( C.isPeriodic() == ON ) {
+  
+	if ( C.isPeriodic() == ON )
+  {
 		BC.InnerPBC_Periodic(x, d_bcd);
 	}
+  
 	Sync_Scalar(IC, x, 1);
   
 	return lc;
@@ -1059,7 +1062,8 @@ int FFV::Fpcg(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, cons
 
 // #################################################################
 // PBiCBSTAB
-int FFV::Fpbicgstab(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0) {
+int FFV::Fpbicgstab(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
+{
 	REAL_TYPE res = 0.0;
   REAL_TYPE omg = IC->get_omg();
   
@@ -1083,19 +1087,25 @@ int FFV::Fpbicgstab(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm
 	REAL_TYPE gamma  = 1.0;
 	REAL_TYPE gamman = -gamma;
   int lc=0;                      /// ループカウント
-  for (lc=0; lc<IC->get_ItrMax(); lc++) {
+  
+  for (lc=0; lc<IC->get_ItrMax(); lc++)
+  {
 		REAL_TYPE rr1 = 0.0;
 		Fdot(&rr1, d_pcg_r, d_pcg_r0);
     
-		if( fabs(rr1) < FLT_MIN ) {
+		if( fabs(rr1) < FLT_MIN )
+    {
 			res = rr1;
 			lc = 0;
 			break;
 		}
     
-		if( lc == 1 ) {
+		if( lc == 1 )
+    {
 			blas_copy_(d_pcg_p, d_pcg_r, size, &guide);
-		} else {
+		}
+    else
+    {
 			REAL_TYPE beta = rr1/rr0*alpha/gamma;
 			blas_axpy_(d_pcg_p, d_pcg_q_, &gamman, size, &guide);
 			blas_xpay_(d_pcg_p, d_pcg_r , &beta  , size, &guide);
@@ -1137,16 +1147,17 @@ int FFV::Fpbicgstab(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm
     
     res = sqrt(rr);
     
-		if( Fcheck(IC, res, rhs_nrm, r0) == true ) {
-			break;
-		}
+		if ( Fcheck(IC, res, rhs_nrm, r0) == true ) break;
     
 		rr0 = rr1;
 	}
+  
 	BC.OuterPBC(x);
-	if ( C.isPeriodic() == ON ) {
+	if ( C.isPeriodic() == ON )
+  {
 		BC.InnerPBC_Periodic(x, d_bcd);
 	}
+  
 	Sync_Scalar(IC, x, 1);
   
 	return lc;
@@ -1154,16 +1165,18 @@ int FFV::Fpbicgstab(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm
 
 // #################################################################
 // Check
-bool FFV::Fcheck(ItrCtl* IC, REAL_TYPE res, const double rhs_nrm, const double r0) {
-	switch ( IC->get_normType() ) {
+bool FFV::Fcheck(ItrCtl* IC, REAL_TYPE res, const double rhs_nrm, const double r0)
+{
+	switch ( IC->get_normType() )
+  {
 		case ItrCtl::dx_b:
-			IC->set_normValue( res/rhs_nrm );
+			IC->set_normValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
 			break;
 		case ItrCtl::r_b:
-			IC->set_normValue( res/rhs_nrm );
+			IC->set_normValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
 			break;
 		case ItrCtl::r_r0:
-			IC->set_normValue( res/r0 );
+			IC->set_normValue( (r0==0.0) ? res : res/r0 );
 			break;
 		default:
 			printf("\tInvalid Linear Solver for Pressure\n");
@@ -1171,7 +1184,8 @@ bool FFV::Fcheck(ItrCtl* IC, REAL_TYPE res, const double rhs_nrm, const double r
 			break;
 	}
   
-	if ( (C.Hide.PM_Test == OFF) && (IC->get_normValue() < IC->get_eps()) ) {
+	if ( (C.Hide.PM_Test == OFF) && (IC->get_normValue() < IC->get_eps()) )
+  {
 		return true;
 	}
   
@@ -1180,7 +1194,8 @@ bool FFV::Fcheck(ItrCtl* IC, REAL_TYPE res, const double rhs_nrm, const double r
 
 // #################################################################
 // Preconditioner
-int FFV::Fpreconditioner(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b) {
+int FFV::Fpreconditioner(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b)
+{
   REAL_TYPE omg = IC->get_omg();
   
   int lc=0;                      /// ループカウント
@@ -1201,29 +1216,40 @@ int FFV::Fpreconditioner(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b) {
 
 // #################################################################
 // Smoother
-void FFV::Fsmoother(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE omg) {
+void FFV::Fsmoother(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE omg)
+{
 	int ip = 0;
-	if ( numProc > 1 ) {
+  
+	if ( numProc > 1 )
+  {
 		ip = (head[0]+head[1]+head[2]+1) % 2;
-	} else {
+	}
+  else
+  {
 		ip = 0;
 	}
   
-	for (int color=0; color<2; color++) {
+	for (int color=0; color<2; color++)
+  {
 		blas_smoother_core_(x, b, d_bcp, &ip, &color, &omg, size, &guide);
     
 		BC.OuterPBC(x);
-		if ( C.isPeriodic() == ON ) {
+    
+		if ( C.isPeriodic() == ON )
+    {
 			BC.InnerPBC_Periodic(x, d_bcd);
 		}
     
-		if ( numProc > 1 ) {
-			double comm_size = count_comm_size(size, guide);
-			if (IC->get_SyncMode() == comm_sync ) {
+		if ( numProc > 1 )
+    {
+			if (IC->get_SyncMode() == comm_sync )
+      {
 				if ( paraMngr->BndCommS3D(x, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) {
 					Exit(0);
 				}
-			} else {
+			}
+      else
+      {
 				int ireq[12];
 				sma_comm_     (x, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, ireq, nID);
 				sma_comm_wait_(x, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, ireq);
@@ -1234,12 +1260,13 @@ void FFV::Fsmoother(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE omg) {
 
 // #################################################################
 // Dot
-void FFV::Fdot(REAL_TYPE* xy, REAL_TYPE* x, REAL_TYPE* y) {
+void FFV::Fdot(REAL_TYPE* xy, REAL_TYPE* x, REAL_TYPE* y)
+{
 	blas_dot_(xy, x, y, size, &guide);
-	if ( numProc > 1 ) {
+  
+	if ( numProc > 1 )
+  {
 		REAL_TYPE xy_tmp = *xy;
-		if ( paraMngr->Allreduce(&xy_tmp, xy, 1, MPI_SUM) != CPM_SUCCESS ) {
-			Exit(0);
-		}
+		if  ( paraMngr->Allreduce(&xy_tmp, xy, 1, MPI_SUM) != CPM_SUCCESS )Exit(0);
 	}
 }

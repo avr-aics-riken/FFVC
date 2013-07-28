@@ -794,8 +794,6 @@ public:
   int CnvScheme;
   int FB_version;     ///< FlowBaseクラスのバージョン番号
   int Fill_Hint;      ///< フィルのヒント {no | x_minux | x_plus |...}
-  int Fill_Fluid;     ///< 作動流体のフィル媒質
-  int Fill_Solid;     ///< 固体のフィル媒質
   int GuideOut;
   int KindOfSolver;
   int Limiter;
@@ -936,8 +934,6 @@ public:
     FB_version = 0;
     CnvScheme = 0;
     Fill_Hint = -1;
-    Fill_Fluid = 0;
-    Fill_Solid = 0;
     GuideOut = 0;
     KindOfSolver = 0;
     Limiter = 0;
@@ -1308,7 +1304,7 @@ public:
    * @param [in] key  探査するラベル
    * @return keyに対するIDを返す。発見できない場合はzero
    */
-  int find_ID_from_Label(const MediumList* mat, const int Nmax, const std::string key);
+  int findIDfromLabel(const MediumList* mat, const int Nmax, const std::string key);
   
   
   // 制御，計算パラメータ群の取得 20130611

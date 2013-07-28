@@ -20,62 +20,10 @@
  */
 
 #include "Interval_Mngr.h"
-
-
-// #################################################################
-/**
- * @brief 指定の時刻になったかどうかを判断する
- * @retval 出力タイミングの場合，trueを返す
- * @param [in] stp    現在ステップ
- * @param [in] tm     現時刻
- * @param [in] d_flag 表示用フラグ（デバッグ）
- * @note 指定時刻を過ぎず，かつ1時刻後が指定時刻を超える場合が出力タイミングとなる
- */
-bool Interval_Manager::isTriggered(const int stp, const double tm, bool d_flag)
-{
-  if (d_flag) printf("tm=%f ntm=%f nst=%d itv=%d\n",tm, next_tm, next_step, intvl_step);
-  
-    
-  if ( step_flag )
-  {
-    return true;
-  }
-  else
-  {
-    if (mode == By_step)
-    {
-      if ( ((stp+1) > next_step) && (stp <= next_step) )
-      {
-        m_count++;
-        next_step = start_step + m_count * intvl_step;
-        step_flag = true;
-        return true;
-      }
-    }
-    else
-    {
-      if ( ((tm+delta_t) > next_tm) && (tm <= next_tm) )
-      {
-        m_count++;
-        next_tm = start_tm + (double)(m_count) * intvl_tm;
-        step_flag = true;
-        return true;
-      }
-    }
-  }
-  
-  return false;
-}
   
 
 // #################################################################
-/**
- * @brief トリガーを初期化する
- * @param [in] stp    現在ステップ
- * @param [in] tm     現時刻（無次元）
- * @param [in] m_dt   時間積分幅（無次元）
- * @param [in] m_id   管理対象を示すID
- */
+// トリガーを初期化する
 bool Interval_Manager::initTrigger(const int stp, const double tm, const double m_dt, const int m_id)
 {
   delta_t = m_dt;
@@ -127,6 +75,74 @@ bool Interval_Manager::initTrigger(const int stp, const double tm, const double 
  
 
 // #################################################################
+// セッションの開始時刻が過ぎているかを判断する
+bool Interval_Manager::isStarted(const unsigned m_step, const double m_time)
+{
+  if (mode == By_step)
+  {
+    if ( start_step <= (int)m_step ) return true;
+  }
+  else
+  {
+    if ( start_tm <= (double)m_time ) return true;
+  }
+  return false;
+}
+
+
+// #################################################################
+// 指定の時刻になったかどうかを判断する
+bool Interval_Manager::isTriggered(const int stp, const double tm, bool d_flag)
+{
+  if (d_flag) printf("tm=%f ntm=%f nst=%d itv=%d\n",tm, next_tm, next_step, intvl_step);
+  
+  
+  if ( step_flag )
+  {
+    return true;
+  }
+  else
+  {
+    if (mode == By_step)
+    {
+      if ( ((stp+1) > next_step) && (stp <= next_step) )
+      {
+        m_count++;
+        next_step = start_step + m_count * intvl_step;
+        step_flag = true;
+        return true;
+      }
+    }
+    else
+    {
+      if ( ((tm+delta_t) > next_tm) && (tm <= next_tm) )
+      {
+        m_count++;
+        next_tm = start_tm + (double)(m_count) * intvl_tm;
+        step_flag = true;
+        return true;
+      }
+    }
+  }
+  
+  return false;
+}
+
+
+// #################################################################
+// 開始時刻とインターバル時刻を無次元化する
+void Interval_Manager::normalizeTime(const double scale)
+{
+  if (mode == By_time)
+  {
+    intvl_tm /= scale;
+    start_tm /= scale;
+  }
+}
+
+
+
+// #################################################################
 /**
  * @brief インターバル値をセットする
  * @param [in] m_interval インターバル値
@@ -145,20 +161,6 @@ void Interval_Manager::setInterval(const double m_interval)
 }
 
 
-// #################################################################
-/**
- * @brief インターバル値を無次元化する
- * @param [in] scale  時間スケール
- * @note BY_stepの場合には変化なし
- */
-void Interval_Manager::normalizeTime(const double scale)
-{
-  if (mode == By_time)
-  {
-    intvl_tm /= scale;
-    start_tm /= scale;
-  }
-}
 
 
 // #################################################################
@@ -177,24 +179,4 @@ void Interval_Manager::setStart(const unsigned m_step, const double m_time)
   {
     start_tm = (double)m_time;
   }
-}
-
-// #################################################################
-/**
- * @brief セッションの開始時刻が過ぎているかを判断する
- * @param [in] m_step 無次元評価ステップ
- * @param [in] m_time 無次元評価時刻
- * @retval 開始時刻が過ぎている場合、true
- */
-bool Interval_Manager::isStarted(const unsigned m_step, const double m_time)
-{
-  if (mode == By_step)
-  {
-    if ( start_step <= (int)m_step ) return true;
-  }
-  else
-  {
-    if ( start_tm <= (double)m_time ) return true;
-  }
-  return false;
 }

@@ -29,7 +29,6 @@ void FFV::NS_FS_E_CDS()
   double flop;                         /// 浮動小数演算数
   double rhs_nrm = 0.0;                /// 反復解法での定数項ベクトルのノルム
   double res_init = 0.0;               /// 反復解法での初期残差ベクトルのL2ノルム
-  double comm_size;                    /// 通信面1面あたりの通信量
   double convergence=0.0;              /// 定常収束モニター量
   
   REAL_TYPE dt = deltaT;               /// 時間積分幅
@@ -48,8 +47,7 @@ void FFV::NS_FS_E_CDS()
   Gemini_R* m_buf = new Gemini_R [C.NoCompo];
   REAL_TYPE* m_snd = new REAL_TYPE [C.NoCompo*2];
   REAL_TYPE* m_rcv = new REAL_TYPE [C.NoCompo*2];
-  
-  comm_size = count_comm_size(size, 1);
+
   
   int v_mode=0;
   
@@ -252,7 +250,7 @@ void FFV::NS_FS_E_CDS()
   {
     TIMING_start(tm_pvec_comm);
     if ( paraMngr->BndCommV3D(d_vc, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
-    TIMING_stop(tm_pvec_comm, comm_size*1.0*3.0); // ガイドセル数 x ベクトル
+    TIMING_stop(tm_pvec_comm, face_comm_size*1.0*3.0); // ガイドセル数 x ベクトル
   }
   
   TIMING_stop(tm_frctnl_stp_sct_3, 0.0);
@@ -553,13 +551,13 @@ void FFV::NS_FS_E_CDS()
   {
     TIMING_start(tm_vectors_comm);
     if ( paraMngr->BndCommV3D(d_v, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-    TIMING_stop(tm_vectors_comm, 2*comm_size*guide*3.0);
+    TIMING_stop(tm_vectors_comm, 2*face_comm_size*guide*3.0);
   }
   
   // 外部領域境界面での速度や流量を計算 > 外部流出境界条件の移流速度に利用
   TIMING_start(tm_domain_monitor);
   flop=0.0;
-  DomainMonitor(BC.export_OBC(), &C);
+  DomainMonitor(BC.exportOBC(), &C);
   TIMING_stop(tm_domain_monitor, flop);
   
   
@@ -583,7 +581,7 @@ void FFV::NS_FS_E_CDS()
     {
       TIMING_start(tm_LES_eddy_comm);
       if ( paraMngr->BndCommS3D(d_vt, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-      TIMING_stop(tm_LES_eddy_comm, comm_size*guide);
+      TIMING_stop(tm_LES_eddy_comm, face_comm_size*guide);
     }
   }
   

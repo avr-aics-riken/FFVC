@@ -49,7 +49,8 @@ ffvc_SOURCES = \
   ffv_SetBC.h \
   ffv_TerminateCtrl.C \
   ffv_TerminateCtrl.h \
-  main.C
+  main.C \
+  ffv_Version.h
 
 ffvc_LDADD = \
   -L../FB -lFB \
@@ -67,7 +68,6 @@ ffvc_LDADD = \
   @MPICH_FCLIBS@ \
   @FFVC_LIBS@ \
   @FFVC_FC_LD@
-
 
 
 EXTRA_DIST = Makefile_hand depend.inc

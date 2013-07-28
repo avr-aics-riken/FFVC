@@ -36,12 +36,9 @@ void FFV::PS_Binary()
   REAL_TYPE one = 1.0;                 /// 定数
   REAL_TYPE zero = 0.0;                /// 定数
   REAL_TYPE convergence=0.0;           /// 定常収束モニター量
-  double comm_size = 0.0;              /// 通信面1面あたりの通信量を全ノードで積算した通信量(Byte)
   int cnv_scheme = C.CnvScheme;        /// 対流項スキーム
   
   ItrCtl* ICt = &IC[ItrCtl::ic_tdf_ei];  /// 拡散項の反復
-  
-  comm_size = count_comm_size(size, guide);
   
   
   // >>> Passive scalar Convection section
@@ -129,7 +126,7 @@ void FFV::PS_Binary()
   {
     TIMING_start(tm_heat_diff_comm);
     if ( paraMngr->BndCommS3D(d_ws, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-    TIMING_stop(tm_heat_diff_comm, comm_size*guide);
+    TIMING_stop(tm_heat_diff_comm, face_comm_size*guide);
   }
   
   TIMING_stop(tm_heat_diff_sct_1, 0.0);
@@ -162,7 +159,7 @@ void FFV::PS_Binary()
   {
     TIMING_start(tm_heat_diff_QBC_comm);
     if ( paraMngr->BndCommV3DEx(d_qbc, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
-    TIMING_stop(tm_heat_diff_QBC_comm, comm_size*3.0); // 3成分
+    TIMING_stop(tm_heat_diff_QBC_comm, face_comm_size*3.0); // 3成分
   }
   
   TIMING_stop(tm_heat_diff_sct_2, 0.0);
@@ -191,7 +188,7 @@ void FFV::PS_Binary()
     {
       TIMING_start(tm_heat_update_comm);
       if ( paraMngr->BndCommS3D(d_t, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-      TIMING_stop(tm_heat_update_comm, comm_size*guide);
+      TIMING_stop(tm_heat_update_comm, face_comm_size*guide);
     }
     
     // 残差の集約

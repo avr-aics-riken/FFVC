@@ -105,7 +105,7 @@ void IP_PMT::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, c
   
   int id_fluid;
   
-  if ( (id_fluid = R->find_ID_from_Label(mat, NoMedium, m_fluid)) == 0 )
+  if ( (id_fluid = R->findIDfromLabel(mat, NoMedium, m_fluid)) == 0 )
   {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_fluid.c_str());
     Exit(0);

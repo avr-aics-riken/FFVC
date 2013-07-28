@@ -315,7 +315,7 @@ void Control::displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, Referenc
 
 // #################################################################
 // MediumList中に登録されているkeyに対するIDを返す。発見できない場合はzero 
-int Control::find_ID_from_Label(const MediumList* mat, const int Nmax, const std::string key)
+int Control::findIDfromLabel(const MediumList* mat, const int Nmax, const std::string key)
 {
   std::string str = key;
 
@@ -1049,60 +1049,6 @@ void Control::getGeometry(const MediumList* mat)
     Exit(0);
   }
   PolylibConfigName = str;
-  
-  
-  // フィルの流体媒質番号の指定
-  label = "/Steer/GeometryModel/FluidMediumForFill";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid value for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  // ラベル名が媒質リストにあるか否かを確認
-  for (int i=1; i<=NoMedium; i++)
-  {
-    if ( !strcasecmp( str.c_str(), mat[i].getAlias().c_str() ) )
-    {
-      Fill_Fluid = i;
-      break;
-    }
-  }
-  
-  // チェック
-  if ( Fill_Fluid == 0 )
-  {
-    Hostonly_ stamped_printf("\tError : Medium '%s' is not listed in '%s'\n", str.c_str(), label.c_str());
-    Exit(0);
-  }
-  
-  
-  // フィルの固体媒質番号の指定
-  label = "/Steer/GeometryModel/SolidMediumForFill";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid value for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  // ラベル名が媒質リストにあるか否かを確認
-  for (int i=1; i<=NoMedium; i++)
-  {
-    if ( !strcasecmp( str.c_str(), mat[i].getAlias().c_str() ) )
-    {
-      Fill_Solid = i;
-      break;
-    }
-  }
-  
-  // チェック
-  if ( Fill_Solid == 0 )
-  {
-    Hostonly_ stamped_printf("\tError : Medium '%s' in not listed in '%s'\n", str.c_str(), label.c_str());
-    Exit(0);
-  }
   
   
   // 流体セルのフィルのヒント

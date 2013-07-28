@@ -24,7 +24,7 @@
 
 #include "mydebug.h"
 
-#define FB_VERS 132
+#define FB_VERS "1.3.3"
 
 
 // precision

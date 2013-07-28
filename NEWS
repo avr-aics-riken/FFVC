@@ -18,6 +18,12 @@
 RELEASE
 =======
 
+
+-------------
+Version 1.2.7    2013-07-28
+  - ポリゴン例題，stokes2nd, Utubeの計算が可能
+  - モニタの並列時のサンプリング
+  
 -------------
 Version 1.2.6    2013-07-27
   - Polygon problem has been able to compute.

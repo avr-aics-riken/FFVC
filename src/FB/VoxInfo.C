@@ -25,243 +25,6 @@
 #include "VoxInfo.h"
 
 
-
-// #################################################################
-/**
- * @brief 計算領域外部のガイドセルに媒質IDをエンコードする
- * @param [in]     face      外部境界面番号
- * @param [in,out] mid       ID配列のデータクラス
- * @param [in]     BCtype    外部境界面の境界条件の種類
- * @param [in]     c_id      媒質格納番号
- * @param [in]     prdc_mode 周期境界条件のモード
- */
-void VoxInfo::adjMedium_on_GC(const int face, int* mid, const int BCtype, const int c_id, const int prdc_mode)
-{
-  size_t m, m0, m1;
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-
-  
-  // 周期境界以外
-  if ( BCtype != OBC_PERIODIC ) 
-  {
-    
-    switch (face) 
-    {
-      case X_MINUS:
-        if ( nID[face] < 0 )
-        {
-          for (int k=1; k<=kx; k++) {
-            for (int j=1; j<=jx; j++) {
-              m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
-              mid[m] = c_id;
-            }
-          }
-        }
-        break;
-        
-      case X_PLUS:
-        if ( nID[face] < 0 )
-        {
-          for (int k=1; k<=kx; k++) {
-            for (int j=1; j<=jx; j++) {
-              m = _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd);
-              mid[m] = c_id;
-            }
-          }
-        }
-        break;
-        
-      case Y_MINUS:
-        if ( nID[face] < 0 )
-        {
-          for (int k=1; k<=kx; k++) {
-            for (int i=1; i<=ix; i++) {
-              m = _F_IDX_S3D(i, 0, k, ix, jx, kx, gd);
-              mid[m] = c_id;
-            }
-          }
-        }
-        break;
-        
-      case Y_PLUS:
-        if ( nID[face] < 0 )
-        {
-          for (int k=1; k<=kx; k++) {
-            for (int i=1; i<=ix; i++) {
-              m = _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd);
-              mid[m] = c_id;
-            }
-          }
-        }
-        break;
-        
-      case Z_MINUS:
-        if ( nID[face] < 0 )
-        {
-          for (int j=1; j<=jx; j++) {
-            for (int i=1; i<=ix; i++) {
-              m = _F_IDX_S3D(i, j, 0, ix, jx, kx, gd);
-              mid[m] = c_id;
-            }
-          }
-        }
-        break;
-        
-      case Z_PLUS:
-        if ( nID[face] < 0 )
-        {
-          for (int j=1; j<=jx; j++) {
-            for (int i=1; i<=ix; i++) {
-              m = _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd);
-              mid[m] = c_id;
-            }
-          }
-        }
-        break;
-    } // end of switch
-  }
-  // 周期境界のとき
-  else 
-  {
-    // 内部周期境界の場合には，別メソッド
-    if ( prdc_mode != BoundaryOuter::prdc_Driver ) 
-    {
-      // 並列時
-      if ( numProc > 1 ) 
-      {
-        switch (face) 
-        {
-          case X_MINUS:
-            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, gd, 1, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-            break;
-            
-          case X_PLUS:
-            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, gd, 1, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
-            break;
-            
-          case Y_MINUS:
-            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, gd, 1, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-            break;
-            
-          case Y_PLUS:
-            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, gd, 1, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
-            break;
-            
-          case Z_MINUS:
-            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, gd, 1, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-            break;
-            
-          case Z_PLUS:
-            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, gd, 1, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
-            break;
-        }      
-      }
-      // 非並列時
-      else
-      {
-        switch (face)
-        {
-          case X_MINUS:
-            if ( nID[face] < 0 )
-            {
-              for (int k=1; k<=kx; k++) {
-                for (int j=1; j<=jx; j++) {
-                  for (int i=1-gd; i<=0; i++) {
-                    m0 = _F_IDX_S3D(i,    j, k, ix, jx, kx, gd);
-                    m1 = _F_IDX_S3D(i+ix, j, k, ix, jx, kx, gd);
-                    mid[m0] = mid[m1];
-                  }
-                }
-              }
-            }
-            break;
-            
-          case X_PLUS:
-            if ( nID[face] < 0 )
-            {
-              for (int k=1; k<=kx; k++) {
-                for (int j=1; j<=jx; j++) {
-                  for (int i=ix+1; i<=ix+gd; i++) {
-                    m0 = _F_IDX_S3D(i,    j, k, ix, jx, kx, gd);
-                    m1 = _F_IDX_S3D(i-ix, j, k, ix, jx, kx, gd);
-                    mid[m0] = mid[m1];
-                  }
-                }
-              }
-            }
-            break;
-            
-          case Y_MINUS:
-            if ( nID[face] < 0 )
-            {
-              for (int k=1; k<=kx; k++) {
-                for (int j=1-gd; j<=0; j++) {
-                  for (int i=1; i<=ix; i++) {
-                    m0 = _F_IDX_S3D(i, j,    k, ix, jx, kx, gd);
-                    m1 = _F_IDX_S3D(i, j+jx, k, ix, jx, kx, gd);
-                    mid[m0] = mid[m1];
-                  }
-                }
-              }
-            }
-            break;
-            
-          case Y_PLUS:
-            if ( nID[face] < 0 )
-            {
-              for (int k=1; k<=kx; k++) {
-                for (int j=jx+1; j<=jx+gd; j++) {
-                  for (int i=1; i<=ix; i++) {
-                    m0 = _F_IDX_S3D(i, j,    k, ix, jx, kx, gd);
-                    m1 = _F_IDX_S3D(i, j-jx, k, ix, jx, kx, gd);
-                    mid[m0] = mid[m1];
-                  }
-                }
-              }
-            }
-            break;
-            
-          case Z_MINUS:
-            if ( nID[face] < 0 )
-            {
-              for (int k=1-gd; k<=0; k++) {
-                for (int j=1; j<=jx; j++) {
-                  for (int i=1; i<=ix; i++) {
-                    m0 = _F_IDX_S3D(i, j, k,    ix, jx, kx, gd);
-                    m1 = _F_IDX_S3D(i, j, k+kx, ix, jx, kx, gd);
-                    mid[m0] = mid[m1];
-                  }
-                }
-              }
-            }
-            break;
-            
-          case Z_PLUS:
-            if ( nID[face] < 0 )
-            {
-              for (int k=kx+1; k<=kx+gd; k++) {
-                for (int j=1; j<=jx; j++) {
-                  for (int i=1; i<=ix; i++) {
-                    m0 = _F_IDX_S3D(i, j, k,    ix, jx, kx, gd);
-                    m1 = _F_IDX_S3D(i, j, k-kx, ix, jx, kx, gd);
-                    mid[m0] = mid[m1];
-                  }
-                }
-              }
-            }
-            break;
-        }    
-      }
-    }
-  }
-  
-}
-
-
 // #################################################################
 // 外部境界に接するガイドセルのmid[]にIDをエンコードする（内部周期境界の場合）
 void VoxInfo::adjMediumPrdc_Inner(int* mid, CompoList* cmp)
@@ -290,86 +53,16 @@ void VoxInfo::adjMediumPrdc_Inner(int* mid, CompoList* cmp)
 }
 
 
-// #################################################################
-/**
- * @brief モデル情報テーブルを作成，0で初期化する
- * @param [in] size アロケートするサイズ
- * @retval エラーの場合はNULL
- */
-int* VoxInfo::allocTable(const int size)
-{
-  int* table=NULL;
-  if( (table = (int*)malloc(size*sizeof(int))) == NULL ) return NULL;
-  for (int i=0; i<size; i++) {
-    table[i]=0;
-  }
-  return table;
-}
-
 
 // #################################################################
-/**
- * @brief IDテーブルを表示
- * @param [in] fp    stdout
- * @param [in] size  配列サイズ
- * @param [in] table ID table
- * @note - デバッグ用
- */
-void VoxInfo::checkColorTable(FILE* fp, const int size, const int* table)
-{
-  for (int i=0; i<size; i++) {
-    Hostonly_ fprintf(fp, "\t\t%d : %d\n", i, table[i]);
-  }
-  fflush(fp);
-}
-
-
-
-// #################################################################
-/**
- * @brief 指定されたIDが計算領域内部にあるかどうかを判定する
- * @param [in] id  サーチ対象ID
- * @param [in] mid ID配列
- * @retval IDがあればtrue
- */
-bool VoxInfo::chkIDinside(const int id, const int* mid)
-{
-  size_t m;
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        if ( mid[m] == id ) {
-          Hostonly_ stamped_printf("\tID[%d] exist inside the computational region\n", id);
-          return true;
-        }
-      }
-    }
-  }
-  
-  return false;
-}
-
-
-// #################################################################
-/**
- @fn void VoxInfo::copyBCIbase(int* dst, int* src)
- @brief dst[]にsrc[]のstate, activeビットの情報をコピーする
- @param dst
- @param src
- */
-void VoxInfo::copyBCIbase(int* dst, int* src)
+// dst[]にsrc[]のstate, activeビットの情報をコピーする
+void VoxInfo::copyBCIbase(int* dst, const int* src)
 {
   size_t nx = (size_t)(size[0]+2*guide) * (size_t)(size[1]+2*guide) * (size_t)(size[2]+2*guide);
   
   // 30, 31ビットのみコピー
-  for (size_t m=0; m<nx; m++) {
+  for (size_t m=0; m<nx; m++)
+  {
     dst[m] = src[m] & 0xc0000000;
   }  
 }
@@ -695,11 +388,7 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
 
 
 // #################################################################
-/**
- @brief  計算領域の外部境界で外側1層と内側の両方が流体セル数の場合にカウントする
- @param [in]  bx       BCindex ID
- @param [out] OpenArea 開口セル数
- */
+// 計算領域の外部境界で外側1層と内側の両方が流体セル数の場合にカウントする
 void VoxInfo::countOpenAreaOfDomain(int* bx, REAL_TYPE* OpenArea)
 {
   size_t m0, m1;
@@ -853,40 +542,9 @@ unsigned long VoxInfo::countPainted(const int* mid)
 }
 
 
+
 // #################################################################
-// 媒質idの数を数え，値を返す
-unsigned long VoxInfo::countState(const int id, const int* mid)
-{
-  size_t m;
-  unsigned long g=0;
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  // サーチ範囲はノードローカルの計算セル内
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        if ( mid[m] == id )  g++;
-      }
-    }
-  }
-  
-  
-  if ( numProc > 1 )
-  {
-    unsigned long tmp = g;
-    MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-  }
-  
-  return g;
-}
-
-
-// BCindexを表示する（デバッグ用）
+// BCindexIDを表示する（デバッグ用）
 void VoxInfo::dbg_chkBCIndexD(const int* bcd, const char* fname)
 {
   int s;
@@ -926,8 +584,8 @@ void VoxInfo::dbg_chkBCIndexD(const int* bcd, const char* fname)
 
 
 // #################################################################
-// BCindexを表示する（デバッグ用）
-void VoxInfo::dbg_chkBCIndexP(const int* bcd, const int* bcp, const char* fname, CompoList* cmp)
+// BCindexPを表示する（デバッグ用）
+void VoxInfo::dbg_chkBCIndexP(const int* bcd, const int* bcp, const char* fname)
 {
   size_t m;
   int q, s, d;
@@ -969,13 +627,8 @@ void VoxInfo::dbg_chkBCIndexP(const int* bcd, const int* bcp, const char* fname,
 
 
 // #################################################################
-/**
- @fn void VoxInfo::dbg_chkBCIndexV(int* bcv, const char* fname)
- @brief BCindexを表示する（デバッグ用）
- @param bcv BCindex V
- @param fname 出力用ファイル名
- */
-void VoxInfo::dbg_chkBCIndexV(int* bcv, const char* fname)
+//BCindexを表示する（デバッグ用）
+void VoxInfo::dbg_chkBCIndexV(const int* bcv, const char* fname)
 {
   size_t m;
   int s;
@@ -1319,10 +972,12 @@ void VoxInfo::encHbit(int* bh1, int* bh2)
  * @param [in]     order エンコードする格納順
  * @param [in]     mid   セルID配列
  * @param [in,out] bx    BCindex ID/H2
+ * @param [in,out] cmp   CompoList
  * @retval エンコードした個数
- * @note mid[]のセルIDが指定されたidならば，bx[]に対してCompoListのエントリをエンコードする
+ * @note mid[]が指定されたidならば，CompoListのエントリをbx[]エンコードする
+ *       対象範囲をサブドメイン内であること．拡大すると，並列時に余計にカウントしてしまう
  */
-unsigned long VoxInfo::encodeOrder(const int order, const int* mid, int* bx)
+unsigned long VoxInfo::encodeOrder(const int order, const int* mid, int* bx, CompoList* cmp)
 {
   unsigned long g=0;
   
@@ -1348,6 +1003,10 @@ unsigned long VoxInfo::encodeOrder(const int order, const int* mid, int* bx)
     }
   }
   
+  if ( g > 0 )
+  {
+    cmp->setEnsLocal(ON);
+  }
   
   if ( numProc > 1 )
   {
@@ -3748,6 +3407,7 @@ unsigned long VoxInfo::encVbitIBC(const int order,
  * @param [in]     bid    カット点ID
  * @param [in]     vec    法線ベクトル
  * @param [in]     bc_dir 境界条件の方向 same_direction=1, opposite_direction=2
+ * @param [in,out] cmp    CompoList
  * @note 指定法線とセルのカット方向ベクトルの内積で判断，vspecとoutflowなのでbp[]のVBC_UWDにマスクビットを立てる
  */
 unsigned long VoxInfo::encVbitIBCcut(const int order,
@@ -3756,7 +3416,8 @@ unsigned long VoxInfo::encVbitIBCcut(const int order,
                                      const float* cut,
                                      const int* bid,
                                      const float* vec,
-                                     const int bc_dir)
+                                     const int bc_dir,
+                                     CompoList* cmp)
 {
   unsigned long g=0;
   
@@ -3865,6 +3526,11 @@ unsigned long VoxInfo::encVbitIBCcut(const int order,
     }
   }
   
+  
+  if ( g > 0 )
+  {
+    cmp->setEnsLocal(ON);
+  }
 
 // ########## check for debug
 # if 0
@@ -3914,9 +3580,9 @@ unsigned long VoxInfo::encVbitIBCcut(const int order,
  * @param [in]     enc_uwd trueのとき，1次精度のスイッチオン
  * @note
   - 外部境界条件の実装には，流束型とディリクレ型の2種類がある．
-  - adjMedium_on_GC()でガイドセル上のIDを指定済み．指定BCとの適合性をチェックする
+  - setMediumOnGC()でガイドセル上のIDを指定済み．指定BCとの適合性をチェックする
  */
-void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool enc_sw, const string chk, int* bp, bool enc_uwd)
+void VoxInfo::encVbitOBC(const int face, int* bv, const string key, const bool enc_sw, const string chk, int* bp, bool enc_uwd)
 {
   size_t m, mt;
   int sw, cw;
@@ -3927,12 +3593,14 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
   int kx = size[2];
   int gd = guide;
   
-  ( "fluid" == key ) ? sw=1 : sw=0;
-  ( "check" == chk ) ? cw=1 : cw=0;
+  ( !strcasecmp("fluid", key.c_str()) ) ? sw=1 : sw=0;
+  ( !strcasecmp("check", chk.c_str()) ) ? cw=1 : cw=0;
   
-  switch (face) {
+  switch (face)
+  {
     case X_MINUS:
-      if( nID[face] < 0 ){ // 外部境界をもつノードのみ
+      if( nID[face] < 0 ) // 外部境界をもつノードのみ
+      {
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
@@ -3942,28 +3610,35 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
             z = bv[mt];
             q = bp[mt];
             
-            if ( IS_FLUID(s) ) {
+            if ( IS_FLUID(s) )
+            {
               // エンコード処理
-              if ( enc_sw ) {
+              if ( enc_sw )
+              {
                 bv[m]  = s | (OBC_MASK << BC_FACE_W); // OBC_MASK==31 外部境界条件のフラグ
               }
               
               // 外部境界で安定化のため，スキームを1次精度にする
-              if ( enc_uwd ) {
+              if ( enc_uwd )
+              {
                 bp[mt] = onBit(q, VBC_UWD);
               }
               
               // チェック
-              if ( cw == 1 ) {
-                
-                if ( sw==1 ) { // ガイドセルが流体であることを要求
-                  if ( !IS_FLUID(z) ) {
+              if ( cw == 1 )
+              {
+                if ( sw==1 ) // ガイドセルが流体であることを要求
+                {
+                  if ( !IS_FLUID(z) )
+                  {
                     Hostonly_ printf("Error : Fluid cell at Outer boundary X- is required\n");
                     Exit(0);
                   }
                 }
-                else { // ガイドセルが固体であることを要求
-                  if ( IS_FLUID(z) ) {
+                else // ガイドセルが固体であることを要求
+                {
+                  if ( IS_FLUID(z) )
+                  {
                     Hostonly_ printf("Error : Solid cell at Outer boundary X- is required\n");
                     Exit(0);
                   }
@@ -3977,7 +3652,8 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
       break;
       
     case X_PLUS:
-      if( nID[face] < 0 ){
+      if( nID[face] < 0 )
+      {
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             m = _F_IDX_S3D(ix,   j, k, ix, jx, kx, gd);
@@ -3987,29 +3663,35 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
             z = bv[mt];
             q = bp[mt];
             
-            if ( IS_FLUID(s) ) {
-              
+            if ( IS_FLUID(s) )
+            {
               // エンコード処理
-              if ( enc_sw ) {
+              if ( enc_sw )
+              {
                 bv[m]  = s | (OBC_MASK << BC_FACE_E);
               }
               
               // 外部境界で安定化のため，スキームを1次精度にする
-              if ( enc_uwd ) {
+              if ( enc_uwd )
+              {
                 bp[mt] = onBit(q, VBC_UWD);
               }
               
               // チェック
-              if ( cw == 1 ) {
-                
-                if ( sw==1 ) {
-                  if ( !IS_FLUID(z) ) {
+              if ( cw == 1 )
+              {
+                if ( sw==1 )
+                {
+                  if ( !IS_FLUID(z) )
+                  {
                     Hostonly_ printf("Error : Fluid cell at Outer boundary X+ is required\n");
                     Exit(0);
                   }
                 }
-                else {
-                  if ( IS_FLUID(z) ) {
+                else
+                {
+                  if ( IS_FLUID(z) )
+                  {
                     Hostonly_ printf("Error : Solid cell at Outer boundary X+ is required\n");
                     Exit(0);
                   }
@@ -4023,7 +3705,8 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
       break;
       
     case Y_MINUS:
-      if( nID[face] < 0 ){
+      if( nID[face] < 0 )
+      {
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
@@ -4033,29 +3716,35 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
             z = bv[mt];
             q = bp[mt];
             
-            if ( IS_FLUID(s) ) {
-              
+            if ( IS_FLUID(s) )
+            {
               // エンコード処理
-              if ( enc_sw ) {
+              if ( enc_sw )
+              {
                 bv[m]  = s | (OBC_MASK << BC_FACE_S);
               }
               
               // 外部境界で安定化のため，スキームを1次精度にする
-              if ( enc_uwd ) {
+              if ( enc_uwd )
+              {
                 bp[mt] = onBit(q, VBC_UWD);
               }
               
               // チェック
-              if ( cw == 1 ) {
-                
-                if ( sw==1 ) {
-                  if ( !IS_FLUID(z) ) {
-                    Hostonly_ printf("Error : Fluid cell at Outer boundary Y- is required\n");
+              if ( cw == 1 )
+              {
+                if ( sw==1 )
+                {
+                  if ( !IS_FLUID(z) )
+                  {
+                    Hostonly_ printf("Error : Fluid cell at Outer boundary Y- is required %d %d %d\n", i, 0, k);
                     Exit(0);
                   }
                 }
-                else {
-                  if ( IS_FLUID(z) ) {
+                else
+                {
+                  if ( IS_FLUID(z) )
+                  {
                     Hostonly_ printf("Error : Solid cell at Outer boundary Y- is required\n");
                     Exit(0);
                   }
@@ -4069,7 +3758,8 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
       break;
       
     case Y_PLUS:
-      if( nID[face] < 0 ){
+      if( nID[face] < 0 )
+      {
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, jx,   k, ix, jx, kx, gd);
@@ -4079,29 +3769,35 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
             z = bv[mt];
             q = bp[mt];
             
-            if ( IS_FLUID(s) ) {
-              
+            if ( IS_FLUID(s) )
+            {
               // エンコード処理
-              if ( enc_sw ) {
+              if ( enc_sw )
+              {
                 bv[m]  = s | (OBC_MASK << BC_FACE_N);
               }
               
               // 外部境界で安定化のため，スキームを1次精度にする
-              if ( enc_uwd ) {
+              if ( enc_uwd )
+              {
                 bp[mt] = onBit(q, VBC_UWD);
               }
               
               // チェック
-              if ( cw == 1 ) {
-                
-                if ( sw==1 ) {
-                  if ( !IS_FLUID(z) ) {
+              if ( cw == 1 )
+              {
+                if ( sw==1 )
+                {
+                  if ( !IS_FLUID(z) )
+                  {
                     Hostonly_ printf("Error : Fluid cell at Outer boundary Y+ is required\n");
                     Exit(0);
                   }
                 }
-                else {
-                  if ( IS_FLUID(z) ) {
+                else
+                {
+                  if ( IS_FLUID(z) )
+                  {
                     Hostonly_ printf("Error : Solid cell at Outer boundary Y+ is required\n");
                     Exit(0);
                   }
@@ -4115,7 +3811,8 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
       break;
       
     case Z_MINUS:
-      if( nID[face] < 0 ){
+      if( nID[face] < 0 )
+      {
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
@@ -4125,29 +3822,35 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
             z = bv[mt];
             q = bp[mt];
             
-            if ( IS_FLUID(s) ) {
-              
+            if ( IS_FLUID(s) )
+            {
               // エンコード処理
-              if ( enc_sw ) {
+              if ( enc_sw )
+              {
                 bv[m]  = s | (OBC_MASK << BC_FACE_B);
               }
               
               // 外部境界で安定化のため，スキームを1次精度にする
-              if ( enc_uwd ) {
+              if ( enc_uwd )
+              {
                 bp[mt] = onBit(q, VBC_UWD);
               }
               
               // チェック
-              if ( cw == 1 ) {
-                
-                if ( sw==1 ) {
-                  if ( !IS_FLUID(z) ) {
+              if ( cw == 1 )
+              {
+                if ( sw==1 )
+                {
+                  if ( !IS_FLUID(z) )
+                  {
                     Hostonly_ printf("Error : Fluid cell at Outer boundary Z- is required\n");
                     Exit(0);
                   }
                 }
-                else {
-                  if ( IS_FLUID(z) ) {
+                else
+                {
+                  if ( IS_FLUID(z) )
+                  {
                     Hostonly_ printf("Error : Solid cell at Outer boundary Z- is required\n");
                     Exit(0);
                   }
@@ -4161,7 +3864,8 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
       break;
       
     case Z_PLUS:
-      if( nID[face] < 0 ){
+      if( nID[face] < 0 )
+      {
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
             m = _F_IDX_S3D(i, j, kx,   ix, jx, kx, gd);
@@ -4171,29 +3875,35 @@ void VoxInfo::encVbit_OBC(const int face, int* bv, const string key, const bool 
             z = bv[mt];
             q = bp[mt];
             
-            if ( IS_FLUID(s) ) {
-              
+            if ( IS_FLUID(s) )
+            {
               // エンコード処理
-              if ( enc_sw ) {
+              if ( enc_sw )
+              {
                 bv[m]  = s | (OBC_MASK << BC_FACE_T);
               }
               
               // 外部境界で安定化のため，スキームを1次精度にする
-              if ( enc_uwd ) {
+              if ( enc_uwd )
+              {
                 bp[mt] = onBit(q, VBC_UWD);
               }
               
               // チェック
-              if ( cw == 1 ) {
-                
-                if ( sw==1 ) {
-                  if ( !IS_FLUID(z) ) {
+              if ( cw == 1 )
+              {
+                if ( sw==1 )
+                {
+                  if ( !IS_FLUID(z) )
+                  {
                     Hostonly_ printf("Error : Fluid cell at Outer boundary Z+ is required\n");
                     Exit(0);
                   }
                 }
-                else {
-                  if ( IS_FLUID(z) ) {
+                else
+                {
+                  if ( IS_FLUID(z) )
+                  {
                     Hostonly_ printf("Error : Solid cell at Outer boundary Z+ is required\n");
                     Exit(0);
                   }
@@ -4740,20 +4450,13 @@ bool VoxInfo::findLBCbbox(const int tgt, const int* bid, const float* cut, int* 
 
 
 // #################################################################
-/**
- @brief BCindexにActive/Inactiveをエンコード
- @retval 不活性化した数
- @param L[out] ノードローカルの不活性セル数
- @param G[out] グローバルの不活性セル数
- @param id セルID
- @param mid ボクセル配列
- @param bx BCindex ID
- */
-unsigned long VoxInfo::flip_InActive(unsigned long& L, 
-                                     unsigned long& G, 
-                                     const int id, 
-                                     const int* mid, 
-                                     int* bx)
+// BCindexにActive/Inactiveをエンコード
+unsigned long VoxInfo::flipInActive(unsigned long& L, 
+                                    unsigned long& G,
+                                    const int id,
+                                    const int* mid,
+                                    int* bx,
+                                    CompoList* cmp)
 {
   int c_p, s;
   size_t m;
@@ -4787,6 +4490,11 @@ unsigned long VoxInfo::flip_InActive(unsigned long& L,
     }
   }
   
+  if ( c > 0 )
+  {
+    cmp->setEnsLocal(ON);
+  }
+  
   L = c;
   
   if ( numProc > 1 )
@@ -4801,46 +4509,66 @@ unsigned long VoxInfo::flip_InActive(unsigned long& L,
 }
 
 
-
 // #################################################################
-/**
- @fn void VoxInfo::getOffset(int* st, int* ofst)
- @brief インデクス範囲を決めるオフセットを計算する
- @param st コンポーネントの開始インデクス
- @param ofst オフセット量
- @note
- - 計算領域内部のノード間境界部でのカウント重複を防ぐため，開始点位置の判断を行う
- - 外部境界に接する面では，補正せず，常にoffset=1
- - 内部境界面では，重複しないようにoffset=0
- */
-void VoxInfo::getOffset(int* st, int* ofst)
+// 内部フィルを実行する場合の固体IDを求める
+int VoxInfo::getFillSolidID(const int* mid)
 {
-  if( nID[X_MINUS] < 0 )
-  {
-    ofst[0] = 1;
-  }
-  else
-  {
-    ofst[0] = ( st[0] == 1 ) ? 0 : 1;
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  int list[NoCompo+1];
+  memset(list, 0, NoCompo+1);
+  
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t m_p = _F_IDX_S3D(i,   j,   k,   ix, jx, kx, gd);
+        size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
+        size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
+        size_t m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd);
+        size_t m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd);
+        size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
+        size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
+        
+        int cw = mid[m_w];
+        int ce = mid[m_e];
+        int cs = mid[m_s];
+        int cn = mid[m_n];
+        int cb = mid[m_b];
+        int ct = mid[m_t];
+        
+        // 対象セルがempty(0)かつ隣接セルが既にペイントされている
+        if ( mid[m_p] == 0 )
+        {
+          if      ( cb != 0 ) list[cb]++;
+          else if ( cs != 0 ) list[cs]++;
+          else if ( cw != 0 ) list[cw]++;
+          else if ( ce != 0 ) list[ce]++;
+          else if ( cn != 0 ) list[cn]++;
+          else if ( ct != 0 ) list[ct]++;
+        }
+      }
+    }
   }
   
-  if( nID[Y_MINUS] < 0 )
+  // 最頻値
+  int c = 0; // order
+  int z = 0; // 頻度
+  for (int i=1; i<=NoCompo; i++)
   {
-    ofst[1] = 1;
-  }
-  else
-  {
-    ofst[1] = ( st[1] == 1 ) ? 0 : 1;
+    if ( z < list[i] )
+    {
+      z = list[i];
+      c = i;
+    }
   }
   
-  if( nID[Z_MINUS] < 0 )
-  {
-    ofst[2] = 1;
-  }
-  else
-  {
-    ofst[2] = ( st[2] == 1 ) ? 0 : 1;
-  }
+  return c;
 }
 
 
@@ -4940,7 +4668,7 @@ void VoxInfo::scanCell(int* mid, const int* colorList, const int ID_replace, FIL
   {
     int tg = colorList[i];
     
-    if ( tg != 0 ) colorSet[tg] = 1;
+    if ( tg != 0 ) colorSet[i] = 1;
   }
 
   
@@ -4964,14 +4692,7 @@ void VoxInfo::scanCell(int* mid, const int* colorList, const int ID_replace, FIL
     if ( paraMngr->Allreduce(clist, colorSet, NoCompo+1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
   // この時点で、存在するIDの数は最大でもnumProc個 >> int の範囲内
-  
-  // ID数をカウント
-  int c=0;
-  
-  for (int i=1; i<=NoCompo; i++)
-  {
-    if (colorSet[i] != 0) c++;
-  }
+
   
   
   // ボクセルをスキャンしたIDの数と境界条件の数，含まれるIDのリストを表示する
@@ -5259,20 +4980,13 @@ void VoxInfo::setBCIndexBase(int* bx, int* mid, const float* cvf, const MediumLi
   {
     switch ( cmp[n].getType() )
     {
-      case -1: // Medium
+      case 0: // Medium
       case OBSTACLE:
       case CELL_MONITOR:
-        cmp[n].setElement( encodeOrder(n, mid, bx) );
+        cmp[n].setElement( encodeOrder(n, mid, bx, &cmp[n]) );
     }
   }
   
-  
-  // 以後のサーチのため，同期が必要
-  if ( paraMngr->BndCommS3D(bx, ix, jx, kx, gd, 1) != CPM_SUCCESS ) Exit(0);
-  
-  
-  // 孤立した流体セルの属性変更
-  findIsolatedFcell(bx);
   
   // BCIndexにそのセルが計算に有効(active)かどうかをエンコードする．KindOfSolverによって異なる
   encActive(Lcell, Gcell, bx, KOS);
@@ -5285,7 +4999,7 @@ void VoxInfo::setBCIndexBase(int* bx, int* mid, const float* cvf, const MediumLi
     if ( cmp[n].getType() == INACTIVE )
     {
       m_L = m_G = 0;
-      cmp[n].setElement( flip_InActive(m_L, m_G, n, mid, bx) );
+      cmp[n].setElement( flipInActive(m_L, m_G, n, mid, bx, &cmp[n]) );
       Lcell -= m_L;
       Gcell -= m_G;
     }
@@ -5346,7 +5060,7 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
   // 対称境界面に断熱マスクをセット
   for (int face=0; face<NOFACE; face++)
   {
-    if ( BC->export_OBC(face)->get_Class() == OBC_SYMMETRIC )
+    if ( BC->exportOBC(face)->get_Class() == OBC_SYMMETRIC )
     {
       encAmask_SymtrcBC(face, bh2);
     }
@@ -5444,8 +5158,7 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
         // Q BC at Volume; idのガイドセルチェックなし
       case HEAT_SRC:
       case CNST_TEMP:
-        cmp[n].setElement( encodeOrder(n, mid, bh2) );
-        cmp[n].setEnsLocal(ON);
+        cmp[n].setElement( encodeOrder(n, mid, bh2, &cmp[n]) );
         break;
     }
     
@@ -5457,19 +5170,7 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
 
 
 // #################################################################
-/**
- * @brief 圧力境界条件のビット情報をエンコードする
- * @param [in,out] bcd   BCindex ID
- * @param [in,out] bcp   BCindex P
- * @param [in,out] mid   ID配列
- * @param [in]     BC    SetBCクラスのポインタ
- * @param [in,out] cmp   CompoList
- * @param [in]     icls  Intrinsic class
- * @param [in]     cut   距離情報
- * @param [in]     bid   カットID情報
- * @param [in]     isCDS CDS->true
- * @retval 表面セル数
- */
+// 圧力境界条件のビット情報をエンコードする
 unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, CompoList* cmp, int icls, const float* cut, const int* bid, const bool isCDS)
 {
   unsigned long surface = 0;
@@ -5493,7 +5194,7 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, Comp
   int F;
   
   for (int face=0; face<NOFACE; face++) {
-    m_obc = BC->export_OBC(face);
+    m_obc = BC->exportOBC(face);
     F = m_obc->get_Class();
     
     switch ( F )
@@ -5589,19 +5290,7 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, Comp
 
 
 // #################################################################
-/**
- * @brief bv[]に境界条件のビット情報をエンコードする
- * @param [in,out] bv    BCindex V
- * @param [in,out] mid   ボクセルID配列
- * @param [in,out] bp    BCindex P
- * @param [in]     BC    SetBCクラスのポインタ
- * @param [in]     cmp   CompoListクラスのポインタ
- * @param [in]     icls  Intrinsic class
- * @param [in]     isCDS カットかどうか
- * @param [in]     cut   カット配列
- * @param [in]     bid   BID配列
- * @attention 事前にbx[]の同期が必要 >> 隣接セルがすべて固体の場合をチェックするため
- */
+// bv[]に境界条件のビット情報をエンコードする
 void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList* cmp, int icls, bool isCDS, float* cut, int* bid)
 {
   // ガイドセルの媒質情報をチェックし，流束形式のBCの場合にビットフラグをセット
@@ -5610,35 +5299,35 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
   
   // 外部境界
   for (int face=0; face<NOFACE; face++) {
-    m_obc = BC->export_OBC(face);
+    m_obc = BC->exportOBC(face);
     F = m_obc->get_Class();
     
     switch ( F )
     {
       case OBC_WALL:
-        encVbit_OBC(face, bv, "solid", true, "check", bp); // 流束形式
+        encVbitOBC(face, bv, "solid", true, "check", bp); // 流束形式
         break;
         
       case OBC_SPEC_VEL:
-        encVbit_OBC(face, bv, "fluid", true, "check", bp); // 流束形式
+        encVbitOBC(face, bv, "fluid", true, "check", bp); // 流束形式
         break;
       
       case OBC_TRC_FREE:
       case OBC_OUTFLOW:
       case OBC_FAR_FIELD:
       case OBC_SYMMETRIC:
-        encVbit_OBC(face, bv, "fluid", false, "check", bp); // 境界値指定
+        encVbitOBC(face, bv, "fluid", false, "check", bp); // 境界値指定
         break;
         
       case OBC_INTRINSIC:
         if ( (icls == id_Jet) && (face==0) )
         {
-          encVbit_OBC(face, bv, "fluid", true, "nocheck", bp); // 流束形式
+          encVbitOBC(face, bv, "fluid", true, "nocheck", bp); // 流束形式
         }
         break;
         
       case OBC_PERIODIC:
-        encVbit_OBC(face, bv, "fluid", false, "nocheck", bp); // 境界値指定，内部セルの状態をコピーするので，ガイドセル状態のチェックなし
+        encVbitOBC(face, bv, "fluid", false, "nocheck", bp); // 境界値指定，内部セルの状態をコピーするので，ガイドセル状態のチェックなし
         break;
         
       default:
@@ -5665,13 +5354,8 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
         case SPEC_VEL:
         case SPEC_VEL_WH:
         case OUTFLOW:
-          //if (isCDS) { // cut
-          cmp[n].setElement( encVbitIBCcut(n, bv, bp, cut, bid, vec, m_dir) );
-          cmp[n].setEnsLocal(ON);
-          //}
-          //else { // binary
-          //cmp[n].setElement( encVbit_IBC(n, mid, bv, bp, vec, m_dir) );
-          //}
+          cmp[n].setElement( encVbitIBCcut(n, bv, bp, cut, bid, vec, m_dir, &cmp[n]) );
+          //cmp[n].setElement( encVbit_IBC(n, mid, bv, bp, vec, m_dir) ); // binary
           break;
       }
     }
@@ -5682,13 +5366,8 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
 
 
 // #################################################################
-/**
- @brief bx[]のコンポーネントエントリを参照して体積率を計算し，圧力損失コンポーネントの場合にはビットを立てる
- @param cmp コンポーネントリスト
- @param bx BCindex ID
- @param vf 体積率
- */
-void VoxInfo::setCmpFraction(CompoList* cmp, int* bx, float* vf)
+// bx[]のコンポーネントエントリを参照して体積率を計算し，圧力損失コンポーネントの場合にはビットを立てる
+void VoxInfo::setCmpFraction(CompoList* cmp, int* bx, const float* vf)
 {
 	size_t m;
   int st[3], ed[3];
@@ -5820,6 +5499,237 @@ void VoxInfo::setInactive_Compo(int id, int def, int* mid, int* bh1, int* bh2)
     }
   }
 }
+
+
+// #################################################################
+// 計算領域外部のガイドセルに媒質IDをエンコードする
+void VoxInfo::setMediumOnGC(const int face, int* mid, const int BCtype, const int c_id, const int prdc_mode)
+{
+  size_t m, m0, m1;
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  
+  
+  // 周期境界以外
+  if ( BCtype != OBC_PERIODIC )
+  {
+    
+    switch (face)
+    {
+      case X_MINUS:
+        if ( nID[face] < 0 )
+        {
+          for (int k=1; k<=kx; k++) {
+            for (int j=1; j<=jx; j++) {
+              m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
+              mid[m] = c_id;
+            }
+          }
+        }
+        break;
+        
+      case X_PLUS:
+        if ( nID[face] < 0 )
+        {
+          for (int k=1; k<=kx; k++) {
+            for (int j=1; j<=jx; j++) {
+              m = _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd);
+              mid[m] = c_id;
+            }
+          }
+        }
+        break;
+        
+      case Y_MINUS:
+        if ( nID[face] < 0 )
+        {
+          for (int k=1; k<=kx; k++) {
+            for (int i=1; i<=ix; i++) {
+              m = _F_IDX_S3D(i, 0, k, ix, jx, kx, gd);
+              mid[m] = c_id;
+            }
+          }
+        }
+        break;
+        
+      case Y_PLUS:
+        if ( nID[face] < 0 )
+        {
+          for (int k=1; k<=kx; k++) {
+            for (int i=1; i<=ix; i++) {
+              m = _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd);
+              mid[m] = c_id;
+            }
+          }
+        }
+        break;
+        
+      case Z_MINUS:
+        if ( nID[face] < 0 )
+        {
+          for (int j=1; j<=jx; j++) {
+            for (int i=1; i<=ix; i++) {
+              m = _F_IDX_S3D(i, j, 0, ix, jx, kx, gd);
+              mid[m] = c_id;
+            }
+          }
+        }
+        break;
+        
+      case Z_PLUS:
+        if ( nID[face] < 0 )
+        {
+          for (int j=1; j<=jx; j++) {
+            for (int i=1; i<=ix; i++) {
+              m = _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd);
+              mid[m] = c_id;
+            }
+          }
+        }
+        break;
+    } // end of switch
+  }
+  // 周期境界のとき
+  else
+  {
+    // 内部周期境界の場合には，別メソッド
+    if ( prdc_mode != BoundaryOuter::prdc_Driver )
+    {
+      // 並列時
+      if ( numProc > 1 )
+      {
+        switch (face)
+        {
+          case X_MINUS:
+            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, gd, 1, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+            break;
+            
+          case X_PLUS:
+            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, gd, 1, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+            break;
+            
+          case Y_MINUS:
+            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, gd, 1, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+            break;
+            
+          case Y_PLUS:
+            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, gd, 1, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+            break;
+            
+          case Z_MINUS:
+            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, gd, 1, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+            break;
+            
+          case Z_PLUS:
+            if ( paraMngr->PeriodicCommS3D(mid, ix, jx, kx, gd, 1, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+            break;
+        }
+      }
+      // 非並列時
+      else
+      {
+        switch (face)
+        {
+          case X_MINUS:
+            if ( nID[face] < 0 )
+            {
+              for (int k=1; k<=kx; k++) {
+                for (int j=1; j<=jx; j++) {
+                  for (int i=1-gd; i<=0; i++) {
+                    m0 = _F_IDX_S3D(i,    j, k, ix, jx, kx, gd);
+                    m1 = _F_IDX_S3D(i+ix, j, k, ix, jx, kx, gd);
+                    mid[m0] = mid[m1];
+                  }
+                }
+              }
+            }
+            break;
+            
+          case X_PLUS:
+            if ( nID[face] < 0 )
+            {
+              for (int k=1; k<=kx; k++) {
+                for (int j=1; j<=jx; j++) {
+                  for (int i=ix+1; i<=ix+gd; i++) {
+                    m0 = _F_IDX_S3D(i,    j, k, ix, jx, kx, gd);
+                    m1 = _F_IDX_S3D(i-ix, j, k, ix, jx, kx, gd);
+                    mid[m0] = mid[m1];
+                  }
+                }
+              }
+            }
+            break;
+            
+          case Y_MINUS:
+            if ( nID[face] < 0 )
+            {
+              for (int k=1; k<=kx; k++) {
+                for (int j=1-gd; j<=0; j++) {
+                  for (int i=1; i<=ix; i++) {
+                    m0 = _F_IDX_S3D(i, j,    k, ix, jx, kx, gd);
+                    m1 = _F_IDX_S3D(i, j+jx, k, ix, jx, kx, gd);
+                    mid[m0] = mid[m1];
+                  }
+                }
+              }
+            }
+            break;
+            
+          case Y_PLUS:
+            if ( nID[face] < 0 )
+            {
+              for (int k=1; k<=kx; k++) {
+                for (int j=jx+1; j<=jx+gd; j++) {
+                  for (int i=1; i<=ix; i++) {
+                    m0 = _F_IDX_S3D(i, j,    k, ix, jx, kx, gd);
+                    m1 = _F_IDX_S3D(i, j-jx, k, ix, jx, kx, gd);
+                    mid[m0] = mid[m1];
+                  }
+                }
+              }
+            }
+            break;
+            
+          case Z_MINUS:
+            if ( nID[face] < 0 )
+            {
+              for (int k=1-gd; k<=0; k++) {
+                for (int j=1; j<=jx; j++) {
+                  for (int i=1; i<=ix; i++) {
+                    m0 = _F_IDX_S3D(i, j, k,    ix, jx, kx, gd);
+                    m1 = _F_IDX_S3D(i, j, k+kx, ix, jx, kx, gd);
+                    mid[m0] = mid[m1];
+                  }
+                }
+              }
+            }
+            break;
+            
+          case Z_PLUS:
+            if ( nID[face] < 0 )
+            {
+              for (int k=kx+1; k<=kx+gd; k++) {
+                for (int j=1; j<=jx; j++) {
+                  for (int i=1; i<=ix; i++) {
+                    m0 = _F_IDX_S3D(i, j, k,    ix, jx, kx, gd);
+                    m1 = _F_IDX_S3D(i, j, k-kx, ix, jx, kx, gd);
+                    mid[m0] = mid[m1];
+                  }
+                }
+              }
+            }
+            break;
+        }
+      }
+    }
+  }
+  
+}
+
 
 
 // #################################################################
@@ -5985,7 +5895,7 @@ void VoxInfo::setMonitorShape(int* mid, const int n, ShapeMonitor* SM, CompoList
 
 // #################################################################
 //外部境界のガイドセルが固体の場合に距離情報をセット
-void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
+void VoxInfo::setOBCcut(SetBC* BC, float* cut)
 {
   BoundaryOuter* m_obc=NULL;
   int F;
@@ -5999,14 +5909,16 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
   int gd = guide;
   
   for (int face=0; face<NOFACE; face++) {
-    m_obc = BC->export_OBC(face);
+    m_obc = BC->exportOBC(face);
     F = m_obc->get_Class();
     
-    if ( (F == OBC_WALL) || (F == OBC_SYMMETRIC) ) {
-      
-      switch (face) {
+    if ( (F == OBC_WALL) || (F == OBC_SYMMETRIC) )
+    {
+      switch (face)
+      {
         case X_MINUS:
-          if( nID[X_MINUS] < 0 ){ // 外部境界をもつノードのみ
+          if( nID[X_MINUS] < 0 ) // 外部境界をもつノードのみ
+          {
             for (int k=1; k<=kx; k++) {
               for (int j=1; j<=jx; j++) {
                 m = _F_IDX_S4DEX(X_MINUS, 1, j, k, 6, ix, jx, kx, gd);
@@ -6017,7 +5929,8 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
           break;
           
         case X_PLUS:
-          if( nID[X_PLUS] < 0 ){
+          if( nID[X_PLUS] < 0 )
+          {
             for (int k=1; k<=kx; k++) {
               for (int j=1; j<=jx; j++) {
                 m = _F_IDX_S4DEX(X_PLUS, ix, j, k, 6, ix, jx, kx, gd);
@@ -6028,7 +5941,8 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
           break;
           
         case Y_MINUS:
-          if( nID[Y_MINUS] < 0 ){
+          if( nID[Y_MINUS] < 0 )
+          {
             for (int k=1; k<=kx; k++) {
               for (int i=1; i<=ix; i++) {
                 m = _F_IDX_S4DEX(Y_MINUS, i, 1, k, 6, ix, jx, kx, gd); 
@@ -6039,7 +5953,8 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
           break;
           
         case Y_PLUS:
-          if( nID[Y_PLUS] < 0 ){
+          if( nID[Y_PLUS] < 0 )
+          {
             for (int k=1; k<=kx; k++) {
               for (int i=1; i<=ix; i++) {
                 m = _F_IDX_S4DEX(Y_PLUS, i, jx, k, 6, ix, jx, kx, gd);
@@ -6050,7 +5965,8 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
           break;
           
         case Z_MINUS:
-          if( nID[Z_MINUS] < 0 ){
+          if( nID[Z_MINUS] < 0 )
+          {
             for (int j=1; j<=jx; j++) {
               for (int i=1; i<=ix; i++) {
                 m = _F_IDX_S4DEX(Z_MINUS, i, j, 1, 6, ix, jx, kx, gd);
@@ -6061,7 +5977,8 @@ void VoxInfo::setOBC_Cut(SetBC* BC, float* cut)
           break;
           
         case Z_PLUS:
-          if( nID[Z_PLUS] < 0 ){
+          if( nID[Z_PLUS] < 0 )
+          {
             for (int j=1; j<=jx; j++) {
               for (int i=1; i<=ix; i++) {
                 m = _F_IDX_S4DEX(Z_PLUS, i, j, kx, 6, ix, jx, kx, gd);
@@ -6161,130 +6078,4 @@ unsigned long VoxInfo::SolidFromCut(int* mid, const int* bid, const float* cut, 
   if ( list ) delete [] list;
   
   return cl;
-}
-
-// #################################################################
-/**
- * @brief ボクセルモデルにカット情報から得られた固体情報を転写する
- * @param [in,out] mid      セルID
- * @param [in]     target   VBCのID
- * @param [in]     solid_id 置換する固体ID
- * @param [in]     vec      法線
- * @param [in]     bc_dir   流体側の方向フラグ
- * @retval 置換セル数
- * @note VBCが設定される反対側のセルを2層固体にする
- *       定義点の極近傍にポリゴンがあると，定義点の両側にカット情報が計算されている場合がある
- *       セルワイズでみると1セル内である．しかし，隣接セルからカット情報を頼りに探すと，
- *       反対側にカットがある場合には探索対象が見当たらないという状況になる
- *       したがって，セル単位の探索にする
- */
-unsigned long VoxInfo::Solid_from_Cut_VBC(int* mid,
-                                          const int target,
-                                          const int solid_id,
-                                          const float* vec,
-                                          const int bc_dir)
-{
-  unsigned long g=0;
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  int tg = target;
-  int sd = solid_id;
-  
-  FB::Vec3f nv(vec);
-  
-  // 反対方向のとき符号反転 > 内積が負のときに対象位置となる
-  if ( bc_dir == CompoList::opposite_direction )
-  {
-    nv *= -1.0;
-  }
-  
-  FB::Vec3f e_w(-1.0,  0.0,  0.0);
-  FB::Vec3f e_e(+1.0,  0.0,  0.0);
-  FB::Vec3f e_s( 0.0, -1.0,  0.0);
-  FB::Vec3f e_n( 0.0, +1.0,  0.0);
-  FB::Vec3f e_b( 0.0,  0.0, -1.0);
-  FB::Vec3f e_t( 0.0,  0.0, +1.0);
-  
-  size_t m_e, m_w, m_n, m_s, m_t, m_b;
-  
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, sd) \
-            firstprivate(e_w, e_e, e_s, e_n, e_b, e_t, nv) \
-            private(m_e, m_w, m_n, m_s, m_t, m_b) \
-            schedule(static) reduction(+:g)
-  
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        
-        int s  = mid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)];
-        
-        if ( s == 0 ) // 対象セルが流体でカットがある場合
-        {
-          
-#include "FindexS3D.h"
-          
-          // X_MINUS
-          if ( (mid[m_w] == tg) && (dot(e_w, nv) < 0.0) )
-          {
-            mid[_F_IDX_S3D(i-2, j, k, ix, jx, kx, gd)] = sd;
-            mid[_F_IDX_S3D(i-3, j, k, ix, jx, kx, gd)] = sd;
-            g++;
-          }
-          
-          // X_PLUS
-          if ( (mid[m_e] == tg) && (dot(e_e, nv) < 0.0) )
-          {
-            mid[_F_IDX_S3D(i+2, j, k, ix, jx, kx, gd)] = sd;
-            mid[_F_IDX_S3D(i+3, j, k, ix, jx, kx, gd)] = sd;
-            g++;
-          }
-          
-          // Y_MINUS
-          if ( (mid[m_s] == tg) && (dot(e_s, nv) < 0.0) )
-          {
-            mid[_F_IDX_S3D(i, j-2, k, ix, jx, kx, gd)] = sd;
-            mid[_F_IDX_S3D(i, j-3, k, ix, jx, kx, gd)] = sd;
-            g++;
-          }
-          
-          // Y_PLUS
-          if ( (mid[m_n] == tg) && (dot(e_n, nv) < 0.0) )
-          {
-            mid[_F_IDX_S3D(i, j+2, k, ix, jx, kx, gd)] = sd;
-            mid[_F_IDX_S3D(i, j+3, k, ix, jx, kx, gd)] = sd;
-            g++;
-          }
-          
-          // Z_MINUS
-          if ( (mid[m_b] == tg) && (dot(e_b, nv) < 0.0) )
-          {
-            mid[_F_IDX_S3D(i, j, k-2, ix, jx, kx, gd)] = sd;
-            mid[_F_IDX_S3D(i, j, k-3, ix, jx, kx, gd)] = sd;
-            g++;
-          }
-          
-          // Z_PLUS
-          if ( (mid[m_t] == tg) && (dot(e_t, nv) < 0.0) )
-          {
-            mid[_F_IDX_S3D(i, j, k+2, ix, jx, kx, gd)] = sd;
-            mid[_F_IDX_S3D(i, j, k+3, ix, jx, kx, gd)] = sd;
-            g++;
-          }
-        }
-        
-      }
-    }
-  }
-  
-  
-  if ( numProc > 1 )
-  {
-    unsigned long tmp = g;
-    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  return g*2;
 }

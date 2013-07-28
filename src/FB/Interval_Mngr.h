@@ -76,83 +76,106 @@ public:
   
 public:
   
-  // トリガーを初期化する
-  bool initTrigger(const int stp, const double tm, const double m_dt, const int m_id);
-  
-  
-  // 指定の時刻になったかどうかを判断する
-  bool isTriggered(const int stp, const double tm, bool d_flag=false);
- 
-  
-  // インターバル値をセットする
-  void setInterval(const double m_interval);
-  
-  
-  // 開始時刻とインターバル時刻を無次元化する
-  void normalizeTime(const double scale);
-  
-  
-  // セッションの開始時刻をセットする
-  void setStart(const unsigned m_step, const double m_time);
-  
-  
-  // 指定モードをステップにする
-  void setMode_Step() 
-  {
-    mode = By_step;
-  }
-  
-
-  // 指定モードをステップにする
-  void setMode_Time() 
-  {
-    mode = By_time;
-  }
-  
-  
-  // 各タイムステップの最初にstep_flagをリセットする 
-  void resetTrigger() 
-  {
-    step_flag = false;
-  }
-  
-
-  // インターバル（ステップ）を返す
-  int getIntervalStep() const 
+  // @brief インターバル（ステップ）を返す
+  int getIntervalStep() const
   {
     return intvl_step;
   }
   
-
-  // インターバル（時刻）を返す
-  double getIntervalTime() const 
+  
+  // @brief インターバル（時刻）を返す
+  double getIntervalTime() const
   {
     return intvl_tm;
   }
   
   
-  // 開始ステップを返す
+  // @brief 開始ステップを返す
   int getStartStep() const
   {
     return start_step;
   }
   
   
-  // 開始時刻を返す
+  // @brief 開始時刻を返す
   double getStartTime() const
   {
     return start_tm;
   }
   
-
-  // インターバル指定がステップの場合trueを返す
-  bool isStep() const 
+  
+  /**
+   * @brief トリガーを初期化する
+   * @param [in] stp    現在ステップ
+   * @param [in] tm     現時刻（無次元）
+   * @param [in] m_dt   時間積分幅（無次元）
+   * @param [in] m_id   管理対象を示すID
+   */
+  bool initTrigger(const int stp, const double tm, const double m_dt, const int m_id);
+  
+  
+  /**
+   * @brief セッションの開始時刻が過ぎているかを判断する
+   * @param [in] m_step 無次元評価ステップ
+   * @param [in] m_time 無次元評価時刻
+   * @retval 開始時刻が過ぎている場合、true
+   */
+  bool isStarted(const unsigned m_step, const double m_time);
+  
+  
+  // @brief インターバル指定がステップの場合trueを返す
+  bool isStep() const
   {
     return (mode==By_step) ? true : false;
   }
   
-  // 開始時刻を過ぎているかどうかを判断
-  bool isStarted(const unsigned m_step, const double m_time);
+  
+  /**
+   * @brief 指定の時刻になったかどうかを判断する
+   * @retval 出力タイミングの場合，trueを返す
+   * @param [in] stp    現在ステップ
+   * @param [in] tm     現時刻
+   * @param [in] d_flag 表示用フラグ（デバッグ）
+   * @note 指定時刻を過ぎず，かつ1時刻後が指定時刻を超える場合が出力タイミングとなる
+   */
+  bool isTriggered(const int stp, const double tm, bool d_flag=false);
+  
+  
+  /**
+   * @brief インターバル値を無次元化する
+   * @param [in] scale  時間スケール
+   * @note BY_stepの場合には変化なし
+   */
+  void normalizeTime(const double scale);
+  
+  
+  // @brief 各タイムステップの最初にstep_flagをリセットする
+  void resetTrigger()
+  {
+    step_flag = false;
+  }
+  
+  
+  // インターバル値をセットする
+  void setInterval(const double m_interval);
+  
+  
+  /// @brief 指定モードをステップにする
+  void setMode_Step()
+  {
+    mode = By_step;
+  }
+  
+  
+  // @brief 指定モードをステップにする
+  void setMode_Time()
+  {
+    mode = By_time;
+  }
+  
+  
+  // セッションの開始時刻をセットする
+  void setStart(const unsigned m_step, const double m_time);
 
 };
 

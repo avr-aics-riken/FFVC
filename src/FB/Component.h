@@ -158,7 +158,7 @@ public:
   /** コンストラクタ */
   CompoList() {
     element = 0;
-    type = -1;
+    type = 0;
     variable = attrb = bc_dir = 0;
     h_type = 0;
     state = shape = -1;

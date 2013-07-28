@@ -94,13 +94,10 @@ void FFV::Buoyancy(REAL_TYPE* v, const REAL_TYPE dgr, const REAL_TYPE* t, const 
 void FFV::ps_LS(ItrCtl* IC, const double rhs_nrm, const double r0)
 {
   double flop = 0.0;      /// 浮動小数点演算数
-  double comm_size;       /// 通信面1面あたりの通信量
   double res=0.0;         /// 残差
   double b2=0.0;          /// 反復式のソースベクトルのノルム
   double nrm = 0.0;       ///
   REAL_TYPE dt = deltaT;  /// 時間積分幅
-  
-  comm_size = count_comm_size(size, guide);
   
   // d_t   温度 n+1 step
   // d_t0  温度 n step
@@ -137,7 +134,7 @@ void FFV::ps_LS(ItrCtl* IC, const double rhs_nrm, const double r0)
       {
         TIMING_start(tm_heat_update_comm);
         if ( paraMngr->BndCommS3D(d_t, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-        TIMING_stop(tm_heat_update_comm, comm_size*guide);
+        TIMING_stop(tm_heat_update_comm, face_comm_size*guide);
       }
       
       // 残差の集約

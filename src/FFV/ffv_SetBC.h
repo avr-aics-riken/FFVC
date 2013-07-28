@@ -43,11 +43,11 @@ public:
 protected:
   
   // コンポーネントから速度境界条件の成分を取り出す
-  REAL_TYPE extractVel_IBC (const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE* v00, double& flop);
+  REAL_TYPE extractVelLBC (const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE* v00, double& flop);
   
   
   // 外部境界条件リストから速度境界条件の成分を取り出す
-  REAL_TYPE extractVel_OBC (const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE* v00, double& flop);
+  REAL_TYPE extractVelOBC (const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE* v00, double& flop);
   
   /**
    * @brief 温度一定の境界条件

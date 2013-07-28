@@ -1,15 +1,26 @@
-Release Note
+//##################################################################################
+//
+// Flow Base class
+//
+// Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
+// All rights reserved.
+//
+// Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo.
+// All rights reserved.
+//
+// Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN.
+// All rights reserved.
+//
+//##################################################################################
 
-	FFV : Frontflow / violet Cartesian
-	
-	Copyright (c) 2012-2013  All right reserved. 
-  
-  Institute of Industrial Scienece, 
-  University of Tokyo, Japan. 
 
-  @author kero
+RELEASE NOTE
+============
 
-#######################################
+
+
+Ver 1.3.3   2013-07-28
+  - リファクタリング　mat[], cmp[]の整理
 
 Ver 1.3.2   2013-07-22
   - 媒質テーブルはMedimutableの内容をそのまま保持する. MTITPを削除

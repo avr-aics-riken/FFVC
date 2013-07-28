@@ -129,7 +129,7 @@ void SetBC::getOuterLoopIdx(const int face, int* st, int* ed)
       break;
       
     case X_PLUS:
-      st[0] = size[0]; ed[0] = size[0];
+      st[0] = size[0];   ed[0] = size[0];
       st[1] = 1;         ed[1] = size[1];
       st[2] = 1;         ed[2] = size[2];
       break;

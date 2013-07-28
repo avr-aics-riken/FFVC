@@ -149,7 +149,7 @@ private:
   
 
   // 外部境界の速度境界条件のタイプを取得し，返す
-  int get_Vel_profile(const string label_base);
+  int getVprofile(const string label_base);
   
   
   // コンポーネントのBbox情報st_xを返す
@@ -203,10 +203,6 @@ private:
   
   // 内部境界条件の法線ベクトル値を取得し，登録する
   void get_NV(const string label_base, REAL_TYPE* v);
-
-  
-  // 基点の媒質名を取得する
-  string get_Origin(const string label_base);
   
   
   // Const_Temperatureのパラメータを取得する
@@ -282,31 +278,31 @@ private:
   
   
   // 外部境界の遠方境界のパラメータを取得する
-  void get_OBC_FarField (const string label_base, const int n);
+  void getObcFarField (const string label_base, const int n);
   
   
   // 外部の壁面熱伝達境界のパラメータを取得する
-  void get_OBC_HT (const string label_base, const int n, const string kind);
+  void getObcHeatTransfer(const string label_base, const int n, const string kind);
   
   
   // 外部境界の流出条件のパラメータを取得する
-  void get_OBC_Outflow (const string label_base, const int n);
+  void getObcOutflow(const string label_base, const int n);
   
   
   // 外部境界の周期条件のパラメータを取得する
-  void get_OBC_Periodic (const string label_base, const int n);
+  void getObcPeriodic(const string label_base, const int n);
   
   
   // 外部境界の流入条件のパラメータを取得する
-  void get_OBC_SpecVH (const string label_base, const int n);
+  void getObcSpecVH(const string label_base, const int n);
   
   
   // トラクションフリーの外部境界のパラメータを取得する
-  void get_OBC_Trcfree (const string label_base, const int n);
+  void getObcTrcfree(const string label_base, const int n);
   
   
   // 外部境界の壁面条件のパラメータを取得する
-  void get_OBC_Wall (const string label_base, const int n);
+  void getObcWall(const string label_base, const int n);
   
   
   // 隣接セル媒質のパラメータを取得する
@@ -318,7 +314,7 @@ private:
   
   
   // 速度のパラメータを取得する
-  void get_Vel_Params(const string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy=false);
+  void getVelocity(const string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy=false);
 
   
   

@@ -18,6 +18,18 @@
 REVISION HISTORY
 ================
 
+--------------------------
+2013-07-28
+
+- r1006 Introduce ffv_Version.h
+  - バージョン番号の自動生成
+  - 分割時の丸め誤差に起因するエラーの対応 >> 自動分割処理
+  - Intrinsic example : stokes2nd
+  - 内部フィルを実行する場合の固体IDを計算する関数
+    int VoxInfo::getFillSolidID(const int* mid)
+  - ノルムのゼロ割対応
+  - count_comm_size()内のallreduceが性能上の問題となっていた（何かの作業でのミス）ものを除去
+  - BCのsetEnsLocal()の処理 >> Heat関連は未処理
 
 --------------------------
 2013-07-27

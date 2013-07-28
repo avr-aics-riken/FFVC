@@ -1266,26 +1266,24 @@
     rjx = dble(ix)*dble(kx)
     rkx = dble(ix)*dble(jx)
 
-    flop = flop + 9.0d0
-
     FACES2 : select case (face)
     case (X_minus)
-      flop = flop + rix*5.0d0 ! 3 + real*2
+      flop = flop + rix*3.0d0
 
     case (X_plus)
-      flop = flop + rix*5.0d0
+      flop = flop + rix*3.0d0
 
     case (Y_minus)
-      flop = flop + rjx*5.0d0
+      flop = flop + rjx*3.0d0
 
     case (Y_plus)
-      flop = flop + rjx*5.0d0
+      flop = flop + rjx*3.0d0
 
     case (Z_minus)
-      flop = flop + rkx*5.0d0
+      flop = flop + rkx*3.0d0
 
     case (Z_plus)
-      flop = flop + rkx*5.0d0
+      flop = flop + rkx*3.0d0
 
     case default
     end select FACES2

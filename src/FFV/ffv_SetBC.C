@@ -54,7 +54,7 @@ void SetBC3D::assign_Temp(REAL_TYPE* d_t, int* d_bh1, const double tm, const Con
    
    if ( typ == OBC_SPEC_VEL ) {
    if ( !clear ) {
-   extractVel_OBC(face, vec, tm, flop);
+   extractVelOBC(face, vec, tm, flop);
    }
    else {
    vec[0] = v00[1];
@@ -91,7 +91,7 @@ void SetBC3D::assignVelocity(REAL_TYPE* d_v, int* d_bv, const double tm, REAL_TY
       case SPEC_VEL_WH:
         if ( !clear )
         {
-          dummy = extractVel_IBC(n, vec, tm, v00, flop);
+          dummy = extractVelLBC(n, vec, tm, v00, flop);
         }
         else
         {
@@ -114,7 +114,7 @@ void SetBC3D::assignVelocity(REAL_TYPE* d_v, int* d_bv, const double tm, REAL_TY
       {
         if ( !clear )
         {
-          dummy = extractVel_OBC(face, vec, tm, v00, flop);
+          dummy = extractVelOBC(face, vec, tm, v00, flop);
         }
         else
         {
@@ -215,7 +215,7 @@ void SetBC3D::checkDriver(FILE* fp)
  * @param [in]     v00  格子速度
  * @param [in,out] flop 浮動小数点演算数
  */
-REAL_TYPE SetBC3D::extractVel_IBC(const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE* v00, double& flop)
+REAL_TYPE SetBC3D::extractVelLBC(const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE* v00, double& flop)
 {
   REAL_TYPE a, b, vel;
   const REAL_TYPE c_pai = (REAL_TYPE)(2.0*asin(1.0));
@@ -241,7 +241,7 @@ REAL_TYPE SetBC3D::extractVel_IBC(const int n, REAL_TYPE* vec, const double tm, 
  * @param [in]     v00  格子速度
  * @param [in,out] flop 浮動小数点演算数
  */
-REAL_TYPE SetBC3D::extractVel_OBC(const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE* v00, double& flop)
+REAL_TYPE SetBC3D::extractVelOBC(const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE* v00, double& flop)
 {
   REAL_TYPE a, b, vel;
   const REAL_TYPE c_pai = (REAL_TYPE)(2.0*asin(1.0));
@@ -350,7 +350,7 @@ void SetBC3D::InnerVBC(REAL_TYPE* d_v, int* d_bv, const double tm, REAL_TYPE* v0
       {
         case SPEC_VEL:
         case SPEC_VEL_WH:
-          dummy = extractVel_IBC(n, vec, tm, v00, flop);
+          dummy = extractVelLBC(n, vec, tm, v00, flop);
           vibc_drchlt_(d_v, size, &gd, st, ed, v00, d_bv, &n, vec);
           break;
           
@@ -474,58 +474,66 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, double tm, REAL_TYPE* v00, Gemini_
       
       cmp[n].getBbox(st, ed);
       
-      switch (typ)
+      if ( cmp[n].isEnsLocal() )
       {
-        case OUTFLOW:
-          //div_ibc_oflow_vec_(dv, size, &gd, st, ed, v00, &coef, bv, &n, &avr[2*(n-1)], &fcount);
-          break;
-          
-        case SPEC_VEL:
-        case SPEC_VEL_WH:
-          cmp[n].val[var_Velocity] = extractVel_IBC(n, vec, tm, v00, fcount); // 指定された無次元平均流速
-          div_ibc_drchlt_(dv, size, &gd, st, ed, v00, bv, &n, vec, &fcount);
-          break;
-          
-        default:
-          break;
+        switch (typ)
+        {
+          case OUTFLOW:
+            //div_ibc_oflow_vec_(dv, size, &gd, st, ed, v00, &coef, bv, &n, &avr[2*(n-1)], &fcount);
+            break;
+            
+          case SPEC_VEL:
+          case SPEC_VEL_WH:
+            cmp[n].val[var_Velocity] = extractVelLBC(n, vec, tm, v00, fcount); // 指定された無次元平均流速
+            div_ibc_drchlt_(dv, size, &gd, st, ed, v00, bv, &n, vec, &fcount);
+            break;
+            
+          default:
+            break;
+        }
       }
     }
   }
   else // Binary
   {
-    for (int n=1; n<=NoCompo; n++) {
+    for (int n=1; n<=NoCompo; n++)
+    {
       typ = cmp[n].getType();
       
       cmp[n].getBbox(st, ed);
       
-      switch (typ)
+      if ( cmp[n].isEnsLocal() )
       {
-        case OUTFLOW:
-          div_ibc_oflow_vec_(dv, size, &gd, st, ed, bv, &n, aa, &fcount);
-          avr[n-1].p0 = aa[0]; // 積算速度
-          avr[n-1].p1 = aa[1]; // 積算回数
-          if ( aa[1] == 0.0 )
-          {
-            Hostonly_ printf("\tError : Number of accumulation is zero\n");
-            Exit(0);
-          }
-          break;
-          
-        case SPEC_VEL:
-        case SPEC_VEL_WH:
-          cmp[n].val[var_Velocity] = extractVel_IBC(n, vec, tm, v00, fcount); // 指定された無次元平均流速
-          div_ibc_drchlt_(dv, size, &gd, st, ed, v00, bv, &n, vec, &fcount);
-          break;
-          
-        default:
-          break;
+        switch (typ)
+        {
+          case OUTFLOW:
+            div_ibc_oflow_vec_(dv, size, &gd, st, ed, bv, &n, aa, &fcount);
+            avr[n-1].p0 = aa[0]; // 積算速度
+            avr[n-1].p1 = aa[1]; // 積算回数
+            if ( aa[1] == 0.0 )
+            {
+              Hostonly_ printf("\tError : Number of accumulation is zero\n");
+              Exit(0);
+            }
+            break;
+            
+          case SPEC_VEL:
+          case SPEC_VEL_WH:
+            cmp[n].val[var_Velocity] = extractVelLBC(n, vec, tm, v00, fcount); // 指定された無次元平均流速
+            div_ibc_drchlt_(dv, size, &gd, st, ed, v00, bv, &n, vec, &fcount);
+            break;
+            
+          default:
+            break;
+        }
       }
     }
   }
 
   
   // 外部境界条件による修正
-  for (int face=0; face<NOFACE; face++) {
+  for (int face=0; face<NOFACE; face++)
+  {
     typ = obc[face].get_Class();
     
     REAL_TYPE dd;
@@ -538,7 +546,7 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, double tm, REAL_TYPE* v00, Gemini_
       {
         case OBC_SPEC_VEL:
         case OBC_WALL:
-          dummy = extractVel_OBC(face, vec, tm, v00, fcount);
+          dummy = extractVelOBC(face, vec, tm, v00, fcount);
           vobc_div_drchlt_(dv, size, &gd, &face, bv, vec, &dd, &fcount);
           //vobc_face_drchlt_(vf, size, &gd, bv, &face, vec, &dd);
           obc[face].setDomainMF(dd);
@@ -629,22 +637,25 @@ void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, float
     
     cmp[n].getBbox(st, ed);
     
-    switch ( cmp[n].getType() )
+    if( cmp[n].isEnsLocal() )
     {
-      case HEX:
-        hex_force_pvec_(d_vc, size, &gd, st, ed, d_bd, d_cvf, d_v, &n, v00, &dt, vec, &cmp[n].ca[0], &flop);
-        break;
-        
-      case FAN:
-        Exit(0);
-        break;
-        
-      case DARCY:
-        Exit(0);
-        break;
-        
-      default:
-        break;
+      switch ( cmp[n].getType() )
+      {
+        case HEX:
+          hex_force_pvec_(d_vc, size, &gd, st, ed, d_bd, d_cvf, d_v, &n, v00, &dt, vec, &cmp[n].ca[0], &flop);
+          break;
+          
+        case FAN:
+          Exit(0);
+          break;
+          
+        case DARCY:
+          Exit(0);
+          break;
+          
+        default:
+          break;
+      }
     }
   }
 }
@@ -671,22 +682,25 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* s_1, REAL_TYPE* v, int* bd, float* cvf
     // w_ptrに
     if ( cmp[n].isFORCING() ) force_keep_vec_(w_ptr, csz, st, ed, v, size, &gd);
 
-    switch ( cmp[n].getType() )
+    if( cmp[n].isEnsLocal() )
     {
-      case HEX:
-        hex_psrc_(s_1, size, &gd, st, ed, bd, cvf, w_ptr, csz, &n, v00, vec, &cmp[n].ca[0], &flop);
-        break;
-        
-      case FAN:
-        Exit(0);
-        break;
-        
-      case DARCY:
-        Exit(0);
-        break;
-        
-      default:
-        break;
+      switch ( cmp[n].getType() )
+      {
+        case HEX:
+          hex_psrc_(s_1, size, &gd, st, ed, bd, cvf, w_ptr, csz, &n, v00, vec, &cmp[n].ca[0], &flop);
+          break;
+          
+        case FAN:
+          Exit(0);
+          break;
+          
+        case DARCY:
+          Exit(0);
+          break;
+          
+        default:
+          break;
+      }
     }
   }
 }
@@ -715,24 +729,27 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, int* bd, float* cvf, REAL_TYPE* dv,
       vec[1] = cmp[n].nv[1];
       vec[2] = cmp[n].nv[2];
       
-      switch ( cmp[n].getType() )
+      if( cmp[n].isEnsLocal() )
       {
-        case HEX:
-          hex_force_vec_(v, dv, size, &gd, st, ed, bd, cvf, w_ptr, csz, &n, v00, &dt, &dh, vec, &cmp[n].ca[0], aa, &flop);
-          am[n-1].p0 = aa[0];
-          am[n-1].p1 = aa[1];
-          break;
-          
-        case FAN:
-          Exit(0);
-          break;
-          
-        case DARCY:
-          Exit(0);
-          break;
-          
-        default:
-          break;
+        switch ( cmp[n].getType() )
+        {
+          case HEX:
+            hex_force_vec_(v, dv, size, &gd, st, ed, bd, cvf, w_ptr, csz, &n, v00, &dt, &dh, vec, &cmp[n].ca[0], aa, &flop);
+            am[n-1].p0 = aa[0];
+            am[n-1].p1 = aa[1];
+            break;
+            
+          case FAN:
+            Exit(0);
+            break;
+            
+          case DARCY:
+            Exit(0);
+            break;
+            
+          default:
+            break;
+        }
       }
     }
   }
@@ -762,8 +779,8 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, const double t
   // 内部境界（流束形式）
   if ( isCDS ) // Cut-Distance
   {
-    for (int n=1; n<=NoCompo; n++) {
-      
+    for (int n=1; n<=NoCompo; n++)
+    {
       if ( cmp[n].isEnsLocal() )
       {
         typ = cmp[n].getType();
@@ -771,7 +788,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, const double t
 
         if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) )
         {
-          dummy = extractVel_IBC(n, vec, tm, v00, flop);
+          dummy = extractVelLBC(n, vec, tm, v00, flop);
           pvec_vibc_specv_(wv, size, &gd, st, ed, &dh, v00, &rei, v, bv, &n, vec, &flop);
         }
         else if ( typ==OUTFLOW )
@@ -783,8 +800,8 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, const double t
   }
   else // Binary
   {
-    for (int n=1; n<=NoCompo; n++) {
-      
+    for (int n=1; n<=NoCompo; n++)
+    {
       if( cmp[n].isEnsLocal() )
       {
         typ = cmp[n].getType();
@@ -792,7 +809,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, const double t
         
         if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) )
         {
-          dummy = extractVel_IBC(n, vec, tm, v00, flop);
+          dummy = extractVelLBC(n, vec, tm, v00, flop);
           pvec_vibc_specv_(wv, size, &gd, st, ed, &dh, v00, &rei, v, bv, &n, vec, &flop);
         }
         else if ( typ==OUTFLOW )
@@ -816,12 +833,12 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, const double t
       switch ( typ )
       {
         case OBC_SPEC_VEL:
-          dummy = extractVel_OBC(face, vec, tm, v00, flop);
+          dummy = extractVelOBC(face, vec, tm, v00, flop);
           vobc_pv_specv_(wv, size, &gd, &dh, &rei, v, bv, vec, &face, &flop);
           break;
           
         case OBC_WALL:
-          dummy = extractVel_OBC(face, vec, tm, v00, flop);
+          dummy = extractVelOBC(face, vec, tm, v00, flop);
           vobc_pv_wall_(wv, size, &gd, &dh, &rei, v, vec, &face, &flop);
           break;
           
@@ -869,21 +886,24 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
       typ = cmp[n].getType();
       cmp[n].getBbox(st, ed);
 
-      switch (typ)
+      if ( cmp[n].isEnsLocal() )
       {
-        case SPEC_VEL:
-        case SPEC_VEL_WH:
+        switch (typ)
         {
-          REAL_TYPE dummy = extractVel_IBC(n, vec, tm, v00, fcount);
-          div_ibc_drchlt_(s_0, size, &gd, st, ed, v00, bv, &n, vec, &fcount);
-          break;
+          case SPEC_VEL:
+          case SPEC_VEL_WH:
+          {
+            REAL_TYPE dummy = extractVelLBC(n, vec, tm, v00, fcount);
+            div_ibc_drchlt_(s_0, size, &gd, st, ed, v00, bv, &n, vec, &fcount);
+            break;
+          }
+            
+          case OUTFLOW:
+            break;
+            
+          default:
+            break;
         }
-          
-        case OUTFLOW:
-          break;
-          
-        default:
-          break;
       }
     }
   }
@@ -893,23 +913,26 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
       typ = cmp[n].getType();
       cmp[n].getBbox(st, ed);
       
-      switch (typ)
+      if ( cmp[n].isEnsLocal() )
       {
-        case SPEC_VEL:
-        case SPEC_VEL_WH:
+        switch (typ)
         {
-          REAL_TYPE dummy = extractVel_IBC(n, vec, tm, v00, fcount);
-          div_ibc_drchlt_(s_0, size, &gd, st, ed, v00, bv, &n, vec, &fcount);
-          break;
+          case SPEC_VEL:
+          case SPEC_VEL_WH:
+          {
+            REAL_TYPE dummy = extractVelLBC(n, vec, tm, v00, fcount);
+            div_ibc_drchlt_(s_0, size, &gd, st, ed, v00, bv, &n, vec, &fcount);
+            break;
+          }
+            
+          case OUTFLOW:
+            vel = cmp[n].val[var_Velocity] * dt / dh; // mod_div()でval[var_Velocity]にセット
+            div_ibc_oflow_pvec_(s_0, size, &gd, st, ed, v00, &vel, bv, &n, v0, vf, &fcount);
+            break;
+            
+          default:
+            break;
         }
-          
-        case OUTFLOW:
-          vel = cmp[n].val[var_Velocity] * dt / dh; // mod_div()でval[var_Velocity]にセット
-          div_ibc_oflow_pvec_(s_0, size, &gd, st, ed, v00, &vel, bv, &n, v0, vf, &fcount);
-          break;
-          
-        default:
-          break;
       }
     }
   }
@@ -930,7 +953,7 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
         case OBC_SPEC_VEL:
         case OBC_WALL:
         {
-          REAL_TYPE dummy = extractVel_OBC(face, vec, tm, v00, fcount);
+          REAL_TYPE dummy = extractVelOBC(face, vec, tm, v00, fcount);
           vobc_div_drchlt_(s_0, size, &gd, &face, bv, vec, &dd, &fcount);
           break;
         }
@@ -978,7 +1001,7 @@ void SetBC3D::mod_Vis_EE(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE cf, int* d_
     
     if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) )
     {
-      REAL_TYPE dummy = extractVel_IBC(n, vec, tm, v00, flop);
+      REAL_TYPE dummy = extractVelLBC(n, vec, tm, v00, flop);
     }
     else if ( typ==OUTFLOW )
     {
@@ -1135,7 +1158,7 @@ void SetBC3D::OuterVBC_GC(REAL_TYPE* d_v, int* d_bv, const double tm, const Cont
       switch ( obc[face].get_Class() )
       {
         case OBC_SPEC_VEL:
-          dummy = extractVel_OBC(face, vec, tm, v00, flop);
+          dummy = extractVelOBC(face, vec, tm, v00, flop);
           vobc_drchlt_(d_v, size, &gd, d_bv, &face, vec);
           break;
           
@@ -1908,7 +1931,7 @@ void SetBC3D::ps_BC_Convection(REAL_TYPE* d_ws, int* d_bh1, REAL_TYPE* d_v, REAL
     switch ( cmp[n].getType() )
     {
       case SPEC_VEL_WH:
-        dummy = extractVel_IBC(n, vec, tm, v00, flop);
+        dummy = extractVelLBC(n, vec, tm, v00, flop);
         cmp[n].set_Mon_Calorie( ps_IBC_SpecVH(d_ws, d_bh1, n, v00[0], vec, flop) );
         break;
           
@@ -2352,7 +2375,7 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
     case X_MINUS:
       if( nID[face] < 0 )
       {
-        dummy = extractVel_OBC(face, vec, tm, v00, flop);
+        dummy = extractVelOBC(face, vec, tm, v00, flop);
         c = vec[0] - u_ref;
         f_w = c * t_nd;
         
@@ -2373,7 +2396,7 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
     case X_PLUS:
       if( nID[face] < 0 )
       {
-        dummy = extractVel_OBC(face, vec, tm, v00, flop);
+        dummy = extractVelOBC(face, vec, tm, v00, flop);
         c = vec[0] - u_ref;
         f_e = -c * t_nd; // ref_tが正のとき，X+方向のセルでは流出なので符号反転
         
@@ -2394,7 +2417,7 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
     case Y_MINUS:
       if( nID[face] < 0 )
       {
-        dummy = extractVel_OBC(face, vec, tm, v00, flop);
+        dummy = extractVelOBC(face, vec, tm, v00, flop);
         c = vec[1] - v_ref;
         f_s = c * t_nd;
         
@@ -2415,7 +2438,7 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
     case Y_PLUS:
       if( nID[face] < 0 )
       {
-        dummy = extractVel_OBC(face, vec, tm, v00, flop);
+        dummy = extractVelOBC(face, vec, tm, v00, flop);
         c = vec[1] - v_ref;
         f_n = -c * t_nd; // 符号反転
         
@@ -2436,7 +2459,7 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
     case Z_MINUS:
       if( nID[face] < 0 )
       {
-        dummy = extractVel_OBC(face, vec, tm, v00, flop);
+        dummy = extractVelOBC(face, vec, tm, v00, flop);
         c = vec[2] - w_ref;
         f_b = c * t_nd;
         
@@ -2457,7 +2480,7 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
     case Z_PLUS:
       if( nID[face] < 0 )
       {
-        dummy = extractVel_OBC(face, vec, tm, v00, flop);
+        dummy = extractVelOBC(face, vec, tm, v00, flop);
         c = vec[2] - w_ref;
         f_t = -c * t_nd; // 符号反転
         
@@ -4477,10 +4500,12 @@ void SetBC3D::setBCIperiodic(int* d_bx)
 
   if ( numProc > 1 ) 
   {
-    for (int face=0; face<NOFACE; face++) {
+    for (int face=0; face<NOFACE; face++)
+    {
       if ( obc[face].get_Class() != OBC_PERIODIC ) continue; // スキップしてfaceをインクリメント
 
-      switch (face) {
+      switch (face)
+      {
         case X_MINUS:
           if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
           break;
@@ -4507,13 +4532,17 @@ void SetBC3D::setBCIperiodic(int* d_bx)
       }
     }
   } 
-  else { // 逐次処理
-    for (int face=0; face<NOFACE; face++) {
+  else // 逐次処理
+  {
+    for (int face=0; face<NOFACE; face++)
+    {
       if ( obc[face].get_Class() != OBC_PERIODIC ) continue; // スキップしてfaceをインクリメント
       
-      switch (face) {
+      switch (face)
+      {
         case X_MINUS:
-          if( nID[face] < 0 ) {
+          if( nID[face] < 0 )
+          {
             for (int k=1; k<=kx; k++) {
               for (int j=1; j<=jx; j++) {
                 for (int i=1-gd; i<=0; i++) {
@@ -4527,7 +4556,8 @@ void SetBC3D::setBCIperiodic(int* d_bx)
           break;
           
         case X_PLUS:
-          if( nID[face] < 0 ) {
+          if( nID[face] < 0 )
+          {
             for (int k=1; k<=kx; k++) {
               for (int j=1; j<=jx; j++) {
                 for (int i=ix+1; i<=ix+gd; i++) {
@@ -4541,7 +4571,8 @@ void SetBC3D::setBCIperiodic(int* d_bx)
           break;
           
         case Y_MINUS:
-          if( nID[face] < 0 ) {
+          if( nID[face] < 0 )
+          {
             for (int k=1; k<=kx; k++) {
               for (int j=1-gd; j<=0; j++) {
                 for (int i=1; i<=ix; i++) {
@@ -4555,7 +4586,8 @@ void SetBC3D::setBCIperiodic(int* d_bx)
           break;
           
         case Y_PLUS:
-          if( nID[face] < 0 ) {
+          if( nID[face] < 0 )
+          {
             for (int k=1; k<=kx; k++) {
               for (int j=jx+1; j<=jx+gd; j++) {
                 for (int i=1; i<=ix; i++) {
@@ -4569,7 +4601,8 @@ void SetBC3D::setBCIperiodic(int* d_bx)
           break;
           
         case Z_MINUS:
-          if( nID[face] < 0 ) {
+          if( nID[face] < 0 )
+          {
             for (int k=1-gd; k<=0; k++) {
               for (int j=1; j<=jx; j++) {
                 for (int i=1; i<=ix; i++) {
@@ -4583,7 +4616,8 @@ void SetBC3D::setBCIperiodic(int* d_bx)
           break;
           
         case Z_PLUS:
-          if( nID[face] < 0 ) {
+          if( nID[face] < 0 )
+          {
             for (int k=kx+1; k<=kx+gd; k++) {
               for (int j=1; j<=jx; j++) {
                 for (int i=1; i<=ix; i++) {

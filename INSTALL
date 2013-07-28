@@ -40,8 +40,8 @@ $ make install
 
 It is strongly recommended to use wrapper compiler for convenience. For instance, if you
                            ^^^^^^^^^^^^^^^^^^^^^^^
-want to compile with OpenMPI, which is compiled by Intel compiler, compile OpenMPI library 
-by Intel compiler before install related libraries (See section 3).
+want to compile with OpenMPI, compile OpenMPI library by a compiler you want to use before 
+install related libraries (See section 3).
 
 
 

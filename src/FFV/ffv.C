@@ -1231,7 +1231,7 @@ bool FFV::stepPost()
 // 利用例の表示
 void FFV::Usage()
 {
-  FBUtility::printVersion(stdout, "Frontflow/violet", FFV_VERS);
+  FBUtility::printVersion(stdout, "Frontflow/violet", FFVC_VERSION_NO);
   
   cout << " Usage : ";
   cout << "ffv"

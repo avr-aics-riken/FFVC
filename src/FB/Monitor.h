@@ -300,7 +300,7 @@ public:
   
 protected:
   
-  /// Line指定の端点座標をグローバル計算領域内にクリッピング.
+  /// Line指定の端点座標をグローバル計算領域内にクリッピング
   ///
   ///   @param [in,out] from Line始点
   ///   @param [in,out] to   Line終点
@@ -308,7 +308,7 @@ protected:
   void clipLine(REAL_TYPE from[3], REAL_TYPE to[3]);
   
   
-  /// 出力タイプ文字列の取得.
+  /// 出力タイプ文字列の取得
   string getOutputTypeStr();
   
 

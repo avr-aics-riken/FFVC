@@ -724,9 +724,9 @@
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
     integer, dimension(3)                                     ::  sz, st, ed
-    double precision                                          ::  flop
+    double precision                                          ::  flop, m
     real                                                      ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
-    real                                                      ::  u_bc_ref, v_bc_ref, w_bc_ref, m
+    real                                                      ::  u_bc_ref, v_bc_ref, w_bc_ref
     real, dimension(3)                                        ::  vec
     real, dimension(0:3)                                      ::  v00
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
@@ -744,8 +744,8 @@
     ks = st(3)
     ke = ed(3)
     
-    m = real( (ie-is+1)*(je-js+1)*(ke-ks+1) )
-    flop = flop + dble(m)*6.0d0 + 3.0d0
+    m = dble( (ie-is+1)*(je-js+1)*(ke-ks+1) )
+    flop = flop + m*6.0d0
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_bc_ref, v_bc_ref, w_bc_ref, odr) &

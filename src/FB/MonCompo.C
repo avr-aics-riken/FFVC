@@ -645,13 +645,10 @@ void MonitorCompo::setIBPoints(const int odr, CompoList& cmp)
 {
   int np = num_process;
   int st[3], ed[3];
-  ///   @param [in] policy セル幅のモード(SINGLE_CELL | NEIGHBOR_CELL)
   
   int* nPointList;
   if (!(nPointList = new int[np])) Exit(0);
   for (int i = 0; i < np; i++) nPointList[i] = 0;
-  
-  int mode = cmp.getSamplingWidth();
   
   cmp.getBbox(st, ed);
 
@@ -687,6 +684,10 @@ void MonitorCompo::setIBPoints(const int odr, CompoList& cmp)
   int sum = 0;
   for (int i = 0; i < np; i++) sum += nPointList[i];
 
+#if 0
+  printf("sum=%d nPoint=%d LocalPoint=%d\n", sum, nPoint, nPointList[myRank]);
+#endif
+  
   assert(sum == nPoint);
   
   REAL_TYPE* buf;

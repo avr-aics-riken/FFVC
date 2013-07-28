@@ -66,14 +66,14 @@ POST_UNINSTALL = :
 bin_PROGRAMS = ffvc$(EXEEXT)
 subdir = src/FFV
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
-	$(top_srcdir)/depcomp
+	$(srcdir)/ffv_Version.h.in $(top_srcdir)/depcomp
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
-CONFIG_CLEAN_FILES =
+CONFIG_CLEAN_FILES = ffv_Version.h
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
@@ -275,7 +275,8 @@ ffvc_SOURCES = \
   ffv_SetBC.h \
   ffv_TerminateCtrl.C \
   ffv_TerminateCtrl.h \
-  main.C
+  main.C \
+  ffv_Version.h
 
 ffvc_LDADD = \
   -L../FB -lFB \
@@ -329,6 +330,8 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
+ffv_Version.h: $(top_builddir)/config.status $(srcdir)/ffv_Version.h.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
