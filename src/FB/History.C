@@ -250,17 +250,21 @@ void History::printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Contr
   int cid;
   int def;
 
-  if ( Unit_Log == DIMENSIONAL ) {
+  if ( Unit_Log == DIMENSIONAL )
+  {
     fprintf(fp, "    step      time[sec]");
   }
-  else {
+  else
+  {
     fprintf(fp, "    step        time[-]");
   }
 
-  for (int i=1; i<=C->NoCompo; i++) {
+  for (int i=1; i<=C->NoCompo; i++)
+  {
     def = cmp[i].getDef();
     
-    switch ( cmp[i].getType() ) {
+    switch ( cmp[i].getType() )
+    {
       case SPEC_VEL:
         fprintf(fp, "  V[%03d:%03d]", i, def);
         break;
@@ -318,8 +322,10 @@ void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C
   
   fprintf(fp, "%8d %14.6e", step, printTime());
   
-  for (int i=1; i<=C->NoCompo; i++) {
-    switch ( cmp[i].getType() ) {
+  for (int i=1; i<=C->NoCompo; i++)
+  {
+    switch ( cmp[i].getType() )
+    {
       case SPEC_VEL:
         fprintf(fp, " %11.4e", printVel(cmp[i].val[var_Velocity]) );
         break;
@@ -381,10 +387,12 @@ void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C
  */
 void History::printHistoryDomfxTitle(FILE* fp, const Control* C)
 {
-  if ( Unit_Log == DIMENSIONAL ) {
+  if ( Unit_Log == DIMENSIONAL )
+  {
     fprintf(fp, "    step      time[sec]");
   }
-  else {
+  else
+  {
     fprintf(fp, "    step        time[-]");
   }
   
@@ -394,7 +402,8 @@ void History::printHistoryDomfxTitle(FILE* fp, const Control* C)
   
   for (int i=0; i<NOFACE; i++) fprintf(fp, "         V:%s", FBUtility::getDirection(i).c_str());
   
-  if (C->isHeatProblem()) {
+  if (C->isHeatProblem())
+  {
     for (int i=0; i<NOFACE; i++) fprintf(fp, "         H:%s", FBUtility::getDirection(i).c_str());
   }
   fprintf(fp, "\n");
@@ -412,7 +421,8 @@ void History::printHistoryDomfx(FILE* fp, const Control* C)
   const REAL_TYPE sgn=-1.0;
   REAL_TYPE balance=0.0, s=1.0;
   
-  for (int i=0; i<NOFACE; i++) {
+  for (int i=0; i<NOFACE; i++)
+  {
     s *= sgn;
     balance += C->Q_Dface[i]*s;
   }
@@ -424,7 +434,8 @@ void History::printHistoryDomfx(FILE* fp, const Control* C)
   
   for (int i=0; i<NOFACE; i++) fprintf(fp, " %12.4e", printVel(C->V_Dface[i]) );
   
-  if (C->isHeatProblem()) {
+  if (C->isHeatProblem())
+  {
     for (int i=0; i<NOFACE; i++) fprintf(fp, " %12.4e", printQF(C->H_Dface[i]) ); // Watt
   }
 
@@ -440,17 +451,21 @@ void History::printHistoryDomfx(FILE* fp, const Control* C)
  */
 void History::printHistoryForceTitle(FILE* fp)
 {
-  if ( Unit_Log == DIMENSIONAL ) {
+  if ( Unit_Log == DIMENSIONAL )
+  {
     fprintf(fp, "    step      time[sec]");
   }
-  else {
+  else
+  {
     fprintf(fp, "    step        time[-]");
   }
   
-  if ( Unit_Log == DIMENSIONAL ) {
+  if ( Unit_Log == DIMENSIONAL )
+  {
     fprintf(fp, "        Fx[N]         Fy[N]         Fz[N]");
   }
-  else {
+  else
+  {
     fprintf(fp, "        Fx[-]         Fy[-]         Fz[-]");
   }
 
@@ -480,10 +495,12 @@ void History::printHistoryForce(FILE* fp, const REAL_TYPE* force)
  */
 void History::printHistoryWallTitle(FILE* fp)
 {
-  if ( Unit_Log == DIMENSIONAL ) {
+  if ( Unit_Log == DIMENSIONAL )
+  {
     fprintf(fp, "    step      time[sec]    Yp_Min[m]     Yp_Max[m]  Ut_Min[m/s]   Ut_Max[m/s]");
   }
-  else {
+  else
+  {
     fprintf(fp, "    step        time[-]    Yp_Min[-]     Yp_Max[-]    Ut_Min[-]     Ut_Max[-]");
   }
   

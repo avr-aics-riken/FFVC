@@ -4272,9 +4272,9 @@ void VoxInfo::findIsolatedFcell(int* bx)
   int kx = size[2];
   int gd = guide;
   
-  unsigned key[NoCompo+1];
+  unsigned* key = new unsigned[NoCompo+1];
   
-  
+  // keyの配列が共有化されるため，スレッド処理しない　（本来はprivate変数にしたい）
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -4319,8 +4319,7 @@ void VoxInfo::findIsolatedFcell(int* bx)
               key[ val[l] ]++;
             }
             
-            
-            int mode = key[NoCompo]; // サーチの初期値，IDの大きい方から
+            int mode = key[NoCompo]; // サーチの初期値，降順にさがす
             int z = NoCompo;         // 最頻値のID
             
             for (int l=NoCompo-1; l>=1; l--)
@@ -4344,6 +4343,8 @@ void VoxInfo::findIsolatedFcell(int* bx)
       }
     }
   }
+  
+  if ( key ) delete [] key;
 }
 
 
@@ -4518,11 +4519,11 @@ int VoxInfo::getFillSolidID(const int* mid)
   int kx = size[2];
   int gd = guide;
   
-  int list[NoCompo+1];
+  int* list = new int[NoCompo+1];
   memset(list, 0, NoCompo+1);
   
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+  // list[]は共有なのでスレッド化の効果なし
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -4567,6 +4568,8 @@ int VoxInfo::getFillSolidID(const int* mid)
       c = i;
     }
   }
+  
+  if ( list ) delete [] list;
   
   return c;
 }
@@ -4634,7 +4637,7 @@ void VoxInfo::scanCell(int* mid, const int* colorList, const int ID_replace, FIL
 
   // 内部領域の媒質IDに対して、カウント
   
-  int colorSet[NoCompo+1];
+  int* colorSet = new int[NoCompo+1];
   
   for (int i=1; i<=NoCompo; i++) colorSet[i]=0;
   
@@ -4687,9 +4690,10 @@ void VoxInfo::scanCell(int* mid, const int* colorList, const int ID_replace, FIL
 	// colorSet[] の集約
   if ( numProc > 1 )
   {
-    int clist[NoCompo+1];
+    int* clist = new int[NoCompo+1];
     for (int i=0; i<NoCompo+1; i++) clist[i] = colorSet[i];
     if ( paraMngr->Allreduce(clist, colorSet, NoCompo+1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    delete [] clist;
   }
   // この時点で、存在するIDの数は最大でもnumProc個 >> int の範囲内
 
@@ -4714,6 +4718,8 @@ void VoxInfo::scanCell(int* mid, const int* colorList, const int ID_replace, FIL
     }
     fflush(fp);
   }
+  
+  if ( colorSet ) delete [] colorSet;
   
 }
 

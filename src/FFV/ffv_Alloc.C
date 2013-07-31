@@ -177,7 +177,7 @@ void FFV::allocArray_Forcing(double& m_prep, double& m_total, FILE* fp)
     paraMngr->Allreduce(&cmp_mem, &G_cmp_mem, 1, MPI_SUM);
   }
   
-  if ( C.isForcing() )
+  if ( C.existForcing() )
   {
     Hostonly_  
     {

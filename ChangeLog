@@ -19,6 +19,15 @@ REVISION HISTORY
 ================
 
 --------------------------
+2013-08-01
+
+- r1007 bug fix of dynamic allocation
+  - プロセス並列時にhistory_compo.txtのVspecモニタ値がゼロになるバグを修正（existLocal()の副作用）
+  - コンポーネントがサブドメインに存在しない場合には，bboxの値をゼロにする >> DomainInfo.txtで確認
+  - 並列時のsetGlobalCmpIdx()のインデクス計算を修正（表示用）
+  - 動的配列への変更
+
+--------------------------
 2013-07-28
 
 - r1006 Introduce ffv_Version.h

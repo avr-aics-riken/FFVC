@@ -1560,7 +1560,7 @@ void Control::getMonitorList()
   }
   
   // セルモニターの指定
-  /// @see Initialize.C setEnsComponent()
+  /// @see Initialize.C setExistComponent()
   if ( Sampling.log == ON )
   {
 	  label = "/Steer/MonitorList/CellMonitor";
@@ -3640,7 +3640,6 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
 }
 
 
-
 // #################################################################
 /**
  * @brief 反復の収束判定パラメータを指定する
@@ -3804,6 +3803,104 @@ void Control::setCriteria(const string key, const int order, ItrCtl* IC)
   
 }
 
+
+// #################################################################
+// コンポーネントが存在するかを保持しておく
+void Control::setExistComponent(CompoList* cmp, BoundaryOuter* OBC)
+{
+  int c;
+  
+  // Vspec
+  c = 0;
+  for (int n=1; n<=NoCompo; n++)
+  {
+    if ( cmp[n].isVBC_IO() ) c++;
+  }
+  if ( c>0 ) EnsCompo.vspec = ON;
+  
+  
+  // Forcing > HEX, FAN, DARCY
+  c = 0;
+  for (int n=1; n<=NoCompo; n++)
+  {
+    if ( cmp[n].isFORCING() ) c++;
+  }
+  if ( c>0 ) EnsCompo.forcing = ON;
+  
+  
+  // Heat source > HEAT_SRC, CNST_TEMP
+  c = 0;
+  for (int n=1; n<=NoCompo; n++)
+  {
+    if ( cmp[n].isHsrc() ) c++;
+  }
+  if ( c>0 ) EnsCompo.hsrc = ON;
+  
+  
+  // 周期境界 > PERIODIC
+  c = 0;
+  for (int n=1; n<=NoCompo; n++)
+  {
+    if ( cmp[n].getType() == PERIODIC ) c++;
+  }
+  if ( c>0 ) EnsCompo.periodic = ON;
+  
+  
+  // 流出境界 > OUTFLOW
+  c = 0;
+  for (int n=1; n<=NoCompo; n++)
+  {
+    if ( cmp[n].getType() == OUTFLOW ) c++;
+  }
+  if ( c>0 ) EnsCompo.outflow = ON;
+  
+  
+  // 体積率コンポーネント
+  c = 0;
+  for (int n=1; n<=NoCompo; n++)
+  {
+    if ( cmp[n].isVFraction() ) c++;
+  }
+  if ( c>0 ) EnsCompo.fraction = ON;
+  
+  
+  // トラクションフリー
+  c = 0;
+  for (int n=0; n<NOFACE; n++)
+  {
+    if ( OBC[n].get_Class()== OBC_TRC_FREE ) c++;
+  }
+  if ( c>0 ) EnsCompo.tfree = ON;
+  
+  
+  // モニタ
+  c = 0;
+  for (int n=1; n<=NoCompo; n++)
+  {
+    if ( cmp[n].isMONITOR() ) c++;
+  }
+  if ( c>0 ) EnsCompo.monitor = ON;
+  
+  
+  // チェック　MONITOR_LISTでCELL_MONITORが指定されている場合
+  if ( (existMonitor() == ON) && (c < 1) )
+  {
+    Hostonly_ stamped_printf("\tError : CellMonitor in MonitorList is specified, however any Monitor can not be found.\n");
+    Exit(0);
+  }
+  
+  if ( (existMonitor() == OFF) && (c > 0) )
+  {
+    Hostonly_ stamped_printf("\tError : CellMonitor in MonitorList is NOT specified, however Monitor section is found in LocalBoundary.\n");
+    Exit(0);
+  }
+  
+  // @see C.EnsCompo.monitor==ONは，Control::getMonitorList()
+  
+}
+
+
+
 // #################################################################
 /**
  * @brief Gmres反復固有のパラメータを指定する
@@ -3814,6 +3911,7 @@ void Control::setPara_Gmres(const string base, ItrCtl* IC)
 {
   ;
 }
+
 
 // #################################################################
 /**
@@ -4189,9 +4287,10 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   }
   
   // 外部境界面の速度の指定パラメータを有次元化
-  if ( Unit.Param == NONDIMENSIONAL ) {
-    for (int n=0; n<NOFACE; n++) {
-      
+  if ( Unit.Param == NONDIMENSIONAL )
+  {
+    for (int n=0; n<NOFACE; n++)
+    {
       switch ( BO[n].get_Class() )
       {
         case OBC_WALL:

@@ -3415,7 +3415,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
 
 // #################################################################
 // 取得したcmpList[]の内容を表示する
-void ParseBC::printCompoSummary(FILE* fp, const CompoList* cmp, const int basicEq)
+void ParseBC::printCompoSummary(FILE* fp, CompoList* cmp, const int basicEq)
 {
   if( !fp ) Exit(0);
   

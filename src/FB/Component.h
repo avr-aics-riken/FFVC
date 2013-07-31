@@ -246,7 +246,7 @@ public:
   /**
    * @brief BCのラベル名を返す
    */
-  std::string getBCstr() const;
+  std::string getBCstr();
   
   
   //@brief コンポーネントのサイズを返す
@@ -258,8 +258,16 @@ public:
   }
   
   
+  // サブドメインにコンポーネントが存在するかどうかを返す
+  bool existLocal() const
+  {
+    return ( (ens == ON) ? true : false );
+  }
+  
+  
+  
   REAL_TYPE get_CoefRadEps() const
-  { 
+  {
     return var1; 
   }
   
@@ -439,13 +447,6 @@ public:
   }
   
   
-  // サブドメインにコンポーネントが存在するかどうかを返す
-  bool isEnsLocal() const
-  {
-    return ( (ens == ON) ? true : false );
-  }
-  
-  
   /**
    * @brief 流体要素であればtrue
    */
@@ -466,10 +467,29 @@ public:
     return false;
   }
   
-
-  bool isHBC() const;
   
-  bool isHsrc() const;
+  // @brief 境界条件タイプが熱境界条件かどうかを調べる
+  bool isHBC() const
+  {
+    if ((type == ADIABATIC)  ||
+        (type == HEATFLUX)   ||
+        (type == TRANSFER)   ||
+        (type == ISOTHERMAL) ||
+        (type == RADIANT)    ||
+        (type == SPEC_VEL_WH)||
+        (type == HEAT_SRC)   ||
+        (type == CNST_TEMP) ) return true;
+    return false;
+  }
+  
+  
+  // @brief 境界条件タイプが熱源かどうかを調べる
+  bool isHsrc() const
+  {
+    if ((type == HEAT_SRC) ||
+        (type == CNST_TEMP) ) return true;
+    return false;
+  }
   
   
   /**
@@ -519,11 +539,30 @@ public:
   {
     return (attrb==BC_type_massflow) ? true : false;
   }
-
-  bool isVBC       () const ;
   
   
-  /// @brief コンポーネントが速度規定 
+  // @brief メンバ変数variableにエンコードされた変数タイプとの照合を行う
+  // @param [in] var 変数タイプのビット数
+  bool isVarEncoded (const int var) const
+  {
+    return ( ( 0x1 & (variable >> var)) ? true : false );
+  }
+  
+  
+  // @brief 内部境界条件タイプが速度指定かどうかを調べる
+  bool isVBC() const
+  {
+    if ((type == SPEC_VEL) ||
+        (type == SPEC_VEL_WH) ||
+        (type == OUTFLOW) ||
+        (type == IBM_DF) ||
+        (type == HEX) ||
+        (type == FAN) ||
+        (type == DARCY) ) return true;
+    return false;
+  }
+  
+  // @brief コンポーネントが速度規定
   bool isVBC_IO() const
   {
     if ((type == SPEC_VEL) ||
@@ -533,28 +572,26 @@ public:
   }
   
   
-  //@brief メンバ変数variableにエンコードされた変数タイプとの照合を行う
-  //@param var 変数タイプのビット数
-  bool isVarEncoded (const int var) const
+  // @brief 体積率の必要なコンポーネントかどうか
+  bool isVFraction() const
   {
-    return ( ( 0x1 & (variable >> var)) ? true : false );
+    if ((type == HEAT_SRC) ||
+        (type == CNST_TEMP) ||
+        (type == IBM_DF) ||
+        (type == HEX) ||
+        (type == FAN) ||
+        (type == DARCY) )  return true;
+    return false;
   }
   
   
-  /**
-   @brief ベクトル強制をするかどうかを調べる
-   @retval ベクトルを強制する場合true
-   */
+  // @brief ベクトル強制をするかどうかを調べる
   bool isVecForcing() const
   {
     if ( isFORCING() && usw==ON ) return true;
     
     return false;
   }
-
-  
-  bool isVFraction () const;
-  
   
 
   void setAlias            (const std::string pnt);

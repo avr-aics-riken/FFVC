@@ -45,7 +45,7 @@ const char* CompoList::getVarStr()
 
 // #################################################################
 //BCのラベル名を返す
-std::string CompoList::getBCstr() const
+std::string CompoList::getBCstr()
 {
   std::string bc;
   
@@ -77,72 +77,6 @@ std::string CompoList::getBCstr() const
   else                              bc = "Medium";
   
   return bc;
-}
-
-
-// #################################################################
-/**
- @brief 境界条件タイプが熱境界条件かどうかを調べる
- @retval HBCであればtrue
- */
-bool CompoList::isHBC() const
-{
-  if ((type == ADIABATIC)  || 
-      (type == HEATFLUX)   ||
-      (type == TRANSFER)   ||
-      (type == ISOTHERMAL) ||
-      (type == RADIANT)    ||
-      (type == SPEC_VEL_WH)||
-      (type == HEAT_SRC)   ||
-      (type == CNST_TEMP) ) return true;
-  return false;
-}
-
-// #################################################################
-/**
- @brief 境界条件タイプが熱源かどうかを調べる
- @retval FORCINGであればtrue
- */
-bool CompoList::isHsrc() const
-{
-  if ((type == HEAT_SRC) || 
-      (type == CNST_TEMP) ) return true;
-  return false;
-}
-
-
-
-// #################################################################
-/**
-
- @brief 内部境界条件タイプが速度指定かどうかを調べる
- @retval VBCであればtrue
- */
-bool CompoList::isVBC() const
-{
-  if ((type == SPEC_VEL) ||
-      (type == SPEC_VEL_WH) ||
-      (type == OUTFLOW) ||
-      (type == IBM_DF) ||
-      (type == HEX) ||
-      (type == FAN) ||
-      (type == DARCY) ) return true;
-  return false;
-}
-
-
-
-// #################################################################
-//@brief 体積率の必要なコンポーネントかどうか
-bool CompoList::isVFraction() const 
-{
-  if ((type == HEAT_SRC) ||
-      (type == CNST_TEMP) ||
-      (type == IBM_DF) ||
-      (type == HEX) ||
-      (type == FAN) ||
-      (type == DARCY) )  return true;
-  return false;
 }
 
 

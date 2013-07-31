@@ -34,8 +34,7 @@ int FFV::Initialize(int argc, char **argv)
   double PrepMemory    = 0.0;  ///< 初期化に必要なメモリ量（ローカル）
   double G_TotalMemory = 0.0;  ///< 計算に必要なメモリ量（グローバル）
   double G_PrepMemory  = 0.0;  ///< 初期化に必要なメモリ量（グローバル）
-  double tmp_memory    = 0.0;  ///< 計算に必要なメモリ量（グローバル）？
-  
+  double tmp_memory    = 0.0;  ///< 計算に必要なメモリ量（グローバル）
   double flop_task     = 0.0;  ///< flops計算用
 
   
@@ -281,7 +280,7 @@ int FFV::Initialize(int argc, char **argv)
   
 
   // HEX/FANコンポーネントの形状情報からBboxと体積率を計算
-  if ( C.isVfraction() )
+  if ( C.existVfraction() )
   {
     TIMING_start(tm_init_alloc);
     allocArray_CompoVF(PrepMemory, TotalMemory);
@@ -313,9 +312,7 @@ int FFV::Initialize(int argc, char **argv)
   // BCIndexにビット情報をエンコードとコンポーネントインデクスの再構築
   encodeBCindex();
   
-  
-  // カット情報からBCのコンポーネント情報を設定
-  //BboxLocalBC();
+
   
   
   // 体積力を使う場合のコンポーネント配列の確保
@@ -399,21 +396,9 @@ int FFV::Initialize(int argc, char **argv)
   }
   
 
-  // コンポーネントのグローバルインデクス情報を取得
-  setGlobalCmpIdx();
+  // コンポーネントのグローバルインデクス情報を取得し，CompoListの内容とセル数の情報を表示する
+  setGlobalCompoIdx_displayInfo(fp);
   
-  
-  
-  // CompoListの内容とセル数の情報を表示する
-  Hostonly_
-  {
-    printf(    "\n---------------------------------------------------------------------------\n\n");
-    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-    printf(    "\t>> Component Information\n\n");
-    fprintf(fp,"\t>> Component Information\n\n");
-  }
-  
-  displayCompoInfo(fp);
   
 
   
@@ -928,7 +913,7 @@ void FFV::createTable(FILE* fp)
 /* @brief CompoListの情報を表示する
  * @param [in]  fp   ファイルポインタ
  */
-void FFV::displayCompoInfo(FILE* fp)
+void FFV::displayCompoInfo(const int* cgb, FILE* fp)
 {
   // サマリー
   Hostonly_
@@ -955,8 +940,8 @@ void FFV::displayCompoInfo(FILE* fp)
   {
     Hostonly_
     {
-      B.printCompo( stdout, compo_global_bbox, mat, cmp, BC.exportOBC() );
-      B.printCompo( fp, compo_global_bbox, mat, cmp, BC.exportOBC() );
+      B.printCompo( stdout, cgb, mat, cmp, BC.exportOBC() );
+      B.printCompo( fp, cgb, mat, cmp, BC.exportOBC() );
     }
   }
   
@@ -1560,6 +1545,11 @@ void FFV::fill(FILE* fp)
     fprintf(fp,"\t\tRemaining target cells = %16ld\n\n", target_count);
   }
 
+  // 同期
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+  }
   
   if ( target_count == 0 ) return;
   
@@ -1686,6 +1676,11 @@ void FFV::fill(FILE* fp)
     fprintf(fp,"\t\tTarget  cell           = %16ld\n", target_count);
   }
   
+  // 同期
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+  }
   
   
   if ( C.Fill_Hint >= 0 ) // ヒントが与えられている場合
@@ -1723,6 +1718,13 @@ void FFV::fill(FILE* fp)
     printf(    "\t\tRemaining target cells = %16ld\n\n", target_count);
     fprintf(fp,"\t\tRemaining target cells = %16ld\n\n", target_count);
   }
+  
+  // 同期
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+  }
+  
   
   if ( target_count == 0 ) return;
   
@@ -1812,6 +1814,11 @@ void FFV::fill(FILE* fp)
     fprintf(fp,"\t\t   Filled by SOLID[%3d]= %16ld\n\n", Fill_Solid, target_count);
   }
   
+  // 同期
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+  }
 
   
   // 確認 paintedは未ペイントセルがある場合に1
@@ -2027,7 +2034,7 @@ void FFV::gatherDomainInfo()
   {
     Hostonly_
     {
-      fprintf(fp,"Domain %4d\n", i);
+      fprintf(fp,"\nDomain %4d\n", i);
       fprintf(fp,"\t ix, jx,  kx        [-] =  %13ld %13ld %13ld\n",  m_size[i*3], m_size[i*3+1], m_size[i*3+2]);
       fprintf(fp,"\t(ox, oy, oz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n", 
               m_org[i*3]*C.RefLength,  m_org[i*3+1]*C.RefLength,  m_org[i*3+2]*C.RefLength, m_org[i*3],  m_org[i*3+1],  m_org[i*3+2]);
@@ -3548,12 +3555,13 @@ void FFV::resizeBbox4Cell(const int order, const int* bx)
   int ist = ix;
   int jst = jx;
   int kst = kx;
-  int ied = 0;
-  int jed = 0;
-  int ked = 0;
+  int ied = 1;
+  int jed = 1;
+  int ked = 1;
+  int c = 0;
   
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, odr) \
-shared(ist, ied, jst, jed, kst, ked) schedule(static)
+shared(ist, ied, jst, jed, kst, ked) schedule(static) reduction(+:c)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -3569,15 +3577,27 @@ shared(ist, ied, jst, jed, kst, ked) schedule(static)
           if( j > jed ) jed = j;
           if( k < kst ) kst = k;
           if( k > ked ) ked = k;
+          c++;
         }
       }
     }
   }
   
-  // replace
+  // コンポーネントが存在する場合
+  if ( c > 0 )
+  {
+    cmp[odr].setEnsLocal(ON);
+  }
+  else
+  {
+    ist = ied = jst = jed = kst = ked = 0;
+    cmp[odr].setEnsLocal(OFF);
+  }
+  
   int nst[3] = {ist, jst, kst};
   int ned[3] = {ied, jed, ked};
   cmp[order].setBbox(nst, ned);
+
 }
 
 
@@ -3601,10 +3621,11 @@ void FFV::resizeBbox4Face(const int order, const int* bx)
   int ied = 0;
   int jed = 0;
   int ked = 0;
+  int c = 0;
   
   
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, odr) \
-shared(ist, ied, jst, jed, kst, ked) schedule(static)
+shared(ist, ied, jst, jed, kst, ked) schedule(static) reduction(+:c)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -3629,12 +3650,23 @@ shared(ist, ied, jst, jed, kst, ked) schedule(static)
           if( j > jed ) jed = j;
           if( k < kst ) kst = k;
           if( k > ked ) ked = k;
+          c++;
         }
       }
     }
   }
   
-  // replace
+  // コンポーネントが存在する場合
+  if ( c > 0 )
+  {
+    cmp[odr].setEnsLocal(ON);
+  }
+  else
+  {
+    ist = ied = jst = jed = kst = ked = 0;
+    cmp[odr].setEnsLocal(OFF);
+  }
+  
   int nst[3] = {ist, jst, kst};
   int ned[3] = {ied, jed, ked};
   cmp[order].setBbox(nst, ned);
@@ -3643,7 +3675,7 @@ shared(ist, ied, jst, jed, kst, ked) schedule(static)
 
 
 // #################################################################
-/* @brief コンポーネントリストに登録されたBbox情報をリサイズする
+/* @brief コンポーネントリストに登録されたBbox情報をBCindexに基づき再計算する
  */
 void FFV::resizeCompoBbox()
 {
@@ -3652,7 +3684,6 @@ void FFV::resizeCompoBbox()
   {
     int typ = cmp[n].getType();
     
-    // デフォルトで流れ計算パートのBC
     switch ( typ )
     {
       case SPEC_VEL:
@@ -3706,7 +3737,7 @@ void FFV::resizeCompoBbox()
 void FFV::scanVoxel(FILE* fp)
 {
   // 媒質IDリスト
-  int cell_id[C.NoCompo+1];
+  int* cell_id = new int[C.NoCompo+1];
   
   for (int i=1; i<=C.NoCompo; i++) cell_id[i]=0;
   
@@ -3734,6 +3765,8 @@ void FFV::scanVoxel(FILE* fp)
   // midに設定されたIDをスキャンし，IDの個数を返し，作業用のcolorList配列にIDを保持，midに含まれるIDの数をチェック
   V.scanCell(d_mid, cell_id, C.Hide.Change_ID, fp);
   
+  if ( cell_id ) delete [] cell_id;
+  
 }
 
 
@@ -3757,7 +3790,7 @@ void FFV::setBCinfo()
   
   
   // 各コンポーネントが存在するかどうかを保持しておく
-  setEnsComponent();
+  C.setExistComponent(cmp, BC.exportOBC());
   
   // KOSと境界条件種類の整合性をチェック
   B.chkBCconsistency(C.KindOfSolver, cmp);
@@ -3869,112 +3902,26 @@ void FFV::setComponentVF()
 
 
 // #################################################################
-/* @brief コンポーネントが存在するかを保持しておく
+/* @brief コンポーネントのローカルなBbox情報からグローバルなBbox情報を求め，CompoListの情報を表示
+ * @param [in] fp file pointer
  */
-void FFV::setEnsComponent()
-{
-  int c;
-  
-  // Vspec
-  c = 0;
-  for (int n=1; n<=C.NoCompo; n++)
-  {
-    if ( cmp[n].isVBC_IO() ) c++;
-  }
-  if ( c>0 ) C.EnsCompo.forcing = ON;
-  
-  // Forcing > HEX, FAN, DARCY
-  c = 0;
-  for (int n=1; n<=C.NoCompo; n++)
-  {
-    if ( cmp[n].isFORCING() ) c++;
-  }
-  if ( c>0 ) C.EnsCompo.forcing = ON;
-  
-  // Heat source > HEAT_SRC, CNST_TEMP
-  c = 0;
-  for (int n=1; n<=C.NoCompo; n++)
-  {
-    if ( cmp[n].isHsrc() ) c++;
-  }
-  if ( c>0 ) C.EnsCompo.hsrc = ON;
-  
-  // 周期境界 > PERIODIC
-  c = 0;
-  for (int n=1; n<=C.NoCompo; n++) 
-  {
-    if ( cmp[n].getType() == PERIODIC ) c++;
-  }
-  if ( c>0 ) C.EnsCompo.periodic = ON;
-  
-  // 流出境界 > OUTFLOW
-  c = 0;
-  for (int n=1; n<=C.NoCompo; n++) 
-  {
-    if ( cmp[n].getType() == OUTFLOW ) c++;
-  }
-  if ( c>0 ) C.EnsCompo.outflow = ON;
-  
-  // 体積率コンポーネント
-  c = 0;
-  for (int n=1; n<=C.NoCompo; n++) 
-  {
-    if ( cmp[n].isVFraction() ) c++;
-  }
-  if ( c>0 ) C.EnsCompo.fraction = ON;
-  
-  // トラクションフリー
-  c = 0;
-  for (int n=0; n<NOFACE; n++)
-  {
-    if ( BC.exportOBC(n)->get_Class()== OBC_TRC_FREE ) c++;
-  }
-  if ( c>0 ) C.EnsCompo.tfree = ON;
-  
-  // モニタ
-  c = 0;
-  for (int n=1; n<=C.NoCompo; n++) 
-  {
-    if ( cmp[n].isMONITOR() ) c++;
-  }
-  
-  // チェック　MONITOR_LISTでCELL_MONITORが指定されている場合
-  if ( (C.isMonitor() == ON) && (c < 1) ) 
-  {
-    Hostonly_ stamped_printf("\tError : CellMonitor in MonitorList is specified, however any Monitor can not be found.\n");
-    Exit(0);
-  }
-  
-  if ( (C.isMonitor() == OFF) && (c > 0) ) 
-  {
-    Hostonly_ stamped_printf("\tError : CellMonitor in MonitorList is NOT specified, however Monitor section is found in LocalBoundary.\n");
-    Exit(0);
-  }
-  
-  // @see C.EnsCompo.monitor==ONは，Control::getMonitorList()
-  
-}
-
-
-
-// #################################################################
-/* @brief コンポーネントのローカルなBbox情報からグローバルなBbox情報を求める
- */
-void FFV::setGlobalCmpIdx()
+void FFV::setGlobalCompoIdx_displayInfo(FILE* fp)
 {
   int st_i, st_j, st_k, ed_i, ed_j, ed_k;
   int node_st_i, node_st_j, node_st_k;
   int st[3], ed[3];
   
+  
   // グローバルインデクスの配列インスタンス
-  compo_global_bbox = new int[6*(C.NoCompo+1)];
-  int* cgb = compo_global_bbox;
+  int* cgb = new int[6*(C.NoCompo+1)];
+  
+  for (int i=0; i<6*(C.NoCompo+1); i++) cgb[i] = 0;
   
   // ローカルインデクスからグローバルインデクスに変換
   for (int m=1; m<=C.NoCompo; m++) 
   {
     
-    if ( !cmp[m].isEnsLocal() ) // コンポーネントが存在しないノードはゼロを代入
+    if ( !cmp[m].existLocal() ) // コンポーネントが存在しないノードはゼロを代入
     {
       cgb[6*m+0] = 0;
       cgb[6*m+1] = 0;
@@ -4000,12 +3947,12 @@ void FFV::setGlobalCmpIdx()
         node_st_j = head[1];
         node_st_k = head[2];
         
-        cgb[6*m+0] = node_st_i + st_i;
-        cgb[6*m+1] = node_st_j + st_j;
-        cgb[6*m+2] = node_st_k + st_k;
-        cgb[6*m+3] = node_st_i + ed_i;
-        cgb[6*m+4] = node_st_j + ed_j;
-        cgb[6*m+5] = node_st_k + ed_k;
+        cgb[6*m+0] = node_st_i + st_i - 1;
+        cgb[6*m+1] = node_st_j + st_j - 1;
+        cgb[6*m+2] = node_st_k + st_k - 1;
+        cgb[6*m+3] = node_st_i + ed_i - 1;
+        cgb[6*m+4] = node_st_j + ed_j - 1;
+        cgb[6*m+5] = node_st_k + ed_k - 1;
       } 
       else 
       {
@@ -4029,17 +3976,20 @@ void FFV::setGlobalCmpIdx()
   if ( !(m_gArray = new int[numProc*6]) ) Exit(0);
   if ( !(m_eArray = new int[numProc]  ) ) Exit(0);
   
+  for (int i=0; i<numProc*6; i++) m_gArray[i] = 0;
+  for (int i=0; i<numProc; i++) m_eArray[i] = 0;
+  
   for (int n=1; n<=C.NoCompo; n++)
   {
     if ( numProc > 1 ) 
     {
-      es = ( cmp[n].isEnsLocal() ) ? 1 : 0;
+      es = ( cmp[n].existLocal() ) ? 1 : 0;
       if ( paraMngr->Gather(&es, 1, m_eArray, 1, 0) != CPM_SUCCESS ) Exit(0);
       if ( paraMngr->Gather(&cgb[6*n], 6, m_gArray, 6, 0) != CPM_SUCCESS ) Exit(0);
       
       
-      if (myRank == 0) { // マスターノードのみ
-        
+      if (myRank == 0) // マスターノードのみ
+      {
         // 初期値
         cgb[6*n+0] = 100000000;
         cgb[6*n+1] = 100000000;
@@ -4084,6 +4034,22 @@ void FFV::setGlobalCmpIdx()
     delete[] m_eArray;
     m_eArray = NULL;
   }
+  
+  
+  // CompoListの内容とセル数の情報を表示する
+  Hostonly_
+  {
+    printf(    "\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    printf(    "\t>> Component Information\n\n");
+    fprintf(fp,"\t>> Component Information\n\n");
+  }
+  
+  displayCompoInfo(cgb, fp);
+  
+  
+  if ( cgb ) delete [] cgb;
+  
 }
 
 
@@ -4093,7 +4059,7 @@ void FFV::setGlobalCmpIdx()
 void FFV::setInitialCondition()
 {
   double flop_task;
-  Gemini_R* m_buf = new Gemini_R [C.NoCompo];
+  Gemini_R* m_buf = new Gemini_R [C.NoCompo+1];
   
   double tm = CurrentTime * C.Tscale;
   
@@ -4178,10 +4144,7 @@ void FFV::setInitialCondition()
     BC.OuterVBC(d_v, d_vf, d_bcv, tm, &C, v00, flop_task);
     
     // 流出境界の流出速度の算出
-    // dummy
-    Gemini_R* m_buf = new Gemini_R [C.NoCompo];
     BC.mod_div(d_ws, d_bcv, tm, v00, m_buf, d_vf, d_v, &C, flop_task);
-    if ( m_buf ) { delete [] m_buf; m_buf=NULL; }
     
     DomainMonitor(BC.exportOBC(), &C);
     
@@ -4217,65 +4180,6 @@ void FFV::setInitialCondition()
   if ( m_buf ) delete [] m_buf;
 }
 
-
-
-// #################################################################
-/* @brief midの情報から各BCコンポーネントのローカルなインデクスを取得する
- * @note  計算内部領域の境界と外部境界とでは，ガイドセル部分にあるコンポーネントIDの取り扱いが異なる
- *        外部境界に接する面では，幅はそのまま，始点はガイドセル部分を含む
- *        内部境界に接する面では，始点と幅はローカルノード内の計算内部領域に含まれるように調整
- 
-void FFV::setLocalCmpIdx_Binary()
-{
-  int st_i[3], len[3];
-  int m_st[3], m_ed[3];
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  for (int m=1; m<=C.NoCompo; m++)
-  {
-    for (int d=0; d<3; d++)
-    {
-      st_i[d] = 0;
-      len[d] = 0;
-    }
-    
-    // コンポーネント範囲
-    //GetBndIndexExtGc()は自ノード内でのidのバウンディングボックスを取得．インデクスはローカルインデクスで，ガイドセルを含む配列の基点をゼロとするCのインデクス
-    if ( !paraMngr->GetBndIndexExtGc(m, d_mid, ix, jx, kx, gd, st_i[0], st_i[1], st_i[2], len[0], len[1], len[2]) )
-    {
-      Hostonly_ stamped_printf("\tError : can not get component local index for ID[%d]\n", m);
-      Exit(0);
-    }
-    
-    // ノード内にコンポーネントがあるかどうかをチェック
-    if ( (len[0]==0) || (len[1]==0) || (len[2]==0) ) { // コンポーネントなし
-      cmp[m].setEnsLocal(OFF);
-      // BV情報はCompoListのコンストラクタでゼロに初期化されているので，すべてゼロ
-    }
-    else
-    {
-      
-      for (int d=0; d<3; d++)
-      {
-        int tmp_st=0;
-        int tmp_ed=0;
-        
-        EnlargeIndex(tmp_st, tmp_ed, st_i[d], len[d], size[d], d, m);
-        
-        m_st[d] = tmp_st;
-        m_ed[d] = tmp_ed;
-      }
-      cmp[m].setBbox(m_st, m_ed);
-      cmp[m].setEnsLocal(ON); // コンポーネントあり
-    }
-    
-  }
-}
-*/
 
 // #################################################################
 /* @brief ParseMatクラスをセットアップし，媒質情報を入力ファイルから読み込み，媒質リストを作成する
@@ -4524,7 +4428,7 @@ void FFV::setupCellMonitor()
 {
   
   // Cell_Monitorの指定がある場合，モニタ位置をセット
-  if ( (C.Sampling.log == ON) && (C.isMonitor() == ON) )
+  if ( (C.Sampling.log == ON) && (C.existMonitor() == ON) )
   {
     
     // ShapeMonitorのインスタンス

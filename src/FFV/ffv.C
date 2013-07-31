@@ -132,8 +132,6 @@ FFV::FFV()
 	d_pcg_s_ = NULL;
 	d_pcg_t_ = NULL;
   
-  compo_global_bbox = NULL;
-  
   cutPos = NULL;
   cutBid = NULL;
   

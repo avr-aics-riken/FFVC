@@ -420,7 +420,7 @@ public:
    * @param [in] basicEq 基礎方程式の種類
    * @note Hostonly
    */
-  void printCompoSummary(FILE* fp, const CompoList* cmp, const int basicEq);
+  void printCompoSummary(FILE* fp, CompoList* cmp, const int basicEq);
   
   
   /**

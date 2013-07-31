@@ -242,12 +242,11 @@ private:
    */
   inline int find_mode_id(const int fid, const int qw, const int qe, const int qs, const int qn, const int qb, const int qt)
   {
-    unsigned key[NoCompo+1]; // ID毎の頻度
+    unsigned* key = new unsigned[NoCompo+1]; // ID毎の頻度
     int val[6];              // ID
     
     
     for (int l=1; l<=NoCompo; l++) key[l]=0;
-    
     
     val[0] = qw;
     val[1] = qe;
@@ -278,6 +277,8 @@ private:
         z = l;
       }
     }
+    
+    if ( key ) delete [] key;
     
     return z;
   }

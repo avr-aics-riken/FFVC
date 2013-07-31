@@ -659,7 +659,7 @@ void MonitorCompo::setIBPoints(const int odr, CompoList& cmp)
   int kx = size[2];
   int gd = guide;
   
-  if (cmp.isEnsLocal())
+  if (cmp.existLocal())
   {
     for (int k = st[2]; k <= ed[2]; k++) {
       for (int j = st[1]; j <= ed[1]; j++) {
@@ -698,7 +698,7 @@ void MonitorCompo::setIBPoints(const int odr, CompoList& cmp)
   for (int i = 0; i < myRank; i++) m0 += nPointList[i];
   
   int m = 0;
-  if (cmp.isEnsLocal()) 
+  if (cmp.existLocal()) 
   {
     int i0 = head[0] - 1; //fortran index なので1からカウントアップしている ---> Cのindexは0からカウントアップ
     int j0 = head[1] - 1;

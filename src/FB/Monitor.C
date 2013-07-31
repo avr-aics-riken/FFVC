@@ -256,7 +256,7 @@ void MonitorList::getMonitor(Control* C)
     nlist++;
   }
   
-  if (nlist==0 && C->isMonitor() == OFF)
+  if (nlist==0 && C->existMonitor() == OFF)
   {
     Hostonly_ stamped_printf("\tError : No monitoring points. Please confirm 'MonitorList' and 'InnerBoundary' in Input parameter file. \n");
     Exit(0);

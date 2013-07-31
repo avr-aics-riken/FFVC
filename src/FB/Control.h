@@ -678,7 +678,7 @@ public:
     int unit;      /// 出力単位 (DImensional / NonDimensional)
   } Sampling_Def;
   
-  /** コンポーネント/BCの存在 */
+  /** コンポーネント/BCのグローバルな存在 */
   typedef struct 
   {
     int forcing;
@@ -1041,6 +1041,7 @@ public:
     EnsCompo.fraction= 0;
     EnsCompo.monitor = 0;
     EnsCompo.tfree   = 0;
+    EnsCompo.vspec   = 0;
     
     Criteria = NULL;
   }
@@ -1298,6 +1299,61 @@ public:
   void displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat);
   
   
+  //@brief Forcingコンポーネントが存在すれば1を返す
+  int existForcing() const
+  {
+    return EnsCompo.forcing;
+  }
+  
+  
+  //@brief Hsrcコンポーネントが存在すれば1を返す
+  int existHsrc() const
+  {
+    return EnsCompo.hsrc;
+  }
+  
+  
+  //@brief モニタコンポーネントが存在すれば1を返す
+  int existMonitor() const
+  {
+    return EnsCompo.monitor;
+  }
+  
+  
+  //@brief 流出コンポーネントがあれば1を返す
+  int existOutflow() const
+  {
+    return EnsCompo.outflow;
+  }
+  
+  
+  //@brief 部分周期境界コンポーネントが存在すれば1を返す
+  int existPeriodic() const
+  {
+    return EnsCompo.periodic;
+  }
+  
+  
+  //@brief トラクションフリー境界が存在すれば1を返す
+  int existTfree() const
+  {
+    return EnsCompo.tfree;
+  }
+  
+  
+  //@brief 体積率コンポーネントが存在すれば1を返す
+  int existVfraction() const
+  {
+    return EnsCompo.fraction;
+  }
+  
+  
+  //@brief 体積率コンポーネントが存在すれば1を返す
+  int existVspec() const
+  {
+    return EnsCompo.vspec;
+  }
+  
   /** MediumList中に登録されているkeyに対するIDを返す
    * @param [in] mat  MediumListクラス
    * @param [in] Namx リストの最大数
@@ -1385,59 +1441,10 @@ public:
   }
   
   
-  //@brief Forcingコンポーネントがあれば1を返す
-  int isForcing() const
-  {
-    return EnsCompo.forcing;
-  }
-  
-  
   //@brief 熱問題かどうかを返す
   bool isHeatProblem() const
   {
     return ( ( KindOfSolver != FLOW_ONLY ) ? true : false );
-  }
-  
-  
-  //@brief Hsrcコンポーネントがあれば1を返す
-  int isHsrc() const
-  {
-    return EnsCompo.hsrc;
-  }
-  
-  
-  //@brief モニタコンポーネントがあれば1を返す
-  int isMonitor() const
-  {
-    return EnsCompo.monitor;
-  }
-  
-  
-  //@brief 流出コンポーネントがあれば1を返す
-  int isOutflow() const
-  {
-    return EnsCompo.outflow;
-  }
-  
-  
-  //@brief 部分周期境界コンポーネントがあれば1を返す
-  int isPeriodic() const
-  {
-    return EnsCompo.periodic;
-  }
-  
-  
-  //@brief トラクションフリー境界があれば1を返す
-  int isTfree() const
-  {
-    return EnsCompo.tfree;
-  }
-  
-  
-  //@brief 体積率コンポーネントがあれば1を返す
-  int isVfraction() const
-  {
-    return EnsCompo.fraction;
   }
 
   
@@ -1491,6 +1498,14 @@ public:
   void printNoCompo(FILE* fp);
   
 
+  /**
+   * @brief コンポーネントが存在するかを保持しておく
+   * @param [in,out] cmp CompoList
+   * @param [in,out] OBC BoundaryOuter
+   */
+  void setExistComponent(CompoList* cmp, BoundaryOuter* OBC);
+  
+  
   // @brief 無次元パラメータを各種モードに応じて設定する
   void setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF, BoundaryOuter* BO);
 

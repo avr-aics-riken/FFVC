@@ -233,8 +233,6 @@ private:
   
   REAL_TYPE** component_array; ///< コンポーネントワーク配列のアドレス管理
   
-  int* compo_global_bbox; ///< グローバルなコンポーネントBbox 表示に利用
-  
   // カット
   CutPos32Array *cutPos;
   CutBid5Array  *cutBid;
@@ -397,7 +395,7 @@ private:
   
   
   // CompoListの情報を表示する
-  void displayCompoInfo(FILE* fp);
+  void displayCompoInfo(const int* cgb, FILE* fp);
   
   
   // メモリ使用量の表示
@@ -414,10 +412,6 @@ private:
   
   // BCIndexにビット情報をエンコードする
   void encodeBCindex();
-  
-  
-  //初期インデクスの情報を元に，一層拡大したインデクス値を返す
-  //void EnlargeIndex(int& m_st, int& m_ed, const int st_i, const int len, const int m_x, const int dir, const int m_id);
   
   
   // ポリゴンの場合のフィル操作
@@ -476,7 +470,7 @@ private:
   void resizeBbox4Cell(const int n, const int* bx);
   
   
-  // コンポーネントリストに登録されたBbox情報をリサイズする
+  // コンポーネントリストに登録されたBbox情報をBCindexに基づき再計算する
   void resizeCompoBbox();
   
   
@@ -492,12 +486,8 @@ private:
   void setComponentVF();
   
   
-  // コンポーネントが存在するかを保持しておく
-  void setEnsComponent();
-  
-  
-  // コンポーネントのローカルなBbox情報からグローバルなBbox情報を求める
-  void setGlobalCmpIdx();
+  // コンポーネントのローカルなBbox情報からグローバルなBbox情報を求め，CompoListの情報を表示
+  void setGlobalCompoIdx_displayInfo(FILE* fp);
   
   
   // 初期条件の設定

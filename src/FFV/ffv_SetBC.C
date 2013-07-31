@@ -474,23 +474,20 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, double tm, REAL_TYPE* v00, Gemini_
       
       cmp[n].getBbox(st, ed);
       
-      if ( cmp[n].isEnsLocal() )
+      switch (typ)
       {
-        switch (typ)
-        {
-          case OUTFLOW:
-            //div_ibc_oflow_vec_(dv, size, &gd, st, ed, v00, &coef, bv, &n, &avr[2*(n-1)], &fcount);
-            break;
-            
-          case SPEC_VEL:
-          case SPEC_VEL_WH:
-            cmp[n].val[var_Velocity] = extractVelLBC(n, vec, tm, v00, fcount); // 指定された無次元平均流速
-            div_ibc_drchlt_(dv, size, &gd, st, ed, v00, bv, &n, vec, &fcount);
-            break;
-            
-          default:
-            break;
-        }
+        case OUTFLOW:
+          //div_ibc_oflow_vec_(dv, size, &gd, st, ed, v00, &coef, bv, &n, &avr[2*n], &fcount);
+          break;
+          
+        case SPEC_VEL:
+        case SPEC_VEL_WH:
+          cmp[n].val[var_Velocity] = extractVelLBC(n, vec, tm, v00, fcount); // 指定された無次元平均流速
+          div_ibc_drchlt_(dv, size, &gd, st, ed, v00, bv, &n, vec, &fcount);
+          break;
+          
+        default:
+          break;
       }
     }
   }
@@ -502,30 +499,27 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, double tm, REAL_TYPE* v00, Gemini_
       
       cmp[n].getBbox(st, ed);
       
-      if ( cmp[n].isEnsLocal() )
+      switch (typ)
       {
-        switch (typ)
-        {
-          case OUTFLOW:
-            div_ibc_oflow_vec_(dv, size, &gd, st, ed, bv, &n, aa, &fcount);
-            avr[n-1].p0 = aa[0]; // 積算速度
-            avr[n-1].p1 = aa[1]; // 積算回数
-            if ( aa[1] == 0.0 )
-            {
-              Hostonly_ printf("\tError : Number of accumulation is zero\n");
-              Exit(0);
-            }
-            break;
-            
-          case SPEC_VEL:
-          case SPEC_VEL_WH:
-            cmp[n].val[var_Velocity] = extractVelLBC(n, vec, tm, v00, fcount); // 指定された無次元平均流速
-            div_ibc_drchlt_(dv, size, &gd, st, ed, v00, bv, &n, vec, &fcount);
-            break;
-            
-          default:
-            break;
-        }
+        case OUTFLOW:
+          div_ibc_oflow_vec_(dv, size, &gd, st, ed, bv, &n, aa, &fcount);
+          avr[n].p0 = aa[0]; // 積算速度
+          avr[n].p1 = aa[1]; // 積算回数
+          if ( aa[1] == 0.0 )
+          {
+            Hostonly_ printf("\tError : Number of accumulation is zero\n");
+            Exit(0);
+          }
+          break;
+          
+        case SPEC_VEL:
+        case SPEC_VEL_WH:
+          cmp[n].val[var_Velocity] = extractVelLBC(n, vec, tm, v00, fcount); // 指定された無次元平均流速
+          div_ibc_drchlt_(dv, size, &gd, st, ed, v00, bv, &n, vec, &fcount);
+          break;
+          
+        default:
+          break;
       }
     }
   }
@@ -637,26 +631,24 @@ void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, float
     
     cmp[n].getBbox(st, ed);
     
-    if( cmp[n].isEnsLocal() )
+    switch ( cmp[n].getType() )
     {
-      switch ( cmp[n].getType() )
-      {
-        case HEX:
-          hex_force_pvec_(d_vc, size, &gd, st, ed, d_bd, d_cvf, d_v, &n, v00, &dt, vec, &cmp[n].ca[0], &flop);
-          break;
-          
-        case FAN:
-          Exit(0);
-          break;
-          
-        case DARCY:
-          Exit(0);
-          break;
-          
-        default:
-          break;
-      }
+      case HEX:
+        hex_force_pvec_(d_vc, size, &gd, st, ed, d_bd, d_cvf, d_v, &n, v00, &dt, vec, &cmp[n].ca[0], &flop);
+        break;
+        
+      case FAN:
+        Exit(0);
+        break;
+        
+      case DARCY:
+        Exit(0);
+        break;
+        
+      default:
+        break;
     }
+
   }
 }
 
@@ -682,26 +674,24 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* s_1, REAL_TYPE* v, int* bd, float* cvf
     // w_ptrに
     if ( cmp[n].isFORCING() ) force_keep_vec_(w_ptr, csz, st, ed, v, size, &gd);
 
-    if( cmp[n].isEnsLocal() )
+    switch ( cmp[n].getType() )
     {
-      switch ( cmp[n].getType() )
-      {
-        case HEX:
-          hex_psrc_(s_1, size, &gd, st, ed, bd, cvf, w_ptr, csz, &n, v00, vec, &cmp[n].ca[0], &flop);
-          break;
-          
-        case FAN:
-          Exit(0);
-          break;
-          
-        case DARCY:
-          Exit(0);
-          break;
-          
-        default:
-          break;
-      }
+      case HEX:
+        hex_psrc_(s_1, size, &gd, st, ed, bd, cvf, w_ptr, csz, &n, v00, vec, &cmp[n].ca[0], &flop);
+        break;
+        
+      case FAN:
+        Exit(0);
+        break;
+        
+      case DARCY:
+        Exit(0);
+        break;
+        
+      default:
+        break;
     }
+
   }
 }
 
@@ -729,27 +719,24 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, int* bd, float* cvf, REAL_TYPE* dv,
       vec[1] = cmp[n].nv[1];
       vec[2] = cmp[n].nv[2];
       
-      if( cmp[n].isEnsLocal() )
+      switch ( cmp[n].getType() )
       {
-        switch ( cmp[n].getType() )
-        {
-          case HEX:
-            hex_force_vec_(v, dv, size, &gd, st, ed, bd, cvf, w_ptr, csz, &n, v00, &dt, &dh, vec, &cmp[n].ca[0], aa, &flop);
-            am[n-1].p0 = aa[0];
-            am[n-1].p1 = aa[1];
-            break;
-            
-          case FAN:
-            Exit(0);
-            break;
-            
-          case DARCY:
-            Exit(0);
-            break;
-            
-          default:
-            break;
-        }
+        case HEX:
+          hex_force_vec_(v, dv, size, &gd, st, ed, bd, cvf, w_ptr, csz, &n, v00, &dt, &dh, vec, &cmp[n].ca[0], aa, &flop);
+          am[n].p0 = aa[0];
+          am[n].p1 = aa[1];
+          break;
+          
+        case FAN:
+          Exit(0);
+          break;
+          
+        case DARCY:
+          Exit(0);
+          break;
+          
+        default:
+          break;
       }
     }
   }
@@ -781,43 +768,41 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, const double t
   {
     for (int n=1; n<=NoCompo; n++)
     {
-      if ( cmp[n].isEnsLocal() )
-      {
-        typ = cmp[n].getType();
-        cmp[n].getBbox(st, ed);
 
-        if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) )
-        {
-          dummy = extractVelLBC(n, vec, tm, v00, flop);
-          pvec_vibc_specv_(wv, size, &gd, st, ed, &dh, v00, &rei, v, bv, &n, vec, &flop);
-        }
-        else if ( typ==OUTFLOW )
-        {
-          ;
-        }      
+      typ = cmp[n].getType();
+      cmp[n].getBbox(st, ed);
+      
+      if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) )
+      {
+        dummy = extractVelLBC(n, vec, tm, v00, flop);
+        pvec_vibc_specv_(wv, size, &gd, st, ed, &dh, v00, &rei, v, bv, &n, vec, &flop);
       }
+      else if ( typ==OUTFLOW )
+      {
+        ;
+      }
+
     }
   }
   else // Binary
   {
     for (int n=1; n<=NoCompo; n++)
     {
-      if( cmp[n].isEnsLocal() )
+
+      typ = cmp[n].getType();
+      cmp[n].getBbox(st, ed);
+      
+      if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) )
       {
-        typ = cmp[n].getType();
-        cmp[n].getBbox(st, ed);
-        
-        if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) )
-        {
-          dummy = extractVelLBC(n, vec, tm, v00, flop);
-          pvec_vibc_specv_(wv, size, &gd, st, ed, &dh, v00, &rei, v, bv, &n, vec, &flop);
-        }
-        else if ( typ==OUTFLOW )
-        {
-          vec[0] = vec[1] = vec[2] = cmp[n].val[var_Velocity]; // mod_div()でセルフェイス流出速度がval[var_Velocity]にセット
-          pvec_vibc_oflow_(wv, size, &gd, st, ed, &dh, &rei, v, bv, &n, vec, &flop);
-        }      
+        dummy = extractVelLBC(n, vec, tm, v00, flop);
+        pvec_vibc_specv_(wv, size, &gd, st, ed, &dh, v00, &rei, v, bv, &n, vec, &flop);
       }
+      else if ( typ==OUTFLOW )
+      {
+        vec[0] = vec[1] = vec[2] = cmp[n].val[var_Velocity]; // mod_div()でセルフェイス流出速度がval[var_Velocity]にセット
+        pvec_vibc_oflow_(wv, size, &gd, st, ed, &dh, &rei, v, bv, &n, vec, &flop);
+      }
+
     }
   }
   
@@ -886,25 +871,24 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
       typ = cmp[n].getType();
       cmp[n].getBbox(st, ed);
 
-      if ( cmp[n].isEnsLocal() )
+
+      switch (typ)
       {
-        switch (typ)
+        case SPEC_VEL:
+        case SPEC_VEL_WH:
         {
-          case SPEC_VEL:
-          case SPEC_VEL_WH:
-          {
-            REAL_TYPE dummy = extractVelLBC(n, vec, tm, v00, fcount);
-            div_ibc_drchlt_(s_0, size, &gd, st, ed, v00, bv, &n, vec, &fcount);
-            break;
-          }
-            
-          case OUTFLOW:
-            break;
-            
-          default:
-            break;
+          REAL_TYPE dummy = extractVelLBC(n, vec, tm, v00, fcount);
+          div_ibc_drchlt_(s_0, size, &gd, st, ed, v00, bv, &n, vec, &fcount);
+          break;
         }
+          
+        case OUTFLOW:
+          break;
+          
+        default:
+          break;
       }
+
     }
   }
   else // Binary
@@ -913,26 +897,23 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
       typ = cmp[n].getType();
       cmp[n].getBbox(st, ed);
       
-      if ( cmp[n].isEnsLocal() )
+      switch (typ)
       {
-        switch (typ)
+        case SPEC_VEL:
+        case SPEC_VEL_WH:
         {
-          case SPEC_VEL:
-          case SPEC_VEL_WH:
-          {
-            REAL_TYPE dummy = extractVelLBC(n, vec, tm, v00, fcount);
-            div_ibc_drchlt_(s_0, size, &gd, st, ed, v00, bv, &n, vec, &fcount);
-            break;
-          }
-            
-          case OUTFLOW:
-            vel = cmp[n].val[var_Velocity] * dt / dh; // mod_div()でval[var_Velocity]にセット
-            div_ibc_oflow_pvec_(s_0, size, &gd, st, ed, v00, &vel, bv, &n, v0, vf, &fcount);
-            break;
-            
-          default:
-            break;
+          REAL_TYPE dummy = extractVelLBC(n, vec, tm, v00, fcount);
+          div_ibc_drchlt_(s_0, size, &gd, st, ed, v00, bv, &n, vec, &fcount);
+          break;
         }
+          
+        case OUTFLOW:
+          vel = cmp[n].val[var_Velocity] * dt / dh; // mod_div()でval[var_Velocity]にセット
+          div_ibc_oflow_pvec_(s_0, size, &gd, st, ed, v00, &vel, bv, &n, v0, vf, &fcount);
+          break;
+          
+        default:
+          break;
       }
     }
   }

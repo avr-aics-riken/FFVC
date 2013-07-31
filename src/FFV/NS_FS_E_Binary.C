@@ -44,9 +44,9 @@ void FFV::NS_FS_E_Binary()
   
   
   // 境界処理用
-  Gemini_R* m_buf = new Gemini_R [C.NoCompo];
-  REAL_TYPE* m_snd = new REAL_TYPE [C.NoCompo*2];
-  REAL_TYPE* m_rcv = new REAL_TYPE [C.NoCompo*2];
+  Gemini_R* m_buf = new Gemini_R [C.NoCompo+1];
+  REAL_TYPE* m_snd = new REAL_TYPE [(C.NoCompo+1)*2];
+  REAL_TYPE* m_rcv = new REAL_TYPE [(C.NoCompo+1)*2];
   
   int v_mode=0;
   
@@ -219,7 +219,7 @@ void FFV::NS_FS_E_Binary()
   TIMING_start(tm_frctnl_stp_sct_3);
   
   // FORCINGコンポーネントの疑似速度ベクトルの方向修正と力の加算
-  if ( C.isForcing() == ON ) 
+  if ( C.existForcing() == ON ) 
   {
     TIMING_start(tm_forcing);
     flop = 0.0;
@@ -327,7 +327,7 @@ void FFV::NS_FS_E_Binary()
   TIMING_stop(tm_assign_const, 0.0);
   
   // Forcingコンポーネントによるソース項の寄与分
-  if ( C.isForcing() == ON )
+  if ( C.existForcing() == ON )
   {
     TIMING_start(tm_force_src);
     flop=0.0;
@@ -483,23 +483,23 @@ void FFV::NS_FS_E_Binary()
 
     
     // セルフェイス速度の境界条件の通信部分
-    if ( C.isOutflow() == ON ) 
+    if ( C.existOutflow() )
     {
       if ( !C.isCDS() ) // Binary
       {
         if ( numProc > 1 )
         {
-          for (int n=0; n<C.NoCompo; n++)
+          for (int n=1; n<=C.NoCompo; n++)
           {
             m_snd[2*n]   = m_rcv[2*n]   = m_buf[n].p0; // 積算速度
             m_snd[2*n+1] = m_rcv[2*n+1] = m_buf[n].p1; // 積算回数
           }
           
           TIMING_start(tm_prj_vec_bc_comm);
-          if ( paraMngr->Allreduce(m_snd, m_rcv, 2*C.NoCompo, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+          if ( paraMngr->Allreduce(m_snd, m_rcv, 2*(C.NoCompo+1), MPI_SUM) != CPM_SUCCESS ) Exit(0);
           TIMING_stop(tm_prj_vec_bc_comm, 2.0*C.NoCompo*numProc*sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数 x 変数
           
-          for (int n=0; n<C.NoCompo; n++)
+          for (int n=1; n<=C.NoCompo; n++)
           {
             m_buf[n].p0 = m_rcv[2*n];
             m_buf[n].p1 = m_rcv[2*n+1];
@@ -510,7 +510,7 @@ void FFV::NS_FS_E_Binary()
         {
           if ( cmp[n].getType() == OUTFLOW ) 
           {
-            cmp[n].val[var_Velocity] = m_buf[n-1].p0 / m_buf[n-1].p1; // 無次元平均流速
+            cmp[n].val[var_Velocity] = m_buf[n].p0 / m_buf[n].p1; // 無次元平均流速
           }
         }
       }
@@ -521,7 +521,7 @@ void FFV::NS_FS_E_Binary()
     }
     
     // Forcingコンポーネントによる速度と発散値の修正
-    if ( C.isForcing() == ON ) 
+    if ( C.existForcing() == ON ) 
     {
       TIMING_start(tm_prj_frc_mod);
       flop=0.0;
@@ -531,17 +531,17 @@ void FFV::NS_FS_E_Binary()
       // 通信部分
       if ( numProc > 1 ) 
       {
-        for (int n=0; n<C.NoCompo; n++)
+        for (int n=1; n<=C.NoCompo; n++)
         {
           m_snd[2*n]   = m_rcv[2*n]   = m_buf[n].p0; // 積算速度
           m_snd[2*n+1] = m_rcv[2*n+1] = m_buf[n].p1; // 積算圧力損失
         }
         
         TIMING_start(tm_prj_frc_mod_comm);
-        if ( paraMngr->Allreduce(m_snd, m_rcv, 2*C.NoCompo, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-        TIMING_stop(tm_prj_frc_mod_comm, 2.0*C.NoCompo*numProc*sizeof(REAL_TYPE)*2.0);
+        if ( paraMngr->Allreduce(m_snd, m_rcv, 2*(C.NoCompo+1), MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        TIMING_stop(tm_prj_frc_mod_comm, 2.0*(C.NoCompo+1)*numProc*sizeof(REAL_TYPE)*2.0);
         
-        for (int n=0; n<C.NoCompo; n++)
+        for (int n=1; n<=C.NoCompo; n++)
         {
           m_buf[n].p0 = m_rcv[2*n];
           m_buf[n].p1 = m_rcv[2*n+1];
@@ -553,14 +553,14 @@ void FFV::NS_FS_E_Binary()
         if ( cmp[n].isFORCING() ) 
         {
           REAL_TYPE aa = (REAL_TYPE)cmp[n].getElement();
-          cmp[n].val[var_Velocity] = m_buf[n-1].p0 / aa; // 平均速度
-          cmp[n].val[var_Pressure] = m_buf[n-1].p1 / aa; // 平均圧力損失量
+          cmp[n].val[var_Velocity] = m_buf[n].p0 / aa; // 平均速度
+          cmp[n].val[var_Pressure] = m_buf[n].p1 / aa; // 平均圧力損失量
         }
       }
     }
 
     // 反復ソース項
-    if ( C.isForcing() == ON )
+    if ( C.existForcing() == ON )
     {
       TIMING_start(tm_force_src);
       flop=0.0;
@@ -586,7 +586,8 @@ void FFV::NS_FS_E_Binary()
 
 
     // トラクションフリーの場合
-    if ( C.isTfree() ) {
+    if ( C.existTfree() )
+    {
       if ( numProc > 1 )
       {
         TIMING_start(tm_vectors_comm);
@@ -699,7 +700,8 @@ void FFV::NS_FS_E_Binary()
   }
   convergence_prev = convergence;
   
-
+      
+      
 
   TIMING_stop(tm_NS_loop_post_sct, 0.0);
   // >>> NS loop post section

@@ -249,7 +249,7 @@ int FFV::Point_SOR(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm,
     // 境界条件
     TIMING_start(tm_poi_BC);
     BC.OuterPBC(x);
-    if ( C.isPeriodic() == ON ) BC.InnerPBC_Periodic(x, d_bcd);
+    if ( C.existPeriodic() == ON ) BC.InnerPBC_Periodic(x, d_bcd);
     TIMING_stop(tm_poi_BC, 0.0);
     
     // 同期処理
@@ -405,7 +405,7 @@ int FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm,
       // 境界条件
       TIMING_start(tm_poi_BC);
       BC.OuterPBC(x);
-      if ( C.isPeriodic() == ON ) BC.InnerPBC_Periodic(x, d_bcd);
+      if ( C.existPeriodic() == ON ) BC.InnerPBC_Periodic(x, d_bcd);
       TIMING_stop(tm_poi_BC, 0.0);
       
       
@@ -1050,7 +1050,7 @@ int FFV::Fpcg(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, cons
   
 	BC.OuterPBC(x);
   
-	if ( C.isPeriodic() == ON )
+	if ( C.existPeriodic() == ON )
   {
 		BC.InnerPBC_Periodic(x, d_bcd);
 	}
@@ -1153,7 +1153,7 @@ int FFV::Fpbicgstab(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm
 	}
   
 	BC.OuterPBC(x);
-	if ( C.isPeriodic() == ON )
+	if ( C.existPeriodic() == ON )
   {
 		BC.InnerPBC_Periodic(x, d_bcd);
 	}
@@ -1235,7 +1235,7 @@ void FFV::Fsmoother(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE omg)
     
 		BC.OuterPBC(x);
     
-		if ( C.isPeriodic() == ON )
+		if ( C.existPeriodic() == ON )
     {
 			BC.InnerPBC_Periodic(x, d_bcd);
 		}
