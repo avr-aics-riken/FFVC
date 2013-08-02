@@ -23,26 +23,31 @@
 
 !> ********************************************************************
 !! @brief 圧力の外部ディリクレ境界
-!! @param p 圧力
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param face 外部境界面の番号
-!! @param pv 値
+!! @param [in,out] p      圧力
+!! @param [in]     sz     配列長
+!! @param [in]     g      ガイドセル長
+!! @param [in]     m_face 外部境界面の番号
+!! @param [in]     pv     値
+!! @param [in]     nID    隣接ランク番号（nID[]<0の時外部境界面）
 !<
-    subroutine pobc_drchlt (p, sz, g, face, pv)
+    subroutine pobc_drchlt (p, sz, g, m_face, pv, nID)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, face, g
+    integer                                                   ::  i, j, k, ix, jx, kx, face, g, m_face
     integer, dimension(3)                                     ::  sz
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p
     real                                                      ::  pv
+    integer, dimension(6)                                     ::  nID
+
+    if ( nID(m_face) >= 0 ) return
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
+    face = m_face
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, pv)
+!$OMP FIRSTPRIVATE(ix, jx, kx, pv, face)
 
     FACES : select case (face)
     case (X_minus)
@@ -116,24 +121,29 @@
     
 !> ********************************************************************
 !! @brief 圧力の外部ノイマン境界
-!! @param p 圧力
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param face 外部境界面の番号
+!! @param [in,out] p      圧力
+!! @param [in]     sz     配列長
+!! @param [in]     g      ガイドセル長
+!! @param [in]     m_face 外部境界面の番号
+!! @param [in]     nID    隣接ランク番号（nID[]<0の時外部境界面）
 !<
-    subroutine pobc_neumann (p, sz, g, face)
+    subroutine pobc_neumann (p, sz, g, m_face, nID)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, face, g
+    integer                                                   ::  i, j, k, ix, jx, kx, face, g, m_face
     integer, dimension(3)                                     ::  sz
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p
+    integer, dimension(6)                                     ::  nID
+
+    if ( nID(m_face) >= 0 ) return
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
+    face = m_face
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx)
+!$OMP FIRSTPRIVATE(ix, jx, kx, face)
 
     FACES : select case (face)
     case (X_minus)

@@ -409,7 +409,7 @@ void FFV::NS_FS_E_Binary()
       
       if ( T->get_Class() == OBC_OUTFLOW )
       {
-        vobc_update_(d_v, size, &guide, d_vc, &face);
+        vobc_update_(d_v, size, &guide, &face, d_vc, nID);
       }
       
     }

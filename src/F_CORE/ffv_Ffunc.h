@@ -69,7 +69,8 @@
 #define vobc_drchlt_        VOBC_DRCHLT
 #define vobc_face_drchlt_   VOBC_FACE_DRCHLT
 #define vobc_outflow_       VOBC_OUTFLOW
-#define vobc_tfree_         VOBC_TFREE
+#define vobc_tfree1_        VOBC_TFREE1
+#define vobc_tfree2_        VOBC_TFREE2
 #define vobc_update_        VOBC_UPDATE
 #define vobc_div_drchlt_    VOBC_DIV_DRCHLT
 #define vobc_get_massflow_  VOBC_GET_MASSFLOW
@@ -179,9 +180,9 @@ extern "C" {
   
   //***********************************************************************************************
   // ffv_pbc.f90
-  void pobc_drchlt_(REAL_TYPE* p, int* sz, int* g, int* face, REAL_TYPE* pv);
+  void pobc_drchlt_(REAL_TYPE* p, int* sz, int* g, int* m_face, REAL_TYPE* pv, int* nID);
   
-  void pobc_neumann_(REAL_TYPE* p, int* sz, int* g, int* face);
+  void pobc_neumann_(REAL_TYPE* p, int* sz, int* g, int* m_face, int* nID);
   
   
   
@@ -433,84 +434,99 @@ extern "C" {
   //***********************************************************************************************
   // ffv_vbc_outer.f90
   
-  void vobc_pv_specv_     (REAL_TYPE* wv,
-                           int* sz,
-                           int* g,
-                           REAL_TYPE* dh,
-                           REAL_TYPE* rei,
-                           REAL_TYPE* v,
-                           int* bv,
-                           REAL_TYPE* vec,
-                           int* face,
-                           double* flop);
+  void vobc_pv_specv_ (REAL_TYPE* wv,
+                       int* sz,
+                       int* g,
+                       int* m_face,
+                       REAL_TYPE* dh,
+                       REAL_TYPE* rei,
+                       REAL_TYPE* v,
+                       int* bv,
+                       REAL_TYPE* vec,
+                       int* nID,
+                       double* flop);
   
-  void vobc_pv_wall_      (REAL_TYPE* wv,
-                           int* sz,
-                           int* g,
-                           REAL_TYPE* dh,
-                           REAL_TYPE* rei,
-                           REAL_TYPE* v,
-                           REAL_TYPE* vec,
-                           int* face,
-                           double* flop);
+  void vobc_pv_wall_ (REAL_TYPE* wv,
+                      int* sz,
+                      int* g,
+                      int* m_face,
+                      REAL_TYPE* dh,
+                      REAL_TYPE* rei,
+                      REAL_TYPE* v,
+                      REAL_TYPE* vec,
+                      int* nID,
+                      double* flop);
   
-  void vobc_drchlt_       (REAL_TYPE* v,
-                           int* sz,
-                           int* g,
-                           int* bv,
-                           int* face,
-                           REAL_TYPE* vec);
-  
-  void vobc_face_drchlt_  (REAL_TYPE* vf,
-                           int* sz,
-                           int* g,
-                           int* bv,
-                           int* face,
-                           REAL_TYPE* vec,
-                           REAL_TYPE* vsum);
+  void vobc_drchlt_ (REAL_TYPE* v,
+                     int* sz,
+                     int* g,
+                     int* m_face,
+                     int* bv,
+                     REAL_TYPE* vec,
+                     int* nID);
   
   void vobc_neumann_ (REAL_TYPE* v,
                       int* sz,
                       int* g,
-                      int* face,
-                      REAL_TYPE* aa);
+                      int* m_face,
+                      REAL_TYPE* sum,
+                      int* nID);
 
-  void vobc_symmetric_ (REAL_TYPE* v,
-                        int* sz,
-                        int* g,
-                        int* face);
+  void vobc_tfree2_ (REAL_TYPE* v,
+                     int* sz,
+                     int* g,
+                     int* m_face,
+                     REAL_TYPE* vf,
+                     REAL_TYPE* sum,
+                     int* nID,
+                     double* flop);
   
-  void vobc_tfree_ (REAL_TYPE* v,
-                    int* sz,
-                    int* g,
-                    int* face,
-                    REAL_TYPE* vf,
-                    int* bv,
-                    REAL_TYPE* aa,
-                    double* flop);
+  void vobc_tfree1_ (REAL_TYPE* vf,
+                     int* sz,
+                     int* g,
+                     int* m_face,
+                     int* nID);
   
   void vobc_update_ (REAL_TYPE* v,
                      int* sz,
                      int* g,
+                     int* m_face,
                      REAL_TYPE*vc,
-                     int* face);
+                     int* nID);
   
   void vobc_div_drchlt_ (REAL_TYPE* div,
                          int* sz,
                          int* g,
-                         int* face,
+                         int* m_face,
                          int* bv,
                          REAL_TYPE* vec,
                          REAL_TYPE* vsum,
+                         int* nID,
                          double* flop);
   
   void vobc_get_massflow_ (int* sz,
                            int* g,
-                           int* face,
-                           REAL_TYPE* aa,
+                           int* m_face,
+                           REAL_TYPE* sum,
                            REAL_TYPE* v,
                            int* bv,
+                           int* nID,
                            double* flop);
+  
+  void vobc_face_drchlt_  (REAL_TYPE* vf,
+                           int* sz,
+                           int* g,
+                           int* m_face,
+                           int* bv,
+                           REAL_TYPE* vec,
+                           REAL_TYPE* vsum,
+                           int* nID);
+
+  void vobc_symmetric_ (REAL_TYPE* v,
+                        int* sz,
+                        int* g,
+                        int* m_face,
+                        int* nID);
 
   
   //***********************************************************************************************

@@ -23,23 +23,24 @@
 
 !> ********************************************************************
 !! @brief 外部速度境界条件による対流項と粘性項の流束の修正
-!! @param [out] wv   疑似ベクトルの空間項の評価値
-!! @param [in]  sz   配列長
-!! @param [in]  g    ガイドセル長
-!! @param [in]  dh   格子幅
-!! @param [in]  rei  Reynolds数の逆数
-!! @param [in]  v0   速度ベクトル（n-step）
-!! @param [in]  bv   BCindex V
-!! @param [in]  vec  指定する速度ベクトル
-!! @param [in]  face 外部境界処理のときの面番号
-!! @param [out] flop 浮動小数点演算数
+!! @param [out] wv     疑似ベクトルの空間項の評価値
+!! @param [in]  sz     配列長
+!! @param [in]  g      ガイドセル長
+!! @param [in]  m_face 外部境界処理のときの面番号
+!! @param [in]  dh     格子幅
+!! @param [in]  rei    Reynolds数の逆数
+!! @param [in]  v0     速度ベクトル（n-step）
+!! @param [in]  bv     BCindex V
+!! @param [in]  vec    指定する速度ベクトル
+!! @param [in]  nID    隣接ランク番号（nID[]<0の時外部境界面）
+!! @param [out] flop   浮動小数点演算数
 !! @note vecには，流入条件のとき指定速度
 !!  mskで部分的な速度を与える
 !<
-    subroutine vobc_pv_specv (wv, sz, g, dh, rei, v0, bv, vec, face, flop)
+    subroutine vobc_pv_specv (wv, sz, g, m_face, dh, rei, v0, bv, vec, nID, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, g, face
+    integer                                                   ::  i, j, k, g, face, m_face
     integer                                                   ::  ix, jx, kx
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
@@ -49,11 +50,15 @@
     real                                                      ::  u_bc, v_bc, w_bc, m
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0, wv
     real, dimension(3)                                        ::  vec
+    integer, dimension(6)                                     ::  nID
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
-    
+
+    if ( nID(m_face) >= 0 ) return
+
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
+    face = m_face
     
     dh1= 1.0/dh
     dh2= rei*dh1*dh1
@@ -308,21 +313,22 @@
     
 !> ********************************************************************
 !! @brief 外部速度境界条件による対流項と粘性項の流束の修正
-!! @param [out] wv   疑似ベクトルの空間項の評価値
-!! @param [in]  sz   配列長
-!! @param [in]  g    ガイドセル長
-!! @param [in]  dh   格子幅
-!! @param [in]  rei  Reynolds数の逆数
-!! @param [in]  v0   速度ベクトル（n-step）
-!! @param [in]  vec  指定する速度ベクトル
-!! @param [in]  face 外部境界処理のときの面番号
-!! @param [out] flop 浮動小数点演算数
+!! @param [out] wv     疑似ベクトルの空間項の評価値
+!! @param [in]  sz     配列長
+!! @param [in]  g      ガイドセル長
+!! @param [in]  m_face 外部境界処理のときの面番号
+!! @param [in]  dh     格子幅
+!! @param [in]  rei    Reynolds数の逆数
+!! @param [in]  v0     速度ベクトル（n-step）
+!! @param [in]  vec    指定する速度ベクトル
+!! @param [in]  nID    隣接ランク番号（nID[]<0の時外部境界面）
+!! @param [out] flop   浮動小数点演算数
 !! @note 対流流束はゼロ，壁面法線方向の1階微分もゼロ
 !<
-    subroutine vobc_pv_wall (wv, sz, g, dh, rei, v0, vec, face, flop)
+    subroutine vobc_pv_wall (wv, sz, g, m_face, dh, rei, v0, vec, nID, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, g, face
+    integer                                                   ::  i, j, k, g, face, m_face
     integer                                                   ::  ix, jx, kx
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, rix, rjx, rkx
@@ -330,10 +336,14 @@
     real                                                      ::  dh, dh1, dh2, rei
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0, wv
     real, dimension(3)                                        ::  vec
-    
+    integer, dimension(6)                                     ::  nID
+
+    if ( nID(m_face) >= 0 ) return
+
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
+    face = m_face
 
     dh1= 1.0/dh
     dh2= rei*dh1*dh1*2.0
@@ -473,28 +483,33 @@
 
 !> ********************************************************************
 !! @brief ガイドセルの速度指定境界条件を設定するために必要な参照値をセットする
-!! @param [out] v    セルセンタ速度
-!! @param [in]  sz   配列長
-!! @param [in]  g    ガイドセル長
-!! @param [in]  bv   BCindex V
-!! @param [in]  face 外部境界の面番号
-!! @param [in]  vec  指定する速度ベクトル
+!! @param [out] v      セルセンタ速度
+!! @param [in]  sz     配列長
+!! @param [in]  g      ガイドセル長
+!! @param [in]  m_face 外部境界の面番号
+!! @param [in]  bv     BCindex V
+!! @param [in]  vec    指定する速度ベクトル
+!! @param [in]  nID    隣接ランク番号（nID[]<0の時外部境界面）
 !! @note 流束型の境界条件を用いるので，内点の計算に使う参照点に値があればよい（1層）
 !<
-    subroutine vobc_drchlt (v, sz, g, bv, face, vec)
+    subroutine vobc_drchlt (v, sz, g, m_face, bv, vec, nID)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, face, ix, jx, kx, gc
+    integer                                                     ::  i, j, k, g, face, ix, jx, kx, gc, m_face
     integer, dimension(3)                                       ::  sz
     real                                                        ::  u_bc, v_bc, w_bc
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
     real, dimension(3)                                          ::  vec
+    integer, dimension(6)                                       ::  nID
+
+    if ( nID(m_face) >= 0 ) return
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
     gc = g
+    face = m_face
     
     ! u_bcは境界速度
     u_bc = vec(1)
@@ -618,24 +633,29 @@
 
 !> ********************************************************************
 !! @brief ノイマン条件
-!! @param [in,out] v    速度ベクトル
-!! @param [in]     sz   配列長
-!! @param [in]     g    ガイドセル長
-!! @param [in]     face 外部境界面の番号
-!! @param [out]    aa   積算値 \sum{v}
+!! @param [in,out] v      速度ベクトル
+!! @param [in]     sz     配列長
+!! @param [in]     g      ガイドセル長
+!! @param [in]     m_face 外部境界面の番号
+!! @param [out]    aa     積算値 \sum{v}
+!! @param [in]     nID    隣接ランク番号（nID[]<0の時外部境界面）
 !<
-    subroutine vobc_neumann (v, sz, g, face, aa)
+    subroutine vobc_neumann (v, sz, g, m_face, aa, nID)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, face, g, gc
+    integer                                                   ::  i, j, k, ix, jx, kx, face, g, gc, m_face
     real                                                      ::  ux, uy, uz, aa
     integer, dimension(3)                                     ::  sz
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
+    integer, dimension(6)                                     ::  nID
+
+    if ( nID(m_face) >= 0 ) return
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
     gc = g
+    face = m_face
 
     aa = 0.0
 
@@ -773,36 +793,40 @@
 
 !> ********************************************************************
 !! @brief 速度の外部境界：　トラクションフリー
-!! @param [in,out] v    セルセンタ速度ベクトル
-!! @param [in]     sz   配列長
-!! @param [in]     g    ガイドセル長
-!! @param [in]     face 外部境界面の番号
-!! @param [in,out] vf   セルフェイス速度
-!! @param [in]     bv   BCindex V
-!! @param [out]    aa   積算値 \sum{v}
-!! @param [in,out] flop 浮動小数演算数
+!! @param [in,out] v      セルセンタ速度ベクトル
+!! @param [in]     sz     配列長
+!! @param [in]     g      ガイドセル長
+!! @param [in]     m_face 外部境界面の番号
+!! @param [in,out] vf     セルフェイス速度
+!! @param [out]    sum    積算値 \sum{v}
+!! @param [in]     nID    隣接ランク番号（nID[]<0の時外部境界面）
+!! @param [in,out] flop   浮動小数演算数
 !! @note 今のところ、トラクションフリー面は全て流体
+!! 後半のループは1~ix，flopはtfree1,2の合計
 !<
-    subroutine vobc_tfree (v, sz, g, face, vf, bv, aa, flop)
+    subroutine vobc_tfree2 (v, sz, g, m_face, vf, sum, nID, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, face, g, gc
+    integer                                                   ::  i, j, k, ix, jx, kx, face, g, gc, m_face
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, rix, rjx, rkx
-    real                                                      ::  v1, v2, v3, v4, ut, vt, wt, aa
+    real                                                      ::  ut, vt, wt, aa, sum
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vf
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
+    integer, dimension(6)                                     ::  nID
+
+    if ( nID(m_face) >= 0 ) return
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
     gc = g
+    face = m_face
 
     aa = 0.0
 
 !$OMP PARALLEL REDUCTION(+:aa) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, gc, face) &
-!$OMP PRIVATE(i, j, k, v1, v2, v3, v4, ut, vt, wt)
+!$OMP PRIVATE(i, j, k, ut, vt, wt)
 
     FACES : select case (face)
     case (X_minus)
@@ -810,14 +834,9 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
-        v1 = 0.5 * (vf(1, j  , k  , 2) + vf(1, j-1, k  , 2))
-        v2 = 0.5 * (vf(0, j+1, k  , 1) - vf(0, j-1, k  , 1))
-        v3 = 0.5 * (vf(1, j  , k  , 3) + vf(1, j  , k-1, 3))
-        v4 = 0.5 * (vf(0, j  , k+1, 1) - vf(0, j  , k-1, 1))
-
         ut = v(1, j, k, 1)
-        vt = v1 + v2
-        wt = v3 + v4
+        vt = 0.5 * (vf(0, j, k, 2) + vf(0, j-1, k  , 2))
+        wt = 0.5 * (vf(0, j, k, 3) + vf(0, j  , k-1, 3))
 
         aa = aa + vf(0, j, k, 1)
 
@@ -837,14 +856,9 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
-        v1 = 0.5 * (vf(ix, j  , k  , 2) + vf(ix, j-1, k  , 2))
-        v2 = 0.5 * (vf(ix, j+1, k  , 1) - vf(ix, j-1, k  , 1))
-        v3 = 0.5 * (vf(ix, j  , k  , 3) + vf(ix, j  , k-1, 3))
-        v4 = 0.5 * (vf(ix, j  , k+1, 1) - vf(ix, j  , k-1, 1))
-
         ut = v(ix, j, k, 1)
-        vt = v1 - v2
-        wt = v3 - v4
+        vt = 0.5 * (vf(ix+1, j, k, 2) + vf(ix+1, j-1, k  , 2))
+        wt = 0.5 * (vf(ix+1, j, k, 3) + vf(ix+1, j  , k-1, 3))
 
         aa = aa + vf(ix, j, k, 1)
 
@@ -864,14 +878,9 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do i=1,ix
-        v1 = 0.5 * (vf(i  , 1, k  , 1) + vf(i-1, 1, k  , 1))
-        v2 = 0.5 * (vf(i+1, 0, k  , 2) - vf(i-1, 0, k  , 2))
-        v3 = 0.5 * (vf(i  , 1, k  , 3) + vf(i  , 1, k-1, 3))
-        v4 = 0.5 * (vf(i  , 0, k+1, 2) - vf(i  , 0, k-1, 2))
-
-        ut = v1 + v2
+        ut = 0.5 * (vf(i, 0, k, 1) + vf(i-1, 0, k  , 1))
         vt = v(i, 1, k, 2)
-        wt = v3 + v4
+        wt = 0.5 * (vf(i, 0, k, 3) + vf(i  , 0, k-1, 3))
 
         aa = aa + vf(i, 0, k, 2)
 
@@ -891,14 +900,9 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do i=1,ix
-        v1 = 0.5 * (vf(i  , jx, k  , 1) + vf(i-1, jx, k  , 1))
-        v2 = 0.5 * (vf(i+1, jx, k  , 2) - vf(i-1, jx, k  , 2))
-        v3 = 0.5 * (vf(i  , jx, k  , 3) + vf(i  , jx, k-1, 3))
-        v4 = 0.5 * (vf(i  , jx, k+1, 2) - vf(i  , jx, k-1, 2))
-
-        ut = v1 - v2
+        ut = 0.5 * (vf(i, jx+1, k, 1) + vf(i-1, jx+1, k  , 1))
         vt = v(i, jx, k, 2)
-        wt = v3 - v4
+        wt = 0.5 * (vf(i, jx+1, k, 3) + vf(i  , jx+1, k-1, 3))
 
         aa = aa + vf(i, jx, k, 2)
 
@@ -914,17 +918,12 @@
       
 
     case (Z_minus)
-      
+
 !$OMP DO SCHEDULE(static)
       do j=1,jx
       do i=1,ix
-        v1 = 0.5 * (vf(i  , j  , 1, 1) + vf(i-1, j  , 1, 1))
-        v2 = 0.5 * (vf(i+1, j  , 0, 3) - vf(i-1, j  , 0, 3))
-        v3 = 0.5 * (vf(i  , j  , 1, 2) + vf(i  , j-1, 1, 2))
-        v4 = 0.5 * (vf(i  , j+1, 0, 3) - vf(i  , j-1, 0, 3))
-
-        ut = v1 + v2
-        vt = v3 + v4
+        ut = 0.5 * (vf(i, j, 0, 1) + vf(i-1, j  , 0, 1))
+        vt = 0.5 * (vf(i, j, 0, 2) + vf(i  , j-1, 0, 2))
         wt = v(i, j, 1, 3)
 
         aa = aa + vf(i, j, 0, 3)
@@ -945,13 +944,8 @@
 !$OMP DO SCHEDULE(static)
       do j=1,jx
       do i=1,ix
-        v1 = 0.5 * (vf(i  , j  , kx, 1) + vf(i-1, j  , kx, 1))
-        v2 = 0.5 * (vf(i+1, j  , kx, 3) - vf(i-1, j  , kx, 3))
-        v3 = 0.5 * (vf(i  , j  , kx, 2) + vf(i  , j-1, kx, 2))
-        v4 = 0.5 * (vf(i  , j+1, kx, 3) - vf(i  , j-1, kx, 3))
-
-        ut = v1 - v2
-        vt = v3 - v4
+        ut = 0.5 * (vf(i, j, kx+1, 1) + vf(i-1, j  , kx+1, 1))
+        vt = 0.5 * (vf(i, j, kx+1, 2) + vf(i  , j-1, kx+1, 2))
         wt = v(i, j, kx, 3)
 
         aa = aa + vf(i, j, kx, 3)
@@ -972,61 +966,178 @@
 !$OMP END PARALLEL
 
 
+    sum = aa
+
     rix = dble(jx)*dble(kx)
     rjx = dble(ix)*dble(kx)
     rkx = dble(ix)*dble(jx)
 
-    flop = flop + 9.0d0
-
     FACES2 : select case (face)
     case (X_minus)
-      flop = flop + rix*10.0d0
+      flop = flop + rix*9.0d0
 
     case (X_plus)
-      flop = flop + rix*10.0d0
+      flop = flop + rix*9.0d0
 
     case (Y_minus)
-      flop = flop + rjx*10.0d0
+      flop = flop + rjx*9.0d0
 
     case (Y_plus)
-      flop = flop + rjx*10.0d0
+      flop = flop + rjx*9.0d0
 
     case (Z_minus)
-      flop = flop + rkx*10.0d0
+      flop = flop + rkx*9.0d0
 
     case (Z_plus)
-      flop = flop + rkx*10.0d0
+      flop = flop + rkx*9.0d0
 
     case default
     end select FACES2
 
 
     return
-    end subroutine vobc_tfree
+    end subroutine vobc_tfree2
+
+
+!> ********************************************************************
+!! @brief 速度の外部境界：　トラクションフリーの前半処理
+!! @param [in,out] vf     セルフェイス速度
+!! @param [in]     sz     配列長
+!! @param [in]     g      ガイドセル長
+!! @param [in]     m_face 外部境界面の番号
+!! @param [in]     nID    隣接ランク番号（nID[]<0の時外部境界面）
+!! ループは0~ixで回す．0から始めるのは，後半処理でスタガード位置の変数からセンターへ内挿するときに
+!! 参照する端点を含めるため．
+!! 処理の間に同期が必要なので，サブルーチンを分割
+!<
+  subroutine vobc_tfree1 (vf, sz, g, m_face, nID)
+  implicit none
+  include 'ffv_f_params.h'
+  integer                                                   ::  i, j, k, ix, jx, kx, face, g, m_face
+  integer, dimension(3)                                     ::  sz
+  integer, dimension(6)                                     ::  nID
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vf
+
+  if ( nID(m_face) >= 0 ) return
+
+  ix = sz(1)
+  jx = sz(2)
+  kx = sz(3)
+  face = m_face
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, face) &
+!$OMP PRIVATE(i, j, k)
+
+  FACES : select case (face)
+  case (X_minus)
+
+!$OMP DO SCHEDULE(static)
+    do k=0,kx
+    do j=0,jx
+      vf(0, j, k, 2) = vf(1, j, k, 2) + vf(0, j+1, k  , 1) - vf(0, j, k, 1)
+      vf(0, j, k, 3) = vf(1, j, k, 3) + vf(0, j  , k+1, 1) - vf(0, j, k, 1)
+    end do
+    end do
+!$OMP END DO
+
+
+  case (X_plus)
+
+!$OMP DO SCHEDULE(static)
+    do k=0,kx
+    do j=0,jx
+      vf(ix+1, j, k, 2) = vf(ix, j, k, 2) - vf(ix, j+1, k  , 1) + vf(ix, j, k, 1)
+      vf(ix+1, j, k, 3) = vf(ix, j, k, 3) - vf(ix, j  , k+1, 1) + vf(ix, j, k, 1)
+    end do
+    end do
+!$OMP END DO
+
+
+  case (Y_minus)
+
+!$OMP DO SCHEDULE(static)
+    do k=0,kx
+    do i=0,ix
+      vf(i, 0, k, 1) = vf(i, 1, k, 1) + vf(i+1, 0, k  , 2) - vf(i, 0, k, 2)
+      vf(i, 0, k, 3) = vf(i, 1, k, 3) + vf(i  , 0, k+1, 2) - vf(i, 0, k, 2)
+    end do
+    end do
+!$OMP END DO
+
+
+  case (Y_plus)
+
+!$OMP DO SCHEDULE(static)
+    do k=0,kx
+    do i=0,ix
+      vf(i, jx+1, k, 1) = vf(i, jx, k, 1) - vf(i+1, jx, k  , 2) + vf(i, jx, k, 2)
+      vf(i, jx+1, k, 3) = vf(i, jx, k, 3) - vf(i  , jx, k+1, 2) + vf(i, jx, k, 2)
+    end do
+    end do
+!$OMP END DO
+
+
+  case (Z_minus)
+
+!$OMP DO SCHEDULE(static)
+    do j=0,jx
+    do i=0,ix
+      vf(i, j, 0, 1) = vf(i, j, 1, 1) + vf(i+1, j  , 0, 3) - vf(i, j, 0, 3)
+      vf(i, j, 0, 2) = vf(i, j, 1, 2) + vf(i  , j+1, 0, 3) - vf(i, j, 0, 3)
+    end do
+    end do
+!$OMP END DO
+
+
+  case (Z_plus)
+
+!$OMP DO SCHEDULE(static)
+    do j=0,jx
+    do i=0,ix
+      vf(i, j, kx+1, 1) = vf(i, j, kx, 1) - vf(i+1, j  , kx, 3) + vf(i, j, kx, 3)
+      vf(i, j, kx+1, 2) = vf(i, j, kx, 2) - vf(i  , j+1, kx, 3) + vf(i, j, kx, 3)
+    end do
+    end do
+!$OMP END DO
+
+
+  case default
+  end select FACES
+
+!$OMP END PARALLEL
+
+  return
+  end subroutine vobc_tfree1
 
 !> ********************************************************************
 !! @brief 疑似速度から次ステップ速度へ参照する速度をコピーする
-!! @param [out] v    速度ベクトル（セルセンタ）
-!! @param [in]  sz   配列長
-!! @param [in]  g    ガイドセル長
-!! @param [in]  vc   セルセンタ疑似速度 u^*
-!! @param [in]  face 面番号
+!! @param [out] v      速度ベクトル（セルセンタ）
+!! @param [in]  sz     配列長
+!! @param [in]  g      ガイドセル長
+!! @param [in]  m_face 面番号
+!! @param [in]  vc     セルセンタ疑似速度 u^*
+!! @param [in]  nID    隣接ランク番号（nID[]<0の時外部境界面）
 !<
-    subroutine vobc_update (v, sz, g, vc, face)
+    subroutine vobc_update (v, sz, g, m_face, vc, nID)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, ix, jx, kx, face, gc
+    integer                                                     ::  i, j, k, g, ix, jx, kx, face, gc, m_face
     integer, dimension(3)                                       ::  sz
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, vc
+    integer, dimension(6)                                       ::  nID
+
+    if ( nID(m_face) >= 0 ) return
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
     gc = g
-    
+    face = m_face
+
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, face, gc)
-    
+
     FACES : select case (face)
     case (X_minus)
 
@@ -1041,7 +1152,7 @@
       end do
       end do
 !$OMP END DO
-      
+
     case (X_plus)
 
 !$OMP DO SCHEDULE(static)
@@ -1123,31 +1234,36 @@
 
 !> ********************************************************************
 !! @brief 外部指定境界条件による速度の発散の修正
-!! @param [in,out] div   速度の発散
-!! @param [in]     sz    配列長
-!! @param [in]     g     ガイドセル長
-!! @param [in]     face  面番号
-!! @param [in]     bv    BCindex V
-!! @param [in]     vec   指定する速度ベクトル
-!! @param [out]    vsum  \sum{v}
+!! @param [in,out] div     速度の発散
+!! @param [in]     sz      配列長
+!! @param [in]     g       ガイドセル長
+!! @param [in]     m_face  面番号
+!! @param [in]     bv      BCindex V
+!! @param [in]     vec     指定する速度ベクトル
+!! @param [out]    vsum    \sum{v}
+!! @param [in]     nID     隣接ランク番号（nID[]<0の時外部境界面）
 !! @param [in,out] flop  flop count
 !! @note 固体部分は対象外とするのでループ中に判定あり
 !!       部分的な境界条件の実装のため、ガイドセル部のマスク情報を利用
 !<
-    subroutine vobc_div_drchlt (div, sz, g, face, bv, vec, vsum, flop)
+    subroutine vobc_div_drchlt (div, sz, g, m_face, bv, vec, vsum, nID, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, g, ix, jx, kx, face, bvx
+    integer                                                   ::  i, j, k, g, ix, jx, kx, face, bvx, m_face
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, rix, rjx, rkx
     real                                                      ::  u_bc, v_bc, w_bc, vsum, b, a
     real, dimension(3)                                        ::  vec
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
+    integer, dimension(6)                                     ::  nID
+
+    if ( nID(m_face) >= 0 ) return
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
+    face = m_face
     
     u_bc = vec(1)
     v_bc = vec(2)
@@ -1295,28 +1411,33 @@
 
 !> ********************************************************************
 !! @brief 外部境界面の流入出量を求める
-!! @param [in]     sz   配列長
-!! @param [in]     g    ガイドセル長
-!! @param [in]     face 面番号
-!! @param [out]    sum  領域境界の流速の積算値 \sum{vf}
-!! @param [in]     v    セルセンター速度 n+1
-!! @param [in]     bv   BCindex V
-!! @param [out]    flop flop count 近似
+!! @param [in]     sz     配列長
+!! @param [in]     g      ガイドセル長
+!! @param [in]     m_face 面番号
+!! @param [out]    sum    領域境界の流速の積算値 \sum{vf}
+!! @param [in]     v      セルセンター速度 n+1
+!! @param [in]     bv     BCindex V
+!! @param [in]     nID    隣接ランク番号（nID[]<0の時外部境界面）
+!! @param [out]    flop   flop count 近似
 !! @note 有効セルのマスクを掛けて、流量を積算
 !<
-    subroutine vobc_get_massflow (sz, g, face, sum, v, bv, flop)
+    subroutine vobc_get_massflow (sz, g, m_face, sum, v, bv, nID, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, g, ix, jx, kx, face
+    integer                                                   ::  i, j, k, g, ix, jx, kx, face, m_face
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, rix, rjx, rkx
     real                                                      ::  sum, a, s
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
+    integer, dimension(6)                                     ::  nID
+
+    if ( nID(m_face) >= 0 ) return
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
+    face = m_face
 
     a = 0.0   ! sum
 
@@ -1439,28 +1560,33 @@
 
 !> ********************************************************************
 !! @brief セルフェイスの値をセットする
-!! @param [out] vf   セルフェイス速度
-!! @param [in]  sz   配列長
-!! @param [in]  g    ガイドセル長
-!! @param [in]  bv   BCindex V
-!! @param [in]  face 外部境界の面番号
-!! @param [in]  vec  指定する速度ベクトル
-!! @param [out] vsum \sum{vf}
+!! @param [out] vf     セルフェイス速度
+!! @param [in]  sz     配列長
+!! @param [in]  g      ガイドセル長
+!! @param [in]  m_face 外部境界の面番号
+!! @param [in]  bv     BCindex V
+!! @param [in]  vec    指定する速度ベクトル
+!! @param [out] vsum   \sum{vf}
+!! @param [in]  nID    隣接ランク番号（nID[]<0の時外部境界面）
 !! @note 部分的な境界条件の実装のため、ガイドセル部のマスク情報を利用
 !<
-    subroutine vobc_face_drchlt (vf, sz, g, bv, face, vec, vsum)
+    subroutine vobc_face_drchlt (vf, sz, g, m_face, bv, vec, vsum, nID)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, face, ix, jx, kx
+    integer                                                     ::  i, j, k, g, face, ix, jx, kx, m_face
     integer, dimension(3)                                       ::  sz
     real                                                        ::  u_bc, v_bc, w_bc, vsum, a, b
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  vf
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
     real, dimension(3)                                          ::  vec
+    integer, dimension(6)                                       ::  nID
+
+    if ( nID(m_face) >= 0 ) return
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
+    face = m_face
 
     ! u_bcは境界速度
     u_bc = vec(1)
@@ -1574,24 +1700,30 @@
     return
     end subroutine vobc_face_drchlt
 
+
 !> ********************************************************************
 !! @brief 対称条件
-!! @param [in,out] v    速度ベクトル
-!! @param [in]     sz   配列長
-!! @param [in]     g    ガイドセル長
-!! @param [in]     face 外部境界面の番号
+!! @param [in,out] v      速度ベクトル
+!! @param [in]     sz     配列長
+!! @param [in]     g      ガイドセル長
+!! @param [in]     m_face 外部境界面の番号
+!! @param [in]     nID    隣接ランク番号（nID[]<0の時外部境界面）
 !<
-  subroutine vobc_symmetric (v, sz, g, face)
+  subroutine vobc_symmetric (v, sz, g, m_face, nID)
   implicit none
   include 'ffv_f_params.h'
-  integer                                                   ::  i, j, k, ix, jx, kx, face, g, gc
+  integer                                                   ::  i, j, k, ix, jx, kx, face, g, gc, m_face
   integer, dimension(3)                                     ::  sz
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
+  integer, dimension(6)                                     ::  nID
+
+  if ( nID(m_face) >= 0 ) return
 
   ix = sz(1)
   jx = sz(2)
   kx = sz(3)
   gc = g
+  face = m_face
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, gc, face) &

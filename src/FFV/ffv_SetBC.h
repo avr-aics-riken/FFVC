@@ -122,23 +122,22 @@ protected:
   REAL_TYPE ps_OBC_IsoThermal     (REAL_TYPE* d_qbc, int* d_bh1, const int face, REAL_TYPE* d_t, REAL_TYPE* d_t0, double& flop);
   
   void Pibc_Prdc                (REAL_TYPE* d_p, int* st, int* ed, int* d_bcd, int odr, int dir, REAL_TYPE pv);
-  void Pobc_Prdc_Directional    (REAL_TYPE* d_p, const int face, REAL_TYPE pv, int uod);
-  void Pobc_Prdc_Simple         (REAL_TYPE* d_p, const int face);
+  
+  void PobcPeriodicDirectional (REAL_TYPE* d_p, const int face, REAL_TYPE pv, int uod);
+  
+  // 圧力の外部周期境界条件（単純コピー）
+  void PobcPeriodicSimple (REAL_TYPE* d_p, const int face);
   
   
-  /**
-   * @brief 温度の外部周期境界条件（単純コピー）
-   * @param [in] t    温度のデータクラス
-   * @param [in] face 面番号
-   */
-  void Tobc_Prdc_Simple (REAL_TYPE* d_t, const int face);
+  //温度の外部周期境界条件（単純コピー）
+  void TobcPeriodicSimple (REAL_TYPE* d_t, const int face);
   
   
   void Vibc_Prdc        (REAL_TYPE* d_v, int* st, int* ed, int* d_bd, int odr, int dir);
   
   
-  // 速度の外部周期境界条件（単純なコピー）
-  void Vobc_Prdc (REAL_TYPE* d_v, const int face);
+  // 速度の外部周期境界条件（単純コピー）
+  void VobcPeriodic (REAL_TYPE* d_v, const int face);
 
   
   
@@ -270,7 +269,11 @@ public:
   
   void mod_Vis_EE (REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE cf, int* d_bx, const double tm, REAL_TYPE dt, REAL_TYPE* v00, double& flop);
   
-  // 圧力の外部境界条件
+  
+  /**
+   * @brief 圧力の外部境界条件
+   * @param [in,out]d_p 圧力のデータクラス
+   */
   void OuterPBC (REAL_TYPE* d_p);
   
   // 温度の外部境界条件
@@ -279,7 +282,16 @@ public:
   // 外部境界セルフェイスに対する温度条件
   void OuterTBCface (REAL_TYPE* d_qbc, int* d_bx, REAL_TYPE* d_t, REAL_TYPE* d_t0, Control* C, double& flop);
   
-  // 速度の外部境界条件処理（VP反復内で値を指定する境界条件）
+  /**
+   * @brief 速度の外部境界条件処理（VP反復内で値を指定する境界条件）
+   * @param [in,out] d_v  セルセンター速度ベクトル v^{n+1}
+   * @param [in]     d_vf セルフェイス速度ベクトル v^{n+1}
+   * @param [in]     d_bv BCindex V
+   * @param [in]     tm   時刻
+   * @param [in]     C    コントロールクラス
+   * @param [in]     v00  参照速度
+   * @param [in,out] flop 浮動小数点演算数
+   */
   void OuterVBC (REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, const double tm, Control* C, REAL_TYPE* v00, double& flop);
   
   

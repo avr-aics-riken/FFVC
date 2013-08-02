@@ -419,7 +419,7 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
     REAL_TYPE* vv = obc[face].getDomainV();
     
     // 特殊条件
-    if ( (R->Mode.Example == id_Jet) && (face==0) )
+    if ( (R->Mode.Example == id_Jet) && (face==X_MINUS) )
     {
       REAL_TYPE q[2] = {0.0, 0.0};
       

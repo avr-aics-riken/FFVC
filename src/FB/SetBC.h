@@ -82,11 +82,6 @@ public:
   /**　デストラクタ */
   virtual ~SetBC() {}
   
-protected:
-  
-  // 外部境界処理用のループインデクスを取得する
-  void getOuterLoopIdx(const int face, int* st, int* ed);
-  
 
 public:
   

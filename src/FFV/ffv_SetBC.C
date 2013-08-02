@@ -47,7 +47,6 @@ void SetBC3D::assign_Temp(REAL_TYPE* d_t, int* d_bh1, const double tm, const Con
    int n = OBC_MASK;
    for (int face=0; face<NOFACE; face++) {
    typ = obc[face].get_Class();
-   getOuterLoopIdx(face, st, ed);
    
    // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
    if( nID[face] >= 0 ) continue;
@@ -103,25 +102,21 @@ void SetBC3D::assignVelocity(REAL_TYPE* d_v, int* d_bv, const double tm, REAL_TY
   }
   
   // 外部境界条件
-  for (int face=0; face<NOFACE; face++) {
+  for (int face=0; face<NOFACE; face++)
+  {
     typ = obc[face].get_Class();
-    getOuterLoopIdx(face, st, ed);
     
-    // 内部領域のときは，処理しない
-    if ( nID[face] < 0 )
+    if ( typ == OBC_SPEC_VEL )
     {
-      if ( typ == OBC_SPEC_VEL )
+      if ( !clear )
       {
-        if ( !clear )
-        {
-          dummy = extractVelOBC(face, vec, tm, v00, flop);
-        }
-        else
-        {
-          vec[0] = vec[1] = vec[2] = 0.0;
-        }
-        vobc_drchlt_(d_v, size, &gd, d_bv, &face, vec);
+        dummy = extractVelOBC(face, vec, tm, v00, flop);
       }
+      else
+      {
+        vec[0] = vec[1] = vec[2] = 0.0;
+      }
+      vobc_drchlt_(d_v, size, &gd, &face, d_bv, vec, nID);
     }
 
   }
@@ -146,16 +141,19 @@ void SetBC3D::checkDriver(FILE* fp)
     node_st_k = head[2];
   }
   
-  for (int face=0; face<NOFACE; face++) {
+  for (int face=0; face<NOFACE; face++)
+  {
     if ( (obc[face].get_Class() == OBC_PERIODIC) && (obc[face].get_PrdcMode() == BoundaryOuter::prdc_Driver) )
     {
 
-      for (int n=1; n<=NoCompo; n++) {
+      for (int n=1; n<=NoCompo; n++)
+      {
         if ( cmp[n].getType() == PERIODIC )
         {
           // 方向のチェック
           o_dir = obc[face].get_DriverDir();
           c_dir = cmp[n].getPeriodicDir();
+          
           if ( o_dir != c_dir )
           {
             fprintf(fp, "\tDriver direction is different between OBC[%s] and Component[%s].", 
@@ -295,7 +293,8 @@ void SetBC3D::InnerVBC_Periodic(REAL_TYPE* d_v, int* d_bd)
   
   int st[3], ed[3];
   
-  for (int n=1; n<=NoCompo; n++) {
+  for (int n=1; n<=NoCompo; n++)
+  {
     cmp[n].getBbox(st, ed);
     
     if ( cmp[n].getType() == PERIODIC )
@@ -324,7 +323,8 @@ void SetBC3D::InnerVBC(REAL_TYPE* d_v, int* d_bv, const double tm, REAL_TYPE* v0
   
   if ( isCDS ) // Cut-Distance
   {
-    for (int n=1; n<=NoCompo; n++) {
+    for (int n=1; n<=NoCompo; n++)
+    {
       cmp[n].getBbox(st, ed);
       
       switch ( cmp[n].getType() )
@@ -343,7 +343,8 @@ void SetBC3D::InnerVBC(REAL_TYPE* d_v, int* d_bv, const double tm, REAL_TYPE* v0
   }
   else // Binary
   {
-    for (int n=1; n<=NoCompo; n++) {
+    for (int n=1; n<=NoCompo; n++)
+    {
       cmp[n].getBbox(st, ed);
       
       switch ( cmp[n].getType() )
@@ -532,29 +533,25 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, double tm, REAL_TYPE* v00, Gemini_
     
     REAL_TYPE dd;
     
-    // 内部領域のときは，処理しない
-    if( nID[face] < 0 )
+    switch (typ)
     {
-      
-      switch (typ)
-      {
-        case OBC_SPEC_VEL:
-        case OBC_WALL:
-          dummy = extractVelOBC(face, vec, tm, v00, fcount);
-          vobc_div_drchlt_(dv, size, &gd, &face, bv, vec, &dd, &fcount);
-          //vobc_face_drchlt_(vf, size, &gd, bv, &face, vec, &dd);
-          obc[face].setDomainMF(dd);
-          break;
-          
-        case OBC_INTRINSIC:
-          if ( (C->Mode.Example == id_Jet) && (face==0) )
-          {
-            ((IP_Jet*)Ex)->divJetInflow(dv, bv, vf, aa, fcount);
-            obc[face].setDomainV(aa);
-          }
-          break;
-      }
+      case OBC_SPEC_VEL:
+      case OBC_WALL:
+        dummy = extractVelOBC(face, vec, tm, v00, fcount);
+        vobc_div_drchlt_(dv, size, &gd, &face, bv, vec, &dd, nID, &fcount);
+        //vobc_face_drchlt_(vf, size, &gd, &face, bv, vec, &dd, nID);
+        obc[face].setDomainMF(dd);
+        break;
+        
+      case OBC_INTRINSIC:
+        if ( C->Mode.Example == id_Jet )
+        {
+          ((IP_Jet*)Ex)->divJetInflow(dv, face, bv, vf, aa, fcount);
+          obc[face].setDomainV(aa);
+        }
+        break;
     }
+
   }
   
   flop += fcount;
@@ -808,34 +805,29 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, const double t
   
   
   // 流束形式の外部境界条件
-  for (int face=0; face<NOFACE; face++) {
+  for (int face=0; face<NOFACE; face++)
+  {
     typ = obc[face].get_Class();
     
-    // 内部領域のときは，処理しない
-    if ( nID[face] < 0 )
+    switch ( typ )
     {
-      
-      switch ( typ )
-      {
-        case OBC_SPEC_VEL:
-          dummy = extractVelOBC(face, vec, tm, v00, flop);
-          vobc_pv_specv_(wv, size, &gd, &dh, &rei, v, bv, vec, &face, &flop);
-          break;
-          
-        case OBC_WALL:
-          dummy = extractVelOBC(face, vec, tm, v00, flop);
-          vobc_pv_wall_(wv, size, &gd, &dh, &rei, v, vec, &face, &flop);
-          break;
-          
-        case OBC_INTRINSIC:
-          if ( (C->Mode.Example == id_Jet) && (face==0) )
-          {
-            ((IP_Jet*)Ex)->vobc_pv_JetInflow(wv, rei, v, bv, flop);
-          }
-          break;
-      }
-      
-    } // end if nID[]
+      case OBC_SPEC_VEL:
+        dummy = extractVelOBC(face, vec, tm, v00, flop);
+        vobc_pv_specv_(wv, size, &gd, &face, &dh, &rei, v, bv, vec, nID, &flop);
+        break;
+        
+      case OBC_WALL:
+        dummy = extractVelOBC(face, vec, tm, v00, flop);
+        vobc_pv_wall_(wv, size, &gd, &face, &dh, &rei, v, vec, nID, &flop);
+        break;
+        
+      case OBC_INTRINSIC:
+        if ( C->Mode.Example == id_Jet )
+        {
+          ((IP_Jet*)Ex)->vobc_pv_JetInflow(wv, face, rei, v, bv, flop);
+        }
+        break;
+    }
   }
   
 }
@@ -920,34 +912,30 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
   
   
   // 外部境界条件による修正
-  for (int face=0; face<NOFACE; face++) {
+  for (int face=0; face<NOFACE; face++)
+  {
+    typ = obc[face].get_Class();
     
-    // 内部領域のときは，処理しない
-    if( nID[face] < 0 )
+    REAL_TYPE dd; // dummy
+    
+    switch ( typ )
     {
-      typ = obc[face].get_Class();
-      
-      REAL_TYPE dd; // dummy
-      
-      switch ( typ )
+      case OBC_SPEC_VEL:
+      case OBC_WALL:
       {
-        case OBC_SPEC_VEL:
-        case OBC_WALL:
-        {
-          REAL_TYPE dummy = extractVelOBC(face, vec, tm, v00, fcount);
-          vobc_div_drchlt_(s_0, size, &gd, &face, bv, vec, &dd, &fcount);
-          break;
-        }
-          
-        case OBC_INTRINSIC:
-          if ( (C->Mode.Example == id_Jet) && (face==0) )
-          {
-            ((IP_Jet*)Ex)->divJetInflow(s_0, bv, vf, vec, flop);
-          }
-          break;
-          
-        // 他は境界値を与え，通常スキームで計算するので不要
+        REAL_TYPE dummy = extractVelOBC(face, vec, tm, v00, fcount);
+        vobc_div_drchlt_(s_0, size, &gd, &face, bv, vec, &dd, nID, &fcount);
+        break;
       }
+        
+      case OBC_INTRINSIC:
+        if ( C->Mode.Example == id_Jet )
+        {
+          ((IP_Jet*)Ex)->divJetInflow(s_0, face, bv, vf, vec, flop);
+        }
+        break;
+        
+        // 他は境界値を与え，通常スキームで計算するので不要
     }
 
   }
@@ -996,17 +984,15 @@ void SetBC3D::mod_Vis_EE(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE cf, int* d_
 
 
 // #################################################################
-/**
- @brief 圧力の外部境界条件
- @param d_p 圧力のデータクラス
- */
+// 圧力の外部境界条件
 void SetBC3D::OuterPBC(REAL_TYPE* d_p)
 {
   int uod, F;
   REAL_TYPE pv=0.0;
   int gd = guide;
   
-  for (int face=0; face<NOFACE; face++) {
+  for (int face=0; face<NOFACE; face++)
+  {
     F = obc[face].get_Class();
     
     // 周期境界条件
@@ -1017,12 +1003,12 @@ void SetBC3D::OuterPBC(REAL_TYPE* d_p)
       switch ( obc[face].get_PrdcMode() )
       {
         case BoundaryOuter::prdc_Simple:
-          Pobc_Prdc_Simple(d_p, face);
+          PobcPeriodicSimple(d_p, face);
           break;
           
         case BoundaryOuter::prdc_Directional:
           uod = obc[face].get_FaceMode();
-          Pobc_Prdc_Directional(d_p, face, pv, uod);
+          PobcPeriodicDirectional(d_p, face, pv, uod);
           break;
           
         case BoundaryOuter::prdc_Driver:
@@ -1032,12 +1018,9 @@ void SetBC3D::OuterPBC(REAL_TYPE* d_p)
     }
     else // 周期境界条件以外の処理
     {
-      if( nID[face] < 0 ) // @note 並列時，内部領域のときは，処理しない
+      if ( F == OBC_TRC_FREE )
       {
-        if ( F == OBC_TRC_FREE )
-        {
-          pobc_drchlt_ (d_p, size, &gd, &face, &pv);            
-        }
+        pobc_drchlt_ (d_p, size, &gd, &face, &pv, nID);
       }
 
     }
@@ -1046,16 +1029,7 @@ void SetBC3D::OuterPBC(REAL_TYPE* d_p)
 
 
 // #################################################################
-/**
- * @brief 速度の外部境界条件処理（VP反復内で値を指定する境界条件）
- * @param [in,out] d_v  セルセンター速度ベクトル v^{n+1}
- * @param [in]     d_vf セルフェイス速度ベクトル v^{n+1}
- * @param [in]     d_bv BCindex V
- * @param [in]     tm   時刻
- * @param [in]     C    コントロールクラス
- * @param [in]     v00  参照速度
- * @param [in,out] flop 浮動小数点演算数
- */
+// 速度の外部境界条件処理（VP反復内で値を指定する境界条件）
 void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, const double tm, Control* C, REAL_TYPE* v00, double& flop)
 {
   REAL_TYPE vec[3];
@@ -1064,49 +1038,52 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, const double 
   REAL_TYPE vsum=0.0;
   int pm;
   
-  for (int face=0; face<NOFACE; face++) {
-    
-    if( nID[face] < 0 )
+  for (int face=0; face<NOFACE; face++)
+  {
+    switch ( obc[face].get_Class() )
     {
-      
-      switch ( obc[face].get_Class() )
-      {
-        case OBC_TRC_FREE:
-          vobc_tfree_(d_v, size, &guide, &face, d_vf, d_bv, &vsum, &flop);
+      case OBC_TRC_FREE:
+        vobc_tfree1_(d_vf, size, &guide, &face, nID);
+        
+        if ( numProc > 1 )
+        {
+          if ( paraMngr->BndCommV3D(d_vf, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+        }
+        
+        vobc_tfree2_(d_v, size, &guide, &face, d_vf, &vsum, nID, &flop);
+        obc[face].setDomainMF(vsum); // DomainMonitor()で集約する
+        break;
+        
+      case OBC_FAR_FIELD:
+        vobc_neumann_(d_v, size, &guide, &face, &vsum, nID);
+        obc[face].setDomainMF(vsum);
+        break;
+        
+      case OBC_OUTFLOW:
+        vobc_get_massflow_(size, &gd, &face, &vsum, d_v, d_bv, nID, &flop);
+        obc[face].setDomainMF(vsum);
+        break;
+        
+      case OBC_SYMMETRIC:
+        vobc_symmetric_(d_v, size, &gd, &face, nID);
+        vsum = 0.0;
+        obc[face].setDomainMF(vsum);
+        break;
+        
+      case OBC_PERIODIC:
+        pm = obc[face].get_PrdcMode();
+        
+        // BoundaryOuter::prdc_Driverに対しては処理不要
+        if ( (pm == BoundaryOuter::prdc_Simple) || (pm == BoundaryOuter::prdc_Directional))
+        {
+          VobcPeriodic(d_v, face); // セルフェイスの値の周期処理は不要
+          vobc_get_massflow_(size, &gd, &face, &vsum, d_v, d_bv, nID, &flop);
           obc[face].setDomainMF(vsum);
-          break;
-          
-        case OBC_FAR_FIELD:
-          vobc_neumann_(d_v, size, &guide, &face, &vsum);
-          obc[face].setDomainMF(vsum);
-          break;
-          
-        case OBC_OUTFLOW:
-          vobc_get_massflow_(size, &gd, &face, &vsum, d_v, d_bv, &flop);
-          obc[face].setDomainMF(vsum);
-          break;
-          
-        case OBC_SYMMETRIC:
-          vobc_symmetric_(d_v, size, &gd, &face);
-          vsum = 0.0;
-          obc[face].setDomainMF(vsum);
-          break;
-          
-        case OBC_PERIODIC:
-          pm = obc[face].get_PrdcMode();
-          
-          // BoundaryOuter::prdc_Driverに対しては処理不要
-          if ( (pm == BoundaryOuter::prdc_Simple) || (pm == BoundaryOuter::prdc_Directional))
-          {
-            Vobc_Prdc(d_v, face); // セルフェイスの値の周期処理は不要
-            vobc_get_massflow_(size, &gd, &face, &vsum, d_v, d_bv, &flop);
-            obc[face].setDomainMF(vsum);
-          }
-          break;
-          
-        default:
-          break;
-      }
+        }
+        break;
+        
+      default:
+        break;
     }
   }
   
@@ -1130,31 +1107,26 @@ void SetBC3D::OuterVBC_GC(REAL_TYPE* d_v, int* d_bv, const double tm, const Cont
   int gd = guide;
 
   
-  for (int face=0; face<NOFACE; face++) {
-
-    // @note 並列時，計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
-    // @note ここでスキップする場合には，MPI通信をしないこと（参加しないノードがあるためエラーとなる）
-    if( nID[face] < 0 )
+  for (int face=0; face<NOFACE; face++)
+  {
+    switch ( obc[face].get_Class() )
     {
-      switch ( obc[face].get_Class() )
-      {
-        case OBC_SPEC_VEL:
-          dummy = extractVelOBC(face, vec, tm, v00, flop);
-          vobc_drchlt_(d_v, size, &gd, d_bv, &face, vec);
-          break;
-          
-        case OBC_INTRINSIC:
-          if ( (C->Mode.Example == id_Jet) && (face==0) )
-          {
-            ((IP_Jet*)Ex)->vobcJetInflowGC(d_v);
-          }
-          break;
-          
-        default:
-          break;
-      }
+      case OBC_SPEC_VEL:
+        dummy = extractVelOBC(face, vec, tm, v00, flop);
+        vobc_drchlt_(d_v, size, &gd, &face, d_bv, vec, nID);
+        break;
+        
+      case OBC_INTRINSIC:
+        if ( C->Mode.Example == id_Jet )
+        {
+          ((IP_Jet*)Ex)->vobcJetInflowGC(d_v, face);
+        }
+        break;
+        
+      default:
+        break;
     }
-  }  
+  }
 }
 
 
@@ -1172,40 +1144,34 @@ void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, int* d_bv, Control* C, double& fl
   int gd = guide;
   int pm;
   
-  
-  for (int face=0; face<NOFACE; face++) {
-    
-    // @note 並列時，内部領域のときは，処理しない
-    // @note ここでスキップする場合には，MPI通信をしないこと（参加しないノードがあるためエラーとなる）
-    if( nID[face] < 0 )  
+  for (int face=0; face<NOFACE; face++)
+  {
+    switch ( obc[face].get_Class() )
     {
-      switch ( obc[face].get_Class() )
-      {
-        case OBC_OUTFLOW :
-        case OBC_FAR_FIELD:
-        case OBC_TRC_FREE:
-          vobc_neumann_(d_vc, size, &gd, &face, &dd);
-          break;
+      case OBC_OUTFLOW :
+      case OBC_FAR_FIELD:
+      case OBC_TRC_FREE:
+        vobc_neumann_(d_vc, size, &gd, &face, &dd, nID);
+        break;
         
-        case OBC_SYMMETRIC:
-          vobc_symmetric_(d_vc, size, &gd, &face);
-          break;
-          
-        case OBC_PERIODIC:
-          pm = obc[face].get_PrdcMode();
-          
-          // BoundaryOuter::prdc_Driverに対しては処理不要
-          if ( (pm == BoundaryOuter::prdc_Simple) || (pm == BoundaryOuter::prdc_Directional))
-          {
-            Vobc_Prdc(d_vc, face); // セルフェイスの値の周期処理は不要
-          }
-          break;
-          
-        default:
-          break;
-      }
+      case OBC_SYMMETRIC:
+        vobc_symmetric_(d_vc, size, &gd, &face, nID);
+        break;
+        
+      case OBC_PERIODIC:
+        pm = obc[face].get_PrdcMode();
+        
+        // BoundaryOuter::prdc_Driverに対しては処理不要
+        if ( (pm == BoundaryOuter::prdc_Simple) || (pm == BoundaryOuter::prdc_Directional))
+        {
+          VobcPeriodic(d_vc, face); // セルフェイスの値の周期処理は不要
+        }
+        break;
+        
+      default:
+        break;
     }
-  }  
+  }
 }
 
 
@@ -1221,7 +1187,8 @@ void SetBC3D::OuterTBC(REAL_TYPE* d_t)
 {
   int F=0;
   
-  for (int face=0; face<NOFACE; face++) {
+  for (int face=0; face<NOFACE; face++)
+  {
     F = obc[face].get_Class();
 
     // 周期境界条件
@@ -1231,7 +1198,7 @@ void SetBC3D::OuterTBC(REAL_TYPE* d_t)
       {
         case BoundaryOuter::prdc_Simple:
         case BoundaryOuter::prdc_Directional:
-          Tobc_Prdc_Simple(d_t, face);
+          TobcPeriodicSimple(d_t, face);
           break;
           
         case BoundaryOuter::prdc_Driver:
@@ -1261,7 +1228,8 @@ void SetBC3D::OuterTBCface(REAL_TYPE* d_qbc, int* d_bh1, REAL_TYPE* d_t, REAL_TY
 {
   int H;
   
-  for (int face=0; face<NOFACE; face++) {
+  for (int face=0; face<NOFACE; face++)
+  {
     
     // 各メソッド内で通信が発生するために，計算領域の最外郭領域でないときに境界処理をスキップする処理はメソッド内で行う
     
@@ -1297,7 +1265,7 @@ void SetBC3D::OuterTBCface(REAL_TYPE* d_qbc, int* d_bh1, REAL_TYPE* d_t, REAL_TY
  @param d_p 圧力
  @param face 面番号
  */
-void SetBC3D::Pobc_Prdc_Simple(REAL_TYPE* d_p, const int face)
+void SetBC3D::PobcPeriodicSimple(REAL_TYPE* d_p, const int face)
 {
   int ix = size[0];
   int jx = size[1];
@@ -1424,13 +1392,13 @@ void SetBC3D::Pobc_Prdc_Simple(REAL_TYPE* d_p, const int face)
 
 // #################################################################
 /**
- @brief 圧力の外部周期境界条件（双方向に圧力差を設定）
- @param d_p 圧力のデータクラス
- @param face 面番号
- @param pv 圧力差
- @param uod 上流面 or 下流面
+ * @brief 圧力の外部周期境界条件（双方向に圧力差を設定）
+ * @param [in,out] d_p  圧力のデータクラス
+ * @param [in]     face 面番号
+ * @param [in]     pv   圧力差
+ * @param [in]     uod  上流面 or 下流面
  */
-void SetBC3D::Pobc_Prdc_Directional(REAL_TYPE* d_p, const int face, REAL_TYPE pv, int uod)
+void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int face, REAL_TYPE pv, int uod)
 {
   int ix = size[0];
   int jx = size[1];
@@ -4732,10 +4700,10 @@ void SetBC3D::mod_Vis_CN(REAL_TYPE* vc, REAL_TYPE* wv, REAL_TYPE cf, int* bx, RE
 // #################################################################
 /**
  * @brief 温度の外部周期境界条件（単純なコピー）
- * @param [in] t    温度のデータクラス
+ * @param [in] d_t  温度のデータクラス
  * @param [in] face 面番号
  */
-void SetBC3D::Tobc_Prdc_Simple(REAL_TYPE* d_t, const int face)
+void SetBC3D::TobcPeriodicSimple(REAL_TYPE* d_t, const int face)
 {
   int ix = size[0];
   int jx = size[1];
@@ -4858,7 +4826,7 @@ void SetBC3D::Tobc_Prdc_Simple(REAL_TYPE* d_t, const int face)
  * @param [in,out] d_v  速度ベクトル
  * @param [in]     face 面番号
  */
-void SetBC3D::Vobc_Prdc(REAL_TYPE* d_v, const int face)
+void SetBC3D::VobcPeriodic(REAL_TYPE* d_v, const int face)
 {
   int ix = size[0];
   int jx = size[1];
@@ -5150,86 +5118,3 @@ void SetBC3D::Vibc_Prdc(REAL_TYPE* d_v, int* st, int* ed, int* d_bx, int odr, in
       break;
   }
 }
-
-
-// #################################################################
-/**
- * @brief 速度の外部周期境界条件（単純なコピー）
- * @param d_v 速度ベクトル（セルフェイス）
- * @param face 面番号
- * @note update_vec_cf_()でのループ範囲が[1,ix]なので，プラス方向のみ計算している
- *
-void SetBC3D::Vobc_Prdc_CF(REAL_TYPE* d_v, const int face)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int sz[3] = {ix, jx, kx};
-  int gd = guide;
-  
-  if ( numProc > 1 )
-  {
-    
-    switch (face) {
-      case X_MINUS:
-        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-        break;
-        
-      case Y_MINUS:
-        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-        break;
-        
-      case Z_MINUS:
-        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-        break;
-    }
-  }
-  else { // Serial
-    
-    switch (face)
-    {
-      case X_MINUS:
-        if ( nID[face] < 0 ) {
-          for (int k=1; k<=kx; k++) {
-            for (int j=1; j<=jx; j++) {
-              for (int i=1-gd; i<=0; i++) {
-                d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 0, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 1, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 2, ix, jx, kx, gd)];
-              }
-            }
-          }
-        }
-        break;
-        
-      case Y_MINUS:
-        if ( nID[face] < 0 ) {
-          for (int k=1; k<=kx; k++) {
-            for (int j=1-gd; j<=0; j++) {
-              for (int i=1; i<=ix; i++) {
-                d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 0, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 1, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 2, ix, jx, kx, gd)];
-              }
-            }
-          }
-        }
-        break;
-        
-      case Z_MINUS:
-        if ( nID[face] < 0 ) {
-          for (int k=1-gd; k<=0; k++) {
-            for (int j=1; j<=jx; j++) {
-              for (int i=1; i<=ix; i++) {
-                d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 0, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 1, ix, jx, kx, gd)];
-                d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 2, ix, jx, kx, gd)];
-              }
-            }
-          }
-        }
-        break;
-    }
-  }
-}
-*/

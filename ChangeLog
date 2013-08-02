@@ -19,6 +19,13 @@ REVISION HISTORY
 ================
 
 --------------------------
+2013-08-02
+- r1008 Change implementation of outer boundary routine
+  - TractionFreeの再実装
+  - 外部境界処理サブルーチンに隣接ランク番号を渡し，サブルーチン内で実行選択を行う．
+  　外部境界条件処理手続きで同期が必要な場合，全てのランクが参加する必要があるための対応
+
+--------------------------
 2013-08-01
 
 - r1007 bug fix of dynamic allocation
