@@ -73,18 +73,18 @@ int FFV::Initialize(int argc, char **argv)
   
   // ffvのパラメータローダのインスタンス生成
   TPControl tp_ffv;
-  
+
   tp_ffv.getTPinstance();
-  
+
   
   // パラメータのロードと保持
-  if ( tp_ffv.readTPfile(input_file) )
+  if ( !tp_ffv.readTPfile(input_file) )
   {
     Hostonly_ stamped_printf("\tInput file '%s' can not find.\n", input_file.c_str());
     Exit(0);
   }
-  
-  
+
+ 
   
   // TPControlクラスのポインタを各クラスに渡す
   C.importTP(&tp_ffv);
@@ -92,9 +92,27 @@ int FFV::Initialize(int argc, char **argv)
   M.importTP(&tp_ffv);
   MO.importTP(&tp_ffv);
   
+
   
+  // 反復制御クラスのインスタンス
+  C.getIteration();
+  
+  
+  // 流体の解法アルゴリズムを取得
+  C.getSolvingMethod();
+  
+  
+  // 線形ソルバーの特定
+  identifyLinearSolver(&tp_ffv);
+  
+
+  
+  // 計算モデルの入力ソース情報を取得
+  C.getGeometryModel();
+  
+
   // Intrinsic classの同定
-  identifyExample(&tp_ffv, fp);
+  identifyExample(fp);
   
   
   // パラメータの取得と計算領域の初期化，並列モードを返す
@@ -104,7 +122,6 @@ int FFV::Initialize(int argc, char **argv)
   
   // mat[], cmp[]の作成
   createTable(fp);
-  
   
   
   
@@ -151,7 +168,6 @@ int FFV::Initialize(int argc, char **argv)
   TIMING_start(tm_voxel_prep_sct);
   
 
-  
   
   
   // 各問題に応じてモデルを設定
@@ -203,7 +219,7 @@ int FFV::Initialize(int argc, char **argv)
     }
     else
     {
-      V.setMediumOnGC(face, d_mid, BC.exportOBC(face)->get_Class(),
+      V.setMediumOnGC(face, d_mid, BC.exportOBC(face)->getClass(),
                       BC.exportOBC(face)->getGuideMedium(), BC.exportOBC(face)->get_PrdcMode());
     }
   }
@@ -313,6 +329,7 @@ int FFV::Initialize(int argc, char **argv)
   encodeBCindex();
   
 
+  
   
   
   // 体積力を使う場合のコンポーネント配列の確保
@@ -484,7 +501,7 @@ int FFV::Initialize(int argc, char **argv)
   
 
   // 平均値のリスタート
-  if ( (C.Start != initial_start) && (C.Mode.Average == ON) )
+  if ( C.Mode.AverageRestart == ON )
   {
     TIMING_start(tm_restart);
     Restart_avrerage(fp, flop_task);
@@ -493,7 +510,7 @@ int FFV::Initialize(int argc, char **argv)
   
 
   // リスタートの最大値と最小値の表示
-  if ( C.Start != initial_start)
+  if ( C.Start != initial_start )
   {
     Restart_display_minmax(fp, flop_task);
   }
@@ -569,7 +586,7 @@ int FFV::Initialize(int argc, char **argv)
   if ( (C.Hide.PM_Test == OFF) && (0 == CurrentStep) )
   {
     flop_task = 0.0;
-    FileOutput(flop_task);
+    OutputBasicVariables(flop_task);
     
     /* 20130611 commentout
     if (C.FIO.Format == plt3d_fmt) PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng[var_Plot3D], flop_task);
@@ -587,7 +604,7 @@ int FFV::Initialize(int argc, char **argv)
   if ( (C.Start == restart_sameDiv_refinement) || (C.Start == restart_diffDiv_refinement) )
   {
     flop_task = 0.0;
-    FileOutput(flop_task, true);
+    OutputBasicVariables(flop_task);
     
     /* 20130611 commentout 
     if (C.FIO.Format == plt3d_fmt) PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng[var_Plot3D], flop_task);
@@ -596,7 +613,7 @@ int FFV::Initialize(int argc, char **argv)
 
 
   // SOR2SMA
-  switch (IC[ItrCtl::ic_prs_pr].get_LS())
+  switch (IC[ic_prs1].getLS())
   {
     case SOR2SMA:
     case SOR2CMA:
@@ -609,7 +626,7 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   // Krylov subspace
-  switch (IC[ItrCtl::ic_prs_pr].get_LS())
+  switch (IC[ic_prs1].getLS())
   {
     case GMRES:
       allocArray_Krylov(TotalMemory);
@@ -687,7 +704,7 @@ void FFV::allocate_Main(double &total)
     allocArray_Heat(total);
   }
   
-  if ( (C.AlgorithmF == Control::Flow_FS_AB2) || (C.AlgorithmF == Control::Flow_FS_AB_CN) )
+  if ( (C.AlgorithmF == Flow_FS_AB2) || (C.AlgorithmF == Flow_FS_AB_CN) )
   {
     allocArray_AB2(total);
   }
@@ -877,14 +894,18 @@ void FFV::createTable(FILE* fp)
   // コンポーネント数，境界条件数，媒質数を取得し，配列をアロケートする
   C.getNoOfComponent();
   
+  
   // 媒質リストをインスタンス [0]はダミーとして利用しないので，配列の大きさはプラス１する
   if ( !(mat = new MediumList[C.NoCompo+1]) ) Exit(0);
+  
   
   // CompoListクラスをインスタンス [0]はダミーとして利用しないので，配列の大きさはプラス１する
   if ( !(cmp = new CompoList[C.NoCompo+1]) ) Exit(0);
   
+  
   // CompoList, MediumListのポインタをセット
   BC.importCMP_MAT(cmp, mat);
+  
   
   Hostonly_
   {
@@ -941,7 +962,7 @@ void FFV::displayCompoInfo(const int* cgb, FILE* fp)
     Hostonly_
     {
       B.printCompo( stdout, cgb, mat, cmp, BC.exportOBC() );
-      B.printCompo( fp, cgb, mat, cmp, BC.exportOBC() );
+      B.printCompo( fp,     cgb, mat, cmp, BC.exportOBC() );
     }
   }
   
@@ -1243,179 +1264,10 @@ void FFV::encodeBCindex()
   V.countCellState(L_Fcell, G_Fcell, d_bcd, FLUID);
   
   
-  // getLocalCmpIdx()などで作成したコンポーネントのインデクスの再構築
   // ここまでのbboxはmid[]でサーチした結果，BCindex処理の過程で範囲が変わるので変更
   resizeCompoBbox();
 }
 
-
-
-// #################################################################
-/* @brief 初期インデクスの情報を元に，一層拡大したインデクス値を返す
- * @param [in,out] m_st 拡大された開始点（Fortranインデクス）
- * @param [in,out] m_ed 拡大された終了点（Fortranインデクス）
- * @param [in]     st   開始点（Fインデクス）
- * @param [in]     ed   終点（Fインデクス）
- * @param [in]     m_x  軸方向のサイズ
- * @param [in]     dir  方向
- * @param [in]     m_id キーID
-
-void FFV::enlargeIndex(int& m_st, int& m_ed, const int st, const int ed, const int m_x, const int dir, const int m_id)
-{
-  int n_st = st - 1; // 1層拡大
-  int n_ed = ed + 1;
-  int max_c1 = m_x + guide;
-  
-  int label_st, label_ed;
-  
-  switch (dir) 
-  {
-    case 0:
-      label_st = X_MINUS;
-      label_ed = X_PLUS;
-      break;
-      
-    case 1:
-      label_st = Y_MINUS;
-      label_ed = Y_PLUS;
-      break;
-      
-    case 2:
-      label_st = Z_MINUS;
-      label_ed = Z_PLUS;
-      break;
-      
-    default:
-      Hostonly_ stamped_printf("\tError : DIRECTION\n");
-      Exit(0);
-  }
-  
-  // BVが-方向のガイドセル内のみにある場合
-  if ( ed < 1 )
-  {
-    if( nID[label_st] < 0 ) // 計算領域の外部面に接する場合は，対象外
-    {
-      m_st = 0;
-      m_ed = 0;
-    }
-    else // 計算領域内部にある場合（並列時）
-    {
-      if ( n_ed == guide ) // ガイドセル1層外側の場合
-      {
-        m_st = 1; // F index
-        m_ed = 1; // F index
-      }
-      else
-      {
-        m_st = 0;
-        m_ed = 0;
-      }
-    }
-  }
-  
-  // BVが+方向のガイドセル内のみにある場合
-  else if ( st >= max_c1 )
-  {
-    if( nID[label_ed] < 0 ) // 計算領域の外部面に接する場合は，対象外
-    {
-      m_st = 0;
-      m_ed = 0;
-    }
-    else
-    {
-      if ( n_st == (max_c1 - 1) ) // ガイドセル1層外側の場合
-      {
-        m_st = m_x; // F index
-        m_ed = m_x; // F index
-      }
-      else
-      {
-        m_st = 0;
-        m_ed = 0;
-      }
-    }
-    //debug; Hostonly_ printf("(2) dir=%d : st=%d ed=%d\n", dir, m_st, m_ed);
-  }
-  
-  // BVが内部領域のみにある場合（逐次・並列で同じ処理）
-  else if ( (st_i >= guide) && (ed_i < max_c1) )
-  {
-    if ( st_i == guide ) // 最外層セル
-    {
-      m_st = 1; // F index
-    }
-    else
-    {
-      m_st = n_st + 1 - guide; // F index
-    }
-    
-    if ( ed_i == (max_c1 - 1) ) // 最外層セル
-    {
-      m_ed = m_x; // F index
-    }
-    else // 内部
-    {
-      m_ed = n_ed + 1 - guide; // F index
-    }
-    //debug; Hostonly_ printf("(3) dir=%d : st=%d ed=%d\n", dir, m_st, m_ed);
-  }
-  
-  // BVが両方向のガイドセルにまたがる場合（逐次・並列で同じ処理）
-  else if ( (st_i < guide) && (ed_i >= max_c1) )
-  {
-    m_st = 1; // F index
-    m_ed = m_x; // F index
-    //debug; Hostonly_ printf("(4) dir=%d : st=%d ed=%d\n", dir, m_st, m_ed);
-  }
-  
-  // BVが-方向のガイドセルから内部領域にある場合
-  else if ( (st_i < guide) && (ed_i < max_c1) )
-  {
-    m_st = 1; // F index
-    
-    if ( ed_i == (max_c1 - 1) ) // 最外層セル
-    {
-      m_ed = m_x; // F index
-    }
-    else // 内部
-    {
-      m_ed = n_ed + 1 - guide; // F index
-    }
-    //debug; Hostonly_ printf("(5) dir=%d : st=%d ed=%d\n", dir, m_st, m_ed);
-  }
-  
-  // BVが+方向のガイドセルから内部領域にある場合
-  else if ( (st_i < max_c1) && (ed_i >= max_c1) )
-  {
-    m_ed = m_x; // F index
-    
-    if ( st_i == guide ) // 端点
-    {
-      m_st = 1; // F index
-    }
-    else // 内部
-    {
-      m_st = n_st + 1 - guide; // F index
-    }
-    //debug; Hostonly_ printf("(6) dir=%d : st=%d ed=%d\n", dir, m_st, m_ed);
-  }
-  
-  else
-  {
-    string m_dir;
-    if      ( dir == 0 ) m_dir = "X";
-    else if ( dir == 1 ) m_dir = "Y";
-    else                 m_dir = "Z";
-    
-    Hostonly_
-    {
-      stamped_printf("\tError : Unexpected case for ID=%d, (%d - %d): %s\n", m_id, st_i, ed_i, m_dir.c_str());
-    }
-    Exit(0);
-  }
-  
-}
-*/
 
 
 // #################################################################
@@ -1861,6 +1713,10 @@ void FFV::fixedParameters()
     C.Mode.Precision = sizeof(float);
   }
   
+  // 定数
+  C.Gravity =9.8; // gravity acceleration
+  
+  
   // ログファイル名
   C.HistoryName        = "history_base.txt";
   C.HistoryCompoName   = "history_compo.txt";
@@ -1882,6 +1738,21 @@ void FFV::fixedParameters()
   C.f_TotalP         = "tp";
   C.f_I2VGT          = "i2vgt";
   C.f_Vorticity      = "vrt";
+  
+  
+  // 出力DFIファイル名のプリフィクス
+  C.f_dfi_out_prs   = "prs";
+  C.f_dfi_out_vel   = "vel";
+  C.f_dfi_out_temp  = "tmp";
+  C.f_dfi_out_fvel  = "fvel";
+  C.f_dfi_out_prsa  = "prsa";
+  C.f_dfi_out_vela  = "vela";
+  C.f_dfi_out_tempa = "tmpa";
+  C.f_dfi_out_div   = "div";
+  C.f_dfi_out_vrt   = "vrt";
+  C.f_dfi_out_hlt   = "hlt";
+  C.f_dfi_out_tp    = "tp";
+  C.f_dfi_out_i2vgt = "i2vgt";
 }
 
 
@@ -2513,50 +2384,43 @@ int FFV::getDomainInfo(TPControl* tp_dom)
   //@todo  string hoge = str;
   
   
+  
+  // 流体セルのフィルの開始面指定
+  label = "/DomainInfo/HintOfFillingFluid";
+  
+  if ( !(tp_dom->GetValue(label, &str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid value in '%s'\n", label.c_str());
+    Exit(0);
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "no" ) )     C.Fill_Hint = -1;
+    else if( !strcasecmp(str.c_str(), "xminus" ) ) C.Fill_Hint = X_MINUS;
+    else if( !strcasecmp(str.c_str(), "xplus" ) )  C.Fill_Hint = X_PLUS;
+    else if( !strcasecmp(str.c_str(), "yminus" ) ) C.Fill_Hint = Y_MINUS;
+    else if( !strcasecmp(str.c_str(), "yplus" ) )  C.Fill_Hint = Y_PLUS;
+    else if( !strcasecmp(str.c_str(), "zminus" ) ) C.Fill_Hint = Z_MINUS;
+    else if( !strcasecmp(str.c_str(), "zplus" ) )  C.Fill_Hint = Z_PLUS;
+    else
+    {
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
+    }
+  }
+  
+  
   return div_type;
 }
 
 
+
 // #################################################################
 /* @brief Intrisic classの同定
- * @param [in] tpf ffvのパラメータを保持するTextParserのインスタンス
  * @param [in] fp  ファイル出力ポインタ
  */
-void FFV::identifyExample(TPControl* tpf, FILE* fp)
+void FFV::identifyExample(FILE* fp)
 {
-  
-  // 例題の種類を取得
-  string keyword;
-  string label;
-  
-  label = "/Steer/Example";
-  
-  if ( !(tpf->GetValue(label, &keyword )) )
-  {
-    Hostonly_ stamped_printf("\tError : '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  if     ( FBUtility::compare(keyword, "ParallelPlate2D") )   C.Mode.Example = id_PPLT2D;
-  else if( FBUtility::compare(keyword, "Duct") )              C.Mode.Example = id_Duct;
-  else if( FBUtility::compare(keyword, "SHC1D") )             C.Mode.Example = id_SHC1D;
-  else if( FBUtility::compare(keyword, "PerformanceTest") )   C.Mode.Example = id_PMT;
-  else if( FBUtility::compare(keyword, "Rectangular") )       C.Mode.Example = id_Rect;
-  else if( FBUtility::compare(keyword, "Cylinder") )          C.Mode.Example = id_Cylinder;
-  else if( FBUtility::compare(keyword, "BackStep") )          C.Mode.Example = id_Step;
-  else if( FBUtility::compare(keyword, "Polygon") )           C.Mode.Example = id_Polygon;
-  else if( FBUtility::compare(keyword, "Sphere") )            C.Mode.Example = id_Sphere;
-  else if( FBUtility::compare(keyword, "Jet") )               C.Mode.Example = id_Jet;
-  else
-  {
-    Hostonly_
-    {
-      stamped_printf(     "\tInvalid keyword is described for '%s'\n", label.c_str());
-      stamped_fprintf(fp, "\tInvalid keyword is described for '%s'\n", label.c_str());
-    }
-    Exit(0);
-  }
-  
   
   // 例題クラスの実体をインスタンスし，Exにポイントする
   if      ( C.Mode.Example == id_PPLT2D)   Ex = dynamic_cast<Intrinsic*>(new IP_PPLT2D);
@@ -2584,6 +2448,61 @@ void FFV::identifyExample(TPControl* tpf, FILE* fp)
   Hostonly_ Ex->printExample(fp, C.Mode.Example);
   
 }
+
+
+// #################################################################
+/**
+ * @brief 線形ソルバを特定
+ * @param [in] tpCntl  テキストパーサー
+ */
+void FFV::identifyLinearSolver(TPControl* tpCntl)
+{
+  
+  switch (C.AlgorithmF)
+  {
+    case Flow_FS_EE_EE:
+    case Flow_FS_AB2:
+      setLinearSolver(tpCntl, ic_prs1, "/Iteration/Pressure");
+      setLinearSolver(tpCntl, ic_div,  "/Iteration/VPiteration");
+      break;
+      
+    case Flow_FS_AB_CN:
+      setLinearSolver(tpCntl, ic_prs1, "/Iteration/Pressure");
+      setLinearSolver(tpCntl, ic_vel1, "/Iteration/Velocity");
+      setLinearSolver(tpCntl, ic_div,  "/Iteration/VPiteration");
+      break;
+      
+    case Flow_FS_RK_CN:
+      setLinearSolver(tpCntl, ic_prs1, "/Iteration/Pressure");
+      setLinearSolver(tpCntl, ic_prs2, "/Iteration/Pressure2nd");
+      setLinearSolver(tpCntl, ic_vel1, "/Iteration/Velocity");
+      setLinearSolver(tpCntl, ic_div,  "/Iteration/VPiteration");
+      break;
+      
+    default:
+      Exit(0);
+  }
+
+  
+
+  if ( !C.isHeatProblem() ) return;
+  
+  
+  switch (C.AlgorithmH)
+  {
+    case Heat_EE_EE:
+      break;
+      
+    case Heat_EE_EI:
+      setLinearSolver(tpCntl, ic_tmp1, "/Iteration/Temperature");
+      break;
+      
+    default:
+      Exit(0);
+  }
+  
+}
+
 
 
 // #################################################################
@@ -3253,9 +3172,9 @@ void FFV::init_FileOut()
  */
 void FFV::initInterval()
 {
-  
   // セッションの初期時刻をセット
-  for (int i=0; i<Interval_Manager::tg_END; i++) {
+  for (int i=0; i<Interval_Manager::tg_END; i++)
+  {
     if ( i != Interval_Manager::tg_average)
     {
       C.Interval[i].setStart(Session_StartStep, Session_StartTime);
@@ -3267,13 +3186,14 @@ void FFV::initInterval()
   }
   
   // debug
-  //printf("tg_instant start_step : %d\n",C.Interval[Interval_Manager::tg_instant].getStartStep());
+  //printf("tg_basic start_step : %d\n",C.Interval[Interval_Manager::tg_basic].getStartStep());
   //printf("tg_average start_step : %d\n",C.Interval[Interval_Manager::tg_average].getStartStep());
   
   // 入力モードが有次元の場合に，無次元に変換
   if ( C.Unit.Param == DIMENSIONAL )
   {
-    for (int i=0; i<Interval_Manager::tg_END; i++) {
+    for (int i=0; i<Interval_Manager::tg_END; i++)
+    {
       C.Interval[i].normalizeTime(C.Tscale);
     }
   }
@@ -3289,49 +3209,65 @@ void FFV::initInterval()
   unsigned m_stp = CurrentStep;
 
   
+  // 計算セッション
   if ( !C.Interval[Interval_Manager::tg_compute].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_compute) )
   {
     Hostonly_ printf("\t Error : Computation Period is assigned to zero.\n");
     Exit(0);
   }
   
-  if ( !C.Interval[Interval_Manager::tg_console].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_console) )  // 基本履歴のコンソールへの出力
+  // 基本履歴のコンソールへの出力
+  if ( !C.Interval[Interval_Manager::tg_console].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_console) )  
   {
     Hostonly_ printf("\t Error : Interval for Console output is assigned to zero.\n");
     Exit(0);
   }
-  if ( !C.Interval[Interval_Manager::tg_history].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_history) )  // 履歴のファイルへの出力
+  
+  // 履歴のファイルへの出力
+  if ( !C.Interval[Interval_Manager::tg_history].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_history) )  
   {
     Hostonly_ printf("\t Error : Interval for History output is assigned to zero.\n");
     Exit(0);
   }
-  if ( !C.Interval[Interval_Manager::tg_instant].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_instant) )  // 瞬時値ファイル
+  
+  // 基本変数の瞬時値ファイル
+  if ( !C.Interval[Interval_Manager::tg_basic].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_basic) )  
   {
     Hostonly_ printf("\t Error : Interval for Instantaneous output is assigned to zero.\n");
     Exit(0);
   }
   
+  // 平均値ファイル
   if ( C.Mode.Average == ON )
   {
-    if ( !C.Interval[Interval_Manager::tg_average].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_average) ) // 平均値ファイル
+    if ( !C.Interval[Interval_Manager::tg_average].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_average) ) 
     {
       Hostonly_ printf("\t Error : Interval for Average output is assigned to zero.\n");
       Exit(0);
     }
   }
-    
+  
+  // 派生変数の出力
+  if ( !C.Interval[Interval_Manager::tg_derived].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_derived) )
+  {
+    Hostonly_ printf("\t Error : Interval for Instantaneous output is assigned to zero.\n");
+    Exit(0);
+  }
+  
+  // サンプリング履歴
   if ( C.Sampling.log == ON )
   {
-    if ( !C.Interval[Interval_Manager::tg_sampled].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_sampled) )  // サンプリング履歴
+    if ( !C.Interval[Interval_Manager::tg_sampled].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_sampled) )  
     {
       Hostonly_ printf("\t Error : Interval for Sampling output is assigned to zero.\n");
       Exit(0);
     }    
   }
   
+  // 瞬時値ファイル
   if (C.FIO.Format == plt3d_fmt)
   {
-    if ( !C.Interval[Interval_Manager::tg_plot3d].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_plot3d) )  // 瞬時値ファイル
+    if ( !C.Interval[Interval_Manager::tg_plot3d].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_plot3d) )  
     {
       Hostonly_ printf("\t Error : Interval for plot3d output is assigned to zero.\n");
       Exit(0);
@@ -3751,8 +3687,8 @@ void FFV::scanVoxel(FILE* fp)
     {
       Hostonly_
       {
-        stamped_printf (   "\tError : An ID of guide cell is out of range.\n");
-        stamped_fprintf(fp,"\tError : An ID of guide cell is out of range.\n");
+        stamped_printf (   "\tError : An ID of guide cell[%d] is out of range.\n", m);
+        stamped_fprintf(fp,"\tError : An ID of guide cell[%d] is out of range.\n", m);
       }
       Exit(0);
     }
@@ -3777,11 +3713,11 @@ void FFV::setBCinfo()
 {
 
   // パラメータファイルをパースして，外部境界条件を保持する　>> VoxScan()以前に処理
-  B.loadBC_Outer( BC.exportOBC(), mat, cmp );
+  B.loadOuterBC( BC.exportOBC(), mat, cmp );
 
   
   // パラメータファイルの情報を元にCompoListの情報を設定する
-  B.loadBC_Local(&C, mat, cmp, PolyPP);
+  B.loadLocalBC(&C, mat, cmp, PolyPP);
   
   
 #if 0
@@ -4084,7 +4020,7 @@ void FFV::setInitialCondition()
     fb_set_fvector_(d_vf, size, &guide, U0, d_bcd);
     
     // セルフェイスの設定　発散値は関係なし
-    BC.mod_div(d_dv, d_bcv, CurrentTime, v00, m_buf, d_vf, d_v, &C, flop_task);
+    BC.modDivergence(d_dv, d_bcv, CurrentTime, v00, m_buf, d_vf, d_v, &C, flop_task);
     
 		// 外部境界面の流出流量と移流速度
     DomainMonitor( BC.exportOBC(), &C);
@@ -4144,7 +4080,7 @@ void FFV::setInitialCondition()
     BC.OuterVBC(d_v, d_vf, d_bcv, tm, &C, v00, flop_task);
     
     // 流出境界の流出速度の算出
-    BC.mod_div(d_ws, d_bcv, tm, v00, m_buf, d_vf, d_v, &C, flop_task);
+    BC.modDivergence(d_ws, d_bcv, tm, v00, m_buf, d_vf, d_v, &C, flop_task);
     
     DomainMonitor(BC.exportOBC(), &C);
     
@@ -4235,9 +4171,6 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
   {
     case id_Polygon: // ユーザ例題
       
-      C.getGeometry(mat);
-      
-      
       // PolylibとCutlibのセットアップ
       setupPolygon2CutInfo(PrepMemory, TotalMemory, fp);
       break;
@@ -4275,6 +4208,29 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
   if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
   
 }
+
+
+
+// #################################################################
+/**
+ * @brief 線形ソルバを特定し，パラメータをセットする
+ * @param [in] tpCntl テキストパーサーのポインタ
+ * @param [in] odr    制御クラス配列の番号
+ * @param [in] label  探索ラベル
+ */
+void FFV::setLinearSolver(TPControl* tpCntl, const int odr, const string label)
+{
+  string str;
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    Hostonly_ printf("\tParsing error : No '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  C.copyCriteria(IC[odr], str);
+}
+
 
 
 // #################################################################
@@ -4580,7 +4536,7 @@ string FFV::setupDomain(TPControl* tpf)
   
   
   // 従属的なパラメータの取得
-  C.get2ndParameter(IC, &RF);
+  C.get2ndParameter(&RF);
 
   
   return str;

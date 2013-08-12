@@ -23,8 +23,8 @@
 
 
 // #################################################################
-// @brief 温度指定境界条件に必要な温度をセットする
-void SetBC3D::assign_Temp(REAL_TYPE* d_t, int* d_bh1, const double tm, const Control* C)
+// 温度指定境界条件に必要な温度をセットする
+void SetBC3D::assignTemp(REAL_TYPE* d_t, int* d_bh1, const double tm, const Control* C)
 {
   REAL_TYPE tc;
   
@@ -46,7 +46,7 @@ void SetBC3D::assign_Temp(REAL_TYPE* d_t, int* d_bh1, const double tm, const Con
    // 外部境界条件
    int n = OBC_MASK;
    for (int face=0; face<NOFACE; face++) {
-   typ = obc[face].get_Class();
+   typ = obc[face].getClass();
    
    // 計算領域の最外郭領域でないときに，境界処理をスキップ，次のface面を評価
    if( nID[face] >= 0 ) continue;
@@ -104,7 +104,7 @@ void SetBC3D::assignVelocity(REAL_TYPE* d_v, int* d_bv, const double tm, REAL_TY
   // 外部境界条件
   for (int face=0; face<NOFACE; face++)
   {
-    typ = obc[face].get_Class();
+    typ = obc[face].getClass();
     
     if ( typ == OBC_SPEC_VEL )
     {
@@ -143,7 +143,7 @@ void SetBC3D::checkDriver(FILE* fp)
   
   for (int face=0; face<NOFACE; face++)
   {
-    if ( (obc[face].get_Class() == OBC_PERIODIC) && (obc[face].get_PrdcMode() == BoundaryOuter::prdc_Driver) )
+    if ( (obc[face].getClass() == OBC_PERIODIC) && (obc[face].get_PrdcMode() == BoundaryOuter::prdc_Driver) )
     {
 
       for (int n=1; n<=NoCompo; n++)
@@ -456,7 +456,7 @@ void SetBC3D::InnerPBC_Periodic(REAL_TYPE* d_p, int* d_bcd)
  *       avr[]のインデクスに注意 (Fortran <-> C)
  */
 
-void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, double tm, REAL_TYPE* v00, Gemini_R* avr, REAL_TYPE* vf, REAL_TYPE* v, Control* C, double& flop)
+void SetBC3D::modDivergence(REAL_TYPE* dv, int* bv, double tm, REAL_TYPE* v00, Gemini_R* avr, REAL_TYPE* vf, REAL_TYPE* v, Control* C, double& flop)
 {
   REAL_TYPE vec[3], dummy;
   int st[3], ed[3];
@@ -529,7 +529,7 @@ void SetBC3D::mod_div(REAL_TYPE* dv, int* bv, double tm, REAL_TYPE* v00, Gemini_
   // 外部境界条件による修正
   for (int face=0; face<NOFACE; face++)
   {
-    typ = obc[face].get_Class();
+    typ = obc[face].getClass();
     
     REAL_TYPE dd;
     
@@ -741,18 +741,8 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, int* bd, float* cvf, REAL_TYPE* dv,
 
 
 // #################################################################
-/**
- * @brief 速度境界条件による流束の修正
- * @param [in,out] wv     疑似速度ベクトル u^*
- * @param [in]     v      セルセンター速度ベクトル u^n
- * @param [in]     bv     BCindex V
- * @param [in]     tm     無次元時刻
- * @param [in]     C      Control class
- * @param [in]     v_mode 粘性項のモード (0=粘性項を計算しない, 1=粘性項を計算する, 2=壁法則)
- * @param [in]     v00    基準速度
- * @param [in,out] flop   flop count
- */
-void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, const double tm, Control* C, int v_mode, REAL_TYPE* v00, double& flop)
+// 速度境界条件による流束の修正
+void SetBC3D::modPvecFlux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, const double tm, Control* C, int v_mode, REAL_TYPE* v00, double& flop)
 {
   REAL_TYPE vec[3], vel, dummy;
   int st[3], ed[3];
@@ -796,7 +786,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, const double t
       }
       else if ( typ==OUTFLOW )
       {
-        vec[0] = vec[1] = vec[2] = cmp[n].val[var_Velocity]; // mod_div()でセルフェイス流出速度がval[var_Velocity]にセット
+        vec[0] = vec[1] = vec[2] = cmp[n].val[var_Velocity]; // modDivergence()でセルフェイス流出速度がval[var_Velocity]にセット
         pvec_vibc_oflow_(wv, size, &gd, st, ed, &dh, &rei, v, bv, &n, vec, &flop);
       }
 
@@ -807,7 +797,7 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, const double t
   // 流束形式の外部境界条件
   for (int face=0; face<NOFACE; face++)
   {
-    typ = obc[face].get_Class();
+    typ = obc[face].getClass();
     
     switch ( typ )
     {
@@ -834,20 +824,8 @@ void SetBC3D::mod_Pvec_Flux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, const double t
 
 
 // #################################################################
-/**
- * @brief 速度境界条件によるPoisosn式のソース項の修正
- * @param [in,out] s_0   \sum{u^*}
- * @param [in]     vc    セルセンタ疑似速度 u^*
- * @param [in]     v0    セルセンタ速度 u^n
- * @param [in]     vf    セルフェイス速度 u^n
- * @param [in]     bv    BCindex V
- * @param [in]     tm    無次元時刻
- * @param [in]     dt    時間積分幅
- * @param [in]     C     Control class
- * @param [in]     v00   基準速度
- * @param [in,out] flop  flop count
- */
-void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE* vf, int* bv, const double tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double &flop)
+// 速度境界条件によるPoisosn式のソース項の修正
+void SetBC3D::modPsrcVBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE* vf, int* bv, const double tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double &flop)
 {
   int st[3], ed[3];
   REAL_TYPE vec[3], vel;
@@ -900,7 +878,7 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
         }
           
         case OUTFLOW:
-          vel = cmp[n].val[var_Velocity] * dt / dh; // mod_div()でval[var_Velocity]にセット
+          vel = cmp[n].val[var_Velocity] * dt / dh; // modDivergence()でval[var_Velocity]にセット
           div_ibc_oflow_pvec_(s_0, size, &gd, st, ed, v00, &vel, bv, &n, v0, vf, &fcount);
           break;
           
@@ -914,7 +892,7 @@ void SetBC3D::mod_Psrc_VBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TY
   // 外部境界条件による修正
   for (int face=0; face<NOFACE; face++)
   {
-    typ = obc[face].get_Class();
+    typ = obc[face].getClass();
     
     REAL_TYPE dd; // dummy
     
@@ -993,7 +971,7 @@ void SetBC3D::OuterPBC(REAL_TYPE* d_p)
   
   for (int face=0; face<NOFACE; face++)
   {
-    F = obc[face].get_Class();
+    F = obc[face].getClass();
     
     // 周期境界条件
     if ( F == OBC_PERIODIC )
@@ -1040,17 +1018,20 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, const double 
   
   for (int face=0; face<NOFACE; face++)
   {
-    switch ( obc[face].get_Class() )
+    switch ( obc[face].getClass() )
     {
       case OBC_TRC_FREE:
         vobc_tfree1_(d_vf, size, &guide, &face, nID);
-        
         if ( numProc > 1 )
         {
           if ( paraMngr->BndCommV3D(d_vf, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
         }
         
         vobc_tfree2_(d_v, size, &guide, &face, d_vf, &vsum, nID, &flop);
+        if ( numProc > 1 )
+        {
+          if ( paraMngr->BndCommV3D(d_v, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+        }
         obc[face].setDomainMF(vsum); // DomainMonitor()で集約する
         break;
         
@@ -1109,7 +1090,7 @@ void SetBC3D::OuterVBC_GC(REAL_TYPE* d_v, int* d_bv, const double tm, const Cont
   
   for (int face=0; face<NOFACE; face++)
   {
-    switch ( obc[face].get_Class() )
+    switch ( obc[face].getClass() )
     {
       case OBC_SPEC_VEL:
         dummy = extractVelOBC(face, vec, tm, v00, flop);
@@ -1146,9 +1127,9 @@ void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, int* d_bv, Control* C, double& fl
   
   for (int face=0; face<NOFACE; face++)
   {
-    switch ( obc[face].get_Class() )
+    switch ( obc[face].getClass() )
     {
-      case OBC_OUTFLOW :
+      case OBC_OUTFLOW:
       case OBC_FAR_FIELD:
       case OBC_TRC_FREE:
         vobc_neumann_(d_vc, size, &gd, &face, &dd, nID);
@@ -1168,8 +1149,6 @@ void SetBC3D::OuterVBC_Pseudo(REAL_TYPE* d_vc, int* d_bv, Control* C, double& fl
         }
         break;
         
-      default:
-        break;
     }
   }
 }
@@ -1189,7 +1168,7 @@ void SetBC3D::OuterTBC(REAL_TYPE* d_t)
   
   for (int face=0; face<NOFACE; face++)
   {
-    F = obc[face].get_Class();
+    F = obc[face].getClass();
 
     // 周期境界条件
     if ( F == OBC_PERIODIC )
@@ -1235,7 +1214,7 @@ void SetBC3D::OuterTBCface(REAL_TYPE* d_qbc, int* d_bh1, REAL_TYPE* d_t, REAL_TY
     
     H = obc[face].get_HTmode();
     
-    if ( obc[face].get_Class() == OBC_WALL )
+    if ( obc[face].getClass() == OBC_WALL )
     {
       switch ( obc[face].get_hType() ) // 熱境界条件の種類
       {
@@ -1857,7 +1836,7 @@ void SetBC3D::ps_BC_Convection(REAL_TYPE* d_ws, int* d_bh1, REAL_TYPE* d_v, REAL
   {
     // 各メソッド内で通信が発生するために，計算領域の最外郭領域でないときに境界処理をスキップする処理はメソッド内で行う
     
-    switch ( obc[face].get_Class() )
+    switch ( obc[face].getClass() )
     {
       case OBC_OUTFLOW:
         C->H_Dface[face] = ps_OBC_Free(d_ws, d_bh1, face, d_v, d_t, v00, flop);
@@ -4451,7 +4430,7 @@ void SetBC3D::setBCIperiodic(int* d_bx)
   {
     for (int face=0; face<NOFACE; face++)
     {
-      if ( obc[face].get_Class() != OBC_PERIODIC ) continue; // スキップしてfaceをインクリメント
+      if ( obc[face].getClass() != OBC_PERIODIC ) continue; // スキップしてfaceをインクリメント
 
       switch (face)
       {
@@ -4485,7 +4464,7 @@ void SetBC3D::setBCIperiodic(int* d_bx)
   {
     for (int face=0; face<NOFACE; face++)
     {
-      if ( obc[face].get_Class() != OBC_PERIODIC ) continue; // スキップしてfaceをインクリメント
+      if ( obc[face].getClass() != OBC_PERIODIC ) continue; // スキップしてfaceをインクリメント
       
       switch (face)
       {

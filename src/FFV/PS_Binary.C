@@ -38,7 +38,7 @@ void FFV::PS_Binary()
   REAL_TYPE convergence=0.0;           /// 定常収束モニター量
   int cnv_scheme = C.CnvScheme;        /// 対流項スキーム
   
-  ItrCtl* ICt = &IC[ItrCtl::ic_tdf_ei];  /// 拡散項の反復
+  IterationCtl* ICt = &IC[ic_tmp1];  /// 拡散項の反復
   
   
   // >>> Passive scalar Convection section
@@ -63,7 +63,7 @@ void FFV::PS_Binary()
   
   // 指定境界条件の参照値を代入する
   TIMING_start(tm_heat_spec_temp);
-  BC.assign_Temp(d_t0, d_bh1, CurrentTime, &C);
+  BC.assignTemp(d_t0, d_bh1, CurrentTime, &C);
   TIMING_stop(tm_heat_spec_temp, 0.0);
   
   
@@ -167,7 +167,7 @@ void FFV::PS_Binary()
   
   
   
-  if ( C.AlgorithmH == Control::Heat_EE_EE ) // 陽的時間進行
+  if ( C.AlgorithmH == Heat_EE_EE ) // 陽的時間進行
   {
     // >>> Passive scalar Diffusion subsection 3
     TIMING_start(tm_heat_diff_sct_3);
@@ -199,7 +199,7 @@ void FFV::PS_Binary()
       if ( paraMngr->Allreduce(&tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
       TIMING_stop( tm_heat_diff_res_comm, 2.0*numProc*sizeof(REAL_TYPE) ); // 双方向 x ノード数
     }
-    ICt->set_normValue( sqrt(res/(REAL_TYPE)G_Acell) ); // RMS
+    ICt->setNormValue( sqrt(res/(REAL_TYPE)G_Acell) ); // RMS
     
     TIMING_stop(tm_heat_diff_sct_3, 0.0);
     // <<< Passive scalar Diffusion subsection 3
@@ -212,17 +212,18 @@ void FFV::PS_Binary()
     U.xcopy(d_t, size, guide, d_ws, one, kind_scalar, flop);
     TIMING_stop(tm_copy_array, 0.0);
     
-    for (ICt->LoopCount=0; ICt->LoopCount< ICt->get_ItrMax(); ICt->LoopCount++) {
+    for (ICt->setLoopCount(0); ICt->getLoopCount()< ICt->getMaxIteration(); ICt->incLoopCount())
+    {
 
       // 線形ソルバー
       ps_LS(ICt, rhs_nrm, res_init);
       
-      switch (ICt->get_normType())
+      switch (ICt->getNormType())
       {
-        case ItrCtl::dx_b:
-        case ItrCtl::r_b:
-        case ItrCtl::r_r0:
-          convergence = ICt->get_normValue();
+        case dx_b:
+        case r_b:
+        case r_r0:
+          convergence = ICt->getNormValue();
           break;
           
         default:
@@ -230,7 +231,7 @@ void FFV::PS_Binary()
           Exit(0);
       }
       
-      if ( convergence < ICt->get_eps() ) break;
+      if ( convergence < ICt->getCriterion() ) break;
     }
     
   }
@@ -244,14 +245,9 @@ void FFV::PS_Binary()
   
   // 変数のカットオフオプション
   TIMING_start(tm_heat_range);
-  switch ( C.Hide.Range_Limit )
+  if ( C.Hide.Range_Limit == Control::Range_Cutoff )
   {
-    case Control::Range_Normal:
-      break;
-      
-    case Control::Range_Cutoff:  // this case includes cutoff for suction
       fb_limit_scalar_(d_t, size, &guide);
-      break;
   }
   TIMING_stop(tm_heat_range, 0.0);
   

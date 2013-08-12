@@ -62,7 +62,7 @@ public:
     procGrp = 0;
     myRank  = -1;
     numProc = 0;
-    for (int i=0; i<6; i++) nID[i] = -1;
+    for (int i=0; i<NOFACE; i++) nID[i] = -1;
     
     for (int i=0; i<3; i++)
     {

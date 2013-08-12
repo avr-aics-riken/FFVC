@@ -151,7 +151,7 @@ public:
    * @param [in]     tm   無次元時刻
    * @param [in]     C    Control class
    */
-  void assign_Temp (REAL_TYPE* d_t, int* d_bh1, const double tm, const Control* C);
+  void assignTemp (REAL_TYPE* d_t, int* d_bh1, const double tm, const Control* C);
   
   
   /**
@@ -185,31 +185,43 @@ public:
   
   
   // 速度境界条件による速度の発散の修正ほか
-  void mod_div (REAL_TYPE* dv,
-                int* bv,
-                double tm_d,
-                REAL_TYPE* v00,
-                Gemini_R* avr,
-                REAL_TYPE* vf,
-                REAL_TYPE* v,
-                Control* C,
-                double& flop);
+  void modDivergence (REAL_TYPE* dv,
+                      int* bv,
+                      double tm_d,
+                      REAL_TYPE* v00,
+                      Gemini_R* avr,
+                      REAL_TYPE* vf,
+                      REAL_TYPE* v,
+                      Control* C,
+                      double& flop);
   
   
   void mod_Dir_Forcing (REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, double& flop);
   
   
-  // 速度境界条件によるPoisosn式のソース項の修正
-  void mod_Psrc_VBC (REAL_TYPE* s_0,
-                     REAL_TYPE* vc,
-                     REAL_TYPE* v0,
-                     REAL_TYPE* vf, 
-                     int* bv,
-                     const double tm,
-                     REAL_TYPE dt,
-                     Control* C,
-                     REAL_TYPE* v00,
-                     double& flop);
+  /**
+   * @brief 速度境界条件によるPoisosn式のソース項の修正
+   * @param [in,out] s_0   \sum{u^*}
+   * @param [in]     vc    セルセンタ疑似速度 u^*
+   * @param [in]     v0    セルセンタ速度 u^n
+   * @param [in]     vf    セルフェイス速度 u^n
+   * @param [in]     bv    BCindex V
+   * @param [in]     tm    無次元時刻
+   * @param [in]     dt    時間積分幅
+   * @param [in]     C     Control class
+   * @param [in]     v00   基準速度
+   * @param [in,out] flop  flop count
+   */
+  void modPsrcVBC (REAL_TYPE* s_0,
+                   REAL_TYPE* vc,
+                   REAL_TYPE* v0,
+                   REAL_TYPE* vf,
+                   int* bv,
+                   const double tm,
+                   REAL_TYPE dt,
+                   Control* C,
+                   REAL_TYPE* v00,
+                   double& flop);
   
   
   /**
@@ -231,15 +243,25 @@ public:
                          double& flop);
   
   
-  // 速度境界条件による流束の修正
-  void mod_Pvec_Flux (REAL_TYPE* wv,
-                      REAL_TYPE* v,
-                      int* bv,
-                      const double tm,
-                      Control* C,
-                      int v_mode,
-                      REAL_TYPE* v00,
-                      double& flop);
+  /**
+   * @brief 速度境界条件による流束の修正
+   * @param [in,out] wv     疑似速度ベクトル u^*
+   * @param [in]     v      セルセンター速度ベクトル u^n
+   * @param [in]     bv     BCindex V
+   * @param [in]     tm     無次元時刻
+   * @param [in]     C      Control class
+   * @param [in]     v_mode 粘性項のモード (0=粘性項を計算しない, 1=粘性項を計算する, 2=壁法則)
+   * @param [in]     v00    基準速度
+   * @param [in,out] flop   flop count
+   */
+  void modPvecFlux (REAL_TYPE* wv,
+                    REAL_TYPE* v,
+                    int* bv,
+                    const double tm,
+                    Control* C,
+                    int v_mode,
+                    REAL_TYPE* v00,
+                    double& flop);
   
   void mod_Pvec_Forcing     (REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, REAL_TYPE dt, double& flop);
   

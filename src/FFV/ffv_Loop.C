@@ -77,9 +77,9 @@ int FFV::Loop(const unsigned step)
     
     switch (C.AlgorithmF) 
     {
-      case Control::Flow_FS_EE_EE:
-      case Control::Flow_FS_AB2:
-      case Control::Flow_FS_AB_CN:
+      case Flow_FS_EE_EE:
+      case Flow_FS_AB2:
+      case Flow_FS_AB_CN:
         if (C.Mode.ShapeAprx == BINARY)
         {
           NS_FS_E_Binary();
@@ -90,7 +90,7 @@ int FFV::Loop(const unsigned step)
         }          
         break;
         
-      case Control::Flow_FS_RK_CN:
+      case Flow_FS_RK_CN:
         break;
         
       default:
@@ -200,26 +200,46 @@ int FFV::Loop(const unsigned step)
   // 瞬時値のデータ出力
 
   // 通常
-  if ( C.Interval[Interval_Manager::tg_instant].isTriggered(CurrentStep, CurrentTime) ) 
+  if ( C.Interval[Interval_Manager::tg_basic].isTriggered(CurrentStep, CurrentTime) ) 
   {
     TIMING_start(tm_file_out);
     flop_count=0.0;
-    FileOutput(flop_count);
+    OutputBasicVariables(flop_count);
     TIMING_stop(tm_file_out, flop_count); 
   }
+  
+  if ( C.Interval[Interval_Manager::tg_derived].isTriggered(CurrentStep, CurrentTime) )
+  {
+    TIMING_start(tm_file_out);
+    flop_count=0.0;
+    OutputDerivedVariables(flop_count);
+    TIMING_stop(tm_file_out, flop_count);
+  }
+  
   
   // 最終ステップ
   if ( CurrentStep == C.Interval[Interval_Manager::tg_compute].getIntervalStep() ) 
   {
     // 指定間隔の出力がない場合のみ（重複を避ける）
-    if ( !C.Interval[Interval_Manager::tg_instant].isTriggered(CurrentStep, CurrentTime) ) 
+    if ( !C.Interval[Interval_Manager::tg_basic].isTriggered(CurrentStep, CurrentTime) ) 
     {
       if ( C.Hide.PM_Test != ON ) 
       {
         TIMING_start(tm_file_out);
         flop_count=0.0;
-        FileOutput(flop_count);
+        OutputBasicVariables(flop_count);
         TIMING_stop(tm_file_out, flop_count); 
+      }
+    }
+    
+    if ( !C.Interval[Interval_Manager::tg_derived].isTriggered(CurrentStep, CurrentTime) )
+    {
+      if ( C.Hide.PM_Test != ON )
+      {
+        TIMING_start(tm_file_out);
+        flop_count=0.0;
+        OutputDerivedVariables(flop_count);
+        TIMING_stop(tm_file_out, flop_count);
       }
     }
   }

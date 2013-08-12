@@ -79,7 +79,7 @@ bool ParseBC::chkDuplicate(const int n, const string m_label)
 {
 	for (int i=0; i<n; i++)
   {
-    if ( BaseBc[i].get_Alias() == m_label ) return false;
+    if ( BaseBc[i].getAlias() == m_label ) return false;
 	}
 	return true;
 }
@@ -1955,7 +1955,7 @@ void ParseBC::get_Phase(CompoList* cmp)
   ///////////////////////////////////////////////////////////////////////////////
   
   
-  label_base="/Steer/PhaseIdetification";
+  label_base="/PhaseIdetification";
   //cout <<  "label : " << label << endl;
   if ( !(tpCntl->chkNode(label_base)) ) {
     stamped_printf("\tParsing error : Missing the section of 'PhaseIdetification'\n");
@@ -2196,21 +2196,19 @@ void ParseBC::importTP(TPControl* tp)
  * @note パラメータファイルから各内部BCのidをパースし，cmpに保持する
  * @note 格納番号は1からスタート
  */
-void ParseBC::loadBC_Local(Control* C, MediumList* mat, CompoList* cmp, PolygonProperty* PP)
+void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp, PolygonProperty* PP)
 { 
   string str, label;
   string label_base, label_ename, label_leaf;
   
-  
 
   label_base = "/BcTable/LocalBoundary";
+  
 
-  
   //
-  //内部境界の条件設定 --- NoBC = 内部境界の数
+  // 内部境界の条件設定 --- NoBC = 内部境界の数
   //
   
-  // BC[@]をサーチ
   for (int k=1; k<=NoBC; k++)
   {
     int m = NoMedium + k;
@@ -2221,13 +2219,14 @@ void ParseBC::loadBC_Local(Control* C, MediumList* mat, CompoList* cmp, PolygonP
       Exit(0);
     }
     
-    if( strcasecmp(str.substr(0,2).c_str(), "BC") ) continue;
+    cmp[m].setAlias(str);
+    
     
     label_leaf = label_base + "/" + str;
     
     
     // alias of medium
-    label = label_leaf + "/AliasOfMedium";
+    label = label_leaf + "/Medium";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -2235,17 +2234,6 @@ void ParseBC::loadBC_Local(Control* C, MediumList* mat, CompoList* cmp, PolygonP
       Exit(0);
     }
     cmp[m].setMedium(str);
-    
-    
-    // alias
-    label = label_leaf + "/Alias";
-    
-    if ( !(tpCntl->GetValue(label, &str )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : No '%s'\n", label.c_str());
-      Exit(0);
-    }
-    cmp[m].setAlias(str);
     
     
     // class
@@ -2442,8 +2430,8 @@ void ParseBC::loadBC_Local(Control* C, MediumList* mat, CompoList* cmp, PolygonP
 
 
 // #################################################################
-// パラメータファイルをパースして，外部境界条件を取得，保持する
-void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumList* mat, CompoList* cmp)
+// 外部境界条件を取得，保持する
+void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* cmp)
 {
   string label_base, label_leaf, label;
   string str;
@@ -2457,35 +2445,37 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumList* mat, CompoList* 
     Exit(0);
   }
   
+  vector<string> nodes;
+  int m=0;
   
-  //Basic_BCs
-  for (int i=0; i<NoBaseBC; i++) {
+  // 直下のラベルを取得
+  tpCntl->getLabelVector(label_base, nodes);
+  
+  
+  // ラベルの重複チェックとセット
+  // ラベル名はパラメータファイルの出現順になっている
+  for (vector<string>::iterator it = nodes.begin(); it != nodes.end(); it++)
+  {
+    if ( !chkDuplicate(m, *it) ) Exit(0);
     
+    if ( strcasecmp( (*it).c_str(), "FaceBC") )
+    {
+      BaseBc[m].setAlias(*it);
+      m++;
+    }
+  }
+  
+  
+  //BasicBCs
+  for (int i=0; i<NoBaseBC; i++)
+  {
     if(!tpCntl->GetNodeStr(label_base, i+1, &str))
     {
       Hostonly_ printf("\tParsing error : Missing 'BasicBCs'\n");
       Exit(0);
     }
     
-    if( strcasecmp(str.substr(0,8).c_str(), "BasicBCs") ) continue;
-    
-    // alias ユニークな名称であること
     label_leaf = label_base + "/" + str;
-    label = label_leaf + "/Alias";
-    
-    if ( !(tpCntl->GetValue(label, &str )) )
-    {
-      Hostonly_ printf("\tParsing error : No '%s'\n", label.c_str());
-      Exit(0);
-    }
-    if ( !chkDuplicate(i, str) )
-    {
-      Hostonly_ printf("\tParsing error : 'Alias' must be unique\n");
-      Exit(0);
-    }
-    BaseBc[i].set_Alias(str);
-    
-    
     
     // Classに境界条件の種別をセットする
     label = label_leaf + "/Class";
@@ -2496,11 +2486,32 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumList* mat, CompoList* 
       Exit(0);
     }
     setKeywordOBC(str, i);
-    BaseBc[i].set_Label(str);
+    
+  
+    
+    // ガイドセルの媒質ラベルを取得
+    label = label_leaf + "/MediumOnGuideCell";
+    
+    if ( !(tpCntl->GetValue(label, &str )) )
+    {
+      Hostonly_ printf("\tParsing error : No entory 'MediumOnGuideCell' in 'BasicBCs'\n");
+      Exit(0);
+    }
+
+    
+    // ラベル名が一致するエントリ番号をセットする
+    for (int m=1; m<=NoCompo; m++)
+    {
+      if ( !strcasecmp( str.c_str(), mat[m].getAlias().c_str() ) )
+      {
+        BaseBc[i].setGuideMedium(m);
+        break;
+      }
+    }
     
     
     // 各条件に応じたパラメータをロード
-    switch ( BaseBc[i].get_Class() )
+    switch ( BaseBc[i].getClass() )
     {
       case OBC_WALL:
         getObcWall(label_leaf, i);
@@ -2533,6 +2544,8 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumList* mat, CompoList* 
     }
   }
   
+  
+  
   // 各フェイスに境界条件を設定する
   label_base = "/BcTable/OuterBoundary/FaceBC";
   
@@ -2550,9 +2563,12 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumList* mat, CompoList* 
     Exit(0);
   }
   
+  
+  
   // 各面に与える境界条件番号を取得し，BaseBcから境界情報リストに内容をコピー
-  for (int face=0; face<NOFACE; face++) {
-    
+  // 同時に，各サブドメインのサブドメイン境界の条件を設定する
+  for (int face=0; face<NOFACE; face++)
+  {
     // faceに対するラベルを取得
     if ( !tpCntl->GetNodeStr(label_base, face+1, &str) )
     {
@@ -2562,7 +2578,7 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumList* mat, CompoList* 
     label_leaf = label_base + "/" + str;
     
     // 指定の境界条件を探してBaseBC[]からbc[]へ内容のコピー
-    label = label_leaf + "/AssignedAlias";
+    label = label_leaf;
     
     if ( !(tpCntl->GetValue(label, &str)) ) 
     {
@@ -2570,14 +2586,19 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumList* mat, CompoList* 
       Exit(0);
     }
     
+    // 外部境界のときzero
+    int inner = (nID[face]<0) ? 0 : 1;
+    
     // Aliasでサーチ
-    for (int i=0; i<NoBaseBC; i++) {
-      if ( !strcasecmp( str.c_str(), BaseBc[i].get_Alias().c_str() ) ) 
+    for (int i=0; i<NoBaseBC; i++)
+    {
+      if ( !strcasecmp( str.c_str(), BaseBc[i].getAlias().c_str() ) ) 
       {
-        bc[face].dataCopy( &BaseBc[i] );
+        bc[face].dataCopy( &BaseBc[i], inner );
+        globalBC[face] = i;
         break;
       }
-      else 
+      else
       {
         if ( i == NoBaseBC-1 ) // 最後までみつからない
         {
@@ -2587,59 +2608,30 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumList* mat, CompoList* 
       }
     }
   }
-  
-  
-  // ガイドセルの媒質インデクスをセット
-  label_base = "/BcTable/OuterBoundary/FaceBC";
-  
-  for (int face=0; face<NOFACE; face++) {
-    
-    if (!tpCntl->GetNodeStr(label_base, face+1, &str))
-    {
-      Hostonly_ printf("\tGetNodeStr error\n");
-      Exit(0);
-    }
-    label_leaf = label_base + "/" + str;
-    
-    // ガイドセルの媒質ラベルを取得
-    label = label_leaf + "/MediumOnGuideCell";
-    
-    if ( !(tpCntl->GetValue(label, &str )) ) 
-    {
-      Hostonly_ printf("\tParsing error : No entory 'MediumOnGuideCell' in 'FaceBC'\n");
-      Exit(0);
-    }
-    
-    // ラベル名が一致するエントリ番号をセットする
-    for (int i=1; i<=NoCompo; i++)
-    {
-      if ( !strcasecmp( str.c_str(), mat[i].getAlias().c_str() ) )
-      {
-        bc[face].setGuideMedium(i);
-        break;
-      }
-    }
-    
-  }
+
 
   
   // 周期境界条件の整合性のチェック
   
   // 部分周期境界の数
   int p_flag=0;
-  for (int n=0; n<NOFACE; n++) {
+  for (int n=0; n<NOFACE; n++)
+  {
     if (bc[n].get_PrdcMode() == BoundaryOuter::prdc_Driver) p_flag++;
   }
   
   // 部分周期条件を使わない場合，対になる外部境界のチェック
-  if ( p_flag == 0 ) {
+  if ( p_flag == 0 )
+  {
     int n_pair=0;
     
     // 周期境界条件の指定をチェック
     for (int n=0; n<NOFACE; n++) {
-      if ( bc[n].get_Class() == OBC_PERIODIC ) {
+      if ( bc[n].getClass() == OBC_PERIODIC )
+      {
         n_pair = oppositeDir(n);
-        if ( bc[n_pair].get_Class() != OBC_PERIODIC ) {
+        if ( bc[n_pair].getClass() != OBC_PERIODIC )
+        {
           Hostonly_ printf("\tFace BC : No consistent Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
           Exit(0);
         }
@@ -2647,20 +2639,25 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumList* mat, CompoList* 
     }
     
     // 対になるモードのチェック
-    for (int n=0; n<NOFACE; n++) {
-      if ( bc[n].get_Class() == OBC_PERIODIC ) {
+    for (int n=0; n<NOFACE; n++)
+    {
+      if ( bc[n].getClass() == OBC_PERIODIC )
+      {
         n_pair = oppositeDir(n);
         
-        switch (bc[n].get_PrdcMode()) {
+        switch (bc[n].get_PrdcMode())
+        {
           case BoundaryOuter::prdc_Simple:
-            if ( bc[n_pair].get_PrdcMode() != BoundaryOuter::prdc_Simple ) { 
+            if ( bc[n_pair].get_PrdcMode() != BoundaryOuter::prdc_Simple )
+            {
               Hostonly_ printf("\tFace BC : No consistent SIMPLE Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
               Exit(0);
             }
             break;
             
           case BoundaryOuter::prdc_Directional:
-            if ( bc[n_pair].get_PrdcMode() != BoundaryOuter::prdc_Directional ) {
+            if ( bc[n_pair].get_PrdcMode() != BoundaryOuter::prdc_Directional )
+            {
               Hostonly_ printf("\tFace BC : No consistent DIRECTIONAL Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
               Exit(0);
             }
@@ -2668,11 +2665,13 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumList* mat, CompoList* 
               Hostonly_ printf("\tFace BC : Pressure difference value is not same in %s direction\n", FBUtility::getDirection(n_pair).c_str());
               Exit(0);
             }
-            if ( (bc[n].get_FaceMode() == BoundaryOuter::prdc_upstream) && (bc[n_pair].get_FaceMode() != BoundaryOuter::prdc_downstream) ) {
+            if ( (bc[n].get_FaceMode() == BoundaryOuter::prdc_upstream) && (bc[n_pair].get_FaceMode() != BoundaryOuter::prdc_downstream) )
+            {
               Hostonly_ printf("\tFace BC : No consistent Upstream/Downstream relation in %s direction\n", FBUtility::getDirection(n).c_str());
               Exit(0);
             }
-            if ( (bc[n].get_FaceMode() == BoundaryOuter::prdc_downstream) && (bc[n_pair].get_FaceMode() != BoundaryOuter::prdc_upstream) ) {
+            if ( (bc[n].get_FaceMode() == BoundaryOuter::prdc_downstream) && (bc[n_pair].get_FaceMode() != BoundaryOuter::prdc_upstream) )
+            {
               Hostonly_ printf("\tFace BC : No consistent Upstream/Downstream relation in %s direction\n", FBUtility::getDirection(n).c_str());
               Exit(0);
             }
@@ -2687,12 +2686,12 @@ void ParseBC::loadBC_Outer(BoundaryOuter* bc, const MediumList* mat, CompoList* 
     for (int n=0; n<NOFACE; n++)
     {
       n_pair = oppositeDir(n);
-      if ( bc[n].get_Class() == OBC_PERIODIC )
+      if ( bc[n].getClass() == OBC_PERIODIC )
       {
         if (bc[n].get_PrdcMode() == BoundaryOuter::prdc_Driver)
         {
           // 他方は周期境界以外であること
-          if ( bc[n_pair].get_Class() == OBC_PERIODIC )
+          if ( bc[n_pair].getClass() == OBC_PERIODIC )
           {
             Hostonly_ printf("\tFace BC : %s direction should be non periodic BC\n", FBUtility::getDirection(n_pair).c_str());
             Exit(0);
@@ -2754,6 +2753,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
 {
   int m;
   bool flag;
+  FB::Vec3i st, ed;
   
   // VBC ---------------------------------------------------
   if ( existComponent(SPEC_VEL, cmp) || existComponent(SPEC_VEL_WH, cmp) )
@@ -2765,11 +2765,12 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     {
       if ( (cmp[n].getType() == SPEC_VEL) || (cmp[n].getType() == SPEC_VEL_WH) )
       {
+        st = getCmpGbbox_st(n, gci);
+        ed = getCmpGbbox_ed(n, gci);
+        
         fprintf(fp,"\t%3d %24s %7d %7d %7d %7d %7d %7d %11.4e %11ld\n\n",
                 n, cmp[n].getAlias().c_str(),
-                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
-                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
-                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
+                st.x, ed.x, st.y, ed.y, st.z, ed.z,
                 cmp[n].area, cmp[n].getElement());
         fprintf(fp, "\t                     normal_x    normal_y    normal_z       Direction");
         
@@ -2828,11 +2829,12 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
       {
         if ( cmp[n].getType() == SPEC_VEL_WH )
         {
+          st = getCmpGbbox_st(n, gci);
+          ed = getCmpGbbox_ed(n, gci);
+          
           fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %12.4e %12.4e\n", 
                   n, cmp[n].getAlias().c_str(), cmp[n].getDef(),
-                  getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
-                  getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
-                  getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci),  
+                  st.x, ed.x, st.y, ed.y, st.z, ed.z, 
 									FBUtility::convK2Temp(cmp[n].get_Temp(), Unit_Temp), 
 									FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp)); // 保持されている温度はKelvin
         }
@@ -2850,11 +2852,12 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     {
       if ( cmp[n].getType() == OUTFLOW )
       {
+        st = getCmpGbbox_st(n, gci);
+        ed = getCmpGbbox_ed(n, gci);
+        
         fprintf(fp,"\t%3d %24s %5d %7d %7d %7d %7d %7d %7d ",
                 n, cmp[n].getAlias().c_str(), cmp[n].getDef(),
-                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
-                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci),
-                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci));
+                st.x, ed.x, st.y, ed.y, st.z, ed.z);
         
         if (cmp[n].get_P_BCtype() == P_DIRICHLET)
         {
@@ -2880,11 +2883,12 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     {
       if ( cmp[n].getType() == IBM_DF )
       {
+        st = getCmpGbbox_st(n, gci);
+        ed = getCmpGbbox_ed(n, gci);
+        
         fprintf(fp,"\t%3d %24s %7d %7d %7d %7d %7d %7d\n",
                 n, cmp[n].getAlias().c_str(),
-                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
-                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
-                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci));
+                st.x, ed.x, st.y, ed.y, st.z, ed.z);
       }
     }
     fprintf(fp, "\n");
@@ -2939,11 +2943,12 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     {
       if ( cmp[n].getType() == HEX )
       {
+        st = getCmpGbbox_st(n, gci);
+        ed = getCmpGbbox_ed(n, gci);
+        
         fprintf(fp, "\t%3d %24s %7d %7d %7d %7d %7d %7d\n", 
                 n, cmp[n].getAlias().c_str(),
-                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
-                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
-                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci));
+                st.x, ed.x, st.y, ed.y, st.z, ed.z);
       }
     }
     fprintf(fp, "\n");
@@ -2996,11 +3001,12 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     {
       if ( cmp[n].getType() == FAN )
       {
+        st = getCmpGbbox_st(n, gci);
+        ed = getCmpGbbox_ed(n, gci);
+        
         fprintf(fp, "\t%3d %24s %7d %7d %7d %7d %7d %7d\n", 
                 n, cmp[n].getAlias().c_str(),
-                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
-                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
-                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci));
+                st.x, ed.x, st.y, ed.y, st.z, ed.z);
       }
     }
     fprintf(fp, "\n");
@@ -3038,11 +3044,12 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     {
       if ( cmp[n].getType() == DARCY )
       {
+        st = getCmpGbbox_st(n, gci);
+        ed = getCmpGbbox_ed(n, gci);
+        
         fprintf(fp, "\t%3d %24s %7d %7d %7d %7d %7d %7d\n", 
                 n, cmp[n].getAlias().c_str(),
-                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
-                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
-                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci));
+                st.x, ed.x, st.y, ed.y, st.z, ed.z);
       }
     }
   }
@@ -3073,11 +3080,12 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     {
       if ( cmp[n].getType() == HEATFLUX )
       {
+        st = getCmpGbbox_st(n, gci);
+        ed = getCmpGbbox_ed(n, gci);
+        
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n", 
                 n, cmp[n].getAlias().c_str(), cmp[n].getDef(),
-                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
-                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
-                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
+                st.x, ed.x, st.y, ed.y, st.z, ed.z,
                 cmp[n].area, cmp[n].get_Heatflux(), cmp[n].get_Heatflux()/(RefVelocity*DiffTemp*rho*cp));
       }
     }
@@ -3093,11 +3101,12 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     {
       if ( cmp[n].getHtype() == HT_N )
       {
+        st = getCmpGbbox_st(n, gci);
+        ed = getCmpGbbox_ed(n, gci);
+        
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e\n", 
                 n, cmp[n].getAlias().c_str(), cmp[n].getDef(),
-                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
-                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
-                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
+                st.x, ed.x, st.y, ed.y, st.z, ed.z,
                 cmp[n].area, cmp[n].get_CoefHT());
       }
     }
@@ -3113,11 +3122,12 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     {
       if ( cmp[n].getHtype() == HT_S )
       {
+        st = getCmpGbbox_st(n, gci);
+        ed = getCmpGbbox_ed(n, gci);
+        
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e %12.4e\n", 
                 n, cmp[n].getAlias().c_str(), cmp[n].getDef(),
-                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
-                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
-                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
+                st.x, ed.x, st.y, ed.y, st.z, ed.z, 
                 cmp[n].area, cmp[n].get_CoefHT(), FBUtility::convK2Temp(cmp[n].get_Temp(), Unit_Temp),
                 FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp) );
       }
@@ -3134,11 +3144,12 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     {
       if ( cmp[n].getHtype() == HT_SN )
       {
+        st = getCmpGbbox_st(n, gci);
+        ed = getCmpGbbox_ed(n, gci);
+        
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e   %s\n", 
                 n, cmp[n].getAlias().c_str(), cmp[n].getDef(),
-                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
-                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
-                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
+                st.x, ed.x, st.y, ed.y, st.z, ed.z,
                 cmp[n].area, FBUtility::convK2Temp(cmp[n].get_Temp(), Unit_Temp),
                 FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp),
                 (cmp[n].get_sw_HTmodeRef()==CompoList::HT_mode_bulk) ? "Bulk" : "Local");
@@ -3179,13 +3190,14 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     {
       if ( cmp[n].getHtype() == HT_SF )
       {
+        st = getCmpGbbox_st(n, gci);
+        ed = getCmpGbbox_ed(n, gci);
+        
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n", 
                 n, 
                 cmp[n].getAlias().c_str(), 
                 cmp[n].getDef(), 
-                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
-                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
-                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
+                st.x, ed.x, st.y, ed.y, st.z, ed.z,
                 cmp[n].area, FBUtility::convK2Temp(cmp[n].get_Temp(), Unit_Temp),
                 FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp),
                 (cmp[n].get_sw_HTmodeRef()==CompoList::HT_mode_bulk) ? "Bulk" : "Local");
@@ -3217,11 +3229,12 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     {
       if ( cmp[n].getHtype() == HT_B )
       {
+        st = getCmpGbbox_st(n, gci);
+        ed = getCmpGbbox_ed(n, gci);
+        
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %11.4e  %12.4e %12.4e %12.4e\n", 
                 n, cmp[n].getAlias().c_str(), cmp[n].getDef(),
-                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
-                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
-                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
+                st.x, ed.x, st.y, ed.y, st.z, ed.z,
                 cmp[n].area, cmp[n].get_CoefHT(), FBUtility::convK2Temp(cmp[n].get_Temp(), Unit_Temp),
                 FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp) );
       }
@@ -3239,11 +3252,12 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     {
       if ( cmp[n].getType() == ISOTHERMAL )
       {
+        st = getCmpGbbox_st(n, gci);
+        ed = getCmpGbbox_ed(n, gci);
+        
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e \n", 
                 n, cmp[n].getAlias().c_str(), cmp[n].getDef(),
-                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
-                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
-                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
+                st.x, ed.x, st.y, ed.y, st.z, ed.z,
 								cmp[n].area, FBUtility::convK2Temp(cmp[n].get_Temp(), Unit_Temp),
                 FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp) );
       }
@@ -3260,11 +3274,12 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     {
       if ( cmp[n].getType() == RADIANT )
       {
+        st = getCmpGbbox_st(n, gci);
+        ed = getCmpGbbox_ed(n, gci);
+        
         fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n", 
                 n, cmp[n].getAlias().c_str(), cmp[n].getDef(),
-                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
-                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
-                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
+                st.x, ed.x, st.y, ed.y, st.z, ed.z,
                 cmp[n].area, cmp[n].get_CoefRadEps(), cmp[n].get_CoefRadPrj());
       }
     }
@@ -3281,11 +3296,12 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     {
       if ( cmp[n].getType() == HEAT_SRC )
       {
+        st = getCmpGbbox_st(n, gci);
+        ed = getCmpGbbox_ed(n, gci);
+        
         fprintf(fp, "\t%3d %24s %7d %7d %7d %7d %7d %7d %12.4e %12.4e\n", 
                 n, cmp[n].getAlias().c_str(),
-                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
-                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
-                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
+                st.x, ed.x, st.y, ed.y, st.z, ed.z,
                 cmp[n].get_HeatValue(), 
                 FBUtility::convD2ND_Hsrc(cmp[n].get_HeatValue(), RefVelocity, RefLength, DiffTemp, mat[n].P[p_density], mat[n].P[p_specific_heat]));
       }
@@ -3303,11 +3319,12 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     {
       if ( cmp[n].getType() == CNST_TEMP )
       {
+        st = getCmpGbbox_st(n, gci);
+        ed = getCmpGbbox_ed(n, gci);
+        
         fprintf(fp, "\t%3d %24s %7d %7d %7d %7d %7d %7d %12.4e %12.4e\n", 
                 n, cmp[n].getAlias().c_str(),
-                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
-                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
-                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
+                st.x, ed.x, st.y, ed.y, st.z, ed.z,
                 FBUtility::convK2Temp(cmp[n].get_Temp(), Unit_Temp), 
                 FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp));
       }
@@ -3323,11 +3340,12 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     {
       if ( cmp[n].getType() == CELL_MONITOR )
       {
+        st = getCmpGbbox_st(n, gci);
+        ed = getCmpGbbox_ed(n, gci);
+        
         fprintf(fp, "\t%3d %24s %7d %7d %7d %7d %7d %7d %11.4e %11ld\n", 
                 n, cmp[n].getAlias().c_str(),
-                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
-                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
-                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci), 
+                st.x, ed.x, st.y, ed.y, st.z, ed.z,
 								cmp[n].area, cmp[n].getElement());
       }
     }
@@ -3360,47 +3378,52 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
       {
         dir_in = cmp[n].getPeriodicDir();
         
+        st = getCmpGbbox_st(n, gci);
+        ed = getCmpGbbox_ed(n, gci);
+        
         fprintf(fp, "\t%3d %24s %7d %7d %7d %7d %7d %7d     ", 
                 n, cmp[n].getAlias().c_str(),
-                getCmpGbbox_st_x(n, gci), getCmpGbbox_ed_x(n, gci), 
-                getCmpGbbox_st_y(n, gci), getCmpGbbox_ed_y(n, gci), 
-                getCmpGbbox_st_z(n, gci), getCmpGbbox_ed_z(n, gci));
+                st.x, ed.x, st.y, ed.y, st.z, ed.z);
         fprintf(fp,"%12.6e / %12.6e ", cmp[n].ca[0], FBUtility::convD2ND_P(cmp[n].ca[0], BasePrs, RefDensity, RefVelocity, Unit_Prs));
         fprintf(fp, "%7s\n", FBUtility::getDirection(dir_in).c_str());
         
         // ドライバの方向が周期境界であるかをチェック
-        if ( bc[dir_in].get_Class() != OBC_PERIODIC ) {
+        if ( bc[dir_in].getClass() != OBC_PERIODIC )
+        {
           fprintf(fp, "\tError : Specified driver direction[%s] by component is not PERIODIC.", FBUtility::getDirection(dir_in).c_str());
           Exit(0);
         }
         
         // ドライバの方向が一致しているかどうかをチェック
         dir_out = bc[dir_in].get_DriverDir();
-        if ( dir_in != dir_out ) {
+        if ( dir_in != dir_out )
+        {
           fprintf(fp, "\tError : The specification of driver direction is different between Outer(%d) and Inner(%d) in XML.", dir_out, dir_in);
           Exit(0);
         }
         
         // 入力のインデクス値とボクセルの位置が一致しているかどうかをチェック
-        switch ( dir_in ) {
+        switch ( dir_in )
+        {
           case X_MINUS:
           case X_PLUS:
-            pp_in = getCmpGbbox_st_x(n, gci);
+            pp_in = getCmpGbbox_st(n, gci).x;
             break;
             
           case Y_MINUS:
           case Y_PLUS:
-            pp_in = getCmpGbbox_st_y(n, gci);
+            pp_in = getCmpGbbox_st(n, gci).y;
             break;
             
           case Z_MINUS:
           case Z_PLUS:
-            pp_in = getCmpGbbox_st_z(n, gci);
+            pp_in = getCmpGbbox_st(n, gci).z;
             break;
         }
         
         pp_out = bc[dir_in].get_DriverIndex();
-        if ( pp_in != pp_out ) {
+        if ( pp_in != pp_out )
+        {
           fprintf(fp, "\tError : The index of inner periodic cell is different in between XML(%d) and voxel model(%d).", pp_out, pp_in);
           Exit(0);
         }
@@ -3467,12 +3490,15 @@ void ParseBC::printCompoSummary(FILE* fp, CompoList* cmp, const int basicEq)
 // 外部境界条件の各面の情報を表示する
 void ParseBC::printFaceOBC(FILE* fp, const REAL_TYPE* G_reg, const BoundaryOuter* bc, const MediumList* mat)
 {
-  for (int i=0; i<NOFACE; i++) {
+  for (int i=0; i<NOFACE; i++)
+  {
+    int m = globalBC[i];
+    
     fprintf(fp,"\t      Set %s up as %s : < %s >\n", 
             FBUtility::getDirection(i).c_str(), 
-            getOBCstr(bc[i].get_Class()).c_str(), 
-            bc[i].get_Alias().c_str());
-    printOBC(fp, &bc[i], mat, G_reg, i);
+            getOBCstr(bc[i].getClass()).c_str(), 
+            bc[i].getAlias().c_str());
+    printOBC(fp, &BaseBc[m], mat, G_reg, i);
     fprintf(fp,"\n");
   }
   fflush(fp);
@@ -3493,7 +3519,7 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
 {
   REAL_TYPE a, b, c;
   
-  if ( ref->get_Class() == OBC_INTRINSIC)
+  if ( ref->getClass() == OBC_INTRINSIC)
   {
     fprintf(fp,"\t\t\tGuide Cell Medium = Intrinsic\n");
   }
@@ -3501,9 +3527,13 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
   {
     fprintf(fp,"\t\t\tGuide Cell Medium = %s\n", mat[ref->getGuideMedium()].getAlias().c_str());
   }
-  switch ( ref->get_Class() ) {
+  
+  
+  switch ( ref->getClass() )
+  {
     case OBC_WALL:
-      if ( ref->get_V_Profile() == CompoList::vel_harmonic ) {
+      if ( ref->get_V_Profile() == CompoList::vel_harmonic )
+      {
         fprintf(fp,"\t\t\tVelocity  Harmonic Oscillation\n");
         fprintf(fp,"\t\t\t          nrml vec. V(%10.3e, %10.3e, %10.3e) [-]\n", ref->nv[0], ref->nv[1], ref->nv[2]);
         fprintf(fp,"\t\t\t          amp.    %12.6e [m/s] / %12.6e [-]\n", ref->ca[0], ref->ca[0]/RefVelocity);
@@ -3511,27 +3541,38 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
         fprintf(fp,"\t\t\t          phase   %12.6e [rad] / %12.6e [-]\n", ref->ca[2], ref->ca[2]);
         fprintf(fp,"\t\t\t          intcpt. %12.6e [m/s] / %12.6e [-]\n", ref->ca[3], ref->ca[3]/RefVelocity);
       }
-      else { // vel_constant, vel_zero
+      else // vel_constant, vel_zero
+      {
         c = ref->ca[CompoList::bias]; // 有次元値
         fprintf(fp,"\t\t\tVelocity V(%10.3e, %10.3e, %10.3e) [m/s] / V(%10.3e, %10.3e, %10.3e) [-]\n", 
                 ref->nv[0]*c, ref->nv[1]*c, ref->nv[2]*c, ref->nv[0]*c/RefVelocity, ref->nv[1]*c/RefVelocity, ref->nv[2]*c/RefVelocity); 
       }
+      
       fprintf(fp,"\t\t\tPressure Gradient is %s\n", ( Mode_Gradp == P_GRAD_ZERO) ? "zero" : "calculated from Navier-Stokes eqs.");
-      if ( HeatProblem ) {
+      
+      if ( HeatProblem )
+      {
         int htp = ref->get_hType();
-        if ( htp == ADIABATIC ) {
+        
+        if ( htp == ADIABATIC )
+        {
           fprintf(fp,"\t\t\tAdiabatic\n");
         }
-        else if ( htp == TRANSFER) {
+        else if ( htp == TRANSFER)
+        {
           int ht_mode = ref->get_HTmode();
-          if ( ht_mode == HT_N ) {
+          
+          if ( ht_mode == HT_N )
+          {
             fprintf(fp, "\tHeat Transfer Type N  : H. T. Coef. = %e \n", ref->get_CoefHT());
           }
-          else if ( ht_mode == HT_S ) {
+          else if ( ht_mode == HT_S )
+          {
             fprintf(fp, "\tHeat Transfer Type S  : H. T. Coef. = %e \n", ref->get_CoefHT());
             fprintf(fp, "\t                        Surf. temp. = %e \n", ref->get_Temp());
           }
-          else if ( ht_mode == HT_SN ) {
+          else if ( ht_mode == HT_SN )
+          {
             fprintf(fp, "\tHeat Transfer Type SN : Surf. temp. = %e \n", ref->get_Temp());
             fprintf(fp, "\t                        Ref. Temp.  = %s \n", (ref->get_HTmodeRef()==CompoList::HT_mode_bulk) ? "Bulk" : "Local");
             fprintf(fp, "\t                        vertival_laminar_alpha   = %12.6e \n", ref->ca[0]);
@@ -3545,22 +3586,26 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
             fprintf(fp, "\t                        lower_turbulent_beta     = %12.6e \n", ref->cb[3]);
             fprintf(fp, "\t                        lower_Ra_critial         = %12.6e \n", ref->cb[4]);
           }
-          else if ( ht_mode == HT_SF ) {
+          else if ( ht_mode == HT_SF )
+          {
             fprintf(fp, "\tHeat Transfer Type SN : Surf. temp. = %e \n", ref->get_Temp());
             fprintf(fp, "\t                        Ref. Temp.  = %s \n", (ref->get_HTmodeRef()==CompoList::HT_mode_bulk) ? "Bulk" : "Local");
             fprintf(fp, "\t                        alpha       = %12.6e \n", ref->ca[0]);
             fprintf(fp, "\t                        beta        = %12.6e \n", ref->ca[1]);
             fprintf(fp, "\t                        gamma       = %12.6e \n", ref->ca[2]);
           }
-          else if ( ht_mode == HT_B ) {
+          else if ( ht_mode == HT_B )
+          {
             fprintf(fp, "\tHeat Transfer Type B  : H. T. Coef. = %e \n", ref->get_CoefHT());
             fprintf(fp, "\t                        Bulk temp.  = %e \n", ref->get_Temp());
           }
         }
-        else if ( htp == HEATFLUX ) {
+        else if ( htp == HEATFLUX )
+        {
           fprintf(fp,"Heat Flux %e\n", ref->get_Heatflux());
         }
-        else if ( htp == ISOTHERMAL ) {
+        else if ( htp == ISOTHERMAL )
+        {
           fprintf(fp,"Isothermal\n");
         }
         //else if ( htp == CNST_TEMP ) {
@@ -3570,7 +3615,8 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
       break;
       
     case OBC_SPEC_VEL:
-      if ( ref->get_V_Profile() == CompoList::vel_harmonic ) {
+      if ( ref->get_V_Profile() == CompoList::vel_harmonic )
+      {
         fprintf(fp,"\t\t\tVelocity  Harmonic Oscillation\n");
         fprintf(fp,"\t\t\t          nrml vec. V(%10.3e, %10.3e, %10.3e) [-]\n", ref->nv[0], ref->nv[1], ref->nv[2]);
         fprintf(fp,"\t\t\t          amp.    %12.6e [m/s] / %12.6e [-]\n", ref->ca[0], ref->ca[0]/RefVelocity);
@@ -3578,7 +3624,8 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
         fprintf(fp,"\t\t\t          phase   %12.6e [rad] / %12.6e [-]\n", ref->ca[2], ref->ca[2]);
         fprintf(fp,"\t\t\t          intcpt. %12.6e [m/s] / %12.6e [-]\n", ref->ca[3], ref->ca[3]/RefVelocity);
       }
-      else { // vel_zero, vel_constant
+      else // vel_zero, vel_constant
+      {
         c = ref->ca[CompoList::bias];
         fprintf(fp,"\t\t\tVelocity V(%10.3e, %10.3e, %10.3e) [m/s] / V(%10.3e, %10.3e, %10.3e) [-]\n", 
                 ref->nv[0]*c, ref->nv[1]*c, ref->nv[2]*c, ref->nv[0]*c/RefVelocity, ref->nv[1]*c/RefVelocity, ref->nv[2]*c/RefVelocity);
@@ -3586,7 +3633,8 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
       
       fprintf(fp,"\t\t\tPressure Gradient is zero.\n");
       
-      if ( HeatProblem ) {
+      if ( HeatProblem )
+      {
         fprintf(fp, "\t\t\tSpecified Temperature  = %12.6e [%s] / %12.6e [-] \n", 
                 FBUtility::convK2Temp(ref->get_Temp(), Unit_Temp),
                 (Unit_Temp==Unit_KELVIN) ? "K" : "C", 
@@ -3596,29 +3644,35 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
       
       
     case OBC_OUTFLOW:
-      if (ref->get_pType() == P_DIRICHLET) {
+      if (ref->get_pType() == P_DIRICHLET)
+      {
         fprintf(fp,"\t\t\t%12.6e [Pa]  /  %12.6e\n", ref->p, FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs));        
       }
-      else {
+      else
+      {
         fprintf(fp,"\t\t\tPressure Gradient is zero\n");
       }
-      if ( HeatProblem ) {
+      if ( HeatProblem )
+      {
+        // ?
       }
-      fprintf(fp,"\t\t\tNumber of Element = %d\n",ref->get_ValidCell());
+      fprintf(fp,"\t\t\tNumber of Element = %d\n",ref->getValidCell());
       break;
       
       
     case OBC_TRC_FREE:
       fprintf(fp,"\t\t\t%12.6e [Pa]  /  %12.6e [-]\n", ref->p, FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs));
       
-      if ( HeatProblem ) {
+      if ( HeatProblem )
+      {
         fprintf(fp, "\t\t\t    Ambient Temperature  = %12.6e \n", ref->get_Temp());
       }
       break;
       
       
     case OBC_PERIODIC:
-      switch (ref->get_PrdcMode()) {
+      switch (ref->get_PrdcMode())
+      {
         case BoundaryOuter::prdc_Simple:
           fprintf(fp, "\t\t\tSimple periodic copy\n");
           break;
@@ -3627,7 +3681,8 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
           fprintf(fp,"\t\t\tPressure Difference = %12.6e [Pa]    /  %12.6e [-]\n", 
                   ref->p, FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs));
           
-          switch (face) {
+          switch (face)
+          {
             case X_MINUS:
             case X_PLUS:
               fprintf(fp,"\t\t\tPressure Gradient   = %12.6e [Pa/m]  /  %12.6e [-]\n", 
@@ -3664,7 +3719,8 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
       {
         fprintf(fp,"\t\t\t%12.6e [Pa]  /  %12.6e [-]\n", ref->p, FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs));
       }
-      else {
+      else
+      {
         fprintf(fp,"\t\t\tPressure Gradient is zero\n");
       }
       break;
@@ -3740,27 +3796,13 @@ void ParseBC::setControlVars(Control* Cref)
     Exit(0);
   }
   
-  // タグ内の数をチェック
-  int nnode = tpCntl->countLabels(label);
-  if ( nnode == 0 )
-  {
-    Hostonly_ stamped_printf("\tNo OuterBoundary defined\n");
-    return;
-  }
+  vector<string> nodes;
   
-  int counter=0;
-  for (int i=1; i<=nnode; i++) {
-    
-    if ( !tpCntl->GetNodeStr(label, i, &str) )
-    {
-      Hostonly_ stamped_printf("\tGetNodeStr error\n");
-      Exit(0);
-    }
-    
-    if( !strcasecmp(str.substr(0,8).c_str(), "BasicBCs") ) counter++;
-  }
+  // /MediumTable直下のラベルを取得
+  tpCntl->getLabelVector(label, nodes);
   
-  NoBaseBC = counter;
+  // ラベル数から"FaceBC"を除いた数
+  NoBaseBC = nodes.size() -1;
   BaseBc = new BoundaryOuter[NoBaseBC];
 }
 
@@ -3806,20 +3848,20 @@ void ParseBC::setKeywordLBC(const string keyword, const int m, CompoList* cmp)
 
 // #################################################################
 /**
- * @brief 内部境界条件の照合を行う
+ * @brief 外部境界条件の照合を行う
  * @param [in] keyword テストキーワード
  * @param [in] m       コンポーネントの格納番号
  */
 void ParseBC::setKeywordOBC(const string keyword, const int m)
 {
-  if     ( FBUtility::compare(keyword, "Wall") )              BaseBc[m].set_Class(OBC_WALL);
-  else if( FBUtility::compare(keyword, "Outflow") )           BaseBc[m].set_Class(OBC_OUTFLOW);
-  else if( FBUtility::compare(keyword, "SpecifiedVelocity") ) BaseBc[m].set_Class(OBC_SPEC_VEL);
-  else if( FBUtility::compare(keyword, "Symmetric") )         BaseBc[m].set_Class(OBC_SYMMETRIC);
-  else if( FBUtility::compare(keyword, "Periodic") )          BaseBc[m].set_Class(OBC_PERIODIC);
-  else if( FBUtility::compare(keyword, "TractionFree") )      BaseBc[m].set_Class(OBC_TRC_FREE);
-  else if( FBUtility::compare(keyword, "FarField") )          BaseBc[m].set_Class(OBC_FAR_FIELD);
-  else if( FBUtility::compare(keyword, "intrinsic") )         BaseBc[m].set_Class(OBC_INTRINSIC);
+  if     ( FBUtility::compare(keyword, "Wall") )              BaseBc[m].setClass(OBC_WALL);
+  else if( FBUtility::compare(keyword, "Outflow") )           BaseBc[m].setClass(OBC_OUTFLOW);
+  else if( FBUtility::compare(keyword, "SpecifiedVelocity") ) BaseBc[m].setClass(OBC_SPEC_VEL);
+  else if( FBUtility::compare(keyword, "Symmetric") )         BaseBc[m].setClass(OBC_SYMMETRIC);
+  else if( FBUtility::compare(keyword, "Periodic") )          BaseBc[m].setClass(OBC_PERIODIC);
+  else if( FBUtility::compare(keyword, "TractionFree") )      BaseBc[m].setClass(OBC_TRC_FREE);
+  else if( FBUtility::compare(keyword, "FarField") )          BaseBc[m].setClass(OBC_FAR_FIELD);
+  else if( FBUtility::compare(keyword, "intrinsic") )         BaseBc[m].setClass(OBC_INTRINSIC);
   else {
     Hostonly_ stamped_printf("\tParsing error : Invalid keyword is described '%s'\n", keyword.c_str());
     Exit(0);
@@ -3855,6 +3897,6 @@ void ParseBC::setRefMediumProperty(const MediumList* mat, const int Ref)
     }
   }
   
-  RefDensity      = rho;
+  //RefDensity      = rho;  >> Control::getReference()で定義
   RefSpecificHeat = cp;
 }

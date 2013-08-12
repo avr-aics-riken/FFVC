@@ -35,7 +35,7 @@ bool IP_PPLT2D::getTP(Control* R, TPControl* tpCntl)
   std::string label;
   
   // 媒質指定
-  label = "/Parameter/IntrinsicExample/FluidMedium";
+  label = "/IntrinsicExample/FluidMedium";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -44,7 +44,7 @@ bool IP_PPLT2D::getTP(Control* R, TPControl* tpCntl)
   }
   m_fluid = str;
   
-  label = "/Parameter/IntrinsicExample/SolidMedium";
+  label = "/IntrinsicExample/SolidMedium";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {

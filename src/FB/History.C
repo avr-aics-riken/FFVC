@@ -56,13 +56,13 @@ void History::printHistoryItrTitle(FILE* fp)
  * @param [in] IC  反復管理クラス
  * @param [in] idx divの最大値の発生セルインデクス
  */
-void History::printHistoryItr(FILE* fp, const ItrCtl* IC, const FB::Vec3i idx)
+void History::printHistoryItr(FILE* fp, const IterationCtl* IC, const FB::Vec3i idx)
 {
-  const ItrCtl* ICd = &IC[ItrCtl::ic_div];     ///< 圧力-速度反復
-  const ItrCtl* ICp = &IC[ItrCtl::ic_prs_pr];  ///< 圧力のPoisson反復
+  const IterationCtl* ICd = &IC[ic_div];   ///< 圧力-速度反復
+  const IterationCtl* ICp = &IC[ic_prs1];  ///< 圧力のPoisson反復
 	fprintf(fp, "                                           %8d %13.6e %8d %13.6e (%12d, %12d, %12d)\n",
-          ICd->LoopCount, ICd->get_normValue(),
-          ICp->LoopCount, ICp->get_normValue(),
+          ICd->getLoopCount(), ICd->getNormValue(),
+          ICp->getLoopCount(), ICp->getNormValue(),
           idx.x, idx.y, idx.z);
 }
 
@@ -75,11 +75,11 @@ void History::printHistoryItr(FILE* fp, const ItrCtl* IC, const FB::Vec3i idx)
  * @param [in] C  制御クラス
  * @param [in] disp  計算時間表示の有無
  */
-void History::printHistoryTitle(FILE* fp, const ItrCtl* IC, const Control* C, const bool disp)
+void History::printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control* C, const bool disp)
 {
-  const ItrCtl* ICp1 = &IC[ItrCtl::ic_prs_pr];  /// 圧力のPoisson反復
-  const ItrCtl* ICv  = &IC[ItrCtl::ic_vis_cn];  /// 粘性項のCrank-Nicolson反復
-  const ItrCtl* ICt  = &IC[ItrCtl::ic_tdf_ei];  /// 温度の拡散項の反復
+  const IterationCtl* ICp1 = &IC[ic_prs1];  /// 圧力のPoisson反復
+  const IterationCtl* ICv  = &IC[ic_vel1];  /// 粘性項のCrank-Nicolson反復
+  const IterationCtl* ICt  = &IC[ic_tmp1];  /// 温度の拡散項の反復
   
   if ( Unit_Log == DIMENSIONAL )
   {
@@ -94,25 +94,25 @@ void History::printHistoryTitle(FILE* fp, const ItrCtl* IC, const Control* C, co
   {
     switch (C->AlgorithmF)
     {
-      case Control::Flow_FS_EE_EE:
-      case Control::Flow_FS_AB2:
-      case Control::Flow_FS_AB_CN:
+      case Flow_FS_EE_EE:
+      case Flow_FS_AB2:
+      case Flow_FS_AB_CN:
         fprintf(fp, "  ItrP");
-        if      (ICp1->get_normType() == ItrCtl::dx_b)       fprintf(fp, "        dx_b");
-        else if (ICp1->get_normType() == ItrCtl::r_b)        fprintf(fp, "         r_b");
-        else if (ICp1->get_normType() == ItrCtl::r_r0)       fprintf(fp, "        r_r0");
+        if      (ICp1->getNormType() == dx_b)       fprintf(fp, "        dx_b");
+        else if (ICp1->getNormType() == r_b)        fprintf(fp, "         r_b");
+        else if (ICp1->getNormType() == r_r0)       fprintf(fp, "        r_r0");
         break;
     }
     
-    if (C->AlgorithmF == Control::Flow_FS_AB_CN)
+    if (C->AlgorithmF == Flow_FS_AB_CN)
     {
       fprintf(fp, "  ItrV");
-      if      (ICv->get_normType() == ItrCtl::dx_b)       fprintf(fp, "        dx_b");
-      else if (ICv->get_normType() == ItrCtl::r_b)        fprintf(fp, "         r_b");
-      else if (ICv->get_normType() == ItrCtl::r_r0)       fprintf(fp, "        r_r0");
+      if      (ICv->getNormType() == dx_b)       fprintf(fp, "        dx_b");
+      else if (ICv->getNormType() == r_b)        fprintf(fp, "         r_b");
+      else if (ICv->getNormType() == r_r0)       fprintf(fp, "        r_r0");
       else
       {
-        printf("\n\tError : Norm selection type=%d\n", ICv->get_normType());
+        printf("\n\tError : Norm selection type=%d\n", ICv->getNormType());
         Exit(0);
       }
     }
@@ -121,14 +121,14 @@ void History::printHistoryTitle(FILE* fp, const ItrCtl* IC, const Control* C, co
     {
       switch (C->AlgorithmH)
       {
-        case Control::Heat_EE_EI:
+        case Heat_EE_EI:
           fprintf(fp, "  ItrT");
-          if      (ICt->get_normType() == ItrCtl::dx_b)       fprintf(fp, "        dx_b");
-          else if (ICt->get_normType() == ItrCtl::r_b)        fprintf(fp, "         r_b");
-          else if (ICt->get_normType() == ItrCtl::r_r0)       fprintf(fp, "        r_r0");
+          if      (ICt->getNormType() == dx_b)       fprintf(fp, "        dx_b");
+          else if (ICt->getNormType() == r_b)        fprintf(fp, "         r_b");
+          else if (ICt->getNormType() == r_r0)       fprintf(fp, "        r_r0");
           else
           {
-            printf("\n\tError : Norm selection type=%d\n", ICt->get_normType());
+            printf("\n\tError : Norm selection type=%d\n", ICt->getNormType());
             Exit(0);
           }
           break;
@@ -142,14 +142,14 @@ void History::printHistoryTitle(FILE* fp, const ItrCtl* IC, const Control* C, co
   {
     switch (C->AlgorithmH)
     {
-      case Control::Heat_EE_EI:
+      case Heat_EE_EI:
         fprintf(fp, "  ItrT");
-        if      (ICt->get_normType() == ItrCtl::dx_b)       fprintf(fp, "        dx_b");
-        else if (ICt->get_normType() == ItrCtl::r_b)        fprintf(fp, "         r_b");
-        else if (ICt->get_normType() == ItrCtl::r_r0)       fprintf(fp, "        r_r0");
+        if      (ICt->getNormType() == dx_b)       fprintf(fp, "        dx_b");
+        else if (ICt->getNormType() == r_b)        fprintf(fp, "         r_b");
+        else if (ICt->getNormType() == r_r0)       fprintf(fp, "        r_r0");
         else
         {
-          printf("\n\tError : Norm selection type=%d\n", ICt->get_normType());
+          printf("\n\tError : Norm selection type=%d\n", ICt->getNormType());
           Exit(0);
         }
         break;
@@ -173,43 +173,43 @@ void History::printHistoryTitle(FILE* fp, const ItrCtl* IC, const Control* C, co
  * @param [in] fp    出力ファイルポインタ
  * @param [in] avr   1タイムステップの平均値　（0-pressure, 1-velocity, 2-temperature)
  * @param [in] rms   1タイムステップの変化量　（0-pressure, 1-velocity, 2-temperature)
- * @param [in] IC    ItrCtlクラスのポインタ
+ * @param [in] IC    IterationCtlクラスのポインタ
  * @param [in] C     Controlクラスへのポインタ
  * @param [in] stptm 1タイムステップの計算時間
  * @param [in] disp  計算時間表示の有無
  */
-void History::printHistory(FILE* fp, const double* avr, const double* rms, const ItrCtl* IC, const Control* C, const double stptm, const bool disp)
+void History::printHistory(FILE* fp, const double* avr, const double* rms, const IterationCtl* IC, const Control* C, const double stptm, const bool disp)
 {
-  const ItrCtl* ICp1 = &IC[ItrCtl::ic_prs_pr];  ///< 圧力のPoisson反復
-  const ItrCtl* ICv  = &IC[ItrCtl::ic_vis_cn];  ///< 粘性項のCrank-Nicolson反復
-  const ItrCtl* ICt  = &IC[ItrCtl::ic_tdf_ei];  ///< 温度の拡散項の反復
-  const ItrCtl* ICd  = &IC[ItrCtl::ic_div];     ///< 圧力-速度反復
+  const IterationCtl* ICp1 = &IC[ic_prs1];  ///< 圧力のPoisson反復
+  const IterationCtl* ICv  = &IC[ic_vel1];  ///< 粘性項のCrank-Nicolson反復
+  const IterationCtl* ICt  = &IC[ic_tmp1];  ///< 温度の拡散項の反復
+  const IterationCtl* ICd  = &IC[ic_div];   ///< 圧力-速度反復
   
   fprintf(fp, "%8d %14.6e %11.4e %5d  %11.4e",
-          step, printTime(), printVmax(), ICd->LoopCount, ICd->get_normValue() );
+          step, printTime(), printVmax(), ICd->getLoopCount(), ICd->getNormValue() );
 
   if ( C->KindOfSolver != SOLID_CONDUCTION ) 
   {
     switch (C->AlgorithmF)
     {
-      case Control::Flow_FS_EE_EE:
-      case Control::Flow_FS_AB2:
-      case Control::Flow_FS_AB_CN:
-        fprintf(fp, " %5d %11.4e", ICp1->LoopCount, ICp1->get_normValue());
+      case Flow_FS_EE_EE:
+      case Flow_FS_AB2:
+      case Flow_FS_AB_CN:
+        fprintf(fp, " %5d %11.4e", ICp1->getLoopCount(), ICp1->getNormValue());
         break;
     }
     
-    if (C->AlgorithmF == Control::Flow_FS_AB_CN) 
+    if (C->AlgorithmF == Flow_FS_AB_CN) 
     {
-      fprintf(fp, " %5d %11.4e", ICv->LoopCount, ICv->get_normValue());
+      fprintf(fp, " %5d %11.4e", ICv->getLoopCount(), ICv->getNormValue());
     }
     
     if ( C->isHeatProblem() ) 
     {
       switch (C->AlgorithmH) 
       {				
-        case Control::Heat_EE_EI:
-          fprintf(fp, " %5d %11.4e", ICt->LoopCount, ICt->get_normValue());
+        case Heat_EE_EI:
+          fprintf(fp, " %5d %11.4e", ICt->getLoopCount(), ICt->getNormValue());
           break;
       }
     }
@@ -221,8 +221,8 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
   {
     switch (C->AlgorithmH) 
     {				
-      case Control::Heat_EE_EI:
-        fprintf(fp, " %5d %11.4e", ICt->LoopCount, ICt->get_normValue());
+      case Heat_EE_EI:
+        fprintf(fp, " %5d %11.4e", ICt->getLoopCount(), ICt->getNormValue());
         break;
     }
     fprintf(fp, " %10.3e %10.3e", rms[var_Temperature], avr[var_Temperature]);

@@ -35,7 +35,7 @@ bool IP_SHC1D::getTP(Control* R, TPControl* tpCntl)
   std::string label;
   
   // 媒質指定
-  label="/Parameter/IntrinsicExample/FluidMedium";
+  label="/IntrinsicExample/FluidMedium";
   
   if ( !(tpCntl->GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -44,7 +44,7 @@ bool IP_SHC1D::getTP(Control* R, TPControl* tpCntl)
   m_fluid = str;
   
   
-  label="/Parameter/IntrinsicExample/SolidMedium";
+  label="/IntrinsicExample/SolidMedium";
   
   if ( !(tpCntl->GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -53,7 +53,7 @@ bool IP_SHC1D::getTP(Control* R, TPControl* tpCntl)
   m_solid = str;
   
   
-  label="/Parameter/IntrinsicExample/InactiveSolidMedium";
+  label="/IntrinsicExample/InactiveSolidMedium";
   
   if ( !(tpCntl->GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());

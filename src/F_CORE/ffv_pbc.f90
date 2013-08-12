@@ -37,7 +37,7 @@
     integer, dimension(3)                                     ::  sz
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p
     real                                                      ::  pv
-    integer, dimension(6)                                     ::  nID
+    integer, dimension(0:5)                                   ::  nID
 
     if ( nID(m_face) >= 0 ) return
 
@@ -133,7 +133,7 @@
     integer                                                   ::  i, j, k, ix, jx, kx, face, g, m_face
     integer, dimension(3)                                     ::  sz
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p
-    integer, dimension(6)                                     ::  nID
+    integer, dimension(0:5)                                   ::  nID
 
     if ( nID(m_face) >= 0 ) return
 

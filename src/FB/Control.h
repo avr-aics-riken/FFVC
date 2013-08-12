@@ -35,6 +35,7 @@
 #include "Interval_Mngr.h"
 #include "TPControl.h"
 #include "CompoFraction.h"
+#include "IterationControl.h"
 
 /* 20130611 commentout
 #include "PLOT3D_read.h"
@@ -138,72 +139,6 @@ public:
   
 };
 
-
-// #################################################################
-class ConveregenceCriterion {
-private:
-  int NoIteration;       ///< 最大反復数
-  REAL_TYPE Epsilon;     ///< 収束閾値
-  std::string normtype;  ///< Normラベル
-  std::string alias;     ///< 別名
-  
-public:
-  
-  /** コンストラクタ */
-  ConveregenceCriterion()
-  {
-    NoIteration = 0;
-		Epsilon = 0.0;
-  }
-  
-  /**　デストラクタ */
-  ~ConveregenceCriterion() {}
-  
-  
-  std::string get_NormType() const
-  {
-    return normtype;
-  }
-  
-  std::string get_Alias() const
-  {
-    return alias;
-  }
-  
-  int get_IteratinMax() const
-  {
-    return NoIteration;
-  }
-  
-  REAL_TYPE get_Criterion() const
-  {
-    return Epsilon;
-  }
-  
-  // ラベルを設定
-  void set_NormType(std::string key)
-  {
-    normtype = key;
-  }
-  
-  // @brief aliasを設定する
-  void set_Alias(std::string key)
-  {
-    alias = key;
-  }
-  
-  // @brief 収束域値の指定
-  void set_Criterion(REAL_TYPE m_eps)
-  {
-    Epsilon = m_eps;
-  }
-  
-  // @brief 最大反復回数の指定
-  void set_IterationMax(int key)
-  {
-    NoIteration = key;
-  }
-};
 
 
 // #################################################################
@@ -417,157 +352,6 @@ public:
 };
 
 
-// #################################################################
-class ItrCtl {
-private:
-  double NormValue;      ///< ノルムの値
-  double eps;            ///< 収束閾値
-  REAL_TYPE omg;         ///< 加速/緩和係数
-  int NormType;          ///< ノルムの種類
-  int SubType;           ///< SKIP LOOP or MASK LOOP
-  int ItrMax;            ///< 最大反復数
-  int LinearSolver;      ///< 線形ソルバーの種類
-  int SyncMode;          ///< 同期モード (comm_sync, comm_async)
-  
-public:
-  int LoopCount;  ///< 反復回数
-  
-  /** 反復制御リスト */
-  enum itr_cntl_key 
-  {
-    ic_prs_pr,
-    ic_prs_cr,
-    ic_vis_cn,
-    ic_tdf_ei,
-    ic_tdf_cn,
-    ic_div,
-    ic_END
-  };
-  
-  
-  /** 反復法の収束基準種別 */
-  enum norm_type 
-  { 
-    v_div_max=1,
-    v_div_dbg,
-    dx_b,
-    r_b,
-    r_r0
-  };
-
-  
-  /** コンストラクタ */
-  ItrCtl() {
-    NormType = 0;
-    ItrMax = LoopCount = LinearSolver = SubType = 0;
-    SyncMode = 0;
-    eps = omg = 0.0;
-    NormValue = 0.0;
-  }
-  
-  /**　デストラクタ */
-  ~ItrCtl() {}
-  
-  
-public:
-  /** @brief 線形ソルバの種類を返す */
-  int get_LS() const 
-  { 
-    return LinearSolver; 
-  }
-  
-  /** @brief 最大反復回数を返す */
-  int get_ItrMax() const 
-  { 
-    return ItrMax; 
-  }
-  
-  /** @brief ループ実装の種類を返す */
-  int get_LoopType() const 
-  { 
-    return SubType; 
-  }
-  
-  /** @brief 緩和/加速係数を返す */
-  REAL_TYPE get_omg() const 
-  { 
-    return omg; 
-  }
-  
-  /** @brief 収束閾値を返す */
-  double get_eps() const
-  { 
-    return eps; 
-  }
-  
-  /** @brief ノルムのタイプを返す */
-  int get_normType() const 
-  { 
-    return NormType; 
-  }
-  
-  /** @brief keyに対応するノルムの値を返す */
-  double get_normValue() const
-  { 
-    return NormValue; 
-  }
-  
-  /** @brief 同期モードを返す */
-  int get_SyncMode() const 
-  { 
-    return SyncMode; 
-  }
-  
-  
-  /** @brief 線形ソルバの種類を設定する */
-  void set_LS(const int key) 
-  { 
-    LinearSolver=key; 
-  }
-  
-  /** @brief 最大反復回数を設定する */
-  void set_ItrMax(const int key) 
-  { 
-    ItrMax=key; 
-  }
-  
-  /** @brief ループ実装の種類を設定する */
-  void set_LoopType(const int key) 
-  { 
-    SubType=key; 
-  }
-
-  /** @brief 緩和/加速係数を保持 */
-  void set_omg(const REAL_TYPE r) 
-  { 
-    omg = r; 
-  }
-  
-  /** @brief 収束閾値を保持 */
-  void set_eps(const double r)
-  { 
-    eps = r; 
-  }
-  
-  /** @brief ノルムのタイプを保持 */
-  void set_normType(const int n) 
-  { 
-    NormType = n; 
-  }
-  
-  /** @brief ノルム値を保持 */
-  void set_normValue(const double r)
-  { 
-    NormValue = r; 
-  }
-  
-  /** @brief 同期モードを保持 */
-  void set_SyncMode(const Synch_Mode r) 
-  { 
-    SyncMode= r; 
-  }
-};
-
 
 // #################################################################
 class Control : public DomainInfo {
@@ -581,6 +365,7 @@ public:
   typedef struct 
   {
     int Average;
+    int AverageRestart;
     int Buoyancy;
     int Example;
     int Helicity;
@@ -715,22 +500,6 @@ public:
     IO_everytime
   };
   
-  /** 流れの計算アルゴリズム */
-  enum Algorithm_Flow 
-  {
-    Flow_FS_EE_EE=0,
-    Flow_FS_RK_CN,
-    Flow_FS_AB2,
-    Flow_FS_AB_CN
-  };
-  
-  /** 温度計算アルゴリズム */
-  enum Algorithm_Heat 
-  {
-    Heat_EE_EE=1, // Euler Explicit
-    Heat_EE_EI    // Euler Explicit + Implicit
-  };
-  
   /** 対流項スキーム */
   enum convection_scheme 
   {
@@ -798,7 +567,7 @@ public:
   int KindOfSolver;
   int Limiter;
   int MarchingScheme;
-  int NoBaseCriterion;
+  int NoBaseLS;       ///< リストアップされた線形ソルバーの数
   int NoBC;           ///< 境界条件数
   int NoCompo;        ///< コンポーネント数
   int NoMedium;       ///< 媒質数
@@ -864,7 +633,7 @@ public:
   // class
   Interval_Manager  Interval[Interval_Manager::tg_END];
   
-  ConveregenceCriterion* Criteria; ///< 反復解法の収束判定パラメータ
+  IterationCtl* Criteria; ///< 反復解法の収束判定パラメータ
   
   string file_fmt_ext;
   
@@ -938,7 +707,7 @@ public:
     KindOfSolver = 0;
     Limiter = 0;
     MarchingScheme = 0;
-    NoBaseCriterion = 0;
+    NoBaseLS = 0;
     NoBC = 0;
     NoCompo = 0;
     NoMedium = 0;
@@ -983,6 +752,7 @@ public:
     iv.Temperature = 0.0;
     
     Mode.Average = 0;
+    Mode.AverageRestart = 0;
     Mode.Base_Medium = 0;
     Mode.Buoyancy = 0;
     Mode.Example = 0;
@@ -1047,205 +817,142 @@ public:
   }
   
   /**　デストラクタ */
-  virtual ~Control() {
+  virtual ~Control()
+  {
     if (Criteria) delete [] Criteria;
   }
   
 protected:
   
-  // ラベルの重複チェック
-  bool chkDuplicate(const int n, const string m_label);
-  
-  /**
-   * @brief 熱交換器パラメータの変換（Pa）
-   * @param [out] cf パラメータ値
-   */
+  // 熱交換器パラメータの変換（Pa）
   void convertHexCoef(REAL_TYPE* cf);
   
   
-  /**
-   * @brief 熱交換器パラメータの変換（水と水銀）
-   * @param [out] cf      パラメータ値
-   * @param [in]  Density ヘッドの単位
-   */
+  // 熱交換器パラメータの変換（水と水銀）
   void convertHexCoef(REAL_TYPE* cf, const REAL_TYPE DensityMode);
   
   
-  /** 
-   * @brief 解法アルゴリズムを選択する 
-   */
-  void get_Algorithm();
+  // アプリケーションのパラメータを取得する
+  void getApplicationControl();
   
   
-  /**
-   * @brief 平均値操作に関するパラメータを取得する
-   * @note パラメータは，setParameters()で無次元して保持
-   */
-  void get_Average_option();
-  
-  
-  /**
-   * @brief Cell IDのゼロを指定IDに変更するオプションを取得する（隠しパラメータ）
-   * @note 'Change_ID'の文字列チェックはしないので注意して使うこと
-   */
-  void get_ChangeID();
-  
-  
-  /** 
-   * @brief パラメータ入力チェックモードの取得 
-   */
-  void get_CheckParameter();
-  
-  
-  /**
-   * @brief 対流項スキームのパラメータを取得する
-   */
-  void get_Convection();
-  
-  
-  /**
-   * @brief 派生して計算する変数のオプションを取得する
-   */
-  void get_Derived();
-  
-  /**
-   * @brief ファイル入出力に関するパラメータを取得し，sphフォーマットの出力の並列モードを指定する．
-   * @note インターバルパラメータは，setParameters()で無次元して保持
-   */
-  void get_FileIO();
-  
-  
-  /**
-   * @brief 反復関連の情報を取得する
-   */
-  void get_Iteration(ItrCtl* IC);
-  
-  
-  /**
-   * @brief LES計算のオプションを取得する
-   */
-  void get_LES_option();
+  // 平均値操作に関するパラメータを取得する
+  void getAverageOption();
 
   
-  
-  /**
-   * @brief ソルバーの計算対象種別と浮力モードを取得
-   */
-  void get_KindOfSolver();
-  
-
-  void get_Log            ();
-  
-  /**
-   * @brief 作業者情報を取得
-   */
-  void get_Operator();
+  // 対流項スキームのパラメータを取得する
+  void getConvection();
   
   
-  /**
-   * @brief 無次元パラメータを各種モードに応じて設定する
-   * @note
-   *   - 純強制対流　有次元　（代表長さ，代表速度，動粘性係数，温度拡散係数）
-   *   -           無次元　（Pr, Re > RefV=RefL=1）
-   * @see bool setParameters(MediumList* mat, CompoList* cmp)
-   */
-  void get_Para_ND();
+  // 派生して計算する変数のオプションを取得する
+  void getDerived();
   
   
-  /**
-   * @brief 参照パラメータを取得
-   * @note Ref_IDで指定される媒質を代表物性値とする
-   */
-  void get_Para_Ref();
-  
-  /**
-   * @brief 温度の参照パラメータを取得
-   */
-  void get_Para_Temp();
+  // 無次元パラメータを各種モードに応じて設定する
+  void getDimensionlessParameter();
   
   
-  /**
-   * @brief 性能試験モードを取得する（隠しパラメータ）
-   */
-  void get_PMtest();
+  // ファイル入出力に関するパラメータを取得し，sphフォーマットの出力の並列モードを指定する
+  void getFieldData();
   
   
-  /**
-   * @brief 参照座標系を取得する
-   * @todo 回転は未
-   */
-  void get_ReferenceFrame (ReferenceFrame* RF);
+  // PLOt3Dフォーマットのオプションを指定する
+  void getFormat_plot3d();
   
   
-  
-  
-  /** ソルバーの種類を特定するパラメータを取得し，ガイドセルの値を決定する */
-  void get_Solver_Properties ();
-  
-  
-  /**
-   * @brief 初期値とリスタート条件
-   */
-  void get_start_condition();
-  
-  /**
-   * @brief 時間制御に関するパラメータを取得する
-   * @param [out] DT DTcntlクラス
-   * @note パラメータは，setParameters()で無次元して保持
-   */
-  void get_Time_Control(DTcntl* DT);
-  
-  
-  /** 入力ファイルに記述するパラメータとファイルの有次元・無次元の指定を取得する */
-  void get_Unit();
-  
-  
-  /**
-   * @brief 変数の範囲制限モードを取得
-   * @note 隠しパラメータ
-   */
-  void get_VarRange();
-  
-  
-  /**
-   * @brief 壁面上の扱いを指定する
-   */
-  void get_Wall_type();
+  // sphフォーマットのオプションを指定
+  void getFormat_sph();
   
 
-  /*
-   * @brief 初期値の表示
-   * @note Init*には無次元値が保持されている
-   * @see void Control::setInitialConditions(void)
-   */
+  // ログ出力のパラメータを取得
+  void getLog();
+  
+  
+  // Gmres反復固有のパラメータを指定する
+  void getParaGmres(const string base, const int m);
+  
+  
+  // Jacobi反復固有のパラメータを指定する
+  void getParaJacobi(const string base, const int m);
+  
+  
+  // PBiCGSTAB反復固有のパラメータを指定する
+  void getParaPBiCGSTAB(const string base, const int m);
+  
+  
+  // PCG反復固有のパラメータを指定する
+  void getParaPCG(const string base, const int m);
+  
+  
+  // RBGS反復固有のパラメータを指定する
+  void getParaRBGS(const string base, const int m);
+  
+  
+  // SOR反復固有のパラメータを指定する
+  void getParaSOR(const string base, const int m);
+  
+  
+  // RB-SOR反復固有のパラメータを指定する
+  void getParaSOR2(const string base, const int m);
+  
+  
+  // 参照パラメータを取得
+  void getReference();
+  
+  
+  // 参照座標系を取得する
+  void getReferenceFrame(ReferenceFrame* RF);
+  
+  
+  // ソルバーの種類を特定するパラメータを取得
+  void getShapeApproximation();
+  
+  
+  // ソルバーの種類を特定するパラメータを取得し，ガイドセルの値を決定する
+  void getSolverProperties ();
+  
+  
+  // 初期値とリスタート条件
+  void getStartCondition();
+  
+  
+  // 時間制御に関するパラメータを取得する
+  void getTimeControl(DTcntl* DT);
+  
+  
+  // 乱流計算のオプションを取得する
+  void getTurbulenceModel();
+  
+  
+  // 入力ファイルに記述するパラメータとファイルの有次元・無次元の指定を取得する
+  void getUnit();
+  
+  
+  // 壁面上の扱いを指定する
+  void getWallType();
+  
+  
+  // 初期値の表示
   void printInitValues(FILE* fp);
   
   
-  /**
-   * @brief 線形ソルバー種別の表示
-   * @param [in] fp ファイルポインタ
-   * @param [in] IC ItrCtl
-   */
-  void printLS(FILE* fp, const ItrCtl* IC);
+  // 線形ソルバー種別の表示
+  void printLS(FILE* fp, const IterationCtl* IC);
   
   
-  /** 
-   * @brief 計算パラメータの表示
-   * @param [in] fp  ファイルポインタ
-   * @param [in] mat MediumListクラス
-   */
+  // 計算パラメータの表示
   void printParaConditions(FILE* fp, const MediumList* mat);
   
   
   /** 20130611
    * @brief 制御パラメータSTEERの表示
-   * @param [in] IC ItrCtl
+   * @param [in] IC IterationCtl
    * @param [in] DT DTcntl
    * @param [in] RF ReferenceFrame
    //* @param [in] FP3DW FileIO PLOT3D WRITE CLASS POINTER
    */
-  void printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT, const ReferenceFrame* RF);
-  //void printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT, const ReferenceFrame* RF, FileIO_PLOT3D_WRITE* FP3DW);
+  void printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT, const ReferenceFrame* RF);
+  //void printSteerConditions(FILE* fp, const IterationCtl* IC, const DTcntl* DT, const ReferenceFrame* RF, FileIO_PLOT3D_WRITE* FP3DW);
   
   
   /**
@@ -1257,46 +964,30 @@ protected:
    */
   
   
-  // @brief 反復の収束判定パラメータを指定する
-  void setCriteria(const string label0, const int order, ItrCtl* IC);
-  
-  // @brief Jacobi反復固有のパラメータを指定する
-  void setPara_Jacobi(const string base, ItrCtl* IC);
-  
-  // @brief SOR反復固有のパラメータを指定する
-  void setPara_SOR(const string base, ItrCtl* IC);
-  
-  // @brief RB-SOR反復固有のパラメータを指定する
-  void setPara_SOR2(const string base, ItrCtl* IC);
-  
-  // @brief Gmres反復固有のパラメータを指定する
-  void setPara_Gmres(const string base, ItrCtl* IC);
-  
-  // @brief RBGS反復固有のパラメータを指定する
-  void setPara_RBGS(const string base, ItrCtl* IC);
-  
-  // @brief PCG反復固有のパラメータを指定する
-  void setPara_PCG(const string base, ItrCtl* IC);
-  
-  //@brief PBiCGSTAB反復固有のパラメータを指定する
-  void setPara_PBiCGSTAB(const string base, ItrCtl* IC);
-  
   
   
 public:
+  
+  /**
+   * @brief 反復の収束判定パラメータをコピーする
+   * @param [in,out] IC   反復制御用クラスの基底へのポインタ
+   * @param [in]     name ラベル
+   */
+  void copyCriteria(IterationCtl& IC, const string name);
+  
   
   /** 20130611
    * @brief 制御，計算パラメータ群の表示
    * @param [in] mp  ファイルポインタ（標準出力）
    * @param [in] fp  ファイルポインタ（ファイル出力）
-   * @param [in] IC  ItrCtl
+   * @param [in] IC  IterationCtl
    * @param [in] DT  DTcntl
    * @param [in] RF  ReferenceFrame
    * @param [in] mat MediumList
    //* @param [in] FP3DW FileIO PLOT3D WRITE CLASS POINTER
    */
-  //void displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat, FileIO_PLOT3D_WRITE* FP3DW);
-  void displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat);
+  //void displayParams(FILE* mp, FILE* fp, IterationCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat, FileIO_PLOT3D_WRITE* FP3DW);
+  void displayParams(FILE* mp, FILE* fp, IterationCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat);
   
   
   //@brief Forcingコンポーネントが存在すれば1を返す
@@ -1363,13 +1054,21 @@ public:
   int findIDfromLabel(const MediumList* mat, const int Nmax, const std::string key);
   
   
+  // @brief 反復関連の情報を取得する
+  void getIteration();
+  
+  
+  // @brief 解法アルゴリズムを選択する
+  void getSolvingMethod();
+  
+  
   // 制御，計算パラメータ群の取得 20130611
   //void get_Steer_1(DTcntl* DT, FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_WRITE* FP3DW);
   void get1stParameter(DTcntl* DT);
   
   
   // 制御，計算パラメータ群の取得
-  void get2ndParameter(ItrCtl* IC, ReferenceFrame* RF);
+  void get2ndParameter(ReferenceFrame* RF);
   
   
   /**
@@ -1379,29 +1078,18 @@ public:
   REAL_TYPE getCellSize(const int* m_size);
   
   
+  // @brief 計算モデルの入力ソース情報を取得
+  void getGeometryModel();
+  
+  
   /**
    * @brief コンポーネント数，媒質数，境界条件数を取得
    */
   void getNoOfComponent();
   
   
-  /**
-   * @brief モデルの形状情報
-   * @param [in] mat 媒質情報テーブル
-   */
-  void getGeometry(const MediumList* mat);
-  
-  
-  // モニタリングのON/OFFとセルモニタの有無のみを取得
+  // @brief モニタリングのON/OFFとセルモニタの有無のみを取得
   void getMonitorList();
-  
-  
-  /**
-   * @brief ノルムのタイプを返す
-   * @param [in] d ノルムの種類
-   * @retval ノルムのラベル
-   */
-  string getNormString(const int d);
   
   
   /**

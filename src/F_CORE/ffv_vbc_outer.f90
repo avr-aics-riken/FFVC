@@ -50,7 +50,7 @@
     real                                                      ::  u_bc, v_bc, w_bc, m
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0, wv
     real, dimension(3)                                        ::  vec
-    integer, dimension(6)                                     ::  nID
+    integer, dimension(0:5)                                   ::  nID
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
 
     if ( nID(m_face) >= 0 ) return
@@ -80,6 +80,7 @@
 !$OMP PRIVATE(i, j, k)
 
     FACES : select case (face)
+
     case (X_minus)
 
       i = 1
@@ -300,7 +301,8 @@
       end do
       end do
 !$OMP END DO
-      
+
+
     case default
     end select FACES
 !$OMP END PARALLEL
@@ -336,7 +338,7 @@
     real                                                      ::  dh, dh1, dh2, rei
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0, wv
     real, dimension(3)                                        ::  vec
-    integer, dimension(6)                                     ::  nID
+    integer, dimension(0:5)                                   ::  nID
 
     if ( nID(m_face) >= 0 ) return
 
@@ -372,7 +374,7 @@
       end do
 !$OMP END DO
 
-      
+
     case (X_plus)
 
       i = ix
@@ -442,6 +444,7 @@
       end do
 !$OMP END DO
 
+
     case default
     end select FACES
 !$OMP END PARALLEL
@@ -501,7 +504,7 @@
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
     real, dimension(3)                                          ::  vec
-    integer, dimension(6)                                       ::  nID
+    integer, dimension(0:5)                                     ::  nID
 
     if ( nID(m_face) >= 0 ) return
 
@@ -647,7 +650,7 @@
     real                                                      ::  ux, uy, uz, aa
     integer, dimension(3)                                     ::  sz
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
-    integer, dimension(6)                                     ::  nID
+    integer, dimension(0:5)                                   ::  nID
 
     if ( nID(m_face) >= 0 ) return
 
@@ -682,7 +685,7 @@
       end do
       end do
 !$OMP END DO
-      
+
 
     case (X_plus)
 
@@ -702,7 +705,7 @@
       end do
       end do
 !$OMP END DO
-      
+
 
     case (Y_minus)
 
@@ -722,7 +725,7 @@
       end do
       end do
 !$OMP END DO
-      
+
 
     case (Y_plus)
 
@@ -742,7 +745,7 @@
       end do
       end do
 !$OMP END DO
-      
+
 
     case (Z_minus)
 
@@ -762,7 +765,7 @@
       end do
       end do
 !$OMP END DO
-      
+
 
     case (Z_plus)
 
@@ -782,6 +785,7 @@
       end do
       end do
 !$OMP END DO
+
 
     case default
     end select FACES
@@ -812,7 +816,7 @@
     double precision                                          ::  flop, rix, rjx, rkx
     real                                                      ::  ut, vt, wt, aa, sum
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vf
-    integer, dimension(6)                                     ::  nID
+    integer, dimension(0:5)                                   ::  nID
 
     if ( nID(m_face) >= 0 ) return
 
@@ -1015,7 +1019,7 @@
   include 'ffv_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, face, g, m_face
   integer, dimension(3)                                     ::  sz
-  integer, dimension(6)                                     ::  nID
+  integer, dimension(0:5)                                   ::  nID
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vf
 
   if ( nID(m_face) >= 0 ) return
@@ -1125,7 +1129,7 @@
     integer                                                     ::  i, j, k, g, ix, jx, kx, face, gc, m_face
     integer, dimension(3)                                       ::  sz
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, vc
-    integer, dimension(6)                                       ::  nID
+    integer, dimension(0:5)                                     ::  nID
 
     if ( nID(m_face) >= 0 ) return
 
@@ -1256,7 +1260,7 @@
     real, dimension(3)                                        ::  vec
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
-    integer, dimension(6)                                     ::  nID
+    integer, dimension(0:5)                                   ::  nID
 
     if ( nID(m_face) >= 0 ) return
 
@@ -1430,7 +1434,7 @@
     real                                                      ::  sum, a, s
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
-    integer, dimension(6)                                     ::  nID
+    integer, dimension(0:5)                                   ::  nID
 
     if ( nID(m_face) >= 0 ) return
 
@@ -1579,7 +1583,7 @@
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  vf
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
     real, dimension(3)                                          ::  vec
-    integer, dimension(6)                                       ::  nID
+    integer, dimension(0:5)                                     ::  nID
 
     if ( nID(m_face) >= 0 ) return
 
@@ -1715,7 +1719,7 @@
   integer                                                   ::  i, j, k, ix, jx, kx, face, g, gc, m_face
   integer, dimension(3)                                     ::  sz
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
-  integer, dimension(6)                                     ::  nID
+  integer, dimension(0:5)                                   ::  nID
 
   if ( nID(m_face) >= 0 ) return
 

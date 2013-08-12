@@ -45,7 +45,6 @@ private:
   REAL_TYPE var1;    ///< 多目的用の変数(熱流束，熱伝達係数を共用するので排他的に使用)
   REAL_TYPE var2;    ///< 多目的用の変数(温度)
   REAL_TYPE dm[2];   ///< ローカルな計算領域境界面のモニタ値 コピー不要
-  std::string label; ///< ラベル
   std::string alias; ///< 別名
   
 public: 
@@ -95,9 +94,47 @@ public:
   
   
 public:
-  int get_Class() const
+  
+  /**
+   * @brief ベクトルのコピー
+   * @param [in] コピー元
+   */
+  void addVec(const REAL_TYPE* vec)
+  {
+    nv[0] = vec[0];
+    nv[1] = vec[1];
+    nv[2] = vec[2];
+  }
+  
+  
+  /**
+   * @brief メンバー変数のコピー
+   * @param [in] src   BoundaryOuterクラス
+   * @param [in] inner 境界面が計算内部にあるとき1, 外部境界のとき0
+   */
+  void dataCopy (BoundaryOuter* src, const int inner);
+  
+
+  std::string getAlias() const
+  {
+    return alias;
+  }
+  
+  
+  int getClass() const
   { 
     return BCclass; 
+  }
+  
+  REAL_TYPE get_CoefHT() const
+  {
+    return var1;
+  }
+  
+  // @brief ローカルのモニタ積算値
+  REAL_TYPE* getDomainV()
+  {
+    return dm;
   }
   
   int get_DriverDir() const
@@ -110,19 +147,25 @@ public:
     return drv_lid; 
   }
   
+  int get_FaceMode() const
+  {
+    return Face_mode;
+  }
+  
   int getGuideMedium() const
   { 
     return gc_medium; 
   }
   
+  REAL_TYPE get_Heatflux() const
+  {
+    return var1;
+  }
+  
+  
   int get_HTmodeRef() const
   { 
     return HTref; 
-  }
-  
-  int get_FaceMode() const
-  { 
-    return Face_mode; 
   }
   
   int get_HTmode() const
@@ -144,91 +187,39 @@ public:
   { 
     return pType; 
   }
-  
-  int get_wallType() const 
-  { 
-    return wallType; 
+
+  REAL_TYPE get_Temp() const
+  {
+    return var1;
   }
+  
   
   int get_V_Profile() const 
   { 
     return v_profile; 
   }
   
-  int get_ValidCell() const
+  int getValidCell() const
   { 
     return valid_cell;
   }
   
-  REAL_TYPE get_CoefHT() const 
-  { 
-    return var1; 
-  }
-  
-  REAL_TYPE get_Heatflux() const
+  int get_wallType() const
   {
-    return var1;
+    return wallType;
   }
-  
-  REAL_TYPE get_Temp() const 
-  { 
-    return var1; 
-  }
-  
-  std::string get_Label() const 
-  { 
-    return label; 
-  }
-  
-  std::string get_Alias() const 
-  { 
-    return alias;
-  }
-  
-  // @brief ローカルのモニタ積算値
-  REAL_TYPE* getDomainV() 
-  {
-    return dm;
-  }
-  
-  
-  // メンバー変数のコピー
-  void dataCopy (BoundaryOuter* src);
-  
-  
-  // 計算領域の流入出量と有効セル数を保持する
-  void setDomainV(const REAL_TYPE* vv);
-  
-  
-  // 計算領域の流入出量を保持する
-  void setDomainMF(const REAL_TYPE vv);
-  
-  
-  // ラベルを設定
-  void set_Label(std::string key)
-  {
-    label = key;
-  }
-  
   
   // @brief aliasラベルを設定する
-  void set_Alias(std::string key)
+  void setAlias(std::string key)
   {
     alias = key;
   }
   
   
-  // @brief 境界面の有効セル数を保持
-  void set_ValidCell(const int val)
+  // @brief 境界条件の種類をセットする
+  void setClass(const int key)
   {
-    valid_cell = val;
-  }
-  
-  
-  // @brief 熱伝達境界の参照モードの保持
-  void set_HTmodeRef(int key)
-  {
-    HTref = key;
+    BCclass = key;
   }
   
   
@@ -237,44 +228,25 @@ public:
   {
     var1 = val;
   }
-
-
-  // @brief 温度の保持
-  void set_Temp(REAL_TYPE val)
-  {
-    var1 = val;
-  }
   
   
-  // @brief 周期境界のときの面の状況をセット
-  void set_FaceMode(int key)
-  {
-    Face_mode = key;
-  }
-  
-  // @brief ガイドセルの媒質IDをセットする
-  void setGuideMedium(int key)
-  {
-    gc_medium = key;
-  }
-  
-  // @brief 熱流束の保持
-  void set_Heatflux(REAL_TYPE val)
-  {
-    var1 = val;
-  }
+  /**
+   * @brief 計算領域の流入出量と有効セル数を保持する
+   * @param [in] vv   保持する値
+   */
+  void setDomainV(const REAL_TYPE* vv);
   
   
-  // @brief 周期境界のモードをセット
-  void set_PrdcMode(int key)
-  {
-    Prdc_mode = key;
-  }
+  /**
+   * @brief 計算領域の流入出量を保持する
+   * @param [in] vv   保持する値
+   */
+  void setDomainMF(const REAL_TYPE vv);
   
   
   // @brief ドライバー部分の方向をセットする
   void set_DriverDir(int key)
-  { 
+  {
     drv_dir = key;
   }
   
@@ -286,17 +258,24 @@ public:
   }
   
   
-  // @brief 境界条件の種類をセットする
-  void set_Class(const int key)
+  // @brief 周期境界のときの面の状況をセット
+  void set_FaceMode(int key)
   {
-    BCclass = key;
+    Face_mode = key;
   }
   
   
-  // @brief 壁面境界のモードをセットする
-  void set_wallType(const int key)
+  // @brief ガイドセルの媒質IDをセットする
+  void setGuideMedium(int key)
   {
-    wallType = key;
+    gc_medium = key;
+  }
+  
+  
+  // @brief 熱流束の保持
+  void set_Heatflux(REAL_TYPE val)
+  {
+    var1 = val;
   }
   
   
@@ -307,10 +286,24 @@ public:
   }
   
   
+  // @brief 熱伝達境界の参照モードの保持
+  void set_HTmodeRef(int key)
+  {
+    HTref = key;
+  }
+  
+  
   // @brief 熱境界条件の種別をセット
   void set_hType(int key)
   {
     hType  = key;
+  }
+  
+  
+  // @brief 周期境界のモードをセット
+  void set_PrdcMode(int key)
+  {
+    Prdc_mode = key;
   }
   
   
@@ -321,6 +314,19 @@ public:
   }
   
   
+  // @brief 温度の保持
+  void set_Temp(REAL_TYPE val)
+  {
+    var1 = val;
+  }
+  
+  // @brief 境界面の有効セル数を保持
+  void setValidCell(const int val)
+  {
+    valid_cell = val;
+  }
+
+  
   // @brief 速度プロファイルの指定
   void set_V_Profile(const int key)
   {
@@ -328,14 +334,12 @@ public:
   }
   
   
-  // @brief ベクトルのコピー
-  void addVec(REAL_TYPE* vec)
+  // @brief 壁面境界のモードをセットする
+  void set_wallType(const int key)
   {
-    nv[0] = vec[0];
-    nv[1] = vec[1];
-    nv[2] = vec[2];
+    wallType = key;
   }
-  
+
 };
 
 #endif // _FB_BND_OUTER_H_

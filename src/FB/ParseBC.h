@@ -46,7 +46,8 @@ private:
   int NoCompo;     ///< コンポーネントリストの全登録数
   int NoMedium;    ///< 媒質数
   int Unit_Temp;   ///< 温度単位
-  int Unit_Prs;    ///< 圧力単位      
+  int Unit_Prs;    ///< 圧力単位
+  int globalBC[6]; ///< グローバルな外部境界条件を保持するBasicBc[]への格納番号ポインタ
   
   REAL_TYPE RefVelocity, BaseTemp, DiffTemp, RefDensity, RefSpecificHeat;
   REAL_TYPE RefLength, BasePrs;
@@ -152,44 +153,24 @@ private:
   int getVprofile(const string label_base);
   
   
-  // コンポーネントのBbox情報st_xを返す
-  int getCmpGbbox_st_x(const int odr, const int* gci) const
+  // コンポーネントのBbox始点情報を返す
+  FB::Vec3i getCmpGbbox_st(const int odr, const int* gci) const
   {
-    return ( gci[6*odr+0] );
+    FB::Vec3i st;
+    st.x = gci[6*odr+0];
+    st.y = gci[6*odr+1];
+    st.z = gci[6*odr+2];
+    return st;
   }
   
-  
-  // コンポーネントのBbox情報st_yを返す
-  int getCmpGbbox_st_y(const int odr, const int* gci) const
+  // コンポーネントのBbox終点情報を返す
+  FB::Vec3i getCmpGbbox_ed(const int odr, const int* gci) const
   {
-    return ( gci[6*odr+1] );
-  }
-  
-  
-  // コンポーネントのBbox情報st_zを返す
-  int getCmpGbbox_st_z(const int odr, const int* gci) const
-  {
-    return ( gci[6*odr+2] );
-  }
-  
-  // コンポーネントのBbox情報st_xを返す
-  int getCmpGbbox_ed_x(const int odr, const int* gci) const
-  {
-    return ( gci[6*odr+3] );
-  }
-  
-  
-  // コンポーネントのBbox情報ed_yを返す
-  int getCmpGbbox_ed_y(const int odr, const int* gci) const
-  {
-    return ( gci[6*odr+4] );
-  }
-  
-  
-  // コンポーネントのBbox情報ed_zを返す
-  int getCmpGbbox_ed_z(const int odr, const int* gci) const
-  {
-    return ( gci[6*odr+5] );
+    FB::Vec3i ed;
+    ed.x = gci[6*odr+0];
+    ed.y = gci[6*odr+1];
+    ed.z = gci[6*odr+2];
+    return ed;
   }
   
   
@@ -390,7 +371,7 @@ public:
    * @param [in]      PP    ポリゴン属性管理クラス [0]-[n-1]
    * @note 格納番号は1からスタート
    */
-  void loadBC_Local(Control* C, MediumList* mat, CompoList* cmp, PolygonProperty* polyPP);
+  void loadLocalBC(Control* C, MediumList* mat, CompoList* cmp, PolygonProperty* polyPP);
   
   
   /**
@@ -399,7 +380,7 @@ public:
    * @param [in]     mat  MediumList
    * @param [out]    cmp  CompoList
    */
-  void loadBC_Outer(BoundaryOuter* bc, const MediumList* mat, CompoList* cmp);
+  void loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* cmp);
   
   
   /**

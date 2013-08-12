@@ -21,35 +21,18 @@
 
 
 // #################################################################
-/**
- * @brief 計算領域の流入出量と有効セル数を保持する
- * @param [in] vv   保持する値
- */
-void BoundaryOuter::setDomainV(const REAL_TYPE* vv)
+// メンバー変数のコピー
+void BoundaryOuter::dataCopy(BoundaryOuter* src, const int inner)
 {
-  dm[0] = vv[0];
-  dm[1] = vv[1];
-}
-
-// #################################################################
-/**
- * @brief 計算領域の流入出量を保持する
- * @param [in] vv   保持する値
- */
-void BoundaryOuter::setDomainMF(const REAL_TYPE vv)
-{
-  dm[0] = vv;
-}
-
-
-// #################################################################
-/**
- * @brief メンバー変数のコピー
- * @param [in] src   BoundaryOuterクラス
- */
-void BoundaryOuter::dataCopy(BoundaryOuter* src)
-{
-  BCclass   = src->BCclass;
+  if ( inner == 1 )
+  {
+    BCclass   = OFF;
+  }
+  else
+  {
+    BCclass   = src->BCclass;
+  }
+  
   wallType  = src->wallType;
   drv_dir   = src->drv_dir;
   drv_lid   = src->drv_lid;
@@ -64,17 +47,35 @@ void BoundaryOuter::dataCopy(BoundaryOuter* src)
   valid_cell= src->valid_cell;
   var1      = src->var1;
   var2      = src->var2;
-  label     = src->label;
   alias     = src->alias;
   
   p         = src->p;
 
-  for (int i=0; i<3; i++) {
+  for (int i=0; i<3; i++)
+  {
     nv[i] = src->nv[i];
   }
   
-  for (int i=0; i<5; i++) {
+  for (int i=0; i<5; i++)
+  {
     ca[i] = src->ca[i];
     cb[i] = src->cb[i];
   }
+}
+
+
+// #################################################################
+// 計算領域の流入出量を保持する
+void BoundaryOuter::setDomainMF(const REAL_TYPE vv)
+{
+  dm[0] = vv;
+}
+
+
+// #################################################################
+// 計算領域の流入出量と有効セル数を保持する
+void BoundaryOuter::setDomainV(const REAL_TYPE* vv)
+{
+  dm[0] = vv[0];
+  dm[1] = vv[1];
 }

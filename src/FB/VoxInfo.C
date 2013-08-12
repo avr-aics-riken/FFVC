@@ -269,7 +269,7 @@ void VoxInfo::countCellState(unsigned long& Lcell, unsigned long& Gcell, int* bx
  * @param [in] typ  BC class
  * @note 外部境界面の両側のセルがFluidのときのみカウント
  */
-unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const int typ)
+unsigned long VoxInfo::countValidCellOBC(const int face, const int* bv, const int typ)
 {
   size_t m1, m2;
   int s1, s2;
@@ -282,11 +282,11 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
   
   unsigned long g=0;
   
-  switch (face)
+  if( nID[face] < 0 ) // 外部境界をもつノードのみ
   {
-    case X_MINUS:
-      if( nID[face] < 0 ) // 外部境界をもつノードのみ
-      {
+    switch (face)
+    {
+      case X_MINUS:
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             m1 = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
@@ -295,13 +295,10 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
             s2 = bv[m2];
             if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
           }
-        }        
-      }
-      break;
-      
-    case X_PLUS:
-      if( nID[face] < 0 )
-      {
+        }
+        break;
+        
+      case X_PLUS:
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             m1 = _F_IDX_S3D(ix,   j, k, ix, jx, kx, gd);
@@ -311,12 +308,9 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
             if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
           }
         }
-      }
-      break;
-      
-    case Y_MINUS:
-      if( nID[face] < 0 )
-      {
+        break;
+        
+      case Y_MINUS:
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
             m1 = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
@@ -326,12 +320,9 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
             if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
           }
         }
-      }
-      break;
-      
-    case Y_PLUS:
-      if( nID[face] < 0 )
-      {
+        break;
+        
+      case Y_PLUS:
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
             m1 = _F_IDX_S3D(i, jx,   k, ix, jx, kx, gd);
@@ -341,12 +332,9 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
             if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
           }
         }
-      }
-      break;
-      
-    case Z_MINUS:
-      if( nID[face] < 0 )
-      {
+        break;
+        
+      case Z_MINUS:
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
             m1 = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
@@ -356,12 +344,9 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
             if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
           }
         }
-      }
-      break;
-      
-    case Z_PLUS:
-      if( nID[face] < 0 )
-      {
+        break;
+        
+      case Z_PLUS:
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
             m1 = _F_IDX_S3D(i, j, kx,   ix, jx, kx, gd);
@@ -371,15 +356,14 @@ unsigned long VoxInfo::count_ValidCell_OBC(const int face, const int* bv, const 
             if ( IS_FLUID(s1) && IS_FLUID(s2) ) g++;
           }
         }
-      }
-      break;
-  } // end of switch
-  
+        break;
+    } // end of switch
+  }
+
   
   if ( numProc > 1 )
   {
     unsigned long tmp = g;
-    //MPI_Allreduce(&tmp, &g, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
     if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
   
@@ -400,12 +384,15 @@ void VoxInfo::countOpenAreaOfDomain(int* bx, REAL_TYPE* OpenArea)
   int kx = size[2];
   int gd = guide;
   
-  for (int i=0; i<NOFACE; i++) {
+  for (int i=0; i<NOFACE; i++)
+  {
     OpenArea[i]=0.0;
     m_area[i] = 0.0;
   }
   
   // described in Fortran index
+  
+  
   
   // X_MINUS
   g=0;
@@ -692,7 +679,8 @@ void VoxInfo::encActive(unsigned long& Lcell, unsigned long& Gcell, int* bx, con
   int kx = size[2];
   int gd = guide;
   
-  switch ( KOS ) {
+  switch ( KOS )
+  {
     case FLOW_ONLY:
     case THERMAL_FLOW:
     case THERMAL_FLOW_NATURAL:
@@ -2013,8 +2001,10 @@ unsigned long VoxInfo::encPbit_N_IBC(const int order,
    - 流体セルに対してのみ，1-Normal, 0-BC
    - 固体セルに隣接する面のノイマンフラグをゼロにし，方向フラグを立てる
  */
-void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool dir)
+void VoxInfo::encPbitOBC(const int face, int* bx, const string key, const bool dir)
 {
+  if( nID[face] >= 0 ) return;
+    
   size_t m;
   int s;
   
@@ -2023,39 +2013,38 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
   int kx = size[2];
   int gd = guide;
   
+  int i, j, k;
+  
 
   switch (face)
   {
     case X_MINUS:
-      if( nID[X_MINUS] < 0 )
+      i = 1;
+      
+      if ("Neumann"==key)
       {
-        int i = 1;
-        
-        if ("Neumann"==key)
-        {
-          for (int k=1; k<=kx; k++) {
-            for (int j=1; j<=jx; j++) {
-              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-              s = bx[m];
-              if ( IS_FLUID(s) )
-              {
-                if (dir) s = onBit( s, FACING_W );
-                bx[m] = offBit( s, BC_N_W );
-              }
+        for (k=1; k<=kx; k++) {
+          for (j=1; j<=jx; j++) {
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            s = bx[m];
+            if ( IS_FLUID(s) )
+            {
+              if (dir) s = onBit( s, FACING_W );
+              bx[m] = offBit( s, BC_N_W );
             }
           }
         }
-        else
-        {
-          for (int k=1; k<=kx; k++) {
-            for (int j=1; j<=jx; j++) {
-              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-              s = bx[m];
-              if ( IS_FLUID(s) )
-              {
-                if (dir) s = onBit( s, FACING_W );
-                bx[m] = offBit( s, BC_D_W );
-              }
+      }
+      else
+      {
+        for (k=1; k<=kx; k++) {
+          for (j=1; j<=jx; j++) {
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            s = bx[m];
+            if ( IS_FLUID(s) )
+            {
+              if (dir) s = onBit( s, FACING_W );
+              bx[m] = offBit( s, BC_D_W );
             }
           }
         }
@@ -2063,35 +2052,32 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
       break;
       
     case X_PLUS:
-      if( nID[X_PLUS] < 0 )
+      i = ix;
+      
+      if ("Neumann"==key)
       {
-        int i = ix;
-        
-        if ("Neumann"==key)
-        {
-          for (int k=1; k<=kx; k++) {
-            for (int j=1; j<=jx; j++) {
-              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-              s = bx[m];
-              if ( IS_FLUID(s) )
-              {
-                if (dir) s = onBit( s, FACING_E );
-                bx[m] = offBit( s, BC_N_E );
-              }
+        for (k=1; k<=kx; k++) {
+          for (j=1; j<=jx; j++) {
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            s = bx[m];
+            if ( IS_FLUID(s) )
+            {
+              if (dir) s = onBit( s, FACING_E );
+              bx[m] = offBit( s, BC_N_E );
             }
           }
         }
-        else
-        {
-          for (int k=1; k<=kx; k++) {
-            for (int j=1; j<=jx; j++) {
-              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-              s = bx[m];
-              if ( IS_FLUID(s) )
-              {
-                if (dir) s = onBit( s, FACING_E );
-                bx[m] = offBit( s, BC_D_E );
-              }
+      }
+      else
+      {
+        for (k=1; k<=kx; k++) {
+          for (j=1; j<=jx; j++) {
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            s = bx[m];
+            if ( IS_FLUID(s) )
+            {
+              if (dir) s = onBit( s, FACING_E );
+              bx[m] = offBit( s, BC_D_E );
             }
           }
         }
@@ -2099,35 +2085,32 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
       break;
       
     case Y_MINUS:
-      if( nID[Y_MINUS] < 0 )
+      j = 1;
+      
+      if ("Neumann"==key)
       {
-        int j = 1;
-        
-        if ("Neumann"==key)
-        {
-          for (int k=1; k<=kx; k++) {
-            for (int i=1; i<=ix; i++) {
-              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-              s = bx[m];
-              if ( IS_FLUID(s) )
-              {
-                if (dir) s = onBit( s, FACING_S );
-                bx[m] = offBit( s, BC_N_S );
-              }
+        for (k=1; k<=kx; k++) {
+          for (i=1; i<=ix; i++) {
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            s = bx[m];
+            if ( IS_FLUID(s) )
+            {
+              if (dir) s = onBit( s, FACING_S );
+              bx[m] = offBit( s, BC_N_S );
             }
           }
         }
-        else
-        {
-          for (int k=1; k<=kx; k++) {
-            for (int i=1; i<=ix; i++) {
-              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-              s = bx[m];
-              if ( IS_FLUID(s) )
-              {
-                if (dir) s = onBit( s, FACING_S );
-                bx[m] = offBit( s, BC_D_S );
-              }
+      }
+      else
+      {
+        for (k=1; k<=kx; k++) {
+          for (i=1; i<=ix; i++) {
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            s = bx[m];
+            if ( IS_FLUID(s) )
+            {
+              if (dir) s = onBit( s, FACING_S );
+              bx[m] = offBit( s, BC_D_S );
             }
           }
         }
@@ -2135,35 +2118,32 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
       break;
       
     case Y_PLUS:
-      if( nID[Y_PLUS] < 0 )
+      j = jx;
+      
+      if ("Neumann"==key)
       {
-        int j = jx;
-        
-        if ("Neumann"==key)
-        {
-          for (int k=1; k<=kx; k++) {
-            for (int i=1; i<=ix; i++) {
-              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-              s = bx[m];
-              if ( IS_FLUID(s) )
-              {
-                if (dir) s = onBit( s, FACING_N );
-                bx[m] = offBit( s, BC_N_N );
-              }
+        for (k=1; k<=kx; k++) {
+          for (i=1; i<=ix; i++) {
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            s = bx[m];
+            if ( IS_FLUID(s) )
+            {
+              if (dir) s = onBit( s, FACING_N );
+              bx[m] = offBit( s, BC_N_N );
             }
           }
         }
-        else
-        {
-          for (int k=1; k<=kx; k++) {
-            for (int i=1; i<=ix; i++) {
-              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-              s = bx[m];
-              if ( IS_FLUID(s) )
-              {
-                if (dir) s = onBit( s, FACING_N );
-                bx[m] = offBit( s, BC_D_N );
-              }
+      }
+      else
+      {
+        for (k=1; k<=kx; k++) {
+          for (i=1; i<=ix; i++) {
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            s = bx[m];
+            if ( IS_FLUID(s) )
+            {
+              if (dir) s = onBit( s, FACING_N );
+              bx[m] = offBit( s, BC_D_N );
             }
           }
         }
@@ -2171,35 +2151,32 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
       break;
       
     case Z_MINUS:
-      if( nID[Z_MINUS] < 0 )
+      k = 1;
+      
+      if ("Neumann"==key)
       {
-        int k = 1;
-        
-        if ("Neumann"==key)
-        {
-          for (int j=1; j<=jx; j++) {
-            for (int i=1; i<=ix; i++) {
-              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-              s = bx[m];
-              if ( IS_FLUID(s) )
-              {
-                if (dir) s = onBit( s, FACING_B );
-                bx[m] = offBit( s, BC_N_B );
-              }
+        for (j=1; j<=jx; j++) {
+          for (i=1; i<=ix; i++) {
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            s = bx[m];
+            if ( IS_FLUID(s) )
+            {
+              if (dir) s = onBit( s, FACING_B );
+              bx[m] = offBit( s, BC_N_B );
             }
           }
         }
-        else
-        {
-          for (int j=1; j<=jx; j++) {
-            for (int i=1; i<=ix; i++) {
-              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-              s = bx[m];
-              if ( IS_FLUID(s) )
-              {
-                if (dir) s = onBit( s, FACING_B );
-                bx[m] = offBit( s, BC_D_B );
-              }
+      }
+      else
+      {
+        for (j=1; j<=jx; j++) {
+          for (i=1; i<=ix; i++) {
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            s = bx[m];
+            if ( IS_FLUID(s) )
+            {
+              if (dir) s = onBit( s, FACING_B );
+              bx[m] = offBit( s, BC_D_B );
             }
           }
         }
@@ -2207,35 +2184,32 @@ void VoxInfo::encPbit_OBC(const int face, int* bx, const string key, const bool 
       break;
       
     case Z_PLUS:
-      if( nID[Z_PLUS] < 0 )
+      k = kx;
+      
+      if ("Neumann"==key)
       {
-        int k = kx;
-        
-        if ("Neumann"==key)
-        {
-          for (int j=1; j<=jx; j++) {
-            for (int i=1; i<=ix; i++) {
-              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-              s = bx[m];
-              if ( IS_FLUID(s) )
-              {
-                if (dir) s = onBit( s, FACING_T );
-                bx[m] = offBit( s, BC_N_T );
-              }
+        for (j=1; j<=jx; j++) {
+          for (i=1; i<=ix; i++) {
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            s = bx[m];
+            if ( IS_FLUID(s) )
+            {
+              if (dir) s = onBit( s, FACING_T );
+              bx[m] = offBit( s, BC_N_T );
             }
           }
         }
-        else
-        {
-          for (int j=1; j<=jx; j++) {
-            for (int i=1; i<=ix; i++) {
-              m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-              s = bx[m];
-              if ( IS_FLUID(s) )
-              {
-                if (dir) s = onBit( s, FACING_T );
-                bx[m] = offBit( s, BC_D_T );
-              }
+      }
+      else
+      {
+        for (j=1; j<=jx; j++) {
+          for (i=1; i<=ix; i++) {
+            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            s = bx[m];
+            if ( IS_FLUID(s) )
+            {
+              if (dir) s = onBit( s, FACING_T );
+              bx[m] = offBit( s, BC_D_T );
             }
           }
         }
@@ -3584,6 +3558,8 @@ unsigned long VoxInfo::encVbitIBCcut(const int order,
  */
 void VoxInfo::encVbitOBC(const int face, int* bv, const string key, const bool enc_sw, const string chk, int* bp, bool enc_uwd)
 {
+  if ( nID[face] >= 0 ) return;
+  
   size_t m, mt;
   int sw, cw;
   int s, q, z;
@@ -3599,322 +3575,315 @@ void VoxInfo::encVbitOBC(const int face, int* bv, const string key, const bool e
   switch (face)
   {
     case X_MINUS:
-      if( nID[face] < 0 ) // 外部境界をもつノードのみ
-      {
-        for (int k=1; k<=kx; k++) {
-          for (int j=1; j<=jx; j++) {
-            m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
-            mt= _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
-            
-            s = bv[m];
-            z = bv[mt];
-            q = bp[mt];
-            
-            if ( IS_FLUID(s) )
+      
+      for (int k=1; k<=kx; k++) {
+        for (int j=1; j<=jx; j++) {
+          m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
+          mt= _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
+          
+          s = bv[m];
+          z = bv[mt];
+          q = bp[mt];
+          
+          if ( IS_FLUID(s) )
+          {
+            // エンコード処理
+            if ( enc_sw )
             {
-              // エンコード処理
-              if ( enc_sw )
+              bv[m]  = s | (OBC_MASK << BC_FACE_W); // OBC_MASK==31 外部境界条件のフラグ
+            }
+            
+            // 外部境界で安定化のため，スキームを1次精度にする
+            if ( enc_uwd )
+            {
+              bp[mt] = onBit(q, VBC_UWD);
+            }
+            
+            // チェック
+            if ( cw == 1 )
+            {
+              if ( sw==1 ) // ガイドセルが流体であることを要求
               {
-                bv[m]  = s | (OBC_MASK << BC_FACE_W); // OBC_MASK==31 外部境界条件のフラグ
-              }
-              
-              // 外部境界で安定化のため，スキームを1次精度にする
-              if ( enc_uwd )
-              {
-                bp[mt] = onBit(q, VBC_UWD);
-              }
-              
-              // チェック
-              if ( cw == 1 )
-              {
-                if ( sw==1 ) // ガイドセルが流体であることを要求
+                if ( !IS_FLUID(z) )
                 {
-                  if ( !IS_FLUID(z) )
-                  {
-                    Hostonly_ printf("Error : Fluid cell at Outer boundary X- is required\n");
-                    Exit(0);
-                  }
+                  Hostonly_ printf("Error : Fluid cell at Outer boundary X- is required\n");
+                  Exit(0);
                 }
-                else // ガイドセルが固体であることを要求
-                {
-                  if ( IS_FLUID(z) )
-                  {
-                    Hostonly_ printf("Error : Solid cell at Outer boundary X- is required\n");
-                    Exit(0);
-                  }
-                }             
               }
-              
-            }// IS_FLUID
-          }
-        }        
+              else // ガイドセルが固体であることを要求
+              {
+                if ( IS_FLUID(z) )
+                {
+                  Hostonly_ printf("Error : Solid cell at Outer boundary X- is required\n");
+                  Exit(0);
+                }
+              }
+            }
+            
+          }// IS_FLUID
+        }
       }
       break;
+      
       
     case X_PLUS:
-      if( nID[face] < 0 )
-      {
-        for (int k=1; k<=kx; k++) {
-          for (int j=1; j<=jx; j++) {
-            m = _F_IDX_S3D(ix,   j, k, ix, jx, kx, gd);
-            mt= _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd);
-            
-            s = bv[m];
-            z = bv[mt];
-            q = bp[mt];
-            
-            if ( IS_FLUID(s) )
+      
+      for (int k=1; k<=kx; k++) {
+        for (int j=1; j<=jx; j++) {
+          m = _F_IDX_S3D(ix,   j, k, ix, jx, kx, gd);
+          mt= _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd);
+          
+          s = bv[m];
+          z = bv[mt];
+          q = bp[mt];
+          
+          if ( IS_FLUID(s) )
+          {
+            // エンコード処理
+            if ( enc_sw )
             {
-              // エンコード処理
-              if ( enc_sw )
+              bv[m]  = s | (OBC_MASK << BC_FACE_E);
+            }
+            
+            // 外部境界で安定化のため，スキームを1次精度にする
+            if ( enc_uwd )
+            {
+              bp[mt] = onBit(q, VBC_UWD);
+            }
+            
+            // チェック
+            if ( cw == 1 )
+            {
+              if ( sw==1 )
               {
-                bv[m]  = s | (OBC_MASK << BC_FACE_E);
-              }
-              
-              // 外部境界で安定化のため，スキームを1次精度にする
-              if ( enc_uwd )
-              {
-                bp[mt] = onBit(q, VBC_UWD);
-              }
-              
-              // チェック
-              if ( cw == 1 )
-              {
-                if ( sw==1 )
+                if ( !IS_FLUID(z) )
                 {
-                  if ( !IS_FLUID(z) )
-                  {
-                    Hostonly_ printf("Error : Fluid cell at Outer boundary X+ is required\n");
-                    Exit(0);
-                  }
-                }
-                else
-                {
-                  if ( IS_FLUID(z) )
-                  {
-                    Hostonly_ printf("Error : Solid cell at Outer boundary X+ is required\n");
-                    Exit(0);
-                  }
+                  Hostonly_ printf("Error : Fluid cell at Outer boundary X+ is required\n");
+                  Exit(0);
                 }
               }
-              
-            }// IS_FLUID
-          }
+              else
+              {
+                if ( IS_FLUID(z) )
+                {
+                  Hostonly_ printf("Error : Solid cell at Outer boundary X+ is required\n");
+                  Exit(0);
+                }
+              }
+            }
+            
+          }// IS_FLUID
         }
       }
       break;
+      
       
     case Y_MINUS:
-      if( nID[face] < 0 )
-      {
-        for (int k=1; k<=kx; k++) {
-          for (int i=1; i<=ix; i++) {
-            m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
-            mt= _F_IDX_S3D(i, 0, k, ix, jx, kx, gd);
-            
-            s = bv[m];
-            z = bv[mt];
-            q = bp[mt];
-            
-            if ( IS_FLUID(s) )
+      
+      for (int k=1; k<=kx; k++) {
+        for (int i=1; i<=ix; i++) {
+          m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
+          mt= _F_IDX_S3D(i, 0, k, ix, jx, kx, gd);
+          
+          s = bv[m];
+          z = bv[mt];
+          q = bp[mt];
+          
+          if ( IS_FLUID(s) )
+          {
+            // エンコード処理
+            if ( enc_sw )
             {
-              // エンコード処理
-              if ( enc_sw )
+              bv[m]  = s | (OBC_MASK << BC_FACE_S);
+            }
+            
+            // 外部境界で安定化のため，スキームを1次精度にする
+            if ( enc_uwd )
+            {
+              bp[mt] = onBit(q, VBC_UWD);
+            }
+            
+            // チェック
+            if ( cw == 1 )
+            {
+              if ( sw==1 )
               {
-                bv[m]  = s | (OBC_MASK << BC_FACE_S);
-              }
-              
-              // 外部境界で安定化のため，スキームを1次精度にする
-              if ( enc_uwd )
-              {
-                bp[mt] = onBit(q, VBC_UWD);
-              }
-              
-              // チェック
-              if ( cw == 1 )
-              {
-                if ( sw==1 )
+                if ( !IS_FLUID(z) )
                 {
-                  if ( !IS_FLUID(z) )
-                  {
-                    Hostonly_ printf("Error : Fluid cell at Outer boundary Y- is required %d %d %d\n", i, 0, k);
-                    Exit(0);
-                  }
-                }
-                else
-                {
-                  if ( IS_FLUID(z) )
-                  {
-                    Hostonly_ printf("Error : Solid cell at Outer boundary Y- is required\n");
-                    Exit(0);
-                  }
+                  Hostonly_ printf("Error : Fluid cell at Outer boundary Y- is required %d %d %d\n", i, 0, k);
+                  Exit(0);
                 }
               }
-              
-            }// IS_FLUID
-          }
+              else
+              {
+                if ( IS_FLUID(z) )
+                {
+                  Hostonly_ printf("Error : Solid cell at Outer boundary Y- is required\n");
+                  Exit(0);
+                }
+              }
+            }
+            
+          }// IS_FLUID
         }
       }
       break;
+      
       
     case Y_PLUS:
-      if( nID[face] < 0 )
-      {
-        for (int k=1; k<=kx; k++) {
-          for (int i=1; i<=ix; i++) {
-            m = _F_IDX_S3D(i, jx,   k, ix, jx, kx, gd);
-            mt= _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd);
-            
-            s = bv[m];
-            z = bv[mt];
-            q = bp[mt];
-            
-            if ( IS_FLUID(s) )
+      
+      for (int k=1; k<=kx; k++) {
+        for (int i=1; i<=ix; i++) {
+          m = _F_IDX_S3D(i, jx,   k, ix, jx, kx, gd);
+          mt= _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd);
+          
+          s = bv[m];
+          z = bv[mt];
+          q = bp[mt];
+          
+          if ( IS_FLUID(s) )
+          {
+            // エンコード処理
+            if ( enc_sw )
             {
-              // エンコード処理
-              if ( enc_sw )
+              bv[m]  = s | (OBC_MASK << BC_FACE_N);
+            }
+            
+            // 外部境界で安定化のため，スキームを1次精度にする
+            if ( enc_uwd )
+            {
+              bp[mt] = onBit(q, VBC_UWD);
+            }
+            
+            // チェック
+            if ( cw == 1 )
+            {
+              if ( sw==1 )
               {
-                bv[m]  = s | (OBC_MASK << BC_FACE_N);
-              }
-              
-              // 外部境界で安定化のため，スキームを1次精度にする
-              if ( enc_uwd )
-              {
-                bp[mt] = onBit(q, VBC_UWD);
-              }
-              
-              // チェック
-              if ( cw == 1 )
-              {
-                if ( sw==1 )
+                if ( !IS_FLUID(z) )
                 {
-                  if ( !IS_FLUID(z) )
-                  {
-                    Hostonly_ printf("Error : Fluid cell at Outer boundary Y+ is required\n");
-                    Exit(0);
-                  }
-                }
-                else
-                {
-                  if ( IS_FLUID(z) )
-                  {
-                    Hostonly_ printf("Error : Solid cell at Outer boundary Y+ is required\n");
-                    Exit(0);
-                  }
+                  Hostonly_ printf("Error : Fluid cell at Outer boundary Y+ is required\n");
+                  Exit(0);
                 }
               }
-              
-            }// IS_FLUID
-          }
+              else
+              {
+                if ( IS_FLUID(z) )
+                {
+                  Hostonly_ printf("Error : Solid cell at Outer boundary Y+ is required\n");
+                  Exit(0);
+                }
+              }
+            }
+            
+          }// IS_FLUID
         }
       }
       break;
+      
       
     case Z_MINUS:
-      if( nID[face] < 0 )
-      {
-        for (int j=1; j<=jx; j++) {
-          for (int i=1; i<=ix; i++) {
-            m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
-            mt= _F_IDX_S3D(i, j, 0, ix, jx, kx, gd);
-            
-            s = bv[m];
-            z = bv[mt];
-            q = bp[mt];
-            
-            if ( IS_FLUID(s) )
+      
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
+          mt= _F_IDX_S3D(i, j, 0, ix, jx, kx, gd);
+          
+          s = bv[m];
+          z = bv[mt];
+          q = bp[mt];
+          
+          if ( IS_FLUID(s) )
+          {
+            // エンコード処理
+            if ( enc_sw )
             {
-              // エンコード処理
-              if ( enc_sw )
+              bv[m]  = s | (OBC_MASK << BC_FACE_B);
+            }
+            
+            // 外部境界で安定化のため，スキームを1次精度にする
+            //if ( enc_uwd )
+            //{
+            //  bp[mt] = onBit(q, VBC_UWD);
+            //}
+            
+            // チェック
+            if ( cw == 1 )
+            {
+              if ( sw==1 )
               {
-                bv[m]  = s | (OBC_MASK << BC_FACE_B);
-              }
-              
-              // 外部境界で安定化のため，スキームを1次精度にする
-              if ( enc_uwd )
-              {
-                bp[mt] = onBit(q, VBC_UWD);
-              }
-              
-              // チェック
-              if ( cw == 1 )
-              {
-                if ( sw==1 )
+                if ( !IS_FLUID(z) )
                 {
-                  if ( !IS_FLUID(z) )
-                  {
-                    Hostonly_ printf("Error : Fluid cell at Outer boundary Z- is required\n");
-                    Exit(0);
-                  }
-                }
-                else
-                {
-                  if ( IS_FLUID(z) )
-                  {
-                    Hostonly_ printf("Error : Solid cell at Outer boundary Z- is required\n");
-                    Exit(0);
-                  }
+                  Hostonly_ printf("Error : Fluid cell at Outer boundary Z- is required\n");
+                  Exit(0);
                 }
               }
-              
-            }// IS_FLUID
-          }
+              else
+              {
+                if ( IS_FLUID(z) )
+                {
+                  Hostonly_ printf("Error : Solid cell at Outer boundary Z- is required\n");
+                  Exit(0);
+                }
+              }
+            }
+            
+          }// IS_FLUID
         }
       }
       break;
       
+      
     case Z_PLUS:
-      if( nID[face] < 0 )
-      {
-        for (int j=1; j<=jx; j++) {
-          for (int i=1; i<=ix; i++) {
-            m = _F_IDX_S3D(i, j, kx,   ix, jx, kx, gd);
-            mt= _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd);
-            
-            s = bv[m];
-            z = bv[mt];
-            q = bp[mt];
-            
-            if ( IS_FLUID(s) )
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          m = _F_IDX_S3D(i, j, kx,   ix, jx, kx, gd);
+          mt= _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd);
+          
+          s = bv[m];
+          z = bv[mt];
+          q = bp[mt];
+          
+          if ( IS_FLUID(s) )
+          {
+            // エンコード処理
+            if ( enc_sw )
             {
-              // エンコード処理
-              if ( enc_sw )
+              bv[m]  = s | (OBC_MASK << BC_FACE_T);
+            }
+            
+            // 外部境界で安定化のため，スキームを1次精度にする
+            //if ( enc_uwd )
+            //{
+            //  bp[mt] = onBit(q, VBC_UWD);
+            //}
+            
+            // チェック
+            if ( cw == 1 )
+            {
+              if ( sw==1 )
               {
-                bv[m]  = s | (OBC_MASK << BC_FACE_T);
-              }
-              
-              // 外部境界で安定化のため，スキームを1次精度にする
-              if ( enc_uwd )
-              {
-                bp[mt] = onBit(q, VBC_UWD);
-              }
-              
-              // チェック
-              if ( cw == 1 )
-              {
-                if ( sw==1 )
+                if ( !IS_FLUID(z) )
                 {
-                  if ( !IS_FLUID(z) )
-                  {
-                    Hostonly_ printf("Error : Fluid cell at Outer boundary Z+ is required\n");
-                    Exit(0);
-                  }
-                }
-                else
-                {
-                  if ( IS_FLUID(z) )
-                  {
-                    Hostonly_ printf("Error : Solid cell at Outer boundary Z+ is required\n");
-                    Exit(0);
-                  }
+                  Hostonly_ printf("Error : Fluid cell at Outer boundary Z+ is required\n");
+                  Exit(0);
                 }
               }
-              
-            }// IS_FLUID
-          }
+              else
+              {
+                if ( IS_FLUID(z) )
+                {
+                  Hostonly_ printf("Error : Solid cell at Outer boundary Z+ is required\n");
+                  Exit(0);
+                }
+              }
+            }
+            
+          }// IS_FLUID
         }
       }
       break;
+      
   } // end of switch
 
 }
@@ -3958,7 +3927,7 @@ unsigned VoxInfo::fill_by_bid(int* bid, int* mid, float* cut, const int tgt_id, 
   int gd = guide;
   unsigned filled   = 0; ///< 流体IDでペイントされた数
   unsigned replaced = 0; ///< 固体IDで置換された数
-  int* list = m_list;
+  int* list = m_list; //< @attention ポインタはprivate化できない　配列にコピー
   
   
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, list) \
@@ -5066,7 +5035,7 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
   // 対称境界面に断熱マスクをセット
   for (int face=0; face<NOFACE; face++)
   {
-    if ( BC->exportOBC(face)->get_Class() == OBC_SYMMETRIC )
+    if ( BC->exportOBC(face)->getClass() == OBC_SYMMETRIC )
     {
       encAmask_SymtrcBC(face, bh2);
     }
@@ -5180,60 +5149,75 @@ void VoxInfo::setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, con
 unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, CompoList* cmp, int icls, const float* cut, const int* bid, const bool isCDS)
 {
   unsigned long surface = 0;
+  
 
   // 初期化 @note ビットを1に初期化する．初期化範囲はガイドセルを含む全領域．セルフェイスの射影処理で必要．
   size_t mx = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
-  for (size_t m=0; m<mx; m++) {
+  
+#pragma omp parallel for firstprivate(mx) schedule(static)
+  for (size_t m=0; m<mx; m++)
+  {
     bcp[m] |= ( 0x3ffff << BC_NDAG_W ); // BC_NDAG_W〜BC_D_Tまで18bitまとめて1に初期化
   }
 
+  
   // 計算領域内の壁面のNeumannBCのマスク処理と固体に隣接するFセルに方向フラグをエンコードし，表面セル数を返す
-  if ( !isCDS ) {
+  if ( !isCDS )
+  {
     surface = encPbit_N_Binary(bcp);    // Binary
   }
-  else {
+  else
+  {
     surface = encPbit_N_Cut(bcp, cut, true);  // Cut-Distance
   }
 
+  
+  
   // 外部境界のビットフラグをエンコード
   BoundaryOuter* m_obc=NULL;
   int F;
   
-  for (int face=0; face<NOFACE; face++) {
+  for (int face=0; face<NOFACE; face++)
+  {
     m_obc = BC->exportOBC(face);
-    F = m_obc->get_Class();
+    F = m_obc->getClass();
+    
     
     switch ( F )
     {
+      // サブドメイン境界面が内部の場合
+      case OFF:
+        break;
+        
       case OBC_WALL:
       case OBC_SYMMETRIC:
-        encPbit_OBC(face, bcp, "Neumann", true);
+        encPbitOBC(face, bcp, "Neumann", true);
         break;
         
       case OBC_SPEC_VEL:
-        encPbit_OBC(face, bcp, "Neumann", false);
+        encPbitOBC(face, bcp, "Neumann", false);
         break;
         
       case OBC_TRC_FREE:
-        encPbit_OBC(face, bcp, "Dirichlet", false);
+        encPbitOBC(face, bcp, "Dirichlet", false);
         break;
         
       case OBC_OUTFLOW:
       case OBC_FAR_FIELD:
         if ( m_obc->get_pType() == P_DIRICHLET )
         {
-          encPbit_OBC(face, bcp, "Dirichlet", false);
+          encPbitOBC(face, bcp, "Dirichlet", false);
         }
         else
         {
-          encPbit_OBC(face, bcp, "Neumann", false);
+          encPbitOBC(face, bcp, "Neumann", false);
         }
         break;
         
       case OBC_INTRINSIC:
         if ( (icls == id_Jet) && (face==0) )
         {
-          encPbit_OBC(face, bcp, "Neumann", false);
+          encPbitOBC(face, bcp, "Neumann", false);
         }
         break;
         
@@ -5304,12 +5288,17 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
   int F;
   
   // 外部境界
-  for (int face=0; face<NOFACE; face++) {
+  for (int face=0; face<NOFACE; face++)
+  {
     m_obc = BC->exportOBC(face);
-    F = m_obc->get_Class();
+    F = m_obc->getClass();
     
     switch ( F )
     {
+      // サブドメイン境界面が内部の場合
+      case OFF:
+        break;
+        
       case OBC_WALL:
         encVbitOBC(face, bv, "solid", true, "check", bp); // 流束形式
         break;
@@ -5341,7 +5330,7 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
     }
     
     // 有効セル数をカウントし，集約
-    m_obc->set_ValidCell( count_ValidCell_OBC(face, bv, F) );
+    m_obc->setValidCell( countValidCellOBC(face, bv, F) );
   }
   
   // 内部境界のコンポーネントのエンコード
@@ -5916,7 +5905,7 @@ void VoxInfo::setOBCcut(SetBC* BC, float* cut)
   
   for (int face=0; face<NOFACE; face++) {
     m_obc = BC->exportOBC(face);
-    F = m_obc->get_Class();
+    F = m_obc->getClass();
     
     if ( (F == OBC_WALL) || (F == OBC_SYMMETRIC) )
     {

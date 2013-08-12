@@ -19,7 +19,21 @@ REVISION HISTORY
 ================
 
 --------------------------
+2013-08-12
+
+- r1009 change parameter structure [ver 1.3.1]
+  - /BCTable/OuterBoundary/FaceBC/Xminus/MediumOnGuideCell  >>  /BCTable/OuterBoundary/BasicBCs[@]/MediumOnGuideCell
+  - /Steer/GeometryModel/HintOfFillingFluid  >>  /DomainInfo/HintOfFillingFluid
+  - /Iterationのパラメータセットを変更
+  - /Steer, /Parameterをとる．パラメータをトップの直下に変更．
+  - /Steer/SolverProperty >> /GoverningEquation
+  - IterationCtl + ConvergenceCriterion >> IterationCtl class, IterationControl.h
+  - ラベル配列はlist[@]とIteration
+  - 外部境界面の判断を BoundaryOuter::dataCopy()において，BCclassへの境界条件番号に変更 OFF(0)のとき内部面
+
+--------------------------
 2013-08-02
+
 - r1008 Change implementation of outer boundary routine
   - TractionFreeの再実装
   - 外部境界処理サブルーチンに隣接ランク番号を渡し，サブルーチン内で実行選択を行う．

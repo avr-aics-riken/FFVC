@@ -46,8 +46,9 @@ public:
     tg_compute,  ///< セッションの計算時間
     tg_console,  ///< コンソール出力
     tg_history,  ///< ファイル出力
-    tg_instant,  ///< 瞬時値出力
+    tg_basic,    ///< 基本変数の瞬時値出力
     tg_average,  ///< 平均値出力
+    tg_derived,  ///< 派生変数の出力
     tg_sampled,  ///< サンプリング出力 
     tg_accelra,  ///< 加速時間
     tg_plot3d,   ///< PLOT3D瞬時値出力

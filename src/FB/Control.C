@@ -239,25 +239,12 @@ void ReferenceFrame::setV00(const double time, const bool init)
 
 
 
-
 // #################################################################
 /**
- * @brief ラベルの重複を調べる
- * @param [in] n       テストするCriteriaの格納番号の最大値
- * @param [in] m_label テストラベル
+ * @brief 熱交換器パラメータの変換（水と水銀）
+ * @param [out] cf      パラメータ値
+ * @param [in]  Density ヘッドの単位
  */
-bool Control::chkDuplicate(const int n, const string m_label)
-{
-	for (int i=0; i<n; i++){
-    if ( Criteria[i].get_Alias() == m_label ) return false;
-	}
-	return true;
-}
-
-
-
-// #################################################################
-// 熱交換器パラメータの変換（水と水銀）
 void Control::convertHexCoef(REAL_TYPE* cf, const REAL_TYPE Density)
 {
   REAL_TYPE cc[6], s;
@@ -275,7 +262,10 @@ void Control::convertHexCoef(REAL_TYPE* cf, const REAL_TYPE Density)
 
 
 // #################################################################
-// 熱交換器パラメータの変換（Pa）
+/**
+ * @brief 熱交換器パラメータの変換（Pa）
+ * @param [out] cf パラメータ値
+ */
 void Control::convertHexCoef(REAL_TYPE* cf)
 {
   REAL_TYPE cc[6], s;
@@ -293,11 +283,28 @@ void Control::convertHexCoef(REAL_TYPE* cf)
 
 
 
+// #################################################################
+// 反復の収束判定パラメータをcopy
+// @see getIteration()
+void Control::copyCriteria(IterationCtl& IC, const string name)
+{
+  
+  for (int i=0; i<NoBaseLS; i++)
+  {
+    if ( !strcasecmp( name.c_str(), Criteria[i].getAlias().c_str() ))
+    {
+      IC.copy(&Criteria[i]);
+    }
+  }
+  
+}
+
+
 
 // #################################################################
 // 制御，計算パラメータ群の表示
-void Control::displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat)
-//void Control::displayParams(FILE* mp, FILE* fp, ItrCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat, FileIO_PLOT3D_WRITE* FP3DW)
+void Control::displayParams(FILE* mp, FILE* fp, IterationCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat)
+//void Control::displayParams(FILE* mp, FILE* fp, IterationCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat, FileIO_PLOT3D_WRITE* FP3DW)
 {
   /* 20130611
   printSteerConditions(mp, IC, DT, RF, FP3DW);
@@ -329,82 +336,205 @@ int Control::findIDfromLabel(const MediumList* mat, const int Nmax, const std::s
 
 
 
-
 // #################################################################
-// 解法アルゴリズムを選択する
-void Control::get_Algorithm()
+/**
+ * @brief 制御，計算パラメータ群の取得
+ * @param [in] DT     DTctlクラス ポインタ
+ //* @param [in] FP3DR  PLOT3D READクラス ポインタ
+ //* @param [in] FP3DW  PLOT3D WRITEクラス ポインタ
+ * @note 他のパラメータ取得に先んじて処理しておくもの
+ */
+//void Control::get_Steer_1(DTcntl* DT, FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_WRITE* FP3DW) // 20130611
+void Control::get1stParameter(DTcntl* DT)
 {
-  string str;
-  string label;
   
-  label = "/Steer/Algorithm/Flow";
+  // ソルバーの具体的な種類を決めるパラメータを取得し，ガイドセルの値を設定する
+  getSolverProperties();
   
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Algorithm/Flow'\n");
-    Exit(0);
-  }
+  // 指定単位を取得
+  getUnit();
   
-  if     ( !strcasecmp(str.c_str(), "FS_C_EE_D_EE") )     AlgorithmF = Flow_FS_EE_EE;
-  else if( !strcasecmp(str.c_str(), "FS_C_RK_D_CN") )     AlgorithmF = Flow_FS_RK_CN;
-  else if( !strcasecmp(str.c_str(), "FS_C_AB_D_AB") )     AlgorithmF = Flow_FS_AB2;
-  else if( !strcasecmp(str.c_str(), "FS_C_AB_D_CN") )     AlgorithmF = Flow_FS_AB_CN;
-  else
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '/Steer/Algorithm/Flow'\n");
-    Exit(0);
-  }
+  // Reference parameter needs to be called before setDomainParameter();
+  // パラメータの取得，代表値に関するもの．
+  getReference();
   
-  // Heat
-  if ( isHeatProblem() )
-  {
-	  label = "/Steer/Algorithm/Heat";
-    
-	  if ( !(tpCntl->GetValue(label, &str )) )
-    {
-		  Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/Algorithm/Heat'\n");
-		  Exit(0);
-	  }
-    
-	  if     ( !strcasecmp(str.c_str(), "C_EE_D_EE") )    AlgorithmH = Heat_EE_EE;
-	  else if( !strcasecmp(str.c_str(), "C_EE_D_EI") )    AlgorithmH = Heat_EE_EI;
-	  else
-    {
-		  Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '/Steer/Algorithm/Heat'\n");
-		  Exit(0);
-	  }
-  }
+  // 時間制御パラメータ
+  getTimeControl(DT);
+  
+  
+  // モニターのON/OFF 詳細パラメータはMonitorList::getMonitor()で行う
+  getMonitorList();
+  
+  // ファイル入出力に関するパラメータ
+  getFieldData();
+  
+  /* 20130611 PLOT3Dファイル入出力に関するパラメータ
+   if (FIO.Format == plt3d_fmt) get_PLOT3D(FP3DR,FP3DW);
+   */
+  
 }
 
 
 // #################################################################
-// 平均値操作に関するパラメータを取得する
-// パラメータは，setParameters()で無次元して保持
-void Control::get_Average_option()
+/**
+ * @brief 制御，計算パラメータ群の取得
+ * @param [in] RF  ReferenceFrameクラス
+ */
+void Control::get2ndParameter(ReferenceFrame* RF)
 {
-  REAL_TYPE ct;
+  // パラメータを取得する
+  if ( Unit.Param == NONDIMENSIONAL )
+  {
+    if ( KindOfSolver == FLOW_ONLY ) getDimensionlessParameter();
+  }
+  
+  // Reference frame information
+  getReferenceFrame(RF);
+  
+  // getAverageOption(); >> getFieldData()へ
+  
+  // 圧力ノイマン条件のタイプ >> get_Log()よりも先に
+  getWallType();
+  
+  // Log >> getIteration()よりも前に
+  getLog();
+  
+  getIteration();
+  
+  getTurbulenceModel();
+  
+  
+  // ラフな初期値を使い、リスタートするモード指定 >> FileIO
+  getStartCondition();
+  
+  
+  // 形状近似
+  getShapeApproximation();
+  
+  
+  getApplicationControl();
+
+  
+}
+
+
+
+
+// #################################################################
+/**
+ * @brief アプリケーションのパラメータを取得する
+ */
+void Control::getApplicationControl()
+{
   string str;
   string label;
   
-  label="/Steer/AverageOption/Operation";
+  label = "/ApplicationControl/Operator";
   
-  if ( !(tpCntl->GetValue(label, &str )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+	  Exit(0);
+  }
+  OperatorName = str;
+  
+  
+  // パラメータチェックフラグ
+  label = "/ApplicationControl/CheckParameter";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
 	  Exit(0);
   }
   
-  if     ( !strcasecmp(str.c_str(), "on") )   Mode.Average = ON;
-  else if( !strcasecmp(str.c_str(), "off") )  Mode.Average = OFF;
+  if     ( !strcasecmp(str.c_str(), "On") )   CheckParam = ON;
+  else if( !strcasecmp(str.c_str(), "Off") )  CheckParam = OFF;
   else
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Hostonly_ printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
   
-  // 平均操作開始時間
+  int ct = 0;
+  
+  // Performance Testの設定（隠しオプション）
+  // 'PerformanceTest'の文字列チェックはしないので注意して使うこと
+  Hide.PM_Test = OFF;
+  label="/ApplicationControl/PerformanceTest";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+	  ;
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "on") )   Hide.PM_Test = ON;
+    else if( !strcasecmp(str.c_str(), "off") )  Hide.PM_Test = OFF;
+    else
+    {
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
+    }
+  }
+  
+  
+  // 変数の範囲制限モードを取得
+  Hide.Range_Limit = Range_Normal;
+  label="/ApplicationControl/VariableRange";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    ;
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "normal") ) Hide.Range_Limit = Range_Normal;
+    else if( !strcasecmp(str.c_str(), "cutoff") ) Hide.Range_Limit = Range_Cutoff;
+    else
+    {
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s\n", label.c_str());
+      Exit(0);
+    }
+  }
+  
+  
+  // Cell IDのゼロを指定IDに変更するオプションを取得する（隠しオプション）
+  label = "/ApplicationControl/ChangeID";
+  if ( !(tpCntl->GetValue(label, &ct )) )
+  {
+	  ;
+  }
+  else
+  {
+    if ( ct < 0 )
+    {
+      Hostonly_ printf("Error : ID should be positive [%d]\n", ct);
+      Exit(0);
+    }
+    else
+    {
+      Hide.Change_ID = ct;
+    }
+  }
+  
+}
+
+
+// #################################################################
+/**
+ * @brief 平均値操作に関するパラメータを取得する
+ * @note パラメータは，setParameters()で無次元して保持
+ * @see getTimeControl()でMode.Averageをセット
+ */
+void Control::getAverageOption()
+{
+  double ct;
+  string str;
+  string label;
+  
+  
   if ( Mode.Average == ON )
   {
-	  label = "/Steer/AverageOption/SpecifiedType";
+	  label = "/Output/Data/AveragedVariables/IntervalType";
     
 	  if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -426,85 +556,23 @@ void Control::get_Average_option()
 			  Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
 			  Exit(0);
 		  }
-		  
-		  label = "/Steer/AverageOption/Start";
-		  if ( !(tpCntl->GetValue(label, &ct )) )
-      {
-			  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-			  Exit(0);
-		  }
-		  else
-      {
-        Interval[Interval_Manager::tg_average].setStart((unsigned)ct, (double)ct);
-		  }
+    }
       
-      label="/Steer/AverageOption/Interval";
-      
-      if ( !(tpCntl->GetValue(label, &ct )) )
-      {
-        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-        Exit(0);
-      }
-      else
-      {
-        Interval[Interval_Manager::tg_average].setInterval((double)ct);
-      }
-      
-	  }
+    label="/Output/Data/AveragedVariables/Interval";
+    
+    if ( !(tpCntl->GetValue(label, &ct )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    else
+    {
+      Interval[Interval_Manager::tg_average].setInterval(ct);
+    }
   }
 }
 
 
-
-// #################################################################
-// Cell IDのゼロを指定IDに変更するオプションを取得する（隠しパラメータ）
-// 'Change_ID'の文字列チェックはしないので注意して使うこと
-void Control::get_ChangeID()
-{
-  int ct=0;
-  string label;
-  
-  label="/Steer/ChangeID";
-  if ( !(tpCntl->GetValue(label, &ct )) )
-  {
-	  return;
-  }
-  
-  if ( ct < 0 )
-  {
-    Hostonly_ printf("Error : ID should be positive [%d]\n", ct);
-    Exit(0);
-  }
-  else
-  {
-    Hide.Change_ID = ct;
-  }
-}
-
-
-
-// #################################################################
-// パラメータ入力チェックモードの取得
-void Control::get_CheckParameter()
-{
-  string str;
-  string label;
-  
-  label = "/Steer/CheckParameter";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "On") )   CheckParam = ON;
-  else if( !strcasecmp(str.c_str(), "Off") )  CheckParam = OFF;
-  else
-  {
-    Hostonly_ printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-}
 
 
 // #################################################################
@@ -517,8 +585,8 @@ REAL_TYPE Control::getCellSize(const int* G_size)
 
 
 // #################################################################
-// 対流項スキームのパラメータを取得する
-void Control::get_Convection()
+// @brief 対流項スキームのパラメータを取得する
+void Control::getConvection()
 {
   
   int ct;
@@ -526,9 +594,10 @@ void Control::get_Convection()
   string label;
   
   // scheme
-  label="/Steer/ConvectionTerm/scheme";
+  label="/ConvectionTerm/scheme";
   
-  if ( !(tpCntl->GetValue(label, &str )) ) {
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
 	  Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
 	  Exit(0);
   }
@@ -546,7 +615,7 @@ void Control::get_Convection()
   // Limiter
   if ( CnvScheme == O3_muscl )
   {
-		label="/Steer/ConvectionTerm/limiter";
+		label="/ConvectionTerm/limiter";
     
 		if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -566,14 +635,14 @@ void Control::get_Convection()
 
 
 // #################################################################
-// 派生して計算する変数のオプションを取得する
-void Control::get_Derived()
+// @brief 派生して計算する変数のオプションを取得する
+void Control::getDerived()
 {
   string str;
   string label;
   
   // 全圧
-  label="/Steer/DerivedVariable/TotalPressure";
+  label="/Output/Data/DerivedVariables/TotalPressure";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -590,7 +659,7 @@ void Control::get_Derived()
   }
   
   // 渦度ベクトル
-  label="/Steer/DerivedVariable/Vorticity";
+  label="/Output/Data/DerivedVariables/Vorticity";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -607,7 +676,7 @@ void Control::get_Derived()
   }
   
   // 速度勾配テンソルの第2不変量
-  label="/Steer/DerivedVariable/2ndInvariantOfVGT";
+  label="/Output/Data/DerivedVariables/Qcriterion";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -624,7 +693,7 @@ void Control::get_Derived()
   }
   
   // ヘリシティ
-  label="/Steer/DerivedVariable/Helicity";
+  label="/Output/Data/DerivedVariables/Helicity";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -642,7 +711,7 @@ void Control::get_Derived()
   
   
   // FaceVelocity hidden parameter
-  label="/Steer/DerivedVariable/FaceVelocity";
+  label="/Output/Data/DerivedVariables/FaceVelocity";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -663,52 +732,48 @@ void Control::get_Derived()
 
 
 // #################################################################
-// ファイル入出力に関するパラメータを取得し，sphフォーマットの出力の並列モードを指定する．
-// インターバルパラメータは，setParameters()で無次元して保持
-void Control::get_FileIO()
+// @brief 無次元パラメータを各種モードに応じて設定する
+// @note 純強制対流　有次元　（代表長さ，代表速度，動粘性係数，温度拡散係数）
+//                 無次元　（Pr, Re > RefV=RefL=1）
+// @see bool Control::setParameters(MediumList* mat, CompoList* cmp)
+void Control::getDimensionlessParameter()
+{
+  REAL_TYPE ct;
+  string label;
+  
+  label="/Reference/Reynolds";
+  
+  if ( !(tpCntl->GetValue(label, &ct )) )
+  {
+    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
+	  Exit(0);
+  }
+  Reynolds=(REAL_TYPE)ct;
+  
+  
+  label="/Reference/Prandtl";
+  
+  if ( !(tpCntl->GetValue(label, &ct )) )
+  {
+    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
+	  Exit(0);
+  }
+  Prandtl=(REAL_TYPE)ct;
+}
+
+
+
+// #################################################################
+// @brief ファイル入出力に関するパラメータを取得し，sphフォーマットの出力の並列モードを指定する．
+// @note インターバルパラメータは，setParameters()で無次元して保持
+void Control::getFieldData()
 {
   
   REAL_TYPE f_val=0.0;
   REAL_TYPE ct;
   string str;
   string label, leaf;
-  
-  /* 出力単位 >> Unitで一括指定
-  label = "/Steer/FileIO/UnitOfFile";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "Dimensional") )     Unit.File = DIMENSIONAL;
-  else if( !strcasecmp(str.c_str(), "NonDimensional") )  Unit.File = NONDIMENSIONAL;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  */
-  
-  /* 並列入出力モード
-  label = "/Steer/FileIO/IOmode";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    Exit(0);
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "distributed") )  FIO.IOmode = IO_DISTRIBUTE;
-  else if( !strcasecmp(str.c_str(), "gathered") )     FIO.IOmode = IO_GATHER;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-   */
+
   
   // Default setting
   FIO.IOmode = IO_DISTRIBUTE;
@@ -720,63 +785,11 @@ void Control::get_FileIO()
   }
   
   
-  // 出力ガイドセルモード
-  label = "/Steer/FileIO/GuideOut";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    Exit(0);
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "without") )  GuideOut = 0;
-  else if( !strcasecmp(str.c_str(), "with") )     GuideOut = guide;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  
-  // デバッグ用のdiv(u)の出力指定
-  label = "/Steer/FileIO/DebugDivergence";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "on") )    FIO.Div_Debug = ON;
-  else if( !strcasecmp(str.c_str(), "off") )   FIO.Div_Debug = OFF;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  
-  // ボクセルファイル出力
-  label = "/Steer/FileIO/VoxelOutput";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "svx") )  FIO.IO_Voxel = Sphere_SVX;
-  else if( !strcasecmp(str.c_str(), "off") )  FIO.IO_Voxel = OFF;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
+  // 基本変数の瞬時値データ
   
   // ファイルフォーマット
-  label = "/Steer/FileIO/Output/FileFormat";
+  label = "/Output/Data/BasicVariables/Format";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -793,17 +806,9 @@ void Control::get_FileIO()
     Exit(0);
   }
   
-  // 拡張子 plot3dの場合は、様々なのでPLOT3Dクラスで処理
-  file_fmt_ext = "sph"; //default
   
-  if (FIO.Format == bov_fmt)
-  {
-    file_fmt_ext = "dat";
-  }
-  
-  
-  // インターバル 瞬時値
-  label = "/Steer/FileIO/InstantIntervalType";
+  // インターバル
+  label = "/Output/Data/BasicVariables/IntervalType";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -814,11 +819,11 @@ void Control::get_FileIO()
   {
     if     ( !strcasecmp(str.c_str(), "step") )
     {
-      Interval[Interval_Manager::tg_instant].setMode_Step();
+      Interval[Interval_Manager::tg_basic].setMode_Step();
     }
     else if( !strcasecmp(str.c_str(), "time") )
     {
-      Interval[Interval_Manager::tg_instant].setMode_Time();
+      Interval[Interval_Manager::tg_basic].setMode_Time();
     }
     else
     {
@@ -826,7 +831,7 @@ void Control::get_FileIO()
       Exit(0);
     }
     
-    label="/Steer/FileIO/InstantInterval";
+    label="/Output/Data/BasicVariables/Interval";
     
     if ( !(tpCntl->GetValue(label, &f_val )) )
     {
@@ -835,13 +840,235 @@ void Control::get_FileIO()
     }
     else
     {
-      Interval[Interval_Manager::tg_instant].setInterval((double)f_val);
+      Interval[Interval_Manager::tg_basic].setInterval((double)f_val);
     }
   }
   
   
+  
+  // 派生変数
+  
+  /* ファイルフォーマット >> 基本変数と同じ
+  label = "/Output/Data/DerivedVariables/Format";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+	  Exit(0);
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "sph") )
+  {
+    FIO.Format = sph_fmt;
+    file_fmt_ext = "sph";
+  }
+  else if( !strcasecmp(str.c_str(), "bov") )
+  {
+    FIO.Format = bov_fmt;
+    file_fmt_ext = "dat";
+  }
+  else if( !strcasecmp(str.c_str(), "plot3d") )
+  {
+    FIO.Format = plt3d_fmt;
+    file_fmt_ext = ""; // plot3dの場合は,ファイルがいくつかあるので別に処理
+  }
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Exit(0);
+  }*/
+  
+  
+  // インターバル
+  label = "/Output/Data/DerivedVariables/IntervalType";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "step") )
+    {
+      Interval[Interval_Manager::tg_derived].setMode_Step();
+    }
+    else if( !strcasecmp(str.c_str(), "time") )
+    {
+      Interval[Interval_Manager::tg_derived].setMode_Time();
+    }
+    else
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
+      Exit(0);
+    }
+    
+    label="/Output/Data/DerivedVariables/Interval";
+    
+    if ( !(tpCntl->GetValue(label, &f_val )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    else
+    {
+      Interval[Interval_Manager::tg_derived].setInterval((double)f_val);
+    }
+  }
+  
+  getDerived();
+  
+  switch ( FIO.Format )
+  {
+    case sph_fmt:
+      getFormat_sph();
+      break;
+      
+    case bov_fmt:
+      break;
+      
+    case plt3d_fmt:
+      getFormat_plot3d();
+      break;
+  }
+  
+  getAverageOption();
+  
+  
+  // ボクセルファイル出力（隠しオプション）
+  FIO.IO_Voxel = OFF;
+  label = "/Output/VoxelOutput";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    ;
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "svx") )  FIO.IO_Voxel = Sphere_SVX;
+  else if( !strcasecmp(str.c_str(), "off") )  FIO.IO_Voxel = OFF;
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  
+  // デバッグ用のdiv(u)の出力指定（隠しオプション）
+  FIO.Div_Debug = OFF;
+  label = "/Output/DebugDivergence";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    ;
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "on") )    FIO.Div_Debug = ON;
+  else if( !strcasecmp(str.c_str(), "off") )   FIO.Div_Debug = OFF;
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Exit(0);
+  }
+}
+
+
+// #################################################################
+// @brief ファイルフォーマットのオプションを指定する
+void Control::getFormat_plot3d()
+{
+  string str;
+  string label;
+  REAL_TYPE f_val;
+  
+  // PLOT3Dディレクトリのチェック
+  label = "/Output/FormatOption/PLOT3D";
+  
+  if ( !tpCntl->chkNode(label) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : Missing '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  
+  
+  // インターバル PLOT3D
+  label = "/Output/FormatOption/PLOT3D/IntervalType";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "step") )
+    {
+      Interval[Interval_Manager::tg_plot3d].setMode_Step();
+    }
+    else if( !strcasecmp(str.c_str(), "time") )
+    {
+      Interval[Interval_Manager::tg_plot3d].setMode_Time();
+    }
+    else
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
+      Exit(0);
+    }
+    
+    label="/Output/FormatOption/PLOT3D/Interval";
+    
+    if ( !(tpCntl->GetValue(label, &f_val )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    else
+    {
+      Interval[Interval_Manager::tg_plot3d].setInterval((double)f_val);
+    }
+  }
+
+}
+
+
+// #################################################################
+// @brief ファイルフォーマットのオプションを指定する．
+void Control::getFormat_sph()
+{
+  string str;
+  string label;
+  
+  
+  // sphディレクトリのチェック
+  label = "/Output/FormatOption/SPH";
+  
+  if ( !tpCntl->chkNode(label) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : Missing '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  
+  // 出力ガイドセルモード
+  label = "/Output/FormatOption/SPH/GuideOut";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+	  Exit(0);
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "without") )  GuideOut = 0;
+  else if( !strcasecmp(str.c_str(), "with") )     GuideOut = guide;
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
   // Output Directory_Path
-  label = "/Steer/FileIO/Output/DirectoryPath";
+  label = "/Output/FormatOption/SPH/DirectoryPath";
   
   if ( !(tpCntl->GetValue(label, &str)) )
   {
@@ -856,7 +1083,7 @@ void Control::get_FileIO()
   
   
   // TimeSlice option
-  label = "/Steer/FileIO/Output/TimeSlice";
+  label = "/Output/FormatOption/SPH/TimeSlice";
   
   if ( !(tpCntl->GetValue(label, &str)) )
   {
@@ -864,10 +1091,12 @@ void Control::get_FileIO()
     Exit(0);
   }
   
-  if ( !strcasecmp(str.c_str(), "on") ) {
+  if ( !strcasecmp(str.c_str(), "on") )
+  {
     FIO.Slice = ON;
   }
-  else {
+  else
+  {
     FIO.Slice = OFF;
   }
   
@@ -878,208 +1107,53 @@ void Control::get_FileIO()
   }
   
   
-  // 出力DFIファイル名
-  label = "/Steer/FileIO/Output/DFIfiles/Pressure";
-  if ( tpCntl->GetValue(label, &str ) )
-  {
-    f_dfi_out_prs = str.c_str();
-  }
-  if ( f_dfi_out_prs.empty() == true ) f_dfi_out_prs = "prs";
-
-  
-  label = "/Steer/FileIO/Output/DFIfiles/Velocity";
-  if ( tpCntl->GetValue(label, &str ) )
-  {
-    f_dfi_out_vel = str.c_str();
-  }
-  if ( f_dfi_out_vel.empty() == true ) f_dfi_out_vel = "vel";
-  
-  
-  label = "/Steer/FileIO/Output/DFIfiles/Temperature";
-  if ( tpCntl->GetValue(label, &str ) )
-  {
-    f_dfi_out_temp = str.c_str();
-  }
-  if ( f_dfi_out_temp.empty() == true ) f_dfi_out_temp = "tmp";
-  
-  
-  label = "/Steer/FileIO/Output/DFIfiles/Fvelocity";
-  if ( tpCntl->GetValue(label, &str ) )
-  {
-    f_dfi_out_fvel = str.c_str();
-  }
-  if ( f_dfi_out_fvel.empty() == true ) f_dfi_out_fvel = "fvel";
-    
-  
-  label = "/Steer/FileIO/Output/DFIfiles/AveragedPressure";
-  if ( tpCntl->GetValue(label, &str ) )
-  {
-    f_dfi_out_prsa = str.c_str();
-  }
-  if ( f_dfi_out_prsa.empty() == true ) f_dfi_out_prsa = "prsa";
-    
-  
-  label = "/Steer/FileIO/Output/DFIfiles/AveragedVelocity";
-  if ( tpCntl->GetValue(label, &str ) )
-  {
-    f_dfi_out_vela = str.c_str();
-  }
-  if ( f_dfi_out_vela.empty() == true ) f_dfi_out_vela = "vela";
-    
-  
-  label = "/Steer/FileIO/Output/DFIfiles/AveragedTemperature";
-  if ( tpCntl->GetValue(label, &str ) )
-  {
-    f_dfi_out_tempa = str.c_str();
-  }
-  if ( f_dfi_out_tempa.empty() == true ) f_dfi_out_tempa = "tmpa";
-    
-  
-  label = "/Steer/FileIO/Output/DFIfiles/Divergence";
-  if ( tpCntl->GetValue(label, &str ) )
-  {
-    f_dfi_out_div = str.c_str();
-  }
-  if ( f_dfi_out_div.empty() == true ) f_dfi_out_div = "div";
-    
-  
-  label = "/Steer/FileIO/Output/DFIfiles/Vorticity";
-  if ( tpCntl->GetValue(label, &str ) )
-  {
-    f_dfi_out_vrt = str.c_str();
-  }
-  if ( f_dfi_out_vrt.empty() == true ) f_dfi_out_vrt = "vrt";
-    
-  
-  label = "/Steer/FileIO/Output/DFIfiles/Helicity";
-  if ( tpCntl->GetValue(label, &str ) )
-  {
-    f_dfi_out_hlt = str.c_str();
-  }
-  if ( f_dfi_out_hlt.empty() == true ) f_dfi_out_hlt = "hlt";
-    
-  
-  label = "/Steer/FileIO/Output/DFIfiles/TotalPressure";
-  if ( tpCntl->GetValue(label, &str ) )
-  {
-    f_dfi_out_tp = str.c_str();
-  }
-  if ( f_dfi_out_tp.empty() == true ) f_dfi_out_tp = "tp";
-    
-  
-  label = "/Steer/FileIO/Output/DFIfiles/2ndInvariantOfVGT";
-  if ( tpCntl->GetValue(label, &str ) )
-  {
-    f_dfi_out_i2vgt = str.c_str();
-  }
-  if ( f_dfi_out_i2vgt.empty() == true ) f_dfi_out_i2vgt = "i2vgt";
-  
-  
-  
-  /* 20130611 PLOT3D Option
-  if ( FIO.Format == plt3d_fmt )
-  {
-    label = "/Steer/FileIO/PLOT3D";
-    
-    if( !tpCntl->chkNode(label) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", label.c_str());
-      Exit(0);
-    }
-    
-    
-    // インターバル PLOT3D
-    if (FIO.Format == plt3d_fmt)
-    {
-      label = "/Steer/FileIO/PLOT3D/IntervalType";
-      
-      if ( !(tpCntl->GetValue(label, &str )) )
-      {
-        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-        Exit(0);
-      }
-      else
-      {
-        if     ( !strcasecmp(str.c_str(), "step") )
-        {
-          Interval[Interval_Manager::tg_plot3d].setMode_Step();
-        }
-        else if( !strcasecmp(str.c_str(), "time") )
-        {
-          Interval[Interval_Manager::tg_plot3d].setMode_Time();
-        }
-        else
-        {
-          Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
-          Exit(0);
-        }
-        
-        label="/Steer/FileIO/PLOT3D/Interval";
-        
-        if ( !(tpCntl->GetValue(label, &f_val )) )
-        {
-          Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-          Exit(0);
-        }
-        else
-        {
-          Interval[Interval_Manager::tg_plot3d].setInterval((double)f_val);
-        }
-      }
-    }
-
-  }*/
-  
 }
 
 
 // #################################################################
-// モデル形状情報
-void Control::getGeometry(const MediumList* mat)
+// 計算モデルの入力ソース情報を取得
+void Control::getGeometryModel()
 {
   string str;
   string label;
   
-  // ファイル名を取得
-  label = "/Steer/GeometryModel/PolylibFile";
+  // ソース名を取得　文字列がIntrisicExampleでなければポリゴンファイル名と解釈
+  label = "/GeometryModel/Source";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : Invalid char* value in '%s'\n", label.c_str());
     Exit(0);
   }
-  PolylibConfigName = str;
   
-  
-  // 流体セルのフィルのヒント
-  label = "/Steer/GeometryModel/HintOfFillingFluid";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-    Hostonly_ stamped_printf("\tParsing error : Invalid value in '%s'\n", label.c_str());
+    Hostonly_ stamped_printf("\tError : '%s'\n", label.c_str());
     Exit(0);
   }
+  
+  if     ( FBUtility::compare(str, "ParallelPlate2D") )   Mode.Example = id_PPLT2D;
+  else if( FBUtility::compare(str, "Duct") )              Mode.Example = id_Duct;
+  else if( FBUtility::compare(str, "SHC1D") )             Mode.Example = id_SHC1D;
+  else if( FBUtility::compare(str, "PerformanceTest") )   Mode.Example = id_PMT;
+  else if( FBUtility::compare(str, "Rectangular") )       Mode.Example = id_Rect;
+  else if( FBUtility::compare(str, "Cylinder") )          Mode.Example = id_Cylinder;
+  else if( FBUtility::compare(str, "BackStep") )          Mode.Example = id_Step;
+  else if( FBUtility::compare(str, "Sphere") )            Mode.Example = id_Sphere;
+  else if( FBUtility::compare(str, "Jet") )               Mode.Example = id_Jet;
   else
   {
-    if     ( !strcasecmp(str.c_str(), "no" ) )     Fill_Hint = -1;
-    else if( !strcasecmp(str.c_str(), "xminus" ) ) Fill_Hint = X_MINUS;
-    else if( !strcasecmp(str.c_str(), "xplus" ) )  Fill_Hint = X_PLUS;
-    else if( !strcasecmp(str.c_str(), "yminus" ) ) Fill_Hint = Y_MINUS;
-    else if( !strcasecmp(str.c_str(), "yplus" ) )  Fill_Hint = Y_PLUS;
-    else if( !strcasecmp(str.c_str(), "zminus" ) ) Fill_Hint = Z_MINUS;
-    else if( !strcasecmp(str.c_str(), "zplus" ) )  Fill_Hint = Z_PLUS;
-    else
-    {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-      Exit(0);
-    }
+    Mode.Example = id_Polygon;
+    PolylibConfigName = str;
   }
   
-
+  
+  
   // スケーリングファクター
   REAL_TYPE ct=0.0;
   
-  label = "/Steer/GeometryModel/ScalingFactor";
+  label = "/GeometryModel/ScalingFactor";
   
   if ( !tpCntl->GetValue(label, &ct) )
   {
@@ -1099,16 +1173,19 @@ void Control::getGeometry(const MediumList* mat)
 }
 
 
+
 // #################################################################
-// 反復関連の情報を取得する
-void Control::get_Iteration(ItrCtl* IC)
+// @brief 反復関連の情報を取得する
+// @see copyCriteria()
+void Control::getIteration()
 {
   string str;
   string base, label, leaf;
   int i_val=0;
-  REAL_TYPE f_val=0.0;
+  double f_val=0.0;
   
-  base = "/Steer/Iteration";
+  
+  base = "/Iteration";
   
   // Iteration
   if( !tpCntl->chkNode(base) )
@@ -1121,40 +1198,43 @@ void Control::get_Iteration(ItrCtl* IC)
   int nnode = tpCntl->countLabels(base);
   if ( nnode == 0 )
   {
-    Hostonly_ stamped_printf("\tNo labels inside /Steer/Iteration\n");
+    Hostonly_ stamped_printf("\tNo labels inside /Iteration\n");
     return;
   }
+
   
-  // Criterionの個数を取得
+  // LinearSolverの個数を取得
   int counter=0;
-  for (int i=1; i<=nnode; i++) {
-    
+  for (int i=1; i<=nnode; i++)
+  {
     if ( !tpCntl->GetNodeStr(base, i, &str) )
     {
       Hostonly_ stamped_printf("\tGetNodeStr error\n");
       Exit(0);
     }
     
-    if( !strcasecmp(str.substr(0,20).c_str(), "ConvergenceCriterion") ) counter++;
+    if( !strcasecmp(str.substr(0,12).c_str(), "LinearSolver") ) counter++;
   }
+
   
   // Instance of candidates
-  NoBaseCriterion = counter;
-  Criteria = new ConveregenceCriterion[NoBaseCriterion];
+  NoBaseLS = counter;
+  Criteria = new IterationCtl[NoBaseLS];
   
   
   // get criterion
-  for (int i=0; i<NoBaseCriterion; i++) {
-    
+  for (int i=0; i<NoBaseLS; i++)
+  {
     if ( !tpCntl->GetNodeStr(base, i+1, &str) )
     {
-      Hostonly_ printf("\tParsing error : Missing 'ConvergenceCriterion'\n");
+      Hostonly_ printf("\tParsing error : Missing 'LinearSolver'\n");
       Exit(0);
     }
+
+    if( strcasecmp(str.substr(0,12).c_str(), "LinearSolver") ) continue;
     
-    if( strcasecmp(str.substr(0,20).c_str(), "ConvergenceCriterion") ) continue;
     
-    // alias ユニークな名称であること
+    // alias 
     leaf = base + "/" + str;
     label = leaf + "/Alias";
     
@@ -1163,13 +1243,60 @@ void Control::get_Iteration(ItrCtl* IC)
       Hostonly_ printf("\tParsing error : No '%s'\n", label.c_str());
       Exit(0);
     }
-    if ( !chkDuplicate(i, str) )
+
+    // ユニークな名称であること
+    for (int n=0; n<i; n++)
     {
-      Hostonly_ printf("\tParsing error : 'Alias' must be unique\n");
+      if ( !strcasecmp( Criteria[n].getAlias().c_str(), str.c_str()) )
+      {
+        Hostonly_ printf("\tParsing error : 'Alias' must be unique\n");
+        Exit(0);
+      }
+    }
+    Criteria[i].setAlias(str);
+    
+    
+    // 線形ソルバーの種類
+    label = leaf + "/class";
+    if ( !(tpCntl->GetValue(label, &str )) )
+    {
+      Hostonly_ printf("\tParsing error : No '%s'\n", label.c_str());
       Exit(0);
     }
-    Criteria[i].set_Alias(str);
     
+    if     ( !strcasecmp(str.c_str(), "SOR") )         Criteria[i].setLS(SOR);
+    else if( !strcasecmp(str.c_str(), "SOR2SMA") )     Criteria[i].setLS(SOR2SMA);
+    else if( !strcasecmp(str.c_str(), "SOR2CMA") )     Criteria[i].setLS(SOR2CMA);
+    else if( !strcasecmp(str.c_str(), "JACOBI") )      Criteria[i].setLS(JACOBI);
+    else if( !strcasecmp(str.c_str(), "GMRES") )       Criteria[i].setLS(GMRES);
+    else if( !strcasecmp(str.c_str(), "RBGS") )        Criteria[i].setLS(RBGS);
+    else if( !strcasecmp(str.c_str(), "PCG") )         Criteria[i].setLS(PCG);
+    else if( !strcasecmp(str.c_str(), "PBiCGSTAB") )   Criteria[i].setLS(PBiCGSTAB);
+    else if( !strcasecmp(str.c_str(), "VPiteration") ) Criteria[i].setLS(VP_ITERATION);
+    else
+    {
+      Hostonly_ stamped_printf("\tInvalid keyword is described for Linear_Solver\n");
+      Exit(0);
+    }
+
+    
+    label = leaf + "/MaxIteration";
+    if ( !(tpCntl->GetValue(label, &i_val )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    Criteria[i].setMaxIteration(i_val);
+
+
+    label = leaf + "/ConvergenceCriterion";
+    if ( !(tpCntl->GetValue(label, &f_val )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    Criteria[i].setCriterion(f_val);
+
     
     label = leaf + "/NormType";
     if ( !(tpCntl->GetValue(label, &str )) )
@@ -1177,197 +1304,88 @@ void Control::get_Iteration(ItrCtl* IC)
       Hostonly_ printf("\tParsing error : No '%s'\n", label.c_str());
       Exit(0);
     }
-    Criteria[i].set_NormType(str);
+
     
-    label = leaf + "/Iteration";
-    if ( !(tpCntl->GetValue(label, &i_val )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
-    }
-    Criteria[i].set_IterationMax(i_val);
+    int ls = Criteria[i].getLS();
     
-    label = leaf + "/Epsilon";
-    if ( !(tpCntl->GetValue(label, &f_val )) )
+    // ノルム
+    switch (ls)
     {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
-    }
-    Criteria[i].set_Criterion(f_val);
-  }
-  
-  
-  
-  
-  switch (AlgorithmF)
-  {
-    case Flow_FS_EE_EE:
-    case Flow_FS_AB2:
-      setCriteria("Pressure",    ItrCtl::ic_prs_pr, &IC[ItrCtl::ic_prs_pr]);
-      setCriteria("VPiteration", ItrCtl::ic_div,    &IC[ItrCtl::ic_div]);
-      break;
-      
-    case Flow_FS_AB_CN:
-      setCriteria("Pressure",    ItrCtl::ic_prs_pr, &IC[ItrCtl::ic_prs_pr]);
-      setCriteria("NSCN",        ItrCtl::ic_vis_cn, &IC[ItrCtl::ic_vis_cn]);
-      setCriteria("VPiteration", ItrCtl::ic_div,    &IC[ItrCtl::ic_div]);
-      break;
-      
-    case Flow_FS_RK_CN:
-      setCriteria("Pressure",    ItrCtl::ic_prs_pr, &IC[ItrCtl::ic_prs_pr]);
-      setCriteria("Pressure2nd", ItrCtl::ic_prs_cr, &IC[ItrCtl::ic_prs_cr]);
-      setCriteria("NSCN",        ItrCtl::ic_vis_cn, &IC[ItrCtl::ic_vis_cn]);
-      setCriteria("VPiteration", ItrCtl::ic_div,    &IC[ItrCtl::ic_div]);
-      break;
-      
-    default:
-      Hostonly_ stamped_printf("\tSomething wrong in '%s'\n", label.c_str());
-      Exit(0);
-  }
-  
-  // Heat
-  label = base + "/Temperature";
-  
-  if ( isHeatProblem() )
-  {
-    
-    switch (AlgorithmH)
-    {
-      case Heat_EE_EE:
-        break;
-        
-      case Heat_EE_EI:
-        if ( !tpCntl->chkNode(label) )
+      case VP_ITERATION:
+        if ( !strcasecmp(str.c_str(), "VdivMax") )
         {
-          Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", label.c_str());
+          Criteria[i].setNormType(v_div_max);
+        }
+        else if ( !strcasecmp(str.c_str(), "VdivDbg") )
+        {
+          Criteria[i].setNormType(v_div_dbg);
+          Mode.Log_Itr == ON;
+        }
+        else
+        {
+          Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' for VP iteration\n", str.c_str());
           Exit(0);
         }
-        setCriteria("Temperature", ItrCtl::ic_tdf_ei, &IC[ItrCtl::ic_tdf_ei]);
         break;
         
       default:
-        Hostonly_ stamped_printf("\tSomething wrong in '%s'\n", label.c_str());
-        Exit(0);
+        if ( !strcasecmp(str.c_str(), "DXbyB") )
+        {
+          Criteria[i].setNormType(dx_b);
+        }
+        else if ( !strcasecmp(str.c_str(), "RbyB") )
+        {
+          Criteria[i].setNormType(r_b);
+        }
+        else if ( !strcasecmp(str.c_str(), "RbyR0") )
+        {
+          Criteria[i].setNormType(r_r0);
+        }
+        else
+        {
+          Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' of Norm for Poisson iteration\n", str.c_str());
+          Exit(0);
+        }
+        break;
     }
-  }
-}
 
-
-
-// #################################################################
-// ソルバーの計算対象種別と浮力モードを取得
-void Control::get_KindOfSolver()
-{
-  string str;
-  string label;
-  
-  label="/Steer/SolverProperty/KindOfSolver";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-	  Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "FlowOnly" ) )               KindOfSolver = FLOW_ONLY;
-  else if( !strcasecmp(str.c_str(), "ThermalFlow" ) )            KindOfSolver = THERMAL_FLOW;
-  else if( !strcasecmp(str.c_str(), "ThermalFlowNatural" ) )     KindOfSolver = THERMAL_FLOW_NATURAL;
-  else if( !strcasecmp(str.c_str(), "ConjugateHeatTransfer" ) )  KindOfSolver = CONJUGATE_HEAT_TRANSFER;
-  else if( !strcasecmp(str.c_str(), "SolidConduction" ) )        KindOfSolver = SOLID_CONDUCTION;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  // Buoyancy option
-  if ( (KindOfSolver==THERMAL_FLOW) || (KindOfSolver==THERMAL_FLOW_NATURAL) || (KindOfSolver==CONJUGATE_HEAT_TRANSFER) )
-  {
-    label="/Steer/SolverProperty/Buoyancy";
     
-    if ( !(tpCntl->GetValue(label, &str )) )
+    // 固有パラメータ
+    switch (ls)
     {
-      Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
-      Exit(0);
+      case JACOBI:
+        getParaJacobi(leaf, i);
+        break;
+        
+      case SOR:
+        getParaSOR(leaf, i);
+        break;
+        
+      case SOR2SMA:
+        getParaSOR2(leaf, i);
+        break;
+        
+      case RBGS:
+        getParaRBGS(leaf, i);
+        break;
+        
+      case GMRES:
+        getParaGmres(leaf, i);
+        break;
+        
+      case PCG:
+        getParaPCG(leaf, i);
+        break;
+        
+      case PBiCGSTAB:
+        getParaPBiCGSTAB(leaf, i);
+        break;
+        
+      default:
+        break;
     }
-    
-    if     ( !strcasecmp(str.c_str(), "Boussinesq" ) )  Mode.Buoyancy = BOUSSINESQ;
-    else if( !strcasecmp(str.c_str(), "LowMach" ) )     Mode.Buoyancy = LOW_MACH;
-    else if( !strcasecmp(str.c_str(), "NoBuoyancy" ) )  Mode.Buoyancy = NO_BUOYANCY;
-    else
-    {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '/Steer/Solver_Property/Buoyancy'\n");
-      Exit(0);
-    }
-  }
-}
 
-
-
-// #################################################################
-// LES計算のオプションを取得する
-void Control::get_LES_option()
-{
-  REAL_TYPE ct;
-  string str;
-  string label;
-  
-  // 計算オプション
-  label="/Steer/LESoption/LEScalculation";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-	  Exit(0);
   }
-  
-  if     ( !strcasecmp(str.c_str(), "on") )    LES.Calc = ON;
-  else if( !strcasecmp(str.c_str(), "off") )   LES.Calc = OFF;
-  else
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  if ( LES.Calc == OFF ) return;
-  
-  
-  // モデル
-  label="/Steer/LESoption/Model";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if      ( !strcasecmp(str.c_str(), "smagorinsky") ) LES.Model = Smagorinsky;
-  else if ( !strcasecmp(str.c_str(), "LowReynolds") ) LES.Model = Low_Reynolds;
-  else if ( !strcasecmp(str.c_str(), "Dynamic") )     LES.Model = Dynamic;
-  else
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  
-  // Cs係数
-  label="/Steer/LESoption/Cs";
-  if ( !(tpCntl->GetValue(label, &ct )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    Exit(0);
-  }
-  LES.Cs = ct;
-  
-  // Cs係数
-  label="/Steer/LESoption/DampingFactor";
-  if ( !(tpCntl->GetValue(label, &ct )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    Exit(0);
-  }
-  LES.damping_factor = ct;
   
 }
 
@@ -1376,7 +1394,7 @@ void Control::get_LES_option()
 // #################################################################
 // ログ出力モードを取得
 // インターバルパラメータは，setParameters()で無次元して保持
-void Control::get_Log()
+void Control::getLog()
 {
   REAL_TYPE f_val=0.0;
   string str;
@@ -1384,7 +1402,7 @@ void Control::get_Log()
   
   
   // Log_Base
-  label="/Steer/Log/LogBase";
+  label="/Output/Log/Base";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -1402,7 +1420,7 @@ void Control::get_Log()
   
   
   // Log_Iteration
-  label="/Steer/Log/LogIteration";
+  label="/Output/Log/Iteration";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -1422,7 +1440,7 @@ void Control::get_Log()
   // Log_Wall_Info
   if ( Mode.Wall_profile == Log_Law )
   {
-	  label="/Steer/Log/LogWallInfo";
+	  label="/Output/Log/WallInfo";
     
 	  if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -1441,7 +1459,7 @@ void Control::get_Log()
   
   
   // Log_Profiling
-  label="/Steer/Log/LogProfiling";
+  label="/Output/Log/Profiling";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -1459,7 +1477,7 @@ void Control::get_Log()
   }
   
   // Interval console
-  label="/Steer/Log/ConsoleIntervalType";
+  label="/Output/Log/ConsoleIntervalType";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -1482,7 +1500,7 @@ void Control::get_Log()
 		  Exit(0);
 	  }
 	  
-	  label="/Steer/Log/ConsoleInterval";
+	  label="/Output/Log/ConsoleInterval";
     
 	  if ( !(tpCntl->GetValue(label, &f_val )) )
     {
@@ -1496,7 +1514,7 @@ void Control::get_Log()
   }
   
   // Interval file_history
-  label="/Steer/Log/HistoryIntervalType";
+  label="/Output/Log/HistoryIntervalType";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -1519,7 +1537,7 @@ void Control::get_Log()
 		  Exit(0);
 	  }
     
-	  label="/Steer/Log/HistoryInterval";
+	  label="/Output/Log/HistoryInterval";
     
 	  if ( !(tpCntl->GetValue(label, &f_val )) )
     {
@@ -1543,7 +1561,7 @@ void Control::getMonitorList()
   string label;
   
   // ログ出力
-  label = "/Steer/MonitorList/log";
+  label = "/MonitorList/log";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -1563,7 +1581,7 @@ void Control::getMonitorList()
   /// @see Initialize.C setExistComponent()
   if ( Sampling.log == ON )
   {
-	  label = "/Steer/MonitorList/CellMonitor";
+	  label = "/MonitorList/CellMonitor";
     
 	  if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -1593,103 +1611,165 @@ void Control::getNoOfComponent()
   
   // 媒質の個数
   label = "/MediumTable";
-  NoMedium = tpCntl->countLabels(label);
   
-  if ( NoMedium < 0)
+  vector<string> nodes_1;
+  tpCntl->getLabelVector(label, nodes_1);
+  
+  NoMedium = nodes_1.size();
+  
+  if ( NoMedium <= 0)
   {
     Hostonly_ stamped_printf("\tError : Empty MediumTable\n");
     Exit(0);
   }
-  
+
   
   // 境界条件数
   label = "/BcTable/LocalBoundary";
   
   if ( tpCntl->chkNode(label) )  //nodeがあれば
   {
-	  NoBC = tpCntl->countLabels(label);
+    vector<string> nodes_2;
+    tpCntl->getLabelVector(label, nodes_2);
+	  NoBC = nodes_2.size();
   }
+
   
   NoCompo = NoMedium + NoBC;
 }
 
 
 // #################################################################
-// ノルムのラベルを返す
-string Control::getNormString(const int d)
+/**
+ * @brief Gmres反復固有のパラメータを指定する
+ * @param [in] base  ラベル
+ * @param [in] m     反復制御用クラスの配列番号
+ */
+void Control::getParaGmres(const string base, const int m)
 {
-  string nrm;
-	
-	if      (d == ItrCtl::v_div_dbg) nrm = "Max. Norm : Divergence of velocity with Monitoring  ### Forced to be selected since Iteration Log is specified ###";
-  else if (d == ItrCtl::v_div_max) nrm = "Max. Norm : Divergence of velocity";
-  else if (d == ItrCtl::dx_b)      nrm = "dx_b : Increment of vector x divided by RHS vector b";
-  else if (d == ItrCtl::r_b)       nrm = "r_b  : Residual vector divided by RHS vector b";
-	else if (d == ItrCtl::r_r0)      nrm = "r_r0 : Residual vector divided by initial residual vector";
-	
-  return nrm;
+  ;
 }
 
 
 // #################################################################
-// 作業者情報の取得
-void Control::get_Operator()
+/**
+ * @brief Jacobi反復固有のパラメータを指定する
+ * @param [in] base  ラベル
+ * @param [in] m     反復制御用クラスの配列番号
+ */
+void Control::getParaJacobi(const string base, const int m)
 {
-  string str;
-  string label;
+  string str, label;
+  double tmp=0.0; // 加速係数
   
-  label = "/Steer/Operator";
+  label = base + "/Omega";
   
+  if ( !(tpCntl->GetValue(label, &tmp )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  Criteria[m].setOmega(tmp);
+  
+}
+
+
+// #################################################################
+/**
+ * @brief PCG反復固有のパラメータを指定する
+ * @param [in] base  ラベル
+ * @param [in] m     反復制御用クラスの配列番号
+ */
+void Control::getParaPCG(const string base, const int m)
+{
+  ;
+}
+
+
+// #################################################################
+/**
+ * @brief PBiCGSTAB反復固有のパラメータを指定する
+ * @param [in] base  ラベル
+ * @param [in] m     反復制御用クラスの配列番号
+ */
+void Control::getParaPBiCGSTAB(const string base, const int m)
+{
+  ;
+}
+
+
+// #################################################################
+/**
+ * @brief RBGS反復固有のパラメータを指定する
+ * @param [in] base  ラベル
+ * @param [in] m     反復制御用クラスの配列番号
+ */
+void Control::getParaRBGS(const string base, const int m)
+{
+  ;
+}
+
+
+// #################################################################
+/**
+ * @brief SOR反復固有のパラメータを指定する
+ * @param [in] base  ラベル
+ * @param [in] m     反復制御用クラスの配列番号
+ */
+void Control::getParaSOR(const string base, const int m)
+{
+  getParaJacobi(base, m);
+}
+
+
+// #################################################################
+/**
+ * @brief RB-SOR反復固有のパラメータを指定する
+ * @param [in] base  ラベル
+ * @param [in] m     反復制御用クラスの配列番号
+ */
+void Control::getParaSOR2(const string base, const int m)
+{
+  string str, label;
+  
+  getParaJacobi(base, m);
+  
+  label = base + "/commMode";
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-	  Exit(0);
+    Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
+    Exit(0);
   }
-  
-  OperatorName = str;
+  if ( !strcasecmp(str.c_str(), "sync") )
+  {
+    Criteria[m].setSyncMode(comm_sync);
+  }
+  else if ( !strcasecmp(str.c_str(), "async") )
+  {
+    Criteria[m].setSyncMode(comm_async);
+  }
+  else
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
+    Exit(0);
+  }
   
 }
 
 
 
 // #################################################################
-// 無次元パラメータを各種モードに応じて設定する
-// 純強制対流　有次元　（代表長さ，代表速度，動粘性係数，温度拡散係数）
-//           無次元　（Pr, Re > RefV=RefL=1）
-// @see bool Control::setParameters(MediumList* mat, CompoList* cmp)
-void Control::get_Para_ND()
-{
-  REAL_TYPE ct;
-  string label;
-  
-  label="/Parameter/Reference/Reynolds";
-  
-  if ( !(tpCntl->GetValue(label, &ct )) )
-  {
-    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  Reynolds=(REAL_TYPE)ct;
-  
-  
-  label="/Parameter/Reference/Prandtl";
-  
-  if ( !(tpCntl->GetValue(label, &ct )) )
-  {
-    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  Prandtl=(REAL_TYPE)ct;
-}
-
-
-
-// #################################################################
-// 参照パラメータを取得
-void Control::get_Para_Ref()
+/**
+ * @brief 参照パラメータを取得
+ * @note Ref_IDで指定される媒質を代表物性値とする
+ */
+void Control::getReference()
 {
   REAL_TYPE ct2;
   string label, str;
   
-  label = "/Parameter/Reference/Length";
+  
+  label = "/Reference/Length";
   if ( !(tpCntl->GetValue(label, &ct2 )) )
   {
     Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
@@ -1697,7 +1777,8 @@ void Control::get_Para_Ref()
   }
   RefLength = ct2;
   
-  label = "/Parameter/Reference/Velocity";
+  
+  label = "/Reference/Velocity";
   if ( !(tpCntl->GetValue(label, &ct2 )) )
   {
     Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
@@ -1705,15 +1786,17 @@ void Control::get_Para_Ref()
   }
   RefVelocity = ct2;
   
-  label = "/Parameter/Reference/Gravity";
+  
+  label = "/Reference/MassDensity";
   if ( !(tpCntl->GetValue(label, &ct2 )) )
   {
     Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
     Exit(0);
   }
-  Gravity = ct2;
+  RefDensity = ct2;
   
-  label = "/Parameter/Reference/BasePressure";
+  
+  label = "/Reference/BasePressure";
   if ( !(tpCntl->GetValue(label, &ct2 )) )
   {
     Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
@@ -1721,91 +1804,69 @@ void Control::get_Para_Ref()
   }
   BasePrs = ct2;
 
-  label = "/Parameter/Reference/Medium";
+  
+  label = "/Reference/Medium";
   if ( !tpCntl->GetValue(label, &str) )
   {
     Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
 	  Exit(0);
   }
   RefMedium = str;
+  
+  
+  if ( isHeatProblem() )
+  {
+    REAL_TYPE Base, Diff;
+    
+    label="/Reference/Temperature/Base";
+    
+    if ( !(tpCntl->GetValue(label, &Base )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
+      Exit(0);
+    }
+    
+    
+    label="/Reference/Temperature/Difference";
+    
+    if ( !(tpCntl->GetValue(label, &Diff )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
+      Exit(0);
+    }
+    
+    
+    if ( Diff < 0.0f )
+    {
+      Hostonly_ stamped_printf("\tTemperature difference must be positive.\n");
+      Exit(0);
+    }
+    DiffTemp = Diff;
+    
+    if ( Unit.Temp == Unit_CELSIUS )
+    {
+      BaseTemp = Base + KELVIN;
+    }
+  }
+  
 }
 
 
 
 // #################################################################
-// 温度の参照パラメータを取得
-void Control::get_Para_Temp()
-{
-  REAL_TYPE Base, Diff;
-  string label;
-  
-  label="/Parameter/Temperature/Base";
-  
-  if ( !(tpCntl->GetValue(label, &Base )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  
-  label="/Parameter/Temperature/Difference";
-  
-  if ( !(tpCntl->GetValue(label, &Diff )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  
-  if( Diff < 0.0f )
-  {
-    Hostonly_ stamped_printf("\tTemperature difference must be positive.\n");
-    Exit(0);
-  }
-  DiffTemp = Diff;
-  
-  if ( Unit.Temp == Unit_CELSIUS )
-  {
-    BaseTemp = Base + KELVIN;
-  }
-}
-
-
-// #################################################################
-// 性能試験モードを取得する（隠しパラメータ）
-// 'PerformanceTest'の文字列チェックはしないので注意して使うこと
-void Control::get_PMtest()
+/**
+ * @brief 参照座標系を取得する
+ * @todo 回転は未
+ */
+void Control::getReferenceFrame(ReferenceFrame* RF)
 {
   string str;
   string label;
   
-  label="/Steer/PerformanceTest";
+  label="/ReferenceFrame/Mode";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
-	  return;
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "on") )   Hide.PM_Test = ON;
-  else if( !strcasecmp(str.c_str(), "off") )  Hide.PM_Test = OFF;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-}
-
-
-// #################################################################
-// 参照座標系を取得する
-void Control::get_ReferenceFrame(ReferenceFrame* RF)
-{
-  string str;
-  string label;
-  
-  label="/Steer/ReferenceFrame/ReferenceFrameType";
-  
-  if ( !(tpCntl->GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
   }
@@ -1817,6 +1878,7 @@ void Control::get_ReferenceFrame(ReferenceFrame* RF)
   else if( !strcasecmp(str.c_str(), "translational") )
   {
     RF->setFrame(ReferenceFrame::frm_translation);
+    
     REAL_TYPE xyz[3];
     for (int n=0; n<3; n++) xyz[n]=0.0;
     
@@ -1837,14 +1899,15 @@ void Control::get_ReferenceFrame(ReferenceFrame* RF)
 
 
 // #################################################################
-// ソルバーの種類を特定するパラメータを取得し，ガイドセルの値を決定する
-void Control::get_Solver_Properties()
+// @brief ソルバーの種類を特定するパラメータを取得する
+// @note ガイドセルの値に影響
+void Control::getShapeApproximation()
 {
   string str;
   string label;
   
   // 形状近似度の取得
-  label = "/Steer/SolverProperty/ShapeApproximation";
+  label = "/ShapeApproximation/Method";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -1859,10 +1922,19 @@ void Control::get_Solver_Properties()
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
+}
+
+
+// #################################################################
+// ソルバーの種類を特定するパラメータを取得し，ガイドセルの値を決定する
+void Control::getSolverProperties()
+{
+  string str;
+  string label;
   
   
   // 支配方程式の型（PDE_NS / Euler）を取得
-  label = "/Steer/SolverProperty/PDEType";
+  label = "/GoverningEquation/PDEType";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -1871,7 +1943,7 @@ void Control::get_Solver_Properties()
   }
   
   if     ( !strcasecmp(str.c_str(), "NavierStokes" ) ) Mode.PDE = PDE_NS;
-  else if( !strcasecmp(str.c_str(), "Euler" ) )         Mode.PDE = PDE_EULER;
+  else if( !strcasecmp(str.c_str(), "Euler" ) )        Mode.PDE = PDE_EULER;
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -1880,7 +1952,7 @@ void Control::get_Solver_Properties()
   
   
   // 基礎方程式の種類を取得する
-  label = "/Steer/SolverProperty/BasicEquation";
+  label = "/GoverningEquation/FlowEquation";
   
   if ( !(tpCntl->GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -1899,7 +1971,7 @@ void Control::get_Solver_Properties()
   
   
   // 非定常計算，または定常計算の種別を取得する
-  label = "/Steer/SolverProperty/TimeVariation";
+  label = "/GoverningEquation/TimeVariation";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -1917,14 +1989,90 @@ void Control::get_Solver_Properties()
   
   
   // 対流項スキームの種類の取得
-  get_Convection();
+  int ct;
+  
+  label="/ConvectionTerm/scheme";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+	  Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
+	  Exit(0);
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "O1Upwind") )    CnvScheme = O1_upwind;
+  else if( !strcasecmp(str.c_str(), "O3muscl") )     CnvScheme = O3_muscl;
+  else if( !strcasecmp(str.c_str(), "O2central") )   CnvScheme = O2_central;
+  else if( !strcasecmp(str.c_str(), "O4central") ) { CnvScheme = O4_central; Exit(0); }  // not yet implemented
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  // Limiter
+  if ( CnvScheme == O3_muscl )
+  {
+		label="/ConvectionTerm/limiter";
+    
+		if ( !(tpCntl->GetValue(label, &str )) )
+    {
+			Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
+			Exit(0);
+		}
+    
+		if     ( !strcasecmp(str.c_str(), "NoLimiter") )  Limiter = No_Limiter;
+		else if( !strcasecmp(str.c_str(), "Minmod") )     Limiter = MinMod;
+		else
+    {
+			Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+			Exit(0);
+		}
+  }
   
   
   // ソルバーの種類（FLOW_ONLY / THERMAL_FLOW / THERMAL_FLOW_NATURAL / CONJUGATE_HEAT_TRANSFER / SOLID_CONDUCTION）と浮力モード
-  get_KindOfSolver();
+  label="/GoverningEquation/HeatEquation";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+	  Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
+	  Exit(0);
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "FlowOnly" ) )               KindOfSolver = FLOW_ONLY;
+  else if( !strcasecmp(str.c_str(), "ThermalFlow" ) )            KindOfSolver = THERMAL_FLOW;
+  else if( !strcasecmp(str.c_str(), "ThermalFlowNatural" ) )     KindOfSolver = THERMAL_FLOW_NATURAL;
+  else if( !strcasecmp(str.c_str(), "ConjugateHeatTransfer" ) )  KindOfSolver = CONJUGATE_HEAT_TRANSFER;
+  else if( !strcasecmp(str.c_str(), "SolidConduction" ) )        KindOfSolver = SOLID_CONDUCTION;
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  // Buoyancy option
+  if ( (KindOfSolver==THERMAL_FLOW) || (KindOfSolver==THERMAL_FLOW_NATURAL) || (KindOfSolver==CONJUGATE_HEAT_TRANSFER) )
+  {
+    label="/GoverningEquation/Buoyancy";
+    
+    if ( !(tpCntl->GetValue(label, &str )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
+      Exit(0);
+    }
+    
+    if     ( !strcasecmp(str.c_str(), "Boussinesq" ) )  Mode.Buoyancy = BOUSSINESQ;
+    else if( !strcasecmp(str.c_str(), "LowMach" ) )     Mode.Buoyancy = LOW_MACH;
+    else if( !strcasecmp(str.c_str(), "NoBuoyancy" ) )  Mode.Buoyancy = NO_BUOYANCY;
+    else
+    {
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '/GovernignEquation/Buoyancy'\n");
+      Exit(0);
+    }
+  }
   
   
-  // ガイドセルの値を決める get_Convection(), get_KindOfSolver()のあと
+  // ガイドセルの値を決める
   if (KindOfSolver==SOLID_CONDUCTION)
   {
     guide = 1;
@@ -1951,57 +2099,19 @@ void Control::get_Solver_Properties()
 
 
 
-
 // #################################################################
-//初期値とリスタート条件
-//@todo セルフェイスの粗格子リスタート  >> 近似なのでサボる？
-void Control::get_start_condition()
+// @brief 初期値とリスタート条件
+// @todo セルフェイスの粗格子リスタート  >> 近似なのでサボる？
+// @ see getTimeControl()
+void Control::getStartCondition()
 {
   int ct;
   string str;
   string label;
   
-  label="/Steer/StartCondition/StartType";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  // デフォルトモード
-  Start = restart_sameDiv_sameRes;
-  if ( !strcasecmp(str.c_str(), "Initial") )  Start = initial_start;
-  
-  
-  // リスタート時のタイムスタンプ
-  if ( Start != initial_start )
-  {
-    label = "/Steer/StartCondition/Restart/Step";
-    
-    if ( !(tpCntl->GetValue(label, &ct )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
-    }
-    Restart_step = ct;
-    
-    if ( Mode.Average == ON )
-    {
-      label="/Steer/StartCondition/Restart/AverageStep";
-      
-      if ( !(tpCntl->GetValue(label, &ct )) )
-      {
-        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-        Exit(0);
-      }
-      Restart_stepAvr = ct;
-    }
-  }
-  
   
   // Staging option
-  label="/Steer/StartCondition/Restart/Staging";
+  label="/StartCondition/Restart/Staging";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2022,7 +2132,7 @@ void Control::get_start_condition()
   // リスタート時のDFIファイル名
   if ( Start != initial_start )
   {
-    label="/Steer/StartCondition/Restart/DFIfiles/Pressure";
+    label="/StartCondition/Restart/DFIfiles/Pressure";
     
     if ( tpCntl->GetValue(label, &str ) )
     {
@@ -2031,7 +2141,7 @@ void Control::get_start_condition()
     if ( f_dfi_in_prs.empty() == true ) f_dfi_in_prs = "prs";
     
     
-    label="/Steer/StartCondition/Restart/DFIfiles/Velocity";
+    label="/StartCondition/Restart/DFIfiles/Velocity";
     
     if ( tpCntl->GetValue(label, &str ) )
     {
@@ -2042,7 +2152,7 @@ void Control::get_start_condition()
     
     if ( Mode.FaceV == ON )
     {
-      label="/Steer/StartCondition/Restart/DFIfiles/Fvelocity";
+      label="/StartCondition/Restart/DFIfiles/Fvelocity";
       
       if ( tpCntl->GetValue(label, &str ) )
       {
@@ -2054,7 +2164,7 @@ void Control::get_start_condition()
     
     if ( isHeatProblem() )
     {
-      label="/Steer/StartCondition/Restart/DFIfiles/Temperature";
+      label="/StartCondition/Restart/DFIfiles/Temperature";
       
       if ( tpCntl->GetValue(label, &str ) )
       {
@@ -2067,7 +2177,7 @@ void Control::get_start_condition()
     // 平均値
     if ( Mode.Average == ON )
     {
-      label="/Steer/StartCondition/Restart/DFIfiles/AveragedPressure";
+      label="/StartCondition/Restart/DFIfiles/AveragedPressure";
       
       if ( tpCntl->GetValue(label, &str ) )
       {
@@ -2076,7 +2186,7 @@ void Control::get_start_condition()
       if ( f_dfi_in_prsa.empty() == true ) f_dfi_in_prsa = "prsa";
       
       
-      label="/Steer/StartCondition/Restart/DFIfiles/AveragedVelocity";
+      label="/StartCondition/Restart/DFIfiles/AveragedVelocity";
       
       if ( tpCntl->GetValue(label, &str ) )
       {
@@ -2087,7 +2197,7 @@ void Control::get_start_condition()
       
       if ( isHeatProblem() )
       {
-        label="/Steer/StartCondition/Restart/DFIfiles/AveragedTemperature";
+        label="/StartCondition/Restart/DFIfiles/AveragedTemperature";
         
         if ( tpCntl->GetValue(label, &str ) )
         {
@@ -2104,7 +2214,7 @@ void Control::get_start_condition()
   if ( Start == initial_start )
   {
     // Density
-    label="/Steer/StartCondition/InitialState/MassDensity";
+    label="/StartCondition/InitialState/MassDensity";
     
     if ( !(tpCntl->GetValue(label, &iv.Density )) )
     {
@@ -2113,7 +2223,7 @@ void Control::get_start_condition()
     }
     
     // Pressure
-    label="/Steer/StartCondition/InitialState/Pressure";
+    label="/StartCondition/InitialState/Pressure";
     
     if ( !(tpCntl->GetValue(label, &iv.Pressure )) )
     {
@@ -2124,7 +2234,7 @@ void Control::get_start_condition()
     // Velocity
     REAL_TYPE v[3];
     for (int n=0; n<3; n++) v[n]=0.0;
-    label="/Steer/StartCondition/InitialState/Velocity";
+    label="/StartCondition/InitialState/Velocity";
     
     if( !(tpCntl->GetVector(label, v, 3)) )
     {
@@ -2138,7 +2248,7 @@ void Control::get_start_condition()
     // Temperature
     if ( isHeatProblem() )
     {
-      label="/Steer/StartCondition/InitialState/Temperature";
+      label="/StartCondition/InitialState/Temperature";
       
       if ( !(tpCntl->GetValue(label, &iv.Temperature )) )
       {
@@ -2152,124 +2262,70 @@ void Control::get_start_condition()
 }
 
 
-
 // #################################################################
-/**
- * @brief 制御，計算パラメータ群の取得
- * @param [in] DT     DTctlクラス ポインタ
- //* @param [in] FP3DR  PLOT3D READクラス ポインタ
- //* @param [in] FP3DW  PLOT3D WRITEクラス ポインタ
- * @note 他のパラメータ取得に先んじて処理しておくもの
- */
-//void Control::get_Steer_1(DTcntl* DT, FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_WRITE* FP3DW) // 20130611
-void Control::get1stParameter(DTcntl* DT)
+// 解法アルゴリズムを選択する
+void Control::getSolvingMethod()
 {
+  string str;
+  string label;
   
-  // ソルバーの具体的な種類を決めるパラメータを取得し，ガイドセルの値を設定する
-  get_Solver_Properties();
+  label = "/SolvingMethod/Flow";
   
-  // 指定単位を取得
-  get_Unit();
-  
-  // Reference parameter needs to be called before setDomainParameter();
-  // パラメータの取得，代表値に関するもの．
-  get_Para_Ref();
-  
-  // 時間制御パラメータ
-  get_Time_Control(DT);
-  
-  // パラメータチェック
-  get_CheckParameter();
-  
-  // モニターのON/OFF 詳細パラメータはMonitorList::getMonitor()で行う
-  getMonitorList();
-  
-  // ファイル入出力に関するパラメータ
-  get_FileIO();
-  
-  /* 20130611 PLOT3Dファイル入出力に関するパラメータ
-  if (FIO.Format == plt3d_fmt) get_PLOT3D(FP3DR,FP3DW);
-   */
-  
-}
-
-
-// #################################################################
-/**
- * @brief 制御，計算パラメータ群の取得
- * @param [in] IC  反復制御クラス
- * @param [in] RF  ReferenceFrameクラス
- */
-void Control::get2ndParameter(ItrCtl* IC, ReferenceFrame* RF)
-{
-  // 流体の解法アルゴリズムを取得
-  get_Algorithm();
-  
-  // パラメータを取得する
-  if ( Unit.Param == NONDIMENSIONAL )
+  if ( !(tpCntl->GetValue(label, &str )) )
   {
-    if ( KindOfSolver == FLOW_ONLY ) get_Para_ND();
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
   }
   
+  if     ( !strcasecmp(str.c_str(), "FS_C_EE_D_EE") )     AlgorithmF = Flow_FS_EE_EE;
+  else if( !strcasecmp(str.c_str(), "FS_C_RK_D_CN") )     AlgorithmF = Flow_FS_RK_CN;
+  else if( !strcasecmp(str.c_str(), "FS_C_AB_D_AB") )     AlgorithmF = Flow_FS_AB2;
+  else if( !strcasecmp(str.c_str(), "FS_C_AB_D_CN") )     AlgorithmF = Flow_FS_AB_CN;
+  else
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  // Heat
   if ( isHeatProblem() )
   {
-    get_Para_Temp();
+	  label = "/SolvingMethod/Heat";
+    
+	  if ( !(tpCntl->GetValue(label, &str )) )
+    {
+		  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+		  Exit(0);
+	  }
+    
+	  if     ( !strcasecmp(str.c_str(), "C_EE_D_EE") )    AlgorithmH = Heat_EE_EE;
+	  else if( !strcasecmp(str.c_str(), "C_EE_D_EI") )    AlgorithmH = Heat_EE_EI;
+	  else
+    {
+		  Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
+		  Exit(0);
+	  }
   }
-  
-  // Reference frame information
-  get_ReferenceFrame(RF);
-  
-  // 時間平均操作
-  get_Average_option();
-  
-  // 圧力ノイマン条件のタイプ >> get_Log()よりも先に
-  get_Wall_type();
-  
-  // Log >> get_Iteration()よりも前に
-  get_Log();
-  
-  // Criteria of computation
-  get_Iteration(IC);
-  
-  // LES
-  get_LES_option();
-  
-  
-  // 派生変数のオプション
-  get_Derived();
-  
-  // 変数範囲の処理　***隠しパラメータ
-  get_VarRange();
-  
-  // Cell IDのゼロを指定IDに変更　***隠しパラメータ
-  get_ChangeID();
-  
-  // 性能測定モードの処理　***隠しパラメータ
-  get_PMtest();
-  
-  // ラフな初期値を使い、リスタートするモード指定 >> FileIO
-  get_start_condition();
-  
-  // 作業者情報
-  get_Operator();
-  
 }
 
 
 
 // #################################################################
-// 時間制御に関するパラメータを取得する
-// パラメータは，setParameters()で無次元して保持
-void Control::get_Time_Control(DTcntl* DT)
+/**
+ * @brief 時間制御に関するパラメータを取得する
+ * @param [out] DT  DTcntl
+ * @note パラメータは，setParameters()で無次元して保持
+ */
+void Control::getTimeControl(DTcntl* DT)
 {
-  REAL_TYPE ct;
+  double ct;
   int ss=0;
   
   string str;
   string label;
   
   // 加速時間
-  label = "/Steer/TimeControl/AccelerationType";
+  label = "/TimeControl/AccelerationType";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2292,7 +2348,7 @@ void Control::get_Time_Control(DTcntl* DT)
 		  Exit(0);
 	  }
 	  
-	  label = "/Steer/TimeControl/Acceleration";
+	  label = "/TimeControl/Acceleration";
     
 	  if ( !(tpCntl->GetValue(label, &ct )) )
     {
@@ -2301,13 +2357,13 @@ void Control::get_Time_Control(DTcntl* DT)
 	  }
 	  else
     {
-		  Interval[Interval_Manager::tg_accelra].setInterval((double)ct);
+		  Interval[Interval_Manager::tg_accelra].setInterval(ct);
 	  }
   }
   
   
   // 時間積分幅を取得する
-  label = "/Steer/TimeControl/DtType";
+  label = "/TimeControl/DeltaTType";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2316,7 +2372,7 @@ void Control::get_Time_Control(DTcntl* DT)
   }
   
   
-  label = "/Steer/TimeControl/DeltaT";
+  label = "/TimeControl/DeltaT";
   
   if ( !(tpCntl->GetValue(label, &ct )) )
   {
@@ -2332,12 +2388,12 @@ void Control::get_Time_Control(DTcntl* DT)
   {
     if (Unit.Param == DIMENSIONAL)
     {
-      cc = (double)ct / ts;
+      cc = ct / ts;
     }
   }
   else
   {
-    cc = (double)ct;
+    cc = ct;
   }
   
   if ( !DT->set_Scheme(str.c_str(), cc) )
@@ -2347,7 +2403,7 @@ void Control::get_Time_Control(DTcntl* DT)
   }
   
   // 計算する時間を取得する
-  label = "/Steer/TimeControl/PeriodType";
+  label = "/TimeControl/TemporalType";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2369,33 +2425,198 @@ void Control::get_Time_Control(DTcntl* DT)
       Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
       Exit(0);
     }
+  }
+  
+  // スタート
+  label = "/TimeControl/Start";
+  
+  if ( !(tpCntl->GetValue(label, &ct )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  double m_start = ct;
+  
+  // 終了
+  label = "/TimeControl/End";
+  
+  if ( !(tpCntl->GetValue(label, &ct )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  double m_end = ct;
+  
+  // チェック
+  if ( m_start >= m_end )
+  {
+    Hostonly_ stamped_printf("\tError : Start msut be less than End.\n");
+    Exit(0);
+  }
+  
+  // 丸め誤差の範囲でゼロ
+  if ( fabs(m_start)< ROUND_EPS )
+  {
+    Start = initial_start;
+  }
+  else
+  {
+    Start = restart_sameDiv_sameRes; // リスタートタイプのデフォルト
+    Restart_step = m_start;
+  }
+  
+  Interval[Interval_Manager::tg_compute].setInterval(m_end-m_start);
+  
+  
+  
+  // 平均操作開始
+  label = "/TimeControl/Average/Start";
+  
+  if ( !(tpCntl->GetValue(label, &ct )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  double avr_start = ct;
+  
+  Interval[Interval_Manager::tg_average].setStart(avr_start, avr_start);
+  Restart_stepAvr = avr_start;
+  
+  
+  // 平均操作終了
+  label = "/TimeControl/Average/End";
+  
+  if ( !(tpCntl->GetValue(label, &ct )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  double avr_end = ct;
+  
+  // チェック
+  if ( avr_start > avr_end )
+  {
+    Hostonly_ stamped_printf("\tError : Average/Start msut be less than Average/End.\n");
+    Exit(0);
+  }
+  
+  
+  // 平均値操作の判断
+  if ( Start == initial_start )
+  {
+    Mode.AverageRestart = OFF;
     
-    
-    label = "/Steer/TimeControl/CalculationPeriod";
-    
+    if ( (avr_end > 0.0) && (avr_start >= 0.0) )
+    {
+      Mode.Average = ON;
+    }
+    else
+    {
+      Mode.Average = OFF;
+    }
+  }
+  else
+  {
+    if ( (avr_start < m_start) && (avr_end < m_start) )
+    {
+      Mode.Average = OFF;
+      Mode.AverageRestart = OFF;
+    }
+    else if ( (avr_start < m_start) && (avr_end > m_start) )
+    {
+      Mode.Average = ON;
+      Mode.AverageRestart = ON;
+    }
+    else if ( (avr_start > m_start) && (avr_end > m_start) )
+    {
+      Mode.Average = ON;
+      Mode.AverageRestart = OFF;
+    }
+  }
+
+}
+
+
+
+// #################################################################
+// @brief 乱流計算のオプションを取得する
+void Control::getTurbulenceModel()
+{
+  REAL_TYPE ct;
+  string str;
+  string label;
+  
+  
+  LES.Calc = OFF;
+  
+  // モデル
+  label = "/TurbulenceModeling/Model";
+  
+  if ( !(tpCntl->GetValue(label, &str )) )
+  {
+	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+	  Exit(0);
+  }
+  
+  if      ( !strcasecmp(str.c_str(), "no") )
+  {
+    LES.Calc = OFF;
+  }
+  else if ( !strcasecmp(str.c_str(), "smagorinsky") )
+  {
+    LES.Calc = ON;
+    LES.Model = Smagorinsky;
+  }
+  else if ( !strcasecmp(str.c_str(), "LowReynolds") )
+  {
+    LES.Calc = ON;
+    LES.Model = Low_Reynolds;
+  }
+  else if ( !strcasecmp(str.c_str(), "Dynamic") )
+  {
+    LES.Calc = ON;
+    LES.Model = Dynamic;
+  }
+  else
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  // スマゴリンスキーモデル
+  if ( LES.Model == Smagorinsky )
+  {
+    // Cs係数
+    label = "/TurbulenceModeling/Cs";
     if ( !(tpCntl->GetValue(label, &ct )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
-    else
-    {
-      Interval[Interval_Manager::tg_compute].setInterval((double)ct);
-    }
+    LES.Cs = ct;
     
+    // damping factor
+    label="/TurbulenceModeling/DampingFactor";
+    if ( !(tpCntl->GetValue(label, &ct )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    LES.damping_factor = ct;
   }
+  
 }
 
 
 
 // #################################################################
 // 入力ファイルに記述するパラメータとファイルの有次元・無次元の指定を取得する
-void Control::get_Unit()
+void Control::getUnit()
 {
   string str;
   string label;
   
-  label = "/Steer/Unit/UnitOfInputParameter";
+  label = "/Unit/UnitOfInputParameter";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2412,7 +2633,7 @@ void Control::get_Unit()
   }
   
   
-  label = "/Steer/Unit/UnitOfOutput";
+  label = "/Unit/UnitOfOutput";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2439,7 +2660,7 @@ void Control::get_Unit()
   }
   
   
-  label = "/Steer/Unit/Pressure";
+  label = "/Unit/Pressure";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2457,7 +2678,7 @@ void Control::get_Unit()
   
   if ( isHeatProblem() )
   {
-    label = "/Steer/Unit/Temperature";
+    label = "/Unit/Temperature";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -2479,40 +2700,14 @@ void Control::get_Unit()
 
 
 // #################################################################
-// 変数の範囲制限モードを取得
-void Control::get_VarRange()
-{
-  string str;
-  string label;
-
-  label="/Steer/VariableRange";
-  
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-	  return;
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "normal") )   Hide.Range_Limit = Range_Normal;
-  else if( !strcasecmp(str.c_str(), "cutoff") )   Hide.Range_Limit = Range_Cutoff;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s\n", label.c_str());
-    Exit(0);
-  }
-  
-}
-
-
-
-// #################################################################
 //壁面上の扱いを指定する
-void Control::get_Wall_type()
+void Control::getWallType()
 {
   string str;
   string label;
   
   // 圧力のタイプ
-  label="/Steer/TreatmentOfWall/PressureGradient";
+  label="/TreatmentOfWall/PressureGradient";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2529,7 +2724,7 @@ void Control::get_Wall_type()
   }
   
   // 壁面摩擦応力の計算モード
-  label="/Steer/TreatmentOfWall/VelocityProfile";
+  label="/TreatmentOfWall/VelocityProfile";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -2686,14 +2881,14 @@ void Control::printGlobalDomain(FILE* fp, const int* G_size, const REAL_TYPE* G_
 
 // #################################################################
 /**
- @fn void Control::printInitValues(FILE* fp)
- @brief 初期値の表示
- @note Init*には無次元値が保持されている
- @see void Control::setInitialConditions(void)
+ * @brief 初期値の表示
+ * @note Init*には無次元値が保持されている
+ * @see void Control::setInitialConditions(void)
  */
 void Control::printInitValues(FILE* fp)
 {
-  if ( !fp ) {
+  if ( !fp )
+  {
     stamped_printf("\tFail to write into file\n");
     Exit(0);
   }
@@ -2709,13 +2904,18 @@ void Control::printInitValues(FILE* fp)
   fprintf(fp,"\tInitial          .V  [m/s]   / [-]   : %12.5e / %12.5e\n", iv.VecV,    iv.VecV/RefVelocity);
   fprintf(fp,"\tInitial          .W  [m/s]   / [-]   : %12.5e / %12.5e\n", iv.VecW,    iv.VecW/RefVelocity);
   fprintf(fp,"\tDynamic  Pressure    [Pa]    / [-]   : %12.5e / %12.5e\n", DynamicPrs,             1.0);
-  if (Unit.Prs == Unit_Absolute) {
+  
+  if (Unit.Prs == Unit_Absolute)
+  {
     fprintf(fp,"\tInitial  Pressure    [Pa]    / [-]   : %12.5e / %12.5e\n", iv.Pressure, (iv.Pressure-BasePrs)/DynamicPrs);
   }
-  else {
+  else
+  {
     fprintf(fp,"\tInitial  Pressure    [Pa_g]  / [-]   : %12.5e / %12.5e\n", iv.Pressure, iv.Pressure/DynamicPrs);
   }
-  if ( isHeatProblem() ) {
+  
+  if ( isHeatProblem() )
+  {
     fprintf(fp,"\tInitial  Temperature [%s]     / [-]   : %12.5e / %12.5e\n", (Unit.Temp==Unit_KELVIN) ? "K" : "C",
 						FBUtility::convK2Temp(iv.Temperature, Unit.Temp), 
 						FBUtility::convK2ND(iv.Temperature, BaseTemp, DiffTemp));
@@ -2727,10 +2927,14 @@ void Control::printInitValues(FILE* fp)
 
 
 // #################################################################
-// 線形ソルバー種別の表示
-void Control::printLS(FILE* fp, const ItrCtl* IC)
+/**
+ * @brief 線形ソルバー種別の表示
+ * @param [in] fp ファイルポインタ
+ * @param [in] IC IterationCtl
+ */
+void Control::printLS(FILE* fp, const IterationCtl* IC)
 {
-  switch (IC->get_LS()) 
+  switch (IC->getLS()) 
   {
     case JACOBI:
       fprintf(fp,"\t       Linear Solver          :   Jacobi method\n");
@@ -2784,7 +2988,11 @@ void Control::printNoCompo(FILE* fp)
 
 
 // #################################################################
-// 計算パラメータの表示
+/**
+ * @brief 計算パラメータの表示
+ * @param [in] fp  ファイルポインタ
+ * @param [in] mat MediumListクラス
+ */
 void Control::printParaConditions(FILE* fp, const MediumList* mat)
 {
   if ( !fp )
@@ -2855,8 +3063,8 @@ void Control::printParaConditions(FILE* fp, const MediumList* mat)
 // #################################################################
 // 制御パラメータSTEERの表示
 // 20130611
-//void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT, const ReferenceFrame* RF, FileIO_PLOT3D_WRITE* FP3DW)
-void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT, const ReferenceFrame* RF)
+//void Control::printSteerConditions(FILE* fp, const IterationCtl* IC, const DTcntl* DT, const ReferenceFrame* RF, FileIO_PLOT3D_WRITE* FP3DW)
+void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT, const ReferenceFrame* RF)
 {
   if ( !fp )
   {
@@ -2936,7 +3144,7 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
 			fprintf(fp,"\t     Basic Equation           :   Heat Conduction Equation\n");
 			break;
   }
-  
+
   // Steady
   switch (Mode.Steady)
   {
@@ -3062,7 +3270,7 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
     }
   }
 
-  
+
   // Convection scheme
 	if ( KindOfSolver != SOLID_CONDUCTION )
   {
@@ -3121,8 +3329,8 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
       stamped_printf("Error: Reference frame section\n");
       err=false;
   }
-  
-  
+
+
   // 単位系 ------------------
   fprintf(fp,"\n\tUnit\n");
   fprintf(fp,"\t     Unit of Input Parameter  :   %s\n", (Unit.Param == DIMENSIONAL) ? "Dimensional" : "Non-Dimensional");
@@ -3370,26 +3578,37 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
     fprintf(fp,"\t     Other Histories          :   %12d [step]\n", Interval[Interval_Manager::tg_history].getIntervalStep());
   }
   
-  // 瞬間値のファイル出力
-  if ( !Interval[Interval_Manager::tg_instant].isStep() )
+  // 基本変数のファイル出力
+  if ( !Interval[Interval_Manager::tg_basic].isStep() )
   {
-    itm = Interval[Interval_Manager::tg_instant].getIntervalTime();
-    fprintf(fp,"\t     Instant data             :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
+    itm = Interval[Interval_Manager::tg_basic].getIntervalTime();
+    fprintf(fp,"\t     Basic Variables          :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
   }
   else
   {
-    fprintf(fp,"\t     Instant data             :   %12d [step]\n", Interval[Interval_Manager::tg_instant].getIntervalStep());
+    fprintf(fp,"\t     Basic Variables          :   %12d [step]\n", Interval[Interval_Manager::tg_basic].getIntervalStep());
   }
   
   // 平均値のファイル出力
   if ( !Interval[Interval_Manager::tg_average].isStep() )
   {
     itm = Interval[Interval_Manager::tg_average].getIntervalTime();
-    fprintf(fp,"\t     Averaged data            :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
+    fprintf(fp,"\t     Averaged Variables       :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
   }
   else
   {
-    fprintf(fp,"\t     Averaged data            :   %12d [step]\n", Interval[Interval_Manager::tg_average].getIntervalStep());
+    fprintf(fp,"\t     Averaged Variables       :   %12d [step]\n", Interval[Interval_Manager::tg_average].getIntervalStep());
+  }
+  
+  // 派生変数のファイル出力
+  if ( !Interval[Interval_Manager::tg_derived].isStep() )
+  {
+    itm = Interval[Interval_Manager::tg_derived].getIntervalTime();
+    fprintf(fp,"\t     Derived Variables        :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
+  }
+  else
+  {
+    fprintf(fp,"\t     Derived Variables        :   %12d [step]\n", Interval[Interval_Manager::tg_derived].getIntervalStep());
   }
   
   // サンプリング情報のファイル出力
@@ -3420,7 +3639,7 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
     }
   }
 
-  
+
   /* 20130611 PLOT3D Options
   if(FIO.Format == plt3d_fmt)
   {
@@ -3449,42 +3668,42 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   
   // Criteria ------------------
   fprintf(fp,"\n\tParameter of Linear Equation\n");
-  const ItrCtl* ICp1= &IC[ItrCtl::ic_prs_pr];  /// 圧力のPoisson反復
-  const ItrCtl* ICp2= &IC[ItrCtl::ic_prs_cr];  /// 圧力のPoisson反復　2回目
-  const ItrCtl* ICv = &IC[ItrCtl::ic_vis_cn];  /// 粘性項のCrank-Nicolson反復
-  const ItrCtl* ICd = &IC[ItrCtl::ic_div];     /// V-P反復
+  IterationCtl* ICp1= &IC[ic_prs1];  /// 圧力のPoisson反復
+  IterationCtl* ICp2= &IC[ic_prs2];  /// 圧力のPoisson反復　2回目
+  IterationCtl* ICv = &IC[ic_vel1];  /// 粘性項のCrank-Nicolson反復
+  IterationCtl* ICd = &IC[ic_div];   /// V-P反復
   
   if ( Hide.PM_Test == ON )
   {
     fprintf(fp,"\t ### Performance Test Mode >> The iteration number is fixed by Iteration max.\n\n");
   }
-  
+
 	if ( KindOfSolver != SOLID_CONDUCTION )
   {
     // V-P iteration
 		fprintf(fp,"\t     V-P Iteration \n");
-		fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICd->get_ItrMax());
-		fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICd->get_eps());
-		fprintf(fp,"\t       Norm type              :   %s\n", getNormString(ICd->get_normType()).c_str() );
+		fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICd->getMaxIteration());
+		fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICd->getCriterion());
+		fprintf(fp,"\t       Norm type              :   %s\n",    ICd->getNormString().c_str());
     
     
 		// 1st iteration
 		fprintf(fp,"\t     1st Pressure Iteration \n");
-		fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICp1->get_ItrMax());
-		fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICp1->get_eps());
-		fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICp1->get_omg());
-		fprintf(fp,"\t       Norm type              :   %s\n", getNormString(ICp1->get_normType()).c_str() );
-    fprintf(fp,"\t       Communication Mode     :   %s\n", (ICp1->get_SyncMode()==comm_sync) ? "SYNC" : "ASYNC");
+		fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICp1->getMaxIteration());
+		fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICp1->getCriterion());
+		fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICp1->getOmega());
+		fprintf(fp,"\t       Norm type              :   %s\n",    ICp1->getNormString().c_str());
+    fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICp1->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
 		printLS(fp, ICp1);
     
     if ( AlgorithmF == Flow_FS_RK_CN )
     {
       fprintf(fp,"\t     2nd Pressure Iteration \n");
-      fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICp2->get_ItrMax());
-      fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICp2->get_eps());
-      fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICp2->get_omg());
-      fprintf(fp,"\t       Norm type              :   %s\n", getNormString(ICp2->get_normType()).c_str() );
-      fprintf(fp,"\t       Communication Mode     :   %s\n", (ICp1->get_SyncMode()==comm_sync) ? "SYNC" : "ASYNC");
+      fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICp2->getMaxIteration());
+      fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICp2->getCriterion());
+      fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICp2->getOmega());
+      fprintf(fp,"\t       Norm type              :   %s\n",    ICp2->getNormString().c_str());
+      fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICp2->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
       printLS(fp, ICp2);
     }
     
@@ -3493,33 +3712,33 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
     {
       fprintf(fp,"\n");
 			fprintf(fp,"\t     Velocity CN Iteration \n");
-			fprintf(fp,"\t       Iteration max           :   %d\n"  ,  ICv->get_ItrMax());
-			fprintf(fp,"\t       Convergence eps         :   %9.3e\n", ICv->get_eps());
-			fprintf(fp,"\t       Coef. of Relax./Accel.  :   %9.3e\n", ICv->get_omg());
-			fprintf(fp,"\t       Norm type               :   %s\n", getNormString(ICv->get_normType()).c_str() );
-      fprintf(fp,"\t       Communication Mode      :   %s\n", (ICp1->get_SyncMode()==comm_sync) ? "SYNC" : "ASYNC");
+			fprintf(fp,"\t       Iteration max           :   %d\n"  ,  ICv->getMaxIteration());
+			fprintf(fp,"\t       Convergence eps         :   %9.3e\n", ICv->getCriterion());
+			fprintf(fp,"\t       Coef. of Relax./Accel.  :   %9.3e\n", ICv->getOmega());
+			fprintf(fp,"\t       Norm type               :   %s\n",    ICv->getNormString().c_str());
+      fprintf(fp,"\t       Communication Mode      :   %s\n",   (ICv->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
 			printLS(fp, ICv);
 		}
 	}
-	
+
   // for Temperature
   if ( isHeatProblem() )
   {
     if ( AlgorithmH == Heat_EE_EI )
     {
-      const ItrCtl* ICt = &IC[ItrCtl::ic_tdf_ei];  /// 温度の拡散項の反復
+      IterationCtl* ICt = &IC[ic_tmp1];  /// 温度の拡散項の反復
       fprintf(fp,"\n");
       fprintf(fp,"\t     Temperature Iteration  \n");
-      fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICt->get_ItrMax());
-      fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICt->get_eps());
-      fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICt->get_omg());
-			fprintf(fp,"\t       Norm type              :   %s\n", getNormString(ICt->get_normType()).c_str() );
-      fprintf(fp,"\t       Communication Mode     :   %s\n", (ICp1->get_SyncMode()==comm_sync) ? "SYNC" : "ASYNC");
+      fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICt->getMaxIteration());
+      fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICt->getCriterion());
+      fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICt->getOmega());
+			fprintf(fp,"\t       Norm type              :   %s\n",    ICt->getNormString().c_str());
+      fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICt->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
       printLS(fp, ICt);
     }
   }
-  
-  
+
+
   // 壁面の扱い ------------------
   fprintf(fp,"\n\tCondition of Wall\n");
   fprintf(fp,"\t     No of surface            :   %ld\n", NoWallSurface);
@@ -3620,18 +3839,9 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   }
   fprintf(fp,"\n");
   
-  switch (Hide.Range_Limit)
+  if (Hide.Range_Limit == Range_Cutoff)
   {
-    case Range_Cutoff:
-      fprintf(fp,"\t     Variable Range           :   Limit value between [0,1] in normalized value\n");
-      break;
-      
-    case Range_Normal:
-      fprintf(fp,"\t     Variable Range           :   Normal \n");
-      break;
-      
-    default:
-      break;
+    fprintf(fp,"\t     Variable Range           :   Limit value between [0,1] in normalized value\n");
   }
   
   fflush(fp);
@@ -3639,169 +3849,6 @@ void Control::printSteerConditions(FILE* fp, const ItrCtl* IC, const DTcntl* DT,
   if (err==false) Exit(0);
 }
 
-
-// #################################################################
-/**
- * @brief 反復の収束判定パラメータを指定する
- * @param [in]     key     反復対象ラベル
- * @param [in]     order   格納番号
- * @param [in,out] IC      反復制御用クラスの配列
- */
-void Control::setCriteria(const string key, const int order, ItrCtl* IC)
-{
-  int itr=0;
-  REAL_TYPE tmp=0.0;
-  string str, label, base;
-  
-  base = "/Steer/Iteration/" + key;
-  
-  if ( tpCntl->chkNode(base) )
-  {
-    label = base + "/AssignedCriterion";
-    if ( !(tpCntl->GetValue(label, &str )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : Invalid integer value for '%s'\n", label.c_str());
-      Exit(0);
-    }
-    
-    // Aliasでサーチ
-    for (int i=0; i<NoBaseCriterion; i++) {
-      if ( !strcasecmp( str.c_str(), Criteria[i].get_Alias().c_str() ) )
-      {
-        IC->set_ItrMax( Criteria[i].get_IteratinMax() );
-        IC->set_eps( (double)Criteria[i].get_Criterion() );
-        
-        // normのタイプ
-        str = Criteria[i].get_NormType();
-        
-        switch (order)
-        {
-          case ItrCtl::ic_prs_pr: // Predictor phase
-          case ItrCtl::ic_prs_cr: // Corrector phase
-          case ItrCtl::ic_vis_cn: // Velocity Crank-Nicolosn
-          case ItrCtl::ic_tdf_ei: // Temperature Euler Implicit
-            
-            if ( !strcasecmp(str.c_str(), "DXbyB") )
-            {
-              IC->set_normType(ItrCtl::dx_b);
-            }
-            else if ( !strcasecmp(str.c_str(), "RbyB") )
-            {
-              IC->set_normType(ItrCtl::r_b);
-            }
-            else if ( !strcasecmp(str.c_str(), "RbyR0") )
-            {
-              IC->set_normType(ItrCtl::r_r0);
-            }
-            else
-            {
-              Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' of Norm for Poisson iteration\n", str.c_str());
-              Exit(0);
-            }
-            break;
-            
-          case ItrCtl::ic_div: // VP iteration
-            if ( !strcasecmp(str.c_str(), "VdivMax") )
-            {
-              IC->set_normType(ItrCtl::v_div_max);
-            }
-            else if ( !strcasecmp(str.c_str(), "VdivDbg") )
-            {
-              IC->set_normType(ItrCtl::v_div_dbg);
-              Mode.Log_Itr == ON;
-            }
-            else
-            {
-              Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' for heat iteration\n", str.c_str());
-              Exit(0);
-            }
-            break;
-            
-          default:
-            Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' for heat iteration\n", str.c_str());
-            Exit(0);
-        }
-        
-        break;
-      }
-      else
-      {
-        if ( i == NoBaseCriterion-1 ) // 最後までみつからない
-        {
-          Hostonly_ printf("\tParsing error : [%d] '%s' is not listed in 'Criteria'\n", i+1, str.c_str());
-          Exit(0);
-        }
-      }
-    }
-    
-  }
-  
-    
-  // 線形ソルバーの種類
-  if ( order != ItrCtl::ic_div )
-  {
-    label = base + "/LinearSolver";
-    if ( !(tpCntl->GetValue(label, &str )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
-      Exit(0);
-    }
-    
-    if     ( !strcasecmp(str.c_str(), "SOR") )         IC->set_LS(SOR);
-    else if( !strcasecmp(str.c_str(), "SOR2SMA") )     IC->set_LS(SOR2SMA);
-    else if( !strcasecmp(str.c_str(), "SOR2CMA") )     IC->set_LS(SOR2CMA);
-    else if( !strcasecmp(str.c_str(), "JACOBI") )      IC->set_LS(JACOBI);
-    else if( !strcasecmp(str.c_str(), "GMRES") )       IC->set_LS(GMRES);
-    else if( !strcasecmp(str.c_str(), "RBGS") )        IC->set_LS(RBGS);
-    else if( !strcasecmp(str.c_str(), "PCG") )         IC->set_LS(PCG);
-    else if( !strcasecmp(str.c_str(), "PBiCGSTAB") )   IC->set_LS(PBiCGSTAB);
-    else
-    {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for Linear_Solver\n");
-      Exit(0);
-    }
-  }
-
-
-  
-  // 反復法固有のパラメータ
-  switch (IC->get_LS()) {
-
-    case JACOBI:
-      setPara_Jacobi(base, IC);
-      break;
-      
-    case SOR:
-      setPara_SOR(base, IC);
-      break;
-      
-    case SOR2SMA:
-    case SOR2CMA:
-      setPara_SOR2(base, IC);
-      break;
-      
-    case GMRES:
-      setPara_Gmres(base, IC);
-      break;
-      
-    case RBGS:
-      setPara_RBGS(base, IC);
-      break;
-      
-    case PCG:
-      setPara_PCG(base, IC);
-      break;
-      
-    case PBiCGSTAB:
-      setPara_PBiCGSTAB(base, IC);
-      break;
-      
-    default:
-      break;
-  }
-  
-  
-}
 
 
 // #################################################################
@@ -3868,7 +3915,7 @@ void Control::setExistComponent(CompoList* cmp, BoundaryOuter* OBC)
   c = 0;
   for (int n=0; n<NOFACE; n++)
   {
-    if ( OBC[n].get_Class()== OBC_TRC_FREE ) c++;
+    if ( OBC[n].getClass()== OBC_TRC_FREE ) c++;
   }
   if ( c>0 ) EnsCompo.tfree = ON;
   
@@ -3899,120 +3946,6 @@ void Control::setExistComponent(CompoList* cmp, BoundaryOuter* OBC)
   
 }
 
-
-
-// #################################################################
-/**
- * @brief Gmres反復固有のパラメータを指定する
- * @param [in]     base    ラベル
- * @param [in,out] IC      反復制御用クラスの配列
- */
-void Control::setPara_Gmres(const string base, ItrCtl* IC)
-{
-  ;
-}
-
-
-// #################################################################
-/**
- * @brief RBGS反復固有のパラメータを指定する
- * @param [in]     base    ラベル
- * @param [in,out] IC      反復制御用クラスの配列
- */
-void Control::setPara_RBGS(const string base, ItrCtl* IC)
-{
-  ;
-}
-
-// #################################################################
-/**
- * @brief PCG反復固有のパラメータを指定する
- * @param [in]     base    ラベル
- * @param [in,out] IC      反復制御用クラスの配列
- */
-void Control::setPara_PCG(const string base, ItrCtl* IC)
-{
-  ;
-}
-
-// #################################################################
-/**
- * @brief PBiCGSTAB反復固有のパラメータを指定する
- * @param [in]     base    ラベル
- * @param [in,out] IC      反復制御用クラスの配列
- */
-void Control::setPara_PBiCGSTAB(const string base, ItrCtl* IC)
-{
-  ;
-}
-
-// #################################################################
-/**
- * @brief Jacobi反復固有のパラメータを指定する
- * @param [in]     base    ラベル
- * @param [in,out] IC      反復制御用クラスの配列
- */
-void Control::setPara_Jacobi(const string base, ItrCtl* IC)
-{
-  string str, label;
-  REAL_TYPE tmp=0.0; // 加速係数
-  
-  label = base + "/Omega";
-  
-  if ( !(tpCntl->GetValue(label, &tmp )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  IC->set_omg(tmp);
-  
-}
-
-// #################################################################
-/**
- * @brief SOR反復固有のパラメータを指定する
- * @param [in]     base    ラベル
- * @param [in,out] IC      反復制御用クラスの配列
- */
-void Control::setPara_SOR(const string base, ItrCtl* IC)
-{
-  setPara_Jacobi(base, IC);
-}
-
-
-// #################################################################
-/**
- * @brief RB-SOR反復固有のパラメータを指定する
- * @param [in]     base    ラベル
- * @param [in,out] IC      反復制御用クラスの配列
- */
-void Control::setPara_SOR2(const string base, ItrCtl* IC)
-{
-  string str, label;
-  
-  setPara_Jacobi(base, IC);
-  
-  label = base + "/commMode";
-  if ( !(tpCntl->GetValue(label, &str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  if ( !strcasecmp(str.c_str(), "sync") )
-  {
-    IC->set_SyncMode(comm_sync);
-  }
-  else if ( !strcasecmp(str.c_str(), "async") )
-  {
-    IC->set_SyncMode(comm_async);
-  }
-  else
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
-    Exit(0);
-  }
-
-}
 
 // #################################################################
 /**
@@ -4061,7 +3994,7 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
     }
   }
   
-  RefDensity      = rho;
+  // RefDensity      = rho;
   RefViscosity    = mu;
   RefKviscosity   = nyu;
   RefSpecificHeat = cp;
@@ -4291,7 +4224,7 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   {
     for (int n=0; n<NOFACE; n++)
     {
-      switch ( BO[n].get_Class() )
+      switch ( BO[n].getClass() )
       {
         case OBC_WALL:
         case OBC_SPEC_VEL:
@@ -4312,7 +4245,7 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   {
     for (int n=0; n<NOFACE; n++) {
       
-      switch ( BO[n].get_Class() )
+      switch ( BO[n].getClass() )
       {
         case OBC_OUTFLOW:
         case OBC_TRC_FREE:

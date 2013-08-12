@@ -112,7 +112,23 @@ void ParseMat::getMediumTable(const int m_NoMedium, MediumList* mat)
   
   label_base = "/MediumTable";
   
-  for (int m=1; m<=NoMedium; m++)
+  vector<string> nodes;
+  int m=1;
+  
+  // /MediumTable直下のラベルを取得
+  tpCntl->getLabelVector(label_base, nodes);
+  
+  
+  // ラベルの重複チェックとセット
+  for (vector<string>::iterator it = nodes.begin(); it != nodes.end(); it++)
+  {
+    if ( !chkDuplicateLabel(mat, m, *it) ) Exit(0);
+    mat[m].setAlias(*it);
+    m++;
+  }
+  
+  
+  for (m=1; m<=NoMedium; m++)
   {
     if ( !tpCntl->GetNodeStr(label_base, m, &str) )
     {
@@ -130,6 +146,7 @@ void ParseMat::getMediumTable(const int m_NoMedium, MediumList* mat)
         Exit(0);
       }
       
+      
       label_leaf = label_m + "/" + str;
       
       if ( !strcasecmp(str.c_str(), "State") )
@@ -146,18 +163,6 @@ void ParseMat::getMediumTable(const int m_NoMedium, MediumList* mat)
           {
             Exit(0);
           }
-        }
-      }
-      else if( !strcasecmp(str.c_str(), "alias") )
-      {
-        if ( !(tpCntl->GetValue(label_leaf, &label)) )
-        {
-          ;
-        }
-        else
-        {
-          if ( !chkDuplicateLabel(mat, m, label) ) Exit(0);
-          mat[m].setAlias(label);
         }
       }
       else if ( !strcasecmp(str.c_str(), "MassDensity") )

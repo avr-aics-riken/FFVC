@@ -65,7 +65,7 @@ private:
   
   
   // 外部境界面の有効セル数をカウントする
-  unsigned long count_ValidCell_OBC (const int face, const int* bv, const int typ);
+  unsigned long countValidCellOBC (const int face, const int* bv, const int typ);
 
   
   
@@ -73,7 +73,10 @@ private:
   void encAmask_SymtrcBC     (int face, int* bh2);
   void encHbit               (int* bh1, int* bh2);
   void encPbit               (int* bx);
-  void encPbit_OBC           (int face, int* bx, string key, bool dir);
+  
+  
+  // 外部境界に接するセルにおいて，bx[]に圧力境界条件keyに対応するビットフラグを設定する
+  void encPbitOBC (int face, int* bx, string key, bool dir);
   
   
   // CompoListのエントリをbx[]へエンコードする

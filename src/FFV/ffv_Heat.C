@@ -91,7 +91,7 @@ void FFV::Buoyancy(REAL_TYPE* v, const REAL_TYPE dgr, const REAL_TYPE* t, const 
 
 // #################################################################
 // 単媒質に対する熱伝導方程式を陰解法で解く
-void FFV::ps_LS(ItrCtl* IC, const double rhs_nrm, const double r0)
+void FFV::ps_LS(IterationCtl* IC, const double rhs_nrm, const double r0)
 {
   double flop = 0.0;      /// 浮動小数点演算数
   double res=0.0;         /// 残差
@@ -109,7 +109,7 @@ void FFV::ps_LS(ItrCtl* IC, const double rhs_nrm, const double r0)
   int req[12];
   
 	
-  switch (IC->get_LS()) 
+  switch (IC->getLS()) 
   {
     case SOR:
       
@@ -162,10 +162,10 @@ void FFV::ps_LS(ItrCtl* IC, const double rhs_nrm, const double r0)
   }
   
   // Residual resを上書き
-  switch ( IC->get_normType() )
+  switch ( IC->getNormType() )
   {
-    case ItrCtl::r_b:
-    case ItrCtl::r_r0:
+    case r_b:
+    case r_r0:
       
       TIMING_start(tm_poi_src_nrm);
       res = 0.0;
@@ -186,19 +186,19 @@ void FFV::ps_LS(ItrCtl* IC, const double rhs_nrm, const double r0)
   }
   
   // 残差の保存
-  switch ( IC->get_normType() )
+  switch ( IC->getNormType() )
   {
       
-    case ItrCtl::dx_b:
-      IC->set_normValue( res/rhs_nrm );
+    case dx_b:
+      IC->setNormValue( res/rhs_nrm );
       break;
       
-    case ItrCtl::r_b:
-      IC->set_normValue( res/rhs_nrm );
+    case r_b:
+      IC->setNormValue( res/rhs_nrm );
       break;
       
-    case ItrCtl::r_r0:
-      IC->set_normValue( res/r0 );
+    case r_r0:
+      IC->setNormValue( res/r0 );
       break;
   }
   
@@ -296,7 +296,7 @@ REAL_TYPE FFV::ps_Diff_SM_EE(REAL_TYPE* t, const REAL_TYPE dt, const REAL_TYPE* 
 
 // #################################################################
 // 単媒質に対する熱伝導方程式をEuler陰解法で解く
-double FFV::ps_Diff_SM_PSOR(REAL_TYPE* t, double& b2, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh2, const REAL_TYPE* ws, ItrCtl* IC, double& flop)
+double FFV::ps_Diff_SM_PSOR(REAL_TYPE* t, double& b2, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh2, const REAL_TYPE* ws, IterationCtl* IC, double& flop)
 {
   size_t m_p, m_w, m_e, m_s, m_n, m_b, m_t;
   REAL_TYPE g_p, g_w, g_e, g_s, g_n, g_b, g_t;
@@ -317,7 +317,7 @@ double FFV::ps_Diff_SM_PSOR(REAL_TYPE* t, double& b2, const REAL_TYPE dt, const 
   
   dth1 = dt/dh;
   dth2 = dth1*C.getRcpPeclet()/dh;
-  omg = IC->get_omg();
+  omg = IC->getOmega();
   res = b2 = 0.0;
   flop += (double)(ix*jx*kx)* 58.0;
 

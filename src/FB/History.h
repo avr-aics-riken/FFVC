@@ -207,11 +207,11 @@ protected:
 public:
   
   // 標準履歴の出力
-  void printHistory(FILE* fp, const double* avr, const double* rms, const ItrCtl* IC, const Control* C, const double stptm, const bool disp);
+  void printHistory(FILE* fp, const double* avr, const double* rms, const IterationCtl* IC, const Control* C, const double stptm, const bool disp);
   
   
   // 標準履歴モニタのヘッダー出力
-  void printHistoryTitle(FILE* fp, const ItrCtl* IC, const Control* C, const bool disp);
+  void printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control* C, const bool disp);
   
   
   // コンポーネントモニタの履歴出力(dimensional value)
@@ -239,7 +239,7 @@ public:
   
   
   // 反復履歴出力
-  void printHistoryItr(FILE* fp, const ItrCtl* IC, const FB::Vec3i idx);
+  void printHistoryItr(FILE* fp, const IterationCtl* IC, const FB::Vec3i idx);
   
   
   // 反復過程の状況モニタのヘッダー出力

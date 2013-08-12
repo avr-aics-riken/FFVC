@@ -51,6 +51,14 @@ public:
 	
 
   /**
+   * @brief ラベルリストを作成し，重複をチェックする
+   * @param [in] root  テストするパラメータディレクトリ
+   * @param [in] nodes ラベルvector
+   */
+  bool getLabelVector(const string root, vector<string>& nodes);
+  
+  
+  /**
    * @brief TextParser入力ファイルからベクトル値を取得する（整数型）
    * @param [int] label 取得するベクトルのラベル（絶対パス）
    * @param [out] vec   ベクトル格納配列ポインタ
@@ -90,7 +98,15 @@ public:
    * @param [in]  label 取得する変数のラベル（絶対パス）
    * @param [out] ct    変数格納ポインタ
    */
-	bool GetValue(const string label, REAL_TYPE *ct);
+	bool GetValue(const string label, float *ct);
+  
+  
+  /**
+   * @brief TextParser入力ファイルから変数を取得する（実数型）
+   * @param [in]  label 取得する変数のラベル（絶対パス）
+   * @param [out] ct    変数格納ポインタ
+   */
+	bool GetValue(const string label, double *ct);
   
   
   /**
@@ -131,6 +147,7 @@ public:
    */
   int countLabels(const string label);
   
+  
   /**
    * @brief TextParserLibraryのインスタンス生成
    * @retrun エラーコード
@@ -143,7 +160,7 @@ public:
    * @param [in] filename 入力ファイル名
    * @retval エラーコード
    */
-	int readTPfile(const string filename);
+	bool readTPfile(const string filename);
   
   
   /** テキストパーサーの内容を破棄 */

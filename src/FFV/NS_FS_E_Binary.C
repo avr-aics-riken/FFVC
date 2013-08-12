@@ -50,9 +50,9 @@ void FFV::NS_FS_E_Binary()
   
   int v_mode=0;
   
-  ItrCtl* ICp = &IC[ItrCtl::ic_prs_pr];  /// 圧力のPoisson反復
-  ItrCtl* ICv = &IC[ItrCtl::ic_vis_cn];  /// 粘性項のCrank-Nicolson反復
-  ItrCtl* ICd = &IC[ItrCtl::ic_div];     /// 圧力-速度反復
+  IterationCtl* ICp = &IC[ic_prs1];  /// 圧力のPoisson反復
+  IterationCtl* ICv = &IC[ic_vel1];  /// 粘性項のCrank-Nicolson反復
+  IterationCtl* ICd = &IC[ic_div];   /// 圧力-速度反復
 
   // point Data
   // d_v   セルセンタ速度 v^n -> v^{n+1}
@@ -110,8 +110,8 @@ void FFV::NS_FS_E_Binary()
   
   // 対流項と粘性項の評価 >> In use (d_vc, d_wv)
   switch (C.AlgorithmF) {
-    case Control::Flow_FS_EE_EE:
-    case Control::Flow_FS_AB2:
+    case Flow_FS_EE_EE:
+    case Flow_FS_AB2:
       TIMING_start(tm_pseudo_vec);     
       
       flop = 0.0;
@@ -130,11 +130,11 @@ void FFV::NS_FS_E_Binary()
 
       TIMING_start(tm_pvec_flux);      
       flop = 0.0;
-      BC.mod_Pvec_Flux(d_vc, d_v0, d_bcv, CurrentTime, &C, v_mode, v00, flop);
+      BC.modPvecFlux(d_vc, d_v0, d_bcv, CurrentTime, &C, v_mode, v00, flop);
       TIMING_stop(tm_pvec_flux, flop);
       break;
       
-    case Control::Flow_FS_AB_CN:
+    case Flow_FS_AB_CN:
       TIMING_start(tm_pseudo_vec);
       flop = 0.0;
       v_mode = 0;
@@ -150,7 +150,7 @@ void FFV::NS_FS_E_Binary()
       
       TIMING_start(tm_pvec_flux);
       flop = 0.0;
-      BC.mod_Pvec_Flux(d_wv, d_v0, d_bcv, CurrentTime, &C, v_mode, v00, flop);
+      BC.modPvecFlux(d_wv, d_v0, d_bcv, CurrentTime, &C, v_mode, v00, flop);
       TIMING_stop(tm_pvec_flux, flop);
       break;
       
@@ -161,14 +161,14 @@ void FFV::NS_FS_E_Binary()
   // 時間積分
   switch (C.AlgorithmF) 
   {
-    case Control::Flow_FS_EE_EE:
+    case Flow_FS_EE_EE:
       TIMING_start(tm_pvec_ee);
       flop = 0.0;
       euler_explicit_ (d_vc, size, &guide, &dt, d_v0, d_bcd, &flop);
       TIMING_stop(tm_pvec_ee, flop);
       break;
       
-    case Control::Flow_FS_AB2:
+    case Flow_FS_AB2:
       TIMING_start(tm_pvec_ab);
       flop = 0.0;
       if ( Session_CurrentStep == 1 ) // 初期とリスタート後，1ステップめ
@@ -182,7 +182,7 @@ void FFV::NS_FS_E_Binary()
       TIMING_stop(tm_pvec_ab, flop);
       break;
       
-    case Control::Flow_FS_AB_CN:
+    case Flow_FS_AB_CN:
       TIMING_start(tm_pvec_abcn);
       flop = 0.0;
       if ( Session_CurrentStep == 1 ) 
@@ -264,16 +264,17 @@ void FFV::NS_FS_E_Binary()
   TIMING_start(tm_frctnl_stp_sct_4);
   
   // Crank-Nicolson Iteration
-  if ( C.AlgorithmF == Control::Flow_FS_AB_CN ) 
+  if ( C.AlgorithmF == Flow_FS_AB_CN ) 
   {
     TIMING_start(tm_copy_array);
     flop = 0.0;
     U.xcopy(d_wv, size, guide, d_vc, one, kind_vector, flop);
     TIMING_stop(tm_copy_array, flop);
     
-    for (ICv->LoopCount=0; ICv->LoopCount< ICv->get_ItrMax(); ICv->LoopCount++) {
+    for (ICv->setLoopCount(0); ICv->getLoopCount() < ICv->getMaxIteration(); ICv->incLoopCount())
+    {
       //CN_Itr(ICv);
-      if (  ICv->get_normValue() < ICv->get_eps() ) break;
+      if (  ICv->isConverged() ) break;
     }
   }
   
@@ -307,7 +308,7 @@ void FFV::NS_FS_E_Binary()
   // Poissonソース項の速度境界条件（VBC）面による修正
   TIMING_start(tm_poi_src_vbc);
   flop = 0.0;
-  BC.mod_Psrc_VBC(d_ws, d_vc, d_v0, d_vf, d_bcv, CurrentTime, dt, &C, v00, flop);
+  BC.modPsrcVBC(d_ws, d_vc, d_v0, d_vf, d_bcv, CurrentTime, dt, &C, v00, flop);
   TIMING_stop(tm_poi_src_vbc, flop);
 
   
@@ -349,9 +350,9 @@ void FFV::NS_FS_E_Binary()
   poi_rhs_(&rhs_nrm, d_b, size, &guide, d_ws, d_sq, d_bcp, &dh, &dt, &flop);
   TIMING_stop(tm_poi_src_nrm, flop);
   
-  if ( ICp->get_LS() == RBGS ||
-       ICp->get_LS() == PCG  ||
-       ICp->get_LS() == PBiCGSTAB )
+  if ( ICp->getLS() == RBGS ||
+       ICp->getLS() == PCG  ||
+       ICp->getLS() == PBiCGSTAB )
   {
 		blas_calcb_(d_b, d_ws, d_sq, d_bcp, &dh, &dt, size, &guide);
 		REAL_TYPE bb = 0.0;
@@ -371,7 +372,7 @@ void FFV::NS_FS_E_Binary()
   
   
   // Initial residual
-  if ( ICp->get_normType() == ItrCtl::r_r0 )
+  if ( ICp->getNormType() == r_r0 )
   {
     TIMING_start(tm_poi_src_nrm);
     res_init = 0.0;
@@ -407,7 +408,7 @@ void FFV::NS_FS_E_Binary()
     {
       BoundaryOuter* T = BC.exportOBC(face);
       
-      if ( T->get_Class() == OBC_OUTFLOW )
+      if ( T->getClass() == OBC_OUTFLOW )
       {
         vobc_update_(d_v, size, &guide, &face, d_vc, nID);
       }
@@ -425,14 +426,14 @@ void FFV::NS_FS_E_Binary()
   
   // 反復回数の積算
   int loop_p = 0;
-  ICp->LoopCount = 0;
-  ICd->LoopCount = 0;
+  ICp->setLoopCount(0);
+  ICd->setLoopCount(0);
   
-  for (int loop_d=0; loop_d<ICd->get_ItrMax(); loop_d++)
+  for (int loop_d=0; loop_d<ICd->getMaxIteration(); loop_d++)
   {
 
     // 線形ソルバー
-    switch (ICp->get_LS())
+    switch (ICp->getLS())
     {
       case SOR:
         loop_p += Point_SOR(ICp, d_p, d_b, rhs_nrm, res_init);
@@ -478,7 +479,7 @@ void FFV::NS_FS_E_Binary()
     // 速度の流束形式の境界条件による修正
     TIMING_start(tm_prj_vec_bc);
     flop=0.0;
-    BC.mod_div(d_dv, d_bcv, CurrentTime, v00, m_buf, d_vf, d_v, &C, flop);
+    BC.modDivergence(d_dv, d_bcv, CurrentTime, v00, m_buf, d_vf, d_v, &C, flop);
     TIMING_stop(tm_prj_vec_bc, flop);
 
     
@@ -612,13 +613,14 @@ void FFV::NS_FS_E_Binary()
     FB::Vec3i divmaxidx = Norm_Div(ICd);
     
     // 総反復回数を代入
-    ICp->LoopCount = loop_p;
-    ICd->LoopCount++;
+    ICp->setLoopCount(loop_p);
+    ICd->incLoopCount();
     
     if ( C.Mode.Log_Itr == ON )
     {
       TIMING_start(tm_hstry_itr);
-      Hostonly_ {
+      Hostonly_
+      {
         H->printHistoryItr(fp_i, IC, divmaxidx);
         fflush(fp_i);
       }
@@ -635,7 +637,7 @@ void FFV::NS_FS_E_Binary()
     
     
     // 収束判定　性能測定モードのときは収束判定を行わない
-    if ( (C.Hide.PM_Test == OFF) && (ICd->get_normValue() < ICd->get_eps()) ) break;
+    if ( (C.Hide.PM_Test == OFF) && ICd->isConverged() ) break;
   } // end of iteration
 
   

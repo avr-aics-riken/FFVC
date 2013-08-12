@@ -216,8 +216,10 @@ void FFV::comm_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
 // 種類Lの線形ソルバを利用する場合，trueを返す
 bool FFV::hasLinearSolver(const int L)
 {
-  for (int i=0; i<ItrCtl::ic_END; i++)
-    if ( IC[i].get_LS() == L ) return true;
+  for (int i=0; i<ic_END; i++)
+  {
+    if ( IC[i].getLS() == L ) return true;
+  }
   
   return false;
 }
@@ -225,10 +227,10 @@ bool FFV::hasLinearSolver(const int L)
 
 // #################################################################
 // Point SOR
-int FFV::Point_SOR(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
+int FFV::Point_SOR(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
 {
   double flop_count=0.0;         /// 浮動小数点演算数
-  REAL_TYPE omg = IC->get_omg(); /// 加速係数
+  REAL_TYPE omg = IC->getOmega(); /// 加速係数
 	double res = 0.0;              /// 残差
   int lc=0;                      /// ループカウント
   
@@ -238,7 +240,7 @@ int FFV::Point_SOR(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm,
   
   TIMING_start(tm_poi_itr_sct_2); // >>> Poisson Iteration section 2
   
-  for (lc=0; lc<IC->get_ItrMax(); lc++)
+  for (lc=0; lc<IC->getMaxIteration(); lc++)
   {
     // 反復処理
     TIMING_start(tm_poi_PSOR);
@@ -268,10 +270,10 @@ int FFV::Point_SOR(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm,
     
     
     // Residual
-    switch ( IC->get_normType() )
+    switch ( IC->getNormType() )
     {
-      case ItrCtl::r_b:
-      case ItrCtl::r_r0:
+      case r_b:
+      case r_r0:
         
         TIMING_start(tm_poi_src_nrm);
         res = 0.0;
@@ -290,24 +292,24 @@ int FFV::Point_SOR(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm,
         res = sqrt(res);
         break;
         
-      case ItrCtl::dx_b:
+      case dx_b:
         // nothing to do, dx is already obtained in psor_(&res,...)
         break;
     }
     
     // 残差の保存
-    switch ( IC->get_normType() )
+    switch ( IC->getNormType() )
     {
-      case ItrCtl::dx_b:
-        IC->set_normValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
+      case dx_b:
+        IC->setNormValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
         break;
         
-      case ItrCtl::r_b:
-        IC->set_normValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
+      case r_b:
+        IC->setNormValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
         break;
         
-      case ItrCtl::r_r0:
-        IC->set_normValue( (r0==0.0) ? res : res/r0 );
+      case r_r0:
+        IC->setNormValue( (r0==0.0) ? res : res/r0 );
         break;
         
       default:
@@ -317,7 +319,7 @@ int FFV::Point_SOR(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm,
     }
 
     // 収束判定　性能測定モードのときは収束判定を行わない
-    if ( (C.Hide.PM_Test == OFF) && (IC->get_normValue() < IC->get_eps()) ) break;
+    if ( (C.Hide.PM_Test == OFF) && (IC->getNormValue() < IC->getCriterion()) ) break;
     
   }
   
@@ -329,13 +331,13 @@ int FFV::Point_SOR(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm,
 
 // #################################################################
 // 反復変数の同期処理
-void FFV::Sync_Scalar(ItrCtl* IC, REAL_TYPE* d_class, const int num_layer)
+void FFV::Sync_Scalar(IterationCtl* IC, REAL_TYPE* d_class, const int num_layer)
 {
   if ( numProc > 1 )
   {
     TIMING_start(tm_poi_comm);
     
-    if (IC->get_SyncMode() == comm_sync )
+    if (IC->getSyncMode() == comm_sync )
     {
       if ( paraMngr->BndCommS3D(d_class, size[0], size[1], size[2], guide, num_layer) != CPM_SUCCESS ) Exit(0);
     }
@@ -355,12 +357,12 @@ void FFV::Sync_Scalar(ItrCtl* IC, REAL_TYPE* d_class, const int num_layer)
 
 // #################################################################
 // SOR2SMA
-int FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
+int FFV::SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
 {
   int ip;                        /// ローカルノードの基点(1,1,1)のカラーを示すインデクス
                                  /// ip=0 > R, ip=1 > B
   double flop_count=0.0;         /// 浮動小数点演算数
-  REAL_TYPE omg = IC->get_omg(); /// 加速係数
+  REAL_TYPE omg = IC->getOmega(); /// 加速係数
 	double res = 0.0;              /// 残差
   int lc=0;                      /// ループカウント
   
@@ -371,7 +373,7 @@ int FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm,
   
   TIMING_start(tm_poi_itr_sct_2); // >>> Poisson Iteration section 2
   
-  for (lc=0; lc<IC->get_ItrMax(); lc++)
+  for (lc=0; lc<IC->getMaxIteration(); lc++)
   {
     // 2色のマルチカラー(Red&Black)のセットアップ
     TIMING_start(tm_poi_setup);
@@ -415,7 +417,7 @@ int FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm,
         TIMING_start(tm_poi_comm);
         
         
-        if (IC->get_SyncMode() == comm_sync )
+        if (IC->getSyncMode() == comm_sync )
         {
           if ( paraMngr->BndCommS3D(x, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0); // 1 layer communication
         }
@@ -435,10 +437,10 @@ int FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm,
     
     
     // Residual
-    switch ( IC->get_normType() )
+    switch ( IC->getNormType() )
     {
-      case ItrCtl::r_b:
-      case ItrCtl::r_r0:
+      case r_b:
+      case r_r0:
         
         TIMING_start(tm_poi_src_nrm);
         res = 0.0;
@@ -446,7 +448,7 @@ int FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm,
         TIMING_stop(tm_poi_src_nrm, flop_count);
         break;
         
-      case ItrCtl::dx_b:
+      case dx_b:
         // nothing to do, dx is already obtained in psor_(&res,...)
         break;
     }
@@ -463,18 +465,18 @@ int FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm,
     
     
     // 残差の保存
-    switch ( IC->get_normType() )
+    switch ( IC->getNormType() )
     {
-      case ItrCtl::dx_b:
-        IC->set_normValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
+      case dx_b:
+        IC->setNormValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
         break;
         
-      case ItrCtl::r_b:
-        IC->set_normValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
+      case r_b:
+        IC->setNormValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
         break;
         
-      case ItrCtl::r_r0:
-        IC->set_normValue( (r0==0.0) ? res : res/r0 );
+      case r_r0:
+        IC->setNormValue( (r0==0.0) ? res : res/r0 );
         break;
         
       default:
@@ -484,7 +486,7 @@ int FFV::SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm,
     }
     
     // 収束判定　性能測定モードのときは収束判定を行わない
-    if ( (C.Hide.PM_Test == OFF) && (IC->get_normValue() < IC->get_eps()) ) break;
+    if ( (C.Hide.PM_Test == OFF) && (IC->getNormValue() < IC->getCriterion()) ) break;
     
   }
   
@@ -689,10 +691,10 @@ void FFV::wait_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
 
 // #################################################################
 // Flexible Gmres(m)
-void FFV::Fgmres(ItrCtl* IC, const double rhs_nrm, const double r0)
+void FFV::Fgmres(IterationCtl* IC, const double rhs_nrm, const double r0)
 {
   const double eps_1 = 1.0e-30;
-  const double eps_2 = IC->get_eps();
+  const double eps_2 = IC->getCriterion();
   int mode_precond = 1; // pre-conditioning
   
   // 残差収束チェック
@@ -710,7 +712,7 @@ void FFV::Fgmres(ItrCtl* IC, const double rhs_nrm, const double r0)
   double r4;
   double flop=0.0;
   
-  const int Iteration_Max = IC->get_ItrMax();
+  const int Iteration_Max = IC->getMaxIteration();
   int m = FREQ_OF_RESTART;
   int s_length = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
   
@@ -954,11 +956,11 @@ jump_4:
 
 // #################################################################
 // RBGS
-int FFV::Frbgs(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
+int FFV::Frbgs(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
 {
-  REAL_TYPE omg = IC->get_omg();
+  REAL_TYPE omg = IC->getOmega();
   int lc=0;                      /// ループカウント
-  for (lc=0; lc<IC->get_ItrMax(); lc++)
+  for (lc=0; lc<IC->getMaxIteration(); lc++)
   {
 		Fsmoother(x, b, omg);
     
@@ -983,10 +985,10 @@ int FFV::Frbgs(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, con
 
 // #################################################################
 // PCG
-int FFV::Fpcg(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
+int FFV::Fpcg(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
 {
 	REAL_TYPE res = 0.0;
-  REAL_TYPE omg = IC->get_omg();
+  REAL_TYPE omg = IC->getOmega();
   
 	blas_clear_(d_pcg_r , size, &guide);
 	blas_clear_(d_pcg_p , size, &guide);
@@ -1000,7 +1002,7 @@ int FFV::Fpcg(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, cons
 	REAL_TYPE rr1 = 0.0;
   int lc=0;                      /// ループカウント
   
-  for (lc=0; lc<IC->get_ItrMax(); lc++)
+  for (lc=0; lc<IC->getMaxIteration(); lc++)
   {
 		blas_clear_(d_pcg_z, size, &guide);
 		Fpreconditioner(IC, d_pcg_z, d_pcg_r);
@@ -1062,10 +1064,10 @@ int FFV::Fpcg(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, cons
 
 // #################################################################
 // PBiCBSTAB
-int FFV::Fpbicgstab(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
+int FFV::Fpbicgstab(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
 {
 	REAL_TYPE res = 0.0;
-  REAL_TYPE omg = IC->get_omg();
+  REAL_TYPE omg = IC->getOmega();
   
 	blas_clear_(d_pcg_r , size, &guide);
 	blas_clear_(d_pcg_p , size, &guide);
@@ -1088,7 +1090,7 @@ int FFV::Fpbicgstab(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm
 	REAL_TYPE gamman = -gamma;
   int lc=0;                      /// ループカウント
   
-  for (lc=0; lc<IC->get_ItrMax(); lc++)
+  for (lc=0; lc<IC->getMaxIteration(); lc++)
   {
 		REAL_TYPE rr1 = 0.0;
 		Fdot(&rr1, d_pcg_r, d_pcg_r0);
@@ -1165,18 +1167,18 @@ int FFV::Fpbicgstab(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm
 
 // #################################################################
 // Check
-bool FFV::Fcheck(ItrCtl* IC, REAL_TYPE res, const double rhs_nrm, const double r0)
+bool FFV::Fcheck(IterationCtl* IC, REAL_TYPE res, const double rhs_nrm, const double r0)
 {
-	switch ( IC->get_normType() )
+	switch ( IC->getNormType() )
   {
-		case ItrCtl::dx_b:
-			IC->set_normValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
+		case dx_b:
+			IC->setNormValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
 			break;
-		case ItrCtl::r_b:
-			IC->set_normValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
+		case r_b:
+			IC->setNormValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
 			break;
-		case ItrCtl::r_r0:
-			IC->set_normValue( (r0==0.0) ? res : res/r0 );
+		case r_r0:
+			IC->setNormValue( (r0==0.0) ? res : res/r0 );
 			break;
 		default:
 			printf("\tInvalid Linear Solver for Pressure\n");
@@ -1184,7 +1186,7 @@ bool FFV::Fcheck(ItrCtl* IC, REAL_TYPE res, const double rhs_nrm, const double r
 			break;
 	}
   
-	if ( (C.Hide.PM_Test == OFF) && (IC->get_normValue() < IC->get_eps()) )
+	if ( (C.Hide.PM_Test == OFF) && (IC->getNormValue() < IC->getCriterion()) )
   {
 		return true;
 	}
@@ -1194,20 +1196,22 @@ bool FFV::Fcheck(ItrCtl* IC, REAL_TYPE res, const double rhs_nrm, const double r
 
 // #################################################################
 // Preconditioner
-int FFV::Fpreconditioner(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b)
+int FFV::Fpreconditioner(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b)
 {
-  REAL_TYPE omg = IC->get_omg();
+  REAL_TYPE omg = IC->getOmega();
   
   int lc=0;                      /// ループカウント
 	int lc_max = 4;
   
   // 前処理なし(コピー)
-	if( lc_max == 0 ) {
+	if( lc_max == 0 )
+  {
 		blas_copy_(x, b, size, &guide);
 		return lc;
 	}
   
-  for (lc=0; lc<lc_max; lc++) {
+  for (lc=0; lc<lc_max; lc++)
+  {
 		Fsmoother(x, b, omg);
 	}
   
@@ -1242,7 +1246,7 @@ void FFV::Fsmoother(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE omg)
     
 		if ( numProc > 1 )
     {
-			if (IC->get_SyncMode() == comm_sync )
+			if (IC->getSyncMode() == comm_sync )
       {
 				if ( paraMngr->BndCommS3D(x, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) {
 					Exit(0);

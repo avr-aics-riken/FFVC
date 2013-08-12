@@ -59,6 +59,7 @@ FFV::FFV()
   //for (int i=0; i<var_END; i++) dfi_mng[i]=0;
    */
   
+  
   fp_b = NULL;
   fp_w = NULL;
   fp_c = NULL;
@@ -413,7 +414,7 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
   {
     
     // 有効セル数 => 外部境界でガイドセルと内側のセルで挟まれる面がFluidの場合のセル数
-    REAL_TYPE ec = (REAL_TYPE)obc[face].get_ValidCell();
+    REAL_TYPE ec = (REAL_TYPE)obc[face].getValidCell();
     
     // 各プロセスの外部領域面の速度をvv[]にコピー
     REAL_TYPE* vv = obc[face].getDomainV();
@@ -463,12 +464,11 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
 
 // #################################################################
 /**
- * @brief ファイル出力
+ * @brief 基本変数のファイル出力
  * @param [in,out] flop       浮動小数点演算数
- * @param [in]     refinement 粗格子を用いたリスタート時の出力指定（trueの場合出力、default=false, ファイル名に_restart_が含まれる）
  * @note d_p0をワークとして使用
  */
-void FFV::FileOutput(double& flop, const bool refinement)
+void FFV::OutputBasicVariables(double& flop)
 {
   REAL_TYPE scale = 1.0;
   
@@ -504,7 +504,7 @@ void FFV::FileOutput(double& flop, const bool refinement)
   
   // 出力間隔
   int interval = 0;
-  interval = C.Interval[Interval_Manager::tg_instant].getIntervalStep();
+  interval = C.Interval[Interval_Manager::tg_basic].getIntervalStep();
   
   
   // Divergence デバッグ用なので無次元のみ
@@ -656,18 +656,98 @@ void FFV::FileOutput(double& flop, const bool refinement)
   }
 
   
+  // Face Velocity
+  if (C.Mode.FaceV == ON )
+  {
+    if ( DFI_OUT_FVEL->DFI_Finfo.ArrayShape == "nijk" )
+    {
+      fb_vout_nijk_(d_wo, d_vf, size, &guide, v00, &scale, &unit_velocity, &flop);
+      fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
+    }
+    else
+    {
+      fb_vout_ijkn_(d_wo, d_vf, size, &guide, v00, &scale, &unit_velocity, &flop);
+      fb_minmax_v_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
+    }
+    
+    if ( numProc > 1 )
+    {
+      REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
+      if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
+      if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    // ここはminmax[]の大きさをvec_min[4],vec_max[4]に合わせて，DFI_OUT_VRTのインターフェイスを変更
+    minmax[0] = vec_min[0];
+    minmax[1] = vec_max[0];
+    
+    DFI_OUT_FVEL->WriteData(m_step,
+                            guide,
+                            &m_time,
+                            d_wo,
+                            minmax,
+                            interval,
+                            true,
+                            0,
+                            0.0,
+                            true);
+  }
+}
+
+
+// #################################################################
+/**
+ * @brief 派生変数のファイル出力
+ * @param [in,out] flop       浮動小数点演算数
+ * @note d_p0をワークとして使用
+ */
+void FFV::OutputDerivedVariables(double& flop)
+{
+  REAL_TYPE scale = 1.0;
+  
+  // ステップ数
+  unsigned m_step = (unsigned)CurrentStep;
+  
+  // 時間の次元変換
+  REAL_TYPE m_time;
+  if (C.Unit.File == DIMENSIONAL)
+  {
+    m_time = (REAL_TYPE)(CurrentTime * C.Tscale);
+  }
+  else
+  {
+    m_time = (REAL_TYPE)CurrentTime;
+  }
+  
+  // ガイドセル出力
+  int gc_out = C.GuideOut;
+  
+  
+  // 最大値と最小値
+  REAL_TYPE f_min, f_max, min_tmp, max_tmp, vec_min[4], vec_max[4];
+  REAL_TYPE minmax[2];
+  
+  
+  // 出力間隔
+  int interval = 0;
+  interval = C.Interval[Interval_Manager::tg_derived].getIntervalStep();
+  
+  REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
+  
   
   // Total Pressure
-  if (C.Mode.TP == ON ) {
-    
+  if (C.Mode.TP == ON )
+  {
     fb_totalp_ (d_p0, size, &guide, d_v, d_p, v00, &flop);
     
     // convert non-dimensional to dimensional, iff file is dimensional
-    if (C.Unit.File == DIMENSIONAL) 
+    if (C.Unit.File == DIMENSIONAL)
     {
       U.tp_array_ND2D(d_ws, d_p0, size, guide, C.RefDensity, C.RefVelocity, flop);
     }
-    else 
+    else
     {
       REAL_TYPE* tp;
       tp = d_ws; d_ws = d_p0; d_p0 = tp;
@@ -685,7 +765,7 @@ void FFV::FileOutput(double& flop, const bool refinement)
     }
     minmax[0] = f_min;
     minmax[1] = f_max;
-
+    
     DFI_OUT_TP->WriteData(m_step,
                           guide,
                           &m_time,
@@ -700,9 +780,8 @@ void FFV::FileOutput(double& flop, const bool refinement)
   
   
   // Vorticity
-  if (C.Mode.VRT == ON ) 
+  if (C.Mode.VRT == ON )
   {
-    
     rot_v_(d_wv, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
     
     REAL_TYPE  vz[3];
@@ -747,8 +826,8 @@ void FFV::FileOutput(double& flop, const bool refinement)
   
   
   // 2nd Invariant of Velocity Gradient Tensor
-  if (C.Mode.I2VGT == ON ) {
-    
+  if (C.Mode.I2VGT == ON )
+  {
     i2vgt_ (d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
     
     // 無次元で出力
@@ -766,7 +845,7 @@ void FFV::FileOutput(double& flop, const bool refinement)
     }
     minmax[0] = f_min;
     minmax[1] = f_max;
-
+    
     DFI_OUT_I2VGT->WriteData(m_step,
                              guide,
                              &m_time,
@@ -781,7 +860,7 @@ void FFV::FileOutput(double& flop, const bool refinement)
   
   
   // Helicity
-  if (C.Mode.Helicity == ON ) 
+  if (C.Mode.Helicity == ON )
   {
     helicity_(d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
     
@@ -812,52 +891,6 @@ void FFV::FileOutput(double& flop, const bool refinement)
                            0.0,
                            true);
   }
-
-  
-  // Face Velocity
-  if (C.Mode.FaceV == ON )
-  {
-    if ( DFI_OUT_FVEL->DFI_Finfo.ArrayShape == "nijk" )
-    {
-      fb_vout_nijk_(d_wo, d_vf, size, &guide, v00, &scale, &unit_velocity, &flop);
-      fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
-    }
-    else
-    {
-      fb_vout_ijkn_(d_wo, d_vf, size, &guide, v00, &scale, &unit_velocity, &flop);
-      fb_minmax_v_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
-    }
-    
-    if ( numProc > 1 )
-    {
-      REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
-      if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
-      
-      REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
-      if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
-    }
-    
-    // ここはminmax[]の大きさをvec_min[4],vec_max[4]に合わせて，DFI_OUT_VRTのインターフェイスを変更
-    minmax[0] = vec_min[0];
-    minmax[1] = vec_max[0];
-
-// CIOlib debug
-//  int IUNIT=m_step+10;
-//  nv3dwrite_(&IUNIT,d_wo,size,&guide);
-    
-    DFI_OUT_FVEL->WriteData(m_step,
-                            guide,
-                            &m_time,
-                            d_wo,
-                            minmax,
-                            interval,
-                            true,
-                            0,
-                            0.0,
-                            true);
-  }
-  
-  
 }
 
 
@@ -913,10 +946,10 @@ int FFV::MainLoop()
 // #################################################################
 /**
  * @brief VP反復の発散値を計算する
- * @param [in] IC ItrCtlクラス
+ * @param [in] IC IterationCtlクラス
  * @retval 発散値の最大の場所のインデクス
  */
-FB::Vec3i FFV::Norm_Div(ItrCtl* IC)
+FB::Vec3i FFV::Norm_Div(IterationCtl* IC)
 {
   double nrm;
   double flop_count;
@@ -927,10 +960,10 @@ FB::Vec3i FFV::Norm_Div(ItrCtl* IC)
   index[1] = 0;
   index[2] = 0;
   
-  switch (IC->get_normType())
+  switch (IC->getNormType())
   {
 
-    case ItrCtl::v_div_max:
+    case v_div_max:
       TIMING_start(tm_norm_div_max);
       flop_count=0.0;
       norm_v_div_max_(&nrm, size, &guide, d_dv, &coef, d_bcp, &flop_count);
@@ -944,11 +977,11 @@ FB::Vec3i FFV::Norm_Div(ItrCtl* IC)
         if ( paraMngr->Allreduce(&tmp, &nrm, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0); // 最大値
         TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
       }
-      IC->set_normValue(nrm);
+      IC->setNormValue(nrm);
       break;
       
       
-    case ItrCtl::v_div_dbg:
+    case v_div_dbg:
       TIMING_start(tm_poi_itr_sct_5); // >>> Poisson Iteration subsection 5
       
       TIMING_start(tm_norm_div_dbg);
@@ -966,7 +999,7 @@ FB::Vec3i FFV::Norm_Div(ItrCtl* IC)
         tmp = nrm;
         if ( paraMngr->Allreduce(&tmp, &nrm, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0); // 最大値
       }
-      IC->set_normValue(nrm);
+      IC->setNormValue(nrm);
       
       
       TIMING_stop(tm_poi_itr_sct_5, 0.0); // <<< Poisson Iteration subsection 5
@@ -1122,7 +1155,6 @@ void FFV::set_timing_label()
   set_label(tm_VBC_update,         "Velocity_BC_Update",      PerfMonitor::CALC);
   set_label(tm_LES_eddy,           "Eddy_Viscosity",          PerfMonitor::CALC);
   set_label(tm_LES_eddy_comm,      "Sync_Eddy_Viscosity",     PerfMonitor::COMM);
-  set_label(tm_pressure_shift,     "Shift_Pressure",          PerfMonitor::COMM);
   // end of NS: Loop Post Section
   
   set_label(tm_gmres_sor_sct,      "Poisson__GMRES_Sct",      PerfMonitor::CALC, false);

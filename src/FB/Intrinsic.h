@@ -37,22 +37,6 @@
 #include "Medium.h"
 
 
-/** 組み込み例題のID */
-enum Intrinsic_class 
-{
-  id_Duct,
-  id_PPLT2D,
-  id_SHC1D,
-  id_PMT,
-  id_Rect,
-  id_Cylinder,
-  id_Step,
-  id_Polygon,
-  id_Sphere,
-  id_Jet
-};
-
-
 class Intrinsic : public DomainInfo {
   
 public:

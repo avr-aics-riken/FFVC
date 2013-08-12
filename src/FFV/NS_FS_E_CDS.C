@@ -51,9 +51,9 @@ void FFV::NS_FS_E_CDS()
   
   int v_mode=0;
   
-  ItrCtl* ICp = &IC[ItrCtl::ic_prs_pr];  /// 圧力のPoisson反復
-  ItrCtl* ICv = &IC[ItrCtl::ic_vis_cn];  /// 粘性項のCrank-Nicolson反復
-  ItrCtl* ICd = &IC[ItrCtl::ic_div];     /// 圧力-速度反復
+  IterationCtl* ICp = &IC[ic_prs1];  /// 圧力のPoisson反復
+  IterationCtl* ICv = &IC[ic_vel1];  /// 粘性項のCrank-Nicolson反復
+  IterationCtl* ICd = &IC[ic_div];   /// 圧力-速度反復
   
   // point Data
   // d_v   セルセンタ速度 v^n -> v^{n+1}
@@ -109,8 +109,8 @@ void FFV::NS_FS_E_CDS()
   
   // 対流項と粘性項の評価 >> In use (dc_vc, dc_wv)
   switch (C.AlgorithmF) {
-    case Control::Flow_FS_EE_EE:
-    case Control::Flow_FS_AB2:
+    case Flow_FS_EE_EE:
+    case Flow_FS_AB2:
       TIMING_start(tm_pseudo_vec);
       
       flop = 0.0;
@@ -129,11 +129,11 @@ void FFV::NS_FS_E_CDS()
 
       TIMING_start(tm_pvec_flux);
       flop = 0.0;
-      BC.mod_Pvec_Flux(d_vc, d_v0, d_bcv, CurrentTime, &C, v_mode, v00, flop);
+      BC.modPvecFlux(d_vc, d_v0, d_bcv, CurrentTime, &C, v_mode, v00, flop);
       TIMING_stop(tm_pvec_flux, flop);
       break;
       
-    case Control::Flow_FS_AB_CN:
+    case Flow_FS_AB_CN:
       TIMING_start(tm_pseudo_vec);
       flop = 0.0;
       v_mode = 0;
@@ -149,7 +149,7 @@ void FFV::NS_FS_E_CDS()
       
       TIMING_start(tm_pvec_flux);
       flop = 0.0;
-      BC.mod_Pvec_Flux(d_wv, d_v0, d_bcv, CurrentTime, &C, v_mode, v00, flop);
+      BC.modPvecFlux(d_wv, d_v0, d_bcv, CurrentTime, &C, v_mode, v00, flop);
       TIMING_stop(tm_pvec_flux, flop);
       break;
       
@@ -160,14 +160,14 @@ void FFV::NS_FS_E_CDS()
   // 時間積分
   switch (C.AlgorithmF)
   {
-    case Control::Flow_FS_EE_EE:
+    case Flow_FS_EE_EE:
       TIMING_start(tm_pvec_ee);
       flop = 0.0;
       euler_explicit_ (d_vc, size, &guide, &dt, d_v0, d_bcd, &flop);
       TIMING_stop(tm_pvec_ee, flop);
       break;
       
-    case Control::Flow_FS_AB2:
+    case Flow_FS_AB2:
       TIMING_start(tm_pvec_ab);
       flop = 0.0;
       if ( Session_CurrentStep == 1 ) // 初期とリスタート後，1ステップめ
@@ -181,7 +181,7 @@ void FFV::NS_FS_E_CDS()
       TIMING_stop(tm_pvec_ab, flop);
       break;
       
-    case Control::Flow_FS_AB_CN: // 未対応20110918
+    case Flow_FS_AB_CN: // 未対応20110918
       TIMING_start(tm_pvec_abcn);
       flop = 0.0;
       if ( Session_CurrentStep == 1 )
@@ -262,15 +262,16 @@ void FFV::NS_FS_E_CDS()
   TIMING_start(tm_frctnl_stp_sct_4);
   
   // Crank-Nicolson Iteration
-  if ( C.AlgorithmF == Control::Flow_FS_AB_CN )
+  if ( C.AlgorithmF == Flow_FS_AB_CN )
   {
     TIMING_start(tm_copy_array);
     U.xcopy(d_wv, size, guide, d_vc, one, kind_vector, flop);
     TIMING_stop(tm_copy_array, 0.0);
     
-    for (ICv->LoopCount=0; ICv->LoopCount< ICv->get_ItrMax(); ICv->LoopCount++) {
+    for (ICv->setLoopCount(0); ICv->getLoopCount()< ICv->getMaxIteration(); ICv->incLoopCount())
+    {
       //CN_Itr(ICv);
-      if (  ICv->get_normValue() < ICv->get_eps() ) break;
+      if (  ICv->isConverged() ) break;
     }
   }
   
@@ -309,7 +310,7 @@ void FFV::NS_FS_E_CDS()
   // Poissonソース項の速度境界条件（VBC）面による修正
   TIMING_start(tm_poi_src_vbc);
   flop = 0.0;
-  BC.mod_Psrc_VBC(d_ws, d_vc, d_v0, d_vf, d_bcv, CurrentTime, dt, &C, v00, flop);
+  BC.modPsrcVBC(d_ws, d_vc, d_v0, d_vf, d_bcv, CurrentTime, dt, &C, v00, flop);
   TIMING_stop(tm_poi_src_vbc, flop);
   
   
@@ -317,7 +318,7 @@ void FFV::NS_FS_E_CDS()
   //hogehoge
   
   // 定数項のL2ノルム　rhs_nrm
-  if ( (ICp->get_normType() == ItrCtl::dx_b) || (ICp->get_normType() == ItrCtl::r_b) )
+  if ( (ICp->getNormType() == dx_b) || (ICp->getNormType() == r_b) )
   {
     TIMING_start(tm_poi_src_nrm);
     rhs_nrm = 0.0;
@@ -337,7 +338,7 @@ void FFV::NS_FS_E_CDS()
   }
   
   // Initial residual
-  if ( ICp->get_normType() == ItrCtl::r_r0 )
+  if ( ICp->getNormType() == r_r0 )
   {
     TIMING_start(tm_poi_src_nrm);
     res_init = 0.0;
@@ -372,7 +373,7 @@ void FFV::NS_FS_E_CDS()
     TIMING_stop(tm_hstry_itr, 0.0);
   }
 
-  for (ICp->LoopCount=0; ICp->LoopCount <= ICp->get_ItrMax(); ICp->LoopCount++)
+  for (ICp->setLoopCount(0); ICp->getLoopCount() <= ICp->getMaxIteration(); ICp->incLoopCount())
   {
     
     // >>> Poisson Iteration subsection 1
@@ -401,7 +402,7 @@ void FFV::NS_FS_E_CDS()
     // <<< Poisson Iteration subsection 1
 
     // 線形ソルバー
-    switch (ICp->get_LS())
+    switch (ICp->getLS())
     {
       case SOR:
         Point_SOR(ICp, d_p, d_b, rhs_nrm, res_init); // return x^{m+1} - x^m
@@ -434,7 +435,7 @@ void FFV::NS_FS_E_CDS()
     // セルフェイス速度の境界条件による修正
     TIMING_start(tm_prj_vec_bc);
     flop=0.0;
-    BC.mod_div(d_dv, d_bcv, CurrentTime, v00, m_buf, d_vf, d_v, &C, flop);
+    BC.modDivergence(d_dv, d_bcv, CurrentTime, v00, m_buf, d_vf, d_v, &C, flop);
     TIMING_stop(tm_prj_vec_bc, flop);
     
     // セルフェイス速度の境界条件の通信部分
@@ -535,7 +536,7 @@ void FFV::NS_FS_E_CDS()
      */
     
     // 収束判定　性能測定モードのときは収束判定を行わない
-    if ( (C.Hide.PM_Test == OFF) && (convergence < ICp->get_eps()) ) break;
+    if ( (C.Hide.PM_Test == OFF) && (convergence < ICp->getCriterion()) ) break;
   } // end of iteration
   
   TIMING_stop(tm_poi_itr_sct, 0.0);

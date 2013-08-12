@@ -36,7 +36,7 @@ bool IP_Sphere::getTP(Control* R, TPControl* tpCntl)
   REAL_TYPE ct;
   
   // radius
-  label = "/Parameter/IntrinsicExample/Radius";
+  label = "/IntrinsicExample/Radius";
   
   if ( !tpCntl->GetValue(label, &ct) )
   {
@@ -50,7 +50,7 @@ bool IP_Sphere::getTP(Control* R, TPControl* tpCntl)
 
   
   // ドライバの設定 値が正の値のとき，有効．ゼロの場合はドライバなし
-  label = "/Parameter/IntrinsicExample/Driver";
+  label = "/IntrinsicExample/Driver";
   
   if ( tpCntl->GetValue(label, &ct ) )
   {
@@ -77,7 +77,7 @@ bool IP_Sphere::getTP(Control* R, TPControl* tpCntl)
   }
   
   // 媒質指定
-  label = "/Parameter/IntrinsicExample/FluidMedium";
+  label = "/IntrinsicExample/FluidMedium";
   if ( !tpCntl->GetValue(label, &str) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -86,7 +86,7 @@ bool IP_Sphere::getTP(Control* R, TPControl* tpCntl)
   m_fluid = str;
   
   
-  label = "/Parameter/IntrinsicExample/SolidMedium";
+  label = "/IntrinsicExample/SolidMedium";
   if ( !tpCntl->GetValue(label, &str) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -97,7 +97,7 @@ bool IP_Sphere::getTP(Control* R, TPControl* tpCntl)
   
   if (drv_length > 0.0 )
   {
-    label = "/Parameter/IntrinsicExample/DriverMedium";
+    label = "/IntrinsicExample/DriverMedium";
     if ( !tpCntl->GetValue(label, &str) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -106,7 +106,7 @@ bool IP_Sphere::getTP(Control* R, TPControl* tpCntl)
     m_driver = str;
     
     
-    label = "/Parameter/IntrinsicExample/DriverFaceMedium";
+    label = "/IntrinsicExample/DriverFaceMedium";
     if ( !tpCntl->GetValue(label, &str) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());

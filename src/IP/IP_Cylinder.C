@@ -36,7 +36,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   REAL_TYPE ct;
   
   // 2D or 3D mode
-  label = "/Parameter/IntrinsicExample/Dimension";
+  label = "/IntrinsicExample/Dimension";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -59,7 +59,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   }
   
   // x-dir step
-  label = "/Parameter/IntrinsicExample/Width";
+  label = "/IntrinsicExample/Width";
   
   if ( !(tpCntl->GetValue(label, &ct )) )
   {
@@ -72,7 +72,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   }
   
   // z-dir step
-  label="/Parameter/IntrinsicExample/Height";
+  label="/IntrinsicExample/Height";
   
   if ( !(tpCntl->GetValue(label, &ct )) )
   {
@@ -85,7 +85,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   }
   
   // ドライバの設定 値が正の値のとき，有効．ゼロの場合はドライバなし
-  label = "/Parameter/IntrinsicExample/Driver";
+  label = "/IntrinsicExample/Driver";
   
   if ( tpCntl->GetValue(label, &ct ) )
   {
@@ -113,7 +113,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   
   
   // 媒質指定
-  label = "/Parameter/IntrinsicExample/FluidMedium";
+  label = "/IntrinsicExample/FluidMedium";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -123,7 +123,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   m_fluid = str;
   
   
-  label = "/Parameter/IntrinsicExample/SolidMedium";
+  label = "/IntrinsicExample/SolidMedium";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -134,7 +134,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   
   if ( drv_mode == ON )
   {
-    label = "/Parameter/IntrinsicExample/DriverMedium";
+    label = "/IntrinsicExample/DriverMedium";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {
@@ -144,7 +144,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
     m_driver = str;
     
     
-    label = "/Parameter/IntrinsicExample/DriverFaceMedium";
+    label = "/IntrinsicExample/DriverFaceMedium";
     
     if ( !(tpCntl->GetValue(label, &str )) )
     {

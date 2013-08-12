@@ -34,7 +34,7 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
   std::string label;
   
   // 2D or 3D mode
-  label="/Parameter/IntrinsicExample/Dimension";
+  label="/IntrinsicExample/Dimension";
   
   if ( !(tpCntl->GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -54,7 +54,7 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
   
   
   // 分割数の偶数チェックオプション
-  label="/Parameter/IntrinsicExample/CheckEven";
+  label="/IntrinsicExample/CheckEven";
 
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -77,7 +77,7 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
   }
   
   // 媒質指定
-  label="/Parameter/IntrinsicExample/FluidMedium";
+  label="/IntrinsicExample/FluidMedium";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -86,7 +86,7 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
   }
   m_fluid = str;
   
-  label="/Parameter/IntrinsicExample/SolidMedium";
+  label="/IntrinsicExample/SolidMedium";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {

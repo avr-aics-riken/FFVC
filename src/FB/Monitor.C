@@ -148,7 +148,7 @@ void MonitorList::getMonitor(Control* C)
   // ログ出力のON/OFFはControl::getmonitorList()で取得済み
   
   // 集約モード
-  label = "/Steer/MonitorList/OutputMode";
+  label = "/MonitorList/OutputMode";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -174,7 +174,7 @@ void MonitorList::getMonitor(Control* C)
   
   
   // サンプリング間隔
-  label="/Steer/MonitorList/SamplingIntervalType";
+  label="/MonitorList/SamplingIntervalType";
   
   if ( !(tpCntl->GetValue(label, &str )) )
   {
@@ -197,7 +197,7 @@ void MonitorList::getMonitor(Control* C)
       Exit(0);
     }
     
-    label="/Steer/MonitorList/SamplingInterval";
+    label="/MonitorList/SamplingInterval";
     
     if ( !(tpCntl->GetValue(label, &f_val )) )
     {
@@ -234,7 +234,7 @@ void MonitorList::getMonitor(Control* C)
   // 指定モニタ個数のチェック
   int nnode=0;
   int nlist=0;
-  label_base = "/Steer/MonitorList";
+  label_base = "/MonitorList";
   
   nnode = tpCntl->countLabels(label_base);
   if ( nnode == 0 )
@@ -263,7 +263,7 @@ void MonitorList::getMonitor(Control* C)
   }
   
   // モニターリストの読み込み
-  label_base = "/Steer/MonitorList";
+  label_base = "/MonitorList";
   
   for (int i=0; i<nnode; i++)
   {

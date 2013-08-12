@@ -253,7 +253,6 @@ private:
   DTcntl DT;                 ///< 時間制御クラス
   ParseMat M;                ///< 媒質パラメータ管理クラス
   Intrinsic* Ex;             ///< pointer to a base class
-  ItrCtl IC[ItrCtl::ic_END]; ///< 反復情報管理クラス
   ReferenceFrame RF;         ///< 参照座標系クラス
   MediumList* mat;           ///< 媒質リスト
   CompoList* cmp;            ///< コンポーネントリスト
@@ -267,6 +266,8 @@ private:
   FBUtility U;               ///< ユーティリティクラス
   MonitorList MO;            ///< Monitorクラス
   PolygonProperty* PolyPP;   ///< PolygonGroupの管理
+  
+  IterationCtl IC[ic_END];   ///< 反復情報管理クラス
   
   // 20130611 ::DFI DFI;                 ///< 分散ファイルインデクス管理クラス
   // 20130611 Plot3D PLT3D;              ///< PLOT3Dクラス
@@ -439,7 +440,11 @@ private:
   
   
   // Intrinsic Classの同定
-  void identifyExample(TPControl* tpf, FILE* fp);
+  void identifyExample(FILE* fp);
+  
+  
+  // 線形ソルバを特定
+  void identifyLinearSolver(TPControl* tpCntl);
   
   
   // 出力ファイルの初期化
@@ -494,8 +499,8 @@ private:
   void setInitialCondition();
   
   
-  // midの情報から各BCコンポーネントのローカルなインデクスを取得する
-  //void setLocalCmpIdx_Binary();
+  // 線形ソルバを特定し，パラメータをセットする
+  void setLinearSolver(TPControl* tpCntl, const int odr, const string label);
   
   
   // ParseMatクラスをセットアップし，媒質情報を入力ファイルから読み込み，媒質リストを作成する
@@ -581,10 +586,6 @@ private:
   void DomainMonitor(BoundaryOuter* ptr, Control* R);
   
   
-  //ファイル出力
-  void FileOutput(double& flop, const bool crs_restart=false);
-  
-  
   /**
    * @brief 種類Lの線形ソルバを利用する場合，trueを返す
    * @param [in] L 線形ソルバの種類
@@ -605,11 +606,11 @@ private:
   
   /**
    * @brief FGMRES
-   * @param [in]     IC      ItrCtlクラス
+   * @param [in]     IC      IterationCtlクラス
    * @param [in]     rhs_nrm RHS vectorのL2ノルム
    * @param [in]     r0      初期残差ベクトル
    */
-  void Fgmres(ItrCtl* IC, const double rhs_nrm, const double r0);
+  void Fgmres(IterationCtl* IC, const double rhs_nrm, const double r0);
   
 
   
@@ -622,7 +623,7 @@ private:
    * @param [in]     rhs_nrm RHS vector
    * @param [in]     r0      初期残差ベクトル
    */
-  int Frbgs(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
+  int Frbgs(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
   
   /**
    * @brief  FPCG
@@ -633,7 +634,7 @@ private:
    * @param [in]     rhs_nrm RHS vector
    * @param [in]     r0      初期残差ベクトル
    */
-  int Fpcg(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
+  int Fpcg(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
   
   /**
    * @brief  FPBiCGSTAB
@@ -644,7 +645,7 @@ private:
    * @param [in]     rhs_nrm RHS vector
    * @param [in]     r0      初期残差ベクトル
    */
-  int Fpbicgstab(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
+  int Fpbicgstab(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
   
   /**
    * @brief  Fcheck
@@ -652,7 +653,7 @@ private:
    * @param [in]     b  RHS  vector
    * @param [in]       RHS  vector
    */
-	bool Fcheck(ItrCtl* IC, REAL_TYPE res, const double rhs_nrm, const double r0);
+	bool Fcheck(IterationCtl* IC, REAL_TYPE res, const double rhs_nrm, const double r0);
   
   /**
    * @brief  Fpreconditioner
@@ -661,7 +662,7 @@ private:
    * @param [in,out] x       解ベクトル
    * @param [in]     b  RHS  vector
    */
-	int Fpreconditioner(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b);
+	int Fpreconditioner(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b);
   
   /**
    * @brief  Fsmoother
@@ -689,18 +690,18 @@ private:
   
   /**
    * @brief 線形ソルバーの選択実行
-   * @param [in]  IC       ItrCtlクラス
+   * @param [in]  IC       IterationCtlクラス
    * @param [in]  rhs_nrm  Poisson定数項ベクトルの自乗和ノルム
    * @param [in]  res_init 初期残差ベクトル
    */
-  void LS_Binary(ItrCtl* IC, const double rhs_nrm, const double rhs_init);
+  void LS_Binary(IterationCtl* IC, const double rhs_nrm, const double rhs_init);
   
   
 
   
   
   // V-P反復のdiv(u)ノルムを計算する
-  FB::Vec3i Norm_Div(ItrCtl* IC);
+  FB::Vec3i Norm_Div(IterationCtl* IC);
   
   
   /**
@@ -708,18 +709,20 @@ private:
    */
   void NS_FS_E_Binary();
   
+  
   /**
    * @brief Fractional Step法でNavier-Stokes方程式を解く．距離場近似．
    */
   void NS_FS_E_CDS();
   
   
-  /**
-   * @brief 圧力の引き戻し操作を行う
-   */
-  void Pressure_Shift();
+  // 基本変数のファイル出力
+  void OutputBasicVariables(double& flop);
 
-
+  
+  // 基本変数のファイル出力
+  void OutputDerivedVariables(double& flop);
+  
   
   /* 温度の移流拡散方程式をEuler陽解法/Adams-Bashforth法で解く
    */
@@ -761,10 +764,10 @@ private:
    * @param [in]     qbc  境界条件熱流束
    * @param [in]     bh2  BCindex H2
    * @param [in]     ws   部分段階の温度
-   * @param [in]     IC   ItrCtlクラス
+   * @param [in]     IC   IterationCtlクラス
    * @param [in,out] flop 浮動小数点演算数
    */
-  double ps_Diff_SM_PSOR(REAL_TYPE* t, double& b2, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh2, const REAL_TYPE* ws, ItrCtl* IC, double& flop);
+  double ps_Diff_SM_PSOR(REAL_TYPE* t, double& b2, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh2, const REAL_TYPE* ws, IterationCtl* IC, double& flop);
   
   
   /** SOR法
@@ -775,7 +778,7 @@ private:
    * @param [in]     rhs_nrm RHS vector
    * @param [in]     r0      初期残差ベクトル
    */
-  int Point_SOR(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
+  int Point_SOR(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
   
   /**
    * @brief 単媒質に対する熱伝導方程式を陰解法で解く
@@ -783,7 +786,7 @@ private:
    * @param [in]  rhs_nrm  Poisson定数項ベクトルの自乗和ノルム
    * @param [in]  r0       初期残差ベクトル
    */
-  void ps_LS(ItrCtl* IC, const double rhs_nrm, const double r0);
+  void ps_LS(IterationCtl* IC, const double rhs_nrm, const double r0);
   
   
   // リスタートプロセス
@@ -837,16 +840,16 @@ private:
    * @param [in]     rhs_nrm RHS vector
    * @param [in]     r0      初期残差ベクトル
    */
-  int SOR_2_SMA(ItrCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
+  int SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
   
   
   /**
    * @brief 反復の同期処理
-   * @param [in]     IC        ItrCtlクラス
+   * @param [in]     IC        IterationCtlクラス
    * @param [in,out] d_class   対象データ
    * @param [in]     num_layer 通信の袖数
    */
-  void Sync_Scalar(ItrCtl* IC, REAL_TYPE* d_class, const int num_layer);
+  void Sync_Scalar(IterationCtl* IC, REAL_TYPE* d_class, const int num_layer);
   
   
   /**

@@ -24,7 +24,7 @@
 
 #include "mydebug.h"
 
-#define FB_VERS "1.3.3"
+#define FB_VERS "1.3.4"
 
 
 // precision
@@ -80,14 +80,15 @@
 #define TM_O_3RD    3
 
 // Linear Solver, do not use zero
-#define JACOBI    1
-#define SOR       2
-#define SOR2SMA   3
-#define SOR2CMA   4
-#define GMRES     5
-#define RBGS      6
-#define PCG       7
-#define PBiCGSTAB 8
+#define JACOBI       1
+#define SOR          2
+#define SOR2SMA      3
+#define SOR2CMA      4
+#define GMRES        5
+#define RBGS         6
+#define PCG          7
+#define PBiCGSTAB    8
+#define VP_ITERATION 9
 
 // KindOfSolver
 #define FLOW_ONLY               0
@@ -500,6 +501,59 @@ enum File_format {
   sph_fmt=0,
   plt3d_fmt,
   bov_fmt
+};
+
+/** 反復制御リスト */
+enum itr_cntl_key
+{
+  ic_prs1,
+  ic_prs2,
+  ic_vel1,
+  ic_tmp1,
+  ic_div,
+  ic_END
+};
+
+
+/** 反復法の収束基準種別 */
+enum norm_type
+{
+  v_div_max=1,
+  v_div_dbg,
+  dx_b,
+  r_b,
+  r_r0
+};
+
+/** 組み込み例題のID */
+enum Intrinsic_class
+{
+  id_Duct,
+  id_PPLT2D,
+  id_SHC1D,
+  id_PMT,
+  id_Rect,
+  id_Cylinder,
+  id_Step,
+  id_Polygon,
+  id_Sphere,
+  id_Jet
+};
+
+/** 流れの計算アルゴリズム */
+enum Algorithm_Flow
+{
+  Flow_FS_EE_EE=0,
+  Flow_FS_RK_CN,
+  Flow_FS_AB2,
+  Flow_FS_AB_CN
+};
+
+/** 温度計算アルゴリズム */
+enum Algorithm_Heat
+{
+  Heat_EE_EE=1, // Euler Explicit
+  Heat_EE_EI    // Euler Explicit + Implicit
 };
 
 #endif // _FB_DEFINE_H_

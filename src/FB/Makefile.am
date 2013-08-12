@@ -53,6 +53,8 @@ libFB_a_SOURCES = \
   Interval_Mngr.h \
   Intrinsic.C \
   Intrinsic.h \
+  IterationControl.C \
+  IterationControl.h \
   Medium.h \
   MonCompo.C \
   MonCompo.h \

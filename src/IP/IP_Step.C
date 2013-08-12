@@ -35,7 +35,7 @@ bool IP_Step::getTP(Control* R, TPControl* tpCntl)
   REAL_TYPE ct;
   
   // 2D or 3D mode
-  label="/Parameter/IntrinsicExample/Dimension";
+  label="/IntrinsicExample/Dimension";
   
   if ( !(tpCntl->GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -54,7 +54,7 @@ bool IP_Step::getTP(Control* R, TPControl* tpCntl)
   }
   
   // x-dir step
-  label="/Parameter/IntrinsicExample/StepLength";
+  label="/IntrinsicExample/StepLength";
   if ( !(tpCntl->GetValue(label, &ct )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
@@ -64,7 +64,7 @@ bool IP_Step::getTP(Control* R, TPControl* tpCntl)
   }
   
   // z-dir step
-  label="/Parameter/IntrinsicExample/StepHeight";
+  label="/IntrinsicExample/StepHeight";
   if ( !(tpCntl->GetValue(label, &ct )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
@@ -74,7 +74,7 @@ bool IP_Step::getTP(Control* R, TPControl* tpCntl)
   }
   
   // ドライバの設定 値が正の値のとき，有効．ゼロの場合はドライバなし
-  label="/Parameter/IntrinsicExample/DriverLength";
+  label="/IntrinsicExample/DriverLength";
   if ( tpCntl->GetValue(label, &ct ) ) {
     drv_length = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
   }
@@ -89,14 +89,14 @@ bool IP_Step::getTP(Control* R, TPControl* tpCntl)
   }
   
   // 媒質指定
-  label="/Parameter/IntrinsicExample/FluidMedium";
+  label="/IntrinsicExample/FluidMedium";
   if ( !(tpCntl->GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   m_fluid = str;
   
-  label="/Parameter/IntrinsicExample/SolidMedium";
+  label="/IntrinsicExample/SolidMedium";
   if ( !(tpCntl->GetValue(label, &str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
@@ -106,14 +106,14 @@ bool IP_Step::getTP(Control* R, TPControl* tpCntl)
   // Only driver is specified
   if ( drv_length > 0.0 )
   {
-    label="/Parameter/IntrinsicExample/DriverMedium";
+    label="/IntrinsicExample/DriverMedium";
     if ( !(tpCntl->GetValue(label, &str )) ) {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;
     }
     m_driver = str;
     
-    label="/Parameter/IntrinsicExample/DriverFaceMedium";
+    label="/IntrinsicExample/DriverFaceMedium";
     if ( !(tpCntl->GetValue(label, &str )) ) {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;

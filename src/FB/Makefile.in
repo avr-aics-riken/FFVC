@@ -145,12 +145,13 @@ am_libFB_a_OBJECTS = libFB_a-Alloc.$(OBJEXT) \
 	libFB_a-DataHolder.$(OBJEXT) libFB_a-FBUtility.$(OBJEXT) \
 	FB_util.$(OBJEXT) libFB_a-FileIO.$(OBJEXT) \
 	libFB_a-History.$(OBJEXT) libFB_a-Interval_Mngr.$(OBJEXT) \
-	libFB_a-Intrinsic.$(OBJEXT) libFB_a-MonCompo.$(OBJEXT) \
-	libFB_a-Monitor.$(OBJEXT) libFB_a-ParseBC.$(OBJEXT) \
-	libFB_a-ParseMat.$(OBJEXT) libFB_a-Sampling.$(OBJEXT) \
-	libFB_a-SetBC.$(OBJEXT) libFB_a-TPControl.$(OBJEXT) \
-	libFB_a-VoxInfo.$(OBJEXT) dbwrite.$(OBJEXT) \
-	libFB_a-dfi.$(OBJEXT) libFB_a-dfiinfo.$(OBJEXT)
+	libFB_a-Intrinsic.$(OBJEXT) libFB_a-IterationControl.$(OBJEXT) \
+	libFB_a-MonCompo.$(OBJEXT) libFB_a-Monitor.$(OBJEXT) \
+	libFB_a-ParseBC.$(OBJEXT) libFB_a-ParseMat.$(OBJEXT) \
+	libFB_a-Sampling.$(OBJEXT) libFB_a-SetBC.$(OBJEXT) \
+	libFB_a-TPControl.$(OBJEXT) libFB_a-VoxInfo.$(OBJEXT) \
+	dbwrite.$(OBJEXT) libFB_a-dfi.$(OBJEXT) \
+	libFB_a-dfiinfo.$(OBJEXT)
 libFB_a_OBJECTS = $(am_libFB_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -405,6 +406,8 @@ libFB_a_SOURCES = \
   Interval_Mngr.h \
   Intrinsic.C \
   Intrinsic.h \
+  IterationControl.C \
+  IterationControl.h \
   Medium.h \
   MonCompo.C \
   MonCompo.h \
@@ -526,6 +529,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-History.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-Interval_Mngr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-Intrinsic.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-IterationControl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-MonCompo.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-Monitor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-ParseBC.Po@am__quote@
@@ -704,6 +708,20 @@ libFB_a-Intrinsic.obj: Intrinsic.C
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='Intrinsic.C' object='libFB_a-Intrinsic.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -c -o libFB_a-Intrinsic.obj `if test -f 'Intrinsic.C'; then $(CYGPATH_W) 'Intrinsic.C'; else $(CYGPATH_W) '$(srcdir)/Intrinsic.C'; fi`
+
+libFB_a-IterationControl.o: IterationControl.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -MT libFB_a-IterationControl.o -MD -MP -MF $(DEPDIR)/libFB_a-IterationControl.Tpo -c -o libFB_a-IterationControl.o `test -f 'IterationControl.C' || echo '$(srcdir)/'`IterationControl.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFB_a-IterationControl.Tpo $(DEPDIR)/libFB_a-IterationControl.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='IterationControl.C' object='libFB_a-IterationControl.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -c -o libFB_a-IterationControl.o `test -f 'IterationControl.C' || echo '$(srcdir)/'`IterationControl.C
+
+libFB_a-IterationControl.obj: IterationControl.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -MT libFB_a-IterationControl.obj -MD -MP -MF $(DEPDIR)/libFB_a-IterationControl.Tpo -c -o libFB_a-IterationControl.obj `if test -f 'IterationControl.C'; then $(CYGPATH_W) 'IterationControl.C'; else $(CYGPATH_W) '$(srcdir)/IterationControl.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFB_a-IterationControl.Tpo $(DEPDIR)/libFB_a-IterationControl.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='IterationControl.C' object='libFB_a-IterationControl.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -c -o libFB_a-IterationControl.obj `if test -f 'IterationControl.C'; then $(CYGPATH_W) 'IterationControl.C'; else $(CYGPATH_W) '$(srcdir)/IterationControl.C'; fi`
 
 libFB_a-MonCompo.o: MonCompo.C
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -MT libFB_a-MonCompo.o -MD -MP -MF $(DEPDIR)/libFB_a-MonCompo.Tpo -c -o libFB_a-MonCompo.o `test -f 'MonCompo.C' || echo '$(srcdir)/'`MonCompo.C
