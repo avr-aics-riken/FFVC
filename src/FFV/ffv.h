@@ -51,7 +51,6 @@
 #include "ParseBC.h"
 #include "ParseMat.h"
 #include "VoxInfo.h"
-#include "TPControl.h"
 #include "ffv_SetBC.h"
 #include "CompoFraction.h"
 #include "ffv_Version.h"
@@ -408,7 +407,7 @@ private:
   
   
   // 計算領域情報を設定する
-  void DomainInitialize(TPControl* tp_dom);
+  void DomainInitialize(TextParser* tp_dom);
   
   
   // BCIndexにビット情報をエンコードする
@@ -436,7 +435,7 @@ private:
   
   
   // グローバルな領域情報を取得
-  int getDomainInfo(TPControl* tp_dom);
+  int getDomainInfo(TextParser* tp_dom);
   
   
   // Intrinsic Classの同定
@@ -444,7 +443,7 @@ private:
   
   
   // 線形ソルバを特定
-  void identifyLinearSolver(TPControl* tpCntl);
+  void identifyLinearSolver(TextParser* tpCntl);
   
   
   // 出力ファイルの初期化
@@ -500,7 +499,7 @@ private:
   
   
   // 線形ソルバを特定し，パラメータをセットする
-  void setLinearSolver(TPControl* tpCntl, const int odr, const string label);
+  void setLinearSolver(TextParser* tpCntl, const int odr, const string label);
   
   
   // ParseMatクラスをセットアップし，媒質情報を入力ファイルから読み込み，媒質リストを作成する
@@ -532,7 +531,7 @@ private:
   
   
   // パラメータのロードと計算領域を初期化し，並列モードを返す
-  string setupDomain(TPControl* tpf);
+  string setupDomain(TextParser* tpf);
   
   
   // 幾何形状情報を準備し，交点計算を行う

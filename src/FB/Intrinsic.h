@@ -33,8 +33,8 @@
 #include "Control.h"
 #include "Component.h"
 #include "vec3.h"
-#include "TPControl.h"
 #include "Medium.h"
+#include "TextParser.h"
 
 
 class Intrinsic : public DomainInfo {
@@ -73,7 +73,7 @@ public:
 public:
   
   // 例題クラス固有のパラメータをロードする
-  virtual bool getTP(Control* R, TPControl* tpCntl) 
+  virtual bool getTP(Control* R, TextParser* tpCntl) 
   { 
     return true; 
   }

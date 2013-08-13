@@ -33,9 +33,9 @@
 #include "FBUtility.h"
 #include "BndOuter.h"
 #include "Interval_Mngr.h"
-#include "TPControl.h"
 #include "CompoFraction.h"
 #include "IterationControl.h"
+#include "TextParser.h"
 
 /* 20130611 commentout
 #include "PLOT3D_read.h"
@@ -356,7 +356,7 @@ public:
 // #################################################################
 class Control : public DomainInfo {
 protected:
-  TPControl* tpCntl;   ///< テキストパーサへのポインタ
+  TextParser* tpCntl;   ///< テキストパーサへのポインタ
   
 public:
     
@@ -1114,9 +1114,9 @@ public:
   
   /**
    * @brief TPのポインタを受け取る
-   * @param [in] tp TPControl
+   * @param [in] tp TextParser
    */
-  void importTP(TPControl* tp);
+  void importTP(TextParser* tp);
   
   
   /**

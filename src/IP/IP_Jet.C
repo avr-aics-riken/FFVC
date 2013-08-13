@@ -318,7 +318,7 @@ schedule(static)
  * @param [in] tpCntl テキストパーサクラス
  * @return true-成功, false-エラー
  */
-bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
+bool IP_Jet::getTP(Control* R, TextParser* tpCntl)
 {
   std::string str;
   std::string label;
@@ -329,7 +329,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
   // 2D or 3D mode
   label="/IntrinsicExample/Dimension";
   
-  if ( !(tpCntl->GetValue(label, &str )) ) {
+  if ( !(tpCntl->getInspectedValue(label, str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
@@ -350,7 +350,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
   // Ring1
   label="/IntrinsicExample/Ring1/UseRing";
   
-  if ( !(tpCntl->GetValue(label, &str )) ) {
+  if ( !(tpCntl->getInspectedValue(label, str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
@@ -368,7 +368,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
   if ( pat_1 == ON )
   {
     label="/IntrinsicExample/Ring1/InnerRadius";
-    if ( !(tpCntl->GetValue(label, &ct )) ) {
+    if ( !(tpCntl->getInspectedValue(label, ct )) ) {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;
     }
@@ -377,7 +377,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
     }
     
     label="/IntrinsicExample/RIng1/OuterRadius";
-    if ( !(tpCntl->GetValue(label, &ct )) ) {
+    if ( !(tpCntl->getInspectedValue(label, ct )) ) {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;
     }
@@ -386,7 +386,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
     }
     
     label="/IntrinsicExample/RIng1/RotationFrequency";
-    if ( !(tpCntl->GetValue(label, &ct )) ) {
+    if ( !(tpCntl->getInspectedValue(label, ct )) ) {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;
     }
@@ -395,7 +395,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
     }
     
     label="/IntrinsicExample/Ring1/InletMassFlow";
-    if ( !(tpCntl->GetValue(label, &ct )) ) {
+    if ( !(tpCntl->getInspectedValue(label, ct )) ) {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;
     }
@@ -412,7 +412,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
   // Ring2
   label="/IntrinsicExample/Ring2/UseRing";
   
-  if ( !(tpCntl->GetValue(label, &str )) ) {
+  if ( !(tpCntl->getInspectedValue(label, str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
@@ -430,7 +430,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
   if ( pat_2 == ON )
   {
     label="/IntrinsicExample/Ring2/InnerRadius";
-    if ( !(tpCntl->GetValue(label, &ct )) ) {
+    if ( !(tpCntl->getInspectedValue(label, ct )) ) {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;
     }
@@ -439,7 +439,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
     }
     
     label="/IntrinsicExample/Ring2/OuterRadius";
-    if ( !(tpCntl->GetValue(label, &ct )) ) {
+    if ( !(tpCntl->getInspectedValue(label, ct )) ) {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;
     }
@@ -448,7 +448,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
     }
     
     label="/IntrinsicExample/Ring2/RotationFrequency";
-    if ( !(tpCntl->GetValue(label, &ct )) ) {
+    if ( !(tpCntl->getInspectedValue(label, ct )) ) {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;
     }
@@ -457,7 +457,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
     }
     
     label="/IntrinsicExample/Ring2/InletMassFlow";
-    if ( !(tpCntl->GetValue(label, &ct )) ) {
+    if ( !(tpCntl->getInspectedValue(label, ct )) ) {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;
     }
@@ -474,7 +474,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
   // 媒質指定
   label="/IntrinsicExample/FluidMedium";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
@@ -483,7 +483,7 @@ bool IP_Jet::getTP(Control* R, TPControl* tpCntl)
   
   label="/IntrinsicExample/SolidMedium";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;

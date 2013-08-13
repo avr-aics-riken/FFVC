@@ -25,8 +25,8 @@
 #include "FB_Define.h"
 #include "Medium.h"
 #include "Component.h"
-#include "TPControl.h"
 #include "FBUtility.h"
+#include "TextParser.h"
 
 class  ParseMat {
 private:
@@ -34,7 +34,7 @@ private:
   
   int NoMedium;    ///< コンポーネントの数
   
-  TPControl* tpCntl;
+  TextParser* tpCntl;
   
   
 public:
@@ -78,9 +78,9 @@ public:
   
   /**
    * @brief TPのポインタを受け取る
-   * @param [in] tp  TPControl
+   * @param [in] tp  TextParser
    */
-  bool importTP(TPControl* tp);
+  bool importTP(TextParser* tp);
   
   
   /**

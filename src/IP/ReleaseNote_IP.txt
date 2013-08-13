@@ -13,6 +13,9 @@ Release Note
 
 ****************************************************************************
 
+Ver 1.2.5    13 Aug. 2013
+  - TextParset-1.4.0対応
+
 Ver 1.2.4    31 Mar. 2013
   - 次元モードパラメータ >> /Parameter/IntrinsicExample/Dimension
   - mode, even, m_fluid, m_solid >> Intrinsic.hへ

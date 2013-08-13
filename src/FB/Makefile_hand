@@ -23,7 +23,6 @@ CSRCS =
 CXXSRCS = Control.C \
           FBUtility.C \
           Intrinsic.C \
-          TPControl.C \
           ParseBC.C \
           ParseMat.C \
           FileIO.C \

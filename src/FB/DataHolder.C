@@ -220,26 +220,31 @@ void DataHolder::printError(const char* fmt, ...)
 ///
 void DataHolderManager::readData()
 {
-  string label_base,label_leaf,str;
-  string label,file;
+  std::string label_base,label_leaf,str;
+  std::string label,file;
   
   label_base="/Parameter/DataHolder";
-  if ( !tpCntl->chkNode(label_base) ) {
+  
+  if ( !tpCntl->chkNode(label_base) )
+  {
     stamped_printf("\tParsing error : Missing the section of 'DataHolder' in 'Parameter'\n");
     Exit(0);
   }
   
   // check number of Elem
   int ndata=tpCntl->countLabels(label_base);
-  if ( ndata == 0 ) {
+  
+  if ( ndata == 0 )
+  {
     stamped_printf("\tParsing error : No Data at DataHolder\n");
     Exit(0);
   }
   
   // load statement list
-  for (int i=1; i<=ndata; i++) {
-    
-    if(!tpCntl->GetNodeStr(label_base,i,&str)){
+  for (int i=1; i<=ndata; i++)
+  {
+    if ( !tpCntl->getNodeStr(label_base,i, str) )
+    {
       stamped_printf("\tGetNodeStr error\n");
       Exit(0);
     }
@@ -247,7 +252,8 @@ void DataHolderManager::readData()
     // name
     label_leaf=label_base+"/"+str+"/Name";
 
-    if ( !(tpCntl->GetValue(label_leaf, &label )) ) {
+    if ( !(tpCntl->getInspectedValue(label_leaf, label )) )
+    {
       stamped_printf("\tParsing error : No valid keyword [SOLID/FLUID] in 'InitTempOfMedium'\n");
       Exit(0);
     }
@@ -255,7 +261,8 @@ void DataHolderManager::readData()
     // file
     label_leaf=label_base+"/"+str+"/File";
 
-    if ( !(tpCntl->GetValue(label_leaf, &file )) ) {
+    if ( !(tpCntl->getInspectedValue(label_leaf, file )) )
+    {
       stamped_printf("\tParsing error : No valid keyword [SOLID/FLUID] in 'InitTempOfMedium'\n");
       Exit(0);
     }
@@ -318,7 +325,7 @@ void DataHolderManager::printError(const char* fmt, ...)
 
 
 // TPのポインタを受け取る
-bool DataHolderManager::importTP(TPControl* tp) 
+bool DataHolderManager::importTP(TextParser* tp) 
 { 
   if ( !tp ) return false;
   tpCntl = tp;

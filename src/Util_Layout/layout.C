@@ -62,11 +62,11 @@ void LAYOUT::ReadInit()
   FILE* fp = NULL;
   
   // TPインスタンス生成
-  TPControl tpCntl;
-  tpCntl.getTPinstance();
+  TextParser tpCntl;
+
   
   //入力ファイルをセット
-  int ierror = tpCntl.readTPfile(fname);
+  int ierror = tpCntl.read(fname);
   
   //入力ファイルの読み込み--->パラメータのセット
   ReadInputFile(&tpCntl);
@@ -80,7 +80,7 @@ void LAYOUT::ReadInit()
 
 // #################################################################
 //
-void LAYOUT::ReadInputFile(TPControl* tpCntl)
+void LAYOUT::ReadInputFile(TextParser* tpCntl)
 {
   string str,buff;
   string label,label_base,label_leaf;
@@ -97,7 +97,7 @@ void LAYOUT::ReadInputFile(TPControl* tpCntl)
   dfi_name.clear();
   for (int i=0; i<nnode; i++) {
     
-    if(!tpCntl->GetNodeStr(label_base,i+1,&str))
+    if(!tpCntl->getNodeStr(label_base, i+1, str))
     {
       printf("\tParsing error : No Elem name\n");
       Exit(0);
@@ -105,7 +105,7 @@ void LAYOUT::ReadInputFile(TPControl* tpCntl)
     if( strcasecmp(str.substr(0,4).c_str(), "list") ) continue;
     label=label_base+"/"+str;
     
-    if ( !(tpCntl->GetValue(label, &buff )) ) {
+    if ( !(tpCntl->getInspectedValue(label, buff )) ) {
       printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
@@ -130,7 +130,7 @@ void LAYOUT::ReadInputFile(TPControl* tpCntl)
   label_base = "/LayoutData";
   for (int i=0; i<nnode; i++) {
     
-    if(!tpCntl->GetNodeStr(label_base,i+1,&str))
+    if(!tpCntl->getNodeStr(label_base, i+1, str))
     {
       printf("\tParsing error : No Elem name\n");
       Exit(0);
@@ -138,7 +138,7 @@ void LAYOUT::ReadInputFile(TPControl* tpCntl)
     if( strcasecmp(str.substr(0,6).c_str(), "divide") ) continue;
     
     label=label_base+"/"+str+"/machine";
-    if ( !(tpCntl->GetValue(label, &buff )) ) {
+    if ( !(tpCntl->getInspectedValue(label, buff )) ) {
       printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
@@ -147,7 +147,7 @@ void LAYOUT::ReadInputFile(TPControl* tpCntl)
     label=label_base+"/"+str+"/rank";
     int v[2];
     for (int n=0; n<2; n++) v[n]=0;
-    if ( !(tpCntl->GetVector(label, v, 2)) ) {
+    if ( !(tpCntl->getInspectedVector(label, v, 2)) ) {
       printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
@@ -155,7 +155,7 @@ void LAYOUT::ReadInputFile(TPControl* tpCntl)
     rankie.push_back(v[1]);
     
     label=label_base+"/"+str+"/dir";
-    if ( !(tpCntl->GetValue(label, &buff )) ) {
+    if ( !(tpCntl->getInspectedValue(label, buff )) ) {
       printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
@@ -165,7 +165,7 @@ void LAYOUT::ReadInputFile(TPControl* tpCntl)
   
   //出力ディレクトリの指定 ---> 実行オプションよりこちらが優先される
   label = "/LayoutData/OutputDir";
-  if ( (tpCntl->GetValue(label, &str )) )
+  if ( (tpCntl->getInspectedValue(label, str )) )
   {
     dirname=str;
     CheckDir(dirname);
@@ -175,7 +175,7 @@ void LAYOUT::ReadInputFile(TPControl* tpCntl)
   // DivideFunc ---> 出力を項目別にファイル分割するオプション
   label = "/LayoutData/FFVDivideFunc";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -195,7 +195,7 @@ void LAYOUT::ReadInputFile(TPControl* tpCntl)
   // FileNameGrid --- option
   label = "/LayoutData/Plot3dOptions/FileNameGrid";
   
-  if ( !(tpCntl->GetValue(label, &str)) )
+  if ( !(tpCntl->getInspectedValue(label, str)) )
   {
     basename_g = "PLOT3DoutputGrid";
   }
@@ -211,7 +211,7 @@ void LAYOUT::ReadInputFile(TPControl* tpCntl)
   // FileNameFunc --- option
   label = "/LayoutData/Plot3dOptions/FileNameFunc";
   
-  if ( !(tpCntl->GetValue(label, &str)) )
+  if ( !(tpCntl->getInspectedValue(label, str)) )
   {
     basename_f = "PLOT3Doutput";
   }

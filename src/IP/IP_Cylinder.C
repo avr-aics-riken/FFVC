@@ -29,7 +29,7 @@
  * @param [in] tpCntl テキストパーサクラス
  * @return true-成功, false-エラー
  */
-bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
+bool IP_Cylinder::getTP(Control* R, TextParser* tpCntl)
 {
   std::string str;
   std::string label;
@@ -38,7 +38,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   // 2D or 3D mode
   label = "/IntrinsicExample/Dimension";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
@@ -61,7 +61,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   // x-dir step
   label = "/IntrinsicExample/Width";
   
-  if ( !(tpCntl->GetValue(label, &ct )) )
+  if ( !(tpCntl->getInspectedValue(label, ct )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
@@ -74,7 +74,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   // z-dir step
   label="/IntrinsicExample/Height";
   
-  if ( !(tpCntl->GetValue(label, &ct )) )
+  if ( !(tpCntl->getInspectedValue(label, ct )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
@@ -87,7 +87,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   // ドライバの設定 値が正の値のとき，有効．ゼロの場合はドライバなし
   label = "/IntrinsicExample/Driver";
   
-  if ( tpCntl->GetValue(label, &ct ) )
+  if ( tpCntl->getInspectedValue(label, ct ) )
   {
     drv_length = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
   }
@@ -115,7 +115,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   // 媒質指定
   label = "/IntrinsicExample/FluidMedium";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
@@ -125,7 +125,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   
   label = "/IntrinsicExample/SolidMedium";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
@@ -136,7 +136,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
   {
     label = "/IntrinsicExample/DriverMedium";
     
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( !(tpCntl->getInspectedValue(label, str )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;
@@ -146,7 +146,7 @@ bool IP_Cylinder::getTP(Control* R, TPControl* tpCntl)
     
     label = "/IntrinsicExample/DriverFaceMedium";
     
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( !(tpCntl->getInspectedValue(label, str )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;

@@ -150,7 +150,7 @@ void MonitorList::getMonitor(Control* C)
   // 集約モード
   label = "/MonitorList/OutputMode";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -176,7 +176,7 @@ void MonitorList::getMonitor(Control* C)
   // サンプリング間隔
   label="/MonitorList/SamplingIntervalType";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -199,7 +199,7 @@ void MonitorList::getMonitor(Control* C)
     
     label="/MonitorList/SamplingInterval";
     
-    if ( !(tpCntl->GetValue(label, &f_val )) )
+    if ( !(tpCntl->getInspectedValue(label, f_val )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
@@ -245,7 +245,7 @@ void MonitorList::getMonitor(Control* C)
   
   for (int i=0; i<nnode; i++) {
     
-    if(!tpCntl->GetNodeStr(label_base, i+1, &str))
+    if(!tpCntl->getNodeStr(label_base, i+1, str))
     {
       printf("\tParsing error : No No List[@]\n");
       Exit(0);
@@ -267,7 +267,7 @@ void MonitorList::getMonitor(Control* C)
   
   for (int i=0; i<nnode; i++)
   {
-    if(!tpCntl->GetNodeStr(label_base, i+1, &str))
+    if(!tpCntl->getNodeStr(label_base, i+1, str))
     {
       printf("\tParsing error : No List[@]\n");
       Exit(0);
@@ -280,7 +280,7 @@ void MonitorList::getMonitor(Control* C)
     // sampling type & param check
     label = label_leaf + "/Type";
     
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( !(tpCntl->getInspectedValue(label, str )) )
     {
       stamped_printf("\tParsing error : No entory '%s'\n", label.c_str());
       Exit(0);
@@ -303,7 +303,7 @@ void MonitorList::getMonitor(Control* C)
     // Labelの取得
     label = label_leaf + "/Label";
     
-    if ( !(tpCntl->GetValue(label, &name )) )
+    if ( !(tpCntl->getInspectedValue(label, name )) )
     {
       Hostonly_ stamped_printf("\tParsing warning : No Label in '%s'\n", label.c_str());
       Exit(0);
@@ -314,7 +314,7 @@ void MonitorList::getMonitor(Control* C)
     
     label = label_leaf + "/Variable";
     
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( !(tpCntl->getInspectedValue(label, str )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
@@ -331,7 +331,7 @@ void MonitorList::getMonitor(Control* C)
     // method
     label = label_leaf + "/SamplingMethod";
     
-    if ( !(tpCntl->GetValue(label, &method )) )
+    if ( !(tpCntl->getInspectedValue(label, method )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get 'SamplingMethod' in '%s'\n", label.c_str());
       Exit(0);
@@ -340,7 +340,7 @@ void MonitorList::getMonitor(Control* C)
     // mode
     label = label_leaf + "/SamplingMode";
     
-    if ( !(tpCntl->GetValue(label, &mode )) )
+    if ( !(tpCntl->getInspectedValue(label, mode )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get 'SamplingMode' in '%s'\n", label.c_str());
       Exit(0);
@@ -381,7 +381,7 @@ void MonitorList::get_Mon_Line(Control* C,
   
   label=label_base+"/Division";
   
-  if ( !(tpCntl->GetValue(label, &nDivision )) )
+  if ( !(tpCntl->getInspectedValue(label, nDivision )) )
   {
 	  Hostonly_ stamped_printf("\tParsing error : No Division\n");
 	  Exit(0);
@@ -392,7 +392,7 @@ void MonitorList::get_Mon_Line(Control* C,
   label=label_base+"/From";
   
   for (int n=0; n<3; n++) v[n]=0.0;
-  if ( !(tpCntl->GetVector(label, v, 3 )) )
+  if ( !(tpCntl->getInspectedVector(label, v, 3 )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'From' in 'Line'\n");
     Exit(0);
@@ -408,7 +408,7 @@ void MonitorList::get_Mon_Line(Control* C,
   label=label_base+"/To";
   
   for (int n=0; n<3; n++) v[n]=0.0;
-  if ( !(tpCntl->GetVector(label, v, 3 )) )
+  if ( !(tpCntl->getInspectedVector(label, v, 3 )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get 'To' in 'Line'\n");
     Exit(0);
@@ -445,8 +445,10 @@ void MonitorList::get_Mon_Pointset(Control* C,
     Exit(0);
   }
   
-  for (int i=0; i<nnode; i++) {
-    if(!tpCntl->GetNodeStr(label_base,i+1,&str)){
+  for (int i=0; i<nnode; i++)
+  {
+    if(!tpCntl->getNodeStr(label_base, i+1, str))
+    {
       printf("\tParsing error : No Elem name\n");
       Exit(0);
     }
@@ -458,7 +460,7 @@ void MonitorList::get_Mon_Pointset(Control* C,
   int pc=0;
   for (int i=0; i<nnode; i++)
   {
-    if(!tpCntl->GetNodeStr(label_base,i+1,&str))
+    if(!tpCntl->getNodeStr(label_base, i+1, str))
     {
       printf("\tParsing error : No Elem name\n");
       Exit(0);
@@ -471,7 +473,7 @@ void MonitorList::get_Mon_Pointset(Control* C,
     // set coordinate
     label=label_leaf+"/Coordinate";
     for (int n=0; n<3; n++) v[n]=0.0;
-    if ( !(tpCntl->GetVector(label, v, 3 )) )
+    if ( !(tpCntl->getInspectedVector(label, v, 3 )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
@@ -482,10 +484,12 @@ void MonitorList::get_Mon_Pointset(Control* C,
     
     // set Labelの取得．ラベルなしでもエラーではない
     label=label_leaf+"/Label";
-    if ( !(tpCntl->GetValue(label, &str )) ) {
+    if ( !(tpCntl->getInspectedValue(label, str )) )
+    {
       Hostonly_ stamped_printf("\tParsing warning : No commnet for '%s'\n", label.c_str());
     }
-    if ( !strcasecmp(str.c_str(), "") ) {
+    if ( !strcasecmp(str.c_str(), "") )
+    {
       sprintf(tmpstr, "point_%d",pc);
       str = tmpstr;
     }
@@ -527,7 +531,7 @@ string MonitorList::getOutputTypeStr()
 
 // #################################################################
 // TPのポインタを受け取る
-void MonitorList::importTP(TPControl* tp)
+void MonitorList::importTP(TextParser* tp)
 {
   if ( !tp ) Exit(0);
   tpCntl = tp;

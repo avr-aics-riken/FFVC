@@ -130,7 +130,7 @@ void ParseMat::getMediumTable(const int m_NoMedium, MediumList* mat)
   
   for (m=1; m<=NoMedium; m++)
   {
-    if ( !tpCntl->GetNodeStr(label_base, m, &str) )
+    if ( !tpCntl->getNodeStr(label_base, m, str) )
     {
       Exit(0);
     }
@@ -141,7 +141,7 @@ void ParseMat::getMediumTable(const int m_NoMedium, MediumList* mat)
     
     for (int i=1; i<=n; i++)
     {
-      if ( !tpCntl->GetNodeStr(label_m, i, &str) )
+      if ( !tpCntl->getNodeStr(label_m, i, str) )
       {
         Exit(0);
       }
@@ -151,7 +151,7 @@ void ParseMat::getMediumTable(const int m_NoMedium, MediumList* mat)
       
       if ( !strcasecmp(str.c_str(), "State") )
       {
-        if ( !(tpCntl->GetValue(label_leaf, &label)) )
+        if ( !(tpCntl->getInspectedValue(label_leaf, label)) )
         {
           Exit(0);
         }
@@ -167,37 +167,37 @@ void ParseMat::getMediumTable(const int m_NoMedium, MediumList* mat)
       }
       else if ( !strcasecmp(str.c_str(), "MassDensity") )
       {
-        if ( !(tpCntl->GetValue(label_leaf, &fval )) ) Exit(0);
+        if ( !(tpCntl->getInspectedValue(label_leaf, fval )) ) Exit(0);
         addVaues(mat, m, p_density, fval);
       }
       else if ( !strcasecmp(str.c_str(), "SpecificHeat") )
       {
-        if ( !(tpCntl->GetValue(label_leaf, &fval )) ) Exit(0);
+        if ( !(tpCntl->getInspectedValue(label_leaf, fval )) ) Exit(0);
         addVaues(mat, m, p_specific_heat, fval);
       }
       else if ( !strcasecmp(str.c_str(), "ThermalConductivity") )
       {
-        if ( !(tpCntl->GetValue(label_leaf, &fval )) ) Exit(0);
+        if ( !(tpCntl->getInspectedValue(label_leaf, fval )) ) Exit(0);
         addVaues(mat, m, p_thermal_conductivity, fval);
       }
       else if ( !strcasecmp(str.c_str(), "KinematicViscosity") )
       {
-        if ( !(tpCntl->GetValue(label_leaf, &fval )) ) Exit(0);
+        if ( !(tpCntl->getInspectedValue(label_leaf, fval )) ) Exit(0);
         addVaues(mat, m, p_kinematic_viscosity, fval);
       }
       else if ( !strcasecmp(str.c_str(), "Viscosity") )
       {
-        if ( !(tpCntl->GetValue(label_leaf, &fval )) ) Exit(0);
+        if ( !(tpCntl->getInspectedValue(label_leaf, fval )) ) Exit(0);
         addVaues(mat, m, p_viscosity, fval);
       }
       else if ( !strcasecmp(str.c_str(), "SpeedOfSound") )
       {
-        if ( !(tpCntl->GetValue(label_leaf, &fval )) ) Exit(0);
+        if ( !(tpCntl->getInspectedValue(label_leaf, fval )) ) Exit(0);
         addVaues(mat, m, p_speed_of_sound, fval);
       }
       else if ( !strcasecmp(str.c_str(), "VolumeExpansion") )
       {
-        if ( !(tpCntl->GetValue(label_leaf, &fval )) ) Exit(0);
+        if ( !(tpCntl->getInspectedValue(label_leaf, fval )) ) Exit(0);
         addVaues(mat, m, p_vol_expansion, fval);
       }
       else if( !strcasecmp(str.c_str(), "color") )
@@ -216,7 +216,7 @@ void ParseMat::getMediumTable(const int m_NoMedium, MediumList* mat)
 
 // #################################################################
 //TPのポインタを受け取る
-bool ParseMat::importTP(TPControl* tp)
+bool ParseMat::importTP(TextParser* tp)
 {
   if ( !tp ) return false;
   tpCntl = tp;

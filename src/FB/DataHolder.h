@@ -30,8 +30,8 @@
 #include <fstream>
 
 #include "FB_Define.h"
-#include "TPControl.h"
 #include "DomainInfo.h"
+#include "TextParser.h"
 
 #ifdef __ARCH_BG
 #include <stdarg.h> // for va_start()
@@ -49,8 +49,8 @@ typedef std::map<REAL_TYPE,REAL_TYPE> DATA_MAP;
  */
 class DataHolder {
 protected:
-  string m_label;  ///< ラベル
-  string m_file;   ///< データファイル
+  std::string m_label;  ///< ラベル
+  std::string m_file;   ///< データファイル
   int m_id;        ///< MPIランク番号
 
   DATA_MAP m_data;  ///< データコンテナ
@@ -162,7 +162,7 @@ protected:
 /* ------------- DataHolderManager ----------------------------------*/
 
 /// DetataHolderコンテナ. ラベルをキーとしたマップ.
-typedef std::map<string,DataHolder*> DATA_HOLDER_MAP;
+typedef std::map<std::string,DataHolder*> DATA_HOLDER_MAP;
 
 
 /**
@@ -174,7 +174,7 @@ protected:
 
   DATA_HOLDER_MAP m_dataHolders;  ///< DataHolderコンテナ(ラベルをキーとしたマップ)
   
-  TPControl* tpCntl;
+  TextParser* tpCntl;
   
   /// エラーメッセージ出力.
   ///
@@ -202,7 +202,7 @@ public:
   ///
   ///   @note 対応するDataHolderがない場合は0を返す.
   ///
-  DataHolder* getDataHolder(const string& label) {
+  DataHolder* getDataHolder(const std::string& label) {
     DATA_HOLDER_MAP::iterator it = m_dataHolders.find(label);
     if (it != m_dataHolders.end()) {
       return it->second;
@@ -245,10 +245,10 @@ public:
   
   /**
    * @brief TPのポインタを受け取る
-   * @param [in] tp  TPControlクラスのポインタ
+   * @param [in] tp  TextParserのポインタ
    * @return エラーコード
    */
-  bool importTP(TPControl* tp);
+  bool importTP(TextParser* tp);
 
 };
 

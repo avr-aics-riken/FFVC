@@ -33,7 +33,6 @@
 #include "Medium.h"
 #include "vec3.h"
 #include "Intrinsic.h"
-#include "TPControl.h"
 
 using namespace std;
 
@@ -60,7 +59,7 @@ private:
   bool HeatProblem;
   bool isCDS;
   
-  TPControl* tpCntl;      ///< テキストパーサーのラッパークラス
+  TextParser* tpCntl;      ///< テキストパーサーのラッパークラス
   BoundaryOuter* BaseBc;  ///< テンポラリのテーブル
 
 
@@ -357,9 +356,9 @@ public:
   
   /**
    * @brief TPのポインタを受け取る
-   * @param [in] tp  TPControlクラスのポインタ
+   * @param [in] tp  TextParserクラスのポインタ
    */
-  void importTP(TPControl* tp);
+  void importTP(TextParser* tp);
 
   
   

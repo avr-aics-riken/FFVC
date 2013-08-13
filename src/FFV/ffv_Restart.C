@@ -2080,7 +2080,7 @@ bool FFV::getCoarseResult (int i, int j, int k,
   
   
 	// dfiファイルローダをインスタンス
-  TPControl tp_dfi;
+  TextParser tp_dfi;
   
   tp_dfi.getTPinstance();
   
@@ -2131,7 +2131,7 @@ bool FFV::getCoarseResult (int i, int j, int k,
       // ランク
       label = label_leaf + "/RankID";
       
-      if ( !tp_dfi.GetValue(label, &ibuf) )
+      if ( !tp_dfi.getInspectedValue(label, &ibuf) )
       {
         Hostonly_ printf("\tParsing error : Invalid integer value for '%s'\n", label.c_str());
         Exit(0);
@@ -2140,7 +2140,7 @@ bool FFV::getCoarseResult (int i, int j, int k,
       
       // VoxelSize
       label = label_leaf + "/VoxelSize";
-      if ( !(tp_dfi.GetVector(label, iv, 3)) )
+      if ( !(tp_dfi.getInspectedVector(label, iv, 3)) )
       {
         Hostonly_ printf("\tParsing error : Invalid integer value for '%s'\n", label.c_str());
         Exit(0);
@@ -2151,7 +2151,7 @@ bool FFV::getCoarseResult (int i, int j, int k,
       
       // HeadIndex
       label = label_leaf + "/HeadIndex";
-      if ( !(tp_dfi.GetVector(label, iv, 3)) )
+      if ( !(tp_dfi.getInspectedVector(label, iv, 3)) )
       {
         Hostonly_ printf("\tParsing error : Invalid integer value for '%s'\n", label.c_str());
         Exit(0);
@@ -2162,7 +2162,7 @@ bool FFV::getCoarseResult (int i, int j, int k,
       
       // TailIndex
       label = label_leaf + "/TailIndex";
-      if ( !(tp_dfi.GetVector(label, iv, 3)) )
+      if ( !(tp_dfi.getInspectedVector(label, iv, 3)) )
       {
         Hostonly_ printf("\tParsing error : Invalid integer value for '%s'\n", label.c_str());
         Exit(0);
@@ -2264,7 +2264,7 @@ bool FFV::getCoarseResult2(int i, int j, int k,
   
   
 	// dfiファイルローダをインスタンス
-  TPControl tp_dfi;
+  TextParser tp_dfi;
   
   tp_dfi.getTPinstance();
   

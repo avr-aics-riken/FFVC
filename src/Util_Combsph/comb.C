@@ -76,16 +76,15 @@ void COMB::ReadInit(string input_file)
   FILE* fp = NULL;
   
   // TPインスタンス生成
-  TPControl tpCntl;
-  tpCntl.getTPinstance();
+  TextParser tpCntl;
   
-  //入力ファイルをセット
-  int ierror = tpCntl.readTPfile(input_file);
+  // 入力ファイルをセット
+  int ierror = tpCntl.read(input_file);
   
-  //入力ファイルの読み込み--->パラメータのセット
+  // 入力ファイルの読み込み--->パラメータのセット
   ReadInputFile(&tpCntl);
   
-  //TextParserの破棄
+  // TextParserの破棄
   tpCntl.remove();
   
   return;
@@ -93,7 +92,7 @@ void COMB::ReadInit(string input_file)
 
 // #################################################################
 //
-void COMB::ReadInputFile(TPControl* tpCntl)
+void COMB::ReadInputFile(TextParser* tpCntl)
 {
   string str;
   string label,label_base,label_leaf;
@@ -111,7 +110,7 @@ void COMB::ReadInputFile(TPControl* tpCntl)
   label_base = "/CombData";
   for (int i=0; i<nnode; i++) {
     
-    if(!tpCntl->GetNodeStr(label_base,i+1,&str))
+    if(!tpCntl->getNodeStr(label_base, i+1, str))
     {
       printf("\tParsing error : No Elem name\n");
       Exit(0);
@@ -119,7 +118,7 @@ void COMB::ReadInputFile(TPControl* tpCntl)
     if( strcasecmp(str.substr(0,4).c_str(), "list") ) continue;
     label=label_base+"/"+str;
     
-    if ( !(tpCntl->GetValue(label, &str )) ) {
+    if ( !(tpCntl->getInspectedValue(label, str )) ) {
       printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
@@ -139,7 +138,7 @@ void COMB::ReadInputFile(TPControl* tpCntl)
   
   //出力ディレクトリの指定 ---> 実行オプションよりこちらが優先される
   label = "/CombData/OutputDir";
-  if ( (tpCntl->GetValue(label, &str )) )
+  if ( (tpCntl->getInspectedValue(label, str )) )
   {
     out_dirname=str;
     LOG_OUT_ fprintf(fplog,"\tReset Output Directory '%s'\n", out_dirname.c_str());
@@ -151,7 +150,7 @@ void COMB::ReadInputFile(TPControl* tpCntl)
   
   //入力ディレクトリの指定
   label = "/CombData/InputDir";
-  if ( (tpCntl->GetValue(label, &str )) )
+  if ( (tpCntl->getInspectedValue(label, str )) )
   {
     in_dirname=str;
     LOG_OUT_ fprintf(fplog,"\tReset Input Directory '%s'\n", in_dirname.c_str());
@@ -163,7 +162,7 @@ void COMB::ReadInputFile(TPControl* tpCntl)
   
   //並列実行時のSTAGINGのON/OFF
   label = "/CombData/Staging";
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     //Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     //Exit(0);
@@ -183,7 +182,7 @@ void COMB::ReadInputFile(TPControl* tpCntl)
   
   //出力の単精度or倍精度指定 ---> PLOT3Dの場合は、optionに記述があればそちらを優先
   label = "/CombData/OutputRealType";
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     //printf("\tParsing error : fail to get '%s'\n", label.c_str());
     //Exit(0);
@@ -199,7 +198,7 @@ void COMB::ReadInputFile(TPControl* tpCntl)
   
   // 連結ファイルの出力フォーマット
   label = "/CombData/OutFormat";
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -220,7 +219,7 @@ void COMB::ReadInputFile(TPControl* tpCntl)
 
 // #################################################################
 // PLOT3Dファイル入出力に関するパラメータ
-void COMB::get_PLOT3D(TPControl* tpCntl)
+void COMB::get_PLOT3D(TextParser* tpCntl)
 {
   string str;
   string label;
@@ -228,7 +227,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   // Filename
   //label = "/Plot3dOptions/Filename";
   //
-  //if ( !(tpCntl->GetValue(label, &str )) )
+  //if ( !(tpCntl->getInspectedValue(label, &str )) )
   //{
   //  P3Op.basename = "PLOT3Doutput";
   //}
@@ -240,7 +239,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   // FileNameGrid --- option
   label = "/Steer/Plot3dOptions/FileNameGrid";
   
-  if ( !(tpCntl->GetValue(label, &str)) )
+  if ( !(tpCntl->getInspectedValue(label, str)) )
   {
     P3Op.basename_g = "PLOT3DoutputGrid";
   }
@@ -256,7 +255,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   // FileNameFunc --- option
   label = "/Steer/Plot3dOptions/FileNameFunc";
   
-  if ( !(tpCntl->GetValue(label, &str)) )
+  if ( !(tpCntl->getInspectedValue(label, str)) )
   {
     P3Op.basename_f = "PLOT3Doutput";
   }
@@ -273,7 +272,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   /* GridKind
    label = "/Plot3dOptions/GridKind";
    
-   if ( !(tpCntl->GetValue(label, &str )) )
+   if ( !(tpCntl->getInspectedValue(label, &str )) )
    {
    printf("\tParsing error : fail to get '%s'\n", label.c_str());
    Exit(0);
@@ -294,7 +293,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   // 格子の移動
   label = "/Plot3dOptions/GridMobility";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -314,7 +313,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   // 時間方向の変化
   label = "/Plot3dOptions/StateOfTime";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     FP3DR.setSteady(FB_UNSTEADY);
   }
@@ -333,7 +332,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   /* IBLANKファイル
    label = "/Plot3dOptions/SetIblankFlag";
    
-   if ( !(tpCntl->GetValue(label, &str )) )
+   if ( !(tpCntl->getInspectedValue(label, &str )) )
    {
    FP3DR.setIBlankFlag(NOT_SET_IBLANK);
    }
@@ -351,7 +350,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   
   /* 次元数
    label = "/Plot3dOptions/Dimension";
-   if ( !(tpCntl->GetValue(label, &str )) )
+   if ( !(tpCntl->getInspectedValue(label, &str )) )
    {
    FP3DR.setDimension3D();
    }
@@ -370,7 +369,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   
   //FormatType
   label = "/Plot3dOptions/FormatType";
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -390,7 +389,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   
   // 出力の単精度or倍精度指定
   label = "/Plot3dOptions/RealType";
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
     //FP3DR.setRealType(d_type);
@@ -419,7 +418,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   // OutputXyz
   label = "/Plot3dOptions/OutputXyz";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     P3Op.IS_xyz = ON;
   }
@@ -439,7 +438,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
    // OutputQ
    label = "/Plot3dOptions/OutputQ";
    
-   if ( !(tpCntl->GetValue(label, &str )) )
+   if ( !(tpCntl->getInspectedValue(label, &str )) )
    {
    P3Op.IS_q = OFF;
    }
@@ -459,7 +458,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   // OutputFunction
   label = "/Plot3dOptions/OutputFunction";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     //printf("\tParsing error : fail to get '%s'\n", label.c_str());
     //Exit(0);
@@ -480,7 +479,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   // OutputFuncName
   label = "/Plot3dOptions/OutputFuncName";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     P3Op.IS_function_name = ON;
   }
@@ -499,7 +498,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
    // Output_fvbnd
    label = "/Plot3dOptions/Output_fvbnd";
    
-   if ( !(tpCntl->GetValue(label, &str )) )
+   if ( !(tpCntl->getInspectedValue(label, &str )) )
    {
    P3Op.IS_fvbnd = OFF;
    }
@@ -520,7 +519,7 @@ void COMB::get_PLOT3D(TPControl* tpCntl)
   // DivideFunc ---> 出力を項目別にファイル分割するオプション
   label = "/Plot3dOptions/DivideFunc";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);

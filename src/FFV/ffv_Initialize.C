@@ -72,13 +72,11 @@ int FFV::Initialize(int argc, char **argv)
 
   
   // ffvのパラメータローダのインスタンス生成
-  TPControl tp_ffv;
-
-  tp_ffv.getTPinstance();
+  TextParser tp_ffv;
 
   
   // パラメータのロードと保持
-  if ( !tp_ffv.readTPfile(input_file) )
+  if ( tp_ffv.read(input_file) )
   {
     Hostonly_ stamped_printf("\tInput file '%s' can not find.\n", input_file.c_str());
     Exit(0);
@@ -86,7 +84,7 @@ int FFV::Initialize(int argc, char **argv)
 
  
   
-  // TPControlクラスのポインタを各クラスに渡す
+  // TextParserクラスのポインタを各クラスに渡す
   C.importTP(&tp_ffv);
   B.importTP(&tp_ffv);
   M.importTP(&tp_ffv);
@@ -1075,9 +1073,9 @@ void FFV::displayParameters(FILE* fp)
 
 // #################################################################
 /* @brief 計算領域情報を設定する
- * @param [in] tp_dom  TPControlクラス
+ * @param [in] tp_dom  TextParserクラス
  */
-void FFV::DomainInitialize(TPControl* tp_dom)
+void FFV::DomainInitialize(TextParser* tp_dom)
 {
   // メンバ変数にパラメータをロード : 分割指示 (1-with / 2-without)
   int div_type = getDomainInfo(tp_dom);
@@ -2083,10 +2081,10 @@ void FFV::getCompoArea()
 
 // #################################################################
 /* @brief グローバルな領域情報を取得
- * @param [in] tp_dom  TPControlクラス
+ * @param [in] tp_dom  TextParserクラス
  * @return 分割指示 (1-with / 2-without)
  */
-int FFV::getDomainInfo(TPControl* tp_dom)
+int FFV::getDomainInfo(TextParser* tp_dom)
 {
   // 領域分割モードのパターン
   //     分割指定(G_div指定)         domain.txt
@@ -2110,7 +2108,7 @@ int FFV::getDomainInfo(TPControl* tp_dom)
   // 長さの単位
   label = "/DomainInfo/UnitOfLength";
   
-  if ( !tp_dom->GetValue(label, &str) )
+  if ( !tp_dom->getInspectedValue(label, str) )
   {
 		Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
 	  Exit(0);
@@ -2130,7 +2128,7 @@ int FFV::getDomainInfo(TPControl* tp_dom)
   // G_origin　必須
   label = "/DomainInfo/GlobalOrigin";
   
-  if ( !tp_dom->GetVector(label, G_origin, 3) )
+  if ( !tp_dom->getInspectedVector(label, G_origin, 3) )
   {
     cout << "ERROR : in parsing [" << label << "]" << endl;
     Exit(0);
@@ -2139,7 +2137,7 @@ int FFV::getDomainInfo(TPControl* tp_dom)
   // G_region 必須
   label = "/DomainInfo/GlobalRegion";
   
-  if ( !tp_dom->GetVector(label, G_region, 3) )
+  if ( !tp_dom->getInspectedVector(label, G_region, 3) )
   {
     Hostonly_ cout << "ERROR : in parsing [" << label << "]" << endl;
     Exit(0);
@@ -2163,14 +2161,14 @@ int FFV::getDomainInfo(TPControl* tp_dom)
   // G_voxel
   label = "/DomainInfo/GlobalVoxel";
   
-  if ( !tp_dom->GetVector(label, G_size, 3) ) g_flag = false;
+  if ( !tp_dom->getInspectedVector(label, G_size, 3) ) g_flag = false;
 
   
   
   // pitch
   label = "/DomainInfo/GlobalPitch";
   
-  if ( !tp_dom->GetVector(label, pitch, 3) ) p_flag = false;
+  if ( !tp_dom->getInspectedVector(label, pitch, 3) ) p_flag = false;
   
   
   // 排他チェック
@@ -2325,7 +2323,7 @@ int FFV::getDomainInfo(TPControl* tp_dom)
   // G_division オプション
   label = "/DomainInfo/GlobalDivision";
   
-  if ( !tp_dom->GetVector(label, G_division, 3) )
+  if ( !tp_dom->getInspectedVector(label, G_division, 3) )
   {
     Hostonly_ cout << "\tAutomatic domain division is selected." << endl;
     div_type = 2; // 自動分割
@@ -2377,7 +2375,7 @@ int FFV::getDomainInfo(TPControl* tp_dom)
   // ActiveSubdomainファイル名の取得
   label = "/DomainInfo/ActiveSubDomainFile";
   
-  if ( !tp_dom->GetValue(label, &str ) )
+  if ( !tp_dom->getInspectedValue(label, str ) )
   {
     Hostonly_ cout << "\tNo option : in parsing [" << label << "]" << endl;
   }
@@ -2388,7 +2386,7 @@ int FFV::getDomainInfo(TPControl* tp_dom)
   // 流体セルのフィルの開始面指定
   label = "/DomainInfo/HintOfFillingFluid";
   
-  if ( !(tp_dom->GetValue(label, &str )) )
+  if ( !(tp_dom->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : Invalid value in '%s'\n", label.c_str());
     Exit(0);
@@ -2455,7 +2453,7 @@ void FFV::identifyExample(FILE* fp)
  * @brief 線形ソルバを特定
  * @param [in] tpCntl  テキストパーサー
  */
-void FFV::identifyLinearSolver(TPControl* tpCntl)
+void FFV::identifyLinearSolver(TextParser* tpCntl)
 {
   
   switch (C.AlgorithmF)
@@ -4218,11 +4216,11 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
  * @param [in] odr    制御クラス配列の番号
  * @param [in] label  探索ラベル
  */
-void FFV::setLinearSolver(TPControl* tpCntl, const int odr, const string label)
+void FFV::setLinearSolver(TextParser* tpCntl, const int odr, const string label)
 {
   string str;
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ printf("\tParsing error : No '%s'\n", label.c_str());
     Exit(0);
@@ -4480,7 +4478,7 @@ void FFV::setupCutInfo4IP(double& m_prep, double& m_total, FILE* fp)
  * @param [in] tpf ffvのパラメータを保持するTextParserインスタンス
  * @retval 並列モードの文字列
  */
-string FFV::setupDomain(TPControl* tpf)
+string FFV::setupDomain(TextParser* tpf)
 {
   
   // ランク情報をセット >> 各クラスでランク情報メンバ変数を利用する前にセットすること

@@ -27,7 +27,7 @@
 #include "DomainInfo.h"
 #include "FB_Define.h"
 #include "mydebug.h"
-#include "TPControl.h"
+#include "TextParser.h"
 
 using namespace std;
 

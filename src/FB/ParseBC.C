@@ -127,7 +127,7 @@ void ParseBC::countMedium(Control* Cref, const MediumList* mat)
 REAL_TYPE ParseBC::get_BCval_real(const string label)
 {
   REAL_TYPE df=0.0f;
-  if ( !(tpCntl->GetValue(label, &df )) ) 
+  if ( !(tpCntl->getInspectedValue(label, df )) )
   {
     stamped_printf("\tParsing error : Invalid REAL_TYPE value for '%s'\n", label.c_str());
     Exit(0);
@@ -149,7 +149,7 @@ void ParseBC::get_Center(const string label_base, REAL_TYPE* v)
   
   label = label_base + "/Center";
   
-  if( !(tpCntl->GetVector(label, v, 3)) )
+  if( !(tpCntl->getInspectedVector(label, v, 3)) )
   {
     stamped_printf("\tParsing error : fail to get vec params in '%s\n", label.c_str());
     Exit(0);
@@ -175,7 +175,7 @@ void ParseBC::get_Darcy(const string label_base, const int n, CompoList* cmp)
   // 透過率の取得
   label = label_base + "/Permeability";
   
-  if( !(tpCntl->GetVector(label, v, 3)) ) {
+  if( !(tpCntl->getInspectedVector(label, v, 3)) ) {
     stamped_printf("\tParsing error : fail to get permeability params in 'Darcy'\n");
     Exit(0);
   }
@@ -197,7 +197,7 @@ void ParseBC::get_Dir(const string label_base, REAL_TYPE* v)
   for (int i=0; i<3; i++) v[i]=0.0f;
   
   label = label_base + "/Dir";
-  if( !(tpCntl->GetVector(label, v, 3)) )
+  if( !(tpCntl->getInspectedVector(label, v, 3)) )
   {
     stamped_printf("\tParsing error : fail to get vec params in '%s\n", label.c_str());
     Exit(0);
@@ -243,7 +243,7 @@ void ParseBC::get_IBC_Fan(const string label_base, const int n, CompoList* cmp)
   // 入力単位の指定
   label=label_base+"/Unit";//
   //cout <<  "label : " << label << endl;
-  if ( !(tpCntl->GetValue(label, &str_u )) ) {
+  if ( !(tpCntl->getInspectedValue(label, str_u )) ) {
 		stamped_printf("\tParsing error : Invalid float value for 'unit' in 'Pressure_Loss'\n");
 		Exit(0);
   }
@@ -320,7 +320,7 @@ void ParseBC::get_IBC_HeatSrc(const string label_base, const int n, CompoList* c
   // type
   label = label_base + "/Type";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     stamped_printf("\tParsing error : Invalid int value for '%s\n", label.c_str());
     Exit(0);
@@ -342,7 +342,7 @@ void ParseBC::get_IBC_HeatSrc(const string label_base, const int n, CompoList* c
   // 放熱量
   label= label_base + "/Value";
   
-  if ( !(tpCntl->GetValue(label, &hsrc )) )
+  if ( !(tpCntl->getInspectedValue(label, hsrc )) )
   {
     stamped_printf("\tParsing error : Invalid float value for '%s\n", label.c_str());
     Exit(0);
@@ -427,7 +427,7 @@ void ParseBC::get_IBC_HT_SN(const string label_base, const int n, CompoList* cmp
   // type
   label = label_base + "/RefTempMode";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     stamped_printf("\tParsing error : Invalid int value for '%s'\n", label.c_str());
     Exit(0);
@@ -505,7 +505,7 @@ void ParseBC::get_IBC_HT_SF(const string label_base, const int n, CompoList* cmp
   
   // type
   label=label_base+"/RefTempMode";//
-  if ( !(tpCntl->GetValue(label, &str )) ) {
+  if ( !(tpCntl->getInspectedValue(label, str )) ) {
     stamped_printf("\tParsing error : Invalid int value for 'RefTempMode' in 'LocalBoundary > HeatTransferSF'\n");
     Exit(0);
   }
@@ -625,7 +625,7 @@ void ParseBC::get_IBC_Monitor(const string label_base, const int n, CompoList* c
   // モードと形状
   label = label_base + "/Shape";
   
-  if ( !tpCntl->GetValue(label, &pnt) )
+  if ( !tpCntl->getInspectedValue(label, pnt) )
   {
     ;
   }
@@ -654,7 +654,7 @@ void ParseBC::get_IBC_Monitor(const string label_base, const int n, CompoList* c
   // サンプリング幅
   label = label_base + "/SamplingWidth";
   
-  if ( !(tpCntl->GetValue(label, &pnt )) )
+  if ( !(tpCntl->getInspectedValue(label, pnt )) )
   {
     ;
   }
@@ -679,7 +679,7 @@ void ParseBC::get_IBC_Monitor(const string label_base, const int n, CompoList* c
   // reference 隠しコマンドに
   label = label_base + "/Reference";
   
-  if ( !(tpCntl->GetValue(label, &pnt )) )
+  if ( !(tpCntl->getInspectedValue(label, pnt )) )
   {
     ;
   }
@@ -752,7 +752,7 @@ void ParseBC::get_IBC_Monitor(const string label_base, const int n, CompoList* c
   
   // 速度
   label = label_leaf + "/Velocity";
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -774,7 +774,7 @@ void ParseBC::get_IBC_Monitor(const string label_base, const int n, CompoList* c
   
   // 圧力
   label = label_leaf + "/Pressure";
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -798,7 +798,7 @@ void ParseBC::get_IBC_Monitor(const string label_base, const int n, CompoList* c
   if ( HeatProblem )
   {
     label = label_leaf + "/Temperature";
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( !(tpCntl->getInspectedValue(label, str )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
@@ -821,7 +821,7 @@ void ParseBC::get_IBC_Monitor(const string label_base, const int n, CompoList* c
   
   // 全圧
   label = label_leaf + "/TotalPressure";
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -868,7 +868,7 @@ void ParseBC::get_IBC_Outflow(const string label_base, const int n, CompoList* c
   // Hidden parameter
   label = label_base + "/PressureType";
   
-  if ( !(tpCntl->GetValue(label, &str )) ) {
+  if ( !(tpCntl->getInspectedValue(label, str )) ) {
     ; // なくてもOK
   }
   else {
@@ -913,7 +913,7 @@ void ParseBC::get_IBC_Periodic(const string label_base, const int n, CompoList* 
   // 上流側の方向
   label = label_base + "/UpstreamDirection";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 	  printf("\tParsing error : fail to get 'upstream_direction' in 'LocalBoundary > Periodic'\n");
 	  Exit(0);
@@ -953,7 +953,7 @@ void ParseBC::get_IBC_Periodic(const string label_base, const int n, CompoList* 
   // 圧力差
   label = label_base + "/PressureDifference";
   
-  if ( !(tpCntl->GetValue(label, &ct )) )
+  if ( !(tpCntl->getInspectedValue(label, ct )) )
   {
     printf("\tParsing error : Invalid value of 'Pressure difference' in 'LocalBoundary > Periodic'\n");
     Exit(0);
@@ -984,7 +984,7 @@ void ParseBC::get_IBC_PrsLoss(const string label_base, const int n, CompoList* c
   // 入力単位の指定
   label = label_base + "/Unit";
   
-  if ( !(tpCntl->GetValue(label, &str_u )) ) {
+  if ( !(tpCntl->getInspectedValue(label, str_u )) ) {
 		stamped_printf("\tParsing error : Invalid float value for 'Unit' in 'PressureLoss'\n");
 		Exit(0);
   }
@@ -1029,7 +1029,7 @@ void ParseBC::get_IBC_PrsLoss(const string label_base, const int n, CompoList* c
   
   // 圧力損失パラメータ
   label = label_base + "/C";
-  if( !(tpCntl->GetVector(label, v, 4)) )
+  if( !(tpCntl->getInspectedVector(label, v, 4)) )
   {
     stamped_printf("\tParsing error : fail to get vec params in '%s\n", label.c_str());
     Exit(0);
@@ -1048,7 +1048,7 @@ void ParseBC::get_IBC_PrsLoss(const string label_base, const int n, CompoList* c
   // 熱交換器の方向強制オプション
   
   label = label_base + "/Vector";
-  if ( !(tpCntl->GetValue(label, &str )) ) {
+  if ( !(tpCntl->getInspectedValue(label, str )) ) {
     stamped_printf("\tParsing error : Invalid string for 'vector' in 'PressureLoss'\n");
     Exit(0);
   }
@@ -1104,7 +1104,7 @@ void ParseBC::get_IBC_SpecVel(const string label_base, const int n, CompoList* c
   // 指定タイプの特定
   label = label_base + "/Type";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : Invalid SpecifiedType in '%s'\n", label.c_str());
     Exit(0);
@@ -1140,7 +1140,7 @@ void ParseBC::get_IBC_SpecVel(const string label_base, const int n, CompoList* c
   // 境界条件の方向
   label = label_base + "/FluidDirection";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -1165,7 +1165,7 @@ void ParseBC::get_IBC_SpecVel(const string label_base, const int n, CompoList* c
   {
     label = label_base + "/Temperature";
     
-    if ( !(tpCntl->GetValue(label, &ct )) )
+    if ( !(tpCntl->getInspectedValue(label, ct )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
@@ -1203,7 +1203,7 @@ void ParseBC::get_Medium_InitTemp(CompoList* cmp)
   
   for (int i=1; i<=NoCompo; i++)
   {
-    if ( !tpCntl->GetNodeStr(label_base, i, &str) )
+    if ( !tpCntl->getNodeStr(label_base, i, str) )
     {
       Hostonly_ stamped_printf("\tGetNodeStr error\n");
       Exit(0);
@@ -1213,7 +1213,7 @@ void ParseBC::get_Medium_InitTemp(CompoList* cmp)
     label = label_base + "/" + str;
     REAL_TYPE ct;
     
-    if ( !tpCntl->GetValue(label, &ct) )
+    if ( !tpCntl->getInspectedValue(label, ct) )
     {
       Hostonly_ stamped_printf("\tParsing error : Invalid keyword in '%s'\n", label_base.c_str());
       Exit(0);
@@ -1253,7 +1253,7 @@ void ParseBC::get_Neighbor(const string label_base, const int n, CompoList* cmp,
   string label = label_base + "/NeighborMedium";
   string str;
   
-  if ( !tpCntl->GetValue(label, &str) )
+  if ( !tpCntl->getInspectedValue(label, str) )
   {
     Hostonly_ stamped_printf("\tParsing error : Invalid keyword in '%s'\n", label_base.c_str());
     Exit(0);
@@ -1294,7 +1294,7 @@ void ParseBC::get_NV(const string label_base, REAL_TYPE* v)
   
   label = label_base + "/Normal";
   
-  if( !(tpCntl->GetVector(label, v, 3)) )
+  if( !(tpCntl->getInspectedVector(label, v, 3)) )
   {
     stamped_printf("\tParsing error : fail to get vec params in '%s\n", label.c_str());
     Exit(0);
@@ -1354,7 +1354,7 @@ void ParseBC::getObcFarField(const string label_base, const int n)
     label = label_base + "/AmbientTemperature";
     REAL_TYPE ct;
     
-    if ( !(tpCntl->GetValue(label, &ct )) )
+    if ( !(tpCntl->getInspectedValue(label, ct )) )
     {
       stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
@@ -1370,7 +1370,7 @@ void ParseBC::getObcFarField(const string label_base, const int n)
   // Hidden option
   label = label_base + "/PressureType";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     ; // エラーではない
   }
@@ -1399,7 +1399,7 @@ void ParseBC::getObcFarField(const string label_base, const int n)
     {
       label = label_base + "/PrsValue";
       
-      if ( !(tpCntl->GetValue(label, &ct )) )
+      if ( !(tpCntl->getInspectedValue(label, ct )) )
       {
         stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
         Exit(0);
@@ -1461,7 +1461,7 @@ void ParseBC::getObcHeatTransfer(const string label_base, const int n, const str
     
     
     label=label_base+"/RefTempMode";
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( !(tpCntl->getInspectedValue(label, str )) )
     {
       stamped_printf("\tParsing error : Invalid int value for '%s'\n", label.c_str());
       Exit(0);
@@ -1497,7 +1497,7 @@ void ParseBC::getObcHeatTransfer(const string label_base, const int n, const str
     
     // reference mode
     label = label_base + "/RefTempMode";
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( !(tpCntl->getInspectedValue(label, str )) )
     {
       stamped_printf("\tParsing error : Invalid int value for '%s'\n", label.c_str());
       Exit(0);
@@ -1576,7 +1576,7 @@ void ParseBC::getObcOutflow(const string label_base, const int n)
   
   label = label_base + "/PressureType";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -1606,7 +1606,7 @@ void ParseBC::getObcOutflow(const string label_base, const int n)
     {
       label = label_base + "/PrsValue";
       
-      if ( !(tpCntl->GetValue(label, &ct )) )
+      if ( !(tpCntl->getInspectedValue(label, ct )) )
       {
         stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
         Exit(0);
@@ -1636,7 +1636,7 @@ void ParseBC::getObcPeriodic(const string label_base, const int n)
   
   // モード
   label = label_base + "/Mode";
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -1661,7 +1661,7 @@ void ParseBC::getObcPeriodic(const string label_base, const int n)
   if ( BaseBc[n].get_PrdcMode() == BoundaryOuter::prdc_Directional )
   {
     label = label_base + "/PressureDifference";
-    if ( !(tpCntl->GetValue(label, &ct )) ) {
+    if ( !(tpCntl->getInspectedValue(label, ct )) ) {
       printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
@@ -1670,7 +1670,7 @@ void ParseBC::getObcPeriodic(const string label_base, const int n)
     }
     
     label = label_base + "/FlowDirection";
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( !(tpCntl->getInspectedValue(label, str )) )
     {
       printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
@@ -1697,7 +1697,7 @@ void ParseBC::getObcPeriodic(const string label_base, const int n)
   {
     
     label = label_base + "/DriverDirection";
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( !(tpCntl->getInspectedValue(label, str )) )
     {
       printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
@@ -1737,7 +1737,7 @@ void ParseBC::getObcPeriodic(const string label_base, const int n)
     
     
     label = label_base + "/DriverLidIndex";
-    if ( !(tpCntl->GetValue(label, &def )) ) {
+    if ( !(tpCntl->getInspectedValue(label, def )) ) {
       printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
@@ -1785,7 +1785,7 @@ void ParseBC::getObcSpecVH(const string label_base, const int n)
     string label = label_base + "/Temperature";
     REAL_TYPE ct;
     
-    if ( !(tpCntl->GetValue(label, &ct )) )
+    if ( !(tpCntl->getInspectedValue(label, ct )) )
     {
       stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
@@ -1822,7 +1822,7 @@ void ParseBC::getObcTrcfree(const string label_base, const int n)
     string label = label_base + "/AmbientTemperature";
     REAL_TYPE ct;
     
-    if ( !(tpCntl->GetValue(label, &ct )) )
+    if ( !(tpCntl->getInspectedValue(label, ct )) )
     {
       stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
@@ -1849,7 +1849,7 @@ void ParseBC::getObcWall(const string label_base, const int n)
   // 速度のタイプの特定
   label = label_base + "/Type";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     stamped_printf("\tParsing error : Invalid Specified_Type in '%s'\n", label.c_str());
     Exit(0);
@@ -1888,7 +1888,7 @@ void ParseBC::getObcWall(const string label_base, const int n)
   {
     label = label_base + "/ThermalOption";
     
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( !(tpCntl->getInspectedValue(label, str )) )
     {
       stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
@@ -1970,7 +1970,7 @@ void ParseBC::get_Phase(CompoList* cmp)
   }
   
   for (int i=1; i<=NoParam; i++) {
-    if(!tpCntl->GetNodeStr(label_base,i,&str)){
+    if(!tpCntl->getNodeStr(label_base,i,str)){
       stamped_printf("\tParsing error : No Leaf Node \n");
       Exit(0);
     }
@@ -2068,7 +2068,7 @@ int ParseBC::getVprofile(const string label_base)
   
   label = label_base + "/Profile";
   
-  if ( !(tpCntl->GetValue(label, &str )) ) {
+  if ( !(tpCntl->getInspectedValue(label, str )) ) {
     printf("\tParsing error : fail to get 'Profile' in '%s'\n", str.c_str());
     Exit(0);
   }
@@ -2113,7 +2113,7 @@ void ParseBC::getVelocity(const string label_base, const int prof, REAL_TYPE* ca
   {
     label = label_base + "/Velocity";
     
-    if ( !(tpCntl->GetValue(label, &ct )) )
+    if ( !(tpCntl->getInspectedValue(label, ct )) )
     {
       stamped_printf("\tParsing error : Invalid value in '%s > Velocity'\n", str);
       Exit(0);
@@ -2136,7 +2136,7 @@ void ParseBC::getVelocity(const string label_base, const int prof, REAL_TYPE* ca
   {
     label = label_base + "/Amplitude";
     
-    if ( !(tpCntl->GetValue(label, &ct )) )
+    if ( !(tpCntl->getInspectedValue(label, ct )) )
     {
       stamped_printf("\tParsing error : fail to get 'Amplitude' in '%s'\n", label_base.c_str());
       Exit(0);
@@ -2145,7 +2145,7 @@ void ParseBC::getVelocity(const string label_base, const int prof, REAL_TYPE* ca
     
     label = label_base + "/Frequency";
     
-    if ( !(tpCntl->GetValue(label, &ct )) )
+    if ( !(tpCntl->getInspectedValue(label, ct )) )
     {
       stamped_printf("\tParsing error : fail to get 'Frequency' in '%s'\n", label_base.c_str());
       Exit(0);
@@ -2154,7 +2154,7 @@ void ParseBC::getVelocity(const string label_base, const int prof, REAL_TYPE* ca
     
     label = label_base + "/InitialPhase";
     
-    if ( !(tpCntl->GetValue(label, &ct )) )
+    if ( !(tpCntl->getInspectedValue(label, ct )) )
     {
       stamped_printf("\tParsing error : fail to get 'InitialPhase' in '%s'\n", label_base.c_str());
       Exit(0);
@@ -2164,7 +2164,7 @@ void ParseBC::getVelocity(const string label_base, const int prof, REAL_TYPE* ca
     
     label = label_base + "/ConstantBias";
     
-    if ( !(tpCntl->GetValue(label, &ct )) )
+    if ( !(tpCntl->getInspectedValue(label, ct )) )
     {
       stamped_printf("\tParsing error : fail to get 'ConstantBias' in '%s'\n", label_base.c_str());
       Exit(0);
@@ -2181,7 +2181,7 @@ void ParseBC::getVelocity(const string label_base, const int prof, REAL_TYPE* ca
 
 // #################################################################
 // TPのポインタを受け取る
-void ParseBC::importTP(TPControl* tp)
+void ParseBC::importTP(TextParser* tp)
 { 
   if ( !tp ) Exit(0);
   tpCntl = tp;
@@ -2213,7 +2213,7 @@ void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp, PolygonPr
   {
     int m = NoMedium + k;
     
-    if( !tpCntl->GetNodeStr(label_base, k, &str))
+    if( !tpCntl->getNodeStr(label_base, k, str))
     {
       stamped_printf("\tParsing error : No Leaf Node \n");
       Exit(0);
@@ -2228,7 +2228,7 @@ void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp, PolygonPr
     // alias of medium
     label = label_leaf + "/Medium";
     
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( !(tpCntl->getInspectedValue(label, str )) )
     {
       Hostonly_ stamped_printf("\tParsing error : No '%s'\n", label.c_str());
       Exit(0);
@@ -2239,7 +2239,7 @@ void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp, PolygonPr
     // class
     label = label_leaf + "/Class";
     
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( !(tpCntl->getInspectedValue(label, str )) )
     {
       Hostonly_ stamped_printf("\tParsing error : No '%s'\n", label.c_str());
       Exit(0);
@@ -2469,7 +2469,7 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
   //BasicBCs
   for (int i=0; i<NoBaseBC; i++)
   {
-    if(!tpCntl->GetNodeStr(label_base, i+1, &str))
+    if(!tpCntl->getNodeStr(label_base, i+1, str))
     {
       Hostonly_ printf("\tParsing error : Missing 'BasicBCs'\n");
       Exit(0);
@@ -2480,7 +2480,7 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
     // Classに境界条件の種別をセットする
     label = label_leaf + "/Class";
     
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( !(tpCntl->getInspectedValue(label, str )) )
     {
       Hostonly_ printf("\tParsing error : No 'Class' in 'BasicBCs'\n");
       Exit(0);
@@ -2492,7 +2492,7 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
     // ガイドセルの媒質ラベルを取得
     label = label_leaf + "/MediumOnGuideCell";
     
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( !(tpCntl->getInspectedValue(label, str )) )
     {
       Hostonly_ printf("\tParsing error : No entory 'MediumOnGuideCell' in 'BasicBCs'\n");
       Exit(0);
@@ -2570,7 +2570,7 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
   for (int face=0; face<NOFACE; face++)
   {
     // faceに対するラベルを取得
-    if ( !tpCntl->GetNodeStr(label_base, face+1, &str) )
+    if ( !tpCntl->getNodeStr(label_base, face+1, str) )
     {
       Hostonly_ printf("\tGetNodeStr error\n");
       Exit(0);
@@ -2580,7 +2580,7 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
     // 指定の境界条件を探してBaseBC[]からbc[]へ内容のコピー
     label = label_leaf;
     
-    if ( !(tpCntl->GetValue(label, &str)) ) 
+    if ( !(tpCntl->getInspectedValue(label, str)) ) 
     {
       Hostonly_ printf("\tParsing error : Alias cannot be found : FaceBC\n");
       Exit(0);

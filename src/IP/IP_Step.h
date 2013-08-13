@@ -47,7 +47,7 @@ public:
 
 public:
 
-  virtual bool getTP(Control* R, TPControl* tpCntl);
+  virtual bool getTP(Control* R, TextParser* tpCntl);
   
   virtual void printPara(FILE* fp, const Control* R);
   

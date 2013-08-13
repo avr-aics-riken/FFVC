@@ -62,18 +62,17 @@ DfiInfo::~DfiInfo()
 // 
 void DfiInfo::ReadDfiFile(string fname)
 {
-  TPControl tpCntl;
+  TextParser tpCntl;
+  
   string str;
   string label,label_base,label_leaf;
   int ct;
   REAL_TYPE ct2;
   int nnode=0;
   
-  //TPインスタンス生成
-  tpCntl.getTPinstance();
   
   //入力ファイルをセット
-  int ierror = tpCntl.readTPfile(fname);
+  int ierror = tpCntl.read(fname);
   if ( ierror )
   {
     Hostonly_ stamped_printf("\tinput file not found '%s'\n",fname.c_str());
@@ -86,7 +85,7 @@ void DfiInfo::ReadDfiFile(string fname)
   //Prefix
   //label = "/DistributedFileInfo/Prefix";
   label = "/FileInfo/Prefix";
-  if ( !(tpCntl.GetValue(label, &str )) )
+  if ( !(tpCntl.getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
@@ -96,7 +95,7 @@ void DfiInfo::ReadDfiFile(string fname)
   //FileFormat
   //label = "/DistributedFileInfo/FileFormat";
   label = "/FileInfo/FileFormat";
-  if ( !(tpCntl.GetValue(label, &str )) )
+  if ( !(tpCntl.getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
@@ -106,7 +105,8 @@ void DfiInfo::ReadDfiFile(string fname)
   //GuideCell
   //label = "/DistributedFileInfo/GuideCell";
   label = "/FileInfo/GuideCell";
-  if ( !(tpCntl.GetValue(label, &ct )) ) {
+  if ( !(tpCntl.getInspectedValue(label, ct )) )
+  {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
   }
@@ -116,7 +116,7 @@ void DfiInfo::ReadDfiFile(string fname)
   
   //DataType
   label = "/FileInfo/DataType";
-  if ( !(tpCntl.GetValue(label, &str )) )
+  if ( !(tpCntl.getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
@@ -125,7 +125,7 @@ void DfiInfo::ReadDfiFile(string fname)
   
   //Endian
   label = "/FileInfo/Endian";
-  if ( !(tpCntl.GetValue(label, &str )) )
+  if ( !(tpCntl.getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
@@ -134,7 +134,7 @@ void DfiInfo::ReadDfiFile(string fname)
   
   //ArrayShape
   label = "/FileInfo/ArrayShape";
-  if ( !(tpCntl.GetValue(label, &str )) )
+  if ( !(tpCntl.getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
@@ -143,7 +143,8 @@ void DfiInfo::ReadDfiFile(string fname)
   
   //Component
   label = "/FileInfo/Component";
-  if ( !(tpCntl.GetValue(label, &ct )) ) {
+  if ( !(tpCntl.getInspectedValue(label, ct )) )
+  {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
   }
@@ -155,7 +156,7 @@ void DfiInfo::ReadDfiFile(string fname)
   
   //Length
   label = "/Unit/Length";
-  if ( !(tpCntl.GetValue(label, &str )) )
+  if ( !(tpCntl.getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
@@ -164,7 +165,8 @@ void DfiInfo::ReadDfiFile(string fname)
   
   //L0
   label = "/Unit/L0";
-  if ( !(tpCntl.GetValue(label, &ct2 )) ) {
+  if ( !(tpCntl.getInspectedValue(label, ct2 )) )
+  {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
   }
@@ -174,7 +176,7 @@ void DfiInfo::ReadDfiFile(string fname)
   
   //Velocity
   label = "/Unit/Velocity";
-  if ( !(tpCntl.GetValue(label, &str )) )
+  if ( !(tpCntl.getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
@@ -183,7 +185,8 @@ void DfiInfo::ReadDfiFile(string fname)
   
   //V0
   label = "/Unit/V0";
-  if ( !(tpCntl.GetValue(label, &ct2 )) ) {
+  if ( !(tpCntl.getInspectedValue(label, ct2 )) )
+  {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
   }
@@ -193,7 +196,7 @@ void DfiInfo::ReadDfiFile(string fname)
   
   //Length
   label = "/Unit/Pressure";
-  if ( !(tpCntl.GetValue(label, &str )) )
+  if ( !(tpCntl.getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
@@ -202,7 +205,8 @@ void DfiInfo::ReadDfiFile(string fname)
   
   //P0
   label = "/Unit/P0";
-  if ( !(tpCntl.GetValue(label, &ct2 )) ) {
+  if ( !(tpCntl.getInspectedValue(label, ct2 )) )
+  {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
   }
@@ -212,7 +216,8 @@ void DfiInfo::ReadDfiFile(string fname)
   
   //DiffPrs
   label = "/Unit/DiffPrs";
-  if ( !(tpCntl.GetValue(label, &ct2 )) ) {
+  if ( !(tpCntl.getInspectedValue(label, ct2 )) )
+  {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
   }
@@ -223,7 +228,7 @@ void DfiInfo::ReadDfiFile(string fname)
   
   //FilePath
   label = "/FilePath/Process";
-  if ( !(tpCntl.GetValue(label, &str )) )
+  if ( !(tpCntl.getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
@@ -243,9 +248,9 @@ void DfiInfo::ReadDfiFile(string fname)
   }
   
   label_base = "/TimeSlice";
-  for (int i=0; i<nnode; i++) {
-    
-    if(!tpCntl.GetNodeStr(label_base,i+1,&str))
+  for (int i=0; i<nnode; i++)
+  {
+    if(!tpCntl.getNodeStr(label_base, i+1, str))
     {
       printf("\tParsing error : No Elem name\n");
       Exit(0);
@@ -255,14 +260,16 @@ void DfiInfo::ReadDfiFile(string fname)
     
     //step
     label=label_base+"/"+str+"/Step";
-    if ( !(tpCntl.GetValue(label, &ct )) ) {
+    if ( !(tpCntl.getInspectedValue(label, ct )) )
+    {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
       Exit(0);
     }
     
     //time
     label=label_base+"/"+str+"/Time";
-    if ( !(tpCntl.GetValue(label, &ct2 )) ) {
+    if ( !(tpCntl.getInspectedValue(label, ct2 )) )
+    {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
       Exit(0);
     }
@@ -366,7 +373,7 @@ void DfiInfo::SetSlice(int m_step, REAL_TYPE m_time)
 //
 void DfiInfo::ReadDfiProc(string fname)
 {
-  TPControl tpCntl;
+  TextParser tpCntl;
   string str;
   string label,label_base,label_leaf;
   int ct;
@@ -374,11 +381,9 @@ void DfiInfo::ReadDfiProc(string fname)
   int iv[3];
   REAL_TYPE v[3];
   
-  //TPインスタンス生成
-  tpCntl.getTPinstance();
   
   //入力ファイルをセット
-  int ierror = tpCntl.readTPfile(fname);
+  int ierror = tpCntl.read(fname);
   if ( ierror )
   {
     Hostonly_ stamped_printf("\tinput file not found '%s'\n",fname.c_str());
@@ -391,7 +396,7 @@ void DfiInfo::ReadDfiProc(string fname)
   //Global_Origin
   label = "/Domain/GlobalOrigin";
   for (int n=0; n<3; n++) v[n]=0.0;
-  if ( !(tpCntl.GetVector(label, v, 3 )) )
+  if ( !(tpCntl.getInspectedVector(label, v, 3 )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
@@ -403,7 +408,7 @@ void DfiInfo::ReadDfiProc(string fname)
   //Global_Region
   label = "/Domain/GlobalRegion";
   for (int n=0; n<3; n++) v[n]=0.0;
-  if ( !(tpCntl.GetVector(label, v, 3 )) )
+  if ( !(tpCntl.getInspectedVector(label, v, 3 )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
@@ -415,7 +420,7 @@ void DfiInfo::ReadDfiProc(string fname)
   //Global_Voxel
   label = "/Domain/GlobalVoxel";
   for (int n=0; n<3; n++) iv[n]=0;
-  if ( !(tpCntl.GetVector(label, iv, 3 )) )
+  if ( !(tpCntl.getInspectedVector(label, iv, 3 )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
@@ -427,7 +432,7 @@ void DfiInfo::ReadDfiProc(string fname)
   //Global_Division
   label = "/Domain/GlobalDivision";
   for (int n=0; n<3; n++) iv[n]=0.0;
-  if ( !(tpCntl.GetVector(label, iv, 3 )) )
+  if ( !(tpCntl.getInspectedVector(label, iv, 3 )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
@@ -441,7 +446,8 @@ void DfiInfo::ReadDfiProc(string fname)
   
   //NumberOfRank
   label = "/MPI/NumberOfRank";
-  if ( !(tpCntl.GetValue(label, &ct )) ) {
+  if ( !(tpCntl.getInspectedValue(label, ct )) )
+  {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
   }
@@ -451,7 +457,8 @@ void DfiInfo::ReadDfiProc(string fname)
   
   //NumberOfGroup
   label = "/MPI/NumberOfGroup";
-  if ( !(tpCntl.GetValue(label, &ct )) ) {
+  if ( !(tpCntl.getInspectedValue(label, ct )) )
+  {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
     Exit(0);
   }
@@ -462,7 +469,7 @@ void DfiInfo::ReadDfiProc(string fname)
   
   ////RankID_in_MPIworld
   //label = "/DistributedFileInfo/RankIDinMPIworld";
-  //if ( !(tpCntl.GetValue(label, &ct )) ) {
+  //if ( !(tpCntl.getInspectedValue(label, &ct )) ) {
   //  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
   //  Exit(0);
   //}
@@ -472,7 +479,7 @@ void DfiInfo::ReadDfiProc(string fname)
   
   ////GroupID_in_MPIworld
   //label = "/DistributedFileInfo/GroupIDinMPIworld";
-  //if ( !(tpCntl.GetValue(label, &ct )) ) {
+  //if ( !(tpCntl.getInspectedValue(label, &ct )) ) {
   //  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
   //  Exit(0);
   //}
@@ -493,9 +500,9 @@ void DfiInfo::ReadDfiProc(string fname)
   NodeInfoSize=nnode;
   Node = new DfiInfo::NodeInfo[nnode];
   
-  for (int i=0; i<NodeInfoSize; i++) {
-    
-    if(!tpCntl.GetNodeStr(label_base,i+1,&str))
+  for (int i=0; i<NodeInfoSize; i++)
+  {
+    if(!tpCntl.getNodeStr(label_base, i+1, str))
     {
       printf("\tParsing error : No Elem name\n");
       Exit(0);
@@ -505,7 +512,8 @@ void DfiInfo::ReadDfiProc(string fname)
     
     //RankID
     label = label_leaf + "/ID";
-    if ( !(tpCntl.GetValue(label, &ct )) ) {
+    if ( !(tpCntl.getInspectedValue(label, ct )) )
+    {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
       Exit(0);
     }
@@ -515,7 +523,8 @@ void DfiInfo::ReadDfiProc(string fname)
     
     //HostName
     label = label_leaf + "/HostName";
-    if ( !(tpCntl.GetValue(label, &str )) ) {
+    if ( !(tpCntl.getInspectedValue(label, str )) )
+    {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
@@ -524,7 +533,7 @@ void DfiInfo::ReadDfiProc(string fname)
     //VoxelSize
     label = label_leaf + "/VoxelSize";
     for (int n=0; n<3; n++) v[n]=0.0;
-    if ( !(tpCntl.GetVector(label, v, 3 )) )
+    if ( !(tpCntl.getInspectedVector(label, v, 3 )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
       Exit(0);
@@ -536,7 +545,7 @@ void DfiInfo::ReadDfiProc(string fname)
     //HeadIndex
     label = label_leaf + "/HeadIndex";
     for (int n=0; n<3; n++) v[n]=0.0;
-    if ( !(tpCntl.GetVector(label, v, 3 )) )
+    if ( !(tpCntl.getInspectedVector(label, v, 3 )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
       Exit(0);
@@ -548,7 +557,7 @@ void DfiInfo::ReadDfiProc(string fname)
     //TailIndex
     label = label_leaf + "/TailIndex";
     for (int n=0; n<3; n++) v[n]=0.0;
-    if ( !(tpCntl.GetVector(label, v, 3 )) )
+    if ( !(tpCntl.getInspectedVector(label, v, 3 )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n",label.c_str());
       Exit(0);

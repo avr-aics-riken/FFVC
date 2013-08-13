@@ -42,12 +42,12 @@ main.o: main.C comb.h /opt/openmpi/include/mpi.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h ../FB/FB_Define.h \
- ../FB/mydebug.h ../FB/FBUtility.h ../FB/TPControl.h \
+ ../FB/mydebug.h ../FB/FBUtility.h ../FB/dfi.h ../PLOT3D/PLOT3D_read.h \
+ ../PLOT3D/PLOT3D.h ../FB/DomainInfo.h ../FB/FB_Ffunc.h ../PLOT3D/PLOT3D_write.h \
+ FileIO_sph.h endianUtil.h ../FB/dfiinfo.h \
  /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
- /usr/local/TextParser/include/Version.h ../FB/dfi.h ../PLOT3D/PLOT3D_read.h \
- ../PLOT3D/PLOT3D.h ../FB/DomainInfo.h ../FB/FB_Ffunc.h ../PLOT3D/PLOT3D_write.h \
- FileIO_sph.h endianUtil.h ../FB/dfiinfo.h COMB_Define.h
+ /usr/local/TextParser/include/Version.h COMB_Define.h
 comb.o: comb.C comb.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/mpi_portable_platform.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/mpicxx.h /opt/openmpi/include/mpi.h \
@@ -92,12 +92,12 @@ comb.o: comb.C comb.h /opt/openmpi/include/mpi.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h ../FB/FB_Define.h \
- ../FB/mydebug.h ../FB/FBUtility.h ../FB/TPControl.h \
+ ../FB/mydebug.h ../FB/FBUtility.h ../FB/dfi.h ../PLOT3D/PLOT3D_read.h \
+ ../PLOT3D/PLOT3D.h ../FB/DomainInfo.h ../FB/FB_Ffunc.h ../PLOT3D/PLOT3D_write.h \
+ FileIO_sph.h endianUtil.h ../FB/dfiinfo.h \
  /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
- /usr/local/TextParser/include/Version.h ../FB/dfi.h ../PLOT3D/PLOT3D_read.h \
- ../PLOT3D/PLOT3D.h ../FB/DomainInfo.h ../FB/FB_Ffunc.h ../PLOT3D/PLOT3D_write.h \
- FileIO_sph.h endianUtil.h ../FB/dfiinfo.h COMB_Define.h
+ /usr/local/TextParser/include/Version.h COMB_Define.h
 comb_sph.o: comb_sph.C comb.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/mpi_portable_platform.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/mpicxx.h /opt/openmpi/include/mpi.h \
@@ -142,12 +142,12 @@ comb_sph.o: comb_sph.C comb.h /opt/openmpi/include/mpi.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h ../FB/FB_Define.h \
- ../FB/mydebug.h ../FB/FBUtility.h ../FB/TPControl.h \
+ ../FB/mydebug.h ../FB/FBUtility.h ../FB/dfi.h ../PLOT3D/PLOT3D_read.h \
+ ../PLOT3D/PLOT3D.h ../FB/DomainInfo.h ../FB/FB_Ffunc.h ../PLOT3D/PLOT3D_write.h \
+ FileIO_sph.h endianUtil.h ../FB/dfiinfo.h \
  /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
- /usr/local/TextParser/include/Version.h ../FB/dfi.h ../PLOT3D/PLOT3D_read.h \
- ../PLOT3D/PLOT3D.h ../FB/DomainInfo.h ../FB/FB_Ffunc.h ../PLOT3D/PLOT3D_write.h \
- FileIO_sph.h endianUtil.h ../FB/dfiinfo.h COMB_Define.h
+ /usr/local/TextParser/include/Version.h COMB_Define.h
 comb_plot3d.o: comb_plot3d.C comb.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/mpi_portable_platform.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/mpicxx.h /opt/openmpi/include/mpi.h \
@@ -192,12 +192,12 @@ comb_plot3d.o: comb_plot3d.C comb.h /opt/openmpi/include/mpi.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h ../FB/FB_Define.h \
- ../FB/mydebug.h ../FB/FBUtility.h ../FB/TPControl.h \
+ ../FB/mydebug.h ../FB/FBUtility.h ../FB/dfi.h ../PLOT3D/PLOT3D_read.h \
+ ../PLOT3D/PLOT3D.h ../FB/DomainInfo.h ../FB/FB_Ffunc.h ../PLOT3D/PLOT3D_write.h \
+ FileIO_sph.h endianUtil.h ../FB/dfiinfo.h \
  /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
- /usr/local/TextParser/include/Version.h ../FB/dfi.h ../PLOT3D/PLOT3D_read.h \
- ../PLOT3D/PLOT3D.h ../FB/DomainInfo.h ../FB/FB_Ffunc.h ../PLOT3D/PLOT3D_write.h \
- FileIO_sph.h endianUtil.h ../FB/dfiinfo.h COMB_Define.h
+ /usr/local/TextParser/include/Version.h COMB_Define.h
 FileIO_sph.o: FileIO_sph.C FileIO_sph.h endianUtil.h ../FB/FB_Define.h \
  ../FB/mydebug.h
 FileIO_read_sph.o: FileIO_read_sph.C FileIO_sph.h endianUtil.h ../FB/FB_Define.h \

@@ -19,6 +19,12 @@ REVISION HISTORY
 ================
 
 --------------------------
+2013-08-13
+
+- r1010 remove TPControl class [ver 1.3.2]
+  - TPControlクラスを追加したTextParser-1.4.0に対応 >> TPControl.h/Cは削除
+
+--------------------------
 2013-08-12
 
 - r1009 change parameter structure [ver 1.3.1]

@@ -29,7 +29,6 @@
 #include "MonCompo.h"
 #include "basic_func.h"
 #include "Component.h"
-#include "TPControl.h"
 #include "Control.h"
 
 using namespace std;
@@ -57,7 +56,7 @@ protected:
   FB::Vec3r g_org;       ///< グローバル基点座標
   FB::Vec3r g_box;       ///< グローバル領域サイズ
   int* bcd;              ///< BCindex ID
-  TPControl* tpCntl;     ///< テキストパーサへのポインタ
+  TextParser* tpCntl;    ///< テキストパーサへのポインタ
   
   OutputType outputType; ///< 出力タイプ
   vector<MonitorCompo*> monGroup;  ///< モニタリンググループ配列
@@ -124,9 +123,9 @@ public:
   
   /**
    * @brief TPのポインタを受け取る
-   * @param [in] tp TPControl
+   * @param [in] tp TextParser
    */
-  void importTP(TPControl* tp);
+  void importTP(TextParser* tp);
   
   
   

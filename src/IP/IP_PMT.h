@@ -41,7 +41,7 @@ protected:
 
 public:
   
-  virtual bool getTP(Control* R, TPControl* tpCntl);
+  virtual bool getTP(Control* R, TextParser* tpCntl);
   
   virtual void setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch);
   

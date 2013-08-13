@@ -149,9 +149,8 @@ am_libFB_a_OBJECTS = libFB_a-Alloc.$(OBJEXT) \
 	libFB_a-MonCompo.$(OBJEXT) libFB_a-Monitor.$(OBJEXT) \
 	libFB_a-ParseBC.$(OBJEXT) libFB_a-ParseMat.$(OBJEXT) \
 	libFB_a-Sampling.$(OBJEXT) libFB_a-SetBC.$(OBJEXT) \
-	libFB_a-TPControl.$(OBJEXT) libFB_a-VoxInfo.$(OBJEXT) \
-	dbwrite.$(OBJEXT) libFB_a-dfi.$(OBJEXT) \
-	libFB_a-dfiinfo.$(OBJEXT)
+	libFB_a-VoxInfo.$(OBJEXT) dbwrite.$(OBJEXT) \
+	libFB_a-dfi.$(OBJEXT) libFB_a-dfiinfo.$(OBJEXT)
 libFB_a_OBJECTS = $(am_libFB_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -421,8 +420,6 @@ libFB_a_SOURCES = \
   Sampling.h \
   SetBC.C \
   SetBC.h \
-  TPControl.C \
-  TPControl.h \
   VoxInfo.C \
   VoxInfo.h \
   basic_func.h \
@@ -536,7 +533,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-ParseMat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-Sampling.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-SetBC.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-TPControl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-VoxInfo.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-dfi.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-dfiinfo.Po@am__quote@
@@ -806,20 +802,6 @@ libFB_a-SetBC.obj: SetBC.C
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='SetBC.C' object='libFB_a-SetBC.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -c -o libFB_a-SetBC.obj `if test -f 'SetBC.C'; then $(CYGPATH_W) 'SetBC.C'; else $(CYGPATH_W) '$(srcdir)/SetBC.C'; fi`
-
-libFB_a-TPControl.o: TPControl.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -MT libFB_a-TPControl.o -MD -MP -MF $(DEPDIR)/libFB_a-TPControl.Tpo -c -o libFB_a-TPControl.o `test -f 'TPControl.C' || echo '$(srcdir)/'`TPControl.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFB_a-TPControl.Tpo $(DEPDIR)/libFB_a-TPControl.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='TPControl.C' object='libFB_a-TPControl.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -c -o libFB_a-TPControl.o `test -f 'TPControl.C' || echo '$(srcdir)/'`TPControl.C
-
-libFB_a-TPControl.obj: TPControl.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -MT libFB_a-TPControl.obj -MD -MP -MF $(DEPDIR)/libFB_a-TPControl.Tpo -c -o libFB_a-TPControl.obj `if test -f 'TPControl.C'; then $(CYGPATH_W) 'TPControl.C'; else $(CYGPATH_W) '$(srcdir)/TPControl.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFB_a-TPControl.Tpo $(DEPDIR)/libFB_a-TPControl.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='TPControl.C' object='libFB_a-TPControl.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -c -o libFB_a-TPControl.obj `if test -f 'TPControl.C'; then $(CYGPATH_W) 'TPControl.C'; else $(CYGPATH_W) '$(srcdir)/TPControl.C'; fi`
 
 libFB_a-VoxInfo.o: VoxInfo.C
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -MT libFB_a-VoxInfo.o -MD -MP -MF $(DEPDIR)/libFB_a-VoxInfo.Tpo -c -o libFB_a-VoxInfo.o `test -f 'VoxInfo.C' || echo '$(srcdir)/'`VoxInfo.C

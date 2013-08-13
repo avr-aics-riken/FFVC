@@ -28,7 +28,7 @@
  * @param [in] tpCntl テキストパーサクラス
  * @return true-成功, false-エラー
  */
-bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
+bool IP_Rect::getTP(Control* R, TextParser* tpCntl)
 {
   std::string str;
   std::string label;
@@ -36,7 +36,7 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
   // 2D or 3D mode
   label="/IntrinsicExample/Dimension";
   
-  if ( !(tpCntl->GetValue(label, &str )) ) {
+  if ( !(tpCntl->getInspectedValue(label, str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
@@ -56,7 +56,7 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
   // 分割数の偶数チェックオプション
   label="/IntrinsicExample/CheckEven";
 
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
@@ -79,7 +79,7 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
   // 媒質指定
   label="/IntrinsicExample/FluidMedium";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
@@ -88,7 +88,7 @@ bool IP_Rect::getTP(Control* R, TPControl* tpCntl)
   
   label="/IntrinsicExample/SolidMedium";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;

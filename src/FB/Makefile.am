@@ -68,8 +68,6 @@ libFB_a_SOURCES = \
   Sampling.h \
   SetBC.C \
   SetBC.h \
-  TPControl.C \
-  TPControl.h \
   VoxInfo.C \
   VoxInfo.h \
   basic_func.h \

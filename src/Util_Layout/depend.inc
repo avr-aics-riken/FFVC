@@ -42,10 +42,10 @@ main.o: main.C layout.h /opt/openmpi/include/mpi.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h ../FB/FB_Define.h \
- ../FB/mydebug.h ../FB/TPControl.h /usr/local/TextParser/include/TextParser.h \
+ ../FB/mydebug.h ../FB/dfiinfo.h ../FB/DomainInfo.h \
+ /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
- /usr/local/TextParser/include/Version.h ../FB/dfiinfo.h ../FB/DomainInfo.h \
- LAYOUT_Define.h
+ /usr/local/TextParser/include/Version.h LAYOUT_Define.h
 layout.o: layout.C layout.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/mpi_portable_platform.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/mpicxx.h /opt/openmpi/include/mpi.h \
@@ -90,7 +90,7 @@ layout.o: layout.C layout.h /opt/openmpi/include/mpi.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h ../FB/FB_Define.h \
- ../FB/mydebug.h ../FB/TPControl.h /usr/local/TextParser/include/TextParser.h \
+ ../FB/mydebug.h ../FB/dfiinfo.h ../FB/DomainInfo.h \
+ /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
- /usr/local/TextParser/include/Version.h ../FB/dfiinfo.h ../FB/DomainInfo.h \
- LAYOUT_Define.h
+ /usr/local/TextParser/include/Version.h LAYOUT_Define.h

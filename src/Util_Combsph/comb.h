@@ -45,7 +45,6 @@
 #include "FB_Define.h"
 #include "FBUtility.h"
 #include "mydebug.h"
-#include "TPControl.h"
 #include "dfi.h"
 #include "PLOT3D_read.h"
 #include "PLOT3D_write.h"
@@ -180,15 +179,15 @@ public:
   
   /**
    * @brief 連結用入力ファイルの読み込み
-   * @param [in] tpCntl  tpCntlクラスポインタ
+   * @param [in] tpCntl  TextParserクラスポインタ
    */
-  void ReadInputFile(TPControl* tpCntl);
+  void ReadInputFile(TextParser* tpCntl);
   
   /**
    * @brief PLOT3Dファイル入出力に関するパラメータ
-   * @param [in] tpCntl  tpCntlクラスポインタ
+   * @param [in] tpCntl  TextParserクラスポインタ
    */
-  void get_PLOT3D(TPControl* tpCntl);
+  void get_PLOT3D(TextParser* tpCntl);
   
   /**
    * @brief dfiファイルの読み込みとDfiInfoクラスデータの作成

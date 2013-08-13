@@ -431,7 +431,7 @@ void Control::getApplicationControl()
   
   label = "/ApplicationControl/Operator";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 	  Exit(0);
   }
@@ -441,7 +441,7 @@ void Control::getApplicationControl()
   // パラメータチェックフラグ
   label = "/ApplicationControl/CheckParameter";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 	  Exit(0);
   }
@@ -461,7 +461,7 @@ void Control::getApplicationControl()
   Hide.PM_Test = OFF;
   label="/ApplicationControl/PerformanceTest";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 	  ;
   }
@@ -481,7 +481,7 @@ void Control::getApplicationControl()
   Hide.Range_Limit = Range_Normal;
   label="/ApplicationControl/VariableRange";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     ;
   }
@@ -499,7 +499,7 @@ void Control::getApplicationControl()
   
   // Cell IDのゼロを指定IDに変更するオプションを取得する（隠しオプション）
   label = "/ApplicationControl/ChangeID";
-  if ( !(tpCntl->GetValue(label, &ct )) )
+  if ( !(tpCntl->getInspectedValue(label, ct )) )
   {
 	  ;
   }
@@ -536,7 +536,7 @@ void Control::getAverageOption()
   {
 	  label = "/Output/Data/AveragedVariables/IntervalType";
     
-	  if ( !(tpCntl->GetValue(label, &str )) )
+	  if ( !(tpCntl->getInspectedValue(label, str )) )
     {
 		  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 		  Exit(0);
@@ -560,7 +560,7 @@ void Control::getAverageOption()
       
     label="/Output/Data/AveragedVariables/Interval";
     
-    if ( !(tpCntl->GetValue(label, &ct )) )
+    if ( !(tpCntl->getInspectedValue(label, ct )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
@@ -596,7 +596,7 @@ void Control::getConvection()
   // scheme
   label="/ConvectionTerm/scheme";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 	  Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
 	  Exit(0);
@@ -617,7 +617,7 @@ void Control::getConvection()
   {
 		label="/ConvectionTerm/limiter";
     
-		if ( !(tpCntl->GetValue(label, &str )) )
+		if ( !(tpCntl->getInspectedValue(label, str )) )
     {
 			Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
 			Exit(0);
@@ -644,7 +644,7 @@ void Control::getDerived()
   // 全圧
   label="/Output/Data/DerivedVariables/TotalPressure";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
@@ -661,7 +661,7 @@ void Control::getDerived()
   // 渦度ベクトル
   label="/Output/Data/DerivedVariables/Vorticity";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
@@ -678,7 +678,7 @@ void Control::getDerived()
   // 速度勾配テンソルの第2不変量
   label="/Output/Data/DerivedVariables/Qcriterion";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
@@ -695,7 +695,7 @@ void Control::getDerived()
   // ヘリシティ
   label="/Output/Data/DerivedVariables/Helicity";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
@@ -713,7 +713,7 @@ void Control::getDerived()
   // FaceVelocity hidden parameter
   label="/Output/Data/DerivedVariables/FaceVelocity";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 	  ;
   }
@@ -743,7 +743,7 @@ void Control::getDimensionlessParameter()
   
   label="/Reference/Reynolds";
   
-  if ( !(tpCntl->GetValue(label, &ct )) )
+  if ( !(tpCntl->getInspectedValue(label, ct )) )
   {
     Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
 	  Exit(0);
@@ -753,7 +753,7 @@ void Control::getDimensionlessParameter()
   
   label="/Reference/Prandtl";
   
-  if ( !(tpCntl->GetValue(label, &ct )) )
+  if ( !(tpCntl->getInspectedValue(label, ct )) )
   {
     Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
 	  Exit(0);
@@ -791,7 +791,7 @@ void Control::getFieldData()
   // ファイルフォーマット
   label = "/Output/Data/BasicVariables/Format";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
@@ -810,7 +810,7 @@ void Control::getFieldData()
   // インターバル
   label = "/Output/Data/BasicVariables/IntervalType";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -833,7 +833,7 @@ void Control::getFieldData()
     
     label="/Output/Data/BasicVariables/Interval";
     
-    if ( !(tpCntl->GetValue(label, &f_val )) )
+    if ( !(tpCntl->getInspectedValue(label, f_val )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
@@ -851,7 +851,7 @@ void Control::getFieldData()
   /* ファイルフォーマット >> 基本変数と同じ
   label = "/Output/Data/DerivedVariables/Format";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
@@ -882,7 +882,7 @@ void Control::getFieldData()
   // インターバル
   label = "/Output/Data/DerivedVariables/IntervalType";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -905,7 +905,7 @@ void Control::getFieldData()
     
     label="/Output/Data/DerivedVariables/Interval";
     
-    if ( !(tpCntl->GetValue(label, &f_val )) )
+    if ( !(tpCntl->getInspectedValue(label, f_val )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
@@ -939,7 +939,7 @@ void Control::getFieldData()
   FIO.IO_Voxel = OFF;
   label = "/Output/VoxelOutput";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     ;
   }
@@ -957,7 +957,7 @@ void Control::getFieldData()
   FIO.Div_Debug = OFF;
   label = "/Output/DebugDivergence";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     ;
   }
@@ -994,7 +994,7 @@ void Control::getFormat_plot3d()
   // インターバル PLOT3D
   label = "/Output/FormatOption/PLOT3D/IntervalType";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -1017,7 +1017,7 @@ void Control::getFormat_plot3d()
     
     label="/Output/FormatOption/PLOT3D/Interval";
     
-    if ( !(tpCntl->GetValue(label, &f_val )) )
+    if ( !(tpCntl->getInspectedValue(label, f_val )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
@@ -1052,7 +1052,7 @@ void Control::getFormat_sph()
   // 出力ガイドセルモード
   label = "/Output/FormatOption/SPH/GuideOut";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -1070,7 +1070,7 @@ void Control::getFormat_sph()
   // Output Directory_Path
   label = "/Output/FormatOption/SPH/DirectoryPath";
   
-  if ( !(tpCntl->GetValue(label, &str)) )
+  if ( !(tpCntl->getInspectedValue(label, str)) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -1085,7 +1085,7 @@ void Control::getFormat_sph()
   // TimeSlice option
   label = "/Output/FormatOption/SPH/TimeSlice";
   
-  if ( !(tpCntl->GetValue(label, &str)) )
+  if ( !(tpCntl->getInspectedValue(label, str)) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -1120,14 +1120,14 @@ void Control::getGeometryModel()
   // ソース名を取得　文字列がIntrisicExampleでなければポリゴンファイル名と解釈
   label = "/GeometryModel/Source";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : Invalid char* value in '%s'\n", label.c_str());
     Exit(0);
   }
   
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tError : '%s'\n", label.c_str());
     Exit(0);
@@ -1155,7 +1155,7 @@ void Control::getGeometryModel()
   
   label = "/GeometryModel/ScalingFactor";
   
-  if ( !tpCntl->GetValue(label, &ct) )
+  if ( !tpCntl->getInspectedValue(label, ct) )
   {
 	  ; // 無くても可
   }
@@ -1207,7 +1207,7 @@ void Control::getIteration()
   int counter=0;
   for (int i=1; i<=nnode; i++)
   {
-    if ( !tpCntl->GetNodeStr(base, i, &str) )
+    if ( !tpCntl->getNodeStr(base, i, str) )
     {
       Hostonly_ stamped_printf("\tGetNodeStr error\n");
       Exit(0);
@@ -1225,7 +1225,7 @@ void Control::getIteration()
   // get criterion
   for (int i=0; i<NoBaseLS; i++)
   {
-    if ( !tpCntl->GetNodeStr(base, i+1, &str) )
+    if ( !tpCntl->getNodeStr(base, i+1, str) )
     {
       Hostonly_ printf("\tParsing error : Missing 'LinearSolver'\n");
       Exit(0);
@@ -1238,7 +1238,7 @@ void Control::getIteration()
     leaf = base + "/" + str;
     label = leaf + "/Alias";
     
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( !(tpCntl->getInspectedValue(label, str )) )
     {
       Hostonly_ printf("\tParsing error : No '%s'\n", label.c_str());
       Exit(0);
@@ -1258,7 +1258,7 @@ void Control::getIteration()
     
     // 線形ソルバーの種類
     label = leaf + "/class";
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( !(tpCntl->getInspectedValue(label, str )) )
     {
       Hostonly_ printf("\tParsing error : No '%s'\n", label.c_str());
       Exit(0);
@@ -1281,7 +1281,7 @@ void Control::getIteration()
 
     
     label = leaf + "/MaxIteration";
-    if ( !(tpCntl->GetValue(label, &i_val )) )
+    if ( !(tpCntl->getInspectedValue(label, i_val )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
@@ -1290,7 +1290,7 @@ void Control::getIteration()
 
 
     label = leaf + "/ConvergenceCriterion";
-    if ( !(tpCntl->GetValue(label, &f_val )) )
+    if ( !(tpCntl->getInspectedValue(label, f_val )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
@@ -1299,7 +1299,7 @@ void Control::getIteration()
 
     
     label = leaf + "/NormType";
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( !(tpCntl->getInspectedValue(label, str )) )
     {
       Hostonly_ printf("\tParsing error : No '%s'\n", label.c_str());
       Exit(0);
@@ -1404,7 +1404,7 @@ void Control::getLog()
   // Log_Base
   label="/Output/Log/Base";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
 	  Exit(0);
@@ -1422,7 +1422,7 @@ void Control::getLog()
   // Log_Iteration
   label="/Output/Log/Iteration";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
 	  Exit(0);
@@ -1442,7 +1442,7 @@ void Control::getLog()
   {
 	  label="/Output/Log/WallInfo";
     
-	  if ( !(tpCntl->GetValue(label, &str )) )
+	  if ( !(tpCntl->getInspectedValue(label, str )) )
     {
 		  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
 		  Exit(0);
@@ -1461,7 +1461,7 @@ void Control::getLog()
   // Log_Profiling
   label="/Output/Log/Profiling";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
 	  Exit(0);
@@ -1479,7 +1479,7 @@ void Control::getLog()
   // Interval console
   label="/Output/Log/ConsoleIntervalType";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
@@ -1502,7 +1502,7 @@ void Control::getLog()
 	  
 	  label="/Output/Log/ConsoleInterval";
     
-	  if ( !(tpCntl->GetValue(label, &f_val )) )
+	  if ( !(tpCntl->getInspectedValue(label, f_val )) )
     {
 		  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 		  Exit(0);
@@ -1516,7 +1516,7 @@ void Control::getLog()
   // Interval file_history
   label="/Output/Log/HistoryIntervalType";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
@@ -1539,7 +1539,7 @@ void Control::getLog()
     
 	  label="/Output/Log/HistoryInterval";
     
-	  if ( !(tpCntl->GetValue(label, &f_val )) )
+	  if ( !(tpCntl->getInspectedValue(label, f_val )) )
     {
 		  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 		  Exit(0);
@@ -1563,7 +1563,7 @@ void Control::getMonitorList()
   // ログ出力
   label = "/MonitorList/log";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
 	  Exit(0);
@@ -1583,7 +1583,7 @@ void Control::getMonitorList()
   {
 	  label = "/MonitorList/CellMonitor";
     
-	  if ( !(tpCntl->GetValue(label, &str )) )
+	  if ( !(tpCntl->getInspectedValue(label, str )) )
     {
 		  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
 		  Exit(0);
@@ -1664,7 +1664,7 @@ void Control::getParaJacobi(const string base, const int m)
   
   label = base + "/Omega";
   
-  if ( !(tpCntl->GetValue(label, &tmp )) )
+  if ( !(tpCntl->getInspectedValue(label, tmp )) )
   {
     Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
     Exit(0);
@@ -1735,7 +1735,7 @@ void Control::getParaSOR2(const string base, const int m)
   getParaJacobi(base, m);
   
   label = base + "/commMode";
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
     Exit(0);
@@ -1770,7 +1770,7 @@ void Control::getReference()
   
   
   label = "/Reference/Length";
-  if ( !(tpCntl->GetValue(label, &ct2 )) )
+  if ( !(tpCntl->getInspectedValue(label, ct2 )) )
   {
     Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
     Exit(0);
@@ -1779,7 +1779,7 @@ void Control::getReference()
   
   
   label = "/Reference/Velocity";
-  if ( !(tpCntl->GetValue(label, &ct2 )) )
+  if ( !(tpCntl->getInspectedValue(label, ct2 )) )
   {
     Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
     Exit(0);
@@ -1788,7 +1788,7 @@ void Control::getReference()
   
   
   label = "/Reference/MassDensity";
-  if ( !(tpCntl->GetValue(label, &ct2 )) )
+  if ( !(tpCntl->getInspectedValue(label, ct2 )) )
   {
     Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
     Exit(0);
@@ -1797,7 +1797,7 @@ void Control::getReference()
   
   
   label = "/Reference/BasePressure";
-  if ( !(tpCntl->GetValue(label, &ct2 )) )
+  if ( !(tpCntl->getInspectedValue(label, ct2 )) )
   {
     Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
     Exit(0);
@@ -1806,7 +1806,7 @@ void Control::getReference()
 
   
   label = "/Reference/Medium";
-  if ( !tpCntl->GetValue(label, &str) )
+  if ( !tpCntl->getInspectedValue(label, str) )
   {
     Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
 	  Exit(0);
@@ -1820,7 +1820,7 @@ void Control::getReference()
     
     label="/Reference/Temperature/Base";
     
-    if ( !(tpCntl->GetValue(label, &Base )) )
+    if ( !(tpCntl->getInspectedValue(label, Base )) )
     {
       Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
       Exit(0);
@@ -1829,7 +1829,7 @@ void Control::getReference()
     
     label="/Reference/Temperature/Difference";
     
-    if ( !(tpCntl->GetValue(label, &Diff )) )
+    if ( !(tpCntl->getInspectedValue(label, Diff )) )
     {
       Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
       Exit(0);
@@ -1865,7 +1865,7 @@ void Control::getReferenceFrame(ReferenceFrame* RF)
   
   label="/ReferenceFrame/Mode";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
@@ -1882,7 +1882,7 @@ void Control::getReferenceFrame(ReferenceFrame* RF)
     REAL_TYPE xyz[3];
     for (int n=0; n<3; n++) xyz[n]=0.0;
     
-    if( tpCntl->GetVector(label, xyz, 3) )
+    if( tpCntl->getInspectedVector(label, xyz, 3) )
     {
       Hostonly_ stamped_printf("\tParsing error : Invalid values for '%s'\n", label.c_str());
       Exit(0);
@@ -1909,7 +1909,7 @@ void Control::getShapeApproximation()
   // 形状近似度の取得
   label = "/ShapeApproximation/Method";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -1936,7 +1936,7 @@ void Control::getSolverProperties()
   // 支配方程式の型（PDE_NS / Euler）を取得
   label = "/GoverningEquation/PDEType";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -1954,7 +1954,7 @@ void Control::getSolverProperties()
   // 基礎方程式の種類を取得する
   label = "/GoverningEquation/FlowEquation";
   
-  if ( !(tpCntl->GetValue(label, &str )) ) {
+  if ( !(tpCntl->getInspectedValue(label, str )) ) {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
@@ -1973,7 +1973,7 @@ void Control::getSolverProperties()
   // 非定常計算，または定常計算の種別を取得する
   label = "/GoverningEquation/TimeVariation";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -1993,7 +1993,7 @@ void Control::getSolverProperties()
   
   label="/ConvectionTerm/scheme";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 	  Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
 	  Exit(0);
@@ -2014,7 +2014,7 @@ void Control::getSolverProperties()
   {
 		label="/ConvectionTerm/limiter";
     
-		if ( !(tpCntl->GetValue(label, &str )) )
+		if ( !(tpCntl->getInspectedValue(label, str )) )
     {
 			Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
 			Exit(0);
@@ -2033,7 +2033,7 @@ void Control::getSolverProperties()
   // ソルバーの種類（FLOW_ONLY / THERMAL_FLOW / THERMAL_FLOW_NATURAL / CONJUGATE_HEAT_TRANSFER / SOLID_CONDUCTION）と浮力モード
   label="/GoverningEquation/HeatEquation";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 	  Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
 	  Exit(0);
@@ -2055,7 +2055,7 @@ void Control::getSolverProperties()
   {
     label="/GoverningEquation/Buoyancy";
     
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( !(tpCntl->getInspectedValue(label, str )) )
     {
       Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
       Exit(0);
@@ -2113,7 +2113,7 @@ void Control::getStartCondition()
   // Staging option
   label="/StartCondition/Restart/Staging";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     ;
   }
@@ -2134,7 +2134,7 @@ void Control::getStartCondition()
   {
     label="/StartCondition/Restart/DFIfiles/Pressure";
     
-    if ( tpCntl->GetValue(label, &str ) )
+    if ( tpCntl->getInspectedValue(label, str ) )
     {
       f_dfi_in_prs = str.c_str();
     }
@@ -2143,7 +2143,7 @@ void Control::getStartCondition()
     
     label="/StartCondition/Restart/DFIfiles/Velocity";
     
-    if ( tpCntl->GetValue(label, &str ) )
+    if ( tpCntl->getInspectedValue(label, str ) )
     {
       f_dfi_in_vel = str.c_str();
     }
@@ -2154,7 +2154,7 @@ void Control::getStartCondition()
     {
       label="/StartCondition/Restart/DFIfiles/Fvelocity";
       
-      if ( tpCntl->GetValue(label, &str ) )
+      if ( tpCntl->getInspectedValue(label, str ) )
       {
         f_dfi_in_fvel = str.c_str();
       }
@@ -2166,7 +2166,7 @@ void Control::getStartCondition()
     {
       label="/StartCondition/Restart/DFIfiles/Temperature";
       
-      if ( tpCntl->GetValue(label, &str ) )
+      if ( tpCntl->getInspectedValue(label, str ) )
       {
         f_dfi_in_temp = str.c_str();
       }
@@ -2179,7 +2179,7 @@ void Control::getStartCondition()
     {
       label="/StartCondition/Restart/DFIfiles/AveragedPressure";
       
-      if ( tpCntl->GetValue(label, &str ) )
+      if ( tpCntl->getInspectedValue(label, str ) )
       {
         f_dfi_in_prsa = str.c_str();
       }
@@ -2188,7 +2188,7 @@ void Control::getStartCondition()
       
       label="/StartCondition/Restart/DFIfiles/AveragedVelocity";
       
-      if ( tpCntl->GetValue(label, &str ) )
+      if ( tpCntl->getInspectedValue(label, str ) )
       {
         f_dfi_in_vela = str.c_str();
       }
@@ -2199,7 +2199,7 @@ void Control::getStartCondition()
       {
         label="/StartCondition/Restart/DFIfiles/AveragedTemperature";
         
-        if ( tpCntl->GetValue(label, &str ) )
+        if ( tpCntl->getInspectedValue(label, str ) )
         {
           f_dfi_in_tempa = str.c_str();
         }
@@ -2216,7 +2216,7 @@ void Control::getStartCondition()
     // Density
     label="/StartCondition/InitialState/MassDensity";
     
-    if ( !(tpCntl->GetValue(label, &iv.Density )) )
+    if ( !(tpCntl->getInspectedValue(label, iv.Density )) )
     {
       Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
       Exit(0);
@@ -2225,7 +2225,7 @@ void Control::getStartCondition()
     // Pressure
     label="/StartCondition/InitialState/Pressure";
     
-    if ( !(tpCntl->GetValue(label, &iv.Pressure )) )
+    if ( !(tpCntl->getInspectedValue(label, iv.Pressure )) )
     {
       Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
       Exit(0);
@@ -2236,7 +2236,7 @@ void Control::getStartCondition()
     for (int n=0; n<3; n++) v[n]=0.0;
     label="/StartCondition/InitialState/Velocity";
     
-    if( !(tpCntl->GetVector(label, v, 3)) )
+    if( !(tpCntl->getInspectedVector(label, v, 3)) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get velocity in '%s'\n", label.c_str());
       Exit(0);
@@ -2250,7 +2250,7 @@ void Control::getStartCondition()
     {
       label="/StartCondition/InitialState/Temperature";
       
-      if ( !(tpCntl->GetValue(label, &iv.Temperature )) )
+      if ( !(tpCntl->getInspectedValue(label, iv.Temperature )) )
       {
         Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
         Exit(0);
@@ -2271,7 +2271,7 @@ void Control::getSolvingMethod()
   
   label = "/SolvingMethod/Flow";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -2292,7 +2292,7 @@ void Control::getSolvingMethod()
   {
 	  label = "/SolvingMethod/Heat";
     
-	  if ( !(tpCntl->GetValue(label, &str )) )
+	  if ( !(tpCntl->getInspectedValue(label, str )) )
     {
 		  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 		  Exit(0);
@@ -2327,7 +2327,7 @@ void Control::getTimeControl(DTcntl* DT)
   // 加速時間
   label = "/TimeControl/AccelerationType";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
@@ -2350,7 +2350,7 @@ void Control::getTimeControl(DTcntl* DT)
 	  
 	  label = "/TimeControl/Acceleration";
     
-	  if ( !(tpCntl->GetValue(label, &ct )) )
+	  if ( !(tpCntl->getInspectedValue(label, ct )) )
     {
 		  Hostonly_ stamped_printf("\tParsing error : fail to get '%s\n", label.c_str());
 		  Exit(0);
@@ -2365,7 +2365,7 @@ void Control::getTimeControl(DTcntl* DT)
   // 時間積分幅を取得する
   label = "/TimeControl/DeltaTType";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -2374,7 +2374,7 @@ void Control::getTimeControl(DTcntl* DT)
   
   label = "/TimeControl/DeltaT";
   
-  if ( !(tpCntl->GetValue(label, &ct )) )
+  if ( !(tpCntl->getInspectedValue(label, ct )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -2405,7 +2405,7 @@ void Control::getTimeControl(DTcntl* DT)
   // 計算する時間を取得する
   label = "/TimeControl/TemporalType";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -2430,7 +2430,7 @@ void Control::getTimeControl(DTcntl* DT)
   // スタート
   label = "/TimeControl/Start";
   
-  if ( !(tpCntl->GetValue(label, &ct )) )
+  if ( !(tpCntl->getInspectedValue(label, ct )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -2440,7 +2440,7 @@ void Control::getTimeControl(DTcntl* DT)
   // 終了
   label = "/TimeControl/End";
   
-  if ( !(tpCntl->GetValue(label, &ct )) )
+  if ( !(tpCntl->getInspectedValue(label, ct )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -2472,7 +2472,7 @@ void Control::getTimeControl(DTcntl* DT)
   // 平均操作開始
   label = "/TimeControl/Average/Start";
   
-  if ( !(tpCntl->GetValue(label, &ct )) )
+  if ( !(tpCntl->getInspectedValue(label, ct )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -2486,7 +2486,7 @@ void Control::getTimeControl(DTcntl* DT)
   // 平均操作終了
   label = "/TimeControl/Average/End";
   
-  if ( !(tpCntl->GetValue(label, &ct )) )
+  if ( !(tpCntl->getInspectedValue(label, ct )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -2552,7 +2552,7 @@ void Control::getTurbulenceModel()
   // モデル
   label = "/TurbulenceModeling/Model";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
 	  Exit(0);
@@ -2588,7 +2588,7 @@ void Control::getTurbulenceModel()
   {
     // Cs係数
     label = "/TurbulenceModeling/Cs";
-    if ( !(tpCntl->GetValue(label, &ct )) )
+    if ( !(tpCntl->getInspectedValue(label, ct )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
@@ -2597,7 +2597,7 @@ void Control::getTurbulenceModel()
     
     // damping factor
     label="/TurbulenceModeling/DampingFactor";
-    if ( !(tpCntl->GetValue(label, &ct )) )
+    if ( !(tpCntl->getInspectedValue(label, ct )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
@@ -2618,7 +2618,7 @@ void Control::getUnit()
   
   label = "/Unit/UnitOfInputParameter";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 		Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
 	  Exit(0);
@@ -2635,7 +2635,7 @@ void Control::getUnit()
   
   label = "/Unit/UnitOfOutput";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 		Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
 	  Exit(0);
@@ -2662,7 +2662,7 @@ void Control::getUnit()
   
   label = "/Unit/Pressure";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
 	  Exit(0);
@@ -2680,7 +2680,7 @@ void Control::getUnit()
   {
     label = "/Unit/Temperature";
     
-    if ( !(tpCntl->GetValue(label, &str )) )
+    if ( !(tpCntl->getInspectedValue(label, str )) )
     {
       Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
       Exit(0);
@@ -2709,7 +2709,7 @@ void Control::getWallType()
   // 圧力のタイプ
   label="/TreatmentOfWall/PressureGradient";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
 	  Exit(0);
@@ -2726,7 +2726,7 @@ void Control::getWallType()
   // 壁面摩擦応力の計算モード
   label="/TreatmentOfWall/VelocityProfile";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
 	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
 	  Exit(0);
@@ -2746,7 +2746,7 @@ void Control::getWallType()
 
 // #################################################################
 // TPのポインタを受け取る
-void Control::importTP(TPControl* tp) 
+void Control::importTP(TextParser* tp)
 { 
   if ( !tp ) Exit(0);
   tpCntl = tp;
@@ -4305,7 +4305,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   // FileNameGrid --- option
   label = "/Steer/Plot3dOptions/FileNameGrid";
   
-  if ( !(tpCntl->GetValue(label, &str)) )
+  if ( !(tpCntl->getInspectedValue(label, str)) )
   {
     P3Op.basename_g = "PLOT3DoutputGrid";
   }
@@ -4321,7 +4321,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   // FileNameFunc --- option
   label = "/Steer/Plot3dOptions/FileNameFunc";
   
-  if ( !(tpCntl->GetValue(label, &str)) )
+  if ( !(tpCntl->getInspectedValue(label, str)) )
   {
     P3Op.basename_f = "PLOT3Doutput";
   }
@@ -4338,7 +4338,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   /*
    label = "/Steer/Plot3dOptions/GridKind";
    
-   if ( !(tpCntl->GetValue(label, &str )) )
+   if ( !(tpCntl->getInspectedValue(label, str )) )
    {
    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
    Exit(0);
@@ -4361,7 +4361,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   // 格子の移動
   label = "/Steer/Plot3dOptions/GridMobility";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -4381,7 +4381,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   // 時間方向の変化
   label = "/Steer/Plot3dOptions/StateOfTime";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     FP3DR->setSteady(FB_UNSTEADY);
   }
@@ -4400,7 +4400,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   // IBLANKファイル
   label = "/Steer/Plot3dOptions/SetIblankFlag";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     FP3DR->setIBlankFlag(SET_IBLANK);
   }
@@ -4419,7 +4419,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   // 次元数
   /*
    label = "/Steer/Plot3dOptions/Dimension";
-   if ( !(tpCntl->GetValue(label, &str )) )
+   if ( !(tpCntl->getInspectedValue(label, str )) )
    {
    //Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/plot3doptions/dimension'\n");
    //Exit(0);
@@ -4440,7 +4440,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   // FormatType
   label = "/Steer/Plot3dOptions/FormatType";
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -4460,7 +4460,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   
   // 出力の単精度or倍精度指定
   label = "/Steer/Plot3dOptions/RealType";
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     //Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     //Exit(0);
@@ -4492,7 +4492,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   // OutputXyz
   label = "/Steer/Plot3dOptions/OutputXyz";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -4514,7 +4514,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   /*
    label = "/Steer/plot3doptions/OutputQ";
    
-   if ( !(tpCntl->GetValue(label, &str )) )
+   if ( !(tpCntl->getInspectedValue(label, str )) )
    {
    //Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
    //Exit(0);
@@ -4537,7 +4537,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   // OutputFunction
   label = "/Steer/Plot3dOptions/OutputFunction";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -4557,7 +4557,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   // OutputFuncName
   label = "/Steer/Plot3dOptions/OutputFuncName";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -4579,7 +4579,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   /*
    label = "/Steer/plot3doptions/OutputFvbnd";
    
-   if ( !(tpCntl->GetValue(label, &str )) )
+   if ( !(tpCntl->getInspectedValue(label, str )) )
    {
    //Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
    //Exit(0);
@@ -4601,7 +4601,7 @@ void Control::get_PLOT3D(FileIO_PLOT3D_READ*  FP3DR, FileIO_PLOT3D_WRITE* FP3DW)
   // DivideFunc ---> 出力を項目別にファイル分割するオプション
   label = "/Steer/Plot3dOptions/DivideFunc";
   
-  if ( !(tpCntl->GetValue(label, &str )) )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);

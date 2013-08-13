@@ -64,7 +64,6 @@
 
 #include "FB_Define.h"
 #include "mydebug.h"
-#include "TPControl.h"
 //#include "omp.h"
 
 #include "dfiinfo.h"
@@ -188,7 +187,7 @@ private:
   /**
    * @brief 入力ファイルの読み込み
    */
-  void ReadInputFile(TPControl* tpCntl);
+  void ReadInputFile(TextParser* tpCntl);
   
   /**
    * @brief layout grid ファイルの出力
