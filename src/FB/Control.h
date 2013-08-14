@@ -834,18 +834,10 @@ protected:
   
   // アプリケーションのパラメータを取得する
   void getApplicationControl();
-  
-  
-  // 平均値操作に関するパラメータを取得する
-  void getAverageOption();
 
   
   // 対流項スキームのパラメータを取得する
   void getConvection();
-  
-  
-  // 派生して計算する変数のオプションを取得する
-  void getDerived();
   
   
   // 無次元パラメータを各種モードに応じて設定する

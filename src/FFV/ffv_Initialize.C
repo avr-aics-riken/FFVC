@@ -76,12 +76,15 @@ int FFV::Initialize(int argc, char **argv)
 
   
   // パラメータのロードと保持
-  if ( tp_ffv.read(input_file) )
   {
-    Hostonly_ stamped_printf("\tInput file '%s' can not find.\n", input_file.c_str());
-    Exit(0);
+    int ierror=0;
+    
+    if ( (ierror = tp_ffv.read(input_file)) != TP_NO_ERROR )
+    {
+      Hostonly_ stamped_printf("\tError at reading '%s' file : %d\n", input_file.c_str(), ierror);
+      Exit(0);
+    }
   }
-
  
   
   // TextParserクラスのポインタを各クラスに渡す

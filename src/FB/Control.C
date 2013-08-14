@@ -438,138 +438,104 @@ void Control::getApplicationControl()
   OperatorName = str;
   
   
-  // パラメータチェックフラグ
+  // パラメータチェックフラグ (Hidden)
   label = "/ApplicationControl/CheckParameter";
   
-  if ( !(tpCntl->getInspectedValue(label, str )) )
+  if ( tpCntl->chkLabel(label) )
   {
-	  Exit(0);
+    if ( tpCntl->getInspectedValue(label, str) )
+    {
+      if     ( !strcasecmp(str.c_str(), "On") )   CheckParam = ON;
+      else if( !strcasecmp(str.c_str(), "Off") )  CheckParam = OFF;
+      else
+      {
+        Hostonly_ printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+        Exit(0);
+      }
+    }
+    else
+    {
+      Exit(0);
+    }
+
   }
-  
-  if     ( !strcasecmp(str.c_str(), "On") )   CheckParam = ON;
-  else if( !strcasecmp(str.c_str(), "Off") )  CheckParam = OFF;
-  else
-  {
-    Hostonly_ printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
+
   
   int ct = 0;
   
-  // Performance Testの設定（隠しオプション）
+  // Performance Testの設定（Hidden）
   // 'PerformanceTest'の文字列チェックはしないので注意して使うこと
   Hide.PM_Test = OFF;
-  label="/ApplicationControl/PerformanceTest";
+  label = "/ApplicationControl/PerformanceTest";
   
-  if ( !(tpCntl->getInspectedValue(label, str )) )
+  if ( tpCntl->chkLabel(label) )
   {
-	  ;
-  }
-  else
-  {
-    if     ( !strcasecmp(str.c_str(), "on") )   Hide.PM_Test = ON;
-    else if( !strcasecmp(str.c_str(), "off") )  Hide.PM_Test = OFF;
+    if ( tpCntl->getInspectedValue(label, str) )
+    {
+      if     ( !strcasecmp(str.c_str(), "on") )   Hide.PM_Test = ON;
+      else if( !strcasecmp(str.c_str(), "off") )  Hide.PM_Test = OFF;
+      else
+      {
+        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+        Exit(0);
+      }
+    }
     else
     {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
       Exit(0);
     }
   }
+
   
   
-  // 変数の範囲制限モードを取得
+  // 変数の範囲制限モードを取得 (Hidden)
   Hide.Range_Limit = Range_Normal;
-  label="/ApplicationControl/VariableRange";
   
-  if ( !(tpCntl->getInspectedValue(label, str )) )
+  label = "/ApplicationControl/VariableRange";
+  
+  if ( tpCntl->chkLabel(label) )
   {
-    ;
-  }
-  else
-  {
-    if     ( !strcasecmp(str.c_str(), "normal") ) Hide.Range_Limit = Range_Normal;
-    else if( !strcasecmp(str.c_str(), "cutoff") ) Hide.Range_Limit = Range_Cutoff;
+    if ( tpCntl->getInspectedValue(label, str) )
+    {
+      if     ( !strcasecmp(str.c_str(), "normal") ) Hide.Range_Limit = Range_Normal;
+      else if( !strcasecmp(str.c_str(), "cutoff") ) Hide.Range_Limit = Range_Cutoff;
+      else
+      {
+        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s\n", label.c_str());
+        Exit(0);
+      }
+    }
     else
     {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s\n", label.c_str());
       Exit(0);
     }
   }
+
   
   
-  // Cell IDのゼロを指定IDに変更するオプションを取得する（隠しオプション）
+  // Cell IDのゼロを指定IDに変更するオプションを取得する（Hidden）
   label = "/ApplicationControl/ChangeID";
-  if ( !(tpCntl->getInspectedValue(label, ct )) )
+  
+  if ( tpCntl->chkLabel(label) )
   {
-	  ;
-  }
-  else
-  {
-    if ( ct < 0 )
+    if ( tpCntl->getInspectedValue(label, ct) )
     {
-      Hostonly_ printf("Error : ID should be positive [%d]\n", ct);
-      Exit(0);
+      if ( ct < 0 )
+      {
+        Hostonly_ printf("Error : ID should be positive [%d]\n", ct);
+        Exit(0);
+      }
+      else
+      {
+        Hide.Change_ID = ct;
+      }
     }
     else
     {
-      Hide.Change_ID = ct;
-    }
-  }
-  
-}
-
-
-// #################################################################
-/**
- * @brief 平均値操作に関するパラメータを取得する
- * @note パラメータは，setParameters()で無次元して保持
- * @see getTimeControl()でMode.Averageをセット
- */
-void Control::getAverageOption()
-{
-  double ct;
-  string str;
-  string label;
-  
-  
-  if ( Mode.Average == ON )
-  {
-	  label = "/Output/Data/AveragedVariables/IntervalType";
-    
-	  if ( !(tpCntl->getInspectedValue(label, str )) )
-    {
-		  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-		  Exit(0);
-	  }
-	  else
-    {
-		  if     ( !strcasecmp(str.c_str(), "step") )
-      {
-        Interval[Interval_Manager::tg_average].setMode_Step();
-		  }
-		  else if( !strcasecmp(str.c_str(), "time") )
-      {
-        Interval[Interval_Manager::tg_average].setMode_Time();
-		  }
-		  else
-      {
-			  Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
-			  Exit(0);
-		  }
-    }
-      
-    label="/Output/Data/AveragedVariables/Interval";
-    
-    if ( !(tpCntl->getInspectedValue(label, ct )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
-    else
-    {
-      Interval[Interval_Manager::tg_average].setInterval(ct);
-    }
   }
+  
 }
 
 
@@ -634,102 +600,6 @@ void Control::getConvection()
 }
 
 
-// #################################################################
-// @brief 派生して計算する変数のオプションを取得する
-void Control::getDerived()
-{
-  string str;
-  string label;
-  
-  // 全圧
-  label="/Output/Data/DerivedVariables/TotalPressure";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "on") )  Mode.TP = ON;
-  else if( !strcasecmp(str.c_str(), "off") ) Mode.TP = OFF;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  // 渦度ベクトル
-  label="/Output/Data/DerivedVariables/Vorticity";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "on") )  Mode.VRT = ON;
-  else if( !strcasecmp(str.c_str(), "off") ) Mode.VRT = OFF;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  // 速度勾配テンソルの第2不変量
-  label="/Output/Data/DerivedVariables/Qcriterion";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "on") )  Mode.I2VGT = ON;
-  else if( !strcasecmp(str.c_str(), "off") ) Mode.I2VGT = OFF;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  // ヘリシティ
-  label="/Output/Data/DerivedVariables/Helicity";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "on") )  Mode.Helicity = ON;
-  else if( !strcasecmp(str.c_str(), "off") ) Mode.Helicity = OFF;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  
-  // FaceVelocity hidden parameter
-  label="/Output/Data/DerivedVariables/FaceVelocity";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-	  ;
-  }
-  else
-  {
-    if     ( !strcasecmp(str.c_str(), "on") )  Mode.FaceV = ON;
-    else if( !strcasecmp(str.c_str(), "off") ) Mode.FaceV = OFF;
-    else
-    {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-      Exit(0);
-    }
-  }
-  
-}
-
 
 // #################################################################
 // @brief 無次元パラメータを各種モードに応じて設定する
@@ -766,6 +636,7 @@ void Control::getDimensionlessParameter()
 // #################################################################
 // @brief ファイル入出力に関するパラメータを取得し，sphフォーマットの出力の並列モードを指定する．
 // @note インターバルパラメータは，setParameters()で無次元して保持
+// @pre getTimeControl()
 void Control::getFieldData()
 {
   
@@ -878,6 +749,20 @@ void Control::getFieldData()
     Exit(0);
   }*/
   
+  switch ( FIO.Format )
+  {
+    case sph_fmt:
+      getFormat_sph();
+      break;
+      
+    case bov_fmt:
+      break;
+      
+    case plt3d_fmt:
+      getFormat_plot3d();
+      break;
+  }
+  
   
   // インターバル
   label = "/Output/Data/DerivedVariables/IntervalType";
@@ -916,59 +801,193 @@ void Control::getFieldData()
     }
   }
   
-  getDerived();
+  // 全圧
+  label="/Output/Data/DerivedVariables/TotalPressure";
   
-  switch ( FIO.Format )
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
-    case sph_fmt:
-      getFormat_sph();
-      break;
-      
-    case bov_fmt:
-      break;
-      
-    case plt3d_fmt:
-      getFormat_plot3d();
-      break;
+	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+	  Exit(0);
   }
   
-  getAverageOption();
+  if     ( !strcasecmp(str.c_str(), "on") )  Mode.TP = ON;
+  else if( !strcasecmp(str.c_str(), "off") ) Mode.TP = OFF;
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  // 渦度ベクトル
+  label="/Output/Data/DerivedVariables/Vorticity";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+	  Exit(0);
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "on") )  Mode.VRT = ON;
+  else if( !strcasecmp(str.c_str(), "off") ) Mode.VRT = OFF;
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  // 速度勾配テンソルの第2不変量
+  label="/Output/Data/DerivedVariables/Qcriterion";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+	  Exit(0);
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "on") )  Mode.I2VGT = ON;
+  else if( !strcasecmp(str.c_str(), "off") ) Mode.I2VGT = OFF;
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  // ヘリシティ
+  label="/Output/Data/DerivedVariables/Helicity";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+	  Exit(0);
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "on") )  Mode.Helicity = ON;
+  else if( !strcasecmp(str.c_str(), "off") ) Mode.Helicity = OFF;
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Exit(0);
+  }
   
   
-  // ボクセルファイル出力（隠しオプション）
+  // FaceVelocity hidden parameter
+  label="/Output/Data/DerivedVariables/FaceVelocity";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+	  ;
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "on") )  Mode.FaceV = ON;
+    else if( !strcasecmp(str.c_str(), "off") ) Mode.FaceV = OFF;
+    else
+    {
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
+    }
+  }
+
+  
+
+  
+  
+  // 平均値操作に関するパラメータを取得
+  if ( Mode.Average == ON )
+  {
+	  label = "/Output/Data/AveragedVariables/IntervalType";
+    
+	  if ( !(tpCntl->getInspectedValue(label, str )) )
+    {
+		  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+		  Exit(0);
+	  }
+	  else
+    {
+		  if     ( !strcasecmp(str.c_str(), "step") )
+      {
+        if ( !Interval[Interval_Manager::tg_average].isStep() )
+        {
+          Hostonly_ stamped_printf("\tError : Specified temporal mode is not consistent with '/TimeControl/Average/TemporalType'\n");
+          Exit(0);
+        }
+		  }
+		  else if( !strcasecmp(str.c_str(), "time") )
+      {
+        if ( Interval[Interval_Manager::tg_average].isStep() )
+        {
+          Hostonly_ stamped_printf("\tError : Specified temporal mode is not consistent with '/TimeControl/Average/TemporalType'\n");
+          Exit(0);
+        }
+		  }
+		  else
+      {
+			  Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
+			  Exit(0);
+		  }
+    }
+    
+    double val;
+    label="/Output/Data/AveragedVariables/Interval";
+    
+    if ( !(tpCntl->getInspectedValue(label, val )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    else
+    {
+      Interval[Interval_Manager::tg_average].setInterval(val);
+    }
+  }
+  
+  
+  // ボクセルファイル出力（Hidden）
   FIO.IO_Voxel = OFF;
   label = "/Output/VoxelOutput";
   
-  if ( !(tpCntl->getInspectedValue(label, str )) )
+  if ( tpCntl->chkLabel(label) )
   {
-    ;
+    if ( tpCntl->getInspectedValue(label, str) )
+    {
+      if     ( !strcasecmp(str.c_str(), "svx") )  FIO.IO_Voxel = Sphere_SVX;
+      else if( !strcasecmp(str.c_str(), "off") )  FIO.IO_Voxel = OFF;
+      else
+      {
+        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+        Exit(0);
+      }
+    }
+    else
+    {
+      Exit(0);
+    }
   }
-  
-  if     ( !strcasecmp(str.c_str(), "svx") )  FIO.IO_Voxel = Sphere_SVX;
-  else if( !strcasecmp(str.c_str(), "off") )  FIO.IO_Voxel = OFF;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
+
   
   
-  // デバッグ用のdiv(u)の出力指定（隠しオプション）
+  // デバッグ用のdiv(u)の出力指定（Hidden）
   FIO.Div_Debug = OFF;
   label = "/Output/DebugDivergence";
   
-  if ( !(tpCntl->getInspectedValue(label, str )) )
+  if ( tpCntl->chkLabel(label) )
   {
-    ;
+    if ( tpCntl->getInspectedValue(label, str) )
+    {
+      if     ( !strcasecmp(str.c_str(), "on") )    FIO.Div_Debug = ON;
+      else if( !strcasecmp(str.c_str(), "off") )   FIO.Div_Debug = OFF;
+      else
+      {
+        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+        Exit(0);
+      }
+    }
+    else
+    {
+      Exit(0);
+    }
   }
-  
-  if     ( !strcasecmp(str.c_str(), "on") )    FIO.Div_Debug = ON;
-  else if( !strcasecmp(str.c_str(), "off") )   FIO.Div_Debug = OFF;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
+
 }
 
 
@@ -1150,25 +1169,29 @@ void Control::getGeometryModel()
   
   
   
-  // スケーリングファクター
-  REAL_TYPE ct=0.0;
-  
+  // スケーリングファクター (Hidden)
   label = "/GeometryModel/ScalingFactor";
   
-  if ( !tpCntl->getInspectedValue(label, ct) )
+  if ( tpCntl->chkLabel(label) )
   {
-	  ; // 無くても可
-  }
-  else
-  {
-    if ( ct <= 0.0 )
+    REAL_TYPE ct=0.0;
+    
+    if ( tpCntl->getInspectedValue(label, ct) )
     {
-      Hostonly_ stamped_printf("Error : Scaling factor should be positive [%f]\n", ct);
+      if ( ct <= 0.0 )
+      {
+        Hostonly_ stamped_printf("Error : Scaling factor should be positive [%f]\n", ct);
+        Exit(0);
+      }
+      
+      Scaling_Factor = ct;
+    }
+    else
+    {
       Exit(0);
     }
-    
-    Scaling_Factor = ct;
   }
+
   
 }
 
@@ -2465,8 +2488,35 @@ void Control::getTimeControl(DTcntl* DT)
     Restart_step = m_start;
   }
   
-  Interval[Interval_Manager::tg_compute].setInterval(m_end-m_start);
+  Interval[Interval_Manager::tg_compute].setInterval( m_end - m_start );
   
+  
+  
+  
+  // 平均値の時刻指定モード
+  label = "/TimeControl/Average/TemporalType";
+  
+  if ( !(tpCntl->getInspectedValue(label, str)) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "step") )
+    {
+      Interval[Interval_Manager::tg_average].setMode_Step();
+    }
+    else if( !strcasecmp(str.c_str(), "time") )
+    {
+      Interval[Interval_Manager::tg_average].setMode_Time();
+    }
+    else
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
+      Exit(0);
+    }
+  }
   
   
   // 平均操作開始
@@ -2493,20 +2543,33 @@ void Control::getTimeControl(DTcntl* DT)
   }
   double avr_end = ct;
   
+  
   // チェック
-  if ( avr_start > avr_end )
+  if ( !(avr_start <= avr_end) )
   {
     Hostonly_ stamped_printf("\tError : Average/Start msut be less than Average/End.\n");
     Exit(0);
   }
   
   
-  // 平均値操作の判断
+
+  /* 平均値操作の判断
+   
+   1    |     2      |   3     << m_start (restart step)
+   ---------+------------+-------
+   ^            ^
+   avr_start    avr_end
+   
+   case 1 : 平均操作は行うが，まだ指定時刻に到達していないので，平均値ファイルは存在せず，平均値のリスタートはない
+   2 : 前セッションから継続して平均操作を行うが，既に平均値ファイルが存在する（はず）ので，平均値のリスタート処理を行う
+   3 : 既に平均値操作の区間は終了しているので，平均操作は行わない
+   */
+  
   if ( Start == initial_start )
   {
-    Mode.AverageRestart = OFF;
+    Mode.AverageRestart = OFF; // default
     
-    if ( (avr_end > 0.0) && (avr_start >= 0.0) )
+    if ( (avr_end > 0.0) && (avr_start >= 0.0) ) // avr_end >= avr_startは既にチェック済み
     {
       Mode.Average = ON;
     }
@@ -2517,17 +2580,17 @@ void Control::getTimeControl(DTcntl* DT)
   }
   else
   {
-    if ( (avr_start < m_start) && (avr_end < m_start) )
+    if ( (avr_start < m_start) && (avr_end < m_start) ) // case 3
     {
       Mode.Average = OFF;
       Mode.AverageRestart = OFF;
     }
-    else if ( (avr_start < m_start) && (avr_end > m_start) )
+    else if ( (avr_start < m_start) && (avr_end > m_start) ) // case 2
     {
       Mode.Average = ON;
       Mode.AverageRestart = ON;
     }
-    else if ( (avr_start > m_start) && (avr_end > m_start) )
+    else if ( (avr_start > m_start) && (avr_end > m_start) ) // case 1
     {
       Mode.Average = ON;
       Mode.AverageRestart = OFF;
