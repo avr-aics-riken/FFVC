@@ -41,8 +41,6 @@ libIP_a_SOURCES = \
   IP_Polygon.h \
   IP_Rect.C \
   IP_Rect.h \
-  IP_SHC1D.C \
-  IP_SHC1D.h \
   IP_Sphere.C \
   IP_Sphere.h \
   IP_Step.C \

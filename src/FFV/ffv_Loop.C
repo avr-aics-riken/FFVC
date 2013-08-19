@@ -140,7 +140,7 @@ int FFV::Loop(const unsigned step)
     avr_Var[i] = 0.0;
     rms_Var[i] = 0.0;
   }
-  Variation_Space(avr_Var, rms_Var, flop_count);
+  VariationSpace(avr_Var, rms_Var, flop_count);
   TIMING_stop(tm_stat_space, flop_count);
 
   
@@ -395,10 +395,10 @@ int FFV::Loop(const unsigned step)
     TIMING_stop(tm_total_prs, flop_count);
   }
   
-  // コンポーネント履歴
+  // セルモニターとコンポーネントの履歴
   if ( C.Sampling.log == ON ) 
   {
-    if ( C.Interval[Interval_Manager::tg_history].isTriggered(CurrentStep, CurrentTime) ) 
+    if ( C.Interval[Interval_Manager::tg_sampled].isTriggered(CurrentStep, CurrentTime) )
     {
       TIMING_start(tm_compo_monitor);
       flop_count=0.0;

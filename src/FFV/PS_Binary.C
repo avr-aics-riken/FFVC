@@ -25,24 +25,22 @@
 void FFV::PS_Binary()
 {
   // local variables
-  REAL_TYPE dt = deltaT;               /// 時間積分幅
-  REAL_TYPE dh = (REAL_TYPE)deltaX;    /// 空間幅
   double flop;                         /// 浮動小数演算数
-  REAL_TYPE pei=C.getRcpPeclet();      /// ペクレ数の逆数
-  REAL_TYPE res=0.0;                   /// 残差
   double rhs_nrm = 0.0;                /// 反復解法での定数項ベクトルのL2ノルム
   double res_init = 0.0;               /// 反復解法での初期残差ベクトルのL2ノルム
+  double convergence=0.0;              /// 定常収束モニター量
+  double res=0.0;                      /// 残差
+  
+  REAL_TYPE dt = deltaT;               /// 時間積分幅
+  REAL_TYPE dh = (REAL_TYPE)deltaX;    /// 空間格子幅
+  REAL_TYPE pei=C.getRcpPeclet();      /// ペクレ数の逆数
+  
   REAL_TYPE half = 0.5;                /// 定数
   REAL_TYPE one = 1.0;                 /// 定数
   REAL_TYPE zero = 0.0;                /// 定数
-  REAL_TYPE convergence=0.0;           /// 定常収束モニター量
   int cnv_scheme = C.CnvScheme;        /// 対流項スキーム
   
   IterationCtl* ICt = &IC[ic_tmp1];  /// 拡散項の反復
-  
-  
-  // >>> Passive scalar Convection section
-  TIMING_start(tm_heat_convection_sct);
 
   // point Data
   // d_v   セルセンタ速度 v^{n+1}
@@ -54,6 +52,10 @@ void FFV::PS_Binary()
   // d_bh2 温度のビットフラグ
   // d_bcv 速度のビットフラグ
   
+  
+  // >>> Passive scalar Convection section
+  TIMING_start(tm_heat_convection_sct);
+  
   // n stepの値をdc_t0に保持，dc_tはn+1レベルの値として利用
   TIMING_start(tm_copy_array);
   flop = 0.0;
@@ -63,7 +65,7 @@ void FFV::PS_Binary()
   
   // 指定境界条件の参照値を代入する
   TIMING_start(tm_heat_spec_temp);
-  BC.assignTemp(d_t0, d_bh1, CurrentTime, &C);
+  //BC.assignTemp(d_t0, d_bh1, CurrentTime, &C);
   TIMING_stop(tm_heat_spec_temp, 0.0);
   
   
@@ -118,7 +120,7 @@ void FFV::PS_Binary()
   // 内部境界条件 体積要素
   TIMING_start(tm_heat_diff_IBC_vol);
   flop = 0.0;
-  BC.InnerTBCvol(d_ws, d_bh2, dt, flop);
+  BC.InnerTBCvol(d_ws, d_bh2, dt);
   TIMING_stop(tm_heat_diff_IBC_vol, flop);
   
   // 部分段階の温度の同期
@@ -147,7 +149,7 @@ void FFV::PS_Binary()
   // 内部境界条件　熱流束型の境界条件は時間進行の前
   TIMING_start(tm_heat_diff_IBC_face);
   flop = 0.0;
-  BC.InnerTBCface(d_qbc, d_bh1, d_ws, d_t0, flop); // 境界値はt^{n}から計算すること
+  BC.InnerTBCface(d_qbc, d_bh1, d_ws, d_t0); // 境界値はt^{n}から計算すること
   TIMING_stop(tm_heat_diff_IBC_face, flop);
   
   TIMING_start(tm_heat_diff_OBC_face);
@@ -166,7 +168,6 @@ void FFV::PS_Binary()
   // <<< Passive scalar Diffusion subsection 2
   
   
-  
   if ( C.AlgorithmH == Heat_EE_EE ) // 陽的時間進行
   {
     // >>> Passive scalar Diffusion subsection 3
@@ -178,10 +179,13 @@ void FFV::PS_Binary()
     ps_diff_ee_(d_t, size, &guide, &res, &dh, &dt, &pei, d_qbc, d_bh2, d_ws, &flop);
     TIMING_stop(tm_heat_diff_EE, flop);
     
+
+    
     // 外部境界条件
     TIMING_start(tm_heat_diff_OBC);
     BC.OuterTBC(d_t);
     TIMING_stop(tm_heat_diff_OBC, 0.0);
+    
     
     // 温度の同期
     if ( numProc > 1 )
@@ -191,15 +195,16 @@ void FFV::PS_Binary()
       TIMING_stop(tm_heat_update_comm, face_comm_size*guide);
     }
     
+    
     // 残差の集約
     if ( numProc > 1 )
     {
       TIMING_start(tm_heat_diff_res_comm);
-      REAL_TYPE tmp = res;
+      double tmp = res;
       if ( paraMngr->Allreduce(&tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
       TIMING_stop( tm_heat_diff_res_comm, 2.0*numProc*sizeof(REAL_TYPE) ); // 双方向 x ノード数
     }
-    ICt->setNormValue( sqrt(res/(REAL_TYPE)G_Acell) ); // RMS
+    ICt->setNormValue( sqrt(res/(double)G_Acell) ); // RMS
     
     TIMING_stop(tm_heat_diff_sct_3, 0.0);
     // <<< Passive scalar Diffusion subsection 3

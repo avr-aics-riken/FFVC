@@ -19,6 +19,16 @@ REVISION HISTORY
 ================
 
 --------------------------
+2013-08-19
+
+- r1012 Filling Medium [ver 1.3.3]
+  - Reference medium と Filling mediumを分ける
+  - step/timeの指定をTempralTypeで統一
+  - SHC1Dクラスを組み込み例題から削除．ポリゴン版で対応．結果の確認
+  - ParseBC::getCmpGbbox_ed()のバグ修正
+  - コンポーネントモニタのファイル出力は/MonitorListで制御
+  
+--------------------------
 2013-08-14
 
 - r1011 modify behavior of restart

@@ -174,7 +174,7 @@ void MonitorList::getMonitor(Control* C)
   
   
   // サンプリング間隔
-  label="/MonitorList/SamplingIntervalType";
+  label="/MonitorList/Sampling/TemporalType";
   
   if ( !(tpCntl->getInspectedValue(label, str )) )
   {
@@ -197,7 +197,7 @@ void MonitorList::getMonitor(Control* C)
       Exit(0);
     }
     
-    label="/MonitorList/SamplingInterval";
+    label="/MonitorList/Sampling/Interval";
     
     if ( !(tpCntl->getInspectedValue(label, f_val )) )
     {
@@ -259,7 +259,7 @@ void MonitorList::getMonitor(Control* C)
   if (nlist==0 && C->existMonitor() == OFF)
   {
     Hostonly_ stamped_printf("\tError : No monitoring points. Please confirm 'MonitorList' and 'InnerBoundary' in Input parameter file. \n");
-    Exit(0);
+    //Exit(0);
   }
   
   // モニターリストの読み込み

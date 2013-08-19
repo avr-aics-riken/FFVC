@@ -229,7 +229,7 @@ public:
    * @param [in] str  キーワード
    * @param [in] val  値
    */
-  bool set_Scheme(const char* str, const double val);
+  bool setScheme(const char* str, const double val);
   
   
   /**
@@ -562,7 +562,7 @@ public:
   int CheckParam;
   int CnvScheme;
   int FB_version;     ///< FlowBaseクラスのバージョン番号
-  int Fill_Hint;      ///< フィルのヒント {no | x_minux | x_plus |...}
+  int FillHint;       ///< フィルのヒント {no | x_minux | x_plus |...}
   int GuideOut;
   int KindOfSolver;
   int Limiter;
@@ -577,6 +577,7 @@ public:
   int num_thread;     ///< スレッド数
   int num_of_polygrp; ///< ポリゴングループ数
   int Parallelism;    ///< 並列モード
+  int RefFillMat;     ///< フィル媒質
   int RefMat;         ///< 参照媒質インデクス
   int Start;
   int version;        ///< FFVバージョン番号
@@ -684,6 +685,7 @@ public:
   string f_Fvelocity;
   
   string RefMedium;    ///< 参照媒質名 -> int RefMat
+  string FillMedium;   ///< フィルに使う媒質 -> int RefFillMat
   string OperatorName;
   
   string ver_TP;   ///< TextPerser version no.
@@ -702,7 +704,7 @@ public:
     CheckParam = 0;
     FB_version = 0;
     CnvScheme = 0;
-    Fill_Hint = -1;
+    FillHint = -1;
     GuideOut = 0;
     KindOfSolver = 0;
     Limiter = 0;
@@ -717,7 +719,8 @@ public:
     num_process = 0;
     num_thread = 0;
     Parallelism = 0;
-    RefMat = 0;
+    RefFillMat = -1;
+    RefMat = -1;
     Restart_staging = 0;    
     Restart_step = 0;
     Restart_stepAvr = 0;
@@ -1051,7 +1054,7 @@ public:
   
   
   // @brief 解法アルゴリズムを選択する
-  void getSolvingMethod();
+  void getSolvingMethod4Flow();
   
   
   // 制御，計算パラメータ群の取得 20130611

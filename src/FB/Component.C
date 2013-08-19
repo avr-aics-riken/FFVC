@@ -274,7 +274,7 @@ void CompoList::set_Mon_Temp(const REAL_TYPE var)
 
 // #################################################################
 //@brief モニタ熱流束の保持
-void CompoList::set_Mon_Heatflux(const REAL_TYPE var) 
+void CompoList::setMonHeatflux(const REAL_TYPE var) 
 {
   var_m = var;
 }
@@ -282,7 +282,7 @@ void CompoList::set_Mon_Heatflux(const REAL_TYPE var)
 
 // #################################################################
 //@brief モニタ熱量の保持
-void CompoList::set_Mon_Calorie(const REAL_TYPE var) 
+void CompoList::setMonCalorie(const REAL_TYPE var) 
 {
   var_m = var;
 }

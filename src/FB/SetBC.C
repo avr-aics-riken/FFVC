@@ -56,6 +56,7 @@ void SetBC::setControlVars(Control* Cref, const MediumList* mat, const Reference
   Prandtl   = Cref->Prandtl;
   NoCompo   = Cref->NoCompo;
   NoMedium  = Cref->NoMedium;
+  //rho       = Cref->RefDensity;
   
   isCDS = Cref->isCDS();
   

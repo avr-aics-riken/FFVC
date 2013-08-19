@@ -209,7 +209,6 @@ void FFV::ps_LS(IterationCtl* IC, const double rhs_nrm, const double r0)
 // 単媒質に対する熱伝導方程式をEuler陽解法で解く
 REAL_TYPE FFV::ps_Diff_SM_EE(REAL_TYPE* t, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh2, const REAL_TYPE* ws, double& flop)
 {
-  size_t m_p, m_w, m_e, m_s, m_n, m_b, m_t;
   REAL_TYPE g_p, g_w, g_e, g_s, g_n, g_b, g_t;
   REAL_TYPE t_p, t_w, t_e, t_s, t_n, t_b, t_t;
   REAL_TYPE      a_w, a_e, a_s, a_n, a_b, a_t;
@@ -228,7 +227,6 @@ REAL_TYPE FFV::ps_Diff_SM_EE(REAL_TYPE* t, const REAL_TYPE dt, const REAL_TYPE* 
   flop += (double)(ix*jx*kx)* 50.0;
 
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, dth1, dth2) \
-            private(m_p, m_w, m_e, m_s, m_n, m_b, m_t) \
             private(t_p, t_w, t_e, t_s, t_n, t_b, t_t) \
             private(g_p, g_w, g_e, g_s, g_n, g_b, g_t) \
             private(a_w, a_e, a_s, a_n, a_b, a_t) \
@@ -239,7 +237,7 @@ REAL_TYPE FFV::ps_Diff_SM_EE(REAL_TYPE* t, const REAL_TYPE dt, const REAL_TYPE* 
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         
-        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        size_t m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         
 #include "FindexS3D.h"
         
@@ -298,7 +296,6 @@ REAL_TYPE FFV::ps_Diff_SM_EE(REAL_TYPE* t, const REAL_TYPE dt, const REAL_TYPE* 
 // 単媒質に対する熱伝導方程式をEuler陰解法で解く
 double FFV::ps_Diff_SM_PSOR(REAL_TYPE* t, double& b2, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh2, const REAL_TYPE* ws, IterationCtl* IC, double& flop)
 {
-  size_t m_p, m_w, m_e, m_s, m_n, m_b, m_t;
   REAL_TYPE g_p, g_w, g_e, g_s, g_n, g_b, g_t;
   REAL_TYPE t_p, t_w, t_e, t_s, t_n, t_b, t_t;
   REAL_TYPE a_p, a_w, a_e, a_s, a_n, a_b, a_t;
@@ -322,7 +319,6 @@ double FFV::ps_Diff_SM_PSOR(REAL_TYPE* t, double& b2, const REAL_TYPE dt, const 
   flop += (double)(ix*jx*kx)* 58.0;
 
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, dth1, dth2, omg) \
-            private(m_p, m_w, m_e, m_s, m_n, m_b, m_t) \
             private(t_p, t_w, t_e, t_s, t_n, t_b, t_t) \
             private(g_p, g_w, g_e, g_s, g_n, g_b, g_t) \
             private(a_p, a_w, a_e, a_s, a_n, a_b, a_t) \
@@ -333,7 +329,7 @@ double FFV::ps_Diff_SM_PSOR(REAL_TYPE* t, double& b2, const REAL_TYPE dt, const 
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         
-        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        size_t m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         
 #include "FindexS3D.h"
         

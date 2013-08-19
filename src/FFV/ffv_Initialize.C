@@ -100,7 +100,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // 流体の解法アルゴリズムを取得
-  C.getSolvingMethod();
+  C.getSolvingMethod4Flow();
   
   
   // 線形ソルバーの特定
@@ -294,7 +294,7 @@ int FFV::Initialize(int argc, char **argv)
   if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
   
   
-  
+
 
   // HEX/FANコンポーネントの形状情報からBboxと体積率を計算
   if ( C.existVfraction() )
@@ -306,7 +306,7 @@ int FFV::Initialize(int argc, char **argv)
     setComponentVF();
   }
 
-  
+
   
   // 内部周期境界の場合のガイドセルのコピー処理
   V.adjMediumPrdc_Inner(d_mid, cmp);
@@ -330,7 +330,7 @@ int FFV::Initialize(int argc, char **argv)
   encodeBCindex();
   
 
-  
+
   
   
   // 体積力を使う場合のコンポーネント配列の確保
@@ -404,7 +404,7 @@ int FFV::Initialize(int argc, char **argv)
   // 温度計算の場合の初期値指定
   if ( C.isHeatProblem() )
   {
-    B.get_Medium_InitTemp(cmp);
+    B.getInitTempOfMedium(cmp);
   }
   
   // set phase 
@@ -432,12 +432,17 @@ int FFV::Initialize(int argc, char **argv)
   
   
   
-  // 性能測定モードがオフのときのみ，出力指定，あるいはMonitorListの場合に，svxファイルを出力する．
+  // 性能測定モードがオフのときのみ，svxファイルを出力する．
   if ( C.Hide.PM_Test == OFF )
   {
-    if ( (C.Sampling.log == ON) || (C.FIO.IO_Voxel == Control::Sphere_SVX) )
+    if ( C.FIO.IO_Voxel == Control::Sphere_SVX )
     {
       Ex->writeSVX(d_mid, &C);
+      Hostonly_
+      {
+        fprintf(fp,"\tVoxel file is written with guide cell information\n\n");
+        printf(    "\tVoxel file is written with guide cell information\n\n");
+      }
     }
   }
   
@@ -1053,8 +1058,8 @@ void FFV::displayParameters(FILE* fp)
 
   
   // モニタ情報の表示
-  if ( C.Sampling.log == ON ) {
-    
+  if ( C.Sampling.log == ON )
+  {
     MO.printMonitorInfo(stdout, C.HistoryMonitorName.c_str(), false); // ヘッダのみ
     
     FILE *fp_mon=NULL;
@@ -1228,10 +1233,7 @@ void FFV::encodeBCindex()
   
   
   // BCIndexV に速度計算のビット情報をエンコードする -----
-  V.setBCIndexV(d_bcv, d_mid, d_bcp, &BC, cmp, C.Mode.Example, true, d_cut, d_bid);
-  // V.setBCIndexV(d_bcv, d_mid, d_bcp, &BC, cmp, C.Mode.Example); // binary
-  
-  
+  V.setBCIndexV(d_bcv, d_mid, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid);
   
   // ##########
 #if 0
@@ -1239,22 +1241,18 @@ void FFV::encodeBCindex()
 #endif
   // ##########
   
-  // BCIndexT に温度計算のビット情報をエンコードする -----
+
+  
+  
+  // BCIndexH に温度計算のビット情報をエンコードする -----
   if ( C.isHeatProblem() )
   {
-    if ( C.isCDS() )
-    {
-      V.setBCIndexH(d_bcd, d_bh1, d_bh2, d_mid, &BC, C.KindOfSolver, cmp, true, d_cut, d_bid);
-    }
-    else // binary
-    {
-      V.setBCIndexH(d_bcd, d_bh1, d_bh2, d_mid, &BC, C.KindOfSolver, cmp);
-    }
-    
+    V.setBCIndexH(d_bh1, d_bh2, d_mid, &BC, C.KindOfSolver, cmp, d_cut, d_bid);
     
     // ##########
 #if 0
-    V.dbg_chkBCIndexH(d_bcv, "BCindexH.txt");
+    V.dbg_chkBCIndexH1(d_bh1, "BCindexH1.txt");
+    V.dbg_chkBCIndexH2(d_bh2, "BCindexH2.txt");
 #endif
     // ##########
     
@@ -1283,7 +1281,7 @@ void FFV::fill(FILE* fp)
   
   for (int i=1; i<=C.NoCompo; i++)
   {
-    if ( (i == C.RefMat) && (cmp[i].getState() == FLUID) )
+    if ( (i == C.RefFillMat) && (cmp[i].getState() == FLUID) )
     {
       flag = true;
     }
@@ -1352,18 +1350,18 @@ void FFV::fill(FILE* fp)
   {
     printf(    "\n\t1st Fill -----\n\n");
     fprintf(fp,"\n\t1st Fill -----\n\n");
-    printf    ("\t\tFilling medium         : %s\n", mat[C.RefMat].getAlias().c_str());
-    fprintf(fp,"\t\tFilling medium         : %s\n", mat[C.RefMat].getAlias().c_str());
-    printf(    "\t\tHint                   : %s\n", FBUtility::getDirection(C.Fill_Hint).c_str());
-    fprintf(fp,"\t\thint                   : %s\n", FBUtility::getDirection(C.Fill_Hint).c_str());
+    printf    ("\t\tFilling medium         : %s\n", mat[C.RefFillMat].getAlias().c_str());
+    fprintf(fp,"\t\tFilling medium         : %s\n", mat[C.RefFillMat].getAlias().c_str());
+    printf(    "\t\tHint                   : %s\n", FBUtility::getDirection(C.FillHint).c_str());
+    fprintf(fp,"\t\thint                   : %s\n", FBUtility::getDirection(C.FillHint).c_str());
   }
   
   // ヒントが与えられている場合
   // 確実に流体のセルのみをペイントする
-  if ( C.Fill_Hint >= 0 )
+  if ( C.FillHint >= 0 )
   {
 
-    filled = (unsigned long)V.fillSeed(d_mid, C.Fill_Hint, C.RefMat, d_cut);
+    filled = (unsigned long)V.fillSeed(d_mid, C.FillHint, C.RefFillMat, d_cut);
 
     if ( numProc > 1 )
     {
@@ -1417,7 +1415,7 @@ void FFV::fill(FILE* fp)
   while (target_count > 0) {
     
     unsigned fs;
-    filled = (unsigned long)V.fill_by_bid(d_bid, d_mid, d_cut, C.RefMat, fs, list);
+    filled = (unsigned long)V.fill_by_bid(d_bid, d_mid, d_cut, C.RefFillMat, fs, list);
     replaced = (unsigned long)fs;
     
     if ( numProc > 1 )
@@ -1468,7 +1466,7 @@ void FFV::fill(FILE* fp)
   
   while (target_count > 0) {
     
-    unsigned z1 = V.fill_by_mid(d_bid, d_mid, d_cut, C.RefMat, list);
+    unsigned z1 = V.fill_by_mid(d_bid, d_mid, d_cut, C.RefFillMat, list);
     
     if ( numProc > 1 )
     {
@@ -1510,7 +1508,7 @@ void FFV::fill(FILE* fp)
   }
   
   // 既にペイントした流体セルをクリア
-  unsigned long fz = (unsigned long)V.fillReplace(d_mid, C.RefMat, 0);
+  unsigned long fz = (unsigned long)V.fillReplace(d_mid, C.RefFillMat, 0);
   
   if ( numProc > 1 )
   {
@@ -1536,9 +1534,9 @@ void FFV::fill(FILE* fp)
   }
   
   
-  if ( C.Fill_Hint >= 0 ) // ヒントが与えられている場合
+  if ( C.FillHint >= 0 ) // ヒントが与えられている場合
   {
-    filled = V.fillSeed(d_mid, C.Fill_Hint, C.RefMat, d_cut);
+    filled = V.fillSeed(d_mid, C.FillHint, C.RefFillMat, d_cut);
     
     if ( numProc > 1 )
     {
@@ -1550,8 +1548,8 @@ void FFV::fill(FILE* fp)
     {
       Hostonly_
       {
-        printf(    "Failed second painting (%s includes solid cell)\n", FBUtility::getDirection(C.Fill_Hint).c_str());
-        fprintf(fp,"Failed second painting (%s includes solid cell)\n", FBUtility::getDirection(C.Fill_Hint).c_str());
+        printf(    "Failed second painting (%s includes solid cell)\n", FBUtility::getDirection(C.FillHint).c_str());
+        fprintf(fp,"Failed second painting (%s includes solid cell)\n", FBUtility::getDirection(C.FillHint).c_str());
       }
       Exit(0);
     }
@@ -1590,7 +1588,7 @@ void FFV::fill(FILE* fp)
   while (target_count > 0) {
     
     unsigned fs;
-    filled = (unsigned long)V.fill_by_bid(d_bid, d_mid, d_cut, C.RefMat, fs, list);
+    filled = (unsigned long)V.fill_by_bid(d_bid, d_mid, d_cut, C.RefFillMat, fs, list);
     replaced = (unsigned long)fs;
     
     if ( numProc > 1 )
@@ -2396,13 +2394,13 @@ int FFV::getDomainInfo(TextParser* tp_dom)
   }
   else
   {
-    if     ( !strcasecmp(str.c_str(), "no" ) )     C.Fill_Hint = -1;
-    else if( !strcasecmp(str.c_str(), "xminus" ) ) C.Fill_Hint = X_MINUS;
-    else if( !strcasecmp(str.c_str(), "xplus" ) )  C.Fill_Hint = X_PLUS;
-    else if( !strcasecmp(str.c_str(), "yminus" ) ) C.Fill_Hint = Y_MINUS;
-    else if( !strcasecmp(str.c_str(), "yplus" ) )  C.Fill_Hint = Y_PLUS;
-    else if( !strcasecmp(str.c_str(), "zminus" ) ) C.Fill_Hint = Z_MINUS;
-    else if( !strcasecmp(str.c_str(), "zplus" ) )  C.Fill_Hint = Z_PLUS;
+    if     ( !strcasecmp(str.c_str(), "no" ) )     C.FillHint = -1;
+    else if( !strcasecmp(str.c_str(), "xminus" ) ) C.FillHint = X_MINUS;
+    else if( !strcasecmp(str.c_str(), "xplus" ) )  C.FillHint = X_PLUS;
+    else if( !strcasecmp(str.c_str(), "yminus" ) ) C.FillHint = Y_MINUS;
+    else if( !strcasecmp(str.c_str(), "yplus" ) )  C.FillHint = Y_PLUS;
+    else if( !strcasecmp(str.c_str(), "zminus" ) ) C.FillHint = Z_MINUS;
+    else if( !strcasecmp(str.c_str(), "zplus" ) )  C.FillHint = Z_PLUS;
     else
     {
       Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -2426,7 +2424,6 @@ void FFV::identifyExample(FILE* fp)
   // 例題クラスの実体をインスタンスし，Exにポイントする
   if      ( C.Mode.Example == id_PPLT2D)   Ex = dynamic_cast<Intrinsic*>(new IP_PPLT2D);
   else if ( C.Mode.Example == id_Duct )    Ex = dynamic_cast<Intrinsic*>(new IP_Duct);
-  else if ( C.Mode.Example == id_SHC1D)    Ex = dynamic_cast<Intrinsic*>(new IP_SHC1D);
   else if ( C.Mode.Example == id_PMT )     Ex = dynamic_cast<Intrinsic*>(new IP_PMT);
   else if ( C.Mode.Example == id_Rect )    Ex = dynamic_cast<Intrinsic*>(new IP_Rect);
   else if ( C.Mode.Example == id_Cylinder) Ex = dynamic_cast<Intrinsic*>(new IP_Cylinder);
@@ -3589,9 +3586,11 @@ shared(ist, ied, jst, jed, kst, ked) schedule(static) reduction(+:c)
           if( k > ked ) ked = k;
           c++;
         }
+
       }
     }
   }
+  
   
   // コンポーネントが存在する場合
   if ( c > 0 )
@@ -3638,32 +3637,37 @@ void FFV::resizeCompoBbox()
         resizeBbox4Cell(n, d_bcd); // セルセンタ位置でのBC
         break;
     }
-    
-    // 熱計算のパート
-    if ( C.isHeatProblem() )
-    {
-      switch ( typ )
-      {
-        case ADIABATIC:
-        case HEATFLUX:
-        case SPEC_VEL_WH:
-        case OUTFLOW:
-        case TRANSFER:
-        case ISOTHERMAL:
-          resizeBbox4Face(n, d_bh1);
-          break;
-          
-        case RADIANT:
-          break;
-          
-        case HEAT_SRC:
-        case CNST_TEMP:
-          resizeBbox4Cell(n, d_bh2);
-          break;
-      }
-    }
-    
   }
+  
+    
+  if ( !C.isHeatProblem() ) return;
+  
+  // 熱計算のパート
+  for (int n=1; n<=C.NoCompo; n++)
+  {
+    int typ = cmp[n].getType();
+    
+    switch ( typ )
+    {
+      case ADIABATIC:
+      case HEATFLUX:
+      case SPEC_VEL_WH:
+      case OUTFLOW:
+      case TRANSFER:
+      case ISOTHERMAL:
+        resizeBbox4Face(n, d_bh1);
+        break;
+        
+      case RADIANT:
+        break;
+        
+      case HEAT_SRC:
+      case CNST_TEMP:
+        resizeBbox4Cell(n, d_bh2);
+        break;
+    }
+  }
+  
 }
 
 
@@ -3739,6 +3743,16 @@ void FFV::setBCinfo()
     Hostonly_
     {
       printf("RefMat[%d] is not listed in MediumTable.\n", C.RefMat);
+    }
+    Exit(0);
+  }
+  
+  // FillMediumがMediumList中にあるかどうかをチェックし、RefFillMatを設定
+  if ( (C.RefFillMat = C.findIDfromLabel(mat, C.NoMedium, C.FillMedium)) == 0 )
+  {
+    Hostonly_
+    {
+      printf("RefFillMat[%d] is not listed in MediumTable.\n", C.RefFillMat);
     }
     Exit(0);
   }
@@ -4028,8 +4042,8 @@ void FFV::setInitialCondition()
     
 		// 外部境界面の移流速度を計算し，外部境界条件を設定
 		BC.OuterVBC(d_v, d_vf, d_bcv, tm, &C, v00, flop_task);
-    BC.InnerVBC(d_v, d_bcv, tm, v00, flop_task);
-    BC.InnerVBC_Periodic(d_v, d_bcd);
+    BC.InnerVBC(d_v, d_bcv, tm, v00);
+    BC.InnerVBCperiodic(d_v, d_bcd);
     
 		// 圧力
     REAL_TYPE ip;
@@ -4073,9 +4087,9 @@ void FFV::setInitialCondition()
   else // リスタート時
   {
     // 内部境界条件
-    BC.InnerVBC(d_v, d_bcv, tm, v00, flop_task);
-    BC.InnerVBC_Periodic(d_v, d_bcd);
-    BC.InnerPBC_Periodic(d_p, d_bcd);
+    BC.InnerVBC(d_v, d_bcv, tm, v00);
+    BC.InnerVBCperiodic(d_v, d_bcd);
+    BC.InnerPBCperiodic(d_p, d_bcd);
     
     // 外部境界条件
     BC.OuterVBC(d_v, d_vf, d_bcv, tm, &C, v00, flop_task);
@@ -4116,6 +4130,29 @@ void FFV::setInitialCondition()
   // 後始末
   if ( m_buf ) delete [] m_buf;
 }
+
+
+
+// #################################################################
+/**
+ * @brief 線形ソルバを特定し，パラメータをセットする
+ * @param [in] tpCntl テキストパーサーのポインタ
+ * @param [in] odr    制御クラス配列の番号
+ * @param [in] label  探索ラベル
+ */
+void FFV::setLinearSolver(TextParser* tpCntl, const int odr, const string label)
+{
+  string str;
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    Hostonly_ printf("\tParsing error : No '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  C.copyCriteria(IC[odr], str);
+}
+
 
 
 // #################################################################
@@ -4189,12 +4226,6 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
       }
       break;
       
-    case id_SHC1D:
-      setupCutInfo4IP(PrepMemory, TotalMemory, fp);
-      Ex->setup(d_mid, &C, G_origin, C.NoCompo, mat);
-      ((IP_SHC1D*)Ex)->setup_bc(d_bid);
-      break;
-      
     default: // ほかのIntrinsic problems
       if ( C.isCDS() ) // カットの場合
       {
@@ -4208,28 +4239,6 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
   // midのガイドセル同期
   if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
   
-}
-
-
-
-// #################################################################
-/**
- * @brief 線形ソルバを特定し，パラメータをセットする
- * @param [in] tpCntl テキストパーサーのポインタ
- * @param [in] odr    制御クラス配列の番号
- * @param [in] label  探索ラベル
- */
-void FFV::setLinearSolver(TextParser* tpCntl, const int odr, const string label)
-{
-  string str;
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-    Hostonly_ printf("\tParsing error : No '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  C.copyCriteria(IC[odr], str);
 }
 
 
@@ -4257,7 +4266,7 @@ void FFV::setMonitorList()
   MO.getMonitor(&C);
   
   
-  // 内部境界条件として指定されたモニタ設定を登録
+  // 内部境界条件として指定されたセルモニタ設定を登録
   MO.setInnerBoundary(cmp, C.NoCompo);
 }
 

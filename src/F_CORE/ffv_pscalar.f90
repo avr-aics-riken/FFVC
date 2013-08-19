@@ -397,8 +397,8 @@
     include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
-    double precision                                          ::  flop
-    real                                                      ::  dh, dt, pei, dth1, dth2, res, delta
+    double precision                                          ::  flop, res
+    real                                                      ::  dh, dt, pei, dth1, dth2, delta
     real                                                      ::  t_p, t_w, t_e, t_s, t_n, t_b, t_t
     real                                                      ::  g_p, g_w, g_e, g_s, g_n, g_b, g_t
     real                                                      ::       a_w, a_e, a_s, a_n, a_b, a_t
@@ -472,7 +472,8 @@
                     +(1.0-g_t)*a_t * qbc(3, i  , j  , k  )  & ! top    gamma
             ) )  * real(ibits(idx, Active,  1))
       t(i,j,k) = ws(i,j,k) + delta
-      res = res + delta*delta
+      res = res + dble(delta*delta)
+
     end do
     end do
     end do

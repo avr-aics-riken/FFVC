@@ -39,7 +39,6 @@ void Intrinsic::printExample(FILE* fp, const int m_id)
   
   if      ( m_id == id_Polygon ) str = "Polygon";
   else if ( m_id == id_Duct )    str = "Duct";
-  else if ( m_id == id_SHC1D)    str = "Steady 1D Heat Conduction";
   else if ( m_id == id_PMT )     str = "Performance Test";
   else if ( m_id == id_Rect )    str = "Rectangular";
   else if ( m_id == id_Cylinder) str = "Cylinder";
@@ -53,8 +52,8 @@ void Intrinsic::printExample(FILE* fp, const int m_id)
     Exit(0);
   }
   
-  fprintf(fp,"\n\tExample : %s\n\n", str.c_str()); fflush(fp);
-  printf    ("\n\tExample : %s\n\n", str.c_str());
+  fprintf(fp,"\n\tChallenge : %s\n\n", str.c_str()); fflush(fp);
+  printf    ("\n\tChallenge : %s\n\n", str.c_str());
   
 }
 

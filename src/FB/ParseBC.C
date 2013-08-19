@@ -1187,12 +1187,12 @@ void ParseBC::get_IBC_SpecVel(const string label_base, const int n, CompoList* c
 
 // #################################################################
 // 温度計算の場合の各媒質の初期値を取得する
-void ParseBC::get_Medium_InitTemp(CompoList* cmp)
+void ParseBC::getInitTempOfMedium(CompoList* cmp)
 {  
   string label, label_base;
   string str;
   
-  label_base = "/Parameter/InitTempOfMedium";
+  label_base = "/StartCondition/InitialState/TemperatureOfMedium";
   
   if ( !tpCntl->chkNode(label_base) )
   {
@@ -1201,7 +1201,7 @@ void ParseBC::get_Medium_InitTemp(CompoList* cmp)
   }
   
   
-  for (int i=1; i<=NoCompo; i++)
+  for (int i=1; i<=NoMedium; i++)
   {
     if ( !tpCntl->getNodeStr(label_base, i, str) )
     {
@@ -2823,7 +2823,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     if ( existComponent(SPEC_VEL_WH, cmp) )
     {
       fprintf(fp, "\n\t[Specified_Velocity with Constant Temperature]\n");
-      fprintf(fp, "\t no                    Label   def    i_st    i_ed    j_st    j_ed    k_st    k_ed      Temp(%s)      Temp[-]\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C");
+      fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed      Temp(%s)      Temp[-]\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C");
       
       for (int n=1; n<=NoCompo; n++)
       {
@@ -2832,11 +2832,11 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
           st = getCmpGbbox_st(n, gci);
           ed = getCmpGbbox_ed(n, gci);
           
-          fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %12.4e %12.4e\n", 
-                  n, cmp[n].getAlias().c_str(), cmp[n].getDef(),
+          fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %12.4e %12.4e\n", 
+                  n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
                   st.x, ed.x, st.y, ed.y, st.z, ed.z, 
-									FBUtility::convK2Temp(cmp[n].get_Temp(), Unit_Temp), 
-									FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp)); // 保持されている温度はKelvin
+									FBUtility::convK2Temp(cmp[n].getTemp(), Unit_Temp), 
+									FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp)); // 保持されている温度はKelvin
         }
       }
       fprintf(fp, "\n");
@@ -2846,7 +2846,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   if ( existComponent(OUTFLOW, cmp) )
   {
     fprintf(fp, "\n\t[Outflow]\n");
-    fprintf(fp, "\t no                    Label   def    i_st    i_ed    j_st    j_ed    k_st    k_ed  outflow_vel  pressure\n");
+    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed  outflow_vel  pressure\n");
     
     for (int n=1; n<=NoCompo; n++)
     {
@@ -2855,8 +2855,8 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         st = getCmpGbbox_st(n, gci);
         ed = getCmpGbbox_ed(n, gci);
         
-        fprintf(fp,"\t%3d %24s %5d %7d %7d %7d %7d %7d %7d ",
-                n, cmp[n].getAlias().c_str(), cmp[n].getDef(),
+        fprintf(fp,"\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d ",
+                n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z);
         
         if (cmp[n].get_P_BCtype() == P_DIRICHLET)
@@ -3059,13 +3059,17 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   if ( HeatProblem && existComponent(ADIABATIC, cmp) )
   {
     fprintf(fp, "\n\t[Adiabatic]\n");
-    fprintf(fp, "\t no                    Label   def\n");
+    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed\n");
     
     for (int n=1; n<=NoCompo; n++)
     {
       if ( cmp[n].getType() == ADIABATIC )
       {
-        fprintf(fp, "\t%3d %24s %5d\n", n, cmp[n].getAlias().c_str(), cmp[n].getDef());
+        st = getCmpGbbox_st(n, gci);
+        ed = getCmpGbbox_ed(n, gci);
+        
+        fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d\n", n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
+                st.x, ed.x, st.y, ed.y, st.z, ed.z);
       }
     }
   }
@@ -3074,7 +3078,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   if ( HeatProblem && existComponent(HEATFLUX, cmp) )
   {
     fprintf(fp, "\n\t[Direct Heat Flux]\n");
-    fprintf(fp, "\t no                    Label   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   flux(W/m^2)        q[-]\n");
+    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   flux(W/m^2)        q[-]\n");
     
     for (int n=1; n<=NoCompo; n++)
     {
@@ -3083,10 +3087,10 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         st = getCmpGbbox_st(n, gci);
         ed = getCmpGbbox_ed(n, gci);
         
-        fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n", 
-                n, cmp[n].getAlias().c_str(), cmp[n].getDef(),
+        fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n", 
+                n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z,
-                cmp[n].area, cmp[n].get_Heatflux(), cmp[n].get_Heatflux()/(RefVelocity*DiffTemp*rho*cp));
+                cmp[n].area, cmp[n].getHeatflux(), cmp[n].getHeatflux()/(RefVelocity*DiffTemp*rho*cp));
       }
     }
   }
@@ -3095,7 +3099,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   if ( HeatProblem && existCompoTransfer(HT_N, cmp) )
   {
     fprintf(fp, "\n\t[Heat Transfer : Type N]\n");
-    fprintf(fp, "\t no                    Label   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   coef(W/m^2K)\n");
+    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   coef(W/m^2K)\n");
     
     for (int n=1; n<=NoCompo; n++)
     {
@@ -3104,10 +3108,10 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         st = getCmpGbbox_st(n, gci);
         ed = getCmpGbbox_ed(n, gci);
         
-        fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e\n", 
-                n, cmp[n].getAlias().c_str(), cmp[n].getDef(),
+        fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %11.4e %12.4e\n", 
+                n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z,
-                cmp[n].area, cmp[n].get_CoefHT());
+                cmp[n].area, cmp[n].getCoefHT());
       }
     }
   }
@@ -3116,7 +3120,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   if ( HeatProblem && existCompoTransfer(HT_S, cmp) )
   {
     fprintf(fp, "\n\t[Heat Transfer : Type S]\n");
-    fprintf(fp, "\t no                    Label   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   coef(W/m^2K)   Temp(%s)   Temp[-]\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C");
+    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   coef(W/m^2K)   Temp(%s)   Temp[-]\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C");
     
     for (int n=1; n<=NoCompo; n++)
     {
@@ -3125,11 +3129,11 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         st = getCmpGbbox_st(n, gci);
         ed = getCmpGbbox_ed(n, gci);
         
-        fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e %12.4e\n", 
-                n, cmp[n].getAlias().c_str(), cmp[n].getDef(),
+        fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e %12.4e\n", 
+                n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z, 
-                cmp[n].area, cmp[n].get_CoefHT(), FBUtility::convK2Temp(cmp[n].get_Temp(), Unit_Temp),
-                FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp) );
+                cmp[n].area, cmp[n].getCoefHT(), FBUtility::convK2Temp(cmp[n].getTemp(), Unit_Temp),
+                FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp) );
       }
     }
   }
@@ -3138,7 +3142,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   if ( HeatProblem && existCompoTransfer(HT_SN, cmp) )
   {
     fprintf(fp, "\n\t[Heat Transfer : Type SN]\n"); 
-    fprintf(fp, "\t no                    Label   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]      Temp(%s)      Temp[-]   Type\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C");
+    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]      Temp(%s)      Temp[-]   Type\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C");
     
     for (int n=1; n<=NoCompo; n++)
     {
@@ -3147,11 +3151,11 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         st = getCmpGbbox_st(n, gci);
         ed = getCmpGbbox_ed(n, gci);
         
-        fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e   %s\n", 
-                n, cmp[n].getAlias().c_str(), cmp[n].getDef(),
+        fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e   %s\n", 
+                n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z,
-                cmp[n].area, FBUtility::convK2Temp(cmp[n].get_Temp(), Unit_Temp),
-                FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp),
+                cmp[n].area, FBUtility::convK2Temp(cmp[n].getTemp(), Unit_Temp),
+                FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp),
                 (cmp[n].get_sw_HTmodeRef()==CompoList::HT_mode_bulk) ? "Bulk" : "Local");
       }
     }
@@ -3183,7 +3187,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   if ( HeatProblem && existCompoTransfer(HT_SF, cmp) )
   {
     fprintf(fp, "\n\t[Heat Transfer : Type SF]\n");
-    fprintf(fp, "\t no                    Label   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]      Temp(%s)      Temp[-]   Type\n", 
+    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]      Temp(%s)      Temp[-]   Type\n", 
             (Unit_Temp==Unit_KELVIN) ? "K" : "C");
     
     for (int n=1; n<=NoCompo; n++)
@@ -3193,13 +3197,13 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         st = getCmpGbbox_st(n, gci);
         ed = getCmpGbbox_ed(n, gci);
         
-        fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n", 
+        fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n", 
                 n, 
                 cmp[n].getAlias().c_str(), 
-                cmp[n].getDef(), 
+                cmp[n].getElement(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z,
-                cmp[n].area, FBUtility::convK2Temp(cmp[n].get_Temp(), Unit_Temp),
-                FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp),
+                cmp[n].area, FBUtility::convK2Temp(cmp[n].getTemp(), Unit_Temp),
+                FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp),
                 (cmp[n].get_sw_HTmodeRef()==CompoList::HT_mode_bulk) ? "Bulk" : "Local");
       }
     }
@@ -3222,7 +3226,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   if ( HeatProblem && existCompoTransfer(HT_B, cmp))
   {
     fprintf(fp, "\n\t[Heat Transfer : Type B]\n");
-    fprintf(fp, "\t no                    Label   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]  coef(W/m^2K)  BulkTemp(%s)   BulkTemp[-]\n", 
+    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]  coef(W/m^2K)  BulkTemp(%s)   BulkTemp[-]\n", 
             (Unit_Temp==Unit_KELVIN) ? "K" : "C");
     
     for (int n=1; n<=NoCompo; n++)
@@ -3232,11 +3236,11 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         st = getCmpGbbox_st(n, gci);
         ed = getCmpGbbox_ed(n, gci);
         
-        fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %11.4e  %12.4e %12.4e %12.4e\n", 
-                n, cmp[n].getAlias().c_str(), cmp[n].getDef(),
+        fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %11.4e  %12.4e %12.4e %12.4e\n", 
+                n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z,
-                cmp[n].area, cmp[n].get_CoefHT(), FBUtility::convK2Temp(cmp[n].get_Temp(), Unit_Temp),
-                FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp) );
+                cmp[n].area, cmp[n].getCoefHT(), FBUtility::convK2Temp(cmp[n].getTemp(), Unit_Temp),
+                FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp) );
       }
     }
   }
@@ -3245,7 +3249,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   if ( HeatProblem && existComponent(ISOTHERMAL, cmp))
   {
     fprintf(fp, "\n\t[Iso-Thermal]\n");
-    fprintf(fp, "\t no                    Label   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   Sf.Temp(%s)   Sf.Temp[-]\n", 
+    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   Sf.Temp(%s)   Sf.Temp[-]\n", 
             (Unit_Temp==Unit_KELVIN) ? "K" : "C");
     
     for (int n=1; n<=NoCompo; n++)
@@ -3255,11 +3259,11 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         st = getCmpGbbox_st(n, gci);
         ed = getCmpGbbox_ed(n, gci);
         
-        fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e \n", 
-                n, cmp[n].getAlias().c_str(), cmp[n].getDef(),
+        fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e \n", 
+                n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z,
-								cmp[n].area, FBUtility::convK2Temp(cmp[n].get_Temp(), Unit_Temp),
-                FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp) );
+								cmp[n].area, FBUtility::convK2Temp(cmp[n].getTemp(), Unit_Temp),
+                FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp) );
       }
     }
   }
@@ -3268,7 +3272,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   if ( HeatProblem && existComponent(RADIANT, cmp))
   {
     fprintf(fp, "\n\t[Radiant]\n");
-    fprintf(fp, "\t no                    Label   def    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   ep[-]   pj[-]\n");
+    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   ep[-]   pj[-]\n");
     
     for (int n=1; n<=NoCompo; n++)
     {
@@ -3277,8 +3281,8 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         st = getCmpGbbox_st(n, gci);
         ed = getCmpGbbox_ed(n, gci);
         
-        fprintf(fp, "\t%3d %24s %5d %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n", 
-                n, cmp[n].getAlias().c_str(), cmp[n].getDef(),
+        fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n", 
+                n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z,
                 cmp[n].area, cmp[n].get_CoefRadEps(), cmp[n].get_CoefRadPrj());
       }
@@ -3290,7 +3294,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   if ( HeatProblem && existComponent(HEAT_SRC, cmp))
   {
     fprintf(fp, "\n\t[Heat Generation]\n");
-    fprintf(fp, "\t no                    Label   i_st    i_ed    j_st    j_ed    k_st    k_ed     Q[W/m^3]    nrmlzd[-]\n");
+    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed     Q[W/m^3]    nrmlzd[-]\n");
     
     for (int n=1; n<=NoCompo; n++)
     {
@@ -3299,8 +3303,8 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         st = getCmpGbbox_st(n, gci);
         ed = getCmpGbbox_ed(n, gci);
         
-        fprintf(fp, "\t%3d %24s %7d %7d %7d %7d %7d %7d %12.4e %12.4e\n", 
-                n, cmp[n].getAlias().c_str(),
+        fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %12.4e %12.4e\n", 
+                n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z,
                 cmp[n].get_HeatValue(), 
                 FBUtility::convD2ND_Hsrc(cmp[n].get_HeatValue(), RefVelocity, RefLength, DiffTemp, mat[n].P[p_density], mat[n].P[p_specific_heat]));
@@ -3312,7 +3316,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   if ( HeatProblem && existComponent(CNST_TEMP, cmp))
   {
     fprintf(fp, "\n\t[Constant Temperature]\n");
-    fprintf(fp, "\t no                    Label   i_st    i_ed    j_st    j_ed    k_st    k_ed      Temp[%s]      Temp[-]\n", 
+    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed      Temp[%s]      Temp[-]\n", 
             (Unit_Temp==Unit_KELVIN) ? "K" : "C");
     
     for (int n=1; n<=NoCompo; n++)
@@ -3322,17 +3326,18 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         st = getCmpGbbox_st(n, gci);
         ed = getCmpGbbox_ed(n, gci);
         
-        fprintf(fp, "\t%3d %24s %7d %7d %7d %7d %7d %7d %12.4e %12.4e\n", 
-                n, cmp[n].getAlias().c_str(),
+        fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %12.4e %12.4e\n", 
+                n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z,
-                FBUtility::convK2Temp(cmp[n].get_Temp(), Unit_Temp), 
-                FBUtility::convK2ND(cmp[n].get_Temp(), BaseTemp, DiffTemp));
+                FBUtility::convK2Temp(cmp[n].getTemp(), Unit_Temp), 
+                FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp));
       }
     }
   }
   
   // Monitor ---------------------------------------------------
-  if ( existComponent(CELL_MONITOR, cmp) ) {
+  if ( existComponent(CELL_MONITOR, cmp) )
+  {
     fprintf(fp, "\n\t[Monitor]\n");
     fprintf(fp, "\t no                    Label    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]    Elements\n");
     
@@ -3552,7 +3557,7 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
       
       if ( HeatProblem )
       {
-        int htp = ref->get_hType();
+        int htp = ref->getHtype();
         
         if ( htp == ADIABATIC )
         {
@@ -3560,21 +3565,21 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
         }
         else if ( htp == TRANSFER)
         {
-          int ht_mode = ref->get_HTmode();
+          int ht_mode = ref->getHTmode();
           
           if ( ht_mode == HT_N )
           {
-            fprintf(fp, "\tHeat Transfer Type N  : H. T. Coef. = %e \n", ref->get_CoefHT());
+            fprintf(fp, "\tHeat Transfer Type N  : H. T. Coef. = %e \n", ref->getCoefHT());
           }
           else if ( ht_mode == HT_S )
           {
-            fprintf(fp, "\tHeat Transfer Type S  : H. T. Coef. = %e \n", ref->get_CoefHT());
-            fprintf(fp, "\t                        Surf. temp. = %e \n", ref->get_Temp());
+            fprintf(fp, "\tHeat Transfer Type S  : H. T. Coef. = %e \n", ref->getCoefHT());
+            fprintf(fp, "\t                        Surf. temp. = %e \n", ref->getTemp());
           }
           else if ( ht_mode == HT_SN )
           {
-            fprintf(fp, "\tHeat Transfer Type SN : Surf. temp. = %e \n", ref->get_Temp());
-            fprintf(fp, "\t                        Ref. Temp.  = %s \n", (ref->get_HTmodeRef()==CompoList::HT_mode_bulk) ? "Bulk" : "Local");
+            fprintf(fp, "\tHeat Transfer Type SN : Surf. temp. = %e \n", ref->getTemp());
+            fprintf(fp, "\t                        Ref. Temp.  = %s \n", (ref->getHTmodeRef()==CompoList::HT_mode_bulk) ? "Bulk" : "Local");
             fprintf(fp, "\t                        vertival_laminar_alpha   = %12.6e \n", ref->ca[0]);
             fprintf(fp, "\t                        vertival_laminar_beta    = %12.6e \n", ref->ca[1]);
             fprintf(fp, "\t                        vertival_turbulent_alpha = %12.6e \n", ref->ca[2]);
@@ -3588,21 +3593,21 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
           }
           else if ( ht_mode == HT_SF )
           {
-            fprintf(fp, "\tHeat Transfer Type SN : Surf. temp. = %e \n", ref->get_Temp());
-            fprintf(fp, "\t                        Ref. Temp.  = %s \n", (ref->get_HTmodeRef()==CompoList::HT_mode_bulk) ? "Bulk" : "Local");
+            fprintf(fp, "\tHeat Transfer Type SN : Surf. temp. = %e \n", ref->getTemp());
+            fprintf(fp, "\t                        Ref. Temp.  = %s \n", (ref->getHTmodeRef()==CompoList::HT_mode_bulk) ? "Bulk" : "Local");
             fprintf(fp, "\t                        alpha       = %12.6e \n", ref->ca[0]);
             fprintf(fp, "\t                        beta        = %12.6e \n", ref->ca[1]);
             fprintf(fp, "\t                        gamma       = %12.6e \n", ref->ca[2]);
           }
           else if ( ht_mode == HT_B )
           {
-            fprintf(fp, "\tHeat Transfer Type B  : H. T. Coef. = %e \n", ref->get_CoefHT());
-            fprintf(fp, "\t                        Bulk temp.  = %e \n", ref->get_Temp());
+            fprintf(fp, "\tHeat Transfer Type B  : H. T. Coef. = %e \n", ref->getCoefHT());
+            fprintf(fp, "\t                        Bulk temp.  = %e \n", ref->getTemp());
           }
         }
         else if ( htp == HEATFLUX )
         {
-          fprintf(fp,"Heat Flux %e\n", ref->get_Heatflux());
+          fprintf(fp,"Heat Flux %e\n", ref->getHeatflux());
         }
         else if ( htp == ISOTHERMAL )
         {
@@ -3636,9 +3641,9 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
       if ( HeatProblem )
       {
         fprintf(fp, "\t\t\tSpecified Temperature  = %12.6e [%s] / %12.6e [-] \n", 
-                FBUtility::convK2Temp(ref->get_Temp(), Unit_Temp),
+                FBUtility::convK2Temp(ref->getTemp(), Unit_Temp),
                 (Unit_Temp==Unit_KELVIN) ? "K" : "C", 
-                FBUtility::convK2ND(ref->get_Temp(), BaseTemp, DiffTemp));
+                FBUtility::convK2ND(ref->getTemp(), BaseTemp, DiffTemp));
       }
       break;
       
@@ -3665,7 +3670,7 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
       
       if ( HeatProblem )
       {
-        fprintf(fp, "\t\t\t    Ambient Temperature  = %12.6e \n", ref->get_Temp());
+        fprintf(fp, "\t\t\t    Ambient Temperature  = %12.6e \n", ref->getTemp());
       }
       break;
       
@@ -3897,6 +3902,6 @@ void ParseBC::setRefMediumProperty(const MediumList* mat, const int Ref)
     }
   }
   
-  //RefDensity      = rho;  >> Control::getReference()で定義
+  RefDensity      = rho;  //>> Control::getReference()で定義
   RefSpecificHeat = cp;
 }

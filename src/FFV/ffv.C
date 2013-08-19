@@ -1277,7 +1277,7 @@ void FFV::Usage()
 // #################################################################
 // 空間平均操作と変動量の計算を行う
 // スカラ値は算術平均，ベクトル値は自乗和
-void FFV::Variation_Space(double* avr, double* rms, double& flop)
+void FFV::VariationSpace(double* avr, double* rms, double& flop)
 {
   double m_var[2];
   

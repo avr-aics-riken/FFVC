@@ -110,7 +110,7 @@ int DTcntl::set_DT(const double vRef)
 
 // #################################################################
 // Δtのスキームを設定する
-bool DTcntl::set_Scheme(const char* str, const double val)
+bool DTcntl::setScheme(const char* str, const double val)
 {
   if ( !str ) return false;
   
@@ -351,12 +351,15 @@ void Control::get1stParameter(DTcntl* DT)
   // ソルバーの具体的な種類を決めるパラメータを取得し，ガイドセルの値を設定する
   getSolverProperties();
   
+  
   // 指定単位を取得
   getUnit();
+  
   
   // Reference parameter needs to be called before setDomainParameter();
   // パラメータの取得，代表値に関するもの．
   getReference();
+  
   
   // 時間制御パラメータ
   getTimeControl(DT);
@@ -365,8 +368,10 @@ void Control::get1stParameter(DTcntl* DT)
   // モニターのON/OFF 詳細パラメータはMonitorList::getMonitor()で行う
   getMonitorList();
   
+  
   // ファイル入出力に関するパラメータ
   getFieldData();
+  
   
   /* 20130611 PLOT3Dファイル入出力に関するパラメータ
    if (FIO.Format == plt3d_fmt) get_PLOT3D(FP3DR,FP3DW);
@@ -679,7 +684,7 @@ void Control::getFieldData()
   
   
   // インターバル
-  label = "/Output/Data/BasicVariables/IntervalType";
+  label = "/Output/Data/BasicVariables/TemporalType";
   
   if ( !(tpCntl->getInspectedValue(label, str )) )
   {
@@ -765,7 +770,7 @@ void Control::getFieldData()
   
   
   // インターバル
-  label = "/Output/Data/DerivedVariables/IntervalType";
+  label = "/Output/Data/DerivedVariables/TemporalType";
   
   if ( !(tpCntl->getInspectedValue(label, str )) )
   {
@@ -895,7 +900,7 @@ void Control::getFieldData()
   // 平均値操作に関するパラメータを取得
   if ( Mode.Average == ON )
   {
-	  label = "/Output/Data/AveragedVariables/IntervalType";
+	  label = "/Output/Data/AveragedVariables/TemporalType";
     
 	  if ( !(tpCntl->getInspectedValue(label, str )) )
     {
@@ -1154,7 +1159,6 @@ void Control::getGeometryModel()
   
   if     ( FBUtility::compare(str, "ParallelPlate2D") )   Mode.Example = id_PPLT2D;
   else if( FBUtility::compare(str, "Duct") )              Mode.Example = id_Duct;
-  else if( FBUtility::compare(str, "SHC1D") )             Mode.Example = id_SHC1D;
   else if( FBUtility::compare(str, "PerformanceTest") )   Mode.Example = id_PMT;
   else if( FBUtility::compare(str, "Rectangular") )       Mode.Example = id_Rect;
   else if( FBUtility::compare(str, "Cylinder") )          Mode.Example = id_Cylinder;
@@ -1500,7 +1504,7 @@ void Control::getLog()
   }
   
   // Interval console
-  label="/Output/Log/ConsoleIntervalType";
+  label="/Output/Log/Console/TemporalType";
   
   if ( !(tpCntl->getInspectedValue(label, str )) )
   {
@@ -1523,7 +1527,7 @@ void Control::getLog()
 		  Exit(0);
 	  }
 	  
-	  label="/Output/Log/ConsoleInterval";
+	  label="/Output/Log/Console/Interval";
     
 	  if ( !(tpCntl->getInspectedValue(label, f_val )) )
     {
@@ -1537,7 +1541,7 @@ void Control::getLog()
   }
   
   // Interval file_history
-  label="/Output/Log/HistoryIntervalType";
+  label="/Output/Log/History/TemporalType";
   
   if ( !(tpCntl->getInspectedValue(label, str )) )
   {
@@ -1560,7 +1564,7 @@ void Control::getLog()
 		  Exit(0);
 	  }
     
-	  label="/Output/Log/HistoryInterval";
+	  label="/Output/Log/History/Interval";
     
 	  if ( !(tpCntl->getInspectedValue(label, f_val )) )
     {
@@ -1809,7 +1813,7 @@ void Control::getReference()
   }
   RefVelocity = ct2;
   
-  
+  /*
   label = "/Reference/MassDensity";
   if ( !(tpCntl->getInspectedValue(label, ct2 )) )
   {
@@ -1817,6 +1821,7 @@ void Control::getReference()
     Exit(0);
   }
   RefDensity = ct2;
+   */
   
   
   label = "/Reference/BasePressure";
@@ -1835,6 +1840,14 @@ void Control::getReference()
 	  Exit(0);
   }
   RefMedium = str;
+  
+  label = "/Reference/FillMedium";
+  if ( !tpCntl->getInspectedValue(label, str) )
+  {
+    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
+	  Exit(0);
+  }
+  FillMedium = str;
   
   
   if ( isHeatProblem() )
@@ -2117,6 +2130,26 @@ void Control::getSolverProperties()
         Exit(0);
     }
   }
+ 
+  // 熱問題の解法
+  if ( isHeatProblem() )
+  {
+	  label = "/SolvingMethod/Heat";
+    
+	  if ( !(tpCntl->getInspectedValue(label, str )) )
+    {
+		  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+		  Exit(0);
+	  }
+    
+	  if     ( !strcasecmp(str.c_str(), "C_EE_D_EE") )    AlgorithmH = Heat_EE_EE;
+	  else if( !strcasecmp(str.c_str(), "C_EE_D_EI") )    AlgorithmH = Heat_EE_EI;
+	  else
+    {
+		  Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
+		  Exit(0);
+	  }
+  }
   
 }
 
@@ -2286,8 +2319,9 @@ void Control::getStartCondition()
 
 
 // #################################################################
-// 解法アルゴリズムを選択する
-void Control::getSolvingMethod()
+// 流体の解法アルゴリズムを選択する
+// 熱問題の解法は，getSolverProperties()でKOSを決定した後で取得
+void Control::getSolvingMethod4Flow()
 {
   string str;
   string label;
@@ -2310,25 +2344,6 @@ void Control::getSolvingMethod()
     Exit(0);
   }
   
-  // Heat
-  if ( isHeatProblem() )
-  {
-	  label = "/SolvingMethod/Heat";
-    
-	  if ( !(tpCntl->getInspectedValue(label, str )) )
-    {
-		  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-		  Exit(0);
-	  }
-    
-	  if     ( !strcasecmp(str.c_str(), "C_EE_D_EE") )    AlgorithmH = Heat_EE_EE;
-	  else if( !strcasecmp(str.c_str(), "C_EE_D_EI") )    AlgorithmH = Heat_EE_EI;
-	  else
-    {
-		  Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
-		  Exit(0);
-	  }
-  }
 }
 
 
@@ -2348,7 +2363,7 @@ void Control::getTimeControl(DTcntl* DT)
   string label;
   
   // 加速時間
-  label = "/TimeControl/AccelerationType";
+  label = "/TimeControl/Acceleration/TemporalType";
   
   if ( !(tpCntl->getInspectedValue(label, str )) )
   {
@@ -2371,7 +2386,7 @@ void Control::getTimeControl(DTcntl* DT)
 		  Exit(0);
 	  }
 	  
-	  label = "/TimeControl/Acceleration";
+	  label = "/TimeControl/Acceleration/AcceleratingTime";
     
 	  if ( !(tpCntl->getInspectedValue(label, ct )) )
     {
@@ -2386,7 +2401,7 @@ void Control::getTimeControl(DTcntl* DT)
   
   
   // 時間積分幅を取得する
-  label = "/TimeControl/DeltaTType";
+  label = "/TimeControl/TimeStep/Mode";
   
   if ( !(tpCntl->getInspectedValue(label, str )) )
   {
@@ -2395,7 +2410,7 @@ void Control::getTimeControl(DTcntl* DT)
   }
   
   
-  label = "/TimeControl/DeltaT";
+  label = "/TimeControl/TimeStep/DeltaT";
   
   if ( !(tpCntl->getInspectedValue(label, ct )) )
   {
@@ -2419,14 +2434,14 @@ void Control::getTimeControl(DTcntl* DT)
     cc = ct;
   }
   
-  if ( !DT->set_Scheme(str.c_str(), cc) )
+  if ( !DT->setScheme(str.c_str(), cc) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to set DeltaT\n");
     Exit(0);
   }
   
   // 計算する時間を取得する
-  label = "/TimeControl/TemporalType";
+  label = "/TimeControl/Session/TemporalType";
   
   if ( !(tpCntl->getInspectedValue(label, str )) )
   {
@@ -2451,7 +2466,7 @@ void Control::getTimeControl(DTcntl* DT)
   }
   
   // スタート
-  label = "/TimeControl/Start";
+  label = "/TimeControl/Session/Start";
   
   if ( !(tpCntl->getInspectedValue(label, ct )) )
   {
@@ -2461,7 +2476,7 @@ void Control::getTimeControl(DTcntl* DT)
   double m_start = ct;
   
   // 終了
-  label = "/TimeControl/End";
+  label = "/TimeControl/Session/End";
   
   if ( !(tpCntl->getInspectedValue(label, ct )) )
   {
@@ -3067,7 +3082,8 @@ void Control::printParaConditions(FILE* fp, const MediumList* mat)
   fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   fprintf(fp,"\n\t>> Simulation Parameters\n\n");
   
-  fprintf(fp,"\tReference ID              [-]         :  %s\n", mat[RefMat].getAlias().c_str());
+  fprintf(fp,"\tReference Medium                      :  %s\n", mat[RefMat].getAlias().c_str());
+  fprintf(fp,"\tFilling   Medium                      :  %s\n", mat[RefFillMat].getAlias().c_str());
   fprintf(fp,"\n");
   
   // Reference values
@@ -3286,30 +3302,33 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
   }
   
   // Flow Algorithm
-  switch (AlgorithmF)
+  if ( KindOfSolver != SOLID_CONDUCTION )
   {
-    case Flow_FS_EE_EE:
-      fprintf(fp,"\t     Flow Algorithm           :   Fractional Step\n");
-      fprintf(fp,"\t        Time marching scheme  :   Euler Explicit O(dt1)\n");
-      break;
-      
-    case Flow_FS_RK_CN:
-      fprintf(fp,"\t     Flow Algorithm           :   Fractional Step\n");
-      fprintf(fp,"\t        Time marching scheme  :   Runge-kutta and Crank-Nicholson O(dt2)\n");
-      break;
-      
-    case Flow_FS_AB2:
-      fprintf(fp,"\t     Flow Algorithm           :   Fractional Step\n");
-      fprintf(fp,"\t        Time marching scheme  :   Adams-Bashforth Explicit O(dt2)\n");
-      break;
-      
-    case Flow_FS_AB_CN:
-      fprintf(fp,"\t     Flow Algorithm           :   Fractional Step\n");
-      fprintf(fp,"\t        Time marching scheme  :   Adams-Bashforth Explicit O(dt2) and Crank-Nicholson O(dt2)\n");
-      break;
-      
-    default:
-      stamped_printf("No algorithm is specified for Flow\n"); // this is not error
+    switch (AlgorithmF)
+    {
+      case Flow_FS_EE_EE:
+        fprintf(fp,"\t     Flow Algorithm           :   Fractional Step\n");
+        fprintf(fp,"\t        Time marching scheme  :   Euler Explicit O(dt1)\n");
+        break;
+        
+      case Flow_FS_RK_CN:
+        fprintf(fp,"\t     Flow Algorithm           :   Fractional Step\n");
+        fprintf(fp,"\t        Time marching scheme  :   Runge-kutta and Crank-Nicholson O(dt2)\n");
+        break;
+        
+      case Flow_FS_AB2:
+        fprintf(fp,"\t     Flow Algorithm           :   Fractional Step\n");
+        fprintf(fp,"\t        Time marching scheme  :   Adams-Bashforth Explicit O(dt2)\n");
+        break;
+        
+      case Flow_FS_AB_CN:
+        fprintf(fp,"\t     Flow Algorithm           :   Fractional Step\n");
+        fprintf(fp,"\t        Time marching scheme  :   Adams-Bashforth Explicit O(dt2) and Crank-Nicholson O(dt2)\n");
+        break;
+        
+      default:
+        stamped_printf("No algorithm is specified for Flow\n"); // this is not error
+    }
   }
   
   // Heat Algorithm
@@ -3501,7 +3520,7 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
   }
   
   // Calculation time/step
-  itm = Interval[Interval_Manager::tg_compute].getIntervalTime();
+  itm = Interval[Interval_Manager::tg_compute].getIntervalTime() - dt;
   fprintf(fp,"\t     Calculation Time         :   %12.5e [sec] / %12.5e [-]\n", itm*Tscale, itm);
   fprintf(fp,"\t     Calculation Step         :   %12d\n", Interval[Interval_Manager::tg_compute].getIntervalStep());
   
@@ -4057,7 +4076,8 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
     }
   }
   
-  // RefDensity      = rho;
+  RefDensity      = rho;
+  // rho = RefDensity;
   RefViscosity    = mu;
   RefKviscosity   = nyu;
   RefSpecificHeat = cp;
@@ -4223,7 +4243,7 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
       }
       else // 発熱密度
       {
-        cmp[n].set_HeatValue( cmp[n].get_HeatDensity() * ((REAL_TYPE)cmp[n].getElement()*vol) );
+        cmp[n].set_HeatValue( cmp[n].getHeatDensity() * ((REAL_TYPE)cmp[n].getElement()*vol) );
       }
     }
   }

@@ -251,7 +251,7 @@ int FFV::Point_SOR(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rh
     // 境界条件
     TIMING_start(tm_poi_BC);
     BC.OuterPBC(x);
-    if ( C.existPeriodic() == ON ) BC.InnerPBC_Periodic(x, d_bcd);
+    if ( C.existPeriodic() == ON ) BC.InnerPBCperiodic(x, d_bcd);
     TIMING_stop(tm_poi_BC, 0.0);
     
     // 同期処理
@@ -407,7 +407,7 @@ int FFV::SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rh
       // 境界条件
       TIMING_start(tm_poi_BC);
       BC.OuterPBC(x);
-      if ( C.existPeriodic() == ON ) BC.InnerPBC_Periodic(x, d_bcd);
+      if ( C.existPeriodic() == ON ) BC.InnerPBCperiodic(x, d_bcd);
       TIMING_stop(tm_poi_BC, 0.0);
       
       
@@ -1054,7 +1054,7 @@ int FFV::Fpcg(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm
   
 	if ( C.existPeriodic() == ON )
   {
-		BC.InnerPBC_Periodic(x, d_bcd);
+		BC.InnerPBCperiodic(x, d_bcd);
 	}
   
 	Sync_Scalar(IC, x, 1);
@@ -1157,7 +1157,7 @@ int FFV::Fpbicgstab(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double r
 	BC.OuterPBC(x);
 	if ( C.existPeriodic() == ON )
   {
-		BC.InnerPBC_Periodic(x, d_bcd);
+		BC.InnerPBCperiodic(x, d_bcd);
 	}
   
 	Sync_Scalar(IC, x, 1);
@@ -1241,7 +1241,7 @@ void FFV::Fsmoother(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE omg)
     
 		if ( C.existPeriodic() == ON )
     {
-			BC.InnerPBC_Periodic(x, d_bcd);
+			BC.InnerPBCperiodic(x, d_bcd);
 		}
     
 		if ( numProc > 1 )

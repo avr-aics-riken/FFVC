@@ -68,22 +68,28 @@ private:
   unsigned long countValidCellOBC (const int face, const int* bv, const int typ);
 
   
-  
-  void encActive             (unsigned long& Lcell, unsigned long& Gcell, int* bx, const int KOS);
-  void encAmask_SymtrcBC     (int face, int* bh2);
-  void encHbit               (int* bh1, int* bh2);
-  void encPbit               (int* bx);
+  // BCindexにそのセルが計算に有効(active)かどうかをエンコードする
+  void encActive(unsigned long& Lcell, unsigned long& Gcell, int* bx, const int KOS);
   
   
-  // 外部境界に接するセルにおいて，bx[]に圧力境界条件keyに対応するビットフラグを設定する
-  void encPbitOBC (int face, int* bx, string key, bool dir);
+  // 外部境界に接するセルに対称境界面の断熱マスクをセットする
+  void encAmaskSymtrcBC(const int face, int* bh2);
   
+  
+  // セルの各面を調べ，境界条件が設定されていれば，ビットをON
+  void encHbit(int* bh1, int* bh2);
+
   
   // CompoListのエントリをbx[]へエンコードする
   unsigned long encodeOrder(const int order,
                             const int* mid,
                             int* bx,
                             CompoList* cmp);
+  
+  
+  // ディリクレ条件とノイマン条件の排他性をチェックし，反復行列の非対角要素/対角要素の係数をエンコードする
+  void encPbit(int* bx);
+  
   
   // 圧力のディリクレ境界ビットをエンコードする
   unsigned long encPbit_D_IBC(const int order, 
@@ -124,86 +130,19 @@ private:
                               const int bc_dir);
   
   
+  // 外部境界に接するセルにおいて，bx[]に圧力境界条件keyに対応するビットフラグを設定する
+  void encPbitOBC(int face, int* bx, string key, bool dir);
   
-  /**
-   * @brief 熱境界条件のBCエントリをエンコードする
-   * @retval カウントしたセル数
-   * @param [in]     order  CompoListのエントリ
-   * @param [in]     target 対象セルID
-   * @param [in]     mid    セルID配列
-   * @param [in,out] bcd    BCindex ID
-   * @param [in,out] bh1    BCindex H1
-   * @param [in,out] bh2    BCindex H2
-   * @param [in]     deface フラグエンコードの対象セルID
-   * @param [in]     flag   断熱ビットのon(true)/off(false)
-   * @note
-   *   - targetとdefaceで挟まれる面に対して適用
-   *   - 対象面の断熱ビットはflagで判断
-   */
+  
+  // 熱境界条件のBCエントリをエンコードする
   unsigned long encQface(const int order,
-                         const int target,
-                         const int* mid, 
-                         int* bcd, 
-                         int* bh1, 
-                         int* bh2, 
-                         const int deface, 
-                         const bool flag);
-  
-  /**
-   * @brief 熱境界条件のBCエントリをエンコードする
-   * @retval カウントしたセル数
-   * @param [in]     order  CompoListのエントリ
-   * @param [in]     target テスト対象セルID
-   * @param [in]     mid    セルID配列
-   * @param [in,out] bcd    BCindex ID
-   * @param [in,out] bh1    BCindex H1
-   * @param [in,out] bh2    BCindex H2
-   * @param [in]     cutid  カットID
-   * @param [in]     flag   断熱ビットのon(true)/off(false)
-   * @note
-   *   - 対象面の断熱ビットはflagで判断
-   */
-  unsigned long encQface_cut(const int order,
-                         const int target,
-                         const int* mid,
-                         int* bcd,
+                         const int* bid,
                          int* bh1,
                          int* bh2,
-                         const int cutid,
-                         const bool flag);
+                         const bool flag,
+                         const int target,
+                         CompoList* cmp);
   
-  
-  unsigned long encQfaceHT_B(const int order, 
-                             const int id, 
-                             const int* mid, 
-                             int* bcd, 
-                             int* bh1, 
-                             int* bh2, 
-                             const int deface);
-  
-  unsigned long encQfaceHT_S(const int order, 
-                             const int id, 
-                             const int* mid, 
-                             int* bcd,
-                             int* bh1, 
-                             int* bh2, 
-                             const int deface);
-  
-  unsigned long encQfaceISO_SF(const int order, 
-                               const int id, 
-                               const int* mid, 
-                               int* bcd, 
-                               int* bh1, 
-                               int* bh2, 
-                               const int deface);
-  
-  unsigned long encQfaceISO_SS(const int order, 
-                               const int id, 
-                               const int* mid, 
-                               int* bcd, 
-                               int* bh1, 
-                               int* bh2, 
-                               const int deface);
   
   void encQfaceSVO           (int order, int id, int* mid, int* bcd, int* bh1, int* bh2, int deface);
   
@@ -211,22 +150,12 @@ private:
   // bv[]にVBCの境界条件に必要な情報をエンコードし，流入流出の場合にbp[]の隣接壁の方向フラグを除く
   // 境界条件指定キーセルのSTATEを流体に変更する
   unsigned long encVbitIBC(const int order,
-                           const int* mid,
                            int* bv,
                            int* bp,
+                           const int* cut_id,
                            const float* vec,
-                           const int bc_dir);
-  
-  
-  // bv[]にVBCの境界条件に必要な情報をエンコード
-  unsigned long encVbitIBCcut(const int order,
-                              int* bv,
-                              int* bp,
-                              const float* cut,
-                              const int* cut_id,
-                              const float* vec,
-                              const int bc_dir,
-                              CompoList* cmp);
+                           const int bc_dir,
+                           CompoList* cmp);
   
   
   // bv[]に境界条件のビット情報をエンコードする
@@ -286,12 +215,13 @@ private:
     return z;
   }
   
+  
   /*
    * @brief 指定面方向のカットIDをとりだす
    * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
    * @param [in] bid  CutBid5のBoundrary ID
    */
-  inline int get_BID5(const int dir, const int bid) const
+  inline int getFaceBID(const int dir, const int bid) const
   {
     return ( (bid >> dir*5) & MASK_5 );
   }
@@ -302,20 +232,29 @@ private:
   
   
   //@brief idxの第shiftビットをOFFにする
-  inline int offBit(int idx, const int shift) {
+  inline int offBit(int idx, const int shift)
+  {
     return ( idx & (~(0x1<<shift)) );
   }
   
   
   //@brief idxの第shiftビットをONにする
-  inline int onBit(int idx, const int shift) {
+  inline int onBit(int idx, const int shift)
+  {
     return ( idx | (0x1<<shift) );
   }
   
   
-  void setAmask_InActive     (int id, int* mid, int* bh);
-  void setAmask_Solid        (int* bh);
-  void setAmask_Thermal      (int* bh);
+  // 不活性セルに対する断熱マスクをエンコード
+  void setAmaskInactive(int* bh);
+  
+  
+  // KOSがSOLID_CONDUCTIONの場合の断熱マスクの処理
+  void setAmaskSolid(int* bh);
+  
+  
+  // KOSがTHERMAL_FLOW, THERMAL_FLOW_NATURALの場合の断熱マスクの処理
+  void setAmaskThermal(int* bh);
   
   
   /*
@@ -324,7 +263,7 @@ private:
    * @param [in]     dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
    * @param [in]     s_id 固体のID (1-31)
    */
-  inline void set_BID5(int& bid, const int dir, const int s_id)
+  inline void setFaceBID(int& bid, const int dir, const int s_id)
   {
     bid |= (s_id << (dir*5));
   }
@@ -384,6 +323,22 @@ public:
    * @param [in] fname 出力用ファイル名
    */
   void dbg_chkBCIndexD  (const int* bcd, const char* fname);
+  
+  
+  /**
+   * @brief BCindexH1を表示する（デバッグ用）
+   * @param [in] bh    BCindex H1
+   * @param [in] fname 出力用ファイル名
+   */
+  void dbg_chkBCIndexH1(const int* bh, const char* fname);
+  
+  
+  /**
+   * @brief BCindexH2を表示する（デバッグ用）
+   * @param [in] bh    BCindex H2
+   * @param [in] fname 出力用ファイル名
+   */
+  void dbg_chkBCIndexH2(const int* bh, const char* fname);
   
   
   /**
@@ -469,7 +424,7 @@ public:
    * @param [in,out] bx  BCindex ID
    * @param [in,out] cmp CompoList
    */
-  unsigned long flipInActive(unsigned long& L,
+  unsigned long flipInactive(unsigned long& L,
                              unsigned long& G,
                              const int id,
                              const int* mid,
@@ -517,9 +472,25 @@ public:
                        const int KOS);
   
   
-  // 境界条件のビット情報をエンコードする
-  void setBCIndexH(int* bcd, int* bh1, int* bh2, int* mid, SetBC* BC, const int kos, CompoList* cmp,
-                   bool isCDS=false, float* cut=NULL, int* cut_id=NULL);
+  /**
+   * @brief 温度境界条件のビット情報をエンコードする
+   * @param [in,out] bh1    BCindex H1
+   * @param [in,out] bh1    BCindex H2
+   * @param [in,out] mid    ID配列
+   * @param [in]     BC     SetBCクラスのポインタ
+   * @param [in]     kos    KindOfSolver
+   * @param [in,out] cmp    CompoList
+   * @param [in]     cut    距離情報
+   * @param [in]     cut_id カット点ID
+   */
+  void setBCIndexH(int* bh1,
+                   int* bh2,
+                   int* mid,
+                   SetBC* BC,
+                   const int kos,
+                   CompoList* cmp,
+                   float* cut,
+                   int* cut_id);
   
   
   /**
@@ -548,15 +519,14 @@ public:
   
   /**
    * @brief bv[]に境界条件のビット情報をエンコードする
-   * @param [in,out] bv    BCindex V
-   * @param [in]     mid   ボクセルID配列
-   * @param [in,out] bp    BCindex P
-   * @param [in]     BC    SetBCクラスのポインタ
-   * @param [in]     cmp   CompoListクラスのポインタ
-   * @param [in]     icls  Intrinsic class
-   * @param [in]     isCDS カットかどうか
-   * @param [in]     cut   カット配列
-   * @param [in]     bid   BID配列
+   * @param [in,out] bv     BCindex V
+   * @param [in]     mid    ボクセルID配列
+   * @param [in,out] bp     BCindex P
+   * @param [in]     BC     SetBCクラスのポインタ
+   * @param [in]     cmp    CompoListクラスのポインタ
+   * @param [in]     icls   Intrinsic class
+   * @param [in]     cut    カット配列
+   * @param [in]     cut_id BID配列
    */
   void setBCIndexV(int* bv,
                    const int* mid,
@@ -564,9 +534,8 @@ public:
                    SetBC* BC,
                    CompoList* cmp,
                    int icls,
-                   bool isCDS=false,
-                   float* cut=NULL,
-                   int* cut_id=NULL);
+                   float* cut,
+                   int* cut_id);
   
   
   /**

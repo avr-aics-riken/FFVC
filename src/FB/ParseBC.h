@@ -162,13 +162,22 @@ private:
     return st;
   }
   
+  /*
+   st_x ; gci[6*m+0];
+   st_y ; gci[6*m+1];
+   st_z ; gci[6*m+2];
+   ed_x ; gci[6*m+3];
+   ed_y ; gci[6*m+4];
+   ed_z ; gci[6*m+5];
+   */
+  
   // コンポーネントのBbox終点情報を返す
   FB::Vec3i getCmpGbbox_ed(const int odr, const int* gci) const
   {
     FB::Vec3i ed;
-    ed.x = gci[6*odr+0];
-    ed.y = gci[6*odr+1];
-    ed.z = gci[6*odr+2];
+    ed.x = gci[6*odr+3];
+    ed.y = gci[6*odr+4];
+    ed.z = gci[6*odr+5];
     return ed;
   }
   
@@ -341,17 +350,17 @@ public:
   
   
   /**
+   * @brief 温度計算の場合の各媒質の初期値を取得する
+   * @param [in,out] cmp    CompoList
+   */
+  void getInitTempOfMedium(CompoList* cmp);
+  
+  
+  /**
    * @brief 2相流問題で気相か液相かを取得する
    * @param [out] cmp   CompoList
    */
   void get_Phase(CompoList* cmp);
-  
-  
-  /**
-   * @brief 温度計算の場合の各媒質の初期値を取得する
-   * @param [in,out] cmp    CompoList
-   */
-  void get_Medium_InitTemp(CompoList* cmp);
   
   
   /**

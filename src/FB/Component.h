@@ -286,17 +286,17 @@ public:
     return var2; 
   }
   
-  REAL_TYPE get_CoefHT() const
+  REAL_TYPE getCoefHT() const
   { 
     return var2; 
   }
   
-  REAL_TYPE get_Heatflux() const
+  REAL_TYPE getHeatflux() const
   { 
     return var2; 
   }
   
-  REAL_TYPE get_HeatDensity() const
+  REAL_TYPE getHeatDensity() const
   { 
     return var3; 
   }
@@ -317,7 +317,7 @@ public:
     return var1; 
   }
   
-  REAL_TYPE get_Mon_Calorie() const
+  REAL_TYPE getMonCalorie() const
   { 
     return var_m; 
   }
@@ -360,7 +360,7 @@ public:
   }
   
   
-  REAL_TYPE get_Temp() const
+  REAL_TYPE getTemp() const
   { 
     return var3; 
   }
@@ -620,10 +620,11 @@ public:
   
   void set_Massflow        (const REAL_TYPE var);
   void setMedium           (const std::string pnt);
-  void set_Mon_Calorie     (const REAL_TYPE var);
-  void set_Mon_Heatflux    (const REAL_TYPE var);
-  void set_Mon_Temp        (const REAL_TYPE var);
+  void setMonCalorie     (const REAL_TYPE var);
   
+  void setMonHeatflux      (const REAL_TYPE var);
+  
+  void set_Mon_Temp        (const REAL_TYPE var);
   void set_P_BCtype        (const int key);
   void setPeriodicDir      (const int key);
   void setPhase            (const int m_phase);

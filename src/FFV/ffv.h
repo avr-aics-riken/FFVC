@@ -70,7 +70,6 @@
 // Intrinsic class
 #include "IP_Duct.h"
 #include "IP_PPLT2D.h"
-#include "IP_SHC1D.h"
 #include "IP_PMT.h"
 #include "IP_Rect.h"
 #include "IP_Step.h"
@@ -901,7 +900,7 @@ private:
    * @param [out]    rms  変動値
    * @param [in,out] flop 浮動小数演算数
    */
-  void Variation_Space(double* avr, double* rms, double& flop);
+  void VariationSpace(double* avr, double* rms, double& flop);
   
   
   /**

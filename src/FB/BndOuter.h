@@ -126,7 +126,7 @@ public:
     return BCclass; 
   }
   
-  REAL_TYPE get_CoefHT() const
+  REAL_TYPE getCoefHT() const
   {
     return var1;
   }
@@ -157,23 +157,23 @@ public:
     return gc_medium; 
   }
   
-  REAL_TYPE get_Heatflux() const
+  REAL_TYPE getHeatflux() const
   {
     return var1;
   }
   
   
-  int get_HTmodeRef() const
+  int getHTmodeRef() const
   { 
     return HTref; 
   }
   
-  int get_HTmode() const
+  int getHTmode() const
   { 
     return HTmode; 
   }
   
-  int get_hType() const
+  int getHtype() const
   { 
     return hType;
   }
@@ -188,7 +188,7 @@ public:
     return pType; 
   }
 
-  REAL_TYPE get_Temp() const
+  REAL_TYPE getTemp() const
   {
     return var1;
   }

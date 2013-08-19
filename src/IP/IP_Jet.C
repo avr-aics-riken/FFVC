@@ -327,17 +327,20 @@ bool IP_Jet::getTP(Control* R, TextParser* tpCntl)
 
   
   // 2D or 3D mode
-  label="/IntrinsicExample/Dimension";
+  label = "/IntrinsicExample/Dimension";
   
-  if ( !(tpCntl->getInspectedValue(label, str )) ) {
+  if ( !(tpCntl->getInspectedValue(label, str)) )
+  {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   
-  if     ( !strcasecmp(str.c_str(), "2d") ) {
+  if     ( !strcasecmp(str.c_str(), "2d") )
+  {
     mode = dim_2d;
   }
-  else if( !strcasecmp(str.c_str(), "3d") ) {
+  else if( !strcasecmp(str.c_str(), "3d") )
+  {
     mode = dim_3d;
   }
   else {
@@ -348,16 +351,19 @@ bool IP_Jet::getTP(Control* R, TextParser* tpCntl)
   // パラメータは無次元で保持
   
   // Ring1
-  label="/IntrinsicExample/Ring1/UseRing";
+  label = "/IntrinsicExample/Ring1/UseRing";
   
-  if ( !(tpCntl->getInspectedValue(label, str )) ) {
+  if ( !(tpCntl->getInspectedValue(label, str)) )
+  {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
-  if     ( !strcasecmp(str.c_str(), "yes") ) {
+  if     ( !strcasecmp(str.c_str(), "yes") )
+  {
     pat_1 = ON;
   }
-  else if( !strcasecmp(str.c_str(), "no") ) {
+  else if( !strcasecmp(str.c_str(), "no") )
+  {
     pat_1 = OFF;
   }
   else {
@@ -367,8 +373,9 @@ bool IP_Jet::getTP(Control* R, TextParser* tpCntl)
   
   if ( pat_1 == ON )
   {
-    label="/IntrinsicExample/Ring1/InnerRadius";
-    if ( !(tpCntl->getInspectedValue(label, ct )) ) {
+    label = "/IntrinsicExample/Ring1/InnerRadius";
+    if ( !(tpCntl->getInspectedValue(label, ct)) )
+    {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;
     }
@@ -376,8 +383,9 @@ bool IP_Jet::getTP(Control* R, TextParser* tpCntl)
       r1i = ( R->Unit.Param == DIMENSIONAL ) ? ct/RefL : ct;
     }
     
-    label="/IntrinsicExample/RIng1/OuterRadius";
-    if ( !(tpCntl->getInspectedValue(label, ct )) ) {
+    label = "/IntrinsicExample/RIng1/OuterRadius";
+    if ( !(tpCntl->getInspectedValue(label, ct)) )
+    {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;
     }
@@ -385,8 +393,9 @@ bool IP_Jet::getTP(Control* R, TextParser* tpCntl)
       r1o = ( R->Unit.Param == DIMENSIONAL ) ? ct/RefL : ct;
     }
     
-    label="/IntrinsicExample/RIng1/RotationFrequency";
-    if ( !(tpCntl->getInspectedValue(label, ct )) ) {
+    label = "/IntrinsicExample/RIng1/RotationFrequency";
+    if ( !(tpCntl->getInspectedValue(label, ct)) )
+    {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;
     }
@@ -394,8 +403,9 @@ bool IP_Jet::getTP(Control* R, TextParser* tpCntl)
       n1 = ( R->Unit.Param == DIMENSIONAL ) ? ct * RefL / RefV : ct;
     }
     
-    label="/IntrinsicExample/Ring1/InletMassFlow";
-    if ( !(tpCntl->getInspectedValue(label, ct )) ) {
+    label = "/IntrinsicExample/Ring1/InletMassFlow";
+    if ( !(tpCntl->getInspectedValue(label, ct)) )
+    {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;
     }
@@ -410,16 +420,19 @@ bool IP_Jet::getTP(Control* R, TextParser* tpCntl)
   
   
   // Ring2
-  label="/IntrinsicExample/Ring2/UseRing";
+  label = "/IntrinsicExample/Ring2/UseRing";
   
-  if ( !(tpCntl->getInspectedValue(label, str )) ) {
+  if ( !(tpCntl->getInspectedValue(label, str)) )
+  {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
-  if     ( !strcasecmp(str.c_str(), "yes") ) {
+  if     ( !strcasecmp(str.c_str(), "yes") )
+  {
     pat_2 = ON;
   }
-  else if( !strcasecmp(str.c_str(), "no") ) {
+  else if( !strcasecmp(str.c_str(), "no") )
+  {
     pat_2 = OFF;
   }
   else {
@@ -429,8 +442,9 @@ bool IP_Jet::getTP(Control* R, TextParser* tpCntl)
   
   if ( pat_2 == ON )
   {
-    label="/IntrinsicExample/Ring2/InnerRadius";
-    if ( !(tpCntl->getInspectedValue(label, ct )) ) {
+    label = "/IntrinsicExample/Ring2/InnerRadius";
+    if ( !(tpCntl->getInspectedValue(label, ct)) )
+    {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;
     }
@@ -438,8 +452,9 @@ bool IP_Jet::getTP(Control* R, TextParser* tpCntl)
       r2i = ( R->Unit.Param == DIMENSIONAL ) ? ct/RefL : ct;
     }
     
-    label="/IntrinsicExample/Ring2/OuterRadius";
-    if ( !(tpCntl->getInspectedValue(label, ct )) ) {
+    label = "/IntrinsicExample/Ring2/OuterRadius";
+    if ( !(tpCntl->getInspectedValue(label, ct)) )
+    {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;
     }
@@ -447,8 +462,9 @@ bool IP_Jet::getTP(Control* R, TextParser* tpCntl)
       r2o = ( R->Unit.Param == DIMENSIONAL ) ? ct/RefL : ct;
     }
     
-    label="/IntrinsicExample/Ring2/RotationFrequency";
-    if ( !(tpCntl->getInspectedValue(label, ct )) ) {
+    label = "/IntrinsicExample/Ring2/RotationFrequency";
+    if ( !(tpCntl->getInspectedValue(label, ct)) )
+    {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;
     }
@@ -456,8 +472,9 @@ bool IP_Jet::getTP(Control* R, TextParser* tpCntl)
       n2 = ( R->Unit.Param == DIMENSIONAL ) ? ct * RefL / RefV : ct;
     }
     
-    label="/IntrinsicExample/Ring2/InletMassFlow";
-    if ( !(tpCntl->getInspectedValue(label, ct )) ) {
+    label = "/IntrinsicExample/Ring2/InletMassFlow";
+    if ( !(tpCntl->getInspectedValue(label, ct)) )
+    {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;
     }
@@ -472,18 +489,18 @@ bool IP_Jet::getTP(Control* R, TextParser* tpCntl)
   
   
   // 媒質指定
-  label="/IntrinsicExample/FluidMedium";
+  label = "/IntrinsicExample/FluidMedium";
   
-  if ( !(tpCntl->getInspectedValue(label, str )) )
+  if ( !(tpCntl->getInspectedValue(label, str)) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   m_fluid = str;
   
-  label="/IntrinsicExample/SolidMedium";
+  label = "/IntrinsicExample/SolidMedium";
   
-  if ( !(tpCntl->getInspectedValue(label, str )) )
+  if ( !(tpCntl->getInspectedValue(label, str)) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;

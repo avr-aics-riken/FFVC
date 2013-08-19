@@ -39,9 +39,9 @@
 #define REAL_TYPE float
 #endif
 
-#define SINGLE_EPSILON 2.4e-7
-#define DOUBLE_EPSILON 4.4e-16
-#define ROUND_EPS 2.0e-6
+#define SINGLE_EPSILON 1.19e-7   // 5.96e-8  * 2
+#define DOUBLE_EPSILON 4.44e-16  // 2.22e-16 * 2
+#define ROUND_EPS 4.0e-7
 
 #define KELVIN    273.15
 #define BOLTZMAN  1.0
@@ -120,21 +120,21 @@
 #define OBC_FAR_FIELD 7
 #define OBC_INTRINSIC 8
 
-// エンコードビット　共通
-#define ACTIVE_BIT 31
-#define STATE_BIT  30
-
-// エンコードビット　ID
-#define TOP_CMP_ID    0  //  コンポーネントの先頭ビット
-#define TOP_MATERIAL  6  //  MATERIALの先頭ビット
-#define TOP_CELL_ID   12 //  IDの先頭ビット
-#define TOP_VF        20 //  Volume Fractionの先頭ビット
-#define FORCING_BIT   28 //  外力モデルの識別子
 
 // マスクのビット幅
 #define MASK_6     0x3f // 6 bit幅
 #define MASK_8     0xff // 8 bit幅
 #define MASK_5     0x1f // 5 bit幅
+
+
+// エンコードビット　共通
+#define ACTIVE_BIT 31
+#define STATE_BIT  30
+
+// エンコードビット　ID
+#define TOP_VF        20 //  Volume Fractionの先頭ビット
+#define FORCING_BIT   28 //  外力モデルの識別子
+
 
 // エンコードビット　P
 #define BC_D_T     29
@@ -169,6 +169,7 @@
 #define VLD_CNVG   2
 #define VBC_UWD    1
 
+
 // エンコードビット　V, H1
 #define BC_FACE_T  25
 #define BC_FACE_B  20
@@ -176,6 +177,7 @@
 #define BC_FACE_S  10
 #define BC_FACE_E  5
 #define BC_FACE_W  0
+
 
 // エンコードビット　H2
 #define ADIABATIC_T  29
@@ -193,6 +195,7 @@
 #define GMA_W        18
 
 #define H_DIAG       15
+
 
 // Component Type
 #define OBSTACLE     1
@@ -236,6 +239,7 @@
 #define FLUID      1
 #define GAS        2
 #define LIQUID     3
+#define ANY_STATE  4
 
 // モニタの形状
 #define SHAPE_CYLINDER 1
@@ -299,7 +303,7 @@
 #define DECODE_VF(a) ( (a >> TOP_VF) & MASK_8 )
 
 // BCindex aの第bビットがONかどうかを調べ，ONのとき，trueを返す
-#define BIT_IS_SHIFT(a,b) ( ( (a >> b) & 0x1 ) ? true : false )
+#define TEST_BIT(a,b) ( ( (a >> b) & 0x1 ) ? true : false )
 
 // BCindex aの第bビットをREALにキャストして返す
 #define GET_SHIFT_F(a,b) ( (REAL_TYPE)( (a>>b) & 0x1 ) )
@@ -530,7 +534,6 @@ enum Intrinsic_class
 {
   id_Duct,
   id_PPLT2D,
-  id_SHC1D,
   id_PMT,
   id_Rect,
   id_Cylinder,

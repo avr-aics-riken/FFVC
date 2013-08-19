@@ -240,8 +240,8 @@ void FFV::NS_FS_E_CDS()
   // 疑似ベクトルの境界条件
   TIMING_start(tm_pvec_BC);
   flop = 0.0;
-  BC.OuterVBC_Pseudo(d_vc, d_bcv, &C, flop);
-  BC.InnerVBC_Periodic(d_vc, d_bcd);
+  BC.OuterVBCpseudo(d_vc, d_bcv, &C, flop);
+  BC.InnerVBCperiodic(d_vc, d_bcd);
   TIMING_stop(tm_pvec_BC, flop);
   
   
@@ -518,7 +518,7 @@ void FFV::NS_FS_E_CDS()
     // 周期型の速度境界条件
     TIMING_start(tm_vec_BC);
     flop=0.0;
-    BC.InnerVBC_Periodic(d_v, d_bcd);
+    BC.InnerVBCperiodic(d_v, d_bcd);
     TIMING_stop(tm_vec_BC, flop);
     
     TIMING_stop(tm_poi_itr_sct_4, 0.0);
@@ -565,8 +565,8 @@ void FFV::NS_FS_E_CDS()
   // 速度のガイドセルへの代入
   TIMING_start(tm_VBC_update);
   flop = 0.0;
-  BC.InnerVBC(d_v, d_bcv, CurrentTime, v00, flop);
-  BC.OuterVBC_GC(d_v, d_bcv, CurrentTime, &C, v00, flop);
+  BC.InnerVBC(d_v, d_bcv, CurrentTime, v00);
+  BC.OuterVBC_GC(d_v, d_bcv, CurrentTime, &C, v00);
   TIMING_stop(tm_VBC_update, flop);
   
   

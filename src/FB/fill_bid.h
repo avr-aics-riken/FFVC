@@ -37,20 +37,19 @@ int zn = mid[m_n];
 int zb = mid[m_b];
 int zt = mid[m_t];
 
-
 // 未ペイントの場合にテスト
 if ( zp == 0 )
 {
   int qq = bid[m_p];
   int sd;
   
-  // 隣接セルの方向に対するカットIDの有無>> 0ならばカット無し、チェック半径は1
-  int qw = get_BID5(X_MINUS, qq);
-  int qe = get_BID5(X_PLUS,  qq);
-  int qs = get_BID5(Y_MINUS, qq);
-  int qn = get_BID5(Y_PLUS,  qq);
-  int qb = get_BID5(Z_MINUS, qq);
-  int qt = get_BID5(Z_PLUS,  qq);
+  // 隣接セルの方向に対するカットIDの有無>> 0ならばカット無し、チェック半径は1  
+  int qw = getFaceBID(0, qq);
+  int qe = getFaceBID(1, qq);
+  int qs = getFaceBID(2, qq);
+  int qn = getFaceBID(3, qq);
+  int qb = getFaceBID(4, qq);
+  int qt = getFaceBID(5, qq);
   
   // 流体属性をもつCELL_MONITORについては，カットがないものとしてフィル対象とする
   int ff = 0;
@@ -102,7 +101,7 @@ if ( zp == 0 )
     {
       sd = find_mode_id(tgt_id, qw, qe, qs, qn, qb, qt);
       mid[m_p] =  sd;
-      set_BID5(bid[m_w], X_PLUS, sd); // テストする方向からみて、カットIDを設定
+      setFaceBID(bid[m_w], X_PLUS, sd); // テストする方向からみて、カットIDを設定
       cut[_F_IDX_S4DEX(X_PLUS, i-1, j, k, 6, ix, jx, kx, gd)] = cpos; // カット位置をセット
       replaced++;
     }
@@ -118,7 +117,7 @@ if ( zp == 0 )
     {
       sd = find_mode_id(tgt_id, qw, qe, qs, qn, qb, qt);
       mid[m_p] =  sd;
-      set_BID5(bid[m_s], Y_PLUS, sd);
+      setFaceBID(bid[m_s], Y_PLUS, sd);
       cut[_F_IDX_S4DEX(Y_PLUS, i, j-1, k, 6, ix, jx, kx, gd)] = cpos;
       replaced++;
     }
@@ -134,7 +133,7 @@ if ( zp == 0 )
     {
       sd = find_mode_id(tgt_id, qw, qe, qs, qn, qb, qt);
       mid[m_p] = sd;
-      set_BID5(bid[m_b], Z_PLUS, sd);
+      setFaceBID(bid[m_b], Z_PLUS, sd);
       cut[_F_IDX_S4DEX(Z_PLUS, i, j, k-1, 6, ix, jx, kx, gd)] = cpos;
       replaced++;
     }
@@ -150,7 +149,7 @@ if ( zp == 0 )
     {
       sd = find_mode_id(tgt_id, qw, qe, qs, qn, qb, qt);
       mid[m_p] = sd;
-      set_BID5(bid[m_t], Z_MINUS, sd);
+      setFaceBID(bid[m_t], Z_MINUS, sd);
       cut[_F_IDX_S4DEX(Z_MINUS, i, j, k+1, 6, ix, jx, kx, gd)] = cpos;
       replaced++;
     }
@@ -166,7 +165,7 @@ if ( zp == 0 )
     {
       sd = find_mode_id(tgt_id, qw, qe, qs, qn, qb, qt);
       mid[m_p] = sd;
-      set_BID5(bid[m_n], Y_MINUS, sd);
+      setFaceBID(bid[m_n], Y_MINUS, sd);
       cut[_F_IDX_S4DEX(Y_MINUS, i, j+1, k, 6, ix, jx, kx, gd)] = cpos;
       replaced++;
     }
@@ -182,7 +181,7 @@ if ( zp == 0 )
     {
       sd = find_mode_id(tgt_id, qw, qe, qs, qn, qb, qt);
       mid[m_p] = sd;
-      set_BID5(bid[m_e], X_MINUS, sd);
+      setFaceBID(bid[m_e], X_MINUS, sd);
       cut[_F_IDX_S4DEX(X_MINUS, i+1, j, k, 6, ix, jx, kx, gd)] = cpos;
       replaced++;
     }

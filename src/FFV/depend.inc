@@ -50,11 +50,10 @@ main.o: main.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
  ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
  ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h \
- ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h \
- ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
- /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
- /usr/local/Polylib/include/Polylib.h \
+ ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
+ ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
+ /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
+ /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -137,11 +136,10 @@ ffv.o: ffv.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
  ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
  ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h \
- ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h \
- ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
- /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
- /usr/local/Polylib/include/Polylib.h \
+ ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
+ ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
+ /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
+ /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -225,11 +223,10 @@ ffv_Initialize.o: ffv_Initialize.C ffv.h \
  ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
  ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
  ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h \
- ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h \
- ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
- /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
- /usr/local/Polylib/include/Polylib.h \
+ ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
+ ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
+ /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
+ /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -312,11 +309,10 @@ ffv_Alloc.o: ffv_Alloc.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
  ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
  ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h \
- ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h \
- ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
- /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
- /usr/local/Polylib/include/Polylib.h \
+ ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
+ ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
+ /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
+ /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -449,11 +445,10 @@ ffv_Restart.o: ffv_Restart.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
  ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
  ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h \
- ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h \
- ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
- /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
- /usr/local/Polylib/include/Polylib.h \
+ ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
+ ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
+ /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
+ /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -536,11 +531,10 @@ ffv_Loop.o: ffv_Loop.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
  ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
  ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h \
- ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h \
- ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
- /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
- /usr/local/Polylib/include/Polylib.h \
+ ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
+ ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
+ /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
+ /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -623,11 +617,10 @@ ffv_LS.o: ffv_LS.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
  ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
  ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h \
- ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h \
- ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
- /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
- /usr/local/Polylib/include/Polylib.h \
+ ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
+ ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
+ /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
+ /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -710,11 +703,10 @@ ffv_Post.o: ffv_Post.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
  ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
  ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h \
- ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h \
- ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
- /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
- /usr/local/Polylib/include/Polylib.h \
+ ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
+ ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
+ /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
+ /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -797,11 +789,10 @@ ffv_Heat.o: ffv_Heat.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
  ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
  ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h \
- ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h \
- ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
- /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
- /usr/local/Polylib/include/Polylib.h \
+ ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
+ ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
+ /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
+ /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -928,11 +919,10 @@ NS_FS_E_Binary.o: NS_FS_E_Binary.C ffv.h \
  ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
  ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
  ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h \
- ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h \
- ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
- /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
- /usr/local/Polylib/include/Polylib.h \
+ ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
+ ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
+ /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
+ /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -1015,11 +1005,10 @@ NS_FS_E_CDS.o: NS_FS_E_CDS.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
  ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
  ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h \
- ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h \
- ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
- /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
- /usr/local/Polylib/include/Polylib.h \
+ ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
+ ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
+ /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
+ /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -1102,11 +1091,10 @@ PS_Binary.o: PS_Binary.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
  ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
  ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_SHC1D.h ../IP/IP_PMT.h \
- ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h ../IP/IP_Polygon.h \
- ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
- /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
- /usr/local/Polylib/include/Polylib.h \
+ ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
+ ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
+ /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
+ /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \

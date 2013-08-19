@@ -81,17 +81,18 @@ void History::printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control*
   const IterationCtl* ICv  = &IC[ic_vel1];  /// 粘性項のCrank-Nicolson反復
   const IterationCtl* ICt  = &IC[ic_tmp1];  /// 温度の拡散項の反復
   
-  if ( Unit_Log == DIMENSIONAL )
-  {
-    fprintf(fp, "    step      time[sec]  v_max[m/s] ItrVP v_div_max[-]");
-  }
-  else
-  {
-    fprintf(fp, "    step        time[-]    v_max[-] ItrVP v_div_max[-]");
-  }
   
-  if ( C->KindOfSolver != SOLID_CONDUCTION )
+  if ( (C->KindOfSolver == FLOW_ONLY) || (C->KindOfSolver == THERMAL_FLOW) || (C->KindOfSolver == THERMAL_FLOW_NATURAL) )
   {
+    if ( Unit_Log == DIMENSIONAL )
+    {
+      fprintf(fp, "    step      time[sec]  v_max[m/s] ItrVP v_div_max[-]");
+    }
+    else
+    {
+      fprintf(fp, "    step        time[-]    v_max[-] ItrVP v_div_max[-]");
+    }
+    
     switch (C->AlgorithmF)
     {
       case Flow_FS_EE_EE:
@@ -138,8 +139,17 @@ void History::printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control*
     fprintf(fp, "     deltaP       avrP     deltaV       avrV");
     if ( C->isHeatProblem() ) fprintf(fp, "     deltaT       avrT");
   }
-  else
+  else if ( C->KindOfSolver == SOLID_CONDUCTION )
   {
+    if ( Unit_Log == DIMENSIONAL )
+    {
+      fprintf(fp, "    step      time[sec]");
+    }
+    else
+    {
+      fprintf(fp, "    step        time[-]");
+    }
+    
     switch (C->AlgorithmH)
     {
       case Heat_EE_EI:
@@ -156,6 +166,10 @@ void History::printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control*
     }
     
     fprintf(fp, "     deltaT       avrT");
+  }
+  else // CONJUGATE_HEAT_TRANSFER
+  {
+    
   }
   
   if ( disp )
@@ -185,48 +199,68 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
   const IterationCtl* ICt  = &IC[ic_tmp1];  ///< 温度の拡散項の反復
   const IterationCtl* ICd  = &IC[ic_div];   ///< 圧力-速度反復
   
-  fprintf(fp, "%8d %14.6e %11.4e %5d  %11.4e",
-          step, printTime(), printVmax(), ICd->getLoopCount(), ICd->getNormValue() );
+  
 
-  if ( C->KindOfSolver != SOLID_CONDUCTION ) 
+  switch (C->KindOfSolver)
   {
-    switch (C->AlgorithmF)
-    {
-      case Flow_FS_EE_EE:
-      case Flow_FS_AB2:
-      case Flow_FS_AB_CN:
-        fprintf(fp, " %5d %11.4e", ICp1->getLoopCount(), ICp1->getNormValue());
-        break;
-    }
-    
-    if (C->AlgorithmF == Flow_FS_AB_CN) 
-    {
-      fprintf(fp, " %5d %11.4e", ICv->getLoopCount(), ICv->getNormValue());
-    }
-    
-    if ( C->isHeatProblem() ) 
-    {
-      switch (C->AlgorithmH) 
-      {				
+    case FLOW_ONLY:
+    case THERMAL_FLOW:
+    case THERMAL_FLOW_NATURAL:
+      
+      fprintf(fp, "%8d %14.6e %11.4e %5d  %11.4e",
+              step, printTime(), printVmax(), ICd->getLoopCount(), ICd->getNormValue() );
+      
+      switch (C->AlgorithmF)
+      {
+        case Flow_FS_EE_EE:
+        case Flow_FS_AB2:
+        case Flow_FS_AB_CN:
+          fprintf(fp, " %5d %11.4e", ICp1->getLoopCount(), ICp1->getNormValue());
+          break;
+      }
+      
+      if (C->AlgorithmF == Flow_FS_AB_CN)
+      {
+        fprintf(fp, " %5d %11.4e", ICv->getLoopCount(), ICv->getNormValue());
+      }
+      
+      if ( C->isHeatProblem() )
+      {
+        switch (C->AlgorithmH)
+        {
+          case Heat_EE_EI:
+            fprintf(fp, " %5d %11.4e", ICt->getLoopCount(), ICt->getNormValue());
+            break;
+        }
+      }
+      
+      fprintf(fp, " %10.3e %10.3e %10.3e %10.3e", rms[var_Pressure], avr[var_Pressure], rms[var_Velocity], avr[var_Velocity]);
+      if ( C->isHeatProblem() ) fprintf(fp, " %10.3e %10.3e", rms[var_Temperature], avr[var_Temperature]);
+      
+      break;
+      
+      
+    case SOLID_CONDUCTION:
+      
+      fprintf(fp, "%8d %14.6e", step, printTime());
+      
+      switch (C->AlgorithmH)
+      {
         case Heat_EE_EI:
           fprintf(fp, " %5d %11.4e", ICt->getLoopCount(), ICt->getNormValue());
           break;
       }
-    }
-    
-    fprintf(fp, " %10.3e %10.3e %10.3e %10.3e", rms[var_Pressure], avr[var_Pressure], rms[var_Velocity], avr[var_Velocity]);
-    if ( C->isHeatProblem() ) fprintf(fp, " %10.3e %10.3e", rms[var_Temperature], avr[var_Temperature]);
+      fprintf(fp, " %10.3e %10.3e", rms[var_Temperature], avr[var_Temperature]);
+      break;
+      
+      
+    case CONJUGATE_HEAT_TRANSFER:
+      break;
+      
+    default:
+      break;
   }
-  else 
-  {
-    switch (C->AlgorithmH) 
-    {				
-      case Heat_EE_EI:
-        fprintf(fp, " %5d %11.4e", ICt->getLoopCount(), ICt->getNormValue());
-        break;
-    }
-    fprintf(fp, " %10.3e %10.3e", rms[var_Temperature], avr[var_Temperature]);
-  }
+  
   
   if ( disp )
   {
@@ -261,22 +295,22 @@ void History::printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Contr
 
   for (int i=1; i<=C->NoCompo; i++)
   {
-    def = cmp[i].getDef();
     
     switch ( cmp[i].getType() )
     {
       case SPEC_VEL:
-        fprintf(fp, "  V[%03d:%03d]", i, def);
+        fprintf(fp, "      V[%03d]", i);
         break;
         
       case SPEC_VEL_WH:
-        fprintf(fp, "  V[%03d:%03d]  Q[%03d:%03d] qa[%03d:%03d]", i, def, cid, def, cid, def);
+        fprintf(fp, "      V[%03d]      Q[%03d]     qa[%03d]", i, cid, cid);
         break;
         
       case OUTFLOW:
-        fprintf(fp, "  V[%03d:%03d]", i, def);
-        if ( C->isHeatProblem() ) {
-          fprintf(fp, "  Q[%03d:%03d] qa[%03d:%03d]", i, def, i, def);
+        fprintf(fp, "      V[%03d]", i);
+        if ( C->isHeatProblem() )
+        {
+          fprintf(fp, "      Q[%03d]     qa[%03d]", i, i);
         }
         break;
         
@@ -285,14 +319,14 @@ void History::printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Contr
         break;
         
       case DARCY:
-        fprintf(fp, "      U[%03d]      V[%03d]      W[%03d]", i, i, i);
+        fprintf(fp, "     U[%03d]     V[%03d]     W[%03d]", i, i, i);
         break;
         
       case HEATFLUX:
       case TRANSFER:
       case ISOTHERMAL:
       case RADIANT:
-        fprintf(fp, "  Q[%03d:%03d] qa[%03d:%03d]", i, def, i, def);
+        fprintf(fp, "      Q[%03d]     qa[%03d]", i, i);
         break;
       
       case CELL_MONITOR:
@@ -331,14 +365,15 @@ void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C
         break;
         
       case SPEC_VEL_WH:
-        pp = printQF(cmp[i].get_Mon_Calorie());
+        pp = printQF(cmp[i].getMonCalorie());
         fprintf(fp, " %11.4e %11.4e %11.4e", printVel(cmp[i].val[var_Velocity]), pp, pp/(REAL_TYPE)cmp[i].getElement() );
         break;
       
       case OUTFLOW:
         fprintf(fp, " %11.4e %11.4e", printVel(cmp[i].val[var_Velocity]) );
-        if ( C->isHeatProblem() ) {
-          pp = printQF(cmp[i].get_Mon_Calorie());
+        if ( C->isHeatProblem() )
+        {
+          pp = printQF(cmp[i].getMonCalorie());
           fprintf(fp, " %11.4e %11.4e", pp, pp/(REAL_TYPE)cmp[i].getElement() ); // [W], [W/m^2]
         }
         break;
@@ -357,12 +392,12 @@ void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C
       case TRANSFER:
       case ISOTHERMAL:
       case RADIANT:
-        pp = printQF(cmp[i].get_Mon_Calorie());
+        pp = printQF(cmp[i].getMonCalorie());
         fprintf(fp, " %11.4e %11.4e", pp, pp/cmp[i].area);
         break;
       
       case HEAT_SRC:
-        fprintf(fp, " %11.4e", printQV(cmp[i].get_Mon_Calorie()));
+        fprintf(fp, " %11.4e", printQV(cmp[i].getMonCalorie()));
         break;
         
       case CELL_MONITOR:
