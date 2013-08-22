@@ -224,7 +224,7 @@ public:
   
   
   // @brief 熱伝達係数の保持
-  void set_CoefHT(REAL_TYPE val)
+  void setCoefHT(REAL_TYPE val)
   {
     var1 = val;
   }
@@ -273,7 +273,7 @@ public:
   
   
   // @brief 熱流束の保持
-  void set_Heatflux(REAL_TYPE val)
+  void setHeatflux(REAL_TYPE val)
   {
     var1 = val;
   }

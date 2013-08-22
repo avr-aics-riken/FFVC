@@ -4345,7 +4345,6 @@ void VoxInfo::setBCIndexH(int* bh1, int* bh2, int* mid, SetBC* BC, const int kos
       case OUTFLOW:
         //encQfaceSVO(n, n, mid, bcd, bh1, bh2, deface);
         cmp[n].setEnsLocal(ON);
-        // ?? setInactive_Compo(id, cmp[n].getDef(), mid, bh1, bh2); // 不活性セルの指定
         break;
         
         

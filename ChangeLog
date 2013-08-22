@@ -19,6 +19,12 @@ REVISION HISTORY
 ================
 
 --------------------------
+2013-08-22
+
+- r1013 modify parameter structure [ver 1.3.4]
+  - パラメータの構成変更 >> ApplicationControl
+
+--------------------------
 2013-08-19
 
 - r1012 Filling Medium [ver 1.3.3]

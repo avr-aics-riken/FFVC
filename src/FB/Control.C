@@ -442,6 +442,42 @@ void Control::getApplicationControl()
   }
   OperatorName = str;
   
+
+  // フィルの媒質指定
+  label = "/ApplicationControl/FillMedium";
+  if ( !tpCntl->getInspectedValue(label, str) )
+  {
+    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
+	  Exit(0);
+  }
+  FillMedium = str;
+  
+  
+  // 流体セルのフィルの開始面指定
+  label = "/ApplicationControl/HintOfFillingFluid";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid value in '%s'\n", label.c_str());
+    Exit(0);
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "no" ) )     FillHint = -1;
+    else if( !strcasecmp(str.c_str(), "xminus" ) ) FillHint = X_MINUS;
+    else if( !strcasecmp(str.c_str(), "xplus" ) )  FillHint = X_PLUS;
+    else if( !strcasecmp(str.c_str(), "yminus" ) ) FillHint = Y_MINUS;
+    else if( !strcasecmp(str.c_str(), "yplus" ) )  FillHint = Y_PLUS;
+    else if( !strcasecmp(str.c_str(), "zminus" ) ) FillHint = Z_MINUS;
+    else if( !strcasecmp(str.c_str(), "zplus" ) )  FillHint = Z_PLUS;
+    else
+    {
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
+    }
+  }
+  
+  
   
   // パラメータチェックフラグ (Hidden)
   label = "/ApplicationControl/CheckParameter";
@@ -462,9 +498,9 @@ void Control::getApplicationControl()
     {
       Exit(0);
     }
-
+    
   }
-
+  
   
   int ct = 0;
   
@@ -502,8 +538,8 @@ void Control::getApplicationControl()
   {
     if ( tpCntl->getInspectedValue(label, str) )
     {
-      if     ( !strcasecmp(str.c_str(), "normal") ) Hide.Range_Limit = Range_Normal;
-      else if( !strcasecmp(str.c_str(), "cutoff") ) Hide.Range_Limit = Range_Cutoff;
+      if     ( !strcasecmp(str.c_str(), "on") ) Hide.Range_Limit = Range_Normal;
+      else if( !strcasecmp(str.c_str(), "off") ) Hide.Range_Limit = Range_Cutoff;
       else
       {
         Hostonly_ stamped_printf("\tInvalid keyword is described for '%s\n", label.c_str());
@@ -947,7 +983,7 @@ void Control::getFieldData()
   }
   
   
-  // ボクセルファイル出力（Hidden）
+  // ボクセルファイル出力
   FIO.IO_Voxel = OFF;
   label = "/Output/VoxelOutput";
   
@@ -971,7 +1007,7 @@ void Control::getFieldData()
 
   
   
-  // デバッグ用のdiv(u)の出力指定（Hidden）
+  // デバッグ用のdiv(u)の出力指定
   FIO.Div_Debug = OFF;
   label = "/Output/DebugDivergence";
   
@@ -1841,14 +1877,6 @@ void Control::getReference()
   }
   RefMedium = str;
   
-  label = "/Reference/FillMedium";
-  if ( !tpCntl->getInspectedValue(label, str) )
-  {
-    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  FillMedium = str;
-  
   
   if ( isHeatProblem() )
   {
@@ -2572,12 +2600,12 @@ void Control::getTimeControl(DTcntl* DT)
    
    1    |     2      |   3     << m_start (restart step)
    ---------+------------+-------
-   ^            ^
-   avr_start    avr_end
+        ^            ^
+     avr_start    avr_end
    
    case 1 : 平均操作は行うが，まだ指定時刻に到達していないので，平均値ファイルは存在せず，平均値のリスタートはない
-   2 : 前セッションから継続して平均操作を行うが，既に平均値ファイルが存在する（はず）ので，平均値のリスタート処理を行う
-   3 : 既に平均値操作の区間は終了しているので，平均操作は行わない
+        2 : 前セッションから継続して平均操作を行うが，既に平均値ファイルが存在する（はず）ので，平均値のリスタート処理を行う
+        3 : 既に平均値操作の区間は終了しているので，平均操作は行わない
    */
   
   if ( Start == initial_start )

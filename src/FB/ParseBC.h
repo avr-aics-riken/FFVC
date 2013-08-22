@@ -183,19 +183,19 @@ private:
   
   
   // 内部境界条件の座標値を取得し，登録する
-  void get_Center(const string label_base, REAL_TYPE* v);
+  void getCenter(const string label_base, REAL_TYPE* v);
   
   
   // 内部境界条件の方向ベクトル値を取得し，登録する
-  void get_Dir(const string label_base, REAL_TYPE* v);
+  void getDir(const string label_base, REAL_TYPE* v);
   
   
   // 内部境界条件の法線ベクトル値を取得し，登録する
   void get_NV(const string label_base, REAL_TYPE* v);
   
   
-  // Const_Temperatureのパラメータを取得する
-  void get_IBC_CnstTemp(const string label_base, const int n, CompoList* cmp);
+  // ConstTemperatureのパラメータを取得する
+  void getIbcCnstTemp(const string label_base, const int n, CompoList* cmp);
   
   
   // Fanのパラメータを取得する
@@ -206,48 +206,48 @@ private:
   void get_IBC_IBM_DF(const string label_base, const int n, CompoList* cmp);
   
   
-  // Direct_Fluxのパラメータを取得する
-  void get_IBC_HeatFlux(const string label_base, const int n, CompoList* cmp);
+  // DirectFluxのパラメータを取得する
+  void getIbcHeatFlux(const string label_base, const int n, CompoList* cmp);
   
   
-  // Heat_Generationのパラメータを取得する
-  void get_IBC_HeatSrc(const string label_base, const int n, CompoList* cmp);
+  // HeatGenerationのパラメータを取得する
+  void getIbcHeatSrc(const string label_base, const int n, CompoList* cmp);
   
   
-  // HeatTransfer_Bのパラメータを取得する
-  void get_IBC_HT_B(const string label_base, const int n, CompoList* cmp);
+  // HeatTransferBのパラメータを取得する
+  void getIbcHT_B(const string label_base, const int n, CompoList* cmp);
   
   
-  // HeatTransfer_Nのパラメータを取得する
-  void get_IBC_HT_N(const string label_base, const int n, CompoList* cmp);
+  // HeatTransferNのパラメータを取得する
+  void getIbcHT_N(const string label_base, const int n, CompoList* cmp);
   
   
-  // HeatTransfer_Sのパラメータを取得
-  void get_IBC_HT_S(const string label_base, const int n, CompoList* cmp, const MediumList* mat);
+  // HeatTransferSのパラメータを取得
+  void getIbcHT_S(const string label_base, const int n, CompoList* cmp, const MediumList* mat);
   
   
-  // HeatTransfer_SFのパラメータを取得する
-  void get_IBC_HT_SF(const string label_base, const int n, CompoList* cmp);
+  // HeatTransferSFのパラメータを取得する
+  void getIbcHT_SF(const string label_base, const int n, CompoList* cmp);
   
   
-  // HeatTransfer_SNのパラメータを取得する
-  void get_IBC_HT_SN(const string label_base, const int n, CompoList* cmp, const MediumList* mat);
+  // HeatTransferSNのパラメータを取得する
+  void getIbcHT_SN(const string label_base, const int n, CompoList* cmp, const MediumList* mat);
   
   
   // 境界条件IsoThermalのパラメータを取得し保持する
-  void get_IBC_IsoTherm(const string label_base, const int n, CompoList* cmp);
+  void getIbcIsoTherm(const string label_base, const int n, CompoList* cmp);
   
   
   // Monitorの設定内容をパースし，パラメータを保持する
-  void get_IBC_Monitor(const string label_base, const int n, CompoList* cmp);
+  void getIbcMonitor(const string label_base, const int n, CompoList* cmp);
   
   
   // 内部の流出境界のパラメータを取得する
-  void get_IBC_Outflow(const string label_base, const int n, CompoList* cmp);
+  void getIbcOutflow(const string label_base, const int n, CompoList* cmp);
   
   
   // 内部の周期境界のパラメータを取得する
-  void get_IBC_Periodic(const string label_base, const int n, CompoList* cmp);
+  void getIbcPeriodic(const string label_base, const int n, CompoList* cmp);
   
   
   // HeatExchangerのパラメータを取得する
@@ -259,7 +259,7 @@ private:
   
   
   // 内部の流入境界のパラメータを取得する
-  void get_IBC_SpecVel(const string label_base, const int n, CompoList* cmp);
+  void getIbcSpecVel(const string label_base, const int n, CompoList* cmp);
   
   
   // Darcyのパラメータを取得する
@@ -292,10 +292,6 @@ private:
   
   // 外部境界の壁面条件のパラメータを取得する
   void getObcWall(const string label_base, const int n);
-  
-  
-  // 隣接セル媒質のパラメータを取得する
-  void get_Neighbor(const string label_base, const int n, CompoList* cmp, const MediumList* mat);
   
   
   // 単位ベクトルを計算して戻す

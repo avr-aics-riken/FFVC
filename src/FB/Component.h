@@ -389,11 +389,6 @@ public:
     return usw;
   }
   
-  int getDef() const
-  {
-    return def;
-  }
-  
   int getState() const
   {
     return state;
@@ -600,18 +595,17 @@ public:
   void setBClocation       (const int key);
   void setBbox             (const int m_st[], const int m_ed[]);
   void set_CoefMassflow    (const REAL_TYPE var);
-  void set_CoefHT          (const REAL_TYPE var);
+  void setCoefHT          (const REAL_TYPE var);
   void set_CoefPrsLoss     (const REAL_TYPE var);
   void set_CoefRadEps      (const REAL_TYPE var);
   void set_CoefRadPrj      (const REAL_TYPE var);
   void set_cmp_sz          ();
-  void setDef              (const int key);
   void setElement          (const unsigned long key);
   
   // サブドメインにコンポーネントが存在するかどうかを設定
   void setEnsLocal(const int key);
   
-  void set_Heatflux        (const REAL_TYPE var);
+  void setHeatflux        (const REAL_TYPE var);
   void set_HeatDensity     (const REAL_TYPE var);
   void set_HeatValue       (const REAL_TYPE var);
   void set_HSRC_policy     (const bool kind);

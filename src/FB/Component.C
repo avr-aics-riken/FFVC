@@ -132,7 +132,7 @@ void CompoList::set_cmp_sz(void)
 
 // #################################################################
 //@brief 熱伝達係数の保持
-void CompoList::set_CoefHT(const REAL_TYPE var) 
+void CompoList::setCoefHT(const REAL_TYPE var) 
 {
   var2 = var;
 }
@@ -171,14 +171,6 @@ void CompoList::set_CoefPrsLoss(const REAL_TYPE var)
 
 
 // #################################################################
-//@brief 指定セルを保持する
-void CompoList::setDef(const int key)
-{
-  def = key;
-}
-
-
-// #################################################################
 //@brief elementをセットする
 //@param key 要素数 element
 void CompoList::setElement(const unsigned long key)
@@ -206,7 +198,7 @@ void CompoList::set_HeatDensity(const REAL_TYPE var)
 
 // #################################################################
 //@brief 熱流束の保持
-void CompoList::set_Heatflux(const REAL_TYPE var) 
+void CompoList::setHeatflux(const REAL_TYPE var) 
 {
   var2 = var;
 }

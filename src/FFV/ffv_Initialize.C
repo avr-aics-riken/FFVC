@@ -2383,32 +2383,6 @@ int FFV::getDomainInfo(TextParser* tp_dom)
   //@todo  string hoge = str;
   
   
-  
-  // 流体セルのフィルの開始面指定
-  label = "/DomainInfo/HintOfFillingFluid";
-  
-  if ( !(tp_dom->getInspectedValue(label, str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid value in '%s'\n", label.c_str());
-    Exit(0);
-  }
-  else
-  {
-    if     ( !strcasecmp(str.c_str(), "no" ) )     C.FillHint = -1;
-    else if( !strcasecmp(str.c_str(), "xminus" ) ) C.FillHint = X_MINUS;
-    else if( !strcasecmp(str.c_str(), "xplus" ) )  C.FillHint = X_PLUS;
-    else if( !strcasecmp(str.c_str(), "yminus" ) ) C.FillHint = Y_MINUS;
-    else if( !strcasecmp(str.c_str(), "yplus" ) )  C.FillHint = Y_PLUS;
-    else if( !strcasecmp(str.c_str(), "zminus" ) ) C.FillHint = Z_MINUS;
-    else if( !strcasecmp(str.c_str(), "zplus" ) )  C.FillHint = Z_PLUS;
-    else
-    {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-      Exit(0);
-    }
-  }
-  
-  
   return div_type;
 }
 
