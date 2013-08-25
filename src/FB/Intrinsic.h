@@ -63,7 +63,7 @@ public:
     RefL = 0.0;
     RefV = 0.0;
     even = 0;
-    mode = 0;
+    mode = dim_3d;
   }
   
   /**　デストラクタ */

@@ -19,6 +19,16 @@ REVISION HISTORY
 ================
 
 --------------------------
+2013-08-24
+
+- r1015 bugfix print outer BC
+  - OuterBCの表示が不正であったバグを修正
+  - SHC1Dをexampleに収録
+  - 2Dcavity, Cabity_Binary, LDC, Jet, PMT, Sphere の入力ファイルをアップデート
+  - OuterTBCface()で熱量収支のallreduceを行う方針（従来は，個別のメソッド内で実施．冒頭に書いた領域内のときのreturnでデッドロックになるバグ）
+  - ConvergenceMonitorを導入し，流動と熱の定常状態をモニター
+
+--------------------------
 2013-08-22
 
 - r1014 update ffvc_ug.pdf ver 0.8.0

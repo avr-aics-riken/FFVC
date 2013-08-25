@@ -238,9 +238,11 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium
   int kx = size[2];
   int gd = guide;
 
-  //printf("%d : ox = %e, oy = %e, oz = %e\n", pn.myrank, org_l.x, org_l.y, org_l.z);
-  //printf("%d : Lx = %e, Ly = %e, Lz = %e\n", pn.myrank, Lx, Ly, Lz);
-  //printf("%d : oxG= %e, oyG= %e, ozG= %e\n", pn.myrank, ox_g, oy_g, oz_g);
+#if 0
+  printf("%d : ox = %e, oy = %e, oz = %e\n", myRank, org_l.x, org_l.y, org_l.z);
+  printf("%d : Lx = %e, Ly = %e, Lz = %e\n", myRank, Lx, Ly, Lz);
+  printf("%d : oxG= %e, oyG= %e, ozG= %e\n", myRank, ox_g, oy_g, oz_g);
+#endif
   
   // 球のbbox 球の中心座標はゼロ
   box_min = - rs;
@@ -248,8 +250,10 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium
   box_st = find_index(box_min, org_l);
   box_ed = find_index(box_max, org_l);
   
-  //printf("%d : st_x = %d, st_y = %d, st_z = %d\n", pn.myrank, box_st.x, box_st.y, box_st.z);
-  //printf("%d : ed_x = %d, ed_y = %d, ed_z = %d\n", pn.myrank, box_ed.x, box_ed.y, box_ed.z);
+#if 0
+  printf("%d : st_x = %d, st_y = %d, st_z = %d\n", myRank, box_st.x, box_st.y, box_st.z);
+  printf("%d : ed_x = %d, ed_y = %d, ed_z = %d\n", myRank, box_ed.x, box_ed.y, box_ed.z);
+#endif
   
   // 媒質設定
   if ( (mid_fluid = R->findIDfromLabel(mat, NoMedium, m_fluid)) == 0 )

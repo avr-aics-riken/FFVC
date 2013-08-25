@@ -124,7 +124,7 @@ void ParseBC::countMedium(Control* Cref, const MediumList* mat)
  * @brief 境界条件の値(REAL_TYPE型)を取得し，返す
  * @param [in] label テストラベル
  */
-REAL_TYPE ParseBC::get_BCval_real(const string label)
+REAL_TYPE ParseBC::getBCvalReal(const string label)
 {
   REAL_TYPE df=0.0f;
   if ( !(tpCntl->getInspectedValue(label, df )) )
@@ -220,7 +220,7 @@ void ParseBC::getIbcCnstTemp(const string label_base, const int n, CompoList* cm
 {
   string label = label_base + "/Temperature";
   
-  REAL_TYPE tmp = get_BCval_real(label);
+  REAL_TYPE tmp = getBCvalReal(label);
   cmp[n].set_Temp( FBUtility::convTemp2K(tmp, Unit_Temp) );
 }
 
@@ -265,7 +265,7 @@ void ParseBC::get_IBC_Fan(const string label_base, const int n, CompoList* cmp)
   }
   
   // 法線ベクトルの取得
-  get_NV(label_base, v);
+  getNV(label_base, v);
   copyVec(cmp[n].nv, v);
   
   // 中心座標の取得
@@ -274,13 +274,16 @@ void ParseBC::get_IBC_Fan(const string label_base, const int n, CompoList* cmp)
   
   // 形状パラメータ
   label=label_base+"/Depth";
-  cmp[n].depth  = get_BCval_real(label);
-  label=label_base+"/FanRadius";
-  cmp[n].shp_p1 = get_BCval_real(label);
-  label=label_base+"/BossRadius";
-  cmp[n].shp_p2 = get_BCval_real(label);
+  cmp[n].depth  = getBCvalReal(label);
   
-  if ( cmp[n].shp_p1 <= cmp[n].shp_p2 ) {
+  label=label_base+"/FanRadius";
+  cmp[n].shp_p1 = getBCvalReal(label);
+  
+  label=label_base+"/BossRadius";
+  cmp[n].shp_p2 = getBCvalReal(label);
+  
+  if ( cmp[n].shp_p1 <= cmp[n].shp_p2 )
+  {
     stamped_printf("\tError : Radius of boss is greater than fan.\n");
     Exit(0);
   }
@@ -300,7 +303,7 @@ void ParseBC::getIbcHeatFlux(const string label_base, const int n, CompoList* cm
 {
   string label = label_base + "/HeatFlux";
   
-  cmp[n].setHeatflux( get_BCval_real(label) ); /// @note [W/m^2]
+  cmp[n].setHeatflux( getBCvalReal(label) ); /// @note [W/m^2]
 }
 
 
@@ -340,7 +343,7 @@ void ParseBC::getIbcHeatSrc(const string label_base, const int n, CompoList* cmp
   }
   
   // 放熱量
-  label= label_base + "/Value";
+  label = label_base + "/Value";
   
   if ( !(tpCntl->getInspectedValue(label, hsrc )) )
   {
@@ -374,11 +377,11 @@ void ParseBC::getIbcHT_B(const string label_base, const int n, CompoList* cmp)
   
   // 熱伝達係数
   label = label_base+"/CoefOfHeatTransfer";
-  cmp[n].setCoefHT( get_BCval_real(label) );
+  cmp[n].setCoefHT( getBCvalReal(label) );
   
   // バルク温度
   label = label_base+"/BulkTemperature";
-  REAL_TYPE st = get_BCval_real(label);
+  REAL_TYPE st = getBCvalReal(label);
   cmp[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
 }
 
@@ -396,7 +399,7 @@ void ParseBC::getIbcHT_N(const string label_base, const int n, CompoList* cmp)
   // 熱伝達係数
   string label = label_base + "/CoefOfHeatTransfer";
   
-  cmp[n].setCoefHT( get_BCval_real(label) );
+  cmp[n].setCoefHT( getBCvalReal(label) );
 }
 
 
@@ -407,101 +410,22 @@ void ParseBC::getIbcHT_N(const string label_base, const int n, CompoList* cmp)
  * @param [in]  label_base ラベルディレクトリ
  * @param [in]  n          コンポーネントリストの格納番号
  * @param [out] cmp        CompoList
- * @param [in]  mat        MediumList
  */
-void ParseBC::getIbcHT_S(const string label_base, const int n, CompoList* cmp, const MediumList* mat)
+void ParseBC::getIbcHT_S(const string label_base, const int n, CompoList* cmp)
 {
   string label;
   
   // 熱伝達係数
   label = label_base + "/CoefOfHeatTransfer";
   
-  cmp[n].setCoefHT( get_BCval_real(label) );
+  cmp[n].setCoefHT( getBCvalReal(label) );
   
   // 表面温度
   label = label_base + "/SurfaceTemperature";
   
-  REAL_TYPE st = get_BCval_real(label);
+  REAL_TYPE st = getBCvalReal(label);
   cmp[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
 
-}
-
-
-// #################################################################
-/**
- * @brief HeatTransferSNのパラメータを取得する
- * @param [in]  label_base ラベルディレクトリ
- * @param [in]  n          コンポーネントリストの格納番号
- * @param [out] cmp        CompoList
- * @param [in]  mat        MediumList
- */
-void ParseBC::getIbcHT_SN(const string label_base, const int n, CompoList* cmp, const MediumList* mat)
-{
-  string str;
-  string label;
-  
-  // 表面温度
-  label = label_base + "/SurfaceTemperature";
-  
-  REAL_TYPE st = get_BCval_real(label);
-  cmp[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
-  
-  // type
-  label = label_base + "/RefTempMode";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-    stamped_printf("\tParsing error : Invalid int value for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  if ( !strcasecmp("Bulk", str.c_str()) )
-  {
-	  cmp[n].set_sw_HTmodeRef( CompoList::HT_mode_bulk );
-  }
-  else if ( !strcasecmp("Local", str.c_str()) )
-  {
-	  cmp[n].set_sw_HTmodeRef( CompoList::HT_mode_local );
-  }
-  else
-  {
-	  stamped_printf("\tParsing error : Invalid string value for 'RefTempMode' : %s\n", str.c_str());
-	  Exit(0);
-  }
-  
-  
-  // Vertical and upper face values
-  label = label_base + "/VerticalLaminarAlpha";
-  cmp[n].ca[CompoList::vert_laminar_alpha]    = get_BCval_real(label);
-  
-  label = label_base + "/VerticalLaminarBeta";
-  cmp[n].ca[CompoList::vert_laminar_beta]     = get_BCval_real(label);
-  
-  label = label_base + "/VerticalTurbulentAlpha";
-  cmp[n].ca[CompoList::vert_turbulent_alpha]  = get_BCval_real(label);
-  
-  label = label_base + "/VerticalTurbulentBeta";
-  cmp[n].ca[CompoList::vert_turbulent_beta]   = get_BCval_real(label);
-  
-  label = label_base + "/VerticalRaCritial";
-  cmp[n].ca[CompoList::vert_Ra_critial]       = get_BCval_real(label);
-  
-  
-  // Lower face values
-  label = label_base + "/LowerLaminarAlpha";
-  cmp[n].cb[CompoList::lower_laminar_alpha]   = get_BCval_real(label);
-  
-  label = label_base + "/LowerLaminarBeta";
-  cmp[n].cb[CompoList::lower_laminar_beta]    = get_BCval_real(label);
-  
-  label = label_base + "/LowerTurbulentAlpha";
-  cmp[n].cb[CompoList::lower_turbulent_alpha] = get_BCval_real(label);
-  
-  label = label_base + "/LowerTurbulentBeta";
-  cmp[n].cb[CompoList::lower_turbulent_beta]  = get_BCval_real(label);
-  
-  label = label_base + "/LowerRaCritial";
-  cmp[n].cb[CompoList::lower_Ra_critial]      = get_BCval_real(label);
 }
 
 
@@ -516,43 +440,108 @@ void ParseBC::getIbcHT_SF(const string label_base, const int n, CompoList* cmp)
 {
   string str;
   string label;
-
+  
   // 表面温度
-  label=label_base+"/SurfaceTemperature";
-  REAL_TYPE st = get_BCval_real(label);
+  label = label_base+"/SurfaceTemperature";
+  REAL_TYPE st = getBCvalReal(label);
   cmp[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
   
-  // type
-  label=label_base+"/RefTempMode";
-  if ( !(tpCntl->getInspectedValue(label, str )) )
+  // type  デフォルトはbulk
+  cmp[n].set_sw_HTmodeRef( CompoList::HT_mode_bulk );
+  label = label_base+"/RefTempMode";
+  
+  if ( tpCntl->getInspectedValue(label, str ) )
   {
-    stamped_printf("\tParsing error : Invalid int value for 'RefTempMode' in 'LocalBoundary > HeatTransferSF'\n");
-    Exit(0);
-  }
-  if ( !strcasecmp("Bulk", str.c_str()) )
-  {
-	  cmp[n].set_sw_HTmodeRef( CompoList::HT_mode_bulk );
-  }
-  else if ( !strcasecmp("Local", str.c_str()) )
-  {
-	  cmp[n].set_sw_HTmodeRef( CompoList::HT_mode_local );
-  }
-  else {
-	  stamped_printf("\tParsing error : Invalid string value for 'Type' : %s\n", str.c_str());
-	  Exit(0);
+    if ( !strcasecmp("Bulk", str.c_str()) )
+    {
+      cmp[n].set_sw_HTmodeRef( CompoList::HT_mode_bulk );
+    }
+    else if ( !strcasecmp("Local", str.c_str()) )
+    {
+      cmp[n].set_sw_HTmodeRef( CompoList::HT_mode_local );
+    }
   }
   
   // coefficients
-  label=label_base+"/Alpha";
-  cmp[n].ca[CompoList::alpha] = get_BCval_real(label);
+  label = label_base+"/Alpha";
+  cmp[n].ca[CompoList::alpha] = getBCvalReal(label);
   
-  label=label_base+"/Beta";
-  cmp[n].ca[CompoList::beta]  = get_BCval_real(label);
+  label = label_base+"/Beta";
+  cmp[n].ca[CompoList::beta]  = getBCvalReal(label);
   
-  label=label_base+"/Gamma";
-  cmp[n].ca[CompoList::gamma] = get_BCval_real(label);
+  label = label_base+"/Gamma";
+  cmp[n].ca[CompoList::gamma] = getBCvalReal(label);
 }
 
+
+// #################################################################
+/**
+ * @brief HeatTransferSNのパラメータを取得する
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ */
+void ParseBC::getIbcHT_SN(const string label_base, const int n, CompoList* cmp)
+{
+  string str;
+  string label;
+  
+  // 表面温度
+  label = label_base + "/SurfaceTemperature";
+  
+  REAL_TYPE st = getBCvalReal(label);
+  cmp[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
+  
+  // type デフォルトはbulk
+  cmp[n].set_sw_HTmodeRef( CompoList::HT_mode_bulk );
+  
+  label = label_base + "/RefTempMode";
+  
+  if ( tpCntl->getInspectedValue(label, str ) )
+  {
+    if ( !strcasecmp("Bulk", str.c_str()) )
+    {
+      cmp[n].set_sw_HTmodeRef( CompoList::HT_mode_bulk );
+    }
+    else if ( !strcasecmp("Local", str.c_str()) )
+    {
+      cmp[n].set_sw_HTmodeRef( CompoList::HT_mode_local );
+    }
+  }
+  
+  // Vertical and upper face values
+  label = label_base + "/VerticalLaminarAlpha";
+  cmp[n].ca[CompoList::vert_laminar_alpha]    = getBCvalReal(label);
+  
+  label = label_base + "/VerticalLaminarBeta";
+  cmp[n].ca[CompoList::vert_laminar_beta]     = getBCvalReal(label);
+  
+  label = label_base + "/VerticalTurbulentAlpha";
+  cmp[n].ca[CompoList::vert_turbulent_alpha]  = getBCvalReal(label);
+  
+  label = label_base + "/VerticalTurbulentBeta";
+  cmp[n].ca[CompoList::vert_turbulent_beta]   = getBCvalReal(label);
+  
+  label = label_base + "/VerticalRaCritial";
+  cmp[n].ca[CompoList::vert_Ra_critial]       = getBCvalReal(label);
+  
+  
+  // Lower face values
+  label = label_base + "/LowerLaminarAlpha";
+  cmp[n].cb[CompoList::lower_laminar_alpha]   = getBCvalReal(label);
+  
+  label = label_base + "/LowerLaminarBeta";
+  cmp[n].cb[CompoList::lower_laminar_beta]    = getBCvalReal(label);
+  
+  label = label_base + "/LowerTurbulentAlpha";
+  cmp[n].cb[CompoList::lower_turbulent_alpha] = getBCvalReal(label);
+  
+  label = label_base + "/LowerTurbulentBeta";
+  cmp[n].cb[CompoList::lower_turbulent_beta]  = getBCvalReal(label);
+  
+  label = label_base + "/LowerRaCritial";
+  cmp[n].cb[CompoList::lower_Ra_critial]      = getBCvalReal(label);
+}
 
 
 // #################################################################
@@ -571,13 +560,13 @@ void ParseBC::get_IBC_IBM_DF(const string label_base, const int n, CompoList* cm
   
   
   // 法線ベクトル
-  get_NV(label_base, v);
+  getNV(label_base, v);
   copyVec(cmp[n].nv, v);
   
   // Velocity
   label=label_base+"/Velocity";
   
-  REAL_TYPE ct = get_BCval_real(label);
+  REAL_TYPE ct = getBCvalReal(label);
   
   if ( Unit_Param == DIMENSIONAL )
   {
@@ -602,8 +591,8 @@ void ParseBC::getIbcIsoTherm(const string label_base, const int n, CompoList* cm
   string label;
   
   // 表面温度
-  label=label_base+"/Temperature";
-  REAL_TYPE tmp = get_BCval_real(label);
+  label = label_base+"/Temperature";
+  REAL_TYPE tmp = getBCvalReal(label);
   cmp[n].set_Temp( FBUtility::convTemp2K(tmp, Unit_Temp) );
 }
 
@@ -704,7 +693,7 @@ void ParseBC::getIbcMonitor(const string label_base, const int n, CompoList* cmp
   }
   
   // 法線ベクトル
-  get_NV(label_base, v);
+  getNV(label_base, v);
   copyVec(cmp[n].nv, v);
   
   int shp = cmp[n].get_Shape();
@@ -724,20 +713,20 @@ void ParseBC::getIbcMonitor(const string label_base, const int n, CompoList* cmp
     
     // 形状パラメータ
     label=label_base+"/Depth";
-    cmp[n].depth  = get_BCval_real(label);
+    cmp[n].depth  = getBCvalReal(label);
     label=label_base+"/Width";
-    cmp[n].shp_p1 = get_BCval_real(label);
+    cmp[n].shp_p1 = getBCvalReal(label);
     label=label_base+"/Height";
-    cmp[n].shp_p2 = get_BCval_real(label);
+    cmp[n].shp_p2 = getBCvalReal(label);
   }
   
   if ( shp == SHAPE_CYLINDER )
   {
     // 形状パラメータ
     label=label_base+"/Depth";
-    cmp[n].depth  = get_BCval_real(label);
+    cmp[n].depth  = getBCvalReal(label);
     label=label_base+"/Radius";
-    cmp[n].shp_p1 = get_BCval_real(label);
+    cmp[n].shp_p1 = getBCvalReal(label);
   }
 
   
@@ -892,12 +881,12 @@ void ParseBC::getIbcOutflow(const string label_base, const int n, CompoList* cmp
     if ( cmp[n].get_P_BCtype() == P_DIRICHLET )
     {
       label = label_base + "/PressureValue";
-      cmp[n].set_Pressure( get_BCval_real(label) );
+      cmp[n].set_Pressure( getBCvalReal(label) );
     }
   }
   
   // 法線ベクトルの取得
-  get_NV(label_base, v);
+  getNV(label_base, v);
   copyVec(cmp[n].nv, v);
   
 }
@@ -1014,7 +1003,7 @@ void ParseBC::get_IBC_PrsLoss(const string label_base, const int n, CompoList* c
   }
   
   // 法線ベクトルの取得
-  get_NV(label_base, v);
+  getNV(label_base, v);
   copyVec(cmp[n].nv, v);
   
   // 方向ベクトルの取得
@@ -1027,13 +1016,13 @@ void ParseBC::get_IBC_PrsLoss(const string label_base, const int n, CompoList* c
   
   // 形状パラメータ
   label = label_base + "/Depth";
-  cmp[n].depth  = get_BCval_real(label);
+  cmp[n].depth  = getBCvalReal(label);
   
   label = label_base + "/Width";
-  cmp[n].shp_p1 = get_BCval_real(label);
+  cmp[n].shp_p1 = getBCvalReal(label);
   
   label = label_base + "/Height";
-  cmp[n].shp_p2 = get_BCval_real(label);
+  cmp[n].shp_p2 = getBCvalReal(label);
   
   // 圧力損失パラメータ
   label = label_base + "/C";
@@ -1048,10 +1037,10 @@ void ParseBC::get_IBC_PrsLoss(const string label_base, const int n, CompoList* c
   cmp[n].ca[3]=v[3];
   
   label = label_base + "/Uthreshold";
-  cmp[n].ca[4] = get_BCval_real(label);
+  cmp[n].ca[4] = getBCvalReal(label);
   
   label = label_base + "/Thickness";
-  cmp[n].ca[5] = get_BCval_real(label);
+  cmp[n].ca[5] = getBCvalReal(label);
   
   // 熱交換器の方向強制オプション
   
@@ -1085,11 +1074,11 @@ void ParseBC::get_IBC_Radiant(const string label_base, const int n, CompoList* c
   
   // 係数
   label=label_base+"/Epsilon";
-  cmp[n].set_CoefRadEps( get_BCval_real(label) );
+  cmp[n].set_CoefRadEps( getBCvalReal(label) );
   
   // 射出率
   label=label_base+"/Projection";
-  cmp[n].set_CoefRadPrj( get_BCval_real(label) );
+  cmp[n].set_CoefRadPrj( getBCvalReal(label) );
 }
 
 
@@ -1140,7 +1129,7 @@ void ParseBC::getIbcSpecVel(const string label_base, const int n, CompoList* cmp
 
   
   // 法線ベクトル
-  get_NV(label_base, v);
+  getNV(label_base, v);
   copyVec(cmp[n].nv, v);
   
 
@@ -1254,7 +1243,7 @@ void ParseBC::getInitTempOfMedium(CompoList* cmp)
  * @param [in] label_base ラベルディレクトリ
  * @param [out v          ベクトルパラメータ
  */
-void ParseBC::get_NV(const string label_base, REAL_TYPE* v)
+void ParseBC::getNV(const string label_base, REAL_TYPE* v)
 {
   string label;
   for (int i=0; i<3; i++) v[i]=0.0f;
@@ -1398,122 +1387,111 @@ void ParseBC::getObcHeatTransfer(const string label_base, const int n, const str
   {
     BaseBc[n].set_HTmode(HT_B);
     label = label_base + "/CoefOfHeatTransfer";
-    BaseBc[n].setCoefHT( get_BCval_real(label) );
+    BaseBc[n].setCoefHT( getBCvalReal(label) );
     
     label = label_base + "/BulkTemperature";
-    ct = get_BCval_real(label);
+    ct = getBCvalReal(label);
     BaseBc[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
   }
   else if ( !strcasecmp(kind.c_str(), "HeatTransferN") )
   {
     BaseBc[n].set_HTmode(HT_N);
     label = label_base + "/CoefOfHeatTransfer";
-    BaseBc[n].setCoefHT( get_BCval_real(label) );
+    BaseBc[n].setCoefHT( getBCvalReal(label) );
   }
   else if ( !strcasecmp(kind.c_str(), "HeatTransferS") )
   {
     BaseBc[n].set_HTmode(HT_S);
     label = label_base + "/CoefOfHeatTransfer";
-    BaseBc[n].setCoefHT( get_BCval_real(label) );
+    BaseBc[n].setCoefHT( getBCvalReal(label) );
     
     label = label_base + "/SurfaceTemperature";
-    ct = get_BCval_real(label);
+    ct = getBCvalReal(label);
     BaseBc[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
   }
   else if ( !strcasecmp(kind.c_str(), "HeatTransferSF") )
   {
     BaseBc[n].set_HTmode(HT_SF);
     label = label_base + "/SurfaceTemperature";
-    BaseBc[n].set_Temp( get_BCval_real(label) );
+    BaseBc[n].set_Temp( getBCvalReal(label) );
     
     
     label=label_base+"/RefTempMode";
-    if ( !(tpCntl->getInspectedValue(label, str )) )
+    BaseBc[n].set_HTmodeRef( CompoList::HT_mode_bulk );
+    if ( tpCntl->getInspectedValue(label, str ) )
     {
-      stamped_printf("\tParsing error : Invalid int value for '%s'\n", label.c_str());
-      Exit(0);
+      if ( !strcasecmp("Bulk", str.c_str()) )
+      {
+        BaseBc[n].set_HTmodeRef( CompoList::HT_mode_bulk );
+      }
+      else if ( !strcasecmp("Local", str.c_str()) )
+      {
+        BaseBc[n].set_HTmodeRef( CompoList::HT_mode_local );
+      }
     }
-    if ( !strcasecmp("Bulk", str.c_str()) )
-    {
-      BaseBc[n].set_HTmodeRef( CompoList::HT_mode_bulk );
-    }
-    else if ( !strcasecmp("Local", str.c_str()) )
-    {
-      BaseBc[n].set_HTmodeRef( CompoList::HT_mode_local );
-    }
-    else
-    {
-      stamped_printf("\tParsing error : Invalid string value for '%s'\n", label.c_str());
-      Exit(0);
-    }
+
     // coefficients
     label = label_base + "/Alpha";
-    BaseBc[n].ca[0] = get_BCval_real(label);
+    BaseBc[n].ca[0] = getBCvalReal(label);
     
     label = label_base + "/Beta";
-    BaseBc[n].ca[1] = get_BCval_real(label);
+    BaseBc[n].ca[1] = getBCvalReal(label);
     
     label = label_base + "/Gamma";
-    BaseBc[n].ca[2] = get_BCval_real(label);
+    BaseBc[n].ca[2] = getBCvalReal(label);
   }
   else if ( !strcasecmp(kind.c_str(), "HeatTransferSN") )
   {
     BaseBc[n].set_HTmode(HT_SN);
     label = label_base + "/SurfaceTemperature";
-    BaseBc[n].set_Temp( get_BCval_real(label) );
+    BaseBc[n].set_Temp( getBCvalReal(label) );
     
     // reference mode
     label = label_base + "/RefTempMode";
-    if ( !(tpCntl->getInspectedValue(label, str )) )
+    BaseBc[n].set_HTmodeRef( CompoList::HT_mode_bulk );
+    if ( tpCntl->getInspectedValue(label, str ) )
     {
-      stamped_printf("\tParsing error : Invalid int value for '%s'\n", label.c_str());
-      Exit(0);
-    }
-    if ( !strcasecmp("Bulk", str.c_str()) )
-    {
-      BaseBc[n].set_HTmodeRef( CompoList::HT_mode_bulk );
-    }
-    else if ( !strcasecmp("Local", str.c_str()) )
-    {
-      BaseBc[n].set_HTmodeRef( CompoList::HT_mode_local );
-    }
-    else
-    {
-      stamped_printf("\tParsing error : Invalid string value for '%s'\n", label.c_str());
-      Exit(0);
+      if ( !strcasecmp("Bulk", str.c_str()) )
+      {
+        BaseBc[n].set_HTmodeRef( CompoList::HT_mode_bulk );
+      }
+      else if ( !strcasecmp("Local", str.c_str()) )
+      {
+        BaseBc[n].set_HTmodeRef( CompoList::HT_mode_local );
+      }
     }
     
     // Vertical and upper face values
     label = label_base + "/VertivalLaminarAlpha";
-    BaseBc[n].ca[0] = get_BCval_real(label);
+    BaseBc[n].ca[0] = getBCvalReal(label);
     
     label = label_base + "/VertivalLaminarBeta";
-    BaseBc[n].ca[1] = get_BCval_real(label);
+    BaseBc[n].ca[1] = getBCvalReal(label);
     
     label = label_base + "/vertivalTurbulentAlpha";
-    BaseBc[n].ca[2] = get_BCval_real(label);
+    BaseBc[n].ca[2] = getBCvalReal(label);
     
     label = label_base + "/VertivalTurbulentBeta";
-    BaseBc[n].ca[3] = get_BCval_real(label);
+    BaseBc[n].ca[3] = getBCvalReal(label);
     
     label = label_base + "/VertivalRaCritial";
-    BaseBc[n].ca[4] = get_BCval_real(label);
+    BaseBc[n].ca[4] = getBCvalReal(label);
     
     // Lower face values
     label = label_base + "/LowerLaminarAlpha";
-    BaseBc[n].cb[0] = get_BCval_real(label);
+    BaseBc[n].cb[0] = getBCvalReal(label);
     
     label = label_base + "/LowerLaminarBeta";
-    BaseBc[n].cb[1] = get_BCval_real(label);
+    BaseBc[n].cb[1] = getBCvalReal(label);
     
     label = label_base + "/LowerTurbulentAlpha";
-    BaseBc[n].cb[2] = get_BCval_real(label);
+    BaseBc[n].cb[2] = getBCvalReal(label);
     
     label = label_base + "/LowerTurbulentBeta";
-    BaseBc[n].cb[3] = get_BCval_real(label);
+    BaseBc[n].cb[3] = getBCvalReal(label);
     
     label = label_base + "/LowerRaCritial";
-    BaseBc[n].cb[4] = get_BCval_real(label);
+    BaseBc[n].cb[4] = getBCvalReal(label);
   }
   else {
     stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
@@ -1726,7 +1704,7 @@ void ParseBC::getObcSpecVH(const string label_base, const int n)
   if ( BaseBc[n].get_V_Profile() != CompoList::vel_zero )
   {
     REAL_TYPE v[3];
-    get_NV(label_base, v);
+    getNV(label_base, v);
     BaseBc[n].addVec(v);
   }
   
@@ -1771,7 +1749,7 @@ void ParseBC::getObcTrcfree(const string label_base, const int n)
   BaseBc[n].set_pType(P_DIRICHLET);
   BaseBc[n].p = 0.0; // ゲージ圧zero 固定
   
-  // 外部雰囲気温
+  /* 外部雰囲気温
   if ( HeatProblem )
   {
     if ( Unit_Param != DIMENSIONAL )
@@ -1791,6 +1769,7 @@ void ParseBC::getObcTrcfree(const string label_base, const int n)
 
     BaseBc[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
   }
+  */
 }
 
 
@@ -1835,7 +1814,7 @@ void ParseBC::getObcWall(const string label_base, const int n)
   // 法線ベクトル
   if ( BaseBc[n].get_V_Profile() != CompoList::vel_zero )
   {
-    get_NV(label_base, v);
+    getNV(label_base, v);
     BaseBc[n].addVec(v);
   }
   
@@ -1874,20 +1853,20 @@ void ParseBC::getObcWall(const string label_base, const int n)
     {
       BaseBc[n].set_hType(HEATFLUX);
       label2 = label + "/Flux";
-      BaseBc[n].setHeatflux( get_BCval_real(label2) ); // 正符号は流入
+      BaseBc[n].setHeatflux( getBCvalReal(label2) ); // 正符号は流入
     }
     else if( !strcasecmp(str.c_str(), "Isothermal") )
     {
       BaseBc[n].set_hType(ISOTHERMAL);
       label2 = label + "/Temperature";
-      ct = get_BCval_real(label2); // 表面温度
+      ct = getBCvalReal(label2); // 表面温度
       BaseBc[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
     }
     else if( !strcasecmp(str.c_str(), "ConstantTemperature") )
     {
       BaseBc[n].set_hType(CNST_TEMP);
       label = label_base + "/Temperature";
-      ct = get_BCval_real(label); // 指定温度
+      ct = getBCvalReal(label); // 指定温度
       BaseBc[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
     }
     else
@@ -2007,12 +1986,15 @@ void ParseBC::getUnitVec(REAL_TYPE* v)
 	REAL_TYPE a;
 	
 	a = sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
-	if ( a > 0.0 ) {
+  
+	if ( a > 0.0 )
+  {
 		v[0] = v[0]/a;
 		v[1] = v[1]/a;
 		v[2] = v[2]/a;
 	}
-	else {
+	else
+  {
 		v[0] = 0.0;
 		v[1] = 0.0;
 		v[2] = 0.0;
@@ -2029,17 +2011,21 @@ int ParseBC::getVprofile(const string label_base)
   
   label = label_base + "/Profile";
   
-  if ( !(tpCntl->getInspectedValue(label, str )) ) {
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
     printf("\tParsing error : fail to get 'Profile' in '%s'\n", str.c_str());
     Exit(0);
   }
-  if ( !strcasecmp("constant", str.c_str()) ) {
+  if ( !strcasecmp("constant", str.c_str()) )
+  {
 		return CompoList::vel_constant;
   }
-  else if ( !strcasecmp("harmonic", str.c_str()) ) {
+  else if ( !strcasecmp("harmonic", str.c_str()) )
+  {
 		return CompoList::vel_harmonic;
   }
-  else {
+  else
+  {
 	  printf("\tParsing error : Invalid string value for '%s' : %s\n", label.c_str(), str.c_str());
 	  Exit(0);
   }
@@ -2157,7 +2143,7 @@ void ParseBC::importTP(TextParser* tp)
  * @note パラメータファイルから各内部BCのidをパースし，cmpに保持する
  * @note 格納番号は1からスタート
  */
-void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp, PolygonProperty* PP)
+void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp)
 { 
   string str, label;
   string label_base, label_ename, label_leaf;
@@ -2290,11 +2276,11 @@ void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp, PolygonPr
             break;
             
           case HT_S:
-            getIbcHT_S(label_leaf, m, cmp, mat);
+            getIbcHT_S(label_leaf, m, cmp);
             break;
             
           case HT_SN:
-            getIbcHT_SN(label_leaf, m, cmp, mat);
+            getIbcHT_SN(label_leaf, m, cmp);
             break;
             
           case HT_SF:
@@ -2407,7 +2393,6 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
   }
   
   vector<string> nodes;
-  int m=0;
   
   // 直下のラベルを取得
   tpCntl->getLabelVector(label_base, nodes);
@@ -2415,6 +2400,7 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
   
   // ラベルの重複チェックとセット
   // ラベル名はパラメータファイルの出現順になっている
+  int m = 1;
   for (vector<string>::iterator it = nodes.begin(); it != nodes.end(); it++)
   {
     if ( !chkDuplicate(m, *it) ) Exit(0);
@@ -2428,9 +2414,9 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
   
   
   //BasicBCs
-  for (int i=0; i<NoBaseBC; i++)
+  for (int i=1; i<=NoBaseBC; i++)
   {
-    if(!tpCntl->getNodeStr(label_base, i+1, str))
+    if(!tpCntl->getNodeStr(label_base, i, str))
     {
       Hostonly_ printf("\tParsing error : Missing candidates of outer boundary\n");
       Exit(0);
@@ -2528,12 +2514,18 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
   }
   
   
+  // ゼロで初期化
+  for (int i=0; i<NOFACE; i++)
+  {
+    globalBC[i] = 0;
+  }
+  
   
   // 各面に与える境界条件番号を取得し，BaseBcから境界情報リストに内容をコピー
   // 同時に，各サブドメインのサブドメイン境界の条件を設定する
   for (int face=0; face<NOFACE; face++)
   {
-    // faceに対するラベルを取得
+    // 各faceに対するラベルを取得
     if ( !tpCntl->getNodeStr(label_base, face+1, str) )
     {
       Hostonly_ printf("\tGetNodeStr error\n");
@@ -2541,7 +2533,7 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
     }
     label_leaf = label_base + "/" + str;
     
-    // 指定の境界条件を探してBaseBC[]からbc[]へ内容のコピー
+    // 指定の境界条件を探して，BaseBc[]にリストアップ済みの候補名を得る
     label = label_leaf;
     
     if ( !(tpCntl->getInspectedValue(label, str)) ) 
@@ -2550,29 +2542,41 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
       Exit(0);
     }
     
-    // 外部境界のときzero
+    // サブドメインが外部境界のときzero
     int inner = (nID[face]<0) ? 0 : 1;
     
     // Aliasでサーチ
-    for (int i=0; i<NoBaseBC; i++)
+    for (int i=1; i<=NoBaseBC; i++)
     {
       if ( !strcasecmp( str.c_str(), BaseBc[i].getAlias().c_str() ) ) 
       {
         bc[face].dataCopy( &BaseBc[i], inner );
-        globalBC[face] = i;
+        
+        // 外部境界のときにBaseBc[]のオーダー(>0)を保持
+        if ( nID[face] < 0 )  globalBC[face] = i;
         break;
       }
       else
       {
-        if ( i == NoBaseBC-1 ) // 最後までみつからない
+        if ( i > NoBaseBC ) // 最後までみつからない
         {
-          Hostonly_ printf("\tParsing error : [%d] '%s' is not listed in 'BasicBCs'\n", i+1, str.c_str());
+          Hostonly_ printf("\tParsing error : [%d] '%s' is not listed in 'BasicBCs'\n", i, str.c_str());
           Exit(0);
         }
       }
     }
   }
-
+  
+  
+  // 境界条件表示のため，マスターノードに外部境界条件の格納番号を集める
+  if ( numProc > 1 )
+  {
+    int tmp[6];
+    for (int i=0; i<NOFACE; i++) tmp[i] = globalBC[i];
+    
+    if( paraMngr->Allreduce(tmp, globalBC, NOFACE, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+  }
+  
 
   
   // 周期境界条件の整合性のチェック
@@ -3214,7 +3218,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   if ( HeatProblem && existComponent(ISOTHERMAL, cmp))
   {
     fprintf(fp, "\n\t[Iso-Thermal]\n");
-    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   Sf.Temp(%s)   Sf.Temp[-]\n", 
+    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   Sf.Temp(%s)   Sf.Temp[-]\n",
             (Unit_Temp==Unit_KELVIN) ? "K" : "C");
     
     for (int n=1; n<=NoCompo; n++)
@@ -3333,6 +3337,29 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
       }
     }
   }
+  
+  // Obstacle ---------------------------------------------------
+  if ( existComponent(OBSTACLE, cmp) )
+  {
+    fprintf(fp, "\n\t[Obstacle]\n");
+    fprintf(fp, "\t no                    Label    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]    Elements\n");
+    
+    for (int n=1; n<=NoCompo; n++)
+    {
+      if ( cmp[n].getType() == OBSTACLE )
+      {
+        st = getCmpGbbox_st(n, gci);
+        ed = getCmpGbbox_ed(n, gci);
+        
+        fprintf(fp, "\t%3d %24s %7d %7d %7d %7d %7d %7d %11.4e %11ld\n",
+                n, cmp[n].getAlias().c_str(),
+                st.x, ed.x, st.y, ed.y, st.z, ed.z,
+								cmp[n].area, cmp[n].getElement());
+      }
+    }
+    fprintf(fp, "\n");
+  }
+  
   
   // Periodic ---------------------------------------------------
   if ( existComponent(PERIODIC, cmp) )
@@ -3466,9 +3493,11 @@ void ParseBC::printFaceOBC(FILE* fp, const REAL_TYPE* G_reg, const BoundaryOuter
     
     fprintf(fp,"\t      Set %s up as %s : < %s >\n", 
             FBUtility::getDirection(i).c_str(), 
-            getOBCstr(bc[i].getClass()).c_str(), 
-            bc[i].getAlias().c_str());
+            getOBCstr(BaseBc[m].getClass()).c_str(),
+            BaseBc[m].getAlias().c_str());
+    
     printOBC(fp, &BaseBc[m], mat, G_reg, i);
+    
     fprintf(fp,"\n");
   }
   fflush(fp);
@@ -3773,7 +3802,7 @@ void ParseBC::setControlVars(Control* Cref)
   
   // ラベル数から"FaceBC"を除いた数
   NoBaseBC = nodes.size() -1;
-  BaseBc = new BoundaryOuter[NoBaseBC];
+  BaseBc = new BoundaryOuter[NoBaseBC+1];
 }
 
 

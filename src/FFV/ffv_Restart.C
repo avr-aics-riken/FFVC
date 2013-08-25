@@ -34,7 +34,7 @@ void FFV::Restart(FILE* fp)
   double g[4];
   
   // 初期スタートのステップ，時間を設定する
-  if ( C.Start == initial_start )
+  if ( (C.Start == initial_start) || (C.Hide.PM_Test == ON)  )
   {
     Session_StartStep = CurrentStep = 0;
     Session_StartTime = CurrentTime = 0.0;
@@ -48,6 +48,8 @@ void FFV::Restart(FILE* fp)
     
     return;
   }
+  
+  
 
   switch (C.Start)
   {

@@ -258,7 +258,7 @@ REAL_TYPE SetBC3D::extractVelOBC(const int n, REAL_TYPE* vec, const double tm, c
  * @param [in,out] d_qbc 境界条件熱流束
  * @param [in]     d_bh1 BCindex H1
  * @param [in,out] d_t   n+1時刻の温度場
- * @param [in]     d_t0  温度
+ * @param [in]     d_t0  n時刻の温度
  */
 void SetBC3D::InnerTBCface(REAL_TYPE* d_qbc, const int* d_bh1, REAL_TYPE* d_t, const REAL_TYPE* d_t0)
 {
@@ -275,10 +275,10 @@ void SetBC3D::InnerTBCface(REAL_TYPE* d_qbc, const int* d_bh1, REAL_TYPE* d_t, c
       case TRANSFER:
         H = cmp[n].getHtype();
         //if      ( H == HT_N)  cmp[n].cmp[n].setMonCalorie( setHeatTransferN_SM(qbc, t, bx, n, t0, flop) );
-        if      ( H == HT_S)  cmp[n].setMonCalorie( ps_IBC_Transfer_S_SM (d_qbc, d_bh1, n, d_t, d_t0) );
-        else if ( H == HT_SN) cmp[n].setMonCalorie( ps_IBC_Transfer_SN_SM(d_qbc, d_bh1, n, d_t, d_t0) );
-        else if ( H == HT_SF) cmp[n].setMonCalorie( ps_IBC_Transfer_SF_SM(d_qbc, d_bh1, n, d_t, d_t0) );
-        else if ( H == HT_B)  cmp[n].setMonCalorie( psIBCtransferB_SM (d_qbc, d_bh1, n, d_t0) );
+        if      ( H == HT_S)  cmp[n].setMonCalorie( psIbcTransferS (d_qbc, d_bh1, n, d_t0) );
+        else if ( H == HT_SN) cmp[n].setMonCalorie( psIbcTransferSN(d_qbc, d_bh1, n, d_t0) );
+        else if ( H == HT_SF) cmp[n].setMonCalorie( psIbcTransferSF(d_qbc, d_bh1, n, d_t0) );
+        else if ( H == HT_B)  cmp[n].setMonCalorie( psIbcTransferB (d_qbc, d_bh1, n, d_t0) );
         break;
         
       case ISOTHERMAL:
@@ -994,6 +994,166 @@ void SetBC3D::OuterPBC(REAL_TYPE* d_p)
 
 
 // #################################################################
+// 対流項計算時の流束型の境界条件処理
+void SetBC3D::OuterTBCconvection(REAL_TYPE* d_ws, const int* d_bh1, const REAL_TYPE* d_vf, const REAL_TYPE* d_t0, const double tm, Control* C, const REAL_TYPE* v00)
+{
+  REAL_TYPE vec[3];
+  REAL_TYPE dummy;
+  
+  // 外部
+  for (int face=0; face<NOFACE; face++)
+  {
+    // 各面の無次元流入出熱量
+    REAL_TYPE va = 0.0;
+    
+    switch ( obc[face].getClass() )
+    {
+      case OBC_OUTFLOW:
+      case OBC_TRC_FREE:
+      case OBC_FAR_FIELD:
+        va = psObcFree(d_ws, d_bh1, face, d_vf, d_t0, v00);
+        break;
+        
+      case OBC_SPEC_VEL:
+        va = psObcSpecVH(d_ws, d_bh1, face, tm, v00);
+        break;
+    }
+    
+    if ( numProc > 1 )
+    {
+      REAL_TYPE tmp = va;
+      if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
+      {
+        Hostonly_ printf("Allreduce Error\n");
+        Exit(0);
+      }
+    }
+    
+    // 対象BCのみ
+    switch ( obc[face].getClass() )
+    {
+      case OBC_OUTFLOW:
+      case OBC_TRC_FREE:
+      case OBC_FAR_FIELD:
+      case OBC_SPEC_VEL:
+        C->H_Dface[face] = va;
+        break;
+    }
+    
+  }
+  
+  
+  // 内部
+  for (int n=1; n<=NoCompo; n++)
+  {
+    switch ( cmp[n].getType() )
+    {
+      case SPEC_VEL_WH:
+        dummy = extractVelLBC(n, vec, tm, v00);
+        cmp[n].setMonCalorie( psIbcSpecVH(d_ws, d_bh1, n, v00[0], vec) );
+        break;
+        
+      case OUTFLOW:
+        cmp[n].setMonCalorie( psIbcOutflow(d_ws, d_bh1, n, d_vf, d_t0, v00) );
+        break;
+    }
+    
+  }
+  
+}
+
+
+// #################################################################
+// 拡散項計算時の温度の外部部境界処理
+void SetBC3D::OuterTBCdiffusion(REAL_TYPE* d_qbc, REAL_TYPE* d_t, const REAL_TYPE* d_t0, Control* C)
+{
+  int H;
+  
+  for (int face=0; face<NOFACE; face++)
+  {
+    // 各面の無次元流入出熱量
+    REAL_TYPE va = 0.0;
+    
+    H = obc[face].getHTmode();
+    
+    if ( obc[face].getClass() == OBC_WALL )
+    {
+      switch ( obc[face].getHtype() ) // 熱境界条件の種類
+      {
+        case HEATFLUX:
+          va = psObcHeatflux(d_qbc, face);
+          break;
+          
+        case TRANSFER:
+          if      ( H == HT_S)  va = psObcHeatTransferBS(d_qbc, face, d_t, d_t0);
+          else if ( H == HT_SN) va = psObcHeatTransferSN(d_qbc, face, d_t, d_t0);
+          else if ( H == HT_SF) va = psObcHeatTransferSF(d_qbc, face, d_t, d_t0);
+          else if ( H == HT_B)  va = psObcHeatTransferBS(d_qbc, face, d_t, d_t0);
+          break;
+          
+        case ISOTHERMAL:
+          va = psObcIsoThermal(d_qbc, face, d_t, d_t0);
+          break;
+      }
+      
+      if ( numProc > 1 )
+      {
+        REAL_TYPE tmp = va;
+        if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
+        {
+          Hostonly_ printf("Allreduce Error\n");
+          Exit(0);
+        }
+      }
+      
+      // 対象BCのみ
+      if ( obc[face].getClass() == OBC_WALL )
+      {
+        switch ( obc[face].getHtype() ) // 熱境界条件の種類
+        {
+          case HEATFLUX:
+          case TRANSFER:
+          case ISOTHERMAL:
+            C->H_Dface[face] = va;
+            break;
+        }
+      }
+    }
+  }
+}
+
+
+// #################################################################
+// 温度の外部周期境界条件
+void SetBC3D::OuterTBCperiodic(REAL_TYPE* d_t)
+{
+  int F=0;
+  
+  for (int face=0; face<NOFACE; face++)
+  {
+    F = obc[face].getClass();
+    
+    // 周期境界条件
+    if ( F == OBC_PERIODIC )
+    {
+      switch ( obc[face].get_PrdcMode() )
+      {
+        case BoundaryOuter::prdc_Simple:
+        case BoundaryOuter::prdc_Directional:
+          TobcPeriodicSimple(d_t, face);
+          break;
+          
+        case BoundaryOuter::prdc_Driver:
+          // nothing
+          break;
+      }
+    }
+  }
+}
+
+
+
+// #################################################################
 // 速度の外部境界条件処理（VP反復内で値を指定する境界条件）
 void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, const double tm, Control* C, REAL_TYPE* v00, double& flop)
 {
@@ -1128,90 +1288,6 @@ void SetBC3D::OuterVBCpseudo(REAL_TYPE* d_vc, int* d_bv, Control* C, double& flo
         }
         break;
         
-    }
-  }
-}
-
-
-// #################################################################
-/**
- * @brief 温度の外部境界条件処理の分岐
- * @param [in,out] d_t 温度のデータクラス
- * @note 
-    - 対流フェイズに関する境界条件はps_Convection_BC()，本メソッドは周期境界と拡散フェイズに関するもの
-    - OBC_SYMMETRICは，断熱マスクで処理するため，不要
- */
-void SetBC3D::OuterTBC(REAL_TYPE* d_t)
-{
-  int F=0;
-  
-  for (int face=0; face<NOFACE; face++)
-  {
-    F = obc[face].getClass();
-
-    // 周期境界条件
-    if ( F == OBC_PERIODIC )
-    {
-      switch ( obc[face].get_PrdcMode() )
-      {
-        case BoundaryOuter::prdc_Simple:
-        case BoundaryOuter::prdc_Directional:
-          TobcPeriodicSimple(d_t, face);
-          break;
-          
-        case BoundaryOuter::prdc_Driver:
-          // nothing
-          break;
-      }
-    }
-    else // 周期境界条件以外の処理
-    {
-      // 対流項寄与分はps_BC_Convection()に実装
-    }    
-  }
-}
-
-
-// #################################################################
-/**
- @brief 拡散部分に関する温度の外部部境界処理（固体壁の場合）
- @param qbc 境界条件熱流束
- @param bh1 BCindex H1
- @param t n+1時刻の温度場
- @param t0 n時刻の温度場
- @param flop 浮動小数演算数
- @note 断熱BCは断熱マスクで処理
- */
-void SetBC3D::OuterTBCface(REAL_TYPE* d_qbc, int* d_bh1, REAL_TYPE* d_t, REAL_TYPE* d_t0, Control* C, double& flop)
-{
-  int H;
-  
-  for (int face=0; face<NOFACE; face++)
-  {
-    
-    // 各メソッド内で通信が発生するために，計算領域の最外郭領域でないときに境界処理をスキップする処理はメソッド内で行う
-    
-    H = obc[face].getHTmode();
-    
-    if ( obc[face].getClass() == OBC_WALL )
-    {
-      switch ( obc[face].getHtype() ) // 熱境界条件の種類
-      {
-        case HEATFLUX:
-          C->H_Dface[face] = ps_OBC_Heatflux(d_qbc, d_bh1, face, flop);
-          break;
-          
-        case TRANSFER:
-          if      ( H == HT_S)  C->H_Dface[face] = ps_OBC_HeatTransfer_BS(d_qbc, d_bh1, face, d_t, d_t0, flop);
-          else if ( H == HT_SN) C->H_Dface[face] = ps_OBC_HeatTransfer_SN(d_qbc, d_bh1, face, d_t, d_t0, flop);
-          else if ( H == HT_SF) C->H_Dface[face] = ps_OBC_HeatTransfer_SF(d_qbc, d_bh1, face, d_t, d_t0, flop);
-          else if ( H == HT_B)  C->H_Dface[face] = ps_OBC_HeatTransfer_BS(d_qbc, d_bh1, face, d_t, d_t0, flop);
-          break;
-          
-        case ISOTHERMAL:
-          C->H_Dface[face] = ps_OBC_IsoThermal(d_qbc, d_bh1, face, d_t, d_t0, flop);
-          break;
-      }      
     }
   }
 }
@@ -1853,16 +1929,16 @@ REAL_TYPE SetBC3D::psIbcHeatGen(REAL_TYPE* d_t, const int* d_bh2, const int n, c
   int gd = guide;
   int odr= n;
   int st[3], ed[3];
-  REAL_TYPE delta_t = dt;
 
-  REAL_TYPE c=0.0;
+  REAL_TYPE c = 0.0;
 
   REAL_TYPE hs = FBUtility::convD2ND_Hsrc(cmp[n].getHeatDensity(), RefV, RefL, DiffTemp, mat[n].P[p_density], mat[n].P[p_specific_heat]);
   //REAL_TYPE hs = FBUtility::convD2ND_Hsrc(cmp[n].getHeatDensity(), RefV, RefL, DiffTemp, rho, cp);
+  REAL_TYPE dhs = dt * hs;
 
   cmp[n].getBbox(st, ed);
 	
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, st, ed, odr, delta_t, hs) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, st, ed, odr, dhs) schedule(static) reduction(+:c)
   for (int k=st[2]; k<=ed[2]; k++) {
     for (int j=st[1]; j<=ed[1]; j++) {
       for (int i=st[0]; i<=ed[0]; i++) {
@@ -1870,7 +1946,7 @@ REAL_TYPE SetBC3D::psIbcHeatGen(REAL_TYPE* d_t, const int* d_bh2, const int n, c
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         if ( (d_bh2[m] & MASK_6) == odr )
         {
-          d_t[m] += delta_t * hs;
+          d_t[m] += dhs;
           c++; 
         }
       }
@@ -1884,11 +1960,11 @@ REAL_TYPE SetBC3D::psIbcHeatGen(REAL_TYPE* d_t, const int* d_bh2, const int n, c
 // #################################################################
 /**
  * @brief 等温境界条件
- * @retval 熱流束の和 (W/m^2)
- * @param [in,out] qbc  境界条件熱流束
- * @param [in]     bh1  BCindex H1
- * @param [in]     n    境界条件コンポーネントのエントリ番号
- * @param [in]     d_t0 n時刻の温度場
+ * @retval 無次元熱流束の和
+ * @param [in,out] d_qbc  境界条件熱流束
+ * @param [in]     d_bh1  BCindex H1
+ * @param [in]     n      境界条件コンポーネントのエントリ番号
+ * @param [in]     d_t0   n時刻の温度場
  * @note 熱流束は加算（他の条件と合成）
  */
 REAL_TYPE SetBC3D::psIbcIsoThermal(REAL_TYPE* d_qbc, const int* d_bh1, const int n, const REAL_TYPE* d_t0)
@@ -1904,8 +1980,9 @@ REAL_TYPE SetBC3D::psIbcIsoThermal(REAL_TYPE* d_qbc, const int* d_bh1, const int
   REAL_TYPE va = 0.0;
   REAL_TYPE dh = deltaX;
   REAL_TYPE sf = FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp); // 保持されている温度はKelvin
-  REAL_TYPE pp = (2.0*mat[n].P[p_thermal_conductivity]) / (dh*RefV*RefL*mat[n].P[p_density]*mat[n].P[p_specific_heat]);
-  //pp = (2.0*lambda) / (dh*RefV*rho*cp); // RefMediumで指定される物性値
+  //REAL_TYPE pp = (2.0*mat[n].P[p_thermal_conductivity]) / (dh*RefV*RefL*mat[n].P[p_density]*mat[n].P[p_specific_heat]);
+  REAL_TYPE pp = (2.0*lambda) / (dh*RefV*rho*cp); // RefMediumで指定される物性値
+  // 等温境界は熱流動でも固体伝熱でも使うので，
 
   cmp[n].getBbox(st, ed);
   
@@ -1980,78 +2057,19 @@ REAL_TYPE SetBC3D::psIbcIsoThermal(REAL_TYPE* d_qbc, const int* d_bh1, const int
 
 // #################################################################
 /**
- @brief 対流項計算時の流束型の境界条件処理
- @param ws 温度の増分
- @param bh1 BCindex H1
- @param v 速度
- @param t 温度
- @param tm 時刻
- @param C コントロールクラス
- @param v00
- @pram flop 浮動小数演算数
- @note
-    - 熱量(-)はvalに保存
- */
-void SetBC3D::ps_BC_Convection(REAL_TYPE* d_ws, int* d_bh1, REAL_TYPE* d_v, REAL_TYPE* d_t, const double tm, Control* C, REAL_TYPE* v00, double& flop)
-{
-  REAL_TYPE vec[3];
-  REAL_TYPE dummy;
-  
-  // 外部
-  for (int face=0; face<NOFACE; face++)
-  {
-    // 各メソッド内で通信が発生するために，計算領域の最外郭領域でないときに境界処理をスキップする処理はメソッド内で行う
-    
-    switch ( obc[face].getClass() )
-    {
-      case OBC_OUTFLOW:
-        C->H_Dface[face] = ps_OBC_Free(d_ws, d_bh1, face, d_v, d_t, v00, flop);
-        break;
-        
-      case OBC_TRC_FREE:
-      case OBC_FAR_FIELD:
-        C->H_Dface[face] = ps_OBC_Free(d_ws, d_bh1, face, d_v, d_t, v00, flop);
-        break;
-
-      case OBC_SPEC_VEL:
-        C->H_Dface[face] = ps_OBC_SpecVH(d_ws, d_bh1, face, d_v, tm, v00, flop);
-        break;
-    }
-  }
-
-  // 内部
-  for (int n=1; n<=NoCompo; n++)
-  {
-    switch ( cmp[n].getType() )
-    {
-      case SPEC_VEL_WH:
-        dummy = extractVelLBC(n, vec, tm, v00);
-        cmp[n].setMonCalorie( psIbcSpecVH(d_ws, d_bh1, n, v00[0], vec) );
-        break;
-          
-      case OUTFLOW:
-        cmp[n].setMonCalorie( psIbcOutflow(d_ws, d_bh1, n, d_v, d_t, v00) );
-        break;
-    }
-    
-  }
-  
-}
-
-
-// #################################################################
-/**
  * @brief 内部領域のOutflowの境界条件処理
- * @retval 熱量[W]
+ * @retval 熱量
  * @param [in,out] d_ws  温度増分
  * @param [in]     d_bh1 BCindex H1
  * @param [in]     n     コンポーネントリストのインデクス
  * @param [in]     d_v   速度
  * @param [in]     d_t   温度
  * @param [in]     v00   参照速度
- * @note モニタ量の熱量va(W)は系に対する流入量なので，基準温度に対する熱量
+ * @note 
+   - モニタ量の熱量va(W)は系に対する流入量なので，基準温度に対する熱量
+   - @todo 流出速度はモニター値を利用
  */
-REAL_TYPE SetBC3D::psIbcOutflow(REAL_TYPE* d_ws, const int* d_bh1, const int n, const REAL_TYPE* d_v, const REAL_TYPE* d_t, const REAL_TYPE* v00)
+REAL_TYPE SetBC3D::psIbcOutflow (REAL_TYPE* d_ws, const int* d_bh1, const int n, const REAL_TYPE* d_v, const REAL_TYPE* d_t, const REAL_TYPE* v00)
 {
   int ix = size[0];
   int jx = size[1];
@@ -2177,7 +2195,7 @@ schedule(static) reduction(+:va)
  * @param [in]     vec    指定ベクトル
  * @note モニタ量の熱量va(無次元)は系に対する流入量なので，基準温度に対する熱量
  */
-REAL_TYPE SetBC3D::psIbcSpecVH(REAL_TYPE* d_ws, const int* d_bh1, const int n, const REAL_TYPE v00, const REAL_TYPE* vec)
+REAL_TYPE SetBC3D::psIbcSpecVH (REAL_TYPE* d_ws, const int* d_bh1, const int n, const REAL_TYPE v00, const REAL_TYPE* vec)
 {
   int ix = size[0];
   int jx = size[1];
@@ -2186,7 +2204,7 @@ REAL_TYPE SetBC3D::psIbcSpecVH(REAL_TYPE* d_ws, const int* d_bh1, const int n, c
   int odr= n;
 
   int st[3], ed[3];
-  REAL_TYPE va=0.0;
+  REAL_TYPE va = 0.0;
   
   REAL_TYPE dh = deltaX;
   REAL_TYPE dh1 = 1.0/dh;
@@ -2270,8 +2288,8 @@ REAL_TYPE SetBC3D::psIbcSpecVH(REAL_TYPE* d_ws, const int* d_bh1, const int n, c
 
 // #################################################################
 /**
- * @brief 単媒質の場合の熱伝達境界条件タイプB 固体のみを解く場合
- * @retval 熱流束の和 (W/m^2)
+ * @brief 熱伝達境界条件タイプB 固体のみを解く場合
+ * @retval 無次元熱流束の和
  * @param [in,out] qbc  境界条件熱流束
  * @param [in]     bh1  BCindex H1
  * @param [in]     n    境界条件コンポーネントのエントリ番号
@@ -2280,7 +2298,7 @@ REAL_TYPE SetBC3D::psIbcSpecVH(REAL_TYPE* d_ws, const int* d_bh1, const int n, c
    - 熱流束は加算（他の条件と合成）
    - pセルは固体セル
  */
-REAL_TYPE SetBC3D::psIBCtransferB_SM(REAL_TYPE* d_qbc, const int* d_bh1, const int n, const REAL_TYPE* d_t0)
+REAL_TYPE SetBC3D::psIbcTransferB (REAL_TYPE* d_qbc, const int* d_bh1, const int n, const REAL_TYPE* d_t0)
 {
   int ix = size[0];
   int jx = size[1];
@@ -2288,24 +2306,22 @@ REAL_TYPE SetBC3D::psIBCtransferB_SM(REAL_TYPE* d_qbc, const int* d_bh1, const i
   int gd = guide;
   int odr= n;
   
-  REAL_TYPE va=0.0;
+  REAL_TYPE va = 0.0;
   int st[3], ed[3];
+  REAL_TYPE q;
   
-  //odr= cmp[n].getMatOdr();
-  //ht = cmp[n].getCoefHT() / (RefV*mat[odr].P[p_density]*mat[odr].P[p_specific_heat]);  // 固体セルで指定される物性値
-  REAL_TYPE ht = cmp[n].getCoefHT() / (RefV*rho*cp);  // RefMediumで指定される物性値
+  REAL_TYPE ht = cmp[n].getCoefHT() / (RefV*rho*cp);                        // RefMediumで指定される物性値
   REAL_TYPE bt = FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp); // 保持されている温度はKelvin
 
   cmp[n].getBbox(st, ed);
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, st, ed, odr, ht, bt) schedule(static) reduction(+:va)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, st, ed, odr, ht, bt) private(q) schedule(static) reduction(+:va)
   for (int k=st[2]; k<=ed[2]; k++) {
     for (int j=st[1]; j<=ed[1]; j++) {
       for (int i=st[0]; i<=ed[0]; i++) {
         
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         int s = d_bh1[m];
-        REAL_TYPE q;
         
         if ( GET_FACE_BC(s, BC_FACE_W) == odr )
         {
@@ -2369,317 +2385,85 @@ REAL_TYPE SetBC3D::psIBCtransferB_SM(REAL_TYPE* d_qbc, const int* d_bh1, const i
 
 // #################################################################
 /**
- @brief 外部領域のOutflow, In_out, T_Freeの境界条件処理
- @retval 熱量(-)
- @param ws 温度増分
- @param bh1 BCindex H1
- @param face 外部境界面番号
- @param v 速度
- @param t 温度
- @param v00 参照速度
- @param flop 浮動小数演算数
- @note
-    - モニタ量の熱量va(-)は系に対する流入量なので，基準温度に対する熱量
+ * @brief 熱伝達境界条件タイプS
+ * @retval 無次元熱流束の和
+ * @param [in,out] d_qbc 境界条件熱流束
+ * @param [in]     d_bh1 BCindex H1
+ * @param [in]     n     境界条件コンポーネントのエントリ番号
+ * @param [in]     d_t0  n時刻の温度場
+ * @note
+   - 熱流束は加算（他の条件と合成）
+   - pセルは流体セル
  */
-REAL_TYPE SetBC3D::ps_OBC_Free(REAL_TYPE* d_ws, int* d_bh1, const int face, REAL_TYPE* d_v, REAL_TYPE* d_t, REAL_TYPE* v00, double& flop)
+REAL_TYPE SetBC3D::psIbcTransferS (REAL_TYPE* d_qbc, const int* d_bh1, const int n, const REAL_TYPE* d_t0)
 {
-  if ( nID[face] >= 0 ) return 0.0;
-  
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
+  int odr= n;
   
-  int register s;
-  REAL_TYPE va=0.0, t_nd;
-  REAL_TYPE dh = deltaX;
-  REAL_TYPE f_e, f_w, f_n, f_s, f_t, f_b, ff, c;
-  REAL_TYPE dh1 = 1.0/dh;
-  REAL_TYPE u_ref, v_ref, w_ref, t_p;
+  REAL_TYPE va = 0.0;
+  REAL_TYPE q;
+  int st[3], ed[3];
   
-  u_ref = v00[1];
-  v_ref = v00[2];
-  w_ref = v00[3];
+  REAL_TYPE ht = cmp[n].getCoefHT() / (RefV*rho*cp);                        // RefMediumで指定される物性値
+  REAL_TYPE sf = FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp); // 保持されている温度はKelvin
   
-  f_e = f_w = f_n = f_s = f_t = f_b = 0.0; // 境界条件以外の寄与をゼロにしておく
-  t_nd = FBUtility::convK2ND(obc[face].getTemp(), BaseTemp, DiffTemp);
+  cmp[n].getBbox(st, ed);
   
-  switch (face)
-  {
-    case X_MINUS:
-
-      for (int k=1; k<=kx; k++) {
-        for (int j=1; j<=jx; j++) {
-          size_t m   = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
-          s = d_bh1[m];
-          size_t m_0 = _F_IDX_V3D(1, j, k, 0, ix, jx, kx, gd);
-          size_t m_w = _F_IDX_V3D(0, j, k, 0, ix, jx, kx, gd);
-          c = 0.5*(d_v[m_w]+d_v[m_0]) - u_ref;
-          t_p = (c < 0.0) ? d_t[m] : t_nd; // 流出の場合には内部の値，流入の場合には参照値
-          f_w = c*t_p;
-          va += f_w;
-          ff = f_e - f_w + f_n - f_s + f_t - f_b;
-          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, st, ed, odr, ht, sf) private(q) schedule(static) reduction(+:va)
+  for (int k=st[2]; k<=ed[2]; k++) {
+    for (int j=st[1]; j<=ed[1]; j++) {
+      for (int i=st[0]; i<=ed[0]; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int s = d_bh1[m];
+        
+        if ( GET_FACE_BC(s, BC_FACE_W) == odr )
+        {
+          q = ht * (sf - d_t0[m]);
+          d_qbc[_F_IDX_V3DEX(0, i-1, j, k, ix, jx, kx, gd)] += q;
+          va += q; // マイナス面の正の値は流入
+        }
+        
+        if ( GET_FACE_BC(s, BC_FACE_E) == odr )
+        {
+          q = ht * (d_t0[m] - sf);
+          d_qbc[_F_IDX_V3DEX(0, i, j, k, ix, jx, kx, gd)] += q;
+          va -= q; // プラス面の正の値は流出
+        }
+        
+        if ( GET_FACE_BC(s, BC_FACE_S) == odr )
+        {
+          q = ht * (sf - d_t0[m]);
+          d_qbc[_F_IDX_V3DEX(1, i, j-1, k, ix, jx, kx, gd)] += q;
+          va += q;
+        }
+        
+        if ( GET_FACE_BC(s, BC_FACE_N) == odr )
+        {
+          q = ht * (d_t0[m] - sf);
+          d_qbc[_F_IDX_V3DEX(1, i, j, k, ix, jx, kx, gd)] += q;
+          va -= q;
+        }
+        
+        if ( GET_FACE_BC(s, BC_FACE_B) == odr )
+        {
+          q = ht * (sf - d_t0[m]);
+          d_qbc[_F_IDX_V3DEX(2, i, j, k-1, ix, jx, kx, gd)] += q;
+          va += q;
+        }
+        
+        if ( GET_FACE_BC(s, BC_FACE_T) == odr )
+        {
+          q = ht * (d_t0[m] - sf);
+          d_qbc[_F_IDX_V3DEX(2, i, j, k, ix, jx, kx, gd)] += q;
+          va -= q;
         }
       }
-      flop += (REAL_TYPE)(jx*kx*13);
-      break;
-      
-    case X_PLUS:
-
-      for (int k=1; k<=kx; k++) {
-        for (int j=1; j<=jx; j++) {
-          size_t m = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
-          s = d_bh1[m];
-          size_t m_0 = _F_IDX_V3D(ix,   j, k, 0, ix, jx, kx, gd);
-          size_t m_e = _F_IDX_V3D(ix+1, j, k, 0, ix, jx, kx, gd);
-          c = 0.5*(d_v[m_e]+d_v[m_0]) - u_ref;
-          t_p = (c > 0.0) ? d_t[m] : t_nd;
-          f_e = c*t_p;
-          va += f_e;
-          ff = f_e - f_w + f_n - f_s + f_t - f_b;
-          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
-        }
-      }
-      flop += (REAL_TYPE)(jx*kx*13);
-      break;
-      
-    case Y_MINUS:
-
-      for (int k=1; k<=kx; k++) {
-        for (int i=1; i<=ix; i++) {
-          size_t m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
-          s = d_bh1[m];
-          size_t m_0 = _F_IDX_V3D(i, 1, k, 1, ix, jx, kx, gd);
-          size_t m_s = _F_IDX_V3D(i, 0, k, 1, ix, jx, kx, gd);
-          c = 0.5*(d_v[m_s]+d_v[m_0]) - v_ref;
-          t_p = (c < 0.0) ? d_t[m] : t_nd;
-          f_s = c*t_p;
-          va += f_s;
-          ff = f_e - f_w + f_n - f_s + f_t - f_b;
-          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
-        }
-      }
-      flop += (REAL_TYPE)(ix*kx*13);
-      break;
-      
-    case Y_PLUS:
-
-      for (int k=1; k<=kx; k++) {
-        for (int i=1; i<=ix; i++) {
-          size_t m = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
-          s = d_bh1[m];
-          size_t m_0 = _F_IDX_V3D(i, jx,   k, 1, ix, jx, kx, gd);
-          size_t m_n = _F_IDX_V3D(i, jx+1, k, 1, ix, jx, kx, gd);
-          c = 0.5*(d_v[m_n]+d_v[m_0]) - v_ref;
-          t_p = (c > 0.0) ? d_t[m] : t_nd;
-          f_n = c*t_p;
-          va += f_n;
-          ff = f_e - f_w + f_n - f_s + f_t - f_b;
-          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
-        }
-      }
-      flop += (REAL_TYPE)(ix*kx*13);
-      break;
-      
-    case Z_MINUS:
-
-      for (int j=1; j<=jx; j++) {
-        for (int i=1; i<=ix; i++) {
-          size_t m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
-          s = d_bh1[m];
-          size_t m_0 = _F_IDX_V3D(i, j, 1, 2, ix, jx, kx, gd);
-          size_t m_b = _F_IDX_V3D(i, j, 0, 2, ix, jx, kx, gd);
-          c = 0.5*(d_v[m_b]+d_v[m_0]) - w_ref;
-          t_p = (c < 0.0) ? d_t[m] : t_nd;
-          f_b = c*t_p;
-          va += f_b;
-          ff = f_e - f_w + f_n - f_s + f_t - f_b;
-          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
-        }
-      }
-      flop += (REAL_TYPE)(ix*jx*13);
-      break;
-      
-    case Z_PLUS:
-
-      for (int j=1; j<=jx; j++) {
-        for (int i=1; i<=ix; i++) {
-          size_t m = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
-          s = d_bh1[m];
-          size_t m_0 = _F_IDX_V3D(i, j, kx,   2, ix, jx, kx, gd);
-          size_t m_t = _F_IDX_V3D(i, j, kx+1, 2, ix, jx, kx, gd);
-          c = 0.5*(d_v[m_t]+d_v[m_0]) - w_ref;
-          t_p = (c > 0.0) ? d_t[m] : t_nd;
-          f_t = c*t_p;
-          va += f_t;
-          ff = f_e - f_w + f_n - f_s + f_t - f_b;
-          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
-        }
-      }
-      flop += (REAL_TYPE)(ix*jx*13);
-      break;
-  }
-  
-  if ( numProc > 1 )
-  {
-		REAL_TYPE tmp = va;
-		if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
-    {
-      Hostonly_ printf("Allreduce Error\n");
-      Exit(0);
     }
-	}
-  
-  return va;
-}
-
-
-// #################################################################
-/**
- @brief 外部領域の速度指定の境界条件処理
- @retval 熱量(-)
- @param ws 温度増分
- @param bh1 BCindex H1
- @param face 外部境界面番号
- @param t 温度
- @param tm 時刻
- @param v00
- @param flop 浮動小数演算数
- @note
-    - モニタ量の熱量va(-)は系に対する流入量なので，基準温度に対する熱量
- */
-REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, REAL_TYPE* d_t, const double tm, REAL_TYPE* v00, double& flop)
-{
-  if ( nID[face] >= 0 ) return 0.0;
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  int register s, m;
-  REAL_TYPE va=0.0, t_nd;
-  REAL_TYPE f_e, f_w, f_n, f_s, f_t, f_b, ff, c;
-  REAL_TYPE dh = deltaX;
-  REAL_TYPE dh1 = 1.0/dh;
-  REAL_TYPE u_ref, v_ref, w_ref, dummy;
-  REAL_TYPE vec[3];
-  
-  u_ref = v00[1];
-  v_ref = v00[2];
-  w_ref = v00[3];
-  
-  f_e = f_w = f_n = f_s = f_t = f_b = 0.0; // 境界条件以外の寄与をゼロにしておく
-  t_nd = FBUtility::convK2ND(obc[face].getTemp(), BaseTemp, DiffTemp);
-
-  dummy = extractVelOBC(face, vec, tm, v00);
-  
-  switch (face)
-  {
-    case X_MINUS:
-      c = vec[0] - u_ref;
-      f_w = c * t_nd;
-      
-      
-      for (int k=1; k<=kx; k++) {
-        for (int j=1; j<=jx; j++) {
-          m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
-          s = d_bh1[m];
-          va += f_w;
-          ff = f_e - f_w + f_n - f_s + f_t - f_b;
-          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
-        }
-      }
-      flop += (REAL_TYPE)(jx*kx*9 + 2);
-      break;
-      
-    case X_PLUS:
-      c = vec[0] - u_ref;
-      f_e = -c * t_nd; // ref_tが正のとき，X+方向のセルでは流出なので符号反転
-      
-
-      for (int k=1; k<=kx; k++) {
-        for (int j=1; j<=jx; j++) {
-          m = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
-          s = d_bh1[m];
-          va += f_e;
-          ff = f_e - f_w + f_n - f_s + f_t - f_b;
-          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
-        }
-      }
-      flop += (REAL_TYPE)(jx*kx*9 + 2);
-      break;
-      
-    case Y_MINUS:
-      c = vec[1] - v_ref;
-      f_s = c * t_nd;
-      
-
-      for (int k=1; k<=kx; k++) {
-        for (int i=1; i<=ix; i++) {
-          m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
-          s = d_bh1[m];
-          va += f_s;
-          ff = f_e - f_w + f_n - f_s + f_t - f_b;
-          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
-        }
-      }
-      flop += (REAL_TYPE)(ix*kx*9 + 2);
-      break;
-      
-    case Y_PLUS:
-      c = vec[1] - v_ref;
-      f_n = -c * t_nd; // 符号反転
-      
-
-      for (int k=1; k<=kx; k++) {
-        for (int i=1; i<=ix; i++) {
-          m = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
-          s = d_bh1[m];
-          va += f_n;
-          ff = f_e - f_w + f_n - f_s + f_t - f_b;
-          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
-        }
-      }
-      flop += (REAL_TYPE)(ix*kx*9 + 2);
-      break;
-      
-    case Z_MINUS:
-      c = vec[2] - w_ref;
-      f_b = c * t_nd;
-      
-
-      for (int j=1; j<=jx; j++) {
-        for (int i=1; i<=ix; i++) {
-          m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
-          s = d_bh1[m];
-          va += f_b;
-          ff = f_e - f_w + f_n - f_s + f_t - f_b;
-          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
-        }
-      }
-      flop += (REAL_TYPE)(ix*jx*9 + 2);
-      break;
-      
-    case Z_PLUS:
-      c = vec[2] - w_ref;
-      f_t = -c * t_nd; // 符号反転
-      
-
-      for (int j=1; j<=jx; j++) {
-        for (int i=1; i<=ix; i++) {
-          m = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
-          s = d_bh1[m];
-          va += f_t;
-          ff = f_e - f_w + f_n - f_s + f_t - f_b;
-          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
-        }
-      }
-      flop += (REAL_TYPE)(ix*jx*9 + 2);
-      break;
   }
-  
   
   if ( numProc > 1 )
   {
@@ -2691,141 +2475,261 @@ REAL_TYPE SetBC3D::ps_OBC_SpecVH(REAL_TYPE* d_ws, int* d_bh1, const int face, RE
     }
 	}
   
-  return va;
+  return va; // 単位面積あたりの無次元熱流束の和
 }
 
 
 // #################################################################
 /**
- @brief 外部領域の等温熱流束の境界条件処理
- @retval 熱量(-)
- @param qbc 境界条件熱流束
- @param bh1 BCindex H1
- @param face 外部境界面番号
- @param t n+1時刻の温度場
- @param t0 n時刻の温度場
- @param flop 浮動小数演算数
- @note
- - モニタ量の熱量va(-)は系に対する流入出量
- - 流入を正にとる
+ * @brief 熱伝達境界条件タイプSF（強制対流)
+ * @retval 無次元熱流束の和
+ * @param [in] d_qbc 境界条件熱流束
+ * @param [in] d_bh1 BCindex H1
+ * @param [in] n     境界条件コンポーネントのエントリ番号
+ * @param [in] d_t0  n時刻の温度場
+ * @note
+   - 熱流束は加算（他の条件と合成）
+   - pセルは流体セル
  */
-REAL_TYPE SetBC3D::ps_OBC_IsoThermal(REAL_TYPE* d_qbc, int* d_bh1, const int face, REAL_TYPE* d_t, REAL_TYPE* d_t0, double& flop)
+REAL_TYPE SetBC3D::psIbcTransferSF (REAL_TYPE* d_qbc, const int* d_bh1, const int n, const REAL_TYPE* d_t0)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  int odr= n;
+  
+  REAL_TYPE va = 0.0;
+  REAL_TYPE q;
+  int st[3], ed[3];
+  
+  REAL_TYPE a1 = cmp[n].ca[CompoList::alpha];
+  REAL_TYPE b1 = cmp[n].ca[CompoList::beta];
+  REAL_TYPE c1 = cmp[n].ca[CompoList::gamma];
+  REAL_TYPE ht = lambda / (RefV*RefL*rho*cp) * a1*pow(Reynolds, b1) * pow(Prandtl, c1);    // RefMediumで指定される物性値
+  REAL_TYPE sf = FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp);                // 保持されている温度はKelvin
+  
+  cmp[n].getBbox(st, ed);
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, st, ed, odr, ht, sf) private(q) schedule(static) reduction(+:va)
+  for (int k=st[2]; k<=ed[2]; k++) {
+    for (int j=st[1]; j<=ed[1]; j++) {
+      for (int i=st[0]; i<=ed[0]; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int s = d_bh1[m];
+        
+        if ( GET_FACE_BC(s, BC_FACE_W) == odr )
+        {
+          q = ht * (sf - d_t0[m]);                                 // 基準温度との温度差
+          d_qbc[_F_IDX_V3DEX(0, i-1, j, k, ix, jx, kx, gd)] += q;
+          va += q;                                                 // マイナス面の正の値は流入
+        }
+        
+        if ( GET_FACE_BC(s, BC_FACE_E) == odr )
+        {
+          q = ht * (d_t0[m] - sf);
+          d_qbc[_F_IDX_V3DEX(0, i, j, k, ix, jx, kx, gd)] += q;
+          va -= q;                                                 // プラス面の正の値は流出
+        }
+        
+        if ( GET_FACE_BC(s, BC_FACE_S) == odr )
+        {
+          q = ht * (sf - d_t0[m]);
+          d_qbc[_F_IDX_V3DEX(1, i, j-1, k, ix, jx, kx, gd)] += q;
+          va += q;
+        }
+        
+        if ( GET_FACE_BC(s, BC_FACE_N) == odr )
+        {
+          q = ht * (d_t0[m] - sf);
+          d_qbc[_F_IDX_V3DEX(1, i, j, k, ix, jx, kx, gd)] += q;
+          va -= q;
+        }
+        
+        if ( GET_FACE_BC(s, BC_FACE_B) == odr )
+        {
+          q = ht * (sf - d_t0[m]);
+          d_qbc[_F_IDX_V3DEX(2, i, j, k-1, ix, jx, kx, gd)] += q;
+          va += q;
+        }
+        
+        if ( GET_FACE_BC(s, BC_FACE_T) == odr )
+        {
+          q = ht * (d_t0[m] - sf);
+          d_qbc[_F_IDX_V3DEX(2, i, j, k, ix, jx, kx, gd)] += q;
+          va -= q;
+        }
+      }
+    }
+  }
+  
+  if ( numProc > 1 )
+  {
+    REAL_TYPE tmp = va;
+    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
+    {
+      Hostonly_ printf("Allreduce Error\n");
+      Exit(0);
+    }
+  }
+  
+  return va; // 単位面積あたりの無次元熱流束の和
+}
+
+
+
+// #################################################################
+/**
+ * @brief 外部領域のOutflow, In_out, TractionFreeの境界条件処理
+ * @retval 無次元熱量
+ * @param [in,out] d_ws  温度増分
+ * @param [in]     d_bh  BCindex H1
+ * @param [in]     face  外部境界面番号
+ * @param [in]     d_vf  セルフェイス速度
+ * @param [in]     d_t   n時刻の温度
+ * @param [in]     v00   参照速度
+ * @note モニタ量の熱量 va は系に対する流入量なので，基準温度に対する熱量
+ */
+REAL_TYPE SetBC3D::psObcFree(REAL_TYPE* d_ws, const int* d_bh, const int face, const REAL_TYPE* d_vf, const REAL_TYPE* d_t, const REAL_TYPE* v00)
 {
   if ( nID[face] >= 0 ) return 0.0;
+  
   
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
   
-  int register s;
-  REAL_TYPE q, pp, sf, va=0.0;
+  REAL_TYPE va = 0.0;
   REAL_TYPE dh = deltaX;
+  REAL_TYPE f_e, f_w, f_n, f_s, f_t, f_b, ff;
+  REAL_TYPE dh1 = 1.0/dh;
+  REAL_TYPE u_ref = v00[1];
+  REAL_TYPE v_ref = v00[2];
+  REAL_TYPE w_ref = v00[3];
+  //REAL_TYPE t_nd = FBUtility::convK2ND(obc[face].getTemp(), BaseTemp, DiffTemp);
   
-  sf = FBUtility::convK2ND(obc[face].getTemp(), BaseTemp, DiffTemp); // 保持されている温度はKelvin
-  pp = (2.0*lambda) / (dh*RefV*rho*cp);
+  f_e = f_w = f_n = f_s = f_t = f_b = 0.0; // 境界条件以外の寄与をゼロにしておく
   
-  switch (face) {
+  // ff = f_e - f_w + f_n - f_s + f_t - f_b として該当流束の寄与のみを考える
+  
+  switch (face)
+  {
     case X_MINUS:
 
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, f_w, u_ref) \
+schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
           size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
-          s = d_bh1[m];
-          q = pp * (sf - d_t0[m]);
-          d_qbc[_F_IDX_V3DEX(0, 0, j, k, ix, jx, kx, gd)] += q; // マイナス面の正の値は流入
-          va += q;
-          d_t[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)] = sf; // 等温セルに指定温度を代入
+          int s = d_bh[m];
+          size_t m_w = _F_IDX_V3D(0, j, k, 0, ix, jx, kx, gd);
+          REAL_TYPE c = d_vf[m_w] - u_ref;
+          REAL_TYPE t_p = (c < 0.0) ? d_t[m] : 0.0;           // 流出の場合には内部の値，流入の場合には断熱
+          f_w = c*t_p;
+          va += f_w;
+          REAL_TYPE ff = - f_w;
+          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
         }
       }
-      flop += (REAL_TYPE)(jx*kx*4);
       break;
       
     case X_PLUS:
 
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, f_e, u_ref) \
+schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
           size_t m = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
-          s = d_bh1[m];
-          q = pp * (d_t0[m] - sf);
-          d_qbc[_F_IDX_V3DEX(0, ix, j, k, ix, jx, kx, gd)] -= q; // プラス面の正の値は流出
-          va -= q;
-          d_t[_F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd)] = sf;
+          int s = d_bh[m];
+          size_t m_e = _F_IDX_V3D(ix, j, k, 0, ix, jx, kx, gd);
+          REAL_TYPE c = d_vf[m_e] - u_ref;
+          REAL_TYPE t_p = (c > 0.0) ? d_t[m] : 0.0;
+          f_e = c*t_p;
+          va += f_e;
+          REAL_TYPE ff = f_e;
+          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
         }
       }
-      flop += (REAL_TYPE)(jx*kx*4);
       break;
       
     case Y_MINUS:
-
+      
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, f_s, v_ref) \
+schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int i=1; i<=ix; i++) {
           size_t m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
-          s = d_bh1[m];
-          q = pp * (sf - d_t0[m]);
-          d_qbc[_F_IDX_V3DEX(1, i, 0, k, ix, jx, kx, gd)] += q;
-          va += q;
-          d_t[_F_IDX_S3D(i, 0, k, ix, jx, kx, gd)] = sf;
+          int s = d_bh[m];
+          size_t m_s = _F_IDX_V3D(i, 0, k, 1, ix, jx, kx, gd);
+          REAL_TYPE c = d_vf[m_s] - v_ref;
+          REAL_TYPE t_p = (c < 0.0) ? d_t[m] : 0.0;
+          f_s = c*t_p;
+          va += f_s;
+          REAL_TYPE ff = - f_s;
+          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
         }
       }
-      flop += (REAL_TYPE)(ix*kx*4);
       break;
       
     case Y_PLUS:
-
+      
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, f_n, v_ref) \
+schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int i=1; i<=ix; i++) {
           size_t m = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
-          s = d_bh1[m];
-          q = pp * (d_t0[m] - sf);
-          d_qbc[_F_IDX_V3DEX(1, i, jx, k, ix, jx, kx, gd)] -= q;
-          va -= q;
-          d_t[_F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd)] = sf;
+          int s = d_bh[m];
+          size_t m_n = _F_IDX_V3D(i, jx, k, 1, ix, jx, kx, gd);
+          REAL_TYPE c = d_vf[m_n] - v_ref;
+          REAL_TYPE t_p = (c > 0.0) ? d_t[m] : 0.0;
+          f_n = c*t_p;
+          va += f_n;
+          REAL_TYPE ff = f_n;
+          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
         }
       }
-      flop += (REAL_TYPE)(ix*kx*4);
       break;
       
     case Z_MINUS:
-
+      
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, f_b, w_ref) \
+schedule(static) reduction(+:va)
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
           size_t m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
-          s = d_bh1[m];
-          q = pp * (sf - d_t0[m]);
-          d_qbc[_F_IDX_V3DEX(2, i, j, 0, ix, jx, kx, gd)] += q;
-          va += q;
-          d_t[_F_IDX_S3D(i, j, 0, ix, jx, kx, gd)] = sf;
+          int s = d_bh[m];
+          size_t m_b = _F_IDX_V3D(i, j, 0, 2, ix, jx, kx, gd);
+          REAL_TYPE c = d_vf[m_b] - w_ref;
+          REAL_TYPE t_p = (c < 0.0) ? d_t[m] : 0.0;
+          f_b = c*t_p;
+          va += f_b;
+          REAL_TYPE ff = - f_b;
+          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
         }
       }
-      flop += (REAL_TYPE)(ix*jx*4);
       break;
       
     case Z_PLUS:
-
+      
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, f_t, w_ref) \
+schedule(static) reduction(+:va)
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
           size_t m = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
-          s = d_bh1[m];
-          q = pp * (d_t0[m] - sf);
-          d_qbc[_F_IDX_V3DEX(2, i, j, kx, ix, jx, kx, gd)] -= q;
-          va -= q;
-          d_t[_F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd)] = sf;
+          int s = d_bh[m];
+          size_t m_t = _F_IDX_V3D(i, j, kx, 2, ix, jx, kx, gd);
+          REAL_TYPE c = d_vf[m_t] - w_ref;
+          REAL_TYPE t_p = (c > 0.0) ? d_t[m] : 0.0;
+          f_t = c*t_p;
+          va += f_t;
+          REAL_TYPE ff = f_t;
+          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
         }
       }
-      flop += (REAL_TYPE)(ix*jx*4);
       break;
   }
-  
-  if ( numProc > 1 )
-  {
-		REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
-    {
-      Hostonly_ printf("Allreduce Error\n");
-      Exit(0);
-    }
-	}
   
   return va;
 }
@@ -2833,120 +2737,89 @@ REAL_TYPE SetBC3D::ps_OBC_IsoThermal(REAL_TYPE* d_qbc, int* d_bh1, const int fac
 
 // #################################################################
 /**
- @brief 外部領域の熱流束指定の境界条件処理
- @retval 熱量(-)
- @param qbc 境界条件熱流束
- @param bh1 BCindex H1
- @param face 外部境界面番号
- @param flop 浮動小数演算数
- @note
-    - モニタ量の熱量va(-)は系に対する流入出量
+ * @brief 外部領域の熱流束指定の境界条件処理
+ * @retval 無次元熱量
+ * @param [in,out] d_qbc 境界条件熱流束
+ * @param [in]     face  外部境界面番号
+ * @note
+    - モニタ量の熱量 va は系に対する流入出量
     - 流入を正にとる
  */
-REAL_TYPE SetBC3D::ps_OBC_Heatflux(REAL_TYPE* d_qbc, int* d_bh1, const int face, double& flop)
+REAL_TYPE SetBC3D::psObcHeatflux(REAL_TYPE* d_qbc, const int face)
 {
   if ( nID[face] >= 0 ) return 0.0;
+  
   
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
   
-  int register s, m;
-  REAL_TYPE q, va=0.0;
-  
-  q = obc[face].getHeatflux() / (RefV*DiffTemp*rho*cp); // [W/m^2]を無次元化
+  REAL_TYPE va = 0.0;
+  REAL_TYPE q = obc[face].getHeatflux() / (RefV*DiffTemp*rho*cp); // [W/m^2]を無次元化
   
   switch (face)
   {
     case X_MINUS:
-
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, q) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
-          m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
-          s = d_bh1[m];
           d_qbc[_F_IDX_V3DEX(0, 0, j, k, ix, jx, kx, gd)] += q;
           va += q;
         }
       }
-      flop += (REAL_TYPE)(jx*kx*2);
       break;
       
     case X_PLUS:
-
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, q) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
-          m = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
-          s = d_bh1[m];
           d_qbc[_F_IDX_V3DEX(0, ix, j, k, ix, jx, kx, gd)] -= q; // プラス面の正の値は流出
           va -= q;
         }
       }
-      flop += (REAL_TYPE)(jx*kx*2);
       break;
       
     case Y_MINUS:
-
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, q) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int i=1; i<=ix; i++) {
-          m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
-          s = d_bh1[m];
           d_qbc[_F_IDX_V3DEX(1, i, 0, k, ix, jx, kx, gd)] += q;
           va += q;
         }
       }
-      flop += (REAL_TYPE)(ix*kx*2);
       break;
       
     case Y_PLUS:
-
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, q) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int i=1; i<=ix; i++) {
-          m = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
-          s = d_bh1[m];
           d_qbc[_F_IDX_V3DEX(1, i, jx, k, ix, jx, kx, gd)] -= q;
           va -= q;
         }
       }
-      flop += (REAL_TYPE)(ix*kx*2);
       break;
       
     case Z_MINUS:
-
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, q) schedule(static) reduction(+:va)
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
-          m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
-          s = d_bh1[m];
           d_qbc[_F_IDX_V3DEX(2, i, j, 0, ix, jx, kx, gd)] += q;
           va += q;
         }
       }
-      flop += (REAL_TYPE)(ix*jx*2);
       break;
       
     case Z_PLUS:
-
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, q) schedule(static) reduction(+:va)
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
-          m = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
-          s = d_bh1[m];
           d_qbc[_F_IDX_V3DEX(2, i, j, kx, ix, jx, kx, gd)] -= q;
           va -= q;
         }
       }
-      flop += (REAL_TYPE)(ix*jx*2);
       break;
   }
-  
-  if ( numProc > 1 )
-  {
-		REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
-    {
-      Hostonly_ printf("Allreduce Error\n");
-      Exit(0);
-    }
-	}
   
   return va;
 }
@@ -2954,136 +2827,110 @@ REAL_TYPE SetBC3D::ps_OBC_Heatflux(REAL_TYPE* d_qbc, int* d_bh1, const int face,
 
 // #################################################################
 /**
- @brief 外部領域の熱伝達境界の境界条件処理
- @retval 熱量(-)
- @param qbc 境界条件熱流束
- @param bh1 BCindex H1
- @param face 外部境界面番号
- @param t n+1時刻の温度場
- @param t0 n時刻の温度場
- @param flop 浮動小数演算数
- @note
-    - モニタ量の熱量va(-)は系に対する流入出量
+ * @brief 外部領域の熱伝達境界の境界条件処理 (TypeB/S共用)
+ * @retval 無次元熱量
+ * @param [in,out] d_qbc 境界条件熱流束
+ * @param [in]     face  外部境界面番号
+ * @param [out]    d_t   n+1時刻の温度場
+ * @param [in]     d_t0  n時刻の温度場
+ * @note
+    - モニタ量の熱量 va は系に対する流入出量
     - 流入を正にとる
-    - TypeS/B共用
  */
-REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_BS(REAL_TYPE* d_qbc, int* d_bh1, const int face, REAL_TYPE* d_t, REAL_TYPE* d_t0, double& flop)
+REAL_TYPE SetBC3D::psObcHeatTransferBS(REAL_TYPE* d_qbc, const int face, REAL_TYPE* d_t, const REAL_TYPE* d_t0)
 {
   if ( nID[face] >= 0 ) return 0.0;
+  
   
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
   
-  int register s, m;
-  REAL_TYPE ht, bt, q, va=0.0;
-  
-  ht = obc[face].getCoefHT() / (RefV*rho*cp);  // 熱伝達係数
-  bt = FBUtility::convK2ND(obc[face].getTemp(), BaseTemp, DiffTemp); // 温度．保持されている温度はKelvin
+  REAL_TYPE va = 0.0;
+  REAL_TYPE ht = obc[face].getCoefHT() / (RefV*rho*cp);                        // 熱伝達係数
+  REAL_TYPE bt = FBUtility::convK2ND(obc[face].getTemp(), BaseTemp, DiffTemp); // 温度．保持されている温度はKelvin
   
   switch (face)
   {
     case X_MINUS:
-
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, bt) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
-          m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
-          s = d_bh1[m];
-          q = ht * (bt - d_t0[m]);
+          size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
+          REAL_TYPE q = ht * (bt - d_t0[m]);
           d_qbc[_F_IDX_V3DEX(0, 0, j, k, ix, jx, kx, gd)] += q; // マイナス面の正の値は流入
           va += q;
           d_t[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)] = bt; // 隣接流体セルにバルク温度を代入
         }
       }
-      flop += (REAL_TYPE)(jx*kx*4);
       break;
       
     case X_PLUS:
-
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, bt) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
-          m = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
-          s = d_bh1[m];
-          q = ht * (d_t0[m] - bt);
+          size_t m = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
+          REAL_TYPE q = ht * (d_t0[m] - bt);
           d_qbc[_F_IDX_V3DEX(0, ix, j, k, ix, jx, kx, gd)] -= q; // プラス面の正の値は流出
           va -= q;
           d_t[_F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd)] = bt;
         }
       }
-      flop += (REAL_TYPE)(jx*kx*4);
       break;
       
     case Y_MINUS:
-
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, bt) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int i=1; i<=ix; i++) {
-          m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
-          s = d_bh1[m];
-          q = ht * (bt - d_t0[m]);
+          size_t m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
+          REAL_TYPE q = ht * (bt - d_t0[m]);
           d_qbc[_F_IDX_V3DEX(1, i, 0, k, ix, jx, kx, gd)] += q;
           va += q;
           d_t[_F_IDX_S3D(i, 0, k, ix, jx, kx, gd)] = bt;
         }
       }
-      flop += (REAL_TYPE)(ix*kx*4);
       break;
       
     case Y_PLUS:
-
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, bt) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int i=1; i<=ix; i++) {
-          m = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
-          s = d_bh1[m];
-          q = ht * (d_t0[m] - bt);
+          size_t m = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
+          REAL_TYPE q = ht * (d_t0[m] - bt);
           d_qbc[_F_IDX_V3DEX(1, i, jx, k, ix, jx, kx, gd)] -= q;
           va -= q;
           d_t[_F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd)] = bt;
         }
       }
-      flop += (REAL_TYPE)(ix*kx*4);
       break;
       
     case Z_MINUS:
-
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, bt) schedule(static) reduction(+:va)
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
-          m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
-          s = d_bh1[m];
-          q = ht * (bt - d_t0[m]);
+          size_t m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
+          REAL_TYPE q = ht * (bt - d_t0[m]);
           d_qbc[_F_IDX_V3DEX(2, i, j, 0, ix, jx, kx, gd)] += q;
           va += q;
           d_t[_F_IDX_S3D(i, j, 0, ix, jx, kx, gd)] = bt;
         }
       }
-      flop += (REAL_TYPE)(ix*jx*4);
       break;
       
     case Z_PLUS:
-
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, bt) schedule(static) reduction(+:va)
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
-          m = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
-          s = d_bh1[m];
-          q = ht * (d_t0[m] - bt);
+          size_t m = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
+          REAL_TYPE q = ht * (d_t0[m] - bt);
           d_qbc[_F_IDX_V3DEX(2, i, j, kx, ix, jx, kx, gd)] -= q;
           va -= q;
           d_t[_F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd)] = bt;
         }
       }
-      flop += (REAL_TYPE)(ix*jx*4);
       break;
   }
-  
-  if ( numProc > 1 )
-  {
-		REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
-    {
-      Hostonly_ printf("Allreduce Error\n");
-      Exit(0);
-    }
-	}
   
   return va;
 }
@@ -3091,483 +2938,242 @@ REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_BS(REAL_TYPE* d_qbc, int* d_bh1, const in
 
 // #################################################################
 /**
- @brief 外部領域の熱伝達境界の境界条件処理
- @retval 熱量(-)
- @param qbc 境界条件熱流束
- @param bh1 BCindex H1
- @param face 外部境界面番号
- @param t n+1時刻の温度場
- @param t0 n時刻の温度場
- @param flop 浮動小数演算数
- @note
+ * @brief 外部領域の熱伝達境界の境界条件処理 (Type SF)
+ * @retval 無次元熱量
+ * @param [in,out] d_qbc 境界条件熱流束
+ * @param [in]     face  外部境界面番号
+ * @param [out]    d_t   n+1時刻の温度場
+ * @param [in]     d_t0  n時刻の温度場
+ * @note
     - モニタ量の熱量va(-)は系に対する流入出量
     - 流入を正にとる
  */
-REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SF(REAL_TYPE* d_qbc, int* d_bh1, int face, REAL_TYPE* d_t, REAL_TYPE* d_t0, double& flop)
+REAL_TYPE SetBC3D::psObcHeatTransferSF(REAL_TYPE* d_qbc, const int face, REAL_TYPE* d_t, const REAL_TYPE* d_t0)
 {
   if ( nID[face] >= 0 ) return 0.0;
+  
   
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
   
-  int register s, m;
-  REAL_TYPE ht, sf, q, va=0.0;
-  REAL_TYPE a1, b1, c1;
+  REAL_TYPE va = 0.0;
   
-  a1 = obc[face].ca[CompoList::alpha];
-  b1 = obc[face].ca[CompoList::beta];
-  c1 = obc[face].ca[CompoList::gamma];
-  ht = lambda / (RefV*RefL*rho*cp) * a1*pow(Reynolds, b1) * pow(Prandtl, c1);    // 熱伝達係数 
-  sf = FBUtility::convK2ND(obc[face].getTemp(), BaseTemp, DiffTemp); // 表面温度．保持されている温度はKelvin
+  REAL_TYPE a1 = obc[face].ca[CompoList::alpha];
+  REAL_TYPE b1 = obc[face].ca[CompoList::beta];
+  REAL_TYPE c1 = obc[face].ca[CompoList::gamma];
+  REAL_TYPE ht = lambda / (RefV*RefL*rho*cp) * a1*pow(Reynolds, b1) * pow(Prandtl, c1);  // 熱伝達係数
+  REAL_TYPE sf = FBUtility::convK2ND(obc[face].getTemp(), BaseTemp, DiffTemp);           // 表面温度．保持されている温度はKelvin
   
   switch (face)
   {
     case X_MINUS:
-
-      if ( obc[face].getHTmodeRef() == CompoList::HT_mode_bulk )
-      {
-        for (int k=1; k<=kx; k++) {
-          for (int j=1; j<=jx; j++) {
-            m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht * (sf - 0.0); // 基準温度との温度差
-            d_qbc[_F_IDX_V3DEX(0, 0, j, k, ix, jx, kx, gd)] += q; // マイナス面の正の値は流入
-            va += q; // マイナス面の正の値は流入
-            d_t[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)] = sf; // 固体セルに表面温度を代入
-          }
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, sf) schedule(static) reduction(+:va)
+      for (int k=1; k<=kx; k++) {
+        for (int j=1; j<=jx; j++) {
+          size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
+          REAL_TYPE q = ht * (sf - d_t0[m]);                                 // 表面温度と隣接セルとの温度差
+          d_qbc[_F_IDX_V3DEX(0, 0, j, k, ix, jx, kx, gd)] += q;
+          va += q;
+          d_t[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)] = sf;
         }
       }
-      else // Local
-      {
-        for (int k=1; k<=kx; k++) {
-          for (int j=1; j<=jx; j++) {
-            m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht * (sf - d_t0[m]); // 基準温度との温度差
-            d_qbc[_F_IDX_V3DEX(0, 0, j, k, ix, jx, kx, gd)] += q;
-            va += q;
-            d_t[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)] = sf;
-          }
-        }
-      }
-      flop += (REAL_TYPE)(jx*kx*4);
       break;
       
     case X_PLUS:
-
-      if ( obc[face].getHTmodeRef() == CompoList::HT_mode_bulk )
-      {
-        for (int k=1; k<=kx; k++) {
-          for (int j=1; j<=jx; j++) {
-            m = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht * (0.0 - sf);
-            d_qbc[_F_IDX_V3DEX(0, ix, j, k, ix, jx, kx, gd)] -= q; // プラス面の正の値は流出
-            va -= q; // プラス面の正の値は流出
-            d_t[_F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd)] = sf;
-          }
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, sf) schedule(static) reduction(+:va)
+      for (int k=1; k<=kx; k++) {
+        for (int j=1; j<=jx; j++) {
+          size_t m = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
+          REAL_TYPE q = ht * (d_t0[m] - sf);
+          d_qbc[_F_IDX_V3DEX(0, ix, j, k, ix, jx, kx, gd)] -= q;
+          va -= q;                                                 // プラス面の正の値は流出
+          d_t[_F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd)] = sf;
         }
       }
-      else // Local
-      {
-        for (int k=1; k<=kx; k++) {
-          for (int j=1; j<=jx; j++) {
-            m = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht * (d_t0[m] - sf);
-            d_qbc[_F_IDX_V3DEX(0, ix, j, k, ix, jx, kx, gd)] -= q;
-            va -= q; // プラス面の正の値は流出
-            d_t[_F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd)] = sf;
-          }
-        }
-      }
-      flop += (REAL_TYPE)(jx*kx*4);
       break;
       
     case Y_MINUS:
-
-      if ( obc[face].getHTmodeRef() == CompoList::HT_mode_bulk )
-      {
-        for (int k=1; k<=kx; k++) {
-          for (int i=1; i<=ix; i++) {
-            m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht * (sf - 0.0);
-            d_qbc[_F_IDX_V3DEX(1, i, 0, k, ix, jx, kx, gd)] += q;
-            va += q;
-            d_t[_F_IDX_S3D(i, 0, k, ix, jx, kx, gd)] = sf;
-          }
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, sf) schedule(static) reduction(+:va)
+      for (int k=1; k<=kx; k++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
+          REAL_TYPE q = ht * (sf - d_t0[m]);
+          d_qbc[_F_IDX_V3DEX(1, i, 0, k, ix, jx, kx, gd)] += q;
+          va += q;
+          d_t[_F_IDX_S3D(i, 0, k, ix, jx, kx, gd)] = sf;
         }
       }
-      else // Local
-      {
-        for (int k=1; k<=kx; k++) {
-          for (int i=1; i<=ix; i++) {
-            m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht * (sf - d_t0[m]);
-            d_qbc[_F_IDX_V3DEX(1, i, 0, k, ix, jx, kx, gd)] += q;
-            va += q;
-            d_t[_F_IDX_S3D(i, 0, k, ix, jx, kx, gd)] = sf;
-          }
-        }
-      }
-      flop += (REAL_TYPE)(ix*kx*4);
       break;
       
     case Y_PLUS:
-
-      if ( obc[face].getHTmodeRef() == CompoList::HT_mode_bulk )
-      {
-        for (int k=1; k<=kx; k++) {
-          for (int i=1; i<=ix; i++) {
-            m = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht * (0.0 - sf);
-            d_qbc[_F_IDX_V3DEX(1, i, jx, k, ix, jx, kx, gd)] -= q;
-            va -= q;
-            d_t[_F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd)] = sf;
-          }
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, sf) schedule(static) reduction(+:va)
+      for (int k=1; k<=kx; k++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
+          REAL_TYPE q = ht * (d_t0[m] - sf);
+          d_qbc[_F_IDX_V3DEX(1, i, jx, k, ix, jx, kx, gd)] -= q;
+          va -= q;
+          d_t[_F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd)] = sf;
         }
       }
-      else // Local
-      {
-        for (int k=1; k<=kx; k++) {
-          for (int i=1; i<=ix; i++) {
-            m = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht * (d_t0[m] - sf);
-            d_qbc[_F_IDX_V3DEX(1, i, jx, k, ix, jx, kx, gd)] -= q;
-            va -= q;
-            d_t[_F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd)] = sf;
-          }
-        }
-      }
-      flop += (REAL_TYPE)(ix*kx*4);
       break;
       
     case Z_MINUS:
-
-      if ( obc[face].getHTmodeRef() == CompoList::HT_mode_bulk )
-      {
-        for (int j=1; j<=jx; j++) {
-          for (int i=1; i<=ix; i++) {
-            m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht * (sf - 0.0);
-            d_qbc[_F_IDX_V3DEX(2, i, j, 0, ix, jx, kx, gd)] += q;
-            va += q;
-            d_t[_F_IDX_S3D(i, j, 0, ix, jx, kx, gd)] = sf;
-          }
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, sf) schedule(static) reduction(+:va)
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
+          REAL_TYPE q = ht * (sf - d_t0[m]);
+          d_qbc[_F_IDX_V3DEX(2, i, j, 0, ix, jx, kx, gd)] += q;
+          va += q;
+          d_t[_F_IDX_S3D(i, j, 0, ix, jx, kx, gd)] = sf;
         }
       }
-      else // Local
-      {
-        for (int j=1; j<=jx; j++) {
-          for (int i=1; i<=ix; i++) {
-            m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht * (sf - d_t0[m]);
-            d_qbc[_F_IDX_V3DEX(2, i, j, 0, ix, jx, kx, gd)] += q;
-            va += q;
-            d_t[_F_IDX_S3D(i, j, 0, ix, jx, kx, gd)] = sf;
-          }
-        }
-      }
-      flop += (REAL_TYPE)(ix*jx*4);
       break;
       
     case Z_PLUS:
-
-      if ( obc[face].getHTmodeRef() == CompoList::HT_mode_bulk )
-      {
-        for (int j=1; j<=jx; j++) {
-          for (int i=1; i<=ix; i++) {
-            m = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht * (0.0 - sf);
-            d_qbc[_F_IDX_V3DEX(2, i, j, kx, ix, jx, kx, gd)] -= q;
-            va -= q;
-            d_t[_F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd)] = sf;
-          }
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, sf) schedule(static) reduction(+:va)
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
+          REAL_TYPE q = ht * (d_t0[m] - sf);
+          d_qbc[_F_IDX_V3DEX(2, i, j, kx, ix, jx, kx, gd)] -= q;
+          va -= q;
+          d_t[_F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd)] = sf;
         }
       }
-      else // Local
-      {
-        for (int j=1; j<=jx; j++) {
-          for (int i=1; i<=ix; i++) {
-            m = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht * (d_t0[m] - sf);
-            d_qbc[_F_IDX_V3DEX(2, i, j, kx, ix, jx, kx, gd)] -= q;
-            va -= q;
-            d_t[_F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd)] = sf;
-          }
-        }
-      }
-      flop += (REAL_TYPE)(ix*jx*4);
       break;
   }
   
-  if ( numProc > 1 )
-  {
-		REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
-    {
-      Hostonly_ printf("Allreduce Error\n");
-      Exit(0);
-    }
-	}
-  
-  return (va);
+  return va;
 }
 
 
 // #################################################################
 /**
- @brief 外部領域の熱伝達境界の境界条件処理
- @retval 熱量(-)
- @param qbc 境界条件熱流束
- @param bh1 BCindex H1
- @param face 外部境界面番号
- @param t n+1時刻の温度場
- @param t0 n時刻の温度場
- @param flop 浮動小数演算数
- @note
- - モニタ量の熱量va(-)は系に対する流入出量
- - 流入を正にとる
+ * @brief 外部領域の熱伝達境界の境界条件処理 (Type SN)
+ * @retval 無次元熱量
+ * @param [in,out] d_qbc 境界条件熱流束
+ * @param [in]     face  外部境界面番号
+ * @param [out]    d_t   n+1時刻の温度場
+ * @param [in]     d_t0  n時刻の温度場
+ * @note
+   - モニタ量の熱量 va は系に対する流入出量
+   - 流入を正にとる
  */
-REAL_TYPE SetBC3D::ps_OBC_HeatTransfer_SN(REAL_TYPE* d_qbc, int* d_bh1, const int face, REAL_TYPE* d_t, REAL_TYPE* d_t0, double& flop)
+REAL_TYPE SetBC3D::psObcHeatTransferSN(REAL_TYPE* d_qbc, const int face, REAL_TYPE* d_t, const REAL_TYPE* d_t0)
 {
   if ( nID[face] >= 0 ) return 0.0;
+  
   
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
   
-  int register s, m;
-  REAL_TYPE ht, ht1, ht3, sf, q, va=0.0;
-  REAL_TYPE a1, a2, a3, a4, b1, b2, b3, b4, c1, c2;
+  REAL_TYPE va = 0.0;
   
-  a1 = obc[face].ca[CompoList::vert_laminar_alpha];    // vertical, upper, laminar
-  a2 = obc[face].ca[CompoList::vert_turbulent_alpha];  // vertical, upper, turbulent
-  a3 = obc[face].cb[CompoList::lower_laminar_alpha];   // lower, laminar
-  a4 = obc[face].cb[CompoList::lower_turbulent_alpha]; // lower, turbulent
+  REAL_TYPE a1 = obc[face].ca[CompoList::vert_laminar_alpha];    // vertical, upper, laminar
+  REAL_TYPE a2 = obc[face].ca[CompoList::vert_turbulent_alpha];  // vertical, upper, turbulent
+  REAL_TYPE a3 = obc[face].cb[CompoList::lower_laminar_alpha];   // lower, laminar
+  REAL_TYPE a4 = obc[face].cb[CompoList::lower_turbulent_alpha]; // lower, turbulent
   
-  b1 = obc[face].ca[CompoList::vert_laminar_beta];     // vertical, upper, laminar
-  b2 = obc[face].ca[CompoList::vert_turbulent_beta];   // vertical, upper, turbulent
-  b3 = obc[face].cb[CompoList::lower_laminar_beta];    // lower, laminar
-  b4 = obc[face].cb[CompoList::lower_turbulent_beta];  // lower, turbulent
+  REAL_TYPE b1 = obc[face].ca[CompoList::vert_laminar_beta];     // vertical, upper, laminar
+  REAL_TYPE b2 = obc[face].ca[CompoList::vert_turbulent_beta];   // vertical, upper, turbulent
+  REAL_TYPE b3 = obc[face].cb[CompoList::lower_laminar_beta];    // lower, laminar
+  REAL_TYPE b4 = obc[face].cb[CompoList::lower_turbulent_beta];  // lower, turbulent
   
-  c1 = obc[face].ca[CompoList::vert_Ra_critial];       // vertical, upper, Ra_c
-  c2 = obc[face].cb[CompoList::lower_Ra_critial];      // lower, Ra_c
-  ht = lambda / (RefV*RefL*rho*cp);                    // RefMediumで指定される物性値
+  REAL_TYPE c1 = obc[face].ca[CompoList::vert_Ra_critial];       // vertical, upper, Ra_c
+  REAL_TYPE c2 = obc[face].cb[CompoList::lower_Ra_critial];      // lower, Ra_c
+  REAL_TYPE ht = lambda / (RefV*RefL*rho*cp);                    // RefMediumで指定される物性値
   
-  ht1 = ( Rayleigh < c1 ) ? ht*a1*pow(Rayleigh, b1) : ht*a2*pow(Rayleigh, b2); // vertical, upper
-  ht3 = ( Rayleigh < c2 ) ? ht*a3*pow(Rayleigh, b3) : ht*a4*pow(Rayleigh, b4); // lower
-  sf = FBUtility::convK2ND(obc[face].getTemp(), BaseTemp, DiffTemp); // 保持されている温度はKelvin
+  REAL_TYPE ht1 = ( Rayleigh < c1 ) ? ht*a1*pow(Rayleigh, b1) : ht*a2*pow(Rayleigh, b2); // vertical, upper
+  REAL_TYPE ht3 = ( Rayleigh < c2 ) ? ht*a3*pow(Rayleigh, b3) : ht*a4*pow(Rayleigh, b4); // lower
+  REAL_TYPE sf = FBUtility::convK2ND(obc[face].getTemp(), BaseTemp, DiffTemp);           // 保持されている温度はKelvin
   
   switch (face)
   {
     case X_MINUS:
-
-      if ( obc[face].getHTmodeRef() == CompoList::HT_mode_bulk )
-      {
-        for (int k=1; k<=kx; k++) {
-          for (int j=1; j<=jx; j++) {
-            m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht1 * (sf - 0.0); // 基準温度との温度差
-            d_qbc[_F_IDX_V3DEX(0, 0, j, k, ix, jx, kx, gd)] += q; // マイナス面の正の値は流入
-            va += q; // マイナス面の正の値は流入
-            d_t[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)] = sf; // 固体セルに表面温度を代入
-          }
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ht1, sf) schedule(static) reduction(+:va)
+      for (int k=1; k<=kx; k++) {
+        for (int j=1; j<=jx; j++) {
+          size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
+          REAL_TYPE q = ht1 * (sf - d_t0[m]);                    // 基準温度との温度差
+          d_qbc[_F_IDX_V3DEX(0, 0, j, k, ix, jx, kx, gd)] += q;
+          va += q;
+          d_t[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)] = sf;
         }
       }
-      else // Local
-      {
-        for (int k=1; k<=kx; k++) {
-          for (int j=1; j<=jx; j++) {
-            m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht1 * (sf - d_t0[m]); // 基準温度との温度差
-            d_qbc[_F_IDX_V3DEX(0, 0, j, k, ix, jx, kx, gd)] += q;
-            va += q;
-            d_t[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)] = sf;
-          }
-        }
-      }
-      flop += (REAL_TYPE)(jx*kx*4);
       break;
       
     case X_PLUS:
-
-      if ( obc[face].getHTmodeRef() == CompoList::HT_mode_bulk )
-      {
-        for (int k=1; k<=kx; k++) {
-          for (int j=1; j<=jx; j++) {
-            m = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht1 * (0.0 - sf);
-            d_qbc[_F_IDX_V3DEX(0, ix, j, k, ix, jx, kx, gd)] -= q; // プラス面の正の値は流出
-            va -= q; // プラス面の正の値は流出
-            d_t[_F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd)] = sf;
-          }
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ht1, sf) schedule(static) reduction(+:va)
+      for (int k=1; k<=kx; k++) {
+        for (int j=1; j<=jx; j++) {
+          size_t m = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
+          REAL_TYPE q = ht1 * (d_t0[m] - sf);
+          d_qbc[_F_IDX_V3DEX(0, ix, j, k, ix, jx, kx, gd)] -= q;
+          va -= q;                                               // プラス面の正の値は流出
+          d_t[_F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd)] = sf;
         }
       }
-      else // Local
-      {
-        for (int k=1; k<=kx; k++) {
-          for (int j=1; j<=jx; j++) {
-            m = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht1 * (d_t0[m] - sf);
-            d_qbc[_F_IDX_V3DEX(0, ix, j, k, ix, jx, kx, gd)] -= q;
-            va -= q; // プラス面の正の値は流出
-            d_t[_F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd)] = sf;
-          }
-        }
-      }
-      flop += (REAL_TYPE)(jx*kx*4);
       break;
       
     case Y_MINUS:
-
-      if ( obc[face].getHTmodeRef() == CompoList::HT_mode_bulk )
-      {
-        for (int k=1; k<=kx; k++) {
-          for (int i=1; i<=ix; i++) {
-            m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht1 * (sf - 0.0);
-            d_qbc[_F_IDX_V3DEX(1, i, 0, k, ix, jx, kx, gd)] += q;
-            va += q;
-            d_t[_F_IDX_S3D(i, 0, k, ix, jx, kx, gd)] = sf;
-          }
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ht1, sf) schedule(static) reduction(+:va)
+      for (int k=1; k<=kx; k++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
+          REAL_TYPE q = ht1 * (sf - d_t0[m]);
+          d_qbc[_F_IDX_V3DEX(1, i, 0, k, ix, jx, kx, gd)] += q;
+          va += q;
+          d_t[_F_IDX_S3D(i, 0, k, ix, jx, kx, gd)] = sf;
         }
       }
-      else // Local
-      {
-        for (int k=1; k<=kx; k++) {
-          for (int i=1; i<=ix; i++) {
-            m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht1 * (sf - d_t0[m]);
-            d_qbc[_F_IDX_V3DEX(1, i, 0, k, ix, jx, kx, gd)] += q;
-            va += q;
-            d_t[_F_IDX_S3D(i, 0, k, ix, jx, kx, gd)] = sf;
-          }
-        }
-      }
-      flop += (REAL_TYPE)(ix*kx*4);
       break;
       
     case Y_PLUS:
-
-      if ( obc[face].getHTmodeRef() == CompoList::HT_mode_bulk )
-      {
-        for (int k=1; k<=kx; k++) {
-          for (int i=1; i<=ix; i++) {
-            m = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht1 * (0.0 - sf);
-            d_qbc[_F_IDX_V3DEX(1, i, jx, k, ix, jx, kx, gd)] -= q;
-            va -= q;
-            d_t[_F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd)] = sf;
-          }
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ht1, sf) schedule(static) reduction(+:va)
+      for (int k=1; k<=kx; k++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
+          REAL_TYPE q = ht1 * (d_t0[m] - sf);
+          d_qbc[_F_IDX_V3DEX(1, i, jx, k, ix, jx, kx, gd)] -= q;
+          va -= q;
+          d_t[_F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd)] = sf;
         }
       }
-      else // Local
-      {
-        for (int k=1; k<=kx; k++) {
-          for (int i=1; i<=ix; i++) {
-            m = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht1 * (d_t0[m] - sf);
-            d_qbc[_F_IDX_V3DEX(1, i, jx, k, ix, jx, kx, gd)] -= q;
-            va -= q;
-            d_t[_F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd)] = sf;
-          }
-        }
-      }
-      flop += (REAL_TYPE)(ix*kx*4);
       break;
       
     case Z_MINUS:
-
-      if ( obc[face].getHTmodeRef() == CompoList::HT_mode_bulk )
-      {
-        for (int j=1; j<=jx; j++) {
-          for (int i=1; i<=ix; i++) {
-            m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht3 * (sf - 0.0);
-            d_qbc[_F_IDX_V3DEX(2, i, j, 0, ix, jx, kx, gd)] += q;
-            va += q;
-            d_t[_F_IDX_S3D(i, j, 0, ix, jx, kx, gd)] = sf;
-          }
+      // ここだけ係数が違うので注意
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ht3, sf) schedule(static) reduction(+:va)
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
+          REAL_TYPE q = ht3 * (sf - d_t0[m]);
+          d_qbc[_F_IDX_V3DEX(2, i, j, 0, ix, jx, kx, gd)] += q;
+          va += q;
+          d_t[_F_IDX_S3D(i, j, 0, ix, jx, kx, gd)] = sf;
         }
       }
-      else // Local
-      {
-        for (int j=1; j<=jx; j++) {
-          for (int i=1; i<=ix; i++) {
-            m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht3 * (sf - d_t0[m]);
-            d_qbc[_F_IDX_V3DEX(2, i, j, 0, ix, jx, kx, gd)] += q;
-            va += q;
-            d_t[_F_IDX_S3D(i, j, 0, ix, jx, kx, gd)] = sf;
-          }
-        }
-      }
-      flop += (REAL_TYPE)(ix*jx*4);
       break;
       
     case Z_PLUS:
-
-      if ( obc[face].getHTmodeRef() == CompoList::HT_mode_bulk )
-      {
-        for (int j=1; j<=jx; j++) {
-          for (int i=1; i<=ix; i++) {
-            m = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht1 * (0.0 - sf);
-            d_qbc[_F_IDX_V3DEX(2, i, j, kx, ix, jx, kx, gd)] -= q;
-            va -= q;
-            d_t[_F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd)] = sf;
-          }
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ht1, sf) schedule(static) reduction(+:va)
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
+          REAL_TYPE q = ht1 * (d_t0[m] - sf);
+          d_qbc[_F_IDX_V3DEX(2, i, j, kx, ix, jx, kx, gd)] -= q;
+          va -= q;
+          d_t[_F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd)] = sf;
         }
       }
-      else // Local
-      {
-        for (int j=1; j<=jx; j++) {
-          for (int i=1; i<=ix; i++) {
-            m = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
-            s = d_bh1[m];
-            q = ht1 * (d_t0[m] - sf);
-            d_qbc[_F_IDX_V3DEX(2, i, j, kx, ix, jx, kx, gd)] -= q;
-            va -= q;
-            d_t[_F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd)] = sf;
-          }
-        }
-      }
-      flop += (REAL_TYPE)(ix*jx*4);
       break;
   }
-  
-  if ( numProc > 1 )
-  {
-		REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
-    {
-      Hostonly_ printf("Allreduce Error\n");
-      Exit(0);
-    }
-	}
   
   return va;
 }
@@ -3642,112 +3248,274 @@ REAL_TYPE SetBC3D::setHeatTransferN_SM(REAL_TYPE* qbc, REAL_TYPE* t, int* bx, in
 }*/
 
 
+
 // #################################################################
 /**
- @brief 単媒質の場合の熱伝達温境界条件タイプS　流体の流動のみを解く場合
- @retval 熱流束の和 (W/m^2)
- @param qbc 境界条件熱流束
- @param bh1 BCindex H1
- @param n 境界条件コンポーネントのエントリ番号
- @param t n+1時刻の温度場
- @param t0 n時刻の温度場
- @note 
-    - 熱流束は加算（他の条件と合成）
-    - pセルは流体セル
+ * @brief 外部領域の等温熱流束の境界条件処理
+ * @retval 無次元熱量
+ * @param [in,out] d_qbc 境界条件熱流束
+ * @param [in]     face  外部境界面番号
+ * @param [out]    d_t   n+1時刻の温度場
+ * @param [in]     d_t0  n時刻の温度場
+ * @note
+   - モニタ量の熱量 va は系に対する流入出量
+   - 流入を正にとる
  */
-REAL_TYPE SetBC3D::ps_IBC_Transfer_S_SM(REAL_TYPE* d_qbc, const int* d_bh1, const int n, REAL_TYPE* d_t, const REAL_TYPE* d_t0)
+REAL_TYPE SetBC3D::psObcIsoThermal(REAL_TYPE* d_qbc, const int face, REAL_TYPE* d_t, const REAL_TYPE* d_t0)
 {
+  if ( nID[face] >= 0 ) return 0.0;
+  
+  
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
   
-  int s, odr, m;
-  REAL_TYPE ht, sf, va=0.0, q;
-  int st[3], ed[3];
-
-  //odr= cmp[n].getMatOdr();
-  //ht = cmp[n].getCoefHT() / (RefV*mat[odr].P[p_density]*mat[odr].P[p_specific_heat]); // 固体セルで指定される物性値
-  ht = cmp[n].getCoefHT() / (RefV*rho*cp); // RefMediumで指定される物性値
-  sf = FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp); // 保持されている温度はKelvin
-
-  cmp[n].getBbox(st, ed);
+  REAL_TYPE va = 0.0;
+  REAL_TYPE sf = FBUtility::convK2ND(obc[face].getTemp(), BaseTemp, DiffTemp); // 保持されている温度はKelvin
+  REAL_TYPE pp = (2.0*lambda) / (deltaX*RefV*rho*cp);
   
-  for (int k=st[2]; k<=ed[2]; k++) {
-    for (int j=st[1]; j<=ed[1]; j++) {
-      for (int i=st[0]; i<=ed[0]; i++) {
-        
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        s = d_bh1[m];
-        
-        if ( GET_FACE_BC(s, BC_FACE_W) == n )
-        {
-          q = ht * (sf - d_t0[m]);
-          d_qbc[_F_IDX_V3DEX(0, i-1, j, k, ix, jx, kx, gd)] += q;
-          va += q; // マイナス面の正の値は流入
-          d_t[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)] = sf; // 表面温度を代入
-        }
-        
-        if ( GET_FACE_BC(s, BC_FACE_E) == n )
-        {
-          q = ht * (d_t0[m] - sf);
-          d_qbc[_F_IDX_V3DEX(0, i, j, k, ix, jx, kx, gd)] += q;
-          va -= q; // プラス面の正の値は流出
-          d_t[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)] = sf;
-        }
-        
-        if ( GET_FACE_BC(s, BC_FACE_S) == n )
-        {
-          q = ht * (sf - d_t0[m]);
-          d_qbc[_F_IDX_V3DEX(1, i, j-1, k, ix, jx, kx, gd)] += q;
+  switch (face)
+  {
+    case X_MINUS:
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pp, sf) schedule(static) reduction(+:va)
+      for (int k=1; k<=kx; k++) {
+        for (int j=1; j<=jx; j++) {
+          size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
+          REAL_TYPE q = pp * (sf - d_t0[m]);
+          d_qbc[_F_IDX_V3DEX(0, 0, j, k, ix, jx, kx, gd)] += q; // マイナス面の正の値は流入
           va += q;
-          d_t[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)] = sf;
-        }
-        
-        if ( GET_FACE_BC(s, BC_FACE_N) == n )
-        {
-          q = ht * (d_t0[m] - sf);
-          d_qbc[_F_IDX_V3DEX(1, i, j, k, ix, jx, kx, gd)] += q;
-          va -= q;
-          d_t[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)] = sf;
-        }
-        
-        if ( GET_FACE_BC(s, BC_FACE_B) == n )
-        {
-          q = ht * (sf - d_t0[m]);
-          d_qbc[_F_IDX_V3DEX(2, i, j, k-1, ix, jx, kx, gd)] += q;
-          va += q;
-          d_t[_F_IDX_S3D(i, j, k-1, ix, jx, kx, gd)] = sf;
-        }
-        
-        if ( GET_FACE_BC(s, BC_FACE_T) == n )
-        {
-          q = ht * (d_t0[m] - sf);
-          d_qbc[_F_IDX_V3DEX(2, i, j, k, ix, jx, kx, gd)] += q;
-          va -= q;
-          d_t[_F_IDX_S3D(i, j, k+1, ix, jx, kx, gd)] = sf;
+          d_t[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)] = sf; // 等温セルに指定温度を代入
         }
       }
-    }
+      break;
+      
+    case X_PLUS:
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pp, sf) schedule(static) reduction(+:va)
+      for (int k=1; k<=kx; k++) {
+        for (int j=1; j<=jx; j++) {
+          size_t m = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
+          REAL_TYPE q = pp * (d_t0[m] - sf);
+          d_qbc[_F_IDX_V3DEX(0, ix, j, k, ix, jx, kx, gd)] -= q; // プラス面の正の値は流出
+          va -= q;
+          d_t[_F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd)] = sf;
+        }
+      }
+      break;
+      
+    case Y_MINUS:
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pp, sf) schedule(static) reduction(+:va)
+      for (int k=1; k<=kx; k++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
+          REAL_TYPE q = pp * (sf - d_t0[m]);
+          d_qbc[_F_IDX_V3DEX(1, i, 0, k, ix, jx, kx, gd)] += q;
+          va += q;
+          d_t[_F_IDX_S3D(i, 0, k, ix, jx, kx, gd)] = sf;
+        }
+      }
+      break;
+      
+    case Y_PLUS:
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pp, sf) schedule(static) reduction(+:va)
+      for (int k=1; k<=kx; k++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
+          REAL_TYPE q = pp * (d_t0[m] - sf);
+          d_qbc[_F_IDX_V3DEX(1, i, jx, k, ix, jx, kx, gd)] -= q;
+          va -= q;
+          d_t[_F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd)] = sf;
+        }
+      }
+      break;
+      
+    case Z_MINUS:
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pp, sf) schedule(static) reduction(+:va)
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
+          REAL_TYPE q = pp * (sf - d_t0[m]);
+          d_qbc[_F_IDX_V3DEX(2, i, j, 0, ix, jx, kx, gd)] += q;
+          va += q;
+          d_t[_F_IDX_S3D(i, j, 0, ix, jx, kx, gd)] = sf;
+        }
+      }
+      break;
+      
+    case Z_PLUS:
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pp, sf) schedule(static) reduction(+:va)
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
+          REAL_TYPE q = pp * (d_t0[m] - sf);
+          d_qbc[_F_IDX_V3DEX(2, i, j, kx, ix, jx, kx, gd)] -= q;
+          va -= q;
+          d_t[_F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd)] = sf;
+        }
+      }
+      break;
   }
   
-  if ( numProc > 1 )
-  {
-		REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
-    {
-      Hostonly_ printf("Allreduce Error\n");
-      Exit(0);
-    }
-	}
-  
-  return va; // 単位面積あたりの無次元熱流束の和
+  return va;
 }
 
 
 // #################################################################
-// 単媒質の場合の熱伝達温境界条件タイプSN（自然対流）　流体のみを解く場合
-REAL_TYPE SetBC3D::ps_IBC_Transfer_SN_SM(REAL_TYPE* d_qbc, const int* d_bh1, const int n, REAL_TYPE* d_t, const REAL_TYPE* d_t0)
+/**
+ * @brief 外部領域の速度指定の境界条件処理
+ * @retval 無次元熱量
+ * @param [in,out] d_ws  温度増分
+ * @param [in]     d_bh1 BCindex H1
+ * @param [in]     face  外部境界面番号
+ * @param [in]     tm    時刻
+ * @param [in]     v00   基準速度
+ * @note モニタ量の熱量 va は系に対する流入量なので，基準温度に対する熱量
+ */
+REAL_TYPE SetBC3D::psObcSpecVH(REAL_TYPE* d_ws, const int* d_bh1, const int face, const double tm, const REAL_TYPE* v00)
+{
+  if ( nID[face] >= 0 ) return 0.0;
+  
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  REAL_TYPE va = 0.0;
+  REAL_TYPE f_e, f_w, f_n, f_s, f_t, f_b, c;
+  REAL_TYPE dh = deltaX;
+  REAL_TYPE dh1 = 1.0/dh;
+  REAL_TYPE vec[3];
+  REAL_TYPE u_ref = v00[1];
+  REAL_TYPE v_ref = v00[2];
+  REAL_TYPE w_ref = v00[3];
+  REAL_TYPE t_nd = FBUtility::convK2ND(obc[face].getTemp(), BaseTemp, DiffTemp);
+  REAL_TYPE dummy = extractVelOBC(face, vec, tm, v00);
+  
+  f_e = f_w = f_n = f_s = f_t = f_b = 0.0; // 境界条件以外の寄与をゼロにしておく
+  
+  switch (face)
+  {
+    case X_MINUS:
+      c = vec[0] - u_ref;
+      f_w = c * t_nd;
+      
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, f_e, f_w, f_n, f_s, f_t, f_b) \
+schedule(static) reduction(+:va)
+      for (int k=1; k<=kx; k++) {
+        for (int j=1; j<=jx; j++) {
+          size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
+          int s = d_bh1[m];
+          va += f_w;
+          REAL_TYPE ff = f_e - f_w + f_n - f_s + f_t - f_b;
+          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
+        }
+      }
+      break;
+      
+    case X_PLUS:
+      c = vec[0] - u_ref;
+      f_e = -c * t_nd; // ref_tが正のとき，X+方向のセルでは流出なので符号反転
+      
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, f_e, f_w, f_n, f_s, f_t, f_b) \
+schedule(static) reduction(+:va)
+      for (int k=1; k<=kx; k++) {
+        for (int j=1; j<=jx; j++) {
+          size_t m = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
+          int s = d_bh1[m];
+          va += f_e;
+          REAL_TYPE ff = f_e - f_w + f_n - f_s + f_t - f_b;
+          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
+        }
+      }
+      break;
+      
+    case Y_MINUS:
+      c = vec[1] - v_ref;
+      f_s = c * t_nd;
+      
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, f_e, f_w, f_n, f_s, f_t, f_b) \
+schedule(static) reduction(+:va)
+      for (int k=1; k<=kx; k++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
+          int s = d_bh1[m];
+          va += f_s;
+          REAL_TYPE ff = f_e - f_w + f_n - f_s + f_t - f_b;
+          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
+        }
+      }
+      break;
+      
+    case Y_PLUS:
+      c = vec[1] - v_ref;
+      f_n = -c * t_nd; // 符号反転
+      
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, f_e, f_w, f_n, f_s, f_t, f_b) \
+schedule(static) reduction(+:va)
+      for (int k=1; k<=kx; k++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
+          int s = d_bh1[m];
+          va += f_n;
+          REAL_TYPE ff = f_e - f_w + f_n - f_s + f_t - f_b;
+          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
+        }
+      }
+      break;
+      
+    case Z_MINUS:
+      c = vec[2] - w_ref;
+      f_b = c * t_nd;
+      
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, f_e, f_w, f_n, f_s, f_t, f_b) \
+schedule(static) reduction(+:va)
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
+          int s = d_bh1[m];
+          va += f_b;
+          REAL_TYPE ff = f_e - f_w + f_n - f_s + f_t - f_b;
+          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
+        }
+      }
+      break;
+      
+    case Z_PLUS:
+      c = vec[2] - w_ref;
+      f_t = -c * t_nd; // 符号反転
+      
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, f_e, f_w, f_n, f_s, f_t, f_b) \
+schedule(static) reduction(+:va)
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
+          int s = d_bh1[m];
+          va += f_t;
+          REAL_TYPE ff = f_e - f_w + f_n - f_s + f_t - f_b;
+          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
+        }
+      }
+      break;
+  }
+  
+  return va;
+}
+
+
+// #################################################################
+/**
+ * @brief 熱伝達境界条件タイプSN（自然対流）
+ * @retval 熱流束の和 (W/m^2)
+ * @param [out]    d_qbc  境界条件熱流束
+ * @param [in]     d_bh1  BCindex H1
+ * @param [in]     n      境界条件コンポーネントのエントリ番号
+ * @param [in]     d_t0   n時刻の温度場
+ * @note
+ *    - 熱流束は加算（他の条件と合成）
+ *    - pセルは流体セル
+ */
+REAL_TYPE SetBC3D::psIbcTransferSN (REAL_TYPE* d_qbc, const int* d_bh1, const int n, const REAL_TYPE* d_t0)
 {
   int ix = size[0];
   int jx = size[1];
@@ -3755,7 +3523,8 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SN_SM(REAL_TYPE* d_qbc, const int* d_bh1, con
   int gd = guide;
   int odr= n;
   
-  REAL_TYPE q, va=0.0;
+  REAL_TYPE q;
+  REAL_TYPE va = 0.0;
   int st[3], ed[3];
   
   REAL_TYPE a1 = cmp[n].ca[CompoList::vert_laminar_alpha];    // vertical, upper, laminar
@@ -3777,140 +3546,64 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SN_SM(REAL_TYPE* d_qbc, const int* d_bh1, con
   REAL_TYPE sf = FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp); // 保持されている温度はKelvin
   
   cmp[n].getBbox(st, ed);
-  
-  if ( cmp[n].get_sw_HTmodeRef() == CompoList::HT_mode_bulk )
-  {
     
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, st, ed, odr) \
-            firstprivate(a1, a2, a3, a4, b1, b2, b3, b4, c1, c2, ht, ht1, ht3, sf) \
+
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, st, ed, odr, ht1, ht3, sf) \
             private(q) \
             schedule(static) reduction(+:va)
     
-    for (int k=st[2]; k<=ed[2]; k++) {
-      for (int j=st[1]; j<=ed[1]; j++) {
-        for (int i=st[0]; i<=ed[0]; i++) {
-          
-          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          int s = d_bh1[m];
-          
-          if ( GET_FACE_BC(s, BC_FACE_W) == odr ) // vertical
-          {
-            q = ht1 * (sf - 0.0); // 基準温度との温度差
-            d_qbc[_F_IDX_V3DEX(0, i-1, j, k, ix, jx, kx, gd)] += q;
-            va += q; // マイナス面の正の値は流入
-            d_t[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)] = sf; // 固体セルに表面温度を代入
-          }
-          
-          if ( GET_FACE_BC(s, BC_FACE_E) == odr ) // vertical
-          {
-            q = ht1 * (0.0 - sf);
-            d_qbc[_F_IDX_V3DEX(0, i, j, k, ix, jx, kx, gd)] += q;
-            va -= q; // プラス面の正の値は流出
-            d_t[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)] = sf;
-          }
-          
-          if ( GET_FACE_BC(s, BC_FACE_S) == odr ) // vertical
-          {
-            q = ht1 * (sf - 0.0);
-            d_qbc[_F_IDX_V3DEX(1, i, j-1, k, ix, jx, kx, gd)] += q;
-            va += q;
-            d_t[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)] = sf;
-          }
-          
-          if ( GET_FACE_BC(s, BC_FACE_N) == odr ) // vertical
-          {
-            q = ht1 * (0.0 - sf);
-            d_qbc[_F_IDX_V3DEX(1, i, j, k, ix, jx, kx, gd)] += q;
-            va -= q;
-            d_t[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)] = sf;
-          }
-          
-          if ( GET_FACE_BC(s, BC_FACE_B) == odr ) // horizontal
-          {
-            q = ht3 * (sf - 0.0);
-            d_qbc[_F_IDX_V3DEX(2, i, j, k-1, ix, jx, kx, gd)] += q;
-            va += q;
-            d_t[_F_IDX_S3D(i, j, k-1, ix, jx, kx, gd)] = sf;
-          }
-          
-          if ( GET_FACE_BC(s, BC_FACE_T) == odr ) // horizontal
-          {
-            q = ht1 * (0.0 - sf);
-            d_qbc[_F_IDX_V3DEX(2, i, j, k, ix, jx, kx, gd)] += q;
-            va -= q;
-            d_t[_F_IDX_S3D(i, j, k+1, ix, jx, kx, gd)] = sf;
-          }
+  for (int k=st[2]; k<=ed[2]; k++) {
+    for (int j=st[1]; j<=ed[1]; j++) {
+      for (int i=st[0]; i<=ed[0]; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int s = d_bh1[m];
+        
+        if ( GET_FACE_BC(s, BC_FACE_W) == odr )
+        {
+          q = ht1 * (sf - d_t0[m]); // 基準温度との温度差
+          d_qbc[_F_IDX_V3DEX(0, i-1, j, k, ix, jx, kx, gd)] += q;
+          va += q; // マイナス面の正の値は流入
         }
-      }
-    }
-    
-  }
-  else // Local
-  {
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, st, ed, odr) \
-            firstprivate(a1, a2, a3, a4, b1, b2, b3, b4, c1, c2, ht, ht1, ht3, sf) \
-            private(q) \
-            schedule(static) reduction(+:va)
-    
-    for (int k=st[2]; k<=ed[2]; k++) {
-      for (int j=st[1]; j<=ed[1]; j++) {
-        for (int i=st[0]; i<=ed[0]; i++) {
-          
-          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          int s = d_bh1[m];
-          
-          if ( GET_FACE_BC(s, BC_FACE_W) == odr )
-          {
-            q = ht1 * (sf - d_t0[m]); // 基準温度との温度差
-            d_qbc[_F_IDX_V3DEX(0, i-1, j, k, ix, jx, kx, gd)] += q;
-            va += q; // マイナス面の正の値は流入
-            d_t[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)] = sf; // 固体セルに表面温度を代入
-          }
-          
-          if ( GET_FACE_BC(s, BC_FACE_E) == odr )
-          {
-            q = ht1 * (d_t0[m] - sf);
-            d_qbc[_F_IDX_V3DEX(0, i, j, k, ix, jx, kx, gd)] += q;
-            va -= q; // プラス面の正の値は流出
-            d_t[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)] = sf;
-          }
-          
-          if ( GET_FACE_BC(s, BC_FACE_S) == odr )
-          {
-            q = ht1 * (sf - d_t0[m]);
-            d_qbc[_F_IDX_V3DEX(1, i, j-1, k, ix, jx, kx, gd)] += q;
-            va += q;
-            d_t[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)] = sf;
-          }
-          
-          if ( GET_FACE_BC(s, BC_FACE_N) == odr )
-          {
-            q = ht1 * (d_t0[m] - sf);
-            d_qbc[_F_IDX_V3DEX(1, i, j, k, ix, jx, kx, gd)] += q;
-            va -= q;
-            d_t[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)] = sf;
-          }
-          
-          if ( GET_FACE_BC(s, BC_FACE_B) == odr )
-          {
-            q = ht3 * (sf - d_t0[m]);
-            d_qbc[_F_IDX_V3DEX(2, i, j, k-1, ix, jx, kx, gd)] += q;
-            va += q;
-            d_t[_F_IDX_S3D(i, j, k-1, ix, jx, kx, gd)] = sf;
-          }
-          
-          if ( GET_FACE_BC(s, BC_FACE_T) == odr )
-          {
-            q = ht1 * (d_t0[m] - sf);
-            d_qbc[_F_IDX_V3DEX(2, i, j, k, ix, jx, kx, gd)] += q;
-            va -= q;
-            d_t[_F_IDX_S3D(i, j, k+1, ix, jx, kx, gd)] = sf;
-          }
+        
+        if ( GET_FACE_BC(s, BC_FACE_E) == odr )
+        {
+          q = ht1 * (d_t0[m] - sf);
+          d_qbc[_F_IDX_V3DEX(0, i, j, k, ix, jx, kx, gd)] += q;
+          va -= q; // プラス面の正の値は流出
+        }
+        
+        if ( GET_FACE_BC(s, BC_FACE_S) == odr )
+        {
+          q = ht1 * (sf - d_t0[m]);
+          d_qbc[_F_IDX_V3DEX(1, i, j-1, k, ix, jx, kx, gd)] += q;
+          va += q;
+        }
+        
+        if ( GET_FACE_BC(s, BC_FACE_N) == odr )
+        {
+          q = ht1 * (d_t0[m] - sf);
+          d_qbc[_F_IDX_V3DEX(1, i, j, k, ix, jx, kx, gd)] += q;
+          va -= q;
+        }
+        
+        if ( GET_FACE_BC(s, BC_FACE_B) == odr )
+        {
+          q = ht3 * (sf - d_t0[m]);
+          d_qbc[_F_IDX_V3DEX(2, i, j, k-1, ix, jx, kx, gd)] += q;
+          va += q;
+        }
+        
+        if ( GET_FACE_BC(s, BC_FACE_T) == odr )
+        {
+          q = ht1 * (d_t0[m] - sf);
+          d_qbc[_F_IDX_V3DEX(2, i, j, k, ix, jx, kx, gd)] += q;
+          va -= q;
         }
       }
     }
   }
-  
+
   if ( numProc > 1 )
   {
     REAL_TYPE tmp = va;
@@ -3919,175 +3612,6 @@ REAL_TYPE SetBC3D::ps_IBC_Transfer_SN_SM(REAL_TYPE* d_qbc, const int* d_bh1, con
   
   return va; // 単位面積あたりの無次元熱流束の和
 }
-
-
-// #################################################################
-/**
- @brief 単媒質の場合の熱伝達温境界条件タイプSF（強制対流）　流体のみを解く場合
- @retval 熱流束の和 (W/m^2)
- @param qbc 境界条件熱流束
- @param bh1 BCindex H1
- @param n 境界条件コンポーネントのエントリ番号
- @param t n+1時刻の温度場
- @param t0 n時刻の温度場
- @note 
-    - 熱流束は加算（他の条件と合成）
-    - pセルは流体セル
- */
-REAL_TYPE SetBC3D::ps_IBC_Transfer_SF_SM(REAL_TYPE* d_qbc, const int* d_bh1, const int n, REAL_TYPE* d_t, const REAL_TYPE* d_t0)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  int s, m;
-  REAL_TYPE ht, sf, q, va=0.0;
-  REAL_TYPE a1, b1, c1;
-  int st[3], ed[3];
-  
-  a1 = cmp[n].ca[CompoList::alpha];
-  b1 = cmp[n].ca[CompoList::beta];
-  c1 = cmp[n].ca[CompoList::gamma];
-  ht = lambda / (RefV*RefL*rho*cp) * a1*pow(Reynolds, b1) * pow(Prandtl, c1);    // RefMediumで指定される物性値
-  sf = FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp); // 保持されている温度はKelvin
-  
-  cmp[n].getBbox(st, ed);
-  
-  if ( cmp[n].get_sw_HTmodeRef() == CompoList::HT_mode_bulk )
-  {
-    for (int k=st[2]; k<=ed[2]; k++) {
-      for (int j=st[1]; j<=ed[1]; j++) {
-        for (int i=st[0]; i<=ed[0]; i++) {
-          
-          m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          s = d_bh1[m];
-          
-          if ( GET_FACE_BC(s, BC_FACE_W) == n )
-          {
-            q = ht * (sf - 0.0); // 基準温度との温度差
-            d_qbc[_F_IDX_V3DEX(0, i-1, j, k, ix, jx, kx, gd)] += q;
-            va += q; // マイナス面の正の値は流入
-            d_t[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)] = sf; // 固体セルに表面温度を代入
-          }
-          
-          if ( GET_FACE_BC(s, BC_FACE_E) == n )
-          {
-            q = ht * (0.0 - sf);
-            d_qbc[_F_IDX_V3DEX(0, i, j, k, ix, jx, kx, gd)] += q;
-            va -= q; // プラス面の正の値は流出
-            d_t[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)] = sf;
-          }
-          
-          if ( GET_FACE_BC(s, BC_FACE_S) == n )
-          {
-            q = ht * (sf - 0.0);
-            d_qbc[_F_IDX_V3DEX(1, i, j-1, k, ix, jx, kx, gd)] += q;
-            va += q;
-            d_t[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)] = sf;
-          }
-          
-          if ( GET_FACE_BC(s, BC_FACE_N) == n )
-          {
-            q = ht * (0.0 - sf);
-            d_qbc[_F_IDX_V3DEX(1, i, j, k, ix, jx, kx, gd)] += q;
-            va -= q;
-            d_t[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)] = sf;
-          }
-          
-          if ( GET_FACE_BC(s, BC_FACE_B) == n )
-          {
-            q = ht * (sf - 0.0);
-            d_qbc[_F_IDX_V3DEX(2, i, j, k-1, ix, jx, kx, gd)] += q;
-            va += q;
-            d_t[_F_IDX_S3D(i, j, k-1, ix, jx, kx, gd)] = sf;
-          }
-          
-          if ( GET_FACE_BC(s, BC_FACE_T) == n )
-          {
-            q = ht * (0.0 - sf);
-            d_qbc[_F_IDX_V3DEX(2, i, j, k, ix, jx, kx, gd)] += q;
-            va -= q;
-            d_t[_F_IDX_S3D(i, j, k+1, ix, jx, kx, gd)] = sf;
-          }
-        }
-      }
-    }
-  }
-  else // Local
-  {
-    for (int k=st[2]; k<=ed[2]; k++) {
-      for (int j=st[1]; j<=ed[1]; j++) {
-        for (int i=st[0]; i<=ed[0]; i++) {
-          
-          m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          s = d_bh1[m];
-          
-          if ( GET_FACE_BC(s, BC_FACE_W) == n )
-          {
-            q = ht * (sf - d_t0[m]); // 基準温度との温度差
-            d_qbc[_F_IDX_V3DEX(0, i-1, j, k, ix, jx, kx, gd)] += q;
-            va += q; // マイナス面の正の値は流入
-            d_t[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)] = sf; // 固体セルに表面温度を代入
-          }
-          
-          if ( GET_FACE_BC(s, BC_FACE_E) == n )
-          {
-            q = ht * (d_t0[m] - sf);
-            d_qbc[_F_IDX_V3DEX(0, i, j, k, ix, jx, kx, gd)] += q;
-            va -= q; // プラス面の正の値は流出
-            d_t[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)] = sf;
-          }
-          
-          if ( GET_FACE_BC(s, BC_FACE_S) == n )
-          {
-            q = ht * (sf - d_t0[m]);
-            d_qbc[_F_IDX_V3DEX(1, i, j-1, k, ix, jx, kx, gd)] += q;
-            va += q;
-            d_t[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)] = sf;
-          }
-          
-          if ( GET_FACE_BC(s, BC_FACE_N) == n )
-          {
-            q = ht * (d_t0[m] - sf);
-            d_qbc[_F_IDX_V3DEX(1, i, j, k, ix, jx, kx, gd)] += q;
-            va -= q;
-            d_t[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)] = sf;
-          }
-          
-          if ( GET_FACE_BC(s, BC_FACE_B) == n )
-          {
-            q = ht * (sf - d_t0[m]);
-            d_qbc[_F_IDX_V3DEX(2, i, j, k-1, ix, jx, kx, gd)] += q;
-            va += q;
-            d_t[_F_IDX_S3D(i, j, k-1, ix, jx, kx, gd)] = sf;
-          }
-          
-          if ( GET_FACE_BC(s, BC_FACE_T) == n )
-          {
-            q = ht * (d_t0[m] - sf);
-            d_qbc[_F_IDX_V3DEX(2, i, j, k, ix, jx, kx, gd)] += q;
-            va -= q;
-            d_t[_F_IDX_S3D(i, j, k+1, ix, jx, kx, gd)] = sf;
-          }
-        }
-      }
-    }
-  }
-
-  if ( numProc > 1 )
-  {
-    REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
-    {
-      Hostonly_ printf("Allreduce Error\n");
-      Exit(0);
-    }
-  }
-
-  return va; // 単位面積あたりの無次元熱流束の和
-}
-
 
 
 
@@ -4166,83 +3690,6 @@ REAL_TYPE SetBC3D::setHeatTransferB(REAL_TYPE* qbc, REAL_TYPE* t, int* bx, int n
   return (c);
 }*/
 
-
-
-// #################################################################
-/**
- @fn REAL_TYPE SetBC3D::setIsoThermal(REAL_TYPE* qbc, REAL_TYPE* t, int* bx, int n, REAL_TYPE* t0)
- @brief 単媒質の場合の等温境界条件
- @retval sum of heat flux (W/m^2)
- @param qbc 境界条件熱流束
- @param t n+1時刻の温度場
- @param bx BCindex
- @param n 境界条件コンポーネントのエントリ番号
- @param t0 n時刻の温度場
- 
-REAL_TYPE SetBC3D::setIsoThermal(REAL_TYPE* qbc, REAL_TYPE* t, int* bx, int n, REAL_TYPE* t0)
-{
-  int i,j,k;
-  int s, m0;
-  int wi, wj, wk;
-  int li, lj, lk;
-  int ni, nj, nk;
-  REAL_TYPE qi, qj, qk, pp, st, qsum=0.0, tmp, c;
-  REAL_TYPE di, dj, dk; // outer normal
-
-  pp = 2.0/(dh*RefV*RefL);
-  st = FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp); // 保持されている温度はKelvin
-  
-  for (k=cmp[n].ci.st[2]-1; k<=cmp[n].ci.ed[2]; k++) {
-    for (j=cmp[n].ci.st[1]-1; j<=cmp[n].ci.ed[1]; j++) {
-      for (i=cmp[n].ci.st[0]-1; i<=cmp[n].ci.ed[0]; i++) {
-        m0 = FBUtility::getFindexS3D(size, guide, i  , j  , k  );
-        s = bx[m0];
-        if ( (s & BIT_MASK_10) == n ) {
-
-          if ( TEST_BIT(s, QFACE_I) ) {
-            wi = BIT_SHIFT(s, DIR_I);
-            t[ FBUtility::getFindexS3D(size, guide, i+wi, j, k) ] = st; // 等温セルに指定温度を代入
-            li = FBUtility::getFindexS3D(size, guide, i+1-wi, j, k); // 計算側のセルインデクス
-            ni = DECODE_MAT( bx[li] ); // 計算セルのマテリアルのオーダーを得る
-            di = 1.0-2.0*(REAL_TYPE)wi;
-            qi = -pp * mat[ni].P[p_thermal_conductivity] / (mat[ni].P[p_density] * mat[ni].P[p_specific_heat]) * (t0[li]-st) * di;
-            qbc[FBUtility::getFindexV3DEx(size, guide, 0, i, j, k)] = qi;
-            qsum += qi*di;
-          }
-          if ( TEST_BIT(s, QFACE_J) ) {
-            wj = BIT_SHIFT(s, DIR_J);
-            t[ FBUtility::getFindexS3D(size, guide, i, j+wj, k) ] = st;
-            lj = FBUtility::getFindexS3D(size, guide, i, j+1-wj, k);
-            nj = DECODE_MAT( bx[lj] );
-            dj = 1.0-2.0*(REAL_TYPE)wj;
-            qj = -pp * mat[nj].P[p_thermal_conductivity] / (mat[nj].P[p_density] * mat[nj].P[p_specific_heat]) * (t0[lj]-st) * dj;
-            qbc[FBUtility::getFindexV3DEx(size, guide, 1, i, j, k)] = qj;
-            qsum += qj*dj;
-          }
-          if ( TEST_BIT(s, QFACE_K) ) {
-            wk = BIT_SHIFT(s, DIR_K);
-            t[ FBUtility::getFindexS3D(size, guide, i, j, k+wk) ] = st;
-            lk = FBUtility::getFindexS3D(size, guide, i, j, k+1-wk);
-            nk = DECODE_MAT( bx[lk] );
-            dk = 1.0-2.0*(REAL_TYPE)wk;
-            qk = -pp * mat[nk].P[p_thermal_conductivity] / (mat[nk].P[p_density] * mat[nk].P[p_specific_heat]) * (t0[lk]-st) * dk;
-            qbc[FBUtility::getFindexV3DEx(size, guide, 2, i, j, k)] = qk;
-            qsum += qk*dk;
-          }
-        }
-      }
-    }
-  }
-  
-  if ( numProc > 1 ) 
- {
-		tmp = qsum;
-		para_mng->Allreduce(&tmp, &qsum, 1, _SUM);
-	}
-  c = qsum * (RefV*DiffTemp*rho*cp);
-  
-  return (c);
-}*/
 
 
 // #################################################################

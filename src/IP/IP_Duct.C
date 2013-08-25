@@ -36,6 +36,7 @@ bool IP_Duct::getTP(Control* R, TextParser* tpCntl)
   std::string label;
   REAL_TYPE ct;
   
+  
   // Shape
   label="/IntrinsicExample/Shape";
   if ( !(tpCntl->getInspectedValue(label, str )) ) {

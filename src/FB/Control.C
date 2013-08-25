@@ -504,30 +504,6 @@ void Control::getApplicationControl()
   
   int ct = 0;
   
-  // Performance Testの設定（Hidden）
-  // 'PerformanceTest'の文字列チェックはしないので注意して使うこと
-  Hide.PM_Test = OFF;
-  label = "/ApplicationControl/PerformanceTest";
-  
-  if ( tpCntl->chkLabel(label) )
-  {
-    if ( tpCntl->getInspectedValue(label, str) )
-    {
-      if     ( !strcasecmp(str.c_str(), "on") )   Hide.PM_Test = ON;
-      else if( !strcasecmp(str.c_str(), "off") )  Hide.PM_Test = OFF;
-      else
-      {
-        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-        Exit(0);
-      }
-    }
-    else
-    {
-      Exit(0);
-    }
-  }
-
-  
   
   // 変数の範囲制限モードを取得 (Hidden)
   Hide.Range_Limit = Range_Normal;
@@ -542,7 +518,7 @@ void Control::getApplicationControl()
       else if( !strcasecmp(str.c_str(), "off") ) Hide.Range_Limit = Range_Cutoff;
       else
       {
-        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s\n", label.c_str());
+        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
         Exit(0);
       }
     }
@@ -551,7 +527,6 @@ void Control::getApplicationControl()
       Exit(0);
     }
   }
-
   
   
   // Cell IDのゼロを指定IDに変更するオプションを取得する（Hidden）
@@ -569,6 +544,53 @@ void Control::getApplicationControl()
       else
       {
         Hide.Change_ID = ct;
+      }
+    }
+    else
+    {
+      Exit(0);
+    }
+  }
+  
+  
+  // ボクセルファイル出力 (Hidden)
+  FIO.IO_Voxel = OFF;
+  label = "/ApplicationControl/VoxelOutput";
+  
+  if ( tpCntl->chkLabel(label) )
+  {
+    if ( tpCntl->getInspectedValue(label, str) )
+    {
+      if     ( !strcasecmp(str.c_str(), "svx") )  FIO.IO_Voxel = Sphere_SVX;
+      else if( !strcasecmp(str.c_str(), "off") )  FIO.IO_Voxel = OFF;
+      else
+      {
+        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+        Exit(0);
+      }
+    }
+    else
+    {
+      Exit(0);
+    }
+  }
+  
+  
+  
+  // デバッグ用のdiv(u)の出力指定 (Hidden)
+  FIO.Div_Debug = OFF;
+  label = "/ApplicationControl/DebugDivergence";
+  
+  if ( tpCntl->chkLabel(label) )
+  {
+    if ( tpCntl->getInspectedValue(label, str) )
+    {
+      if     ( !strcasecmp(str.c_str(), "on") )    FIO.Div_Debug = ON;
+      else if( !strcasecmp(str.c_str(), "off") )   FIO.Div_Debug = OFF;
+      else
+      {
+        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+        Exit(0);
       }
     }
     else
@@ -979,53 +1001,6 @@ void Control::getFieldData()
     else
     {
       Interval[Interval_Manager::tg_average].setInterval(val);
-    }
-  }
-  
-  
-  // ボクセルファイル出力
-  FIO.IO_Voxel = OFF;
-  label = "/Output/VoxelOutput";
-  
-  if ( tpCntl->chkLabel(label) )
-  {
-    if ( tpCntl->getInspectedValue(label, str) )
-    {
-      if     ( !strcasecmp(str.c_str(), "svx") )  FIO.IO_Voxel = Sphere_SVX;
-      else if( !strcasecmp(str.c_str(), "off") )  FIO.IO_Voxel = OFF;
-      else
-      {
-        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-        Exit(0);
-      }
-    }
-    else
-    {
-      Exit(0);
-    }
-  }
-
-  
-  
-  // デバッグ用のdiv(u)の出力指定
-  FIO.Div_Debug = OFF;
-  label = "/Output/DebugDivergence";
-  
-  if ( tpCntl->chkLabel(label) )
-  {
-    if ( tpCntl->getInspectedValue(label, str) )
-    {
-      if     ( !strcasecmp(str.c_str(), "on") )    FIO.Div_Debug = ON;
-      else if( !strcasecmp(str.c_str(), "off") )   FIO.Div_Debug = OFF;
-      else
-      {
-        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-        Exit(0);
-      }
-    }
-    else
-    {
-      Exit(0);
     }
   }
 

@@ -59,7 +59,7 @@ private:
   bool HeatProblem;
   bool isCDS;
   
-  TextParser* tpCntl;      ///< テキストパーサーのラッパークラス
+  TextParser* tpCntl;     ///< テキストパーサー
   BoundaryOuter* BaseBc;  ///< テンポラリのテーブル
 
 
@@ -109,7 +109,7 @@ private:
   
   
   /**
-   * @brief コンポーネントが存在するかどうかを調べる
+   * @brief コンポーネントがグローバルに存在するかどうかを調べる
    * @param [in] label  テストするラベル
    * @param [in] cmp    CompoList
    * @retval bool値
@@ -125,7 +125,7 @@ private:
   
   
   /**
-   * @brief HTコンポーネントが存在するかどうかを調べる
+   * @brief HTコンポーネントがグローバルに存在するかどうかを調べる
    * @param [in] label  テストするラベル
    * @param [in] cmp    CompoList
    * @retval bool値
@@ -141,35 +141,12 @@ private:
   
   
   // 境界条件の値(REAL_TYPE型)を取得し，返す
-  REAL_TYPE get_BCval_real(const string label);
+  REAL_TYPE getBCvalReal(const string label);
   
   
-  // 外部境界条件のキーワードを照合し， BCの文字列を返す
-  string getOBCstr(const int id);
+  // 内部境界条件の座標値を取得し，登録する
+  void getCenter(const string label_base, REAL_TYPE* v);
   
-
-  // 外部境界の速度境界条件のタイプを取得し，返す
-  int getVprofile(const string label_base);
-  
-  
-  // コンポーネントのBbox始点情報を返す
-  FB::Vec3i getCmpGbbox_st(const int odr, const int* gci) const
-  {
-    FB::Vec3i st;
-    st.x = gci[6*odr+0];
-    st.y = gci[6*odr+1];
-    st.z = gci[6*odr+2];
-    return st;
-  }
-  
-  /*
-   st_x ; gci[6*m+0];
-   st_y ; gci[6*m+1];
-   st_z ; gci[6*m+2];
-   ed_x ; gci[6*m+3];
-   ed_y ; gci[6*m+4];
-   ed_z ; gci[6*m+5];
-   */
   
   // コンポーネントのBbox終点情報を返す
   FB::Vec3i getCmpGbbox_ed(const int odr, const int* gci) const
@@ -181,17 +158,32 @@ private:
     return ed;
   }
   
+  /*
+   st_x ; gci[6*m+0];
+   st_y ; gci[6*m+1];
+   st_z ; gci[6*m+2];
+   ed_x ; gci[6*m+3];
+   ed_y ; gci[6*m+4];
+   ed_z ; gci[6*m+5];
+   */
   
-  // 内部境界条件の座標値を取得し，登録する
-  void getCenter(const string label_base, REAL_TYPE* v);
+  // コンポーネントのBbox始点情報を返す
+  FB::Vec3i getCmpGbbox_st(const int odr, const int* gci) const
+  {
+    FB::Vec3i st;
+    st.x = gci[6*odr+0];
+    st.y = gci[6*odr+1];
+    st.z = gci[6*odr+2];
+    return st;
+  }
+  
+  
+  // Darcyのパラメータを取得する
+  void get_Darcy(const string label_base, const int n, CompoList* cmp);
   
   
   // 内部境界条件の方向ベクトル値を取得し，登録する
   void getDir(const string label_base, REAL_TYPE* v);
-  
-  
-  // 内部境界条件の法線ベクトル値を取得し，登録する
-  void get_NV(const string label_base, REAL_TYPE* v);
   
   
   // ConstTemperatureのパラメータを取得する
@@ -223,7 +215,7 @@ private:
   
   
   // HeatTransferSのパラメータを取得
-  void getIbcHT_S(const string label_base, const int n, CompoList* cmp, const MediumList* mat);
+  void getIbcHT_S(const string label_base, const int n, CompoList* cmp);
   
   
   // HeatTransferSFのパラメータを取得する
@@ -231,7 +223,7 @@ private:
   
   
   // HeatTransferSNのパラメータを取得する
-  void getIbcHT_SN(const string label_base, const int n, CompoList* cmp, const MediumList* mat);
+  void getIbcHT_SN(const string label_base, const int n, CompoList* cmp);
   
   
   // 境界条件IsoThermalのパラメータを取得し保持する
@@ -262,8 +254,8 @@ private:
   void getIbcSpecVel(const string label_base, const int n, CompoList* cmp);
   
   
-  // Darcyのパラメータを取得する
-  void get_Darcy(const string label_base, const int n, CompoList* cmp);
+  // 内部境界条件の法線ベクトル値を取得し，登録する
+  void getNV(const string label_base, REAL_TYPE* v);
   
   
   // 外部境界の遠方境界のパラメータを取得する
@@ -286,6 +278,10 @@ private:
   void getObcSpecVH(const string label_base, const int n);
   
   
+  // 外部境界条件のキーワードを照合し， BCの文字列を返す
+  string getOBCstr(const int id);
+  
+  
   // トラクションフリーの外部境界のパラメータを取得する
   void getObcTrcfree(const string label_base, const int n);
   
@@ -300,7 +296,10 @@ private:
   
   // 速度のパラメータを取得する
   void getVelocity(const string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy=false);
-
+  
+  
+  // 外部境界の速度境界条件のタイプを取得し，返す
+  int getVprofile(const string label_base);
   
   
   // 外部境界面の反対方向を返す
@@ -324,7 +323,7 @@ public:
 
   /**
    * @brief テーブルのチェック（デバッグ用）
-   * @param [in] mat  MediumList
+   * @param [in]  mat  MediumList
    * @param [out] cmp   CompoList
    */
   void checkList(const MediumList* mat, const CompoList* cmp);
@@ -372,10 +371,8 @@ public:
    * @param [in]      C     Control
    * @param [in,out]  mat   MediumList
    * @param [out]     cmp   CompoList
-   * @param [in]      PP    ポリゴン属性管理クラス [0]-[n-1]
-   * @note 格納番号は1からスタート
    */
-  void loadLocalBC(Control* C, MediumList* mat, CompoList* cmp, PolygonProperty* polyPP);
+  void loadLocalBC(Control* C, MediumList* mat, CompoList* cmp);
   
   
   /**

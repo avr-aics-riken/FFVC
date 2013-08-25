@@ -124,9 +124,9 @@ void FFV::ps_LS(IterationCtl* IC, const double rhs_nrm, const double r0)
       
       TIMING_stop(tm_heat_diff_PSOR, flop);
       
-      // 外部境界条件
+      // 外部周期境界条件
       TIMING_start(tm_heat_diff_OBC);
-      BC.OuterTBC(d_t);
+      BC.OuterTBCperiodic(d_t);
       TIMING_stop(tm_heat_diff_OBC, 0.0);
       
       // 温度の同期

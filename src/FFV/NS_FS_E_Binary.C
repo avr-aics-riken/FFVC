@@ -693,15 +693,15 @@ void FFV::NS_FS_E_Binary()
   
   
   // ノルムの増加率が規定値をこえたら，終了
-  if (convergence_prev != 0.0 ) 
+  if (CM_F.previous != 0.0 )
   {
-    convergence_rate = convergence / convergence_prev;
+    CM_F.rate = convergence / CM_F.previous;
   }
   else 
   {
-    convergence_rate = 1.0;
+    CM_F.rate = 1.0;
   }
-  convergence_prev = convergence;
+  CM_F.previous = convergence;
   
       
       

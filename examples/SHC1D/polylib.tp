@@ -1,0 +1,27 @@
+Polylib {
+
+  Rod {
+    class_name = "PolygonGroup"
+    filepath ="./rectcyl.stla"
+    movable = "false"
+    label = "VirtualMetal"
+    type = "HeatTransferB"
+  }
+
+  Insulation {
+    class_name = "PolygonGroup"
+    filepath ="./x1.stla"
+    movable = "false"
+    label = "VirtualMetal"
+    type = "adiabatic"
+  }
+
+  HeatedWall {
+    class_name = "PolygonGroup"
+    filepath ="./x0.stla"
+    movable = "false"
+    label = "VirtualMetal"
+    type = "IsoThermal"
+  }
+
+}

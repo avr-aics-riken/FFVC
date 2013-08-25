@@ -19,7 +19,7 @@ DomainInfo {
   UnitOfLength   = "NonDimensional"
   GlobalOrigin   = (-0.5, -0.5, -0.5   )
   GlobalRegion   = (1.0,  1.0,  1.0    )
-  GlobalVoxel    = (128 , 128 , 128)
+  GlobalVoxel    = (512   , 512   , 512   )
   
   //GlobalPitch    = (1.5625e-02, 1.5625e-02, 1.5625e-02)
   //GlobalDivision = (1    , 1    , 1    )

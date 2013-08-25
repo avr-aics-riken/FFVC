@@ -71,7 +71,7 @@ int FFV::Loop(const unsigned step)
   
   
   // Flow
-  if ( C.KindOfSolver != SOLID_CONDUCTION ) 
+  if ( C.KindOfSolver != SOLID_CONDUCTION )
   {
     TIMING_start(tm_flow_sct);
     
@@ -199,42 +199,38 @@ int FFV::Loop(const unsigned step)
   
   // 瞬時値のデータ出力
 
-  // 通常
-  if ( C.Interval[Interval_Manager::tg_basic].isTriggered(CurrentStep, CurrentTime) ) 
+  if ( C.Hide.PM_Test == OFF )
   {
-    TIMING_start(tm_file_out);
-    flop_count=0.0;
-    OutputBasicVariables(flop_count);
-    TIMING_stop(tm_file_out, flop_count); 
-  }
-  
-  if ( C.Interval[Interval_Manager::tg_derived].isTriggered(CurrentStep, CurrentTime) )
-  {
-    TIMING_start(tm_file_out);
-    flop_count=0.0;
-    OutputDerivedVariables(flop_count);
-    TIMING_stop(tm_file_out, flop_count);
-  }
-  
-  
-  // 最終ステップ
-  if ( CurrentStep == C.Interval[Interval_Manager::tg_compute].getIntervalStep() ) 
-  {
-    // 指定間隔の出力がない場合のみ（重複を避ける）
-    if ( !C.Interval[Interval_Manager::tg_basic].isTriggered(CurrentStep, CurrentTime) ) 
+    // 通常
+    if ( C.Interval[Interval_Manager::tg_basic].isTriggered(CurrentStep, CurrentTime) )
     {
-      if ( C.Hide.PM_Test != ON ) 
+      TIMING_start(tm_file_out);
+      flop_count=0.0;
+      OutputBasicVariables(flop_count);
+      TIMING_stop(tm_file_out, flop_count);
+    }
+    
+    if ( C.Interval[Interval_Manager::tg_derived].isTriggered(CurrentStep, CurrentTime) )
+    {
+      TIMING_start(tm_file_out);
+      flop_count=0.0;
+      OutputDerivedVariables(flop_count);
+      TIMING_stop(tm_file_out, flop_count);
+    }
+    
+    // 最終ステップ
+    if ( CurrentStep == C.Interval[Interval_Manager::tg_compute].getIntervalStep() )
+    {
+      // 指定間隔の出力がない場合のみ（重複を避ける）
+      if ( !C.Interval[Interval_Manager::tg_basic].isTriggered(CurrentStep, CurrentTime) )
       {
         TIMING_start(tm_file_out);
         flop_count=0.0;
         OutputBasicVariables(flop_count);
-        TIMING_stop(tm_file_out, flop_count); 
+        TIMING_stop(tm_file_out, flop_count);
       }
-    }
-    
-    if ( !C.Interval[Interval_Manager::tg_derived].isTriggered(CurrentStep, CurrentTime) )
-    {
-      if ( C.Hide.PM_Test != ON )
+      
+      if ( !C.Interval[Interval_Manager::tg_derived].isTriggered(CurrentStep, CurrentTime) )
       {
         TIMING_start(tm_file_out);
         flop_count=0.0;
@@ -242,7 +238,9 @@ int FFV::Loop(const unsigned step)
         TIMING_stop(tm_file_out, flop_count);
       }
     }
+    
   }
+
 
   
   /* 20130611 commentout  PLOT3D output
@@ -434,14 +432,45 @@ int FFV::Loop(const unsigned step)
   // 発散時の打ち切り
   if ( CurrentStep > 1 ) 
   {
-    if ( (convergence_rate > 100.0) )
+    
+    switch ( C.KindOfSolver )
     {
-      Hostonly_ {
-        printf      ("\tForced termination : converegence rate >> 100.0\n");
-        fprintf(fp_b,"\tForced termination : converegence rate >> 100.0\n");
-      }
-      return -1;
+      case FLOW_ONLY:
+        if ( (CM_F.rate > 100.0) )
+        {
+          Hostonly_ {
+            printf      ("\tForced termination : converegence rate >> 100.0\n");
+            fprintf(fp_b,"\tForced termination : converegence rate >> 100.0\n");
+          }
+          return -1;
+        }
+        break;
+        
+      case THERMAL_FLOW:
+      case THERMAL_FLOW_NATURAL:
+      case CONJUGATE_HEAT_TRANSFER:
+        if ( (CM_F.rate > 100.0) || (CM_H.rate > 100.0) )
+        {
+          Hostonly_ {
+            printf      ("\tForced termination : converegence rate >> 100.0\n");
+            fprintf(fp_b,"\tForced termination : converegence rate >> 100.0\n");
+          }
+          return -1;
+        }
+        break;
+        
+      case SOLID_CONDUCTION:
+        if ( (CM_H.rate > 100.0) )
+        {
+          Hostonly_ {
+            printf      ("\tForced termination : converegence rate >> 100.0\n");
+            fprintf(fp_b,"\tForced termination : converegence rate >> 100.0\n");
+          }
+          return -1;
+        }
+        break;
     }
+    
   }
   
   // 計算時間がtimeにより指定されている場合の終了判断

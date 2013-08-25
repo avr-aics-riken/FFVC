@@ -34,6 +34,9 @@ bool IP_PPLT2D::getTP(Control* R, TextParser* tpCntl)
   std::string str;
   std::string label;
   
+  // Dimension
+  mode = dim_2d;
+  
   // 媒質指定
   label = "/IntrinsicExample/FluidMedium";
   

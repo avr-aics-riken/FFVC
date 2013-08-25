@@ -140,9 +140,6 @@ private:
   
   double face_comm_size;       ///< 全ノードについて，ローカルノード1面・一層あたりの通信量の和
   
-  REAL_TYPE convergence_prev;  ///< 前回の反復の収束値
-  REAL_TYPE convergence_rate;  ///< 収束値の増減比
-  
   REAL_TYPE deltaT; ///< 時間積分幅（無次元）
   
   int communication_mode; ///< synchronous, asynchronous
@@ -164,6 +161,13 @@ private:
   REAL_TYPE range_Ut[2]; ///< 
   REAL_TYPE range_Yp[2]; ///< 
   
+  
+  // 定常収束モニター
+  typedef struct
+  {
+    double previous;  ///< 前回の反復の収束値
+    double rate;      ///< 収束値の増減比
+  } ConvergenceMonitor;
   
   // データ領域ポインタ
   
@@ -263,9 +267,11 @@ private:
   POLYLIB_STAT poly_stat;    ///< Polylibの戻り値
   FBUtility U;               ///< ユーティリティクラス
   MonitorList MO;            ///< Monitorクラス
-  PolygonProperty* PolyPP;   ///< PolygonGroupの管理
   
   IterationCtl IC[ic_END];   ///< 反復情報管理クラス
+  
+  ConvergenceMonitor CM_F;   ///< 流動の定常収束モニター
+  ConvergenceMonitor CM_H;   ///< 熱の定常収束モニター
   
   // 20130611 ::DFI DFI;                 ///< 分散ファイルインデクス管理クラス
   // 20130611 Plot3D PLT3D;              ///< PLOT3Dクラス
@@ -429,10 +435,6 @@ private:
   void generateSolid(FILE* fp);
   
   
-  // コンポーネントの面積を計算する
-  void getCompoArea();
-  
-  
   // グローバルな領域情報を取得
   int getDomainInfo(TextParser* tp_dom);
   
@@ -446,7 +448,7 @@ private:
   
   
   // 出力ファイルの初期化
-  void init_FileOut();
+  void initFileOut();
   
   
   // インターバルの初期化
@@ -458,7 +460,7 @@ private:
   
   
   // 履歴の出力準備
-  void prep_HistoryOutput();
+  void prepHistoryOutput();
   
   
   // 読み込んだ領域情報のデバッグライト

@@ -44,7 +44,10 @@ FFV::FFV()
   CurrentStep = 0;
   CurrentStep_Avr = 0;
   
-  convergence_prev = 0.0;
+  CM_F.previous = 0.0;
+  CM_F.rate     = 0.0;
+  CM_H.previous = 0.0;
+  CM_H.rate     = 0.0;
   
   deltaT = 0.0;
   

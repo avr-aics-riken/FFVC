@@ -4501,19 +4501,16 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, Comp
   
   for (int n=1; n<=NoCompo; n++)
   {
-    if ( cmp[n].isKindCompo() )
+    int m_dir = cmp[n].getBClocation();
+    float vec[3] = { (float)cmp[n].nv[0], (float)cmp[n].nv[1], (float)cmp[n].nv[2] };
+    
+    switch ( cmp[n].getType() )
     {
-      int m_dir = cmp[n].getBClocation();
-      float vec[3] = { (float)cmp[n].nv[0], (float)cmp[n].nv[1], (float)cmp[n].nv[2] };
-      
-      switch ( cmp[n].getType() )
-      {
-        case SPEC_VEL:
-        case SPEC_VEL_WH:
-        case OUTFLOW:
-          encPbit_N_IBC(n, mid, bcd, bcp, vec, m_dir);
-          break;
-      }
+      case SPEC_VEL:
+      case SPEC_VEL_WH:
+      case OUTFLOW:
+        encPbit_N_IBC(n, mid, bcd, bcp, vec, m_dir);
+        break;
     }
   }
 
@@ -4606,19 +4603,16 @@ void VoxInfo::setBCIndexV(int* bv, const int* mid, int* bp, SetBC* BC, CompoList
   
   for (int n=1; n<=NoCompo; n++)
   {
-    if ( cmp[n].isKindCompo() )
+    int m_dir = cmp[n].getBClocation(); // same_direction=1, opposite_direction=2
+    float vec[3] = { (float)cmp[n].nv[0], (float)cmp[n].nv[1], (float)cmp[n].nv[2] };
+    
+    switch ( cmp[n].getType() )
     {
-      int m_dir = cmp[n].getBClocation(); // same_direction=1, opposite_direction=2
-      float vec[3] = { (float)cmp[n].nv[0], (float)cmp[n].nv[1], (float)cmp[n].nv[2] };
-      
-      switch ( cmp[n].getType() )
-      {
-        case SPEC_VEL:
-        case SPEC_VEL_WH:
-        case OUTFLOW:
-          cmp[n].setElement( encVbitIBC(n, bv, bp, bid, vec, m_dir, &cmp[n]) );
-          break;
-      }
+      case SPEC_VEL:
+      case SPEC_VEL_WH:
+      case OUTFLOW:
+        cmp[n].setElement( encVbitIBC(n, bv, bp, bid, vec, m_dir, &cmp[n]) );
+        break;
     }
   }
   

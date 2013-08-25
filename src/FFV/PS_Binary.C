@@ -81,7 +81,7 @@ void FFV::PS_Binary()
 		// 対流フェイズの流束型境界条件
     TIMING_start(tm_heat_cnv_BC);
     flop=0.0;
-		BC.ps_BC_Convection(d_ws, d_bh1, d_v, d_t0, CurrentTime, &C, v00, flop);
+		BC.OuterTBCconvection(d_ws, d_bh1, d_vf, d_t0, CurrentTime, &C, v00);
     TIMING_stop(tm_heat_cnv_BC, flop);
 		
     // 時間積分
@@ -98,6 +98,13 @@ void FFV::PS_Binary()
     TIMING_stop(tm_copy_array, flop);
   }
 
+  
+  // 外部周期境界条件
+  TIMING_start(tm_heat_diff_OBC);
+  BC.OuterTBCperiodic(d_ws);
+  TIMING_stop(tm_heat_diff_OBC, 0.0);
+  
+  
   TIMING_stop(tm_heat_convection_sct, 0.0);
   // <<< Passive scalar Convection section
   
@@ -107,21 +114,17 @@ void FFV::PS_Binary()
   // >>> Passive scalar Diffusion section
   TIMING_start(tm_heat_diffusion_sct);
   
-  // 外部境界条件
-  TIMING_start(tm_heat_diff_OBC);
-  BC.OuterTBC(d_ws);
-  TIMING_stop(tm_heat_diff_OBC, 0.0);
-  
-  
   
   // >>> Passive scalar Diffusion subsection 1
   TIMING_start(tm_heat_diff_sct_1);
+  
   
   // 内部境界条件 体積要素
   TIMING_start(tm_heat_diff_IBC_vol);
   flop = 0.0;
   BC.InnerTBCvol(d_ws, d_bh2, dt);
   TIMING_stop(tm_heat_diff_IBC_vol, flop);
+  
   
   // 部分段階の温度の同期
   if ( numProc > 1 )
@@ -152,9 +155,11 @@ void FFV::PS_Binary()
   BC.InnerTBCface(d_qbc, d_bh1, d_ws, d_t0); // 境界値はt^{n}から計算すること
   TIMING_stop(tm_heat_diff_IBC_face, flop);
   
+  
   TIMING_start(tm_heat_diff_OBC_face);
-  BC.OuterTBCface(d_qbc, d_bh1, d_ws, d_t0, &C, flop);
+  BC.OuterTBCdiffusion(d_qbc, d_ws, d_t0, &C);
   TIMING_stop(tm_heat_diff_OBC_face, flop);
+  
   
   // 境界条件の熱流束の同期 >>　不要？
   if ( numProc > 1 )
@@ -181,9 +186,9 @@ void FFV::PS_Binary()
     
 
     
-    // 外部境界条件
+    // 外部周期境界条件
     TIMING_start(tm_heat_diff_OBC);
-    BC.OuterTBC(d_t);
+    BC.OuterTBCperiodic(d_t);
     TIMING_stop(tm_heat_diff_OBC, 0.0);
     
     
@@ -205,6 +210,7 @@ void FFV::PS_Binary()
       TIMING_stop( tm_heat_diff_res_comm, 2.0*numProc*sizeof(REAL_TYPE) ); // 双方向 x ノード数
     }
     ICt->setNormValue( sqrt(res/(double)G_Acell) ); // RMS
+    
     
     TIMING_stop(tm_heat_diff_sct_3, 0.0);
     // <<< Passive scalar Diffusion subsection 3
@@ -258,5 +264,17 @@ void FFV::PS_Binary()
   
   TIMING_stop(tm_heat_loop_post_sct, 0.0);
   // <<< Passive scalar Post
+  
+  
+  // ノルムの増加率が規定値をこえたら，終了
+  if (CM_H.previous != 0.0 )
+  {
+    CM_H.rate = convergence / CM_H.previous;
+  }
+  else
+  {
+    CM_H.rate = 1.0;
+  }
+  CM_H.previous = convergence;
   
 }

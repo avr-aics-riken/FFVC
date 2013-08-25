@@ -1,0 +1,17 @@
+solid katamochix0
+	facet normal -1.0e0 0.0e0 0.0e0
+		outer loop
+			vertex 1.0e-6 -9.99997e-2 -9.99997e-2
+			vertex 1.0e-6  9.99997e-2  9.99997e-2
+			vertex 1.0e-6  9.99997e-2 -9.99997e-2
+		endloop
+	endfacet
+	facet normal -1.0e0 0.0e0 0.0e0
+		outer loop
+			vertex 1.0e-6 -9.99997e-2 -9.99997e-2
+			vertex 1.0e-6 -9.99997e-2  9.99997e-2
+			vertex 1.0e-6  9.99997e-2  9.99997e-2
+		endloop
+	endfacet
+endsolid katamochix0
+

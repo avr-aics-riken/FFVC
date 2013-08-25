@@ -1,0 +1,59 @@
+solid katamochi_cyl
+	facet normal 0.0e0 -1.0e0 0.0e0
+		outer loop
+			vertex  1.0e-6     -9.99997e-2 -9.99997e-2
+			vertex  9.99997e-1 -9.99997e-2 -9.99997e-2
+			vertex  9.99997e-1 -9.99997e-2  9.99997e-2
+		endloop
+	endfacet
+	facet normal 0.0e0 -1.0e0 0.0e0
+		outer loop
+			vertex  1.0e-6     -9.99997e-2 -9.99997e-2
+			vertex  9.99997e-1 -9.99997e-2  9.99997e-2
+			vertex  1.0e-6     -9.99997e-2  9.99997e-2
+	endloop
+	endfacet
+	facet normal 0.0e0 1.0e0 0.0e0
+		outer loop
+			vertex  1.0e-6     9.99997e-2 -9.99997e-2
+			vertex  9.99997e-1 9.99997e-2  9.99997e-2
+			vertex  9.99997e-1 9.99997e-2 -9.99997e-2
+		endloop
+	endfacet
+	facet normal 0.0e0 1.0e0 0.0e0
+		outer loop
+			vertex  1.0e-6     9.99997e-2 -9.99997e-2
+			vertex  1.0e-6     9.99997e-2  9.99997e-2
+			vertex  9.99997e-1 9.99997e-2  9.99997e-2
+		endloop
+	endfacet
+	facet normal 0.0e0 0.0e0 -1.0e0
+		outer loop
+			vertex  1.0e-6      -9.99997e-2 -9.99997e-2
+			vertex  9.99997e-1   9.99997e-2 -9.99997e-2
+			vertex  9.99997e-1  -9.99997e-2 -9.99997e-2
+		endloop
+	endfacet
+	facet normal 0.0e0 0.0e0 -1.0e0
+		outer loop
+			vertex  1.0e-6      -9.99997e-2 -9.99997e-2
+			vertex  1.0e-6       9.99997e-2 -9.99997e-2
+			vertex  9.99997e-1   9.99997e-2 -9.99997e-2
+		endloop
+	endfacet
+	facet normal 0.0e0 0.0e0 1.0e0
+		outer loop
+			vertex  1.0e-6      -9.99997e-2 9.99997e-2
+			vertex  9.99997e-1  -9.99997e-2 9.99997e-2
+			vertex  9.99997e-1   9.99997e-2 9.99997e-2
+		endloop
+	endfacet
+	facet normal 0.0e0 0.0e0 1.0e0
+		outer loop
+			vertex  1.0e-6     -9.99997e-2 9.99997e-2
+			vertex  9.99997e-1  9.99997e-2 9.99997e-2
+			vertex  1.0e-6      9.99997e-2 9.99997e-2
+		endloop
+	endfacet
+endsolid katamochi_cyl
+

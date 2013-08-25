@@ -119,7 +119,7 @@ int FFV::Initialize(int argc, char **argv)
   // パラメータの取得と計算領域の初期化，並列モードを返す
   std::string str_para = setupDomain(&tp_ffv);
 
-  
+
   
   // mat[], cmp[]の作成
   createTable(fp);
@@ -369,10 +369,6 @@ int FFV::Initialize(int argc, char **argv)
       if ( paraMngr->BndCommS3D(d_bh2, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
     }
   }
-
-  
-  // 法線計算
-  getCompoArea();
   
   
   
@@ -431,7 +427,7 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   
-  
+
   // 性能測定モードがオフのときのみ，svxファイルを出力する．
   if ( C.Hide.PM_Test == OFF )
   {
@@ -585,10 +581,10 @@ int FFV::Initialize(int argc, char **argv)
 
   
   // 出力ファイルの初期化
-  init_FileOut();
+  initFileOut();
   
 
-  // セッションを開始したときに、初期値をファイル出力  リスタートと性能測定モードのときには出力しない
+  // セッションを開始したときに、初期値をファイル出力  性能測定モードのときには出力しない
   if ( (C.Hide.PM_Test == OFF) && (0 == CurrentStep) )
   {
     flop_task = 0.0;
@@ -662,7 +658,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // 履歴出力準備
-  prep_HistoryOutput();
+  prepHistoryOutput();
   
 
   Hostonly_ if ( fp ) fclose(fp);
@@ -729,95 +725,6 @@ void FFV::allocate_Main(double &total)
   TIMING_stop(tm_init_alloc);
 }
 
-
-
-/* #################################################################
-// ポリゴングループの座標値からboxを計算する
-void FFV::calcBboxfromPolygonGroup()
-{
-  // float で定義すること
-  float poly_org[3];
-  float poly_dx[3];
-  
-  // 有次元に変換 Polylib: 並列計算領域情報　ポリゴンは実スケールで，ガイドセル領域部分も含めて指定する
-  poly_dx[0]  = pitch[0] * C.RefLength;
-  poly_dx[1]  = pitch[1] * C.RefLength;
-  poly_dx[2]  = pitch[2] * C.RefLength;
-  poly_org[0] = origin[0]* C.RefLength;
-  poly_org[1] = origin[1]* C.RefLength;
-  poly_org[2] = origin[2]* C.RefLength;
-  
-  
-  // ポリゴン情報へのアクセス
-  vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
-  vector<PolygonGroup*>::iterator it;
-  
-  PolylibNS::Vec3f m_min, m_max;
-  PolylibNS::Vec3f t1(poly_org), t2(poly_dx), t3;
-  
-  t3.assign((float)size[0]*t2.t[0], (float)size[1]*t2.t[1], (float)size[2]*t2.t[2]);
-  
-  // サブドメインの1層外側までをサーチ対象とする
-  m_min = t1 - t2;      
-  m_max = t1 + t3 + t2;
-  printf("Search area Bbox min : %f %f %f\n", m_min.t[0], m_min.t[1], m_min.t[2]);
-  printf("Search area Bbox max : %f %f %f\n", m_max.t[0], m_max.t[1], m_max.t[2]);
-  
-  
-  // ポリゴングループのループ
-  int m=0;
-  for (it = pg_roots->begin(); it != pg_roots->end(); it++)
-  {
-    string m_pg = PolyPP[m].get_Group();
-    
-    // false; ポリゴンが一部でもかかればピックアップ
-    vector<Triangle*>* trias = PL->search_polygons(m_pg, m_min, m_max, false);
-    
-    PolylibNS::Vec3f *p;
-    FB::Vec3f bbox_min( 1.0e6,  1.0e6,  1.0e6);
-    FB::Vec3f bbox_max(-1.0e6, -1.0e6, -1.0e6);
-    unsigned c=0;
-    vector<Triangle*>::iterator it2;
-    
-    for (it2 = trias->begin(); it2 != trias->end(); it2++)
-    {
-      p = (*it2)->get_vertex();
-      
-      // PolulibNS::Vec3f >> FB::Vec3f
-      FB::Vec3f p0(p[0].t[0], p[0].t[1], p[0].t[2]);
-      FB::Vec3f p1(p[1].t[0], p[1].t[1], p[1].t[2]);
-      FB::Vec3f p2(p[2].t[0], p[2].t[1], p[2].t[2]);
-      
-      CompoFraction::get_min(bbox_min, p0);
-      CompoFraction::get_min(bbox_min, p1);
-      CompoFraction::get_min(bbox_min, p2);
-      
-      CompoFraction::get_max(bbox_max, p0);
-      CompoFraction::get_max(bbox_max, p1);
-      CompoFraction::get_max(bbox_max, p2);
-      
-#if 0
-      printf("%d : p0=(%6.3e %6.3e %6.3e)  p1=(%6.3e %6.3e %6.3e) p2=(%6.3e %6.3e %6.3e) n=(%6.3e %6.3e %6.3e)\n", c++,
-             p[0].t[0], p[0].t[1], p[0].t[2],
-             p[1].t[0], p[1].t[1], p[1].t[2],
-             p[2].t[0], p[2].t[1], p[2].t[2],
-             n.t[0], n.t[1], n.t[2]);
-#endif
-    }
-    
-    PolyPP[m].set_Min(bbox_min);
-    PolyPP[m].set_Max(bbox_max);
-    
-    printf("%20s : (%6.3e %6.3e %6.3e) - (%6.3e %6.3e %6.3e)\n",
-           m_pg.c_str(), bbox_min.x, bbox_min.y, bbox_min.z,
-           bbox_max.x, bbox_max.y, bbox_max.z);
-    
-    delete trias; // 後始末
-    m++;
-  }
-  
-}
-*/
 
 // #################################################################
 /* @brief 全Voxelモデルの媒質数とKOSの整合性をチェック
@@ -976,28 +883,25 @@ void FFV::displayCompoInfo(const int* cgb, FILE* fp)
   // Check consistency of boundary condition
   for (int n=1; n<=C.NoCompo; n++)
   {
-    if ( cmp[n].isKindCompo() )
+    if ( cmp[n].getType() == HT_SN )
     {
-      if ( cmp[n].getType() == HT_SN )
+      if ( (C.KindOfSolver == FLOW_ONLY) || (C.KindOfSolver == THERMAL_FLOW) || (C.KindOfSolver == SOLID_CONDUCTION) )
       {
-        if ( (C.KindOfSolver == FLOW_ONLY) || (C.KindOfSolver == THERMAL_FLOW) || (C.KindOfSolver == SOLID_CONDUCTION) )
-        {
-          Hostonly_ printf("\tInconsistent parameters of combination between Kind of Solver and Heat Transfer type SN. Check QBCF\n");
-          fflush(stdout);
-          Exit(0);
-        }
+        Hostonly_ printf("\tInconsistent parameters of combination between Kind of Solver and Heat Transfer type SN. Check QBCF\n");
+        fflush(stdout);
+        Exit(0);
       }
-      if ( cmp[n].getType() == HT_SF )
-      {
-        if ( (C.KindOfSolver == FLOW_ONLY) || (C.KindOfSolver == THERMAL_FLOW_NATURAL) || (C.KindOfSolver == SOLID_CONDUCTION) )
-        {
-          Hostonly_ printf("\tInconsistent parameters of combination between Kind of Solver and Heat Transfer type SF. Check QBCF\n");
-          fflush(stdout);
-          Exit(0);
-        }
-      }
-      
     }
+    if ( cmp[n].getType() == HT_SF )
+    {
+      if ( (C.KindOfSolver == FLOW_ONLY) || (C.KindOfSolver == THERMAL_FLOW_NATURAL) || (C.KindOfSolver == SOLID_CONDUCTION) )
+      {
+        Hostonly_ printf("\tInconsistent parameters of combination between Kind of Solver and Heat Transfer type SF. Check QBCF\n");
+        fflush(stdout);
+        Exit(0);
+      }
+    }
+
   }
   
 }
@@ -1118,6 +1022,7 @@ void FFV::DomainInitialize(TextParser* tp_dom)
   double m_org[3] = {(double)G_origin[0], (double)G_origin[1], (double)G_origin[2]};
   double m_reg[3] = {(double)G_region[0], (double)G_region[1], (double)G_region[2]};
   
+
   
   // 領域分割モードのパターン
   //     分割指定(G_div指定)         domain.txt
@@ -2045,42 +1950,6 @@ void FFV::generateSolid(FILE* fp)
 
 
 // #################################################################
-// @brief コンポーネントの面積を計算
-void FFV::getCompoArea()
-{
-
-  if ( C.NoBC == 0 ) return;
-  if ( C.Mode.Example != id_Polygon ) return;
-  
-  
-  float area=0.0;
-  
-  // コンポーネントで指定されるID面の法線を計算
-  for (int n=1; n<=C.NoCompo; n++)
-  {
-    if ( cmp[n].isKindCompo() )
-    {
-      int type = cmp[n].getType();
-      
-      if ( type > OBSTACLE )
-      {
-        string label = cmp[n].getAlias();
-        
-        for (int i=0; i<C.num_of_polygrp; i++)
-        {
-          if ( FBUtility::compare(PolyPP[i].getGroup(), label) )
-          {
-            cmp[n].area = PolyPP[i].getGarea();
-          }
-        }
-      }
-    }
-
-  }
-}
-
-
-// #################################################################
 /* @brief グローバルな領域情報を取得
  * @param [in] tp_dom  TextParserクラス
  * @return 分割指示 (1-with / 2-without)
@@ -2134,6 +2003,7 @@ int FFV::getDomainInfo(TextParser* tp_dom)
     cout << "ERROR : in parsing [" << label << "]" << endl;
     Exit(0);
   }
+  
   
   // G_region 必須
   label = "/DomainInfo/GlobalRegion";
@@ -2261,7 +2131,7 @@ int FFV::getDomainInfo(TextParser* tp_dom)
           G_region[2] = gr[2];
         }
       }
-      else // dim_2d
+      else if ( Ex->mode == Intrinsic::dim_2d )
       {
         if ( (G_region[0] != gr[0]) || (G_region[1] != gr[1]) )
         {
@@ -2275,6 +2145,10 @@ int FFV::getDomainInfo(TextParser* tp_dom)
           G_region[2] = gr[2];
           G_origin[2] = -0.5 * pitch[2];
         }
+      }
+      else
+      {
+        Exit(0);
       }
       
     }
@@ -2290,6 +2164,7 @@ int FFV::getDomainInfo(TextParser* tp_dom)
     Exit(0);
   }
   
+
 
   // 2D check
   if ( (Ex->mode == Intrinsic::dim_2d) && (G_size[2] != 3) )
@@ -2480,7 +2355,7 @@ void FFV::identifyLinearSolver(TextParser* tpCntl)
 // #################################################################
 /* @brief ファイル出力の初期化
  */
-void FFV::init_FileOut()
+void FFV::initFileOut()
 {
   std::string hostname;
   hostname = paraMngr->GetHostName();
@@ -3363,12 +3238,13 @@ void FFV::minDistance(float* cut, int* bid, FILE* fp)
 // #################################################################
 /* @brief 履歴の出力準備
  */
-void FFV::prep_HistoryOutput()
+void FFV::prepHistoryOutput()
 {
   // マスターノードでの履歴出力準備
   H = new History(&C);
   
-  Hostonly_ {
+  Hostonly_
+  {
     H->printHistoryTitle(stdout, IC, &C, true);
     
     // コンポーネント情報
@@ -3608,6 +3484,7 @@ void FFV::resizeCompoBbox()
       case FAN:
       case DARCY:
       case CELL_MONITOR:
+      case OBSTACLE:
         resizeBbox4Cell(n, d_bcd); // セルセンタ位置でのBC
         break;
     }
@@ -3696,7 +3573,7 @@ void FFV::setBCinfo()
 
   
   // パラメータファイルの情報を元にCompoListの情報を設定する
-  B.loadLocalBC(&C, mat, cmp, PolyPP);
+  B.loadLocalBC(&C, mat, cmp);
   
   
 #if 0
@@ -4054,7 +3931,7 @@ void FFV::setInitialCondition()
         BC.setInitialTempCompo(m, d_bcd, d_t);
       }
       
-			BC.OuterTBC(d_t);
+			BC.OuterTBCperiodic(d_t);
 		}
     
   }
@@ -4561,6 +4438,16 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     printf("\tfile name = %s\n\n", C.PolylibConfigName.c_str());
   }
   
+  // debug
+#if 0
+  printf("%d : %d %d %d : %e %e %e : %e %e %e\n", myRank,
+         size[0], size[1]. size[2],
+         poly_org[0], poly_org[1], poly_org[2],
+         poly_dx[0], poly_dx[1], poly_dx[2]);
+  
+  
+#endif
+  
   // Polylib: インスタンス取得
   PL = MPIPolylib::get_instance();
   
@@ -4650,8 +4537,6 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     Exit(0);
   }
   
-  // ポリゴングループの属性保持
-  PolyPP = new PolygonProperty[C.num_of_polygrp];
   
   Hostonly_
   {
@@ -4665,10 +4550,10 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   }
   
   
-  // ポリゴン情報の表示と管理クラスへのコピー
+  // ポリゴン情報の表示
   int c = 0;
-  for (it = pg_roots->begin(); it != pg_roots->end(); it++) {
-    
+  for (it = pg_roots->begin(); it != pg_roots->end(); it++)
+  {
     std::string m_pg = (*it)->get_name();     // グループラベル
     std::string m_mat = (*it)->get_label();   // 媒質ラベル
     std::string m_bc = (*it)->get_type();     // 境界条件ラベル
@@ -4700,11 +4585,6 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
       }
     }
     
-    PolyPP[c].setGroup(m_pg);
-    PolyPP[c].setMaterial(m_mat);
-    PolyPP[c].setBClabel(m_bc);
-    PolyPP[c].setLntria(ntria);
-    PolyPP[c].setLarea(area);     
     
     if ( numProc > 1 )
     {
@@ -4715,21 +4595,23 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
       if ( paraMngr->Allreduce(&ta, &area, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
     }
     
-    PolyPP[c].setGntria(ntria);   // グローバルなポリゴン数
-    PolyPP[c].setGarea(area);     // グローバルなポリゴン面積
+    
+    // コンポーネント(BC+OBSTACLE)の面積を保持 >> @todo Polylibのバグで並列時に正しい値を返さない, ntriaとarea 暫定的処置
+    cmp[mat_id].area = area;
+    
     
     Hostonly_
     {
-      printf(    "\t  %20s %16s  %20s %12d  %e\n", PolyPP[c].getGroup().c_str(),
-                                                   PolyPP[c].getMaterial().c_str(),
-                                                   PolyPP[c].getBClabel().c_str(),
-                                                   PolyPP[c].getGntria(),
-                                                   PolyPP[c].getGarea());
-      fprintf(fp,"\t  %20s %16s  %20s %12d  %e\n", PolyPP[c].getGroup().c_str(),
-                                                   PolyPP[c].getMaterial().c_str(),
-                                                   PolyPP[c].getBClabel().c_str(),
-                                                   PolyPP[c].getGntria(),
-                                                   PolyPP[c].getGarea());
+      printf(    "\t  %20s %16s  %20s %12d  %e\n", m_pg.c_str(),
+                                                   m_mat.c_str(),
+                                                   m_bc.c_str(),
+                                                   ntria,
+                                                   area);
+      fprintf(fp,"\t  %20s %16s  %20s %12d  %e\n", m_pg.c_str(),
+                                                   m_mat.c_str(),
+                                                   m_bc.c_str(),
+                                                   ntria,
+                                                   area);
     }
     
     c++;
@@ -4741,6 +4623,8 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
 // ##########
     
   }
+  
+  
   
   delete pg_roots;
   
@@ -4792,6 +4676,8 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   delete trias;  //後始末
 #endif
 // ##########
+  
+  
   
   // Polylib: STLデータ書き出しテスト >> Debug
 // ##########
@@ -4955,3 +4841,94 @@ void FFV::setVOF()
     }
   }
 }
+
+
+
+
+/* #################################################################
+ // ポリゴングループの座標値からboxを計算する
+ void FFV::calcBboxfromPolygonGroup()
+ {
+ // float で定義すること
+ float poly_org[3];
+ float poly_dx[3];
+ 
+ // 有次元に変換 Polylib: 並列計算領域情報　ポリゴンは実スケールで，ガイドセル領域部分も含めて指定する
+ poly_dx[0]  = pitch[0] * C.RefLength;
+ poly_dx[1]  = pitch[1] * C.RefLength;
+ poly_dx[2]  = pitch[2] * C.RefLength;
+ poly_org[0] = origin[0]* C.RefLength;
+ poly_org[1] = origin[1]* C.RefLength;
+ poly_org[2] = origin[2]* C.RefLength;
+ 
+ 
+ // ポリゴン情報へのアクセス
+ vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
+ vector<PolygonGroup*>::iterator it;
+ 
+ PolylibNS::Vec3f m_min, m_max;
+ PolylibNS::Vec3f t1(poly_org), t2(poly_dx), t3;
+ 
+ t3.assign((float)size[0]*t2.t[0], (float)size[1]*t2.t[1], (float)size[2]*t2.t[2]);
+ 
+ // サブドメインの1層外側までをサーチ対象とする
+ m_min = t1 - t2;
+ m_max = t1 + t3 + t2;
+ printf("Search area Bbox min : %f %f %f\n", m_min.t[0], m_min.t[1], m_min.t[2]);
+ printf("Search area Bbox max : %f %f %f\n", m_max.t[0], m_max.t[1], m_max.t[2]);
+ 
+ 
+ // ポリゴングループのループ
+ int m=0;
+ for (it = pg_roots->begin(); it != pg_roots->end(); it++)
+ {
+ string m_pg = PolyPP[m].get_Group();
+ 
+ // false; ポリゴンが一部でもかかればピックアップ
+ vector<Triangle*>* trias = PL->search_polygons(m_pg, m_min, m_max, false);
+ 
+ PolylibNS::Vec3f *p;
+ FB::Vec3f bbox_min( 1.0e6,  1.0e6,  1.0e6);
+ FB::Vec3f bbox_max(-1.0e6, -1.0e6, -1.0e6);
+ unsigned c=0;
+ vector<Triangle*>::iterator it2;
+ 
+ for (it2 = trias->begin(); it2 != trias->end(); it2++)
+ {
+ p = (*it2)->get_vertex();
+ 
+ // PolulibNS::Vec3f >> FB::Vec3f
+ FB::Vec3f p0(p[0].t[0], p[0].t[1], p[0].t[2]);
+ FB::Vec3f p1(p[1].t[0], p[1].t[1], p[1].t[2]);
+ FB::Vec3f p2(p[2].t[0], p[2].t[1], p[2].t[2]);
+ 
+ CompoFraction::get_min(bbox_min, p0);
+ CompoFraction::get_min(bbox_min, p1);
+ CompoFraction::get_min(bbox_min, p2);
+ 
+ CompoFraction::get_max(bbox_max, p0);
+ CompoFraction::get_max(bbox_max, p1);
+ CompoFraction::get_max(bbox_max, p2);
+ 
+ #if 0
+ printf("%d : p0=(%6.3e %6.3e %6.3e)  p1=(%6.3e %6.3e %6.3e) p2=(%6.3e %6.3e %6.3e) n=(%6.3e %6.3e %6.3e)\n", c++,
+ p[0].t[0], p[0].t[1], p[0].t[2],
+ p[1].t[0], p[1].t[1], p[1].t[2],
+ p[2].t[0], p[2].t[1], p[2].t[2],
+ n.t[0], n.t[1], n.t[2]);
+ #endif
+ }
+ 
+ PolyPP[m].set_Min(bbox_min);
+ PolyPP[m].set_Max(bbox_max);
+ 
+ printf("%20s : (%6.3e %6.3e %6.3e) - (%6.3e %6.3e %6.3e)\n",
+ m_pg.c_str(), bbox_min.x, bbox_min.y, bbox_min.z,
+ bbox_max.x, bbox_max.y, bbox_max.z);
+ 
+ delete trias; // 後始末
+ m++;
+ }
+ 
+ }
+ */

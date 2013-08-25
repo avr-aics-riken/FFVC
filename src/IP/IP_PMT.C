@@ -33,6 +33,7 @@ bool IP_PMT::getTP(Control* R, TextParser* tpCntl)
 {
   std::string str;
   std::string label;
+
   
   // 媒質指定
   label="/IntrinsicExample/FluidMedium";
@@ -76,6 +77,7 @@ void IP_PMT::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_
   
   // 性能測定モードをOnにする
   R->Hide.PM_Test = ON;
+
   
   // 偶数チェック
   even = ON;
