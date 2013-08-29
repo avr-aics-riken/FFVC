@@ -396,7 +396,7 @@ int FFV::Loop(const unsigned step)
   // セルモニターとコンポーネントの履歴
   if ( C.Sampling.log == ON ) 
   {
-    if ( C.Interval[Interval_Manager::tg_sampled].isTriggered(CurrentStep, CurrentTime) )
+    if ( C.Interval[Interval_Manager::tg_history].isTriggered(CurrentStep, CurrentTime) )
     {
       TIMING_start(tm_compo_monitor);
       flop_count=0.0;
