@@ -556,15 +556,21 @@ public:
   
   
   /**
-   * @brief 計算領域外部のガイドセルに媒質IDをエンコードする
+   * @brief 計算領域外部のガイドセルに媒質IDをエンコードする（周期境界以外の場合）
    * @param [in]     face      外部境界面番号
    * @param [in,out] mid       ID配列のデータクラス
-   * @param [in]     BCtype    外部境界面の境界条件の種類
    * @param [in]     c_id      媒質格納番号
+   */
+  void setMediumOnGC (const int face, int* mid, const int c_id);
+  
+  
+  /**
+   * @brief 計算領域外部のガイドセルに媒質IDをエンコードする（周期境界の場合）
+   * @param [in]     face      外部境界面番号
+   * @param [in,out] mid       ID配列のデータクラス
    * @param [in]     prdc_mode 周期境界条件のモード
    */
-  void setMediumOnGC(const int face, int* mid, const int BCtype, const int c_id, const int prdc_mode);
-  
+  void setMediumOnGCperiodic (const int face, int* mid, const int prdc_mode);
   
   /**
    * @brief セルモニターのIDをmid[]にセットする
@@ -575,7 +581,7 @@ public:
    * @param [in]     fluid  流体のID
    * @param [in]     policy セルモニター幅
    */
-  unsigned long setMonitorCellID(int* mid, const int* bid, const float* cut, const int target, const int fluid, const int policy);
+  unsigned long setMonitorCellID (int* mid, const int* bid, const float* cut, const int target, const int fluid, const int policy);
   
   
   /**
@@ -586,7 +592,7 @@ public:
    * @param [in] cmp  CompoListクラス
    * @param [in] RefL 代表長さ
    */
-  void setMonitorShape(int* mid, const int n, ShapeMonitor* SM, CompoList* cmp, const REAL_TYPE RefL);
+  void setMonitorShape (int* mid, const int n, ShapeMonitor* SM, CompoList* cmp, const REAL_TYPE RefL);
   
   
   /**
@@ -594,7 +600,7 @@ public:
    @param [in]     BC  SetBCクラスのポインタ
    @param [in,out] cut 距離情報
    */
-  void setOBCcut(SetBC* BC, float* cut);
+  void setOBCcut (SetBC* BC, float* cut);
   
   
   /**
@@ -606,7 +612,7 @@ public:
    * @retval 固体セル数
    * @attention 境界条件ポリゴンのIDへペイントしないので，予めチェック用のリストをつくっておき，ペイント時に確認
    */
-  unsigned long SolidFromCut(int* mid, const int* bid, const float* cut, CompoList* cmp);
+  unsigned long SolidFromCut (int* mid, const int* bid, const float* cut, CompoList* cmp);
   
 };
 

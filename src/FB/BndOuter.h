@@ -110,9 +110,8 @@ public:
   /**
    * @brief メンバー変数のコピー
    * @param [in] src   BoundaryOuterクラス
-   * @param [in] inner 境界面が計算内部にあるとき1, 外部境界のとき0
    */
-  void dataCopy (BoundaryOuter* src, const int inner);
+  void dataCopy (BoundaryOuter* src);
   
 
   std::string getAlias() const
@@ -178,7 +177,7 @@ public:
     return hType;
   }
   
-  int get_PrdcMode() const
+  int getPrdcMode() const
   { 
     return Prdc_mode;
   }
@@ -208,6 +207,7 @@ public:
   {
     return wallType;
   }
+  
   
   // @brief aliasラベルを設定する
   void setAlias(std::string key)
@@ -252,7 +252,7 @@ public:
   
   
   // @brief ドライバー部分の方向をセットする
-  void set_DriverIndex(int key)
+  void setDriverIndex(int key)
   {
     drv_lid = key;
   }
@@ -319,6 +319,7 @@ public:
   {
     var1 = val;
   }
+  
   
   // @brief 境界面の有効セル数を保持
   void setValidCell(const int val)

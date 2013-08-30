@@ -1597,14 +1597,16 @@ void ParseBC::getObcPeriodic(const string label_base, const int n)
   }
   
   // Directional
-  if ( BaseBc[n].get_PrdcMode() == BoundaryOuter::prdc_Directional )
+  if ( BaseBc[n].getPrdcMode() == BoundaryOuter::prdc_Directional )
   {
     label = label_base + "/PressureDifference";
-    if ( !(tpCntl->getInspectedValue(label, ct )) ) {
+    if ( !(tpCntl->getInspectedValue(label, ct )) )
+    {
       printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
-    else {
+    else
+    {
       BaseBc[n].p = ct;
     }
     
@@ -1620,7 +1622,8 @@ void ParseBC::getObcPeriodic(const string label_base, const int n)
       {
         BaseBc[n].set_FaceMode(BoundaryOuter::prdc_upstream);
       }
-      else if ( !strcasecmp(str.c_str(), "Downstream") ) {
+      else if ( !strcasecmp(str.c_str(), "Downstream") )
+      {
         BaseBc[n].set_FaceMode(BoundaryOuter::prdc_downstream);
       }
       else
@@ -1632,7 +1635,7 @@ void ParseBC::getObcPeriodic(const string label_base, const int n)
   }
   
   // Driver
-  if ( BaseBc[n].get_PrdcMode() == BoundaryOuter::prdc_Driver )
+  if ( BaseBc[n].getPrdcMode() == BoundaryOuter::prdc_Driver )
   {
     
     label = label_base + "/DriverDirection";
@@ -1667,7 +1670,8 @@ void ParseBC::getObcPeriodic(const string label_base, const int n)
       {
         def = Z_PLUS;
       }
-      else {
+      else
+      {
         printf("\tParsing error : Invalid keyword in '%s'\n", label.c_str());
         Exit(0);
       }
@@ -1676,12 +1680,14 @@ void ParseBC::getObcPeriodic(const string label_base, const int n)
     
     
     label = label_base + "/DriverLidIndex";
-    if ( !(tpCntl->getInspectedValue(label, def )) ) {
+    if ( !(tpCntl->getInspectedValue(label, def )) )
+    {
       printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
-    else {
-      BaseBc[n].set_DriverIndex(def);
+    else
+    {
+      BaseBc[n].setDriverIndex(def);
     }
   }
 }
@@ -2514,15 +2520,7 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
   }
   
   
-  // ゼロで初期化
-  for (int i=0; i<NOFACE; i++)
-  {
-    globalBC[i] = 0;
-  }
-  
-  
   // 各面に与える境界条件番号を取得し，BaseBcから境界情報リストに内容をコピー
-  // 同時に，各サブドメインのサブドメイン境界の条件を設定する
   for (int face=0; face<NOFACE; face++)
   {
     // 各faceに対するラベルを取得
@@ -2542,18 +2540,12 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
       Exit(0);
     }
     
-    // サブドメインが外部境界のときzero
-    int inner = (nID[face]<0) ? 0 : 1;
-    
     // Aliasでサーチ
     for (int i=1; i<=NoBaseBC; i++)
     {
       if ( !strcasecmp( str.c_str(), BaseBc[i].getAlias().c_str() ) ) 
       {
-        bc[face].dataCopy( &BaseBc[i], inner );
-        
-        // 外部境界のときにBaseBc[]のオーダー(>0)を保持
-        if ( nID[face] < 0 )  globalBC[face] = i;
+        bc[face].dataCopy( &BaseBc[i] );
         break;
       }
       else
@@ -2567,16 +2559,6 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
     }
   }
   
-  
-  // 境界条件表示のため，マスターノードに外部境界条件の格納番号を集める
-  if ( numProc > 1 )
-  {
-    int tmp[6];
-    for (int i=0; i<NOFACE; i++) tmp[i] = globalBC[i];
-    
-    if( paraMngr->Allreduce(tmp, globalBC, NOFACE, MPI_MAX) != CPM_SUCCESS ) Exit(0);
-  }
-  
 
   
   // 周期境界条件の整合性のチェック
@@ -2585,7 +2567,7 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
   int p_flag=0;
   for (int n=0; n<NOFACE; n++)
   {
-    if (bc[n].get_PrdcMode() == BoundaryOuter::prdc_Driver) p_flag++;
+    if (bc[n].getPrdcMode() == BoundaryOuter::prdc_Driver) p_flag++;
   }
   
   // 部分周期条件を使わない場合，対になる外部境界のチェック
@@ -2601,7 +2583,7 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
         n_pair = oppositeDir(n);
         if ( bc[n_pair].getClass() != OBC_PERIODIC )
         {
-          Hostonly_ printf("\tFace BC : No consistent Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
+          Hostonly_ printf("\tFace BC[rank=%d] : No consistent Periodic Bnoudary in %s direction\n", myRank, FBUtility::getDirection(n_pair).c_str());
           Exit(0);
         }
       }
@@ -2614,10 +2596,10 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
       {
         n_pair = oppositeDir(n);
         
-        switch (bc[n].get_PrdcMode())
+        switch (bc[n].getPrdcMode())
         {
           case BoundaryOuter::prdc_Simple:
-            if ( bc[n_pair].get_PrdcMode() != BoundaryOuter::prdc_Simple )
+            if ( bc[n_pair].getPrdcMode() != BoundaryOuter::prdc_Simple )
             {
               Hostonly_ printf("\tFace BC : No consistent SIMPLE Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
               Exit(0);
@@ -2625,12 +2607,13 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
             break;
             
           case BoundaryOuter::prdc_Directional:
-            if ( bc[n_pair].get_PrdcMode() != BoundaryOuter::prdc_Directional )
+            if ( bc[n_pair].getPrdcMode() != BoundaryOuter::prdc_Directional )
             {
               Hostonly_ printf("\tFace BC : No consistent DIRECTIONAL Periodic Bnoudary in %s direction\n", FBUtility::getDirection(n_pair).c_str());
               Exit(0);
             }
-            if ( bc[n].p != bc[n_pair].p ) { // 同じ値が入っていること
+            if ( bc[n].p != bc[n_pair].p ) // 同じ値が入っていること
+            {
               Hostonly_ printf("\tFace BC : Pressure difference value is not same in %s direction\n", FBUtility::getDirection(n_pair).c_str());
               Exit(0);
             }
@@ -2657,7 +2640,7 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
       n_pair = oppositeDir(n);
       if ( bc[n].getClass() == OBC_PERIODIC )
       {
-        if (bc[n].get_PrdcMode() == BoundaryOuter::prdc_Driver)
+        if (bc[n].getPrdcMode() == BoundaryOuter::prdc_Driver)
         {
           // 他方は周期境界以外であること
           if ( bc[n_pair].getClass() == OBC_PERIODIC )
@@ -3489,14 +3472,12 @@ void ParseBC::printFaceOBC(FILE* fp, const REAL_TYPE* G_reg, const BoundaryOuter
 {
   for (int i=0; i<NOFACE; i++)
   {
-    int m = globalBC[i];
-    
     fprintf(fp,"\t      Set %s up as %s : < %s >\n", 
             FBUtility::getDirection(i).c_str(), 
-            getOBCstr(BaseBc[m].getClass()).c_str(),
-            BaseBc[m].getAlias().c_str());
+            getOBCstr(bc[i].getClass()).c_str(),
+            bc[i].getAlias().c_str());
     
-    printOBC(fp, &BaseBc[m], mat, G_reg, i);
+    printOBC(fp, &bc[i], mat, G_reg, i);
     
     fprintf(fp,"\n");
   }
@@ -3521,6 +3502,10 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
   if ( ref->getClass() == OBC_INTRINSIC)
   {
     fprintf(fp,"\t\t\tGuide Cell Medium = Intrinsic\n");
+  }
+  else if ( ref->getClass() == OBC_PERIODIC)
+  {
+    ; // 表示なし
   }
   else
   {
@@ -3670,7 +3655,7 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
       
       
     case OBC_PERIODIC:
-      switch (ref->get_PrdcMode())
+      switch (ref->getPrdcMode())
       {
         case BoundaryOuter::prdc_Simple:
           fprintf(fp, "\t\t\tSimple periodic copy\n");
@@ -3797,7 +3782,7 @@ void ParseBC::setControlVars(Control* Cref)
   
   vector<string> nodes;
   
-  // /MediumTable直下のラベルを取得
+  // MediumTable直下のラベルを取得
   tpCntl->getLabelVector(label, nodes);
   
   // ラベル数から"FaceBC"を除いた数

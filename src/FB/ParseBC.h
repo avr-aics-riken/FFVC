@@ -46,7 +46,6 @@ private:
   int NoMedium;    ///< 媒質数
   int Unit_Temp;   ///< 温度単位
   int Unit_Prs;    ///< 圧力単位
-  int globalBC[6]; ///< グローバルな外部境界条件を保持するBasicBc[]への格納番号ポインタ
   
   REAL_TYPE RefVelocity, BaseTemp, DiffTemp, RefDensity, RefSpecificHeat;
   REAL_TYPE RefLength, BasePrs;

@@ -521,8 +521,7 @@ extern "C" {
                            REAL_TYPE* sum,
                            REAL_TYPE* v,
                            int* bv,
-                           int* nID,
-                           double* flop);
+                           int* nID);
   
   void vobc_face_drchlt_  (REAL_TYPE* vf,
                            int* sz,

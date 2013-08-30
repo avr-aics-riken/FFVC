@@ -395,16 +395,14 @@ void Control::get2ndParameter(ReferenceFrame* RF)
   
   // Reference frame information
   getReferenceFrame(RF);
-  
-  // getAverageOption(); >> getFieldData()へ
+
   
   // 圧力ノイマン条件のタイプ >> get_Log()よりも先に
   getWallType();
   
-  // Log >> getIteration()よりも前に
+
   getLog();
   
-  getIteration();
   
   getTurbulenceModel();
   
@@ -419,9 +417,7 @@ void Control::get2ndParameter(ReferenceFrame* RF)
   
   getApplicationControl();
 
-  
 }
-
 
 
 
@@ -1221,17 +1217,17 @@ void Control::getIteration()
   string base, label, leaf;
   int i_val=0;
   double f_val=0.0;
-  
+
   
   base = "/Iteration";
-  
+
   // Iteration
   if( !tpCntl->chkNode(base) )
   {
     Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", base.c_str());
     Exit(0);
   }
-  
+
   // タグ内のラベル数をチェック
   int nnode = tpCntl->countLabels(base);
   if ( nnode == 0 )
@@ -1259,7 +1255,7 @@ void Control::getIteration()
   NoBaseLS = counter;
   Criteria = new IterationCtl[NoBaseLS];
   
-  
+
   // get criterion
   for (int i=0; i<NoBaseLS; i++)
   {
@@ -4000,7 +3996,7 @@ void Control::setExistComponent(CompoList* cmp, BoundaryOuter* OBC)
   c = 0;
   for (int n=0; n<NOFACE; n++)
   {
-    if ( OBC[n].getClass()== OBC_TRC_FREE ) c++;
+    if ( OBC[n].getClass() == OBC_TRC_FREE ) c++;
   }
   if ( c>0 ) EnsCompo.tfree = ON;
   
@@ -4329,8 +4325,8 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   // 外部境界面の圧力の有次元化
   if ( Unit.Param == NONDIMENSIONAL )
   {
-    for (int n=0; n<NOFACE; n++) {
-      
+    for (int n=0; n<NOFACE; n++)
+    {
       switch ( BO[n].getClass() )
       {
         case OBC_OUTFLOW:
@@ -4343,7 +4339,7 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
           break;
           
         case OBC_PERIODIC:
-          if ( BO[n].get_PrdcMode() != BoundaryOuter::prdc_Simple ) // Dirichlet or Bidirectionalを指定の場合
+          if ( BO[n].getPrdcMode() != BoundaryOuter::prdc_Simple ) // Dirichlet or Bidirectionalを指定の場合
           {
             BO[n].p = FBUtility::convND2D_P(BO[n].p, BasePrs, RefDensity, RefVelocity, Unit.Prs);
           }

@@ -134,7 +134,7 @@ protected:
   
   
   // 速度の外部周期境界条件（単純コピー）
-  void VobcPeriodic (REAL_TYPE* d_v, const int face);
+  void VobcPeriodicSimple (REAL_TYPE* d_v, const int face);
 
   
   

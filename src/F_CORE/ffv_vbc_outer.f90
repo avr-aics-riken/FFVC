@@ -1422,15 +1422,13 @@
 !! @param [in]     v      セルセンター速度 n+1
 !! @param [in]     bv     BCindex V
 !! @param [in]     nID    隣接ランク番号（nID[]<0の時外部境界面）
-!! @param [out]    flop   flop count 近似
 !! @note 有効セルのマスクを掛けて、流量を積算
 !<
-    subroutine vobc_get_massflow (sz, g, m_face, sum, v, bv, nID, flop)
+    subroutine vobc_get_massflow (sz, g, m_face, sum, v, bv, nID)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, ix, jx, kx, face, m_face
     integer, dimension(3)                                     ::  sz
-    double precision                                          ::  flop, rix, rjx, rkx
     real                                                      ::  sum, a, s
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
@@ -1529,34 +1527,6 @@
 !$OMP END PARALLEL
 
     sum = a
-
-
-    rix = dble(jx)*dble(kx)
-    rjx = dble(ix)*dble(kx)
-    rkx = dble(ix)*dble(jx)
-
-    FACES2 : select case (face)
-
-    case (X_minus)
-      flop = flop + rix*7.0d0
-
-    case (X_plus)
-      flop = flop + rix*7.0d0
-
-    case (Y_minus)
-      flop = flop + rjx*7.0d0
-
-    case (Y_plus)
-      flop = flop + rjx*7.0d0
-
-    case (Z_minus)
-      flop = flop + rkx*7.0d0
-
-    case (Z_plus)
-      flop = flop + rkx*7.0d0
-
-    case default
-    end select FACES2
 
     return
     end subroutine vobc_get_massflow

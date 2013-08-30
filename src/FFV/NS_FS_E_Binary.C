@@ -405,15 +405,11 @@ void FFV::NS_FS_E_Binary()
   // 流出境界条件のアップデート（u^{n+1}を先に）
   for (int face=0; face<NOFACE; face++)
   {
-    if( nID[face] < 0 )
+    BoundaryOuter* T = BC.exportOBC(face);
+    
+    if ( T->getClass() == OBC_OUTFLOW )
     {
-      BoundaryOuter* T = BC.exportOBC(face);
-      
-      if ( T->getClass() == OBC_OUTFLOW )
-      {
-        vobc_update_(d_v, size, &guide, &face, d_vc, nID);
-      }
-      
+      vobc_update_(d_v, size, &guide, &face, d_vc, nID);
     }
   }
   

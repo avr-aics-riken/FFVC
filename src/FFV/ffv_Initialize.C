@@ -93,21 +93,20 @@ int FFV::Initialize(int argc, char **argv)
   M.importTP(&tp_ffv);
   MO.importTP(&tp_ffv);
   
-
   
   // 反復制御クラスのインスタンス
   C.getIteration();
-  
-  
+
+
   // 流体の解法アルゴリズムを取得
   C.getSolvingMethod4Flow();
-  
+
   
   // 線形ソルバーの特定
   identifyLinearSolver(&tp_ffv);
   
 
-  
+
   // 計算モデルの入力ソース情報を取得
   C.getGeometryModel();
   
@@ -115,11 +114,11 @@ int FFV::Initialize(int argc, char **argv)
   // Intrinsic classの同定
   identifyExample(fp);
   
-  
+
   // パラメータの取得と計算領域の初期化，並列モードを返す
   std::string str_para = setupDomain(&tp_ffv);
 
-
+  
   
   // mat[], cmp[]の作成
   createTable(fp);
@@ -216,12 +215,20 @@ int FFV::Initialize(int argc, char **argv)
   {
     if ( (C.Mode.Example == id_Jet) && (face==0) )
     {
-      // skip
+      ; // skip
     }
     else
     {
-      V.setMediumOnGC(face, d_mid, BC.exportOBC(face)->getClass(),
-                      BC.exportOBC(face)->getGuideMedium(), BC.exportOBC(face)->get_PrdcMode());
+      // 周期境界条件の並列時
+      if ( BC.exportOBC(face)->getClass() == OBC_PERIODIC )
+      {
+        V.setMediumOnGCperiodic(face, d_mid, BC.exportOBC(face)->getPrdcMode() );
+      }
+      else // 周期境界以外
+      {
+        V.setMediumOnGC(face, d_mid, BC.exportOBC(face)->getGuideMedium() );
+      }
+      
     }
   }
 
@@ -451,7 +458,6 @@ int FFV::Initialize(int argc, char **argv)
   // 各ノードの領域情報をファイル出力
   gatherDomainInfo();
   
-
   
   TIMING_stop(tm_voxel_prep_sct);
   // ここまでがボクセル準備の時間セクション
@@ -3537,20 +3543,22 @@ void FFV::scanVoxel(FILE* fp)
   // 外部境界面の媒質IDをセット
   for (int i=0; i<NOFACE; i++)
   {
-    int m = BC.exportOBC(i)->getGuideMedium();
-
-    if ( m<1 || m>C.NoMedium )
+    if ( BC.exportOBC(i)->getClass() != OBC_PERIODIC )
     {
-      Hostonly_
+      int m = BC.exportOBC(i)->getGuideMedium();
+      
+      if ( m<1 || m>C.NoMedium )
       {
-        stamped_printf (   "\tError : An ID of guide cell[%d] is out of range.\n", m);
-        stamped_fprintf(fp,"\tError : An ID of guide cell[%d] is out of range.\n", m);
+        Hostonly_
+        {
+          stamped_printf (   "\tError : An ID of guide cell[%d] is out of range. dir=%d\n", m, i);
+          stamped_fprintf(fp,"\tError : An ID of guide cell[%d] is out of range. dir=%d\n", m, i);
+        }
+        Exit(0);
       }
-      Exit(0);
+      
+      cell_id[m] = 1;
     }
-    
-    cell_id[m] = 1;
-    
   }
   
   

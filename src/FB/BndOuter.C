@@ -22,17 +22,9 @@
 
 // #################################################################
 // メンバー変数のコピー
-void BoundaryOuter::dataCopy(BoundaryOuter* src, const int inner)
+void BoundaryOuter::dataCopy(BoundaryOuter* src)
 {
-  if ( inner == 1 )
-  {
-    BCclass   = OFF;
-  }
-  else
-  {
-    BCclass   = src->BCclass;
-  }
-  
+  BCclass   = src->BCclass;
   wallType  = src->wallType;
   drv_dir   = src->drv_dir;
   drv_lid   = src->drv_lid;
@@ -48,7 +40,6 @@ void BoundaryOuter::dataCopy(BoundaryOuter* src, const int inner)
   var1      = src->var1;
   var2      = src->var2;
   alias     = src->alias;
-  
   p         = src->p;
 
   for (int i=0; i<3; i++)
