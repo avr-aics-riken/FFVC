@@ -1545,7 +1545,7 @@ void ParseBC::getObcOutflow(const string label_base, const int n)
   
   
   // 値
-  label = label_base + "/Value";
+  label = label_base + "/PrsValue";
   
   if ( !(tpCntl->getInspectedValue(label, ct )) )
   {
@@ -2449,12 +2449,12 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
       
       if ( !(tpCntl->getInspectedValue(label, str )) )
       {
-        Hostonly_ printf("\tParsing error : No entory 'Medium'\n");
+        Hostonly_ printf("\tParsing error : No entory '/BCTable/OUterBoundary/*/Medium'\n");
         Exit(0);
       }
       
       
-      // ラベル名が一致するエントリ番号をセットする
+      // ラベル名が一致するエントリ番号をセットする 
       for (int m=1; m<=NoCompo; m++)
       {
         if ( !strcasecmp( str.c_str(), mat[m].getAlias().c_str() ) )

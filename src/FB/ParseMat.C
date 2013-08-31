@@ -249,7 +249,7 @@ int ParseMat::missingMessage(const MediumList* mat, const int m, const int key)
 // Hostonly
 void ParseMat::printMatList(FILE* fp, const MediumList* mat)
 {
-  fprintf(fp, "\t  no :            Alias   Physical constant\n");
+  fprintf(fp, "\t  no :            Alias  Physical constant\n");
   fprintf(fp, "\t ----------------------------------------------------------------------\n");
   
   for (int n=1; n<=NoMedium; n++)

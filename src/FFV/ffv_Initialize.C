@@ -334,7 +334,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // BCIndexにビット情報をエンコードとコンポーネントインデクスの再構築
-  encodeBCindex();
+  encodeBCindex(fp);
   
 
 
@@ -814,6 +814,16 @@ void FFV::createTable(FILE* fp)
   C.getNoOfComponent();
   
   
+  // ポリゴンモデルの場合の局所境界条件数のチェック
+  if ( (C.Mode.Example == id_Polygon) && (C.NoBC == 0) )
+  {
+    Hostonly_{
+      printf("Error : In case of using polygon model, at least one local boundary condition is required.\n");
+    }
+    Exit(0);
+  }
+  
+  
   // 媒質リストをインスタンス [0]はダミーとして利用しないので，配列の大きさはプラス１する
   if ( !(mat = new MediumList[C.NoCompo+1]) ) Exit(0);
   
@@ -1089,7 +1099,7 @@ void FFV::DomainInitialize(TextParser* tp_dom)
 // #################################################################
 /* @brief BCIndexにビット情報をエンコードする
  */
-void FFV::encodeBCindex()
+void FFV::encodeBCindex(FILE* fp)
 {
   int ix = size[0];
   int jx = size[1];
@@ -1107,8 +1117,17 @@ void FFV::encodeBCindex()
   
   
   // 孤立した流体セルの属性変更
-  V.findIsolatedFcell(d_bcd);
+  unsigned long filled = V.findIsolatedFcell(d_bcd, C.RefFillMat);
   
+  if ( filled > 0 )
+  {
+    Hostonly_
+    {
+      printf    ("\n\tReplaced isolated fluid cell = %ld\n", filled);
+      fprintf(fp,"\n\tReplaced isolated fluid cell = %ld\n", filled);
+    }
+  }
+
   
 #if 0
   V.dbg_chkBCIndexD(d_bcd, "BCindexD.txt");
@@ -1208,6 +1227,9 @@ void FFV::fill(FILE* fp)
   unsigned long target_count; ///< フィルの対象となるセル数
   unsigned long replaced;     ///< 置換された数
   unsigned long filled;       ///< FLUIDでフィルされた数
+  unsigned long sum_replaced; ///< 置換された数の合計
+  unsigned long sum_filled;   ///< FLUIDでフィルされた数の合計
+  
   
   
   // 最初にフィル対象のセル数を求める >> 全計算内部セル数
@@ -1220,9 +1242,11 @@ void FFV::fill(FILE* fp)
     if ( paraMngr->Allreduce(&tmp_fc, &total_cell, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
   
-  filled = V.countPainted(d_mid);
+  // ペイント済みをカウント
+  filled = V.countCell(d_mid);
   
-  target_count = total_cell - filled;
+  // ID=0をカウント
+  target_count = V.countCell(d_mid, false);
   
   Hostonly_
   {
@@ -1243,13 +1267,18 @@ void FFV::fill(FILE* fp)
   
   
   
-  // チェック用のリストのアロケート
-  int* list = new int[C.NoCompo+1];
+  // チェック用のリスト OpenMPのfirstprivate化のために固定長にする
+  int list[64];
+  memset(list, 0, 64);
+  
+  if ( C.NoCompo+1 > 64 )
+  {
+    Exit(0);
+  }
   
   // CellMonitorをリストアップ
   for (int n=1; n<=C.NoCompo; n++)
   {
-    list[n] = 0;
     if ( cmp[n].isMONITOR() ) list[n] = n;
   }
   
@@ -1272,12 +1301,11 @@ void FFV::fill(FILE* fp)
   if ( C.FillHint >= 0 )
   {
 
-    filled = (unsigned long)V.fillSeed(d_mid, C.FillHint, C.RefFillMat, d_cut);
+    filled = V.fillSeed(d_mid, C.FillHint, C.RefFillMat, d_cut);
 
     if ( numProc > 1 )
     {
-      unsigned long tmp_fs = filled;
-      if ( paraMngr->Allreduce(&tmp_fs, &filled, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
     }
     
     if ( filled == 0 )
@@ -1307,13 +1335,10 @@ void FFV::fill(FILE* fp)
     fprintf(fp,"\t\tRemaining target cells = %16ld\n\n", target_count);
   }
 
-  // 同期
-  if ( numProc > 1 )
-  {
-    if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-  }
+
   
   if ( target_count == 0 ) return;
+  
   
   
   
@@ -1322,52 +1347,76 @@ void FFV::fill(FILE* fp)
   // 隣接する流体セルと接続しており，かつ固体セルに挟まれていないセルのみペイントする
   
   int c=-1; // iteration
+  sum_replaced = 0;
+  sum_filled = 0;
   
   while (target_count > 0) {
     
-    unsigned fs;
-    filled = (unsigned long)V.fill_by_bid(d_bid, d_mid, d_cut, C.RefFillMat, fs, list);
-    replaced = (unsigned long)fs;
+    unsigned long fs;
+    filled = V.fillByBid(d_bid, d_mid, d_cut, C.RefFillMat, fs, list);
+    replaced = fs;
     
-    if ( numProc > 1 )
-    {
-      unsigned long t_fc = filled;
-      if ( paraMngr->Allreduce(&t_fc, &filled, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-      
-      t_fc = replaced;
-      if ( paraMngr->Allreduce(&t_fc, &replaced, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-    }
-    
-    if ( filled == 0 ) break; // フィル対象がなくなったら終了
-    
-    target_count -= filled;
-    target_count -= replaced;
-    c++;
-    
-    // 同期
     if ( numProc > 1 )
     {
       if ( paraMngr->BndCommS4DEx(d_cut, 6, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
       if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
       if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
     }
+    
+    target_count -= filled;
+    target_count -= replaced;
+    sum_filled   += filled;
+    sum_replaced += replaced;
+    
+    if ( filled == 0 ) break; // フィル対象がなくなったら終了
+    c++;
   }
+  
+  unsigned long isofilled = V.fillIsolatedEmptyCell(d_mid, C.RefFillMat);
+  
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  target_count -= isofilled;
   
   Hostonly_
   {
     printf(    "\t\tBID Iteration          = %5d\n", c+1);
     fprintf(fp,"\t\tBID Iteration          = %5d\n", c+1);
-    printf(    "\t\t    FLUID filled       = %16ld\n", filled);
-    fprintf(fp,"\t\t    FLUID filled       = %16ld\n", filled);
-    printf(    "\t\t    SOLID replaced     = %16ld\n", replaced);
-    fprintf(fp,"\t\t    SOLID replaced     = %16ld\n", replaced);
+    printf(    "\t\t    FLUID filled       = %16ld\n", sum_filled);
+    fprintf(fp,"\t\t    FLUID filled       = %16ld\n", sum_filled);
+    printf(    "\t\t    SOLID replaced     = %16ld\n", sum_replaced);
+    fprintf(fp,"\t\t    SOLID replaced     = %16ld\n", sum_replaced);
+    printf(    "\t\t    Isolated fill      = %16ld\n", isofilled);
+    fprintf(fp,"\t\t    Isolated fill      = %16ld\n", isofilled);
     printf(    "\t\t    Remaining cell     = %16ld\n\n", target_count);
     fprintf(fp,"\t\t    Remaining cell     = %16ld\n\n", target_count);
   }
-  
+  // ここでフィルできなかったRemaining cellは固体に挟まれている可能性のあるセル
+
   
   if ( target_count == 0 ) return;
   
+  
+
+  
+#if 0
+  for (int k=1; k<=size[2]; k++) {
+    for (int j=1; j<=size[1]; j++) {
+      for (int i=1; i<=size[0]; i++) {
+        size_t m = _F_IDX_S3D(i  , j  , k  , size[0], size[1], size[2], guide);
+        if ( d_mid[m] == 0 )
+        {
+          printf("(%d %d %d) = %d\n", i,j,k,d_mid[m]);
+        }
+      }
+    }
+  }
+  Ex->writeSVX(d_mid, &C);
+  exit(0);
+#endif
   
   
   
@@ -1377,27 +1426,19 @@ void FFV::fill(FILE* fp)
   
   while (target_count > 0) {
     
-    unsigned z1 = V.fill_by_mid(d_bid, d_mid, d_cut, C.RefFillMat, list);
+    unsigned long z1 = V.fillByMid(d_bid, d_mid, d_cut, C.RefFillMat, list);
     
-    if ( numProc > 1 )
-    {
-      unsigned t_fc = z1;
-      if ( paraMngr->Allreduce(&t_fc, &z1, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-    }
-    
-    replaced += (unsigned long)z1;
-    
-    if ( z1 == 0 ) break; // フィル対象がなくなったら終了
-
-    c++;
-    
-    // 同期
     if ( numProc > 1 )
     {
       if ( paraMngr->BndCommS4DEx(d_cut, 6, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
       if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
       if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
     }
+    
+    replaced += z1;
+    
+    if ( z1 == 0 ) break; // フィル対象がなくなったら終了
+    c++;
   }
   
   Hostonly_
@@ -1419,15 +1460,16 @@ void FFV::fill(FILE* fp)
   }
   
   // 既にペイントした流体セルをクリア
-  unsigned long fz = (unsigned long)V.fillReplace(d_mid, C.RefFillMat, 0);
+  unsigned long fz = V.fillReplace(d_mid, C.RefFillMat, 0);
   
+  // 同期
   if ( numProc > 1 )
   {
-    unsigned long t_fc = fz;
-    if ( paraMngr->Allreduce(&t_fc, &fz, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
   }
   
-  target_count = fz;
+  // ターゲットの数は，ID=0の数
+  target_count = fz = V.countCell(d_mid, false);
   
   
   Hostonly_
@@ -1438,11 +1480,7 @@ void FFV::fill(FILE* fp)
     fprintf(fp,"\t\tTarget  cell           = %16ld\n", target_count);
   }
   
-  // 同期
-  if ( numProc > 1 )
-  {
-    if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-  }
+  
   
   
   if ( C.FillHint >= 0 ) // ヒントが与えられている場合
@@ -1451,8 +1489,7 @@ void FFV::fill(FILE* fp)
     
     if ( numProc > 1 )
     {
-      unsigned long tmp_fs = filled;
-      if ( paraMngr->Allreduce(&tmp_fs, &filled, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
     }
     
     if ( filled == 0 )
@@ -1481,12 +1518,6 @@ void FFV::fill(FILE* fp)
     fprintf(fp,"\t\tRemaining target cells = %16ld\n\n", target_count);
   }
   
-  // 同期
-  if ( numProc > 1 )
-  {
-    if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-  }
-  
   
   if ( target_count == 0 ) return;
   
@@ -1495,45 +1526,51 @@ void FFV::fill(FILE* fp)
   
   // BIDによるフィル
   c = -1;
+  sum_replaced = 0;
+  sum_filled = 0;
   
   while (target_count > 0) {
     
-    unsigned fs;
-    filled = (unsigned long)V.fill_by_bid(d_bid, d_mid, d_cut, C.RefFillMat, fs, list);
-    replaced = (unsigned long)fs;
+    unsigned long fs;
+    filled = V.fillByBid(d_bid, d_mid, d_cut, C.RefFillMat, fs, list);
+    replaced = fs;
     
-    if ( numProc > 1 )
-    {
-      unsigned long t_fc = filled;
-      if ( paraMngr->Allreduce(&t_fc, &filled, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-      
-      t_fc = replaced;
-      if ( paraMngr->Allreduce(&t_fc, &replaced, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-    }
-    
-    if ( filled == 0 ) break; // フィル対象がなくなったら終了
-    
-    target_count -= filled;
-    target_count -= replaced;
-    c++;
-    
-    // 同期
     if ( numProc > 1 )
     {
       if ( paraMngr->BndCommS4DEx(d_cut, 6, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
       if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
       if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
     }
+    
+    target_count -= filled;
+    target_count -= replaced;
+    sum_filled   += filled;
+    sum_replaced += replaced;
+    
+    if ( filled == 0 ) break; // フィル対象がなくなったら終了
+    c++;
   }
+  
+  isofilled = V.fillIsolatedEmptyCell(d_mid, C.RefFillMat);
+  
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  // ID=0をカウント
+  target_count = V.countCell(d_mid, false);
   
   Hostonly_
   {
     printf(    "\t\tBID Iteration          = %5d\n", c+1);
     fprintf(fp,"\t\tBID Iteration          = %5d\n", c+1);
-    printf(    "\t\t    FLUID filled       = %16ld\n", filled);
-    fprintf(fp,"\t\t    FLUID filled       = %16ld\n", filled);
-    printf(    "\t\t    SOLID replaced     = %16ld\n", replaced);
-    fprintf(fp,"\t\t    SOLID replaced     = %16ld\n", replaced);
+    printf(    "\t\t    FLUID filled       = %16ld\n", sum_filled);
+    fprintf(fp,"\t\t    FLUID filled       = %16ld\n", sum_filled);
+    printf(    "\t\t    SOLID replaced     = %16ld\n", sum_replaced);
+    fprintf(fp,"\t\t    SOLID replaced     = %16ld\n", sum_replaced);
+    printf(    "\t\t    Isolated fill      = %16ld\n", isofilled);
+    fprintf(fp,"\t\t    Isolated fill      = %16ld\n", isofilled);
     printf(    "\t\t    Remaining cell     = %16ld\n\n", target_count);
     fprintf(fp,"\t\t    Remaining cell     = %16ld\n\n", target_count);
   }
@@ -1542,29 +1579,40 @@ void FFV::fill(FILE* fp)
   
   
   
+#if 0
+  for (int k=1; k<=size[2]; k++) {
+    for (int j=1; j<=size[1]; j++) {
+      for (int i=1; i<=size[0]; i++) {
+        size_t m = _F_IDX_S3D(i  , j  , k  , size[0], size[1], size[2], guide);
+        if ( d_mid[m] == 0 )
+        {
+          printf("(%d %d %d) = %d\n", i,j,k,d_mid[m]);
+        }
+      }
+    }
+  }
+  Ex->writeSVX(d_mid, &C);
+  exit(0);
+#endif
+  
   // 固体に変更
-  // Allreduce時の桁あふれ対策のため、unsigned long で集約
-  int Fill_Solid=0;
   c = -1;
+  sum_replaced = 0;
   
   while ( target_count > 0 ) {
     
-    // Fillする固体IDを求める
-    Fill_Solid = V.getFillSolidID(d_mid);
-    
     // 未ペイントのセルに対して、固体IDを与える
-    replaced = (unsigned long)V.fillReplace(d_mid, 0, Fill_Solid);
-    
+    replaced = V.fillByModalSolid(d_mid, 0, C.RefFillMat);
     
     if ( numProc > 1 )
     {
-      unsigned long t_fc = replaced;
-      if ( paraMngr->Allreduce(&t_fc, &replaced, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
     }
+
+    target_count -= replaced;
+    sum_replaced += replaced;
     
     if ( replaced == 0 ) break;
-    
-    target_count -= replaced;
     c++;
   }
   
@@ -1572,37 +1620,24 @@ void FFV::fill(FILE* fp)
   {
     printf(    "\t\tSOLID filling Iteration= %5d\n", c+1);
     fprintf(fp,"\t\tSOLID filling Iteration= %5d\n", c+1);
-    printf(    "\t\t   Filled by SOLID[%3d]= %16ld\n\n", Fill_Solid, target_count);
-    fprintf(fp,"\t\t   Filled by SOLID[%3d]= %16ld\n\n", Fill_Solid, target_count);
+    printf(    "\t\t   Filled by SOLID     = %16ld\n\n", sum_replaced);
+    fprintf(fp,"\t\t   Filled by SOLID     = %16ld\n\n", sum_replaced);
   }
   
-  // 同期
-  if ( numProc > 1 )
-  {
-    if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-  }
 
   
-  // 確認 paintedは未ペイントセルがある場合に1
-  unsigned long painted = (unsigned long)V.fill_check(d_mid);
+  // ID=0をカウント
+  unsigned long unpainted = V.countCell(d_mid, false);
   
-  if ( numProc > 1 )
-  {
-    unsigned long t_painted = painted;
-    if ( paraMngr->Allreduce(&t_painted, &painted, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  if ( painted  != 0 )
+  if ( unpainted != 0 )
   {
     Hostonly_
     {
-      printf(    "\tFill operation is done, but still remains unpainted cells.\n");
-      fprintf(fp,"\tFill operation is done, but still remains unpainted cells.\n");
+      printf(    "\tFill operation is done, but still remains %ld unpainted cells.\n", unpainted);
+      fprintf(fp,"\tFill operation is done, but still remains %ld unpainted cells.\n", unpainted);
     }
     Exit(0);
   }
-
-    if ( list ) delete [] list;
   
 }
 
@@ -3601,7 +3636,7 @@ void FFV::setBCinfo()
   {
     Hostonly_
     {
-      printf("RefMat[%d] is not listed in MediumTable.\n", C.RefMat);
+      printf("/Referece/Medium = \"%s\" is not listed in MediumTable.\n", C.RefMedium.c_str());
     }
     Exit(0);
   }
@@ -3611,7 +3646,7 @@ void FFV::setBCinfo()
   {
     Hostonly_
     {
-      printf("RefFillMat[%d] is not listed in MediumTable.\n", C.RefFillMat);
+      printf("/ApplicationControl/FillMedium = \"%s\" is not listed in MediumTable.\n", C.FillMedium.c_str());
     }
     Exit(0);
   }
@@ -4570,7 +4605,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     
     // mat[]の格納順を探す
     int mat_id;
-    
+
     for (int i=1; i<=C.NoCompo; i++)
     {
       if ( FBUtility::compare(m_pg, mat[i].getAlias()) )
@@ -4579,7 +4614,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
         break;
       }
     }
-    
+
     // PolygonにIDを割り当てる
     poly_stat = (*it)->set_all_exid_of_trias(mat_id);
     
@@ -4602,12 +4637,12 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
       REAL_TYPE ta = area;
       if ( paraMngr->Allreduce(&ta, &area, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
     }
-    
+
     
     // コンポーネント(BC+OBSTACLE)の面積を保持 >> @todo Polylibのバグで並列時に正しい値を返さない, ntriaとarea 暫定的処置
     cmp[mat_id].area = area;
     
-    
+
     Hostonly_
     {
       printf(    "\t  %20s %16s  %20s %12d  %e\n", m_pg.c_str(),
@@ -4621,7 +4656,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
                                                    ntria,
                                                    area);
     }
-    
+
     c++;
     
 // ########## show corrdinates and area
@@ -4631,8 +4666,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
 // ##########
     
   }
-  
-  
+
   
   delete pg_roots;
   
@@ -4641,7 +4675,6 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     printf("\n");
     fprintf(fp, "\n");
   }
-  
   
   
   

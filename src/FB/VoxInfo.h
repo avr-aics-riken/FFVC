@@ -174,11 +174,10 @@ private:
    */
   inline int find_mode_id(const int fid, const int qw, const int qe, const int qs, const int qn, const int qb, const int qt)
   {
-    unsigned* key = new unsigned[NoCompo+1]; // ID毎の頻度
-    int val[6];              // ID
+    unsigned key[64]; ///< ID毎の頻度 @note ffv_Initialize() >> fill()でif ( C.NoCompo+1 > 64 )をチェック
+    int val[6];       ///< ID
     
-    
-    for (int l=1; l<=NoCompo; l++) key[l]=0;
+    memset(key, 0, 64);
     
     val[0] = qw;
     val[1] = qe;
@@ -210,8 +209,6 @@ private:
       }
     }
     
-    if ( key ) delete [] key;
-    
     return z;
   }
   
@@ -225,10 +222,6 @@ private:
   {
     return ( (bid >> dir*5) & MASK_5 );
   }
-  
-  
-  bool isInTable             (int MaxSize, int* cList, int target);
-  
   
   
   //@brief idxの第shiftビットをOFFにする
@@ -292,21 +285,22 @@ public:
   
   
   /**
-   * @brief ペイント済みの個数を返す
-   * @retval 計算空間内における非empty(0)セル数
-   * @param [in] mid ボクセルID配列
+   * @brief セル数をカウント
+   * @param [in] mid     ID配列
+   * @param [in] painted ID=0以外でペイント済みを求める(true), m_idのセルをカウント(false)
+   * @param [in] m_id    検査するID
    */
-  unsigned long countPainted(const int* mid);
+  unsigned long countCell(const int* mid, bool painted=true, int m_id=0);
   
   
   /**
    * @brief セルの状態をカウントして，その個数をLcell, Gcellに保持する
-   * @param Lcell ノードローカルの値（戻り値）
-   * @param Gcell グローバルの値（戻り値）
-   * @param bx BCindex ID
-   * @param state カウントするセルの状態
+   * @param [out] Lcell ノードローカルの値（戻り値）
+   * @param [out] Gcell グローバルの値（戻り値）
+   * @param [in]  bx    BCindex ID
+   * @param [in]  state カウントするセルの状態
    */
-  void countCellState(unsigned long& Lcell, unsigned long& Gcell, int* bx, const int state);
+  void countCellState(unsigned long& Lcell, unsigned long& Gcell, const int* bx, const int state);
   
   
   /**
@@ -314,7 +308,7 @@ public:
    @param [in]  bx       BCindex ID
    @param [out] OpenArea 開口セル数
    */
-  void countOpenAreaOfDomain (int* bx, REAL_TYPE* OpenArea);
+  void countOpenAreaOfDomain (const int* bx, REAL_TYPE* OpenArea);
   
   
   /**
@@ -322,7 +316,7 @@ public:
    * @param [in] bcd   BCindex ID
    * @param [in] fname 出力用ファイル名
    */
-  void dbg_chkBCIndexD  (const int* bcd, const char* fname);
+  void dbg_chkBCIndexD (const int* bcd, const char* fname);
   
   
   /**
@@ -330,7 +324,7 @@ public:
    * @param [in] bh    BCindex H1
    * @param [in] fname 出力用ファイル名
    */
-  void dbg_chkBCIndexH1(const int* bh, const char* fname);
+  void dbg_chkBCIndexH1 (const int* bh, const char* fname);
   
   
   /**
@@ -338,7 +332,7 @@ public:
    * @param [in] bh    BCindex H2
    * @param [in] fname 出力用ファイル名
    */
-  void dbg_chkBCIndexH2(const int* bh, const char* fname);
+  void dbg_chkBCIndexH2 (const int* bh, const char* fname);
   
   
   /**
@@ -347,7 +341,7 @@ public:
    * @param [in] bcp   BCindex P
    * @param [in] fname 出力用ファイル名
    */
-  void dbg_chkBCIndexP  (const int* bcd, const int* bcp, const char* fname);
+  void dbg_chkBCIndexP (const int* bcd, const int* bcp, const char* fname);
   
   
   /**
@@ -355,14 +349,7 @@ public:
    * @param [in] bcv   BCindex V
    * @param [in] fname 出力用ファイル名
    */
-  void dbg_chkBCIndexV  (const int* bcv, const char* fname);
-  
-  
-  /**
-   * @brief ペイント済みかどうかをチェックし、未ペイントセルがあれば1を返す
-   * @param [in] mid ID配列
-   */
-  int fill_check(const int* mid);
+  void dbg_chkBCIndexV (const int* bcv, const char* fname);
   
   
   /**
@@ -374,7 +361,7 @@ public:
    * @param [out]    substituted 固体IDに置換された数
    * @param [in]     m_list      CellMonitorの格納順がリストアップされた配列
    */
-  unsigned fill_by_bid(int* bid, int* mid, float* cut, const int tgt_id, unsigned& substituted, int* m_list);
+  unsigned long fillByBid (int* bid, int* mid, float* cut, const int tgt_id, unsigned long& substituted, const int* m_list);
   
   
   /**
@@ -385,7 +372,16 @@ public:
    * @param [in]     tgt_id   フィルする流体ID
    * @param [in]     m_list   CellMonitorの格納順がリストアップされた配列
    */
-  unsigned fill_by_mid(int* bid, int* mid, float* cut, const int tgt_id, int* m_list);
+  unsigned long fillByMid (int* bid, int* mid, float* cut, const int tgt_id, const int* m_list);
+  
+  
+  /* @brief targetセルの周囲の固体最頻値でフィルを実行
+   * @param [in,out] mid      ID配列
+   * @param [in]     target   置換対象セルID
+   * @param [in]     fluid_id フィルをする流体ID
+   * @retval 置換されたセル数
+   */
+  unsigned long fillByModalSolid (int* mid, const int target, const int fluid_id);
   
   
   /**
@@ -393,8 +389,9 @@ public:
    * @param [in,out] mid     ID配列
    * @param [in]     target  置換対象ID
    * @param [in]     fill_id 置換ID
+   * @retval 置換されたセル数
    */
-  unsigned fillReplace(int* mid, const int target, const int fill_id);
+  unsigned long fillReplace (int* mid, const int target, const int fill_id);
   
   /**
    * @brief シード点をペイントする
@@ -403,15 +400,23 @@ public:
    * @param [in]     target ペイントするID
    * @param [in]     cut    距離情報
    */
-  unsigned fillSeed(int* mid, const int face, const int target, const float* cut);
+  unsigned long fillSeed (int* mid, const int face, const int target, const float* cut);
+  
+  
+  /* @brief 孤立したゼロIDのセルを隣接セルIDで埋める
+   * @param [in,out] mid      ID配列
+   * @param [in]     fluid_id フィルする流体ID
+   */
+  unsigned long fillIsolatedEmptyCell (int* mid, const int fluid_id);
   
   
   /**
    * @brief 孤立した流体セルを探し，周囲の個体媒質で置換，BCindexを修正する
-   * @param [in]     bx    BCindex ID
+   * @param [in,out] bx       BCindex ID
+   * @param [in]     fluid_id フィルする流体ID
    * @attention 事前にbx[]の同期が必要 >> 隣接セルがすべて固体の場合をチェックするため
    */
-  void findIsolatedFcell(int* bx);
+  unsigned long findIsolatedFcell (int* bx, const int fluid_id);
   
   
   /**
@@ -442,13 +447,6 @@ public:
    * @param [in]  policy モニターのセル幅
    */
   bool findLBCbbox(const int tgt, const int* bid, const float* cut, int* st, int* ed, const int policy);
-  
-  
-  /**
-   * @brief 内部フィルを実行する場合の固体IDを求める
-   * @param [in] mid ボクセルIDを保持する配列
-   */
-  int getFillSolidID(const int* mid);
   
   
   /**

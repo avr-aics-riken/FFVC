@@ -141,7 +141,7 @@ private:
   REAL_TYPE temp_init;   /// 温度の初期値
   
   std::string alias;     ///< 局所境界条件の別名
-  std::string medium;    ///< Alias of Medium
+  std::string medium;    ///< Medium名
   
 public:
   REAL_TYPE area;           ///< 断面積

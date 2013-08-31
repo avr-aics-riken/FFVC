@@ -36,18 +36,22 @@ bool IP_Rect::getTP(Control* R, TextParser* tpCntl)
   // 2D or 3D mode
   label="/IntrinsicExample/Dimension";
   
-  if ( !(tpCntl->getInspectedValue(label, str )) ) {
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   
-  if     ( !strcasecmp(str.c_str(), "2d") ) {
+  if     ( !strcasecmp(str.c_str(), "2d") )
+  {
     mode = dim_2d;
   }
-  else if( !strcasecmp(str.c_str(), "3d") ) {
+  else if( !strcasecmp(str.c_str(), "3d") )
+  {
     mode = dim_3d;
   }
-  else {
+  else
+  {
     Hostonly_ stamped_printf("\tParsing error : Invalid '%s'\n", label.c_str());
     return false;
   }

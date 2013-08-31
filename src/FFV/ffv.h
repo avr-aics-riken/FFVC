@@ -416,7 +416,7 @@ private:
   
   
   // BCIndexにビット情報をエンコードする
-  void encodeBCindex();
+  void encodeBCindex(FILE* fp);
   
   
   // ポリゴンの場合のフィル操作

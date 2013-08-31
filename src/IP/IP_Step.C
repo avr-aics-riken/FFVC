@@ -35,69 +35,82 @@ bool IP_Step::getTP(Control* R, TextParser* tpCntl)
   REAL_TYPE ct;
   
   // 2D or 3D mode
-  label="/IntrinsicExample/Dimension";
+  label = "/IntrinsicExample/Dimension";
   
-  if ( !(tpCntl->getInspectedValue(label, str )) ) {
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   
-  if     ( !strcasecmp(str.c_str(), "2d") ) {
+  if     ( !strcasecmp(str.c_str(), "2d") )
+  {
     mode = dim_2d;
   }
-  else if( !strcasecmp(str.c_str(), "3d") ) {
+  else if( !strcasecmp(str.c_str(), "3d") )
+  {
     mode = dim_3d;
   }
-  else {
+  else
+  {
     Hostonly_ stamped_printf("\tParsing error : Invalid '%s'\n", label.c_str());
     return false;
   }
   
   // x-dir step
-  label="/IntrinsicExample/StepLength";
-  if ( !(tpCntl->getInspectedValue(label, ct )) ) {
+  label = "/IntrinsicExample/StepLength";
+  if ( !(tpCntl->getInspectedValue(label, ct )) )
+  {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
-  else{
+  else
+  {
 	  width = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
   }
   
   // z-dir step
-  label="/IntrinsicExample/StepHeight";
-  if ( !(tpCntl->getInspectedValue(label, ct )) ) {
+  label = "/IntrinsicExample/StepHeight";
+  if ( !(tpCntl->getInspectedValue(label, ct )) )
+  {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
-  else{
+  else
+  {
 	  height = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
   }
   
   // ドライバの設定 値が正の値のとき，有効．ゼロの場合はドライバなし
-  label="/IntrinsicExample/DriverLength";
-  if ( tpCntl->getInspectedValue(label, ct ) ) {
+  label = "/IntrinsicExample/DriverLength";
+  if ( tpCntl->getInspectedValue(label, ct ) )
+  {
     drv_length = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
   }
-  else {
+  else
+  {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   
-  if ( drv_length < 0.0 ) {
+  if ( drv_length < 0.0 )
+  {
     Hostonly_ stamped_printf("\tError : Value of '%s' must be positive.\n", label.c_str());
     return false;
   }
   
   // 媒質指定
-  label="/IntrinsicExample/FluidMedium";
-  if ( !(tpCntl->getInspectedValue(label, str )) ) {
+  label = "/IntrinsicExample/FluidMedium";
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
   m_fluid = str;
   
-  label="/IntrinsicExample/SolidMedium";
-  if ( !(tpCntl->getInspectedValue(label, str )) ) {
+  label = "/IntrinsicExample/SolidMedium";
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
@@ -106,15 +119,17 @@ bool IP_Step::getTP(Control* R, TextParser* tpCntl)
   // Only driver is specified
   if ( drv_length > 0.0 )
   {
-    label="/IntrinsicExample/DriverMedium";
-    if ( !(tpCntl->getInspectedValue(label, str )) ) {
+    label = "/IntrinsicExample/DriverMedium";
+    if ( !(tpCntl->getInspectedValue(label, str )) )
+    {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;
     }
     m_driver = str;
     
-    label="/IntrinsicExample/DriverFaceMedium";
-    if ( !(tpCntl->getInspectedValue(label, str )) ) {
+    label = "/IntrinsicExample/DriverFaceMedium";
+    if ( !(tpCntl->getInspectedValue(label, str )) )
+    {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;
     }
@@ -132,7 +147,8 @@ bool IP_Step::getTP(Control* R, TextParser* tpCntl)
  */
 void IP_Step::printPara(FILE* fp, const Control* R)
 {
-  if ( !fp ) {
+  if ( !fp )
+  {
     stamped_printf("\tFail to write into file\n");
     Exit(0);
   }
@@ -143,7 +159,9 @@ void IP_Step::printPara(FILE* fp, const Control* R)
   fprintf(fp,"\tDimension Mode                     :  %s\n", (mode==dim_2d)?"2 Dimensional":"3 Dimensional");
   fprintf(fp,"\tStep Width (x-dir.)    [m] / [-]   : %12.5e / %12.5e\n", width, width/RefL);
   fprintf(fp,"\tStep Height(z-dir.)    [m] / [-]   : %12.5e / %12.5e\n", height, height/RefL);
-  if ( drv_length > 0.0 ) {
+  
+  if ( drv_length > 0.0 )
+  {
     fprintf(fp,"\tDriver Length        [m] / [-]   : %12.5e / %12.5e\n", drv_length, drv_length/RefL);
   }
 }
@@ -223,10 +241,10 @@ void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, 
   }
   
   // ドライバ部分　X-面からドライバ長さより小さい領域
-  if ( drv_length > 0.0 ) {
+  if ( drv_length > 0.0 )
+  {
     
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_driver, ox, dh, len) \
-schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_driver, ox, dh, len) schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
@@ -243,8 +261,7 @@ schedule(static)
   if ( drv_length > 0.0 )
   {
     
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_driver, mid_fluid, mid_driver_face) \
-schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_driver, mid_fluid, mid_driver_face) schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
@@ -260,8 +277,7 @@ schedule(static)
   }
 
   // ステップ部分を上書き
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid, ox, oy, dh, len, ht) \
-schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid, ox, oy, dh, len, ht) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
