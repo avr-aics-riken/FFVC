@@ -208,14 +208,12 @@ public:
    * @param [in]     sz   分割数
    * @param [in]     gc   ガイドセル数
    * @param [in]     coef 係数
-   * @param [in,out] flop 浮動小数演算数
    */
   void cnv_Div(REAL_TYPE* dst,
                REAL_TYPE* src,
                int* sz,
                int gc,
-               REAL_TYPE coef,
-               double& flop);
+               REAL_TYPE coef);
   
   
   /**
@@ -226,15 +224,13 @@ public:
    * @param [in]     gc      ガイドセル数
    * @param [in]     Ref_rho 代表密度(kg/m^3)
    * @param [in]     Ref_v   代表速度(m/s)
-   * @param [in,out] flop    浮動小数演算数
    */
   void tp_array_ND2D(REAL_TYPE* dst,
                      REAL_TYPE* src,
                      int* sz,
                      int gc,
                      const REAL_TYPE Ref_rho,
-                     const REAL_TYPE Ref_v,
-                     double& flop);
+                     const REAL_TYPE Ref_v);
   
   
 	/**
@@ -394,15 +390,13 @@ public:
    * @param [in]     src   入力
    * @param [in]     scale スカラー倍数
    * @param [in]     mode  スカラー or ベクトル
-   * @param [in,out] flop  浮動小数点演算
    */
   void xcopy (REAL_TYPE* dst,
               const int* size,
               const int guide,
               const REAL_TYPE* src,
               const REAL_TYPE scale,
-              const int mode,
-              double& flop);
+              const int mode);
 
   
   /**

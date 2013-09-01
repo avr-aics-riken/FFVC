@@ -351,24 +351,17 @@ public:
    * @param [in]     tm   時刻
    * @param [in]     C    コントロールクラス
    * @param [in]     v00  参照速度
-   * @param [in,out] flop 浮動小数点演算数
    */
-  void OuterVBC (REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, const double tm, Control* C, REAL_TYPE* v00, double& flop);
+  void OuterVBC (REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, const double tm, Control* C, REAL_TYPE* v00);
   
   
   /**
-   * @brief 速度の外部境界処理(タイムステップに一度ガイドセルに値を設定する)
-   * @param [in,out] d_v  速度ベクトル v^{n+1}
-   * @param [in]     d_bv BCindex V
-   * @param [in]     tm   時刻
-   * @param [in]     C    コントロールクラス
-   * @param [in]     v00  参照速度
+   * @brief 疑似速度の外部境界条件処理
+   * @param [out]    d_vc   疑似速度ベクトル v^*
+   * @param [in]     d_bv   BCindex V
+   * @param [in]     C      Control class
    */
-  void OuterVBC_GC (REAL_TYPE* d_v, int* d_bv, const double tm, const Control* C, const REAL_TYPE* v00);
-  
-  
-  // 疑似速度の外部境界条件処理
-  void OuterVBCpseudo (REAL_TYPE* d_vc, int* d_bv, Control* C, double& flop);
+  void OuterVBCpseudo (REAL_TYPE* d_vc, int* d_bv, Control* C);
   
   
   // 周期境界の場合のインデクスの同期

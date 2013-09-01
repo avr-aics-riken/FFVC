@@ -1184,18 +1184,20 @@ void ParseBC::getIbcSpecVel(const string label_base, const int n, CompoList* cmp
 
 // #################################################################
 // 温度計算の場合の各媒質の初期値を取得する
-void ParseBC::getInitTempOfMedium(CompoList* cmp)
+void ParseBC::getInitTempOfMedium(CompoList* cmp, Control* C)
 {  
   string label, label_base;
   string str;
   
-  label_base = "/StartCondition/InitialState/TemperatureOfMedium";
+  label_base = "/StartCondition/InitialState/Mediumoption";
   
   if ( !tpCntl->chkNode(label_base) )
   {
-    Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", label_base.c_str());
-    Exit(0);
+    return; // ラベルがなければオプション指定なし
   }
+  
+  // ラベルが指定されている場合はオプションが有効
+  C->MediumTmpInitOption = ON;
   
   
   for (int i=1; i<=NoMedium; i++)
@@ -1858,13 +1860,13 @@ void ParseBC::getObcWall(const string label_base, const int n)
     else if( !strcasecmp(str.c_str(), "HeatFlux") )
     {
       BaseBc[n].set_hType(HEATFLUX);
-      label2 = label + "/Flux";
+      label2 = label_base + "/Flux";
       BaseBc[n].setHeatflux( getBCvalReal(label2) ); // 正符号は流入
     }
     else if( !strcasecmp(str.c_str(), "Isothermal") )
     {
       BaseBc[n].set_hType(ISOTHERMAL);
-      label2 = label + "/Temperature";
+      label2 = label_base + "/Temperature";
       ct = getBCvalReal(label2); // 表面温度
       BaseBc[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
     }
@@ -3586,11 +3588,14 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
         }
         else if ( htp == HEATFLUX )
         {
-          fprintf(fp,"Heat Flux %e\n", ref->getHeatflux());
+          fprintf(fp,"\t\t\tHeat Flux  = %12.6e [W/m^2] / %12.6e [-]\n", ref->getHeatflux(), ref->getHeatflux());
         }
         else if ( htp == ISOTHERMAL )
         {
-          fprintf(fp,"Isothermal\n");
+          fprintf(fp,"\t\t\tIsothermal   = %12.6e [%s] / %12.6e [-]\n",
+                  FBUtility::convK2Temp(ref->getTemp(), Unit_Temp),
+                  (Unit_Temp==Unit_KELVIN) ? "K" : "C",
+                  FBUtility::convK2ND(ref->getTemp(), BaseTemp, DiffTemp));
         }
         //else if ( htp == CNST_TEMP ) {
         //  fprintf(fp,"Dirichlet %e [%s]\n", ref->T1.c, (Unit_Temp==CompoList::Unit_KELVIN)?"K":"C");

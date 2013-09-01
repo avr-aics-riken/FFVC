@@ -84,10 +84,9 @@ void FFV::NS_FS_E_CDS()
   
   // n stepの値を保持 >> In use (d_v0, d_p0)
   TIMING_start(tm_copy_array);
-  flop = 0.0;
-  U.xcopy(d_p0, size, guide, d_p, one, kind_scalar, flop);
-  U.xcopy(d_v0, size, guide, d_v, one, kind_vector, flop);
-  TIMING_stop(tm_copy_array, flop, 2);
+  U.xcopy(d_p0, size, guide, d_p, one, kind_scalar);
+  U.xcopy(d_v0, size, guide, d_v, one, kind_vector);
+  TIMING_stop(tm_copy_array, 0.0, 2);
   
   
   // 壁関数指定時の摩擦速度の計算 src0をテンポラリのワークとして利用
@@ -239,10 +238,9 @@ void FFV::NS_FS_E_CDS()
   
   // 疑似ベクトルの境界条件
   TIMING_start(tm_pvec_BC);
-  flop = 0.0;
-  BC.OuterVBCpseudo(d_vc, d_bcv, &C, flop);
+  BC.OuterVBCpseudo(d_vc, d_bcv, &C);
   BC.InnerVBCperiodic(d_vc, d_bcd);
-  TIMING_stop(tm_pvec_BC, flop);
+  TIMING_stop(tm_pvec_BC, 0.0);
   
   
   // 疑似ベクトルの同期
@@ -265,7 +263,7 @@ void FFV::NS_FS_E_CDS()
   if ( C.AlgorithmF == Flow_FS_AB_CN )
   {
     TIMING_start(tm_copy_array);
-    U.xcopy(d_wv, size, guide, d_vc, one, kind_vector, flop);
+    U.xcopy(d_wv, size, guide, d_vc, one, kind_vector);
     TIMING_stop(tm_copy_array, 0.0);
     
     for (ICv->setLoopCount(0); ICv->getLoopCount()< ICv->getMaxIteration(); ICv->incLoopCount())
@@ -290,7 +288,7 @@ void FFV::NS_FS_E_CDS()
   
   // vの初期値をvcにしておく
   TIMING_start(tm_copy_array);
-  U.xcopy(d_v, size, guide, d_vc, one, kind_vector, flop);
+  U.xcopy(d_v, size, guide, d_vc, one, kind_vector);
   TIMING_stop(tm_copy_array, 0.0);
   
   
@@ -517,9 +515,8 @@ void FFV::NS_FS_E_CDS()
 
     // 周期型の速度境界条件
     TIMING_start(tm_vec_BC);
-    flop=0.0;
     BC.InnerVBCperiodic(d_v, d_bcd);
-    TIMING_stop(tm_vec_BC, flop);
+    TIMING_stop(tm_vec_BC, 0.0);
     
     TIMING_stop(tm_poi_itr_sct_4, 0.0);
     // <<< Poisson Iteration subsection 4
@@ -557,17 +554,14 @@ void FFV::NS_FS_E_CDS()
   
   // 外部領域境界面での速度や流量を計算 > 外部流出境界条件の移流速度に利用
   TIMING_start(tm_domain_monitor);
-  flop=0.0;
   DomainMonitor(BC.exportOBC(), &C);
-  TIMING_stop(tm_domain_monitor, flop);
+  TIMING_stop(tm_domain_monitor, 0.0);
   
   
   // 速度のガイドセルへの代入
   TIMING_start(tm_VBC_update);
-  flop = 0.0;
   BC.InnerVBC(d_v, d_bcv, CurrentTime, v00);
-  BC.OuterVBC_GC(d_v, d_bcv, CurrentTime, &C, v00);
-  TIMING_stop(tm_VBC_update, flop);
+  TIMING_stop(tm_VBC_update, 0.0);
   
   
   // 非同期にして隠す

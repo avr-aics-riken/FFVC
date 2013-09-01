@@ -346,8 +346,9 @@ public:
   /**
    * @brief 温度計算の場合の各媒質の初期値を取得する
    * @param [in,out] cmp    CompoList
+   * @param [in,out] C      Control
    */
-  void getInitTempOfMedium(CompoList* cmp);
+  void getInitTempOfMedium(CompoList* cmp, Control* C);
   
   
   /**

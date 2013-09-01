@@ -107,6 +107,8 @@ int FFV::Loop(const unsigned step)
     TIMING_stop(tm_heat_sct, 0.0);
   }
   
+  
+  
   // Interface Equation
   if ( C.BasicEqs == INCMP_2PHASE ) 
   {
@@ -143,6 +145,7 @@ int FFV::Loop(const unsigned step)
   VariationSpace(avr_Var, rms_Var, flop_count);
   TIMING_stop(tm_stat_space, flop_count);
 
+  
   
   if ( numProc > 1 ) 
   {

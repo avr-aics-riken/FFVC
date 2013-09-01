@@ -404,10 +404,10 @@ int FFV::Initialize(int argc, char **argv)
   
   
   
-  // 温度計算の場合の初期値指定
+  // 温度計算の場合の媒質毎の初期値指定オプション
   if ( C.isHeatProblem() )
   {
-    B.getInitTempOfMedium(cmp);
+    B.getInitTempOfMedium(cmp, &C);
   }
   
   // set phase 
@@ -533,7 +533,7 @@ int FFV::Initialize(int argc, char **argv)
   C.ver_CUT = cutlib_VersionInfo();
   C.ver_TP  = tp_ffv.getVersionInfo();
   
-  
+
   // 制御パラメータ，物理パラメータの表示
   Hostonly_ 
   {
@@ -648,7 +648,7 @@ int FFV::Initialize(int argc, char **argv)
 			allocArray_PBiCGSTAB(TotalMemory);
 			break;
   }
-  
+
   
   // メモリ使用量の表示
   Hostonly_
@@ -661,11 +661,11 @@ int FFV::Initialize(int argc, char **argv)
   
   displayMemoryInfo(fp, G_TotalMemory, TotalMemory, "Solver");
 
-  
+
   
   // 履歴出力準備
   prepHistoryOutput();
-  
+
 
   Hostonly_ if ( fp ) fclose(fp);
   
@@ -3908,6 +3908,7 @@ void FFV::setInitialCondition()
   
   double tm = CurrentTime * C.Tscale;
   
+  
   if ( C.Start == initial_start )
   {
 		REAL_TYPE U0[3];
@@ -3928,17 +3929,21 @@ void FFV::setInitialCondition()
 		fb_set_vector_(d_v, size, &guide, U0, d_bcd);
     fb_set_fvector_(d_vf, size, &guide, U0, d_bcd);
     
+    
     // セルフェイスの設定　発散値は関係なし
     BC.modDivergence(d_dv, d_bcv, CurrentTime, v00, m_buf, d_vf, d_v, &C, flop_task);
+    
     
 		// 外部境界面の流出流量と移流速度
     DomainMonitor( BC.exportOBC(), &C);
     
+    
 		// 外部境界面の移流速度を計算し，外部境界条件を設定
-		BC.OuterVBC(d_v, d_vf, d_bcv, tm, &C, v00, flop_task);
+		BC.OuterVBC(d_v, d_vf, d_bcv, tm, &C, v00);
     BC.InnerVBC(d_v, d_bcv, tm, v00);
     BC.InnerVBCperiodic(d_v, d_bcd);
     
+
 		// 圧力
     REAL_TYPE ip;
     if (C.Unit.Param == DIMENSIONAL)
@@ -3949,10 +3954,10 @@ void FFV::setInitialCondition()
     {
       ip = C.iv.Pressure;
     }
-    
+
     U.xset(d_p, size, guide, ip, kind_scalar);
 		BC.OuterPBC(d_p);
-    
+
 		// 温度
 		if ( C.isHeatProblem() )
     {
@@ -3965,13 +3970,16 @@ void FFV::setInitialCondition()
       {
         it = C.iv.Temperature;
       }
-      
+
       U.xset(d_t, size, guide, it, kind_scalar);
       
       // コンポーネントの初期値
-      for (int m=1; m<=C.NoCompo; m++)
+      if ( C.MediumTmpInitOption == ON )
       {
-        BC.setInitialTempCompo(m, d_bcd, d_t);
+        for (int m=1; m<=C.NoCompo; m++)
+        {
+          BC.setInitialTempCompo(m, d_bcd, d_t);
+        }
       }
       
 			BC.OuterTBCperiodic(d_t);
@@ -3986,7 +3994,7 @@ void FFV::setInitialCondition()
     BC.InnerPBCperiodic(d_p, d_bcd);
     
     // 外部境界条件
-    BC.OuterVBC(d_v, d_vf, d_bcv, tm, &C, v00, flop_task);
+    BC.OuterVBC(d_v, d_vf, d_bcv, tm, &C, v00);
     
     // 流出境界の流出速度の算出
     BC.modDivergence(d_ws, d_bcv, tm, v00, m_buf, d_vf, d_v, &C, flop_task);
@@ -4015,6 +4023,7 @@ void FFV::setInitialCondition()
   if ( C.BasicEqs == INCMP_2PHASE )
   {
     setVOF();
+    
     if ( numProc > 1 )
     {
       if ( paraMngr->BndCommS3D(d_vof, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);

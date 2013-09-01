@@ -218,7 +218,7 @@ void FFV::AverageOutput(double& flop)
   }
   else 
   {
-    U.xcopy(d_ws, size, guide, d_ap, scale, kind_scalar, flop);
+    U.xcopy(d_ws, size, guide, d_ap, scale, kind_scalar);
   }
   
   // 最大値と最小値
@@ -298,7 +298,7 @@ void FFV::AverageOutput(double& flop)
     }
     else 
     {
-      U.xcopy(d_ws, size, guide, d_at, scale, kind_scalar, flop);
+      U.xcopy(d_ws, size, guide, d_at, scale, kind_scalar);
     }
     
     fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
@@ -515,7 +515,7 @@ void FFV::OutputBasicVariables(double& flop)
   {
     
     REAL_TYPE coef = (REAL_TYPE)DT.get_DT()/(deltaX*deltaX); /// 発散値を計算するための係数　dt/h^2
-    U.cnv_Div(d_ws, d_dv, size, guide, coef, flop);
+    U.cnv_Div(d_ws, d_dv, size, guide, coef);
     
     fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
     
@@ -552,7 +552,7 @@ void FFV::OutputBasicVariables(double& flop)
   }
   else 
   {
-    U.xcopy(d_ws, size, guide, d_p, scale, kind_scalar, flop);
+    U.xcopy(d_ws, size, guide, d_p, scale, kind_scalar);
   }
   
   fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
@@ -630,7 +630,7 @@ void FFV::OutputBasicVariables(double& flop)
     }
     else 
     {
-      U.xcopy(d_ws, size, guide, d_t, scale, kind_scalar, flop);
+      U.xcopy(d_ws, size, guide, d_t, scale, kind_scalar);
     }
     
     fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
@@ -748,7 +748,7 @@ void FFV::OutputDerivedVariables(double& flop)
     // convert non-dimensional to dimensional, iff file is dimensional
     if (C.Unit.File == DIMENSIONAL)
     {
-      U.tp_array_ND2D(d_ws, d_p0, size, guide, C.RefDensity, C.RefVelocity, flop);
+      U.tp_array_ND2D(d_ws, d_p0, size, guide, C.RefDensity, C.RefVelocity);
     }
     else
     {
@@ -834,7 +834,7 @@ void FFV::OutputDerivedVariables(double& flop)
     i2vgt_ (d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
     
     // 無次元で出力
-    U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar, flop);
+    U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar);
     
     fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
     
@@ -868,7 +868,7 @@ void FFV::OutputDerivedVariables(double& flop)
     helicity_(d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
     
     // 無次元で出力
-    U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar, flop);
+    U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar);
     
     fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
     

@@ -19,6 +19,14 @@ REVISION HISTORY
 ================
 
 --------------------------
+2013-09-01
+
+- r1019 backstep
+  - vobc_drchltのバグ修正
+  - Backstep(ColdFlow)
+  - 温度計算の場合の媒質毎の初期値指定オプション
+
+--------------------------
 2013-08-31
 
 - r1018 improve fill algorithm [ver 1.3.5]

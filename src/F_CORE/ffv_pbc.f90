@@ -52,7 +52,7 @@
     FACES : select case (face)
     case (X_minus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(j, k)
       do k=1,kx
       do j=1,jx
         p(0,j,k) = pv
@@ -62,7 +62,7 @@
       
     case (X_plus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(j, k)
       do k=1,kx
       do j=1,jx
         p(ix+1,j,k) = pv
@@ -72,7 +72,7 @@
       
     case (Y_minus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, k)
       do k=1,kx
       do i=1,ix
         p(i,0,k) = pv
@@ -82,7 +82,7 @@
       
     case (Y_plus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, k)
       do k=1,kx
       do i=1,ix
         p(i,jx+1,k) = pv
@@ -92,7 +92,7 @@
       
     case (Z_minus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, j)
       do j=1,jx
       do i=1,ix
         p(i,j,0) = pv
@@ -102,7 +102,7 @@
     
     case (Z_plus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, j)
       do j=1,jx
       do i=1,ix
         p(i,j,kx+1) = pv
@@ -148,7 +148,7 @@
     FACES : select case (face)
     case (X_minus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(j, k)
       do k=1,kx
       do j=1,jx
         p(0,j,k) = p(1,j,k)
@@ -158,7 +158,7 @@
       
     case (X_plus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(j, k)
       do k=1,kx
       do j=1,jx
         p(ix+1,j,k) = p(ix,j,k)
@@ -168,7 +168,7 @@
       
     case (Y_minus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, k)
       do k=1,kx
       do i=1,ix
         p(i,0,k) = p(i,1,k)
@@ -178,7 +178,7 @@
       
     case (Y_plus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, k)
       do k=1,kx
       do i=1,ix
         p(i,jx+1,k) = p(i,jx,k)
@@ -188,7 +188,7 @@
       
     case (Z_minus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, j)
       do j=1,jx
       do i=1,ix
         p(i,j,0) = p(i,j,1)
@@ -198,7 +198,7 @@
     
     case (Z_plus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, j)
       do j=1,jx
       do i=1,ix
         p(i,j,kx+1) = p(i,j,kx)

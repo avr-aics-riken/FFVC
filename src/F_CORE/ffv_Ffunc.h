@@ -489,8 +489,7 @@ extern "C" {
                      int* m_face,
                      REAL_TYPE* vf,
                      REAL_TYPE* sum,
-                     int* nID,
-                     double* flop);
+                     int* nID);
   
   void vobc_tfree1_ (REAL_TYPE* vf,
                      int* sz,
@@ -502,7 +501,7 @@ extern "C" {
                      int* sz,
                      int* g,
                      int* m_face,
-                     REAL_TYPE*vc,
+                     REAL_TYPE* vc,
                      int* nID);
   
   void vobc_div_drchlt_ (REAL_TYPE* div,
@@ -512,13 +511,12 @@ extern "C" {
                          int* bv,
                          REAL_TYPE* vec,
                          REAL_TYPE* vsum,
-                         int* nID,
-                         double* flop);
+                         int* nID);
   
-  void vobc_get_massflow_ (int* sz,
+  void vobc_get_massflow_ (REAL_TYPE* sum,
+                           int* sz,
                            int* g,
                            int* m_face,
-                           REAL_TYPE* sum,
                            REAL_TYPE* v,
                            int* bv,
                            int* nID);

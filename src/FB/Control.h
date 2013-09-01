@@ -561,7 +561,6 @@ public:
   int BasicEqs;
   int CheckParam;
   int CnvScheme;
-  int FB_version;     ///< FlowBaseクラスのバージョン番号
   int FillHint;       ///< フィルのヒント {no | x_minux | x_plus |...}
   int GuideOut;
   int KindOfSolver;
@@ -580,7 +579,7 @@ public:
   int RefFillMat;     ///< フィル媒質
   int RefMat;         ///< 参照媒質インデクス
   int Start;
-  int version;        ///< FFVバージョン番号
+  int MediumTmpInitOption; ///< 媒質に初期温度を与えるオプション
   
   unsigned Restart_staging;    ///< リスタート時にリスタートファイルがSTAGINGされているか
   unsigned Restart_step;       ///< リスタートステップ
@@ -702,7 +701,6 @@ public:
     AlgorithmH = 0;
     BasicEqs = 0;
     CheckParam = 0;
-    FB_version = 0;
     CnvScheme = 0;
     FillHint = -1;
     GuideOut = 0;
@@ -725,7 +723,7 @@ public:
     Restart_step = 0;
     Restart_stepAvr = 0;
     Start = 0;
-    version = 0;
+    MediumTmpInitOption = 0;
     
     Scaling_Factor = 1.0;
     

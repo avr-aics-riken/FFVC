@@ -525,7 +525,7 @@ void SetBC3D::modDivergence(REAL_TYPE* dv, int* bv, double tm, REAL_TYPE* v00, G
       case OBC_SPEC_VEL:
       case OBC_WALL:
         dummy = extractVelOBC(face, vec, tm, v00);
-        vobc_div_drchlt_(dv, size, &gd, &face, bv, vec, &dd, nID, &fcount);
+        vobc_div_drchlt_(dv, size, &gd, &face, bv, vec, &dd, nID);
         //vobc_face_drchlt_(vf, size, &gd, &face, bv, vec, &dd, nID);
         obc[face].setDomainMF(dd);
         break;
@@ -889,7 +889,7 @@ void SetBC3D::modPsrcVBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE
       case OBC_WALL:
       {
         REAL_TYPE dummy = extractVelOBC(face, vec, tm, v00);
-        vobc_div_drchlt_(s_0, size, &gd, &face, bv, vec, &dd, nID, &fcount);
+        vobc_div_drchlt_(s_0, size, &gd, &face, bv, vec, &dd, nID);
         break;
       }
         
@@ -1155,12 +1155,13 @@ void SetBC3D::OuterTBCperiodic(REAL_TYPE* d_t)
 
 // #################################################################
 // 速度の外部境界条件処理（VP反復内で値を指定する境界条件）
-void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, const double tm, Control* C, REAL_TYPE* v00, double& flop)
+void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, const double tm, Control* C, REAL_TYPE* v00)
 {
   REAL_TYPE vec[3];
   int gd = guide;
   REAL_TYPE dd=0.0;
   REAL_TYPE vsum=0.0;
+  REAL_TYPE dummy;
   int pm;
   
   for (int face=0; face<NOFACE; face++)
@@ -1168,27 +1169,27 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, const double 
     switch ( obc[face].getClass() )
     {
       case OBC_TRC_FREE:
-        vobc_tfree1_(d_vf, size, &guide, &face, nID);
+        vobc_tfree1_(d_vf, size, &gd, &face, nID);
         if ( numProc > 1 )
         {
-          if ( paraMngr->BndCommV3D(d_vf, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+          if ( paraMngr->BndCommV3D(d_vf, size[0], size[1], size[2], gd, gd) != CPM_SUCCESS ) Exit(0);
         }
         
-        vobc_tfree2_(d_v, size, &guide, &face, d_vf, &vsum, nID, &flop);
+        vobc_tfree2_(d_v, size, &gd, &face, d_vf, &vsum, nID);
         if ( numProc > 1 )
         {
-          if ( paraMngr->BndCommV3D(d_v, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+          if ( paraMngr->BndCommV3D(d_v, size[0], size[1], size[2], gd, gd) != CPM_SUCCESS ) Exit(0);
         }
         obc[face].setDomainMF(vsum); // DomainMonitor()で集約する
         break;
         
       case OBC_FAR_FIELD:
-        vobc_neumann_(d_v, size, &guide, &face, &vsum, nID);
+        vobc_neumann_(d_v, size, &gd, &face, &vsum, nID);
         obc[face].setDomainMF(vsum);
         break;
         
       case OBC_OUTFLOW:
-        vobc_get_massflow_(size, &gd, &face, &vsum, d_v, d_bv, nID);
+        vobc_get_massflow_(&vsum, size, &gd, &face, d_v, d_bv, nID);
         obc[face].setDomainMF(vsum);
         break;
         
@@ -1198,6 +1199,18 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, const double 
         obc[face].setDomainMF(vsum);
         break;
         
+      case OBC_SPEC_VEL:
+        dummy = extractVelOBC(face, vec, tm, v00);
+        vobc_drchlt_(d_v, size, &gd, &face, d_bv, vec, nID);
+        break;
+        
+      case OBC_INTRINSIC:
+        if ( C->Mode.Example == id_Jet )
+        {
+          ((IP_Jet*)Ex)->vobcJetInflowGC(d_v, face);
+        }
+        break;
+        
       case OBC_PERIODIC:
         pm = obc[face].getPrdcMode();
         
@@ -1205,7 +1218,7 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, const double 
         if ( (pm == BoundaryOuter::prdc_Simple) || (pm == BoundaryOuter::prdc_Directional))
         {
           VobcPeriodicSimple(d_v, face); // セルフェイスの値の周期処理は不要
-          vobc_get_massflow_(size, &gd, &face, &vsum, d_v, d_bv, nID);
+          vobc_get_massflow_(&vsum, size, &gd, &face, d_v, d_bv, nID);
           obc[face].setDomainMF(vsum);
         }
         break;
@@ -1219,46 +1232,8 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, const double 
 
 
 // #################################################################
-// 速度の外部境界処理(タイムステップに一度ガイドセルに値を設定する)
-void SetBC3D::OuterVBC_GC(REAL_TYPE* d_v, int* d_bv, const double tm, const Control* C, const REAL_TYPE* v00)
-{
-  REAL_TYPE vec[3];
-  REAL_TYPE dummy;
-  int gd = guide;
-
-  
-  for (int face=0; face<NOFACE; face++)
-  {
-    switch ( obc[face].getClass() )
-    {
-      case OBC_SPEC_VEL:
-        dummy = extractVelOBC(face, vec, tm, v00);
-        vobc_drchlt_(d_v, size, &gd, &face, d_bv, vec, nID);
-        break;
-        
-      case OBC_INTRINSIC:
-        if ( C->Mode.Example == id_Jet )
-        {
-          ((IP_Jet*)Ex)->vobcJetInflowGC(d_v, face);
-        }
-        break;
-        
-      default:
-        break;
-    }
-  }
-}
-
-
-// #################################################################
-/**
- * @brief 疑似速度の外部境界条件処理
- * @param [out]    d_vc   疑似速度ベクトル v^*
- * @param [in]     d_bv   BCindex V
- * @param [in]     C      Control class
- * @param [in,out] flop   浮動小数点演算数
- */
-void SetBC3D::OuterVBCpseudo(REAL_TYPE* d_vc, int* d_bv, Control* C, double& flop)
+// 疑似速度の外部境界条件処理
+void SetBC3D::OuterVBCpseudo(REAL_TYPE* d_vc, int* d_bv, Control* C)
 {
   REAL_TYPE dd=0.0;
   int gd = guide;

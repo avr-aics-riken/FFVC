@@ -454,28 +454,25 @@
     rjx = dble(ix)*dble(kx)
     rkx = dble(ix)*dble(jx)
 
-    flop = flop + 14.0d0
-
-
     FACES2 : select case (face)
 
     case (X_minus)
-      flop = flop + rix*9.0d0
+      flop = flop + rix*6.0d0
 
     case (X_plus)
-      flop = flop + rix*9.0d0
+      flop = flop + rix*6.0d0
 
     case (Y_minus)
-      flop = flop + rjx*9.0d0
+      flop = flop + rjx*6.0d0
 
     case (Y_plus)
-      flop = flop + rjx*9.0d0
+      flop = flop + rjx*6.0d0
 
     case (Z_minus)
-      flop = flop + rkx*9.0d0
+      flop = flop + rkx*6.0d0
 
     case (Z_plus)
-      flop = flop + rkx*9.0d0
+      flop = flop + rkx*6.0d0
 
     case default
     end select FACES2
@@ -530,13 +527,11 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
-        if ( ibits(bv(i,j,k), bc_face_W, bitw_5) == obc_mask ) then
-          do i=1-gc, 0
-            v(i, j, k, 1) = u_bc
-            v(i, j, k, 2) = v_bc
-            v(i, j, k, 3) = w_bc
-          end do
-        endif
+      do i=1-gc, 0
+        v(i, j, k, 1) = u_bc
+        v(i, j, k, 2) = v_bc
+        v(i, j, k, 3) = w_bc
+      end do
       end do
       end do
 !$OMP END DO
@@ -547,13 +542,11 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do j=1,jx
-        if ( ibits(bv(i,j,k), bc_face_E, bitw_5) == obc_mask ) then
-          do i=ix+1, ix+gc
-            v(i, j, k, 1) = u_bc
-            v(i, j, k, 2) = v_bc
-            v(i, j, k, 3) = w_bc
-          end do
-        endif
+      do i=ix+1, ix+gc
+        v(i, j, k, 1) = u_bc
+        v(i, j, k, 2) = v_bc
+        v(i, j, k, 3) = w_bc
+      end do
       end do
       end do
 !$OMP END DO
@@ -564,13 +557,11 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do i=1,ix
-        if ( ibits(bv(i,j,k), bc_face_S, bitw_5) == obc_mask ) then
-          do j=1-gc, 0
-            v(i, j, k, 1) = u_bc
-            v(i, j, k, 2) = v_bc
-            v(i, j, k, 3) = w_bc
-          end do
-        endif
+      do j=1-gc, 0
+        v(i, j, k, 1) = u_bc
+        v(i, j, k, 2) = v_bc
+        v(i, j, k, 3) = w_bc
+      end do
       end do
       end do
 !$OMP END DO
@@ -581,13 +572,11 @@
 !$OMP DO SCHEDULE(static)
       do k=1,kx
       do i=1,ix
-        if ( ibits(bv(i,j,k), bc_face_N, bitw_5) == obc_mask ) then
-          do j=jx+1, jx+gc
-            v(i, j, k, 1) = u_bc
-            v(i, j, k, 2) = v_bc
-            v(i, j, k, 3) = w_bc
-          end do
-        endif
+      do j=jx+1, jx+gc
+        v(i, j, k, 1) = u_bc
+        v(i, j, k, 2) = v_bc
+        v(i, j, k, 3) = w_bc
+      end do
       end do
       end do
 !$OMP END DO
@@ -598,13 +587,11 @@
 !$OMP DO SCHEDULE(static)
       do j=1,jx
       do i=1,ix
-        if ( ibits(bv(i,j,k), bc_face_B, bitw_5) == obc_mask ) then
-          do k=1-gc, 0
-            v(i, j, k, 1) = u_bc
-            v(i, j, k, 2) = v_bc
-            v(i, j, k, 3) = w_bc
-          end do
-        endif
+      do k=1-gc, 0
+        v(i, j, k, 1) = u_bc
+        v(i, j, k, 2) = v_bc
+        v(i, j, k, 3) = w_bc
+      end do
       end do
       end do
 !$OMP END DO
@@ -615,13 +602,11 @@
 !$OMP DO SCHEDULE(static)
       do j=1,jx
       do i=1,ix
-        if ( ibits(bv(i,j,k), bc_face_T, bitw_5) == obc_mask ) then
-          do k=kx+1, kx+gc
-            v(i, j, k, 1) = u_bc
-            v(i, j, k, 2) = v_bc
-            v(i, j, k, 3) = w_bc
-          end do
-        endif
+      do k=kx+1, kx+gc
+        v(i, j, k, 1) = u_bc
+        v(i, j, k, 2) = v_bc
+        v(i, j, k, 3) = w_bc
+      end do
       end do
       end do
 !$OMP END DO
@@ -804,16 +789,14 @@
 !! @param [in,out] vf     セルフェイス速度
 !! @param [out]    sum    積算値 \sum{v}
 !! @param [in]     nID    隣接ランク番号（nID[]<0の時外部境界面）
-!! @param [in,out] flop   浮動小数演算数
 !! @note 今のところ、トラクションフリー面は全て流体
 !! 後半のループは1~ix，flopはtfree1,2の合計
 !<
-    subroutine vobc_tfree2 (v, sz, g, m_face, vf, sum, nID, flop)
+    subroutine vobc_tfree2 (v, sz, g, m_face, vf, sum, nID)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, face, g, gc, m_face
     integer, dimension(3)                                     ::  sz
-    double precision                                          ::  flop, rix, rjx, rkx
     real                                                      ::  ut, vt, wt, aa, sum
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vf
     integer, dimension(0:5)                                   ::  nID
@@ -972,33 +955,6 @@
 
     sum = aa
 
-    rix = dble(jx)*dble(kx)
-    rjx = dble(ix)*dble(kx)
-    rkx = dble(ix)*dble(jx)
-
-    FACES2 : select case (face)
-    case (X_minus)
-      flop = flop + rix*9.0d0
-
-    case (X_plus)
-      flop = flop + rix*9.0d0
-
-    case (Y_minus)
-      flop = flop + rjx*9.0d0
-
-    case (Y_plus)
-      flop = flop + rjx*9.0d0
-
-    case (Z_minus)
-      flop = flop + rkx*9.0d0
-
-    case (Z_plus)
-      flop = flop + rkx*9.0d0
-
-    case default
-    end select FACES2
-
-
     return
     end subroutine vobc_tfree2
 
@@ -1030,13 +986,12 @@
   face = m_face
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, face) &
-!$OMP PRIVATE(i, j, k)
+!$OMP FIRSTPRIVATE(ix, jx, kx, face)
 
   FACES : select case (face)
   case (X_minus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(j, k)
     do k=0,kx
     do j=0,jx
       vf(0, j, k, 2) = vf(1, j, k, 2) + vf(0, j+1, k  , 1) - vf(0, j, k, 1)
@@ -1048,7 +1003,7 @@
 
   case (X_plus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(j, k)
     do k=0,kx
     do j=0,jx
       vf(ix+1, j, k, 2) = vf(ix, j, k, 2) - vf(ix, j+1, k  , 1) + vf(ix, j, k, 1)
@@ -1060,7 +1015,7 @@
 
   case (Y_minus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, k)
     do k=0,kx
     do i=0,ix
       vf(i, 0, k, 1) = vf(i, 1, k, 1) + vf(i+1, 0, k  , 2) - vf(i, 0, k, 2)
@@ -1072,7 +1027,7 @@
 
   case (Y_plus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, k)
     do k=0,kx
     do i=0,ix
       vf(i, jx+1, k, 1) = vf(i, jx, k, 1) - vf(i+1, jx, k  , 2) + vf(i, jx, k, 2)
@@ -1084,7 +1039,7 @@
 
   case (Z_minus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, j)
     do j=0,jx
     do i=0,ix
       vf(i, j, 0, 1) = vf(i, j, 1, 1) + vf(i+1, j  , 0, 3) - vf(i, j, 0, 3)
@@ -1096,7 +1051,7 @@
 
   case (Z_plus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, j)
     do j=0,jx
     do i=0,ix
       vf(i, j, kx+1, 1) = vf(i, j, kx, 1) - vf(i+1, j  , kx, 3) + vf(i, j, kx, 3)
@@ -1113,6 +1068,7 @@
 
   return
   end subroutine vobc_tfree1
+
 
 !> ********************************************************************
 !! @brief 疑似速度から次ステップ速度へ参照する速度をコピーする
@@ -1140,7 +1096,7 @@
     face = m_face
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, face, gc)
+!$OMP FIRSTPRIVATE(ix, jx, kx, face, gc) PRIVATE(i, j, k)
 
     FACES : select case (face)
     case (X_minus)
@@ -1246,16 +1202,14 @@
 !! @param [in]     vec     指定する速度ベクトル
 !! @param [out]    vsum    \sum{v}
 !! @param [in]     nID     隣接ランク番号（nID[]<0の時外部境界面）
-!! @param [in,out] flop  flop count
 !! @note 固体部分は対象外とするのでループ中に判定あり
 !!       部分的な境界条件の実装のため、ガイドセル部のマスク情報を利用
 !<
-    subroutine vobc_div_drchlt (div, sz, g, m_face, bv, vec, vsum, nID, flop)
+    subroutine vobc_div_drchlt (div, sz, g, m_face, bv, vec, vsum, nID)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, ix, jx, kx, face, bvx, m_face
     integer, dimension(3)                                     ::  sz
-    double precision                                          ::  flop, rix, rjx, rkx
     real                                                      ::  u_bc, v_bc, w_bc, vsum, b, a
     real, dimension(3)                                        ::  vec
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
@@ -1278,12 +1232,12 @@
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:b) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, u_bc, v_bc, w_bc, face) &
-!$OMP PRIVATE(i, j, k, a)
+!$OMP PRIVATE(a)
 
     FACES : select case (face)
     case (X_minus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(j, k)
       do k=1,kx
       do j=1,jx
         bvx = bv(1, j, k)
@@ -1299,7 +1253,7 @@
       
     case (X_plus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(j, k)
       do k=1,kx
       do j=1,jx
         bvx = bv(ix, j, k)
@@ -1315,7 +1269,7 @@
       
     case (Y_minus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, k)
       do k=1,kx
       do i=1,ix
         bvx = bv(i, 1, k)
@@ -1331,7 +1285,7 @@
       
     case (Y_plus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, k)
       do k=1,kx
       do i=1,ix
         bvx = bv(i, jx, k)
@@ -1347,7 +1301,7 @@
     
     case (Z_minus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, j)
       do j=1,jx
       do i=1,ix
         bvx = bv(i, j, 1)
@@ -1363,7 +1317,7 @@
       
     case (Z_plus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, j)
       do j=1,jx
       do i=1,ix
         bvx = bv(i, j, kx)
@@ -1382,49 +1336,22 @@
 !$OMP END PARALLEL
 
 
-    rix = dble(jx)*dble(kx)
-    rjx = dble(ix)*dble(kx)
-    rkx = dble(ix)*dble(jx)
-
-    FACES2 : select case (face)
-    case (X_minus)
-      flop = flop + rix*3.0d0
-
-    case (X_plus)
-      flop = flop + rix*3.0d0
-
-    case (Y_minus)
-      flop = flop + rjx*3.0d0
-
-    case (Y_plus)
-      flop = flop + rjx*3.0d0
-
-    case (Z_minus)
-      flop = flop + rkx*3.0d0
-
-    case (Z_plus)
-      flop = flop + rkx*3.0d0
-
-    case default
-    end select FACES2
-
-
     return
     end subroutine vobc_div_drchlt
 
 
 !> ********************************************************************
 !! @brief 外部境界面の流入出量を求める
+!! @param [out]    sum    領域境界の流速の積算値 \sum{vf}
 !! @param [in]     sz     配列長
 !! @param [in]     g      ガイドセル長
 !! @param [in]     m_face 面番号
-!! @param [out]    sum    領域境界の流速の積算値 \sum{vf}
 !! @param [in]     v      セルセンター速度 n+1
 !! @param [in]     bv     BCindex V
 !! @param [in]     nID    隣接ランク番号（nID[]<0の時外部境界面）
 !! @note 有効セルのマスクを掛けて、流量を積算
 !<
-    subroutine vobc_get_massflow (sz, g, m_face, sum, v, bv, nID)
+    subroutine vobc_get_massflow (sum, sz, g, m_face, v, bv, nID)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, ix, jx, kx, face, m_face
@@ -1447,13 +1374,13 @@
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:a) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, face) &
-!$OMP PRIVATE(i, j, k, s)
+!$OMP PRIVATE(s)
 
     FACES : select case (face)
 
     case (X_minus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(j, k)
       do k=1,kx
       do j=1,jx
         s = real(ibits(bv(0,j,k), State, 1)) * real(ibits(bv(1,j,k), State, 1))
@@ -1465,7 +1392,7 @@
 
     case (X_plus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(j, k)
       do k=1,kx
       do j=1,jx
         s = real(ibits(bv(ix,j,k), State, 1)) * real(ibits(bv(ix+1,j,k), State, 1))
@@ -1477,7 +1404,7 @@
 
     case (Y_minus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, k)
       do k=1,kx
       do i=1,ix
         s = real(ibits(bv(i,0,k), State, 1)) * real(ibits(bv(i,1,k), State, 1))
@@ -1489,7 +1416,7 @@
 
     case (Y_plus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, k)
       do k=1,kx
       do i=1,ix
         s = real(ibits(bv(i,jx,k), State, 1)) * real(ibits(bv(i,jx+1,k), State, 1))
@@ -1501,7 +1428,7 @@
 
     case (Z_minus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, j)
       do j=1,jx
       do i=1,ix
         s = real(ibits(bv(i,j,0), State, 1)) * real(ibits(bv(i,j,1), State, 1))
@@ -1513,7 +1440,7 @@
 
     case (Z_plus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, j)
       do j=1,jx
       do i=1,ix
         s = real(ibits(bv(i,j,kx), State, 1)) * real(ibits(bv(i,j,kx+1), State, 1))
@@ -1578,7 +1505,7 @@
 
     case (X_minus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(j, k)
       do k=1,kx
       do j=1,jx
         if ( ibits(bv(1, j, k), bc_face_W, bitw_5) == obc_mask ) then
@@ -1593,7 +1520,7 @@
 
     case (X_plus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(j, k)
       do k=1,kx
       do j=1,jx
         if ( ibits(bv(ix, j, k), bc_face_E, bitw_5) == obc_mask ) then
@@ -1608,7 +1535,7 @@
 
     case (Y_minus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, k)
       do k=1,kx
       do i=1,ix
         if ( ibits(bv(i, 1, k), bc_face_S, bitw_5) == obc_mask ) then
@@ -1623,7 +1550,7 @@
 
     case (Y_plus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, k)
       do k=1,kx
       do i=1,ix
         if ( ibits(bv(i, jx, k), bc_face_N, bitw_5) == obc_mask ) then
@@ -1638,7 +1565,7 @@
 
     case (Z_minus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, j)
       do j=1,jx
       do i=1,ix
         if ( ibits(bv(i, j ,1), bc_face_B, bitw_5) == obc_mask ) then
@@ -1653,7 +1580,7 @@
 
     case (Z_plus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) PRIVATE(i, j)
       do j=1,jx
       do i=1,ix
         if ( ibits(bv(i, j, kx), bc_face_T, bitw_5) == obc_mask ) then
@@ -1709,11 +1636,11 @@
 !$OMP DO SCHEDULE(static)
   do k=1,kx
   do j=1,jx
-    do i=1-gc, 0
-      v(i, j, k, 1) = -v(1-i, j, k, 1)
-      v(i, j, k, 2) =  v(1-i, j, k, 2)
-      v(i, j, k, 3) =  v(1-i, j, k, 3)
-    end do
+  do i=1-gc, 0
+    v(i, j, k, 1) = -v(1-i, j, k, 1)
+    v(i, j, k, 2) =  v(1-i, j, k, 2)
+    v(i, j, k, 3) =  v(1-i, j, k, 3)
+  end do
   end do
   end do
 !$OMP END DO
@@ -1724,11 +1651,11 @@
 !$OMP DO SCHEDULE(static)
   do k=1,kx
   do j=1,jx
-    do i=ix+1, ix+gc
-      v(i, j, k, 1) = -v(2*ix-i+1, j, k, 1)
-      v(i, j, k, 2) =  v(2*ix-i+1, j, k, 2)
-      v(i, j, k, 3) =  v(2*ix-i+1, j, k, 3)
-    end do
+  do i=ix+1, ix+gc
+    v(i, j, k, 1) = -v(2*ix-i+1, j, k, 1)
+    v(i, j, k, 2) =  v(2*ix-i+1, j, k, 2)
+    v(i, j, k, 3) =  v(2*ix-i+1, j, k, 3)
+  end do
   end do
   end do
 !$OMP END DO
@@ -1739,11 +1666,11 @@
 !$OMP DO SCHEDULE(static)
   do k=1,kx
   do i=1,ix
-    do j=1-gc, 0
-      v(i, j, k, 1) =  v(i, 1-j, k, 1)
-      v(i, j, k, 2) = -v(i, 1-j, k, 2)
-      v(i, j, k, 3) =  v(i, 1-j, k, 3)
-    end do
+  do j=1-gc, 0
+    v(i, j, k, 1) =  v(i, 1-j, k, 1)
+    v(i, j, k, 2) = -v(i, 1-j, k, 2)
+    v(i, j, k, 3) =  v(i, 1-j, k, 3)
+  end do
   end do
   end do
 !$OMP END DO
@@ -1754,11 +1681,11 @@
 !$OMP DO SCHEDULE(static)
   do k=1,kx
   do i=1,ix
-    do j=jx+1, jx+gc
-      v(i, j, k, 1) =  v(i, 2*jx-j+1, k, 1)
-      v(i, j, k, 2) = -v(i, 2*jx-j+1, k, 2)
-      v(i, j, k, 3) =  v(i, 2*jx-j+1, k, 3)
-    end do
+  do j=jx+1, jx+gc
+    v(i, j, k, 1) =  v(i, 2*jx-j+1, k, 1)
+    v(i, j, k, 2) = -v(i, 2*jx-j+1, k, 2)
+    v(i, j, k, 3) =  v(i, 2*jx-j+1, k, 3)
+  end do
   end do
   end do
 !$OMP END DO
@@ -1769,11 +1696,11 @@
 !$OMP DO SCHEDULE(static)
   do j=1,jx
   do i=1,ix
-    do k=1-gc, 0
-      v(i, j, k, 1) =  v(i, j, 1-k, 1)
-      v(i, j, k, 2) =  v(i, j, 1-k, 2)
-      v(i, j, k, 3) = -v(i, j, 1-k, 3)
-    end do
+  do k=1-gc, 0
+    v(i, j, k, 1) =  v(i, j, 1-k, 1)
+    v(i, j, k, 2) =  v(i, j, 1-k, 2)
+    v(i, j, k, 3) = -v(i, j, 1-k, 3)
+  end do
   end do
   end do
 !$OMP END DO
@@ -1784,11 +1711,11 @@
 !$OMP DO SCHEDULE(static)
   do j=1,jx
   do i=1,ix
-    do k=kx+1, kx+gc
-      v(i, j, k, 1) =  v(i, j, 2*kx-k+1, 1)
-      v(i, j, k, 2) =  v(i, j, 2*kx-k+1, 2)
-      v(i, j, k, 3) = -v(i, j, 2*kx-k+1, 3)
-    end do
+  do k=kx+1, kx+gc
+    v(i, j, k, 1) =  v(i, j, 2*kx-k+1, 1)
+    v(i, j, k, 2) =  v(i, j, 2*kx-k+1, 2)
+    v(i, j, k, 3) = -v(i, j, 2*kx-k+1, 3)
+  end do
   end do
   end do
 !$OMP END DO

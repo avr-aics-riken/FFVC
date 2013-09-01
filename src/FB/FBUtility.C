@@ -94,19 +94,19 @@ int FBUtility::mkdirs(string path)
 
 // #################################################################
 // ファイル出力時，発散値を計算する
-void FBUtility::cnv_Div(REAL_TYPE* dst, REAL_TYPE* src, int* sz, int gc, REAL_TYPE coef, double& flop)
+void FBUtility::cnv_Div(REAL_TYPE* dst, REAL_TYPE* src, int* sz, int gc, REAL_TYPE coef)
 {
-  xcopy(dst, sz, gc, src, coef, kind_scalar, flop);
+  xcopy(dst, sz, gc, src, coef, kind_scalar);
 }
 
 
 // #################################################################
 // 全圧データについて，無次元から有次元単位に変換する
-void FBUtility::tp_array_ND2D(REAL_TYPE* dst, REAL_TYPE* src, int* sz, int gc, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, double& flop)
+void FBUtility::tp_array_ND2D(REAL_TYPE* dst, REAL_TYPE* src, int* sz, int gc, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v)
 {
   REAL_TYPE cf = Ref_rho * Ref_v * Ref_v;
   
-  xcopy(dst, sz, gc, src, cf, kind_scalar, flop);
+  xcopy(dst, sz, gc, src, cf, kind_scalar);
 }
 
 // #################################################################
@@ -121,7 +121,8 @@ void FBUtility::prs_array_D2ND(REAL_TYPE* dst, const int* size, const int guide,
   size_t n = (size_t)(size[0]+2*guide) * (size_t)(size[1]+2*guide) * (size_t)(size[2]+2*guide);
   
 #pragma omp parallel for firstprivate(n, dp, bp) schedule(static)
-  for (size_t i=0; i<n; i++) {
+  for (size_t i=0; i<n; i++)
+  {
     dst[i] = ( dst[i] - bp ) * dp;
   }
 }
@@ -139,7 +140,8 @@ void FBUtility::prs_array_ND2D(REAL_TYPE* dst, const int* size, const int guide,
   size_t n = (size_t)(size[0]+2*guide) * (size_t)(size[1]+2*guide) * (size_t)(size[2]+2*guide);
   
 #pragma omp parallel for firstprivate(n, dp, bp) schedule(static)
-  for (size_t i=0; i<n; i++) {
+  for (size_t i=0; i<n; i++)
+  {
     dst[i] = src[i] * dp + bp;
   }
 }
@@ -157,7 +159,8 @@ void FBUtility::tmp_array_D2ND(REAL_TYPE* dst, const int* size, const int guide,
   flop += (double)size[0] * (double)size[1] * (double)size[2] * 2.0 + 9.0;
   
 #pragma omp parallel for firstprivate(n, dp, bt) schedule(static)
-  for (size_t i=0; i<n; i++) {
+  for (size_t i=0; i<n; i++)
+  {
     dst[i] = ( dst[i] + bt ) * dp;
   }
 }
@@ -175,7 +178,8 @@ void FBUtility::tmp_array_ND2D(REAL_TYPE* dst, const int* size, const int guide,
   flop += (double)size[0] * (double)size[1] * (double)size[2] * 2.0 + 3.0;
   
 #pragma omp parallel for firstprivate(n, dp, bt) schedule(static)
-  for (size_t i=0; i<n; i++) {
+  for (size_t i=0; i<n; i++)
+  {
     dst[i] = src[i] * dp + bt;
   }
 }
@@ -250,17 +254,16 @@ void FBUtility::MemoryRequirement(const char* mode, const double Memory, const d
 
 // #################################################################
 // スカラー倍してコピー
-void FBUtility::xcopy(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE* src, const REAL_TYPE scale, const int mode, double& flop)
+void FBUtility::xcopy(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE* src, const REAL_TYPE scale, const int mode)
 {
   REAL_TYPE s = scale;
   size_t n = (size_t)(size[0]+2*guide) * (size_t)(size[1]+2*guide) * (size_t)(size[2]+2*guide);
   
   if ( mode == kind_vector ) n *= 3;
   
-  flop += (double)n;
-  
 #pragma omp parallel for firstprivate(n, s) schedule(static)
-  for (size_t i=0; i<n; i++) {
+  for (size_t i=0; i<n; i++)
+  {
     dst[i] = s * src[i];
   }
 }
@@ -277,7 +280,8 @@ void FBUtility::xset(REAL_TYPE* dst, const int* size, const int guide, const REA
   if ( mode == kind_vector ) n *= 3;
   
 #pragma omp parallel for firstprivate(n, s) schedule(static)
-  for (size_t i=0; i<n; i++) {
+  for (size_t i=0; i<n; i++)
+  {
     dst[i] = s;
   }
 }

@@ -58,9 +58,8 @@ void FFV::PS_Binary()
   
   // n stepの値をdc_t0に保持，dc_tはn+1レベルの値として利用
   TIMING_start(tm_copy_array);
-  flop = 0.0;
-  U.xcopy(d_t0, size, guide, d_t, one, kind_scalar, flop);
-  TIMING_stop(tm_copy_array, flop);
+  U.xcopy(d_t0, size, guide, d_t, one, kind_scalar);
+  TIMING_stop(tm_copy_array, 0.0);
   
   
   // 指定境界条件の参照値を代入する
@@ -93,9 +92,8 @@ void FFV::PS_Binary()
   else // 熱伝導の場合，対流項の寄与分はないので前ステップの値
   {
     TIMING_start(tm_copy_array);
-    flop = 0.0;
-    U.xcopy(d_ws, size, guide, d_t0, one, kind_scalar, flop);
-    TIMING_stop(tm_copy_array, flop);
+    U.xcopy(d_ws, size, guide, d_t0, one, kind_scalar);
+    TIMING_stop(tm_copy_array, 0.0);
   }
 
   
@@ -121,9 +119,8 @@ void FFV::PS_Binary()
   
   // 内部境界条件 体積要素
   TIMING_start(tm_heat_diff_IBC_vol);
-  flop = 0.0;
   BC.InnerTBCvol(d_ws, d_bh2, dt);
-  TIMING_stop(tm_heat_diff_IBC_vol, flop);
+  TIMING_stop(tm_heat_diff_IBC_vol, 0.0);
   
   
   // 部分段階の温度の同期
@@ -151,14 +148,13 @@ void FFV::PS_Binary()
   
   // 内部境界条件　熱流束型の境界条件は時間進行の前
   TIMING_start(tm_heat_diff_IBC_face);
-  flop = 0.0;
   BC.InnerTBCface(d_qbc, d_bh1, d_ws, d_t0); // 境界値はt^{n}から計算すること
-  TIMING_stop(tm_heat_diff_IBC_face, flop);
+  TIMING_stop(tm_heat_diff_IBC_face, 0.0);
   
   
   TIMING_start(tm_heat_diff_OBC_face);
   BC.OuterTBCdiffusion(d_qbc, d_ws, d_t0, &C);
-  TIMING_stop(tm_heat_diff_OBC_face, flop);
+  TIMING_stop(tm_heat_diff_OBC_face, 0.0);
   
   
   // 境界条件の熱流束の同期 >>　不要？
@@ -219,8 +215,7 @@ void FFV::PS_Binary()
   {
     // 反復初期値
     TIMING_start(tm_copy_array);
-    flop=0.0;
-    U.xcopy(d_t, size, guide, d_ws, one, kind_scalar, flop);
+    U.xcopy(d_t, size, guide, d_ws, one, kind_scalar);
     TIMING_stop(tm_copy_array, 0.0);
     
     for (ICt->setLoopCount(0); ICt->getLoopCount()< ICt->getMaxIteration(); ICt->incLoopCount())
