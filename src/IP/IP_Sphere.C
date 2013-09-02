@@ -204,7 +204,7 @@ FB::Vec3i IP_Sphere::find_index(const FB::Vec3f p, const FB::Vec3f ol)
  * @param[in]     NoMedium 媒質数
  * @param[in]     mat      MediumListクラスのポインタ
  */
-void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat)
+void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
 {
   int mid_fluid;        /// 流体
   int mid_solid;        /// 固体

@@ -22,7 +22,7 @@
  @author kero
  */
 
-#include "Intrinsic.h"
+#include "../FB/Intrinsic.h"
 #include "IP_Define.h"
 
 #ifdef __ARCH_BG
@@ -41,7 +41,7 @@ public:
 
 public:
   
-  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat);
+  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut);
   
 };
 #endif // _IP_POLYGON_H_

@@ -439,38 +439,31 @@ void FFV::NS_FS_E_CDS()
     // セルフェイス速度の境界条件の通信部分
     if ( C.existOutflow() == ON )
     {
-      if ( !C.isCDS() ) // Binary
+      if ( numProc > 1 )
       {
-        if ( numProc > 1 )
+        for (int n=1; n<=C.NoCompo; n++)
         {
-          for (int n=1; n<=C.NoCompo; n++)
-          {
-            m_snd[2*n]   = m_rcv[2*n]   = m_buf[n].p0; // 積算速度
-            m_snd[2*n+1] = m_rcv[2*n+1] = m_buf[n].p1; // 積算回数
-          }
-          
-          TIMING_start(tm_prj_vec_bc_comm);
-          if ( paraMngr->Allreduce(m_snd, m_rcv, 2*(C.NoCompo+1), MPI_SUM) != CPM_SUCCESS ) Exit(0);
-          TIMING_stop(tm_prj_vec_bc_comm, 2.0*(C.NoCompo+1)*numProc*sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数 x 変数
-          
-          for (int n=1; n<=C.NoCompo; n++)
-          {
-            m_buf[n].p0 = m_rcv[2*n];
-            m_buf[n].p1 = m_rcv[2*n+1];
-          }
+          m_snd[2*n]   = m_rcv[2*n]   = m_buf[n].p0; // 積算速度
+          m_snd[2*n+1] = m_rcv[2*n+1] = m_buf[n].p1; // 積算回数
         }
+        
+        TIMING_start(tm_prj_vec_bc_comm);
+        if ( paraMngr->Allreduce(m_snd, m_rcv, 2*(C.NoCompo+1), MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        TIMING_stop(tm_prj_vec_bc_comm, 2.0*(C.NoCompo+1)*numProc*sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数 x 変数
         
         for (int n=1; n<=C.NoCompo; n++)
         {
-          if ( cmp[n].getType() == OUTFLOW )
-          {
-            cmp[n].val[var_Velocity] = m_buf[n].p0 / m_buf[n].p1; // 無次元平均流速
-          }
+          m_buf[n].p0 = m_rcv[2*n];
+          m_buf[n].p1 = m_rcv[2*n+1];
         }
       }
-      else // Cut-Distance
+      
+      for (int n=1; n<=C.NoCompo; n++)
       {
-        ;
+        if ( cmp[n].getType() == OUTFLOW )
+        {
+          cmp[n].val[var_Velocity] = m_buf[n].p0 / m_buf[n].p1; // 無次元平均流速
+        }
       }
     }
     

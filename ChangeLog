@@ -19,6 +19,16 @@ REVISION HISTORY
 ================
 
 --------------------------
+2013-09-02 
+
+- r1020 change from isCDS() to isBinary()
+  - isCDS() >> isBinary()に変更
+  - fillSeed()で固体面に隣接するセルでもシード点の対象とする
+  - Intrisic::setup()にfloat* cutを追加．バイナリでもカット情報を用いる方針にする
+  - setOBCcut()は壁面のみ，対称条件は外す，bidへのエンコードも行う
+  - ffv_SetBC内で局所境界条件をBinary/Cutで同一にする
+  
+--------------------------
 2013-09-01
 
 - r1019 backstep

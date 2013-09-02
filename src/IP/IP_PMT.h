@@ -22,7 +22,7 @@
  * @author kero
  */
 
-#include "Intrinsic.h"
+#include "../FB/Intrinsic.h"
 #include "IP_Define.h"
 
 class IP_PMT : public Intrinsic {
@@ -45,7 +45,7 @@ public:
   
   virtual void setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch);
   
-  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat);
+  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut);
   
 };
 #endif // _IP_PMT_H_

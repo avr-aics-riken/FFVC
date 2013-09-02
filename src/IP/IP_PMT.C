@@ -96,8 +96,9 @@ void IP_PMT::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_
  * @param [in]     G_org    グローバルな原点（無次元）
  * @param [in]     NoMedium 媒質数
  * @param [in]     mat      MediumListクラスのポインタ
+ * @param [out]    cut      カット情報
  */
-void IP_PMT::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat)
+void IP_PMT::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
 {
   // ローカルにコピー
   int ix = size[0];

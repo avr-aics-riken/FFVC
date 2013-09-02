@@ -131,8 +131,9 @@ void IP_Rect::printPara(FILE* fp, const Control* R)
  * @param [in]     G_org    グローバルな原点（無次元）
  * @param [in]     NoMedium 媒質数
  * @param [in]     mat      MediumListクラスのポインタ
+ * @param [out]    cut      カット情報
  */
-void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat)
+void IP_Rect::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
 {
   // ローカルにコピー
   int ix = size[0];

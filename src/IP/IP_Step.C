@@ -175,7 +175,7 @@ void IP_Step::printPara(FILE* fp, const Control* R)
  * @param [in]     NoMedium 媒質数
  * @param [in]     mat      MediumListクラスのポインタ
  */
-void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat)
+void IP_Step::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
 {
   int mid_fluid, mid_solid, mid_driver, mid_driver_face;
   

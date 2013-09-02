@@ -329,47 +329,24 @@ void SetBC3D::InnerVBC(REAL_TYPE* d_v, int* d_bv, const double tm, REAL_TYPE* v0
   int gd = guide;
   REAL_TYPE dummy;
   
-  if ( isCDS ) // Cut-Distance
+  for (int n=1; n<=NoCompo; n++)
   {
-    for (int n=1; n<=NoCompo; n++)
+    cmp[n].getBbox(st, ed);
+    
+    switch ( cmp[n].getType() )
     {
-      cmp[n].getBbox(st, ed);
-      
-      switch ( cmp[n].getType() )
-      {
-        case SPEC_VEL:
-        case SPEC_VEL_WH:
-          break;
-          
-        case OUTFLOW:
-          break;
-          
-        default:
-          break;
-      }  
-    }
-  }
-  else // Binary
-  {
-    for (int n=1; n<=NoCompo; n++)
-    {
-      cmp[n].getBbox(st, ed);
-      
-      switch ( cmp[n].getType() )
-      {
-        case SPEC_VEL:
-        case SPEC_VEL_WH:
-          dummy = extractVelLBC(n, vec, tm, v00);
-          vibc_drchlt_(d_v, size, &gd, st, ed, v00, d_bv, &n, vec);
-          break;
-          
-        case OUTFLOW:
-          vibc_outflow_(d_v, size, &gd, st, ed, d_bv, &n);
-          break;
-          
-        default:
-          break;
-      }  
+      case SPEC_VEL:
+      case SPEC_VEL_WH:
+        dummy = extractVelLBC(n, vec, tm, v00);
+        vibc_drchlt_(d_v, size, &gd, st, ed, v00, d_bv, &n, vec);
+        break;
+        
+      case OUTFLOW:
+        vibc_outflow_(d_v, size, &gd, st, ed, d_bv, &n);
+        break;
+        
+      default:
+        break;
     }
   }
   
@@ -454,61 +431,33 @@ void SetBC3D::modDivergence(REAL_TYPE* dv, int* bv, double tm, REAL_TYPE* v00, G
   REAL_TYPE aa[2]; // バッファ
   
   // 内部境界条件による修正
-  if ( isCDS ) // Cut-Distance
+  for (int n=1; n<=NoCompo; n++)
   {
-    for (int n=1; n<=NoCompo; n++)
+    typ = cmp[n].getType();
+    
+    cmp[n].getBbox(st, ed);
+    
+    switch (typ)
     {
-      typ = cmp[n].getType();
-      
-      cmp[n].getBbox(st, ed);
-      
-      switch (typ)
-      {
-        case OUTFLOW:
-          //div_ibc_oflow_vec_(dv, size, &gd, st, ed, v00, &coef, bv, &n, &avr[2*n], &fcount);
-          break;
-          
-        case SPEC_VEL:
-        case SPEC_VEL_WH:
-          cmp[n].val[var_Velocity] = extractVelLBC(n, vec, tm, v00); // 指定された無次元平均流速
-          div_ibc_drchlt_(dv, size, &gd, st, ed, v00, bv, &n, vec, &fcount);
-          break;
-          
-        default:
-          break;
-      }
-    }
-  }
-  else // Binary
-  {
-    for (int n=1; n<=NoCompo; n++)
-    {
-      typ = cmp[n].getType();
-      
-      cmp[n].getBbox(st, ed);
-      
-      switch (typ)
-      {
-        case OUTFLOW:
-          div_ibc_oflow_vec_(dv, size, &gd, st, ed, bv, &n, aa, &fcount);
-          avr[n].p0 = aa[0]; // 積算速度
-          avr[n].p1 = aa[1]; // 積算回数
-          if ( aa[1] == 0.0 )
-          {
-            Hostonly_ printf("\tError : Number of accumulation is zero\n");
-            Exit(0);
-          }
-          break;
-          
-        case SPEC_VEL:
-        case SPEC_VEL_WH:
-          cmp[n].val[var_Velocity] = extractVelLBC(n, vec, tm, v00); // 指定された無次元平均流速
-          div_ibc_drchlt_(dv, size, &gd, st, ed, v00, bv, &n, vec, &fcount);
-          break;
-          
-        default:
-          break;
-      }
+      case OUTFLOW:
+        div_ibc_oflow_vec_(dv, size, &gd, st, ed, bv, &n, aa, &fcount);
+        avr[n].p0 = aa[0]; // 積算速度
+        avr[n].p1 = aa[1]; // 積算回数
+        if ( aa[1] == 0.0 )
+        {
+          Hostonly_ printf("\tError : Number of accumulation is zero\n");
+          Exit(0);
+        }
+        break;
+        
+      case SPEC_VEL:
+      case SPEC_VEL_WH:
+        cmp[n].val[var_Velocity] = extractVelLBC(n, vec, tm, v00); // 指定された無次元平均流速
+        div_ibc_drchlt_(dv, size, &gd, st, ed, v00, bv, &n, vec, &fcount);
+        break;
+        
+      default:
+        break;
     }
   }
 
@@ -738,46 +687,23 @@ void SetBC3D::modPvecFlux(REAL_TYPE* wv, REAL_TYPE* v, int* bv, const double tm,
   int gd = guide;
   
   // 内部境界（流束形式）
-  if ( isCDS ) // Cut-Distance
+  for (int n=1; n<=NoCompo; n++)
   {
-    for (int n=1; n<=NoCompo; n++)
+    
+    typ = cmp[n].getType();
+    cmp[n].getBbox(st, ed);
+    
+    if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) )
     {
-
-      typ = cmp[n].getType();
-      cmp[n].getBbox(st, ed);
-      
-      if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) )
-      {
-        dummy = extractVelLBC(n, vec, tm, v00);
-        pvec_vibc_specv_(wv, size, &gd, st, ed, &dh, v00, &rei, v, bv, &n, vec, &flop);
-      }
-      else if ( typ==OUTFLOW )
-      {
-        ;
-      }
-
+      dummy = extractVelLBC(n, vec, tm, v00);
+      pvec_vibc_specv_(wv, size, &gd, st, ed, &dh, v00, &rei, v, bv, &n, vec, &flop);
     }
-  }
-  else // Binary
-  {
-    for (int n=1; n<=NoCompo; n++)
+    else if ( typ==OUTFLOW )
     {
-
-      typ = cmp[n].getType();
-      cmp[n].getBbox(st, ed);
-      
-      if ( (typ==SPEC_VEL) || (typ==SPEC_VEL_WH) )
-      {
-        dummy = extractVelLBC(n, vec, tm, v00);
-        pvec_vibc_specv_(wv, size, &gd, st, ed, &dh, v00, &rei, v, bv, &n, vec, &flop);
-      }
-      else if ( typ==OUTFLOW )
-      {
-        vec[0] = vec[1] = vec[2] = cmp[n].val[var_Velocity]; // modDivergence()でセルフェイス流出速度がval[var_Velocity]にセット
-        pvec_vibc_oflow_(wv, size, &gd, st, ed, &dh, &rei, v, bv, &n, vec, &flop);
-      }
-
+      vec[0] = vec[1] = vec[2] = cmp[n].val[var_Velocity]; // modDivergence()でセルフェイス流出速度がval[var_Velocity]にセット
+      pvec_vibc_oflow_(wv, size, &gd, st, ed, &dh, &rei, v, bv, &n, vec, &flop);
     }
+    
   }
   
   
@@ -822,58 +748,30 @@ void SetBC3D::modPsrcVBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE
   double fcount = 0.0;
   
   // 内部境界条件による修正
-  if ( isCDS ) // Cut-Distance
-  {
-    for (int n=1; n<=NoCompo; n++) {
-      typ = cmp[n].getType();
-      cmp[n].getBbox(st, ed);
-
-
-      switch (typ)
+  for (int n=1; n<=NoCompo; n++) {
+    typ = cmp[n].getType();
+    cmp[n].getBbox(st, ed);
+    
+    switch (typ)
+    {
+      case SPEC_VEL:
+      case SPEC_VEL_WH:
       {
-        case SPEC_VEL:
-        case SPEC_VEL_WH:
-        {
-          REAL_TYPE dummy = extractVelLBC(n, vec, tm, v00);
-          div_ibc_drchlt_(s_0, size, &gd, st, ed, v00, bv, &n, vec, &fcount);
-          break;
-        }
-          
-        case OUTFLOW:
-          break;
-          
-        default:
-          break;
+        REAL_TYPE dummy = extractVelLBC(n, vec, tm, v00);
+        div_ibc_drchlt_(s_0, size, &gd, st, ed, v00, bv, &n, vec, &fcount);
+        break;
       }
-
+        
+      case OUTFLOW:
+        vel = cmp[n].val[var_Velocity] * dt / dh; // modDivergence()でval[var_Velocity]にセット
+        div_ibc_oflow_pvec_(s_0, size, &gd, st, ed, v00, &vel, bv, &n, v0, vf, &fcount);
+        break;
+        
+      default:
+        break;
     }
   }
-  else // Binary
-  {
-    for (int n=1; n<=NoCompo; n++) {
-      typ = cmp[n].getType();
-      cmp[n].getBbox(st, ed);
-      
-      switch (typ)
-      {
-        case SPEC_VEL:
-        case SPEC_VEL_WH:
-        {
-          REAL_TYPE dummy = extractVelLBC(n, vec, tm, v00);
-          div_ibc_drchlt_(s_0, size, &gd, st, ed, v00, bv, &n, vec, &fcount);
-          break;
-        }
-          
-        case OUTFLOW:
-          vel = cmp[n].val[var_Velocity] * dt / dh; // modDivergence()でval[var_Velocity]にセット
-          div_ibc_oflow_pvec_(s_0, size, &gd, st, ed, v00, &vel, bv, &n, v0, vf, &fcount);
-          break;
-          
-        default:
-          break;
-      }
-    }
-  }
+
   
   
   // 外部境界条件による修正

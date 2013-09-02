@@ -611,8 +611,9 @@ void IP_Jet::printPara(FILE* fp, const Control* R)
  * @param [in]     G_org    グローバルな原点（無次元）
  * @param [in]     NoMedium 媒質数
  * @param [in]     mat      MediumListクラスのポインタ
+ * @param [out]    cut      カット情報
  */
-void IP_Jet::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat)
+void IP_Jet::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
 {
   int mid_fluid;        /// 流体
   int mid_solid;        /// 固体

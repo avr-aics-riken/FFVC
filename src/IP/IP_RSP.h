@@ -20,7 +20,7 @@
 //@brief IP_RSP class Header
 //@author keno, FSI Team, VCAD, RIKEN
 
-#include "Intrinsic.h"
+#include "../FB/Intrinsic.h"
 #include "IP_Define.h"
 
 class IP_RSP : public Intrinsic {

@@ -1779,223 +1779,6 @@ unsigned long VoxInfo::encPbit_N_Cut(int* bx, const int* bid, const float* cut, 
 
 
 // #################################################################
-/**
- * @brief 圧力のノイマン境界ビットをエンコードする（カット）
- * @param [in,out] bx          BCindex P
- * @param [in]     cut         距離情報
- * @param [in]     convergence カットのあるセルは収束判定をしないオプション（trueの時）
- * @retval 固体表面セル数
- * @note
- *   - 流体セルのうち，固体セルに隣接する面のノイマンフラグをゼロにする．ただし，内部領域のみ．
- *   - 固体セルに隣接する流体セルに方向フラグを付与する．全内部領域．
- *   - 収束判定の有効フラグをカット情報からエンコードする
- */
-unsigned long VoxInfo::encPbit_N_Cut(int* bx, const float* cut, const bool convergence)
-{
-  size_t m_p, m;
-  int qw, qe, qs, qn, qb, qt, qq;
-  int s;
-  float cp_e, cp_w, cp_n, cp_s, cp_t, cp_b;
-  const float* ct;
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  // ノイマンフラグ
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        s = bx[m_p];
-        
-        if ( IS_FLUID( s ) )
-        {
-          m = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
-          ct = &cut[m];
-
-          // X_MINUS
-          if ((ct[0] - ROUND_EPS) < 1.0)  // 交点があるなら壁面なのでノイマン条件をセット
-          {
-            s = offBit( s, BC_N_W );
-          }
-          
-          // X_PLUS
-          if ((ct[1] - ROUND_EPS) < 1.0)
-          {
-            s = offBit( s, BC_N_E );
-          }
-          
-          // Y_MINUS
-          if ((ct[2] - ROUND_EPS) < 1.0)
-          {
-            s = offBit( s, BC_N_S );
-          }
-          
-          // Y_PLUS
-          if ((ct[3] - ROUND_EPS) < 1.0)
-          {
-            s = offBit( s, BC_N_N );
-          }
-          
-          // Z_MINUS
-          if ((ct[4] - ROUND_EPS) < 1.0)
-          {
-            s = offBit( s, BC_N_B );
-          }
-          
-          // Z_PLUS
-          if ((ct[5] - ROUND_EPS) < 1.0)
-          {
-            s = offBit( s, BC_N_T );
-          }
-          
-          bx[m_p] = s;
-        }
-      }
-    }
-  }
-  
-  // wall locationフラグ
-  unsigned long c = 0;
-  const float* pos; 
-  float q;
-  
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        s = bx[m_p];
-        
-        if ( IS_FLUID( s ) )
-        {
-          m = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
-          pos = &cut[m];
-          
-          if ( pos[X_MINUS] != 1.0 ) { s = onBit( s, FACING_W ); c++; }
-          if ( pos[X_PLUS]  != 1.0 ) { s = onBit( s, FACING_E ); c++; }
-          if ( pos[Y_MINUS] != 1.0 ) { s = onBit( s, FACING_S ); c++; }
-          if ( pos[Y_PLUS]  != 1.0 ) { s = onBit( s, FACING_N ); c++; }
-          if ( pos[Z_MINUS] != 1.0 ) { s = onBit( s, FACING_B ); c++; }
-          if ( pos[Z_PLUS]  != 1.0 ) { s = onBit( s, FACING_T ); c++; }
-          
-          bx[m_p] = s;
-        }
-      }
-    }
-  }
-  
-  if ( numProc > 1 )
-  {
-    unsigned long tmp = c;
-    if ( paraMngr->Allreduce(&tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  
-  // 収束判定の有効フラグ
-  float q0, q1, q2, q3, q4, q5;
-  unsigned long g=0;
-  
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        s = bx[m_p];
-        
-        if ( IS_FLUID( s ) )
-        {
-          m = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
-          pos = &cut[m];
-          
-          q0 = floor(pos[0]);
-          q1 = floor(pos[1]);
-          q2 = floor(pos[2]);
-          q3 = floor(pos[3]);
-          q4 = floor(pos[4]);
-          q5 = floor(pos[5]);
-          
-          // 収束判定の有効フラグ 全周カットがあるセルは孤立セルとして固体セルへ変更
-          if ( (q0+q1+q2+q3+q4+q5) == 0.0 )
-          {
-            s = offBit(s, VLD_CNVG);    // Out of scope
-            s = offBit(s, STATE_BIT );  // Solid
-            s = offBit(s, ACTIVE_BIT ); // Inactive
-            g++;
-          }
-          else
-          {
-            s = onBit(s, VLD_CNVG);
-          }
-          
-          bx[m_p] = s;
-        }
-      }
-    }
-  }
-  
-  
-  if ( numProc > 1 )
-  {
-    unsigned long tmp = g;
-    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  Hostonly_ printf("\tThe number of cells which are changed to INACTIVE and SOLID because of all faces are cut = %ld\n\n", g);
-  
-  
-  // カットのあるセルの収束判定をしないオプション
-  if ( convergence ) {
-    g = 0;
-    
-    for (int k=1; k<=kx; k++) {
-      for (int j=1; j<=jx; j++) {
-        for (int i=1; i<=ix; i++) {
-          m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(sz, gd, i, j, k);
-          s = bx[m_p];
-          
-          if ( IS_FLUID( s ) )
-          {
-            m = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
-            pos = &cut[m];
-            
-            q0 = floor(pos[0]);
-            q1 = floor(pos[1]);
-            q2 = floor(pos[2]);
-            q3 = floor(pos[3]);
-            q4 = floor(pos[4]);
-            q5 = floor(pos[5]);
-            
-            // 収束判定の有効フラグ 
-            if ( (q0+q1+q2+q3+q4+q5) != 6.0 )
-            {
-              s = offBit(s, VLD_CNVG);    // Out of scope  @todo check
-              g++;
-            }
-            
-            bx[m_p] = s;
-          }
-        }
-      }
-    }
-    
-    if ( numProc > 1 )
-    {
-      unsigned long tmp = g;
-      if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-    }
-    
-    Hostonly_ printf("\tThe number of cells which are excluded to convergence judgement by cut = %ld\n\n", g);
-    
-  }
-  
-  
-  return c;
-}
-
-
-
-// #################################################################
 //計算領域内部のコンポーネントのNeumannフラグをbcp[]にエンコードする
 unsigned long VoxInfo::encPbit_N_IBC(const int order, 
                                      const int* mid, 
@@ -3414,10 +3197,12 @@ unsigned long VoxInfo::fillSeed(int* mid, const int face, const int target, cons
             int flag = 0;
             
             // 対象セルの周囲6方向にセル内のカットがあるかを調べる
-            for (int l=0; l<6; l++)
-            {
-              if ( (pos[l] - ROUND_EPS) <= 0.5) flag++; // 誤差を許容してテストする
-            }
+            //if ( (pos[0] - ROUND_EPS) <= 0.5) flag++; // x-
+            if ( (pos[1] - ROUND_EPS) <= 0.5) flag++; // x+
+            if ( (pos[2] - ROUND_EPS) <= 0.5) flag++; // y-
+            if ( (pos[3] - ROUND_EPS) <= 0.5) flag++; // y+
+            if ( (pos[4] - ROUND_EPS) <= 0.5) flag++; // z-
+            if ( (pos[5] - ROUND_EPS) <= 0.5) flag++; // z+
             
             // カットがなく，未ペイントのセルの場合に流体セルとしてペイントする
             if ( (flag == 0) && (mid[m] == 0) )
@@ -3442,10 +3227,12 @@ unsigned long VoxInfo::fillSeed(int* mid, const int face, const int target, cons
             const float* pos = &cut[mp];
             int flag = 0;
             
-            for (int l=0; l<6; l++)
-            {
-              if ( (pos[l] - ROUND_EPS) <= 0.5 ) flag++;
-            }
+            if ( (pos[0] - ROUND_EPS) <= 0.5) flag++; // x-
+            //if ( (pos[1] - ROUND_EPS) <= 0.5) flag++; // x+
+            if ( (pos[2] - ROUND_EPS) <= 0.5) flag++; // y-
+            if ( (pos[3] - ROUND_EPS) <= 0.5) flag++; // y+
+            if ( (pos[4] - ROUND_EPS) <= 0.5) flag++; // z-
+            if ( (pos[5] - ROUND_EPS) <= 0.5) flag++; // z+
             
             if ( (flag == 0) && (mid[m] == 0) )
             {
@@ -3468,10 +3255,12 @@ unsigned long VoxInfo::fillSeed(int* mid, const int face, const int target, cons
             const float* pos = &cut[mp];
             int flag = 0;
             
-            for (int l=0; l<6; l++)
-            {
-              if ( (pos[l] - ROUND_EPS) <= 0.5 ) flag++;
-            }
+            if ( (pos[0] - ROUND_EPS) <= 0.5) flag++; // x-
+            if ( (pos[1] - ROUND_EPS) <= 0.5) flag++; // x+
+            //if ( (pos[2] - ROUND_EPS) <= 0.5) flag++; // y-
+            if ( (pos[3] - ROUND_EPS) <= 0.5) flag++; // y+
+            if ( (pos[4] - ROUND_EPS) <= 0.5) flag++; // z-
+            if ( (pos[5] - ROUND_EPS) <= 0.5) flag++; // z+
             
             if ( (flag == 0) && (mid[m] == 0) )
             {
@@ -3494,10 +3283,12 @@ unsigned long VoxInfo::fillSeed(int* mid, const int face, const int target, cons
             const float* pos = &cut[mp];
             int flag = 0;
             
-            for (int l=0; l<6; l++)
-            {
-              if ( (pos[l] - ROUND_EPS) <= 0.5 ) flag++;
-            }
+            if ( (pos[0] - ROUND_EPS) <= 0.5) flag++; // x-
+            if ( (pos[1] - ROUND_EPS) <= 0.5) flag++; // x+
+            if ( (pos[2] - ROUND_EPS) <= 0.5) flag++; // y-
+            //if ( (pos[3] - ROUND_EPS) <= 0.5) flag++; // y+
+            if ( (pos[4] - ROUND_EPS) <= 0.5) flag++; // z-
+            if ( (pos[5] - ROUND_EPS) <= 0.5) flag++; // z+
             
             if ( (flag == 0) && (mid[m] == 0) )
             {
@@ -3521,10 +3312,12 @@ unsigned long VoxInfo::fillSeed(int* mid, const int face, const int target, cons
             const float* pos = &cut[mp];
             int flag = 0;
             
-            for (int l=0; l<6; l++)
-            {
-              if ( (pos[l] - ROUND_EPS) <= 0.5 ) flag++;
-            }
+            if ( (pos[0] - ROUND_EPS) <= 0.5) flag++; // x-
+            if ( (pos[1] - ROUND_EPS) <= 0.5) flag++; // x+
+            if ( (pos[2] - ROUND_EPS) <= 0.5) flag++; // y-
+            if ( (pos[3] - ROUND_EPS) <= 0.5) flag++; // y+
+            //if ( (pos[4] - ROUND_EPS) <= 0.5) flag++; // z-
+            if ( (pos[5] - ROUND_EPS) <= 0.5) flag++; // z+
             
             if ( (flag == 0) && (mid[m] == 0) )
             {
@@ -3548,10 +3341,12 @@ unsigned long VoxInfo::fillSeed(int* mid, const int face, const int target, cons
             const float* pos = &cut[mp];
             int flag = 0;
             
-            for (int l=0; l<6; l++)
-            {
-              if ( (pos[l] - ROUND_EPS) <= 0.5 ) flag++;
-            }
+            if ( (pos[0] - ROUND_EPS) <= 0.5) flag++; // x-
+            if ( (pos[1] - ROUND_EPS) <= 0.5) flag++; // x+
+            if ( (pos[2] - ROUND_EPS) <= 0.5) flag++; // y-
+            if ( (pos[3] - ROUND_EPS) <= 0.5) flag++; // y+
+            if ( (pos[4] - ROUND_EPS) <= 0.5) flag++; // z-
+            //if ( (pos[5] - ROUND_EPS) <= 0.5) flag++; // z+
             
             if ( (flag == 0) && (mid[m] == 0) )
             {
@@ -4446,7 +4241,7 @@ void VoxInfo::setBCIndexH(int* bh1, int* bh2, int* mid, SetBC* BC, const int kos
 
 // #################################################################
 // 圧力境界条件のビット情報をエンコードする
-unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, CompoList* cmp, int icls, const float* cut, const int* bid, const bool isCDS)
+unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, CompoList* cmp, int icls, const float* cut, const int* bid, const bool isBinary)
 {
   unsigned long surface = 0;
   
@@ -4462,16 +4257,17 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, Comp
 
   
   // 計算領域内の壁面のNeumannBCのマスク処理と固体に隣接するFセルに方向フラグをエンコードし，表面セル数を返す
-  if ( !isCDS )
+  if ( isBinary )
   {
-    surface = encPbit_N_Binary(bcp);    // Binary
+    surface = encPbit_N_Binary(bcp);
+    //surface = encPbit_N_Cut(bcp, bid, cut, false);
   }
   else
   {
-    surface = encPbit_N_Cut(bcp, cut, true);  // Cut-Distance
+    surface = encPbit_N_Cut(bcp, bid, cut, false);
   }
-
   
+
   
   // 外部境界のビットフラグをエンコード
   BoundaryOuter* m_obc=NULL;
@@ -4543,8 +4339,10 @@ unsigned long VoxInfo::setBCIndexP(int* bcd, int* bcp, int* mid, SetBC* BC, Comp
     }
   }
 
+
   // 全周Neumannフラグのセルと排他性をチェックし，反復行列の非対角要素/対角要素をエンコードする
   encPbit(bcp);
+
 
 
 // ########## debug
@@ -5154,7 +4952,7 @@ void VoxInfo::setMonitorShape(int* mid, const int n, ShapeMonitor* SM, CompoList
 
 // #################################################################
 // 外部境界のガイドセルが固体の場合に距離情報をセット
-void VoxInfo::setOBCcut(SetBC* BC, float* cut)
+void VoxInfo::setOBCcut(SetBC* BC, float* cut, int* bid)
 {
   float pos=0.5f;
   
@@ -5168,68 +4966,94 @@ void VoxInfo::setOBCcut(SetBC* BC, float* cut)
     if( nID[face] >= 0 ) continue;
     
     BoundaryOuter* m_obc = BC->exportOBC(face);
-    int F = m_obc->getClass();
+    int F  = m_obc->getClass();
+    int id = m_obc->getGuideMedium();
     
-    if ( (F == OBC_WALL) || (F == OBC_SYMMETRIC) )
+    
+    if ( F == OBC_WALL )
     {
       switch (face)
       {
         case X_MINUS:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, id) schedule(static)
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
               size_t m = _F_IDX_S4DEX(X_MINUS, 1, j, k, 6, ix, jx, kx, gd);
               cut[m] = pos;
+              size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
+              int q = bid[l];
+              setFaceBID(q, X_MINUS, id);
+              bid[l] = q;
             }
           }
           break;
           
         case X_PLUS:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, id) schedule(static)
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
               size_t m = _F_IDX_S4DEX(X_PLUS, ix, j, k, 6, ix, jx, kx, gd);
               cut[m] = pos;
+              size_t l = _F_IDX_S3D(ix  , j  , k  , ix, jx, kx, gd);
+              int q = bid[l];
+              setFaceBID(q, X_PLUS, id);
+              bid[l] = q;
             }
           }
           break;
           
         case Y_MINUS:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, id) schedule(static)
           for (int k=1; k<=kx; k++) {
             for (int i=1; i<=ix; i++) {
               size_t m = _F_IDX_S4DEX(Y_MINUS, i, 1, k, 6, ix, jx, kx, gd);
               cut[m] = pos;
+              size_t l = _F_IDX_S3D(i  , 1  , k  , ix, jx, kx, gd);
+              int q = bid[l];
+              setFaceBID(q, Y_MINUS, id);
+              bid[l] = q;
             }
           }
           break;
           
         case Y_PLUS:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, id) schedule(static)
           for (int k=1; k<=kx; k++) {
             for (int i=1; i<=ix; i++) {
               size_t m = _F_IDX_S4DEX(Y_PLUS, i, jx, k, 6, ix, jx, kx, gd);
               cut[m] = pos;
+              size_t l = _F_IDX_S3D(i  , jx  , k  , ix, jx, kx, gd);
+              int q = bid[l];
+              setFaceBID(q, Y_PLUS, id);
+              bid[l] = q;
             }
           }
           break;
           
         case Z_MINUS:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, id) schedule(static)
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
               size_t m = _F_IDX_S4DEX(Z_MINUS, i, j, 1, 6, ix, jx, kx, gd);
               cut[m] = pos;
+              size_t l = _F_IDX_S3D(i  , j  , 1  , ix, jx, kx, gd);
+              int q = bid[l];
+              setFaceBID(q, Z_MINUS, id);
+              bid[l] = q;
             }
           }
           break;
           
         case Z_PLUS:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, id) schedule(static)
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
               size_t m = _F_IDX_S4DEX(Z_PLUS, i, j, kx, 6, ix, jx, kx, gd);
               cut[m] = pos;
+              size_t l = _F_IDX_S3D(i  , j  , kx  , ix, jx, kx, gd);
+              int q = bid[l];
+              setFaceBID(q, Z_PLUS, id);
+              bid[l] = q;
             }
           }
           break;

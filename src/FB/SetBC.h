@@ -47,7 +47,6 @@ protected:
   int Unit_Temp;   ///<
   int Unit_Prs;    ///<
   bool inout_flag; ///<
-  bool isCDS;      ///<
   
   BoundaryOuter   obc[NOFACE];
   CompoList       *cmp;
@@ -72,7 +71,7 @@ public:
     rho = nyu = cp = lambda = beta = BasePrs = 0.0;
     Peclet = Reynolds = Rayleigh = Grashof = Prandtl = 0.0;
     Example = Unit_Temp = Unit_Prs = NoCompo = NoMedium = 0;
-    inout_flag = isCDS = false;
+    inout_flag = false;
     
     cmp = NULL;
     mat = NULL;

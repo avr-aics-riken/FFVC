@@ -56,7 +56,6 @@ private:
   int monitor;
   int Mode_Gradp;
   bool HeatProblem;
-  bool isCDS;
   
   TextParser* tpCntl;     ///< テキストパーサー
   BoundaryOuter* BaseBc;  ///< テンポラリのテーブル
@@ -73,7 +72,7 @@ public:
     Unit_Temp = 0;
     Unit_Prs = 0;
     Mode_Gradp = 0;
-    HeatProblem = isCDS = false;
+    HeatProblem = false;
     NoBaseBC = 0;
     NoBC     = 0;
     NoCompo  = 0;

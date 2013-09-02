@@ -108,10 +108,6 @@ private:
   unsigned long encPbit_N_Cut(int* bx, const int* bid, const float* cut, const bool convergence);
   
   
-  // 圧力のノイマン境界ビットをエンコードする（カット）
-  unsigned long encPbit_N_Cut(int* bx, const float* cut, const bool convergence);
-  
-  
   /**
    * @brief 計算領域内部のコンポーネントのNeumannフラグをbcp[]にエンコードする
    * @retval エンコードしたセル数
@@ -254,7 +250,7 @@ private:
    * @brief CutBid5のBoundrary ID設定
    * @param [in,out] bid  CutBid5のBoundrary ID
    * @param [in]     dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
-   * @param [in]     s_id 固体のID (1-31)
+   * @param [in]     s_id ID (1-31)
    */
   inline void setFaceBID(int& bid, const int dir, const int s_id)
   {
@@ -493,15 +489,15 @@ public:
   
   /**
    * @brief 圧力境界条件のビット情報をエンコードする
-   * @param [in,out] bcd   BCindex ID
-   * @param [in,out] bcp   BCindex P
-   * @param [in,out] mid   ID配列
-   * @param [in]     BC    SetBCクラスのポインタ
-   * @param [in,out] cmp   CompoList
-   * @param [in]     icls  Intrinsic class
-   * @param [in]     cut   距離情報
-   * @param [in]     bid   カットID情報
-   * @param [in]     isCDS CDS->true
+   * @param [in,out] bcd      BCindex ID
+   * @param [in,out] bcp      BCindex P
+   * @param [in,out] mid      ID配列
+   * @param [in]     BC       SetBCクラスのポインタ
+   * @param [in,out] cmp      CompoList
+   * @param [in]     icls     Intrinsic class
+   * @param [in]     cut      距離情報
+   * @param [in]     bid      カットID情報
+   * @param [in]     isBinary バイナリの場合true
    * @retval 表面セル数
    */
   unsigned long setBCIndexP(int* bcd,
@@ -512,7 +508,7 @@ public:
                             int icls,
                             const float* cut,
                             const int* bid,
-                            const bool isCDS);
+                            const bool isBinary);
   
   
   /**
@@ -594,11 +590,12 @@ public:
   
   
   /**
-   @brief 外部境界のガイドセルが固体の場合に距離情報をセット
-   @param [in]     BC  SetBCクラスのポインタ
-   @param [in,out] cut 距離情報
+   * @brief 外部境界のガイドセルが固体の場合に距離情報をセット
+   * @param [in]     BC  SetBCクラスのポインタ
+   * @param [in,out] cut 距離情報
+   * @param [in]     bid カットID情報
    */
-  void setOBCcut (SetBC* BC, float* cut);
+  void setOBCcut (SetBC* BC, float* cut, int* bid);
   
   
   /**

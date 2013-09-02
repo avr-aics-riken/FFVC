@@ -3747,7 +3747,6 @@ void ParseBC::setControlVars(Control* Cref)
   Unit_Prs    = Cref->Unit.Prs;
 	BasePrs     = Cref->BasePrs;
   Mode_Gradp  = Cref->Mode.PrsNeuamnnType;
-  isCDS       = Cref->isCDS();
   NoCompo     = Cref->NoCompo;
   NoBC        = Cref->NoBC;
   NoMedium    = Cref->NoMedium;

@@ -1113,12 +1113,12 @@ public:
   
   
   /**
-   * @brief ソルバーがCDSタイプかどうかを返す
-   * @retval CDSであればtrue
+   * @brief 形状近似がバイナリかどうか
+   * @retval Binaryであればtrue
    */
-  bool isCDS() const
+  bool isBinary() const
   {
-    return ( CUT_INFO == Mode.ShapeAprx ) ? true : false;
+    return ( BINARY == Mode.ShapeAprx ) ? true : false;
   }
   
   

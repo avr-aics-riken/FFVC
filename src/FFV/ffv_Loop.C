@@ -361,13 +361,13 @@ int FFV::Loop(const unsigned step)
       flop_count=0.0;
       // 性能測定モードのときには出力しない
       
-      if ( C.isCDS() ) 
+      if ( C.isBinary() )
       {
-        //cds_force_(frc, size, &guide, d_p, d_bcd, d_bid, &id_of_solid, &deltaX, &flop_count);
+        force_(frc, size, &guide, d_p, d_bcd, &deltaX, &flop_count);
       }
       else 
       {
-        force_(frc, size, &guide, d_p, d_bcd, &deltaX, &flop_count);
+        //cds_force_(frc, size, &guide, d_p, d_bcd, d_bid, &id_of_solid, &deltaX, &flop_count);
       }
       
       TIMING_stop(tm_cal_force, 0.0);

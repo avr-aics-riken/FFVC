@@ -202,8 +202,8 @@ int FFV::Initialize(int argc, char **argv)
 
   
   
-  // Binaryの場合に，SOLIDセルを生成
-  if ( !C.isCDS() && (C.Mode.Example == id_Polygon) )
+  // Binaryの場合に，SOLIDセルを生成 >> この時点で外部境界面にはカットが設定されていない
+  if ( C.isBinary() && (C.Mode.Example == id_Polygon) )
   {
     generateSolid(fp);
   }
@@ -233,6 +233,10 @@ int FFV::Initialize(int argc, char **argv)
   }
 
 
+  // 外部境界で壁面条件の場合にカットとガイドセルIDを設定
+  V.setOBCcut(&BC, d_cut, d_bid);
+  
+  
   
   // Fill
   if ( (C.Mode.Example == id_Polygon) )
@@ -289,18 +293,10 @@ int FFV::Initialize(int argc, char **argv)
   
 
   
-  
-  // CDSの場合，WALLとSYMMETRICのときに，カットを外部境界に接する内部セルに設定 fill以前には行わない
-  if ( C.isCDS() ) 
-  {
-    V.setOBCcut(&BC, d_cut);
-  }
-  
-  
   // セルIDのノード間同期
   if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
   
-  
+
 
 
   // HEX/FANコンポーネントの形状情報からBboxと体積率を計算
@@ -317,7 +313,7 @@ int FFV::Initialize(int argc, char **argv)
   
   // 内部周期境界の場合のガイドセルのコピー処理
   V.adjMediumPrdc_Inner(d_mid, cmp);
-  
+
   
   // 媒質数とKindOfSolverの整合性をチェックする
   if ( !chkMediumConsistency() )
@@ -1109,7 +1105,7 @@ void FFV::encodeBCindex(FILE* fp)
   // 基本ビット情報（Active, State, コンポ，媒質情報）を全領域についてエンコードする
   V.setBCIndexBase(d_bcd, d_mid, d_cvf, mat, cmp, L_Acell, G_Acell, C.KindOfSolver);
   
-  
+
   // @attention bx[]の同期が必要 >> 以下の処理で隣接セルを参照するため
   if ( paraMngr->BndCommS3D(d_bcd, ix, jx, kx, gd, 1) != CPM_SUCCESS ) Exit(0);
   
@@ -1144,14 +1140,14 @@ void FFV::encodeBCindex(FILE* fp)
     V.copyBCIbase(d_bh2, d_bcd);
   }
   
-  
+
   
   // BCIndexP に圧力計算のビット情報をエンコードする -----
-  if ( C.isCDS() )
+  if ( C.isBinary() )
   {
     C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, d_mid, &BC, cmp, C.Mode.Example, d_cut, d_bid, true);
   }
-  else // binary
+  else // CDS
   {
     C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, d_mid, &BC, cmp, C.Mode.Example, d_cut, d_bid, false);
   }
@@ -1160,7 +1156,7 @@ void FFV::encodeBCindex(FILE* fp)
   V.dbg_chkBCIndexP(d_bcd, d_bcp, "BCindexP.txt");
 #endif
   
-  
+
   
   // BCIndexV に速度計算のビット情報をエンコードする -----
   V.setBCIndexV(d_bcv, d_mid, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid);
@@ -1192,9 +1188,11 @@ void FFV::encodeBCindex(FILE* fp)
   V.countCellState(L_Wcell, G_Wcell, d_bcd, SOLID);
   V.countCellState(L_Fcell, G_Fcell, d_bcd, FLUID);
   
+
   
   // ここまでのbboxはmid[]でサーチした結果，BCindex処理の過程で範囲が変わるので変更
   resizeCompoBbox();
+
 }
 
 
@@ -4111,31 +4109,25 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
   switch (C.Mode.Example)
   {
     case id_Polygon: // ユーザ例題
-      
-      // PolylibとCutlibのセットアップ
       setupPolygon2CutInfo(PrepMemory, TotalMemory, fp);
       break;
       
     case id_Sphere:
-      if ( !C.isCDS() ) // binary
+      setupCutInfo4IP(PrepMemory, TotalMemory, fp);
+      
+      if ( C.isBinary() ) // binary
       {
-        Ex->setup(d_mid, &C, G_origin, C.NoCompo, mat);
+        Ex->setup(d_mid, &C, G_origin, C.NoCompo, mat, d_cut);
       }
       else // cut
       {
-        // 初期値1.0をセット
-        setupCutInfo4IP(PrepMemory, TotalMemory, fp);
         ((IP_Sphere*)Ex)->setup_cut(d_mid, &C, G_origin, C.NoCompo, mat, d_cut);
       }
       break;
       
     default: // ほかのIntrinsic problems
-      if ( C.isCDS() ) // カットの場合
-      {
-        setupCutInfo4IP(PrepMemory, TotalMemory, fp);
-      }
-      
-      Ex->setup(d_mid, &C, G_origin, C.NoCompo, mat);
+      setupCutInfo4IP(PrepMemory, TotalMemory, fp);
+      Ex->setup(d_mid, &C, G_origin, C.NoCompo, mat, d_cut);
       break;
   }
   
