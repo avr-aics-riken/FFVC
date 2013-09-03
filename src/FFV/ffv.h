@@ -37,46 +37,45 @@
 #include <math.h>
 #include <float.h>
 
+#include "omp.h"
+
 #include "cpm_ParaManager.h"
 
-#include "DomainInfo.h"
+#include "../FB/DomainInfo.h"
+#include "../FB/FB_Define.h"
+#include "../FB/mydebug.h"
+#include "../FB/FBUtility.h"
+#include "../FB/Control.h"
+#include "../FB/Alloc.h"
+#include "../FB/FileIO.h"
+#include "../FB/ParseBC.h"
+#include "../FB/ParseMat.h"
+#include "../FB/VoxInfo.h"
+#include "../FB/CompoFraction.h"
+#include "../FB/History.h"
+#include "../FB/Monitor.h"
 
-#include "FB_Define.h"
-#include "ffv_Define.h"
-#include "mydebug.h"
-#include "FBUtility.h"
-#include "Control.h"
-#include "Alloc.h"
-#include "FileIO.h"
-#include "ParseBC.h"
-#include "ParseMat.h"
-#include "VoxInfo.h"
-#include "ffv_SetBC.h"
-#include "CompoFraction.h"
 #include "ffv_Version.h"
+#include "ffv_Define.h"
+#include "ffv_SetBC.h"
+#include "ffv_Ffunc.h"
+#include "ffv_TerminateCtrl.h"
 
 /* 20130606 commentout 
 #include "dfi.h"
 #include "dfiinfo.h"
  */
 
-#include "History.h"
-#include "Monitor.h"
-#include "ffv_Ffunc.h"
-#include "ffv_TerminateCtrl.h"
-
-#include "omp.h"
-
 // Intrinsic class
-#include "IP_Duct.h"
-#include "IP_PPLT2D.h"
-#include "IP_PMT.h"
-#include "IP_Rect.h"
-#include "IP_Step.h"
-#include "IP_Cylinder.h"
-#include "IP_Polygon.h"
-#include "IP_Sphere.h"
-#include "IP_Jet.h"
+#include "../IP/IP_Duct.h"
+#include "../IP/IP_PPLT2D.h"
+#include "../IP/IP_PMT.h"
+#include "../IP/IP_Rect.h"
+#include "../IP/IP_Step.h"
+#include "../IP/IP_Cylinder.h"
+#include "../IP/IP_Polygon.h"
+#include "../IP/IP_Sphere.h"
+#include "../IP/IP_Jet.h"
 
 /* 20130606 commentout  PLOT3D
 #include "ffv_PLOT3D.h"

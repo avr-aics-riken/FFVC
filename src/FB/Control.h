@@ -392,6 +392,7 @@ public:
     int Change_ID;
     int Range_Limit;
     int PM_Test;
+    int GeomParaOutput;
   } Hidden_Parameter;
   
   /** File IO control */
@@ -793,6 +794,7 @@ public:
     Hide.Change_ID = 0;
     Hide.Range_Limit = 0;
     Hide.PM_Test = 0;
+    Hide.GeomParaOutput = OFF;
     
     Unit.Param  = 0;
     Unit.Output = 0;

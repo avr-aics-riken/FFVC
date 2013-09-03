@@ -173,7 +173,7 @@ private:
     unsigned key[64]; ///< ID毎の頻度 @note ffv_Initialize() >> fill()でif ( C.NoCompo+1 > 64 )をチェック
     int val[6];       ///< ID
     
-    memset(key, 0, 64);
+    memset(key, 0, sizeof(unsigned)*64);
     
     val[0] = qw;
     val[1] = qe;
@@ -238,6 +238,10 @@ private:
   void setAmaskInactive(int* bh);
   
   
+  //各方向の張るスクリーンにコンポーネント要素を投影し，面積を求める
+  void projectCompo(const int* st, const int* ed, const int target, const int* bid, int* ss);
+  
+  
   // KOSがSOLID_CONDUCTIONの場合の断熱マスクの処理
   void setAmaskSolid(int* bh);
   
@@ -271,6 +275,10 @@ public:
    */
   void adjMediumPrdc_Inner(int* mid, CompoList* cmp);
 
+  
+  // コンポーネントのbid情報から近似的な面積と法線を計算する
+  void calCompoArea(const float dhd, const int* bid, CompoList* cmp, FILE* fp);
+  
   
   /**
    * @brief dst[]にsrc[]のstate, activeビットの情報をコピーする

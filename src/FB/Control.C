@@ -1178,6 +1178,21 @@ void Control::getGeometryModel()
     PolylibConfigName = str;
   }
   
+  // ジオメトリの分割出力
+  label = "/GeometryModel/ParallelOutput";
+  
+  if ( tpCntl->chkLabel(label) )
+  {
+    if ( !(tpCntl->getInspectedValue(label, str )) )
+    {
+      Hostonly_ stamped_printf("\tError : '%s'\n", label.c_str());
+      Exit(0);
+    }
+    else
+    {
+      Hide.GeomParaOutput = ON;
+    }
+  }
   
   
   // スケーリングファクター (Hidden)
@@ -2877,12 +2892,12 @@ void Control::printOuterArea(FILE* fp, unsigned long G_Fcell, unsigned long G_Ac
   fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   fprintf(fp,"\n\t>> Effective cells and Open Area of Computational Domain\n\n");
   
-  fprintf(fp,"\tFluid  cell inside whole Computational domain = %15ld (%8.4f percent)\n", G_Fcell, (REAL_TYPE)G_Fcell/cell_max *100.0);
-  fprintf(fp,"\tActive cell                                   = %15ld (%8.4f percent)\n", G_Acell, (REAL_TYPE)G_Acell/cell_max *100.0);
+  fprintf(fp,"\tFluid  cell inside whole Computational domain = %15ld (%8.4f %%)\n", G_Fcell, (REAL_TYPE)G_Fcell/cell_max *100.0);
+  fprintf(fp,"\tActive cell                                   = %15ld (%8.4f %%)\n", G_Acell, (REAL_TYPE)G_Acell/cell_max *100.0);
   
   fprintf(fp,"\n\tFace :      Element (Open ratio)\n");
   for (int i=0; i<NOFACE; i++) {
-    fprintf(fp,"\t  %s : %12.0f (%6.2f percent)\n", FBUtility::getDirection(i).c_str(), OpenDomain[i], OpenDomainRatio(i, OpenDomain[i], G_size));
+    fprintf(fp,"\t  %s : %12.0f (%6.2f %%)\n", FBUtility::getDirection(i).c_str(), OpenDomain[i], OpenDomainRatio(i, OpenDomain[i], G_size));
   }
   fprintf(fp,"\n");
   fflush(fp);

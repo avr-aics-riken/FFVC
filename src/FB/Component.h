@@ -117,7 +117,7 @@ private:
   
   unsigned long element; ///< 要素数
   
-  int type;              ///< 境界条件の種類 媒質の場合には-1
+  int type;              ///< 境界条件の種類 媒質の場合には0
   int attrb;             /// 
   int h_type;            /// 
   int variable;          ///
@@ -502,7 +502,7 @@ public:
    */
   bool isKindMedium() const
   {
-    return (type == -1) ? true : false;
+    return (type == 0) ? true : false;
   }
   
   
@@ -595,7 +595,7 @@ public:
   void setBClocation       (const int key);
   void setBbox             (const int m_st[], const int m_ed[]);
   void set_CoefMassflow    (const REAL_TYPE var);
-  void setCoefHT          (const REAL_TYPE var);
+  void setCoefHT           (const REAL_TYPE var);
   void set_CoefPrsLoss     (const REAL_TYPE var);
   void set_CoefRadEps      (const REAL_TYPE var);
   void set_CoefRadPrj      (const REAL_TYPE var);
@@ -603,9 +603,9 @@ public:
   void setElement          (const unsigned long key);
   
   // サブドメインにコンポーネントが存在するかどうかを設定
-  void setEnsLocal(const int key);
+  void setEnsLocal         (const int key);
   
-  void setHeatflux        (const REAL_TYPE var);
+  void setHeatflux         (const REAL_TYPE var);
   void set_HeatDensity     (const REAL_TYPE var);
   void set_HeatValue       (const REAL_TYPE var);
   void set_HSRC_policy     (const bool kind);
@@ -614,7 +614,7 @@ public:
   
   void set_Massflow        (const REAL_TYPE var);
   void setMedium           (const std::string pnt);
-  void setMonCalorie     (const REAL_TYPE var);
+  void setMonCalorie       (const REAL_TYPE var);
   
   void setMonHeatflux      (const REAL_TYPE var);
   

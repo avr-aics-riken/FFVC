@@ -873,9 +873,9 @@ void FFV::displayCompoInfo(const int* cgb, FILE* fp)
   {
     double cr = (double)G_Wcell/ ( (double)G_size[0] * (double)G_size[1] * (double)G_size[2]) *100.0;
     
-    fprintf(stdout, "\tThis model includes %4d solid %s  [Solid cell ratio inside computational domain : %9.5f percent]\n\n", 
+    fprintf(stdout, "\tThis model includes %4d solid %s  [Solid cell ratio inside computational domain : %9.5f %%]\n\n",
             C.NoMediumSolid, (C.NoMediumSolid>1) ? "IDs" : "ID", cr);
-    fprintf(fp, "\tThis model includes %4d solid %s  [Solid cell ratio inside computational domain : %9.5f percent]\n\n", 
+    fprintf(fp, "\tThis model includes %4d solid %s  [Solid cell ratio inside computational domain : %9.5f %%]\n\n", 
             C.NoMediumSolid, (C.NoMediumSolid>1) ? "IDs" : "ID", cr);
   }
   
@@ -1267,7 +1267,7 @@ void FFV::fill(FILE* fp)
   
   // チェック用のリスト OpenMPのfirstprivate化のために固定長にする
   int list[64];
-  memset(list, 0, 64);
+  memset(list, 0, sizeof(int)*64);
   
   if ( C.NoCompo+1 > 64 )
   {
@@ -3383,8 +3383,7 @@ void FFV::resizeBbox4Cell(const int order, const int* bx)
   int ked = 1;
   int c = 0;
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, odr) \
-shared(ist, ied, jst, jed, kst, ked) schedule(static) reduction(+:c)
+// ist, ied, jst, jed, kst, kedはcritical sectionになるので，スレッド化しない
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -3447,8 +3446,7 @@ void FFV::resizeBbox4Face(const int order, const int* bx)
   int c = 0;
   
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, odr) \
-shared(ist, ied, jst, jed, kst, ked) schedule(static) reduction(+:c)
+// ist, ied, jst, jed, kst, kedはcritical sectionになるので，スレッド化しない
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -3811,72 +3809,82 @@ void FFV::setGlobalCompoIdx_displayInfo(FILE* fp)
   }
   
   // 領域全体のbboxを求める
-  int* m_gArray = NULL;
-  int* m_eArray = NULL;
-  int array_size = 6*(C.NoCompo+1);
-  int st_x, st_y, st_z, ed_x, ed_y, ed_z, es;
-  
-  if ( !(m_gArray = new int[numProc*6]) ) Exit(0);
-  if ( !(m_eArray = new int[numProc]  ) ) Exit(0);
-  
-  for (int i=0; i<numProc*6; i++) m_gArray[i] = 0;
-  for (int i=0; i<numProc; i++) m_eArray[i] = 0;
-  
-  for (int n=1; n<=C.NoCompo; n++)
+  if ( numProc > 1 )
   {
-    if ( numProc > 1 ) 
+    int* m_gArray = NULL;
+    int* m_eArray = NULL;
+    int array_size = 6*(C.NoCompo+1);
+    int st_x, st_y, st_z, ed_x, ed_y, ed_z, es;
+    
+    if ( !(m_gArray = new int[numProc*6]) ) Exit(0);
+    if ( !(m_eArray = new int[numProc]  ) ) Exit(0);
+    
+    for (int i=0; i<numProc*6; i++) m_gArray[i] = 0;
+    for (int i=0; i<numProc; i++) m_eArray[i] = 0;
+    
+    for (int n=1; n<=C.NoCompo; n++)
     {
-      es = ( cmp[n].existLocal() ) ? 1 : 0;
-      if ( paraMngr->Gather(&es, 1, m_eArray, 1, 0) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->Gather(&cgb[6*n], 6, m_gArray, 6, 0) != CPM_SUCCESS ) Exit(0);
-      
-      
-      if (myRank == 0) // マスターノードのみ
+      if ( numProc > 1 )
       {
-        // 初期値
-        cgb[6*n+0] = 100000000;
-        cgb[6*n+1] = 100000000;
-        cgb[6*n+2] = 100000000;
-        cgb[6*n+3] = 0;
-        cgb[6*n+4] = 0;
-        cgb[6*n+5] = 0;
+        es = ( cmp[n].existLocal() ) ? 1 : 0;
+        if ( paraMngr->Gather(&es, 1, m_eArray, 1, 0) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Gather(&cgb[6*n], 6, m_gArray, 6, 0) != CPM_SUCCESS ) Exit(0);
         
-        for (int m=0; m<numProc; m++) 
+        
+        if (myRank == 0) // マスターノードのみ
         {
-          if ( m_eArray[m]==1 ) // コンポーネントの存在ランクのみを対象とする
+          // 初期値
+          cgb[6*n+0] = 100000000;
+          cgb[6*n+1] = 100000000;
+          cgb[6*n+2] = 100000000;
+          cgb[6*n+3] = 0;
+          cgb[6*n+4] = 0;
+          cgb[6*n+5] = 0;
+          
+          for (int m=0; m<numProc; m++)
           {
-            st_x = m_gArray[6*m+0]; // 各ランクのコンポーネント存在範囲のインデクス
-            st_y = m_gArray[6*m+1];
-            st_z = m_gArray[6*m+2];
-            ed_x = m_gArray[6*m+3];
-            ed_y = m_gArray[6*m+4];
-            ed_z = m_gArray[6*m+5];
-            
-            if( st_x < cgb[6*n+0] ) { cgb[6*n+0] = st_x; } // 最大値と最小値を求める
-            if( st_y < cgb[6*n+1] ) { cgb[6*n+1] = st_y; }
-            if( st_z < cgb[6*n+2] ) { cgb[6*n+2] = st_z; }
-            if( ed_x > cgb[6*n+3] ) { cgb[6*n+3] = ed_x; }
-            if( ed_y > cgb[6*n+4] ) { cgb[6*n+4] = ed_y; }
-            if( ed_z > cgb[6*n+5] ) { cgb[6*n+5] = ed_z; }
+            if ( m_eArray[m]==1 ) // コンポーネントの存在ランクのみを対象とする
+            {
+              st_x = m_gArray[6*m+0]; // 各ランクのコンポーネント存在範囲のインデクス
+              st_y = m_gArray[6*m+1];
+              st_z = m_gArray[6*m+2];
+              ed_x = m_gArray[6*m+3];
+              ed_y = m_gArray[6*m+4];
+              ed_z = m_gArray[6*m+5];
+              
+              if( st_x < cgb[6*n+0] ) { cgb[6*n+0] = st_x; } // 最大値と最小値を求める
+              if( st_y < cgb[6*n+1] ) { cgb[6*n+1] = st_y; }
+              if( st_z < cgb[6*n+2] ) { cgb[6*n+2] = st_z; }
+              if( ed_x > cgb[6*n+3] ) { cgb[6*n+3] = ed_x; }
+              if( ed_y > cgb[6*n+4] ) { cgb[6*n+4] = ed_y; }
+              if( ed_z > cgb[6*n+5] ) { cgb[6*n+5] = ed_z; }
+            }
           }
         }
       }
+    
+    }
+    
+    // destroy
+    if (m_gArray)
+    {
+      delete[] m_gArray;
+      m_gArray = NULL;
+    }
+    
+    if (m_eArray)
+    {
+      delete[] m_eArray;
+      m_eArray = NULL;
     }
     
   }
   
-  // destroy
-  if (m_gArray) 
-  {
-    delete[] m_gArray;
-    m_gArray = NULL;
-  }
   
-  if (m_eArray) 
-  {
-    delete[] m_eArray;
-    m_eArray = NULL;
-  }
+  // コンポーネントの近似面積と法線
+  float dhd = (float)deltaX * (float)C.RefLength;
+  V.calCompoArea(dhd, d_bid, cmp, fp);
+  
   
   
   // CompoListの内容とセル数の情報を表示する
@@ -3891,7 +3899,7 @@ void FFV::setGlobalCompoIdx_displayInfo(FILE* fp)
   displayCompoInfo(cgb, fp);
   
   
-  if ( cgb ) delete [] cgb;
+  if ( cgb ) { delete [] cgb; cgb=NULL; }
   
 }
 
@@ -4721,40 +4729,39 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   
   
-  // Polylib: STLデータ書き出しテスト >> Debug
-// ##########
-#if 0
-  unsigned poly_out_para = IO_DISTRIBUTE; // 逐次の場合と並列の場合で明示的に切り分けている．あとで，考慮
-  string fname;
-  
-  if ( poly_out_para == IO_GATHER )
+  // Polylib: STLデータ書き出し
+  if ( C.Hide.GeomParaOutput == ON )
   {
-    poly_stat = PL->save_rank0( &fname, "stl_b" );
-    if ( poly_stat != PLSTAT_OK )
+    unsigned poly_out_para = IO_DISTRIBUTE; // 逐次の場合と並列の場合で明示的に切り分けている．あとで，考慮
+    string fname;
+    
+    if ( poly_out_para == IO_GATHER )
     {
-      Hostonly_
+      poly_stat = PL->save_rank0( &fname, "stl_b" );
+      if ( poly_stat != PLSTAT_OK )
       {
-        printf("Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", myRank, fname.c_str());
-        fprintf(fp,"Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", myRank, fname.c_str());
+        Hostonly_
+        {
+          printf("Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", myRank, fname.c_str());
+          fprintf(fp,"Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", myRank, fname.c_str());
+        }
+        Exit(0);
       }
-      Exit(0);
+    }
+    else
+    {
+      poly_stat = PL->save_parallel( &fname, "stl_b" );
+      if ( poly_stat != PLSTAT_OK )
+      {
+        Hostonly_
+        {
+          printf("Rank [%d]: p_polylib->save_parallel() failed to write into '%s'.", myRank, fname.c_str());
+          fprintf(fp,"Rank [%d]: p_polylib->save_parallel() failed to write into '%s'.", myRank, fname.c_str());
+        }
+        Exit(0);
+      }
     }
   }
-  else
-  {
-    poly_stat = PL->save_parallel( &fname, "stl_b" );
-    if ( poly_stat != PLSTAT_OK )
-    {
-      Hostonly_
-      {
-        printf("Rank [%d]: p_polylib->save_parallel() failed to write into '%s'.", myRank, fname.c_str());
-        fprintf(fp,"Rank [%d]: p_polylib->save_parallel() failed to write into '%s'.", myRank, fname.c_str());
-      }
-      Exit(0);
-    }
-  }
-#endif
-// ##########  
   
   
   
