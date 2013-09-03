@@ -21,6 +21,10 @@ REVISION HISTORY
 --------------------------
 2013-09-03
 
+- r1022 change area calculation
+  - コンポーネントの面積は 要素数 x 面素 >> encodeBCindex()に追加
+  - calCompoArea(), projectCompo()削除
+  
 - r1021 approximate component area [ver 1.3.6]
   - setGlobalCompoIdx_displayInfo()でグローバルなbboxから近似的な法線と面積を求める
   - calCompoArea(), projectCompo()追加
@@ -42,7 +46,7 @@ REVISION HISTORY
 - r1019 backstep
   - vobc_drchltのバグ修正
   - Backstep(ColdFlow)
-  - 温度計算の場合の媒質毎の初期値指定オプション
+  - 温度計算の場合の媒質毎の初期値指定オプション getInitTempOfMedium()
 
 --------------------------
 2013-08-31

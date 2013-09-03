@@ -1198,7 +1198,7 @@ void ParseBC::getInitTempOfMedium(CompoList* cmp, Control* C)
   
   // ラベルが指定されている場合はオプションが有効
   C->MediumTmpInitOption = ON;
-  
+
   
   for (int i=1; i<=NoMedium; i++)
   {
@@ -1224,8 +1224,16 @@ void ParseBC::getInitTempOfMedium(CompoList* cmp, Control* C)
     {
       if ( FBUtility::compare(cmp[m].getAlias(), str) )
       {
-        cmp[m].setInitTemp( FBUtility::convTemp2K(ct, Unit_Temp) );
-        flag++;
+        if ( cmp[m].isKindMedium())
+        {
+          cmp[m].setInitTemp( FBUtility::convTemp2K(ct, Unit_Temp) );
+          flag++;
+        }
+        else
+        {
+          Hostonly_ stamped_printf("\tError : Label '%s' is not a medium\n", cmp[m].getAlias().c_str());
+          Exit(0);
+        }
       }
     }
     
@@ -3426,39 +3434,49 @@ void ParseBC::printCompoSummary(FILE* fp, CompoList* cmp, const int basicEq)
   
   if ( basicEq == INCMP_2PHASE )
   {
-    fprintf(fp,"\t  No :  Num. of Elements      Medium   Phase                     Label : Class\n");
+    fprintf(fp,"\t  No :  Num. of Elements       State   Phase                     Label : Class                 Medium\n");
+    fprintf(fp,"\t--------------------------------------------------------------------------------------------------------------------\n");
     
     for (int i=1; i<=NoCompo; i++)
     {
       fprintf(fp,"\t%4d : %18ld ", i, cmp[i].getElement());
       ( cmp[i].getState() == FLUID ) ? fprintf(fp, "      Fluid ") : fprintf(fp, "      Solid ") ;
       ( cmp[i].getPhase() == GAS )   ? fprintf(fp, "        Gas ") : fprintf(fp, "     Liquid ") ;
-      fprintf(fp, " %24s : %s", (cmp[i].getAlias().empty()) ? "" : cmp[i].getAlias().c_str(), cmp[i].getBCstr().c_str() );
+      fprintf(fp, " %24s : %-20s  %-20s", (cmp[i].getAlias().empty()) ? "" : cmp[i].getAlias().c_str(),
+              cmp[i].getBCstr().c_str(),
+              cmp[i].getMedium().c_str() );
     }
   }
   else
   {
     if ( KindOfSolver == FLOW_ONLY )
     {
-      fprintf(fp,"\t  No :   Num. of Elements      Medium                    Label : Class\n");
+      fprintf(fp,"\t  No :   Num. of Elements       State                    Label : Class                 Medium\n");
+      fprintf(fp,"\t--------------------------------------------------------------------------------------------------------------------\n");
       
       for (int i=1; i<=NoCompo; i++)
       {
         fprintf(fp,"\t%4d : %18ld ", i, cmp[i].getElement());
         ( cmp[i].getState() == FLUID ) ? fprintf(fp, "      Fluid ") : fprintf(fp, "      Solid ") ;
-        fprintf(fp, "%24s : %s", (cmp[i].getAlias().empty()) ? "" : cmp[i].getAlias().c_str(), cmp[i].getBCstr().c_str() );
+        fprintf(fp, "%24s : %-20s  %-20s", (cmp[i].getAlias().empty()) ? "" : cmp[i].getAlias().c_str(),
+                cmp[i].getBCstr().c_str(),
+                cmp[i].getMedium().c_str() );
         fprintf(fp,"\n");
       }
     }
     else
     {
-      fprintf(fp,"\t  No :   Num. of Elements      Medium    Init.Temp(%s)                    Label : Class\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C" );
+      fprintf(fp,"\t  No :   Num. of Elements       State    Init.Temp(%s)                    Label : Class                 Medium\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C" );
+      fprintf(fp,"\t--------------------------------------------------------------------------------------------------------------------\n");
+      
       for (int i=1; i<=NoCompo; i++)
       {
         fprintf(fp,"\t%4d : %18ld ", i, cmp[i].getElement());
         ( cmp[i].getState() == FLUID ) ? fprintf(fp, "      Fluid ") : fprintf(fp, "      Solid ") ;
-        fprintf(fp, "%14.4e %24s : %s", FBUtility::convK2Temp(cmp[i].getInitTemp(), Unit_Temp),
-                (cmp[i].getAlias().empty()) ? "" : cmp[i].getAlias().c_str(), cmp[i].getBCstr().c_str() );
+        fprintf(fp, "%14.4e %24s : %-20s  %-20s", FBUtility::convK2Temp(cmp[i].getInitTemp(), Unit_Temp),
+                (cmp[i].getAlias().empty()) ? "" : cmp[i].getAlias().c_str(),
+                cmp[i].getBCstr().c_str(),
+                cmp[i].getMedium().c_str() );
         fprintf(fp,"\n");
       }
     }

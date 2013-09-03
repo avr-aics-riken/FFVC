@@ -1193,6 +1193,38 @@ void FFV::encodeBCindex(FILE* fp)
   // ここまでのbboxはmid[]でサーチした結果，BCindex処理の過程で範囲が変わるので変更
   resizeCompoBbox();
 
+  
+  // エンコードした面の数から表面積を近似
+  float dhd = (float)deltaX * (float)C.RefLength;
+  
+  Hostonly_
+  {
+    printf("\n---------------------------------------------------------------------------\n\n");
+    printf("\t>> Comparison of Component area\n\n");
+    printf("\t  No.  Area [m*m] Org./  Approx.     Err.[%%]\n");
+    
+    fprintf(fp, "\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp, "\t>> Comparison of Component normal and area\n\n");
+    fprintf(fp,"\t  No.  Area [m*m] Org./  Approx.     Err.[%%]\n");
+  }
+  
+  for (int n=1; n<=C.NoCompo; n++)
+  {
+    if ( cmp[n].isKindMedium() ) continue;
+    
+    float ap = (float)cmp[n].getElement() * dhd * dhd; // dhd は有次元値，近似的な面積
+    float ao = (float)cmp[n].area;
+    cmp[n].area = (REAL_TYPE)ap;
+    
+    Hostonly_
+    {
+      printf("\t %3d    %12.5e  / %12.5e  %6.2f\n",
+             n, ao, ap, fabs(ap-ao)/ao*100.0);
+      fprintf(fp,"\t %3d    %12.5e  / %12.5e  %6.2f\n",
+              n, ao, ap, fabs(ap-ao)/ao*100.0);
+    }
+  }
+  
 }
 
 
@@ -3881,12 +3913,6 @@ void FFV::setGlobalCompoIdx_displayInfo(FILE* fp)
   }
   
   
-  // コンポーネントの近似面積と法線
-  float dhd = (float)deltaX * (float)C.RefLength;
-  V.calCompoArea(dhd, d_bid, cmp, fp);
-  
-  
-  
   // CompoListの内容とセル数の情報を表示する
   Hostonly_
   {
@@ -4037,7 +4063,7 @@ void FFV::setInitialCondition()
   }
   
   // 後始末
-  if ( m_buf ) delete [] m_buf;
+  if ( m_buf ) { delete [] m_buf; m_buf=NULL; }
 }
 
 

@@ -238,10 +238,6 @@ private:
   void setAmaskInactive(int* bh);
   
   
-  //各方向の張るスクリーンにコンポーネント要素を投影し，面積を求める
-  void projectCompo(const int* st, const int* ed, const int target, const int* bid, int* ss);
-  
-  
   // KOSがSOLID_CONDUCTIONの場合の断熱マスクの処理
   void setAmaskSolid(int* bh);
   
@@ -274,10 +270,6 @@ public:
    * @param [in]     cmp  CompoList
    */
   void adjMediumPrdc_Inner(int* mid, CompoList* cmp);
-
-  
-  // コンポーネントのbid情報から近似的な面積と法線を計算する
-  void calCompoArea(const float dhd, const int* bid, CompoList* cmp, FILE* fp);
   
   
   /**

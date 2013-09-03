@@ -144,7 +144,7 @@ private:
   std::string medium;    ///< Medium名
   
 public:
-  REAL_TYPE area;           ///< 断面積
+  REAL_TYPE area;           ///< 断面積（有次元）
   REAL_TYPE nv[3];          ///< 法線方向ベクトル（流出方向）
   REAL_TYPE oc[3];          ///< 形状の中心座標（前面の中心位置）
   REAL_TYPE dr[3];          ///< 補助方向ベクトル（nvと直交）
@@ -202,14 +202,7 @@ public:
   {
     return alias;
   }
-  
-  /**
-   * @brief 媒質名を返す
-   */
-  std::string getMedium() const
-  {
-    return medium;
-  }
+
   
   int getAttrb() const
   {
@@ -316,6 +309,16 @@ public:
   { 
     return var1; 
   }
+  
+  
+  /**
+   * @brief 媒質名を返す
+   */
+  std::string getMedium() const
+  {
+    return medium;
+  }
+  
   
   REAL_TYPE getMonCalorie() const
   { 

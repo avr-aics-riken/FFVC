@@ -3550,14 +3550,17 @@ void SetBC3D::setInitialTempCompo(const int n, const int* d_bx, REAL_TYPE* d_t)
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
+  int odr = n;
   
   REAL_TYPE ref = FBUtility::convK2ND(cmp[n].getInitTemp(), BaseTemp, DiffTemp);
-	
+
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, odr, ref) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        if ( DECODE_CMP(d_bx[m]) == n )
+        if ( DECODE_CMP(d_bx[m]) == odr )
         {
           d_t[m] = ref; 
         }
