@@ -105,7 +105,7 @@ protected:
   
   ReferenceVariables refVar;  ///< 参照用パラメータ変数
   
-  int* bcd;            ///< BCindex ID
+  int* bcd;            ///< BCindex B
   
   FILE* fp;            ///< 出力ファイルポインタ
   
@@ -150,7 +150,7 @@ public:
   ///   @param [in] g_org,g_box グローバル領域基点座標，領域サイズ
   ///   @param [in] size,guide  ローカルセルサイズ，ガイドセル数
   ///   @param [in] refVar      参照パラメータ
-  ///   @param [in] bcd         BCindex ID
+  ///   @param [in] bcd         BCindex B
   ///   @param [in] num_process プロセス数
   ///
   MonitorCompo(FB::Vec3r org,

@@ -709,7 +709,7 @@ void MonitorCompo::setIBPoints(const int odr, CompoList& cmp)
         for (int i = st[0]; i <= ed[0]; i++) {
           
           size_t mm=_F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          if ((bcd[mm] & MASK_6) == odr)
+          if ((bcd[mm] & MASK_5) == odr)
           {
             buf[(m0+m)*3+0] = g_org.x + (i + i0 - 0.5) * pch.x;
             buf[(m0+m)*3+1] = g_org.y + (j + j0 - 0.5) * pch.y;

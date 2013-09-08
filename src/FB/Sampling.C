@@ -65,7 +65,7 @@ FB::Vec3r Sampling::calcVorticity(const REAL_TYPE* v, FB::Vec3i index)
 ///   @param[in] crd  モニタ点座標
 ///   @param[in] org,pch  ローカル領域基点座標，セル幅
 ///   @param[in] v00  座標系移動速度
-///   @param[in] bcd  BCindex ID
+///   @param[in] bcd  BCindex B
 ///
 Nearest::Nearest(int mode, int size[], int guide,
                  FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd) 
@@ -126,7 +126,7 @@ FB::Vec3r Nearest::samplingVorticity(const REAL_TYPE* v)
 ///   @param[in] crd  モニタ点座標
 ///   @param[in] org,pch  ローカル領域基点座標，セル幅
 ///   @param[in] v00  座標系移動速度
-///   @param[in] bcd  BCindex ID
+///   @param[in] bcd  BCindex B
 ///
 Smoothing::Smoothing(int mode, int size[], int guide,
                      FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd) 
@@ -249,7 +249,7 @@ FB::Vec3r Smoothing::samplingVorticity(const REAL_TYPE* v)
 ///   @param[in] crd  モニタ点座標
 ///   @param[in] org,pch  ローカル領域基点座標，セル幅
 ///   @param[in] v00  座標系移動速度
-///   @param[in] bcd  BCindex ID
+///   @param[in] bcd  BCindex B
 ///
 Interpolation::Interpolation(int mode, int size[], int guide,
                              FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd) 
@@ -369,7 +369,7 @@ FB::Vec3r Interpolation::samplingVorticity(const REAL_TYPE* v)
 ///   @param[in] crd  モニタ点座標
 ///   @param[in] org,pch  ローカル領域基点座標，セル幅
 ///   @param[in] v00  座標系移動速度
-///   @param[in] bcd  BCindex ID
+///   @param[in] bcd  BCindex B
 ///
 InterpolationStgV::InterpolationStgV(int mode, int size[], int guide,
                                      FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd) 

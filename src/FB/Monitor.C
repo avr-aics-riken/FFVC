@@ -636,7 +636,7 @@ void MonitorList::printMonitorInfo(FILE* fp, const char* str, const bool verbose
 // #################################################################
 /// 必要なパラメータのコピー.
 ///
-///   @param [in] bcd            BCindex ID
+///   @param [in] bcd            BCindex B
 ///   @param [in] refVelocity    代表速度
 ///   @param [in] baseTemp       基準温度
 ///   @param [in] diffTemp       代表温度差

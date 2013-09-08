@@ -38,7 +38,7 @@ private:
   int Face_mode;     ///< 周期境界のときの面の状況指定（upstream, downstream）
   int hType;         ///< 熱境界条件の種別
   int HTref;         ///< 熱伝達境界の参照モード(Bulk, Local)
-  int HTmode;        ///< 熱伝達境界の種別(HT_N, HT_B, HT_S, HT_SN, HT_SF)
+  int HTmode;        ///< 熱伝達境界の種別(HT_S, HT_SN, HT_SF)
   int Prdc_mode;     ///< 周期境界のモード（simple, directional, driver）
   int pType;         ///< 外部境界の圧力指定(ディリクレ，勾配ゼロ)
   int valid_cell;    ///< 境界面で流量計算に有効なセル数（Fluid cell）
@@ -315,7 +315,7 @@ public:
   
   
   // @brief 温度の保持
-  void set_Temp(REAL_TYPE val)
+  void setTemp(REAL_TYPE val)
   {
     var1 = val;
   }

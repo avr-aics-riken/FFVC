@@ -59,103 +59,90 @@ public:
   
 private:
   
-  
   // 外部境界に接するガイドセルのmid[]にIDを内部周期境界からコピーする
-  void copyID_Prdc_Inner(int* mid, const int* m_st, const int* m_ed, const int m_id, const int m_dir);
+  void copyID_Prdc_Inner (int* mid, const int* m_st, const int* m_ed, const int m_id, const int m_dir);
   
   
   // 外部境界面の有効セル数をカウントする
-  unsigned long countValidCellOBC (const int face, const int* bv, const int typ);
+  unsigned long countValidCellOBC (const int face, const int* cdf, const int typ);
 
   
   // BCindexにそのセルが計算に有効(active)かどうかをエンコードする
-  void encActive(unsigned long& Lcell, unsigned long& Gcell, int* bx, const int KOS);
+  void encActive (unsigned long& Lcell, unsigned long& Gcell, int* bx, const int KOS);
   
   
-  // 外部境界に接するセルに対称境界面の断熱マスクをセットする
-  void encAmaskSymtrcBC(const int face, int* bh2);
+  // 断熱マスクのエンコード
+  void encAdiabatic (int* bd, const string target, int face=-1);
   
   
   // セルの各面を調べ，境界条件が設定されていれば，ビットをON
-  void encHbit(int* bh1, int* bh2);
+  void encHbit (const int* cdf, int* bd);
 
   
   // CompoListのエントリをbx[]へエンコードする
-  unsigned long encodeOrder(const int order,
-                            const int* mid,
-                            int* bx,
-                            CompoList* cmp);
+  unsigned long encOrder (const int order,
+                          const int* mid,
+                          int* bx,
+                          CompoList* cmp);
   
   
   // ディリクレ条件とノイマン条件の排他性をチェックし，反復行列の非対角要素/対角要素の係数をエンコードする
-  void encPbit(int* bx);
-  
-  
-  // 圧力のディリクレ境界ビットをエンコードする
-  unsigned long encPbit_D_IBC(const int order, 
-                              const int id, 
-                              const int* mid, 
-                              int* bcd, 
-                              int* bcp, 
-                              const int deface);
+  void encPbit (int* bx);
   
   
   // 圧力のノイマン境界ビットをエンコードする（バイナリボクセル）
-  unsigned long encPbit_N_Binary(int* bx);
+  unsigned long encPbit_N_Binary (int* bx);
   
   
   // 圧力のノイマン境界ビットをエンコードする（カット）
-  unsigned long encPbit_N_Cut(int* bx, const int* bid, const float* cut, const bool convergence);
+  unsigned long encPbit_N_Cut (int* bx, const int* bid, const float* cut, const bool convergence);
   
   
-  /**
-   * @brief 計算領域内部のコンポーネントのNeumannフラグをbcp[]にエンコードする
-   * @retval エンコードしたセル数
-   * @param [in]     order  cmp[]のエントリ番号
-   * @param [in]     mid    媒質ID配列
-   * @param [in,out] bcd    BCindex ID
-   * @param [in,out] bcp    BCindex P
-   * @param [in]     vec    法線ベクトル
-   * @param [in]     bc_dir 境界条件の方向
-   */
-  unsigned long encPbit_N_IBC(const int order,
-                              const int* mid,
-                              int* bcd,
-                              int* bcp,
-                              const float* vec,
-                              const int bc_dir);
+  // 計算領域内部のコンポーネントの圧力境界条件フラグをbcp[]にエンコードする
+  unsigned long encPbitIBC (const int order,
+                            const int* mid,
+                            int* bcd,
+                            int* bcp,
+                            const float* vec,
+                            const string condition,
+                            const int bc_dir);
+  
+  unsigned long encPbitIBC (const int order,
+                            int* bcd,
+                            int* bcp,
+                            const int* bid,
+                            const float* vec,
+                            const string condition,
+                            const int bc_dir);
   
   
   // 外部境界に接するセルにおいて，bx[]に圧力境界条件keyに対応するビットフラグを設定する
-  void encPbitOBC(int face, int* bx, string key, bool dir);
+  void encPbitOBC (int face, int* bx, string key, bool dir);
   
   
   // 熱境界条件のBCエントリをエンコードする
-  unsigned long encQface(const int order,
-                         const int* bid,
-                         int* bh1,
-                         int* bh2,
-                         const bool flag,
-                         const int target,
-                         CompoList* cmp);
+  unsigned long encQface (const int order,
+                          const int* bid,
+                          int* cdf,
+                          int* bd,
+                          const bool flag,
+                          const int target,
+                          CompoList* cmp);
   
   
-  void encQfaceSVO           (int order, int id, int* mid, int* bcd, int* bh1, int* bh2, int deface);
-  
-  
-  // bv[]にVBCの境界条件に必要な情報をエンコードし，流入流出の場合にbp[]の隣接壁の方向フラグを除く
+  // cdf[]にVBCの境界条件に必要な情報をエンコードし，流入流出の場合にbp[]の隣接壁の方向フラグを除く
   // 境界条件指定キーセルのSTATEを流体に変更する
-  unsigned long encVbitIBC(const int order,
-                           int* bv,
-                           int* bp,
-                           const int* cut_id,
-                           const float* vec,
-                           const int bc_dir,
-                           CompoList* cmp);
+  unsigned long encVbitIBC (const int order,
+                            int* cdf,
+                            int* bp,
+                            const int* cut_id,
+                            const float* vec,
+                            const int bc_dir,
+                            CompoList* cmp);
   
   
-  // bv[]に境界条件のビット情報をエンコードする
-  void encVbitOBC(int face, int* bv, string key, const bool enc_sw, string chk, int* bp, bool enc_uwd=false);
+  // cdf[]に境界条件のビット情報をエンコードする
+  void encVbitOBC (int face, int* cdf, string key, const bool enc_sw, string chk, int* bp, bool enc_uwd=false);
   
   
   /**
@@ -168,7 +155,7 @@ private:
    * @param [in] qb  b方向のID
    * @param [in] qt  t方向のID
    */
-  inline int find_mode_id(const int fid, const int qw, const int qe, const int qs, const int qn, const int qb, const int qt)
+  inline int find_mode_id (const int fid, const int qw, const int qe, const int qs, const int qn, const int qb, const int qt)
   {
     unsigned key[64]; ///< ID毎の頻度 @note ffv_Initialize() >> fill()でif ( C.NoCompo+1 > 64 )をチェック
     int val[6];       ///< ID
@@ -214,36 +201,24 @@ private:
    * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
    * @param [in] bid  CutBid5のBoundrary ID
    */
-  inline int getFaceBID(const int dir, const int bid) const
+  inline int getFaceBID (const int dir, const int bid) const
   {
     return ( (bid >> dir*5) & MASK_5 );
   }
   
   
   //@brief idxの第shiftビットをOFFにする
-  inline int offBit(int idx, const int shift)
+  inline int offBit (int idx, const int shift)
   {
     return ( idx & (~(0x1<<shift)) );
   }
   
   
   //@brief idxの第shiftビットをONにする
-  inline int onBit(int idx, const int shift)
+  inline int onBit (int idx, const int shift)
   {
     return ( idx | (0x1<<shift) );
   }
-  
-  
-  // 不活性セルに対する断熱マスクをエンコード
-  void setAmaskInactive(int* bh);
-  
-  
-  // KOSがSOLID_CONDUCTIONの場合の断熱マスクの処理
-  void setAmaskSolid(int* bh);
-  
-  
-  // KOSがTHERMAL_FLOW, THERMAL_FLOW_NATURALの場合の断熱マスクの処理
-  void setAmaskThermal(int* bh);
   
   
   /*
@@ -252,13 +227,10 @@ private:
    * @param [in]     dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
    * @param [in]     s_id ID (1-31)
    */
-  inline void setFaceBID(int& bid, const int dir, const int s_id)
+  inline void setFaceBID (int& bid, const int dir, const int s_id)
   {
     bid |= (s_id << (dir*5));
   }
-  
-  
-  void setInactive_Compo(int id, int def, int* mid, int* bh1, int* bh2);
 
 
   
@@ -269,7 +241,14 @@ public:
    * @param [in,out] mid  ID配列のデータ
    * @param [in]     cmp  CompoList
    */
-  void adjMediumPrdc_Inner(int* mid, CompoList* cmp);
+  void adjMediumPrdc_Inner (int* mid, CompoList* cmp);
+  
+  
+  /**
+   * @brief BCindex Bのエンコードを確認
+   * @param [in] bcd BCindex B
+   */
+  void chkOrder (const int* bcd);
   
   
   /**
@@ -286,54 +265,46 @@ public:
    * @param [in] painted ID=0以外でペイント済みを求める(true), m_idのセルをカウント(false)
    * @param [in] m_id    検査するID
    */
-  unsigned long countCell(const int* mid, bool painted=true, int m_id=0);
+  unsigned long countCell (const int* mid, bool painted=true, int m_id=0);
   
   
   /**
    * @brief セルの状態をカウントして，その個数をLcell, Gcellに保持する
    * @param [out] Lcell ノードローカルの値（戻り値）
    * @param [out] Gcell グローバルの値（戻り値）
-   * @param [in]  bx    BCindex ID
+   * @param [in]  bx    BCindex B
    * @param [in]  state カウントするセルの状態
    */
-  void countCellState(unsigned long& Lcell, unsigned long& Gcell, const int* bx, const int state);
+  void countCellState (unsigned long& Lcell, unsigned long& Gcell, const int* bx, const int state);
   
   
   /**
    @brief  計算領域の外部境界で外側1層と内側の両方が流体セル数の場合にカウントする
-   @param [in]  bx       BCindex ID
+   @param [in]  bx       BCindex B
    @param [out] OpenArea 開口セル数
    */
   void countOpenAreaOfDomain (const int* bx, REAL_TYPE* OpenArea);
   
   
   /**
-   * @brief BCindexIDを表示する（デバッグ用）
-   * @param [in] bcd   BCindex ID
+   * @brief BCindex Bを表示する（デバッグ用）
+   * @param [in] bcd   BCindex B
    * @param [in] fname 出力用ファイル名
    */
-  void dbg_chkBCIndexD (const int* bcd, const char* fname);
+  void dbg_chkBCIndexB (const int* bcd, const char* fname);
   
   
   /**
-   * @brief BCindexH1を表示する（デバッグ用）
-   * @param [in] bh    BCindex H1
+   * @brief BCindex Cを表示する（デバッグ用）
+   * @param [in] cdf   BCindex C
    * @param [in] fname 出力用ファイル名
    */
-  void dbg_chkBCIndexH1 (const int* bh, const char* fname);
+  void dbg_chkBCIndexC (const int* cdf, const char* fname);
   
   
   /**
-   * @brief BCindexH2を表示する（デバッグ用）
-   * @param [in] bh    BCindex H2
-   * @param [in] fname 出力用ファイル名
-   */
-  void dbg_chkBCIndexH2 (const int* bh, const char* fname);
-  
-  
-  /**
-   * @brief BCindexPを表示する（デバッグ用）
-   * @param [in] bcd   BCindex ID
+   * @brief BCindex Pを表示する（デバッグ用）
+   * @param [in] bcd   BCindex B
    * @param [in] bcp   BCindex P
    * @param [in] fname 出力用ファイル名
    */
@@ -341,11 +312,12 @@ public:
   
   
   /**
-   * @brief BCindexVを表示する（デバッグ用）
-   * @param [in] bcv   BCindex V
-   * @param [in] fname 出力用ファイル名
+   * @brief ガイドセルにコンポーネントの格納番号をエンコード
+   * @param [in]     face  面番号
+   * @param [in]     d_mid ID配列
+   * @param [in,out] d_bcd BCindex B
    */
-  void dbg_chkBCIndexV (const int* bcv, const char* fname);
+  void encOrderOnGC (const int face, const int* mid, int* bd);
   
   
   /**
@@ -408,7 +380,7 @@ public:
   
   /**
    * @brief 孤立した流体セルを探し，周囲の個体媒質で置換，BCindexを修正する
-   * @param [in,out] bx       BCindex ID
+   * @param [in,out] bx       BCindex B
    * @param [in]     fluid_id フィルする流体ID
    * @attention 事前にbx[]の同期が必要 >> 隣接セルがすべて固体の場合をチェックするため
    */
@@ -422,15 +394,15 @@ public:
    * @param [out]    G   グローバルの不活性セル数
    * @param [in]     id  セルID
    * @param [in]     mid ボクセル配列
-   * @param [in,out] bx  BCindex ID
+   * @param [in,out] bx  BCindex B
    * @param [in,out] cmp CompoList
    */
-  unsigned long flipInactive(unsigned long& L,
-                             unsigned long& G,
-                             const int id,
-                             const int* mid,
-                             int* bx,
-                             CompoList* cmp);
+  unsigned long flipInactive (unsigned long& L,
+                              unsigned long& G,
+                              const int id,
+                              const int* mid,
+                              int* bx,
+                              CompoList* cmp);
   
   
   /**
@@ -442,7 +414,7 @@ public:
    * @param [out] ed     コンポーネントbboxの終端セル
    * @param [in]  policy モニターのセル幅
    */
-  bool findLBCbbox(const int tgt, const int* bid, const float* cut, int* st, int* ed, const int policy);
+  bool findLBCbbox (const int tgt, const int* bid, const float* cut, int* st, int* ed, const int policy);
   
   
   /**
@@ -452,7 +424,7 @@ public:
    * @param [in]     ID_replace ID=0を置換するID
    * @param [in]     fp         file pointer
    */
-  void scanCell(int *mid, const int* colorList, const int ID_replace, FILE* fp);
+  void scanCell (int *mid, const int* colorList, const int ID_replace, FILE* fp);
   
   
   // bx[]に各境界条件の共通のビット情報をエンコードする
@@ -468,8 +440,8 @@ public:
   
   /**
    * @brief 温度境界条件のビット情報をエンコードする
-   * @param [in,out] bh1    BCindex H1
-   * @param [in,out] bh1    BCindex H2
+   * @param [in,out] cdf    BCindex C
+   * @param [in,out] bd     BCindex B
    * @param [in,out] mid    ID配列
    * @param [in]     BC     SetBCクラスのポインタ
    * @param [in]     kos    KindOfSolver
@@ -477,19 +449,19 @@ public:
    * @param [in]     cut    距離情報
    * @param [in]     cut_id カット点ID
    */
-  void setBCIndexH(int* bh1,
-                   int* bh2,
-                   int* mid,
-                   SetBC* BC,
-                   const int kos,
-                   CompoList* cmp,
-                   float* cut,
-                   int* cut_id);
+  void setBCIndexH (int* cdf,
+                    int* bd,
+                    int* mid,
+                    SetBC* BC,
+                    const int kos,
+                    CompoList* cmp,
+                    float* cut,
+                    int* cut_id);
   
   
   /**
    * @brief 圧力境界条件のビット情報をエンコードする
-   * @param [in,out] bcd      BCindex ID
+   * @param [in,out] bcd      BCindex B
    * @param [in,out] bcp      BCindex P
    * @param [in,out] mid      ID配列
    * @param [in]     BC       SetBCクラスのポインタ
@@ -500,20 +472,20 @@ public:
    * @param [in]     isBinary バイナリの場合true
    * @retval 表面セル数
    */
-  unsigned long setBCIndexP(int* bcd,
-                            int* bcp,
-                            int* mid,
-                            SetBC* BC,
-                            CompoList* cmp,
-                            int icls,
-                            const float* cut,
-                            const int* bid,
-                            const bool isBinary);
+  unsigned long setBCIndexP (int* bcd,
+                             int* bcp,
+                             int* mid,
+                             SetBC* BC,
+                             CompoList* cmp,
+                             int icls,
+                             const float* cut,
+                             const int* bid,
+                             const bool isBinary);
   
   
   /**
-   * @brief bv[]に境界条件のビット情報をエンコードする
-   * @param [in,out] bv     BCindex V
+   * @brief cdf[]に境界条件のビット情報をエンコードする
+   * @param [in,out] cdf    BCindex C
    * @param [in]     mid    ボクセルID配列
    * @param [in,out] bp     BCindex P
    * @param [in]     BC     SetBCクラスのポインタ
@@ -522,23 +494,23 @@ public:
    * @param [in]     cut    カット配列
    * @param [in]     cut_id BID配列
    */
-  void setBCIndexV(int* bv,
-                   const int* mid,
-                   int* bp,
-                   SetBC* BC,
-                   CompoList* cmp,
-                   int icls,
-                   float* cut,
-                   int* cut_id);
+  void setBCIndexV (int* cdf,
+                    const int* mid,
+                    int* bp,
+                    SetBC* BC,
+                    CompoList* cmp,
+                    int icls,
+                    float* cut,
+                    int* cut_id);
   
   
   /**
    * @brief bx[]のコンポーネントエントリを参照して体積率を計算し，圧力損失コンポーネントの場合にはビットを立てる
    * @param [in]     cmp コンポーネントリスト
-   * @param [in,out] bx  BCindex ID
+   * @param [in,out] bx  BCindex B
    * @param [in]     vf  体積率
    */
-  void setCmpFraction(CompoList* cmp, int* bx, const float* vf);
+  void setCmpFraction (CompoList* cmp, int* bx, const float* vf);
   
   
   /**

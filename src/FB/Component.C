@@ -54,8 +54,11 @@ std::string CompoList::getBCstr()
   else if ( type == HEATFLUX )      bc = "Direct Heat Flux";
   else if ( type == ISOTHERMAL )    bc = "Isothermal";
   else if ( type == RADIANT )       bc = "Radiant";
-  else if ( type == SPEC_VEL)       bc = "Specified Velocity";
-  else if ( type == SPEC_VEL_WH)    bc = "Specified Velocity with Temperature";
+  else if ( type == SPEC_VEL)
+  {
+    if ( heatmode == OFF ) bc = "Specified Velocity";
+    else                   bc = "Specified Velocity with Temperature";
+  }  
   else if ( type == OUTFLOW)        bc = "Outflow";
   else if ( type == IBM_DF )        bc = "Immersed Boundary Method(Direct Forcing)";
   else if ( type == HEAT_SRC )      bc = "Heat Source";
@@ -68,11 +71,9 @@ std::string CompoList::getBCstr()
   else if ( type == INACTIVE )      bc = "Inactive";
   else if ( type == TRANSFER )
   {
-    if      ( h_type == HT_N )      bc = "Heat Transfer type N";
-    else if ( h_type == HT_S )      bc = "Heat Transfer type S";
+    if      ( h_type == HT_S )      bc = "Heat Transfer type S";
     else if ( h_type == HT_SN)      bc = "Heat Transfer type SN (Natural convection)";
     else if ( h_type == HT_SF)      bc = "Heat Transfer type SF (Forced convection)";
-    else if ( h_type == HT_B )      bc = "Heat Transfer type B";
   }
   else                              bc = "Medium";
   
@@ -108,7 +109,7 @@ void CompoList::setBClocation(const int key)
 
 
 // #################################################################
-//@brief コンポーネントのBV情報を設定する
+//@brief コンポーネントのBbox情報を設定する
 void CompoList::setBbox(const int m_st[], const int m_ed[]) 
 {
   st[0] = m_st[0];
@@ -189,8 +190,8 @@ void CompoList::setEnsLocal(const int key)
 
 
 // #################################################################
-//@brief 吸発熱密度の保持
-void CompoList::set_HeatDensity(const REAL_TYPE var) 
+// 吸発熱密度の保持
+void CompoList::setHeatDensity(const REAL_TYPE var) 
 {
   var3 = var;
 }
@@ -205,17 +206,16 @@ void CompoList::setHeatflux(const REAL_TYPE var)
 
 
 // #################################################################
-//@brief 吸発熱量の保持
-void CompoList::set_HeatValue(const REAL_TYPE var) 
+// 吸発熱量の保持
+void CompoList::setHeatValue(const REAL_TYPE var) 
 {
   var2 = var;
 }
 
 
 // #################################################################
-//@brief 発熱項の指定ポリシーをセットする
-//@param kind ポリシー種別　true-発熱量指定, false-発熱密度指定
-void CompoList::set_HSRC_policy(const bool kind) 
+// 発熱項の指定ポリシーをセットする
+void CompoList::setHsrcPolicy(const bool kind)
 {
   usw = ( kind ) ? hsrc_watt : hsrc_density;
 }
@@ -257,24 +257,8 @@ void CompoList::setMedium(const std::string pnt)
 
 
 // #################################################################
-//@brief モニタ温度の保持
-void CompoList::set_Mon_Temp(const REAL_TYPE var) 
-{
-  var_m = var;
-}
-
-
-// #################################################################
-//@brief モニタ熱流束の保持
-void CompoList::setMonHeatflux(const REAL_TYPE var) 
-{
-  var_m = var;
-}
-
-
-// #################################################################
-//@brief モニタ熱量の保持
-void CompoList::setMonCalorie(const REAL_TYPE var) 
+//@brief モニタ値の保持
+void CompoList::setMonitorValue( const REAL_TYPE var) 
 {
   var_m = var;
 }
@@ -352,14 +336,6 @@ void CompoList::setStateCellMonitor(const int key)
 
 
 // #################################################################
-//@brief 熱伝達の参照指定モードの保持
-void CompoList::set_sw_HTmodeRef(const int key) 
-{
-  usw = key;
-}
-
-
-// #################################################################
 //@brief 熱交換機の方向指定モードの保持
 void CompoList::set_sw_HexDir (const int key) 
 {
@@ -376,8 +352,8 @@ void CompoList::set_sw_Heatgen(const int key)
 
 
 // #################################################################
-//@brief 温度の保持
-void CompoList::set_Temp(const REAL_TYPE var) 
+// 温度の保持
+void CompoList::setTemp(const REAL_TYPE var) 
 {
   var3 = var;
 }

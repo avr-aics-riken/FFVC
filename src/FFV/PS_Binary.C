@@ -34,6 +34,7 @@ void FFV::PS_Binary()
   REAL_TYPE dt = deltaT;               /// 時間積分幅
   REAL_TYPE dh = (REAL_TYPE)deltaX;    /// 空間格子幅
   REAL_TYPE pei=C.getRcpPeclet();      /// ペクレ数の逆数
+  REAL_TYPE coef = C.RefDensity * C.RefSpecificHeat * C.RefVelocity * C.RefLength;
   
   REAL_TYPE half = 0.5;                /// 定数
   REAL_TYPE one = 1.0;                 /// 定数
@@ -44,28 +45,27 @@ void FFV::PS_Binary()
 
   // point Data
   // d_v   セルセンタ速度 v^{n+1}
-  // d_t   温度 t^n -> t^{n+1}
-  // d_t0  温度 t^n
-  // d_qbc 温度のソース項
+  // d_ie  内部エネルギー ie^n -> ie^{n+1}
+  // d_ie0 内部エネルギー ie^n
+  // d_qbc 熱流束のソース項
   // d_ws  ワーク
-  // d_bh1 温度のビットフラグ
-  // d_bh2 温度のビットフラグ
-  // d_bcv 速度のビットフラグ
+  // d_bcd BCindex B
+  // d_cdf Component Directional BC Flag
   
   
   // >>> Passive scalar Convection section
   TIMING_start(tm_heat_convection_sct);
   
-  // n stepの値をdc_t0に保持，dc_tはn+1レベルの値として利用
+  // n stepの値をd_ie0に保持，d_ieはn+1レベルの値として利用
   TIMING_start(tm_copy_array);
-  U.xcopy(d_t0, size, guide, d_t, one, kind_scalar);
+  U.xcopy(d_ie0, size, guide, d_ie, one, kind_scalar);
   TIMING_stop(tm_copy_array, 0.0);
   
   
   // 指定境界条件の参照値を代入する
-  TIMING_start(tm_heat_spec_temp);
-  //BC.assignTemp(d_t0, d_bh1, CurrentTime, &C);
-  TIMING_stop(tm_heat_spec_temp, 0.0);
+  //TIMING_start(tm_heat_spec_temp);
+  //BC.assignTemp(d_ie0, d_cdf, CurrentTime, &C);
+  //TIMING_stop(tm_heat_spec_temp, 0.0);
   
   
   // 対流項の寄与
@@ -74,25 +74,25 @@ void FFV::PS_Binary()
     TIMING_start(tm_heat_cnv);
     flop = 0.0;
     int swt = 0; // 断熱壁
-    ps_muscl_(d_ws, size, &guide, &dh, &cnv_scheme, v00, d_v, d_t0, d_bcv, d_bcp, d_bh1, d_bh2, &swt, &flop);
+    ps_muscl_(d_ws, size, &guide, &dh, &cnv_scheme, v00, d_v, d_ie0, d_bcp, d_cdf, d_bcd, &swt, &flop);
     TIMING_stop(tm_heat_cnv, flop);
 
 		// 対流フェイズの流束型境界条件
     TIMING_start(tm_heat_cnv_BC);
     flop=0.0;
-		BC.OuterTBCconvection(d_ws, d_bh1, d_vf, d_t0, CurrentTime, &C, v00);
+		BC.TBCconvection(d_ws, d_cdf, d_vf, d_ie0, CurrentTime, &C, v00);
     TIMING_stop(tm_heat_cnv_BC, flop);
 		
     // 時間積分
     TIMING_start(tm_heat_cnv_EE);
     flop = 0.0;
-    ps_ConvectionEE(d_ws, dt, d_bh2, d_t0, flop);
+    ps_ConvectionEE(d_ws, dt, d_bcd, d_ie0, flop);
     TIMING_stop(tm_heat_cnv_EE, flop);
   }
   else // 熱伝導の場合，対流項の寄与分はないので前ステップの値
   {
     TIMING_start(tm_copy_array);
-    U.xcopy(d_ws, size, guide, d_t0, one, kind_scalar);
+    U.xcopy(d_ws, size, guide, d_ie0, one, kind_scalar);
     TIMING_stop(tm_copy_array, 0.0);
   }
 
@@ -119,7 +119,7 @@ void FFV::PS_Binary()
   
   // 内部境界条件 体積要素
   TIMING_start(tm_heat_diff_IBC_vol);
-  BC.InnerTBCvol(d_ws, d_bh2, dt);
+  BC.InnerTBCvol(d_ws, d_bcd, dt);
   TIMING_stop(tm_heat_diff_IBC_vol, 0.0);
   
   
@@ -142,18 +142,18 @@ void FFV::PS_Binary()
   
   // 熱流束境界条件のクリア qbcは積算するため
   TIMING_start(tm_assign_const);
-  U.xset(d_qbc, size, guide, zero, kind_vector);
+  U.setS4DEX(d_qbc, size, guide, zero);
   TIMING_stop(tm_assign_const, 0.0);
   
   
   // 内部境界条件　熱流束型の境界条件は時間進行の前
   TIMING_start(tm_heat_diff_IBC_face);
-  BC.InnerTBCface(d_qbc, d_bh1, d_ws, d_t0); // 境界値はt^{n}から計算すること
+  BC.InnerTBCface(d_qbc, d_cdf, d_bcd, d_ws, d_ie0); // 境界値はt^{n}から計算すること
   TIMING_stop(tm_heat_diff_IBC_face, 0.0);
   
   
   TIMING_start(tm_heat_diff_OBC_face);
-  BC.OuterTBCdiffusion(d_qbc, d_ws, d_t0, &C);
+  BC.OuterTBCdiffusion(d_qbc, d_ws, d_ie0, d_bcd, &C);
   TIMING_stop(tm_heat_diff_OBC_face, 0.0);
   
   
@@ -161,8 +161,8 @@ void FFV::PS_Binary()
   if ( numProc > 1 )
   {
     TIMING_start(tm_heat_diff_QBC_comm);
-    if ( paraMngr->BndCommV3DEx(d_qbc, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
-    TIMING_stop(tm_heat_diff_QBC_comm, face_comm_size*3.0); // 3成分
+    if ( paraMngr->BndCommS4DEx(d_qbc, 6, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+    TIMING_stop(tm_heat_diff_QBC_comm, face_comm_size*6.0); // 6成分
   }
   
   TIMING_stop(tm_heat_diff_sct_2, 0.0);
@@ -176,15 +176,15 @@ void FFV::PS_Binary()
     
     TIMING_start(tm_heat_diff_EE);
     flop = 0.0;
-    //res = ps_Diff_SM_EE(t, dt, qbc, bh2, ws, flop); // resは拡散項のみの絶対残差
-    ps_diff_ee_(d_t, size, &guide, &res, &dh, &dt, &pei, d_qbc, d_bh2, d_ws, &flop);
+    //res = ps_Diff_SM_EE(t, dt, qbc, bh, ws, flop); // resは拡散項のみの絶対残差
+    ps_diff_ee_(d_ie, size, &guide, &res, &dh, &dt, &coef, d_qbc, d_bcd, d_ws, &C.NoCompo, mat_tbl, &flop);
     TIMING_stop(tm_heat_diff_EE, flop);
     
 
     
     // 外部周期境界条件
     TIMING_start(tm_heat_diff_OBC);
-    BC.OuterTBCperiodic(d_t);
+    BC.OuterTBCperiodic(d_ie);
     TIMING_stop(tm_heat_diff_OBC, 0.0);
     
     
@@ -192,7 +192,7 @@ void FFV::PS_Binary()
     if ( numProc > 1 )
     {
       TIMING_start(tm_heat_update_comm);
-      if ( paraMngr->BndCommS3D(d_t, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->BndCommS3D(d_ie, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
       TIMING_stop(tm_heat_update_comm, face_comm_size*guide);
     }
     
@@ -215,7 +215,7 @@ void FFV::PS_Binary()
   {
     // 反復初期値
     TIMING_start(tm_copy_array);
-    U.xcopy(d_t, size, guide, d_ws, one, kind_scalar);
+    U.xcopy(d_ie, size, guide, d_ws, one, kind_scalar);
     TIMING_stop(tm_copy_array, 0.0);
     
     for (ICt->setLoopCount(0); ICt->getLoopCount()< ICt->getMaxIteration(); ICt->incLoopCount())
@@ -253,7 +253,7 @@ void FFV::PS_Binary()
   TIMING_start(tm_heat_range);
   if ( C.Hide.Range_Limit == Control::Range_Cutoff )
   {
-      fb_limit_scalar_(d_t, size, &guide);
+      fb_limit_scalar_(d_ie, size, &guide);
   }
   TIMING_stop(tm_heat_range, 0.0);
   

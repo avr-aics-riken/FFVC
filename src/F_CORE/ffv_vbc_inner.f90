@@ -31,7 +31,7 @@
 !! @param [in]  dh   格子幅
 !! @param [in]  rei  Reynolds数の逆数
 !! @param [in]  v    セルセンター速度ベクトル（u^n）
-!! @param [in]  bv   BCindex V
+!! @param [in]  bv   BCindex C
 !! @param [in]  odr  内部境界処理時の速度境界条件のエントリ
 !! @param [in]  vec  指定する速度ベクトル
 !! @param [out] flop 浮動小数点演算数
@@ -268,7 +268,7 @@
 !! @param [in]  v00  参照速度
 !! @param [in]  rei  Reynolds数の逆数
 !! @param [in]  v    セルセンター速度ベクトル（u^n）
-!! @param [in]  bv   BCindex V
+!! @param [in]  bv   BCindex C
 !! @param [in]  odr  内部境界処理時の速度境界条件のエントリ
 !! @param [in]  vec  指定する速度ベクトル
 !! @param [out] flop 浮動小数点演算数
@@ -523,7 +523,7 @@
 !! @param st ループの開始インデクス
 !! @param ed ループの終了インデクス
 !! @param v00 参照速度
-!! @param bv BCindex V
+!! @param bv BCindex C
 !! @param odr 内部境界処理時の速度境界条件のエントリ
 !! @param vec 指定する速度ベクトル
 !<
@@ -616,7 +616,7 @@
 !! @param g ガイドセル長
 !! @param st ループの開始インデクス
 !! @param ed ループの終了インデクス
-!! @param bv BCindex V
+!! @param bv BCindex C
 !! @param odr 内部境界処理時の速度境界条件のエントリ
 !! @note 参照される頻度の少ない（逆流時の）近似値として，ゼロ時近似を与える．発散しないようにする消極的な代入．
 !<
@@ -714,7 +714,7 @@
 !! @param [in]     st   ループの開始インデクス
 !! @param [in]     ed   ループの終了インデクス
 !! @param [in]     v00  参照速度
-!! @param [in]     bv   BCindex V
+!! @param [in]     bv   BCindex C
 !! @param [in]     odr  速度境界条件のエントリ
 !! @param [in]     vec  指定する速度ベクトル
 !! @param [in,out] flop flop count 近似
@@ -794,7 +794,7 @@
 !! @param [in]     ed   ループの終了インデクス
 !! @param [in]     v00  参照速度
 !! @param [in]     cf   u_out*dt/dh
-!! @param [in]     bv   BCindex V
+!! @param [in]     bv   BCindex C
 !! @param [in]     odr  速度境界条件のエントリ
 !! @param [in]     v0   セルセンター速度　u^n
 !! @param [in]     vf   セルフェイス速度ベクトル（n-step）
@@ -920,7 +920,7 @@
 !! @param [in]     g    ガイドセル長
 !! @param [in]     st   ループの開始インデクス
 !! @param [in]     ed   ループの終了インデクス
-!! @param [in]     bv   BCindex V
+!! @param [in]     bv   BCindex C
 !! @param [in]     odr  速度境界条件のエントリ
 !! @param [out]    av   積算速度と積算数
 !! @param [out]    flop flop count

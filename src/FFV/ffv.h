@@ -58,7 +58,7 @@
 #include "ffv_Version.h"
 #include "ffv_Define.h"
 #include "ffv_SetBC.h"
-#include "ffv_Ffunc.h"
+#include "../F_CORE/ffv_Ffunc.h"
 #include "ffv_TerminateCtrl.h"
 
 /* 20130606 commentout 
@@ -185,9 +185,7 @@ private:
   int *d_mid;
   int *d_bcd;
   int *d_bcp;
-  int *d_bcv;
-  int *d_bh1;
-  int *d_bh2;
+  int *d_cdf;
   
   REAL_TYPE *d_p;   ///< 圧力
   REAL_TYPE *d_p0;  ///< 圧力（1ステップ前）
@@ -195,8 +193,8 @@ private:
   REAL_TYPE *d_sq;  ///< 反復中に変化するソース
   REAL_TYPE *d_dv;  ///< div(u)の保存
   REAL_TYPE *d_b;   ///< Ax=bの右辺ベクトル
-  REAL_TYPE *d_t;   ///< 温度
-  REAL_TYPE *d_t0;  ///< 温度（1ステップ前）
+  REAL_TYPE *d_ie;  ///< 内部エネルギー
+  REAL_TYPE *d_ie0; ///< 内部エネルギー（1ステップ前）
   REAL_TYPE *d_vt;
   REAL_TYPE *d_vof;
   REAL_TYPE *d_ap;  ///< 圧力（時間平均値）
@@ -240,6 +238,8 @@ private:
   
   float  *d_cut; ///< 距離情報
   int    *d_bid; ///< BC
+  
+  REAL_TYPE *mat_tbl; // Fortranでの多媒質対応ルーチンのため，rho, cp, lambdaの配列
   
   
   FILE *fp_b;  ///< 基本情報
@@ -547,7 +547,7 @@ private:
   /** ffv.C *******************************************************/
   
   // 時間平均値のファイル出力
-  void AverageOutput(double& flop);
+  void OutputAveragedVarables(double& flop);
   
   
   // 時間平均操作を行う
@@ -560,7 +560,7 @@ private:
    * @param [out]    v    速度
    * @param [in]     dgr  係数
    * @param [in]     t    温度
-   * @param [in]     bd   BCindex ID
+   * @param [in]     bd   BCindex B
    * @param [in,out] flop 浮動小数点演算数
    */
   void Buoyancy(REAL_TYPE* v, const REAL_TYPE dgr, const REAL_TYPE* t, const int* bd, double& flop);
@@ -730,14 +730,14 @@ private:
   
   /**
    * @brief 移流項のEuler陽解法による時間積分
-   * @param [in,out] tc      対流項の流束の和/部分段階の温度
+   * @param [in,out] ie_c    内部エネルギーの対流項の流束の和/部分段階
    * @param [in]     delta_t 時間積分幅
-   * @param [in]     bd      BCindex ID
-   * @param [in]     t0      nステップの温度
+   * @param [in]     bd      BCindex B
+   * @param [in]     ie_0    nステップの内部エネルギー
    * @param [in,out] flop    浮動小数演算数
-   * @note tc = t0 + dt/dh*sum_flux(n)
+   * @note ie_c = ie_0 + dt/dh*sum_flux(n)
    */
-  void ps_ConvectionEE(REAL_TYPE* tc, const REAL_TYPE delta_t, const int* bd, const REAL_TYPE* t0, double& flop);
+  void ps_ConvectionEE(REAL_TYPE* ie_c, const REAL_TYPE delta_t, const int* bd, const REAL_TYPE* ie_0, double& flop);
   
   
   
@@ -747,11 +747,11 @@ private:
    * @param [in,out] t    n+1時刻の温度場
    * @param [in]     dt   時間積分幅
    * @param [in]     qbc  境界条件熱流束
-   * @param [in]     bh2  BCindex H2
+   * @param [in]     bh   BCindex B
    * @param [in]     ws   部分段階の温度
    * @param [in,out] flop 浮動小数点演算数
    */
-  REAL_TYPE ps_Diff_SM_EE(REAL_TYPE* t, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh2, const REAL_TYPE* ws, double& flop);
+  REAL_TYPE ps_Diff_SM_EE(REAL_TYPE* t, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh, const REAL_TYPE* ws, double& flop);
   
   
   /**
@@ -761,12 +761,12 @@ private:
    * @param [out]    b2   ソースベクトルの自乗和
    * @param [in]     dt   時間積分幅
    * @param [in]     qbc  境界条件熱流束
-   * @param [in]     bh2  BCindex H2
+   * @param [in]     bh   BCindex B
    * @param [in]     ws   部分段階の温度
    * @param [in]     IC   IterationCtlクラス
    * @param [in,out] flop 浮動小数点演算数
    */
-  double ps_Diff_SM_PSOR(REAL_TYPE* t, double& b2, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh2, const REAL_TYPE* ws, IterationCtl* IC, double& flop);
+  double ps_Diff_SM_PSOR(REAL_TYPE* t, double& b2, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh, const REAL_TYPE* ws, IterationCtl* IC, double& flop);
   
   
   /** SOR法

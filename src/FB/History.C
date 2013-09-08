@@ -281,9 +281,6 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
  */
 void History::printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Control* C)
 {
-  int cid;
-  int def;
-
   if ( Unit_Log == DIMENSIONAL )
   {
     fprintf(fp, "    step      time[sec]");
@@ -299,41 +296,38 @@ void History::printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Contr
     switch ( cmp[i].getType() )
     {
       case SPEC_VEL:
-        fprintf(fp, "      V[%03d]", i);
-        break;
-        
-      case SPEC_VEL_WH:
-        fprintf(fp, "      V[%03d]      Q[%03d]     qa[%03d]", i, cid, cid);
+        if ( !cmp[i].isHeatMode() ) fprintf(fp, "       V[%02d]", i);
+        else                        fprintf(fp, "       V[%02d]       Q[%02d]", i, i);
         break;
         
       case OUTFLOW:
-        fprintf(fp, "      V[%03d]", i);
+        fprintf(fp, "       V[%02d]", i);
         if ( C->isHeatProblem() )
         {
-          fprintf(fp, "      Q[%03d]     qa[%03d]", i, i);
+          fprintf(fp, "       Q[%02d]", i);
         }
         break;
         
       case HEX:
-        fprintf(fp, "     Va[%03d]    DPa[%03d]", i, i);
+        fprintf(fp, "      Va[%02d]     DPa[%02d]", i, i);
         break;
         
       case DARCY:
-        fprintf(fp, "     U[%03d]     V[%03d]     W[%03d]", i, i, i);
+        fprintf(fp, "      U[%02d]      V[%02d]      W[%02d]", i, i, i);
         break;
         
       case HEATFLUX:
       case TRANSFER:
       case ISOTHERMAL:
       case RADIANT:
-        fprintf(fp, "      Q[%03d]     qa[%03d]", i, i);
+        fprintf(fp, "       Q[%02d]", i);
         break;
       
       case CELL_MONITOR:
-        if ( cmp[i].isVarEncoded(var_Velocity) )     fprintf(fp, "      V[%03d]", i);
-        if ( cmp[i].isVarEncoded(var_Pressure) )     fprintf(fp, "      P[%03d]", i);
-        if ( cmp[i].isVarEncoded(var_Temperature) )  fprintf(fp, "      T[%03d]", i);
-        if ( cmp[i].isVarEncoded(var_TotalP) )       fprintf(fp, "     TP[%03d]", i);
+        if ( cmp[i].isVarEncoded(var_Velocity) )     fprintf(fp, "       V[%02d]", i);
+        if ( cmp[i].isVarEncoded(var_Pressure) )     fprintf(fp, "       P[%02d]", i);
+        if ( cmp[i].isVarEncoded(var_Temperature) )  fprintf(fp, "       T[%02d]", i);
+        if ( cmp[i].isVarEncoded(var_TotalP) )       fprintf(fp, "      TP[%02d]", i);
         break;
     }
   }
@@ -343,15 +337,10 @@ void History::printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Contr
 
 
 // #################################################################
-/**
- * @brief コンポーネントモニタの履歴出力(dimensional value)
- * @param [in] fp  出力ファイルポインタ
- * @param [in] cmp CompoListクラスのポインタ
- * @param [in] C   Controlクラスへのポインタ
- */
-void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C)
+// コンポーネントモニタの履歴出力
+void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C, const REAL_TYPE dt)
 {
-  REAL_TYPE c, pp, dr, dp;
+  REAL_TYPE c, dr, dp;
   const REAL_TYPE p0 = RefDensity * RefVelocity * RefVelocity;
   
   fprintf(fp, "%8d %14.6e", step, printTime());
@@ -361,20 +350,21 @@ void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C
     switch ( cmp[i].getType() )
     {
       case SPEC_VEL:
-        fprintf(fp, " %11.4e", printVel(cmp[i].val[var_Velocity]) );
-        break;
-        
-      case SPEC_VEL_WH:
-        pp = printQF(cmp[i].getMonCalorie());
-        fprintf(fp, " %11.4e %11.4e %11.4e", printVel(cmp[i].val[var_Velocity]), pp, pp/(REAL_TYPE)cmp[i].getElement() );
+        if ( !cmp[i].isHeatMode() )
+        {
+          fprintf(fp, " %11.4e", printVel(cmp[i].val[var_Velocity]) );
+        }
+        else
+        {
+          fprintf(fp, " %11.4e %11.4e", printVel(cmp[i].val[var_Velocity]), printQF(cmp[i].getMonCalorie(), dt) );
+        }
         break;
       
       case OUTFLOW:
-        fprintf(fp, " %11.4e %11.4e", printVel(cmp[i].val[var_Velocity]) );
+        fprintf(fp, " %11.4e", printVel(cmp[i].val[var_Velocity]) );
         if ( C->isHeatProblem() )
         {
-          pp = printQF(cmp[i].getMonCalorie());
-          fprintf(fp, " %11.4e %11.4e", pp, pp/(REAL_TYPE)cmp[i].getElement() ); // [W], [W/m^2]
+          fprintf(fp, " %11.4e", printQF(cmp[i].getMonCalorie(), dt) ); // [J]
         }
         break;
         
@@ -392,8 +382,7 @@ void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C
       case TRANSFER:
       case ISOTHERMAL:
       case RADIANT:
-        pp = printQF(cmp[i].getMonCalorie());
-        fprintf(fp, " %11.4e %11.4e", pp, pp/cmp[i].area);
+        fprintf(fp, " %11.4e", printQF(cmp[i].getMonCalorie(), dt) );
         break;
       
       case HEAT_SRC:
@@ -446,12 +435,8 @@ void History::printHistoryDomfxTitle(FILE* fp, const Control* C)
 
 
 // #################################################################
-/**
- * @brief 計算領域の流束履歴の出力
- * @param [in] fp 出力ファイルポインタ
- * @param [in] C  Controlクラスへのポインタ
- */
-void History::printHistoryDomfx(FILE* fp, const Control* C)
+// 計算領域の流束履歴の出力
+void History::printHistoryDomfx(FILE* fp, const Control* C, const REAL_TYPE dt)
 {
   const REAL_TYPE sgn=-1.0;
   REAL_TYPE balance=0.0, s=1.0;
@@ -471,7 +456,7 @@ void History::printHistoryDomfx(FILE* fp, const Control* C)
   
   if (C->isHeatProblem())
   {
-    for (int i=0; i<NOFACE; i++) fprintf(fp, " %12.4e", printQF(C->H_Dface[i]) ); // Watt
+    for (int i=0; i<NOFACE; i++) fprintf(fp, " %12.4e", printQF(C->H_Dface[i], dt) ); // [J]
   }
 
   fprintf(fp, "\n");

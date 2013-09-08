@@ -288,7 +288,7 @@ int FFV::Loop(const unsigned step)
       {
         TIMING_start(tm_file_out);
         flop_count=0.0;
-        AverageOutput(flop_count);
+        OutputAveragedVarables(flop_count);
         TIMING_stop(tm_file_out, flop_count);
       }
       
@@ -300,7 +300,7 @@ int FFV::Loop(const unsigned step)
         {
           TIMING_start(tm_file_out);
           flop_count=0.0;
-          AverageOutput(flop_count);
+          OutputAveragedVarables(flop_count);
           TIMING_stop(tm_file_out, flop_count);
         }
       }
@@ -348,7 +348,7 @@ int FFV::Loop(const unsigned step)
     if ( C.Mode.Log_Base == ON ) 
     {
       TIMING_start(tm_hstry_dmfx);
-      Hostonly_ H->printHistoryDomfx(fp_d, &C);
+      Hostonly_ H->printHistoryDomfx(fp_d, &C, deltaT);
       TIMING_stop(tm_hstry_dmfx, 0.0);
     }
     
@@ -407,7 +407,7 @@ int FFV::Loop(const unsigned step)
       TIMING_stop(tm_compo_monitor, flop_count);
       
       TIMING_start(tm_hstry_compo);
-      Hostonly_ H->printHistoryCompo(fp_c, cmp, &C);
+      Hostonly_ H->printHistoryCompo(fp_c, cmp, &C, deltaT);
       TIMING_stop(tm_hstry_compo, 0.0);
     }
   }

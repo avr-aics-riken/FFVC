@@ -42,7 +42,6 @@ protected:
   REAL_TYPE v_max;           ///< 速度成分の最大値
   REAL_TYPE dhd;             ///< 有次元の格子幅
   REAL_TYPE dh;              ///< 無次元の格子幅
-  REAL_TYPE rhocp;           ///< 熱流束計算の無次元化量
   REAL_TYPE dynamic_p;       ///< 動圧
   REAL_TYPE base_mf;         ///< 流量の基準値
   int step;                  ///< ステップ数
@@ -71,7 +70,6 @@ public:
     dh              = Cref->deltaX;
     Tscale          = RefLength / RefVelocity;
     dhd             = dh*RefLength;
-    rhocp           = RefVelocity * DiffTemp * RefDensity * RefSpecificHeat;
     dynamic_p       = RefVelocity * RefVelocity * RefDensity;
     base_mf         = RefVelocity * RefLength * RefLength;
 
@@ -176,22 +174,23 @@ protected:
   
 
   /**
-   * @brief モードに対応する熱量を返す(面要素)
-   * @param [in] var  熱量
+   * @brief 無次元熱量の有次元化(面要素)
+   * @param [in] var  無次元熱量
+   * @param [in] dt   無次元時間積分幅
    */
-  REAL_TYPE printQF(const REAL_TYPE var) const
+  REAL_TYPE printQF(const REAL_TYPE var, const REAL_TYPE dt) const
   {
-    return ( (Unit_Log == DIMENSIONAL) ? var*dhd*dhd*rhocp : var*dh*dh );
+    return ( (Unit_Log == DIMENSIONAL) ? var*RefDensity*RefSpecificHeat*DiffTemp*RefVelocity*dhd*dhd*dt*Tscale : var*dh*dh*dt );
   }
   
 
   /**
-   * @brief モードに対応する熱量を返す(体積要素)
-   * @param [in] var  熱量
+   * @brief 無次元熱量の有次元化（体積要素）
+   * @param [in] var  無次元熱量
    */
   REAL_TYPE printQV(const REAL_TYPE var) const
   {
-    return ( (Unit_Log == DIMENSIONAL) ? var*dhd*dhd*dhd*rhocp : var*dh*dh*dh );
+    return ( (Unit_Log == DIMENSIONAL) ? var*RefDensity*RefSpecificHeat*DiffTemp*dhd*dhd*dhd*Tscale : var*dh*dh*dh );
   }
   
 
@@ -214,16 +213,27 @@ public:
   void printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control* C, const bool disp);
   
   
-  // コンポーネントモニタの履歴出力(dimensional value)
-  void printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C);
+  /**
+   * @brief コンポーネントモニタの履歴出力
+   * @param [in] fp  出力ファイルポインタ
+   * @param [in] cmp CompoListクラスのポインタ
+   * @param [in] C   Controlクラスへのポインタ
+   * @param [in] dt  無次元時間積分幅
+   */
+  void printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C, const REAL_TYPE dt);
   
   
   // コンポーネントモニタのヘッダー出力
   void printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Control* C);
   
   
-  // 計算領域の流束履歴の出力
-  void printHistoryDomfx(FILE* fp, const Control* C);
+  /**
+   * @brief 計算領域の流束履歴の出力
+   * @param [in] fp 出力ファイルポインタ
+   * @param [in] C  Controlクラスへのポインタ
+   * @param [in] dt 無次元時間積分幅
+   */
+  void printHistoryDomfx(FILE* fp, const Control* C, const REAL_TYPE dt);
   
   
   // 計算領域の流束履歴のヘッダー出力

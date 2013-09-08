@@ -73,17 +73,17 @@ void SetBC::setControlVars(Control* Cref, const MediumList* mat, const Reference
     {
       if ( mat[n].getState() == FLUID )
       {
-        rho    = mat[n].P[p_density];
-        nyu    = mat[n].P[p_kinematic_viscosity];
-        cp     = mat[n].P[p_specific_heat];
-        lambda = mat[n].P[p_thermal_conductivity];
-        beta   = mat[n].P[p_vol_expansion]; // can be replaced by 1/K in the case of gas
+        rho_0    = mat[n].P[p_density];
+        nyu      = mat[n].P[p_kinematic_viscosity];
+        cp_0     = mat[n].P[p_specific_heat];
+        lambda_0 = mat[n].P[p_thermal_conductivity];
+        beta     = mat[n].P[p_vol_expansion]; // can be replaced by 1/K in the case of gas
       }
       else
       {
-        rho    = mat[n].P[p_density];
-        cp     = mat[n].P[p_specific_heat];
-        lambda = mat[n].P[p_thermal_conductivity];
+        rho_0    = mat[n].P[p_density];
+        cp_0     = mat[n].P[p_specific_heat];
+        lambda_0 = mat[n].P[p_thermal_conductivity];
       }
     }
   }

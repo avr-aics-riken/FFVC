@@ -1465,7 +1465,7 @@
 !! @param [in]  sz  配列長
 !! @param [in]  g   ガイドセル長
 !! @param [in]  val ベクトル値
-!! @param [in]  bv  BCindex V
+!! @param [in]  bv  BCindex C
 !<
     subroutine fb_set_vector (var, sz, g, val, bv)
     implicit none
@@ -1513,7 +1513,7 @@
 !! @param [in]  sz  配列長
 !! @param [in]  g   ガイドセル長
 !! @param [in]  val ベクトル値
-!! @param [in]  bv  BCindex V
+!! @param [in]  bv  BCindex C
 !<
 subroutine fb_set_fvector (var, sz, g, val, bv)
 implicit none

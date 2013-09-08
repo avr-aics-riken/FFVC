@@ -204,14 +204,6 @@ private:
   void getIbcHeatSrc(const string label_base, const int n, CompoList* cmp);
   
   
-  // HeatTransferBのパラメータを取得する
-  void getIbcHT_B(const string label_base, const int n, CompoList* cmp);
-  
-  
-  // HeatTransferNのパラメータを取得する
-  void getIbcHT_N(const string label_base, const int n, CompoList* cmp);
-  
-  
   // HeatTransferSのパラメータを取得
   void getIbcHT_S(const string label_base, const int n, CompoList* cmp);
   

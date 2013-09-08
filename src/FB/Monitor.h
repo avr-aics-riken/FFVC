@@ -55,7 +55,7 @@ protected:
   FB::Vec3r box;         ///< ローカル領域サイズ
   FB::Vec3r g_org;       ///< グローバル基点座標
   FB::Vec3r g_box;       ///< グローバル領域サイズ
-  int* bcd;              ///< BCindex ID
+  int* bcd;              ///< BCindex B
   TextParser* tpCntl;    ///< テキストパーサへのポインタ
   
   OutputType outputType; ///< 出力タイプ
@@ -186,7 +186,7 @@ public:
   
   /// 必要なパラメータのコピー.
   ///
-  ///   @param [in] bcd            BCindex ID
+  ///   @param [in] bcd            BCindex B
   ///   @param [in] refVelocity    代表速度
   ///   @param [in] baseTemp       基準温度
   ///   @param [in] diffTemp       代表温度差

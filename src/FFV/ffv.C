@@ -62,6 +62,7 @@ FFV::FFV()
   //for (int i=0; i<var_END; i++) dfi_mng[i]=0;
    */
   
+  mat_tbl = NULL;
   
   fp_b = NULL;
   fp_w = NULL;
@@ -90,9 +91,7 @@ FFV::FFV()
   d_mid = NULL;
   d_bcd = NULL;
   d_bcp = NULL;
-  d_bcv = NULL;
-  d_bh1 = NULL;
-  d_bh2 = NULL;
+  d_cdf = NULL;
   
   d_p   = NULL;
   d_p0  = NULL;
@@ -100,8 +99,8 @@ FFV::FFV()
   d_sq  = NULL;
   d_dv  = NULL;
   d_b   = NULL;
-  d_t   = NULL;
-  d_t0  = NULL;
+  d_ie  = NULL;
+  d_ie0 = NULL;
   d_vt  = NULL;
   d_vof = NULL;
   d_ap  = NULL;
@@ -157,177 +156,6 @@ FFV::~FFV()
 }
 
 
-// #################################################################
-/**
- * @brief 時間平均値のファイル出力
- * @param [in,out] flop 浮動小数点演算数
- */
-void FFV::AverageOutput(double& flop)
-{  
-
-  // 出力ファイルの指定が有次元の場合
-  double timeAvr;
-  if (C.Unit.File == DIMENSIONAL)
-  {
-    timeAvr = CurrentTime_Avr * C.Tscale;
-  }
-  else
-  {
-    timeAvr = CurrentTime_Avr;
-  }
-  
-  // 平均操作の母数
-  unsigned stepAvr = (unsigned)CurrentStep_Avr;
-  REAL_TYPE scale = 1.0;
-  
-  // ガイドセル出力
-  int gc_out = C.GuideOut;
-  
-  // ファイル出力のタイムスタンプに使うステップ数
-  unsigned m_step = (unsigned)CurrentStep;
-  
-  // ファイル出力のタイムスタンプの次元変換
-  REAL_TYPE m_time;
-  if (C.Unit.File == DIMENSIONAL)
-  {
-    m_time = (REAL_TYPE)(CurrentTime * C.Tscale);
-  }
-  else
-  {
-    m_time = (REAL_TYPE)CurrentTime;
-  }
-  
-  
-  /* 20130611 出力ディレクトリの作成
-  std::string dtmp = DFI.GenerateDirName(C.FIO.OutDirPath, m_step, C.FIO.Slice);
-  if ( !FBUtility::mkdirs(dtmp) ) {
-    Hostonly_ printf("Error : create directory \"%s\"\n", dtmp.c_str());
-    Exit(-1);
-  }
-   */
-  
-  // 出力インターバル
-  int interval = 0;
-  interval = C.Interval[Interval_Manager::tg_average].getIntervalStep();
-  
-  // Pressure
-  if (C.Unit.File == DIMENSIONAL) 
-  {
-    REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
-    U.prs_array_ND2D(d_ws, size, guide, d_ap, bp, C.RefDensity, C.RefVelocity, scale, flop);
-  }
-  else 
-  {
-    U.xcopy(d_ws, size, guide, d_ap, scale, kind_scalar);
-  }
-  
-  // 最大値と最小値
-  REAL_TYPE f_min, f_max, min_tmp, max_tmp, vec_min[4], vec_max[4];
-  
-  fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
-  
-  if ( numProc > 1 )
-  {
-    min_tmp = f_min;
-    if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
-    
-    max_tmp = f_max;
-    if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  REAL_TYPE minmax[2] = {f_min, f_max};
-  
-  DFI_OUT_PRSA->WriteData(m_step,   // 出力step番号
-                          guide,    // 仮想セル数
-                          &m_time,  // 出力時刻
-                          d_ws,     // フィールドデータポインタ
-                          minmax,   // 最小値と最大値
-                          interval, // 出力間隔
-                          false,    // ?
-                          stepAvr,  // 平均をとったステップ数
-                          timeAvr,  // 平均をとった時刻
-                          false);   // 強制出力指示 trueのとき？
-  
-  // Velocity
-  REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
-  
-  if ( DFI_OUT_VELA->DFI_Finfo.ArrayShape == "nijk" )
-  {
-    fb_vout_nijk_(d_wo, d_av, size, &guide, v00, &scale, &unit_velocity, &flop); // 配列並びを変換
-    fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
-  }
-  else // "ijkn"
-  {
-    fb_vout_ijkn_(d_wo, d_av, size, &guide, v00, &scale, &unit_velocity, &flop); // 並び変換なし
-    fb_minmax_v_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
-  }
-  
-  
-  if ( numProc > 1 )
-  {
-    REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
-    if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
-    
-    REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
-    if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  // ここはminmax[]の大きさをvec_min[4],vec_max[4]に合わせて，DFI_OUT_VELAのインターフェイスを変更
-  minmax[0] = vec_min[0];
-  minmax[1] = vec_max[0];
-
-  DFI_OUT_VELA->WriteData(m_step,
-                          guide,
-                          &m_time,
-                          d_wo,
-                          minmax,
-                          interval,
-                          false,
-                          stepAvr,
-                          timeAvr,
-                          false);
-  
-  
-  // Temperature
-  if( C.isHeatProblem() )
-  {
-    if (C.Unit.File == DIMENSIONAL)
-    {
-      REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-      U.tmp_array_ND2D(d_ws, size, guide, d_at, C.BaseTemp, C.DiffTemp, klv, scale, flop);
-    }
-    else 
-    {
-      U.xcopy(d_ws, size, guide, d_at, scale, kind_scalar);
-    }
-    
-    fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
-    
-    if ( numProc > 1 )
-    {
-      min_tmp = f_min;
-      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
-      
-      max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
-    }
-    
-    minmax[0] = f_min;
-    minmax[1] = f_max;
-    
-    DFI_OUT_TEMPA->WriteData(m_step,
-                             guide,
-                             &m_time,
-                             d_ws,
-                             minmax,
-                             interval,
-                             false,
-                             stepAvr,
-                             timeAvr,
-                             false);
-  }
-}
-
 
 // #################################################################
 /**
@@ -345,7 +173,7 @@ void FFV::Averaging_Time(double& flop)
   
   if ( C.isHeatProblem() ) 
   {
-    fb_average_s_(d_at, size, &guide, d_t, &nadd, &flop);
+    fb_average_s_(d_at, size, &guide, d_ie, &nadd, &flop);
   }
 }
 
@@ -467,6 +295,184 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
 
 // #################################################################
 /**
+ * @brief 時間平均値のファイル出力
+ * @param [in,out] flop 浮動小数点演算数
+ */
+void FFV::OutputAveragedVarables(double& flop)
+{
+  REAL_TYPE f_min, f_max, min_tmp, max_tmp, vec_min[4], vec_max[4];
+  REAL_TYPE minmax[2];
+  
+  // 出力ファイルの指定が有次元の場合
+  double timeAvr;
+  if (C.Unit.File == DIMENSIONAL)
+  {
+    timeAvr = CurrentTime_Avr * C.Tscale;
+  }
+  else
+  {
+    timeAvr = CurrentTime_Avr;
+  }
+  
+  // 平均操作の母数
+  unsigned stepAvr = (unsigned)CurrentStep_Avr;
+  REAL_TYPE scale = 1.0;
+  
+  // ガイドセル出力
+  int gc_out = C.GuideOut;
+  
+  // ファイル出力のタイムスタンプに使うステップ数
+  unsigned m_step = (unsigned)CurrentStep;
+  
+  // ファイル出力のタイムスタンプの次元変換
+  REAL_TYPE m_time;
+  if (C.Unit.File == DIMENSIONAL)
+  {
+    m_time = (REAL_TYPE)(CurrentTime * C.Tscale);
+  }
+  else
+  {
+    m_time = (REAL_TYPE)CurrentTime;
+  }
+  
+  
+  /* 20130611 出力ディレクトリの作成
+   std::string dtmp = DFI.GenerateDirName(C.FIO.OutDirPath, m_step, C.FIO.Slice);
+   if ( !FBUtility::mkdirs(dtmp) ) {
+   Hostonly_ printf("Error : create directory \"%s\"\n", dtmp.c_str());
+   Exit(-1);
+   }
+   */
+  
+  // 出力インターバル
+  int interval = 0;
+  interval = C.Interval[Interval_Manager::tg_average].getIntervalStep();
+  
+  
+  if ( C.KindOfSolver != SOLID_CONDUCTION )
+  {
+    // Pressure
+    if (C.Unit.File == DIMENSIONAL)
+    {
+      REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
+      U.prs_array_ND2D(d_ws, size, guide, d_ap, bp, C.RefDensity, C.RefVelocity, scale, flop);
+    }
+    else
+    {
+      U.xcopy(d_ws, size, guide, d_ap, scale, kind_scalar);
+    }
+    
+    // 最大値と最小値
+    fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
+    
+    if ( numProc > 1 )
+    {
+      min_tmp = f_min;
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      max_tmp = f_max;
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    minmax[0] = f_min;
+    minmax[1] = f_max;
+    
+    DFI_OUT_PRSA->WriteData(m_step,   // 出力step番号
+                            guide,    // 仮想セル数
+                            &m_time,  // 出力時刻
+                            d_ws,     // フィールドデータポインタ
+                            minmax,   // 最小値と最大値
+                            interval, // 出力間隔
+                            false,    // ?
+                            stepAvr,  // 平均をとったステップ数
+                            timeAvr,  // 平均をとった時刻
+                            false);   // 強制出力指示 trueのとき？
+    
+    // Velocity
+    REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
+    
+    if ( DFI_OUT_VELA->DFI_Finfo.ArrayShape == "nijk" )
+    {
+      fb_vout_nijk_(d_wo, d_av, size, &guide, v00, &scale, &unit_velocity, &flop); // 配列並びを変換
+      fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
+    }
+    else // "ijkn"
+    {
+      fb_vout_ijkn_(d_wo, d_av, size, &guide, v00, &scale, &unit_velocity, &flop); // 並び変換なし
+      fb_minmax_v_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
+    }
+    
+    
+    if ( numProc > 1 )
+    {
+      REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
+      if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
+      if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    // ここはminmax[]の大きさをvec_min[4],vec_max[4]に合わせて，DFI_OUT_VELAのインターフェイスを変更
+    minmax[0] = vec_min[0];
+    minmax[1] = vec_max[0];
+    
+    DFI_OUT_VELA->WriteData(m_step,
+                            guide,
+                            &m_time,
+                            d_wo,
+                            minmax,
+                            interval,
+                            false,
+                            stepAvr,
+                            timeAvr,
+                            false);
+  }
+
+  
+  // Temperature
+  if( C.isHeatProblem() )
+  {
+    if (C.Unit.File == DIMENSIONAL)
+    {
+      REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
+      U.tmp_array_ND2D(d_ws, size, guide, d_at, C.BaseTemp, C.DiffTemp, klv, scale, flop);
+    }
+    else
+    {
+      U.xcopy(d_ws, size, guide, d_at, scale, kind_scalar);
+    }
+    
+    fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
+    
+    if ( numProc > 1 )
+    {
+      min_tmp = f_min;
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      max_tmp = f_max;
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    minmax[0] = f_min;
+    minmax[1] = f_max;
+    
+    DFI_OUT_TEMPA->WriteData(m_step,
+                             guide,
+                             &m_time,
+                             d_ws,
+                             minmax,
+                             interval,
+                             false,
+                             stepAvr,
+                             timeAvr,
+                             false);
+  }
+}
+
+
+
+// #################################################################
+/**
  * @brief 基本変数のファイル出力
  * @param [in,out] flop       浮動小数点演算数
  * @note d_p0をワークとして使用
@@ -544,93 +550,133 @@ void FFV::OutputBasicVariables(double& flop)
   }
   
   
-  // Pressure
-  if (C.Unit.File == DIMENSIONAL) 
+  if ( C.KindOfSolver != SOLID_CONDUCTION )
   {
-    REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
-    U.prs_array_ND2D(d_ws, size, guide, d_p, bp, C.RefDensity, C.RefVelocity, scale, flop);
-  }
-  else 
-  {
-    U.xcopy(d_ws, size, guide, d_p, scale, kind_scalar);
-  }
-  
-  fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
-  
-  if ( numProc > 1 )
-  {
-    min_tmp = f_min;
-    if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+    // Pressure
+    if (C.Unit.File == DIMENSIONAL)
+    {
+      REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
+      U.prs_array_ND2D(d_ws, size, guide, d_p, bp, C.RefDensity, C.RefVelocity, scale, flop);
+    }
+    else
+    {
+      U.xcopy(d_ws, size, guide, d_p, scale, kind_scalar);
+    }
     
-    max_tmp = f_max;
-    if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
-  }
-  minmax[0] = f_min;
-  minmax[1] = f_max;
-
-  DFI_OUT_PRS->WriteData(m_step,
-                         guide,
-                         &m_time,
-                         d_ws,
-                         minmax,
-                         interval,
-                         true,
-                         0,
-                         0.0,
-                         true);
-  
-
-  // Velocity
-  REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
-  
-  if( DFI_OUT_VEL->DFI_Finfo.ArrayShape == "nijk" )
-  {
-    fb_vout_nijk_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
-    fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
-  }
-  else
-  {
-    fb_vout_ijkn_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
-    fb_minmax_v_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
-  }
-  
-  if ( numProc > 1 )
-  {
-    REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
-    if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+    fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
     
-    REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
-    if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    if ( numProc > 1 )
+    {
+      min_tmp = f_min;
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      max_tmp = f_max;
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    minmax[0] = f_min;
+    minmax[1] = f_max;
+    
+    DFI_OUT_PRS->WriteData(m_step,
+                           guide,
+                           &m_time,
+                           d_ws,
+                           minmax,
+                           interval,
+                           true,
+                           0,
+                           0.0,
+                           true);
+    
+    // Velocity
+    REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
+    
+    if( DFI_OUT_VEL->DFI_Finfo.ArrayShape == "nijk" )
+    {
+      fb_vout_nijk_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
+      fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
+    }
+    else
+    {
+      fb_vout_ijkn_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
+      fb_minmax_v_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
+    }
+    
+    if ( numProc > 1 )
+    {
+      REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
+      if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
+      if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    // ここはminmax[]の大きさをvec_min[4],vec_max[4]に合わせて，DFI_OUT_VELのインターフェイスを変更
+    minmax[0] = vec_min[0];
+    minmax[1] = vec_max[0];
+    
+    DFI_OUT_VEL->WriteData(m_step,
+                           guide,
+                           &m_time,
+                           d_wo,
+                           minmax,
+                           interval,
+                           true,
+                           0,
+                           0.0,
+                           true);
+    
+    // Face Velocity
+    if (C.Mode.FaceV == ON )
+    {
+      if ( DFI_OUT_FVEL->DFI_Finfo.ArrayShape == "nijk" )
+      {
+        fb_vout_nijk_(d_wo, d_vf, size, &guide, v00, &scale, &unit_velocity, &flop);
+        fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
+      }
+      else
+      {
+        fb_vout_ijkn_(d_wo, d_vf, size, &guide, v00, &scale, &unit_velocity, &flop);
+        fb_minmax_v_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
+      }
+      
+      if ( numProc > 1 )
+      {
+        REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
+        if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+        
+        REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
+        if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      }
+      
+      // ここはminmax[]の大きさをvec_min[4],vec_max[4]に合わせて，DFI_OUT_VRTのインターフェイスを変更
+      minmax[0] = vec_min[0];
+      minmax[1] = vec_max[0];
+      
+      DFI_OUT_FVEL->WriteData(m_step,
+                              guide,
+                              &m_time,
+                              d_wo,
+                              minmax,
+                              interval,
+                              true,
+                              0,
+                              0.0,
+                              true);
+    }
   }
-  
-  // ここはminmax[]の大きさをvec_min[4],vec_max[4]に合わせて，DFI_OUT_VELのインターフェイスを変更
-  minmax[0] = vec_min[0];
-  minmax[1] = vec_max[0];
-
-  DFI_OUT_VEL->WriteData(m_step,
-                         guide,
-                         &m_time,
-                         d_wo,
-                         minmax,
-                         interval,
-                         true,
-                         0,
-                         0.0,
-                         true);
   
   
   // Tempearture
   if( C.isHeatProblem() )
   {
-    
-    if (C.Unit.File == DIMENSIONAL) 
+    if (C.Unit.File == DIMENSIONAL)
     {
       REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-      U.tmp_array_ND2D(d_ws, size, guide, d_t, C.BaseTemp, C.DiffTemp, klv, scale, flop);
+      U.tmp_array_ND2D(d_ws, size, guide, d_ie, C.BaseTemp, C.DiffTemp, klv, scale, flop);
     }
-    else 
+    else
     {
-      U.xcopy(d_ws, size, guide, d_t, scale, kind_scalar);
+      U.xcopy(d_ws, size, guide, d_ie, scale, kind_scalar);
     }
     
     fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
@@ -657,46 +703,7 @@ void FFV::OutputBasicVariables(double& flop)
                             0.0,
                             true);
   }
-
   
-  // Face Velocity
-  if (C.Mode.FaceV == ON )
-  {
-    if ( DFI_OUT_FVEL->DFI_Finfo.ArrayShape == "nijk" )
-    {
-      fb_vout_nijk_(d_wo, d_vf, size, &guide, v00, &scale, &unit_velocity, &flop);
-      fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
-    }
-    else
-    {
-      fb_vout_ijkn_(d_wo, d_vf, size, &guide, v00, &scale, &unit_velocity, &flop);
-      fb_minmax_v_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
-    }
-    
-    if ( numProc > 1 )
-    {
-      REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
-      if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
-      
-      REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
-      if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
-    }
-    
-    // ここはminmax[]の大きさをvec_min[4],vec_max[4]に合わせて，DFI_OUT_VRTのインターフェイスを変更
-    minmax[0] = vec_min[0];
-    minmax[1] = vec_max[0];
-    
-    DFI_OUT_FVEL->WriteData(m_step,
-                            guide,
-                            &m_time,
-                            d_wo,
-                            minmax,
-                            interval,
-                            true,
-                            0,
-                            0.0,
-                            true);
-  }
 }
 
 
@@ -785,7 +792,7 @@ void FFV::OutputDerivedVariables(double& flop)
   // Vorticity
   if (C.Mode.VRT == ON )
   {
-    rot_v_(d_wv, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
+    rot_v_(d_wv, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
     REAL_TYPE  vz[3];
     vz[0] = vz[1] = vz[2] = 0.0;
@@ -831,7 +838,7 @@ void FFV::OutputDerivedVariables(double& flop)
   // 2nd Invariant of Velocity Gradient Tensor
   if (C.Mode.I2VGT == ON )
   {
-    i2vgt_ (d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
+    i2vgt_ (d_p0, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
     // 無次元で出力
     U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar);
@@ -865,7 +872,7 @@ void FFV::OutputDerivedVariables(double& flop)
   // Helicity
   if (C.Mode.Helicity == ON )
   {
-    helicity_(d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
+    helicity_(d_p0, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
     // 無次元で出力
     U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar);
@@ -1297,7 +1304,7 @@ void FFV::VariationSpace(double* avr, double* rms, double& flop)
   // 温度
   if ( C.isHeatProblem() ) 
   {
-    fb_delta_s_(m_var, size, &guide, d_t, d_t0, d_bcd, &flop);
+    fb_delta_s_(m_var, size, &guide, d_ie, d_ie0, d_bcd, &flop);
     rms[var_Temperature] = m_var[0];
     avr[var_Temperature] = m_var[1];
   }

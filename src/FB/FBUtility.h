@@ -383,6 +383,16 @@ public:
   
   
   /**
+   * @brief S4DEXクラスの初期化
+   * @param [out]    dst   出力
+   * @param [in]     size  配列サイズ
+   * @param [in]     guide ガイドセルサイズ
+   * @param [in]     init  定数
+   */
+  void setS4DEX (REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE init);
+  
+  
+  /**
    * @brief スカラー倍コピー
    * @param [out]    dst   出力
    * @param [in]     size  配列サイズ

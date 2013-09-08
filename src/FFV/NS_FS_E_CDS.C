@@ -66,10 +66,10 @@ void FFV::NS_FS_E_CDS()
   // d_sq Poissonのソース項1　反復毎に変化するソース項，摩擦速度，発散値, div(u)の値を保持，出力のところまでは再利用しないこと
   // d_bcd IDのビットフラグ
   // d_bcp 圧力のビットフラグ
-  // d_bcv 速度のビットフラグ
+  // d_cdf Component Directional BC Flag
   // d_wo  ワーク　壁関数利用時のWSS，ベクトル出力時のテンポラリ
   // d_cvf コンポーネントの体積率
-  // d_t0  温度 t^n
+  // d_ie0 内部エネルギー
   // d_vt  LES計算の渦粘性係数
   // d_ab0 Adams-Bashforth用のワーク
   // d_cut カット情報
@@ -122,13 +122,13 @@ void FFV::NS_FS_E_CDS()
       }
       else
       {
-        pvec_muscl_cds_(d_vc, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_bcv, d_bcp, &v_mode, d_cut, &flop);
+        pvec_muscl_cds_(d_vc, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_cdf, d_bcp, &v_mode, d_cut, &flop);
       }
       TIMING_stop(tm_pseudo_vec, flop);
 
       TIMING_start(tm_pvec_flux);
       flop = 0.0;
-      BC.modPvecFlux(d_vc, d_v0, d_bcv, CurrentTime, &C, v_mode, v00, flop);
+      BC.modPvecFlux(d_vc, d_v0, d_cdf, CurrentTime, &C, v_mode, v00, flop);
       TIMING_stop(tm_pvec_flux, flop);
       break;
       
@@ -142,13 +142,13 @@ void FFV::NS_FS_E_CDS()
       }
       else
       {
-        pvec_muscl_cds_(d_wv, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_bcv, d_bcp, &v_mode, d_cut, &flop);
+        pvec_muscl_cds_(d_wv, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_cdf, d_bcp, &v_mode, d_cut, &flop);
       }
       TIMING_stop(tm_pseudo_vec, flop);
       
       TIMING_start(tm_pvec_flux);
       flop = 0.0;
-      BC.modPvecFlux(d_wv, d_v0, d_bcv, CurrentTime, &C, v_mode, v00, flop);
+      BC.modPvecFlux(d_wv, d_v0, d_cdf, CurrentTime, &C, v_mode, v00, flop);
       TIMING_stop(tm_pvec_flux, flop);
       break;
       
@@ -195,12 +195,12 @@ void FFV::NS_FS_E_CDS()
       
       TIMING_start(tm_pvec_abcn_df_ee);
       flop = 0.0;
-      vis_ee_(d_vc, size, &guide, &dh, &dt, v00, &rei, d_wv, d_v0, d_bcv, &half, &flop);
+      vis_ee_(d_vc, size, &guide, &dh, &dt, v00, &rei, d_wv, d_v0, d_cdf, &half, &flop);
       TIMING_stop(tm_pvec_abcn_df_ee, flop);
       
       TIMING_start(tm_pvec_abcn_df_ee_BC);
       flop = 0.0;
-      BC.mod_Vis_EE(d_vc, d_v0, half, d_bcv, CurrentTime, dt, v00, flop);
+      BC.mod_Vis_EE(d_vc, d_v0, half, d_cdf, CurrentTime, dt, v00, flop);
       TIMING_stop(tm_pvec_abcn_df_ee_BC, flop);
       break;
       
@@ -231,14 +231,14 @@ void FFV::NS_FS_E_CDS()
     TIMING_start(tm_buoyancy);
     REAL_TYPE dgr = dt*C.Grashof*rei*rei;
     flop = 3.0;
-    Buoyancy(d_vc, dgr, d_t0, d_bcd, flop);
+    Buoyancy(d_vc, dgr, d_ie0, d_bcd, flop);
     TIMING_stop(tm_buoyancy, flop);
   }
   
   
   // 疑似ベクトルの境界条件
   TIMING_start(tm_pvec_BC);
-  BC.OuterVBCpseudo(d_vc, d_bcv, &C);
+  BC.OuterVBCpseudo(d_vc, d_cdf, &C);
   BC.InnerVBCperiodic(d_vc, d_bcd);
   TIMING_stop(tm_pvec_BC, 0.0);
   
@@ -301,14 +301,14 @@ void FFV::NS_FS_E_CDS()
   // 非VBC面に対してのみ，セルセンターの値から発散量を計算
   TIMING_start(tm_div_pvec);
   flop = 0.0;
-  divergence_cds_(d_ws, size, &guide, &coef, d_vc, d_bcv, d_cut, v00, &flop);
+  divergence_cds_(d_ws, size, &guide, &coef, d_vc, d_cdf, d_cut, v00, &flop);
   TIMING_stop(tm_div_pvec, flop);
   
   
   // Poissonソース項の速度境界条件（VBC）面による修正
   TIMING_start(tm_poi_src_vbc);
   flop = 0.0;
-  BC.modPsrcVBC(d_ws, d_vc, d_v0, d_vf, d_bcv, CurrentTime, dt, &C, v00, flop);
+  BC.modPsrcVBC(d_ws, d_vc, d_v0, d_vf, d_cdf, CurrentTime, dt, &C, v00, flop);
   TIMING_stop(tm_poi_src_vbc, flop);
   
   
@@ -427,13 +427,13 @@ void FFV::NS_FS_E_CDS()
     // 速度のスカラポテンシャルによる射影と発散値 src1は，反復毎のソース項をワークとして利用
     TIMING_start(tm_prj_vec);
     flop = 0.0;
-    update_vec_cds_(d_v, d_dv, size, &guide, &dt, &dh, d_vc, d_p, d_bcp, d_bcv, d_cut, v00, &flop);
+    update_vec_cds_(d_v, d_dv, size, &guide, &dt, &dh, d_vc, d_p, d_bcp, d_cdf, d_cut, v00, &flop);
     TIMING_stop(tm_prj_vec, flop);
     
     // セルフェイス速度の境界条件による修正
     TIMING_start(tm_prj_vec_bc);
     flop=0.0;
-    BC.modDivergence(d_dv, d_bcv, CurrentTime, v00, m_buf, d_vf, d_v, &C, flop);
+    BC.modDivergence(d_dv, d_cdf, CurrentTime, v00, m_buf, d_vf, d_v, &C, flop);
     TIMING_stop(tm_prj_vec_bc, flop);
     
     // セルフェイス速度の境界条件の通信部分
@@ -553,7 +553,7 @@ void FFV::NS_FS_E_CDS()
   
   // 速度のガイドセルへの代入
   TIMING_start(tm_VBC_update);
-  BC.InnerVBC(d_v, d_bcv, CurrentTime, v00);
+  BC.InnerVBC(d_v, d_cdf, CurrentTime, v00);
   TIMING_stop(tm_VBC_update, 0.0);
   
   
@@ -562,7 +562,7 @@ void FFV::NS_FS_E_CDS()
   {
     TIMING_start(tm_LES_eddy);
     flop = 0.0;
-    eddy_viscosity_(d_vt, size, &guide, &dh, &C.Reynolds, &C.LES.Cs, d_v, d_bcv, range_Ut, range_Yp, v00);
+    eddy_viscosity_(d_vt, size, &guide, &dh, &C.Reynolds, &C.LES.Cs, d_v, d_cdf, range_Ut, range_Yp, v00);
     TIMING_stop(tm_LES_eddy, flop);
     
     if ( numProc > 1 )

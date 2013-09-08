@@ -4211,7 +4211,7 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   // コンポーネントの指定速度
   for (int n=1; n<=NoCompo; n++)
   {
-    if ( (cmp[n].getType()==SPEC_VEL_WH) || (cmp[n].getType()==SPEC_VEL) )
+    if ( cmp[n].getType()==SPEC_VEL )
     {
 			if ( cmp[n].isPolicy_Massflow() ) //ポリシーが流量の場合
       {
@@ -4253,11 +4253,11 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
     {
       if (cmp[n].get_sw_Heatgen() == CompoList::hsrc_watt)
       {
-        cmp[n].set_HeatDensity( cmp[n].get_HeatValue() / ((REAL_TYPE)cmp[n].getElement()*vol) );
+        cmp[n].setHeatDensity( cmp[n].get_HeatValue() / ((REAL_TYPE)cmp[n].getElement()*vol) );
       }
       else // 発熱密度
       {
-        cmp[n].set_HeatValue( cmp[n].getHeatDensity() * ((REAL_TYPE)cmp[n].getElement()*vol) );
+        cmp[n].setHeatValue( cmp[n].getHeatDensity() * ((REAL_TYPE)cmp[n].getElement()*vol) );
       }
     }
   }

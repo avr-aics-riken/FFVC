@@ -196,7 +196,7 @@
 !! @param g ガイドセル長
 !! @param dh 格子幅
 !! @param v セルセンター速度ベクトル
-!! @param bv BCindex V
+!! @param bv BCindex C
 !! @param v00 参照速度
 !! @param[out] flop
 !<
@@ -371,7 +371,7 @@
 !! @param g ガイドセル長
 !! @param dh 格子幅
 !! @param v セルセンター速度ベクトル
-!! @param bv BCindex V
+!! @param bv BCindex C
 !! @param v00 参照速度
 !! @param[out] flop
 !<
@@ -529,7 +529,7 @@
 !! @param g ガイドセル長
 !! @param dh 格子幅
 !! @param v セルセンター速度ベクトル
-!! @param bv BCindex V
+!! @param bv BCindex C
 !! @param v00 参照速度
 !! @param[out] flop
 !<

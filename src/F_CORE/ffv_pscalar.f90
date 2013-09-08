@@ -22,25 +22,24 @@
 
 !> ********************************************************************
 !! @brief パッシブスカラの移流部分の積分
-!! @param [out] ws スカラ値の対流項による増分
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param dh 格子幅
-!! @param c_scheme 対流項スキームのモード（1-UWD, 2-center, 3-MUSCL）
-!! @param v00 参照速度
-!! @param v cell center u^{n+1}
-!! @param t 温度
-!! @param bv  BCindex V
-!! @param bp  BCindex P
-!! @param bh1 BCindex H1
-!! @param bh2 BCindex H2
-!! @param swt 固定壁の扱い（0-断熱，1-共役熱移動）
-!! @param[out] flop
+!! @param [in,out] ws     内部エネルギーの対流項による増分
+!! @param [in]     sz     配列長
+!! @param [in]     g      ガイドセル長
+!! @param [in]     dh     格子幅
+!! @param [in]     scheme 対流項スキームのモード（1-UWD, 2-center, 3-MUSCL）
+!! @param [in]     v00    参照速度
+!! @param [in]     v      cell center u^{n+1}
+!! @param [in]     ie     内部エネルギー
+!! @param [in]     bp     BCindex P
+!! @param [in]     cdf    BCindex C
+!! @param [in[     bh     BCindex B
+!! @param [in]     swt    固定壁の扱い（0-断熱，1-共役熱移動）
+!! @param [out]    flop   浮動小数点演算数
 !<
-    subroutine ps_muscl (ws, sz, g, dh, c_scheme, v00, v, t, bv, bp, bh1, bh2, swt, flop)
+    subroutine ps_muscl (ws, sz, g, dh, scheme, v00, v, ie, bp, cdf, bh, swt, flop)
     implicit none
     include '../FB/ffv_f_params.h'
-    integer                                                     ::  i, j, k, ix, jx, kx, g, c_scheme, idx, swt, hdx
+    integer                                                     ::  i, j, k, ix, jx, kx, g, scheme, idx, swt, hdx
     integer                                                     ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
     integer                                                     ::  b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p
     integer, dimension(3)                                       ::  sz
@@ -59,9 +58,9 @@
     real                                                        ::  w_e, w_w, w_n, w_s, w_t, w_b
     real                                                        ::  lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  t, ws
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  ie, ws
     real, dimension(0:3)                                        ::  v00
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bh1, bh2, bv, bp
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  cdf, bh, bp
     
     ix = sz(1)
     jx = sz(2)
@@ -77,11 +76,11 @@
     v_ref = v00(2)
     w_ref = v00(3)
             
-    if ( c_scheme == 1 ) then      !     1st order upwind
+    if ( scheme == 1 ) then      !     1st order upwind
       ss = 0.0
-    else if ( c_scheme == 2 ) then !     2nd order central 
+    else if ( scheme == 2 ) then !     2nd order central 
       ck = 1.0     
-    else if ( c_scheme == 3 ) then !     3rd order MUSCL
+    else if ( scheme == 3 ) then !     3rd order MUSCL
       ck = 1.0/3.0
       b  = (3.0-ck)/(1.0-ck)
     endif
@@ -121,14 +120,20 @@
       cnv = 0.0
 
       ! セル状態 (0-solid / 1-fluid)
-      b_p = ibits(bv(i  ,j  ,k  ), State, 1)
-      b_w1= ibits(bv(i-1,j  ,k  ), State, 1)
-      b_e1= ibits(bv(i+1,j  ,k  ), State, 1)
-      b_s1= ibits(bv(i  ,j-1,k  ), State, 1)
-      b_n1= ibits(bv(i  ,j+1,k  ), State, 1)
-      b_b1= ibits(bv(i  ,j  ,k-1), State, 1)
-      b_t1= ibits(bv(i  ,j  ,k+1), State, 1)
-      
+      b_p = ibits(cdf(i  ,j  ,k  ), State, 1)
+      b_w2= ibits(cdf(i-2,j  ,k  ), State, 1)
+      b_w1= ibits(cdf(i-1,j  ,k  ), State, 1)
+      b_e1= ibits(cdf(i+1,j  ,k  ), State, 1)
+      b_e2= ibits(cdf(i+2,j  ,k  ), State, 1)
+      b_s2= ibits(cdf(i  ,j-2,k  ), State, 1)
+      b_s1= ibits(cdf(i  ,j-1,k  ), State, 1)
+      b_n1= ibits(cdf(i  ,j+1,k  ), State, 1)
+      b_n2= ibits(cdf(i  ,j+2,k  ), State, 1)
+      b_b2= ibits(cdf(i  ,j  ,k-2), State, 1)
+      b_b1= ibits(cdf(i  ,j  ,k-1), State, 1)
+      b_t1= ibits(cdf(i  ,j  ,k+1), State, 1)
+      b_t2= ibits(cdf(i  ,j  ,k+2), State, 1)
+
       ! セル界面のフラグ (0-wall face / 1-fluid)
       w_e = real(b_e1 * b_p)
       w_w = real(b_w1 * b_p)
@@ -138,37 +143,24 @@
       w_b = real(b_b1 * b_p) ! real*6 flop
       
       ! 変数のロード
-      Fp0 = t(i  ,j  ,k  )
-      Fw2 = t(i-2,j  ,k  )
-      Fw1 = t(i-1,j  ,k  )
-      Fe1 = t(i+1,j  ,k  )
-      Fe2 = t(i+2,j  ,k  )
-      Fs2 = t(i  ,j-2,k  )
-      Fs1 = t(i  ,j-1,k  )
-      Fn1 = t(i  ,j+1,k  )
-      Fn2 = t(i  ,j+2,k  )
-      Fb2 = t(i  ,j  ,k-2)
-      Fb1 = t(i  ,j  ,k-1)
-      Ft1 = t(i  ,j  ,k+1)
-      Ft2 = t(i  ,j  ,k+2)
+      Fp0 = ie(i  ,j  ,k  )
+      Fw2 = ie(i-2,j  ,k  )
+      Fw1 = ie(i-1,j  ,k  )
+      Fe1 = ie(i+1,j  ,k  )
+      Fe2 = ie(i+2,j  ,k  )
+      Fs2 = ie(i  ,j-2,k  )
+      Fs1 = ie(i  ,j-1,k  )
+      Fn1 = ie(i  ,j+1,k  )
+      Fn2 = ie(i  ,j+2,k  )
+      Fb2 = ie(i  ,j  ,k-2)
+      Fb1 = ie(i  ,j  ,k-1)
+      Ft1 = ie(i  ,j  ,k+1)
+      Ft2 = ie(i  ,j  ,k+2)
       
-      idx = bh1(i,j,k)
-      hdx = bh2(i,j,k)
-      actv= real(ibits(hdx, State, 1)) ! 1 flop 対流マスクなのでbh2の状態を参照
-      
-      ! セル状態 (0-solid / 1-fluid)
-      b_w2= ibits(bh1(i-2,j  ,k  ), State, 1)
-      b_w1= ibits(bh1(i-1,j  ,k  ), State, 1)
-      b_e1= ibits(bh1(i+1,j  ,k  ), State, 1)
-      b_e2= ibits(bh1(i+2,j  ,k  ), State, 1)
-      b_s2= ibits(bh1(i  ,j-2,k  ), State, 1)
-      b_s1= ibits(bh1(i  ,j-1,k  ), State, 1)
-      b_n1= ibits(bh1(i  ,j+1,k  ), State, 1)
-      b_n2= ibits(bh1(i  ,j+2,k  ), State, 1)
-      b_b2= ibits(bh1(i  ,j  ,k-2), State, 1)
-      b_b1= ibits(bh1(i  ,j  ,k-1), State, 1)
-      b_t1= ibits(bh1(i  ,j  ,k+1), State, 1)
-      b_t2= ibits(bh1(i  ,j  ,k+2), State, 1)
+      idx = cdf(i,j,k)
+      hdx = bh(i,j,k)
+      actv= real(ibits(hdx, State, 1)) ! 1 flop 対流マスクなのでbhの状態を参照
+
 
       ! 各面のHBCフラグ ibits() = 0(Normal) / others(BC) >> c_e = 1.0(Normal) / 0.0(BC) 
       c_e = 1.0
@@ -200,12 +192,12 @@
       lmt_b = 1.0
       lmt_t = 1.0
 
-      if ( (ibits(bv(i-1, j  , k  ), bc_face_W, bitw_5) /= 0) .and. (ibits(bp(i-1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_w = 0.0
-      if ( (ibits(bv(i+1, j  , k  ), bc_face_E, bitw_5) /= 0) .and. (ibits(bp(i+1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_e = 0.0
-      if ( (ibits(bv(i  , j-1, k  ), bc_face_S, bitw_5) /= 0) .and. (ibits(bp(i  , j-1, k  ), vbc_uwd, 1) == 1) ) lmt_s = 0.0
-      if ( (ibits(bv(i  , j+1, k  ), bc_face_N, bitw_5) /= 0) .and. (ibits(bp(i  , j+1, k  ), vbc_uwd, 1) == 1) ) lmt_n = 0.0
-      if ( (ibits(bv(i  , j  , k-1), bc_face_B, bitw_5) /= 0) .and. (ibits(bp(i  , j  , k-1), vbc_uwd, 1) == 1) ) lmt_b = 0.0
-      if ( (ibits(bv(i  , j  , k+1), bc_face_T, bitw_5) /= 0) .and. (ibits(bp(i  , j  , k+1), vbc_uwd, 1) == 1) ) lmt_t = 0.0
+      if ( (ibits(cdf(i-1, j  , k  ), bc_face_W, bitw_5) /= 0) .and. (ibits(bp(i-1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_w = 0.0
+      if ( (ibits(cdf(i+1, j  , k  ), bc_face_E, bitw_5) /= 0) .and. (ibits(bp(i+1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_e = 0.0
+      if ( (ibits(cdf(i  , j-1, k  ), bc_face_S, bitw_5) /= 0) .and. (ibits(bp(i  , j-1, k  ), vbc_uwd, 1) == 1) ) lmt_s = 0.0
+      if ( (ibits(cdf(i  , j+1, k  ), bc_face_N, bitw_5) /= 0) .and. (ibits(bp(i  , j+1, k  ), vbc_uwd, 1) == 1) ) lmt_n = 0.0
+      if ( (ibits(cdf(i  , j  , k-1), bc_face_B, bitw_5) /= 0) .and. (ibits(bp(i  , j  , k-1), vbc_uwd, 1) == 1) ) lmt_b = 0.0
+      if ( (ibits(cdf(i  , j  , k+1), bc_face_T, bitw_5) /= 0) .and. (ibits(bp(i  , j  , k+1), vbc_uwd, 1) == 1) ) lmt_t = 0.0
 
       ! 外部境界条件の場合
       if ( (i == 1)  .and. (ibits(bp(0   , j   , k   ), vbc_uwd, 1) == 1) ) lmt_w = 0.0
@@ -334,41 +326,46 @@
     return
     end subroutine ps_muscl
 
+
 !> ********************************************************************
-!! @brief 浮力項の計算
-!! @param [in,out] v    速度ベクトル
-!! @param [in]     sz   配列長
-!! @param [in]     g    ガイドセル長
-!! @param [in]     dgr  係数
-!! @param [in]     t    温度
-!! @param [in]     bd   BCindex ID
-!! @param [in,out] flop 浮動小数点演算数
+!! @brief 浮力項の計算（単相流）
+!! @param [in,out] v     速度ベクトル
+!! @param [in]     sz    配列長
+!! @param [in]     g     ガイドセル長
+!! @param [in]     dgr   係数
+!! @param [in]     ie    内部エネルギー
+!! @param [in]     bd    BCindex B
+!! @param [in]     rhocp rho * cp
+!! @param [in,out] flop  浮動小数点演算数
+!! @note rhocpは代表値なので，単相流の実装
+!! @todo 対象セルは流体だけでよい？　active flag?
 !<
-    subroutine ps_buoyancy (v, sz, g, dgr, t, bd, flop)
+    subroutine ps_buoyancy (v, sz, g, dgr, ie, bd, rhocp, flop)
     implicit none
     include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
-    real                                                      ::  dgr
+    real                                                      ::  dgr, rhocp, r
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  t
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  ie
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bd
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
+    r = dgr/rhocp
     
     flop = flop + dble(ix)*dble(jx)*dble(kx)*3.0d0
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, dgr)
+!$OMP FIRSTPRIVATE(ix, jx, kx, r)
 
 !$OMP DO SCHEDULE(static)
     do k=1,kx
     do j=1,jx
     do i=1,ix
-        v(i,j,k,3) = v(i,j,k,3) + dgr*t(i,j,k) * real(ibits(bd(i,j,k), State, 1))
+        v(i,j,k,3) = v(i,j,k,3) + r * ie(i,j,k) * real(ibits(bd(i,j,k), State, 1))
     end do
     end do
     end do
@@ -380,50 +377,64 @@
 
 !> ********************************************************************
 !! @brief 温度の拡散項の半陰的時間積分（対流項を積分した結果を用いて粘性項を計算）
-!! @param t 温度
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param res 残差
-!! @param dh 格子幅
-!! @param dt 時間積分幅
-!! @param pei ペクレ数の逆数
-!! @param qbc 境界条件の熱流束
-!! @param bh BCindex H2
-!! @param ws 部分段階の温度
-!! @param flop 浮動小数演算数
+!! @param [in,out] ie     内部エネルギー
+!! @param [in]     sz     配列長
+!! @param [in]     g      ガイドセル長
+!! @param [out]    res    残差
+!! @param [in]     dh     格子幅
+!! @param [in]     dt     時間積分幅
+!! @param [in]     coef   正規化係数 \rho_0 C_p u_0 L
+!! @param [in]     qbc    境界条件の熱流束
+!! @param [in]     bh     BCindex B
+!! @param [in,out] ws     部分段階の温度
+!! @param [in]     ncompo コンポーネント数
+!! @param [in]     mtbl   コンポーネントの物性値
+!! @param [in,out] flop    浮動小数演算数
 !<
-    subroutine ps_diff_ee (t, sz, g, res, dh, dt, pei, qbc, bh, ws, flop)
+    subroutine ps_diff_ee (ie, sz, g, res, dh, dt, coef, qbc, bh, ws, ncompo, mtbl, flop)
     implicit none
     include '../FB/ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, g, idx
+    integer                                                   ::  i, j, k, ix, jx, kx, g, idx, ncompo
+    integer                                                   ::  l_p, l_w, l_e, l_s, l_n, l_b, l_t
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, res
-    real                                                      ::  dh, dt, pei, dth1, dth2, delta
+    real                                                      ::  dh, dt, dth1, dth2, delta, pp, coef
     real                                                      ::  t_p, t_w, t_e, t_s, t_n, t_b, t_t
-    real                                                      ::  g_p, g_w, g_e, g_s, g_n, g_b, g_t
-    real                                                      ::       a_w, a_e, a_s, a_n, a_b, a_t
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  t, ws
-    real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  qbc
+    real                                                      ::  g_w, g_e, g_s, g_n, g_b, g_t, g_p
+    real                                                      ::  a_w, a_e, a_s, a_n, a_b, a_t
+    real                                                      ::  lmd_p, lmd_w, lmd_e, lmd_s, lmd_n, lmd_b, lmd_t
+    real                                                      ::  rcp_p, rcp_w, rcp_e, rcp_s, rcp_n, rcp_b, rcp_t
+    real                                                      ::  tc_w, tc_e, tc_s, tc_n, tc_b, tc_t
+    real                                                      ::  c_w, c_e, c_s, c_n, c_b, c_t
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  ie, ws
+    real, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  qbc
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bh
+    real, dimension(3, 0:ncompo)                              ::  mtbl
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
     dth1 = dt/dh
-    dth2 = dth1*pei/dh
+    dth2 = dth1/dh
     res  = 0.0
+    pp = 2.0 / coef
     
     ! /2 + 1 = 17 flop ! DP 27 flop
     ! loop : 6 + 6 + 1 + 51 = 64 flop
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*64.0d0 + 17.0d0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*195.0d0 + 24.0d0
     ! flop = flop + dble(ix)*dble(jx)*dble(kx)*64.0d0 + 27.0d0
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:res) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, dth1, dth2) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, dth1, dth2, pp) &
 !$OMP PRIVATE(idx, delta) &
 !$OMP PRIVATE(t_p, t_w, t_e, t_s, t_n, t_b, t_t) &
-!$OMP PRIVATE(g_p, g_w, g_e, g_s, g_n, g_b, g_t) &
+!$OMP PRIVATE(g_w, g_e, g_s, g_n, g_b, g_t, g_p) &
+!$OMP PRIVATE(lmd_p, lmd_w, lmd_e, lmd_s, lmd_n, lmd_b, lmd_t) &
+!$OMP PRIVATE(rcp_p, rcp_w, rcp_e, rcp_s, rcp_n, rcp_b, rcp_t) &
+!$OMP PRIVATE(tc_w, tc_e, tc_s, tc_n, tc_b, tc_t) &
+!$OMP PRIVATE(c_w, c_e, c_s, c_n, c_b, c_t) &
+!$OMP PRIVATE(l_p, l_w, l_e, l_s, l_n, l_b, l_t) &
 !$OMP PRIVATE(a_w, a_e, a_s, a_n, a_b, a_t)
 
 !$OMP DO SCHEDULE(static)
@@ -433,47 +444,89 @@
     do i=1,ix
       idx = bh(i,j,k)
       
-      t_p = t(i  , j  , k  )
-      t_w = t(i-1, j  , k  )
-      t_e = t(i+1, j  , k  )
-      t_s = t(i  , j-1, k  )
-      t_n = t(i  , j+1, k  )
-      t_b = t(i  , j  , k-1)
-      t_t = t(i  , j  , k+1)
-      
       a_w = real(ibits(idx, adbtc_W, 1))
       a_e = real(ibits(idx, adbtc_E, 1))
       a_s = real(ibits(idx, adbtc_S, 1))
       a_n = real(ibits(idx, adbtc_N, 1))
       a_b = real(ibits(idx, adbtc_B, 1))
-      a_t = real(ibits(idx, adbtc_T, 1)) ! real*6 = 6 flop
+      a_t = real(ibits(idx, adbtc_T, 1))
       
       g_w = real(ibits(idx, gma_W, 1))
       g_e = real(ibits(idx, gma_E, 1))
       g_s = real(ibits(idx, gma_S, 1))
       g_n = real(ibits(idx, gma_N, 1))
       g_b = real(ibits(idx, gma_B, 1))
-      g_t = real(ibits(idx, gma_T, 1)) ! real*6 = 6 flop
+      g_t = real(ibits(idx, gma_T, 1))
 
-      g_p = real(ibits(idx, h_diag, 3))  ! diagonal > 1 flop
-      
-      delta =(dth2*( g_w * a_w * t_w  & ! west  
-                   + g_e * a_e * t_e  & ! east  
-                   + g_s * a_s * t_s  & ! south 
-                   + g_n * a_n * t_n  & ! north 
-                   + g_b * a_b * t_b  & ! bottom
-                   + g_t * a_t * t_t  & ! top
-                   - g_p *       t_p) &
-            - dth1*(-(1.0-g_w)*a_w * qbc(1, i-1, j  , k  )  & ! west   gamma
-                    +(1.0-g_e)*a_e * qbc(1, i  , j  , k  )  & ! east   gamma
-                    -(1.0-g_s)*a_s * qbc(2, i  , j-1, k  )  & ! south  gamma
-                    +(1.0-g_n)*a_n * qbc(2, i  , j  , k  )  & ! north  gamma
-                    -(1.0-g_b)*a_b * qbc(3, i  , j  , k-1)  & ! bottom gamma
-                    +(1.0-g_t)*a_t * qbc(3, i  , j  , k  )  & ! top    gamma
-            ) )  * real(ibits(idx, Active,  1))
-      t(i,j,k) = ws(i,j,k) + delta
-      res = res + dble(delta*delta)
+      c_w = g_w * a_w
+      c_e = g_e * a_e
+      c_s = g_s * a_s
+      c_n = g_n * a_n
+      c_b = g_b * a_b
+      c_t = g_t * a_t ! 6
 
+      l_p = ibits(idx,               0, bitw_5)
+      l_w = ibits(bh(i-1, j  , k  ), 0, bitw_5)
+      l_e = ibits(bh(i+1, j  , k  ), 0, bitw_5)
+      l_s = ibits(bh(i  , j-1, k  ), 0, bitw_5)
+      l_n = ibits(bh(i  , j+1, k  ), 0, bitw_5)
+      l_b = ibits(bh(i  , j  , k-1), 0, bitw_5)
+      l_t = ibits(bh(i  , j  , k+1), 0, bitw_5)
+
+      rcp_p = mtbl(1, l_p) * mtbl(2, l_p)
+      rcp_w = mtbl(1, l_w) * mtbl(2, l_w)
+      rcp_e = mtbl(1, l_e) * mtbl(2, l_e)
+      rcp_s = mtbl(1, l_s) * mtbl(2, l_s)
+      rcp_n = mtbl(1, l_n) * mtbl(2, l_n)
+      rcp_b = mtbl(1, l_b) * mtbl(2, l_b)
+      rcp_t = mtbl(1, l_t) * mtbl(2, l_t) ! 7
+
+      lmd_p = mtbl(3, l_p)
+      lmd_w = mtbl(3, l_w)
+      lmd_e = mtbl(3, l_e)
+      lmd_s = mtbl(3, l_s)
+      lmd_n = mtbl(3, l_n)
+      lmd_b = mtbl(3, l_b)
+      lmd_t = mtbl(3, l_t)
+
+      t_p = ie(i  , j  , k  ) / rcp_p
+      t_w = ie(i-1, j  , k  ) / rcp_w
+      t_e = ie(i+1, j  , k  ) / rcp_e
+      t_s = ie(i  , j-1, k  ) / rcp_s
+      t_n = ie(i  , j+1, k  ) / rcp_n
+      t_b = ie(i  , j  , k-1) / rcp_b
+      t_t = ie(i  , j  , k+1) / rcp_t ! 7*8 = 56
+
+      tc_w = lmd_p * lmd_w / (lmd_p + lmd_w) * pp
+      tc_e = lmd_p * lmd_e / (lmd_p + lmd_e) * pp
+      tc_s = lmd_p * lmd_s / (lmd_p + lmd_s) * pp
+      tc_n = lmd_p * lmd_n / (lmd_p + lmd_n) * pp
+      tc_b = lmd_p * lmd_b / (lmd_p + lmd_b) * pp
+      tc_t = lmd_p * lmd_t / (lmd_p + lmd_t) * pp ! (3+8)*6 = 66
+
+      g_p = c_w * tc_w &
+          + c_e * tc_e &
+          + c_s * tc_s &
+          + c_n * tc_n &
+          + c_b * tc_b &
+          + c_t * tc_t    ! 11
+
+      delta =(dth2*( c_w * tc_w * t_w  & ! west
+                   + c_e * tc_e * t_e  & ! east
+                   + c_s * tc_s * t_s  & ! south
+                   + c_n * tc_n * t_n  & ! north
+                   + c_b * tc_b * t_b  & ! bottom
+                   + c_t * tc_t * t_t  & ! top
+                   - g_p *        t_p) &
+            - dth1*(-(1.0-g_w)*a_w * qbc(1, i, j, k)  & ! west   gamma
+                    +(1.0-g_e)*a_e * qbc(2, i, j, k)  & ! east   gamma
+                    -(1.0-g_s)*a_s * qbc(3, i, j, k)  & ! south  gamma
+                    +(1.0-g_n)*a_n * qbc(4, i, j, k)  & ! north  gamma
+                    -(1.0-g_b)*a_b * qbc(5, i, j, k)  & ! bottom gamma
+                    +(1.0-g_t)*a_t * qbc(6, i, j, k)  & ! top    gamma
+            ) )  * real(ibits(idx, Active,  1))                         ! 20 + 26 = 46
+      ie(i,j,k) = ws(i,j,k) + delta
+      res = res + dble(delta*delta) ! 3
     end do
     end do
     end do
@@ -482,70 +535,3 @@
 
     return
     end subroutine ps_diff_ee
-
-!> ********************************************************************
-!! @brief 温度指定境界条件を設定するために必要な参照値をセットする
-!! @param[in,out] t 温度
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param st ループの開始インデクス
-!! @param ed ループの終了インデクス
-!! @param bh BCindex H1
-!! @param odr 内部境界処理時の境界条件のエントリ
-!! @param tc 指定する値
-!<
-    subroutine hbc_drchlt (t, sz, g, st, ed, bh, odr, tc)
-    implicit none
-    include '../FB/ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, idx, odr
-    integer, dimension(3)                                       ::  sz, st, ed
-    real                                                        ::  tc
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  t
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bh
-
-!$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(st, ed, odr, tc) &
-!$OMP PRIVATE(idx)
-
-!$OMP DO SCHEDULE(static)
-
-    do k=st(3),ed(3)
-    do j=st(2),ed(2)
-    do i=st(1),ed(1)
-      idx = bh(i,j,k)
-
-      if ( 0 /= iand(idx, bc_mask30) ) then ! 6面のうちのどれか速度境界フラグが立っている場合
-
-        if ( ibits(idx, bc_face_E, bitw_5) == odr ) then
-          t(i+1,j,k) = tc
-        end if
-        
-        if ( ibits(idx, bc_face_W, bitw_5) == odr ) then
-          t(i-1,j,k) = tc
-        end if
-
-        if ( ibits(idx, bc_face_N, bitw_5) == odr ) then
-          t(i,j+1,k) = tc
-        end if
-        
-        if ( ibits(idx, bc_face_S, bitw_5) == odr ) then
-          t(i,j-1,k) = tc
-        end if
-			
-        if ( ibits(idx, bc_face_T, bitw_5) == odr ) then
-          t(i,j,k+1) = tc
-        end if
-        
-        if ( ibits(idx, bc_face_B, bitw_5) == odr ) then
-          t(i,j,k-1) = tc
-        end if
-
-      endif
-    end do
-    end do
-    end do
-!$OMP END DO
-!$OMP END PARALLEL
-
-    return
-    end subroutine hbc_drchlt

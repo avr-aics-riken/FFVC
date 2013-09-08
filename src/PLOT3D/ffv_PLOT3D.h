@@ -49,11 +49,11 @@ private:
   REAL_TYPE* d_p;    ///< 圧力データ配列
   REAL_TYPE* d_wo;   ///< ベクトル出力コンテナ配列
   REAL_TYPE* d_v;    ///< 速度ベクトルデータ配列
-  REAL_TYPE* d_t;    ///< 温度データ配列
+  REAL_TYPE* d_ie;   ///< 内部エネルギーデータ配列
   REAL_TYPE* d_p0;   ///< スカラーデータ配列
   REAL_TYPE* d_wv;   ///< ベクトルデータ配列
-  int* d_bcv;        ///< BCindexV
-  int* d_bcd;        ///< BCindexID
+  int* d_cdf;        ///< BCindex Component Directional BC
+  int* d_bcd;        ///< BCindex B
 
 public:
   
@@ -69,10 +69,10 @@ public:
     d_p  = NULL;
     d_wo = NULL;
     d_v  = NULL;
-    d_t  = NULL;
+    d_ie  = NULL;
     d_p0 = NULL;
     d_wv = NULL;
-    d_bcv= NULL;
+    d_cdf= NULL;
     d_bcd= NULL;
   }
   
@@ -582,11 +582,11 @@ public:
    * @param [in]     m_d_p       圧力データ
    * @param [in]     m_d_wo      ベクトル出力データコンテナ配列
    * @param [in]     m_d_v       速度データ
-   * @param [in]     m_d_t       温度データ
+   * @param [in]     m_d_ie       温度データ
    * @param [in]     m_d_p0      スカラーデータ
    * @param [in]     m_d_wv      ベクトルデータ
-   * @param [in]     m_d_bcv     BCindexV
-   * @param [in]     m_d_bcd     BCindexID
+   * @param [in]     m_d_cdf     BCindex C
+   * @param [in]     m_d_bcd     BCindex B
    */
   void Initialize(const int* m_size,
                   const int m_guide,
@@ -599,10 +599,10 @@ public:
                   REAL_TYPE* m_d_p,
                   REAL_TYPE* m_d_wo,
                   REAL_TYPE* m_d_v,
-                  REAL_TYPE* m_d_t,
+                  REAL_TYPE* m_d_ie,
                   REAL_TYPE* m_d_p0,
                   REAL_TYPE* m_d_wv,
-                  int*       m_d_bcv,
+                  int*       m_d_cdf,
                   int*       m_d_bcd);
 };
 

@@ -30,7 +30,7 @@
 !! @param [in]  dh     格子幅
 !! @param [in]  rei    Reynolds数の逆数
 !! @param [in]  v0     速度ベクトル（n-step）
-!! @param [in]  bv     BCindex V
+!! @param [in]  bv     BCindex C
 !! @param [in]  vec    指定する速度ベクトル
 !! @param [in]  nID    隣接ランク番号（nID[]<0の時外部境界面）
 !! @param [out] flop   浮動小数点演算数
@@ -487,7 +487,7 @@
 !! @param [in]  sz     配列長
 !! @param [in]  g      ガイドセル長
 !! @param [in]  m_face 外部境界の面番号
-!! @param [in]  bv     BCindex V
+!! @param [in]  bv     BCindex C
 !! @param [in]  vec    指定する速度ベクトル
 !! @param [in]  nID    隣接ランク番号（nID[]<0の時外部境界面）
 !! @note 流束型の境界条件を用いるので，内点の計算に使う参照点に値があればよい（1層）
@@ -1198,7 +1198,7 @@
 !! @param [in]     sz      配列長
 !! @param [in]     g       ガイドセル長
 !! @param [in]     m_face  面番号
-!! @param [in]     bv      BCindex V
+!! @param [in]     bv      BCindex C
 !! @param [in]     vec     指定する速度ベクトル
 !! @param [out]    vsum    \sum{v}
 !! @param [in]     nID     隣接ランク番号（nID[]<0の時外部境界面）
@@ -1347,7 +1347,7 @@
 !! @param [in]     g      ガイドセル長
 !! @param [in]     m_face 面番号
 !! @param [in]     v      セルセンター速度 n+1
-!! @param [in]     bv     BCindex V
+!! @param [in]     bv     BCindex C
 !! @param [in]     nID    隣接ランク番号（nID[]<0の時外部境界面）
 !! @note 有効セルのマスクを掛けて、流量を積算
 !<
@@ -1465,7 +1465,7 @@
 !! @param [in]  sz     配列長
 !! @param [in]  g      ガイドセル長
 !! @param [in]  m_face 外部境界の面番号
-!! @param [in]  bv     BCindex V
+!! @param [in]  bv     BCindex C
 !! @param [in]  vec    指定する速度ベクトル
 !! @param [out] vsum   \sum{vf}
 !! @param [in]  nID    隣接ランク番号（nID[]<0の時外部境界面）

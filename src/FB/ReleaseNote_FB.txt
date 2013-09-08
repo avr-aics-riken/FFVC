@@ -17,6 +17,9 @@
 RELEASE NOTE
 ============
 
+Ver 1.3.5   2013-09-07
+  - 温度輸送方程式を内部エネルギー輸送方程式へ変更したことに伴う変更
+
 Ver 1.3.4   2013-08-05
   - パラメータ構造の変更に対応
   - TPControl::GetValue(REAL_TYPE) >> float, doubleに分離, GetVector(REAL_TYPE)は未だ

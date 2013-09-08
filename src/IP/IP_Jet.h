@@ -103,12 +103,11 @@ public:
    * @brief Jetの流入境界条件による発散値の修正
    * @param [in,out] div   発散値
    * @param [in]     face  面番号
-   * @param [in]     bv    BCindex V
    * @param [in,out] vf    セルフェイス速度
    * @param [out]    sum   sum[0] 無次元流入量, sum[1] 無次元平均速度のもと
    * @param [in,out] flop  flop count
    */
-  void divJetInflow(REAL_TYPE* div, const int face, const int* bv, REAL_TYPE* vf, REAL_TYPE* sum, double& flop);
+  void divJetInflow(REAL_TYPE* div, const int face, REAL_TYPE* vf, REAL_TYPE* sum, double& flop);
   
   
   /**
@@ -125,14 +124,12 @@ public:
    * @param [in]     face  面番号
    * @param [in]     rei   レイノルズ数の逆数
    * @param [in]     v0    速度ベクトル（n-step）
-   * @param [in]     bv    BCindex V
    * @param [in,out] flop  flop count
    */
   void vobc_pv_JetInflow(REAL_TYPE* wv,
                          const int face, 
                          const REAL_TYPE rei,
                          const REAL_TYPE* v0,
-                         const int* bv,
                          double& flop);
   
 };

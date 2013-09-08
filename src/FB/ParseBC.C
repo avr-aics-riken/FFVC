@@ -48,7 +48,7 @@ void ParseBC::chkBCconsistency(const int kos, const CompoList* cmp)
   {
     for (int n=1; n<=NoCompo; n++)
     {
-      if ( cmp[n].isHBC() )
+      if ( cmp[n].isHeatMode() )
       {
         Hostonly_ stamped_printf("\t'KindOfSolver' is FLOW_ONLY, but 'LocalBoundary' has heat boundary condition.\n");
         Exit(0);
@@ -211,7 +211,7 @@ void ParseBC::getDir(const string label_base, REAL_TYPE* v)
 
 // #################################################################
 /**
- * @brief Const_Temperatureのパラメータを取得する
+ * @brief ConstTemperatureのパラメータを取得する
  * @param [in]  label_base ラベルディレクトリ
  * @param [in]  n          コンポーネントリストの格納番号
  * @param [out] cmp        CompoList
@@ -221,7 +221,7 @@ void ParseBC::getIbcCnstTemp(const string label_base, const int n, CompoList* cm
   string label = label_base + "/Temperature";
   
   REAL_TYPE tmp = getBCvalReal(label);
-  cmp[n].set_Temp( FBUtility::convTemp2K(tmp, Unit_Temp) );
+  cmp[n].setTemp( FBUtility::convTemp2K(tmp, Unit_Temp) );
 }
 
 
@@ -316,92 +316,48 @@ void ParseBC::getIbcHeatFlux(const string label_base, const int n, CompoList* cm
  */
 void ParseBC::getIbcHeatSrc(const string label_base, const int n, CompoList* cmp)
 {
-  REAL_TYPE hsrc=0.0f;
+  REAL_TYPE ct=0.0f;
   string str;
   string label;
   
-  // type
-  label = label_base + "/Type";
+  // 発熱密度
+  label = label_base + "/HeatReleaseValue";
   
-  if ( !(tpCntl->getInspectedValue(label, str )) )
+  if ( tpCntl->chkLabel(label) )
   {
-    stamped_printf("\tParsing error : Invalid int value for '%s\n", label.c_str());
-    Exit(0);
+    if ( tpCntl->getInspectedValue(label, ct) )
+    {
+      cmp[n].setHsrcPolicy(true);
+      cmp[n].setHeatDensity( ct );
+    }
+    else
+    {
+      stamped_printf("\tParsing error : Invalid value for '%s\n", label.c_str());
+      Exit(0);
+    }
   }
-  if ( !strcasecmp("HeatReleaseValue", str.c_str()) )
+  else if ( tpCntl->chkLabel(label_base + "/HeatGenerationDensity") )
   {
-	  cmp[n].set_HSRC_policy(true);
-  }
-  else if ( !strcasecmp("HeatGenerationDensity", str.c_str()) )
-  {
-	  cmp[n].set_HSRC_policy(false);
-  }
-  else
-  {
-	  stamped_printf("\tParsing error : Invalid string value for 'Type' : %s\n", str.c_str());
-	  Exit(0);
-  }
-  
-  // 放熱量
-  label = label_base + "/Value";
-  
-  if ( !(tpCntl->getInspectedValue(label, hsrc )) )
-  {
-    stamped_printf("\tParsing error : Invalid float value for '%s\n", label.c_str());
-    Exit(0);
-  }
-  
-  if ( cmp[n].isPolicy_HeatDensity() )
-  {
-    cmp[n].set_HeatDensity( hsrc ); // 発熱密度
+    label = label_base + "/HeatGenerationDensity";
+    
+    if ( tpCntl->getInspectedValue(label, ct) )
+    {
+      cmp[n].setHsrcPolicy(false);
+      cmp[n].setHeatValue( ct );
+    }
+    else
+    {
+      stamped_printf("\tParsing error : Invalid value for '%s\n", label.c_str());
+      Exit(0);
+    }
   }
   else
   {
-    cmp[n].set_HeatValue( hsrc ); // 発熱量
+    stamped_printf("\tParsing error : Invalid STRING value for '%s\n", label.c_str());
+    Exit(0);
   }
   
 }
-
-
-
-// #################################################################
-/**
- * @brief HeatTransferBのパラメータを取得する
- * @param [in]  label_base ラベルディレクトリ
- * @param [in]  n          コンポーネントリストの格納番号
- * @param [out] cmp        CompoList
- */
-void ParseBC::getIbcHT_B(const string label_base, const int n, CompoList* cmp)
-{
-  string label;
-  
-  // 熱伝達係数
-  label = label_base+"/CoefOfHeatTransfer";
-  cmp[n].setCoefHT( getBCvalReal(label) );
-  
-  // バルク温度
-  label = label_base+"/BulkTemperature";
-  REAL_TYPE st = getBCvalReal(label);
-  cmp[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
-}
-
-
-
-// #################################################################
-/**
- * @brief HeatTransferNのパラメータを取得する
- * @param [in]  label_base ラベルディレクトリ
- * @param [in]  n          コンポーネントリストの格納番号
- * @param [out] cmp        CompoList
- */
-void ParseBC::getIbcHT_N(const string label_base, const int n, CompoList* cmp)
-{
-  // 熱伝達係数
-  string label = label_base + "/CoefOfHeatTransfer";
-  
-  cmp[n].setCoefHT( getBCvalReal(label) );
-}
-
 
 
 // #################################################################
@@ -421,17 +377,17 @@ void ParseBC::getIbcHT_S(const string label_base, const int n, CompoList* cmp)
   cmp[n].setCoefHT( getBCvalReal(label) );
   
   // 表面温度
-  label = label_base + "/SurfaceTemperature";
+  label = label_base + "/BulkTemperature";
   
   REAL_TYPE st = getBCvalReal(label);
-  cmp[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
+  cmp[n].setTemp( FBUtility::convTemp2K(st, Unit_Temp) );
 
 }
 
 
 // #################################################################
 /**
- * @brief HeatTransfer_SFのパラメータを取得する
+ * @brief HeatTransferSFのパラメータを取得する
  * @param [in]  label_base ラベルディレクトリ
  * @param [in]  n          コンポーネントリストの格納番号
  * @param [out] cmp        CompoList
@@ -442,25 +398,9 @@ void ParseBC::getIbcHT_SF(const string label_base, const int n, CompoList* cmp)
   string label;
   
   // 表面温度
-  label = label_base+"/SurfaceTemperature";
+  label = label_base+"/BulkTemperature";
   REAL_TYPE st = getBCvalReal(label);
-  cmp[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
-  
-  // type  デフォルトはbulk
-  cmp[n].set_sw_HTmodeRef( CompoList::HT_mode_bulk );
-  label = label_base+"/RefTempMode";
-  
-  if ( tpCntl->getInspectedValue(label, str ) )
-  {
-    if ( !strcasecmp("Bulk", str.c_str()) )
-    {
-      cmp[n].set_sw_HTmodeRef( CompoList::HT_mode_bulk );
-    }
-    else if ( !strcasecmp("Local", str.c_str()) )
-    {
-      cmp[n].set_sw_HTmodeRef( CompoList::HT_mode_local );
-    }
-  }
+  cmp[n].setTemp( FBUtility::convTemp2K(st, Unit_Temp) );
   
   // coefficients
   label = label_base+"/Alpha";
@@ -487,27 +427,10 @@ void ParseBC::getIbcHT_SN(const string label_base, const int n, CompoList* cmp)
   string label;
   
   // 表面温度
-  label = label_base + "/SurfaceTemperature";
+  label = label_base + "/BulkTemperature";
   
   REAL_TYPE st = getBCvalReal(label);
-  cmp[n].set_Temp( FBUtility::convTemp2K(st, Unit_Temp) );
-  
-  // type デフォルトはbulk
-  cmp[n].set_sw_HTmodeRef( CompoList::HT_mode_bulk );
-  
-  label = label_base + "/RefTempMode";
-  
-  if ( tpCntl->getInspectedValue(label, str ) )
-  {
-    if ( !strcasecmp("Bulk", str.c_str()) )
-    {
-      cmp[n].set_sw_HTmodeRef( CompoList::HT_mode_bulk );
-    }
-    else if ( !strcasecmp("Local", str.c_str()) )
-    {
-      cmp[n].set_sw_HTmodeRef( CompoList::HT_mode_local );
-    }
-  }
+  cmp[n].setTemp( FBUtility::convTemp2K(st, Unit_Temp) );
   
   // Vertical and upper face values
   label = label_base + "/VerticalLaminarAlpha";
@@ -593,7 +516,7 @@ void ParseBC::getIbcIsoTherm(const string label_base, const int n, CompoList* cm
   // 表面温度
   label = label_base+"/Temperature";
   REAL_TYPE tmp = getBCvalReal(label);
-  cmp[n].set_Temp( FBUtility::convTemp2K(tmp, Unit_Temp) );
+  cmp[n].setTemp( FBUtility::convTemp2K(tmp, Unit_Temp) );
 }
 
 
@@ -1168,14 +1091,13 @@ void ParseBC::getIbcSpecVel(const string label_base, const int n, CompoList* cmp
       Exit(0);
     }
 
-    cmp[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
+    cmp[n].setTemp( FBUtility::convTemp2K(ct, Unit_Temp) );
     
     if ( Unit_Param != DIMENSIONAL )
     {
       Hostonly_ stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
       Exit(0);
     }
-    cmp[n].setType(SPEC_VEL_WH); // SPEC_VELから変更
 
   }
   
@@ -1326,7 +1248,7 @@ void ParseBC::getObcFarField(const string label_base, const int n)
       Exit(0);
     }
 
-    BaseBc[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
+    BaseBc[n].setTemp( FBUtility::convTemp2K(ct, Unit_Temp) );
   }
   
   // 圧力境界のタイプ  default
@@ -1393,23 +1315,8 @@ void ParseBC::getObcHeatTransfer(const string label_base, const int n, const str
   string str;
   REAL_TYPE ct;
   
-  if ( !strcasecmp(kind.c_str(), "HeatTransferB") )
-  {
-    BaseBc[n].set_HTmode(HT_B);
-    label = label_base + "/CoefOfHeatTransfer";
-    BaseBc[n].setCoefHT( getBCvalReal(label) );
-    
-    label = label_base + "/BulkTemperature";
-    ct = getBCvalReal(label);
-    BaseBc[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
-  }
-  else if ( !strcasecmp(kind.c_str(), "HeatTransferN") )
-  {
-    BaseBc[n].set_HTmode(HT_N);
-    label = label_base + "/CoefOfHeatTransfer";
-    BaseBc[n].setCoefHT( getBCvalReal(label) );
-  }
-  else if ( !strcasecmp(kind.c_str(), "HeatTransferS") )
+
+  if ( !strcasecmp(kind.c_str(), "HeatTransferS") )
   {
     BaseBc[n].set_HTmode(HT_S);
     label = label_base + "/CoefOfHeatTransfer";
@@ -1417,13 +1324,13 @@ void ParseBC::getObcHeatTransfer(const string label_base, const int n, const str
     
     label = label_base + "/SurfaceTemperature";
     ct = getBCvalReal(label);
-    BaseBc[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
+    BaseBc[n].setTemp( FBUtility::convTemp2K(ct, Unit_Temp) );
   }
   else if ( !strcasecmp(kind.c_str(), "HeatTransferSF") )
   {
     BaseBc[n].set_HTmode(HT_SF);
     label = label_base + "/SurfaceTemperature";
-    BaseBc[n].set_Temp( getBCvalReal(label) );
+    BaseBc[n].setTemp( getBCvalReal(label) );
     
     
     label=label_base+"/RefTempMode";
@@ -1454,7 +1361,7 @@ void ParseBC::getObcHeatTransfer(const string label_base, const int n, const str
   {
     BaseBc[n].set_HTmode(HT_SN);
     label = label_base + "/SurfaceTemperature";
-    BaseBc[n].set_Temp( getBCvalReal(label) );
+    BaseBc[n].setTemp( getBCvalReal(label) );
     
     // reference mode
     label = label_base + "/RefTempMode";
@@ -1747,7 +1654,7 @@ void ParseBC::getObcSpecVH(const string label_base, const int n)
     }
     else
     {
-      BaseBc[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
+      BaseBc[n].setTemp( FBUtility::convTemp2K(ct, Unit_Temp) );
       BaseBc[n].set_hType(CNST_TEMP);
     }
   }
@@ -1783,7 +1690,7 @@ void ParseBC::getObcTrcfree(const string label_base, const int n)
       Exit(0);
     }
 
-    BaseBc[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
+    BaseBc[n].setTemp( FBUtility::convTemp2K(ct, Unit_Temp) );
   }
   */
 }
@@ -1876,14 +1783,14 @@ void ParseBC::getObcWall(const string label_base, const int n)
       BaseBc[n].set_hType(ISOTHERMAL);
       label2 = label_base + "/Temperature";
       ct = getBCvalReal(label2); // 表面温度
-      BaseBc[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
+      BaseBc[n].setTemp( FBUtility::convTemp2K(ct, Unit_Temp) );
     }
     else if( !strcasecmp(str.c_str(), "ConstantTemperature") )
     {
       BaseBc[n].set_hType(CNST_TEMP);
       label = label_base + "/Temperature";
       ct = getBCvalReal(label); // 指定温度
-      BaseBc[n].set_Temp( FBUtility::convTemp2K(ct, Unit_Temp) );
+      BaseBc[n].setTemp( FBUtility::convTemp2K(ct, Unit_Temp) );
     }
     else
     {
@@ -2215,50 +2122,22 @@ void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp)
     // 各BCの処理
     int tp = cmp[m].getType();
     
-    if ( tp == OBSTACLE )
-    {
-      ;
-    }
-    else if ( tp == SPEC_VEL )
-    {
-      getIbcSpecVel(label_leaf, m, cmp);
-    }
-    else if ( tp == OUTFLOW ) 
-    {
-      getIbcOutflow(label_leaf, m, cmp);
-    }
-    else if ( tp == IBM_DF ) 
-    {
-      get_IBC_IBM_DF(label_leaf, m, cmp);
-    }
-    else if ( tp == HEX ) 
-    {
-      get_IBC_PrsLoss(label_leaf, m, cmp);
-    }
-    else if ( tp == FAN ) 
-    {
-      get_IBC_Fan(label_leaf, m, cmp);
-    }
-    else if ( tp == DARCY ) 
-    {
-      get_Darcy(label_leaf, m, cmp);
-    }
-    else if ( tp == CELL_MONITOR ) 
-    {
-      getIbcMonitor(label_leaf, m, cmp);
-    }
-    else if ( tp == INACTIVE ) 
-    {
-      ; // skip
-    }
-    else if ( tp == PERIODIC ) 
-    {
-      getIbcPeriodic(label_leaf, m, cmp);
-    }
+    if      ( tp == OBSTACLE )      { ; }
+    else if ( tp == SPEC_VEL )      getIbcSpecVel(label_leaf, m, cmp);
+    else if ( tp == OUTFLOW )       getIbcOutflow(label_leaf, m, cmp);
+    else if ( tp == IBM_DF )        get_IBC_IBM_DF(label_leaf, m, cmp);
+    else if ( tp == HEX )           get_IBC_PrsLoss(label_leaf, m, cmp);
+    else if ( tp == FAN )           get_IBC_Fan(label_leaf, m, cmp);
+    else if ( tp == DARCY )         get_Darcy(label_leaf, m, cmp);
+    else if ( tp == CELL_MONITOR )  getIbcMonitor(label_leaf, m, cmp);
+    else if ( tp == INACTIVE )      { ; }
+    else if ( tp == PERIODIC )      getIbcPeriodic(label_leaf, m, cmp);
     
     
     if ( HeatProblem )
     {
+      cmp[m].setHeatmode(ON);
+      
       if ( C->KindOfSolver == FLOW_ONLY )
       {
         Hostonly_ stamped_printf("Parse Error : Heat BC is not allowed on FLOWONLY mode.\n");
@@ -2271,26 +2150,13 @@ void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp)
         Exit(0);
       }
       
-      if ( tp == OBSTACLE ) 
-      {
-        cmp[m].setHeatflux( 0.0 );
-      }
-      else if ( tp == ADIABATIC )
-      {
-        cmp[m].setHeatflux( 0.0 );
-      }
-      else if ( tp == HEATFLUX ) 
-      {
-        getIbcHeatFlux(label_leaf, m, cmp);
-      }
+      if      ( tp == OBSTACLE )   cmp[m].setHeatflux( 0.0 );
+      else if ( tp == ADIABATIC )  cmp[m].setHeatflux( 0.0 );
+      else if ( tp == HEATFLUX )   getIbcHeatFlux(label_leaf, m, cmp);
       else if ( tp == TRANSFER ) 
       {
         switch ( cmp[m].getHtype() )
         {
-          case HT_N:
-            getIbcHT_N(label_leaf, m, cmp);
-            break;
-            
           case HT_S:
             getIbcHT_S(label_leaf, m, cmp);
             break;
@@ -2302,28 +2168,12 @@ void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp)
           case HT_SF:
             getIbcHT_SF(label_leaf, m, cmp);
             break;
-            
-          case HT_B:
-            getIbcHT_B(label_leaf, m, cmp);
-            break;
         }        
       }
-      else if ( tp == ISOTHERMAL ) 
-      {
-        getIbcIsoTherm(label_leaf, m, cmp);
-      }
-      else if ( tp == RADIANT )
-      {
-        get_IBC_Radiant(label_leaf, m, cmp);
-      }
-      else if ( tp == HEAT_SRC ) 
-      {
-        getIbcHeatSrc(label_leaf, m, cmp);
-      }
-      else if ( tp == CNST_TEMP ) 
-      {
-        getIbcCnstTemp(label_leaf, m, cmp);
-      }
+      else if ( tp == ISOTHERMAL )   getIbcIsoTherm(label_leaf, m, cmp);
+      else if ( tp == RADIANT )      get_IBC_Radiant(label_leaf, m, cmp);
+      else if ( tp == HEAT_SRC )     getIbcHeatSrc(label_leaf, m, cmp);
+      else if ( tp == CNST_TEMP )    getIbcCnstTemp(label_leaf, m, cmp);
       else 
       {
         Hostonly_ printf("\tError : Invalid Local BC keyword [%d]\n", tp);
@@ -2332,12 +2182,14 @@ void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp)
     }
   }
   
-  // mat[]とcmp[]の整合性をとる
+  
+  
+  // この時点まで，mat[]の媒質情報は媒質を保持しているオーダーにしかないので，媒質情報をLBCのオーダーにコピーする
   for (int k=1; k<=NoBC; k++)
   {
-    int m = NoMedium + k;
+    int m = NoMedium + k; // cmp[]のLBCのインデクス
     
-    // LocalBCについて，媒質ラベルからmat[]の格納番号のサーチ
+    // 媒質ラベルからmat[]の格納番号のサーチ
     int odr = -1;
     
     for (int i=1; i<=NoMedium; i++)
@@ -2349,14 +2201,14 @@ void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp)
       }
     }
     
-    if ( -1 == odr )
+    if ( (odr < 1) || (odr > NoMedium) )
     {
       Hostonly_ stamped_printf("\tSomthing wrong %d\n", odr);
       Exit(0);
     }
     
     // LocalBC分の媒質情報のコピー
-    if ( mat[m].getState() == FLUID )
+    if ( mat[odr].getState() == FLUID )
     {
       mat[m].P[p_density]              = mat[odr].P[p_density];
       mat[m].P[p_kinematic_viscosity]  = mat[odr].P[p_kinematic_viscosity];
@@ -2389,6 +2241,24 @@ void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp)
     cmp[k].setMedium(mat[k].getAlias());
   }
   
+#if 0
+  for (int k=0; k<=NoCompo; k++)
+  {
+    printf("%3d : %3d %16s %16s %e %e %e %e %e %e %e\n",
+           k,
+           cmp[k].getState(),
+           cmp[k].getAlias().c_str(),
+           cmp[k].getMedium().c_str(),
+           mat[k].P[p_density],
+           mat[k].P[p_kinematic_viscosity],
+           mat[k].P[p_viscosity],
+           mat[k].P[p_thermal_conductivity],
+           mat[k].P[p_specific_heat],
+           mat[k].P[p_speed_of_sound],
+           mat[k].P[p_vol_expansion]
+           );
+  }
+#endif
 }
 
 
@@ -2718,14 +2588,14 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   FB::Vec3i st, ed;
   
   // VBC ---------------------------------------------------
-  if ( existComponent(SPEC_VEL, cmp) || existComponent(SPEC_VEL_WH, cmp) )
+  if ( existComponent(SPEC_VEL, cmp) )
   {
     fprintf(fp, "\n\t[Specified_Velocity]\n");
     fprintf(fp, "\t no                    Label    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]    Elements\n");
     
     for (int n=1; n<=NoCompo; n++)
     {
-      if ( (cmp[n].getType() == SPEC_VEL) || (cmp[n].getType() == SPEC_VEL_WH) )
+      if ( cmp[n].getType() == SPEC_VEL )
       {
         st = getCmpGbbox_st(n, gci);
         ed = getCmpGbbox_ed(n, gci);
@@ -2754,7 +2624,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     
     for (int n=1; n<=NoCompo; n++)
     {
-      if ( (cmp[n].getType() == SPEC_VEL) || (cmp[n].getType() == SPEC_VEL_WH) )
+      if ( cmp[n].getType() == SPEC_VEL )
       {
         fprintf(fp,"\t\t\t   %10.3e  %10.3e  %10.3e  %14s ",
                 cmp[n].nv[0], cmp[n].nv[1], cmp[n].nv[2],
@@ -2782,14 +2652,14 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     }
     
     // with constant temperature
-    if ( existComponent(SPEC_VEL_WH, cmp) )
+    if ( existComponent(SPEC_VEL, cmp) && HeatProblem )
     {
       fprintf(fp, "\n\t[Specified_Velocity with Constant Temperature]\n");
       fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed      Temp(%s)      Temp[-]\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C");
       
       for (int n=1; n<=NoCompo; n++)
       {
-        if ( cmp[n].getType() == SPEC_VEL_WH )
+        if ( cmp[n].getType() == SPEC_VEL )
         {
           st = getCmpGbbox_st(n, gci);
           ed = getCmpGbbox_ed(n, gci);
@@ -2862,7 +2732,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
       if ( cmp[n].getType() == IBM_DF )
       {
         fprintf(fp,"\t%3d %24s %10.3e %10.3e %10.3e %12.4e %12.4e \n",
-                n, cmp[n].getAlias().c_str(), n, cmp[n].nv[0], cmp[n].nv[1], cmp[n].nv[2],
+                n, cmp[n].getAlias().c_str(), cmp[n].nv[0], cmp[n].nv[1], cmp[n].nv[2],
                 cmp[n].get_Velocity(), FBUtility::convD2ND_V(cmp[n].get_Velocity(), RefVelocity));
       }
     }
@@ -3057,27 +2927,6 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     }
   }
   
-  // Heat Transfer N
-  if ( HeatProblem && existCompoTransfer(HT_N, cmp) )
-  {
-    fprintf(fp, "\n\t[Heat Transfer : Type N]\n");
-    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   coef(W/m^2K)\n");
-    
-    for (int n=1; n<=NoCompo; n++)
-    {
-      if ( cmp[n].getHtype() == HT_N )
-      {
-        st = getCmpGbbox_st(n, gci);
-        ed = getCmpGbbox_ed(n, gci);
-        
-        fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %11.4e %12.4e\n", 
-                n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
-                st.x, ed.x, st.y, ed.y, st.z, ed.z,
-                cmp[n].area, cmp[n].getCoefHT());
-      }
-    }
-  }
-  
   // Heat Transfer S
   if ( HeatProblem && existCompoTransfer(HT_S, cmp) )
   {
@@ -3113,12 +2962,11 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         st = getCmpGbbox_st(n, gci);
         ed = getCmpGbbox_ed(n, gci);
         
-        fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e   %s\n", 
+        fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n",
                 n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z,
                 cmp[n].area, FBUtility::convK2Temp(cmp[n].getTemp(), Unit_Temp),
-                FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp),
-                (cmp[n].get_sw_HTmodeRef()==CompoList::HT_mode_bulk) ? "Bulk" : "Local");
+                FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp));
       }
     }
     fprintf(fp, "\n");
@@ -3159,14 +3007,13 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         st = getCmpGbbox_st(n, gci);
         ed = getCmpGbbox_ed(n, gci);
         
-        fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n", 
+        fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n",
                 n, 
                 cmp[n].getAlias().c_str(), 
                 cmp[n].getElement(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z,
                 cmp[n].area, FBUtility::convK2Temp(cmp[n].getTemp(), Unit_Temp),
-                FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp),
-                (cmp[n].get_sw_HTmodeRef()==CompoList::HT_mode_bulk) ? "Bulk" : "Local");
+                FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp));
       }
     }
     fprintf(fp, "\t no                    Label   alpha        beta       gamma\n");
@@ -3180,29 +3027,6 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
                 cmp[n].ca[CompoList::alpha], 
                 cmp[n].ca[CompoList::beta], 
                 cmp[n].ca[CompoList::gamma]);
-      }
-    }
-  }
-  
-  // Heat Transfer B
-  if ( HeatProblem && existCompoTransfer(HT_B, cmp))
-  {
-    fprintf(fp, "\n\t[Heat Transfer : Type B]\n");
-    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]  coef(W/m^2K)  BulkTemp(%s)   BulkTemp[-]\n", 
-            (Unit_Temp==Unit_KELVIN) ? "K" : "C");
-    
-    for (int n=1; n<=NoCompo; n++)
-    {
-      if ( cmp[n].getHtype() == HT_B )
-      {
-        st = getCmpGbbox_st(n, gci);
-        ed = getCmpGbbox_ed(n, gci);
-        
-        fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %11.4e  %12.4e %12.4e %12.4e\n", 
-                n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
-                st.x, ed.x, st.y, ed.y, st.z, ed.z,
-                cmp[n].area, cmp[n].getCoefHT(), FBUtility::convK2Temp(cmp[n].getTemp(), Unit_Temp),
-                FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp) );
       }
     }
   }
@@ -3566,11 +3390,7 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
         {
           int ht_mode = ref->getHTmode();
           
-          if ( ht_mode == HT_N )
-          {
-            fprintf(fp, "\tHeat Transfer Type N  : H. T. Coef. = %e \n", ref->getCoefHT());
-          }
-          else if ( ht_mode == HT_S )
+          if ( ht_mode == HT_S )
           {
             fprintf(fp, "\tHeat Transfer Type S  : H. T. Coef. = %e \n", ref->getCoefHT());
             fprintf(fp, "\t                        Surf. temp. = %e \n", ref->getTemp());
@@ -3592,16 +3412,11 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
           }
           else if ( ht_mode == HT_SF )
           {
-            fprintf(fp, "\tHeat Transfer Type SN : Surf. temp. = %e \n", ref->getTemp());
+            fprintf(fp, "\tHeat Transfer Type SF : Surf. temp. = %e \n", ref->getTemp());
             fprintf(fp, "\t                        Ref. Temp.  = %s \n", (ref->getHTmodeRef()==CompoList::HT_mode_bulk) ? "Bulk" : "Local");
             fprintf(fp, "\t                        alpha       = %12.6e \n", ref->ca[0]);
             fprintf(fp, "\t                        beta        = %12.6e \n", ref->ca[1]);
             fprintf(fp, "\t                        gamma       = %12.6e \n", ref->ca[2]);
-          }
-          else if ( ht_mode == HT_B )
-          {
-            fprintf(fp, "\tHeat Transfer Type B  : H. T. Coef. = %e \n", ref->getCoefHT());
-            fprintf(fp, "\t                        Bulk temp.  = %e \n", ref->getTemp());
           }
         }
         else if ( htp == HEATFLUX )
@@ -3772,7 +3587,7 @@ void ParseBC::setControlVars(Control* Cref)
   int m;
   double s, two=2.0;
   
-  s = (double)MASK_6; // bit幅マスクは2^(bit幅)-1を表し，ちょうど0を除いた個数となっている
+  s = (double)MASK_5; // bit幅マスクは2^(bit幅)-1を表し，ちょうど0を除いた個数となっている
   m = (int)(log10(s+1.0)/log10(two) );
   
   if ( NoCompo > s )
@@ -3820,14 +3635,11 @@ void ParseBC::setControlVars(Control* Cref)
  * @param [in]  keyword テストキーワード
  * @param [in]  m       BaseBcの格納番号
  * @param [out] cmp     CompoList
- * @note SPEC_VEL_WHは陽には現れず，get_IBC_SpecVel()内で登録される
  */
 void ParseBC::setKeywordLBC(const string keyword, const int m, CompoList* cmp)
 {
   if     ( FBUtility::compare(keyword, "Adiabatic") )            cmp[m].setType(ADIABATIC);
   else if( FBUtility::compare(keyword, "DirectHeatFlux") )       cmp[m].setType(HEATFLUX);
-  else if( FBUtility::compare(keyword, "HeatTransferB") ) {      cmp[m].setType(TRANSFER); cmp[m].setHtype(HT_B); }
-  else if( FBUtility::compare(keyword, "HeatTransferN") ) {      cmp[m].setType(TRANSFER); cmp[m].setHtype(HT_N); }
   else if( FBUtility::compare(keyword, "HeatTransferS") ) {      cmp[m].setType(TRANSFER); cmp[m].setHtype(HT_S); }
   else if( FBUtility::compare(keyword, "HeatTransferSF") ){      cmp[m].setType(TRANSFER); cmp[m].setHtype(HT_SF); }
   else if( FBUtility::compare(keyword, "HeatTransferSN") ){      cmp[m].setType(TRANSFER); cmp[m].setHtype(HT_SN); }

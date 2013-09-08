@@ -100,7 +100,7 @@ void FFV::allocArray_CompoVF(double &prep, double &total)
 {
   double mc = (double)(size[0] * size[1] * size[2]);
   
-  // d_cvf
+
   if ( !(d_cvf = paraMngr->AllocFloatS3D(guide)) ) Exit(0);
   prep += mc * (double)sizeof(float);
   total+= mc * (double)sizeof(float);
@@ -116,11 +116,11 @@ void FFV::allocArray_Cut(double &total)
 {
   double mc = (double)(size[0] * size[1] * size[2]);
   
-  // d_cut
+
   if ( !(d_cut = paraMngr->AllocFloatS4DEx(6, guide)) ) Exit(0);
   total+= mc * (double)sizeof(float) * 6.0;
   
-  // d_bid
+
   if ( !(d_bid = paraMngr->AllocIntS3D(guide)) ) Exit(0);
   total += mc * (double)sizeof(int);
 }
@@ -197,14 +197,18 @@ void FFV::allocArray_Krylov(double &total)
 {
   double mc = (double)(size[0] * size[1] * size[2]);
   
+  
   if ( !(d_wg = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
+  
   
   if ( !(d_res = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
+  
   if ( !(d_vm = Alloc::Real_S4D(size, guide, FREQ_OF_RESTART+1)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
+  
   
   if ( !(d_zm = Alloc::Real_S4D(size, guide, FREQ_OF_RESTART+1)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
@@ -221,17 +225,17 @@ void FFV::allocArray_Heat(double &total)
 {
   double mc = (double)(size[0] * size[1] * size[2]);
   
-  // d_t
-  if ( !(d_t = Alloc::Real_S3D(size, guide)) ) Exit(0);
+
+  if ( !(d_ie = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
-  // d_t0
-  if ( !(d_t0 = Alloc::Real_S3D(size, guide)) ) Exit(0);
+
+  if ( !(d_ie0 = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
-  // d_qbc
-  if ( !(d_qbc = Alloc::Real_V3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE) * 3.0;
+  
+  if ( !(d_qbc = Alloc::Real_S4D(size, guide, 6)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE) * 6.0;
 }
 
 
@@ -244,7 +248,7 @@ void FFV::allocArray_Interface(double &total)
 {
   double mc = (double)(size[0] * size[1] * size[2]);
   
-  // d_vof
+
   if ( !(d_vof = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
@@ -260,7 +264,7 @@ void FFV::allocArray_LES(double &total)
 {
   double mc = (double)(size[0] * size[1] * size[2]);
   
-  // d_vt
+
   if ( !(d_vt = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
 }
@@ -275,47 +279,47 @@ void FFV::allocArray_Main(double &total)
 {
   double mc = (double)(size[0] * size[1] * size[2]);
   
-  // d_v
+
   if ( !(d_v = Alloc::Real_V3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE) * 3.0;
   
-  // d_vf
+
   if ( !(d_vf = Alloc::Real_V3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE) * 3.0;
   
-  // d_vc
+
   if ( !(d_vc = Alloc::Real_V3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE) * 3.0;
   
-  // d_v0
+
   if ( !(d_v0 = Alloc::Real_V3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE) * 3.0;
   
-  // d_wv
+
   if ( !(d_wv = Alloc::Real_V3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE) * 3.0;
   
-  // d_wo
+
   if ( !(d_wo = Alloc::Real_V3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE) * 3.0;
   
-  // d_p
+
   if ( !(d_p = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
-  // d_p0
+
   if ( !(d_p0 = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
-  // d_sq
+
   if ( !(d_sq = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
-  // d_dv
+
   if ( !(d_dv = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
-  // d_b
+
   if ( !(d_b = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
 }
@@ -330,26 +334,34 @@ void FFV::allocArray_PBiCGSTAB(double &total)
 {
   double mc = (double)(size[0] * size[1] * size[2]);
   
+  
   if ( !(d_pcg_r = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
+  
   
   if ( !(d_pcg_p = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
+  
   if ( !(d_pcg_r0 = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
+  
   
   if ( !(d_pcg_p_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
+  
   if ( !(d_pcg_q_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
+  
   
 	if ( !(d_pcg_s = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
+  
 	if ( !(d_pcg_s_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
+  
   
 	if ( !(d_pcg_t_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
@@ -365,14 +377,18 @@ void FFV::allocArray_PCG(double &total)
 {
   double mc = (double)(size[0] * size[1] * size[2]);
   
+  
   if ( !(d_pcg_r = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
+  
   
   if ( !(d_pcg_p = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
+  
   if ( !(d_pcg_q = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
+  
   
   if ( !(d_pcg_z = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
@@ -389,42 +405,29 @@ void FFV::allocArray_Prep(double &prep, double &total)
 {
   double mc = (double)(size[0] * size[1] * size[2]);
   
-  // d_ws
+
   if ( !(d_ws = Alloc::Real_S3D(size, guide)) ) Exit(0);
   prep += mc * (double)sizeof(REAL_TYPE);
   total+= mc * (double)sizeof(REAL_TYPE);
   
-  // d_mid
+
   if ( !(d_mid = paraMngr->AllocIntS3D(guide)) ) Exit(0);
   prep += mc * (double)sizeof(int);
   
-  // d_bcd
+
   if ( !(d_bcd = paraMngr->AllocIntS3D(guide)) ) Exit(0);
   prep += mc * (double)sizeof(int);
   total+= mc * (double)sizeof(int);
   
-  // d_bcp
+
   if ( !(d_bcp = paraMngr->AllocIntS3D(guide)) ) Exit(0);
   prep += mc * (double)sizeof(int);
   total+= mc * (double)sizeof(int);
   
-  // d_bcv
-  if ( !(d_bcv = paraMngr->AllocIntS3D(guide)) ) Exit(0);
+
+  if ( !(d_cdf = paraMngr->AllocIntS3D(guide)) ) Exit(0);
   prep += mc * (double)sizeof(int);
   total+= mc * (double)sizeof(int);
-  
-  if ( C.isHeatProblem() ) 
-  {
-    // d_bh1
-    if ( !(d_bh1 = paraMngr->AllocIntS3D(guide)) ) Exit(0);
-    prep += mc * (double)sizeof(int);
-    total+= mc * (double)sizeof(int);
-    
-    // d_bh2
-    if ( !(d_bh2 = paraMngr->AllocIntS3D(guide)) ) Exit(0);
-    prep += mc * (double)sizeof(int);
-    total+= mc * (double)sizeof(int);
-  }
 }
 
 

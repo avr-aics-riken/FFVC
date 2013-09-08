@@ -351,26 +351,15 @@ int FFV::Initialize(int argc, char **argv)
   // 周期境界条件が設定されている場合のBCIndexの周期条件の強制同期
   BC.setBCIperiodic(d_bcd);
   BC.setBCIperiodic(d_bcp);
-  BC.setBCIperiodic(d_bcv);
+  BC.setBCIperiodic(d_cdf);
 
-  if ( C.isHeatProblem() )
-  {
-    BC.setBCIperiodic(d_bh1);
-    BC.setBCIperiodic(d_bh2);
-  }
 
-  // bcd/bcp/bcv/bchの同期
+  // bcd/bcp/cdfの同期
   if ( numProc > 1 )
   {
     if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
     if ( paraMngr->BndCommS3D(d_bcp, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->BndCommS3D(d_bcv, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
-    
-    if ( C.isHeatProblem() )
-    {
-      if ( paraMngr->BndCommS3D(d_bh1, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->BndCommS3D(d_bh2, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
-    }
+    if ( paraMngr->BndCommS3D(d_cdf, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
   }
   
   
@@ -553,7 +542,7 @@ int FFV::Initialize(int argc, char **argv)
     
     if ( C.isHeatProblem() ) 
     {
-      MO.setDataPtrs(d_v, d_p, d_t);
+      MO.setDataPtrs(d_v, d_p, d_ie);
     }
     else 
     {
@@ -563,7 +552,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   /* 20130611 commentout PLOT3D形状データの書き出し
-  PLT3D.Initialize(size, guide, deltaX, dfi_mng[var_Plot3D], &C, &FP3DW, &DFI, d_ws, d_p, d_wo, d_v, d_t, d_p0, d_wv, d_bcv, d_bcd);
+  PLT3D.Initialize(size, guide, deltaX, dfi_mng[var_Plot3D], &C, &FP3DW, &DFI, d_ws, d_p, d_wo, d_v, d_ie, d_p0, d_wv, d_cdf, d_bcd);
   
   if (C.FIO.Format == plt3d_fmt)
   {
@@ -599,7 +588,7 @@ int FFV::Initialize(int argc, char **argv)
     if ( (C.Mode.Average == ON) && (C.Start != initial_start) )
     {
       double flop_count=0.0;
-      AverageOutput(flop_count);
+      OutputAveragedVarables(flop_count);
     }
   }
 
@@ -830,6 +819,11 @@ void FFV::createTable(FILE* fp)
   
   // CompoList, MediumListのポインタをセット
   BC.importCMP_MAT(cmp, mat);
+  
+  
+  // Fortran用のデータ保持配列 >> mat_tbl[C.NoCompo+1][3]のイメージ
+  if ( !(mat_tbl = new REAL_TYPE[3*(C.NoCompo+1)]) ) Exit(0);
+  for (int i=0; i<3*(C.NoCompo+1); i++) mat_tbl[i] = 0.0;
   
   
   Hostonly_
@@ -1126,23 +1120,17 @@ void FFV::encodeBCindex(FILE* fp)
 
   
 #if 0
-  V.dbg_chkBCIndexD(d_bcd, "BCindexD.txt");
+  V.dbg_chkBCIndexB(d_bcd, "BCindexD.txt");
 #endif
   
   
   // STATEとACTIVEビットのコピー
   V.copyBCIbase(d_bcp, d_bcd);
-  V.copyBCIbase(d_bcv, d_bcd);
-  
-  if ( C.isHeatProblem() )
-  {
-    V.copyBCIbase(d_bh1, d_bcd);
-    V.copyBCIbase(d_bh2, d_bcd);
-  }
+  V.copyBCIbase(d_cdf, d_bcd);
   
 
   
-  // BCIndexP に圧力計算のビット情報をエンコードする -----
+  // 圧力計算のビット情報をエンコードする -----
   if ( C.isBinary() )
   {
     C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, d_mid, &BC, cmp, C.Mode.Example, d_cut, d_bid, true);
@@ -1158,27 +1146,26 @@ void FFV::encodeBCindex(FILE* fp)
   
 
   
-  // BCIndexV に速度計算のビット情報をエンコードする -----
-  V.setBCIndexV(d_bcv, d_mid, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid);
+  // 速度計算のビット情報をエンコードする -----
+  V.setBCIndexV(d_cdf, d_mid, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid);
   
   // ##########
 #if 0
-  V.dbg_chkBCIndexV(d_bcv, "BCindexV.txt");
+  V.dbg_chkBCIndexC(d_cdf, "BCindexC.txt");
 #endif
   // ##########
   
 
   
   
-  // BCIndexH に温度計算のビット情報をエンコードする -----
+  // 温度計算のビット情報をエンコードする -----
   if ( C.isHeatProblem() )
   {
-    V.setBCIndexH(d_bh1, d_bh2, d_mid, &BC, C.KindOfSolver, cmp, d_cut, d_bid);
+    V.setBCIndexH(d_cdf, d_bcd, d_mid, &BC, C.KindOfSolver, cmp, d_cut, d_bid);
     
     // ##########
 #if 0
-    V.dbg_chkBCIndexH1(d_bh1, "BCindexH1.txt");
-    V.dbg_chkBCIndexH2(d_bh2, "BCindexH2.txt");
+    V.dbg_chkBCIndexB(d_bcd, "BCindexH.txt");
 #endif
     // ##########
     
@@ -1189,6 +1176,17 @@ void FFV::encodeBCindex(FILE* fp)
   V.countCellState(L_Fcell, G_Fcell, d_bcd, FLUID);
   
 
+  Ex->writeSVX(d_mid, &C);
+  // ガイドセルへコンポーネントオーダーをエンコード
+  for (int n=0; n<NOFACE; n++)
+  {
+    V.encOrderOnGC(n, d_mid, d_bcd);
+  }
+  
+  
+  // エンコードのチェック
+  V.chkOrder(d_bcd);
+  
   
   // ここまでのbboxはmid[]でサーチした結果，BCindex処理の過程で範囲が変わるので変更
   resizeCompoBbox();
@@ -3542,9 +3540,8 @@ void FFV::resizeCompoBbox()
     switch ( typ )
     {
       case SPEC_VEL:
-      case SPEC_VEL_WH:
       case OUTFLOW:
-        resizeBbox4Face(n, d_bcv); // 速度のBCindex　セルフェイス位置でのflux型BC
+        resizeBbox4Face(n, d_cdf); // 速度のBCindex　セルフェイス位置でのflux型BC
         break;
         
       case PERIODIC:
@@ -3559,8 +3556,9 @@ void FFV::resizeCompoBbox()
     }
   }
   
-    
   if ( !C.isHeatProblem() ) return;
+  
+  
   
   // 熱計算のパート
   for (int n=1; n<=C.NoCompo; n++)
@@ -3571,11 +3569,11 @@ void FFV::resizeCompoBbox()
     {
       case ADIABATIC:
       case HEATFLUX:
-      case SPEC_VEL_WH:
+      case SPEC_VEL:
       case OUTFLOW:
       case TRANSFER:
       case ISOTHERMAL:
-        resizeBbox4Face(n, d_bh1);
+        resizeBbox4Face(n, d_cdf);
         break;
         
       case RADIANT:
@@ -3583,7 +3581,7 @@ void FFV::resizeCompoBbox()
         
       case HEAT_SRC:
       case CNST_TEMP:
-        resizeBbox4Cell(n, d_bh2);
+        resizeBbox4Cell(n, d_bcd);
         break;
     }
   }
@@ -3677,6 +3675,16 @@ void FFV::setBCinfo()
       printf("/ApplicationControl/FillMedium = \"%s\" is not listed in MediumTable.\n", C.FillMedium.c_str());
     }
     Exit(0);
+  }
+  
+  
+  // Fortran用の配列にコピー
+  for (int n=1; n<=C.NoCompo; n++)
+  {
+    mat_tbl[n*3+0] = mat[n].P[p_density];
+    mat_tbl[n*3+1] = mat[n].P[p_specific_heat];
+    mat_tbl[n*3+2] = mat[n].P[p_thermal_conductivity];
+    //printf("%d : rho=%e cp=%e lambda=%e\n", n, mat[n].P[p_density], mat[n].P[p_specific_heat], mat[n].P[p_thermal_conductivity]);
   }
   
 }
@@ -3963,7 +3971,7 @@ void FFV::setInitialCondition()
     
     
     // セルフェイスの設定　発散値は関係なし
-    BC.modDivergence(d_dv, d_bcv, CurrentTime, v00, m_buf, d_vf, d_v, &C, flop_task);
+    BC.modDivergence(d_dv, d_cdf, CurrentTime, v00, m_buf, d_vf, d_v, &C, flop_task);
     
     
 		// 外部境界面の流出流量と移流速度
@@ -3971,8 +3979,8 @@ void FFV::setInitialCondition()
     
     
 		// 外部境界面の移流速度を計算し，外部境界条件を設定
-		BC.OuterVBC(d_v, d_vf, d_bcv, tm, &C, v00);
-    BC.InnerVBC(d_v, d_bcv, tm, v00);
+		BC.OuterVBC(d_v, d_vf, d_cdf, tm, &C, v00);
+    BC.InnerVBC(d_v, d_cdf, tm, v00);
     BC.InnerVBCperiodic(d_v, d_bcd);
     
 
@@ -4003,33 +4011,33 @@ void FFV::setInitialCondition()
         it = C.iv.Temperature;
       }
 
-      U.xset(d_t, size, guide, it, kind_scalar);
+      U.xset(d_ie, size, guide, it, kind_scalar);
       
       // コンポーネントの初期値
       if ( C.MediumTmpInitOption == ON )
       {
         for (int m=1; m<=C.NoCompo; m++)
         {
-          BC.setInitialTempCompo(m, d_bcd, d_t);
+          BC.setInitialTempCompo(m, d_bcd, d_ie);
         }
       }
       
-			BC.OuterTBCperiodic(d_t);
+			BC.OuterTBCperiodic(d_ie);
 		}
     
   }
   else // リスタート時
   {
     // 内部境界条件
-    BC.InnerVBC(d_v, d_bcv, tm, v00);
+    BC.InnerVBC(d_v, d_cdf, tm, v00);
     BC.InnerVBCperiodic(d_v, d_bcd);
     BC.InnerPBCperiodic(d_p, d_bcd);
     
     // 外部境界条件
-    BC.OuterVBC(d_v, d_vf, d_bcv, tm, &C, v00);
+    BC.OuterVBC(d_v, d_vf, d_cdf, tm, &C, v00);
     
     // 流出境界の流出速度の算出
-    BC.modDivergence(d_ws, d_bcv, tm, v00, m_buf, d_vf, d_v, &C, flop_task);
+    BC.modDivergence(d_ws, d_cdf, tm, v00, m_buf, d_vf, d_v, &C, flop_task);
     
     DomainMonitor(BC.exportOBC(), &C);
     

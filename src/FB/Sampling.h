@@ -49,7 +49,7 @@ protected:
   FB::Vec3i cIndex; ///< モニタ点を含むセルのインデックス
   FB::Vec3r pch;    ///< セル幅
   FB::Vec3r v00;    ///< 座標系移動速度
-  int* bcd;     ///< BCindex ID
+  int* bcd;     ///< BCindex B
   
 public:
   /// ディフォルトコンストラクタ.
@@ -64,7 +64,7 @@ public:
   ///   @param[in] org   ローカル領域基点座標
   ///   @param[in] pch   セル幅
   ///   @param[in] v00   座標系移動速度
-  ///   @param[in] bcd   BCindex ID
+  ///   @param[in] bcd   BCindex B
   ///
   Sampling(int mode, int size[], int guide,
            FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd) {
@@ -251,7 +251,7 @@ public:
   ///   @param[in] crd  モニタ点座標
   ///   @param[in] org,pch  ローカル領域基点座標，セル幅
   ///   @param[in] v00  座標系移動速度
-  ///   @param[in] bcd  BCindex ID
+  ///   @param[in] bcd  BCindex B
   ///
   Nearest(int mode, int size[], int guide,
           FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd);
@@ -340,7 +340,7 @@ public:
   ///   @param [in] crd  モニタ点座標
   ///   @param [in] org,pch  ローカル領域基点座標，セル幅
   ///   @param [in] v00  座標系移動速度
-  ///   @param [in] bcd  BCindex ID
+  ///   @param [in] bcd  BCindex B
   ///
   Smoothing(int mode, int size[], int guide,
             FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd);
@@ -423,7 +423,7 @@ public:
   ///   @param [in] crd  モニタ点座標
   ///   @param [in] org,pch  ローカル領域基点座標，セル幅
   ///   @param [in] v00  座標系移動速度
-  ///   @param [in] bcd  BCindex ID
+  ///   @param [in] bcd  BCindex B
   ///
   Interpolation(int mode, int size[], int guide,
                 FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd);
@@ -485,7 +485,7 @@ public:
   ///   @param [in] crd  モニタ点座標
   ///   @param [in] org,pch  ローカル領域基点座標，セル幅
   ///   @param [in] v00  座標系移動速度
-  ///   @param [in] bcd  BCindex ID
+  ///   @param [in] bcd  BCindex B
   ///
   InterpolationStgV(int mode, int size[], int guide,
                     FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd);

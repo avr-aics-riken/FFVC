@@ -253,6 +253,34 @@ void FBUtility::MemoryRequirement(const char* mode, const double Memory, const d
 
 
 // #################################################################
+// S4DEXクラスの初期化
+void FBUtility::setS4DEX(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE init)
+{
+  REAL_TYPE s = init;
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, s) schedule(static)
+  for (int k=1-gd; k<=kx+gd; k++) {
+    for (int j=1-gd; j<=jx+gd; j++) {
+      for (int i=1-gd; i<=ix+gd; i++) {
+        
+        size_t m = _F_IDX_S4DEX(0, i, j, k, NOFACE, ix, jx, kx, gd);
+        dst[m+0] = s;
+        dst[m+1] = s;
+        dst[m+2] = s;
+        dst[m+3] = s;
+        dst[m+4] = s;
+        dst[m+5] = s;
+      }
+    }
+  }
+}
+
+
+// #################################################################
 // スカラー倍してコピー
 void FBUtility::xcopy(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE* src, const REAL_TYPE scale, const int mode)
 {

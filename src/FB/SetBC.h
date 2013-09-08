@@ -39,7 +39,7 @@ protected:
   REAL_TYPE accel, Dp1, Dp2, mach, BasePrs;
   REAL_TYPE RefV, RefL, DiffTemp, BaseTemp, Peclet, Reynolds, rei, pei;
   REAL_TYPE Lbx[3], Rayleigh, Grashof, Prandtl;
-  REAL_TYPE rho, nyu, cp, lambda, beta;
+  REAL_TYPE rho_0, nyu, cp_0, lambda_0, beta;
   
   int NoCompo;     ///< コンポーネント数
   int NoMedium;    ///< 媒質数
@@ -68,7 +68,7 @@ public:
   /** コンストラクタ */
   SetBC() {
     rei = accel = Dp1 = Dp2 = mach = RefV = RefL = DiffTemp = BaseTemp = pei = 0.0;
-    rho = nyu = cp = lambda = beta = BasePrs = 0.0;
+    rho_0 = nyu = cp_0 = lambda_0 = beta = BasePrs = 0.0;
     Peclet = Reynolds = Rayleigh = Grashof = Prandtl = 0.0;
     Example = Unit_Temp = Unit_Prs = NoCompo = NoMedium = 0;
     inout_flag = false;

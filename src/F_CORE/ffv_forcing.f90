@@ -27,7 +27,7 @@
 !! @param g ガイドセル長
 !! @param st ループの開始インデクス
 !! @param ed ループの終了インデクス
-!! @param bd BCindex ID
+!! @param bd BCindex B
 !! @param vf コンポーネントの体積率
 !! @param odr 速度境界条件のエントリ
 !! @param v00 参照速度
@@ -76,7 +76,7 @@
       b0 = vf(i,j,k)
       es = 0.0
 
-      if ( ibits(idx, 0, bitw_6) == odr ) es=1.0 ! コンポーネントは流体であることが保証されている
+      if ( ibits(idx, 0, bitw_5) == odr ) es=1.0 ! コンポーネントは流体であることが保証されている
       bes = b0*es ! 体積率とコンポーネントの両方でチェック
 
       ! 擬似速度の方向の強制
@@ -161,7 +161,7 @@
 !! @param [in]     g    ガイドセル長
 !! @param [in]     st   ループの開始インデクス
 !! @param [in]     ed   ループの終了インデクス
-!! @param [in]     bd   BCindex ID
+!! @param [in]     bd   BCindex B
 !! @param [in]     vf   コンポーネントの体積率
 !! @param [in]     wk   テンポラリのワークベクトル 速度ベクトル
 !! @param [in]     cz   コンポーネントの配列長
@@ -274,7 +274,7 @@
 !! @param g ガイドセル長
 !! @param st ループの開始インデクス
 !! @param ed ループの終了インデクス
-!! @param bd BCindex ID
+!! @param bd BCindex B
 !! @param vf コンポーネントの体積率
 !! @param v 速度ベクトル タイムレベルn
 !! @param odr 速度境界条件のエントリ
@@ -337,7 +337,7 @@
       b0 = vf(i,j,k)
       es = 0.0
 
-      if ( ibits(idx, 0, bitw_6) == odr ) es=1.0 ! コンポーネントは流体であることが保証されている
+      if ( ibits(idx, 0, bitw_5) == odr ) es=1.0 ! コンポーネントは流体であることが保証されている
       bes = b0*es ! 体積率とコンポーネントの両方でチェック
 
       ! 圧損による外力の計算(v^n)
@@ -385,7 +385,7 @@
 !! @param [in]     g    ガイドセル長
 !! @param [in]     st   ループの開始インデクス
 !! @param [in]     ed   ループの終了インデクス
-!! @param [in]     bd   BCindex ID
+!! @param [in]     bd   BCindex B
 !! @param [in]     vf   コンポーネントの体積率
 !! @param [in]     wk   テンポラリのワークベクトル 速度ベクトル (n+1,k)
 !! @param [in]     cz   コンポーネントの配列長

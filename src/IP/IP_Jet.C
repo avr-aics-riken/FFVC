@@ -24,7 +24,7 @@
 
 // #################################################################
 // Jetの流入境界条件による発散値の修正
-void IP_Jet::divJetInflow(REAL_TYPE* div, const int face, const int* bv, REAL_TYPE* vf, REAL_TYPE* sum, double& flop)
+void IP_Jet::divJetInflow(REAL_TYPE* div, const int face, REAL_TYPE* vf, REAL_TYPE* sum, double& flop)
 {
   // X_MINUS面の外部境界面のみ
   if ( nID[face] >= 0) return;
@@ -119,7 +119,6 @@ void IP_Jet::vobc_pv_JetInflow(REAL_TYPE* wv,
                                const int face, 
                                const REAL_TYPE rei,
                                const REAL_TYPE* v0,
-                               const int* bv,
                                double& flop)
 {
   // X_MINUS面の外部境界面のみ

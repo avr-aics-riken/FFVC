@@ -31,12 +31,12 @@
 !! @param [in]  rei       レイノルズ数の逆数
 !! @param [in]  v         セルセンター速度ベクトル（n-step）
 !! @param [in]  vf        セルフェイス速度ベクトル（n-step）
-!! @param [in]  bv        BCindex V
+!! @param [in]  bv        BCindex C
 !! @param [in]  bp        BCindex P
 !! @param [in]  v_mode    粘性項のモード (0=対流項のみ, 1=対流項と粘性項，2=粘性項は壁法則)
 !! @param [in]  ut        摩擦速度
 !! @param [in]  wall_type 壁面条件 (0=no_slip, 1=slip)
-!! @param [in]  bd        BCindex ID
+!! @param [in]  bd        BCindex B
 !! @param [in]  cvf       コンポーネント体積率
 !! @param [in]  vcs_coef  粘性項の係数
 !! @param [out] flop      浮動小数点演算数
@@ -651,7 +651,7 @@
 !! @param [in]  vf   セルフェイス速度ベクトル
 !! @param [in]  p    圧力
 !! @param [in]  bp   BCindex P
-!! @param [in]  bv   BCindex V
+!! @param [in]  bv   BCindex C
 !! @param [out] flop flop count
 !! @note 
 !!    - actvのマスクはSPEC_VEL/OUTFLOWの参照セルをマスクしないようにbvを使う
@@ -824,7 +824,7 @@
 !! @param [in]     sz   配列長
 !! @param [in]     g    ガイドセル長
 !! @param [in]     v0   セルセンター疑似ベクトル
-!! @param [in]     bv   BCindex V
+!! @param [in]     bv   BCindex C
 !! @param [in,out] flop flop count
 !<
     subroutine divergence (div, sz, g, v0, bv, flop)
@@ -933,7 +933,7 @@
 !! @param [in]     g    ガイドセル長
 !! @param [in]     dt   時間積分幅
 !! @param [in]     v    速度ベクトル（n-step, collocated）
-!! @param [in]     bd   BCindex ID
+!! @param [in]     bd   BCindex B
 !! @param [in,out] flop 浮動小数点演算数
 !! @note ここのマスクはIDのこと，VSPEC, OUTFLOWの増分をキャンセルするため
 !<
@@ -1771,7 +1771,7 @@
 !! @param dt 時間積分幅
 !! @param v 速度ベクトル（n-step, collocated）
 !! @param ab 前ステップの対流項（＋粘性項）の計算値
-!! @param bd BCindex ID
+!! @param bd BCindex B
 !! @param v00 参照速度
 !! @param[out] flop
 !! @note NOCHECK

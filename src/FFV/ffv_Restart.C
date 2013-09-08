@@ -134,7 +134,7 @@ void FFV::Restart_display_minmax(FILE* fp, double& flop)
   // temperature
   if ( C.isHeatProblem() )
   {
-    fb_minmax_s_ (&f_min, &f_max, size, &guide, d_t, &flop);
+    fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ie, &flop);
     
     if ( numProc > 1 )
     {
@@ -257,12 +257,12 @@ void FFV::Restart_instantaneous(FILE* fp, double& flop)
                           (int *)m_div,
                           head,
                           tail,
-                          d_t,
+                          d_ie,
                           r_time,
                           true,
                           i_dummy,
                           f_dummy);
-    if( d_t == NULL ) Exit(0);
+    if( d_ie == NULL ) Exit(0);
     
     time = r_time;
     step = (unsigned)C.Restart_step;
@@ -714,7 +714,7 @@ void FFV::Interpolation_from_coarse_initial(const int* m_st, const int* m_bk)
   
   if ( C.isHeatProblem() )
   {
-    fb_interp_coarse0_s_(d_t, size, &guide, d_r_t, st, bk);
+    fb_interp_coarse0_s_(d_ie, size, &guide, d_r_t, st, bk);
   }
   
 }
@@ -1540,7 +1540,7 @@ void FFV::ReadOverlap_Temperature(FILE* fp, double& flop, DifferentRestartInfo* 
     if (paraMngr->Irecv( d_wk, recvsize, recv_rank, &mpi_req ) != CPM_SUCCESS) Exit(0);
     if (paraMngr->Wait( &mpi_req ) != MPI_SUCCESS) Exit(0);
   }
-  SetOverlap(d_t,d_wk,1,guide,head,size,DRI->overlap_head,DRI->overlap_tail,
+  SetOverlap(d_ie,d_wk,1,guide,head,size,DRI->overlap_head,DRI->overlap_tail,
              DRI->read_file_voxel_head,DRI->read_file_voxel_size);
   
 }
@@ -1711,7 +1711,7 @@ void FFV::Restart_different(FILE* fp, double& flop)
   // 読み込みようワークエリアの最大サイズを決定
   //REAL_TYPE *d_d_v;  ///< 速度
   //REAL_TYPE *d_d_p;  ///< 圧力
-  //REAL_TYPE *d_d_t;  ///< 温度
+  //REAL_TYPE *d_d_ie;  ///< 温度
   REAL_TYPE *d_wk;
   unsigned long long d_sz=0;
   for(int ic=0;ic<nDRI;ic++){// 自身が読むファイルのボクセルサイズの最大値
@@ -1984,7 +1984,7 @@ void FFV::ReadOverlap(FILE* fp, double& flop, DifferentRestartInfo* DRI, REAL_TY
       Exit(0);
     }
     F.readTemperature(fp, DRI->f_temp, d_size, guide, d_wk, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs, true, i_dummy, f_dummy);
-    SetOverlap(d_t,d_wk,1,guide,head,size,DRI->overlap_head,DRI->overlap_tail,
+    SetOverlap(d_ie,d_wk,1,guide,head,size,DRI->overlap_head,DRI->overlap_tail,
                DRI->read_file_voxel_head,DRI->read_file_voxel_size);
     
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;

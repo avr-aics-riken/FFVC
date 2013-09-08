@@ -126,13 +126,14 @@ private:
   int var_u1;            /// 内部周期境界の方向，圧力単位指定，セルモニタの状態
   int bc_dir;            /// VBCの指定方向
   int state;             ///< Fluid(1) or Solid(0)
-  int st[3];             /// コンポーネントインデクスBV範囲の始点
-  int ed[3];             /// コンポーネントインデクスBV範囲の終点
+  int st[3];             /// コンポーネントインデクスBbox範囲の始点
+  int ed[3];             /// コンポーネントインデクスBbox範囲の終点
   int c_size[3];         /// コンポーネントワーク配列の大きさ
   int def;               /// BC指定時の面を挟む相手先のセルID
   int shape;             /// 形状パラメータ
   int sampling_width;    /// セルモニターの場合のセル幅
   int usw;               /// 汎用変数
+  int heatmode;          /// 熱輸送のときON
   
   REAL_TYPE var1;        /// パラメータ保持 (Velocity, Pressure, Massflow, Epsiolon of Radiation)
   REAL_TYPE var2;        /// パラメータ保持 (Heat Value, Heat flux, Heat Transfer, Pressure loss, Projection of Radiation)
@@ -168,6 +169,7 @@ public:
     usw = 0;
     var_u1 = 0;
     phase = 0;
+    heatmode = OFF;
     for (int i=0; i<3; i++) {
       nv[i] = 0.0;
       st[i] = 0;
@@ -210,7 +212,7 @@ public:
   }
   
   
-  //@brief コンポーネントのBV情報を返す
+  //@brief コンポーネントのBbox情報を返す
   inline void getBbox(int* m_st, int* m_ed)
   {
     m_st[0] = st[0];
@@ -222,14 +224,14 @@ public:
   }
   
   
-  //@brief コンポーネントのBV情報edのアドレスを返す
+  //@brief コンポーネントのBbox情報edのアドレスを返す
   int* getBbox_ed()
   {
     return ed;
   }
   
   
-  //@brief コンポーネントのBV情報stのアドレスを返す
+  //@brief コンポーネントのBbox情報stのアドレスを返す
   int* getBbox_st()
   {
     return st;
@@ -357,11 +359,6 @@ public:
     return usw;
   }
   
-  int get_sw_HTmodeRef() const
-  {
-    return usw;
-  }
-  
   
   REAL_TYPE getTemp() const
   { 
@@ -466,18 +463,10 @@ public:
   }
   
   
-  // @brief 境界条件タイプが熱境界条件かどうかを調べる
-  bool isHBC() const
+  // @brief 熱問題のときture
+  bool isHeatMode() const
   {
-    if ((type == ADIABATIC)  ||
-        (type == HEATFLUX)   ||
-        (type == TRANSFER)   ||
-        (type == ISOTHERMAL) ||
-        (type == RADIANT)    ||
-        (type == SPEC_VEL_WH)||
-        (type == HEAT_SRC)   ||
-        (type == CNST_TEMP) ) return true;
-    return false;
+    return (heatmode==ON) ? true : false;
   }
   
   
@@ -551,7 +540,6 @@ public:
   bool isVBC() const
   {
     if ((type == SPEC_VEL) ||
-        (type == SPEC_VEL_WH) ||
         (type == OUTFLOW) ||
         (type == IBM_DF) ||
         (type == HEX) ||
@@ -564,7 +552,6 @@ public:
   bool isVBC_IO() const
   {
     if ((type == SPEC_VEL) ||
-        (type == SPEC_VEL_WH) ||
         (type == OUTFLOW) ) return true;
     return false;
   }
@@ -609,19 +596,37 @@ public:
   void setEnsLocal         (const int key);
   
   void setHeatflux         (const REAL_TYPE var);
-  void set_HeatDensity     (const REAL_TYPE var);
-  void set_HeatValue       (const REAL_TYPE var);
-  void set_HSRC_policy     (const bool kind);
+  
+  
+  // @brief 吸発熱密度の保持
+  void setHeatDensity (const REAL_TYPE var);
+  
+  
+  // @brief 熱問題の指定
+  void setHeatmode (const int mode)
+  {
+    heatmode = mode;
+  }
+  
+  
+  // @brief 吸発熱量の保持
+  void setHeatValue (const REAL_TYPE var);
+  
+  
+  // @brief 発熱項の指定ポリシーを指定する
+  // @param [in] kind ポリシー種別　true-発熱量, false-発熱密度
+  void setHsrcPolicy (const bool kind);
+  
   void setHtype            (const int key);
   void setInitTemp         (const REAL_TYPE var);
   
   void set_Massflow        (const REAL_TYPE var);
   void setMedium           (const std::string pnt);
-  void setMonCalorie       (const REAL_TYPE var);
   
-  void setMonHeatflux      (const REAL_TYPE var);
+  // @brief モニター値を保持する
+  void setMonitorValue (const REAL_TYPE var);
   
-  void set_Mon_Temp        (const REAL_TYPE var);
+  
   void set_P_BCtype        (const int key);
   void setPeriodicDir      (const int key);
   void setPhase            (const int m_phase);
@@ -635,9 +640,12 @@ public:
 
   void set_sw_Heatgen      (const int key);
   void set_sw_HexDir       (const int key);
-  void set_sw_HTmodeRef    (const int key);
   
-  void set_Temp            (const REAL_TYPE var);
+  
+  // @brief 温度の保持
+  void setTemp (const REAL_TYPE var);
+  
+  
   void set_V_profile       (const int key);
   void set_VBC_policy      (const bool kind);
   void set_Velocity        (const REAL_TYPE var);

@@ -30,7 +30,7 @@
 !! @param v00 参照速度
 !! @param rei レイノルズ数の逆数
 !! @param v 速度ベクトル（n-step, collocated）
-!! @param bv BCindex V
+!! @param bv BCindex C
 !! @param bp BCindex P
 !! @param v_mode 粘性項のモード (0=対流項のみ, 1=対流項と粘性項，2=粘性項は壁法則)
 !! @param cut カット情報(float)
@@ -692,7 +692,7 @@
 !! @param vc セルセンタの疑似速度ベクトル
 !! @param p 圧力
 !! @param bp BCindex P
-!! @param bv BCindex V
+!! @param bv BCindex C
 !! @param cut カット情報(float)
 !! @param v00 参照速度
 !! @param[out] flop flop count
@@ -940,7 +940,7 @@
 !! @param g ガイドセル長
 !! @param coef 係数
 !! @param v 疑似ベクトル
-!! @param bv BCindex V
+!! @param bv BCindex C
 !! @param cut カット情報(float)
 !! @param v00 参照速度
 !! @param[out] flop flop count

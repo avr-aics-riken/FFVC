@@ -34,10 +34,10 @@ void Plot3D::Initialize(const int* m_size,
                         REAL_TYPE* m_d_p,
                         REAL_TYPE* m_d_wo,
                         REAL_TYPE* m_d_v,
-                        REAL_TYPE* m_d_t,
+                        REAL_TYPE* m_d_ie,
                         REAL_TYPE* m_d_p0,
                         REAL_TYPE* m_d_wv,
-                        int*       m_d_bcv,
+                        int*       m_d_cdf,
                         int*       m_d_bcd)
 {
   MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
@@ -57,10 +57,10 @@ void Plot3D::Initialize(const int* m_size,
   d_p  = m_d_p;
   d_wo = m_d_wo;
   d_v  = m_d_v;
-  d_t  = m_d_t;
+  d_ie = m_d_ie;
   d_p0 = m_d_p0;
   d_wv = m_d_wv;
-  d_bcv= m_d_bcv;
+  d_cdf= m_d_cdf;
   d_bcd= m_d_bcd;
 }
 
@@ -289,11 +289,11 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
     if (C->Unit.File == DIMENSIONAL)
     {
       REAL_TYPE klv = ( C->Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-      U.tmp_array_ND2D(d_ws, size, guide, d_t, C->BaseTemp, C->DiffTemp, klv, scale, flop);
+      U.tmp_array_ND2D(d_ws, size, guide, d_ie, C->BaseTemp, C->DiffTemp, klv, scale, flop);
     }
     else
     {
-      U.xcopy(d_ws, size, guide, d_t, scale, kind_scalar);
+      U.xcopy(d_ws, size, guide, d_ie, scale, kind_scalar);
     }
     
     if(FP3DW->GetFormat() == C_BINARY){//C_BINARYでの出力は項目ごとに書き出し
@@ -357,7 +357,7 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   // Vorticity
   if (C->Mode.VRT == ON )
   {
-    rot_v_(d_wv, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
+    rot_v_(d_wv, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
     REAL_TYPE  vz[3];
     vz[0] = vz[1] = vz[2] = 0.0;
@@ -403,7 +403,7 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   
   // 2nd Invariant of Velocity Gradient Tensor
   if (C->Mode.I2VGT == ON ) {
-    i2vgt_ (d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
+    i2vgt_ (d_p0, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
     U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar);
     
@@ -431,7 +431,7 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   // Helicity
   if (C->Mode.Helicity == ON )
   {
-    helicity_(d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
+    helicity_(d_p0, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
     U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar);
     
@@ -689,11 +689,11 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     if (C->Unit.File == DIMENSIONAL)
     {
       REAL_TYPE klv = ( C->Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-      U.tmp_array_ND2D(d_ws, size, guide, d_t, C->BaseTemp, C->DiffTemp, klv, scale, flop);
+      U.tmp_array_ND2D(d_ws, size, guide, d_ie, C->BaseTemp, C->DiffTemp, klv, scale, flop);
     }
     else
     {
-      U.xcopy(d_ws, size, guide, d_t, scale, kind_scalar);
+      U.xcopy(d_ws, size, guide, d_ie, scale, kind_scalar);
     }
     
     fname = "tmp_" + tmp;
@@ -767,7 +767,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   
   // Vorticity
   if (C->Mode.VRT == ON ){
-    rot_v_(d_wv, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
+    rot_v_(d_wv, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
     REAL_TYPE  vz[3];
     vz[0] = vz[1] = vz[2] = 0.0;
@@ -820,7 +820,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   // 2nd Invariant of Velocity Gradient Tensor
   if (C->Mode.I2VGT == ON ) {
     
-    i2vgt_ (d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
+    i2vgt_ (d_p0, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
     U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar);
     
@@ -855,7 +855,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   
   // Helicity
   if (C->Mode.Helicity == ON ){
-    helicity_(d_p0, size, &guide, &deltaX, d_v, d_bcv, v00, &flop);
+    helicity_(d_p0, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
     U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar);
     

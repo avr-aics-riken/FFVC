@@ -24,9 +24,9 @@
 
 #include <math.h>
 
-#include "SetBC.h"
+#include "../FB/SetBC.h"
 #include "ffv_Define.h"
-#include "ffv_Ffunc.h"
+#include "../F_CORE/ffv_Ffunc.h"
 #include "../IP/IP_Jet.h"
 
 
@@ -51,71 +51,67 @@ protected:
   
   
   // 温度一定の境界条件
-  void psIbcConstTemp (REAL_TYPE* d_t, const int* d_bh2, const int n);
+  void psIbcConstTemp (REAL_TYPE* d_ie, const int* d_bcd, const int n);
   
   
   // 内部領域の熱流束指定境界条件
-  REAL_TYPE psIbcHeatflux (REAL_TYPE* d_qbc, const int* d_bh1, const int n);
+  REAL_TYPE psIbcHeatflux (REAL_TYPE* d_qbc, const int* d_cdf, const int n);
   
   
   // 発熱境界条件
-  REAL_TYPE psIbcHeatGen (REAL_TYPE* d_t, const int* d_bh2, const int n, const REAL_TYPE dt);
+  REAL_TYPE psIbcHeatGen (REAL_TYPE* d_ie, const int* d_bcd, const int n, const REAL_TYPE dt);
   
   
   // 等温境界条件
-  REAL_TYPE psIbcIsoThermal (REAL_TYPE* d_qbc, const int* d_bh1, const int n, const REAL_TYPE* d_t0);
+  REAL_TYPE psIbcIsoThermal (REAL_TYPE* d_qbc, const int* d_cdf, const int* d_bcd, const int n, const REAL_TYPE* d_ie0);
   
   
   // 内部領域のOutflowの境界条件処理
-  REAL_TYPE psIbcOutflow (REAL_TYPE* d_ws, const int* d_bh1, const int n, const REAL_TYPE* d_v, const REAL_TYPE* d_t, const REAL_TYPE* v00);
+  REAL_TYPE psIbcOutflow (REAL_TYPE* d_ws, const int* d_cdf, const int n, const REAL_TYPE* d_v, const REAL_TYPE* d_ie, const REAL_TYPE* v00);
   
   
   // 内部領域の速度と温度の指定境界条件
-  REAL_TYPE psIbcSpecVH (REAL_TYPE* d_ws, const int* d_bh1, const int n, const REAL_TYPE v00, const REAL_TYPE* vec);
-  
-  
-  // 熱伝達境界条件タイプB
-  REAL_TYPE psIbcTransferB (REAL_TYPE* d_qbc, const int* d_bh1, const int n, const REAL_TYPE* d_t0);
+  REAL_TYPE psIbcSpecVH (REAL_TYPE* d_ws, const int* d_cdf, const int n, const REAL_TYPE v00, const REAL_TYPE* vec);
   
   
   // 熱伝達境界条件タイプS
-  REAL_TYPE psIbcTransferS (REAL_TYPE* d_qbc, const int* d_bh1, const int n, const REAL_TYPE* d_t0);
+  REAL_TYPE psIbcTransferS (REAL_TYPE* d_qbc, const int* d_cdf, const int* d_bcd, const int n, const REAL_TYPE* d_ie0);
   
   
   // 熱伝達境界条件タイプSF
-  REAL_TYPE psIbcTransferSF (REAL_TYPE* d_qbc, const int* d_bh1, const int n, const REAL_TYPE* d_t0);
+  REAL_TYPE psIbcTransferSF (REAL_TYPE* d_qbc, const int* d_cdf, const int* d_bcd, const int n, const REAL_TYPE* d_ie0);
   
   
   // 熱伝達境界条件タイプSN
-  REAL_TYPE psIbcTransferSN (REAL_TYPE* d_qbc, const int* d_bh1, const int n, const REAL_TYPE* d_t0);
+  REAL_TYPE psIbcTransferSN (REAL_TYPE* d_qbc, const int* d_cdf, const int* d_bcd, const int n, const REAL_TYPE* d_ie0);
   
   
   // 外部領域のOutflow, In_out, TractionFreeの境界条件処理
-  REAL_TYPE psObcFree (REAL_TYPE* d_ws, const int* d_bh, const int face, const REAL_TYPE* d_vf, const REAL_TYPE* d_t, const REAL_TYPE* v00);
+  REAL_TYPE psObcFree (REAL_TYPE* d_ws, const int* d_bcd, const int face, const REAL_TYPE* d_vf, const REAL_TYPE* d_ie, const REAL_TYPE* v00);
   
   
   // 外部領域の熱流束指定の境界条件処理
   REAL_TYPE psObcHeatflux (REAL_TYPE* d_qbc, const int face);
   
   
-  // 外部領域の熱伝達境界の境界条件処理 (TypeB/S共用)
-  REAL_TYPE psObcHeatTransferBS (REAL_TYPE* d_qbc, const int face, REAL_TYPE* d_t, const REAL_TYPE* d_t0);
+  // 外部領域の熱伝達境界の境界条件処理 (TypeS)
+  REAL_TYPE psObcHeatTransferS (REAL_TYPE* d_qbc, const int face, const int* d_bcd, REAL_TYPE* d_ie, const REAL_TYPE* d_ie0);
   
   
   // 外部領域の熱伝達境界の境界条件処理 (Type SF)
-  REAL_TYPE psObcHeatTransferSF (REAL_TYPE* d_qbc, const int face, REAL_TYPE* d_t, const REAL_TYPE* d_t0);
+  REAL_TYPE psObcHeatTransferSF (REAL_TYPE* d_qbc, const int face, const int* d_bcd, REAL_TYPE* d_ie, const REAL_TYPE* d_ie0);
   
   
   // 外部領域の熱伝達境界の境界条件処理 (Type SN)
-  REAL_TYPE psObcHeatTransferSN (REAL_TYPE* d_qbc, const int face, REAL_TYPE* d_t, const REAL_TYPE* d_t0);
+  REAL_TYPE psObcHeatTransferSN (REAL_TYPE* d_qbc, const int face, const int* d_bcd, REAL_TYPE* d_ie, const REAL_TYPE* d_ie0);
   
   
   // 外部領域の等温熱流束の境界条件処理
-  REAL_TYPE psObcIsoThermal (REAL_TYPE* d_qbc, const int face, REAL_TYPE* d_t, const REAL_TYPE* d_t0);
+  REAL_TYPE psObcIsoThermal (REAL_TYPE* d_qbc, const int face, const int* d_bcd, REAL_TYPE* d_ie, const REAL_TYPE* d_ie0);
   
   
   // 外部領域の速度指定の境界条件処理
-  REAL_TYPE psObcSpecVH (REAL_TYPE* d_ws, const int* d_bh1, const int face, const double tm, const REAL_TYPE* v00);
+  REAL_TYPE psObcSpecVH (REAL_TYPE* d_ws, const int* d_cdf, const int face, const double tm, const REAL_TYPE* v00);
   
   
   void Pibc_Prdc                (REAL_TYPE* d_p, int* st, int* ed, int* d_bcd, int odr, int dir, REAL_TYPE pv);
@@ -127,7 +123,7 @@ protected:
   
   
   //温度の外部周期境界条件（単純コピー）
-  void TobcPeriodicSimple (REAL_TYPE* d_t, const int face);
+  void TobcPeriodicSimple (REAL_TYPE* d_ie, const int face);
   
   
   void Vibc_Prdc (REAL_TYPE* d_v, int* st, int* ed, int* d_bd, int odr, int dir);
@@ -143,23 +139,23 @@ public:
   
   /**
    * @brief 温度指定境界条件に必要な温度をセットする
-   * @param [in,out] d_t  温度場
-   * @param [in]     bh   BCindex H1
+   * @param [in,out] d_ie 内部エネルギー
+   * @param [in]     bh   BCindex C
    * @param [in]     tm   無次元時刻
    * @param [in]     C    Control class
    */
-  void assignTemp (REAL_TYPE* d_t, int* d_bh1, const double tm, const Control* C);
+  //void assignTemp (REAL_TYPE* d_ie, int* d_cdf, const double tm, const Control* C);
   
   
   /**
    * @brief 速度指定境界条件に必要な参照速度をセットする
    * @param [in,out] d_v   セルセンタ速度ベクトル (n step)
-   * @param [in]     bv    BCindex V
+   * @param [in]     d_cdf BCindex C
    * @param [in]     tm    無次元時刻
    * @param [in]     v00   参照速度
    * @param [in]     clear trueのとき，出力時に速度を壁面速度にする（デフォルトfalse）
    */
-  void assignVelocity (REAL_TYPE* d_v, int* d_bv, const double tm, REAL_TYPE* v00, bool clear=false);
+  void assignVelocity (REAL_TYPE* d_v, int* d_cdf, const double tm, REAL_TYPE* v00, bool clear=false);
   
   
   /**
@@ -170,24 +166,39 @@ public:
   void checkDriver (FILE* fp);
   
   
+  // 内部エネルギーから温度への変換
+  void convertIE2Tmp(REAL_TYPE* d_t, const int n, const int* bx, const REAL_TYPE* d_ie);
+  
+  
+  // 温度から内部エネルギーへの変換
+  void convertTmp2IE(const int n, const int* bx, REAL_TYPE* d_ie);
+  
+  
   void InnerPBCperiodic (REAL_TYPE* d_p, int* d_bcd);
   
   
-  // 拡散部分に関する温度の内部境界処理
-  void InnerTBCface (REAL_TYPE* d_qbc, const int* d_bh1, REAL_TYPE* d_t, const REAL_TYPE* d_t0);
+  /**
+   * @brief 拡散部分に関する内部エネルギーの内部境界処理
+   * @param [in,out] d_qbc  境界条件熱流束
+   * @param [in]     d_cdf  BCindex C
+   * @param [in]     d_bcd  BCindex B
+   * @param [in,out] d_ie   n+1時刻の内部エネルギー
+   * @param [in]     d_ie0  n時刻の内部エネルギー
+   */
+  void InnerTBCface (REAL_TYPE* d_qbc, const int* d_cdf, const int* d_bcd, REAL_TYPE* d_ie, const REAL_TYPE* d_ie0);
   
   
   /**
    * @brief セルに対する温度の内部境界をセットする
-   * @param [in,out] d_t 温度
-   * @param [in]     bh2 BCindex H2
-   * @param [in]     dt  時間積分幅
+   * @param [in,out] d_ie  内部エネルギー
+   * @param [in]     d_bcd BCindex B
+   * @param [in]     dt    時間積分幅
    */
-  void InnerTBCvol (REAL_TYPE* d_t, const int* d_bh2, const REAL_TYPE dt);
+  void InnerTBCvol (REAL_TYPE* d_ie, const int* d_bcd, const REAL_TYPE dt);
   
   
   // 速度の内部境界条件
-  void InnerVBC (REAL_TYPE* d_v, int* d_bv, const double tm, REAL_TYPE* v00);
+  void InnerVBC (REAL_TYPE* d_v, int* d_cdf, const double tm, REAL_TYPE* v00);
   
   
   // 速度の内部周期境界条件
@@ -196,7 +207,7 @@ public:
   
   // 速度境界条件による速度の発散の修正ほか
   void modDivergence (REAL_TYPE* dv,
-                      int* bv,
+                      int* d_cdf,
                       double tm_d,
                       REAL_TYPE* v00,
                       Gemini_R* avr,
@@ -215,7 +226,7 @@ public:
    * @param [in]     vc    セルセンタ疑似速度 u^*
    * @param [in]     v0    セルセンタ速度 u^n
    * @param [in]     vf    セルフェイス速度 u^n
-   * @param [in]     bv    BCindex V
+   * @param [in]     d_cdf BCindex C
    * @param [in]     tm    無次元時刻
    * @param [in]     dt    時間積分幅
    * @param [in]     C     Control class
@@ -226,7 +237,7 @@ public:
                    REAL_TYPE* vc,
                    REAL_TYPE* v0,
                    REAL_TYPE* vf,
-                   int* bv,
+                   int* d_cdf,
                    const double tm,
                    REAL_TYPE dt,
                    Control* C,
@@ -238,7 +249,7 @@ public:
    @brief 圧力損失部によるPoisosn式のソース項の修正とワーク用の速度を保持
    @param [in,out] s_1     Poisson方程式の反復ソース項
    @param [in]     v       速度ベクトル
-   @param [in]     bd      BCindex ID
+   @param [in]     bd      BCindex B
    @param [in]     cvf     コンポーネントの体積率
    @param [in]     v00     参照速度
    @param [in]     c_array コンポーネントワーク配列の管理ポインタ
@@ -257,7 +268,7 @@ public:
    * @brief 速度境界条件による流束の修正
    * @param [in,out] wv     疑似速度ベクトル u^*
    * @param [in]     v      セルセンター速度ベクトル u^n
-   * @param [in]     bv     BCindex V
+   * @param [in]     d_cdf  BCindex C
    * @param [in]     tm     無次元時刻
    * @param [in]     C      Control class
    * @param [in]     v_mode 粘性項のモード (0=粘性項を計算しない, 1=粘性項を計算する, 2=壁法則)
@@ -266,7 +277,7 @@ public:
    */
   void modPvecFlux (REAL_TYPE* wv,
                     REAL_TYPE* v,
-                    int* bv,
+                    int* d_cdf,
                     const double tm,
                     Control* C,
                     int v_mode,
@@ -278,7 +289,7 @@ public:
   /**
    * @brief 圧力損失部によるセルセンタ速度の修正と速度の発散値の修正
    * @param [in,out] v          セルセンターの速度
-   * @param [in]     bd         BCindex ID
+   * @param [in]     bd         BCindex B
    * @param [in]     cvf        コンポーネントの体積率
    * @param [in]     dv         \sum{u}
    * @param [in]     dt         時間積分幅
@@ -310,58 +321,45 @@ public:
   
   
   /**
-   * @brief 対流項計算時の流束型の温度の外部境界条件処理
-   * @param [in,out] d_ws  温度の増分
-   * @param [in]     d_bh1 BCindex H1
-   * @param [in]     d_vf  n+1時刻のセルフェイス速度
-   * @param [in]     d_t0  n時刻の温度
-   * @param [in]     tm    時刻
-   * @param [in,out] C     コントロールクラス
-   * @param [in]     v00   参照速度
-   * @note 無次元熱量はvalに保存
-   */
-  void OuterTBCconvection (REAL_TYPE* d_ws, const int* d_bh1, const REAL_TYPE* d_vf, const REAL_TYPE* d_t0, const double tm, Control* C, const REAL_TYPE* v00);
-  
-  
-  /**
    * @brief 拡散項計算時の温度の外部部境界処理
    * @param [in,out] d_qbc 境界条件熱流束
-   * @param [out]    d_t   n+1時刻の温度場
-   * @param [in]     d_t0  n時刻の温度場
+   * @param [out]    d_ie  n+1時刻の内部エネルギー
+   * @param [in]     d_ie0 n時刻の内部エネルギー
+   * @param [in]     d_bcd BCindex B
    * @param [in]     C     コントロールクラス
    * @note 断熱BCは断熱マスクで処理
    */
-  void OuterTBCdiffusion (REAL_TYPE* d_qbc, REAL_TYPE* d_t, const REAL_TYPE* d_t0, Control* C);
+  void OuterTBCdiffusion (REAL_TYPE* d_qbc, REAL_TYPE* d_ie, const REAL_TYPE* d_ie0, const int* d_bcd, Control* C);
   
   
   /**
    * @brief 温度の外部周期境界条件処理
-   * @param [in,out] d_t 温度のデータクラス
+   * @param [in,out] d_ie 内部エネルギー
    * @see OuterTBConvection(), OuterTBCdiffusion()
    * @note OBC_SYMMETRICは，断熱マスクで処理するため，不要
    */
-  void OuterTBCperiodic (REAL_TYPE* d_t);
+  void OuterTBCperiodic (REAL_TYPE* d_ie);
   
   
   /**
    * @brief 速度の外部境界条件処理（VP反復内で値を指定する境界条件）
-   * @param [in,out] d_v  セルセンター速度ベクトル v^{n+1}
-   * @param [in]     d_vf セルフェイス速度ベクトル v^{n+1}
-   * @param [in]     d_bv BCindex V
-   * @param [in]     tm   時刻
-   * @param [in]     C    コントロールクラス
-   * @param [in]     v00  参照速度
+   * @param [in,out] d_v   セルセンター速度ベクトル v^{n+1}
+   * @param [in]     d_vf  セルフェイス速度ベクトル v^{n+1}
+   * @param [in]     d_cdf BCindex C
+   * @param [in]     tm    時刻
+   * @param [in]     C     コントロールクラス
+   * @param [in]     v00   参照速度
    */
-  void OuterVBC (REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_bv, const double tm, Control* C, REAL_TYPE* v00);
+  void OuterVBC (REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_cdf, const double tm, Control* C, REAL_TYPE* v00);
   
   
   /**
    * @brief 疑似速度の外部境界条件処理
    * @param [out]    d_vc   疑似速度ベクトル v^*
-   * @param [in]     d_bv   BCindex V
+   * @param [in]     d_cdf  BCindex C
    * @param [in]     C      Control class
    */
-  void OuterVBCpseudo (REAL_TYPE* d_vc, int* d_bv, Control* C);
+  void OuterVBCpseudo (REAL_TYPE* d_vc, int* d_cdf, Control* C);
   
   
   // 周期境界の場合のインデクスの同期
@@ -371,14 +369,27 @@ public:
   /**
    * @brief 初期温度を代入
    * @param [in]     n    エントリ
-   * @param [in]     d_bx BCindex ID
-   * @param [in,out] d_t  温度
+   * @param [in]     d_bx BCindex B
+   * @param [in,out] d_ie 内部エネルギー
    */
-  void setInitialTempCompo (const int n, const int* d_bx, REAL_TYPE* d_t);
+  void setInitialTempCompo (const int n, const int* d_bx, REAL_TYPE* d_ie);
   
   
   REAL_TYPE setDirectForcing (REAL_TYPE* d_v, int* d_bx, int n, REAL_TYPE v00);
   
+  
+  /**
+   * @brief 対流項計算時の流束型の温度の外部境界条件処理
+   * @param [in,out] d_ws  温度の増分
+   * @param [in]     d_cdf BCindex C
+   * @param [in]     d_vf  n+1時刻のセルフェイス速度
+   * @param [in]     d_ie0 n時刻の内部エネルギー
+   * @param [in]     tm    時刻
+   * @param [in,out] C     コントロールクラス
+   * @param [in]     v00   参照速度
+   * @note 無次元熱量はvalに保存
+   */
+  void TBCconvection (REAL_TYPE* d_ws, const int* d_cdf, const REAL_TYPE* d_vf, const REAL_TYPE* d_ie0, const double tm, Control* C, const REAL_TYPE* v00);
 };
 
 #endif // _FFV_SETBC_H_

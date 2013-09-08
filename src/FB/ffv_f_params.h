@@ -54,40 +54,54 @@ parameter ( id_fluid  = 1 ) ! FB_Define.h FLUID
 parameter ( Active  = 31 ) ! FB_Define.h ACTIVE_BIT
 parameter ( State   = 30 ) ! FB_Define.h STATE_BIT
 
-! 圧力ビットフラグ
-parameter ( bc_d_T = 29 ) ! FB_Define.h BC_D_T
-parameter ( bc_d_B = 28 ) ! FB_Define.h BC_D_B
-parameter ( bc_d_N = 27 ) ! FB_Define.h BC_D_N
-parameter ( bc_d_S = 26 ) ! FB_Define.h BC_D_S
-parameter ( bc_d_E = 25 ) ! FB_Define.h BC_D_E
-parameter ( bc_d_W = 24 ) ! FB_Define.h BC_D_W
+! BCindex B
+parameter ( forcing_bit = 28) ! FB_Define.h FORCING_BIT
+parameter ( top_vf      = 20) ! FB_Define.h TOP_VF
+parameter ( adbtc_T = 19) ! FB_Define.h ADIABATIC_T
+parameter ( adbtc_B = 18) ! FB_Define.h ADIABATIC_B
+parameter ( adbtc_N = 17) ! FB_Define.h ADIABATIC_N
+parameter ( adbtc_S = 16) ! FB_Define.h ADIABATIC_S
+parameter ( adbtc_E = 15) ! FB_Define.h ADIABATIC_E
+parameter ( adbtc_W = 14) ! FB_Define.h ADIABATIC_W
+parameter ( gma_T   = 13) ! FB_Define.h GMA_T
+parameter ( gma_B   = 12) ! FB_Define.h GMA_B
+parameter ( gma_N   = 11) ! FB_Define.h GMA_N
+parameter ( gma_S   = 10) ! FB_Define.h GMA_S
+parameter ( gma_E   =  9) ! FB_Define.h GMA_E
+parameter ( gma_W   =  8) ! FB_Define.h GMA_W
+parameter ( h_diag  =  5) ! FB_Define.h H_DIAG
 
-parameter ( bc_n_T = 23 ) ! FB_Define.h BC_N_T
-parameter ( bc_n_B = 22 ) ! FB_Define.h BC_N_B
-parameter ( bc_n_N = 21 ) ! FB_Define.h BC_N_N
-parameter ( bc_n_S = 20 ) ! FB_Define.h BC_N_S
-parameter ( bc_n_E = 19 ) ! FB_Define.h BC_N_E
-parameter ( bc_n_W = 18 ) ! FB_Define.h BC_N_W
 
+! BCindex P
+parameter ( bc_d_T    = 29 ) ! FB_Define.h BC_D_T
+parameter ( bc_d_B    = 28 ) ! FB_Define.h BC_D_B
+parameter ( bc_d_N    = 27 ) ! FB_Define.h BC_D_N
+parameter ( bc_d_S    = 26 ) ! FB_Define.h BC_D_S
+parameter ( bc_d_E    = 25 ) ! FB_Define.h BC_D_E
+parameter ( bc_d_W    = 24 ) ! FB_Define.h BC_D_W
+parameter ( bc_n_T    = 23 ) ! FB_Define.h BC_N_T
+parameter ( bc_n_B    = 22 ) ! FB_Define.h BC_N_B
+parameter ( bc_n_N    = 21 ) ! FB_Define.h BC_N_N
+parameter ( bc_n_S    = 20 ) ! FB_Define.h BC_N_S
+parameter ( bc_n_E    = 19 ) ! FB_Define.h BC_N_E
+parameter ( bc_n_W    = 18 ) ! FB_Define.h BC_N_W
 parameter ( bc_ndag_T = 17 ) ! FB_Define.h BC_NDAG_T
 parameter ( bc_ndag_B = 16 ) ! FB_Define.h BC_NDAG_B
 parameter ( bc_ndag_N = 15 ) ! FB_Define.h BC_NDAG_N
 parameter ( bc_ndag_S = 14 ) ! FB_Define.h BC_NDAG_S
 parameter ( bc_ndag_E = 13 ) ! FB_Define.h BC_NDAG_E
 parameter ( bc_ndag_W = 12 ) ! FB_Define.h BC_NDAG_W
+parameter ( bc_diag   =  9 ) ! FB_Define.h BC_DIAG
+parameter ( facing_t  =  8 ) ! FB_Define.h FACING_T
+parameter ( facing_b  =  7 ) ! FB_Define.h FACING_B
+parameter ( facing_n  =  6 ) ! FB_Define.h FACING_N
+parameter ( facing_s  =  5 ) ! FB_Define.h FACING_S
+parameter ( facing_e  =  4 ) ! FB_Define.h FACING_E
+parameter ( facing_w  =  3 ) ! FB_Define.h FACING_W
+parameter ( vld_cnvg  =  2 ) ! FB_Define.h VLD_CNVG
+parameter ( vbc_uwd   =  1 ) ! FB_Define.h VBC_UWD
 
-parameter ( bc_diag = 9 ) ! FB_Define.h BC_DIAG
-
-parameter ( facing_t = 8 ) ! FB_Define.h FACING_T
-parameter ( facing_b = 7 ) ! FB_Define.h FACING_B
-parameter ( facing_n = 6 ) ! FB_Define.h FACING_N
-parameter ( facing_s = 5 ) ! FB_Define.h FACING_S
-parameter ( facing_e = 4 ) ! FB_Define.h FACING_E
-parameter ( facing_w = 3 ) ! FB_Define.h FACING_W
-parameter ( vld_cnvg = 2 ) ! FB_Define.h VLD_CNVG
-parameter ( vbc_uwd  = 1 ) ! FB_Define.h VBC_UWD
-
-! 速度，温度1のビットフラグ
+! BCindex C
 parameter ( bc_face_T = 25 ) ! FB_Define.h BC_FACE_T
 parameter ( bc_face_B = 20 ) ! FB_Define.h BC_FACE_B
 parameter ( bc_face_N = 15 ) ! FB_Define.h BC_FACE_N
@@ -95,22 +109,6 @@ parameter ( bc_face_S = 10 ) ! FB_Define.h BC_FACE_S
 parameter ( bc_face_E = 5  ) ! FB_Define.h BC_FACE_E
 parameter ( bc_face_W = 0  ) ! FB_Define.h BC_FACE_W
 
-! 温度2のビットフラグ
-parameter ( adbtc_T = 29) ! FB_Define.h ADIABATIC_T
-parameter ( adbtc_B = 28) ! FB_Define.h ADIABATIC_B
-parameter ( adbtc_N = 27) ! FB_Define.h ADIABATIC_N
-parameter ( adbtc_S = 26) ! FB_Define.h ADIABATIC_S
-parameter ( adbtc_E = 25) ! FB_Define.h ADIABATIC_E
-parameter ( adbtc_W = 24) ! FB_Define.h ADIABATIC_W
-
-parameter ( gma_T = 23) ! FB_Define.h GMA_T
-parameter ( gma_B = 22) ! FB_Define.h GMA_B
-parameter ( gma_N = 21) ! FB_Define.h GMA_N
-parameter ( gma_S = 20) ! FB_Define.h GMA_S
-parameter ( gma_E = 19) ! FB_Define.h GMA_E
-parameter ( gma_W = 18) ! FB_Define.h GMA_W
-
-parameter ( h_diag = 15 ) ! FB_Define.h H_DIAG
 
 ! 速度境界条件の種類
 parameter ( id_specvel   = 0 ) ! SetBC.h outer boundary condition enum
@@ -119,18 +117,14 @@ parameter ( id_symmetric = 3 ) ! SetBC.h
 parameter ( id_periodic  = 4 ) ! SetBC.h 
 
 ! 内部コンポーネント番号
-parameter ( cmp_typ_outflow = 8  ) ! FB_Define.h OUTFLOW
-parameter ( cmp_typ_vspec   = 7  ) ! FB_Define.h SPEC_VEL
-parameter ( cmp_typ_hex     = 12 ) ! FB_Define.h HEX
+parameter ( cmp_typ_vspec   = 8  ) ! FB_Define.h SPEC_VEL
+parameter ( cmp_typ_outflow = 9  ) ! FB_Define.h OUTFLOW
+parameter ( cmp_typ_hex     = 13 ) ! FB_Define.h HEX
 
 ! 外部境界条件番号
 parameter ( obc_mask     = 31) ! FB_Define.h OBC_MASK 内外部境界条件の識別子
 parameter ( obc_outflow  = 3 ) ! FB_Define.h OBC_OUTFLOW 
 parameter ( obc_periodic = 5 ) ! FB_Define.h OBC_PERIODIC
-
-! 体積率
-parameter ( top_vf      = 20) ! FB_Define.h TOP_VF
-parameter ( forcing_bit = 28) ! FB_Define.h FORCING_BIT
 
 ! ファイルパスの長さ
 parameter ( file_path_length = 64 ) ! #define FB_FILE_PATH_LENGTH 64

@@ -20,11 +20,12 @@
  * @file   FB_Define.h
  * @brief  FlowBase Definition Header
  * @author kero
+ * @attention このマクロを変更した場合には，対応するffv_f_param.hも変更すること
  */
 
 #include "mydebug.h"
 
-#define FB_VERS "1.3.4"
+#define FB_VERS "1.3.5"
 
 
 // precision
@@ -122,8 +123,8 @@
 
 
 // マスクのビット幅
-#define MASK_6     0x3f // 6 bit幅
 #define MASK_8     0xff // 8 bit幅
+#define MASK_6     0x3f // 6 bit幅
 #define MASK_5     0x1f // 5 bit幅
 
 
@@ -131,9 +132,24 @@
 #define ACTIVE_BIT 31
 #define STATE_BIT  30
 
-// エンコードビット　ID
-#define TOP_VF        20 //  Volume Fractionの先頭ビット
+// エンコードビット　B
 #define FORCING_BIT   28 //  外力モデルの識別子
+#define TOP_VF        20 //  Volume Fractionの先頭ビット
+
+// エンコードビット　B : Heat part
+#define ADIABATIC_T  19
+#define ADIABATIC_B  18
+#define ADIABATIC_N  17
+#define ADIABATIC_S  16
+#define ADIABATIC_E  15
+#define ADIABATIC_W  14
+#define GMA_T        13
+#define GMA_B        12
+#define GMA_N        11
+#define GMA_S        10
+#define GMA_E        9
+#define GMA_W        8
+#define H_DIAG       5
 
 
 // エンコードビット　P
@@ -170,31 +186,13 @@
 #define VBC_UWD    1
 
 
-// エンコードビット　V, H1
+// エンコードビット　C
 #define BC_FACE_T  25
 #define BC_FACE_B  20
 #define BC_FACE_N  15
 #define BC_FACE_S  10
 #define BC_FACE_E  5
 #define BC_FACE_W  0
-
-
-// エンコードビット　H2
-#define ADIABATIC_T  29
-#define ADIABATIC_B  28
-#define ADIABATIC_N  27
-#define ADIABATIC_S  26
-#define ADIABATIC_E  25
-#define ADIABATIC_W  24
-
-#define GMA_T        23
-#define GMA_B        22
-#define GMA_N        21
-#define GMA_S        20
-#define GMA_E        19
-#define GMA_W        18
-
-#define H_DIAG       15
 
 
 // Component Type
@@ -205,25 +203,22 @@
 #define TRANSFER     5
 #define ISOTHERMAL   6
 #define RADIANT      7
-#define SPEC_VEL_WH  8
-#define SPEC_VEL     9
-#define OUTFLOW      10
-#define IBM_DF       11
-#define HEAT_SRC     12 // Hsrc
-#define CNST_TEMP    13
-#define HEX          14 // Forcing
-#define FAN          15
-#define DARCY        16
-#define PERIODIC     17
-#define INACTIVE     18
+#define SPEC_VEL     8
+#define OUTFLOW      9
+#define IBM_DF       10
+#define HEAT_SRC     11 // Hsrc
+#define CNST_TEMP    12
+#define HEX          13 // Forcing
+#define FAN          14
+#define DARCY        15
+#define PERIODIC     16
+#define INACTIVE     17
 
 
 // 熱伝達係数のモード コンポーネントタイプと並列
-#define HT_N     21
-#define HT_S     22
-#define HT_B     23
-#define HT_SN    24
-#define HT_SF    25
+#define HT_S     21
+#define HT_SN    22
+#define HT_SF    23
 
 // 圧力条件のタイプ
 #define P_GRAD_ZERO  1
@@ -291,13 +286,7 @@
 #define BIT_SHIFT(a,b) ( (a >> b) & 0x1 )
 
 // コンポーネントエントリを返す (uint a)
-#define DECODE_CMP(a) ( a & MASK_6 )
-
-// ID番号を返す (uint a)
-//#define DECODE_ID(a) ( (a >> TOP_CELL_ID) & MASK_8 )
-
-// MediumListへのエントリを返す (uint a)
-//#define DECODE_MAT(a) ( (a >> TOP_MATERIAL) & MASK_6 )
+#define DECODE_CMP(a) ( a & MASK_5 )
 
 // Volume Fraction[0-255]を返す (uint a)
 #define DECODE_VF(a) ( (a >> TOP_VF) & MASK_8 )

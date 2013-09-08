@@ -355,23 +355,42 @@ extern "C" {
   
   //***********************************************************************************************
   // ffv_pscalar.f90
-  void ps_muscl_ (REAL_TYPE* ws, int* sz, int* g, REAL_TYPE* dh, int* c_scheme, REAL_TYPE* v00, REAL_TYPE* v, REAL_TYPE* t, int* bv, int* bp,
-                       int* bh1, int* bh2, int* swt, double* flop);
-  void ps_buoyancy_ (REAL_TYPE* v, int* sz, int* g, REAL_TYPE* dgr, REAL_TYPE* t, int* bd, double* flop);
+  void ps_muscl_ (REAL_TYPE* ws,
+                  int* sz,
+                  int* g,
+                  REAL_TYPE* dh,
+                  int* scheme,
+                  REAL_TYPE* v00,
+                  REAL_TYPE* v,
+                  REAL_TYPE* ie,
+                  int* bp,
+                  int* cdf,
+                  int* bh,
+                  int* swt,
+                  double* flop);
   
-  void ps_diff_ee_ (REAL_TYPE* t,
+  void ps_buoyancy_ (REAL_TYPE* v,
+                     int* sz,
+                     int* g,
+                     REAL_TYPE* dgr,
+                     REAL_TYPE* ie,
+                     int* bd,
+                     REAL_TYPE* rhocp,
+                     double* flop);
+  
+  void ps_diff_ee_ (REAL_TYPE* ie,
                     int* sz,
                     int* g,
                     double* res,
                     REAL_TYPE* dh,
                     REAL_TYPE* dt,
-                    REAL_TYPE* pei,
+                    REAL_TYPE* coef,
                     REAL_TYPE* qbc,
                     int* bh,
                     REAL_TYPE* ws,
+                    int* ncompo,
+                    REAL_TYPE* mtbl,
                     double* flop);
-  
-  void hbc_drchlt_ (REAL_TYPE* t, int* sz, int* g, int* st, int* ed, int* bh, int* odr, REAL_TYPE* tc);
   
   
   
