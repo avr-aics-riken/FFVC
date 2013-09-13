@@ -335,37 +335,43 @@
 !! @param [in]     dgr   係数
 !! @param [in]     ie    内部エネルギー
 !! @param [in]     bd    BCindex B
-!! @param [in]     rhocp rho * cp
+!! @param [in]     ncompo コンポーネント数
+!! @param [in]     mtbl   コンポーネントの物性値
 !! @param [in,out] flop  浮動小数点演算数
-!! @note rhocpは代表値なので，単相流の実装
 !! @todo 対象セルは流体だけでよい？　active flag?
 !<
-    subroutine ps_buoyancy (v, sz, g, dgr, ie, bd, rhocp, flop)
+    subroutine ps_buoyancy (v, sz, g, dgr, ie, bd, ncompo, mtbl, flop)
     implicit none
     include '../FB/ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, g
+    integer                                                   ::  i, j, k, ix, jx, kx, g, ncompo, l, idx
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
-    real                                                      ::  dgr, rhocp, r
+    real                                                      ::  dgr, r, rcp, t
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  ie
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bd
+    real, dimension(3, 0:ncompo)                              ::  mtbl
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    r = dgr/rhocp
+    r = dgr
     
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*3.0d0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*12.0d0
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, r)
+!$OMP FIRSTPRIVATE(ix, jx, kx, r) &
+!$OMP PRIVATE(idx, l, rcp, t)
 
 !$OMP DO SCHEDULE(static)
     do k=1,kx
     do j=1,jx
     do i=1,ix
-        v(i,j,k,3) = v(i,j,k,3) + r * ie(i,j,k) * real(ibits(bd(i,j,k), State, 1))
+      idx = bd(i,j,k)
+      l = ibits(idx, 0, bitw_5)
+      rcp = mtbl(1, l) * mtbl(2, l)
+      t = ie(i, j, k) / rcp
+      v(i,j,k,3) = v(i,j,k,3) + r * t * real(ibits(idx, State, 1))
     end do
     end do
     end do
@@ -383,7 +389,6 @@
 !! @param [out]    res    残差
 !! @param [in]     dh     格子幅
 !! @param [in]     dt     時間積分幅
-!! @param [in]     coef   正規化係数 \rho_0 C_p u_0 L
 !! @param [in]     qbc    境界条件の熱流束
 !! @param [in]     bh     BCindex B
 !! @param [in,out] ws     部分段階の温度
@@ -391,14 +396,14 @@
 !! @param [in]     mtbl   コンポーネントの物性値
 !! @param [in,out] flop    浮動小数演算数
 !<
-    subroutine ps_diff_ee (ie, sz, g, res, dh, dt, coef, qbc, bh, ws, ncompo, mtbl, flop)
+    subroutine ps_diff_ee (ie, sz, g, res, dh, dt, qbc, bh, ws, ncompo, mtbl, flop)
     implicit none
     include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx, ncompo
     integer                                                   ::  l_p, l_w, l_e, l_s, l_n, l_b, l_t
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, res
-    real                                                      ::  dh, dt, dth1, dth2, delta, pp, coef
+    real                                                      ::  dh, dt, dth1, dth2, delta
     real                                                      ::  t_p, t_w, t_e, t_s, t_n, t_b, t_t
     real                                                      ::  g_w, g_e, g_s, g_n, g_b, g_t, g_p
     real                                                      ::  a_w, a_e, a_s, a_n, a_b, a_t
@@ -417,7 +422,6 @@
     dth1 = dt/dh
     dth2 = dth1/dh
     res  = 0.0
-    pp = 2.0 / coef
     
     ! /2 + 1 = 17 flop ! DP 27 flop
     ! loop : 6 + 6 + 1 + 51 = 64 flop
@@ -426,7 +430,7 @@
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:res) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, dth1, dth2, pp) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, dth1, dth2) &
 !$OMP PRIVATE(idx, delta) &
 !$OMP PRIVATE(t_p, t_w, t_e, t_s, t_n, t_b, t_t) &
 !$OMP PRIVATE(g_w, g_e, g_s, g_n, g_b, g_t, g_p) &
@@ -497,12 +501,12 @@
       t_b = ie(i  , j  , k-1) / rcp_b
       t_t = ie(i  , j  , k+1) / rcp_t ! 7*8 = 56
 
-      tc_w = lmd_p * lmd_w / (lmd_p + lmd_w) * pp
-      tc_e = lmd_p * lmd_e / (lmd_p + lmd_e) * pp
-      tc_s = lmd_p * lmd_s / (lmd_p + lmd_s) * pp
-      tc_n = lmd_p * lmd_n / (lmd_p + lmd_n) * pp
-      tc_b = lmd_p * lmd_b / (lmd_p + lmd_b) * pp
-      tc_t = lmd_p * lmd_t / (lmd_p + lmd_t) * pp ! (3+8)*6 = 66
+      tc_w = lmd_p * lmd_w / (lmd_p + lmd_w) * 2.0
+      tc_e = lmd_p * lmd_e / (lmd_p + lmd_e) * 2.0
+      tc_s = lmd_p * lmd_s / (lmd_p + lmd_s) * 2.0
+      tc_n = lmd_p * lmd_n / (lmd_p + lmd_n) * 2.0
+      tc_b = lmd_p * lmd_b / (lmd_p + lmd_b) * 2.0
+      tc_t = lmd_p * lmd_t / (lmd_p + lmd_t) * 2.0 ! (3+8)*6 = 66
 
       g_p = c_w * tc_w &
           + c_e * tc_e &

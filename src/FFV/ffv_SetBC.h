@@ -166,14 +166,6 @@ public:
   void checkDriver (FILE* fp);
   
   
-  // 内部エネルギーから温度への変換
-  void convertIE2Tmp(REAL_TYPE* d_t, const int n, const int* bx, const REAL_TYPE* d_ie);
-  
-  
-  // 温度から内部エネルギーへの変換
-  void convertTmp2IE(const int n, const int* bx, REAL_TYPE* d_ie);
-  
-  
   void InnerPBCperiodic (REAL_TYPE* d_p, int* d_bcd);
   
   

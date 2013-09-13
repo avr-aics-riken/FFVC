@@ -356,7 +356,7 @@ void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C
         }
         else
         {
-          fprintf(fp, " %11.4e %11.4e", printVel(cmp[i].val[var_Velocity]), printQF(cmp[i].getMonCalorie(), dt) );
+          fprintf(fp, " %11.4e %11.4e", printVel(cmp[i].val[var_Velocity]), printQF(cmp[i].getMonCalorie()) );
         }
         break;
       
@@ -364,7 +364,7 @@ void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C
         fprintf(fp, " %11.4e", printVel(cmp[i].val[var_Velocity]) );
         if ( C->isHeatProblem() )
         {
-          fprintf(fp, " %11.4e", printQF(cmp[i].getMonCalorie(), dt) ); // [J]
+          fprintf(fp, " %11.4e", printQF(cmp[i].getMonCalorie()) ); // [W]
         }
         break;
         
@@ -382,7 +382,7 @@ void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C
       case TRANSFER:
       case ISOTHERMAL:
       case RADIANT:
-        fprintf(fp, " %11.4e", printQF(cmp[i].getMonCalorie(), dt) );
+        fprintf(fp, " %11.4e", printQF(cmp[i].getMonCalorie()) );
         break;
       
       case HEAT_SRC:
@@ -456,7 +456,7 @@ void History::printHistoryDomfx(FILE* fp, const Control* C, const REAL_TYPE dt)
   
   if (C->isHeatProblem())
   {
-    for (int i=0; i<NOFACE; i++) fprintf(fp, " %12.4e", printQF(C->H_Dface[i], dt) ); // [J]
+    for (int i=0; i<NOFACE; i++) fprintf(fp, " %12.4e", printQF(C->H_Dface[i]) ); // [W]
   }
 
   fprintf(fp, "\n");

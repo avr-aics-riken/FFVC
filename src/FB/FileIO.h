@@ -126,7 +126,6 @@ public:
                        const int Dmode, 
                        const REAL_TYPE Base_tmp, 
                        const REAL_TYPE Diff_tmp, 
-                       const REAL_TYPE Kelvin, 
                        double& flop, 
                        const int guide_out,
                        const bool mode,

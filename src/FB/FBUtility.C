@@ -50,70 +50,52 @@ int FBUtility::c_mkdir(const char* path)
 }
 
 
-
-// #################################################################
-/**
- * @brief 階層ディレクトリの作成
- * @param [in] path ディレクトリパス
- */
-int FBUtility::mkdirs(string path)
-{
-  int len = path.size() + 4;
-  char* buf = new char[len];
-  
-  if ( !buf )
-  {
-    printf("Error: create buffer(%d) %s\n", errno, strerror(errno));
-    return(-1);
-  }
-  strcpy(buf, path.c_str());
-  
-  // 階層的にディレクトリを作成
-  char *p = NULL;
-  int ret = 0;
-  
-  for(p=strchr(buf+1, '/'); p; p=strchr(p+1, '/'))
-  {
-    *p = '\0';
-    ret = c_mkdir(buf);
-    if (ret != 1)
-    {
-      delete [] buf;
-      return(-1);
-    }
-    *p = '/';
-  }
-  
-  if (buf)
-  {
-    delete [] buf;
-  }
-  return(1);
-}
-
-
 // #################################################################
 // ファイル出力時，発散値を計算する
 void FBUtility::cnv_Div(REAL_TYPE* dst, REAL_TYPE* src, int* sz, int gc, REAL_TYPE coef)
 {
-  xcopy(dst, sz, gc, src, coef, kind_scalar);
+  copyS3D(dst, sz, gc, src, coef);
 }
 
 
 // #################################################################
-// 全圧データについて，無次元から有次元単位に変換する
-void FBUtility::tp_array_ND2D(REAL_TYPE* dst, REAL_TYPE* src, int* sz, int gc, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v)
+// 無次元内部エネルギーから有次元/無次元温度への変換
+void FBUtility::convArrayIE2Tmp(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE* src, const int* bd, const REAL_TYPE* mtbl, const REAL_TYPE Base_tmp, const REAL_TYPE Diff_tmp, const bool mode, double& flop)
 {
-  REAL_TYPE cf = Ref_rho * Ref_v * Ref_v;
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  bool zz = mode; // dst[]の次元　true=dimensional, false=non-dimensional
   
-  xcopy(dst, sz, gc, src, cf, kind_scalar);
+  REAL_TYPE dp = fabs(Diff_tmp);
+  REAL_TYPE bt = Base_tmp;
+  
+  flop += (double)ix * (double)jx * (double)kx * 11.0 + 1.0;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dp, bt, zz) schedule(static)
+  for (int k=0; k<=kx+1; k++) {
+    for (int j=0; j<=jx+1; j++) {
+      for (int i=0; i<=ix+1; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int l = bd[m] & MASK_5;
+        REAL_TYPE rho = mtbl[3*l+0];
+        REAL_TYPE cp  = mtbl[3*l+1];
+        REAL_TYPE tn = src[m] / (rho * cp);
+        dst[m] = (zz) ? (tn * dp + bt) : tn;
+      }
+    }
+  }
+  
 }
 
+
 // #################################################################
-// 圧力値を有次元から無次元へ変換し，scale倍
-void FBUtility::prs_array_D2ND(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE Base_prs, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, const REAL_TYPE scale, double& flop)
+// 圧力値を有次元から無次元へ変換
+void FBUtility::convArrayPrsD2ND(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE Base_prs, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, double& flop)
 {
-  REAL_TYPE dp = scale / (Ref_rho * Ref_v * Ref_v);
+  REAL_TYPE dp = 1.0 / (Ref_rho * Ref_v * Ref_v);
   REAL_TYPE bp = Base_prs;
 
   flop += (double)size[0] * (double)size[1] * (double)size[2] * 2.0 + 10.0;
@@ -129,10 +111,10 @@ void FBUtility::prs_array_D2ND(REAL_TYPE* dst, const int* size, const int guide,
 
 
 // #################################################################
-// 圧力値を無次元から有次元へ変換し，scale倍
-void FBUtility::prs_array_ND2D(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE* src, const REAL_TYPE Base_prs, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, const REAL_TYPE scale, double& flop)
+// 圧力値を無次元から有次元へ変換
+void FBUtility::convArrayPrsND2D(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE* src, const REAL_TYPE Base_prs, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, double& flop)
 {
-  REAL_TYPE dp = scale * (Ref_rho * Ref_v * Ref_v);
+  REAL_TYPE dp = Ref_rho * Ref_v * Ref_v;
   REAL_TYPE bp = Base_prs;
   
   flop += (double)size[0] * (double)size[1] * (double)size[2] * 2.0 + 3.0;
@@ -148,39 +130,144 @@ void FBUtility::prs_array_ND2D(REAL_TYPE* dst, const int* size, const int guide,
 
 
 // #################################################################
-// 温度値を有次元から無次元へ変換し，scale倍
-void FBUtility::tmp_array_D2ND(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE Base_tmp, const REAL_TYPE Diff_tmp, const REAL_TYPE klv, const REAL_TYPE scale, double& flop)
+// 有次元/無次元温度から無次元内部エネルギーへの変換
+// mtbl[]は無次元パラメータ
+void FBUtility::convArrayTmp2IE(REAL_TYPE* dst, const int* size, const int guide, REAL_TYPE* src, const int* bd, const REAL_TYPE* mtbl, const REAL_TYPE Base_tmp, const REAL_TYPE Diff_tmp, const bool mode, double& flop)
 {
-  REAL_TYPE dp = scale / fabs(Diff_tmp);
-  REAL_TYPE bt = klv - Base_tmp;
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  bool zz = mode; // src[]の次元　true=dimensional, false=non-dimensional
   
-  size_t n = (size_t)(size[0]+2*guide) * (size_t)(size[1]+2*guide) * (size_t)(size[2]+2*guide);
+  REAL_TYPE dp = 1.0 / fabs(Diff_tmp);
+  REAL_TYPE bt = Base_tmp;
   
-  flop += (double)size[0] * (double)size[1] * (double)size[2] * 2.0 + 9.0;
+  flop += (double)ix * (double)jx * (double)kx * 4.0 + 9.0;
   
-#pragma omp parallel for firstprivate(n, dp, bt) schedule(static)
-  for (size_t i=0; i<n; i++)
-  {
-    dst[i] = ( dst[i] + bt ) * dp;
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dp, bt, zz) schedule(static)
+  for (int k=0; k<=kx+1; k++) {
+    for (int j=0; j<=jx+1; j++) {
+      for (int i=0; i<=ix+1; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        REAL_TYPE tn = (zz) ? (src[m]-bt)*dp : src[m];
+        
+        int l = bd[m] & MASK_5;
+        REAL_TYPE rho = mtbl[3*l+0];
+        REAL_TYPE cp  = mtbl[3*l+1];
+        dst[m] = rho * cp * tn;
+      }
+    }
   }
 }
 
 
 // #################################################################
-// 温度値を無次元から有次元へ変換し，scale倍
-void FBUtility::tmp_array_ND2D(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE* src, const REAL_TYPE Base_tmp, const REAL_TYPE Diff_tmp, const REAL_TYPE klv, const REAL_TYPE scale, double& flop)
+// 全圧データについて，無次元から有次元単位に変換する
+void FBUtility::convArrayTpND2D(REAL_TYPE* dst, REAL_TYPE* src, int* sz, int gc, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v)
 {
-  REAL_TYPE dp = scale * fabs(Diff_tmp);
-  REAL_TYPE bt = Base_tmp - klv;
+  REAL_TYPE cf = Ref_rho * Ref_v * Ref_v;
+  
+  copyS3D(dst, sz, gc, src, cf);
+}
 
-  size_t n = (size_t)(size[0]+2*guide) * (size_t)(size[1]+2*guide) * (size_t)(size[2]+2*guide);
+
+// #################################################################
+// S3D配列のコピー
+void FBUtility::copyS3D(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE* src, const REAL_TYPE scale)
+{
+  REAL_TYPE s = scale;
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
   
-  flop += (double)size[0] * (double)size[1] * (double)size[2] * 2.0 + 3.0;
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, s) schedule(static)
+  for (int k=1-gd; k<=kx+gd; k++) {
+    for (int j=1-gd; j<=jx+gd; j++) {
+      for (int i=1-gd; i<=ix+gd; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        dst[m] = s * src[m];
+      }
+    }
+  }
+}
+
+
+// #################################################################
+// V3D配列のコピー
+void FBUtility::copyV3D(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE* src, const REAL_TYPE scale)
+{
+  REAL_TYPE s = scale;
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
   
-#pragma omp parallel for firstprivate(n, dp, bt) schedule(static)
-  for (size_t i=0; i<n; i++)
-  {
-    dst[i] = src[i] * dp + bt;
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, s) schedule(static)
+  for (int l=0; l<3; l++) {
+    for (int k=1-gd; k<=kx+gd; k++) {
+      for (int j=1-gd; j<=jx+gd; j++) {
+        for (int i=1-gd; i<=ix+gd; i++) {
+          
+          size_t m = _F_IDX_V3D(i, j, k, l, ix, jx, kx, gd);
+          dst[m] = s * src[m];
+        }
+      }
+    }
+  }
+}
+
+
+// #################################################################
+// S3D配列の初期化
+void FBUtility::initS3D(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE init)
+{
+  REAL_TYPE s = init;
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, s) schedule(static)
+  for (int k=1-gd; k<=kx+gd; k++) {
+    for (int j=1-gd; j<=jx+gd; j++) {
+      for (int i=1-gd; i<=ix+gd; i++) {
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        dst[m] = s;
+      }
+    }
+  }
+  
+}
+
+
+// #################################################################
+// S4DEX配列の初期化
+void FBUtility::initS4DEX(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE init)
+{
+  REAL_TYPE s = init;
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, s) schedule(static)
+  for (int k=1-gd; k<=kx+gd; k++) {
+    for (int j=1-gd; j<=jx+gd; j++) {
+      for (int i=1-gd; i<=ix+gd; i++) {
+        
+        size_t m = _F_IDX_S4DEX(0, i, j, k, NOFACE, ix, jx, kx, gd);
+        dst[m+0] = s;
+        dst[m+1] = s;
+        dst[m+2] = s;
+        dst[m+3] = s;
+        dst[m+4] = s;
+        dst[m+5] = s;
+      }
+    }
   }
 }
 
@@ -253,63 +340,41 @@ void FBUtility::MemoryRequirement(const char* mode, const double Memory, const d
 
 
 // #################################################################
-// S4DEXクラスの初期化
-void FBUtility::setS4DEX(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE init)
+/**
+ * @brief 階層ディレクトリの作成
+ * @param [in] path ディレクトリパス
+ */
+int FBUtility::mkdirs(string path)
 {
-  REAL_TYPE s = init;
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
+  int len = path.size() + 4;
+  char* buf = new char[len];
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, s) schedule(static)
-  for (int k=1-gd; k<=kx+gd; k++) {
-    for (int j=1-gd; j<=jx+gd; j++) {
-      for (int i=1-gd; i<=ix+gd; i++) {
-        
-        size_t m = _F_IDX_S4DEX(0, i, j, k, NOFACE, ix, jx, kx, gd);
-        dst[m+0] = s;
-        dst[m+1] = s;
-        dst[m+2] = s;
-        dst[m+3] = s;
-        dst[m+4] = s;
-        dst[m+5] = s;
-      }
+  if ( !buf )
+  {
+    printf("Error: create buffer(%d) %s\n", errno, strerror(errno));
+    return(-1);
+  }
+  strcpy(buf, path.c_str());
+  
+  // 階層的にディレクトリを作成
+  char *p = NULL;
+  int ret = 0;
+  
+  for(p=strchr(buf+1, '/'); p; p=strchr(p+1, '/'))
+  {
+    *p = '\0';
+    ret = c_mkdir(buf);
+    if (ret != 1)
+    {
+      delete [] buf;
+      return(-1);
     }
+    *p = '/';
   }
-}
-
-
-// #################################################################
-// スカラー倍してコピー
-void FBUtility::xcopy(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE* src, const REAL_TYPE scale, const int mode)
-{
-  REAL_TYPE s = scale;
-  size_t n = (size_t)(size[0]+2*guide) * (size_t)(size[1]+2*guide) * (size_t)(size[2]+2*guide);
   
-  if ( mode == kind_vector ) n *= 3;
-  
-#pragma omp parallel for firstprivate(n, s) schedule(static)
-  for (size_t i=0; i<n; i++)
+  if (buf)
   {
-    dst[i] = s * src[i];
+    delete [] buf;
   }
-}
-
-
-
-// #################################################################
-// 初期化
-void FBUtility::xset(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE init, const int mode)
-{
-  REAL_TYPE s = init;
-  size_t n = (size_t)(size[0]+2*guide) * (size_t)(size[1]+2*guide) * (size_t)(size[2]+2*guide);
-  
-  if ( mode == kind_vector ) n *= 3;
-  
-#pragma omp parallel for firstprivate(n, s) schedule(static)
-  for (size_t i=0; i<n; i++)
-  {
-    dst[i] = s;
-  }
+  return(1);
 }

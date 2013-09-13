@@ -40,23 +40,25 @@ using namespace std;
 class ParseBC : public DomainInfo {
 private:
   
-  int NoBC;        ///< LocalBCの数
-  int NoBaseBC;    ///< 入力ファイルに記載された外部境界条件の指定種類数
-  int NoCompo;     ///< コンポーネントリストの全登録数
-  int NoMedium;    ///< 媒質数
-  int Unit_Temp;   ///< 温度単位
-  int Unit_Prs;    ///< 圧力単位
-  
-  REAL_TYPE RefVelocity, BaseTemp, DiffTemp, RefDensity, RefSpecificHeat;
-  REAL_TYPE RefLength, BasePrs;
-  REAL_TYPE rho, nyu, cp, lambda, beta; // 無次元化の参照値
-
+  int NoBC;         ///< LocalBCの数
+  int NoBaseBC;     ///< 入力ファイルに記載された外部境界条件の指定種類数
+  int NoCompo;      ///< コンポーネントリストの全登録数
+  int NoMedium;     ///< 媒質数
+  int Unit_Prs;     ///< 圧力単位
   int KindOfSolver; ///< 支配方程式の種類
   int Unit_Param;
   int monitor;
   int Mode_Gradp;
   bool HeatProblem;
   
+  REAL_TYPE RefLength;       ///< 代表長さ
+  REAL_TYPE RefVelocity;     ///< 代表速度
+  REAL_TYPE BasePrs;         ///< 基準圧力
+  REAL_TYPE BaseTemp;        ///< 基準温度
+  REAL_TYPE DiffTemp;        ///< 代表温度差
+  REAL_TYPE RefDensity;      ///< 代表密度
+  REAL_TYPE RefSpecificHeat; ///< 代表比熱比
+    
   TextParser* tpCntl;     ///< テキストパーサー
   BoundaryOuter* BaseBc;  ///< テンポラリのテーブル
 
@@ -69,7 +71,6 @@ public:
     RefVelocity = RefDensity = RefSpecificHeat = RefLength = 0.0;
     monitor = 0;
     Unit_Param = 0;
-    Unit_Temp = 0;
     Unit_Prs = 0;
     Mode_Gradp = 0;
     HeatProblem = false;
@@ -415,10 +416,10 @@ public:
   
   /**
    * @brief 指定した媒質IDから参照物理量を設定する
-   * @param [in] mat MediumList
-   * @param [in] Ref 参照媒質の格納順
+   * @param [in] m_rho 代表密度
+   * @param [in] m_cp  代表比熱比
    */
-  void setRefMediumProperty(const MediumList* mat, const int Ref);
+  void setRefMediumProperty(const REAL_TYPE m_rho, const REAL_TYPE m_cp);
   
 };
 

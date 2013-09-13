@@ -392,7 +392,7 @@ bool IP_Jet::getTP(Control* R, TextParser* tpCntl)
       r1o = ( R->Unit.Param == DIMENSIONAL ) ? ct/RefL : ct;
     }
     
-    label = "/IntrinsicExample/RIng1/RotationFrequency";
+    label = "/IntrinsicExample/Ring1/RotationFrequency";
     if ( !(tpCntl->getInspectedValue(label, ct)) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());

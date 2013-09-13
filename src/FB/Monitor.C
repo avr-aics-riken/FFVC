@@ -643,7 +643,6 @@ void MonitorList::printMonitorInfo(FILE* fp, const char* str, const bool verbose
 ///   @param [in] refDensity     基準密度
 ///   @param [in] refLength      代表長さ
 ///   @param [in] basePrs        基準圧力
-///   @param [in] unitTemp       温度単位指定フラグ (Kelvin / Celsius)
 ///   @param [in] modePrecision  出力精度指定フラグ (単精度，倍精度)
 ///   @param [in] unitPrs        圧力単位指定フラグ (絶対値，ゲージ圧)
 ///   @param [in] num_process    プロセス数
@@ -655,7 +654,6 @@ void MonitorList::setControlVars(int* bcd,
                                  const REAL_TYPE refDensity,
                                  const REAL_TYPE refLength,
                                  const REAL_TYPE basePrs,
-                                 const int unitTemp,
                                  const int modePrecision,
                                  const int unitPrs,
                                  const int num_process)
@@ -674,7 +672,6 @@ void MonitorList::setControlVars(int* bcd,
   refVar.refDensity    = refDensity;
   refVar.refLength     = refLength;
   refVar.basePrs       = basePrs;
-  refVar.unitTemp      = unitTemp;
   refVar.unitPrs       = unitPrs;
   refVar.modePrecision = modePrecision;
   

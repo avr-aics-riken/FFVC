@@ -84,8 +84,8 @@ void FFV::NS_FS_E_CDS()
   
   // n stepの値を保持 >> In use (d_v0, d_p0)
   TIMING_start(tm_copy_array);
-  U.xcopy(d_p0, size, guide, d_p, one, kind_scalar);
-  U.xcopy(d_v0, size, guide, d_v, one, kind_vector);
+  U.copyS3D(d_p0, size, guide, d_p, one);
+  U.copyV3D(d_v0, size, guide, d_v, one);
   TIMING_stop(tm_copy_array, 0.0, 2);
   
   
@@ -263,7 +263,7 @@ void FFV::NS_FS_E_CDS()
   if ( C.AlgorithmF == Flow_FS_AB_CN )
   {
     TIMING_start(tm_copy_array);
-    U.xcopy(d_wv, size, guide, d_vc, one, kind_vector);
+    U.copyV3D(d_wv, size, guide, d_vc, one);
     TIMING_stop(tm_copy_array, 0.0);
     
     for (ICv->setLoopCount(0); ICv->getLoopCount()< ICv->getMaxIteration(); ICv->incLoopCount())
@@ -288,13 +288,13 @@ void FFV::NS_FS_E_CDS()
   
   // vの初期値をvcにしておく
   TIMING_start(tm_copy_array);
-  U.xcopy(d_v, size, guide, d_vc, one, kind_vector);
+  U.copyV3D(d_v, size, guide, d_vc, one);
   TIMING_stop(tm_copy_array, 0.0);
   
   
   // 非反復ソース項のゼロクリア src0
   TIMING_start(tm_assign_const);
-  U.xset(d_ws, size, guide, zero, kind_scalar);
+  U.initS3D(d_ws, size, guide, zero);
   TIMING_stop(tm_assign_const, 0.0);
   
   
@@ -379,7 +379,7 @@ void FFV::NS_FS_E_CDS()
     
     // 反復ソース項のゼロクリア => src1
     TIMING_start(tm_assign_const);
-    U.xset(d_sq, size, guide, zero, kind_scalar);
+    U.initS3D(d_sq, size, guide, zero);
     TIMING_stop(tm_assign_const, 0.0);
     
     // Forcingコンポーネントによるソース項の寄与分

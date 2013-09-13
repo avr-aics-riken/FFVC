@@ -91,7 +91,7 @@ MonitorList {
   OutputMode      = "Gather"
   CellMonitor     = "on"
   Sampling {
-    TemprallType  = "step"
+    TemporalType  = "step"
     Interval      = 100
   }
 
@@ -235,7 +235,6 @@ StartCondition {
   InitialState {
     MassDensity = 1.0
     Pressure    = 0.0
-    Temperature = 1.0
     Velocity    = (0.0, 0.0, 0.0)
   }
 }
@@ -279,7 +278,6 @@ Unit {
   UnitOfInputParameter  = "nonDimensional"
   UnitOfOutput          = "nonDimensional"
   Pressure              = "Gauge"
-  Temperature           = "Celsius"
 }
 
 

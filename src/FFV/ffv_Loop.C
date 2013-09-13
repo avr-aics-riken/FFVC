@@ -130,7 +130,7 @@ int FFV::Loop(const unsigned step)
   {
     TIMING_start(tm_average_time);
     flop_count=0.0;
-    Averaging_Time(flop_count);
+    Averaging(flop_count);
     TIMING_stop(tm_average_time, flop_count);
   }
   

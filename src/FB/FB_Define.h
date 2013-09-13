@@ -449,12 +449,6 @@ enum Unit_Pressure {
   Unit_Absolute
 };
 
-/// 温度単位
-enum Temp_Unit {
-  Unit_KELVIN=1,
-  Unit_CELSIUS
-};
-
 /// 長さ単位
 enum Length_Unit {
   LTH_ND=0,

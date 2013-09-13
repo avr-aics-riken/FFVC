@@ -375,7 +375,8 @@ extern "C" {
                      REAL_TYPE* dgr,
                      REAL_TYPE* ie,
                      int* bd,
-                     REAL_TYPE* rhocp,
+                     int* ncompo,
+                     REAL_TYPE* mtbl,
                      double* flop);
   
   void ps_diff_ee_ (REAL_TYPE* ie,
@@ -384,7 +385,6 @@ extern "C" {
                     double* res,
                     REAL_TYPE* dh,
                     REAL_TYPE* dt,
-                    REAL_TYPE* coef,
                     REAL_TYPE* qbc,
                     int* bh,
                     REAL_TYPE* ws,

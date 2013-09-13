@@ -407,11 +407,9 @@ void Control::get2ndParameter(ReferenceFrame* RF)
   getTurbulenceModel();
   
   
-  // ラフな初期値を使い、リスタートするモード指定 >> FileIO
   getStartCondition();
   
   
-  // 形状近似
   getShapeApproximation();
   
   
@@ -1884,7 +1882,7 @@ void Control::getReference()
       Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
       Exit(0);
     }
-    
+    BaseTemp = Base;
     
     if ( Diff < 0.0f )
     {
@@ -1892,11 +1890,6 @@ void Control::getReference()
       Exit(0);
     }
     DiffTemp = Diff;
-    
-    if ( Unit.Temp == Unit_CELSIUS )
-    {
-      BaseTemp = Base + KELVIN;
-    }
   }
   
 }
@@ -2177,7 +2170,7 @@ void Control::getStartCondition()
 {
   int ct;
   string str;
-  string label;
+  string label, leaf;
   
   
   // Staging option
@@ -2280,7 +2273,7 @@ void Control::getStartCondition()
   
   
 
-  // 初期条件
+  // 初期条件 温度はParseBC::getInitTempOfMedium()
   if ( Start == initial_start )
   {
     // Density
@@ -2314,19 +2307,6 @@ void Control::getStartCondition()
     iv.VecU = v[0];
     iv.VecV = v[1];
     iv.VecW = v[2];
-    
-    // Temperature
-    if ( isHeatProblem() )
-    {
-      label="/StartCondition/InitialState/Temperature";
-      
-      if ( !(tpCntl->getInspectedValue(label, iv.Temperature )) )
-      {
-        Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
-        Exit(0);
-      }
-      
-    }
   }
   
 }
@@ -2768,25 +2748,6 @@ void Control::getUnit()
     Exit(0);
   }
   
-  if ( isHeatProblem() )
-  {
-    label = "/Unit/Temperature";
-    
-    if ( !(tpCntl->getInspectedValue(label, str )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
-      Exit(0);
-    }
-    
-    if     ( !strcasecmp(str.c_str(), "Celsius") )  Unit.Temp = Unit_CELSIUS;
-    else if( !strcasecmp(str.c_str(), "Kelvin") )   Unit.Temp = Unit_KELVIN;
-    else
-    {
-      Hostonly_ stamped_printf("\tInvalid keyword is described at '%s'\n", label.c_str());
-      Exit(0);
-    }
-  }
-  
 }
 
 
@@ -3008,9 +2969,9 @@ void Control::printInitValues(FILE* fp)
   
   if ( isHeatProblem() )
   {
-    fprintf(fp,"\tInitial  Temperature [%s]     / [-]   : %12.5e / %12.5e\n", (Unit.Temp==Unit_KELVIN) ? "K" : "C",
-						FBUtility::convK2Temp(iv.Temperature, Unit.Temp), 
-						FBUtility::convK2ND(iv.Temperature, BaseTemp, DiffTemp));
+    fprintf(fp,"\tInitial  Temperature [C]     / [-]   : %12.5e / %12.5e\n",
+						iv.Temperature, 
+						FBUtility::convTempD2ND(iv.Temperature, BaseTemp, DiffTemp));
   }
   
   fprintf(fp,"\n");
@@ -3105,10 +3066,7 @@ void Control::printParaConditions(FILE* fp, const MediumList* mat)
   fprintf(fp,"\tRef. Velocity             [m/s]       : %12.5e\n", RefVelocity);
 	fprintf(fp,"\tBase Pressure             [Pa]        : %12.5e\n", BasePrs);
   fprintf(fp,"\tRef. Mass Density         [kg/m^3]    : %12.5e\n", RefDensity);
-  fprintf(fp,"\tRef. Viscosity            [Pa s]      : %12.5e\n", RefViscosity);
-  fprintf(fp,"\tRef. Knmtc Viscosity      [m^2/s]     : %12.5e\n", RefKviscosity);
   fprintf(fp,"\tRef. Specific Heat        [J/(kg K)]  : %12.5e\n", RefSpecificHeat);
-  fprintf(fp,"\tRef. Thermal Conductivity [W/(m K)]   : %12.5e\n", RefLambda);
   fprintf(fp,"\tRef. Speed of Sound       [m/s]       : %12.5e\n", RefSoundSpeed);
   fprintf(fp,"\tGravity                   [m/s^2]     : %12.5e\n", Gravity);
   fprintf(fp,"\n");
@@ -3119,8 +3077,8 @@ void Control::printParaConditions(FILE* fp, const MediumList* mat)
   
   if ( isHeatProblem() )
   {
-    fprintf(fp,"\tBase Temperature          [%s] / [-]   : %12.5e / %3.1f\n", (Unit.Temp==Unit_KELVIN) ? "K" : "C", FBUtility::convK2Temp(BaseTemp, Unit.Temp), 0.0);
-    fprintf(fp,"\tTemperature Diff.         [%s] / [-]   : %12.5e / %3.1f\n", (Unit.Temp==Unit_KELVIN) ? "K" : "C", DiffTemp, 1.0);
+    fprintf(fp,"\tBase Temperature          [C] / [-]   : %12.5e / %3.1f\n", BaseTemp, 0.0);
+    fprintf(fp,"\tTemperature Diff.         [C] / [-]   : %12.5e / %3.1f\n", DiffTemp, 1.0);
   }
   fprintf(fp,"\n");
   
@@ -3431,7 +3389,7 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
   fprintf(fp,"\n\tUnit\n");
   fprintf(fp,"\t     Unit of Input Parameter  :   %s\n", (Unit.Param == DIMENSIONAL) ? "Dimensional" : "Non-Dimensional");
   fprintf(fp,"\t             Pressure         :   %s\n", (Unit.Prs == Unit_Absolute) ? "Absolute Pressure" : "Gauge Pressure");
-  fprintf(fp,"\t             Temperature      :   %s\n", (Unit.Temp == Unit_KELVIN) ? "Kelvin" : "Celsius");
+  fprintf(fp,"\t             Temperature      :   Celsius\n");
   
   
   // 時間制御 ------------------
@@ -4044,25 +4002,197 @@ void Control::setExistComponent(CompoList* cmp, BoundaryOuter* OBC)
 
 
 // #################################################################
-/**
- @brief 無次元パラメータを各種モードに応じて設定する
- @param mat
- @param cmp
- @param rf
- @note
- - 代表長さと代表速度はパラメータで必ず与えること（読み込んだ値は変更しない）
- - 純強制対流　有次元　（代表長さ，代表速度，動粘性係数，温度拡散係数）
- -           無次元　（Pr, Re > RefV=RefL=1）
- - 熱対流　　　有次元　（代表長さ，代表速度，温度差，体膨張係数，重力加速度，動粘性係数，温度拡散係数）
- - 自然対流　　有次元　（代表長さ，代表速度，温度差，体膨張係数，重力加速度，動粘性係数，温度拡散係数）
- - 固体熱伝導　有次元　（代表長さ，温度拡散係数 > Peclet=1）？
- * @see
- *  - bool Control::getXML_Para_ND(void)
- *  - void Control::getXML_Para_Init(void)
- */
-void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF, BoundaryOuter* BO)
+// コンポーネントと外部境界のパラメータを有次元に設定
+void Control::setCmpParameters(MediumList* mat, CompoList* cmp, BoundaryOuter* BO)
 {
-  REAL_TYPE rho, nyu, cp, lambda, beta, mu, snd_spd=0.0;
+  // コンポーネントの指定速度
+  for (int n=1; n<=NoCompo; n++)
+  {
+    if ( cmp[n].getType()==SPEC_VEL )
+    {
+			if ( cmp[n].isPolicy_Massflow() ) //ポリシーが流量の場合
+      {
+				if ( Unit.Param == DIMENSIONAL )
+        {
+					cmp[n].set_Velocity( cmp[n].get_Massflow() / cmp[n].area );  // attenltion! Velocity and MassFlow use same variable
+				}
+				else
+        {
+					cmp[n].set_Velocity( cmp[n].get_Massflow()*RefVelocity*RefLength*RefLength / cmp[n].area );
+				}
+			}
+      
+			// 流量指定のときのみ，ca[]に有次元速度パラメータを保存  >> 速度指定の場合には，parseBC::getXML_IBC_SpecVel()で設定済み
+      if ( cmp[n].isPolicy_Massflow() )
+      {
+        if ( Unit.Param != DIMENSIONAL )
+        {
+          Hostonly_ stamped_printf("Error: Non-dimensional condition\n");
+          Exit(0);
+        }
+        else
+        {
+          cmp[n].ca[CompoList::amplitude] = cmp[n].get_Velocity();
+          cmp[n].ca[CompoList::bias] = cmp[n].ca[CompoList::bias] / cmp[n].area; // dimensional velocity
+        }
+      }
+		}
+  }
+	
+  // 発熱密度の計算(有次元) -- 発熱量と発熱密度
+  REAL_TYPE a, vol;
+  a = deltaX*RefLength;
+  vol = a*a*a;
+  
+  for (int n=1; n<=NoCompo; n++)
+  {
+    if ( cmp[n].getType()==HEAT_SRC )
+    {
+      if (cmp[n].get_sw_Heatgen() == CompoList::hsrc_watt)
+      {
+        cmp[n].setHeatDensity( cmp[n].get_HeatValue() / ((REAL_TYPE)cmp[n].getElement()*vol) );
+      }
+      else // 発熱密度
+      {
+        cmp[n].setHeatValue( cmp[n].getHeatDensity() * ((REAL_TYPE)cmp[n].getElement()*vol) );
+      }
+    }
+  }
+  
+  // Darcy係数（単媒質）
+  // C[0-2]; 有次元，C[3-5]; 無次元係数
+  REAL_TYPE ki;
+  for (int n=1; n<=NoCompo; n++)
+  {
+    if ( cmp[n].getType()==DARCY )
+    {
+      ki = (mat[n].P[p_viscosity]*RefLength) / (mat[n].P[p_density]*RefVelocity);
+      cmp[n].ca[3] = ki / cmp[n].ca[0];
+      cmp[n].ca[4] = ki / cmp[n].ca[1];
+      cmp[n].ca[5] = ki / cmp[n].ca[2];
+    }    
+  }
+  
+  // Pressure Loss
+  REAL_TYPE DensityOfMedium, cf[6];
+  for (int n=1; n<=NoCompo; n++) {
+    
+    if ( cmp[n].getType()==HEX )
+    {
+      for (int i=0; i<6; i++) cf[i] = cmp[n].ca[i];
+      
+      // 流量と圧力損失量計算の有次元化の係数
+      cmp[n].set_CoefMassflow( RefLength * RefLength * RefVelocity );
+      cmp[n].set_CoefPrsLoss( cf[5] * RefDensity * RefVelocity * RefVelocity / RefLength );
+      
+      // Normalize
+      if ( cmp[n].getPrsUnit() == CompoList::unit_mmAq )
+      {
+        // Water: T=300K, p=101.325kPa > 996.62 kg/m^3
+        DensityOfMedium = 996.62;
+        convertHexCoef(cf, DensityOfMedium);
+      }
+      else if ( cmp[n].getPrsUnit() == CompoList::unit_mmHg )
+      {
+        // Mercury: T=300K > 13538 kg/m^3
+        DensityOfMedium = 13538.0;
+        convertHexCoef(cf, DensityOfMedium);
+      }
+      else if ( cmp[n].getPrsUnit() == CompoList::unit_Pa )
+      {
+        convertHexCoef(cf);
+      }
+      else if ( cmp[n].getPrsUnit() == CompoList::unit_NonDimensional )
+      {
+        cf[4] /= RefVelocity; // 無次元の場合には単位変更のみ
+        cf[5] *= (1e-3/RefLength);
+      }
+      
+      for (int i=0; i<6; i++) cmp[n].ca[i] = cf[i];
+    }
+    
+  }
+  
+  // 外部境界面の速度の指定パラメータを有次元化
+  if ( Unit.Param == NONDIMENSIONAL )
+  {
+    for (int n=0; n<NOFACE; n++)
+    {
+      switch ( BO[n].getClass() )
+      {
+        case OBC_WALL:
+        case OBC_SPEC_VEL:
+          BO[n].ca[CompoList::amplitude] *= RefVelocity;
+          BO[n].ca[CompoList::frequency] *= (RefVelocity/RefLength);
+          //BO[n].ca[CompoList::initphase] radは有次元化不要
+          BO[n].ca[CompoList::bias]      *= RefVelocity;
+          break;
+          
+        default:
+          break;
+      }
+    }
+  }
+  
+  // 外部境界面の圧力の有次元化
+  if ( Unit.Param == NONDIMENSIONAL )
+  {
+    for (int n=0; n<NOFACE; n++)
+    {
+      switch ( BO[n].getClass() )
+      {
+        case OBC_OUTFLOW:
+        case OBC_TRC_FREE:
+        case OBC_FAR_FIELD:
+          if ( BO[n].get_pType() == P_DIRICHLET )
+          {
+            BO[n].p = FBUtility::convPrsND2D(BO[n].p, BasePrs, RefDensity, RefVelocity, Unit.Prs); 
+          }          
+          break;
+          
+        case OBC_PERIODIC:
+          if ( BO[n].getPrdcMode() != BoundaryOuter::prdc_Simple ) // Dirichlet or Bidirectionalを指定の場合
+          {
+            BO[n].p = FBUtility::convPrsND2D(BO[n].p, BasePrs, RefDensity, RefVelocity, Unit.Prs);
+          }
+          break;
+          
+        default:
+          break;
+      }
+    }
+  }
+  
+  // 初期条件の値の有次元化
+  if ( Unit.Param == NONDIMENSIONAL )
+  {
+    iv.Pressure = FBUtility::convPrsND2D(iv.Pressure, BasePrs, RefDensity, RefVelocity, Unit.Prs);
+    iv.Density *= RefDensity;
+		iv.VecU    *= RefVelocity;
+		iv.VecV    *= RefVelocity;
+		iv.VecW    *= RefVelocity;
+    
+    if ( isHeatProblem() )
+    {
+      iv.Temperature = FBUtility::convTempND2D(iv.Temperature, BaseTemp, DiffTemp);
+    }
+	}
+}
+
+
+// #################################################################
+/* 無次元パラメータを各種モードに応じて設定する
+ * @note
+ * - 代表長さと代表速度はパラメータで必ず与えること（読み込んだ値は変更しない）
+ * - 純強制対流　有次元　（代表長さ，代表速度，動粘性係数，温度拡散係数）
+ * -           無次元　（Pr, Re > RefV=RefL=1）
+ * - 熱対流　　　有次元　（代表長さ，代表速度，温度差，体膨張係数，重力加速度，動粘性係数，温度拡散係数）
+ * - 自然対流　　有次元　（代表長さ，代表速度，温度差，体膨張係数，重力加速度，動粘性係数，温度拡散係数）
+ * - 固体熱伝導　有次元　（代表長さ，温度拡散係数)
+ */
+void Control::setRefParameters(MediumList* mat, ReferenceFrame* RF)
+{
+  REAL_TYPE rho, nyu, cp, lambda, beta, snd_spd=0.0;
   REAL_TYPE c1, c2, c3;
   int m;
   
@@ -4074,7 +4204,6 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
       if ( mat[n].getState() == FLUID )
       {
         rho     = mat[n].P[p_density];
-        mu      = mat[n].P[p_viscosity];
         nyu     = mat[n].P[p_kinematic_viscosity];
         cp      = mat[n].P[p_specific_heat];
         lambda  = mat[n].P[p_thermal_conductivity];
@@ -4091,11 +4220,7 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   }
   
   RefDensity      = rho;
-  // rho = RefDensity;
-  RefViscosity    = mu;
-  RefKviscosity   = nyu;
   RefSpecificHeat = cp;
-  RefLambda       = lambda;
   RefSoundSpeed   = snd_spd;
   
   if (KindOfSolver == SOLID_CONDUCTION)
@@ -4198,6 +4323,7 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
   Tscale = (double)RefLength / (double)RefVelocity;
   
   
+  // 参照速度の無次元化
   if ( Unit.Param == DIMENSIONAL )
   {
     double g[3];
@@ -4207,188 +4333,8 @@ void Control::setParameters(MediumList* mat, CompoList* cmp, ReferenceFrame* RF,
     g[2] /= (double)RefVelocity;
     RF->setGridVel(g);
   }
-  
-  // コンポーネントの指定速度
-  for (int n=1; n<=NoCompo; n++)
-  {
-    if ( cmp[n].getType()==SPEC_VEL )
-    {
-			if ( cmp[n].isPolicy_Massflow() ) //ポリシーが流量の場合
-      {
-				if ( Unit.Param == DIMENSIONAL )
-        {
-					cmp[n].set_Velocity( cmp[n].get_Massflow() / cmp[n].area );  // attenltion! Velocity and MassFlow use same variable
-				}
-				else
-        {
-					cmp[n].set_Velocity( cmp[n].get_Massflow()*RefVelocity*RefLength*RefLength / cmp[n].area );
-				}
-			}
-      
-			// 流量指定のときのみ，ca[]に有次元速度パラメータを保存  >> 速度指定の場合には，parseBC::getXML_IBC_SpecVel()で設定済み
-      if ( cmp[n].isPolicy_Massflow() )
-      {
-        if ( Unit.Param != DIMENSIONAL )
-        {
-          Hostonly_ stamped_printf("Error: Non-dimensional condition\n");
-          Exit(0);
-        }
-        else
-        {
-          cmp[n].ca[CompoList::amplitude] = cmp[n].get_Velocity();
-          cmp[n].ca[CompoList::bias] = cmp[n].ca[CompoList::bias] / cmp[n].area; // dimensional velocity
-        }
-      }
-		}
-  }
-	
-  // 発熱密度の計算(有次元) -- 発熱量と発熱密度
-  REAL_TYPE a, vol;
-  a = deltaX*RefLength;
-  vol = a*a*a;
-  
-  for (int n=1; n<=NoCompo; n++)
-  {
-    if ( cmp[n].getType()==HEAT_SRC )
-    {
-      if (cmp[n].get_sw_Heatgen() == CompoList::hsrc_watt)
-      {
-        cmp[n].setHeatDensity( cmp[n].get_HeatValue() / ((REAL_TYPE)cmp[n].getElement()*vol) );
-      }
-      else // 発熱密度
-      {
-        cmp[n].setHeatValue( cmp[n].getHeatDensity() * ((REAL_TYPE)cmp[n].getElement()*vol) );
-      }
-    }
-  }
-  
-  // Darcy係数（単媒質）
-  // C[0-2]; 有次元，C[3-5]; 無次元係数
-  REAL_TYPE ki;
-  for (int n=1; n<=NoCompo; n++)
-  {
-    if ( cmp[n].getType()==DARCY )
-    {
-      ki = (mat[m].P[p_viscosity]*RefLength) / (mat[n].P[p_density]*RefVelocity);
-      cmp[n].ca[3] = ki / cmp[n].ca[0];
-      cmp[n].ca[4] = ki / cmp[n].ca[1];
-      cmp[n].ca[5] = ki / cmp[n].ca[2];
-    }    
-  }
-  
-  // Pressure Loss
-  REAL_TYPE DensityOfMedium, cf[6];
-  for (int n=1; n<=NoCompo; n++) {
-    
-    if ( cmp[n].getType()==HEX )
-    {
-      for (int i=0; i<6; i++) cf[i] = cmp[n].ca[i];
-      
-      // 流量と圧力損失量計算の有次元化の係数
-      cmp[n].set_CoefMassflow( RefLength * RefLength * RefVelocity );
-      cmp[n].set_CoefPrsLoss( cf[5] * RefDensity * RefVelocity * RefVelocity / RefLength );
-      
-      // Normalize
-      if ( cmp[n].getPrsUnit() == CompoList::unit_mmAq )
-      {
-        // Water: T=300K, p=101.325kPa > 996.62 kg/m^3
-        DensityOfMedium = 996.62;
-        convertHexCoef(cf, DensityOfMedium);
-      }
-      else if ( cmp[n].getPrsUnit() == CompoList::unit_mmHg )
-      {
-        // Mercury: T=300K > 13538 kg/m^3
-        DensityOfMedium = 13538.0;
-        convertHexCoef(cf, DensityOfMedium);
-      }
-      else if ( cmp[n].getPrsUnit() == CompoList::unit_Pa )
-      {
-        convertHexCoef(cf);
-      }
-      else if ( cmp[n].getPrsUnit() == CompoList::unit_NonDimensional )
-      {
-        cf[4] /= RefVelocity; // 無次元の場合には単位変更のみ
-        cf[5] *= (1e-3/RefLength);
-      }
-      
-      for (int i=0; i<6; i++) cmp[n].ca[i] = cf[i];
-    }
-    
-  }
-  
-  // 外部境界面の速度の指定パラメータを有次元化
-  if ( Unit.Param == NONDIMENSIONAL )
-  {
-    for (int n=0; n<NOFACE; n++)
-    {
-      switch ( BO[n].getClass() )
-      {
-        case OBC_WALL:
-        case OBC_SPEC_VEL:
-          BO[n].ca[CompoList::amplitude] *= RefVelocity;
-          BO[n].ca[CompoList::frequency] *= (RefVelocity/RefLength);
-          //BO[n].ca[CompoList::initphase] radは有次元化不要
-          BO[n].ca[CompoList::bias]      *= RefVelocity;
-          break;
-          
-        default:
-          break;
-      }
-    }
-  }
-  
-  // 外部境界面の圧力の有次元化
-  if ( Unit.Param == NONDIMENSIONAL )
-  {
-    for (int n=0; n<NOFACE; n++)
-    {
-      switch ( BO[n].getClass() )
-      {
-        case OBC_OUTFLOW:
-        case OBC_TRC_FREE:
-        case OBC_FAR_FIELD:
-          if ( BO[n].get_pType() == P_DIRICHLET )
-          {
-            BO[n].p = FBUtility::convND2D_P(BO[n].p, BasePrs, RefDensity, RefVelocity, Unit.Prs); 
-          }          
-          break;
-          
-        case OBC_PERIODIC:
-          if ( BO[n].getPrdcMode() != BoundaryOuter::prdc_Simple ) // Dirichlet or Bidirectionalを指定の場合
-          {
-            BO[n].p = FBUtility::convND2D_P(BO[n].p, BasePrs, RefDensity, RefVelocity, Unit.Prs);
-          }
-          break;
-          
-        default:
-          break;
-      }
-    }
-  }
-  
-  // 初期条件の値の有次元化
-  if ( Unit.Param == NONDIMENSIONAL )
-  {
-    iv.Pressure = FBUtility::convND2D_P(iv.Pressure, BasePrs, RefDensity, RefVelocity, Unit.Prs);
-    iv.Density *= RefDensity;
-		iv.VecU    *= RefVelocity;
-		iv.VecV    *= RefVelocity;
-		iv.VecW    *= RefVelocity;
-    
-    if ( isHeatProblem() )
-    {
-			iv.Temperature = FBUtility::convND2Kelvin(iv.Temperature, BaseTemp, DiffTemp); //内部表現をKelvinに
-    }
-	}
-	else
-  {
-		if ( isHeatProblem() )
-    {
-			iv.Temperature = FBUtility::convTemp2K(iv.Temperature, Unit.Temp);
-    }
-	}
-}
 
+}
 
 
 

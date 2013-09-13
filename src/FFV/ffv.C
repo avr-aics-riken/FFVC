@@ -104,7 +104,7 @@ FFV::FFV()
   d_vt  = NULL;
   d_vof = NULL;
   d_ap  = NULL;
-  d_at  = NULL;
+  d_ae  = NULL;
   d_cvf = NULL;
   
   // Coarse initial
@@ -162,7 +162,7 @@ FFV::~FFV()
  * @brief 時間平均操作を行う
  * @param [in,out] flop 浮動小数点演算数
  */
-void FFV::Averaging_Time(double& flop)
+void FFV::Averaging(double& flop)
 {
   CurrentStep_Avr++;
   CurrentTime_Avr += DT.get_DT();
@@ -173,7 +173,7 @@ void FFV::Averaging_Time(double& flop)
   
   if ( C.isHeatProblem() ) 
   {
-    fb_average_s_(d_at, size, &guide, d_ie, &nadd, &flop);
+    fb_average_s_(d_ae, size, &guide, d_ie, &nadd, &flop);
   }
 }
 
@@ -355,11 +355,11 @@ void FFV::OutputAveragedVarables(double& flop)
     if (C.Unit.File == DIMENSIONAL)
     {
       REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
-      U.prs_array_ND2D(d_ws, size, guide, d_ap, bp, C.RefDensity, C.RefVelocity, scale, flop);
+      U.convArrayPrsND2D(d_ws, size, guide, d_ap, bp, C.RefDensity, C.RefVelocity, flop);
     }
     else
     {
-      U.xcopy(d_ws, size, guide, d_ap, scale, kind_scalar);
+      U.copyS3D(d_ws, size, guide, d_ap, scale);
     }
     
     // 最大値と最小値
@@ -393,12 +393,12 @@ void FFV::OutputAveragedVarables(double& flop)
     
     if ( DFI_OUT_VELA->DFI_Finfo.ArrayShape == "nijk" )
     {
-      fb_vout_nijk_(d_wo, d_av, size, &guide, v00, &scale, &unit_velocity, &flop); // 配列並びを変換
+      fb_vout_nijk_(d_wo, d_av, size, &guide, v00, &unit_velocity, &flop); // 配列並びを変換
       fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
     }
     else // "ijkn"
     {
-      fb_vout_ijkn_(d_wo, d_av, size, &guide, v00, &scale, &unit_velocity, &flop); // 並び変換なし
+      fb_vout_ijkn_(d_wo, d_av, size, &guide, v00, &unit_velocity, &flop); // 並び変換なし
       fb_minmax_v_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
     }
     
@@ -434,12 +434,11 @@ void FFV::OutputAveragedVarables(double& flop)
   {
     if (C.Unit.File == DIMENSIONAL)
     {
-      REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-      U.tmp_array_ND2D(d_ws, size, guide, d_at, C.BaseTemp, C.DiffTemp, klv, scale, flop);
+      U.convArrayIE2Tmp(d_ws, size, guide, d_ae, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, true, flop);
     }
     else
     {
-      U.xcopy(d_ws, size, guide, d_at, scale, kind_scalar);
+      U.convArrayIE2Tmp(d_ws, size, guide, d_ae, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, false, flop);
     }
     
     fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
@@ -556,11 +555,11 @@ void FFV::OutputBasicVariables(double& flop)
     if (C.Unit.File == DIMENSIONAL)
     {
       REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
-      U.prs_array_ND2D(d_ws, size, guide, d_p, bp, C.RefDensity, C.RefVelocity, scale, flop);
+      U.convArrayPrsND2D(d_ws, size, guide, d_p, bp, C.RefDensity, C.RefVelocity, flop);
     }
     else
     {
-      U.xcopy(d_ws, size, guide, d_p, scale, kind_scalar);
+      U.copyS3D(d_ws, size, guide, d_p, scale);
     }
     
     fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
@@ -592,12 +591,12 @@ void FFV::OutputBasicVariables(double& flop)
     
     if( DFI_OUT_VEL->DFI_Finfo.ArrayShape == "nijk" )
     {
-      fb_vout_nijk_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
+      fb_vout_nijk_(d_wo, d_v, size, &guide, v00, &unit_velocity, &flop);
       fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
     }
     else
     {
-      fb_vout_ijkn_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
+      fb_vout_ijkn_(d_wo, d_v, size, &guide, v00, &unit_velocity, &flop);
       fb_minmax_v_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
     }
     
@@ -630,12 +629,12 @@ void FFV::OutputBasicVariables(double& flop)
     {
       if ( DFI_OUT_FVEL->DFI_Finfo.ArrayShape == "nijk" )
       {
-        fb_vout_nijk_(d_wo, d_vf, size, &guide, v00, &scale, &unit_velocity, &flop);
+        fb_vout_nijk_(d_wo, d_vf, size, &guide, v00, &unit_velocity, &flop);
         fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
       }
       else
       {
-        fb_vout_ijkn_(d_wo, d_vf, size, &guide, v00, &scale, &unit_velocity, &flop);
+        fb_vout_ijkn_(d_wo, d_vf, size, &guide, v00, &unit_velocity, &flop);
         fb_minmax_v_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
       }
       
@@ -671,12 +670,11 @@ void FFV::OutputBasicVariables(double& flop)
   {
     if (C.Unit.File == DIMENSIONAL)
     {
-      REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-      U.tmp_array_ND2D(d_ws, size, guide, d_ie, C.BaseTemp, C.DiffTemp, klv, scale, flop);
+      U.convArrayIE2Tmp(d_ws, size, guide, d_ie, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, true, flop);
     }
     else
     {
-      U.xcopy(d_ws, size, guide, d_ie, scale, kind_scalar);
+      U.convArrayIE2Tmp(d_ws, size, guide, d_ie, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, false, flop);
     }
     
     fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
@@ -755,7 +753,7 @@ void FFV::OutputDerivedVariables(double& flop)
     // convert non-dimensional to dimensional, iff file is dimensional
     if (C.Unit.File == DIMENSIONAL)
     {
-      U.tp_array_ND2D(d_ws, d_p0, size, guide, C.RefDensity, C.RefVelocity);
+      U.convArrayTpND2D(d_ws, d_p0, size, guide, C.RefDensity, C.RefVelocity);
     }
     else
     {
@@ -800,12 +798,12 @@ void FFV::OutputDerivedVariables(double& flop)
     
     if ( DFI_OUT_VRT->DFI_Finfo.ArrayShape == "nijk" )
     {
-      fb_vout_nijk_(d_wo, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
+      fb_vout_nijk_(d_wo, d_wv, size, &guide, vz, &unit_velocity, &flop);
       fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
     }
     else
     {
-      fb_vout_ijkn_(d_wo, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
+      fb_vout_ijkn_(d_wo, d_wv, size, &guide, vz, &unit_velocity, &flop);
       fb_minmax_v_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
     }
     
@@ -841,7 +839,7 @@ void FFV::OutputDerivedVariables(double& flop)
     i2vgt_ (d_p0, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
     // 無次元で出力
-    U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar);
+    U.copyS3D(d_ws, size, guide, d_p0, scale);
     
     fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
     
@@ -875,7 +873,7 @@ void FFV::OutputDerivedVariables(double& flop)
     helicity_(d_p0, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
     // 無次元で出力
-    U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar);
+    U.copyS3D(d_ws, size, guide, d_p0, scale);
     
     fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
     
@@ -1223,7 +1221,7 @@ void FFV::set_timing_label()
   set_label(tm_loop_uty_sct,       "Loop_Utility_Section",    PerfMonitor::CALC, false);
   
   set_label(tm_loop_uty_sct_1,     "Loop_Utility_Sct_1",      PerfMonitor::CALC, false);
-  set_label(tm_average_time,       "Averaging_Time",          PerfMonitor::CALC);
+  set_label(tm_average_time,       "Averaging",               PerfMonitor::CALC);
   set_label(tm_stat_space,         "Variation_Space",         PerfMonitor::CALC);
   set_label(tm_stat_space_comm,    "Sync_Variation",          PerfMonitor::COMM);
   // end of Loop Utility Sct:1

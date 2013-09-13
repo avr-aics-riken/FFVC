@@ -4,8 +4,58 @@ ApplicationControl {
   Operator            = "Kenji_Ono"
   FillMedium          = "air"
   HintOfFillingFluid  = "Xplus"
-  VoxelOutput     = "svx"
-  DebugDivergence = "Off"
+  VoxelOutput         = "svx"
+  DebugDivergence     = "Off"
+}
+
+
+BCTable {
+
+  LocalBoundary {
+  }
+
+  OuterBoundary {
+   
+    outer_wall {
+      class   = "Wall"
+      Type    = "fixed"
+      Medium  = "fe"
+    }
+
+    inflow {
+      class     = "SpecifiedVelocity"
+      Medium    = "air"
+      Profile   = "Constant"
+      Normal    = (1.0, 0.0, 0.0)
+      velocity  = 27.8
+    }
+
+    outflow {
+      class         = "Outflow"
+      Medium        = "air"
+      PressureType  = "dirichlet"
+      PrsValue      = 0.0
+    }
+
+    tfree {
+      class   = "TractionFree"
+      Medium  = "air"
+    }
+    
+    jet {
+      class  = "intrinsic"
+      Medium = "air"
+    }
+
+    FaceBC {
+      Xminus = "jet"
+      Xplus  = "outflow"
+      Yminus = "tfree"
+      Yplus  = "tfree"
+      Zminus = "tfree"
+      Zplus  = "tfree"
+    }
+  }
 }
 
 
@@ -28,6 +78,11 @@ DomainInfo {
 }
 
 
+GeometryModel {
+  Source = "jet"
+}
+
+
 GoverningEquation {
   FlowEquation       = "Incompressible"
   HeatEquation       = "FlowOnly"
@@ -36,10 +91,6 @@ GoverningEquation {
   PDEType            = "NavierStokes" 
 }
 
-
-GeometryModel {
-  Source = "jet"
-}
 
 IntrinsicExample {
   Dimension   = "3d"
@@ -99,6 +150,29 @@ Iteration {
 }
 
 
+MediumTable {
+
+  air {
+    State               = "Fluid"
+    MassDensity         = 1.1763
+    SpecificHeat        = 1007
+    ThermalConductivity = 2.614e-02
+    KinematicViscosity  = 15.83e-06
+    Viscosity           = 18.62e-06
+    SpeedOfSound        = 340.0
+    VolumeExpansion     = 0.04e-3
+  }
+
+  Fe {
+    State               = "Solid"
+    MassDensity         = 7870.0
+    SpecificHeat        = 442.0
+    ThermalConductivity = 80.3
+  }
+
+}
+
+
 MonitorList {
   Log                  = "off"
   OutputMode           = "Gather"
@@ -112,7 +186,6 @@ MonitorList {
   list[@] {
     type            = "Line"
     label           = "line1"
-    value           = "x"
     Variable        = "Velocity"
     SamplingMethod  = "Interpolation"
     SamplingMode    = "Fluid"
@@ -248,7 +321,6 @@ StartCondition {
   InitialState {
     MassDensity = 1.1763
     Pressure    = 0.0
-    Temperature = 20.0
     Velocity    = (0.0, 0.0, 0.0)
   }
 }
@@ -294,86 +366,4 @@ Unit {
   UnitOfInputParameter  = "Dimensional"
   UnitOfOutput          = "Dimensional"
   Pressure              = "Gauge"
-  Temperature           = "Celsius"
 }
-
-
-
-MediumTable {
-
-  air {
-    State               = "Fluid"
-    MassDensity         = 1.1763
-    SpecificHeat        = 1007
-    ThermalConductivity = 2.614e-02
-    KinematicViscosity  = 15.83e-06
-    Viscosity           = 18.62e-06
-    SpeedOfSound        = 340.0
-    VolumeExpansion     = 0.04e-3
-    COLOR               = "23B7A9FF"
-  }
-
-  Fe {
-    State               = "Solid"
-    MassDensity         = 7870.0
-    SpecificHeat        = 442.0
-    ThermalConductivity = 80.3
-    COLOR               = "9C4625FF"
-  }
-
-}
-
-
-
-BCTable {
-
-  LocalBoundary {
-  }
-
-
-  OuterBoundary {
-   
-    outer_wall {
-      class   = "Wall"
-      Type    = "fixed"
-      Medium  = "fe"
-    }
-
-    inflow {
-      class     = "SpecifiedVelocity"
-      Medium    = "air"
-      Profile   = "Constant"
-      Normal    = (1.0, 0.0, 0.0)
-      velocity  = 27.8
-    }
-
-    outflow {
-      class         = "Outflow"
-      Medium        = "air"
-      PressureType  = "dirichlet"
-      PrsValue      = 0.0
-    }
-
-    tfree {
-      class   = "TractionFree"
-      Medium  = "air"
-    }
-    
-    jet {
-      class  = "intrinsic"
-      Medium = "air"
-    }
-
-    FaceBC {
-      Xminus = "jet"
-      Xplus  = "outflow"
-      Yminus = "tfree"
-      Yplus  = "tfree"
-      Zminus = "tfree"
-      Zplus  = "tfree"
-    }
-
-  }
-
-}
-

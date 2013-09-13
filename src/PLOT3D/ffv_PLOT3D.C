@@ -216,11 +216,11 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   if (C->Unit.File == DIMENSIONAL)
   {
     REAL_TYPE bp = ( C->Unit.Prs == Unit_Absolute ) ? C->BasePrs : 0.0;
-    U.prs_array_ND2D(d_ws, size, guide, d_p, bp, C->RefDensity, C->RefVelocity, scale, flop);
+    U.convArrayPrsND2D(d_ws, size, guide, d_p, bp, C->RefDensity, C->RefVelocity, flop);
   }
   else
   {
-    U.xcopy(d_ws, size, guide, d_p, scale, kind_scalar);
+    U.copyS3D(d_ws, size, guide, d_p, scale);
   }
   
   if(FP3DW->GetFormat() == C_BINARY){//C_BINARYでの出力は項目ごとに書き出し
@@ -245,7 +245,7 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   
   // Velocity
   REAL_TYPE unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
-  fb_vout_nijk_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
+  fb_vout_nijk_(d_wo, d_v, size, &guide, v00, &unit_velocity, &flop);
   
   if(FP3DW->GetFormat() == C_BINARY){//C_BINARYでの出力は項目ごとに書き出し
     if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
@@ -288,12 +288,11 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   {
     if (C->Unit.File == DIMENSIONAL)
     {
-      REAL_TYPE klv = ( C->Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-      U.tmp_array_ND2D(d_ws, size, guide, d_ie, C->BaseTemp, C->DiffTemp, klv, scale, flop);
+      //U.convArrayIE2Tmp(d_ws, size, guide, d_ie, d_bcd, mat_tbl, C->BaseTemp, C->DiffTemp, true, flop);
     }
     else
     {
-      U.xcopy(d_ws, size, guide, d_ie, scale, kind_scalar);
+      //U.convArrayIE2Tmp(d_ws, size, guide, d_ie, d_bcd, mat_tbl, C->BaseTemp, C->DiffTemp, false, flop);
     }
     
     if(FP3DW->GetFormat() == C_BINARY){//C_BINARYでの出力は項目ごとに書き出し
@@ -325,7 +324,7 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
     // convert non-dimensional to dimensional, iff file is dimensional
     if (C->Unit.File == DIMENSIONAL)
     {
-      U.tp_array_ND2D(d_ws, d_p0, size, guide, C->RefDensity, C->RefVelocity);
+      U.convArrayTpND2D(d_ws, d_p0, size, guide, C->RefDensity, C->RefVelocity);
     }
     else
     {
@@ -362,7 +361,7 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
     REAL_TYPE  vz[3];
     vz[0] = vz[1] = vz[2] = 0.0;
     unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity/C->RefLength : 1.0;
-    fb_vout_nijk_(d_wo, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
+    fb_vout_nijk_(d_wo, d_wv, size, &guide, vz, &unit_velocity, &flop);
     
     if(FP3DW->GetFormat() == C_BINARY){//C_BINARYでの出力は項目ごとに書き出し
       if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
@@ -405,7 +404,7 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   if (C->Mode.I2VGT == ON ) {
     i2vgt_ (d_p0, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
-    U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar);
+    U.copyS3D(d_ws, size, guide, d_p0, scale);
     
     if(FP3DW->GetFormat() == C_BINARY){//C_BINARYでの出力は項目ごとに書き出し
       if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
@@ -433,7 +432,7 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   {
     helicity_(d_p0, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
-    U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar);
+    U.copyS3D(d_ws, size, guide, d_p0, scale);
     
     if(FP3DW->GetFormat() == C_BINARY){//C_BINARYでの出力は項目ごとに書き出し
       if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
@@ -603,11 +602,11 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   if (C->Unit.File == DIMENSIONAL)
   {
     REAL_TYPE bp = ( C->Unit.Prs == Unit_Absolute ) ? C->BasePrs : 0.0;
-    U.prs_array_ND2D(d_ws, size, guide, d_p, bp, C->RefDensity, C->RefVelocity, scale, flop);
+    U.convArrayPrsND2D(d_ws, size, guide, d_p, bp, C->RefDensity, C->RefVelocity, flop);
   }
   else
   {
-    U.xcopy(d_ws, size, guide, d_p, scale, kind_scalar);
+    U.copyS3D(d_ws, size, guide, d_p, scale);
   }
   
   fname = "prs_" + tmp;
@@ -639,7 +638,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   
   // Velocity
   REAL_TYPE unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
-  fb_vout_nijk_(d_wo, d_v, size, &guide, v00, &scale, &unit_velocity, &flop);
+  fb_vout_nijk_(d_wo, d_v, size, &guide, v00, &unit_velocity, &flop);
   
   fname = "vel_" + tmp;
   FP3DW->setFileName((dtmp+fname).c_str());
@@ -688,12 +687,11 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   if( C->isHeatProblem() ){
     if (C->Unit.File == DIMENSIONAL)
     {
-      REAL_TYPE klv = ( C->Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-      U.tmp_array_ND2D(d_ws, size, guide, d_ie, C->BaseTemp, C->DiffTemp, klv, scale, flop);
+      //U.convArrayTmp2IE(d_ws, size, guide, d_ie, d_bcd, mat_tbl, C->BaseTemp, C->DiffTemp, true, flop);
     }
     else
     {
-      U.xcopy(d_ws, size, guide, d_ie, scale, kind_scalar);
+      //U.convArrayTmp2IE(d_ws, size, guide, d_ie, d_bcd, mat_tbl, C->BaseTemp, C->DiffTemp, false, flop);
     }
     
     fname = "tmp_" + tmp;
@@ -730,7 +728,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     // convert non-dimensional to dimensional, iff file is dimensional
     if (C->Unit.File == DIMENSIONAL)
     {
-      U.tp_array_ND2D(d_ws, d_p0, size, guide, C->RefDensity, C->RefVelocity);
+      U.convArrayTpND2D(d_ws, d_p0, size, guide, C->RefDensity, C->RefVelocity);
     }
     else
     {
@@ -772,7 +770,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     REAL_TYPE  vz[3];
     vz[0] = vz[1] = vz[2] = 0.0;
     unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity/C->RefLength : 1.0;
-    fb_vout_nijk_(d_wo, d_wv, size, &guide, vz, &scale, &unit_velocity, &flop);
+    fb_vout_nijk_(d_wo, d_wv, size, &guide, vz, &unit_velocity, &flop);
     
     fname = "vrt_" + tmp;
     FP3DW->setFileName((dtmp+fname).c_str());
@@ -822,7 +820,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     
     i2vgt_ (d_p0, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
-    U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar);
+    U.copyS3D(d_ws, size, guide, d_p0, scale);
     
     fname = "iv2gt_" + tmp;
     FP3DW->setFileName((dtmp+fname).c_str());
@@ -857,7 +855,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   if (C->Mode.Helicity == ON ){
     helicity_(d_p0, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
-    U.xcopy(d_ws, size, guide, d_p0, scale, kind_scalar);
+    U.copyS3D(d_ws, size, guide, d_p0, scale);
     
     fname = "hlt_" + tmp;
     FP3DW->setFileName((dtmp+fname).c_str());

@@ -58,7 +58,7 @@ void FFV::PS_Binary()
   
   // n stepの値をd_ie0に保持，d_ieはn+1レベルの値として利用
   TIMING_start(tm_copy_array);
-  U.xcopy(d_ie0, size, guide, d_ie, one, kind_scalar);
+  U.copyS3D(d_ie0, size, guide, d_ie, one);
   TIMING_stop(tm_copy_array, 0.0);
   
   
@@ -92,7 +92,7 @@ void FFV::PS_Binary()
   else // 熱伝導の場合，対流項の寄与分はないので前ステップの値
   {
     TIMING_start(tm_copy_array);
-    U.xcopy(d_ws, size, guide, d_ie0, one, kind_scalar);
+    U.copyS3D(d_ws, size, guide, d_ie0, one);
     TIMING_stop(tm_copy_array, 0.0);
   }
 
@@ -142,7 +142,7 @@ void FFV::PS_Binary()
   
   // 熱流束境界条件のクリア qbcは積算するため
   TIMING_start(tm_assign_const);
-  U.setS4DEX(d_qbc, size, guide, zero);
+  U.initS4DEX(d_qbc, size, guide, zero);
   TIMING_stop(tm_assign_const, 0.0);
   
   
@@ -177,7 +177,7 @@ void FFV::PS_Binary()
     TIMING_start(tm_heat_diff_EE);
     flop = 0.0;
     //res = ps_Diff_SM_EE(t, dt, qbc, bh, ws, flop); // resは拡散項のみの絶対残差
-    ps_diff_ee_(d_ie, size, &guide, &res, &dh, &dt, &coef, d_qbc, d_bcd, d_ws, &C.NoCompo, mat_tbl, &flop);
+    ps_diff_ee_(d_ie, size, &guide, &res, &dh, &dt, d_qbc, d_bcd, d_ws, &C.NoCompo, mat_tbl, &flop);
     TIMING_stop(tm_heat_diff_EE, flop);
     
 
@@ -215,7 +215,7 @@ void FFV::PS_Binary()
   {
     // 反復初期値
     TIMING_start(tm_copy_array);
-    U.xcopy(d_ie, size, guide, d_ws, one, kind_scalar);
+    U.copyS3D(d_ie, size, guide, d_ws, one);
     TIMING_stop(tm_copy_array, 0.0);
     
     for (ICt->setLoopCount(0); ICt->getLoopCount()< ICt->getMaxIteration(); ICt->incLoopCount())

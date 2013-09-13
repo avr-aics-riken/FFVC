@@ -221,7 +221,7 @@ void ParseBC::getIbcCnstTemp(const string label_base, const int n, CompoList* cm
   string label = label_base + "/Temperature";
   
   REAL_TYPE tmp = getBCvalReal(label);
-  cmp[n].setTemp( FBUtility::convTemp2K(tmp, Unit_Temp) );
+  cmp[n].setTemp( tmp );
 }
 
 
@@ -380,7 +380,7 @@ void ParseBC::getIbcHT_S(const string label_base, const int n, CompoList* cmp)
   label = label_base + "/BulkTemperature";
   
   REAL_TYPE st = getBCvalReal(label);
-  cmp[n].setTemp( FBUtility::convTemp2K(st, Unit_Temp) );
+  cmp[n].setTemp( st );
 
 }
 
@@ -400,7 +400,7 @@ void ParseBC::getIbcHT_SF(const string label_base, const int n, CompoList* cmp)
   // 表面温度
   label = label_base+"/BulkTemperature";
   REAL_TYPE st = getBCvalReal(label);
-  cmp[n].setTemp( FBUtility::convTemp2K(st, Unit_Temp) );
+  cmp[n].setTemp( st );
   
   // coefficients
   label = label_base+"/Alpha";
@@ -430,7 +430,7 @@ void ParseBC::getIbcHT_SN(const string label_base, const int n, CompoList* cmp)
   label = label_base + "/BulkTemperature";
   
   REAL_TYPE st = getBCvalReal(label);
-  cmp[n].setTemp( FBUtility::convTemp2K(st, Unit_Temp) );
+  cmp[n].setTemp( st );
   
   // Vertical and upper face values
   label = label_base + "/VerticalLaminarAlpha";
@@ -516,7 +516,7 @@ void ParseBC::getIbcIsoTherm(const string label_base, const int n, CompoList* cm
   // 表面温度
   label = label_base+"/Temperature";
   REAL_TYPE tmp = getBCvalReal(label);
-  cmp[n].setTemp( FBUtility::convTemp2K(tmp, Unit_Temp) );
+  cmp[n].setTemp( tmp );
 }
 
 
@@ -1091,7 +1091,7 @@ void ParseBC::getIbcSpecVel(const string label_base, const int n, CompoList* cmp
       Exit(0);
     }
 
-    cmp[n].setTemp( FBUtility::convTemp2K(ct, Unit_Temp) );
+    cmp[n].setTemp( ct );
     
     if ( Unit_Param != DIMENSIONAL )
     {
@@ -1110,19 +1110,28 @@ void ParseBC::getInitTempOfMedium(CompoList* cmp, Control* C)
 {  
   string label, label_base;
   string str;
+  int no_list;
   
-  label_base = "/StartCondition/InitialState/Mediumoption";
+  label_base = "/StartCondition/InitialState/MediumTemperature";
   
   if ( !tpCntl->chkNode(label_base) )
   {
-    return; // ラベルがなければオプション指定なし
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label_base.c_str());
+    Exit(0);
+  }
+  else // label_base直下のノード数を得る
+  {
+	  no_list = tpCntl->countLabels(label_base);
+  }
+
+  if ( no_list != NoMedium )
+  {
+    Hostonly_ stamped_printf("\tNo of medium [%d] listed in '%s' is not agree with one [%d] in MediumTable.\n", no_list, label_base.c_str(), NoMedium);
+    Exit(0);
   }
   
-  // ラベルが指定されている場合はオプションが有効
-  C->MediumTmpInitOption = ON;
-
   
-  for (int i=1; i<=NoMedium; i++)
+  for (int i=1; i<=no_list; i++)
   {
     if ( !tpCntl->getNodeStr(label_base, i, str) )
     {
@@ -1136,7 +1145,7 @@ void ParseBC::getInitTempOfMedium(CompoList* cmp, Control* C)
     
     if ( !tpCntl->getInspectedValue(label, ct) )
     {
-      Hostonly_ stamped_printf("\tParsing error : Invalid keyword in '%s'\n", label_base.c_str());
+      Hostonly_ stamped_printf("\tParsing error : Invalid keyword '%s'\n", label.c_str());
       Exit(0);
     }
     
@@ -1148,7 +1157,7 @@ void ParseBC::getInitTempOfMedium(CompoList* cmp, Control* C)
       {
         if ( cmp[m].isKindMedium())
         {
-          cmp[m].setInitTemp( FBUtility::convTemp2K(ct, Unit_Temp) );
+          cmp[m].setInitTemp( ct );
           flag++;
         }
         else
@@ -1248,7 +1257,7 @@ void ParseBC::getObcFarField(const string label_base, const int n)
       Exit(0);
     }
 
-    BaseBc[n].setTemp( FBUtility::convTemp2K(ct, Unit_Temp) );
+    BaseBc[n].setTemp( ct );
   }
   
   // 圧力境界のタイプ  default
@@ -1324,7 +1333,7 @@ void ParseBC::getObcHeatTransfer(const string label_base, const int n, const str
     
     label = label_base + "/SurfaceTemperature";
     ct = getBCvalReal(label);
-    BaseBc[n].setTemp( FBUtility::convTemp2K(ct, Unit_Temp) );
+    BaseBc[n].setTemp( ct );
   }
   else if ( !strcasecmp(kind.c_str(), "HeatTransferSF") )
   {
@@ -1654,7 +1663,7 @@ void ParseBC::getObcSpecVH(const string label_base, const int n)
     }
     else
     {
-      BaseBc[n].setTemp( FBUtility::convTemp2K(ct, Unit_Temp) );
+      BaseBc[n].setTemp( ct );
       BaseBc[n].set_hType(CNST_TEMP);
     }
   }
@@ -1690,7 +1699,7 @@ void ParseBC::getObcTrcfree(const string label_base, const int n)
       Exit(0);
     }
 
-    BaseBc[n].setTemp( FBUtility::convTemp2K(ct, Unit_Temp) );
+    BaseBc[n].setTemp( ct );
   }
   */
 }
@@ -1783,14 +1792,14 @@ void ParseBC::getObcWall(const string label_base, const int n)
       BaseBc[n].set_hType(ISOTHERMAL);
       label2 = label_base + "/Temperature";
       ct = getBCvalReal(label2); // 表面温度
-      BaseBc[n].setTemp( FBUtility::convTemp2K(ct, Unit_Temp) );
+      BaseBc[n].setTemp( ct );
     }
     else if( !strcasecmp(str.c_str(), "ConstantTemperature") )
     {
       BaseBc[n].set_hType(CNST_TEMP);
       label = label_base + "/Temperature";
       ct = getBCvalReal(label); // 指定温度
-      BaseBc[n].setTemp( FBUtility::convTemp2K(ct, Unit_Temp) );
+      BaseBc[n].setTemp( ct );
     }
     else
     {
@@ -2655,7 +2664,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     if ( existComponent(SPEC_VEL, cmp) && HeatProblem )
     {
       fprintf(fp, "\n\t[Specified_Velocity with Constant Temperature]\n");
-      fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed      Temp(%s)      Temp[-]\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C");
+      fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed      Temp(C)      Temp[-]\n");
       
       for (int n=1; n<=NoCompo; n++)
       {
@@ -2667,8 +2676,8 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
           fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %12.4e %12.4e\n", 
                   n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
                   st.x, ed.x, st.y, ed.y, st.z, ed.z, 
-									FBUtility::convK2Temp(cmp[n].getTemp(), Unit_Temp), 
-									FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp)); // 保持されている温度はKelvin
+									cmp[n].getTemp(), 
+									FBUtility::convTempD2ND(cmp[n].getTemp(), BaseTemp, DiffTemp)); // 保持されている温度はCelsius
         }
       }
       fprintf(fp, "\n");
@@ -2693,7 +2702,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         
         if (cmp[n].get_P_BCtype() == P_DIRICHLET)
         {
-          fprintf(fp, "%12.4e;", FBUtility::convND2D_P(cmp[n].get_Pressure(), BasePrs, RefDensity, RefVelocity, Unit_Prs) );
+          fprintf(fp, "%12.4e;", FBUtility::convPrsND2D(cmp[n].get_Pressure(), BasePrs, RefDensity, RefVelocity, Unit_Prs) );
         }
         else
         {
@@ -2733,7 +2742,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
       {
         fprintf(fp,"\t%3d %24s %10.3e %10.3e %10.3e %12.4e %12.4e \n",
                 n, cmp[n].getAlias().c_str(), cmp[n].nv[0], cmp[n].nv[1], cmp[n].nv[2],
-                cmp[n].get_Velocity(), FBUtility::convD2ND_V(cmp[n].get_Velocity(), RefVelocity));
+                cmp[n].get_Velocity(), FBUtility::convVelD2ND(cmp[n].get_Velocity(), RefVelocity));
       }
     }
   }
@@ -2919,10 +2928,10 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         st = getCmpGbbox_st(n, gci);
         ed = getCmpGbbox_ed(n, gci);
         
-        fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n", 
+        fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n",
                 n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z,
-                cmp[n].area, cmp[n].getHeatflux(), cmp[n].getHeatflux()/(RefVelocity*DiffTemp*rho*cp));
+                cmp[n].area, cmp[n].getHeatflux(), cmp[n].getHeatflux()/(RefVelocity*DiffTemp*RefDensity*RefSpecificHeat));
       }
     }
   }
@@ -2931,7 +2940,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   if ( HeatProblem && existCompoTransfer(HT_S, cmp) )
   {
     fprintf(fp, "\n\t[Heat Transfer : Type S]\n");
-    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   coef(W/m^2K)   Temp(%s)   Temp[-]\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C");
+    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]    H[W/m^2K]      Temp[C]      Temp[-]\n");
     
     for (int n=1; n<=NoCompo; n++)
     {
@@ -2943,8 +2952,8 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e %12.4e\n", 
                 n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z, 
-                cmp[n].area, cmp[n].getCoefHT(), FBUtility::convK2Temp(cmp[n].getTemp(), Unit_Temp),
-                FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp) );
+                cmp[n].area, cmp[n].getCoefHT(), cmp[n].getTemp(),
+                FBUtility::convTempD2ND(cmp[n].getTemp(), BaseTemp, DiffTemp) );
       }
     }
   }
@@ -2953,7 +2962,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   if ( HeatProblem && existCompoTransfer(HT_SN, cmp) )
   {
     fprintf(fp, "\n\t[Heat Transfer : Type SN]\n"); 
-    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]      Temp(%s)      Temp[-]   Type\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C");
+    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]      Temp[C]      Temp[-]   Type\n");
     
     for (int n=1; n<=NoCompo; n++)
     {
@@ -2965,8 +2974,8 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e\n",
                 n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z,
-                cmp[n].area, FBUtility::convK2Temp(cmp[n].getTemp(), Unit_Temp),
-                FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp));
+                cmp[n].area, cmp[n].getTemp(),
+                FBUtility::convTempD2ND(cmp[n].getTemp(), BaseTemp, DiffTemp));
       }
     }
     fprintf(fp, "\n");
@@ -2997,8 +3006,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   if ( HeatProblem && existCompoTransfer(HT_SF, cmp) )
   {
     fprintf(fp, "\n\t[Heat Transfer : Type SF]\n");
-    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]      Temp(%s)      Temp[-]   Type\n", 
-            (Unit_Temp==Unit_KELVIN) ? "K" : "C");
+    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]      Temp[C]      Temp[-]   Type\n");
     
     for (int n=1; n<=NoCompo; n++)
     {
@@ -3012,8 +3020,8 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
                 cmp[n].getAlias().c_str(), 
                 cmp[n].getElement(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z,
-                cmp[n].area, FBUtility::convK2Temp(cmp[n].getTemp(), Unit_Temp),
-                FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp));
+                cmp[n].area, cmp[n].getTemp(),
+                FBUtility::convTempD2ND(cmp[n].getTemp(), BaseTemp, DiffTemp));
       }
     }
     fprintf(fp, "\t no                    Label   alpha        beta       gamma\n");
@@ -3035,8 +3043,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   if ( HeatProblem && existComponent(ISOTHERMAL, cmp))
   {
     fprintf(fp, "\n\t[Iso-Thermal]\n");
-    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   Sf.Temp(%s)   Sf.Temp[-]\n",
-            (Unit_Temp==Unit_KELVIN) ? "K" : "C");
+    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]   Sf.Temp[C]   Sf.Temp[-]\n");
     
     for (int n=1; n<=NoCompo; n++)
     {
@@ -3048,8 +3055,8 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %11.4e %12.4e %12.4e \n", 
                 n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z,
-								cmp[n].area, FBUtility::convK2Temp(cmp[n].getTemp(), Unit_Temp),
-                FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp) );
+								cmp[n].area, cmp[n].getTemp(),
+                FBUtility::convTempD2ND(cmp[n].getTemp(), BaseTemp, DiffTemp) );
       }
     }
   }
@@ -3093,7 +3100,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
                 n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z,
                 cmp[n].get_HeatValue(), 
-                FBUtility::convD2ND_Hsrc(cmp[n].get_HeatValue(), RefVelocity, RefLength, DiffTemp, mat[n].P[p_density], mat[n].P[p_specific_heat]));
+                FBUtility::convHsrcD2ND(cmp[n].get_HeatValue(), RefVelocity, RefLength, DiffTemp, mat[n].P[p_density], mat[n].P[p_specific_heat]));
       }
     }
   }
@@ -3102,8 +3109,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   if ( HeatProblem && existComponent(CNST_TEMP, cmp))
   {
     fprintf(fp, "\n\t[Constant Temperature]\n");
-    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed      Temp[%s]      Temp[-]\n", 
-            (Unit_Temp==Unit_KELVIN) ? "K" : "C");
+    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed      Temp[C]      Temp[-]\n");
     
     for (int n=1; n<=NoCompo; n++)
     {
@@ -3115,8 +3121,8 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %12.4e %12.4e\n", 
                 n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z,
-                FBUtility::convK2Temp(cmp[n].getTemp(), Unit_Temp), 
-                FBUtility::convK2ND(cmp[n].getTemp(), BaseTemp, DiffTemp));
+                cmp[n].getTemp(), 
+                FBUtility::convTempD2ND(cmp[n].getTemp(), BaseTemp, DiffTemp));
       }
     }
   }
@@ -3198,7 +3204,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         fprintf(fp, "\t%3d %24s %7d %7d %7d %7d %7d %7d     ", 
                 n, cmp[n].getAlias().c_str(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z);
-        fprintf(fp,"%12.6e / %12.6e ", cmp[n].ca[0], FBUtility::convD2ND_P(cmp[n].ca[0], BasePrs, RefDensity, RefVelocity, Unit_Prs));
+        fprintf(fp,"%12.6e / %12.6e ", cmp[n].ca[0], FBUtility::convPrsD2ND(cmp[n].ca[0], BasePrs, RefDensity, RefVelocity, Unit_Prs));
         fprintf(fp, "%7s\n", FBUtility::getDirection(dir_in).c_str());
         
         // ドライバの方向が周期境界であるかをチェック
@@ -3290,14 +3296,15 @@ void ParseBC::printCompoSummary(FILE* fp, CompoList* cmp, const int basicEq)
     }
     else
     {
-      fprintf(fp,"\t  No :   Num. of Elements       State    Init.Temp(%s)                    Label : Class                 Medium\n", (Unit_Temp==Unit_KELVIN) ? "K" : "C" );
+      fprintf(fp,"\t  No :   Num. of Elements       State   Init.Temp[C]                    Label : Class                 Medium\n");
       fprintf(fp,"\t--------------------------------------------------------------------------------------------------------------------\n");
       
       for (int i=1; i<=NoCompo; i++)
       {
         fprintf(fp,"\t%4d : %18ld ", i, cmp[i].getElement());
         ( cmp[i].getState() == FLUID ) ? fprintf(fp, "      Fluid ") : fprintf(fp, "      Solid ") ;
-        fprintf(fp, "%14.4e %24s : %-20s  %-20s", FBUtility::convK2Temp(cmp[i].getInitTemp(), Unit_Temp),
+        fprintf(fp, "%14.4e %24s : %-20s  %-20s",
+                cmp[i].getInitTemp(),
                 (cmp[i].getAlias().empty()) ? "" : cmp[i].getAlias().c_str(),
                 cmp[i].getBCstr().c_str(),
                 cmp[i].getMedium().c_str() );
@@ -3425,13 +3432,12 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
         }
         else if ( htp == ISOTHERMAL )
         {
-          fprintf(fp,"\t\t\tIsothermal   = %12.6e [%s] / %12.6e [-]\n",
-                  FBUtility::convK2Temp(ref->getTemp(), Unit_Temp),
-                  (Unit_Temp==Unit_KELVIN) ? "K" : "C",
-                  FBUtility::convK2ND(ref->getTemp(), BaseTemp, DiffTemp));
+          fprintf(fp,"\t\t\tIsothermal   = %12.6e [C] / %12.6e [-]\n",
+                  ref->getTemp(),
+                  FBUtility::convTempD2ND(ref->getTemp(), BaseTemp, DiffTemp));
         }
         //else if ( htp == CNST_TEMP ) {
-        //  fprintf(fp,"Dirichlet %e [%s]\n", ref->T1.c, (Unit_Temp==CompoList::Unit_KELVIN)?"K":"C");
+        //  fprintf(fp,"Dirichlet %e [C]\n", ref->T1.c);
         //}        
       }
       break;
@@ -3457,10 +3463,9 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
       
       if ( HeatProblem )
       {
-        fprintf(fp, "\t\t\tSpecified Temperature  = %12.6e [%s] / %12.6e [-] \n", 
-                FBUtility::convK2Temp(ref->getTemp(), Unit_Temp),
-                (Unit_Temp==Unit_KELVIN) ? "K" : "C", 
-                FBUtility::convK2ND(ref->getTemp(), BaseTemp, DiffTemp));
+        fprintf(fp, "\t\t\tSpecified Temperature  = %12.6e [C] / %12.6e [-] \n", 
+                ref->getTemp(),
+                FBUtility::convTempD2ND(ref->getTemp(), BaseTemp, DiffTemp));
       }
       break;
       
@@ -3468,7 +3473,7 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
     case OBC_OUTFLOW:
       if (ref->get_pType() == P_DIRICHLET)
       {
-        fprintf(fp,"\t\t\t%12.6e [Pa]  /  %12.6e\n", ref->p, FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs));        
+        fprintf(fp,"\t\t\t%12.6e [Pa]  /  %12.6e\n", ref->p, FBUtility::convPrsD2ND(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs));        
       }
       else
       {
@@ -3483,7 +3488,7 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
       
       
     case OBC_TRC_FREE:
-      fprintf(fp,"\t\t\t%12.6e [Pa]  /  %12.6e [-]\n", ref->p, FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs));
+      fprintf(fp,"\t\t\t%12.6e [Pa]  /  %12.6e [-]\n", ref->p, FBUtility::convPrsD2ND(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs));
       
       if ( HeatProblem )
       {
@@ -3501,26 +3506,26 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
           
         case BoundaryOuter::prdc_Directional:
           fprintf(fp,"\t\t\tPressure Difference = %12.6e [Pa]    /  %12.6e [-]\n", 
-                  ref->p, FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs));
+                  ref->p, FBUtility::convPrsD2ND(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs));
           
           switch (face)
           {
             case X_MINUS:
             case X_PLUS:
               fprintf(fp,"\t\t\tPressure Gradient   = %12.6e [Pa/m]  /  %12.6e [-]\n", 
-                      ref->p/(G_reg[0]*RefLength), FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs)/G_reg[0]);
+                      ref->p/(G_reg[0]*RefLength), FBUtility::convPrsD2ND(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs)/G_reg[0]);
               break;
               
             case Y_MINUS:
             case Y_PLUS:
               fprintf(fp,"\t\t\tPressure Gradient   = %12.6e [Pa/m]  /  %12.6e [-]\n", 
-                      ref->p/(G_reg[1]*RefLength), FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs)/G_reg[1]);
+                      ref->p/(G_reg[1]*RefLength), FBUtility::convPrsD2ND(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs)/G_reg[1]);
               break;
               
             case Z_MINUS:
             case Z_PLUS:
               fprintf(fp,"\t\t\tPressure Gradient   = %12.6e [Pa/m]  /  %12.6e [-]\n", 
-                      ref->p/(G_reg[2]*RefLength), FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs)/G_reg[2]);
+                      ref->p/(G_reg[2]*RefLength), FBUtility::convPrsD2ND(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs)/G_reg[2]);
               break;
           }          
           break;
@@ -3539,7 +3544,7 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
       fprintf(fp, "\t\t\tVelocity : Neumann, Pressure : %s\n", (ref->get_pType() == P_DIRICHLET) ? "Dirichlet" : "Neumann");
       if (ref->get_pType() == P_DIRICHLET)
       {
-        fprintf(fp,"\t\t\t%12.6e [Pa]  /  %12.6e [-]\n", ref->p, FBUtility::convD2ND_P(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs));
+        fprintf(fp,"\t\t\t%12.6e [Pa]  /  %12.6e [-]\n", ref->p, FBUtility::convPrsD2ND(ref->p, BasePrs, RefDensity, RefVelocity, Unit_Prs));
       }
       else
       {
@@ -3576,7 +3581,6 @@ void ParseBC::setControlVars(Control* Cref)
   Unit_Param  = Cref->Unit.Param;
   RefLength   = Cref->RefLength;
   KindOfSolver= Cref->KindOfSolver;
-  Unit_Temp   = Cref->Unit.Temp;
   Unit_Prs    = Cref->Unit.Prs;
 	BasePrs     = Cref->BasePrs;
   Mode_Gradp  = Cref->Mode.PrsNeuamnnType;
@@ -3619,7 +3623,7 @@ void ParseBC::setControlVars(Control* Cref)
   
   vector<string> nodes;
   
-  // MediumTable直下のラベルを取得
+  // OuterBoundary直下のラベルを取得
   tpCntl->getLabelVector(label, nodes);
   
   // ラベル数から"FaceBC"を除いた数
@@ -3688,33 +3692,9 @@ void ParseBC::setKeywordOBC(const string keyword, const int m)
 
 
 // #################################################################
-// 指定した媒質IDから参照物理量を設定する
-void ParseBC::setRefMediumProperty(const MediumList* mat, const int Ref)
-{
-  
-  for (int n=1; n<=NoMedium; n++)
-  {
-    if ( n == Ref )
-    {
-      if ( mat[n].getState() == FLUID )
-      {
-        rho    = mat[n].P[p_density];
-        nyu    = mat[n].P[p_kinematic_viscosity];
-        cp     = mat[n].P[p_specific_heat];
-        lambda = mat[n].P[p_thermal_conductivity];
-        beta   = mat[n].P[p_vol_expansion]; // can be replaced by 1/K in the case of gas
-        //mu    = mat[n].P[p_viscosity];
-        //snd_spd = mat[n].P[p_speed_of_sound];
-      }
-      else 
-      {
-        rho    = mat[n].P[p_density];
-        cp     = mat[n].P[p_specific_heat];
-        lambda = mat[n].P[p_thermal_conductivity];
-      }
-    }
-  }
-  
-  RefDensity      = rho;  //>> Control::getReference()で定義
-  RefSpecificHeat = cp;
+// 参照物理量を設定する
+void ParseBC::setRefMediumProperty(const REAL_TYPE m_rho, const REAL_TYPE m_cp)
+{  
+  RefDensity      = m_rho;
+  RefSpecificHeat = m_cp;
 }

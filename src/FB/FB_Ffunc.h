@@ -171,8 +171,7 @@ extern "C" {
                            int* sz,
                            int* g,
                            REAL_TYPE* vi,
-                           REAL_TYPE* v00, 
-                           REAL_TYPE* scale, 
+                           REAL_TYPE* v00,  
                            REAL_TYPE* refv, 
                            double* flop);
   
@@ -181,7 +180,6 @@ extern "C" {
                            int* sz, 
                            int* g, 
                            REAL_TYPE* v00, 
-                           REAL_TYPE* scale, 
                            REAL_TYPE* unit_v, 
                            double* flop);
 
@@ -191,7 +189,6 @@ extern "C" {
                            int* sz,
                            int* g,
                            REAL_TYPE* v00,
-                           REAL_TYPE* scale,
                            REAL_TYPE* unit_v,
                            double* flop);
   

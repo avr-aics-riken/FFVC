@@ -39,12 +39,11 @@ protected:
   REAL_TYPE accel, Dp1, Dp2, mach, BasePrs;
   REAL_TYPE RefV, RefL, DiffTemp, BaseTemp, Peclet, Reynolds, rei, pei;
   REAL_TYPE Lbx[3], Rayleigh, Grashof, Prandtl;
-  REAL_TYPE rho_0, nyu, cp_0, lambda_0, beta;
+  REAL_TYPE rho_0, cp_0, lambda_0;
   
   int NoCompo;     ///< コンポーネント数
   int NoMedium;    ///< 媒質数
   int Example;     ///<
-  int Unit_Temp;   ///<
   int Unit_Prs;    ///<
   bool inout_flag; ///<
   
@@ -52,6 +51,9 @@ protected:
   CompoList       *cmp;
   MediumList      *mat;
   Intrinsic       *Ex;
+  
+  // 無次元物性値テーブル
+  REAL_TYPE *mtbl;
   
   /** 外部境界の種類 */
   enum obc_kind 
@@ -68,21 +70,32 @@ public:
   /** コンストラクタ */
   SetBC() {
     rei = accel = Dp1 = Dp2 = mach = RefV = RefL = DiffTemp = BaseTemp = pei = 0.0;
-    rho_0 = nyu = cp_0 = lambda_0 = beta = BasePrs = 0.0;
+    rho_0 = cp_0 = lambda_0 = BasePrs = 0.0;
     Peclet = Reynolds = Rayleigh = Grashof = Prandtl = 0.0;
-    Example = Unit_Temp = Unit_Prs = NoCompo = NoMedium = 0;
+    Example = Unit_Prs = NoCompo = NoMedium = 0;
     inout_flag = false;
     
     cmp = NULL;
     mat = NULL;
     Ex  = NULL;
+    mtbl= NULL;
   }
   
   /**　デストラクタ */
-  virtual ~SetBC() {}
+  virtual ~SetBC() {
+    if ( mtbl ) delete [] mtbl;
+  }
   
 
 public:
+  
+  /**
+   * @biref 無次元の媒質情報をコピー
+   * @param [in] m_compo コンポーネント数 NoCompo
+   * @param [in] m_mat   外部で作成された媒質テーブル
+   */
+  void copyNDmatTable(const int m_compo, const REAL_TYPE* m_mat);
+  
   
   /**
    * @brief 静止座標系のときの流出速度制御の値を計算する

@@ -198,7 +198,7 @@ private:
   REAL_TYPE *d_vt;
   REAL_TYPE *d_vof;
   REAL_TYPE *d_ap;  ///< 圧力（時間平均値）
-  REAL_TYPE *d_at;  ///< 温度（時間平均値）
+  REAL_TYPE *d_ae;  ///< 内部エネルギー（時間平均値）
   float *d_cvf;     ///< 体積率
   
   // Coarse initial
@@ -551,7 +551,7 @@ private:
   
   
   // 時間平均操作を行う
-  void Averaging_Time(double& flop);
+  void Averaging(double& flop);
   
   
   

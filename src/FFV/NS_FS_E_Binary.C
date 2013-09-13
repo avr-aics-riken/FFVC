@@ -85,8 +85,8 @@ void FFV::NS_FS_E_Binary()
   
   // n stepの値を保持 >> In use (d_v0, d_p0)
   TIMING_start(tm_copy_array);
-  U.xcopy(d_p0, size, guide, d_p, one, kind_scalar);
-  U.xcopy(d_v0, size, guide, d_v, one, kind_vector);
+  U.copyS3D(d_p0, size, guide, d_p, one);
+  U.copyV3D(d_v0, size, guide, d_v, one);
   TIMING_stop(tm_copy_array, 0.0, 2);
   
 
@@ -232,10 +232,9 @@ void FFV::NS_FS_E_Binary()
   {
     TIMING_start(tm_buoyancy);
     REAL_TYPE dgr = dt*C.Grashof*rei*rei * v00[0];
-    REAL_TYPE rhocp = C.RefDensity * C.RefSpecificHeat;
     flop = 3.0;
     //Buoyancy(d_vc, dgr, d_ie0, d_bcd, flop);
-    ps_buoyancy_(d_vc, size, &guide, &dgr, d_ie0, d_bcd, &rhocp, &flop);
+    ps_buoyancy_(d_vc, size, &guide, &dgr, d_ie0, d_bcd, &C.NoCompo, mat_tbl, &flop);
     TIMING_stop(tm_buoyancy, flop);
   }
 
@@ -267,7 +266,7 @@ void FFV::NS_FS_E_Binary()
   if ( C.AlgorithmF == Flow_FS_AB_CN ) 
   {
     TIMING_start(tm_copy_array);;
-    U.xcopy(d_wv, size, guide, d_vc, one, kind_vector);
+    U.copyV3D(d_wv, size, guide, d_vc, one);
     TIMING_stop(tm_copy_array, 0.0);
     
     for (ICv->setLoopCount(0); ICv->getLoopCount() < ICv->getMaxIteration(); ICv->incLoopCount())
@@ -292,7 +291,7 @@ void FFV::NS_FS_E_Binary()
   
   // vの初期値をvcにしておく
   TIMING_start(tm_copy_array);
-  U.xcopy(d_v, size, guide, d_vc, one, kind_vector);
+  U.copyV3D(d_v, size, guide, d_vc, one);
   TIMING_stop(tm_copy_array, 0.0);
   
   
@@ -317,12 +316,12 @@ void FFV::NS_FS_E_Binary()
   // ソース項のコピー
   //TIMING_start(tm_copy_array);
   //flop = 0.0;
-  //U.xcopy(d_sq, size, guide, d_ws, one, kind_scalar, flop);
+  //U.copyS3D(d_sq, size, guide, d_ws, one);
   //TIMING_stop(tm_copy_array, flop);
 
   // 反復ソースの初期化
   TIMING_start(tm_assign_const);
-  U.xset(d_sq, size, guide, zero, kind_scalar);
+  U.initS3D(d_sq, size, guide, zero);
   TIMING_stop(tm_assign_const, 0.0);
   
   // Forcingコンポーネントによるソース項の寄与分

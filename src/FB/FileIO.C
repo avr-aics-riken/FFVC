@@ -265,9 +265,7 @@ void FileIO::readPressure(FILE* fp,
   // 有次元ファイルの場合，無次元に変換する
   if ( Dmode == DIMENSIONAL )
   {
-    REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step_avr; // 瞬時値の時スケールは1.0、平均値の時は平均数
-  
-    U.prs_array_D2ND(p, sz, gc, BasePrs, RefDensity, RefVelocity, scale, flop);
+    U.convArrayPrsD2ND(p, sz, gc, BasePrs, RefDensity, RefVelocity, flop);
   }
   
   if ( mode )
@@ -358,14 +356,13 @@ void FileIO::readVelocity(FILE* fp,
   }
 
   REAL_TYPE refv = (Dmode == DIMENSIONAL) ? RefVelocity : 1.0;
-  REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step_avr; // 瞬時値の時スケールは1.0、平均値の時は平均数
   REAL_TYPE u0[4];
   u0[0] = v00[0];
   u0[1] = v00[1];
   u0[2] = v00[2];
   u0[3] = v00[3];
 
-  fb_vin_nijk_(v, sz, &gc, v_buf, u0, &scale, &refv, &flop);
+  fb_vin_nijk_(v, sz, &gc, v_buf, u0, &refv, &flop);
 
   if ( mode )
   {
@@ -400,7 +397,6 @@ void FileIO::readVelocity(FILE* fp,
  * @param [in]     Dmode       次元（無次元-0 / 有次元-1）
  * @param [in]     Base_tmp    基準温度
  * @param [in]     Diff_tmp  　代表温度差
- * @param [in]     Kelvin      定数
  * @param [in,out] flop        浮動小数点演算数
  * @param [in]     guide_out   出力ガイドセル数
  * @param [in]     mode        平均値出力指示（瞬時値のときtrue，平均値のときfalse）
@@ -417,7 +413,6 @@ void FileIO::readTemperature(FILE* fp,
                              const int Dmode, 
                              const REAL_TYPE Base_tmp, 
                              const REAL_TYPE Diff_tmp,
-                             const REAL_TYPE Kelvin,
                              double& flop, 
                              const int guide_out,
                              const bool mode,
@@ -453,11 +448,10 @@ void FileIO::readTemperature(FILE* fp,
   }
   
   // 有次元ファイルの場合，無次元に変換する
-  REAL_TYPE scale = (mode == true) ? 1.0 : (REAL_TYPE)step_avr; // 瞬時値の時スケールは1.0、平均値の時は平均数
   
   if ( Dmode == DIMENSIONAL )
   {
-    U.tmp_array_D2ND(t, sz, gc, Base_tmp, Diff_tmp, Kelvin, scale, flop);
+    //U.tmp_array_D2ND(t, sz, gc, Base_tmp, Diff_tmp, flop);
   }
   
   if ( mode ) {

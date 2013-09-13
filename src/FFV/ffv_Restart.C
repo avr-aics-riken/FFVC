@@ -223,14 +223,13 @@ void FFV::Restart_instantaneous(FILE* fp, double& flop)
   if( d_wo == NULL ) Exit(0);
   
   REAL_TYPE refv = (Dmode == DIMENSIONAL) ? refV : 1.0;
-  REAL_TYPE scale = 1.0; // 瞬時値の時スケールは1.0
   REAL_TYPE u0[4];
   u0[0] = v00[0];
   u0[1] = v00[1];
   u0[2] = v00[2];
   u0[3] = v00[3];
   
-  fb_vin_nijk_(d_v, size, &guide, d_wo, u0, &scale, &refv, &flop);
+  fb_vin_nijk_(d_v, size, &guide, d_wo, u0, &refv, &flop);
   
   time = r_time;
   step = (unsigned)C.Restart_step;
@@ -249,8 +248,6 @@ void FFV::Restart_instantaneous(FILE* fp, double& flop)
   // Instantaneous Temperature fields
   if ( C.isHeatProblem() )
   {
-    REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-    
     DFI_IN_TEMP->ReadData(C.Restart_step,
                           guide,
                           G_size,
@@ -392,7 +389,7 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   u0[2] = v00[2];
   u0[3] = v00[3];
   
-  fb_vin_nijk_(d_av, size, &guide, d_wo, u0, &scale, &refv, &flop);
+  fb_vin_nijk_(d_av, size, &guide, d_wo, u0, &refv, &flop);
   
   if ( (step_avr != CurrentStep_Avr) || (time_avr != CurrentTime_Avr) ) // 圧力とちがう場合
   {
@@ -405,20 +402,18 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
   // Temperature
   if ( C.isHeatProblem() )
   {
-    REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-    
     DFI_IN_TEMPA->ReadData(C.Restart_step,
                            guide,
                            G_size,
                            (int *)m_div,
                            head,
                            tail,
-                           d_at,
+                           d_ae,
                            r_time,
                            false,
                            step_avr,
                            time_avr);
-    if ( d_at == NULL ) Exit(0);
+    if ( d_ae == NULL ) Exit(0);
     
     if ( (step_avr != CurrentStep_Avr) || (time_avr != CurrentTime_Avr) )
     {
@@ -908,14 +903,12 @@ void FFV::Restart_coarse(FILE* fp, double& flop)
   // Instantaneous Temperature fields
   if ( C.isHeatProblem() )
   {
-    REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-    
     if ( !checkFile(f_temp) )
     {
       Hostonly_ printf("\n\tError : File open '%s'\n", f_temp.c_str());
       Exit(0);
     }
-    F.readTemperature(fp, f_temp, r_size, guide, d_r_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs, true, i_dummy, f_dummy);
+    F.readTemperature(fp, f_temp, r_size, guide, d_r_t, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, flop, gs, true, i_dummy, f_dummy);
     
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
     
@@ -1428,9 +1421,6 @@ void FFV::ReadOverlap_Temperature(FILE* fp, double& flop, DifferentRestartInfo* 
   std::string rank_dir(buff);
   if ( buff ) delete [] buff;
   
-  //
-  REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-  
   // ガイド出力
   int gs = C.GuideOut;
   
@@ -1475,7 +1465,7 @@ void FFV::ReadOverlap_Temperature(FILE* fp, double& flop, DifferentRestartInfo* 
           printf("\n\tError : File open '%s'\n", tmp.c_str());
           Exit(0);
         }
-        F.readTemperature(fp, tmp, d_size, guide, d_wk, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs, true, i_dummy, f_dummy);
+        F.readTemperature(fp, tmp, d_size, guide, d_wk, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, flop, gs, true, i_dummy, f_dummy);
         
         if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
         
@@ -1517,7 +1507,7 @@ void FFV::ReadOverlap_Temperature(FILE* fp, double& flop, DifferentRestartInfo* 
       Hostonly_ printf("\n\tError : File open '%s'\n", tmp.c_str());
       Exit(0);
     }
-    F.readTemperature(fp, tmp, d_size, guide, d_wk, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs, true, i_dummy, f_dummy);
+    F.readTemperature(fp, tmp, d_size, guide, d_wk, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, flop, gs, true, i_dummy, f_dummy);
     
     if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
     
@@ -1975,15 +1965,13 @@ void FFV::ReadOverlap(FILE* fp, double& flop, DifferentRestartInfo* DRI, REAL_TY
   // Instantaneous Temperature fields
   if ( C.isHeatProblem() )
   {
-    REAL_TYPE klv = ( C.Unit.Temp == Unit_KELVIN ) ? 0.0 : KELVIN;
-    
     // 温度のオーバーラップ分を移す
     if ( !checkFile(DRI->f_temp) )
     {
       Hostonly_ printf("\n\tError : File open '%s'\n", DRI->f_temp.c_str());
       Exit(0);
     }
-    F.readTemperature(fp, DRI->f_temp, d_size, guide, d_wk, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, klv, flop, gs, true, i_dummy, f_dummy);
+    F.readTemperature(fp, DRI->f_temp, d_size, guide, d_wk, step, time, C.Unit.File, C.BaseTemp, C.DiffTemp, flop, gs, true, i_dummy, f_dummy);
     SetOverlap(d_ie,d_wk,1,guide,head,size,DRI->overlap_head,DRI->overlap_tail,
                DRI->read_file_voxel_head,DRI->read_file_voxel_size);
     

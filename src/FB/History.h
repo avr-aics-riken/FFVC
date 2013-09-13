@@ -45,7 +45,6 @@ protected:
   REAL_TYPE dynamic_p;       ///< 動圧
   REAL_TYPE base_mf;         ///< 流量の基準値
   int step;                  ///< ステップ数
-  int Unit_Temp;             ///< 温度単位
   int Unit_Prs;              ///< 圧力基準モード
   int Unit_Log;              ///< ログ出力の単位
   
@@ -64,7 +63,6 @@ public:
     RefLength       = Cref->RefLength;
     BasePrs         = Cref->BasePrs;
     RefSpecificHeat = Cref->RefSpecificHeat;
-    Unit_Temp       = Cref->Unit.Temp;
     Unit_Prs        = Cref->Unit.Prs;
     Unit_Log        = Cref->Unit.Log;
     dh              = Cref->deltaX;
@@ -167,30 +165,30 @@ protected:
   REAL_TYPE printTmp(const REAL_TYPE var) const
   {
     if (Unit_Log != DIMENSIONAL) return var;
-    const REAL_TYPE a = BaseTemp + DiffTemp*var; // Kelvin
-    return ( (Unit_Temp==Unit_KELVIN) ? a : a-KELVIN  );
+    return (BaseTemp + DiffTemp*var);
   }
   
   
 
   /**
    * @brief 無次元熱量の有次元化(面要素)
-   * @param [in] var  無次元熱量
-   * @param [in] dt   無次元時間積分幅
+   * @param [in] var  単位時間あたりの無次元熱量
+   * @retval [W]
    */
-  REAL_TYPE printQF(const REAL_TYPE var, const REAL_TYPE dt) const
+  REAL_TYPE printQF(const REAL_TYPE var) const
   {
-    return ( (Unit_Log == DIMENSIONAL) ? var*RefDensity*RefSpecificHeat*DiffTemp*RefVelocity*dhd*dhd*dt*Tscale : var*dh*dh*dt );
+    return ( (Unit_Log == DIMENSIONAL) ? var*RefDensity*RefSpecificHeat*DiffTemp*RefVelocity*RefLength*RefLength*RefLength : var );
   }
   
 
   /**
    * @brief 無次元熱量の有次元化（体積要素）
-   * @param [in] var  無次元熱量
+   * @param [in] var  単位時間あたりの無次元熱量
+   * @retval [W]
    */
   REAL_TYPE printQV(const REAL_TYPE var) const
   {
-    return ( (Unit_Log == DIMENSIONAL) ? var*RefDensity*RefSpecificHeat*DiffTemp*dhd*dhd*dhd*Tscale : var*dh*dh*dh );
+    return ( (Unit_Log == DIMENSIONAL) ? var*RefDensity*RefSpecificHeat*DiffTemp*RefLength*RefLength*RefLength : var );
   }
   
 
@@ -202,6 +200,8 @@ protected:
   {
     return ( (Unit_Log == DIMENSIONAL) ? var*RefVelocity : var );
   }
+  
+  
   
 public:
   

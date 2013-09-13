@@ -115,6 +115,7 @@ int FFV::Initialize(int argc, char **argv)
   identifyExample(fp);
   
 
+  
   // パラメータの取得と計算領域の初期化，並列モードを返す
   std::string str_para = setupDomain(&tp_ffv);
 
@@ -130,11 +131,6 @@ int FFV::Initialize(int argc, char **argv)
   
   
   V.setControlVars(C.NoCompo, Ex);
-
-  B.setControlVars(&C);
-
-  B.countMedium(&C, mat);
-
   
   
   // CompoListの設定，外部境界条件の読み込み保持
@@ -394,6 +390,8 @@ int FFV::Initialize(int argc, char **argv)
   {
     B.getInitTempOfMedium(cmp, &C);
   }
+  
+
   
   // set phase 
   if ( C.BasicEqs == INCMP_2PHASE )
@@ -3637,6 +3635,13 @@ void FFV::scanVoxel(FILE* fp)
 void FFV::setBCinfo()
 {
 
+  B.setControlVars(&C);
+  
+  
+  // KOSと媒質の状態の整合性をチェックし，流体と固体の媒質数をカウント
+  B.countMedium(&C, mat);
+  
+  
   // パラメータファイルをパースして，外部境界条件を保持する　>> VoxScan()以前に処理
   B.loadOuterBC( BC.exportOBC(), mat, cmp );
 
@@ -3678,15 +3683,27 @@ void FFV::setBCinfo()
   }
   
   
-  // Fortran用の配列にコピー
+  // 無次元パラメータの設定
+  C.setRefParameters(mat, &RF);
+  
+  
+  // パラメータの無次元化（正規化）に必要な参照物理量の設定
+  B.setRefMediumProperty(C.RefDensity, C.RefSpecificHeat);
+  
+  
+  // 演算用のパラメータ配列にコピーし，無次元化　Fortranからアクセスできるように一次元配列
+  REAL_TYPE lmd0 = C.RefDensity * C.RefSpecificHeat * C.RefVelocity * C.RefLength;
+  
   for (int n=1; n<=C.NoCompo; n++)
   {
-    mat_tbl[n*3+0] = mat[n].P[p_density];
-    mat_tbl[n*3+1] = mat[n].P[p_specific_heat];
-    mat_tbl[n*3+2] = mat[n].P[p_thermal_conductivity];
-    //printf("%d : rho=%e cp=%e lambda=%e\n", n, mat[n].P[p_density], mat[n].P[p_specific_heat], mat[n].P[p_thermal_conductivity]);
+    mat_tbl[n*3+0] = mat[n].P[p_density] / C.RefDensity;
+    mat_tbl[n*3+1] = mat[n].P[p_specific_heat] / C.RefSpecificHeat;
+    mat_tbl[n*3+2] = mat[n].P[p_thermal_conductivity] / lmd0;
+    //printf("%d : rho=%e cp=%e lambda=%e\n", n, mat_tbl[n*3+0], mat_tbl[n*3+1], mat_tbl[n*3+2]);
   }
   
+  // 無次元媒質情報をコピー
+  BC.copyNDmatTable(C.NoCompo, mat_tbl);
 }
 
 
@@ -3988,14 +4005,14 @@ void FFV::setInitialCondition()
     REAL_TYPE ip;
     if (C.Unit.Param == DIMENSIONAL)
     {
-      ip = FBUtility::convD2ND_P(C.iv.Pressure, C.BasePrs, C.RefDensity, C.RefVelocity, C.Unit.Prs);
+      ip = FBUtility::convPrsD2ND(C.iv.Pressure, C.BasePrs, C.RefDensity, C.RefVelocity, C.Unit.Prs);
     }
     else
     {
       ip = C.iv.Pressure;
     }
 
-    U.xset(d_p, size, guide, ip, kind_scalar);
+    U.initS3D(d_p, size, guide, ip);
 		BC.OuterPBC(d_p);
 
 		// 温度
@@ -4004,22 +4021,20 @@ void FFV::setInitialCondition()
       REAL_TYPE it;
       if (C.Unit.Param == DIMENSIONAL)
       {
-        it = FBUtility::convK2ND(C.iv.Temperature, C.BaseTemp, C.DiffTemp);
+        it = FBUtility::convTempD2ND(C.iv.Temperature, C.BaseTemp, C.DiffTemp);
       }
       else
       {
         it = C.iv.Temperature;
       }
+      REAL_TYPE ref = C.RefDensity * C.RefSpecificHeat * it;
 
-      U.xset(d_ie, size, guide, it, kind_scalar);
+      U.initS3D(d_ie, size, guide, ref);
       
       // コンポーネントの初期値
-      if ( C.MediumTmpInitOption == ON )
+      for (int m=1; m<=C.NoMedium; m++)
       {
-        for (int m=1; m<=C.NoCompo; m++)
-        {
-          BC.setInitialTempCompo(m, d_bcd, d_ie);
-        }
+        BC.setInitialTempCompo(m, d_bcd, d_ie);
       }
       
 			BC.OuterTBCperiodic(d_ie);
@@ -4113,7 +4128,7 @@ void FFV::setMediumList(FILE* fp)
   }
   
   
-  // 媒質情報をロードし、 MediumTableタグ内のコンポーネント数，BC数を得る
+  // 媒質情報をmat[]にロード
   M.getMediumTable(C.NoMedium, mat);
   
 
@@ -4193,7 +4208,6 @@ void FFV::setMonitorList()
                     C.RefDensity,
                     C.RefLength,
                     C.BasePrs,
-                    C.Unit.Temp,
                     C.Mode.Precision,
                     C.Unit.Prs,
                     C.num_process);
@@ -4314,12 +4328,8 @@ void FFV::setParameters()
   // 無次元時間積分幅
   deltaT = DT.get_DT();
 
-  
-  C.setParameters(mat, cmp, &RF, BC.exportOBC());
-  
-  
-  // パラメータの無次元化（正規化）に必要な参照物理量の設定
-  B.setRefMediumProperty(mat, C.RefMat);
+  // コンポーネントと外部境界のパラメータを有次元化
+  C.setCmpParameters(mat, cmp, BC.exportOBC());
 }
 
 

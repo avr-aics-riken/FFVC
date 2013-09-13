@@ -22,6 +22,21 @@
 #include <math.h>
 #include "SetBC.h"
 
+
+// #################################################################
+// 無次元の媒質情報をコピー
+void SetBC::copyNDmatTable(const int m_compo, const REAL_TYPE* m_mat)
+{
+  // Fortran用のデータ保持配列 >> mat_tbl[C.NoCompo+1][3]のイメージ
+  if ( !(mtbl = new REAL_TYPE[3*(m_compo+1)]) ) Exit(0);
+  
+  for (int i=0; i<3*(m_compo+1); i++)
+  {
+    mtbl[i] = m_mat[i];
+  }
+}
+
+
 // #################################################################
 // 作業用ポインタのコピー
 void SetBC::importCMP_MAT(CompoList* m_CMP, MediumList* m_MAT)
@@ -48,7 +63,6 @@ void SetBC::setControlVars(Control* Cref, const MediumList* mat, const Reference
   RefL      = Cref->RefLength;
   DiffTemp  = Cref->DiffTemp;
 	BaseTemp  = Cref->BaseTemp;
-	Unit_Temp = Cref->Unit.Temp;
   Unit_Prs  = Cref->Unit.Prs;
 	BasePrs   = Cref->BasePrs;
   Rayleigh  = Cref->Rayleigh;
@@ -74,10 +88,8 @@ void SetBC::setControlVars(Control* Cref, const MediumList* mat, const Reference
       if ( mat[n].getState() == FLUID )
       {
         rho_0    = mat[n].P[p_density];
-        nyu      = mat[n].P[p_kinematic_viscosity];
         cp_0     = mat[n].P[p_specific_heat];
         lambda_0 = mat[n].P[p_thermal_conductivity];
-        beta     = mat[n].P[p_vol_expansion]; // can be replaced by 1/K in the case of gas
       }
       else
       {

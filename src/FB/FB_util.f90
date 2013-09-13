@@ -845,16 +845,15 @@
 !! @param [in]     g     ガイドセル長
 !! @param [in]     vi    入力速度場
 !! @param [in]     v00   参照速度
-!! @param [in]     sacle 倍数　（瞬時値の場合には1）
 !! @param [in]     refv  代表速度
 !! @param [out]    flop  浮動小数演算数
-!! @note dst[] = ( src[]/refv + v00 ) * scale, 有次元のときrefvは次元速度，無次元のとき1.0
+!! @note dst[] = src[]/refv + v00 有次元のときrefvは次元速度，無次元のとき1.0
 !<
-  subroutine fb_vin_nijk (vo, sz, g, vi, v00, scale, refv, flop)
+  subroutine fb_vin_nijk (vo, sz, g, vi, v00, refv, flop)
   implicit none
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
-  real                                                      ::  scale, u_ref, v_ref, w_ref, refv, rr
+  real                                                      ::  u_ref, v_ref, w_ref, refv, rr
   double precision                                          ::  flop
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vo
   real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  vi
@@ -874,16 +873,16 @@
 
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, scale, rr)
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, rr)
 
 !$OMP DO SCHEDULE(static)
 
   do k=1,kx
   do j=1,jx
   do i=1,ix 
-    vo(i,j,k,1) = ( vi(1,i,j,k) * rr + u_ref ) * scale
-    vo(i,j,k,2) = ( vi(2,i,j,k) * rr + v_ref ) * scale
-    vo(i,j,k,3) = ( vi(3,i,j,k) * rr + w_ref ) * scale
+    vo(i,j,k,1) = vi(1,i,j,k) * rr + u_ref
+    vo(i,j,k,2) = vi(2,i,j,k) * rr + v_ref
+    vo(i,j,k,3) = vi(3,i,j,k) * rr + w_ref
   end do
   end do
   end do
@@ -901,16 +900,15 @@
 !! @param [in]  sz     配列長
 !! @param [in]  g      ガイドセル長
 !! @param [in]  v00    参照速度
-!! @param [in]  scale  倍数（瞬時値の場合には1）
 !! @param [in]  unit_v 無次元のとき1.0，有次元のとき代表速度(m/s)
 !! @param [out] flop   浮動小数演算数
 !! @note dst[] = ( src[] * stepAvr ) - v00
 !<
-  subroutine fb_vout_nijk (vout, vin, sz, g, v00, scale, unit_v, flop)
+  subroutine fb_vout_nijk (vout, vin, sz, g, v00, unit_v, flop)
   implicit none
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
-  real                                                      ::  u_ref, v_ref, w_ref, unit_v, scale, unit
+  real                                                      ::  u_ref, v_ref, w_ref, unit_v, unit
   double precision                                          ::  flop
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vin
   real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  vout
@@ -930,16 +928,16 @@
 
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, scale, unit)
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, unit)
 
 !$OMP DO SCHEDULE(static)
 
   do k=1,kx
   do j=1,jx
   do i=1,ix 
-    vout(1,i,j,k) = ( vin(i,j,k,1) * scale - u_ref ) * unit
-    vout(2,i,j,k) = ( vin(i,j,k,2) * scale - v_ref ) * unit
-    vout(3,i,j,k) = ( vin(i,j,k,3) * scale - w_ref ) * unit
+    vout(1,i,j,k) = ( vin(i,j,k,1) - u_ref ) * unit
+    vout(2,i,j,k) = ( vin(i,j,k,2) - v_ref ) * unit
+    vout(3,i,j,k) = ( vin(i,j,k,3) - w_ref ) * unit
   end do
   end do
   end do
@@ -957,16 +955,15 @@
 !! @param [in]  sz     配列長
 !! @param [in]  g      ガイドセル長
 !! @param [in]  v00    参照速度
-!! @param [in]  scale  倍数（瞬時値の場合には1）
 !! @param [in]  unit_v 無次元のとき1.0，有次元のとき代表速度(m/s)
 !! @param [out] flop   浮動小数演算数
 !! @note dst[] = ( src[] * stepAvr ) - v00
 !<
-  subroutine fb_vout_ijkn (vout, vin, sz, g, v00, scale, unit_v, flop)
+  subroutine fb_vout_ijkn (vout, vin, sz, g, v00, unit_v, flop)
   implicit none
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
-  real                                                      ::  u_ref, v_ref, w_ref, unit_v, scale, unit
+  real                                                      ::  u_ref, v_ref, w_ref, unit_v, unit
   double precision                                          ::  flop
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vin, vout
   real, dimension(0:3)                                      ::  v00
@@ -985,16 +982,16 @@
 
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, scale, unit)
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, unit)
 
 !$OMP DO SCHEDULE(static)
 
   do k=1,kx
   do j=1,jx
   do i=1,ix
-    vout(i,j,k,1) = ( vin(i,j,k,1) * scale - u_ref ) * unit
-    vout(i,j,k,2) = ( vin(i,j,k,2) * scale - v_ref ) * unit
-    vout(i,j,k,3) = ( vin(i,j,k,3) * scale - w_ref ) * unit
+    vout(i,j,k,1) = ( vin(i,j,k,1) - u_ref ) * unit
+    vout(i,j,k,2) = ( vin(i,j,k,2) - v_ref ) * unit
+    vout(i,j,k,3) = ( vin(i,j,k,3) - w_ref ) * unit
   end do
   end do
   end do

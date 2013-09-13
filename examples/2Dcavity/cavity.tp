@@ -9,6 +9,48 @@ ApplicationControl {
 }
 
 
+BcTable {
+
+  OuterBoundary {
+      
+    outerWall {
+      class       = "Wall"
+      Type        = "fixed"
+      Medium      = "fe"
+    }
+
+    slideWall {
+      class       = "wall"
+      Type        = "slide"
+      Profile     = "Constant"
+      Normal      = (1.0, 0.0, 0.0)
+      Velocity    = 1.0
+      Medium      = "fe"
+    }
+
+    symmetric {
+      class       = "Symmetric"
+      Medium      = "air"
+    }
+    
+    periodic {
+      class  = "periodic"
+      mode   = "simplecopy"
+    }
+
+    FaceBC {
+      Xminus = "outerWall"
+      Xplus  = "outerWall"
+      Yminus = "outerWall"
+      Yplus  = "slideWall"
+      Zminus = "periodic"
+      Zplus  = "periodic"
+    }
+
+  }
+}
+
+
 ConvectionTerm {
   Scheme  = "O3MUSCL"
   Limiter = "minmod"
@@ -29,17 +71,17 @@ DomainInfo {
 }
 
 
+GeometryModel {
+  Source = "rectangular"
+}
+
+
 GoverningEquation {
   FlowEquation       = "Incompressible"
   HeatEquation       = "FlowOnly"
   Buoyancy           = "NoBuoyancy"
   TimeVariation      = "Unsteady"
   PDEType            = "NavierStokes" 
-}
-
-
-GeometryModel {
-  Source = "rectangular"
 }
 
 
@@ -77,7 +119,6 @@ Iteration {
     ConvergenceCriterion = 1.0e-2
     NormType             = "RbyB"
     Omega                = 1.1
-    CommMode             = "sync"
   }
 
   Pressure    = "sor2_strict"
@@ -87,19 +128,40 @@ Iteration {
 }
 
 
+MediumTable {
+
+  Air {
+    state               = "Fluid"
+    MassDensity         = 1.1763
+    SpecificHeat        = 1007
+    ThermalConductivity = 2.614e-02
+    KinematicViscosity  = 15.83e-06
+    Viscosity           = 18.62e-06
+    SpeedOfSound        = 340.0
+    VolumeExpansion     = 0.04e-3
+  }
+
+  Fe {
+    state               = "Solid"
+    MassDensity         = 7870.0
+    SpecificHeat        = 442.0
+    ThermalConductivity = 80.3
+  }
+}
+
+
 MonitorList {
   Log             = "Off"
   OutputMode      = "Gather"
   CellMonitor     = "on"
   Sampling {
-    TemprallType  = "step"
+    TemporalType  = "step"
     Interval      = 100
   }
 
   list[@] {
     type            = "Line"
     label           = "line1"
-    value           = "x"
     Variable        = "Velocity"
     SamplingMethod  = "Interpolation"
     SamplingMode    = "Fluid"
@@ -236,7 +298,6 @@ StartCondition {
   InitialState {
     MassDensity = 1.0
     Pressure    = 0.0
-    Temperature = 1.0
     Velocity    = (0.0, 0.0, 0.0)
   }
 }
@@ -260,8 +321,8 @@ TimeControl {
 
   Average {
     TemporalType   = "step"
-    Start          = 0  // 指定区間の平均をとる．両方とも0のときoff
-    End            = 0 
+    Start          = 400  // 指定区間の平均をとる．両方とも0のときoff
+    End            = 2000 
   }
 }
 
@@ -280,68 +341,4 @@ Unit {
   UnitOfInputParameter  = "nonDimensional"
   UnitOfOutput          = "nonDimensional"
   Pressure              = "Gauge"
-  Temperature           = "Celsius"
 }
-
-
-MediumTable {
-
-  Air {
-    state               = "Fluid"
-    MassDensity         = 1.1763
-    SpecificHeat        = 1007
-    ThermalConductivity = 2.614e-02
-    KinematicViscosity  = 15.83e-06
-    Viscosity           = 18.62e-06
-    SpeedOfSound        = 340.0
-    VolumeExpansion     = 0.04e-3
-  }
-
-  Fe {
-    state               = "Solid"
-    MassDensity         = 7870.0
-    SpecificHeat        = 442.0
-    ThermalConductivity = 80.3
-  }
-
-}
-
-
-BcTable {
-
-  OuterBoundary {
-      
-    outerWall {
-      class       = "Wall"
-      Type        = "fixed"
-      Medium      = "fe"
-    }
-
-    slideWall {
-      class       = "wall"
-      Type        = "slide"
-      Profile     = "Constant"
-      Normal      = (1.0, 0.0, 0.0)
-      Velocity    = 1.0
-      Medium      = "fe"
-    }
-
-    symmetric {
-      class       = "Symmetric"
-      Medium      = "air"
-    }
-      
-
-    FaceBC {
-      Xminus = "outerWall"
-      Xplus  = "outerWall"
-      Yminus = "outerWall"
-      Yplus  = "slideWall"
-      Zminus = "symmetric"
-      Zplus  = "symmetric"
-    }
-
-  }
-
-}
-

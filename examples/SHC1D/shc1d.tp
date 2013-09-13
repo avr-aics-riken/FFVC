@@ -8,6 +8,49 @@ ApplicationControl {
 }
 
 
+BcTable {
+
+  LocalBoundary {
+
+    Insulation {
+      class  = "adiabatic"
+      medium = "virtualmetal"
+    }
+
+    Rod {
+      class = "HeatTransferS"
+      medium = "virtualmetal"
+      CoefOfHeatTransfer = 12.0
+      BulkTemperature = 100.0
+    }
+
+    HeatedWall {
+      class = "IsoThermal"
+      medium = "virtualmetal"
+      temperature = 200.0
+    }
+  }
+
+  OuterBoundary {
+      
+    free {
+      class          = "tractionfree"
+      ThermalOption  = "Adiabatic"
+      Medium         = "water"
+    }
+      
+    FaceBC {
+      Xminus = "free"
+      Xplus  = "free"
+      Yminus = "free"
+      Yplus  = "free"
+      Zminus = "free"
+      Zplus  = "free"
+    }
+  }
+}
+
+
 ConvectionTerm {
   Scheme  = "O2CENTRAL"
 }
@@ -25,17 +68,17 @@ DomainInfo {
 }
 
 
+GeometryModel {
+  Source = "polylib.tp"
+}
+
+
 GoverningEquation {
   FlowEquation       = "Incompressible"
   HeatEquation       = "SolidConduction"
   Buoyancy           = "NoBuoyancy"
   PDEType            = "NavierStokes"
   TimeVariation      = "Unsteady"
-}
-
-
-GeometryModel {
-  Source = "polylib.tp"
 }
 
 
@@ -78,6 +121,27 @@ Iteration {
 }
 
 
+MediumTable {
+  water {
+    State               = "Fluid"
+    MassDensity         = 998.2
+    SpecificHeat        = 4182.0
+    ThermalConductivity = 598.0e-3
+    KinematicViscosity  = 1.004e-06
+    Viscosity           = 1002.6e-06
+    SpeedOFSound        = 1500.0
+    VolumeExpansion     = 0.04e-3 
+  }
+
+  VirtualMetal {
+    State               = "Solid"
+    MassDensity         = 1.0
+    SpecificHeat        = 1.0
+    ThermalConductivity = 50.0
+  }
+}
+
+
 MonitorList {
   Log             = "On"
   OutputMode      = "Gather"
@@ -91,7 +155,6 @@ MonitorList {
   list[@] {
     type            = "Line"
     label           = "line1"
-    value           = "x"
     Variable        = "Velocity"
     SamplingMethod  = "Interpolation"
     SamplingMode    = "Fluid"
@@ -134,7 +197,7 @@ Output {
     BasicVariables {
       Format         = "sph"
       TemporalType   = "step"
-      Interval       = 10
+      Interval       = 1
     }
     DerivedVariables {
       Format         = "sph"
@@ -227,10 +290,9 @@ StartCondition {
   InitialState {
     MassDensity = 1.0
     Pressure    = 0.0
-    Temperature = 150.0
     Velocity    = (0.0, 0.0, 0.0)
 
-    TemperatureOfMedium {
+    MediumTemperature {
       virtualmetal  = 150.0
       water         = 100.0
     }
@@ -252,7 +314,7 @@ TimeControl {
   Session {
     TemporalType   = "step"
     Start          = 0
-    End            = 200
+    End            = 100
   }
 
   Average {
@@ -278,76 +340,5 @@ Unit {
   UnitOfInputParameter  = "Dimensional"
   UnitOfOutput          = "Dimensional"
   Pressure              = "Gauge"
-  Temperature           = "Celsius"
-}
-
-
-MediumTable {
-  water {
-    State               = "Fluid"
-    MassDensity         = 998.2
-    SpecificHeat        = 4182.0
-    ThermalConductivity = 598.0e-3
-    KinematicViscosity  = 1.004e-06
-    Viscosity           = 1002.6e-06
-    SpeedOFSound        = 1500.0
-    VolumeExpansion     = 0.04e-3 
-    COLOR               = "F3EB37FF"
-  }
-
-  VirtualMetal {
-    State               = "Solid"
-    MassDensity         = 1.0
-    SpecificHeat        = 1.0
-    ThermalConductivity = 50.0
-    COLOR               = "233C62FF"
-  }
-
-} //MediumTable
-
-
-BcTable {
-
-  LocalBoundary {
-
-    Insulation {
-      class  = "adiabatic"
-      medium = "virtualmetal"
-    }
-
-    Rod {
-      class = "HeatTransferB"
-      medium = "virtualmetal"
-      CoefOfHeatTransfer = 12.0
-      BulkTemperature = 100.0
-    }
-
-    HeatedWall {
-      class = "IsoThermal"
-      medium = "virtualmetal"
-      temperature = 200.0
-    }
-  }
-
-  OuterBoundary {
-      
-    AdiabaticWall {
-      class          = "wall"
-      Type           = "fixed"
-      ThermalOption  = "Adiabatic"
-      Medium         = "virtualmetal"
-    }
-      
-    FaceBC {
-      Xminus = "AdiabaticWall"
-      Xplus  = "AdiabaticWall"
-      Yminus = "AdiabaticWall"
-      Yplus  = "AdiabaticWall"
-      Zminus = "AdiabaticWall"
-      Zplus  = "AdiabaticWall"
-    }
-
-  }
-
 }
 

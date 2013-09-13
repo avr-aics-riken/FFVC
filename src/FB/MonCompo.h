@@ -56,7 +56,6 @@ public:
   /// 参照用パラメータ構造体
   struct ReferenceVariables {
     int modeUnit;       /// 出力単位指定フラグ (有次元，無次元)
-    int unitTemp;       /// 温度単位指定フラグ (Kelvin / Celsius)
     int modePrecision;  /// 出力精度指定フラグ (単精度，倍精度)
     int unitPrs;        /// 圧力単位指定フラグ (絶対値，ゲージ圧)
     REAL_TYPE refVelocity;   /// 代表速度
@@ -422,13 +421,13 @@ protected:
   /// 圧力の単位変換
   REAL_TYPE convPrs(REAL_TYPE prs) const
   {
-    return ( (refVar.modeUnit==DIMENSIONAL) ? FBUtility::convND2D_P(prs, refVar.basePrs, refVar.refDensity, refVar.refVelocity, refVar.unitPrs) : prs );
+    return ( (refVar.modeUnit==DIMENSIONAL) ? FBUtility::convPrsND2D(prs, refVar.basePrs, refVar.refDensity, refVar.refVelocity, refVar.unitPrs) : prs );
   }
   
   /// 温度の単位変換
   REAL_TYPE convTmp(REAL_TYPE tmp) const
   {
-    return ( (refVar.modeUnit==DIMENSIONAL) ? FBUtility::convK2Temp(FBUtility::convND2Kelvin(tmp, refVar.baseTemp, refVar.diffTemp), refVar.unitTemp) : tmp);
+    return ( (refVar.modeUnit==DIMENSIONAL) ? FBUtility::convTempND2D(tmp, refVar.baseTemp, refVar.diffTemp) : tmp);
   }
   
   /// 全圧の単位変換
