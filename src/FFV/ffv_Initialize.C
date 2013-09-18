@@ -69,7 +69,7 @@ int FFV::Initialize(int argc, char **argv)
   
   // 入力ファイルの指定
   std::string input_file = argv[1];
-
+  
   
   // ffvのパラメータローダのインスタンス生成
   TextParser tp_ffv;
@@ -85,14 +85,14 @@ int FFV::Initialize(int argc, char **argv)
       Exit(0);
     }
   }
- 
+  
   
   // TextParserクラスのポインタを各クラスに渡す
   C.importTP(&tp_ffv);
   B.importTP(&tp_ffv);
   M.importTP(&tp_ffv);
   MO.importTP(&tp_ffv);
-  
+
   
   // 反復制御クラスのインスタンス
   C.getIteration();
@@ -104,13 +104,13 @@ int FFV::Initialize(int argc, char **argv)
   
   // 線形ソルバーの特定
   identifyLinearSolver(&tp_ffv);
-  
+
 
 
   // 計算モデルの入力ソース情報を取得
   C.getGeometryModel();
   
-
+ 
   // Intrinsic classの同定
   identifyExample(fp);
   
@@ -119,7 +119,7 @@ int FFV::Initialize(int argc, char **argv)
   // パラメータの取得と計算領域の初期化，並列モードを返す
   std::string str_para = setupDomain(&tp_ffv);
 
-  
+ 
   
   // mat[], cmp[]の作成
   createTable(fp);
@@ -204,6 +204,8 @@ int FFV::Initialize(int argc, char **argv)
     generateSolid(fp);
   }
   
+  //Ex->writeSVX(d_mid, &C);
+  //exit(0);
 
   
   // ガイドセル上にパラメータファイルで指定する媒質IDを代入する．周期境界の場合の処理も含む．
@@ -1174,7 +1176,7 @@ void FFV::encodeBCindex(FILE* fp)
   V.countCellState(L_Fcell, G_Fcell, d_bcd, FLUID);
   
 
-  Ex->writeSVX(d_mid, &C);
+  
   // ガイドセルへコンポーネントオーダーをエンコード
   for (int n=0; n<NOFACE; n++)
   {
@@ -3370,6 +3372,12 @@ void FFV::prepHistoryOutput()
       }
       H->printHistoryWallTitle(fp_w);
     }
+    
+    // CCNVfile
+    if ( C.Mode.CCNV == ON )
+    {
+      H->printCCNVtitle(IC, &C);
+    }
   }
   
 }
@@ -4774,14 +4782,17 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   
   // Polylib: STLデータ書き出し
-  if ( C.Hide.GeomParaOutput == ON )
+  if ( C.Hide.GeomOutput == ON )
   {
-    unsigned poly_out_para = IO_DISTRIBUTE; // 逐次の場合と並列の場合で明示的に切り分けている．あとで，考慮
+    unsigned poly_out_para = IO_DISTRIBUTE;
+    if ( (C.Parallelism == Control::Serial) || (C.Parallelism == Control::OpenMP) ) poly_out_para = IO_GATHER;
+    
     string fname;
     
     if ( poly_out_para == IO_GATHER )
     {
       poly_stat = PL->save_rank0( &fname, "stl_b" );
+
       if ( poly_stat != PLSTAT_OK )
       {
         Hostonly_
@@ -4795,6 +4806,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     else
     {
       poly_stat = PL->save_parallel( &fname, "stl_b" );
+      
       if ( poly_stat != PLSTAT_OK )
       {
         Hostonly_

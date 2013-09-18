@@ -28,6 +28,8 @@
 #include "FBUtility.h"
 #include "vec3.h"
 
+#define CCNV_MAX 20
+
 class History {
 protected:
   REAL_TYPE Tscale;          ///< 時間スケール
@@ -47,6 +49,9 @@ protected:
   int step;                  ///< ステップ数
   int Unit_Prs;              ///< 圧力基準モード
   int Unit_Log;              ///< ログ出力の単位
+  
+  // CCNVファイル名（固定）
+  char ccnvfile[16];
   
 public:
   
@@ -74,6 +79,10 @@ public:
     time  = 0.0;
     v_max = 0.0;
     step  = 0;
+    
+    // ファイル名（固定）
+    memset(ccnvfile, 0, sizeof(char)*16);
+    sprintf(ccnvfile, "ccnv.log");
   }
   
   /**　デストラクタ */
@@ -205,11 +214,45 @@ protected:
   
 public:
   
-  // 標準履歴の出力
+  /**
+   * @brief 履歴のCCNVファイルへの出力
+   * @param [in] avr   1タイムステップの平均値　（0-pressure, 1-velocity, 2-temperature)
+   * @param [in] rms   1タイムステップの変化量　（0-pressure, 1-velocity, 2-temperature)
+   * @param [in] IC    IterationCtlクラスのポインタ
+   * @param [in] C     Controlクラスへのポインタ
+   * @param [in] stptm 1タイムステップの計算時間
+   */
+  void printCCNV(const double* avr, const double* rms, const IterationCtl* IC, const Control* C, const double stptm);
+  
+  
+  /**
+   * @brief CCNV履歴のヘッダ出力
+   * @param [in] IC    IterationCtlクラスのポインタ
+   * @param [in] C     Controlクラスへのポインタ
+   */
+  void printCCNVtitle(const IterationCtl* IC, const Control* C);
+  
+  
+  /**
+   * @brief 標準履歴の出力
+   * @param [in] fp    出力ファイルポインタ
+   * @param [in] avr   1タイムステップの平均値　（0-pressure, 1-velocity, 2-temperature)
+   * @param [in] rms   1タイムステップの変化量　（0-pressure, 1-velocity, 2-temperature)
+   * @param [in] IC    IterationCtlクラスのポインタ
+   * @param [in] C     Controlクラスへのポインタ
+   * @param [in] stptm 1タイムステップの計算時間
+   * @param [in] disp  計算時間表示の有無
+   */
   void printHistory(FILE* fp, const double* avr, const double* rms, const IterationCtl* IC, const Control* C, const double stptm, const bool disp);
   
   
-  // 標準履歴モニタのヘッダー出力
+  /**
+   * @brief 反復過程の状況モニタのヘッダー出力
+   * @param [in] fp 出力ファイルポインタ
+   * @param [in] IC 反復管理クラス
+   * @param [in] C  制御クラス
+   * @param [in] disp  計算時間表示の有無
+   */
   void printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control* C, const bool disp);
   
   
@@ -223,7 +266,12 @@ public:
   void printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C, const REAL_TYPE dt);
   
   
-  // コンポーネントモニタのヘッダー出力
+  /**
+   * @brief コンポーネントモニタのヘッダー出力
+   * @param [in] fp  出力ファイルポインタ
+   * @param [in] cmp CompoListクラスのポインタ
+   * @param [in] C   Controlクラスへのポインタ
+   */
   void printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Control* C);
   
   
@@ -236,35 +284,67 @@ public:
   void printHistoryDomfx(FILE* fp, const Control* C, const REAL_TYPE dt);
   
   
-  // 計算領域の流束履歴のヘッダー出力
+  /**
+   * @brief 計算領域の流束履歴のヘッダー出力
+   * @param [in] fp 出力ファイルポインタ
+   * @param [in] C  コントロールクラス
+   */
   void printHistoryDomfxTitle(FILE* fp, const Control* C);
   
   
-  // 物体に働く力の履歴の出力
+  /**
+   * @brief 物体に働く力の履歴の出力
+   * @param [in] fp    出力ファイルポインタ
+   * @param [in] force 力
+   */
   void printHistoryForce(FILE* fp, const REAL_TYPE* force);
   
   
-  // 物体に働く力の履歴のヘッダー出力
+  /**
+   * @brief 物体に働く力の履歴のヘッダー出力
+   * @param [in] fp 出力ファイルポインタ
+   */
   void printHistoryForceTitle(FILE* fp);
   
   
-  // 反復履歴出力
+  /**
+   * @brief コンポーネントモニタの履歴出力
+   * @param [in] fp  出力ファイルポインタ
+   * @param [in] IC  反復管理クラス
+   * @param [in] idx divの最大値の発生セルインデクス
+   */
   void printHistoryItr(FILE* fp, const IterationCtl* IC, const FB::Vec3i idx);
   
   
-  // 反復過程の状況モニタのヘッダー出力
+  /**
+   * @brief 反復過程の状況モニタのヘッダー出力
+   * @param [in] fp 出力ファイルポインタ
+   */
   void printHistoryItrTitle(FILE* fp);
   
   
-  // 壁面履歴の出力
+  /**
+   * @brief 壁面履歴の出力
+   * @param [in] fp        出力ファイルポインタ
+   * @param [in] range_Yp  壁座標の最小最大値
+   * @param [in] range_Ut  摩擦速度の最小最大値
+   */
   void printHistoryWall(FILE* fp, const REAL_TYPE* range_Yp, const REAL_TYPE* range_Ut);
   
   
-  // 壁面モニタのヘッダー出力
+  /**
+   * @brief 壁面履歴のヘッダール出力
+   * @param [in] fp        出力ファイルポインタ
+   */
   void printHistoryWallTitle(FILE* fp);
   
   
-  // タイムスタンプの更新
+  /**
+   * @brief タイムスタンプの更新
+   * @param [in] m_stp ステップ数
+   * @param [in] m_tm  時刻
+   * @param [in] vMax  速度最大値成分
+   */
   void updateTimeStamp(const int m_stp, const REAL_TYPE m_tm, const REAL_TYPE vMax);
 };
 

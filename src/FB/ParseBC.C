@@ -1065,11 +1065,11 @@ void ParseBC::getIbcSpecVel(const string label_base, const int n, CompoList* cmp
     stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
-  if ( !strcasecmp("SameSideOfNormal", str.c_str()) )
+  if ( !strcasecmp("SameSideWithNormal", str.c_str()) )
   {
     cmp[n].setBClocation(CompoList::same_direction);
   }
-  else if ( !strcasecmp("OppositeSideOfNormal", str.c_str()) )
+  else if ( !strcasecmp("OppositeSideWithNormal", str.c_str()) )
   {
     cmp[n].setBClocation(CompoList::opposite_direction);
   }
@@ -3264,7 +3264,7 @@ void ParseBC::printCompoSummary(FILE* fp, CompoList* cmp, const int basicEq)
   
   if ( basicEq == INCMP_2PHASE )
   {
-    fprintf(fp,"\t  No :  Num. of Elements       State   Phase                     Label : Class                 Medium\n");
+    fprintf(fp,"\t  No :  # of Faces/Cells       State   Phase                     Label : Class                 Medium\n");
     fprintf(fp,"\t--------------------------------------------------------------------------------------------------------------------\n");
     
     for (int i=1; i<=NoCompo; i++)
@@ -3281,7 +3281,7 @@ void ParseBC::printCompoSummary(FILE* fp, CompoList* cmp, const int basicEq)
   {
     if ( KindOfSolver == FLOW_ONLY )
     {
-      fprintf(fp,"\t  No :   Num. of Elements       State                    Label : Class                 Medium\n");
+      fprintf(fp,"\t  No :   # of Faces/Cells       State                    Label : Class                 Medium\n");
       fprintf(fp,"\t--------------------------------------------------------------------------------------------------------------------\n");
       
       for (int i=1; i<=NoCompo; i++)
@@ -3296,7 +3296,7 @@ void ParseBC::printCompoSummary(FILE* fp, CompoList* cmp, const int basicEq)
     }
     else
     {
-      fprintf(fp,"\t  No :   Num. of Elements       State   Init.Temp[C]                    Label : Class                 Medium\n");
+      fprintf(fp,"\t  No :   # of Faces/Cells       State   Init.Temp[C]                    Label : Class                 Medium\n");
       fprintf(fp,"\t--------------------------------------------------------------------------------------------------------------------\n");
       
       for (int i=1; i<=NoCompo; i++)

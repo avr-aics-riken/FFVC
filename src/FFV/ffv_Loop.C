@@ -318,7 +318,14 @@ int FFV::Loop(const unsigned step)
     if ( C.Interval[Interval_Manager::tg_console].isTriggered(CurrentStep, CurrentTime) )
     {
       TIMING_start(tm_hstry_stdout);
-      Hostonly_ H->printHistory(stdout, avr_Var, rms_Var, IC, &C, step_end, true);
+      Hostonly_
+      {
+        H->printHistory(stdout, avr_Var, rms_Var, IC, &C, step_end, true);
+        if ( C.Mode.CCNV == ON )
+        {
+          H->printCCNV(avr_Var, rms_Var, IC, &C, step_end);
+        }
+      }
       TIMING_stop(tm_hstry_stdout, 0.0);
     }
   }

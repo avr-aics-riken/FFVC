@@ -384,6 +384,7 @@ public:
     int VRT;
     int Wall_profile;
     int Base_Medium;
+    int CCNV;
   } Mode_set;
   
   /** 隠しパラメータ */
@@ -392,7 +393,7 @@ public:
     int Change_ID;
     int Range_Limit;
     int PM_Test;
-    int GeomParaOutput;
+    int GeomOutput;
   } Hidden_Parameter;
   
   /** File IO control */
@@ -767,6 +768,7 @@ public:
     Mode.TP = 0;
     Mode.VRT = 0;
     Mode.Wall_profile = 0;
+    Mode.CCNV = 0;
     
     LES.Calc=0;
     LES.Model=0;
@@ -788,7 +790,7 @@ public:
     Hide.Change_ID = 0;
     Hide.Range_Limit = 0;
     Hide.PM_Test = 0;
-    Hide.GeomParaOutput = OFF;
+    Hide.GeomOutput = OFF;
     
     Unit.Param  = 0;
     Unit.Output = 0;

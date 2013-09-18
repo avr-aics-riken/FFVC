@@ -2518,6 +2518,7 @@ unsigned long VoxInfo::encVbitIBC (const int order,
   FB::Vec3f e_b( 0.0,  0.0, -1.0);
   FB::Vec3f e_t( 0.0,  0.0, +1.0);
   
+
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, odr) \
         firstprivate(e_w, e_e, e_s, e_n, e_b, e_t, nv) \
         schedule(static) reduction(+:g)
