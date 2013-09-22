@@ -20,8 +20,8 @@
 #ifndef _FFVC_VERSION_H_
 #define _FFVC_VERSION_H_
 
-#define FFVC_VERSION_NO  "1.3.8"
-#define FFVC_REVISION    "20130913_1400"
+#define FFVC_VERSION_NO  "1.3.9"
+#define FFVC_REVISION    "20130922_1130"
 
 #endif /* _FFVC_VERSION_H_ */
 

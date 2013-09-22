@@ -359,30 +359,30 @@ void COMB::output_plot3d()
       if(  FP3DW.IsMoveGrid()){
         if( d_type == SPH_FLOAT ){
           if( FP3DW.GetRealType() == OUTPUT_FLOAT ){ // float ---> float
-            OutputPlot3D_xyz(m_step, m_rank, guide, m_org, m_pit, sz, &d[0], &d[outsize], &d[outsize*2]);
+            xyz(m_step, m_rank, guide, m_org, m_pit, sz, &d[0], &d[outsize], &d[outsize*2]);
           }else{ // float ---> double
-            OutputPlot3D_xyz(m_step, m_rank, guide, m_org, m_pit, sz, &dd[0], &dd[outsize], &dd[outsize*2]);
+            xyz(m_step, m_rank, guide, m_org, m_pit, sz, &dd[0], &dd[outsize], &dd[outsize*2]);
           }
         }else{
           if( FP3DW.GetRealType() == OUTPUT_FLOAT ){ // double ---> float
-            OutputPlot3D_xyz(m_step, m_rank, guide, m_dorg, m_dpit, sz, &d[0], &d[outsize], &d[outsize*2]);
+            xyz(m_step, m_rank, guide, m_dorg, m_dpit, sz, &d[0], &d[outsize], &d[outsize*2]);
           }else{ // double ---> double
-            OutputPlot3D_xyz(m_step, m_rank, guide, m_dorg, m_dpit, sz, &dd[0], &dd[outsize], &dd[outsize*2]);
+            xyz(m_step, m_rank, guide, m_dorg, m_dpit, sz, &dd[0], &dd[outsize], &dd[outsize*2]);
           }
         }
       }else{
         if(istep==0){
           if( d_type == SPH_FLOAT ){
             if( FP3DW.GetRealType() == OUTPUT_FLOAT ){ // float ---> float
-              OutputPlot3D_xyz(m_step, m_rank, guide, m_org, m_pit, sz, &d[0], &d[outsize], &d[outsize*2]);
+              xyz(m_step, m_rank, guide, m_org, m_pit, sz, &d[0], &d[outsize], &d[outsize*2]);
             }else{ // float ---> double
-              OutputPlot3D_xyz(m_step, m_rank, guide, m_org, m_pit, sz, &dd[0], &dd[outsize], &dd[outsize*2]);
+              xyz(m_step, m_rank, guide, m_org, m_pit, sz, &dd[0], &dd[outsize], &dd[outsize*2]);
             }
           }else{
             if( FP3DW.GetRealType() == OUTPUT_FLOAT ){ // double ---> float
-              OutputPlot3D_xyz(m_step, m_rank, guide, m_dorg, m_dpit, sz, &d[0], &d[outsize], &d[outsize*2]);
+              xyz(m_step, m_rank, guide, m_dorg, m_dpit, sz, &d[0], &d[outsize], &d[outsize*2]);
             }else{ // double ---> double
-              OutputPlot3D_xyz(m_step, m_rank, guide, m_dorg, m_dpit, sz, &dd[0], &dd[outsize], &dd[outsize*2]);
+              xyz(m_step, m_rank, guide, m_dorg, m_dpit, sz, &dd[0], &dd[outsize], &dd[outsize*2]);
             }
           }
         }

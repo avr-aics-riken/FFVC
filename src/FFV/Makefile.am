@@ -53,10 +53,10 @@ ffvc_SOURCES = \
   ffv_Version.h
 
 ffvc_LDADD = \
+  -L../PLOT3D -lPLOT3D \
   -L../FB -lFB \
   -L../IP -lIP \
   -L../F_CORE -lFCORE \
-  -L../PLOT3D -lPLOT3D \
   @CPM_LDFLAGS@ \
   @CIO_LDFLAGS@ \
   @TP_LDFLAGS@ \

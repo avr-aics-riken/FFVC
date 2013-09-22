@@ -183,10 +183,10 @@ UDEF_INC_PATH=`$(TP_DIR)/bin/tp-config --cflags`  \
 
               
 UDEF_LIB_PATH=-L$(MPI_DIR)/lib \
+              -L../PLOT3D -lPLOT3D \
               -L../FB -lFB \
               -L../IP -lIP \
               -L../F_CORE -lFCORE \
-              -L../PLOT3D -lPLOT3D \
               `$(TP_DIR)/bin/tp-config --libs`  \
               `$(PM_DIR)/bin/pm-config --libs` \
               `$(POLY_DIR)/bin/polylib-config --libs` \

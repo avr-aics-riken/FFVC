@@ -246,15 +246,15 @@ int FFV::Loop(const unsigned step)
 
 
   
-  /* 20130611 commentout  PLOT3D output
-  if(C.FIO.Format == plt3d_fmt)
+  //  PLOT3D output
+  if (C.FIO.Format == plt3d_fmt)
   {
     // 通常
-    if ( C.Interval[Interval_Manager::tg_plot3d].isTriggered(CurrentStep, CurrentTime) )
+    if ( C.Interval[Interval_Manager::tg_basic].isTriggered(CurrentStep, CurrentTime) )
     {
       TIMING_start(tm_file_out);
       flop_count=0.0;
-      PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng[var_Plot3D], flop_count);
+      PLT3D.post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng_Plot3D, flop_count);
       TIMING_stop(tm_file_out, flop_count);
     }
      
@@ -263,18 +263,18 @@ int FFV::Loop(const unsigned step)
     if ( CurrentStep == C.Interval[Interval_Manager::tg_compute].getIntervalStep() )
     {
       // 指定間隔の出力がない場合のみ（重複を避ける）
-      if ( !C.Interval[Interval_Manager::tg_plot3d].isTriggered(CurrentStep, CurrentTime) )
+      if ( !C.Interval[Interval_Manager::tg_basic].isTriggered(CurrentStep, CurrentTime) )
       {
         if ( C.Hide.PM_Test != ON )
         {
           TIMING_start(tm_file_out);
           flop_count=0.0;
-          PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng[var_Plot3D], flop_count);
+          PLT3D.post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng_Plot3D, flop_count);
           TIMING_stop(tm_file_out, flop_count);
         }
       }
     }
-  }*/
+  }
   
   // 平均値のデータ出力 
   if (C.Mode.Average == ON) 

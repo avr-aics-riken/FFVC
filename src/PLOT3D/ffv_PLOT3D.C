@@ -23,11 +23,355 @@
 
 
 // #################################################################
+// PLOT3Dファイル入出力に関するパラメータ取得
+void Plot3D::getParameter(TextParser* tpCntl)
+{
+  string str;
+  string label;
+  
+  // Output Directory_Path
+  label = "/Output/FormatOption/PLOT3D/DirectoryPath";
+  
+  if ( !(tpCntl->getInspectedValue(label, str)) )
+  {
+    if (myRank==0) stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  // 指定が無ければ，空のまま
+  if ( !str.empty() )
+  {
+    C->FIO.OutDirPath = str;
+  }
+  
+  // FileNameGrid --- option
+  label = "/Output/FormatOption/PLOT3D/FileNameGrid";
+  
+  if ( !(tpCntl->getInspectedValue(label, str)) )
+  {
+    C->P3Op.basename_g = "PLOT3DoutputGrid";
+  }
+  else
+  {
+    C->P3Op.basename_g = str;
+  }
+  
+  if ( C->P3Op.basename_g.empty() )
+  {
+    C->P3Op.basename_g = "PLOT3DoutputGrid";
+  }
+  
+  // FileNameFunc --- option
+  label = "/Output/FormatOption/PLOT3D/FileNameFunc";
+  
+  if ( !(tpCntl->getInspectedValue(label, str)) )
+  {
+    C->P3Op.basename_f = "PLOT3Doutput";
+  }
+  else
+  {
+    C->P3Op.basename_f = str;
+  }
+  
+  if ( C->P3Op.basename_f.empty() )
+  {
+    C->P3Op.basename_f = "PLOT3Doutput";
+  }
+  
+  // GridKind
+  /*
+   label = "/Steer/Plot3dOptions/GridKind";
+   
+   if ( !(tpCntl->getInspectedValue(label, str )) )
+   {
+   Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+   Exit(0);
+   }
+   else
+   {
+   if     ( !strcasecmp(str.c_str(), "SingleGrid") ) FP3DR->setSingleGrid();
+   else if( !strcasecmp(str.c_str(), "MultiGrid") )  FP3DR->setMultiGrid();
+   else
+   {
+   Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+   Exit(0);
+   }
+   }
+   */
+  
+  FP3DR->setMultiGrid(); // 常にmulti grid
+  
+  
+  // 格子の移動
+  label = "/Output/FormatOption/PLOT3D/GridMobility";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    if (myRank==0) stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "movable") )   FP3DR->setMoveGrid(GRID_MOVE);
+    else if( !strcasecmp(str.c_str(), "immovable") ) FP3DR->setMoveGrid(GRID_NOT_MOVE);
+    else
+    {
+      if (myRank==0) stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
+    }
+  }
+  
+  
+  // 時間方向の変化
+  label = "/Output/FormatOption/PLOT3D/StateOfTime";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    FP3DR->setSteady(FB_UNSTEADY);
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "steady") )   FP3DR->setSteady(FB_STEADY);
+    else if( !strcasecmp(str.c_str(), "unsteady") ) FP3DR->setSteady(FB_UNSTEADY);
+    else
+    {
+      if (myRank==0) stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
+    }
+  }
+  
+  
+  // IBLANKファイル
+  label = "/Output/FormatOption/PLOT3D/SetIblankFlag";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    FP3DR->setIBlankFlag(SET_IBLANK);
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "on") )  FP3DR->setIBlankFlag(SET_IBLANK);
+    else if( !strcasecmp(str.c_str(), "off") ) FP3DR->setIBlankFlag(NOT_SET_IBLANK);
+    else
+    {
+      if (myRank==0) stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
+    }
+  }
+  
+  
+  // 次元数
+  /*
+   label = "/Steer/Plot3dOptions/Dimension";
+   if ( !(tpCntl->getInspectedValue(label, str )) )
+   {
+   //Hostonly_ stamped_printf("\tParsing error : fail to get '/Steer/plot3doptions/dimension'\n");
+   //Exit(0);
+   FP3DR->setDimension3D();
+   }
+   else
+   {
+   if     ( !strcasecmp(str.c_str(), "2d") ) FP3DR->setDimension2D();
+   else if( !strcasecmp(str.c_str(), "3d") ) FP3DR->setDimension3D();
+   else
+   {
+   Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+   Exit(0);
+   }
+   }
+   */
+  FP3DR->setDimension3D(); // 常に三次元
+  
+  // FormatType
+  label = "/Output/FormatOption/PLOT3D/FormatType";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    if (myRank==0) stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "unformatted") )  FP3DR->setFormat(UNFORMATTED);
+    else if( !strcasecmp(str.c_str(), "formatted") )    FP3DR->setFormat(FORMATTED);
+    else if( !strcasecmp(str.c_str(), "binary") )       FP3DR->setFormat(C_BINARY);
+    else
+    {
+      if (myRank==0) stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
+    }
+  }
+  
+  
+  // 出力の単精度or倍精度指定
+  label = "/Output/FormatOption/PLOT3D/RealType";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    //Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    //Exit(0);
+    int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
+    FP3DR->setRealType(d_type);
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "float") )  FP3DR->setRealType(OUTPUT_FLOAT);
+    else if( !strcasecmp(str.c_str(), "double") ) FP3DR->setRealType(OUTPUT_DOUBLE);
+    else
+    {
+      if (myRank==0) stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
+    }
+  }
+  
+  
+  //copy options read to write
+  FP3DW->setGridKind(FP3DR->IsGridKind());
+  FP3DW->setMoveGrid(FP3DR->IsMoveGrid());
+  FP3DW->setSteady(FP3DR->IsSteady());
+  FP3DW->setIBlankFlag(FP3DR->IsIBlankFlag());
+  FP3DW->setDim(FP3DR->GetDim());
+  FP3DW->setFormat(FP3DR->GetFormat());
+  FP3DW->setRealType(FP3DR->GetRealType());
+  
+  
+  // OutputXyz
+  label = "/Output/FormatOption/PLOT3D/OutputXyz";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    if (myRank==0) stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "on") )  C->P3Op.IS_xyz = ON;
+    else if( !strcasecmp(str.c_str(), "off") ) C->P3Op.IS_xyz = OFF;
+    else
+    {
+      if (myRank==0) stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
+    }
+  }
+  
+  
+  // OutputQ
+  
+  /*
+   label = "/Steer/plot3doptions/OutputQ";
+   
+   if ( !(tpCntl->getInspectedValue(label, str )) )
+   {
+   //Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+   //Exit(0);
+   P3Op.IS_q = OFF;
+   }
+   else
+   {
+   if     ( !strcasecmp(str.c_str(), "on") )  P3Op.IS_q = ON;
+   else if( !strcasecmp(str.c_str(), "off") ) P3Op.IS_q = OFF;
+   else
+   {
+   Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+   Exit(0);
+   }
+   }*/
+  
+  C->P3Op.IS_q = OFF; // 常にoff
+  
+  
+  // OutputFunction
+  label = "/Output/FormatOption/PLOT3D/OutputFunction";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    if (myRank==0) stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "on") )  C->P3Op.IS_funciton = ON;
+    else if( !strcasecmp(str.c_str(), "off") ) C->P3Op.IS_funciton = OFF;
+    else
+    {
+      if (myRank==0) stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
+    }
+  }
+  
+  
+  // OutputFuncName
+  label = "/Output/FormatOption/PLOT3D/OutputFuncName";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    if (myRank==0) stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "on") )  C->P3Op.IS_function_name = ON;
+    else if( !strcasecmp(str.c_str(), "off") ) C->P3Op.IS_function_name = OFF;
+    else
+    {
+      if (myRank==0) stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
+    }
+  }
+  
+  
+  // OutputFvbnd
+  
+  /*
+   label = "/Steer/plot3doptions/OutputFvbnd";
+   
+   if ( !(tpCntl->getInspectedValue(label, str )) )
+   {
+   //Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+   //Exit(0);
+   P3Op.IS_fvbnd = OFF;
+   }
+   else
+   {
+   if     ( !strcasecmp(str.c_str(), "on") )  P3Op.IS_fvbnd = ON;
+   else if( !strcasecmp(str.c_str(), "off") ) P3Op.IS_fvbnd = OFF;
+   else
+   {
+   Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+   Exit(0);
+   }
+   }*/
+  
+  C->P3Op.IS_fvbnd = OFF; // 常にoff
+  
+  // DivideFunc ---> 出力を項目別にファイル分割するオプション
+  label = "/Output/FormatOption/PLOT3D/DivideFunc";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    if (myRank==0) stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "on") )  C->P3Op.IS_DivideFunc = ON;
+    else if( !strcasecmp(str.c_str(), "off") ) C->P3Op.IS_DivideFunc = OFF;
+    else
+    {
+      if (myRank==0) stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
+    }
+  }
+  
+}
+
+
+
+// #################################################################
 void Plot3D::Initialize(const int* m_size,
                         const int m_guide,
                         const REAL_TYPE m_deltaX,
-                        const int m_dfi_plot3d,
                         Control* m_C,
+                        FileIO_PLOT3D_READ* m_FP3DR,
                         FileIO_PLOT3D_WRITE* m_FP3DW,
                         DFI* m_dfi,
                         REAL_TYPE* m_d_ws,
@@ -47,9 +391,9 @@ void Plot3D::Initialize(const int* m_size,
   size[2] = m_size[2];
   guide   = m_guide;
   deltaX  = m_deltaX;
-  dfi_plot3d = m_dfi_plot3d;
   
   C    = m_C;
+  FP3DR= m_FP3DR;
   FP3DW= m_FP3DW;
   dfi  = m_dfi;
   
@@ -64,30 +408,12 @@ void Plot3D::Initialize(const int* m_size,
   d_bcd= m_d_bcd;
 }
 
-// #################################################################
-void Plot3D::setValuePlot3D()
-{
-  //set ngrid
-  C->P3Op.ngrid=1;
-  
-  //set nvar
-  int nvar=4;//pressure + velocity(3)
-  
-  if ( C->isHeatProblem() )     nvar++;
-  if ( C->Mode.TP == ON )       nvar++;
-  if ( C->Mode.VRT == ON )      nvar+3;
-  if ( C->Mode.I2VGT == ON )    nvar++;
-  if ( C->Mode.Helicity == ON ) nvar++;
-  
-  C->P3Op.nvar=nvar;
-}
-
 
 // #################################################################
-void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
-                                   const double CurrentTime,
-                                   REAL_TYPE* v00,
-                                   double& flop)
+void Plot3D::function(const unsigned CurrentStep,
+                      const double CurrentTime,
+                      REAL_TYPE* v00,
+                      double& flop)
 {
   //value
   int igrid;
@@ -150,12 +476,12 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   if(FP3DW->GetFormat() == C_BINARY){//C_BINARYでの出力は項目ごとに書き出し
     if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
       if (!(d = new float[ maxid*maxjd*maxkd ])){
-        if (myRank==0) printf(    "\t>> cannot allocate work area : OutputPlot3D_function\n\n");
+        if (myRank==0) printf(    "\t>> cannot allocate work area : function()\n\n");
         Exit(0);
       }
     }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
       if (!(dd = new double[ maxid*maxjd*maxkd ])){
-        if (myRank==0) printf(    "\t>> cannot allocate work area : OutputPlot3D_function\n\n");
+        if (myRank==0) printf(    "\t>> cannot allocate work area : function()\n\n");
         Exit(0);
       }
     }
@@ -164,12 +490,12 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   {
     if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
       if (!(d = new float[ maxid*maxjd*maxkd*maxnvar ])){
-        if (myRank==0) printf(    "\t>> cannot allocate work area : OutputPlot3D_function\n\n");
+        if (myRank==0) printf(    "\t>> cannot allocate work area : function()\n\n");
         Exit(0);
       }
     }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
       if (!(dd = new double[ maxid*maxjd*maxkd*maxnvar ])){
-        if (myRank==0) printf(    "\t>> cannot allocate work area : OutputPlot3D_function\n\n");
+        if (myRank==0) printf(    "\t>> cannot allocate work area : function()\n\n");
         Exit(0);
       }
     }
@@ -479,35 +805,14 @@ void Plot3D::OutputPlot3D_function(const unsigned CurrentStep,
   delete [] id;
   delete [] jd;
   delete [] kd;
-  
-  //// 出力モード
-  //bool mio = (bool)C->FIO.IOmode;
-  
-  //// 最大値と最小値
-  //REAL_TYPE minmax[2];
-  
-  //minmax[0] = 0.0;
-  //minmax[1] = 0.0;
-  //if (myRank==0) if ( !dfi->WriteDFIindex(C->P3Op.basename_f,
-  ////Hostonly_ if ( !dfi->WriteDFIindex(C->P3Op.basename_f,
-  //                                   C->FIO.OutDirPath,
-  //                                   C->file_fmt_ext,
-  //                                   m_step,
-  //                                   m_time,
-  //                                   dfi_mng[var_Plot3D],
-  //                                   "ijkn",
-  //                                   1,
-  //                                   minmax,
-  //                                   mio) ) Exit(0);
-  
 }
 
 
 // #################################################################
-void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
-                                          const double CurrentTime,
-                                          REAL_TYPE* v00,
-                                          double& flop)
+void Plot3D::function_divide(const unsigned CurrentStep,
+                             const double CurrentTime,
+                             REAL_TYPE* v00,
+                             double& flop)
 {
   //value
   int igrid;
@@ -574,12 +879,12 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   //allocate workarea
   if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
     if (!(d = new float[ maxid*maxjd*maxkd ])){
-      if (myRank==0)  printf(    "\t>> cannot allocate work area : OutputPlot3D_function\n\n");
+      if (myRank==0)  printf(    "\t>> cannot allocate work area : function()\n\n");
       Exit(0);
     }
   }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
     if (!(dd = new double[ maxid*maxjd*maxkd ])){
-      if (myRank==0)  printf(    "\t>> cannot allocate work area : OutputPlot3D_function\n\n");
+      if (myRank==0)  printf(    "\t>> cannot allocate work area : function()\n\n");
       Exit(0);
     }
   }
@@ -634,7 +939,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   //}//igrid loop
   FP3DW->CloseFile();
   dfi_name = "prs_" + C->P3Op.basename_f;
-  //if (myRank==0) if ( !dfi->WriteDFIindex(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
+
   
   // Velocity
   REAL_TYPE unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
@@ -681,7 +986,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   //}//igrid loop
   FP3DW->CloseFile();
   dfi_name = "vel_" + C->P3Op.basename_f;
-  //if (myRank==0) if ( !dfi->WriteDFIindex(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
+
   
   // Tempearture
   if( C->isHeatProblem() ){
@@ -718,7 +1023,7 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     //}//igrid loop
     FP3DW->CloseFile();
     dfi_name = "tmp_" + C->P3Op.basename_f;
-    //if (myRank==0) if ( !dfi->WriteDFIindex(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
+
   }
   
   // Total Pressure
@@ -760,7 +1065,6 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     //}//igrid loop
     FP3DW->CloseFile();
     dfi_name = "tp_" + C->P3Op.basename_f;
-    //if (myRank==0) if ( !dfi->WriteDFIindex(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
   }
   
   // Vorticity
@@ -812,7 +1116,6 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     //}//igrid loop
     FP3DW->CloseFile();
     dfi_name = "vrt_" + C->P3Op.basename_f;
-    //if (myRank==0) if ( !dfi->WriteDFIindex(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
   }
   
   // 2nd Invariant of Velocity Gradient Tensor
@@ -846,8 +1149,6 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     //}//igrid loop
     FP3DW->CloseFile();
     dfi_name = "iv2gt_" + C->P3Op.basename_f;
-    //if (myRank==0) if ( !dfi->WriteDFIindex(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
-    
   }
   
   
@@ -881,7 +1182,6 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
     //}//igrid loop
     FP3DW->CloseFile();
     dfi_name = "hlt_" + C->P3Op.basename_f;
-    //if (myRank==0) if ( !dfi->WriteDFIindex(dfi_name, m_step, (double)m_time, dfi_plot3d, pout) ) Exit(0); // keno 2013-01-14
   }
   
   //deallocate
@@ -889,32 +1189,11 @@ void Plot3D::OutputPlot3D_function_divide(const unsigned CurrentStep,
   delete [] id;
   delete [] jd;
   delete [] kd;
-  
-  //// 出力モード
-  //bool mio = (bool)C->FIO.IOmode;
-  
-  //// 最大値と最小値
-  //REAL_TYPE minmax[2];
-  
-  //minmax[0] = 0.0;
-  //minmax[1] = 0.0;
-  //if (myRank==0) if ( !dfi->WriteDFIindex(C->P3Op.basename_f,
-  ////Hostonly_ if ( !dfi->WriteDFIindex(C->P3Op.basename_f,
-  //                                   C->FIO.OutDirPath,
-  //                                   C->file_fmt_ext,
-  //                                   m_step,
-  //                                   m_time,
-  //                                   dfi_mng[var_Plot3D],
-  //                                   "ijkn",
-  //                                   1,
-  //                                   minmax,
-  //                                   mio) ) Exit(0);
-  
 }
 
 
 // #################################################################
-void Plot3D::OutputPlot3D_function_name()
+void Plot3D::function_name()
 {  
   //function_nameファイルはかならずformatted形式
   int keep_format=FP3DW->GetFormat();
@@ -977,7 +1256,7 @@ void Plot3D::OutputPlot3D_function_name()
 
 
 // #################################################################
-void Plot3D::OutputPlot3D_function_name_divide()
+void Plot3D::function_name_divide()
 {  
   //function_nameファイルはかならずformatted形式
   int keep_format=FP3DW->GetFormat();
@@ -1088,37 +1367,37 @@ void Plot3D::OutputPlot3D_function_name_divide()
 
 
 // #################################################################
-void Plot3D::OutputPlot3D_fvbnd()
+void Plot3D::fvbnd()
 {
 
 }
 
 
 // #################################################################
-void Plot3D::OutputPlot3D_post(const unsigned CurrentStep,
-                               const double CurrentTime,
-                               REAL_TYPE* v00,
-                               const REAL_TYPE* origin,
-                               const REAL_TYPE* pitch,
-                               int& dfi_mng,
-                               double& flop)
+void Plot3D::post(const unsigned CurrentStep,
+                  const double CurrentTime,
+                  REAL_TYPE* v00,
+                  const REAL_TYPE* origin,
+                  const REAL_TYPE* pitch,
+                  int& dfi_mng,
+                  double& flop)
 {
-  if ( C->P3Op.IS_q == ON ) OutputPlot3D_q(flop);
+  if ( C->P3Op.IS_q == ON ) Q(flop);
   
   if ( C->P3Op.IS_DivideFunc == ON )
   {
-    if ( C->P3Op.IS_funciton == ON ) OutputPlot3D_function_divide(CurrentStep, CurrentTime, v00, flop);
+    if ( C->P3Op.IS_funciton == ON ) function_divide(CurrentStep, CurrentTime, v00, flop);
   }
   else
   {
-    if ( C->P3Op.IS_funciton == ON ) OutputPlot3D_function(CurrentStep, CurrentTime, v00, flop);
+    if ( C->P3Op.IS_funciton == ON ) function(CurrentStep, CurrentTime, v00, flop);
   }
   
   if ( C->P3Op.IS_xyz == ON )
   {
     if ( FP3DW->IsMoveGrid() )
     {
-      OutputPlot3D_xyz(CurrentStep, origin, pitch);
+      xyz(CurrentStep, origin, pitch);
     }
   }
   
@@ -1147,12 +1426,10 @@ void Plot3D::OutputPlot3D_post(const unsigned CurrentStep,
   minmax[0] = 0.0;
   minmax[1] = 0.0;
   if (myRank==0) if ( !dfi->WriteDFIindex(C->P3Op.basename_f,
-                                          //Hostonly_ if ( !dfi->WriteDFIindex(C->P3Op.basename_f,
                                           C->FIO.OutDirPath,
                                           C->file_fmt_ext,
                                           m_step,
                                           m_time,
-                                          //dfi_mng[var_Plot3D],
                                           dfi_mng,
                                           "ijkn",
                                           1,
@@ -1163,14 +1440,14 @@ void Plot3D::OutputPlot3D_post(const unsigned CurrentStep,
 
 
 // #################################################################
-void Plot3D::OutputPlot3D_q(double& flop)
+void Plot3D::Q(double& flop)
 {
   
 }
 
 
 // #################################################################
-void Plot3D::OutputPlot3D_xyz(const unsigned CurrentStep, const REAL_TYPE* origin, const REAL_TYPE* pitch)
+void Plot3D::xyz(const unsigned CurrentStep, const REAL_TYPE* origin, const REAL_TYPE* pitch)
 {
   //value
   int igrid;
@@ -1260,15 +1537,15 @@ void Plot3D::OutputPlot3D_xyz(const unsigned CurrentStep, const REAL_TYPE* origi
   if( FP3DW->GetRealType() == OUTPUT_FLOAT ){
     
     if (!(x = new float[ id[igrid]*jd[igrid]*kd[igrid] ])){
-      if (myRank==0)  printf(    "\t>> cannot allocate work area : OutputPlot3D_xyz\n\n");
+      if (myRank==0)  printf(    "\t>> cannot allocate work area : xyz()\n\n");
       Exit(0);
     }
     if (!(y = new float[ id[igrid]*jd[igrid]*kd[igrid] ])){
-      if (myRank==0)  printf(    "\t>> cannot allocate work area : OutputPlot3D_xyz\n\n");
+      if (myRank==0)  printf(    "\t>> cannot allocate work area : xyz()\n\n");
       Exit(0);
     }
     if (!(z = new float[ id[igrid]*jd[igrid]*kd[igrid] ])){
-      if (myRank==0)  printf(    "\t>> cannot allocate work area : OutputPlot3D_xyz\n\n");
+      if (myRank==0)  printf(    "\t>> cannot allocate work area : xyz()\n\n");
       Exit(0);
     }
     for(int k=0;k<kd[igrid];k++){
@@ -1284,15 +1561,15 @@ void Plot3D::OutputPlot3D_xyz(const unsigned CurrentStep, const REAL_TYPE* origi
   }else if( FP3DW->GetRealType() == OUTPUT_DOUBLE ){
     
     if (!(dx = new double[ id[igrid]*jd[igrid]*kd[igrid] ])){
-      if (myRank==0)  printf(    "\t>> cannot allocate work area : OutputPlot3D_xyz\n\n");
+      if (myRank==0)  printf(    "\t>> cannot allocate work area : xyz()\n\n");
       Exit(0);
     }
     if (!(dy = new double[ id[igrid]*jd[igrid]*kd[igrid] ])){
-      if (myRank==0)  printf(    "\t>> cannot allocate work area : OutputPlot3D_xyz\n\n");
+      if (myRank==0)  printf(    "\t>> cannot allocate work area : xyz()\n\n");
       Exit(0);
     }
     if (!(dz = new double[ id[igrid]*jd[igrid]*kd[igrid] ])){
-      if (myRank==0)  printf(    "\t>> cannot allocate work area : OutputPlot3D_xyz\n\n");
+      if (myRank==0)  printf(    "\t>> cannot allocate work area : xyz()\n\n");
       Exit(0);
     }
     for(int k=0;k<kd[igrid];k++){
@@ -1314,7 +1591,7 @@ void Plot3D::OutputPlot3D_xyz(const unsigned CurrentStep, const REAL_TYPE* origi
     
     //iblank = new int[ id[igrid]*jd[igrid]*kd[igrid] ];
     if (!(iblankr = new int[ idr[igrid]*jdr[igrid]*kdr[igrid] ])){
-      if (myRank==0)  printf(    "\t>> cannot allocate work area : OutputPlot3D_xyz\n\n");
+      if (myRank==0)  printf(    "\t>> cannot allocate work area : xyz()\n\n");
       Exit(0);
     }
     
@@ -1326,7 +1603,7 @@ void Plot3D::OutputPlot3D_xyz(const unsigned CurrentStep, const REAL_TYPE* origi
     else// ガイドセル出力しない場合
     {
       if (!(iblank = new int[ id[igrid]*jd[igrid]*kd[igrid] ])){
-        if (myRank==0)  printf(    "\t>> cannot allocate work area : OutputPlot3D_xyz\n\n");
+        if (myRank==0)  printf(    "\t>> cannot allocate work area : xyz()\n\n");
         Exit(0);
       }
       for(int kr=gd;kr<kdr[igrid]-gd;kr++){
@@ -1346,7 +1623,7 @@ void Plot3D::OutputPlot3D_xyz(const unsigned CurrentStep, const REAL_TYPE* origi
 #else
     
     if (!(iblank = new int[ id[igrid]*jd[igrid]*kd[igrid] ]) ){
-      if (myRank==0)  printf(    "\t>> cannot allocate work area : OutputPlot3D_xyz\n\n");
+      if (myRank==0)  printf(    "\t>> cannot allocate work area : xyz()\n\n");
       Exit(0);
     }
     setIblank(iblank,id[igrid],jd[igrid],kd[igrid]);
@@ -1385,6 +1662,31 @@ void Plot3D::OutputPlot3D_xyz(const unsigned CurrentStep, const REAL_TYPE* origi
   //close file
   FP3DW->CloseFile();
   
+}
+
+
+// #################################################################
+void Plot3D::printParameters(FILE* fp)
+{
+  fprintf(fp,"\n\tPLOT3D Options\n");
+  fprintf(fp,"\t     grid file prefix         :   %s\n", C->P3Op.basename_g.c_str());
+  fprintf(fp,"\t     function file prefix     :   %s\n", C->P3Op.basename_f.c_str());
+  fprintf(fp,"\t     grid kind                :   %s\n", (FP3DW->IsGridKind()) ? "multi grid" : "single grid");
+  fprintf(fp,"\t     grid mobility            :   %s\n", (FP3DW->IsMoveGrid()) ? "movable" : "immovable");
+  fprintf(fp,"\t     state of time            :   %s\n", (FP3DW->IsSteady()) ? "unsteady" : "steady");
+  fprintf(fp,"\t     output iblank            :   %s\n", (FP3DW->IsIBlankFlag()) ? "on" : "off");
+  if (      FP3DW->GetFormat() == UNFORMATTED ) fprintf(fp,"\t     output format            :   %s\n", "Fortran Unformatted");
+  else if ( FP3DW->GetFormat() == FORMATTED   ) fprintf(fp,"\t     output format            :   %s\n", "Fortran Formatted");
+  else if ( FP3DW->GetFormat() == C_BINARY    ) fprintf(fp,"\t     output format            :   %s\n", "C Binary");
+  fprintf(fp,"\t     output dimention         :   %iD\n", FP3DW->GetDim());
+  if (      FP3DW->GetRealType() == OUTPUT_FLOAT  ) fprintf(fp,"\t     output format            :   %s\n", "float");
+  else if ( FP3DW->GetRealType() == OUTPUT_DOUBLE ) fprintf(fp,"\t     output format            :   %s\n", "double");
+  fprintf(fp,"\t     output xyz file          :   %s\n", (C->P3Op.IS_xyz) ? "on" : "off");
+  fprintf(fp,"\t     output q file            :   %s\n", (C->P3Op.IS_q) ? "on" : "off");
+  fprintf(fp,"\t     output function file     :   %s\n", (C->P3Op.IS_funciton) ? "on" : "off");
+  fprintf(fp,"\t     output funciton name file:   %s\n", (C->P3Op.IS_function_name) ? "on" : "off");
+  fprintf(fp,"\t     output fvbnd file        :   %s\n", (C->P3Op.IS_fvbnd) ? "on" : "off");
+  fprintf(fp,"\t     function per item        :   %s\n", (C->P3Op.IS_DivideFunc) ? "on" : "off");
 }
 
 
@@ -2533,3 +2835,21 @@ void Plot3D::setIblankGuide(int* iblank, int id, int jd, int kd)
   
 }
 
+
+// #################################################################
+void Plot3D::setValuePlot3D()
+{
+  //set ngrid
+  C->P3Op.ngrid=1;
+  
+  //set nvar
+  int nvar=4;//pressure + velocity(3)
+  
+  if ( C->isHeatProblem() )     nvar++;
+  if ( C->Mode.TP == ON )       nvar++;
+  if ( C->Mode.VRT == ON )      nvar+3;
+  if ( C->Mode.I2VGT == ON )    nvar++;
+  if ( C->Mode.Helicity == ON ) nvar++;
+  
+  C->P3Op.nvar=nvar;
+}

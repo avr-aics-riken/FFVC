@@ -61,10 +61,10 @@
 #include "../F_CORE/ffv_Ffunc.h"
 #include "ffv_TerminateCtrl.h"
 
-/* 20130606 commentout 
+ 
 #include "dfi.h"
 #include "dfiinfo.h"
- */
+
 
 // Intrinsic class
 #include "../IP/IP_Duct.h"
@@ -77,9 +77,9 @@
 #include "../IP/IP_Sphere.h"
 #include "../IP/IP_Jet.h"
 
-/* 20130606 commentout  PLOT3D
-#include "ffv_PLOT3D.h"
- */
+// PLOT3D
+#include "../PLOT3D/ffv_PLOT3D.h"
+
 
 // FX10 profiler
 #if defined __K_FPCOLL
@@ -147,14 +147,8 @@ private:
   REAL_TYPE *cf_x;  ///< i方向のバッファ
   REAL_TYPE *cf_y;  ///< j方向のバッファ
   REAL_TYPE *cf_z;  ///< k方向のバッファ
-
-  /* 20130611 commentout 
-  // @attention CIOlib導入により，ポリシーの確認
-  // dfi ファイル管理用 -> Kind_of_vars in FB_Define.h
-  // 同じ解像度のリスタート時には、既にdfiファイルが存在する場合には、その内容を継続する
-  // ラフリスタートの場合には、新規dfiファイルを生成する >> dfi.C
-  //int dfi_mng[var_END];
-  */
+  
+  int dfi_mng_Plot3D;
   
   REAL_TYPE v00[4];      ///< 参照速度
   REAL_TYPE range_Ut[2]; ///< 
@@ -272,10 +266,10 @@ private:
   ConvergenceMonitor CM_F;   ///< 流動の定常収束モニター
   ConvergenceMonitor CM_H;   ///< 熱の定常収束モニター
   
-  // 20130611 ::DFI DFI;                 ///< 分散ファイルインデクス管理クラス
-  // 20130611 Plot3D PLT3D;              ///< PLOT3Dクラス
-  // 20130611 FileIO_PLOT3D_READ  FP3DR; ///< PLOT3D READクラス
-  // 20130611 FileIO_PLOT3D_WRITE FP3DW; ///< PLOT3D WRITEクラス
+  ::DFI DFI;                 ///< 分散ファイルインデクス管理クラス
+  Plot3D PLT3D;              ///< PLOT3Dクラス
+  FileIO_PLOT3D_READ  FP3DR; ///< PLOT3D READクラス
+  FileIO_PLOT3D_WRITE FP3DW; ///< PLOT3D WRITEクラス
   
   char tm_label_ptr[tm_END][TM_LABEL_MAX];  ///< プロファイラ用のラベル
 

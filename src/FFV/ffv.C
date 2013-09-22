@@ -58,9 +58,7 @@ FFV::FFV()
     G_region[i] = 0.0;
   }
   
-  /* 20130611 commentout  dfi管理
-  //for (int i=0; i<var_END; i++) dfi_mng[i]=0;
-   */
+  dfi_mng_Plot3D = 0;
   
   mat_tbl = NULL;
   

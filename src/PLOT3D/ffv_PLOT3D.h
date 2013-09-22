@@ -21,17 +21,18 @@
  * @author kero
  */
 
-#define PLT3D_VERS 102
+#define PLT3D_VERS 103
 
 #include <string>
 #include <mpi.h>
 
-#include "FB_Ffunc.h"
-#include "Control.h"
-#include "dfi.h"
+#include "../FB/FB_Ffunc.h"
+#include "../FB/Control.h"
+#include "../FB/dfi.h"
+#include "../F_CORE/ffv_Ffunc.h"
 #include "PLOT3D_write.h"
 #include "PLOT3D_read.h"
-#include "ffv_Ffunc.h"
+
 
 class Plot3D {
 private:
@@ -39,9 +40,9 @@ private:
   int size[3];       ///< 配列サイズ
   int guide;         ///< ガイドセルサイズ
   REAL_TYPE deltaX;  ///< 等間隔格子の無次元格子幅
-  int dfi_plot3d;    ///< PLOT3D管理用
   
   Control* C;                 ///< Controlクラス
+  FileIO_PLOT3D_READ*  FP3DR; ///< PLOT3D format read class
   FileIO_PLOT3D_WRITE* FP3DW; ///< PLOT3D format wirte class
   DFI* dfi;                   ///< Distributed File Information
   
@@ -63,17 +64,18 @@ public:
     size[0] = size[1] = size[2] = 0;
     guide = 0;
     deltaX = 0.0;
-    dfi_plot3d = 0;
     
     d_ws = NULL;
     d_p  = NULL;
     d_wo = NULL;
     d_v  = NULL;
-    d_ie  = NULL;
+    d_ie = NULL;
     d_p0 = NULL;
     d_wv = NULL;
     d_cdf= NULL;
     d_bcd= NULL;
+    FP3DR= NULL;
+    FP3DW= NULL;
   }
   
   /**　デストラクタ */
@@ -92,10 +94,10 @@ protected:
    * @param [in]     v00         格子速度
    * @param [in,out] flop        浮動小数点演算数
    */
-  void OutputPlot3D_function(const unsigned CurrentStep,
-                             const double CurrentTime,
-                             REAL_TYPE* v00,
-                             double& flop);
+  void function(const unsigned CurrentStep,
+                const double CurrentTime,
+                REAL_TYPE* v00,
+                double& flop);
   
   
   /**
@@ -105,17 +107,17 @@ protected:
    * @param [in]     v00         格子速度
    * @param [in,out] flop    浮動小数点演算数
    */
-  void OutputPlot3D_function_divide(const unsigned CurrentStep,
-                                    const double CurrentTime,
-                                    REAL_TYPE* v00,
-                                    double& flop);
+  void function_divide(const unsigned CurrentStep,
+                       const double CurrentTime,
+                       REAL_TYPE* v00,
+                       double& flop);
   
   
   /**
    * @brief 圧縮性流体のための計算結果ファイル（*.q）出力（未整備）
    * @param [in,out] flop    浮動小数点演算数
    */
-  void OutputPlot3D_q(double& flop);
+  void Q(double& flop);
   
   
   /**
@@ -519,20 +521,27 @@ public:
   /**
    * @brief 計算結果ファイルの項目（*.nam）出力
    */
-  void OutputPlot3D_function_name();
+  void function_name();
   
   
   /**
    * @brief 項目別計算結果ファイルの項目（*.nam）出力
    */
-  void OutputPlot3D_function_name_divide();
+  void function_name_divide();
   
   
   /**
    * @brief 境界面定義ファイル（*.fvbnd）出力（未整備）
    * @note BCMになるとりメッシュされたときに対応できないため出力することはない？
    */
-  void OutputPlot3D_fvbnd();
+  void fvbnd();
+  
+  
+  /**
+   * @brief PLOT3Dファイル入出力に関するパラメータ取得
+   * @param [in] tpCntl  Texparserポインタ
+   */
+  void getParameter(TextParser* tpCntl);
   
   
   /**
@@ -545,13 +554,20 @@ public:
    * @param [in]     dfi_mng     dfi file for plot3d counter
    * @param [in,out] flop        浮動小数点演算数
    */
-  void OutputPlot3D_post(const unsigned CurrentStep,
-                         const double CurrentTime,
-                         REAL_TYPE* v00,
-                         const REAL_TYPE* origin,
-                         const REAL_TYPE* pitch,
-                         int& dfi_mng,
-                         double& flop);
+  void post(const unsigned CurrentStep,
+            const double CurrentTime,
+            REAL_TYPE* v00,
+            const REAL_TYPE* origin,
+            const REAL_TYPE* pitch,
+            int& dfi_mng,
+            double& flop);
+  
+  
+  /**
+   * @brief PLOT3Dのパラメータを表示
+   * @param [in] fp   file pointer
+   */
+  void printParameters(FILE* fp);
   
   
   /**
@@ -560,7 +576,7 @@ public:
    * @param [in]     origin      基点座標
    * @param [in]     pitch       格子幅
    */
-  void OutputPlot3D_xyz(const unsigned CurrentStep, const REAL_TYPE* origin, const REAL_TYPE* pitch);
+  void xyz(const unsigned CurrentStep, const REAL_TYPE* origin, const REAL_TYPE* pitch);
   
   
   /**
@@ -574,8 +590,8 @@ public:
    * @param [in]     m_size      配列サイズ
    * @param [in]     m_guide     ガイドセルサイズ
    * @param [in]     m_deltaX    格子幅
-   * @param [in]     dfi_plot3d  PLOT3D管理用
    * @param [in]     m_C         Controlクラス
+   * @param [in]     m_FP3DR     FileIO_PLOT3D_READ
    * @param [in]     m_FP3DW     FileIO_PLOT3D_WRITE
    * @param [in]     m_DFI       DFI
    * @param [in]     m_d_ws      出力データコンテナ配列
@@ -591,8 +607,8 @@ public:
   void Initialize(const int* m_size,
                   const int m_guide,
                   const REAL_TYPE m_deltaX,
-                  const int dfi_plot3d,
                   Control* m_C,
+                  FileIO_PLOT3D_READ* m_FP3DR,
                   FileIO_PLOT3D_WRITE* m_FP3DW,
                   DFI* m_dfi,
                   REAL_TYPE* m_d_ws,

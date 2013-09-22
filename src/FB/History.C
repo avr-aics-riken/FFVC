@@ -145,7 +145,7 @@ void History::printCCNV(const double* avr, const double* rms, const IterationCtl
   // データタイプ
 	//  4: 単精度
 	//  8: 倍精度
-	long ccnv_pr = (long)C->Mode.Precision;
+	long ccnv_pr = 8; // 出力はdoubleで固定 (long)C->Mode.Precision;
   
   
   // データを追加で書込みます
@@ -166,6 +166,7 @@ void History::printCCNVtitle(const IterationCtl* IC, const Control* C)
   // X軸タイトル数 最大2
 	long num_x = 2;
 	char x_title[2][128];
+  for (int i=0; i<2; i++) memset(x_title[i], 0, sizeof(char)*128);
   
   std::string str("Step");
   sprintf(x_title[0], "%s", str.c_str());
@@ -177,6 +178,7 @@ void History::printCCNVtitle(const IterationCtl* IC, const Control* C)
   // Y軸タイトル数 最大15
 	long num_y = CCNV_MAX - 2;
 	char y_title[CCNV_MAX - 2][128];
+  for (int i=0; i<CCNV_MAX-2; i++) memset(y_title[i], 0, sizeof(char)*128);
   int c=0;
   
   if ( (C->KindOfSolver==FLOW_ONLY) ||
@@ -304,7 +306,7 @@ void History::printCCNVtitle(const IterationCtl* IC, const Control* C)
 	// データタイプ
 	//  4: 単精度
 	//  8: 倍精度
-	long ccnv_pr = (long)C->Mode.Precision;
+	long ccnv_pr = 8; // (long)C->Mode.Precision;
   
 	// ファイル名（固定）
 	char ccnvfile[16] = {"ccnv.log"};

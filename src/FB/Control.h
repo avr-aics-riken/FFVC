@@ -37,11 +37,6 @@
 #include "IterationControl.h"
 #include "TextParser.h"
 
-/* 20130611 commentout
-#include "PLOT3D_read.h"
-#include "PLOT3D_write.h"
- */
-
 using namespace std;
 
 
@@ -934,24 +929,13 @@ protected:
   void printParaConditions(FILE* fp, const MediumList* mat);
   
   
-  /** 20130611
+  /**
    * @brief 制御パラメータSTEERの表示
    * @param [in] IC IterationCtl
    * @param [in] DT DTcntl
    * @param [in] RF ReferenceFrame
-   //* @param [in] FP3DW FileIO PLOT3D WRITE CLASS POINTER
    */
   void printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT, const ReferenceFrame* RF);
-  //void printSteerConditions(FILE* fp, const IterationCtl* IC, const DTcntl* DT, const ReferenceFrame* RF, FileIO_PLOT3D_WRITE* FP3DW);
-  
-  
-  /**
-   * @brief PLOT3Dファイル入出力に関するパラメータ
-   * @param [in]  FP3DR    PLOT3D READクラス ポインタ
-   * @param [in]  FP3DW    PLOT3D WRITEクラス ポインタ
-   *
-  void get_PLOT3D(FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_WRITE* FP3DW);
-   */
   
   
   
@@ -966,7 +950,7 @@ public:
   void copyCriteria(IterationCtl& IC, const string name);
   
   
-  /** 20130611
+  /**
    * @brief 制御，計算パラメータ群の表示
    * @param [in] mp  ファイルポインタ（標準出力）
    * @param [in] fp  ファイルポインタ（ファイル出力）
@@ -974,9 +958,7 @@ public:
    * @param [in] DT  DTcntl
    * @param [in] RF  ReferenceFrame
    * @param [in] mat MediumList
-   //* @param [in] FP3DW FileIO PLOT3D WRITE CLASS POINTER
    */
-  //void displayParams(FILE* mp, FILE* fp, IterationCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat, FileIO_PLOT3D_WRITE* FP3DW);
   void displayParams(FILE* mp, FILE* fp, IterationCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat);
   
   
@@ -1052,8 +1034,7 @@ public:
   void getSolvingMethod4Flow();
   
   
-  // 制御，計算パラメータ群の取得 20130611
-  //void get_Steer_1(DTcntl* DT, FileIO_PLOT3D_READ* FP3DR, FileIO_PLOT3D_WRITE* FP3DW);
+  // 制御，計算パラメータ群の取得
   void get1stParameter(DTcntl* DT);
   
   

@@ -545,7 +545,7 @@ public:
    * @param [in] z          z方向座標ワーク
    */
   template<class T1, class T2>
-  void OutputPlot3D_xyz(int m_step, int m_rank, int guide, T1* origin, T1* pitch, int* size, T2* x, T2* y, T2* z)
+  void xyz(int m_step, int m_rank, int guide, T1* origin, T1* pitch, int* size, T2* x, T2* y, T2* z)
   {
     //value
     int ngrid=1;

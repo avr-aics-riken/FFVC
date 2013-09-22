@@ -551,24 +551,24 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   
-  /* 20130611 commentout PLOT3D形状データの書き出し
-  PLT3D.Initialize(size, guide, deltaX, dfi_mng[var_Plot3D], &C, &FP3DW, &DFI, d_ws, d_p, d_wo, d_v, d_ie, d_p0, d_wv, d_cdf, d_bcd);
+  // PLOT3D形状データの書き出し
+  PLT3D.Initialize(size, guide, deltaX, &C, &FP3DR, &FP3DW, &DFI, d_ws, d_p, d_wo, d_v, d_ie, d_p0, d_wv, d_cdf, d_bcd);
   
   if (C.FIO.Format == plt3d_fmt)
   {
     PLT3D.setValuePlot3D();
-    if (C.P3Op.IS_xyz == ON) PLT3D.OutputPlot3D_xyz(CurrentStep, origin, pitch);// ---> moving grid を考慮したときOutputPlot3D_postに組み込む
+    if (C.P3Op.IS_xyz == ON) PLT3D.xyz(CurrentStep, origin, pitch); // ---> moving grid を考慮したときpostに組み込む
     if (C.P3Op.IS_DivideFunc == ON)
     {
-      if (C.P3Op.IS_function_name == ON) Hostonly_ PLT3D.OutputPlot3D_function_name_divide();
+      if (C.P3Op.IS_function_name == ON) Hostonly_ PLT3D.function_name_divide();
     }
     else
     {
-      if (C.P3Op.IS_function_name == ON) Hostonly_ PLT3D.OutputPlot3D_function_name();
+      if (C.P3Op.IS_function_name == ON) Hostonly_ PLT3D.function_name();
     }
-    if (C.P3Op.IS_fvbnd == ON) PLT3D.OutputPlot3D_fvbnd();
+    if (C.P3Op.IS_fvbnd == ON) PLT3D.fvbnd();
   }
-  */
+
 
   
   // 出力ファイルの初期化
@@ -581,9 +581,9 @@ int FFV::Initialize(int argc, char **argv)
     flop_task = 0.0;
     OutputBasicVariables(flop_task);
     
-    /* 20130611 commentout
-    if (C.FIO.Format == plt3d_fmt) PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng[var_Plot3D], flop_task);
-    */
+
+    if (C.FIO.Format == plt3d_fmt) PLT3D.post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng_Plot3D, flop_task);
+
     
     if ( (C.Mode.Average == ON) && (C.Start != initial_start) )
     {
@@ -599,9 +599,7 @@ int FFV::Initialize(int argc, char **argv)
     flop_task = 0.0;
     OutputBasicVariables(flop_task);
     
-    /* 20130611 commentout 
-    if (C.FIO.Format == plt3d_fmt) PLT3D.OutputPlot3D_post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng[var_Plot3D], flop_task);
-     */
+    if (C.FIO.Format == plt3d_fmt) PLT3D.post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng_Plot3D, flop_task);
   }
 
 
@@ -947,8 +945,14 @@ void FFV::displayMemoryInfo(FILE* fp, double G_mem, double L_mem, const char* st
  */
 void FFV::displayParameters(FILE* fp)
 {
-  // 20130611 C.displayParams(stdout, fp, IC, &DT, &RF, mat, &FP3DW);
   C.displayParams(stdout, fp, IC, &DT, &RF, mat);
+  
+  if (C.FIO.Format == plt3d_fmt)
+  {
+    PLT3D.printParameters(stdout);
+    PLT3D.printParameters(fp);
+  }
+  
   Ex->printPara(stdout, &C);
   Ex->printPara(fp, &C);
   
@@ -4456,10 +4460,9 @@ string FFV::setupDomain(TextParser* tpf)
   BC.setRankInfo   (paraMngr, procGrp);
   Ex->setRankInfo  (paraMngr, procGrp);
   MO.setRankInfo   (paraMngr, procGrp);
-  /* 20130611
+
   FP3DR.setRankInfo(paraMngr, procGrp);
   FP3DW.setRankInfo(paraMngr, procGrp);
-   */
   
   
   // 並列モードの取得
@@ -4467,8 +4470,13 @@ string FFV::setupDomain(TextParser* tpf)
   
   
   // 最初のパラメータの取得
-  // 20130611 C.get_Steer_1(&DT, &FP3DR, &FP3DW);
   C.get1stParameter(&DT);
+  
+  // PLOT3D Parameter
+  if ( C.FIO.Format == plt3d_fmt)
+  {
+    PLT3D.getParameter(tpf);
+  }
   
   // 代表パラメータをコピー
   Ex->setRefParameter(&C);
@@ -4494,10 +4502,9 @@ string FFV::setupDomain(TextParser* tpf)
   BC.setNeighborInfo   (C.guide);
   Ex->setNeighborInfo  (C.guide);
   MO.setNeighborInfo   (C.guide);
-  /* 20130611
+
   FP3DR.setNeighborInfo(C.guide);
   FP3DW.setNeighborInfo(C.guide);
-   */
   
   
   // 従属的なパラメータの取得
@@ -4594,7 +4601,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   }
   
   // ポリゴンの修正
-  //RepairPolygonData(PL);
+  RepairPolygonData(PL, false);
   
   
   /* スケーリングする場合のみ表示
