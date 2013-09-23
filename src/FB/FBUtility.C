@@ -74,9 +74,9 @@ void FBUtility::convArrayIE2Tmp(REAL_TYPE* dst, const int* size, const int guide
   flop += (double)ix * (double)jx * (double)kx * 11.0 + 1.0;
   
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, dp, bt, zz) schedule(static)
-  for (int k=0; k<=kx+1; k++) {
-    for (int j=0; j<=jx+1; j++) {
-      for (int i=0; i<=ix+1; i++) {
+  for (int k=1-gd; k<=kx+gd; k++) {
+    for (int j=1-gd; j<=jx+gd; j++) {
+      for (int i=1-gd; i<=ix+gd; i++) {
         
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         int l = bd[m] & MASK_5;
@@ -95,17 +95,25 @@ void FBUtility::convArrayIE2Tmp(REAL_TYPE* dst, const int* size, const int guide
 // 圧力値を有次元から無次元へ変換
 void FBUtility::convArrayPrsD2ND(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE Base_prs, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, double& flop)
 {
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
   REAL_TYPE dp = 1.0 / (Ref_rho * Ref_v * Ref_v);
   REAL_TYPE bp = Base_prs;
 
-  flop += (double)size[0] * (double)size[1] * (double)size[2] * 2.0 + 10.0;
+  flop += (double)ix * (double)jx * (double)kx * 2.0 + 10.0;
   
-  size_t n = (size_t)(size[0]+2*guide) * (size_t)(size[1]+2*guide) * (size_t)(size[2]+2*guide);
-  
-#pragma omp parallel for firstprivate(n, dp, bp) schedule(static)
-  for (size_t i=0; i<n; i++)
-  {
-    dst[i] = ( dst[i] - bp ) * dp;
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dp, bp) schedule(static)
+  for (int k=1-gd; k<=kx+gd; k++) {
+    for (int j=1-gd; j<=jx+gd; j++) {
+      for (int i=1-gd; i<=ix+gd; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        dst[m] = ( dst[m] - bp ) * dp;
+      }
+    }
   }
 }
 
@@ -114,17 +122,25 @@ void FBUtility::convArrayPrsD2ND(REAL_TYPE* dst, const int* size, const int guid
 // 圧力値を無次元から有次元へ変換
 void FBUtility::convArrayPrsND2D(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE* src, const REAL_TYPE Base_prs, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v, double& flop)
 {
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
   REAL_TYPE dp = Ref_rho * Ref_v * Ref_v;
   REAL_TYPE bp = Base_prs;
   
-  flop += (double)size[0] * (double)size[1] * (double)size[2] * 2.0 + 3.0;
+  flop += (double)ix * (double)jx * (double)kx * 2.0 + 3.0;
   
-  size_t n = (size_t)(size[0]+2*guide) * (size_t)(size[1]+2*guide) * (size_t)(size[2]+2*guide);
-  
-#pragma omp parallel for firstprivate(n, dp, bp) schedule(static)
-  for (size_t i=0; i<n; i++)
-  {
-    dst[i] = src[i] * dp + bp;
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dp, bp) schedule(static)
+  for (int k=1-gd; k<=kx+gd; k++) {
+    for (int j=1-gd; j<=jx+gd; j++) {
+      for (int i=1-gd; i<=ix+gd; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        dst[m] = src[m] * dp + bp;
+      }
+    }
   }
 }
 
@@ -146,9 +162,9 @@ void FBUtility::convArrayTmp2IE(REAL_TYPE* dst, const int* size, const int guide
   flop += (double)ix * (double)jx * (double)kx * 4.0 + 9.0;
   
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, dp, bt, zz) schedule(static)
-  for (int k=0; k<=kx+1; k++) {
-    for (int j=0; j<=jx+1; j++) {
-      for (int i=0; i<=ix+1; i++) {
+  for (int k=1-gd; k<=kx+gd; k++) {
+    for (int j=1-gd; j<=jx+gd; j++) {
+      for (int i=1-gd; i<=ix+gd; i++) {
         
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         REAL_TYPE tn = (zz) ? (src[m]-bt)*dp : src[m];
@@ -206,11 +222,12 @@ void FBUtility::copyV3D(REAL_TYPE* dst, const int* size, const int guide, const 
   int kx = size[2];
   int gd = guide;
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, s) schedule(static)
-  for (int l=0; l<3; l++) {
-    for (int k=1-gd; k<=kx+gd; k++) {
-      for (int j=1-gd; j<=jx+gd; j++) {
-        for (int i=1-gd; i<=ix+gd; i++) {
+    for (int l=0; l<3; l++) {
+      
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, s, l) schedule(static)
+      for (int k=1-gd; k<=kx+gd; k++) {
+        for (int j=1-gd; j<=jx+gd; j++) {
+          for (int i=1-gd; i<=ix+gd; i++) {
           
           size_t m = _F_IDX_V3D(i, j, k, l, ix, jx, kx, gd);
           dst[m] = s * src[m];

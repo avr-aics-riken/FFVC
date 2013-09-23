@@ -144,13 +144,54 @@ FFV::FFV()
   cf_x = NULL;
   cf_y = NULL;
   cf_z = NULL;
+  
+  
+  // ファイル入出力
+  DFI_IN_PRS   = NULL;
+  DFI_IN_VEL   = NULL;
+  DFI_IN_FVEL  = NULL;
+  DFI_IN_TEMP  = NULL;
+  DFI_IN_PRSA  = NULL;
+  DFI_IN_VELA  = NULL;
+  DFI_IN_TEMPA = NULL;
+  DFI_OUT_PRS  = NULL;
+  DFI_OUT_VEL  = NULL;
+  DFI_OUT_FVEL = NULL;
+  DFI_OUT_TEMP = NULL;
+  DFI_OUT_PRSA = NULL;
+  DFI_OUT_VELA = NULL;
+  DFI_OUT_TEMPA= NULL;
+  DFI_OUT_TP   = NULL;
+  DFI_OUT_VRT  = NULL;
+  DFI_OUT_I2VGT= NULL;
+  DFI_OUT_HLT  = NULL;
+  DFI_OUT_DIV  = NULL;
 }
+
 
 
 // デストラクタ
 FFV::~FFV()
 {
-  
+  if( DFI_IN_PRS    != NULL ) delete DFI_IN_PRS;
+  if( DFI_IN_VEL    != NULL ) delete DFI_IN_VEL;
+  if( DFI_IN_FVEL   != NULL ) delete DFI_IN_FVEL;
+  if( DFI_IN_TEMP   != NULL ) delete DFI_IN_TEMP;
+  if( DFI_IN_PRSA   != NULL ) delete DFI_IN_PRSA;
+  if( DFI_IN_VELA   != NULL ) delete DFI_IN_VELA;
+  if( DFI_IN_TEMPA  != NULL ) delete DFI_IN_TEMPA;
+  if( DFI_OUT_PRS   != NULL ) delete DFI_OUT_PRS;
+  if( DFI_OUT_VEL   != NULL ) delete DFI_OUT_VEL;
+  if( DFI_OUT_FVEL  != NULL ) delete DFI_OUT_FVEL;
+  if( DFI_OUT_TEMP  != NULL ) delete DFI_OUT_TEMP;
+  if( DFI_OUT_PRSA  != NULL ) delete DFI_OUT_PRSA;
+  if( DFI_OUT_VELA  != NULL ) delete DFI_OUT_VELA;
+  if( DFI_OUT_TEMPA != NULL ) delete DFI_OUT_TEMPA;
+  if( DFI_OUT_TP    != NULL ) delete DFI_OUT_TP;
+  if( DFI_OUT_VRT   != NULL ) delete DFI_OUT_VRT;
+  if( DFI_OUT_I2VGT != NULL ) delete DFI_OUT_I2VGT;
+  if( DFI_OUT_HLT   != NULL ) delete DFI_OUT_HLT;
+  if( DFI_OUT_DIV   != NULL ) delete DFI_OUT_DIV;
 }
 
 
@@ -300,9 +341,15 @@ void FFV::OutputAveragedVarables(double& flop)
 {
   REAL_TYPE f_min, f_max, min_tmp, max_tmp, vec_min[4], vec_max[4];
   REAL_TYPE minmax[2];
+  REAL_TYPE cio_minmax[8];
+  
+  // エラーコード
+  CIO::E_CIO_ERRORCODE ret;
+  
   
   // 出力ファイルの指定が有次元の場合
   double timeAvr;
+  
   if (C.Unit.File == DIMENSIONAL)
   {
     timeAvr = CurrentTime_Avr * C.Tscale;
@@ -322,8 +369,10 @@ void FFV::OutputAveragedVarables(double& flop)
   // ファイル出力のタイムスタンプに使うステップ数
   unsigned m_step = (unsigned)CurrentStep;
   
+  
   // ファイル出力のタイムスタンプの次元変換
   REAL_TYPE m_time;
+  
   if (C.Unit.File == DIMENSIONAL)
   {
     m_time = (REAL_TYPE)(CurrentTime * C.Tscale);
@@ -333,14 +382,6 @@ void FFV::OutputAveragedVarables(double& flop)
     m_time = (REAL_TYPE)CurrentTime;
   }
   
-  
-  /* 20130611 出力ディレクトリの作成
-   std::string dtmp = DFI.GenerateDirName(C.FIO.OutDirPath, m_step, C.FIO.Slice);
-   if ( !FBUtility::mkdirs(dtmp) ) {
-   Hostonly_ printf("Error : create directory \"%s\"\n", dtmp.c_str());
-   Exit(-1);
-   }
-   */
   
   // 出力インターバル
   int interval = 0;
@@ -366,35 +407,47 @@ void FFV::OutputAveragedVarables(double& flop)
     if ( numProc > 1 )
     {
       min_tmp = f_min;
-      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
       
       max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
     
     minmax[0] = f_min;
     minmax[1] = f_max;
+
     
-    DFI_OUT_PRSA->WriteData(m_step,   // 出力step番号
-                            guide,    // 仮想セル数
-                            &m_time,  // 出力時刻
-                            d_ws,     // フィールドデータポインタ
-                            minmax,   // 最小値と最大値
-                            interval, // 出力間隔
-                            false,    // ?
-                            stepAvr,  // 平均をとったステップ数
-                            timeAvr,  // 平均をとった時刻
-                            false);   // 強制出力指示 trueのとき？
+    if ( !DFI_OUT_PRSA )
+    {
+      printf("[%d] DFI_OUT_PRSA Pointer Error\n", paraMngr->GetMyRankID());
+      Exit(-1);
+    }
+
+    ret = DFI_OUT_PRSA->WriteData(m_step,   // 出力step番号
+                                  m_time,   // 出力時刻
+                                  size,     // d_wsの実ボクセル数
+                                  1,        // 成分数
+                                  guide,    // 仮想セル数
+                                  d_ws,     // フィールドデータポインタ
+                                  minmax,   // 最小値と最大値
+                                  true,     // 強制出力指示（デフォルトtrue：強制出力）
+                                  false,    // 平均出力指示 false:出力あり
+                                  stepAvr,  // 平均をとったステップ数
+                                  timeAvr); // 平均をとった時刻
+
+    if ( ret != CIO::E_CIO_SUCCESS ) Exit(0);
+    
+    
     
     // Velocity
     REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
     
-    if ( DFI_OUT_VELA->DFI_Finfo.ArrayShape == "nijk" )
+    if ( DFI_OUT_VELA->GetArrayShape() == CIO::E_CIO_NIJK ) // Velocityの型は CIO::E_CIO_NIJK
     {
       fb_vout_nijk_(d_wo, d_av, size, &guide, v00, &unit_velocity, &flop); // 配列並びを変換
       fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
     }
-    else // "ijkn"
+    else 
     {
       fb_vout_ijkn_(d_wo, d_av, size, &guide, v00, &unit_velocity, &flop); // 並び変換なし
       fb_minmax_v_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
@@ -404,26 +457,45 @@ void FFV::OutputAveragedVarables(double& flop)
     if ( numProc > 1 )
     {
       REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
-      if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
       
       REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
-      if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
     
-    // ここはminmax[]の大きさをvec_min[4],vec_max[4]に合わせて，DFI_OUT_VELAのインターフェイスを変更
-    minmax[0] = vec_min[0];
-    minmax[1] = vec_max[0];
     
-    DFI_OUT_VELA->WriteData(m_step,
-                            guide,
-                            &m_time,
-                            d_wo,
-                            minmax,
-                            interval,
-                            false,
-                            stepAvr,
-                            timeAvr,
-                            false);
+    if ( !DFI_OUT_VELA )
+    {
+      printf("[%d] DFI_OUT_VELA Pointer Error\n", paraMngr->GetMyRankID());
+      Exit(-1);
+    }
+    
+    cio_minmax[0] = vec_min[1]; ///<<< vec_u min
+    cio_minmax[1] = vec_max[1]; ///<<< vec_u max
+    cio_minmax[2] = vec_min[2]; ///<<< vec_v min
+    cio_minmax[3] = vec_max[2]; ///<<< vec_v max
+    cio_minmax[4] = vec_min[3]; ///<<< vec_w min
+    cio_minmax[5] = vec_max[3]; ///<<< vec_w max
+    cio_minmax[6] = vec_min[0]; ///<<< u,v,wの合成値のmin
+    cio_minmax[7] = vec_max[0]; ///<<< u,v,wの合成値のmax
+    
+    DFI_OUT_VELA->setComponentVariable(0, "u");
+    DFI_OUT_VELA->setComponentVariable(1, "v");
+    DFI_OUT_VELA->setComponentVariable(2, "w");
+
+    ret = DFI_OUT_VELA->WriteData(m_step,
+                                  m_time,
+                                  size,
+                                  3,
+                                  guide,
+                                  d_wo,
+                                  cio_minmax,
+                                  true,
+                                  false,
+                                  stepAvr,
+                                  timeAvr);
+
+    if ( ret != CIO::E_CIO_SUCCESS ) Exit(0);
   }
 
   
@@ -444,25 +516,34 @@ void FFV::OutputAveragedVarables(double& flop)
     if ( numProc > 1 )
     {
       min_tmp = f_min;
-      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
       
       max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
     
     minmax[0] = f_min;
     minmax[1] = f_max;
     
-    DFI_OUT_TEMPA->WriteData(m_step,
-                             guide,
-                             &m_time,
-                             d_ws,
-                             minmax,
-                             interval,
-                             false,
-                             stepAvr,
-                             timeAvr,
-                             false);
+    if ( !DFI_OUT_TEMPA )
+    {
+      printf("[%d] DFI_OUT_TEMPA Pointer Error\n", paraMngr->GetMyRankID());
+      Exit(-1);
+    }
+    
+    ret = DFI_OUT_TEMPA->WriteData(m_step,
+                                   m_time,
+                                   size,
+                                   1,
+                                   guide,
+                                   d_ws,
+                                   minmax,
+                                   true,
+                                   false,
+                                   stepAvr,
+                                   timeAvr);
+
+    if ( ret != CIO::E_CIO_SUCCESS ) Exit(0);
   }
 }
 
@@ -495,22 +576,18 @@ void FFV::OutputBasicVariables(double& flop)
   // ガイドセル出力
   int gc_out = C.GuideOut;
   
-  
-  /* 20130611  出力ディレクトリの作成
-  std::string dtmp = DFI.GenerateDirName(C.FIO.OutDirPath, m_step, C.FIO.Slice);
-  if ( !FBUtility::mkdirs(dtmp) ) {
-    Hostonly_ printf("Error : create directory \"%s\"\n", dtmp.c_str());
-    Exit(-1);
-  }
-   */
 
   // 最大値と最小値
   REAL_TYPE f_min, f_max, min_tmp, max_tmp, vec_min[4], vec_max[4];
   REAL_TYPE minmax[2];
+  REAL_TYPE cio_minmax[8];
   
   // 出力間隔
   int interval = 0;
   interval = C.Interval[Interval_Manager::tg_basic].getIntervalStep();
+  
+  // エラーコード
+  CIO::E_CIO_ERRORCODE ret;
   
   
   // Divergence デバッグ用なので無次元のみ
@@ -533,16 +610,25 @@ void FFV::OutputBasicVariables(double& flop)
     minmax[0] = f_min;
     minmax[1] = f_max;
     
-    DFI_OUT_DIV->WriteData(m_step,
-                           guide,
-                           &m_time,
-                           d_ws,
-                           minmax,
-                           interval,
-                           true,
-                           0,
-                           0.0,
-                           true);
+    if( !DFI_OUT_DIV )
+    {
+      printf("[%d] DFI_OUT_DIV Pointer Error\n", paraMngr->GetMyRankID());
+      Exit(-1);
+    }
+
+    ret = DFI_OUT_DIV->WriteData(m_step,
+                                 m_time,
+                                 size,
+                                 1,
+                                 guide,
+                                 d_ws,
+                                 minmax,
+                                 true,
+                                 true,
+                                 0,
+                                 0.0);
+
+    if( ret != CIO::E_CIO_SUCCESS ) Exit(0);
     
   }
   
@@ -573,26 +659,36 @@ void FFV::OutputBasicVariables(double& flop)
     minmax[0] = f_min;
     minmax[1] = f_max;
     
-    DFI_OUT_PRS->WriteData(m_step,
-                           guide,
-                           &m_time,
-                           d_ws,
-                           minmax,
-                           interval,
-                           true,
-                           0,
-                           0.0,
-                           true);
+    if( !DFI_OUT_PRS )
+    {
+      printf("[%d] DFI_OUT_PRS Pointer Error\n", paraMngr->GetMyRankID());
+      Exit(-1);
+    }
+    
+    ret = DFI_OUT_PRS->WriteData(m_step,
+                                 m_time,
+                                 size,
+                                 1,
+                                 guide,
+                                 d_ws,
+                                 minmax,
+                                 true,
+                                 true,
+                                 0,
+                                 0.0);
+
+    if( ret != CIO::E_CIO_SUCCESS ) Exit(0);
+    
     
     // Velocity
     REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
     
-    if( DFI_OUT_VEL->DFI_Finfo.ArrayShape == "nijk" )
+    if ( DFI_OUT_VEL->GetArrayShape() == CIO::E_CIO_NIJK ) // Velocityの型は CIO::E_CIO_NIJK
     {
       fb_vout_nijk_(d_wo, d_v, size, &guide, v00, &unit_velocity, &flop);
       fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
     }
-    else
+    else 
     {
       fb_vout_ijkn_(d_wo, d_v, size, &guide, v00, &unit_velocity, &flop);
       fb_minmax_v_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
@@ -607,59 +703,87 @@ void FFV::OutputBasicVariables(double& flop)
       if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
     
-    // ここはminmax[]の大きさをvec_min[4],vec_max[4]に合わせて，DFI_OUT_VELのインターフェイスを変更
-    minmax[0] = vec_min[0];
-    minmax[1] = vec_max[0];
+    if ( !DFI_OUT_VEL )
+    {
+      printf("[%d] DFI_OUT_VEL Pointer Error\n", paraMngr->GetMyRankID());
+      Exit(-1);
+    }
     
-    DFI_OUT_VEL->WriteData(m_step,
-                           guide,
-                           &m_time,
-                           d_wo,
-                           minmax,
-                           interval,
-                           true,
-                           0,
-                           0.0,
-                           true);
+    cio_minmax[0] = vec_min[1]; ///<<< vec_u min
+    cio_minmax[1] = vec_max[1]; ///<<< vec_u max
+    cio_minmax[2] = vec_min[2]; ///<<< vec_v min
+    cio_minmax[3] = vec_max[2]; ///<<< vec_v max
+    cio_minmax[4] = vec_min[3]; ///<<< vec_w min
+    cio_minmax[5] = vec_max[3]; ///<<< vec_w max
+    cio_minmax[6] = vec_min[0]; ///<<< u,v,wの合成値のmin
+    cio_minmax[7] = vec_max[0]; ///<<< u,v,wの合成値のmax
+    
+    DFI_OUT_VEL->setComponentVariable(0, "u");
+    DFI_OUT_VEL->setComponentVariable(1, "v");
+    DFI_OUT_VEL->setComponentVariable(2, "w");
+    
+    ret = DFI_OUT_VEL->WriteData(m_step,
+                                 m_time,
+                                 size,
+                                 3,
+                                 guide,
+                                 d_wo,
+                                 cio_minmax,
+                                 true,
+                                 true,
+                                 0,
+                                 0.0);
+
+    if( ret != CIO::E_CIO_SUCCESS ) Exit(0);
+    
     
     // Face Velocity
-    if (C.Mode.FaceV == ON )
+    if ( DFI_OUT_VEL->GetArrayShape() == CIO::E_CIO_NIJK ) // FVelocityの型は CIO::E_CIO_NIJK
     {
-      if ( DFI_OUT_FVEL->DFI_Finfo.ArrayShape == "nijk" )
-      {
-        fb_vout_nijk_(d_wo, d_vf, size, &guide, v00, &unit_velocity, &flop);
-        fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
-      }
-      else
-      {
-        fb_vout_ijkn_(d_wo, d_vf, size, &guide, v00, &unit_velocity, &flop);
-        fb_minmax_v_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
-      }
-      
-      if ( numProc > 1 )
-      {
-        REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
-        if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
-        
-        REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
-        if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
-      }
-      
-      // ここはminmax[]の大きさをvec_min[4],vec_max[4]に合わせて，DFI_OUT_VRTのインターフェイスを変更
-      minmax[0] = vec_min[0];
-      minmax[1] = vec_max[0];
-      
-      DFI_OUT_FVEL->WriteData(m_step,
-                              guide,
-                              &m_time,
-                              d_wo,
-                              minmax,
-                              interval,
-                              true,
-                              0,
-                              0.0,
-                              true);
+      fb_vout_nijk_(d_wo, d_vf, size, &guide, v00, &unit_velocity, &flop);
+      fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
     }
+    else 
+    {
+      fb_vout_ijkn_(d_wo, d_vf, size, &guide, v00, &unit_velocity, &flop);
+      fb_minmax_v_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
+    }
+    
+    if ( numProc > 1 )
+    {
+      REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
+      if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
+      if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    cio_minmax[0] = vec_min[1]; ///<<< vec_u min
+    cio_minmax[1] = vec_max[1]; ///<<< vec_u max
+    cio_minmax[2] = vec_min[2]; ///<<< vec_v min
+    cio_minmax[3] = vec_max[2]; ///<<< vec_v max
+    cio_minmax[4] = vec_min[3]; ///<<< vec_w min
+    cio_minmax[5] = vec_max[3]; ///<<< vec_w max
+    cio_minmax[6] = vec_min[0]; ///<<< u,v,wの合成値のmin
+    cio_minmax[7] = vec_max[0]; ///<<< u,v,wの合成値のmax
+    
+    DFI_OUT_FVEL->setComponentVariable(0, "u");
+    DFI_OUT_FVEL->setComponentVariable(1, "v");
+    DFI_OUT_FVEL->setComponentVariable(2, "w");
+    
+    ret = DFI_OUT_FVEL->WriteData(m_step,
+                                  m_time,
+                                  size,
+                                  3,
+                                  guide,
+                                  d_wo,
+                                  cio_minmax,
+                                  true,
+                                  true,
+                                  0,
+                                  0.0);
+    
+    if ( ret != CIO::E_CIO_SUCCESS ) Exit(0);
   }
   
   
@@ -688,16 +812,25 @@ void FFV::OutputBasicVariables(double& flop)
     minmax[0] = f_min;
     minmax[1] = f_max;
     
-    DFI_OUT_TEMP->WriteData(m_step,
-                            guide,
-                            &m_time,
-                            d_ws,
-                            minmax,
-                            interval,
-                            true,
-                            0,
-                            0.0,
-                            true);
+    if ( !DFI_OUT_TEMP )
+    {
+      printf("[%d] DFI_OUT_TEMP Pointer Error\n", paraMngr->GetMyRankID());
+      Exit(-1);
+    }
+    
+    ret = DFI_OUT_TEMP->WriteData(m_step,
+                                  m_time,
+                                  size,
+                                  1,
+                                  guide,
+                                  d_ws,
+                                  minmax,
+                                  true,
+                                  true,
+                                  0,
+                                  0.0);
+
+    if ( ret != CIO::E_CIO_SUCCESS ) Exit(0);
   }
   
 }
@@ -734,6 +867,11 @@ void FFV::OutputDerivedVariables(double& flop)
   // 最大値と最小値
   REAL_TYPE f_min, f_max, min_tmp, max_tmp, vec_min[4], vec_max[4];
   REAL_TYPE minmax[2];
+  REAL_TYPE cio_minmax[8];
+  
+  
+  // エラーコード
+  CIO::E_CIO_ERRORCODE ret;
   
   
   // 出力間隔
@@ -772,16 +910,25 @@ void FFV::OutputDerivedVariables(double& flop)
     minmax[0] = f_min;
     minmax[1] = f_max;
     
-    DFI_OUT_TP->WriteData(m_step,
-                          guide,
-                          &m_time,
-                          d_ws,
-                          minmax,
-                          interval,
-                          true,
-                          0,
-                          0.0,
-                          true);
+    if ( !DFI_OUT_TP )
+    {
+      printf("[%d] DFI_OUT_TP Pointer Error\n",paraMngr->GetMyRankID());
+      Exit(-1);
+    }
+    
+    ret = DFI_OUT_TP->WriteData(m_step,
+                                m_time,
+                                size,
+                                1,
+                                guide,
+                                d_ws,
+                                minmax,
+                                true,
+                                true,
+                                0,
+                                0.0);
+
+    if ( ret != CIO::E_CIO_SUCCESS ) Exit(0);
   }
   
   
@@ -794,12 +941,12 @@ void FFV::OutputDerivedVariables(double& flop)
     vz[0] = vz[1] = vz[2] = 0.0;
     unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity/C.RefLength : 1.0;
     
-    if ( DFI_OUT_VRT->DFI_Finfo.ArrayShape == "nijk" )
+    if ( DFI_OUT_VRT->GetArrayShape() == CIO::E_CIO_NIJK ) // Vorticityの型は CIO::E_CIO_NIJK
     {
       fb_vout_nijk_(d_wo, d_wv, size, &guide, vz, &unit_velocity, &flop);
       fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
     }
-    else
+    else 
     {
       fb_vout_ijkn_(d_wo, d_wv, size, &guide, vz, &unit_velocity, &flop);
       fb_minmax_v_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
@@ -814,20 +961,34 @@ void FFV::OutputDerivedVariables(double& flop)
       if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
     
-    // ここはminmax[]の大きさをvec_min[4],vec_max[4]に合わせて，DFI_OUT_VRTのインターフェイスを変更
-    minmax[0] = vec_min[0];
-    minmax[1] = vec_max[0];
+    if ( !DFI_OUT_VRT )
+    {
+      printf("[%d] DFI_OUT_VRT Pointer Error\n", paraMngr->GetMyRankID());
+      Exit(-1);
+    }
     
-    DFI_OUT_VRT->WriteData(m_step,
-                           guide,
-                           &m_time,
-                           d_wo,
-                           minmax,
-                           interval,
-                           true,
-                           0,
-                           0.0,
-                           true);
+    cio_minmax[0] = vec_min[1]; ///<<< vec_u min
+    cio_minmax[1] = vec_max[1]; ///<<< vec_u max
+    cio_minmax[2] = vec_min[2]; ///<<< vec_v min
+    cio_minmax[3] = vec_max[2]; ///<<< vec_v max
+    cio_minmax[4] = vec_min[3]; ///<<< vec_w min
+    cio_minmax[5] = vec_max[3]; ///<<< vec_w max
+    cio_minmax[6] = vec_min[0]; ///<<< u,v,wの合成値のmin
+    cio_minmax[7] = vec_max[0]; ///<<< u,v,wの合成値のmax
+
+    ret = DFI_OUT_VRT->WriteData(m_step,
+                                 m_time,
+                                 size,
+                                 3,
+                                 guide,
+                                 d_wo,
+                                 cio_minmax,
+                                 true,
+                                 true,
+                                 0,
+                                 0.0);
+
+    if ( ret != CIO::E_CIO_SUCCESS ) Exit(0);
   }
   
   
@@ -852,16 +1013,25 @@ void FFV::OutputDerivedVariables(double& flop)
     minmax[0] = f_min;
     minmax[1] = f_max;
     
-    DFI_OUT_I2VGT->WriteData(m_step,
-                             guide,
-                             &m_time,
-                             d_ws,
-                             minmax,
-                             interval,
-                             true,
-                             0,
-                             0.0,
-                             true);
+    if ( !DFI_OUT_I2VGT )
+    {
+      printf("[%d] DFI_OUT_I2VGT Pointer Error\n", paraMngr->GetMyRankID());
+      Exit(-1);
+    }
+    
+    ret = DFI_OUT_I2VGT->WriteData(m_step,
+                                   m_time,
+                                   size,
+                                   1,
+                                   guide,
+                                   d_ws,
+                                   minmax,
+                                   true,
+                                   true,
+                                   0,
+                                   0.0);
+
+    if( ret != CIO::E_CIO_SUCCESS ) Exit(0);
   }
   
   
@@ -886,16 +1056,25 @@ void FFV::OutputDerivedVariables(double& flop)
     minmax[0] = f_min;
     minmax[1] = f_max;
     
-    DFI_OUT_HLT->WriteData(m_step,
-                           guide,
-                           &m_time,
-                           d_ws,
-                           minmax,
-                           interval,
-                           true,
-                           0,
-                           0.0,
-                           true);
+    if ( !DFI_OUT_HLT )
+    {
+      printf("[%d] DFI_OUT_HLT Pointer Error\n", paraMngr->GetMyRankID());
+      Exit(-1);
+    }
+    
+    ret = DFI_OUT_HLT->WriteData(m_step,
+                                 m_time,
+                                 size,
+                                 1,
+                                 guide,
+                                 d_ws,
+                                 minmax,
+                                 true,
+                                 true,
+                                 0,
+                                 0.0);
+
+    if( ret != CIO::E_CIO_SUCCESS ) Exit(0);
   }
 }
 

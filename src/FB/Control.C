@@ -910,27 +910,6 @@ void Control::getFieldData()
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
-  
-  
-  // FaceVelocity hidden parameter
-  label="/Output/Data/DerivedVariables/FaceVelocity";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-	  ;
-  }
-  else
-  {
-    if     ( !strcasecmp(str.c_str(), "on") )  Mode.FaceV = ON;
-    else if( !strcasecmp(str.c_str(), "off") ) Mode.FaceV = OFF;
-    else
-    {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-      Exit(0);
-    }
-  }
-
-  
 
   
   
@@ -2216,16 +2195,13 @@ void Control::getStartCondition()
     if ( f_dfi_in_vel.empty() == true ) f_dfi_in_vel = "vel";
     
     
-    if ( Mode.FaceV == ON )
+    label="/StartCondition/Restart/DFIfiles/Fvelocity";
+    
+    if ( tpCntl->getInspectedValue(label, str ) )
     {
-      label="/StartCondition/Restart/DFIfiles/Fvelocity";
-      
-      if ( tpCntl->getInspectedValue(label, str ) )
-      {
-        f_dfi_in_fvel = str.c_str();
-      }
-      if ( f_dfi_in_fvel.empty() == true ) f_dfi_in_fvel = "fvel";
+      f_dfi_in_fvel = str.c_str();
     }
+    if ( f_dfi_in_fvel.empty() == true ) f_dfi_in_fvel = "fvel";
     
     
     if ( isHeatProblem() )
@@ -3848,15 +3824,6 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
   else
   {
     fprintf(fp,"\t     2nd Invariant of VGT     :   OFF\n");
-  }
-  
-  // FaceVelocity
-  if ( Mode.FaceV == ON ) {
-    fprintf(fp,"\t     Face Velocity(Staggered) :   ON\n");
-  }
-  else
-  {
-    fprintf(fp,"\t     Face Velocity(Staggered) :   OFF\n");
   }
   
   

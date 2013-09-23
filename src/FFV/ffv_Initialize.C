@@ -497,7 +497,7 @@ int FFV::Initialize(int argc, char **argv)
   if ( C.Mode.AverageRestart == ON )
   {
     TIMING_start(tm_restart);
-    Restart_avrerage(fp, flop_task);
+    RestartAvrerage(fp, flop_task);
     TIMING_stop(tm_restart);
   }
   
@@ -505,7 +505,7 @@ int FFV::Initialize(int argc, char **argv)
   // リスタートの最大値と最小値の表示
   if ( C.Start != initial_start )
   {
-    Restart_display_minmax(fp, flop_task);
+    RestartDisplayMinmax(fp, flop_task);
   }
 
   
@@ -2435,27 +2435,27 @@ void FFV::initFileOut()
   
   
   // Format
-  cio_DFI::E_CIO_FORMAT format;
+  CIO::E_CIO_FORMAT format;
   
   if ( C.FIO.Format == sph_fmt )
   {
-    format = cio_DFI::E_CIO_FMT_SPH;
+    format = CIO::E_CIO_FMT_SPH;
   }
   else if ( C.FIO.Format == bov_fmt )
   {
-    format = cio_DFI::E_CIO_FMT_BOV;
+    format = CIO::E_CIO_FMT_BOV;
   }
   
   // Datatype
-  cio_DFI::E_CIO_DTYPE datatype;
+  CIO::E_CIO_DTYPE datatype;
   
   if ( sizeof(REAL_TYPE) == 4 )
   {
-    datatype = cio_DFI::E_CIO_FLOAT32;
+    datatype = CIO::E_CIO_FLOAT32;
   }
   else if ( sizeof(REAL_TYPE) == 8 )
   {
-    datatype = cio_DFI::E_CIO_FLOAT64;
+    datatype = CIO::E_CIO_FLOAT64;
   }
   else
   {
@@ -2508,14 +2508,14 @@ void FFV::initFileOut()
 
   
   // タイムスライス出力オプション
-  cio_DFI::E_CIO_ONOFF TimeSliceDir;
+  CIO::E_CIO_ONOFF TimeSliceDir;
   if ( C.FIO.Slice == ON )
   {
-    TimeSliceDir = cio_DFI::E_CIO_ON;
+    TimeSliceDir = CIO::E_CIO_ON;
   }
   else
   {
-    TimeSliceDir = cio_DFI::E_CIO_OFF;
+    TimeSliceDir = CIO::E_CIO_OFF;
   }
   
   
@@ -2524,77 +2524,9 @@ void FFV::initFileOut()
   int comp = 1;
   
   
-  // Divergence for Debug
-  if ( C.FIO.Div_Debug == ON )
-  {
-    dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_div);
-    DFI_OUT_DIV = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                     dfi_name,
-                                     path,
-                                     C.f_DivDebug,
-                                     format,
-                                     gc_out,
-                                     datatype,
-                                     cio_DFI::E_CIO_IJKN,
-                                     comp,
-                                     process,
-                                     size,
-                                     cio_pit,
-                                     cio_org,
-                                     cio_div,
-                                     head,
-                                     cio_tail,
-                                     hostname,
-                                     TimeSliceDir);
-    
-    if ( DFI_OUT_DIV == NULL )
-    {
-      Hostonly_ stamped_printf("\tFails to instance Divergence dfi.\n");
-      Exit(0);
-    }
-  }
-  
-
-  
-  // Pressure
-  dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_prs);
-  DFI_OUT_PRS = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                   dfi_name,
-                                   path,
-                                   C.f_Pressure,
-                                   format,
-                                   gc_out,
-                                   datatype,
-                                   cio_DFI::E_CIO_IJKN,
-                                   comp,
-                                   process,
-                                   size,
-                                   cio_pit,
-                                   cio_org,
-                                   cio_div,
-                                   head,
-                                   cio_tail,
-                                   hostname,
-                                   TimeSliceDir);
-  
-  if ( DFI_OUT_PRS == NULL )
-  {
-    Hostonly_ stamped_printf("\tFails to instance Pressure dfi.\n");
-    Exit(0);
-  }
-  
-  if( C.FIO.Slice == ON )
-  {
-    DFI_OUT_PRS->m_outSlice = true;
-  }
-  else
-  {
-    DFI_OUT_PRS->m_outSlice = false;
-  }
-  
+  // 単位の設定
   
   std::string UnitL;
-  
   switch (C.Unit.Length)
   {
     case LTH_ND:
@@ -2617,8 +2549,6 @@ void FFV::initFileOut()
       break;
   }
   
-  DFI_OUT_PRS->SetUnitLength(true, UnitL, (double)C.RefLength);
-  
   
   std::string UnitV;
   if ( C.Unit.File == DIMENSIONAL )
@@ -2629,8 +2559,6 @@ void FFV::initFileOut()
   {
     UnitV = "NonDimensional";
   }
-  
-  DFI_OUT_PRS->SetUnitVelo(true, UnitV, (double)C.RefVelocity);
   
   
   std::string UnitP;
@@ -2643,23 +2571,94 @@ void FFV::initFileOut()
     UnitP = "NonDimensional";
   }
   
-  double DiffPrs;
-  DiffPrs = (double)C.RefDensity * (double)C.RefVelocity * (double)C.RefVelocity;
-  DFI_OUT_PRS->SetUnitPres(true, UnitP, (double)C.BasePrs, DiffPrs);
+  double DiffPrs = (double)C.RefDensity * (double)C.RefVelocity * (double)C.RefVelocity;
   
-  cio_DFI::MakeDirectory(CIO::cioPath_DirName(dfi_name));
-  std::string processdir = CIO::cioPath_DirName(dfi_name)+"/"+CIO::cioPath_FileName(process,".dfi");
   
-  DFI_OUT_PRS->WriteProcDfiFile(MPI_COMM_WORLD,
-                                processdir,
-                                G_size,
-                                cio_div,
-                                head,
-                                cio_tail,
-                                G_origin,
-                                cio_pit,
-                                hostname,
-                                true);
+  
+  
+  // Divergence for Debug
+  if ( C.FIO.Div_Debug == ON )
+  {
+    dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_div);
+    DFI_OUT_DIV = cio_DFI::WriteInit(MPI_COMM_WORLD,
+                                     dfi_name,
+                                     path,
+                                     C.f_DivDebug,
+                                     format,
+                                     gc_out,
+                                     datatype,
+                                     CIO::E_CIO_IJKN,
+                                     comp,
+                                     process,
+                                     G_size,
+                                     cio_pit,
+                                     cio_org,
+                                     cio_div,
+                                     head,
+                                     cio_tail,
+                                     hostname,
+                                     TimeSliceDir);
+    
+    if ( DFI_OUT_DIV == NULL )
+    {
+      Hostonly_ stamped_printf("\tFails to instance Divergence dfi.\n");
+      Exit(0);
+    }
+    
+    if( C.FIO.Slice == ON )
+    {
+      DFI_OUT_DIV->SetTimeSliceFlag(CIO::E_CIO_ON);
+    }
+    else
+    {
+      DFI_OUT_DIV->SetTimeSliceFlag(CIO::E_CIO_OFF);
+    }
+  }
+  
+  
+  // Pressure
+  dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_prs);
+  DFI_OUT_PRS = cio_DFI::WriteInit(MPI_COMM_WORLD,
+                                   dfi_name,
+                                   path,
+                                   C.f_Pressure,
+                                   format,
+                                   gc_out,
+                                   datatype,
+                                   CIO::E_CIO_IJKN,
+                                   comp,
+                                   process,
+                                   G_size,
+                                   cio_pit,
+                                   cio_org,
+                                   cio_div,
+                                   head,
+                                   cio_tail,
+                                   hostname,
+                                   TimeSliceDir);
+  
+  if ( DFI_OUT_PRS == NULL )
+  {
+    Hostonly_ stamped_printf("\tFails to instance Pressure dfi.\n");
+    Exit(0);
+  }
+  
+  if( C.FIO.Slice == ON )
+  {
+    DFI_OUT_PRS->SetTimeSliceFlag(CIO::E_CIO_ON);
+  }
+  else
+  {
+    DFI_OUT_PRS->SetTimeSliceFlag(CIO::E_CIO_OFF);
+  }
+  
+  
+  DFI_OUT_PRS->AddUnit("Length",   UnitL, "L0", (double)C.RefLength);
+  DFI_OUT_PRS->AddUnit("Velocity", UnitV, "V0", (double)C.RefVelocity);
+  DFI_OUT_PRS->AddUnit("Pressure", UnitP, "P0", (double)C.BasePrs, "DiffPrs", DiffPrs);
+  
+  DFI_OUT_PRS->WriteProcDfiFile(MPI_COMM_WORLD, true, G_origin);
+  
   
   
   // Velocity
@@ -2672,10 +2671,10 @@ void FFV::initFileOut()
                                    format,
                                    gc_out,
                                    datatype,
-                                   cio_DFI::E_CIO_NIJK,
+                                   CIO::E_CIO_NIJK,
                                    comp,
                                    process,
-                                   size,
+                                   G_size,
                                    cio_pit,
                                    cio_org,
                                    cio_div,
@@ -2689,63 +2688,64 @@ void FFV::initFileOut()
     Hostonly_ stamped_printf("\tFails to instance Velocity dfi.\n");
     Exit(0);
   }
+  
   if ( C.FIO.Slice == ON )
   {
-    DFI_OUT_VEL->m_outSlice = true;
+    DFI_OUT_VEL->SetTimeSliceFlag(CIO::E_CIO_ON);
   }
   else
   {
-    DFI_OUT_VEL->m_outSlice = false;
+    DFI_OUT_VEL->SetTimeSliceFlag(CIO::E_CIO_OFF);
   }
   
-  DFI_OUT_VEL->SetUnitLength(true, UnitL, (double)C.RefLength);
-  DFI_OUT_VEL->SetUnitVelo(  true, UnitV, (double)C.RefVelocity);
-  DFI_OUT_VEL->SetUnitPres(  true, UnitP, (double)C.BasePrs, DiffPrs);
+  DFI_OUT_VEL->AddUnit("Length"  , UnitL, "L0", (double)C.RefLength);
+  DFI_OUT_VEL->AddUnit("Velocity", UnitV, "V0", (double)C.RefVelocity);
+  DFI_OUT_VEL->AddUnit("Pressure", UnitP, "P0", (double)C.BasePrs, "DiffPrs", DiffPrs);
+  
   
   
   // Fvelocity
-  if (C.Mode.FaceV == ON )
+  dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_fvel);
+  comp = 3;
+  DFI_OUT_FVEL = cio_DFI::WriteInit(MPI_COMM_WORLD,
+                                    dfi_name,
+                                    path,
+                                    C.f_Fvelocity,
+                                    format,
+                                    gc_out,
+                                    datatype,
+                                    CIO::E_CIO_NIJK,
+                                    comp,
+                                    process,
+                                    G_size,
+                                    cio_pit,
+                                    cio_org,
+                                    cio_div,
+                                    head,
+                                    cio_tail,
+                                    hostname,
+                                    TimeSliceDir);
+  
+  if ( DFI_OUT_FVEL == NULL )
   {
-    dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_fvel);
-    comp = 3;
-    DFI_OUT_FVEL = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                      dfi_name,
-                                      path,
-                                      C.f_Fvelocity,
-                                      format,
-                                      gc_out,
-                                      datatype,
-                                      cio_DFI::E_CIO_NIJK,
-                                      comp,
-                                      process,
-                                      size,
-                                      cio_pit,
-                                      cio_org,
-                                      cio_div,
-                                      head,
-                                      cio_tail,
-                                      hostname,
-                                      TimeSliceDir);
-    
-    if( DFI_OUT_FVEL == NULL )
-    {
-      Hostonly_ stamped_printf("\tFails to instance Fvelocity dfi.\n");
-      Exit(0);
-    }
-    if ( C.FIO.Slice == ON )
-    {
-      DFI_OUT_FVEL->m_outSlice = true;
-    }
-    else
-    {
-      DFI_OUT_FVEL->m_outSlice = false;
-    }
-    
-    DFI_OUT_FVEL->SetUnitLength(true, UnitL, (double)C.RefLength);
-    DFI_OUT_FVEL->SetUnitVelo(  true, UnitV, (double)C.RefVelocity);
-    DFI_OUT_FVEL->SetUnitPres(  true, UnitP, (double)C.BasePrs, DiffPrs);
-    
+    Hostonly_ stamped_printf("\tFails to instance Fvelocity dfi.\n");
+    Exit(0);
   }
+  
+  if ( C.FIO.Slice == ON )
+  {
+    DFI_OUT_FVEL->SetTimeSliceFlag(CIO::E_CIO_ON);
+  }
+  else
+  {
+    DFI_OUT_FVEL->SetTimeSliceFlag(CIO::E_CIO_OFF);
+  }
+  
+  DFI_OUT_FVEL->AddUnit("Length"  , UnitL, "L0", (double)C.RefLength);
+  DFI_OUT_FVEL->AddUnit("Velocity", UnitV, "V0", (double)C.RefVelocity);
+  DFI_OUT_FVEL->AddUnit("Pressure", UnitP, "P0", (double)C.BasePrs, "DiffPrs", DiffPrs);
+  
+  
   
   // Temperature
   if ( C.isHeatProblem() )
@@ -2759,10 +2759,10 @@ void FFV::initFileOut()
                                       format,
                                       gc_out,
                                       datatype,
-                                      cio_DFI::E_CIO_IJKN,
+                                      CIO::E_CIO_IJKN,
                                       comp,
                                       process,
-                                      size,
+                                      G_size,
                                       cio_pit,
                                       cio_org,
                                       cio_div,
@@ -2770,28 +2770,33 @@ void FFV::initFileOut()
                                       cio_tail,
                                       hostname,
                                       TimeSliceDir);
-    if( DFI_OUT_TEMP == NULL )
+    
+    if ( DFI_OUT_TEMP == NULL )
     {
       Hostonly_ stamped_printf("\tFails to instance Temperature dfi.\n");
       Exit(0);
     }
+    
     if ( C.FIO.Slice == ON )
     {
-      DFI_OUT_TEMP->m_outSlice = true;
+      DFI_OUT_TEMP->SetTimeSliceFlag(CIO::E_CIO_ON);
     }
     else
     {
-      DFI_OUT_TEMP->m_outSlice = false;
+      DFI_OUT_TEMP->SetTimeSliceFlag(CIO::E_CIO_OFF);
     }
     
-    DFI_OUT_TEMP->SetUnitLength(true, UnitL, (double)C.RefLength);
-    DFI_OUT_TEMP->SetUnitVelo(  true, UnitV, (double)C.RefVelocity);
-    DFI_OUT_TEMP->SetUnitPres(  true, UnitP, (double)C.BasePrs, DiffPrs);
+    DFI_OUT_TEMP->AddUnit("Length"  , UnitL, "L0", (double)C.RefLength);
+    DFI_OUT_TEMP->AddUnit("Velocity", UnitV, "V0", (double)C.RefVelocity);
+    DFI_OUT_TEMP->AddUnit("Pressure", UnitP, "P0", (double)C.BasePrs, "DiffPrs", DiffPrs);
     
   }
   
+  
+  
   // 平均値
-  if ( C.Mode.Average == ON ) {
+  if ( C.Mode.Average == ON )
+  {
     
     // Pressure
     dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_prsa);
@@ -2803,10 +2808,10 @@ void FFV::initFileOut()
                                       format,
                                       gc_out,
                                       datatype,
-                                      cio_DFI::E_CIO_IJKN,
+                                      CIO::E_CIO_IJKN,
                                       comp,
                                       process,
-                                      size,
+                                      G_size,
                                       cio_pit,
                                       cio_org,
                                       cio_div,
@@ -2814,23 +2819,27 @@ void FFV::initFileOut()
                                       cio_tail,
                                       hostname,
                                       TimeSliceDir);
-    if( DFI_OUT_PRSA == NULL )
+    
+    if ( DFI_OUT_PRSA == NULL )
     {
       Hostonly_ stamped_printf("\tFails to instance AvrPressure dfi.\n");
       Exit(0);
     }
-    if( C.FIO.Slice == ON )
+    
+    if ( C.FIO.Slice == ON )
     {
-      DFI_OUT_PRSA->m_outSlice = true;
+      DFI_OUT_PRSA->SetTimeSliceFlag(CIO::E_CIO_ON);
     }
     else
     {
-      DFI_OUT_PRSA->m_outSlice = false;
+      DFI_OUT_PRSA->SetTimeSliceFlag(CIO::E_CIO_OFF);
     }
     
-    DFI_OUT_PRSA->SetUnitLength(true, UnitL, (double)C.RefLength);
-    DFI_OUT_PRSA->SetUnitVelo(  true, UnitV, (double)C.RefVelocity);
-    DFI_OUT_PRSA->SetUnitPres(  true, UnitP, (double)C.BasePrs, DiffPrs);
+    DFI_OUT_PRSA->AddUnit("Length"  , UnitL, "L0", (double)C.RefLength);
+    DFI_OUT_PRSA->AddUnit("Velocity", UnitV, "V0", (double)C.RefVelocity);
+    DFI_OUT_PRSA->AddUnit("Pressure", UnitP, "P0", (double)C.BasePrs, "DiffPrs", DiffPrs);
+    
+    
     
     // Velocity
     dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_vela);
@@ -2842,10 +2851,10 @@ void FFV::initFileOut()
                                       format,
                                       gc_out,
                                       datatype,
-                                      cio_DFI::E_CIO_NIJK,
+                                      CIO::E_CIO_NIJK,
                                       comp,
                                       process,
-                                      size,
+                                      G_size,
                                       cio_pit,
                                       cio_org,
                                       cio_div,
@@ -2853,23 +2862,27 @@ void FFV::initFileOut()
                                       cio_tail,
                                       hostname,
                                       TimeSliceDir);
-    if( DFI_OUT_VELA == NULL )
+    
+    if ( DFI_OUT_VELA == NULL )
     {
       Hostonly_ stamped_printf("\tcan not instance AvrVelocity dfi\n");
       Exit(0);
     }
-    if( C.FIO.Slice == ON )
+    
+    if ( C.FIO.Slice == ON )
     {
-      DFI_OUT_VELA->m_outSlice = true;
+      DFI_OUT_VELA->SetTimeSliceFlag(CIO::E_CIO_ON);
     }
     else
     {
-      DFI_OUT_VELA->m_outSlice = false;
+      DFI_OUT_VELA->SetTimeSliceFlag(CIO::E_CIO_OFF);
     }
     
-    DFI_OUT_VELA->SetUnitLength(true, UnitL, (double)C.RefLength);
-    DFI_OUT_VELA->SetUnitVelo(  true, UnitV, (double)C.RefVelocity);
-    DFI_OUT_VELA->SetUnitPres(  true, UnitP, (double)C.BasePrs, DiffPrs);
+    DFI_OUT_VELA->AddUnit("Length"  , UnitL, "L0", (double)C.RefLength);
+    DFI_OUT_VELA->AddUnit("Velocity", UnitV, "V0", (double)C.RefVelocity);
+    DFI_OUT_VELA->AddUnit("Pressure", UnitP, "P0", (double)C.BasePrs, "DiffPrs", DiffPrs);
+    
+    
     
     // Temperature
     if ( C.isHeatProblem() )
@@ -2883,10 +2896,10 @@ void FFV::initFileOut()
                                          format,
                                          gc_out,
                                          datatype,
-                                         cio_DFI::E_CIO_IJKN,
+                                         CIO::E_CIO_IJKN,
                                          comp,
                                          process,
-                                         size,
+                                         G_size,
                                          cio_pit,
                                          cio_org,
                                          cio_div,
@@ -2894,26 +2907,31 @@ void FFV::initFileOut()
                                          cio_tail,
                                          hostname,
                                          TimeSliceDir);
-      if( DFI_OUT_TEMPA == NULL )
+      
+      if ( DFI_OUT_TEMPA == NULL )
       {
         Hostonly_ stamped_printf("\tFails to instance AvrTemperature dfi.\n");
         Exit(0);
       }
+      
       if ( C.FIO.Slice == ON )
       {
-        DFI_OUT_TEMPA->m_outSlice = true;
+        DFI_OUT_TEMPA->SetTimeSliceFlag(CIO::E_CIO_ON);
       }
       else
       {
-        DFI_OUT_TEMPA->m_outSlice = false;
+        DFI_OUT_TEMPA->SetTimeSliceFlag(CIO::E_CIO_OFF);
       }
       
-      DFI_OUT_TEMPA->SetUnitLength(true, UnitL, (double)C.RefLength);
-      DFI_OUT_TEMPA->SetUnitVelo(  true, UnitV, (double)C.RefVelocity);
-      DFI_OUT_TEMPA->SetUnitPres(  true, UnitP, (double)C.BasePrs, DiffPrs);
+      DFI_OUT_TEMPA->AddUnit("Length"  , UnitL, "L0", (double)C.RefLength);
+      DFI_OUT_TEMPA->AddUnit("Velocity", UnitV, "V0", (double)C.RefVelocity);
+      DFI_OUT_TEMPA->AddUnit("Pressure", UnitP, "P0", (double)C.BasePrs, "DiffPrs", DiffPrs);
     }
   }
   
+  
+  
+  // Derived Variables
   
   // Total Pressure
   if (C.Mode.TP == ON )
@@ -2927,10 +2945,10 @@ void FFV::initFileOut()
                                     format,
                                     gc_out,
                                     datatype,
-                                    cio_DFI::E_CIO_IJKN,
+                                    CIO::E_CIO_IJKN,
                                     comp,
                                     process,
-                                    size,
+                                    G_size,
                                     cio_pit,
                                     cio_org,
                                     cio_div,
@@ -2938,24 +2956,28 @@ void FFV::initFileOut()
                                     cio_tail,
                                     hostname,
                                     TimeSliceDir);
-    if( DFI_OUT_TP == NULL )
+    
+    if ( DFI_OUT_TP == NULL )
     {
       Hostonly_ stamped_printf("\tFails to instance TotalPressure dfi.\n");
       Exit(0);
     }
+    
     if ( C.FIO.Slice == ON )
     {
-      DFI_OUT_TP->m_outSlice = true;
+      DFI_OUT_TP->SetTimeSliceFlag(CIO::E_CIO_ON);
     }
     else
     {
-      DFI_OUT_TP->m_outSlice = false;
+      DFI_OUT_TP->SetTimeSliceFlag(CIO::E_CIO_OFF);
     }
     
-    DFI_OUT_TP->SetUnitLength(true, UnitL, (double)C.RefLength);
-    DFI_OUT_TP->SetUnitVelo(  true, UnitV, (double)C.RefVelocity);
-    DFI_OUT_TP->SetUnitPres(  true, UnitP, (double)C.BasePrs, DiffPrs);
+    DFI_OUT_TP->AddUnit("Length"  , UnitL, "L0", (double)C.RefLength);
+    DFI_OUT_TP->AddUnit("Velocity", UnitV, "V0", (double)C.RefVelocity);
+    DFI_OUT_TP->AddUnit("Pressure", UnitP, "P0", (double)C.BasePrs, "DiffPrs", DiffPrs);
   }
+  
+  
   
   // Vorticity
   if (C.Mode.VRT == ON )
@@ -2969,10 +2991,10 @@ void FFV::initFileOut()
                                      format,
                                      gc_out,
                                      datatype,
-                                     cio_DFI::E_CIO_NIJK,
+                                     CIO::E_CIO_NIJK,
                                      comp,
                                      process,
-                                     size,
+                                     G_size,
                                      cio_pit,
                                      cio_org,
                                      cio_div,
@@ -2987,20 +3009,22 @@ void FFV::initFileOut()
     }
     if( C.FIO.Slice == ON )
     {
-      DFI_OUT_VRT->m_outSlice = true;
+      DFI_OUT_VRT->SetTimeSliceFlag(CIO::E_CIO_ON);
     }
     else
     {
-      DFI_OUT_VRT->m_outSlice = false;
+      DFI_OUT_VRT->SetTimeSliceFlag(CIO::E_CIO_OFF);
     }
     
-    DFI_OUT_VRT->SetUnitLength(true, UnitL, (double)C.RefLength);
-    DFI_OUT_VRT->SetUnitVelo(  true, UnitV, (double)C.RefVelocity);
-    DFI_OUT_VRT->SetUnitPres(  true, UnitP, (double)C.BasePrs, DiffPrs);
+    DFI_OUT_VRT->AddUnit("Length"  , UnitL, "L0", (double)C.RefLength);
+    DFI_OUT_VRT->AddUnit("Velocity", UnitV, "V0", (double)C.RefVelocity);
+    DFI_OUT_VRT->AddUnit("Pressure", UnitP, "P0", (double)C.BasePrs, "DiffPrs", DiffPrs);
   }
   
+  
+  
   // 2nd Invariant of VGT
-  if (C.Mode.I2VGT == ON )
+  if ( C.Mode.I2VGT == ON )
   {
     dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_i2vgt);
     comp = 1;
@@ -3011,10 +3035,10 @@ void FFV::initFileOut()
                                        format,
                                        gc_out,
                                        datatype,
-                                       cio_DFI::E_CIO_IJKN,
+                                       CIO::E_CIO_IJKN,
                                        comp,
                                        process,
-                                       size,
+                                       G_size,
                                        cio_pit,
                                        cio_org,
                                        cio_div,
@@ -3022,27 +3046,31 @@ void FFV::initFileOut()
                                        cio_tail,
                                        hostname,
                                        TimeSliceDir);
-    if( DFI_OUT_I2VGT == NULL )
+    
+    if ( DFI_OUT_I2VGT == NULL )
     {
       Hostonly_ stamped_printf("\tFails to instance 2nd Invariant of VGT dfi.\n");
       Exit(0);
     }
+    
     if ( C.FIO.Slice == ON )
     {
-      DFI_OUT_I2VGT->m_outSlice = true;
+      DFI_OUT_I2VGT->SetTimeSliceFlag(CIO::E_CIO_ON);
     }
     else
     {
-      DFI_OUT_I2VGT->m_outSlice = false;
+      DFI_OUT_I2VGT->SetTimeSliceFlag(CIO::E_CIO_OFF);
     }
     
-    DFI_OUT_I2VGT->SetUnitLength(true, UnitL, (double)C.RefLength);
-    DFI_OUT_I2VGT->SetUnitVelo(  true, UnitV, (double)C.RefVelocity);
-    DFI_OUT_I2VGT->SetUnitPres(  true, UnitP, (double)C.BasePrs, DiffPrs);
+    DFI_OUT_I2VGT->AddUnit("Length"  , UnitL, "L0", (double)C.RefLength);
+    DFI_OUT_I2VGT->AddUnit("Velocity", UnitV, "V0", (double)C.RefVelocity);
+    DFI_OUT_I2VGT->AddUnit("Pressure", UnitP, "P0", (double)C.BasePrs, "DiffPrs", DiffPrs);
   }
   
+  
+  
   // Helicity
-  if (C.Mode.Helicity == ON )
+  if ( C.Mode.Helicity == ON )
   {
     dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_hlt);
     comp = 1;
@@ -3053,10 +3081,10 @@ void FFV::initFileOut()
                                      format,
                                      gc_out,
                                      datatype,
-                                     cio_DFI::E_CIO_IJKN,
+                                     CIO::E_CIO_IJKN,
                                      comp,
                                      process,
-                                     size,
+                                     G_size,
                                      cio_pit,
                                      cio_org,
                                      cio_div,
@@ -3064,23 +3092,25 @@ void FFV::initFileOut()
                                      cio_tail,
                                      hostname,
                                      TimeSliceDir);
-    if( DFI_OUT_HLT == NULL )
+    
+    if ( DFI_OUT_HLT == NULL )
     {
       Hostonly_ stamped_printf("\tFails to instance Helicity dfi.\n");
       Exit(0);
     }
+    
     if ( C.FIO.Slice == ON )
     {
-      DFI_OUT_HLT->m_outSlice = true;
+      DFI_OUT_HLT->SetTimeSliceFlag(CIO::E_CIO_ON);
     }
     else
     {
-      DFI_OUT_HLT->m_outSlice = false;
+      DFI_OUT_HLT->SetTimeSliceFlag(CIO::E_CIO_OFF);
     }
     
-    DFI_OUT_HLT->SetUnitLength(true, UnitL, (double)C.RefLength);
-    DFI_OUT_HLT->SetUnitVelo(  true, UnitV, (double)C.RefVelocity);
-    DFI_OUT_HLT->SetUnitPres(  true, UnitP, (double)C.BasePrs, DiffPrs);
+    DFI_OUT_HLT->AddUnit("Length",   UnitL, "L0", (double)C.RefLength);
+    DFI_OUT_HLT->AddUnit("Velocity", UnitV, "V0", (double)C.RefVelocity);
+    DFI_OUT_HLT->AddUnit("Pressure", UnitP, "P0", (double)C.BasePrs, "DiffPrs", DiffPrs);
   }
   
 }

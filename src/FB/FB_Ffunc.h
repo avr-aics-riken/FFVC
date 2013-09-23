@@ -229,6 +229,11 @@ extern "C" {
                            REAL_TYPE* time_avr);
   
   // for CIOlib debugging
+  void s3dwrite_          (int* ID,
+                           REAL_TYPE* v,
+                           int* sz,
+                           int* g);
+  
   void v3dwrite_          (int* ID,
                            REAL_TYPE* v,
                            int* sz,

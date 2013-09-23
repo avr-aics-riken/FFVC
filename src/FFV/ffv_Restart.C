@@ -81,8 +81,154 @@ void FFV::Restart(FILE* fp)
   }
   
   flop_task = 0.0;
-  Restart_instantaneous(fp, flop_task);
+  RestartInstantaneous(fp, flop_task);
   
+}
+
+
+// #################################################################
+/**
+ * @brief リスタート時の平均値ファイル読み込み
+ * @param [in]  fp   ファイルポインタ
+ * @param [out] flop 浮動小数点演算数
+ */
+void FFV::RestartAvrerage (FILE* fp, double& flop)
+{
+  std::string fname;
+  std::string fmt(C.file_fmt_ext);
+  
+  unsigned step = Session_StartStep;
+  double   time = Session_StartTime;
+  
+  
+  // ガイド出力
+  int gs = C.GuideOut;
+  
+  if ( C.Interval[Interval_Manager::tg_average].isStep() )
+  {
+    if ( step >= C.Interval[Interval_Manager::tg_average].getStartStep() )
+    {
+      Hostonly_ printf     ("\tRestart from Previous Calculation Results of averaged field\n");
+      Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of averaged field\n");
+      Hostonly_ printf     ("\tStep : base=%u current=%u\n", step, CurrentStep);
+      Hostonly_ fprintf(fp, "\tStep : base=%u current=%u\n", step, CurrentStep);
+    }
+    else
+    {
+      return;
+    }
+  }
+  else
+  {
+    if ( time >= C.Interval[Interval_Manager::tg_average].getStartTime() )
+    {
+      Hostonly_ printf     ("\tRestart from Previous Calculation Results of averaged field\n");
+      Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of averaged field\n");
+      Hostonly_ printf     ("\tTime : base=%e[sec.]/%e[-] current=%e[-]\n", time*C.Tscale, time, CurrentTime);
+      Hostonly_ fprintf(fp, "\tTime : base=%e[sec.]/%e[-] current=%e[-]\n", time*C.Tscale, time, CurrentTime);
+    }
+    else
+    {
+      return;
+    }
+  }
+  
+  unsigned step_avr = 0;
+  double time_avr = 0.0;
+  
+  
+  // Pressure
+  REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
+  
+  
+  // 分割数
+  const int* m_div = paraMngr->GetDivNum();
+  
+  //自身の領域終点インデックス
+  int tail[3];
+  for (int i=0; i<3; i++) tail[i] = head[i]+size[i]-1;
+  
+  double r_time;
+  if ( DFI_IN_PRSA->ReadData(d_ap,
+                             C.Restart_step,
+                             guide,
+                             G_size,
+                             (int *)m_div,
+                             head,
+                             tail,
+                             r_time,
+                             false,
+                             step_avr,
+                             time_avr) != CIO::E_CIO_SUCCESS ) Exit(0);
+  
+  if( d_ap == NULL ) Exit(0);
+  
+  if ( (step != Session_StartStep) || (time != Session_StartTime) )
+  {
+    Hostonly_ printf     ("\n\tTime stamp is different between instantaneous and averaged files\n");
+    Hostonly_ fprintf(fp, "\n\tTime stamp is different between instantaneous and averaged files\n");
+    Exit(0);
+  }
+  
+  CurrentStep_Avr = step_avr;
+  CurrentTime_Avr = time_avr;
+  
+  if ( DFI_IN_VELA->ReadData(d_wo,
+                             C.Restart_step,
+                             guide,
+                             G_size,
+                             (int *)m_div,
+                             head,
+                             tail,
+                             r_time,
+                             false,
+                             step_avr,
+                             time_avr) != CIO::E_CIO_SUCCESS ) Exit(0);
+  
+  if( d_wo == NULL ) Exit(0);
+  
+  REAL_TYPE refv = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
+  REAL_TYPE scale = (REAL_TYPE)step_avr;
+  REAL_TYPE u0[4];
+  u0[0] = v00[0];
+  u0[1] = v00[1];
+  u0[2] = v00[2];
+  u0[3] = v00[3];
+  
+  fb_vin_nijk_(d_av, size, &guide, d_wo, u0, &refv, &flop);
+  
+  if ( (step_avr != CurrentStep_Avr) || (time_avr != CurrentTime_Avr) ) // 圧力とちがう場合
+  {
+    Hostonly_ printf     ("\n\tTime stamp is different between files\n");
+    Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
+    Exit(0);
+  }
+  
+  
+  // Temperature
+  if ( C.isHeatProblem() )
+  {
+    if ( DFI_IN_TEMPA->ReadData(d_ae,
+                                C.Restart_step,
+                                guide,
+                                G_size,
+                                (int *)m_div,
+                                head,
+                                tail,
+                                r_time,
+                                false,
+                                step_avr,
+                                time_avr) != CIO::E_CIO_SUCCESS ) Exit(0);
+    
+    if ( d_ae == NULL ) Exit(0);
+    
+    if ( (step_avr != CurrentStep_Avr) || (time_avr != CurrentTime_Avr) )
+    {
+      Hostonly_ printf     ("\n\tTime stamp is different between files\n");
+      Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
+      Exit(0);
+    }
+  }
 }
 
 
@@ -93,7 +239,7 @@ void FFV::Restart(FILE* fp)
  * @param [in]  fp   ファイルポインタ
  * @param [out] flop 浮動小数点演算数
  */
-void FFV::Restart_display_minmax(FILE* fp, double& flop)
+void FFV::RestartDisplayMinmax(FILE* fp, double& flop)
 {
   Hostonly_ fprintf(stdout, "\n\tNon-dimensional value\n");
   Hostonly_ fprintf(fp, "\n\tNon-dimensional value\n");
@@ -159,17 +305,16 @@ void FFV::Restart_display_minmax(FILE* fp, double& flop)
  * @param [in]  fp   ファイルポインタ
  * @param [out] flop 浮動小数点演算数
  */
-void FFV::Restart_instantaneous(FILE* fp, double& flop)
+void FFV::RestartInstantaneous(FILE* fp, double& flop)
 {
-  double time;
-  unsigned step;
+  double time, r_time;
+  const unsigned step = C.Restart_step;
   std::string fname;
   std::string fmt(C.file_fmt_ext);
 
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   REAL_TYPE refD = C.RefDensity;
   REAL_TYPE refV = C.RefVelocity;
-  int Dmode = C.Unit.File;
   
   // ガイド出力
   int gs = C.GuideOut;
@@ -185,21 +330,35 @@ void FFV::Restart_instantaneous(FILE* fp, double& flop)
   int tail[3];
   for (int i=0;i<3;i++) tail[i]=head[i]+size[i]-1;
   
-  double r_time;
-  DFI_IN_PRS->ReadData(C.Restart_step,
-                       guide,
-                       G_size,
-                       (int *)m_div,
-                       head,
-                       tail,
-                       d_p,
-                       r_time,
-                       true,
-                       i_dummy,
-                       f_dummy);
+  
+  // Pressure
+  if ( DFI_IN_PRS->ReadData(d_p,
+                            step,
+                            guide,
+                            G_size,
+                            (int *)m_div,
+                            head,
+                            tail,
+                            r_time,
+                            true,
+                            i_dummy,
+                            f_dummy) != CIO::E_CIO_SUCCESS ) Exit(0);
+  
   if ( d_p == NULL ) Exit(0);
   time = r_time;
-  step = (unsigned)C.Restart_step;
+  
+  // 有次元の場合，無次元に変換する
+  if ( C.Unit.File == DIMENSIONAL )
+  {
+    REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
+    U.convArrayPrsD2ND(d_p, size, guide, bp, C.RefDensity, C.RefVelocity, flop);
+  }
+  
+  Hostonly_ printf     ("\tPressure has read :\tstep=%d  time=%e [%s]\n",
+                        step, time, (C.Unit.File == DIMENSIONAL)?"sec.":"-");
+  Hostonly_ fprintf(fp, "\tPressure has read :\tstep=%d  time=%e [%s]\n",
+                    step, time, (C.Unit.File == DIMENSIONAL)?"sec.":"-");
+
   
   // ここでタイムスタンプを得る
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
@@ -209,219 +368,94 @@ void FFV::Restart_instantaneous(FILE* fp, double& flop)
   // v00[]に値をセット
   copyV00fromRF(Session_StartTime);
   
-  DFI_IN_VEL->ReadData(C.Restart_step,
-                       guide,
-                       G_size,
-                       (int *)m_div,
-                       head,
-                       tail,
-                       d_wo,
-                       r_time,
-                       true,
-                       i_dummy,
-                       f_dummy);
+  
+  
+  if ( DFI_IN_VEL->ReadData(d_wo,
+                            step,
+                            guide,
+                            G_size,
+                            (int *)m_div,
+                            head,
+                            tail,
+                            r_time,
+                            true,
+                            i_dummy,
+                            f_dummy) != CIO::E_CIO_SUCCESS ) Exit(0);
+  
   if( d_wo == NULL ) Exit(0);
   
-  REAL_TYPE refv = (Dmode == DIMENSIONAL) ? refV : 1.0;
+  REAL_TYPE refv = (C.Unit.File == DIMENSIONAL) ? refV : 1.0;
   REAL_TYPE u0[4];
   u0[0] = v00[0];
   u0[1] = v00[1];
   u0[2] = v00[2];
   u0[3] = v00[3];
   
-  fb_vin_nijk_(d_v, size, &guide, d_wo, u0, &refv, &flop);
+  Hostonly_ printf     ("\tVelocity has read :\tstep=%d  time=%e [%s]\n",
+                        step, time, (C.Unit.File == DIMENSIONAL)?"sec.":"-");
+  Hostonly_ fprintf(fp, "\tVelocity has read :\tstep=%d  time=%e [%s]\n",
+                    step, time, (C.Unit.File == DIMENSIONAL)?"sec.":"-");
   
   time = r_time;
-  step = (unsigned)C.Restart_step;
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   
-  if ( (step != Session_StartStep) || (time != Session_StartTime) )
+  if ( time != Session_StartTime )
   {
     Hostonly_ printf     ("\n\tTime stamp is different between files\n");
     Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
     Exit(0);
   }
+  
+  // indexの変換と無次元化
+  fb_vin_nijk_(d_v, size, &guide, d_wo, u0, &refv, &flop);
+  
 
+  
+  if ( !C.isHeatProblem() ) return;
+  
   
   
   // Instantaneous Temperature fields
-  if ( C.isHeatProblem() )
-  {
-    DFI_IN_TEMP->ReadData(C.Restart_step,
-                          guide,
-                          G_size,
-                          (int *)m_div,
-                          head,
-                          tail,
-                          d_ie,
-                          r_time,
-                          true,
-                          i_dummy,
-                          f_dummy);
-    if( d_ie == NULL ) Exit(0);
-    
-    time = r_time;
-    step = (unsigned)C.Restart_step;
-    
-    
-    if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
-    
-    if ( (step != Session_StartStep) || (time != Session_StartTime) ) 
-    {
-      Hostonly_ printf     ("\n\tTime stamp is different between files\n");
-      Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
-      Exit(0);
-    }
-  }
+  if ( DFI_IN_TEMP->ReadData(d_ws,
+                             C.Restart_step,
+                             guide,
+                             G_size,
+                             (int *)m_div,
+                             head,
+                             tail,
+                             r_time,
+                             true,
+                             i_dummy,
+                             f_dummy) != CIO::E_CIO_SUCCESS ) Exit(0);
   
-}
-
-
-
-// #################################################################
-/**
- * @brief リスタート時の平均値ファイル読み込み
- * @param [in]  fp   ファイルポインタ
- * @param [out] flop 浮動小数点演算数
- */
-void FFV::Restart_avrerage (FILE* fp, double& flop)
-{
-  std::string fname;
-  std::string fmt(C.file_fmt_ext);
+  if( d_ws == NULL ) Exit(0);
   
-  unsigned step = Session_StartStep;
-  double   time = Session_StartTime;
-
+  time = r_time;
   
-  // ガイド出力
-  int gs = C.GuideOut;
+  if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   
-  if ( C.Interval[Interval_Manager::tg_average].isStep() )
-  {
-    if ( step >= C.Interval[Interval_Manager::tg_average].getStartStep() )
-    {
-      Hostonly_ printf     ("\tRestart from Previous Calculation Results of averaged field\n");
-      Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of averaged field\n");
-      Hostonly_ printf     ("\tStep : base=%u current=%u\n", step, CurrentStep);
-      Hostonly_ fprintf(fp, "\tStep : base=%u current=%u\n", step, CurrentStep);
-    }
-    else
-    {
-      return;
-    }
-  }
-  else
-  {
-    if ( time >= C.Interval[Interval_Manager::tg_average].getStartTime() )
-    {
-      Hostonly_ printf     ("\tRestart from Previous Calculation Results of averaged field\n");
-      Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of averaged field\n");
-      Hostonly_ printf     ("\tTime : base=%e[sec.]/%e[-] current=%e[-]\n", time*C.Tscale, time, CurrentTime);
-      Hostonly_ fprintf(fp, "\tTime : base=%e[sec.]/%e[-] current=%e[-]\n", time*C.Tscale, time, CurrentTime);
-    }
-    else
-    {
-      return;
-    }
-  }
+  Hostonly_ printf     ("\tTemperature has read :\tstep=%d  time=%e [%s]\n",
+                        step, time, (C.Unit.File == DIMENSIONAL)?"sec.":"-");
+  Hostonly_ fprintf(fp, "\tTemperature has read :\tstep=%d  time=%e [%s]\n",
+                    step, time, (C.Unit.File == DIMENSIONAL)?"sec.":"-");
   
-  unsigned step_avr = 0;
-  double time_avr = 0.0;
-  
-  
-  // Pressure
-  REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
-  
-  
-  // 分割数
-  const int* m_div = paraMngr->GetDivNum();
-  
-  //自身の領域終点インデックス
-  int tail[3];
-  for (int i=0; i<3; i++) tail[i] = head[i]+size[i]-1;
-  
-  double r_time;
-  DFI_IN_PRSA->ReadData(C.Restart_step,
-                        guide,
-                        G_size,
-                        (int *)m_div,
-                        head,
-                        tail,
-                        d_ap,
-                        r_time,
-                        false,
-                        step_avr,
-                        time_avr);
-  if( d_ap == NULL ) Exit(0);
-  
-  if ( (step != Session_StartStep) || (time != Session_StartTime) )
-  {
-    Hostonly_ printf     ("\n\tTime stamp is different between instantaneous and averaged files\n");
-    Hostonly_ fprintf(fp, "\n\tTime stamp is different between instantaneous and averaged files\n");
-    Exit(0);
-  }
-  
-  CurrentStep_Avr = step_avr;
-  CurrentTime_Avr = time_avr;
-  
-  
-  DFI_IN_VELA->ReadData(C.Restart_step,
-                        guide,
-                        G_size,
-                        (int *)m_div,
-                        head,
-                        tail,
-                        d_wo,
-                        r_time,
-                        false,
-                        step_avr,
-                        time_avr);
-  if( d_wo == NULL ) Exit(0);
-  
-  int Dmode = C.Unit.File;
-
-  REAL_TYPE refv = (Dmode == DIMENSIONAL) ? C.RefVelocity : 1.0;
-  REAL_TYPE scale = (REAL_TYPE)step_avr;
-  REAL_TYPE u0[4];
-  u0[0] = v00[0];
-  u0[1] = v00[1];
-  u0[2] = v00[2];
-  u0[3] = v00[3];
-  
-  fb_vin_nijk_(d_av, size, &guide, d_wo, u0, &refv, &flop);
-  
-  if ( (step_avr != CurrentStep_Avr) || (time_avr != CurrentTime_Avr) ) // 圧力とちがう場合
+  if ( time != Session_StartTime )
   {
     Hostonly_ printf     ("\n\tTime stamp is different between files\n");
     Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
     Exit(0);
   }
   
-  
-  // Temperature
-  if ( C.isHeatProblem() )
+  if (C.Unit.File == DIMENSIONAL)
   {
-    DFI_IN_TEMPA->ReadData(C.Restart_step,
-                           guide,
-                           G_size,
-                           (int *)m_div,
-                           head,
-                           tail,
-                           d_ae,
-                           r_time,
-                           false,
-                           step_avr,
-                           time_avr);
-    if ( d_ae == NULL ) Exit(0);
-    
-    if ( (step_avr != CurrentStep_Avr) || (time_avr != CurrentTime_Avr) )
-    {
-      Hostonly_ printf     ("\n\tTime stamp is different between files\n");
-      Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
-      Exit(0);
-    }
+    U.convArrayTmp2IE(d_ie, size, guide, d_ws, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, true, flop);
   }
+  else
+  {
+    U.convArrayTmp2IE(d_ie, size, guide, d_ws, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, false, flop);
+  }
+  
 }
 
 
@@ -430,37 +464,8 @@ void FFV::Restart_avrerage (FILE* fp, double& flop)
  */
 void FFV::selectRestartMode()
 {
-  
-  // Instantaneous dataの初期化
-  DFI_IN_PRS = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_prs);
-  DFI_IN_VEL = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_vel);
-  if( DFI_IN_PRS == NULL || DFI_IN_VEL == NULL ) Exit(0);
-  
-  if ( C.Mode.FaceV == ON )
-  {
-    DFI_IN_FVEL = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_fvel);
-    if ( DFI_IN_FVEL == NULL ) Exit(0);
-  }
-  
-  if ( C.isHeatProblem() )
-  {
-    DFI_IN_TEMP = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_temp);
-    if( DFI_IN_TEMP == NULL ) Exit(0);
-  }
-  
-  // Averaged dataの初期化
-  if ( C.Mode.Average == ON )
-  {
-    DFI_IN_PRSA = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_prsa);
-    DFI_IN_VELA = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_vela);
-    if ( DFI_IN_PRSA == NULL || DFI_IN_VELA == NULL ) Exit(0);
-    
-    if ( C.isHeatProblem() )
-    {
-      DFI_IN_TEMPA = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_tempa);
-      if ( DFI_IN_TEMPA == NULL ) Exit(0);
-    }
-  }
+  // エラーコード
+  CIO::E_CIO_ERRORCODE cio_error;
   
   
   // 現在のセッションの領域分割数の取得
@@ -472,22 +477,104 @@ void FFV::selectRestartMode()
     for (int i=0; i<3; i++ ) gdiv[i]=p_div[i];
   }
   
+  
+  // Instantaneous dataの初期化
+  
+  // Pressure
+  DFI_IN_PRS = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_prs, G_size, gdiv, cio_error);
+  if ( cio_error != CIO::E_CIO_SUCCESS ) Exit(0);
+  
+  
+  // Velocity
+  DFI_IN_VEL = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_vel, G_size, gdiv, cio_error);
+  if ( cio_error != CIO::E_CIO_SUCCESS ) Exit(0);
+  
+  if ( DFI_IN_PRS == NULL || DFI_IN_VEL == NULL ) Exit(0);
+  
+  
+  // Fvelocity
+  DFI_IN_FVEL = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_fvel, G_size, gdiv, cio_error);
+  if ( cio_error != CIO::E_CIO_SUCCESS ) Exit(0);
+  if ( DFI_IN_FVEL == NULL ) Exit(0);
+  
+  
+  // Temperature
+  if ( C.isHeatProblem() )
+  {
+    DFI_IN_TEMP = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_temp, G_size, gdiv, cio_error);
+    if ( cio_error != CIO::E_CIO_SUCCESS ) Exit(0);
+    if ( DFI_IN_TEMP == NULL ) Exit(0);
+  }
+  
+  
+  ///CIO FileInfoの成分名の取得、成分名が登録されていないときは、空白が戻される
+  /*
+   std::string VCompVariable[3];
+   VCompVariable[0]=DFI_IN_VEL->getComponentVariable(0);
+   VCompVariable[1]=DFI_IN_VEL->getComponentVariable(1);
+   VCompVariable[2]=DFI_IN_VEL->getComponentVariable(2);
+   
+   ///CIO TimeSliceのVectorMinMaxの取得、取得出来たときはCIO::E_CIO_SUCCESS
+   double vec_minmax[2];
+   cio_error = DFI_IN_VEL->getVectorMinMax(C.Restart_step,vec_minmax[0],vec_minmax[1]);
+   
+   ///CIO TimeSlice minmaxの取得、取得出来たときはCIO::E_CIO_SUCCESS
+   double minmax[6];
+   cio_error =  DFI_IN_VEL->getMinMax(C.Restart_step,0,minmax[0],minmax[1]);
+   cio_error =  DFI_IN_VEL->getMinMax(C.Restart_step,1,minmax[2],minmax[3]);
+   cio_error =  DFI_IN_VEL->getMinMax(C.Restart_step,2,minmax[4],minmax[5]);
+   */
+  
+  
+  
+  // Averaged dataの初期化
+  if ( C.Mode.Average == ON )
+  {
+    DFI_IN_PRSA = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_prsa, G_size, gdiv, cio_error);
+    if ( cio_error != CIO::E_CIO_SUCCESS ) Exit(0);
+    
+    DFI_IN_VELA = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_vela, G_size, gdiv, cio_error);
+    if ( cio_error != CIO::E_CIO_SUCCESS ) Exit(0);
+    
+    if ( DFI_IN_PRSA == NULL || DFI_IN_VELA == NULL ) Exit(0);
+    
+    
+    if ( C.isHeatProblem() )
+    {
+      DFI_IN_TEMPA = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_tempa, G_size, gdiv, cio_error);
+      if ( cio_error != CIO::E_CIO_SUCCESS ) Exit(0);
+      if ( DFI_IN_TEMPA == NULL ) Exit(0);
+    }
+  }
+  
+
+  
   bool isSameDiv = true; // 同一分割数
   bool isSameRes = true; // 同一解像度
+  
+  
+  // 前のセッションの領域分割数の取得
+  int* DFI_div = DFI_IN_PRS->GetDFIGlobalDivision();
+  
+  
   
   // 前セッションと領域分割数が異なる場合
   for (int i=0; i<3; i++ )
   {
-    if ( gdiv[i] != DFI_IN_PRS->DFI_Domain.GlobalDivision[i] )
+    if ( gdiv[i] != DFI_div[i] )
     {
       isSameDiv = false;
     }
   }
   
-  // 前セッションとボクセル数が異なる場合
+  // 前のセッションの全要素数の取得
+  int* DFI_G_size = DFI_IN_PRS->GetDFIGlobalVoxel();
+  
+  
+  // 前セッションと全要素数が異なる場合
   for (int i=0; i<3; i++ )
   {
-    if ( G_size[i] != DFI_IN_PRS->DFI_Domain.GlobalVoxel[i] )
+    if ( G_size[i] != DFI_G_size[i] )
     {
       isSameRes = false;
     }
@@ -498,7 +585,7 @@ void FFV::selectRestartMode()
   {
     for(int i=0; i<3; i++)
     {
-      if ( G_size[i] != DFI_IN_PRS->DFI_Domain.GlobalVoxel[i]*2 )
+      if ( G_size[i] != DFI_G_size[i]*2 )
       {
         printf("\tDimension size error (%d %d %d)\n", G_size[0], G_size[1], G_size[2]);
         Exit(0);
@@ -529,21 +616,6 @@ void FFV::selectRestartMode()
     {
       C.Start = restart_diffDiv_refinement;
     }
-  }
-  
-  // 登録
-  int c = C.Start;
-  
-  DFI_IN_PRS->m_start_type = c;
-  DFI_IN_VEL->m_start_type = c;
-  if ( C.Mode.FaceV == ON ) DFI_IN_FVEL->m_start_type = c;
-  if ( C.isHeatProblem() )  DFI_IN_TEMP->m_start_type = c;
-  
-  if ( C.Mode.Average == ON )
-  {
-    DFI_IN_PRSA->m_start_type = c;
-    DFI_IN_VELA->m_start_type = c;
-    if ( C.isHeatProblem() )  DFI_IN_TEMPA->m_start_type = c;
   }
   
 }

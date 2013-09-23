@@ -33,7 +33,6 @@
 #include "DomainInfo.h"
 #include "FB_Define.h"
 #include "FB_Ffunc.h"
-#include "FBUtility.h"
 
 
 #ifndef _WIN32
@@ -65,11 +64,17 @@ public:
   
   
 public:
-  
-  FBUtility U;
 
-  
-  // sphファイルの書き出し（内部領域のみ）
+  /**
+   * @brief sphファイルの書き出し（内部領域のみ）
+   * @param [in] vf               スカラデータ
+   * @param [in] sz               配列サイズ
+   * @param [in] gc               ガイドセル
+   * @param [in] org              基点
+   * @param [in] ddx              ピッチ
+   * @param [in] m_ModePrecision  浮動小数点の精度
+   * @note 標記上，long 対応になっているが，ファイルフォーマットとの対応を確認のこと
+   */
   void writeRawSPH(const REAL_TYPE *vf, 
                    const int* sz, 
                    const int gc, 
@@ -77,63 +82,22 @@ public:
                    const REAL_TYPE* ddx, 
                    const int m_ModePrecision);
   
-  // 圧力のファイルをロードする
-  void readPressure(FILE* fp, 
-                    const string fname, 
-                    int* sz, 
-                    int gc,
-                    REAL_TYPE* s, 
-                    unsigned& step, 
-                    double& time, 
-                    const int Dmode, 
-                    const REAL_TYPE BasePrs, 
-                    const REAL_TYPE RefDensity, 
-                    const REAL_TYPE RefVelocity, 
-                    double& flop, 
-                    const int guide_out,
-                    const bool mode,
-                    unsigned& step_avr,
-                    double& time_avr);
   
-  
-  // 速度のファイルをロードする
-  void readVelocity(FILE* fp, 
-                    const string fname, 
-                    int* sz, 
-                    int gc, 
-                    REAL_TYPE* v,
-                    REAL_TYPE* v_buf,
-                    unsigned& step, 
-                    double& time, 
-                    const REAL_TYPE *v00, 
-                    const int Dmode, 
-                    const REAL_TYPE RefVelocity, 
-                    double& flop, 
-                    const int guide_out,
-                    const bool mode,
-                    unsigned& step_avr,
-                    double& time_avr);
-  
-  
-  // 温度のファイルをロードする
-  void readTemperature(FILE* fp, 
-                       const string fname, 
-                       int* sz, 
-                       int gc, 
-                       REAL_TYPE* t, 
-                       unsigned& step, 
-                       double& time, 
-                       const int Dmode, 
-                       const REAL_TYPE Base_tmp, 
-                       const REAL_TYPE Diff_tmp, 
-                       double& flop, 
-                       const int guide_out,
-                       const bool mode,
-                       unsigned& step_avr,
-                       double& time_avr);
-  
-  
-  // スカラーファイルを出力する
+  /**
+   * @brief スカラーファイルを出力する
+   * @param [in] fname     ファイル名
+   * @param [in] sz        分割数
+   * @param [in] gc        ガイドセル数
+   * @param [in] s         スカラー場
+   * @param [in] step      ステップ
+   * @param [in] time      時刻
+   * @param [in] org       領域の基点
+   * @param [in] pit       セル幅
+   * @param [in] guide_out ガイドセル数
+   * @param [in] mode      平均値出力指示（瞬時値のときtrue，平均値のときfalse）
+   * @param [in] step_avr  平均操作したステップ数
+   * @param [in] time_avr  平均操作した時間
+   */
   void writeScalar(const string fname, 
                    int* sz, 
                    int gc,
@@ -148,7 +112,21 @@ public:
                    const double time_avr=0.0);
   
   
-  // ベクトルファイルを出力する
+  /**
+   * @brief ベクトルファイルを出力する
+   * @param [in] fname     ファイル名
+   * @param [in] sz        分割数
+   * @param [in] gc        ガイドセル数
+   * @param [in] v         ベクトル場
+   * @param [in] step      ステップ
+   * @param [in] time      時刻
+   * @param [in] org       領域の基点
+   * @param [in] pit       セル幅
+   * @param [in] guide_out ガイドセル数
+   * @param [in] mode      平均値出力指示（瞬時値のときtrue，平均値のときfalse）
+   * @param [in] step_avr  平均操作したステップ数
+   * @param [in] time_avr  平均操作した時間
+   */
   void writeVector(const string fname, 
                    int* sz, 
                    int gc, 

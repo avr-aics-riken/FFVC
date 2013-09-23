@@ -88,7 +88,8 @@ public:
                REAL_TYPE coef);
   
   
-  /** 無次元内部エネルギーから有次元/無次元温度への変換
+  /** 
+   * @brief 無次元内部エネルギーから有次元/無次元温度への変換
    * @param [out]    dst      温度
    * @param [in]     size     配列長
    * @param [in]     guide    ガイドセル
@@ -152,7 +153,8 @@ public:
                         double& flop);
   
   
-  /** 有次元/無次元温度から無次元内部エネルギーへの変換
+  /** 
+   * @brief 有次元/無次元温度から無次元内部エネルギーへの変換
    * @param [out]    dst      無次元内部エネルギー
    * @param [in]     size     配列長
    * @param [in]     guide    ガイドセル
