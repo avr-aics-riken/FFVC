@@ -554,7 +554,16 @@ void FFV::selectRestartMode()
   
   
   // 前のセッションの領域分割数の取得
-  int* DFI_div = DFI_IN_PRS->GetDFIGlobalDivision();
+  int* DFI_div=NULL;
+  
+  if ( C.KindOfSolver != SOLID_CONDUCTION )
+  {
+    DFI_div = DFI_IN_PRS->GetDFIGlobalDivision();
+  }
+  else
+  {
+    DFI_div = DFI_IN_TEMP->GetDFIGlobalDivision();
+  }
   
   
   

@@ -1337,7 +1337,7 @@ void Plot3D::function_name_divide()
   
   // 2nd Invariant of Velocity Gradient Tensor
   if (C->Mode.I2VGT == ON ){
-    fname = "i2vgt_" + tmp;
+    fname = "qcr_" + tmp;
     FP3DW->setFileName((dtmp+fname).c_str());
     if(!FP3DW->OpenFile()){
       if (myRank==0) printf("Error : error OpenFile\n");

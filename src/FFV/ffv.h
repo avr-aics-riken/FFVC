@@ -396,6 +396,10 @@ private:
   void displayCompoInfo(const int* cgb, FILE* fp);
   
   
+  // 交点情報の表示（デバッグ）
+  void displayCutInfo(float* cut, int* bid);
+  
+  
   // メモリ使用量の表示
   void displayMemoryInfo(FILE* fp, double G_mem, double L_mem, const char* str);
   

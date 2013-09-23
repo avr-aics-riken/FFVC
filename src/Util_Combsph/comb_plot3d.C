@@ -883,7 +883,7 @@ void COMB::output_plot3d()
       FP3DW.WriteFunctionName("V-Vorticity");
       FP3DW.WriteFunctionName("W-Vorticity");
     }
-    else if( !strcasecmp(comp.c_str(), "i2vgt"  ) )
+    else if( !strcasecmp(comp.c_str(), "qcr"  ) )
     {
       FP3DW.WriteFunctionName("2nd Invariant of Velocity Gradient Tensor");
     }

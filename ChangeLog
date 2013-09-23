@@ -21,6 +21,11 @@ REVISION HISTORY
 --------------------------
 2013-09-23
 
+- r1029 modify obtaining DFI_div
+  - displayCutInfo() 交点情報のデバッグライト
+  - I2VGTのファイル名プリフィクスを i2vgt -> qcr
+  - selectRestartMode()のDFI_divの取得 >> KOS依存の分岐を追加
+
 - r1028 Refactoring of FileIO
   - ベクトルデータのロード修正
   - 温度の読み込み変換

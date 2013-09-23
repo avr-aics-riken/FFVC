@@ -910,6 +910,62 @@ void FFV::displayCompoInfo(const int* cgb, FILE* fp)
   
 }
 
+
+// #################################################################
+/* @brief 交点情報の表示（デバッグ）
+ * @param [in,out] cut カット情報の配列
+ * @param [in]     bid カット情報の配列
+ */
+void FFV::displayCutInfo(float* cut, int* bid)
+{
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+
+  FILE *fp=NULL;
+  
+  if ( !(fp=fopen("cutinfo.txt","w")) )
+  {
+    Hostonly_ printf("\tSorry, can't open 'cutinfo.txt', write failed.\n");
+    Exit(0);
+  }
+
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
+        size_t mb = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int bd = bid[mb];
+        
+        int b0 = (bd >> 0)  & MASK_5;
+        int b1 = (bd >> 5)  & MASK_5;
+        int b2 = (bd >> 10) & MASK_5;
+        int b3 = (bd >> 15) & MASK_5;
+        int b4 = (bd >> 20) & MASK_5;
+        int b5 = (bd >> 25) & MASK_5;
+        //fprintf(fp, "%d %d %d %d %d %d : ", b0, b1, b2, b3, b4, b5);
+        
+        fprintf(fp, "%3d %3d %3d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n", i,j,k,
+               d_cut[mp+0],
+               d_cut[mp+1],
+               d_cut[mp+2],
+               d_cut[mp+3],
+               d_cut[mp+4],
+               d_cut[mp+5],
+               b0, b1, b2, b3, b4, b5);
+        
+      }
+    }
+  }
+  
+  fflush(fp);
+  fclose(fp);
+}
+
+
 // #################################################################
 /* @brief メモリ消費情報を表示
  * @param [in]     fp    ファイルポインタ
@@ -1713,7 +1769,7 @@ void FFV::fixedParameters()
   C.f_DivDebug       = "div";
   C.f_Helicity       = "hlt";
   C.f_TotalP         = "tp";
-  C.f_I2VGT          = "i2vgt";
+  C.f_I2VGT          = "qcr";
   C.f_Vorticity      = "vrt";
   
   
@@ -1729,7 +1785,7 @@ void FFV::fixedParameters()
   C.f_dfi_out_vrt   = "vrt";
   C.f_dfi_out_hlt   = "hlt";
   C.f_dfi_out_tp    = "tp";
-  C.f_dfi_out_i2vgt = "i2vgt";
+  C.f_dfi_out_i2vgt = "qcr";
 }
 
 
@@ -2520,7 +2576,6 @@ void FFV::initFileOut()
   
   
   std::string process="./proc.dfi";
-  std::string dfi_name;
   int comp = 1;
   
   
@@ -2579,9 +2634,9 @@ void FFV::initFileOut()
   // Divergence for Debug
   if ( C.FIO.Div_Debug == ON )
   {
-    dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_div);
+    comp = 1;
     DFI_OUT_DIV = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                     dfi_name,
+                                     cio_DFI::Generate_DFI_Name(C.f_dfi_out_div),
                                      path,
                                      C.f_DivDebug,
                                      format,
@@ -2617,9 +2672,9 @@ void FFV::initFileOut()
   
   
   // Pressure
-  dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_prs);
+  comp = 1;
   DFI_OUT_PRS = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                   dfi_name,
+                                   cio_DFI::Generate_DFI_Name(C.f_dfi_out_prs),
                                    path,
                                    C.f_Pressure,
                                    format,
@@ -2662,10 +2717,9 @@ void FFV::initFileOut()
   
   
   // Velocity
-  dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_vel);
   comp = 3;
   DFI_OUT_VEL = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                   dfi_name,
+                                   cio_DFI::Generate_DFI_Name(C.f_dfi_out_vel),
                                    path,
                                    C.f_Velocity,
                                    format,
@@ -2705,10 +2759,9 @@ void FFV::initFileOut()
   
   
   // Fvelocity
-  dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_fvel);
   comp = 3;
   DFI_OUT_FVEL = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                    dfi_name,
+                                    cio_DFI::Generate_DFI_Name(C.f_dfi_out_fvel),
                                     path,
                                     C.f_Fvelocity,
                                     format,
@@ -2750,10 +2803,9 @@ void FFV::initFileOut()
   // Temperature
   if ( C.isHeatProblem() )
   {
-    dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_temp);
     comp = 1;
     DFI_OUT_TEMP = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                      dfi_name,
+                                      cio_DFI::Generate_DFI_Name(C.f_dfi_out_temp),
                                       path,
                                       C.f_Temperature,
                                       format,
@@ -2799,10 +2851,9 @@ void FFV::initFileOut()
   {
     
     // Pressure
-    dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_prsa);
     comp = 1;
     DFI_OUT_PRSA = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                      dfi_name,
+                                      cio_DFI::Generate_DFI_Name(C.f_dfi_out_prsa),
                                       path,
                                       C.f_AvrPressure,
                                       format,
@@ -2842,10 +2893,9 @@ void FFV::initFileOut()
     
     
     // Velocity
-    dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_vela);
     comp = 3;
     DFI_OUT_VELA = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                      dfi_name,
+                                      cio_DFI::Generate_DFI_Name(C.f_dfi_out_vela),
                                       path,
                                       C.f_AvrVelocity,
                                       format,
@@ -2887,10 +2937,9 @@ void FFV::initFileOut()
     // Temperature
     if ( C.isHeatProblem() )
     {
-      dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_tempa);
       comp = 1;
       DFI_OUT_TEMPA = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                         dfi_name,
+                                         cio_DFI::Generate_DFI_Name(C.f_dfi_out_tempa),
                                          path,
                                          C.f_AvrTemperature,
                                          format,
@@ -2936,10 +2985,9 @@ void FFV::initFileOut()
   // Total Pressure
   if (C.Mode.TP == ON )
   {
-    dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_tp);
     comp = 1;
     DFI_OUT_TP = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                    dfi_name,
+                                    cio_DFI::Generate_DFI_Name(C.f_dfi_out_tp),
                                     path,
                                     C.f_TotalP,
                                     format,
@@ -2982,10 +3030,9 @@ void FFV::initFileOut()
   // Vorticity
   if (C.Mode.VRT == ON )
   {
-    dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_vrt);
     comp = 3;
     DFI_OUT_VRT = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                     dfi_name,
+                                     cio_DFI::Generate_DFI_Name(C.f_dfi_out_vrt),
                                      path,
                                      C.f_Vorticity,
                                      format,
@@ -3026,10 +3073,9 @@ void FFV::initFileOut()
   // 2nd Invariant of VGT
   if ( C.Mode.I2VGT == ON )
   {
-    dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_i2vgt);
     comp = 1;
     DFI_OUT_I2VGT = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                       dfi_name,
+                                       cio_DFI::Generate_DFI_Name(C.f_dfi_out_i2vgt),
                                        path,
                                        C.f_I2VGT,
                                        format,
@@ -3072,10 +3118,9 @@ void FFV::initFileOut()
   // Helicity
   if ( C.Mode.Helicity == ON )
   {
-    dfi_name = cio_DFI::Generate_DFI_Name(C.f_dfi_out_hlt);
     comp = 1;
     DFI_OUT_HLT = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                     dfi_name,
+                                     cio_DFI::Generate_DFI_Name(C.f_dfi_out_hlt),
                                      path,
                                      C.f_Helicity,
                                      format,
@@ -3277,29 +3322,7 @@ void FFV::minDistance(float* cut, int* bid, FILE* fp)
               }
             }
           }
-          
-          
-// ##########
-#if 0 // debug
-          int b0 = (bd >> 0)  & MASK_5;
-          int b1 = (bd >> 5)  & MASK_5;
-          int b2 = (bd >> 10) & MASK_5;
-          int b3 = (bd >> 15) & MASK_5;
-          int b4 = (bd >> 20) & MASK_5;
-          int b5 = (bd >> 25) & MASK_5;
-          printf("%d %d %d %d %d %d ", b0, b1, b2, b3, b4, b5);
-          /*
-          printf("%3d %3d %3d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n", i,j,k,
-                 d_cut[mp+0],
-                 d_cut[mp+1],
-                 d_cut[mp+2],
-                 d_cut[mp+3],
-                 d_cut[mp+4],
-                 d_cut[mp+5],
-                 b0, b1, b2, b3, b4, b5);
-           */
-#endif
-// ##########
+
         }
       }
     }
@@ -4631,7 +4654,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   }
   
   // ポリゴンの修正
-  RepairPolygonData(PL, false);
+  //RepairPolygonData(PL, false);
   
   
   /* スケーリングする場合のみ表示
@@ -4953,6 +4976,9 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   // カットの最小値
   minDistance(d_cut, d_bid, fp);
   
+#if 1
+  displayCutInfo(d_cut, d_bid);
+#endif
 }
 
 
