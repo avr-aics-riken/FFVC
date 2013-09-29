@@ -25,7 +25,7 @@
 //
 void COMB::output_sph()
 {
-  char tmp[FB_FILE_PATH_LENGTH];
+  char tmp[FILE_PATH_LENGTH];
   string prefix,outfile,infile;
   int fp_in =8;
   FILE *fp;
@@ -44,10 +44,6 @@ void COMB::output_sph()
   int xsize,ysize,zsize,asize,vsize;
   long long dxsize,dysize,dzsize,dasize,dvsize;
   int dim;
-  int wk1size,wk2size;
-  float *wk1, *wk2;
-  double *dwk1, *dwk2;
-  int jsNode,jeNode,ksNode,keNode;
   
   //for thin_out option
   int m_imax_th,m_jmax_th,m_kmax_th;
@@ -55,7 +51,8 @@ void COMB::output_sph()
   
   // 出力モード
   bool mio = false;
-  if(DI[0].NumberOfRank > 1) mio=true;
+  const cio_MPI* DFI_MPI = dfi[0]->GetcioMPI();
+  if( DFI_MPI->NumberOfRank > 1) mio=true;
   
   //並列処理のためのインデックス作成
   int iproc=0;
@@ -64,15 +61,14 @@ void COMB::output_sph()
   if(numProc > 1) {
     index.clear();
     for(int i=0;i<ndfi;i++){
-      //for(int j=0; j< DI[i].step.size(); j++ ) {
-      for(int j=0; j< DI[i].Sc.size(); j++ ) {
+      const cio_TimeSlice* TSlice = dfi[i]->GetcioTimeSlice();
+      for(int j=0; j< TSlice->SliceList.size(); j++ ) {
         ip=ips+j;
         if(myRank==iproc) index.push_back(ip);
         iproc++;
         if(iproc==numProc) iproc=0;
       }
-      //ips=ips+DI[i].step.size();
-      ips=ips+DI[i].Sc.size();
+      ips=ips+TSlice->SliceList.size();
     }
     LOG_OUTV_ {
       fprintf(fplog,"\n");
@@ -92,16 +88,36 @@ void COMB::output_sph()
   if (numProc > 1) ips=0;
   
   for (int i=0;i<ndfi;i++) {
-    prefix=DI[i].Prefix;
+    const cio_FileInfo* DFI_FInfo = dfi[i]->GetcioFileInfo();
+    prefix=DFI_FInfo->Prefix;
     LOG_OUTV_ fprintf(fplog,"  COMBINE SPH START : %s\n", prefix.c_str());
     STD_OUTV_ printf("  COMBINE SPH START : %s\n", prefix.c_str());
     
     //Scalar or Vector
-    dim=DI[i].Component;
+    dim=DFI_FInfo->Component;
+    printf("prefix : %s dim : %d\n",prefix.c_str(),dim);
     
-    //step loop
-    //for(int j=0; j< DI[i].step.size(); j++ ) {
-    for(int j=0; j< DI[i].Sc.size(); j++ ) {
+    const cio_Domain* DFI_Domian = dfi[i]->GetcioDomain();
+    
+    cio_Process* DFI_Process = (cio_Process *)dfi[i]->GetcioProcess();
+    
+    int div[3];
+    div[0]=DFI_Domian->GlobalDivision[0];
+    div[1]=DFI_Domian->GlobalDivision[1];
+    div[2]=DFI_Domian->GlobalDivision[2];
+    
+    int *rankMap;
+    typedef std::map<int,int> headT;
+    headT mapHeadX;
+    headT mapHeadY;
+    headT mapHeadZ;
+    rankMap = DFI_Process->CreateRankMap(div,
+                                         mapHeadX,
+                                         mapHeadY,
+                                         mapHeadZ);
+    
+    const cio_TimeSlice* TSlice = dfi[i]->GetcioTimeSlice();
+    for(int j=0; j< TSlice->SliceList.size(); j++ ) {
       
       //並列処理
       int iskip=1;
@@ -114,15 +130,16 @@ void COMB::output_sph()
       }
       if(!iskip) continue;
       
-      //m_step=DI[i].step[j];
-      m_step=DI[i].Sc[j]->step;
+      m_step=TSlice->SliceList[j].step;
+      m_time=(float)TSlice->SliceList[j].time;
+      
       LOG_OUTV_ fprintf(fplog,"\tstep = %d\n", m_step);
       STD_OUTV_ printf("\tstep = %d\n", m_step);
       
       //連結出力ファイルオープン
-      outfile = Generate_FileName(prefix, m_step, 0, mio);
+      outfile = Generate_FileName(prefix, m_step, 0, false);
       outfile = out_dirname + outfile;
-      memset(tmp, 0, sizeof(char)*FB_FILE_PATH_LENGTH);
+      memset(tmp, 0, sizeof(char)*FILE_PATH_LENGTH);
       strcpy(tmp, outfile.c_str());
       if( (fp = fopen(outfile.c_str(), "wb")) == NULL ) {
         printf("\tCan't open file.(%s)\n",outfile.c_str());
@@ -130,9 +147,27 @@ void COMB::output_sph()
       }
       
       //rank0のheader読み込み ---> 最初のファイルを開いてheaderだけ先に記述
-      infile = Generate_FileName(prefix, m_step, 0, mio);
-      infile = in_dirname + infile;
-      ReadSphDataType (&m_sv_type, &m_d_type, fp_in, infile);
+      infile = dfi[i]->Generate_FieldFileName(0,m_step,mio);
+      
+      EMatchType eType;
+      eType = isMatchEndian(infile, 8);
+      bool matchEndian = true;
+      if( eType == UnMatch ) matchEndian = false;
+      
+      //m_sv_typeのセット (スカラー or ベクター)
+      if( dfi[i]->GetNumComponent() == 1 ) {
+        m_sv_type = SPH_SCALAR;
+      } else if( dfi[i]->GetNumComponent() >= 3 ) {
+        m_sv_type = SPH_VECTOR;
+      } else Exit(0);
+      
+      //m_d_typeのセット (float or double)
+      if( dfi[i]->GetDataType() == CIO::E_CIO_FLOAT32 ) {
+        m_d_type = SPH_FLOAT;
+      } else if( dfi[i]->GetDataType() == CIO::E_CIO_FLOAT64 ) {
+        m_d_type = SPH_DOUBLE;
+      } else Exit(0);
+      
       if( output_real_type == OUTPUT_REAL_UNKNOWN )
       {
         if( m_d_type == SPH_FLOAT ) output_real_type = OUTPUT_FLOAT;
@@ -140,18 +175,13 @@ void COMB::output_sph()
       }
       d_type=output_real_type;
       
-      if( m_d_type == SPH_FLOAT ){
-        ReadSphHeader (&m_step, &m_sv_type, &m_d_type, &m_imax, &m_jmax, &m_kmax, &m_time, m_org, m_pit, fp_in, infile);
-      }else{
-        ReadSphHeader (&m_dstep, &m_sv_type, &m_d_type, &m_dimax, &m_djmax, &m_dkmax, &m_dtime, m_dorg, m_dpit, fp_in, infile);
-        m_step=(int)m_dstep;
-        m_time=(float)m_dtime;
-      }
+      //sphのヘッダーレコードからオリジンとピッチを読込む
+      ReadSphHeader(m_dorg,  m_dpit, infile);
       
       //全体サイズのキープ
-      m_imax= DI[i].Global_Voxel[0] + 2*DI[i].GuideCell;
-      m_jmax= DI[i].Global_Voxel[1] + 2*DI[i].GuideCell;
-      m_kmax= DI[i].Global_Voxel[2] + 2*DI[i].GuideCell;
+      m_imax= DFI_Domian->GlobalVoxel[0] + 2*DFI_FInfo->GuideCell;
+      m_jmax= DFI_Domian->GlobalVoxel[1] + 2*DFI_FInfo->GuideCell;
+      m_kmax= DFI_Domian->GlobalVoxel[2] + 2*DFI_FInfo->GuideCell;
       
       //間引きを考慮
       m_imax_th=m_imax/thin_count;//間引き後のxサイズ
@@ -161,71 +191,21 @@ void COMB::output_sph()
       if(m_jmax%thin_count != 0) m_jmax_th++;
       if(m_kmax%thin_count != 0) m_kmax_th++;
       
-      //連結ファイルのheader書き込み
-      if( m_d_type == SPH_FLOAT && output_real_type == OUTPUT_FLOAT)
-      { // float ---> float
-        float out_pit[3];
-        for(int ic=0;ic<3;ic++) out_pit[ic]=m_pit[ic]*float(thin_count);
-        if( !(WriteSphHeader(m_step, m_sv_type, d_type, m_imax_th, m_jmax_th, m_kmax_th, m_time, m_org, out_pit, fp)) ) {
-          printf("\twrite header error\n");
-          Exit(0);
-        }
-      }
-      else if( m_d_type == SPH_DOUBLE && output_real_type == OUTPUT_DOUBLE)
-      { // double ---> double
-        m_dimax_th=(long long)m_imax_th;
-        m_djmax_th=(long long)m_jmax_th;
-        m_dkmax_th=(long long)m_kmax_th;
-        double out_dpit[3];
-        for(int ic=0;ic<3;ic++) out_dpit[ic]=m_dpit[ic]*double(thin_count);
-        if( !(WriteSphHeader(m_dstep, m_sv_type, d_type, m_dimax_th, m_djmax_th, m_dkmax_th, m_dtime, m_dorg, out_dpit, fp)) ) {
-          printf("\twrite header error\n");
-          Exit(0);
-        }
-      }
-      if( m_d_type == SPH_FLOAT && output_real_type == OUTPUT_DOUBLE)
-      { // float ---> double
-        m_dimax_th=(long long)m_imax_th;
-        m_djmax_th=(long long)m_jmax_th;
-        m_dkmax_th=(long long)m_kmax_th;
-        m_dstep=(long long)m_step;
-        m_dtime=(double)m_time;
-        m_dorg[0]=(double)m_org[0];
-        m_dorg[1]=(double)m_org[1];
-        m_dorg[2]=(double)m_org[2];
-        m_dpit[0]=(double)m_pit[0];
-        m_dpit[1]=(double)m_pit[1];
-        m_dpit[2]=(double)m_pit[2];
-        double out_dpit[3];
-        for(int ic=0;ic<3;ic++) out_dpit[ic]=m_dpit[ic]*double(thin_count);
-        if( !(WriteSphHeader(m_dstep, m_sv_type, d_type, m_dimax_th, m_djmax_th, m_dkmax_th, m_dtime, m_dorg, out_dpit, fp)) ) {
-          printf("\twrite header error\n");
-          Exit(0);
-        }
-      }
-      if( m_d_type == SPH_DOUBLE && output_real_type == OUTPUT_FLOAT)
-      { // double ---> float
-        m_org[0]=(float)m_dorg[0];
-        m_org[1]=(float)m_dorg[1];
-        m_org[2]=(float)m_dorg[2];
-        m_pit[0]=(float)m_dpit[0];
-        m_pit[1]=(float)m_dpit[1];
-        m_pit[2]=(float)m_dpit[2];
-        float out_pit[3];
-        for(int ic=0;ic<3;ic++) out_pit[ic]=m_pit[ic]*float(thin_count);
-        if( !(WriteSphHeader(m_step, m_sv_type, d_type, m_imax_th, m_jmax_th, m_kmax_th, m_time, m_org, out_pit, fp)) ) {
-          printf("\twrite header error\n");
-          Exit(0);
-        }
+      //出力sphのヘッダーレコードを出力
+      double out_dpit[3];
+      for(int ic=0;ic<3;ic++) out_dpit[ic]=m_dpit[ic]*double(thin_count);
+      if( !(WriteSphHeader(m_step, m_sv_type, d_type, m_imax_th, m_jmax_th, m_kmax_th,
+                           m_time, m_dorg, out_dpit, fp)) ) {
+        printf("\twrite header error\n");
+        Exit(0);
       }
       
       //全体の大きさの計算とデータのヘッダ書き込み
       int dummy;
       size_t dLen;
-      //dLen = (size_t)(m_imax * m_jmax * m_kmax);
-      dLen = (size_t)(m_imax_th * m_jmax_th * m_kmax_th);
+
+      dLen = size_t(m_imax_th) * size_t(m_jmax_th) * size_t(m_kmax_th);
       if( m_sv_type == SPH_VECTOR ) dLen *= 3;
-      //if( m_d_type == SPH_FLOAT ) dummy = dLen * sizeof(float);
       if( output_real_type == OUTPUT_FLOAT ) dummy = dLen * sizeof(float);
       else                                   dummy = dLen * sizeof(double);
       if( !(WriteCombineDataMarker(dummy, fp)) ) {
@@ -233,182 +213,168 @@ void COMB::output_sph()
         Exit(0);
       }
       
-      //同一Z面ループ
-      int zstart=0;
-      for(int kp=0; kp< DI[i].index_z.size()-1; kp++ ) {
-        ksNode = DI[i].index_z[kp];
-        keNode = DI[i].index_z[kp+1];
+      //書き込みworkareaのサイズ決め
+      m_imax_th=m_imax/thin_count;//間引き後のxサイズ
+      m_jmax_th=m_jmax/thin_count;//間引き後のyサイズ
+      if(m_imax%thin_count != 0) m_imax_th++;
+      if(m_jmax%thin_count != 0) m_jmax_th++;
+      xsize=m_imax_th;
+      ysize=m_jmax_th;
+      asize=xsize*ysize;
+      vsize=0;
+      for(int n=0; n< DFI_Process->RankList.size(); n++ ) {
+        int szx,szy,szz;
+        szx=DFI_Process->RankList[n].VoxelSize[0];
+        szy=DFI_Process->RankList[n].VoxelSize[1];
+        szz=DFI_Process->RankList[n].VoxelSize[2];
+        int vdum=szx*szy*szz;
+        if(vsize < vdum) vsize=vdum;
+      }
+      // メモリチェック
+      LOG_OUTV_ fprintf(fplog,"\tNode %4d - Node %4d\n", 0,
+                        DFI_Domian->GlobalVoxel[2] + 2*DFI_FInfo->GuideCell-1);
+      STD_OUTV_ printf("\tNode %4d - Node %4d\n", 0,
+                       DFI_Domian->GlobalVoxel[2] + 2*DFI_FInfo->GuideCell-1);
+      double mc1 = (double)asize*(double)dim;
+      double mc2 = (double)vsize*(double)dim;
+      if(mc1>(double)INT_MAX){// 整数値あふれ出しチェック //参考 894*894*894*3=2143550952 INT_MAX 2147483647
+        printf("\tsize error : mc1>INT_MAX\n");
+        Exit(0);
+      }
+      if(mc2>(double)INT_MAX){// 整数値あふれ出しチェック //参考 894*894*894*3=2143550952 INT_MAX 2147483647
+        printf("\tsize error : mc2>INT_MAX\n");
+        Exit(0);
+      }
+      double TotalMemory=0.0; // = mc * (double)sizeof(REAL_TYPE);
+      if( output_real_type == OUTPUT_FLOAT ) TotalMemory = TotalMemory + mc1 * (double)sizeof(float);
+      else                                   TotalMemory = TotalMemory + mc1 * (double)sizeof(double);
+      if( m_d_type == SPH_FLOAT ) TotalMemory = TotalMemory + mc2 * (double)sizeof(float);
+      else                        TotalMemory = TotalMemory + mc2 * (double)sizeof(double);
+      LOG_OUT_ MemoryRequirement(TotalMemory,fplog);
+      STD_OUT_ MemoryRequirement(TotalMemory,stdout);
+      
+      //出力バッファのインスタンス
+      int szS[3];
+      int headS[3],tailS[3];
+      szS[0]=m_imax_th;
+      szS[1]=m_jmax_th;
+      szS[2]=1;
+      headS[0]=0-DFI_FInfo->GuideCell;
+      headS[1]=0-DFI_FInfo->GuideCell;
+      tailS[0]=headS[0]+m_imax-1;
+      tailS[1]=headS[1]+m_jmax-1;
+      
+      CIO::E_CIO_DTYPE cio_d_type;
+      if( output_real_type == OUTPUT_FLOAT ) {
+        cio_d_type = CIO::E_CIO_FLOAT32;
+      } else if( output_real_type == OUTPUT_DOUBLE ) {
+        cio_d_type = CIO::E_CIO_FLOAT64;
+      } else Exit(0);
+      cio_Array* src = cio_Array::instanceArray
+      ( cio_d_type
+       , DFI_FInfo->ArrayShape
+       , szS
+       , 0
+       , DFI_FInfo->Component );
+      
+      int kdiv,jdiv,idiv;
+      //z方向の分割数回のループ
+      for( headT::iterator itz=mapHeadZ.begin(); itz!= mapHeadZ.end(); itz++ ) {
+        kdiv = itz->second;
+        int kp_sta,kp_end;
+        kp_sta = itz->first;
+
+        int nrank = _CIO_IDX_IJK(0,0,kdiv,div[0],div[1],div[2],0);
+        kp_end = kp_sta + DFI_Process->RankList[nrank].VoxelSize[2];
         
-        //書き込みworkareaのサイズ決め
-        m_imax_th=m_imax/thin_count;//間引き後のxサイズ
-        m_jmax_th=m_jmax/thin_count;//間引き後のyサイズ
-        if(m_imax%thin_count != 0) m_imax_th++;
-        if(m_jmax%thin_count != 0) m_jmax_th++;
-        //xsize=m_imax;
-        //ysize=m_jmax;
-        xsize=m_imax_th;
-        ysize=m_jmax_th;
-        zsize=DI[i].Node[ksNode].VoxelSize[2];
-        asize=xsize*ysize;
-        vsize=0;
-        for(int n=ksNode; n< keNode; n++ ) {
-          int szx,szy,szz;
-          szx=DI[i].Node[n].VoxelSize[0];
-          szy=DI[i].Node[n].VoxelSize[1];
-          szz=DI[i].Node[n].VoxelSize[2];
-          int vdum=szx*szy*szz;
-          if(vsize < vdum) vsize=vdum;
-        }
+        if( kdiv == 0 ) kp_sta -= DFI_FInfo->GuideCell;
+
+        if( kp_end == DFI_Domian->GlobalVoxel[2]+1 ) kp_end += DFI_FInfo->GuideCell;
         
-        // メモリチェック
-        LOG_OUTV_ fprintf(fplog,"\tNode %4d - Node %4d\n", ksNode, keNode-1);
-        STD_OUTV_ printf("\tNode %4d - Node %4d\n", ksNode, keNode-1);
-        double mc1 = (double)asize*(double)dim;
-        double mc2 = (double)vsize*(double)dim;
-        if(mc1>(double)INT_MAX){// 整数値あふれ出しチェック //参考 894*894*894*3=2143550952 INT_MAX 2147483647
-          printf("\tsize error : mc1>INT_MAX\n");
-          Exit(0);
-        }
-        if(mc2>(double)INT_MAX){// 整数値あふれ出しチェック //参考 894*894*894*3=2143550952 INT_MAX 2147483647
-          printf("\tsize error : mc2>INT_MAX\n");
-          Exit(0);
-        }
-        double TotalMemory=0.0; // = mc * (double)sizeof(REAL_TYPE);
-        if( output_real_type == OUTPUT_FLOAT ) TotalMemory = TotalMemory + mc1 * (double)sizeof(float);
-        else                                   TotalMemory = TotalMemory + mc1 * (double)sizeof(double);
-        if( m_d_type == SPH_FLOAT ) TotalMemory = TotalMemory + mc2 * (double)sizeof(float);
-        else                        TotalMemory = TotalMemory + mc2 * (double)sizeof(double);
-        LOG_OUT_ MemoryRequirement(TotalMemory,fplog);
-        STD_OUT_ MemoryRequirement(TotalMemory,stdout);
-        
-        //allocate work area
-        wk1size=asize*dim;
-        wk2size=vsize*dim;
-        
-        // work for read
-        if( m_d_type == SPH_FLOAT ){
-          if ( !(wk2 = new float[wk2size]) ){
-            printf("\tallocate error : wk2\n");
-            Exit(0);
-          }
-        }else{
-          if ( !(dwk2 = new double[wk2size]) ){
-            printf("\tallocate error : dwk2\n");
-            Exit(0);
-          }
-        }
-        
-        // work for write
-        if( output_real_type == OUTPUT_FLOAT ){
-          if ( !(wk1 = new float[wk1size]) ){
-            printf("\tallocate error : wk1\n");
-            Exit(0);
-          }
-        }else if( output_real_type == OUTPUT_DOUBLE ){
-          if ( !(dwk1 = new double[wk1size]) ){
-            printf("\tallocate error : dwk1\n");
-            Exit(0);
-          }
-        }
-        
-        //同一Y面のindexのスタート、エンドを決める
-        int index_y_s=0;
-        int index_y_e=0;
-        for(int jp=0; jp< DI[i].index_y.size()-1; jp++ ) {
-          jsNode = DI[i].index_y[jp];
-          jeNode = DI[i].index_y[jp+1];
-          if(jsNode == ksNode) index_y_s=jp;
-          if(jeNode == keNode) index_y_e=jp+1;
-        }
-        
-        //同一Y面ループをz方向高さ分だけ繰り返しファイルをcombine
-        int zzz=0;
-        while(zzz != zsize){
-          int zh = zstart + zzz;
-          int zrest=zh%thin_count;
+        //同一Z面のループ
+        for(int kp=kp_sta; kp< kp_end; kp++) {
+          int kk = kp+DFI_FInfo->GuideCell-1;
+          //間引きの層のときスキップ
+          if( kk%thin_count != 0 ) continue;
           
-          if(zrest == 0){
+          //y方向の分割数のループ
+          for( headT::iterator ity=mapHeadY.begin(); ity!= mapHeadY.end(); ity++ ) {
+            jdiv = ity->second;
+            int jp_sta,jp_end;
+            jp_sta = ity->first;
+            int nrank = _CIO_IDX_IJK(0,jdiv,kdiv,div[0],div[1],div[2],0);
+            jp_end = jp_sta + DFI_Process->RankList[nrank].VoxelSize[1];
             
-            int ystart=0;
-            for(int jp=index_y_s; jp< index_y_e; jp++ ) {
-              jsNode = DI[i].index_y[jp];
-              jeNode = DI[i].index_y[jp+1];
-              LOG_OUTV_ fprintf(fplog,"\t  Node %4d - Node %4d\n", jsNode, jeNode-1);
-              STD_OUTV_ printf("\t  Node %4d - Node %4d\n", jsNode, jeNode-1);
+            if( jdiv == 0 ) jp_sta -= DFI_FInfo->GuideCell;
+
+            if( jp_end == DFI_Domian->GlobalVoxel[1]+1 ) jp_end += DFI_FInfo->GuideCell;
+            
+            //x方向の分割数のループ
+            for( headT::iterator itx=mapHeadX.begin(); itx!= mapHeadX.end(); itx++ ) {
+              idiv = itx->second;
+              int ip_sta,ip_end;
+              ip_sta = itx->first;
+              int nrank = _CIO_IDX_IJK(idiv,jdiv,kdiv,div[0],div[1],div[2],0);
+              ip_end = ip_sta + DFI_Process->RankList[nrank].VoxelSize[0];
               
-              int xstart=0;
-              for(int n=jsNode; n< jeNode; n++ ) {
-                
-                //連結対象ファイルオープン
-                m_rank=DI[i].Node[n].RankID;
-                infile = Generate_FileName(prefix, m_step, m_rank, mio);
-                infile = in_dirname + infile;
-                
-                //combine
-                sz[0]=DI[i].Node[n].VoxelSize[0];
-                sz[1]=DI[i].Node[n].VoxelSize[1];
-                sz[2]=DI[i].Node[n].VoxelSize[2];
-                if( m_d_type == SPH_FLOAT ){
-                  ReadSphData ( wk2, wk2size, sz, dim, fp_in, infile );
-                  if( output_real_type == OUTPUT_FLOAT ){
-                    CombineLayerData(
-                                     wk1, wk1size, wk2, wk2size, xsize, ysize, zsize,
-                                     zzz, sz, dim, xstart, ystart );
-                  }else if( output_real_type == OUTPUT_DOUBLE ){
-                    CombineLayerData(
-                                     dwk1, wk1size, wk2, wk2size, xsize, ysize, zsize,
-                                     zzz, sz, dim, xstart, ystart );
-                  }
-                }else{
-                  ReadSphData ( dwk2, wk2size, sz, dim, fp_in, infile );
-                  if( output_real_type == OUTPUT_FLOAT ){
-                    CombineLayerData(
-                                     wk1, wk1size, dwk2, wk2size, xsize, ysize, zsize,
-                                     zzz, sz, dim, xstart, ystart );
-                  }else if( output_real_type == OUTPUT_DOUBLE ){
-                    CombineLayerData(
-                                     dwk1, wk1size, dwk2, wk2size, xsize, ysize, zsize,
-                                     zzz, sz, dim, xstart, ystart );
-                  }
-                }
-                
-                //書き込みデータスタート位置の更新
-                xstart=xstart+DI[i].Node[n].VoxelSize[0];
-                
-              }
+              if( idiv == 0 ) ip_sta -= DFI_FInfo->GuideCell;
+
+              if( ip_end == DFI_Domian->GlobalVoxel[0]+1 ) ip_end += DFI_FInfo->GuideCell;
               
-              //書き込みデータスタート位置の更新
-              ystart=ystart+DI[i].Node[jsNode].VoxelSize[1];
-            }
-            
-            //write
-            if( output_real_type == OUTPUT_FLOAT ){
-              if( !(WriteCombineData(wk1, (size_t)wk1size, fp)) ) {
-                printf("\twrite data footer error\n");
-                Exit(0);
-              }
-            }else{
-              if( !(WriteCombineData(dwk1, (size_t)wk1size, fp)) ) {
-                printf("\twrite data footer error\n");
-                Exit(0);
-              }
-            }
-            
-          }
+              int RankID = _CIO_IDX_IJK(idiv,jdiv,kdiv,div[0],div[1],div[2],0);
+              
+              int read_sta[3],read_end[3];
+              read_sta[0]=ip_sta;
+              read_sta[1]=jp_sta;
+              read_sta[2]=kp;
+              read_end[0]=ip_end-1;
+              read_end[1]=jp_end-1;
+              read_end[2]=kp;
+              
+              m_rank=DFI_Process->RankList[RankID].RankID;
+              infile = dfi[i]->Generate_FieldFileName(m_rank,m_step,mio);
+              unsigned int avr_step;
+              double avr_time;
+              CIO::E_CIO_ERRORCODE ret;
+              //連結対象ファイルの読込み
+              cio_Array* buf = dfi[i]->ReadFieldData(infile, m_step, m_dtime,
+                                                     read_sta, read_end,
+                                                     DFI_Process->RankList[RankID].HeadIndex,
+                                                     DFI_Process->RankList[RankID].TailIndex,
+                                                     true, avr_step, avr_time, ret);
+              
+              //headIndexを０スタートにしてセット
+              int headB[3];
+              headB[0]=read_sta[0]+DFI_FInfo->GuideCell-1;
+              headB[1]=read_sta[1]+DFI_FInfo->GuideCell-1;
+              headB[2]=read_sta[2]+DFI_FInfo->GuideCell-1;
+              buf->setHeadIndex( headB );
+              
+              int headS0[3];
+              headS0[0]=headS[0]+DFI_FInfo->GuideCell;
+              headS0[1]=headS[1]+DFI_FInfo->GuideCell;
+              headS0[2]=kk;
+              src->setHeadIndex( headS0 );
+              
+              tailS[2]=headS0[2];
+              
+              
+              //出力配列へのコンバイン
+              combineXY(matchEndian,buf,src,headS0,tailS);
+              
+              delete buf;
+              
+            } //x --- itx
+          } //y --- ity
           
-          zzz++;
-        }
-        
-        //deallocate workarea
-        if( m_d_type == SPH_FLOAT ) delete[] wk2;
-        else                        delete[] dwk2;
-        if( output_real_type == OUTPUT_FLOAT ) delete[] wk1;
-        else                                   delete[] dwk1;
-        
-        //書き込みデータスタート位置の更新
-        zstart=zstart+DI[i].Node[jsNode].VoxelSize[2];
-        
-      }//z --- kp
+          //一層分出力
+          size_t dLen = szS[0]*szS[1]*szS[2]*DFI_FInfo->Component;
+          if( src->writeBinary(fp) != dLen ) Exit(0);
+          
+        } //z --- kp
+      } //z --- itz
+      
+      delete src;
       
       //平均値識別の記述 ---> なし？
       
@@ -421,120 +387,8 @@ void COMB::output_sph()
       //出力ファイルクローズ
       fclose(fp);
     }
-    //if(numProc > 1) ips=ips+DI[i].step.size();
-    if(numProc > 1) ips=ips+DI[i].Sc.size();
+    if(numProc > 1) ips=ips+TSlice->SliceList.size();
   }
-  
-}
-
-
-#if 0
-
-// #################################################################
-//
-bool COMB::WriteSphHeader(
-                          int step, int sv_type, int d_type, int imax, int jmax, int kmax,
-                          REAL_TYPE time, REAL_TYPE* org, REAL_TYPE* pit, FILE *fp)
-{
-  if( !fp ) return false;
-  
-  unsigned int dmy;
-  dmy = 8;
-  if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-  if( fwrite(&sv_type, sizeof(int), 1, fp) != 1 ) return false;
-  if( fwrite(&d_type, sizeof(int), 1, fp) != 1 ) return false;
-  if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-  
-  if( d_type == OUTPUT_FLOAT ){
-    dmy = 12;
-    if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-    if( fwrite(&imax, sizeof(int), 1, fp) != 1 ) return false;
-    if( fwrite(&jmax, sizeof(int), 1, fp) != 1 ) return false;
-    if( fwrite(&kmax, sizeof(int), 1, fp) != 1 ) return false;
-    if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-    
-    if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-    if( fwrite(org, sizeof(float), 3, fp) != 3 ) return false;
-    if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-    
-    if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-    if( fwrite(pit, sizeof(float), 3, fp) != 3 ) return false;
-    if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-  } else { // OUTPUT_DOUBLE
-    dmy = 24;
-    if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-    if( fwrite(&imax, sizeof(long long), 1, fp) != 1 ) return false;
-    if( fwrite(&jmax, sizeof(long long), 1, fp) != 1 ) return false;
-    if( fwrite(&kmax, sizeof(long long), 1, fp) != 1 ) return false;
-    if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-    
-    if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-    if( fwrite(org, sizeof(double), 3, fp) != 3 ) return false;
-    if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-    
-    if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-    if( fwrite(pit, sizeof(double), 3, fp) != 3 ) return false;
-    if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-  }
-  
-  if( d_type == OUTPUT_FLOAT ) dmy = 8;
-  else dmy = 16;
-  if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-  if( d_type == OUTPUT_FLOAT ){
-    if( fwrite(&step, sizeof(int), 1, fp) != 1 ) return false;
-    if( fwrite(&time, sizeof(float), 1, fp) != 1 ) return false;
-  }else{
-    if( fwrite(&step, sizeof(long long), 1, fp) != 1 ) return false;
-    if( fwrite(&time, sizeof(double), 1, fp) != 1 ) return false;
-  }
-  if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-  
-  return true;
-  
-}
-
-#endif
-
-
-// #################################################################
-//
-bool COMB::WriteSphHeader(
-                          int step, int sv_type, int d_type, int imax, int jmax, int kmax,
-                          float time, float* org, float* pit, FILE *fp)
-{
-  if( !fp ) return false;
-  
-  unsigned int dmy;
-  
-  dmy = 2 * sizeof(int);
-  if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-  if( fwrite(&sv_type, sizeof(int), 1, fp) != 1 ) return false;
-  if( fwrite(&d_type, sizeof(int), 1, fp) != 1 ) return false;
-  if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-  
-  dmy = 3 * sizeof(int);
-  if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-  if( fwrite(&imax, sizeof(int), 1, fp) != 1 ) return false;
-  if( fwrite(&jmax, sizeof(int), 1, fp) != 1 ) return false;
-  if( fwrite(&kmax, sizeof(int), 1, fp) != 1 ) return false;
-  if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-  
-  dmy = 3 * sizeof(float);
-  if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-  if( fwrite(org, sizeof(float), 3, fp) != 3 ) return false;
-  if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-  
-  if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-  if( fwrite(pit, sizeof(float), 3, fp) != 3 ) return false;
-  if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-  
-  dmy  = sizeof(int) + sizeof(float);
-  if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-  if( fwrite(&step, sizeof(int), 1, fp) != 1 ) return false;
-  if( fwrite(&time, sizeof(float), 1, fp) != 1 ) return false;
-  if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-  
-  return true;
   
 }
 
@@ -553,26 +407,70 @@ bool COMB::WriteSphHeader(
   if( fwrite(&d_type, sizeof(int), 1, fp) != 1 ) return false;
   if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
   
-  dmy = 3 * sizeof(long long);
+  if( d_type == SPH_FLOAT ) {
+    dmy = 3 * sizeof(int);
+  } else if( d_type == SPH_DOUBLE ) {
+    dmy = 3 * sizeof(long long);
+  }
+  
+  //dmy = 3 * sizeof(long long);
   if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-  if( fwrite(&imax, sizeof(long long), 1, fp) != 1 ) return false;
-  if( fwrite(&jmax, sizeof(long long), 1, fp) != 1 ) return false;
-  if( fwrite(&kmax, sizeof(long long), 1, fp) != 1 ) return false;
+  if( d_type == SPH_FLOAT ) {
+    if( fwrite(&imax, sizeof(int), 1, fp) != 1 ) return false;
+    if( fwrite(&jmax, sizeof(int), 1, fp) != 1 ) return false;
+    if( fwrite(&kmax, sizeof(int), 1, fp) != 1 ) return false;
+  } else {
+    if( fwrite(&imax, sizeof(long long), 1, fp) != 1 ) return false;
+    if( fwrite(&jmax, sizeof(long long), 1, fp) != 1 ) return false;
+    if( fwrite(&kmax, sizeof(long long), 1, fp) != 1 ) return false;
+  }
   if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
   
-  dmy = 3 * sizeof(double);
+  if( d_type == SPH_FLOAT ) {
+    dmy = 3 * sizeof(float);
+  } else {
+    dmy = 3 * sizeof(double);
+  }
+  //dmy = 3 * sizeof(double);
   if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-  if( fwrite(org, sizeof(double), 3, fp) != 3 ) return false;
+  if( d_type == SPH_FLOAT ) {
+    float tmp[3];
+    tmp[0] = (float)org[0];
+    tmp[1] = (float)org[1];
+    tmp[2] = (float)org[2];
+    if( fwrite(tmp, sizeof(float), 3, fp) != 3 ) return false;
+  } else {
+    if( fwrite(org, sizeof(double), 3, fp) != 3 ) return false;
+  }
   if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
   
   if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-  if( fwrite(pit, sizeof(double), 3, fp) != 3 ) return false;
+  if( d_type == SPH_FLOAT ) {
+    float tmp[3];
+    tmp[0] = (float)pit[0];
+    tmp[1] = (float)pit[1];
+    tmp[2] = (float)pit[2];
+    if( fwrite(tmp, sizeof(float), 3, fp) != 3 ) return false;
+  } else {
+    if( fwrite(pit, sizeof(double), 3, fp) != 3 ) return false;
+  }
   if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
   
-  dmy = sizeof(long long) + sizeof(double);
+  if( d_type == SPH_FLOAT ) {
+    dmy = sizeof(int) + sizeof(float);
+  } else {
+    dmy = sizeof(long long) + sizeof(double);
+  }
+  //dmy = sizeof(long long) + sizeof(double);
   if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
-  if( fwrite(&step, sizeof(long long), 1, fp) != 1 ) return false;
-  if( fwrite(&time, sizeof(double), 1, fp) != 1 ) return false;
+  if( d_type == SPH_FLOAT ) {
+    float ftmp = (float)time;
+    if( fwrite(&step, sizeof(int), 1, fp) != 1 ) return false;
+    if( fwrite(&ftmp, sizeof(float), 1, fp) != 1 ) return false;
+  } else {
+    if( fwrite(&step, sizeof(long long), 1, fp) != 1 ) return false;
+    if( fwrite(&time, sizeof(double), 1, fp) != 1 ) return false;
+  }
   if( fwrite(&dmy, sizeof(int), 1, fp) != 1 ) return false;
   
   return true;
@@ -587,34 +485,3 @@ bool COMB::WriteCombineDataMarker(int dmy, FILE* fp)
   return true;
 }
 
-#if 0
-
-// #################################################################
-//
-bool COMB::WriteCombineData(REAL_TYPE* data, size_t dLen, int d_type, FILE* fp)
-{
-  if( d_type == OUTPUT_FLOAT ){
-    if( fwrite(data, sizeof(float), dLen, fp) != dLen ) return false;
-  }else{
-    if( fwrite(data, sizeof(double), dLen, fp) != dLen ) return false;
-  }
-  return true;
-}
-
-#endif
-
-// #################################################################
-// 
-bool COMB::WriteCombineData(float* data, size_t dLen, FILE* fp)
-{
-  if( fwrite(data, sizeof(float), dLen, fp) != dLen ) return false;
-  return true;
-}
-
-// #################################################################
-// 
-bool COMB::WriteCombineData(double* data, size_t dLen, FILE* fp)
-{
-  if( fwrite(data, sizeof(double), dLen, fp) != dLen ) return false;
-  return true;
-}

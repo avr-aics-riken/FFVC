@@ -41,17 +41,13 @@
 #include "PerfMonitor.h"
 #include "cpm_ParaManager.h"
 
-//#include "DomainInfo.h"
-#include "FB_Define.h"
-#include "FBUtility.h"
-#include "mydebug.h"
-#include "dfi.h"
 #include "PLOT3D_read.h"
 #include "PLOT3D_write.h"
 #include "FileIO_sph.h"
 //#include "omp.h"
 
-#include "dfiinfo.h"
+#include "cio_DFI.h"
+
 
 #include "limits.h" // for UBUNTU
 
@@ -125,11 +121,15 @@ public:
   int ndfi;//number of dfi file list
   vector<string> dfi_name;
   
-  ::DFI DFI;                 ///< 分散ファイルインデクス管理クラス
   FileIO_PLOT3D_READ  FP3DR; ///< PLOT3D READクラス
   FileIO_PLOT3D_WRITE FP3DW; ///< PLOT3D WRITEクラス
-  DfiInfo *DI;
-  //FileIO_SPH FSPH;
+
+  vector<cio_DFI *>dfi;
+  
+  /** AVS オプション */
+  int output_format_type;  ///< avsファイルの形式     0:binary     1:ascii
+  int output_divfunc;      ///< avsファイルの分割形式 0:分割しない 1:分割出力
+  
   
 public:
   /** コンストラクタ */
@@ -190,6 +190,13 @@ public:
   void get_PLOT3D(TextParser* tpCntl);
   
   /**
+   * @brief AVSファイル入出力に関するパラメータ
+   * @param [in] tpCntl  TextParserクラスポインタ
+   */
+  void get_AVSoptions(TextParser* tpCntl);
+  
+  
+  /**
    * @brief dfiファイルの読み込みとDfiInfoクラスデータの作成
    */
   void ReadDfiFiles();
@@ -219,65 +226,16 @@ public:
    */
   void CombineFiles();
   
-  /**
-   * @brief sphファイルのデータタイプの読み込み
-   * @param[out] m_sv_type    データ種別
-   * @param[out] m_d_type     データ型タイプ
-   * @param[in] fp_in         FORTRAN入力用ファイル装置番号
-   * @param[in] fname         ファイル名
-   */
-  bool ReadSphDataType(int* m_sv_type, int* m_d_type, int fp_in, string fname);
-  
-  /**
-   * @brief sphファイルのheaderの読み込み（単精度）
-   * @param[out] m_step       ステップ数
-   * @param[out] m_sv_type    データ種別
-   * @param[out] m_d_type     データ型タイプ
-   * @param[out] m_imax       x方向ボクセルサイズ
-   * @param[out] m_jmax       y方向ボクセルサイズ
-   * @param[out] m_kmax       z方向ボクセルサイズ
-   * @param[out] m_time       時間
-   * @param[out] m_org        原点座標
-   * @param[out] m_pit        ピッチ
-   * @param[in] fp_in         FORTRAN入力用ファイル装置番号
-   * @param[in] fname         ファイル名
-   */
-  bool ReadSphHeader(int* m_step,
-                     int* m_sv_type,
-                     int* m_d_type,
-                     int* m_imax,
-                     int* m_jmax,
-                     int* m_kmax,
-                     float* m_time,
-                     float* m_org,
-                     float* m_pit,
-                     int fp_in,
-                     string fname);
-  
+
   /**
    * @brief sphファイルのheaderの読み込み（倍精度）
-   * @param[out] m_step       ステップ数
-   * @param[out] m_sv_type    データ種別
-   * @param[out] m_d_type     データ型タイプ
-   * @param[out] m_imax       x方向ボクセルサイズ
-   * @param[out] m_jmax       y方向ボクセルサイズ
-   * @param[out] m_kmax       z方向ボクセルサイズ
-   * @param[out] m_time       時間
    * @param[out] m_org        原点座標
    * @param[out] m_pit        ピッチ
-   * @param[in] fp_in         FORTRAN入力用ファイル装置番号
    * @param[in] fname         ファイル名
    */
-  bool ReadSphHeader(long long* m_step,
-                     int* m_sv_type,
-                     int* m_d_type,
-                     long long* m_imax,
-                     long long* m_jmax,
-                     long long* m_kmax,
-                     double* m_time,
+  bool ReadSphHeader(
                      double* m_org,
                      double* m_pit,
-                     int fp_in,
                      string fname);
   
   /**
@@ -309,7 +267,150 @@ public:
                    int dim,
                    int fp_in,
                    string fname);
+  /**
+   * @brief[in] fp       ファイルポインタ
+   * @brief[in] eType    endian タイプ
+   * @brief[in] m_d_type データ型
+   */
+  bool read_HeaderRecord(FILE* fp,
+                         EMatchType eType,
+                         const int m_d_type);
+  /**
+   * @brief sphファイルのdataの読み込み
+   * @param[in]  fp          ファイルポインタ
+   * @param[in]  k           読み飛ばし層数
+   * @param[in]  matchEndian true:Endian一致
+   * @param[in]  buf         読込み用バッファ
+   * @param[out] src         読み込んだデータを格納した配列のポインタ
+   * @param[in]  headS       srcの始点インデックス
+   * @param[in]  tailS       srcの終点インデックス
+   */
+  bool read_DataRecord(FILE* fp,
+                       int k,
+                       bool matchEndian,
+                       cio_Array* buf,
+                       cio_Array* &src,
+                       int headS[3],
+                       int tailS[3]);
   
+  /**
+   * @brief 配列のコンバイン
+   * @param[in]  matchEndian true:Endian一致
+   * @param[in]  buf         読込み用バッファ
+   * @param[out] src         読み込んだデータを格納した配列のポインタ
+   */
+  bool combineXY(bool matchEndian,
+                 cio_Array* buf,
+                 cio_Array* &src,
+                 int headS[3],
+                 int tailS[3]);
+  
+  
+  /**
+   * @brief 配列のコピー
+   * @param [in]  buf コピー元の配列
+   * @param [out] src コピー先の配列
+   * @param [in]  sta コピーのスタート位置
+   * @param [in]  end コピーのエンド位置
+   */
+  template<class T1, class T2>
+  bool copyArray(cio_TypeArray<T1> *buf,
+                 cio_TypeArray<T2> *&src,
+                 int sta[3],
+                 int end[3],
+                 int sta_thin[3])
+  {
+    
+    int ic,jc,kc;
+    
+    //配列形状
+    CIO::E_CIO_ARRAYSHAPE shape = buf->getArrayShape();
+    //成分数
+    int ncomp = src->getNcomp();
+    //コピー
+    if( shape == CIO::E_CIO_IJKN )
+    {
+      for( int n=0;n<ncomp;n++ ){
+        kc=sta_thin[2]-1;
+        for( int k=sta[2];k<=end[2];k++ ){
+          kc++;
+          jc=sta_thin[1]-1;
+          for( int j=sta[1];j<=end[1];j++ ){
+            if( (j-1)%thin_count != 0 ) continue;
+            jc++;
+            ic=sta_thin[0]-1;
+            for( int i=sta[0];i<=end[0];i++ ){
+              if( (i-1)%thin_count != 0 ) continue;
+              ic++;
+              //src->hval(i,j,k,n) = (T2)buf->hval(i,j,k,n);
+              src->hval(ic,jc,kc,n) = (T2)buf->hval(i,j,k,n);
+            }}}}
+    }
+    else
+    {
+      kc=sta_thin[2]-1;
+      for( int k=sta[2];k<=end[2];k++ ){
+        kc++;
+        jc=sta_thin[1]-1;
+        for( int j=sta[1];j<=end[1];j++ ){
+          if( (j-1)%thin_count != 0 ) continue;
+          jc++;
+          ic=sta_thin[0]-1;
+          for( int i=sta[0];i<=end[0];i++ ){
+            if( (i-1)%thin_count != 0 ) continue;
+            ic++;
+            for( int n=0;n<ncomp;n++ ){
+              //src->hval(n,i,j,k) = (T2)buf->hval(n,i,j,k);
+              src->hval(n,ic,jc,kc) = (T2)buf->hval(n,i,j,k);
+            }}}}
+    }
+    return true;
+  };
+  /**
+   * @brief 配列のコピー
+   * @param [in]  buf コピー元の配列
+   * @param [out] src コピー先の配列
+   * @param [in]  sta コピーのスタート位置
+   * @param [in]  end コピーのエンド位置
+   *
+   */
+  template<class T1, class T2>
+  bool copyArray(cio_TypeArray<T1> *buf,
+                 cio_TypeArray<T2> *&src,
+                 int sta[3],
+                 int end[3])
+  {
+    
+    
+    //配列形状
+    CIO::E_CIO_ARRAYSHAPE shape = buf->getArrayShape();
+    //成分数
+    int ncomp = src->getNcomp();
+    //IJKN
+    if( shape == CIO::E_CIO_IJKN )
+    {
+      for( int n=0;n<ncomp;n++ ){
+        for( int k=sta[2];k<=end[2];k++ ){
+          for( int j=sta[1];j<=end[1];j++ ){
+            if( j%thin_count != 0 ) continue;
+            for( int i=sta[0];i<=end[0];i++ ){
+              if( i%thin_count != 0 ) continue;
+              src->hval(i/thin_count,j/thin_count,k,n) = (T2)buf->hval(i,j,k,n);
+            }}}}
+    }
+    else
+    {
+      for( int k=sta[2];k<=end[2];k++ ){
+        for( int j=sta[1];j<=end[1];j++ ){
+          if( j%thin_count != 0 ) continue;
+          for( int i=sta[0];i<=end[0];i++ ){
+            if( i%thin_count != 0 ) continue;
+            for( int n=0;n<ncomp;n++ ){
+              src->hval(n,i/thin_count,j/thin_count,k) = (T2)buf->hval(n,i,j,k);
+            }}}}
+    }
+    return true;
+  };
   
   /**
    * @brief 出力DFIファイル名を作成する
@@ -325,7 +426,6 @@ public:
    * @param [in] mio    出力時の分割指定　 true = local / false = gather(default)
    */
   std::string Generate_FileName(const std::string prefix, const unsigned m_step, const int m_id, const bool mio=false);
-  
   
   /**
    * @brief ファイル名を作成する。（拡張子自由）
@@ -387,23 +487,7 @@ public:
    */
   void output_sph();
   
-  /**
-   * @brief sphファイルのheaderの書き込み（単精度）
-   * @param[in] step       ステップ数
-   * @param[in] sv_type    データ種別
-   * @param[in] d_type     データ型タイプ
-   * @param[in] imax       x方向ボクセルサイズ
-   * @param[in] jmax       y方向ボクセルサイズ
-   * @param[in] kmax       z方向ボクセルサイズ
-   * @param[in] time       時間
-   * @param[in] org        原点座標
-   * @param[in] pit        ピッチ
-   * @param[in] fp         ファイルポインタ
-   */
-  bool WriteSphHeader(
-                      int step, int sv_type, int d_type, int imax, int jmax, int kmax,
-                      float time, float* org, float* pit, FILE *fp);
-  
+
   /**
    * @brief sphファイルのheaderの書き込み（倍精度）
    * @param[in] step       ステップ数
@@ -434,7 +518,7 @@ public:
    * @param[in] dLen       データサイズ
    * @param[in] fp         ファイルポインタ
    */
-  bool WriteCombineData(float* data, size_t dLen, FILE* fp);
+  //bool WriteCombineData(float* data, size_t dLen, FILE* fp);
   
   /**
    * @brief sphファイルのデータの書き込み（倍精度）
@@ -545,7 +629,7 @@ public:
    * @param [in] z          z方向座標ワーク
    */
   template<class T1, class T2>
-  void xyz(int m_step, int m_rank, int guide, T1* origin, T1* pitch, int* size, T2* x, T2* y, T2* z)
+  void OutputPlot3D_xyz(int m_step, int m_rank, int guide, T1* origin, T1* pitch, int* size, T2* x, T2* y, T2* z)
   {
     //value
     int ngrid=1;
@@ -1046,6 +1130,14 @@ public:
     LineDataDivideBy2(d, id, jd, kd);
     
   };
+  
+  ///////////////////////////////////////////////////////////////////////////////
+  // comb_avs.C
+  
+  /**
+   * @brief avsファイルの連結
+   */
+  void output_avs();
   
 };
 

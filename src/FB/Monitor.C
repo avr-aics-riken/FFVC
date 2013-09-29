@@ -757,6 +757,7 @@ void MonitorList::setInnerBoundary(CompoList *cmp, const int nBC)
     if (cmp[i].isMONITOR()) 
     {
       MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bcd, num_process);
+      
       m->setRankInfo(paraMngr, procGrp);
       m->setNeighborInfo(guide);
       

@@ -20,6 +20,7 @@ combsph_CXXFLAGS = \
   -I../FB \
   -I../PLOT3D \
   @CPM_CFLAGS@ \
+  @CIO_CFLAGS@ \
   @TP_CFLAGS@ \
   @PM_CFLAGS@ \
   @MPICH_CFLAGS@ \
@@ -33,6 +34,7 @@ combsph_SOURCES = \
   FileIO_sph.h \
   comb.C \
   comb.h \
+  comb_avs.C \
   comb_plot3d.C \
   comb_sph.C \
   endianUtil.h \
@@ -43,6 +45,7 @@ combsph_LDADD = \
   -L../FB -lFB \
   -L../PLOT3D -lPLOT3D \
   @CPM_LDFLAGS@ \
+  @CIO_LDFLAGS@ \
   @TP_LDFLAGS@ \
   @PM_LDFLAGS@ \
   @MPICH_LDFLAGS@ \

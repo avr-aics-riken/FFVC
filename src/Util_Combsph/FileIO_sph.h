@@ -26,7 +26,7 @@
 #include <string.h>
 
 #include "endianUtil.h"
-#include "FB_Define.h"
+
 
 /**
  * SPHファイル入出力クラス
@@ -239,101 +239,16 @@ public:
                       unsigned long long voxsize[3]);
 
   /**
-   * ファイルからSPHデータを読み込む。(float型)
+   * ファイルからSPHヘッダデータを読み込む
    * @param[in] fname        ファイル名
-   * @param[out] data_type   データ種別
-   * @param[out] voxsize     ボクセルサイズ
    * @param[out] voxorg      原点座標
    * @param[out] voxpit      ピッチ
-   * @param[out] step        ステップ数
-   * @param[out] time        時間
-   * @param[out] data        SPHデータ
-   * @return      true=success, false=fault
-   */
-  static bool ReadFile(const char* fname,
-                       DataType* data_type,
-                       unsigned int voxsize[3],
-                       float voxorg[3],
-                       float voxpit[3],
-                       int* step,
-                       float* time,
-                       float** data);
-
-  /**
-   * ファイルからSPHデータを読み込む。(double型)
-   * @param[in] fname        ファイル名
-   * @param[out] data_type   データ種別
-   * @param[out] voxsize     ボクセルサイズ
-   * @param[out] voxorg      原点座標
-   * @param[out] voxpit      ピッチ
-   * @param[out] step        ステップ数
-   * @param[out] time        時間
-   * @param[out] data        SPHデータ
-   * @return      true=success, false=fault
-   */
-  static bool ReadFile(const char* fname,
-                       DataType* data_type,
-                       unsigned long long voxsize[3],
-                       double voxorg[3],
-                       double voxpit[3],
-                       long long* step,
-                       double* time,
-                       double** data);
-
-
-  /**
-   * ファイルからSPHヘッダデータを読み込む。(float型)
-   * @param[in] fname        ファイル名
-   * @param[out] data_type   データ種別
-   * @param[out] voxsize     ボクセルサイズ
-   * @param[out] voxorg      原点座標
-   * @param[out] voxpit      ピッチ
-   * @param[out] step        ステップ数
-   * @param[out] time        時間
    * @return      true=success, false=fault
    */
   static bool GetHeader(const char* fname,
-                        //DataType* data_type,
-                        int* data_type,
-                        unsigned int voxsize[3],
-                        float voxorg[3],
-                        float voxpit[3],
-                        int* step,
-                        float* time);
-
-  /**
-   * ファイルからSPHヘッダデータを読み込む。(double型)
-   * @param[in] fname        ファイル名
-   * @param[out] data_type   データ種別
-   * @param[out] voxsize     ボクセルサイズ
-   * @param[out] voxorg      原点座標
-   * @param[out] voxpit      ピッチ
-   * @param[out] step        ステップ数
-   * @param[out] time        時間
-   * @return      true=success, false=fault
-   */
-  static bool GetHeader(const char* fname,
-                        //DataType* data_type,
-                        int* data_type,
-                        unsigned long long voxsize[3],
                         double voxorg[3],
-                        double voxpit[3],
-                        long long* step,
-                        double* time);
-
-  /**
-   * データ型を取得する。
-   * @param[in] fname        ファイル名
-   * @param[out] real_type   データ型タイプ
-   * @param[out] data_type   データ種別
-   * @param[out] voxsize     ボクセルサイズ
-   * @return      true=success, false=fault
-   */
-  static bool GetDataType(const char* fname,
-                          //RealType* real_type,
-                          //DataType* data_type);
-                          int* real_type,
-                          int* data_type);
+                        double voxpit[3]);
+  
 
   /**
    * ファイルからSPHデータを読み込む。(float型) 

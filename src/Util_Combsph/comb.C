@@ -50,12 +50,16 @@ COMB::COMB()
   output_real_type=0;
   out_format=0;
   ndfi=0;
-  DI=NULL;
+  
+  dfi.clear();
   
   // dfi管理
   for (int i=0; i<var_END; i++) dfi_mng[i]=0;
   
   staging=0;
+  
+  output_format_type = 0;
+  output_divfunc     = 0;
   
 }
 
@@ -64,7 +68,8 @@ COMB::COMB()
 // デストラクタ
 COMB::~COMB()
 {
-  if( DI ) delete [] DI;
+  for(int i=0; i<dfi.size(); i++ ) if( !dfi[i] ) delete dfi[i];
+  
 }
 
 // #################################################################
@@ -122,7 +127,7 @@ void COMB::ReadInputFile(TextParser* tpCntl)
       printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
-    //FList[ilist].name = str;
+
     dfi_name.push_back(str.c_str());
     
   }
@@ -164,8 +169,6 @@ void COMB::ReadInputFile(TextParser* tpCntl)
   label = "/CombData/Staging";
   if ( !(tpCntl->getInspectedValue(label, str )) )
   {
-    //Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    //Exit(0);
     staging = OFF;
   }
   else
@@ -184,8 +187,6 @@ void COMB::ReadInputFile(TextParser* tpCntl)
   label = "/CombData/OutputRealType";
   if ( !(tpCntl->getInspectedValue(label, str )) )
   {
-    //printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    //Exit(0);
     output_real_type = OUTPUT_REAL_UNKNOWN;
   }
   if     ( !strcasecmp(str.c_str(), "float" ) )  output_real_type = OUTPUT_FLOAT;
@@ -205,6 +206,7 @@ void COMB::ReadInputFile(TextParser* tpCntl)
   }
   if     ( !strcasecmp(str.c_str(), "sph" ) )    out_format = OUTFORMAT_IS_SPH;
   else if( !strcasecmp(str.c_str(), "plot3d" ) ) out_format = OUTFORMAT_IS_PLOT3D;
+  else if( !strcasecmp(str.c_str(), "avs" ) ) out_format = OUTFORMAT_IS_AVS;
   else
   {
     printf("\tInvalid keyword is described for  '%s'\n", label.c_str());
@@ -213,6 +215,9 @@ void COMB::ReadInputFile(TextParser* tpCntl)
   
   // PLOT3Dオプションの読み込み
   if( out_format == OUTFORMAT_IS_PLOT3D ) get_PLOT3D(tpCntl);
+  
+  // AVSオプションの読み込み
+  if( out_format == OUTFORMAT_IS_AVS ) get_AVSoptions(tpCntl);
   
 }
 
@@ -315,12 +320,12 @@ void COMB::get_PLOT3D(TextParser* tpCntl)
   
   if ( !(tpCntl->getInspectedValue(label, str )) )
   {
-    FP3DR.setSteady(FB_UNSTEADY);
+    FP3DR.setSteady(UNSTEADY);
   }
   else
   {
-    if     ( !strcasecmp(str.c_str(), "steady") )   FP3DR.setSteady(FB_STEADY);
-    else if( !strcasecmp(str.c_str(), "unsteady") ) FP3DR.setSteady(FB_UNSTEADY);
+    if     ( !strcasecmp(str.c_str(), "steady") )   FP3DR.setSteady(STEADY);
+    else if( !strcasecmp(str.c_str(), "unsteady") ) FP3DR.setSteady(UNSTEADY);
     else
     {
       printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -391,8 +396,6 @@ void COMB::get_PLOT3D(TextParser* tpCntl)
   label = "/Plot3dOptions/RealType";
   if ( !(tpCntl->getInspectedValue(label, str )) )
   {
-    //int d_type = (sizeof(REAL_TYPE) == 4) ? 1 : 2;  // 1-float / 2-double
-    //FP3DR.setRealType(d_type);
     FP3DR.setRealType(output_real_type);
   }
   else
@@ -537,6 +540,48 @@ void COMB::get_PLOT3D(TextParser* tpCntl)
   
 }
 
+// #################################################################
+// AVSファイル入出力に関するパラメータ
+void COMB::get_AVSoptions(TextParser* tpCntl)
+{
+  string str;
+  string label;
+  
+  //FormatType
+  label = "/AVSoptions/FormatType";
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    output_format_type = OUTPUT_FORMAT_TYPE_BINARY;
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "binary") ) output_format_type = OUTPUT_FORMAT_TYPE_BINARY;
+    else if( !strcasecmp(str.c_str(), "ascii") )  output_format_type = OUTPUT_FORMAT_TYPE_ASCII;
+    else
+    {
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
+    }
+  }
+  
+  //DivideFunc
+  label = "/AVSoptions/DivideFunc";
+  if(  !(tpCntl->getInspectedValue(label, str )) )
+  {
+    output_divfunc = OUTPUT_DIV_FUNC_OFF;
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "on") )  output_divfunc = OUTPUT_DIV_FUNC_ON;
+    else if( !strcasecmp(str.c_str(), "uff") ) output_divfunc = OUTPUT_DIV_FUNC_OFF;
+    else
+    {
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
+    }
+  }
+  
+}
 
 // #################################################################
 //
@@ -547,20 +592,23 @@ void COMB::ReadDfiFiles()
   
   // allocate dfi info class
   ndfi=dfi_name.size();
-  DI = new DfiInfo[ndfi];
   
-  // ランク情報をセット
-  ic=0;
-  for (it = dfi_name.begin(); it != dfi_name.end(); it++) {
-    DI[ic].setRankInfo(paraMngr, procGrp);
-    ic++;
-  }
   
-  // set dfi info class
+  // dfiファイルの読込み
   ic=0;
+  int tempg[3];
+  int tempd[3];
+  CIO::E_CIO_ERRORCODE ret = CIO::E_CIO_SUCCESS;
   for (it = dfi_name.begin(); it != dfi_name.end(); it++) {
     string fname=(*it).c_str();
-    DI[ic].ReadDfiFile(fname);
+    cio_DFI* dfi_in = cio_DFI::ReadInit(MPI_COMM_WORLD,
+                                        fname,
+                                        tempg,
+                                        tempd,
+                                        ret);
+    if( dfi_in == NULL ) exit(0);
+    if( ret != CIO::E_CIO_SUCCESS && ret != CIO::E_CIO_ERROR_INVALID_DIVNUM ) exit(0);
+    dfi.push_back(dfi_in);
     ic++;
   }
   
@@ -568,56 +616,53 @@ void COMB::ReadDfiFiles()
     fprintf(fplog,"\n");
     fprintf(fplog,"*** dfi file info ***\n");
     fprintf(fplog,"\n");
-    for(int i=0;i<ndfi;i++){
-      fprintf(fplog,"\tDI[%2d].Prefix                      = %s\n",i,DI[i].Prefix.c_str());
-      //fprintf(fplog,"\tDI[%2d].RankID_in_MPIworld          = %d\n",i,DI[i].RankID_in_MPIworld);
-      //fprintf(fplog,"\tDI[%2d].GroupID_in_MPIworld         = %d\n",i,DI[i].GroupID_in_MPIworld);
-      fprintf(fplog,"\tDI[%2d].NumberOfRank                = %d\n",i,DI[i].NumberOfRank);
-      fprintf(fplog,"\tDI[%2d].NumberOfGroup               = %d\n",i,DI[i].NumberOfGroup);
-      fprintf(fplog,"\tDI[%2d].Global_Voxel[0]             = %d\n",i,DI[i].Global_Voxel[0]);
-      fprintf(fplog,"\tDI[%2d].Global_Voxel[1]             = %d\n",i,DI[i].Global_Voxel[1]);
-      fprintf(fplog,"\tDI[%2d].Global_Voxel[2]             = %d\n",i,DI[i].Global_Voxel[2]);
-      fprintf(fplog,"\tDI[%2d].Global_Division[0]          = %d\n",i,DI[i].Global_Division[0]);
-      fprintf(fplog,"\tDI[%2d].Global_Division[1]          = %d\n",i,DI[i].Global_Division[1]);
-      fprintf(fplog,"\tDI[%2d].Global_Division[2]          = %d\n",i,DI[i].Global_Division[2]);
-      fprintf(fplog,"\tDI[%2d].FileFormat                  = %s\n",i,DI[i].FileFormat.c_str());
-      fprintf(fplog,"\tDI[%2d].GuideCell                   = %d\n",i,DI[i].GuideCell);
+    //for(int i=0;i<ndfi;i++){
+    for(int i=0;i<dfi.size();i++){
+      const cio_FileInfo *DFI_Info = dfi[i]->GetcioFileInfo();
+      fprintf(fplog,"\tDFI_Info->DirectoryPath            = %s\n",DFI_Info->DirectoryPath.c_str());
+      fprintf(fplog,"\tDFI_Info->TimeSliceDirFlag         = %d\n",DFI_Info->TimeSliceDirFlag);
+      fprintf(fplog,"\tDFI_Info->Prefix                   = %s\n",DFI_Info->Prefix.c_str());
+      fprintf(fplog,"\tDFI_Info->FileFormat               = %d\n",DFI_Info->FileFormat);
+      fprintf(fplog,"\tDFI_Info->GuideCell                = %d\n",DFI_Info->GuideCell);
+      fprintf(fplog,"\tDFI_Info->DataType                 = %d\n",DFI_Info->DataType);
+      fprintf(fplog,"\tDFI_Info->Endian                   = %d\n",DFI_Info->Endian);
+      fprintf(fplog,"\tDFI_Info->ArrayShape               = %d\n",DFI_Info->ArrayShape);
+      fprintf(fplog,"\tDFI_Info->Component                = %d\n",DFI_Info->Component);
+      
+      const cio_MPI *DFI_MPI = dfi[i]->GetcioMPI();
+      fprintf(fplog,"\tDFI_MPI->NumberOfRank              = %d\n",DFI_MPI->NumberOfRank);
+      fprintf(fplog,"\tDFI_MPI->NumberOfGroup             = %d\n",DFI_MPI->NumberOfGroup);
+      
+      const cio_Domain *DFI_Domain = dfi[i]->GetcioDomain();
+      fprintf(fplog,"\tDFI_Domain->GlobalVoxel[0]         = %d\n",DFI_Domain->GlobalVoxel[0]);
+      fprintf(fplog,"\tDFI_Domain->GlobalVoxel[1]         = %d\n",DFI_Domain->GlobalVoxel[1]);
+      fprintf(fplog,"\tDFI_Domain->GlobalVoxel[2]         = %d\n",DFI_Domain->GlobalVoxel[2]);
+      fprintf(fplog,"\tDFI_Domain->GlobalDivision[0]      = %d\n",DFI_Domain->GlobalDivision[0]);
+      fprintf(fplog,"\tDFI_Domain->GlobalDivision[1]      = %d\n",DFI_Domain->GlobalDivision[1]);
+      fprintf(fplog,"\tDFI_Domain->GlobalDivision[2]      = %d\n",DFI_Domain->GlobalDivision[2]);
+      
+      const cio_Process *DFI_Process = dfi[i]->GetcioProcess();
       fprintf(fplog,"\n");
-      fprintf(fplog,"\tDI[%2d].NodeInfoSizet = %d\n",i,DI[i].NodeInfoSize);
-      for(int j=0; j< DI[i].NodeInfoSize; j++ ) {
-        fprintf(fplog,"\t  DI[%2d].Node[%4d].RankID = %d\n",i,j,DI[i].Node[j].RankID);
-        fprintf(fplog,"\t  DI[%2d].Node[%4d].HostName = %s\n",i,j,DI[i].Node[j].HostName.c_str());
-        fprintf(fplog,"\t  DI[%2d].Node[%4d].VoxelSize[0] = %d\n",i,j,DI[i].Node[j].VoxelSize[0]);
-        fprintf(fplog,"\t  DI[%2d].Node[%4d].VoxelSize[1] = %d\n",i,j,DI[i].Node[j].VoxelSize[1]);
-        fprintf(fplog,"\t  DI[%2d].Node[%4d].VoxelSize[2] = %d\n",i,j,DI[i].Node[j].VoxelSize[2]);
-        fprintf(fplog,"\t  DI[%2d].Node[%4d].HeadIndex[0] = %d\n",i,j,DI[i].Node[j].HeadIndex[0]);
-        fprintf(fplog,"\t  DI[%2d].Node[%4d].HeadIndex[1] = %d\n",i,j,DI[i].Node[j].HeadIndex[1]);
-        fprintf(fplog,"\t  DI[%2d].Node[%4d].HeadIndex[2] = %d\n",i,j,DI[i].Node[j].HeadIndex[2]);
-        fprintf(fplog,"\t  DI[%2d].Node[%4d].TailIndex[0] = %d\n",i,j,DI[i].Node[j].TailIndex[0]);
-        fprintf(fplog,"\t  DI[%2d].Node[%4d].TailIndex[1] = %d\n",i,j,DI[i].Node[j].TailIndex[1]);
-        fprintf(fplog,"\t  DI[%2d].Node[%4d].TailIndex[2] = %d\n",i,j,DI[i].Node[j].TailIndex[2]);
-        fprintf(fplog,"\t  DI[%2d].Node[%4d].IJK          = %ld\n",i,j,DI[i].Node[j].IJK);
-        fprintf(fplog,"\t  DI[%2d].Node[%4d].IJK_JK       = %ld\n",i,j,DI[i].Node[j].IJK_JK);
-        fprintf(fplog,"\t  DI[%2d].Node[%4d].IJK_K        = %ld\n",i,j,DI[i].Node[j].IJK_K);
+      fprintf(fplog,"\tDFI_Process->RankList.size()       = %d\n",DFI_Process->RankList.size());
+      for(int j=0; j< DFI_Process->RankList.size(); j++ ) {
+        fprintf(fplog,"\t  DFI_Process->RankList[%d].RankID       = %d\n",j,DFI_Process->RankList[j].RankID);
+        fprintf(fplog,"\t  DFI_Process->RankList[%d].HostName     = %s\n",j,DFI_Process->RankList[j].HostName.c_str());
+        fprintf(fplog,"\t  DFI_Process->RankList[%d].VoxelSize[0] = %d\n",j,DFI_Process->RankList[j].VoxelSize[0]);
+        fprintf(fplog,"\t  DFI_Process->RankList[%d].VoxelSize[1] = %d\n",j,DFI_Process->RankList[j].VoxelSize[1]);
+        fprintf(fplog,"\t  DFI_Process->RankList[%d].VoxelSize[2] = %d\n",j,DFI_Process->RankList[j].VoxelSize[2]);
+        fprintf(fplog,"\t  DFI_Process->RankList[%d].HeadIndex[0] = %d\n",j,DFI_Process->RankList[j].HeadIndex[0]);
+        fprintf(fplog,"\t  DFI_Process->RankList[%d].HeadIndex[1] = %d\n",j,DFI_Process->RankList[j].HeadIndex[1]);
+        fprintf(fplog,"\t  DFI_Process->RankList[%d].HeadIndex[2] = %d\n",j,DFI_Process->RankList[j].HeadIndex[2]);
+        fprintf(fplog,"\t  DFI_Process->RankList[%d].TailIndex[0] = %d\n",j,DFI_Process->RankList[j].TailIndex[0]);
+        fprintf(fplog,"\t  DFI_Process->RankList[%d].TailIndex[1] = %d\n",j,DFI_Process->RankList[j].TailIndex[1]);
+        fprintf(fplog,"\t  DFI_Process->RankList[%d].TailIndex[2] = %d\n",j,DFI_Process->RankList[j].TailIndex[2]);
       }
       
       fprintf(fplog,"\n");
-      //for(int j=0; j< DI[i].step.size(); j++ ) {
-      //  fprintf(fplog,"\t  DI[%2d].step[%4d] = %d\n",i,j,DI[i].step[j]);
-      //}
-      for(int j=0; j< DI[i].Sc.size(); j++ ) {
-        fprintf(fplog,"\t  DI[%2d].step[%4d] = %d\n",i,j,DI[i].Sc[j]->step);
-        fprintf(fplog,"\t  DI[%2d].time[%4d] = %f\n",i,j,DI[i].Sc[j]->time);
-      }
-      
-      fprintf(fplog,"\n");
-      for(int j=0; j< DI[i].index_y.size(); j++ ) {
-        fprintf(fplog,"\t  DI[%2d].index_y[%4d] = %d\n",i,j,DI[i].index_y[j]);
-      }
-      
-      fprintf(fplog,"\n");
-      for(int j=0; j< DI[i].index_y.size(); j++ ) {
-        fprintf(fplog,"\t  DI[%2d].index_z[%4d] = %d\n",i,j,DI[i].index_z[j]);
+      const cio_TimeSlice* DFI_TSlice = dfi[i]->GetcioTimeSlice();
+      for(int j=0; j< DFI_TSlice->SliceList.size(); j++ ) {
+        fprintf(fplog,"\t  DFI_TSlice->SliceList[%d].step         = %d\n",j,DFI_TSlice->SliceList[j].step);
+        fprintf(fplog,"\t  DFI_TSlice->SliceList[%d}.time         = %f\n",j,DFI_TSlice->SliceList[j].time);
       }
     }
     fprintf(fplog,"\n");
@@ -627,59 +672,55 @@ void COMB::ReadDfiFiles()
     printf("\n");
     printf("*** dfi file info ***\n");
     printf("\n");
-    for(int i=0;i<ndfi;i++){
-      printf("\tDI[%2d].Prefix                      = %s\n",i,DI[i].Prefix.c_str());
-      //printf("\tDI[%2d].RankID_in_MPIworld          = %d\n",i,DI[i].RankID_in_MPIworld);
-      //printf("\tDI[%2d].GroupID_in_MPIworld         = %d\n",i,DI[i].GroupID_in_MPIworld);
-      printf("\tDI[%2d].NumberOfRank                = %d\n",i,DI[i].NumberOfRank);
-      printf("\tDI[%2d].NumberOfGroup               = %d\n",i,DI[i].NumberOfGroup);
-      printf("\tDI[%2d].Global_Voxel[0]             = %d\n",i,DI[i].Global_Voxel[0]);
-      printf("\tDI[%2d].Global_Voxel[1]             = %d\n",i,DI[i].Global_Voxel[1]);
-      printf("\tDI[%2d].Global_Voxel[2]             = %d\n",i,DI[i].Global_Voxel[2]);
-      printf("\tDI[%2d].Global_Division[0]          = %d\n",i,DI[i].Global_Division[0]);
-      printf("\tDI[%2d].Global_Division[1]          = %d\n",i,DI[i].Global_Division[1]);
-      printf("\tDI[%2d].Global_Division[2]          = %d\n",i,DI[i].Global_Division[2]);
-      printf("\tDI[%2d].FileFormat                  = %s\n",i,DI[i].FileFormat.c_str());
-      printf("\tDI[%2d].GuideCell                   = %d\n",i,DI[i].GuideCell);
+    for(int i=0;i<dfi.size();i++){
+      const cio_FileInfo *DFI_Info = dfi[i]->GetcioFileInfo();
+      printf("\tDFI_Info->DirectoryPath            = %s\n",DFI_Info->DirectoryPath.c_str());
+      printf("\tDFI_Info->TimeSliceDirFlag         = %d\n",DFI_Info->TimeSliceDirFlag);
+      printf("\tDFI_Info->Prefix                   = %s\n",DFI_Info->Prefix.c_str());
+      printf("\tDFI_Info->FileFormat               = %d\n",DFI_Info->FileFormat);
+      printf("\tDFI_Info->GuideCell                = %d\n",DFI_Info->GuideCell);
+      printf("\tDFI_Info->DataType                 = %d\n",DFI_Info->DataType);
+      printf("\tDFI_Info->Endian                   = %d\n",DFI_Info->Endian);
+      printf("\tDFI_Info->ArrayShape               = %d\n",DFI_Info->ArrayShape);
+      printf("\tDFI_Info->Component                = %d\n",DFI_Info->Component);
+      
+      const cio_MPI *DFI_MPI = dfi[i]->GetcioMPI();
+      printf("\tDFI_MPI->NumberOfRank              = %d\n",DFI_MPI->NumberOfRank);
+      printf("\tDFI_MPI->NumberOfGroup             = %d\n",DFI_MPI->NumberOfGroup);
+      
+      const cio_Domain *DFI_Domain = dfi[i]->GetcioDomain();
+      printf("\tDFI_Domain->GlobalVoxel[0]         = %d\n",DFI_Domain->GlobalVoxel[0]);
+      printf("\tDFI_Domain->GlobalVoxel[1]         = %d\n",DFI_Domain->GlobalVoxel[1]);
+      printf("\tDFI_Domain->GlobalVoxel[2]         = %d\n",DFI_Domain->GlobalVoxel[2]);
+      printf("\tDFI_Domain->GlobalDivision[0]      = %d\n",DFI_Domain->GlobalDivision[0]);
+      printf("\tDFI_Domain->GlobalDivision[1]      = %d\n",DFI_Domain->GlobalDivision[1]);
+      printf("\tDFI_Domain->GlobalDivision[2]      = %d\n",DFI_Domain->GlobalDivision[2]);
+      
+      const cio_Process *DFI_Process = dfi[i]->GetcioProcess();
       printf("\n");
-      printf("\tDI[%2d].NodeInfoSizet = %d\n",i,DI[i].NodeInfoSize);
-      for(int j=0; j< DI[i].NodeInfoSize; j++ ) {
-        printf("\t  DI[%2d].Node[%4d].RankID = %d\n",i,j,DI[i].Node[j].RankID);
-        printf("\t  DI[%2d].Node[%4d].HostName = %s\n",i,j,DI[i].Node[j].HostName.c_str());
-        printf("\t  DI[%2d].Node[%4d].VoxelSize[0] = %d\n",i,j,DI[i].Node[j].VoxelSize[0]);
-        printf("\t  DI[%2d].Node[%4d].VoxelSize[1] = %d\n",i,j,DI[i].Node[j].VoxelSize[1]);
-        printf("\t  DI[%2d].Node[%4d].VoxelSize[2] = %d\n",i,j,DI[i].Node[j].VoxelSize[2]);
-        printf("\t  DI[%2d].Node[%4d].HeadIndex[0] = %d\n",i,j,DI[i].Node[j].HeadIndex[0]);
-        printf("\t  DI[%2d].Node[%4d].HeadIndex[1] = %d\n",i,j,DI[i].Node[j].HeadIndex[1]);
-        printf("\t  DI[%2d].Node[%4d].HeadIndex[2] = %d\n",i,j,DI[i].Node[j].HeadIndex[2]);
-        printf("\t  DI[%2d].Node[%4d].TailIndex[0] = %d\n",i,j,DI[i].Node[j].TailIndex[0]);
-        printf("\t  DI[%2d].Node[%4d].TailIndex[1] = %d\n",i,j,DI[i].Node[j].TailIndex[1]);
-        printf("\t  DI[%2d].Node[%4d].TailIndex[2] = %d\n",i,j,DI[i].Node[j].TailIndex[2]);
-        printf("\t  DI[%2d].Node[%4d].IJK          = %ld\n",i,j,DI[i].Node[j].IJK);
-        printf("\t  DI[%2d].Node[%4d].IJK_JK       = %ld\n",i,j,DI[i].Node[j].IJK_JK);
-        printf("\t  DI[%2d].Node[%4d].IJK_K        = %ld\n",i,j,DI[i].Node[j].IJK_K);
+      printf("\tDFI_Process->RankList.size()       = %d\n",(int)DFI_Process->RankList.size());
+      for(int j=0; j< DFI_Process->RankList.size(); j++ ) {
+        printf("\t  DFI_Process->RankList[%d].RankID       = %d\n",j,DFI_Process->RankList[j].RankID);
+        printf("\t  DFI_Process->RankList[%d].HostName     = %s\n",j,DFI_Process->RankList[j].HostName.c_str());
+        printf("\t  DFI_Process->RankList[%d].VoxelSize[0] = %d\n",j,DFI_Process->RankList[j].VoxelSize[0]);
+        printf("\t  DFI_Process->RankList[%d].VoxelSize[1] = %d\n",j,DFI_Process->RankList[j].VoxelSize[1]);
+        printf("\t  DFI_Process->RankList[%d].VoxelSize[2] = %d\n",j,DFI_Process->RankList[j].VoxelSize[2]);
+        printf("\t  DFI_Process->RankList[%d].HeadIndex[0] = %d\n",j,DFI_Process->RankList[j].HeadIndex[0]);
+        printf("\t  DFI_Process->RankList[%d].HeadIndex[1] = %d\n",j,DFI_Process->RankList[j].HeadIndex[1]);
+        printf("\t  DFI_Process->RankList[%d].HeadIndex[2] = %d\n",j,DFI_Process->RankList[j].HeadIndex[2]);
+        printf("\t  DFI_Process->RankList[%d].TailIndex[0] = %d\n",j,DFI_Process->RankList[j].TailIndex[0]);
+        printf("\t  DFI_Process->RankList[%d].TailIndex[1] = %d\n",j,DFI_Process->RankList[j].TailIndex[1]);
+        printf("\t  DFI_Process->RankList[%d].TailIndex[2] = %d\n",j,DFI_Process->RankList[j].TailIndex[2]);
       }
       
       printf("\n");
-      //for(int j=0; j< DI[i].step.size(); j++ ) {
-      //  printf("\t  DI[%2d].step[%4d] = %d\n",i,j,DI[i].step[j]);
-      //}
-      for(int j=0; j< DI[i].Sc.size(); j++ ) {
-        printf("\t  DI[%2d].step[%4d] = %d\n",i,j,DI[i].Sc[j]->step);
-        printf("\t  DI[%2d].time[%4d] = %f\n",i,j,DI[i].Sc[j]->time);
+      const cio_TimeSlice* DFI_TSlice = dfi[i]->GetcioTimeSlice();
+      for(int j=0; j< DFI_TSlice->SliceList.size(); j++ ) {
+        printf("\t  DFI_TSlice->SliceList[%d].step         = %d\n",j,DFI_TSlice->SliceList[j].step);
+        printf("\t  DFI_TSlice->SliceList[%d}.time         = %f\n",j,DFI_TSlice->SliceList[j].time);
       }
       
-      printf("\n");
-      for(int j=0; j< DI[i].index_y.size(); j++ ) {
-        printf("\t  DI[%2d].index_y[%4d] = %d\n",i,j,DI[i].index_y[j]);
-      }
-      
-      printf("\n");
-      for(int j=0; j< DI[i].index_y.size(); j++ ) {
-        printf("\t  DI[%2d].index_z[%4d] = %d\n",i,j,DI[i].index_z[j]);
-      }
     }
-    printf("\n");
   }
   
 }
@@ -702,7 +743,8 @@ void COMB::CheckDir(string dirstr)
     if( !(dir = opendir(dirstr.c_str())) ) {
       if( errno == ENOENT ) {
         mode_t mode = S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
-        if ( !FBUtility::mkdirs(dirstr.c_str()) )
+        //if ( !FBUtility::mkdirs(dirstr.c_str()) )
+        if ( !cio_DFI::MakeDirectorySub(dirstr) )
         {
           printf("\tCan't generate directory(%s).\n", dirstr.c_str());
           Exit(0);
@@ -808,6 +850,11 @@ void COMB::CombineFiles()
   {
     output_plot3d();
   }
+  else if( out_format == OUTFORMAT_IS_AVS )
+  {
+    output_avs();
+  }
+
 }
 
 // #################################################################
@@ -855,7 +902,6 @@ std::string COMB::Generate_FileName(const std::string prefix, const unsigned m_s
   return fname;
 }
 
-
 // #################################################################
 // ファイル名を作成する（拡張子自由）
 std::string COMB::Generate_FileName_Free(const std::string prefix, const std::string xxx, const unsigned m_step, const int m_id, const bool mio)
@@ -902,8 +948,6 @@ bool COMB::Copy_DFIFile(const std::string base_name, const std::string new_name,
   
   while( fgets(buff,DFI_LINE_LENGTH,fpin) != NULL ) {
     buffs=buff;
-    //if( !strcasecmp(buffs.c_str(), "  FileInfo {\n" ) ) break;
-    //if( !strcasecmp(buffs.substr(0,12).c_str(), "  FileInfo {") ) break;
     if( !strcasecmp(buffs.substr(0,8).c_str(), "  Prefix") ){
       Write_Tab(fpout, 1);
       fprintf(fpout, "Prefix        = \"%s\"\n", prefix.c_str());
@@ -921,16 +965,8 @@ bool COMB::Copy_DFIFile(const std::string base_name, const std::string new_name,
     }
   }
   
-  //if (fpout) Write_Tab(fpout, 1);
-  //if (fpout) fprintf(fpout, "FileInfo {\n");
-  //if (fpout) Write_Tab(fpout, 1);
-  //if (fpout) fprintf(fpout, "}\n");
-  //if (fpout) fprintf(fpout, "}\n");
-  
   fclose(fpin);
   fclose(fpout);
-  
-  //dfi_mng++;
   
   return true;
 }
@@ -1115,65 +1151,17 @@ int COMB::tt_check_machine_endian()
 
 // #################################################################
 //
-bool COMB::ReadSphDataType(int* m_sv_type, int* m_d_type, int fp_in, string fname)
-{
-  if( !(FileIO_SPH::GetDataType(fname.c_str(), m_d_type, m_sv_type)) ){
-    printf("\terror : FileIO_SPH::GetDataType\n");
-    Exit(0);
-  }
-  return true;
-}
-
-// #################################################################
-//
-bool COMB::ReadSphHeader(int* m_step,
-                         int* m_sv_type,
-                         int* m_d_type,
-                         int* m_imax,
-                         int* m_jmax,
-                         int* m_kmax,
-                         float* m_time,
-                         float* m_org,
-                         float* m_pit,
-                         int fp_in,
-                         string fname)
-{
-  unsigned int voxsize[3];
-  if( !(FileIO_SPH::GetHeader(fname.c_str(), m_sv_type, voxsize, m_org, m_pit, m_step, m_time)) ){
-    printf("\terror : FileIO_SPH::GetHeader\n");
-    Exit(0);
-  }
-  *m_imax=(int)voxsize[0];
-  *m_jmax=(int)voxsize[1];
-  *m_kmax=(int)voxsize[2];
-  return true;
-}
-
-// #################################################################
-//
-bool COMB::ReadSphHeader(long long* m_step,
-                         int* m_sv_type,
-                         int* m_d_type,
-                         long long* m_imax,
-                         long long* m_jmax,
-                         long long* m_kmax,
-                         double* m_time,
+bool COMB::ReadSphHeader(
                          double* m_org,
                          double* m_pit,
-                         int fp_in,
                          string fname)
 {
-  unsigned long long voxsize[3];
-  if( !(FileIO_SPH::GetHeader(fname.c_str(), m_sv_type, voxsize, m_org, m_pit, m_step, m_time)) ){
+  if( !(FileIO_SPH::GetHeader(fname.c_str(), m_org, m_pit)) ){
     printf("\terror : FileIO_SPH::GetHeader\n");
     Exit(0);
   }
-  *m_imax=(long long)voxsize[0];
-  *m_jmax=(long long)voxsize[1];
-  *m_kmax=(long long)voxsize[2];
   return true;
 }
-
 
 // #################################################################
 //
@@ -1220,5 +1208,196 @@ bool COMB::ReadSphData(double* wk,
     printf("\terror : FileIO_SPH::GetData\n");
     Exit(0);
   }
+  return true;
+}
+
+// #################################################################
+//
+bool COMB::read_HeaderRecord(FILE* fp,
+                             EMatchType eType,
+                             const int m_d_type)
+{
+  
+  unsigned int dmy, type_dmy;
+  int data_type,real_type;
+  
+  if( fread(&dmy, sizeof(int), 1, fp) != 1 ) { fclose(fp); return false; }
+  if( eType == UnMatch ) BSWAP32(dmy);
+  if( dmy != 8 ) { fclose(fp); return false; }
+  if( fread(&data_type, sizeof(int), 1, fp) != 1 ) { fclose(fp); return false; }
+  if( eType == UnMatch ) BSWAP32(data_type);
+  if( fread(&real_type, sizeof(int), 1, fp) != 1 ) { fclose(fp); return false; }
+  if( eType == UnMatch ) BSWAP32(real_type);
+  if( fread(&dmy, sizeof(int), 1, fp) != 1 ) { fclose(fp); return false; }
+  if( eType == UnMatch ) BSWAP32(dmy);
+  if( dmy != 8 ) { fclose(fp); return false; }
+  
+  if( real_type == SPH_FLOAT ) {
+    type_dmy = 12;
+  } else if( real_type == SPH_DOUBLE ) {
+    type_dmy = 24;
+  } else {
+    return false;
+  }
+  
+  //voxcel
+  if( fread(&dmy, sizeof(int), 1, fp) != 1 ) { fclose(fp); return false; }
+  if( eType == UnMatch ) BSWAP32(dmy);
+  if( dmy != type_dmy ) { fclose(fp); return false; }
+  if( real_type == SPH_FLOAT ) {
+    unsigned int tmp[3];
+    if( fread(tmp, sizeof(int), 3, fp) != 3 ){fclose(fp);return false;}
+    if( eType == UnMatch ) {
+      BSWAP32(tmp[0]);
+      BSWAP32(tmp[1]);
+      BSWAP32(tmp[2]);
+    }
+  } else {
+    unsigned long long tmp[3];
+    if( fread(tmp, sizeof(long long), 3, fp) != 3 ){fclose(fp);return false;}
+    if( eType == UnMatch ) {
+      BSWAP64(tmp[0]);
+      BSWAP64(tmp[1]);
+      BSWAP64(tmp[2]);
+    }
+  }
+  if( fread(&dmy, sizeof(int), 1, fp) != 1 ) { fclose(fp); return false; }
+  if( eType == UnMatch ) BSWAP32(dmy);
+  if( dmy != type_dmy ) { fclose(fp); return false; }
+  
+  //org
+  if( fread(&dmy, sizeof(int), 1, fp) != 1 ) { fclose(fp); return false; }
+  if( eType == UnMatch ) BSWAP32(dmy);
+  if( dmy != type_dmy ) { fclose(fp); return false; }
+  if( real_type == SPH_FLOAT ) {
+    float ftmp[3];
+    if( fread(ftmp, sizeof(float), 3, fp) != 3 ){fclose(fp);return false;}
+    if( eType == UnMatch ) {
+      BSWAP32(ftmp[0]);
+      BSWAP32(ftmp[1]);
+      BSWAP32(ftmp[2]);
+    }
+  } else {
+    double dtmp[3];
+    if( fread(dtmp, sizeof(double), 3, fp) != 3 ){fclose(fp);return false;}
+    if( eType == UnMatch ) {
+      BSWAP64(dtmp[0]);
+      BSWAP64(dtmp[1]);
+      BSWAP64(dtmp[2]);
+    }
+  }
+  if( fread(&dmy, sizeof(int), 1, fp) != 1 ) { fclose(fp); return false; }
+  if( eType == UnMatch ) BSWAP32(dmy);
+  if( dmy != type_dmy ) { fclose(fp); return false; }
+  
+  //pit
+  if( fread(&dmy, sizeof(int), 1, fp) != 1 ) { fclose(fp); return false; }
+  if( eType == UnMatch ) BSWAP32(dmy);
+  if( dmy != type_dmy ) { fclose(fp); return false; }
+  if( real_type == SPH_FLOAT ) {
+    float ftmp[3];
+    if( fread(ftmp, sizeof(float), 3, fp) != 3 ){fclose(fp);return false;}
+    if( eType == UnMatch ) {
+      BSWAP32(ftmp[0]);
+      BSWAP32(ftmp[1]);
+      BSWAP32(ftmp[2]);
+    }
+  } else {
+    double dtmp[3];
+    if( fread(dtmp, sizeof(double), 3, fp) != 3 ){fclose(fp);return false;}
+    if( eType == UnMatch ) {
+      BSWAP64(dtmp[0]);
+      BSWAP64(dtmp[1]);
+      BSWAP64(dtmp[2]);
+    }
+  }
+  if( fread(&dmy, sizeof(int), 1, fp) != 1 ) { fclose(fp); return false; }
+  if( eType == UnMatch ) BSWAP32(dmy);
+  if( dmy != type_dmy ) { fclose(fp); return false; }
+  
+  //step & time
+  if( real_type == SPH_FLOAT ) {
+    type_dmy = 8;
+  } else {
+    type_dmy = 16;
+  }
+  if( fread(&dmy, sizeof(int), 1, fp) != 1 ) { fclose(fp); return false; }
+  if( eType == UnMatch ) BSWAP32(dmy);
+  if( dmy != type_dmy ) { fclose(fp); return false; }
+  if( real_type == SPH_FLOAT ) {
+    int t_step;
+    if( fread(&t_step, sizeof(int), 1, fp) != 1 ) {fclose(fp); return false;}
+    if( eType == UnMatch ) BSWAP32(t_step);
+    float t_time;
+    if( fread(&t_time, sizeof(float), 1, fp) != 1 ) { fclose(fp); return false; }
+    if( eType == UnMatch ) BSWAP32(t_time);
+  } else {
+    long long t_step;
+    if( fread(&t_step, sizeof(long long), 1, fp) != 1 ) {fclose(fp); return false;}
+    if( eType == UnMatch ) BSWAP64(t_step);
+    double t_time;
+    if( fread(&t_time, sizeof(double), 1, fp) != 1 ) { fclose(fp); return false; }
+    if( eType == UnMatch ) BSWAP64(t_time);
+  }
+  if( fread(&dmy, sizeof(int), 1, fp) != 1 ) { fclose(fp); return false; }
+  if( eType == UnMatch ) BSWAP32(dmy);
+  if( dmy != type_dmy ) { fclose(fp); return false; }
+  
+  return true;
+}
+
+
+// #################################################################
+//
+bool COMB::combineXY(bool matchEndian,
+                     cio_Array* buf,
+                     cio_Array* &src,
+                     int headS[3],
+                     int tailS[3])
+{
+  
+  //copy
+  int gcB          = buf->getGcInt();
+  const int *headB = buf->getHeadIndex();
+  const int *tailB = buf->getTailIndex();
+  int       gcS    = src->getGcInt();
+  int sta[3],end[3];
+  for( int i=0;i<3;i++ )
+  {
+    sta[i] = (headB[i]-gcB>=headS[i]-gcS) ? headB[i]-gcB : headS[i]-gcS;
+    end[i] = (tailB[i]+gcB<=tailS[i]+gcS) ? tailB[i]+gcB : tailS[i]+gcS;
+  }
+  
+  
+  //同じデータ型のコピー
+  if( buf->getDataType() == src->getDataType() ) {
+    // float to float
+    if( buf->getDataType() == CIO::E_CIO_FLOAT32 ) {
+      cio_TypeArray<float> *B = dynamic_cast<cio_TypeArray<float>*>(buf);
+      cio_TypeArray<float> *S = dynamic_cast<cio_TypeArray<float>*>(src);
+      copyArray(B, S, sta, end);
+      //copyArray(buf, src, sta, end);
+      // double to double
+    } else {
+      cio_TypeArray<double> *B = dynamic_cast<cio_TypeArray<double>*>(buf);
+      cio_TypeArray<double> *S = dynamic_cast<cio_TypeArray<double>*>(src);
+      copyArray(B, S, sta, end);
+    }
+    //違う型のコピー
+  } else {
+    // float to double
+    if( buf->getDataType() == CIO::E_CIO_FLOAT32 &&
+       src->getDataType() == CIO::E_CIO_FLOAT64 ) {
+      cio_TypeArray<float>  *B = dynamic_cast<cio_TypeArray<float>*>(buf);
+      cio_TypeArray<double> *S = dynamic_cast<cio_TypeArray<double>*>(src);
+      copyArray(B, S, sta, end);
+      //doubel to float
+    } else {
+      cio_TypeArray<double> *B = dynamic_cast<cio_TypeArray<double>*>(buf);
+      cio_TypeArray<float>  *S = dynamic_cast<cio_TypeArray<float>*>(src);
+      copyArray(B, S, sta, end);
+    }
+  }
+  
   return true;
 }

@@ -39,10 +39,46 @@ int FFV::Initialize(int argc, char **argv)
 
   
   
+  // cpm_ParaManagerのポインタをセット
+  C.importCPM(paraMngr);
+  F.importCPM(paraMngr);
+  V.importCPM(paraMngr);
+  B.importCPM(paraMngr);
+  BC.importCPM(paraMngr);
+  MO.importCPM(paraMngr);
+  
+  // 入力ファイルの指定
+  std::string input_file = argv[1];
+  
+  
+  // ffvのパラメータローダのインスタンス生成
+  TextParser tp_ffv;
+  
+  
+  // パラメータのロードと保持
+  {
+    int ierror=0;
+    
+    if ( (ierror = tp_ffv.read(input_file)) != TP_NO_ERROR )
+    {
+      Hostonly_ stamped_printf("\tError at reading '%s' file : %d\n", input_file.c_str(), ierror);
+      Exit(0);
+    }
+  }
+  
+  
+  // TextParserクラスのポインタを各クラスに渡す
+  C.importTP(&tp_ffv);
+  B.importTP(&tp_ffv);
+  M.importTP(&tp_ffv);
+  MO.importTP(&tp_ffv);
+  
+  
   // 固定パラメータ
   fixedParameters();
   
 
+  
   
   // ------------------------------------
   FILE* fp = NULL;
@@ -66,32 +102,6 @@ int FFV::Initialize(int argc, char **argv)
     FBUtility::printVersion(fp,     "FlowBase        ", FB_VERS);
     FBUtility::printVersion(stdout, "FlowBase        ", FB_VERS);
   }
-  
-  // 入力ファイルの指定
-  std::string input_file = argv[1];
-  
-  
-  // ffvのパラメータローダのインスタンス生成
-  TextParser tp_ffv;
-
-  
-  // パラメータのロードと保持
-  {
-    int ierror=0;
-    
-    if ( (ierror = tp_ffv.read(input_file)) != TP_NO_ERROR )
-    {
-      Hostonly_ stamped_printf("\tError at reading '%s' file : %d\n", input_file.c_str(), ierror);
-      Exit(0);
-    }
-  }
-  
-  
-  // TextParserクラスのポインタを各クラスに渡す
-  C.importTP(&tp_ffv);
-  B.importTP(&tp_ffv);
-  M.importTP(&tp_ffv);
-  MO.importTP(&tp_ffv);
 
   
   // 反復制御クラスのインスタンス
@@ -106,7 +116,6 @@ int FFV::Initialize(int argc, char **argv)
   identifyLinearSolver(&tp_ffv);
 
 
-
   // 計算モデルの入力ソース情報を取得
   C.getGeometryModel();
   
@@ -118,12 +127,10 @@ int FFV::Initialize(int argc, char **argv)
   
   // パラメータの取得と計算領域の初期化，並列モードを返す
   std::string str_para = setupDomain(&tp_ffv);
-
  
   
   // mat[], cmp[]の作成
   createTable(fp);
-  
   
   
   // 媒質情報をパラメータファイルから読み込み，媒質リストを作成する
@@ -4653,8 +4660,6 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     Exit(0);
   }
   
-  // ポリゴンの修正
-  //RepairPolygonData(PL, false);
   
   
   /* スケーリングする場合のみ表示
@@ -4807,6 +4812,9 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   displayMemoryInfo(fp, G_poly_mem, poly_mem, "Polygon");
   
+  
+  // ポリゴンの修正
+  RepairPolygonData(PL, false);
 
   //calcBboxfromPolygonGroup();
   

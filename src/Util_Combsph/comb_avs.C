@@ -14,14 +14,16 @@
 //##################################################################################
 
 /**
- * @file   ffv_Version.h
+ * @file   comb_avs.C
+ * @brief  COMB Class
+ * @author kero
  */
 
-#ifndef _FFVC_VERSION_H_
-#define _FFVC_VERSION_H_
+#include "comb.h"
 
-#define FFVC_VERSION_NO  "1.4.0"
-#define FFVC_REVISION    "20130929_2330"
+// #################################################################
+// output avs file
+void COMB::output_avs()
+{
 
-#endif /* _FFVC_VERSION_H_ */
-
+}
