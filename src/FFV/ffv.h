@@ -428,10 +428,6 @@ private:
   void gatherDomainInfo();
   
   
-  // Binary voxelをカット情報から生成
-  void generateSolid(FILE* fp);
-  
-  
   // グローバルな領域情報を取得
   int getDomainInfo(TextParser* tp_dom);
   

@@ -214,6 +214,7 @@ Output {
     Iteration        = "Off"
     Profiling        = "On"
     WallInfo         = "Off"
+    CCNVfile         = "off"
     Console {
       TemporalType   = "Step"
       Interval       = 1
@@ -256,23 +257,18 @@ Output {
     }
 
     PLOT3D {
-      filename        = ""
-      gridkind        = "single_grid"
-      gridmobility    = "immovable"
-      stateoftime     = "unsteady"
-      setiblankflag   = "off"
-      Dimension       = "3D"
-      Formattype      = "unformatted"
-      Outputxyz       = "off"
-      Outputq         = "off"
-      Outputfunction  = "off"
-      Outputfuncname  = "off"
-      Outputfvbnd     = "off"
-    }
-
-    VTK {
-      Path            = "VTK"
-      Prefix          = "data-"
+      DirectoryPath   = "foo"
+      FileNameGrid    = ""
+      FileNameFunc    = ""
+      GridMobility    = "immovable"
+      StateOfTime     = "unsteady"
+      SetIblankFlag   = "on"
+      FormatType      = "unformatted"
+      RealType        = "float"
+      OutputXYZ       = "on"
+      OutputFunction  = "on"
+      OutputFuncName  = "on"
+      DivideFunc      = "off"
     }
   }
 }

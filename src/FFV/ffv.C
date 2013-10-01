@@ -787,51 +787,51 @@ void FFV::OutputBasicVariables(double& flop)
   }
   
   
+  
+  if ( !C.isHeatProblem() ) return;
+  
   // Tempearture
-  if( C.isHeatProblem() )
+  if (C.Unit.File == DIMENSIONAL)
   {
-    if (C.Unit.File == DIMENSIONAL)
-    {
-      U.convArrayIE2Tmp(d_ws, size, guide, d_ie, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, true, flop);
-    }
-    else
-    {
-      U.convArrayIE2Tmp(d_ws, size, guide, d_ie, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, false, flop);
-    }
-    
-    fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
-    
-    if ( numProc > 1 )
-    {
-      min_tmp = f_min;
-      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
-      
-      max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
-    }
-    minmax[0] = f_min;
-    minmax[1] = f_max;
-    
-    if ( !DFI_OUT_TEMP )
-    {
-      printf("[%d] DFI_OUT_TEMP Pointer Error\n", paraMngr->GetMyRankID());
-      Exit(-1);
-    }
-    
-    ret = DFI_OUT_TEMP->WriteData(m_step,
-                                  m_time,
-                                  size,
-                                  1,
-                                  guide,
-                                  d_ws,
-                                  minmax,
-                                  true,
-                                  true,
-                                  0,
-                                  0.0);
-
-    if ( ret != CIO::E_CIO_SUCCESS ) Exit(0);
+    U.convArrayIE2Tmp(d_ws, size, guide, d_ie, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, true, flop);
   }
+  else
+  {
+    U.convArrayIE2Tmp(d_ws, size, guide, d_ie, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, false, flop);
+  }
+  
+  fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
+  
+  if ( numProc > 1 )
+  {
+    min_tmp = f_min;
+    if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+    
+    max_tmp = f_max;
+    if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+  }
+  minmax[0] = f_min;
+  minmax[1] = f_max;
+  
+  if ( !DFI_OUT_TEMP )
+  {
+    printf("[%d] DFI_OUT_TEMP Pointer Error\n", paraMngr->GetMyRankID());
+    Exit(-1);
+  }
+  
+  ret = DFI_OUT_TEMP->WriteData(m_step,
+                                m_time,
+                                size,
+                                1,
+                                guide,
+                                d_ws,
+                                minmax,
+                                true,
+                                true,
+                                0,
+                                0.0);
+  
+  if ( ret != CIO::E_CIO_SUCCESS ) Exit(0);
   
 }
 

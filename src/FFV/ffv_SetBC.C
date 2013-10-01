@@ -1575,7 +1575,7 @@ void SetBC3D::psIbcConstTemp(REAL_TYPE* d_ie, const int* d_bcd, const int n)
   int st[3], ed[3];
   
   REAL_TYPE rho = mat[n].P[p_density] / rho_0;
-  REAL_TYPE cp  = mat[n].P[p_thermal_conductivity] / cp_0;
+  REAL_TYPE cp  = mat[n].P[p_specific_heat] / cp_0;
   REAL_TYPE tmp = FBUtility::convTempD2ND(cmp[n].getTemp(), BaseTemp, DiffTemp);
   REAL_TYPE ref = rho * cp * tmp;
   
@@ -1977,7 +1977,7 @@ REAL_TYPE SetBC3D::psIbcSpecVH (REAL_TYPE* d_ws, const int* d_cdf, const int n, 
   REAL_TYPE dh1 = 1.0/deltaX;
   
   REAL_TYPE rho = mat[n].P[p_density] / rho_0;
-  REAL_TYPE cp  = mat[n].P[p_thermal_conductivity] / cp_0;
+  REAL_TYPE cp  = mat[n].P[p_specific_heat] / cp_0;
   REAL_TYPE tmp = FBUtility::convTempD2ND(cmp[n].getTemp(), BaseTemp, DiffTemp);
   REAL_TYPE ref = rho * cp * tmp;
   
@@ -2637,7 +2637,7 @@ REAL_TYPE SetBC3D::psObcHeatTransferS (REAL_TYPE* d_qbc, const int face, const i
   
   int n = obc[face].getGuideMedium();
   REAL_TYPE rho_1 = mat[n].P[p_density] / rho_0;
-  REAL_TYPE cp_1  = mat[n].P[p_thermal_conductivity] / cp_0;
+  REAL_TYPE cp_1  = mat[n].P[p_specific_heat] / cp_0;
   REAL_TYPE ie  = rho_1 * cp_1 * bt;
   
   switch (face)
@@ -2782,7 +2782,7 @@ REAL_TYPE SetBC3D::psObcHeatTransferSF(REAL_TYPE* d_qbc, const int face, const i
   
   int n = obc[face].getGuideMedium();
   REAL_TYPE rho_1 = mat[n].P[p_density] / rho_0;
-  REAL_TYPE cp_1  = mat[n].P[p_thermal_conductivity] / cp_0;
+  REAL_TYPE cp_1  = mat[n].P[p_specific_heat] / cp_0;
   REAL_TYPE ie  = rho_1 * cp_1 * sf;
   
   switch (face)
@@ -2939,7 +2939,7 @@ REAL_TYPE SetBC3D::psObcHeatTransferSN(REAL_TYPE* d_qbc, const int face, const i
   
   int n = obc[face].getGuideMedium();
   REAL_TYPE rho_1 = mat[n].P[p_density] / rho_0;
-  REAL_TYPE cp_1  = mat[n].P[p_thermal_conductivity] / cp_0;
+  REAL_TYPE cp_1  = mat[n].P[p_specific_heat] / cp_0;
   REAL_TYPE ie  = rho_1 * cp_1 * sf;
   
   switch (face)
@@ -3151,7 +3151,7 @@ REAL_TYPE SetBC3D::psObcIsoThermal(REAL_TYPE* d_qbc, const int face, const int* 
   
   int n = obc[face].getGuideMedium();
   REAL_TYPE rho_1 = mat[n].P[p_density] / rho_0;
-  REAL_TYPE cp_1  = mat[n].P[p_thermal_conductivity] / cp_0;
+  REAL_TYPE cp_1  = mat[n].P[p_specific_heat] / cp_0;
   REAL_TYPE ie  = rho_1 * cp_1 * sf;
   
   switch (face)
@@ -3300,7 +3300,7 @@ REAL_TYPE SetBC3D::psObcSpecVH(REAL_TYPE* d_ws, const int* d_cdf, const int face
   
   int n = obc[face].getGuideMedium();
   REAL_TYPE rho = mat[n].P[p_density] / rho_0;
-  REAL_TYPE cp  = mat[n].P[p_thermal_conductivity] / cp_0;
+  REAL_TYPE cp  = mat[n].P[p_specific_heat] / cp_0;
   REAL_TYPE tmp = FBUtility::convTempD2ND(obc[face].getTemp(), BaseTemp, DiffTemp);
   REAL_TYPE ie  = rho * cp * tmp;
   
@@ -3412,9 +3412,8 @@ void SetBC3D::setInitialTempCompo(const int n, const int* d_bx, REAL_TYPE* d_ie)
   
   REAL_TYPE tmp = FBUtility::convTempD2ND(cmp[n].getInitTemp(), BaseTemp, DiffTemp);
   REAL_TYPE rho = mat[n].P[p_density] / rho_0;
-  REAL_TYPE cp  = mat[n].P[p_thermal_conductivity] / cp_0;
+  REAL_TYPE cp  = mat[n].P[p_specific_heat] / cp_0;
   REAL_TYPE ref = rho * cp * tmp;
-
   
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, odr, ref) schedule(static)
   for (int k=1; k<=kx; k++) {

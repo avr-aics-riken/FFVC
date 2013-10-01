@@ -433,7 +433,6 @@ public:
     REAL_TYPE Density;
     REAL_TYPE Energy;
     REAL_TYPE Pressure;
-    REAL_TYPE Temperature;
     REAL_TYPE VecU;
     REAL_TYPE VecV;
     REAL_TYPE VecW;
@@ -740,7 +739,6 @@ public:
     iv.Density     = 0.0;
     iv.Energy      = 0.0;
     iv.Pressure    = 0.0;
-    iv.Temperature = 0.0;
     
     Mode.Average = 0;
     Mode.AverageRestart = 0;
@@ -916,7 +914,7 @@ protected:
   
   
   // 初期値の表示
-  void printInitValues(FILE* fp);
+  void printInitValues(FILE* fp, CompoList* cmp);
   
   
   // 線形ソルバー種別の表示
@@ -956,8 +954,9 @@ public:
    * @param [in] DT  DTcntl
    * @param [in] RF  ReferenceFrame
    * @param [in] mat MediumList
+   * @param [in] cmp CompoList
    */
-  void displayParams(FILE* mp, FILE* fp, IterationCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat);
+  void displayParams(FILE* mp, FILE* fp, IterationCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat, CompoList* cmp);
   
   
   //@brief Forcingコンポーネントが存在すれば1を返す

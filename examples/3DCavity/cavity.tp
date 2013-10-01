@@ -191,6 +191,7 @@ Output {
     Iteration        = "Off"
     Profiling        = "On"
     WallInfo         = "Off"
+    CCNVfile         = "on"
     Console {
       TemporalType   = "Step"
       Interval       = 1

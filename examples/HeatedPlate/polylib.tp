@@ -1,0 +1,11 @@
+Polylib {
+
+  plate {
+    class_name = "PolygonGroup"
+    filepath ="./hplate.stl"
+    movable = "false"
+    label = "fe"
+    type = "IsoThermal"
+  }
+
+}

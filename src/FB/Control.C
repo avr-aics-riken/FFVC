@@ -303,14 +303,14 @@ void Control::copyCriteria(IterationCtl& IC, const string name)
 
 // #################################################################
 // 制御，計算パラメータ群の表示
-void Control::displayParams(FILE* mp, FILE* fp, IterationCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat)
+void Control::displayParams(FILE* mp, FILE* fp, IterationCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat, CompoList* cmp)
 {
   printSteerConditions(mp, IC, DT, RF);
   printSteerConditions(fp, IC, DT, RF);
   printParaConditions(mp, mat);
   printParaConditions(fp, mat);
-  printInitValues(mp);
-  printInitValues(fp);
+  printInitValues(mp, cmp);
+  printInitValues(fp, cmp);
 }
 
 
@@ -2914,10 +2914,11 @@ void Control::printGlobalDomain(FILE* fp, const int* G_size, const REAL_TYPE* G_
 // #################################################################
 /**
  * @brief 初期値の表示
- * @note Init*には無次元値が保持されている
+ * @param [in] fp  ファイルポインタ
+ * @param [in] cmp コンポーネント配列
  * @see void Control::setInitialConditions(void)
  */
-void Control::printInitValues(FILE* fp)
+void Control::printInitValues(FILE* fp, CompoList* cmp)
 {
   if ( !fp )
   {
@@ -2948,9 +2949,13 @@ void Control::printInitValues(FILE* fp)
   
   if ( isHeatProblem() )
   {
-    fprintf(fp,"\tInitial  Temperature [C]     / [-]   : %12.5e / %12.5e\n",
-						iv.Temperature, 
-						FBUtility::convTempD2ND(iv.Temperature, BaseTemp, DiffTemp));
+    for (int m=1; m<=NoMedium; m++)
+    {
+      fprintf(fp,"\tInitial  Temperature [C]     / [-]   : %12.5e / %12.5e\n",
+              cmp[m].getInitTemp(),
+              FBUtility::convTempD2ND(cmp[m].getInitTemp(), BaseTemp, DiffTemp));
+    }
+    
   }
   
   fprintf(fp,"\n");
@@ -4116,7 +4121,10 @@ void Control::setCmpParameters(MediumList* mat, CompoList* cmp, BoundaryOuter* B
     
     if ( isHeatProblem() )
     {
-      iv.Temperature = FBUtility::convTempND2D(iv.Temperature, BaseTemp, DiffTemp);
+      for (int m=1; m<=NoMedium; m++)
+      {
+        cmp[m].setInitTemp( FBUtility::convTempND2D(cmp[m].getInitTemp(), BaseTemp, DiffTemp) );
+      }
     }
 	}
 }

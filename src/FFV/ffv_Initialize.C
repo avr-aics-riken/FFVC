@@ -204,16 +204,25 @@ int FFV::Initialize(int argc, char **argv)
 
 
   
-  
-  // Binaryの場合に，SOLIDセルを生成 >> この時点で外部境界面にはカットが設定されていない
-  if ( C.isBinary() && (C.Mode.Example == id_Polygon) )
+#if 0
+  // SOLIDセルを生成 >> この時点で外部境界面にはカットが設定されていない
+  // テスト用
+  if ( C.Mode.Example == id_Polygon )
   {
-    generateSolid(fp);
+    unsigned long zc = V.SolidFromCut(d_mid, d_bid, d_cut, cmp);
+    
+    Hostonly_
+    {
+      printf(    "\n\tGenerated Solid cell from cut = %ld\n", zc);
+      fprintf(fp,"\n\tGenerated Solid cell from cut = %ld\n", zc);
+    }
+    
+    // midのガイドセル同期
+    if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
   }
-  
-  //Ex->writeSVX(d_mid, &C);
-  //exit(0);
-
+  Ex->writeSVX(d_mid, &C);
+  exit(0);
+#endif
   
   // ガイドセル上にパラメータファイルで指定する媒質IDを代入する．周期境界の場合の処理も含む．
   for (int face=0; face<NOFACE; face++)
@@ -828,7 +837,7 @@ void FFV::createTable(FILE* fp)
   
   // Fortran用のデータ保持配列 >> mat_tbl[C.NoCompo+1][3]のイメージ
   if ( !(mat_tbl = new REAL_TYPE[3*(C.NoCompo+1)]) ) Exit(0);
-  for (int i=0; i<3*(C.NoCompo+1); i++) mat_tbl[i] = 0.0;
+  for (int i=0; i<3*(C.NoCompo+1); i++) mat_tbl[i] = 1.0; // ゼロ割防止のため，1.0をいれておく
   
   
   Hostonly_
@@ -955,13 +964,13 @@ void FFV::displayCutInfo(float* cut, int* bid)
         int b5 = (bd >> 25) & MASK_5;
         //fprintf(fp, "%d %d %d %d %d %d : ", b0, b1, b2, b3, b4, b5);
         
-        fprintf(fp, "%3d %3d %3d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n", i,j,k,
-               d_cut[mp+0],
-               d_cut[mp+1],
-               d_cut[mp+2],
-               d_cut[mp+3],
-               d_cut[mp+4],
-               d_cut[mp+5],
+        fprintf(fp, "%5d %5d %5d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n", i,j,k,
+               d_cut[mp+0], // x- w
+               d_cut[mp+1], // x+ e
+               d_cut[mp+2], // y- s
+               d_cut[mp+3], // y+ n
+               d_cut[mp+4], // z- b
+               d_cut[mp+5], // z+ t
                b0, b1, b2, b3, b4, b5);
         
       }
@@ -1008,7 +1017,7 @@ void FFV::displayMemoryInfo(FILE* fp, double G_mem, double L_mem, const char* st
  */
 void FFV::displayParameters(FILE* fp)
 {
-  C.displayParams(stdout, fp, IC, &DT, &RF, mat);
+  C.displayParams(stdout, fp, IC, &DT, &RF, mat, cmp);
   
   if (C.FIO.Format == plt3d_fmt)
   {
@@ -1187,7 +1196,7 @@ void FFV::encodeBCindex(FILE* fp)
 
   
 #if 0
-  V.dbg_chkBCIndexB(d_bcd, "BCindexD.txt");
+  V.dbg_chkBCIndexB(d_bcd, "BCindexB.txt");
 #endif
   
   
@@ -2062,30 +2071,6 @@ void FFV::gatherDomainInfo()
 
 
 // #################################################################
-/* @brief binaryの場合に，非BCポリゴンからSOLIDセルを生成
- * @param [in] fp stdout
- */
-void FFV::generateSolid(FILE* fp)
-{
-  unsigned long zc=0;
-  
-
-  zc += V.SolidFromCut(d_mid, d_bid, d_cut, cmp);
-      
-  Hostonly_
-  {
-    printf(    "\n\tGenerated Solid cell from cut = %ld\n", zc);
-    fprintf(fp,"\n\tGenerated Solid cell from cut = %ld\n", zc);
-  }
-  
-  // midのガイドセル同期
-  if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
-  
-}
-
-
-
-// #################################################################
 /* @brief グローバルな領域情報を取得
  * @param [in] tp_dom  TextParserクラス
  * @return 分割指示 (1-with / 2-without)
@@ -2255,7 +2240,7 @@ int FFV::getDomainInfo(TextParser* tp_dom)
       // 整合性チェック
       if ( Ex->mode == Intrinsic::dim_3d )
       {
-        if ( (G_region[0] != gr[0]) || (G_region[1] != gr[1]) || (G_region[2] != gr[2]) )
+        if ( (G_region[0]-gr[0]>ROUND_EPS) || (G_region[1]-gr[1]>ROUND_EPS) || (G_region[2]-gr[2]>ROUND_EPS) )
         {
           Hostonly_ {
             printf("\tGlobal Region is modified due to maintain the consistency of domain parameters.\n\n");
@@ -2269,7 +2254,7 @@ int FFV::getDomainInfo(TextParser* tp_dom)
       }
       else if ( Ex->mode == Intrinsic::dim_2d )
       {
-        if ( (G_region[0] != gr[0]) || (G_region[1] != gr[1]) )
+        if ( (G_region[0]-gr[0]>ROUND_EPS) || (G_region[1]-gr[1]>ROUND_EPS) )
         {
           Hostonly_ {
             printf("\tGlobal Region is modified due to maintain the consistency of domain parameters.\n\n");
@@ -3776,6 +3761,16 @@ void FFV::setBCinfo()
   
   // 無次元媒質情報をコピー
   BC.copyNDmatTable(C.NoCompo, mat_tbl);
+  
+  // コンポーネントの指定温度を初期温度にコピー
+  for (int n=1; n<=C.NoCompo; n++)
+  {
+    if ( cmp[n].isKindCompo() )
+    {
+      cmp[n].setInitTemp( cmp[n].getTemp() );
+    }
+  }
+  
 }
 
 
@@ -4087,24 +4082,10 @@ void FFV::setInitialCondition()
     U.initS3D(d_p, size, guide, ip);
 		BC.OuterPBC(d_p);
 
-		// 温度
+		// 温度　コンポーネントの初期値
 		if ( C.isHeatProblem() )
     {
-      REAL_TYPE it;
-      if (C.Unit.Param == DIMENSIONAL)
-      {
-        it = FBUtility::convTempD2ND(C.iv.Temperature, C.BaseTemp, C.DiffTemp);
-      }
-      else
-      {
-        it = C.iv.Temperature;
-      }
-      REAL_TYPE ref = C.RefDensity * C.RefSpecificHeat * it;
-
-      U.initS3D(d_ie, size, guide, ref);
-      
-      // コンポーネントの初期値
-      for (int m=1; m<=C.NoMedium; m++)
+      for (int m=1; m<=C.NoCompo; m++) // Mediumでまわすと，オーダーがエンコードされていない場合もある
       {
         BC.setInitialTempCompo(m, d_bcd, d_ie);
       }
@@ -4765,7 +4746,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     }
 
     
-    // コンポーネント(BC+OBSTACLE)の面積を保持 >> @todo Polylibのバグで並列時に正しい値を返さない, ntriaとarea 暫定的処置
+    // コンポーネント(BC+OBSTACLE)の面積を保持 >> @todo Polylibのバグ?で並列時に正しい値を返さない, ntriaとarea 暫定的処置
     cmp[mat_id].area = area;
     
 
@@ -4984,7 +4965,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   // カットの最小値
   minDistance(d_cut, d_bid, fp);
   
-#if 1
+#if 0
   displayCutInfo(d_cut, d_bid);
 #endif
 }

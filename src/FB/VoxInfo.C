@@ -603,31 +603,30 @@ void VoxInfo::dbg_chkBCIndexB (const int* bcd, const char* fname)
   int kx = size[2];
   int gd = guide;
   
-  // ガイドセルを含む全領域
-  for (int k=1-gd; k<=kx+gd; k++) {
-    for (int j=1-gd; j<=jx+gd; j++) {
-      for (int i=1-gd; i<=ix+gd; i++) {
+  // ガイドセル1層を含む全領域
+  for (int k=0; k<=kx+1; k++) {
+    for (int j=0; j<=jx+1; j++) {
+      for (int i=0; i<=ix+1; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         int s = bcd[m];
-        Hostonly_ fprintf(fp, "[%4d %4d %4d], state=%1d: cmp=%3d vf=%3d force=%3d A(ewnstb) [%2d %2d %2d %2d %2d %2d] : G[%2d %2d %2d %2d %2d %2d] : DIAG = %3d : ORDER = %3d\n",
+        Hostonly_ fprintf(fp, "[%4d %4d %4d], st=%1d: cmp[%2d] vf=%3d force=%2d A(wesnbt) [%1d %1d %1d %1d %1d %1d] : G[%1d %1d %1d %1d %1d %1d] : DIAG=%2d\n",
                           i, j, k, IS_FLUID(s), 
                           DECODE_CMP(s), 
                           DECODE_VF(s), 
                           (s>>FORCING_BIT)&0x1,
-                          (s>>ADIABATIC_E)&0x1, // 1-bit
                           (s>>ADIABATIC_W)&0x1,
-                          (s>>ADIABATIC_N)&0x1,
+                          (s>>ADIABATIC_E)&0x1, // 1-bit
                           (s>>ADIABATIC_S)&0x1,
-                          (s>>ADIABATIC_T)&0x1,
+                          (s>>ADIABATIC_N)&0x1,
                           (s>>ADIABATIC_B)&0x1,
-                          (s>>GMA_E)&0x1,
+                          (s>>ADIABATIC_T)&0x1,
                           (s>>GMA_W)&0x1,
-                          (s>>GMA_N)&0x1,
+                          (s>>GMA_E)&0x1,
                           (s>>GMA_S)&0x1,
-                          (s>>GMA_T)&0x1,
+                          (s>>GMA_N)&0x1,
                           (s>>GMA_B)&0x1,
-                          (s>>H_DIAG)&0x7, // 3-bit
-                          DECODE_CMP(s)
+                          (s>>GMA_T)&0x1,
+                          (s>>H_DIAG)&0x7 // 3-bit
                           );
       }
     }
@@ -656,22 +655,21 @@ void VoxInfo::dbg_chkBCIndexC (const int* cdf, const char* fname)
   int gd = guide;
   
   // ガイドセルを含む全領域
-  for (int k=1-gd; k<=kx+gd; k++) {
-    for (int j=1-gd; j<=jx+gd; j++) {
-      for (int i=1-gd; i<=ix+gd; i++) {
+  for (int k=0; k<=kx+1; k++) {
+    for (int j=0; j<=jx+1; j++) {
+      for (int i=0; i<=ix+1; i++) {
         
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         int s = cdf[m];
         
-        Hostonly_ fprintf(fp, "[%4d %4d %4d], state=%1d: HBC(ewnstb) [%2d %2d %2d %2d %2d %2d] : idx=%d\n",
+        Hostonly_ fprintf(fp, "[%4d %4d %4d], st=%1d: BC(wesnbt) [%2d %2d %2d %2d %2d %2d]\n",
                           i, j, k, IS_FLUID(s),
-                          GET_FACE_BC(s, BC_FACE_E), // 5-bit
-                          GET_FACE_BC(s, BC_FACE_W),
-                          GET_FACE_BC(s, BC_FACE_N),
+                          GET_FACE_BC(s, BC_FACE_W), // 5-bit
+                          GET_FACE_BC(s, BC_FACE_E),
                           GET_FACE_BC(s, BC_FACE_S),
-                          GET_FACE_BC(s, BC_FACE_T),
+                          GET_FACE_BC(s, BC_FACE_N),
                           GET_FACE_BC(s, BC_FACE_B),
-                          s);
+                          GET_FACE_BC(s, BC_FACE_T));
         
       }
     }
@@ -700,35 +698,36 @@ void VoxInfo::dbg_chkBCIndexP (const int* bcd, const int* bcp, const char* fname
   int gd = guide;
   
   // ガイドセルを含む全領域
-  for (int k=1-gd; k<=kx+gd; k++) {
-    for (int j=1-gd; j<=jx+gd; j++) {
-      for (int i=1-gd; i<=ix+gd; i++) {
+  for (int k=0; k<=kx+1; k++) {
+    for (int j=0; j<=jx+1; j++) {
+      for (int i=0; i<=ix+1; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         int d = bcd[m];
         int s = bcp[m];
         int q = DECODE_CMP(d);
-        Hostonly_ fprintf(fp, "[%4d %4d %4d], cmp[%3d], state=%1d: D(ewnstb) [%d %d %d %d %d %d] N [%d %d %d %d %d %d] NDAG [%d %d %d %d %d %d] DIAG=%1d :idx=%d\n", 
-                          i, j, k, q, IS_FLUID(d), 
-                          (s>>BC_D_E)&0x1,
+        Hostonly_ fprintf(fp, "[%4d %4d %4d], cmp[%2d], st=%1d: D(wesnbt) [%1d %1d %1d %1d %1d %1d] N [%1d %1d %1d %1d %1d %1d] NDAG [%1d %1d %1d %1d %1d %1d] DIAG=%1d cnv=%1d uwd=%1d\n", 
+                          i, j, k, q, IS_FLUID(d),
                           (s>>BC_D_W)&0x1,
-                          (s>>BC_D_N)&0x1,
+                          (s>>BC_D_E)&0x1,
                           (s>>BC_D_S)&0x1,
-                          (s>>BC_D_T)&0x1,
+                          (s>>BC_D_N)&0x1,
                           (s>>BC_D_B)&0x1,
-                          (s>>BC_N_E)&0x1,
+                          (s>>BC_D_T)&0x1,
                           (s>>BC_N_W)&0x1,
-                          (s>>BC_N_N)&0x1,
+                          (s>>BC_N_E)&0x1,
                           (s>>BC_N_S)&0x1,
-                          (s>>BC_N_T)&0x1,
+                          (s>>BC_N_N)&0x1,
                           (s>>BC_N_B)&0x1,
-                          (s>>BC_NDAG_E)&0x1,
+                          (s>>BC_N_T)&0x1,
                           (s>>BC_NDAG_W)&0x1,
-                          (s>>BC_NDAG_N)&0x1,
+                          (s>>BC_NDAG_E)&0x1,
                           (s>>BC_NDAG_S)&0x1,
-                          (s>>BC_NDAG_T)&0x1,
+                          (s>>BC_NDAG_N)&0x1,
                           (s>>BC_NDAG_B)&0x1,
+                          (s>>BC_NDAG_T)&0x1,
                           (s>>BC_DIAG)&0x7,
-                          s);
+                          (s>>VLD_CNVG)&0x1,
+                          (s>>VBC_UWD)&0x1);
       }
     }
   }

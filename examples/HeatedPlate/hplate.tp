@@ -1,70 +1,97 @@
 
 ApplicationControl {
+  CheckParameter      = "Off"
   Operator            = "Kenji_Ono"
-  FillMedium          = "water"
-  HintOfFillingFluid  = "Xminus"
-  VoxelOutput     = "svx"
-  DebugDivergence = "Off"
+  FillMedium          = "air"
+  HintOfFillingFluid  = "xminus"
+  VoxelOutput         = "svx"
+  DebugDivergence     = "off"
 }
 
 
 BcTable {
 
   LocalBoundary {
-
-    Insulation {
-      class  = "adiabatic"
-      medium = "virtualmetal"
-    }
-
-    Rod {
-      class = "HeatTransferS"
-      medium = "virtualmetal"
-      CoefOfHeatTransfer = 12.0
-      BulkTemperature = 100.0
-    }
-
-    HeatedWall {
+    plate {
       class = "IsoThermal"
-      medium = "virtualmetal"
-      temperature = 200.0
+      medium = "fe"
+      Temperature = 50.0
     }
   }
 
   OuterBoundary {
       
-    free {
-      class          = "tractionfree"
-      ThermalOption  = "Adiabatic"
-      Medium         = "water"
+    adiabaticWall {
+      class         = "Wall"
+      Type          = "fixed"
+      Medium        = "fe"
+      ThermalOption = "adiabatic"
     }
-      
+
+    inlet {
+      class       = "SpecifiedVelocity"
+      Profile     = "Constant"
+      Normal      = (1.0, 0.0, 0.0)
+      velocity    = 3.0
+      Medium      = "air"
+      Temperature = 20
+    }
+
+    outlet {
+      class        = "Outflow"
+      Medium       = "air"
+      PressureType = "dirichlet"
+      PrsValue     = 0.0
+    }
+    
+    periodic {
+      class  = "periodic"
+      mode   = "simplecopy"
+    }
+
+    symmetry {
+      class    = "symmetric"
+      Medium   = "air"
+    }
+
     FaceBC {
-      Xminus = "free"
-      Xplus  = "free"
-      Yminus = "free"
-      Yplus  = "free"
-      Zminus = "free"
-      Zplus  = "free"
+      Xminus = "inlet"
+      Xplus  = "outlet"
+      Yminus = "adiabaticWall"
+      Yplus  = "adiabaticWall"
+      Zminus = "symmetry"
+      Zplus  = "symmetry"
     }
   }
 }
 
 
 ConvectionTerm {
-  Scheme  = "O2CENTRAL"
+  Scheme  = "O3MUSCL"
+  Limiter = "minmod"
 }
 
 
 DomainInfo {
-  UnitOfLength   = "NonDimensional"
-  GlobalOrigin   = (-0.2, -0.3, -0.3)
-  GlobalRegion   = (1.4, 0.6, 0.6)
-  GlobalPitch    = (0.2, 0.2, 0.2)
+  UnitOfLength   = "m"
+  GlobalOrigin   = (-0.5, -0.1, -0.02)
+  GlobalRegion   = (1.0,  0.2,  0.04 )
+  //GlobalVoxel    = (500   , 50   , 3   )
   
+  //GlobalPitch    = (1.0e-3, 1.0e-3, 1.0e-3)
+  GlobalPitch    = (5.0e-3, 5.0e-3, 5.0e-3)
   //GlobalDivision = (1    , 1    , 1    )
 
   ActiveSubDomainFile = "hoge"
+}
+
+
+GoverningEquation {
+  FlowEquation       = "Incompressible"
+  HeatEquation       = "ThermalFlow"
+  Buoyancy           = "Boussinesq"
+  TimeVariation      = "Unsteady"
+  PDEType            = "NavierStokes" 
 }
 
 
@@ -73,26 +100,25 @@ GeometryModel {
 }
 
 
-GoverningEquation {
-  FlowEquation       = "Incompressible"
-  HeatEquation       = "SolidConduction"
-  Buoyancy           = "NoBuoyancy"
-  PDEType            = "NavierStokes"
-  TimeVariation      = "Unsteady"
-}
-
-
 IntrinsicExample {
+    Dimension        = "3d"
+    FluidMedium      = "air"
+    SolidMedium      = "fe"
+    StepLength       = 0.03
+    StepHeight       = 0.005
+    DriverLength     = 0.0
+    DriverMedium     = "air"
+    DriverFaceMedium = "air"
 }
 
 
 Iteration {
   LinearSolver[@] {
-    Alias                = "sor2_moderate"
+    Alias                = "sor2_strict"
     class                = "sor2sma"
-    MaxIteration         = 50
+    MaxIteration         = 20
     ConvergenceCriterion = 1.0e-3
-    NormType             = "RbyR0"
+    NormType             = "DXbyB"
     Omega                = 1.1
     CommMode             = "async"
   }
@@ -100,7 +126,7 @@ Iteration {
   LinearSolver[@] {
     Alias                = "vp"
     class                = "VPiteration"
-    MaxIteration         = 20
+    MaxIteration         = 10
     ConvergenceCriterion = 1.0e-4
     NormType             = "VdivMax"
   }
@@ -108,13 +134,14 @@ Iteration {
   LinearSolver[@] {
     Alias                = "sor2_loose"
     class                = "sor"
-    MaxIteration         = 10
+    MaxIteration         = 20
     ConvergenceCriterion = 1.0e-2
-    NormType             = "RbyR0"
+    NormType             = "RbyB"
     Omega                = 1.1
+    CommMode             = "sync"
   }
 
-  Pressure    = "sor2_moderate"
+  Pressure    = "sor2_strict"
   Velocity    = ""
   VPiteration = "vp"
   Temperature = "sor2_loose"   
@@ -122,39 +149,41 @@ Iteration {
 
 
 MediumTable {
-  water {
-    State               = "Fluid"
-    MassDensity         = 998.2
-    SpecificHeat        = 4182.0
-    ThermalConductivity = 598.0e-3
-    KinematicViscosity  = 1.004e-06
-    Viscosity           = 1002.6e-06
-    SpeedOFSound        = 1500.0
-    VolumeExpansion     = 0.04e-3 
+
+  Air {
+    state               = "Fluid"
+    MassDensity         = 1.1763
+    SpecificHeat        = 1007
+    ThermalConductivity = 2.614e-02
+    KinematicViscosity  = 15.83e-06
+    Viscosity           = 18.62e-06
+    SpeedOfSound        = 340.0
+    VolumeExpansion     = 0.04e-3
   }
 
-  VirtualMetal {
-    State               = "Solid"
-    MassDensity         = 1.0
-    SpecificHeat        = 1.0
-    ThermalConductivity = 50.0
+  Fe {
+    state               = "Solid"
+    MassDensity         = 7870.0
+    SpecificHeat        = 442.0
+    ThermalConductivity = 80.3
   }
+
 }
 
 
 MonitorList {
-  Log             = "On"
+  Log             = "Off"
   OutputMode      = "Gather"
-  CellMonitor     = "off"
+  CellMonitor     = "on"
   Sampling {
-    TemporalType  = "step"
-    Interval      = 1
+    TemprallType  = "step"
+    Interval      = 100
   }
 
-/*
   list[@] {
     type            = "Line"
     label           = "line1"
+    value           = "x"
     Variable        = "Velocity"
     SamplingMethod  = "Interpolation"
     SamplingMode    = "Fluid"
@@ -173,7 +202,6 @@ MonitorList {
     From            = (0.0, 0.0, -0.5)
     To              = (0.0, 0.0, 0.5)
   }
-*/
 }
 
 
@@ -183,7 +211,6 @@ Output {
     Iteration        = "Off"
     Profiling        = "On"
     WallInfo         = "Off"
-    CCNVfile         = "on"
     Console {
       TemporalType   = "Step"
       Interval       = 1
@@ -198,12 +225,12 @@ Output {
     BasicVariables {
       Format         = "sph"
       TemporalType   = "step"
-      Interval       = 1
+      Interval       = 10
     }
     DerivedVariables {
       Format         = "sph"
       TemporalType   = "step"
-      Interval       = 10
+      Interval       = 100
 
       TotalPressure  = "Off"
       Helicity       = "Off"
@@ -213,7 +240,7 @@ Output {
 
     AveragedVariables {
       Format        = "sph"
-      TemporalType  = "step"
+      TemporalType  = "step" // /TimeControl/Average/TemporalTypeでの指定と整合性をとる
       Interval      = 100
     }
   }
@@ -224,40 +251,19 @@ Output {
       TimeSlice       = "off"
       DirectoryPath   = "hoge"
     }
-
-    PLOT3D {
-      filename        = ""
-      gridkind        = "single_grid"
-      gridmobility    = "immovable"
-      stateoftime     = "unsteady"
-      setiblankflag   = "off"
-      Dimension       = "3D"
-      Formattype      = "unformatted"
-      Outputxyz       = "off"
-      Outputq         = "off"
-      Outputfunction  = "off"
-      Outputfuncname  = "off"
-      Outputfvbnd     = "off"
-    }
-
-    VTK {
-      Path            = "VTK"
-      Prefix          = "data-"
-    }
   }
 }
 
 
 Reference {
-  Length       = 1.0
-  Velocity     = 50.0
-  //MassDensity  = 1.1763
+  Length        = 0.01
+  Velocity      = 3.0
+  BasePressure  = 0.0
+  Medium        = "air"
   Temperature {
-    Base       = 100.0
-    Difference = 100.0
+    Base       = 20.0
+    Difference = 30.0
   }
-  Medium       = "virtualmetal"
-  BasePressure = 0.0
 }
 
 
@@ -291,15 +297,15 @@ StartCondition {
   InitialState {
     MassDensity = 1.0
     Pressure    = 0.0
+    Temperature = 20.0
     Velocity    = (0.0, 0.0, 0.0)
 
     MediumTemperature {
-      virtualmetal  = 150.0
-      water         = 100.0
+      air = 20.0
+      fe  = 50.0 
     }
   }
 }
-
 
 TimeControl {
   Acceleration {
@@ -308,20 +314,20 @@ TimeControl {
   }
 
   TimeStep {
-    Mode           = "direct"
-    DeltaT         = 4.0e-4
+    Mode           = "CFLReferenceVelocity"
+    DeltaT         = 0.1
   }
 
   Session {
-    TemporalType   = "step"
-    Start          = 0
-    End            = 100
+    TemporalType   = "time"
+    Start          = 0    // 0 or 0.0の場合initial start
+    End            = 30
   }
 
   Average {
     TemporalType   = "step"
-    Start          = 0
-    End            = 0
+    Start          = 0  // 指定区間の平均をとる．両方とも0のときoff
+    End            = 0 
   }
 }
 
@@ -336,10 +342,8 @@ TurbulenceModeling {
   Model = "no"
 }
 
-
 Unit {
   UnitOfInputParameter  = "Dimensional"
   UnitOfOutput          = "Dimensional"
   Pressure              = "Gauge"
 }
-
