@@ -22,6 +22,8 @@
  * @author kero
  */
 
+#include "cpm_Define.h"
+#include "cpm_ParaManager.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,10 +33,6 @@
 #include <time.h>
 #include <fcntl.h>
 #include <string>
-
-#include "cpm_Define.h"
-#include "cpm_ParaManager.h"
-
 #include "DomainInfo.h"
 #include "FB_Define.h"
 #include "FB_Ffunc.h"

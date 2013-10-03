@@ -22,9 +22,10 @@
  * @author kero
  */
 
+#include "cpm_ParaManager.h"
 #include <string>
 #include "FB_Define.h"
-#include "cpm_ParaManager.h"
+
 
 class DomainInfo {
   

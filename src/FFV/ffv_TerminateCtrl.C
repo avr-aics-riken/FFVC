@@ -19,10 +19,12 @@
  * @author kero
  */
 
-#include "ffv_TerminateCtrl.h"
 #ifndef _NO_CPMLIB_
 #include "cpm_ParaManager.h"
 #endif
+
+#include "ffv_TerminateCtrl.h"
+
 
 // スタティック変数の実体
 bool FFV_TerminateCtrl::m_ffvTerminateFlag;

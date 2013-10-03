@@ -22,10 +22,10 @@
  * @author kero
  */
 
+#include "cpm_Define.h"
 #include <string>
 #include <string.h>
 #include "FB_Define.h"
-#include "cpm_Define.h"
 
 
 class CompoList {

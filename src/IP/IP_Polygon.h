@@ -24,10 +24,7 @@
 
 #include "../FB/Intrinsic.h"
 #include "IP_Define.h"
-
-#ifdef __ARCH_BG
-#include <string.h> // for memset()
-#endif
+#include <string.h>
 
 class IP_Polygon : public Intrinsic {
 protected:

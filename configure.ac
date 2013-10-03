@@ -17,7 +17,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([FFVC], [1.4.1], [keno@riken.jp], [FFVC])
+AC_INIT([FFVC], [1.4.2], [keno@riken.jp], [FFVC])
 AM_INIT_AUTOMAKE()
 AC_CONFIG_SRCDIR([src/FB/Alloc.C])
 AC_CONFIG_HEADERS([config.h])
@@ -25,7 +25,7 @@ AC_CONFIG_HEADERS([config.h])
 #
 # revision No.
 #
-FFVC_REVISION="20131001_1330"
+FFVC_REVISION="20131003_1430"
 AC_SUBST(FFVC_REVISION)
 
 
@@ -180,7 +180,7 @@ AC_SUBST(FFVC_FC_LD)
 if test "$with_comp" = "FJ"; then
   FFVC_FC_LD="$CXX"" --linkfortran"
 elif test "$with_comp" = "INTEL" ; then
-  FFVC_LIBS="$FFVC_LIBS"" -lifport -lifcore"
+  FFVC_LIBS="$FFVC_LIBS"" -lstdc++ -lifcore"
 else
   FFVC_LIBS="$FFVC_LIBS"" -lstdc++"
 fi
@@ -347,7 +347,7 @@ AC_PROG_RANLIB
 #
 # Checks for header files.
 #
-AC_CHECK_HEADERS([fcntl.h float.h stdlib.h string.h strings.h sys/param.h unistd.h])
+AC_CHECK_HEADERS([fcntl.h float.h stdlib.h string.h strings.h sys/param.h unistd.h stdarg.h])
 
 
 
@@ -365,7 +365,7 @@ AC_TYPE_SIZE_T
 # Checks for library functions.
 #
 AC_FUNC_MALLOC
-AC_CHECK_FUNCS([floor memset mkdir pow realpath sqrt strcasecmp strchr strdup strerror])
+AC_CHECK_FUNCS([floor memset mkdir pow realpath sqrt strcasecmp strchr strdup strerror va_start])
 
 
 

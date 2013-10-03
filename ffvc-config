@@ -59,7 +59,7 @@ while test $# -gt 0; do
     --version)
 cat <<EOF
 
-# FFV-C : Frontflow / violet Cartesian  Ver. 1.4.1  (20131001_1330)
+# FFV-C : Frontflow / violet Cartesian  Ver. 1.4.2  (20131003_1430)
 #
 # Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
 # All rights reserved.
@@ -95,7 +95,7 @@ EOF
       ;;
 
     --fclibs)
-      echo   -lifport -lifcore
+      echo   -lstdc++ -lifcore
       ;;
 
     --fclink)
@@ -103,7 +103,7 @@ EOF
       ;;
 
     --libs)
-      echo  -lifport -lifcore
+      echo  -lstdc++ -lifcore
       ;;
 
     *)

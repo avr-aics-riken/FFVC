@@ -22,6 +22,7 @@
  * @author kero
  */
 
+#include "cpm_Define.h"
 #include <math.h>
 #include <string>
 #include <string.h>
@@ -34,7 +35,6 @@
 #include <stdlib.h>
 
 #include "FB_Define.h"
-#include "cpm_Define.h"
 #include "Medium.h"
 
 #include "omp.h"

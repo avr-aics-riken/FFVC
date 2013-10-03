@@ -22,14 +22,12 @@
  * @author kero
  */
 
+#include "cpm_ParaManager.h"
 #include <fstream>
 #include <math.h>
 #include <time.h>
 #include <fcntl.h>
 #include <string>
-
-#include "cpm_ParaManager.h"
-
 #include "DomainInfo.h"
 #include "FB_Define.h"
 #include "FB_Ffunc.h"

@@ -22,18 +22,16 @@
  * @author kero
  */
 
+#include "DomainInfo.h"
 #include <string>
 #include <vector>
 #include <cassert>
-
-#include "DomainInfo.h"
 #include "FB_Define.h"
 #include "vec3.h"
 #include "basic_func.h"
 #include "Component.h"
 #include "Sampling.h"
 #include "FBUtility.h"
-
 #include "limits.h" // for UBUNTU
 
 using namespace std;

@@ -19,6 +19,14 @@ REVISION HISTORY
 ================
 
 --------------------------
+2013-10-03
+
+- r1032 modify for intel MPI [ver 1.4.2]
+  - include mpi.h before stdio.h to suppress error message #error "SEEK_SET is #defined but must not be for the C++ binding of MPI"
+  - remove __ARCH_BG
+  - add va_start to AC_CHECK_FUNCS([])
+
+--------------------------
 2013-10-01
 
 - r1031 expire SolidFromCut() [ver 1.4.1]

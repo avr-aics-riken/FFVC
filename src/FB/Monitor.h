@@ -20,10 +20,9 @@
 //@brief  FlowBase MonitorList class Header
 //@author kero
 
+#include "DomainInfo.h"
 #include <string>
 #include <vector>
-
-#include "DomainInfo.h"
 #include "FB_Define.h"
 #include "vec3.h"
 #include "MonCompo.h"

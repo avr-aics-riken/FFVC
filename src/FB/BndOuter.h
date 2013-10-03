@@ -23,9 +23,9 @@
  * @note メンバ変数に追加したら，dataCopy()処理にも加えること
  */
 
+#include "cpm_Define.h"
 #include <string>
 #include "FB_Define.h"
-#include "cpm_Define.h"
 
 class BoundaryOuter {
 private:

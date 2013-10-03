@@ -22,7 +22,7 @@
  * @author kero
  */
 
-
+#include "mpi.h"
 #include <stdio.h>
 //#include <stdlib.h>
 #include <string.h>
@@ -31,8 +31,6 @@
 #include <fstream>
 #include <errno.h>
 #include <sstream>
-
-#include "mpi.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

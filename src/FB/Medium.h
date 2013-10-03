@@ -22,9 +22,11 @@
  * @author kero
  */
 
+#include "cpm_Define.h"
 #include <string>
 #include "FB_Define.h"
-#include "cpm_Define.h"
+#include <strings.h>
+
 
 /** 属性リストのキー */
 enum property_list 

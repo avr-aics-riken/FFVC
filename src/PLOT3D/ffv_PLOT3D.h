@@ -23,12 +23,12 @@
 
 #define PLT3D_VERS 103
 
+#include "../FB/dfi.h"
 #include <string>
 #include <mpi.h>
 
 #include "../FB/FB_Ffunc.h"
 #include "../FB/Control.h"
-#include "../FB/dfi.h"
 #include "../F_CORE/ffv_Ffunc.h"
 #include "PLOT3D_write.h"
 #include "PLOT3D_read.h"

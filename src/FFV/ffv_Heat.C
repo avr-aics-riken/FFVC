@@ -19,6 +19,7 @@
  * @author kero
  */
 
+#include "ffv.h"
 #include <math.h>
 #include <time.h>
 #include <fcntl.h>
@@ -30,8 +31,6 @@
 #include "sph_win32_util.h"
 #endif
 #include <sys/types.h>
-
-#include "ffv.h"
 
 
 

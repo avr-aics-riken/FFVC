@@ -22,9 +22,9 @@
  * @author kero
  */
 
-#include <stdio.h>
 #include "FB_Define.h"
 #include "vec3.h"
+#include <stdio.h>
 
 
 class CompoFraction {

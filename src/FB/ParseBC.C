@@ -17,8 +17,9 @@
 //@brief  FlowBase ParseBC class
 //@author kero
 
-#include <math.h>
 #include "ParseBC.h"
+#include <math.h>
+
 
 // #################################################################
 // KOSと境界条件数の整合性をチェックする

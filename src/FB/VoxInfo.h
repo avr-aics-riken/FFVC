@@ -22,11 +22,9 @@
  * @author kero
  */
 
+#include "cpm_ParaManager.h"
 #include <math.h>
 #include <cstdlib>
-
-#include "cpm_ParaManager.h"
-
 #include "DomainInfo.h"
 #include "FBUtility.h"
 #include "Component.h"
@@ -36,8 +34,6 @@
 #include "vec3.h"
 #include "CompoFraction.h"
 #include "Intrinsic.h"
-
-#include "mpi.h"
 #include "limits.h"
 #include "omp.h"
 

@@ -103,7 +103,7 @@ ifeq ($(ARCH),ibm)
   RM          = \rm -f
   MPI_DIR     = /opt/openmpi
   OMP_FLAGS   = -qsmp=omp
-  UDEF_OPT    = -WF,-D__ARCH_BG
+  UDEF_OPT    = -WF
   CC          = mpixlc_r
   CFLAGS      = -O3 -qarch=450d -qtune=450
   CXX         = mpixlcxx_r

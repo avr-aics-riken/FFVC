@@ -22,11 +22,9 @@
  * @author kero
  */
 
+#include "cpm_ParaManager.h"
 #include <math.h>
 #include <fstream>
-
-#include "cpm_ParaManager.h"
-
 #include "DomainInfo.h"
 #include "FB_Define.h"
 #include "BndOuter.h"

@@ -22,20 +22,16 @@
  * @author kero
  */
 
+#include "DomainInfo.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <string>
 #include <iostream>
 #include <fstream>
-
 #include "FB_Define.h"
-#include "DomainInfo.h"
 #include "TextParser.h"
-
-#ifdef __ARCH_BG
 #include <stdarg.h> // for va_start()
-#endif
 
 /* ------------- DataHolder -----------------------------------------*/
 

@@ -28,6 +28,7 @@
  * @author kero
  */
 
+#include "cpm_ParaManager.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,9 +39,6 @@
 #include <float.h>
 
 #include "omp.h"
-
-#include "cpm_ParaManager.h"
-
 #include "../FB/DomainInfo.h"
 #include "../FB/FB_Define.h"
 #include "../FB/mydebug.h"

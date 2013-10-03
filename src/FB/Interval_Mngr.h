@@ -22,9 +22,9 @@
  * @author kero
  */
 
+#include "FB_Define.h"
 #include "math.h"
 #include "stdio.h"
-#include "FB_Define.h"
 
 class Interval_Manager {
 protected:

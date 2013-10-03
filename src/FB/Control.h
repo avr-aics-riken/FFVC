@@ -22,10 +22,8 @@
  * @author kero
  */
 
-#include <math.h>
-
 #include "cpm_Define.h"
-
+#include <math.h>
 #include "DomainInfo.h"
 #include "FB_Define.h"
 #include "Medium.h"

@@ -22,6 +22,7 @@
  * @author kero
  */
 
+#include "mpi.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,8 +30,6 @@
 #include <iostream>
 #include <fstream>
 #include <errno.h>
-
-#include "mpi.h"
 
 #ifndef _WIN32
 #include <dirent.h>

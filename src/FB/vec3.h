@@ -22,9 +22,9 @@
  * @author T. Tawara and kero
  */
 
+#include "cpm_Define.h"
 #include <iostream>
 #include <math.h>
-#include "cpm_Define.h"
 #include "vec3_func.h"
 #include "vec3f_func.h"
 

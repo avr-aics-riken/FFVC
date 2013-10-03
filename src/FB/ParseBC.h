@@ -20,10 +20,8 @@
 //@brief  FlowBase ParseBC class Header
 //@author kero
 
-#include "string.h"
-
 #include "cpm_ParaManager.h"
-
+#include "string.h"
 #include "DomainInfo.h"
 #include "FB_Define.h"
 #include "FBUtility.h"
