@@ -19,6 +19,16 @@ REVISION HISTORY
 ================
 
 --------------------------
+2013-10-05
+
+- r1033 exclude PLOT3D output [ver 1.4.3]
+  - MPIinit is called at firstline in main.C because Intel MPI tells error message
+  - PLOT3D functions are expired and will be supported by a new converter
+  - dfi.h/C is replaced by CIOlib
+  - temporally excludes compilation of PLOT3D and Util_Layout
+  - combsph supports sph and avs
+
+--------------------------
 2013-10-03
 
 - r1032 modify for intel MPI [ver 1.4.2]

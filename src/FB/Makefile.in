@@ -118,7 +118,7 @@ am_libFB_a_OBJECTS = libFB_a-Alloc.$(OBJEXT) \
 	libFB_a-ParseBC.$(OBJEXT) libFB_a-ParseMat.$(OBJEXT) \
 	libFB_a-Sampling.$(OBJEXT) libFB_a-SetBC.$(OBJEXT) \
 	libFB_a-VoxInfo.$(OBJEXT) dbwrite.$(OBJEXT) \
-	libFB_a-dfi.$(OBJEXT) libFB_a-dfiinfo.$(OBJEXT)
+	libFB_a-dfiinfo.$(OBJEXT)
 libFB_a_OBJECTS = $(am_libFB_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -334,8 +334,6 @@ libFB_a_SOURCES = \
   VoxInfo.h \
   basic_func.h \
   dbwrite.f90 \
-  dfi.C \
-  dfi.h \
   dfiinfo.C \
   dfiinfo.h \
   ffv_f_params.h \
@@ -443,7 +441,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-Sampling.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-SetBC.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-VoxInfo.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-dfi.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-dfiinfo.Po@am__quote@
 
 .C.o:
@@ -725,20 +722,6 @@ libFB_a-VoxInfo.obj: VoxInfo.C
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='VoxInfo.C' object='libFB_a-VoxInfo.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -c -o libFB_a-VoxInfo.obj `if test -f 'VoxInfo.C'; then $(CYGPATH_W) 'VoxInfo.C'; else $(CYGPATH_W) '$(srcdir)/VoxInfo.C'; fi`
-
-libFB_a-dfi.o: dfi.C
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -MT libFB_a-dfi.o -MD -MP -MF $(DEPDIR)/libFB_a-dfi.Tpo -c -o libFB_a-dfi.o `test -f 'dfi.C' || echo '$(srcdir)/'`dfi.C
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libFB_a-dfi.Tpo $(DEPDIR)/libFB_a-dfi.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dfi.C' object='libFB_a-dfi.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -c -o libFB_a-dfi.o `test -f 'dfi.C' || echo '$(srcdir)/'`dfi.C
-
-libFB_a-dfi.obj: dfi.C
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -MT libFB_a-dfi.obj -MD -MP -MF $(DEPDIR)/libFB_a-dfi.Tpo -c -o libFB_a-dfi.obj `if test -f 'dfi.C'; then $(CYGPATH_W) 'dfi.C'; else $(CYGPATH_W) '$(srcdir)/dfi.C'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libFB_a-dfi.Tpo $(DEPDIR)/libFB_a-dfi.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='dfi.C' object='libFB_a-dfi.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -c -o libFB_a-dfi.obj `if test -f 'dfi.C'; then $(CYGPATH_W) 'dfi.C'; else $(CYGPATH_W) '$(srcdir)/dfi.C'; fi`
 
 libFB_a-dfiinfo.o: dfiinfo.C
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -MT libFB_a-dfiinfo.o -MD -MP -MF $(DEPDIR)/libFB_a-dfiinfo.Tpo -c -o libFB_a-dfiinfo.o `test -f 'dfiinfo.C' || echo '$(srcdir)/'`dfiinfo.C

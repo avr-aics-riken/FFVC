@@ -21,10 +21,11 @@ CXXSRCS = \
     main.C \
     comb.C \
     comb_sph.C \
-    comb_plot3d.C \
     comb_avs.C \
     FileIO_sph.C \
     FileIO_read_sph.C
+
+#comb_plot3d.C \
 
 F90SRCS =
 

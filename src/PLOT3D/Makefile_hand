@@ -21,6 +21,7 @@ CSRCS =
 
 
 CXXSRCS = \
+  dfi.C \
   PLOT3D.C \
   PLOT3D_read.C \
   PLOT3D_write.C \
@@ -56,11 +57,10 @@ $(TARGET):$(OBJS)
 clean:
 	$(RM) $(OBJS) $(TARGET)
 
-depend:
+depend: $(CXXOBJS:.o=.C)
 	@ rm -rf depend.inc
 	@ for i in $^; do\
-		$(CXX) $(CXXFLAGS) $(UDEF_INC_PATH)-MM $$i >> depend.inc;\
+		$(CXX) $(CXXFLAGS) $(UDEF_INC_PATH) -MM $$i >> depend.inc;\
 	done
-
 -include depend.inc
 

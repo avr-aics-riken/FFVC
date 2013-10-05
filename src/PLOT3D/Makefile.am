@@ -24,10 +24,12 @@ libPLOT3D_a_CXXFLAGS = \
   @CPM_CFLAGS@ \
   @MPICH_CFLAGS@ \
   @REALOPT@ \
-  @TP_CFLAGS@
+  @TP_CFLAGS@ \
   @FREALOPT@ 
 
 libPLOT3D_a_SOURCES = \
+  dfi.C \
+  dfi.h \
   PLOT3D.C \
   PLOT3D.h \
   PLOT3D_read.C \

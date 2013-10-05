@@ -40,8 +40,10 @@
 #include "PerfMonitor.h"
 #include "cpm_ParaManager.h"
 
+/* PLOT3Dfunctions_20131005
 #include "PLOT3D_read.h"
 #include "PLOT3D_write.h"
+*/
 #include "FileIO_sph.h"
 //#include "omp.h"
 
@@ -59,7 +61,42 @@
 
 #include "COMB_Define.h"
 
+#include "../FB/mydebug.h"
+
 using namespace std;
+
+
+/// 変数の種類 copy from FB_Define.h
+enum Kind_of_vars {
+  var_Velocity=0,
+  var_Pressure,
+  var_Temperature,
+  var_Density,
+  var_TotalP,
+  var_Velocity_Avr,
+  var_Pressure_Avr,
+  var_Temperature_Avr,
+  var_Density_Avr,
+  var_TotalP_Avr,
+  var_Helicity,
+  var_Vorticity,
+  var_I2vgt,
+  var_Divergence,
+  var_FaceVelocity,
+  var_END
+};
+
+////////// From FB_Define.h
+
+#define ON          1
+#define OFF         0
+//////////
+
+////////// From PLOT3D.h
+#define OUTPUT_REAL_UNKNOWN 0
+#define OUTPUT_FLOAT        1
+#define OUTPUT_DOUBLE       2
+//////////
 
 
 class COMB {
@@ -113,15 +150,15 @@ public:
     int ngrid; //出力ブロック数
     int nvar;  //出力項目数
   } Plot3D_Option;
-  Plot3D_Option  P3Op;
+  // PLOT3Dfunctions_20131005 Plot3D_Option  P3Op;
   
   int output_real_type;
   int out_format;//combine sph or output plot3d
   int ndfi;//number of dfi file list
   vector<string> dfi_name;
   
-  FileIO_PLOT3D_READ  FP3DR; ///< PLOT3D READクラス
-  FileIO_PLOT3D_WRITE FP3DW; ///< PLOT3D WRITEクラス
+  // PLOT3Dfunctions_20131005 FileIO_PLOT3D_READ  FP3DR; ///< PLOT3D READクラス
+  // PLOT3Dfunctions_20131005 FileIO_PLOT3D_WRITE FP3DW; ///< PLOT3D WRITEクラス
 
   vector<cio_DFI *>dfi;
   
@@ -186,7 +223,7 @@ public:
    * @brief PLOT3Dファイル入出力に関するパラメータ
    * @param [in] tpCntl  TextParserクラスポインタ
    */
-  void get_PLOT3D(TextParser* tpCntl);
+  // PLOT3Dfunctions_20131005 void get_PLOT3D(TextParser* tpCntl);
   
   /**
    * @brief AVSファイル入出力に関するパラメータ
@@ -584,7 +621,7 @@ public:
   /**
    * @brief PLOT3Dファイルの出力
    */
-  void output_plot3d();
+  // PLOT3Dfunctions_20131005 void output_plot3d();
   
   
   /**
@@ -598,7 +635,7 @@ public:
    * @param [in]     jd       セル中心d y方向サイズ
    * @param [in]     kd       セル中心d z方向サイズ
    */
-  void thinout_plot3d(float* dt, float* d, int idt, int jdt, int kdt, int id, int jd, int kd);
+  // PLOT3Dfunctions_20131005 void thinout_plot3d(float* dt, float* d, int idt, int jdt, int kdt, int id, int jd, int kd);
   
   
   /**
@@ -612,7 +649,7 @@ public:
    * @param [in]     jd       セル中心d y方向サイズ
    * @param [in]     kd       セル中心d z方向サイズ
    */
-  void thinout_plot3d(double* dt, double* d, int idt, int jdt, int kdt, int id, int jd, int kd);
+  // PLOT3Dfunctions_20131005 void thinout_plot3d(double* dt, double* d, int idt, int jdt, int kdt, int id, int jd, int kd);
   
   
   /**
@@ -627,6 +664,7 @@ public:
    * @param [in] y          y方向座標ワーク
    * @param [in] z          z方向座標ワーク
    */
+  /* PLOT3Dfunctions_20131005
   template<class T1, class T2>
   void OutputPlot3D_xyz(int m_step, int m_rank, int guide, T1* origin, T1* pitch, int* size, T2* x, T2* y, T2* z)
   {
@@ -753,6 +791,7 @@ public:
     FP3DW.CloseFile();
     
   };
+   */
   
   /**
    * @brief 内部の格子点のデータを8で割る
@@ -761,6 +800,7 @@ public:
    * @param [in]     jd       セル中心d y方向サイズ
    * @param [in]     kd       セル中心d z方向サイズ
    */
+  /* PLOT3Dfunctions_20131005
   template<class T>
   void VolumeDataDivideBy8(T* d, int id, int jd, int kd)
   {
@@ -776,6 +816,7 @@ public:
       }
     }
   };
+   */
   
   /**
    * @brief 面上の格子点のデータを4で割る
@@ -784,6 +825,7 @@ public:
    * @param [in]     jd       セル中心d y方向サイズ
    * @param [in]     kd       セル中心d z方向サイズ
    */
+  /* PLOT3Dfunctions_20131005
   template<class T>
   void FaceDataDivideBy4(T* d, int id, int jd, int kd)
   {
@@ -838,6 +880,7 @@ public:
       }
     }
   };
+   */
   
   
   /**
@@ -847,6 +890,7 @@ public:
    * @param [in]     jd       セル中心d y方向サイズ
    * @param [in]     kd       セル中心d z方向サイズ
    */
+  /* PLOT3Dfunctions_20131005
   template<class T>
   void LineDataDivideBy2(T* d, int id, int jd, int kd)
   {
@@ -926,6 +970,7 @@ public:
     }
     
   };
+   */
   
   
   /**
@@ -936,6 +981,7 @@ public:
    * @param [in]     jd       セル中心data y方向サイズ
    * @param [in]     kd       セル中心data z方向サイズ
    */
+  /* PLOT3Dfunctions_20131005
   template<class T1, class T2>
   void setScalarGridData(int* size, int guide, T1* d, T2* data, int id, int jd, int kd, int gc_out)
   {
@@ -990,6 +1036,7 @@ public:
     LineDataDivideBy2(d, id, jd, kd);
     
   };
+   */
   
   
   /**
@@ -1000,6 +1047,7 @@ public:
    * @param [in]     jd       セル中心data y方向サイズ
    * @param [in]     kd       セル中心data z方向サイズ
    */
+  /* PLOT3Dfunctions_20131005
   template<class T1, class T2>
   void setVectorGridData(int* size, int guide, T1* d, T2* data, int id, int jd, int kd, int gc_out)
   {
@@ -1063,7 +1111,7 @@ public:
     }//loop ivar
     
   };
-  
+  */
   
   /**
    * @brief 成分別Vectorの格子点での値をセット
@@ -1074,6 +1122,7 @@ public:
    * @param [in]     kd       セル中心data z方向サイズ
    * @param [in]     ivar     ベクトル成分 =0:x =1:y =2:z
    */
+  /* PLOT3Dfunctions_20131005
   template<class T1, class T2>
   void setVectorComponentGridData(int* size, int guide, T1* d, T2* data, int id, int jd, int kd, int ivar, int gc_out)
   {
@@ -1129,6 +1178,7 @@ public:
     LineDataDivideBy2(d, id, jd, kd);
     
   };
+   */
   
   ///////////////////////////////////////////////////////////////////////////////
   // comb_avs.C

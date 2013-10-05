@@ -51,7 +51,7 @@ public:
     tg_derived,  ///< 派生変数の出力
     tg_sampled,  ///< サンプリング出力 
     tg_accelra,  ///< 加速時間
-    tg_plot3d,   ///< PLOT3D瞬時値出力
+    //tg_plot3d,   ///< PLOT3D瞬時値出力
     tg_END
   };
   

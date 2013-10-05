@@ -400,7 +400,7 @@ public:
     string InDirPath;
   } File_IO_Cntl;
   
-  /** PLOT3D オプション */
+  /* PLOT3Dfunctions_20131005 PLOT3D オプション 
   typedef struct 
   {
     string basename_g;
@@ -415,6 +415,7 @@ public:
     int ngrid; //出力ブロック数
     int nvar;  //出力項目数
   } Plot3D_Option;
+   */
   
   /** LESパラメータ */
   typedef struct 
@@ -612,7 +613,7 @@ public:
   Initial_Value     iv;
   LES_Parameter     LES;
   File_IO_Cntl      FIO;
-  Plot3D_Option     P3Op;
+  /* PLOT3Dfunctions_20131005 Plot3D_Option     P3Op; */
   Hidden_Parameter  Hide;
   Unit_Def          Unit;
   Sampling_Def      Sampling;
@@ -767,14 +768,16 @@ public:
     FIO.IOmode   = 0;
     FIO.Div_Debug  = 0;
     FIO.IO_Voxel   = 0;
-    FIO.Format     = 0; // 0:sph, 1:PLOT3D, 2:BOV
+    FIO.Format     = 0; // 0:sph, 1:BOV
     FIO.Slice      = 0;
     
+    /* PLOT3Dfunctions_20131005
     P3Op.IS_xyz = ON;
     P3Op.IS_q = OFF;
     P3Op.IS_funciton = ON;
     P3Op.IS_function_name = ON;
     P3Op.IS_fvbnd = OFF;
+     */
     
     Hide.Change_ID = 0;
     Hide.Range_Limit = 0;
@@ -834,9 +837,10 @@ protected:
   // ファイル入出力に関するパラメータを取得し，sphフォーマットの出力の並列モードを指定する
   void getFieldData();
   
-  
+  /* PLOT3Dfunctions_20131005
   // PLOt3Dフォーマットのオプションを指定する
   void getFormat_plot3d();
+   */
   
   
   // sphフォーマットのオプションを指定

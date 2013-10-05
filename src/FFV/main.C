@@ -43,6 +43,15 @@ int main( int argc, char **argv )
   // FFV classのインスタンス
   FFV ffv;
   
+  
+  // 並列管理クラスのインスタンスと初期化
+  // ここでMPI_Initも行う
+  if ( !ffv.importCPM(cpm_ParaManager::get_instance(argc, argv)) )
+  {
+    return 1;
+  }
+  
+  
   // 引数チェック
   if ( argc != 2 )
   {
@@ -51,6 +60,7 @@ int main( int argc, char **argv )
       printf("\n\tusage\n");
       printf("\n\t$ ffvc <input_file>\n");
     }
+    
     if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
     return 1;
   }
@@ -58,14 +68,6 @@ int main( int argc, char **argv )
   // ##################################################################
   // 初期化
   init_str = cpm_Base::GetWTime();
-
-  
-  // 並列管理クラスのインスタンスと初期化
-  // ここでMPI_Initも行う
-  if ( !ffv.importCPM(cpm_ParaManager::get_instance(argc, argv)) )
-  {
-    return 1;
-  }
   
   
   // Open HPCPF_STATUS file

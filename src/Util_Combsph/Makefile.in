@@ -79,8 +79,8 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_combsph_OBJECTS = combsph-FileIO_read_sph.$(OBJEXT) \
 	combsph-FileIO_sph.$(OBJEXT) combsph-comb.$(OBJEXT) \
-	combsph-comb_avs.$(OBJEXT) combsph-comb_plot3d.$(OBJEXT) \
-	combsph-comb_sph.$(OBJEXT) combsph-main.$(OBJEXT)
+	combsph-comb_avs.$(OBJEXT) combsph-comb_sph.$(OBJEXT) \
+	combsph-main.$(OBJEXT)
 combsph_OBJECTS = $(am_combsph_OBJECTS)
 combsph_DEPENDENCIES =
 combsph_LINK = $(CXXLD) $(combsph_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
@@ -241,7 +241,6 @@ top_srcdir = @top_srcdir@
 combsph_CXXFLAGS = \
   -I. \
   -I../FB \
-  -I../PLOT3D \
   @CPM_CFLAGS@ \
   @CIO_CFLAGS@ \
   @TP_CFLAGS@ \
@@ -250,6 +249,8 @@ combsph_CXXFLAGS = \
   @REALOPT@ \
   @FREALOPT@
 
+
+# -I../PLOT3D
 combsph_SOURCES = \
   COMB_Define.h \
   FileIO_read_sph.C \
@@ -258,15 +259,15 @@ combsph_SOURCES = \
   comb.C \
   comb.h \
   comb_avs.C \
-  comb_plot3d.C \
   comb_sph.C \
   endianUtil.h \
   main.C \
   util_Path.h
 
+
+# comb_plot3d.C
 combsph_LDADD = \
   -L../FB -lFB \
-  -L../PLOT3D -lPLOT3D \
   @CPM_LDFLAGS@ \
   @CIO_LDFLAGS@ \
   @TP_LDFLAGS@ \
@@ -277,7 +278,9 @@ combsph_LDADD = \
   @FFVC_LIBS@ \
   @FFVC_FC_LD@
 
-EXTRA_DIST = Makefile_hand depend.inc README
+
+# -L../PLOT3D -lPLOT3D
+EXTRA_DIST = Makefile_hand depend.inc README comb_plot3d.C
 all: all-am
 
 .SUFFIXES:
@@ -366,7 +369,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/combsph-FileIO_sph.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/combsph-comb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/combsph-comb_avs.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/combsph-comb_plot3d.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/combsph-comb_sph.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/combsph-main.Po@am__quote@
 
@@ -439,20 +441,6 @@ combsph-comb_avs.obj: comb_avs.C
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='comb_avs.C' object='combsph-comb_avs.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-comb_avs.obj `if test -f 'comb_avs.C'; then $(CYGPATH_W) 'comb_avs.C'; else $(CYGPATH_W) '$(srcdir)/comb_avs.C'; fi`
-
-combsph-comb_plot3d.o: comb_plot3d.C
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-comb_plot3d.o -MD -MP -MF $(DEPDIR)/combsph-comb_plot3d.Tpo -c -o combsph-comb_plot3d.o `test -f 'comb_plot3d.C' || echo '$(srcdir)/'`comb_plot3d.C
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/combsph-comb_plot3d.Tpo $(DEPDIR)/combsph-comb_plot3d.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='comb_plot3d.C' object='combsph-comb_plot3d.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-comb_plot3d.o `test -f 'comb_plot3d.C' || echo '$(srcdir)/'`comb_plot3d.C
-
-combsph-comb_plot3d.obj: comb_plot3d.C
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-comb_plot3d.obj -MD -MP -MF $(DEPDIR)/combsph-comb_plot3d.Tpo -c -o combsph-comb_plot3d.obj `if test -f 'comb_plot3d.C'; then $(CYGPATH_W) 'comb_plot3d.C'; else $(CYGPATH_W) '$(srcdir)/comb_plot3d.C'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/combsph-comb_plot3d.Tpo $(DEPDIR)/combsph-comb_plot3d.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='comb_plot3d.C' object='combsph-comb_plot3d.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-comb_plot3d.obj `if test -f 'comb_plot3d.C'; then $(CYGPATH_W) 'comb_plot3d.C'; else $(CYGPATH_W) '$(srcdir)/comb_plot3d.C'; fi`
 
 combsph-comb_sph.o: comb_sph.C
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-comb_sph.o -MD -MP -MF $(DEPDIR)/combsph-comb_sph.Tpo -c -o combsph-comb_sph.o `test -f 'comb_sph.C' || echo '$(srcdir)/'`comb_sph.C

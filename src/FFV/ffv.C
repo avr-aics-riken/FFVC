@@ -58,8 +58,6 @@ FFV::FFV()
     G_region[i] = 0.0;
   }
   
-  dfi_mng_Plot3D = 0;
-  
   mat_tbl = NULL;
   
   fp_b = NULL;

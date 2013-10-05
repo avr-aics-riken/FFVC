@@ -245,7 +245,7 @@ int FFV::Loop(const unsigned step)
   }
 
 
-  
+  /* PLOT3Dfunctions_20131005
   //  PLOT3D output
   if (C.FIO.Format == plt3d_fmt)
   {
@@ -275,6 +275,7 @@ int FFV::Loop(const unsigned step)
       }
     }
   }
+   */
   
   // 平均値のデータ出力 
   if (C.Mode.Average == ON) 

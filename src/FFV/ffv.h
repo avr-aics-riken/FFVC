@@ -52,16 +52,12 @@
 #include "../FB/CompoFraction.h"
 #include "../FB/History.h"
 #include "../FB/Monitor.h"
-
+#include "../FB/dfiinfo.h"
 #include "ffv_Version.h"
 #include "ffv_Define.h"
 #include "ffv_SetBC.h"
 #include "../F_CORE/ffv_Ffunc.h"
 #include "ffv_TerminateCtrl.h"
-
- 
-#include "dfi.h"
-#include "dfiinfo.h"
 
 
 // Intrinsic class
@@ -74,9 +70,6 @@
 #include "../IP/IP_Polygon.h"
 #include "../IP/IP_Sphere.h"
 #include "../IP/IP_Jet.h"
-
-// PLOT3D
-#include "../PLOT3D/ffv_PLOT3D.h"
 
 
 // FX10 profiler
@@ -145,8 +138,6 @@ private:
   REAL_TYPE *cf_x;  ///< i方向のバッファ
   REAL_TYPE *cf_y;  ///< j方向のバッファ
   REAL_TYPE *cf_z;  ///< k方向のバッファ
-  
-  int dfi_mng_Plot3D;
   
   REAL_TYPE v00[4];      ///< 参照速度
   REAL_TYPE range_Ut[2]; ///< 
@@ -264,10 +255,12 @@ private:
   ConvergenceMonitor CM_F;   ///< 流動の定常収束モニター
   ConvergenceMonitor CM_H;   ///< 熱の定常収束モニター
   
+  /* PLOT3Dfunctions_20131005
   ::DFI DFI;                 ///< 分散ファイルインデクス管理クラス
   Plot3D PLT3D;              ///< PLOT3Dクラス
   FileIO_PLOT3D_READ  FP3DR; ///< PLOT3D READクラス
   FileIO_PLOT3D_WRITE FP3DW; ///< PLOT3D WRITEクラス
+   */
   
   char tm_label_ptr[tm_END][TM_LABEL_MAX];  ///< プロファイラ用のラベル
 
@@ -948,123 +941,6 @@ public:
    */
   bool Post();
   
-  
-  
-  
-//####################################################################
-/* CIOlib導入で利用しなくなったメソッド
-//####################################################################
- 
-  // @brief 並列分散時のファイル名の管理を行う
-  void setDFI();
-  
-   // @brief ファイルのオープンチェック
-   bool checkFile(string fname);
-  
-  
-   // @brief 粗い格子を用いたリスタート
-   void Restart_coarse(FILE* fp, double& flop);
-   
-   
-   // @brief リスタート時の瞬時値ファイル読み込み（並列数が異なる場合）
-   void Restart_different(FILE* fp, double& flop);
-   
-   
-   // @brief ファイル読み込み＋オーバーラップを移しこみ（圧力）
-   void ReadOverlap_Pressure(FILE* fp,
-   double& flop,
-   DifferentRestartInfo* DRI,
-   DfiInfo* DI,
-   REAL_TYPE* d_wk,
-   int* rank_list,
-   int recv_rank,
-   int* assign,
-   int nassign);
-   
-   
-   // @brief ファイル読み込み＋オーバーラップを移しこみ（流速）
-   void ReadOverlap_Velocity(FILE* fp,
-   double& flop,
-   DifferentRestartInfo* DRI,
-   DfiInfo* DI,
-   REAL_TYPE* d_wk,
-   int* rank_list,
-   int recv_rank,
-   int* assign,
-   int nassign);
-   
-   
-   // @brief ファイル読み込み＋オーバーラップを移しこみ（境界流速）
-   void ReadOverlap_FVelocity(FILE* fp,
-   double& flop,
-   DifferentRestartInfo* DRI,
-   DfiInfo* DI,
-   REAL_TYPE* d_wk,
-   int* rank_list,
-   int recv_rank,
-   int* assign,
-   int nassign);
-   
-   
-   // @brief ファイル読み込み＋オーバーラップを移しこみ（温度）
-   void ReadOverlap_Temperature(FILE* fp,
-   double& flop,
-   DifferentRestartInfo* DRI,
-   DfiInfo* DI,
-   REAL_TYPE* d_wk,
-   int* rank_list,
-   int recv_rank,
-   int* assign,
-   int nassign);
-   
-   
-   // @brief ファイル読み込み＋オーバーラップを移しこみ
-   void ReadOverlap(FILE* fp,
-   double& flop,
-   DifferentRestartInfo* DRI,
-   REAL_TYPE* d_wk);
-   
-   // @brief オーバーラップ領域を計算
-   void SetOverlap(REAL_TYPE* write_wk,
-   REAL_TYPE* read_wk,
-   int dim,
-   int gd,
-   int* h,
-   int* s,
-   int* overlap_h,
-   int* overlap_t,
-   int* head,
-   int* size);
-   
-   // 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
-   bool getCoarseResult (int i, int j, int k,
-   std::string& coarse_dfi_fname,
-   std::string& coarse_prefix,
-   const int m_step,
-   std::string& coarse_sph_fname,
-   int* c_size,
-   int* coarse,
-   int* block
-   );
-   
-   // 2倍密格子の領域開始インデクス番号から、その領域が属する粗格子計算結果ファイル名と、その計算結果ファイルの開始インデクス番号を取得する
-   bool getCoarseResult2(int i, int j, int k,
-   std::string& coarse_dfi_fname,
-   std::string& coarse_prefix,
-   const int m_step,
-   std::string& coarse_sph_fname,
-   int* c_size,
-   int* coarse,
-   int* block
-   );
-   
-   // @brief オーバーラップ領域を計算
-   void CalOverlap(int* overlap_h, int* overlap_t, int* h, int* t, int* head, int* tail);
-   
-   // @brief 粗格子から密格子へ内挿
-   void Interpolation_from_coarse_initial(const int* m_st, const int* m_bk);
-   
-  */
 };
 
 #endif // _FFV_H_

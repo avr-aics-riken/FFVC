@@ -72,8 +72,6 @@ libFB_a_SOURCES = \
   VoxInfo.h \
   basic_func.h \
   dbwrite.f90 \
-  dfi.C \
-  dfi.h \
   dfiinfo.C \
   dfiinfo.h \
   ffv_f_params.h \

@@ -712,7 +712,6 @@ void Control::getFieldData()
   
   if     ( !strcasecmp(str.c_str(), "sph") )     FIO.Format = sph_fmt;
   else if( !strcasecmp(str.c_str(), "bov") )     FIO.Format = bov_fmt;
-  else if( !strcasecmp(str.c_str(), "plot3d") )  FIO.Format = plt3d_fmt;
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -780,11 +779,6 @@ void Control::getFieldData()
     FIO.Format = bov_fmt;
     file_fmt_ext = "dat";
   }
-  else if( !strcasecmp(str.c_str(), "plot3d") )
-  {
-    FIO.Format = plt3d_fmt;
-    file_fmt_ext = ""; // plot3dの場合は,ファイルがいくつかあるので別に処理
-  }
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -798,10 +792,6 @@ void Control::getFieldData()
       break;
       
     case bov_fmt:
-      break;
-      
-    case plt3d_fmt:
-      getFormat_plot3d();
       break;
   }
   
@@ -964,7 +954,7 @@ void Control::getFieldData()
 
 }
 
-
+/* PLOT3Dfunctions_20131005
 // #################################################################
 // @brief ファイルフォーマットのオプションを指定する
 void Control::getFormat_plot3d()
@@ -1022,7 +1012,7 @@ void Control::getFormat_plot3d()
   }
 
 }
-
+ */
 
 // #################################################################
 // @brief ファイルフォーマットのオプションを指定する．
@@ -3661,6 +3651,7 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
     }
   }
   
+  /* PLOT3Dfunctions_20131005
   // PLOT3D 瞬間値のファイル出力
   if(FIO.Format == plt3d_fmt)
   {
@@ -3674,6 +3665,7 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
       fprintf(fp,"\t     Plot3d Instant data      :   %12d [step]\n", Interval[Interval_Manager::tg_plot3d].getIntervalStep());
     }
   }
+   */
 
   
   // Criteria ------------------

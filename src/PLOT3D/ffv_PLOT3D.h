@@ -23,7 +23,7 @@
 
 #define PLT3D_VERS 103
 
-#include "../FB/dfi.h"
+#include "dfi.h"
 #include <string>
 #include <mpi.h>
 

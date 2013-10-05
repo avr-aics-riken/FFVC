@@ -166,26 +166,6 @@ Output {
       TimeSlice       = "off"
       DirectoryPath   = "hoge"
     }
-
-    PLOT3D {
-      filename        = ""
-      gridkind        = "single_grid"
-      gridmobility    = "immovable"
-      stateoftime     = "unsteady"
-      setiblankflag   = "off"
-      Dimension       = "3D"
-      Formattype      = "unformatted"
-      Outputxyz       = "off"
-      Outputq         = "off"
-      Outputfunction  = "off"
-      Outputfuncname  = "off"
-      Outputfvbnd     = "off"
-    }
-
-    VTK {
-      Path            = "VTK"
-      Prefix          = "data-"
-    }
   }
 }
 

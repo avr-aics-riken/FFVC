@@ -19,6 +19,10 @@ RELEASE
 =======
 
 -------------
+Version 1.4.3    2013-10-05
+  - exception of PLOT3D
+  
+-------------
 Version 1.4.2    2013-10-03
   - modify for intel MPI
 

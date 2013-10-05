@@ -21,7 +21,6 @@ ffvc_CXXFLAGS = \
   -I../FB \
   -I../F_CORE \
   -I../IP \
-  -I../PLOT3D \
   @CPM_CFLAGS@ \
   @CIO_CFLAGS@ \
   @TP_CFLAGS@ \
@@ -53,7 +52,6 @@ ffvc_SOURCES = \
   ffv_Version.h
 
 ffvc_LDADD = \
-  -L../PLOT3D -lPLOT3D \
   -L../FB -lFB \
   -L../IP -lIP \
   -L../F_CORE -lFCORE \

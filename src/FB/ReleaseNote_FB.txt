@@ -17,6 +17,10 @@
 RELEASE NOTE
 ============
 
+Ver 1.3.7   2013-10-05
+  - PLOT3D出力はコンバータ対応に変更．ソースのコメントアウト PLOT3Dfunctions_20131005
+  - dfi.h/CをPLOT3Dディレクトリに移動
+  
 Ver 1.3.6   2013-10-02
   - Intel MPIではmpi.hをstdio.hの前にインクルードしないとエラーになるので対応
 

@@ -18,7 +18,6 @@ bin_PROGRAMS = combsph
 combsph_CXXFLAGS = \
   -I. \
   -I../FB \
-  -I../PLOT3D \
   @CPM_CFLAGS@ \
   @CIO_CFLAGS@ \
   @TP_CFLAGS@ \
@@ -26,6 +25,8 @@ combsph_CXXFLAGS = \
   @MPICH_CFLAGS@ \
   @REALOPT@ \
   @FREALOPT@
+  
+# -I../PLOT3D
 
 combsph_SOURCES = \
   COMB_Define.h \
@@ -35,15 +36,15 @@ combsph_SOURCES = \
   comb.C \
   comb.h \
   comb_avs.C \
-  comb_plot3d.C \
   comb_sph.C \
   endianUtil.h \
   main.C \
   util_Path.h
+  
+# comb_plot3d.C
 
 combsph_LDADD = \
   -L../FB -lFB \
-  -L../PLOT3D -lPLOT3D \
   @CPM_LDFLAGS@ \
   @CIO_LDFLAGS@ \
   @TP_LDFLAGS@ \
@@ -54,6 +55,6 @@ combsph_LDADD = \
   @FFVC_LIBS@ \
   @FFVC_FC_LD@
   
+# -L../PLOT3D -lPLOT3D
 
-
-EXTRA_DIST = Makefile_hand depend.inc README
+EXTRA_DIST = Makefile_hand depend.inc README comb_plot3d.C

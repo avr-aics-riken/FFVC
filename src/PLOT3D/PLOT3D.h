@@ -54,6 +54,16 @@
 #endif // _WIN32
 
 
+// PLOT3D File Format
+#define UNFORMATTED         1
+#define FORMATTED           2
+#define C_BINARY            3
+
+// output real type (plot3d)
+#define OUTPUT_REAL_UNKNOWN 0
+#define OUTPUT_FLOAT        1
+#define OUTPUT_DOUBLE       2
+
 extern "C" {
 
 // PLT3D.f90

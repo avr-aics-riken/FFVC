@@ -38,6 +38,7 @@ COMB::COMB()
   lflagv=0;
   thin_out = false;
   
+  /* PLOT3Dfunctoins_20131005
   P3Op.IS_xyz = ON;
   P3Op.IS_q = OFF;
   P3Op.IS_funciton = ON;
@@ -46,11 +47,13 @@ COMB::COMB()
   P3Op.IS_DivideFunc=OFF;
   P3Op.ngrid=0; //出力ブロック数
   P3Op.nvar=0;  //出力項目数
+  */
+  
+  out_format=0;
   
   output_real_type=0;
-  out_format=0;
+
   ndfi=0;
-  
   dfi.clear();
   
   // dfi管理
@@ -214,14 +217,14 @@ void COMB::ReadInputFile(TextParser* tpCntl)
   }
   
   // PLOT3Dオプションの読み込み
-  if( out_format == OUTFORMAT_IS_PLOT3D ) get_PLOT3D(tpCntl);
+  // PLOT3Dfunctions_20131005 if( out_format == OUTFORMAT_IS_PLOT3D ) get_PLOT3D(tpCntl);
   
   // AVSオプションの読み込み
   if( out_format == OUTFORMAT_IS_AVS ) get_AVSoptions(tpCntl);
   
 }
 
-
+/* PLOT3Dfunctions_20131005
 // #################################################################
 // PLOT3Dファイル入出力に関するパラメータ
 void COMB::get_PLOT3D(TextParser* tpCntl)
@@ -292,7 +295,7 @@ void COMB::get_PLOT3D(TextParser* tpCntl)
    Exit(0);
    }
    }
-   */
+   
   FP3DR.setMultiGrid(); // 常にmulti grid
   
   // 格子の移動
@@ -350,7 +353,7 @@ void COMB::get_PLOT3D(TextParser* tpCntl)
    printf("\tInvalid keyword is described for '%s'\n", label.c_str());
    Exit(0);
    }
-   }*/
+   }
   FP3DR.setIBlankFlag(NOT_SET_IBLANK); //sphファイルの情報からIblankは作れないので常にoff
   
   /* 次元数
@@ -368,7 +371,7 @@ void COMB::get_PLOT3D(TextParser* tpCntl)
    printf("\tInvalid keyword is described for '%s'\n", label.c_str());
    Exit(0);
    }
-   }*/
+   }
   FP3DR.setDimension3D(); // 常に三次元
   
   
@@ -455,7 +458,7 @@ void COMB::get_PLOT3D(TextParser* tpCntl)
    Exit(0);
    }
    }
-   */
+   
   P3Op.IS_q = OFF;
   
   // OutputFunction
@@ -515,7 +518,7 @@ void COMB::get_PLOT3D(TextParser* tpCntl)
    Exit(0);
    }
    }
-   */
+   
   P3Op.IS_fvbnd = OFF;
   
   
@@ -539,6 +542,7 @@ void COMB::get_PLOT3D(TextParser* tpCntl)
   }
   
 }
+ */
 
 // #################################################################
 // AVSファイル入出力に関するパラメータ
@@ -848,7 +852,7 @@ void COMB::CombineFiles()
   }
   else if( out_format == OUTFORMAT_IS_PLOT3D )
   {
-    output_plot3d();
+    // PLTT3Dfunctions_20131005 output_plot3d();
   }
   else if( out_format == OUTFORMAT_IS_AVS )
   {

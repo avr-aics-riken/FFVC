@@ -566,7 +566,7 @@ int FFV::Initialize(int argc, char **argv)
     }
   }
   
-  
+  /* PLOT3Dfunctions_20131005
   // PLOT3D形状データの書き出し
   PLT3D.Initialize(size, guide, deltaX, &C, &FP3DR, &FP3DW, &DFI, d_ws, d_p, d_wo, d_v, d_ie, d_p0, d_wv, d_cdf, d_bcd);
   
@@ -584,7 +584,7 @@ int FFV::Initialize(int argc, char **argv)
     }
     if (C.P3Op.IS_fvbnd == ON) PLT3D.fvbnd();
   }
-
+   */
 
   
   // 出力ファイルの初期化
@@ -597,9 +597,9 @@ int FFV::Initialize(int argc, char **argv)
     flop_task = 0.0;
     OutputBasicVariables(flop_task);
     
-
+    /* PLOT3Dfunctions_20131005
     if (C.FIO.Format == plt3d_fmt) PLT3D.post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng_Plot3D, flop_task);
-
+     */
     
     if ( (C.Mode.Average == ON) && (C.Start != initial_start) )
     {
@@ -615,7 +615,9 @@ int FFV::Initialize(int argc, char **argv)
     flop_task = 0.0;
     OutputBasicVariables(flop_task);
     
+    /* PLOT3Dfunctions_20131005
     if (C.FIO.Format == plt3d_fmt) PLT3D.post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng_Plot3D, flop_task);
+     */
   }
 
 
@@ -1019,11 +1021,13 @@ void FFV::displayParameters(FILE* fp)
 {
   C.displayParams(stdout, fp, IC, &DT, &RF, mat, cmp);
   
+  /* PLOT3Dfunctions_20131005
   if (C.FIO.Format == plt3d_fmt)
   {
     PLT3D.printParameters(stdout);
     PLT3D.printParameters(fp);
   }
+   */
   
   Ex->printPara(stdout, &C);
   Ex->printPara(fp, &C);
@@ -3251,6 +3255,7 @@ void FFV::initInterval()
     }    
   }
   
+  /* PLOT3Dfunctions_20131005
   // 瞬時値ファイル
   if (C.FIO.Format == plt3d_fmt)
   {
@@ -3260,6 +3265,7 @@ void FFV::initInterval()
       Exit(0);
     }
   }
+   */
   
   Session_LastStep = C.Interval[Interval_Manager::tg_compute].getIntervalStep();
   
@@ -4502,9 +4508,10 @@ string FFV::setupDomain(TextParser* tpf)
   Ex->setRankInfo  (paraMngr, procGrp);
   MO.setRankInfo   (paraMngr, procGrp);
 
+  /* PLOT3Dfunctions_20131005
   FP3DR.setRankInfo(paraMngr, procGrp);
   FP3DW.setRankInfo(paraMngr, procGrp);
-  
+   */
   
   // 並列モードの取得
   string str = setParallelism();
@@ -4513,11 +4520,13 @@ string FFV::setupDomain(TextParser* tpf)
   // 最初のパラメータの取得
   C.get1stParameter(&DT);
   
+  /* PLOT3Dfunctions_20131005
   // PLOT3D Parameter
   if ( C.FIO.Format == plt3d_fmt)
   {
     PLT3D.getParameter(tpf);
   }
+   */
   
   // 代表パラメータをコピー
   Ex->setRefParameter(&C);
@@ -4544,8 +4553,10 @@ string FFV::setupDomain(TextParser* tpf)
   Ex->setNeighborInfo  (C.guide);
   MO.setNeighborInfo   (C.guide);
 
+  /* PLOT3Dfunctions_20131005
   FP3DR.setNeighborInfo(C.guide);
   FP3DW.setNeighborInfo(C.guide);
+   */
   
   
   // 従属的なパラメータの取得

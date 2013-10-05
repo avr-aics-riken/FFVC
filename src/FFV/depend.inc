@@ -40,20 +40,21 @@ main.o: main.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h ../FB/DomainInfo.h \
- ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h ../FB/FBUtility.h ../FB/Control.h \
- ../FB/Medium.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
+ ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h ../FB/Medium.h \
+ ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
  ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
  ../FB/IterationControl.h /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
  /usr/local/TextParser/include/Version.h ../FB/Alloc.h ../FB/FileIO.h \
  ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h ../FB/ParseMat.h \
- ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
- ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
- ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
- /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
+ ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
+ ../FB/basic_func.h ../FB/Sampling.h ../FB/dfiinfo.h ffv_Version.h ffv_Define.h \
+ ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
+ ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
+ /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
+ /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -79,11 +80,19 @@ main.o: main.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/Cutlib/include/GridAccessor/GridAccessor.h \
  /usr/local/Cutlib/include/Version.h \
  /usr/local/Cutlib/include/GridAccessor/Cell.h \
- /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_PathUtil.h \
+ /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_Define.h \
+ /usr/local/CIOlib/include/cio_Version.h /usr/local/CIOlib/include/cio_PathUtil.h \
  /usr/local/CIOlib/include/cio_TextParser.h \
- /usr/local/CIOlib/include/cio_Define.h /usr/local/CIOlib/include/cio_Version.h \
  /usr/local/CIOlib/include/cio_ActiveSubDomain.h \
- /usr/local/CIOlib/include/cio_endianUtil.h
+ /usr/local/CIOlib/include/cio_endianUtil.h \
+ /usr/local/CIOlib/include/cio_TypeArray.h /usr/local/CIOlib/include/cio_Array.h \
+ /usr/local/CIOlib/include/inline/cio_Array_inline.h \
+ /usr/local/CIOlib/include/cio_FileInfo.h \
+ /usr/local/CIOlib/include/cio_FilePath.h /usr/local/CIOlib/include/cio_Unit.h \
+ /usr/local/CIOlib/include/cio_TimeSlice.h /usr/local/CIOlib/include/cio_Domain.h \
+ /usr/local/CIOlib/include/cio_MPI.h /usr/local/CIOlib/include/cio_Process.h \
+ /usr/local/CIOlib/include/cio_Interval_Mngr.h \
+ /usr/local/CIOlib/include/inline/cio_DFI_inline.h
 ffv.o: ffv.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/cpm_Base.h /usr/local/CPMlib/include/cpm_Define.h \
  /opt/openmpi/include/mpi.h /opt/openmpi/include/mpi_portable_platform.h \
@@ -126,20 +135,21 @@ ffv.o: ffv.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h ../FB/DomainInfo.h \
- ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h ../FB/FBUtility.h ../FB/Control.h \
- ../FB/Medium.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
+ ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h ../FB/Medium.h \
+ ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
  ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
  ../FB/IterationControl.h /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
  /usr/local/TextParser/include/Version.h ../FB/Alloc.h ../FB/FileIO.h \
  ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h ../FB/ParseMat.h \
- ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
- ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
- ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
- /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
+ ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
+ ../FB/basic_func.h ../FB/Sampling.h ../FB/dfiinfo.h ffv_Version.h ffv_Define.h \
+ ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
+ ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
+ /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
+ /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -165,11 +175,19 @@ ffv.o: ffv.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/Cutlib/include/GridAccessor/GridAccessor.h \
  /usr/local/Cutlib/include/Version.h \
  /usr/local/Cutlib/include/GridAccessor/Cell.h \
- /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_PathUtil.h \
+ /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_Define.h \
+ /usr/local/CIOlib/include/cio_Version.h /usr/local/CIOlib/include/cio_PathUtil.h \
  /usr/local/CIOlib/include/cio_TextParser.h \
- /usr/local/CIOlib/include/cio_Define.h /usr/local/CIOlib/include/cio_Version.h \
  /usr/local/CIOlib/include/cio_ActiveSubDomain.h \
- /usr/local/CIOlib/include/cio_endianUtil.h
+ /usr/local/CIOlib/include/cio_endianUtil.h \
+ /usr/local/CIOlib/include/cio_TypeArray.h /usr/local/CIOlib/include/cio_Array.h \
+ /usr/local/CIOlib/include/inline/cio_Array_inline.h \
+ /usr/local/CIOlib/include/cio_FileInfo.h \
+ /usr/local/CIOlib/include/cio_FilePath.h /usr/local/CIOlib/include/cio_Unit.h \
+ /usr/local/CIOlib/include/cio_TimeSlice.h /usr/local/CIOlib/include/cio_Domain.h \
+ /usr/local/CIOlib/include/cio_MPI.h /usr/local/CIOlib/include/cio_Process.h \
+ /usr/local/CIOlib/include/cio_Interval_Mngr.h \
+ /usr/local/CIOlib/include/inline/cio_DFI_inline.h
 ffv_Initialize.o: ffv_Initialize.C ffv.h \
  /usr/local/CPMlib/include/cpm_ParaManager.h /usr/local/CPMlib/include/cpm_Base.h \
  /usr/local/CPMlib/include/cpm_Define.h /opt/openmpi/include/mpi.h \
@@ -213,20 +231,21 @@ ffv_Initialize.o: ffv_Initialize.C ffv.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h ../FB/DomainInfo.h \
- ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h ../FB/FBUtility.h ../FB/Control.h \
- ../FB/Medium.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
+ ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h ../FB/Medium.h \
+ ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
  ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
  ../FB/IterationControl.h /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
  /usr/local/TextParser/include/Version.h ../FB/Alloc.h ../FB/FileIO.h \
  ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h ../FB/ParseMat.h \
- ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
- ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
- ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
- /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
+ ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
+ ../FB/basic_func.h ../FB/Sampling.h ../FB/dfiinfo.h ffv_Version.h ffv_Define.h \
+ ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
+ ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
+ /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
+ /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -252,11 +271,19 @@ ffv_Initialize.o: ffv_Initialize.C ffv.h \
  /usr/local/Cutlib/include/GridAccessor/GridAccessor.h \
  /usr/local/Cutlib/include/Version.h \
  /usr/local/Cutlib/include/GridAccessor/Cell.h \
- /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_PathUtil.h \
+ /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_Define.h \
+ /usr/local/CIOlib/include/cio_Version.h /usr/local/CIOlib/include/cio_PathUtil.h \
  /usr/local/CIOlib/include/cio_TextParser.h \
- /usr/local/CIOlib/include/cio_Define.h /usr/local/CIOlib/include/cio_Version.h \
  /usr/local/CIOlib/include/cio_ActiveSubDomain.h \
- /usr/local/CIOlib/include/cio_endianUtil.h
+ /usr/local/CIOlib/include/cio_endianUtil.h \
+ /usr/local/CIOlib/include/cio_TypeArray.h /usr/local/CIOlib/include/cio_Array.h \
+ /usr/local/CIOlib/include/inline/cio_Array_inline.h \
+ /usr/local/CIOlib/include/cio_FileInfo.h \
+ /usr/local/CIOlib/include/cio_FilePath.h /usr/local/CIOlib/include/cio_Unit.h \
+ /usr/local/CIOlib/include/cio_TimeSlice.h /usr/local/CIOlib/include/cio_Domain.h \
+ /usr/local/CIOlib/include/cio_MPI.h /usr/local/CIOlib/include/cio_Process.h \
+ /usr/local/CIOlib/include/cio_Interval_Mngr.h \
+ /usr/local/CIOlib/include/inline/cio_DFI_inline.h
 ffv_Alloc.o: ffv_Alloc.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/cpm_Base.h /usr/local/CPMlib/include/cpm_Define.h \
  /opt/openmpi/include/mpi.h /opt/openmpi/include/mpi_portable_platform.h \
@@ -299,20 +326,21 @@ ffv_Alloc.o: ffv_Alloc.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h ../FB/DomainInfo.h \
- ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h ../FB/FBUtility.h ../FB/Control.h \
- ../FB/Medium.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
+ ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h ../FB/Medium.h \
+ ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
  ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
  ../FB/IterationControl.h /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
  /usr/local/TextParser/include/Version.h ../FB/Alloc.h ../FB/FileIO.h \
  ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h ../FB/ParseMat.h \
- ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
- ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
- ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
- /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
+ ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
+ ../FB/basic_func.h ../FB/Sampling.h ../FB/dfiinfo.h ffv_Version.h ffv_Define.h \
+ ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
+ ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
+ /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
+ /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -338,11 +366,19 @@ ffv_Alloc.o: ffv_Alloc.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/Cutlib/include/GridAccessor/GridAccessor.h \
  /usr/local/Cutlib/include/Version.h \
  /usr/local/Cutlib/include/GridAccessor/Cell.h \
- /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_PathUtil.h \
+ /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_Define.h \
+ /usr/local/CIOlib/include/cio_Version.h /usr/local/CIOlib/include/cio_PathUtil.h \
  /usr/local/CIOlib/include/cio_TextParser.h \
- /usr/local/CIOlib/include/cio_Define.h /usr/local/CIOlib/include/cio_Version.h \
  /usr/local/CIOlib/include/cio_ActiveSubDomain.h \
- /usr/local/CIOlib/include/cio_endianUtil.h
+ /usr/local/CIOlib/include/cio_endianUtil.h \
+ /usr/local/CIOlib/include/cio_TypeArray.h /usr/local/CIOlib/include/cio_Array.h \
+ /usr/local/CIOlib/include/inline/cio_Array_inline.h \
+ /usr/local/CIOlib/include/cio_FileInfo.h \
+ /usr/local/CIOlib/include/cio_FilePath.h /usr/local/CIOlib/include/cio_Unit.h \
+ /usr/local/CIOlib/include/cio_TimeSlice.h /usr/local/CIOlib/include/cio_Domain.h \
+ /usr/local/CIOlib/include/cio_MPI.h /usr/local/CIOlib/include/cio_Process.h \
+ /usr/local/CIOlib/include/cio_Interval_Mngr.h \
+ /usr/local/CIOlib/include/inline/cio_DFI_inline.h
 ffv_SetBC.o: ffv_SetBC.C ffv_SetBC.h ../FB/SetBC.h \
  /usr/local/CPMlib/include/cpm_ParaManager.h /usr/local/CPMlib/include/cpm_Base.h \
  /usr/local/CPMlib/include/cpm_Define.h /opt/openmpi/include/mpi.h \
@@ -435,20 +471,21 @@ ffv_Restart.o: ffv_Restart.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h ../FB/DomainInfo.h \
- ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h ../FB/FBUtility.h ../FB/Control.h \
- ../FB/Medium.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
+ ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h ../FB/Medium.h \
+ ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
  ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
  ../FB/IterationControl.h /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
  /usr/local/TextParser/include/Version.h ../FB/Alloc.h ../FB/FileIO.h \
  ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h ../FB/ParseMat.h \
- ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
- ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
- ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
- /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
+ ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
+ ../FB/basic_func.h ../FB/Sampling.h ../FB/dfiinfo.h ffv_Version.h ffv_Define.h \
+ ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
+ ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
+ /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
+ /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -474,11 +511,19 @@ ffv_Restart.o: ffv_Restart.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/Cutlib/include/GridAccessor/GridAccessor.h \
  /usr/local/Cutlib/include/Version.h \
  /usr/local/Cutlib/include/GridAccessor/Cell.h \
- /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_PathUtil.h \
+ /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_Define.h \
+ /usr/local/CIOlib/include/cio_Version.h /usr/local/CIOlib/include/cio_PathUtil.h \
  /usr/local/CIOlib/include/cio_TextParser.h \
- /usr/local/CIOlib/include/cio_Define.h /usr/local/CIOlib/include/cio_Version.h \
  /usr/local/CIOlib/include/cio_ActiveSubDomain.h \
- /usr/local/CIOlib/include/cio_endianUtil.h
+ /usr/local/CIOlib/include/cio_endianUtil.h \
+ /usr/local/CIOlib/include/cio_TypeArray.h /usr/local/CIOlib/include/cio_Array.h \
+ /usr/local/CIOlib/include/inline/cio_Array_inline.h \
+ /usr/local/CIOlib/include/cio_FileInfo.h \
+ /usr/local/CIOlib/include/cio_FilePath.h /usr/local/CIOlib/include/cio_Unit.h \
+ /usr/local/CIOlib/include/cio_TimeSlice.h /usr/local/CIOlib/include/cio_Domain.h \
+ /usr/local/CIOlib/include/cio_MPI.h /usr/local/CIOlib/include/cio_Process.h \
+ /usr/local/CIOlib/include/cio_Interval_Mngr.h \
+ /usr/local/CIOlib/include/inline/cio_DFI_inline.h
 ffv_Loop.o: ffv_Loop.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/cpm_Base.h /usr/local/CPMlib/include/cpm_Define.h \
  /opt/openmpi/include/mpi.h /opt/openmpi/include/mpi_portable_platform.h \
@@ -521,20 +566,21 @@ ffv_Loop.o: ffv_Loop.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h ../FB/DomainInfo.h \
- ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h ../FB/FBUtility.h ../FB/Control.h \
- ../FB/Medium.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
+ ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h ../FB/Medium.h \
+ ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
  ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
  ../FB/IterationControl.h /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
  /usr/local/TextParser/include/Version.h ../FB/Alloc.h ../FB/FileIO.h \
  ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h ../FB/ParseMat.h \
- ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
- ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
- ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
- /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
+ ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
+ ../FB/basic_func.h ../FB/Sampling.h ../FB/dfiinfo.h ffv_Version.h ffv_Define.h \
+ ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
+ ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
+ /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
+ /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -560,11 +606,19 @@ ffv_Loop.o: ffv_Loop.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/Cutlib/include/GridAccessor/GridAccessor.h \
  /usr/local/Cutlib/include/Version.h \
  /usr/local/Cutlib/include/GridAccessor/Cell.h \
- /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_PathUtil.h \
+ /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_Define.h \
+ /usr/local/CIOlib/include/cio_Version.h /usr/local/CIOlib/include/cio_PathUtil.h \
  /usr/local/CIOlib/include/cio_TextParser.h \
- /usr/local/CIOlib/include/cio_Define.h /usr/local/CIOlib/include/cio_Version.h \
  /usr/local/CIOlib/include/cio_ActiveSubDomain.h \
- /usr/local/CIOlib/include/cio_endianUtil.h
+ /usr/local/CIOlib/include/cio_endianUtil.h \
+ /usr/local/CIOlib/include/cio_TypeArray.h /usr/local/CIOlib/include/cio_Array.h \
+ /usr/local/CIOlib/include/inline/cio_Array_inline.h \
+ /usr/local/CIOlib/include/cio_FileInfo.h \
+ /usr/local/CIOlib/include/cio_FilePath.h /usr/local/CIOlib/include/cio_Unit.h \
+ /usr/local/CIOlib/include/cio_TimeSlice.h /usr/local/CIOlib/include/cio_Domain.h \
+ /usr/local/CIOlib/include/cio_MPI.h /usr/local/CIOlib/include/cio_Process.h \
+ /usr/local/CIOlib/include/cio_Interval_Mngr.h \
+ /usr/local/CIOlib/include/inline/cio_DFI_inline.h
 ffv_LS.o: ffv_LS.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/cpm_Base.h /usr/local/CPMlib/include/cpm_Define.h \
  /opt/openmpi/include/mpi.h /opt/openmpi/include/mpi_portable_platform.h \
@@ -607,20 +661,21 @@ ffv_LS.o: ffv_LS.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h ../FB/DomainInfo.h \
- ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h ../FB/FBUtility.h ../FB/Control.h \
- ../FB/Medium.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
+ ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h ../FB/Medium.h \
+ ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
  ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
  ../FB/IterationControl.h /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
  /usr/local/TextParser/include/Version.h ../FB/Alloc.h ../FB/FileIO.h \
  ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h ../FB/ParseMat.h \
- ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
- ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
- ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
- /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
+ ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
+ ../FB/basic_func.h ../FB/Sampling.h ../FB/dfiinfo.h ffv_Version.h ffv_Define.h \
+ ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
+ ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
+ /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
+ /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -646,11 +701,19 @@ ffv_LS.o: ffv_LS.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/Cutlib/include/GridAccessor/GridAccessor.h \
  /usr/local/Cutlib/include/Version.h \
  /usr/local/Cutlib/include/GridAccessor/Cell.h \
- /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_PathUtil.h \
+ /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_Define.h \
+ /usr/local/CIOlib/include/cio_Version.h /usr/local/CIOlib/include/cio_PathUtil.h \
  /usr/local/CIOlib/include/cio_TextParser.h \
- /usr/local/CIOlib/include/cio_Define.h /usr/local/CIOlib/include/cio_Version.h \
  /usr/local/CIOlib/include/cio_ActiveSubDomain.h \
- /usr/local/CIOlib/include/cio_endianUtil.h
+ /usr/local/CIOlib/include/cio_endianUtil.h \
+ /usr/local/CIOlib/include/cio_TypeArray.h /usr/local/CIOlib/include/cio_Array.h \
+ /usr/local/CIOlib/include/inline/cio_Array_inline.h \
+ /usr/local/CIOlib/include/cio_FileInfo.h \
+ /usr/local/CIOlib/include/cio_FilePath.h /usr/local/CIOlib/include/cio_Unit.h \
+ /usr/local/CIOlib/include/cio_TimeSlice.h /usr/local/CIOlib/include/cio_Domain.h \
+ /usr/local/CIOlib/include/cio_MPI.h /usr/local/CIOlib/include/cio_Process.h \
+ /usr/local/CIOlib/include/cio_Interval_Mngr.h \
+ /usr/local/CIOlib/include/inline/cio_DFI_inline.h
 ffv_Post.o: ffv_Post.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/cpm_Base.h /usr/local/CPMlib/include/cpm_Define.h \
  /opt/openmpi/include/mpi.h /opt/openmpi/include/mpi_portable_platform.h \
@@ -693,20 +756,21 @@ ffv_Post.o: ffv_Post.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h ../FB/DomainInfo.h \
- ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h ../FB/FBUtility.h ../FB/Control.h \
- ../FB/Medium.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
+ ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h ../FB/Medium.h \
+ ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
  ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
  ../FB/IterationControl.h /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
  /usr/local/TextParser/include/Version.h ../FB/Alloc.h ../FB/FileIO.h \
  ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h ../FB/ParseMat.h \
- ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
- ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
- ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
- /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
+ ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
+ ../FB/basic_func.h ../FB/Sampling.h ../FB/dfiinfo.h ffv_Version.h ffv_Define.h \
+ ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
+ ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
+ /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
+ /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -732,11 +796,19 @@ ffv_Post.o: ffv_Post.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/Cutlib/include/GridAccessor/GridAccessor.h \
  /usr/local/Cutlib/include/Version.h \
  /usr/local/Cutlib/include/GridAccessor/Cell.h \
- /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_PathUtil.h \
+ /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_Define.h \
+ /usr/local/CIOlib/include/cio_Version.h /usr/local/CIOlib/include/cio_PathUtil.h \
  /usr/local/CIOlib/include/cio_TextParser.h \
- /usr/local/CIOlib/include/cio_Define.h /usr/local/CIOlib/include/cio_Version.h \
  /usr/local/CIOlib/include/cio_ActiveSubDomain.h \
- /usr/local/CIOlib/include/cio_endianUtil.h
+ /usr/local/CIOlib/include/cio_endianUtil.h \
+ /usr/local/CIOlib/include/cio_TypeArray.h /usr/local/CIOlib/include/cio_Array.h \
+ /usr/local/CIOlib/include/inline/cio_Array_inline.h \
+ /usr/local/CIOlib/include/cio_FileInfo.h \
+ /usr/local/CIOlib/include/cio_FilePath.h /usr/local/CIOlib/include/cio_Unit.h \
+ /usr/local/CIOlib/include/cio_TimeSlice.h /usr/local/CIOlib/include/cio_Domain.h \
+ /usr/local/CIOlib/include/cio_MPI.h /usr/local/CIOlib/include/cio_Process.h \
+ /usr/local/CIOlib/include/cio_Interval_Mngr.h \
+ /usr/local/CIOlib/include/inline/cio_DFI_inline.h
 ffv_Heat.o: ffv_Heat.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/cpm_Base.h /usr/local/CPMlib/include/cpm_Define.h \
  /opt/openmpi/include/mpi.h /opt/openmpi/include/mpi_portable_platform.h \
@@ -779,20 +851,21 @@ ffv_Heat.o: ffv_Heat.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h ../FB/DomainInfo.h \
- ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h ../FB/FBUtility.h ../FB/Control.h \
- ../FB/Medium.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
+ ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h ../FB/Medium.h \
+ ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
  ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
  ../FB/IterationControl.h /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
  /usr/local/TextParser/include/Version.h ../FB/Alloc.h ../FB/FileIO.h \
  ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h ../FB/ParseMat.h \
- ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
- ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
- ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
- /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
+ ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
+ ../FB/basic_func.h ../FB/Sampling.h ../FB/dfiinfo.h ffv_Version.h ffv_Define.h \
+ ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
+ ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
+ /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
+ /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -818,12 +891,21 @@ ffv_Heat.o: ffv_Heat.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/Cutlib/include/GridAccessor/GridAccessor.h \
  /usr/local/Cutlib/include/Version.h \
  /usr/local/Cutlib/include/GridAccessor/Cell.h \
- /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_PathUtil.h \
+ /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_Define.h \
+ /usr/local/CIOlib/include/cio_Version.h /usr/local/CIOlib/include/cio_PathUtil.h \
  /usr/local/CIOlib/include/cio_TextParser.h \
- /usr/local/CIOlib/include/cio_Define.h /usr/local/CIOlib/include/cio_Version.h \
  /usr/local/CIOlib/include/cio_ActiveSubDomain.h \
- /usr/local/CIOlib/include/cio_endianUtil.h ../FB/FindexS3D.h ../FB/FindexS3D.h
-ffv_TerminateCtrl.o: ffv_TerminateCtrl.C ffv_TerminateCtrl.h \
+ /usr/local/CIOlib/include/cio_endianUtil.h \
+ /usr/local/CIOlib/include/cio_TypeArray.h /usr/local/CIOlib/include/cio_Array.h \
+ /usr/local/CIOlib/include/inline/cio_Array_inline.h \
+ /usr/local/CIOlib/include/cio_FileInfo.h \
+ /usr/local/CIOlib/include/cio_FilePath.h /usr/local/CIOlib/include/cio_Unit.h \
+ /usr/local/CIOlib/include/cio_TimeSlice.h /usr/local/CIOlib/include/cio_Domain.h \
+ /usr/local/CIOlib/include/cio_MPI.h /usr/local/CIOlib/include/cio_Process.h \
+ /usr/local/CIOlib/include/cio_Interval_Mngr.h \
+ /usr/local/CIOlib/include/inline/cio_DFI_inline.h ../FB/FindexS3D.h \
+ ../FB/FindexS3D.h
+ffv_TerminateCtrl.o: ffv_TerminateCtrl.C \
  /usr/local/CPMlib/include/cpm_ParaManager.h /usr/local/CPMlib/include/cpm_Base.h \
  /usr/local/CPMlib/include/cpm_Define.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/mpi_portable_platform.h \
@@ -865,7 +947,7 @@ ffv_TerminateCtrl.o: ffv_TerminateCtrl.C ffv_TerminateCtrl.h \
  /usr/local/CPMlib/include/cpm_ObjList.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
- /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h
+ /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h ffv_TerminateCtrl.h
 NS_FS_E_Binary.o: NS_FS_E_Binary.C ffv.h \
  /usr/local/CPMlib/include/cpm_ParaManager.h /usr/local/CPMlib/include/cpm_Base.h \
  /usr/local/CPMlib/include/cpm_Define.h /opt/openmpi/include/mpi.h \
@@ -909,20 +991,21 @@ NS_FS_E_Binary.o: NS_FS_E_Binary.C ffv.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h ../FB/DomainInfo.h \
- ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h ../FB/FBUtility.h ../FB/Control.h \
- ../FB/Medium.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
+ ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h ../FB/Medium.h \
+ ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
  ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
  ../FB/IterationControl.h /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
  /usr/local/TextParser/include/Version.h ../FB/Alloc.h ../FB/FileIO.h \
  ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h ../FB/ParseMat.h \
- ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
- ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
- ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
- /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
+ ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
+ ../FB/basic_func.h ../FB/Sampling.h ../FB/dfiinfo.h ffv_Version.h ffv_Define.h \
+ ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
+ ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
+ /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
+ /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -948,11 +1031,19 @@ NS_FS_E_Binary.o: NS_FS_E_Binary.C ffv.h \
  /usr/local/Cutlib/include/GridAccessor/GridAccessor.h \
  /usr/local/Cutlib/include/Version.h \
  /usr/local/Cutlib/include/GridAccessor/Cell.h \
- /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_PathUtil.h \
+ /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_Define.h \
+ /usr/local/CIOlib/include/cio_Version.h /usr/local/CIOlib/include/cio_PathUtil.h \
  /usr/local/CIOlib/include/cio_TextParser.h \
- /usr/local/CIOlib/include/cio_Define.h /usr/local/CIOlib/include/cio_Version.h \
  /usr/local/CIOlib/include/cio_ActiveSubDomain.h \
- /usr/local/CIOlib/include/cio_endianUtil.h
+ /usr/local/CIOlib/include/cio_endianUtil.h \
+ /usr/local/CIOlib/include/cio_TypeArray.h /usr/local/CIOlib/include/cio_Array.h \
+ /usr/local/CIOlib/include/inline/cio_Array_inline.h \
+ /usr/local/CIOlib/include/cio_FileInfo.h \
+ /usr/local/CIOlib/include/cio_FilePath.h /usr/local/CIOlib/include/cio_Unit.h \
+ /usr/local/CIOlib/include/cio_TimeSlice.h /usr/local/CIOlib/include/cio_Domain.h \
+ /usr/local/CIOlib/include/cio_MPI.h /usr/local/CIOlib/include/cio_Process.h \
+ /usr/local/CIOlib/include/cio_Interval_Mngr.h \
+ /usr/local/CIOlib/include/inline/cio_DFI_inline.h
 NS_FS_E_CDS.o: NS_FS_E_CDS.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/cpm_Base.h /usr/local/CPMlib/include/cpm_Define.h \
  /opt/openmpi/include/mpi.h /opt/openmpi/include/mpi_portable_platform.h \
@@ -995,20 +1086,21 @@ NS_FS_E_CDS.o: NS_FS_E_CDS.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h ../FB/DomainInfo.h \
- ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h ../FB/FBUtility.h ../FB/Control.h \
- ../FB/Medium.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
+ ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h ../FB/Medium.h \
+ ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
  ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
  ../FB/IterationControl.h /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
  /usr/local/TextParser/include/Version.h ../FB/Alloc.h ../FB/FileIO.h \
  ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h ../FB/ParseMat.h \
- ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
- ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
- ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
- /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
+ ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
+ ../FB/basic_func.h ../FB/Sampling.h ../FB/dfiinfo.h ffv_Version.h ffv_Define.h \
+ ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
+ ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
+ /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
+ /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -1034,11 +1126,19 @@ NS_FS_E_CDS.o: NS_FS_E_CDS.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/Cutlib/include/GridAccessor/GridAccessor.h \
  /usr/local/Cutlib/include/Version.h \
  /usr/local/Cutlib/include/GridAccessor/Cell.h \
- /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_PathUtil.h \
+ /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_Define.h \
+ /usr/local/CIOlib/include/cio_Version.h /usr/local/CIOlib/include/cio_PathUtil.h \
  /usr/local/CIOlib/include/cio_TextParser.h \
- /usr/local/CIOlib/include/cio_Define.h /usr/local/CIOlib/include/cio_Version.h \
  /usr/local/CIOlib/include/cio_ActiveSubDomain.h \
- /usr/local/CIOlib/include/cio_endianUtil.h
+ /usr/local/CIOlib/include/cio_endianUtil.h \
+ /usr/local/CIOlib/include/cio_TypeArray.h /usr/local/CIOlib/include/cio_Array.h \
+ /usr/local/CIOlib/include/inline/cio_Array_inline.h \
+ /usr/local/CIOlib/include/cio_FileInfo.h \
+ /usr/local/CIOlib/include/cio_FilePath.h /usr/local/CIOlib/include/cio_Unit.h \
+ /usr/local/CIOlib/include/cio_TimeSlice.h /usr/local/CIOlib/include/cio_Domain.h \
+ /usr/local/CIOlib/include/cio_MPI.h /usr/local/CIOlib/include/cio_Process.h \
+ /usr/local/CIOlib/include/cio_Interval_Mngr.h \
+ /usr/local/CIOlib/include/inline/cio_DFI_inline.h
 PS_Binary.o: PS_Binary.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/cpm_Base.h /usr/local/CPMlib/include/cpm_Define.h \
  /opt/openmpi/include/mpi.h /opt/openmpi/include/mpi_portable_platform.h \
@@ -1081,20 +1181,21 @@ PS_Binary.o: PS_Binary.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h ../FB/DomainInfo.h \
- ../FB/FB_Define.h ../FB/mydebug.h ffv_Define.h ../FB/FBUtility.h ../FB/Control.h \
- ../FB/Medium.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
+ ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h ../FB/Medium.h \
+ ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h ../FB/Interval_Mngr.h \
  ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
  ../FB/IterationControl.h /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
  /usr/local/TextParser/include/Version.h ../FB/Alloc.h ../FB/FileIO.h \
  ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h ../FB/ParseMat.h \
- ../FB/VoxInfo.h ../FB/SetBC.h ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
- ../IP/IP_Define.h ffv_Version.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
- ../FB/basic_func.h ../FB/Sampling.h ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h \
- ../IP/IP_Duct.h ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/PMlib/include/PerfMonitor.h /usr/local/PMlib/include/PerfWatch.h \
- /usr/local/PMlib/include/Version.h /usr/local/Polylib/include/Polylib.h \
+ ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h ../FB/MonCompo.h \
+ ../FB/basic_func.h ../FB/Sampling.h ../FB/dfiinfo.h ffv_Version.h ffv_Define.h \
+ ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
+ ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/PMlib/include/PerfMonitor.h \
+ /usr/local/PMlib/include/PerfWatch.h /usr/local/PMlib/include/Version.h \
+ /usr/local/Polylib/include/Polylib.h \
  /usr/local/Polylib/include/polygons/Polygons.h \
  /usr/local/Polylib/include/polygons/VTree.h \
  /usr/local/Polylib/include/common/BBox.h \
@@ -1120,8 +1221,16 @@ PS_Binary.o: PS_Binary.C ffv.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/Cutlib/include/GridAccessor/GridAccessor.h \
  /usr/local/Cutlib/include/Version.h \
  /usr/local/Cutlib/include/GridAccessor/Cell.h \
- /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_PathUtil.h \
+ /usr/local/CIOlib/include/cio_DFI.h /usr/local/CIOlib/include/cio_Define.h \
+ /usr/local/CIOlib/include/cio_Version.h /usr/local/CIOlib/include/cio_PathUtil.h \
  /usr/local/CIOlib/include/cio_TextParser.h \
- /usr/local/CIOlib/include/cio_Define.h /usr/local/CIOlib/include/cio_Version.h \
  /usr/local/CIOlib/include/cio_ActiveSubDomain.h \
- /usr/local/CIOlib/include/cio_endianUtil.h
+ /usr/local/CIOlib/include/cio_endianUtil.h \
+ /usr/local/CIOlib/include/cio_TypeArray.h /usr/local/CIOlib/include/cio_Array.h \
+ /usr/local/CIOlib/include/inline/cio_Array_inline.h \
+ /usr/local/CIOlib/include/cio_FileInfo.h \
+ /usr/local/CIOlib/include/cio_FilePath.h /usr/local/CIOlib/include/cio_Unit.h \
+ /usr/local/CIOlib/include/cio_TimeSlice.h /usr/local/CIOlib/include/cio_Domain.h \
+ /usr/local/CIOlib/include/cio_MPI.h /usr/local/CIOlib/include/cio_Process.h \
+ /usr/local/CIOlib/include/cio_Interval_Mngr.h \
+ /usr/local/CIOlib/include/inline/cio_DFI_inline.h

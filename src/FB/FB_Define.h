@@ -25,7 +25,7 @@
 
 #include "mydebug.h"
 
-#define FB_VERS "1.3.6"
+#define FB_VERS "1.3.7"
 
 
 // precision
@@ -268,6 +268,7 @@
 #define NOT_SET_IBLANK 0
 #define SET_IBLANK     1
 
+/* PLOT3Dfunctions_20131005
 // PLOT3D File Format
 #define UNFORMATTED         1
 #define FORMATTED           2
@@ -277,6 +278,7 @@
 #define OUTPUT_REAL_UNKNOWN 0
 #define OUTPUT_FLOAT        1
 #define OUTPUT_DOUBLE       2
+ */
 
 // 判定マクロ
 // BCindex aの状態が流体であればtrueを返す (uint a)
@@ -429,7 +431,6 @@ enum Kind_of_vars {
   var_Vorticity,
   var_I2vgt,
   var_Divergence,
-  var_Plot3D,
   var_FaceVelocity,
   var_END
 };
@@ -486,7 +487,6 @@ enum sv_type {
 /// File Format
 enum File_format {
   sph_fmt=0,
-  plt3d_fmt,
   bov_fmt
 };
 
