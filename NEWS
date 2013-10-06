@@ -19,6 +19,10 @@ RELEASE
 =======
 
 -------------
+Version 1.4.4    2013-10-06
+  - modify algorithm for Binary
+
+-------------
 Version 1.4.3    2013-10-05
   - exception of PLOT3D
   

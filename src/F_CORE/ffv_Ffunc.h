@@ -55,8 +55,6 @@
 #define hbc_drchlt_         HBC_DRCHLT
 
 // ffv_vbc_inner.f90
-#define vibc_drchlt_        VIBC_DRCHLT
-#define vibc_outflow_       VIBC_OUTFLOW
 #define pvec_vibc_specv_    PVEC_VIBC_SPECV
 #define pvec_vibc_oflow_    PVEC_VIBC_OFLOW
 #define div_ibc_drchlt_     DIV_IBC_DRCHLT
@@ -423,9 +421,6 @@ extern "C" {
                            REAL_TYPE* vec,
                            double* flop);
   
-  void vibc_drchlt_       (REAL_TYPE* v, int* sz, int* g, int* st, int* ed, REAL_TYPE* v00, int* bv, int* odr, REAL_TYPE* vec);
-  void vibc_outflow_      (REAL_TYPE* vc,int* sz, int* g, int* st, int* ed, int* bv, int* odr);
-  
   void div_ibc_drchlt_    (REAL_TYPE* div,
                            int* sz,
                            int* g,
@@ -565,6 +560,7 @@ extern "C" {
                            int* g,
                            REAL_TYPE* vc,
                            int* bv,
+                           int* bp,
                            double* flop);
   
   void eddy_viscosity_    (REAL_TYPE* vt,
@@ -680,9 +676,22 @@ extern "C" {
   
   
   //***********************************************************************************************
-  // cds_vector.f90
-  void pvec_muscl_cds_    (REAL_TYPE* wv, int* sz, int* g, REAL_TYPE* dh, int* c_scheme, REAL_TYPE* v00, REAL_TYPE* rei, REAL_TYPE* v,
-                           int* bv, int* bp, int* v_mode, float* cut, double* flop);
+  // ffv_velocity_cds.f90
+  void pvec_muscl_cds_ (REAL_TYPE* wv,
+                        int* sz,
+                        int* g,
+                        REAL_TYPE* dh,
+                        int* c_scheme,
+                        REAL_TYPE* v00,
+                        REAL_TYPE* rei,
+                        REAL_TYPE* v,
+                        REAL_TYPE* vf,
+                        int* bv,
+                        int* bp,
+                        int* v_mode,
+                        float* cut,
+                        double* flop);
+  
   void update_vec_cds_    (REAL_TYPE* v, REAL_TYPE* div, int* sz, int* g, REAL_TYPE* dt, REAL_TYPE* dh, REAL_TYPE* vc, REAL_TYPE* p,
                            int* bp, int* bv, float* cut, REAL_TYPE* v00, double* flop);
   void divergence_cds_    (REAL_TYPE* div, int* sz, int* g, REAL_TYPE* coef, REAL_TYPE* v, int* bv, float* cut, REAL_TYPE* v00, double* flop);

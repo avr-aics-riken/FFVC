@@ -86,23 +86,11 @@ private:
   void encPbit (int* bx);
   
   
-  // 圧力のノイマン境界ビットをエンコードする（バイナリボクセル）
-  unsigned long encPbit_N_Binary (int* bx);
-  
-  
   // 圧力のノイマン境界ビットをエンコードする（カット）
-  unsigned long encPbit_N_Cut (int* bx, const int* bid, const float* cut, const bool convergence);
+  unsigned long encPbitN (int* bx, const int* bid, const float* cut, const bool convergence);
   
   
   // 計算領域内部のコンポーネントの圧力境界条件フラグをbcp[]にエンコードする
-  unsigned long encPbitIBC (const int order,
-                            const int* mid,
-                            int* bcd,
-                            int* bcp,
-                            const float* vec,
-                            const string condition,
-                            const int bc_dir);
-  
   unsigned long encPbitIBC (const int order,
                             int* bcd,
                             int* bcp,

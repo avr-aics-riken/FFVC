@@ -137,27 +137,6 @@ protected:
 public:
   
   /**
-   * @brief 温度指定境界条件に必要な温度をセットする
-   * @param [in,out] d_ie 内部エネルギー
-   * @param [in]     bh   BCindex C
-   * @param [in]     tm   無次元時刻
-   * @param [in]     C    Control class
-   */
-  //void assignTemp (REAL_TYPE* d_ie, int* d_cdf, const double tm, const Control* C);
-  
-  
-  /**
-   * @brief 速度指定境界条件に必要な参照速度をセットする
-   * @param [in,out] d_v   セルセンタ速度ベクトル (n step)
-   * @param [in]     d_cdf BCindex C
-   * @param [in]     tm    無次元時刻
-   * @param [in]     v00   参照速度
-   * @param [in]     clear trueのとき，出力時に速度を壁面速度にする（デフォルトfalse）
-   */
-  void assignVelocity (REAL_TYPE* d_v, int* d_cdf, const double tm, REAL_TYPE* v00, bool clear=false);
-  
-  
-  /**
    * @brief ドライバ指定のチェック
    * @param [in] fp
    * @note コンポーネントと外部境界で指定された，方向と位置の情報が一致するかをチェック
@@ -186,10 +165,6 @@ public:
    * @param [in]     dt    時間積分幅
    */
   void InnerTBCvol (REAL_TYPE* d_ie, const int* d_bcd, const REAL_TYPE dt);
-  
-  
-  // 速度の内部境界条件
-  void InnerVBC (REAL_TYPE* d_v, int* d_cdf, const double tm, REAL_TYPE* v00);
   
   
   // 速度の内部周期境界条件

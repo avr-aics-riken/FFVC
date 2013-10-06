@@ -4070,7 +4070,6 @@ void FFV::setInitialCondition()
     
 		// 外部境界面の移流速度を計算し，外部境界条件を設定
 		BC.OuterVBC(d_v, d_vf, d_cdf, tm, &C, v00);
-    BC.InnerVBC(d_v, d_cdf, tm, v00);
     BC.InnerVBCperiodic(d_v, d_bcd);
     
 
@@ -4103,7 +4102,6 @@ void FFV::setInitialCondition()
   else // リスタート時
   {
     // 内部境界条件
-    BC.InnerVBC(d_v, d_cdf, tm, v00);
     BC.InnerVBCperiodic(d_v, d_bcd);
     BC.InnerPBCperiodic(d_p, d_bcd);
     

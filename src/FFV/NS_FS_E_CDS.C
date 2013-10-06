@@ -122,7 +122,7 @@ void FFV::NS_FS_E_CDS()
       }
       else
       {
-        pvec_muscl_cds_(d_vc, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_cdf, d_bcp, &v_mode, d_cut, &flop);
+        pvec_muscl_cds_(d_vc, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bcp, &v_mode, d_cut, &flop);
       }
       TIMING_stop(tm_pseudo_vec, flop);
 
@@ -142,7 +142,7 @@ void FFV::NS_FS_E_CDS()
       }
       else
       {
-        pvec_muscl_cds_(d_wv, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_cdf, d_bcp, &v_mode, d_cut, &flop);
+        pvec_muscl_cds_(d_wv, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bcp, &v_mode, d_cut, &flop);
       }
       TIMING_stop(tm_pseudo_vec, flop);
       
@@ -549,12 +549,6 @@ void FFV::NS_FS_E_CDS()
   TIMING_start(tm_domain_monitor);
   DomainMonitor(BC.exportOBC(), &C);
   TIMING_stop(tm_domain_monitor, 0.0);
-  
-  
-  // 速度のガイドセルへの代入
-  TIMING_start(tm_VBC_update);
-  BC.InnerVBC(d_v, d_cdf, CurrentTime, v00);
-  TIMING_stop(tm_VBC_update, 0.0);
   
   
   // 非同期にして隠す

@@ -22,21 +22,22 @@
 
 !> ***************************************************************************
 !! @brief 疑似ベクトルの計算
-!! @param wv 仮のベクトル
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param dh 格子幅
-!! @param c_scheme 対流項スキームのモード（1-UWD, 2-center 3-MUSCL）
-!! @param v00 参照速度
-!! @param rei レイノルズ数の逆数
-!! @param v 速度ベクトル（n-step, collocated）
-!! @param bv BCindex C
-!! @param bp BCindex P
-!! @param v_mode 粘性項のモード (0=対流項のみ, 1=対流項と粘性項，2=粘性項は壁法則)
-!! @param cut カット情報(float)
-!! @param[out] flop
+!! @param [out] wv       仮のベクトル
+!! @param [in]  sz       配列長
+!! @param [in]  g        ガイドセル長
+!! @param [in]  dh       格子幅
+!! @param [in]  c_scheme 対流項スキームのモード（1-UWD, 2-center 3-MUSCL）
+!! @param [in]  v00      参照速度
+!! @param [in]  rei      レイノルズ数の逆数
+!! @param [in]  v        速度ベクトル（n-step, collocated）
+!! @param [in]  vf       セルフェイス速度ベクトル（n-step）
+!! @param [in]  bv       BCindex C
+!! @param [in]  bp       BCindex P
+!! @param [in]  v_mode   粘性項のモード (0=対流項のみ, 1=対流項と粘性項，2=粘性項は壁法則)
+!! @param [in]  cut      カット情報(float)
+!! @param [out] flop     浮動小数点演算数
 !<
-    subroutine pvec_muscl_cds (wv, sz, g, dh, c_scheme, v00, rei, v, bv, bp, v_mode, cut, flop)
+    subroutine pvec_muscl_cds (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bv, bp, v_mode, cut, flop)
     implicit none
     include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, c_scheme, bpx, bvx, v_mode
@@ -84,7 +85,7 @@
     real                                                        ::  dw_e, dw_w, dw_s, dw_n, dw_b, dw_t
 		real                                                        ::  EX, EY, EZ
     real                                                        ::  lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, wv
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, wv, vf
     real(4), dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)::  cut
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv, bp
     real, dimension(0:3)                                        ::  v00

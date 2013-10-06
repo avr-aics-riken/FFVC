@@ -1455,127 +1455,6 @@ void VoxInfo::encPbit (int* bx)
 }
 
 
-// #################################################################
-/**
- * @brief 圧力のノイマン境界ビットをエンコードする（バイナリボクセル）
- * @param [in,out] bx BCindex P
- * @retval 固体表面セル数
- * @note
- *  - 流体セルのうち，固体セルに隣接する面のノイマンフラグをゼロにする．ただし，内部領域のみ．
- *  - 固体セルに隣接する流体セルに方向フラグを付与する．全内部領域．
- *  - 収束判定の有効フラグをエンコードする
- */
-unsigned long VoxInfo::encPbit_N_Binary (int* bx)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-
-  // ノイマンフラグ
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        size_t m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        int s = bx[m_p];
-        
-        if ( IS_FLUID( s ) )
-        {
-#include "FindexS3D.h"
-          
-          // X_MINUS
-          if ( !IS_FLUID(bx[m_w]) )
-          {
-            s = offBit( s, BC_N_W );
-          }
-          
-          // X_PLUS
-          if ( !IS_FLUID(bx[m_e]) )
-          {
-            s = offBit( s, BC_N_E );
-          }
-          
-          // Y_MINUS
-          if ( !IS_FLUID(bx[m_s]) )
-          {
-            s = offBit( s, BC_N_S );
-          }
-          
-          // Y_PLUS
-          if ( !IS_FLUID(bx[m_n]) )
-          {
-            s = offBit( s, BC_N_N );
-          }
-          
-          // Z_MINUS
-          if ( !IS_FLUID(bx[m_b]) )
-          {
-            s = offBit( s, BC_N_B );
-          }
-          
-          // Z_PLUS
-          if ( !IS_FLUID(bx[m_t]) )
-          {
-            s = offBit( s, BC_N_T );
-          }
-          
-          bx[m_p] = s;
-        }
-      }
-    }
-  }
-
-  // wall locationフラグ
-  unsigned long c = 0;
-  
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        size_t m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        int s = bx[m_p];
-        
-        if ( IS_FLUID( s ) )
-        {
-#include "FindexS3D.h"
-          
-          // X_MINUS
-          if ( !IS_FLUID(bx[m_w]) ) { s = onBit( s, FACING_W ); c++; }
-          
-          // X_PLUS
-          if ( !IS_FLUID(bx[m_e]) ) { s = onBit( s, FACING_E ); c++; }
-          
-          // Y_MINUS
-          if ( !IS_FLUID(bx[m_s]) ) { s = onBit( s, FACING_S ); c++; }
-          
-          // Y_PLUS
-          if ( !IS_FLUID(bx[m_n]) ) { s = onBit( s, FACING_N ); c++; }
-          
-          // Z_MINUS
-          if ( !IS_FLUID(bx[m_b]) ) { s = onBit( s, FACING_B ); c++; }
-          
-          // Z_PLUS
-          if ( !IS_FLUID(bx[m_t]) ) { s = onBit( s, FACING_T ); c++; }
-          
-          // 収束判定の有効フラグ，計算内部領域の流体セルのみ
-          s = onBit(s, VLD_CNVG);
-          
-          bx[m_p] = s;
-        }
-      }
-    }
-  }
-
-  if ( numProc > 1 )
-  {
-    unsigned long tmp = c;
-    if ( paraMngr->Allreduce(&tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  return c;
-}
-
 
 // #################################################################
 /**
@@ -1590,7 +1469,7 @@ unsigned long VoxInfo::encPbit_N_Binary (int* bx)
  *   - 固体セルに隣接する流体セルに方向フラグを付与する．全内部領域．
  *   - 収束判定の有効フラグをカット情報からエンコードする
  */
-unsigned long VoxInfo::encPbit_N_Cut (int* bx, const int* bid, const float* cut, const bool convergence)
+unsigned long VoxInfo::encPbitN (int* bx, const int* bid, const float* cut, const bool convergence)
 {
   int ix = size[0];
   int jx = size[1];
@@ -1829,147 +1708,13 @@ unsigned long VoxInfo::encPbit_N_Cut (int* bx, const int* bid, const float* cut,
  * @brief 計算領域内部のコンポーネントのNeumannフラグをbcp[]にエンコードする
  * @retval エンコードしたセル数
  * @param [in]     order      cmp[]のエントリ番号
- * @param [in]     mid        媒質ID配列
- * @param [in,out] bcd        BCindex B
- * @param [in,out] bcp        BCindex P
- * @param [in]     vec        法線ベクトル
- * @param [in]     consdition "Neumann" or "Dirichlet"
- * @param [in]     bc_dir     境界条件の方向
- */
-unsigned long VoxInfo::encPbitIBC (const int order,
-                                   const int* mid,
-                                   int* bcd,
-                                   int* bcp,
-                                   const float* vec,
-                                   const string condition,
-                                   const int bc_dir)
-{
-  unsigned long g=0;
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  int odr = order;
-  bool mode;
-  
-  if ( !strcasecmp(condition.c_str(), "neumann"))
-  {
-    mode = true;
-  }
-  else
-  {
-    mode = false;
-  }
-  
-  FB::Vec3f nv(vec);
-  
-  // 反対方向のとき符号反転 > 内積が負のときに対象位置となる
-  if ( bc_dir == CompoList::opposite_direction )
-  {
-    nv *= -1.0;
-  }
-  
-  FB::Vec3f e_w(-1.0,  0.0,  0.0);
-  FB::Vec3f e_e(+1.0,  0.0,  0.0);
-  FB::Vec3f e_s( 0.0, -1.0,  0.0);
-  FB::Vec3f e_n( 0.0, +1.0,  0.0);
-  FB::Vec3f e_b( 0.0,  0.0, -1.0);
-  FB::Vec3f e_t( 0.0,  0.0, +1.0);
-  
-  
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, odr, mode) \
-            firstprivate(e_w, e_e, e_s, e_n, e_b, e_t, nv) \
-            schedule(static) reduction(+:g)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        int d = bcd[m];
-        int s = bcp[m];
-        
-        if ( IS_FLUID( s ) ) // 対象セルが流体セル
-        {
-#include "FindexS3D.h"
-
-          // X_MINUS
-          if ( (mid[m_w] == odr) && (dot(e_w, nv) < 0.0) )
-          {
-            d |= odr; // dにエントリをエンコード
-            s = (mode) ? offBit( s, BC_N_W ) : offBit( s, BC_D_W );
-            g++;
-          }
-          
-          // X_PLUS
-          if ( (mid[m_e] == odr) && (dot(e_e, nv) < 0.0) )
-          {
-            d |= odr;
-            s = (mode) ? offBit( s, BC_N_E ) : offBit( s, BC_D_E );
-            g++;
-          }
-          
-          // Y_MINUS
-          if ( (mid[m_s] == odr) && (dot(e_s, nv) < 0.0) )
-          {
-            d |= odr;
-            s = (mode) ? offBit( s, BC_N_S ) : offBit( s, BC_D_S );
-            g++;
-          }
-          
-          // Y_PLUS
-          if ( (mid[m_n] == odr) && (dot(e_n, nv) < 0.0) )
-          {
-            d |= odr;
-            s = (mode) ? offBit( s, BC_N_N ) : offBit( s, BC_D_N );
-            g++;
-          }
-          
-          // Z_MINUS
-          if ( (mid[m_b] == odr) && (dot(e_b, nv) < 0.0) )
-          {
-            d |= odr;
-            s = (mode) ? offBit( s, BC_N_B ) : offBit( s, BC_D_B );
-            g++;
-          }
-          
-          // Z_PLUS
-          if ( (mid[m_t] == odr) && (dot(e_t, nv) < 0.0) )
-          {
-            d |= odr;
-            s = (mode) ? offBit( s, BC_N_T ) : offBit( s, BC_D_T );
-            g++;
-          }
-          
-          bcd[m] = d;
-          bcp[m] = s;
-        }
-      }
-    }
-  }
-  
-  if ( numProc > 1 )
-  {
-    unsigned long tmp = g;
-    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-
-  return g;
-}
-
-
-
-// #################################################################
-/**
- * @brief 計算領域内部のコンポーネントのNeumannフラグをbcp[]にエンコードする
- * @retval エンコードしたセル数
- * @param [in]     order      cmp[]のエントリ番号
  * @param [in,out] bcd        BCindex B
  * @param [in,out] bcp        BCindex P
  * @param [in]     bid        カット点ID
  * @param [in]     vec        法線ベクトル
  * @param [in]     consdition "Neumann" or "Dirichlet"
  * @param [in]     bc_dir     境界条件の方向
+ * @note エンコードしたセルのフェイスの裏面を壁面（ノイマン）にする
  */
 unsigned long VoxInfo::encPbitIBC (const int order,
                                    int* bcd,
@@ -2037,11 +1782,14 @@ schedule(static) reduction(+:g)
             int id_b = getFaceBID(4, bd);
             int id_t = getFaceBID(5, bd);
             
+#include "FindexS3D.h"
+            
             // X_MINUS
             if ( (id_w == odr) && (dot(e_w, nv) < 0.0) )
             {
               d |= odr;
               s = (mode) ? offBit( s, BC_N_W ) : offBit( s, BC_D_W );
+              offBit(bcp[m_w], BC_N_E);
               g++;
             }
             
@@ -2050,6 +1798,7 @@ schedule(static) reduction(+:g)
             {
               d |= odr;
               s = (mode) ? offBit( s, BC_N_E ) : offBit( s, BC_D_E );
+              offBit(bcp[m_e], BC_N_W);
               g++;
             }
             
@@ -2058,6 +1807,7 @@ schedule(static) reduction(+:g)
             {
               d |= odr;
               s = (mode) ? offBit( s, BC_N_S ) : offBit( s, BC_D_S );
+              offBit(bcp[m_s], BC_N_N);
               g++;
             }
             
@@ -2066,6 +1816,7 @@ schedule(static) reduction(+:g)
             {
               d |= odr;
               s = (mode) ? offBit( s, BC_N_N ) : offBit( s, BC_D_N );
+              offBit(bcp[m_n], BC_N_S);
               g++;
             }
             
@@ -2074,6 +1825,7 @@ schedule(static) reduction(+:g)
             {
               d |= odr;
               s = (mode) ? offBit( s, BC_N_B ) : offBit( s, BC_D_B );
+              offBit(bcp[m_b], BC_N_T);
               g++;
             }
             
@@ -2082,6 +1834,7 @@ schedule(static) reduction(+:g)
             {
               d |= odr;
               s = (mode) ? offBit( s, BC_N_T ) : offBit( s, BC_D_T );
+              offBit(bcp[m_t], BC_N_B);
               g++;
             }
             
@@ -4098,15 +3851,7 @@ unsigned long VoxInfo::setBCIndexP (int* bcd, int* bcp, int* mid, SetBC* BC, Com
 
   
   // 計算領域内の壁面のNeumannBCのマスク処理と固体に隣接するFセルに方向フラグをエンコードし，表面セル数を返す
-  if ( isBinary )
-  {
-    surface = encPbit_N_Binary(bcp);
-    //surface = encPbit_N_Cut(bcp, bid, cut, false);
-  }
-  else
-  {
-    surface = encPbit_N_Cut(bcp, bid, cut, false);
-  }
+  surface = encPbitN(bcp, bid, cut, false);
   
 
   
@@ -4174,7 +3919,6 @@ unsigned long VoxInfo::setBCIndexP (int* bcd, int* bcp, int* mid, SetBC* BC, Com
     {
       case SPEC_VEL:
       case OUTFLOW:
-        //encPbitIBC(n, mid, bcd, bcp, vec, "neumann", m_dir);
         encPbitIBC(n, bcd, bcp, bid, vec, "neumann", m_dir);
         break;
     }
@@ -4919,3 +4663,126 @@ unsigned long VoxInfo::SolidFromCut (int* mid, const int* bid, const float* cut,
   
   return cl;
 }
+
+/*
+ // #################################################################
+ /**
+ * @brief 圧力のノイマン境界ビットをエンコードする（バイナリボクセル）
+ * @param [in,out] bx BCindex P
+ * @retval 固体表面セル数
+ * @note
+ *  - 流体セルのうち，固体セルに隣接する面のノイマンフラグをゼロにする．ただし，内部領域のみ．
+ *  - 固体セルに隣接する流体セルに方向フラグを付与する．全内部領域．
+ *  - 収束判定の有効フラグをエンコードする
+ 
+unsigned long VoxInfo::encPbit_N_Binary (int* bx)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  // ノイマンフラグ
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int s = bx[m_p];
+        
+        if ( IS_FLUID( s ) )
+        {
+#include "FindexS3D.h"
+          
+          // X_MINUS
+          if ( !IS_FLUID(bx[m_w]) )
+          {
+            s = offBit( s, BC_N_W );
+          }
+          
+          // X_PLUS
+          if ( !IS_FLUID(bx[m_e]) )
+          {
+            s = offBit( s, BC_N_E );
+          }
+          
+          // Y_MINUS
+          if ( !IS_FLUID(bx[m_s]) )
+          {
+            s = offBit( s, BC_N_S );
+          }
+          
+          // Y_PLUS
+          if ( !IS_FLUID(bx[m_n]) )
+          {
+            s = offBit( s, BC_N_N );
+          }
+          
+          // Z_MINUS
+          if ( !IS_FLUID(bx[m_b]) )
+          {
+            s = offBit( s, BC_N_B );
+          }
+          
+          // Z_PLUS
+          if ( !IS_FLUID(bx[m_t]) )
+          {
+            s = offBit( s, BC_N_T );
+          }
+          
+          bx[m_p] = s;
+        }
+      }
+    }
+  }
+  
+  // wall locationフラグ
+  unsigned long c = 0;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int s = bx[m_p];
+        
+        if ( IS_FLUID( s ) )
+        {
+#include "FindexS3D.h"
+          
+          // X_MINUS
+          if ( !IS_FLUID(bx[m_w]) ) { s = onBit( s, FACING_W ); c++; }
+          
+          // X_PLUS
+          if ( !IS_FLUID(bx[m_e]) ) { s = onBit( s, FACING_E ); c++; }
+          
+          // Y_MINUS
+          if ( !IS_FLUID(bx[m_s]) ) { s = onBit( s, FACING_S ); c++; }
+          
+          // Y_PLUS
+          if ( !IS_FLUID(bx[m_n]) ) { s = onBit( s, FACING_N ); c++; }
+          
+          // Z_MINUS
+          if ( !IS_FLUID(bx[m_b]) ) { s = onBit( s, FACING_B ); c++; }
+          
+          // Z_PLUS
+          if ( !IS_FLUID(bx[m_t]) ) { s = onBit( s, FACING_T ); c++; }
+          
+          // 収束判定の有効フラグ，計算内部領域の流体セルのみ
+          s = onBit(s, VLD_CNVG);
+          
+          bx[m_p] = s;
+        }
+      }
+    }
+  }
+  
+  if ( numProc > 1 )
+  {
+    unsigned long tmp = c;
+    if ( paraMngr->Allreduce(&tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  return c;
+}
+ */

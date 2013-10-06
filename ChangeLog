@@ -19,6 +19,14 @@ REVISION HISTORY
 ================
 
 --------------------------
+2013-10-06
+
+- r1034 modify Algorithm for Binary [ver 1.4.4]
+  - Replace cell face mask by Neumann flag >> pvec_muscl_(), update_vec_(), divergence_()
+  - modify encPbitIBC(), encPbit_N() so that these methods use boundary ID information.
+  - remove InnerVBC(), vibc_drchlt_(), vibc_outflow_(), assignVelocity(), assignTemp() due to change algorithm
+
+--------------------------
 2013-10-05
 
 - r1033 exclude PLOT3D output [ver 1.4.3]

@@ -62,11 +62,6 @@ void FFV::PS_Binary()
   TIMING_stop(tm_copy_array, 0.0);
   
   
-  // 指定境界条件の参照値を代入する
-  //TIMING_start(tm_heat_spec_temp);
-  //BC.assignTemp(d_ie0, d_cdf, CurrentTime, &C);
-  //TIMING_stop(tm_heat_spec_temp, 0.0);
-  
   
   // 対流項の寄与
   if ( C.KindOfSolver != SOLID_CONDUCTION) // 流れの場合，対流項の寄与分のみを積分しdc_tで保持

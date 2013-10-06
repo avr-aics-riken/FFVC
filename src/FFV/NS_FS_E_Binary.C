@@ -298,7 +298,7 @@ void FFV::NS_FS_E_Binary()
   // 非VBC面に対してのみ，セルセンターの値から \sum{u^*} を計算
   TIMING_start(tm_div_pvec);
   flop = 0.0;
-  divergence_(d_ws, size, &guide, d_vc, d_cdf, &flop);
+  divergence_(d_ws, size, &guide, d_vc, d_cdf, d_bcp, &flop);
   TIMING_stop(tm_div_pvec, flop);
   
   
@@ -649,13 +649,6 @@ void FFV::NS_FS_E_Binary()
   TIMING_start(tm_domain_monitor);
   DomainMonitor(BC.exportOBC(), &C);
   TIMING_stop(tm_domain_monitor, 0.0);
-  
-  
-  
-  // 速度のガイドセルへの代入
-  TIMING_start(tm_VBC_update);
-  BC.InnerVBC(d_v, d_cdf, CurrentTime, v00);
-  TIMING_stop(tm_VBC_update, 0.0);
   
   
   
