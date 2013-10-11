@@ -26,7 +26,9 @@
 void COMB::output_sph()
 {
   char tmp[FILE_PATH_LENGTH];
-  string prefix,outfile,infile;
+//CIO.20131008.s
+  string prefix,outfile,infile,inPath;
+//CIO.20131008.e
   int fp_in =8;
   FILE *fp;
   FILE *fpin;
@@ -88,6 +90,11 @@ void COMB::output_sph()
   if (numProc > 1) ips=0;
   
   for (int i=0;i<ndfi;i++) {
+
+//CIO.20131008.s
+    inPath = CIO::cioPath_DirName(dfi_name[i]);
+//CIO.20131008.e
+
     const cio_FileInfo* DFI_FInfo = dfi[i]->GetcioFileInfo();
     prefix=DFI_FInfo->Prefix;
     LOG_OUTV_ fprintf(fplog,"  COMBINE SPH START : %s\n", prefix.c_str());
@@ -95,7 +102,6 @@ void COMB::output_sph()
     
     //Scalar or Vector
     dim=DFI_FInfo->Component;
-    printf("prefix : %s dim : %d\n",prefix.c_str(),dim);
     
     const cio_Domain* DFI_Domian = dfi[i]->GetcioDomain();
     
@@ -147,7 +153,10 @@ void COMB::output_sph()
       }
       
       //rank0のheader読み込み ---> 最初のファイルを開いてheaderだけ先に記述
-      infile = dfi[i]->Generate_FieldFileName(0,m_step,mio);
+//CIO.20131008.s
+      //infile = dfi[i]->Generate_FieldFileName(0,m_step,mio);
+      infile = CIO::cioPath_ConnectPath(inPath,dfi[i]->Generate_FieldFileName(0,m_step,mio));
+//CIO.20131008.e
       
       EMatchType eType;
       eType = isMatchEndian(infile, 8);
@@ -177,11 +186,23 @@ void COMB::output_sph()
       
       //sphのヘッダーレコードからオリジンとピッチを読込む
       ReadSphHeader(m_dorg,  m_dpit, infile);
+
+//CIO.20131008.s
+      //ガイドセルがあるときオリジンを修正
+      if( DFI_FInfo->GuideCell>0 ) {
+        m_dorg[0]=DFI_Domian->GlobalOrigin[0]+0.5*m_dpit[0];
+        m_dorg[1]=DFI_Domian->GlobalOrigin[1]+0.5*m_dpit[1];
+        m_dorg[2]=DFI_Domian->GlobalOrigin[2]+0.5*m_dpit[2];
+      }
       
       //全体サイズのキープ
-      m_imax= DFI_Domian->GlobalVoxel[0] + 2*DFI_FInfo->GuideCell;
-      m_jmax= DFI_Domian->GlobalVoxel[1] + 2*DFI_FInfo->GuideCell;
-      m_kmax= DFI_Domian->GlobalVoxel[2] + 2*DFI_FInfo->GuideCell;
+      //m_imax= DFI_Domian->GlobalVoxel[0] + 2*DFI_FInfo->GuideCell;
+      //m_jmax= DFI_Domian->GlobalVoxel[1] + 2*DFI_FInfo->GuideCell;
+      //m_kmax= DFI_Domian->GlobalVoxel[2] + 2*DFI_FInfo->GuideCell;
+      m_imax= DFI_Domian->GlobalVoxel[0];
+      m_jmax= DFI_Domian->GlobalVoxel[1];
+      m_kmax= DFI_Domian->GlobalVoxel[2];
+//CIO.20131008.e
       
       //間引きを考慮
       m_imax_th=m_imax/thin_count;//間引き後のxサイズ
@@ -231,10 +252,18 @@ void COMB::output_sph()
         if(vsize < vdum) vsize=vdum;
       }
       // メモリチェック
+//CIO.20131008.s
+      /*
       LOG_OUTV_ fprintf(fplog,"\tNode %4d - Node %4d\n", 0,
                         DFI_Domian->GlobalVoxel[2] + 2*DFI_FInfo->GuideCell-1);
       STD_OUTV_ printf("\tNode %4d - Node %4d\n", 0,
                        DFI_Domian->GlobalVoxel[2] + 2*DFI_FInfo->GuideCell-1);
+      */
+      LOG_OUTV_ fprintf(fplog,"\tNode %4d - Node %4d\n", 0,
+                        DFI_Domian->GlobalVoxel[2] -1);
+      STD_OUTV_ printf("\tNode %4d - Node %4d\n", 0,
+                       DFI_Domian->GlobalVoxel[2] -1);
+//CIO.20131008.e
       double mc1 = (double)asize*(double)dim;
       double mc2 = (double)vsize*(double)dim;
       if(mc1>(double)INT_MAX){// 整数値あふれ出しチェック //参考 894*894*894*3=2143550952 INT_MAX 2147483647
@@ -259,8 +288,12 @@ void COMB::output_sph()
       szS[0]=m_imax_th;
       szS[1]=m_jmax_th;
       szS[2]=1;
-      headS[0]=0-DFI_FInfo->GuideCell;
-      headS[1]=0-DFI_FInfo->GuideCell;
+//CIO.20131008.s
+      //headS[0]=0-DFI_FInfo->GuideCell;
+      //headS[1]=0-DFI_FInfo->GuideCell;
+      headS[0]=0;
+      headS[1]=0;
+//CIO.20131008.e
       tailS[0]=headS[0]+m_imax-1;
       tailS[1]=headS[1]+m_jmax-1;
       
@@ -286,14 +319,19 @@ void COMB::output_sph()
 
         int nrank = _CIO_IDX_IJK(0,0,kdiv,div[0],div[1],div[2],0);
         kp_end = kp_sta + DFI_Process->RankList[nrank].VoxelSize[2];
-        
-        if( kdiv == 0 ) kp_sta -= DFI_FInfo->GuideCell;
+       
+//CIO.20131008.s 
+        //if( kdiv == 0 ) kp_sta -= DFI_FInfo->GuideCell;
 
-        if( kp_end == DFI_Domian->GlobalVoxel[2]+1 ) kp_end += DFI_FInfo->GuideCell;
+        //if( kp_end == DFI_Domian->GlobalVoxel[2]+1 ) kp_end += DFI_FInfo->GuideCell;
+//CIO.20131008.e 
         
         //同一Z面のループ
         for(int kp=kp_sta; kp< kp_end; kp++) {
-          int kk = kp+DFI_FInfo->GuideCell-1;
+//CIO.20131008.s
+          //int kk = kp+DFI_FInfo->GuideCell-1;
+          int kk = kp-1;
+//CIO.20131008.e
           //間引きの層のときスキップ
           if( kk%thin_count != 0 ) continue;
           
@@ -304,10 +342,12 @@ void COMB::output_sph()
             jp_sta = ity->first;
             int nrank = _CIO_IDX_IJK(0,jdiv,kdiv,div[0],div[1],div[2],0);
             jp_end = jp_sta + DFI_Process->RankList[nrank].VoxelSize[1];
-            
-            if( jdiv == 0 ) jp_sta -= DFI_FInfo->GuideCell;
 
-            if( jp_end == DFI_Domian->GlobalVoxel[1]+1 ) jp_end += DFI_FInfo->GuideCell;
+//CIO.20131008.s            
+            //if( jdiv == 0 ) jp_sta -= DFI_FInfo->GuideCell;
+
+            //if( jp_end == DFI_Domian->GlobalVoxel[1]+1 ) jp_end += DFI_FInfo->GuideCell;
+//CIO.20131008.e            
             
             //x方向の分割数のループ
             for( headT::iterator itx=mapHeadX.begin(); itx!= mapHeadX.end(); itx++ ) {
@@ -316,10 +356,12 @@ void COMB::output_sph()
               ip_sta = itx->first;
               int nrank = _CIO_IDX_IJK(idiv,jdiv,kdiv,div[0],div[1],div[2],0);
               ip_end = ip_sta + DFI_Process->RankList[nrank].VoxelSize[0];
-              
-              if( idiv == 0 ) ip_sta -= DFI_FInfo->GuideCell;
+             
+//CIO.20131008.s 
+              //if( idiv == 0 ) ip_sta -= DFI_FInfo->GuideCell;
 
-              if( ip_end == DFI_Domian->GlobalVoxel[0]+1 ) ip_end += DFI_FInfo->GuideCell;
+              //if( ip_end == DFI_Domian->GlobalVoxel[0]+1 ) ip_end += DFI_FInfo->GuideCell;
+//CIO.20131008.e 
               
               int RankID = _CIO_IDX_IJK(idiv,jdiv,kdiv,div[0],div[1],div[2],0);
               
@@ -332,7 +374,10 @@ void COMB::output_sph()
               read_end[2]=kp;
               
               m_rank=DFI_Process->RankList[RankID].RankID;
-              infile = dfi[i]->Generate_FieldFileName(m_rank,m_step,mio);
+//CIO.20131008.s
+              //infile = dfi[i]->Generate_FieldFileName(m_rank,m_step,mio);
+              infile = CIO::cioPath_ConnectPath(inPath,dfi[i]->Generate_FieldFileName(m_rank,m_step,mio));
+//CIO.20131008.e
               unsigned int avr_step;
               double avr_time;
               CIO::E_CIO_ERRORCODE ret;
@@ -345,14 +390,23 @@ void COMB::output_sph()
               
               //headIndexを０スタートにしてセット
               int headB[3];
-              headB[0]=read_sta[0]+DFI_FInfo->GuideCell-1;
-              headB[1]=read_sta[1]+DFI_FInfo->GuideCell-1;
-              headB[2]=read_sta[2]+DFI_FInfo->GuideCell-1;
+//CIO.20131008.s
+              //headB[0]=read_sta[0]+DFI_FInfo->GuideCell-1;
+              //headB[1]=read_sta[1]+DFI_FInfo->GuideCell-1;
+              //headB[2]=read_sta[2]+DFI_FInfo->GuideCell-1;
+              headB[0]=read_sta[0]-1;
+              headB[1]=read_sta[1]-1;
+              headB[2]=read_sta[2]-1;
+//CIO.20131008.e
               buf->setHeadIndex( headB );
               
               int headS0[3];
-              headS0[0]=headS[0]+DFI_FInfo->GuideCell;
-              headS0[1]=headS[1]+DFI_FInfo->GuideCell;
+//CIO.20131008.s
+              //headS0[0]=headS[0]+DFI_FInfo->GuideCell;
+              //headS0[1]=headS[1]+DFI_FInfo->GuideCell;
+              headS0[0]=headS[0];
+              headS0[1]=headS[1];
+//CIO.20131008.s
               headS0[2]=kk;
               src->setHeadIndex( headS0 );
               

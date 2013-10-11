@@ -349,6 +349,7 @@ public:
    * @param [in]  sta コピーのスタート位置
    * @param [in]  end コピーのエンド位置
    */
+/*
   template<class T1, class T2>
   bool copyArray(cio_TypeArray<T1> *buf,
                  cio_TypeArray<T2> *&src,
@@ -402,6 +403,7 @@ public:
     }
     return true;
   };
+*/
   /**
    * @brief 配列のコピー
    * @param [in]  buf コピー元の配列
@@ -562,7 +564,7 @@ public:
    * @param[in] dLen       データサイズ
    * @param[in] fp         ファイルポインタ
    */
-  bool WriteCombineData(double* data, size_t dLen, FILE* fp);
+  //bool WriteCombineData(double* data, size_t dLen, FILE* fp);
   
   
   /**
@@ -1186,7 +1188,10 @@ public:
   /**
    * @brief avsファイルの連結
    */
-  void output_avs();
+//CIO.20131008.s
+  //void output_avs();
+  void output_avs_header();
+//CIO.20131008.e
   
 };
 

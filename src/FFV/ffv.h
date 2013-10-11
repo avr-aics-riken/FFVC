@@ -52,7 +52,6 @@
 #include "../FB/CompoFraction.h"
 #include "../FB/History.h"
 #include "../FB/Monitor.h"
-#include "../FB/dfiinfo.h"
 #include "ffv_Version.h"
 #include "ffv_Define.h"
 #include "ffv_SetBC.h"

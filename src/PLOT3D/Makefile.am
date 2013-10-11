@@ -30,6 +30,8 @@ libPLOT3D_a_CXXFLAGS = \
 libPLOT3D_a_SOURCES = \
   dfi.C \
   dfi.h \
+  dfiinfo.C \
+  dfiinfo.h \
   PLOT3D.C \
   PLOT3D.h \
   PLOT3D_read.C \

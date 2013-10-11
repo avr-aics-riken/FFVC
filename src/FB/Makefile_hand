@@ -38,8 +38,7 @@ CXXSRCS = Control.C \
           DataHolder.C \
           Monitor.C \
           MonCompo.C \
-          Sampling.C \
-          dfiinfo.C
+          Sampling.C
 
 F90SRCS = FB_util.f90 \
           dbwrite.f90

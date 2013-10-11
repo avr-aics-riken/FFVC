@@ -748,7 +748,9 @@ void COMB::CheckDir(string dirstr)
       if( errno == ENOENT ) {
         mode_t mode = S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
         //if ( !FBUtility::mkdirs(dirstr.c_str()) )
-        if ( !cio_DFI::MakeDirectorySub(dirstr) )
+//CIO.20131008.s
+        //if ( !cio_DFI::MakeDirectorySub(dirstr) )
+        if ( cio_DFI::MakeDirectorySub(dirstr) != 0 )
         {
           printf("\tCan't generate directory(%s).\n", dirstr.c_str());
           Exit(0);
@@ -846,6 +848,7 @@ void COMB::WriteTime(double* tt)
 //
 void COMB::CombineFiles()
 {
+
   if( out_format == OUTFORMAT_IS_SPH )
   {
     output_sph();
@@ -856,7 +859,11 @@ void COMB::CombineFiles()
   }
   else if( out_format == OUTFORMAT_IS_AVS )
   {
-    output_avs();
+//CIO.20131008.s
+    //output_avs();
+    output_sph();
+    output_avs_header();
+//CIO.20131008.e
   }
 
 }
@@ -924,7 +931,15 @@ std::string COMB::Generate_FileName_Free(const std::string prefix, const std::st
   }
   else
   {
+//CIO.20131008.s
+   if( !strcasecmp(xxx.c_str(), "sph") || !strcasecmp(xxx.c_str(), "dat") )
+   { 
     sprintf(tmp, "%s_%010d.%s", prefix.c_str(), m_step, xxx.c_str());
+   }
+    else
+    {
+      sprintf(tmp, "%s.%s", prefix.c_str(), xxx.c_str());
+    }
   }
   
   std::string fname(tmp);

@@ -25,8 +25,8 @@ CXXSRCS = \
   PLOT3D.C \
   PLOT3D_read.C \
   PLOT3D_write.C \
-  ffv_PLOT3D.C
-
+  ffv_PLOT3D.C \
+  dfiinfo.C
 
 F90SRCS = \
   PLT3D.f90 \

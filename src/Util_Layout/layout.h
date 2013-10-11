@@ -64,7 +64,7 @@
 #include "mydebug.h"
 //#include "omp.h"
 
-#include "dfiinfo.h"
+#include "../PLOT3D/dfiinfo.h"
 
 #include "limits.h" // for UBUNTU
 
