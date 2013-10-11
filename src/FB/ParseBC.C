@@ -1066,11 +1066,11 @@ void ParseBC::getIbcSpecVel(const string label_base, const int n, CompoList* cmp
     stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
-  if ( !strcasecmp("SameSideWithNormal", str.c_str()) )
+  if ( !strcasecmp("SameSideWithOrientation", str.c_str()) )
   {
     cmp[n].setBClocation(CompoList::same_direction);
   }
-  else if ( !strcasecmp("OppositeSideWithNormal", str.c_str()) )
+  else if ( !strcasecmp("OppositeSideWithOrientation", str.c_str()) )
   {
     cmp[n].setBClocation(CompoList::opposite_direction);
   }
@@ -1181,7 +1181,7 @@ void ParseBC::getInitTempOfMedium(CompoList* cmp, Control* C)
 
 // #################################################################
 /**
- * @brief 内部境界条件の法線ベクトル値を取得し，登録する
+ * @brief 内部境界条件の方向ベクトル値を取得し，登録する
  * @param [in] label_base ラベルディレクトリ
  * @param [out v          ベクトルパラメータ
  */
@@ -1190,7 +1190,7 @@ void ParseBC::getNV(const string label_base, REAL_TYPE* v)
   string label;
   for (int i=0; i<3; i++) v[i]=0.0f;
   
-  label = label_base + "/Normal";
+  label = label_base + "/OrientationVector";
   
   if( !(tpCntl->getInspectedVector(label, v, 3)) )
   {
@@ -2614,7 +2614,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
                 n, cmp[n].getAlias().c_str(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z,
                 cmp[n].area, cmp[n].getElement());
-        fprintf(fp, "\t                     normal_x    normal_y    normal_z       Direction");
+        fprintf(fp, "\t                     vector_x    vector_y    vector_z       Direction");
         
         if ( cmp[n].get_V_Profile() == CompoList::vel_zero )
         {
@@ -2735,7 +2735,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     }
     fprintf(fp, "\n");
     
-    fprintf(fp, "\t no                    Label   normal_x   normal_y   normal_z    Vel.[m/s]      Vel.[-]\n");
+    fprintf(fp, "\t no                    Label   vector_x   vector_y   vector_z    Vel.[m/s]      Vel.[-]\n");
     
     for (int n=1; n<=NoCompo; n++)
     {
@@ -2754,7 +2754,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   {
     fprintf(fp, "\n\t[Heat Exchanger]\n");
     
-    fprintf(fp, "\t no                    Label   normal_x   normal_y   normal_z     O_x[m]     O_y[m]     O_z[m]      dir_x      dir_y      dir_z\n");
+    fprintf(fp, "\t no                    Label   vector_x   vector_y   vector_z     O_x[m]     O_y[m]     O_z[m]      dir_x      dir_y      dir_z\n");
     for (int n=1; n<=NoCompo; n++)
     {
       if ( cmp[n].getType() == HEX )
@@ -2813,7 +2813,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   {
     fprintf(fp, "\n\t[Fan]\n");
     
-    fprintf(fp, "\t no                    Label   normal_x   normal_y   normal_z      O_x[m]     O_y[m]     O_z[m]\n");
+    fprintf(fp, "\t no                    Label   vector_x   vector_y   vector_z      O_x[m]     O_y[m]     O_z[m]\n");
     for (int n=1; n<=NoCompo; n++)
     {
       if ( cmp[n].getType() == FAN )
@@ -3149,7 +3149,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     }
     fprintf(fp, "\n");
     
-    fprintf(fp, "\t                     normal_x    normal_y    normal_z       Reference  Variables\n");
+    fprintf(fp, "\t                     vector_x    vector_y    vector_z       Reference  Variables\n");
     for (int n=1; n<=NoCompo; n++)
     {
       if ( cmp[n].getType() == CELL_MONITOR )

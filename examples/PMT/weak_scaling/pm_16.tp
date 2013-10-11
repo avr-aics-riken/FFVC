@@ -298,7 +298,7 @@ BcTable {
       class       = "wall"
       Type        = "slide"
       Profile     = "Constant"
-      Normal      = (1.0, 0.0, 0.0)
+      OrientationVector      = (1.0, 0.0, 0.0)
       Velocity    = 1.0
       Medium      = "fe"
     }

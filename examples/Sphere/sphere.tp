@@ -28,7 +28,7 @@ BcTable {
     inlet {
       class       = "SpecifiedVelocity"
       Profile     = "Constant"
-      Normal      = (1.0, 0.0, 0.0)
+      OrientationVector      = (1.0, 0.0, 0.0)
       velocity    = 5.0
       Medium      = "air"
     }

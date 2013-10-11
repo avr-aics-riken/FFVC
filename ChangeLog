@@ -21,6 +21,8 @@ REVISION HISTORY
 --------------------------
 2013-10-11
 
+- r1036 change keyword from 'Normal' to 'OrientationVector'
+
 - r1035 update for CIOlib-1.3.8 [ver 1.4.5]
   - move dfiinfo.h from FB/ to PLOT3D/
   - delete extra methods in ffv_Restart.C
