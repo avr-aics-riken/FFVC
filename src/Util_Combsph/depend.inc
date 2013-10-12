@@ -57,10 +57,7 @@ main.o: main.C comb.h /opt/openmpi/include/mpi.h \
  /usr/local/CIOlib/include/cio_FilePath.h /usr/local/CIOlib/include/cio_Unit.h \
  /usr/local/CIOlib/include/cio_TimeSlice.h /usr/local/CIOlib/include/cio_Domain.h \
  /usr/local/CIOlib/include/cio_MPI.h /usr/local/CIOlib/include/cio_Process.h \
- /usr/local/CIOlib/include/cio_Interval_Mngr.h \
- /usr/local/CIOlib/include/inline/cio_DFI_inline.h ../PLOT3D/dfiinfo.h \
- ../PLOT3D/../FB/DomainInfo.h ../PLOT3D/../FB/FB_Define.h \
- ../PLOT3D/../FB/mydebug.h COMB_Define.h
+ /usr/local/CIOlib/include/inline/cio_DFI_inline.h COMB_Define.h ../FB/mydebug.h
 comb.o: comb.C comb.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/mpi_portable_platform.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/mpicxx.h /opt/openmpi/include/mpi.h \
@@ -120,10 +117,7 @@ comb.o: comb.C comb.h /opt/openmpi/include/mpi.h \
  /usr/local/CIOlib/include/cio_FilePath.h /usr/local/CIOlib/include/cio_Unit.h \
  /usr/local/CIOlib/include/cio_TimeSlice.h /usr/local/CIOlib/include/cio_Domain.h \
  /usr/local/CIOlib/include/cio_MPI.h /usr/local/CIOlib/include/cio_Process.h \
- /usr/local/CIOlib/include/cio_Interval_Mngr.h \
- /usr/local/CIOlib/include/inline/cio_DFI_inline.h ../PLOT3D/dfiinfo.h \
- ../PLOT3D/../FB/DomainInfo.h ../PLOT3D/../FB/FB_Define.h \
- ../PLOT3D/../FB/mydebug.h COMB_Define.h
+ /usr/local/CIOlib/include/inline/cio_DFI_inline.h COMB_Define.h ../FB/mydebug.h
 comb_sph.o: comb_sph.C comb.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/mpi_portable_platform.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/mpicxx.h /opt/openmpi/include/mpi.h \
@@ -183,10 +177,7 @@ comb_sph.o: comb_sph.C comb.h /opt/openmpi/include/mpi.h \
  /usr/local/CIOlib/include/cio_FilePath.h /usr/local/CIOlib/include/cio_Unit.h \
  /usr/local/CIOlib/include/cio_TimeSlice.h /usr/local/CIOlib/include/cio_Domain.h \
  /usr/local/CIOlib/include/cio_MPI.h /usr/local/CIOlib/include/cio_Process.h \
- /usr/local/CIOlib/include/cio_Interval_Mngr.h \
- /usr/local/CIOlib/include/inline/cio_DFI_inline.h ../PLOT3D/dfiinfo.h \
- ../PLOT3D/../FB/DomainInfo.h ../PLOT3D/../FB/FB_Define.h \
- ../PLOT3D/../FB/mydebug.h COMB_Define.h
+ /usr/local/CIOlib/include/inline/cio_DFI_inline.h COMB_Define.h ../FB/mydebug.h
 comb_avs.o: comb_avs.C comb.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/mpi_portable_platform.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/mpicxx.h /opt/openmpi/include/mpi.h \
@@ -246,9 +237,6 @@ comb_avs.o: comb_avs.C comb.h /opt/openmpi/include/mpi.h \
  /usr/local/CIOlib/include/cio_FilePath.h /usr/local/CIOlib/include/cio_Unit.h \
  /usr/local/CIOlib/include/cio_TimeSlice.h /usr/local/CIOlib/include/cio_Domain.h \
  /usr/local/CIOlib/include/cio_MPI.h /usr/local/CIOlib/include/cio_Process.h \
- /usr/local/CIOlib/include/cio_Interval_Mngr.h \
- /usr/local/CIOlib/include/inline/cio_DFI_inline.h ../PLOT3D/dfiinfo.h \
- ../PLOT3D/../FB/DomainInfo.h ../PLOT3D/../FB/FB_Define.h \
- ../PLOT3D/../FB/mydebug.h COMB_Define.h
+ /usr/local/CIOlib/include/inline/cio_DFI_inline.h COMB_Define.h ../FB/mydebug.h
 FileIO_sph.o: FileIO_sph.C FileIO_sph.h endianUtil.h
 FileIO_read_sph.o: FileIO_read_sph.C FileIO_sph.h endianUtil.h

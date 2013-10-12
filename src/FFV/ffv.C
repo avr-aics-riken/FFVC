@@ -35,12 +35,9 @@ FFV::FFV()
   
   CurrentTime = 0.0;
   CurrentTime_Avr = 0.0;
-  Session_StartTime = 0.0;
-  Session_CurrentTime = 0.0;
-  
-  Session_LastStep = 0;
+
   Session_CurrentStep = 0;
-  Session_StartStep = 0;
+  Session_LastStep = 0;
   CurrentStep = 0;
   CurrentStep_Avr = 0;
   
@@ -381,11 +378,6 @@ void FFV::OutputAveragedVarables(double& flop)
   }
   
   
-  // 出力インターバル
-  int interval = 0;
-  interval = C.Interval[Interval_Manager::tg_average].getIntervalStep();
-  
-  
   if ( C.KindOfSolver != SOLID_CONDUCTION )
   {
     // Pressure
@@ -428,7 +420,6 @@ void FFV::OutputAveragedVarables(double& flop)
                                   guide,    // 仮想セル数
                                   d_ws,     // フィールドデータポインタ
                                   minmax,   // 最小値と最大値
-                                  true,     // 強制出力指示（デフォルトtrue：強制出力）
                                   false,    // 平均出力指示 false:出力あり
                                   stepAvr,  // 平均をとったステップ数
                                   timeAvr); // 平均をとった時刻
@@ -488,7 +479,6 @@ void FFV::OutputAveragedVarables(double& flop)
                                   guide,
                                   d_wo,
                                   cio_minmax,
-                                  true,
                                   false,
                                   stepAvr,
                                   timeAvr);
@@ -536,7 +526,6 @@ void FFV::OutputAveragedVarables(double& flop)
                                    guide,
                                    d_ws,
                                    minmax,
-                                   true,
                                    false,
                                    stepAvr,
                                    timeAvr);
@@ -580,9 +569,6 @@ void FFV::OutputBasicVariables(double& flop)
   REAL_TYPE minmax[2];
   REAL_TYPE cio_minmax[8];
   
-  // 出力間隔
-  int interval = 0;
-  interval = C.Interval[Interval_Manager::tg_basic].getIntervalStep();
   
   // エラーコード
   CIO::E_CIO_ERRORCODE ret;
@@ -621,7 +607,6 @@ void FFV::OutputBasicVariables(double& flop)
                                  guide,
                                  d_ws,
                                  minmax,
-                                 true,
                                  true,
                                  0,
                                  0.0);
@@ -670,7 +655,6 @@ void FFV::OutputBasicVariables(double& flop)
                                  guide,
                                  d_ws,
                                  minmax,
-                                 true,
                                  true,
                                  0,
                                  0.0);
@@ -728,7 +712,6 @@ void FFV::OutputBasicVariables(double& flop)
                                  d_wo,
                                  cio_minmax,
                                  true,
-                                 true,
                                  0,
                                  0.0);
 
@@ -777,7 +760,6 @@ void FFV::OutputBasicVariables(double& flop)
                                   d_wo,
                                   cio_minmax,
                                   true,
-                                  true,
                                   0,
                                   0.0);
     
@@ -825,7 +807,6 @@ void FFV::OutputBasicVariables(double& flop)
                                 d_ws,
                                 minmax,
                                 true,
-                                true,
                                 0,
                                 0.0);
   
@@ -872,10 +853,6 @@ void FFV::OutputDerivedVariables(double& flop)
   CIO::E_CIO_ERRORCODE ret;
   
   
-  // 出力間隔
-  int interval = 0;
-  interval = C.Interval[Interval_Manager::tg_derived].getIntervalStep();
-  
   REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
   
   
@@ -921,7 +898,6 @@ void FFV::OutputDerivedVariables(double& flop)
                                 guide,
                                 d_ws,
                                 minmax,
-                                true,
                                 true,
                                 0,
                                 0.0);
@@ -982,7 +958,6 @@ void FFV::OutputDerivedVariables(double& flop)
                                  d_wo,
                                  cio_minmax,
                                  true,
-                                 true,
                                  0,
                                  0.0);
 
@@ -1025,7 +1000,6 @@ void FFV::OutputDerivedVariables(double& flop)
                                    d_ws,
                                    minmax,
                                    true,
-                                   true,
                                    0,
                                    0.0);
 
@@ -1067,7 +1041,6 @@ void FFV::OutputDerivedVariables(double& flop)
                                  guide,
                                  d_ws,
                                  minmax,
-                                 true,
                                  true,
                                  0,
                                  0.0);

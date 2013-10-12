@@ -731,11 +731,11 @@ void Control::getFieldData()
   {
     if     ( !strcasecmp(str.c_str(), "step") )
     {
-      Interval[Interval_Manager::tg_basic].setMode_Step();
+      Interval[tg_basic].setMode(IntervalManager::By_step);
     }
     else if( !strcasecmp(str.c_str(), "time") )
     {
-      Interval[Interval_Manager::tg_basic].setMode_Time();
+      Interval[tg_basic].setMode(IntervalManager::By_time);
     }
     else
     {
@@ -752,7 +752,7 @@ void Control::getFieldData()
     }
     else
     {
-      Interval[Interval_Manager::tg_basic].setInterval((double)f_val);
+      Interval[tg_basic].setInterval((double)f_val);
     }
   }
   
@@ -808,11 +808,11 @@ void Control::getFieldData()
   {
     if     ( !strcasecmp(str.c_str(), "step") )
     {
-      Interval[Interval_Manager::tg_derived].setMode_Step();
+      Interval[tg_derived].setMode(IntervalManager::By_step);
     }
     else if( !strcasecmp(str.c_str(), "time") )
     {
-      Interval[Interval_Manager::tg_derived].setMode_Time();
+      Interval[tg_derived].setMode(IntervalManager::By_time);
     }
     else
     {
@@ -829,7 +829,7 @@ void Control::getFieldData()
     }
     else
     {
-      Interval[Interval_Manager::tg_derived].setInterval((double)f_val);
+      Interval[tg_derived].setInterval((double)f_val);
     }
   }
   
@@ -917,7 +917,7 @@ void Control::getFieldData()
     {
 		  if     ( !strcasecmp(str.c_str(), "step") )
       {
-        if ( !Interval[Interval_Manager::tg_average].isStep() )
+        if ( Interval[tg_average].getMode() == IntervalManager::By_time )
         {
           Hostonly_ stamped_printf("\tError : Specified temporal mode is not consistent with '/TimeControl/Average/TemporalType'\n");
           Exit(0);
@@ -925,7 +925,7 @@ void Control::getFieldData()
 		  }
 		  else if( !strcasecmp(str.c_str(), "time") )
       {
-        if ( Interval[Interval_Manager::tg_average].isStep() )
+        if ( Interval[tg_average].getMode() == IntervalManager::By_step )
         {
           Hostonly_ stamped_printf("\tError : Specified temporal mode is not consistent with '/TimeControl/Average/TemporalType'\n");
           Exit(0);
@@ -948,71 +948,12 @@ void Control::getFieldData()
     }
     else
     {
-      Interval[Interval_Manager::tg_average].setInterval(val);
+      Interval[tg_average].setInterval(val);
     }
   }
 
 }
 
-/* PLOT3Dfunctions_20131005
-// #################################################################
-// @brief ファイルフォーマットのオプションを指定する
-void Control::getFormat_plot3d()
-{
-  string str;
-  string label;
-  REAL_TYPE f_val;
-  
-  // PLOT3Dディレクトリのチェック
-  label = "/Output/FormatOption/PLOT3D";
-  
-  if ( !tpCntl->chkNode(label) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : Missing '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  
-  
-  // インターバル PLOT3D
-  label = "/Output/FormatOption/PLOT3D/TemporalType";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    Exit(0);
-  }
-  else
-  {
-    if     ( !strcasecmp(str.c_str(), "step") )
-    {
-      Interval[Interval_Manager::tg_plot3d].setMode_Step();
-    }
-    else if( !strcasecmp(str.c_str(), "time") )
-    {
-      Interval[Interval_Manager::tg_plot3d].setMode_Time();
-    }
-    else
-    {
-      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
-      Exit(0);
-    }
-    
-    label="/Output/FormatOption/PLOT3D/Interval";
-    
-    if ( !(tpCntl->getInspectedValue(label, f_val )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
-    }
-    else
-    {
-      Interval[Interval_Manager::tg_plot3d].setInterval((double)f_val);
-    }
-  }
-
-}
- */
 
 // #################################################################
 // @brief ファイルフォーマットのオプションを指定する．
@@ -1489,11 +1430,11 @@ void Control::getLog()
   {
 	  if     ( !strcasecmp(str.c_str(), "step") )
     {
-      Interval[Interval_Manager::tg_console].setMode_Step();
+      Interval[tg_console].setMode(IntervalManager::By_step);
 	  }
 	  else if( !strcasecmp(str.c_str(), "time") )
     {
-      Interval[Interval_Manager::tg_console].setMode_Time();
+      Interval[tg_console].setMode(IntervalManager::By_time);
 	  }
 	  else
     {
@@ -1510,7 +1451,7 @@ void Control::getLog()
 	  }
 	  else
     {
-		  Interval[Interval_Manager::tg_console].setInterval((double)f_val);
+		  Interval[tg_console].setInterval((double)f_val);
 	  }
   }
   
@@ -1526,11 +1467,11 @@ void Control::getLog()
   {
 	  if     ( !strcasecmp(str.c_str(), "step") )
     {
-		  Interval[Interval_Manager::tg_history].setMode_Step();
+		  Interval[tg_history].setMode(IntervalManager::By_step);
 	  }
 	  else if( !strcasecmp(str.c_str(), "time") )
     {
-		  Interval[Interval_Manager::tg_history].setMode_Time();
+		  Interval[tg_history].setMode(IntervalManager::By_time);
 	  }
 	  else
     {
@@ -1547,7 +1488,7 @@ void Control::getLog()
 	  }
 	  else
     {
-		  Interval[Interval_Manager::tg_history].setInterval((double)f_val);
+		  Interval[tg_history].setInterval((double)f_val);
 	  }
   }
   
@@ -2337,11 +2278,11 @@ void Control::getTimeControl(DTcntl* DT)
   {
 	  if     ( !strcasecmp(str.c_str(), "step") )
     {
-		  Interval[Interval_Manager::tg_accelra].setMode_Step();
+		  Interval[tg_accelra].setMode(IntervalManager::By_step);
 	  }
 	  else if( !strcasecmp(str.c_str(), "time") )
     {
-		  Interval[Interval_Manager::tg_accelra].setMode_Time();
+		  Interval[tg_accelra].setMode(IntervalManager::By_time);
 	  }
 	  else
     {
@@ -2358,7 +2299,7 @@ void Control::getTimeControl(DTcntl* DT)
 	  }
 	  else
     {
-		  Interval[Interval_Manager::tg_accelra].setInterval(ct);
+		  Interval[tg_accelra].setInterval(ct);
 	  }
   }
   
@@ -2415,11 +2356,11 @@ void Control::getTimeControl(DTcntl* DT)
   {
     if ( !strcasecmp(str.c_str(), "step") )
     {
-      Interval[Interval_Manager::tg_compute].setMode_Step();
+      Interval[tg_compute].setMode(IntervalManager::By_step);
     }
     else if ( !strcasecmp(str.c_str(), "time") )
     {
-      Interval[Interval_Manager::tg_compute].setMode_Time();
+      Interval[tg_compute].setMode(IntervalManager::By_time);
     }
     else
     {
@@ -2437,6 +2378,8 @@ void Control::getTimeControl(DTcntl* DT)
     Exit(0);
   }
   double m_start = ct;
+  
+  
   
   // 終了
   label = "/TimeControl/Session/End";
@@ -2466,8 +2409,10 @@ void Control::getTimeControl(DTcntl* DT)
     Restart_step = m_start;
   }
   
-  Interval[Interval_Manager::tg_compute].setInterval( m_end - m_start );
-  
+  // Intereval Manager への登録 >> 他はFFV::initInterval()で指定
+  Interval[tg_compute].setStart(m_start);
+  Interval[tg_compute].setLast(m_end);
+  Interval[tg_compute].setInterval(m_end-m_start); // tg_computeのインターバルは計算するセッションの長さ
   
   
   
@@ -2483,11 +2428,11 @@ void Control::getTimeControl(DTcntl* DT)
   {
     if     ( !strcasecmp(str.c_str(), "step") )
     {
-      Interval[Interval_Manager::tg_average].setMode_Step();
+      Interval[tg_average].setMode(IntervalManager::By_step);
     }
     else if( !strcasecmp(str.c_str(), "time") )
     {
-      Interval[Interval_Manager::tg_average].setMode_Time();
+      Interval[tg_average].setMode(IntervalManager::By_time);
     }
     else
     {
@@ -2507,7 +2452,6 @@ void Control::getTimeControl(DTcntl* DT)
   }
   double avr_start = ct;
   
-  Interval[Interval_Manager::tg_average].setStart(avr_start, avr_start);
   Restart_stepAvr = avr_start;
   
   
@@ -2529,6 +2473,10 @@ void Control::getTimeControl(DTcntl* DT)
     Exit(0);
   }
   
+  
+  // Intereval Manager への登録 >> 他はFFV::initInterval()で指定
+  Interval[tg_average].setStart(avr_start);
+  Interval[tg_average].setLast(avr_end);
   
 
   /* 平均値操作の判断
@@ -3368,27 +3316,27 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
   fprintf(fp,"\n\tTime Control\n");
   
   // 加速時間
-  if ( !Interval[Interval_Manager::tg_accelra].isStep() )
+  if ( Interval[tg_accelra].getMode() == IntervalManager::By_time )
   {
-    itm = Interval[Interval_Manager::tg_accelra].getIntervalTime();
+    itm = Interval[tg_accelra].getIntervalTime();
     fprintf(fp,"\t     Acceleration Time        :   %12.5e [sec] / %12.5e [-]\n", itm*Tscale, itm);
   }
   else
   {
-    fprintf(fp,"\t     Acceleration Step        :   %12d\n", Interval[Interval_Manager::tg_accelra].getIntervalStep());
+    fprintf(fp,"\t     Acceleration Step        :   %12d\n", Interval[tg_accelra].getIntervalStep());
   }
   
   // 時間平均
   if ( Mode.Average == ON )
   {
-    if ( !Interval[Interval_Manager::tg_average].isStep() )
+    if ( Interval[tg_average].getMode() == IntervalManager::By_time )
     {
-      itm = Interval[Interval_Manager::tg_average].getStartTime();
+      itm = Interval[tg_average].getStartTime();
       fprintf(fp,"\t     Averaging Start          :   %12.5e [sec] / %12.5e [-]\n", itm*Tscale, itm);
     }
     else
     {
-      fprintf(fp,"\t     Averaging Start          :   %12d\n", Interval[Interval_Manager::tg_average].getStartStep());
+      fprintf(fp,"\t     Averaging Start          :   %12d\n", Interval[tg_average].getStartStep());
     }
   }
   else
@@ -3463,10 +3411,46 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
       err=false;
   }
   
+  // start & end
+  unsigned stp;
+  
+  if ( Interval[Control::tg_compute].getMode() == IntervalManager::By_step )
+  {
+    itm = (double)Interval[Control::tg_compute].getStartStep() * dt;
+    stp = Interval[tg_compute].getStartStep();
+  }
+  else
+  {
+    itm = Interval[tg_compute].getStartTime();
+    stp = (unsigned)ceil(Interval[Control::tg_compute].getStartTime() / dt);
+  }
+  fprintf(fp,"\t     Calculation Start        :   %12.5e [sec] / %12.5e [-]  : %12d\n", itm*Tscale, itm, stp);
+  
+  
+  if ( Interval[Control::tg_compute].getMode() == IntervalManager::By_step )
+  {
+    itm = (double)Interval[Control::tg_compute].getLastStep() * dt;
+    stp = Interval[tg_compute].getLastStep();
+  }
+  else
+  {
+    itm = Interval[tg_compute].getLastTime();
+    stp = (unsigned)ceil(Interval[Control::tg_compute].getLastTime() / dt);
+  }
+  fprintf(fp,"\t     Calculation End          :   %12.5e [sec] / %12.5e [-]  : %12d\n", itm*Tscale, itm, stp);
+  
+  
   // Calculation time/step
-  itm = Interval[Interval_Manager::tg_compute].getIntervalTime() - dt;
-  fprintf(fp,"\t     Calculation Time         :   %12.5e [sec] / %12.5e [-]\n", itm*Tscale, itm);
-  fprintf(fp,"\t     Calculation Step         :   %12d\n", Interval[Interval_Manager::tg_compute].getIntervalStep());
+  if ( Interval[Control::tg_compute].getMode() == IntervalManager::By_step )
+  {
+    itm = (double)Interval[Control::tg_compute].getIntervalStep() * dt;
+  }
+  else
+  {
+    itm = Interval[tg_compute].getIntervalTime();
+  }
+
+  fprintf(fp,"\t     Calculation Period       :   %12.5e [sec] / %12.5e [-]  : %12d\n", itm*Tscale, itm, Interval[tg_compute].getIntervalStep());
   
   
   
@@ -3583,89 +3567,74 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
   
   // インターバル ------------------
   // 基本履歴のコンソール出力 
-  if ( !Interval[Interval_Manager::tg_console].isStep() )
+  if ( Interval[tg_console].getMode() == IntervalManager::By_time )
   {
-    itm = Interval[Interval_Manager::tg_console].getIntervalTime();
+    itm = Interval[tg_console].getIntervalTime();
     fprintf(fp,"\t     Base Info.(stdout)       :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
   }
   else
   {
-    fprintf(fp,"\t     Base Info.(stdout)       :   %12d [step]\n", Interval[Interval_Manager::tg_console].getIntervalStep());
+    fprintf(fp,"\t     Base Info.(stdout)       :   %12d [step]\n", Interval[tg_console].getIntervalStep());
   }
   
   // 履歴情報のファイル出力
-  if ( !Interval[Interval_Manager::tg_history].isStep() )
+  if ( Interval[tg_history].getMode() == IntervalManager::By_time )
   {
-    itm = Interval[Interval_Manager::tg_history].getIntervalTime();
+    itm = Interval[tg_history].getIntervalTime();
     fprintf(fp,"\t     Other Histories          :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
   }
   else
   {
-    fprintf(fp,"\t     Other Histories          :   %12d [step]\n", Interval[Interval_Manager::tg_history].getIntervalStep());
+    fprintf(fp,"\t     Other Histories          :   %12d [step]\n", Interval[tg_history].getIntervalStep());
   }
   
   // 基本変数のファイル出力
-  if ( !Interval[Interval_Manager::tg_basic].isStep() )
+  if ( Interval[tg_basic].getMode() == IntervalManager::By_time )
   {
-    itm = Interval[Interval_Manager::tg_basic].getIntervalTime();
+    itm = Interval[tg_basic].getIntervalTime();
     fprintf(fp,"\t     Basic Variables          :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
   }
   else
   {
-    fprintf(fp,"\t     Basic Variables          :   %12d [step]\n", Interval[Interval_Manager::tg_basic].getIntervalStep());
+    fprintf(fp,"\t     Basic Variables          :   %12d [step]\n", Interval[tg_basic].getIntervalStep());
   }
   
   // 平均値のファイル出力
-  if ( !Interval[Interval_Manager::tg_average].isStep() )
+  if ( Interval[tg_average].getMode() == IntervalManager::By_time )
   {
-    itm = Interval[Interval_Manager::tg_average].getIntervalTime();
+    itm = Interval[tg_average].getIntervalTime();
     fprintf(fp,"\t     Averaged Variables       :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
   }
   else
   {
-    fprintf(fp,"\t     Averaged Variables       :   %12d [step]\n", Interval[Interval_Manager::tg_average].getIntervalStep());
+    fprintf(fp,"\t     Averaged Variables       :   %12d [step]\n", Interval[tg_average].getIntervalStep());
   }
   
   // 派生変数のファイル出力
-  if ( !Interval[Interval_Manager::tg_derived].isStep() )
+  if ( Interval[tg_derived].getMode() == IntervalManager::By_time )
   {
-    itm = Interval[Interval_Manager::tg_derived].getIntervalTime();
+    itm = Interval[tg_derived].getIntervalTime();
     fprintf(fp,"\t     Derived Variables        :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
   }
   else
   {
-    fprintf(fp,"\t     Derived Variables        :   %12d [step]\n", Interval[Interval_Manager::tg_derived].getIntervalStep());
+    fprintf(fp,"\t     Derived Variables        :   %12d [step]\n", Interval[tg_derived].getIntervalStep());
   }
   
   // サンプリング情報のファイル出力
   if ( Sampling.log == ON )
   {
-    if ( !Interval[Interval_Manager::tg_sampled].isStep() )
+    if ( Interval[tg_sampled].getMode() == IntervalManager::By_time )
     {
-      itm = Interval[Interval_Manager::tg_sampled].getIntervalTime();
+      itm = Interval[tg_sampled].getIntervalTime();
       fprintf(fp,"\t     Sampled data             :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
     }
     else
     {
-      fprintf(fp,"\t     Sampled data             :   %12d [step]\n", Interval[Interval_Manager::tg_sampled].getIntervalStep());
+      fprintf(fp,"\t     Sampled data             :   %12d [step]\n", Interval[tg_sampled].getIntervalStep());
     }
   }
   
-  /* PLOT3Dfunctions_20131005
-  // PLOT3D 瞬間値のファイル出力
-  if(FIO.Format == plt3d_fmt)
-  {
-    if ( !Interval[Interval_Manager::tg_plot3d].isStep() )
-    {
-      itm = Interval[Interval_Manager::tg_plot3d].getIntervalTime();
-      fprintf(fp,"\t     Plot3d Instant data      :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
-    }
-    else
-    {
-      fprintf(fp,"\t     Plot3d Instant data      :   %12d [step]\n", Interval[Interval_Manager::tg_plot3d].getIntervalStep());
-    }
-  }
-   */
 
   
   // Criteria ------------------

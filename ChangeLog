@@ -19,6 +19,15 @@ REVISION HISTORY
 ================
 
 --------------------------
+2013-10-12
+
+- r1037 repalce IntervalManager.h from CIOlib [ver 1.4.6]
+  - change integer type from int to unsigned int in IntervalManager
+  - add getLastStep(), getLastTime() in IntervalManager
+  - integrate isLastStep() and isLastTime() to isLast() and cahnge to public method
+  - rewrite timing control by a new IntervalManager
+
+--------------------------
 2013-10-11
 
 - r1036 change keyword from 'Normal' to 'OrientationVector'

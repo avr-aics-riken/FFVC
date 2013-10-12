@@ -185,11 +185,11 @@ void MonitorList::getMonitor(Control* C)
   {
     if ( !strcasecmp(str.c_str(), "step") )
     {
-      C->Interval[Interval_Manager::tg_sampled].setMode_Step();
+      C->Interval[Control::tg_sampled].setMode(IntervalManager::By_step);
     }
     else if ( !strcasecmp(str.c_str(), "time") )
     {
-      C->Interval[Interval_Manager::tg_sampled].setMode_Time();
+      C->Interval[Control::tg_sampled].setMode(IntervalManager::By_time);
     }
     else
     {
@@ -206,7 +206,7 @@ void MonitorList::getMonitor(Control* C)
     }
     else
     {
-      C->Interval[Interval_Manager::tg_sampled].setInterval((double)f_val);
+      C->Interval[Control::tg_sampled].setInterval((double)f_val);
     }
   }
 
@@ -227,7 +227,7 @@ void MonitorList::getMonitor(Control* C)
   // サンプリングの指定単位が有次元の場合に，無次元に変換
   if ( C->Sampling.unit == DIMENSIONAL )
   {
-    C->Interval[Interval_Manager::tg_sampled].normalizeTime(C->Tscale);
+    C->Interval[Control::tg_sampled].normalizeTime(C->Tscale);
   }
   
   

@@ -565,26 +565,6 @@ int FFV::Initialize(int argc, char **argv)
       MO.setDataPtrs(d_v, d_p);
     }
   }
-  
-  /* PLOT3Dfunctions_20131005
-  // PLOT3D形状データの書き出し
-  PLT3D.Initialize(size, guide, deltaX, &C, &FP3DR, &FP3DW, &DFI, d_ws, d_p, d_wo, d_v, d_ie, d_p0, d_wv, d_cdf, d_bcd);
-  
-  if (C.FIO.Format == plt3d_fmt)
-  {
-    PLT3D.setValuePlot3D();
-    if (C.P3Op.IS_xyz == ON) PLT3D.xyz(CurrentStep, origin, pitch); // ---> moving grid を考慮したときpostに組み込む
-    if (C.P3Op.IS_DivideFunc == ON)
-    {
-      if (C.P3Op.IS_function_name == ON) Hostonly_ PLT3D.function_name_divide();
-    }
-    else
-    {
-      if (C.P3Op.IS_function_name == ON) Hostonly_ PLT3D.function_name();
-    }
-    if (C.P3Op.IS_fvbnd == ON) PLT3D.fvbnd();
-  }
-   */
 
   
   // 出力ファイルの初期化
@@ -596,10 +576,6 @@ int FFV::Initialize(int argc, char **argv)
   {
     flop_task = 0.0;
     OutputBasicVariables(flop_task);
-    
-    /* PLOT3Dfunctions_20131005
-    if (C.FIO.Format == plt3d_fmt) PLT3D.post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng_Plot3D, flop_task);
-     */
     
     if ( (C.Mode.Average == ON) && (C.Start != initial_start) )
     {
@@ -614,10 +590,6 @@ int FFV::Initialize(int argc, char **argv)
   {
     flop_task = 0.0;
     OutputBasicVariables(flop_task);
-    
-    /* PLOT3Dfunctions_20131005
-    if (C.FIO.Format == plt3d_fmt) PLT3D.post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng_Plot3D, flop_task);
-     */
   }
 
 
@@ -1020,14 +992,7 @@ void FFV::displayMemoryInfo(FILE* fp, double G_mem, double L_mem, const char* st
 void FFV::displayParameters(FILE* fp)
 {
   C.displayParams(stdout, fp, IC, &DT, &RF, mat, cmp);
-  
-  /* PLOT3Dfunctions_20131005
-  if (C.FIO.Format == plt3d_fmt)
-  {
-    PLT3D.printParameters(stdout);
-    PLT3D.printParameters(fp);
-  }
-   */
+
   
   Ex->printPara(stdout, &C);
   Ex->printPara(fp, &C);
@@ -3163,111 +3128,72 @@ void FFV::initFileOut()
  */
 void FFV::initInterval()
 {
-  // セッションの初期時刻をセット
-  for (int i=0; i<Interval_Manager::tg_END; i++)
+  unsigned m_Session_StartStep;   ///< セッションの開始ステップ
+  m_Session_StartStep = C.Interval[Control::tg_compute].getStartStep();
+  
+  double m_dt = DT.get_DT();
+  
+  // セッションの最終ステップ
+  if ( C.Interval[Control::tg_compute].getMode() == IntervalManager::By_step )
   {
-    if ( i != Interval_Manager::tg_average)
+    Session_LastStep = C.Interval[Control::tg_compute].getLastStep();
+  }
+  else
+  {
+    Session_LastStep = (unsigned)ceil( C.Interval[Control::tg_compute].getIntervalTime() / m_dt );
+  }
+  
+  
+  // セッションの開始・終了時刻をセット >> @see Control::getTimeControl()
+  for (int i=0; i<Control::tg_END; i++)
+  {
+    if ( (i != Control::tg_average) && (i != Control::tg_compute) )
     {
-      C.Interval[i].setStart(Session_StartStep, Session_StartTime);
-    }
-    else
-    {
-      // tg_averageの場合は、get_Average_option()で指定済み
+      C.Interval[i].setStart(m_Session_StartStep);
+      C.Interval[i].setLast(Session_LastStep);
     }
   }
   
-  // debug
-  //printf("tg_basic start_step : %d\n",C.Interval[Interval_Manager::tg_basic].getStartStep());
-  //printf("tg_average start_step : %d\n",C.Interval[Interval_Manager::tg_average].getStartStep());
   
   // 入力モードが有次元の場合に，無次元に変換
   if ( C.Unit.Param == DIMENSIONAL )
   {
-    for (int i=0; i<Interval_Manager::tg_END; i++)
+    for (int i=0; i<Control::tg_END; i++)
     {
-      C.Interval[i].normalizeTime(C.Tscale);
+      if ( !C.Interval[i].normalizeTime(C.Tscale) )
+      {
+        Hostonly_ printf("\t Error : initialize timing normalize.\n");
+        Exit(0);
+      }
     }
   }
   
   // Reference frame
-  RF.setAccel( C.Interval[Interval_Manager::tg_accelra].getIntervalTime() );
+  RF.setAccel( C.Interval[Control::tg_accelra].getIntervalTime() );
   
   
   
   // インターバルの初期化
-  double m_dt    = DT.get_DT();
-  double m_tm    = CurrentTime;  // Restart()で設定
-  unsigned m_stp = CurrentStep;
+  double m_tm    = CurrentTime;  // 積算時間　Restart()で設定
+  unsigned m_stp = CurrentStep;  // 積算ステップ数
 
-  
-  // 計算セッション
-  if ( !C.Interval[Interval_Manager::tg_compute].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_compute) )
+  for (int i=Control::tg_compute; i<Control::tg_accelra; i++)
   {
-    Hostonly_ printf("\t Error : Computation Period is assigned to zero.\n");
-    Exit(0);
-  }
-  
-  // 基本履歴のコンソールへの出力
-  if ( !C.Interval[Interval_Manager::tg_console].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_console) )  
-  {
-    Hostonly_ printf("\t Error : Interval for Console output is assigned to zero.\n");
-    Exit(0);
-  }
-  
-  // 履歴のファイルへの出力
-  if ( !C.Interval[Interval_Manager::tg_history].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_history) )  
-  {
-    Hostonly_ printf("\t Error : Interval for History output is assigned to zero.\n");
-    Exit(0);
-  }
-  
-  // 基本変数の瞬時値ファイル
-  if ( !C.Interval[Interval_Manager::tg_basic].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_basic) )  
-  {
-    Hostonly_ printf("\t Error : Interval for Instantaneous output is assigned to zero.\n");
-    Exit(0);
-  }
-  
-  // 平均値ファイル
-  if ( C.Mode.Average == ON )
-  {
-    if ( !C.Interval[Interval_Manager::tg_average].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_average) ) 
+    if ( !C.Interval[i].initTrigger(m_stp, m_tm, m_dt) )
     {
-      Hostonly_ printf("\t Error : Interval for Average output is assigned to zero.\n");
+      Hostonly_ printf("\t Error : initialize timing trigger [no=%d].\n", i);
       Exit(0);
     }
   }
   
-  // 派生変数の出力
-  if ( !C.Interval[Interval_Manager::tg_derived].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_derived) )
-  {
-    Hostonly_ printf("\t Error : Interval for Instantaneous output is assigned to zero.\n");
-    Exit(0);
-  }
-  
-  // サンプリング履歴
   if ( C.Sampling.log == ON )
   {
-    if ( !C.Interval[Interval_Manager::tg_sampled].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_sampled) )  
+    if ( !C.Interval[Control::tg_sampled].initTrigger(m_stp, m_tm, m_dt) )
     {
-      Hostonly_ printf("\t Error : Interval for Sampling output is assigned to zero.\n");
-      Exit(0);
-    }    
-  }
-  
-  /* PLOT3Dfunctions_20131005
-  // 瞬時値ファイル
-  if (C.FIO.Format == plt3d_fmt)
-  {
-    if ( !C.Interval[Interval_Manager::tg_plot3d].initTrigger(m_stp, m_tm, m_dt, Interval_Manager::tg_plot3d) )  
-    {
-      Hostonly_ printf("\t Error : Interval for plot3d output is assigned to zero.\n");
+      Hostonly_ printf("\t Error : initialize timing trigger [tg_sampled].\n");
       Exit(0);
     }
   }
-   */
-  
-  Session_LastStep = C.Interval[Interval_Manager::tg_compute].getIntervalStep();
   
 }
 
@@ -4506,10 +4432,6 @@ string FFV::setupDomain(TextParser* tpf)
   Ex->setRankInfo  (paraMngr, procGrp);
   MO.setRankInfo   (paraMngr, procGrp);
 
-  /* PLOT3Dfunctions_20131005
-  FP3DR.setRankInfo(paraMngr, procGrp);
-  FP3DW.setRankInfo(paraMngr, procGrp);
-   */
   
   // 並列モードの取得
   string str = setParallelism();
@@ -4518,13 +4440,6 @@ string FFV::setupDomain(TextParser* tpf)
   // 最初のパラメータの取得
   C.get1stParameter(&DT);
   
-  /* PLOT3Dfunctions_20131005
-  // PLOT3D Parameter
-  if ( C.FIO.Format == plt3d_fmt)
-  {
-    PLT3D.getParameter(tpf);
-  }
-   */
   
   // 代表パラメータをコピー
   Ex->setRefParameter(&C);
@@ -4550,11 +4465,6 @@ string FFV::setupDomain(TextParser* tpf)
   BC.setNeighborInfo   (C.guide);
   Ex->setNeighborInfo  (C.guide);
   MO.setNeighborInfo   (C.guide);
-
-  /* PLOT3Dfunctions_20131005
-  FP3DR.setNeighborInfo(C.guide);
-  FP3DW.setNeighborInfo(C.guide);
-   */
   
   
   // 従属的なパラメータの取得

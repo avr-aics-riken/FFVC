@@ -25,7 +25,7 @@
 
 #include "mydebug.h"
 
-#define FB_VERS "1.3.7"
+#define FB_VERS "1.3.8"
 
 
 // precision
@@ -268,17 +268,6 @@
 #define NOT_SET_IBLANK 0
 #define SET_IBLANK     1
 
-/* PLOT3Dfunctions_20131005
-// PLOT3D File Format
-#define UNFORMATTED         1
-#define FORMATTED           2
-#define C_BINARY            3
-
-// output real type (plot3d)
-#define OUTPUT_REAL_UNKNOWN 0
-#define OUTPUT_FLOAT        1
-#define OUTPUT_DOUBLE       2
- */
 
 // 判定マクロ
 // BCindex aの状態が流体であればtrueを返す (uint a)

@@ -30,10 +30,10 @@
 #include "Component.h"
 #include "FBUtility.h"
 #include "BndOuter.h"
-#include "Interval_Mngr.h"
 #include "CompoFraction.h"
 #include "IterationControl.h"
 #include "TextParser.h"
+#include "IntervalManager.h"
 
 using namespace std;
 
@@ -400,22 +400,6 @@ public:
     string InDirPath;
   } File_IO_Cntl;
   
-  /* PLOT3Dfunctions_20131005 PLOT3D オプション 
-  typedef struct 
-  {
-    string basename_g;
-    string basename_f;
-    int IS_xyz;
-    int IS_q;
-    int IS_funciton;
-    int IS_function_name;
-    int IS_fvbnd;
-    int IS_DivideFunc;
-    //Initializeでセット
-    int ngrid; //出力ブロック数
-    int nvar;  //出力項目数
-  } Plot3D_Option;
-   */
   
   /** LESパラメータ */
   typedef struct 
@@ -548,6 +532,19 @@ public:
     io_specified
   };
   
+  /** 管理対象のリスト */
+  enum flush_trigger {
+    tg_compute=0,  ///< セッションの計算時間
+    tg_console,  ///< コンソール出力
+    tg_history,  ///< ファイル出力
+    tg_basic,    ///< 基本変数の瞬時値出力
+    tg_average,  ///< 平均値出力
+    tg_derived,  ///< 派生変数の出力
+    tg_accelra,  ///< 加速時間
+    tg_sampled,  ///< サンプリング出力
+    tg_END
+  };
+  
   
   int AlgorithmF;
   int AlgorithmH;
@@ -613,16 +610,14 @@ public:
   Initial_Value     iv;
   LES_Parameter     LES;
   File_IO_Cntl      FIO;
-  /* PLOT3Dfunctions_20131005 Plot3D_Option     P3Op; */
   Hidden_Parameter  Hide;
   Unit_Def          Unit;
   Sampling_Def      Sampling;
   Ens_of_Compo      EnsCompo;
   
   // class
-  Interval_Manager  Interval[Interval_Manager::tg_END];
-  
-  IterationCtl* Criteria; ///< 反復解法の収束判定パラメータ
+  IntervalManager Interval[tg_END];  ///< タイミング制御
+  IterationCtl* Criteria;            ///< 反復解法の収束判定パラメータ
   
   string file_fmt_ext;
   
@@ -771,14 +766,6 @@ public:
     FIO.Format     = 0; // 0:sph, 1:BOV
     FIO.Slice      = 0;
     
-    /* PLOT3Dfunctions_20131005
-    P3Op.IS_xyz = ON;
-    P3Op.IS_q = OFF;
-    P3Op.IS_funciton = ON;
-    P3Op.IS_function_name = ON;
-    P3Op.IS_fvbnd = OFF;
-     */
-    
     Hide.Change_ID = 0;
     Hide.Range_Limit = 0;
     Hide.PM_Test = 0;
@@ -836,11 +823,6 @@ protected:
   
   // ファイル入出力に関するパラメータを取得し，sphフォーマットの出力の並列モードを指定する
   void getFieldData();
-  
-  /* PLOT3Dfunctions_20131005
-  // PLOt3Dフォーマットのオプションを指定する
-  void getFormat_plot3d();
-   */
   
   
   // sphフォーマットのオプションを指定

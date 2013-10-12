@@ -40,11 +40,11 @@ Control.o: Control.C Control.h /usr/local/CPMlib/include/cpm_Define.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h FB_Define.h \
- mydebug.h Medium.h Component.h FBUtility.h BndOuter.h Interval_Mngr.h \
- CompoFraction.h vec3.h vec3_func.h vec3f_func.h IterationControl.h \
+ mydebug.h Medium.h Component.h FBUtility.h BndOuter.h CompoFraction.h vec3.h \
+ vec3_func.h vec3f_func.h IterationControl.h \
  /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
- /usr/local/TextParser/include/Version.h
+ /usr/local/TextParser/include/Version.h IntervalManager.h
 FBUtility.o: FBUtility.C FBUtility.h /usr/local/CPMlib/include/cpm_Define.h \
  /opt/openmpi/include/mpi.h /opt/openmpi/include/mpi_portable_platform.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/mpicxx.h /opt/openmpi/include/mpi.h \
@@ -122,10 +122,10 @@ Intrinsic.o: Intrinsic.C Intrinsic.h /usr/local/CPMlib/include/cpm_ParaManager.h
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h DomainInfo.h \
  FB_Define.h mydebug.h BndOuter.h Control.h Medium.h Component.h FBUtility.h \
- Interval_Mngr.h CompoFraction.h vec3.h vec3_func.h vec3f_func.h \
- IterationControl.h /usr/local/TextParser/include/TextParser.h \
+ CompoFraction.h vec3.h vec3_func.h vec3f_func.h IterationControl.h \
+ /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
- /usr/local/TextParser/include/Version.h
+ /usr/local/TextParser/include/Version.h IntervalManager.h
 ParseBC.o: ParseBC.C ParseBC.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/cpm_Base.h /usr/local/CPMlib/include/cpm_Define.h \
  /opt/openmpi/include/mpi.h /opt/openmpi/include/mpi_portable_platform.h \
@@ -169,10 +169,10 @@ ParseBC.o: ParseBC.C ParseBC.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h DomainInfo.h \
  FB_Define.h mydebug.h FBUtility.h Medium.h BndOuter.h Control.h Component.h \
- Interval_Mngr.h CompoFraction.h vec3.h vec3_func.h vec3f_func.h \
- IterationControl.h /usr/local/TextParser/include/TextParser.h \
+ CompoFraction.h vec3.h vec3_func.h vec3f_func.h IterationControl.h \
+ /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
- /usr/local/TextParser/include/Version.h Intrinsic.h
+ /usr/local/TextParser/include/Version.h IntervalManager.h Intrinsic.h
 ParseMat.o: ParseMat.C ParseMat.h FB_Define.h mydebug.h Medium.h \
  /usr/local/CPMlib/include/cpm_Define.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/mpi_portable_platform.h \
@@ -319,7 +319,6 @@ BndOuter.o: BndOuter.C BndOuter.h /usr/local/CPMlib/include/cpm_Define.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/info_inln.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/win_inln.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/file_inln.h FB_Define.h mydebug.h
-Interval_Mngr.o: Interval_Mngr.C Interval_Mngr.h FB_Define.h mydebug.h
 IterationControl.o: IterationControl.C IterationControl.h FB_Define.h mydebug.h
 Alloc.o: Alloc.C Alloc.h FB_Define.h mydebug.h
 VoxInfo.o: VoxInfo.C VoxInfo.h /usr/local/CPMlib/include/cpm_ParaManager.h \
@@ -365,11 +364,12 @@ VoxInfo.o: VoxInfo.C VoxInfo.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h DomainInfo.h \
  FB_Define.h mydebug.h FBUtility.h Medium.h Component.h SetBC.h BndOuter.h \
- Control.h Interval_Mngr.h CompoFraction.h vec3.h vec3_func.h vec3f_func.h \
- IterationControl.h /usr/local/TextParser/include/TextParser.h \
+ Control.h CompoFraction.h vec3.h vec3_func.h vec3f_func.h IterationControl.h \
+ /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
- /usr/local/TextParser/include/Version.h Intrinsic.h FindexS3D.h FindexS3D.h \
- FindexS3D.h fill_bid.h fill_bid.h fill_mid.h fill_mid.h FindexS3D.h FindexS3D.h
+ /usr/local/TextParser/include/Version.h IntervalManager.h Intrinsic.h \
+ FindexS3D.h FindexS3D.h FindexS3D.h fill_bid.h fill_bid.h fill_mid.h fill_mid.h \
+ FindexS3D.h FindexS3D.h
 History.o: History.C History.h Control.h /usr/local/CPMlib/include/cpm_Define.h \
  /opt/openmpi/include/mpi.h /opt/openmpi/include/mpi_portable_platform.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/mpicxx.h /opt/openmpi/include/mpi.h \
@@ -412,11 +412,11 @@ History.o: History.C History.h Control.h /usr/local/CPMlib/include/cpm_Define.h 
  /usr/local/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h FB_Define.h \
- mydebug.h Medium.h Component.h FBUtility.h BndOuter.h Interval_Mngr.h \
- CompoFraction.h vec3.h vec3_func.h vec3f_func.h IterationControl.h \
+ mydebug.h Medium.h Component.h FBUtility.h BndOuter.h CompoFraction.h vec3.h \
+ vec3_func.h vec3f_func.h IterationControl.h \
  /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
- /usr/local/TextParser/include/Version.h
+ /usr/local/TextParser/include/Version.h IntervalManager.h
 SetBC.o: SetBC.C SetBC.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/cpm_Base.h /usr/local/CPMlib/include/cpm_Define.h \
  /opt/openmpi/include/mpi.h /opt/openmpi/include/mpi_portable_platform.h \
@@ -460,10 +460,10 @@ SetBC.o: SetBC.C SetBC.h /usr/local/CPMlib/include/cpm_ParaManager.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h DomainInfo.h \
  FB_Define.h mydebug.h BndOuter.h Control.h Medium.h Component.h FBUtility.h \
- Interval_Mngr.h CompoFraction.h vec3.h vec3_func.h vec3f_func.h \
- IterationControl.h /usr/local/TextParser/include/TextParser.h \
+ CompoFraction.h vec3.h vec3_func.h vec3f_func.h IterationControl.h \
+ /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
- /usr/local/TextParser/include/Version.h Intrinsic.h
+ /usr/local/TextParser/include/Version.h IntervalManager.h Intrinsic.h
 CompoFraction.o: CompoFraction.C CompoFraction.h FB_Define.h mydebug.h vec3.h \
  /usr/local/CPMlib/include/cpm_Define.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/mpi_portable_platform.h \
@@ -588,10 +588,10 @@ Monitor.o: Monitor.C Monitor.h DomainInfo.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h FB_Define.h \
  mydebug.h vec3.h vec3_func.h vec3f_func.h MonCompo.h basic_func.h Component.h \
- Sampling.h FBUtility.h Medium.h Control.h BndOuter.h Interval_Mngr.h \
- CompoFraction.h IterationControl.h /usr/local/TextParser/include/TextParser.h \
+ Sampling.h FBUtility.h Medium.h Control.h BndOuter.h CompoFraction.h \
+ IterationControl.h /usr/local/TextParser/include/TextParser.h \
  /usr/local/TextParser/include/TextParserCommon.h \
- /usr/local/TextParser/include/Version.h
+ /usr/local/TextParser/include/Version.h IntervalManager.h
 MonCompo.o: MonCompo.C MonCompo.h DomainInfo.h \
  /usr/local/CPMlib/include/cpm_ParaManager.h /usr/local/CPMlib/include/cpm_Base.h \
  /usr/local/CPMlib/include/cpm_Define.h /opt/openmpi/include/mpi.h \

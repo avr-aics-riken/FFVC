@@ -25,8 +25,8 @@
 // タイムステップループの処理
 int FFV::Loop(const unsigned step) 
 {
-  // 1 step elapse
-  step_start = cpm_Base::GetWTime();
+  // 1 step elapse (sec)
+  double step_start = cpm_Base::GetWTime();
   double step_end;
   
   double flop_count=0.0;   /// 浮動小数演算数
@@ -34,12 +34,6 @@ int FFV::Loop(const unsigned step)
   double rms_Var[3];       /// 変動値
   REAL_TYPE vMax=0.0;      /// 最大速度成分
 
-
-  // トリガーのリセット
-  for (int i=0; i<Interval_Manager::tg_END; i++) 
-  {
-    C.Interval[i].resetTrigger();
-  }
   
   // Loop section
   TIMING_start(tm_loop_sct);
@@ -126,7 +120,7 @@ int FFV::Loop(const unsigned step)
   TIMING_start(tm_loop_uty_sct_1);
   
   // 時間平均値操作
-  if ( (C.Mode.Average == ON) && C.Interval[Interval_Manager::tg_average].isStarted(CurrentStep, CurrentTime))
+  if ( (C.Mode.Average == ON) && C.Interval[Control::tg_average].isStarted(CurrentStep, CurrentTime))
   {
     TIMING_start(tm_average_time);
     flop_count=0.0;
@@ -205,7 +199,7 @@ int FFV::Loop(const unsigned step)
   if ( C.Hide.PM_Test == OFF )
   {
     // 通常
-    if ( C.Interval[Interval_Manager::tg_basic].isTriggered(CurrentStep, CurrentTime) )
+    if ( C.Interval[Control::tg_basic].isTriggered(CurrentStep, CurrentTime) )
     {
       TIMING_start(tm_file_out);
       flop_count=0.0;
@@ -213,7 +207,7 @@ int FFV::Loop(const unsigned step)
       TIMING_stop(tm_file_out, flop_count);
     }
     
-    if ( C.Interval[Interval_Manager::tg_derived].isTriggered(CurrentStep, CurrentTime) )
+    if ( C.Interval[Control::tg_derived].isTriggered(CurrentStep, CurrentTime) )
     {
       TIMING_start(tm_file_out);
       flop_count=0.0;
@@ -222,10 +216,10 @@ int FFV::Loop(const unsigned step)
     }
     
     // 最終ステップ
-    if ( CurrentStep == C.Interval[Interval_Manager::tg_compute].getIntervalStep() )
+    if ( C.Interval[Control::tg_compute].isLast(CurrentStep, CurrentTime) )
     {
       // 指定間隔の出力がない場合のみ（重複を避ける）
-      if ( !C.Interval[Interval_Manager::tg_basic].isTriggered(CurrentStep, CurrentTime) )
+      if ( !C.Interval[Control::tg_basic].isTriggered(CurrentStep, CurrentTime) )
       {
         TIMING_start(tm_file_out);
         flop_count=0.0;
@@ -233,7 +227,7 @@ int FFV::Loop(const unsigned step)
         TIMING_stop(tm_file_out, flop_count);
       }
       
-      if ( !C.Interval[Interval_Manager::tg_derived].isTriggered(CurrentStep, CurrentTime) )
+      if ( !C.Interval[Control::tg_derived].isTriggered(CurrentStep, CurrentTime) )
       {
         TIMING_start(tm_file_out);
         flop_count=0.0;
@@ -244,48 +238,16 @@ int FFV::Loop(const unsigned step)
     
   }
 
-
-  /* PLOT3Dfunctions_20131005
-  //  PLOT3D output
-  if (C.FIO.Format == plt3d_fmt)
-  {
-    // 通常
-    if ( C.Interval[Interval_Manager::tg_basic].isTriggered(CurrentStep, CurrentTime) )
-    {
-      TIMING_start(tm_file_out);
-      flop_count=0.0;
-      PLT3D.post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng_Plot3D, flop_count);
-      TIMING_stop(tm_file_out, flop_count);
-    }
-     
-    
-    // 最終ステップ
-    if ( CurrentStep == C.Interval[Interval_Manager::tg_compute].getIntervalStep() )
-    {
-      // 指定間隔の出力がない場合のみ（重複を避ける）
-      if ( !C.Interval[Interval_Manager::tg_basic].isTriggered(CurrentStep, CurrentTime) )
-      {
-        if ( C.Hide.PM_Test != ON )
-        {
-          TIMING_start(tm_file_out);
-          flop_count=0.0;
-          PLT3D.post(CurrentStep, CurrentTime, v00, origin, pitch, dfi_mng_Plot3D, flop_count);
-          TIMING_stop(tm_file_out, flop_count);
-        }
-      }
-    }
-  }
-   */
   
   // 平均値のデータ出力 
   if (C.Mode.Average == ON) 
   {
     
     // 開始時刻を過ぎているか
-    if ( C.Interval[Interval_Manager::tg_average].isStarted(CurrentStep, CurrentTime) )
+    if ( C.Interval[Control::tg_average].isStarted(CurrentStep, CurrentTime) )
     {
       // 通常
-      if ( C.Interval[Interval_Manager::tg_average].isTriggered(CurrentStep, CurrentTime) ) 
+      if ( C.Interval[Control::tg_average].isTriggered(CurrentStep, CurrentTime) ) 
       {
         TIMING_start(tm_file_out);
         flop_count=0.0;
@@ -294,10 +256,10 @@ int FFV::Loop(const unsigned step)
       }
       
       // 最終ステップ
-      if ( CurrentStep == C.Interval[Interval_Manager::tg_compute].getIntervalStep() )
+      if ( C.Interval[Control::tg_compute].isLast(CurrentStep, CurrentTime) )
       {
         // 指定間隔の出力がない場合のみ（重複を避ける）
-        if ( !C.Interval[Interval_Manager::tg_average].isTriggered(CurrentStep, CurrentTime) )
+        if ( !C.Interval[Control::tg_average].isTriggered(CurrentStep, CurrentTime) )
         {
           TIMING_start(tm_file_out);
           flop_count=0.0;
@@ -305,6 +267,45 @@ int FFV::Loop(const unsigned step)
           TIMING_stop(tm_file_out, flop_count);
         }
       }
+    }
+  }
+  
+  if (C.Mode.TP == ON )
+  {
+    TIMING_start(tm_total_prs);
+    flop_count=0.0;
+    fb_totalp_ (d_p0, size, &guide, d_v, d_p, v00, &flop_count);
+    TIMING_stop(tm_total_prs, flop_count);
+  }
+  
+  // セルモニターとコンポーネントの履歴
+  if ( C.Sampling.log == ON )
+  {
+    if ( C.Interval[Control::tg_history].isTriggered(CurrentStep, CurrentTime) )
+    {
+      TIMING_start(tm_compo_monitor);
+      flop_count=0.0;
+      MO.samplingInnerBoundary();
+      TIMING_stop(tm_compo_monitor, flop_count);
+      
+      TIMING_start(tm_hstry_compo);
+      Hostonly_ H->printHistoryCompo(fp_c, cmp, &C, deltaT);
+      TIMING_stop(tm_hstry_compo, 0.0);
+    }
+  }
+  
+  // サンプリング履歴
+  if ( C.Sampling.log == ON )
+  {
+    if ( C.Interval[Control::tg_sampled].isTriggered(CurrentStep, CurrentTime) )
+    {
+      TIMING_start(tm_sampling);
+      MO.sampling();
+      TIMING_stop(tm_sampling, 0.0);
+      
+      TIMING_start(tm_hstry_sampling);
+      MO.print(CurrentStep, (REAL_TYPE)CurrentTime);
+      TIMING_stop(tm_hstry_sampling, 0.0);
     }
   }
   
@@ -316,7 +317,7 @@ int FFV::Loop(const unsigned step)
   // 基本履歴情報をコンソールに出力
   if ( C.Mode.Log_Base == ON)
   {
-    if ( C.Interval[Interval_Manager::tg_console].isTriggered(CurrentStep, CurrentTime) )
+    if ( C.Interval[Control::tg_console].isTriggered(CurrentStep, CurrentTime) )
     {
       TIMING_start(tm_hstry_stdout);
       Hostonly_
@@ -333,7 +334,7 @@ int FFV::Loop(const unsigned step)
   
   
   // 履歴のファイル出力
-  if ( C.Interval[Interval_Manager::tg_history].isTriggered(CurrentStep, CurrentTime) ) 
+  if ( C.Interval[Control::tg_history].isTriggered(CurrentStep, CurrentTime) ) 
   {
     
     // 基本履歴情報
@@ -396,45 +397,6 @@ int FFV::Loop(const unsigned step)
     }
   }
   
-  if (C.Mode.TP == ON ) 
-  {
-    TIMING_start(tm_total_prs);
-    flop_count=0.0;
-    fb_totalp_ (d_p0, size, &guide, d_v, d_p, v00, &flop_count);
-    TIMING_stop(tm_total_prs, flop_count);
-  }
-  
-  // セルモニターとコンポーネントの履歴
-  if ( C.Sampling.log == ON ) 
-  {
-    if ( C.Interval[Interval_Manager::tg_history].isTriggered(CurrentStep, CurrentTime) )
-    {
-      TIMING_start(tm_compo_monitor);
-      flop_count=0.0;
-      MO.samplingInnerBoundary();
-      TIMING_stop(tm_compo_monitor, flop_count);
-      
-      TIMING_start(tm_hstry_compo);
-      Hostonly_ H->printHistoryCompo(fp_c, cmp, &C, deltaT);
-      TIMING_stop(tm_hstry_compo, 0.0);
-    }
-  }
-  
-  // サンプリング履歴
-  if ( C.Sampling.log == ON ) 
-  {
-    if ( C.Interval[Interval_Manager::tg_sampled].isTriggered(CurrentStep, CurrentTime) )
-    {
-      TIMING_start(tm_sampling);
-      MO.sampling();
-      TIMING_stop(tm_sampling, 0.0);
-      
-      TIMING_start(tm_hstry_sampling);
-      MO.print(CurrentStep, (REAL_TYPE)CurrentTime);
-      TIMING_stop(tm_hstry_sampling, 0.0);
-    }
-  }
-  
   TIMING_stop(tm_loop_uty_sct_2, 0.0);
   //  <<< ステップループのユーティリティ 2
   
@@ -484,24 +446,23 @@ int FFV::Loop(const unsigned step)
     
   }
   
-  // 計算時間がtimeにより指定されている場合の終了判断
-  if ( !C.Interval[Interval_Manager::tg_compute].isStep() )
-  {
-    if ( C.Interval[Interval_Manager::tg_compute].getIntervalTime() < CurrentTime )
-    {
-      Hostonly_ 
-      {
-        printf      ("\tFinish : Time = %e\n", CurrentTime);
-        fprintf(fp_b,"\tFinish : Time = %e\n", CurrentTime);
-      }
-      return 0;
-    }
-  }
-  
   TIMING_stop(tm_loop_uty_sct, 0.0);
   //  <<< ステップループのユーティリティ
   
   TIMING_stop(tm_loop_sct, 0.0);
+  
+  
+  
+  // 終了判断
+  if ( C.Interval[Control::tg_compute].isLast(CurrentStep, CurrentTime) )
+  {
+    Hostonly_
+    {
+      printf      ("\tFinish : Time = %e\n", CurrentTime);
+      fprintf(fp_b,"\tFinish : Time = %e\n", CurrentTime);
+    }
+    return 0;
+  }
   
   return 1;
 }

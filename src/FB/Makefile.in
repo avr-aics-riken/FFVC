@@ -112,12 +112,12 @@ am_libFB_a_OBJECTS = libFB_a-Alloc.$(OBJEXT) \
 	libFB_a-Component.$(OBJEXT) libFB_a-Control.$(OBJEXT) \
 	libFB_a-DataHolder.$(OBJEXT) libFB_a-FBUtility.$(OBJEXT) \
 	FB_util.$(OBJEXT) libFB_a-FileIO.$(OBJEXT) \
-	libFB_a-History.$(OBJEXT) libFB_a-Interval_Mngr.$(OBJEXT) \
-	libFB_a-Intrinsic.$(OBJEXT) libFB_a-IterationControl.$(OBJEXT) \
-	libFB_a-MonCompo.$(OBJEXT) libFB_a-Monitor.$(OBJEXT) \
-	libFB_a-ParseBC.$(OBJEXT) libFB_a-ParseMat.$(OBJEXT) \
-	libFB_a-Sampling.$(OBJEXT) libFB_a-SetBC.$(OBJEXT) \
-	libFB_a-VoxInfo.$(OBJEXT) dbwrite.$(OBJEXT)
+	libFB_a-History.$(OBJEXT) libFB_a-Intrinsic.$(OBJEXT) \
+	libFB_a-IterationControl.$(OBJEXT) libFB_a-MonCompo.$(OBJEXT) \
+	libFB_a-Monitor.$(OBJEXT) libFB_a-ParseBC.$(OBJEXT) \
+	libFB_a-ParseMat.$(OBJEXT) libFB_a-Sampling.$(OBJEXT) \
+	libFB_a-SetBC.$(OBJEXT) libFB_a-VoxInfo.$(OBJEXT) \
+	dbwrite.$(OBJEXT)
 libFB_a_OBJECTS = $(am_libFB_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -281,6 +281,7 @@ noinst_libdir = ../lib
 libFB_a_CXXFLAGS = \
   -I. \
   @CPM_CFLAGS@ \
+  @CIO_CFLAGS@ \
   @TP_CFLAGS@ \
   @MPICH_CFLAGS@ \
   @REALOPT@ \
@@ -310,8 +311,7 @@ libFB_a_SOURCES = \
   FindexS3D.h \
   History.C \
   History.h \
-  Interval_Mngr.C \
-  Interval_Mngr.h \
+  IntervalManager.h \
   Intrinsic.C \
   Intrinsic.h \
   IterationControl.C \
@@ -428,7 +428,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-FBUtility.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-FileIO.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-History.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-Interval_Mngr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-Intrinsic.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-IterationControl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-MonCompo.Po@am__quote@
@@ -578,20 +577,6 @@ libFB_a-History.obj: History.C
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='History.C' object='libFB_a-History.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -c -o libFB_a-History.obj `if test -f 'History.C'; then $(CYGPATH_W) 'History.C'; else $(CYGPATH_W) '$(srcdir)/History.C'; fi`
-
-libFB_a-Interval_Mngr.o: Interval_Mngr.C
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -MT libFB_a-Interval_Mngr.o -MD -MP -MF $(DEPDIR)/libFB_a-Interval_Mngr.Tpo -c -o libFB_a-Interval_Mngr.o `test -f 'Interval_Mngr.C' || echo '$(srcdir)/'`Interval_Mngr.C
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libFB_a-Interval_Mngr.Tpo $(DEPDIR)/libFB_a-Interval_Mngr.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Interval_Mngr.C' object='libFB_a-Interval_Mngr.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -c -o libFB_a-Interval_Mngr.o `test -f 'Interval_Mngr.C' || echo '$(srcdir)/'`Interval_Mngr.C
-
-libFB_a-Interval_Mngr.obj: Interval_Mngr.C
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -MT libFB_a-Interval_Mngr.obj -MD -MP -MF $(DEPDIR)/libFB_a-Interval_Mngr.Tpo -c -o libFB_a-Interval_Mngr.obj `if test -f 'Interval_Mngr.C'; then $(CYGPATH_W) 'Interval_Mngr.C'; else $(CYGPATH_W) '$(srcdir)/Interval_Mngr.C'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libFB_a-Interval_Mngr.Tpo $(DEPDIR)/libFB_a-Interval_Mngr.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Interval_Mngr.C' object='libFB_a-Interval_Mngr.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -c -o libFB_a-Interval_Mngr.obj `if test -f 'Interval_Mngr.C'; then $(CYGPATH_W) 'Interval_Mngr.C'; else $(CYGPATH_W) '$(srcdir)/Interval_Mngr.C'; fi`
 
 libFB_a-Intrinsic.o: Intrinsic.C
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -MT libFB_a-Intrinsic.o -MD -MP -MF $(DEPDIR)/libFB_a-Intrinsic.Tpo -c -o libFB_a-Intrinsic.o `test -f 'Intrinsic.C' || echo '$(srcdir)/'`Intrinsic.C

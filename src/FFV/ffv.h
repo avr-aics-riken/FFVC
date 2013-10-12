@@ -116,16 +116,10 @@ private:
   
   double CurrentTime;           ///< 計算開始からの積算時刻（ケース）
   double CurrentTime_Avr;       ///< 平均値操作の積算時間（ケース）
-  double Session_StartTime;     ///< セッションの開始時間
-  double Session_CurrentTime;   ///< セッションの現在時間
-  
-  double step_start;            ///< 1stepのelapse time(sec)
-  
   unsigned CurrentStep;         ///< 計算開始からの積算ステップ（ケース）
   unsigned CurrentStep_Avr;     ///< 平均操作の積算ステップ数（ケース）
-  unsigned Session_StartStep;   ///< セッションの開始ステップ
   unsigned Session_CurrentStep; ///< セッションの現在のステップ
-  unsigned Session_LastStep;    ///< セッションで計算するステップ数
+  unsigned Session_LastStep;    ///< セッションの終了ステップ数
   
   double face_comm_size;       ///< 全ノードについて，ローカルノード1面・一層あたりの通信量の和
   
@@ -254,12 +248,6 @@ private:
   ConvergenceMonitor CM_F;   ///< 流動の定常収束モニター
   ConvergenceMonitor CM_H;   ///< 熱の定常収束モニター
   
-  /* PLOT3Dfunctions_20131005
-  ::DFI DFI;                 ///< 分散ファイルインデクス管理クラス
-  Plot3D PLT3D;              ///< PLOT3Dクラス
-  FileIO_PLOT3D_READ  FP3DR; ///< PLOT3D READクラス
-  FileIO_PLOT3D_WRITE FP3DW; ///< PLOT3D WRITEクラス
-   */
   
   char tm_label_ptr[tm_END][TM_LABEL_MAX];  ///< プロファイラ用のラベル
 

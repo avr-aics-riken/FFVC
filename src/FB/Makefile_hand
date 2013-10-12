@@ -28,7 +28,6 @@ CXXSRCS = Control.C \
           FileIO.C \
           Component.C \
           BndOuter.C \
-          Interval_Mngr.C \
           IterationControl.C \
           Alloc.C \
           VoxInfo.C \

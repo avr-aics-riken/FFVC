@@ -36,8 +36,8 @@ void FFV::Restart(FILE* fp)
   // 初期スタートのステップ，時間を設定する
   if ( (C.Start == initial_start) || (C.Hide.PM_Test == ON)  )
   {
-    Session_StartStep = CurrentStep = 0;
-    Session_StartTime = CurrentTime = 0.0;
+    CurrentStep = 0;
+    CurrentTime = 0.0;
     
     // V00の値のセット．モードがONの場合はV00[0]=1.0に設定，そうでなければtmに応じた値
     if ( C.CheckParam == ON ) RF.setV00(CurrentTime, true);
@@ -97,21 +97,36 @@ void FFV::RestartAvrerage (FILE* fp, double& flop)
   std::string fname;
   std::string fmt(C.file_fmt_ext);
   
-  unsigned step = Session_StartStep;
-  double   time = Session_StartTime;
-  
+  unsigned m_Session_step = C.Interval[Control::tg_compute].getStartStep(); ///< セッションの開始ステップ
+  double   m_Session_time = C.Interval[Control::tg_compute].getStartTime(); ///< セッションの開始時刻
   
   // ガイド出力
   int gs = C.GuideOut;
   
-  if ( C.Interval[Interval_Manager::tg_average].isStep() )
+  
+  // まだ平均値開始時刻になっていなければ，何もしない
+  if ( C.Interval[Control::tg_average].getMode() == IntervalManager::By_step )
   {
-    if ( step >= C.Interval[Interval_Manager::tg_average].getStartStep() )
+    if ( m_Session_step >= C.Interval[Control::tg_average].getStartStep() )
     {
       Hostonly_ printf     ("\tRestart from Previous Calculation Results of averaged field\n");
       Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of averaged field\n");
-      Hostonly_ printf     ("\tStep : base=%u current=%u\n", step, CurrentStep);
-      Hostonly_ fprintf(fp, "\tStep : base=%u current=%u\n", step, CurrentStep);
+      Hostonly_ printf     ("\tStep : base=%u current=%u\n", m_Session_step, CurrentStep);
+      Hostonly_ fprintf(fp, "\tStep : base=%u current=%u\n", m_Session_step, CurrentStep);
+    }
+    else
+    {
+      return;
+    }
+  }
+  else if ( C.Interval[Control::tg_average].getMode() == IntervalManager::By_time )
+  {
+    if ( m_Session_time >= C.Interval[Control::tg_average].getStartTime() )
+    {
+      Hostonly_ printf     ("\tRestart from Previous Calculation Results of averaged field\n");
+      Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of averaged field\n");
+      Hostonly_ printf     ("\tTime : base=%e[sec.]/%e[-] current=%e[-]\n", m_Session_time*C.Tscale, m_Session_time, CurrentTime);
+      Hostonly_ fprintf(fp, "\tTime : base=%e[sec.]/%e[-] current=%e[-]\n", m_Session_time*C.Tscale, m_Session_time, CurrentTime);
     }
     else
     {
@@ -120,17 +135,7 @@ void FFV::RestartAvrerage (FILE* fp, double& flop)
   }
   else
   {
-    if ( time >= C.Interval[Interval_Manager::tg_average].getStartTime() )
-    {
-      Hostonly_ printf     ("\tRestart from Previous Calculation Results of averaged field\n");
-      Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of averaged field\n");
-      Hostonly_ printf     ("\tTime : base=%e[sec.]/%e[-] current=%e[-]\n", time*C.Tscale, time, CurrentTime);
-      Hostonly_ fprintf(fp, "\tTime : base=%e[sec.]/%e[-] current=%e[-]\n", time*C.Tscale, time, CurrentTime);
-    }
-    else
-    {
-      return;
-    }
+    Exit(0);
   }
   
   unsigned step_avr = 0;
@@ -163,12 +168,6 @@ void FFV::RestartAvrerage (FILE* fp, double& flop)
   
   if( d_ap == NULL ) Exit(0);
   
-  if ( (step != Session_StartStep) || (time != Session_StartTime) )
-  {
-    Hostonly_ printf     ("\n\tTime stamp is different between instantaneous and averaged files\n");
-    Hostonly_ fprintf(fp, "\n\tTime stamp is different between instantaneous and averaged files\n");
-    Exit(0);
-  }
   
   CurrentStep_Avr = step_avr;
   CurrentTime_Avr = time_avr;
@@ -362,11 +361,11 @@ void FFV::RestartInstantaneous(FILE* fp, double& flop)
   
   // ここでタイムスタンプを得る
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
-  Session_StartStep = CurrentStep = step;
-  Session_StartTime = CurrentTime = time;
+  CurrentStep = step;
+  CurrentTime = time;
   
   // v00[]に値をセット
-  copyV00fromRF(Session_StartTime);
+  copyV00fromRF(time);
   
   
   
@@ -400,7 +399,7 @@ void FFV::RestartInstantaneous(FILE* fp, double& flop)
   
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   
-  if ( time != Session_StartTime )
+  if ( time != CurrentTime )
   {
     Hostonly_ printf     ("\n\tTime stamp is different between files\n");
     Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
@@ -440,7 +439,7 @@ void FFV::RestartInstantaneous(FILE* fp, double& flop)
   Hostonly_ fprintf(fp, "\tTemperature has read :\tstep=%d  time=%e [%s]\n",
                     step, time, (C.Unit.File == DIMENSIONAL)?"sec.":"-");
   
-  if ( time != Session_StartTime )
+  if ( time != CurrentTime )
   {
     Hostonly_ printf     ("\n\tTime stamp is different between files\n");
     Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");

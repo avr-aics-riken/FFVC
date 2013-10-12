@@ -20,6 +20,7 @@ noinst_libdir = ../lib
 libFB_a_CXXFLAGS = \
   -I. \
   @CPM_CFLAGS@ \
+  @CIO_CFLAGS@ \
   @TP_CFLAGS@ \
   @MPICH_CFLAGS@ \
   @REALOPT@ \
@@ -49,8 +50,7 @@ libFB_a_SOURCES = \
   FindexS3D.h \
   History.C \
   History.h \
-  Interval_Mngr.C \
-  Interval_Mngr.h \
+  IntervalManager.h \
   Intrinsic.C \
   Intrinsic.h \
   IterationControl.C \

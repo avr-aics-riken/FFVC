@@ -17,6 +17,11 @@
 RELEASE NOTE
 ============
 
+
+Ver 1.3.8   2013-10-11
+  - PLOT3D関連のコードを削除
+  - Interval_Manager >> cio_IOnterval_Mngrに置換
+
 Ver 1.3.7   2013-10-05
   - PLOT3D出力はコンバータ対応に変更．ソースのコメントアウト PLOT3Dfunctions_20131005
   - dfi.h/C, dfiinfo.h/CをPLOT3Dディレクトリに移動
