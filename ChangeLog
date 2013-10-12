@@ -21,6 +21,8 @@ REVISION HISTORY
 --------------------------
 2013-10-12
 
+- r1038 bug fix for average restart
+
 - r1037 repalce IntervalManager.h from CIOlib [ver 1.4.6]
   - change integer type from int to unsigned int in IntervalManager
   - add getLastStep(), getLastTime() in IntervalManager

@@ -3046,6 +3046,7 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
   double dt = DT->get_DT();
   bool  err=true;
   double itm=0.0;
+  unsigned stp;
   
   fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   fprintf(fp,"\n\t>> Library Information\n\n");
@@ -3332,17 +3333,22 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
     if ( Interval[tg_average].getMode() == IntervalManager::By_time )
     {
       itm = Interval[tg_average].getStartTime();
-      fprintf(fp,"\t     Averaging Start          :   %12.5e [sec] / %12.5e [-]\n", itm*Tscale, itm);
+      stp = (unsigned)ceil(Interval[Control::tg_average].getStartTime() / dt);
+      fprintf(fp,"\t     Averaging Start          :   %12.5e [sec] / %12.5e [-] : %12d [step]\n", itm*Tscale, itm, stp);
     }
     else
     {
-      fprintf(fp,"\t     Averaging Start          :   %12d\n", Interval[tg_average].getStartStep());
+      itm = (double)Interval[Control::tg_average].getStartStep() * dt;
+      stp = Interval[tg_average].getStartStep();
+      fprintf(fp,"\t     Averaging Start          :   %12.5e [sec] / %12.5e [-] : %12d [step]\n", itm*Tscale, itm, stp);
     }
   }
   else
   {
     fprintf(fp,"\t     Averaging Start          :   OFF\n");
   }
+  
+  
   
   // Time Increment
   REAL_TYPE d_R = deltaX*deltaX*Reynolds/6.0; // 拡散数
@@ -3412,8 +3418,6 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
   }
   
   // start & end
-  unsigned stp;
-  
   if ( Interval[Control::tg_compute].getMode() == IntervalManager::By_step )
   {
     itm = (double)Interval[Control::tg_compute].getStartStep() * dt;
@@ -3424,7 +3428,7 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
     itm = Interval[tg_compute].getStartTime();
     stp = (unsigned)ceil(Interval[Control::tg_compute].getStartTime() / dt);
   }
-  fprintf(fp,"\t     Calculation Start        :   %12.5e [sec] / %12.5e [-]  : %12d\n", itm*Tscale, itm, stp);
+  fprintf(fp,"\t     Calculation Start        :   %12.5e [sec] / %12.5e [-] : %12d [step]\n", itm*Tscale, itm, stp);
   
   
   if ( Interval[Control::tg_compute].getMode() == IntervalManager::By_step )
@@ -3437,7 +3441,7 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
     itm = Interval[tg_compute].getLastTime();
     stp = (unsigned)ceil(Interval[Control::tg_compute].getLastTime() / dt);
   }
-  fprintf(fp,"\t     Calculation End          :   %12.5e [sec] / %12.5e [-]  : %12d\n", itm*Tscale, itm, stp);
+  fprintf(fp,"\t     Calculation End          :   %12.5e [sec] / %12.5e [-] : %12d [step]\n", itm*Tscale, itm, stp);
   
   
   // Calculation time/step
@@ -3450,7 +3454,7 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
     itm = Interval[tg_compute].getIntervalTime();
   }
 
-  fprintf(fp,"\t     Calculation Period       :   %12.5e [sec] / %12.5e [-]  : %12d\n", itm*Tscale, itm, Interval[tg_compute].getIntervalStep());
+  fprintf(fp,"\t     Calculation Period       :   %12.5e [sec] / %12.5e [-] : %12d [step]\n", itm*Tscale, itm, Interval[tg_compute].getIntervalStep());
   
   
   

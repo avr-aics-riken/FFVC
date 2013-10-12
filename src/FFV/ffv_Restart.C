@@ -138,6 +138,44 @@ void FFV::RestartAvrerage (FILE* fp, double& flop)
     Exit(0);
   }
   
+  
+  // 現在のセッションの領域分割数の取得
+  int gdiv[3] = {1, 1, 1};
+  
+  if ( numProc > 1)
+  {
+    const int* m_div = paraMngr->GetDivNum();
+    for (int i=0; i<3; i++ ) gdiv[i]=m_div[i];
+  }
+  
+  
+  // エラーコード
+  CIO::E_CIO_ERRORCODE cio_error;
+  
+  
+  // Averaged dataの初期化
+  if ( C.Mode.Average == ON && C.Interval[Control::tg_average].isStarted(CurrentStep, CurrentTime) )
+  {
+    DFI_IN_PRSA = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_prsa, G_size, gdiv, cio_error);
+    if ( cio_error != CIO::E_CIO_SUCCESS ) Exit(0);
+    
+    DFI_IN_VELA = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_vela, G_size, gdiv, cio_error);
+    if ( cio_error != CIO::E_CIO_SUCCESS ) Exit(0);
+    
+    if ( DFI_IN_PRSA == NULL || DFI_IN_VELA == NULL ) Exit(0);
+    
+    
+    if ( C.isHeatProblem() )
+    {
+      DFI_IN_TEMPA = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_tempa, G_size, gdiv, cio_error);
+      if ( cio_error != CIO::E_CIO_SUCCESS ) Exit(0);
+      if ( DFI_IN_TEMPA == NULL ) Exit(0);
+    }
+  }
+  
+  
+  
+  
   unsigned step_avr = 0;
   double time_avr = 0.0;
   
@@ -145,9 +183,6 @@ void FFV::RestartAvrerage (FILE* fp, double& flop)
   // Pressure
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   
-  
-  // 分割数
-  const int* m_div = paraMngr->GetDivNum();
   
   //自身の領域終点インデックス
   int tail[3];
@@ -158,7 +193,7 @@ void FFV::RestartAvrerage (FILE* fp, double& flop)
                              C.Restart_step,
                              guide,
                              G_size,
-                             (int *)m_div,
+                             gdiv,
                              head,
                              tail,
                              r_time,
@@ -176,7 +211,7 @@ void FFV::RestartAvrerage (FILE* fp, double& flop)
                              C.Restart_step,
                              guide,
                              G_size,
-                             (int *)m_div,
+                             gdiv,
                              head,
                              tail,
                              r_time,
@@ -211,7 +246,7 @@ void FFV::RestartAvrerage (FILE* fp, double& flop)
                                 C.Restart_step,
                                 guide,
                                 G_size,
-                                (int *)m_div,
+                                gdiv,
                                 head,
                                 tail,
                                 r_time,
@@ -496,7 +531,6 @@ void FFV::selectRestartMode()
   if ( cio_error != CIO::E_CIO_SUCCESS ) Exit(0);
   if ( DFI_IN_FVEL == NULL ) Exit(0);
   
-  
   // Temperature
   if ( C.isHeatProblem() )
   {
@@ -526,8 +560,8 @@ void FFV::selectRestartMode()
   
   
   
-  // Averaged dataの初期化
-  if ( C.Mode.Average == ON )
+  /* Averaged dataの初期化
+  if ( C.Mode.Average == ON && C.Interval[Control::tg_average].isStarted(CurrentStep, CurrentTime) )
   {
     DFI_IN_PRSA = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_prsa, G_size, gdiv, cio_error);
     if ( cio_error != CIO::E_CIO_SUCCESS ) Exit(0);
@@ -545,7 +579,7 @@ void FFV::selectRestartMode()
       if ( DFI_IN_TEMPA == NULL ) Exit(0);
     }
   }
-  
+  */
 
   
   bool isSameDiv = true; // 同一分割数
