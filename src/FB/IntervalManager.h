@@ -265,7 +265,7 @@ public:
   
   
   /*
-   * @brief インターバルのチェック
+   * @brief タイミングの評価
    * @retval true-出力タイミングである / false-出力タイミングではない
    * @param [in] step       現在のステップ
    * @param [in] time       現在の時刻
@@ -359,21 +359,20 @@ public:
   
   /*
    * @brief 時刻モードがステップのとき，インターバルの計算に使われる全ての時間を scale で無次元化する
-   * @retval true-正常に無次元化終了 / false-時制モードが時間
    * @param [in] scale 無次元化の代表時間
    */
-  bool normalizeTime( const double scale )
+  void normalizeTime( const double scale )
   {
     if( m_mode != By_time )
     {
-      return false;
+      return;
     }
     normalizeBaseTime(scale);
     normalizeIntervalTime(scale);
     normalizeStartTime(scale);
     normalizeLastTime(scale);
     normalizeDelteT(scale);
-    return true;
+    return;
   }
   
   

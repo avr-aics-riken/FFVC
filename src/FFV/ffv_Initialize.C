@@ -1316,7 +1316,7 @@ void FFV::fill(FILE* fp)
   }
   
   // ペイント済みをカウント
-  filled = V.countCell(d_mid);
+  //filled = V.countCell(d_mid);
   
   // ID=0をカウント
   target_count = V.countCell(d_mid, false);
@@ -1329,8 +1329,9 @@ void FFV::fill(FILE* fp)
     printf    ("\t\tWhole num. of cells    = %16ld\n", total_cell);
     fprintf(fp,"\t\tWhole num. of cells    = %16ld\n", total_cell);
     
-    printf    ("\t\tGenerated solid        = %16ld\n", filled);
-    fprintf(fp,"\t\tGenerated solid        = %16ld\n", filled);
+    // V.SolidFromCut()をコールしないので固体セルなし
+    //printf    ("\t\tGenerated solid        = %16ld\n", filled);
+    //fprintf(fp,"\t\tGenerated solid        = %16ld\n", filled);
     
     printf    ("\t\tInitial target count   = %16ld\n", target_count);
     fprintf(fp,"\t\tInitial target count   = %16ld\n", target_count);
@@ -1349,10 +1350,14 @@ void FFV::fill(FILE* fp)
     Exit(0);
   }
   
-  // CellMonitorをリストアップ
+  // CellMonitorをリストアップ >> 
   for (int n=1; n<=C.NoCompo; n++)
   {
-    if ( cmp[n].isMONITOR() ) list[n] = n;
+    if ( cmp[n].isMONITOR() )
+    {
+      list[n] = n;
+      //printf("list=%d\n", n);
+    }
   }
   
   
@@ -1407,7 +1412,6 @@ void FFV::fill(FILE* fp)
     printf(    "\t\tRemaining target cells = %16ld\n\n", target_count);
     fprintf(fp,"\t\tRemaining target cells = %16ld\n\n", target_count);
   }
-
 
   
   if ( target_count == 0 ) return;
@@ -1468,7 +1472,8 @@ void FFV::fill(FILE* fp)
     fprintf(fp,"\t\t    Remaining cell     = %16ld\n\n", target_count);
   }
   // ここでフィルできなかったRemaining cellは固体に挟まれている可能性のあるセル
-
+  Ex->writeSVX(d_mid, &C);
+  exit(0);
   
   if ( target_count == 0 ) return;
   
@@ -1756,21 +1761,6 @@ void FFV::fixedParameters()
   C.f_TotalP         = "tp";
   C.f_I2VGT          = "qcr";
   C.f_Vorticity      = "vrt";
-  
-  
-  // 出力DFIファイル名のプリフィクス
-  C.f_dfi_out_prs   = "prs";
-  C.f_dfi_out_vel   = "vel";
-  C.f_dfi_out_temp  = "tmp";
-  C.f_dfi_out_fvel  = "fvel";
-  C.f_dfi_out_prsa  = "prsa";
-  C.f_dfi_out_vela  = "vela";
-  C.f_dfi_out_tempa = "tmpa";
-  C.f_dfi_out_div   = "div";
-  C.f_dfi_out_vrt   = "vrt";
-  C.f_dfi_out_hlt   = "hlt";
-  C.f_dfi_out_tp    = "tp";
-  C.f_dfi_out_i2vgt = "qcr";
 }
 
 
@@ -2597,7 +2587,7 @@ void FFV::initFileOut()
   {
     comp = 1;
     DFI_OUT_DIV = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                     cio_DFI::Generate_DFI_Name(C.f_dfi_out_div),
+                                     cio_DFI::Generate_DFI_Name(C.f_DivDebug),
                                      path,
                                      C.f_DivDebug,
                                      format,
@@ -2635,7 +2625,7 @@ void FFV::initFileOut()
   // Pressure
   comp = 1;
   DFI_OUT_PRS = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                   cio_DFI::Generate_DFI_Name(C.f_dfi_out_prs),
+                                   cio_DFI::Generate_DFI_Name(C.f_Pressure),
                                    path,
                                    C.f_Pressure,
                                    format,
@@ -2680,7 +2670,7 @@ void FFV::initFileOut()
   // Velocity
   comp = 3;
   DFI_OUT_VEL = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                   cio_DFI::Generate_DFI_Name(C.f_dfi_out_vel),
+                                   cio_DFI::Generate_DFI_Name(C.f_Velocity),
                                    path,
                                    C.f_Velocity,
                                    format,
@@ -2722,7 +2712,7 @@ void FFV::initFileOut()
   // Fvelocity
   comp = 3;
   DFI_OUT_FVEL = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                    cio_DFI::Generate_DFI_Name(C.f_dfi_out_fvel),
+                                    cio_DFI::Generate_DFI_Name(C.f_Fvelocity),
                                     path,
                                     C.f_Fvelocity,
                                     format,
@@ -2766,7 +2756,7 @@ void FFV::initFileOut()
   {
     comp = 1;
     DFI_OUT_TEMP = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                      cio_DFI::Generate_DFI_Name(C.f_dfi_out_temp),
+                                      cio_DFI::Generate_DFI_Name(C.f_Temperature),
                                       path,
                                       C.f_Temperature,
                                       format,
@@ -2814,7 +2804,7 @@ void FFV::initFileOut()
     // Pressure
     comp = 1;
     DFI_OUT_PRSA = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                      cio_DFI::Generate_DFI_Name(C.f_dfi_out_prsa),
+                                      cio_DFI::Generate_DFI_Name(C.f_AvrPressure),
                                       path,
                                       C.f_AvrPressure,
                                       format,
@@ -2856,7 +2846,7 @@ void FFV::initFileOut()
     // Velocity
     comp = 3;
     DFI_OUT_VELA = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                      cio_DFI::Generate_DFI_Name(C.f_dfi_out_vela),
+                                      cio_DFI::Generate_DFI_Name(C.f_AvrVelocity),
                                       path,
                                       C.f_AvrVelocity,
                                       format,
@@ -2900,7 +2890,7 @@ void FFV::initFileOut()
     {
       comp = 1;
       DFI_OUT_TEMPA = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                         cio_DFI::Generate_DFI_Name(C.f_dfi_out_tempa),
+                                         cio_DFI::Generate_DFI_Name(C.f_AvrTemperature),
                                          path,
                                          C.f_AvrTemperature,
                                          format,
@@ -2948,7 +2938,7 @@ void FFV::initFileOut()
   {
     comp = 1;
     DFI_OUT_TP = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                    cio_DFI::Generate_DFI_Name(C.f_dfi_out_tp),
+                                    cio_DFI::Generate_DFI_Name(C.f_TotalP),
                                     path,
                                     C.f_TotalP,
                                     format,
@@ -2993,7 +2983,7 @@ void FFV::initFileOut()
   {
     comp = 3;
     DFI_OUT_VRT = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                     cio_DFI::Generate_DFI_Name(C.f_dfi_out_vrt),
+                                     cio_DFI::Generate_DFI_Name(C.f_Vorticity),
                                      path,
                                      C.f_Vorticity,
                                      format,
@@ -3036,7 +3026,7 @@ void FFV::initFileOut()
   {
     comp = 1;
     DFI_OUT_I2VGT = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                       cio_DFI::Generate_DFI_Name(C.f_dfi_out_i2vgt),
+                                       cio_DFI::Generate_DFI_Name(C.f_I2VGT),
                                        path,
                                        C.f_I2VGT,
                                        format,
@@ -3081,7 +3071,7 @@ void FFV::initFileOut()
   {
     comp = 1;
     DFI_OUT_HLT = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                     cio_DFI::Generate_DFI_Name(C.f_dfi_out_hlt),
+                                     cio_DFI::Generate_DFI_Name(C.f_Helicity),
                                      path,
                                      C.f_Helicity,
                                      format,
@@ -3155,16 +3145,12 @@ void FFV::initInterval()
   }
   
   
-  // 入力モードが有次元の場合に，無次元に変換
+  // 入力モードが有次元の場合に，無次元に変換 >> 時制がBy_timeの場合のみ
   if ( C.Unit.Param == DIMENSIONAL )
   {
     for (int i=0; i<Control::tg_END; i++)
     {
-      if ( !C.Interval[i].normalizeTime(C.Tscale) )
-      {
-        Hostonly_ printf("\t Error : initialize timing normalize.\n");
-        Exit(0);
-      }
+      C.Interval[i].normalizeTime(C.Tscale);
     }
   }
   
@@ -3688,7 +3674,6 @@ void FFV::setBCinfo()
     mat_tbl[n*3+0] = mat[n].P[p_density] / C.RefDensity;
     mat_tbl[n*3+1] = mat[n].P[p_specific_heat] / C.RefSpecificHeat;
     mat_tbl[n*3+2] = mat[n].P[p_thermal_conductivity] / lmd0;
-    //printf("%d : rho=%e cp=%e lambda=%e\n", n, mat_tbl[n*3+0], mat_tbl[n*3+1], mat_tbl[n*3+2]);
   }
   
   // 無次元媒質情報をコピー

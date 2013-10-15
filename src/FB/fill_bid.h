@@ -100,7 +100,7 @@ if ( zp == 0 )
     if ( (qs*qn != 0) || (qb*qt != 0) )
     {
       sd = find_mode_id(tgt_id, qw, qe, qs, qn, qb, qt);
-      mid[m_p] =  sd;
+      //mid[m_p] =  sd;
       setFaceBID(bid[m_w], X_PLUS, sd); // テストする方向からみて、カットIDを設定
       cut[_F_IDX_S4DEX(X_PLUS, i-1, j, k, 6, ix, jx, kx, gd)] = cpos; // カット位置をセット
       replaced++;
@@ -116,7 +116,7 @@ if ( zp == 0 )
     if ( (qw*qe != 0) || (qb*qt != 0) )
     {
       sd = find_mode_id(tgt_id, qw, qe, qs, qn, qb, qt);
-      mid[m_p] =  sd;
+      //mid[m_p] =  sd;
       setFaceBID(bid[m_s], Y_PLUS, sd);
       cut[_F_IDX_S4DEX(Y_PLUS, i, j-1, k, 6, ix, jx, kx, gd)] = cpos;
       replaced++;
@@ -132,7 +132,7 @@ if ( zp == 0 )
     if ( (qw*qe != 0) || (qs*qn != 0) )
     {
       sd = find_mode_id(tgt_id, qw, qe, qs, qn, qb, qt);
-      mid[m_p] = sd;
+      //mid[m_p] = sd;
       setFaceBID(bid[m_b], Z_PLUS, sd);
       cut[_F_IDX_S4DEX(Z_PLUS, i, j, k-1, 6, ix, jx, kx, gd)] = cpos;
       replaced++;
@@ -148,7 +148,7 @@ if ( zp == 0 )
     if ( (qw*qe != 0) || (qs*qn != 0) )
     {
       sd = find_mode_id(tgt_id, qw, qe, qs, qn, qb, qt);
-      mid[m_p] = sd;
+      //mid[m_p] = sd;
       setFaceBID(bid[m_t], Z_MINUS, sd);
       cut[_F_IDX_S4DEX(Z_MINUS, i, j, k+1, 6, ix, jx, kx, gd)] = cpos;
       replaced++;
@@ -164,7 +164,7 @@ if ( zp == 0 )
     if ( (qw*qe != 0) || (qb*qt != 0) )
     {
       sd = find_mode_id(tgt_id, qw, qe, qs, qn, qb, qt);
-      mid[m_p] = sd;
+      //mid[m_p] = sd;
       setFaceBID(bid[m_n], Y_MINUS, sd);
       cut[_F_IDX_S4DEX(Y_MINUS, i, j+1, k, 6, ix, jx, kx, gd)] = cpos;
       replaced++;
@@ -180,7 +180,7 @@ if ( zp == 0 )
     if ( (qs*qn != 0) || (qb*qt != 0) )
     {
       sd = find_mode_id(tgt_id, qw, qe, qs, qn, qb, qt);
-      mid[m_p] = sd;
+      //mid[m_p] = sd;
       setFaceBID(bid[m_e], X_MINUS, sd);
       cut[_F_IDX_S4DEX(X_MINUS, i+1, j, k, 6, ix, jx, kx, gd)] = cpos;
       replaced++;

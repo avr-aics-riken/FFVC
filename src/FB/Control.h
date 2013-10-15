@@ -629,20 +629,7 @@ public:
   string HistoryWallName;
   string PolylibConfigName;
   string HistoryForceName;
-  
-  // 出力dfiファイルのプレフィックス
-  string f_dfi_out_prs;
-  string f_dfi_out_vel;
-  string f_dfi_out_fvel;
-  string f_dfi_out_temp;
-  string f_dfi_out_prsa;
-  string f_dfi_out_vela;
-  string f_dfi_out_tempa;
-  string f_dfi_out_hlt;
-  string f_dfi_out_tp;
-  string f_dfi_out_i2vgt;
-  string f_dfi_out_vrt;
-  string f_dfi_out_div;
+
   
   // 入力dfiファイルのプレフィックス
   string f_dfi_in_prs;

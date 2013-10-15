@@ -17,6 +17,9 @@
 RELEASE NOTE
 ============
 
+Ver 1.4.0   2013-10-13
+  - bool normalizeTime() >> void
+
 Ver 1.3.9   2013-10-12
   - InterevalManagerクラスをCIOlibから移動
   

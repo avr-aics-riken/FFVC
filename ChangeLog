@@ -19,6 +19,13 @@ REVISION HISTORY
 ================
 
 --------------------------
+2013-10-13
+
+- r1039 substitute dfi file name
+  - remove string variables of dfi file name and substituted by the refix of output file
+
+
+--------------------------
 2013-10-12
 
 - r1038 bug fix for average restart
