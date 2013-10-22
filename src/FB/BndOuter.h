@@ -33,7 +33,7 @@ private:
   int wallType;      ///< wall >> (fixed, slide)
   int drv_dir;       ///< ドライバーの方向
   int drv_lid;       ///< ドライバフェイスIDの位置
-  int gc_medium;     ///< ガイドセルの媒質インデクス
+  int gc_medium;     ///< ガイドセルの媒質IDのエントリ番号
   int v_profile;     ///< 速度プロファイル（constant, harmonic, zero）
   int Face_mode;     ///< 周期境界のときの面の状況指定（upstream, downstream）
   int hType;         ///< 熱境界条件の種別
@@ -265,7 +265,7 @@ public:
   }
   
   
-  // @brief ガイドセルの媒質IDをセットする
+  // @brief ガイドセルの媒質IDのエントリ番号をセットする
   void setGuideMedium(int key)
   {
     gc_medium = key;

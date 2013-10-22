@@ -224,13 +224,6 @@ void MonitorList::getMonitor(Control* C)
   
   
   
-  // サンプリングの指定単位が有次元の場合に，無次元に変換
-  if ( C->Sampling.unit == DIMENSIONAL )
-  {
-    C->Interval[Control::tg_sampled].normalizeTime(C->Tscale);
-  }
-  
-  
   // 指定モニタ個数のチェック
   int nnode=0;
   int nlist=0;
@@ -562,6 +555,7 @@ void MonitorList::openFile(const char* str)
         
         if (outputType == GATHER)
         {
+          mark();
           monGroup[i]->openFile(fileName.c_str(), true);
         }
         else
@@ -634,20 +628,10 @@ void MonitorList::printMonitorInfo(FILE* fp, const char* str, const bool verbose
 
 
 // #################################################################
-/// 必要なパラメータのコピー.
-///
-///   @param [in] bcd            BCindex B
-///   @param [in] refVelocity    代表速度
-///   @param [in] baseTemp       基準温度
-///   @param [in] diffTemp       代表温度差
-///   @param [in] refDensity     基準密度
-///   @param [in] refLength      代表長さ
-///   @param [in] basePrs        基準圧力
-///   @param [in] modePrecision  出力精度指定フラグ (単精度，倍精度)
-///   @param [in] unitPrs        圧力単位指定フラグ (絶対値，ゲージ圧)
-///   @param [in] num_process    プロセス数
-///
-void MonitorList::setControlVars(int* bcd,
+/// 必要なパラメータのコピー
+void MonitorList::setControlVars(int* bid,
+                                 float* cut,
+                                 int* bcd,
                                  const REAL_TYPE refVelocity,
                                  const REAL_TYPE baseTemp,
                                  const REAL_TYPE diffTemp,
@@ -658,7 +642,9 @@ void MonitorList::setControlVars(int* bcd,
                                  const int unitPrs,
                                  const int num_process)
 {
+  this->bid         = bid;
   this->bcd         = bcd;
+  this->cut         = cut;
   this->g_org       = G_origin;
   this->g_box       = G_region;
   this->org         = origin;
@@ -693,17 +679,19 @@ void MonitorList::set_V00(REAL_TYPE v00[4])
 // #################################################################
 /// PointSet登録.
 ///
-///   @param [in] str ラベル文字列
+///   @param [in] str       ラベル文字列
 ///   @param [in] variables モニタ変数vector
-///   @param [in] method method文字列
-///   @param [in] mode   mode文字列
+///   @param [in] method    method文字列
+///   @param [in] mode      mode文字列
 ///   @param [in] pointSet  PointSet
 ///
-void MonitorList::setPointSet(const char* str, vector<string>& variables,
-                              const char* method, const char* mode,
+void MonitorList::setPointSet(const char* str,
+                              vector<string>& variables,
+                              const char* method,
+                              const char* mode,
                               vector<MonitorCompo::MonitorPoint>& pointSet)
 {
-  MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bcd, num_process);
+  MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process);
   
   m->setRankInfo(paraMngr, procGrp);
   m->setNeighborInfo(guide);
@@ -718,21 +706,25 @@ void MonitorList::setPointSet(const char* str, vector<string>& variables,
 // #################################################################
 /// Line点登録.
 ///
-///   @param [in] str ラベル文字列
+///   @param [in] str       ラベル文字列
 ///   @param [in] variables モニタ変数vector
-///   @param [in] method method文字列
-///   @param [in] mode   mode文字列
-///   @param [in] from Line始点
-///   @param [in] to   Line終点
+///   @param [in] method    method文字列
+///   @param [in] mode      mode文字列
+///   @param [in] from      Line始点
+///   @param [in] to        Line終点
 ///   @param [in] nDivision 分割数(モニタ点数-1)
 ///
-void MonitorList::setLine(const char* str, vector<string>& variables,
-                          const char* method, const char* mode,
-                          REAL_TYPE from[3], REAL_TYPE to[3], int nDivision)
+void MonitorList::setLine(const char* str,
+                          vector<string>& variables,
+                          const char* method,
+                          const char* mode,
+                          REAL_TYPE from[3],
+                          REAL_TYPE to[3],
+                          int nDivision)
 {
   clipLine(from, to);
   
-  MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bcd, num_process);
+  MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process);
   
   m->setRankInfo(paraMngr, procGrp);
   m->setNeighborInfo(guide);
@@ -745,28 +737,32 @@ void MonitorList::setLine(const char* str, vector<string>& variables,
 
 
 // #################################################################
-/// 内部境界条件としてモニタ点を登録.
+/// セルモニターのモニタ点を登録
 ///
 ///   @param [in] cmp    コンポーネント配列
 ///   @param [in] nBC    コンポーネント数
 ///
-void MonitorList::setInnerBoundary(CompoList *cmp, const int nBC)
+void MonitorList::setCellMonitor(CompoList *cmp, const int nBC)
 {
   for (int i = 1; i <= nBC; i++)
   {
     if (cmp[i].isMONITOR()) 
     {
-      MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bcd, num_process);
+      MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process);
       
       m->setRankInfo(paraMngr, procGrp);
       m->setNeighborInfo(guide);
       
-      m->setInnerBoundary(i, cmp[i]);
+      m->setCellMonitor(i, cmp[i]);
       
       monGroup.push_back(m);
+      
+      cmp[i].setEnsLocal(ON);
     }
   }
+  
   nGroup = monGroup.size();
+  
 }
 
 

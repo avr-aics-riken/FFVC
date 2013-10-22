@@ -19,11 +19,17 @@ REVISION HISTORY
 ================
 
 --------------------------
-2013-10-13
+2013-10-22
+
+- r1040 Boundary ID based implementation
+  - change algorithm from d_mid based to d_bcd based
+  - delete d_mid related methods
+
+--------------------------
+2013-10-15
 
 - r1039 substitute dfi file name
   - remove string variables of dfi file name and substituted by the refix of output file
-
 
 --------------------------
 2013-10-12

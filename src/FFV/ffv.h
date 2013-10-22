@@ -494,10 +494,6 @@ private:
   void setParameters();
   
   
-  // BCで指定するCELL_MINITORのIDをmid[]にセットする
-  void setupCellMonitor();
-  
-  
   // IP用にカット領域をアロケートする
   void setupCutInfo4IP(double& m_prep, double& m_total, FILE* fp);
   
@@ -509,11 +505,7 @@ private:
   // 幾何形状情報を準備し，交点計算を行う
   void setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp);
   
-  
-  // ボクセルをスキャンし情報を表示する
-  void scanVoxel(FILE* fp);
-  
-  
+
   
   
   /** ffv.C *******************************************************/
@@ -859,6 +851,13 @@ private:
     TIMING__ PM.stop((unsigned)key, flopPerTask, (unsigned)iterationCount);
   }
     
+  
+  
+  /**
+   * @brief 外部境界面およびガイドセルのカットとIDの処理
+   */
+  void TreatmentOfOuterBoundary();
+  
   
   /**
    * @brief コマンドラインヘルプ 

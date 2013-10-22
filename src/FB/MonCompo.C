@@ -24,7 +24,7 @@
 
 
 // #################################################################
-/// モニタリング管理用配列の確保.
+/// モニタリング管理用配列の確保
 void MonitorCompo::allocArray()
 {
   if (nPoint == 0) Exit(0); // サンプリング点数
@@ -40,7 +40,7 @@ void MonitorCompo::allocArray()
 
 
 // #################################################################
-/// サンプリング値を格納する配列の確保.
+/// サンプリング値を格納する配列の確保
 void MonitorCompo::allocSamplingArray()
 {
   if ( nPoint == 0 ) Exit(0); // サンプリング点数
@@ -53,21 +53,25 @@ void MonitorCompo::allocSamplingArray()
     if (!(vel = new FB::Vec3r[nPoint])) Exit(0);
     for (int i = 0; i < nPoint; i++) vel[i] = FB::Vec3r(DUMMY, DUMMY, DUMMY);
   }
+  
   if (variable[PRESSURE])
   {
     if (!(prs = new REAL_TYPE[nPoint])) Exit(0);
     for (int i = 0; i < nPoint; i++) prs[i] = DUMMY;
   }
+  
   if (variable[TEMPERATURE])
   {
     if (!(tmp = new REAL_TYPE[nPoint])) Exit(0);
     for (int i = 0; i < nPoint; i++) tmp[i] = DUMMY;
   }
+  
   if (variable[TOTAL_PRESSURE])
   {
     if (!(tp = new REAL_TYPE[nPoint])) Exit(0);
     for (int i = 0; i < nPoint; i++) tp[i] = DUMMY;
   }
+  
   //if (variable[VORTICITY]) {
   //  if (!(vor = new FB::Vec3r[nPoint])) Exit(0);
   //  for (int i = 0; i < nPoint; i++) vor[i] = FB::Vec3r(DUMMY, DUMMY, DUMMY);
@@ -484,6 +488,7 @@ void MonitorCompo::openFile(const char* str, bool gathered)
       perror(fileName.c_str()); Exit(0);
     }
     writeHeader(false);
+    fflush(fp);
   }
 }
 
@@ -626,9 +631,9 @@ void MonitorCompo::samplingInnerBoundary()
   if (variable[VELOCITY]) 
   {
     FB::Vec3r velAve = averageVector(vel);
-    cmp->val[var_Velocity]
-    = velAve.x * cmp->nv[0] + velAve.y * cmp->nv[1] + velAve.z * cmp->nv[2];
+    cmp->val[var_Velocity] = velAve.x * cmp->nv[0] + velAve.y * cmp->nv[1] + velAve.z * cmp->nv[2];
   }
+  
   if (variable[PRESSURE])       cmp->val[var_Pressure]    = averageScalar(prs);
   if (variable[TEMPERATURE])    cmp->val[var_Temperature] = averageScalar(tmp);
   if (variable[TOTAL_PRESSURE]) cmp->val[var_TotalP]      = averageScalar(tp);
@@ -636,46 +641,41 @@ void MonitorCompo::samplingInnerBoundary()
 
 
 // #################################################################
-/// 内部境界条件として指定されたモニタ領域のセル中心座標をcrd[]に設定.
-///
-///   @param[in] n コンポーネントエントリ
-///   @param[in] cmp コンポーネント
-///
-void MonitorCompo::setIBPoints(const int odr, CompoList& cmp)
+/// Polygon要素の交点座標をcrd[]に設定
+void MonitorCompo::setPointsPolygon(const int odr, CompoList& cmp)
 {
   int np = num_process;
-  int st[3], ed[3];
   
   int* nPointList;
   if (!(nPointList = new int[np])) Exit(0);
   for (int i = 0; i < np; i++) nPointList[i] = 0;
-  
-  cmp.getBbox(st, ed);
 
-
-  // for optimization > variables defined outside
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
   
-  if (cmp.existLocal())
-  {
-    for (int k = st[2]; k <= ed[2]; k++) {
-      for (int j = st[1]; j <= ed[1]; j++) {
-        for (int i = st[0]; i <= ed[0]; i++) {
+  
+  for (int k = 1; k <= kx; k++) {
+    for (int j = 1; j <= jx; j++) {
+      for (int i = 1; i <= ix; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int bd = bid[m];
+        
+        if ( TEST_BC(bd) ) // 6面のいずれかにIDがある
+        {
+          const float* pos = &cut[ _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd) ];
           
-          size_t mm = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          
-          if ( DECODE_CMP(bcd[mm]) == odr)
+          for (int i=0; i<6; i++)
           {
-            nPointList[myRank]++;
+            int d = (bd >> i*5) & MASK_5;
+            if ( (pos[i] <= 0.5) && (d == odr) ) nPointList[myRank]++; // セル内部にカットが存在し，境界IDがエントリ番号
           }
         }
       }
     }
   }
-
 
   if (!allReduceSum(nPointList, np)) Exit(0);
   
@@ -684,11 +684,18 @@ void MonitorCompo::setIBPoints(const int odr, CompoList& cmp)
   int sum = 0;
   for (int i = 0; i < np; i++) sum += nPointList[i];
 
-#if 0
-  printf("sum=%d nPoint=%d LocalPoint=%d\n", sum, nPoint, nPointList[myRank]);
+#if 1
+  printf("sum=%d LocalPoint=%d\n", sum, nPointList[myRank]);
 #endif
   
-  assert(sum == nPoint);
+  nPoint = nPointList[myRank];
+  
+  
+  cmp.setElement((unsigned long)nPoint);
+  
+  allocArray();
+  allocSamplingArray();
+  
   
   REAL_TYPE* buf;
   if (!(buf = new REAL_TYPE[nPoint*3])) Exit(0);
@@ -698,25 +705,46 @@ void MonitorCompo::setIBPoints(const int odr, CompoList& cmp)
   for (int i = 0; i < myRank; i++) m0 += nPointList[i];
   
   int m = 0;
-  if (cmp.existLocal()) 
-  {
-    int i0 = head[0] - 1; //fortran index なので1からカウントアップしている ---> Cのindexは0からカウントアップ
-    int j0 = head[1] - 1;
-    int k0 = head[2] - 1;
 
-    for (int k = st[2]; k <= ed[2]; k++) {
-      for (int j = st[1]; j <= ed[1]; j++) {
-        for (int i = st[0]; i <= ed[0]; i++) {
+  int i0 = head[0] - 1; //fortran index なので1からカウントアップしている ---> Cのindexは0からカウントアップ
+  int j0 = head[1] - 1;
+  int k0 = head[2] - 1;
+  
+  for (int k = 1; k <= kx; k++) {
+    for (int j = 1; j <= jx; j++) {
+      for (int i = 1; i <= ix; i++) {
+        
+        size_t mm = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int bd = bid[mm];
+        
+        if ( TEST_BC(bd) ) // 6面のいずれかにIDがある
+        {
+          const float* pos = &cut[ _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd) ];
           
-          size_t mm=_F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          if ((bcd[mm] & MASK_5) == odr)
+          for (int i=0; i<6; i++)
           {
-            buf[(m0+m)*3+0] = g_org.x + (i + i0 - 0.5) * pch.x;
-            buf[(m0+m)*3+1] = g_org.y + (j + j0 - 0.5) * pch.y;
-            buf[(m0+m)*3+2] = g_org.z + (k + k0 - 0.5) * pch.z;
-            m++;
+            int d = (bd >> i*5) & MASK_5;
+            
+            if ( (pos[i] <= 0.5) && (d == odr) ) // セル内部に存在する
+            {
+              float cx = 0.0;
+              float cy = 0.0;
+              float cz = 0.0;
+              if (i == 0)      cx = -pos[i];
+              else if (i == 1) cx =  pos[i];
+              else if (i == 2) cy = -pos[i];
+              else if (i == 3) cy =  pos[i];
+              else if (i == 4) cz = -pos[i];
+              else if (i == 5) cz =  pos[i];
+              
+              buf[(m0+m)*3+0] = g_org.x + (i + i0 - 0.5 + cx) * pch.x;
+              buf[(m0+m)*3+1] = g_org.y + (j + j0 - 0.5 + cy) * pch.y;
+              buf[(m0+m)*3+2] = g_org.z + (k + k0 - 0.5 + cz) * pch.z;
+              m++;
+            }
           }
         }
+
       }
     }
   }
@@ -736,12 +764,108 @@ void MonitorCompo::setIBPoints(const int odr, CompoList& cmp)
 
 
 // #################################################################
-/// 内部境界条件としてモニタ点を登録.
+/// Primitive要素の交点座標をcrd[]に設定
+void MonitorCompo::setPointsPrimitive(const int odr, CompoList& cmp)
+{
+  int np = num_process;
+  
+  int* nPointList;
+  if (!(nPointList = new int[np])) Exit(0);
+  for (int i = 0; i < np; i++) nPointList[i] = 0;
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  for (int k = 1; k <= kx; k++) {
+    for (int j = 1; j <= jx; j++) {
+      for (int i = 1; i <= ix; i++) {
+        
+        if ( DECODE_CMP( bcd[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)] ) == odr )
+        {
+          nPointList[myRank]++;
+        }
+      }
+    }
+  }
+  
+  if (!allReduceSum(nPointList, np)) Exit(0);
+  
+  
+  //check
+  int sum = 0;
+  for (int i = 0; i < np; i++) sum += nPointList[i];
+  
+#if 1
+  printf("sum=%d LocalPoint=%d\n", sum, nPointList[myRank]);
+#endif
+  
+  nPoint = nPointList[myRank];
+  
+  
+  cmp.setElement((unsigned long)nPoint);
+  
+  allocArray();
+  allocSamplingArray();
+  
+  
+  
+  REAL_TYPE* buf;
+  if (!(buf = new REAL_TYPE[nPoint*3])) Exit(0);
+  for (int i = 0; i < nPoint*3; i++) buf[i] = 0.0;
+  
+  int m0 = 0;
+  for (int i = 0; i < myRank; i++) m0 += nPointList[i];
+  
+  int m = 0;
+  
+  int i0 = head[0] - 1; //fortran index なので1からカウントアップしている ---> Cのindexは0からカウントアップ
+  int j0 = head[1] - 1;
+  int k0 = head[2] - 1;
+  
+  for (int k = 1; k <= kx; k++) {
+    for (int j = 1; j <= jx; j++) {
+      for (int i = 1; i <= ix; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        
+        if ( DECODE_CMP( bcd[m] ) == odr )
+        {
+          buf[(m0+m)*3+0] = g_org.x + (i + i0 - 0.5) * pch.x;
+          buf[(m0+m)*3+1] = g_org.y + (j + j0 - 0.5) * pch.y;
+          buf[(m0+m)*3+2] = g_org.z + (k + k0 - 0.5) * pch.z;
+          m++;
+          
+          bcd[m] |= 0; // クリア
+        }
+        
+      }
+    }
+  }
+  
+  if (!allReduceSum(buf, nPoint*3)) Exit(0);
+  
+  for (m = 0; m < nPoint; m++)
+  {
+    crd[m].x = buf[m*3+0];
+    crd[m].y = buf[m*3+1];
+    crd[m].z = buf[m*3+2];
+  }
+  
+  delete[] buf;
+  delete[] nPointList;
+}
+
+
+
+// #################################################################
+/// セルモニターのモニタ点を登録.
 ///
 ///   @param [in] odr    コンポーネントエントリ
 ///   @param [in] cmp    コンポーネント
 ///
-void MonitorCompo::setInnerBoundary(const int odr, CompoList& cmp)
+void MonitorCompo::setCellMonitor(const int odr, CompoList& cmp)
 {
   ostringstream oss;
   oss << "LocalBoundary" << odr;
@@ -758,12 +882,22 @@ void MonitorCompo::setInnerBoundary(const int odr, CompoList& cmp)
   if (cmp.isVarEncoded(var_TotalP))      variable[TOTAL_PRESSURE] = true;
   
   
-  nPoint = (int)cmp.getElement();
-
-  allocArray();
-  allocSamplingArray();
+  switch ( cmp.get_Shape() )
+  {
+    case SHAPE_BOX:
+    case SHAPE_CYLINDER:
+      setPointsPrimitive(odr, cmp);
+      break;
+      
+    case SHAPE_POLYGON:
+      setPointsPolygon(odr, cmp);
+      break;
+      
+    default:
+      Exit(0);
+      break;
+  }
   
-  setIBPoints(odr, cmp);
   
   setRankArray();
   

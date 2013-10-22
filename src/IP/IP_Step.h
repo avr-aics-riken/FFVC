@@ -47,11 +47,31 @@ public:
 
 public:
 
+  /**
+   * @brief パラメータをロード
+   * @param [in] R      Controlクラス
+   * @param [in] tpCntl テキストパーサクラス
+   * @return true-成功, false-エラー
+   */
   virtual bool getTP(Control* R, TextParser* tpCntl);
   
+  /**
+   * @brief パラメータの表示
+   * @param [in] fp ファイルポインタ
+   * @param [in] R  コントロールクラスのポインタ
+   */
   virtual void printPara(FILE* fp, const Control* R);
   
-  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut);
+  
+  /**
+   * @brief 計算領域のセルIDを設定する
+   * @param [in,out] bcd      BCindex B
+   * @param [in]     R        Controlクラスのポインタ
+   * @param [in]     G_org    グローバルな原点（無次元）
+   * @param [in]     NoMedium 媒質数
+   * @param [in]     mat      MediumListクラスのポインタ
+   */
+  virtual void setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut);
 
 };
 #endif // _IP_STEP_H_

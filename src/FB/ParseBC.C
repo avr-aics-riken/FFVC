@@ -557,36 +557,11 @@ void ParseBC::getIbcMonitor(const string label_base, const int n, CompoList* cmp
     }
     else if ( !strcasecmp("Polygon", pnt.c_str()) )
     {
-      cmp[n].set_Shape(SHAPE_VOXEL);
+      cmp[n].set_Shape(SHAPE_POLYGON);
     }
     else
     {
       Hostonly_ stamped_printf("\tParsing error : Invalid string value for 'Shape' : %s\n", pnt.c_str());
-      Exit(0);
-    }
-  }
-  
-  
-  // サンプリング幅
-  label = label_base + "/SamplingWidth";
-  
-  if ( !(tpCntl->getInspectedValue(label, pnt )) )
-  {
-    ;
-  }
-  else
-  {
-    if ( !strcasecmp("SingleCell", pnt.c_str()) )
-    {
-      cmp[n].setSamplingWidth(SINGLE_CELL);
-    }
-    else if ( !strcasecmp("NeighborCell", pnt.c_str()) )
-    {
-      cmp[n].setSamplingWidth(NEIGHBOR_CELL);
-    }
-    else
-    {
-      Hostonly_ stamped_printf("\tParsing error : Invalid string value for 'SamplingWidth' : %s\n", pnt.c_str());
       Exit(0);
     }
   }
@@ -616,14 +591,15 @@ void ParseBC::getIbcMonitor(const string label_base, const int n, CompoList* cmp
     }
   }
   
-  // 法線ベクトル
-  getNV(label_base, v);
-  copyVec(cmp[n].nv, v);
   
   int shp = cmp[n].get_Shape();
   
   if ( (shp == SHAPE_BOX) || (shp == SHAPE_CYLINDER) )
   {
+    // 法線ベクトル
+    getNV(label_base, v);
+    copyVec(cmp[n].nv, v);
+    
     // 中心座標の取得
     getCenter(label_base, v);
     copyVec(cmp[n].oc, v);

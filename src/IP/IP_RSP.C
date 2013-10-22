@@ -77,14 +77,14 @@ void IP_RSP::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_
 }
 
 /**
- @fn void IP_RSP::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, MediumList* mat)
+ @fn void IP_RSP::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, MediumList* mat)
  @brief RSPの計算領域のセルIDを設定する
- @param mid IDの配列
+ @param bcd BCindex B
  @param R Controlクラスのポインタ
  @param G_org グローバルな原点（無次元）
  @param mat
  */
-void IP_RSP::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat)
+void IP_RSP::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat)
 {
   size_t m;
   
@@ -99,7 +99,7 @@ void IP_RSP::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, c
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
-        mid[m] = 1;
+        bcd[m] |= 1;
       }
     }
   }

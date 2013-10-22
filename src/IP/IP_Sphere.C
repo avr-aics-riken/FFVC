@@ -23,12 +23,7 @@
 
 
 // #################################################################
-/*
- * @brief パラメータをロード
- * @param [in] R      Controlクラス
- * @param [in] tpCntl テキストパーサクラス
- * @return true-成功, false-エラー
- */
+// パラメータをロード
 bool IP_Sphere::getTP(Control* R, TextParser* tpCntl)
 {
   std::string str;
@@ -121,11 +116,7 @@ bool IP_Sphere::getTP(Control* R, TextParser* tpCntl)
 
 
 // #################################################################
-/*
- * @brief パラメータの表示
- * @param [in] fp ファイルポインタ
- * @param [in] R  コントロールクラスのポインタ
- */
+// パラメータの表示
 void IP_Sphere::printPara(FILE* fp, const Control* R)
 {
   if ( !fp )
@@ -147,14 +138,7 @@ void IP_Sphere::printPara(FILE* fp, const Control* R)
 
 
 // #################################################################
-/*
- * @brief 領域パラメータを設定する
- * @param [in]     R     Controlクラスのポインタ
- * @param [in]     sz    分割数
- * @param [in,out] m_org 計算領域の基点
- * @param [in,out] m_reg 計算領域のbounding boxサイズ
- * @param [in,out] m_pch セル幅
- */
+// 領域パラメータを設定する
 void IP_Sphere::setDomainParameter(Control* R, const int* sz, REAL_TYPE* m_org, REAL_TYPE* m_reg, REAL_TYPE* m_pch)
 {
   pch.x = (float)m_pch[0];
@@ -168,12 +152,7 @@ void IP_Sphere::setDomainParameter(Control* R, const int* sz, REAL_TYPE* m_org, 
 
 
 // #################################################################
-/*
- * @brief 点pの属するセルインデクスを求める
- * @param [in] p   探索座標
- * @param [in] ol  基点座標
- * @return cell index
- */
+//  点pの属するセルインデクスを求める
 // Fortran index
 FB::Vec3i IP_Sphere::find_index(const FB::Vec3f p, const FB::Vec3f ol)
 {
@@ -196,15 +175,8 @@ FB::Vec3i IP_Sphere::find_index(const FB::Vec3f p, const FB::Vec3f ol)
 
 
 // #################################################################
-/*
- * @brief 矩形の計算領域のセルIDを設定する
- * @param[in,out] mid      媒質情報の配列
- * @param[in]     R        Controlクラスのポインタ
- * @param[in]     G_org    グローバルな原点（無次元）
- * @param[in]     NoMedium 媒質数
- * @param[in]     mat      MediumListクラスのポインタ
- */
-void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
+// 矩形の計算領域のセルIDを設定する
+void IP_Sphere::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
 {
   int mid_fluid;        /// 流体
   int mid_solid;        /// 固体
@@ -273,7 +245,7 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium
     for (int j=1-gd; j<=jx+gd; j++) {
       for (int i=1-gd; i<=ix+gd; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        mid[m] = mid_fluid;
+        bcd[m] |= mid_fluid;
       }
     }
   }
@@ -290,7 +262,7 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium
         if ( r <= rs )
         {
           size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          mid[m] = mid_solid;
+          bcd[m] |= mid_solid;
         }
       }
     }
@@ -326,7 +298,7 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium
         for (int i=1; i<=ix; i++) {
           size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
           x = ox + 0.5*dh + dh*(i-1);
-          if ( x < len ) mid[m] = mid_driver;
+          if ( x < len ) bcd[m] |= mid_driver;
         }
       }
     }  
@@ -340,9 +312,9 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium
         for (int i=1; i<=ix; i++) {
           size_t m = _F_IDX_S3D(i,   j, k, ix, jx, kx, gd);
           size_t m1= _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd);
-          if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) )
+          if ( (DECODE_CMP(bcd[m])  == mid_driver) && (DECODE_CMP(bcd[m1]) == mid_fluid) )
           {
-            mid[m] = mid_driver_face;
+            bcd[m] |= mid_driver_face;
           }
         }
       }
@@ -358,7 +330,7 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium
         y = oy + 0.5*dh + dh*(j-1);
         if ( x < len )
         {
-          mid[m] = mid_solid;
+          bcd[m] |= mid_solid;
         }
       }
     }
@@ -367,16 +339,8 @@ void IP_Sphere::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium
 
 
 // #################################################################
-/**
- * @brief 計算領域のセルIDとカット情報を設定する
- * @param [in,out] mid      IDの配列
- * @param [in]     R        Controlクラスのポインタ
- * @param [in]     G_org    グローバルな原点（無次元）
- * @param [in]     NoMedium 媒質数
- * @param [in]     mat      MediumListクラスのポインタ
- * @param [out]    cut      カット情報
- */
-void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
+// 計算領域のセルIDとカット情報を設定する
+void IP_Sphere::setup_cut(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
 {
   int mid_fluid;        /// 流体
   int mid_solid;        /// 固体
@@ -435,7 +399,7 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int NoMe
     for (int j=1-gd; j<=jx+gd; j++) {
       for (int i=1-gd; i<=ix+gd; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        mid[m] = mid_fluid;
+        bcd[m] |= mid_fluid;
       }
     }
   }
@@ -453,7 +417,7 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int NoMe
         if ( r <= rs )
         {
           size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          mid[m] = mid_solid;
+          bcd[m] |= mid_solid;
         }
       }
     }
@@ -532,7 +496,7 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int NoMe
         for (int i=1; i<=ix; i++) {
           size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
           x = ox + 0.5*dh + dh*(i-1);
-          if ( x < len ) mid[m] = mid_driver;
+          if ( x < len ) bcd[m] |= mid_driver;
         }
       }
     }  
@@ -546,9 +510,9 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int NoMe
         for (int i=1; i<=ix; i++) {
           size_t m = _F_IDX_S3D(i,   j, k, ix, jx, kx, gd);
           size_t m1= _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd);
-          if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) )
+          if ( (DECODE_CMP(bcd[m]) == mid_driver) && (DECODE_CMP(bcd[m1]) == mid_fluid) )
           {
-            mid[m] = mid_driver_face;
+            bcd[m] |= mid_driver_face;
           }
         }
       }
@@ -564,7 +528,7 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int NoMe
         y = oy + 0.5*dh + dh*(j-1);
         if ( x < len )
         {
-          mid[m] = mid_solid;
+          bcd[m] |= mid_solid;
         }
       }
     }
@@ -573,14 +537,7 @@ void IP_Sphere::setup_cut(int* mid, Control* R, REAL_TYPE* G_org, const int NoMe
 
 
 // #################################################################
-/**
- * @brief 交点の無次元距離を計算する
- * @param [in] p 基点座標
- * @param [in] dir テスト方向
- * @param [in] r radius
- * @param [in] dh 格子幅
- * @return 交点距離
- */
+// 交点の無次元距離を計算する
 float IP_Sphere::cut_line(const FB::Vec3f p, const int dir, const float r, const float dh)
 {
   float x, y, z, s;

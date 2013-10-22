@@ -454,7 +454,7 @@ void CompoFraction::vertex8(const int st[], const int ed[], float* vf, double& f
 
 // #################################################################
 // セルの8頂点の内外判定より50%以上のセルにIDを設定する
-void ShapeMonitor::setID(const int st[], const int ed[], int* mid, const int id)
+void ShapeMonitor::setID(const int st[], const int ed[], int* bcd, const int id)
 {
   FB::Vec3f base, o, b;
   FB::Vec3f p[8];
@@ -469,7 +469,8 @@ void ShapeMonitor::setID(const int st[], const int ed[], int* mid, const int id)
   o  = org;
   ph = pch.x;
   
-  if ( smode == SHAPE_BOX ) {
+  if ( smode == SHAPE_BOX )
+  {
     // Rect cylinder
     for (int k=st[2]; k<=ed[2]; k++) {
       for (int j=st[1]; j<=ed[1]; j++) {
@@ -491,16 +492,19 @@ void ShapeMonitor::setID(const int st[], const int ed[], int* mid, const int id)
           for (int l=0; l<8; l++) {
             c += judge_rect(p[l]);
           }
-          if ( c>=4.0) {
+          
+          if ( c>=4.0)
+          {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-            mid[m] = id;
+            bcd[m] |= id;
           }
         }
       }
     }
 
   }
-  else {
+  else
+  {
     // Circular cylinder
     for (int k=st[2]; k<=ed[2]; k++) {
       for (int j=st[1]; j<=ed[1]; j++) {
@@ -522,9 +526,11 @@ void ShapeMonitor::setID(const int st[], const int ed[], int* mid, const int id)
           for (int l=0; l<8; l++) {
             c += judge_cylinder(p[l]);
           }
-          if ( c>=4.0) {
+          
+          if ( c>=4.0)
+          {
             m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-            mid[m] = id;
+            bcd[m] |= id;
           }
         }
       }

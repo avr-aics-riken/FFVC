@@ -508,30 +508,6 @@ void Control::getApplicationControl()
   }
   
   
-  // Cell IDのゼロを指定IDに変更するオプションを取得する（Hidden）
-  label = "/ApplicationControl/ChangeID";
-  
-  if ( tpCntl->chkLabel(label) )
-  {
-    if ( tpCntl->getInspectedValue(label, ct) )
-    {
-      if ( ct < 0 )
-      {
-        Hostonly_ printf("Error : ID should be positive [%d]\n", ct);
-        Exit(0);
-      }
-      else
-      {
-        Hide.Change_ID = ct;
-      }
-    }
-    else
-    {
-      Exit(0);
-    }
-  }
-  
-  
   // ボクセルファイル出力 (Hidden)
   FIO.IO_Voxel = OFF;
   label = "/ApplicationControl/VoxelOutput";
@@ -1514,7 +1490,7 @@ void Control::getLog()
 
 
 // #################################################################
-// モニタリングのON/OFFとセルモニタの有無のみを取得　詳細パラメータは後ほど
+// モニタリングのON/OFFとセルモニタの有無のみを取得　詳細パラメータはParseBC::getIbcMonitor()
 void Control::getMonitorList()
 {
   string str;
@@ -3798,12 +3774,6 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
   
   
   // Hidden parameter -----------------
-  
-  if (Hide.Change_ID != 0 )
-  {
-    fprintf(fp,"\t     Change ID from [0] to    :   %d\n", Hide.Change_ID);
-  }
-  fprintf(fp,"\n");
   
   if (Hide.Range_Limit == Range_Cutoff)
   {

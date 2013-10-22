@@ -23,15 +23,8 @@
 
 
 // #################################################################
-/* @brief 矩形の計算領域のセルIDを設定する
- * @param [in,out] mid      媒質情報の配列
- * @param [in]     R        Controlクラスのポインタ
- * @param [in]     G_org    グローバルな原点（無次元）
- * @param [in]     NoMedium 媒質数
- * @param [in]     mat      MediumListクラスのポインタ
- * @param [out]    cut      カット情報
- */
-void IP_Polygon::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
+// 矩形の計算領域のセルIDを設定する
+void IP_Polygon::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
 {
   // ローカルにコピー
   int ix = size[0];
@@ -47,7 +40,7 @@ void IP_Polygon::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMediu
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        mid[m] = ref;
+        bcd[m] |= ref;
       }
     }
   }

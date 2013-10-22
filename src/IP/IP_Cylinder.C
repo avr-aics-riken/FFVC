@@ -23,12 +23,7 @@
 
 
 // #################################################################
-/*
- * @brief パラメータをロード
- * @apram [in] R      Controlクラス
- * @param [in] tpCntl テキストパーサクラス
- * @return true-成功, false-エラー
- */
+// パラメータをロード
 bool IP_Cylinder::getTP(Control* R, TextParser* tpCntl)
 {
   std::string str;
@@ -159,11 +154,7 @@ bool IP_Cylinder::getTP(Control* R, TextParser* tpCntl)
 
 
 // #################################################################
-/**
- * @brief パラメータの表示
- * @param [in] fp ファイルポインタ
- * @param [in] R  コントロールクラスのポインタ
- */
+// パラメータの表示
 void IP_Cylinder::printPara(FILE* fp, const Control* R)
 {
   if ( !fp )
@@ -188,16 +179,8 @@ void IP_Cylinder::printPara(FILE* fp, const Control* R)
 
 
 // #################################################################
-/*
- * @brief Cylinderの計算領域のセルIDを設定する
- * @param [in,out] mid   　　媒質情報の配列
- * @param [in]     R     　　Controlクラスのポインタ
- * @param [in]     G_org 　　グローバルな原点（無次元）
- * @param [in]     NoMedium 媒質数
- * @param [in]     mat   　　MediumListクラスのポインタ
- * @param [out]    cut      カット情報
- */
-void IP_Cylinder::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
+// Cylinderの計算領域のセルIDを設定する
+void IP_Cylinder::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
 {
   int mid_fluid;        ///< 流体
   int mid_solid;        ///< 固体
@@ -247,7 +230,7 @@ void IP_Cylinder::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedi
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        mid[m] = mid_fluid;
+        bcd[m] |= mid_fluid;
       }
     }
   }
@@ -279,7 +262,7 @@ void IP_Cylinder::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedi
           for (int i=1; i<=ix; i++) {
             size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
             x = ox + 0.5*dh + dh*(i-1);
-            if ( x < ox+len ) mid[m] = mid_driver;
+            if ( x < ox+len ) bcd[m] |= mid_driver;
           }
         }
       }
@@ -295,9 +278,9 @@ void IP_Cylinder::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedi
         for (int i=1; i<=ix; i++) {
           size_t m = _F_IDX_S3D(i,   j, k, ix, jx, kx, gd);
           size_t m1= _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd);
-          if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) )
+          if ( ( DECODE_CMP( bcd[m] ) == mid_driver) && (DECODE_CMP( bcd[m1] ) == mid_fluid) )
           {
-            mid[m] = mid_driver_face;
+            bcd[m] |= mid_driver_face;
           }
         }
       }
@@ -313,7 +296,7 @@ void IP_Cylinder::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedi
         y = oy + 0.5*dh + dh*(j-1);
         if ( (x < ox+len) && (y < oy+ht) )
         {
-          mid[m] = mid_solid;
+          bcd[m] |= mid_solid;
         }
       }
     }

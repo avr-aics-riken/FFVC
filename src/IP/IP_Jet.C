@@ -312,11 +312,7 @@ schedule(static)
 
 
 // #################################################################
-/* @brief パラメータをロード
- * @param [in] R      Controlクラス
- * @param [in] tpCntl テキストパーサクラス
- * @return true-成功, false-エラー
- */
+//  パラメータをロード
 bool IP_Jet::getTP(Control* R, TextParser* tpCntl)
 {
   std::string str;
@@ -512,10 +508,7 @@ bool IP_Jet::getTP(Control* R, TextParser* tpCntl)
 
 
 // #################################################################
-/* @brief パラメータの表示
- * @param [in] fp ファイルポインタ
- * @param [in] R  コントロールクラスのポインタ
- */
+// パラメータの表示
 void IP_Jet::printPara(FILE* fp, const Control* R)
 {
   if ( !fp )
@@ -604,15 +597,8 @@ void IP_Jet::printPara(FILE* fp, const Control* R)
 
 
 // #################################################################
-/* @brief 計算領域のセルIDを設定する
- * @param [in,out] mid      媒質情報の配列
- * @param [in]     R        Controlクラスのポインタ
- * @param [in]     G_org    グローバルな原点（無次元）
- * @param [in]     NoMedium 媒質数
- * @param [in]     mat      MediumListクラスのポインタ
- * @param [out]    cut      カット情報
- */
-void IP_Jet::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
+// 計算領域のセルIDを設定する
+void IP_Jet::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
 {
   int mid_fluid;        /// 流体
   int mid_solid;        /// 固体
@@ -654,7 +640,7 @@ schedule(static)
     for (int j=1-gd; j<=jx+gd; j++) {
       for (int i=1-gd; i<=ix+gd; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        mid[m] = mid_fluid;
+        bcd[m] |= mid_fluid;
       }
     }
   }
@@ -670,7 +656,7 @@ schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         size_t m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
-        mid[m] = mid_solid;
+        bcd[m] |= mid_solid;
       }
     }
     
@@ -693,7 +679,7 @@ schedule(static)
           
           if ( (ri < r) && (r < ro) )
           {
-            mid[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)] = mid_fluid;
+            bcd[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)] |= mid_fluid;
           }
           
         }
@@ -719,7 +705,7 @@ schedule(static)
           
           if ( (ri < r) && (r < ro) )
           {
-            mid[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)] = mid_fluid;
+            bcd[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)] |= mid_fluid;
           }
           
         }

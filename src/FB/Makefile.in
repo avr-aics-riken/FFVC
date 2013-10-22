@@ -335,7 +335,6 @@ libFB_a_SOURCES = \
   dbwrite.f90 \
   ffv_f_params.h \
   fill_bid.h \
-  fill_mid.h \
   mydebug.h \
   util_Path.h \
   vec3.h \

@@ -23,12 +23,7 @@
 
 
 // #################################################################
-/*
- * @brief パラメータをロード
- * @param [in] R      Controlクラス
- * @param [in] tpCntl テキストパーサクラス
- * @return true-成功, false-エラー
- */
+//パラメータをロード
 bool IP_PPLT2D::getTP(Control* R, TextParser* tpCntl)
 {
   std::string str;
@@ -61,13 +56,7 @@ bool IP_PPLT2D::getTP(Control* R, TextParser* tpCntl)
 
 
 // #################################################################
-/* @brief 領域パラメータを設定する
- * @param [in]     R   Controlクラスのポインタ
- * @param [in]     sz  分割数
- * @param [in,out] org 計算領域の基点
- * @param [in,out] reg 計算領域のbounding boxサイズ
- * @param [in,out] pch セル幅
- */
+// 領域パラメータを設定する
 void IP_PPLT2D::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch)
 {
   // forced
@@ -104,16 +93,8 @@ void IP_PPLT2D::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, RE
 
 
 // #################################################################
-/*
- * @brief 並行平板の計算領域のセルIDを設定する
- * @param [in,out] mid      媒質情報の配列
- * @param [in]     R        Controlクラスのポインタ
- * @param [in]     G_org    グローバルな原点（無次元）
- * @param [in]     NoMedium 媒質数
- * @param [in]     mat      MediumListクラスのポインタ
- * @param [out]    cut      カット情報
- */
-void IP_PPLT2D::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
+// 並行平板の計算領域のセルIDを設定する
+void IP_PPLT2D::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
 {
   // ローカルにコピー
   int ix = size[0];
@@ -134,7 +115,7 @@ void IP_PPLT2D::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        mid[m] = id_fluid;
+        bcd[m] |= id_fluid;
       }
     }
   }

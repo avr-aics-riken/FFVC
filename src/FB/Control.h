@@ -382,7 +382,6 @@ public:
   /** 隠しパラメータ */
   typedef struct 
   {
-    int Change_ID;
     int Range_Limit;
     int PM_Test;
     int GeomOutput;
@@ -753,7 +752,6 @@ public:
     FIO.Format     = 0; // 0:sph, 1:BOV
     FIO.Slice      = 0;
     
-    Hide.Change_ID = 0;
     Hide.Range_Limit = 0;
     Hide.PM_Test = 0;
     Hide.GeomOutput = OFF;

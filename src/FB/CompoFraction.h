@@ -391,10 +391,10 @@ public:
    * @brief セルの8頂点の内外判定より50%以上のセルにIDを設定する
    * @param [in]     st   開始インデクス
    * @param [in]     en   終了インデクス
-   * @param [in,out] mid  IDの配列
+   * @param [in,out] bcd  BCindex B
    * @param [in]     id   指定ID
    */
-  void setID(const int st[], const int ed[], int* mid, const int m_id);
+  void setID(const int st[], const int ed[], int* bcd, const int m_id);
 };
 
 

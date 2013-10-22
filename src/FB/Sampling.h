@@ -42,14 +42,14 @@ public:
   };
 
 protected:
-  int mode;     ///< サンプリングモード
-  int size[3];  ///< セル(ローカル)サイズ
-  int guide;    ///< ガイドセル数
+  int mode;          ///< サンプリングモード
+  int size[3];       ///< セル(ローカル)サイズ
+  int guide;         ///< ガイドセル数
 
   FB::Vec3i cIndex; ///< モニタ点を含むセルのインデックス
   FB::Vec3r pch;    ///< セル幅
   FB::Vec3r v00;    ///< 座標系移動速度
-  int* bcd;     ///< BCindex B
+  int* bcd;         ///< BCindex B
   
 public:
   /// ディフォルトコンストラクタ.
@@ -66,8 +66,15 @@ public:
   ///   @param[in] v00   座標系移動速度
   ///   @param[in] bcd   BCindex B
   ///
-  Sampling(int mode, int size[], int guide,
-           FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd) {
+  Sampling(int mode,
+           int size[],
+           int guide,
+           FB::Vec3r crd,
+           FB::Vec3r org,
+           FB::Vec3r pch,
+           FB::Vec3r v00,
+           int* bcd) {
+    
     this->mode = mode;
     this->size[0] = size[0];
     this->size[1] = size[1];
@@ -246,15 +253,23 @@ public:
 
   /// コンストラクタ.
   ///
-  ///   @param[in] mode サンプリングモード
-  ///   @param[in] size,guide ローカルセル数，ガイドセル数
-  ///   @param[in] crd  モニタ点座標
-  ///   @param[in] org,pch  ローカル領域基点座標，セル幅
-  ///   @param[in] v00  座標系移動速度
-  ///   @param[in] bcd  BCindex B
+  ///   @param [in] mode   サンプリングモード
+  ///   @param [in] size   ローカルセル数
+  ///   @param [in] guide  ガイドセル数
+  ///   @param [in] crd    モニタ点座標
+  ///   @param [in] org    ローカル領域基点座標
+  ///   @param [in] pch    セル幅
+  ///   @param [in] v00    座標系移動速度
+  ///   @param [in] bcd    BCindex B
   ///
-  Nearest(int mode, int size[], int guide,
-          FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd);
+  Nearest(int mode,
+          int size[],
+          int guide,
+          FB::Vec3r crd,
+          FB::Vec3r org,
+          FB::Vec3r pch,
+          FB::Vec3r v00,
+          int* bcd);
 
   /// デストラクタ.
   ~Nearest() {}
@@ -335,15 +350,23 @@ public:
   ///
   ///   隣接セルに対して局所平均計算に使用するかどうかのフラグを立てる.
   ///
-  ///   @param [in] mode サンプリングモード
-  ///   @param [in] size,guide ローカルセル数，ガイドセル数
-  ///   @param [in] crd  モニタ点座標
-  ///   @param [in] org,pch  ローカル領域基点座標，セル幅
-  ///   @param [in] v00  座標系移動速度
-  ///   @param [in] bcd  BCindex B
+  ///   @param [in] mode   サンプリングモード
+  ///   @param [in] size   ローカルセル数
+  ///   @param [in] guide  ガイドセル数
+  ///   @param [in] crd    モニタ点座標
+  ///   @param [in] org    ローカル領域基点座標
+  ///   @param [in] pch    セル幅
+  ///   @param [in] v00    座標系移動速度
+  ///   @param [in] bcd    BCindex B
   ///
-  Smoothing(int mode, int size[], int guide,
-            FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd);
+  Smoothing(int mode,
+            int size[],
+            int guide,
+            FB::Vec3r crd,
+            FB::Vec3r org,
+            FB::Vec3r pch,
+            FB::Vec3r v00,
+            int* bcd);
 
   /// デストラクタ.
   ~Smoothing() {}
@@ -418,15 +441,23 @@ public:
   ///   補間計算の基準セルのインデックスおよび補間係数を計算.
   ///   流体-固体境界に接しているかをチェック.
   ///
-  ///   @param [in] mode サンプリングモード
-  ///   @param [in] size,guide ローカルセル数，ガイドセル数
-  ///   @param [in] crd  モニタ点座標
-  ///   @param [in] org,pch  ローカル領域基点座標，セル幅
-  ///   @param [in] v00  座標系移動速度
-  ///   @param [in] bcd  BCindex B
+  ///   @param [in] mode   サンプリングモード
+  ///   @param [in] size   ローカルセル数
+  ///   @param [in] guide  ガイドセル数
+  ///   @param [in] crd    モニタ点座標
+  ///   @param [in] org    ローカル領域基点座標，セル幅
+  ///   @param [in] pch    セル幅
+  ///   @param [in] v00    座標系移動速度
+  ///   @param [in] bcd    BCindex B
   ///
-  Interpolation(int mode, int size[], int guide,
-                FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd);
+  Interpolation(int mode,
+                int size[],
+                int guide,
+                FB::Vec3r crd,
+                FB::Vec3r org,
+                FB::Vec3r pch,
+                FB::Vec3r v00,
+                int* bcd);
 
   /// デストラクタ.
   ~Interpolation() {}
@@ -480,15 +511,23 @@ public:
 
   /// コンストラクタ.
   ///
-  ///   @param [in] mode サンプリングモード
-  ///   @param [in] size,guide ローカルセル数，ガイドセル数
-  ///   @param [in] crd  モニタ点座標
-  ///   @param [in] org,pch  ローカル領域基点座標，セル幅
-  ///   @param [in] v00  座標系移動速度
-  ///   @param [in] bcd  BCindex B
+  ///   @param [in] mode  サンプリングモード
+  ///   @param [in] size  ローカルセル数
+  ///   @param [in] guide ガイドセル数
+  ///   @param [in] crd   モニタ点座標
+  ///   @param [in] org   ローカル領域基点座標
+  ///   @param [in] pch   セル幅
+  ///   @param [in] v00   座標系移動速度
+  ///   @param [in] bcd   BCindex B
   ///
-  InterpolationStgV(int mode, int size[], int guide,
-                    FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd);
+  InterpolationStgV(int mode,
+                    int size[],
+                    int guide,
+                    FB::Vec3r crd,
+                    FB::Vec3r org,
+                    FB::Vec3r pch,
+                    FB::Vec3r v00,
+                    int* bcd);
 
   /// デストラクタ.
   ~InterpolationStgV() {}

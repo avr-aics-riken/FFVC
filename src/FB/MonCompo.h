@@ -46,23 +46,23 @@ public:
   /// PointSet要素用構造体
   struct MonitorPoint {
     FB::Vec3r crd;      ///< モニタ点座標
-    string label;   ///< モニタ点ラベル
+    string label;       ///< モニタ点ラベル
     MonitorPoint(const REAL_TYPE v[3], const char* str) : crd(v), label(str) {}
     ~MonitorPoint() {}
   };
   
   /// 参照用パラメータ構造体
   struct ReferenceVariables {
-    int modeUnit;       /// 出力単位指定フラグ (有次元，無次元)
-    int modePrecision;  /// 出力精度指定フラグ (単精度，倍精度)
-    int unitPrs;        /// 圧力単位指定フラグ (絶対値，ゲージ圧)
+    int modeUnit;            /// 出力単位指定フラグ (有次元，無次元)
+    int modePrecision;       /// 出力精度指定フラグ (単精度，倍精度)
+    int unitPrs;             /// 圧力単位指定フラグ (絶対値，ゲージ圧)
     REAL_TYPE refVelocity;   /// 代表速度
     REAL_TYPE baseTemp;      /// 基準温度
     REAL_TYPE diffTemp;      /// 代表温度差
     REAL_TYPE refDensity;    /// 基準密度
     REAL_TYPE refLength;     /// 代表長さ
     REAL_TYPE basePrs;       /// 基準圧力
-    FB::Vec3r v00;               /// 参照（座標系移動）速度
+    FB::Vec3r v00;           /// 参照（座標系移動）速度
   };
   
   /// モニタ点指定タイプ型
@@ -102,7 +102,9 @@ protected:
   
   ReferenceVariables refVar;  ///< 参照用パラメータ変数
   
+  int* bid;            ///< 境界ID
   int* bcd;            ///< BCindex B
+  float* cut;          ///< 交点情報
   
   FILE* fp;            ///< 出力ファイルポインタ
   
@@ -138,7 +140,9 @@ public:
     comment = NULL;
     pointStatus = NULL;
     vSource = pSource = tSource = NULL;
+    bid = NULL;
     bcd = NULL;
+    cut = NULL;
   }
   
   /// コンストラクタ.
@@ -147,7 +151,9 @@ public:
   ///   @param [in] g_org,g_box グローバル領域基点座標，領域サイズ
   ///   @param [in] size,guide  ローカルセルサイズ，ガイドセル数
   ///   @param [in] refVar      参照パラメータ
+  ///   @param [in] bid         境界ID
   ///   @param [in] bcd         BCindex B
+  ///   @param [in] cut         交点情報
   ///   @param [in] num_process プロセス数
   ///
   MonitorCompo(FB::Vec3r org,
@@ -156,7 +162,9 @@ public:
                FB::Vec3r g_org,
                FB::Vec3r g_box,
                ReferenceVariables refVar,
+               int* bid,
                int* bcd,
+               float* cut,
                const int num_process) {
     nPoint = 0;
     for (int i = 0; i < NUM_VAR; i++) variable[i] = false;
@@ -174,7 +182,9 @@ public:
     this->g_org = g_org;
     this->g_box = g_box;
     this->refVar = refVar;
+    this->bid = bid;
     this->bcd = bcd;
+    this->cut = cut;
     this->num_process = num_process;
   }
   
@@ -328,12 +338,12 @@ public:
                REAL_TYPE from[3], REAL_TYPE to[3], int nDivision);
   
   
-  /// 内部境界条件としてモニタ点を登録.
+  /// セルモニターのモニタ点を登録.
   ///
   ///   @param [in] odr コンポーネントエントリ
   ///   @param [in] cmp コンポーネント
   ///
-  void setInnerBoundary(const int odr, CompoList& cmp);
+  void setCellMonitor(const int odr, CompoList& cmp);
   
   
   /// サンプリング元データの登録.
@@ -481,12 +491,20 @@ protected:
   void print(unsigned step, REAL_TYPE tm, bool gathered);
   
   
-  /// 内部境界条件として指定されたモニタ領域のセル中心座標をcrd[]に設定.
+  /// Polygonl要素の交点座標をcrd[]に設定
   ///
-  ///   @param [in] odr コンポーネントエントリ
+  ///   @param [in] odr エントリ
   ///   @param [in] cmp コンポーネント
   ///
-  void setIBPoints(const int odr, CompoList& cmp);
+  void setPointsPolygon(const int odr, CompoList& cmp);
+  
+  
+  /// Primitive要素の交点座標をcrd[]に設定
+  ///
+  ///   @param [in] odr エントリ
+  ///   @param [in] cmp コンポーネント
+  ///
+  void setPointsPrimitive(const int odr, CompoList& cmp);
   
   
   /// モニタ対象物理量の設定.

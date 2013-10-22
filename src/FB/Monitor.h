@@ -54,7 +54,9 @@ protected:
   FB::Vec3r box;         ///< ローカル領域サイズ
   FB::Vec3r g_org;       ///< グローバル基点座標
   FB::Vec3r g_box;       ///< グローバル領域サイズ
+  int* bid;              ///< 境界ID
   int* bcd;              ///< BCindex B
+  float* cut;            ///< 交点情報
   TextParser* tpCntl;    ///< テキストパーサへのポインタ
   
   OutputType outputType; ///< 出力タイプ
@@ -165,7 +167,7 @@ public:
   }
   
   
-  /// サンプリング(内部境界条件指定).
+  /// サンプリング(内部境界条件指定)
   ///
   ///   サンプリング結果を集計，コンポーネント領域での平均値を計算.
   ///   速度は法線ベクトルとの内積をとる．
@@ -183,8 +185,19 @@ public:
   }
   
   
-  /// 必要なパラメータのコピー.
+  /// セルモニターのモニタ点を登録
   ///
+  ///   @param [in] cmp コンポーネント配列
+  ///   @param [in] nBC コンポーネント数
+  ///
+  void setCellMonitor(CompoList* cmp, const int nBC);
+  
+  
+  
+  /// 必要なパラメータのコピー
+  ///
+  ///   @param [in] bid            境界ID
+  ///   @param [in] cut            交点情報
   ///   @param [in] bcd            BCindex B
   ///   @param [in] refVelocity    代表速度
   ///   @param [in] baseTemp       基準温度
@@ -196,7 +209,9 @@ public:
   ///   @param [in] unitPrs        圧力単位指定フラグ (絶対値，ゲージ圧)
   ///   @param [in] num_process    プロセス数
   ///
-  void setControlVars(int* bcd,
+  void setControlVars(int* bid,
+                      float* cut,
+                      int* bcd,
                       const REAL_TYPE refVelocity,
                       const REAL_TYPE baseTemp,
                       const REAL_TYPE diffTemp,
@@ -208,7 +223,7 @@ public:
                       const int num_process);
   
   
-  /// サンプリング元データの登録.
+  /// サンプリング元データの登録
   ///
   ///   @param [in] v 速度変数配列
   ///   @param [in] p 圧力変数配列
@@ -220,16 +235,8 @@ public:
   }
   
   
-  /// 内部境界条件としてモニタ点を登録.
-  ///
-  ///   @param [in] cmp コンポーネント配列
-  ///   @param [in] nBC コンポーネント数
-  ///
-  void setInnerBoundary(CompoList* cmp, const int nBC);
   
-  
-  
-  /// Line登録.
+  /// Line登録
   ///
   ///   @param [in] str ラベル文字列
   ///   @param [in] variables モニタ変数vector
@@ -248,7 +255,7 @@ public:
                int nDivision);
   
   
-  /// 出力タイプの設定.
+  /// 出力タイプの設定
   void setOutputType(OutputType type)
   {
     outputType = type;
@@ -297,10 +304,6 @@ public:
 protected:
   
   /// Line指定の端点座標をグローバル計算領域内にクリッピング
-  ///
-  ///   @param [in,out] from Line始点
-  ///   @param [in,out] to   Line終点
-  ///
   void clipLine(REAL_TYPE from[3], REAL_TYPE to[3]);
   
   
@@ -308,7 +311,7 @@ protected:
   string getOutputTypeStr();
   
 
-  /// @brief 座標値を無次元化する
+  /// 座標値を無次元化する
   void normalizeCord(REAL_TYPE RefLength, REAL_TYPE x[3])
   {
     x[0] /= RefLength;

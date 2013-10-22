@@ -90,7 +90,7 @@ public:
   
   
   // 計算領域の媒質情報を設定する
-  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int Nmax, const MediumList* mat, float* cut) {};
+  virtual void setup(int* bcd, Control* R, REAL_TYPE* G_org, const int Nmax, const MediumList* mat, float* cut) {};
   
   
   
@@ -104,7 +104,7 @@ public:
   
   
   // モデルIDをsphフォーマット(float)で出力する
-  void writeSPH(const int *mid, const Control* R);
+  void writeSPH(const int* bcd, const Control* R);
   
   
   // 例題のモデルをsvxフォーマットで出力する(体積率とID)
@@ -112,7 +112,7 @@ public:
   
   
   // 例題のモデルをsvxフォーマットで出力する(ID)
-  void writeSVX(int *id, Control* R);
+  void writeSVX(const int* bcd, Control* R);
   
 };
 

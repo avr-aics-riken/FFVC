@@ -173,8 +173,19 @@ int FFV::Initialize(int argc, char **argv)
 
   
   
-  // 各問題に応じてモデルを設定
+  // 各問題に応じてモデルを設定 >> Polylib + Cutlib
   setModel(PrepMemory, TotalMemory, fp);
+  
+  
+  
+  // 定義点上に交点がある場合の処理 >> カットするポリゴンのエントリ番号でフィルする
+  unsigned long fill_cut = V.modifyCutOnCellCenter(d_bid, d_cut, C.RefFillMat);
+  
+  Hostonly_
+  {
+    printf(    "\tCut on cell center = %16ld\n\n", fill_cut);
+    fprintf(fp,"\tCut on cell center = %16ld\n\n", fill_cut);
+  }
   
   
   
@@ -202,54 +213,20 @@ int FFV::Initialize(int argc, char **argv)
   displayMemoryInfo(fp, G_PrepMemory, PrepMemory, "Preprocessor");
   
 
+  
+  // 外部境界面およびガイドセルのカットとIDの処理
+  TreatmentOfOuterBoundary();
 
   
-#if 0
-  // SOLIDセルを生成 >> この時点で外部境界面にはカットが設定されていない
-  // テスト用
-  if ( C.Mode.Example == id_Polygon )
+  
+  // サンプリング指定がある場合
+  if ( C.Sampling.log == ON )
   {
-    unsigned long zc = V.SolidFromCut(d_mid, d_bid, d_cut, cmp);
+    setMonitorList();
     
-    Hostonly_
-    {
-      printf(    "\n\tGenerated Solid cell from cut = %ld\n", zc);
-      fprintf(fp,"\n\tGenerated Solid cell from cut = %ld\n", zc);
-    }
-    
-    // midのガイドセル同期
-    if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
+    // モニタ結果出力ファイル群のオープン
+    MO.openFile(C.HistoryMonitorName.c_str());
   }
-  Ex->writeSVX(d_mid, &C);
-  exit(0);
-#endif
-  
-  // ガイドセル上にパラメータファイルで指定する媒質IDを代入する．周期境界の場合の処理も含む．
-  for (int face=0; face<NOFACE; face++)
-  {
-    if ( (C.Mode.Example == id_Jet) && (face==0) )
-    {
-      ; // skip
-    }
-    else
-    {
-      // 周期境界条件の並列時
-      if ( BC.exportOBC(face)->getClass() == OBC_PERIODIC )
-      {
-        V.setMediumOnGCperiodic(face, d_mid, BC.exportOBC(face)->getPrdcMode() );
-      }
-      else // 周期境界以外
-      {
-        V.setMediumOnGC(face, d_mid, BC.exportOBC(face)->getGuideMedium() );
-      }
-      
-    }
-  }
-
-
-  // 外部境界で壁面条件の場合にカットとガイドセルIDを設定
-  V.setOBCcut(&BC, d_cut, d_bid);
-  
   
   
   // Fill
@@ -294,25 +271,10 @@ int FFV::Initialize(int argc, char **argv)
     C.printNoCompo(fp);
     fprintf(fp,"\n"); fflush(fp);
   }
-  
-
-  
-  // セルモニターのモニタ位置をセット
-  setupCellMonitor();
-  
-  
-  
-  // ボクセルのスキャン
-  scanVoxel(fp);
-  
-
-  
-  // セルIDのノード間同期
-  if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
-  
 
 
-
+  
+  
   // HEX/FANコンポーネントの形状情報からBboxと体積率を計算
   if ( C.existVfraction() )
   {
@@ -326,7 +288,7 @@ int FFV::Initialize(int argc, char **argv)
 
   
   // 内部周期境界の場合のガイドセルのコピー処理
-  V.adjMediumPrdc_Inner(d_mid, cmp);
+  V.adjMediumPrdcInner(d_bcd, cmp);
 
   
   // 媒質数とKindOfSolverの整合性をチェックする
@@ -435,21 +397,6 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   
-
-  // 性能測定モードがオフのときのみ，svxファイルを出力する．
-  if ( C.Hide.PM_Test == OFF )
-  {
-    if ( C.FIO.IO_Voxel == Control::Sphere_SVX )
-    {
-      Ex->writeSVX(d_mid, &C);
-      Hostonly_
-      {
-        fprintf(fp,"\tVoxel file is written with guide cell information\n\n");
-        printf(    "\tVoxel file is written with guide cell information\n\n");
-      }
-    }
-  }
-  
   
   // mid[]を解放する  ---------------------------
   if ( d_mid ) delete [] d_mid;
@@ -497,13 +444,6 @@ int FFV::Initialize(int argc, char **argv)
   TIMING_stop(tm_restart);
   
 
-  if ( C.Sampling.log == ON )
-  {
-    setMonitorList();
-    
-    // サンプリング指定がある場合，モニタ結果出力ファイル群のオープン
-    MO.openFile(C.HistoryMonitorName.c_str());
-  }
   
   // 制御インターバルの初期化
   initInterval();
@@ -1142,7 +1082,7 @@ void FFV::encodeBCindex(FILE* fp)
   int gd = guide;
   
   // 基本ビット情報（Active, State, コンポ，媒質情報）を全領域についてエンコードする
-  V.setBCIndexBase(d_bcd, d_mid, d_cvf, mat, cmp, L_Acell, G_Acell, C.KindOfSolver);
+  V.setBCIndexBase(d_bcd, d_cvf, mat, cmp, L_Acell, G_Acell, C.KindOfSolver);
   
 
   // @attention bx[]の同期が必要 >> 以下の処理で隣接セルを参照するため
@@ -1165,7 +1105,7 @@ void FFV::encodeBCindex(FILE* fp)
 
   
 #if 0
-  V.dbg_chkBCIndexB(d_bcd, "BCindexB.txt");
+  V.dbg_chkBCIndex(d_bcd, d_cdf, d_bcp, "BCindexB.txt");
 #endif
   
   
@@ -1176,27 +1116,22 @@ void FFV::encodeBCindex(FILE* fp)
 
   
   // 圧力計算のビット情報をエンコードする -----
-  if ( C.isBinary() )
-  {
-    C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, d_mid, &BC, cmp, C.Mode.Example, d_cut, d_bid, true);
-  }
-  else // CDS
-  {
-    C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, d_mid, &BC, cmp, C.Mode.Example, d_cut, d_bid, false);
-  }
-  
-#if 0
-  V.dbg_chkBCIndexP(d_bcd, d_bcp, "BCindexP.txt");
-#endif
-  
-
-  
-  // 速度計算のビット情報をエンコードする -----
-  V.setBCIndexV(d_cdf, d_mid, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid);
+  C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid);
   
   // ##########
 #if 0
-  V.dbg_chkBCIndexC(d_cdf, "BCindexC.txt");
+  V.dbg_chkBCIndex(d_bcd, d_cdf, d_bcp, "BCindexP.txt");
+#endif
+  // ##########
+
+  
+  
+  // 速度計算のビット情報をエンコードする -----
+  V.setBCIndexV(d_cdf, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid);
+  
+  // ##########
+#if 0
+  V.dbg_chkBCIndex(d_bcd, d_cdf, d_bcp, "BCindexC.txt");
 #endif
   // ##########
   
@@ -1206,11 +1141,11 @@ void FFV::encodeBCindex(FILE* fp)
   // 温度計算のビット情報をエンコードする -----
   if ( C.isHeatProblem() )
   {
-    V.setBCIndexH(d_cdf, d_bcd, d_mid, &BC, C.KindOfSolver, cmp, d_cut, d_bid);
+    V.setBCIndexH(d_cdf, d_bcd, &BC, C.KindOfSolver, cmp, d_cut, d_bid);
     
     // ##########
 #if 0
-    V.dbg_chkBCIndexB(d_bcd, "BCindexH.txt");
+    V.dbg_chkBCIndex(d_bcd, d_cdf, d_bcp, "BCindexH.txt");
 #endif
     // ##########
     
@@ -1220,20 +1155,12 @@ void FFV::encodeBCindex(FILE* fp)
   V.countCellState(L_Wcell, G_Wcell, d_bcd, SOLID);
   V.countCellState(L_Fcell, G_Fcell, d_bcd, FLUID);
   
-
   
-  // ガイドセルへコンポーネントオーダーをエンコード
-  for (int n=0; n<NOFACE; n++)
-  {
-    V.encOrderOnGC(n, d_mid, d_bcd);
-  }
-  
-  
-  // エンコードのチェック
+  // エンコードされているエントリ番号のチェック 1<=order<=31
   V.chkOrder(d_bcd);
   
   
-  // ここまでのbboxはmid[]でサーチした結果，BCindex処理の過程で範囲が変わるので変更
+  // ここまでのbboxはbcd[]でサーチした結果，BCindex処理の過程で範囲が変わるので変更
   resizeCompoBbox();
 
   
@@ -1315,63 +1242,72 @@ void FFV::fill(FILE* fp)
     if ( paraMngr->Allreduce(&tmp_fc, &total_cell, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
   
-  // ペイント済みをカウント
-  //filled = V.countCell(d_mid);
   
-  // ID=0をカウント
-  target_count = V.countCell(d_mid, false);
+  target_count = total_cell;
   
   Hostonly_
   {
     printf(    "\tFill initialize -----\n\n");
     fprintf(fp,"\tFill initialize -----\n\n");
-
-    printf    ("\t\tWhole num. of cells    = %16ld\n", total_cell);
-    fprintf(fp,"\t\tWhole num. of cells    = %16ld\n", total_cell);
-    
-    // V.SolidFromCut()をコールしないので固体セルなし
-    //printf    ("\t\tGenerated solid        = %16ld\n", filled);
-    //fprintf(fp,"\t\tGenerated solid        = %16ld\n", filled);
     
     printf    ("\t\tInitial target count   = %16ld\n", target_count);
     fprintf(fp,"\t\tInitial target count   = %16ld\n", target_count);
   }
   
   
+  // 定義点上に交点がある場合の処理 >> カットするポリゴンのエントリ番号でフィルする
+  unsigned long fill_cut = V.fillCutOnCellCenter(d_bcd, d_bid, d_cut);
+  target_count -= fill_cut;
+  
+  Hostonly_
+  {
+    if ( fill_cut > 0 )
+    {
+      printf(    "\t\tFill center cut        = %16ld\n", fill_cut);
+      fprintf(fp,"\t\tFill center cut        = %16ld\n", fill_cut);
+      
+      
+      printf    ("\t\tTarget count           = %16ld\n\n", target_count);
+      fprintf(fp,"\t\tTarget count           = %16ld\n\n", target_count);
+    }
+  }
+  
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+  }
+
   
   
+  /* チェック用のリスト OpenMPのfirstprivate化のために固定長にする
+  int list[CMP_BIT_W];
+  memset(list, 0, sizeof(int)*CMP_BIT_W);
   
-  // チェック用のリスト OpenMPのfirstprivate化のために固定長にする
-  int list[64];
-  memset(list, 0, sizeof(int)*64);
-  
-  if ( C.NoCompo+1 > 64 )
+  if ( C.NoCompo+1 > CMP_BIT_W )
   {
     Exit(0);
   }
   
-  // CellMonitorをリストアップ >> 
+  // CellMonitorをリストアップ >> モニタ部の例外処理
   for (int n=1; n<=C.NoCompo; n++)
   {
     if ( cmp[n].isMONITOR() )
     {
       list[n] = n;
-      //printf("list=%d\n", n);
     }
   }
+  */
   
   
-  
-  // 1st pass
   
   Hostonly_
   {
-    printf(    "\n\t1st Fill -----\n\n");
-    fprintf(fp,"\n\t1st Fill -----\n\n");
-    printf    ("\t\tFilling medium         : %s\n", mat[C.RefFillMat].getAlias().c_str());
-    fprintf(fp,"\t\tFilling medium         : %s\n", mat[C.RefFillMat].getAlias().c_str());
+    printf(    "\n\tFill -----\n\n");
+    fprintf(fp,"\n\tFill -----\n\n");
+    printf    ("\t\tFilling fluid medium   : %s\n", mat[C.RefFillMat].getAlias().c_str());
+    fprintf(fp,"\t\tFilling fluid medium   : %s\n", mat[C.RefFillMat].getAlias().c_str());
     printf(    "\t\tHint                   : %s\n", FBUtility::getDirection(C.FillHint).c_str());
-    fprintf(fp,"\t\thint                   : %s\n", FBUtility::getDirection(C.FillHint).c_str());
+    fprintf(fp,"\t\tHint                   : %s\n", FBUtility::getDirection(C.FillHint).c_str());
   }
   
   // ヒントが与えられている場合
@@ -1379,11 +1315,11 @@ void FFV::fill(FILE* fp)
   if ( C.FillHint >= 0 )
   {
 
-    filled = V.fillSeed(d_mid, C.FillHint, C.RefFillMat, d_cut);
+    filled = V.fillSeed(d_bcd, C.FillHint, C.RefFillMat, d_bid);
 
     if ( numProc > 1 )
     {
-      if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
     }
     
     if ( filled == 0 )
@@ -1412,15 +1348,10 @@ void FFV::fill(FILE* fp)
     printf(    "\t\tRemaining target cells = %16ld\n\n", target_count);
     fprintf(fp,"\t\tRemaining target cells = %16ld\n\n", target_count);
   }
-
-  
-  if ( target_count == 0 ) return;
   
   
   
   
-  
-  // BIDによるフィル
   // 隣接する流体セルと接続しており，かつ固体セルに挟まれていないセルのみペイントする
   
   int c=-1; // iteration
@@ -1430,13 +1361,13 @@ void FFV::fill(FILE* fp)
   while (target_count > 0) {
     
     unsigned long fs;
-    filled = V.fillByBid(d_bid, d_mid, d_cut, C.RefFillMat, fs, list);
+    filled = V.fillByBid(d_bid, d_bcd, d_cut, C.RefFillMat, fs);
     replaced = fs;
     
     if ( numProc > 1 )
     {
       if ( paraMngr->BndCommS4DEx(d_cut, 6, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
       if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
     }
     
@@ -1445,18 +1376,10 @@ void FFV::fill(FILE* fp)
     sum_filled   += filled;
     sum_replaced += replaced;
     
-    if ( filled == 0 ) break; // フィル対象がなくなったら終了
+    if ( filled <= 0 ) break; // フィル対象がなくなったら終了
     c++;
   }
   
-  unsigned long isofilled = V.fillIsolatedEmptyCell(d_mid, C.RefFillMat);
-  
-  if ( numProc > 1 )
-  {
-    if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  target_count -= isofilled;
   
   Hostonly_
   {
@@ -1466,212 +1389,42 @@ void FFV::fill(FILE* fp)
     fprintf(fp,"\t\t    FLUID filled       = %16ld\n", sum_filled);
     printf(    "\t\t    SOLID replaced     = %16ld\n", sum_replaced);
     fprintf(fp,"\t\t    SOLID replaced     = %16ld\n", sum_replaced);
-    printf(    "\t\t    Isolated fill      = %16ld\n", isofilled);
-    fprintf(fp,"\t\t    Isolated fill      = %16ld\n", isofilled);
     printf(    "\t\t    Remaining cell     = %16ld\n\n", target_count);
     fprintf(fp,"\t\t    Remaining cell     = %16ld\n\n", target_count);
   }
-  // ここでフィルできなかったRemaining cellは固体に挟まれている可能性のあるセル
-  Ex->writeSVX(d_mid, &C);
-  exit(0);
   
-  if ( target_count == 0 ) return;
-  
-  
-
-  
-#if 0
+#if 1
   for (int k=1; k<=size[2]; k++) {
     for (int j=1; j<=size[1]; j++) {
       for (int i=1; i<=size[0]; i++) {
         size_t m = _F_IDX_S3D(i  , j  , k  , size[0], size[1], size[2], guide);
-        if ( d_mid[m] == 0 )
+        if ( DECODE_CMP(d_bcd[m]) == 0 )
         {
-          printf("(%d %d %d) = %d\n", i,j,k,d_mid[m]);
+          printf("(%d %d %d) = %d\n", i,j,k, DECODE_CMP(d_bcd[m]) );
         }
       }
     }
   }
-  Ex->writeSVX(d_mid, &C);
-  exit(0);
+  Ex->writeSVX(d_bcd, &C);
 #endif
   
+  if ( target_count == 0 ) return;
   
   
-  // midによる穴埋め
-  c = -1;
-  replaced = 0;
   
-  while (target_count > 0) {
-    
-    unsigned long z1 = V.fillByMid(d_bid, d_mid, d_cut, C.RefFillMat, list);
-    
-    if ( numProc > 1 )
-    {
-      if ( paraMngr->BndCommS4DEx(d_cut, 6, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-    }
-    
-    replaced += z1;
-    
-    if ( z1 == 0 ) break; // フィル対象がなくなったら終了
-    c++;
-  }
   
-  Hostonly_
+  // 未ペイント（ID=0）のセルを検出
+  unsigned long upc = V.countCell(d_bcd, false);
+  
+  if ( upc == 0 )
   {
-    printf(    "\t\tHoll filling Iteration = %5d\n", c+1);
-    fprintf(fp,"\t\tHoll filling Iteration = %5d\n", c+1);
-    printf(    "\t\t    Filled by SOLID    = %16ld\n", replaced);
-    fprintf(fp,"\t\t    Filled by SOLID    = %16ld\n", replaced);
-  }
-  
-  
-  
-  // 2nd pass
-  
-  Hostonly_
-  {
-    printf(    "\n\t2nd Fill -----\n\n");
-    fprintf(fp,"\n\t2nd Fill -----\n\n");
-  }
-  
-  // 既にペイントした流体セルをクリア
-  unsigned long fz = V.fillReplace(d_mid, C.RefFillMat, 0);
-  
-  // 同期
-  if ( numProc > 1 )
-  {
-    if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  // ターゲットの数は，ID=0の数
-  target_count = fz = V.countCell(d_mid, false);
-  
-  
-  Hostonly_
-  {
-    printf(    "\t\tCleared cell           = %16ld\n", fz);
-    fprintf(fp,"\t\tCleared cell           = %16ld\n", fz);
-    printf(    "\t\tTarget  cell           = %16ld\n", target_count);
-    fprintf(fp,"\t\tTarget  cell           = %16ld\n", target_count);
-  }
-  
-  
-  
-  
-  if ( C.FillHint >= 0 ) // ヒントが与えられている場合
-  {
-    filled = V.fillSeed(d_mid, C.FillHint, C.RefFillMat, d_cut);
-    
-    if ( numProc > 1 )
-    {
-      if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-    }
-    
-    if ( filled == 0 )
-    {
-      Hostonly_
-      {
-        printf(    "Failed second painting (%s includes solid cell)\n", FBUtility::getDirection(C.FillHint).c_str());
-        fprintf(fp,"Failed second painting (%s includes solid cell)\n", FBUtility::getDirection(C.FillHint).c_str());
-      }
-      Exit(0);
-    }
-    
     Hostonly_
     {
-      printf(    "\t\tPainted cells          = %16ld\n", filled);
-      fprintf(fp,"\t\tPainted cells          = %16ld\n", filled);
+      printf(    "\t\tUnpainted cell         = %16ld\n\n", upc);
+      fprintf(fp,"\t\tUnpainted cell         = %16ld\n\n", upc);
     }
   }
   
-  // ペイントされたシードセル数をターゲットから差し引く
-  target_count -= filled;
-  
-  Hostonly_
-  {
-    printf(    "\t\tRemaining target cells = %16ld\n\n", target_count);
-    fprintf(fp,"\t\tRemaining target cells = %16ld\n\n", target_count);
-  }
-  
-  
-  if ( target_count == 0 ) return;
-  
-  
-  
-  
-  // BIDによるフィル
-  c = -1;
-  sum_replaced = 0;
-  sum_filled = 0;
-  
-  while (target_count > 0) {
-    
-    unsigned long fs;
-    filled = V.fillByBid(d_bid, d_mid, d_cut, C.RefFillMat, fs, list);
-    replaced = fs;
-    
-    if ( numProc > 1 )
-    {
-      if ( paraMngr->BndCommS4DEx(d_cut, 6, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-    }
-    
-    target_count -= filled;
-    target_count -= replaced;
-    sum_filled   += filled;
-    sum_replaced += replaced;
-    
-    if ( filled == 0 ) break; // フィル対象がなくなったら終了
-    c++;
-  }
-  
-  isofilled = V.fillIsolatedEmptyCell(d_mid, C.RefFillMat);
-  
-  if ( numProc > 1 )
-  {
-    if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  // ID=0をカウント
-  target_count = V.countCell(d_mid, false);
-  
-  Hostonly_
-  {
-    printf(    "\t\tBID Iteration          = %5d\n", c+1);
-    fprintf(fp,"\t\tBID Iteration          = %5d\n", c+1);
-    printf(    "\t\t    FLUID filled       = %16ld\n", sum_filled);
-    fprintf(fp,"\t\t    FLUID filled       = %16ld\n", sum_filled);
-    printf(    "\t\t    SOLID replaced     = %16ld\n", sum_replaced);
-    fprintf(fp,"\t\t    SOLID replaced     = %16ld\n", sum_replaced);
-    printf(    "\t\t    Isolated fill      = %16ld\n", isofilled);
-    fprintf(fp,"\t\t    Isolated fill      = %16ld\n", isofilled);
-    printf(    "\t\t    Remaining cell     = %16ld\n\n", target_count);
-    fprintf(fp,"\t\t    Remaining cell     = %16ld\n\n", target_count);
-  }
-  
-  if ( target_count == 0 ) return;
-  
-  
-  
-#if 0
-  for (int k=1; k<=size[2]; k++) {
-    for (int j=1; j<=size[1]; j++) {
-      for (int i=1; i<=size[0]; i++) {
-        size_t m = _F_IDX_S3D(i  , j  , k  , size[0], size[1], size[2], guide);
-        if ( d_mid[m] == 0 )
-        {
-          printf("(%d %d %d) = %d\n", i,j,k,d_mid[m]);
-        }
-      }
-    }
-  }
-  Ex->writeSVX(d_mid, &C);
-  exit(0);
-#endif
   
   // 固体に変更
   c = -1;
@@ -1680,17 +1433,17 @@ void FFV::fill(FILE* fp)
   while ( target_count > 0 ) {
     
     // 未ペイントのセルに対して、固体IDを与える
-    replaced = V.fillByModalSolid(d_mid, 0, C.RefFillMat);
+    replaced = V.fillByModalSolid(d_bcd, 0, C.RefFillMat);
     
     if ( numProc > 1 )
     {
-      if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
     }
 
     target_count -= replaced;
     sum_replaced += replaced;
     
-    if ( replaced == 0 ) break;
+    if ( replaced <= 0 ) break;
     c++;
   }
   
@@ -1702,17 +1455,34 @@ void FFV::fill(FILE* fp)
     fprintf(fp,"\t\t   Filled by SOLID     = %16ld\n\n", sum_replaced);
   }
   
+  
+  
+#if 0
+  for (int k=1; k<=size[2]; k++) {
+    for (int j=1; j<=size[1]; j++) {
+      for (int i=1; i<=size[0]; i++) {
+        size_t m = _F_IDX_S3D(i  , j  , k  , size[0], size[1], size[2], guide);
+        if ( DECODE_CMP(d_bcd[m]) == 0 )
+        {
+          printf("(%d %d %d) = %d\n", i,j,k, DECODE_CMP(d_bcd[m]) );
+        }
+      }
+    }
+  }
+  Ex->writeSVX(d_bcd, &C);
+#endif
+  
 
   
   // ID=0をカウント
-  unsigned long unpainted = V.countCell(d_mid, false);
+  upc = V.countCell(d_bcd, false);
   
-  if ( unpainted != 0 )
+  if ( upc != 0 )
   {
     Hostonly_
     {
-      printf(    "\tFill operation is done, but still remains %ld unpainted cells.\n", unpainted);
-      fprintf(fp,"\tFill operation is done, but still remains %ld unpainted cells.\n", unpainted);
+      printf(    "\tFill operation is done, but still remains %ld unpainted cells.\n", upc);
+      fprintf(fp,"\tFill operation is done, but still remains %ld unpainted cells.\n", upc);
     }
     Exit(0);
   }
@@ -1920,7 +1690,7 @@ void FFV::gatherDomainInfo()
       fprintf(fp,"\t(Lx, Ly, Lz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n", 
               m_reg[i*3]*C.RefLength,  m_reg[i*3+1]*C.RefLength,  m_reg[i*3+2]*C.RefLength, m_reg[i*3],  m_reg[i*3+1],  m_reg[i*3+2]);
       
-      if (C.NoCompo != 0) fprintf(fp, "\t no            Label   i_st    i_ed    j_st    j_ed    k_st    k_ed\n");
+      if (C.NoCompo != 0) fprintf(fp, "\n\t no            Label    i_st    i_ed    j_st    j_ed    k_st    k_ed\n");
     }
     
     if ( numProc > 1 )
@@ -3148,9 +2918,14 @@ void FFV::initInterval()
   // 入力モードが有次元の場合に，無次元に変換 >> 時制がBy_timeの場合のみ
   if ( C.Unit.Param == DIMENSIONAL )
   {
-    for (int i=0; i<Control::tg_END; i++)
+    for (int i=Control::tg_compute; i<=Control::tg_accelra; i++)
     {
       C.Interval[i].normalizeTime(C.Tscale);
+    }
+    
+    if ( C.Sampling.log == ON )
+    {
+      C.Interval[Control::tg_sampled].normalizeTime(C.Tscale);
     }
   }
   
@@ -3163,7 +2938,7 @@ void FFV::initInterval()
   double m_tm    = CurrentTime;  // 積算時間　Restart()で設定
   unsigned m_stp = CurrentStep;  // 積算ステップ数
 
-  for (int i=Control::tg_compute; i<Control::tg_accelra; i++)
+  for (int i=Control::tg_compute; i<=Control::tg_accelra; i++)
   {
     if ( !C.Interval[i].initTrigger(m_stp, m_tm, m_dt) )
     {
@@ -3195,7 +2970,6 @@ void FFV::minDistance(float* cut, int* bid, FILE* fp)
 {
   float global_min;
   float local_min = 1.0;
-  float eps = 1.0/255.0; // 0.000392
   unsigned g=0;
   
   int ix = size[0];
@@ -3205,7 +2979,7 @@ void FFV::minDistance(float* cut, int* bid, FILE* fp)
   
   TIMING_start(tm_cut_min);
   
-#pragma omp parallel firstprivate(ix, jx, kx, eps, gd)
+#pragma omp parallel firstprivate(ix, jx, kx, gd)
   {
     float th_min = 1.0;
     
@@ -3224,12 +2998,6 @@ void FFV::minDistance(float* cut, int* bid, FILE* fp)
               float c = cut[mp+n];
               th_min = min(th_min, c);
               //th_min = min(th_min, cutPos->getPos(i+1,j+1,k+1,n)); slower than above inplementation
-              
-              if ( (c > 0.0) && (c <= eps) )
-              {
-                cut[mp+n] = eps;
-                g++;
-              }
             }
           }
 
@@ -3245,28 +3013,17 @@ void FFV::minDistance(float* cut, int* bid, FILE* fp)
     
   global_min = local_min;
   
-  // Allreduce時の桁あふれ対策のため、unsigned long で集約
-  unsigned long gl = (unsigned long)g;
   
   if ( numProc > 1 )
   {
     float tmp = global_min;
     if ( paraMngr->Allreduce(&tmp, &global_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
-    
-    unsigned long tmp_g = gl;
-    if ( paraMngr->Allreduce(&tmp_g, &gl, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
   
   TIMING_stop(tm_cut_min);
-
-  if ( gl > 0 )
-  {
-    Hostonly_
-    {
-      fprintf(fp, "\tMinimum non-dimnensional distance is %e and replaced to %e : num = %ld\n\n", global_min, eps, gl);
-      printf     ("\tMinimum non-dimnensional distance is %e and replaced to %e : num = %ld\n\n", global_min, eps, gl);
-    }
-  }
+  
+  fprintf(fp, "\tMinimum non-dimnensional distance is %e\n\n", global_min);
+  printf     ("\tMinimum non-dimnensional distance is %e\n\n", global_min);
 
 }
 
@@ -3563,48 +3320,6 @@ void FFV::resizeCompoBbox()
 
 
 // #################################################################
-/* @brief ボクセルをスキャンし情報を表示する
- * @param [in] fp file pointer
- */
-void FFV::scanVoxel(FILE* fp)
-{
-  // 媒質IDリスト
-  int* cell_id = new int[C.NoCompo+1];
-  
-  for (int i=1; i<=C.NoCompo; i++) cell_id[i]=0;
-  
-  
-  // 外部境界面の媒質IDをセット
-  for (int i=0; i<NOFACE; i++)
-  {
-    if ( BC.exportOBC(i)->getClass() != OBC_PERIODIC )
-    {
-      int m = BC.exportOBC(i)->getGuideMedium();
-      
-      if ( m<1 || m>C.NoMedium )
-      {
-        Hostonly_
-        {
-          stamped_printf (   "\tError : An ID of guide cell[%d] is out of range. dir=%d\n", m, i);
-          stamped_fprintf(fp,"\tError : An ID of guide cell[%d] is out of range. dir=%d\n", m, i);
-        }
-        Exit(0);
-      }
-      
-      cell_id[m] = 1;
-    }
-  }
-  
-  
-  // midに設定されたIDをスキャンし，IDの個数を返し，作業用のcolorList配列にIDを保持，midに含まれるIDの数をチェック
-  V.scanCell(d_mid, cell_id, C.Hide.Change_ID, fp);
-  
-  if ( cell_id ) delete [] cell_id;
-  
-}
-
-
-// #################################################################
 /* @brief 外部境界条件を読み込み，Controlクラスに保持する
  */
 void FFV::setBCinfo()
@@ -3617,7 +3332,7 @@ void FFV::setBCinfo()
   B.countMedium(&C, mat);
   
   
-  // パラメータファイルをパースして，外部境界条件を保持する　>> VoxScan()以前に処理
+  // パラメータファイルをパースして，外部境界条件を保持する
   B.loadOuterBC( BC.exportOBC(), mat, cmp );
 
   
@@ -4126,11 +3841,6 @@ void FFV::setMediumList(FILE* fp)
  */
 void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
 {
-  // d_midをゼロで初期化
-  size_t mt = (size[0]+2*guide) * (size[1]+2*guide) *(size[2]+2*guide) * sizeof(int);
-  memset(d_mid, 0, mt);
-  
-  
   switch (C.Mode.Example)
   {
     case id_Polygon: // ユーザ例題
@@ -4142,22 +3852,22 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
       
       if ( C.isBinary() ) // binary
       {
-        Ex->setup(d_mid, &C, G_origin, C.NoCompo, mat, d_cut);
+        Ex->setup(d_bcd, &C, G_origin, C.NoCompo, mat, d_cut);
       }
       else // cut
       {
-        ((IP_Sphere*)Ex)->setup_cut(d_mid, &C, G_origin, C.NoCompo, mat, d_cut);
+        ((IP_Sphere*)Ex)->setup_cut(d_bcd, &C, G_origin, C.NoCompo, mat, d_cut);
       }
       break;
       
     default: // ほかのIntrinsic problems
       setupCutInfo4IP(PrepMemory, TotalMemory, fp);
-      Ex->setup(d_mid, &C, G_origin, C.NoCompo, mat, d_cut);
+      Ex->setup(d_bcd, &C, G_origin, C.NoCompo, mat, d_cut);
       break;
   }
   
-  // midのガイドセル同期
-  if ( paraMngr->BndCommS3D(d_mid, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
+  // ガイドセル同期
+  if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
   
 }
 
@@ -4169,7 +3879,9 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
  */
 void FFV::setMonitorList()
 {
-  MO.setControlVars(d_bcd,
+  MO.setControlVars(d_bid,
+                    d_cut,
+                    d_bcd,
                     C.RefVelocity,
                     C.BaseTemp,
                     C.DiffTemp,
@@ -4185,8 +3897,52 @@ void FFV::setMonitorList()
   MO.getMonitor(&C);
   
   
-  // 内部境界条件として指定されたセルモニタ設定を登録
-  MO.setInnerBoundary(cmp, C.NoCompo);
+  // ShapeMonitorのインスタンス
+  ShapeMonitor SM(size, guide, (float*)pitch, (float*)origin);
+  
+  for (int n=1; n<=C.NoCompo; n++)
+  {
+    if ( cmp[n].isMONITOR() )
+    {
+      switch ( cmp[n].get_Shape() )
+      {
+          // BCで指定するCELL_MONITORのIDをbcd[]にセットする
+        case SHAPE_BOX:
+        case SHAPE_CYLINDER:
+          V.setMonitorShape(d_bcd, n, &SM, cmp, C.RefLength);
+          cmp[n].setEnsLocal(ON);
+          break;
+          
+        case SHAPE_POLYGON:
+          // Polygon指定の場合はMonitorクラスで処理
+          break;
+          
+        default:
+          Exit(0);
+          break;
+      }
+    }
+  }
+  
+  
+  // セルモニタ設定を登録
+  MO.setCellMonitor(cmp, C.NoCompo);
+  
+  
+  // Polygon指定のセルモニターの場合に交点と境界IDを除去
+  for (int n=1; n<=C.NoCompo; n++)
+  {
+    if ( cmp[n].isMONITOR() )
+    {
+      switch ( cmp[n].get_Shape() )
+      {
+        case SHAPE_POLYGON:
+          V.clearMonitorCut(d_cut, d_bid, n);
+          break;
+      }
+    }
+  }
+  
 }
 
 
@@ -4299,50 +4055,6 @@ void FFV::setParameters()
   // コンポーネントと外部境界のパラメータを有次元化
   C.setCmpParameters(mat, cmp, BC.exportOBC());
 }
-
-
-
-// #################################################################
-/* @brief BCで指定するCELL_MINITORのIDをmid[]にセットする
- */
-void FFV::setupCellMonitor()
-{
-  
-  // Cell_Monitorの指定がある場合，モニタ位置をセット
-  if ( (C.Sampling.log == ON) && (C.existMonitor() == ON) )
-  {
-    
-    // ShapeMonitorのインスタンス
-    ShapeMonitor SM(size, guide, (float*)pitch, (float*)origin);
-    
-    for (int n=1; n<=C.NoCompo; n++)
-    {
-      
-      if ( cmp[n].isMONITOR() )
-      {
-        switch ( cmp[n].get_Shape() )
-        {
-          case SHAPE_BOX:
-          case SHAPE_CYLINDER:
-            V.setMonitorShape(d_mid, n, &SM, cmp, C.RefLength);
-            cmp[n].setEnsLocal(ON);
-            break;
-            
-          case SHAPE_VOXEL:
-            V.setMonitorCellID(d_mid, d_bid, d_cut, n, C.RefMat, cmp[n].getSamplingWidth());
-            cmp[n].setEnsLocal(ON);
-            break;
-            
-          default:
-            Exit(0);
-            break;
-        }
-      }
-    }
-  }
-  
-}
-
 
 
 // #################################################################
@@ -4903,6 +4615,37 @@ void FFV::setVOF()
   }
 }
 
+
+// #################################################################
+// 外部境界面およびガイドセルのカットとIDの処理
+void FFV::TreatmentOfOuterBoundary()
+{
+  // ガイドセル上にパラメータファイルで指定する媒質IDを代入する．周期境界の場合の処理も含む．
+  for (int face=0; face<NOFACE; face++)
+  {
+    if ( (C.Mode.Example == id_Jet) && (face==0) )
+    {
+      ; // skip
+    }
+    else
+    {
+      // 周期境界条件の並列時
+      if ( BC.exportOBC(face)->getClass() == OBC_PERIODIC )
+      {
+        V.setMediumOnGCperiodic(face, d_bcd, BC.exportOBC(face)->getPrdcMode() );
+      }
+      else // 周期境界以外
+      {
+        V.setMediumOnGC(face, d_bcd, BC.exportOBC(face)->getGuideMedium() );
+      }
+      
+    }
+  }
+  
+  
+  // 外部境界で壁面条件の場合にカットと境界IDを設定
+  V.setOBCcut(&BC, d_cut, d_bid);
+}
 
 
 

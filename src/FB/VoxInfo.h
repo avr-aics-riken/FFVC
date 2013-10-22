@@ -55,8 +55,8 @@ public:
   
 private:
   
-  // 外部境界に接するガイドセルのmid[]にIDを内部周期境界からコピーする
-  void copyID_Prdc_Inner (int* mid, const int* m_st, const int* m_ed, const int m_id, const int m_dir);
+  // 外部境界に接するガイドセルのbcd[]にIDを内部周期境界からコピーする
+  void copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const int m_id, const int m_dir);
   
   
   // 外部境界面の有効セル数をカウントする
@@ -77,7 +77,6 @@ private:
   
   // CompoListのエントリをbx[]へエンコードする
   unsigned long encOrder (const int order,
-                          const int* mid,
                           int* bx,
                           CompoList* cmp);
   
@@ -130,7 +129,7 @@ private:
   
   
   /**
-   * @brief 隣接６方向の最頻値IDを求める
+   * @brief 隣接６方向の最頻値IDを求める（0とfid以外）
    * @param [in] fid 流体のID
    * @param [in] qw  w方向のID
    * @param [in] qe  e方向のID
@@ -141,10 +140,10 @@ private:
    */
   inline int find_mode_id (const int fid, const int qw, const int qe, const int qs, const int qn, const int qb, const int qt)
   {
-    unsigned key[64]; ///< ID毎の頻度 @note ffv_Initialize() >> fill()でif ( C.NoCompo+1 > 64 )をチェック
-    int val[6];       ///< ID
+    unsigned key[CMP_BIT_W]; ///< ID毎の頻度 @note ffv_Initialize() >> fill()でif ( C.NoCompo+1 > CMP_BIT_W )をチェック
+    int val[6];              ///< ID
     
-    memset(key, 0, sizeof(unsigned)*64);
+    memset(key, 0, sizeof(unsigned)*CMP_BIT_W);
     
     val[0] = qw;
     val[1] = qe;
@@ -157,7 +156,7 @@ private:
     // 周囲6方向をテスト
     for (int l=0; l<6; l++)
     {
-      if ( val[l] != fid ) // フィルする流体IDでない
+      if ( (val[l] != fid) && (val[l] != 0) ) // 流体IDでも0でもない
       {
         key[ val[l] ]++;
       }
@@ -216,16 +215,15 @@ private:
     bid |= (s_id << (dir*5));
   }
 
-
   
 public:
   
   /**
-   * @brief 外部境界に接するガイドセルのmid[]にIDをエンコードする（内部周期境界の場合）
-   * @param [in,out] mid  ID配列のデータ
+   * @brief 外部境界に接するガイドセルのbcd[]にIDをエンコードする（内部周期境界の場合）
+   * @param [in,out] bcd  BCindex B
    * @param [in]     cmp  CompoList
    */
-  void adjMediumPrdc_Inner (int* mid, CompoList* cmp);
+  void adjMediumPrdcInner (int* bcd, CompoList* cmp);
   
   
   /**
@@ -233,6 +231,15 @@ public:
    * @param [in] bcd BCindex B
    */
   void chkOrder (const int* bcd);
+  
+  
+  /**
+   * @brief セルモニタの場合の交点情報をクリア
+   * @param [in,out]  cut     カット情報
+   * @param [in,out]  bid     境界ID情報
+   * @param [in]      order   エントリ番号
+   */
+  unsigned long clearMonitorCut (float* cut, int* bid, const int order);
   
   
   /**
@@ -245,11 +252,11 @@ public:
   
   /**
    * @brief セル数をカウント
-   * @param [in] mid     ID配列
-   * @param [in] painted ID=0以外でペイント済みを求める(true), m_idのセルをカウント(false)
+   * @param [in] bcd     BCindex B
+   * @param [in] painted ID=0以外でペイント済みを求める(true), bcd[]=0のセルをカウント(false)
    * @param [in] m_id    検査するID
    */
-  unsigned long countCell (const int* mid, bool painted=true, int m_id=0);
+  unsigned long countCell (const int* bcd, bool painted=true, int m_id=0);
   
   
   /**
@@ -271,95 +278,61 @@ public:
   
   
   /**
-   * @brief BCindex Bを表示する（デバッグ用）
+   * @brief BCindex を表示する（デバッグ用）
    * @param [in] bcd   BCindex B
-   * @param [in] fname 出力用ファイル名
-   */
-  void dbg_chkBCIndexB (const int* bcd, const char* fname);
-  
-  
-  /**
-   * @brief BCindex Cを表示する（デバッグ用）
    * @param [in] cdf   BCindex C
-   * @param [in] fname 出力用ファイル名
-   */
-  void dbg_chkBCIndexC (const int* cdf, const char* fname);
-  
-  
-  /**
-   * @brief BCindex Pを表示する（デバッグ用）
-   * @param [in] bcd   BCindex B
    * @param [in] bcp   BCindex P
    * @param [in] fname 出力用ファイル名
    */
-  void dbg_chkBCIndexP (const int* bcd, const int* bcp, const char* fname);
-  
-  
-  /**
-   * @brief ガイドセルにコンポーネントの格納番号をエンコード
-   * @param [in]     face  面番号
-   * @param [in]     d_mid ID配列
-   * @param [in,out] d_bcd BCindex B
-   */
-  void encOrderOnGC (const int face, const int* mid, int* bd);
+  void dbg_chkBCIndex (const int* bcd, const int* cdf, const int* bcp, const char* fname);
   
   
   /**
    * @brief 流体媒質のフィルをbid情報を元に実行
-   * @param [in,out] bid         カット点のID配列（5ビット幅x6方向）
-   * @param [in,out] mid         ID配列
+   * @param [in,out] bid         境界ID（5ビット幅x6方向）
+   * @param [in,out] bcd         BCindex B
    * @param [in,out] cut         カット情報
-   * @param [in]     tgt_id      フィルする流体ID
+   * @param [in]     tgt_id      フィルする流体IDのエントリ
    * @param [out]    substituted 固体IDに置換された数
-   * @param [in]     m_list      CellMonitorの格納順がリストアップされた配列
    */
-  unsigned long fillByBid (int* bid, int* mid, float* cut, const int tgt_id, unsigned long& substituted, const int* m_list);
-  
-  
-  /**
-   * @brief 流体媒質のフィルをmid情報を元に実行
-   * @param [in,out] bid      カット点のID配列（5ビット幅x6方向）
-   * @param [in,out] mid      ID配列
-   * @param [in,out] cut      カット情報
-   * @param [in]     tgt_id   フィルする流体ID
-   * @param [in]     m_list   CellMonitorの格納順がリストアップされた配列
-   */
-  unsigned long fillByMid (int* bid, int* mid, float* cut, const int tgt_id, const int* m_list);
+  unsigned long fillByBid (int* bid, int* bcd, float* cut, const int tgt_id, unsigned long& substituted);
   
   
   /* @brief targetセルの周囲の固体最頻値でフィルを実行
-   * @param [in,out] mid      ID配列
+   * @param [in,out] bcd      BCindex B
    * @param [in]     target   置換対象セルID
    * @param [in]     fluid_id フィルをする流体ID
    * @retval 置換されたセル数
    */
-  unsigned long fillByModalSolid (int* mid, const int target, const int fluid_id);
+  unsigned long fillByModalSolid (int* bcd, const int target, const int fluid_id);
   
   
   /**
-   * @brief ID置換を実行
-   * @param [in,out] mid     ID配列
-   * @param [in]     target  置換対象ID
-   * @param [in]     fill_id 置換ID
-   * @retval 置換されたセル数
+   * @brief 交点が定義点にある場合にそのポリゴンのエントリ番号でフィルする
+   * @param [in,out] bcd         BCindex B
+   * @param [in]     bid         境界ID（5ビット幅x6方向）
+   * @param [in]     cut         カット情報
+   * @retval フィルされたセル数
    */
-  unsigned long fillReplace (int* mid, const int target, const int fill_id);
+  unsigned long fillCutOnCellCenter (int* bcd, const int* bid, const float* cut);
+  
   
   /**
    * @brief シード点をペイントする
-   * @param [in,out] mid    ID配列
+   * @param [in,out] bcd    BCindex B
    * @param [in]     face   ヒント面
-   * @param [in]     target ペイントするID
-   * @param [in]     cut    距離情報
+   * @param [in]     target ペイントするIDのエントリ
+   * @param [in]     bid    境界ID
    */
-  unsigned long fillSeed (int* mid, const int face, const int target, const float* cut);
+  unsigned long fillSeed (int* bcd, const int face, const int target, const int* bid);
   
   
   /* @brief 孤立したゼロIDのセルを隣接セルIDで埋める
-   * @param [in,out] mid      ID配列
+   * @param [in,out] bcd      BCindex B
    * @param [in]     fluid_id フィルする流体ID
+   * @param [in]     bid      境界ID
    */
-  unsigned long fillIsolatedEmptyCell (int* mid, const int fluid_id);
+  unsigned long fillIsolatedEmptyCell (int* bcd, const int fluid_id, const int* bid);
   
   
   /**
@@ -377,14 +350,12 @@ public:
    * @param [out]    L   ノードローカルの不活性セル数
    * @param [out]    G   グローバルの不活性セル数
    * @param [in]     id  セルID
-   * @param [in]     mid ボクセル配列
    * @param [in,out] bx  BCindex B
    * @param [in,out] cmp CompoList
    */
   unsigned long flipInactive (unsigned long& L,
                               unsigned long& G,
                               const int id,
-                              const int* mid,
                               int* bx,
                               CompoList* cmp);
   
@@ -401,19 +372,27 @@ public:
   bool findLBCbbox (const int tgt, const int* bid, const float* cut, int* st, int* ed, const int policy);
   
   
-  /**
-   * @brief cellで保持されるボクセルid配列をスキャンする
-   * @param [in,out] mid        ボクセルIDを保持する配列
-   * @param [in]     colorList  IDリスト
-   * @param [in]     ID_replace ID=0を置換するID
-   * @param [in]     fp         file pointer
+  
+  /* @brief 交点が定義点にある場合の修正
+   * @param [in,out] bid      境界ID
+   * @param [in]     cut      カット情報
+   * @param [in]     fluid_id フィルをする流体ID
+   * @retval 置換されたセル数
    */
-  void scanCell (int *mid, const int* colorList, const int ID_replace, FILE* fp);
+  unsigned long modifyCutOnCellCenter (int* bid, const float* cut, const int fluid_id);
   
   
-  // bx[]に各境界条件の共通のビット情報をエンコードする
-  void setBCIndexBase (int* bd,
-                       int* mid,
+  /**
+   * @brief bx[]に各境界条件の共通のビット情報をエンコードする
+   * @param [in,out] bx    BCindex B
+   * @param [in]     cvf   コンポーネントの体積率
+   * @param [in]     mat   MediumList
+   * @param [in,out] cmp   CompoList
+   * @param [in,out] Lcell ノードローカルの有効セル数
+   * @param [in,out] Gcell グローバルの有効セル数
+   * @param [in]     KOS   解くべき方程式の種類 KIND_OF_SOLVER
+   */
+  void setBCIndexBase (int* bx,
                        const float* cvf,
                        const MediumList* mat,
                        CompoList* cmp,
@@ -426,7 +405,6 @@ public:
    * @brief 温度境界条件のビット情報をエンコードする
    * @param [in,out] cdf    BCindex C
    * @param [in,out] bd     BCindex B
-   * @param [in,out] mid    ID配列
    * @param [in]     BC     SetBCクラスのポインタ
    * @param [in]     kos    KindOfSolver
    * @param [in,out] cmp    CompoList
@@ -435,7 +413,6 @@ public:
    */
   void setBCIndexH (int* cdf,
                     int* bd,
-                    int* mid,
                     SetBC* BC,
                     const int kos,
                     CompoList* cmp,
@@ -447,30 +424,25 @@ public:
    * @brief 圧力境界条件のビット情報をエンコードする
    * @param [in,out] bcd      BCindex B
    * @param [in,out] bcp      BCindex P
-   * @param [in,out] mid      ID配列
    * @param [in]     BC       SetBCクラスのポインタ
    * @param [in,out] cmp      CompoList
    * @param [in]     icls     Intrinsic class
    * @param [in]     cut      距離情報
    * @param [in]     bid      カットID情報
-   * @param [in]     isBinary バイナリの場合true
    * @retval 表面セル数
    */
   unsigned long setBCIndexP (int* bcd,
                              int* bcp,
-                             int* mid,
                              SetBC* BC,
                              CompoList* cmp,
                              int icls,
                              const float* cut,
-                             const int* bid,
-                             const bool isBinary);
+                             const int* bid);
   
   
   /**
    * @brief cdf[]に境界条件のビット情報をエンコードする
    * @param [in,out] cdf    BCindex C
-   * @param [in]     mid    ボクセルID配列
    * @param [in,out] bp     BCindex P
    * @param [in]     BC     SetBCクラスのポインタ
    * @param [in]     cmp    CompoListクラスのポインタ
@@ -479,7 +451,6 @@ public:
    * @param [in]     cut_id BID配列
    */
   void setBCIndexV (int* cdf,
-                    const int* mid,
                     int* bp,
                     SetBC* BC,
                     CompoList* cmp,
@@ -506,43 +477,32 @@ public:
   
   
   /**
-   * @brief 計算領域外部のガイドセルに媒質IDをエンコードする（周期境界以外の場合）
+   * @brief 計算領域外部のガイドセルに媒質IDエントリをエンコードする（周期境界以外の場合）
    * @param [in]     face      外部境界面番号
-   * @param [in,out] mid       ID配列のデータクラス
-   * @param [in]     c_id      媒質格納番号
+   * @param [in,out] bcd       BCindex B
+   * @param [in]     c_id      媒質IDエントリ番号
    */
-  void setMediumOnGC (const int face, int* mid, const int c_id);
+  void setMediumOnGC (const int face, int* bcd, const int c_id);
   
   
   /**
-   * @brief 計算領域外部のガイドセルに媒質IDをエンコードする（周期境界の場合）
+   * @brief 計算領域外部のガイドセルに媒質IDエントリをエンコードする（周期境界の場合）
    * @param [in]     face      外部境界面番号
-   * @param [in,out] mid       ID配列のデータクラス
+   * @param [in,out] bcd       BCindex B
    * @param [in]     prdc_mode 周期境界条件のモード
    */
-  void setMediumOnGCperiodic (const int face, int* mid, const int prdc_mode);
-  
-  /**
-   * @brief セルモニターのIDをmid[]にセットする
-   * @param [in,out] mid    ID配列
-   * @param [in]     bid    カットID情報
-   * @param [in]     cut    距離情報
-   * @param [in]     target 指定ID
-   * @param [in]     fluid  流体のID
-   * @param [in]     policy セルモニター幅
-   */
-  unsigned long setMonitorCellID (int* mid, const int* bid, const float* cut, const int target, const int fluid, const int policy);
+  void setMediumOnGCperiodic (const int face, int* bcd, const int prdc_mode);
   
   
   /**
-   * @brief Cell_Monitorで指定するIDでモニタ部分を指定するためのしかけ (SHAPE_BOX, SHAPE_CYLINDER)
-   * @param [in] mid  ID配列
+   * @brief CellMonitorで指定するIDでモニタ部分を指定するためのしかけ (SHAPE_BOX, SHAPE_CYLINDER)
+   * @param [in] bcd  BCindex B
    * @param [in] n    BC格納番号
    * @param [in] SM   ShapeMonitorクラス
    * @param [in] cmp  CompoListクラス
    * @param [in] RefL 代表長さ
    */
-  void setMonitorShape (int* mid, const int n, ShapeMonitor* SM, CompoList* cmp, const REAL_TYPE RefL);
+  void setMonitorShape (int* bcd, const int n, ShapeMonitor* SM, CompoList* cmp, const REAL_TYPE RefL);
   
   
   /**
@@ -552,18 +512,6 @@ public:
    * @param [in]     bid カットID情報
    */
   void setOBCcut (SetBC* BC, float* cut, int* bid);
-  
-  
-  /**
-   * @brief ボクセルモデルにカット情報から得られた固体情報を転写する
-   * @param [in,out] mid セルID
-   * @param [in]     bid カットID情報
-   * @param [in]     cut 距離情報
-   * @param [in]     cmp CompoListクラス
-   * @retval 固体セル数
-   * @attention 境界条件ポリゴンのIDへペイントしないので，予めチェック用のリストをつくっておき，ペイント時に確認
-   */
-  unsigned long SolidFromCut (int* mid, const int* bid, const float* cut, CompoList* cmp);
   
 };
 

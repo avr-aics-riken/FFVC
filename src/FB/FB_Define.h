@@ -25,7 +25,7 @@
 
 #include "mydebug.h"
 
-#define FB_VERS "1.4.0"
+#define FB_VERS "1.4.2"
 
 
 // precision
@@ -126,6 +126,7 @@
 #define MASK_8     0xff // 8 bit幅
 #define MASK_6     0x3f // 6 bit幅
 #define MASK_5     0x1f // 5 bit幅
+#define CMP_BIT_W  32 // 5bit
 
 
 // エンコードビット　共通
@@ -239,7 +240,7 @@
 // モニタの形状
 #define SHAPE_CYLINDER 1
 #define SHAPE_BOX      2
-#define SHAPE_VOXEL    3
+#define SHAPE_POLYGON  3
 
 // サンプリング方法
 #define SAMPLING_NEAREST       1  /// モニタ点を含むセルでの値
@@ -250,10 +251,6 @@
 #define SAMPLING_ALL        1 ///< 全タイプのセルを対象
 #define SAMPLING_FLUID_ONLY 2 ///< 流体セルのみを対象
 #define SAMPLING_SOLID_ONLY 3 ///< 固体セルのみを対象
-
-// セルモニターの場合のサンプリング幅
-#define SINGLE_CELL    1 ///< 指定面を含むセルのみ
-#define NEIGHBOR_CELL  2 ///< 指定面の両側のセル
 
 
 // GRIDの種類

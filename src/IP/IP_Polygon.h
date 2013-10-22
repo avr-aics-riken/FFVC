@@ -37,8 +37,16 @@ public:
   ~IP_Polygon() {}
 
 public:
-  
-  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut);
+
+  /* @brief 矩形の計算領域のセルIDを設定する
+   * @param [in,out] bcd      BCindex B
+   * @param [in]     R        Controlクラスのポインタ
+   * @param [in]     G_org    グローバルな原点（無次元）
+   * @param [in]     NoMedium 媒質数
+   * @param [in]     mat      MediumListクラスのポインタ
+   * @param [out]    cut      カット情報
+   */
+  virtual void setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut);
   
 };
 #endif // _IP_POLYGON_H_

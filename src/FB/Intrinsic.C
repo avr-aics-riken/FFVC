@@ -87,10 +87,10 @@ void Intrinsic::setRefParameter(Control* Cref)
 
 // #################################################################
 /* @brief モデルIDをsphフォーマット(float)で出力する
- * @param [in] mid ID情報
+ * @param [in] bcd BCindex B
  * @param [in] R   コントロールクラスのポインタ
  */
-void Intrinsic::writeSPH(const int *mid, const Control* R)
+void Intrinsic::writeSPH(const int *bcd, const Control* R)
 {
   int ix, jx, kx;
   float ox, oy, oz, dx, dy, dz;
@@ -134,15 +134,13 @@ void Intrinsic::writeSPH(const int *mid, const Control* R)
   
   float *q = new float[nx];
   
-  size_t m, l;
-  
-  #pragma omp parallel for firstprivate(imax, jmax, kmax, ix, jx, gd) private(m, l) schedule(static)
+  #pragma omp parallel for firstprivate(imax, jmax, kmax, ix, jx, gd) schedule(static)
   for (int k=0; k<=(kmax+1); k++) {
     for (int j=0; j<=(jmax+1); j++) {
       for (int i=0; i<=(imax+1); i++) {
-        l = (size_t)(ix*jx*k + ix*j + i);
-        m = _F_IDX_S3D(i, j, k, imax, jmax, kmax, gd);
-        q[l] = (float)mid[m];
+        size_t l = (size_t)(ix*jx*k + ix*j + i);
+        size_t m = _F_IDX_S3D(i, j, k, imax, jmax, kmax, gd);
+        q[l] = (float)DECODE_CMP(bcd[m]);
       }
     }
   }
@@ -313,10 +311,10 @@ void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
 
 // #################################################################
 /* @brief 例題のモデルをsvxフォーマットで出力する(ID)
- * @param [in] id ID情報
+ * @param [in] bcd BCindex B
  * @param [in] R  コントロールクラスのポインタ
  */
-void Intrinsic::writeSVX(int *id, Control* R)
+void Intrinsic::writeSVX(const int* bcd, Control* R)
 {
   
   int   sz, ix, jx, kx;
@@ -363,7 +361,7 @@ void Intrinsic::writeSVX(int *id, Control* R)
       for (int i=0; i<=(imax+1); i++) {
         l = (size_t)(ix*jx*k + ix*j + i);
         m = _F_IDX_S3D(i, j, k, imax, jmax, kmax, gd);
-        q[l] = id[m];
+        q[l] = DECODE_CMP(bcd[m]);
       }
     }
   }

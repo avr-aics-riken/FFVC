@@ -41,11 +41,36 @@ protected:
 
 public:
   
+  /*
+   * @brief パラメータをロード
+   * @param [in] R      Controlクラス
+   * @param [in] tpCntl テキストパーサクラス
+   * @return true-成功, false-エラー
+   */
   virtual bool getTP(Control* R, TextParser* tpCntl);
   
+  
+  /*
+   * @brief 領域パラメータを設定する
+   * @param [in]     R   Controlクラスのポインタ
+   * @param [in]     sz  分割数
+   * @param [in,out] org 計算領域の基点
+   * @param [in,out] reg 計算領域のbounding boxサイズ
+   * @param [in,out] pch セル幅
+   */
   virtual void setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch);
   
-  virtual void setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut);
+  
+  /*
+   * @brief Cavityの計算領域のセルIDを設定する
+   * @param [in,out] bcd      BCindex B
+   * @param [in]     R        Controlクラスのポインタ
+   * @param [in]     G_org    グローバルな原点（無次元）
+   * @param [in]     NoMedium 媒質数
+   * @param [in]     mat      MediumListクラスのポインタ
+   * @param [out]    cut      カット情報
+   */
+  virtual void setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut);
   
 };
 #endif // _IP_PMT_H_

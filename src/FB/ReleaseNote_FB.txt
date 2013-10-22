@@ -17,6 +17,12 @@
 RELEASE NOTE
 ============
 
+Ver 1.4.2   2013-10-18
+  - Cell_Monitorを交点ベースに変更
+
+Ver 1.4.1   2013-10-15
+  - mid >> bcd
+
 Ver 1.4.0   2013-10-13
   - bool normalizeTime() >> void
 

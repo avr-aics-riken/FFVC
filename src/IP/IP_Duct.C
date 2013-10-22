@@ -24,12 +24,7 @@
 
 
 // #################################################################
-/*
- * @brief パラメータをロード
- * @param [in] R      Controlクラス
- * @param [in] tpCntl テキストパーサクラス
- * @return true-成功, false-エラー
- */
+// パラメータをロード
 bool IP_Duct::getTP(Control* R, TextParser* tpCntl)
 {
   std::string str;
@@ -143,11 +138,7 @@ bool IP_Duct::getTP(Control* R, TextParser* tpCntl)
 
 
 // #################################################################
-/**
- * @brief パラメータの表示
- * @param [in] fp ファイルポインタ
- * @param [in] R  コントロールクラスのポインタ
- */
+//  パラメータの表示
 void IP_Duct::printPara(FILE* fp, const Control* R)
 {
   if ( !fp ) {
@@ -189,16 +180,8 @@ void IP_Duct::printPara(FILE* fp, const Control* R)
 
 
 // #################################################################
-/*
- * @brief Ductの計算領域のセルIDを設定する
- * @param [in,out] mid      媒質情報の配列
- * @param [in]     R        Controlクラスのポインタ
- * @param [in]     G_org    グローバルな原点（無次元）
- * @param [in]     NoMedium 媒質数
- * @param [in]     mat      MediumListクラスのポインタ
- * @param [out]    cut      カット情報
- */
-void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
+// Ductの計算領域のセルIDを設定する
+void IP_Duct::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
 {
   int mid_fluid=1;        /// 流体
   int mid_solid=2;        /// 固体
@@ -232,7 +215,7 @@ void IP_Duct::setup(int* mid, Control* R, REAL_TYPE* G_org, const int NoMedium, 
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        mid[m] = mid_solid;
+        bcd[m] |= mid_solid;
       }
     }
   }
@@ -245,7 +228,7 @@ schedule(static)
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
           size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          mid[m] = mid_fluid;
+          bcd[m] |= mid_fluid;
         }
       }
     }
@@ -260,7 +243,7 @@ schedule(static)
               size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
               y = oy + 0.5*dh + dh*(j-1);
               z = oz + 0.5*dh + dh*(k-1);
-              if ( (y-r)*(y-r)+(z-r)*(z-r) <= r*r ) mid[m] = mid_fluid;
+              if ( (y-r)*(y-r)+(z-r)*(z-r) <= r*r ) bcd[m] |= mid_fluid;
             }
           }
         }
@@ -274,7 +257,7 @@ schedule(static)
               size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
               x = ox + 0.5*dh + dh*(i-1);
               z = oz + 0.5*dh + dh*(k-1);
-              if ( (x-r)*(x-r)+(z-r)*(z-r) <= r*r ) mid[m] = mid_fluid;
+              if ( (x-r)*(x-r)+(z-r)*(z-r) <= r*r ) bcd[m] |= mid_fluid;
             }
           }
         }
@@ -288,7 +271,7 @@ schedule(static)
               size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
               x = ox + 0.5*dh + dh*(i-1);
               y = oy + 0.5*dh + dh*(j-1);
-              if ( (x-r)*(x-r)+(y-r)*(y-r) <= r*r ) mid[m] = mid_fluid;
+              if ( (x-r)*(x-r)+(y-r)*(y-r) <= r*r ) bcd[m] |= mid_fluid;
             }
           }
         }
@@ -311,10 +294,10 @@ schedule(static)
                 z = oz + 0.5*dh + dh*(k-1);
                 if ( x < ox+len ) {
                   if ( driver.shape == id_circular ) {
-                    if ( (y-r)*(y-r)+(z-r)*(z-r) <= r*r ) mid[m] = mid_driver; // 半径以内をドライバIDにする
+                    if ( (y-r)*(y-r)+(z-r)*(z-r) <= r*r ) bcd[m] |= mid_driver; // 半径以内をドライバIDにする
                   }
                   else {
-                    mid[m] = mid_driver;
+                    bcd[m] |= mid_driver;
                   }
                 }
               }
@@ -334,10 +317,10 @@ schedule(static)
                 z = oz + 0.5*dh + dh*(k-1);
                 if ( x > ox+Lx-len ) {
                   if ( driver.shape == id_circular ) {
-                    if ( (y-r)*(y-r)+(z-r)*(z-r) <= r*r ) mid[m] = mid_driver;
+                    if ( (y-r)*(y-r)+(z-r)*(z-r) <= r*r ) bcd[m] |= mid_driver;
                   }
                   else {
-                    mid[m] = mid_driver;
+                    bcd[m] |= mid_driver;
                   }
                 }                
               }
@@ -357,10 +340,10 @@ schedule(static)
                 z = oz + 0.5*dh + dh*(k-1);
                 if ( y < oy+len ) {
                   if ( driver.shape == id_circular ) {
-                    if ( (x-r)*(x-r)+(z-r)*(z-r) <= r*r ) mid[m] = mid_driver;
+                    if ( (x-r)*(x-r)+(z-r)*(z-r) <= r*r ) bcd[m] |= mid_driver;
                   }
                   else {
-                    mid[m] = mid_driver;
+                    bcd[m] |= mid_driver;
                   }
                 }
               }
@@ -380,10 +363,10 @@ schedule(static)
                 z = oz + 0.5*dh + dh*(k-1);
                 if ( y > oy+Ly-len ) {
                   if ( driver.shape == id_circular ) {
-                    if ( (x-r)*(x-r)+(z-r)*(z-r) <= r*r ) mid[m] = mid_driver;
+                    if ( (x-r)*(x-r)+(z-r)*(z-r) <= r*r ) bcd[m] |= mid_driver;
                   }
                   else {
-                    mid[m] = mid_driver;
+                    bcd[m] |= mid_driver;
                   }
                 }
               }
@@ -403,10 +386,10 @@ schedule(static)
                 z = oz + 0.5*dh + dh*(k-1);
                 if ( z < oz+len ) {
                   if ( driver.shape == id_circular ) {
-                    if ( (x-r)*(x-r)+(y-r)*(y-r) <= r*r ) mid[m] = mid_driver;
+                    if ( (x-r)*(x-r)+(y-r)*(y-r) <= r*r ) bcd[m] |= mid_driver;
                   }
                   else {
-                    mid[m] = mid_driver;
+                    bcd[m] |= mid_driver;
                   }
                 }
               }
@@ -426,10 +409,10 @@ schedule(static)
                 z = oz + 0.5*dh + dh*(k-1);
                 if ( z > oz+Lz-len ) {
                   if ( driver.shape == id_circular ) {
-                    if ( (x-r)*(x-r)+(y-r)*(y-r) <= r*r ) mid[m] = mid_driver;
+                    if ( (x-r)*(x-r)+(y-r)*(y-r) <= r*r ) bcd[m] |= mid_driver;
                   }
                   else {
-                    mid[m] = mid_driver;
+                    bcd[m] |= mid_driver;
                   }
                 }
               }
@@ -451,9 +434,9 @@ schedule(static)
             for (int i=1; i<=ix; i++) {
               size_t m = _F_IDX_S3D(i,   j, k, ix, jx, kx, gd);
               size_t m1= _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd);
-              if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) 
+              if ( (DECODE_CMP( bcd[m] )  == mid_driver) && (DECODE_CMP( bcd[m1] ) == mid_fluid) )
               {
-                mid[m] = mid_driver_face;
+                bcd[m] |= mid_driver_face;
               }
             }
           }
@@ -466,9 +449,9 @@ schedule(static)
             for (int i=1; i<=ix; i++) {
               size_t m = _F_IDX_S3D(i,   j, k, ix, jx, kx, gd);
               size_t m1= _F_IDX_S3D(i-1, j, k, ix, jx, kx, gd);
-              if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) 
+              if ( (DECODE_CMP( bcd[m] ) == mid_driver) && (DECODE_CMP( bcd[m1] )  == mid_fluid) ) 
               {
-                mid[m] = mid_driver_face;
+                bcd[m] |= mid_driver_face;
               }
             }
           }
@@ -481,9 +464,9 @@ schedule(static)
             for (int i=1; i<=ix; i++) {
               size_t m = _F_IDX_S3D(i, j,   k, ix, jx, kx, gd);
               size_t m1= _F_IDX_S3D(i, j+1, k, ix, jx, kx, gd);
-              if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) 
+              if ( (DECODE_CMP( bcd[m] ) == mid_driver) && (DECODE_CMP( bcd[m1] )  == mid_fluid) ) 
               {
-                mid[m] = mid_driver_face;
+                bcd[m] |= mid_driver_face;
               }
             }
           }
@@ -496,9 +479,9 @@ schedule(static)
             for (int i=1; i<=ix; i++) {
               size_t m = _F_IDX_S3D(i, j,   k, ix, jx, kx, gd);
               size_t m1= _F_IDX_S3D(i, j-1, k, ix, jx, kx, gd);
-              if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) 
+              if ( (DECODE_CMP( bcd[m] ) == mid_driver) && (DECODE_CMP( bcd[m1] )  == mid_fluid) ) 
               {
-                mid[m] = mid_driver_face;
+                bcd[m] |= mid_driver_face;
               }
             }
           }
@@ -511,9 +494,9 @@ schedule(static)
             for (int i=1; i<=ix; i++) {
               size_t m = _F_IDX_S3D(i, j, k,   ix, jx, kx, gd);
               size_t m1= _F_IDX_S3D(i, j, k+1, ix, jx, kx, gd);
-              if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) 
+              if ( (DECODE_CMP( bcd[m] ) == mid_driver) && (DECODE_CMP( bcd[m1] )  == mid_fluid) ) 
               {
-                mid[m] = mid_driver_face;
+                bcd[m] |= mid_driver_face;
               }
             }
           }
@@ -526,9 +509,9 @@ schedule(static)
             for (int i=1; i<=ix; i++) {
               size_t m = _F_IDX_S3D(i, j, k,   ix, jx, kx, gd);
               size_t m1= _F_IDX_S3D(i, j, k-1, ix, jx, kx, gd);
-              if ( (mid[m] == mid_driver) && (mid[m1] == mid_fluid) ) 
+              if ( (DECODE_CMP( bcd[m] ) == mid_driver) && (DECODE_CMP( bcd[m1] )  == mid_fluid) ) 
               {
-                mid[m] = mid_driver_face;
+                bcd[m] |= mid_driver_face;
               }
             }
           }
