@@ -230,18 +230,18 @@ double FFV::count_comm_size(const int sz[3], const int guide)
       
       switch (n) 
       {
-        case X_MINUS:
-        case X_PLUS:
+        case X_minus:
+        case X_plus:
           c += (double)(sz[1]*sz[2]);
           break;
           
-        case Y_MINUS:
-        case Y_PLUS:
+        case Y_minus:
+        case Y_plus:
           c += (double)(sz[0]*sz[2]);
           break;
           
-        case Z_MINUS:
-        case Z_PLUS:
+        case Z_minus:
+        case Z_plus:
           c += (double)(sz[0]*sz[1]);
           break;
       }
@@ -285,7 +285,7 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
     REAL_TYPE* vv = obc[face].getDomainV();
     
     // 特殊条件
-    if ( (R->Mode.Example == id_Jet) && (face==X_MINUS) )
+    if ( (R->Mode.Example == id_Jet) && (face==X_minus) )
     {
       REAL_TYPE q[2] = {0.0, 0.0};
       
@@ -1091,7 +1091,19 @@ int FFV::MainLoop()
     
     if( loop_ret == 0 ) break;
   }
+  
+  
+  // サンプリングファイルのクローズ
+  MO.closeFile();
 
+  if ( fp_b ) fclose(fp_b);  ///< 基本情報
+  if ( fp_w ) fclose(fp_w);  ///< 壁面情報
+  if ( fp_c ) fclose(fp_c);  ///< コンポーネント情報
+  if ( fp_d ) fclose(fp_d);  ///< 流量収支情報
+  if ( fp_i ) fclose(fp_i);  ///< 反復履歴情報
+  if ( fp_f ) fclose(fp_f);  ///< 力の履歴情報
+
+  
   if ( !stepPost() ) return -1;
 
   return ret;
@@ -1379,10 +1391,7 @@ void FFV::set_timing_label()
   set_label(tm_file_out,           "File_Output",             PerfMonitor::CALC);
   set_label(tm_hstry_base,         "History_Base",            PerfMonitor::CALC);
   set_label(tm_hstry_wall,         "History_Wall_Info",       PerfMonitor::CALC);
-  set_label(tm_hstry_dmfx,         "History_Domain_Flux",     PerfMonitor::CALC);
   set_label(tm_total_prs,          "Total_Pressure",          PerfMonitor::CALC);
-  set_label(tm_compo_monitor,      "Component_Monitoring",    PerfMonitor::CALC);
-  set_label(tm_hstry_compo,        "History_Component",       PerfMonitor::CALC);
   set_label(tm_sampling,           "Sampling",                PerfMonitor::CALC);
   set_label(tm_hstry_sampling,     "History_Sampling",        PerfMonitor::CALC);
   set_label(tm_cal_force,          "Force_Calculation",       PerfMonitor::CALC);

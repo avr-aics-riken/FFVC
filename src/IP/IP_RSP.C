@@ -86,7 +86,6 @@ void IP_RSP::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_
  */
 void IP_RSP::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat)
 {
-  size_t m;
   
   // ローカルにコピー
   int ix = size[0];
@@ -98,8 +97,8 @@ void IP_RSP::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, c
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd); //FBUtility::getFindexS3D(size, guide, i, j, k);
-        bcd[m] |= 1;
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        bcd[m] = 0;
       }
     }
   }

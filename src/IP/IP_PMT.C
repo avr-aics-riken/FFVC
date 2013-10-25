@@ -74,34 +74,3 @@ void IP_PMT::setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_
   org[1] = -0.5*reg[1];
   org[2] = -0.5*reg[2];
 }
-
-
-// #################################################################
-// 計算領域のセルIDを設定する
-void IP_PMT::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
-{
-  // ローカルにコピー
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  int id_fluid;
-  
-  if ( (id_fluid = R->findIDfromLabel(mat, NoMedium, m_fluid)) == 0 )
-  {
-    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_fluid.c_str());
-    Exit(0);
-  }
-  
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, id_fluid) schedule(static)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        bcd[m] |= id_fluid;
-      }
-    }
-  }
-  
-}

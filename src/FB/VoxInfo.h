@@ -32,7 +32,6 @@
 #include "SetBC.h"
 #include "BndOuter.h"
 #include "vec3.h"
-#include "CompoFraction.h"
 #include "Intrinsic.h"
 #include "limits.h"
 #include "omp.h"
@@ -129,7 +128,7 @@ private:
   
   
   /**
-   * @brief 隣接６方向の最頻値IDを求める（0とfid以外）
+   * @brief 隣接6方向の最頻値IDを求める（0とfid以外）
    * @param [in] fid 流体のID
    * @param [in] qw  w方向のID
    * @param [in] qe  e方向のID
@@ -137,6 +136,7 @@ private:
    * @param [in] qn  n方向のID
    * @param [in] qb  b方向のID
    * @param [in] qt  t方向のID
+   * @note 0が戻り値の場合には想定外のエラー
    */
   inline int find_mode_id (const int fid, const int qw, const int qe, const int qs, const int qn, const int qb, const int qt)
   {
@@ -164,11 +164,11 @@ private:
     
     
     int mode = key[NoCompo]; // サーチの初期値，IDの大きい方から
-    int z = NoCompo;         // 最頻値のID
+    int z = 0;         // 最頻値のID
     
     for (int l=NoCompo-1; l>=1; l--)
     {
-      if ( key[l] > mode )
+      if ( (key[l] > mode) && (key[l]>0) )
       {
         mode = key[l];
         z = l;
@@ -176,17 +176,6 @@ private:
     }
     
     return z;
-  }
-  
-  
-  /*
-   * @brief 指定面方向のカットIDをとりだす
-   * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
-   * @param [in] bid  CutBid5のBoundrary ID
-   */
-  inline int getFaceBID (const int dir, const int bid) const
-  {
-    return ( (bid >> dir*5) & MASK_5 );
   }
   
   
@@ -203,17 +192,6 @@ private:
     return ( idx | (0x1<<shift) );
   }
   
-  
-  /*
-   * @brief CutBid5のBoundrary ID設定
-   * @param [in,out] bid  CutBid5のBoundrary ID
-   * @param [in]     dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
-   * @param [in]     s_id ID (1-31)
-   */
-  inline void setFaceBID (int& bid, const int dir, const int s_id)
-  {
-    bid |= (s_id << (dir*5));
-  }
 
   
 public:
@@ -231,15 +209,6 @@ public:
    * @param [in] bcd BCindex B
    */
   void chkOrder (const int* bcd);
-  
-  
-  /**
-   * @brief セルモニタの場合の交点情報をクリア
-   * @param [in,out]  cut     カット情報
-   * @param [in,out]  bid     境界ID情報
-   * @param [in]      order   エントリ番号
-   */
-  unsigned long clearMonitorCut (float* cut, int* bid, const int order);
   
   
   /**
@@ -477,41 +446,25 @@ public:
   
   
   /**
-   * @brief 計算領域外部のガイドセルに媒質IDエントリをエンコードする（周期境界以外の場合）
+   * @brief 外部境界が周期境界の場合の距離情報・境界ID・媒質エントリをセット
    * @param [in]     face      外部境界面番号
-   * @param [in,out] bcd       BCindex B
-   * @param [in]     c_id      媒質IDエントリ番号
-   */
-  void setMediumOnGC (const int face, int* bcd, const int c_id);
-  
-  
-  /**
-   * @brief 計算領域外部のガイドセルに媒質IDエントリをエンコードする（周期境界の場合）
-   * @param [in]     face      外部境界面番号
-   * @param [in,out] bcd       BCindex B
    * @param [in]     prdc_mode 周期境界条件のモード
+   * @param [in,out] bcd       BCindex B
+   * @note 領域境界面は全て流体を想定
    */
-  void setMediumOnGCperiodic (const int face, int* bcd, const int prdc_mode);
+  void setOBCperiodic (const int face, const int prdc_mode, int* bcd);
   
   
   /**
-   * @brief CellMonitorで指定するIDでモニタ部分を指定するためのしかけ (SHAPE_BOX, SHAPE_CYLINDER)
-   * @param [in] bcd  BCindex B
-   * @param [in] n    BC格納番号
-   * @param [in] SM   ShapeMonitorクラス
-   * @param [in] cmp  CompoListクラス
-   * @param [in] RefL 代表長さ
+   * @brief 外部境界の距離情報・境界ID・媒質エントリをセット
+   * @param [in]     face  外部境界面番号
+   * @param [in]     c_id  媒質IDエントリ番号
+   * @param [in]     str   "SOLID" or "FLUID"
+   * @param [in,out] bcd   BCindex B
+   * @param [in,out] cut   距離情報
+   * @param [in,out] bid   カットID情報
    */
-  void setMonitorShape (int* bcd, const int n, ShapeMonitor* SM, CompoList* cmp, const REAL_TYPE RefL);
-  
-  
-  /**
-   * @brief 外部境界のガイドセルが固体の場合に距離情報をセット
-   * @param [in]     BC  SetBCクラスのポインタ
-   * @param [in,out] cut 距離情報
-   * @param [in]     bid カットID情報
-   */
-  void setOBCcut (SetBC* BC, float* cut, int* bid);
+  void setOBC (const int face, const int c_id, const char* str, int* bcd, float* cut, int* bid);
   
 };
 

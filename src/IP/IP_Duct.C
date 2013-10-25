@@ -67,22 +67,22 @@ bool IP_Duct::getTP(Control* R, TextParser* tpCntl)
     return false;
   }
   if ( !strcasecmp(str.c_str(), "Xminus")) {
-    driver.direction = X_MINUS;
+    driver.direction = X_minus;
   }
   else if ( !strcasecmp(str.c_str(), "Xplus")) {
-    driver.direction = X_PLUS;
+    driver.direction = X_plus;
   }
   else if ( !strcasecmp(str.c_str(), "Yminus")) {
-    driver.direction = Y_MINUS;
+    driver.direction = Y_minus;
   }
   else if ( !strcasecmp(str.c_str(), "Yplus")) {
-    driver.direction = Y_PLUS;
+    driver.direction = Y_plus;
   }
   else if ( !strcasecmp(str.c_str(), "Zminus")) {
-    driver.direction = Z_MINUS;
+    driver.direction = Z_minus;
   }
   else if ( !strcasecmp(str.c_str(), "Zplus")) {
-    driver.direction = Z_PLUS;
+    driver.direction = Z_plus;
   }
   else {
     Hostonly_ stamped_printf("\tParsing error : Invalid value of '%s'\n", label.c_str());
@@ -148,18 +148,18 @@ void IP_Duct::printPara(FILE* fp, const Control* R)
   
   std::string dir;
   switch (driver.direction) {
-    case X_MINUS:
-    case X_PLUS:
+    case X_minus:
+    case X_plus:
       dir = "X dir.";
       break;
       
-    case Y_MINUS:
-    case Y_PLUS:
+    case Y_minus:
+    case Y_plus:
       dir = "Y dir.";
       break;
       
-    case Z_MINUS:
-    case Z_PLUS:
+    case Z_minus:
+    case Z_plus:
       dir = "Z dir.";
       break;
   }
@@ -209,13 +209,13 @@ void IP_Duct::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, 
   r  = driver.diameter/R->RefLength * 0.5;
   len= driver.length/R->RefLength;
   
-  // Initialize  内部領域をsolidにしておく
+  // Initialize
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        bcd[m] |= mid_solid;
+        bcd[m] = 0;
       }
     }
   }
@@ -228,15 +228,15 @@ schedule(static)
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
           size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          bcd[m] |= mid_fluid;
+          bcd[m] = 0;
         }
       }
     }
   }
   else { // 円管の場合，半径以下のセルを流体にする（ノードにかかわらず）
     switch (driver.direction) {
-      case X_MINUS:
-      case X_PLUS:
+      case X_minus:
+      case X_plus:
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
@@ -249,8 +249,8 @@ schedule(static)
         }
         break;
         
-      case Y_MINUS:
-      case Y_PLUS:
+      case Y_minus:
+      case Y_plus:
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
@@ -263,8 +263,8 @@ schedule(static)
         }
         break;
         
-      case Z_MINUS:
-      case Z_PLUS:
+      case Z_minus:
+      case Z_plus:
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
@@ -283,7 +283,7 @@ schedule(static)
   if ( driver.length > 0.0 ) {
     
     switch (driver.direction) {
-      case X_MINUS:
+      case X_minus:
         if ( nID[driver.direction] < 0 ) {
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
@@ -306,7 +306,7 @@ schedule(static)
         }        
         break;
         
-      case X_PLUS:
+      case X_plus:
         if ( nID[driver.direction] < 0 ) {
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
@@ -329,7 +329,7 @@ schedule(static)
         }
         break;
         
-      case Y_MINUS:
+      case Y_minus:
         if ( nID[driver.direction] < 0 ) {
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
@@ -352,7 +352,7 @@ schedule(static)
         }        
         break;
         
-      case Y_PLUS:
+      case Y_plus:
         if ( nID[driver.direction] < 0 ) {
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
@@ -375,7 +375,7 @@ schedule(static)
         }
         break;
         
-      case Z_MINUS:
+      case Z_minus:
         if ( nID[driver.direction] < 0 ) {
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
@@ -398,7 +398,7 @@ schedule(static)
         }
         break;
         
-      case Z_PLUS:
+      case Z_plus:
         if ( nID[driver.direction] < 0 ) {
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
@@ -428,7 +428,7 @@ schedule(static)
     
     switch (driver.direction) 
     {
-      case X_MINUS:
+      case X_minus:
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
@@ -443,7 +443,7 @@ schedule(static)
         }        
         break;
         
-      case X_PLUS:
+      case X_plus:
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
@@ -458,7 +458,7 @@ schedule(static)
         }
         break;
         
-      case Y_MINUS:
+      case Y_minus:
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
@@ -473,7 +473,7 @@ schedule(static)
         }        
         break;
         
-      case Y_PLUS:
+      case Y_plus:
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
@@ -488,7 +488,7 @@ schedule(static)
         }
         break;
         
-      case Z_MINUS:
+      case Z_minus:
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
@@ -503,7 +503,7 @@ schedule(static)
         }
         break;
         
-      case Z_PLUS:
+      case Z_plus:
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {

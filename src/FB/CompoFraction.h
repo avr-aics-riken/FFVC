@@ -262,6 +262,7 @@ protected:
     return FB::Vec3f( dot(a, u), dot(b, u), dot(c, u) );
   }
   
+  
 public:
   
   /** 

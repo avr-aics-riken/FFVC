@@ -63,17 +63,18 @@ void VoxInfo::chkOrder (const int* bcd)
   int gd = guide;
   unsigned long c=0;
   
-  // ガイドセル 1layer を含む全領域
+  // 内部領域
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
-  for (int k=0; k<=kx+1; k++) {
-    for (int j=0; j<=jx+1; j++) {
-      for (int i=0; i<=ix+1; i++) {
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         int s = bcd[m];
         int q = DECODE_CMP(s);
         
         if ( (q < 1) || (q > 31) )
         {
+          // debug; printf("%4d %4d %4d : %2d\n", i,j,k,q);
           c++;
         }
 
@@ -89,187 +90,10 @@ void VoxInfo::chkOrder (const int* bcd)
   
   if ( c > 0 )
   {
-    Hostonly_ printf("Error : BCindex encord is not correct. \n");
+    Hostonly_ printf("Error : BCindex encord is not correct : %lu\n", c);
     Exit(0);
   }
 }
-
-
-// #################################################################
-// セルモニタの場合の交点情報をクリアする
-unsigned long VoxInfo::clearMonitorCut (float* cut, int* bid, const int order)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  int odr = order;
-  
-  unsigned long c = 0;
-  
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, odr) schedule(static) reduction(+:c)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        int qq = bid[m];
-        
-        if ( TEST_BC(qq) ) // 6面のいずれかにIDがある
-        {
-          float* pos = &cut[ _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd) ];
-          
-          size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
-          size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
-          size_t m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd);
-          size_t m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd);
-          size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
-          size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
-          
-          // 隣接セルの方向に対する境界ID
-          int qw = getFaceBID(X_MINUS, qq);
-          int qe = getFaceBID(X_PLUS,  qq);
-          int qs = getFaceBID(Y_MINUS, qq);
-          int qn = getFaceBID(Y_PLUS,  qq);
-          int qb = getFaceBID(Z_MINUS, qq);
-          int qt = getFaceBID(Z_PLUS,  qq);
-          
-          int rw = getFaceBID(X_PLUS,  bid[m_w]);
-          int re = getFaceBID(X_MINUS, bid[m_e]);
-          int rs = getFaceBID(Y_PLUS,  bid[m_s]);
-          int rn = getFaceBID(Y_MINUS, bid[m_n]);
-          int rb = getFaceBID(Z_PLUS,  bid[m_b]);
-          int rt = getFaceBID(Z_MINUS, bid[m_t]);
-
-          
-          int flag = 0;
-          
-          // X-
-          if ( (pos[X_MINUS] <= 0.5) && (qw == odr) )
-          {
-            float dd = 1.0 - cut[ _F_IDX_S4DEX(X_PLUS, i-1, j, k, 6, ix, jx, kx, gd) ];
-            
-            if ( (fabsf(dd-pos[X_MINUS]) < ROUND_EPS) && ( qw == rw ) )
-            {
-              pos[X_MINUS] = 1.0;
-              setFaceBID(qq, X_MINUS, 0);
-            }
-            else
-            {
-              pos[X_MINUS] = dd;
-              setFaceBID(qq, X_MINUS, rw);
-            }
-            flag++;
-          }
-          
-          // X+
-          if ( (pos[X_PLUS] <= 0.5) && (qe == odr) )
-          {
-            float dd = 1.0 - cut[ _F_IDX_S4DEX(X_MINUS, i+1, j, k, 6, ix, jx, kx, gd) ];
-            
-            if ( (fabsf(dd-pos[X_PLUS]) < ROUND_EPS) && ( qe == re ) )
-            {
-              pos[X_PLUS] = 1.0;
-              setFaceBID(qq, X_PLUS, 0);
-            }
-            else
-            {
-              pos[X_PLUS] = dd;
-              setFaceBID(qq, X_PLUS, re);
-            }
-            flag++;
-          }
-          
-          // Y-
-          if ( (pos[Y_MINUS] <= 0.5) && (qs == odr) )
-          {
-            float dd = 1.0 - cut[ _F_IDX_S4DEX(Y_PLUS, i, j-1, k, 6, ix, jx, kx, gd) ];
-            
-            if ( (fabsf(dd-pos[Y_MINUS]) < ROUND_EPS) && ( qs == rs ) )
-            {
-              pos[Y_MINUS] = 1.0;
-              setFaceBID(qq, Y_MINUS, 0);
-            }
-            else
-            {
-              pos[Y_MINUS] = dd;
-              setFaceBID(qq, Y_MINUS, rs);
-            }
-            flag++;
-          }
-          
-          // Y+
-          if ( (pos[Y_PLUS] <= 0.5) && (qn == odr) )
-          {
-            float dd = 1.0 - cut[ _F_IDX_S4DEX(Y_MINUS, i, j+1, k, 6, ix, jx, kx, gd) ];
-            
-            if ( (fabsf(dd-pos[Y_PLUS]) < ROUND_EPS) && ( qn == rn ) )
-            {
-              pos[Y_PLUS] = 1.0;
-              setFaceBID(qq, Y_PLUS, 0);
-            }
-            else
-            {
-              pos[Y_PLUS] = dd;
-              setFaceBID(qq, Y_PLUS, rn);
-            }
-            flag++;
-          }
-          
-          // Z-
-          if ( (pos[Z_MINUS] <= 0.5) && (qb == odr) )
-          {
-            float dd = 1.0 - cut[ _F_IDX_S4DEX(Z_PLUS, i, j, k-1, 6, ix, jx, kx, gd) ];
-            
-            if ( (fabsf(dd-pos[Z_MINUS]) < ROUND_EPS) && ( qb == rb ) )
-            {
-              pos[Z_MINUS] = 1.0;
-              setFaceBID(qq, Z_MINUS, 0);
-            }
-            else
-            {
-              pos[Z_MINUS] = dd;
-              setFaceBID(qq, Z_MINUS, rb);
-            }
-            flag++;
-          }
-          
-          // Z+
-          if ( (pos[Z_PLUS] <= 0.5) && (qt == odr) )
-          {
-            float dd = 1.0 - cut[ _F_IDX_S4DEX(Z_MINUS, i, j, k+1, 6, ix, jx, kx, gd) ];
-            
-            if ( (fabsf(dd-pos[Z_PLUS]) < ROUND_EPS) && ( qt == rt ) )
-            {
-              pos[Z_PLUS] = 1.0;
-              setFaceBID(qq, Z_PLUS, 0);
-            }
-            else
-            {
-              pos[Z_PLUS] = dd;
-              setFaceBID(qq, Z_PLUS, rt);
-            }
-            flag++;
-          }
-          
-          bid[m] = qq;
-          
-          if ( flag > 0 ) c++;
-        }
-        
-      }
-    }
-  }
-  
-  if ( numProc > 1 )
-  {
-    unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  return c;
-}
-
 
 
 // #################################################################
@@ -316,7 +140,7 @@ void VoxInfo::copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const
   
   switch (dir)
   {
-    case X_MINUS:
+    case X_minus:
       if ( nID[dir] < 0 )
       {
         int i = st[0];
@@ -329,7 +153,7 @@ void VoxInfo::copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const
               for (int ii=1-gd; ii<=0; ii++) {
                 size_t m0 = _F_IDX_S3D(ii,   j, k, ix, jx, kx, gd);
                 size_t m2 = _F_IDX_S3D(ii+i, j, k, ix, jx, kx, gd);
-                bcd[m0] |= DECODE_CMP( bcd[m2] );
+                setBit5(bcd[m0], DECODE_CMP(bcd[m2]), 0);
               }
             }
           }
@@ -337,7 +161,7 @@ void VoxInfo::copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const
       }
       break;
       
-    case X_PLUS:
+    case X_plus:
       if ( nID[dir] < 0 )
       {
         int i = st[0];
@@ -351,7 +175,7 @@ void VoxInfo::copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const
               {
                 size_t m0 = _F_IDX_S3D(ii,        j, k, ix, jx, kx, gd);
                 size_t m2 = _F_IDX_S3D(ii+i-ix-1, j, k, ix, jx, kx, gd);
-                bcd[m0] |= DECODE_CMP( bcd[m2] );
+                setBit5(bcd[m0], DECODE_CMP(bcd[m2]), 0);
               }
             }
           }
@@ -359,7 +183,7 @@ void VoxInfo::copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const
       }
       break;
       
-    case Y_MINUS:
+    case Y_minus:
       if ( nID[dir] < 0 )
       {
         int j = st[1];
@@ -373,7 +197,7 @@ void VoxInfo::copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const
               {
                 size_t m0 = _F_IDX_S3D(i, jj,   k, ix, jx, kx, gd);
                 size_t m2 = _F_IDX_S3D(i, jj+j, k, ix, jx, kx, gd);
-                bcd[m0] |= DECODE_CMP( bcd[m2] );
+                setBit5(bcd[m0], DECODE_CMP(bcd[m2]), 0);
               }
             }
           }
@@ -381,7 +205,7 @@ void VoxInfo::copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const
       }
       break;
       
-    case Y_PLUS:
+    case Y_plus:
       if ( nID[dir] < 0 )
       {
         int j = st[1];
@@ -395,7 +219,7 @@ void VoxInfo::copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const
               {
                 size_t m0 = _F_IDX_S3D(i, jj,        k, ix, jx, kx, gd);
                 size_t m2 = _F_IDX_S3D(i, jj+j-jx-1, k, ix, jx, kx, gd);
-                bcd[m0] |= DECODE_CMP( bcd[m2] );
+                setBit5(bcd[m0], DECODE_CMP(bcd[m2]), 0);
               }
             }
           }
@@ -403,7 +227,7 @@ void VoxInfo::copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const
       }
       break;
       
-    case Z_MINUS:
+    case Z_minus:
       if ( nID[dir] < 0 )
       {
         int k = st[2];
@@ -417,7 +241,7 @@ void VoxInfo::copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const
               {
                 size_t m0 = _F_IDX_S3D(i, j, kk,   ix, jx, kx, gd);
                 size_t m2 = _F_IDX_S3D(i, j, kk+k, ix, jx, kx, gd);
-                bcd[m0] |= DECODE_CMP( bcd[m2] );
+                setBit5(bcd[m0], DECODE_CMP(bcd[m2]), 0);
               }
             }
           }
@@ -425,7 +249,7 @@ void VoxInfo::copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const
       }
       break;
       
-    case Z_PLUS:
+    case Z_plus:
       if ( nID[dir] < 0 )
       {
         int k = st[2];
@@ -439,7 +263,7 @@ void VoxInfo::copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const
               {
                 size_t m0 = _F_IDX_S3D(i, j, kk,        ix, jx, kx, gd);
                 size_t m2 = _F_IDX_S3D(i, j, kk+k-kx-1, ix, jx, kx, gd);
-                bcd[m0] |= DECODE_CMP( bcd[m2] );
+                setBit5(bcd[m0], DECODE_CMP(bcd[m2]), 0);
               }
             }
           }
@@ -558,7 +382,7 @@ void VoxInfo::countOpenAreaOfDomain (const int* bx, REAL_TYPE* OpenArea)
   // described in Fortran index
   
   // X_MINUS
-  if( nID[X_MINUS] < 0 )
+  if( nID[X_minus] < 0 )
   {
     g=0;
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:g)
@@ -570,11 +394,11 @@ void VoxInfo::countOpenAreaOfDomain (const int* bx, REAL_TYPE* OpenArea)
             && (FLUID == IS_FLUID(bx[m1])) ) g++;
       }
     }
-    m_area[X_MINUS] = g;
+    m_area[X_minus] = g;
   }
   
   // X_PLUS
-  if( nID[X_PLUS] < 0 )
+  if( nID[X_plus] < 0 )
   {
     g=0;
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:g)
@@ -586,11 +410,11 @@ void VoxInfo::countOpenAreaOfDomain (const int* bx, REAL_TYPE* OpenArea)
             && (FLUID == IS_FLUID(bx[m1])) ) g++;
       }
     }
-    m_area[X_PLUS] = g;
+    m_area[X_plus] = g;
   }
   
   // Y_MINUS
-  if( nID[Y_MINUS] < 0 )
+  if( nID[Y_minus] < 0 )
   {
     g=0;
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:g)
@@ -602,11 +426,11 @@ void VoxInfo::countOpenAreaOfDomain (const int* bx, REAL_TYPE* OpenArea)
             && (FLUID == IS_FLUID(bx[m1])) ) g++;
       }
     }
-    m_area[Y_MINUS] = g;
+    m_area[Y_minus] = g;
   }
   
   // Y_PLUS
-  if( nID[Y_PLUS] < 0 )
+  if( nID[Y_plus] < 0 )
   {
     g=0;
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:g)
@@ -618,11 +442,11 @@ void VoxInfo::countOpenAreaOfDomain (const int* bx, REAL_TYPE* OpenArea)
             && (FLUID == IS_FLUID(bx[m1])) ) g++;
       }
     }
-    m_area[Y_PLUS] = g;
+    m_area[Y_plus] = g;
   }
   
   // Z_MINUS
-  if( nID[Z_MINUS] < 0 )
+  if( nID[Z_minus] < 0 )
   {
     g=0;
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:g)
@@ -634,11 +458,11 @@ void VoxInfo::countOpenAreaOfDomain (const int* bx, REAL_TYPE* OpenArea)
             && (FLUID == IS_FLUID(bx[m1])) ) g++;
       }
     }
-    m_area[Z_MINUS] = g;
+    m_area[Z_minus] = g;
   }
   
   // Z_PLUS
-  if( nID[Z_PLUS] < 0 )
+  if( nID[Z_plus] < 0 )
   {
     g=0;
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:g)
@@ -650,7 +474,7 @@ void VoxInfo::countOpenAreaOfDomain (const int* bx, REAL_TYPE* OpenArea)
             && (FLUID == IS_FLUID(bx[m1])) ) g++;
       }
     }
-    m_area[Z_PLUS] = g;
+    m_area[Z_plus] = g;
   }
   
   // 外部境界面の面素がunsignedの値域を超えることはないと仮定
@@ -687,7 +511,7 @@ unsigned long VoxInfo::countValidCellOBC (const int face, const int* cdf, const 
   {
     switch (face)
     {
-      case X_MINUS:
+      case X_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:g)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
@@ -700,7 +524,7 @@ unsigned long VoxInfo::countValidCellOBC (const int face, const int* cdf, const 
         }
         break;
         
-      case X_PLUS:
+      case X_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:g)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
@@ -713,7 +537,7 @@ unsigned long VoxInfo::countValidCellOBC (const int face, const int* cdf, const 
         }
         break;
         
-      case Y_MINUS:
+      case Y_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:g)
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
@@ -726,7 +550,7 @@ unsigned long VoxInfo::countValidCellOBC (const int face, const int* cdf, const 
         }
         break;
         
-      case Y_PLUS:
+      case Y_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:g)
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
@@ -739,7 +563,7 @@ unsigned long VoxInfo::countValidCellOBC (const int face, const int* cdf, const 
         }
         break;
         
-      case Z_MINUS:
+      case Z_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:g)
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
@@ -752,7 +576,7 @@ unsigned long VoxInfo::countValidCellOBC (const int face, const int* cdf, const 
         }
         break;
         
-      case Z_PLUS:
+      case Z_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:g)
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
@@ -1166,7 +990,7 @@ void VoxInfo::encAdiabatic (int* bd, const string target, int face)
     
     switch (face)
     {
-      case X_MINUS:
+      case X_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
@@ -1176,7 +1000,7 @@ void VoxInfo::encAdiabatic (int* bd, const string target, int face)
         }
         break;
         
-      case X_PLUS:
+      case X_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
@@ -1186,7 +1010,7 @@ void VoxInfo::encAdiabatic (int* bd, const string target, int face)
         }
         break;
         
-      case Y_MINUS:
+      case Y_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
@@ -1196,7 +1020,7 @@ void VoxInfo::encAdiabatic (int* bd, const string target, int face)
         }
         break;
         
-      case Y_PLUS:
+      case Y_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
@@ -1206,7 +1030,7 @@ void VoxInfo::encAdiabatic (int* bd, const string target, int face)
         }
         break;
         
-      case Z_MINUS:
+      case Z_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
@@ -1216,7 +1040,7 @@ void VoxInfo::encAdiabatic (int* bd, const string target, int face)
         }
         break;
         
-      case Z_PLUS:
+      case Z_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
@@ -1561,12 +1385,12 @@ unsigned long VoxInfo::encPbitN (int* bx, const int* bid, const float* cut, cons
           int qq = bid[m_p];
           
           // 隣接セルの方向に対するカットの有無>> 0ならばカット無し
-          int qw = getFaceBID(0, qq);
-          int qe = getFaceBID(1, qq);
-          int qs = getFaceBID(2, qq);
-          int qn = getFaceBID(3, qq);
-          int qb = getFaceBID(4, qq);
-          int qt = getFaceBID(5, qq);
+          int qw = getBit5(qq, 0);
+          int qe = getBit5(qq, 1);
+          int qs = getBit5(qq, 2);
+          int qn = getBit5(qq, 3);
+          int qb = getBit5(qq, 4);
+          int qt = getBit5(qq, 5);
           
           // 交点があるなら壁面なのでノイマン条件をセット
           if (qw != 0) s = offBit( s, BC_N_W );
@@ -1596,12 +1420,12 @@ unsigned long VoxInfo::encPbitN (int* bx, const int* bid, const float* cut, cons
         {
           int qq = bid[m_p];
 
-          int qw = getFaceBID(0, qq);
-          int qe = getFaceBID(1, qq);
-          int qs = getFaceBID(2, qq);
-          int qn = getFaceBID(3, qq);
-          int qb = getFaceBID(4, qq);
-          int qt = getFaceBID(5, qq);
+          int qw = getBit5(qq, 0);
+          int qe = getBit5(qq, 1);
+          int qs = getBit5(qq, 2);
+          int qn = getBit5(qq, 3);
+          int qb = getBit5(qq, 4);
+          int qt = getBit5(qq, 5);
 
           
           if ( qw != 0 ) s = onBit(s, FACING_W); c++;
@@ -1801,19 +1625,19 @@ schedule(static) reduction(+:g)
           if ( IS_FLUID( s ) ) // 対象セルが流体セル
           {
             // 各方向のID
-            int id_w = getFaceBID(0, bd);
-            int id_e = getFaceBID(1, bd);
-            int id_s = getFaceBID(2, bd);
-            int id_n = getFaceBID(3, bd);
-            int id_b = getFaceBID(4, bd);
-            int id_t = getFaceBID(5, bd);
+            int id_w = getBit5(bd, 0);
+            int id_e = getBit5(bd, 1);
+            int id_s = getBit5(bd, 2);
+            int id_n = getBit5(bd, 3);
+            int id_b = getBit5(bd, 4);
+            int id_t = getBit5(bd, 5);
             
 #include "FindexS3D.h"
             
             // X_MINUS
             if ( (id_w == odr) && (dot(e_w, nv) < 0.0) )
             {
-              d |= odr;
+              setBit5(d, odr, 0);
               s = (mode) ? offBit( s, BC_N_W ) : offBit( s, BC_D_W );
               offBit(bcp[m_w], BC_N_E);
               g++;
@@ -1822,7 +1646,7 @@ schedule(static) reduction(+:g)
             // X_PLUS
             if ( (id_e == odr) && (dot(e_e, nv) < 0.0) )
             {
-              d |= odr;
+              setBit5(d, odr, 0);
               s = (mode) ? offBit( s, BC_N_E ) : offBit( s, BC_D_E );
               offBit(bcp[m_e], BC_N_W);
               g++;
@@ -1831,7 +1655,7 @@ schedule(static) reduction(+:g)
             // Y_MINUS
             if ( (id_s == odr) && (dot(e_s, nv) < 0.0) )
             {
-              d |= odr;
+              setBit5(d, odr, 0);
               s = (mode) ? offBit( s, BC_N_S ) : offBit( s, BC_D_S );
               offBit(bcp[m_s], BC_N_N);
               g++;
@@ -1840,7 +1664,7 @@ schedule(static) reduction(+:g)
             // Y_PLUS
             if ( (id_n == odr) && (dot(e_n, nv) < 0.0) )
             {
-              d |= odr;
+              setBit5(d, odr, 0);
               s = (mode) ? offBit( s, BC_N_N ) : offBit( s, BC_D_N );
               offBit(bcp[m_n], BC_N_S);
               g++;
@@ -1849,7 +1673,7 @@ schedule(static) reduction(+:g)
             // Z_MINUS
             if ( (id_b == odr) && (dot(e_b, nv) < 0.0) )
             {
-              d |= odr;
+              setBit5(d, odr, 0);
               s = (mode) ? offBit( s, BC_N_B ) : offBit( s, BC_D_B );
               offBit(bcp[m_b], BC_N_T);
               g++;
@@ -1858,7 +1682,7 @@ schedule(static) reduction(+:g)
             // Z_PLUS
             if ( (id_t == odr) && (dot(e_t, nv) < 0.0) )
             {
-              d |= odr;
+              setBit5(d, odr, 0);
               s = (mode) ? offBit( s, BC_N_T ) : offBit( s, BC_D_T );
               offBit(bcp[m_t], BC_N_B);
               g++;
@@ -1905,7 +1729,7 @@ void VoxInfo::encPbitOBC (const int face, int* bx, const string key, const bool 
 
   switch (face)
   {
-    case X_MINUS:
+    case X_minus:
       
       if ("Neumann"==key)
       {
@@ -1939,7 +1763,7 @@ void VoxInfo::encPbitOBC (const int face, int* bx, const string key, const bool 
       }
       break;
       
-    case X_PLUS:
+    case X_plus:
       
       if ("Neumann"==key)
       {
@@ -1973,7 +1797,7 @@ void VoxInfo::encPbitOBC (const int face, int* bx, const string key, const bool 
       }
       break;
       
-    case Y_MINUS:
+    case Y_minus:
       
       if ("Neumann"==key)
       {
@@ -2007,7 +1831,7 @@ void VoxInfo::encPbitOBC (const int face, int* bx, const string key, const bool 
       }
       break;
       
-    case Y_PLUS:
+    case Y_plus:
       
       if ("Neumann"==key)
       {
@@ -2041,7 +1865,7 @@ void VoxInfo::encPbitOBC (const int face, int* bx, const string key, const bool 
       }
       break;
       
-    case Z_MINUS:
+    case Z_minus:
       
       if ("Neumann"==key)
       {
@@ -2075,7 +1899,7 @@ void VoxInfo::encPbitOBC (const int face, int* bx, const string key, const bool 
       }
       break;
       
-    case Z_PLUS:
+    case Z_plus:
       
       if ("Neumann"==key)
       {
@@ -2171,17 +1995,17 @@ unsigned long VoxInfo::encQface (const int order,
         // 6面のいずれかにカットがあり，ターゲットの状態であるセルが候補
         if ( TEST_BC(d) && mode )
         {
-          int b0 = getFaceBID(0, d);
-          int b1 = getFaceBID(1, d);
-          int b2 = getFaceBID(2, d);
-          int b3 = getFaceBID(3, d);
-          int b4 = getFaceBID(4, d);
-          int b5 = getFaceBID(5, d);
+          int b0 = getBit5(d, 0);
+          int b1 = getBit5(d, 1);
+          int b2 = getBit5(d, 2);
+          int b3 = getBit5(d, 3);
+          int b4 = getBit5(d, 4);
+          int b5 = getBit5(d, 5);
           
           // X-
           if ( b0 == odr )
           {
-            s1 |= (odr << BC_FACE_W);  // エントリをエンコード
+            setBit5(s1, odr, BC_FACE_W); // エントリをエンコード
             s2 = ( es == true ) ? onBit(s2, ADIABATIC_W) : offBit( s2, ADIABATIC_W ); // offBitが断熱状態
             g++;
           }
@@ -2189,7 +2013,7 @@ unsigned long VoxInfo::encQface (const int order,
           // X+
           if ( b1 == odr )
           {
-            s1 |= (odr << BC_FACE_E);
+            setBit5(s1, odr, BC_FACE_E);
             s2 = ( es == true ) ? onBit(s2, ADIABATIC_E) : offBit( s2, ADIABATIC_E );
             g++;
           }
@@ -2197,7 +2021,7 @@ unsigned long VoxInfo::encQface (const int order,
           // Y-
           if ( b2 == odr )
           {
-            s1 |= (odr<< BC_FACE_S);
+            setBit5(s1, odr, BC_FACE_S);
             s2 = ( es == true ) ? onBit(s2, ADIABATIC_S) : offBit( s2, ADIABATIC_S );
             g++;
           }
@@ -2205,7 +2029,7 @@ unsigned long VoxInfo::encQface (const int order,
           // Y+
           if ( b3 == odr )
           {
-            s1 |= (odr << BC_FACE_N);
+            setBit5(s1, odr, BC_FACE_N);
             s2 = ( es == true ) ? onBit(s2, ADIABATIC_N) : offBit( s2, ADIABATIC_N );
             g++;
           }
@@ -2213,7 +2037,7 @@ unsigned long VoxInfo::encQface (const int order,
           // Z-
           if ( b4 == odr )
           {
-            s1 |= (odr << BC_FACE_B);
+            setBit5(s1, odr, BC_FACE_B);
             s2 = ( es == true ) ? onBit(s2, ADIABATIC_B) : offBit( s2, ADIABATIC_B );
             g++;
           }
@@ -2221,7 +2045,7 @@ unsigned long VoxInfo::encQface (const int order,
           // Z+
           if ( b5 == odr )
           {
-            s1 |= (odr << BC_FACE_T);
+            setBit5(s1, odr, BC_FACE_T);
             s2 = ( es == true ) ? onBit(s2, ADIABATIC_T) : offBit( s2, ADIABATIC_T );
             g++;
           }
@@ -2315,17 +2139,17 @@ unsigned long VoxInfo::encVbitIBC (const int order,
           if ( IS_FLUID(s) ) // 流体セルがテスト対象
           {
             // 各方向のID
-            int id_w = getFaceBID(0, bd);
-            int id_e = getFaceBID(1, bd);
-            int id_s = getFaceBID(2, bd);
-            int id_n = getFaceBID(3, bd);
-            int id_b = getFaceBID(4, bd);
-            int id_t = getFaceBID(5, bd);
+            int id_w = getBit5(bd, 0);
+            int id_e = getBit5(bd, 1);
+            int id_s = getBit5(bd, 2);
+            int id_n = getBit5(bd, 3);
+            int id_b = getBit5(bd, 4);
+            int id_t = getBit5(bd, 5);
             
             // X-
             if ( (id_w == odr) && (dot(e_w, nv) < 0.0) )
             {
-              s |= (odr << BC_FACE_W);
+              setBit5(s, odr, BC_FACE_W);
               q = offBit(q, FACING_W);
               q = onBit(q, VBC_UWD);
               g++;
@@ -2334,7 +2158,7 @@ unsigned long VoxInfo::encVbitIBC (const int order,
             // X+
             if ( (id_e == odr) && (dot(e_e, nv) < 0.0) )
             {
-              s |= (odr << BC_FACE_E);
+              setBit5(s, odr, BC_FACE_E);
               q = offBit(q, FACING_E);
               q = onBit(q, VBC_UWD);
               g++;
@@ -2343,7 +2167,7 @@ unsigned long VoxInfo::encVbitIBC (const int order,
             // Y-
             if ( (id_s == odr) && (dot(e_s, nv) < 0.0) )
             {
-              s |= (odr << BC_FACE_S);
+              setBit5(s, odr, BC_FACE_S);
               q = offBit(q, FACING_S);
               q = onBit(q, VBC_UWD);
               g++;
@@ -2352,7 +2176,7 @@ unsigned long VoxInfo::encVbitIBC (const int order,
             // Y+
             if ( (id_n == odr) && (dot(e_n, nv) < 0.0) )
             {
-              s |= (odr << BC_FACE_N);
+              setBit5(s, odr, BC_FACE_N);
               q = offBit(q, FACING_N);
               q = onBit(q, VBC_UWD);
               g++;
@@ -2361,7 +2185,7 @@ unsigned long VoxInfo::encVbitIBC (const int order,
             // Z-
             if ( (id_b == odr) && (dot(e_b, nv) < 0.0) )
             {
-              s |= (odr << BC_FACE_B);
+              setBit5(s, odr, BC_FACE_B);
               q = offBit(q, FACING_B);
               q = onBit(q, VBC_UWD);
               g++;
@@ -2370,7 +2194,7 @@ unsigned long VoxInfo::encVbitIBC (const int order,
             // Z+
             if ( (id_t == odr) && (dot(e_t, nv) < 0.0) )
             {
-              s |= (odr << BC_FACE_T);
+              setBit5(s, odr, BC_FACE_T);
               q = offBit(q, FACING_T);
               q = onBit(q, VBC_UWD);
               g++;
@@ -2462,7 +2286,7 @@ void VoxInfo::encVbitOBC (const int face, int* cdf, const string key, const bool
   
   switch (face)
   {
-    case X_MINUS:
+    case X_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, sw, cw, enc, uwd) schedule(static)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
@@ -2514,7 +2338,7 @@ void VoxInfo::encVbitOBC (const int face, int* cdf, const string key, const bool
       break;
       
       
-    case X_PLUS:
+    case X_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, sw, cw, enc, uwd) schedule(static)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
@@ -2566,7 +2390,7 @@ void VoxInfo::encVbitOBC (const int face, int* cdf, const string key, const bool
       break;
       
       
-    case Y_MINUS:
+    case Y_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, sw, cw, enc, uwd) schedule(static)
       for (int k=1; k<=kx; k++) {
         for (int i=1; i<=ix; i++) {
@@ -2618,7 +2442,7 @@ void VoxInfo::encVbitOBC (const int face, int* cdf, const string key, const bool
       break;
       
       
-    case Y_PLUS:
+    case Y_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, sw, cw, enc, uwd) schedule(static)
       for (int k=1; k<=kx; k++) {
         for (int i=1; i<=ix; i++) {
@@ -2670,7 +2494,7 @@ void VoxInfo::encVbitOBC (const int face, int* cdf, const string key, const bool
       break;
       
       
-    case Z_MINUS:
+    case Z_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, sw, cw, enc, uwd) schedule(static)
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
@@ -2722,7 +2546,7 @@ void VoxInfo::encVbitOBC (const int face, int* cdf, const string key, const bool
       break;
       
       
-    case Z_PLUS:
+    case Z_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, sw, cw, enc, uwd) schedule(static)
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
@@ -2792,9 +2616,6 @@ unsigned long VoxInfo::fillByBid (int* bid, int* bcd, float* cut, const int tgt_
   unsigned long filled   = 0; ///< 流体IDでペイントされた数
   unsigned long replaced = 0; ///< 固体IDで置換された数
 
-  // 固定長配列へのコピー
-  //int list[CMP_BIT_W];
-  //for (int i=0; i<CMP_BIT_W; i++) list[i] = m_list[i];
   
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) \
 schedule(static) reduction(+:filled) reduction(+:replaced)
@@ -2876,7 +2697,9 @@ unsigned long VoxInfo::fillByModalSolid (int* bcd, const int target, const int f
         // 対象セルがtargetの場合
         if ( qq == tg )
         {
-          bcd[m_p] |= find_mode_id(fid, qw, qe, qs, qn, qb, qt);
+          int sd = find_mode_id(fid, qw, qe, qs, qn, qb, qt);
+          if ( sd == 0 ) Exit(0);
+          setBit5(bcd[m_p], sd, 0);
           c++;
         }
       }
@@ -2921,19 +2744,20 @@ unsigned long VoxInfo::fillCutOnCellCenter (int* bcd, const int* bid, const floa
         int qq = bid[m_p];
         
         // 隣接セルの方向に対する境界ID
-        int qw = getFaceBID(X_MINUS, qq);
-        int qe = getFaceBID(X_PLUS,  qq);
-        int qs = getFaceBID(Y_MINUS, qq);
-        int qn = getFaceBID(Y_PLUS,  qq);
-        int qb = getFaceBID(Z_MINUS, qq);
-        int qt = getFaceBID(Z_PLUS,  qq);
+        int qw = getBit5(qq, X_minus);
+        int qe = getBit5(qq, X_plus);
+        int qs = getBit5(qq, Y_minus);
+        int qn = getBit5(qq, Y_plus);
+        int qb = getBit5(qq, Z_minus);
+        int qt = getBit5(qq, Z_plus);
         
         const float* pos = &cut[ _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd) ];
         
         // いずれかの方向で交点が定義点上の場合
         if ( pos[0]*pos[1]*pos[2]*pos[3]*pos[4]*pos[5] == 0.0 )
         {
-          bcd[m_p] |= qw; // qwで代表
+          printf("%d %d %d : %f %f %f %f %f %f : %d\n",i,j,k,pos[0],pos[1],pos[2],pos[3],pos[4],pos[5], qw);
+          setBit5(bcd[m_p], qw, 0); // qwで代表
           c++;
         }
         
@@ -2967,7 +2791,7 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
   
   switch (face)
   {
-    case X_MINUS:
+    case X_minus:
       if ( nID[face] < 0 )
       {
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
@@ -2979,7 +2803,7 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
             // 対象セルの周囲6方向にカットがなく，未ペイントのセルの場合
             if ( !TEST_BC(s) && (DECODE_CMP(s) == 0) )
             {
-              bcd[m] |= tg;
+              setBit5(bcd[m], tg, 0);
               c++;
             }
           }
@@ -2987,7 +2811,7 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
       }
       break;
       
-    case X_PLUS:
+    case X_plus:
       if ( nID[face] < 0 )
       {
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
@@ -2998,7 +2822,7 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
             
             if ( !TEST_BC(s) && (DECODE_CMP(s) == 0) )
             {
-              bcd[m] |= tg;
+              setBit5(bcd[m], tg, 0);
               c++;
             }
           }
@@ -3006,7 +2830,7 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
       }
       break;
       
-    case Y_MINUS:
+    case Y_minus:
       if ( nID[face] < 0 )
       {
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
@@ -3017,7 +2841,7 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
             
             if ( !TEST_BC(s) && (DECODE_CMP(s) == 0) )
             {
-              bcd[m] |= tg;
+              setBit5(bcd[m], tg, 0);
               c++;
             }
           }
@@ -3025,7 +2849,7 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
       }
       break;
       
-    case Y_PLUS:
+    case Y_plus:
       if ( nID[face] < 0 )
       {
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
@@ -3036,7 +2860,7 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
             
             if ( !TEST_BC(s) && (DECODE_CMP(s) == 0) )
             {
-              bcd[m] |= tg;
+              setBit5(bcd[m], tg, 0);
               c++;
             }
           }
@@ -3044,7 +2868,7 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
       }
       break;
       
-    case Z_MINUS:
+    case Z_minus:
       if ( nID[face] < 0 )
       {
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
@@ -3055,7 +2879,7 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
             
             if ( !TEST_BC(s) && (DECODE_CMP(s) == 0) )
             {
-              bcd[m] |= tg;
+              setBit5(bcd[m], tg, 0);
               c++;
             }
           }
@@ -3063,7 +2887,7 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
       }
       break;
       
-    case Z_PLUS:
+    case Z_plus:
       if ( nID[face] < 0 )
       {
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
@@ -3074,7 +2898,7 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
             
             if ( !TEST_BC(s) && (DECODE_CMP(s) == 0) )
             {
-              bcd[m] |= tg;
+              setBit5(bcd[m], tg, 0);
               c++;
             }
           }
@@ -3117,12 +2941,12 @@ unsigned long VoxInfo::fillIsolatedEmptyCell (int* bcd, const int fluid_id, cons
         if ( DECODE_CMP(s) == 0 )
         {
           int qq = bid[m_p];
-          int qw = getFaceBID(0, qq);
-          int qe = getFaceBID(1, qq);
-          int qs = getFaceBID(2, qq);
-          int qn = getFaceBID(3, qq);
-          int qb = getFaceBID(4, qq);
-          int qt = getFaceBID(5, qq);
+          int qw = getBit5(qq, 0);
+          int qe = getBit5(qq, 1);
+          int qs = getBit5(qq, 2);
+          int qn = getBit5(qq, 3);
+          int qb = getBit5(qq, 4);
+          int qt = getBit5(qq, 5);
           
           // 隣接セルがすべて固体の場合でなく，かつempty(=0)でもない
           if ( (qw != fid) && (qe != fid) &&
@@ -3130,7 +2954,9 @@ unsigned long VoxInfo::fillIsolatedEmptyCell (int* bcd, const int fluid_id, cons
                (qb != fid) && (qt != fid) &&
               ( qw * qe * qs * qn * qb * qt != 0 ) )
           {
-            bcd[m_p] |= find_mode_id(fid, qw, qe, qs, qn, qb, qt);
+            int sd = find_mode_id(fid, qw, qe, qs, qn, qb, qt);
+            if ( sd == 0 ) Exit(0);
+            setBit5(bcd[m_p], sd, 0);
             replaced++;
           }
         }
@@ -3194,7 +3020,9 @@ unsigned long VoxInfo::findIsolatedFcell (int* bx, const int fluid_id)
             int qb = DECODE_CMP( bb[5] );
           
             // 媒質オーダーの変更
-            s |= find_mode_id(fid, qw, qe, qs, qn, qb, qt);
+            int sd = find_mode_id(fid, qw, qe, qs, qn, qb, qt);
+            if ( sd == 0 ) Exit(0);
+            setBit5(s, sd, 0);
             
             // 固体セルへ状態を変更　
             bx[m_p] = offBit( s, STATE_BIT );
@@ -3299,12 +3127,12 @@ unsigned long VoxInfo::modifyCutOnCellCenter (int* bid, const float* cut, const 
         size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
         
         // 隣接セルから検査セルを見た場合の境界ID
-        int qw = getFaceBID(0, bid[m_e]);
-        int qe = getFaceBID(1, bid[m_w]);
-        int qs = getFaceBID(2, bid[m_n]);
-        int qn = getFaceBID(3, bid[m_s]);
-        int qb = getFaceBID(4, bid[m_t]);
-        int qt = getFaceBID(5, bid[m_b]);
+        int qw = getBit5(bid[m_e], 0);
+        int qe = getBit5(bid[m_w], 1);
+        int qs = getBit5(bid[m_n], 2);
+        int qn = getBit5(bid[m_s], 3);
+        int qb = getBit5(bid[m_t], 4);
+        int qt = getBit5(bid[m_b], 5);
         
         const float* pos = &cut[ _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd) ];
         
@@ -3312,25 +3140,26 @@ unsigned long VoxInfo::modifyCutOnCellCenter (int* bid, const float* cut, const 
         if ( pos[0]*pos[1]*pos[2]*pos[3]*pos[4]*pos[5] == 0.0 )
         {
           int sd = find_mode_id(fid, qw, qe, qs, qn, qb, qt);
+          if ( sd == 0 ) Exit(0);
 #if 1
           // check
           int qq = bid[m_p];
           printf("(%d %d %d) : (%e %e %e %e %e %e) (%d %d %d %d %d %d) >> %d\n", i,j,k,
                  pos[0], pos[1], pos[2], pos[3], pos[4], pos[5],
-                 getFaceBID(0, qq),
-                 getFaceBID(1, qq),
-                 getFaceBID(2, qq),
-                 getFaceBID(3, qq),
-                 getFaceBID(4, qq),
-                 getFaceBID(5, qq),
+                 getBit5(qq, 0),
+                 getBit5(qq, 1),
+                 getBit5(qq, 2),
+                 getBit5(qq, 3),
+                 getBit5(qq, 4),
+                 getBit5(qq, 5),
                  sd);
 #endif
-          setFaceBID(bid[m_p], 0, sd);
-          setFaceBID(bid[m_p], 1, sd);
-          setFaceBID(bid[m_p], 2, sd);
-          setFaceBID(bid[m_p], 3, sd);
-          setFaceBID(bid[m_p], 4, sd);
-          setFaceBID(bid[m_p], 5, sd);
+          setBit5(bid[m_p], sd, X_minus);
+          setBit5(bid[m_p], sd, X_plus);
+          setBit5(bid[m_p], sd, Y_minus);
+          setBit5(bid[m_p], sd, Y_plus);
+          setBit5(bid[m_p], sd, Z_minus);
+          setBit5(bid[m_p], sd, Z_plus);
           c++;
         }
         
@@ -3398,7 +3227,6 @@ void VoxInfo::setBCIndexBase (int* bx,
     {
       case 0: // Medium
       case OBSTACLE:
-      case CELL_MONITOR:
         cmp[n].setElement( encOrder(n, bx, &cmp[n]) );
     }
   }
@@ -3832,87 +3660,8 @@ void VoxInfo::setControlVars (const int m_NoCompo, Intrinsic* ExRef)
 
 
 // #################################################################
-// 計算領域外部のガイドセルに媒質IDエントリをエンコードする（周期境界以外の場合）
-void VoxInfo::setMediumOnGC (const int face, int* bcd, const int c_id)
-{
-  if ( nID[face] >= 0 ) return;
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  int tgt= c_id;
-  
-  switch (face)
-  {
-    case X_MINUS:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tgt) schedule(static)
-      for (int k=0; k<=kx+1; k++) {
-        for (int j=0; j<=jx+1; j++) {
-          size_t m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
-          bcd[m] |= tgt;
-        }
-      }
-      break;
-      
-    case X_PLUS:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tgt) schedule(static)
-      for (int k=0; k<=kx+1; k++) {
-        for (int j=0; j<=jx+1; j++) {
-          size_t m = _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd);
-          bcd[m] |= tgt;
-        }
-      }
-      break;
-      
-    case Y_MINUS:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tgt) schedule(static)
-      for (int k=0; k<=kx+1; k++) {
-        for (int i=0; i<=ix+1; i++) {
-          size_t m = _F_IDX_S3D(i, 0, k, ix, jx, kx, gd);
-          bcd[m] |= tgt;
-        }
-      }
-      break;
-      
-    case Y_PLUS:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tgt) schedule(static)
-      for (int k=0; k<=kx+1; k++) {
-        for (int i=0; i<=ix+1; i++) {
-          size_t m = _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd);
-          bcd[m] |= tgt;
-        }
-      }
-      break;
-      
-    case Z_MINUS:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tgt) schedule(static)
-      for (int j=0; j<=jx+1; j++) {
-        for (int i=0; i<=ix+1; i++) {
-          size_t m = _F_IDX_S3D(i, j, 0, ix, jx, kx, gd);
-          bcd[m] |= tgt;
-        }
-      }
-      break;
-      
-    case Z_PLUS:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tgt) schedule(static)
-      for (int j=0; j<=jx+1; j++) {
-        for (int i=0; i<=ix+1; i++) {
-          size_t m = _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd);
-          bcd[m] |= tgt;
-        }
-      }
-      break;
-  } // end of switch
-
-  
-}
-
-
-// #################################################################
-// 計算領域外部のガイドセルに媒質IDエントリをエンコードする（周期境界の場合）
-void VoxInfo::setMediumOnGCperiodic (const int face, int* bcd, const int prdc_mode)
+// 外部境界が周期境界の場合の距離情報・境界ID・媒質エントリをセット
+void VoxInfo::setOBCperiodic (const int face, const int prdc_mode, int* bcd)
 {
   int ix = size[0];
   int jx = size[1];
@@ -3923,32 +3672,32 @@ void VoxInfo::setMediumOnGCperiodic (const int face, int* bcd, const int prdc_mo
   if ( prdc_mode == BoundaryOuter::prdc_Driver ) return;
   
   
-  // この次点ではbcd[]にガイドセイル情報以外は入っていないので，bcdの全ビットをコピーすることができる
+  // この次点ではbcd[]に下位5ビット以外はデータが入っていないので，bcdの全ビットをコピーすることができる
   if ( numProc > 1 )
   {
     switch (face)
     {
-      case X_MINUS:
+      case X_minus:
         if ( paraMngr->PeriodicCommS3D(bcd, ix, jx, kx, gd, 1, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
         break;
         
-      case X_PLUS:
+      case X_plus:
         if ( paraMngr->PeriodicCommS3D(bcd, ix, jx, kx, gd, 1, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
         break;
         
-      case Y_MINUS:
+      case Y_minus:
         if ( paraMngr->PeriodicCommS3D(bcd, ix, jx, kx, gd, 1, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
         break;
         
-      case Y_PLUS:
+      case Y_plus:
         if ( paraMngr->PeriodicCommS3D(bcd, ix, jx, kx, gd, 1, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
         break;
         
-      case Z_MINUS:
+      case Z_minus:
         if ( paraMngr->PeriodicCommS3D(bcd, ix, jx, kx, gd, 1, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
         break;
         
-      case Z_PLUS:
+      case Z_plus:
         if ( paraMngr->PeriodicCommS3D(bcd, ix, jx, kx, gd, 1, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
         break;
     }
@@ -3959,7 +3708,7 @@ void VoxInfo::setMediumOnGCperiodic (const int face, int* bcd, const int prdc_mo
     
     switch (face)
     {
-      case X_MINUS:
+      case X_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
@@ -3972,7 +3721,7 @@ void VoxInfo::setMediumOnGCperiodic (const int face, int* bcd, const int prdc_mo
         }
         break;
         
-      case X_PLUS:
+      case X_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
@@ -3985,7 +3734,7 @@ void VoxInfo::setMediumOnGCperiodic (const int face, int* bcd, const int prdc_mo
         }
         break;
         
-      case Y_MINUS:
+      case Y_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1-gd; j<=0; j++) {
@@ -3998,7 +3747,7 @@ void VoxInfo::setMediumOnGCperiodic (const int face, int* bcd, const int prdc_mo
         }
         break;
         
-      case Y_PLUS:
+      case Y_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=jx+1; j<=jx+gd; j++) {
@@ -4011,7 +3760,7 @@ void VoxInfo::setMediumOnGCperiodic (const int face, int* bcd, const int prdc_mo
         }
         break;
         
-      case Z_MINUS:
+      case Z_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int k=1-gd; k<=0; k++) {
           for (int j=1; j<=jx; j++) {
@@ -4024,7 +3773,7 @@ void VoxInfo::setMediumOnGCperiodic (const int face, int* bcd, const int prdc_mo
         }
         break;
         
-      case Z_PLUS:
+      case Z_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int k=kx+1; k<=kx+gd; k++) {
           for (int j=1; j<=jx; j++) {
@@ -4044,170 +3793,136 @@ void VoxInfo::setMediumOnGCperiodic (const int face, int* bcd, const int prdc_mo
 
 
 // #################################################################
-// CellMonitorで指定するIDでモニタ部分を指定するための準備 (SHAPE_BOX, SHAPE_CYLINDER)
-void VoxInfo::setMonitorShape (int* bcd, const int n, ShapeMonitor* SM, CompoList* cmp, const REAL_TYPE RefL)
+// 外部境界の距離情報・境界ID・媒質エントリをセット
+void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd, float* cut, int* bid)
 {
-  int f_st[3], f_ed[3];
-  
-  float ctr[3];
-  float nv[3];
-  float dr[3];
-  float m_depth;
-  float m_radius;
-  float m_width;
-  float m_height;
-  
-  
-  // 形状パラメータのセット
-  nv[0]   = cmp[n].nv[0];
-  nv[1]   = cmp[n].nv[1];
-  nv[2]   = cmp[n].nv[2];
-  
-  dr[0]   = cmp[n].dr[0];
-  dr[1]   = cmp[n].dr[1];
-  dr[2]   = cmp[n].dr[2];
-  
-  ctr[0]  = cmp[n].oc[0]/(float)RefL;
-  ctr[1]  = cmp[n].oc[1]/(float)RefL;
-  ctr[2]  = cmp[n].oc[2]/(float)RefL;
-  
-  m_depth = cmp[n].depth/(float)RefL;
-  m_radius= cmp[n].shp_p1/(float)RefL;
-  m_width = cmp[n].shp_p1/(float)RefL;
-  m_height= cmp[n].shp_p2/(float)RefL;
-  
-  
-  switch ( cmp[n].get_Shape() )
-  {
-    case SHAPE_BOX:
-      SM->setShapeParam(nv, ctr, dr, m_depth, m_width, m_height);
-      break;
-      
-    case SHAPE_CYLINDER:
-      SM->setShapeParam(nv, ctr, m_depth, m_radius);
-      break;
-      
-    default:
-      Exit(0);
-      break;
-  }
-  
-  // 回転角度の計算
-  SM->get_angle();
-  
-  // bboxと投影面積の計算
-  cmp[n].area = SM->get_BboxArea();
-  
-  // インデクスの計算 > あとでresize
-  SM->bbox_index(f_st, f_ed);
-  
-  // インデクスのサイズ登録
-  cmp[n].setBbox(f_st, f_ed);
-  
-  SM->setID(f_st, f_ed, bcd, n);
-  
-}
-
-
-
-// #################################################################
-// 外部境界のガイドセルが固体の場合に距離情報をセット
-void VoxInfo::setOBCcut (SetBC* BC, float* cut, int* bid)
-{
-  float pos=0.5f;
-  
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
+  int tgt= c_id;   // ガイドセルへのエントリ
+  int did= 0;      // 境界ID
+  float pos = 0.0; // 距離
   
-  for (int face=0; face<NOFACE; face++)
+  if ( !strcasecmp(str, "solid") )
   {
-    if( nID[face] >= 0 ) continue;
-    
-    BoundaryOuter* m_obc = BC->exportOBC(face);
-    int F  = m_obc->getClass();
-    int id = m_obc->getGuideMedium();
-    
-    
-    if ( F == OBC_WALL )
-    {
-      switch (face)
-      {
-        case X_MINUS:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, id) schedule(static)
-          for (int k=1; k<=kx; k++) {
-            for (int j=1; j<=jx; j++) {
-              size_t m = _F_IDX_S4DEX(X_MINUS, 1, j, k, 6, ix, jx, kx, gd);
-              cut[m] = pos;
-              size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
-              setFaceBID(bid[l], X_MINUS, id);
-            }
-          }
-          break;
-          
-        case X_PLUS:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, id) schedule(static)
-          for (int k=1; k<=kx; k++) {
-            for (int j=1; j<=jx; j++) {
-              size_t m = _F_IDX_S4DEX(X_PLUS, ix, j, k, 6, ix, jx, kx, gd);
-              cut[m] = pos;
-              size_t l = _F_IDX_S3D(ix  , j  , k  , ix, jx, kx, gd);
-              setFaceBID(bid[l], X_PLUS, id);
-            }
-          }
-          break;
-          
-        case Y_MINUS:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, id) schedule(static)
-          for (int k=1; k<=kx; k++) {
-            for (int i=1; i<=ix; i++) {
-              size_t m = _F_IDX_S4DEX(Y_MINUS, i, 1, k, 6, ix, jx, kx, gd);
-              cut[m] = pos;
-              size_t l = _F_IDX_S3D(i  , 1  , k  , ix, jx, kx, gd);
-              setFaceBID(bid[l], Y_MINUS, id);
-            }
-          }
-          break;
-          
-        case Y_PLUS:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, id) schedule(static)
-          for (int k=1; k<=kx; k++) {
-            for (int i=1; i<=ix; i++) {
-              size_t m = _F_IDX_S4DEX(Y_PLUS, i, jx, k, 6, ix, jx, kx, gd);
-              cut[m] = pos;
-              size_t l = _F_IDX_S3D(i  , jx  , k  , ix, jx, kx, gd);
-              setFaceBID(bid[l], Y_PLUS, id);
-            }
-          }
-          break;
-          
-        case Z_MINUS:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, id) schedule(static)
-          for (int j=1; j<=jx; j++) {
-            for (int i=1; i<=ix; i++) {
-              size_t m = _F_IDX_S4DEX(Z_MINUS, i, j, 1, 6, ix, jx, kx, gd);
-              cut[m] = pos;
-              size_t l = _F_IDX_S3D(i  , j  , 1  , ix, jx, kx, gd);
-              setFaceBID(bid[l], Z_MINUS, id);
-            }
-          }
-          break;
-          
-        case Z_PLUS:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, id) schedule(static)
-          for (int j=1; j<=jx; j++) {
-            for (int i=1; i<=ix; i++) {
-              size_t m = _F_IDX_S4DEX(Z_PLUS, i, j, kx, 6, ix, jx, kx, gd);
-              cut[m] = pos;
-              size_t l = _F_IDX_S3D(i  , j  , kx  , ix, jx, kx, gd);
-              setFaceBID(bid[l], Z_PLUS, id);
-            }
-          }
-          break;
-      }
-      
-    }
+    pos = 0.5;
+    did = c_id;
+  }
+  else // FLUID
+  {
+    pos = 1.0;
+    did = 0;  // 流体の場合には bid[]=0
   }
   
+
+
+  switch (face)
+  {
+    case X_minus:
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, tgt, did) schedule(static)
+      for (int k=1; k<=kx; k++) {
+        for (int j=1; j<=jx; j++) {
+          
+          size_t mc = _F_IDX_S4DEX(X_minus, 1, j, k, 6, ix, jx, kx, gd);
+          cut[mc] = pos;
+          
+          size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
+          setBit5(bid[l], did, X_minus);
+          
+          size_t m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
+          setBit5(bcd[m], tgt, 0);
+        }
+      }
+      break;
+      
+      
+    case X_plus:
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, tgt, did) schedule(static)
+      for (int k=1; k<=kx; k++) {
+        for (int j=1; j<=jx; j++) {
+          
+          size_t mc = _F_IDX_S4DEX(X_plus, ix, j, k, 6, ix, jx, kx, gd);
+          cut[mc] = pos;
+          
+          size_t l = _F_IDX_S3D(ix  , j  , k  , ix, jx, kx, gd);
+          setBit5(bid[l], did, X_plus);
+          
+          size_t m = _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd);
+          setBit5(bcd[m], tgt, 0);
+        }
+      }
+      break;
+      
+      
+    case Y_minus:
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, tgt, did) schedule(static)
+      for (int k=1; k<=kx; k++) {
+        for (int i=1; i<=ix; i++) {
+          
+          size_t mc = _F_IDX_S4DEX(Y_minus, i, 1, k, 6, ix, jx, kx, gd);
+          cut[mc] = pos;
+          
+          size_t l = _F_IDX_S3D(i  , 1  , k  , ix, jx, kx, gd);
+          setBit5(bid[l], did, Y_minus);
+          
+          size_t m = _F_IDX_S3D(i, 0, k, ix, jx, kx, gd);
+          setBit5(bcd[m], tgt, 0);
+        }
+      }
+      break;
+      
+      
+    case Y_plus:
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, tgt, did) schedule(static)
+      for (int k=1; k<=kx; k++) {
+        for (int i=1; i<=ix; i++) {
+          
+          size_t mc = _F_IDX_S4DEX(Y_plus, i, jx, k, 6, ix, jx, kx, gd);
+          cut[mc] = pos;
+          
+          size_t l = _F_IDX_S3D(i  , jx  , k  , ix, jx, kx, gd);
+          setBit5(bid[l], did, Y_plus);
+          
+          size_t m = _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd);
+          setBit5(bcd[m], tgt, 0);
+        }
+      }
+      break;
+      
+      
+    case Z_minus:
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, tgt, did) schedule(static)
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t mc = _F_IDX_S4DEX(Z_minus, i, j, 1, 6, ix, jx, kx, gd);
+          cut[mc] = pos;
+          
+          size_t l = _F_IDX_S3D(i  , j  , 1  , ix, jx, kx, gd);
+          setBit5(bid[l], did, Z_minus);
+          
+          size_t m = _F_IDX_S3D(i, j, 0, ix, jx, kx, gd);
+          setBit5(bcd[m], tgt, 0);
+        }
+      }
+      break;
+      
+    case Z_plus:
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, tgt, did) schedule(static)
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          
+          size_t mc = _F_IDX_S4DEX(Z_plus, i, j, kx, 6, ix, jx, kx, gd);
+          cut[mc] = pos;
+          
+          size_t l = _F_IDX_S3D(i  , j  , kx  , ix, jx, kx, gd);
+          setBit5(bid[l], did, Z_plus);
+          
+          size_t m = _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd);
+          setBit5(bcd[m], tgt, 0);
+        }
+      }
+      break;
+  }
+
 }

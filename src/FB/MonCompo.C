@@ -48,25 +48,25 @@ void MonitorCompo::allocSamplingArray()
   const REAL_TYPE DUMMY = 1.0e10;
 
   
-  if (variable[VELOCITY])
+  if (variable[var_Velocity])
   {
     if (!(vel = new FB::Vec3r[nPoint])) Exit(0);
     for (int i = 0; i < nPoint; i++) vel[i] = FB::Vec3r(DUMMY, DUMMY, DUMMY);
   }
   
-  if (variable[PRESSURE])
+  if (variable[var_Pressure])
   {
     if (!(prs = new REAL_TYPE[nPoint])) Exit(0);
     for (int i = 0; i < nPoint; i++) prs[i] = DUMMY;
   }
   
-  if (variable[TEMPERATURE])
+  if (variable[var_Temperature])
   {
     if (!(tmp = new REAL_TYPE[nPoint])) Exit(0);
     for (int i = 0; i < nPoint; i++) tmp[i] = DUMMY;
   }
   
-  if (variable[TOTAL_PRESSURE])
+  if (variable[var_TotalP])
   {
     if (!(tp = new REAL_TYPE[nPoint])) Exit(0);
     for (int i = 0; i < nPoint; i++) tp[i] = DUMMY;
@@ -80,7 +80,7 @@ void MonitorCompo::allocSamplingArray()
 
 
 // #################################################################
-/// Allreduceによる総和(実数配列上書き，work配列指定).
+/// Allreduceによる総和(実数配列上書き，work配列指定)
 bool MonitorCompo::allReduceSum(REAL_TYPE* array, int n, REAL_TYPE* sendBuf)
 {
   if ( numProc <= 1 ) return true;
@@ -102,7 +102,7 @@ bool MonitorCompo::allReduceSum(REAL_TYPE* array, int n, REAL_TYPE* sendBuf)
 
 
 // #################################################################
-/// Allreduceによる総和(実数配列上書き).
+/// Allreduceによる総和(実数配列上書き)
 bool MonitorCompo::allReduceSum(REAL_TYPE* array, int n)
 {
   if ( numProc <= 1 ) return true;
@@ -116,7 +116,7 @@ bool MonitorCompo::allReduceSum(REAL_TYPE* array, int n)
 
 
 // #################################################################
-/// Allreduceによる総和(整数配列上書き，work配列指定).
+/// Allreduceによる総和(整数配列上書き，work配列指定)
 bool MonitorCompo::allReduceSum(int* array, int n, unsigned long* sendBuf)
 {
   if ( numProc <= 1 ) return true;
@@ -144,7 +144,7 @@ bool MonitorCompo::allReduceSum(int* array, int n, unsigned long* sendBuf)
 
 
 // #################################################################
-/// Allreduceによる総和(整数配列上書き).
+/// Allreduceによる総和(整数配列上書き)
 bool MonitorCompo::allReduceSum(int* array, int n)
 {
   if ( numProc <= 1 ) return true;
@@ -158,7 +158,7 @@ bool MonitorCompo::allReduceSum(int* array, int n)
 
 
 // #################################################################
-/// 内部境界条件として指定されたモニタ領域内でスカラー変数を平均.
+/// 指定されたモニタ領域内でスカラー変数を平均
 ///
 ///   @param[in] s スカラー変数配列
 ///   @return モニタ領域内平均値
@@ -178,7 +178,7 @@ REAL_TYPE MonitorCompo::averageScalar(REAL_TYPE* s)
 
 
 // #################################################################
-/// 内部境界条件として指定されたモニタ領域内でベクトル変数を平均.
+/// 指定されたモニタ領域内でベクトル変数を平均
 ///
 ///   @param[in] v ベクトル変数配列
 ///   @return モニタ領域内平均値
@@ -203,7 +203,7 @@ FB::Vec3r MonitorCompo::averageVector(FB::Vec3r* v)
 
 
 // #################################################################
-/// モニタ点の状態を調べ，不正モニタ点フラグ配列pointStatusを設定.
+/// モニタ点の状態を調べ，不正モニタ点フラグ配列pointStatusを設定
 void MonitorCompo::checkMonitorPoints()
 {
   for (int m = 0; m < nPoint; m++)
@@ -215,13 +215,13 @@ void MonitorCompo::checkMonitorPoints()
     }
   }
   
-  if (!allReduceSum(pointStatus, nPoint)) Exit(0);
+  if ( !allReduceSum(pointStatus, nPoint) ) Exit(0);
   
 }
 
 
 // #################################################################
-/// モニタ点が指定領域内にあるかを判定.
+/// モニタ点が指定領域内にあるかを判定
 ///
 ///   @param[in] m   モニタ点番号
 ///   @param[in] org 調査領域の基点
@@ -249,7 +249,216 @@ bool MonitorCompo::checkRegion(const int m, const FB::Vec3r org, const FB::Vec3r
 
 
 // #################################################################
-/// 出力ファイルクローズ.
+/**
+ * @brief セルモニタの場合の交点情報をクリアする
+ */
+unsigned long MonitorCompo::clearMonitorCut()
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  int odr = polyID;
+  
+  float* ct = cut;
+  int* bd = bid;
+  
+  unsigned long c = 0;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, odr) schedule(static) reduction(+:c)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int qq = bd[m];
+        
+        if ( TEST_BC(qq) ) // 6面のいずれかにIDがある
+        {
+          float* pos = &ct[ _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd) ];
+          
+          size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
+          size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
+          size_t m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd);
+          size_t m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd);
+          size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
+          size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
+          
+          
+          // 隣接セルの方向に対する境界ID
+          int qw = getBit5(qq, X_minus);
+          int qe = getBit5(qq, X_plus);
+          int qs = getBit5(qq, Y_minus);
+          int qn = getBit5(qq, Y_plus);
+          int qb = getBit5(qq, Z_minus);
+          int qt = getBit5(qq, Z_plus);
+          
+          int rw = getBit5(bd[m_w], X_plus);
+          int re = getBit5(bd[m_e], X_minus);
+          int rs = getBit5(bd[m_s], Y_plus);
+          int rn = getBit5(bd[m_n], Y_minus);
+          int rb = getBit5(bd[m_b], Z_plus);
+          int rt = getBit5(bd[m_t], Z_minus);
+
+          
+          int flag = 0;
+          
+          // X-
+          if ( (pos[X_minus] <= 0.5) && (qw == odr) )
+          {
+            size_t m1 = _F_IDX_S4DEX(X_plus, i-1, j, k, 6, ix, jx, kx, gd);
+            float dd = 1.0 - ct[m1];
+            
+            if ( (fabsf(dd-pos[X_minus]) < ROUND_EPS) && ( qw == rw ) ) // 流体にする
+            {
+              // iセルのX-方向
+              pos[X_minus] = 1.0;
+              setBit5(qq, 0, X_minus);
+              
+              // i-1セルのX+方向
+              ct[m1] = 1.0;
+              setBit5(bd[m_w], 0, X_plus);
+            }
+            else // 反対側の固体で置き換え
+            {
+              pos[X_minus] = dd;
+              setBit5(qq, rw, X_minus);
+            }
+            flag++;
+          }
+          
+          // X+
+          if ( (pos[X_plus] <= 0.5) && (qe == odr) )
+          {
+            size_t m1 = _F_IDX_S4DEX(X_minus, i+1, j, k, 6, ix, jx, kx, gd);
+            float dd = 1.0 - ct[m1];
+            
+            if ( (fabsf(dd-pos[X_plus]) < ROUND_EPS) && ( qe == re ) )
+            {
+              pos[X_plus] = 1.0;
+              setBit5(qq, 0, X_plus);
+              
+              ct[m1] = 1.0;
+              setBit5(bd[m_e], 0, X_minus);
+            }
+            else
+            {
+              pos[X_plus] = dd;
+              setBit5(qq, re, X_plus);
+            }
+            flag++;
+          }
+          
+          // Y-
+          if ( (pos[Y_minus] <= 0.5) && (qs == odr) )
+          {
+            size_t m1 = _F_IDX_S4DEX(Y_plus, i, j-1, k, 6, ix, jx, kx, gd);
+            float dd = 1.0 - ct[m1];
+            
+            if ( (fabsf(dd-pos[Y_minus]) < ROUND_EPS) && ( qs == rs ) )
+            {
+              pos[Y_minus] = 1.0;
+              setBit5(qq, 0, Y_minus);
+              
+              ct[m1] = 1.0;
+              setBit5(bd[m_s], 0, Y_plus);
+            }
+            else
+            {
+              pos[Y_minus] = dd;
+              setBit5(qq, rs, Y_minus);
+            }
+            flag++;
+          }
+          
+          // Y+
+          if ( (pos[Y_plus] <= 0.5) && (qn == odr) )
+          {
+            size_t m1 = _F_IDX_S4DEX(Y_minus, i, j+1, k, 6, ix, jx, kx, gd);
+            float dd = 1.0 - ct[m1];
+            
+            if ( (fabsf(dd-pos[Y_plus]) < ROUND_EPS) && ( qn == rn ) )
+            {
+              pos[Y_plus] = 1.0;
+              setBit5(qq, 0, Y_plus);
+              
+              ct[m1] = 1.0;
+              setBit5(bd[m_n], 0, Y_minus);
+            }
+            else
+            {
+              pos[Y_plus] = dd;
+              setBit5(qq, rn, Y_plus);
+            }
+            flag++;
+          }
+          
+          // Z-
+          if ( (pos[Z_minus] <= 0.5) && (qb == odr) )
+          {
+            size_t m1 = _F_IDX_S4DEX(Z_plus, i, j, k-1, 6, ix, jx, kx, gd);
+            float dd = 1.0 - ct[m1];
+            
+            if ( (fabsf(dd-pos[Z_minus]) < ROUND_EPS) && ( qb == rb ) )
+            {
+              pos[Z_minus] = 1.0;
+              setBit5(qq, 0, Z_minus);
+              
+              ct[m1] = 1.0;
+              setBit5(bd[m_b], 0, Z_plus);
+            }
+            else
+            {
+              pos[Z_minus] = dd;
+              setBit5(qq, rb, Z_minus);
+            }
+            flag++;
+          }
+          
+          // Z+
+          if ( (pos[Z_plus] <= 0.5) && (qt == odr) )
+          {
+            size_t m1 = _F_IDX_S4DEX(Z_minus, i, j, k+1, 6, ix, jx, kx, gd);
+            float dd = 1.0 - ct[m1];
+            
+            if ( (fabsf(dd-pos[Z_plus]) < ROUND_EPS) && ( qt == rt ) )
+            {
+              pos[Z_plus] = 1.0;
+              setBit5(qq, 0, Z_plus);
+              
+              ct[m1] = 1.0;
+              setBit5(bd[m_t], 0, Z_minus);
+            }
+            else
+            {
+              pos[Z_plus] = dd;
+              setBit5(qq, rt, Z_plus);
+            }
+            flag++;
+          }
+          
+          bd[m] = qq;
+          
+          if ( flag > 0 ) c++;
+        }
+        
+      }
+    }
+  }
+  
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = c;
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  return c;
+}
+
+
+
+// #################################################################
+/// 出力ファイルクローズ
 void MonitorCompo::closeFile()
 { 
   assert(fp);
@@ -259,17 +468,17 @@ void MonitorCompo::closeFile()
 
 
 // #################################################################
-/// サンプリングした変数をノード0に集約.
+/// サンプリングした変数をノード0に集約
 void MonitorCompo::gatherSampled()
 {
   REAL_TYPE* vSendBuf = NULL;
   REAL_TYPE* vRecvBuf = NULL;
   REAL_TYPE* sRecvBuf = NULL;
   
-  if (variable[VELOCITY])       gatherSampledVector(vel, vSendBuf, vRecvBuf);
-  if (variable[PRESSURE])       gatherSampledScalar(prs, sRecvBuf);
-  if (variable[TEMPERATURE])    gatherSampledScalar(tmp, sRecvBuf);
-  if (variable[TOTAL_PRESSURE]) gatherSampledScalar(tp, sRecvBuf);
+  if (variable[var_Velocity])      gatherSampledVector(vel, vSendBuf, vRecvBuf);
+  if (variable[var_Pressure])      gatherSampledScalar(prs, sRecvBuf);
+  if (variable[var_Temperature])   gatherSampledScalar(tmp, sRecvBuf);
+  if (variable[var_TotalP])        gatherSampledScalar(tp, sRecvBuf);
   //if (variable[VORTICITY])      gatherSampledVector(vor, vSendBuf, vRecvBuf);
   
   if (vSendBuf) delete[] vSendBuf;
@@ -279,7 +488,7 @@ void MonitorCompo::gatherSampled()
 
 
 // #################################################################
-/// サンプリングしたスカラー変数をノード0に集約.
+/// サンプリングしたスカラー変数をノード0に集約
 ///
 ///   @param [in,out] s         スカラー変数配列
 ///   @param          sRecvBuf  通信用work領域
@@ -321,7 +530,7 @@ void MonitorCompo::gatherSampledScalar(REAL_TYPE* s, REAL_TYPE* sRecvBuf)
 
 
 // #################################################################
-/// サンプリングしたベクトル変数をノード0に集約.
+/// サンプリングしたベクトル変数をノード0に集約
 ///
 ///   @param[in,out] v ベクトル変数配列
 ///   @param  vSendBuf,vRecvBuf  通信用work領域
@@ -378,20 +587,35 @@ void MonitorCompo::gatherSampledVector(FB::Vec3r* v, REAL_TYPE* vSendBuf, REAL_T
 
 
 // #################################################################
-/// モニタ点指定方法文字列の取得.
+/// モニタ点指定方法文字列の取得
 string MonitorCompo::getTypeStr()
 {
   string str;
   
-  switch (type)
+  switch (monitor_type)
   {
-    case POINT_SET:
-      str = "PointSet"; break;
-    case LINE:
-      str = "Line"; break;
-    case INNER_BOUNDARY:
-      str = "LocalBoundary"; break;
+    case mon_POINT_SET:
+      str = "PointSet";
+      break;
+      
+    case mon_LINE:
+      str = "Line";
+      break;
+      
+    case mon_CYLINDER:
+      str = "Cylinder";
+      break;
+      
+    case mon_BOX:
+      str = "Box";
+      break;
+      
+    case mon_POLYGON:
+      str = "Polygon";
+      break;
+      
     default:
+      printf("Monitor Type = %d\n", monitor_type);
       Exit(0);
   }
   
@@ -400,7 +624,7 @@ string MonitorCompo::getTypeStr()
 
 
 // #################################################################
-/// サンプリング方法文字列の取得.
+/// サンプリング方法文字列の取得
 string MonitorCompo::getMethodStr()
 {
   string str;
@@ -408,11 +632,17 @@ string MonitorCompo::getMethodStr()
   switch (method)
   {
     case SAMPLING_NEAREST:
-      str = "Nearest"; break;
+      str = "Nearest";
+      break;
+      
     case SAMPLING_INTERPOLATION:
-      str = "Interpolation"; break;
+      str = "Interpolation";
+      break;
+      
     case SAMPLING_SMOOTHING:
-      str = "Smoothing"; break;
+      str = "Smoothing";
+      break;
+      
     default:
       Exit(0);
   }
@@ -422,7 +652,7 @@ string MonitorCompo::getMethodStr()
 
 
 // #################################################################
-/// サンプリングモード文字列の取得.
+/// サンプリングモード文字列の取得
 string MonitorCompo::getModeStr()
 {
   string str;
@@ -430,11 +660,17 @@ string MonitorCompo::getModeStr()
   switch (mode)
   {
     case SAMPLING_ALL:
-      str = "All"; break;
+      str = "All";
+      break;
+      
     case SAMPLING_FLUID_ONLY:
-      str = "Fluid"; break;
+      str = "Fluid";
+      break;
+      
     case SAMPLING_SOLID_ONLY:
-      str = "Solid"; break;
+      str = "Solid";
+      break;
+      
     default:
       Exit(0);
   }
@@ -444,15 +680,15 @@ string MonitorCompo::getModeStr()
 
 
 // #################################################################
-/// モニタ変数を結合した文字列の取得.
+/// モニタ変数を結合した文字列の取得
 string MonitorCompo::getVarStr() 
 {
   string var;
   
-  if (variable[VELOCITY])        var += "Velocity ";
-  if (variable[PRESSURE])        var += "Pressure ";
-  if (variable[TEMPERATURE])     var += "Temperature ";
-  if (variable[TOTAL_PRESSURE])  var += "TotalPressure ";
+  if (variable[var_Velocity])     var += "Velocity ";
+  if (variable[var_Pressure])     var += "Pressure ";
+  if (variable[var_Temperature])  var += "Temperature ";
+  if (variable[var_TotalP])       var += "TotalPressure ";
   //if (variable[VORTICITY])       var += "Vorticity ";
   
   return var;
@@ -461,40 +697,48 @@ string MonitorCompo::getVarStr()
 
 
 // #################################################################
-/// 出力ファイルオープン.
+/// 出力ファイルオープン
 ///
 ///    @param str ファイル名テンプレート
 ///    @param gathered true=gather出力/false=disutribute出力
 ///
-void MonitorCompo::openFile(const char* str, bool gathered)
+void MonitorCompo::openFile(const char* str, const bool gathered)
 {
-  if (gathered) 
+  if ( (monitor_type == mon_LINE) || (monitor_type == mon_POINT_SET) )
   {
-    if (!(fp = fopen(str, "w"))) 
+    if (gathered)
     {
-      perror(str); Exit(0);
+      if (!(fp = fopen(str, "w"))) { perror(str); Exit(0); }
+      
+      writeHeader(true);
+      fflush(fp);
     }
-    writeHeader(true);
+    else
+    {
+      string fileName(str);
+      ostringstream rankStr;
+      rankStr << "_" << myRank;
+      string::size_type pos = fileName.rfind(".");
+      fileName.insert(pos, rankStr.str());
+      
+      if (!(fp = fopen(fileName.c_str(), "w"))) { perror(fileName.c_str()); Exit(0); }
+      
+      writeHeader(false);
+      fflush(fp);
+    }
   }
-  else 
+  else // mon_POLYGON, mon_CYLINDER, mon_BOX >> gatherd only
   {
-    string fileName(str);
-    ostringstream rankStr;
-    rankStr << "_" << myRank;
-    string::size_type pos = fileName.rfind(".");
-    fileName.insert(pos, rankStr.str());
-    if (!(fp = fopen(fileName.c_str(), "w"))) 
-    {
-      perror(fileName.c_str()); Exit(0);
-    }
-    writeHeader(false);
+    if (!(fp = fopen(str, "w"))) { perror(str); Exit(0); }
+    
+    writeHeaderCompo();
     fflush(fp);
   }
 }
 
 
 // #################################################################
-/// モニタ結果出力.
+/// モニタ結果出力
 ///
 ///   @param[in] step サンプリング時の計算ステップ
 ///   @param[in] tm   サンプリング時の計算時刻
@@ -504,68 +748,97 @@ void MonitorCompo::print(unsigned step, REAL_TYPE tm, bool gathered)
 {
   assert(fp);
   
-  char* sFmtSingle = "%15.7e ";
-  char* vFmtSingle = "%15.7e %15.7e %15.7e ";
-  char* sFmtDouble = "%24.16e ";
-  char* vFmtDouble = "%24.16e %24.16e %24.16e ";
-  char* sFmt;
-  char* vFmt;
-  
-  if (refVar.modePrecision == sizeof(float))
+  if ( (monitor_type == mon_LINE) || (monitor_type == mon_POINT_SET) )
   {
-    sFmt = sFmtSingle;
-    vFmt = vFmtSingle;
-  }
-  else 
-  {
-    sFmt = sFmtDouble;
-    vFmt = vFmtDouble;
-  }
-  
-  fprintf(fp, "\n");
-  if (refVar.modePrecision == sizeof(float)) 
-  {
-    fprintf(fp, "%d %14.6e\n", step, convTime(tm)); // %12.4 >> %14.6
-  }
-  else 
-  {
-    fprintf(fp, "%d %24.16e\n", step, convTime(tm));
-  }
-  
-  for (int i = 0; i < nPoint; i++)
-  {
-    if (!gathered && rank[i] != myRank) continue;
-    if (pointStatus[i] != Sampling::POINT_STATUS_OK) 
+    char* sFmtSingle = "%15.7e ";
+    char* vFmtSingle = "%15.7e %15.7e %15.7e ";
+    char* sFmtDouble = "%24.16e ";
+    char* vFmtDouble = "%24.16e %24.16e %24.16e ";
+    char* sFmt;
+    char* vFmt;
+    
+    if (refVar.modePrecision == sizeof(float))
     {
-      fprintf(fp, "%s\n", "  *NA*");
-      continue;
+      sFmt = sFmtSingle;
+      vFmt = vFmtSingle;
     }
-    if (variable[VELOCITY]) 
+    else
     {
-      fprintf(fp, vFmt, convVel(vel[i].x), convVel(vel[i].y), convVel(vel[i].z));
+      sFmt = sFmtDouble;
+      vFmt = vFmtDouble;
     }
-    if (variable[PRESSURE]) 
-    {
-      fprintf(fp, sFmt, convPrs(prs[i]));
-    }
-    if (variable[TEMPERATURE]) 
-    {
-      fprintf(fp, sFmt, convTmp(tmp[i]));
-    }
-    if (variable[TOTAL_PRESSURE]) 
-    {
-      fprintf(fp, sFmt, convTP(tp[i]));
-    }
-    //if (variable[VORTICITY]) {
-    //  fprintf(fp, vFmt, convVor(vor[i].x), convVor(vor[i].y), convVor(vor[i].z));
-    //}
+    
     fprintf(fp, "\n");
+    
+    if (refVar.modePrecision == sizeof(float))
+    {
+      fprintf(fp, "%d %14.6e\n", step, convTime(tm));
+    }
+    else
+    {
+      fprintf(fp, "%d %24.16e\n", step, convTime(tm));
+    }
+    
+    for (int i = 0; i < nPoint; i++)
+    {
+      if (!gathered && rank[i] != myRank) continue;
+      
+      if (pointStatus[i] != Sampling::POINT_STATUS_OK)
+      {
+        fprintf(fp, "%s\n", "  *NA*");
+        continue;
+      }
+      
+      if (variable[var_Velocity])    fprintf(fp, vFmt, convVel(vel[i].x), convVel(vel[i].y), convVel(vel[i].z));
+      if (variable[var_Pressure])    fprintf(fp, sFmt, convPrs(prs[i]));
+      if (variable[var_Temperature]) fprintf(fp, sFmt, convTmp(tmp[i]));
+      if (variable[var_TotalP])      fprintf(fp, sFmt, convTP(tp[i]));
+      
+      //if (variable[VORTICITY]) {
+      //  fprintf(fp, vFmt, convVor(vor[i].x), convVor(vor[i].y), convVor(vor[i].z));
+      //}
+      
+      fprintf(fp, "\n");
+    }
   }
+  else // mon_POLYGON, mon_CYLINDER, mon_BOX >> gatherd only
+  {
+    if ( !gathered ) Exit(0);
+    
+    char* sFmtSingle = "%15.7e ";
+    char* sFmtDouble = "%24.16e ";
+    char* sFmt;
+    char* vFmt;
+    
+    if (refVar.modePrecision == sizeof(float))
+    {
+      sFmt = sFmtSingle;
+    }
+    else
+    {
+      sFmt = sFmtDouble;
+    }
+    
+    if (refVar.modePrecision == sizeof(float))
+    {
+      fprintf(fp, "%10d %14.6e ", step, convTime(tm));
+    }
+    else
+    {
+      fprintf(fp, "%10d %24.16e ", step, convTime(tm));
+    }
+    
+    if (variable[var_Velocity])    fprintf(fp, vFmt, convVel(val[var_Velocity]));
+    if (variable[var_Pressure])    fprintf(fp, sFmt, convPrs(val[var_Pressure]));
+    if (variable[var_Temperature]) fprintf(fp, sFmt, convTmp(val[var_Temperature]));
+    if (variable[var_TotalP])      fprintf(fp, sFmt, convTP(val[var_TotalP]));
+  }
+
 }
 
 
 // #################################################################
-/// モニタ情報を出力.
+/// モニタ情報を出力
 ///
 ///    @param[in] fp 出力ファイルポインタ
 ///    @param[in] no モニタグループ通し番号
@@ -575,9 +848,9 @@ void MonitorCompo::printInfo(FILE* fp, int no)
   fprintf(fp,"\t%3d : %s\t division=%d  [%s]\n", no+1, getTypeStr().c_str(), nPoint, label.c_str());
   fprintf(fp,"\t\tVariables : %s\n", getVarStr().c_str());
   fprintf(fp,"\t\t   Method : %s\n", getMethodStr().c_str());
-  fprintf(fp,"\t\t     Mode : %s\n", getModeStr().c_str());
+  fprintf(fp,"\t\t     Mode : %s\n\n", getModeStr().c_str());
   
-  fprintf(fp, "\t\t    order :            X              Y              Z    :   rank : comment\n");
+  fprintf(fp,"\t\t    order :            X              Y              Z    :   rank : comment\n");
   for (int j = 0; j < nPoint; j++)
   {
     fprintf(fp,"\t\t%9d : %14.6e %14.6e %14.6e  : %6d : %s", // %12.4 >> %14.6
@@ -595,349 +868,64 @@ void MonitorCompo::printInfo(FILE* fp, int no)
       fprintf(fp, "\n");
     }
   }
-  fprintf(fp,"\n");
+  fprintf(fp,"\n\n");
 }
 
 
 // #################################################################
-/// サンプリング(Line, PointSet).
+/// サンプリング(Line, PointSet)
 void MonitorCompo::sampling()
 {
   for (int i = 0; i < nPoint; i++)
   {
     //  if (!(mon[i] && pointStatus[i] == Sampling::POINT_STATUS_OK)) continue;
     if (!mon[i]) continue;
-    if (variable[VELOCITY])       vel[i] = mon[i]->samplingVelocity(vSource);
-    if (variable[PRESSURE])       prs[i] = mon[i]->samplingPressure(pSource);
-    if (variable[TEMPERATURE])    tmp[i] = mon[i]->samplingTemperature(tSource);
-    if (variable[TOTAL_PRESSURE]) tp[i]  = mon[i]->samplingTotalPressure(vSource, pSource);
+    if (variable[var_Velocity])     vel[i] = mon[i]->samplingVelocity(vSource);
+    if (variable[var_Pressure])     prs[i] = mon[i]->samplingPressure(pSource);
+    if (variable[var_Temperature])  tmp[i] = mon[i]->samplingTemperature(tSource);
+    if (variable[var_TotalP])       tp[i]  = mon[i]->samplingTotalPressure(vSource, pSource);
     //if (variable[VORTICITY])      vor[i] = mon[i]->samplingVorticity(vSource);
   }
 }
 
 
 // #################################################################
-/// 内部境界条件モニタ点でのサンプリング.
+/// モニタ点での平均値サンプリング
 ///
-///   サンプリング結果を集計，コンポーネント領域での平均値を計算.
-///   速度は法線ベクトルとの内積をとる．
-///   結果はコンポーネントcmpに格納.
+///   サンプリング結果を集計，領域での平均値を計算
+///   速度は法線ベクトルとの内積をとる
 ///
-void MonitorCompo::samplingInnerBoundary()
+void MonitorCompo::samplingAverage()
 {
-  assert(type == INNER_BOUNDARY);
   sampling();
   
-  if (variable[VELOCITY]) 
+  if (variable[var_Velocity]) 
   {
     FB::Vec3r velAve = averageVector(vel);
-    cmp->val[var_Velocity] = velAve.x * cmp->nv[0] + velAve.y * cmp->nv[1] + velAve.z * cmp->nv[2];
+    val[var_Velocity] = velAve.x * nv[0] + velAve.y * nv[1] + velAve.z * nv[2];
   }
   
-  if (variable[PRESSURE])       cmp->val[var_Pressure]    = averageScalar(prs);
-  if (variable[TEMPERATURE])    cmp->val[var_Temperature] = averageScalar(tmp);
-  if (variable[TOTAL_PRESSURE]) cmp->val[var_TotalP]      = averageScalar(tp);
+  if (variable[var_Pressure])     val[var_Pressure]    = averageScalar(prs);
+  if (variable[var_Temperature])  val[var_Temperature] = averageScalar(tmp);
+  if (variable[var_TotalP])       val[var_TotalP]      = averageScalar(tp);
 }
 
 
 // #################################################################
-/// Polygon要素の交点座標をcrd[]に設定
-void MonitorCompo::setPointsPolygon(const int odr, CompoList& cmp)
+/// Line登録
+void MonitorCompo::setLine(const char* labelStr,
+                           vector<string>& variables,
+                           const char* methodStr,
+                           const char* modeStr,
+                           REAL_TYPE from[3],
+                           REAL_TYPE to[3],
+                           int nDivision,
+                           Monitor_Type m_type)
 {
-  int np = num_process;
-  
-  int* nPointList;
-  if (!(nPointList = new int[np])) Exit(0);
-  for (int i = 0; i < np; i++) nPointList[i] = 0;
-
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  
-  for (int k = 1; k <= kx; k++) {
-    for (int j = 1; j <= jx; j++) {
-      for (int i = 1; i <= ix; i++) {
-        
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        int bd = bid[m];
-        
-        if ( TEST_BC(bd) ) // 6面のいずれかにIDがある
-        {
-          const float* pos = &cut[ _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd) ];
-          
-          for (int i=0; i<6; i++)
-          {
-            int d = (bd >> i*5) & MASK_5;
-            if ( (pos[i] <= 0.5) && (d == odr) ) nPointList[myRank]++; // セル内部にカットが存在し，境界IDがエントリ番号
-          }
-        }
-      }
-    }
-  }
-
-  if (!allReduceSum(nPointList, np)) Exit(0);
-  
-  
-  //check
-  int sum = 0;
-  for (int i = 0; i < np; i++) sum += nPointList[i];
-
-#if 1
-  printf("sum=%d LocalPoint=%d\n", sum, nPointList[myRank]);
-#endif
-  
-  nPoint = nPointList[myRank];
-  
-  
-  cmp.setElement((unsigned long)nPoint);
-  
-  allocArray();
-  allocSamplingArray();
-  
-  
-  REAL_TYPE* buf;
-  if (!(buf = new REAL_TYPE[nPoint*3])) Exit(0);
-  for (int i = 0; i < nPoint*3; i++) buf[i] = 0.0;
-  
-  int m0 = 0;
-  for (int i = 0; i < myRank; i++) m0 += nPointList[i];
-  
-  int m = 0;
-
-  int i0 = head[0] - 1; //fortran index なので1からカウントアップしている ---> Cのindexは0からカウントアップ
-  int j0 = head[1] - 1;
-  int k0 = head[2] - 1;
-  
-  for (int k = 1; k <= kx; k++) {
-    for (int j = 1; j <= jx; j++) {
-      for (int i = 1; i <= ix; i++) {
-        
-        size_t mm = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        int bd = bid[mm];
-        
-        if ( TEST_BC(bd) ) // 6面のいずれかにIDがある
-        {
-          const float* pos = &cut[ _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd) ];
-          
-          for (int i=0; i<6; i++)
-          {
-            int d = (bd >> i*5) & MASK_5;
-            
-            if ( (pos[i] <= 0.5) && (d == odr) ) // セル内部に存在する
-            {
-              float cx = 0.0;
-              float cy = 0.0;
-              float cz = 0.0;
-              if (i == 0)      cx = -pos[i];
-              else if (i == 1) cx =  pos[i];
-              else if (i == 2) cy = -pos[i];
-              else if (i == 3) cy =  pos[i];
-              else if (i == 4) cz = -pos[i];
-              else if (i == 5) cz =  pos[i];
-              
-              buf[(m0+m)*3+0] = g_org.x + (i + i0 - 0.5 + cx) * pch.x;
-              buf[(m0+m)*3+1] = g_org.y + (j + j0 - 0.5 + cy) * pch.y;
-              buf[(m0+m)*3+2] = g_org.z + (k + k0 - 0.5 + cz) * pch.z;
-              m++;
-            }
-          }
-        }
-
-      }
-    }
-  }
-  
-  if (!allReduceSum(buf, nPoint*3)) Exit(0);
-  
-  for (m = 0; m < nPoint; m++)
-  {
-    crd[m].x = buf[m*3+0];
-    crd[m].y = buf[m*3+1];
-    crd[m].z = buf[m*3+2];
-  }
-  
-  delete[] buf;
-  delete[] nPointList;
-}
-
-
-// #################################################################
-/// Primitive要素の交点座標をcrd[]に設定
-void MonitorCompo::setPointsPrimitive(const int odr, CompoList& cmp)
-{
-  int np = num_process;
-  
-  int* nPointList;
-  if (!(nPointList = new int[np])) Exit(0);
-  for (int i = 0; i < np; i++) nPointList[i] = 0;
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  for (int k = 1; k <= kx; k++) {
-    for (int j = 1; j <= jx; j++) {
-      for (int i = 1; i <= ix; i++) {
-        
-        if ( DECODE_CMP( bcd[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)] ) == odr )
-        {
-          nPointList[myRank]++;
-        }
-      }
-    }
-  }
-  
-  if (!allReduceSum(nPointList, np)) Exit(0);
-  
-  
-  //check
-  int sum = 0;
-  for (int i = 0; i < np; i++) sum += nPointList[i];
-  
-#if 1
-  printf("sum=%d LocalPoint=%d\n", sum, nPointList[myRank]);
-#endif
-  
-  nPoint = nPointList[myRank];
-  
-  
-  cmp.setElement((unsigned long)nPoint);
-  
-  allocArray();
-  allocSamplingArray();
-  
-  
-  
-  REAL_TYPE* buf;
-  if (!(buf = new REAL_TYPE[nPoint*3])) Exit(0);
-  for (int i = 0; i < nPoint*3; i++) buf[i] = 0.0;
-  
-  int m0 = 0;
-  for (int i = 0; i < myRank; i++) m0 += nPointList[i];
-  
-  int m = 0;
-  
-  int i0 = head[0] - 1; //fortran index なので1からカウントアップしている ---> Cのindexは0からカウントアップ
-  int j0 = head[1] - 1;
-  int k0 = head[2] - 1;
-  
-  for (int k = 1; k <= kx; k++) {
-    for (int j = 1; j <= jx; j++) {
-      for (int i = 1; i <= ix; i++) {
-        
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        
-        if ( DECODE_CMP( bcd[m] ) == odr )
-        {
-          buf[(m0+m)*3+0] = g_org.x + (i + i0 - 0.5) * pch.x;
-          buf[(m0+m)*3+1] = g_org.y + (j + j0 - 0.5) * pch.y;
-          buf[(m0+m)*3+2] = g_org.z + (k + k0 - 0.5) * pch.z;
-          m++;
-          
-          bcd[m] |= 0; // クリア
-        }
-        
-      }
-    }
-  }
-  
-  if (!allReduceSum(buf, nPoint*3)) Exit(0);
-  
-  for (m = 0; m < nPoint; m++)
-  {
-    crd[m].x = buf[m*3+0];
-    crd[m].y = buf[m*3+1];
-    crd[m].z = buf[m*3+2];
-  }
-  
-  delete[] buf;
-  delete[] nPointList;
-}
-
-
-
-// #################################################################
-/// セルモニターのモニタ点を登録.
-///
-///   @param [in] odr    コンポーネントエントリ
-///   @param [in] cmp    コンポーネント
-///
-void MonitorCompo::setCellMonitor(const int odr, CompoList& cmp)
-{
-  ostringstream oss;
-  oss << "LocalBoundary" << odr;
-  type = INNER_BOUNDARY;
-  label = oss.str();
-  method = SAMPLING_NEAREST;
-  mode = SAMPLING_ALL;
-  
-  this->cmp = &cmp;
-  
-  if (cmp.isVarEncoded(var_Velocity))    variable[VELOCITY]       = true;
-  if (cmp.isVarEncoded(var_Pressure))    variable[PRESSURE]       = true;
-  if (cmp.isVarEncoded(var_Temperature)) variable[TEMPERATURE]    = true;
-  if (cmp.isVarEncoded(var_TotalP))      variable[TOTAL_PRESSURE] = true;
-  
-  
-  switch ( cmp.get_Shape() )
-  {
-    case SHAPE_BOX:
-    case SHAPE_CYLINDER:
-      setPointsPrimitive(odr, cmp);
-      break;
-      
-    case SHAPE_POLYGON:
-      setPointsPolygon(odr, cmp);
-      break;
-      
-    default:
-      Exit(0);
-      break;
-  }
-  
-  
-  setRankArray();
-  
-  for (int m = 0; m < nPoint; m++)
-  {
-    ostringstream oss;
-    oss << "point_" << m;
-    comment[m] = oss.str();
-    
-    if (!checkRegion(m, g_org, g_box, true)) Exit(0);
-    
-    if (rank[m] == myRank) 
-    {
-      mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
-    }
-  }
-  
-  checkMonitorPoints();
-}
-
-
-// #################################################################
-/// Line登録.
-///
-///   @param[in] labelStr ラベル文字列
-///   @param[in] variables モニタ変数vector
-///   @param[in] methodStr method文字列
-///   @param[in] modeStr   mode文字列
-///   @param[in] from Line始点
-///   @param[in] to   Line終点
-///   @param[in] nDivision 分割数(モニタ点数-1)
-///
-void MonitorCompo::setLine(const char* labelStr, vector<string>& variables,
-                           const char* methodStr, const char* modeStr,
-                           REAL_TYPE from[3], REAL_TYPE to[3], int nDivision)
-{
-  type = LINE;
   label = labelStr;
   setSamplingMethod(methodStr);
   setSamplingMode(modeStr);
+  monitor_type = m_type;
   
   vector<string>::const_iterator it;
   for (it = variables.begin(); it != variables.end(); it++)
@@ -959,8 +947,11 @@ void MonitorCompo::setLine(const char* labelStr, vector<string>& variables,
   {
     ostringstream oss;
     oss << "point_" << m;
+    
     crd[m] = st + dd * (REAL_TYPE)m;
+    
     if (!checkRegion(m, g_org, g_box, true)) Exit(0);
+    
     comment[m] = oss.str();
   }
   
@@ -989,22 +980,20 @@ void MonitorCompo::setLine(const char* labelStr, vector<string>& variables,
       }
     }
   }
-  
-  checkMonitorPoints();
 }
 
 
 // #################################################################
-/// モニタ対象物理量の設定.
+/// モニタ対象物理量の設定
 ///
 ///    @param[in] str モニタ対象物理量文字列
 ///
 void MonitorCompo::setMonitorVar(const char* str) 
 {
-  if      (!strcasecmp("velocity", str))       variable[VELOCITY]       = true;
-  else if (!strcasecmp("pressure", str))       variable[PRESSURE]       = true;
-  else if (!strcasecmp("temperature", str))    variable[TEMPERATURE]    = true;
-  else if (!strcasecmp("totalpressure", str))  variable[TOTAL_PRESSURE] = true;
+  if      (!strcasecmp("velocity", str))       variable[var_Velocity]    = true;
+  else if (!strcasecmp("pressure", str))       variable[var_Pressure]    = true;
+  else if (!strcasecmp("temperature", str))    variable[var_Temperature] = true;
+  else if (!strcasecmp("totalpressure", str))  variable[var_TotalP]      = true;
   //else if (!strcasecmp("vorticity", str))       variable[VORTICITY] = true;
   else
   {
@@ -1015,22 +1004,18 @@ void MonitorCompo::setMonitorVar(const char* str)
 
 
 // #################################################################
-/// PointSet登録.
-///
-///   @param[in] labelStr ラベル文字列
-///   @param[in] variables モニタ変数vector
-///   @param[in] methodStr method文字列
-///   @param[in] modeStr   mode文字列
-///   @param[in] pointSet  PointSet
-///
-void MonitorCompo::setPointSet(const char* labelStr, vector<string>& variables,
-                               const char* methodStr, const char* modeStr,
-                               vector<MonitorPoint>& pointSet)
+/// PointSet登録
+void MonitorCompo::setPointSet(const char* labelStr,
+                               vector<string>& variables,
+                               const char* methodStr,
+                               const char* modeStr,
+                               vector<MonitorPoint>& pointSet,
+                               Monitor_Type m_type)
 {
-  type = POINT_SET;
   label = labelStr;
   setSamplingMethod(methodStr);
   setSamplingMode(modeStr);
+  monitor_type = m_type;
   
   vector<string>::const_iterator it;
   for (it = variables.begin(); it != variables.end(); it++)
@@ -1047,7 +1032,9 @@ void MonitorCompo::setPointSet(const char* labelStr, vector<string>& variables,
   for (int m = 0; m < nPoint; m++)
   {
     crd[m] = pointSet[m].crd;
+    
     if (!checkRegion(m, g_org, g_box, true)) Exit(0);
+    
     comment[m] = pointSet[m].label;
   }
   
@@ -1076,13 +1063,364 @@ void MonitorCompo::setPointSet(const char* labelStr, vector<string>& variables,
       }
     }
   }
+}
+
+// #################################################################
+/// Polygon登録
+void MonitorCompo::setPolygon(const char* labelStr,
+                              vector<string>& variables,
+                              const char* methodStr,
+                              const char* modeStr,
+                              const int order,
+                              const REAL_TYPE m_nv[3],
+                              Monitor_Type m_type)
+{
+  label = labelStr;
+  setSamplingMethod(methodStr);
+  setSamplingMode(modeStr);
+  monitor_type = m_type;
+  nv[0] = m_nv[0];
+  nv[1] = m_nv[1];
+  nv[2] = m_nv[2];
+  polyID = order;
+  int odr = order;
+
   
-  checkMonitorPoints();
+  vector<string>::const_iterator it;
+  for (it = variables.begin(); it != variables.end(); it++)
+  {
+    setMonitorVar((*it).c_str());
+  }
+  
+
+  // nPointを求める
+  int np = num_process;
+  
+  int* nPointList;
+  if (!(nPointList = new int[np])) Exit(0);
+  for (int i = 0; i < np; i++) nPointList[i] = 0;
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  // Serial
+  for (int k = 1; k <= kx; k++) {
+    for (int j = 1; j <= jx; j++) {
+      for (int i = 1; i <= ix; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int bd = bid[m];
+        
+        if ( TEST_BC(bd) ) // 6面のいずれかにIDがある
+        {
+          const float* pos = &cut[ _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd) ];
+          
+          for (int i=0; i<6; i++)
+          {
+            int d = (bd >> i*5) & MASK_5;
+            if ( (pos[i] <= 0.5) && (d == odr) ) nPointList[myRank]++; // セル内部にカットが存在し，境界IDがエントリ番号
+          }
+        }
+      }
+    }
+  }
+  
+  if (!allReduceSum(nPointList, np)) Exit(0);
+  
+  
+  //check
+  int sum = 0;
+  for (int i = 0; i < np; i++) sum += nPointList[i];
+  
+#if 1
+  printf("Polygon Monitor : sum=%d LocalPoint=%d\n", sum, nPointList[myRank]);
+#endif
+  
+  nPoint = nPointList[myRank];
+  
+  
+  if (nPoint == 0) Exit(0); // サンプリング点数
+  
+  
+  
+  // アロケート
+  allocArray();
+  allocSamplingArray();
+  
+  
+  // 座標値を保持
+  REAL_TYPE* buf;
+  if (!(buf = new REAL_TYPE[nPoint*3])) Exit(0);
+  for (int i = 0; i < nPoint*3; i++) buf[i] = 0.0;
+  
+  int m0 = 0;
+  for (int i = 0; i < myRank; i++) m0 += nPointList[i];
+  
+  int m = 0;
+  
+  int i0 = head[0] - 1; //fortran index なので1からカウントアップしている ---> Cのindexは0からカウントアップ
+  int j0 = head[1] - 1;
+  int k0 = head[2] - 1;
+  
+  // serial
+  for (int k = 1; k <= kx; k++) {
+    for (int j = 1; j <= jx; j++) {
+      for (int i = 1; i <= ix; i++) {
+        
+        size_t mm = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int bd = bid[mm];
+        int flag = 0;
+        
+        float cx = 0.0;
+        float cy = 0.0;
+        float cz = 0.0;
+        
+        if ( TEST_BC(bd) ) // 6面のいずれかにIDがある
+        {
+          const float* pos = &cut[ _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd) ];
+
+          for (int i=0; i<6; i++)
+          {
+            int d = (bd >> i*5) & MASK_5;
+            
+            if ( (pos[i] <= 0.5) && (d == odr) ) // セル内部に存在する
+            {
+              if      (i == 0) cx = -pos[i];
+              else if (i == 1) cx =  pos[i];
+              else if (i == 2) cy = -pos[i];
+              else if (i == 3) cy =  pos[i];
+              else if (i == 4) cz = -pos[i];
+              else if (i == 5) cz =  pos[i];
+              flag++;
+            }
+          }
+        }
+        
+        if ( flag > 0 )
+        {
+          buf[(m0+m)*3+0] = g_org.x + (i + i0 - 0.5 + cx) * pch.x;
+          buf[(m0+m)*3+1] = g_org.y + (j + j0 - 0.5 + cy) * pch.y;
+          buf[(m0+m)*3+2] = g_org.z + (k + k0 - 0.5 + cz) * pch.z;
+          m++;
+        }
+        
+      }
+    }
+  }
+
+  
+  if (!allReduceSum(buf, nPoint*3)) Exit(0);
+  
+  // serial
+  for (m = 0; m < nPoint; m++)
+  {
+    ostringstream oss;
+    oss << "point_" << m;
+    
+    crd[m].x = buf[m*3+0];
+    crd[m].y = buf[m*3+1];
+    crd[m].z = buf[m*3+2];
+    
+    if (!checkRegion(m, g_org, g_box, true)) Exit(0);
+    
+    comment[m] = oss.str();
+  }
+  
+  if (buf) delete [] buf;
+  if (nPointList) delete [] nPointList;
+  
+
+  setRankArray();
+  
+  for (int m = 0; m < nPoint; m++)
+  {
+    if (rank[m] == myRank)
+    {
+      switch (method)
+      {
+        case SAMPLING_NEAREST:
+          mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          break;
+          
+        case SAMPLING_INTERPOLATION:
+          mon[m] = new Interpolation(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          break;
+          
+        case SAMPLING_SMOOTHING:
+          mon[m] = new Smoothing(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          break;
+          
+        default:
+          Exit(0);
+      }
+    }
+  }
 }
 
 
 // #################################################################
-/// 各モニタ点を担当するランク番号を配列rank[]にセット.
+/// Primitiveを登録し，bcd[]をゼロクリア
+void MonitorCompo::setPrimitive(const char* labelStr,
+                                vector<string>& variables,
+                                const char* methodStr,
+                                const char* modeStr,
+                                const int order,
+                                const REAL_TYPE m_nv[3],
+                                Monitor_Type m_type)
+{
+  label = labelStr;
+  setSamplingMethod(methodStr);
+  setSamplingMode(modeStr);
+  monitor_type = m_type;
+  nv[0] = m_nv[0];
+  nv[1] = m_nv[1];
+  nv[2] = m_nv[2];
+  int odr = order;
+  
+  vector<string>::const_iterator it;
+  for (it = variables.begin(); it != variables.end(); it++)
+  {
+    setMonitorVar((*it).c_str());
+  }
+  
+  
+  // nPointを求める
+  int np = num_process;
+  
+  int* nPointList;
+  if (!(nPointList = new int[np])) Exit(0);
+  for (int i = 0; i < np; i++) nPointList[i] = 0;
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  // serial
+  for (int k = 1; k <= kx; k++) {
+    for (int j = 1; j <= jx; j++) {
+      for (int i = 1; i <= ix; i++) {
+
+        if ( DECODE_CMP( bcd[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)] ) == odr )
+        {
+          nPointList[myRank]++;
+        }
+        
+      }
+    }
+  }
+  
+  if (!allReduceSum(nPointList, np)) Exit(0);
+  
+  
+  //check
+  int sum = 0;
+  for (int i = 0; i < np; i++) sum += nPointList[i];
+  
+#if 1
+  printf("Primitive Monitor : sum=%d LocalPoint=%d\n", sum, nPointList[myRank]);
+#endif
+  
+  nPoint = nPointList[myRank];
+  
+  if (nPoint == 0) Exit(0); // サンプリング点数
+  
+  
+  
+  // アロケート
+  allocArray();
+  allocSamplingArray();
+  
+  
+  // 座標値を保持
+  REAL_TYPE* buf;
+  if (!(buf = new REAL_TYPE[nPoint*3])) Exit(0);
+  for (int i = 0; i < nPoint*3; i++) buf[i] = 0.0;
+  
+  int m0 = 0;
+  for (int i = 0; i < myRank; i++) m0 += nPointList[i];
+  
+  int m = 0;
+  
+  int i0 = head[0] - 1; //fortran index なので1からカウントアップしている ---> Cのindexは0からカウントアップ
+  int j0 = head[1] - 1;
+  int k0 = head[2] - 1;
+  
+  // serial
+  for (int k = 1; k <= kx; k++) {
+    for (int j = 1; j <= jx; j++) {
+      for (int i = 1; i <= ix; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        
+        if ( DECODE_CMP( bcd[m] ) == odr )
+        {
+          buf[(m0+m)*3+0] = g_org.x + (i + i0 - 0.5) * pch.x;
+          buf[(m0+m)*3+1] = g_org.y + (j + j0 - 0.5) * pch.y;
+          buf[(m0+m)*3+2] = g_org.z + (k + k0 - 0.5) * pch.z;
+          m++;
+          
+          setBit5(bcd[m], 0, 0); // クリア
+        }
+        
+      }
+    }
+  }
+  
+  if (!allReduceSum(buf, nPoint*3)) Exit(0);
+  
+  // serial
+  for (m = 0; m < nPoint; m++)
+  {
+    ostringstream oss;
+    oss << "point_" << m;
+    
+    crd[m].x = buf[m*3+0];
+    crd[m].y = buf[m*3+1];
+    crd[m].z = buf[m*3+2];
+    
+    if (!checkRegion(m, g_org, g_box, true)) Exit(0);
+    
+    comment[m] = oss.str();
+  }
+  
+  if (buf) delete [] buf;
+  if (nPointList) delete [] nPointList;
+  
+  
+  setRankArray();
+  
+  for (int m = 0; m < nPoint; m++)
+  {
+    if (rank[m] == myRank)
+    {
+      switch (method)
+      {
+        case SAMPLING_NEAREST:
+          mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          break;
+          
+        case SAMPLING_INTERPOLATION:
+          mon[m] = new Interpolation(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          break;
+          
+        case SAMPLING_SMOOTHING:
+          mon[m] = new Smoothing(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          break;
+          
+        default:
+          Exit(0);
+      }
+    }
+  }
+
+}
+
+
+// #################################################################
+/// 各モニタ点を担当するランク番号を配列rank[]にセット
 ///
 ///   @note 領域境界上のモニタ点は，ランク番号の大きい方の領域が担当
 ///
@@ -1107,13 +1445,13 @@ void MonitorCompo::setRankArray()
     for (int m = 0; m < nPoint; m++) rank[m] = sendBuf[m];
   }
   
-  delete[] sendBuf;
+  if (sendBuf) delete[] sendBuf;
 }
 
 
 
 // #################################################################
-/// サンプリング方法の設定.
+/// サンプリング方法の設定
 ///
 ///    @param[in] str サンプリング方法文字列
 ///
@@ -1131,7 +1469,7 @@ void MonitorCompo::setSamplingMethod(const char* str)
 
 
 // #################################################################
-/// サンプリングモードの設定.
+/// サンプリングモードの設定
 ///
 ///    @param[in] str サンプリングモード文字列
 ///
@@ -1149,7 +1487,7 @@ void MonitorCompo::setSamplingMode(const char* str)
 
 
 // #################################################################
-/// モニタ結果出力ファイルにヘッダ部を出力.
+/// モニタ結果出力ファイルにヘッダ部を出力
 ///
 ///   @param[in] gathered 出力モードフラグ(true=gather出力/false=disutribute出力)
 ///
@@ -1174,7 +1512,7 @@ void MonitorCompo::writeHeader(bool gathered)
   {
     if (gathered || rank[i] == myRank) 
     {
-      fprintf(fp, "%14.6e %14.6e %14.6e  #%s", // %12.4 >> %14.6
+      fprintf(fp, "%14.6e %14.6e %14.6e  #%s",
               convCrd(crd[i].x), convCrd(crd[i].y), convCrd(crd[i].z), comment[i].c_str());
       
       if (pointStatus[i] == Sampling::UNEXPECTED_SOLID) 
@@ -1193,4 +1531,26 @@ void MonitorCompo::writeHeader(bool gathered)
   }
   
   fflush(fp);
+}
+
+
+// #################################################################
+/// 平均値モニタ結果出力ファイルにヘッダ部を出力
+void MonitorCompo::writeHeaderCompo()
+{
+  if ( refVar.modeUnit == DIMENSIONAL )
+  {
+    fprintf(fp, "    step      time[sec]");
+  }
+  else
+  {
+    fprintf(fp, "    step        time[-]");
+  }
+  
+  if ( variable[var_Velocity] )     fprintf(fp, "      Velocity [m/s]");
+  if ( variable[var_Pressure] )     fprintf(fp, "       Pressure [pa]");
+  if ( variable[var_Temperature] )  fprintf(fp, "     Temperature [C]");
+  if ( variable[var_TotalP] )       fprintf(fp, "   TotalPressure[pa]");
+  
+  fprintf(fp, "\n");
 }

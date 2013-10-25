@@ -56,17 +56,5 @@ public:
    */
   virtual void setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch);
   
-  
-  /*
-   * @brief 並行平板の計算領域のセルIDを設定する
-   * @param [in,out] bcd      BCindex B
-   * @param [in]     R        Controlクラスのポインタ
-   * @param [in]     G_org    グローバルな原点（無次元）
-   * @param [in]     NoMedium 媒質数
-   * @param [in]     mat      MediumListクラスのポインタ
-   * @param [out]    cut      カット情報
-   */
-  virtual void setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut);
-  
 };
 #endif // _IP_PPLT2D_H_

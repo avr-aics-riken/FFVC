@@ -29,11 +29,12 @@
 #include "basic_func.h"
 #include "Component.h"
 #include "Control.h"
+#include "CompoFraction.h"
 
 using namespace std;
 
 /**
- *  モニタグループ管理クラス.
+ *  モニタグループ管理クラス
  */
 class MonitorList : public DomainInfo {
   
@@ -42,7 +43,7 @@ public:
   enum OutputType {
     GATHER,      ///< 単一ファイル出力
     DISTRIBUTE,  ///< 分散出力
-    NONE,
+    NONE
   };
   
 protected:
@@ -58,12 +59,14 @@ protected:
   int* bcd;              ///< BCindex B
   float* cut;            ///< 交点情報
   TextParser* tpCntl;    ///< テキストパーサへのポインタ
+  float area;            ///< 断面積 [m^2]
   
   OutputType outputType; ///< 出力タイプ
   vector<MonitorCompo*> monGroup;  ///< モニタリンググループ配列
   MonitorCompo:: ReferenceVariables refVar;  ///< 参照用パラメータ変数
 
-  
+  string fname_integral; ///< mon_POLYGON, mon_BOX, mon_CYLINDER
+  string fname_detail;   ///< mon_POINT_SET, mon_LINE
   
   
 public:
@@ -73,6 +76,9 @@ public:
     nGroup = 0;
     outputType = NONE;
     num_process = 0;
+    fname_integral = "sampling_compo.txt";
+    fname_detail   = "sampling.txt";
+    area = 0.0;
   }
   
   /// デストラクタ
@@ -82,44 +88,28 @@ public:
   }
   
   
-  /// 出力ファイルクローズ.
+  /// Polygonモニターの交点の状況を確認
+  void checkStatus();
+  
+  
+  /// @brief Polygonモニターの交点と境界IDの除去
+  void clearCut();
+  
+  
+  /// 出力ファイルクローズ
   ///
   ///    @note 出力タイプによらず全プロセスから呼んでも問題ない
   ///
   void closeFile();
-
   
   
   /**
-   @brief TPに記述されたモニタ座標情報を取得し，リストに保持する
-   @param [in] C  Control クラスオブジェクトのポインタ
+   * @brief モニタ座標情報を取得し，リストに保持する
+   * @param [in,out] C   Controlクラスオブジェクトのポインタ
+   * @param [in,out] cmp コンポーネント配列
+   * @retval サンプリング指定のときtrue
    */
-  void getMonitor(Control* C);
-  
-  
-  /**
-   @brief TPに記述されたモニタ座標情報(Line)を取得
-   @param C  Control クラスオブジェクトのポインタ
-   @param from Line始点座標
-   @param to   Line終点座標
-   @param nDivision Line分割数
-   @note データは無次元化して保持
-   */
-  void get_Mon_Line(Control* C,
-                    const string label_base,
-                    REAL_TYPE from[3],
-                    REAL_TYPE to[3],
-                    int& nDivision);
-  
-  /**
-   @brief TPに記述されたモニタ座標情報を取得(PointSet)
-   @param C  Control クラスオブジェクトのポインタ
-   @param pointSet PointSet配列
-   @note データは無次元化して保持
-   */
-  void get_Mon_Pointset(Control* C,
-                        const string label_base,
-                        vector<MonitorCompo::MonitorPoint>& pointSet);
+  bool getMonitor(Control* C, CompoList* cmp);
   
   
   /**
@@ -130,68 +120,48 @@ public:
   
   
   
-  /// 出力ファイルオープン.
-  ///
-  ///    @param str ファイル名テンプレート
+  /// 出力ファイルオープン
   ///
   ///    @note 出力タイプによらず全プロセスから呼んでも問題ない
   ///
-  void openFile(const char* str);
+  void openFile();
   
   
-  /// モニタ結果出力(Line, PointSet指定).
+  /// モニタ結果出力(Line, PointSet指定)
   ///
   ///   @param [in] step サンプリング時の計算ステップ
   ///   @param [in] tm   サンプリング時の計算時刻
   ///
   ///   @note gatherの場合も全プロセスから呼ぶこと
   ///
-  void print(unsigned step, REAL_TYPE tm);
+  void print(const unsigned step, const REAL_TYPE tm);
   
   
-  /// モニタ情報を出力.
+  /// モニタ情報を出力
   ///   @param [in] str 出力ファイルの基本名
   void printMonitorInfo(FILE* fp, const char* str, const bool verbose);
   
   
-  /// サンプリング(Line, PointSet指定).
+  /// サンプリング
   void sampling()
   {
     for (int i = 0; i < nGroup; i++)
     {
-      if (monGroup[i]->getType() != MonitorCompo::INNER_BOUNDARY)
+      switch ( monGroup[i]->getType() )
       {
-        monGroup[i]->sampling();
+        case mon_LINE:
+        case mon_POINT_SET:
+          monGroup[i]->sampling();
+          break;
+          
+        case mon_CYLINDER:
+        case mon_BOX:
+        case mon_POLYGON:
+          monGroup[i]->samplingAverage();
+          break;
       }
     }
   }
-  
-  
-  /// サンプリング(内部境界条件指定)
-  ///
-  ///   サンプリング結果を集計，コンポーネント領域での平均値を計算.
-  ///   速度は法線ベクトルとの内積をとる．
-  ///   結果はコンポーネントcmpに格納.
-  ///
-  void samplingInnerBoundary()
-  {
-    for (int i = 0; i < nGroup; i++)
-    {
-      if (monGroup[i]->getType() == MonitorCompo::INNER_BOUNDARY)
-      {
-        monGroup[i]->samplingInnerBoundary();
-      }
-    }
-  }
-  
-  
-  /// セルモニターのモニタ点を登録
-  ///
-  ///   @param [in] cmp コンポーネント配列
-  ///   @param [in] nBC コンポーネント数
-  ///
-  void setCellMonitor(CompoList* cmp, const int nBC);
-  
   
   
   /// 必要なパラメータのコピー
@@ -235,67 +205,17 @@ public:
   }
   
   
-  
-  /// Line登録
-  ///
-  ///   @param [in] str ラベル文字列
-  ///   @param [in] variables モニタ変数vector
-  ///   @param [in] method method文字列
-  ///   @param [in] mode   mode文字列
-  ///   @param [in] from Line始点
-  ///   @param [in] to   Line終点
-  ///   @param [in] nDivision 分割数(モニタ点数-1)
-  ///
-  void setLine(const char* labelStr,
-               vector<string>& variables,
-               const char* methodStr,
-               const char* modeStr,
-               REAL_TYPE from[3],
-               REAL_TYPE to[3],
-               int nDivision);
-  
-  
-  /// 出力タイプの設定
-  void setOutputType(OutputType type)
-  {
-    outputType = type;
-  }
-  
-  
-  /// PointSet登録.
-  ///
-  ///   @param [in] str ラベル文字列
-  ///   @param [in] variables モニタ変数vector
-  ///   @param [in] method method文字列
-  ///   @param [in] mode   mode文字列
-  ///   @param [in] pointSet  PointSet
-  ///
-  void setPointSet(const char* labelStr,
-                   vector<string>& variables,
-                   const char* methodStr,
-                   const char* modeStr,
-                   vector<MonitorCompo::MonitorPoint>& pointSet);
-  
-
-  /// サンプリングと出力の次元の設定
-  /// @param [in] modeUnit       出力単位指定フラグ (有次元，無次元)
-  void setSamplingUnit(const int unit)
-  {
-    refVar.modeUnit = unit;
-  }
+  /**
+   * @brief Polygonモニターの交点の数をcmp[]にセット
+   * @param [in,out] cmp     CompoList
+   * @param [in]     NoCompo リストの配列長
+   */
+  void setMonitorNpoint(CompoList* cmp, const int NoCompo);
   
   
   /// 参照速度のコピー
   ///   @param [in] v00 座標系移動速度
-  void set_V00(REAL_TYPE v00[4]);
-
-
-  
-  /// 指定されるモニタ点位置にID=255を書き込む.
-  ///
-  ///   @param [in] id セルID配列
-  ///
-  void writeID(int* id);
+  void setV00(REAL_TYPE v00[4]);
   
   
   
@@ -307,16 +227,116 @@ protected:
   void clipLine(REAL_TYPE from[3], REAL_TYPE to[3]);
   
   
+  /// プリミティブ形状を作成
+  void generatePrimitiveShape(const int odr,
+                              const Monitor_Type montyp,
+                              REAL_TYPE nv[3],
+                              REAL_TYPE ctr[3],
+                              REAL_TYPE depth,
+                              REAL_TYPE tmp,
+                              REAL_TYPE height,
+                              REAL_TYPE dr[3]);
+  
+  
+  /// モニタ座標情報(Line)を取得
+  void getLine(const Control* C,
+               const string label_base,
+               REAL_TYPE from[3],
+               REAL_TYPE to[3],
+               int& nDivision);
+  
+  
   /// 出力タイプ文字列の取得
   string getOutputTypeStr();
   
 
+  /// モニタ座標情報を取得(PointSet)
+  void getPointset(const Control* C,
+                   const string label_base,
+                   vector<MonitorCompo::MonitorPoint>& pointSet);
+  
+  
+  /// プリミティブのモニタ形状情報を取得
+  void getPrimitive(Monitor_Type mon_type,
+                    const string label_base,
+                    REAL_TYPE nv[3],
+                    REAL_TYPE center[3],
+                    REAL_TYPE& depth,
+                    REAL_TYPE& tmp,
+                    REAL_TYPE& height,
+                    REAL_TYPE dir[3]);
+  
+  
   /// 座標値を無次元化する
   void normalizeCord(REAL_TYPE RefLength, REAL_TYPE x[3])
   {
     x[0] /= RefLength;
     x[1] /= RefLength;
     x[2] /= RefLength;
+  }
+  
+  
+  /// サンプリング対象変数の登録
+  void registVars(const string label, vector<string>& variables, const string key);
+  
+  
+  /// Line登録
+  void setLine(const char* str,
+               vector<string>& variables,
+               const char* method,
+               const char* mode,
+               REAL_TYPE from[3],
+               REAL_TYPE to[3],
+               int nDivision,
+               Monitor_Type mon_type);
+  
+  
+  /// 出力タイプの設定
+  void setOutputType(OutputType type)
+  {
+    outputType = type;
+  }
+  
+  
+  /// PointSet登録
+  void setPointSet(const char* str,
+                   vector<string>& variables,
+                   const char* method,
+                   const char* mode,
+                   vector<MonitorCompo::MonitorPoint>& pointSet,
+                   Monitor_Type mon_type);
+  
+  
+  /// Polygon登録
+  void setPolygon(const char* str,
+                  vector<string>& variables,
+                  const char* method,
+                  const char* mode,
+                  const int order,
+                  const REAL_TYPE nv[3],
+                  Monitor_Type mon_type);
+  
+  
+  /// Primitiveの登録
+  void setPrimitive(const char* str,
+                    vector<string>& variables,
+                    const char* method,
+                    const char* mode,
+                    Monitor_Type mon_type,
+                    const REAL_TYPE nv[3],
+                    const REAL_TYPE center[3],
+                    const REAL_TYPE& depth,
+                    const REAL_TYPE& tmp,
+                    const REAL_TYPE& height,
+                    const REAL_TYPE dir[3],
+                    const int order);
+  
+  
+  /// サンプリングと出力の次元の設定
+  /// @param [in] modeUnit       出力単位指定フラグ (有次元，無次元)
+  void setSamplingUnit(const int unit)
+  {
+    refVar.modeUnit = unit;
   }
   
 };

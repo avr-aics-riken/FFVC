@@ -352,7 +352,6 @@ protected:
   TextParser* tpCntl;   ///< テキストパーサへのポインタ
   
 public:
-    
   
   /** 各種モード　パラメータ */
   typedef struct 
@@ -431,13 +430,6 @@ public:
     int Length; /// 入力パラメータの長さの単位 (non_dimensional/m/cm/mm)
   } Unit_Def;
   
-  /** サンプリング機能 */
-  typedef struct 
-  {
-    int log;       /// ログ出力 (ON / OFF)
-    int out_mode;  /// 出力モード (Gather / Distribute)
-    int unit;      /// 出力単位 (DImensional / NonDimensional)
-  } Sampling_Def;
   
   /** コンポーネント/BCのグローバルな存在 */
   typedef struct 
@@ -447,9 +439,9 @@ public:
     int outflow;
     int periodic;
     int fraction;
-    int monitor;
     int tfree;
     int vspec;
+    int monitor;
   } Ens_of_Compo;
   
   
@@ -532,15 +524,16 @@ public:
   };
   
   /** 管理対象のリスト */
-  enum flush_trigger {
+  enum flush_trigger
+  {
     tg_compute=0,  ///< セッションの計算時間
-    tg_console,  ///< コンソール出力
-    tg_history,  ///< ファイル出力
-    tg_basic,    ///< 基本変数の瞬時値出力
-    tg_average,  ///< 平均値出力
-    tg_derived,  ///< 派生変数の出力
-    tg_accelra,  ///< 加速時間
-    tg_sampled,  ///< サンプリング出力
+    tg_console,    ///< コンソール出力
+    tg_history,    ///< ファイル出力
+    tg_basic,      ///< 基本変数の瞬時値出力
+    tg_average,    ///< 平均値出力
+    tg_derived,    ///< 派生変数の出力
+    tg_accelra,    ///< 加速時間
+    tg_sampled,    ///< サンプリング出力
     tg_END
   };
   
@@ -568,6 +561,7 @@ public:
   int RefFillMat;     ///< フィル媒質
   int RefMat;         ///< 参照媒質インデクス
   int Start;
+  int SamplingMode;   ///< サンプリング指定
   
   unsigned Restart_staging;    ///< リスタート時にリスタートファイルがSTAGINGされているか
   unsigned Restart_step;       ///< リスタートステップ
@@ -611,7 +605,6 @@ public:
   File_IO_Cntl      FIO;
   Hidden_Parameter  Hide;
   Unit_Def          Unit;
-  Sampling_Def      Sampling;
   Ens_of_Compo      EnsCompo;
   
   // class
@@ -619,15 +612,7 @@ public:
   IterationCtl* Criteria;            ///< 反復解法の収束判定パラメータ
   
   string file_fmt_ext;
-  
-  string HistoryName;
-  string HistoryCompoName;
-  string HistoryDomfxName;
-  string HistoryItrName;
-  string HistoryMonitorName;
-  string HistoryWallName;
   string PolylibConfigName;
-  string HistoryForceName;
 
   
   // 入力dfiファイルのプレフィックス
@@ -762,18 +747,16 @@ public:
     Unit.Log    = 0;
     Unit.File   = 0;
     
-    Sampling.log = 0;
-    Sampling.out_mode = 0;
-    Sampling.unit = 0;
+    SamplingMode = 0;
     
     EnsCompo.hsrc    = 0;
     EnsCompo.forcing = 0;
     EnsCompo.outflow = 0;
     EnsCompo.periodic= 0;
     EnsCompo.fraction= 0;
-    EnsCompo.monitor = 0;
     EnsCompo.tfree   = 0;
     EnsCompo.vspec   = 0;
+    EnsCompo.monitor = 0;
     
     Criteria = NULL;
   }
@@ -928,61 +911,6 @@ public:
   void displayParams(FILE* mp, FILE* fp, IterationCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat, CompoList* cmp);
   
   
-  //@brief Forcingコンポーネントが存在すれば1を返す
-  int existForcing() const
-  {
-    return EnsCompo.forcing;
-  }
-  
-  
-  //@brief Hsrcコンポーネントが存在すれば1を返す
-  int existHsrc() const
-  {
-    return EnsCompo.hsrc;
-  }
-  
-  
-  //@brief モニタコンポーネントが存在すれば1を返す
-  int existMonitor() const
-  {
-    return EnsCompo.monitor;
-  }
-  
-  
-  //@brief 流出コンポーネントがあれば1を返す
-  int existOutflow() const
-  {
-    return EnsCompo.outflow;
-  }
-  
-  
-  //@brief 部分周期境界コンポーネントが存在すれば1を返す
-  int existPeriodic() const
-  {
-    return EnsCompo.periodic;
-  }
-  
-  
-  //@brief トラクションフリー境界が存在すれば1を返す
-  int existTfree() const
-  {
-    return EnsCompo.tfree;
-  }
-  
-  
-  //@brief 体積率コンポーネントが存在すれば1を返す
-  int existVfraction() const
-  {
-    return EnsCompo.fraction;
-  }
-  
-  
-  //@brief 体積率コンポーネントが存在すれば1を返す
-  int existVspec() const
-  {
-    return EnsCompo.vspec;
-  }
-  
   /** MediumList中に登録されているkeyに対するIDを返す
    * @param [in] mat  MediumListクラス
    * @param [in] Namx リストの最大数
@@ -1025,10 +953,6 @@ public:
   void getNoOfComponent();
   
   
-  // @brief モニタリングのON/OFFとセルモニタの有無のみを取得
-  void getMonitorList();
-  
-  
   /**
    * @brief ペクレ数の逆数を計算
    * @note Eulerの時にはゼロ
@@ -1047,6 +971,24 @@ public:
   {
     return ( (Mode.PDE == PDE_NS) ? (1.0 / Reynolds) : 0.0 );
   }
+  
+  
+  /**
+   * @brief 値(REAL_TYPE型)を取得し，返す
+   * @param [in] label テストラベル
+   * @param [in] tpc   TextParser pointer
+   */
+  static REAL_TYPE getValueReal(const std::string label, TextParser* tpc);
+  
+  
+  /**
+   * @brief ベクトル値を取得する
+   * @param [in]  label     ラベルディレクトリ
+   * @param [out] v         ベクトル値
+   * @param [in]  tpc       TextParser pointer
+   * @param [in]  normalize trueのとき無次元化
+   */
+  static void getVec(const std::string label, REAL_TYPE* v, TextParser* tpc, bool normalize=false);
   
   
   /**
@@ -1155,6 +1097,13 @@ public:
    */
   void setRefParameters(MediumList* mat, ReferenceFrame* RF);
 
+  
+  /**
+   * @brief 単位ベクトルを計算して戻す
+   * @param [in,out] v ベクトル値
+   */
+  static void UnitVec(REAL_TYPE* v);
+  
 };
 
 #endif // _FB_CONTROL_H_

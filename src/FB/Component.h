@@ -119,8 +119,7 @@ private:
   
   int type;              ///< 境界条件の種類 媒質の場合には0
   int attrb;             /// 
-  int h_type;            /// 
-  int variable;          ///
+  int h_type;            ///
   int ens;               ///
   int phase;             ///
   int var_u1;            /// 内部周期境界の方向，圧力単位指定，セルモニタの状態
@@ -129,9 +128,6 @@ private:
   int st[3];             /// コンポーネントインデクスBbox範囲の始点
   int ed[3];             /// コンポーネントインデクスBbox範囲の終点
   int c_size[3];         /// コンポーネントワーク配列の大きさ
-  int def;               /// BC指定時の面を挟む相手先のセルID
-  int shape;             /// 形状パラメータ
-  int sampling_width;    /// セルモニターの場合のセル幅
   int usw;               /// 汎用変数
   int heatmode;          /// 熱輸送のときON
   
@@ -160,10 +156,9 @@ public:
   CompoList() {
     element = 0;
     type = 0;
-    variable = attrb = bc_dir = 0;
+    attrb = bc_dir = 0;
     h_type = 0;
-    state = shape = -1;
-    def = 0;
+    state = -1;
     ens = OFF;
     area = 0.0;
     usw = 0;
@@ -188,14 +183,6 @@ public:
   ~CompoList() {}
   
 public:
-  
-  //@brief メンバ変数variableに変数の種類をエンコードする
-  //@param var 変数タイプを表すビット数
-  void encodeVarType (const int var)
-  {
-    variable |= (0x1 << var);
-  }
-  
   
   /**
    * @brief ラベル名を返す
@@ -369,12 +356,6 @@ public:
   { 
     return var1; 
   }
-
-  
-  /**
-   * @brief 変数名を返す
-   */
-  const char* getVarStr();
   
   
   
@@ -394,16 +375,6 @@ public:
     return state;
   }
   
-  int get_Shape() const
-  {
-    return shape;
-  }
-  
-  int getSamplingWidth() const
-  {
-    return sampling_width;
-  }
-  
   
   int getBClocation() const
   {
@@ -416,11 +387,6 @@ public:
   }
   
   int getPrsUnit() const
-  {
-    return var_u1;
-  }
-  
-  int getStateCellMonitor() const
   {
     return var_u1;
   }
@@ -507,15 +473,6 @@ public:
   }
   
   
-  /**
-   @brief コンポーネントタイプがモニタかどうかを調べる
-   @retval モニタであればtrue
-   */
-  bool isMONITOR() const
-  {
-    return (type == CELL_MONITOR) ? true : false;
-  }
-  
   bool isPolicy_HeatDensity() const
   {
     return (usw==hsrc_density) ? true : false;
@@ -528,11 +485,21 @@ public:
   }
   
   
-  // @brief メンバ変数variableにエンコードされた変数タイプとの照合を行う
-  // @param [in] var 変数タイプのビット数
-  bool isVarEncoded (const int var) const
+  // @brief 内部境界条件タイプがコンポーネントモニタかどうかを調べる
+  bool isCompoMonitor() const
   {
-    return ( ( 0x1 & (variable >> var)) ? true : false );
+    if ((type == SPEC_VEL) ||
+        (type == OUTFLOW) ||
+        (type == HEX) ||
+        (type == DARCY) ||
+        (type == FAN) ||
+        (type == DARCY) ||
+        (type == HEATFLUX) ||
+        (type == TRANSFER) ||
+        (type == ISOTHERMAL) ||
+        (type == RADIANT)
+        ) return true;
+    return false;
   }
   
   
@@ -633,9 +600,7 @@ public:
   void set_Pressure        (const REAL_TYPE var);
   void setPrsUnit          (const int key);
   void setSamplingWidth    (const int key);
-  void set_Shape           (const int key);
   void setState            (const int key);
-  void setStateCellMonitor (const int key);
   void setType             (const int key);
 
   void set_sw_Heatgen      (const int key);

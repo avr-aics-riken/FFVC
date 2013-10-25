@@ -164,7 +164,7 @@ void CompoFraction::get_angle()
   
   
   // 矩形の場合，単位ベクトルdirが回転した後，x軸の単位ベクトルへ回転する角度を計算
-  if ( smode == SHAPE_BOX ) {
+  if ( smode == mon_BOX ) {
     float c_gma, f_xy;
     FB::Vec3f x(1.0, 0.0, 0.0);
     
@@ -206,10 +206,12 @@ float CompoFraction::get_BboxArea()
   box_max.assign(-1.0e6, -1.0e6, -1.0e6);
   float a;
   
-  if ( smode == SHAPE_BOX ) {
+  if ( smode == mon_BOX )
+  {
     a = bbox_rect_cylinder(box_min, box_max);
   }
-  else {
+  else
+  {
     a = bbox_circ_cylinder(box_min, box_max);
   }
 
@@ -228,7 +230,7 @@ float CompoFraction::get_BboxArea()
 // 矩形の形状パラメータをセットする
 void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_dir[3], const float m_depth, const float m_width, const float m_height)
 {
-  smode  = SHAPE_BOX;
+  smode  = mon_BOX;
   nv     = m_nv;
   center = m_ctr;
   dir    = m_dir;
@@ -254,7 +256,7 @@ void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], co
 // 円筒の形状パラメータをセットする
 void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_depth, const float m_r_fan, const float m_r_boss)
 {
-  smode  = SHAPE_CYLINDER;
+  smode  = mon_CYLINDER;
   nv     = m_nv;
   center = m_ctr;
   depth  = m_depth;
@@ -290,7 +292,7 @@ void CompoFraction::subdivision(const int st[], const int ed[], float* vf, doubl
   o  = org;
   ph = pch.x;
   
-  if ( smode == SHAPE_BOX ) {
+  if ( smode == mon_BOX ) {
     
     for (int k=st[2]; k<=ed[2]; k++) {
       for (int j=st[1]; j<=ed[1]; j++) {
@@ -389,7 +391,7 @@ void CompoFraction::vertex8(const int st[], const int ed[], float* vf, double& f
   o  = org;
   ph = pch.x;
   
-  if ( smode == SHAPE_BOX ) {
+  if ( smode == mon_BOX ) {
     // Rect cylinder
     for (int k=st[2]; k<=ed[2]; k++) {
       for (int j=st[1]; j<=ed[1]; j++) {
@@ -458,7 +460,6 @@ void ShapeMonitor::setID(const int st[], const int ed[], int* bcd, const int id)
 {
   FB::Vec3f base, o, b;
   FB::Vec3f p[8];
-  size_t m;
   float c, ph;
   
   // for optimization > variables defined outside
@@ -466,10 +467,11 @@ void ShapeMonitor::setID(const int st[], const int ed[], int* bcd, const int id)
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
+  int odr = id;
   o  = org;
   ph = pch.x;
   
-  if ( smode == SHAPE_BOX )
+  if ( smode == mon_BOX )
   {
     // Rect cylinder
     for (int k=st[2]; k<=ed[2]; k++) {
@@ -492,11 +494,11 @@ void ShapeMonitor::setID(const int st[], const int ed[], int* bcd, const int id)
           for (int l=0; l<8; l++) {
             c += judge_rect(p[l]);
           }
-          
+
           if ( c>=4.0)
           {
-            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-            bcd[m] |= id;
+            size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            setBit5(bcd[m], odr, 0);
           }
         }
       }
@@ -529,12 +531,24 @@ void ShapeMonitor::setID(const int st[], const int ed[], int* bcd, const int id)
           
           if ( c>=4.0)
           {
-            m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-            bcd[m] |= id;
+            size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            setBit5(bcd[m], odr, 0);
           }
         }
       }
     }
 
   }
+  /*
+  for (int k=st[2]; k<=ed[2]; k++) {
+    for (int j=st[1]; j<=ed[1]; j++) {
+      for (int i=st[0]; i<=ed[0]; i++) {
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int b = DECODE_CMP(bcd[m]);
+        printf("%d ", b);
+      }
+    }
+  }
+  */
+  
 }

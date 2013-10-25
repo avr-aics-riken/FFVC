@@ -217,7 +217,7 @@ void FFV::NS_FS_E_CDS()
   TIMING_start(tm_frctnl_stp_sct_3);
   
   // FORCINGコンポーネントの疑似速度ベクトルの方向修正
-  if ( C.existForcing() == ON )
+  if ( C.EnsCompo.forcing == ON )
   {
     TIMING_start(tm_forcing);
     flop = 0.0;
@@ -383,7 +383,7 @@ void FFV::NS_FS_E_CDS()
     TIMING_stop(tm_assign_const, 0.0);
     
     // Forcingコンポーネントによるソース項の寄与分
-    if ( C.existForcing() == ON )
+    if ( C.EnsCompo.forcing == ON )
     {
       TIMING_start(tm_force_src);
       flop=0.0;
@@ -437,7 +437,7 @@ void FFV::NS_FS_E_CDS()
     TIMING_stop(tm_prj_vec_bc, flop);
     
     // セルフェイス速度の境界条件の通信部分
-    if ( C.existOutflow() == ON )
+    if ( C.EnsCompo.outflow == ON )
     {
       if ( numProc > 1 )
       {
@@ -468,7 +468,7 @@ void FFV::NS_FS_E_CDS()
     }
     
     // Forcingコンポーネントによる速度と発散値の修正
-    if ( C.existForcing() == ON )
+    if ( C.EnsCompo.forcing == ON )
     {
       TIMING_start(tm_prj_frc_mod);
       flop=0.0;

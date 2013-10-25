@@ -130,7 +130,7 @@ void ParseMat::getMediumTable(const int m_NoMedium, MediumList* mat)
   
   for (m=1; m<=NoMedium; m++)
   {
-    if ( !tpCntl->getNodeStr(label_base, m, str) )
+    if ( !(tpCntl->getNodeStr(label_base, m, str)) )
     {
       Exit(0);
     }
@@ -141,7 +141,7 @@ void ParseMat::getMediumTable(const int m_NoMedium, MediumList* mat)
     
     for (int i=1; i<=n; i++)
     {
-      if ( !tpCntl->getNodeStr(label_m, i, str) )
+      if ( !(tpCntl->getNodeStr(label_m, i, str)) )
       {
         Exit(0);
       }

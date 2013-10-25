@@ -52,8 +52,30 @@ public:
   /**　デストラクタ */
   ~IP_Sphere() {}
 
-public:
-
+  
+  
+protected:
+  
+  /**
+   * @brief 交点の無次元距離を計算する
+   * @param [in] p 基点座標
+   * @param [in] dir テスト方向
+   * @param [in] r radius
+   * @param [in] dh 格子幅
+   * @return 交点距離
+   */
+  float cut_line(const FB::Vec3f b, const int dir, const float r, const float dh);
+  
+  
+  /**
+   * @brief 点pの属するセルインデクスを求める
+   * @param [in] p   探索座標
+   * @param [in] ol  基点座標
+   * @return cell index
+   */
+  FB::Vec3i find_index(const FB::Vec3f p, const FB::Vec3f ol);
+  
+  
   /**
    * @brief パラメータをロード
    * @param [in] R      Controlクラス
@@ -83,46 +105,15 @@ public:
   
   
   /**
-   * @brief 矩形の計算領域のセルIDを設定する
-   * @param[in,out] bcd      BCindex B
-   * @param[in]     R        Controlクラスのポインタ
-   * @param[in]     G_org    グローバルな原点（無次元）
-   * @param[in]     NoMedium 媒質数
-   * @param[in]     mat      MediumListクラスのポインタ
-   */
-  virtual void setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut);
-  
-  
-  
-  /**
    * @brief 計算領域のセルIDとカット情報を設定する
    * @param [in,out] bcd      BCindex B
    * @param [in]     R        Controlクラスのポインタ
    * @param [in]     G_org    グローバルな原点（無次元）
    * @param [in]     NoMedium 媒質数
    * @param [in]     mat      MediumListクラスのポインタ
-   * @param [out]    cut      カット情報
+   * @param [in]     cut      交点情報
    */
-  void setup_cut(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut);
+  virtual void setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut);
   
-  
-  /**
-   * @brief 点pの属するセルインデクスを求める
-   * @param [in] p   探索座標
-   * @param [in] ol  基点座標
-   * @return cell index
-   */
-  FB::Vec3i find_index(const FB::Vec3f p, const FB::Vec3f ol);
-  
-  
-  /**
-   * @brief 交点の無次元距離を計算する
-   * @param [in] p 基点座標
-   * @param [in] dir テスト方向
-   * @param [in] r radius
-   * @param [in] dh 格子幅
-   * @return 交点距離
-   */
-  float cut_line(const FB::Vec3f b, const int dir, const float r, const float dh);
 };
 #endif // _IP_SHERE_H_

@@ -71,18 +71,18 @@ void SetBC3D::checkDriver(FILE* fp)
           // 位置のチェック  IDは，流入面に対して面直1層の指定
           switch (c_dir)
           {
-            case X_MINUS:
-            case X_PLUS:
+            case X_minus:
+            case X_plus:
               c_pos = node_st_i + st[0];
               break;
               
-            case Y_MINUS:
-            case Y_PLUS:
+            case Y_minus:
+            case Y_plus:
               c_pos = node_st_j + st[1];
               break;
               
-            case Z_MINUS:
-            case Z_PLUS:
+            case Z_minus:
+            case Z_plus:
               c_pos = node_st_k + st[2];
               break;
               
@@ -963,27 +963,27 @@ void SetBC3D::PobcPeriodicSimple(REAL_TYPE* d_p, const int face)
   {
     switch (face)
     {
-      case X_MINUS:
+      case X_minus:
         if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
         break;
         
-      case X_PLUS:
+      case X_plus:
         if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
         break;
         
-      case Y_MINUS:
+      case Y_minus:
         if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
         break;
         
-      case Y_PLUS:
+      case Y_plus:
         if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
         break;
         
-      case Z_MINUS:
+      case Z_minus:
         if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
         break;
         
-      case Z_PLUS:
+      case Z_plus:
         if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
         break;
     }
@@ -994,7 +994,7 @@ void SetBC3D::PobcPeriodicSimple(REAL_TYPE* d_p, const int face)
     
     switch (face) 
     {
-      case X_MINUS:
+      case X_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
@@ -1005,7 +1005,7 @@ void SetBC3D::PobcPeriodicSimple(REAL_TYPE* d_p, const int face)
         }
         break;
         
-      case X_PLUS:
+      case X_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
@@ -1016,7 +1016,7 @@ void SetBC3D::PobcPeriodicSimple(REAL_TYPE* d_p, const int face)
         }
         break;
         
-      case Y_MINUS:
+      case Y_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
@@ -1027,7 +1027,7 @@ void SetBC3D::PobcPeriodicSimple(REAL_TYPE* d_p, const int face)
         }
         break;
         
-      case Y_PLUS:
+      case Y_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
@@ -1038,7 +1038,7 @@ void SetBC3D::PobcPeriodicSimple(REAL_TYPE* d_p, const int face)
         }
         break;
         
-      case Z_MINUS:
+      case Z_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
@@ -1049,7 +1049,7 @@ void SetBC3D::PobcPeriodicSimple(REAL_TYPE* d_p, const int face)
         }
         break;
         
-      case Z_PLUS:
+      case Z_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
@@ -1086,7 +1086,7 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int face, REAL_TYPE 
   {
     switch (face) 
     {
-      case X_MINUS:
+      case X_minus:
         if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
         if ( nID[face] >= 0 ) return;
         
@@ -1099,7 +1099,7 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int face, REAL_TYPE 
         }
         break;
         
-      case X_PLUS:
+      case X_plus:
         if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
         if ( nID[face] >= 0 ) return;
         
@@ -1112,7 +1112,7 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int face, REAL_TYPE 
         }
         break;
         
-      case Y_MINUS:
+      case Y_minus:
         if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
         if ( nID[face] >= 0 ) return;
         
@@ -1125,7 +1125,7 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int face, REAL_TYPE 
         }
         break;
         
-      case Y_PLUS:
+      case Y_plus:
         if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
         if ( nID[face] >= 0 ) return;
         
@@ -1138,7 +1138,7 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int face, REAL_TYPE 
         }
         break;
         
-      case Z_MINUS:
+      case Z_minus:
         if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
         if ( nID[face] >= 0 ) return;
         
@@ -1151,7 +1151,7 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int face, REAL_TYPE 
         }
         break;
         
-      case Z_PLUS:
+      case Z_plus:
         if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
         if ( nID[face] >= 0 ) return;
         
@@ -1171,7 +1171,7 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int face, REAL_TYPE 
     
     switch (face)
     {
-      case X_MINUS:
+      case X_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
@@ -1182,7 +1182,7 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int face, REAL_TYPE 
         }
         break;
         
-      case X_PLUS:
+      case X_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
@@ -1193,7 +1193,7 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int face, REAL_TYPE 
         }
         break;
         
-      case Y_MINUS:
+      case Y_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
@@ -1204,7 +1204,7 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int face, REAL_TYPE 
         }
         break;
         
-      case Y_PLUS:
+      case Y_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
@@ -1215,7 +1215,7 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int face, REAL_TYPE 
         }
         break;
         
-      case Z_MINUS:
+      case Z_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
@@ -1226,7 +1226,7 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int face, REAL_TYPE 
         }
         break;
         
-      case Z_PLUS:
+      case Z_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
@@ -1270,7 +1270,7 @@ void SetBC3D::Pibc_Prdc(REAL_TYPE* d_p, int* st, int* ed, int* d_bx, int odr, in
   
   switch (dir) 
   {
-    case X_MINUS:
+    case X_minus:
       if ( nID[dir] < 0 )
       {
         int i = st[0];
@@ -1287,7 +1287,7 @@ void SetBC3D::Pibc_Prdc(REAL_TYPE* d_p, int* st, int* ed, int* d_bx, int odr, in
       }
       break;
       
-    case X_PLUS:
+    case X_plus:
       if ( nID[dir] < 0 )
       {
         int i = st[0];
@@ -1304,7 +1304,7 @@ void SetBC3D::Pibc_Prdc(REAL_TYPE* d_p, int* st, int* ed, int* d_bx, int odr, in
       }
       break;
       
-    case Y_MINUS:
+    case Y_minus:
       if ( nID[dir] < 0 )
       {
         int j = st[1];
@@ -1321,7 +1321,7 @@ void SetBC3D::Pibc_Prdc(REAL_TYPE* d_p, int* st, int* ed, int* d_bx, int odr, in
       }
       break;
       
-    case Y_PLUS:
+    case Y_plus:
       if ( nID[dir] < 0 )
       {
         int j = st[1];
@@ -1338,7 +1338,7 @@ void SetBC3D::Pibc_Prdc(REAL_TYPE* d_p, int* st, int* ed, int* d_bx, int odr, in
       }
       break;
       
-    case Z_MINUS:
+    case Z_minus:
       if ( nID[dir] < 0 )
       {
         int k = st[2];
@@ -1355,7 +1355,7 @@ void SetBC3D::Pibc_Prdc(REAL_TYPE* d_p, int* st, int* ed, int* d_bx, int odr, in
       }
       break;
       
-    case Z_PLUS:
+    case Z_plus:
       if ( nID[dir] < 0 )
       {
         int k = st[2];
@@ -1491,37 +1491,37 @@ REAL_TYPE SetBC3D::psIbcHeatflux(REAL_TYPE* d_qbc, const int* d_cdf, const int n
         
         if ( GET_FACE_BC(s, BC_FACE_W) == odr )
         {
-          d_qbc[_F_IDX_S4DEX(X_MINUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(X_minus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q; // マイナス面の正の値は流入
         }
         
         if ( GET_FACE_BC(s, BC_FACE_E) == odr )
         {
-          d_qbc[_F_IDX_S4DEX(X_PLUS, i, j, k, NOFACE, ix, jx, kx, gd)] -= q;
+          d_qbc[_F_IDX_S4DEX(X_plus, i, j, k, NOFACE, ix, jx, kx, gd)] -= q;
           va -= q; // プラス面の正の値は流出
         }
         
         if ( GET_FACE_BC(s, BC_FACE_S) == odr )
         {
-          d_qbc[_F_IDX_S4DEX(Y_MINUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Y_minus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_N) == odr )
         {
-          d_qbc[_F_IDX_S4DEX(Y_PLUS, i, j, k, NOFACE, ix, jx, kx, gd)] -= q;
+          d_qbc[_F_IDX_S4DEX(Y_plus, i, j, k, NOFACE, ix, jx, kx, gd)] -= q;
           va -= q;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_B) == odr )
         {
-          d_qbc[_F_IDX_S4DEX(Z_MINUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Z_minus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_T) == odr )
         {
-          d_qbc[_F_IDX_S4DEX(Z_PLUS, i, j, k, NOFACE, ix, jx, kx, gd)] -= q;
+          d_qbc[_F_IDX_S4DEX(Z_plus, i, j, k, NOFACE, ix, jx, kx, gd)] -= q;
           va -= q;
         }
       }
@@ -1629,42 +1629,42 @@ REAL_TYPE SetBC3D::psIbcIsoThermal(REAL_TYPE* d_qbc, const int* d_cdf, const int
         if ( GET_FACE_BC(s, BC_FACE_W) == odr )
         {
           q = lmd * (sf - t);
-          d_qbc[_F_IDX_S4DEX(X_MINUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(X_minus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q; // マイナス面の正の値は流入
         }
         
         if ( GET_FACE_BC(s, BC_FACE_E) == odr )
         {
           q = lmd * (t - sf);
-          d_qbc[_F_IDX_S4DEX(X_PLUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(X_plus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va -= q; // プラス面の正の値は流出
         }
         
         if ( GET_FACE_BC(s, BC_FACE_S) == odr )
         {
           q = lmd * (sf - t);
-          d_qbc[_F_IDX_S4DEX(Y_MINUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Y_minus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_N) == odr )
         {
           q = lmd * (t - sf);
-          d_qbc[_F_IDX_S4DEX(Y_PLUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Y_plus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va -= q;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_B) == odr )
         {
           q = lmd * (sf - t);
-          d_qbc[_F_IDX_S4DEX(Z_MINUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Z_minus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_T) == odr )
         {
           q = lmd * (t - sf);
-          d_qbc[_F_IDX_S4DEX(Z_PLUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Z_plus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va -= q;
         }
       }
@@ -1964,42 +1964,42 @@ REAL_TYPE SetBC3D::psIbcTransferS (REAL_TYPE* d_qbc, const int* d_cdf, const int
         if ( GET_FACE_BC(s, BC_FACE_W) == odr )
         {
           q = ht * (bt - t);
-          d_qbc[_F_IDX_S4DEX(X_MINUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(X_minus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q; // マイナス面の正の値は流入
         }
         
         if ( GET_FACE_BC(s, BC_FACE_E) == odr )
         {
           q = ht * (t - bt);
-          d_qbc[_F_IDX_S4DEX(X_PLUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(X_plus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va -= q; // プラス面の正の値は流出
         }
         
         if ( GET_FACE_BC(s, BC_FACE_S) == odr )
         {
           q = ht * (bt - t);
-          d_qbc[_F_IDX_S4DEX(Y_MINUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Y_minus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_N) == odr )
         {
           q = ht * (t - bt);
-          d_qbc[_F_IDX_S4DEX(Y_PLUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Y_plus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va -= q;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_B) == odr )
         {
           q = ht * (bt - t);
-          d_qbc[_F_IDX_S4DEX(Z_MINUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Z_minus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_T) == odr )
         {
           q = ht * (t - bt);
-          d_qbc[_F_IDX_S4DEX(Z_PLUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Z_plus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va -= q;
         }
       }
@@ -2067,42 +2067,42 @@ REAL_TYPE SetBC3D::psIbcTransferSF (REAL_TYPE* d_qbc, const int* d_cdf, const in
         if ( GET_FACE_BC(s, BC_FACE_W) == odr )
         {
           q = ht * (sf - t);                                 // 基準温度との温度差
-          d_qbc[_F_IDX_S4DEX(X_MINUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(X_minus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q;                                                 // マイナス面の正の値は流入
         }
         
         if ( GET_FACE_BC(s, BC_FACE_E) == odr )
         {
           q = ht * (t - sf);
-          d_qbc[_F_IDX_S4DEX(X_PLUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(X_plus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va -= q;                                                 // プラス面の正の値は流出
         }
         
         if ( GET_FACE_BC(s, BC_FACE_S) == odr )
         {
           q = ht * (sf - t);
-          d_qbc[_F_IDX_S4DEX(Y_MINUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Y_minus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_N) == odr )
         {
           q = ht * (t - sf);
-          d_qbc[_F_IDX_S4DEX(Y_PLUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Y_plus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va -= q;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_B) == odr )
         {
           q = ht * (sf - t);
-          d_qbc[_F_IDX_S4DEX(Z_MINUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Z_minus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_T) == odr )
         {
           q = ht * (t - sf);
-          d_qbc[_F_IDX_S4DEX(Z_PLUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Z_plus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va -= q;
         }
       }
@@ -2186,42 +2186,42 @@ schedule(static) reduction(+:va)
         if ( GET_FACE_BC(s, BC_FACE_W) == odr )
         {
           q = ht1 * (sf - t); // 基準温度との温度差
-          d_qbc[_F_IDX_S4DEX(X_MINUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(X_minus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q; // マイナス面の正の値は流入
         }
         
         if ( GET_FACE_BC(s, BC_FACE_E) == odr )
         {
           q = ht1 * (t - sf);
-          d_qbc[_F_IDX_S4DEX(X_PLUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(X_plus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va -= q; // プラス面の正の値は流出
         }
         
         if ( GET_FACE_BC(s, BC_FACE_S) == odr )
         {
           q = ht1 * (sf - t);
-          d_qbc[_F_IDX_S4DEX(Y_MINUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Y_minus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_N) == odr )
         {
           q = ht1 * (t - sf);
-          d_qbc[_F_IDX_S4DEX(Y_PLUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Y_plus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va -= q;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_B) == odr )
         {
           q = ht3 * (sf - t);
-          d_qbc[_F_IDX_S4DEX(Z_MINUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Z_minus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
         }
         
         if ( GET_FACE_BC(s, BC_FACE_T) == odr )
         {
           q = ht1 * (t - sf);
-          d_qbc[_F_IDX_S4DEX(Z_PLUS, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Z_plus, i, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va -= q;
         }
       }
@@ -2268,7 +2268,7 @@ REAL_TYPE SetBC3D::psObcFree(REAL_TYPE* d_ws, const int* d_bcd, const int face, 
   
   switch (face)
   {
-    case X_MINUS:
+    case X_minus:
 
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, u_ref) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
@@ -2286,7 +2286,7 @@ REAL_TYPE SetBC3D::psObcFree(REAL_TYPE* d_ws, const int* d_bcd, const int face, 
       }
       break;
       
-    case X_PLUS:
+    case X_plus:
 
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, u_ref) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
@@ -2304,7 +2304,7 @@ REAL_TYPE SetBC3D::psObcFree(REAL_TYPE* d_ws, const int* d_bcd, const int face, 
       }
       break;
       
-    case Y_MINUS:
+    case Y_minus:
       
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, v_ref) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
@@ -2322,7 +2322,7 @@ REAL_TYPE SetBC3D::psObcFree(REAL_TYPE* d_ws, const int* d_bcd, const int face, 
       }
       break;
       
-    case Y_PLUS:
+    case Y_plus:
       
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, v_ref) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
@@ -2340,7 +2340,7 @@ REAL_TYPE SetBC3D::psObcFree(REAL_TYPE* d_ws, const int* d_bcd, const int face, 
       }
       break;
       
-    case Z_MINUS:
+    case Z_minus:
       
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, w_ref) schedule(static) reduction(+:va)
       for (int j=1; j<=jx; j++) {
@@ -2358,7 +2358,7 @@ REAL_TYPE SetBC3D::psObcFree(REAL_TYPE* d_ws, const int* d_bcd, const int face, 
       }
       break;
       
-    case Z_PLUS:
+    case Z_plus:
       
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, w_ref) schedule(static) reduction(+:va)
       for (int j=1; j<=jx; j++) {
@@ -2406,61 +2406,61 @@ REAL_TYPE SetBC3D::psObcHeatflux(REAL_TYPE* d_qbc, const int face)
   
   switch (face)
   {
-    case X_MINUS:
+    case X_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, q) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
-          d_qbc[_F_IDX_S4DEX(X_MINUS, 1, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(X_minus, 1, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
         }
       }
       break;
       
-    case X_PLUS:
+    case X_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, q) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
-          d_qbc[_F_IDX_S4DEX(X_PLUS, ix, j, k, NOFACE, ix, jx, kx, gd)] -= q; // プラス面の正の値は流出
+          d_qbc[_F_IDX_S4DEX(X_plus, ix, j, k, NOFACE, ix, jx, kx, gd)] -= q; // プラス面の正の値は流出
           va -= q;
         }
       }
       break;
       
-    case Y_MINUS:
+    case Y_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, q) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int i=1; i<=ix; i++) {
-          d_qbc[_F_IDX_S4DEX(Y_MINUS, i, 1, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Y_minus, i, 1, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
         }
       }
       break;
       
-    case Y_PLUS:
+    case Y_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, q) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int i=1; i<=ix; i++) {
-          d_qbc[_F_IDX_S4DEX(Y_PLUS, i, jx, k, NOFACE, ix, jx, kx, gd)] -= q;
+          d_qbc[_F_IDX_S4DEX(Y_plus, i, jx, k, NOFACE, ix, jx, kx, gd)] -= q;
           va -= q;
         }
       }
       break;
       
-    case Z_MINUS:
+    case Z_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, q) schedule(static) reduction(+:va)
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
-          d_qbc[_F_IDX_S4DEX(Z_MINUS, i, j, 1, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Z_minus, i, j, 1, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
         }
       }
       break;
       
-    case Z_PLUS:
+    case Z_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, q) schedule(static) reduction(+:va)
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
-          d_qbc[_F_IDX_S4DEX(Z_PLUS, i, j, kx, NOFACE, ix, jx, kx, gd)] -= q;
+          d_qbc[_F_IDX_S4DEX(Z_plus, i, j, kx, NOFACE, ix, jx, kx, gd)] -= q;
           va -= q;
         }
       }
@@ -2505,7 +2505,7 @@ REAL_TYPE SetBC3D::psObcHeatTransferS (REAL_TYPE* d_qbc, const int face, const i
   
   switch (face)
   {
-    case X_MINUS:
+    case X_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, bt, ie) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
@@ -2515,14 +2515,14 @@ REAL_TYPE SetBC3D::psObcHeatTransferS (REAL_TYPE* d_qbc, const int face, const i
           REAL_TYPE cp  = mtbl[3*l+1];
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = ht * (bt - t);
-          d_qbc[_F_IDX_S4DEX(X_MINUS, 1, j, k, NOFACE, ix, jx, kx, gd)] += q; // マイナス面の正の値は流入
+          d_qbc[_F_IDX_S4DEX(X_minus, 1, j, k, NOFACE, ix, jx, kx, gd)] += q; // マイナス面の正の値は流入
           va += q;
           d_ie[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)] = ie; // 隣接セルに代入
         }
       }
       break;
       
-    case X_PLUS:
+    case X_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, bt, ie) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
@@ -2532,14 +2532,14 @@ REAL_TYPE SetBC3D::psObcHeatTransferS (REAL_TYPE* d_qbc, const int face, const i
           REAL_TYPE cp  = mtbl[3*l+1];
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = ht * (t - bt);
-          d_qbc[_F_IDX_S4DEX(X_PLUS, ix, j, k, NOFACE, ix, jx, kx, gd)] -= q; // プラス面の正の値は流出
+          d_qbc[_F_IDX_S4DEX(X_plus, ix, j, k, NOFACE, ix, jx, kx, gd)] -= q; // プラス面の正の値は流出
           va -= q;
           d_ie[_F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd)] = ie;
         }
       }
       break;
       
-    case Y_MINUS:
+    case Y_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, bt, ie) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int i=1; i<=ix; i++) {
@@ -2549,14 +2549,14 @@ REAL_TYPE SetBC3D::psObcHeatTransferS (REAL_TYPE* d_qbc, const int face, const i
           REAL_TYPE cp  = mtbl[3*l+1];
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = ht * (bt - t);
-          d_qbc[_F_IDX_S4DEX(Y_MINUS, i, 1, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Y_minus, i, 1, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
           d_ie[_F_IDX_S3D(i, 0, k, ix, jx, kx, gd)] = ie;
         }
       }
       break;
       
-    case Y_PLUS:
+    case Y_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, bt, ie) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int i=1; i<=ix; i++) {
@@ -2566,14 +2566,14 @@ REAL_TYPE SetBC3D::psObcHeatTransferS (REAL_TYPE* d_qbc, const int face, const i
           REAL_TYPE cp  = mtbl[3*l+1];
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = ht * (t - bt);
-          d_qbc[_F_IDX_S4DEX(Y_PLUS, i, jx, k, NOFACE, ix, jx, kx, gd)] -= q;
+          d_qbc[_F_IDX_S4DEX(Y_plus, i, jx, k, NOFACE, ix, jx, kx, gd)] -= q;
           va -= q;
           d_ie[_F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd)] = ie;
         }
       }
       break;
       
-    case Z_MINUS:
+    case Z_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, bt, ie) schedule(static) reduction(+:va)
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
@@ -2583,14 +2583,14 @@ REAL_TYPE SetBC3D::psObcHeatTransferS (REAL_TYPE* d_qbc, const int face, const i
           REAL_TYPE cp  = mtbl[3*l+1];
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = ht * (bt - t);
-          d_qbc[_F_IDX_S4DEX(Z_MINUS, i, j, 1, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Z_minus, i, j, 1, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
           d_ie[_F_IDX_S3D(i, j, 0, ix, jx, kx, gd)] = ie;
         }
       }
       break;
       
-    case Z_PLUS:
+    case Z_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, bt, ie) schedule(static) reduction(+:va)
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
@@ -2600,7 +2600,7 @@ REAL_TYPE SetBC3D::psObcHeatTransferS (REAL_TYPE* d_qbc, const int face, const i
           REAL_TYPE cp  = mtbl[3*l+1];
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = ht * (t - bt);
-          d_qbc[_F_IDX_S4DEX(Z_PLUS, i, j, kx, NOFACE, ix, jx, kx, gd)] -= q;
+          d_qbc[_F_IDX_S4DEX(Z_plus, i, j, kx, NOFACE, ix, jx, kx, gd)] -= q;
           va -= q;
           d_ie[_F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd)] = ie;
         }
@@ -2650,7 +2650,7 @@ REAL_TYPE SetBC3D::psObcHeatTransferSF(REAL_TYPE* d_qbc, const int face, const i
   
   switch (face)
   {
-    case X_MINUS:
+    case X_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, sf, ie) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
@@ -2660,14 +2660,14 @@ REAL_TYPE SetBC3D::psObcHeatTransferSF(REAL_TYPE* d_qbc, const int face, const i
           REAL_TYPE cp  = mtbl[3*l+1];
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = ht * (sf - t);             // 表面温度と隣接セルとの温度差
-          d_qbc[_F_IDX_S4DEX(X_MINUS, 1, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(X_minus, 1, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
           d_ie[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)] = ie;
         }
       }
       break;
       
-    case X_PLUS:
+    case X_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, sf, ie) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
@@ -2677,14 +2677,14 @@ REAL_TYPE SetBC3D::psObcHeatTransferSF(REAL_TYPE* d_qbc, const int face, const i
           REAL_TYPE cp  = mtbl[3*l+1];
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = ht * (t - sf);
-          d_qbc[_F_IDX_S4DEX(X_PLUS, ix, j, k, NOFACE, ix, jx, kx, gd)] -= q;
+          d_qbc[_F_IDX_S4DEX(X_plus, ix, j, k, NOFACE, ix, jx, kx, gd)] -= q;
           va -= q;                                                 // プラス面の正の値は流出
           d_ie[_F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd)] = ie;
         }
       }
       break;
       
-    case Y_MINUS:
+    case Y_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, sf, ie) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int i=1; i<=ix; i++) {
@@ -2694,14 +2694,14 @@ REAL_TYPE SetBC3D::psObcHeatTransferSF(REAL_TYPE* d_qbc, const int face, const i
           REAL_TYPE cp  = mtbl[3*l+1];
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = ht * (sf - t);
-          d_qbc[_F_IDX_S4DEX(Y_MINUS, i, 1, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Y_minus, i, 1, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
           d_ie[_F_IDX_S3D(i, 0, k, ix, jx, kx, gd)] = ie;
         }
       }
       break;
       
-    case Y_PLUS:
+    case Y_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, sf, ie) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int i=1; i<=ix; i++) {
@@ -2711,14 +2711,14 @@ REAL_TYPE SetBC3D::psObcHeatTransferSF(REAL_TYPE* d_qbc, const int face, const i
           REAL_TYPE cp  = mtbl[3*l+1];
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = ht * (t - sf);
-          d_qbc[_F_IDX_S4DEX(Y_PLUS, i, jx, k, NOFACE, ix, jx, kx, gd)] -= q;
+          d_qbc[_F_IDX_S4DEX(Y_plus, i, jx, k, NOFACE, ix, jx, kx, gd)] -= q;
           va -= q;
           d_ie[_F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd)] = ie;
         }
       }
       break;
       
-    case Z_MINUS:
+    case Z_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, sf, ie) schedule(static) reduction(+:va)
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
@@ -2728,14 +2728,14 @@ REAL_TYPE SetBC3D::psObcHeatTransferSF(REAL_TYPE* d_qbc, const int face, const i
           REAL_TYPE cp  = mtbl[3*l+1];
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = ht * (sf - t);
-          d_qbc[_F_IDX_S4DEX(Z_MINUS, i, j, 1, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Z_minus, i, j, 1, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
           d_ie[_F_IDX_S3D(i, j, 0, ix, jx, kx, gd)] = ie;
         }
       }
       break;
       
-    case Z_PLUS:
+    case Z_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ht, sf, ie) schedule(static) reduction(+:va)
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
@@ -2745,7 +2745,7 @@ REAL_TYPE SetBC3D::psObcHeatTransferSF(REAL_TYPE* d_qbc, const int face, const i
           REAL_TYPE cp  = mtbl[3*l+1];
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = ht * (t - sf);
-          d_qbc[_F_IDX_S4DEX(Z_PLUS, i, j, kx, NOFACE, ix, jx, kx, gd)] -= q;
+          d_qbc[_F_IDX_S4DEX(Z_plus, i, j, kx, NOFACE, ix, jx, kx, gd)] -= q;
           va -= q;
           d_ie[_F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd)] = ie;
         }
@@ -2807,7 +2807,7 @@ REAL_TYPE SetBC3D::psObcHeatTransferSN(REAL_TYPE* d_qbc, const int face, const i
   
   switch (face)
   {
-    case X_MINUS:
+    case X_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ht1, sf, ie) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
@@ -2817,14 +2817,14 @@ REAL_TYPE SetBC3D::psObcHeatTransferSN(REAL_TYPE* d_qbc, const int face, const i
           REAL_TYPE cp  = mtbl[3*l+1];
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = ht1 * (sf - t);                    // 基準温度との温度差
-          d_qbc[_F_IDX_S4DEX(X_MINUS, 1, j, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(X_minus, 1, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
           d_ie[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)] = ie;
         }
       }
       break;
       
-    case X_PLUS:
+    case X_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ht1, sf, ie) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
@@ -2834,14 +2834,14 @@ REAL_TYPE SetBC3D::psObcHeatTransferSN(REAL_TYPE* d_qbc, const int face, const i
           REAL_TYPE cp  = mtbl[3*l+1];
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = ht1 * (t - sf);
-          d_qbc[_F_IDX_S4DEX(X_PLUS, ix, j, k, NOFACE, ix, jx, kx, gd)] -= q;
+          d_qbc[_F_IDX_S4DEX(X_plus, ix, j, k, NOFACE, ix, jx, kx, gd)] -= q;
           va -= q;                                               // プラス面の正の値は流出
           d_ie[_F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd)] = ie;
         }
       }
       break;
       
-    case Y_MINUS:
+    case Y_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ht1, sf, ie) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int i=1; i<=ix; i++) {
@@ -2851,14 +2851,14 @@ REAL_TYPE SetBC3D::psObcHeatTransferSN(REAL_TYPE* d_qbc, const int face, const i
           REAL_TYPE cp  = mtbl[3*l+1];
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = ht1 * (sf - t);
-          d_qbc[_F_IDX_S4DEX(Y_MINUS, i, 1, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Y_minus, i, 1, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
           d_ie[_F_IDX_S3D(i, 0, k, ix, jx, kx, gd)] = ie;
         }
       }
       break;
       
-    case Y_PLUS:
+    case Y_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ht1, sf, ie) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int i=1; i<=ix; i++) {
@@ -2868,14 +2868,14 @@ REAL_TYPE SetBC3D::psObcHeatTransferSN(REAL_TYPE* d_qbc, const int face, const i
           REAL_TYPE cp  = mtbl[3*l+1];
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = ht1 * (t - sf);
-          d_qbc[_F_IDX_S4DEX(Y_PLUS, i, jx, k, NOFACE, ix, jx, kx, gd)] -= q;
+          d_qbc[_F_IDX_S4DEX(Y_plus, i, jx, k, NOFACE, ix, jx, kx, gd)] -= q;
           va -= q;
           d_ie[_F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd)] = ie;
         }
       }
       break;
       
-    case Z_MINUS:
+    case Z_minus:
       // ここだけ係数が違うので注意
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ht3, sf, ie) schedule(static) reduction(+:va)
       for (int j=1; j<=jx; j++) {
@@ -2886,14 +2886,14 @@ REAL_TYPE SetBC3D::psObcHeatTransferSN(REAL_TYPE* d_qbc, const int face, const i
           REAL_TYPE cp  = mtbl[3*l+1];
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = ht3 * (sf - t);
-          d_qbc[_F_IDX_S4DEX(Z_MINUS, i, j, 1, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Z_minus, i, j, 1, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
           d_ie[_F_IDX_S3D(i, j, 0, ix, jx, kx, gd)] = ie;
         }
       }
       break;
       
-    case Z_PLUS:
+    case Z_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ht1, sf, ie) schedule(static) reduction(+:va)
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
@@ -2903,7 +2903,7 @@ REAL_TYPE SetBC3D::psObcHeatTransferSN(REAL_TYPE* d_qbc, const int face, const i
           REAL_TYPE cp  = mtbl[3*l+1];
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = ht1 * (t - sf);
-          d_qbc[_F_IDX_S4DEX(Z_PLUS, i, j, kx, NOFACE, ix, jx, kx, gd)] -= q;
+          d_qbc[_F_IDX_S4DEX(Z_plus, i, j, kx, NOFACE, ix, jx, kx, gd)] -= q;
           va -= q;
           d_ie[_F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd)] = ie;
         }
@@ -3019,7 +3019,7 @@ REAL_TYPE SetBC3D::psObcIsoThermal(REAL_TYPE* d_qbc, const int face, const int* 
   
   switch (face)
   {
-    case X_MINUS:
+    case X_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, pp, sf, ie) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
@@ -3030,14 +3030,14 @@ REAL_TYPE SetBC3D::psObcIsoThermal(REAL_TYPE* d_qbc, const int face, const int* 
           REAL_TYPE lmd = mtbl[3*l+2] * pp;
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = lmd * (sf - t);
-          d_qbc[_F_IDX_S4DEX(X_MINUS, 1, j, k, NOFACE, ix, jx, kx, gd)] += q; // マイナス面の正の値は流入
+          d_qbc[_F_IDX_S4DEX(X_minus, 1, j, k, NOFACE, ix, jx, kx, gd)] += q; // マイナス面の正の値は流入
           va += q;
           d_ie[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)] = ie; // 等温セルに指定温度を代入
         }
       }
       break;
       
-    case X_PLUS:
+    case X_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, pp, sf, ie) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
@@ -3048,14 +3048,14 @@ REAL_TYPE SetBC3D::psObcIsoThermal(REAL_TYPE* d_qbc, const int face, const int* 
           REAL_TYPE lmd = mtbl[3*l+2] * pp;
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = lmd * (t - sf);
-          d_qbc[_F_IDX_S4DEX(X_PLUS, ix, j, k, NOFACE, ix, jx, kx, gd)] -= q; // プラス面の正の値は流出
+          d_qbc[_F_IDX_S4DEX(X_plus, ix, j, k, NOFACE, ix, jx, kx, gd)] -= q; // プラス面の正の値は流出
           va -= q;
           d_ie[_F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd)] = ie;
         }
       }
       break;
       
-    case Y_MINUS:
+    case Y_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, pp, sf, ie) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int i=1; i<=ix; i++) {
@@ -3066,14 +3066,14 @@ REAL_TYPE SetBC3D::psObcIsoThermal(REAL_TYPE* d_qbc, const int face, const int* 
           REAL_TYPE lmd = mtbl[3*l+2] * pp;
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = lmd * (sf - t);
-          d_qbc[_F_IDX_S4DEX(Y_MINUS, i, 1, k, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Y_minus, i, 1, k, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
           d_ie[_F_IDX_S3D(i, 0, k, ix, jx, kx, gd)] = ie;
         }
       }
       break;
       
-    case Y_PLUS:
+    case Y_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, pp, sf, ie) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
         for (int i=1; i<=ix; i++) {
@@ -3084,14 +3084,14 @@ REAL_TYPE SetBC3D::psObcIsoThermal(REAL_TYPE* d_qbc, const int face, const int* 
           REAL_TYPE lmd = mtbl[3*l+2] * pp;
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = lmd * (t - sf);
-          d_qbc[_F_IDX_S4DEX(Y_PLUS, i, jx, k, NOFACE, ix, jx, kx, gd)] -= q;
+          d_qbc[_F_IDX_S4DEX(Y_plus, i, jx, k, NOFACE, ix, jx, kx, gd)] -= q;
           va -= q;
           d_ie[_F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd)] = ie;
         }
       }
       break;
       
-    case Z_MINUS:
+    case Z_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, pp, sf, ie) schedule(static) reduction(+:va)
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
@@ -3102,14 +3102,14 @@ REAL_TYPE SetBC3D::psObcIsoThermal(REAL_TYPE* d_qbc, const int face, const int* 
           REAL_TYPE lmd = mtbl[3*l+2] * pp;
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = lmd * (sf - t);
-          d_qbc[_F_IDX_S4DEX(Z_MINUS, i, j, 1, NOFACE, ix, jx, kx, gd)] += q;
+          d_qbc[_F_IDX_S4DEX(Z_minus, i, j, 1, NOFACE, ix, jx, kx, gd)] += q;
           va += q;
           d_ie[_F_IDX_S3D(i, j, 0, ix, jx, kx, gd)] = ie;
         }
       }
       break;
       
-    case Z_PLUS:
+    case Z_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, pp, sf, ie) schedule(static) reduction(+:va)
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
@@ -3120,7 +3120,7 @@ REAL_TYPE SetBC3D::psObcIsoThermal(REAL_TYPE* d_qbc, const int face, const int* 
           REAL_TYPE lmd = mtbl[3*l+2] * pp;
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = lmd * (t - sf);
-          d_qbc[_F_IDX_S4DEX(Z_PLUS, i, j, kx, NOFACE, ix, jx, kx, gd)] -= q;
+          d_qbc[_F_IDX_S4DEX(Z_plus, i, j, kx, NOFACE, ix, jx, kx, gd)] -= q;
           va -= q;
           d_ie[_F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd)] = ie;
         }
@@ -3173,7 +3173,7 @@ REAL_TYPE SetBC3D::psObcSpecVH(REAL_TYPE* d_ws, const int* d_cdf, const int face
   
   switch (face)
   {
-    case X_MINUS:
+    case X_minus:
       
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, f_x) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
@@ -3187,7 +3187,7 @@ REAL_TYPE SetBC3D::psObcSpecVH(REAL_TYPE* d_ws, const int* d_cdf, const int face
       }
       break;
       
-    case X_PLUS:
+    case X_plus:
       
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, f_x) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
@@ -3201,7 +3201,7 @@ REAL_TYPE SetBC3D::psObcSpecVH(REAL_TYPE* d_ws, const int* d_cdf, const int face
       }
       break;
       
-    case Y_MINUS:
+    case Y_minus:
       
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, f_y) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
@@ -3215,7 +3215,7 @@ REAL_TYPE SetBC3D::psObcSpecVH(REAL_TYPE* d_ws, const int* d_cdf, const int face
       }
       break;
       
-    case Y_PLUS:
+    case Y_plus:
       
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, f_y) schedule(static) reduction(+:va)
       for (int k=1; k<=kx; k++) {
@@ -3229,7 +3229,7 @@ REAL_TYPE SetBC3D::psObcSpecVH(REAL_TYPE* d_ws, const int* d_cdf, const int face
       }
       break;
       
-    case Z_MINUS:
+    case Z_minus:
       
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, f_z) schedule(static) reduction(+:va)
       for (int j=1; j<=jx; j++) {
@@ -3243,7 +3243,7 @@ REAL_TYPE SetBC3D::psObcSpecVH(REAL_TYPE* d_ws, const int* d_cdf, const int face
       }
       break;
       
-    case Z_PLUS:
+    case Z_plus:
       
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, dh1, f_z) schedule(static) reduction(+:va)
       for (int j=1; j<=jx; j++) {
@@ -3315,27 +3315,27 @@ void SetBC3D::setBCIperiodic(int* d_bx)
 
       switch (face)
       {
-        case X_MINUS:
+        case X_minus:
           if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
           break;
           
-        case X_PLUS:
+        case X_plus:
           if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
           break;
           
-        case Y_MINUS:
+        case Y_minus:
           if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
           break;
           
-        case Y_PLUS:
+        case Y_plus:
           if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
           break;
           
-        case Z_MINUS:
+        case Z_minus:
           if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
           break;
           
-        case Z_PLUS:
+        case Z_plus:
           if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
           break;
       }
@@ -3351,7 +3351,7 @@ void SetBC3D::setBCIperiodic(int* d_bx)
       
       switch (face)
       {
-        case X_MINUS:
+        case X_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
@@ -3364,7 +3364,7 @@ void SetBC3D::setBCIperiodic(int* d_bx)
           }
           break;
           
-        case X_PLUS:
+        case X_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
           for (int k=1; k<=kx; k++) {
             for (int j=1; j<=jx; j++) {
@@ -3377,7 +3377,7 @@ void SetBC3D::setBCIperiodic(int* d_bx)
           }
           break;
           
-        case Y_MINUS:
+        case Y_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
           for (int k=1; k<=kx; k++) {
             for (int j=1-gd; j<=0; j++) {
@@ -3390,7 +3390,7 @@ void SetBC3D::setBCIperiodic(int* d_bx)
           }
           break;
           
-        case Y_PLUS:
+        case Y_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
           for (int k=1; k<=kx; k++) {
             for (int j=jx+1; j<=jx+gd; j++) {
@@ -3403,7 +3403,7 @@ void SetBC3D::setBCIperiodic(int* d_bx)
           }
           break;
           
-        case Z_MINUS:
+        case Z_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
           for (int k=1-gd; k<=0; k++) {
             for (int j=1; j<=jx; j++) {
@@ -3416,7 +3416,7 @@ void SetBC3D::setBCIperiodic(int* d_bx)
           }
           break;
           
-        case Z_PLUS:
+        case Z_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
           for (int k=kx+1; k<=kx+gd; k++) {
             for (int j=1; j<=jx; j++) {
@@ -3636,27 +3636,27 @@ void SetBC3D::TobcPeriodicSimple(REAL_TYPE* d_ie, const int face)
   {
     switch (face) 
     {
-      case X_MINUS:
+      case X_minus:
         if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
         break;
         
-      case X_PLUS:
+      case X_plus:
         if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
         break;
         
-      case Y_MINUS:
+      case Y_minus:
         if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
         break;
         
-      case Y_PLUS:
+      case Y_plus:
         if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
         break;
         
-      case Z_MINUS:
+      case Z_minus:
         if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
         break;
         
-      case Z_PLUS:
+      case Z_plus:
         if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
         break;
     }
@@ -3667,7 +3667,7 @@ void SetBC3D::TobcPeriodicSimple(REAL_TYPE* d_ie, const int face)
     
     switch (face)
     {
-      case X_MINUS:
+      case X_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
@@ -3678,7 +3678,7 @@ void SetBC3D::TobcPeriodicSimple(REAL_TYPE* d_ie, const int face)
         }
         break;
         
-      case X_PLUS:
+      case X_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
@@ -3689,7 +3689,7 @@ void SetBC3D::TobcPeriodicSimple(REAL_TYPE* d_ie, const int face)
         }
         break;
         
-      case Y_MINUS:
+      case Y_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
@@ -3700,7 +3700,7 @@ void SetBC3D::TobcPeriodicSimple(REAL_TYPE* d_ie, const int face)
         }
         break;
         
-      case Y_PLUS:
+      case Y_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
@@ -3711,7 +3711,7 @@ void SetBC3D::TobcPeriodicSimple(REAL_TYPE* d_ie, const int face)
         }
         break;
         
-      case Z_MINUS:
+      case Z_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
@@ -3722,7 +3722,7 @@ void SetBC3D::TobcPeriodicSimple(REAL_TYPE* d_ie, const int face)
         }
         break;
         
-      case Z_PLUS:
+      case Z_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
@@ -3754,27 +3754,27 @@ void SetBC3D::VobcPeriodicSimple(REAL_TYPE* d_v, const int face)
   {
     switch (face)
     {
-      case X_MINUS:
+      case X_minus:
         if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
         break;
         
-      case X_PLUS:
+      case X_plus:
         if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
         break;
         
-      case Y_MINUS:
+      case Y_minus:
         if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
         break;
         
-      case Y_PLUS:
+      case Y_plus:
         if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
         break;
         
-      case Z_MINUS:
+      case Z_minus:
         if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
         break;
         
-      case Z_PLUS:
+      case Z_plus:
         if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
         break;
     }
@@ -3785,7 +3785,7 @@ void SetBC3D::VobcPeriodicSimple(REAL_TYPE* d_v, const int face)
     
     switch (face) 
     {
-      case X_MINUS:
+      case X_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
@@ -3798,7 +3798,7 @@ void SetBC3D::VobcPeriodicSimple(REAL_TYPE* d_v, const int face)
         }
         break;
         
-      case X_PLUS:
+      case X_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
@@ -3811,7 +3811,7 @@ void SetBC3D::VobcPeriodicSimple(REAL_TYPE* d_v, const int face)
         }
         break;
         
-      case Y_MINUS:
+      case Y_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
@@ -3824,7 +3824,7 @@ void SetBC3D::VobcPeriodicSimple(REAL_TYPE* d_v, const int face)
         }
         break;
         
-      case Y_PLUS:
+      case Y_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
@@ -3837,7 +3837,7 @@ void SetBC3D::VobcPeriodicSimple(REAL_TYPE* d_v, const int face)
         }
         break;
         
-      case Z_MINUS:
+      case Z_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
@@ -3850,7 +3850,7 @@ void SetBC3D::VobcPeriodicSimple(REAL_TYPE* d_v, const int face)
         }
         break;
         
-      case Z_PLUS:
+      case Z_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
@@ -3896,7 +3896,7 @@ void SetBC3D::Vibc_Prdc(REAL_TYPE* d_v, int* st, int* ed, int* d_bx, int odr, in
   
   switch (dir)
   {
-    case X_MINUS:
+    case X_minus:
       if ( nID[dir] < 0 )
       {
         int i = st[0];
@@ -3918,7 +3918,7 @@ void SetBC3D::Vibc_Prdc(REAL_TYPE* d_v, int* st, int* ed, int* d_bx, int odr, in
       }
       break;
       
-    case X_PLUS:
+    case X_plus:
       if ( nID[dir] < 0 )
       {
         int i = st[0];
@@ -3940,7 +3940,7 @@ void SetBC3D::Vibc_Prdc(REAL_TYPE* d_v, int* st, int* ed, int* d_bx, int odr, in
       }
       break;
       
-    case Y_MINUS:
+    case Y_minus:
       if ( nID[dir] < 0 )
       {
         int j = st[1];
@@ -3962,7 +3962,7 @@ void SetBC3D::Vibc_Prdc(REAL_TYPE* d_v, int* st, int* ed, int* d_bx, int odr, in
       }
       break;
       
-    case Y_PLUS:
+    case Y_plus:
       if ( nID[dir] < 0 )
       {
         int j = st[1];
@@ -3984,7 +3984,7 @@ void SetBC3D::Vibc_Prdc(REAL_TYPE* d_v, int* st, int* ed, int* d_bx, int odr, in
       }
       break;
       
-    case Z_MINUS:
+    case Z_minus:
       if ( nID[dir] < 0 )
       {
         int k = st[2];
@@ -4006,7 +4006,7 @@ void SetBC3D::Vibc_Prdc(REAL_TYPE* d_v, int* st, int* ed, int* d_bx, int odr, in
       }
       break;
       
-    case Z_PLUS:
+    case Z_plus:
       if ( nID[dir] < 0 )
       {
         int k = st[2];

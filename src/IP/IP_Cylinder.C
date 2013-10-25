@@ -224,13 +224,13 @@ void IP_Cylinder::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedi
   }
   
   
-  // Initialize  内部領域をfluidにしておく
+  // Initialize
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid) schedule(static)
   for (int k=1; k<=kx; k++) { 
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        bcd[m] |= mid_fluid;
+        bcd[m] = 0;
       }
     }
   }
@@ -255,7 +255,7 @@ void IP_Cylinder::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedi
   // ドライバ部分
   if ( drv_length > 0.0 )
   {
-    if ( nID[X_MINUS] < 0 )
+    if ( nID[X_minus] < 0 )
     {
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {

@@ -23,6 +23,91 @@
 
 
 // #################################################################
+// 交点の無次元距離を計算する
+float IP_Sphere::cut_line(const FB::Vec3f p, const int dir, const float r, const float dh)
+{
+  float x, y, z, s;
+  float xc, yc, zc;
+  
+  x = p.x;
+  y = p.y;
+  z = p.z;
+  
+  s = 0.0;
+  
+  // 基点座標の符号で交点座標を判断
+  switch (dir)
+  {
+    case 1: // X-
+      xc = sqrtf(r*r - y*y - z*z);
+      if ( x < 0.0 ) xc *= -1.0;
+      s = fabs(xc-x);
+      break;
+      
+    case 2: // X+
+      xc = sqrtf(r*r - y*y - z*z);
+      if ( x < 0.0 ) xc *= -1.0;
+      s = fabs(xc-x);
+      break;
+      
+    case 3: // Y-
+      yc = sqrtf(r*r - x*x - z*z);
+      if ( y < 0.0 ) yc *= -1.0;
+      s = fabs(yc-y);
+      break;
+      
+    case 4: // Y+
+      yc = sqrtf(r*r - x*x - z*z);
+      if ( y < 0.0 ) yc *= -1.0;
+      s = fabs(yc-y);
+      break;
+      
+    case 5: // Z-
+      zc = sqrtf(r*r - x*x - y*y);
+      if ( z < 0.0 ) zc *= -1.0;
+      s = fabs(zc-z);
+      break;
+      
+    case 6: // Z+
+      zc = sqrtf(r*r - x*x - y*y);
+      if ( z < 0.0 ) zc *= -1.0;
+      s = fabs(zc-z);
+      break;
+      
+    default:
+      Exit(0);
+      break;
+  }
+  
+  return s/dh;
+}
+
+
+
+// #################################################################
+//  点pの属するセルインデクスを求める
+// Fortran index
+FB::Vec3i IP_Sphere::find_index(const FB::Vec3f p, const FB::Vec3f ol)
+{
+  FB::Vec3f q = (p-ol)/pch;
+  FB::Vec3i idx( ceil(q.x), ceil(q.y), ceil(q.z) );
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  
+  if ( idx.x < 1 ) idx.x = 1;
+  if ( idx.y < 1 ) idx.y = 1;
+  if ( idx.z < 1 ) idx.z = 1;
+  if ( idx.x > ix ) idx.x = ix;
+  if ( idx.y > jx ) idx.y = jx;
+  if ( idx.z > kx ) idx.z = kx;
+  
+  return idx;
+}
+
+
+// #################################################################
 // パラメータをロード
 bool IP_Sphere::getTP(Control* R, TextParser* tpCntl)
 {
@@ -33,7 +118,7 @@ bool IP_Sphere::getTP(Control* R, TextParser* tpCntl)
   // radius
   label = "/IntrinsicExample/Radius";
   
-  if ( !tpCntl->getInspectedValue(label, ct) )
+  if ( !(tpCntl->getInspectedValue(label, ct)) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
@@ -73,7 +158,7 @@ bool IP_Sphere::getTP(Control* R, TextParser* tpCntl)
   
   // 媒質指定
   label = "/IntrinsicExample/FluidMedium";
-  if ( !tpCntl->getInspectedValue(label, str) )
+  if ( !(tpCntl->getInspectedValue(label, str)) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
@@ -82,7 +167,7 @@ bool IP_Sphere::getTP(Control* R, TextParser* tpCntl)
   
   
   label = "/IntrinsicExample/SolidMedium";
-  if ( !tpCntl->getInspectedValue(label, str) )
+  if ( !(tpCntl->getInspectedValue(label, str)) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
@@ -93,7 +178,7 @@ bool IP_Sphere::getTP(Control* R, TextParser* tpCntl)
   if (drv_length > 0.0 )
   {
     label = "/IntrinsicExample/DriverMedium";
-    if ( !tpCntl->getInspectedValue(label, str) )
+    if ( !(tpCntl->getInspectedValue(label, str)) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;
@@ -102,7 +187,7 @@ bool IP_Sphere::getTP(Control* R, TextParser* tpCntl)
     
     
     label = "/IntrinsicExample/DriverFaceMedium";
-    if ( !tpCntl->getInspectedValue(label, str) )
+    if ( !(tpCntl->getInspectedValue(label, str)) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       return false;
@@ -152,195 +237,8 @@ void IP_Sphere::setDomainParameter(Control* R, const int* sz, REAL_TYPE* m_org, 
 
 
 // #################################################################
-//  点pの属するセルインデクスを求める
-// Fortran index
-FB::Vec3i IP_Sphere::find_index(const FB::Vec3f p, const FB::Vec3f ol)
-{
-  FB::Vec3f q = (p-ol)/pch;
-  FB::Vec3i idx( ceil(q.x), ceil(q.y), ceil(q.z) );
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  
-  if ( idx.x < 1 ) idx.x = 1;
-  if ( idx.y < 1 ) idx.y = 1;
-  if ( idx.z < 1 ) idx.z = 1;
-  if ( idx.x > ix ) idx.x = ix;
-  if ( idx.y > jx ) idx.y = jx;
-  if ( idx.z > kx ) idx.z = kx;
-
-  return idx;
-}
-
-
-// #################################################################
-// 矩形の計算領域のセルIDを設定する
-void IP_Sphere::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
-{
-  int mid_fluid;        /// 流体
-  int mid_solid;        /// 固体
-  int mid_driver;       /// ドライバ部
-  int mid_driver_face;  /// ドライバ流出面
-
-  REAL_TYPE x, y, z, dh, len;
-  REAL_TYPE ox, oy, oz, Lx, Ly, Lz;
-  REAL_TYPE ox_g, oy_g, oz_g;
-  
-  FB::Vec3f base, b, t, org_l;
-  float ph = pch.x;
-  REAL_TYPE r;
-  REAL_TYPE rs = radius/R->RefLength;
-  
-  // ノードローカルの無次元値
-  org_l.x = (float)origin[0];
-  org_l.y = (float)origin[1];
-  org_l.z = (float)origin[2];
-  Lx = region[0];
-  Ly = region[1];
-  Lz = region[2];
-  dh = deltaX;
-  ox_g = G_origin[0];
-  oy_g = G_origin[1];
-  oz_g = G_origin[2];
-  
-  // ローカルにコピー
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-
-#if 0
-  printf("%d : ox = %e, oy = %e, oz = %e\n", myRank, org_l.x, org_l.y, org_l.z);
-  printf("%d : Lx = %e, Ly = %e, Lz = %e\n", myRank, Lx, Ly, Lz);
-  printf("%d : oxG= %e, oyG= %e, ozG= %e\n", myRank, ox_g, oy_g, oz_g);
-#endif
-  
-  // 球のbbox 球の中心座標はゼロ
-  box_min = - rs;
-  box_max = + rs;
-  box_st = find_index(box_min, org_l);
-  box_ed = find_index(box_max, org_l);
-  
-#if 0
-  printf("%d : st_x = %d, st_y = %d, st_z = %d\n", myRank, box_st.x, box_st.y, box_st.z);
-  printf("%d : ed_x = %d, ed_y = %d, ed_z = %d\n", myRank, box_ed.x, box_ed.y, box_ed.z);
-#endif
-  
-  // 媒質設定
-  if ( (mid_fluid = R->findIDfromLabel(mat, NoMedium, m_fluid)) == 0 )
-  {
-    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_fluid.c_str());
-    Exit(0);
-  }
-  
-  if ( (mid_solid = R->findIDfromLabel(mat, NoMedium, m_solid)) == 0 )
-  {
-    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_solid.c_str());
-    Exit(0);
-  }
-  
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid) schedule(static)
-  for (int k=1-gd; k<=kx+gd; k++) {
-    for (int j=1-gd; j<=jx+gd; j++) {
-      for (int i=1-gd; i<=ix+gd; i++) {
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        bcd[m] |= mid_fluid;
-      }
-    }
-  }
-  
-  // 球内部
-  for (int k=box_st.z; k<=box_ed.z; k++) { 
-    for (int j=box_st.y; j<=box_ed.y; j++) {
-      for (int i=box_st.x; i<=box_ed.x; i++) {
-        
-        base.assign((float)i-0.5, (float)j-0.5, (float)k-0.5);
-        b = org_l + base*ph;
-        r = b.length();
-        
-        if ( r <= rs )
-        {
-          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          bcd[m] |= mid_solid;
-        }
-      }
-    }
-  }
-
-  
-  // driver設定 iff ドライバ長が正の場合
-  if ( drv_mode == OFF ) return;
-  
-  
-  if ( (mid_driver = R->findIDfromLabel(mat, NoMedium, m_driver)) == 0 )
-  {
-    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver.c_str());
-    Exit(0);
-  }
-  
-  if ( (mid_driver_face = R->findIDfromLabel(mat, NoMedium, m_driver_face)) == 0 )
-  {
-    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver_face.c_str());
-    Exit(0);
-  }
-  
-  // @todo 以下は確認のこと
-  
-  // lengthは有次元値
-  len = ox_g + (drv_length)/R->RefLength; // グローバルな無次元位置
-  
-  // ドライバ部分　X-面からドライバ長さより小さい領域
-  if ( drv_length > 0.0 )
-  {
-    for (int k=1; k<=kx; k++) {
-      for (int j=1; j<=jx; j++) {
-        for (int i=1; i<=ix; i++) {
-          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          x = ox + 0.5*dh + dh*(i-1);
-          if ( x < len ) bcd[m] |= mid_driver;
-        }
-      }
-    }  
-  }
-  
-  // ドライバの下流面にIDを設定
-  if ( drv_length > 0.0 )
-  {
-    for (int k=1; k<=kx; k++) {
-      for (int j=1; j<=jx; j++) {
-        for (int i=1; i<=ix; i++) {
-          size_t m = _F_IDX_S3D(i,   j, k, ix, jx, kx, gd);
-          size_t m1= _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd);
-          if ( (DECODE_CMP(bcd[m])  == mid_driver) && (DECODE_CMP(bcd[m1]) == mid_fluid) )
-          {
-            bcd[m] |= mid_driver_face;
-          }
-        }
-      }
-    }    
-  }
-  
-  // ステップ部分を上書き
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        x = ox + 0.5*dh + dh*(i-1);
-        y = oy + 0.5*dh + dh*(j-1);
-        if ( x < len )
-        {
-          bcd[m] |= mid_solid;
-        }
-      }
-    }
-  }
-}
-
-
-// #################################################################
 // 計算領域のセルIDとカット情報を設定する
-void IP_Sphere::setup_cut(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
+void IP_Sphere::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
 {
   int mid_fluid;        /// 流体
   int mid_solid;        /// 固体
@@ -394,6 +292,7 @@ void IP_Sphere::setup_cut(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMe
     Exit(0);
   }
   
+  /*
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid) schedule(static)
   for (int k=1-gd; k<=kx+gd; k++) {
     for (int j=1-gd; j<=jx+gd; j++) {
@@ -422,6 +321,7 @@ void IP_Sphere::setup_cut(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMe
       }
     }
   }
+  */
   
   // カット情報
   FB::Vec3f p[7];
@@ -533,65 +433,4 @@ void IP_Sphere::setup_cut(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMe
       }
     }
   }
-}
-
-
-// #################################################################
-// 交点の無次元距離を計算する
-float IP_Sphere::cut_line(const FB::Vec3f p, const int dir, const float r, const float dh)
-{
-  float x, y, z, s;
-  float xc, yc, zc;
-
-  x = p.x;
-  y = p.y;
-  z = p.z;
-  
-  s = 0.0;
-  
-  // 基点座標の符号で交点座標を判断
-  switch (dir)
-  {
-    case 1: // X-
-      xc = sqrtf(r*r - y*y - z*z);
-      if ( x < 0.0 ) xc *= -1.0;
-      s = fabs(xc-x);
-      break;
-      
-    case 2: // X+
-      xc = sqrtf(r*r - y*y - z*z);
-      if ( x < 0.0 ) xc *= -1.0;
-      s = fabs(xc-x);
-      break;
-      
-    case 3: // Y-
-      yc = sqrtf(r*r - x*x - z*z);
-      if ( y < 0.0 ) yc *= -1.0;
-      s = fabs(yc-y);
-      break;
-      
-    case 4: // Y+
-      yc = sqrtf(r*r - x*x - z*z);
-      if ( y < 0.0 ) yc *= -1.0;
-      s = fabs(yc-y);
-      break;
-      
-    case 5: // Z-
-      zc = sqrtf(r*r - x*x - y*y);
-      if ( z < 0.0 ) zc *= -1.0;
-      s = fabs(zc-z);
-      break;
-      
-    case 6: // Z+
-      zc = sqrtf(r*r - x*x - y*y);
-      if ( z < 0.0 ) zc *= -1.0;
-      s = fabs(zc-z);
-      break;
-      
-    default:
-      Exit(0);
-      break;
-  }
-  
-  return s/dh;
 }

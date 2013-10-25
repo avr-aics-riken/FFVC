@@ -70,6 +70,10 @@ public:
   
 public:
   
+  // ユーザー例題の名称を返す
+  const char* getExampleName(int m_id);
+  
+  
   // 例題クラス固有のパラメータをロードする
   virtual bool getTP(Control* R, TextParser* tpCntl) 
   { 
@@ -89,18 +93,16 @@ public:
   virtual void setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch) {};
   
   
-  // 計算領域の媒質情報を設定する
-  virtual void setup(int* bcd, Control* R, REAL_TYPE* G_org, const int Nmax, const MediumList* mat, float* cut) {};
-  
-  
-  
-  
-  // ユーザー例題の名称を返す
-  const char* getExampleName(int m_id);
+  // 外部境界の設定
+  virtual void setOBC(const int face, int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut, int* bid) {};
   
   
   // 代表パラメータのセット
   void setRefParameter(Control* Cref);
+  
+  
+  // 計算領域の媒質情報を設定する
+  virtual void setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut) {};
   
   
   // モデルIDをsphフォーマット(float)で出力する

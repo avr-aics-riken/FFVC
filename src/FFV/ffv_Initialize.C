@@ -174,8 +174,9 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // 各問題に応じてモデルを設定 >> Polylib + Cutlib
+  // 外部境界面およびガイドセルのカットとIDの処理
   setModel(PrepMemory, TotalMemory, fp);
-  
+
   
   
   // 定義点上に交点がある場合の処理 >> カットするポリゴンのエントリ番号でフィルする
@@ -213,37 +214,24 @@ int FFV::Initialize(int argc, char **argv)
   displayMemoryInfo(fp, G_PrepMemory, PrepMemory, "Preprocessor");
   
 
-  
-  // 外部境界面およびガイドセルのカットとIDの処理
-  TreatmentOfOuterBoundary();
 
   
+  // サンプリング準備
+  setMonitorList();
   
-  // サンプリング指定がある場合
-  if ( C.Sampling.log == ON )
-  {
-    setMonitorList();
-    
-    // モニタ結果出力ファイル群のオープン
-    MO.openFile(C.HistoryMonitorName.c_str());
-  }
   
   
   // Fill
-  if ( (C.Mode.Example == id_Polygon) )
+  Hostonly_
   {
-    Hostonly_
-    {
-      printf(    "\n---------------------------------------------------------------------------\n\n");
-      fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
-      printf(    "\t>> Fill\n\n");
-      fprintf(fp,"\t>> Fill\n\n");
-    }
-    
-    fill(fp);
+    printf(    "\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    printf(    "\t>> Fill\n\n");
+    fprintf(fp,"\t>> Fill\n\n");
   }
   
-
+  fill(fp);
+  
   
   
   // ∆tの決め方とKindOfSolverの組み合わせで無効なものをはねる
@@ -276,7 +264,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // HEX/FANコンポーネントの形状情報からBboxと体積率を計算
-  if ( C.existVfraction() )
+  if ( C.EnsCompo.fraction )
   {
     TIMING_start(tm_init_alloc);
     allocArray_CompoVF(PrepMemory, TotalMemory);
@@ -309,6 +297,11 @@ int FFV::Initialize(int argc, char **argv)
   encodeBCindex(fp);
   
 
+  // Polygonモニタの数をcmp[]にセット
+  if ( C.SamplingMode )
+  {
+    MO.setMonitorNpoint(cmp, C.NoCompo);
+  }
 
   
   
@@ -339,6 +332,9 @@ int FFV::Initialize(int argc, char **argv)
   }
   
   
+  // サンプリング点の整合性をチェック
+  if ( C.SamplingMode == ON ) MO.checkStatus();
+    
   
   // 時間積分幅 deltaT や物理パラメータの設定
   setParameters();
@@ -493,7 +489,7 @@ int FFV::Initialize(int argc, char **argv)
   
 
   // サンプリング元となるデータ配列の登録
-  if ( C.Sampling.log == ON ) 
+  if ( C.SamplingMode == ON ) 
   {
     
     if ( C.isHeatProblem() ) 
@@ -790,11 +786,11 @@ void FFV::displayCompoInfo(const int* cgb, FILE* fp)
     B.printCompoSummary(fp, cmp, C.BasicEqs);
   }
   
+  double cr = (double)G_Wcell/ ( (double)G_size[0] * (double)G_size[1] * (double)G_size[2]) *100.0;
+  
   // セル数の情報を表示する
   Hostonly_
   {
-    double cr = (double)G_Wcell/ ( (double)G_size[0] * (double)G_size[1] * (double)G_size[2]) *100.0;
-    
     fprintf(stdout, "\tThis model includes %4d solid %s  [Solid cell ratio inside computational domain : %9.5f %%]\n\n",
             C.NoMediumSolid, (C.NoMediumSolid>1) ? "IDs" : "ID", cr);
     fprintf(fp, "\tThis model includes %4d solid %s  [Solid cell ratio inside computational domain : %9.5f %%]\n\n", 
@@ -870,12 +866,13 @@ void FFV::displayCutInfo(float* cut, int* bid)
         size_t mb = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         int bd = bid[mb];
         
-        int b0 = (bd >> 0)  & MASK_5;
-        int b1 = (bd >> 5)  & MASK_5;
-        int b2 = (bd >> 10) & MASK_5;
-        int b3 = (bd >> 15) & MASK_5;
-        int b4 = (bd >> 20) & MASK_5;
-        int b5 = (bd >> 25) & MASK_5;
+        int b0 = getBit5(bd, X_minus); // (bd >> 0)  & MASK_5;
+        int b1 = getBit5(bd, X_plus);  // (bd >> 5)  & MASK_5;
+        int b2 = getBit5(bd, Y_minus); // (bd >> 10) & MASK_5;
+        int b3 = getBit5(bd, Y_plus);  // (bd >> 15) & MASK_5;
+        int b4 = getBit5(bd, Z_minus); // (bd >> 20) & MASK_5;
+        int b5 = getBit5(bd, Z_plus);  // (bd >> 25) & MASK_5;
+        
         //fprintf(fp, "%d %d %d %d %d %d : ", b0, b1, b2, b3, b4, b5);
         
         fprintf(fp, "%5d %5d %5d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n", i,j,k,
@@ -928,6 +925,7 @@ void FFV::displayMemoryInfo(FILE* fp, double G_mem, double L_mem, const char* st
 // #################################################################
 /* @brief 制御パラメータ，物理パラメータの表示
  * @param [in]  fp   ファイルポインタ
+ * @note この関数はマスターノードのみ
  */
 void FFV::displayParameters(FILE* fp)
 {
@@ -953,23 +951,20 @@ void FFV::displayParameters(FILE* fp)
 
   
   // モニタ情報の表示
-  if ( C.Sampling.log == ON )
+  if ( C.SamplingMode == ON )
   {
-    MO.printMonitorInfo(stdout, C.HistoryMonitorName.c_str(), false); // ヘッダのみ
+    MO.printMonitorInfo(stdout, "sampling_info.txt", false); // ヘッダのみ
     
     FILE *fp_mon=NULL;
-    Hostonly_
+
+    if ( !(fp_mon=fopen("sampling_info.txt", "w")) )
     {
-      if ( !(fp_mon=fopen("sampling_info.txt", "w")) )
-      {
-        stamped_printf("\tSorry, can't open 'sampling_info.txt' file. Write failed.\n");
-        //return -1;
-        Exit(0);
-      }
+      stamped_printf("\tSorry, can't open 'sampling_info.txt' file. Write failed.\n");
+      Exit(0);
     }
     
-    MO.printMonitorInfo(fp_mon, C.HistoryMonitorName.c_str(), true);  // 詳細モード
-    Hostonly_ if ( fp_mon ) fclose(fp_mon);
+    MO.printMonitorInfo(fp_mon, "sampling_info.txt", true);  // 詳細モード
+    if ( fp_mon ) fclose(fp_mon);
   }
 }
 
@@ -1156,6 +1151,7 @@ void FFV::encodeBCindex(FILE* fp)
   V.countCellState(L_Fcell, G_Fcell, d_bcd, FLUID);
   
   
+  
   // エンコードされているエントリ番号のチェック 1<=order<=31
   V.chkOrder(d_bcd);
   
@@ -1276,27 +1272,6 @@ void FFV::fill(FILE* fp)
   {
     if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
   }
-
-  
-  
-  /* チェック用のリスト OpenMPのfirstprivate化のために固定長にする
-  int list[CMP_BIT_W];
-  memset(list, 0, sizeof(int)*CMP_BIT_W);
-  
-  if ( C.NoCompo+1 > CMP_BIT_W )
-  {
-    Exit(0);
-  }
-  
-  // CellMonitorをリストアップ >> モニタ部の例外処理
-  for (int n=1; n<=C.NoCompo; n++)
-  {
-    if ( cmp[n].isMONITOR() )
-    {
-      list[n] = n;
-    }
-  }
-  */
   
   
   
@@ -1337,10 +1312,11 @@ void FFV::fill(FILE* fp)
       printf(    "\t\tPainted cells          : %16ld\n", filled);
       fprintf(fp,"\t\tPainted cells          : %16ld\n", filled);
     }
+    
+    // ペイントされたシードセル数をターゲットから差し引く
+    target_count -= filled;
   }
 
-  // ペイントされたシードセル数をターゲットから差し引く
-  target_count -= filled;
   
   
   Hostonly_
@@ -1393,7 +1369,7 @@ void FFV::fill(FILE* fp)
     fprintf(fp,"\t\t    Remaining cell     = %16ld\n\n", target_count);
   }
   
-#if 1
+#if 0
   for (int k=1; k<=size[2]; k++) {
     for (int j=1; j<=size[1]; j++) {
       for (int i=1; i<=size[0]; i++) {
@@ -1510,15 +1486,7 @@ void FFV::fixedParameters()
   C.Gravity =9.8; // gravity acceleration
   
   
-  // ログファイル名
-  C.HistoryName        = "history_base.txt";
-  C.HistoryCompoName   = "history_compo.txt";
-  C.HistoryDomfxName   = "history_domainflux.txt";
-  C.HistoryForceName   = "history_force.txt";
-  C.HistoryWallName    = "history_log_wall.txt";
-  C.HistoryItrName     = "history_iteration.txt";
-  C.HistoryMonitorName = "sampling.txt";
-  
+  // ファイル名
   C.f_Pressure       = "prs";
   C.f_Velocity       = "vel";
   C.f_Fvelocity      = "fvel";
@@ -1611,12 +1579,12 @@ void FFV::gatherDomainInfo()
   int kx = size[2];
   double m_srf = (double)((ix*jx + jx*kx + kx*ix)) * 2.0;
   
-  if ( nID[X_MINUS] < 0 ) m_srf -= (double)(jx*kx);  // remove face which does not join communication
-  if ( nID[Y_MINUS] < 0 ) m_srf -= (double)(ix*kx);
-  if ( nID[Z_MINUS] < 0 ) m_srf -= (double)(ix*jx);
-  if ( nID[X_PLUS]  < 0 ) m_srf -= (double)(jx*kx);
-  if ( nID[Y_PLUS]  < 0 ) m_srf -= (double)(ix*kx);
-  if ( nID[Z_PLUS]  < 0 ) m_srf -= (double)(ix*jx);
+  if ( nID[X_minus] < 0 ) m_srf -= (double)(jx*kx);  // remove face which does not join communication
+  if ( nID[Y_minus] < 0 ) m_srf -= (double)(ix*kx);
+  if ( nID[Z_minus] < 0 ) m_srf -= (double)(ix*jx);
+  if ( nID[X_plus]  < 0 ) m_srf -= (double)(jx*kx);
+  if ( nID[Y_plus]  < 0 ) m_srf -= (double)(ix*kx);
+  if ( nID[Z_plus]  < 0 ) m_srf -= (double)(ix*jx);
   
   if ( numProc > 1 )
   {
@@ -2923,7 +2891,7 @@ void FFV::initInterval()
       C.Interval[i].normalizeTime(C.Tscale);
     }
     
-    if ( C.Sampling.log == ON )
+    if ( C.SamplingMode == ON )
     {
       C.Interval[Control::tg_sampled].normalizeTime(C.Tscale);
     }
@@ -2947,7 +2915,7 @@ void FFV::initInterval()
     }
   }
   
-  if ( C.Sampling.log == ON )
+  if ( C.SamplingMode == ON )
   {
     if ( !C.Interval[Control::tg_sampled].initTrigger(m_stp, m_tm, m_dt) )
     {
@@ -3043,34 +3011,37 @@ void FFV::prepHistoryOutput()
     // コンポーネント情報
     if ( C.Mode.Log_Base == ON ) 
     {
-      // 基本情報　history.log, history_compo.log, history_domfx.log
-      if ( !(fp_b=fopen(C.HistoryName.c_str(), "w")) ) 
+      // 基本情報
+      if ( !(fp_b=fopen("history_base.txt", "w")) )
       {
-        stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", C.HistoryName.c_str());
+        stamped_printf("\tSorry, can't open 'history_base.txt' file. Write failed.\n");
         Exit(0);
       }
       H->printHistoryTitle(fp_b, IC, &C, false);
       
       // コンポーネント履歴情報
-      if ( !(fp_c=fopen(C.HistoryCompoName.c_str(), "w")) ) 
+      if ( C.EnsCompo.monitor )
       {
-        stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", C.HistoryCompoName.c_str());
-        Exit(0);
+        if ( !(fp_c=fopen("history_compo.txt", "w")) )
+        {
+          stamped_printf("\tSorry, can't open 'sampling_compo.txt' file. Write failed.\n");
+          Exit(0);
+        }
+        H->printHistoryCompoTitle(fp_c, cmp, &C);
       }
-      H->printHistoryCompoTitle(fp_c, cmp, &C);
       
       // 流量収支情報　
-      if ( !(fp_d=fopen(C.HistoryDomfxName.c_str(), "w")) ) 
+      if ( !(fp_d=fopen("history_domainflux.txt", "w")) ) 
       {
-        stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", C.HistoryDomfxName.c_str());
+        stamped_printf("\tSorry, can't open 'history_domainflux.txt' file. Write failed.\n");
         Exit(0);
       }
       H->printHistoryDomfxTitle(fp_d, &C);
       
       // 力の履歴情報　
-      if ( !(fp_f=fopen(C.HistoryForceName.c_str(), "w")) ) 
+      if ( !(fp_f=fopen("history_force.txt", "w")) ) 
       {
-        stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", C.HistoryForceName.c_str());
+        stamped_printf("\tSorry, can't open 'history_force.txt' file. Write failed.\n");
         Exit(0);
       }
       H->printHistoryForceTitle(fp_f);
@@ -3079,9 +3050,9 @@ void FFV::prepHistoryOutput()
     // 反復履歴情報　history_itr.log
     if ( C.Mode.Log_Itr == ON ) 
     {
-      if ( !(fp_i=fopen(C.HistoryItrName.c_str(), "w")) ) 
+      if ( !(fp_i=fopen("history_iteration.txt", "w")) ) 
       {
-				stamped_printf("\tSorry, can't open '%s' file.\n", C.HistoryItrName.c_str());
+				stamped_printf("\tSorry, can't open 'history_iteration.txt' file.\n");
         Exit(0);
       }
     }
@@ -3089,9 +3060,9 @@ void FFV::prepHistoryOutput()
     // 壁面情報　history_wall.log
     if ( C.Mode.Log_Wall == ON ) 
     {
-      if ( !(fp_w=fopen(C.HistoryWallName.c_str(), "w")) ) 
+      if ( !(fp_w=fopen("history_log_wall.txt", "w")) ) 
       {
-				stamped_printf("\tSorry, can't open '%s' file.\n", C.HistoryWallName.c_str());
+				stamped_printf("\tSorry, can't open 'history_log_wall.txt' file.\n");
         Exit(0);
       }
       H->printHistoryWallTitle(fp_w);
@@ -3279,7 +3250,6 @@ void FFV::resizeCompoBbox()
       case HEX:
       case FAN:
       case DARCY:
-      case CELL_MONITOR:
       case OBSTACLE:
         resizeBbox4Cell(n, d_bcd); // セルセンタ位置でのBC
         break;
@@ -3841,6 +3811,7 @@ void FFV::setMediumList(FILE* fp)
  */
 void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
 {
+  // 内部領域の交点と境界ID
   switch (C.Mode.Example)
   {
     case id_Polygon: // ユーザ例題
@@ -3848,27 +3819,58 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
       break;
       
     case id_Sphere:
+    case id_Step:
+    case id_Cylinder:
+    case id_Duct:
       setupCutInfo4IP(PrepMemory, TotalMemory, fp);
-      
-      if ( C.isBinary() ) // binary
-      {
-        Ex->setup(d_bcd, &C, G_origin, C.NoCompo, mat, d_cut);
-      }
-      else // cut
-      {
-        ((IP_Sphere*)Ex)->setup_cut(d_bcd, &C, G_origin, C.NoCompo, mat, d_cut);
-      }
+      Ex->setup(d_bcd, &C, G_origin, C.NoCompo, mat, d_cut);
       break;
       
     default: // ほかのIntrinsic problems
       setupCutInfo4IP(PrepMemory, TotalMemory, fp);
-      Ex->setup(d_bcd, &C, G_origin, C.NoCompo, mat, d_cut);
       break;
   }
   
+  
+  
+  // 外部境界面の処理
+  for (int face=0; face<NOFACE; face++)
+  {
+    if( nID[face] >= 0 ) continue;
+    
+    BoundaryOuter* m_obc = BC.exportOBC(face);
+    int id = m_obc->getGuideMedium();
+    int cls= m_obc->getClass();
+    int pm = m_obc->getPrdcMode();
+    
+    switch (cls)
+    {
+      case OBC_PERIODIC:
+        V.setOBCperiodic(face, pm, d_bcd);
+        break;
+        
+      case OBC_WALL:
+        if (mat[id].getState() != SOLID) Exit(0);
+        V.setOBC(face, id, "solid", d_bcd, d_cut, d_bid);
+        break;
+        
+      case OBC_INTRINSIC:
+        Ex->setOBC(face, d_bcd, &C, G_origin, C.NoCompo, mat, d_cut, d_bid);
+        break;
+        
+      default:
+        if (mat[id].getState() != FLUID) Exit(0);
+        V.setOBC(face, id, "fluid", d_bcd, d_cut, d_bid);
+        break;
+    }
+
+  }
+  
+
   // ガイドセル同期
   if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
-  
+  if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
+  if ( paraMngr->BndCommS4DEx(d_cut, 6, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
 }
 
 
@@ -3893,56 +3895,16 @@ void FFV::setMonitorList()
                     C.num_process);
   
   
-  //パラメータを取得し，セットの配列を確保する
-  MO.getMonitor(&C);
+  // パラメータを取得し，サンプリングの座標値をセットする >> サンプリング指定がなければ，return
+  if ( !MO.getMonitor(&C, cmp) ) return;
   
-  
-  // ShapeMonitorのインスタンス
-  ShapeMonitor SM(size, guide, (float*)pitch, (float*)origin);
-  
-  for (int n=1; n<=C.NoCompo; n++)
-  {
-    if ( cmp[n].isMONITOR() )
-    {
-      switch ( cmp[n].get_Shape() )
-      {
-          // BCで指定するCELL_MONITORのIDをbcd[]にセットする
-        case SHAPE_BOX:
-        case SHAPE_CYLINDER:
-          V.setMonitorShape(d_bcd, n, &SM, cmp, C.RefLength);
-          cmp[n].setEnsLocal(ON);
-          break;
-          
-        case SHAPE_POLYGON:
-          // Polygon指定の場合はMonitorクラスで処理
-          break;
-          
-        default:
-          Exit(0);
-          break;
-      }
-    }
-  }
-  
-  
-  // セルモニタ設定を登録
-  MO.setCellMonitor(cmp, C.NoCompo);
-  
-  
+  //Ex->writeSVX(d_bcd, &C);
   // Polygon指定のセルモニターの場合に交点と境界IDを除去
-  for (int n=1; n<=C.NoCompo; n++)
-  {
-    if ( cmp[n].isMONITOR() )
-    {
-      switch ( cmp[n].get_Shape() )
-      {
-        case SHAPE_POLYGON:
-          V.clearMonitorCut(d_cut, d_bid, n);
-          break;
-      }
-    }
-  }
+  MO.clearCut();
   
+  
+  // モニタ結果出力ファイル群のオープン
+  MO.openFile();
 }
 
 
@@ -4148,7 +4110,7 @@ string FFV::setupDomain(TextParser* tpf)
   
   // 領域設定 計算領域全体のサイズ，並列計算時のローカルのサイズ，コンポーネントのサイズなどを設定
   DomainInitialize(tpf);
-  
+
   
   // 各例題の領域パラメータを設定する
   Ex->setDomainParameter(&C, size, origin, region, pitch);
@@ -4613,38 +4575,6 @@ void FFV::setVOF()
       }
     }
   }
-}
-
-
-// #################################################################
-// 外部境界面およびガイドセルのカットとIDの処理
-void FFV::TreatmentOfOuterBoundary()
-{
-  // ガイドセル上にパラメータファイルで指定する媒質IDを代入する．周期境界の場合の処理も含む．
-  for (int face=0; face<NOFACE; face++)
-  {
-    if ( (C.Mode.Example == id_Jet) && (face==0) )
-    {
-      ; // skip
-    }
-    else
-    {
-      // 周期境界条件の並列時
-      if ( BC.exportOBC(face)->getClass() == OBC_PERIODIC )
-      {
-        V.setMediumOnGCperiodic(face, d_bcd, BC.exportOBC(face)->getPrdcMode() );
-      }
-      else // 周期境界以外
-      {
-        V.setMediumOnGC(face, d_bcd, BC.exportOBC(face)->getGuideMedium() );
-      }
-      
-    }
-  }
-  
-  
-  // 外部境界で壁面条件の場合にカットと境界IDを設定
-  V.setOBCcut(&BC, d_cut, d_bid);
 }
 
 

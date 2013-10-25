@@ -88,7 +88,6 @@ Iteration {
 MonitorList {
   Log             = "Off"
   OutputMode      = "Gather"
-  CellMonitor     = "on"
   Sampling {
     TemporalType  = "step"
     Interval      = 100

@@ -47,7 +47,7 @@ int FFV::Loop(const unsigned step)
   copyV00fromRF(CurrentTime);
   
   // モニタークラスに参照速度を渡す
-  if (C.Sampling.log == ON) MO.set_V00(v00);
+  if (C.SamplingMode == ON) MO.setV00(v00);
   
   // 速度成分の最大値
   TIMING_start(tm_vmax);
@@ -278,36 +278,20 @@ int FFV::Loop(const unsigned step)
     TIMING_stop(tm_total_prs, flop_count);
   }
   
-  // セルモニターとコンポーネントの履歴
-  if ( C.Sampling.log == ON )
-  {
-    if ( C.Interval[Control::tg_history].isTriggered(CurrentStep, CurrentTime) )
-    {
-      TIMING_start(tm_compo_monitor);
-      flop_count=0.0;
-      MO.samplingInnerBoundary();
-      TIMING_stop(tm_compo_monitor, flop_count);
-      
-      TIMING_start(tm_hstry_compo);
-      Hostonly_ H->printHistoryCompo(fp_c, cmp, &C, deltaT);
-      TIMING_stop(tm_hstry_compo, 0.0);
-    }
-  }
+
   
   // サンプリング履歴
-  if ( C.Sampling.log == ON )
+  if ( (C.SamplingMode == ON) && C.Interval[Control::tg_sampled].isTriggered(CurrentStep, CurrentTime) )
   {
-    if ( C.Interval[Control::tg_sampled].isTriggered(CurrentStep, CurrentTime) )
-    {
-      TIMING_start(tm_sampling);
-      MO.sampling();
-      TIMING_stop(tm_sampling, 0.0);
-      
-      TIMING_start(tm_hstry_sampling);
-      MO.print(CurrentStep, (REAL_TYPE)CurrentTime);
-      TIMING_stop(tm_hstry_sampling, 0.0);
-    }
+    TIMING_start(tm_sampling);
+    MO.sampling();
+    TIMING_stop(tm_sampling, 0.0);
+    
+    TIMING_start(tm_hstry_sampling);
+    MO.print(CurrentStep, (REAL_TYPE)CurrentTime);
+    TIMING_stop(tm_hstry_sampling, 0.0);
   }
+
   
   
   // 1 step elapse
@@ -323,6 +307,7 @@ int FFV::Loop(const unsigned step)
       Hostonly_
       {
         H->printHistory(stdout, avr_Var, rms_Var, IC, &C, step_end, true);
+        
         if ( C.Mode.CCNV == ON )
         {
           H->printCCNV(avr_Var, rms_Var, IC, &C, step_end);
@@ -337,11 +322,19 @@ int FFV::Loop(const unsigned step)
   if ( C.Interval[Control::tg_history].isTriggered(CurrentStep, CurrentTime) ) 
   {
     
-    // 基本履歴情報
     if ( C.Mode.Log_Base == ON ) 
     {
       TIMING_start(tm_hstry_base);
+      
+      // 基本履歴情報
       Hostonly_ H->printHistory(fp_b, avr_Var, rms_Var, IC, &C, step_end, true);
+      
+      // コンポーネント
+      if ( C.EnsCompo.monitor ) Hostonly_ H->printHistoryCompo(fp_c, cmp, &C, deltaT);
+      
+      // 流量収支履歴
+      Hostonly_ H->printHistoryDomfx(fp_d, &C, deltaT);
+      
       TIMING_stop(tm_hstry_base, 0.0);
     }
     
@@ -353,13 +346,6 @@ int FFV::Loop(const unsigned step)
       TIMING_stop(tm_hstry_wall, 0.0);
     }
     
-    // 流量収支履歴
-    if ( C.Mode.Log_Base == ON ) 
-    {
-      TIMING_start(tm_hstry_dmfx);
-      Hostonly_ H->printHistoryDomfx(fp_d, &C, deltaT);
-      TIMING_stop(tm_hstry_dmfx, 0.0);
-    }
     
     // 力の履歴
     if ( C.Hide.PM_Test != ON ) 

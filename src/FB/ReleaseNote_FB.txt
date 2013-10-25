@@ -17,6 +17,9 @@
 RELEASE NOTE
 ============
 
+Ver 1.4.3   2013-10-24
+  - Monitorクラスの実装をCell_monitorを含むように変更
+  
 Ver 1.4.2   2013-10-18
   - Cell_Monitorを交点ベースに変更
 

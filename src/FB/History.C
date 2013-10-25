@@ -176,7 +176,6 @@ void History::printCCNVtitle(const IterationCtl* IC, const Control* C)
   
   
   // Y軸タイトル数 最大15
-	long num_y = CCNV_MAX - 2;
 	char y_title[CCNV_MAX - 2][128];
   for (int i=0; i<CCNV_MAX-2; i++) memset(y_title[i], 0, sizeof(char)*128);
   int c=0;
@@ -538,7 +537,7 @@ void History::printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control*
 // コンポーネントモニタの履歴出力
 void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C, const REAL_TYPE dt)
 {
-  REAL_TYPE c, dr, dp;
+  REAL_TYPE dr, dp;
   const REAL_TYPE p0 = RefDensity * RefVelocity * RefVelocity;
   
   fprintf(fp, "%8d %14.6e", step, printTime());
@@ -585,13 +584,6 @@ void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C
       
       case HEAT_SRC:
         fprintf(fp, " %11.4e", printQV(cmp[i].getMonCalorie()));
-        break;
-        
-      case CELL_MONITOR:
-        if ( cmp[i].isVarEncoded(var_Velocity) )     fprintf(fp, " %11.4e", printVel(cmp[i].val[var_Velocity]) );
-        if ( cmp[i].isVarEncoded(var_Pressure) )     fprintf(fp, " %11.4e", printPrs(cmp[i].val[var_Pressure]) );
-        if ( cmp[i].isVarEncoded(var_Temperature) )  fprintf(fp, " %11.4e", printTmp(cmp[i].val[var_Temperature]) );
-        if ( cmp[i].isVarEncoded(var_TotalP) )       fprintf(fp, " %11.4e", printTP(cmp[i].val[var_TotalP]) );
         break;
     }
   }
@@ -645,13 +637,6 @@ void History::printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Contr
       case ISOTHERMAL:
       case RADIANT:
         fprintf(fp, "       Q[%02d]", i);
-        break;
-        
-      case CELL_MONITOR:
-        if ( cmp[i].isVarEncoded(var_Velocity) )     fprintf(fp, "       V[%02d]", i);
-        if ( cmp[i].isVarEncoded(var_Pressure) )     fprintf(fp, "       P[%02d]", i);
-        if ( cmp[i].isVarEncoded(var_Temperature) )  fprintf(fp, "       T[%02d]", i);
-        if ( cmp[i].isVarEncoded(var_TotalP) )       fprintf(fp, "      TP[%02d]", i);
         break;
     }
   }

@@ -56,7 +56,7 @@ void FFV::comm_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
 
   // X_MINUS
   // send
-  if ( nID[X_MINUS]>=0 )
+  if ( nID[X_minus]>=0 )
   {
     int c = 0;
     int i = 1;
@@ -70,19 +70,19 @@ void FFV::comm_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
       }
     }
     
-    if ( paraMngr->Isend(&cf_x[_PACK(cx, face_m_send, 0)], cx, nID[X_MINUS], &key[_KEY_RQ(X_MINUS, key_send)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Isend(&cf_x[_PACK(cx, face_m_send, 0)], cx, nID[X_minus], &key[_KEY_RQ(X_minus, key_send)]) != CPM_SUCCESS ) Exit(0);
   }
     
   // recieve
-  if ( nID[X_PLUS]>=0 )
+  if ( nID[X_plus]>=0 )
   {
-    if ( paraMngr->Irecv(&cf_x[_PACK(cx, face_p_recv, 0)], cx, nID[X_PLUS], &key[_KEY_RQ(X_PLUS, key_recv)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Irecv(&cf_x[_PACK(cx, face_p_recv, 0)], cx, nID[X_plus], &key[_KEY_RQ(X_plus, key_recv)]) != CPM_SUCCESS ) Exit(0);
   }
     
     
   // X_PLUS
   // send
-  if ( nID[X_PLUS]>=0 )
+  if ( nID[X_plus]>=0 )
   {
     int c = 0;
     int i = ix;
@@ -96,19 +96,19 @@ void FFV::comm_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
       }
     }
     
-    if ( paraMngr->Isend(&cf_x[_PACK(cx, face_p_send, 0)], cx, nID[X_PLUS], &key[_KEY_RQ(X_PLUS, key_send)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Isend(&cf_x[_PACK(cx, face_p_send, 0)], cx, nID[X_plus], &key[_KEY_RQ(X_plus, key_send)]) != CPM_SUCCESS ) Exit(0);
   }
   
   // recieve
-  if ( nID[X_MINUS]>=0 )
+  if ( nID[X_minus]>=0 )
   {
-    if ( paraMngr->Irecv(&cf_x[_PACK(cx, face_m_recv, 0)], cx, nID[X_MINUS], &key[_KEY_RQ(X_MINUS, key_recv)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Irecv(&cf_x[_PACK(cx, face_m_recv, 0)], cx, nID[X_minus], &key[_KEY_RQ(X_minus, key_recv)]) != CPM_SUCCESS ) Exit(0);
   }
   
   
   // Y_MINUS
   // send
-  if ( nID[Y_MINUS]>=0 )
+  if ( nID[Y_minus]>=0 )
   {
     int c = 0;
     int j = 1;
@@ -122,19 +122,19 @@ void FFV::comm_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
       }
     }
     
-    if ( paraMngr->Isend(&cf_y[_PACK(cy, face_m_send, 0)], cy, nID[Y_MINUS], &key[_KEY_RQ(Y_MINUS, key_send)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Isend(&cf_y[_PACK(cy, face_m_send, 0)], cy, nID[Y_minus], &key[_KEY_RQ(Y_minus, key_send)]) != CPM_SUCCESS ) Exit(0);
   }
   
   // recv
-  if ( nID[Y_PLUS]>=0 )
+  if ( nID[Y_plus]>=0 )
   {
-    if ( paraMngr->Irecv(&cf_y[_PACK(cy, face_p_recv, 0)], cy, nID[Y_PLUS], &key[_KEY_RQ(Y_PLUS, key_recv)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Irecv(&cf_y[_PACK(cy, face_p_recv, 0)], cy, nID[Y_plus], &key[_KEY_RQ(Y_plus, key_recv)]) != CPM_SUCCESS ) Exit(0);
   }
   
   
   // Y_PLUS
   // send
-  if ( nID[Y_PLUS]>=0 )
+  if ( nID[Y_plus]>=0 )
   {
     int c = 0;
     int j = jx;
@@ -148,19 +148,19 @@ void FFV::comm_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
       }
     }
     
-    if ( paraMngr->Isend(&cf_y[_PACK(cy, face_p_send, 0)], cy, nID[Y_PLUS], &key[_KEY_RQ(Y_PLUS, key_send)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Isend(&cf_y[_PACK(cy, face_p_send, 0)], cy, nID[Y_plus], &key[_KEY_RQ(Y_plus, key_send)]) != CPM_SUCCESS ) Exit(0);
   }
   
   // recv
-  if ( nID[Y_MINUS]>=0 )
+  if ( nID[Y_minus]>=0 )
   {
-    if ( paraMngr->Irecv(&cf_y[_PACK(cy, face_m_recv, 0)], cy, nID[Y_MINUS], &key[_KEY_RQ(Y_MINUS, key_recv)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Irecv(&cf_y[_PACK(cy, face_m_recv, 0)], cy, nID[Y_minus], &key[_KEY_RQ(Y_minus, key_recv)]) != CPM_SUCCESS ) Exit(0);
   }
   
   
   // Z_MINUS
   // send
-  if ( nID[Z_MINUS]>=0 )
+  if ( nID[Z_minus]>=0 )
   {
     int c = 0;
     int k = 1;
@@ -174,19 +174,19 @@ void FFV::comm_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
       }
     }
     
-    if ( paraMngr->Isend(&cf_z[_PACK(cz, face_m_send, 0)], cz, nID[Z_MINUS], &key[_KEY_RQ(Z_MINUS, key_send)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Isend(&cf_z[_PACK(cz, face_m_send, 0)], cz, nID[Z_minus], &key[_KEY_RQ(Z_minus, key_send)]) != CPM_SUCCESS ) Exit(0);
   }
   
   // recv
-  if ( nID[Z_PLUS]>=0 )
+  if ( nID[Z_plus]>=0 )
   {
-    if ( paraMngr->Irecv(&cf_z[_PACK(cz, face_p_recv, 0)], cz, nID[Z_PLUS], &key[_KEY_RQ(Z_PLUS, key_recv)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Irecv(&cf_z[_PACK(cz, face_p_recv, 0)], cz, nID[Z_plus], &key[_KEY_RQ(Z_plus, key_recv)]) != CPM_SUCCESS ) Exit(0);
   }
   
   
   // Z_PLUS
   // send
-  if ( nID[Z_PLUS]>=0 )
+  if ( nID[Z_plus]>=0 )
   {
     int c = 0;
     int k = kx;
@@ -200,13 +200,13 @@ void FFV::comm_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
       }
     }
     
-    if ( paraMngr->Isend(&cf_z[_PACK(cz, face_p_send, 0)], cz, nID[Z_PLUS], &key[_KEY_RQ(Z_PLUS, key_send)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Isend(&cf_z[_PACK(cz, face_p_send, 0)], cz, nID[Z_plus], &key[_KEY_RQ(Z_plus, key_send)]) != CPM_SUCCESS ) Exit(0);
   }
   
   // recv
-  if ( nID[Z_MINUS]>=0 )
+  if ( nID[Z_minus]>=0 )
   {
-    if ( paraMngr->Irecv(&cf_z[_PACK(cz, face_m_recv, 0)], cz, nID[Z_MINUS], &key[_KEY_RQ(Z_MINUS, key_recv)]) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Irecv(&cf_z[_PACK(cz, face_m_recv, 0)], cz, nID[Z_minus], &key[_KEY_RQ(Z_minus, key_recv)]) != CPM_SUCCESS ) Exit(0);
   }
   
 }
@@ -251,7 +251,7 @@ int FFV::Point_SOR(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rh
     // 境界条件
     TIMING_start(tm_poi_BC);
     BC.OuterPBC(x);
-    if ( C.existPeriodic() == ON ) BC.InnerPBCperiodic(x, d_bcd);
+    if ( C.EnsCompo.periodic == ON ) BC.InnerPBCperiodic(x, d_bcd);
     TIMING_stop(tm_poi_BC, 0.0);
     
     // 同期処理
@@ -407,7 +407,7 @@ int FFV::SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rh
       // 境界条件
       TIMING_start(tm_poi_BC);
       BC.OuterPBC(x);
-      if ( C.existPeriodic() == ON ) BC.InnerPBCperiodic(x, d_bcd);
+      if ( C.EnsCompo.periodic == ON ) BC.InnerPBCperiodic(x, d_bcd);
       TIMING_stop(tm_poi_BC, 0.0);
       
       
@@ -516,7 +516,7 @@ void FFV::wait_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
   
   
   // X_PLUS面の受信バッファを展開
-  rq = _KEY_RQ(X_PLUS, key_recv);
+  rq = _KEY_RQ(X_plus, key_recv);
   
   if (key[rq]>=0 )
   {
@@ -536,7 +536,7 @@ void FFV::wait_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
   }
   
   // X_MINUS面の受信バッファを展開
-  rq = _KEY_RQ(X_MINUS, key_recv);
+  rq = _KEY_RQ(X_minus, key_recv);
   
   if (key[rq]>=0 )
   {
@@ -556,7 +556,7 @@ void FFV::wait_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
   }
           
   // Y_PLUS面の受信バッファを展開
-  rq = _KEY_RQ(Y_PLUS, key_recv);
+  rq = _KEY_RQ(Y_plus, key_recv);
   
   if (key[rq]>=0 )
   {
@@ -576,7 +576,7 @@ void FFV::wait_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
   }
   
   // Y_MINUS面の受信バッファを展開
-  rq = _KEY_RQ(Y_MINUS, key_recv);
+  rq = _KEY_RQ(Y_minus, key_recv);
   
   if (key[rq]>=0 )
   {
@@ -596,7 +596,7 @@ void FFV::wait_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
   }
   
   // Z_PLUS面の受信バッファを展開
-  rq = _KEY_RQ(Z_PLUS, key_recv);
+  rq = _KEY_RQ(Z_plus, key_recv);
   
   if (key[rq]>=0 )
   {
@@ -616,7 +616,7 @@ void FFV::wait_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
   }
   
   // Z_MINUS面の受信バッファを展開
-  rq = _KEY_RQ(Z_MINUS, key_recv);
+  rq = _KEY_RQ(Z_minus, key_recv);
   
   if (key[rq]>=0 )
   {
@@ -639,7 +639,7 @@ void FFV::wait_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
   // Wait for send ------------------------
   
   // X_MINUS
-  rq = _KEY_RQ(X_MINUS, key_send);
+  rq = _KEY_RQ(X_minus, key_send);
   
   if (key[rq]>=0 )
   {
@@ -647,7 +647,7 @@ void FFV::wait_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
   }
   
   // X_PLUS
-  rq = _KEY_RQ(X_PLUS, key_send);
+  rq = _KEY_RQ(X_plus, key_send);
   
   if (key[rq]>=0 )
   {
@@ -655,7 +655,7 @@ void FFV::wait_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
   }
   
   // Y_MINUS
-  rq = _KEY_RQ(Y_MINUS, key_send);
+  rq = _KEY_RQ(Y_minus, key_send);
   
   if (key[rq]>=0 )
   {
@@ -663,7 +663,7 @@ void FFV::wait_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
   }
   
   // Y_PLUS
-  rq = _KEY_RQ(Y_PLUS, key_send);
+  rq = _KEY_RQ(Y_plus, key_send);
   
   if (key[rq]>=0 )
   {
@@ -671,7 +671,7 @@ void FFV::wait_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
   }
   
   // Z_MINUS
-  rq = _KEY_RQ(Z_MINUS, key_send);
+  rq = _KEY_RQ(Z_minus, key_send);
   
   if (key[rq]>=0 )
   {
@@ -679,7 +679,7 @@ void FFV::wait_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
   }
   
   // Z_PLUS
-  rq = _KEY_RQ(Z_PLUS, key_send);
+  rq = _KEY_RQ(Z_plus, key_send);
   
   if (key[rq]>=0 )
   {
@@ -1052,7 +1052,7 @@ int FFV::Fpcg(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm
   
 	BC.OuterPBC(x);
   
-	if ( C.existPeriodic() == ON )
+	if ( C.EnsCompo.periodic == ON )
   {
 		BC.InnerPBCperiodic(x, d_bcd);
 	}
@@ -1155,7 +1155,7 @@ int FFV::Fpbicgstab(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double r
 	}
   
 	BC.OuterPBC(x);
-	if ( C.existPeriodic() == ON )
+	if ( C.EnsCompo.periodic == ON )
   {
 		BC.InnerPBCperiodic(x, d_bcd);
 	}
@@ -1239,7 +1239,7 @@ void FFV::Fsmoother(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE omg)
     
 		BC.OuterPBC(x);
     
-		if ( C.existPeriodic() == ON )
+		if ( C.EnsCompo.periodic == ON )
     {
 			BC.InnerPBCperiodic(x, d_bcd);
 		}

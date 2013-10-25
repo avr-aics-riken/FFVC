@@ -39,7 +39,7 @@ parameter ( bitw_8 = 8)  ! FB_Define.h MASK_8 8bit幅
 parameter ( bitw_6 = 6)  ! FB_Define.h MASK_6 6bit幅
 parameter ( bitw_5 = 5)  ! FB_Define.h MASK_5 5bit幅
 
-parameter ( X_minus = 0 ) ! FB_Define.h X_MINUS
+parameter ( X_minus = 0 ) ! FB_Define.h X_MINUS or enum
 parameter ( X_plus  = 1 ) ! FB_Define.h X_PLUS
 parameter ( Y_minus = 2 ) ! FB_Define.h Y_MINUS
 parameter ( Y_plus  = 3 ) ! FB_Define.h Y_PLUS
@@ -117,9 +117,9 @@ parameter ( id_symmetric = 3 ) ! SetBC.h
 parameter ( id_periodic  = 4 ) ! SetBC.h 
 
 ! 内部コンポーネント番号
-parameter ( cmp_typ_vspec   = 8  ) ! FB_Define.h SPEC_VEL
-parameter ( cmp_typ_outflow = 9  ) ! FB_Define.h OUTFLOW
-parameter ( cmp_typ_hex     = 13 ) ! FB_Define.h HEX
+parameter ( cmp_typ_vspec   = 7  ) ! FB_Define.h SPEC_VEL
+parameter ( cmp_typ_outflow = 8  ) ! FB_Define.h OUTFLOW
+parameter ( cmp_typ_hex     = 12 ) ! FB_Define.h HEX
 
 ! 外部境界条件番号
 parameter ( obc_mask     = 31) ! FB_Define.h OBC_MASK 内外部境界条件の識別子

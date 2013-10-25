@@ -97,7 +97,7 @@ void LAYOUT::ReadInputFile(TextParser* tpCntl)
   dfi_name.clear();
   for (int i=0; i<nnode; i++) {
     
-    if(!tpCntl->getNodeStr(label_base, i+1, str))
+    if ( !(tpCntl->getNodeStr(label_base, i+1, str)) )
     {
       printf("\tParsing error : No Elem name\n");
       Exit(0);
@@ -130,7 +130,7 @@ void LAYOUT::ReadInputFile(TextParser* tpCntl)
   label_base = "/LayoutData";
   for (int i=0; i<nnode; i++) {
     
-    if(!tpCntl->getNodeStr(label_base, i+1, str))
+    if ( !(tpCntl->getNodeStr(label_base, i+1, str)) )
     {
       printf("\tParsing error : No Elem name\n");
       Exit(0);

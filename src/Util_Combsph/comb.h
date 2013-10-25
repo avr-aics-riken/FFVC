@@ -71,18 +71,13 @@ enum Kind_of_vars {
   var_Velocity=0,
   var_Pressure,
   var_Temperature,
-  var_Density,
   var_TotalP,
   var_Velocity_Avr,
   var_Pressure_Avr,
   var_Temperature_Avr,
-  var_Density_Avr,
-  var_TotalP_Avr,
   var_Helicity,
   var_Vorticity,
   var_I2vgt,
-  var_Divergence,
-  var_FaceVelocity,
   var_END
 };
 

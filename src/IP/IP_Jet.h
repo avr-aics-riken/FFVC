@@ -109,16 +109,18 @@ public:
   virtual void printPara(FILE* fp, const Control* R);
   
   
-  /** 
-   * @brief 計算領域のセルIDを設定する
+  /**
+   * @brief 外部境界の設定
+   * @param [in]     face     面番号
    * @param [in,out] bcd      BCindexx B
    * @param [in]     R        Controlクラスのポインタ
    * @param [in]     G_org    グローバルな原点（無次元）
    * @param [in]     NoMedium 媒質数
    * @param [in]     mat      MediumListクラスのポインタ
    * @param [out]    cut      カット情報
+   * @param [out]    bid      境界ID
    */
-  virtual void setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut);
+  virtual void setOBC(const int face, int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut, int* bid);
   
   
   /**

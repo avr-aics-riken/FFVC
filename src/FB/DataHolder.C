@@ -225,7 +225,7 @@ void DataHolderManager::readData()
   
   label_base="/Parameter/DataHolder";
   
-  if ( !tpCntl->chkNode(label_base) )
+  if ( !(tpCntl->chkNode(label_base)) )
   {
     stamped_printf("\tParsing error : Missing the section of 'DataHolder' in 'Parameter'\n");
     Exit(0);
@@ -243,7 +243,7 @@ void DataHolderManager::readData()
   // load statement list
   for (int i=1; i<=ndata; i++)
   {
-    if ( !tpCntl->getNodeStr(label_base,i, str) )
+    if ( !(tpCntl->getNodeStr(label_base,i, str)) )
     {
       stamped_printf("\tGetNodeStr error\n");
       Exit(0);

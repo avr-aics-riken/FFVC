@@ -20,6 +20,7 @@
 //@brief  FlowBase ParseBC class Header
 //@author kero
 
+#include <stdlib.h>
 #include "cpm_ParaManager.h"
 #include "string.h"
 #include "DomainInfo.h"
@@ -45,7 +46,6 @@ private:
   int Unit_Prs;     ///< 圧力単位
   int KindOfSolver; ///< 支配方程式の種類
   int Unit_Param;
-  int monitor;
   int Mode_Gradp;
   bool HeatProblem;
   
@@ -67,7 +67,6 @@ public:
     KindOfSolver = 0;
     BaseTemp = DiffTemp = BasePrs = 0.0;
     RefVelocity = RefDensity = RefSpecificHeat = RefLength = 0.0;
-    monitor = 0;
     Unit_Param = 0;
     Unit_Prs = 0;
     Mode_Gradp = 0;
@@ -90,19 +89,6 @@ private:
   
   // ラベルの重複を調べる
   bool chkDuplicate(const int n, const string m_label);
-  
-  
-  /**
-   * @brief ベクトルのコピー
-   * @param [out] dst コピー先
-   * @param [in]  src コピー元
-   */
-  void copyVec(REAL_TYPE* dst, const REAL_TYPE* src) 
-  {
-    dst[0] = src[0];
-    dst[1] = src[1];
-    dst[2] = src[2];
-  }
   
   
   /**
@@ -137,12 +123,18 @@ private:
   }
   
   
-  // 境界条件の値(REAL_TYPE型)を取得し，返す
-  REAL_TYPE getBCvalReal(const string label);
-  
-  
-  // 内部境界条件の座標値を取得し，登録する
-  void getCenter(const string label_base, REAL_TYPE* v);
+  /**
+   * @brief 値(REAL_TYPE型)を取得し，返す
+   * @param [in] label テストラベル
+   */
+  REAL_TYPE getValueReal(const string label)
+  {
+    REAL_TYPE df=0.0f;
+    
+    if ( !(tpCntl->getInspectedValue(label, df)) ) Exit(0);
+    
+    return df;
+  }
   
   
   // コンポーネントのBbox終点情報を返す
@@ -177,10 +169,6 @@ private:
   
   // Darcyのパラメータを取得する
   void get_Darcy(const string label_base, const int n, CompoList* cmp);
-  
-  
-  // 内部境界条件の方向ベクトル値を取得し，登録する
-  void getDir(const string label_base, REAL_TYPE* v);
   
   
   // ConstTemperatureのパラメータを取得する
@@ -219,10 +207,6 @@ private:
   void getIbcIsoTherm(const string label_base, const int n, CompoList* cmp);
   
   
-  // Monitorの設定内容をパースし，パラメータを保持する
-  void getIbcMonitor(const string label_base, const int n, CompoList* cmp);
-  
-  
   // 内部の流出境界のパラメータを取得する
   void getIbcOutflow(const string label_base, const int n, CompoList* cmp);
   
@@ -241,10 +225,6 @@ private:
   
   // 内部の流入境界のパラメータを取得する
   void getIbcSpecVel(const string label_base, const int n, CompoList* cmp);
-  
-  
-  // 内部境界条件の法線ベクトル値を取得し，登録する
-  void getNV(const string label_base, REAL_TYPE* v);
   
   
   // 外部境界の遠方境界のパラメータを取得する
@@ -277,10 +257,6 @@ private:
   
   // 外部境界の壁面条件のパラメータを取得する
   void getObcWall(const string label_base, const int n);
-  
-  
-  // 単位ベクトルを計算して戻す
-  void getUnitVec(REAL_TYPE* v);
   
   
   // 速度のパラメータを取得する

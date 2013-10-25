@@ -318,12 +318,12 @@ public:
   static string getDirection(const int dir)
   {
     string face;
-    if      (dir == X_MINUS) face = "X-";
-    else if (dir == X_PLUS)  face = "X+";
-    else if (dir == Y_MINUS) face = "Y-";
-    else if (dir == Y_PLUS)  face = "Y+";
-    else if (dir == Z_MINUS) face = "Z-";
-    else if (dir == Z_PLUS)  face = "Z+";
+    if      (dir == X_minus) face = "X-";
+    else if (dir == X_plus)  face = "X+";
+    else if (dir == Y_minus) face = "Y-";
+    else if (dir == Y_plus)  face = "Y+";
+    else if (dir == Z_minus) face = "Z-";
+    else if (dir == Z_plus)  face = "Z+";
     return face;
   }
   

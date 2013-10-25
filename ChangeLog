@@ -19,6 +19,14 @@ REVISION HISTORY
 ================
 
 --------------------------
+2013-10-25
+
+- r1041 change Monitor implementation
+  - remove CELL_MONITOR
+  - sampling line & points are reasonable, but polygon & primitive is not
+  - component is not detected (bug)
+  
+--------------------------
 2013-10-22
 
 - r1040 Boundary ID based implementation

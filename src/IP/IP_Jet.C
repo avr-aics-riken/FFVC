@@ -595,13 +595,12 @@ void IP_Jet::printPara(FILE* fp, const Control* R)
 }
 
 
-
 // #################################################################
-// 計算領域のセルIDを設定する
-void IP_Jet::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
+// 外部境界の設定
+void IP_Jet::setOBC(const int face, int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut, int*bid)
 {
   int mid_fluid;        /// 流体
-  int mid_solid;        /// 固体
+  int mid_solid;        /// 固体  
   
   // 媒質設定のチェック
   if ( (mid_fluid = R->findIDfromLabel(mat, NoMedium, m_fluid)) == 0 )
@@ -627,91 +626,105 @@ void IP_Jet::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, c
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-
+  
   
   // 隣接ランクのIDを取得 nID[6]
   const int* nID = paraMngr->GetNeighborRankID();
   
   
-  // Initialize  全領域をfluidにしておく
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid) \
-schedule(static)
-  for (int k=1-gd; k<=kx+gd; k++) {
-    for (int j=1-gd; j<=jx+gd; j++) {
-      for (int i=1-gd; i<=ix+gd; i++) {
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        bcd[m] |= mid_fluid;
-      }
-    }
-  }
-  
-
   
   // X-側の場合に，Jet吹き出し部設定
-  if ( nID[X_MINUS] < 0 )
+  if ( face == X_minus )
   {
-    // デフォルトでガイドセルをSolidにする
+    if ( nID[X_minus] < 0 )
+    {
+      // デフォルトでガイドセルをSolidにする
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid) \
 schedule(static)
-    for (int k=1; k<=kx; k++) {
-      for (int j=1; j<=jx; j++) {
-        size_t m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
-        bcd[m] |= mid_solid;
-      }
-    }
-    
-    
-    // Ring1
-    if ( pat_1 == ON )
-    {
-      REAL_TYPE ri = r1i;
-      REAL_TYPE ro = r1o;
-      
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid, ri, ro, oy, oz, dh) \
-schedule(static)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
           
-          REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
-          REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+          // 媒質エントリ
+          size_t m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
+          setBit5(bcd[m], mid_solid, 0);
           
-          REAL_TYPE r = sqrt(y*y + z*z);
+          // 交点
+          size_t m1 = _F_IDX_S4DEX(X_minus, 1, j, k, 6, ix, jx, kx, gd);
+          cut[m1] = 0.5; /// 壁面までの距離
           
-          if ( (ri < r) && (r < ro) )
-          {
-            bcd[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)] |= mid_fluid;
-          }
-          
+          // 境界ID
+          size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
+          setBit5(bid[l], mid_solid, X_minus);
         }
       }
-    }
-
-   
-    // Ring2
-    if ( pat_2 == ON )
-    {
-      REAL_TYPE ri = r2i;
-      REAL_TYPE ro = r2o;
       
+      
+      // Ring1
+      if ( pat_1 == ON )
+      {
+        REAL_TYPE ri = r1i;
+        REAL_TYPE ro = r1o;
+        
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid, ri, ro, oy, oz, dh) \
 schedule(static)
-      for (int k=1; k<=kx; k++) {
-        for (int j=1; j<=jx; j++) {
-          
-          REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
-          REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
-          
-          REAL_TYPE r = sqrt(y*y + z*z);
-          
-          if ( (ri < r) && (r < ro) )
-          {
-            bcd[_F_IDX_S3D(0, j, k, ix, jx, kx, gd)] |= mid_fluid;
+        for (int k=1; k<=kx; k++) {
+          for (int j=1; j<=jx; j++) {
+            
+            REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
+            REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+            
+            REAL_TYPE r = sqrt(y*y + z*z);
+            
+            if ( (ri < r) && (r < ro) )
+            {
+              size_t m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
+              setBit5(bcd[m], mid_fluid, 0);
+              
+              size_t m1 = _F_IDX_S4DEX(X_minus, 1, j, k, 6, ix, jx, kx, gd);
+              cut[m1] = 1.0;
+              
+              size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
+              setBit5(bid[l], 0, X_minus);
+            }
+            
           }
-          
         }
-      }
+      } // ring1
+      
+      
+      // Ring2
+      if ( pat_2 == ON )
+      {
+        REAL_TYPE ri = r2i;
+        REAL_TYPE ro = r2o;
+        
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid, ri, ro, oy, oz, dh) \
+schedule(static)
+        for (int k=1; k<=kx; k++) {
+          for (int j=1; j<=jx; j++) {
+            
+            REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
+            REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+            
+            REAL_TYPE r = sqrt(y*y + z*z);
+            
+            if ( (ri < r) && (r < ro) )
+            {
+              size_t m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
+              setBit5(bcd[m], mid_fluid, 0);
+              
+              size_t m1 = _F_IDX_S4DEX(X_minus, 1, j, k, 6, ix, jx, kx, gd);
+              cut[m1] = 1.0;
+              
+              size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
+              setBit5(bid[l], 0, X_minus);
+            }
+            
+          }
+        }
+      }// ring2
     }
     
-  } // X_MINUS面の処理
+  } // face
   
 }

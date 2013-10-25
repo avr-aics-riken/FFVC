@@ -23,27 +23,6 @@
 
 
 // #################################################################
-// 変数名を返す
-const char* CompoList::getVarStr()
-{
-  std::string var;
-  
-  if ( isVarEncoded(var_Velocity) )         var += "Velocity ";              // 0
-  if ( isVarEncoded(var_Pressure) )         var += "Pressure ";              // 1
-  if ( isVarEncoded(var_Temperature) )      var += "Temperature ";           // 2
-  if ( isVarEncoded(var_Density) )          var += "MassDensity ";           // 3
-  if ( isVarEncoded(var_TotalP) )           var += "TotalPressure ";         // 4
-  if ( isVarEncoded(var_Velocity_Avr) )     var += "Averaged Velocity ";     // 5
-  if ( isVarEncoded(var_Pressure_Avr) )     var += "Averaged Pressure ";     // 6
-  if ( isVarEncoded(var_Temperature_Avr) )  var += "Averaged Temperature ";  // 7
-  if ( isVarEncoded(var_Density_Avr) )      var += "Averaged MassDensity ";  // 8
-  if ( isVarEncoded(var_TotalP_Avr) )       var += "Averaged TotalPressure ";// 9
-  
-  return var.c_str();
-}
-
-
-// #################################################################
 //BCのラベル名を返す
 std::string CompoList::getBCstr()
 {
@@ -66,7 +45,6 @@ std::string CompoList::getBCstr()
   else if ( type == HEX )           bc = "Pressure Loss";
   else if ( type == FAN )           bc = "Fan";
   else if ( type == DARCY )         bc = "Darcy";
-  else if ( type == CELL_MONITOR )  bc = "Cell Monitor";
   else if ( type == PERIODIC )      bc = "Periodic";
   else if ( type == INACTIVE )      bc = "Inactive";
   else if ( type == TRANSFER )
@@ -305,33 +283,11 @@ void CompoList::setPrsUnit(const int key)
 
 
 // #################################################################
-void CompoList::setSamplingWidth(const int key)
-{
-  sampling_width = key;
-}
-
-
-// #################################################################
-void CompoList::set_Shape(const int key)
-{
-  shape = key;
-}
-
-
-// #################################################################
 //@brief stateをセットする
 //@param key セルの状態 SOLID/FLUID
 void CompoList::setState(const int key)
 {
   state = key;
-}
-
-
-// #################################################################
-//@brief セルモニタスイッチ ON/OFF
-void CompoList::setStateCellMonitor(const int key)
-{
-  var_u1 = key;
 }
 
 

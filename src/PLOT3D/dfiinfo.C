@@ -250,7 +250,7 @@ void DfiInfo::ReadDfiFile(string fname)
   label_base = "/TimeSlice";
   for (int i=0; i<nnode; i++)
   {
-    if(!tpCntl.getNodeStr(label_base, i+1, str))
+    if ( !(tpCntl.getNodeStr(label_base, i+1, str)) )
     {
       printf("\tParsing error : No Elem name\n");
       Exit(0);
@@ -502,7 +502,7 @@ void DfiInfo::ReadDfiProc(string fname)
   
   for (int i=0; i<NodeInfoSize; i++)
   {
-    if(!tpCntl.getNodeStr(label_base, i+1, str))
+    if ( !(tpCntl.getNodeStr(label_base, i+1, str)) )
     {
       printf("\tParsing error : No Elem name\n");
       Exit(0);

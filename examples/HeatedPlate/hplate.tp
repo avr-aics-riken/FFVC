@@ -174,7 +174,6 @@ MediumTable {
 MonitorList {
   Log             = "Off"
   OutputMode      = "Gather"
-  CellMonitor     = "on"
   Sampling {
     TemprallType  = "step"
     Interval      = 100

@@ -851,12 +851,7 @@ private:
     TIMING__ PM.stop((unsigned)key, flopPerTask, (unsigned)iterationCount);
   }
     
-  
-  
-  /**
-   * @brief 外部境界面およびガイドセルのカットとIDの処理
-   */
-  void TreatmentOfOuterBoundary();
+
   
   
   /**

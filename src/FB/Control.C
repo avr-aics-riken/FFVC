@@ -300,7 +300,6 @@ void Control::copyCriteria(IterationCtl& IC, const string name)
 }
 
 
-
 // #################################################################
 // 制御，計算パラメータ群の表示
 void Control::displayParams(FILE* mp, FILE* fp, IterationCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat, CompoList* cmp)
@@ -354,10 +353,6 @@ void Control::get1stParameter(DTcntl* DT)
   
   // 時間制御パラメータ
   getTimeControl(DT);
-  
-  
-  // モニターのON/OFF 詳細パラメータはMonitorList::getMonitor()で行う
-  getMonitorList();
   
   
   // ファイル入出力に関するパラメータ
@@ -424,7 +419,7 @@ void Control::getApplicationControl()
 
   // フィルの媒質指定
   label = "/ApplicationControl/FillMedium";
-  if ( !tpCntl->getInspectedValue(label, str) )
+  if ( !(tpCntl->getInspectedValue(label, str)) )
   {
     Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
 	  Exit(0);
@@ -443,12 +438,12 @@ void Control::getApplicationControl()
   else
   {
     if     ( !strcasecmp(str.c_str(), "no" ) )     FillHint = -1;
-    else if( !strcasecmp(str.c_str(), "xminus" ) ) FillHint = X_MINUS;
-    else if( !strcasecmp(str.c_str(), "xplus" ) )  FillHint = X_PLUS;
-    else if( !strcasecmp(str.c_str(), "yminus" ) ) FillHint = Y_MINUS;
-    else if( !strcasecmp(str.c_str(), "yplus" ) )  FillHint = Y_PLUS;
-    else if( !strcasecmp(str.c_str(), "zminus" ) ) FillHint = Z_MINUS;
-    else if( !strcasecmp(str.c_str(), "zplus" ) )  FillHint = Z_PLUS;
+    else if( !strcasecmp(str.c_str(), "xminus" ) ) FillHint = X_minus;
+    else if( !strcasecmp(str.c_str(), "xplus" ) )  FillHint = X_plus;
+    else if( !strcasecmp(str.c_str(), "yminus" ) ) FillHint = Y_minus;
+    else if( !strcasecmp(str.c_str(), "yplus" ) )  FillHint = Y_plus;
+    else if( !strcasecmp(str.c_str(), "zminus" ) ) FillHint = Z_minus;
+    else if( !strcasecmp(str.c_str(), "zplus" ) )  FillHint = Z_plus;
     else
     {
       Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -567,7 +562,6 @@ REAL_TYPE Control::getCellSize(const int* G_size)
 }
 
 
-
 // #################################################################
 // @brief 対流項スキームのパラメータを取得する
 void Control::getConvection()
@@ -580,7 +574,7 @@ void Control::getConvection()
   // scheme
   label="/ConvectionTerm/scheme";
   
-  if ( !(tpCntl->getInspectedValue(label, str )) )
+  if ( !(tpCntl->getInspectedValue(label, str)) )
   {
 	  Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
 	  Exit(0);
@@ -942,7 +936,7 @@ void Control::getFormat_sph()
   // sphディレクトリのチェック
   label = "/Output/FormatOption/SPH";
   
-  if ( !tpCntl->chkNode(label) )
+  if ( !(tpCntl->chkNode(label)) )
   {
     Hostonly_ stamped_printf("\tParsing error : Missing '%s'\n", label.c_str());
     Exit(0);
@@ -952,7 +946,7 @@ void Control::getFormat_sph()
   // 出力ガイドセルモード
   label = "/Output/FormatOption/SPH/GuideOut";
   
-  if ( !(tpCntl->getInspectedValue(label, str )) )
+  if ( !(tpCntl->getInspectedValue(label, str)) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
@@ -1106,7 +1100,7 @@ void Control::getIteration()
   base = "/Iteration";
 
   // Iteration
-  if( !tpCntl->chkNode(base) )
+  if( !(tpCntl->chkNode(base)) )
   {
     Hostonly_ stamped_printf("\tParsing error : Missing the section of '%s'\n", base.c_str());
     Exit(0);
@@ -1125,7 +1119,7 @@ void Control::getIteration()
   int counter=0;
   for (int i=1; i<=nnode; i++)
   {
-    if ( !tpCntl->getNodeStr(base, i, str) )
+    if ( !(tpCntl->getNodeStr(base, i, str)) )
     {
       Hostonly_ stamped_printf("\tGetNodeStr error\n");
       Exit(0);
@@ -1143,7 +1137,7 @@ void Control::getIteration()
   // get criterion
   for (int i=0; i<NoBaseLS; i++)
   {
-    if ( !tpCntl->getNodeStr(base, i+1, str) )
+    if ( !(tpCntl->getNodeStr(base, i+1, str)) )
     {
       Hostonly_ printf("\tParsing error : Missing 'LinearSolver'\n");
       Exit(0);
@@ -1490,56 +1484,6 @@ void Control::getLog()
 
 
 // #################################################################
-// モニタリングのON/OFFとセルモニタの有無のみを取得　詳細パラメータはParseBC::getIbcMonitor()
-void Control::getMonitorList()
-{
-  string str;
-  string label;
-  
-  // ログ出力
-  label = "/MonitorList/log";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "on") )   Sampling.log = ON;
-  else if( !strcasecmp(str.c_str(), "off") )  Sampling.log = OFF;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  // セルモニターの指定
-  /// @see Initialize.C setExistComponent()
-  if ( Sampling.log == ON )
-  {
-	  label = "/MonitorList/CellMonitor";
-    
-	  if ( !(tpCntl->getInspectedValue(label, str )) )
-    {
-		  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
-		  Exit(0);
-	  }
-    
-	  if     ( !strcasecmp(str.c_str(), "on") )   EnsCompo.monitor = ON;
-	  else if( !strcasecmp(str.c_str(), "off") )  EnsCompo.monitor = OFF;
-	  else
-    {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-		  Exit(0);
-	  }
-  }
-  
-}
-
-
-
-
-// #################################################################
 // コンポーネント数，媒質数，境界条件数を取得
 void Control::getNoOfComponent()
 {
@@ -1743,7 +1687,7 @@ void Control::getReference()
 
   
   label = "/Reference/Medium";
-  if ( !tpCntl->getInspectedValue(label, str) )
+  if ( !(tpCntl->getInspectedValue(label, str)) )
   {
     Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
 	  Exit(0);
@@ -2644,6 +2588,31 @@ void Control::getUnit()
 }
 
 
+// #################################################################
+//境界条件の値(REAL_TYPE型)を取得し，返す
+REAL_TYPE Control::getValueReal(const std::string label, TextParser* tpc)
+{
+  REAL_TYPE df=0.0f;
+  
+  if ( !(tpc->getInspectedValue(label, df)) ) Exit(0);
+  
+  return df;
+}
+
+
+// #################################################################
+// ベクトル値を取得し，登録する
+// normalize = trueのとき，無次元化する
+void Control::getVec(const std::string label, REAL_TYPE* v, TextParser* tpc, bool normalize)
+{
+  for (int i=0; i<3; i++) v[i]=0.0f;
+  
+  if( !(tpc->getInspectedVector(label, v, 3)) ) Exit(0);
+  
+  //単位ベクトル化
+  if ( normalize ) UnitVec(v);
+}
+
 
 // #################################################################
 //壁面上の扱いを指定する
@@ -2711,18 +2680,18 @@ REAL_TYPE Control::OpenDomainRatio(const int dir, const REAL_TYPE area, const in
   
   switch (dir) 
   {
-    case X_MINUS:
-    case X_PLUS:
+    case X_minus:
+    case X_plus:
       r = area / (REAL_TYPE)(m_jmax*m_kmax) * 100.0;
       break;
       
-    case Y_MINUS:
-    case Y_PLUS:
+    case Y_minus:
+    case Y_plus:
       r = area / (REAL_TYPE)(m_imax*m_kmax) * 100.0;
       break;
       
-    case Z_MINUS:
-    case Z_PLUS:
+    case Z_minus:
+    case Z_plus:
       r = area / (REAL_TYPE)(m_imax*m_jmax) * 100.0;
       break;
   }
@@ -3526,19 +3495,19 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
   fprintf(fp,"\t     Unit for Output          :   %s\n", (Unit.Log == DIMENSIONAL) ? "Dimensional" : "Non-Dimensional");
   fprintf(fp,"\t     Base Logs                :   %4s  %s, %s, %s, %s\n", 
           (Mode.Log_Base == ON) ? "ON >" : "OFF ", 
-          (Mode.Log_Base == ON) ? HistoryName.c_str() : "", 
-          (Mode.Log_Base == ON) ? HistoryCompoName.c_str() : "", 
-          (Mode.Log_Base == ON) ? HistoryDomfxName.c_str() : "", 
-          (Mode.Log_Base == ON) ? HistoryForceName.c_str() : "");
+          (Mode.Log_Base == ON) ? "history_base.txt" : "", 
+          (Mode.Log_Base == ON) ? "history_compo.txt" : "",
+          (Mode.Log_Base == ON) ? "history_domainflux.txt" : "", 
+          (Mode.Log_Base == ON) ? "history_force.txt" : "");
   fprintf(fp,"\t     Iteration Log            :   %4s  %s\n", 
-          (Mode.Log_Itr == ON)?"ON >":"OFF ", (Mode.Log_Itr == ON) ? HistoryItrName.c_str() : "");
+          (Mode.Log_Itr == ON)?"ON >":"OFF ", (Mode.Log_Itr == ON) ? "history_iteration.txt" : "");
   fprintf(fp,"\t     Profiling report         :   %4s  %s%s\n", 
           (Mode.Profiling != OFF)?"ON >":"OFF ", 
           (Mode.Profiling == DETAIL)? "Detail mode, ":"",
           (Mode.Profiling != OFF)?"profiling.txt":"");
   
   fprintf(fp,"\t     Wall info. Log           :   %4s  %s\n", 
-          (Mode.Log_Wall == ON)?"ON >":"OFF ", (Mode.Log_Wall == ON) ? HistoryWallName.c_str() : "");
+          (Mode.Log_Wall == ON)?"ON >":"OFF ", (Mode.Log_Wall == ON) ? "history_log_wall.txt" : "");
   
   
   // Intervals
@@ -3602,7 +3571,7 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
   }
   
   // サンプリング情報のファイル出力
-  if ( Sampling.log == ON )
+  if ( SamplingMode == ON )
   {
     if ( Interval[tg_sampled].getMode() == IntervalManager::By_time )
     {
@@ -3856,29 +3825,13 @@ void Control::setExistComponent(CompoList* cmp, BoundaryOuter* OBC)
   if ( c>0 ) EnsCompo.tfree = ON;
   
   
-  // モニタ
+  // コンポーネントモニター出力
   c = 0;
   for (int n=1; n<=NoCompo; n++)
   {
-    if ( cmp[n].isMONITOR() ) c++;
+    if ( cmp[n].isCompoMonitor() ) c++;
   }
   if ( c>0 ) EnsCompo.monitor = ON;
-  
-  
-  // チェック　MONITOR_LISTでCELL_MONITORが指定されている場合
-  if ( (existMonitor() == ON) && (c < 1) )
-  {
-    Hostonly_ stamped_printf("\tError : CellMonitor in MonitorList is specified, however any Monitor can not be found.\n");
-    Exit(0);
-  }
-  
-  if ( (existMonitor() == OFF) && (c > 0) )
-  {
-    Hostonly_ stamped_printf("\tError : CellMonitor in MonitorList is NOT specified, however Monitor section is found in LocalBoundary.\n");
-    Exit(0);
-  }
-  
-  // @see C.EnsCompo.monitor==ONは，Control::getMonitorList()
   
 }
 
@@ -4219,4 +4172,25 @@ void Control::setRefParameters(MediumList* mat, ReferenceFrame* RF)
     RF->setGridVel(g);
   }
 
+}
+
+
+// #################################################################
+//単位ベクトルを計算して戻す
+void Control::UnitVec(REAL_TYPE* v)
+{
+	REAL_TYPE a = sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
+  
+	if ( a > 0.0 )
+  {
+		v[0] = v[0]/a;
+		v[1] = v[1]/a;
+		v[2] = v[2]/a;
+	}
+	else
+  {
+		v[0] = 0.0;
+		v[1] = 0.0;
+		v[2] = 0.0;
+	}
 }

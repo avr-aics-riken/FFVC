@@ -25,7 +25,7 @@
 
 #include "mydebug.h"
 
-#define FB_VERS "1.4.2"
+#define FB_VERS "1.4.3"
 
 
 // precision
@@ -198,22 +198,22 @@
 
 // Component Type
 #define OBSTACLE     1
-#define CELL_MONITOR 2 // Monitor
-#define ADIABATIC    3
-#define HEATFLUX     4
-#define TRANSFER     5
-#define ISOTHERMAL   6
-#define RADIANT      7
-#define SPEC_VEL     8
-#define OUTFLOW      9
-#define IBM_DF       10
-#define HEAT_SRC     11 // Hsrc
-#define CNST_TEMP    12
-#define HEX          13 // Forcing
-#define FAN          14
-#define DARCY        15
-#define PERIODIC     16
-#define INACTIVE     17
+#define ADIABATIC    2
+#define HEATFLUX     3
+#define TRANSFER     4
+#define ISOTHERMAL   5
+#define RADIANT      6
+#define SPEC_VEL     7
+#define OUTFLOW      8
+#define IBM_DF       9
+#define HEAT_SRC     10 // Hsrc
+#define CNST_TEMP    11
+#define HEX          12 // Forcing
+#define FAN          13
+#define DARCY        14
+#define PERIODIC     15
+#define INACTIVE     16
+#define MONITOR      17
 
 
 // 熱伝達係数のモード コンポーネントタイプと並列
@@ -236,11 +236,6 @@
 #define GAS        2
 #define LIQUID     3
 #define ANY_STATE  4
-
-// モニタの形状
-#define SHAPE_CYLINDER 1
-#define SHAPE_BOX      2
-#define SHAPE_POLYGON  3
 
 // サンプリング方法
 #define SAMPLING_NEAREST       1  /// モニタ点を含むセルでの値
@@ -406,18 +401,13 @@ enum Kind_of_vars {
   var_Velocity=0,
   var_Pressure,
   var_Temperature,
-  var_Density,
   var_TotalP,
   var_Velocity_Avr,
   var_Pressure_Avr,
   var_Temperature_Avr,
-  var_Density_Avr,
-  var_TotalP_Avr,
   var_Helicity,
   var_Vorticity,
   var_I2vgt,
-  var_Divergence,
-  var_FaceVelocity,
   var_END
 };
 
@@ -527,5 +517,47 @@ enum Algorithm_Heat
   Heat_EE_EE=1, // Euler Explicit
   Heat_EE_EI    // Euler Explicit + Implicit
 };
+
+
+/// モニタ点指定タイプ型
+enum Monitor_Type {
+  mon_POINT_SET,
+  mon_LINE,
+  mon_CYLINDER,
+  mon_BOX,
+  mon_POLYGON
+};
+
+enum DIRection {
+  X_minus=0,
+  X_plus,
+  Y_minus,
+  Y_plus,
+  Z_minus,
+  Z_plus
+};
+
+/*
+ * @brief 指定面方向のカットIDをとりだす
+ * @param [in] bid  int variable
+ * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+ */
+inline int getBit5 (const int bid, const int dir)
+{
+  return ( (bid >> dir*5) & MASK_5 );
+}
+
+
+/*
+ * @brief 5bit幅の値の設定
+ * @param [in,out] b   int 変数
+ * @param [in]     q   5-bit幅のID (1-31)
+ * @param [in]     dir 方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+ */
+inline void setBit5 (int& b, const int q, const int dir)
+{
+  b &= (~(0x1f << (dir*5)) ); // 対象5bitをゼロにする
+  b |= (q << (dir*5));        // 書き込む
+}
 
 #endif // _FB_DEFINE_H_

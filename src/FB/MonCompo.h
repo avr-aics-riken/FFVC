@@ -38,7 +38,7 @@ using namespace std;
 
 
 /**
- *  モニタグループクラス.
+ *  モニタグループクラス
  */
 class MonitorCompo : public DomainInfo {
 public:
@@ -65,42 +65,28 @@ public:
     FB::Vec3r v00;           /// 参照（座標系移動）速度
   };
   
-  /// モニタ点指定タイプ型
-  enum Type {
-    POINT_SET,
-    LINE,
-    INNER_BOUNDARY,
-  };
-  
-  /// モニタ変数識別定数
-  enum Var {
-    VELOCITY,
-    PRESSURE,
-    TEMPERATURE,
-    TOTAL_PRESSURE,
-    VORTICITY,
-    NUM_VAR,
-  };
-  
   
 protected:
-  int nPoint;             ///< モニタ点数
-  bool variable[NUM_VAR]; ///< モニタ変数フラグ
-  string label;           ///< グループのラベル
-  Type type;              ///< モニタ点指定タイプ
-  int method;             ///< サンプリング方法
-  int mode;               ///< サンプリングモード
-  int num_process;        ///< プロセス数
+  int nPoint;                ///< モニタ点数
+  bool variable[var_END];    ///< モニタ変数フラグ
+  string label;              ///< グループのラベル
+  Monitor_Type monitor_type; ///< モニタ点指定タイプ
+  int method;                ///< サンプリング方法
+  int mode;                  ///< サンプリングモード
+  int num_process;           ///< プロセス数
+  int polyID;                ///< PolygonモニタのエントリID
   
-  Sampling** mon;         ///< 「モニタ点毎のSampligクラスへのポインタ」の配列
+  Sampling** mon;            ///< 「モニタ点毎のSampligクラスへのポインタ」の配列
   
-  FB::Vec3r org;          ///< ローカル基点座標
-  FB::Vec3r pch;          ///< セル幅
-  FB::Vec3r box;          ///< ローカル領域サイズ
-  FB::Vec3r g_org;        ///< グローバル基点座標
-  FB::Vec3r g_box;        ///< グローバル領域サイズ
+  FB::Vec3r org;             ///< ローカル基点座標
+  FB::Vec3r pch;             ///< セル幅
+  FB::Vec3r box;             ///< ローカル領域サイズ
+  FB::Vec3r g_org;           ///< グローバル基点座標
+  FB::Vec3r g_box;           ///< グローバル領域サイズ
+  REAL_TYPE nv[3];           ///< 法線ベクトル
+  REAL_TYPE val[var_END];    ///< サンプリング値
   
-  ReferenceVariables refVar;  ///< 参照用パラメータ変数
+  ReferenceVariables refVar; ///< 参照用パラメータ変数
   
   int* bid;            ///< 境界ID
   int* bcd;            ///< BCindex B
@@ -124,15 +110,19 @@ protected:
   REAL_TYPE* tmp;      ///< 温度サンプリング結果配列
   REAL_TYPE* tp;       ///< 全圧サンプリング結果配列
   FB::Vec3r* vor;      ///< 渦度サンプリング結果配列
-  
-  CompoList* cmp;      ///< 内部境界条件指定の場合の対応するコンポーネントへのポインタ
 
   
 public:
-  /// ディフォルトコンストラクタ.
+  /// デフォルトコンストラクタ
   MonitorCompo() {
     nPoint = 0;
-    for (int i = 0; i < NUM_VAR; i++) variable[i] = false;
+    polyID = 0;
+    nv[0] = nv[1] = nv[2] = 0.0;
+    for (int i = 0; i < var_END; i++)
+    {
+      variable[i] = false;
+      val[i] = 0.0;
+    }
     vel = vor  = NULL;
     prs = tmp = tp  = NULL;
     crd = NULL;
@@ -145,7 +135,7 @@ public:
     cut = NULL;
   }
   
-  /// コンストラクタ.
+  /// コンストラクタ
   ///
   ///   @param [in] org,pch,box ローカル領域基点座標，セル幅，領域サイズ
   ///   @param [in] g_org,g_box グローバル領域基点座標，領域サイズ
@@ -167,7 +157,7 @@ public:
                float* cut,
                const int num_process) {
     nPoint = 0;
-    for (int i = 0; i < NUM_VAR; i++) variable[i] = false;
+    for (int i = 0; i < var_END; i++) variable[i] = false;
     vel = vor  = NULL;
     prs = tmp = tp  = NULL;
     crd = NULL;
@@ -188,7 +178,7 @@ public:
     this->num_process = num_process;
   }
   
-  /// デストラクタ.
+  /// デストラクタ
   ~MonitorCompo() {
     if (crd) delete[] crd;
     if (vel) delete[] vel;
@@ -199,36 +189,49 @@ public:
     if (comment) delete[] comment;
     if (pointStatus) delete[] pointStatus;
     
-    if (mon) {
-      for (int i = 0; i < nPoint; i++) if (mon[i]) delete mon[i];
+    if (mon)
+    {
+      for (int i = 0; i < nPoint; i++)
+      {
+        if (mon[i]) delete mon[i];
+      }
+      
       delete[] mon;
     }
   }
   
   
-  /// モニタ点が指定領域内にあるかを判定.
+  /// モニタ点の状態を調べ，不正モニタ点フラグ配列pointStatusを設定
+  void checkMonitorPoints();
+  
+  
+  /// モニタ点が指定領域内にあるかを判定
   ///
-  ///   @param [in] m モニタ点番号
-  ///   @param [in] org 調査領域の基点
-  ///   @param [in] box 調査領域のサイズ
+  ///   @param [in] m    モニタ点番号
+  ///   @param [in] org  調査領域の基点
+  ///   @param [in] box  調査領域のサイズ
   ///   @param [in] flag メッセージ出力フラグ(trueの時出力)
   ///   @return true=領域内/false=領域外
   ///
   bool checkRegion(const int m, const FB::Vec3r org, const FB::Vec3r box, bool flag=false) const;
   
   
-  /// 出力ファイルクローズ.
+  ///セルモニタの場合の交点情報をクリアする
+  unsigned long clearMonitorCut();
+  
+  
+  /// 出力ファイルクローズ
   void closeFile();
   
   
-  /// グループラベルを返す.
+  /// グループラベルを返す
   const char* getLabel() const
   {
     return label.c_str();
   }
   
   
-  /// m番目のモニタ点を含むセルインデクスを返す.
+  /// m番目のモニタ点を含むセルインデクスを返す
   FB::Vec3i getSamplingCellIndex(int m) const
   {
     FB::Vec3i index;
@@ -240,29 +243,64 @@ public:
   }
   
   
-  /// モニタ点数を返す.
+  /// エントリを返す
+  int getPolyID() const
+  {
+    return polyID;
+  }
+  
+  
+  /// モニタ点数を返す
   int getSize() const
   {
     return nPoint;
   }
   
   
-  /// 登録タイプを返す.
-  Type getType() const
+  /// 登録タイプを返す
+  Monitor_Type getType() const
   {
-    return type;
+    return monitor_type;
   }
   
   
-  /// 出力ファイルオープン.
+  /// 出力ファイルオープン
   ///
   ///    @param str ファイル名テンプレート
   ///    @param gathered true=gather出力/false=disutribute出力
   ///
-  void openFile(const char* str, bool gathered);
+  void openFile(const char* str, const bool gathered);
   
   
-  /// モニタ情報を出力.
+  /// モニタ結果出力(distribute)
+  ///
+  ///   @param [in] step サンプリング時の計算ステップ
+  ///   @param [in] tm   サンプリング時の計算時刻
+  ///
+  ///   @note 全プロセスから呼ぶこと
+  ///
+  void print_distribute(const unsigned step, const REAL_TYPE tm)
+  {
+    print(step, tm, false);
+  }
+  
+  
+  /// モニタ結果出力(gather)
+  ///
+  ///   @param [in] step サンプリング時の計算ステップ
+  ///   @param [in] tm   サンプリング時の計算時刻
+  ///
+  ///   @note 内部でノード0に集計するため全プロセスから呼ぶこと
+  ///
+  void print_gather(const unsigned step, const REAL_TYPE tm)
+  {
+    gatherSampled();
+    
+    if (myRank == 0) print(step, tm, true);
+  }
+  
+  
+  /// モニタ情報を出力
   ///
   ///    @param [in] fp 出力ファイルポインタ
   ///    @param [in] no モニタグループ通し番号
@@ -270,83 +308,19 @@ public:
   void printInfo(FILE* fp, int no);
   
   
-  /// モニタ結果出力(gather).
-  ///
-  ///   @param [in] step サンプリング時の計算ステップ
-  ///   @param [in] tm   サンプリング時の計算時刻
-  ///
-  ///   @note 内部でノード0に集計するため全プロセスから呼ぶこと
-  ///
-  void print_gather(unsigned step, REAL_TYPE tm)
-  {
-    gatherSampled();
-    if (myRank == 0) print(step, tm, true);
-  }
-  
-  
-  /// モニタ結果出力(distribute).
-  ///
-  ///   @param [in] step サンプリング時の計算ステップ
-  ///   @param [in] tm   サンプリング時の計算時刻
-  ///
-  ///   @note 全プロセスから呼ぶこと
-  ///
-  void print_distribute(unsigned step, REAL_TYPE tm)
-  {
-    print(step, tm, false);
-  }
-  
-  
-  /// サンプリング(Line, PointSet).
+  /// 詳細サンプリング(Line, PointSet)
   void sampling();
   
   
-  /// 内部境界条件モニタ点でのサンプリング.
+  /// 平均値サンプリング
   ///
-  ///   サンプリング結果を集計，コンポーネント領域での平均値を計算.
-  ///   速度は法線ベクトルとの内積をとる．
-  ///   結果はコンポーネントcmpに格納.
+  ///   サンプリング結果を集計，領域での平均値を計算
+  ///   速度は法線ベクトルとの内積をとる
   ///
-  void samplingInnerBoundary();
+  void samplingAverage();
   
   
-  /// PointSet登録.
-  ///
-  ///   @param [in] labelStr ラベル文字列
-  ///   @param [in] variables モニタ変数vector
-  ///   @param [in] methodStr method文字列
-  ///   @param [in] modeStr   mode文字列
-  ///   @param [in] pointSet  PointSet
-  ///
-  void setPointSet(const char* lableStr, vector<string>& variables, 
-                   const char* methodStr, const char* modeStr,
-                   vector<MonitorPoint>& pointSet);
-  
-  
-  /// Line登録.
-  ///
-  ///   @param [in] labelStr ラベル文字列
-  ///   @param [in] variables モニタ変数vector
-  ///   @param [in] methodStr method文字列
-  ///   @param [in] modeStr   mode文字列
-  ///   @param [in] from Line始点
-  ///   @param [in] to   Line終点
-  ///   @param [in] nDivision 分割数(モニタ点数-1)
-  ///
-  void setLine(const char* labelStr, vector<string>& variables,
-               const char* methodStr, const char* modeStr,
-               REAL_TYPE from[3], REAL_TYPE to[3], int nDivision);
-  
-  
-  /// セルモニターのモニタ点を登録.
-  ///
-  ///   @param [in] odr コンポーネントエントリ
-  ///   @param [in] cmp コンポーネント
-  ///
-  void setCellMonitor(const int odr, CompoList& cmp);
-  
-  
-  /// サンプリング元データの登録.
+  /// サンプリング元データの登録
   ///
   ///   @param [in] v 速度変数配列
   ///   @param [in] p 圧力変数配列
@@ -357,55 +331,122 @@ public:
     vSource = v;
     pSource = p;
     tSource = t;
-    if (variable[TEMPERATURE] && !tSource) {
+    if (variable[var_Temperature] && !tSource) {
       Hostonly_ stamped_printf("\tError : Temperature monitoring source not assigned.\n");
       Exit(0);
     }
   }
+  
+  
+  /// Line登録
+  ///
+  ///   @param [in] labelStr  ラベル文字列
+  ///   @param [in] variables モニタ変数vector
+  ///   @param [in] methodStr method文字列
+  ///   @param [in] modeStr   mode文字列
+  ///   @param [in] from      Line始点
+  ///   @param [in] to        Line終点
+  ///   @param [in] nDivision 分割数(モニタ点数-1)
+  ///   @param [in] m_type    モニタタイプ
+  ///
+  void setLine(const char* labelStr,
+               vector<string>& variables,
+               const char* methodStr,
+               const char* modeStr,
+               REAL_TYPE from[3],
+               REAL_TYPE to[3],
+               int nDivision,
+               Monitor_Type m_type);
+  
+  
+  /// PointSet登録
+  ///
+  ///   @param [in] labelStr  ラベル文字列
+  ///   @param [in] variables モニタ変数vector
+  ///   @param [in] methodStr method文字列
+  ///   @param [in] modeStr   mode文字列
+  ///   @param [in] pointSet  PointSet
+  ///   @param [in] m_type    モニタタイプ
+  ///
+  void setPointSet(const char* lableStr,
+                   vector<string>& variables,
+                   const char* methodStr,
+                   const char* modeStr,
+                   vector<MonitorPoint>& pointSet,
+                   Monitor_Type m_type);
 
   
+  /// Polygon登録
+  ///
+  ///   @param [in] labelStr  ラベル文字列
+  ///   @param [in] variables モニタ変数vector
+  ///   @param [in] methodStr method文字列
+  ///   @param [in] modeStr   mode文字列
+  ///   @param [in] order     エントリ番号
+  ///   @param [in] m_nv      法線ベクトル
+  ///   @param [in] m_type    モニタタイプ
+  ///
+  void setPolygon(const char* labelStr,
+                  vector<string>& variables,
+                  const char* methodStr,
+                  const char* modeStr,
+                  const int order,
+                  const REAL_TYPE m_nv[3],
+                  Monitor_Type m_type);
+  
+  
+  /// Primitiveを登録し，bcd[]をゼロクリア
+  ///
+  ///   @param [in] labelStr  ラベル文字列
+  ///   @param [in] variables モニタ変数vector
+  ///   @param [in] methodStr method文字列
+  ///   @param [in] modeStr   mode文字列
+  ///   @param [in] order     エントリ番号
+  ///   @param [in] m_nv      法線ベクトル
+  ///   @param [in] m_type    モニタタイプ
+  ///
+  void setPrimitive(const char* labelStr,
+                    vector<string>& variables,
+                    const char* methodStr,
+                    const char* modeStr,
+                    const int order,
+                    const REAL_TYPE m_nv[3],
+                    Monitor_Type m_type);
   
   
   
 protected:
   
-  /// モニタリング管理用配列の確保.
+  /// モニタリング管理用配列の確保
   void allocArray();
   
-  /// サンプリング値を格納する配列の確保.
+  
+  /// サンプリング値を格納する配列の確保
   void allocSamplingArray();
   
-  /// Allreduceによる総和(実数配列上書き，work配列指定).
+  
+  /// Allreduceによる総和(実数配列上書き，work配列指定)
   bool allReduceSum(REAL_TYPE* array, int n, REAL_TYPE* sendBuf);
   
-  /// Allreduceによる総和(実数配列上書き).
+  
+  /// Allreduceによる総和(実数配列上書き)
   bool allReduceSum(REAL_TYPE* array, int n);
   
-  /// Allreduceによる総和(整数配列上書き，work配列指定).
+  
+  /// Allreduceによる総和(整数配列上書き，work配列指定)
   bool allReduceSum(int* array, int n, unsigned long* sendBuf);
   
-  /// Allreduceによる総和(整数配列上書き).
+  
+  /// Allreduceによる総和(整数配列上書き)
   bool allReduceSum(int* array, int n);
   
   
-  /// 内部境界条件として指定されたモニタ領域内でスカラー変数を平均.
-  ///
-  ///   @param [in] s スカラー変数配列
-  ///   @return モニタ領域内平均値
-  ///
+  /// 指定されたモニタ領域内でスカラー変数を平均
   REAL_TYPE averageScalar(REAL_TYPE* s);
   
   
-  /// 内部境界条件として指定されたモニタ領域内でベクトル変数を平均.
-  ///
-  ///   @param [in] v ベクトル変数配列
-  ///   @return モニタ領域内平均値
-  ///
+  /// 指定されたモニタ領域内でベクトル変数を平均
   FB::Vec3r averageVector(FB::Vec3r* v);
-  
-  
-  /// モニタ点の状態を調べ，不正モニタ点フラグ配列pointStatusを設定.
-  void checkMonitorPoints();
   
   
   /// 座標の単位変換
@@ -450,39 +491,44 @@ protected:
     return ( (refVar.modeUnit==DIMENSIONAL) ? vor*refVar.refVelocity/refVar.refLength : vor );
   }
   
-  /// サンプリングした変数をノード0に集約.
+  /// サンプリングした変数をノード0に集約
   void gatherSampled();
   
-  /// サンプリングしたスカラー変数をノード0に集約.
+  
+  /// サンプリングしたスカラー変数をノード0に集約
   ///
   ///   @param [in,out] s スカラー変数配列
   ///   @param  sRecvBuf  通信用work領域
   ///
   void gatherSampledScalar(REAL_TYPE* s, REAL_TYPE* sRecvBuf);
   
-  /// サンプリングしたベクトル変数をノード0に集約.
+  
+  /// サンプリングしたベクトル変数をノード0に集約
   ///
   ///   @param [in,out] v ベクトル変数配列
   ///   @param  vSendBuf,vRecvBuf  通信用work領域
   ///
   void gatherSampledVector(FB::Vec3r* v, REAL_TYPE* vSendBuf, REAL_TYPE* vRecvBuf);
-  
 
   
-  /// サンプリング方法文字列の取得.
+  
+  /// サンプリング方法文字列の取得
   string getMethodStr();
   
-  /// サンプリングモード文字列の取得.
+  
+  /// サンプリングモード文字列の取得
   string getModeStr();
   
-  /// モニタ点指定方法文字列の取得.
+  
+  /// モニタ点指定方法文字列の取得
   string getTypeStr();
   
-  /// モニタ変数を結合した文字列の取得.
+  
+  /// モニタ変数を結合した文字列の取得
   string getVarStr();
   
   
-  /// モニタ結果出力.
+  /// モニタ結果出力
   ///
   ///   @param [in] step サンプリング時の計算ステップ
   ///   @param [in] tm   サンプリング時の計算時刻
@@ -491,37 +537,35 @@ protected:
   void print(unsigned step, REAL_TYPE tm, bool gathered);
   
   
-  /// Polygonl要素の交点座標をcrd[]に設定
-  ///
-  ///   @param [in] odr エントリ
-  ///   @param [in] cmp コンポーネント
-  ///
-  void setPointsPolygon(const int odr, CompoList& cmp);
+  /*
+   * @brief 5bit幅の値の設定
+   * @param [in,out] b   int 変数
+   * @param [in]     q   5-bit幅のID (1-31)
+   * @param [in]     dir 方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+   
+   */
+  inline void setBit5 (int& b, const int q, const int dir)
+  {
+    b &= (~(0x1f << (dir*5)) ); // 対象5bitをゼロにする
+    b |= (q << (dir*5));        // 書き込む
+  }
   
   
-  /// Primitive要素の交点座標をcrd[]に設定
-  ///
-  ///   @param [in] odr エントリ
-  ///   @param [in] cmp コンポーネント
-  ///
-  void setPointsPrimitive(const int odr, CompoList& cmp);
-  
-  
-  /// モニタ対象物理量の設定.
+  /// モニタ対象物理量の設定
   ///
   ///    @param [in] str モニタ対象物理量文字列
   ///
   void setMonitorVar(const char* str);
   
   
-  /// 各モニタ点を担当するランク番号を配列rank[]にセット.
+  /// 各モニタ点を担当するランク番号を配列rank[]にセット
   ///
   ///   @note 領域境界上のモニタ点は，ランク番号の大きい方の領域が担当
   ///
   void setRankArray();
   
   
-  /// サンプリング方法の設定.
+  /// サンプリング方法の設定
   ///
   ///    @param [in] str サンプリング方法文字列
   ///
@@ -535,12 +579,17 @@ protected:
   void setSamplingMode(const char* str);
   
   
-  /// モニタ結果出力ファイルにヘッダ部を出力.
+  /// モニタ結果出力ファイルにヘッダ部を出力
   ///
   ///   @param [in] gathered 出力モードフラグ(true=gather出力/false=disutribute出力)
   ///
   void writeHeader(bool gathered);
   
+  
+  /**
+   * @brief mon_POLYGON, mon_BOX, mon_CYLINDERのヘッダー出力
+   */
+  void writeHeaderCompo();
 };
 
 #endif // _FB_MONITOR_COMPO_H_

@@ -215,17 +215,7 @@ void IP_Step::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, 
   // length, widthなどは有次元値
   REAL_TYPE len = G_origin[0] + (drv_length+width)/R->RefLength; // グローバルな無次元位置
   REAL_TYPE ht  = G_origin[1] + height/R->RefLength;
-  
-  // Initialize  内部領域をfluidにしておく
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid) schedule(static)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        bcd[m] |= mid_fluid;
-      }
-    }
-  }
+
   
   // ドライバ部分　X-面からドライバ長さより小さい領域
   if ( drv_length > 0.0 )
