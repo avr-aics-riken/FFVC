@@ -286,7 +286,7 @@ int FFV::Loop(const unsigned step)
     TIMING_start(tm_sampling);
     MO.sampling();
     TIMING_stop(tm_sampling, 0.0);
-    
+
     TIMING_start(tm_hstry_sampling);
     MO.print(CurrentStep, (REAL_TYPE)CurrentTime);
     TIMING_stop(tm_hstry_sampling, 0.0);

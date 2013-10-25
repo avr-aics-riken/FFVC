@@ -805,8 +805,8 @@ void MonitorCompo::print(unsigned step, REAL_TYPE tm, bool gathered)
   {
     if ( !gathered ) Exit(0);
     
-    char* sFmtSingle = "%15.7e ";
-    char* sFmtDouble = "%24.16e ";
+    char* sFmtSingle = "    %15.7e";
+    char* sFmtDouble = "  %24.16e";
     char* sFmt;
     char* vFmt;
     
@@ -821,17 +821,18 @@ void MonitorCompo::print(unsigned step, REAL_TYPE tm, bool gathered)
     
     if (refVar.modePrecision == sizeof(float))
     {
-      fprintf(fp, "%10d %14.6e ", step, convTime(tm));
+      fprintf(fp, "%10d %14.6e", step, convTime(tm));
     }
     else
     {
-      fprintf(fp, "%10d %24.16e ", step, convTime(tm));
+      fprintf(fp, "%10d %24.16e", step, convTime(tm));
     }
-    
-    if (variable[var_Velocity])    fprintf(fp, vFmt, convVel(val[var_Velocity]));
+
+    if (variable[var_Velocity])    fprintf(fp, sFmt, convVel(val[var_Velocity]));
     if (variable[var_Pressure])    fprintf(fp, sFmt, convPrs(val[var_Pressure]));
     if (variable[var_Temperature]) fprintf(fp, sFmt, convTmp(val[var_Temperature]));
     if (variable[var_TotalP])      fprintf(fp, sFmt, convTP(val[var_TotalP]));
+    fprintf(fp, "\n");
   }
 
 }
@@ -904,7 +905,7 @@ void MonitorCompo::samplingAverage()
     FB::Vec3r velAve = averageVector(vel);
     val[var_Velocity] = velAve.x * nv[0] + velAve.y * nv[1] + velAve.z * nv[2];
   }
-  
+
   if (variable[var_Pressure])     val[var_Pressure]    = averageScalar(prs);
   if (variable[var_Temperature])  val[var_Temperature] = averageScalar(tmp);
   if (variable[var_TotalP])       val[var_TotalP]      = averageScalar(tp);
@@ -1540,17 +1541,29 @@ void MonitorCompo::writeHeaderCompo()
 {
   if ( refVar.modeUnit == DIMENSIONAL )
   {
-    fprintf(fp, "    step      time[sec]");
+    fprintf(fp, "      step      time[sec]");
   }
   else
   {
-    fprintf(fp, "    step        time[-]");
+    fprintf(fp, "      step        time[-]");
   }
   
-  if ( variable[var_Velocity] )     fprintf(fp, "      Velocity [m/s]");
-  if ( variable[var_Pressure] )     fprintf(fp, "       Pressure [pa]");
-  if ( variable[var_Temperature] )  fprintf(fp, "     Temperature [C]");
-  if ( variable[var_TotalP] )       fprintf(fp, "   TotalPressure[pa]");
+  if (refVar.modePrecision == sizeof(float))
+  {
+    if ( variable[var_Velocity] )     fprintf(fp, "     Velocity [m/s]");
+    if ( variable[var_Pressure] )     fprintf(fp, "      Pressure [pa]");
+    if ( variable[var_Temperature] )  fprintf(fp, "    Temperature [C]");
+    if ( variable[var_TotalP] )       fprintf(fp, "  TotalPressure[pa]");
+  }
+  else
+  {
+    if ( variable[var_Velocity] )     fprintf(fp, "              Velocity [m/s]");
+    if ( variable[var_Pressure] )     fprintf(fp, "               Pressure [pa]");
+    if ( variable[var_Temperature] )  fprintf(fp, "             Temperature [C]");
+    if ( variable[var_TotalP] )       fprintf(fp, "           TotalPressure[pa]");
+  }
+  
+
   
   fprintf(fp, "\n");
 }

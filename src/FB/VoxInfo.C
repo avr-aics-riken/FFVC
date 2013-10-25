@@ -2005,7 +2005,7 @@ unsigned long VoxInfo::encQface (const int order,
           // X-
           if ( b0 == odr )
           {
-            setBit5(s1, odr, BC_FACE_W); // エントリをエンコード
+            setBit5raw(s1, odr, BC_FACE_W); // エントリをエンコード
             s2 = ( es == true ) ? onBit(s2, ADIABATIC_W) : offBit( s2, ADIABATIC_W ); // offBitが断熱状態
             g++;
           }
@@ -2013,7 +2013,7 @@ unsigned long VoxInfo::encQface (const int order,
           // X+
           if ( b1 == odr )
           {
-            setBit5(s1, odr, BC_FACE_E);
+            setBit5raw(s1, odr, BC_FACE_E);
             s2 = ( es == true ) ? onBit(s2, ADIABATIC_E) : offBit( s2, ADIABATIC_E );
             g++;
           }
@@ -2021,7 +2021,7 @@ unsigned long VoxInfo::encQface (const int order,
           // Y-
           if ( b2 == odr )
           {
-            setBit5(s1, odr, BC_FACE_S);
+            setBit5raw(s1, odr, BC_FACE_S);
             s2 = ( es == true ) ? onBit(s2, ADIABATIC_S) : offBit( s2, ADIABATIC_S );
             g++;
           }
@@ -2029,7 +2029,7 @@ unsigned long VoxInfo::encQface (const int order,
           // Y+
           if ( b3 == odr )
           {
-            setBit5(s1, odr, BC_FACE_N);
+            setBit5raw(s1, odr, BC_FACE_N);
             s2 = ( es == true ) ? onBit(s2, ADIABATIC_N) : offBit( s2, ADIABATIC_N );
             g++;
           }
@@ -2037,7 +2037,7 @@ unsigned long VoxInfo::encQface (const int order,
           // Z-
           if ( b4 == odr )
           {
-            setBit5(s1, odr, BC_FACE_B);
+            setBit5raw(s1, odr, BC_FACE_B);
             s2 = ( es == true ) ? onBit(s2, ADIABATIC_B) : offBit( s2, ADIABATIC_B );
             g++;
           }
@@ -2045,7 +2045,7 @@ unsigned long VoxInfo::encQface (const int order,
           // Z+
           if ( b5 == odr )
           {
-            setBit5(s1, odr, BC_FACE_T);
+            setBit5raw(s1, odr, BC_FACE_T);
             s2 = ( es == true ) ? onBit(s2, ADIABATIC_T) : offBit( s2, ADIABATIC_T );
             g++;
           }
@@ -2149,7 +2149,7 @@ unsigned long VoxInfo::encVbitIBC (const int order,
             // X-
             if ( (id_w == odr) && (dot(e_w, nv) < 0.0) )
             {
-              setBit5(s, odr, BC_FACE_W);
+              setBit5raw(s, odr, BC_FACE_W);
               q = offBit(q, FACING_W);
               q = onBit(q, VBC_UWD);
               g++;
@@ -2158,7 +2158,7 @@ unsigned long VoxInfo::encVbitIBC (const int order,
             // X+
             if ( (id_e == odr) && (dot(e_e, nv) < 0.0) )
             {
-              setBit5(s, odr, BC_FACE_E);
+              setBit5raw(s, odr, BC_FACE_E);
               q = offBit(q, FACING_E);
               q = onBit(q, VBC_UWD);
               g++;
@@ -2167,7 +2167,7 @@ unsigned long VoxInfo::encVbitIBC (const int order,
             // Y-
             if ( (id_s == odr) && (dot(e_s, nv) < 0.0) )
             {
-              setBit5(s, odr, BC_FACE_S);
+              setBit5raw(s, odr, BC_FACE_S);
               q = offBit(q, FACING_S);
               q = onBit(q, VBC_UWD);
               g++;
@@ -2176,7 +2176,7 @@ unsigned long VoxInfo::encVbitIBC (const int order,
             // Y+
             if ( (id_n == odr) && (dot(e_n, nv) < 0.0) )
             {
-              setBit5(s, odr, BC_FACE_N);
+              setBit5raw(s, odr, BC_FACE_N);
               q = offBit(q, FACING_N);
               q = onBit(q, VBC_UWD);
               g++;
@@ -2185,7 +2185,7 @@ unsigned long VoxInfo::encVbitIBC (const int order,
             // Z-
             if ( (id_b == odr) && (dot(e_b, nv) < 0.0) )
             {
-              setBit5(s, odr, BC_FACE_B);
+              setBit5raw(s, odr, BC_FACE_B);
               q = offBit(q, FACING_B);
               q = onBit(q, VBC_UWD);
               g++;
@@ -2194,7 +2194,7 @@ unsigned long VoxInfo::encVbitIBC (const int order,
             // Z+
             if ( (id_t == odr) && (dot(e_t, nv) < 0.0) )
             {
-              setBit5(s, odr, BC_FACE_T);
+              setBit5raw(s, odr, BC_FACE_T);
               q = offBit(q, FACING_T);
               q = onBit(q, VBC_UWD);
               g++;
@@ -2302,7 +2302,7 @@ void VoxInfo::encVbitOBC (const int face, int* cdf, const string key, const bool
             // エンコード処理
             if ( enc )
             {
-              cdf[m]  = s | (OBC_MASK << BC_FACE_W); // OBC_MASK==31 外部境界条件のフラグ
+              setBit5raw(cdf[m], OBC_MASK, BC_FACE_W); // OBC_MASK==31 外部境界条件のフラグ
             }
             
             // 外部境界で安定化のため，スキームを1次精度にする
@@ -2354,7 +2354,7 @@ void VoxInfo::encVbitOBC (const int face, int* cdf, const string key, const bool
             // エンコード処理
             if ( enc )
             {
-              cdf[m]  = s | (OBC_MASK << BC_FACE_E);
+              setBit5raw(cdf[m], OBC_MASK, BC_FACE_E);
             }
             
             // 外部境界で安定化のため，スキームを1次精度にする
@@ -2406,7 +2406,7 @@ void VoxInfo::encVbitOBC (const int face, int* cdf, const string key, const bool
             // エンコード処理
             if ( enc )
             {
-              cdf[m]  = s | (OBC_MASK << BC_FACE_S);
+              setBit5raw(cdf[m], OBC_MASK, BC_FACE_S);
             }
             
             // 外部境界で安定化のため，スキームを1次精度にする
@@ -2458,7 +2458,7 @@ void VoxInfo::encVbitOBC (const int face, int* cdf, const string key, const bool
             // エンコード処理
             if ( enc )
             {
-              cdf[m]  = s | (OBC_MASK << BC_FACE_N);
+              setBit5raw(cdf[m], OBC_MASK, BC_FACE_N);
             }
             
             // 外部境界で安定化のため，スキームを1次精度にする
@@ -2510,7 +2510,7 @@ void VoxInfo::encVbitOBC (const int face, int* cdf, const string key, const bool
             // エンコード処理
             if ( enc )
             {
-              cdf[m]  = s | (OBC_MASK << BC_FACE_B);
+              setBit5raw(cdf[m], OBC_MASK, BC_FACE_B);
             }
             
             // 外部境界で安定化のため，スキームを1次精度にする
@@ -2562,7 +2562,7 @@ void VoxInfo::encVbitOBC (const int face, int* cdf, const string key, const bool
             // エンコード処理
             if ( enc )
             {
-              cdf[m]  = s | (OBC_MASK << BC_FACE_T);
+              setBit5raw(cdf[m], OBC_MASK, BC_FACE_T);
             }
             
             // 外部境界で安定化のため，スキームを1次精度にする

@@ -192,6 +192,19 @@ private:
     return ( idx | (0x1<<shift) );
   }
   
+  
+  /*
+   * @brief 5bit幅の値の設定
+   * @param [in,out] b   int 変数
+   * @param [in]     q   5-bit幅のID (1-31)
+   * @param [in]     sht シフト量
+   */
+  inline void setBit5raw (int& b, const int q, const int sht)
+  {
+    b &= (~(0x1f << sht) ); // 対象5bitをゼロにする
+    b |= (q << sht);        // 書き込む
+  }
+  
 
   
 public:

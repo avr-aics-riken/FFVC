@@ -21,6 +21,8 @@ REVISION HISTORY
 --------------------------
 2013-10-25
 
+- r1042 Polygon Monitor
+
 - r1041 change Monitor implementation
   - remove CELL_MONITOR
   - sampling line & points are reasonable, but polygon & primitive is not
