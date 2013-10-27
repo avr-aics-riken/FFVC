@@ -2661,19 +2661,19 @@ schedule(static) reduction(+:filled) reduction(+:replaced)
 
 
 // #################################################################
-// targetセルの周囲の固体最頻値でフィルを実行
-unsigned long VoxInfo::fillByModalSolid (int* bcd, const int target, const int fluid_id)
+// 未ペイントセルをフィル
+// 周囲の媒質IDの固体最頻値がゼロの場合には，境界IDで代用
+unsigned long VoxInfo::fillByModalSolid (int* bcd, const int fluid_id, const int* bid)
 {
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
   
-  int tg = target;
   int fid = fluid_id;
   unsigned long c = 0; /// painted count
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, fid) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, fid) schedule(static) reduction(+:c)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -2686,7 +2686,8 @@ unsigned long VoxInfo::fillByModalSolid (int* bcd, const int target, const int f
         size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
         size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
         
-        int qq = DECODE_CMP( bcd[m_p] );
+        int dd = DECODE_CMP( bcd[m_p] );
+        
         int qw = DECODE_CMP( bcd[m_w] );
         int qe = DECODE_CMP( bcd[m_e] );
         int qs = DECODE_CMP( bcd[m_s] );
@@ -2694,11 +2695,25 @@ unsigned long VoxInfo::fillByModalSolid (int* bcd, const int target, const int f
         int qb = DECODE_CMP( bcd[m_b] );
         int qt = DECODE_CMP( bcd[m_t] );
         
-        // 対象セルがtargetの場合
-        if ( qq == tg )
+        
+        // 対象セルが未ペイントの場合
+        if ( dd == 0 )
         {
           int sd = find_mode_id(fid, qw, qe, qs, qn, qb, qt);
-          if ( sd == 0 ) Exit(0);
+          
+          // 周囲の媒質IDの固体最頻値がゼロの場合
+          if ( sd == 0 )
+          {
+            int qq = bid[m_p];
+            qw = getBit5(qq, 0);
+            qe = getBit5(qq, 1);
+            qs = getBit5(qq, 2);
+            qn = getBit5(qq, 3);
+            qb = getBit5(qq, 4);
+            qt = getBit5(qq, 5);
+            sd = find_mode_id(fid, qw, qe, qs, qn, qb, qt);
+            if ( sd == 0 ) Exit(0); // 何かあるはず
+          }
           setBit5(bcd[m_p], sd, 0);
           c++;
         }
@@ -2778,7 +2793,7 @@ unsigned long VoxInfo::fillCutOnCellCenter (int* bcd, const int* bid, const floa
 // #################################################################
 // シード点をペイントする
 // ヒントとして与えられた外部境界面に接するセルにおいて，確実に流体セルであるセルをフィルする
-// もし，ヒント面に固体候補があれば、ぬれ面はフィルしない
+// もし，外部境界面以外に固体候補があれば、ぬれ面はフィルしない
 unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, const int* bid)
 {
   int ix = size[0];
@@ -2788,20 +2803,29 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
   int tg = target;     ///< order of FLUID ID
   unsigned long c = 0;
   
+  // 各外部境界面以外のフェイスにカットがあるかどうかを検査するためのマスク
+  unsigned mask0 = 0x3fffffff;
+  unsigned mx_w  = mask0 & ( ~(0x1f << (X_minus*5)) );
+  unsigned mx_e  = mask0 & ( ~(0x1f << (X_plus *5)) );
+  unsigned mx_s  = mask0 & ( ~(0x1f << (Y_minus*5)) );
+  unsigned mx_n  = mask0 & ( ~(0x1f << (Y_plus *5)) );
+  unsigned mx_b  = mask0 & ( ~(0x1f << (Z_minus*5)) );
+  unsigned mx_t  = mask0 & ( ~(0x1f << (Z_plus *5)) );
+  
   
   switch (face)
   {
     case X_minus:
       if ( nID[face] < 0 )
       {
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, mx_w) schedule(static) reduction(+:c)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
             int s = bid[m];
             
             // 対象セルの周囲6方向にカットがなく，未ペイントのセルの場合
-            if ( !TEST_BC(s) && (DECODE_CMP(s) == 0) )
+            if ( ((s & mx_w) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
               setBit5(bcd[m], tg, 0);
               c++;
@@ -2814,13 +2838,13 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
     case X_plus:
       if ( nID[face] < 0 )
       {
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, mx_e) schedule(static) reduction(+:c)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             size_t m = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
             int s = bid[m];
             
-            if ( !TEST_BC(s) && (DECODE_CMP(s) == 0) )
+            if ( ((s & mx_e) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
               setBit5(bcd[m], tg, 0);
               c++;
@@ -2833,13 +2857,13 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
     case Y_minus:
       if ( nID[face] < 0 )
       {
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, mx_s) schedule(static) reduction(+:c)
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
             size_t m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
             int s = bid[m];
             
-            if ( !TEST_BC(s) && (DECODE_CMP(s) == 0) )
+            if ( ((s & mx_s) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
               setBit5(bcd[m], tg, 0);
               c++;
@@ -2852,13 +2876,13 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
     case Y_plus:
       if ( nID[face] < 0 )
       {
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, mx_n) schedule(static) reduction(+:c)
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
             size_t m = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
             int s = bid[m];
             
-            if ( !TEST_BC(s) && (DECODE_CMP(s) == 0) )
+            if ( ((s & mx_n) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
               setBit5(bcd[m], tg, 0);
               c++;
@@ -2871,13 +2895,13 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
     case Z_minus:
       if ( nID[face] < 0 )
       {
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, mx_b) schedule(static) reduction(+:c)
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
             size_t m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
             int s = bid[m];
-            
-            if ( !TEST_BC(s) && (DECODE_CMP(s) == 0) )
+
+            if ( ((s & mx_b) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
               setBit5(bcd[m], tg, 0);
               c++;
@@ -2890,13 +2914,13 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
     case Z_plus:
       if ( nID[face] < 0 )
       {
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, mx_t) schedule(static) reduction(+:c)
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
             size_t m = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
             int s = bid[m];
             
-            if ( !TEST_BC(s) && (DECODE_CMP(s) == 0) )
+            if ( ((s & mx_t) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
               setBit5(bcd[m], tg, 0);
               c++;

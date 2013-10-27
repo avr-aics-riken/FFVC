@@ -181,29 +181,6 @@ MonitorList {
     Interval      = 2.0e-5
   }
 
-/*
-  list[@] {
-    type            = "Line"
-    label           = "line1"
-    Variable        = "Velocity"
-    SamplingMethod  = "Interpolation"
-    SamplingMode    = "Fluid"
-    Division        = 64
-    From            = (-0.5, 0.0, 0.0)
-    To              = (0.5, 0.0, 0.0)
-  }
-
-  list[@] {
-    type            = "Line"
-    label           = "line2"
-    Variable        = "Velocity"
-    SamplingMethod  = "Interpolation"
-    SamplingMode    = "Fluid"
-    Division        = 64
-    From            = (0.0, 0.0, -0.5)
-    To              = (0.0, 0.0, 0.5)
-  }
-*/
 }
 
 
@@ -213,7 +190,6 @@ Output {
     Iteration        = "Off"
     Profiling        = "On"
     WallInfo         = "Off"
-    CCNVfile         = "off"
     Console {
       TemporalType   = "Step"
       Interval       = 1
@@ -235,8 +211,8 @@ Output {
       TemporalType   = "step"
       Interval       = 20
 
-      TotalPressure  = "On"
-      Helicity       = "On"
+      TotalPressure  = "Off"
+      Helicity       = "Off"
       Vorticity      = "Off"
       Qcriterion     = "On"
     }
@@ -261,7 +237,6 @@ Output {
 Reference {
   Length       = 0.1
   Velocity     = 1.0
-  //MassDensity  = 1.1763
   Temperature {
     Base       = 20.0
     Difference = 35.0

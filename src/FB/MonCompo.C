@@ -871,15 +871,16 @@ void MonitorCompo::printInfo(FILE* fp, int no)
   {
     fprintf(fp,"\t\t%9d : %14.6e %14.6e %14.6e  : %6d : %s", // %12.4 >> %14.6
             j+1, convCrd(crd[j].x), convCrd(crd[j].y), convCrd(crd[j].z), rank[j], comment[j].c_str());
-    if (pointStatus[j] == Sampling::UNEXPECTED_SOLID) 
+    
+    if (pointStatus[j] == Sampling::UNEXPECTED_SOLID)      // 流体セルを指定したが固体だった
     {
       fprintf(fp, "  *skip(unexpected solid)*\n");
     }
-    else if (pointStatus[j] == Sampling::UNEXPECTED_FLUID) 
+    else if (pointStatus[j] == Sampling::UNEXPECTED_FLUID) // 固体セルを指定したが流体だった
     {
       fprintf(fp, "  *skip(unexpected fluid)*\n");
     }
-    else 
+    else
     {
       fprintf(fp, "\n");
     }
@@ -1543,11 +1544,11 @@ void MonitorCompo::writeHeader(bool gathered)
       fprintf(fp, "%14.6e %14.6e %14.6e  #%s",
               convCrd(crd[i].x), convCrd(crd[i].y), convCrd(crd[i].z), comment[i].c_str());
       
-      if (pointStatus[i] == Sampling::UNEXPECTED_SOLID) 
+      if (pointStatus[i] == Sampling::UNEXPECTED_SOLID)      // 流体セルを指定したが固体だった
       {
         fprintf(fp, "  *skip(unexpected solid)*\n");
       }
-      else if (pointStatus[i] == Sampling::UNEXPECTED_FLUID) 
+      else if (pointStatus[i] == Sampling::UNEXPECTED_FLUID) // 固体セルを指定したが流体だった
       {
         fprintf(fp, "  *skip(unexpected fluid)*\n");
       }

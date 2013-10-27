@@ -70,50 +70,122 @@ public:
   
 public:
   
-  // ユーザー例題の名称を返す
-  const char* getExampleName(int m_id);
-  
-  
-  // 例題クラス固有のパラメータをロードする
+  /**
+   * @brief 例題クラス固有のパラメータをロードする
+   * @param [in] R      Controlクラス
+   * @param [in] tpCntl テキストパーサクラス
+   * @return true-成功, false-エラー
+   */
   virtual bool getTP(Control* R, TextParser* tpCntl) 
   { 
     return true; 
   }
   
   
-  // 例題名称の表示
+  /**
+   * @brief 例題名称の表示
+   * @param [in] fp   出力ファイルのファイルポインタ
+   * @param [in] m_id 例題ID
+   */
   virtual void printExample(FILE* fp, const int m_id);
   
   
-  // 例題クラス固有のパラメータの表示
+  
+  /**
+   * @brief パラメータの表示
+   * @param [in] fp ファイルポインタ
+   * @param [in] R  コントロールクラスのポインタ
+   */
   virtual void printPara(FILE* fp, const Control* R);
   
   
-  // 領域パラメータを設定する
-  virtual void setDomainParameter(Control* R, const int* sz, REAL_TYPE* org, REAL_TYPE* reg, REAL_TYPE* pch) {};
+  /**
+   * @brief 領域パラメータを設定する
+   * @param [in]     R     Controlクラスのポインタ
+   * @param [in]     sz    分割数
+   * @param [in,out] m_org 計算領域の基点
+   * @param [in,out] m_reg 計算領域のbounding boxサイズ
+   * @param [in,out] m_pch セル幅
+   */
+  virtual void setDomainParameter(Control* R,
+                                  const int* sz,
+                                  REAL_TYPE* org,
+                                  REAL_TYPE* reg,
+                                  REAL_TYPE* pch) {};
   
   
-  // 外部境界の設定
-  virtual void setOBC(const int face, int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut, int* bid) {};
+  /**
+   * @brief 外部境界の設定
+   * @param [in]     face     面番号
+   * @param [in,out] bcd      BCindexx B
+   * @param [in]     R        Controlクラスのポインタ
+   * @param [in]     G_org    グローバルな原点（無次元）
+   * @param [in]     NoMedium 媒質数
+   * @param [in]     mat      MediumListクラスのポインタ
+   * @param [out]    cut      カット情報
+   * @param [out]    bid      境界ID
+   */
+  virtual void setOBC(const int face,
+                      int* bcd,
+                      Control* R,
+                      REAL_TYPE* G_org,
+                      const int NoMedium,
+                      const MediumList* mat,
+                      float* cut,
+                      int* bid) {};
   
   
-  // 代表パラメータのセット
+  
+  /**
+   * @brief 代表パラメータの設定
+   * @param [in] Cref  コントロールクラスのポインタ
+   */
   void setRefParameter(Control* Cref);
   
   
-  // 計算領域の媒質情報を設定する
-  virtual void setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut) {};
+  /**
+   * @brief 計算領域のセルIDとカット情報を設定する
+   * @param [in,out] bcd      BCindex B
+   * @param [in]     R        Controlクラスのポインタ
+   * @param [in]     G_org    グローバルな原点（無次元）
+   * @param [in]     NoMedium 媒質数
+   * @param [in]     mat      MediumListクラスのポインタ
+   * @param [in]     cut      交点情報
+   * @param [in]     bid      境界ID
+   */
+  virtual void setup(int* bcd,
+                     Control* R,
+                     REAL_TYPE* G_org,
+                     const int NoMedium,
+                     const MediumList* mat,
+                     float* cut,
+                     int* bid) {};
   
   
-  // モデルIDをsphフォーマット(float)で出力する
+  
+  /**
+   * @brief モデルIDをsphフォーマット(float)で出力する
+   * @param [in] bcd BCindex B
+   * @param [in] R   コントロールクラスのポインタ
+   */
   void writeSPH(const int* bcd, const Control* R);
   
   
-  // 例題のモデルをsvxフォーマットで出力する(体積率とID)
+  
+  /**
+   * @brief 例題のモデルをsvxフォーマットで出力する(体積率とID)
+   * @param [in] vf 体積占有率
+   * @param [in] id ID情報
+   * @param [in] R  コントロールクラスのポインタ
+   */
   void writeSVX(REAL_TYPE *vf, int *id, Control* R);
   
   
-  // 例題のモデルをsvxフォーマットで出力する(ID)
+  /**
+   * @brief 例題のモデルをsvxフォーマットで出力する(ID)
+   * @param [in] bcd BCindex B
+   * @param [in] R   コントロールクラスのポインタ
+   */
   void writeSVX(const int* bcd, Control* R);
   
 };

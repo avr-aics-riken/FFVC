@@ -27,7 +27,7 @@
 float IP_Sphere::cut_line(const FB::Vec3f p, const int dir, const float r, const float dh)
 {
   float x, y, z, s;
-  float xc, yc, zc;
+  float c;
   
   x = p.x;
   y = p.y;
@@ -39,39 +39,39 @@ float IP_Sphere::cut_line(const FB::Vec3f p, const int dir, const float r, const
   switch (dir)
   {
     case 1: // X-
-      xc = sqrtf(r*r - y*y - z*z);
-      if ( x < 0.0 ) xc *= -1.0;
-      s = fabs(xc-x);
+      c = sqrtf(r*r - y*y - z*z);
+      if ( x < 0.0 ) c *= -1.0;
+      s = fabs(c-x);
       break;
       
     case 2: // X+
-      xc = sqrtf(r*r - y*y - z*z);
-      if ( x < 0.0 ) xc *= -1.0;
-      s = fabs(xc-x);
+      c = sqrtf(r*r - y*y - z*z);
+      if ( x < 0.0 ) c *= -1.0;
+      s = fabs(c-x);
       break;
       
     case 3: // Y-
-      yc = sqrtf(r*r - x*x - z*z);
-      if ( y < 0.0 ) yc *= -1.0;
-      s = fabs(yc-y);
+      c = sqrtf(r*r - x*x - z*z);
+      if ( y < 0.0 ) c *= -1.0;
+      s = fabs(c-y);
       break;
       
     case 4: // Y+
-      yc = sqrtf(r*r - x*x - z*z);
-      if ( y < 0.0 ) yc *= -1.0;
-      s = fabs(yc-y);
+      c = sqrtf(r*r - x*x - z*z);
+      if ( y < 0.0 ) c *= -1.0;
+      s = fabs(c-y);
       break;
       
     case 5: // Z-
-      zc = sqrtf(r*r - x*x - y*y);
-      if ( z < 0.0 ) zc *= -1.0;
-      s = fabs(zc-z);
+      c = sqrtf(r*r - x*x - y*y);
+      if ( z < 0.0 ) c *= -1.0;
+      s = fabs(c-z);
       break;
       
     case 6: // Z+
-      zc = sqrtf(r*r - x*x - y*y);
-      if ( z < 0.0 ) zc *= -1.0;
-      s = fabs(zc-z);
+      c = sqrtf(r*r - x*x - y*y);
+      if ( z < 0.0 ) c *= -1.0;
+      s = fabs(c-z);
       break;
       
     default:
@@ -238,7 +238,7 @@ void IP_Sphere::setDomainParameter(Control* R, const int* sz, REAL_TYPE* m_org, 
 
 // #################################################################
 // 計算領域のセルIDとカット情報を設定する
-void IP_Sphere::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
+void IP_Sphere::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut, int* bid)
 {
   int mid_fluid;        /// 流体
   int mid_solid;        /// 固体
@@ -292,44 +292,16 @@ void IP_Sphere::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium
     Exit(0);
   }
   
-  /*
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid) schedule(static)
-  for (int k=1-gd; k<=kx+gd; k++) {
-    for (int j=1-gd; j<=jx+gd; j++) {
-      for (int i=1-gd; i<=ix+gd; i++) {
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        bcd[m] |= mid_fluid;
-      }
-    }
-  }
+
   
-  // 球内部
-  
-  for (int k=box_st.z; k<=box_ed.z; k++) { 
-    for (int j=box_st.y; j<=box_ed.y; j++) {
-      for (int i=box_st.x; i<=box_ed.x; i++) {
-       
-        base.assign((float)i-0.5, (float)j-0.5, (float)k-0.5);
-        b = org_l + base*ph;
-        r = b.length();
-        
-        if ( r <= rs )
-        {
-          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          bcd[m] |= mid_solid;
-        }
-      }
-    }
-  }
-  */
   
   // カット情報
   FB::Vec3f p[7];
   float lb[7], s, r_min=10.0, r_max=0.0;
   
-  for (int k=box_st.z; k<=box_ed.z; k++) { 
-    for (int j=box_st.y; j<=box_ed.y; j++) {
-      for (int i=box_st.x; i<=box_ed.x; i++) {
+  for (int k=box_st.z-2; k<=box_ed.z+2; k++) {
+    for (int j=box_st.y-2; j<=box_ed.y+2; j++) {
+      for (int i=box_st.x-2; i<=box_ed.x+2; i++) {
         
         base.assign((float)i-0.5, (float)j-0.5, (float)k-0.5);
         b = org + base*ph;
@@ -342,9 +314,11 @@ void IP_Sphere::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium
         p[5].assign(b.x   , b.y   , b.z-ph); // b
         p[6].assign(b.x   , b.y   , b.z+ph); // t
         
+        // (0.0, 0.0, 0.0)が球の中心
         for (int l=0; l<7; l++) {
           lb[l] = ( p[l].length() <= rs ) ? -1.0 : 1.0; // 内側がマイナス
         }
+        
         
         // cut test
         for (int l=1; l<=6; l++) {
@@ -353,6 +327,41 @@ void IP_Sphere::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium
             s = cut_line(p[0], l, rs, ph);
             size_t m = _F_IDX_S4DEX(l-1, i, j, k, 6, ix, jx, kx, gd); // 注意！　インデクスが1-6
             cut[m] = s;
+            setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_solid, l-1);
+            
+            switch (l-1) {
+              case X_minus:
+                setBit5(bid[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)], mid_solid, X_plus);
+                cut[_F_IDX_S4DEX(X_plus, i-1, j, k, 6, ix, jx, kx, gd)] = 1.0-s;
+                break;
+                
+              case X_plus:
+                setBit5(bid[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)], mid_solid, X_minus);
+                cut[_F_IDX_S4DEX(X_minus, i+1, j, k, 6, ix, jx, kx, gd)] = 1.0-s;
+                break;
+                
+              case Y_minus:
+                setBit5(bid[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)], mid_solid, Y_plus);
+                cut[_F_IDX_S4DEX(Y_plus, i, j-1, k, 6, ix, jx, kx, gd)] = 1.0-s;
+                break;
+                
+              case Y_plus:
+                setBit5(bid[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)], mid_solid, Y_minus);
+                cut[_F_IDX_S4DEX(Y_minus, i, j+1, k, 6, ix, jx, kx, gd)] = 1.0-s;
+                break;
+                
+              case Z_minus:
+                setBit5(bid[_F_IDX_S3D(i, j, k-1, ix, jx, kx, gd)], mid_solid, Z_plus);
+                cut[_F_IDX_S4DEX(Z_plus, i, j, k-1, 6, ix, jx, kx, gd)] = 1.0-s;
+                break;
+                
+              case Z_plus:
+                setBit5(bid[_F_IDX_S3D(i, j, k+1, ix, jx, kx, gd)], mid_solid, Z_minus);
+                cut[_F_IDX_S4DEX(Z_minus, i, j, k+1, 6, ix, jx, kx, gd)] = 1.0-s;
+                break;
+            }
+            
+            //printf("(%2d %2d %2d) %2d %d %f\n", i,j,k,mid_solid, l-1, s);
             r_min = std::min(r_min, s);
             r_max = std::max(r_max, s);
           }
@@ -363,7 +372,7 @@ void IP_Sphere::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium
   
   Hostonly_
   {
-    printf("\nCut info. for Sphere\n");
+    printf("\n\tCut info. for Sphere\n");
     printf("\tmin. cut = %f\n", r_min);
     printf("\tmax. cut = %f\n", r_max);
   }

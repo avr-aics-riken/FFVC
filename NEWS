@@ -18,6 +18,11 @@
 RELEASE
 =======
 
+-------------
+Version 1.4.7    2013-10-27
+  - renew pre-precess algorithm and sampling
+
+-------------
 Version 1.4.6    2013-10-12
   - repalce IntervalManager.h from CIOlib
   

@@ -23,10 +23,7 @@
 
 
 // #################################################################
-/* @brief 例題名称の表示
- * @param [in] fp   出力ファイルのファイルポインタ
- * @param [in] m_id 例題ID
-*/
+// 例題名称の表示
 void Intrinsic::printExample(FILE* fp, const int m_id)
 {
   if ( !fp )
@@ -60,10 +57,7 @@ void Intrinsic::printExample(FILE* fp, const int m_id)
 
 
 // #################################################################
-/* @brief パラメータの表示
- * @param [in] fp ファイルポインタ
- * @param [in] R  コントロールクラスのポインタ
- */
+// 例題クラス固有のパラメータの表示
 void Intrinsic::printPara(FILE* fp, const Control* R)
 {
   if ( !fp ) {
@@ -75,9 +69,7 @@ void Intrinsic::printPara(FILE* fp, const Control* R)
 
 
 // #################################################################
-/* @brief 代表パラメータの設定
- * @param [in] Cref  コントロールクラスのポインタ
- */
+// 代表パラメータのセット
 void Intrinsic::setRefParameter(Control* Cref)
 {
   RefL = Cref->RefLength;
@@ -86,10 +78,7 @@ void Intrinsic::setRefParameter(Control* Cref)
 
 
 // #################################################################
-/* @brief モデルIDをsphフォーマット(float)で出力する
- * @param [in] bcd BCindex B
- * @param [in] R   コントロールクラスのポインタ
- */
+// モデルIDをsphフォーマット(float)で出力する
 void Intrinsic::writeSPH(const int *bcd, const Control* R)
 {
   int ix, jx, kx;
@@ -199,11 +188,7 @@ void Intrinsic::writeSPH(const int *bcd, const Control* R)
 
 
 // #################################################################
-/* @brief 例題のモデルをsvxフォーマットで出力する(体積率とID)
- * @param [in] vf 体積占有率
- * @param [in] id ID情報
- * @param [in] R  コントロールクラスのポインタ
- */
+// 例題のモデルをsvxフォーマットで出力する(体積率とID)
 void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
 {
 
@@ -310,10 +295,7 @@ void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
 
 
 // #################################################################
-/* @brief 例題のモデルをsvxフォーマットで出力する(ID)
- * @param [in] bcd BCindex B
- * @param [in] R  コントロールクラスのポインタ
- */
+// 例題のモデルをsvxフォーマットで出力する(ID)
 void Intrinsic::writeSVX(const int* bcd, Control* R)
 {
   

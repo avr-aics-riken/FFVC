@@ -45,16 +45,10 @@ public:
    * @param [in]     G_org    グローバルな原点（無次元）
    * @param [in]     NoMedium 媒質数
    * @param [in]     mat      MediumListクラスのポインタ
+   * @param [in]     cut      交点情報
+   * @param [in]     bid      境界ID
    */
   void setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat);
-  
-  
-  /** 
-   @brief 例題の名称を返す
-   */
-  const char* getExampleName(void) 
-  {
-    return ("Rayleigh's Problem");
-  }
+
 };
 #endif // _IP_RSP_H_

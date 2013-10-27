@@ -67,8 +67,7 @@ protected:
   vector<MonitorCompo*> monGroup;  ///< モニタリンググループ配列
   MonitorCompo:: ReferenceVariables refVar;  ///< 参照用パラメータ変数
 
-  string fname_integral; ///< mon_POLYGON, mon_BOX, mon_CYLINDER
-  string fname_detail;   ///< mon_POINT_SET, mon_LINE
+  string fname_sampling; ///< 基本ファイル名
   
   
 public:
@@ -78,8 +77,7 @@ public:
     nGroup = 0;
     outputType = NONE;
     num_process = 0;
-    fname_integral = "sampling_compo.txt";
-    fname_detail   = "sampling.txt";
+    fname_sampling = "sampling.txt";
     area = 0.0;
     NoCompo = 0;
     mtbl = NULL;

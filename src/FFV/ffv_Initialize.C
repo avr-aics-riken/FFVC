@@ -392,7 +392,17 @@ int FFV::Initialize(int argc, char **argv)
     printf(    "\n---------------------------------------------------------------------------\n\n\n");
   }
   
-  
+  if (C.FIO.IO_Voxel == ON)
+  {
+    Ex->writeSVX(d_bcd, &C);
+    Hostonly_
+    {
+      fprintf(fp,"\tVoxel file 'example.svx' was written.\n");
+      printf(    "\tVoxel file 'example.svx' was written.\n");
+      fprintf(fp,"\n---------------------------------------------------------------------------\n\n\n");
+      printf(    "\n---------------------------------------------------------------------------\n\n\n");
+    }
+  }
   
   // mid[]を解放する  ---------------------------
   if ( d_mid ) delete [] d_mid;
@@ -1270,6 +1280,7 @@ void FFV::fill(FILE* fp)
     if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
   }
   
+
   
   
   Hostonly_
@@ -1293,7 +1304,7 @@ void FFV::fill(FILE* fp)
     {
       if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
     }
-    
+
     if ( filled == 0 )
     {
       Hostonly_
@@ -1398,6 +1409,7 @@ void FFV::fill(FILE* fp)
     }
   }
   
+  Ex->writeSVX(d_bcd, &C);
   
   // 固体に変更
   c = -1;
@@ -1406,7 +1418,7 @@ void FFV::fill(FILE* fp)
   while ( target_count > 0 ) {
     
     // 未ペイントのセルに対して、固体IDを与える
-    replaced = V.fillByModalSolid(d_bcd, 0, C.RefFillMat);
+    replaced = V.fillByModalSolid(d_bcd, C.RefFillMat, d_bid);
     
     if ( numProc > 1 )
     {
@@ -3014,14 +3026,14 @@ void FFV::prepHistoryOutput()
         stamped_printf("\tSorry, can't open 'history_base.txt' file. Write failed.\n");
         Exit(0);
       }
-      H->printHistoryTitle(fp_b, IC, &C, false);
+      H->printHistoryTitle(fp_b, IC, &C, true);
       
       // コンポーネント履歴情報
       if ( C.EnsCompo.monitor )
       {
         if ( !(fp_c=fopen("history_compo.txt", "w")) )
         {
-          stamped_printf("\tSorry, can't open 'sampling_compo.txt' file. Write failed.\n");
+          stamped_printf("\tSorry, can't open 'history_compo.txt' file. Write failed.\n");
           Exit(0);
         }
         H->printHistoryCompoTitle(fp_c, cmp, &C);
@@ -3820,7 +3832,7 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
     case id_Cylinder:
     case id_Duct:
       setupCutInfo4IP(PrepMemory, TotalMemory, fp);
-      Ex->setup(d_bcd, &C, G_origin, C.NoCompo, mat, d_cut);
+      Ex->setup(d_bcd, &C, G_origin, C.NoCompo, mat, d_cut, d_bid);
       break;
       
     default: // ほかのIntrinsic problems
@@ -3897,7 +3909,7 @@ void FFV::setMonitorList()
   // パラメータを取得し，サンプリングの座標値をセットする >> サンプリング指定がなければ，return
   if ( !MO.getMonitor(&C, cmp) ) return;
   
-  //Ex->writeSVX(d_bcd, &C);
+
   // Polygon指定のセルモニターの場合に交点と境界IDを除去
   MO.clearCut();
   

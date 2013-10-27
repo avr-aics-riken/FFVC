@@ -162,7 +162,7 @@ void IP_Step::printPara(FILE* fp, const Control* R)
 
 // #################################################################
 // 計算領域のセルIDを設定する
-void IP_Step::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut)
+void IP_Step::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut, int* bid)
 {
   int mid_fluid, mid_solid, mid_driver, mid_driver_face;
   

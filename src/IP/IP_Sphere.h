@@ -112,8 +112,9 @@ protected:
    * @param [in]     NoMedium 媒質数
    * @param [in]     mat      MediumListクラスのポインタ
    * @param [in]     cut      交点情報
+   * @param [in]     bid      境界ID
    */
-  virtual void setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut);
+  virtual void setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut, int* bid);
   
 };
 #endif // _IP_SHERE_H_

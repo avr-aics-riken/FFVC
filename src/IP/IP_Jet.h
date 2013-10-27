@@ -120,7 +120,14 @@ public:
    * @param [out]    cut      カット情報
    * @param [out]    bid      境界ID
    */
-  virtual void setOBC(const int face, int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut, int* bid);
+  virtual void setOBC(const int face,
+                      int* bcd,
+                      Control* R,
+                      REAL_TYPE* G_org,
+                      const int NoMedium,
+                      const MediumList* mat,
+                      float* cut,
+                      int* bid);
   
   
   /**

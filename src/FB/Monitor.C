@@ -844,17 +844,7 @@ void MonitorList::openFile()
   {
     for (int i = 0; i < nGroup; i++)
     {
-      string fileName;
-      
-      if ( (monGroup[i]->getType() == mon_LINE) ||
-           (monGroup[i]->getType() == mon_POINT_SET) )
-      {
-        fileName = fname_detail;
-      }
-      else
-      {
-        fileName = fname_integral;
-      }
+      string fileName(fname_sampling);
       
       string label("_");
       label = label + monGroup[i]->getLabel();

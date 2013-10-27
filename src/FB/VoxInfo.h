@@ -164,7 +164,7 @@ private:
     
     
     int mode = key[NoCompo]; // サーチの初期値，IDの大きい方から
-    int z = 0;         // 最頻値のID
+    int z = NoCompo;         // 最頻値のID
     
     for (int l=NoCompo-1; l>=1; l--)
     {
@@ -280,13 +280,13 @@ public:
   unsigned long fillByBid (int* bid, int* bcd, float* cut, const int tgt_id, unsigned long& substituted);
   
   
-  /* @brief targetセルの周囲の固体最頻値でフィルを実行
+  /* @brief 未ペイントセルをフィル
    * @param [in,out] bcd      BCindex B
-   * @param [in]     target   置換対象セルID
    * @param [in]     fluid_id フィルをする流体ID
+   * @param [in]     bid      境界ID
    * @retval 置換されたセル数
    */
-  unsigned long fillByModalSolid (int* bcd, const int target, const int fluid_id);
+  unsigned long fillByModalSolid (int* bcd, const int fluid_id, const int* bid);
   
   
   /**

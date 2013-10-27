@@ -153,34 +153,88 @@ MediumTable {
 
 
 MonitorList {
-  Log             = "Off"
-  OutputMode      = "Gather"
+  Log             = "On"
+  OutputMode      = "gather"
   Sampling {
     TemporalType  = "step"
-    Interval      = 100
+    Interval      = 10
   }
 
   list[@] {
     type            = "Line"
-    label           = "line1"
-    Variable        = "Velocity"
-    SamplingMethod  = "Interpolation"
+    label           = "grp1"
+    SamplingMethod  = "nearest"
     SamplingMode    = "Fluid"
     Division        = 64
     From            = (-0.5, 0.0, 0.0)
     To              = (0.5, 0.0, 0.0)
+    Variables {
+      velocity      = "on"
+      vorticity     = "on"
+      totalPressure = "on"
+    }
   }
 
   list[@] {
-    type            = "Line"
-    label           = "line2"
-    Variable        = "Velocity"
+    type            = "pointset"
+    label           = "grp2"
     SamplingMethod  = "Interpolation"
     SamplingMode    = "Fluid"
-    Division        = 64
-    From            = (0.0, 0.0, -0.5)
-    To              = (0.0, 0.0, 0.5)
+    set[@] {
+      Coordinate    = (0.2, 0.2, 0.2)
+      tag           = "p1" 
+    }
+    set[@] {
+      Coordinate    = (0.3, 0.3, 0.3)
+      tag           = "p2" 
+    }
+    set[@] {
+      Coordinate    = (0.4, 0.4, 0.4)
+      tag           = "p3" 
+    }
+    Variables {
+      pressure      = "on"
+      helicity      = "on"
+      totalPressure = "off"
+    }
   }
+/*
+  list[@] {
+    type              = "box"
+    label             = "grp3"
+    SamplingMethod    = "nearest"
+    SamplingMode      = "Fluid"
+    Normal            = (0.0, 0.0, 1.0)
+    Center            = (0.0, 0.0, 0.4)
+    Depth             = 0.05
+    orientationVector = (1.0, 0.0, 0.0)
+    width             = 0.4
+    height            = 0.2
+    Variables {
+      velocity      = "on"
+      pressure      = "off"
+      temperature   = "off"
+      TotalPressure = "off"
+    }
+  }
+
+  list[@] {
+    type              = "cylinder"
+    label             = "grp4"
+    SamplingMethod    = "nearest"
+    SamplingMode      = "Fluid"
+    Normal            = (0.0,-1.0, 0.0)
+    Center            = (0.0, 0.2, 0.0)
+    Depth             = 0.1
+    radius            = 0.1
+    Variables {
+      velocity      = "on"
+      pressure      = "off"
+      temperature   = "off"
+      TotalPressure = "off"
+    }
+  }
+*/
 }
 
 
@@ -190,7 +244,6 @@ Output {
     Iteration        = "Off"
     Profiling        = "On"
     WallInfo         = "Off"
-    CCNVfile         = "on"
     Console {
       TemporalType   = "Step"
       Interval       = 1
@@ -238,7 +291,6 @@ Output {
 Reference {
   Length        = 1.0
   Velocity      = 1.0
-  //MassDensity   = 1.1763
   BasePressure  = 0.0
   Medium        = "air"
   Temperature {
@@ -271,8 +323,8 @@ StartCondition {
     Staging     = "off"
 
     DFIfiles {
-      Velocity    = "vel0.dfi"
-      Pressure    = "prs0.dfi"
+      Velocity    = "vel.dfi"
+      Pressure    = "prs.dfi"
       Fvelocity   = "fvel.dfi"
     }
   }

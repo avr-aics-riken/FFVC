@@ -19,6 +19,9 @@
  * @author kero
  */
 
+
+/// 最初に1セルの隙間の穴埋め処理を行い，その後，フラッドフィル
+
 size_t m_p = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
 size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
 size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
@@ -55,121 +58,157 @@ if ( zp == 0 )
   // 最頻値ID >> tg以外
   int sd = find_mode_id(tg, qw, qe, qs, qn, qb, qt);
   
-  
   // 各方向のテスト
   // 対象セルは，未評価セル(zp == 0) 
   // 例えば、X-側からテストする場合は，X-側のセルがフィルを行うターゲットID（Fluid）で既にペイントされている(zw == tg)
-  // 次のパターンではない場合にX-方向からみてi点上にsolidがあるとみなす
+  // 次のパターンの場合にX-方向からみてi点上にsolidがあるとみなす
   // 1) X方向面直平面のYもしくはZ各方向の対辺の両方のみにカットがある
   // 2) YとZの4方向にカットがある
 
   // 固体IDでフィルする場合にインクリメント
   int sd_flag = 0;
   
-  // 検査方向に貫通しない場合にインクリメント
-  int fill_flag;
+  
   
   // X-
-  fill_flag = 0;
   if ( zw==tg && qw==0 )
   {
-    if ( (qs+qn)==0 && (qb*qt)>0 ) fill_flag++;
-    if ( (qb+qt)==0 && (qs*qn)>0 ) fill_flag++;
-    if ( qs*qn*qb*qt > 0 )         fill_flag++;
+    // 検査方向に壁をおく場合にインクリメント
+    int fill_flag = 0;
+    
+    if ( ((qs+qn)==0) && ((qb*qt)>0) && (qe==0) ) fill_flag++; // Y方向の両側にはカットが無く，Z方向の両側にカットがある，X+方向にカットなし
+    if ( ((qb+qt)==0) && ((qs*qn)>0) && (qe==0) ) fill_flag++; // Z方向の両側にはカットが無く，Y方向の両側にカットがある，X+方向にカットなし
+    if ( ((qs*qn*qb*qt)>0)           && (qe==0) ) fill_flag++; // Y方向とZ方向の両側にカットがある，X+方向にカットなし
+  
+    if ( fill_flag > 0 )
+    {
+      if (sd == 0) Exit(0);
+        
+      cut[ _F_IDX_S4DEX(X_plus, i-1, j, k, 6, ix, jx, kx, gd) ] = 1.0;
+      setBit5(bid[m_w], sd, X_plus);
+      
+      cut[ _F_IDX_S4DEX(X_minus, i, j, k, 6, ix, jx, kx, gd) ] = 0.0;
+      setBit5(bid[m_p], sd, X_minus);
+      sd_flag++;
+    }
   }
   
-  if ( fill_flag > 0 )
-  {
-    if ( sd == 0 ) Exit(0);
-    cut[ _F_IDX_S4DEX(X_plus, i-1, j, k, 6, ix, jx, kx, gd) ] = 1.0;
-    setBit5(bid[m_w], sd, X_plus);
-    sd_flag++;
-  }
   
   // X+
-  fill_flag = 0;
   if ( ze==tg && qe==0 )
   {
-    if ( (qs+qn)==0 && (qb*qt)>0 ) fill_flag++;
-    if ( (qb+qt)==0 && (qs*qn)>0 ) fill_flag++;
-    if ( qs*qn*qb*qt > 0 )         fill_flag++;
+    int fill_flag = 0;
+    
+    if ( ((qs+qn)==0) && ((qb*qt)>0) && (qw==0) ) fill_flag++;
+    if ( ((qb+qt)==0) && ((qs*qn)>0) && (qw==0) ) fill_flag++;
+    if ( ((qs*qn*qb*qt)>0)           && (qw==0) ) fill_flag++;
+    
+    if ( fill_flag > 0 )
+    {
+      if (sd == 0) Exit(0);
+        
+      cut[ _F_IDX_S4DEX(X_minus, i+1, j, k, 6, ix, jx, kx, gd) ] = 1.0;
+      setBit5(bid[m_e], sd, X_minus);
+      
+      cut[ _F_IDX_S4DEX(X_plus, i, j, k, 6, ix, jx, kx, gd) ] = 0.0;
+      setBit5(bid[m_p], sd, X_plus);
+      sd_flag++;
+    }
   }
   
-  if ( fill_flag > 0 )
-  {
-    if ( sd == 0 ) Exit(0);
-    cut[ _F_IDX_S4DEX(X_minus, i+1, j, k, 6, ix, jx, kx, gd) ] = 1.0;
-    setBit5(bid[m_e], sd, X_minus);
-    sd_flag++;
-  }
   
   // Y-
-  fill_flag = 0;
   if ( zs==tg && qs==0 )
   {
-    if ( (qw+qe)==0 && (qb*qt)>0 ) fill_flag++;
-    if ( (qb+qt)==0 && (qw*qe)>0 ) fill_flag++;
-    if ( qw*qe*qb*qt > 0 )         fill_flag++;
-  }
-  
-  if ( fill_flag > 0 )
-  {
-    if ( sd == 0 ) Exit(0);
-    cut[ _F_IDX_S4DEX(Y_plus, i, j-1, k, 6, ix, jx, kx, gd) ] = 1.0;
-    setBit5(bid[m_s], sd, Y_plus);
-    sd_flag++;
+    int fill_flag = 0;
+    
+    if ( ((qw+qe)==0) && ((qb*qt)>0) && (qn==0) ) fill_flag++;
+    if ( ((qb+qt)==0) && ((qw*qe)>0) && (qn==0) ) fill_flag++;
+    if ( ((qw*qe*qb*qt)>0)           && (qn==0) ) fill_flag++;
+    
+    if ( fill_flag > 0 )
+    {
+      if (sd == 0) Exit(0);
+        
+      cut[ _F_IDX_S4DEX(Y_plus, i, j-1, k, 6, ix, jx, kx, gd) ] = 1.0;
+      setBit5(bid[m_s], sd, Y_plus);
+      
+      cut[ _F_IDX_S4DEX(Y_minus, i, j, k, 6, ix, jx, kx, gd) ] = 0.0;
+      setBit5(bid[m_p], sd, Y_minus);
+      sd_flag++;
+    }
   }
 
+  
   // Y+
-  fill_flag = 0;
   if ( zn==tg && qn==0 )
   {
-    if ( (qw+qe)==0 && (qb*qt)>0 ) fill_flag++;
-    if ( (qb+qt)==0 && (qw*qe)>0 ) fill_flag++;
-    if ( qw*qe*qb*qt > 0 )         fill_flag++;
+    int fill_flag = 0;
+    
+    if ( ((qw+qe)==0) && ((qb*qt)>0) && (qs==0) ) fill_flag++;
+    if ( ((qb+qt)==0) && ((qw*qe)>0) && (qs==0) ) fill_flag++;
+    if ( ((qw*qe*qb*qt)>0)           && (qs==0) ) fill_flag++;
+    
+    if ( fill_flag > 0 )
+    {
+      if (sd == 0) Exit(0);
+        
+      cut[ _F_IDX_S4DEX(Y_minus, i, j+1, k, 6, ix, jx, kx, gd) ] = 1.0;
+      setBit5(bid[m_n], sd, Y_minus);
+      
+      cut[ _F_IDX_S4DEX(Y_plus, i, j, k, 6, ix, jx, kx, gd) ] = 0.0;
+      setBit5(bid[m_p], sd, Y_plus);
+      sd_flag++;
+    }
   }
   
-  if ( fill_flag > 0 )
-  {
-    if ( sd == 0 ) Exit(0);
-    cut[ _F_IDX_S4DEX(Y_minus, i, j+1, k, 6, ix, jx, kx, gd) ] = 1.0;
-    setBit5(bid[m_n], sd, Y_minus);
-    sd_flag++;
-  }
   
   // Z-
-  fill_flag = 0;
   if ( zb==tg && qb==0 )
   {
-    if ( (qw+qe)==0 && (qs*qn)>0 ) fill_flag++;
-    if ( (qs+qn)==0 && (qw*qe)>0 ) fill_flag++;
-    if ( qw*qe*qs*qn > 0 )         fill_flag++;
+    int fill_flag = 0;
+    
+    if ( ((qw+qe)==0) && ((qs*qn)>0) && (qt==0) ) fill_flag++;
+    if ( ((qs+qn)==0) && ((qw*qe)>0) && (qt==0) ) fill_flag++;
+    if ( ((qw*qe*qs*qn)>0)           && (qt==0) ) fill_flag++;
+    
+    if ( fill_flag > 0 )
+    {
+      if (sd == 0) Exit(0);
+        
+      cut[ _F_IDX_S4DEX(Z_plus, i, j, k-1, 6, ix, jx, kx, gd) ] = 1.0;
+      setBit5(bid[m_b], sd, Z_plus);
+      
+      cut[ _F_IDX_S4DEX(Z_minus, i, j, k, 6, ix, jx, kx, gd) ] = 0.0;
+      setBit5(bid[m_p], sd, Z_minus);
+      sd_flag++;
+    }
   }
   
-  if ( fill_flag > 0 )
-  {
-    if ( sd == 0 ) Exit(0);
-    cut[ _F_IDX_S4DEX(Z_plus, i, j, k-1, 6, ix, jx, kx, gd) ] = 1.0;
-    setBit5(bid[m_b], sd, Z_plus);
-    sd_flag++;
-  }
   
   // Z+
-  fill_flag = 0;
   if ( zt==tg && qt==0 )
   {
-    if ( (qw+qe)==0 && (qs*qn)>0 ) fill_flag++;
-    if ( (qs+qn)==0 && (qw*qe)>0 ) fill_flag++;
-    if ( qw*qe*qs*qn > 0 )         fill_flag++;
+    int fill_flag = 0;
+    
+    if ( ((qw+qe)==0) && ((qs*qn)>0) && (qb==0) ) fill_flag++;
+    if ( ((qs+qn)==0) && ((qw*qe)>0) && (qb==0) ) fill_flag++;
+    if ( ((qw*qe*qs*qn)>0)           && (qb==0) ) fill_flag++;
+    
+    if ( fill_flag > 0 )
+    {
+      if (sd == 0) Exit(0);
+        
+      cut[ _F_IDX_S4DEX(Z_minus, i, j, k+1, 6, ix, jx, kx, gd) ] = 1.0;
+      setBit5(bid[m_t], sd, Z_minus);
+      
+      cut[ _F_IDX_S4DEX(Z_plus, i, j, k, 6, ix, jx, kx, gd) ] = 0.0;
+      setBit5(bid[m_p], sd, Z_plus);
+      sd_flag++;
+    }
   }
+
   
-  if ( fill_flag > 0 )
-  {
-    if ( sd == 0 ) Exit(0);
-    cut[ _F_IDX_S4DEX(Z_minus, i, j, k+1, 6, ix, jx, kx, gd) ] = 1.0;
-    setBit5(bid[m_t], sd, Z_minus);
-    sd_flag++;
-  }
   
   if ( sd_flag > 0 )
   {
@@ -182,33 +221,23 @@ if ( zp == 0 )
     }
     replaced++;
   }
-  else
+  
+  
+  // フラッドフィル
+  int tag = 0;
+  
+  if ( zw==tg && qw==0 ) tag++;
+  if ( ze==tg && qe==0 ) tag++;
+  if ( zs==tg && qs==0 ) tag++;
+  if ( zn==tg && qn==0 ) tag++;
+  if ( zb==tg && qb==0 ) tag++;
+  if ( zt==tg && qt==0 ) tag++;
+
+  if ( tag>0 )
   {
     setBit5(bcd[m_p], tg, 0);
     filled++;
   }
-  
-  
-  //if ( cut[_F_IDX_S4DEX(X_plus,  i, j, k, 6, ix, jx, kx, gd)] <= ROUND_EPS ) printf("X+ : %d %d %d\n",i,j,k);
-  //if ( cut[_F_IDX_S4DEX(X_minus, i, j, k, 6, ix, jx, kx, gd)] <= ROUND_EPS ) printf("X- : %d %d %d\n",i,j,k);
-  //if ( cut[_F_IDX_S4DEX(Y_plus,  i, j, k, 6, ix, jx, kx, gd)] <= ROUND_EPS ) printf("Y+ : %d %d %d\n",i,j,k);
-  //if ( cut[_F_IDX_S4DEX(Y_minus, i, j, k, 6, ix, jx, kx, gd)] <= ROUND_EPS ) printf("Y- : %d %d %d\n",i,j,k);
-  //if ( cut[_F_IDX_S4DEX(Z_plus,  i, j, k, 6, ix, jx, kx, gd)] <= ROUND_EPS ) printf("Z+ : %d %d %d\n",i,j,k);
-  //if ( cut[_F_IDX_S4DEX(Z_minus, i, j, k, 6, ix, jx, kx, gd)] <= ROUND_EPS ) printf("Z- : %d %d %d\n",i,j,k);
-  //if ( (i==26) && (j==14) && (k==239) )
-    //printf("%d %d %d : %f %f %f %f %f %f\n",i,j,k,
-      //     cut[_F_IDX_S4DEX(X_minus, i, j, k, 6, ix, jx, kx, gd)],
-      //     cut[_F_IDX_S4DEX(X_plus, i, j, k, 6, ix, jx, kx, gd)],
-      //     cut[_F_IDX_S4DEX(Y_minus, i, j, k, 6, ix, jx, kx, gd)],
-      //     cut[_F_IDX_S4DEX(Y_plus, i, j, k, 6, ix, jx, kx, gd)],
-      //     cut[_F_IDX_S4DEX(Z_minus, i, j, k, 6, ix, jx, kx, gd)],
-      //     cut[_F_IDX_S4DEX(Z_plus, i, j, k, 6, ix, jx, kx, gd)]);
-    //printf("%d %d %d : %d %d %d %d %d %d\n",i,j,k,
-    //       getFaceBID(0, bid[m_p]),
-    //       getFaceBID(1, bid[m_p]),
-    //       getFaceBID(2, bid[m_p]),
-    //       getFaceBID(3, bid[m_p]),
-    //       getFaceBID(4, bid[m_p]),
-    //       getFaceBID(5, bid[m_p]) );
+
   
 } // target
