@@ -72,12 +72,12 @@ enum Kind_of_vars {
   var_Pressure,
   var_Temperature,
   var_TotalP,
-  var_Velocity_Avr,
+  var_VelocityAvr,
   var_Pressure_Avr,
-  var_Temperature_Avr,
+  var_TemperatureAvr,
   var_Helicity,
   var_Vorticity,
-  var_I2vgt,
+  var_Qcr,
   var_END
 };
 

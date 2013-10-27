@@ -812,8 +812,8 @@ void Control::getFieldData()
 	  Exit(0);
   }
   
-  if     ( !strcasecmp(str.c_str(), "on") )  Mode.TP = ON;
-  else if( !strcasecmp(str.c_str(), "off") ) Mode.TP = OFF;
+  if     ( !strcasecmp(str.c_str(), "on") )  varState[var_TotalP] = ON;
+  else if( !strcasecmp(str.c_str(), "off") ) varState[var_TotalP] = OFF;
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -829,8 +829,8 @@ void Control::getFieldData()
 	  Exit(0);
   }
   
-  if     ( !strcasecmp(str.c_str(), "on") )  Mode.VRT = ON;
-  else if( !strcasecmp(str.c_str(), "off") ) Mode.VRT = OFF;
+  if     ( !strcasecmp(str.c_str(), "on") )  varState[var_Vorticity] = ON;
+  else if( !strcasecmp(str.c_str(), "off") ) varState[var_Vorticity] = OFF;
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -846,8 +846,8 @@ void Control::getFieldData()
 	  Exit(0);
   }
   
-  if     ( !strcasecmp(str.c_str(), "on") )  Mode.I2VGT = ON;
-  else if( !strcasecmp(str.c_str(), "off") ) Mode.I2VGT = OFF;
+  if     ( !strcasecmp(str.c_str(), "on") )  varState[var_Qcr] = ON;
+  else if( !strcasecmp(str.c_str(), "off") ) varState[var_Qcr] = OFF;
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -863,8 +863,8 @@ void Control::getFieldData()
 	  Exit(0);
   }
   
-  if     ( !strcasecmp(str.c_str(), "on") )  Mode.Helicity = ON;
-  else if( !strcasecmp(str.c_str(), "off") ) Mode.Helicity = OFF;
+  if     ( !strcasecmp(str.c_str(), "on") )  varState[var_Helicity] = ON;
+  else if( !strcasecmp(str.c_str(), "off") ) varState[var_Helicity] = OFF;
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -1915,11 +1915,42 @@ void Control::getSolverProperties()
 	  Exit(0);
   }
   
-  if     ( !strcasecmp(str.c_str(), "FlowOnly" ) )               KindOfSolver = FLOW_ONLY;
-  else if( !strcasecmp(str.c_str(), "ThermalFlow" ) )            KindOfSolver = THERMAL_FLOW;
-  else if( !strcasecmp(str.c_str(), "ThermalFlowNatural" ) )     KindOfSolver = THERMAL_FLOW_NATURAL;
-  else if( !strcasecmp(str.c_str(), "ConjugateHeatTransfer" ) )  KindOfSolver = CONJUGATE_HEAT_TRANSFER;
-  else if( !strcasecmp(str.c_str(), "SolidConduction" ) )        KindOfSolver = SOLID_CONDUCTION;
+  if     ( !strcasecmp(str.c_str(), "FlowOnly" ) )
+  {
+    KindOfSolver = FLOW_ONLY;
+    varState[var_Velocity]    = true;
+    varState[var_Fvelocity]   = true;
+    varState[var_Pressure]    = true;
+  }
+  else if( !strcasecmp(str.c_str(), "ThermalFlow" ) )
+  {
+    KindOfSolver = THERMAL_FLOW;
+    varState[var_Velocity]    = true;
+    varState[var_Fvelocity]   = true;
+    varState[var_Pressure]    = true;
+    varState[var_Temperature] = true;
+  }
+  else if( !strcasecmp(str.c_str(), "ThermalFlowNatural" ) )
+  {
+    KindOfSolver = THERMAL_FLOW_NATURAL;
+    varState[var_Velocity]    = true;
+    varState[var_Fvelocity]   = true;
+    varState[var_Pressure]    = true;
+    varState[var_Temperature] = true;
+  }
+  else if( !strcasecmp(str.c_str(), "ConjugateHeatTransfer" ) )
+  {
+    KindOfSolver = CONJUGATE_HEAT_TRANSFER;
+    varState[var_Velocity]    = true;
+    varState[var_Fvelocity]   = true;
+    varState[var_Pressure]    = true;
+    varState[var_Temperature] = true;
+  }
+  else if( !strcasecmp(str.c_str(), "SolidConduction" ) )
+  {
+    KindOfSolver = SOLID_CONDUCTION;
+    varState[var_Temperature] = true;
+  }
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -3703,7 +3734,7 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
   fprintf(fp, "\n\tDerived variables\n");
   
   //　全圧の出力モード
-  if ( Mode.TP == ON )
+  if ( varState[var_TotalP] == ON )
   {
     fprintf(fp,"\t     Total Pressure           :   ON\n");
   }
@@ -3713,7 +3744,7 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
   }
   
   //　渦度の出力モード
-  if ( Mode.VRT == ON )
+  if ( varState[var_Vorticity] == ON )
   {
     fprintf(fp,"\t     Vorticity                :   ON\n");
   }
@@ -3723,7 +3754,7 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
   }
   
   //　ヘリシティの出力モード
-  if ( Mode.Helicity == ON )
+  if ( varState[var_Helicity] == ON )
   {
     fprintf(fp,"\t     Helicity                 :   ON\n");
   }
@@ -3733,7 +3764,7 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
   }
   
   //　速度勾配テンソルの第二不変量の出力モード
-  if ( Mode.I2VGT == ON ) {
+  if ( varState[var_Qcr] == ON ) {
     fprintf(fp,"\t     2nd Invariant of VGT     :   ON\n");
   }
   else

@@ -19,10 +19,47 @@
 
 #include "Sampling.h"
 
+/// Helicityを計算
+///
+///   @param [in] v     速度配列
+///   @param [in] index 計算位置のセルインデックス
+///   @return ヘリシティ値
+///
+REAL_TYPE Sampling::calcHelicity(const REAL_TYPE* v, FB::Vec3i index)
+{
+  if (isFluid(index)) {
+    
+    FB::Vec3r v0 = getVector(v, index);
+    FB::Vec3r v1 = 2.0 * v0 - v00;
+    
+    FB::Vec3r v_xm = isFluid(shift_xm(index)) ? getVector(v, shift_xm(index)) : v1;
+    FB::Vec3r v_xp = isFluid(shift_xp(index)) ? getVector(v, shift_xp(index)) : v1;
+    FB::Vec3r v_ym = isFluid(shift_ym(index)) ? getVector(v, shift_ym(index)) : v1;
+    FB::Vec3r v_yp = isFluid(shift_yp(index)) ? getVector(v, shift_yp(index)) : v1;
+    FB::Vec3r v_zm = isFluid(shift_zm(index)) ? getVector(v, shift_zm(index)) : v1;
+    FB::Vec3r v_zp = isFluid(shift_zp(index)) ? getVector(v, shift_zp(index)) : v1;
+    
+    REAL_TYPE hx = 0.5 / pch.x;
+    REAL_TYPE hy = 0.5 / pch.y;
+    REAL_TYPE hz = 0.5 / pch.z;
+    
+    FB::Vec3r omg;
+    omg.x = ( (v_yp.z - v_ym.z)*hy - (v_zp.y - v_zm.y)*hz ) * v0.x;
+    omg.y = ( (v_zp.x - v_zm.x)*hz - (v_xp.z - v_xm.z)*hx ) * v0.y;
+    omg.z = ( (v_xp.y - v_xm.y)*hx - (v_yp.x - v_ym.x)*hy ) * v0.z;
+    
+    return (omg.x + omg.y + omg.z);
+  }
+  else {
+    return 0.0;
+  }
+}
+
+
 /// 渦度を計算
 ///
-///   @param[in] v 速度配列
-///   @param[in] index 計算位置のセルインデックス
+///   @param [in] v 速度配列
+///   @param [in] index 計算位置のセルインデックス
 ///   @return 渦度ベクトル
 ///
 FB::Vec3r Sampling::calcVorticity(const REAL_TYPE* v, FB::Vec3i index)
@@ -58,25 +95,37 @@ FB::Vec3r Sampling::calcVorticity(const REAL_TYPE* v, FB::Vec3i index)
 
 /* -------- Nearest -------------------------------------------------------- */
 
-/// コンストラクタ.
+/// コンストラクタ
 ///
-///   @param[in] mode サンプリングモード
-///   @param[in] size,guide ローカルセル数，ガイドセル数
-///   @param[in] crd  モニタ点座標
-///   @param[in] org,pch  ローカル領域基点座標，セル幅
-///   @param[in] v00  座標系移動速度
-///   @param[in] bcd  BCindex B
+///   @param [in] mode      サンプリングモード
+///   @param [in] size      ローカルセル数
+///   @param [in] guide     ガイドセル数
+///   @param [in] crd       モニタ点座標
+///   @param [in] org       ローカル領域基点座標，セル幅
+///   @param [in] pch       セル幅
+///   @param [in] v00       座標系移動速度
+///   @param [in] bcd       BCindex B
+///   @param [in] num_compo 物性テーブルの個数
+///   @param [in] tbl       物性テーブル
 ///
-Nearest::Nearest(int mode, int size[], int guide,
-                 FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd) 
-  : Sampling(mode, size, guide, crd, org, pch, v00, bcd)
+Nearest::Nearest(int mode,
+                 int size[],
+                 int guide,
+                 FB::Vec3r crd,
+                 FB::Vec3r org,
+                 FB::Vec3r pch,
+                 FB::Vec3r v00,
+                 int* bcd,
+                 int num_compo,
+                 REAL_TYPE* tbl)
+  : Sampling(mode, size, guide, crd, org, pch, v00, bcd, num_compo, tbl)
 {
 }
 
 
-/// スカラー変数をサンプリング.
+/// スカラー変数をサンプリング
 ///
-///   @param[in] s サンプリング元スカラー変数配列
+///   @param [in] s サンプリング元スカラー変数配列
 ///
 REAL_TYPE Nearest::samplingScalar(const REAL_TYPE* s)
 {
@@ -84,9 +133,19 @@ REAL_TYPE Nearest::samplingScalar(const REAL_TYPE* s)
 }
 
 
-/// 速度をサンプリング.
+/// 温度変数をサンプリング
 ///
-///   @param[in] v サンプリング元速度配列
+///   @param [in] s サンプリング元内部エネルギー変数配列
+///
+REAL_TYPE Nearest::samplingTemp(const REAL_TYPE* s)
+{
+  return getTemp(s, cIndex);
+}
+
+
+/// 速度をサンプリング
+///
+///   @param [in] v サンプリング元速度配列
 ///
 FB::Vec3r Nearest::samplingVelocity(const REAL_TYPE* v)
 {
@@ -94,10 +153,10 @@ FB::Vec3r Nearest::samplingVelocity(const REAL_TYPE* v)
 }
 
 
-/// 全圧をサンプリング.
+/// 全圧をサンプリング
 ///
-///   @param[in] v サンプリング元速度配列
-///   @param[in] p サンプリング元圧力配列
+///   @param [in] v サンプリング元速度配列
+///   @param [in] p サンプリング元圧力配列
 ///
 REAL_TYPE Nearest::samplingTotalPressure(const REAL_TYPE* v, const REAL_TYPE* p)
 {
@@ -105,32 +164,53 @@ REAL_TYPE Nearest::samplingTotalPressure(const REAL_TYPE* v, const REAL_TYPE* p)
 }
 
 
-/// 渦度をサンプリング.
+/// 渦度をサンプリング
 ///
-///   @param[in] v サンプリング元速度配列
+///   @param [in] v サンプリング元速度配列
 ///
 FB::Vec3r Nearest::samplingVorticity(const REAL_TYPE* v)
 {
   return calcVorticity(v, cIndex);
 }
 
+/// Helicityをサンプリング
+///
+///   @param [in] v サンプリング元速度配列
+///
+REAL_TYPE Nearest::samplingHelicity(const REAL_TYPE* v)
+{
+  return calcHelicity(v, cIndex);
+}
+
 
 /* -------- Smoothing ------------------------------------------------------ */
 
-/// コンストラクタ.
+/// コンストラクタ
 ///
-///   隣接セルに対して局所平均計算に使用するかどうかのフラグを立てる.
+///   隣接セルに対して局所平均計算に使用するかどうかのフラグを立てる
 ///
-///   @param[in] mode サンプリングモード
-///   @param[in] size,guide ローカルセル数，ガイドセル数
-///   @param[in] crd  モニタ点座標
-///   @param[in] org,pch  ローカル領域基点座標，セル幅
-///   @param[in] v00  座標系移動速度
-///   @param[in] bcd  BCindex B
+///   @param [in] mode      サンプリングモード
+///   @param [in] size      ローカルセル数
+///   @param [in] guide     ガイドセル数
+///   @param [in] crd       モニタ点座標
+///   @param [in] org       ローカル領域基点座標，セル幅
+///   @param [in] pch       セル幅
+///   @param [in] v00       座標系移動速度
+///   @param [in] bcd       BCindex B
+///   @param [in] num_compo 物性テーブルの個数
+///   @param [in] tbl       物性テーブル
 ///
-Smoothing::Smoothing(int mode, int size[], int guide,
-                     FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd) 
-  : Sampling(mode, size, guide, crd, org, pch, v00, bcd)
+Smoothing::Smoothing(int mode,
+                     int size[],
+                     int guide,
+                     FB::Vec3r crd,
+                     FB::Vec3r org,
+                     FB::Vec3r pch,
+                     FB::Vec3r v00,
+                     int* bcd,
+                     int num_compo,
+                     REAL_TYPE* tbl)
+  : Sampling(mode, size, guide, crd, org, pch, v00, bcd, num_compo, tbl)
 {
   add_xm = permitToAdd(shift_xm(cIndex)) ? true : false;
   add_xp = permitToAdd(shift_xp(cIndex)) ? true : false;
@@ -149,9 +229,9 @@ Smoothing::Smoothing(int mode, int size[], int guide,
 }
 
 
-/// スカラー変数をサンプリング.
+/// スカラー変数をサンプリング
 ///
-///   @param[in] s サンプリング元スカラー変数配列
+///   @param [in] s サンプリング元スカラー変数配列
 ///
 REAL_TYPE Smoothing::samplingScalar(const REAL_TYPE* s)
 {
@@ -168,9 +248,28 @@ REAL_TYPE Smoothing::samplingScalar(const REAL_TYPE* s)
 }
 
 
-/// 速度をサンプリング.
+/// 内部エネルギー変数から温度をサンプリング
 ///
-///   @param[in] v サンプリング元速度配列
+///   @param [in] s サンプリング元変数配列
+///
+REAL_TYPE Smoothing::samplingTemp(const REAL_TYPE* s)
+{
+  REAL_TYPE sRet = getTemp(s, cIndex);
+  if (add_xm) sRet += getTemp(s, shift_xm(cIndex));
+  if (add_xp) sRet += getTemp(s, shift_xp(cIndex));
+  if (add_ym) sRet += getTemp(s, shift_ym(cIndex));
+  if (add_yp) sRet += getTemp(s, shift_yp(cIndex));
+  if (add_zm) sRet += getTemp(s, shift_zm(cIndex));
+  if (add_zp) sRet += getTemp(s, shift_zp(cIndex));
+  sRet /= nAdd;
+  
+  return sRet;
+}
+
+
+/// 速度をサンプリング
+///
+///   @param [in] v サンプリング元速度配列
 ///
 FB::Vec3r Smoothing::samplingVelocity(const REAL_TYPE* v)
 {
@@ -187,10 +286,10 @@ FB::Vec3r Smoothing::samplingVelocity(const REAL_TYPE* v)
 }
 
 
-/// 全圧をサンプリング.
+/// 全圧をサンプリング
 ///
-///   @param[in] v サンプリング元速度配列
-///   @param[in] p サンプリング元圧力配列
+///   @param [in] v サンプリング元速度配列
+///   @param [in] p サンプリング元圧力配列
 ///
 REAL_TYPE Smoothing::samplingTotalPressure(const REAL_TYPE* v, const REAL_TYPE* p)
 {
@@ -219,9 +318,9 @@ REAL_TYPE Smoothing::samplingTotalPressure(const REAL_TYPE* v, const REAL_TYPE* 
 }
 
 
-/// 渦度をサンプリング.
+/// 渦度をサンプリング
 ///
-///   @param[in] v サンプリング元速度配列
+///   @param [in] v サンプリング元速度配列
 ///
 FB::Vec3r Smoothing::samplingVorticity(const REAL_TYPE* v)
 {
@@ -237,23 +336,55 @@ FB::Vec3r Smoothing::samplingVorticity(const REAL_TYPE* v)
   return omg;
 }
 
+/// Helicityをサンプリング
+///
+///   @param [in] v サンプリング元速度配列
+///
+REAL_TYPE Smoothing::samplingHelicity(const REAL_TYPE* v)
+{
+  REAL_TYPE omg = calcHelicity(v, cIndex);
+  if (add_xm) omg += calcHelicity(v, shift_xm(cIndex));
+  if (add_xp) omg += calcHelicity(v, shift_xp(cIndex));
+  if (add_ym) omg += calcHelicity(v, shift_ym(cIndex));
+  if (add_yp) omg += calcHelicity(v, shift_yp(cIndex));
+  if (add_zm) omg += calcHelicity(v, shift_zm(cIndex));
+  if (add_zp) omg += calcHelicity(v, shift_zp(cIndex));
+  omg /= nAdd;
+  
+  return omg;
+}
+
+
+
 /* -------- Interpolation -------------------------------------------------- */
 
-/// コンストラクタ.
+/// コンストラクタ
 ///
-///   補間計算の基準セルのインデックスおよび補間係数を計算.
-///   流体-固体境界に接しているかをチェック.
+///   補間計算の基準セルのインデックスおよび補間係数を計算
+///   流体-固体境界に接しているかをチェック
 ///
-///   @param[in] mode サンプリングモード
-///   @param[in] size,guide ローカルセル数，ガイドセル数
-///   @param[in] crd  モニタ点座標
-///   @param[in] org,pch  ローカル領域基点座標，セル幅
-///   @param[in] v00  座標系移動速度
-///   @param[in] bcd  BCindex B
+///   @param [in] mode      サンプリングモード
+///   @param [in] size      ローカルセル数
+///   @param [in] guide     ガイドセル数
+///   @param [in] crd       モニタ点座標
+///   @param [in] org       ローカル領域基点座標，セル幅
+///   @param [in] pch       セル幅
+///   @param [in] v00       座標系移動速度
+///   @param [in] bcd       BCindex B
+///   @param [in] num_compo 物性テーブルの個数
+///   @param [in] tbl       物性テーブル
 ///
-Interpolation::Interpolation(int mode, int size[], int guide,
-                             FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd) 
-  : Sampling(mode, size, guide, crd, org, pch, v00, bcd)
+Interpolation::Interpolation(int mode,
+                             int size[],
+                             int guide,
+                             FB::Vec3r crd,
+                             FB::Vec3r org,
+                             FB::Vec3r pch,
+                             FB::Vec3r v00,
+                             int* bcd,
+                             int num_compo,
+                             REAL_TYPE* tbl)
+  : Sampling(mode, size, guide, crd, org, pch, v00, bcd, num_compo, tbl)
 {
   FB::Vec3r c = (crd - org) / pch;
   base.x = (int)(c.x + 0.5);
@@ -275,9 +406,9 @@ Interpolation::Interpolation(int mode, int size[], int guide,
 }
 
 
-/// スカラー変数をサンプリング.
+/// スカラー変数をサンプリング
 ///
-///   @param[in] s サンプリング元スカラー変数配列
+///   @param [in] s サンプリング元スカラー変数配列
 ///
 REAL_TYPE Interpolation::samplingScalar(const REAL_TYPE* s)
 {
@@ -296,9 +427,30 @@ REAL_TYPE Interpolation::samplingScalar(const REAL_TYPE* s)
 }
 
 
-/// 速度をサンプリング.
+/// 内部エネルギー変数から温度をサンプリング
 ///
-///   @param[in] v サンプリング元速度配列
+///   @param [in] s サンプリング元変数配列
+///
+REAL_TYPE Interpolation::samplingTemp(const REAL_TYPE* s)
+{
+  if (onBoundary) return getTemp(s, cIndex);  // nearest
+  
+  REAL_TYPE r[8];
+  r[0] = getTemp(s, base);          // (0, 0, 0)
+  r[1] = getTemp(s, shift1(base));  // (1, 0, 0)
+  r[2] = getTemp(s, shift2(base));  // (0, 1, 0)
+  r[3] = getTemp(s, shift3(base));  // (1, 1, 0)
+  r[4] = getTemp(s, shift4(base));  // (0, 0, 1)
+  r[5] = getTemp(s, shift5(base));  // (1, 0, 1)
+  r[6] = getTemp(s, shift6(base));  // (0, 1, 1)
+  r[7] = getTemp(s, shift7(base));  // (1, 1, 1)
+  return Trilinear(coef, r);
+}
+
+
+/// 速度をサンプリング
+///
+///   @param [in] v サンプリング元速度配列
 ///
 FB::Vec3r Interpolation::samplingVelocity(const REAL_TYPE* v)
 {
@@ -317,10 +469,10 @@ FB::Vec3r Interpolation::samplingVelocity(const REAL_TYPE* v)
 }
 
 
-/// 全圧をサンプリング.
+/// 全圧をサンプリング
 ///
-///   @param[in] v サンプリング元速度配列
-///   @param[in] p サンプリング元圧力配列
+///   @param [in] v サンプリング元速度配列
+///   @param [in] p サンプリング元圧力配列
 ///
 REAL_TYPE Interpolation::samplingTotalPressure(const REAL_TYPE* v, const REAL_TYPE* p)
 {
@@ -339,9 +491,9 @@ REAL_TYPE Interpolation::samplingTotalPressure(const REAL_TYPE* v, const REAL_TY
 }
 
 
-/// 渦度をサンプリング.
+/// 渦度をサンプリング
 ///
-///   @param[in] v サンプリング元速度配列
+///   @param [in] v サンプリング元速度配列
 ///
 FB::Vec3r Interpolation::samplingVorticity(const REAL_TYPE* v)
 {
@@ -360,20 +512,53 @@ FB::Vec3r Interpolation::samplingVorticity(const REAL_TYPE* v)
 }
 
 
+/// Helicityをサンプリング
+///
+///   @param [in] v サンプリング元速度配列
+///
+REAL_TYPE Interpolation::samplingHelicity(const REAL_TYPE* v)
+{
+  if (onBoundary) return calcHelicity(v, cIndex);  // nearest
+  
+  REAL_TYPE r[8];
+  r[0] = calcHelicity(v, base);
+  r[1] = calcHelicity(v, shift1(base));
+  r[2] = calcHelicity(v, shift2(base));
+  r[3] = calcHelicity(v, shift3(base));
+  r[4] = calcHelicity(v, shift4(base));
+  r[5] = calcHelicity(v, shift5(base));
+  r[6] = calcHelicity(v, shift6(base));
+  r[7] = calcHelicity(v, shift7(base));
+  return Trilinear(coef, r);
+}
+
+
 /* -------- InterpolationStgV ---------------------------------------------- */
 
-/// コンストラクタ.
+/// コンストラクタ
 ///
-///   @param[in] mode サンプリングモード
-///   @param[in] size,guide ローカルセル数，ガイドセル数
-///   @param[in] crd  モニタ点座標
-///   @param[in] org,pch  ローカル領域基点座標，セル幅
-///   @param[in] v00  座標系移動速度
-///   @param[in] bcd  BCindex B
+///   @param [in] mode      サンプリングモード
+///   @param [in] size      ローカルセル数
+///   @param [in] guide     ガイドセル数
+///   @param [in] crd       モニタ点座標
+///   @param [in] org       ローカル領域基点座標，セル幅
+///   @param [in] pch       セル幅
+///   @param [in] v00       座標系移動速度
+///   @param [in] bcd       BCindex B
+///   @param [in] num_compo 物性テーブルの個数
+///   @param [in] tbl       物性テーブル
 ///
-InterpolationStgV::InterpolationStgV(int mode, int size[], int guide,
-                                     FB::Vec3r crd, FB::Vec3r org, FB::Vec3r pch, FB::Vec3r v00, int* bcd) 
-  : Interpolation(mode, size, guide, crd, org, pch, v00, bcd)
+InterpolationStgV::InterpolationStgV(int mode,
+                                     int size[],
+                                     int guide,
+                                     FB::Vec3r crd,
+                                     FB::Vec3r org,
+                                     FB::Vec3r pch,
+                                     FB::Vec3r v00,
+                                     int* bcd,
+                                     int num_compo,
+                                     REAL_TYPE* tbl)
+  : Interpolation(mode, size, guide, crd, org, pch, v00, bcd, num_compo, tbl)
 {
   FB::Vec3r c = (crd - org) / pch;
   base_s[0] = (int)(c.x);
@@ -385,9 +570,9 @@ InterpolationStgV::InterpolationStgV(int mode, int size[], int guide,
 }
 
 
-/// 速度をサンプリング.
+/// 速度をサンプリング
 ///
-///   @param[in] v サンプリング元速度配列
+///   @param [in] v サンプリング元速度配列
 ///
 FB::Vec3r InterpolationStgV::samplingVelocity(const REAL_TYPE* v)
 {

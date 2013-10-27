@@ -85,6 +85,8 @@ protected:
   FB::Vec3r g_box;           ///< グローバル領域サイズ
   REAL_TYPE nv[3];           ///< 法線ベクトル
   REAL_TYPE val[var_END];    ///< サンプリング値
+  int NoCompo;               ///< 物性テーブルの個数 >> 配列の大きさは[NoCompo+1]
+  REAL_TYPE* mtbl;           ///< 物性テーブル
   
   ReferenceVariables refVar; ///< 参照用パラメータ変数
   
@@ -95,9 +97,10 @@ protected:
   FILE* fp;            ///< 出力ファイルポインタ
   
   // サンプリング元データ
-  REAL_TYPE* vSource;  ///< 速度サンプリング元データ
-  REAL_TYPE* pSource;  ///< 圧力サンプリング元データ
-  REAL_TYPE* tSource;  ///< 温度サンプリング元データ
+  REAL_TYPE* vSource;   ///< 速度サンプリング元データ
+  REAL_TYPE* pSource;   ///< 圧力サンプリング元データ
+  REAL_TYPE* tSource;   ///< 温度サンプリング元データ
+  REAL_TYPE* vrSource;  ///< 渦度サンプリング元データ
   
   
   FB::Vec3r* crd;      ///< モニタ点座標配列
@@ -109,6 +112,7 @@ protected:
   REAL_TYPE* prs;      ///< 圧力サンプリング結果配列
   REAL_TYPE* tmp;      ///< 温度サンプリング結果配列
   REAL_TYPE* tp;       ///< 全圧サンプリング結果配列
+  REAL_TYPE* hlt;      ///< Helicityサンプリング結果配列
   FB::Vec3r* vor;      ///< 渦度サンプリング結果配列
 
   
@@ -123,16 +127,18 @@ public:
       variable[i] = false;
       val[i] = 0.0;
     }
-    vel = vor  = NULL;
-    prs = tmp = tp  = NULL;
+    NoCompo = 0;
+    vel = vor = NULL;
+    prs = tmp = tp = hlt = NULL;
     crd = NULL;
     rank = NULL;
     comment = NULL;
     pointStatus = NULL;
-    vSource = pSource = tSource = NULL;
+    vSource = pSource = tSource = vrSource = NULL;
     bid = NULL;
     bcd = NULL;
     cut = NULL;
+    mtbl= NULL;
   }
   
   /// コンストラクタ
@@ -145,6 +151,8 @@ public:
   ///   @param [in] bcd         BCindex B
   ///   @param [in] cut         交点情報
   ///   @param [in] num_process プロセス数
+  ///   @param [in] num_compo   物性テーブルの個数
+  ///   @param [in] m_tbl       物性テーブル
   ///
   MonitorCompo(FB::Vec3r org,
                FB::Vec3r pch,
@@ -155,16 +163,22 @@ public:
                int* bid,
                int* bcd,
                float* cut,
-               const int num_process) {
+               const int num_process,
+               const int num_compo,
+               REAL_TYPE* m_tbl) {
     nPoint = 0;
-    for (int i = 0; i < var_END; i++) variable[i] = false;
+    for (int i = 0; i < var_END; i++)
+    {
+      variable[i] = false;
+      val[i] = 0.0;
+    }
     vel = vor  = NULL;
     prs = tmp = tp  = NULL;
     crd = NULL;
     rank = NULL;
     comment = NULL;
     pointStatus = NULL;
-    vSource = pSource = tSource = NULL;
+    vSource = pSource = tSource = vrSource = NULL;
     
     this->org = org;
     this->pch = pch;
@@ -176,6 +190,8 @@ public:
     this->bcd = bcd;
     this->cut = cut;
     this->num_process = num_process;
+    this->NoCompo = num_compo;
+    this->mtbl = m_tbl;
   }
   
   /// デストラクタ
@@ -257,6 +273,13 @@ public:
   }
   
   
+  /// モニタ変数の状態を返す
+  bool getStateVariable(int var) const
+  {
+    return variable[var];
+  }
+  
+  
   /// 登録タイプを返す
   Monitor_Type getType() const
   {
@@ -322,17 +345,53 @@ public:
   
   /// サンプリング元データの登録
   ///
-  ///   @param [in] v 速度変数配列
-  ///   @param [in] p 圧力変数配列
-  ///   @param [in] t 温度変数配列
+  ///   @param [in] v  速度変数配列
+  ///   @param [in] p  圧力変数配列
+  ///   @param [in] t  温度変数配列
+  ///   @param [in] vr 渦度変数配列
   ///
-  void setDataPtrs(REAL_TYPE* v, REAL_TYPE* p, REAL_TYPE* t)
+  void setDataPtrs(REAL_TYPE* v, REAL_TYPE* p, REAL_TYPE* t, REAL_TYPE* vr)
   {
-    vSource = v;
-    pSource = p;
-    tSource = t;
-    if (variable[var_Temperature] && !tSource) {
-      Hostonly_ stamped_printf("\tError : Temperature monitoring source not assigned.\n");
+    vSource  = v;
+    pSource  = p;
+    tSource  = t;
+    vrSource = vr;
+    
+    
+    if (variable[var_Velocity] && !vSource)
+    {
+      Hostonly_ stamped_printf("\tError : Null monitoring source for Velocity.\n");
+      Exit(0);
+    }
+    
+    if (variable[var_Pressure] && !pSource)
+    {
+      Hostonly_ stamped_printf("\tError : Null monitoring source for Pressure.\n");
+      Exit(0);
+    }
+    
+    if (variable[var_Temperature] && !tSource)
+    {
+      Hostonly_ stamped_printf("\tError : Null monitoring source for Temperature.\n");
+      Exit(0);
+    }
+
+    
+    if (variable[var_Vorticity] && !vrSource)
+    {
+      Hostonly_ stamped_printf("\tError : Null monitoring source for Vorticity.\n");
+      Exit(0);
+    }
+    
+    if (variable[var_TotalP] && !(vSource && pSource) )
+    {
+      Hostonly_ stamped_printf("\tError : Null monitoring source for Vorticity.\n");
+      Exit(0);
+    }
+    
+    if (variable[var_Helicity] && !vSource )
+    {
+      Hostonly_ stamped_printf("\tError : Null monitoring source for Vorticity.\n");
       Exit(0);
     }
   }
@@ -491,6 +550,12 @@ protected:
     return ( (refVar.modeUnit==DIMENSIONAL) ? vor*refVar.refVelocity/refVar.refLength : vor );
   }
   
+  /// Helicityの単位変換
+  REAL_TYPE convHlt(REAL_TYPE hlt) const
+  {
+    return ( (refVar.modeUnit==DIMENSIONAL) ? hlt*refVar.refVelocity*refVar.refVelocity/refVar.refLength : hlt );
+  }
+  
   /// サンプリングした変数をノード0に集約
   void gatherSampled();
   
@@ -572,7 +637,7 @@ protected:
   void setSamplingMethod(const char* str);
   
   
-  /// サンプリングモードの設定.
+  /// サンプリングモードの設定
   ///
   ///    @param [in] str サンプリングモード文字列
   ///

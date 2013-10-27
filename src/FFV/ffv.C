@@ -99,6 +99,7 @@ FFV::FFV()
   d_ap  = NULL;
   d_ae  = NULL;
   d_cvf = NULL;
+  d_vrt = NULL;
   
   // Coarse initial
   d_r_v = NULL;
@@ -857,7 +858,7 @@ void FFV::OutputDerivedVariables(double& flop)
   
   
   // Total Pressure
-  if (C.Mode.TP == ON )
+  if (C.varState[var_TotalP] == ON )
   {
     fb_totalp_ (d_p0, size, &guide, d_v, d_p, v00, &flop);
     
@@ -907,7 +908,7 @@ void FFV::OutputDerivedVariables(double& flop)
   
   
   // Vorticity
-  if (C.Mode.VRT == ON )
+  if (C.varState[var_Vorticity] == ON )
   {
     rot_v_(d_wv, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
@@ -966,7 +967,7 @@ void FFV::OutputDerivedVariables(double& flop)
   
   
   // 2nd Invariant of Velocity Gradient Tensor
-  if (C.Mode.I2VGT == ON )
+  if (C.varState[var_Qcr] == ON )
   {
     i2vgt_ (d_p0, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
@@ -1008,7 +1009,7 @@ void FFV::OutputDerivedVariables(double& flop)
   
   
   // Helicity
-  if (C.Mode.Helicity == ON )
+  if (C.varState[var_Helicity] == ON )
   {
     helicity_(d_p0, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     

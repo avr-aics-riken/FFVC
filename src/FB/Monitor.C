@@ -494,24 +494,28 @@ bool MonitorList::getMonitor(Control* C, CompoList* cmp)
       Exit(0);
     }
     
+    // 登録変数の数
+    int n_vars = 0;
+    n_vars = tpCntl->countLabels(label);
     
     // モニタする変数名と数を取得
     variables.clear();
     
-    // 速度
-    registVars(label, variables, "velocity");
-    
-    // 圧力
-    registVars(label, variables, "pressure");
-    
-    // 温度
-    if ( C->isHeatProblem() )
+    for (int nc=1; nc<=n_vars; nc++)
     {
-      registVars(label, variables, "temperature");
+      registVars(label, variables, "Velocity");
+      registVars(label, variables, "Pressure");
+      
+
+      if ( C->isHeatProblem() )
+      {
+        registVars(label, variables, "Temperature");
+      }
+      
+      registVars(label, variables, "TotalPressure");
+      registVars(label, variables, "Helicity");
+      registVars(label, variables, "Vorticity");
     }
-    
-    // 全圧
-    registVars(label, variables, "totalpressure");
     
     
     // variable
@@ -793,6 +797,33 @@ void MonitorList::getPrimitive(Monitor_Type mon_type,
 
 
 // #################################################################
+/// VorticityとHelicityのサンプリングが指定されている場合にtrueを返す
+bool MonitorList::getStateVorticity()
+{
+  int count[var_END];
+  
+  for (int k=var_Velocity; k<var_END; k++)
+  {
+    count[k]=0;
+  }
+  
+  // モニタで使用する変数を取得
+  for (int k=var_Velocity; k<var_END; k++)
+  {
+    for (int i = 0; i < nGroup; i++)
+    {
+      if (monGroup[i]->getStateVariable(k) == true) count[k]++;
+    }
+  }
+  
+  // SamplingでHelicityあるいはVorticityが指定されている場合には，VorticityをON
+  if ( count[var_Helicity]>0 || count[var_Vorticity]>0 ) return true;
+  
+  return false;
+}
+
+
+// #################################################################
 // TPのポインタを受け取る
 void MonitorList::importTP(TextParser* tp)
 {
@@ -900,33 +931,22 @@ void MonitorList::printMonitorInfo(FILE* fp, const char* str, const bool verbose
 // #################################################################
 /**
  * @brief サンプリング対象変数の登録
- * @param [in] 
+ * @param [in] label     ノード
  * @param [in] variables モニタ変数vector
- * @param [in]
+ * @param [in] key       変数名
  */
 void MonitorList::registVars(const string label, vector<string>& variables, const string key)
 {
   string str;
   string leaf = label + "/" + key;
   
-  if ( !(tpCntl->getInspectedValue(leaf, str)) )
+  if ( tpCntl->getInspectedValue(leaf, str) )
   {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", leaf.c_str());
-    Exit(0);
-  }
-  
-  if ( !strcasecmp(str.c_str(), "on") )
-  {
-    variables.push_back(key.c_str());
-  }
-  else if( !strcasecmp(str.c_str(), "off") )
-  {
-    ;  // nothing
-  }
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", leaf.c_str());
-    Exit(0);
+    // onで登録，なければ登録なし
+    if ( !strcasecmp(str.c_str(), "on") )
+    {
+      variables.push_back(key.c_str());
+    }
   }
 }
 
@@ -944,7 +964,9 @@ void MonitorList::setControlVars(int* bid,
                                  const REAL_TYPE basePrs,
                                  const int modePrecision,
                                  const int unitPrs,
-                                 const int num_process)
+                                 const int num_process,
+                                 const int m_NoCompo,
+                                 REAL_TYPE* tbl)
 {
   this->bid         = bid;
   this->bcd         = bcd;
@@ -955,6 +977,8 @@ void MonitorList::setControlVars(int* bid,
   this->pch         = deltaX;
   this->box         = region;
   this->num_process = num_process;
+  this->NoCompo     = m_NoCompo;
+  this->mtbl        = tbl;
   
   refVar.refVelocity   = refVelocity;
   refVar.baseTemp      = baseTemp;
@@ -964,7 +988,6 @@ void MonitorList::setControlVars(int* bid,
   refVar.basePrs       = basePrs;
   refVar.unitPrs       = unitPrs;
   refVar.modePrecision = modePrecision;
-  
 }
 
 
@@ -991,11 +1014,10 @@ void MonitorList::setLine(const char* str,
 {
   clipLine(from, to);
   
-  MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process);
+  MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process, NoCompo, mtbl);
   
   m->setRankInfo(paraMngr, procGrp);
   m->setNeighborInfo(guide);
-  
   m->setLine(str, variables, method, mode, from, to, nDivision, mon_type);
   
   monGroup.push_back(m);
@@ -1038,11 +1060,10 @@ void MonitorList::setPointSet(const char* str,
                               vector<MonitorCompo::MonitorPoint>& pointSet,
                               Monitor_Type mon_type)
 {
-  MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process);
+  MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process, NoCompo, mtbl);
   
   m->setRankInfo(paraMngr, procGrp);
   m->setNeighborInfo(guide);
-  
   m->setPointSet(str, variables, method, mode, pointSet, mon_type);
   
   monGroup.push_back(m);
@@ -1050,17 +1071,17 @@ void MonitorList::setPointSet(const char* str,
 
 
 // #################################################################
-/// Polygon登録
-///
-///   @param [in] str       ラベル文字列
-///   @param [in] variables モニタ変数vector
-///   @param [in] method    method文字列
-///   @param [in] mode      mode文字列
-///   @param [in] order     エントリ番号
-///   @param [in] nv        法線ベクトル
-///   @param [in] mon_type  モニタタイプ
-///   @note orderはLocalBCのエントリ
-///
+/**
+ * @brief Polygon登録
+ * @param [in] str       ラベル文字列
+ * @param [in] variables モニタ変数vector
+ * @param [in] method    method文字列
+ * @param [in] mode      mode文字列
+ * @param [in] order     エントリ番号
+ * @param [in] nv        法線ベクトル
+ * @param [in] mon_type  モニタタイプ
+ * @note orderはLocalBCのエントリ
+ */
 void MonitorList::setPolygon(const char* str,
                              vector<string>& variables,
                              const char* method,
@@ -1069,7 +1090,7 @@ void MonitorList::setPolygon(const char* str,
                              const REAL_TYPE nv[3],
                              Monitor_Type mon_type)
 {
-  MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process);
+  MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process, NoCompo, mtbl);
   
   m->setRankInfo(paraMngr, procGrp);
   m->setNeighborInfo(guide);
@@ -1108,7 +1129,7 @@ void MonitorList::setPrimitive(const char* str,
                                const REAL_TYPE dir[3],
                                const int order)
 {
-  MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process);
+  MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process, NoCompo, mtbl);
 
   m->setRankInfo(paraMngr, procGrp);
   m->setNeighborInfo(guide);

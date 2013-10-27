@@ -270,7 +270,7 @@ int FFV::Loop(const unsigned step)
     }
   }
   
-  if (C.Mode.TP == ON )
+  if (C.varState[var_TotalP] == ON )
   {
     TIMING_start(tm_total_prs);
     flop_count=0.0;

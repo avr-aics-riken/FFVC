@@ -171,6 +171,7 @@ private:
   REAL_TYPE *d_b;   ///< Ax=bの右辺ベクトル
   REAL_TYPE *d_ie;  ///< 内部エネルギー
   REAL_TYPE *d_ie0; ///< 内部エネルギー（1ステップ前）
+  REAL_TYPE *d_vrt; ///< 渦度ベクトル
   REAL_TYPE *d_vt;
   REAL_TYPE *d_vof;
   REAL_TYPE *d_ap;  ///< 圧力（時間平均値）

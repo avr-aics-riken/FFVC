@@ -644,7 +644,7 @@ void Plot3D::function(const unsigned CurrentStep,
   }
   
   // Total Pressure
-  if (C->Mode.TP == ON ) {
+  if (C->varState[var_TotalP] == ON ) {
     fb_totalp_ (d_p0, size, &guide, d_v, d_p, v00, &flop);
     
     // convert non-dimensional to dimensional, iff file is dimensional
@@ -680,7 +680,7 @@ void Plot3D::function(const unsigned CurrentStep,
   }
   
   // Vorticity
-  if (C->Mode.VRT == ON )
+  if (C->varState[var_Vorticity] == ON )
   {
     rot_v_(d_wv, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
@@ -727,7 +727,7 @@ void Plot3D::function(const unsigned CurrentStep,
   }
   
   // 2nd Invariant of Velocity Gradient Tensor
-  if (C->Mode.I2VGT == ON ) {
+  if (C->varState[var_Qcr] == ON ) {
     i2vgt_ (d_p0, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
     U.copyS3D(d_ws, size, guide, d_p0, scale);
@@ -754,7 +754,7 @@ void Plot3D::function(const unsigned CurrentStep,
   }
   
   // Helicity
-  if (C->Mode.Helicity == ON )
+  if (C->varState[var_Helicity] == ON )
   {
     helicity_(d_p0, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
@@ -1027,7 +1027,7 @@ void Plot3D::function_divide(const unsigned CurrentStep,
   }
   
   // Total Pressure
-  if (C->Mode.TP == ON ){
+  if (C->varState[var_TotalP] == ON ){
     fb_totalp_ (d_p0, size, &guide, d_v, d_p, v00, &flop);
     
     // convert non-dimensional to dimensional, iff file is dimensional
@@ -1068,7 +1068,7 @@ void Plot3D::function_divide(const unsigned CurrentStep,
   }
   
   // Vorticity
-  if (C->Mode.VRT == ON ){
+  if (C->varState[var_Vorticity] == ON ){
     rot_v_(d_wv, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
     REAL_TYPE  vz[3];
@@ -1119,7 +1119,7 @@ void Plot3D::function_divide(const unsigned CurrentStep,
   }
   
   // 2nd Invariant of Velocity Gradient Tensor
-  if (C->Mode.I2VGT == ON ) {
+  if (C->varState[var_Qcr] == ON ) {
     
     i2vgt_ (d_p0, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
@@ -1153,7 +1153,7 @@ void Plot3D::function_divide(const unsigned CurrentStep,
   
   
   // Helicity
-  if (C->Mode.Helicity == ON ){
+  if (C->varState[var_Helicity] == ON ){
     helicity_(d_p0, size, &guide, &deltaX, d_v, d_cdf, v00, &flop);
     
     U.copyS3D(d_ws, size, guide, d_p0, scale);
@@ -1231,20 +1231,20 @@ void Plot3D::function_name()
   if( C->isHeatProblem() ) FP3DW->WriteFunctionName("Tempearture");
   
   // Total Pressure
-  if (C->Mode.TP == ON ) FP3DW->WriteFunctionName("Total_Pressure");
+  if (C->varState[var_TotalP] == ON ) FP3DW->WriteFunctionName("Total_Pressure");
   
   // Vorticity
-  if (C->Mode.VRT == ON ){
+  if (C->varState[var_Vorticity] == ON ){
     FP3DW->WriteFunctionName("U-Vorticity ; Vorticity");
     FP3DW->WriteFunctionName("V-Vorticity");
     FP3DW->WriteFunctionName("W-Vorticity");
   }
   
   // 2nd Invariant of Velocity Gradient Tensor
-  if (C->Mode.I2VGT == ON ) FP3DW->WriteFunctionName("2nd Invariant of Velocity Gradient Tensor");
+  if (C->varState[var_Qcr] == ON ) FP3DW->WriteFunctionName("2nd Invariant of Velocity Gradient Tensor");
   
   // Helicity
-  if (C->Mode.Helicity == ON ) FP3DW->WriteFunctionName("Helicity");
+  if (C->varState[var_Helicity] == ON ) FP3DW->WriteFunctionName("Helicity");
   
   //close file
   FP3DW->CloseFile();
@@ -1310,7 +1310,7 @@ void Plot3D::function_name_divide()
   }
   
   // Total Pressure
-  if (C->Mode.TP == ON ){
+  if (C->varState[var_TotalP] == ON ){
     fname = "tp_" + tmp;
     FP3DW->setFileName((dtmp+fname).c_str());
     if(!FP3DW->OpenFile()){
@@ -1322,7 +1322,7 @@ void Plot3D::function_name_divide()
   }
   
   // Vorticity
-  if (C->Mode.VRT == ON ){
+  if (C->varState[var_Vorticity] == ON ){
     fname = "vrt_" + tmp;
     FP3DW->setFileName((dtmp+fname).c_str());
     if(!FP3DW->OpenFile()){
@@ -1336,7 +1336,7 @@ void Plot3D::function_name_divide()
   }
   
   // 2nd Invariant of Velocity Gradient Tensor
-  if (C->Mode.I2VGT == ON ){
+  if (C->varState[var_Qcr] == ON ){
     fname = "qcr_" + tmp;
     FP3DW->setFileName((dtmp+fname).c_str());
     if(!FP3DW->OpenFile()){
@@ -1349,7 +1349,7 @@ void Plot3D::function_name_divide()
   
   
   // Helicity
-  if (C->Mode.Helicity == ON ){
+  if (C->varState[var_Helicity] == ON ){
     fname = "hlt_" + tmp;
     FP3DW->setFileName((dtmp+fname).c_str());
     if(!FP3DW->OpenFile()){
@@ -2846,10 +2846,10 @@ void Plot3D::setValuePlot3D()
   int nvar=4;//pressure + velocity(3)
   
   if ( C->isHeatProblem() )     nvar++;
-  if ( C->Mode.TP == ON )       nvar++;
-  if ( C->Mode.VRT == ON )      nvar+3;
-  if ( C->Mode.I2VGT == ON )    nvar++;
-  if ( C->Mode.Helicity == ON ) nvar++;
+  if ( C->varState[var_TotalP] == ON )       nvar++;
+  if ( C->varState[var_Vorticity] == ON )      nvar+3;
+  if ( C->varState[var_Qcr] == ON )    nvar++;
+  if ( C->varState[var_Helicity] == ON ) nvar++;
   
   C->P3Op.nvar=nvar;
 }

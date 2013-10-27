@@ -25,7 +25,7 @@
 
 #include "mydebug.h"
 
-#define FB_VERS "1.4.3"
+#define FB_VERS "1.4.4"
 
 
 // precision
@@ -401,13 +401,14 @@ enum Kind_of_vars {
   var_Velocity=0,
   var_Pressure,
   var_Temperature,
+  var_Fvelocity,
+  var_VelocityAvr,
+  var_PressureAvr,
+  var_TemperatureAvr,
   var_TotalP,
-  var_Velocity_Avr,
-  var_Pressure_Avr,
-  var_Temperature_Avr,
   var_Helicity,
   var_Vorticity,
-  var_I2vgt,
+  var_Qcr,
   var_END
 };
 

@@ -322,6 +322,14 @@ void FFV::allocArray_Main(double &total)
 
   if ( !(d_b = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
+  
+  
+  // 渦度の出力指定がある，あるいは渦度関連のサンプリングがある場合にアロケート
+  if ( C.varState[var_Vorticity] || MO.getStateVorticity() )
+  {
+    if ( !(d_vrt = Alloc::Real_V3D(size, guide)) ) Exit(0);
+    total+= mc * (double)sizeof(REAL_TYPE) * 3.0;
+  }
 }
 
 

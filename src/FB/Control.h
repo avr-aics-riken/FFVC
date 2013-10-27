@@ -360,8 +360,6 @@ public:
     int AverageRestart;
     int Buoyancy;
     int Example;
-    int Helicity;
-    int I2VGT;
     int Log_Base;
     int Log_Itr;
     int Log_Wall;
@@ -371,8 +369,6 @@ public:
     int PrsNeuamnnType;
     int ShapeAprx;
     int Steady;
-    int TP;
-    int VRT;
     int Wall_profile;
     int Base_Medium;
     int CCNV;
@@ -572,6 +568,8 @@ public:
 	
   double Tscale;
   
+  bool varState[var_END]; ///< 変数のActive/Inactive
+  
   REAL_TYPE BasePrs;
   REAL_TYPE BaseTemp;
   REAL_TYPE DiffTemp;
@@ -701,6 +699,8 @@ public:
     Reynolds = Peclet = 1.0;
     Prandtl = Rayleigh = Grashof = 0.0;
     
+    for (int i=0; i<var_END; i++) varState[i]=false;
+    
     iv.Density     = 0.0;
     iv.Energy      = 0.0;
     iv.Pressure    = 0.0;
@@ -710,8 +710,6 @@ public:
     Mode.Base_Medium = 0;
     Mode.Buoyancy = 0;
     Mode.Example = 0;
-    Mode.Helicity = 0;
-    Mode.I2VGT = 0;
     Mode.Log_Base = 0;
     Mode.Log_Itr = 0;
     Mode.Log_Wall = 0;
@@ -721,8 +719,6 @@ public:
     Mode.PrsNeuamnnType = 0;
     Mode.ShapeAprx = 0;
     Mode.Steady = 0;
-    Mode.TP = 0;
-    Mode.VRT = 0;
     Mode.Wall_profile = 0;
     Mode.CCNV = 0;
     

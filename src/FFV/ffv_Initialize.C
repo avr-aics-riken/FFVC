@@ -491,15 +491,7 @@ int FFV::Initialize(int argc, char **argv)
   // サンプリング元となるデータ配列の登録
   if ( C.SamplingMode == ON ) 
   {
-    
-    if ( C.isHeatProblem() ) 
-    {
-      MO.setDataPtrs(d_v, d_p, d_ie);
-    }
-    else 
-    {
-      MO.setDataPtrs(d_v, d_p);
-    }
+    MO.setDataPtrs(d_v, d_p, d_ie, d_vrt);
   }
 
   
@@ -635,6 +627,11 @@ void FFV::allocate_Main(double &total)
   if ( C.Mode.Average == ON )
   {
     allocArray_Average(total);
+    
+    C.varState[var_VelocityAvr] = true;
+    C.varState[var_PressureAvr] = true;
+    
+    if ( C.isHeatProblem() ) C.varState[var_TemperatureAvr] = true;
   }
   
   TIMING_stop(tm_init_alloc);
@@ -2672,7 +2669,7 @@ void FFV::initFileOut()
   // Derived Variables
   
   // Total Pressure
-  if (C.Mode.TP == ON )
+  if (C.varState[var_TotalP] == ON )
   {
     comp = 1;
     DFI_OUT_TP = cio_DFI::WriteInit(MPI_COMM_WORLD,
@@ -2717,7 +2714,7 @@ void FFV::initFileOut()
   
   
   // Vorticity
-  if (C.Mode.VRT == ON )
+  if (C.varState[var_Vorticity] == ON )
   {
     comp = 3;
     DFI_OUT_VRT = cio_DFI::WriteInit(MPI_COMM_WORLD,
@@ -2760,7 +2757,7 @@ void FFV::initFileOut()
   
   
   // 2nd Invariant of VGT
-  if ( C.Mode.I2VGT == ON )
+  if ( C.varState[var_Qcr] == ON )
   {
     comp = 1;
     DFI_OUT_I2VGT = cio_DFI::WriteInit(MPI_COMM_WORLD,
@@ -2805,7 +2802,7 @@ void FFV::initFileOut()
   
   
   // Helicity
-  if ( C.Mode.Helicity == ON )
+  if ( C.varState[var_Helicity] == ON )
   {
     comp = 1;
     DFI_OUT_HLT = cio_DFI::WriteInit(MPI_COMM_WORLD,
@@ -3892,7 +3889,9 @@ void FFV::setMonitorList()
                     C.BasePrs,
                     C.Mode.Precision,
                     C.Unit.Prs,
-                    C.num_process);
+                    C.num_process,
+                    C.NoCompo,
+                    mat_tbl);
   
   
   // パラメータを取得し，サンプリングの座標値をセットする >> サンプリング指定がなければ，return
@@ -3905,6 +3904,7 @@ void FFV::setMonitorList()
   
   // モニタ結果出力ファイル群のオープン
   MO.openFile();
+  
 }
 
 

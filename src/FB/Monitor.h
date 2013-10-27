@@ -60,6 +60,8 @@ protected:
   float* cut;            ///< 交点情報
   TextParser* tpCntl;    ///< テキストパーサへのポインタ
   float area;            ///< 断面積 [m^2]
+  int NoCompo;           ///< 物性テーブルの個数 >> 配列の大きさは[NoCompo+1]
+  REAL_TYPE* mtbl;       ///< 物性テーブルへのポインタ
   
   OutputType outputType; ///< 出力タイプ
   vector<MonitorCompo*> monGroup;  ///< モニタリンググループ配列
@@ -79,6 +81,8 @@ public:
     fname_integral = "sampling_compo.txt";
     fname_detail   = "sampling.txt";
     area = 0.0;
+    NoCompo = 0;
+    mtbl = NULL;
   }
   
   /// デストラクタ
@@ -105,11 +109,15 @@ public:
   
   /**
    * @brief モニタ座標情報を取得し，リストに保持する
-   * @param [in,out] C   Controlクラスオブジェクトのポインタ
-   * @param [in,out] cmp コンポーネント配列
+   * @param [in,out] C    Controlクラスオブジェクトのポインタ
+   * @param [in,out] cmp  コンポーネント配列
    * @retval サンプリング指定のときtrue
    */
   bool getMonitor(Control* C, CompoList* cmp);
+  
+  
+  /// VorticityとHelicityのサンプリングが指定されている場合にtrueを返す
+  bool getStateVorticity();
   
   
   /**
@@ -178,6 +186,8 @@ public:
   ///   @param [in] modePrecision  出力精度指定フラグ (単精度，倍精度)
   ///   @param [in] unitPrs        圧力単位指定フラグ (絶対値，ゲージ圧)
   ///   @param [in] num_process    プロセス数
+  ///   @param [in] m_NoCompo      物性テーブルの個数
+  ///   @param [in] tbl            物性テーブル
   ///
   void setControlVars(int* bid,
                       float* cut,
@@ -190,18 +200,21 @@ public:
                       const REAL_TYPE basePrs,
                       const int modePrecision,
                       const int unitPrs,
-                      const int num_process);
+                      const int num_process,
+                      const int m_NoCompo,
+                      REAL_TYPE* tbl);
   
   
   /// サンプリング元データの登録
   ///
-  ///   @param [in] v 速度変数配列
-  ///   @param [in] p 圧力変数配列
-  ///   @param [in] t 温度変数配列
+  ///   @param [in] v  速度変数配列
+  ///   @param [in] p  圧力変数配列
+  ///   @param [in] t  温度変数配列
+  ///   @param [in] vr 渦度変数配列
   ///
-  void setDataPtrs(REAL_TYPE* v, REAL_TYPE* p, REAL_TYPE* t=NULL)
+  void setDataPtrs(REAL_TYPE* v, REAL_TYPE* p, REAL_TYPE* t, REAL_TYPE* vr)
   {
-    for (int i = 0; i < nGroup; i++) monGroup[i]->setDataPtrs(v, p, t);
+    for (int i = 0; i < nGroup; i++) monGroup[i]->setDataPtrs(v, p, t, vr);
   }
   
   

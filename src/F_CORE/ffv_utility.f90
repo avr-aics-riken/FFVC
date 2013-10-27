@@ -191,14 +191,14 @@
 
 !> ********************************************************************
 !! @brief 速度勾配テンソルの第２不変量の計算
-!! @param[out] q 速度勾配テンソルの第２不変量
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param dh 格子幅
-!! @param v セルセンター速度ベクトル
-!! @param bv BCindex C
-!! @param v00 参照速度
-!! @param[out] flop
+!! @param [out] q    速度勾配テンソルの第２不変量
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  dh   格子幅
+!! @param [in]  v    セルセンター速度ベクトル
+!! @param [in]  bv   BCindex C
+!! @param [in]  v00  参照速度
+!! @param [out] flop 浮動小数点演算数
 !<
     subroutine i2vgt (q, sz, g, dh, v, bv, v00, flop)
     implicit none
@@ -365,15 +365,15 @@
     end subroutine i2vgt
 
 !> ********************************************************************
-!! @brief 速度勾配テンソルの第２不変量の計算
-!! @param[out] rot 渦度ベクトル
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param dh 格子幅
-!! @param v セルセンター速度ベクトル
-!! @param bv BCindex C
-!! @param v00 参照速度
-!! @param[out] flop
+!! @brief 渦度ベクトルの計算
+!! @param [out] rot  渦度ベクトル
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  dh   格子幅
+!! @param [in]  v    セルセンター速度ベクトル
+!! @param [in]  bv   BCindex C
+!! @param [in]  v00  参照速度
+!! @param [out] flop 浮動小数点演算数
 !<
     subroutine rot_v (rot, sz, g, dh, v, bv, v00, flop)
     implicit none

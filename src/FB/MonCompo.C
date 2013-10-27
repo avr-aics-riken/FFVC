@@ -65,6 +65,8 @@ void MonitorCompo::allocSamplingArray()
     if (!(tmp = new REAL_TYPE[nPoint])) Exit(0);
     for (int i = 0; i < nPoint; i++) tmp[i] = DUMMY;
   }
+
+  
   
   if (variable[var_TotalP])
   {
@@ -72,10 +74,17 @@ void MonitorCompo::allocSamplingArray()
     for (int i = 0; i < nPoint; i++) tp[i] = DUMMY;
   }
   
-  //if (variable[VORTICITY]) {
-  //  if (!(vor = new FB::Vec3r[nPoint])) Exit(0);
-  //  for (int i = 0; i < nPoint; i++) vor[i] = FB::Vec3r(DUMMY, DUMMY, DUMMY);
-  //}
+  if (variable[var_Helicity])
+  {
+    if (!(hlt = new REAL_TYPE[nPoint])) Exit(0);
+    for (int i = 0; i < nPoint; i++) hlt[i] = DUMMY;
+  }
+  
+  if (variable[var_Vorticity])
+  {
+    if (!(vor = new FB::Vec3r[nPoint])) Exit(0);
+    for (int i = 0; i < nPoint; i++) vor[i] = FB::Vec3r(DUMMY, DUMMY, DUMMY);
+  }
 }
 
 
@@ -160,7 +169,7 @@ bool MonitorCompo::allReduceSum(int* array, int n)
 // #################################################################
 /// 指定されたモニタ領域内でスカラー変数を平均
 ///
-///   @param[in] s スカラー変数配列
+///   @param [in] s スカラー変数配列
 ///   @return モニタ領域内平均値
 ///
 REAL_TYPE MonitorCompo::averageScalar(REAL_TYPE* s)
@@ -180,7 +189,7 @@ REAL_TYPE MonitorCompo::averageScalar(REAL_TYPE* s)
 // #################################################################
 /// 指定されたモニタ領域内でベクトル変数を平均
 ///
-///   @param[in] v ベクトル変数配列
+///   @param [in] v ベクトル変数配列
 ///   @return モニタ領域内平均値
 ///
 FB::Vec3r MonitorCompo::averageVector(FB::Vec3r* v)
@@ -223,10 +232,10 @@ void MonitorCompo::checkMonitorPoints()
 // #################################################################
 /// モニタ点が指定領域内にあるかを判定
 ///
-///   @param[in] m   モニタ点番号
-///   @param[in] org 調査領域の基点
-///   @param[in] box 調査領域のサイズ
-///   @param[in] flag メッセージ出力フラグ(trueの時出力)
+///   @param [in] m   モニタ点番号
+///   @param [in] org 調査領域の基点
+///   @param [in] box 調査領域のサイズ
+///   @param [in] flag メッセージ出力フラグ(trueの時出力)
 ///   @return true=領域内/false=領域外
 ///
 bool MonitorCompo::checkRegion(const int m, const FB::Vec3r org, const FB::Vec3r box, bool flag) const
@@ -478,8 +487,10 @@ void MonitorCompo::gatherSampled()
   if (variable[var_Velocity])      gatherSampledVector(vel, vSendBuf, vRecvBuf);
   if (variable[var_Pressure])      gatherSampledScalar(prs, sRecvBuf);
   if (variable[var_Temperature])   gatherSampledScalar(tmp, sRecvBuf);
+  
   if (variable[var_TotalP])        gatherSampledScalar(tp, sRecvBuf);
-  //if (variable[VORTICITY])      gatherSampledVector(vor, vSendBuf, vRecvBuf);
+  if (variable[var_Helicity])      gatherSampledScalar(hlt, sRecvBuf);
+  if (variable[var_Vorticity])     gatherSampledVector(vor, vSendBuf, vRecvBuf);
   
   if (vSendBuf) delete[] vSendBuf;
   if (vRecvBuf) delete[] vRecvBuf;
@@ -532,8 +543,8 @@ void MonitorCompo::gatherSampledScalar(REAL_TYPE* s, REAL_TYPE* sRecvBuf)
 // #################################################################
 /// サンプリングしたベクトル変数をノード0に集約
 ///
-///   @param[in,out] v ベクトル変数配列
-///   @param  vSendBuf,vRecvBuf  通信用work領域
+///   @param [in,out] v                  ベクトル変数配列
+///   @param [in,out] vSendBuf,vRecvBuf  通信用work領域
 ///
 void MonitorCompo::gatherSampledVector(FB::Vec3r* v, REAL_TYPE* vSendBuf, REAL_TYPE* vRecvBuf)
 {
@@ -685,11 +696,13 @@ string MonitorCompo::getVarStr()
 {
   string var;
   
-  if (variable[var_Velocity])     var += "Velocity ";
-  if (variable[var_Pressure])     var += "Pressure ";
-  if (variable[var_Temperature])  var += "Temperature ";
-  if (variable[var_TotalP])       var += "TotalPressure ";
-  //if (variable[VORTICITY])       var += "Vorticity ";
+  if (variable[var_Velocity])       var += "Velocity ";
+  if (variable[var_Pressure])       var += "Pressure ";
+  if (variable[var_Temperature])    var += "Temperature ";
+  
+  if (variable[var_TotalP])         var += "TotalPressure ";
+  if (variable[var_Helicity])       var += "Helicity ";
+  if (variable[var_Vorticity])      var += "Vorticity ";
   
   return var;
 }
@@ -740,9 +753,9 @@ void MonitorCompo::openFile(const char* str, const bool gathered)
 // #################################################################
 /// モニタ結果出力
 ///
-///   @param[in] step サンプリング時の計算ステップ
-///   @param[in] tm   サンプリング時の計算時刻
-///   @param[in] gathered 出力モードフラグ(true=gather出力/false=disutribute出力)
+///   @param [in] step     サンプリング時の計算ステップ
+///   @param [in] tm       サンプリング時の計算時刻
+///   @param [in] gathered 出力モードフラグ(true=gather出力/false=disutribute出力)
 ///
 void MonitorCompo::print(unsigned step, REAL_TYPE tm, bool gathered)
 {
@@ -792,11 +805,10 @@ void MonitorCompo::print(unsigned step, REAL_TYPE tm, bool gathered)
       if (variable[var_Velocity])    fprintf(fp, vFmt, convVel(vel[i].x), convVel(vel[i].y), convVel(vel[i].z));
       if (variable[var_Pressure])    fprintf(fp, sFmt, convPrs(prs[i]));
       if (variable[var_Temperature]) fprintf(fp, sFmt, convTmp(tmp[i]));
-      if (variable[var_TotalP])      fprintf(fp, sFmt, convTP(tp[i]));
       
-      //if (variable[VORTICITY]) {
-      //  fprintf(fp, vFmt, convVor(vor[i].x), convVor(vor[i].y), convVor(vor[i].z));
-      //}
+      if (variable[var_TotalP])      fprintf(fp, sFmt, convTP(tp[i]));
+      if (variable[var_Helicity])    fprintf(fp, sFmt, convHlt(hlt[i]));
+      if (variable[var_Vorticity])   fprintf(fp, vFmt, convVor(vor[i].x), convVor(vor[i].y), convVor(vor[i].z));
       
       fprintf(fp, "\n");
     }
@@ -831,7 +843,10 @@ void MonitorCompo::print(unsigned step, REAL_TYPE tm, bool gathered)
     if (variable[var_Velocity])    fprintf(fp, sFmt, convVel(val[var_Velocity]));
     if (variable[var_Pressure])    fprintf(fp, sFmt, convPrs(val[var_Pressure]));
     if (variable[var_Temperature]) fprintf(fp, sFmt, convTmp(val[var_Temperature]));
+    
     if (variable[var_TotalP])      fprintf(fp, sFmt, convTP(val[var_TotalP]));
+    if (variable[var_Helicity])    fprintf(fp, sFmt, convHlt(val[var_Helicity]));
+    if (variable[var_Vorticity])   fprintf(fp, sFmt, convVor(val[var_Vorticity]));
     fprintf(fp, "\n");
   }
 
@@ -841,8 +856,8 @@ void MonitorCompo::print(unsigned step, REAL_TYPE tm, bool gathered)
 // #################################################################
 /// モニタ情報を出力
 ///
-///    @param[in] fp 出力ファイルポインタ
-///    @param[in] no モニタグループ通し番号
+///    @param [in] fp 出力ファイルポインタ
+///    @param [in] no モニタグループ通し番号
 //
 void MonitorCompo::printInfo(FILE* fp, int no)
 {
@@ -881,11 +896,14 @@ void MonitorCompo::sampling()
   {
     //  if (!(mon[i] && pointStatus[i] == Sampling::POINT_STATUS_OK)) continue;
     if (!mon[i]) continue;
+    
     if (variable[var_Velocity])     vel[i] = mon[i]->samplingVelocity(vSource);
     if (variable[var_Pressure])     prs[i] = mon[i]->samplingPressure(pSource);
     if (variable[var_Temperature])  tmp[i] = mon[i]->samplingTemperature(tSource);
+    
     if (variable[var_TotalP])       tp[i]  = mon[i]->samplingTotalPressure(vSource, pSource);
-    //if (variable[VORTICITY])      vor[i] = mon[i]->samplingVorticity(vSource);
+    if (variable[var_Vorticity])    vor[i] = mon[i]->samplingVorticity(vSource);
+    if (variable[var_Helicity])     hlt[i] = mon[i]->samplingHelicity(vSource);
   }
 }
 
@@ -905,10 +923,17 @@ void MonitorCompo::samplingAverage()
     FB::Vec3r velAve = averageVector(vel);
     val[var_Velocity] = velAve.x * nv[0] + velAve.y * nv[1] + velAve.z * nv[2];
   }
-
   if (variable[var_Pressure])     val[var_Pressure]    = averageScalar(prs);
   if (variable[var_Temperature])  val[var_Temperature] = averageScalar(tmp);
+  
+  
+  if (variable[var_Vorticity])
+  {
+    FB::Vec3r vrtAve = averageVector(vor);
+    val[var_Vorticity] = vrtAve.x * nv[0] + vrtAve.y * nv[1] + vrtAve.z * nv[2];
+  }
   if (variable[var_TotalP])       val[var_TotalP]      = averageScalar(tp);
+  if (variable[var_Helicity])     val[var_Helicity]    = averageScalar(hlt);
 }
 
 
@@ -965,15 +990,15 @@ void MonitorCompo::setLine(const char* labelStr,
       switch (method)
       {
         case SAMPLING_NEAREST:
-          mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd, NoCompo, mtbl);
           break;
           
         case SAMPLING_INTERPOLATION:
-          mon[m] = new Interpolation(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          mon[m] = new Interpolation(mode, size, guide, crd[m], org, pch, refVar.v00, bcd, NoCompo, mtbl);
           break;
           
         case SAMPLING_SMOOTHING:
-          mon[m] = new Smoothing(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          mon[m] = new Smoothing(mode, size, guide, crd[m], org, pch, refVar.v00, bcd, NoCompo, mtbl);
           break;
           
         default:
@@ -991,11 +1016,13 @@ void MonitorCompo::setLine(const char* labelStr,
 ///
 void MonitorCompo::setMonitorVar(const char* str) 
 {
-  if      (!strcasecmp("velocity", str))       variable[var_Velocity]    = true;
-  else if (!strcasecmp("pressure", str))       variable[var_Pressure]    = true;
-  else if (!strcasecmp("temperature", str))    variable[var_Temperature] = true;
-  else if (!strcasecmp("totalpressure", str))  variable[var_TotalP]      = true;
-  //else if (!strcasecmp("vorticity", str))       variable[VORTICITY] = true;
+  if      (!strcasecmp("velocity", str))             variable[var_Velocity]       = true;
+  else if (!strcasecmp("pressure", str))             variable[var_Pressure]       = true;
+  else if (!strcasecmp("temperature", str))          variable[var_Temperature]    = true;
+
+  else if (!strcasecmp("totalpressure", str))        variable[var_TotalP]         = true;
+  else if (!strcasecmp("helicity", str))             variable[var_Helicity]       = true;
+  else if (!strcasecmp("vorticity", str))            variable[var_Vorticity]      = true;
   else
   {
     Hostonly_ stamped_printf("\tError : Invalid variable keyword [%s]\n", str);
@@ -1048,15 +1075,15 @@ void MonitorCompo::setPointSet(const char* labelStr,
       switch (method)
       {
         case SAMPLING_NEAREST:
-          mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd, NoCompo, mtbl);
           break;
           
         case SAMPLING_INTERPOLATION:
-          mon[m] = new Interpolation(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          mon[m] = new Interpolation(mode, size, guide, crd[m], org, pch, refVar.v00, bcd, NoCompo, mtbl);
           break;
           
         case SAMPLING_SMOOTHING:
-          mon[m] = new Smoothing(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          mon[m] = new Smoothing(mode, size, guide, crd[m], org, pch, refVar.v00, bcd, NoCompo, mtbl);
           break;
           
         default:
@@ -1242,15 +1269,15 @@ void MonitorCompo::setPolygon(const char* labelStr,
       switch (method)
       {
         case SAMPLING_NEAREST:
-          mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd, NoCompo, mtbl);
           break;
           
         case SAMPLING_INTERPOLATION:
-          mon[m] = new Interpolation(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          mon[m] = new Interpolation(mode, size, guide, crd[m], org, pch, refVar.v00, bcd, NoCompo, mtbl);
           break;
           
         case SAMPLING_SMOOTHING:
-          mon[m] = new Smoothing(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          mon[m] = new Smoothing(mode, size, guide, crd[m], org, pch, refVar.v00, bcd, NoCompo, mtbl);
           break;
           
         default:
@@ -1400,15 +1427,15 @@ void MonitorCompo::setPrimitive(const char* labelStr,
       switch (method)
       {
         case SAMPLING_NEAREST:
-          mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          mon[m] = new Nearest(mode, size, guide, crd[m], org, pch, refVar.v00, bcd, NoCompo, mtbl);
           break;
           
         case SAMPLING_INTERPOLATION:
-          mon[m] = new Interpolation(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          mon[m] = new Interpolation(mode, size, guide, crd[m], org, pch, refVar.v00, bcd, NoCompo, mtbl);
           break;
           
         case SAMPLING_SMOOTHING:
-          mon[m] = new Smoothing(mode, size, guide, crd[m], org, pch, refVar.v00, bcd);
+          mon[m] = new Smoothing(mode, size, guide, crd[m], org, pch, refVar.v00, bcd, NoCompo, mtbl);
           break;
           
         default:
@@ -1554,6 +1581,8 @@ void MonitorCompo::writeHeaderCompo()
     if ( variable[var_Pressure] )     fprintf(fp, "      Pressure [pa]");
     if ( variable[var_Temperature] )  fprintf(fp, "    Temperature [C]");
     if ( variable[var_TotalP] )       fprintf(fp, "  TotalPressure[pa]");
+    if ( variable[var_Helicity] )     fprintf(fp, "     Helicity [m/s]");
+    if ( variable[var_Vorticity] )    fprintf(fp, "    Vorticity [m/s]");
   }
   else
   {
@@ -1561,9 +1590,9 @@ void MonitorCompo::writeHeaderCompo()
     if ( variable[var_Pressure] )     fprintf(fp, "               Pressure [pa]");
     if ( variable[var_Temperature] )  fprintf(fp, "             Temperature [C]");
     if ( variable[var_TotalP] )       fprintf(fp, "           TotalPressure[pa]");
+    if ( variable[var_Helicity] )     fprintf(fp, "              Helicity [m/s]");
+    if ( variable[var_Vorticity] )    fprintf(fp, "             Vorticity [m/s]");
   }
-  
-
   
   fprintf(fp, "\n");
 }

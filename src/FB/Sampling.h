@@ -24,7 +24,6 @@
 #include "vec3.h"
 #include "basic_func.h"
 
-//using namespace FB;
 
 /**
  * Samplingクラス
@@ -42,29 +41,33 @@ public:
   };
 
 protected:
-  int mode;          ///< サンプリングモード
-  int size[3];       ///< セル(ローカル)サイズ
-  int guide;         ///< ガイドセル数
+  int mode;         ///< サンプリングモード
+  int size[3];      ///< セル(ローカル)サイズ
+  int guide;        ///< ガイドセル数
+  int NoCompo;      ///< 物性値テーブルの個数 [NoCompo+1]
 
   FB::Vec3i cIndex; ///< モニタ点を含むセルのインデックス
   FB::Vec3r pch;    ///< セル幅
   FB::Vec3r v00;    ///< 座標系移動速度
   int* bcd;         ///< BCindex B
+  REAL_TYPE *mtbl;  ///< 無次元物性値テーブル
   
 public:
-  /// ディフォルトコンストラクタ.
+  /// ディフォルトコンストラクタ
   Sampling() {}
 
-  /// コンストラクタ.
+  /// コンストラクタ
   ///
-  ///   @param[in] mode  サンプリングモード
-  ///   @param[in] size  ローカルセル数
-  ///   @param[in] guide ガイドセル数
-  ///   @param[in] crd   モニタ点座標
-  ///   @param[in] org   ローカル領域基点座標
-  ///   @param[in] pch   セル幅
-  ///   @param[in] v00   座標系移動速度
-  ///   @param[in] bcd   BCindex B
+  ///   @param [in] mode      サンプリングモード
+  ///   @param [in] size      ローカルセル数
+  ///   @param [in] guide     ガイドセル数
+  ///   @param [in] crd       モニタ点座標
+  ///   @param [in] org       ローカル領域基点座標
+  ///   @param [in] pch       セル幅
+  ///   @param [in] v00       座標系移動速度
+  ///   @param [in] bcd       BCindex B
+  ///   @param [in] num_compo 物性テーブルの個数
+  ///   @param [in] tbl       物性テーブル
   ///
   Sampling(int mode,
            int size[],
@@ -73,7 +76,9 @@ public:
            FB::Vec3r org,
            FB::Vec3r pch,
            FB::Vec3r v00,
-           int* bcd) {
+           int* bcd,
+           int num_compo,
+           REAL_TYPE* tbl) {
     
     this->mode = mode;
     this->size[0] = size[0];
@@ -83,114 +88,143 @@ public:
     this->pch = pch;
     this->v00 = v00;
     this->bcd = bcd;
+    this->NoCompo = num_compo;
 
     FB::Vec3r c = (crd - org) / pch;
     cIndex.x = (int)(c.x) + 1;
     cIndex.y = (int)(c.y) + 1;
     cIndex.z = (int)(c.z) + 1;
+    
+    mtbl = NULL;
+    
+    if ( !(mtbl = new REAL_TYPE[3*(NoCompo+1)]) ) Exit(0);
+    
+    for (int i=0; i<3*(NoCompo+1); i++)
+    {
+      mtbl[i] = tbl[i];
+    }
   } 
 
-  /// デストラクタ.
-  virtual ~Sampling() {}
+  /// デストラクタ
+  virtual ~Sampling() {
+    if (mtbl) delete [] mtbl;
+  }
 
-  /// モニタ点の状態を返す.
-  PointStatus checkMonitorPoint() {
+  /// モニタ点の状態を返す
+  PointStatus checkMonitorPoint()
+  {
     if      (mode == SAMPLING_FLUID_ONLY && !isFluid(cIndex)) return UNEXPECTED_SOLID;
     else if (mode == SAMPLING_SOLID_ONLY &&  isFluid(cIndex)) return UNEXPECTED_FLUID;
     else return POINT_STATUS_OK;   // mode == ALL
   }
 
-  /// 速度をサンプリング.
+  /// 速度をサンプリング
   ///
-  ///   @param[in] v サンプリング元速度配列
+  ///   @param [in] v サンプリング元速度配列
   ///
   virtual FB::Vec3r samplingVelocity(const REAL_TYPE* v) = 0;
 
-  /// 圧力をサンプリング.
+  /// 圧力をサンプリング
   ///
-  ///   @param[in] p サンプリング元圧力配列
+  ///   @param [in] p サンプリング元圧力配列
   ///
   virtual REAL_TYPE samplingPressure(const REAL_TYPE* p) = 0;
 
-  /// 温度をサンプリング.
+  /// 温度をサンプリング
   ///
-  ///   @param[in] t サンプリング元温度配列
+  ///   @param [in] t サンプリング元温度配列
   ///
   virtual REAL_TYPE samplingTemperature(const REAL_TYPE* t) = 0;
 
-  /// 全圧をサンプリング.
+  /// 全圧をサンプリング
   ///
-  ///   @param[in] v サンプリング元速度配列
-  ///   @param[in] p サンプリング元圧力配列
+  ///   @param [in] v サンプリング元速度配列
+  ///   @param [in] p サンプリング元圧力配列
   ///
   virtual REAL_TYPE samplingTotalPressure(const REAL_TYPE* v, const REAL_TYPE* p) = 0;
 
-  /// 渦度をサンプリング.
+  /// 渦度をサンプリング
   ///
-  ///   @param[in] v サンプリング元速度配列
+  ///   @param [in] v サンプリング元速度配列
   ///
   virtual FB::Vec3r samplingVorticity(const REAL_TYPE* v) = 0;
 
-protected:
-  /// 全圧を計算.
+  /// Helicityをサンプリング
   ///
-  ///   @param[in] v  速度
-  ///   @param[in] p  圧力
+  ///   @param [in] v サンプリング元速度配列
+  ///
+  virtual REAL_TYPE samplingHelicity(const REAL_TYPE* v) = 0;
+  
+  
+protected:
+  /// 全圧を計算
+  ///
+  ///   @param [in] v  速度
+  ///   @param [in] p  圧力
   ///   @return 全圧
   REAL_TYPE calcTotalPressure(const FB::Vec3r v, REAL_TYPE p) {
     FB::Vec3r v1 = v - v00;
     return 0.5 * v1.lengthSquared() + p;
   }
 
+  /// Helicityを計算
+  ///
+  ///   @param [in] v     速度配列
+  ///   @param [in] index セルインデックス
+  ///   @return Helicity
+  ///
+  REAL_TYPE calcHelicity(const REAL_TYPE* v, FB::Vec3i index);
+  
+  
   /// 渦度を計算
   ///
-  ///   @param[in] v 速度配列
-  ///   @param[in] index セルインデックス
+  ///   @param [in] v 速度配列
+  ///   @param [in] index セルインデックス
   ///   @return 渦度ベクトル
   ///
   FB::Vec3r calcVorticity(const REAL_TYPE* v, FB::Vec3i index);
 
 
-  /// セルインデックスを(1,0,0)シフト.
+  /// セルインデックスを(1,0,0)シフト
   FB::Vec3i shift1(FB::Vec3i index) { return FB::Vec3i(index.x+1, index.y  , index.z  ); }
 
-  /// セルインデックスを(0,1,0)シフト.
+  /// セルインデックスを(0,1,0)シフト
   FB::Vec3i shift2(FB::Vec3i index) { return FB::Vec3i(index.x  , index.y+1, index.z  ); }
 
-  /// セルインデックスを(1,1,0)シフト.
+  /// セルインデックスを(1,1,0)シフト
   FB::Vec3i shift3(FB::Vec3i index) { return FB::Vec3i(index.x+1, index.y+1, index.z  ); }
 
-  /// セルインデックスを(0,0,1)シフト.
+  /// セルインデックスを(0,0,1)シフト
   FB::Vec3i shift4(FB::Vec3i index) { return FB::Vec3i(index.x  , index.y  , index.z+1); }
 
-  /// セルインデックスを(1,0,1)シフト.
+  /// セルインデックスを(1,0,1)シフト
   FB::Vec3i shift5(FB::Vec3i index) { return FB::Vec3i(index.x+1, index.y  , index.z+1); }
 
-  /// セルインデックスを(0,1,1)シフト.
+  /// セルインデックスを(0,1,1)シフト
   FB::Vec3i shift6(FB::Vec3i index) { return FB::Vec3i(index.x  , index.y+1, index.z+1); }
 
-  /// セルインデックスを(1,1,1)シフト.
+  /// セルインデックスを(1,1,1)シフト
   FB::Vec3i shift7(FB::Vec3i index) { return FB::Vec3i(index.x+1, index.y+1, index.z+1); }
 
-  /// セルインデックスを-xシフト.
+  /// セルインデックスを-xシフト
   FB::Vec3i shift_xm(FB::Vec3i index) { return FB::Vec3i(index.x-1, index.y  , index.z  ); }
 
-  /// セルインデックスを+xシフト.
+  /// セルインデックスを+xシフト
   FB::Vec3i shift_xp(FB::Vec3i index) { return FB::Vec3i(index.x+1, index.y  , index.z  ); }
 
-  /// セルインデックスを-yシフト.
+  /// セルインデックスを-yシフト
   FB::Vec3i shift_ym(FB::Vec3i index) { return FB::Vec3i(index.x  , index.y-1, index.z  ); }
 
-  /// セルインデックスを+yシフト.
+  /// セルインデックスを+yシフト
   FB::Vec3i shift_yp(FB::Vec3i index) { return FB::Vec3i(index.x  , index.y+1, index.z  ); }
 
-  /// セルインデックスを-zシフト.
+  /// セルインデックスを-zシフト
   FB::Vec3i shift_zm(FB::Vec3i index) { return FB::Vec3i(index.x  , index.y  , index.z-1); }
 
-  /// セルインデックスを+zシフト.
+  /// セルインデックスを+zシフト
   FB::Vec3i shift_zp(FB::Vec3i index) { return FB::Vec3i(index.x  , index.y  , index.z+1); }
 
-  /// セルが流体セルかどうか調べる.
+  /// セルが流体セルかどうか調べる
   ///
   ///    @param[in] index セルインデックス
   ///
@@ -199,7 +233,7 @@ protected:
     return IS_FLUID(bcd[m]);
   }
 
-  /// セルでのスカラー値を取得.
+  /// セルでのスカラー値を取得
   ///
   ///    @param [in] s スカラー配列
   ///    @param [in] index セルインデックス
@@ -209,8 +243,20 @@ protected:
     size_t m =_F_IDX_S3D(index.x, index.y, index.z, size[0], size[1], size[2], guide);
     return s[m];
   }
+  
+  /// セルでの温度を内部エネルギーから取得
+  ///
+  ///    @param [in] s     内部エネルギー
+  ///    @param [in] index セルインデックス
+  ///    @return セルでの温度
+  ///
+  REAL_TYPE getTemp(const REAL_TYPE* s, FB::Vec3i index) {
+    size_t m =_F_IDX_S3D(index.x, index.y, index.z, size[0], size[1], size[2], guide);
+    int l = DECODE_CMP(bcd[m]);
+    return (s[m] / (mtbl[3*l+0] * mtbl[3*l+1]) ); //  t=ie/(rho cp)
+  }
 
-  /// セルでのベクトル値を取得.
+  /// セルでのベクトル値を取得
   ///
   ///    @param [in] v ベクトル配列
   ///    @param [in] index セルインデックス
@@ -236,31 +282,39 @@ protected:
 };
 
 /**
-  * Nearestクラス.
+  * Nearestクラス
   *
-  *    - モニタ点を含むセルの値をサンプリングする．
+  *    - モニタ点を含むセルの値をサンプリングする
   */
 class Nearest : public Sampling {
 protected:
 
-  /// スカラー変数をサンプリング.
+  /// スカラー変数をサンプリング
   ///
-  ///   @param[in] s サンプリング元スカラー変数配列
+  ///   @param [in] s サンプリング元スカラー変数配列
   ///
   REAL_TYPE samplingScalar(const REAL_TYPE* s);
+  
+  /// 温度をサンプリング
+  ///
+  ///   @param [in] s サンプリング元内部エネルギー変数
+  ///
+  REAL_TYPE samplingTemp(const REAL_TYPE* s);
 
 public:
 
-  /// コンストラクタ.
+  /// コンストラクタ
   ///
-  ///   @param [in] mode   サンプリングモード
-  ///   @param [in] size   ローカルセル数
-  ///   @param [in] guide  ガイドセル数
-  ///   @param [in] crd    モニタ点座標
-  ///   @param [in] org    ローカル領域基点座標
-  ///   @param [in] pch    セル幅
-  ///   @param [in] v00    座標系移動速度
-  ///   @param [in] bcd    BCindex B
+  ///   @param [in] mode      サンプリングモード
+  ///   @param [in] size      ローカルセル数
+  ///   @param [in] guide     ガイドセル数
+  ///   @param [in] crd       モニタ点座標
+  ///   @param [in] org       ローカル領域基点座標
+  ///   @param [in] pch       セル幅
+  ///   @param [in] v00       座標系移動速度
+  ///   @param [in] bcd       BCindex B
+  ///   @param [in] num_compo 物性テーブルの個数
+  ///   @param [in] tbl       物性テーブル
   ///
   Nearest(int mode,
           int size[],
@@ -269,41 +323,49 @@ public:
           FB::Vec3r org,
           FB::Vec3r pch,
           FB::Vec3r v00,
-          int* bcd);
+          int* bcd,
+          int num_compo,
+          REAL_TYPE* tbl);
 
-  /// デストラクタ.
+  /// デストラクタ
   ~Nearest() {}
 
-  /// 速度をサンプリング.
+  /// 速度をサンプリング
   ///
-  ///   @param[in] v サンプリング元速度配列
+  ///   @param [in] v サンプリング元速度配列
   ///
   FB::Vec3r samplingVelocity(const REAL_TYPE* v);
 
-  /// 圧力をサンプリング.
+  /// 圧力をサンプリング
   ///
-  ///   @param[in] p サンプリング元圧力配列
+  ///   @param [in] p サンプリング元圧力配列
   ///
   REAL_TYPE samplingPressure(const REAL_TYPE* p) { return samplingScalar(p); }
 
-  /// 温度をサンプリング.
+  /// 温度をサンプリング
   ///
-  ///   @param[in] t サンプリング元温度配列
+  ///   @param [in] t サンプリング元温度配列
   ///
-  REAL_TYPE samplingTemperature(const REAL_TYPE* t) { return samplingScalar(t); }
+  REAL_TYPE samplingTemperature(const REAL_TYPE* t) { return samplingTemp(t); }
 
-  /// 全圧をサンプリング.
+  /// 全圧をサンプリング
   ///
-  ///   @param[in] v サンプリング元速度配列
-  ///   @param[in] p サンプリング元圧力配列
+  ///   @param [in] v サンプリング元速度配列
+  ///   @param [in] p サンプリング元圧力配列
   ///
   REAL_TYPE samplingTotalPressure(const REAL_TYPE*v, const REAL_TYPE* p);
 
-  /// 渦度をサンプリング.
+  /// 渦度をサンプリング
   ///
-  ///   @param[in] v サンプリング元速度配列
+  ///   @param [in] v サンプリング元速度配列
   ///
   FB::Vec3r samplingVorticity(const REAL_TYPE* v);
+  
+  /// Helicityをサンプリング
+  ///
+  ///   @param [in] v サンプリング元速度配列
+  ///
+  REAL_TYPE samplingHelicity(const REAL_TYPE* v);
 };
 
 
@@ -328,7 +390,7 @@ protected:
 
   int nAdd;  ///< 平均値計算参加セル数
 
-  /// そのセルを平均値計算に使用するかどうか判定する.
+  /// そのセルを平均値計算に使用するかどうか判定する
   ///
   ///    @param[in] index セルインデックス
   ///
@@ -338,26 +400,35 @@ protected:
     else return true;  // モードがallの場合はセルのfluid/solidは考慮しない
   }
 
-  /// スカラー変数をサンプリング.
+  /// スカラー変数をサンプリング
   ///
   ///   @param[in] s サンプリング元スカラー変数配列
   ///
   REAL_TYPE samplingScalar(const REAL_TYPE* s);
+  
+  /// 温度をサンプリング
+  ///
+  ///   @param [in] s サンプリング元内部エネルギー変数
+  ///
+  REAL_TYPE samplingTemp(const REAL_TYPE* s);
+  
 
 public:
 
-  /// コンストラクタ.
+  /// コンストラクタ
   ///
-  ///   隣接セルに対して局所平均計算に使用するかどうかのフラグを立てる.
+  ///   隣接セルに対して局所平均計算に使用するかどうかのフラグを立てる
   ///
-  ///   @param [in] mode   サンプリングモード
-  ///   @param [in] size   ローカルセル数
-  ///   @param [in] guide  ガイドセル数
-  ///   @param [in] crd    モニタ点座標
-  ///   @param [in] org    ローカル領域基点座標
-  ///   @param [in] pch    セル幅
-  ///   @param [in] v00    座標系移動速度
-  ///   @param [in] bcd    BCindex B
+  ///   @param [in] mode      サンプリングモード
+  ///   @param [in] size      ローカルセル数
+  ///   @param [in] guide     ガイドセル数
+  ///   @param [in] crd       モニタ点座標
+  ///   @param [in] org       ローカル領域基点座標
+  ///   @param [in] pch       セル幅
+  ///   @param [in] v00       座標系移動速度
+  ///   @param [in] bcd       BCindex B
+  ///   @param [in] num_compo 物性テーブルの個数
+  ///   @param [in] tbl       物性テーブル
   ///
   Smoothing(int mode,
             int size[],
@@ -366,42 +437,49 @@ public:
             FB::Vec3r org,
             FB::Vec3r pch,
             FB::Vec3r v00,
-            int* bcd);
+            int* bcd,
+            int num_compo,
+            REAL_TYPE* tbl);
 
-  /// デストラクタ.
+  /// デストラクタ
   ~Smoothing() {}
 
-  /// 速度をサンプリング.
+  /// 速度をサンプリング
   ///
-  ///   @param[in] v サンプリング元速度配列
+  ///   @param [in] v サンプリング元速度配列
   ///
   FB::Vec3r samplingVelocity(const REAL_TYPE* v);
 
-  /// 圧力をサンプリング.
+  /// 圧力をサンプリング
   ///
-  ///   @param[in] p サンプリング元圧力配列
+  ///   @param [in] p サンプリング元圧力配列
   ///
   REAL_TYPE samplingPressure(const REAL_TYPE* p) { return samplingScalar(p); }
 
-  /// 温度をサンプリング.
+  /// 温度をサンプリング
   ///
-  ///   @param[in] t サンプリング元温度配列
+  ///   @param [in] t サンプリング元温度配列
   ///
-  REAL_TYPE samplingTemperature(const REAL_TYPE* t) { return samplingScalar(t); }
+  REAL_TYPE samplingTemperature(const REAL_TYPE* t) { return samplingTemp(t); }
 
-  /// 全圧をサンプリング.
+  /// 全圧をサンプリング
   ///
-  ///   @param[in] v サンプリング元速度配列
-  ///   @param[in] p サンプリング元圧力配列
+  ///   @param [in] v サンプリング元速度配列
+  ///   @param [in] p サンプリング元圧力配列
   ///
   REAL_TYPE samplingTotalPressure(const REAL_TYPE*v, const REAL_TYPE* s);
 
-  /// 渦度をサンプリング.
+  /// 渦度をサンプリング
   ///
-  ///   @param[in] v サンプリング元速度配列
+  ///   @param [in] v サンプリング元速度配列
   ///
   FB::Vec3r samplingVorticity(const REAL_TYPE* v);
 
+  /// Helicityをサンプリング
+  ///
+  ///   @param [in] v サンプリング元速度配列
+  ///
+  REAL_TYPE samplingHelicity(const REAL_TYPE* v);
 };
 
 
@@ -428,27 +506,36 @@ protected:
     else return false;  // モードがallの場合はセルのfluid/solidは考慮しない
   }
 
-  /// スカラー変数をサンプリング.
+  /// スカラー変数をサンプリング
   ///
-  ///   @param[in] s サンプリング元スカラー変数配列
+  ///   @param [in] s サンプリング元スカラー変数配列
   ///
   REAL_TYPE samplingScalar(const REAL_TYPE* s);
+  
+  /// 温度をサンプリング
+  ///
+  ///   @param [in] s サンプリング元内部エネルギー変数
+  ///
+  REAL_TYPE samplingTemp(const REAL_TYPE* s);
+  
 
 public:
 
-  /// コンストラクタ.
+  /// コンストラクタ
   ///
-  ///   補間計算の基準セルのインデックスおよび補間係数を計算.
-  ///   流体-固体境界に接しているかをチェック.
+  ///   補間計算の基準セルのインデックスおよび補間係数を計算
+  ///   流体-固体境界に接しているかをチェック
   ///
-  ///   @param [in] mode   サンプリングモード
-  ///   @param [in] size   ローカルセル数
-  ///   @param [in] guide  ガイドセル数
-  ///   @param [in] crd    モニタ点座標
-  ///   @param [in] org    ローカル領域基点座標，セル幅
-  ///   @param [in] pch    セル幅
-  ///   @param [in] v00    座標系移動速度
-  ///   @param [in] bcd    BCindex B
+  ///   @param [in] mode      サンプリングモード
+  ///   @param [in] size      ローカルセル数
+  ///   @param [in] guide     ガイドセル数
+  ///   @param [in] crd       モニタ点座標
+  ///   @param [in] org       ローカル領域基点座標，セル幅
+  ///   @param [in] pch       セル幅
+  ///   @param [in] v00       座標系移動速度
+  ///   @param [in] bcd       BCindex B
+  ///   @param [in] num_compo 物性テーブルの個数
+  ///   @param [in] tbl       物性テーブル
   ///
   Interpolation(int mode,
                 int size[],
@@ -457,41 +544,49 @@ public:
                 FB::Vec3r org,
                 FB::Vec3r pch,
                 FB::Vec3r v00,
-                int* bcd);
+                int* bcd,
+                int num_compo,
+                REAL_TYPE* tbl);
 
-  /// デストラクタ.
+  /// デストラクタ
   ~Interpolation() {}
 
-  /// 速度をサンプリング.
+  /// 速度をサンプリング
   ///
-  ///   @param[in] v サンプリング元速度配列
+  ///   @param [in] v サンプリング元速度配列
   ///
   FB::Vec3r samplingVelocity(const REAL_TYPE* v);
 
-  /// 圧力をサンプリング.
+  /// 圧力をサンプリング
   ///
-  ///   @param[in] p サンプリング元圧力配列
+  ///   @param [in] p サンプリング元圧力配列
   ///
   REAL_TYPE samplingPressure(const REAL_TYPE* p) { return samplingScalar(p); }
 
-  /// 温度をサンプリング.
+  /// 温度をサンプリング
   ///
-  ///   @param[in] t サンプリング元温度配列
+  ///   @param [in] t サンプリング元温度配列
   ///
-  REAL_TYPE samplingTemperature(const REAL_TYPE* t) { return samplingScalar(t); }
+  REAL_TYPE samplingTemperature(const REAL_TYPE* t) { return samplingTemp(t); }
 
-  /// 全圧をサンプリング.
+  /// 全圧をサンプリング
   ///
-  ///   @param[in] v サンプリング元速度配列
-  ///   @param[in] p サンプリング元圧力配列
+  ///   @param [in] v サンプリング元速度配列
+  ///   @param [in] p サンプリング元圧力配列
   ///
   REAL_TYPE samplingTotalPressure(const REAL_TYPE* v, const REAL_TYPE* p);
 
-  /// 渦度をサンプリング.
+  /// 渦度をサンプリング
   ///
-  ///   @param[in] v サンプリング元速度配列
+  ///   @param [in] v サンプリング元速度配列
   ///
   FB::Vec3r samplingVorticity(const REAL_TYPE* v);
+  
+  /// Helicityをサンプリング
+  ///
+  ///   @param [in] v サンプリング元速度配列
+  ///
+  REAL_TYPE samplingHelicity(const REAL_TYPE* v);
 };
 
 
@@ -504,21 +599,23 @@ public:
  */
 class InterpolationStgV : public Interpolation {
 protected:
-  FB::Vec3i base_s;        ///< 線形補間基準セルのインデックス(スタガード配置)
+  FB::Vec3i base_s;     ///< 線形補間基準セルのインデックス(スタガード配置)
   REAL_TYPE coef_s[3];  ///< 線形補間係数(スタガード配置)
 
 public:
 
-  /// コンストラクタ.
+  /// コンストラクタ
   ///
-  ///   @param [in] mode  サンプリングモード
-  ///   @param [in] size  ローカルセル数
-  ///   @param [in] guide ガイドセル数
-  ///   @param [in] crd   モニタ点座標
-  ///   @param [in] org   ローカル領域基点座標
-  ///   @param [in] pch   セル幅
-  ///   @param [in] v00   座標系移動速度
-  ///   @param [in] bcd   BCindex B
+  ///   @param [in] mode      サンプリングモード
+  ///   @param [in] size      ローカルセル数
+  ///   @param [in] guide     ガイドセル数
+  ///   @param [in] crd       モニタ点座標
+  ///   @param [in] org       ローカル領域基点座標
+  ///   @param [in] pch       セル幅
+  ///   @param [in] v00       座標系移動速度
+  ///   @param [in] bcd       BCindex B
+  ///   @param [in] num_compo 物性テーブルの個数
+  ///   @param [in] tbl       物性テーブル
   ///
   InterpolationStgV(int mode,
                     int size[],
@@ -527,14 +624,16 @@ public:
                     FB::Vec3r org,
                     FB::Vec3r pch,
                     FB::Vec3r v00,
-                    int* bcd);
+                    int* bcd,
+                    int num_compo,
+                    REAL_TYPE* tbl);
 
-  /// デストラクタ.
+  /// デストラクタ
   ~InterpolationStgV() {}
 
-  /// 速度をサンプリング.
+  /// 速度をサンプリング
   ///
-  ///   @param[in] v サンプリング元速度配列
+  ///   @param [in] v サンプリング元速度配列
   ///
   FB::Vec3r samplingVelocity(const REAL_TYPE* v);
 
