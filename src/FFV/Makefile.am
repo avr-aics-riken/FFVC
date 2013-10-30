@@ -27,7 +27,7 @@ ffvc_CXXFLAGS = \
   @PM_CFLAGS@ \
   @PL_CFLAGS@ \
   @CUT_CFLAGS@ \
-  @MPICH_CFLAGS@ \
+  @MPI_CFLAGS@ \
   @REALOPT@
 
 ffvc_SOURCES = \
@@ -61,11 +61,10 @@ ffvc_LDADD = \
   @PM_LDFLAGS@ \
   @PL_LDFLAGS@ \
   @CUT_LDFLAGS@ \
-  @MPICH_LDFLAGS@ \
-  @MPICH_LIBS@ \
-  @MPICH_FCLIBS@ \
-  @FFVC_LIBS@ \
-  @FFVC_FC_LD@
+  @MPI_LDFLAGS@ \
+  @MPI_LIBS@ \
+  @MPI_FCLIBS@ \
+  @FFVC_LIBS@
 
 
 EXTRA_DIST = Makefile_hand depend.inc

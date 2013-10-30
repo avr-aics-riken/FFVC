@@ -32,7 +32,6 @@ Known values for OPTION are:
   --fc        print Fortran90 compiler command
   --fcflags   print Fortran90 pre-processor and compiler flags
   --fclibs    print library linking information for Fortran90 program
-  --fclink    print Fortran90 program linker command
   --help      display this help and exit
   --libs      print library linking information for C++ program
   --version   output version information
@@ -59,7 +58,7 @@ while test $# -gt 0; do
     --version)
 cat <<EOF
 
-# FFV-C : Frontflow / violet Cartesian  Ver. 1.4.7  (20131027_1600)
+# FFV-C : Frontflow / violet Cartesian  Ver. 1.4.8  (20131030_1830)
 #
 # Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
 # All rights reserved.
@@ -96,10 +95,6 @@ EOF
 
     --fclibs)
       echo   -lstdc++ -lifcore
-      ;;
-
-    --fclink)
-      echo 
       ;;
 
     --libs)

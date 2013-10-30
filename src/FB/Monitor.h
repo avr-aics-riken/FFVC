@@ -90,7 +90,12 @@ public:
   }
   
   
-  /// Polygonモニターの交点の状況を確認
+  /// @brief サンプリングの変数指定と計算モードの整合性をチェックする
+  /// @param [in] KOS  KindOfSolver
+  bool checkConsistency(const int KOS);
+  
+  
+  /// @brief Polygonモニターの交点の状況を確認
   void checkStatus();
   
   

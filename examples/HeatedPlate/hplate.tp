@@ -101,14 +101,6 @@ GeometryModel {
 
 
 IntrinsicExample {
-    Dimension        = "3d"
-    FluidMedium      = "air"
-    SolidMedium      = "fe"
-    StepLength       = 0.03
-    StepHeight       = 0.005
-    DriverLength     = 0.0
-    DriverMedium     = "air"
-    DriverFaceMedium = "air"
 }
 
 
@@ -182,24 +174,15 @@ MonitorList {
   list[@] {
     type            = "Line"
     label           = "line1"
-    value           = "x"
-    Variable        = "Velocity"
+    
     SamplingMethod  = "Interpolation"
     SamplingMode    = "Fluid"
     Division        = 64
     From            = (-0.5, 0.0, 0.0)
     To              = (0.5, 0.0, 0.0)
-  }
-
-  list[@] {
-    type            = "Line"
-    label           = "line2"
-    Variable        = "Velocity"
-    SamplingMethod  = "Interpolation"
-    SamplingMode    = "Fluid"
-    Division        = 64
-    From            = (0.0, 0.0, -0.5)
-    To              = (0.0, 0.0, 0.5)
+    Variables {
+      Velocity      = "on"
+    }
   }
 }
 

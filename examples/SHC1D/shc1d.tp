@@ -145,34 +145,25 @@ MediumTable {
 MonitorList {
   Log             = "On"
   OutputMode      = "Gather"
+  CellMonitor     = "off"
   Sampling {
     TemporalType  = "step"
     Interval      = 1
   }
 
-/*
   list[@] {
     type            = "Line"
     label           = "line1"
-    Variable        = "Velocity"
     SamplingMethod  = "Interpolation"
-    SamplingMode    = "Fluid"
-    Division        = 64
-    From            = (-0.5, 0.0, 0.0)
-    To              = (0.5, 0.0, 0.0)
+    SamplingMode    = "Solid"
+    Division        = 4
+    From            = (0.1, 0.0, 0.0)
+    To              = (0.9, 0.0, 0.0)
+    Variables {
+      temperature   = "on"
+    }
   }
 
-  list[@] {
-    type            = "Line"
-    label           = "line2"
-    Variable        = "Velocity"
-    SamplingMethod  = "Interpolation"
-    SamplingMode    = "Fluid"
-    Division        = 64
-    From            = (0.0, 0.0, -0.5)
-    To              = (0.0, 0.0, 0.5)
-  }
-*/
 }
 
 

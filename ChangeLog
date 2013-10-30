@@ -19,9 +19,18 @@ REVISION HISTORY
 ================
 
 --------------------------
+2013-10-30
+
+- r1045 compile on K/FX [ver 1.4.8]
+  - update examples/SHC1D/shc1d.tp, examples/HeatedPlate/hplate.tp
+  - FillHint is mandatory
+  - modify configure.ac to update update configure.ac to support Marvericks
+
+
+--------------------------
 2013-10-27
 
-- r1044 Holl filling update [ver 1.4.7]
+- r1044 Hall filling update [ver 1.4.7]
 
 - r1043 Helicity sampling
 

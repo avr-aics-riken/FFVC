@@ -17,7 +17,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([FFVC], [1.4.7], [keno@riken.jp], [FFVC])
+AC_INIT([FFVC], [1.4.8], [keno@riken.jp], [FFVC])
 AM_INIT_AUTOMAKE()
 AC_CONFIG_SRCDIR([src/FB/Alloc.C])
 AC_CONFIG_HEADERS([config.h])
@@ -25,8 +25,19 @@ AC_CONFIG_HEADERS([config.h])
 #
 # revision No.
 #
-FFVC_REVISION="20131027_1600"
+FFVC_REVISION="20131030_1830"
 AC_SUBST(FFVC_REVISION)
+
+
+#
+# default prefix setting
+#
+AC_PREFIX_DEFAULT([/usr/local/FFVC])
+if test "$prefix" = "NONE" ; then
+  FFVC_INST_DIR=/usr/local/FFVC
+else
+  FFVC_INST_DIR="$prefix"
+fi
 
 
 #
@@ -37,11 +48,19 @@ AC_SUBST(TGT_DEVICE)
 
 
 #
-# FORTRAN
+# FORTRAN f90 compiler check
 #
 
-FC=$F90
-FCFLAGS=$F90FLAGS
+if test "_$FC" = "_"; then
+  if test "_$F90" != "_"; then
+    FC=$F90
+  fi
+fi
+if test "_$FCFLAGS" = "_"; then
+  if test "_$F90FLAGS" != "_"; then
+    FCFLAGS=$F90FLAGS
+  fi
+fi
 
 
 
@@ -92,13 +111,13 @@ esac
 
 
 #
-# MPICH environment
+# MPI environment
 #
-AC_SUBST(MPICH_DIR)
-AC_SUBST(MPICH_CFLAGS)
-AC_SUBST(MPICH_LDFLAGS)
-AC_SUBST(MPICH_LIBS)
-AC_SUBST(MPICH_FCLIBS)
+AC_SUBST(MPI_DIR)
+AC_SUBST(MPI_CFLAGS)
+AC_SUBST(MPI_LDFLAGS)
+AC_SUBST(MPI_LIBS)
+AC_SUBST(MPI_FCLIBS)
 
 
 
@@ -112,9 +131,9 @@ if test "$enable_mpi" = "none" ; then
   AC_ARG_WITH(mpich, [AC_HELP_STRING([--with-mpich=dir],[Specify MPICH install directory])], , with_mpich=none)
 
   if test "$with_mpich" != "none" ; then
-    MPICH_DIR=$with_mpich;
-    MPICH_CFLAGS=-I$MPICH_DIR/include
-    MPICH_LDFLAGS=-L$MPICH_DIR/lib
+    MPI_DIR=$with_mpich;
+    MPI_CFLAGS=-I$MPI_DIR/include
+    MPI_LDFLAGS=-L$MPI_DIR/lib
     enable_mpi="mpich"
   fi
 
@@ -123,9 +142,9 @@ if test "$enable_mpi" = "none" ; then
     AC_ARG_WITH(ompi, [AC_HELP_STRING([--with-ompi=dir],[Specify OpenMPI install directory])], , with_ompi=none)
 
     if test "$with_ompi" != "none" ; then
-      MPICH_DIR=$with_ompi;
-      MPICH_CFLAGS=-I$MPICH_DIR/include
-      MPICH_LDFLAGS=-L$MPICH_DIR/lib
+      MPI_DIR=$with_ompi;
+      MPI_CFLAGS=-I$MPI_DIR/include
+      MPI_LDFLAGS=-L$MPI_DIR/lib
       enable_mpi="ompi"
     fi
   fi
@@ -135,25 +154,25 @@ fi
 
 
 #
-# MPI Library  // for Fortran
+# MPI Library for Fortran
 #
 
 if test "$with_comp" = "FJ" ; then
-  MPICH_LIBS=""
+  MPI_LIBS=""
   case "$host" in
-    sparc*) MPICH_FCLIBS="$MPICH_LIBS"" -lmpi_f77 -lmpi_f90" ;;
+    sparc*) MPI_FCLIBS="$MPI_LIBS"" -lmpi_f77 -lmpi_f90" ;;
   esac
 elif test "$enable_mpi" = "mpich" ; then
-  MPICH_LIBS="-lmpich"
-  MPICH_FCLIBS="$MPICH_LIBS"" -lfmpich"
+  MPI_LIBS="-lmpich"
+  MPI_FCLIBS="$MPI_LIBS"" -lfmpich"
   case "$TGT_DEVICE" in
-    "Lion"|"Snow_Leopard"|"Leopard"|"Mountain_Lion") ;;
+    "Lion"|"Snow_Leopard"|"Leopard"|"Mountain_Lion"|"Marvericks") ;;
   esac
 elif test "$enable_mpi" = "ompi" ; then
-  MPICH_LIBS="-lmpi -lmpi_cxx"
-  MPICH_FCLIBS="$MPICH_LIBS"" -lmpi_f77 -lmpi_f90"
+  MPI_LIBS="-lmpi -lmpi_cxx"
+  MPI_FCLIBS="$MPI_LIBS"" -lmpi_f77 -lmpi_f90"
   case "$TGT_DEVICE" in
-    "Lion"|"Snow_Leopard"|"Leopard"|"Mountain_Lion") ;;
+    "Lion"|"Snow_Leopard"|"Leopard"|"Mountain_Lion"|"Marvericks") ;;
   esac
 fi
 
@@ -161,11 +180,16 @@ fi
 
 # warning. if a wrapper compiler is used, "enable_mpi" is empty, but parallel.
 #
+
 if test "$enable_mpi" = "none" ; then
   echo "  Warning: Neither MPICH nor OpenMPI library is not specified."
   echo "           If compilation error occurs about MPI, specify --with-mpich or --with-ompi option."
 fi
 
+
+#
+# FFVC special flags
+#
 
 
 FFVC_FC="$FC"
@@ -174,30 +198,22 @@ AC_SUBST(FFVC_FC)
 FFVC_LIBS=""
 AC_SUBST(FFVC_LIBS)
 
-FFVC_FC_LD=""
+FFVC_LDFLAGS=""
+AC_SUBST(FFVC_LDFLAGS)
+
+FFVC_FC_LD="$FC"
 AC_SUBST(FFVC_FC_LD)
 
 if test "$with_comp" = "FJ"; then
   FFVC_FC_LD="$CXX"" --linkfortran"
+  FFVC_LIBS=" --linkfortran"
 elif test "$with_comp" = "INTEL" ; then
   FFVC_LIBS="$FFVC_LIBS"" -lstdc++ -lifcore"
 else
   FFVC_LIBS="$FFVC_LIBS"" -lstdc++"
 fi
 
-FFVC_LDFLAGS=""
-AC_SUBST(FFVC_LDFLAGS)
 
-
-#
-# default prefix setting
-#
-AC_PREFIX_DEFAULT([/usr/local/FFVC])
-if test "$prefix" = "NONE" ; then
-  FFVC_INST_DIR=/usr/local/FFVC
-else
-  FFVC_INST_DIR="$prefix"
-fi
 
 
 

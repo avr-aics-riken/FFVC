@@ -17,6 +17,10 @@
 RELEASE NOTE
 ============
 
+Ver 1.4.5   2013-10-28
+  - MonitorList::checkConsistency()を追加
+  - C.iv.MassDensityは当座コメントアウト
+
 Ver 1.4.4   2013-10-26
   - 温度のサンプリングを内部エネルギー変数から計算するように修正
   - サンプリングにHelicityを追加

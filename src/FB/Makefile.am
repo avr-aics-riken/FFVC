@@ -22,7 +22,7 @@ libFB_a_CXXFLAGS = \
   @CPM_CFLAGS@ \
   @CIO_CFLAGS@ \
   @TP_CFLAGS@ \
-  @MPICH_CFLAGS@ \
+  @MPI_CFLAGS@ \
   @REALOPT@ \
   @FREALOPT@
 

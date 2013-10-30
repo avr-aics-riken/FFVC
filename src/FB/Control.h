@@ -539,7 +539,7 @@ public:
   int BasicEqs;
   int CheckParam;
   int CnvScheme;
-  int FillHint;       ///< フィルのヒント {no | x_minux | x_plus |...}
+  int FillHint;       ///< フィルのヒント {x_minux | x_plus |...}
   int GuideOut;
   int KindOfSolver;
   int Limiter;

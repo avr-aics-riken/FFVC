@@ -2,7 +2,7 @@
 
 ###################################################################
 #
-# keno@riken.jp
+# keno@riken.jp 2013-10-30
 #
 ##################################################################
 
@@ -10,44 +10,45 @@
 
 # for Linux
 if test `uname` = "Linux" ; then
-  if test `uname -m` = "ia64" ; then
-    echo IA64_Linux
-  elif test `uname -m` = "x86_64" ; then
-    echo Intel64_Linux
-  else
-    echo IA32_Linux
-  fi
-  exit 0
+if test `uname -m` = "ia64" ; then
+echo IA64_Linux
+elif test `uname -m` = "x86_64" ; then
+echo Intel64_Linux
+else
+echo IA32_Linux
+fi
+exit 0
 fi
 
 # for MacOSX
 if test `uname` = "Darwin" ; then
-  if   test `uname -r | cut -b 1` = "1" ; then
-    if test `uname -r | cut -b 2` = "0" ; then
-      echo Snow_Leopard
-    elif test `uname -r | cut -b 2` = "1" ; then
-      echo Lion
-    elif test `uname -r | cut -b 2` = "2" ; then
-      echo Mountain_Lion
-    fi
-  elif test `uname -r | cut -b 1` = "9" ; then
-    echo Leopard
-  elif test `uname -r | cut -b 1` = "8" ; then
-    if test `uname -p` = "i386" ; then
-      echo Tiger_Intel
-    else
-      echo Tiger_PPC
-    fi
-  elif test `uname -r | cut -b 1` = "7" ; then
-    echo Panther
-  else
-    echo OS_UNKOWN
-    exit 1
-  fi
-  exit 0
+if   test `uname -r | cut -b 1` = "1" ; then
+if test `uname -r | cut -b 2` = "0" ; then
+echo Snow_Leopard
+elif test `uname -r | cut -b 2` = "1" ; then
+echo Lion
+elif test `uname -r | cut -b 2` = "2" ; then
+echo Mountain_Lion
+elif test `uname -r | cut -b 2` = "3" ; then
+echo Mavericks
+fi
+elif test `uname -r | cut -b 1` = "9" ; then
+echo Leopard
+elif test `uname -r | cut -b 1` = "8" ; then
+if test `uname -p` = "i386" ; then
+echo Tiger_Intel
+else
+echo Tiger_PPC
+fi
+elif test `uname -r | cut -b 1` = "7" ; then
+echo Panther
+else
+echo OS_UNKOWN
+exit 1
+fi
+exit 0
 fi
 
 # OS Unkown
 echo OS_UNKOWN
 exit 1
-

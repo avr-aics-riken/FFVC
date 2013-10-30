@@ -22,6 +22,60 @@
 #include "Monitor.h"
 
 // #################################################################
+/// サンプリングの変数指定と計算モードの整合性をチェックする
+bool MonitorList::checkConsistency(const int KOS)
+{
+  int count[var_END];
+  
+  for (int k=var_Velocity; k<var_END; k++)
+  {
+    count[k]=0;
+  }
+  
+  // モニタで使用する変数を取得
+  for (int k=var_Velocity; k<var_END; k++)
+  {
+    for (int i = 0; i < nGroup; i++)
+    {
+      if (monGroup[i]->getStateVariable(k) == true) count[k]++;
+    }
+  }
+  
+  
+  // 利用しない変数のサンプリングは中止
+  switch (KOS)
+  {
+    case FLOW_ONLY:
+      if ( count[var_Temperature]>0 )
+      {
+        Hostonly_{
+          printf("\tError : Temperature is not able to sample in 'FLOW_ONLY' mode\n");
+        }
+        return false;
+      }
+      break;
+      
+    case SOLID_CONDUCTION:
+      if ( (count[var_Velocity]>0) ||
+           (count[var_Pressure]>0) ||
+           (count[var_TotalP]>0)   ||
+           (count[var_Helicity]>0) ||
+           (count[var_Vorticity]>0) )
+      {
+        Hostonly_{
+          printf("\tError : In 'SOLID_CONDUCTION' mode, sampling variable is temperature only\n");
+        }
+        return false;
+      }
+      break;
+  };
+
+  return true;
+}
+
+
+
+// #################################################################
 /// Polygonモニターの交点の状況を確認
 void MonitorList::checkStatus()
 {
@@ -33,7 +87,7 @@ void MonitorList::checkStatus()
 
 
 // #################################################################
-/// Line指定の端点座標をグローバル計算領域内にクリッピング.
+/// Line指定の端点座標をグローバル計算領域内にクリッピング
 ///
 ///   @param [in,out] from Line始点
 ///   @param [in,out] to   Line終点

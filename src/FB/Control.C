@@ -437,8 +437,7 @@ void Control::getApplicationControl()
   }
   else
   {
-    if     ( !strcasecmp(str.c_str(), "no" ) )     FillHint = -1;
-    else if( !strcasecmp(str.c_str(), "xminus" ) ) FillHint = X_minus;
+    if     ( !strcasecmp(str.c_str(), "xminus" ) ) FillHint = X_minus;
     else if( !strcasecmp(str.c_str(), "xplus" ) )  FillHint = X_plus;
     else if( !strcasecmp(str.c_str(), "yminus" ) ) FillHint = Y_minus;
     else if( !strcasecmp(str.c_str(), "yplus" ) )  FillHint = Y_plus;
@@ -2137,7 +2136,7 @@ void Control::getStartCondition()
   // 初期条件 温度はParseBC::getInitTempOfMedium()
   if ( Start == initial_start )
   {
-    // Density
+    /* Density
     label="/StartCondition/InitialState/MassDensity";
     
     if ( !(tpCntl->getInspectedValue(label, iv.Density )) )
@@ -2145,6 +2144,7 @@ void Control::getStartCondition()
       Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
       Exit(0);
     }
+    */
     
     // Pressure
     label="/StartCondition/InitialState/Pressure";
@@ -2846,7 +2846,7 @@ void Control::printInitValues(FILE* fp, CompoList* cmp)
   fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
   fprintf(fp,"\n\t>> Initial Values for Physical Variables\n\n");
   
-  fprintf(fp,"\tInitial  MassDensity [kg/m^3]/ [-]   : %12.5e / %12.5e\n", iv.Density, iv.Density/RefDensity);
+  //fprintf(fp,"\tInitial  MassDensity [kg/m^3]/ [-]   : %12.5e / %12.5e\n", iv.Density, iv.Density/RefDensity);
   fprintf(fp,"\tInitial  Velocity.U  [m/s]   / [-]   : %12.5e / %12.5e\n", iv.VecU,    iv.VecU/RefVelocity);
   fprintf(fp,"\tInitial          .V  [m/s]   / [-]   : %12.5e / %12.5e\n", iv.VecV,    iv.VecV/RefVelocity);
   fprintf(fp,"\tInitial          .W  [m/s]   / [-]   : %12.5e / %12.5e\n", iv.VecW,    iv.VecW/RefVelocity);
@@ -4033,7 +4033,7 @@ void Control::setCmpParameters(MediumList* mat, CompoList* cmp, BoundaryOuter* B
   if ( Unit.Param == NONDIMENSIONAL )
   {
     iv.Pressure = FBUtility::convPrsND2D(iv.Pressure, BasePrs, RefDensity, RefVelocity, Unit.Prs);
-    iv.Density *= RefDensity;
+    //iv.Density *= RefDensity;
 		iv.VecU    *= RefVelocity;
 		iv.VecV    *= RefVelocity;
 		iv.VecW    *= RefVelocity;

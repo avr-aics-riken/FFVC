@@ -1294,36 +1294,31 @@ void FFV::fill(FILE* fp)
   }
   
   // ヒントが与えられている場合
-  // 確実に流体のセルのみをペイントする
-  if ( C.FillHint >= 0 )
+  filled = V.fillSeed(d_bcd, C.FillHint, C.RefFillMat, d_bid);
+  
+  if ( numProc > 1 )
   {
-
-    filled = V.fillSeed(d_bcd, C.FillHint, C.RefFillMat, d_bid);
-
-    if ( numProc > 1 )
-    {
-      if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-    }
-
-    if ( filled == 0 )
-    {
-      Hostonly_
-      {
-        printf(    "No cells to paint\n");
-        fprintf(fp,"No cells to paint\n");
-      }
-      Exit(0);
-    }
-    
+    if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  if ( filled == 0 )
+  {
     Hostonly_
     {
-      printf(    "\t\tPainted cells          : %16ld\n", filled);
-      fprintf(fp,"\t\tPainted cells          : %16ld\n", filled);
+      printf(    "No cells to paint\n");
+      fprintf(fp,"No cells to paint\n");
     }
-    
-    // ペイントされたシードセル数をターゲットから差し引く
-    target_count -= filled;
+    Exit(0);
   }
+  
+  Hostonly_
+  {
+    printf(    "\t\tPainted cells          : %16ld\n", filled);
+    fprintf(fp,"\t\tPainted cells          : %16ld\n", filled);
+  }
+  
+  // ペイントされたシードセル数をターゲットから差し引く
+  target_count -= filled;
 
   
   
@@ -3908,6 +3903,10 @@ void FFV::setMonitorList()
   
   // パラメータを取得し，サンプリングの座標値をセットする >> サンプリング指定がなければ，return
   if ( !MO.getMonitor(&C, cmp) ) return;
+  
+  
+  // モニター指定変数とKOSの整合性チェック
+  if ( !MO.checkConsistency(C.KindOfSolver) )  Exit(0);
   
 
   // Polygon指定のセルモニターの場合に交点と境界IDを除去

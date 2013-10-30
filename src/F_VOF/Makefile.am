@@ -18,7 +18,7 @@ lib_LIBRARIES = libFCORE.a
 libFCORE_a_FCFLAGS = \
   -I. \
   -I../FB \
-  @MPICH_CFLAGS@ \
+  @MPI_CFLAGS@ \
   @FREALOPT@ 
 
 libFCORE_a_SOURCES = \
@@ -42,7 +42,7 @@ libFCORE_a_SOURCES = \
 
 libFCORE_LDADD = \
     @CPM_LDFLAGS@ \
-    @MPICH_LDFLAGS@ \
-    @MPICH_FCLIBS@
+    @MPI_LDFLAGS@ \
+    @MPI_FCLIBS@
 
 EXTRA_DIST = Makefile_hand depend.inc unused.f90

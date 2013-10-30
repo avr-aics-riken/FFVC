@@ -21,7 +21,7 @@ libFCORE_a_FCFLAGS = \
   -I. \
   -I../FB \
   @CPM_CFLAGS@ \
-  @MPICH_CFLAGS@ \
+  @MPI_CFLAGS@ \
   @FREALOPT@ 
 
 libFCORE_a_SOURCES = \
