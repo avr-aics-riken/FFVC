@@ -22,7 +22,7 @@ combsph_CXXFLAGS = \
   @CIO_CFLAGS@ \
   @TP_CFLAGS@ \
   @PM_CFLAGS@ \
-  @MPI_CFLAGS@ \
+  @MPICH_CFLAGS@ \
   @REALOPT@ \
   @FREALOPT@
   
@@ -49,9 +49,9 @@ combsph_LDADD = \
   @CIO_LDFLAGS@ \
   @TP_LDFLAGS@ \
   @PM_LDFLAGS@ \
-  @MPI_LDFLAGS@ \
-  @MPI_LIBS@ \
-  @MPI_FCLIBS@ \
+  @MPICH_LDFLAGS@ \
+  @MPICH_LIBS@ \
+  @MPICH_FCLIBS@ \
   @FFVC_LIBS@
   
 # -L../PLOT3D -lPLOT3D

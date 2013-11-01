@@ -22,7 +22,7 @@ libIP_a_CXXFLAGS = \
   -I../FB \
   @CPM_CFLAGS@ \
   @TP_CFLAGS@ \
-  @MPI_CFLAGS@ \
+  @MPICH_CFLAGS@ \
   @REALOPT@
 
 libIP_a_SOURCES = \

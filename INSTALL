@@ -70,14 +70,10 @@ Configure options:
     Specify the REAL macro by selecting single(4bytes) or double(8bytes). If this 
     option is omitted, single precision will be applied.
 
- --with-mpich=MPICH_DIR
-    If you will use a MPICH library, specify the directory that MPICH library is
-    installed. Either --with-mpich of --with-ompi option will be required except. 
-    If the wrapper compiler, e.g., mpic++ or mpicxx is used to compile, both options 
-    can be eliminated.
-
  --with-ompi=OPENMPI_DIR
-    If you will use an OpenMPI library, specify the directory path of OpenMPI.
+    If the OpenMPI library is used, specify the directory path that OpenMPI library is
+    installed. This option will be required to use a native compiler. Instead, if the 
+    wrapper compiler, e.g., mpicxx, is used to compile, this options can be eliminated.
 
  --with-parser=TEXTPARSER_PATH
     Specify the directory path that is installed TextParser library.

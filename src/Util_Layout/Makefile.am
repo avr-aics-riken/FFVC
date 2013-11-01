@@ -23,7 +23,7 @@ layout_CXXFLAGS = \
   @CPM_CFLAGS@ \
   @TP_CFLAGS@ \
   @PM_CFLAGS@ \
-  @MPI_CFLAGS@ \
+  @MPICH_CFLAGS@ \
   @REALOPT@ \
   @FREALOPT@
 
@@ -39,10 +39,11 @@ layout_LDADD = \
   @CPM_LDFLAGS@ \
   @TP_LDFLAGS@ \
   @PM_LDFLAGS@ \
-  @MPI_LDFLAGS@ \
-  @MPI_LIBS@ \
-  @MPI_FCLIBS@ \
-  @FFVC_LIBS@
+  @MPICH_LDFLAGS@ \
+  @MPICH_LIBS@ \
+  @MPICH_FCLIBS@ \
+  @FFVC_LIBS@ \
+  @FFVC_FC_LD@
 
 
 EXTRA_DIST = Makefile_hand depend.inc README

@@ -22,7 +22,7 @@ libPLOT3D_a_CXXFLAGS = \
   -I../FB \
   -I../F_CORE \
   @CPM_CFLAGS@ \
-  @MPI_CFLAGS@ \
+  @MPICH_CFLAGS@ \
   @REALOPT@ \
   @TP_CFLAGS@ \
   @FREALOPT@ 
