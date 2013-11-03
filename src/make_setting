@@ -17,14 +17,15 @@
 # Common setting
 ########################
 
-CPM_DIR  = /usr/local/CPMlib
-CIO_DIR  = /usr/local/CIOlib
-TP_DIR   = /usr/local/TextParser
-POLY_DIR = /usr/local/Polylib
-CUT_DIR  = /usr/local/Cutlib
-PM_DIR   = /usr/local/PMlib
+INSTALL_BASE = /usr/local/FFV
 
-FFVC_DIR = /usr/local/FFVC
+CPM_DIR  = $(INSTALL_BASE)/CPMlib
+CIO_DIR  = $(INSTALL_BASE)/CIOlib
+TP_DIR   = $(INSTALL_BASE)/TextParser
+POLY_DIR = $(INSTALL_BASE)/Polylib
+CUT_DIR  = $(INSTALL_BASE)/Cutlib
+PM_DIR   = $(INSTALL_BASE)/PMlib
+FFVC_DIR = $(INSTALL_BASE)/FFVC
 
 
 #########################

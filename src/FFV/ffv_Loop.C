@@ -378,7 +378,7 @@ int FFV::Loop(const unsigned step)
       }
       
       TIMING_start(tm_hstry_force);
-      Hostonly_ H->printHistoryForce(fp_f, frc);
+      Hostonly_ if ( C.Mode.Log_Base == ON) H->printHistoryForce(fp_f, frc);
       TIMING_stop(tm_hstry_force, 0.0);
     }
   }
@@ -399,7 +399,7 @@ int FFV::Loop(const unsigned step)
         {
           Hostonly_ {
             printf      ("\tForced termination : converegence rate >> 100.0\n");
-            fprintf(fp_b,"\tForced termination : converegence rate >> 100.0\n");
+            if ( C.Mode.Log_Base == ON) fprintf(fp_b,"\tForced termination : converegence rate >> 100.0\n");
           }
           return -1;
         }
@@ -412,7 +412,7 @@ int FFV::Loop(const unsigned step)
         {
           Hostonly_ {
             printf      ("\tForced termination : converegence rate >> 100.0\n");
-            fprintf(fp_b,"\tForced termination : converegence rate >> 100.0\n");
+            if ( C.Mode.Log_Base == ON) fprintf(fp_b,"\tForced termination : converegence rate >> 100.0\n");
           }
           return -1;
         }
@@ -423,7 +423,7 @@ int FFV::Loop(const unsigned step)
         {
           Hostonly_ {
             printf      ("\tForced termination : converegence rate >> 100.0\n");
-            fprintf(fp_b,"\tForced termination : converegence rate >> 100.0\n");
+            if ( C.Mode.Log_Base == ON) fprintf(fp_b,"\tForced termination : converegence rate >> 100.0\n");
           }
           return -1;
         }
@@ -445,7 +445,7 @@ int FFV::Loop(const unsigned step)
     Hostonly_
     {
       printf      ("\tFinish : Time = %e\n", CurrentTime);
-      fprintf(fp_b,"\tFinish : Time = %e\n", CurrentTime);
+      if ( C.Mode.Log_Base == ON) fprintf(fp_b,"\tFinish : Time = %e\n", CurrentTime);
     }
     return 0;
   }

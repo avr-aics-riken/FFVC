@@ -115,12 +115,12 @@ Here is examples.
 ## for OpenMPI compiled by INTEL compiler, wrapper compiler, openmp.
 
   $ ./configure \
-      --with-cpm=/usr/local/CPMlib \
-      --with-cio=/usr/local/CIOlib \
-      --with-cut=/usr/local/Cutlib \
-      --with-pm=/usr/local/PMlib \
-      --with-polylib=/usr/local/Polylib \
-      --with-parser=/usr/local/TextParser \
+      --with-cpm=/usr/local/FFV/CPMlib \
+      --with-cio=/usr/local/FFV/CIOlib \
+      --with-cut=/usr/local/FFV/Cutlib \
+      --with-pm=/usr/local/FFV/PMlib \
+      --with-polylib=/usr/local/FFV/Polylib \
+      --with-parser=/usr/local/FFV/TextParser \
       --with-comp=INTEL \
       CC=mpicc \
       CFLAGS=-O3 \
@@ -133,12 +133,12 @@ Here is examples.
 ## for OpenMPI compiled by INTEL compiler, double precision, openmp.
 
   $ ./configure \
-      --with-cpm=/usr/local/CPMlib \
-      --with-cio=/usr/local/CIOlib \
-      --with-cut=/usr/local/Cutlib \
-      --with-pm=/usr/local/PMlib \
-      --with-polylib=/usr/local/Polylib \
-      --with-parser=/usr/local/TextParser \
+      --with-cpm=/usr/local/FFV/CPMlib \
+      --with-cio=/usr/local/FFV/CIOlib \
+      --with-cut=/usr/local/FFV/Cutlib \
+      --with-pm=/usr/local/FFV/PMlib \
+      --with-polylib=/usr/local/FFV/Polylib \
+      --with-parser=/usr/local/FFV/TextParser \
       --with-comp=INTEL \
       --with-precision=double \
       CC=mpicc \
@@ -146,29 +146,26 @@ Here is examples.
       CXX=mpicxx \
       CXXFLAGS="-O3 -openmp -par-report=3 -vec-report=2" \
       F90=mpif90 \
-      F90FLAGS="-O3 -Warn unused -fpp -openmp -par-report=3 -vec-report=2" \
-      LIBS="-lifport -lifcore" \
-      LDFLAGS=-L/opt/intel/composerxe/lib
+      F90FLAGS="-O3 -Warn unused -fpp -openmp -par-report=3 -vec-report=2"
 
 
-## for GNU compiler and MPICH.
+## for GNU compiler
 
   $ ./configure \
-      --prefix=/usr/local/FFVC \
-      --with-cpm=/usr/local/CPMlib \
-      --with-cio=/usr/local/CIOlib \
-      --with-cut=/usr/local/Cutlib \
-      --with-pm=/usr/local/PMlib \
-      --with-polylib=/usr/local/Polylib \
-      --with-parser=/usr/local/TextParser \
+      --prefix=/usr/local/FFV/FFVC \
+      --with-cpm=/usr/local/FFV/CPMlib \
+      --with-cio=/usr/local/FFV/CIOlib \
+      --with-cut=/usr/local/FFV/Cutlib \
+      --with-pm=/usr/local/FFV/PMlib \
+      --with-polylib=/usr/local/FFV/Polylib \
+      --with-parser=/usr/local/FFV/TextParser \
       CC=mpicc \
       CFLAGS=-O3 \
       CXX=mpicxx \
       CXXFLAGS="-O3 -fopenmp" \
       F90=mpif90 \
       F90FLAGS="-O3 -cpp -fopenmp -ffree-form" \
-      LIBS=-lgfortran \
-      LDFLAGS=
+      LIBS=-lgfortran
 
 
 ## for K-computer.
@@ -189,8 +186,7 @@ Here is examples.
       CXXFLAGS="-Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp,optmsg=2 -V -Nsrc"
       F90=mpifrtpx \
       F90FLAGS="-Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt" \
-      LDFLAGS="--linkfortran" \
-      LIBS=
+      LDFLAGS="--linkfortran"
 
 
 

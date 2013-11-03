@@ -25,15 +25,9 @@ AC_CONFIG_HEADERS([config.h])
 #
 # revision No.
 #
-FFVC_REVISION="20131102_0030"
+FFVC_REVISION="20131103_1200"
 AC_SUBST(FFVC_REVISION)
 
-
-#
-# platform
-#
-TGT_DEVICE="$($SHELL ./chk-uname)"
-AC_SUBST(TGT_DEVICE)
 
 
 #
@@ -138,11 +132,15 @@ fi
 
 
 
-# warning. if a wrapper compiler is used, "enable_mpi" is empty, but parallel.
 #
-if test "$enable_mpi" = "none" ; then
-  echo "  Warning: OpenMPI library is not specified."
-  echo "           If compilation error occurs about MPI, specify --with-ompi option."
+# warning
+#
+
+if test "$enable_mpi" != "wrappermpi" ; then
+  if test "$with_ompi" = "none" ; then
+    echo "  Warning: OpenMPI library is not specified."
+    echo "           If compilation error occurs about MPI, specify --with-ompi option."
+  fi
 fi
 
 

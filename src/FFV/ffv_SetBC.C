@@ -2010,11 +2010,7 @@ REAL_TYPE SetBC3D::psIbcTransferS (REAL_TYPE* d_qbc, const int* d_cdf, const int
   if ( numProc > 1 )
   {
 		REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
-    {
-      Hostonly_ printf("Allreduce Error\n");
-      Exit(0);
-    }
+    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
 	}
   
   return va*deltaX*deltaX;

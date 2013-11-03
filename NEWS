@@ -19,8 +19,8 @@ RELEASE
 =======
 
 -------------
-Version 1.4.9    2013-11-02
-  - compile on K/FX
+Version 1.4.9    2013-11-03
+  - bugfix for initial temperature setting
 
 -------------
 Version 1.4.8    2013-10-30

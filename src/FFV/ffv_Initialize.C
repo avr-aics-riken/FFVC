@@ -359,13 +359,7 @@ int FFV::Initialize(int argc, char **argv)
 #endif
 // ##########
   
-  
-  
-  // 温度計算の場合の媒質毎の初期値指定オプション
-  if ( C.isHeatProblem() )
-  {
-    B.getInitTempOfMedium(cmp, &C);
-  }
+
   
 
   
@@ -3294,7 +3288,7 @@ void FFV::resizeCompoBbox()
 
 
 // #################################################################
-/* @brief 外部境界条件を読み込み，Controlクラスに保持する
+/* @brief 境界条件を読み込み，Controlクラスに保持する
  */
 void FFV::setBCinfo()
 {
@@ -3368,12 +3362,28 @@ void FFV::setBCinfo()
   // 無次元媒質情報をコピー
   BC.copyNDmatTable(C.NoCompo, mat_tbl);
   
-  // コンポーネントの指定温度を初期温度にコピー
+  
+  
+  // 温度計算の場合の媒質毎の初期値指定オプション
+  if ( C.isHeatProblem() )
+  {
+    B.getInitTempOfMedium(cmp, &C);
+  }
+  
+  
+  // 境界条件の媒質に初期温度にコピー
   for (int n=1; n<=C.NoCompo; n++)
   {
     if ( cmp[n].isKindCompo() )
     {
-      cmp[n].setInitTemp( cmp[n].getTemp() );
+      for (int j=1; j<=C.NoMedium; j++)
+      {
+        if ( !strcasecmp(cmp[j].getAlias().c_str(), cmp[n].getMedium().c_str()) )
+        {
+          cmp[n].setInitTemp( cmp[j].getInitTemp() );
+          printf("init[%d] %f %s\n", n, cmp[n].getInitTemp(), cmp[n].getMedium().c_str());
+        }
+      }
     }
   }
   
