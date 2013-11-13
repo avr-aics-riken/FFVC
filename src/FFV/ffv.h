@@ -428,7 +428,7 @@ private:
   
   
   // 距離の最小値を求める
-  void minDistance(float* cut, int* bid, FILE* fp);
+  void minDistance(const float* cut, const int* bid, FILE* fp);
   
   
   // 履歴の出力準備

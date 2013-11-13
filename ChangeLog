@@ -21,6 +21,9 @@ REVISION HISTORY
 --------------------------
 2013-11-13
 
+- r1049 bug fix: add Hostonly_ for minDistance()
+  - In case of Polygon loading, MPI process yields seg. fault.
+
 - r1048 output scaled polygon in the case of Unit.Length={mm, cm} [ver 1.5.0]
   - Modify setupPolygon2CutInfo() to load polygons in the case of Unit.Length is cm or mm.
   - expire INACTIVE mode and related methods > flip_inactive()

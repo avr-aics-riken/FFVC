@@ -171,7 +171,7 @@ int FFV::Initialize(int argc, char **argv)
   TIMING_start(tm_voxel_prep_sct);
   
 
-  
+
   
   // 各問題に応じてモデルを設定 >> Polylib + Cutlib
   // 外部境界面およびガイドセルのカットとIDの処理
@@ -1086,7 +1086,10 @@ void FFV::encodeBCindex(FILE* fp)
   
 
   // @attention bx[]の同期が必要 >> 以下の処理で隣接セルを参照するため
-  if ( paraMngr->BndCommS3D(d_bcd, ix, jx, kx, gd, 1) != CPM_SUCCESS ) Exit(0);
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->BndCommS3D(d_bcd, ix, jx, kx, gd, 1) != CPM_SUCCESS ) Exit(0);
+  }
   
   BC.setBCIperiodic(d_bcd);
   
@@ -2934,7 +2937,7 @@ void FFV::initInterval()
  * @param [in]     bid カット情報の配列
  * @param [in]     fp  file pointer
  */
-void FFV::minDistance(float* cut, int* bid, FILE* fp)
+void FFV::minDistance(const float* cut, const int* bid, FILE* fp)
 {
   float global_min;
   float local_min = 1.0;
@@ -2944,6 +2947,7 @@ void FFV::minDistance(float* cut, int* bid, FILE* fp)
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
+  
   
   TIMING_start(tm_cut_min);
   
@@ -2962,7 +2966,7 @@ void FFV::minDistance(float* cut, int* bid, FILE* fp)
           
           if ( TEST_BC(bd) ) // カットがあるか，IDによる判定
           {
-            for (size_t n=0; n<6; n++) {
+            for (int n=0; n<6; n++) {
               float c = cut[mp+n];
               th_min = min(th_min, c);
               //th_min = min(th_min, cutPos->getPos(i+1,j+1,k+1,n)); slower than above inplementation
@@ -2990,8 +2994,11 @@ void FFV::minDistance(float* cut, int* bid, FILE* fp)
   
   TIMING_stop(tm_cut_min);
   
-  fprintf(fp, "\tMinimum non-dimnensional distance is %e\n\n", global_min);
-  printf     ("\tMinimum non-dimnensional distance is %e\n\n", global_min);
+  Hostonly_
+  {
+    fprintf(fp, "\tMinimum non-dimnensional distance is %e\n\n", global_min);
+    printf     ("\tMinimum non-dimnensional distance is %e\n\n", global_min);
+  }
 
 }
 
@@ -3846,8 +3853,7 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
       setupCutInfo4IP(PrepMemory, TotalMemory, fp);
       break;
   }
-  
-  
+
   
   // 外部境界面の処理
   for (int face=0; face<NOFACE; face++)
@@ -3881,12 +3887,16 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
     }
 
   }
-  
+
 
   // ガイドセル同期
-  if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
-  if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
-  if ( paraMngr->BndCommS4DEx(d_cut, 6, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS4DEx(d_cut, 6, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+  }
+
 }
 
 
@@ -4218,8 +4228,8 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   // debug
 #if 0
   printf("%d : %d %d %d : %e %e %e : %e %e %e\n", myRank, size[0], size[1], size[2],
-         poly_org[0], poly_org[1], poly_org[2],
-         poly_dx[0], poly_dx[1], poly_dx[2]);
+         poly_dx[0], poly_dx[1], poly_dx[2],
+         poly_org[0], poly_org[1], poly_org[2]);
 #endif
   
   // Polylib: インスタンス取得
@@ -4496,7 +4506,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   }
   
   
-  
+
   
   
   // Cutlib
@@ -4538,7 +4548,8 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
    
    */
   
-  for ( int i=0; i<3; i++) {
+  for ( int i=0; i<3; i++)
+  {
     n_cell[i] = (size_t)(size[i] + 2*guide);  // 分割数+ガイドセル両側
     cut_org[i] -= cut_dx[i]*(double)guide;    // ガイドセルを含む領域のマイナス側頂点の座標
   }
@@ -4554,8 +4565,10 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     }
     Exit(0);
   }
-  
-  
+
+#if 0
+  printf("Rank=%d : %d %d %d : %e %e %e : %e %e %e\n", myRank, size[0], size[1], size[2], cut_dx[0], cut_dx[1], cut_dx[2], cut_org[0], cut_org[1], cut_org[2]);
+#endif
   
   // Cutlibの配列は各方向(引数)のサイズ
   TIMING_start(tm_init_alloc);
@@ -4591,6 +4604,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   // カットの最小値
   minDistance(d_cut, d_bid, fp);
+
   
 #if 0
   displayCutInfo(d_cut, d_bid);
