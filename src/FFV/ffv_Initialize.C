@@ -233,6 +233,10 @@ int FFV::Initialize(int argc, char **argv)
   fill(fp);
   
   
+  // 全周カットのあるセルを固体セルIDで埋める
+  V.replaceIsolatedFcell(d_bcd, C.RefFillMat, d_bid);
+  
+  
   
   // ∆tの決め方とKindOfSolverの組み合わせで無効なものをはねる
   if ( !DT.chkDtSelect() )
@@ -1397,8 +1401,6 @@ void FFV::fill(FILE* fp)
       fprintf(fp,"\t\tUnpainted cell         = %16ld\n\n", upc);
     }
   }
-  
-  Ex->writeSVX(d_bcd, &C);
   
   // 固体に変更
   c = -1;
@@ -3381,7 +3383,7 @@ void FFV::setBCinfo()
         if ( !strcasecmp(cmp[j].getAlias().c_str(), cmp[n].getMedium().c_str()) )
         {
           cmp[n].setInitTemp( cmp[j].getInitTemp() );
-          printf("init[%d] %f %s\n", n, cmp[n].getInitTemp(), cmp[n].getMedium().c_str());
+          //printf("init[%d] %f %s\n", n, cmp[n].getInitTemp(), cmp[n].getMedium().c_str());
         }
       }
     }
@@ -4169,14 +4171,38 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   float poly_org[3];
   float poly_dx[3];
 
+  float factor;
+  switch ( C.Unit.Length )
+  {
+      case LTH_m:
+      case LTH_ND:
+      factor = 1.0; // 変更なし
+      break;
+      
+      case LTH_cm:
+      factor = 0.01;
+      break;
+      
+      case LTH_mm:
+      factor = 0.001;
+      break;
+      
+    default:
+      Exit(0);
+  }
+  //printf("\n\tScaling Factor           :   %f\n", factor);
+  
   
   // 有次元に変換 Polylib: 並列計算領域情報　ポリゴンは実スケールで，ガイドセル領域部分も含めて指定する
-  poly_dx[0]  = pitch[0] * C.RefLength;
-  poly_dx[1]  = pitch[1] * C.RefLength;
-  poly_dx[2]  = pitch[2] * C.RefLength;
-  poly_org[0] = origin[0]* C.RefLength;
-  poly_org[1] = origin[1]* C.RefLength;
-  poly_org[2] = origin[2]* C.RefLength;
+  // C.Scaling_Factor{1.0, 0.1, 0.001}
+  // pitch[], origin[]などはm単位になっているので，factorで除してFXgenで指定したときの単位系（DomainInfoのUnitOfLength）でポリゴンをサーチする
+  // ロード後はスケーリングする
+  poly_dx[0]  = pitch[0] * C.RefLength / factor;
+  poly_dx[1]  = pitch[1] * C.RefLength / factor;
+  poly_dx[2]  = pitch[2] * C.RefLength / factor;
+  poly_org[0] = origin[0]* C.RefLength / factor;
+  poly_org[1] = origin[1]* C.RefLength / factor;
+  poly_org[2] = origin[2]* C.RefLength / factor;
   
   Hostonly_
   {
@@ -4191,12 +4217,9 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   // debug
 #if 0
-  printf("%d : %d %d %d : %e %e %e : %e %e %e\n", myRank,
-         size[0], size[1]. size[2],
+  printf("%d : %d %d %d : %e %e %e : %e %e %e\n", myRank, size[0], size[1], size[2],
          poly_org[0], poly_org[1], poly_org[2],
          poly_dx[0], poly_dx[1], poly_dx[2]);
-  
-  
 #endif
   
   // Polylib: インスタンス取得
@@ -4224,7 +4247,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   
   
-  // Polylib: STLデータ読み込みとスケーリング
+  // Polylib: STLデータ読み込み
   TIMING_start(tm_polygon_load);
   
   // ロード
@@ -4240,28 +4263,6 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     Exit(0);
   }
   
-  
-  
-  /* スケーリングする場合のみ表示
-  if ( C.Scaling_Factor != 1.0 )
-  {
-    fprintf(fp,"\n\tScaling Factor           :   %f\n", C.Scaling_Factor);
-  }
-  
-  // スケーリング
-  poly_stat = PL->rescale_polygons(C.Scaling_Factor);
-  
-  if( poly_stat != PLSTAT_OK )
-  {
-    Hostonly_
-    {
-      printf    ("\tRank [%6d]: p_polylib->rescale_polygons() failed.", myRank);
-      fprintf(fp,"\tRank [%6d]: p_polylib->rescale_polygons() failed.", myRank);
-    }
-    Exit(0);
-  }*/
-  
-  
   TIMING_stop(tm_polygon_load);
   
   // 階層情報表示 debug brief hierarchy
@@ -4275,7 +4276,31 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   // ポリゴン情報へのアクセス
   vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
-  vector<PolygonGroup*>::iterator it;
+  
+  
+  
+  // スケーリング
+  vector<PolygonGroup*>::iterator it2;
+  
+  int c=0;
+  for (it2 = pg_roots->begin(); it2 != pg_roots->end(); it2++)
+  {
+    poly_stat = (*it2)->rescale_polygons(factor);
+    if( poly_stat != PLSTAT_OK ) c++;
+  }
+  
+  if ( c>0 )
+  {
+    Hostonly_
+    {
+      printf    ("\tRank [%6d]: p_polylib->rescale_polygons() failed.", myRank);
+      fprintf(fp,"\tRank [%6d]: p_polylib->rescale_polygons() failed.", myRank);
+    }
+    Exit(0);
+  }
+  
+  
+  
   
   // Polygon Groupの数
   C.num_of_polygrp = pg_roots->size();
@@ -4299,8 +4324,10 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   }
   
   
+  vector<PolygonGroup*>::iterator it;
+  
   // ポリゴン情報の表示
-  int c = 0;
+  c = 0;
   for (it = pg_roots->begin(); it != pg_roots->end(); it++)
   {
     std::string m_pg = (*it)->get_name();     // グループラベル
@@ -4430,6 +4457,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   
   // Polylib: STLデータ書き出し
+  // DomainInfo/UnitOfLength={"mm", "cm"}のとき，"m"でスケーリングされたポリゴンが出力される
   if ( C.Hide.GeomOutput == ON )
   {
     unsigned poly_out_para = IO_DISTRIBUTE;
@@ -4486,7 +4514,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   double cut_org[3];
   double cut_dx[3];
   
-  // 有次元に変換 Polylib: 並列計算領域情報　ポリゴンは実スケール
+  // 有次元に変換 Polylib: 並列計算領域情報　ポリゴンはMスケール
   cut_dx[0]  = (double)(pitch[0] * C.RefLength);
   cut_dx[1]  = (double)(pitch[1] * C.RefLength);
   cut_dx[2]  = (double)(pitch[2] * C.RefLength);

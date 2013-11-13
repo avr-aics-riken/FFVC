@@ -1056,31 +1056,6 @@ void Control::getGeometryModel()
     }
   }
   
-  
-  // スケーリングファクター (Hidden)
-  label = "/GeometryModel/ScalingFactor";
-  
-  if ( tpCntl->chkLabel(label) )
-  {
-    REAL_TYPE ct=0.0;
-    
-    if ( tpCntl->getInspectedValue(label, ct) )
-    {
-      if ( ct <= 0.0 )
-      {
-        Hostonly_ stamped_printf("Error : Scaling factor should be positive [%f]\n", ct);
-        Exit(0);
-      }
-      
-      Scaling_Factor = ct;
-    }
-    else
-    {
-      Exit(0);
-    }
-  }
-
-  
 }
 
 

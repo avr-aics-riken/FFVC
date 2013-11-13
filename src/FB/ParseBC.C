@@ -1782,7 +1782,6 @@ void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp)
     else if ( tp == HEX )           get_IBC_PrsLoss(label_leaf, m, cmp);
     else if ( tp == FAN )           get_IBC_Fan(label_leaf, m, cmp);
     else if ( tp == DARCY )         get_Darcy(label_leaf, m, cmp);
-    else if ( tp == INACTIVE )      { ; }
     else if ( tp == PERIODIC )      getIbcPeriodic(label_leaf, m, cmp);
     else if ( tp == MONITOR )       { ; }
     
@@ -3268,7 +3267,6 @@ void ParseBC::setKeywordLBC(const string keyword, const int m, CompoList* cmp)
   else if( FBUtility::compare(keyword, "PressureLoss") )         cmp[m].setType(HEX);
   else if( FBUtility::compare(keyword, "Fan") )                  cmp[m].setType(FAN);
   else if( FBUtility::compare(keyword, "Darcy") )                cmp[m].setType(DARCY);
-  else if( FBUtility::compare(keyword, "inactive") )             cmp[m].setType(INACTIVE);
   else if( FBUtility::compare(keyword, "Periodic") )             cmp[m].setType(PERIODIC);
   else if( FBUtility::compare(keyword, "Obstacle") )             cmp[m].setType(OBSTACLE);
   else if( FBUtility::compare(keyword, "Monitor") )              cmp[m].setType(MONITOR);

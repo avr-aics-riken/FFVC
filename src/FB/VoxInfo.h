@@ -67,7 +67,7 @@ private:
   
   
   // 断熱マスクのエンコード
-  void encAdiabatic (int* bd, const string target, int face=-1);
+  void encAdiabatic (int* bd, const string target, const int* bid, int face=-1);
   
   
   // セルの各面を調べ，境界条件が設定されていれば，ビットをON
@@ -309,14 +309,6 @@ public:
   unsigned long fillSeed (int* bcd, const int face, const int target, const int* bid);
   
   
-  /* @brief 孤立したゼロIDのセルを隣接セルIDで埋める
-   * @param [in,out] bcd      BCindex B
-   * @param [in]     fluid_id フィルする流体ID
-   * @param [in]     bid      境界ID
-   */
-  unsigned long fillIsolatedEmptyCell (int* bcd, const int fluid_id, const int* bid);
-  
-  
   /**
    * @brief 孤立した流体セルを探し，周囲の個体媒質で置換，BCindexを修正する
    * @param [in,out] bx       BCindex B
@@ -326,35 +318,6 @@ public:
   unsigned long findIsolatedFcell (int* bx, const int fluid_id);
   
   
-  /**
-   * @brief BCindexにActive/Inactiveをエンコード
-   * @retval 不活性化した数
-   * @param [out]    L   ノードローカルの不活性セル数
-   * @param [out]    G   グローバルの不活性セル数
-   * @param [in]     id  セルID
-   * @param [in,out] bx  BCindex B
-   * @param [in,out] cmp CompoList
-   */
-  unsigned long flipInactive (unsigned long& L,
-                              unsigned long& G,
-                              const int id,
-                              int* bx,
-                              CompoList* cmp);
-  
-  
-  /**
-   * @brief IBCのbboxを取得する
-   * @param [in]  tgt    コンポーネント配列のID
-   * @param [in]  bid    カットID情報
-   * @param [in]  cut    カット情報
-   * @param [out] st     コンポーネントbboxの開始セル
-   * @param [out] ed     コンポーネントbboxの終端セル
-   * @param [in]  policy モニターのセル幅
-   */
-  bool findLBCbbox (const int tgt, const int* bid, const float* cut, int* st, int* ed, const int policy);
-  
-  
-  
   /* @brief 交点が定義点にある場合の修正
    * @param [in,out] bid      境界ID
    * @param [in]     cut      カット情報
@@ -362,6 +325,14 @@ public:
    * @retval 置換されたセル数
    */
   unsigned long modifyCutOnCellCenter (int* bid, const float* cut, const int fluid_id);
+  
+  
+  /* @brief 孤立したゼロIDのセルを隣接セルIDで埋める
+   * @param [in,out] bcd      BCindex B
+   * @param [in]     fluid_id フィルする流体ID
+   * @param [in]     bid      境界ID
+   */
+  unsigned long replaceIsolatedFcell (int* bcd, const int fluid_id, const int* bid);
   
   
   /**

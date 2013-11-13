@@ -46,7 +46,6 @@ std::string CompoList::getBCstr()
   else if ( type == FAN )           bc = "Fan";
   else if ( type == DARCY )         bc = "Darcy";
   else if ( type == PERIODIC )      bc = "Periodic";
-  else if ( type == INACTIVE )      bc = "Inactive";
   else if ( type == TRANSFER )
   {
     if      ( h_type == HT_S )      bc = "Heat Transfer type S";

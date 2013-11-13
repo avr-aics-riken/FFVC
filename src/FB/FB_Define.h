@@ -212,8 +212,7 @@
 #define FAN          13
 #define DARCY        14
 #define PERIODIC     15
-#define INACTIVE     16
-#define MONITOR      17
+#define MONITOR      16
 
 
 // 熱伝達係数のモード コンポーネントタイプと並列

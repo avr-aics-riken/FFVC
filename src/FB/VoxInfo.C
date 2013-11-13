@@ -720,10 +720,10 @@ void VoxInfo::dbg_chkBCIndex (const int* bcd, const int* cdf, const int* bcp, co
 // #################################################################
 /**
  * @brief BCindexにそのセルが計算に有効(active)かどうかをエンコードする
- * @param Lcell[out] ノードローカルの有効セル数
- * @param Gcell[out] グローバルの有効セル数
- * @param bx BCindex B
- * @param KOS 解くべき方程式の種類 KIND_OF_SOLVER
+ * @param [out]    Lcell  ノードローカルの有効セル数
+ * @param [out]    Gcell  グローバルの有効セル数
+ * @param [in,out] bx     BCindex B
+ * @param [in]     KOS    解くべき方程式の種類 KIND_OF_SOLVER
  * @note
    - IS_FLUID returns true if FLUID
    - 設定は内部領域のみ
@@ -822,18 +822,22 @@ void VoxInfo::encActive (unsigned long& Lcell, unsigned long& Gcell, int* bx, co
  * @brief 断熱マスクのエンコード
  * @param [in,out] bd     BCindex B
  * @param [in]     target エンコードのモード指定
+ * @param [in]     bid    境界ID
  * @param [in]     face   対称面指定の場合の面番号
- * @note "fluid"     >>  S-F面のF側を断熱にする．
+ * @note "fluid"     >>  S-F面のF側を断熱にする
  *       "solid"     >>  S側
- *       "inactive"  >>  不活性セルに対する断熱マスク
  *       "symmetric" >>  対称境界面の断熱マスクをセット
+ * @attention F/Sの判定は水密でないと確定しない．もし，非水密の場合，Sセルがない場合がある．
+ *            このアルゴリズムでよいか？
  */
-void VoxInfo::encAdiabatic (int* bd, const string target, int face)
+void VoxInfo::encAdiabatic (int* bd, const string target, const int* bid, int face)
 {
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
+  
+  unsigned long g=0;
   
   if (!strcasecmp(target.c_str(), "fluid"))
   {
@@ -846,50 +850,21 @@ void VoxInfo::encAdiabatic (int* bd, const string target, int face)
           
           if ( IS_FLUID(s) ) // pセルが流体セルの場合が対象
           {
-#include "FindexS3D.h"
+            int qq = bid[m_p];
+            int qw = getBit5(qq, 0);
+            int qe = getBit5(qq, 1);
+            int qs = getBit5(qq, 2);
+            int qn = getBit5(qq, 3);
+            int qb = getBit5(qq, 4);
+            int qt = getBit5(qq, 5);
             
-            int s_e = bd[m_e];
-            int s_w = bd[m_w];
-            int s_n = bd[m_n];
-            int s_s = bd[m_s];
-            int s_t = bd[m_t];
-            int s_b = bd[m_b];
-            
-            // X-
-            if ( !IS_FLUID(s_w) ) // S-F界面であること
-            {
-              s = offBit( s, ADIABATIC_W );
-            }
-            
-            // X+
-            if ( !IS_FLUID(s_e) )
-            {
-              s = offBit( s, ADIABATIC_E );
-            }
-            
-            // Y-
-            if ( !IS_FLUID(s_s) )
-            {
-              s = offBit( s, ADIABATIC_S );
-            }
-            
-            // Y+
-            if ( !IS_FLUID(s_n) )
-            {
-              s = offBit( s, ADIABATIC_N );
-            }
-            
-            // Z-
-            if ( !IS_FLUID(s_b) )
-            {
-              s = offBit( s, ADIABATIC_B );
-            }
-            
-            // Z+
-            if ( !IS_FLUID(s_t) )
-            {
-              s = offBit( s, ADIABATIC_T );
-            }
+            // S-F界面であること
+            if ( qw != 0 ) s = offBit( s, ADIABATIC_W ); 
+            if ( qe != 0 ) s = offBit( s, ADIABATIC_E );
+            if ( qs != 0 ) s = offBit( s, ADIABATIC_S );
+            if ( qn != 0 ) s = offBit( s, ADIABATIC_N );
+            if ( qb != 0 ) s = offBit( s, ADIABATIC_B );
+            if ( qt != 0 ) s = offBit( s, ADIABATIC_T );
           }
           bd[m_p] = s;
         }
@@ -908,78 +883,23 @@ void VoxInfo::encAdiabatic (int* bd, const string target, int face)
           
           if ( !IS_FLUID(s) ) // pセルが固体セルの場合が対象
           {
-#include "FindexS3D.h"
+            int qq = bid[m_p];
+            int qw = getBit5(qq, 0);
+            int qe = getBit5(qq, 1);
+            int qs = getBit5(qq, 2);
+            int qn = getBit5(qq, 3);
+            int qb = getBit5(qq, 4);
+            int qt = getBit5(qq, 5);
             
-            int s_e = bd[m_e];
-            int s_w = bd[m_w];
-            int s_n = bd[m_n];
-            int s_s = bd[m_s];
-            int s_t = bd[m_t];
-            int s_b = bd[m_b];
-            
-            // X-
-            if ( IS_FLUID(s_w) ) // S-F界面であること
-            {
-              s = offBit( s, ADIABATIC_W );
-            }
-            
-            // X+
-            if ( IS_FLUID(s_e) )
-            {
-              s = offBit( s, ADIABATIC_E );
-            }
-            
-            // Y-
-            if ( IS_FLUID(s_s) )
-            {
-              s = offBit( s, ADIABATIC_S );
-            }
-            
-            // Y+
-            if ( IS_FLUID(s_n) )
-            {
-              s = offBit( s, ADIABATIC_N );
-            }
-            
-            // Z-
-            if ( IS_FLUID(s_b) )
-            {
-              s = offBit( s, ADIABATIC_B );
-            }
-            
-            // Z+
-            if ( IS_FLUID(s_t) )
-            {
-              s = offBit( s, ADIABATIC_T );
-            }
+            // S-F界面であること
+            if ( qw != 0 ) s = offBit( s, ADIABATIC_W );
+            if ( qe != 0 ) s = offBit( s, ADIABATIC_E );
+            if ( qs != 0 ) s = offBit( s, ADIABATIC_S );
+            if ( qn != 0 ) s = offBit( s, ADIABATIC_N );
+            if ( qb != 0 ) s = offBit( s, ADIABATIC_B );
+            if ( qt != 0 ) s = offBit( s, ADIABATIC_T );
           }
           bd[m_p] = s;
-        }
-      }
-    }
-  }
-  else if (!strcasecmp(target.c_str(), "inactive"))
-  {
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
-    for (int k=1; k<=kx; k++) {
-      for (int j=1; j<=jx; j++) {
-        for (int i=1; i<=ix; i++) {
-          
-          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          
-          int s = bd[m];
-          
-          // Inactive指定の場合には，セルの全周を断熱にする
-          if ( !TEST_BIT(s, ACTIVE_BIT) )
-          {
-            s = offBit( s, ADIABATIC_W );
-            s = offBit( s, ADIABATIC_E );
-            s = offBit( s, ADIABATIC_S );
-            s = offBit( s, ADIABATIC_N );
-            s = offBit( s, ADIABATIC_B );
-            s = offBit( s, ADIABATIC_T );
-          }
-          bd[m] = s;
         }
       }
     }
@@ -995,7 +915,7 @@ void VoxInfo::encAdiabatic (int* bd, const string target, int face)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd); // 最外層のID
-            bd[m] = offBit(bd[m], ADIABATIC_W);           // 断熱ビットを0にする
+            bd[m] = offBit(bd[m], ADIABATIC_W);             // 断熱ビットを0にする
           }
         }
         break;
@@ -1055,6 +975,7 @@ void VoxInfo::encAdiabatic (int* bd, const string target, int face)
   {
     Exit(0);
   }
+  
 }
 
 
@@ -1083,7 +1004,7 @@ void VoxInfo::encHbit (const int* cdf, int* bd)
     }
   }
   
-  // 境界条件ビットの設定
+  // 境界条件ビットの設定 すでに速度条件{WALL, VSPEC, OUTFLOW}が設定されていれば，γ=0
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
@@ -1112,7 +1033,7 @@ void VoxInfo::encHbit (const int* cdf, int* bd)
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         int s2= bd[m];
         
-        int s_w = BIT_SHIFT(s2, GMA_W); // 対角要素の係数：0 or 1
+        int s_w = BIT_SHIFT(s2, GMA_W); // 面要素の係数：0 or 1
         int s_e = BIT_SHIFT(s2, GMA_E);
         int s_s = BIT_SHIFT(s2, GMA_S);
         int s_n = BIT_SHIFT(s2, GMA_N);
@@ -1137,7 +1058,7 @@ void VoxInfo::encHbit (const int* cdf, int* bd)
         
         if ( (ss == 0) && BIT_SHIFT(s2, ACTIVE_BIT) )
         {
-          Hostonly_ printf("\tDiagonal element is zero at (%d,%d,%d) : (Gamma:wesnbt)[%1d %1d %1d %1d %1d %1d] (A:wesnbt)[%1d %1d %1d %1d %1d %1d] : Act= %d  State= %d\n",
+          Hostonly_ printf("\tDiagonal element is zero at (%4d,%4d,%4d) : (Gamma:wesnbt)[%1d %1d %1d %1d %1d %1d] (A:wesnbt)[%1d %1d %1d %1d %1d %1d] : Act= %d  State= %d\n",
                            i,j,k,
                            s_w, s_e, s_s, s_n, s_b, s_t, 
                            a_w, a_e, a_s, a_n, a_b, a_t,
@@ -1149,7 +1070,7 @@ void VoxInfo::encHbit (const int* cdf, int* bd)
     }
   }
   
-  // ゼロ割防止のためのダミー係数 >> 全領域
+  // 陰解法の場合のゼロ割防止のためのダミー係数 >> 全領域
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
   for (int k=1-gd; k<=kx+gd; k++) {
     for (int j=1-gd; j<=jx+gd; j++) {
@@ -1419,7 +1340,6 @@ unsigned long VoxInfo::encPbitN (int* bx, const int* bid, const float* cut, cons
         if ( IS_FLUID( s ) )
         {
           int qq = bid[m_p];
-
           int qw = getBit5(qq, 0);
           int qe = getBit5(qq, 1);
           int qs = getBit5(qq, 2);
@@ -1427,7 +1347,6 @@ unsigned long VoxInfo::encPbitN (int* bx, const int* bid, const float* cut, cons
           int qb = getBit5(qq, 4);
           int qt = getBit5(qq, 5);
 
-          
           if ( qw != 0 ) s = onBit(s, FACING_W); c++;
           if ( qe != 0 ) s = onBit(s, FACING_E); c++;
           if ( qs != 0 ) s = onBit(s, FACING_S); c++;
@@ -1449,10 +1368,7 @@ unsigned long VoxInfo::encPbitN (int* bx, const int* bid, const float* cut, cons
   
   
   // 収束判定の有効フラグ
-  unsigned long g=0;
-  
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:g)
-  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -1461,44 +1377,14 @@ unsigned long VoxInfo::encPbitN (int* bx, const int* bid, const float* cut, cons
         
         if ( IS_FLUID( s ) )
         {
-          size_t m = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
-          const float* pos = &cut[m];
-          
-          float q0 = floor(pos[0]);
-          float q1 = floor(pos[1]);
-          float q2 = floor(pos[2]);
-          float q3 = floor(pos[3]);
-          float q4 = floor(pos[4]);
-          float q5 = floor(pos[5]);
-          
-          // 全周カットがあるセルは孤立セルとして固体セルへ変更
-          if ( (q0+q1+q2+q3+q4+q5) == 0.0 )
-          {
-            s = offBit(s, VLD_CNVG);    // Out of scope
-            s = offBit(s, STATE_BIT );  // Solid
-            s = offBit(s, ACTIVE_BIT ); // Inactive
-            g++;
-          }
-          else
-          {
-            s = onBit(s, VLD_CNVG);
-          }
-          
-          bx[m_p] = s;
+          s = onBit(s, VLD_CNVG);
+          bx[m_p] = s; 
         }
       }
     }
   }
-  
-  
-  if ( numProc > 1 )
-  {
-    unsigned long tmp = g;
-    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  Hostonly_ printf("\tThe number of cells which are changed to INACTIVE and SOLID because of all faces are cut = %ld\n\n", g);
-  
+
+  unsigned long g=0;
   
   // カットのあるセルの収束判定をしないオプション
   if ( convergence )
@@ -2944,61 +2830,6 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
 
 
 // #################################################################
-// 孤立したゼロIDのセルを隣接セルIDで埋める
-unsigned long VoxInfo::fillIsolatedEmptyCell (int* bcd, const int fluid_id, const int* bid)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  int fid = fluid_id;
-  unsigned long replaced=0;
-  
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, fid) schedule(static) reduction(+:replaced)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        size_t m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        int s = bcd[m_p];
-        
-        // 未ペイント
-        if ( DECODE_CMP(s) == 0 )
-        {
-          int qq = bid[m_p];
-          int qw = getBit5(qq, 0);
-          int qe = getBit5(qq, 1);
-          int qs = getBit5(qq, 2);
-          int qn = getBit5(qq, 3);
-          int qb = getBit5(qq, 4);
-          int qt = getBit5(qq, 5);
-          
-          // 隣接セルがすべて固体の場合でなく，かつempty(=0)でもない
-          if ( (qw != fid) && (qe != fid) &&
-               (qs != fid) && (qn != fid) &&
-               (qb != fid) && (qt != fid) &&
-              ( qw * qe * qs * qn * qb * qt != 0 ) )
-          {
-            int sd = find_mode_id(fid, qw, qe, qs, qn, qb, qt);
-            if ( sd == 0 ) Exit(0);
-            setBit5(bcd[m_p], sd, 0);
-            replaced++;
-          }
-        }
-      }
-    }
-  }
-  
-  if ( numProc > 1 )
-  {
-    unsigned long c_tmp = replaced;
-    if ( paraMngr->Allreduce(&c_tmp, &replaced, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  return replaced;
-}
-
-
-// #################################################################
 // 孤立した流体セルを探し，周囲の固体媒質で置換，BCindexを修正する
 unsigned long VoxInfo::findIsolatedFcell (int* bx, const int fluid_id)
 {
@@ -3061,64 +2892,6 @@ unsigned long VoxInfo::findIsolatedFcell (int* bx, const int fluid_id)
     unsigned long tmp = c;
     if ( paraMngr->Allreduce(&tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
-  
-  return c;
-}
-
-
-
-// #################################################################
-// BCindexにActive/Inactiveをエンコード
-unsigned long VoxInfo::flipInactive (unsigned long& L,
-                                     unsigned long& G,
-                                     const int id,
-                                     int* bx,
-                                     CompoList* cmp)
-{
-  unsigned long c=0;
-  
-  int idd = id;
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-#pragma omp parallel firstprivate(ix, jx, kx, gd, idd) reduction(+:c)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        int s = bx[m];
-        
-        if ( DECODE_CMP(s) == idd )
-        {
-          if ( TEST_BIT(s, ACTIVE_BIT) ) // 活性化してある場合に，不活性にし，カウント
-          {
-            s = offBit( s, ACTIVE_BIT );
-            bx[m] = s;
-            c++;
-          }
-        }
-        
-      }
-    }
-  }
-  
-  if ( c > 0 )
-  {
-    cmp->setEnsLocal(ON);
-  }
-  
-  L = c;
-  
-  if ( numProc > 1 )
-  {
-    unsigned long tmp = c;
-    MPI_Allreduce(&tmp, &c, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-  }
-  
-  G = c;
   
   return c;
 }
@@ -3201,6 +2974,53 @@ unsigned long VoxInfo::modifyCutOnCellCenter (int* bid, const float* cut, const 
 }
 
 
+// #################################################################
+// 全周カットのあるセルを固体セルIDで埋める
+unsigned long VoxInfo::replaceIsolatedFcell(int* bcd, const int fluid_id, const int* bid)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  int fid = fluid_id;
+  unsigned long replaced=0;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, fid) schedule(static) reduction(+:replaced)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        
+        int qq = bid[m_p];
+        int qw = getBit5(qq, 0);
+        int qe = getBit5(qq, 1);
+        int qs = getBit5(qq, 2);
+        int qn = getBit5(qq, 3);
+        int qb = getBit5(qq, 4);
+        int qt = getBit5(qq, 5);
+        
+        // 隣接方向がすべて固体の場合
+        if ( qw * qe * qs * qn * qb * qt != 0 )
+        {
+          int sd = find_mode_id(fid, qw, qe, qs, qn, qb, qt);
+          if ( sd == 0 ) Exit(0);
+          setBit5(bcd[m_p], sd, 0);
+          replaced++;
+        }
+        
+      }
+    }
+  }
+  
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = replaced;
+    if ( paraMngr->Allreduce(&c_tmp, &replaced, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  return replaced;
+}
+
 
 // #################################################################
 // bx[]に各境界条件の共通のビット情報をエンコードする
@@ -3266,21 +3086,6 @@ void VoxInfo::setBCIndexBase (int* bx,
   // BCIndexにそのセルが計算に有効(active)かどうかをエンコードする．KindOfSolverによって異なる
   encActive(Lcell, Gcell, bx, KOS);
   
-  
-  // Inactive指定のセルを不活性にする
-  unsigned long m_L, m_G;
-  
-  for (int n=1; n<=NoCompo; n++)
-  {
-    if ( cmp[n].getType() == INACTIVE )
-    {
-      m_L = m_G = 0;
-      cmp[n].setElement( flipInactive(m_L, m_G, n, bx, &cmp[n]) );
-      Lcell -= m_L;
-      Gcell -= m_G;
-    }
-  }
-  
 }
 
 
@@ -3312,11 +3117,11 @@ void VoxInfo::setBCIndexH (int* cdf, int* bd, SetBC* BC, const int kos, CompoLis
   {
     case THERMAL_FLOW:
     case THERMAL_FLOW_NATURAL:
-      encAdiabatic(bd, "fluid");
+      encAdiabatic(bd, "fluid", bid);
       break;
       
     case SOLID_CONDUCTION:
-      encAdiabatic(bd, "solid");
+      encAdiabatic(bd, "solid", bid);
       break;
   }
   
@@ -3326,13 +3131,9 @@ void VoxInfo::setBCIndexH (int* cdf, int* bd, SetBC* BC, const int kos, CompoLis
   {
     if ( BC->exportOBC(face)->getClass() == OBC_SYMMETRIC )
     {
-      encAdiabatic(bd, "symmetric", face);
+      encAdiabatic(bd, "symmetric", bid, face);
     }
   }
-  
-  
-  // 不活性セルの場合の断熱マスク処理
-  encAdiabatic(bd, "inactive");
   
   
   

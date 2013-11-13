@@ -563,8 +563,6 @@ public:
   unsigned Restart_step;       ///< リスタートステップ
   unsigned Restart_stepAvr;    ///< 平均値のリスタートステップ
   unsigned long NoWallSurface; ///< 固体表面セル数
-  
-  float Scaling_Factor;  ///< ポリゴンのスケーリングファクター
 	
   double Tscale;
   
@@ -676,8 +674,6 @@ public:
     Restart_step = 0;
     Restart_stepAvr = 0;
     Start = 0;
-    
-    Scaling_Factor = 1.0;
     
     PlotIntvl = 0.0;
     Domain_p1 = Domain_p2 = 0.0;

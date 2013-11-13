@@ -19,6 +19,14 @@ REVISION HISTORY
 ================
 
 --------------------------
+2013-11-13
+
+- r1048 output scaled polygon in the case of Unit.Length={mm, cm} [ver 1.5.0]
+  - Modify setupPolygon2CutInfo() to load polygons in the case of Unit.Length is cm or mm.
+  - expire INACTIVE mode and related methods > flip_inactive()
+  - modify VLD_CNVG flag encoding in encPbitN()
+
+--------------------------
 2013-11-03
 
 - r1047 bugfix: [ver 1.4.9]

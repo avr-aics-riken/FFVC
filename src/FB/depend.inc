@@ -374,7 +374,7 @@ VoxInfo.o: VoxInfo.C VoxInfo.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/Version.h IntervalManager.h Intrinsic.h \
- FindexS3D.h FindexS3D.h FindexS3D.h fill_bid.h fill_bid.h FindexS3D.h
+ FindexS3D.h fill_bid.h fill_bid.h FindexS3D.h
 History.o: History.C History.h Control.h \
  /usr/local/FFV/CPMlib/include/cpm_Define.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/mpi_portable_platform.h \
