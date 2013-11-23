@@ -78,7 +78,9 @@ libFB_a_SOURCES = \
   util_Path.h \
   vec3.h \
   vec3_func.h \
-  vec3f_func.h
+  vec3f_func.h \
+  Glyph.C \
+  Glyph.h
 
 EXTRA_DIST = Makefile_hand depend.inc ReleaseNote_FB.txt
 

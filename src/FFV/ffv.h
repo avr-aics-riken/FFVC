@@ -57,6 +57,7 @@
 #include "ffv_SetBC.h"
 #include "../F_CORE/ffv_Ffunc.h"
 #include "ffv_TerminateCtrl.h"
+#include "../FB/Glyph.h"
 
 
 // Intrinsic class
@@ -405,6 +406,10 @@ private:
   
   // 並列処理時の各ノードの分割数を集めてファイルに保存する
   void gatherDomainInfo();
+  
+  
+  // Glyphを生成・出力
+  void generateGlyph(const float* cut, const int* bid, FILE* fp);
   
   
   // グローバルな領域情報を取得

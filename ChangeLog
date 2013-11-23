@@ -19,6 +19,13 @@ REVISION HISTORY
 ================
 
 --------------------------
+2013-11-23
+
+- r1050 Introduction of Glyph
+  - add /GeometryModel/OutputGlyph
+  - add FB/Glyph.cpp, Glyph.h
+
+--------------------------
 2013-11-13
 
 - r1049 bug fix: add Hostonly_ for minDistance()

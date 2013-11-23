@@ -17,6 +17,9 @@
 RELEASE NOTE
 ============
 
+Ver 1.4.6   2013-11-23
+  - Glyph classを導入
+
 Ver 1.4.5   2013-10-28
   - MonitorList::checkConsistency()を追加
   - C.iv.MassDensityは当座コメントアウト

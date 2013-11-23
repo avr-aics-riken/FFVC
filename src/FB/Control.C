@@ -1040,7 +1040,7 @@ void Control::getGeometryModel()
     PolylibConfigName = str;
   }
   
-  // ジオメトリの分割出力
+  // ジオメトリの出力
   label = "/GeometryModel/Output";
   
   if ( tpCntl->chkLabel(label) )
@@ -1053,6 +1053,23 @@ void Control::getGeometryModel()
     else
     {
       if ( !strcasecmp(str.c_str(), "on") ) Hide.GeomOutput = ON;
+    }
+  }
+  
+  // グリフの出力
+  label = "/GeometryModel/OutputGlyph";
+  
+  if ( tpCntl->chkLabel(label) )
+  {
+    if ( !(tpCntl->getInspectedValue(label, str )) )
+    {
+      Hostonly_ stamped_printf("\tError : '%s'\n", label.c_str());
+      Exit(0);
+    }
+    else
+    {
+      if ( !strcasecmp(str.c_str(), "on") ) Hide.GlyphOutput = ON;
+      if ( !strcasecmp(str.c_str(), "InnerOnly") ) Hide.GlyphOutput = 2; // special treatment
     }
   }
   

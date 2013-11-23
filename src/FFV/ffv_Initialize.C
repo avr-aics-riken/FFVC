@@ -411,8 +411,16 @@ int FFV::Initialize(int argc, char **argv)
   gatherDomainInfo();
   
   
+  
+  // 交点のグリフを出力
+  if ( C.Hide.GlyphOutput != OFF )
+  {
+    generateGlyph(d_cut, d_bid, fp);
+  }
+  
+  
   TIMING_stop(tm_voxel_prep_sct);
-  // ここまでがボクセル準備の時間セクション
+  // ここまでが準備の時間セクション
   
   
 // ##########  
@@ -1771,6 +1779,152 @@ void FFV::gatherDomainInfo()
 
 
 // #################################################################
+/* @brief 交点情報のグリフを生成する
+ * @param [in] cut カットの配列
+ * @param [in] bid 境界IDの配列
+ * @param [in] fp  file pointer
+ */
+void FFV::generateGlyph(const float* cut, const int* bid, FILE* fp)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  // 交点の総数を求める
+  unsigned global_cut=0;  /// 全カット数
+  unsigned local_cut=0;   /// 担当プロセスのカット数
+  unsigned g=0;
+  
+
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int qq = bid[m];
+        
+        if ( TEST_BC(qq) ) // カットがあるか，IDによる判定
+        {
+          if (getBit5(qq, 0) != 0) g++;
+          if (getBit5(qq, 1) != 0) g++;
+          if (getBit5(qq, 2) != 0) g++;
+          if (getBit5(qq, 3) != 0) g++;
+          if (getBit5(qq, 4) != 0) g++;
+          if (getBit5(qq, 5) != 0) g++;
+        }
+        
+      }
+    }
+  }
+  
+  global_cut = local_cut = g;
+
+  if ( numProc > 1 )
+  {
+    unsigned tmp = global_cut;
+    if ( paraMngr->Allreduce(&tmp, &global_cut, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  Hostonly_
+  {
+    printf("\tNumber of Cut points = %ld\n", global_cut);
+    fprintf(fp, "\tNumber of Cut points = %ld\n", global_cut);
+  }
+  
+  
+  // 格子幅（有次元）
+  float m_pch[3] = {
+    (float)pitch[0]*C.RefLength,
+    (float)pitch[1]*C.RefLength,
+    (float)pitch[2]*C.RefLength
+  };
+  
+  // サブドメインの起点座標（有次元）
+  float m_org[3] = {
+    (float)origin[0]*C.RefLength,
+    (float)origin[1]*C.RefLength,
+    (float)origin[2]*C.RefLength
+  };
+  
+  //printf("org = %e %e %e\n", m_org[0], m_org[1], m_org[2]);
+  //printf("pch = %e %e %e\n", m_pch[0], m_pch[1], m_pch[2]);
+  
+  // ポリゴンをストアする配列を確保
+  Glyph glyph(m_pch, m_org, local_cut, myRank);
+  
+  
+  // グリフの生成モード
+  bool inner_only = false;
+  if (C.Hide.GlyphOutput == 2) inner_only=true;
+  
+  // カット点毎にグリフのポリゴン要素を生成し，配列にストア
+  FB::Vec3i idx;
+  
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int qq = bid[m];
+        
+        if ( TEST_BC(qq) ) // カットがあるか，IDによる判定
+        {
+          const float* pos = &cut[ _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd) ];
+          
+          idx.assign(i, j, k);
+          
+          if ( inner_only )
+          {
+            if (i != 1 )
+            {
+              if (getBit5(qq, 0) != 0) glyph.generateVertex(idx, pos, "x-", qq);
+            }
+            if ( i != ix )
+            {
+              if (getBit5(qq, 1) != 0) glyph.generateVertex(idx, pos, "x+", qq);
+            }
+            if ( j != 1 )
+            {
+              if (getBit5(qq, 2) != 0) glyph.generateVertex(idx, pos, "y-", qq);
+            }
+            if ( j != jx )
+            {
+              if (getBit5(qq, 3) != 0) glyph.generateVertex(idx, pos, "y+", qq);
+            }
+            if ( k != 1 )
+            {
+              if (getBit5(qq, 4) != 0) glyph.generateVertex(idx, pos, "z-", qq);
+            }
+            if ( k != kx )
+            {
+              if (getBit5(qq, 5) != 0) glyph.generateVertex(idx, pos, "z+", qq);
+            }
+          }
+          else
+          {
+            if (getBit5(qq, 0) != 0) glyph.generateVertex(idx, pos, "x-", qq);
+            if (getBit5(qq, 1) != 0) glyph.generateVertex(idx, pos, "x+", qq);
+            if (getBit5(qq, 2) != 0) glyph.generateVertex(idx, pos, "y-", qq);
+            if (getBit5(qq, 3) != 0) glyph.generateVertex(idx, pos, "y+", qq);
+            if (getBit5(qq, 4) != 0) glyph.generateVertex(idx, pos, "z-", qq);
+            if (getBit5(qq, 5) != 0) glyph.generateVertex(idx, pos, "z+", qq);
+          }
+        }
+        
+      }
+    }
+  }
+  
+
+  // ポリゴンの出力
+  glyph.writeBinary("CutGlyph");
+  
+}
+
+
+
+// #################################################################
 /* @brief グローバルな領域情報を取得
  * @param [in] tp_dom  TextParserクラス
  * @return 分割指示 (1-with / 2-without)
@@ -2933,15 +3087,14 @@ void FFV::initInterval()
 
 // #################################################################
 /* @brief 距離の最小値を求める
- * @param [in,out] cut カット情報の配列
- * @param [in]     bid カット情報の配列
+ * @param [in,out] cut カットの配列
+ * @param [in]     bid 境界IDの配列
  * @param [in]     fp  file pointer
  */
 void FFV::minDistance(const float* cut, const int* bid, FILE* fp)
 {
   float global_min;
   float local_min = 1.0;
-  unsigned g=0;
   
   int ix = size[0];
   int jx = size[1];
@@ -2955,7 +3108,7 @@ void FFV::minDistance(const float* cut, const int* bid, FILE* fp)
   {
     float th_min = 1.0;
     
-#pragma omp for schedule(static) reduction(+:g)
+#pragma omp for schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
@@ -3001,6 +3154,7 @@ void FFV::minDistance(const float* cut, const int* bid, FILE* fp)
   }
 
 }
+
 
 
 // #################################################################
@@ -4505,7 +4659,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     }
   }
   
-  
+
 
   
   
@@ -4609,6 +4763,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
 #if 0
   displayCutInfo(d_cut, d_bid);
 #endif
+  
 }
 
 

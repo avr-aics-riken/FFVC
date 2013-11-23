@@ -380,6 +380,7 @@ public:
     int Range_Limit;
     int PM_Test;
     int GeomOutput;
+    int GlyphOutput;
   } Hidden_Parameter;
   
   /** File IO control */
@@ -732,6 +733,7 @@ public:
     Hide.Range_Limit = 0;
     Hide.PM_Test = 0;
     Hide.GeomOutput = OFF;
+    Hide.GlyphOutput = OFF;
     
     Unit.Param  = 0;
     Unit.Output = 0;
