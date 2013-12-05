@@ -20,9 +20,11 @@
 //@brief  FlowBase Glyph class Header
 //@author kero
 
+#include "mpi.h" // add header explicitly to avoid compile error for Intel MPI
 #include <iostream>
 #include <fstream>
 #include <string>
+#include "string.h"
 #include <stdlib.h>
 #include <iomanip>
 #include "FB_Define.h"

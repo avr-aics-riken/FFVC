@@ -19,6 +19,12 @@ REVISION HISTORY
 ================
 
 --------------------------
+2013-12-05
+
+- r1051 bug fix [ver 1.5.1]
+ - incorrect calculation end was set
+
+--------------------------
 2013-11-23
 
 - r1050 Introduction of Glyph

@@ -1075,7 +1075,7 @@ int FFV::MainLoop()
     switch (loop_ret) 
     {
       case -1: // error
-        return -1;
+        ret = -1;
         break;
         
       case 0: // forced terminated
@@ -1087,10 +1087,10 @@ int FFV::MainLoop()
         break;
         
       default:
-        return -1;
+        ret = -1;
     }
     
-    if( loop_ret == 0 ) break;
+    if ( loop_ret == 0 ) break;
   }
   
   
@@ -1105,7 +1105,7 @@ int FFV::MainLoop()
   if ( fp_f ) fclose(fp_f);  ///< 力の履歴情報
 
   
-  if ( !stepPost() ) return -1;
+  if ( !stepPost() ) ret = -1;
 
   return ret;
 }

@@ -3413,16 +3413,19 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
   
   
   // Calculation time/step
+  unsigned long m_stp;
   if ( Interval[Control::tg_compute].getMode() == IntervalManager::By_step )
   {
     itm = (double)Interval[Control::tg_compute].getIntervalStep() * dt;
+    m_stp = (unsigned long)Interval[Control::tg_compute].getIntervalStep();
   }
   else
   {
     itm = Interval[tg_compute].getIntervalTime();
+    m_stp = (unsigned long)(itm/dt);
   }
 
-  fprintf(fp,"\t     Calculation Period       :   %12.5e [sec] / %12.5e [-] : %12d [step]\n", itm*Tscale, itm, Interval[tg_compute].getIntervalStep());
+  fprintf(fp,"\t     Calculation Period       :   %12.5e [sec] / %12.5e [-] : %12ld [step]\n", itm*Tscale, itm, m_stp);
   
   
   

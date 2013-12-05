@@ -19,6 +19,10 @@ RELEASE
 =======
 
 -------------
+Version 1.5.1    2013-12-05
+  - bug fix : incorrect calculation end
+  
+-------------
 Version 1.5.0    2013-11-13
   - This version enables us to calculate natural thermal flow with un-watertight polygons
   

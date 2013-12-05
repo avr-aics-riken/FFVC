@@ -343,7 +343,6 @@ int FFV::Initialize(int argc, char **argv)
   // 時間積分幅 deltaT や物理パラメータの設定
   setParameters();
 
-
   
   // 必要なパラメータをSetBC3Dクラスオブジェクトにコピーする >> setParameters()の後
   BC.setControlVars(&C, mat, &RF, Ex);
@@ -455,7 +454,6 @@ int FFV::Initialize(int argc, char **argv)
   Restart(fp);
   TIMING_stop(tm_restart);
   
-
   
   // 制御インターバルの初期化
   initInterval();
@@ -3013,10 +3011,12 @@ void FFV::initFileOut()
  */
 void FFV::initInterval()
 {
+  
   unsigned m_Session_StartStep;   ///< セッションの開始ステップ
   m_Session_StartStep = C.Interval[Control::tg_compute].getStartStep();
   
   double m_dt = DT.get_DT();
+
   
   // セッションの最終ステップ
   if ( C.Interval[Control::tg_compute].getMode() == IntervalManager::By_step )
@@ -3025,8 +3025,9 @@ void FFV::initInterval()
   }
   else
   {
-    Session_LastStep = (unsigned)ceil( C.Interval[Control::tg_compute].getIntervalTime() / m_dt );
+    Session_LastStep = (unsigned)ceil( C.Interval[Control::tg_compute].getIntervalTime() / (m_dt*C.Tscale) );
   }
+  
   
   
   // セッションの開始・終了時刻をセット >> @see Control::getTimeControl()
@@ -3038,6 +3039,7 @@ void FFV::initInterval()
       C.Interval[i].setLast(Session_LastStep);
     }
   }
+  
   
   
   // 入力モードが有次元の場合に，無次元に変換 >> 時制がBy_timeの場合のみ
@@ -4200,6 +4202,7 @@ void FFV::setParameters()
   
   // 無次元時間積分幅
   deltaT = DT.get_DT();
+
 
   // コンポーネントと外部境界のパラメータを有次元化
   C.setCmpParameters(mat, cmp, BC.exportOBC());
