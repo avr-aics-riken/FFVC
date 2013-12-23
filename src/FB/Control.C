@@ -1040,7 +1040,7 @@ void Control::getGeometryModel()
     PolylibConfigName = str;
   }
   
-  // ジオメトリの出力
+  // Geometry output (NOT mandatory)
   label = "/GeometryModel/Output";
   
   if ( tpCntl->chkLabel(label) )
@@ -1056,7 +1056,7 @@ void Control::getGeometryModel()
     }
   }
   
-  // グリフの出力
+  // Glyph output (NOT mandatory)
   label = "/GeometryModel/OutputGlyph";
   
   if ( tpCntl->chkLabel(label) )

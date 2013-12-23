@@ -2473,6 +2473,7 @@ void FFV::initFileOut()
   double DiffPrs = (double)C.RefDensity * (double)C.RefVelocity * (double)C.RefVelocity;
   
   
+  std::string UnitT = "Celsius";
   
   
   // Divergence for Debug
@@ -2685,7 +2686,7 @@ void FFV::initFileOut()
     DFI_OUT_TEMP->AddUnit("Length"  , UnitL, (double)C.RefLength);
     DFI_OUT_TEMP->AddUnit("Velocity", UnitV, (double)C.RefVelocity);
     DFI_OUT_TEMP->AddUnit("Pressure", UnitP, (double)C.BasePrs, DiffPrs, true);
-    
+    DFI_OUT_TEMP->AddUnit("Temperature", UnitT, (double)C.BaseTemp, (double)C.DiffTemp, true);
   }
   
   
@@ -2819,6 +2820,7 @@ void FFV::initFileOut()
       DFI_OUT_TEMPA->AddUnit("Length"  , UnitL, (double)C.RefLength);
       DFI_OUT_TEMPA->AddUnit("Velocity", UnitV, (double)C.RefVelocity);
       DFI_OUT_TEMPA->AddUnit("Pressure", UnitP, (double)C.BasePrs, DiffPrs, true);
+      DFI_OUT_TEMP->AddUnit("Temperature", UnitT, (double)C.BaseTemp, (double)C.DiffTemp, true);
     }
   }
   

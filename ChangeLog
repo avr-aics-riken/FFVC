@@ -19,6 +19,14 @@ REVISION HISTORY
 ================
 
 --------------------------
+2013-12-23
+
+- r1052 bug fix & check [ver 1.5.2]
+ - add ParseBC::loadLocalBCfromPolylibFile()
+ - bug fix : issue #1 & #5 on github
+ - read SPEC_VEL parameters in case of thermal flow
+
+--------------------------
 2013-12-05
 
 - r1051 bug fix [ver 1.5.1]

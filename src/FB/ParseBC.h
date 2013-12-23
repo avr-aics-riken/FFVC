@@ -267,6 +267,10 @@ private:
   int getVprofile(const string label_base);
   
   
+  // 内部境界条件のalias名に対するclassとmediumをpolylib.tpから取得する
+  void loadLocalBCfromPolylibFile(Control* C, const string obj_name, string& m_class, string& m_medium);
+  
+  
   // 外部境界面の反対方向を返す
   int oppositeDir(const int dir);
   

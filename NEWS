@@ -19,6 +19,10 @@ RELEASE
 =======
 
 -------------
+Version 1.5.2    2013-12-23
+  - bug fix : issues #1 & #5
+
+-------------
 Version 1.5.1    2013-12-05
   - bug fix : incorrect calculation end
   

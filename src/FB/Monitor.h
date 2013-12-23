@@ -349,10 +349,12 @@ protected:
   
   
   /// サンプリングと出力の次元の設定
-  /// @param [in] modeUnit       出力単位指定フラグ (有次元，無次元)
-  void setSamplingUnit(const int unit)
+  /// @param [in] unitOutput      出力単位指定フラグ (有次元，無次元)
+  /// @param [in] unitInput       入力単位指定フラグ (有次元，無次元)
+  void setSamplingUnit(const int unitOutput, const int unitInput)
   {
-    refVar.modeUnit = unit;
+    refVar.modeUnitOutput = unitOutput;
+    refVar.modeUnitInput  = unitInput;
   }
   
 };

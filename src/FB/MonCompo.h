@@ -53,7 +53,8 @@ public:
   
   /// 参照用パラメータ構造体
   struct ReferenceVariables {
-    int modeUnit;            /// 出力単位指定フラグ (有次元，無次元)
+    int modeUnitOutput;      /// 出力単位指定フラグ (有次元，無次元)
+    int modeUnitInput;       /// 入力単位指定フラグ (有次元，無次元)
     int modePrecision;       /// 出力精度指定フラグ (単精度，倍精度)
     int unitPrs;             /// 圧力単位指定フラグ (絶対値，ゲージ圧)
     REAL_TYPE refVelocity;   /// 代表速度
@@ -511,49 +512,49 @@ protected:
   /// 座標の単位変換
   REAL_TYPE convCrd(REAL_TYPE xyz) const
   {
-    return ( (refVar.modeUnit==DIMENSIONAL) ? xyz*refVar.refLength : xyz );
+    return ( (refVar.modeUnitInput==DIMENSIONAL) ? xyz*refVar.refLength : xyz );
   }
   
   /// 時間の単位変換
   REAL_TYPE convTime(REAL_TYPE tm) const
   {
-    return ( (refVar.modeUnit==DIMENSIONAL) ? tm*refVar.refLength/refVar.refVelocity : tm );
+    return ( (refVar.modeUnitInput==DIMENSIONAL) ? tm*refVar.refLength/refVar.refVelocity : tm );
   }
   
   /// 速度成分の単位変換
   REAL_TYPE convVel(REAL_TYPE vel) const
   {
-    return ( (refVar.modeUnit==DIMENSIONAL) ? vel*refVar.refVelocity : vel );
+    return ( (refVar.modeUnitInput==DIMENSIONAL) ? vel*refVar.refVelocity : vel );
   }
   
   /// 圧力の単位変換
   REAL_TYPE convPrs(REAL_TYPE prs) const
   {
-    return ( (refVar.modeUnit==DIMENSIONAL) ? FBUtility::convPrsND2D(prs, refVar.basePrs, refVar.refDensity, refVar.refVelocity, refVar.unitPrs) : prs );
+    return ( (refVar.modeUnitInput==DIMENSIONAL) ? FBUtility::convPrsND2D(prs, refVar.basePrs, refVar.refDensity, refVar.refVelocity, refVar.unitPrs) : prs );
   }
   
   /// 温度の単位変換
   REAL_TYPE convTmp(REAL_TYPE tmp) const
   {
-    return ( (refVar.modeUnit==DIMENSIONAL) ? FBUtility::convTempND2D(tmp, refVar.baseTemp, refVar.diffTemp) : tmp);
+    return ( (refVar.modeUnitInput==DIMENSIONAL) ? FBUtility::convTempND2D(tmp, refVar.baseTemp, refVar.diffTemp) : tmp);
   }
   
   /// 全圧の単位変換
   REAL_TYPE convTP(REAL_TYPE tp) const
   {
-    return ( (refVar.modeUnit==DIMENSIONAL) ? tp * (refVar.refVelocity * refVar.refVelocity * refVar.refDensity) : tp );
+    return ( (refVar.modeUnitInput==DIMENSIONAL) ? tp * (refVar.refVelocity * refVar.refVelocity * refVar.refDensity) : tp );
   }
   
   /// 渦度成分の単位変換
   REAL_TYPE convVor(REAL_TYPE vor) const
   {
-    return ( (refVar.modeUnit==DIMENSIONAL) ? vor*refVar.refVelocity/refVar.refLength : vor );
+    return ( (refVar.modeUnitInput==DIMENSIONAL) ? vor*refVar.refVelocity/refVar.refLength : vor );
   }
   
   /// Helicityの単位変換
   REAL_TYPE convHlt(REAL_TYPE hlt) const
   {
-    return ( (refVar.modeUnit==DIMENSIONAL) ? hlt*refVar.refVelocity*refVar.refVelocity/refVar.refLength : hlt );
+    return ( (refVar.modeUnitInput==DIMENSIONAL) ? hlt*refVar.refVelocity*refVar.refVelocity/refVar.refLength : hlt );
   }
   
   /// サンプリングした変数をノード0に集約

@@ -50,7 +50,7 @@ void History::printCCNV(const double* avr, const double* rms, const IterationCtl
     data[c++] = (double)printVmax();
     
     // Iteration VP
-    data[c++] = (double)ICd->getLoopCount();
+    data[c++] = (double)ICd->getLoopCount()+1.0;
     
     // max divergence
     data[c++] = (double)ICd->getNormValue();
@@ -61,7 +61,7 @@ void History::printCCNV(const double* avr, const double* rms, const IterationCtl
       case Flow_FS_AB2:
       case Flow_FS_AB_CN:
         // Iteration Pressure
-        data[c++] = (double)ICp1->getLoopCount();
+        data[c++] = (double)ICp1->getLoopCount()+1.0;
         
         // Norm Pressure
         data[c++] = (double)ICp1->getNormValue();
@@ -71,7 +71,7 @@ void History::printCCNV(const double* avr, const double* rms, const IterationCtl
     if (C->AlgorithmF == Flow_FS_AB_CN)
     {
       // Iteration Velocity
-      data[c++] = (double)ICv->getLoopCount();
+      data[c++] = (double)ICv->getLoopCount()+1.0;
       
       // Norm Velocity
       data[c++] = (double)ICv->getNormValue();
@@ -99,7 +99,7 @@ void History::printCCNV(const double* avr, const double* rms, const IterationCtl
           
         case Heat_EE_EI:
           // Iteration Energy
-          data[c++] = (double)ICt->getLoopCount();
+          data[c++] = (double)ICt->getLoopCount()+1.0;
           
           // Norm Energy
           data[c++] = (double)ICt->getNormValue();
@@ -122,7 +122,7 @@ void History::printCCNV(const double* avr, const double* rms, const IterationCtl
         
       case Heat_EE_EI:
         // Iteration Energy
-        data[c++] = (double)ICt->getLoopCount();
+        data[c++] = (double)ICt->getLoopCount()+1.0;
         
         // Norm Energy
         data[c++] = (double)ICt->getNormValue();
@@ -363,13 +363,13 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
       case Flow_FS_EE_EE:
       case Flow_FS_AB2:
       case Flow_FS_AB_CN:
-        fprintf(fp, " %5d %11.4e", ICp1->getLoopCount(), ICp1->getNormValue());
+        fprintf(fp, " %5d %11.4e", ICp1->getLoopCount()+1, ICp1->getNormValue());
         break;
     }
     
     if (C->AlgorithmF == Flow_FS_AB_CN)
     {
-      fprintf(fp, " %5d %11.4e", ICv->getLoopCount(), ICv->getNormValue());
+      fprintf(fp, " %5d %11.4e", ICv->getLoopCount()+1, ICv->getNormValue());
     }
     
     fprintf(fp, " %10.3e %10.3e %10.3e %10.3e",
@@ -386,7 +386,7 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
           break;
           
         case Heat_EE_EI:
-          fprintf(fp, " %5d %11.4e", ICt->getLoopCount(), ICt->getNormValue());
+          fprintf(fp, " %5d %11.4e", ICt->getLoopCount()+1, ICt->getNormValue());
           break;
       }
       
@@ -401,7 +401,7 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
         break;
         
       case Heat_EE_EI:
-        fprintf(fp, " %5d %11.4e", ICt->getLoopCount(), ICt->getNormValue());
+        fprintf(fp, " %5d %11.4e", ICt->getLoopCount()+1, ICt->getNormValue());
         break;
     }
     fprintf(fp, " %10.3e %10.3e", rms[var_Temperature], avr[var_Temperature]);
@@ -748,7 +748,7 @@ void History::printHistoryItr(FILE* fp, const IterationCtl* IC, const FB::Vec3i 
   const IterationCtl* ICp = &IC[ic_prs1];  ///< 圧力のPoisson反復
 	fprintf(fp, "                                           %8d %13.6e %8d %13.6e (%12d, %12d, %12d)\n",
           ICd->getLoopCount(), ICd->getNormValue(),
-          ICp->getLoopCount(), ICp->getNormValue(),
+          ICp->getLoopCount()+1, ICp->getNormValue(),
           idx.x, idx.y, idx.z);
 }
 

@@ -436,14 +436,9 @@ bool MonitorList::getMonitor(Control* C, CompoList* cmp)
   }
 
   
-  if ( C->Unit.Output == DIMENSIONAL )
-  {
-    setSamplingUnit(DIMENSIONAL);
-  }
-  else // NonDimensional
-  {
-    setSamplingUnit(NONDIMENSIONAL);
-  }
+  // 出力と入力の単位モード 
+  setSamplingUnit(C->Unit.Output, C->Unit.Param);
+
   
   
   
@@ -957,7 +952,7 @@ void MonitorList::printMonitorInfo(FILE* fp, const char* str, const bool verbose
   
   fprintf(fp, "\t  Output Type              : %s\n", getOutputTypeStr().c_str());
   fprintf(fp, "\t  Base Name of Output File : %s\n", str);
-  fprintf(fp, "\t  Unit                     : %s\n\n", (refVar.modeUnit == DIMENSIONAL) ? "Dimensional" : "Non Dimensional");
+  fprintf(fp, "\t  Unit                     : %s\n\n", (refVar.modeUnitOutput == DIMENSIONAL) ? "Dimensional" : "Non Dimensional");
   
   if ( verbose )
   {

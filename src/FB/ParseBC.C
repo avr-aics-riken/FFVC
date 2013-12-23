@@ -1748,7 +1748,7 @@ void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp)
     label_leaf = label_base + "/" + str;
     
     
-    // alias of medium
+    // medium of alias
     label = label_leaf + "/Medium";
     
     if ( !(tpCntl->getInspectedValue(label, str )) )
@@ -1767,6 +1767,31 @@ void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp)
       Hostonly_ stamped_printf("\tParsing error : No '%s'\n", label.c_str());
       Exit(0);
     }
+    
+    // check consitency between Polylib file and input parameter file
+    string m_class, m_medium;
+    loadLocalBCfromPolylibFile(C, cmp[m].getAlias(), m_class, m_medium);
+    
+    if ( !strcasecmp(m_class.c_str(), str.c_str()) )
+    {
+      ;
+    }
+    else
+    {
+      Hostonly_ stamped_printf("\tError : Check consistency of LocalBC class name in between Polylib file and input parameter file. [%s , %s]\n", m_class.c_str(), str.c_str());
+      Exit(0);
+    }
+    
+    if ( !strcasecmp(m_medium.c_str(), cmp[m].getMedium().c_str()) )
+    {
+      ;
+    }
+    else
+    {
+      Hostonly_ stamped_printf("\tError : Check consistency of Medium name in between Polylib file and input parameter file. [%s , %s]\n", m_medium.c_str(), cmp[m].getMedium().c_str());
+      Exit(0);
+    }
+    
     
     // cmp[].type, h_typeのセット ---> setType
     setKeywordLBC(str, m, cmp);
@@ -1826,6 +1851,7 @@ void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp)
       else if ( tp == RADIANT )      get_IBC_Radiant(label_leaf, m, cmp);
       else if ( tp == HEAT_SRC )     getIbcHeatSrc(label_leaf, m, cmp);
       else if ( tp == CNST_TEMP )    getIbcCnstTemp(label_leaf, m, cmp);
+      else if ( tp == SPEC_VEL ) { ; } // 既に読み込み済み
       else 
       {
         Hostonly_ printf("\tError : Invalid Local BC keyword [%d]\n", tp);
@@ -1911,6 +1937,79 @@ void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp)
            );
   }
 #endif
+}
+
+
+// #################################################################
+/** 
+ * @brief 内部境界条件のalias名に対するclassとmediumをpolylib.tpから取得する
+ * @param [in]  C        pointer to Control class
+ * @param [in]  obj_name object name
+ * @param [out] m_lass   class name
+ * @param [out] m_medium medium name
+ */
+void ParseBC::loadLocalBCfromPolylibFile(Control* C, const string obj_name, string& m_class, string& m_medium)
+{
+  // ffvのパラメータローダのインスタンス生成
+  TextParser tp;
+  int ierror=0;
+  
+  if ( (ierror = tp.read(C->PolylibConfigName)) != TP_NO_ERROR )
+  {
+    Hostonly_ stamped_printf("\tError at reading '%s' file : %d\n", C->PolylibConfigName.c_str(), ierror);
+    Exit(0);
+  }
+  
+  // Number of polygon objects
+  vector<string> nodes;
+  tp.getLabelVector("/Polylib", nodes);
+  
+  int m_obj = nodes.size();
+  
+  if ( m_obj != C->NoBC )
+  {
+    stamped_printf("\tError : Number of LocalBC does not agree between '%s' and input parameter file. \n",
+                   C->PolylibConfigName.c_str());
+    Exit(0);
+  }
+  
+  
+  string label, str;
+  
+  // Does obj_name exist?
+  bool flag=false;
+  for (vector<string>::iterator it = nodes.begin(); it != nodes.end(); it++)
+  {
+    if ( !strcasecmp((*it).c_str(), obj_name.c_str()) ) flag = true;
+  }
+  if ( !flag )
+  {
+    Hostonly_ stamped_printf("\tParsing error : No '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  label = "/Polylib/" + obj_name;
+  
+  // class name
+  string label2 = label + "/type";
+  
+  if ( !(tp.getInspectedValue(label2, str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : No '%s'\n", label2.c_str());
+    Exit(0);
+  }
+  m_class = str;
+
+  // medium name
+  string label3 = label + "/label";
+  
+  if ( !(tp.getInspectedValue(label3, str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : No '%s'\n", label3.c_str());
+    Exit(0);
+  }
+  m_medium = str;
+  
 }
 
 

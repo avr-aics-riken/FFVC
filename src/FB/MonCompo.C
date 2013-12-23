@@ -1567,7 +1567,7 @@ void MonitorCompo::writeHeader(bool gathered)
 /// 平均値モニタ結果出力ファイルにヘッダ部を出力
 void MonitorCompo::writeHeaderCompo()
 {
-  if ( refVar.modeUnit == DIMENSIONAL )
+  if ( refVar.modeUnitOutput == DIMENSIONAL )
   {
     fprintf(fp, "      step      time[sec]");
   }
