@@ -96,7 +96,6 @@ bool MonitorCompo::allReduceSum(REAL_TYPE* array, int n, REAL_TYPE* sendBuf)
   
   for (int i = 0; i < n; i++) sendBuf[i] = array[i];
   
-
   if( sizeof(REAL_TYPE) == 8 )
   {
     if( MPI_Allreduce(sendBuf, array, n, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD) != MPI_SUCCESS ) return false;
@@ -116,9 +115,12 @@ bool MonitorCompo::allReduceSum(REAL_TYPE* array, int n)
 {
   if ( numProc <= 1 ) return true;
   
-  REAL_TYPE* sendBuf = new REAL_TYPE[n];
-  bool ret = allReduceSum(array, n, sendBuf);
-  delete[] sendBuf;
+  REAL_TYPE* sBuf=NULL;
+  if ( !(sBuf = new REAL_TYPE[n])) Exit(0);
+  
+  bool ret = allReduceSum(array, n, sBuf);
+
+  if ( sBuf ) delete[] sBuf; sBuf=NULL;
   
   return ret;
 }
@@ -228,33 +230,6 @@ void MonitorCompo::checkMonitorPoints()
   
 }
 
-
-// #################################################################
-/// モニタ点が指定領域内にあるかを判定
-///
-///   @param [in] m   モニタ点番号
-///   @param [in] org 調査領域の基点
-///   @param [in] box 調査領域のサイズ
-///   @param [in] flag メッセージ出力フラグ(trueの時出力)
-///   @return true=領域内/false=領域外
-///
-bool MonitorCompo::checkRegion(const int m, const FB::Vec3r org, const FB::Vec3r box, bool flag) const
-{
-  if ((crd[m].x< org.x)         ||
-      (crd[m].x>(org.x+box.x))  ||
-      (crd[m].y< org.y)         ||
-      (crd[m].y>(org.y+box.y))  ||
-      (crd[m].z< org.z)         ||
-      (crd[m].z>(org.z+box.z)) )
-  {
-    if (flag)
-    {
-      stamped_printf("\trank=%d : [%14.6e %14.6e %14.6e] is out of region\n", myRank, crd[m].x, crd[m].y, crd[m].z);
-    }
-    return false;
-  }
-  return true;
-}
 
 
 // #################################################################
@@ -850,6 +825,7 @@ void MonitorCompo::print(unsigned step, REAL_TYPE tm, bool gathered)
     fprintf(fp, "\n");
   }
 
+  fflush(fp);
 }
 
 
@@ -963,12 +939,14 @@ void MonitorCompo::setLine(const char* labelStr,
   nPoint = nDivision + 1;
   if (nPoint < 2) Exit(0);
   
+  // アロケート
   allocArray();
   allocSamplingArray();
   
   FB::Vec3r st(from), ed(to);
   FB::Vec3r dd = ed - st;
   dd /= nPoint - 1;
+  
   
   for (int m = 0; m < nPoint; m++)
   {
@@ -977,13 +955,16 @@ void MonitorCompo::setLine(const char* labelStr,
     
     crd[m] = st + dd * (REAL_TYPE)m;
     
+    // 計算領域全体でのチェック
     if (!checkRegion(m, g_org, g_box, true)) Exit(0);
     
     comment[m] = oss.str();
   }
   
+  // サンプリングポイントの担当ランクを決める
   setRankArray();
   
+  // モニタ点の登録
   for (int m = 0; m < nPoint; m++)
   {
     if (rank[m] == myRank) 
@@ -1053,8 +1034,14 @@ void MonitorCompo::setPointSet(const char* labelStr,
   }
   
   nPoint = pointSet.size();
-  if (nPoint == 0) Exit(0); // サンプリング点数
   
+  if (nPoint == 0)
+  {
+    printf("\tError : No sampling point\n");
+    Exit(0);
+  }
+  
+  // アロケート
   allocArray();
   allocSamplingArray();
   
@@ -1062,13 +1049,16 @@ void MonitorCompo::setPointSet(const char* labelStr,
   {
     crd[m] = pointSet[m].crd;
     
+    // 計算領域全体でのチェック
     if (!checkRegion(m, g_org, g_box, true)) Exit(0);
     
     comment[m] = pointSet[m].label;
   }
   
+  // サンプリングポイントの担当ランクを決める
   setRankArray();
   
+  // モニタ点の登録
   for (int m = 0; m < nPoint; m++)
   {
     if (rank[m] == myRank) 
@@ -1092,7 +1082,9 @@ void MonitorCompo::setPointSet(const char* labelStr,
       }
     }
   }
+  
 }
+
 
 // #################################################################
 /// Polygon登録
@@ -1122,7 +1114,7 @@ void MonitorCompo::setPolygon(const char* labelStr,
   }
   
 
-  // nPointを求める
+  // ローカルのサンプリング点数 nPointList[myRank] を求める
   int np = num_process;
   
   int* nPointList;
@@ -1156,42 +1148,52 @@ void MonitorCompo::setPolygon(const char* labelStr,
     }
   }
   
-  if (!allReduceSum(nPointList, np)) Exit(0);
   
+  // 全サンプリング数を求める
+  if ( !allReduceSum(nPointList, np) )
+  {
+    if (nPointList) delete [] nPointList;
+    nPointList = NULL;
+    Exit(0);
+  }
   
-  //check
   int sum = 0;
   for (int i = 0; i < np; i++) sum += nPointList[i];
   
-#if 1
-  printf("Polygon Monitor : sum=%d LocalPoint=%d\n", sum, nPointList[myRank]);
+  // Number of sampling points
+  nPoint = sum;
+  
+  
+#if 0
+  printf("Polygon Monitor[rank=%d] : sum=%d LocalPoint=%d\n", myRank, sum, nPointList[myRank]);
 #endif
   
-  nPoint = nPointList[myRank];
-  
-  
-  if (nPoint == 0) Exit(0); // サンプリング点数
-  
-  
+  if (nPoint == 0)
+  {
+    printf("\tError : No sampling point\n");
+    Exit(0);
+  }
+
   
   // アロケート
   allocArray();
   allocSamplingArray();
   
   
-  // 座標値を保持
+  // 座標値を保持するための配列，バッファ共用
   REAL_TYPE* buf;
   if (!(buf = new REAL_TYPE[nPoint*3])) Exit(0);
-  for (int i = 0; i < nPoint*3; i++) buf[i] = 0.0;
   
+  // 初期値にゼロをいれておき，MPI_SUMで集約
+  for (int m = 0; m < nPoint*3; m++) buf[m] = 0.0;
+  
+  // 各ランクの開始点offset
   int m0 = 0;
   for (int i = 0; i < myRank; i++) m0 += nPointList[i];
   
-  int m = 0;
   
-  int i0 = head[0] - 1; //fortran index なので1からカウントアップしている ---> Cのindexは0からカウントアップ
-  int j0 = head[1] - 1;
-  int k0 = head[2] - 1;
+  // 座標値を計算
+  int m = 0;
   
   // serial
   for (int k = 1; k <= kx; k++) {
@@ -1209,7 +1211,7 @@ void MonitorCompo::setPolygon(const char* labelStr,
         if ( TEST_BC(bd) ) // 6面のいずれかにIDがある
         {
           const float* pos = &cut[ _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd) ];
-
+          
           for (int i=0; i<6; i++)
           {
             int d = (bd >> i*5) & MASK_5;
@@ -1229,18 +1231,27 @@ void MonitorCompo::setPolygon(const char* labelStr,
         
         if ( flag > 0 )
         {
-          buf[(m0+m)*3+0] = g_org.x + (i + i0 - 0.5 + cx) * pch.x;
-          buf[(m0+m)*3+1] = g_org.y + (j + j0 - 0.5 + cy) * pch.y;
-          buf[(m0+m)*3+2] = g_org.z + (k + k0 - 0.5 + cz) * pch.z;
+          buf[(m0+m)*3+0] = org.x + (i - 0.5 + cx) * pch.x;
+          buf[(m0+m)*3+1] = org.y + (j - 0.5 + cy) * pch.y;
+          buf[(m0+m)*3+2] = org.z + (k - 0.5 + cz) * pch.z;
           m++;
         }
         
       }
     }
   }
+  
+  if ( m != nPointList[myRank] )
+  {
+    printf("Rank[%d] : number of sampling points is inconsistent (%d, %d)\n", myRank, m, nPointList[myRank]);
+    Exit(0);
+  }
+  
 
   
+  // 座標値を集める
   if (!allReduceSum(buf, nPoint*3)) Exit(0);
+  
   
   // serial
   for (m = 0; m < nPoint; m++)
@@ -1252,18 +1263,19 @@ void MonitorCompo::setPolygon(const char* labelStr,
     crd[m].y = buf[m*3+1];
     crd[m].z = buf[m*3+2];
     
+    // 計算領域全体でのチェック
     if (!checkRegion(m, g_org, g_box, true)) Exit(0);
     
     comment[m] = oss.str();
   }
-  
-  if (buf) delete [] buf;
-  if (nPointList) delete [] nPointList;
-  
 
+  
+  // サンプリングポイントの担当ランクを決める
   setRankArray();
   
-  for (int m = 0; m < nPoint; m++)
+  
+  // モニタ点の登録
+  for (m = 0; m < nPoint; m++)
   {
     if (rank[m] == myRank)
     {
@@ -1286,6 +1298,11 @@ void MonitorCompo::setPolygon(const char* labelStr,
       }
     }
   }
+
+  // テンポラリバッファの削除
+  if (buf) delete [] buf; buf = NULL;
+  if (nPointList) delete [] nPointList; nPointList = NULL;
+  
 }
 
 
@@ -1315,7 +1332,7 @@ void MonitorCompo::setPrimitive(const char* labelStr,
   }
   
   
-  // nPointを求める
+  // ローカルのサンプリング点数 nPointList[myRank] を求める
   int np = num_process;
   
   int* nPointList;
@@ -1341,21 +1358,32 @@ void MonitorCompo::setPrimitive(const char* labelStr,
     }
   }
   
-  if (!allReduceSum(nPointList, np)) Exit(0);
   
+  // 全サンプリング数を求める
+  if ( !allReduceSum(nPointList, np) )
+  {
+    if (nPointList) delete [] nPointList;
+    nPointList = NULL;
+    Exit(0);
+  }
   
-  //check
   int sum = 0;
   for (int i = 0; i < np; i++) sum += nPointList[i];
   
-#if 1
-  printf("Primitive Monitor : sum=%d LocalPoint=%d\n", sum, nPointList[myRank]);
+  // Number of sampling points
+  nPoint = sum;
+  
+  
+#if 0
+  printf("Polygon Monitor[rank=%d] : sum=%d LocalPoint=%d\n", myRank, sum, nPointList[myRank]);
 #endif
   
-  nPoint = nPointList[myRank];
   
-  if (nPoint == 0) Exit(0); // サンプリング点数
-  
+  if (nPoint == 0)
+  {
+    printf("\tError : No sampling point\n");
+    Exit(0);
+  }
   
   
   // アロケート
@@ -1366,16 +1394,17 @@ void MonitorCompo::setPrimitive(const char* labelStr,
   // 座標値を保持
   REAL_TYPE* buf;
   if (!(buf = new REAL_TYPE[nPoint*3])) Exit(0);
-  for (int i = 0; i < nPoint*3; i++) buf[i] = 0.0;
+
+  // 初期値にゼロをいれておき，MPI_SUMで集約
+  for (int m = 0; m < nPoint*3; m++) buf[m] = 0.0;
   
+  // 各ランクの開始点offset
   int m0 = 0;
   for (int i = 0; i < myRank; i++) m0 += nPointList[i];
   
-  int m = 0;
   
-  int i0 = head[0] - 1; //fortran index なので1からカウントアップしている ---> Cのindexは0からカウントアップ
-  int j0 = head[1] - 1;
-  int k0 = head[2] - 1;
+  // 座標値を計算
+  int m = 0;
   
   // serial
   for (int k = 1; k <= kx; k++) {
@@ -1386,9 +1415,9 @@ void MonitorCompo::setPrimitive(const char* labelStr,
         
         if ( DECODE_CMP( bcd[m] ) == odr )
         {
-          buf[(m0+m)*3+0] = g_org.x + (i + i0 - 0.5) * pch.x;
-          buf[(m0+m)*3+1] = g_org.y + (j + j0 - 0.5) * pch.y;
-          buf[(m0+m)*3+2] = g_org.z + (k + k0 - 0.5) * pch.z;
+          buf[(m0+m)*3+0] = org.x + (i - 0.5) * pch.x;
+          buf[(m0+m)*3+1] = org.y + (j - 0.5) * pch.y;
+          buf[(m0+m)*3+2] = org.z + (k - 0.5) * pch.z;
           m++;
           
           setBit5(bcd[m], 0, 0); // クリア
@@ -1398,7 +1427,17 @@ void MonitorCompo::setPrimitive(const char* labelStr,
     }
   }
   
+  if ( m != nPointList[myRank] )
+  {
+    printf("Rank[%d] : number of sampling points is inconsistent (%d, %d)\n", myRank, m, nPointList[myRank]);
+    Exit(0);
+  }
+  
+  
+  
+  // 座標値を集める
   if (!allReduceSum(buf, nPoint*3)) Exit(0);
+  
   
   // serial
   for (m = 0; m < nPoint; m++)
@@ -1410,17 +1449,18 @@ void MonitorCompo::setPrimitive(const char* labelStr,
     crd[m].y = buf[m*3+1];
     crd[m].z = buf[m*3+2];
     
+    // 計算領域全体でのチェック
     if (!checkRegion(m, g_org, g_box, true)) Exit(0);
     
     comment[m] = oss.str();
   }
+
   
-  if (buf) delete [] buf;
-  if (nPointList) delete [] nPointList;
-  
-  
+  // サンプリングポイントの担当ランクを決める
   setRankArray();
   
+  
+  // モニタ点の登録
   for (int m = 0; m < nPoint; m++)
   {
     if (rank[m] == myRank)
@@ -1445,6 +1485,10 @@ void MonitorCompo::setPrimitive(const char* labelStr,
     }
   }
 
+  // テンポラリバッファの削除
+  if (buf) delete [] buf; buf = NULL;
+  if (nPointList) delete [] nPointList; nPointList = NULL;
+  
 }
 
 
@@ -1461,6 +1505,8 @@ void MonitorCompo::setRankArray()
   for (int m = 0; m < nPoint; m++)
   {
     sendBuf[m] = -1;
+    
+    // ローカルノードの担当領域をチェック
     if (checkRegion(m, org, box)) sendBuf[m] = myRank;
   }
   

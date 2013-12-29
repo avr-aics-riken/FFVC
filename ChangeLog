@@ -21,6 +21,12 @@ REVISION HISTORY
 --------------------------
 2013-12-23
 
+- r1053 bug fix [ver 1.5.3]
+ - Monitor & Sampling related issue #1
+
+--------------------------
+2013-12-23
+
 - r1052 bug fix & check [ver 1.5.2]
  - add ParseBC::loadLocalBCfromPolylibFile()
  - bug fix : issue #1 & #5 on github

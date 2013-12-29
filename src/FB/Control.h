@@ -982,7 +982,7 @@ public:
    * @param [in]  tpc       TextParser pointer
    * @param [in]  normalize trueのとき無次元化
    */
-  static void getVec(const std::string label, REAL_TYPE* v, TextParser* tpc, bool normalize=false);
+  static bool getVec(const std::string label, REAL_TYPE* v, TextParser* tpc, bool normalize=false);
   
   
   /**

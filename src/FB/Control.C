@@ -2626,14 +2626,16 @@ REAL_TYPE Control::getValueReal(const std::string label, TextParser* tpc)
 // #################################################################
 // ベクトル値を取得し，登録する
 // normalize = trueのとき，無次元化する
-void Control::getVec(const std::string label, REAL_TYPE* v, TextParser* tpc, bool normalize)
+bool Control::getVec(const std::string label, REAL_TYPE* v, TextParser* tpc, bool normalize)
 {
   for (int i=0; i<3; i++) v[i]=0.0f;
   
-  if( !(tpc->getInspectedVector(label, v, 3)) ) Exit(0);
+  if( !(tpc->getInspectedVector(label, v, 3)) ) return false;
   
   //単位ベクトル化
   if ( normalize ) UnitVec(v);
+  
+  return true;
 }
 
 

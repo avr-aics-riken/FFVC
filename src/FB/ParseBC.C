@@ -205,11 +205,11 @@ void ParseBC::get_IBC_Fan(const string label_base, const int n, CompoList* cmp)
   
   // 法線ベクトルの取得
   label = label_base + "/OrientationVector";
-  Control::getVec(label, cmp[n].nv, tpCntl, true);
+  if ( !Control::getVec(label, cmp[n].nv, tpCntl, true) ) Exit(0);
   
   // 中心座標の取得
   label = label_base + "/Center";
-  Control::getVec(label, cmp[n].oc, tpCntl, false);
+  if ( !Control::getVec(label, cmp[n].oc, tpCntl, false) ) Exit(0);
   
   // 形状パラメータ
   label=label_base+"/Depth";
@@ -421,7 +421,7 @@ void ParseBC::get_IBC_IBM_DF(const string label_base, const int n, CompoList* cm
   
   // 法線ベクトル
   label = label_base + "/OrientationVector";
-  Control::getVec(label, cmp[n].nv, tpCntl, true);
+  if ( !Control::getVec(label, cmp[n].nv, tpCntl, true) ) Exit(0);
   
   // Velocity
   label=label_base+"/Velocity";
@@ -502,7 +502,7 @@ void ParseBC::getIbcOutflow(const string label_base, const int n, CompoList* cmp
   
   // 法線ベクトルの取得
   label = label_base + "/OrientationVector";
-  Control::getVec(label, cmp[n].nv, tpCntl, true);
+  if ( !Control::getVec(label, cmp[n].nv, tpCntl, true) ) Exit(0);
   
 }
 
@@ -619,15 +619,15 @@ void ParseBC::get_IBC_PrsLoss(const string label_base, const int n, CompoList* c
   
   // 法線ベクトルの取得
   label = label_base + "/OrientationVector";
-  Control::getVec(label, cmp[n].nv, tpCntl, true);
+  if ( !Control::getVec(label, cmp[n].nv, tpCntl, true) ) Exit(0);
   
   // 方向ベクトルの取得
   label = label_base + "/Dir";
-  Control::getVec(label, cmp[n].dr, tpCntl, true);
+  if ( !Control::getVec(label, cmp[n].dr, tpCntl, true) ) Exit(0);
   
   // 中心座標の取得
   label = label_base + "/Center";
-  Control::getVec(label, cmp[n].oc, tpCntl, false);
+  if ( !Control::getVec(label, cmp[n].oc, tpCntl, false) ) Exit(0);
   
   // 形状パラメータ
   label = label_base + "/Depth";
@@ -744,7 +744,7 @@ void ParseBC::getIbcSpecVel(const string label_base, const int n, CompoList* cmp
   
   // 法線ベクトル
   label = label_base + "/OrientationVector";
-  Control::getVec(label, cmp[n].nv, tpCntl, true);
+  if ( !Control::getVec(label, cmp[n].nv, tpCntl, true) ) Exit(0);
   
 
   
@@ -1307,7 +1307,7 @@ void ParseBC::getObcSpecVH(const string label_base, const int n)
   {
     REAL_TYPE v[3];
     label = label_base + "/OrientationVector";
-    Control::getVec(label, v, tpCntl, true);
+    if ( !Control::getVec(label, v, tpCntl, true) ) Exit(0);
     BaseBc[n].addVec(v);
   }
   
@@ -1418,7 +1418,7 @@ void ParseBC::getObcWall(const string label_base, const int n)
   if ( BaseBc[n].get_V_Profile() != CompoList::vel_zero )
   {
     label = label_base + "/OrientationVector";
-    Control::getVec(label, v, tpCntl, true);
+    if ( !Control::getVec(label, v, tpCntl, true) ) Exit(0);
     BaseBc[n].addVec(v);
   }
   

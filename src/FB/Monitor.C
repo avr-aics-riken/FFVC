@@ -315,10 +315,10 @@ void MonitorList::getLine(const Control* C,
   from[0]=v[0];
   from[1]=v[1];
   from[2]=v[2];
-  if (C->Unit.Output == DIMENSIONAL)
-  {
-    normalizeCord(C->RefLength,from);
-  }
+  
+  // 入力パラメータの次元が有次元のとき，無次元化する
+  if (C->Unit.Output == DIMENSIONAL) normalizeCord(C->RefLength, from);
+
   
   label=label_base+"/To";
   
@@ -331,10 +331,10 @@ void MonitorList::getLine(const Control* C,
   to[0]=v[0];
   to[1]=v[1];
   to[2]=v[2];
-  if (C->Unit.Output == DIMENSIONAL)
-  {
-    normalizeCord(C->RefLength,to);
-  }
+  
+  // 入力パラメータの次元が有次元のとき，無次元化する
+  if (C->Unit.Output == DIMENSIONAL) normalizeCord(C->RefLength, to);
+
 }
 
 
@@ -437,8 +437,7 @@ bool MonitorList::getMonitor(Control* C, CompoList* cmp)
 
   
   // 出力と入力の単位モード 
-  setSamplingUnit(C->Unit.Output, C->Unit.Param);
-
+  setSamplingUnit(C->Unit.Output);
   
   
   
@@ -637,7 +636,7 @@ bool MonitorList::getMonitor(Control* C, CompoList* cmp)
       // 法線ベクトル
       REAL_TYPE nv[3];
       label = label_leaf + "/Normal";
-      Control::getVec(label, nv, tpCntl, true);
+      if ( !Control::getVec(label, nv, tpCntl, true) ) Exit(0);
       
       setPolygon(name.c_str(), variables, method.c_str(), mode.c_str(), odr, nv, mon_type);
       setOutputType(MonitorList::GATHER); // 強制
@@ -761,10 +760,9 @@ void MonitorList::getPointset(const Control* C,
       Exit(0);
     }
     
-    if (C->Unit.Output == DIMENSIONAL)
-    {
-      normalizeCord(C->RefLength,v);
-    }
+    // 入力パラメータの次元が有次元のとき，無次元化する
+    if (C->Unit.Param == DIMENSIONAL) normalizeCord(C->RefLength, v);
+
     
     // set tagの取得．ラベルなしでもエラーではない
     label = label_leaf + "/tag";
@@ -810,11 +808,11 @@ void MonitorList::getPrimitive(Monitor_Type mon_type,
   
   // 法線ベクトル
   label = label_base + "/Normal";
-  Control::getVec(label, nv, tpCntl, true);
+  if ( !Control::getVec(label, nv, tpCntl, true) ) Exit(0);
   
   // 中心座標の取得
   label = label_base + "/Center";
-  Control::getVec(label, center, tpCntl, false);
+  if ( !Control::getVec(label, center, tpCntl, false) ) Exit(0);
   
   label = label_base + "/Depth";
   depth = Control::getValueReal(label, tpCntl);
@@ -824,7 +822,7 @@ void MonitorList::getPrimitive(Monitor_Type mon_type,
   {
     case mon_BOX:
       label = label_base + "/OrientationVector";
-      Control::getVec(label, dir, tpCntl, true);
+      if ( !Control::getVec(label, dir, tpCntl, true) ) Exit(0);
       
       label = label_base + "/Width";
       tmp = Control::getValueReal(label, tpCntl);

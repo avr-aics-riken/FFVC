@@ -65,7 +65,7 @@ protected:
   
   OutputType outputType; ///< 出力タイプ
   vector<MonitorCompo*> monGroup;  ///< モニタリンググループ配列
-  MonitorCompo:: ReferenceVariables refVar;  ///< 参照用パラメータ変数
+  MonitorCompo::ReferenceVariables refVar;  ///< 参照用パラメータ変数
 
   string fname_sampling; ///< 基本ファイル名
   
@@ -350,11 +350,9 @@ protected:
   
   /// サンプリングと出力の次元の設定
   /// @param [in] unitOutput      出力単位指定フラグ (有次元，無次元)
-  /// @param [in] unitInput       入力単位指定フラグ (有次元，無次元)
-  void setSamplingUnit(const int unitOutput, const int unitInput)
+  void setSamplingUnit(const int unitOutput)
   {
     refVar.modeUnitOutput = unitOutput;
-    refVar.modeUnitInput  = unitInput;
   }
   
 };
