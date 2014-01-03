@@ -21,6 +21,8 @@ REVISION HISTORY
 --------------------------
 2014-01-03
 
+- r1055 change include files for RHEL [ver 1.5.5]
+
 - r1054 Naive Implementation for SOR2SMA [ver 1.5.4]
  - renew the expression of year in copuright from 2013 to 2014
  - Default of FillHint is set to X_minus in getApplicationControl()

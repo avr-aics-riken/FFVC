@@ -25,6 +25,8 @@
 #include "FB_Define.h"
 #include <stdlib.h>
 #include <string>
+#include <stdio.h>
+#include <strings.h>
 #include "TextParser.h"
 
 using namespace std;
