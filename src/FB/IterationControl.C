@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -36,14 +36,194 @@ void IterationCtl::copy(IterationCtl* src)
   eps          = src->eps;
   Sync         = src->Sync;
   omg          = src->omg;
+  Naive        = src->Naive;
 }
 
 
 // #################################################################
-// ノルムのラベルを返す
-std::string IterationCtl::getNormString()
+// 固有パラメータを取得
+bool IterationCtl::getInherentPara(TextParser* tpCntl, const string base, int& m_naive)
 {
-  std::string nrm;
+  switch (LinearSolver)
+  {
+    case JACOBI:
+      getParaJacobi(tpCntl, base);
+      break;
+      
+    case SOR:
+      getParaSOR(tpCntl, base);
+      break;
+      
+    case SOR2SMA:
+      getParaSOR2(tpCntl, base);
+      m_naive = Naive;
+      break;
+      
+    case RBGS:
+      getParaRBGS(tpCntl, base);
+      break;
+      
+    case GMRES:
+      getParaGmres(tpCntl, base);
+      break;
+      
+    case PCG:
+      getParaPCG(tpCntl, base);
+      break;
+      
+    case PBiCGSTAB:
+      getParaPBiCGSTAB(tpCntl, base);
+      break;
+      
+    case VP_ITERATION:
+      break;
+      
+    default:
+      return false;
+  }
+  
+  return true;
+}
+
+
+// #################################################################
+/**
+ * @brief Gmres反復固有のパラメータを指定する
+ * @param [in] tpCntl TextParser pointer
+ * @param [in] base   ラベル
+ */
+void IterationCtl::getParaGmres(TextParser* tpCntl, const string base)
+{
+  ;
+}
+
+
+// #################################################################
+/**
+ * @brief Jacobi反復固有のパラメータを指定する
+ * @param [in] tpCntl TextParser pointer
+ * @param [in] base   ラベル
+ */
+void IterationCtl::getParaJacobi(TextParser* tpCntl, const string base)
+{
+  string str, label;
+  double tmp=0.0; // 加速係数
+  
+  label = base + "/Omega";
+  
+  if ( !(tpCntl->getInspectedValue(label, tmp )) )
+  {
+    Exit(0);
+  }
+  setOmega(tmp);
+  
+}
+
+
+// #################################################################
+/**
+ * @brief PCG反復固有のパラメータを指定する
+ * @param [in] tpCntl TextParser pointer
+ * @param [in] base   ラベル
+ */
+void IterationCtl::getParaPCG(TextParser* tpCntl, const string base)
+{
+  ;
+}
+
+
+// #################################################################
+/**
+ * @brief PBiCGSTAB反復固有のパラメータを指定する
+ * @param [in] tpCntl TextParser pointer
+ * @param [in] base   ラベル
+ */
+void IterationCtl::getParaPBiCGSTAB(TextParser* tpCntl, const string base)
+{
+  ;
+}
+
+
+// #################################################################
+/**
+ * @brief RBGS反復固有のパラメータを指定する
+ * @param [in] tpCntl TextParser pointer
+ * @param [in] base   ラベル
+ */
+void IterationCtl::getParaRBGS(TextParser* tpCntl, const string base)
+{
+  ;
+}
+
+
+// #################################################################
+/**
+ * @brief SOR反復固有のパラメータを指定する
+ * @param [in] tpCntl TextParser pointer
+ * @param [in] base   ラベル
+ */
+void IterationCtl::getParaSOR(TextParser* tpCntl, const string base)
+{
+  getParaJacobi(tpCntl, base);
+}
+
+
+// #################################################################
+/**
+ * @brief RB-SOR反復固有のパラメータを指定する
+ * @param [in] tpCntl TextParser pointer
+ * @param [in] base   ラベル
+ */
+void IterationCtl::getParaSOR2(TextParser* tpCntl, const string base)
+{
+  string str, label;
+  
+  getParaJacobi(tpCntl, base);
+  
+  label = base + "/commMode";
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    Exit(0);
+  }
+  if ( !strcasecmp(str.c_str(), "sync") )
+  {
+    setSyncMode(comm_sync);
+  }
+  else if ( !strcasecmp(str.c_str(), "async") )
+  {
+    setSyncMode(comm_async);
+  }
+  else
+  {
+    Exit(0);
+  }
+  
+  // not mandatory
+  label = base + "/NaiveImplementation";
+  
+  if ( tpCntl->chkLabel(label) )
+  {
+    if ( !(tpCntl->getInspectedValue(label, str )) )
+    {
+      Exit(0);
+    }
+    else
+    {
+      if ( !strcasecmp(str.c_str(), "on") ) Naive = ON;
+      else if ( !strcasecmp(str.c_str(), "off") ) Naive = OFF;
+      else Exit(0);
+    }
+  }
+  
+}
+
+
+
+// #################################################################
+// ノルムのラベルを返す
+string IterationCtl::getNormString()
+{
+  string nrm;
 	
 	if (NormType == v_div_dbg)
   {
@@ -67,4 +247,25 @@ std::string IterationCtl::getNormString()
   }
 	
   return nrm;
+}
+
+
+// #################################################################
+// 線形ソルバの種類を設定する
+bool IterationCtl::setLS(const string str)
+{
+	if     ( !strcasecmp(str.c_str(), "SOR") )          LinearSolver = SOR;
+  else if( !strcasecmp(str.c_str(), "SOR2SMA") )      LinearSolver = SOR2SMA;
+  else if( !strcasecmp(str.c_str(), "JACOBI") )       LinearSolver = JACOBI;
+  else if( !strcasecmp(str.c_str(), "GMRES") )        LinearSolver = GMRES;
+  else if( !strcasecmp(str.c_str(), "RBGS") )         LinearSolver = RBGS;
+  else if( !strcasecmp(str.c_str(), "PCG") )          LinearSolver = PCG;
+  else if( !strcasecmp(str.c_str(), "PBiCGSTAB") )    LinearSolver = PBiCGSTAB;
+  else if( !strcasecmp(str.c_str(), "VPiteration") )  LinearSolver = VP_ITERATION;
+  else
+  {
+    return false;
+  }
+	
+  return true;
 }

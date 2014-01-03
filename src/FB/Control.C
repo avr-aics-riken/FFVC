@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -445,8 +445,8 @@ void Control::getApplicationControl()
     else if( !strcasecmp(str.c_str(), "zplus" ) )  FillHint = Z_plus;
     else
     {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-      Exit(0);
+      FillHint = X_minus;
+      Hostonly_ printf("\tDefault 'X_minus' is set for Hint Of Filling Fluid\n");
     }
   }
   
@@ -473,9 +473,6 @@ void Control::getApplicationControl()
     }
     
   }
-  
-  
-  int ct = 0;
   
   
   // 変数の範囲制限モードを取得 (Hidden)
@@ -565,8 +562,6 @@ REAL_TYPE Control::getCellSize(const int* G_size)
 // @brief 対流項スキームのパラメータを取得する
 void Control::getConvection()
 {
-  
-  int ct;
   string str;
   string label;
   
@@ -619,7 +614,7 @@ void Control::getConvection()
 // @see bool Control::setParameters(MediumList* mat, CompoList* cmp)
 void Control::getDimensionlessParameter()
 {
-  REAL_TYPE ct;
+  REAL_TYPE ct = 0.0;
   string label;
   
   label="/Reference/Reynolds";
@@ -652,7 +647,6 @@ void Control::getFieldData()
 {
   
   REAL_TYPE f_val=0.0;
-  REAL_TYPE ct;
   string str;
   string label, leaf;
 
@@ -1097,9 +1091,10 @@ void Control::getIteration()
     Exit(0);
   }
 
-  // タグ内のラベル数をチェック
-  int nnode = tpCntl->countLabels(base);
-  if ( nnode == 0 )
+  // タグ内のラベル数をチェック 0;
+  int nnode = 0;
+  
+  if ( (nnode = tpCntl->countLabels(base)) == 0 )
   {
     Hostonly_ stamped_printf("\tNo labels inside /Iteration\n");
     return;
@@ -1167,16 +1162,7 @@ void Control::getIteration()
       Exit(0);
     }
     
-    if     ( !strcasecmp(str.c_str(), "SOR") )         Criteria[i].setLS(SOR);
-    else if( !strcasecmp(str.c_str(), "SOR2SMA") )     Criteria[i].setLS(SOR2SMA);
-    else if( !strcasecmp(str.c_str(), "SOR2CMA") )     Criteria[i].setLS(SOR2CMA);
-    else if( !strcasecmp(str.c_str(), "JACOBI") )      Criteria[i].setLS(JACOBI);
-    else if( !strcasecmp(str.c_str(), "GMRES") )       Criteria[i].setLS(GMRES);
-    else if( !strcasecmp(str.c_str(), "RBGS") )        Criteria[i].setLS(RBGS);
-    else if( !strcasecmp(str.c_str(), "PCG") )         Criteria[i].setLS(PCG);
-    else if( !strcasecmp(str.c_str(), "PBiCGSTAB") )   Criteria[i].setLS(PBiCGSTAB);
-    else if( !strcasecmp(str.c_str(), "VPiteration") ) Criteria[i].setLS(VP_ITERATION);
-    else
+    if ( !Criteria[i].setLS(str) )
     {
       Hostonly_ stamped_printf("\tInvalid keyword is described for Linear_Solver\n");
       Exit(0);
@@ -1222,7 +1208,7 @@ void Control::getIteration()
         else if ( !strcasecmp(str.c_str(), "VdivDbg") )
         {
           Criteria[i].setNormType(v_div_dbg);
-          Mode.Log_Itr == ON;
+          Mode.Log_Itr = ON;
         }
         else
         {
@@ -1254,40 +1240,11 @@ void Control::getIteration()
 
     
     // 固有パラメータ
-    switch (ls)
+    if ( !Criteria[i].getInherentPara(tpCntl, leaf, ExperimentNaive) )
     {
-      case JACOBI:
-        getParaJacobi(leaf, i);
-        break;
-        
-      case SOR:
-        getParaSOR(leaf, i);
-        break;
-        
-      case SOR2SMA:
-        getParaSOR2(leaf, i);
-        break;
-        
-      case RBGS:
-        getParaRBGS(leaf, i);
-        break;
-        
-      case GMRES:
-        getParaGmres(leaf, i);
-        break;
-        
-      case PCG:
-        getParaPCG(leaf, i);
-        break;
-        
-      case PBiCGSTAB:
-        getParaPBiCGSTAB(leaf, i);
-        break;
-        
-      default:
-        break;
+      Hostonly_ printf("\tError : Invalid Linear Solver[%d]\n", ls);
+      Exit(0);
     }
-
   }
   
 }
@@ -1507,124 +1464,6 @@ void Control::getNoOfComponent()
 
   
   NoCompo = NoMedium + NoBC;
-}
-
-
-// #################################################################
-/**
- * @brief Gmres反復固有のパラメータを指定する
- * @param [in] base  ラベル
- * @param [in] m     反復制御用クラスの配列番号
- */
-void Control::getParaGmres(const string base, const int m)
-{
-  ;
-}
-
-
-// #################################################################
-/**
- * @brief Jacobi反復固有のパラメータを指定する
- * @param [in] base  ラベル
- * @param [in] m     反復制御用クラスの配列番号
- */
-void Control::getParaJacobi(const string base, const int m)
-{
-  string str, label;
-  double tmp=0.0; // 加速係数
-  
-  label = base + "/Omega";
-  
-  if ( !(tpCntl->getInspectedValue(label, tmp )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  Criteria[m].setOmega(tmp);
-  
-}
-
-
-// #################################################################
-/**
- * @brief PCG反復固有のパラメータを指定する
- * @param [in] base  ラベル
- * @param [in] m     反復制御用クラスの配列番号
- */
-void Control::getParaPCG(const string base, const int m)
-{
-  ;
-}
-
-
-// #################################################################
-/**
- * @brief PBiCGSTAB反復固有のパラメータを指定する
- * @param [in] base  ラベル
- * @param [in] m     反復制御用クラスの配列番号
- */
-void Control::getParaPBiCGSTAB(const string base, const int m)
-{
-  ;
-}
-
-
-// #################################################################
-/**
- * @brief RBGS反復固有のパラメータを指定する
- * @param [in] base  ラベル
- * @param [in] m     反復制御用クラスの配列番号
- */
-void Control::getParaRBGS(const string base, const int m)
-{
-  ;
-}
-
-
-// #################################################################
-/**
- * @brief SOR反復固有のパラメータを指定する
- * @param [in] base  ラベル
- * @param [in] m     反復制御用クラスの配列番号
- */
-void Control::getParaSOR(const string base, const int m)
-{
-  getParaJacobi(base, m);
-}
-
-
-// #################################################################
-/**
- * @brief RB-SOR反復固有のパラメータを指定する
- * @param [in] base  ラベル
- * @param [in] m     反復制御用クラスの配列番号
- */
-void Control::getParaSOR2(const string base, const int m)
-{
-  string str, label;
-  
-  getParaJacobi(base, m);
-  
-  label = base + "/commMode";
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  if ( !strcasecmp(str.c_str(), "sync") )
-  {
-    Criteria[m].setSyncMode(comm_sync);
-  }
-  else if ( !strcasecmp(str.c_str(), "async") )
-  {
-    Criteria[m].setSyncMode(comm_async);
-  }
-  else
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
 }
 
 
@@ -1856,8 +1695,6 @@ void Control::getSolverProperties()
   
   
   // 対流項スキームの種類の取得
-  int ct;
-  
   label="/ConvectionTerm/scheme";
   
   if ( !(tpCntl->getInspectedValue(label, str )) )
@@ -2023,7 +1860,6 @@ void Control::getSolverProperties()
 // @ see getTimeControl()
 void Control::getStartCondition()
 {
-  int ct;
   string str;
   string label, leaf;
   
@@ -2203,8 +2039,7 @@ void Control::getSolvingMethod4Flow()
  */
 void Control::getTimeControl(DTcntl* DT)
 {
-  double ct;
-  int ss=0;
+  double ct = 0.0;
   
   string str;
   string label;
@@ -2890,11 +2725,14 @@ void Control::printLS(FILE* fp, const IterationCtl* IC)
       break;
       
     case SOR2SMA:
-      fprintf(fp,"\t       Linear Solver          :   2-colored SOR SMA (Stride Memory Access)\n");
-      break;
-      
-    case SOR2CMA:
-      fprintf(fp,"\t       Linear Solver          :   2-colored SOR CMA (Consecutive Memory Access)\n");
+      if (IC->getNaive()==OFF)
+      {
+        fprintf(fp,"\t       Linear Solver          :   2-colored SOR SMA (Stride Memory Access)\n");
+      }
+      else
+      {
+        fprintf(fp,"\t       Linear Solver          :   2-colored SOR SMA (Stride Memory Access, Naive Implementation)\n");
+      }
       break;
       
     case GMRES:

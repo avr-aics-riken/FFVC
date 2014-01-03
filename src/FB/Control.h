@@ -8,10 +8,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -540,7 +540,8 @@ public:
   int BasicEqs;
   int CheckParam;
   int CnvScheme;
-  int FillHint;       ///< フィルのヒント {x_minux | x_plus |...}
+  int ExperimentNaive; ///< Naive実装のスイッチ
+  int FillHint;        ///< フィルのヒント {x_minux | x_plus |...}
   int GuideOut;
   int KindOfSolver;
   int Limiter;
@@ -654,6 +655,7 @@ public:
     BasicEqs = 0;
     CheckParam = 0;
     CnvScheme = 0;
+    ExperimentNaive = OFF;
     FillHint = -1;
     GuideOut = 0;
     KindOfSolver = 0;
@@ -793,34 +795,6 @@ protected:
 
   // ログ出力のパラメータを取得
   void getLog();
-  
-  
-  // Gmres反復固有のパラメータを指定する
-  void getParaGmres(const string base, const int m);
-  
-  
-  // Jacobi反復固有のパラメータを指定する
-  void getParaJacobi(const string base, const int m);
-  
-  
-  // PBiCGSTAB反復固有のパラメータを指定する
-  void getParaPBiCGSTAB(const string base, const int m);
-  
-  
-  // PCG反復固有のパラメータを指定する
-  void getParaPCG(const string base, const int m);
-  
-  
-  // RBGS反復固有のパラメータを指定する
-  void getParaRBGS(const string base, const int m);
-  
-  
-  // SOR反復固有のパラメータを指定する
-  void getParaSOR(const string base, const int m);
-  
-  
-  // RB-SOR反復固有のパラメータを指定する
-  void getParaSOR2(const string base, const int m);
   
   
   // 参照パラメータを取得

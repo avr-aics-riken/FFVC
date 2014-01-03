@@ -7,10 +7,10 @@
 ! Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 ! All rights reserved.
 !
-! Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo.
+! Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
 ! All rights reserved.
 !
-! Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN.
+! Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
 ! All rights reserved.
 !
 !###################################################################################
@@ -242,7 +242,7 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    flop = flop + dble(ix)*dble(jx)*dble(kx) * 36.0d0 * 0.5d0
+    flop = flop + dble(ix)*dble(jx)*dble(kx) * 27.0d0 * 0.5d0
     ! flop = flop + dble(ix)*dble(jx)*dble(kx) * 41.0d0 * 0.5d0 ! DP
 
 !$OMP PARALLEL &
@@ -264,7 +264,7 @@
       ndag_t = real(ibits(idx, bc_ndag_T, 1))  ! t
       ndag_b = real(ibits(idx, bc_ndag_B, 1))  ! b
       
-      dd = 1.0 / real(ibits(idx, bc_diag, 3))  ! diagonal
+      dd = 1.0 / real(ibits(idx, bc_diag, 3))  ! diagonal 8/13flop(S/D)
       pp = p(i,j,k)
       ss = ndag_e * p(i+1,j  ,k  ) &
          + ndag_w * p(i-1,j  ,k  ) &
@@ -283,6 +283,81 @@
 
     return
     end subroutine psor2sma_core
+
+
+!> ********************************************************************
+!! @brief 2-colored SOR法 stride memory access Naive Imprementation
+!! @param [in,out] p     圧力
+!! @param [in]     sz    配列長
+!! @param [in]     g     ガイドセル長
+!! @param [in]     ip    開始点インデクス
+!! @param [in]     color グループ番号
+!! @param [in]     omg   加速係数
+!! @param [in,out] res   相対残差
+!! @param [in]     b     RHS vector
+!! @param [in]     bp    BCindex P
+!! @param [in]     pn    係数行列
+!! @param [out]    flop  浮動小数演算数
+!! @note resは積算
+!<
+  subroutine psor2sma_naive (p, sz, g, ip, color, omg, res, b, bp, pn, flop)
+  implicit none
+  include 'ffv_f_params.h'
+  integer                                                   ::  i, j, k, ix, jx, kx, g
+  integer, dimension(3)                                     ::  sz
+  double precision                                          ::  flop, res
+  real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b, ndag
+  real                                                      ::  omg, dd, ss, dp, pp
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 7) ::  pn
+  integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
+  integer                                                   ::  ip, color
+
+  ix = sz(1)
+  jx = sz(2)
+  kx = sz(3)
+  flop = flop + dble(ix)*dble(jx)*dble(kx) * 27.0d0 * 0.5d0
+! flop = flop + dble(ix)*dble(jx)*dble(kx) * 41.0d0 * 0.5d0 ! DP
+
+!$OMP PARALLEL &
+!$OMP REDUCTION(+:res) &
+!$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t, ndag, dd, pp, ss, dp) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, color, ip, omg)
+
+!$OMP DO SCHEDULE(static)
+
+  do k=1,kx
+  do j=1,jx
+  do i=1+mod(k+j+color+ip,2), ix, 2
+
+    ndag_w = pn(i,j,k,1)  ! w
+    ndag_e = pn(i,j,k,2)  ! e, non-diagonal
+    ndag_s = pn(i,j,k,3)  ! s
+    ndag_n = pn(i,j,k,4)  ! n
+    ndag_b = pn(i,j,k,5)  ! b
+    ndag_t = pn(i,j,k,6)  ! t
+    ndag   = pn(i,j,k,7)
+
+    dd = 1.0 / ndag  ! diagonal
+    pp = p(i,j,k)
+    ss = ndag_e * p(i+1,j  ,k  ) &
+       + ndag_w * p(i-1,j  ,k  ) &
+       + ndag_n * p(i  ,j+1,k  ) &
+       + ndag_s * p(i  ,j-1,k  ) &
+       + ndag_t * p(i  ,j  ,k+1) &
+       + ndag_b * p(i  ,j  ,k-1)
+    dp = ( dd*ss + b(i,j,k) - pp ) * omg
+    p(i,j,k) = pp + dp
+    res = res + dble(dp*dp) * dble(ibits(bp(i,j,k), Active, 1))
+  end do
+  end do
+  end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+  return
+  end subroutine psor2sma_naive
+
 
 
 !> ***********************************************************************************

@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -140,6 +140,9 @@ FFV::FFV()
   cf_x = NULL;
   cf_y = NULL;
   cf_z = NULL;
+  
+  // Poisson係数（Naive実装の実験）
+  d_pni = NULL;
   
   
   // ファイル入出力
@@ -1291,7 +1294,6 @@ void FFV::set_timing_label()
   set_label(tm_poi_PSOR,           "Poisson_PSOR",            PerfMonitor::CALC);
   set_label(tm_poi_setup,          "Poisson_Setup_for_Itr",   PerfMonitor::CALC);
   set_label(tm_poi_SOR2SMA,        "Poisson_SOR2_SMA",        PerfMonitor::CALC);
-  set_label(tm_poi_SOR2CMA,        "Poisson_SOR2_CMA",        PerfMonitor::CALC);
   set_label(tm_poi_BC,             "Poisson_BC",              PerfMonitor::CALC);
   // end of Poisson: Itr. Sct:2
   
