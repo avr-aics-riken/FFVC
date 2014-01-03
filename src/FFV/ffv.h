@@ -8,10 +8,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -135,7 +135,7 @@ private:
   
   REAL_TYPE v00[4];      ///< 参照速度
   REAL_TYPE range_Ut[2]; ///< 
-  REAL_TYPE range_Yp[2]; ///< 
+  REAL_TYPE range_Yp[2]; ///<
   
   
   // 定常収束モニター
@@ -178,6 +178,7 @@ private:
   REAL_TYPE *d_ap;  ///< 圧力（時間平均値）
   REAL_TYPE *d_ae;  ///< 内部エネルギー（時間平均値）
   float *d_cvf;     ///< 体積率
+  REAL_TYPE *d_pni; ///< 圧力Poissonの係数（Naive実装の実験）
   
   // Coarse initial
   REAL_TYPE *d_r_v;  ///< 粗格子の速度
@@ -333,6 +334,10 @@ private:
   
   // 主計算部分に用いる配列のアロケーション
   void allocArray_Main(double &total);
+  
+  
+  // Poissonのナイーブ実装試験
+  void allocArray_Naive(double &total);
   
   
   // PCG法に用いる配列のアロケーション
@@ -807,8 +812,9 @@ private:
    * @param [in]     b  RHS  vector
    * @param [in]     rhs_nrm RHS vector
    * @param [in]     r0      初期残差ベクトル
+   * @param [in]     naive   naive実装 ON/OFF
    */
-  int SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
+  int SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0, const int naive);
   
   
   /**

@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -330,6 +330,19 @@ void FFV::allocArray_Main(double &total)
     if ( !(d_vrt = Alloc::Real_V3D(size, guide)) ) Exit(0);
     total+= mc * (double)sizeof(REAL_TYPE) * 3.0;
   }
+}
+
+// #################################################################
+/**
+ * @brief PoissonのNaiveな実装テスト
+ * @param [in,out] total 使用するメモリ量
+ */
+void FFV::allocArray_Naive(double &total)
+{
+  double mc = (double)(size[0] * size[1] * size[2]);
+  
+  if ( !(d_pni = Alloc::Real_S4D(size, guide, 7)) ) Exit(0);
+  total+= mc * (double)sizeof(REAL_TYPE) * 7.0;
 }
 
 

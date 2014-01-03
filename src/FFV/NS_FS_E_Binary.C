@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -433,7 +433,7 @@ void FFV::NS_FS_E_Binary()
         break;
         
       case SOR2SMA:
-        loop_p += SOR_2_SMA(ICp, d_p, d_b, rhs_nrm, res_init);
+        loop_p += SOR_2_SMA(ICp, d_p, d_b, rhs_nrm, res_init, C.ExperimentNaive);
         break;
         
       case GMRES:

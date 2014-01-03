@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -116,6 +116,51 @@ void VoxInfo::copyBCIbase (int* dst, const int* src)
     }
   }
 }
+
+
+// #################################################################
+/**
+ * @brief Naive実装に使う係数を保持
+ * @param [in]  bx BCindex P
+ * @param [out] pn Coef
+ */
+void VoxInfo::copyCoefNaive(int* bx, REAL_TYPE* pn)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m  = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int s = bx[m];
+        
+        size_t cw = _F_IDX_S4D(i, j, k, 0, ix, jx, kx, gd); // w
+        size_t ce = _F_IDX_S4D(i, j, k, 1, ix, jx, kx, gd); // e
+        size_t cs = _F_IDX_S4D(i, j, k, 2, ix, jx, kx, gd); // s
+        size_t cn = _F_IDX_S4D(i, j, k, 3, ix, jx, kx, gd); // n
+        size_t cb = _F_IDX_S4D(i, j, k, 4, ix, jx, kx, gd); // b
+        size_t ct = _F_IDX_S4D(i, j, k, 5, ix, jx, kx, gd); // t
+        size_t cd = _F_IDX_S4D(i, j, k, 6, ix, jx, kx, gd); // diag
+        
+        pn[cw] = GET_SHIFT_F(s, BC_N_W);
+        pn[ce] = GET_SHIFT_F(s, BC_N_E);
+        pn[cs] = GET_SHIFT_F(s, BC_N_S);
+        pn[cn] = GET_SHIFT_F(s, BC_N_N);
+        pn[cb] = GET_SHIFT_F(s, BC_N_B);
+        pn[ct] = GET_SHIFT_F(s, BC_N_T);
+        pn[cd] = (REAL_TYPE)((s>>BC_DIAG) & 0x7);
+        
+      }
+    }
+  }
+  
+}
+
 
 
 // #################################################################
@@ -3234,7 +3279,7 @@ void VoxInfo::setBCIndexH (int* cdf, int* bd, SetBC* BC, const int kos, CompoLis
 
 // #################################################################
 // 圧力境界条件のビット情報をエンコードする
-unsigned long VoxInfo::setBCIndexP (int* bcd, int* bcp, SetBC* BC, CompoList* cmp, int icls, const float* cut, const int* bid)
+unsigned long VoxInfo::setBCIndexP (int* bcd, int* bcp, SetBC* BC, CompoList* cmp, int icls, const float* cut, const int* bid, const int naive, REAL_TYPE* pni)
 {
   unsigned long surface = 0;
   
@@ -3335,6 +3380,11 @@ unsigned long VoxInfo::setBCIndexP (int* bcd, int* bcp, SetBC* BC, CompoList* cm
   encPbit(bcp);
 
 
+  // Naive実装の場合の係数コピー
+  if (naive==ON) copyCoefNaive(bcp, pni);
+  
+  
+  
 
 // ########## debug
 #if 0

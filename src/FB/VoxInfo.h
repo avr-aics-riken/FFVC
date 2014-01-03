@@ -8,10 +8,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -56,6 +56,10 @@ private:
   
   // 外部境界に接するガイドセルのbcd[]にIDを内部周期境界からコピーする
   void copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const int m_id, const int m_dir);
+  
+  
+  // Naive実装に使う係数を保持
+  void copyCoefNaive(int* bx, REAL_TYPE* pn);
   
   
   // 外部境界面の有効セル数をカウントする
@@ -382,6 +386,8 @@ public:
    * @param [in]     icls     Intrinsic class
    * @param [in]     cut      距離情報
    * @param [in]     bid      カットID情報
+   * @param [in]     naive    ナイーブ実装のON/OFF
+   * @param [out]    pni      Naive実装の係数
    * @retval 表面セル数
    */
   unsigned long setBCIndexP (int* bcd,
@@ -390,7 +396,9 @@ public:
                              CompoList* cmp,
                              int icls,
                              const float* cut,
-                             const int* bid);
+                             const int* bid,
+                             const int naive,
+                             REAL_TYPE* pni);
   
   
   /**

@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -106,7 +106,10 @@ int FFV::Initialize(int argc, char **argv)
   
   // 反復制御クラスのインスタンス
   C.getIteration();
-
+  if ( (IC[ic_prs1].getLS()==SOR2SMA) && (IC[ic_prs1].getNaive() == ON) )
+  {
+    Hostonly_ printf("Naive implementation. >>\n\n");
+  }
 
   // 流体の解法アルゴリズムを取得
   C.getSolvingMethod4Flow();
@@ -164,6 +167,13 @@ int FFV::Initialize(int argc, char **argv)
   // 前処理に用いるデータクラスのアロケート -----------------------------------------------------
   TIMING_start(tm_init_alloc); 
   allocArray_Prep(PrepMemory, TotalMemory);
+  
+  // SOR2SMAのNaive実装
+  if ( (IC[ic_prs1].getLS()==SOR2SMA) && (IC[ic_prs1].getNaive() == ON) )
+  {
+    Hostonly_ printf("\n\t << Extra arrays are allocated for Naive implementation. >>\n\n");
+    allocArray_Naive(TotalMemory);
+  }
   TIMING_stop(tm_init_alloc);
   
 
@@ -295,11 +305,12 @@ int FFV::Initialize(int argc, char **argv)
   }
 
 
-  
+
   
   // BCIndexにビット情報をエンコードとコンポーネントインデクスの再構築
   encodeBCindex(fp);
-  
+
+
 
   // Polygonモニタの数をcmp[]にセット
   if ( C.SamplingMode )
@@ -539,7 +550,6 @@ int FFV::Initialize(int argc, char **argv)
   switch (IC[ic_prs1].getLS())
   {
     case SOR2SMA:
-    case SOR2CMA:
     case GMRES:
     case RBGS:
 		case PCG:
@@ -547,6 +557,7 @@ int FFV::Initialize(int argc, char **argv)
       allocate_SOR2SMA_buffer(TotalMemory);
       break;
   }
+  
   
   // Krylov subspace
   switch (IC[ic_prs1].getLS())
@@ -1125,7 +1136,7 @@ void FFV::encodeBCindex(FILE* fp)
 
   
   // 圧力計算のビット情報をエンコードする -----
-  C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid);
+  C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid, C.ExperimentNaive, d_pni);
   
   // ##########
 #if 0

@@ -8,10 +8,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -25,7 +25,7 @@
 
 #include "mydebug.h"
 
-#define FB_VERS "1.4.6"
+#define FB_VERS "1.4.7"
 
 
 // precision
@@ -81,15 +81,15 @@
 #define TM_O_3RD    3
 
 // Linear Solver, do not use zero
-#define JACOBI       1
-#define SOR          2
-#define SOR2SMA      3
-#define SOR2CMA      4
-#define GMRES        5
-#define RBGS         6
-#define PCG          7
-#define PBiCGSTAB    8
-#define VP_ITERATION 9
+#define JACOBI        1
+#define SOR           2
+#define SOR2SMA       3
+#define GMRES         4
+#define RBGS          5
+#define PCG           6
+#define PBiCGSTAB     7
+#define VP_ITERATION  8
+
 
 // KindOfSolver
 #define FLOW_ONLY               0

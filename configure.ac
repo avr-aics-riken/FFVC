@@ -5,10 +5,10 @@
 # Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
 # All rights reserved.
 #
-# Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo. 
+# Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo. 
 # All rights reserved.
 #
-# Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN. 
+# Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN. 
 # All rights reserved. 
 #
 ###################################################################################
@@ -17,7 +17,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([FFVC], [1.5.3], [keno@riken.jp], [FFVC])
+AC_INIT([FFVC], [1.5.4], [keno@riken.jp], [FFVC])
 AM_INIT_AUTOMAKE()
 AC_CONFIG_SRCDIR([src/FB/Alloc.C])
 AC_CONFIG_HEADERS([config.h])
@@ -25,7 +25,7 @@ AC_CONFIG_HEADERS([config.h])
 #
 # revision No.
 #
-FFVC_REVISION="20131229_1400"
+FFVC_REVISION="20140103_1530"
 AC_SUBST(FFVC_REVISION)
 
 

@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -43,6 +43,7 @@
 #define div_cnst_           DIV_CNST
 #define psor_               PSOR
 #define psor2sma_core_      PSOR2SMA_CORE
+#define psor2sma_naive_     PSOR2SMA_NAIVE
 #define sma_comm_           SMA_COMM
 #define sma_comm_wait_      SMA_COMM_WAIT
 #define cds_psor_           CDS_PSOR
@@ -224,6 +225,18 @@ extern "C" {
                        REAL_TYPE* b,
                        int* bp,
                        double* flop);
+  
+  void psor2sma_naive_ (REAL_TYPE* p,
+                        int* sz,
+                        int* g,
+                        int* ip,
+                        int* color,
+                        REAL_TYPE* omg,
+                        double* res,
+                        REAL_TYPE* b,
+                        int* bp,
+                        REAL_TYPE* pn,
+                        double* flop);
   
   void sma_comm_      (REAL_TYPE* p,
                        int* sz,

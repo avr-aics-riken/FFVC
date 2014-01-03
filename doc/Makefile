@@ -21,10 +21,10 @@
 # Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
 # All rights reserved.
 #
-# Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo. 
+# Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo. 
 # All rights reserved.
 #
-# Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN. 
+# Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN. 
 # All rights reserved. 
 #
 ###################################################################################
@@ -113,11 +113,11 @@ HEADERS = $(doc_include_HEADERS)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = ${SHELL} /Volumes/MRaid/Daily/Development/SphDev/Module/FFVC/FFVC-1.5.2/missing --run aclocal-1.12
+ACLOCAL = ${SHELL} /Volumes/MRaid/Daily/Development/SphDev/Module/FFVC/FFVC-1.5.3/missing --run aclocal-1.12
 AMTAR = $${TAR-tar}
-AUTOCONF = ${SHELL} /Volumes/MRaid/Daily/Development/SphDev/Module/FFVC/FFVC-1.5.2/missing --run autoconf
-AUTOHEADER = ${SHELL} /Volumes/MRaid/Daily/Development/SphDev/Module/FFVC/FFVC-1.5.2/missing --run autoheader
-AUTOMAKE = ${SHELL} /Volumes/MRaid/Daily/Development/SphDev/Module/FFVC/FFVC-1.5.2/missing --run automake-1.12
+AUTOCONF = ${SHELL} /Volumes/MRaid/Daily/Development/SphDev/Module/FFVC/FFVC-1.5.3/missing --run autoconf
+AUTOHEADER = ${SHELL} /Volumes/MRaid/Daily/Development/SphDev/Module/FFVC/FFVC-1.5.3/missing --run autoheader
+AUTOMAKE = ${SHELL} /Volumes/MRaid/Daily/Development/SphDev/Module/FFVC/FFVC-1.5.3/missing --run automake-1.12
 AWK = awk
 CC = mpicc
 CCDEPMODE = depmode=gcc3
@@ -153,7 +153,7 @@ FFVC_FC = mpif90
 FFVC_FC_LD = 
 FFVC_LDFLAGS = 
 FFVC_LIBS =  -lstdc++ -lifcore
-FFVC_REVISION = 20131229_1400
+FFVC_REVISION = 20140103_1530
 FREALOPT = 
 GREP = /usr/bin/grep
 INSTALL = /usr/local/bin/ginstall -c
@@ -165,7 +165,7 @@ LDFLAGS =
 LIBOBJS = 
 LIBS = 
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /Volumes/MRaid/Daily/Development/SphDev/Module/FFVC/FFVC-1.5.2/missing --run makeinfo
+MAKEINFO = ${SHELL} /Volumes/MRaid/Daily/Development/SphDev/Module/FFVC/FFVC-1.5.3/missing --run makeinfo
 MAKE_SUB_DIRS = src/IP src/FB src/F_CORE src/FFV src/Util_Combsph doc
 MKDIR_P = /usr/local/bin/gmkdir -p
 MPICH_CFLAGS = 
@@ -177,10 +177,10 @@ OBJEXT = o
 PACKAGE = FFVC
 PACKAGE_BUGREPORT = keno@riken.jp
 PACKAGE_NAME = FFVC
-PACKAGE_STRING = FFVC 1.5.3
+PACKAGE_STRING = FFVC 1.5.4
 PACKAGE_TARNAME = FFVC
 PACKAGE_URL = 
-PACKAGE_VERSION = 1.5.3
+PACKAGE_VERSION = 1.5.4
 PATH_SEPARATOR = :
 PL_CFLAGS = -I/usr/local/FFV/Polylib/include
 PL_DIR = /usr/local/FFV/Polylib
@@ -196,11 +196,11 @@ STRIP =
 TP_CFLAGS = -I/usr/local/FFV/TextParser/include
 TP_DIR = /usr/local/FFV/TextParser
 TP_LDFLAGS = -L/usr/local/FFV/TextParser/lib -lMPITP
-VERSION = 1.5.3
-abs_builddir = /Volumes/MRaid/Daily/Development/SphDev/Module/FFVC/FFVC-1.5.2/doc
-abs_srcdir = /Volumes/MRaid/Daily/Development/SphDev/Module/FFVC/FFVC-1.5.2/doc
-abs_top_builddir = /Volumes/MRaid/Daily/Development/SphDev/Module/FFVC/FFVC-1.5.2
-abs_top_srcdir = /Volumes/MRaid/Daily/Development/SphDev/Module/FFVC/FFVC-1.5.2
+VERSION = 1.5.4
+abs_builddir = /Volumes/MRaid/Daily/Development/SphDev/Module/FFVC/FFVC-1.5.3/doc
+abs_srcdir = /Volumes/MRaid/Daily/Development/SphDev/Module/FFVC/FFVC-1.5.3/doc
+abs_top_builddir = /Volumes/MRaid/Daily/Development/SphDev/Module/FFVC/FFVC-1.5.3
+abs_top_srcdir = /Volumes/MRaid/Daily/Development/SphDev/Module/FFVC/FFVC-1.5.3
 ac_ct_CC = mpicc
 ac_ct_CXX = 
 ac_ct_F77 = ifort
@@ -222,7 +222,7 @@ host_alias =
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /Volumes/MRaid/Daily/Development/SphDev/Module/FFVC/FFVC-1.5.2/install-sh
+install_sh = ${SHELL} /Volumes/MRaid/Daily/Development/SphDev/Module/FFVC/FFVC-1.5.3/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale

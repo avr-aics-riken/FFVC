@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2013 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2013 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -357,14 +357,14 @@ void FFV::Sync_Scalar(IterationCtl* IC, REAL_TYPE* d_class, const int num_layer)
 
 // #################################################################
 // SOR2SMA
-int FFV::SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
+int FFV::SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0, const int naive)
 {
-  int ip;                        /// ローカルノードの基点(1,1,1)のカラーを示すインデクス
-                                 /// ip=0 > R, ip=1 > B
-  double flop_count=0.0;         /// 浮動小数点演算数
+  int ip;                         /// ローカルノードの基点(1,1,1)のカラーを示すインデクス
+                                  /// ip=0 > R, ip=1 > B
+  double flop_count=0.0;          /// 浮動小数点演算数
   REAL_TYPE omg = IC->getOmega(); /// 加速係数
-	double res = 0.0;              /// 残差
-  int lc=0;                      /// ループカウント
+	double res = 0.0;               /// 残差
+  int lc=0;                       /// ループカウント
   
   // x     圧力 p^{n+1}
   // b     RHS vector
@@ -401,7 +401,15 @@ int FFV::SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rh
       
       TIMING_start(tm_poi_SOR2SMA);
       flop_count = 0.0; // 色間で積算しない
-      psor2sma_core_(x, size, &guide, &ip, &color, &omg, &res, b, d_bcp, &flop_count);
+      if ( naive==OFF)
+      {
+        psor2sma_core_(x, size, &guide, &ip, &color, &omg, &res, b, d_bcp, &flop_count);
+      }
+      else
+      {
+        psor2sma_naive_(x, size, &guide, &ip, &color, &omg, &res, b, d_bcp, d_pni, &flop_count);
+      }
+      
       TIMING_stop(tm_poi_SOR2SMA, flop_count);
       
       // 境界条件
@@ -798,7 +806,7 @@ void FFV::Fgmres(IterationCtl* IC, const double rhs_nrm, const double r0)
         
         // Inner-iteration
         for (int i_inner=1; i_inner<=n_inner; i_inner++) {
-          SOR_2_SMA(IC, &d_zm[adrs], &d_vm[adrs], rhs_nrm, r0); // z^i <- K^{-1} v^i
+          SOR_2_SMA(IC, &d_zm[adrs], &d_vm[adrs], rhs_nrm, r0, C.ExperimentNaive); // z^i <- K^{-1} v^i
         }
       }
       else
@@ -934,7 +942,7 @@ void FFV::Fgmres(IterationCtl* IC, const double rhs_nrm, const double r0)
   
 jump_2:
   
-  SOR_2_SMA(IC, &d_zm[0], &d_vm[0], rhs_nrm, r0);
+  SOR_2_SMA(IC, &d_zm[0], &d_vm[0], rhs_nrm, r0, C.ExperimentNaive);
   
   
 jump_4:
