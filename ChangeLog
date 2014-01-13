@@ -19,6 +19,11 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-01-13
+
+- r1056 change the keyword of 'FluidDirection' to 'InOut'
+
+--------------------------
 2014-01-03
 
 - r1055 change include files for RHEL [ver 1.5.5]

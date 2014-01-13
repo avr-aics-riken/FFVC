@@ -749,24 +749,24 @@ void ParseBC::getIbcSpecVel(const string label_base, const int n, CompoList* cmp
 
   
   // 境界条件の方向
-  label = label_base + "/FluidDirection";
+  label = label_base + "/InOut";
   
   if ( !(tpCntl->getInspectedValue(label, str )) )
   {
     stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
-  if ( !strcasecmp("SameSideWithOrientation", str.c_str()) )
+  if ( !strcasecmp("in", str.c_str()) )
   {
     cmp[n].setBClocation(CompoList::same_direction);
   }
-  else if ( !strcasecmp("OppositeSideWithOrientation", str.c_str()) )
+  else if ( !strcasecmp("out", str.c_str()) )
   {
     cmp[n].setBClocation(CompoList::opposite_direction);
   }
   else
   {
-    printf("\tParsing error : Invalid string value '%s' for 'FluidDirection'\n", str.c_str());
+    printf("\tParsing error : Invalid string value '%s' for 'InOut'\n", str.c_str());
     Exit(0);
   }
   
@@ -2377,9 +2377,9 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     {
       if ( cmp[n].getType() == SPEC_VEL )
       {
-        fprintf(fp,"\t\t\t   %10.3e  %10.3e  %10.3e  %14s ",
+        fprintf(fp,"\t\t\t   %10.3e  %10.3e  %10.3e  %6s ",
                 cmp[n].nv[0], cmp[n].nv[1], cmp[n].nv[2],
-                (cmp[n].getBClocation()==CompoList::same_direction) ? "same dir." : "opposite dir.");
+                (cmp[n].getBClocation()==CompoList::same_direction) ? "In" : "Out");
         
         if ( cmp[n].get_V_Profile() == CompoList::vel_zero )
         {

@@ -101,7 +101,11 @@ public:
   }
   
   // destructor
-	~Glyph() {}
+	~Glyph() {
+    if (nvc) delete [] nvc;
+    if (xyz) delete [] xyz;
+    if (b_id) delete [] b_id;
+  }
   
   
   /**

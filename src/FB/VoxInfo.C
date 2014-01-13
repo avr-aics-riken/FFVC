@@ -2016,7 +2016,7 @@ unsigned long VoxInfo::encQface (const int order,
  * @param [in,out] bp     BCindex P
  * @param [in]     bid    カット点ID
  * @param [in]     vec    法線ベクトル
- * @param [in]     bc_dir 境界条件の方向 same_direction=1, opposite_direction=2
+ * @param [in]     bc_dir 境界条件の方向 IN/same_direction=1, OUT/opposite_direction=2
  * @param [in,out] cmp    CompoList
  * @note 指定法線とセルのカット方向ベクトルの内積で判断，vspecとoutflowなのでbp[]のVBC_UWDにマスクビットを立てる
  */
@@ -3468,7 +3468,7 @@ void VoxInfo::setBCIndexV (int* cdf, int* bp, SetBC* BC, CompoList* cmp, int icl
   
   for (int n=1; n<=NoCompo; n++)
   {
-    int m_dir = cmp[n].getBClocation(); // same_direction=1, opposite_direction=2
+    int m_dir = cmp[n].getBClocation(); // IN/same_direction=1, OUT/opposite_direction=2
     float vec[3] = { (float)cmp[n].nv[0], (float)cmp[n].nv[1], (float)cmp[n].nv[2] };
     
     switch ( cmp[n].getType() )
