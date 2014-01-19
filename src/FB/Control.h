@@ -541,7 +541,7 @@ public:
   int CheckParam;
   int CnvScheme;
   int ExperimentNaive; ///< Naive実装のスイッチ
-  int FillHint;        ///< フィルのヒント {x_minux | x_plus |...}
+  int FillSeedDir;     ///< フィルのヒント {x_minux | x_plus |...}
   int GuideOut;
   int KindOfSolver;
   int Limiter;
@@ -556,7 +556,8 @@ public:
   int num_thread;     ///< スレッド数
   int num_of_polygrp; ///< ポリゴングループ数
   int Parallelism;    ///< 並列モード
-  int RefFillMat;     ///< フィル媒質
+  int RefFillMat;     ///< フィル媒質ID
+  int RefSeedMat;     ///< フィルシード媒質ID
   int RefMat;         ///< 参照媒質インデクス
   int Start;
   int SamplingMode;   ///< サンプリング指定
@@ -636,8 +637,9 @@ public:
   string f_Vorticity;
   string f_Fvelocity;
   
-  string RefMedium;    ///< 参照媒質名 -> int RefMat
-  string FillMedium;   ///< フィルに使う媒質 -> int RefFillMat
+  string RefMedium;      ///< 参照媒質名 -> int RefMat
+  string FillMedium;     ///< フィルに使う媒質 -> int RefFillMat
+  string FillSeedMedium; ///< ヒントに使う媒質 -> int RefSeedMat
   string OperatorName;
   
   string ver_TP;   ///< TextPerser version no.
@@ -656,7 +658,7 @@ public:
     CheckParam = 0;
     CnvScheme = 0;
     ExperimentNaive = OFF;
-    FillHint = -1;
+    FillSeedDir = -1;
     GuideOut = 0;
     KindOfSolver = 0;
     Limiter = 0;
@@ -672,6 +674,7 @@ public:
     num_thread = 0;
     Parallelism = 0;
     RefFillMat = -1;
+    RefSeedMat = -1;
     RefMat = -1;
     Restart_staging = 0;    
     Restart_step = 0;

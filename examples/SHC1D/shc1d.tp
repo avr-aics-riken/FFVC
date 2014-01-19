@@ -2,7 +2,7 @@
 ApplicationControl {
   Operator            = "Kenji_Ono"
   FillMedium          = "water"
-  HintOfFillingFluid  = "Xminus"
+  HintOfFillSeedDirection  = "Xminus"
   VoxelOutput     = "svx"
   DebugDivergence = "Off"
 }

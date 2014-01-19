@@ -290,6 +290,15 @@ public:
    * @param [in]     bid      境界ID
    * @retval 置換されたセル数
    */
+  unsigned long fillByFluid (int* bcd, const int fluid_id, const int* bid);
+  
+  
+  /* @brief 未ペイントセルをフィル
+   * @param [in,out] bcd      BCindex B
+   * @param [in]     fluid_id フィルをする流体ID
+   * @param [in]     bid      境界ID
+   * @retval 置換されたセル数
+   */
   unsigned long fillByModalSolid (int* bcd, const int fluid_id, const int* bid);
   
   

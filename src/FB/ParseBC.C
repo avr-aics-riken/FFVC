@@ -2355,7 +2355,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
                 n, cmp[n].getAlias().c_str(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z,
                 cmp[n].area, cmp[n].getElement());
-        fprintf(fp, "\t                     vector_x    vector_y    vector_z       Direction");
+        fprintf(fp, "\t                     vector_x    vector_y    vector_z   Direction");
         
         if ( cmp[n].get_V_Profile() == CompoList::vel_zero )
         {
@@ -2377,7 +2377,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     {
       if ( cmp[n].getType() == SPEC_VEL )
       {
-        fprintf(fp,"\t\t\t   %10.3e  %10.3e  %10.3e  %6s ",
+        fprintf(fp,"\t\t\t   %10.3e  %10.3e  %10.3e  %10s ",
                 cmp[n].nv[0], cmp[n].nv[1], cmp[n].nv[2],
                 (cmp[n].getBClocation()==CompoList::same_direction) ? "In" : "Out");
         
@@ -2973,15 +2973,15 @@ void ParseBC::printCompoSummary(FILE* fp, CompoList* cmp, const int basicEq)
   
   if ( basicEq == INCMP_2PHASE )
   {
-    fprintf(fp,"\t  No :  # of Faces/Cells       State   Phase                     Label : Class                 Medium\n");
-    fprintf(fp,"\t--------------------------------------------------------------------------------------------------------------------\n");
+    fprintf(fp,"\t  No :  # of Faces/Cells       State   Phase                     Label : Class                                 Medium\n");
+    fprintf(fp,"\t------------------------------------------------------------------------------------------------------------------------------\n");
     
     for (int i=1; i<=NoCompo; i++)
     {
       fprintf(fp,"\t%4d : %18ld ", i, cmp[i].getElement());
       ( cmp[i].getState() == FLUID ) ? fprintf(fp, "      Fluid ") : fprintf(fp, "      Solid ") ;
       ( cmp[i].getPhase() == GAS )   ? fprintf(fp, "        Gas ") : fprintf(fp, "     Liquid ") ;
-      fprintf(fp, " %24s : %-20s  %-20s", (cmp[i].getAlias().empty()) ? "" : cmp[i].getAlias().c_str(),
+      fprintf(fp, " %24s : %-36s  %-20s", (cmp[i].getAlias().empty()) ? "" : cmp[i].getAlias().c_str(),
               cmp[i].getBCstr().c_str(),
               cmp[i].getMedium().c_str() );
     }
@@ -2990,14 +2990,14 @@ void ParseBC::printCompoSummary(FILE* fp, CompoList* cmp, const int basicEq)
   {
     if ( KindOfSolver == FLOW_ONLY )
     {
-      fprintf(fp,"\t  No :   # of Faces/Cells       State                    Label : Class                 Medium\n");
-      fprintf(fp,"\t--------------------------------------------------------------------------------------------------------------------\n");
+      fprintf(fp,"\t  No :   # of Faces/Cells       State                    Label : Class                                 Medium\n");
+      fprintf(fp,"\t------------------------------------------------------------------------------------------------------------------------------\n");
       
       for (int i=1; i<=NoCompo; i++)
       {
         fprintf(fp,"\t%4d : %18ld ", i, cmp[i].getElement());
         ( cmp[i].getState() == FLUID ) ? fprintf(fp, "      Fluid ") : fprintf(fp, "      Solid ") ;
-        fprintf(fp, "%24s : %-20s  %-20s", (cmp[i].getAlias().empty()) ? "" : cmp[i].getAlias().c_str(),
+        fprintf(fp, "%24s : %-36s  %-20s", (cmp[i].getAlias().empty()) ? "" : cmp[i].getAlias().c_str(),
                 cmp[i].getBCstr().c_str(),
                 cmp[i].getMedium().c_str() );
         fprintf(fp,"\n");
@@ -3005,14 +3005,14 @@ void ParseBC::printCompoSummary(FILE* fp, CompoList* cmp, const int basicEq)
     }
     else
     {
-      fprintf(fp,"\t  No :   # of Faces/Cells       State   Init.Temp[C]                    Label : Class                 Medium\n");
-      fprintf(fp,"\t--------------------------------------------------------------------------------------------------------------------\n");
+      fprintf(fp,"\t  No :   # of Faces/Cells       State   Init.Temp[C]                    Label : Class                                 Medium\n");
+      fprintf(fp,"\t------------------------------------------------------------------------------------------------------------------------------\n");
       
       for (int i=1; i<=NoCompo; i++)
       {
         fprintf(fp,"\t%4d : %18ld ", i, cmp[i].getElement());
         ( cmp[i].getState() == FLUID ) ? fprintf(fp, "      Fluid ") : fprintf(fp, "      Solid ") ;
-        fprintf(fp, "%14.4e %24s : %-20s  %-20s",
+        fprintf(fp, "%14.4e %24s : %-36s  %-20s",
                 cmp[i].getInitTemp(),
                 (cmp[i].getAlias().empty()) ? "" : cmp[i].getAlias().c_str(),
                 cmp[i].getBCstr().c_str(),

@@ -3,7 +3,7 @@ ApplicationControl {
   CheckParameter      = "Off"
   Operator            = "Kenji_Ono"
   FillMedium          = "air"
-  HintOfFillingFluid  = "xminus"
+  HintOfFillSeedDirection  = "xminus"
   VoxelOutput         = "svx"
   DebugDivergence     = "off"
 }

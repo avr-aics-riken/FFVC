@@ -3,7 +3,7 @@ ApplicationControl {
   CheckParameter      = "Off"
   Operator            = "Kenji_Ono"
   FillMedium          = "water"
-  HintOfFillingFluid  = "Zminus"
+  HintOfFillSeedDirection  = "Zminus"
   VoxelOutput         = "off"
   DebugDivergence     = "off"
 }

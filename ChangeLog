@@ -19,6 +19,16 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-01-19
+
+- r1057 introduce hint of fillseed for both fluid and solid [ver 1.5.6]
+ - /ApplicationControl/HintOfFillingFluid >> /ApplicationControl/HintOfFillSeedDirection
+ - add /ApplicationControl/HintOfFillSeedMedium
+ - rename int FillHint -> int FillSeedDir
+ - add int FillSeedMedium, int RefSeedMedium
+ - check Cutlib-3.2.0 on Mac
+ 
+--------------------------
 2014-01-13
 
 - r1056 change the keyword of 'FluidDirection' to 'InOut'

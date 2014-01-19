@@ -1242,7 +1242,6 @@ void FFV::fill(FILE* fp)
     Hostonly_ printf("\tSpecified Medium of filling fluid is not FLUID\n");
     Exit(0);
   }
-
   
   
   unsigned long target_count; ///< フィルの対象となるセル数
@@ -1304,15 +1303,18 @@ void FFV::fill(FILE* fp)
   Hostonly_
   {
     printf(    "\n\tFill -----\n\n");
+    printf(    "\t\tFilling Fluid Medium   : %s\n", mat[C.RefFillMat].getAlias().c_str());
+    printf(    "\t\tHint                   : %s\n", FBUtility::getDirection(C.FillSeedDir).c_str());
+    printf(    "\t\tFillSeed Medium        : %s\n", mat[C.RefSeedMat].getAlias().c_str());
+    
     fprintf(fp,"\n\tFill -----\n\n");
-    printf    ("\t\tFilling fluid medium   : %s\n", mat[C.RefFillMat].getAlias().c_str());
-    fprintf(fp,"\t\tFilling fluid medium   : %s\n", mat[C.RefFillMat].getAlias().c_str());
-    printf(    "\t\tHint                   : %s\n", FBUtility::getDirection(C.FillHint).c_str());
-    fprintf(fp,"\t\tHint                   : %s\n", FBUtility::getDirection(C.FillHint).c_str());
+    fprintf(fp,"\t\tFilling Fluid Medium   : %s\n", mat[C.RefFillMat].getAlias().c_str());
+    fprintf(fp,"\t\tHint                   : %s\n", FBUtility::getDirection(C.FillSeedDir).c_str());
+    fprintf(fp,"\t\tFillSeed  Medium       : %s\n", mat[C.RefSeedMat].getAlias().c_str());
   }
   
   // ヒントが与えられている場合
-  filled = V.fillSeed(d_bcd, C.FillHint, C.RefFillMat, d_bid);
+  filled = V.fillSeed(d_bcd, C.FillSeedDir, C.RefSeedMat, d_bid);
   
   if ( numProc > 1 )
   {
@@ -1422,33 +1424,65 @@ void FFV::fill(FILE* fp)
     }
   }
   
-  // 固体に変更
+  // FillSeedMediumと反対の媒質に変更
   c = -1;
   sum_replaced = 0;
-  
-  while ( target_count > 0 ) {
-    
-    // 未ペイントのセルに対して、固体IDを与える
-    replaced = V.fillByModalSolid(d_bcd, C.RefFillMat, d_bid);
-    
-    if ( numProc > 1 )
-    {
-      if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-    }
-
-    target_count -= replaced;
-    sum_replaced += replaced;
-    
-    if ( replaced <= 0 ) break;
-    c++;
+  int fill_mode = -1;
+  if ( cmp[C.RefSeedMat].getState() == FLUID )
+  {
+    fill_mode = SOLID;
   }
+  else
+  {
+    fill_mode = FLUID;
+  }
+
+  if ( fill_mode == SOLID )
+  {
+    while ( target_count > 0 ) {
+      
+      // 未ペイントのセルに対して、固体IDを与える
+      replaced = V.fillByModalSolid(d_bcd, C.RefFillMat, d_bid);
+      
+      if ( numProc > 1 )
+      {
+        if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+      }
+      
+      target_count -= replaced;
+      sum_replaced += replaced;
+      
+      if ( replaced <= 0 ) break;
+      c++;
+    }
+  }
+  else
+  {
+    while ( target_count > 0 ) {
+      
+      // 未ペイントのセルに対して、固体IDを与える
+      replaced = V.fillByFluid(d_bcd, C.RefFillMat, d_bid);
+      
+      if ( numProc > 1 )
+      {
+        if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+      }
+      
+      target_count -= replaced;
+      sum_replaced += replaced;
+      
+      if ( replaced <= 0 ) break;
+      c++;
+    }
+  }
+  
   
   Hostonly_
   {
-    printf(    "\t\tSOLID filling Iteration= %5d\n", c+1);
-    fprintf(fp,"\t\tSOLID filling Iteration= %5d\n", c+1);
-    printf(    "\t\t   Filled by SOLID     = %16ld\n\n", sum_replaced);
-    fprintf(fp,"\t\t   Filled by SOLID     = %16ld\n\n", sum_replaced);
+    printf(    "\t\tFinal Filling Iteration= %5d\n", c+1);
+    fprintf(fp,"\t\tFinal Filling Iteration= %5d\n", c+1);
+    printf(    "\t\t   Filled by %s     = %16ld\n\n", (fill_mode==FLUID)?"FLUID":"SOLID", sum_replaced);
+    fprintf(fp,"\t\t   Filled by %s     = %16ld\n\n", (fill_mode==FLUID)?"FLUID":"SOLID", sum_replaced);
   }
   
   
@@ -3514,6 +3548,16 @@ void FFV::setBCinfo()
     Hostonly_
     {
       printf("/ApplicationControl/FillMedium = \"%s\" is not listed in MediumTable.\n", C.FillMedium.c_str());
+    }
+    Exit(0);
+  }
+  
+  // FillSeedMediumがMediumList中にあるかどうかをチェックし、RefSeedMatを設定
+  if ( (C.RefSeedMat = C.findIDfromLabel(mat, C.NoMedium, C.FillSeedMedium)) == 0 )
+  {
+    Hostonly_
+    {
+      printf("/ApplicationControl/HintOfFillSeedMedium = \"%s\" is not listed in MediumTable.\n", C.FillSeedMedium.c_str());
     }
     Exit(0);
   }

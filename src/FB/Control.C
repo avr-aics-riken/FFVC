@@ -428,7 +428,7 @@ void Control::getApplicationControl()
   
   
   // 流体セルのフィルの開始面指定
-  label = "/ApplicationControl/HintOfFillingFluid";
+  label = "/ApplicationControl/HintOfFillSeedDirection";
   
   if ( !(tpCntl->getInspectedValue(label, str )) )
   {
@@ -437,19 +437,27 @@ void Control::getApplicationControl()
   }
   else
   {
-    if     ( !strcasecmp(str.c_str(), "xminus" ) ) FillHint = X_minus;
-    else if( !strcasecmp(str.c_str(), "xplus" ) )  FillHint = X_plus;
-    else if( !strcasecmp(str.c_str(), "yminus" ) ) FillHint = Y_minus;
-    else if( !strcasecmp(str.c_str(), "yplus" ) )  FillHint = Y_plus;
-    else if( !strcasecmp(str.c_str(), "zminus" ) ) FillHint = Z_minus;
-    else if( !strcasecmp(str.c_str(), "zplus" ) )  FillHint = Z_plus;
+    if     ( !strcasecmp(str.c_str(), "xminus" ) ) FillSeedDir = X_minus;
+    else if( !strcasecmp(str.c_str(), "xplus" ) )  FillSeedDir = X_plus;
+    else if( !strcasecmp(str.c_str(), "yminus" ) ) FillSeedDir = Y_minus;
+    else if( !strcasecmp(str.c_str(), "yplus" ) )  FillSeedDir = Y_plus;
+    else if( !strcasecmp(str.c_str(), "zminus" ) ) FillSeedDir = Z_minus;
+    else if( !strcasecmp(str.c_str(), "zplus" ) )  FillSeedDir = Z_plus;
     else
     {
-      FillHint = X_minus;
-      Hostonly_ printf("\tDefault 'X_minus' is set for Hint Of Filling Fluid\n");
+      FillSeedDir = X_minus;
+      Hostonly_ printf("\tDefault 'X_minus' is set for Hint Of FillSeed direction\n");
     }
   }
   
+  // ヒントに使うフィルの媒質指定
+  label = "/ApplicationControl/HintOfFillSeedMedium";
+  if ( !(tpCntl->getInspectedValue(label, str)) )
+  {
+    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
+	  Exit(0);
+  }
+  FillSeedMedium = str;
   
   
   // パラメータチェックフラグ (Hidden)
@@ -2788,7 +2796,6 @@ void Control::printParaConditions(FILE* fp, const MediumList* mat)
   fprintf(fp,"\n\t>> Simulation Parameters\n\n");
   
   fprintf(fp,"\tReference Medium                      :  %s\n", mat[RefMat].getAlias().c_str());
-  fprintf(fp,"\tFilling   Medium                      :  %s\n", mat[RefFillMat].getAlias().c_str());
   fprintf(fp,"\n");
   
   // Reference values

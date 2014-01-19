@@ -3,7 +3,7 @@ ApplicationControl {
   CheckParameter      = "Off"
   Operator    Temporal        = "Kenji_Ono"
   FillMedium          = "air"
-  HintOfFillingFluid  = "no"
+  HintOfFillSeedDirection  = "no"
   VoxelOutput         = "off"
   DebugDivergence     = "off"
 }

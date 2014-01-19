@@ -2592,6 +2592,46 @@ schedule(static) reduction(+:filled) reduction(+:replaced)
 
 
 // #################################################################
+// 未ペイントセルをFLUIDでフィル
+unsigned long VoxInfo::fillByFluid (int* bcd, const int fluid_id, const int* bid)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  int fid = fluid_id;
+  unsigned long c = 0; /// painted count
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, fid) schedule(static) reduction(+:c)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t m_p = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
+        int dd = DECODE_CMP( bcd[m_p] );
+        
+        // 対象セルが未ペイントの場合
+        if ( dd == 0 )
+        {
+          setBit5(bcd[m_p], fid, 0);
+          c++;
+        }
+      }
+    }
+  }
+  
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = c;
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  return c;
+}
+
+
+// #################################################################
 // 未ペイントセルをフィル
 // 周囲の媒質IDの固体最頻値がゼロの場合には，境界IDで代用
 unsigned long VoxInfo::fillByModalSolid (int* bcd, const int fluid_id, const int* bid)
