@@ -553,6 +553,22 @@ void Control::getApplicationControl()
     }
   }
   
+  // Bit3Test for FX (NOT mandatory)
+  label = "/ApplicationControl/Bit3option";
+  
+  if ( tpCntl->chkLabel(label) )
+  {
+    if ( !(tpCntl->getInspectedValue(label, str )) )
+    {
+      Hostonly_ stamped_printf("\tError : '%s'\n", label.c_str());
+      Exit(0);
+    }
+    else
+    {
+      if ( !strcasecmp(str.c_str(), "on") ) Hide.GlyphOutput = ON;
+    }
+  }
+  
 }
 
 

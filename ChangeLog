@@ -19,6 +19,14 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-01-21
+
+- r1058 Test of enhanced implementation bit3 for Sparc architecture [ver 1.5.7]
+ - poi_rhs_bit3_(), poi_residual_bit3_(), psor2sma_core_bit3_()
+ - Control:: int Bit3option, getApplicationControl()
+ - NS_FS_E_Binary.C -> if(C.Hide.Bit3option==OFF)...
+
+--------------------------
 2014-01-19
 
 - r1057 introduce hint of fillseed for both fluid and solid [ver 1.5.6]

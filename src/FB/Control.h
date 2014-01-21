@@ -381,6 +381,7 @@ public:
     int PM_Test;
     int GeomOutput;
     int GlyphOutput;
+    int Bit3option;
   } Hidden_Parameter;
   
   /** File IO control */
@@ -739,6 +740,7 @@ public:
     Hide.PM_Test = 0;
     Hide.GeomOutput = OFF;
     Hide.GlyphOutput = OFF;
+    Hide.Bit3option = OFF;
     
     Unit.Param  = 0;
     Unit.Output = 0;

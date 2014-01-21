@@ -404,6 +404,7 @@ int FFV::SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rh
       if ( naive==OFF)
       {
         psor2sma_core_(x, size, &guide, &ip, &color, &omg, &res, b, d_bcp, &flop_count);
+        //psor2sma_core_bit3_(x, size, &guide, &ip, &color, &omg, &res, b, d_bcp, &flop_count);
       }
       else
       {
