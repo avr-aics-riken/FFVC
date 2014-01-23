@@ -457,7 +457,7 @@ void Control::getApplicationControl()
     Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
 	  Exit(0);
   }
-  FillSeedMedium = str;
+  SeedMedium = str;
   
   
   // パラメータチェックフラグ (Hidden)

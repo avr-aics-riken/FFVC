@@ -19,6 +19,10 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-01-23
+- r1059 modify psor2sma_core_bit3_()
+
+--------------------------
 2014-01-21
 
 - r1058 Test of enhanced implementation bit3 for Sparc architecture [ver 1.5.7]

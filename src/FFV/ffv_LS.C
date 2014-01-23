@@ -403,8 +403,14 @@ int FFV::SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rh
       flop_count = 0.0; // 色間で積算しない
       if ( naive==OFF)
       {
-        psor2sma_core_(x, size, &guide, &ip, &color, &omg, &res, b, d_bcp, &flop_count);
-        //psor2sma_core_bit3_(x, size, &guide, &ip, &color, &omg, &res, b, d_bcp, &flop_count);
+        if (C.Hide.Bit3option == OFF)
+        {
+          psor2sma_core_(x, size, &guide, &ip, &color, &omg, &res, b, d_bcp, &flop_count);
+        }
+        else
+        {
+          psor2sma_core_bit3_(x, size, &guide, &ip, &color, &omg, &res, b, d_bcp, &flop_count);
+        }
       }
       else
       {

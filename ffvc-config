@@ -15,7 +15,7 @@
 #
 #! /bin/sh
 
-prefix=/usr/local/FFV/FFVC
+prefix=/usr/local/FFVC
 exec_prefix=${prefix}
 includedir=${prefix}/include
 libdir=${exec_prefix}/lib
@@ -91,7 +91,7 @@ EOF
       ;;
 
     --fcflags)
-      echo @FFVC_CFLAGS@ 
+      echo @FFVC_CFLAGS@ -r8
       ;;
 
     --fclibs)

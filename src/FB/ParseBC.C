@@ -504,6 +504,9 @@ void ParseBC::getIbcOutflow(const string label_base, const int n, CompoList* cmp
   label = label_base + "/OrientationVector";
   if ( !Control::getVec(label, cmp[n].nv, tpCntl, true) ) Exit(0);
   
+  // 出口方向を指定
+  cmp[n].setBClocation(CompoList::opposite_direction);
+  
 }
 
 

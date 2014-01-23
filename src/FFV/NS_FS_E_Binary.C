@@ -517,6 +517,7 @@ void FFV::NS_FS_E_Binary()
         if ( cmp[n].getType() == OUTFLOW )
         {
           cmp[n].val[var_Velocity] = m_buf[n].p0 / m_buf[n].p1; // 無次元平均流速
+          //printf("%e  = %e  / %e\n", cmp[n].val[var_Velocity], m_buf[n].p0, m_buf[n].p1);
         }
       }
     }

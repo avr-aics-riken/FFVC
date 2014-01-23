@@ -557,8 +557,8 @@ public:
   int num_thread;     ///< スレッド数
   int num_of_polygrp; ///< ポリゴングループ数
   int Parallelism;    ///< 並列モード
-  int RefFillMat;     ///< フィル媒質ID
-  int RefSeedMat;     ///< フィルシード媒質ID
+  int FillID;         ///< フィル媒質ID
+  int SeedID;         ///< フィルシード媒質ID
   int RefMat;         ///< 参照媒質インデクス
   int Start;
   int SamplingMode;   ///< サンプリング指定
@@ -639,8 +639,8 @@ public:
   string f_Fvelocity;
   
   string RefMedium;      ///< 参照媒質名 -> int RefMat
-  string FillMedium;     ///< フィルに使う媒質 -> int RefFillMat
-  string FillSeedMedium; ///< ヒントに使う媒質 -> int RefSeedMat
+  string FillMedium;     ///< フィルに使う媒質 -> int FillID
+  string SeedMedium;     ///< ヒントに使う媒質 -> int SeedID
   string OperatorName;
   
   string ver_TP;   ///< TextPerser version no.
@@ -674,8 +674,8 @@ public:
     num_process = 0;
     num_thread = 0;
     Parallelism = 0;
-    RefFillMat = -1;
-    RefSeedMat = -1;
+    FillID = -1;
+    SeedID = -1;
     RefMat = -1;
     Restart_staging = 0;    
     Restart_step = 0;

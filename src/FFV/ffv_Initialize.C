@@ -190,7 +190,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // 定義点上に交点がある場合の処理 >> カットするポリゴンのエントリ番号でフィルする
-  unsigned long fill_cut = V.modifyCutOnCellCenter(d_bid, d_cut, C.RefFillMat);
+  unsigned long fill_cut = V.modifyCutOnCellCenter(d_bid, d_cut, C.FillID);
   
   Hostonly_
   {
@@ -244,7 +244,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // 全周カットのあるセルを固体セルIDで埋める
-  V.replaceIsolatedFcell(d_bcd, C.RefFillMat, d_bid);
+  V.replaceIsolatedFcell(d_bcd, C.FillID, d_bid);
   
   
   
@@ -1112,7 +1112,7 @@ void FFV::encodeBCindex(FILE* fp)
   
   
   // 孤立した流体セルの属性変更
-  unsigned long filled = V.findIsolatedFcell(d_bcd, C.RefFillMat);
+  unsigned long filled = V.findIsolatedFcell(d_bcd, C.FillID);
   
   if ( filled > 0 )
   {
@@ -1230,9 +1230,10 @@ void FFV::fill(FILE* fp)
   // 指定媒質の属性をチェック
   bool flag = false;
   
+  
   for (int i=1; i<=C.NoCompo; i++)
   {
-    if ( (i == C.RefFillMat) && (cmp[i].getState() == FLUID) )
+    if ( (i == C.FillID) && (cmp[i].getState() == FLUID) )
     {
       flag = true;
     }
@@ -1242,6 +1243,7 @@ void FFV::fill(FILE* fp)
     Hostonly_ printf("\tSpecified Medium of filling fluid is not FLUID\n");
     Exit(0);
   }
+
   
   
   unsigned long target_count; ///< フィルの対象となるセル数
@@ -1303,18 +1305,19 @@ void FFV::fill(FILE* fp)
   Hostonly_
   {
     printf(    "\n\tFill -----\n\n");
-    printf(    "\t\tFilling Fluid Medium   : %s\n", mat[C.RefFillMat].getAlias().c_str());
-    printf(    "\t\tHint                   : %s\n", FBUtility::getDirection(C.FillSeedDir).c_str());
-    printf(    "\t\tFillSeed Medium        : %s\n", mat[C.RefSeedMat].getAlias().c_str());
+    printf(    "\t\tFilling Fluid Medium   : %s\n", mat[C.FillID].getAlias().c_str());
+    printf(    "\t\tHint of Direction      : %s\n", FBUtility::getDirection(C.FillSeedDir).c_str());
+    printf(    "\t\tFillSeed Medium        : %s\n", mat[C.SeedID].getAlias().c_str());
     
     fprintf(fp,"\n\tFill -----\n\n");
-    fprintf(fp,"\t\tFilling Fluid Medium   : %s\n", mat[C.RefFillMat].getAlias().c_str());
-    fprintf(fp,"\t\tHint                   : %s\n", FBUtility::getDirection(C.FillSeedDir).c_str());
-    fprintf(fp,"\t\tFillSeed  Medium       : %s\n", mat[C.RefSeedMat].getAlias().c_str());
+    fprintf(fp,"\t\tFilling Fluid Medium   : %s\n", mat[C.FillID].getAlias().c_str());
+    fprintf(fp,"\t\tHint of Direction      : %s\n", FBUtility::getDirection(C.FillSeedDir).c_str());
+    fprintf(fp,"\t\tFillSeed Medium        : %s\n", mat[C.SeedID].getAlias().c_str());
   }
   
+  
   // ヒントが与えられている場合
-  filled = V.fillSeed(d_bcd, C.FillSeedDir, C.RefSeedMat, d_bid);
+  filled = V.fillSeed(d_bcd, C.FillSeedDir, C.SeedID, d_bid);
   
   if ( numProc > 1 )
   {
@@ -1359,8 +1362,9 @@ void FFV::fill(FILE* fp)
   
   while (target_count > 0) {
     
+    // SeedIDで指定された媒質でフィルする．FLUID/SOLIDの両方のケースがある
     unsigned long fs;
-    filled = V.fillByBid(d_bid, d_bcd, d_cut, C.RefFillMat, fs);
+    filled = V.fillByBid(d_bid, d_bcd, d_cut, C.SeedID, fs);
     replaced = fs;
     
     if ( numProc > 1 )
@@ -1384,8 +1388,8 @@ void FFV::fill(FILE* fp)
   {
     printf(    "\t\tBID Iteration          = %5d\n", c+1);
     fprintf(fp,"\t\tBID Iteration          = %5d\n", c+1);
-    printf(    "\t\t    FLUID filled       = %16ld\n", sum_filled);
-    fprintf(fp,"\t\t    FLUID filled       = %16ld\n", sum_filled);
+    printf(    "\t\t    Filled by [%02d]    = %16ld\n", C.SeedID, sum_filled);
+    fprintf(fp,"\t\t    Filled by [%02d]    = %16ld\n", C.SeedID, sum_filled);
     printf(    "\t\t    SOLID replaced     = %16ld\n", sum_replaced);
     fprintf(fp,"\t\t    SOLID replaced     = %16ld\n", sum_replaced);
     printf(    "\t\t    Remaining cell     = %16ld\n\n", target_count);
@@ -1411,7 +1415,6 @@ void FFV::fill(FILE* fp)
   
   
   
-  
   // 未ペイント（ID=0）のセルを検出
   unsigned long upc = V.countCell(d_bcd, false);
   
@@ -1424,11 +1427,13 @@ void FFV::fill(FILE* fp)
     }
   }
   
-  // FillSeedMediumと反対の媒質に変更
+  
+  
+  // SeedMediumと反対の媒質に変更
   c = -1;
   sum_replaced = 0;
   int fill_mode = -1;
-  if ( cmp[C.RefSeedMat].getState() == FLUID )
+  if ( cmp[C.SeedID].getState() == FLUID )
   {
     fill_mode = SOLID;
   }
@@ -1437,43 +1442,28 @@ void FFV::fill(FILE* fp)
     fill_mode = FLUID;
   }
 
-  if ( fill_mode == SOLID )
-  {
-    while ( target_count > 0 ) {
-      
-      // 未ペイントのセルに対して、固体IDを与える
-      replaced = V.fillByModalSolid(d_bcd, C.RefFillMat, d_bid);
-      
-      if ( numProc > 1 )
-      {
-        if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-      }
-      
-      target_count -= replaced;
-      sum_replaced += replaced;
-      
-      if ( replaced <= 0 ) break;
-      c++;
+  // 未ペイントのセルに対して、指定媒質でフィルする
+  while ( target_count > 0 ) {
+    
+    if ( fill_mode == SOLID )
+    {
+      replaced = V.fillByModalSolid(d_bcd, C.FillID, d_bid);
     }
-  }
-  else
-  {
-    while ( target_count > 0 ) {
-      
-      // 未ペイントのセルに対して、固体IDを与える
-      replaced = V.fillByFluid(d_bcd, C.RefFillMat, d_bid);
-      
-      if ( numProc > 1 )
-      {
-        if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-      }
-      
-      target_count -= replaced;
-      sum_replaced += replaced;
-      
-      if ( replaced <= 0 ) break;
-      c++;
+    else
+    {
+      replaced = V.fillByFluid(d_bcd, C.FillID, d_bid);
     }
+    
+    if ( numProc > 1 )
+    {
+      if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    target_count -= replaced;
+    sum_replaced += replaced;
+    
+    if ( replaced <= 0 ) break;
+    c++;
   }
   
   
@@ -3542,8 +3532,8 @@ void FFV::setBCinfo()
     Exit(0);
   }
   
-  // FillMediumがMediumList中にあるかどうかをチェックし、RefFillMatを設定
-  if ( (C.RefFillMat = C.findIDfromLabel(mat, C.NoMedium, C.FillMedium)) == 0 )
+  // FillMediumがMediumList中にあるかどうかをチェックし、FillIDを設定
+  if ( (C.FillID = C.findIDfromLabel(mat, C.NoMedium, C.FillMedium)) == 0 )
   {
     Hostonly_
     {
@@ -3552,12 +3542,12 @@ void FFV::setBCinfo()
     Exit(0);
   }
   
-  // FillSeedMediumがMediumList中にあるかどうかをチェックし、RefSeedMatを設定
-  if ( (C.RefSeedMat = C.findIDfromLabel(mat, C.NoMedium, C.FillSeedMedium)) == 0 )
+  // SeedMediumがMediumList中にあるかどうかをチェックし、SeedIDを設定
+  if ( (C.SeedID = C.findIDfromLabel(mat, C.NoMedium, C.SeedMedium)) == 0 )
   {
     Hostonly_
     {
-      printf("/ApplicationControl/HintOfFillSeedMedium = \"%s\" is not listed in MediumTable.\n", C.FillSeedMedium.c_str());
+      printf("/ApplicationControl/HintOfFillSeedMedium = \"%s\" is not listed in MediumTable.\n", C.SeedMedium.c_str());
     }
     Exit(0);
   }
