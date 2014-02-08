@@ -15,7 +15,7 @@
 #
 #! /bin/sh
 
-prefix=/usr/local/FFVC
+prefix=/usr/local/FFV/FFVC
 exec_prefix=${prefix}
 includedir=${prefix}/include
 libdir=${exec_prefix}/lib
@@ -59,7 +59,7 @@ while test $# -gt 0; do
     --version)
 cat <<EOF
 
-# FFV-C : Frontflow / violet Cartesian  Ver. 1.5.7  (20140121_1630)
+# FFV-C : Frontflow / violet Cartesian  Ver. 1.5.8  (20140208_1030)
 #
 # Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
 # All rights reserved.
@@ -91,7 +91,7 @@ EOF
       ;;
 
     --fcflags)
-      echo @FFVC_CFLAGS@ -r8
+      echo @FFVC_CFLAGS@ 
       ;;
 
     --fclibs)

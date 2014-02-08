@@ -56,7 +56,7 @@ Configure options:
  --with-cio=CIOLIB_DIR
     Specify the directory path that is installed CIO library.
 
- --with-comp=(INTEL|FJ)
+ --with-comp=(INTEL|FJ|GNU)
     If Intel compiler is used, choose INTEL, and if Fujitsu compiler, specify FJ. 
     This option is mandatory when using both compilers.
 
@@ -169,7 +169,7 @@ Here is examples.
       LIBS=-lgfortran
 
 
-## for K-computer.
+## for K-computer
 
   $ ./configure \
       --prefix=/home/foo/FFVC \

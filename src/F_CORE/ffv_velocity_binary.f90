@@ -47,7 +47,8 @@
     integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, v_mode, bpx, wall_type, bdx
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, vflop
-    real                                                      ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p
+    real                                                      ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
+    real                                                      ::  b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p
     real                                                      ::  UPe, UPw, VPn, VPs, WPt, WPb, u1, u2, u3, ug, e1, e2, e3, u_tau
     real                                                      ::  Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2
     real                                                      ::  Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2

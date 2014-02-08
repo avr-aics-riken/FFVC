@@ -19,6 +19,15 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-02-08
+- r1060 add configure for gfortran [ver 1.5.8]
+ - change AC_PREREQ([2.69]) to 2.63 for convenience
+ - from --with-comp=(INTEL|FJ) to --with-comp=(INTEL|FJ|GNU)
+ - add FREALOPT="-fdefault-real-8", but not confirm yet
+ - Currently gnu f2c can't translate f90 code perfectly, so modify long line to short in ffv_velocity_binary.f90
+ - CIOlib 1.5.1 compatible
+
+--------------------------
 2014-01-23
 - r1059 modify psor2sma_core_bit3_()
 

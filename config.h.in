@@ -76,9 +76,6 @@
 /* Define to 1 if you have the `va_start' function. */
 #undef HAVE_VA_START
 
-/* Define to 1 if the system has the type `_Bool'. */
-#undef HAVE__BOOL
-
 /* Name of package */
 #undef PACKAGE
 

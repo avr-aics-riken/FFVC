@@ -2,9 +2,11 @@
 ApplicationControl {
   Operator            = "Kenji_Ono"
   FillMedium          = "water"
-  HintOfFillSeedDirection  = "Xminus"
-  VoxelOutput     = "svx"
-  DebugDivergence = "Off"
+  HintOfFillSeedDirection = "Xminus"
+  HintOfFillSeedMedium    = "air"
+  VoxelOutput             = "svx"
+  DebugDivergence         = "off"
+  bit3option              = "on"
 }
 
 

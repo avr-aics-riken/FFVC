@@ -19,6 +19,10 @@ RELEASE
 =======
 
 -------------
+Version 1.5.8    2014-02-08
+  - GNU compiler
+
+-------------
 Version 1.5.4    2014-01-03
   - Naive implementation for SOR2SMA
   

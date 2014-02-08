@@ -3,9 +3,11 @@ ApplicationControl {
   CheckParameter      = "Off"
   Operator            = "Kenji_Ono"
   FillMedium          = "air"
-  HintOfFillSeedDirection  = "xminus"
-  VoxelOutput         = "svx"
-  DebugDivergence     = "off"
+  HintOfFillSeedDirection = "xminus"
+  HintOfFillSeedMedium    = "air"
+  VoxelOutput             = "off"
+  DebugDivergence         = "off"
+  bit3option              = "on"
 }
 
 BcTable {

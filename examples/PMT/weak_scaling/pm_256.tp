@@ -3,9 +3,11 @@ ApplicationControl {
   CheckParameter      = "Off"
   Operator            = "Kenji_Ono"
   FillMedium          = "air"
-  HintOfFillSeedDirection  = "no"
-  VoxelOutput         = "off"
-  DebugDivergence     = "off"
+  HintOfFillSeedDirection = "no"
+  HintOfFillSeedMedium    = "air"
+  VoxelOutput             = "off"
+  DebugDivergence         = "off"
+  bit3option              = "on"
 }
 
 

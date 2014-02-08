@@ -2418,15 +2418,16 @@ void FFV::initFileOut()
   
   for (int i=0; i<3; i++)
   {
-    cio_org[i] = origin[i] - pitch[i]*(REAL_TYPE)C.GuideOut; // ガイドセルによるオリジナルポイントの調整
+    cio_org[i] = origin[i]; // CIO用オリジナルポイントのセット
     cio_pit[i] = pitch[i];
   }
   
-  // セルセンター位置を基点とする
+  /* セルセンター位置を基点とする >> CIOlib-1.5.1からセルセンターへの更新処理を削除する
   for (int i=0; i<3; i++)
   {
     cio_org[i] += 0.5*cio_pit[i];
   }
+   */
   
   // 出力ファイルの指定が有次元の場合
   if ( C.Unit.File == DIMENSIONAL )
@@ -2592,7 +2593,7 @@ void FFV::initFileOut()
   DFI_OUT_PRS->AddUnit("Velocity", UnitV, (double)C.RefVelocity);
   DFI_OUT_PRS->AddUnit("Pressure", UnitP, (double)C.BasePrs, DiffPrs, true);
   
-  DFI_OUT_PRS->WriteProcDfiFile(MPI_COMM_WORLD, true, G_origin);
+  DFI_OUT_PRS->WriteProcDfiFile(MPI_COMM_WORLD, true);
   
   
   

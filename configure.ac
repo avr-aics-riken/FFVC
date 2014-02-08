@@ -16,8 +16,8 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.69])
-AC_INIT([FFVC], [1.5.7], [keno@riken.jp], [FFVC])
+AC_PREREQ([2.63])
+AC_INIT([FFVC], [1.5.8], [keno@riken.jp], [FFVC])
 AM_INIT_AUTOMAKE()
 AC_CONFIG_SRCDIR([src/FB/Alloc.C])
 AC_CONFIG_HEADERS([config.h])
@@ -25,7 +25,7 @@ AC_CONFIG_HEADERS([config.h])
 #
 # revision No.
 #
-FFVC_REVISION="20140121_1630"
+FFVC_REVISION="20140208_1030"
 AC_SUBST(FFVC_REVISION)
 
 
@@ -42,7 +42,7 @@ FCFLAGS=$F90FLAGS
 #
 # compiler
 #
-AC_ARG_WITH(comp, [AC_HELP_STRING([--with-comp=(INTEL|FJ)],[Specify Compiler type])], , with_comp=none)
+AC_ARG_WITH(comp, [AC_HELP_STRING([--with-comp=(INTEL|FJ|GNU)],[Specify Compiler type])], , with_comp=none)
 
 
 
@@ -58,6 +58,8 @@ if test "$with_precision" = "double" ; then
     FREALOPT="-r8"
   elif test "$with_comp" = "FJ" ; then
     FREALOPT="-CcdRR8"
+  elif test "$with_comp" = "GNU" ; then
+    FREALOPT="-fdefault-real-8"
   fi
 else
   REALOPT=
@@ -159,6 +161,8 @@ if test "$with_comp" = "FJ"; then
   FFVC_LIBS=" --linkfortran"
 elif test "$with_comp" = "INTEL" ; then
   FFVC_LIBS="$FFVC_LIBS"" -lstdc++ -lifcore"
+elif test "$with_comp" = "GNU" ; then
+  FFVC_LIBS="$FFVC_LIBS"" -lstdc++ -lgfortran"
 else
   FFVC_LIBS="$FFVC_LIBS"" -lstdc++"
 fi
@@ -332,7 +336,6 @@ AC_CHECK_HEADERS([fcntl.h float.h stdlib.h string.h strings.h sys/param.h unistd
 #
 # Checks for typedefs, structures, and compiler characteristics.
 #
-AC_CHECK_HEADER_STDBOOL
 AC_C_INLINE
 AC_TYPE_INT32_T
 AC_TYPE_MODE_T
