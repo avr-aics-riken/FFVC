@@ -19,7 +19,7 @@
 /**
  * @file   ParseMat.h
  * @brief  FlowBase ParseMat class Header
- * @author kero
+ * @author aics
  */
 
 #include "FB_Define.h"

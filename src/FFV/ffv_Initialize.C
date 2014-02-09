@@ -16,7 +16,7 @@
 /** 
  * @file   ffv_Initialize.C
  * @brief  FFV Class
- * @author kero
+ * @author aics
  */
 
 #include "ffv.h"
@@ -106,10 +106,7 @@ int FFV::Initialize(int argc, char **argv)
   
   // 反復制御クラスのインスタンス
   C.getIteration();
-  if ( (IC[ic_prs1].getLS()==SOR2SMA) && (IC[ic_prs1].getNaive() == ON) )
-  {
-    Hostonly_ printf("Naive implementation. >>\n\n");
-  }
+  
 
   // 流体の解法アルゴリズムを取得
   C.getSolvingMethod4Flow();

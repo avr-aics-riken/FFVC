@@ -18,7 +18,7 @@
 /**
  * @file   ffv_PLOT3D.h
  * @brief  Plot3D Class
- * @author kero
+ * @author aics
  */
 
 #define PLT3D_VERS 103

@@ -16,7 +16,7 @@
 /** 
  * @file   IP_Sphere.C
  * @brief  IP_Sphere class
- * @author kero
+ * @author aics
  */
 
 #include "IP_Sphere.h"

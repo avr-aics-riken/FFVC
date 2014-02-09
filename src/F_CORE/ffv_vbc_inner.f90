@@ -17,7 +17,7 @@
 
 !> @file   ffv_bc_inner.f90
 !! @brief  計算領域内部の境界条件
-!! @author kero
+!! @author aics
 !<
     
 

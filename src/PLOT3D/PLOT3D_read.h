@@ -19,7 +19,7 @@
 /** 
  * @file   PLOT3D_read.h
  * @brief  FlowBase FileIO_PLOT3D_READ class Header
- * @author kero
+ * @author aics
  */
 
 #include "PLOT3D.h"

@@ -16,7 +16,7 @@
 /** 
  * @file   ffv_SetBC.C
  * @brief  FFV BC Class
- * @author kero
+ * @author aics
  */
 
 #include "ffv_SetBC.h"

@@ -16,7 +16,7 @@
 !
 !> @file ffv_f_params.h
 !! @brief BC Indexのマスク操作のビット定義, FB_Define.hと整合
-!! @author kero
+!! @author aics
 !<
 
 integer     ::  Active, State, id_fluid, id_solid

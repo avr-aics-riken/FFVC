@@ -19,7 +19,7 @@
 /**
  * @file   FB_Define.h
  * @brief  FlowBase Definition Header
- * @author kero
+ * @author aics
  * @attention このマクロを変更した場合には，対応するffv_f_param.hも変更すること
  */
 

@@ -16,7 +16,7 @@
 /** 
  * @file   main.C
  * @brief  layoutのmain関数
- * @author kero
+ * @author aics
  */
 
 #include "layout.h"

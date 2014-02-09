@@ -19,7 +19,7 @@
 /**
  @file   LAYOUT_Define.h
  @brief  layout Header
- @author kero
+ @author aics
  */
 
 #include "mydebug.h"

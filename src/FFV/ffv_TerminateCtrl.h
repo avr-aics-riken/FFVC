@@ -19,7 +19,7 @@
 /** 
  * @file   ffvTerminateCtrl.h
  * @brief  FFV Terminate Control Class Header
- * @author kero
+ * @author aics
  */
 
 #include <signal.h>

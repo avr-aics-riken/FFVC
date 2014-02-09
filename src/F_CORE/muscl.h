@@ -17,7 +17,7 @@
 
 !> @file   muscl.h
 !! @brief  MUSCL reconstruction core
-!! @author kero
+!! @author aics
 !<
 
 ! b  = (3.0-ck)/(1.0-ck), ck=1/3

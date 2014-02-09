@@ -19,7 +19,7 @@
 /**
  * @file   DomainInfo.h
  * @brief  FlowBase DomainInfo class Header
- * @author kero
+ * @author aics
  */
 
 #include "cpm_ParaManager.h"

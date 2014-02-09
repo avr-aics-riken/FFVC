@@ -19,7 +19,7 @@
 /** 
  * @file   IP_Sphere.h
  * @brief  IP_Sphere class Header
- * @author kero
+ * @author aics
  */
 
 #include "../FB/Intrinsic.h"

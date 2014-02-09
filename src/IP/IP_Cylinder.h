@@ -19,7 +19,7 @@
 /** 
  * @file   IP_Cylinder.h
  * @brief  IP_Cylinder class Header
- * @author kero
+ * @author aics
  */
 
 #include "../FB/Intrinsic.h"

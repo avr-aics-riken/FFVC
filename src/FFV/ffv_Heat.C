@@ -16,7 +16,7 @@
 /**
  * @file   ffv_Heat.C
  * @brief  FFV BC Class
- * @author kero
+ * @author aics
  */
 
 #include "ffv.h"

@@ -19,7 +19,7 @@
 /** 
  * @file   PLOT3D.h
  * @brief  FlowBase FileIO_PLOT3D class Header
- * @author kero
+ * @author aics
  */
 
 #include "cpm_Define.h"

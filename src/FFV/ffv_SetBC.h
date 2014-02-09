@@ -19,7 +19,7 @@
 /** 
  * @file   ffv_SetBC.h
  * @brief  FFV BC Class Header
- * @author kero
+ * @author aics
  */
 
 #include "../FB/SetBC.h"

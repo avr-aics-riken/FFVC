@@ -16,7 +16,7 @@
 /**
  * @file   VoxInfo.C
  * @brief  FlowBase VoxInfo class
- * @author kero
+ * @author aics
  */
 
 #include <set>

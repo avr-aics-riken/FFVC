@@ -18,7 +18,7 @@
 
 //@file   basic_func.h
 //@brief  basic functions
-//@author kero
+//@author aics
 
 #include <math.h>
 

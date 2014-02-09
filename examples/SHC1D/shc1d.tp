@@ -6,7 +6,6 @@ ApplicationControl {
   HintOfFillSeedMedium    = "air"
   VoxelOutput             = "svx"
   DebugDivergence         = "off"
-  bit3option              = "on"
 }
 
 

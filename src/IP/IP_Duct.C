@@ -16,7 +16,7 @@
 /** 
  * @file IP_Duct.C
  * @brief IP_Duct class
- * @author kero
+ * @author aics
  */
 
 #include "IP_Duct.h"

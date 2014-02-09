@@ -15,7 +15,7 @@
 
 //@file   Sampling.C
 //@brief  FlowBase Sampling class
-//@author kero
+//@author aics
 
 #include "Sampling.h"
 

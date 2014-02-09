@@ -15,7 +15,7 @@
 
 //@file   ParseBC.C
 //@brief  FlowBase ParseBC class
-//@author kero
+//@author aics
 
 #include "ParseBC.h"
 #include <math.h>

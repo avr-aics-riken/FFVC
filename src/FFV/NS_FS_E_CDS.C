@@ -16,7 +16,7 @@
 /**
  * @file   NS_FS_E_CDS.C
  * @brief  FFV Class
- * @author kero
+ * @author aics
  */
 
 #include "ffv.h"
@@ -321,7 +321,7 @@ void FFV::NS_FS_E_CDS()
     TIMING_start(tm_poi_src_nrm);
     rhs_nrm = 0.0;
     flop = 0.0;
-    if (C.Hide.Bit3option == OFF)
+    if (ICp->getBit3() == OFF)
     {
       poi_rhs_(&rhs_nrm, d_b, size, &guide, d_ws, d_sq, d_bcp, &dh, &dt, &flop);
     }
@@ -348,7 +348,7 @@ void FFV::NS_FS_E_CDS()
     TIMING_start(tm_poi_src_nrm);
     res_init = 0.0;
     flop = 0.0;
-    if (C.Hide.Bit3option == OFF)
+    if (ICp->getBit3() == OFF)
     {
       poi_residual_(&res_init, size, &guide, d_p, d_b, d_bcp, &flop);
     }
@@ -421,7 +421,7 @@ void FFV::NS_FS_E_CDS()
         break;
         
       case SOR2SMA:
-        SOR_2_SMA(ICp, d_p, d_b, rhs_nrm, res_init, C.ExperimentNaive); // return x^{m+1} - x^m
+        SOR_2_SMA(ICp, d_p, d_b, rhs_nrm, res_init); // return x^{m+1} - x^m
         break;
         
       case GMRES:

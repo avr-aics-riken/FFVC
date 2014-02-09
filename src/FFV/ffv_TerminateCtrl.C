@@ -16,7 +16,7 @@
 /** 
  * @file   ffvTerminateCtrl.C
  * @brief  FFV Terminate Control Class
- * @author kero
+ * @author aics
  */
 
 #ifndef _NO_CPMLIB_

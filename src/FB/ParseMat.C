@@ -16,7 +16,7 @@
 /**
  * @file   ParseMat.C
  * @brief  FlowBase ParseMat class
- * @author kero
+ * @author aics
  */
 
 #include "ParseMat.h"

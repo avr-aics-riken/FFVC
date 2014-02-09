@@ -16,7 +16,7 @@
 /**
  * @file   fill_bid.h
  * @brief  bidによるフィルアルゴのコア
- * @author kero
+ * @author aics
  */
 
 

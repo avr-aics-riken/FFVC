@@ -18,7 +18,7 @@
 
 //@file   ParseBC.h
 //@brief  FlowBase ParseBC class Header
-//@author kero
+//@author aics
 
 #include <stdlib.h>
 #include "cpm_ParaManager.h"

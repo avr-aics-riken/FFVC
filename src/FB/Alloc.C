@@ -17,7 +17,7 @@
 /** 
  * @file   Alloc.C
  * @brief  FlowBase Alloc class
- * @author kero
+ * @author aics
  */
 
 #include "Alloc.h"

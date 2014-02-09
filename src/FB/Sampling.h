@@ -18,7 +18,7 @@
 
 //@file   Sampling.h
 //@brief  FlowBase Sampling class Header
-//@author kero
+//@author aics
 
 #include "FB_Define.h"
 #include "vec3.h"

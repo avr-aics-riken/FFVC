@@ -16,7 +16,7 @@
 /** 
  * @file   main.C
  * @brief  ffvのmain関数
- * @author kero
+ * @author aics
  */
 
 #include "ffv.h"

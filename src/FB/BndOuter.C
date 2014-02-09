@@ -15,7 +15,7 @@
 
 //@file   BndOuter.C
 //@brief  FlowBase BoundaryOuter class
-//@author kero
+//@author aics
 
 #include "BndOuter.h"
 

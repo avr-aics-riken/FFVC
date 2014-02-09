@@ -16,7 +16,7 @@
 /**
  @file   Control.C
  @brief  FlowBase Control class
- @author kero
+ @author aics
  */
 
 #include "Control.h"
@@ -550,22 +550,6 @@ void Control::getApplicationControl()
     else
     {
       Exit(0);
-    }
-  }
-  
-  // Bit3Test for FX (NOT mandatory)
-  label = "/ApplicationControl/Bit3option";
-  
-  if ( tpCntl->chkLabel(label) )
-  {
-    if ( !(tpCntl->getInspectedValue(label, str )) )
-    {
-      Hostonly_ stamped_printf("\tError : '%s'\n", label.c_str());
-      Exit(0);
-    }
-    else
-    {
-      if ( !strcasecmp(str.c_str(), "on") ) Hide.GlyphOutput = ON;
     }
   }
   
@@ -2751,7 +2735,14 @@ void Control::printLS(FILE* fp, const IterationCtl* IC)
     case SOR2SMA:
       if (IC->getNaive()==OFF)
       {
-        fprintf(fp,"\t       Linear Solver          :   2-colored SOR SMA (Stride Memory Access)\n");
+        if ( IC->getBit3()==OFF )
+        {
+          fprintf(fp,"\t       Linear Solver          :   2-colored SOR SMA (Stride Memory Access, Bit compressed 1-decode)\n");
+        }
+        else
+        {
+          fprintf(fp,"\t       Linear Solver          :   2-colored SOR SMA (Stride Memory Access, Bit compressed 3-decodes)\n");
+        }
       }
       else
       {

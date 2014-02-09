@@ -16,7 +16,7 @@
 /**
  * @file   layout.C
  * @brief  LAYOUT Class
- * @author kero
+ * @author aics
  */
 
 #include "layout.h"

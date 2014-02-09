@@ -19,7 +19,7 @@
 /** 
  * @file   Intrinsic.h
  * @brief  FlowBase Intrinsic class Header
- * @author kero
+ * @author aics
  */
 
 #include "cpm_ParaManager.h"

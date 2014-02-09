@@ -16,7 +16,7 @@
 /** 
  * @file   SetBC.C
  * @brief  FlowBase SetBC class
- * @author kero
+ * @author aics
  */
 
 #include "SetBC.h"

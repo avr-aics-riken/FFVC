@@ -16,7 +16,7 @@
 /** 
  * @file   Component.C
  * @brief  FlowBase CompoList class
- * @author kero
+ * @author aics
  */
 
 #include "Component.h"

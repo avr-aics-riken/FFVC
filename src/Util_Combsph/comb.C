@@ -16,7 +16,7 @@
 /**
  * @file   comb.C
  * @brief  COMB Class
- * @author kero
+ * @author aics
  */
 
 #include "comb.h"

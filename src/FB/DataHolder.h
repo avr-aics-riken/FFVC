@@ -19,7 +19,7 @@
 /**
  * @file   DataHolder.h
  * @brief  FlowBase DataHolder class Header
- * @author kero
+ * @author aics
  */
 
 #include "DomainInfo.h"

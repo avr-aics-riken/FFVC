@@ -16,7 +16,7 @@
 /**
  * @file   PLOT3D.C
  * @brief  FlowBase FileIO_PLOT3D class Header
- * @author kero
+ * @author aics
  */
 
 #include "PLOT3D.h"

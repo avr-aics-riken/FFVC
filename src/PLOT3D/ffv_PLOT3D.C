@@ -16,7 +16,7 @@
 /**
  * @file   ffv_PLOT3D.C
  * @brief  Plot3D Class
- * @author kero
+ * @author aics
  */
 
 #include "ffv_PLOT3D.h"

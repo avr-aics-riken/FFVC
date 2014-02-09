@@ -16,7 +16,7 @@
 /**
  @file   IP_Polygon.C
  @brief  IP_Polygon class
- @author kero
+ @author aics
  */
 
 #include "IP_Polygon.h"

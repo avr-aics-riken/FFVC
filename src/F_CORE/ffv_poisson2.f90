@@ -17,7 +17,7 @@
 
 !> @file   ffv_poisson.f90
 !! @brief  Poisson routine
-!! @author kero
+!! @author aics
 !<
 
 !> ********************************************************************

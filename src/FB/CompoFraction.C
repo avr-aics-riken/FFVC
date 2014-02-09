@@ -15,7 +15,7 @@
 
 //@file   CompoFraction.C
 //@brief  CompoFraction class
-//@author kero
+//@author aics
 
 #include "CompoFraction.h"
 

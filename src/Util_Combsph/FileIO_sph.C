@@ -16,7 +16,7 @@
 /** 
  * @file   FileIO_SPH_sph.C
  * @brief  FileIO_SPH Class
- * @author kero
+ * @author aics
  */
 
 #include "FileIO_sph.h"

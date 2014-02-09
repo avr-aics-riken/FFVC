@@ -17,7 +17,7 @@
 
 !> @file   ffv_utility.f90
 !! @brief  Utilitiy functions
-!! @author kero
+!! @author aics
 !<
 
 !> ********************************************************************

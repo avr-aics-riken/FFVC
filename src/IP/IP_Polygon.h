@@ -19,7 +19,7 @@
 /**
  @file   IP_Polygon.h
  @brief  IP_Polygon class Header
- @author kero
+ @author aics
  */
 
 #include "../FB/Intrinsic.h"

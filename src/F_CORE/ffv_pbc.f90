@@ -17,7 +17,7 @@
 
 !> @file   ffv_pbc.f90
 !! @brief  圧力境界条件
-!! @author kero
+!! @author aics
 !<
     
 

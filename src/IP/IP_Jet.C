@@ -16,7 +16,7 @@
 /**
  * @file   IP_Jet.C
  * @brief  IP_Jet class
- * @author kero
+ * @author aics
  */
 
 #include "IP_Jet.h"

@@ -17,7 +17,7 @@
 
 !> @file   load_var_stencil5.h
 !! @brief  共通のデータロード部分
-!! @author kero
+!! @author aics
 !<
 
 !   real                                                        ::  Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2

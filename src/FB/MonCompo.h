@@ -19,7 +19,7 @@
 /** 
  * @file   MonCompo.h
  * @brief  FlowBase MonitorCompo class Header
- * @author kero
+ * @author aics
  */
 
 #include "DomainInfo.h"

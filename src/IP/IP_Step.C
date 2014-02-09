@@ -16,7 +16,7 @@
 /** 
  * @file   IP_Step.C
  * @brief  IP_Step class
- * @author kero
+ * @author aics
  */
 
 #include "IP_Step.h"

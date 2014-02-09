@@ -16,7 +16,7 @@
 /** 
  * @file   dfiinfo.C
  * @brief  DfiInfo Class
- * @author kero
+ * @author aics
  */
 
 #include "dfiinfo.h"

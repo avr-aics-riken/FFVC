@@ -16,7 +16,7 @@
 /** 
  * @file   IP_Cylinder.C
  * @brief  IP_Cylinder class
- * @author kero
+ * @author aics
  */
 
 #include "IP_Cylinder.h"

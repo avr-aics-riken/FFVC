@@ -15,7 +15,7 @@
 
 //@file   Glyph.C
 //@brief  FlowBase Glyph class Header
-//@author kero
+//@author aics
 
 #include "Glyph.h"
 

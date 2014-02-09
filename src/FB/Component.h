@@ -19,7 +19,7 @@
 /** 
  * @file   Component.h
  * @brief  FlowBase CompoList class Header
- * @author kero
+ * @author aics
  */
 
 #include "cpm_Define.h"

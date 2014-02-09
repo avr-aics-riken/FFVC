@@ -19,7 +19,7 @@
 /** 
  * @file   IP_PPLT2D.h
  * @brief  IP_PPLT2D class Header
- * @author kero
+ * @author aics
  */
 
 #include "../FB/Intrinsic.h"

@@ -19,7 +19,7 @@
 /** 
  * @file   IP_Define.h
  * @brief  Intrinsic class Header
- * @author kero
+ * @author aics
  */
 
 #define IP_VERS 129

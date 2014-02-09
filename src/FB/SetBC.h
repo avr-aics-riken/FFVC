@@ -19,7 +19,7 @@
 /** 
  * @file   SetBC.h
  * @brief  FlowBase SetBC class Header
- * @author kero
+ * @author aics
  */
 
 #include "cpm_ParaManager.h"

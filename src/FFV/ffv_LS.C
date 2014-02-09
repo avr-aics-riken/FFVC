@@ -16,7 +16,7 @@
 /** 
  * @file   ffv_LS.C
  * @brief  FFV Class
- * @author kero
+ * @author aics
  */
 
 #include "ffv.h"
@@ -357,7 +357,7 @@ void FFV::Sync_Scalar(IterationCtl* IC, REAL_TYPE* d_class, const int num_layer)
 
 // #################################################################
 // SOR2SMA
-int FFV::SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0, const int naive)
+int FFV::SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
 {
   int ip;                         /// ローカルノードの基点(1,1,1)のカラーを示すインデクス
                                   /// ip=0 > R, ip=1 > B
@@ -401,9 +401,9 @@ int FFV::SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rh
       
       TIMING_start(tm_poi_SOR2SMA);
       flop_count = 0.0; // 色間で積算しない
-      if ( naive==OFF)
+      if ( IC->getNaive()==OFF)
       {
-        if (C.Hide.Bit3option == OFF)
+        if (IC->getBit3() == OFF)
         {
           psor2sma_core_(x, size, &guide, &ip, &color, &omg, &res, b, d_bcp, &flop_count);
         }
@@ -813,7 +813,7 @@ void FFV::Fgmres(IterationCtl* IC, const double rhs_nrm, const double r0)
         
         // Inner-iteration
         for (int i_inner=1; i_inner<=n_inner; i_inner++) {
-          SOR_2_SMA(IC, &d_zm[adrs], &d_vm[adrs], rhs_nrm, r0, C.ExperimentNaive); // z^i <- K^{-1} v^i
+          SOR_2_SMA(IC, &d_zm[adrs], &d_vm[adrs], rhs_nrm, r0); // z^i <- K^{-1} v^i
         }
       }
       else
@@ -949,7 +949,7 @@ void FFV::Fgmres(IterationCtl* IC, const double rhs_nrm, const double r0)
   
 jump_2:
   
-  SOR_2_SMA(IC, &d_zm[0], &d_vm[0], rhs_nrm, r0, C.ExperimentNaive);
+  SOR_2_SMA(IC, &d_zm[0], &d_vm[0], rhs_nrm, r0);
   
   
 jump_4:

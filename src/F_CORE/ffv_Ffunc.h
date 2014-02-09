@@ -16,7 +16,7 @@
 /** 
  * @file   ffv_Ffunc.h
  * @brief  FFV Fortran function Header
- * @author kero
+ * @author aics
  */
 
 #include "FB_Define.h"

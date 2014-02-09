@@ -16,7 +16,7 @@
 /**
  * @file   IterationControl.C
  * @brief  FlowBase IterationCtl class
- * @author kero
+ * @author aics
  */
 
 #include "IterationControl.h"
@@ -37,6 +37,7 @@ void IterationCtl::copy(IterationCtl* src)
   Sync         = src->Sync;
   omg          = src->omg;
   Naive        = src->Naive;
+  Bit3option   = src->Bit3option;
 }
 
 
@@ -210,8 +211,21 @@ void IterationCtl::getParaSOR2(TextParser* tpCntl, const string base)
     else
     {
       if ( !strcasecmp(str.c_str(), "on") ) Naive = ON;
-      else if ( !strcasecmp(str.c_str(), "off") ) Naive = OFF;
-      else Exit(0);
+    }
+  }
+  
+  // Bit3Test (NOT mandatory)
+  label = "/Bit3option";
+  
+  if ( tpCntl->chkLabel(label) )
+  {
+    if ( !(tpCntl->getInspectedValue(label, str )) )
+    {
+      Exit(0);
+    }
+    else
+    {
+      if ( !strcasecmp(str.c_str(), "on") ) Bit3option = ON;
     }
   }
   

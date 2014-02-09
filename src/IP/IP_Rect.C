@@ -16,7 +16,7 @@
 /** 
  * @file   IP_Rect.C
  * @brief  IP_Rect class
- * @author kero
+ * @author aics
  */
 
 #include "IP_Rect.h"

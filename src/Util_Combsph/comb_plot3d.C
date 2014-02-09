@@ -16,7 +16,7 @@
 /**
  * @file   comb_plot3d.C
  * @brief  COMB Class
- * @author kero
+ * @author aics
  */
 
 

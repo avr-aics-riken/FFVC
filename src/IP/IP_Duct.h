@@ -19,7 +19,7 @@
 /** 
  * @file   IP_Duct.h
  * @brief  IP_Duct class Header
- * @author kero
+ * @author aics
  */
 
 #include "../FB/Intrinsic.h"

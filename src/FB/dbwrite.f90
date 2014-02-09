@@ -16,7 +16,7 @@
 
 !> @file   dbwrite.f90
 !! @brief  FlowBase utilities for CIOlib
-!! @author kero
+!! @author aics
 !<
 
 !> ********************************************************************

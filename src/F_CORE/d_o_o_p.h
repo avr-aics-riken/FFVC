@@ -17,7 +17,7 @@
 
 !> @file   d_o_o_p.h
 !! @brief  データロードの共通部分
-!! @author kero
+!! @author aics
 !<
 
 !    real                                                        ::  b_w, b_e, b_s, b_n, b_b, b_t, b_p

@@ -17,7 +17,7 @@
 
 !> @file   ffv_bc_outer.f90
 !! @brief  外部境界条件
-!! @author kero
+!! @author aics
 !<
 
 

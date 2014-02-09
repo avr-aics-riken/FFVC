@@ -18,7 +18,7 @@
 
 //@file   dfi.h
 //@brief  DFI class Header
-//@author kero
+//@author aics
 //@note このクラスは、並列時のみにコールすること。MPI_Initialize(), Finalize()はクラス外で実行。
 //      dfiファイルの書き出しは、マスターランクでのみ行う。
 

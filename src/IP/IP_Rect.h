@@ -19,7 +19,7 @@
 /** 
  * @file   IP_Rect.h
  * @brief  IP_Rect class Header
- * @author kero
+ * @author aics
  */
 
 #include "../FB/Intrinsic.h"

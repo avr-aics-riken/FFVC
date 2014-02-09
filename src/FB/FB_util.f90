@@ -16,7 +16,7 @@
 
 !> @file   FB_util.f90
 !! @brief  FlowBase utilities
-!! @author kero
+!! @author aics
 !<
 
 !> ********************************************************************

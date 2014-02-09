@@ -19,7 +19,7 @@
 /** 
  * @file   IP_PMT.h
  * @brief  IP_PMT class Header
- * @author kero
+ * @author aics
  */
 
 #include "../FB/Intrinsic.h"

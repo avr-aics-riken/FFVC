@@ -16,7 +16,7 @@
 /**
  * @file   Monitor.C
  * @brief  FlowBase MonitorList class
- * @author kero
+ * @author aics
  */
 
 #include "Monitor.h"

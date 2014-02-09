@@ -7,7 +7,6 @@ ApplicationControl {
   HintOfFillSeedMedium    = "water"
   VoxelOutput             = "off"
   DebugDivergence         = "off"
-  bit3option              = "on"
 }
 
 

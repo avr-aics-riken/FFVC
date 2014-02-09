@@ -59,16 +59,16 @@ while test $# -gt 0; do
     --version)
 cat <<EOF
 
-# FFV-C : Frontflow / violet Cartesian  Ver. @VERSION@  (@FFVC_REVISION@)
-#
-# Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
-# All rights reserved.
-#
-# Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo. 
-# All rights reserved.
-#
-# Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN. 
-# All rights reserved. 
+FFV-C : Frontflow / violet Cartesian  Ver. @VERSION@  (@FFVC_REVISION@)
+
+Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
+All rights reserved.
+
+Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+All rights reserved.
+
+Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+All rights reserved.
 
 EOF
       exit 0

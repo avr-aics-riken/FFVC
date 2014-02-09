@@ -16,7 +16,7 @@
 /** 
  * @file   MonCompo.h
  * @brief  FlowBase MonitorCompo class
- * @author kero
+ * @author aics
  */
 
 #include "MonCompo.h"

@@ -7,7 +7,7 @@ Release Note
   Institute of Industrial Scienece, 
   University of Tokyo, Japan.
 
-  @author kero
+  @author aics
 
 #######################################
 

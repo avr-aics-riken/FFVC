@@ -16,7 +16,7 @@
 /** 
  * @file   History.C
  * @brief  FlowBase History class
- * @author kero
+ * @author aics
  */
 
 #include "History.h"

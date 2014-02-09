@@ -16,7 +16,7 @@
 /** 
  * @file   ffv_Loop.C
  * @brief  FFV Class
- * @author kero
+ * @author aics
  */
 
 #include "ffv.h"

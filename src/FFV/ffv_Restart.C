@@ -16,7 +16,7 @@
 /** 
  * @file   ffv_Restart.C
  * @brief  FFV Class
- * @author kero
+ * @author aics
  */
 
 #include "ffv.h"

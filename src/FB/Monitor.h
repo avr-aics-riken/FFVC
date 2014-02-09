@@ -18,7 +18,7 @@
 
 //@file   Monitor.h
 //@brief  FlowBase MonitorList class Header
-//@author kero
+//@author aics
 
 #include "DomainInfo.h"
 #include <string>

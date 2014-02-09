@@ -15,7 +15,7 @@
 
 //@file   dfi.C
 //@brief  DFIファイル生成
-//@author kero
+//@author aics
 
 
 #include "dfi.h"

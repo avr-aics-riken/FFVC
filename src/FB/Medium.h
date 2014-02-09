@@ -19,7 +19,7 @@
 /** 
  * @file   Medium.h
  * @brief  FlowBase Medium class Header
- * @author kero
+ * @author aics
  */
 
 #include "cpm_Define.h"

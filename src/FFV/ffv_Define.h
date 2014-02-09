@@ -19,7 +19,7 @@
 /** 
  * @file   ffv_Define.h
  * @brief  FFV Class Definition Header
- * @author kero
+ * @author aics
  */
 
 #define TM_LABEL_MAX 24

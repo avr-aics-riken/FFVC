@@ -19,7 +19,7 @@
 /**
  * @file   comb.h
  * @brief  COMB Class Header
- * @author kero
+ * @author aics
  */
 
 #include "mpi.h"

@@ -19,7 +19,7 @@
 /**
  * @file   IterationControl.h
  * @brief  FlowBase IterationCtl class Header
- * @author kero
+ * @author aics
  */
 
 #include "FB_Define.h"
@@ -45,6 +45,7 @@ private:
   int valid;            ///< 有効フラグ
   int Sync;             ///< 同期モード (comm_sync, comm_async)
   int Naive;            ///< Naive Implementation >> on/off
+  int Bit3option;       ///< bit option
   string alias;         ///< 別名
   
 public:
@@ -61,6 +62,7 @@ public:
     omg = 0.0;
     Sync = -1;
     Naive = OFF;
+    Bit3option = OFF;
   }
   
   /**　デストラクタ */
@@ -122,6 +124,12 @@ public:
   int getNaive() const
   {
     return Naive;
+  }
+  
+  // @brief Bit3Optionを返す
+  int getBit3() const
+  {
+    return Bit3option;
   }
   
   

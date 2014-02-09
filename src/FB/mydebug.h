@@ -18,7 +18,7 @@
 
 //@file   mydebug.h
 //@brief  FlowBase mydebug Header
-//@author kero
+//@author aics
 
 #include <stdlib.h>
 

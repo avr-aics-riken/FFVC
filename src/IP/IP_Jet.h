@@ -19,7 +19,7 @@
 /**
  * @file   IP_Jet.h
  * @brief  IP_Jet class Header
- * @author kero
+ * @author aics
  */
 
 #include "../FB/Intrinsic.h"

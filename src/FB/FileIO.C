@@ -16,7 +16,7 @@
 /** 
  * @file   FileIO.C
  * @brief  FlowBase FileIO class Header
- * @author kero
+ * @author aics
  */
 
 #include "FileIO.h"

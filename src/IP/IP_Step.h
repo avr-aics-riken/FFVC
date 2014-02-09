@@ -19,7 +19,7 @@
 /** 
  * @file   IP_Step.h
  * @brief  IP_Step class Header
- * @author kero
+ * @author aics
  */
 
 #include "../FB/Intrinsic.h"

@@ -25,7 +25,7 @@
 /** 
  * @file   ffv.h
  * @brief  FFV Class Header
- * @author kero
+ * @author aics
  */
 
 #include "cpm_ParaManager.h"
@@ -812,9 +812,8 @@ private:
    * @param [in]     b  RHS  vector
    * @param [in]     rhs_nrm RHS vector
    * @param [in]     r0      初期残差ベクトル
-   * @param [in]     naive   naive実装 ON/OFF
    */
-  int SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0, const int naive);
+  int SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
   
   
   /**

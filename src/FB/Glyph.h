@@ -18,7 +18,7 @@
 
 //@file   Glyph.h
 //@brief  FlowBase Glyph class Header
-//@author kero
+//@author aics
 
 #include "mpi.h" // add header explicitly to avoid compile error for Intel MPI
 #include <iostream>

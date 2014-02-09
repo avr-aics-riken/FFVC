@@ -19,7 +19,7 @@
 /** 
  * @file   FileIO_SPH.h
  * @brief  FileIO_SPH Class Header
- * @author kero
+ * @author aics
  */
 
 #include <stdio.h>

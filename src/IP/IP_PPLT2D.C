@@ -16,7 +16,7 @@
 /** 
  * @file   IP_PPLT2D.C
  * @brief  IP_PPLT2D class
- * @author kero
+ * @author aics
  */
 
 #include "IP_PPLT2D.h"

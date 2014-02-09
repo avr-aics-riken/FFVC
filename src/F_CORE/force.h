@@ -17,7 +17,7 @@
 
 !> @file   force.h
 !! @brief  力の各成分の計算
-!! @author kero
+!! @author aics
 !<
 
 ! 179 flop

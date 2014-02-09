@@ -19,7 +19,7 @@
 /**
  * @file   FB_Ffunc.h
  * @brief  FlowBase Fortran function Header
- * @author kero
+ * @author aics
  */
 
 

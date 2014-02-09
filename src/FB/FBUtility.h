@@ -19,7 +19,7 @@
 /** 
  * @file   FBUtility.h
  * @brief  FlowBase FBUtility class Header
- * @author kero
+ * @author aics
  */
 
 #include "cpm_Define.h"

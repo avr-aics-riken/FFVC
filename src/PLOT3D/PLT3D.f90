@@ -17,7 +17,7 @@
 
 !> @file   PLT3D.f90
 !! @brief  FlowBase PLOT3D related code
-!! @author kero
+!! @author aics
 !<
 
 !  ***************************************************

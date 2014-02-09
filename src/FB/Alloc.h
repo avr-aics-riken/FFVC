@@ -19,7 +19,7 @@
 /** 
  * @file   Alloc.h
  * @brief  FlowBase Files class Header
- * @author kero
+ * @author aics
  */
 
 #include <string.h>

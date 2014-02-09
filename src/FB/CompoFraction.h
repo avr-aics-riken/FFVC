@@ -19,7 +19,7 @@
 /** 
  * @file   CompoFraction.h
  * @brief  Component Fraction class Header
- * @author kero
+ * @author aics
  */
 
 #include "FB_Define.h"

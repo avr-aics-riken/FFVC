@@ -16,7 +16,7 @@
 /**
  * @file   DataHolder.C
  * @brief  FlowBase DataHolder class
- * @author kero
+ * @author aics
  */
 
 #include "DataHolder.h"

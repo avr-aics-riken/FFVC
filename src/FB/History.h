@@ -19,7 +19,7 @@
 /** 
  * @file   History.h
  * @brief  FlowBase History class Header
- * @author kero
+ * @author aics
  */
 
 

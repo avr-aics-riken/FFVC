@@ -19,7 +19,7 @@
 /** 
  * @file   dfiinfo.h
  * @brief  DfiInfo Class Header
- * @author kero
+ * @author aics
  */
 
 #include "cpm_Define.h"

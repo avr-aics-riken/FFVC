@@ -160,13 +160,13 @@ Here is examples.
       --with-pm=/usr/local/FFV/PMlib \
       --with-polylib=/usr/local/FFV/Polylib \
       --with-parser=/usr/local/FFV/TextParser \
+      --with-comp=GNU \
       CC=mpicc \
       CFLAGS=-O3 \
       CXX=mpicxx \
       CXXFLAGS="-O3 -fopenmp" \
       F90=mpif90 \
-      F90FLAGS="-O3 -cpp -fopenmp -ffree-form" \
-      LIBS=-lgfortran
+      F90FLAGS="-O3 -cpp -fopenmp -ffree-form"
 
 
 ## for K-computer

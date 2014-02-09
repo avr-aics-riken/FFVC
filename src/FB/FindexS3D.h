@@ -16,7 +16,7 @@
 /**
  * @file   FindexS3D.h
  * @brief  アドレス計算の共通ヘッダ
- * @author kero
+ * @author aics
  */
 
   // int ix, jx, kx, gd;

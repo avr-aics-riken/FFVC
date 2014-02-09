@@ -16,7 +16,7 @@
 /** 
  * @file main.C
  * @brief combのmain関数
- * @author kero
+ * @author aics
  */
 
 #include "comb.h"

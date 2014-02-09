@@ -16,7 +16,7 @@
 /** 
  * @file   Intrinsic.C
  * @brief  FlowBase Intrinsic class
- * @author kero
+ * @author aics
  */
 
 #include "Intrinsic.h"

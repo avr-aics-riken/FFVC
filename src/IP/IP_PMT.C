@@ -16,7 +16,7 @@
 /** 
  * @file   IP_PMT.C
  * @brief  IP_PMT class
- * @author kero
+ * @author aics
  */
 
 #include "IP_PMT.h"

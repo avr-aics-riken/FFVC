@@ -19,7 +19,7 @@
 /** 
  * @file   layout.h
  * @brief  LAYOUT Class Header
- * @author kero
+ * @author aics
  */
 
 #include "mpi.h"

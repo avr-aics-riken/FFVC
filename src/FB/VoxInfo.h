@@ -19,7 +19,7 @@
 /** 
  * @file   VoxInfo.h
  * @brief  FlowBase VoxInfo class Header
- * @author kero
+ * @author aics
  */
 
 #include "cpm_ParaManager.h"

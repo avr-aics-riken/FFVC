@@ -19,6 +19,14 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-02-09
+- r1601  [ver 1.5.9]
+  - move Bit3option form ApplicationControl to Iteration/LinearSolver[@]
+  - CIOlib-1.5.2 compatible
+
+
+
+--------------------------
 2014-02-08
 - r1060 add configure for gfortran [ver 1.5.8]
  - change AC_PREREQ([2.69]) to 2.63 for convenience
