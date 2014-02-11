@@ -16,8 +16,8 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.63])
-AC_INIT([FFVC], [1.5.9], [keno@riken.jp], [FFVC])
+AC_PREREQ([2.57])
+AC_INIT([FFVC], [1.6.0], [keno@riken.jp], [FFVC])
 AM_INIT_AUTOMAKE()
 AC_CONFIG_SRCDIR([src/FB/Alloc.C])
 AC_CONFIG_HEADERS([config.h])
@@ -25,9 +25,8 @@ AC_CONFIG_HEADERS([config.h])
 #
 # revision No.
 #
-FFVC_REVISION="20140209_1730"
+FFVC_REVISION="20140211_2030"
 AC_SUBST(FFVC_REVISION)
-
 
 
 #
@@ -38,12 +37,10 @@ FC=$F90
 FCFLAGS=$F90FLAGS
 
 
-
 #
 # compiler
 #
 AC_ARG_WITH(comp, [AC_HELP_STRING([--with-comp=(INTEL|FJ|GNU)],[Specify Compiler type])], , with_comp=none)
-
 
 
 #
@@ -52,15 +49,21 @@ AC_ARG_WITH(comp, [AC_HELP_STRING([--with-comp=(INTEL|FJ|GNU)],[Specify Compiler
 AC_ARG_WITH(precision, [AC_HELP_STRING([--with-precision=(single|double)],[Specify REAL type [single]])], , with_precision=single)
 AC_SUBST(REALOPT)
 AC_SUBST(FREALOPT)
-if test "$with_precision" = "double" ; then
+
+if test x"$with_precision" = x"double" ; then
   REALOPT=-D_REAL_IS_DOUBLE_
-  if test "$with_comp" = "INTEL" ; then
-    FREALOPT="-r8"
-  elif test "$with_comp" = "FJ" ; then
-    FREALOPT="-CcdRR8"
-  elif test "$with_comp" = "GNU" ; then
-    FREALOPT="-fdefault-real-8"
-  fi
+#  if test x"$with_comp" = x"INTEL" ; then
+#    FREALOPT="-r8"
+#  elif test x"$with_comp" = x"FJ" ; then
+#    FREALOPT="-CcdRR8"
+#  elif test x"$with_comp" = x"GNU" ; then
+#    FREALOPT="-fdefault-real-8"
+#  fi
+  case "$with_comp" in
+    INTEL) FREALOPT="-r8" ;;
+    FJ)    FREALOPT="-CcdRR8" ;;
+    GNU)   FREALOPT="-fdefault-real-8" ;;
+  esac
 else
   REALOPT=
   FREALOPT=
@@ -84,8 +87,11 @@ case "$FFVC_CXX" in
   mpiCC)    enable_mpi="wrappermpi" ;;
   mpic++)   enable_mpi="wrappermpi" ;;
   mpiFCCpx) enable_mpi="wrappermpi" ;;
+  CC)       enable_mpi="wrappermpi" ;;
 esac
 
+# mpiFCCpx ; Fujitsu FX
+# CC       ; NERSC Hopper
 
 #
 # MPICH environment
@@ -156,16 +162,23 @@ AC_SUBST(FFVC_LIBS)
 FFVC_FC_LD=""
 AC_SUBST(FFVC_FC_LD)
 
-if test "$with_comp" = "FJ"; then
-  FFVC_FC_LD="$CXX"" --linkfortran"
-  FFVC_LIBS=" --linkfortran"
-elif test "$with_comp" = "INTEL" ; then
-  FFVC_LIBS="$FFVC_LIBS"" -lstdc++ -lifcore"
-elif test "$with_comp" = "GNU" ; then
-  FFVC_LIBS="$FFVC_LIBS"" -lstdc++ -lgfortran"
-else
-  FFVC_LIBS="$FFVC_LIBS"" -lstdc++"
-fi
+#if test "$with_comp" = "FJ"; then
+#  FFVC_FC_LD="$CXX"" --linkfortran"
+#  FFVC_LIBS=" --linkfortran"
+#elif test "$with_comp" = "INTEL" ; then
+#  FFVC_LIBS="$FFVC_LIBS"" -lstdc++ -lifcore"
+#elif test "$with_comp" = "GNU" ; then
+#  FFVC_LIBS="$FFVC_LIBS"" -lstdc++ -lgfortran"
+#else
+#  FFVC_LIBS="$FFVC_LIBS"" -lstdc++"
+#fi
+
+case "$with_comp" in
+  INTEL) FFVC_LIBS="$FFVC_LIBS"" -lstdc++ -lifcore" ;;
+  FJ)    FFVC_FC_LD="$CXX"" --linkfortran" \
+         FFVC_LIBS=" --linkfortran" ;;
+  GNU)   FFVC_LIBS="$FFVC_LIBS"" -lstdc++ -lgfortran" ;;
+esac
 
 FFVC_LDFLAGS=""
 AC_SUBST(FFVC_LDFLAGS)
@@ -175,7 +188,7 @@ AC_SUBST(FFVC_LDFLAGS)
 # default prefix setting
 #
 AC_PREFIX_DEFAULT([/usr/local/FFVC])
-if test "$prefix" = "NONE" ; then
+if test x"$prefix" = x"NONE" ; then
   FFVC_INST_DIR=/usr/local/FFVC
 else
   FFVC_INST_DIR="$prefix"
@@ -190,7 +203,7 @@ AC_ARG_WITH(cpm, [AC_HELP_STRING([--with-cpm=dir],[Specify CPMlib installed dire
 AC_SUBST(CPM_DIR)
 AC_SUBST(CPM_CFLAGS)
 AC_SUBST(CPM_LDFLAGS)
-if test "$with_cpm" != "none" ; then
+if test x"$with_cpm" != x"none" ; then
   CPM_DIR=$with_cpm;
   CPM_CFLAGS=`$CPM_DIR/bin/cpm-config --cflags`
   CPM_LDFLAGS=`$CPM_DIR/bin/cpm-config --libs`
@@ -209,7 +222,7 @@ AC_ARG_WITH(cio, [AC_HELP_STRING([--with-cio=dir],[Specify CIOlib installed dire
 AC_SUBST(CIO_DIR)
 AC_SUBST(CIO_CFLAGS)
 AC_SUBST(CIO_LDFLAGS)
-if test "$with_cio" != "none" ; then
+if test x"$with_cio" != x"none" ; then
   CIO_DIR=$with_cio;
   CIO_CFLAGS=`$CIO_DIR/bin/cio-config --cflags`
   CIO_LDFLAGS=`$CIO_DIR/bin/cio-config --libs`
@@ -229,7 +242,7 @@ AC_ARG_WITH(parser, [AC_HELP_STRING([--with-parser=dir],[Specify TextParser inst
 AC_SUBST(TP_DIR)
 AC_SUBST(TP_CFLAGS)
 AC_SUBST(TP_LDFLAGS)
-if test "$with_parser" != "none" ; then
+if test x"$with_parser" != x"none" ; then
   TP_DIR=$with_parser;
   TP_CFLAGS=`$TP_DIR/bin/tp-config --cflags`
   TP_LDFLAGS=`$TP_DIR/bin/tp-config --libs`
@@ -249,7 +262,7 @@ AC_SUBST(PM_CFLAGS)
 AC_ARG_WITH(pm, [AC_HELP_STRING([--with-pm=dir],[Specify PMlib install directory])], , with_pm=none)
 AC_SUBST(PM_LDFLAGS)
 
-if test "$with_pm" != "none" ; then
+if test x"$with_pm" != x"none" ; then
   PM_DIR=$with_pm;
   PM_CFLAGS=`$PM_DIR/bin/pm-config --cflags`
   PM_LDFLAGS=`$PM_DIR/bin/pm-config --libs`
@@ -269,7 +282,7 @@ AC_SUBST(PL_DIR)
 AC_SUBST(PL_CFLAGS)
 AC_SUBST(PL_LDFLAGS)
 
-if test "$with_polylib" != "none" ; then
+if test x"$with_polylib" != x"none" ; then
   PL_DIR=$with_polylib;
   PL_CFLAGS=`$PL_DIR/bin/polylib-config --cflags`
   PL_LDFLAGS=`$PL_DIR/bin/polylib-config --libs`
@@ -289,7 +302,7 @@ AC_SUBST(CUT_DIR)
 AC_SUBST(CUT_CFLAGS)
 AC_SUBST(CUT_LDFLAGS)
 
-if test "$with_cut" != "none" ; then
+if test x"$with_cut" != x"none" ; then
   CUT_DIR=$with_cut;
   CUT_CFLAGS=`$CUT_DIR/bin/cut-config --cflags`
   CUT_LDFLAGS=`$CUT_DIR/bin/cut-config --libs`

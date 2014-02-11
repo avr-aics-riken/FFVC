@@ -19,6 +19,14 @@ RELEASE
 =======
 
 -------------
+Version 1.6.0    2014-02-11
+  - CC compiler wrapper for NERSC Hopper
+
+-------------
+Version 1.5.9    2014-02-09
+  - CIOlib-1.5.2 compatible
+
+-------------
 Version 1.5.8    2014-02-08
   - GNU compiler
 

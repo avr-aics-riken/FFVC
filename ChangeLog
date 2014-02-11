@@ -19,12 +19,15 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-02-11
+- r1602 NERSC Hopper [ver 1.6.0]
+  - add CCcompiler wrapper in configure.ac
+
+--------------------------
 2014-02-09
 - r1601  [ver 1.5.9]
-  - move Bit3option form ApplicationControl to Iteration/LinearSolver[@]
-  - CIOlib-1.5.2 compatible
-
-
+ - move Bit3option form ApplicationControl to Iteration/LinearSolver[@]
+ - CIOlib-1.5.2 compatible
 
 --------------------------
 2014-02-08
