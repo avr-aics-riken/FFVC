@@ -22,6 +22,6 @@
  * @author aics
  */
 
-#define IP_VERS 129
+#define IP_VERS 130
 
 #endif // _IP_DEFINE_H_

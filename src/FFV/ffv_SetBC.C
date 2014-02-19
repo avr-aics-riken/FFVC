@@ -330,6 +330,12 @@ void SetBC3D::modDivergence(REAL_TYPE* dv, int* d_cdf, double tm, REAL_TYPE* v00
         obc[face].setDomainMF(dd);
         break;
         
+      case OBC_SYMMETRIC:
+        // no contribution
+        dd = 0.0;
+        obc[face].setDomainMF(dd);
+        break;
+        
       case OBC_INTRINSIC:
         if ( C->Mode.Example == id_Jet )
         {
@@ -575,6 +581,10 @@ void SetBC3D::modPvecFlux(REAL_TYPE* wv, REAL_TYPE* v, int* d_cdf, const double 
         vobc_pv_wall_(wv, size, &gd, &face, &dh, &rei, v, vec, nID, &flop);
         break;
         
+      case OBC_SYMMETRIC:
+        // nothing, no flux contribution
+        break;
+        
       case OBC_INTRINSIC:
         if ( C->Mode.Example == id_Jet )
         {
@@ -640,6 +650,10 @@ void SetBC3D::modPsrcVBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE
         vobc_div_drchlt_(s_0, size, &gd, &face, d_cdf, vec, &dd, nID);
         break;
       }
+        
+      case OBC_SYMMETRIC:
+        // no contribution
+        break;
         
       case OBC_INTRINSIC:
         if ( C->Mode.Example == id_Jet )
@@ -870,12 +884,6 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_cdf, const double
         obc[face].setDomainMF(vsum);
         break;
         
-      case OBC_SYMMETRIC:
-        vobc_symmetric_(d_v, size, &gd, &face, nID);
-        vsum = 0.0;
-        obc[face].setDomainMF(vsum);
-        break;
-        
       case OBC_SPEC_VEL:
         dummy = extractVelOBC(face, vec, tm, v00);
         vobc_drchlt_(d_v, size, &gd, &face, d_cdf, vec, nID);
@@ -924,10 +932,6 @@ void SetBC3D::OuterVBCpseudo(REAL_TYPE* d_vc, int* d_cdf, Control* C)
       case OBC_FAR_FIELD:
       case OBC_TRC_FREE:
         vobc_neumann_(d_vc, size, &gd, &face, &dd, nID);
-        break;
-        
-      case OBC_SYMMETRIC:
-        vobc_symmetric_(d_vc, size, &gd, &face, nID);
         break;
         
       case OBC_PERIODIC:

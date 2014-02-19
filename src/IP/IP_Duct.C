@@ -42,13 +42,14 @@ bool IP_Duct::getTP(Control* R, TextParser* tpCntl)
   if ( !strcasecmp(str.c_str(), "circular") ) {
     driver.shape = id_circular;
   }
-  else if ( !strcasecmp(str.c_str(), "rectangualr") ) {
+  else if ( !strcasecmp(str.c_str(), "rectangular") ) {
     driver.shape = id_rectangular;
   }
   else {
     Hostonly_ stamped_printf("\tParsing error : Invalid shape in '%s'\n", label.c_str());
     return false;
   }
+  
   
   // Diameter
   label="/IntrinsicExample/Diameter";
@@ -60,49 +61,6 @@ bool IP_Duct::getTP(Control* R, TextParser* tpCntl)
 	  driver.diameter = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
   }
   
-  // periodic
-  label="/IntrinsicExample/Direction";
-  if ( !(tpCntl->getInspectedValue(label, str )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    return false;
-  }
-  if ( !strcasecmp(str.c_str(), "Xminus")) {
-    driver.direction = X_minus;
-  }
-  else if ( !strcasecmp(str.c_str(), "Xplus")) {
-    driver.direction = X_plus;
-  }
-  else if ( !strcasecmp(str.c_str(), "Yminus")) {
-    driver.direction = Y_minus;
-  }
-  else if ( !strcasecmp(str.c_str(), "Yplus")) {
-    driver.direction = Y_plus;
-  }
-  else if ( !strcasecmp(str.c_str(), "Zminus")) {
-    driver.direction = Z_minus;
-  }
-  else if ( !strcasecmp(str.c_str(), "Zplus")) {
-    driver.direction = Z_plus;
-  }
-  else {
-    Hostonly_ stamped_printf("\tParsing error : Invalid value of '%s'\n", label.c_str());
-    return false;
-  }     
-  
-  // ドライバの設定 値が正の値のとき，有効．ゼロの場合はドライバなし
-  label="/IntrinsicExample/Driver";
-  if ( tpCntl->getInspectedValue(label, ct ) ) {
-    driver.length = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
-  }
-  else {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    return false;
-  }
-  
-  if ( driver.length < 0.0 ) {
-    Hostonly_ stamped_printf("\tError : Value of 'Driver' must be positive.\n");
-    return false;
-  }
   
   // 媒質指定
   label="/IntrinsicExample/FluidMedium";
@@ -118,20 +76,70 @@ bool IP_Duct::getTP(Control* R, TextParser* tpCntl)
     return false;
   }
   m_solid = str;
+
   
-  label="/IntrinsicExample/DriverMedium";
-  if ( !(tpCntl->getInspectedValue(label, str )) ) {
+  
+  // ドライバの設定 値が正の値のとき，有効．ゼロの場合はドライバなし
+  label="/IntrinsicExample/DriverLength";
+  if ( tpCntl->getInspectedValue(label, ct ) ) {
+    driver.length = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
+  }
+  else {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     return false;
   }
-  m_driver = str;
   
-  label="/IntrinsicExample/DriverFaceMedium";
-  if ( !(tpCntl->getInspectedValue(label, str )) ) {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+  if ( driver.length < 0.0 ) {
+    Hostonly_ stamped_printf("\tError : Value of 'Driver' must be positive.\n");
     return false;
   }
-  m_driver_face = str;
+  
+  // Only driver is specified
+  if ( driver.length > 0.0 )
+  {
+    label="/IntrinsicExample/DriverMedium";
+    if ( !(tpCntl->getInspectedValue(label, str )) ) {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      return false;
+    }
+    m_driver = str;
+    
+    label="/IntrinsicExample/DriverFaceMedium";
+    if ( !(tpCntl->getInspectedValue(label, str )) ) {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      return false;
+    }
+    m_driver_face = str;
+    
+    label="/IntrinsicExample/DriverDirection";
+    if ( !(tpCntl->getInspectedValue(label, str )) ) {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      return false;
+    }
+    if ( !strcasecmp(str.c_str(), "Xminus")) {
+      driver.direction = X_minus;
+    }
+    else if ( !strcasecmp(str.c_str(), "Xplus")) {
+      driver.direction = X_plus;
+    }
+    else if ( !strcasecmp(str.c_str(), "Yminus")) {
+      driver.direction = Y_minus;
+    }
+    else if ( !strcasecmp(str.c_str(), "Yplus")) {
+      driver.direction = Y_plus;
+    }
+    else if ( !strcasecmp(str.c_str(), "Zminus")) {
+      driver.direction = Z_minus;
+    }
+    else if ( !strcasecmp(str.c_str(), "Zplus")) {
+      driver.direction = Z_plus;
+    }
+    else {
+      Hostonly_ stamped_printf("\tParsing error : Invalid value of '%s'\n", label.c_str());
+      return false;
+    }
+  }
+  
   
   return true;
 }
@@ -141,13 +149,15 @@ bool IP_Duct::getTP(Control* R, TextParser* tpCntl)
 //  パラメータの表示
 void IP_Duct::printPara(FILE* fp, const Control* R)
 {
-  if ( !fp ) {
+  if ( !fp )
+  {
     stamped_printf("\tFail to write into file\n");
     Exit(0);
   }
   
   std::string dir;
-  switch (driver.direction) {
+  switch (driver.direction)
+  {
     case X_minus:
     case X_plus:
       dir = "X dir.";
@@ -170,7 +180,9 @@ void IP_Duct::printPara(FILE* fp, const Control* R)
   fprintf(fp,"\tShape of cross-section                :  %s\n", (driver.shape==id_circular)?"Circular":"Rectangular");
   fprintf(fp,"\tDiameter                  [m] / [-]   : %12.5e / %12.5e\n", driver.diameter, driver.diameter/RefL);
   fprintf(fp,"\tDirection of periodic BC              :  %s\n", dir.c_str());
-  if ( driver.length > 0.0 ) {
+  
+  if ( driver.length > 0.0 )
+  {
     fprintf(fp,"\twith Driver                           :  %s\n", FBUtility::getDirection(driver.direction).c_str());
     fprintf(fp,"\t     Driver Length        [m] / [-]   : %12.5e / %12.5e\n", driver.length, driver.length/RefL);
   }
@@ -183,10 +195,10 @@ void IP_Duct::printPara(FILE* fp, const Control* R)
 // Ductの計算領域のセルIDを設定する
 void IP_Duct::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut, int* bid)
 {
-  int mid_fluid=1;        /// 流体
-  int mid_solid=2;        /// 固体
-  int mid_driver=3;       /// ドライバ部
-  int mid_driver_face=4;  /// ドライバ流出面
+  int mid_fluid;        /// 流体
+  int mid_solid;        /// 固体
+  int mid_driver;       /// ドライバ部
+  int mid_driver_face;  /// ドライバ流出面
   REAL_TYPE x, y, z, dh, r, len;
   REAL_TYPE ox, oy, oz, Lx, Ly, Lz;
   
@@ -209,34 +221,35 @@ void IP_Duct::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, 
   r  = driver.diameter/R->RefLength * 0.5;
   len= driver.length/R->RefLength;
   
-  // Initialize
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid) schedule(static)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        bcd[m] = 0;
-      }
-    }
+  
+  // 媒質設定
+  if ( (mid_fluid = R->findIDfromLabel(mat, NoMedium, m_fluid)) == 0 )
+  {
+    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_fluid.c_str());
+    Exit(0);
   }
   
-  // Inner
-  if (driver.shape == id_rectangular ) { // 矩形管の場合は内部は全て流体
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid) \
-schedule(static)
-    for (int k=1; k<=kx; k++) {
-      for (int j=1; j<=jx; j++) {
-        for (int i=1; i<=ix; i++) {
-          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          bcd[m] = 0;
-        }
-      }
-    }
+  if ( (mid_solid = R->findIDfromLabel(mat, NoMedium, m_solid)) == 0 )
+  {
+    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_solid.c_str());
+    Exit(0);
   }
-  else { // 円管の場合，半径以下のセルを流体にする（ノードにかかわらず）
+  
+  // 矩形管の場合は内部は全て流体なので，処理の必要なし
+  
+  
+  // 円管の場合にはsphereを参考にカット情報を入れる
+  // ドライバー情報はフィルの後にしなければいけないか？　@todo
+  // いろんな組み込み問題をまとめて処理する方がよい
+  
+
+  // 円管の場合，半径以下のセルを流体にする（ノードにかかわらず）
+  if (driver.shape == id_circular) {
     switch (driver.direction) {
       case X_minus:
       case X_plus:
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid) \
+schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
@@ -251,6 +264,8 @@ schedule(static)
         
       case Y_minus:
       case Y_plus:
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid) \
+schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
@@ -265,6 +280,8 @@ schedule(static)
         
       case Z_minus:
       case Z_plus:
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid) \
+schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {

@@ -78,7 +78,6 @@
 #define vobc_div_drchlt_    VOBC_DIV_DRCHLT
 #define vobc_get_massflow_  VOBC_GET_MASSFLOW
 #define vobc_neumann_       VOBC_NEUMANN
-#define vobc_symmetric_     VOBC_SYMMETRIC
 
 // ffv_velocity_binary.f90
 #define ab2_                AB2
@@ -590,12 +589,6 @@ extern "C" {
                            REAL_TYPE* vec,
                            REAL_TYPE* vsum,
                            int* nID);
-
-  void vobc_symmetric_ (REAL_TYPE* v,
-                        int* sz,
-                        int* g,
-                        int* m_face,
-                        int* nID);
 
   
   //***********************************************************************************************

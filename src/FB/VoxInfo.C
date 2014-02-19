@@ -2193,7 +2193,7 @@ unsigned long VoxInfo::encVbitIBC (const int order,
  * @param [in]     enc_sw  trueのとき，エンコードする．falseの場合にはガイドセルの状態チェックのみ
  * @param [in]     chk     ガイドセルの状態をチェックするかどうかを指定
  * @param [in]     bp      BCindex P
- * @param [in]     enc_uwd trueのとき，1次精度のスイッチオン
+ * @param [in]     enc_uwd trueのとき，1次精度のスイッチオン(default => false)
  * @note
   - 外部境界条件の実装には，流束型とディリクレ型の2種類がある．
   - setMediumOnGC()でガイドセル上のIDを指定済み．指定BCとの適合性をチェックする
@@ -3359,8 +3359,11 @@ unsigned long VoxInfo::setBCIndexP (int* bcd, int* bcp, SetBC* BC, CompoList* cm
     switch ( F )
     {
       case OBC_WALL:
-      case OBC_SYMMETRIC:
         encPbitOBC(face, bcp, "Neumann", true);
+        break;
+        
+      case OBC_SYMMETRIC:
+        encPbitOBC(face, bcp, "Neumann", false);
         break;
         
       case OBC_SPEC_VEL:
@@ -3472,13 +3475,13 @@ void VoxInfo::setBCIndexV (int* cdf, int* bp, SetBC* BC, CompoList* cmp, int icl
         break;
         
       case OBC_SPEC_VEL:
+      case OBC_SYMMETRIC:
         encVbitOBC(face, cdf, "fluid", true, "check", bp); // 流束形式
         break;
       
       case OBC_TRC_FREE:
       case OBC_OUTFLOW:
       case OBC_FAR_FIELD:
-      case OBC_SYMMETRIC:
         encVbitOBC(face, cdf, "fluid", false, "check", bp); // 境界値指定
         break;
         

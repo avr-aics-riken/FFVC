@@ -1042,6 +1042,7 @@ void Control::getGeometryModel()
     PolylibConfigName = str;
   }
   
+  
   // Geometry output (NOT mandatory)
   label = "/GeometryModel/Output";
   

@@ -53,6 +53,25 @@ bool IP_Step::getTP(Control* R, TextParser* tpCntl)
     return false;
   }
   
+  
+  // 媒質指定
+  label = "/IntrinsicExample/FluidMedium";
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    return false;
+  }
+  m_fluid = str;
+  
+  label = "/IntrinsicExample/SolidMedium";
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    return false;
+  }
+  m_solid = str;
+  
+  
   // x-dir step
   label = "/IntrinsicExample/StepLength";
   if ( !(tpCntl->getInspectedValue(label, ct )) )
@@ -77,6 +96,7 @@ bool IP_Step::getTP(Control* R, TextParser* tpCntl)
 	  height = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
   }
   
+  
   // ドライバの設定 値が正の値のとき，有効．ゼロの場合はドライバなし
   label = "/IntrinsicExample/DriverLength";
   if ( tpCntl->getInspectedValue(label, ct ) )
@@ -95,23 +115,7 @@ bool IP_Step::getTP(Control* R, TextParser* tpCntl)
     return false;
   }
   
-  // 媒質指定
-  label = "/IntrinsicExample/FluidMedium";
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    return false;
-  }
-  m_fluid = str;
-  
-  label = "/IntrinsicExample/SolidMedium";
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    return false;
-  }
-  m_solid = str;
-  
+
   // Only driver is specified
   if ( drv_length > 0.0 )
   {
