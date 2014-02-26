@@ -279,9 +279,10 @@ public:
    * @param [in,out] bcd         BCindex B
    * @param [in,out] cut         カット情報
    * @param [in]     tgt_id      フィルする流体IDのエントリ
+   * @param [in]     suppress    各軸方向のフィル抑止モード（Periodic, Symmetric時の対策）
    * @param [out]    substituted 固体IDに置換された数
    */
-  unsigned long fillByBid (int* bid, int* bcd, float* cut, const int tgt_id, unsigned long& substituted);
+  unsigned long fillByBid (int* bid, int* bcd, float* cut, const int tgt_id, const int* suppress, unsigned long& substituted);
   
   
   /* @brief 未ペイントセルをフィル

@@ -19,6 +19,10 @@ RELEASE
 =======
 
 -------------
+Version 1.6.2    2014-02-26
+  - introduce fill direction control
+
+-------------
 Version 1.6.1    2014-02-19
   - change implementation of symmetric condition
   

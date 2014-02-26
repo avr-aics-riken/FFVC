@@ -85,6 +85,32 @@ bool ParseBC::chkDuplicate(const int n, const string m_label)
 	return true;
 }
 
+// #################################################################
+/**
+ * @brief 外部境界条件の候補を探し，内容をコピーする
+ * @param [in]     str  string
+ * @param [in]     face face number
+ * @param [in,out] bc   array of bc
+ */
+bool ParseBC::findOBClist(const string str, const int face, BoundaryOuter* bc)
+{
+  for (int i=1; i<=NoBaseBC; i++)
+  {
+    if ( !strcasecmp( str.c_str(), BaseBc[i].getAlias().c_str() ) )
+    {
+      bc[face].dataCopy( &BaseBc[i] );
+      break;
+    }
+    else
+    {
+      if ( i == NoBaseBC ) // 最後までみつからない
+      {
+        return false;
+      }
+    }
+  }
+  return true;
+}
 
 // #################################################################
 // KOSと媒質の状態の整合性をチェックし，媒質数をカウント，C.NoMediumFluid, C.NoMediumSolidをセット
@@ -2073,7 +2099,6 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
       Exit(0);
     }
     setKeywordOBC(str, i);
-    
   
     
     // ガイドセルの媒質ラベルを取得   周期境界は不要
@@ -2155,42 +2180,52 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
   
   
   // 各面に与える境界条件番号を取得し，BaseBcから境界情報リストに内容をコピー
-  for (int face=0; face<NOFACE; face++)
+  label = label_base + "/Xminus";
+  if ( !(tpCntl->getInspectedValue(label, str )) ) Exit(0);
+  if ( !findOBClist(str, X_minus, bc) )
   {
-    // 各faceに対するラベルを取得
-    if ( !(tpCntl->getNodeStr(label_base, face+1, str)) )
-    {
-      Hostonly_ printf("\tGetNodeStr error\n");
-      Exit(0);
-    }
-    label_leaf = label_base + "/" + str;
-    
-    // 指定の境界条件を探して，BaseBc[]にリストアップ済みの候補名を得る
-    label = label_leaf;
-    
-    if ( !(tpCntl->getInspectedValue(label, str)) ) 
-    {
-      Hostonly_ printf("\tParsing error : Alias cannot be found : FaceBC\n");
-      Exit(0);
-    }
-    
-    // Aliasでサーチ
-    for (int i=1; i<=NoBaseBC; i++)
-    {
-      if ( !strcasecmp( str.c_str(), BaseBc[i].getAlias().c_str() ) ) 
-      {
-        bc[face].dataCopy( &BaseBc[i] );
-        break;
-      }
-      else
-      {
-        if ( i > NoBaseBC ) // 最後までみつからない
-        {
-          Hostonly_ printf("\tParsing error : [%d] '%s' is not listed in 'BasicBCs'\n", i, str.c_str());
-          Exit(0);
-        }
-      }
-    }
+    Hostonly_ printf("\tParsing error : Alias cannot be found : FaceBC/Xminus\n");
+    Exit(0);
+  }
+  
+  label = label_base + "/Xplus";
+  if ( !(tpCntl->getInspectedValue(label, str )) ) Exit(0);
+  if ( !findOBClist(str, X_plus, bc) )
+  {
+    Hostonly_ printf("\tParsing error : Alias cannot be found : FaceBC/Xplus\n");
+    Exit(0);
+  }
+  
+  label = label_base + "/Yminus";
+  if ( !(tpCntl->getInspectedValue(label, str )) ) Exit(0);
+  if ( !findOBClist(str, Y_minus, bc) )
+  {
+    Hostonly_ printf("\tParsing error : Alias cannot be found : FaceBC/Yminus\n");
+    Exit(0);
+  }
+  
+  label = label_base + "/Yplus";
+  if ( !(tpCntl->getInspectedValue(label, str )) ) Exit(0);
+  if ( !findOBClist(str, Y_plus, bc) )
+  {
+    Hostonly_ printf("\tParsing error : Alias cannot be found : FaceBC/Yplus\n");
+    Exit(0);
+  }
+  
+  label = label_base + "/Zminus";
+  if ( !(tpCntl->getInspectedValue(label, str )) ) Exit(0);
+  if ( !findOBClist(str, Z_minus, bc) )
+  {
+    Hostonly_ printf("\tParsing error : Alias cannot be found : FaceBC/Zminus\n");
+    Exit(0);
+  }
+  
+  label = label_base + "/Zplus";
+  if ( !(tpCntl->getInspectedValue(label, str )) ) Exit(0);
+  if ( !findOBClist(str, Z_plus, bc) )
+  {
+    Hostonly_ printf("\tParsing error : Alias cannot be found : FaceBC/Zplus\n");
+    Exit(0);
   }
   
 

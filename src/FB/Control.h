@@ -561,6 +561,7 @@ public:
   int RefMat;         ///< 参照媒質インデクス
   int Start;
   int SamplingMode;   ///< サンプリング指定
+  int FillSuppress[3];///< PeriodicとSymmetricの外部境界面フィル抑制
   
   unsigned Restart_staging;    ///< リスタート時にリスタートファイルがSTAGINGされているか
   unsigned Restart_step;       ///< リスタートステップ
@@ -702,6 +703,8 @@ public:
     Prandtl = Rayleigh = Grashof = 0.0;
     
     for (int i=0; i<var_END; i++) varState[i]=false;
+    
+    for (int i=0; i<3; i++)  FillSuppress[i] = -1;
     
     iv.Density     = 0.0;
     iv.Energy      = 0.0;

@@ -60,7 +60,7 @@ if ( zp == 0 )
   
   // 各方向のテスト
   // 対象セルは，未評価セル(zp == 0) 
-  // 例えば、X-側からテストする場合は，X-側のセルがフィルを行うターゲットID（Fluid）で既にペイントされている(zw == tg)
+  // 例えば、X-側からテストする場合は，X-側のセルがフィルを行うターゲットIDで既にペイントされている(zw == tg)
   // 次のパターンの場合にX-方向からみてi点上にsolidがあるとみなす
   // 1) X方向面直平面のYもしくはZ各方向の対辺の両方のみにカットがある
   // 2) YとZの4方向にカットがある
@@ -130,12 +130,12 @@ if ( zp == 0 )
     {
       if (sd == 0) Exit(0);
         
-      cut[ _F_IDX_S4DEX(Y_plus, i, j-1, k, 6, ix, jx, kx, gd) ] = 1.0;
-      setBit5(bid[m_s], sd, Y_plus);
-      
-      cut[ _F_IDX_S4DEX(Y_minus, i, j, k, 6, ix, jx, kx, gd) ] = 0.0;
-      setBit5(bid[m_p], sd, Y_minus);
-      sd_flag++;
+        cut[ _F_IDX_S4DEX(Y_plus, i, j-1, k, 6, ix, jx, kx, gd) ] = 1.0;
+        setBit5(bid[m_s], sd, Y_plus);
+        
+        cut[ _F_IDX_S4DEX(Y_minus, i, j, k, 6, ix, jx, kx, gd) ] = 0.0;
+        setBit5(bid[m_p], sd, Y_minus);
+        sd_flag++;
     }
   }
 
@@ -153,12 +153,12 @@ if ( zp == 0 )
     {
       if (sd == 0) Exit(0);
         
-      cut[ _F_IDX_S4DEX(Y_minus, i, j+1, k, 6, ix, jx, kx, gd) ] = 1.0;
-      setBit5(bid[m_n], sd, Y_minus);
-      
-      cut[ _F_IDX_S4DEX(Y_plus, i, j, k, 6, ix, jx, kx, gd) ] = 0.0;
-      setBit5(bid[m_p], sd, Y_plus);
-      sd_flag++;
+        cut[ _F_IDX_S4DEX(Y_minus, i, j+1, k, 6, ix, jx, kx, gd) ] = 1.0;
+        setBit5(bid[m_n], sd, Y_minus);
+        
+        cut[ _F_IDX_S4DEX(Y_plus, i, j, k, 6, ix, jx, kx, gd) ] = 0.0;
+        setBit5(bid[m_p], sd, Y_plus);
+        sd_flag++;
     }
   }
   
@@ -228,8 +228,26 @@ if ( zp == 0 )
   
   if ( zw==tg && qw==0 ) tag++;
   if ( ze==tg && qe==0 ) tag++;
-  if ( zs==tg && qs==0 ) tag++;
-  if ( zn==tg && qn==0 ) tag++;
+  
+  // mode_y==0の時には，Y方向の領域境界でフィルしない
+  if ( (sds < 0) && (j == 1) && !mode_y )
+  {
+    ; // skip
+  }
+  else
+  {
+    if ( zs==tg && qs==0 ) tag++;
+  }
+  
+  if ( (sdn < 0) && (j == jx) && !mode_y )
+  {
+    ;
+  }
+  else
+  {
+    if ( zn==tg && qn==0 ) tag++;
+  }
+  
   if ( zb==tg && qb==0 ) tag++;
   if ( zt==tg && qt==0 ) tag++;
 

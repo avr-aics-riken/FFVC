@@ -165,11 +165,12 @@ void IP_Step::printPara(FILE* fp, const Control* R)
 
 
 // #################################################################
-// 計算領域のセルIDを設定する
+// 計算領域のセルIDとカット情報を設定する
 void IP_Step::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut, int* bid)
 {
-  int mid_fluid, mid_solid, mid_driver, mid_driver_face;
-  
+  int mid_fluid;        /// 流体
+  int mid_solid;        /// 固体
+
   // 流体
   if ( (mid_fluid = R->findIDfromLabel(mat, NoMedium, m_fluid)) == 0 )
   {
@@ -184,93 +185,139 @@ void IP_Step::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, 
     Exit(0);
   }
   
-  if ( drv_length > 0.0 )
-  {
-    // ドライバ部
-    if ( (mid_driver = R->findIDfromLabel(mat, NoMedium, m_driver)) == 0 )
-    {
-      Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver.c_str());
-      Exit(0);
-    }
-    
-    // ドライバ流出面
-    if ( (mid_driver_face = R->findIDfromLabel(mat, NoMedium, m_driver_face)) == 0 )
-    {
-      Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver_face.c_str());
-      Exit(0);
-    }
-  }
 
 
-  REAL_TYPE ox, oy, oz, dh;
-  
-  // ノードローカルの無次元値
-  ox = origin[0];
-  oy = origin[1];
-  oz = origin[2];
-  dh = deltaX;
-  
-  // ローカルにコピー
+  // ローカル
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
+  
+  REAL_TYPE dh = deltaX;
+  
+  // ローカルな無次元位置
+  REAL_TYPE ox, oz;
+  ox = origin[0];
+  oz = origin[2];
+  
 
-  // length, widthなどは有次元値
-  REAL_TYPE len = G_origin[0] + (drv_length+width)/R->RefLength; // グローバルな無次元位置
-  REAL_TYPE ht  = G_origin[1] + height/R->RefLength;
+  // step length 有次元値
+  REAL_TYPE len = G_origin[0] + width/R->RefLength; // グローバルな無次元位置
+  
+  // step height 有次元値
+  REAL_TYPE ht  = G_origin[2] + height/R->RefLength; // グローバルな無次元位置
 
   
-  // ドライバ部分　X-面からドライバ長さより小さい領域
-  if ( drv_length > 0.0 )
-  {
-    
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_driver, ox, dh, len) schedule(static)
-    for (int k=1; k<=kx; k++) {
-      for (int j=1; j<=jx; j++) {
-        for (int i=1; i<=ix; i++) {
-          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          REAL_TYPE x = ox + 0.5*dh + dh*(i-1);
-          if ( x < len ) bcd[m] |= mid_driver;
-        }
-      }
-    }
-    
-  }
-  
-  // ドライバの下流面にIDを設定
-  if ( drv_length > 0.0 )
-  {
-    
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_driver, mid_fluid, mid_driver_face) schedule(static)
-    for (int k=1; k<=kx; k++) {
-      for (int j=1; j<=jx; j++) {
-        for (int i=1; i<=ix; i++) {
-          size_t m = _F_IDX_S3D(i,   j, k, ix, jx, kx, gd);
-          size_t m1= _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd);
-          if ( (DECODE_CMP(bcd[m])  == mid_driver) && (DECODE_CMP(bcd[m1]) == mid_fluid) ) {
-            bcd[m] |= mid_driver_face;
-          }
-        }
-      }
-    }
-    
-  }
-
-  // ステップ部分を上書き
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid, ox, oy, dh, len, ht) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid, ox, oz, dh, len, ht) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        REAL_TYPE x = ox + 0.5*dh + dh*(i-1);
-        REAL_TYPE y = oy + 0.5*dh + dh*(j-1);
-        if ( (x < len) && (y < ht) )
+        REAL_TYPE x = ox + 0.5*dh + dh*(i-1); // position of cell center
+        REAL_TYPE z = oz + 0.5*dh + dh*(k-1); // position of cell center
+        REAL_TYPE s = (len - x)/dh;
+        
+        if ( z <= ht )
         {
-          bcd[m] |= mid_solid;
+          if ( (x <= len) && (len < x+dh) )
+          {
+            setBit5(bid[m], mid_solid, X_plus);
+            cut[_F_IDX_S4DEX(X_plus, i, j, k, 6, ix, jx, kx, gd)] = s;
+            setBit5(bid[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)], mid_solid, X_minus);
+            cut[_F_IDX_S4DEX(X_minus, i+1, j, k, 6, ix, jx, kx, gd)] = 1.0-s;
+          }
+          else if ( (x-dh < len) && (len < x) )
+          {
+            setBit5(bid[m], mid_solid, X_minus);
+            cut[_F_IDX_S4DEX(X_minus, i, j, k, 6, ix, jx, kx, gd)] = -s;
+            setBit5(bid[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)], mid_solid, X_plus);
+            cut[_F_IDX_S4DEX(X_plus, i-1, j, k, 6, ix, jx, kx, gd)] = 1.0+s;
+          }
+        }
+
+      }
+    }
+  }
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid, ox, oz, dh, len, ht) schedule(static)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        REAL_TYPE x = ox + 0.5*dh + dh*(i-1); // position of cell center
+        REAL_TYPE z = oz + 0.5*dh + dh*(k-1); // position of cell center
+        REAL_TYPE c = (ht - z)/dh;
+        
+        if ( x <= len )
+        {
+          if ( (z <= ht) && (ht < z+dh) )
+          {
+            setBit5(bid[m], mid_solid, Z_plus);
+            cut[_F_IDX_S4DEX(Z_plus, i, j, k, 6, ix, jx, kx, gd)] = c;
+            setBit5(bid[_F_IDX_S3D(i, j, k+1, ix, jx, kx, gd)], mid_solid, Z_minus);
+            cut[_F_IDX_S4DEX(Z_minus, i, j, k+1, 6, ix, jx, kx, gd)] = 1.0-c;
+          }
+          else if ( (z-dh < ht) && (ht < z) )
+          {
+            setBit5(bid[m], mid_solid, Z_minus);
+            cut[_F_IDX_S4DEX(Z_minus, i, j, k, 6, ix, jx, kx, gd)] = -c;
+            setBit5(bid[_F_IDX_S3D(i, j, k-1, ix, jx, kx, gd)], mid_solid, Z_plus);
+            cut[_F_IDX_S4DEX(Z_plus, i, j, k-1, 6, ix, jx, kx, gd)] = 1.0+c;
+          }
+        }
+        
+      }
+    }
+  }
+  
+  // ステップ部のガイドセルの設定
+  
+  // 隣接ランクのIDを取得 nID[6]
+  const int* nID = paraMngr->GetNeighborRankID();
+  
+  if ( nID[X_minus] < 0 )
+  {
+    // デフォルトでガイドセルをSolidにする
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid) schedule(static)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        
+        // 媒質エントリ
+        size_t m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
+        setBit5(bcd[m], mid_solid, 0);
+        
+        // 交点
+        size_t m1 = _F_IDX_S4DEX(X_minus, 1, j, k, 6, ix, jx, kx, gd);
+        cut[m1] = 0.5; /// 壁面までの距離
+        
+        // 境界ID
+        size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
+        setBit5(bid[l], mid_solid, X_minus);
+      }
+    }
+    
+    
+    // Channel
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid, ht, oz, dh) schedule(static)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        
+        REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+        
+        if ( z > ht )
+        {
+          size_t m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
+          setBit5(bcd[m], mid_fluid, 0);
+          
+          size_t m1 = _F_IDX_S4DEX(X_minus, 1, j, k, 6, ix, jx, kx, gd);
+          cut[m1] = 1.0;
+          
+          size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
+          setBit5(bid[l], 0, X_minus);
         }
       }
     }
+    
   }
   
 }

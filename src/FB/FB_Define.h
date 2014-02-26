@@ -560,4 +560,5 @@ inline void setBit5 (int& b, const int q, const int dir)
   b |= (q << (dir*5));        // 書き込む
 }
 
+
 #endif // _FB_DEFINE_H_

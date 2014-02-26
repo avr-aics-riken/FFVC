@@ -122,6 +122,9 @@ private:
     return false;
   }
   
+  // 外部境界条件の候補を探し，内容をコピーする
+  bool findOBClist(const string str, const int face, BoundaryOuter* bc);
+  
   
   /**
    * @brief 値(REAL_TYPE型)を取得し，返す

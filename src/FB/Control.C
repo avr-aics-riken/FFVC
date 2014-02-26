@@ -416,49 +416,6 @@ void Control::getApplicationControl()
   }
   OperatorName = str;
   
-
-  // フィルの媒質指定
-  label = "/ApplicationControl/FillMedium";
-  if ( !(tpCntl->getInspectedValue(label, str)) )
-  {
-    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  FillMedium = str;
-  
-  
-  // 流体セルのフィルの開始面指定
-  label = "/ApplicationControl/HintOfFillSeedDirection";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid value in '%s'\n", label.c_str());
-    Exit(0);
-  }
-  else
-  {
-    if     ( !strcasecmp(str.c_str(), "xminus" ) ) FillSeedDir = X_minus;
-    else if( !strcasecmp(str.c_str(), "xplus" ) )  FillSeedDir = X_plus;
-    else if( !strcasecmp(str.c_str(), "yminus" ) ) FillSeedDir = Y_minus;
-    else if( !strcasecmp(str.c_str(), "yplus" ) )  FillSeedDir = Y_plus;
-    else if( !strcasecmp(str.c_str(), "zminus" ) ) FillSeedDir = Z_minus;
-    else if( !strcasecmp(str.c_str(), "zplus" ) )  FillSeedDir = Z_plus;
-    else
-    {
-      FillSeedDir = X_minus;
-      Hostonly_ printf("\tDefault 'X_minus' is set for Hint Of FillSeed direction\n");
-    }
-  }
-  
-  // ヒントに使うフィルの媒質指定
-  label = "/ApplicationControl/HintOfFillSeedMedium";
-  if ( !(tpCntl->getInspectedValue(label, str)) )
-  {
-    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  SeedMedium = str;
-  
   
   // パラメータチェックフラグ (Hidden)
   label = "/ApplicationControl/CheckParameter";
@@ -1042,6 +999,71 @@ void Control::getGeometryModel()
     PolylibConfigName = str;
   }
   
+  
+  // フィルの媒質指定
+  label = "/GeometryModel/FillMedium";
+  if ( !(tpCntl->getInspectedValue(label, str)) )
+  {
+    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
+	  Exit(0);
+  }
+  FillMedium = str;
+  
+  
+  // 流体セルのフィルの開始面指定
+  label = "/GeometryModel/HintOfFillSeedDirection";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid value in '%s'\n", label.c_str());
+    Exit(0);
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "xminus" ) ) FillSeedDir = X_minus;
+    else if( !strcasecmp(str.c_str(), "xplus" ) )  FillSeedDir = X_plus;
+    else if( !strcasecmp(str.c_str(), "yminus" ) ) FillSeedDir = Y_minus;
+    else if( !strcasecmp(str.c_str(), "yplus" ) )  FillSeedDir = Y_plus;
+    else if( !strcasecmp(str.c_str(), "zminus" ) ) FillSeedDir = Z_minus;
+    else if( !strcasecmp(str.c_str(), "zplus" ) )  FillSeedDir = Z_plus;
+    else
+    {
+      FillSeedDir = X_minus;
+      Hostonly_ printf("\tDefault 'X_minus' is set for Hint Of FillSeed direction\n");
+    }
+  }
+  
+  
+  // ヒントに使うフィルの媒質指定
+  label = "/GeometryModel/HintOfFillSeedMedium";
+  if ( !(tpCntl->getInspectedValue(label, str)) )
+  {
+    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
+	  Exit(0);
+  }
+  SeedMedium = str;
+  
+  
+  // フィル方向制御
+  /*
+  string dir[3];
+  label = "/GeometryModel/FillDirCntl";
+  if ( !(tpCntl->getInspectedVector(label, dir, 3)) )
+  {
+    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
+	  Exit(0);
+  }
+  FillSuppress[0] = ( !strcasecmp(dir[0].c_str(), "fill" ) ) ? 1 : 0;
+  FillSuppress[1] = ( !strcasecmp(dir[1].c_str(), "fill" ) ) ? 1 : 0;
+  FillSuppress[2] = ( !strcasecmp(dir[2].c_str(), "fill" ) ) ? 1 : 0;
+  */
+  
+  label = "/GeometryModel/FillDirCntl";
+  if ( !(tpCntl->getInspectedVector(label, FillSuppress, 3)) )
+  {
+    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
+	  Exit(0);
+  }
   
   // Geometry output (NOT mandatory)
   label = "/GeometryModel/Output";

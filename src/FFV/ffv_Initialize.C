@@ -1303,13 +1303,19 @@ void FFV::fill(FILE* fp)
   {
     printf(    "\n\tFill -----\n\n");
     printf(    "\t\tFilling Fluid Medium   : %s\n", mat[C.FillID].getAlias().c_str());
-    printf(    "\t\tHint of Direction      : %s\n", FBUtility::getDirection(C.FillSeedDir).c_str());
-    printf(    "\t\tFillSeed Medium        : %s\n", mat[C.SeedID].getAlias().c_str());
+    printf(    "\t\tHint of Seeding Dir.   : %s\n", FBUtility::getDirection(C.FillSeedDir).c_str());
+    printf(    "\t\tFill Seed Medium       : %s\n", mat[C.SeedID].getAlias().c_str());
+    printf(    "\t\tFill Control X-dir.    : %s\n", ( !C.FillSuppress[0] ) ? "Suppress" : "Fill");
+    printf(    "\t\t             Y-dir.    : %s\n", ( !C.FillSuppress[1] ) ? "Suppress" : "Fill");
+    printf(    "\t\t             Z-dir.    : %s\n", ( !C.FillSuppress[2] ) ? "Suppress" : "Fill");
     
     fprintf(fp,"\n\tFill -----\n\n");
     fprintf(fp,"\t\tFilling Fluid Medium   : %s\n", mat[C.FillID].getAlias().c_str());
-    fprintf(fp,"\t\tHint of Direction      : %s\n", FBUtility::getDirection(C.FillSeedDir).c_str());
-    fprintf(fp,"\t\tFillSeed Medium        : %s\n", mat[C.SeedID].getAlias().c_str());
+    fprintf(fp,"\t\tHint of Seeding Dir.   : %s\n", FBUtility::getDirection(C.FillSeedDir).c_str());
+    fprintf(fp,"\t\tFill Seed Medium       : %s\n", mat[C.SeedID].getAlias().c_str());
+    fprintf(fp,"\t\tFill Control X-dir.    : %s\n", ( !C.FillSuppress[0] ) ? "Suppress" : "Fill");
+    fprintf(fp,"\t\t             Y-dir.    : %s\n", ( !C.FillSuppress[1] ) ? "Suppress" : "Fill");
+    fprintf(fp,"\t\t             Z-dir.    : %s\n", ( !C.FillSuppress[2] ) ? "Suppress" : "Fill");
   }
   
   
@@ -1333,8 +1339,8 @@ void FFV::fill(FILE* fp)
   
   Hostonly_
   {
-    printf(    "\t\tPainted cells          : %16ld\n", filled);
-    fprintf(fp,"\t\tPainted cells          : %16ld\n", filled);
+    printf(    "\t\tPainted cells          = %16ld\n", filled);
+    fprintf(fp,"\t\tPainted cells          = %16ld\n", filled);
   }
   
   // ペイントされたシードセル数をターゲットから差し引く
@@ -1348,7 +1354,7 @@ void FFV::fill(FILE* fp)
     fprintf(fp,"\t\tRemaining target cells = %16ld\n\n", target_count);
   }
   
-  
+  //Ex->writeSVX(d_bcd, &C); Exit(0);
   
   
   // 隣接する流体セルと接続しており，かつ固体セルに挟まれていないセルのみペイントする
@@ -1361,7 +1367,7 @@ void FFV::fill(FILE* fp)
     
     // SeedIDで指定された媒質でフィルする．FLUID/SOLIDの両方のケースがある
     unsigned long fs;
-    filled = V.fillByBid(d_bid, d_bcd, d_cut, C.SeedID, fs);
+    filled = V.fillByBid(d_bid, d_bcd, d_cut, C.SeedID, C.FillSuppress, fs);
     replaced = fs;
     
     if ( numProc > 1 )
@@ -1385,8 +1391,8 @@ void FFV::fill(FILE* fp)
   {
     printf(    "\t\tBID Iteration          = %5d\n", c+1);
     fprintf(fp,"\t\tBID Iteration          = %5d\n", c+1);
-    printf(    "\t\t    Filled by [%02d]    = %16ld\n", C.SeedID, sum_filled);
-    fprintf(fp,"\t\t    Filled by [%02d]    = %16ld\n", C.SeedID, sum_filled);
+    printf(    "\t\t    Filled by [%02d]     = %16ld\n", C.SeedID, sum_filled);
+    fprintf(fp,"\t\t    Filled by [%02d]     = %16ld\n", C.SeedID, sum_filled);
     printf(    "\t\t    SOLID replaced     = %16ld\n", sum_replaced);
     fprintf(fp,"\t\t    SOLID replaced     = %16ld\n", sum_replaced);
     printf(    "\t\t    Remaining cell     = %16ld\n\n", target_count);
@@ -4066,10 +4072,16 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
     int cls= m_obc->getClass();
     int pm = m_obc->getPrdcMode();
     
+    
     switch (cls)
     {
       case OBC_PERIODIC:
         V.setOBCperiodic(face, pm, d_bcd);
+        break;
+        
+      case OBC_SYMMETRIC:
+        if (mat[id].getState() != FLUID) Exit(0);
+        V.setOBC(face, id, "fluid", d_bcd, d_cut, d_bid);
         break;
         
       case OBC_WALL:
@@ -4082,7 +4094,9 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
         break;
         
       default:
-        if (mat[id].getState() != FLUID) Exit(0);
+        if (mat[id].getState() != FLUID) {
+          Exit(0);
+        }
         V.setOBC(face, id, "fluid", d_bcd, d_cut, d_bid);
         break;
     }

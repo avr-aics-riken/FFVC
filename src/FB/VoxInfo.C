@@ -2537,18 +2537,30 @@ void VoxInfo::encVbitOBC (const int face, int* cdf, const string key, const bool
 // #################################################################
 // カットID情報に基づく流体媒質のフィルを実行
 // Symmetric fillにより反復回数を減少
-unsigned long VoxInfo::fillByBid (int* bid, int* bcd, float* cut, const int tgt_id, unsigned long& substituted)
+unsigned long VoxInfo::fillByBid (int* bid, int* bcd, float* cut, const int tgt_id, const int* suppress, unsigned long& substituted)
 {
-  int tg = tgt_id;       ///< FLUID ID
+  int tg = tgt_id;
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
   unsigned long filled   = 0; ///< 流体IDでペイントされた数
   unsigned long replaced = 0; ///< 固体IDで置換された数
+  
+  // 隣接サブドメインのランク番号
+  int sdw = nID[X_minus];
+  int sde = nID[X_plus];
+  int sds = nID[Y_minus];
+  int sdn = nID[Y_plus];
+  int sdb = nID[Z_minus];
+  int sdt = nID[Z_plus];
+  
+  int mode_x = suppress[0]; // if 0, suppress connectivity evaluation
+  int mode_y = suppress[1];
+  int mode_z = suppress[2];
 
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) \
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, sdw, sde, sds, sdn, sdb, sdt, mode_x, mode_y, mode_z) \
 schedule(static) reduction(+:filled) reduction(+:replaced)
   
   for (int k=1; k<=kx; k++) {
@@ -2562,7 +2574,7 @@ schedule(static) reduction(+:filled) reduction(+:replaced)
   }
   
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) \
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, sdw, sde, sds, sdn, sdb, sdt, mode_x, mode_y, mode_z) \
 schedule(static) reduction(+:filled) reduction(+:replaced)
   
   for (int k=kx; k>=1; k--) {
@@ -2795,7 +2807,7 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
             size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
             int s = bid[m];
             
-            // 対象セルの周囲6方向にカットがなく，未ペイントのセルの場合
+            // 対象セルの周囲に指定方向以外にカットがなく，未ペイントのセルの場合
             if ( ((s & mx_w) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
               setBit5(bcd[m], tg, 0);
@@ -2814,7 +2826,6 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
           for (int j=1; j<=jx; j++) {
             size_t m = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
             int s = bid[m];
-            
             if ( ((s & mx_e) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
               setBit5(bcd[m], tg, 0);
@@ -3475,6 +3486,16 @@ void VoxInfo::setBCIndexV (int* cdf, int* bp, SetBC* BC, CompoList* cmp, int icl
         break;
         
       case OBC_SPEC_VEL:
+        if ( (icls == id_Step) && (face==0) )
+        {
+          encVbitOBC(face, cdf, "fluid", true, "nocheck", bp); // 流束形式，部分的に固体があるためチェックしない
+        }
+        else
+        {
+          encVbitOBC(face, cdf, "fluid", true, "check", bp); // 流束形式
+        }
+        break;
+        
       case OBC_SYMMETRIC:
         encVbitOBC(face, cdf, "fluid", true, "check", bp); // 流束形式
         break;
@@ -3488,7 +3509,7 @@ void VoxInfo::setBCIndexV (int* cdf, int* bp, SetBC* BC, CompoList* cmp, int icl
       case OBC_INTRINSIC:
         if ( (icls == id_Jet) && (face==0) )
         {
-          encVbitOBC(face, cdf, "fluid", true, "nocheck", bp); // 流束形式
+          encVbitOBC(face, cdf, "fluid", true, "nocheck", bp); // 流束形式，部分的に固体があるためチェックしない
         }
         break;
         
@@ -3733,7 +3754,8 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
     did = 0;  // 流体の場合には bid[]=0
   }
   
-
+  // もし既に，ガイドセルに何か値がセットされいてれば（ id != 0 ）上書きしない
+  // IP_Stepが該当，X-minus方向のみ
 
   switch (face)
   {
@@ -3742,14 +3764,18 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
           
-          size_t mc = _F_IDX_S4DEX(X_minus, 1, j, k, 6, ix, jx, kx, gd);
-          cut[mc] = pos;
-          
-          size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
-          setBit5(bid[l], did, X_minus);
-          
           size_t m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
-          setBit5(bcd[m], tgt, 0);
+          
+          if ( getBit5(bcd[m], 0) == 0 ) // ガイドセルに値がセットされていないこと
+          {
+            size_t mc = _F_IDX_S4DEX(X_minus, 1, j, k, 6, ix, jx, kx, gd);
+            cut[mc] = pos;
+            
+            size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
+            setBit5(bid[l], did, X_minus);
+            
+            setBit5(bcd[m], tgt, 0);
+          }
         }
       }
       break;

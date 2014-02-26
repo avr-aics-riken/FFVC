@@ -17,7 +17,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.57])
-AC_INIT([FFVC], [1.6.1], [keno@riken.jp], [FFVC])
+AC_INIT([FFVC], [1.6.2], [keno@riken.jp], [FFVC])
 AM_INIT_AUTOMAKE()
 AC_CONFIG_SRCDIR([src/FB/Alloc.C])
 AC_CONFIG_HEADERS([config.h])
@@ -25,7 +25,7 @@ AC_CONFIG_HEADERS([config.h])
 #
 # revision No.
 #
-FFVC_REVISION="20140219_1830"
+FFVC_REVISION="20140226_1500"
 AC_SUBST(FFVC_REVISION)
 
 
@@ -52,13 +52,6 @@ AC_SUBST(FREALOPT)
 
 if test x"$with_precision" = x"double" ; then
   REALOPT=-D_REAL_IS_DOUBLE_
-#  if test x"$with_comp" = x"INTEL" ; then
-#    FREALOPT="-r8"
-#  elif test x"$with_comp" = x"FJ" ; then
-#    FREALOPT="-CcdRR8"
-#  elif test x"$with_comp" = x"GNU" ; then
-#    FREALOPT="-fdefault-real-8"
-#  fi
   case "$with_comp" in
     INTEL) FREALOPT="-r8" ;;
     FJ)    FREALOPT="-CcdRR8" ;;

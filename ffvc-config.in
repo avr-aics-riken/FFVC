@@ -83,7 +83,7 @@ EOF
       ;;
 
     --cxx)
-      echo @FFVC_CXX@
+      echo @FFVC_CXX@ @REALOPT@
       ;;
 
     --fc)
