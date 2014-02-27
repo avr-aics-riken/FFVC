@@ -1305,17 +1305,19 @@ void FFV::fill(FILE* fp)
     printf(    "\t\tFilling Fluid Medium   : %s\n", mat[C.FillID].getAlias().c_str());
     printf(    "\t\tHint of Seeding Dir.   : %s\n", FBUtility::getDirection(C.FillSeedDir).c_str());
     printf(    "\t\tFill Seed Medium       : %s\n", mat[C.SeedID].getAlias().c_str());
-    printf(    "\t\tFill Control X-dir.    : %s\n", ( !C.FillSuppress[0] ) ? "Suppress" : "Fill");
-    printf(    "\t\t             Y-dir.    : %s\n", ( !C.FillSuppress[1] ) ? "Suppress" : "Fill");
-    printf(    "\t\t             Z-dir.    : %s\n", ( !C.FillSuppress[2] ) ? "Suppress" : "Fill");
+    printf(    "\t\tFill Control (X, Y, Z) : (%s, %s, %s)\n\n",
+           ( !C.FillSuppress[0] ) ? "Suppress" : "Fill",
+           ( !C.FillSuppress[1] ) ? "Suppress" : "Fill",
+           ( !C.FillSuppress[2] ) ? "Suppress" : "Fill");
     
     fprintf(fp,"\n\tFill -----\n\n");
     fprintf(fp,"\t\tFilling Fluid Medium   : %s\n", mat[C.FillID].getAlias().c_str());
     fprintf(fp,"\t\tHint of Seeding Dir.   : %s\n", FBUtility::getDirection(C.FillSeedDir).c_str());
     fprintf(fp,"\t\tFill Seed Medium       : %s\n", mat[C.SeedID].getAlias().c_str());
-    fprintf(fp,"\t\tFill Control X-dir.    : %s\n", ( !C.FillSuppress[0] ) ? "Suppress" : "Fill");
-    fprintf(fp,"\t\t             Y-dir.    : %s\n", ( !C.FillSuppress[1] ) ? "Suppress" : "Fill");
-    fprintf(fp,"\t\t             Z-dir.    : %s\n", ( !C.FillSuppress[2] ) ? "Suppress" : "Fill");
+    fprintf(fp,"\t\tFill Control (X, Y, Z) : (%s, %s, %s)\n\n",
+          ( !C.FillSuppress[0] ) ? "Suppress" : "Fill",
+          ( !C.FillSuppress[1] ) ? "Suppress" : "Fill",
+          ( !C.FillSuppress[2] ) ? "Suppress" : "Fill");
   }
   
   

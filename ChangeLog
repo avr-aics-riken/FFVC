@@ -19,13 +19,12 @@ REVISION HISTORY
 ================
 
 --------------------------
-2014-02-26
+2014-02-27
 - r1604 suppreess fill direction [ver 1.6.2]
   - modify trap in loadOuterBC() : if ( i == NoBaseBC ) 
   - modify IP_Step::setup()
   - move Fill related paramete from getApplicationControl() to getGeometryModel()
   - introduce connectivity suppression in fill_bid for periodic and symmetric
-  - Implementation of /GeometryModel/FillDirCntl is integer. This is temporal.
 
 --------------------------
 2014-02-19

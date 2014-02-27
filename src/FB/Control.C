@@ -605,6 +605,56 @@ void Control::getDimensionlessParameter()
 
 
 // #################################################################
+// 計算モデルのドライバー情報を取得
+void Control::getDriver()
+{
+  string str;
+  string label;
+  REAL_TYPE ct;
+  
+  // ドライバの設定 値が正の値のとき，有効．ゼロの場合はドライバなし
+  label = "/GeometryModel/Driver/Length";
+  if ( tpCntl->getInspectedValue(label, ct ) )
+  {
+    drv.length = ( Unit.Param == DIMENSIONAL ) ? ct : ct * RefLength;
+  }
+  else
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  if ( drv.length < 0.0 )
+  {
+    Hostonly_ stamped_printf("\tError : Value of '%s' must be positive.\n", label.c_str());
+    Exit(0);
+  }
+  
+  
+  // Only driver is specified
+  if ( drv.length > 0.0 )
+  {
+    label = "/GeometryModel/Driver/Medium";
+    if ( !(tpCntl->getInspectedValue(label, str )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    drv.Label = str;
+    
+    label = "/GeometryModel/Driver/FaceMedium";
+    if ( !(tpCntl->getInspectedValue(label, str )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    drv.faceLabel = str;
+  }
+  
+}
+
+
+// #################################################################
 // @brief ファイル入出力に関するパラメータを取得し，sphフォーマットの出力の並列モードを指定する．
 // @note インターバルパラメータは，setParameters()で無次元して保持
 // @pre getTimeControl()
@@ -1044,26 +1094,21 @@ void Control::getGeometryModel()
   SeedMedium = str;
   
   
-  // フィル方向制御
-  /*
+  // フィル方向制御 (NOT mandatory)
   string dir[3];
-  label = "/GeometryModel/FillDirCntl";
-  if ( !(tpCntl->getInspectedVector(label, dir, 3)) )
+  label = "/GeometryModel/FillDirectionControl";
+  if ( tpCntl->chkLabel(label) )
   {
-    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
-	  Exit(0);
+    if ( !(tpCntl->getInspectedVector(label, dir, 3)) )
+    {
+      Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
+      Exit(0);
+    }
+    FillSuppress[0] = ( !strcasecmp(dir[0].c_str(), "fill" ) ) ? 1 : 0;
+    FillSuppress[1] = ( !strcasecmp(dir[1].c_str(), "fill" ) ) ? 1 : 0;
+    FillSuppress[2] = ( !strcasecmp(dir[2].c_str(), "fill" ) ) ? 1 : 0;
   }
-  FillSuppress[0] = ( !strcasecmp(dir[0].c_str(), "fill" ) ) ? 1 : 0;
-  FillSuppress[1] = ( !strcasecmp(dir[1].c_str(), "fill" ) ) ? 1 : 0;
-  FillSuppress[2] = ( !strcasecmp(dir[2].c_str(), "fill" ) ) ? 1 : 0;
-  */
-  
-  label = "/GeometryModel/FillDirCntl";
-  if ( !(tpCntl->getInspectedVector(label, FillSuppress, 3)) )
-  {
-    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
-	  Exit(0);
-  }
+
   
   // Geometry output (NOT mandatory)
   label = "/GeometryModel/Output";
@@ -3642,6 +3687,14 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
   else
   {
     fprintf(fp,"\t     2nd Invariant of VGT     :   OFF\n");
+  }
+  
+  
+  // Driver ------------------
+  fprintf(fp, "\n\tDriver parameter\n");
+  if ( drv.length > 0.0 )
+  {
+    fprintf(fp,"\tDriver Length        [m] / [-]   : %12.5e / %12.5e\n", drv.length, drv.length/RefLength);
   }
   
   

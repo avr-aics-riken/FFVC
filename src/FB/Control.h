@@ -441,6 +441,14 @@ public:
     int monitor;
   } Ens_of_Compo;
   
+  /** ドライバ **/
+  typedef struct
+  {
+    REAL_TYPE length;      ///< ドライバの長さ
+    std::string Label;      ///< ドライバ部分のラベル
+    std::string faceLabel; ///< ドライバ指定面のラベル
+  } Driver_Def;
+  
   
   /** 偏微分方程式の型 */
   enum PDE_type 
@@ -606,6 +614,7 @@ public:
   Hidden_Parameter  Hide;
   Unit_Def          Unit;
   Ens_of_Compo      EnsCompo;
+  Driver_Def        drv;
   
   // class
   IntervalManager Interval[tg_END];  ///< タイミング制御
@@ -760,6 +769,8 @@ public:
     EnsCompo.vspec   = 0;
     EnsCompo.monitor = 0;
     
+    drv.length = 0.0;
+    
     Criteria = NULL;
   }
   
@@ -789,6 +800,10 @@ protected:
   
   // 無次元パラメータを各種モードに応じて設定する
   void getDimensionlessParameter();
+  
+  
+  // ドライバー情報を取得
+  void getDriver();
   
   
   // ファイル入出力に関するパラメータを取得し，sphフォーマットの出力の並列モードを指定する

@@ -96,46 +96,6 @@ bool IP_Step::getTP(Control* R, TextParser* tpCntl)
 	  height = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
   }
   
-  
-  // ドライバの設定 値が正の値のとき，有効．ゼロの場合はドライバなし
-  label = "/IntrinsicExample/DriverLength";
-  if ( tpCntl->getInspectedValue(label, ct ) )
-  {
-    drv_length = ( R->Unit.Param == DIMENSIONAL ) ? ct : ct * RefL;
-  }
-  else
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    return false;
-  }
-  
-  if ( drv_length < 0.0 )
-  {
-    Hostonly_ stamped_printf("\tError : Value of '%s' must be positive.\n", label.c_str());
-    return false;
-  }
-  
-
-  // Only driver is specified
-  if ( drv_length > 0.0 )
-  {
-    label = "/IntrinsicExample/DriverMedium";
-    if ( !(tpCntl->getInspectedValue(label, str )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      return false;
-    }
-    m_driver = str;
-    
-    label = "/IntrinsicExample/DriverFaceMedium";
-    if ( !(tpCntl->getInspectedValue(label, str )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      return false;
-    }
-    m_driver_face = str;
-  }
-  
   return true;
 }
 
@@ -157,10 +117,6 @@ void IP_Step::printPara(FILE* fp, const Control* R)
   fprintf(fp,"\tStep Width (x-dir.)    [m] / [-]   : %12.5e / %12.5e\n", width, width/RefL);
   fprintf(fp,"\tStep Height(z-dir.)    [m] / [-]   : %12.5e / %12.5e\n", height, height/RefL);
   
-  if ( drv_length > 0.0 )
-  {
-    fprintf(fp,"\tDriver Length        [m] / [-]   : %12.5e / %12.5e\n", drv_length, drv_length/RefL);
-  }
 }
 
 

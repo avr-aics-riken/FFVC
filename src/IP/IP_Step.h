@@ -29,17 +29,13 @@ class IP_Step : public Intrinsic {
   
 protected:
   REAL_TYPE width;           ///< 流路の幅
-  REAL_TYPE height;          ///< ドライバ部の高さ
-  REAL_TYPE drv_length;      ///< ドライバの長さ
-  std::string m_driver;      ///< ドライバ部分のラベル
-  std::string m_driver_face; ///< ドライバ指定面のラベル
+  REAL_TYPE height;          ///< ステップ部の高さ
   
 public:
   /** コンストラクタ */
   IP_Step(){
     width  = 0.0;
     height = 0.0;
-    drv_length = 0.0;
   }
   
   /**　デストラクタ */
