@@ -561,4 +561,16 @@ inline void setBit5 (int& b, const int q, const int dir)
 }
 
 
+/*
+ * @brief 5bit幅のIDの設定
+ * @param [in,out] b   int 変数
+ * @param [in]     q   5-bit幅のID (1-31)
+ */
+inline void setBitID (int& b, const int q)
+{
+  b &= ( ~(0x1f) ); // 下位5bitをゼロにする
+  b |= q;           // 書き込む
+}
+
+
 #endif // _FB_DEFINE_H_

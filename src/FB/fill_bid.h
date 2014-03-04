@@ -212,7 +212,7 @@ if ( zp == 0 )
   
   if ( sd_flag > 0 )
   {
-    setBit5(bcd[m_p], sd, 0);
+    setBitID(bcd[m_p], sd);
     
     for (int l=0; l<6; l++)
     {
@@ -226,8 +226,24 @@ if ( zp == 0 )
   // フラッドフィル
   int tag = 0;
   
-  if ( zw==tg && qw==0 ) tag++;
-  if ( ze==tg && qe==0 ) tag++;
+  // mode_x==0の時には，X方向の領域境界でフィルしない
+  if ( (sdw < 0) && (i == 1) && !mode_x )
+  {
+    ; // skip
+  }
+  else
+  {
+    if ( zw==tg && qw==0 ) tag++;
+  }
+  
+  if ( (sde < 0) && (i == ix) && !mode_x )
+  {
+    ; // skip
+  }
+  else
+  {
+    if ( ze==tg && qe==0 ) tag++;
+  }
   
   // mode_y==0の時には，Y方向の領域境界でフィルしない
   if ( (sds < 0) && (j == 1) && !mode_y )
@@ -248,12 +264,29 @@ if ( zp == 0 )
     if ( zn==tg && qn==0 ) tag++;
   }
   
-  if ( zb==tg && qb==0 ) tag++;
-  if ( zt==tg && qt==0 ) tag++;
+  // mode_z==0の時には，Z方向の領域境界でフィルしない
+  if ( (sdb < 0) && (k == 1) && !mode_z )
+  {
+    ; // skip
+  }
+  else
+  {
+    if ( zb==tg && qb==0 ) tag++;
+  }
+  
+  if ( (sdt < 0) && (k == kx) && !mode_z )
+  {
+    ; // skip
+  }
+  else
+  {
+    if ( zt==tg && qt==0 ) tag++;
+  }
+  
 
   if ( tag>0 )
   {
-    setBit5(bcd[m_p], tg, 0);
+    setBitID(bcd[m_p], tg);
     filled++;
   }
 

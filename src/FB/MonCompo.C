@@ -1420,7 +1420,7 @@ void MonitorCompo::setPrimitive(const char* labelStr,
           buf[(m0+m)*3+2] = org.z + (k - 0.5) * pch.z;
           m++;
           
-          setBit5(bcd[m], 0, 0); // クリア
+          setBitID(bcd[m], 0); // クリア
         }
         
       }

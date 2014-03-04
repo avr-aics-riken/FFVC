@@ -4062,6 +4062,32 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
       setupCutInfo4IP(PrepMemory, TotalMemory, fp);
       break;
   }
+  
+  
+  
+  // 外部境界面に接するセルでカットがある場合はガイドセルに固体IDを付与
+  unsigned long painted[6];
+  
+  V.paintSolidGC(d_bcd, d_bid, painted);
+  
+  Hostonly_ {
+    printf("\n\tPainted guide cell by cut\n");
+    printf("\t\t X minus = %10ld\n", painted[0]);
+    printf("\t\t X plus  = %10ld\n", painted[1]);
+    printf("\t\t Y minus = %10ld\n", painted[2]);
+    printf("\t\t Y plus  = %10ld\n", painted[3]);
+    printf("\t\t Z minus = %10ld\n", painted[4]);
+    printf("\t\t Z plus  = %10ld\n\n", painted[5]);
+    
+    fprintf(fp, "\n\tPainted guide cell by cut\n");
+    fprintf(fp, "\t\t X minus = %10ld\n", painted[0]);
+    fprintf(fp, "\t\t X plus  = %10ld\n", painted[1]);
+    fprintf(fp, "\t\t Y minus = %10ld\n", painted[2]);
+    fprintf(fp, "\t\t Y plus  = %10ld\n", painted[3]);
+    fprintf(fp, "\t\t Z minus = %10ld\n", painted[4]);
+    fprintf(fp, "\t\t Z plus  = %10ld\n\n", painted[5]);
+  }
+  
 
   
   // 外部境界面の処理
@@ -4104,7 +4130,8 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
     }
 
   }
-
+  
+  
 
   // ガイドセル同期
   if ( numProc > 1 )
@@ -4824,7 +4851,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   minDistance(d_cut, d_bid, fp);
 
   
-#if 0
+#if 1
   displayCutInfo(d_cut, d_bid);
 #endif
   

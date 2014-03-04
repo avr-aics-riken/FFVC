@@ -198,7 +198,7 @@ void VoxInfo::copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const
               for (int ii=1-gd; ii<=0; ii++) {
                 size_t m0 = _F_IDX_S3D(ii,   j, k, ix, jx, kx, gd);
                 size_t m2 = _F_IDX_S3D(ii+i, j, k, ix, jx, kx, gd);
-                setBit5(bcd[m0], DECODE_CMP(bcd[m2]), 0);
+                setBitID(bcd[m0], DECODE_CMP(bcd[m2]));
               }
             }
           }
@@ -220,7 +220,7 @@ void VoxInfo::copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const
               {
                 size_t m0 = _F_IDX_S3D(ii,        j, k, ix, jx, kx, gd);
                 size_t m2 = _F_IDX_S3D(ii+i-ix-1, j, k, ix, jx, kx, gd);
-                setBit5(bcd[m0], DECODE_CMP(bcd[m2]), 0);
+                setBitID(bcd[m0], DECODE_CMP(bcd[m2]));
               }
             }
           }
@@ -242,7 +242,7 @@ void VoxInfo::copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const
               {
                 size_t m0 = _F_IDX_S3D(i, jj,   k, ix, jx, kx, gd);
                 size_t m2 = _F_IDX_S3D(i, jj+j, k, ix, jx, kx, gd);
-                setBit5(bcd[m0], DECODE_CMP(bcd[m2]), 0);
+                setBitID(bcd[m0], DECODE_CMP(bcd[m2]));
               }
             }
           }
@@ -264,7 +264,7 @@ void VoxInfo::copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const
               {
                 size_t m0 = _F_IDX_S3D(i, jj,        k, ix, jx, kx, gd);
                 size_t m2 = _F_IDX_S3D(i, jj+j-jx-1, k, ix, jx, kx, gd);
-                setBit5(bcd[m0], DECODE_CMP(bcd[m2]), 0);
+                setBitID(bcd[m0], DECODE_CMP(bcd[m2]));
               }
             }
           }
@@ -286,7 +286,7 @@ void VoxInfo::copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const
               {
                 size_t m0 = _F_IDX_S3D(i, j, kk,   ix, jx, kx, gd);
                 size_t m2 = _F_IDX_S3D(i, j, kk+k, ix, jx, kx, gd);
-                setBit5(bcd[m0], DECODE_CMP(bcd[m2]), 0);
+                setBitID(bcd[m0], DECODE_CMP(bcd[m2]));
               }
             }
           }
@@ -308,7 +308,7 @@ void VoxInfo::copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const
               {
                 size_t m0 = _F_IDX_S3D(i, j, kk,        ix, jx, kx, gd);
                 size_t m2 = _F_IDX_S3D(i, j, kk+k-kx-1, ix, jx, kx, gd);
-                setBit5(bcd[m0], DECODE_CMP(bcd[m2]), 0);
+                setBitID(bcd[m0], DECODE_CMP(bcd[m2]));
               }
             }
           }
@@ -1568,7 +1568,7 @@ schedule(static) reduction(+:g)
             // X_MINUS
             if ( (id_w == odr) && (dot(e_w, nv) < 0.0) )
             {
-              setBit5(d, odr, 0);
+              setBitID(d, odr);
               s = (mode) ? offBit( s, BC_N_W ) : offBit( s, BC_D_W );
               offBit(bcp[m_w], BC_N_E);
               g++;
@@ -1577,7 +1577,7 @@ schedule(static) reduction(+:g)
             // X_PLUS
             if ( (id_e == odr) && (dot(e_e, nv) < 0.0) )
             {
-              setBit5(d, odr, 0);
+              setBitID(d, odr);
               s = (mode) ? offBit( s, BC_N_E ) : offBit( s, BC_D_E );
               offBit(bcp[m_e], BC_N_W);
               g++;
@@ -1586,7 +1586,7 @@ schedule(static) reduction(+:g)
             // Y_MINUS
             if ( (id_s == odr) && (dot(e_s, nv) < 0.0) )
             {
-              setBit5(d, odr, 0);
+              setBitID(d, odr);
               s = (mode) ? offBit( s, BC_N_S ) : offBit( s, BC_D_S );
               offBit(bcp[m_s], BC_N_N);
               g++;
@@ -1595,7 +1595,7 @@ schedule(static) reduction(+:g)
             // Y_PLUS
             if ( (id_n == odr) && (dot(e_n, nv) < 0.0) )
             {
-              setBit5(d, odr, 0);
+              setBitID(d, odr);
               s = (mode) ? offBit( s, BC_N_N ) : offBit( s, BC_D_N );
               offBit(bcp[m_n], BC_N_S);
               g++;
@@ -1604,7 +1604,7 @@ schedule(static) reduction(+:g)
             // Z_MINUS
             if ( (id_b == odr) && (dot(e_b, nv) < 0.0) )
             {
-              setBit5(d, odr, 0);
+              setBitID(d, odr);
               s = (mode) ? offBit( s, BC_N_B ) : offBit( s, BC_D_B );
               offBit(bcp[m_b], BC_N_T);
               g++;
@@ -1613,7 +1613,7 @@ schedule(static) reduction(+:g)
             // Z_PLUS
             if ( (id_t == odr) && (dot(e_t, nv) < 0.0) )
             {
-              setBit5(d, odr, 0);
+              setBitID(d, odr);
               s = (mode) ? offBit( s, BC_N_T ) : offBit( s, BC_D_T );
               offBit(bcp[m_t], BC_N_B);
               g++;
@@ -2626,7 +2626,7 @@ unsigned long VoxInfo::fillByFluid (int* bcd, const int fluid_id, const int* bid
         // 対象セルが未ペイントの場合
         if ( dd == 0 )
         {
-          setBit5(bcd[m_p], fid, 0);
+          setBitID(bcd[m_p], fid);
           c++;
         }
       }
@@ -2697,7 +2697,7 @@ unsigned long VoxInfo::fillByModalSolid (int* bcd, const int fluid_id, const int
             sd = find_mode_id(fid, qw, qe, qs, qn, qb, qt);
             if ( sd == 0 ) Exit(0); // 何かあるはず
           }
-          setBit5(bcd[m_p], sd, 0);
+          setBitID(bcd[m_p], sd);
           c++;
         }
       }
@@ -2755,7 +2755,7 @@ unsigned long VoxInfo::fillCutOnCellCenter (int* bcd, const int* bid, const floa
         if ( pos[0]*pos[1]*pos[2]*pos[3]*pos[4]*pos[5] == 0.0 )
         {
           printf("%d %d %d : %f %f %f %f %f %f : %d\n",i,j,k,pos[0],pos[1],pos[2],pos[3],pos[4],pos[5], qw);
-          setBit5(bcd[m_p], qw, 0); // qwで代表
+          setBitID(bcd[m_p], qw); // qwで代表
           c++;
         }
         
@@ -2810,7 +2810,7 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
             // 対象セルの周囲に指定方向以外にカットがなく，未ペイントのセルの場合
             if ( ((s & mx_w) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
-              setBit5(bcd[m], tg, 0);
+              setBitID(bcd[m], tg);
               c++;
             }
           }
@@ -2828,7 +2828,7 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
             int s = bid[m];
             if ( ((s & mx_e) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
-              setBit5(bcd[m], tg, 0);
+              setBitID(bcd[m], tg);
               c++;
             }
           }
@@ -2847,7 +2847,7 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
             
             if ( ((s & mx_s) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
-              setBit5(bcd[m], tg, 0);
+              setBitID(bcd[m], tg);
               c++;
             }
           }
@@ -2866,7 +2866,7 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
             
             if ( ((s & mx_n) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
-              setBit5(bcd[m], tg, 0);
+              setBitID(bcd[m], tg);
               c++;
             }
           }
@@ -2885,7 +2885,7 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
 
             if ( ((s & mx_b) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
-              setBit5(bcd[m], tg, 0);
+              setBitID(bcd[m], tg);
               c++;
             }
           }
@@ -2904,7 +2904,7 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
             
             if ( ((s & mx_t) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
-              setBit5(bcd[m], tg, 0);
+              setBitID(bcd[m], tg);
               c++;
             }
           }
@@ -2973,7 +2973,7 @@ unsigned long VoxInfo::findIsolatedFcell (int* bx, const int fluid_id)
             // 媒質オーダーの変更
             int sd = find_mode_id(fid, qw, qe, qs, qn, qb, qt);
             if ( sd == 0 ) Exit(0);
-            setBit5(s, sd, 0);
+            setBitID(s, sd);
             
             // 固体セルへ状態を変更　
             bx[m_p] = offBit( s, STATE_BIT );
@@ -3034,7 +3034,7 @@ unsigned long VoxInfo::modifyCutOnCellCenter (int* bid, const float* cut, const 
         {
           int sd = find_mode_id(fid, qw, qe, qs, qn, qb, qt);
           if ( sd == 0 ) Exit(0);
-#if 1
+#if 0
           // check
           int qq = bid[m_p];
           printf("(%d %d %d) : (%e %e %e %e %e %e) (%d %d %d %d %d %d) >> %d\n", i,j,k,
@@ -3071,6 +3071,175 @@ unsigned long VoxInfo::modifyCutOnCellCenter (int* bid, const float* cut, const 
 
 
 // #################################################################
+// ガイドセルに接するセルにカットがある場合にはガイドセルをペイント
+void VoxInfo::paintSolidGC (int* bcd, const int* bid, unsigned long* painted)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  
+  // X minus
+  unsigned long c = 0;
+  if ( nID[X_minus] < 0 )
+  {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        size_t m1 = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
+        size_t m0 = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
+        int sd = getBit5(bid[m1], X_minus);
+        
+        if ( sd != 0 ) {
+          setBitID(bcd[m0], sd);
+          c++;
+        }
+      }
+    }
+  }
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = c;
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  painted[X_minus] = c;
+  
+  
+  // X plus
+  c = 0;
+  if ( nID[X_plus] < 0 )
+  {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        size_t m1 = _F_IDX_S3D(ix  , j, k, ix, jx, kx, gd);
+        size_t m0 = _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd);
+        int sd = getBit5(bid[m1], X_plus);
+        
+        if ( sd != 0 ) {
+          setBitID(bcd[m0], sd);
+          c++;
+        }
+      }
+    }
+  }
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = c;
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  painted[X_plus] = c;
+  
+  
+  // Y minus
+  c = 0;
+  if ( nID[Y_minus] < 0 )
+  {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+    for (int k=1; k<=kx; k++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m1 = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
+        size_t m0 = _F_IDX_S3D(i, 0, k, ix, jx, kx, gd);
+        int sd = getBit5(bid[m1], Y_minus);
+        
+        if ( sd != 0 ) {
+          setBitID(bcd[m0], sd);
+          c++;
+        }
+      }
+    }
+  }
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = c;
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  painted[Y_minus] = c;
+  
+  
+  // Y plus
+  c = 0;
+  if ( nID[Y_plus] < 0 )
+  {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+    for (int k=1; k<=kx; k++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m1 = _F_IDX_S3D(i, jx,   k, ix, jx, kx, gd);
+        size_t m0 = _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd);
+        int sd = getBit5(bid[m1], Y_plus);
+        
+        if ( sd != 0 ) {
+          setBitID(bcd[m0], sd);
+          c++;
+        }
+      }
+    }
+  }
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = c;
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  painted[Y_plus] = c;
+  
+  
+  // Z minus
+  c = 0;
+  if ( nID[Z_minus] < 0 )
+  {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m1 = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
+        size_t m0 = _F_IDX_S3D(i, j, 0, ix, jx, kx, gd);
+        int sd = getBit5(bid[m1], Z_minus);
+        
+        if ( sd != 0 ) {
+          setBitID(bcd[m0], sd);
+          c++;
+        }
+      }
+    }
+  }
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = c;
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  painted[Z_minus] = c;
+  
+  
+  // Z plus
+  c = 0;
+  if ( nID[Z_plus] < 0 )
+  {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m1 = _F_IDX_S3D(i, j, kx,   ix, jx, kx, gd);
+        size_t m0 = _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd);
+        int sd = getBit5(bid[m1], Z_plus);
+        
+        if ( sd != 0 ) {
+          setBitID(bcd[m0], sd);
+          c++;
+        }
+      }
+    }
+  }
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = c;
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  painted[Z_plus] = c;
+  
+}
+
+
+
+// #################################################################
 // 全周カットのあるセルを固体セルIDで埋める
 unsigned long VoxInfo::replaceIsolatedFcell(int* bcd, const int fluid_id, const int* bid)
 {
@@ -3100,7 +3269,7 @@ unsigned long VoxInfo::replaceIsolatedFcell(int* bcd, const int fluid_id, const 
         {
           int sd = find_mode_id(fid, qw, qe, qs, qn, qb, qt);
           if ( sd == 0 ) Exit(0);
-          setBit5(bcd[m_p], sd, 0);
+          setBitID(bcd[m_p], sd);
           replaced++;
         }
         
@@ -3755,7 +3924,6 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
   }
   
   // もし既に，ガイドセルに何か値がセットされいてれば（ id != 0 ）上書きしない
-  // IP_Stepが該当，X-minus方向のみ
 
   switch (face)
   {
@@ -3774,7 +3942,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
             size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
             setBit5(bid[l], did, X_minus);
             
-            setBit5(bcd[m], tgt, 0);
+            setBitID(bcd[m], tgt);
           }
         }
       }
@@ -3786,14 +3954,18 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
           
-          size_t mc = _F_IDX_S4DEX(X_plus, ix, j, k, 6, ix, jx, kx, gd);
-          cut[mc] = pos;
-          
-          size_t l = _F_IDX_S3D(ix  , j  , k  , ix, jx, kx, gd);
-          setBit5(bid[l], did, X_plus);
-          
           size_t m = _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd);
-          setBit5(bcd[m], tgt, 0);
+          
+          if ( getBit5(bcd[m], 0) == 0 ) // ガイドセルに値がセットされていないこと
+          {
+            size_t mc = _F_IDX_S4DEX(X_plus, ix, j, k, 6, ix, jx, kx, gd);
+            cut[mc] = pos;
+            
+            size_t l = _F_IDX_S3D(ix  , j  , k  , ix, jx, kx, gd);
+            setBit5(bid[l], did, X_plus);
+            
+            setBitID(bcd[m], tgt);
+          }
         }
       }
       break;
@@ -3804,14 +3976,18 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
       for (int k=1; k<=kx; k++) {
         for (int i=1; i<=ix; i++) {
           
-          size_t mc = _F_IDX_S4DEX(Y_minus, i, 1, k, 6, ix, jx, kx, gd);
-          cut[mc] = pos;
-          
-          size_t l = _F_IDX_S3D(i  , 1  , k  , ix, jx, kx, gd);
-          setBit5(bid[l], did, Y_minus);
-          
           size_t m = _F_IDX_S3D(i, 0, k, ix, jx, kx, gd);
-          setBit5(bcd[m], tgt, 0);
+          
+          if ( getBit5(bcd[m], 0) == 0 ) // ガイドセルに値がセットされていないこと
+          {
+            size_t mc = _F_IDX_S4DEX(Y_minus, i, 1, k, 6, ix, jx, kx, gd);
+            cut[mc] = pos;
+            
+            size_t l = _F_IDX_S3D(i  , 1  , k  , ix, jx, kx, gd);
+            setBit5(bid[l], did, Y_minus);
+            
+            setBitID(bcd[m], tgt);
+          }
         }
       }
       break;
@@ -3822,14 +3998,18 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
       for (int k=1; k<=kx; k++) {
         for (int i=1; i<=ix; i++) {
           
-          size_t mc = _F_IDX_S4DEX(Y_plus, i, jx, k, 6, ix, jx, kx, gd);
-          cut[mc] = pos;
-          
-          size_t l = _F_IDX_S3D(i  , jx  , k  , ix, jx, kx, gd);
-          setBit5(bid[l], did, Y_plus);
-          
           size_t m = _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd);
-          setBit5(bcd[m], tgt, 0);
+          
+          if ( getBit5(bcd[m], 0) == 0 ) // ガイドセルに値がセットされていないこと
+          {
+            size_t mc = _F_IDX_S4DEX(Y_plus, i, jx, k, 6, ix, jx, kx, gd);
+            cut[mc] = pos;
+            
+            size_t l = _F_IDX_S3D(i  , jx  , k  , ix, jx, kx, gd);
+            setBit5(bid[l], did, Y_plus);
+            
+            setBitID(bcd[m], tgt);
+          }
         }
       }
       break;
@@ -3839,14 +4019,19 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, tgt, did) schedule(static)
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
-          size_t mc = _F_IDX_S4DEX(Z_minus, i, j, 1, 6, ix, jx, kx, gd);
-          cut[mc] = pos;
-          
-          size_t l = _F_IDX_S3D(i  , j  , 1  , ix, jx, kx, gd);
-          setBit5(bid[l], did, Z_minus);
           
           size_t m = _F_IDX_S3D(i, j, 0, ix, jx, kx, gd);
-          setBit5(bcd[m], tgt, 0);
+          
+          if ( getBit5(bcd[m], 0) == 0 ) // ガイドセルに値がセットされていないこと
+          {
+            size_t mc = _F_IDX_S4DEX(Z_minus, i, j, 1, 6, ix, jx, kx, gd);
+            cut[mc] = pos;
+            
+            size_t l = _F_IDX_S3D(i  , j  , 1  , ix, jx, kx, gd);
+            setBit5(bid[l], did, Z_minus);
+            
+            setBitID(bcd[m], tgt);
+          }
         }
       }
       break;
@@ -3856,14 +4041,18 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
           
-          size_t mc = _F_IDX_S4DEX(Z_plus, i, j, kx, 6, ix, jx, kx, gd);
-          cut[mc] = pos;
-          
-          size_t l = _F_IDX_S3D(i  , j  , kx  , ix, jx, kx, gd);
-          setBit5(bid[l], did, Z_plus);
-          
           size_t m = _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd);
-          setBit5(bcd[m], tgt, 0);
+          
+          if ( getBit5(bcd[m], 0) == 0 ) // ガイドセルに値がセットされていないこと
+          {
+            size_t mc = _F_IDX_S4DEX(Z_plus, i, j, kx, 6, ix, jx, kx, gd);
+            cut[mc] = pos;
+            
+            size_t l = _F_IDX_S3D(i  , j  , kx  , ix, jx, kx, gd);
+            setBit5(bid[l], did, Z_plus);
+            
+            setBitID(bcd[m], tgt);
+          }
         }
       }
       break;

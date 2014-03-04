@@ -646,7 +646,7 @@ schedule(static)
           
           // 媒質エントリ
           size_t m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
-          setBit5(bcd[m], mid_solid, 0);
+          setBitID(bcd[m], mid_solid);
           
           // 交点
           size_t m1 = _F_IDX_S4DEX(X_minus, 1, j, k, 6, ix, jx, kx, gd);
@@ -678,7 +678,7 @@ schedule(static)
             if ( (ri < r) && (r < ro) )
             {
               size_t m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
-              setBit5(bcd[m], mid_fluid, 0);
+              setBitID(bcd[m], mid_fluid);
               
               size_t m1 = _F_IDX_S4DEX(X_minus, 1, j, k, 6, ix, jx, kx, gd);
               cut[m1] = 1.0;
@@ -711,7 +711,7 @@ schedule(static)
             if ( (ri < r) && (r < ro) )
             {
               size_t m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
-              setBit5(bcd[m], mid_fluid, 0);
+              setBitID(bcd[m], mid_fluid);
               
               size_t m1 = _F_IDX_S4DEX(X_minus, 1, j, k, 6, ix, jx, kx, gd);
               cut[m1] = 1.0;

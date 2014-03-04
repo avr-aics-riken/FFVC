@@ -17,7 +17,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.57])
-AC_INIT([FFVC], [1.6.2], [keno@riken.jp], [FFVC])
+AC_INIT([FFVC], [1.6.3], [keno@riken.jp], [FFVC])
 AM_INIT_AUTOMAKE()
 AC_CONFIG_SRCDIR([src/FB/Alloc.C])
 AC_CONFIG_HEADERS([config.h])
@@ -25,7 +25,7 @@ AC_CONFIG_HEADERS([config.h])
 #
 # revision No.
 #
-FFVC_REVISION="20140226_1500"
+FFVC_REVISION="20140303_2000"
 AC_SUBST(FFVC_REVISION)
 
 
@@ -363,10 +363,7 @@ AC_CONFIG_FILES([Makefile \
                  src/IP/Makefile \
                  src/FFV/Makefile \
                  src/Util_Combsph/Makefile \
-                 ffvc-config \
                  src/FFV/ffv_Version.h \
                 ])
 
 AC_OUTPUT
-
-chmod +x ./ffvc-config

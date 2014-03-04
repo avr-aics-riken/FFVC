@@ -498,7 +498,7 @@ void ShapeMonitor::setID(const int st[], const int ed[], int* bcd, const int id)
           if ( c>=4.0)
           {
             size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-            setBit5(bcd[m], odr, 0);
+            setBitID(bcd[m], odr);
           }
         }
       }
@@ -532,7 +532,7 @@ void ShapeMonitor::setID(const int st[], const int ed[], int* bcd, const int id)
           if ( c>=4.0)
           {
             size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-            setBit5(bcd[m], odr, 0);
+            setBitID(bcd[m], odr);
           }
         }
       }

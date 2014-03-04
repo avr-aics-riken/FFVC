@@ -35,6 +35,16 @@ FILE* fp_hpcpf = NULL;
 //         1 - others
 int main( int argc, char **argv )
 {
+  // Version info
+  
+  if ( !strcasecmp(argv[1], "--version"))
+  {
+    printf("FFV-C  Frontflow / violet Cartesian : %s\n", FFVC_VERSION_NO);
+    exit(0);
+  }
+  
+  
+  
   // タイミング用変数
   double init_str, init_end;
   double main_str, main_end;

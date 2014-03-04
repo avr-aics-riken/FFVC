@@ -341,6 +341,14 @@ public:
   unsigned long modifyCutOnCellCenter (int* bid, const float* cut, const int fluid_id);
   
   
+  /* @brief 領域境界のセルで境界方向にカットがある場合にガイドセルをそのIDで埋める
+   * @param [in,out] bcd      BCindex B
+   * @param [in]     bid      境界ID
+   * @param [out]    painted  各外部領域面でペイントされた個数
+   */
+  void paintSolidGC (int* bcd, const int* bid, unsigned long* painted);
+  
+  
   /* @brief 孤立したゼロIDのセルを隣接セルIDで埋める
    * @param [in,out] bcd      BCindex B
    * @param [in]     fluid_id フィルする流体ID
