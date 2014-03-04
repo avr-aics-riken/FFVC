@@ -432,21 +432,21 @@ void FFV::allocArray_Prep(double &prep, double &total)
   total+= mc * (double)sizeof(REAL_TYPE);
   
 
-  if ( !(d_mid = paraMngr->AllocIntS3D(guide)) ) Exit(0);
+  if ( !(d_mid = Alloc::Int_S3D(size, guide)) ) Exit(0);
   prep += mc * (double)sizeof(int);
   
 
-  if ( !(d_bcd = paraMngr->AllocIntS3D(guide)) ) Exit(0);
-  prep += mc * (double)sizeof(int);
-  total+= mc * (double)sizeof(int);
-  
-
-  if ( !(d_bcp = paraMngr->AllocIntS3D(guide)) ) Exit(0);
+  if ( !(d_bcd = Alloc::Int_S3D(size, guide)) ) Exit(0);
   prep += mc * (double)sizeof(int);
   total+= mc * (double)sizeof(int);
   
 
-  if ( !(d_cdf = paraMngr->AllocIntS3D(guide)) ) Exit(0);
+  if ( !(d_bcp = Alloc::Int_S3D(size, guide)) ) Exit(0);
+  prep += mc * (double)sizeof(int);
+  total+= mc * (double)sizeof(int);
+  
+
+  if ( !(d_cdf = Alloc::Int_S3D(size, guide)) ) Exit(0);
   prep += mc * (double)sizeof(int);
   total+= mc * (double)sizeof(int);
 }

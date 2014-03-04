@@ -39,7 +39,7 @@ int main( int argc, char **argv )
   
   if ( !strcasecmp(argv[1], "--version"))
   {
-    printf("FFV-C  Frontflow / violet Cartesian : %s\n", FFVC_VERSION_NO);
+    printf("FFV-C : Frontflow / violet Cartesian  Version : %s : %s\n", FFVC_VERSION_NO, FFVC_REVISION);
     exit(0);
   }
   

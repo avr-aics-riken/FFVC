@@ -2,11 +2,7 @@
 ApplicationControl {
   CheckParameter      = "Off"
   Operator            = "Kenji_Ono"
-  FillMedium          = "air"
-  HintOfFillSeedDirection = "no"
-  HintOfFillSeedMedium    = "air"
-  VoxelOutput             = "off"
-  DebugDivergence         = "off"
+  DebugDivergence     = "off"
 }
 
 
@@ -44,8 +40,8 @@ BcTable {
       Xplus  = "outerWall"
       Yminus = "outerWall"
       Yplus  = "slideWall"
-      Zminus = "periodic"
-      Zplus  = "periodic"
+      Zminus = "symmetric"
+      Zplus  = "symmetric"
     }
 
   }
@@ -73,7 +69,11 @@ DomainInfo {
 
 
 GeometryModel {
-  Source = "rectangular"
+  Source                  = "rectangular"
+  FillMedium              = "air"
+  HintOfFillSeedDirection = "no"
+  HintOfFillSeedMedium    = "air"
+  VoxelOutput             = "off"
 }
 
 
@@ -103,6 +103,8 @@ Iteration {
     NormType             = "RbyR0"
     Omega                = 1.1
     CommMode             = "async"
+    NaiveImplementation  = "off"
+    bit3option           = "off"
   }
 
   LinearSolver[@] {
@@ -206,8 +208,8 @@ Output {
   Data {
     BasicVariables {
       Format         = "sph"
-      TemporalType   = "step"
-      Interval       = 10
+      TemporalType   = "time"
+      Interval       = 0.1
     }
     DerivedVariables {
       Format         = "sph"
@@ -297,15 +299,15 @@ TimeControl {
   }
 
   Session {
-    TemporalType   = "step"
+    TemporalType   = "time"
     Start          = 0    // 0 or 0.0の場合initial start
-    End            = 100
+    End            = 40
   }
 
   Average {
     TemporalType   = "step"
-    Start          = 400  // 指定区間の平均をとる．両方とも0のときoff
-    End            = 2000 
+    Start          = 0  // 指定区間の平均をとる．両方とも0のときoff
+    End            = 0 
   }
 }
 

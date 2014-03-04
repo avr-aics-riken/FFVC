@@ -30,7 +30,8 @@ bool DTcntl::chkDtSelect()
     case FLOW_ONLY:
     case THERMAL_FLOW:
     case THERMAL_FLOW_NATURAL:
-    case CONJUGATE_HEAT_TRANSFER:
+    case CONJUGATE_HT:
+    case CONJUGATE_HT_NATURAL:
       break;
       
     case SOLID_CONDUCTION:
@@ -81,14 +82,15 @@ int DTcntl::set_DT(const double vRef)
           
         case THERMAL_FLOW:
         case THERMAL_FLOW_NATURAL:
-        case CONJUGATE_HEAT_TRANSFER:
+        case CONJUGATE_HT:
+        case CONJUGATE_HT_NATURAL:
           dtC = dtCFL( vRef );
           a = dtDFN( Reynolds );
           b = dtDFN( Peclet );
           dtD = (a > b) ? b : a;
           deltaT = (dtC > dtD) ? dtD : dtC;
           break;
-          
+        
         case SOLID_CONDUCTION:
           return 4;
           break;
@@ -451,29 +453,6 @@ void Control::getApplicationControl()
     {
       if     ( !strcasecmp(str.c_str(), "on") ) Hide.Range_Limit = Range_Normal;
       else if( !strcasecmp(str.c_str(), "off") ) Hide.Range_Limit = Range_Cutoff;
-      else
-      {
-        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-        Exit(0);
-      }
-    }
-    else
-    {
-      Exit(0);
-    }
-  }
-  
-  
-  // ボクセルファイル出力 (Hidden)
-  FIO.IO_Voxel = OFF;
-  label = "/ApplicationControl/VoxelOutput";
-  
-  if ( tpCntl->chkLabel(label) )
-  {
-    if ( tpCntl->getInspectedValue(label, str) )
-    {
-      if     ( !strcasecmp(str.c_str(), "svx") )  FIO.IO_Voxel = Sphere_SVX;
-      else if( !strcasecmp(str.c_str(), "off") )  FIO.IO_Voxel = OFF;
       else
       {
         Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -1104,9 +1083,12 @@ void Control::getGeometryModel()
       Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
       Exit(0);
     }
-    FillSuppress[0] = ( !strcasecmp(dir[0].c_str(), "fill" ) ) ? 1 : 0;
-    FillSuppress[1] = ( !strcasecmp(dir[1].c_str(), "fill" ) ) ? 1 : 0;
-    FillSuppress[2] = ( !strcasecmp(dir[2].c_str(), "fill" ) ) ? 1 : 0;
+    else
+    {
+      FillSuppress[0] = ( !strcasecmp(dir[0].c_str(), "fill" ) ) ? 1 : 0;
+      FillSuppress[1] = ( !strcasecmp(dir[1].c_str(), "fill" ) ) ? 1 : 0;
+      FillSuppress[2] = ( !strcasecmp(dir[2].c_str(), "fill" ) ) ? 1 : 0;
+    }
   }
 
   
@@ -1140,6 +1122,29 @@ void Control::getGeometryModel()
     {
       if ( !strcasecmp(str.c_str(), "on") ) Hide.GlyphOutput = ON;
       if ( !strcasecmp(str.c_str(), "InnerOnly") ) Hide.GlyphOutput = 2; // special treatment
+    }
+  }
+  
+  
+  // ボクセルファイル出力 (Hidden)
+  FIO.IO_Voxel = OFF;
+  label = "/GeometryModel/VoxelOutput";
+  
+  if ( tpCntl->chkLabel(label) )
+  {
+    if ( tpCntl->getInspectedValue(label, str) )
+    {
+      if     ( !strcasecmp(str.c_str(), "svx") )  FIO.IO_Voxel = Sphere_SVX;
+      else if( !strcasecmp(str.c_str(), "off") )  FIO.IO_Voxel = OFF;
+      else
+      {
+        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+        Exit(0);
+      }
+    }
+    else
+    {
+      Exit(0);
     }
   }
   
@@ -1810,7 +1815,7 @@ void Control::getSolverProperties()
   }
   
   
-  // ソルバーの種類（FLOW_ONLY / THERMAL_FLOW / THERMAL_FLOW_NATURAL / CONJUGATE_HEAT_TRANSFER / SOLID_CONDUCTION）と浮力モード
+  // ソルバーの種類（FLOW_ONLY / THERMAL_FLOW / THERMAL_FLOW_NATURAL / CONJUGATE_HT / CONJUGATE_HT_NATURAL / SOLID_CONDUCTION）と浮力モード
   label="/GoverningEquation/HeatEquation";
   
   if ( !(tpCntl->getInspectedValue(label, str )) )
@@ -1844,7 +1849,15 @@ void Control::getSolverProperties()
   }
   else if( !strcasecmp(str.c_str(), "ConjugateHeatTransfer" ) )
   {
-    KindOfSolver = CONJUGATE_HEAT_TRANSFER;
+    KindOfSolver = CONJUGATE_HT;
+    varState[var_Velocity]    = true;
+    varState[var_Fvelocity]   = true;
+    varState[var_Pressure]    = true;
+    varState[var_Temperature] = true;
+  }
+  else if( !strcasecmp(str.c_str(), "ConjugateHeatTransferNatural" ) )
+  {
+    KindOfSolver = CONJUGATE_HT_NATURAL;
     varState[var_Velocity]    = true;
     varState[var_Fvelocity]   = true;
     varState[var_Pressure]    = true;
@@ -1862,7 +1875,10 @@ void Control::getSolverProperties()
   }
   
   // Buoyancy option
-  if ( (KindOfSolver==THERMAL_FLOW) || (KindOfSolver==THERMAL_FLOW_NATURAL) || (KindOfSolver==CONJUGATE_HEAT_TRANSFER) )
+  if ( (KindOfSolver==THERMAL_FLOW) ||
+       (KindOfSolver==THERMAL_FLOW_NATURAL) ||
+       (KindOfSolver==CONJUGATE_HT) ||
+       (KindOfSolver==CONJUGATE_HT_NATURAL) )
   {
     label="/GoverningEquation/Buoyancy";
     
@@ -2960,7 +2976,8 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
     case FLOW_ONLY:
     case THERMAL_FLOW:
     case THERMAL_FLOW_NATURAL:
-    case CONJUGATE_HEAT_TRANSFER:
+    case CONJUGATE_HT:
+    case CONJUGATE_HT_NATURAL:
 			switch (BasicEqs) {
 				case INCMP:
 					fprintf(fp,"\t     Basic Equation           :   Incompressible Flow ");
@@ -3074,6 +3091,28 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
   {
     fprintf(fp,"\t     Kind of Solver           :   Natural convection : Low Mach Approximation\n");
   }
+  
+  else if ( (KindOfSolver==CONJUGATE_HT) && (Mode.Buoyancy==NO_BUOYANCY) )
+  {
+    fprintf(fp,"\t     Kind of Solver           :   Conjugate heat transfer / Forced convection without buoyancy\n");
+  }
+  else if ( (KindOfSolver==CONJUGATE_HT) && (Mode.Buoyancy==BOUSSINESQ) )
+  {
+    fprintf(fp,"\t     Kind of Solver           :   Conjugate heat transfer / Forced convection with buoyancy : Boussinesq Approximation\n");
+  }
+  else if ( (KindOfSolver==CONJUGATE_HT) && (Mode.Buoyancy==LOW_MACH) )
+  {
+    fprintf(fp,"\t     Kind of Solver           :   Conjugate heat transfer / Forced convection with buoyancy : Low Mach Approximation\n");
+  }
+  else if ( (KindOfSolver==CONJUGATE_HT_NATURAL) && (Mode.Buoyancy==BOUSSINESQ) )
+  {
+    fprintf(fp,"\t     Kind of Solver           :   Conjugate heat transfer / Natural convection : Boussinesq Approximation\n");
+  }
+  else if ( (KindOfSolver==CONJUGATE_HT_NATURAL) && (Mode.Buoyancy==LOW_MACH) )
+  {
+    fprintf(fp,"\t     Kind of Solver           :   Conjugate heat transfer / Natural convection : Low Mach Approximation\n");
+  }
+  
   else if (KindOfSolver==SOLID_CONDUCTION)
   {
     fprintf(fp,"\t     Kind of Solver           :   Solid Conduction\n");
@@ -4037,7 +4076,7 @@ void Control::setRefParameters(MediumList* mat, ReferenceFrame* RF)
       Prandtl  = rho * cp * nyu / lambda;
     }
   }
-	else if (KindOfSolver==THERMAL_FLOW)
+	else if ( (KindOfSolver==THERMAL_FLOW) || (KindOfSolver==CONJUGATE_HT) )
   {
     switch (Mode.Buoyancy)
     {
@@ -4076,7 +4115,7 @@ void Control::setRefParameters(MediumList* mat, ReferenceFrame* RF)
         break;
     }
   }
-  else if (KindOfSolver==THERMAL_FLOW_NATURAL)
+  else if ( (KindOfSolver==THERMAL_FLOW_NATURAL) || (KindOfSolver==CONJUGATE_HT_NATURAL) )
   {
     switch (Mode.Buoyancy)
     {
@@ -4104,10 +4143,7 @@ void Control::setRefParameters(MediumList* mat, ReferenceFrame* RF)
         break;
 		}
 	}
-	else
-  { // CONJUGATE_HEAT_TRANSFER
-		;
-	}
+
   
   if (Mode.PDE == PDE_EULER) Reynolds=1.0e23;
   

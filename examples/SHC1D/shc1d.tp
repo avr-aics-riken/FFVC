@@ -1,11 +1,7 @@
 
 ApplicationControl {
-  Operator            = "Kenji_Ono"
-  FillMedium          = "water"
-  HintOfFillSeedDirection = "Xminus"
-  HintOfFillSeedMedium    = "air"
-  VoxelOutput             = "svx"
-  DebugDivergence         = "off"
+  Operator        = "Kenji_Ono"
+  DebugDivergence = "Off"
 }
 
 
@@ -71,6 +67,10 @@ DomainInfo {
 
 GeometryModel {
   Source = "polylib.tp"
+  FillMedium = "water"
+  HintOfFillSeedDirection = "xminus"
+  HintOfFillSeedMedium = "water"
+  VoxelOutput     = "svx"
 }
 
 
@@ -146,6 +146,7 @@ MediumTable {
 MonitorList {
   Log             = "On"
   OutputMode      = "Gather"
+  CellMonitor     = "off"
   Sampling {
     TemporalType  = "step"
     Interval      = 1
@@ -173,7 +174,6 @@ Output {
     Iteration        = "Off"
     Profiling        = "On"
     WallInfo         = "Off"
-    CCNVfile         = "on"
     Console {
       TemporalType   = "Step"
       Interval       = 1

@@ -834,7 +834,8 @@ void VoxInfo::encActive (unsigned long& Lcell, unsigned long& Gcell, int* bx, co
       }
       break;
       
-    case CONJUGATE_HEAT_TRANSFER:
+    case CONJUGATE_HT:
+    case CONJUGATE_HT_NATURAL:
       
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
       for (int k=1; k<=kx; k++) {
@@ -3416,7 +3417,7 @@ void VoxInfo::setBCIndexH (int* cdf, int* bd, SetBC* BC, const int kos, CompoLis
         {
           cmp[n].setElement( encQface(n, bid, cdf, bd, false, SOLID, &cmp[n]) );
         }
-        else if ( (kos == CONJUGATE_HEAT_TRANSFER) )
+        else if ( (kos == CONJUGATE_HT) || (kos == CONJUGATE_HT_NATURAL) )
         {
           cmp[n].setElement( encQface(n, bid, cdf, bd, false, ANY_STATE, &cmp[n]) );
         }
@@ -3437,7 +3438,7 @@ void VoxInfo::setBCIndexH (int* cdf, int* bd, SetBC* BC, const int kos, CompoLis
         {
           cmp[n].setElement( encQface(n, bid, cdf, bd, true, SOLID, &cmp[n]) );
         }
-        else if ( (kos == CONJUGATE_HEAT_TRANSFER) )
+        else if ( (kos == CONJUGATE_HT) || (kos == CONJUGATE_HT_NATURAL) )
         {
           cmp[n].setElement( encQface(n, bid, cdf, bd, true, ANY_STATE, &cmp[n]) );
         }

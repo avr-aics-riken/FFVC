@@ -1,11 +1,8 @@
+
 ApplicationControl {
   CheckParameter      = "Off"
   Operator            = "Kenji_Ono"
-  FillMedium          = "air"
-  HintOfFillSeedDirection = "no"
-  HintOfFillSeedMedium    = "air"
-  VoxelOutput             = "off"
-  DebugDivergence         = "off"
+  DebugDivergence     = "Off"
 }
 
 
@@ -15,7 +12,7 @@ BCTable {
   }
 
   OuterBoundary {
-
+   
     outer_wall {
       class   = "Wall"
       Type    = "fixed"
@@ -41,7 +38,7 @@ BCTable {
       class   = "TractionFree"
       Medium  = "air"
     }
-
+    
     jet {
       class  = "intrinsic"
       Medium = "air"
@@ -71,7 +68,7 @@ DomainInfo {
   GlobalRegion   = (3.0, 3.0, 3.0)
   //GlobalPitch    = (2.0e-3, 2.0e-3, 2.0e-3)
 
-  GlobalVoxel    = (200   , 200   , 200   )
+  GlobalVoxel    = (100   , 100   , 100   )
   //GlobalDivision = (1    , 1    , 4    )
 
   ActiveSubDomainFile = "hoge"
@@ -79,7 +76,11 @@ DomainInfo {
 
 
 GeometryModel {
-  Source = "jet"
+  Source                  = "jet"
+  FillMedium              = "air"
+  HintOfFillSeedDirection = "xminus"
+  HintOfFillSeedMedium    = "air"
+  VoxelOutput             = "svx"
 }
 
 
@@ -88,7 +89,7 @@ GoverningEquation {
   HeatEquation       = "FlowOnly"
   Buoyancy           = "NoBuoyancy"
   TimeVariation      = "Unsteady"
-  PDEType            = "NavierStokes"
+  PDEType            = "NavierStokes" 
 }
 
 
@@ -146,7 +147,7 @@ Iteration {
   Pressure    = "sor2_moderate"
   Velocity    = ""
   VPiteration = "vp"
-  Temperature = "sor2_loose"
+  Temperature = "sor2_loose"   
 }
 
 
@@ -204,12 +205,12 @@ Output {
     BasicVariables {
       Format         = "sph"
       TemporalType   = "step"
-      Interval       = 40
+      Interval       = 20
     }
     DerivedVariables {
       Format         = "sph"
       TemporalType   = "step"
-      Interval       = 40
+      Interval       = 20
 
       TotalPressure  = "Off"
       Helicity       = "Off"
@@ -223,7 +224,7 @@ Output {
       Interval      = 100
     }
   }
-
+    
   FormatOption {
     SPH {
       GuideOut        = "Without"
@@ -295,7 +296,7 @@ TimeControl {
   Session {
     TemporalType     = "step"
     Start            = 0
-    End              = 80000
+    End              = 20000
   }
 
   Average {

@@ -44,7 +44,8 @@ void History::printCCNV(const double* avr, const double* rms, const IterationCtl
   if ( (C->KindOfSolver==FLOW_ONLY) ||
        (C->KindOfSolver==THERMAL_FLOW) ||
        (C->KindOfSolver==THERMAL_FLOW_NATURAL) ||
-       (C->KindOfSolver==CONJUGATE_HEAT_TRANSFER) )
+       (C->KindOfSolver==CONJUGATE_HT) ||
+       (C->KindOfSolver==CONJUGATE_HT_NATURAL) )
   {
     // Max Velocity
     data[c++] = (double)printVmax();
@@ -183,7 +184,8 @@ void History::printCCNVtitle(const IterationCtl* IC, const Control* C)
   if ( (C->KindOfSolver==FLOW_ONLY) ||
        (C->KindOfSolver==THERMAL_FLOW) ||
        (C->KindOfSolver==THERMAL_FLOW_NATURAL) ||
-       (C->KindOfSolver==CONJUGATE_HEAT_TRANSFER) )
+       (C->KindOfSolver==CONJUGATE_HT) ||
+       (C->KindOfSolver==CONJUGATE_HT_NATURAL) )
   {
     str = (Unit_Log == DIMENSIONAL) ? "Maximum Velocity[m/s]" : "Maximum Velocity[-]";
     sprintf(y_title[c++], "%s", str.c_str()); // c=0
@@ -353,7 +355,8 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
   if ( (C->KindOfSolver==FLOW_ONLY) ||
       ( C->KindOfSolver==THERMAL_FLOW) ||
       ( C->KindOfSolver==THERMAL_FLOW_NATURAL) ||
-      ( C->KindOfSolver==CONJUGATE_HEAT_TRANSFER) )
+      ( C->KindOfSolver==CONJUGATE_HT) ||
+      ( C->KindOfSolver==CONJUGATE_HT_NATURAL) )
   {
     fprintf(fp, " %11.4e %5d  %11.4e",
             printVmax(), ICd->getLoopCount(), ICd->getNormValue() );
@@ -436,7 +439,9 @@ void History::printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control*
   
   if ( (C->KindOfSolver == FLOW_ONLY) ||
       ( C->KindOfSolver == THERMAL_FLOW) ||
-      ( C->KindOfSolver == THERMAL_FLOW_NATURAL) )
+      ( C->KindOfSolver == THERMAL_FLOW_NATURAL) ||
+      ( C->KindOfSolver == CONJUGATE_HT) ||
+      ( C->KindOfSolver == CONJUGATE_HT_NATURAL) )
   {
     if ( Unit_Log == DIMENSIONAL )
     {
@@ -519,10 +524,7 @@ void History::printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control*
     
     fprintf(fp, "     deltaT       avrT");
   }
-  else // CONJUGATE_HEAT_TRANSFER
-  {
-    
-  }
+
   
   if ( disp )
   {

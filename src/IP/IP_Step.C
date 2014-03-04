@@ -72,6 +72,7 @@ bool IP_Step::getTP(Control* R, TextParser* tpCntl)
   m_solid = str;
   
   
+  
   // x-dir step
   label = "/IntrinsicExample/StepLength";
   if ( !(tpCntl->getInspectedValue(label, ct )) )

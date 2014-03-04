@@ -5,7 +5,7 @@ Polylib {
     filepath ="./rectcyl.stla"
     movable = "false"
     label = "VirtualMetal"
-    type = "HeatTransferB"
+    type = "HeatTransferS"
   }
 
   Insulation {

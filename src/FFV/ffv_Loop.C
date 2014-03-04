@@ -407,7 +407,8 @@ int FFV::Loop(const unsigned step)
         
       case THERMAL_FLOW:
       case THERMAL_FLOW_NATURAL:
-      case CONJUGATE_HEAT_TRANSFER:
+      case CONJUGATE_HT:
+      case CONJUGATE_HT_NATURAL:
         if ( (CM_F.rate > 100.0) || (CM_H.rate > 100.0) )
         {
           Hostonly_ {

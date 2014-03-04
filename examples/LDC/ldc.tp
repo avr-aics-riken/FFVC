@@ -2,11 +2,7 @@
 ApplicationControl {
   CheckParameter      = "Off"
   Operator            = "Kenji_Ono"
-  FillMedium          = "water"
-  HintOfFillSeedDirection = "Zminus"
-  HintOfFillSeedMedium    = "water"
-  VoxelOutput             = "off"
-  DebugDivergence         = "off"
+  DebugDivergence     = "off"
 }
 
 
@@ -65,7 +61,11 @@ DomainInfo {
 
 
 GeometryModel {
-  Source = "rectangular"
+  Source                  = "rectangular"
+  FillMedium              = "water"
+  HintOfFillSeedDirection = "xminus"
+  HintOfFillSeedMedium    = "water"
+  VoxelOutput             = "off"
 }
 
 

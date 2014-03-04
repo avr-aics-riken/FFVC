@@ -1,11 +1,7 @@
 
 ApplicationControl {
-  CheckParameter      = "Off"
-  Operator            = "Kenji_Ono"
-  FillMedium          = "air"
-  HintOfFillSeedDirection = "no"
-  HintOfFillSeedMedium    = "air"
-  VoxelOutput             = "off"
+  CheckParameter          = "Off"
+  Operator                = "Kenji_Ono"
   DebugDivergence         = "off"
 }
 
@@ -76,6 +72,10 @@ DomainInfo {
 
 GeometryModel {
   Source = "rectangular"
+  FillMedium              = "air"
+  HintOfFillSeedDirection = "no"
+  HintOfFillSeedMedium    = "air"
+  VoxelOutput             = "off"
 }
 
 
@@ -98,6 +98,14 @@ IntrinsicExample {
 
 Iteration {
   LinearSolver[@] {
+    Alias                = "vp"
+    class                = "VPiteration"
+    MaxIteration         = 100
+    ConvergenceCriterion = 1.0e-4
+    NormType             = "VdivMax"
+  }
+
+  LinearSolver[@] {
     Alias                = "sor2_strict"
     class                = "sor2sma"
     MaxIteration         = 50
@@ -105,14 +113,8 @@ Iteration {
     NormType             = "RbyR0"
     Omega                = 1.1
     CommMode             = "async"
-  }
-
-  LinearSolver[@] {
-    Alias                = "vp"
-    class                = "VPiteration"
-    MaxIteration         = 100
-    ConvergenceCriterion = 1.0e-4
-    NormType             = "VdivMax"
+    NaiveImplementation  = "off"
+    bit3option           = "off"
   }
 
   LinearSolver[@] {
@@ -154,7 +156,7 @@ MediumTable {
 
 
 MonitorList {
-  Log             = "On"
+  Log             = "Off"
   OutputMode      = "gather"
   Sampling {
     TemporalType  = "step"
@@ -351,7 +353,7 @@ TimeControl {
   Session {
     TemporalType   = "step"
     Start          = 0    // 0 or 0.0の場合initial start
-    End            = 100
+    End            = 1000
   }
 
   Average {

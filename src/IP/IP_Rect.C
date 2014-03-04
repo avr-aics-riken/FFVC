@@ -95,6 +95,7 @@ bool IP_Rect::getTP(Control* R, TextParser* tpCntl)
   }
   m_solid = str;
   
+  
   return true;
 }
 

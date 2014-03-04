@@ -95,8 +95,9 @@
 #define FLOW_ONLY               0
 #define THERMAL_FLOW            1
 #define THERMAL_FLOW_NATURAL    2
-#define CONJUGATE_HEAT_TRANSFER 3
-#define SOLID_CONDUCTION        4
+#define CONJUGATE_HT            3
+#define CONJUGATE_HT_NATURAL    4
+#define SOLID_CONDUCTION        5
 
 // 基礎方程式
 #define INCMP        0

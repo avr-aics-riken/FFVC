@@ -2,10 +2,6 @@
 ApplicationControl {
   CheckParameter      = "Off"
   Operator            = "Kenji_Ono"
-  FillMedium          = "air"
-  HintOfFillSeedDirection = "no"
-  HintOfFillSeedMedium    = "air"
-  VoxelOutput             = "off"
   DebugDivergence         = "off"
 }
 
@@ -40,6 +36,10 @@ GoverningEquation {
 
 GeometryModel {
   Source = "PerformanceTest"
+  FillMedium          = "air"
+  HintOfFillSeedDirection = "no"
+  HintOfFillSeedMedium    = "air"
+  VoxelOutput             = "off"
 }
 
 

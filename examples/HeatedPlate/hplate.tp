@@ -2,9 +2,6 @@
 ApplicationControl {
   CheckParameter      = "Off"
   Operator            = "Kenji_Ono"
-  FillMedium          = "air"
-  HintOfFillSeedDirection  = "xminus"
-  VoxelOutput         = "svx"
   DebugDivergence     = "off"
 }
 
@@ -96,7 +93,12 @@ GoverningEquation {
 
 
 GeometryModel {
-  Source = "polylib.tp"
+  Source                  = "polylib.tp"
+  outputGlyph             = "on"
+  FillMedium              = "air"
+  HintOfFillSeedMedium    = "air"
+  HintOfFillSeedDirection = "xminus"
+  VoxelOutput             = "svx"
 }
 
 

@@ -2,11 +2,7 @@
 ApplicationControl {
   CheckParameter      = "Off"
   Operator            = "Kenji_Ono"
-  FillMedium          = "air"
-  HintOfFillSeedDirection = "xminus"
-  HintOfFillSeedMedium    = "air"
-  VoxelOutput             = "off"
-  DebugDivergence         = "off"
+  DebugDivergence     = "off"
 }
 
 BcTable {
@@ -67,7 +63,11 @@ DomainInfo {
 
 
 GeometryModel {
-  Source = "sphere"
+  Source                  = "sphere"
+  FillMedium              = "air"
+  HintOfFillSeedDirection = "xminus"
+  HintOfFillSeedMedium    = "air"
+  VoxelOutput             = "off"
 }
 
 

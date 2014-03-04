@@ -274,7 +274,7 @@ void ParseBC::getIbcHeatFlux(const string label_base, const int n, CompoList* cm
 
 // #################################################################
 /**
- * @brief Heat_Generationのパラメータを取得する
+ * @brief HeatGenerationのパラメータを取得する
  * @param [in]  label_base ラベルディレクトリ
  * @param [in]  n          コンポーネントリストの格納番号
  * @param [out] cmp        CompoList
@@ -285,10 +285,9 @@ void ParseBC::getIbcHeatSrc(const string label_base, const int n, CompoList* cmp
   string str;
   string label;
   
-  // 発熱密度
   label = label_base + "/HeatReleaseValue";
   
-  if ( tpCntl->chkLabel(label) )
+  if ( tpCntl->chkLabel(label) ) // 発熱量 [W]
   {
     if ( tpCntl->getInspectedValue(label, ct) )
     {
@@ -301,25 +300,28 @@ void ParseBC::getIbcHeatSrc(const string label_base, const int n, CompoList* cmp
       Exit(0);
     }
   }
-  else if ( tpCntl->chkLabel(label_base + "/HeatGenerationDensity") )
+  else // 発熱密度 [W/m^3]
   {
     label = label_base + "/HeatGenerationDensity";
     
-    if ( tpCntl->getInspectedValue(label, ct) )
+    if ( tpCntl->chkLabel(label) )
     {
-      cmp[n].setHsrcPolicy(false);
-      cmp[n].setHeatValue( ct );
+      if ( tpCntl->getInspectedValue(label, ct) )
+      {
+        cmp[n].setHsrcPolicy(false);
+        cmp[n].setHeatValue( ct );
+      }
+      else
+      {
+        stamped_printf("\tParsing error : Invalid value for '%s\n", label.c_str());
+        Exit(0);
+      }
     }
     else
     {
-      stamped_printf("\tParsing error : Invalid value for '%s\n", label.c_str());
+      stamped_printf("\tParsing error : Invalid STRING value for '%s\n", label.c_str());
       Exit(0);
     }
-  }
-  else
-  {
-    stamped_printf("\tParsing error : Invalid STRING value for '%s\n", label.c_str());
-    Exit(0);
   }
   
 }

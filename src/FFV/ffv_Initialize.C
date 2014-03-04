@@ -178,7 +178,6 @@ int FFV::Initialize(int argc, char **argv)
   TIMING_start(tm_voxel_prep_sct);
   
 
-
   
   // 各問題に応じてモデルを設定 >> Polylib + Cutlib
   // 外部境界面およびガイドセルのカットとIDの処理
@@ -696,7 +695,8 @@ bool FFV::chkMediumConsistency()
       }
       break;
       
-    case CONJUGATE_HEAT_TRANSFER:
+    case CONJUGATE_HT:
+    case CONJUGATE_HT_NATURAL:
       if ( ( nmFluid == 0 ) || ( nmSolid == 0 ) )
       {
         Hostonly_ printf("\tError : Fluid/Solid should have at least one medium.\n");
@@ -1099,6 +1099,7 @@ void FFV::encodeBCindex(FILE* fp)
   V.setBCIndexBase(d_bcd, d_cvf, mat, cmp, L_Acell, G_Acell, C.KindOfSolver);
   
 
+  
   // @attention bx[]の同期が必要 >> 以下の処理で隣接セルを参照するため
   if ( numProc > 1 )
   {
@@ -1152,7 +1153,6 @@ void FFV::encodeBCindex(FILE* fp)
 #endif
   // ##########
   
-
   
   
   // 温度計算のビット情報をエンコードする -----
@@ -4851,7 +4851,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   minDistance(d_cut, d_bid, fp);
 
   
-#if 1
+#if 0
   displayCutInfo(d_cut, d_bid);
 #endif
   
