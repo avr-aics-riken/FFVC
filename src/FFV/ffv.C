@@ -24,6 +24,7 @@
 // コンストラクタ
 FFV::FFV()
 {
+  EXEC_MODE = -1;
   ffv_procGrp = 0;
   ModeTiming = 0;
   G_Acell = 0;

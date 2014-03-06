@@ -31,6 +31,7 @@ FILE* fp_hpcpf = NULL;
 #define hpcpf_status(x) \
 (fprintf(fp_hpcpf, "status code = %d\nexit at %s:%u\n", x, __FILE__, __LINE__))
 
+
 // return; 0 - normal
 //         1 - others
 int main( int argc, char **argv )
@@ -44,7 +45,6 @@ int main( int argc, char **argv )
   }
   
   
-  
   // タイミング用変数
   double init_str, init_end;
   double main_str, main_end;
@@ -52,6 +52,18 @@ int main( int argc, char **argv )
   
   // FFV classのインスタンス
   FFV ffv;
+  
+  
+  // FFVCのモード
+  if ( !strcasecmp(argv[1], "--filter"))
+  {
+    ffv.EXEC_MODE = ffvc_filter;
+  }
+  else
+  {
+    ffv.EXEC_MODE = ffvc_solver;
+  }
+
   
   
   // 並列管理クラスのインスタンスと初期化
@@ -63,12 +75,15 @@ int main( int argc, char **argv )
   
   
   // 引数チェック
-  if ( argc != 2 )
+  if ( ((ffv.EXEC_MODE == ffvc_solver) && (argc != 2)) ||
+       ((ffv.EXEC_MODE == ffvc_filter) && (argc != 3)) )
   {
     if ( ffv.IsMaster() )
     {
       printf("\n\tusage\n");
-      printf("\n\t$ ffvc <input_file>\n");
+      printf("\n\t$ ffvc <parameter_file>\n");
+      printf("\n\t$ ffvc --version\n");
+      printf("\n\t$ ffvc --filter <parameter_file>\n");
     }
     
     if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
@@ -91,7 +106,16 @@ int main( int argc, char **argv )
   }
   
   
-  int init_ret = ffv.Initialize(argc, argv);
+  int init_ret;
+  
+  if ( ffv.EXEC_MODE == ffvc_solver )
+  {
+    init_ret = ffv.Initialize(argc, argv);
+  }
+  else
+  {
+    init_ret = ffv.FilterInitialize(argc, argv);
+  }
   
   switch( init_ret )
   {
@@ -129,25 +153,35 @@ int main( int argc, char **argv )
   // タイムステップループ
   main_str = cpm_Base::GetWTime();
   
-  int loop_ret = ffv.MainLoop();
+  int loop_ret;
   
-  switch (loop_ret) 
+  if ( ffv.EXEC_MODE == ffvc_solver )
   {
-    case -1:
-      if ( ffv.IsMaster() ) printf("\n\tSolver error.\n\n");
-      if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
-      break;
-
-    case 0:
-      if ( ffv.IsMaster() ) printf("\n\tSolver forced termination time-step loop.\n\n");
-      if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
-      break;
-      
-    case 1:
-      if ( ffv.IsMaster() ) printf("\n\tSolver finished.\n\n");
-      if (cpm_ParaManager::get_instance()->GetMyRankID()==0) fprintf(fp_hpcpf, "status code = 0\n");
-      break;
+    loop_ret = ffv.MainLoop();
+    
+    switch (loop_ret)
+    {
+      case -1:
+        if ( ffv.IsMaster() ) printf("\n\tSolver error.\n\n");
+        if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
+        break;
+        
+      case 0:
+        if ( ffv.IsMaster() ) printf("\n\tSolver forced termination time-step loop.\n\n");
+        if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
+        break;
+        
+      case 1:
+        if ( ffv.IsMaster() ) printf("\n\tSolver finished.\n\n");
+        if (cpm_ParaManager::get_instance()->GetMyRankID()==0) fprintf(fp_hpcpf, "status code = 0\n");
+        break;
+    }
   }
+  else
+  {
+    loop_ret = ffv.FilterLoop();
+  }
+
   
   main_end = cpm_Base::GetWTime();
 

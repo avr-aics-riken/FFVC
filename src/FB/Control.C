@@ -304,10 +304,16 @@ void Control::copyCriteria(IterationCtl& IC, const string name)
 
 // #################################################################
 // 制御，計算パラメータ群の表示
-void Control::displayParams(FILE* mp, FILE* fp, IterationCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat, CompoList* cmp)
+void Control::displayParams(FILE* mp, FILE* fp,
+                            IterationCtl* IC,
+                            DTcntl* DT,
+                            ReferenceFrame* RF,
+                            MediumList* mat,
+                            CompoList* cmp,
+                            const int em)
 {
-  printSteerConditions(mp, IC, DT, RF);
-  printSteerConditions(fp, IC, DT, RF);
+  printSteerConditions(mp, IC, DT, RF, em);
+  printSteerConditions(fp, IC, DT, RF, em);
   printParaConditions(mp, mat);
   printParaConditions(fp, mat);
   printInitValues(mp, cmp);
@@ -2941,7 +2947,7 @@ void Control::printParaConditions(FILE* fp, const MediumList* mat)
 
 // #################################################################
 // 制御パラメータSTEERの表示
-void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT, const ReferenceFrame* RF)
+void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT, const ReferenceFrame* RF, const int em)
 {
   if ( !fp )
   {
@@ -3572,78 +3578,82 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
   }
   
 
-  
   // Criteria ------------------
-  fprintf(fp,"\n\tParameter of Linear Equation\n");
-  IterationCtl* ICp1= &IC[ic_prs1];  /// 圧力のPoisson反復
-  IterationCtl* ICp2= &IC[ic_prs2];  /// 圧力のPoisson反復　2回目
-  IterationCtl* ICv = &IC[ic_vel1];  /// 粘性項のCrank-Nicolson反復
-  IterationCtl* ICd = &IC[ic_div];   /// V-P反復
+  if ( em == ffvc_solver )
+  {
+    fprintf(fp,"\n\tParameter of Linear Equation\n");
+    IterationCtl* ICp1= &IC[ic_prs1];  /// 圧力のPoisson反復
+    IterationCtl* ICp2= &IC[ic_prs2];  /// 圧力のPoisson反復　2回目
+    IterationCtl* ICv = &IC[ic_vel1];  /// 粘性項のCrank-Nicolson反復
+    IterationCtl* ICd = &IC[ic_div];   /// V-P反復
+    
+    if ( Hide.PM_Test == ON )
+    {
+      fprintf(fp,"\t ### Performance Test Mode >> The iteration number is fixed by Iteration max.\n\n");
+    }
+    
+    if ( KindOfSolver != SOLID_CONDUCTION )
+    {
+      // V-P iteration
+      fprintf(fp,"\t     V-P Iteration \n");
+      fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICd->getMaxIteration());
+      fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICd->getCriterion());
+      fprintf(fp,"\t       Norm type              :   %s\n",    ICd->getNormString().c_str());
+      
+      
+      // 1st iteration
+      fprintf(fp,"\t     1st Pressure Iteration \n");
+      fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICp1->getMaxIteration());
+      fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICp1->getCriterion());
+      fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICp1->getOmega());
+      fprintf(fp,"\t       Norm type              :   %s\n",    ICp1->getNormString().c_str());
+      fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICp1->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
+      printLS(fp, ICp1);
+      
+      if ( AlgorithmF == Flow_FS_RK_CN )
+      {
+        fprintf(fp,"\t     2nd Pressure Iteration \n");
+        fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICp2->getMaxIteration());
+        fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICp2->getCriterion());
+        fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICp2->getOmega());
+        fprintf(fp,"\t       Norm type              :   %s\n",    ICp2->getNormString().c_str());
+        fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICp2->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
+        printLS(fp, ICp2);
+      }
+      
+      // CN iteration
+      if ( (AlgorithmF == Flow_FS_AB_CN) || (AlgorithmF == Flow_FS_RK_CN) )
+      {
+        fprintf(fp,"\n");
+        fprintf(fp,"\t     Velocity CN Iteration \n");
+        fprintf(fp,"\t       Iteration max           :   %d\n"  ,  ICv->getMaxIteration());
+        fprintf(fp,"\t       Convergence eps         :   %9.3e\n", ICv->getCriterion());
+        fprintf(fp,"\t       Coef. of Relax./Accel.  :   %9.3e\n", ICv->getOmega());
+        fprintf(fp,"\t       Norm type               :   %s\n",    ICv->getNormString().c_str());
+        fprintf(fp,"\t       Communication Mode      :   %s\n",   (ICv->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
+        printLS(fp, ICv);
+      }
+    }
+    
+    // for Temperature
+    if ( isHeatProblem() )
+    {
+      if ( AlgorithmH == Heat_EE_EI )
+      {
+        IterationCtl* ICt = &IC[ic_tmp1];  /// 温度の拡散項の反復
+        fprintf(fp,"\n");
+        fprintf(fp,"\t     Temperature Iteration  \n");
+        fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICt->getMaxIteration());
+        fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICt->getCriterion());
+        fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICt->getOmega());
+        fprintf(fp,"\t       Norm type              :   %s\n",    ICt->getNormString().c_str());
+        fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICt->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
+        printLS(fp, ICt);
+      }
+    }
+
+  } // End of Criteria
   
-  if ( Hide.PM_Test == ON )
-  {
-    fprintf(fp,"\t ### Performance Test Mode >> The iteration number is fixed by Iteration max.\n\n");
-  }
-
-	if ( KindOfSolver != SOLID_CONDUCTION )
-  {
-    // V-P iteration
-		fprintf(fp,"\t     V-P Iteration \n");
-		fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICd->getMaxIteration());
-		fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICd->getCriterion());
-		fprintf(fp,"\t       Norm type              :   %s\n",    ICd->getNormString().c_str());
-    
-    
-		// 1st iteration
-		fprintf(fp,"\t     1st Pressure Iteration \n");
-		fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICp1->getMaxIteration());
-		fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICp1->getCriterion());
-		fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICp1->getOmega());
-		fprintf(fp,"\t       Norm type              :   %s\n",    ICp1->getNormString().c_str());
-    fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICp1->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
-		printLS(fp, ICp1);
-    
-    if ( AlgorithmF == Flow_FS_RK_CN )
-    {
-      fprintf(fp,"\t     2nd Pressure Iteration \n");
-      fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICp2->getMaxIteration());
-      fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICp2->getCriterion());
-      fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICp2->getOmega());
-      fprintf(fp,"\t       Norm type              :   %s\n",    ICp2->getNormString().c_str());
-      fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICp2->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
-      printLS(fp, ICp2);
-    }
-    
-    // CN iteration
-		if ( (AlgorithmF == Flow_FS_AB_CN) || (AlgorithmF == Flow_FS_RK_CN) )
-    {
-      fprintf(fp,"\n");
-			fprintf(fp,"\t     Velocity CN Iteration \n");
-			fprintf(fp,"\t       Iteration max           :   %d\n"  ,  ICv->getMaxIteration());
-			fprintf(fp,"\t       Convergence eps         :   %9.3e\n", ICv->getCriterion());
-			fprintf(fp,"\t       Coef. of Relax./Accel.  :   %9.3e\n", ICv->getOmega());
-			fprintf(fp,"\t       Norm type               :   %s\n",    ICv->getNormString().c_str());
-      fprintf(fp,"\t       Communication Mode      :   %s\n",   (ICv->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
-			printLS(fp, ICv);
-		}
-	}
-
-  // for Temperature
-  if ( isHeatProblem() )
-  {
-    if ( AlgorithmH == Heat_EE_EI )
-    {
-      IterationCtl* ICt = &IC[ic_tmp1];  /// 温度の拡散項の反復
-      fprintf(fp,"\n");
-      fprintf(fp,"\t     Temperature Iteration  \n");
-      fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICt->getMaxIteration());
-      fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICt->getCriterion());
-      fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICt->getOmega());
-			fprintf(fp,"\t       Norm type              :   %s\n",    ICt->getNormString().c_str());
-      fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICt->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
-      printLS(fp, ICt);
-    }
-  }
 
 
   // 壁面の扱い ------------------

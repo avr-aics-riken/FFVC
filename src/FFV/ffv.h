@@ -100,8 +100,10 @@ using namespace PolylibNS;
 using namespace cutlib;
 
 
-
 class FFV : public DomainInfo {
+public:
+  int EXEC_MODE;           ///< solver と filter の識別
+  
 private:
   int ffv_procGrp;         ///< プロセスグループ番号 => 0
   int ModeTiming;          ///< タイミング測定管理フラグ
@@ -892,6 +894,14 @@ private:
 
   
 public:
+  
+  // フィルタ処理初期か
+  int FilterInitialize(int argc, char **argv);
+  
+  
+  // フィルタ処理ループ
+  int FilterLoop();
+  
   
   /**
    * @brief CPMのポインタをコピーし、ランク情報を設定

@@ -948,7 +948,7 @@ void FFV::displayMemoryInfo(FILE* fp, double G_mem, double L_mem, const char* st
  */
 void FFV::displayParameters(FILE* fp)
 {
-  C.displayParams(stdout, fp, IC, &DT, &RF, mat, cmp);
+  C.displayParams(stdout, fp, IC, &DT, &RF, mat, cmp, EXEC_MODE);
 
   
   Ex->printPara(stdout, &C);

@@ -18,7 +18,12 @@
 REVISION HISTORY
 ================
 
-  
+--------------------------
+2014-03-06
+- r1607 Filter module [ver 1.6.5]
+  - introduce EXEC_MODE to identify mode (solver|filter)
+  - ffv_Filter.C
+
 --------------------------
 2014-03-04
 - r1606 conjugate heat transfer [ver 1.6.4]

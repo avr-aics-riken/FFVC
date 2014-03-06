@@ -395,6 +395,11 @@ typedef struct {
   REAL_TYPE p1;
 } Gemini_R;
 
+/// FFVC_EXEC_MODE
+enum ffvc_execution {
+  ffvc_solver=1,
+  ffvc_filter
+};
 
 /// 変数の種類
 enum Kind_of_vars {

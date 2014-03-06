@@ -868,11 +868,12 @@ protected:
   
   /**
    * @brief 制御パラメータSTEERの表示
-   * @param [in] IC IterationCtl
-   * @param [in] DT DTcntl
-   * @param [in] RF ReferenceFrame
+   * @param [in] IC  IterationCtl
+   * @param [in] DT  DTcntl
+   * @param [in] RF  ReferenceFrame
+   * @param [in] em  ffvcの実行モード
    */
-  void printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT, const ReferenceFrame* RF);
+  void printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT, const ReferenceFrame* RF, const int em);
   
   
   
@@ -889,15 +890,22 @@ public:
   
   /**
    * @brief 制御，計算パラメータ群の表示
-   * @param [in] mp  ファイルポインタ（標準出力）
-   * @param [in] fp  ファイルポインタ（ファイル出力）
-   * @param [in] IC  IterationCtl
-   * @param [in] DT  DTcntl
-   * @param [in] RF  ReferenceFrame
-   * @param [in] mat MediumList
-   * @param [in] cmp CompoList
+   * @param [in] mp   ファイルポインタ（標準出力）
+   * @param [in] fp   ファイルポインタ（ファイル出力）
+   * @param [in] IC   IterationCtl
+   * @param [in] DT   DTcntl
+   * @param [in] RF   ReferenceFrame
+   * @param [in] mat  MediumList
+   * @param [in] cmp  CompoList
+   * @param [in] em   ffvcの実行モード
    */
-  void displayParams(FILE* mp, FILE* fp, IterationCtl* IC, DTcntl* DT, ReferenceFrame* RF, MediumList* mat, CompoList* cmp);
+  void displayParams(FILE* mp, FILE* fp,
+                     IterationCtl* IC,
+                     DTcntl* DT,
+                     ReferenceFrame* RF,
+                     MediumList* mat,
+                     CompoList* cmp,
+                     const int em);
   
   
   /** MediumList中に登録されているkeyに対するIDを返す

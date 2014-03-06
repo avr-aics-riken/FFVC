@@ -38,6 +38,7 @@ ffvc_SOURCES = \
   ffv.h \
   ffv_Alloc.C \
   ffv_Define.h \
+  ffv_Filter.C \
   ffv_Heat.C \
   ffv_Initialize.C \
   ffv_LS.C \
