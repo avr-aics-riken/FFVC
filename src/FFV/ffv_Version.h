@@ -21,7 +21,7 @@
 #define _FFVC_VERSION_H_
 
 #define FFVC_VERSION_NO  "1.6.5"
-#define FFVC_REVISION    "20140306_2330"
+#define FFVC_REVISION    "20140308_1300"
 
 #endif /* _FFVC_VERSION_H_ */
 

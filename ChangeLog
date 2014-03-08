@@ -19,8 +19,10 @@ REVISION HISTORY
 ================
 
 --------------------------
-2014-03-06
-- r1607 Filter module [ver 1.6.5]
+2014-03-08
+- r1608 modify [ver 1.6.5]
+
+- r1607 Filter module
   - introduce EXEC_MODE to identify mode (solver|filter)
   - ffv_Filter.C
 
