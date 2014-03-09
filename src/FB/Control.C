@@ -3891,6 +3891,7 @@ void Control::setCmpParameters(MediumList* mat, CompoList* cmp, BoundaryOuter* B
       }
 		}
   }
+  
 	
   // 発熱密度の計算(有次元) -- 発熱量と発熱密度
   REAL_TYPE a, vol;
@@ -3899,18 +3900,10 @@ void Control::setCmpParameters(MediumList* mat, CompoList* cmp, BoundaryOuter* B
   
   for (int n=1; n<=NoCompo; n++)
   {
-    if ( cmp[n].getType()==HEAT_SRC )
-    {
-      if (cmp[n].get_sw_Heatgen() == CompoList::hsrc_watt)
-      {
-        cmp[n].setHeatDensity( cmp[n].get_HeatValue() / ((REAL_TYPE)cmp[n].getElement()*vol) );
-      }
-      else // 発熱密度
-      {
-        cmp[n].setHeatValue( cmp[n].getHeatDensity() * ((REAL_TYPE)cmp[n].getElement()*vol) );
-      }
-    }
+    if ( cmp[n].getType()==HEAT_SRC ) cmp[n].setHeatSrcValue(vol);
   }
+  
+  
   
   // Darcy係数（単媒質）
   // C[0-2]; 有次元，C[3-5]; 無次元係数

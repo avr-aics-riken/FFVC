@@ -434,6 +434,7 @@ extern "C" {
                     REAL_TYPE* ws,
                     int* ncompo,
                     REAL_TYPE* mtbl,
+                    int* h_mode,
                     double* flop);
   
   

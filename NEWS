@@ -19,6 +19,10 @@ RELEASE
 =======
 
 -------------
+Version 1.6.7    2014-03-09
+  - modify heat source bc
+  
+-------------
 Version 1.6.6    2014-03-09
   - add example of Thermal cavity
 

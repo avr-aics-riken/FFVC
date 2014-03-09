@@ -674,7 +674,7 @@ void VoxInfo::dbg_chkBCIndex (const int* bcd, const int* cdf, const int* bcp, co
         for (int i=0; i<=ix+1; i++) {
           size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
           int s = bcd[m];
-          Hostonly_ fprintf(fp, "[%4d %4d %4d], st=%1d: cmp[%2d] vf=%3d force=%2d A(wesnbt) [%1d %1d %1d %1d %1d %1d] : G[%1d %1d %1d %1d %1d %1d] : DIAG=%2d\n",
+          Hostonly_ fprintf(fp, "[%4d %4d %4d], st=%1d: cmp[%2d] vf=%3d force=%2d A(wesnbt) [%1d %1d %1d %1d %1d %1d] : G[%1d %1d %1d %1d %1d %1d] : DIAG=%2d active=%d\n",
                             i, j, k, IS_FLUID(s),
                             DECODE_CMP(s),
                             DECODE_VF(s),
@@ -691,7 +691,8 @@ void VoxInfo::dbg_chkBCIndex (const int* bcd, const int* cdf, const int* bcp, co
                             (s>>GMA_N)&0x1,
                             (s>>GMA_B)&0x1,
                             (s>>GMA_T)&0x1,
-                            (s>>H_DIAG)&0x7 // 3-bit
+                            (s>>H_DIAG)&0x7, // 3-bit
+                            BIT_SHIFT(s, ACTIVE_BIT)
                             );
         }
       }
@@ -3386,18 +3387,21 @@ void VoxInfo::setBCIndexH (int* cdf, int* bd, SetBC* BC, const int kos, CompoLis
   }
   
   
-  // THERMAL_FLOW, THERMAL_FLOW_NATURAL, SOLID_CONDUCTION, CONJUGATE_HT, CONJUGATE_HT_NATURAL のときに，デフォルトとしてSolid-Fluid面を断熱にする
+  // THERMAL_FLOW, THERMAL_FLOW_NATURAL, SOLID_CONDUCTION のときに，デフォルトとしてSolid-Fluid面を断熱にする
   switch (kos)
   {
     case THERMAL_FLOW:
     case THERMAL_FLOW_NATURAL:
-    case CONJUGATE_HT:
-    case CONJUGATE_HT_NATURAL:
       encAdiabatic(bd, "fluid", bid);
       break;
       
     case SOLID_CONDUCTION:
       encAdiabatic(bd, "solid", bid);
+      break;
+      
+    case CONJUGATE_HT:
+    case CONJUGATE_HT_NATURAL:
+      ; // nothing
       break;
   }
   

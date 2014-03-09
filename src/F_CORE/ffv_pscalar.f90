@@ -394,16 +394,17 @@
 !! @param [in,out] ws     部分段階の温度
 !! @param [in]     ncompo コンポーネント数
 !! @param [in]     mtbl   コンポーネントの物性値
-!! @param [in,out] flop    浮動小数演算数
+!! @param [in]     h_mode mode(0-conjugate heat transfer / 1-othres)
+!! @param [in,out] flop   浮動小数演算数
 !<
-    subroutine ps_diff_ee (ie, sz, g, res, dh, dt, qbc, bh, ws, ncompo, mtbl, flop)
+    subroutine ps_diff_ee (ie, sz, g, res, dh, dt, qbc, bh, ws, ncompo, mtbl, h_mode, flop)
     implicit none
     include '../FB/ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, g, idx, ncompo
+    integer                                                   ::  i, j, k, ix, jx, kx, g, idx, ncompo, h_mode, hm
     integer                                                   ::  l_p, l_w, l_e, l_s, l_n, l_b, l_t
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, res
-    real                                                      ::  dh, dt, dth1, dth2, delta
+    real                                                      ::  dh, dt, dth1, dth2, delta, sw
     real                                                      ::  t_p, t_w, t_e, t_s, t_n, t_b, t_t
     real                                                      ::  g_w, g_e, g_s, g_n, g_b, g_t, g_p
     real                                                      ::  a_w, a_e, a_s, a_n, a_b, a_t
@@ -422,7 +423,9 @@
     dth1 = dt/dh
     dth2 = dth1/dh
     res  = 0.0
-    
+    hm = 1
+    if ( h_mode == 0) hm = 0
+
     ! /2 + 1 = 17 flop ! DP 27 flop
     ! loop : 6 + 6 + 1 + 51 = 64 flop
     flop = flop + dble(ix)*dble(jx)*dble(kx)*195.0d0 + 24.0d0
@@ -430,8 +433,8 @@
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:res) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, dth1, dth2) &
-!$OMP PRIVATE(idx, delta) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, dth1, dth2, hm) &
+!$OMP PRIVATE(idx, delta, sw) &
 !$OMP PRIVATE(t_p, t_w, t_e, t_s, t_n, t_b, t_t) &
 !$OMP PRIVATE(g_w, g_e, g_s, g_n, g_b, g_t, g_p) &
 !$OMP PRIVATE(lmd_p, lmd_w, lmd_e, lmd_s, lmd_n, lmd_b, lmd_t) &
@@ -446,7 +449,11 @@
     do k=1,kx
     do j=1,jx
     do i=1,ix
+
       idx = bh(i,j,k)
+
+      sw = real(ibits(idx, Active,  1))
+      if (hm == 0) sw = 1.0 ! conjugate heat transfer
       
       a_w = real(ibits(idx, adbtc_W, 1))
       a_e = real(ibits(idx, adbtc_E, 1))
@@ -528,7 +535,7 @@
                     +(1.0-g_n)*a_n * qbc(4, i, j, k)  & ! north  gamma
                     -(1.0-g_b)*a_b * qbc(5, i, j, k)  & ! bottom gamma
                     +(1.0-g_t)*a_t * qbc(6, i, j, k)  & ! top    gamma
-            ) )  * real(ibits(idx, Active,  1))                         ! 20 + 26 = 46
+            ) )  * sw                        ! 20 + 26 = 46
       ie(i,j,k) = ws(i,j,k) + delta
       res = res + dble(delta*delta) ! 3
     end do

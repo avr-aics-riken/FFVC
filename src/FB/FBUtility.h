@@ -197,7 +197,7 @@ public:
   
   /**
    * @brief 発熱量(W/m^3)を無次元にして返す
-   * @param [in] var   有次元発熱量(W/m^3)
+   * @param [in] var   有次元発熱密度 [W/m^3]
    * @param [in] RefV  代表速度
    * @param [in] RefL  代表長さ
    * @param [in] diff  代表温度差

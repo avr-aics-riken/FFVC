@@ -283,7 +283,7 @@ public:
     return var3; 
   }
   
-  REAL_TYPE get_HeatValue() const
+  REAL_TYPE getHeatValue() const
   { 
     return var2; 
   }
@@ -333,13 +333,9 @@ public:
   
   REAL_TYPE get_Pressure() const
   { 
-    return var1; 
+    return var1;
   }
   
-  int get_sw_Heatgen() const
-  {
-    return usw;
-  }
   
   int get_sw_HexDir() const
   {
@@ -473,12 +469,6 @@ public:
   }
   
   
-  bool isPolicy_HeatDensity() const
-  {
-    return (usw==hsrc_density) ? true : false;
-  }
-  
-  
   bool isPolicy_Massflow() const
   {
     return (attrb==BC_type_massflow) ? true : false;
@@ -497,6 +487,7 @@ public:
         (type == HEATFLUX) ||
         (type == TRANSFER) ||
         (type == ISOTHERMAL) ||
+        (type == HEAT_SRC) ||
         (type == RADIANT)
         ) return true;
     return false;
@@ -557,16 +548,30 @@ public:
   void set_CoefRadEps      (const REAL_TYPE var);
   void set_CoefRadPrj      (const REAL_TYPE var);
   void set_cmp_sz          ();
-  void setElement          (const unsigned long key);
+  
+  
+  // @brief elementをセットする
+  // @param [in] key 要素数
+  void setElement (const unsigned long key) {
+    element = key;
+  }
   
   // サブドメインにコンポーネントが存在するかどうかを設定
   void setEnsLocal         (const int key);
   
-  void setHeatflux         (const REAL_TYPE var);
+  
+  // @brief 熱流束の保持
+  // @param [in] m_var 熱流束 [W/m^2]
+  void setHeatflux (const REAL_TYPE m_var) {
+    var2 = m_var;
+  }
   
   
   // @brief 吸発熱密度の保持
-  void setHeatDensity (const REAL_TYPE var);
+  // @param [in] m_var 吸発熱密度 [W/m^3]
+  void setHeatGenerationDensity (const REAL_TYPE m_var) {
+    var3 = m_var;
+  }
   
   
   // @brief 熱問題の指定
@@ -577,12 +582,33 @@ public:
   
   
   // @brief 吸発熱量の保持
-  void setHeatValue (const REAL_TYPE var);
+  // @param [in] m_var 吸発熱量 [W]
+  void setHeatReleaseValue (const REAL_TYPE m_var) {
+    var2 = m_var;
+  }
+  
+  
+  // @brief 吸発熱量指定時の発熱密度への変換
+  // @param [in] m_vol 有次元セル体積 [m^3]
+  void setHeatSrcValue (const REAL_TYPE m_vol) {
+    
+    if ( usw == hsrc_watt )
+    {
+      var3 = var2 / ( (REAL_TYPE)element*m_vol );
+    }
+    else
+    {
+      var2 = var3 * ( (REAL_TYPE)element*m_vol );
+    }
+  }
   
   
   // @brief 発熱項の指定ポリシーを指定する
-  // @param [in] kind ポリシー種別　true-発熱量, false-発熱密度
-  void setHsrcPolicy (const bool kind);
+  // @param [in] kind ポリシー種別
+  void setHsrcPolicy (const enum heat_src_type kind) {
+    usw = kind;
+  }
+  
   
   void setHtype            (const int key);
   void setInitTemp         (const REAL_TYPE var);

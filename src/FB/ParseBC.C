@@ -285,14 +285,16 @@ void ParseBC::getIbcHeatSrc(const string label_base, const int n, CompoList* cmp
   string str;
   string label;
   
+  
+  // 発熱量は発熱密度の形式で保持
   label = label_base + "/HeatReleaseValue";
   
   if ( tpCntl->chkLabel(label) ) // 発熱量 [W]
   {
     if ( tpCntl->getInspectedValue(label, ct) )
     {
-      cmp[n].setHsrcPolicy(true);
-      cmp[n].setHeatDensity( ct );
+      cmp[n].setHsrcPolicy(CompoList::hsrc_watt);
+      cmp[n].setHeatReleaseValue(ct);
     }
     else
     {
@@ -308,8 +310,8 @@ void ParseBC::getIbcHeatSrc(const string label_base, const int n, CompoList* cmp
     {
       if ( tpCntl->getInspectedValue(label, ct) )
       {
-        cmp[n].setHsrcPolicy(false);
-        cmp[n].setHeatValue( ct );
+        cmp[n].setHsrcPolicy(CompoList::hsrc_density);
+        cmp[n].setHeatGenerationDensity(ct);
       }
       else
       {
@@ -2869,7 +2871,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
   if ( HeatProblem && existComponent(HEAT_SRC, cmp))
   {
     fprintf(fp, "\n\t[Heat Generation]\n");
-    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed     Q[W/m^3]    nrmlzd[-]\n");
+    fprintf(fp, "\t no                    Label   # of faces    i_st    i_ed    j_st    j_ed    k_st    k_ed     Q-Vol[W]     Q[W/m^3]  Q-nrmlzd[-]\n");
     
     for (int n=1; n<=NoCompo; n++)
     {
@@ -2878,11 +2880,12 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         st = getCmpGbbox_st(n, gci);
         ed = getCmpGbbox_ed(n, gci);
         
-        fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %12.4e %12.4e\n", 
+        fprintf(fp, "\t%3d %24s %12ld %7d %7d %7d %7d %7d %7d %12.4e %12.4e %12.4e\n", 
                 n, cmp[n].getAlias().c_str(), cmp[n].getElement(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z,
-                cmp[n].get_HeatValue(), 
-                FBUtility::convHsrcD2ND(cmp[n].get_HeatValue(), RefVelocity, RefLength, DiffTemp, mat[n].P[p_density], mat[n].P[p_specific_heat]));
+                cmp[n].getHeatValue(),
+                cmp[n].getHeatDensity(),
+                FBUtility::convHsrcD2ND(cmp[n].getHeatDensity(), RefVelocity, RefLength, DiffTemp, mat[n].P[p_density], mat[n].P[p_specific_heat]));
       }
     }
   }

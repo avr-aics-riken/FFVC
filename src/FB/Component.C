@@ -148,14 +148,6 @@ void CompoList::set_CoefPrsLoss(const REAL_TYPE var)
 }
 
 
-// #################################################################
-//@brief elementをセットする
-//@param key 要素数 element
-void CompoList::setElement(const unsigned long key)
-{
-  element = key;
-}
-
 
 // #################################################################
 //@brief コンポーネントが自ノードに存在しているかどうかをセットする
@@ -164,38 +156,6 @@ void CompoList::setEnsLocal(const int key)
   ens = key;
 }
 
-
-
-// #################################################################
-// 吸発熱密度の保持
-void CompoList::setHeatDensity(const REAL_TYPE var) 
-{
-  var3 = var;
-}
-
-
-// #################################################################
-//@brief 熱流束の保持
-void CompoList::setHeatflux(const REAL_TYPE var) 
-{
-  var2 = var;
-}
-
-
-// #################################################################
-// 吸発熱量の保持
-void CompoList::setHeatValue(const REAL_TYPE var) 
-{
-  var2 = var;
-}
-
-
-// #################################################################
-// 発熱項の指定ポリシーをセットする
-void CompoList::setHsrcPolicy(const bool kind)
-{
-  usw = ( kind ) ? hsrc_watt : hsrc_density;
-}
 
 
 // #################################################################

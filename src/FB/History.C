@@ -638,6 +638,7 @@ void History::printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Contr
       case TRANSFER:
       case ISOTHERMAL:
       case RADIANT:
+      case HEAT_SRC:
         fprintf(fp, "       Q[%02d]", i);
         break;
     }

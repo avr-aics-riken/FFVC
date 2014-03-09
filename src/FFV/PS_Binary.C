@@ -177,7 +177,18 @@ void FFV::PS_Binary()
     TIMING_start(tm_heat_diff_EE);
     flop = 0.0;
     //res = ps_Diff_SM_EE(t, dt, qbc, bh, ws, flop); // resは拡散項のみの絶対残差
-    ps_diff_ee_(d_ie, size, &guide, &res, &dh, &dt, d_qbc, d_bcd, d_ws, &C.NoCompo, mat_tbl, &flop);
+    
+    int h_mode;
+    if ( (C.KindOfSolver == CONJUGATE_HT) || (C.KindOfSolver == CONJUGATE_HT_NATURAL) )
+    {
+      h_mode = 0;
+    }
+    else
+    {
+      h_mode = 1;
+    }
+    ps_diff_ee_(d_ie, size, &guide, &res, &dh, &dt, d_qbc, d_bcd, d_ws, &C.NoCompo, mat_tbl, &h_mode, &flop);
+    
     TIMING_stop(tm_heat_diff_EE, flop);
     
 

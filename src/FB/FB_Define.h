@@ -152,7 +152,7 @@
 #define GMA_E        9
 #define GMA_W        8
 #define H_DIAG       5
-
+// 0-4 bitはコンポーネント番号
 
 // エンコードビット　P
 #define BC_D_T     29
