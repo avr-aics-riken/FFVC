@@ -325,8 +325,8 @@ void SetBC3D::modDivergence(REAL_TYPE* dv, int* d_cdf, double tm, REAL_TYPE* v00
       case OBC_SPEC_VEL:
       case OBC_WALL:
         dummy = extractVelOBC(face, vec, tm, v00);
-        vobc_div_drchlt_(dv, size, &gd, &face, d_cdf, vec, &dd, nID);
-        //vobc_face_drchlt_(vf, size, &gd, &face, d_cdf, vec, &dd, nID);
+        vobc_face_drchlt_(vf, size, &gd, &face, d_cdf, vec, &dd, nID);
+        vobc_div_drchlt_(dv, size, &gd, &face, d_cdf, vec, nID);
         obc[face].setDomainMF(dd);
         break;
         
@@ -639,15 +639,13 @@ void SetBC3D::modPsrcVBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE
   {
     typ = obc[face].getClass();
     
-    REAL_TYPE dd; // dummy
-    
     switch ( typ )
     {
       case OBC_SPEC_VEL:
       case OBC_WALL:
       {
         REAL_TYPE dummy = extractVelOBC(face, vec, tm, v00);
-        vobc_div_drchlt_(s_0, size, &gd, &face, d_cdf, vec, &dd, nID);
+        vobc_div_drchlt_(s_0, size, &gd, &face, d_cdf, vec, nID);
         break;
       }
         
@@ -786,30 +784,20 @@ void SetBC3D::OuterTBCdiffusion(REAL_TYPE* d_qbc, REAL_TYPE* d_ie, const REAL_TY
           va = psObcIsoThermal(d_qbc, face, d_bcd, d_ie, d_ie0);
           break;
       }
-      
-      if ( numProc > 1 )
+
+    }
+    
+    if ( numProc > 1 )
+    {
+      REAL_TYPE tmp = va;
+      if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
       {
-        REAL_TYPE tmp = va;
-        if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
-        {
-          Hostonly_ printf("Allreduce Error\n");
-          Exit(0);
-        }
-      }
-      
-      // 対象BCのみ
-      if ( obc[face].getClass() == OBC_WALL )
-      {
-        switch ( obc[face].getHtype() ) // 熱境界条件の種類
-        {
-          case HEATFLUX:
-          case TRANSFER:
-          case ISOTHERMAL:
-            C->H_Dface[face] = va;
-            break;
-        }
+        Hostonly_ printf("Allreduce Error\n");
+        Exit(0);
       }
     }
+    
+    C->H_Dface[face] += va;
   }
 }
 
@@ -2278,10 +2266,9 @@ REAL_TYPE SetBC3D::psObcFree(REAL_TYPE* d_ws, const int* d_bcd, const int face, 
           size_t m_w = _F_IDX_V3D(0, j, k, 0, ix, jx, kx, gd);
           REAL_TYPE c = d_vf[m_w] - u_ref;
           REAL_TYPE t_p = (c < 0.0) ? d_ie[m] : 0.0;           // 流出の場合には内部の値，流入の場合には断熱
-          REAL_TYPE f_w = c*t_p;
-          va += f_w;
-          REAL_TYPE ff = - f_w;
-          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
+          REAL_TYPE ff = c*t_p;
+          va += ff;
+          d_ws[m] += ff*dh1*GET_SHIFT_F(s, STATE_BIT);
         }
       }
       break;
@@ -2296,9 +2283,8 @@ REAL_TYPE SetBC3D::psObcFree(REAL_TYPE* d_ws, const int* d_bcd, const int face, 
           size_t m_e = _F_IDX_V3D(ix, j, k, 0, ix, jx, kx, gd);
           REAL_TYPE c = d_vf[m_e] - u_ref;
           REAL_TYPE t_p = (c > 0.0) ? d_ie[m] : 0.0;
-          REAL_TYPE f_e = c*t_p;
-          va += f_e;
-          REAL_TYPE ff = f_e;
+          REAL_TYPE ff = c*t_p;
+          va += ff;
           d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
         }
       }
@@ -2314,10 +2300,9 @@ REAL_TYPE SetBC3D::psObcFree(REAL_TYPE* d_ws, const int* d_bcd, const int face, 
           size_t m_s = _F_IDX_V3D(i, 0, k, 1, ix, jx, kx, gd);
           REAL_TYPE c = d_vf[m_s] - v_ref;
           REAL_TYPE t_p = (c < 0.0) ? d_ie[m] : 0.0;
-          REAL_TYPE f_s = c*t_p;
-          va += f_s;
-          REAL_TYPE ff = - f_s;
-          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
+          REAL_TYPE ff = c*t_p;
+          va += ff;
+          d_ws[m] += ff*dh1*GET_SHIFT_F(s, STATE_BIT);
         }
       }
       break;
@@ -2332,9 +2317,8 @@ REAL_TYPE SetBC3D::psObcFree(REAL_TYPE* d_ws, const int* d_bcd, const int face, 
           size_t m_n = _F_IDX_V3D(i, jx, k, 1, ix, jx, kx, gd);
           REAL_TYPE c = d_vf[m_n] - v_ref;
           REAL_TYPE t_p = (c > 0.0) ? d_ie[m] : 0.0;
-          REAL_TYPE f_n = c*t_p;
-          va += f_n;
-          REAL_TYPE ff = f_n;
+          REAL_TYPE ff = c*t_p;
+          va += ff;
           d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
         }
       }
@@ -2350,10 +2334,9 @@ REAL_TYPE SetBC3D::psObcFree(REAL_TYPE* d_ws, const int* d_bcd, const int face, 
           size_t m_b = _F_IDX_V3D(i, j, 0, 2, ix, jx, kx, gd);
           REAL_TYPE c = d_vf[m_b] - w_ref;
           REAL_TYPE t_p = (c < 0.0) ? d_ie[m] : 0.0;
-          REAL_TYPE f_b = c*t_p;
-          va += f_b;
-          REAL_TYPE ff = - f_b;
-          d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
+          REAL_TYPE ff = c*t_p;
+          va += ff;
+          d_ws[m] += ff*dh1*GET_SHIFT_F(s, STATE_BIT);
         }
       }
       break;
@@ -2368,9 +2351,8 @@ REAL_TYPE SetBC3D::psObcFree(REAL_TYPE* d_ws, const int* d_bcd, const int face, 
           size_t m_t = _F_IDX_V3D(i, j, kx, 2, ix, jx, kx, gd);
           REAL_TYPE c = d_vf[m_t] - w_ref;
           REAL_TYPE t_p = (c > 0.0) ? d_ie[m] : 0.0;
-          REAL_TYPE f_t = c*t_p;
-          va += f_t;
-          REAL_TYPE ff = f_t;
+          REAL_TYPE ff = c*t_p;
+          va += ff;
           d_ws[m] -= ff*dh1*GET_SHIFT_F(s, STATE_BIT);
         }
       }
@@ -2834,7 +2816,7 @@ REAL_TYPE SetBC3D::psObcHeatTransferSN(REAL_TYPE* d_qbc, const int face, const i
           REAL_TYPE cp  = mtbl[3*l+1];
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = ht1 * (t - sf);
-          d_qbc[_F_IDX_S4DEX(X_plus, ix, j, k, NOFACE, ix, jx, kx, gd)] -= q;
+          d_qbc[_F_IDX_S4DEX(X_plus, ix, j, k, NOFACE, ix, jx, kx, gd)] += q;
           va -= q;                                               // プラス面の正の値は流出
           d_ie[_F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd)] = ie;
         }
@@ -3048,7 +3030,7 @@ REAL_TYPE SetBC3D::psObcIsoThermal(REAL_TYPE* d_qbc, const int face, const int* 
           REAL_TYPE lmd = mtbl[3*l+2] * pp;
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = lmd * (t - sf);
-          d_qbc[_F_IDX_S4DEX(X_plus, ix, j, k, NOFACE, ix, jx, kx, gd)] -= q; // プラス面の正の値は流出
+          d_qbc[_F_IDX_S4DEX(X_plus, ix, j, k, NOFACE, ix, jx, kx, gd)] += q; // プラス面の正の値は流出
           va -= q;
           d_ie[_F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd)] = ie;
         }
@@ -3084,7 +3066,7 @@ REAL_TYPE SetBC3D::psObcIsoThermal(REAL_TYPE* d_qbc, const int face, const int* 
           REAL_TYPE lmd = mtbl[3*l+2] * pp;
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = lmd * (t - sf);
-          d_qbc[_F_IDX_S4DEX(Y_plus, i, jx, k, NOFACE, ix, jx, kx, gd)] -= q;
+          d_qbc[_F_IDX_S4DEX(Y_plus, i, jx, k, NOFACE, ix, jx, kx, gd)] += q;
           va -= q;
           d_ie[_F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd)] = ie;
         }
@@ -3120,7 +3102,7 @@ REAL_TYPE SetBC3D::psObcIsoThermal(REAL_TYPE* d_qbc, const int face, const int* 
           REAL_TYPE lmd = mtbl[3*l+2] * pp;
           REAL_TYPE t = d_ie0[m] / (rho * cp);
           REAL_TYPE q = lmd * (t - sf);
-          d_qbc[_F_IDX_S4DEX(Z_plus, i, j, kx, NOFACE, ix, jx, kx, gd)] -= q;
+          d_qbc[_F_IDX_S4DEX(Z_plus, i, j, kx, NOFACE, ix, jx, kx, gd)] += q;
           va -= q;
           d_ie[_F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd)] = ie;
         }
@@ -3164,12 +3146,13 @@ REAL_TYPE SetBC3D::psObcSpecVH(REAL_TYPE* d_ws, const int* d_cdf, const int face
   int n = obc[face].getGuideMedium();
   REAL_TYPE rho = mat[n].P[p_density] / rho_0;
   REAL_TYPE cp  = mat[n].P[p_specific_heat] / cp_0;
-  REAL_TYPE tmp = FBUtility::convTempD2ND(obc[face].getTemp(), BaseTemp, DiffTemp);
+  REAL_TYPE tmp = FBUtility::convTempD2ND(obc[face].getTemp(), BaseTemp, DiffTemp); // 基準温度に対する無次元温度
   REAL_TYPE ie  = rho * cp * tmp;
   
   REAL_TYPE f_x = (vec[0] - u_ref) * ie;
   REAL_TYPE f_y = (vec[1] - v_ref) * ie;
   REAL_TYPE f_z = (vec[2] - w_ref) * ie;
+  
   
   switch (face)
   {
@@ -3180,9 +3163,9 @@ REAL_TYPE SetBC3D::psObcSpecVH(REAL_TYPE* d_ws, const int* d_cdf, const int face
         for (int j=1; j<=jx; j++) {
           size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
           int s = d_cdf[m];
-          REAL_TYPE ff = - f_x * GET_SHIFT_F(s, STATE_BIT);
-          va -= ff; // 系への流入
-          d_ws[m] -= ff * dh1;
+          REAL_TYPE ff = f_x * GET_SHIFT_F(s, STATE_BIT); // 固体マスク
+          va += ff; // 系への流入
+          d_ws[m] += ff * dh1;
         }
       }
       break;
@@ -3208,9 +3191,9 @@ REAL_TYPE SetBC3D::psObcSpecVH(REAL_TYPE* d_ws, const int* d_cdf, const int face
         for (int i=1; i<=ix; i++) {
           size_t m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
           int s = d_cdf[m];
-          REAL_TYPE ff = - f_y * GET_SHIFT_F(s, STATE_BIT);
-          va -= ff;
-          d_ws[m] -= ff * dh1;
+          REAL_TYPE ff = f_y * GET_SHIFT_F(s, STATE_BIT);
+          va += ff;
+          d_ws[m] += ff * dh1;
         }
       }
       break;
@@ -3236,9 +3219,9 @@ REAL_TYPE SetBC3D::psObcSpecVH(REAL_TYPE* d_ws, const int* d_cdf, const int face
         for (int i=1; i<=ix; i++) {
           size_t m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
           int s = d_cdf[m];
-          REAL_TYPE ff = - f_z * GET_SHIFT_F(s, STATE_BIT);
-          va -= ff;
-          d_ws[m] -= ff * dh1;
+          REAL_TYPE ff = f_z * GET_SHIFT_F(s, STATE_BIT);
+          va += ff;
+          d_ws[m] += ff * dh1;
         }
       }
       break;
@@ -3257,7 +3240,7 @@ REAL_TYPE SetBC3D::psObcSpecVH(REAL_TYPE* d_ws, const int* d_cdf, const int face
       }
       break;
   }
-  
+
   return va*deltaX*deltaX;
 }
 
@@ -3573,7 +3556,7 @@ void SetBC3D::TBCconvection(REAL_TYPE* d_ws, const int* d_cdf, const REAL_TYPE* 
         break;
     }
     
-    // vaは無次元内部エネルギー流束（有次元では[W/m^2]）
+    // vaは無次元内部エネルギー（有次元では[W]）
     if ( numProc > 1 )
     {
       REAL_TYPE tmp = va;
@@ -3583,18 +3566,8 @@ void SetBC3D::TBCconvection(REAL_TYPE* d_ws, const int* d_cdf, const REAL_TYPE* 
         Exit(0);
       }
     }
-    
-    // 対象BCのみ
-    switch ( obc[face].getClass() )
-    {
-      case OBC_OUTFLOW:
-      case OBC_TRC_FREE:
-      case OBC_FAR_FIELD:
-      case OBC_SPEC_VEL:
-        C->H_Dface[face] = va;
-        break;
-    }
-    
+
+    C->H_Dface[face] += va;
   }
   
   

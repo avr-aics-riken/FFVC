@@ -2,62 +2,44 @@
 ApplicationControl {
   CheckParameter      = "Off"
   Operator            = "Kenji_Ono"
-  DebugDivergence     = "off"
+  DebugDivergence         = "off"
 }
 
 
 BcTable {
 
-  LocalBoundary {
-    plate {
-      class = "IsoThermal"
-      medium = "fe"
-      Temperature = 50.0
-    }
-  }
-
   OuterBoundary {
       
-    adiabaticWall {
+    HeatWall {
       class         = "Wall"
       Type          = "fixed"
       Medium        = "fe"
+      ThermalOption = "IsoThermal"
+      Temperature   = 28.0
+    }
+
+    CoolWall {
+      class       = "Wall"
+      Type        = "fixed"
+      Medium      = "fe"
+      ThermalOption = "IsoThermal"
+      Temperature   = 12.0
+    }
+
+    adiabaticWall {
+      class       = "Wall"
+      Type        = "fixed"
+      Medium      = "fe"
       ThermalOption = "adiabatic"
     }
 
-    inlet {
-      class       = "SpecifiedVelocity"
-      Profile     = "Constant"
-      OrientationVector = (1.0, 0.0, 0.0)
-      velocity    = 3.0
-      Medium      = "air"
-      Temperature = 18
-    }
-
-    outlet {
-      class        = "Outflow"
-      Medium       = "air"
-      PressureType = "dirichlet"
-      PrsValue     = 0.0
-    }
-    
-    periodic {
-      class  = "periodic"
-      mode   = "simplecopy"
-    }
-
-    symmetry {
-      class    = "symmetric"
-      Medium   = "air"
-    }
-
     FaceBC {
-      Xminus = "inlet"
-      Xplus  = "outlet"
+      Xminus = "HeatWall"
+      Xplus  = "CoolWall"
+      Zminus = "adiabaticWall"
+      Zplus  = "adiabaticWall"
       Yminus = "adiabaticWall"
       Yplus  = "adiabaticWall"
-      Zminus = "symmetry"
-      Zplus  = "symmetry"
     }
   }
 }
@@ -71,11 +53,10 @@ ConvectionTerm {
 
 DomainInfo {
   UnitOfLength   = "m"
-  GlobalOrigin   = (-0.5, -0.1, -0.02)
-  GlobalRegion   = (1.0,  0.2,  0.04 )
-  //GlobalVoxel    = (500   , 50   , 3   )
+  GlobalOrigin   = (0.0, 0.0, 0.0)
+  GlobalRegion   = (0.1, 0.5, 0.5)
+  //GlobalVoxel    = (500   , 3   , 50   )
   
-  //GlobalPitch    = (1.0e-3, 1.0e-3, 1.0e-3)
   GlobalPitch    = (5.0e-3, 5.0e-3, 5.0e-3)
   //GlobalDivision = (1    , 1    , 1    )
 
@@ -85,7 +66,7 @@ DomainInfo {
 
 GoverningEquation {
   FlowEquation       = "Incompressible"
-  HeatEquation       = "ThermalFlow"
+  HeatEquation       = "ThermalFlowNatural"
   Buoyancy           = "Boussinesq"
   TimeVariation      = "Unsteady"
   PDEType            = "NavierStokes" 
@@ -93,16 +74,19 @@ GoverningEquation {
 
 
 GeometryModel {
-  Source                  = "polylib.tp"
-  outputGlyph             = "on"
+  Source = "rectangular"
   FillMedium              = "air"
+  HintOfFillSeedDirection = "no"
   HintOfFillSeedMedium    = "air"
-  HintOfFillSeedDirection = "xminus"
-  VoxelOutput             = "svx"
+  VoxelOutput             = "off"
 }
 
 
 IntrinsicExample {
+    Dimension        = "3d"
+    FluidMedium      = "air"
+    SolidMedium      = "fe"
+    CheckEven   = "yes"
 }
 
 
@@ -110,17 +94,19 @@ Iteration {
   LinearSolver[@] {
     Alias                = "sor2_strict"
     class                = "sor2sma"
-    MaxIteration         = 20
-    ConvergenceCriterion = 1.0e-3
+    MaxIteration         = 1
+    ConvergenceCriterion = 1.0e-4
     NormType             = "DXbyB"
     Omega                = 1.1
     CommMode             = "async"
+    NaiveImplementation  = "off"
+    bit3option           = "off"
   }
 
   LinearSolver[@] {
     Alias                = "vp"
     class                = "VPiteration"
-    MaxIteration         = 10
+    MaxIteration         = 100
     ConvergenceCriterion = 1.0e-4
     NormType             = "VdivMax"
   }
@@ -168,6 +154,7 @@ MediumTable {
 MonitorList {
   Log             = "Off"
   OutputMode      = "Gather"
+  CellMonitor     = "on"
   Sampling {
     TemprallType  = "step"
     Interval      = 100
@@ -176,15 +163,24 @@ MonitorList {
   list[@] {
     type            = "Line"
     label           = "line1"
-    
+    value           = "x"
+    Variable        = "Velocity"
     SamplingMethod  = "Interpolation"
     SamplingMode    = "Fluid"
     Division        = 64
     From            = (-0.5, 0.0, 0.0)
     To              = (0.5, 0.0, 0.0)
-    Variables {
-      Velocity      = "on"
-    }
+  }
+
+  list[@] {
+    type            = "Line"
+    label           = "line2"
+    Variable        = "Velocity"
+    SamplingMethod  = "Interpolation"
+    SamplingMode    = "Fluid"
+    Division        = 64
+    From            = (0.0, 0.0, -0.5)
+    To              = (0.0, 0.0, 0.5)
   }
 }
 
@@ -209,7 +205,7 @@ Output {
     BasicVariables {
       Format         = "sph"
       TemporalType   = "step"
-      Interval       = 10
+      Interval       = 20
     }
     DerivedVariables {
       Format         = "sph"
@@ -224,7 +220,7 @@ Output {
 
     AveragedVariables {
       Format        = "sph"
-      TemporalType  = "step" // /TimeControl/Average/TemporalTypeでの指定と整合性をとる
+      TemporalType  = "step"
       Interval      = 100
     }
   }
@@ -240,14 +236,14 @@ Output {
 
 
 Reference {
-  Length        = 0.01
-  Velocity      = 3.0
+  Length        = 0.1
+  Velocity      = 0.05
   BasePressure  = 0.0
   Medium        = "air"
   Temperature {
     Base = 20.0
-    High = 50.0
-    Low  = 18.0
+    High = 28.0
+    Low  = 12.0
   }
 }
 
@@ -286,8 +282,8 @@ StartCondition {
     Velocity    = (0.0, 0.0, 0.0)
 
     MediumTemperature {
-      air = 20.0
-      fe  = 50.0 
+      air  = 20.0
+      fe   = 20.0
     }
   }
 }
@@ -306,7 +302,7 @@ TimeControl {
   Session {
     TemporalType   = "time"
     Start          = 0    // 0 or 0.0の場合initial start
-    End            = 30
+    End            = 60
   }
 
   Average {

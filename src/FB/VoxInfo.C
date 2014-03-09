@@ -872,7 +872,7 @@ void VoxInfo::encActive (unsigned long& Lcell, unsigned long& Gcell, int* bx, co
  * @param [in]     face   対称面指定の場合の面番号
  * @note "fluid"     >>  S-F面のF側を断熱にする
  *       "solid"     >>  S側
- *       "symmetric" >>  対称境界面の断熱マスクをセット
+ *       その他 >>  対称境界面の断熱マスクをセット "outer-on", "outer-off"
  * @attention F/Sの判定は水密でないと確定しない．もし，非水密の場合，Sセルがない場合がある．
  *            このアルゴリズムでよいか？
  */
@@ -950,76 +950,84 @@ void VoxInfo::encAdiabatic (int* bd, const string target, const int* bid, int fa
       }
     }
   }
-  else if (!strcasecmp(target.c_str(), "symmetric"))
+  else
   {
     if ( nID[face] >= 0 ) return;
+    
+    int sw= -1;
+    if ( !strcasecmp(target.c_str(), "outer-on") ) {
+      sw = 1;
+    }
+    else if ( !strcasecmp(target.c_str(), "outer-off") ) {
+      sw = 0;
+    }
+    else {
+      Hostonly_ stamped_printf("Keyowrd error\n");
+      Exit(0);
+    }
     
     switch (face)
     {
       case X_minus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, sw) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd); // 最外層のID
-            bd[m] = offBit(bd[m], ADIABATIC_W);             // 断熱ビットを0にする
+            bd[m] = (sw==0) ? offBit(bd[m], ADIABATIC_W) : onBit(bd[m], ADIABATIC_W);
           }
         }
         break;
         
       case X_plus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, sw) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             size_t m = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
-            bd[m] = offBit(bd[m], ADIABATIC_E);
+            bd[m] = (sw==0) ? offBit(bd[m], ADIABATIC_E) : onBit(bd[m], ADIABATIC_E);
           }
         }
         break;
         
       case Y_minus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, sw) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
             size_t m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
-            bd[m] = offBit(bd[m], ADIABATIC_S);
+            bd[m] = (sw==0) ? offBit(bd[m], ADIABATIC_S) : onBit(bd[m], ADIABATIC_S);
           }
         }
         break;
         
       case Y_plus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, sw) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
             size_t m = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
-            bd[m] = offBit(bd[m], ADIABATIC_N);
+            bd[m] = (sw==0) ? offBit(bd[m], ADIABATIC_N) : onBit(bd[m], ADIABATIC_N);
           }
         }
         break;
         
       case Z_minus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, sw) schedule(static)
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
             size_t m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
-            bd[m] = offBit(bd[m], ADIABATIC_B);
+            bd[m] = (sw==0) ? offBit(bd[m], ADIABATIC_B) : onBit(bd[m], ADIABATIC_B);
           }
         }
         break;
         
       case Z_plus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, sw) schedule(static)
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
             size_t m = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
-            bd[m] = offBit(bd[m], ADIABATIC_T);
+            bd[m] = (sw==0) ? offBit(bd[m], ADIABATIC_T) : onBit(bd[m], ADIABATIC_T);
           }
         }
         break;
     }
-  }
-  else
-  {
-    Exit(0);
   }
   
 }
@@ -1116,7 +1124,7 @@ void VoxInfo::encHbit (const int* cdf, int* bd)
     }
   }
   
-  // 陰解法の場合のゼロ割防止のためのダミー係数 >> 全領域
+  // 陰解法の場合のゼロ割防止のためのダミー係数 1 >> 全領域
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
   for (int k=1-gd; k<=kx+gd; k++) {
     for (int j=1-gd; j<=jx+gd; j++) {
@@ -1912,7 +1920,7 @@ unsigned long VoxInfo::encQface (const int order,
         int s1 = cdf[m];
         int s2 = bd[m];
         
-        bool mode = true; // default stete==ANY_STATEの場合，true
+        bool mode = true; // default state==ANY_STATEの場合，true
         
         // ターゲットの状態の判定
         if ( state == FLUID )
@@ -1923,7 +1931,7 @@ unsigned long VoxInfo::encQface (const int order,
         {
           mode = !IS_FLUID(s2); // ターゲットが流体セルでない場合にtrue
         }
-        
+
         // 6面のいずれかにカットがあり，ターゲットの状態であるセルが候補
         if ( TEST_BC(d) && mode )
         {
@@ -3378,11 +3386,13 @@ void VoxInfo::setBCIndexH (int* cdf, int* bd, SetBC* BC, const int kos, CompoLis
   }
   
   
-  // THERMAL_FLOW, THERMAL_FLOW_NATURAL, SOLID_CONDUCTIONのときに，デフォルトとしてSolid-Fluid面を断熱にする
+  // THERMAL_FLOW, THERMAL_FLOW_NATURAL, SOLID_CONDUCTION, CONJUGATE_HT, CONJUGATE_HT_NATURAL のときに，デフォルトとしてSolid-Fluid面を断熱にする
   switch (kos)
   {
     case THERMAL_FLOW:
     case THERMAL_FLOW_NATURAL:
+    case CONJUGATE_HT:
+    case CONJUGATE_HT_NATURAL:
       encAdiabatic(bd, "fluid", bid);
       break;
       
@@ -3392,17 +3402,36 @@ void VoxInfo::setBCIndexH (int* cdf, int* bd, SetBC* BC, const int kos, CompoLis
   }
   
   
-  // 対称境界面に断熱マスクをセット
+  
+  // 外部 拡散条件のみ
   for (int face=0; face<NOFACE; face++)
   {
-    if ( BC->exportOBC(face)->getClass() == OBC_SYMMETRIC )
+    BoundaryOuter* m_obc = BC->exportOBC(face);
+    int F = m_obc->getClass();
+    int HT = m_obc->getHtype();
+    
+    switch ( F )
     {
-      encAdiabatic(bd, "symmetric", bid, face);
+      case OBC_WALL:
+        if ( HT == ADIABATIC )
+        {
+          encAdiabatic(bd, "outer-off", bid, face);
+        }
+        else // ほかの熱境界は断熱マスクを外す
+        {
+          encAdiabatic(bd, "outer-on", bid, face);
+        }
+        break;
+        
+      case OBC_SYMMETRIC:
+        encAdiabatic(bd, "outer-off", bid, face);
+        break;
     }
   }
   
+
   
-  
+  // 内部
   // bdの下位5ビットにはコンポーネントのエントリをエンコード
   for (int n=1; n<=NoCompo; n++)
   {

@@ -268,6 +268,7 @@ double FFV::count_comm_size(const int sz[3], const int guide)
  * @brief 外部計算領域の各面における総流量と対流流出速度を計算する
  * @param [in] ptr  BoundaryOuterクラスのポインタ
  * @param [in] R    Controlクラスのポインタ
+ * @note 系への流入を正の符号とする
  */
 void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
 {

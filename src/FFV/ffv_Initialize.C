@@ -1136,22 +1136,11 @@ void FFV::encodeBCindex(FILE* fp)
   // 圧力計算のビット情報をエンコードする -----
   C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid, C.ExperimentNaive, d_pni);
   
-  // ##########
-#if 0
-  V.dbg_chkBCIndex(d_bcd, d_cdf, d_bcp, "BCindexP.txt");
-#endif
-  // ##########
 
   
   
   // 速度計算のビット情報をエンコードする -----
   V.setBCIndexV(d_cdf, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid);
-  
-  // ##########
-#if 0
-  V.dbg_chkBCIndex(d_bcd, d_cdf, d_bcp, "BCindexC.txt");
-#endif
-  // ##########
   
   
   
@@ -1159,19 +1148,18 @@ void FFV::encodeBCindex(FILE* fp)
   if ( C.isHeatProblem() )
   {
     V.setBCIndexH(d_cdf, d_bcd, &BC, C.KindOfSolver, cmp, d_cut, d_bid);
-    
-    // ##########
-#if 0
-    V.dbg_chkBCIndex(d_bcd, d_cdf, d_bcp, "BCindexH.txt");
-#endif
-    // ##########
-    
   }
   
   // 内部領域のFluid, Solidのセル数を数える C.Wcell(Local), G_Wcell(global)
   V.countCellState(L_Wcell, G_Wcell, d_bcd, SOLID);
   V.countCellState(L_Fcell, G_Fcell, d_bcd, FLUID);
   
+  
+// ########## DEBUG
+  //V.dbg_chkBCIndex(d_bcd, d_cdf, d_bcp, "BCindexP.txt");
+  //V.dbg_chkBCIndex(d_bcd, d_cdf, d_bcp, "BCindexH.txt");
+  //V.dbg_chkBCIndex(d_bcd, d_cdf, d_bcp, "BCindexC.txt");
+// ##########
   
   
   // エンコードされているエントリ番号のチェック 1<=order<=31

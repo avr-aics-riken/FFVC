@@ -1200,17 +1200,17 @@
 !! @param [in]     m_face  面番号
 !! @param [in]     bv      BCindex C
 !! @param [in]     vec     指定する速度ベクトル
-!! @param [out]    vsum    \sum{v}
+!! @param [out]    vsum    \sum{v} 速度の積算
 !! @param [in]     nID     隣接ランク番号（nID[]<0の時外部境界面）
 !! @note 固体部分は対象外とするのでループ中に判定あり
 !!       部分的な境界条件の実装のため、ガイドセル部のマスク情報を利用
 !<
-    subroutine vobc_div_drchlt (div, sz, g, m_face, bv, vec, vsum, nID)
+    subroutine vobc_div_drchlt (div, sz, g, m_face, bv, vec, nID)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, ix, jx, kx, face, bvx, m_face
     integer, dimension(3)                                     ::  sz
-    real                                                      ::  u_bc, v_bc, w_bc, vsum, b, a
+    real                                                      ::  u_bc, v_bc, w_bc, b, a
     real, dimension(3)                                        ::  vec
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
@@ -1335,6 +1335,7 @@
 
 !$OMP END PARALLEL
 
+    !vsum = b
 
     return
     end subroutine vobc_div_drchlt

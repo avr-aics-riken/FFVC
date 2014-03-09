@@ -19,10 +19,17 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-03-09
+- r1609 bug fix outer IsoThermal BC [ver 1.6.6]
+  - modify setBCindexH(), encAdiabatic() to flip adiabatic bit
+  - modify output form fo History_Domainflux >> Q and H only
+  - add ThermalCavity in examples
+  
+--------------------------
 2014-03-08
-- r1608 modify [ver 1.6.5]
+- r1608 modify ver 1.6.5
 
-- r1607 Filter module
+- r1607 Filter module [ver 1.6.5]
   - introduce EXEC_MODE to identify mode (solver|filter)
   - ffv_Filter.C
 

@@ -652,24 +652,30 @@ void History::printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Contr
 void History::printHistoryDomfx(FILE* fp, const Control* C, const REAL_TYPE dt)
 {
   const REAL_TYPE sgn=-1.0;
-  REAL_TYPE balance=0.0, s=1.0;
-  
-  for (int i=0; i<NOFACE; i++)
-  {
-    s *= sgn;
-    balance += C->Q_Dface[i]*s;
-  }
+  REAL_TYPE balance=0.0, s=-1.0;
   
   fprintf(fp, "%8d %14.6e", step, printTime());
   
-  for (int i=0; i<NOFACE; i++) fprintf(fp, " %12.4e", printMF(C->Q_Dface[i]) );
-  fprintf(fp, " >> %12.4e : ", printMF(balance) );
+  for (int i=0; i<NOFACE; i++) {
+    s *= sgn;
+    fprintf(fp, " %12.4e", printMF(C->Q_Dface[i]*s) );
+    balance += C->Q_Dface[i]*s;
+  }
+  fprintf(fp, " >   %12.4e : ", printMF(balance) );
   
-  for (int i=0; i<NOFACE; i++) fprintf(fp, " %12.4e", printVel(C->V_Dface[i]) );
+  
+  //for (int i=0; i<NOFACE; i++) fprintf(fp, " %12.4e", printVel(C->V_Dface[i]) );
+  
   
   if (C->isHeatProblem())
   {
     for (int i=0; i<NOFACE; i++) fprintf(fp, " %12.4e", printQF(C->H_Dface[i]) ); // [W]
+    
+    balance = 0.0;
+    for (int i=0; i<NOFACE; i++) {
+      balance += C->H_Dface[i];
+    }
+    fprintf(fp, " >   %12.4e", printQF(balance) );
   }
 
   fprintf(fp, "\n");
@@ -692,14 +698,17 @@ void History::printHistoryDomfxTitle(FILE* fp, const Control* C)
   
   for (int i=0; i<NOFACE; i++) fprintf(fp, "         Q:%s", FBUtility::getDirection(i).c_str());
   
-  fprintf(fp, " >>      Balance : ");
+  ( Unit_Log == DIMENSIONAL ) ? fprintf(fp, " > Balance[m^3/s] : ") : fprintf(fp, " > Balance[-]     : ");
   
-  for (int i=0; i<NOFACE; i++) fprintf(fp, "         V:%s", FBUtility::getDirection(i).c_str());
+  //for (int i=0; i<NOFACE; i++) fprintf(fp, "         V:%s", FBUtility::getDirection(i).c_str());
   
   if (C->isHeatProblem())
   {
     for (int i=0; i<NOFACE; i++) fprintf(fp, "         H:%s", FBUtility::getDirection(i).c_str());
+    
+    fprintf(fp, " >     Balance[W]");
   }
+  
   fprintf(fp, "\n");
 }
 

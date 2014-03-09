@@ -223,8 +223,9 @@ Reference {
   Velocity     = 50.0
   //MassDensity  = 1.1763
   Temperature {
-    Base       = 100.0
-    Difference = 100.0
+    Base = 150.0
+    High = 200.0
+    Low  = 100.0
   }
   Medium       = "virtualmetal"
   BasePressure = 0.0

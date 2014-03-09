@@ -1614,32 +1614,43 @@ void Control::getReference()
   
   if ( isHeatProblem() )
   {
-    REAL_TYPE Base, Diff;
+    REAL_TYPE ct;
     
     label="/Reference/Temperature/Base";
     
-    if ( !(tpCntl->getInspectedValue(label, Base )) )
+    if ( !(tpCntl->getInspectedValue(label, ct)) )
     {
       Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
       Exit(0);
     }
+    BaseTemp = ct;
     
     
-    label="/Reference/Temperature/Difference";
+    label="/Reference/Temperature/High";
     
-    if ( !(tpCntl->getInspectedValue(label, Diff )) )
+    if ( !(tpCntl->getInspectedValue(label, ct)) )
     {
       Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
       Exit(0);
     }
-    BaseTemp = Base;
+    HighTemp = ct;
     
-    if ( Diff < 0.0f )
+    label="/Reference/Temperature/Low";
+    
+    if ( !(tpCntl->getInspectedValue(label, ct)) )
     {
-      Hostonly_ stamped_printf("\tTemperature difference must be positive.\n");
+      Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
       Exit(0);
     }
-    DiffTemp = Diff;
+    LowTemp = ct;
+    
+    
+    if ( LowTemp > HighTemp )
+    {
+      Hostonly_ stamped_printf("\tTempereture difference must be High - Low > 0 \n");
+      Exit(0);
+    }
+    DiffTemp = HighTemp - LowTemp;
   }
   
 }
@@ -2912,7 +2923,9 @@ void Control::printParaConditions(FILE* fp, const MediumList* mat)
   if ( isHeatProblem() )
   {
     fprintf(fp,"\tBase Temperature          [C] / [-]   : %12.5e / %3.1f\n", BaseTemp, 0.0);
-    fprintf(fp,"\tTemperature Diff.         [C] / [-]   : %12.5e / %3.1f\n", DiffTemp, 1.0);
+    fprintf(fp,"\tHigh Temperature          [C] / [-]   : %12.5e / %3.1f\n", HighTemp, FBUtility::convTempD2ND(HighTemp, BaseTemp, DiffTemp));
+    fprintf(fp,"\tLow  Temperature          [C] / [-]   : %12.5e / %3.1f\n", LowTemp,  FBUtility::convTempD2ND(LowTemp,  BaseTemp, DiffTemp));
+    fprintf(fp,"\tTemperature Diff.         [C]         : %12.5e\n", DiffTemp);
   }
   fprintf(fp,"\n");
   

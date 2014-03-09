@@ -582,6 +582,8 @@ public:
   
   REAL_TYPE BasePrs;
   REAL_TYPE BaseTemp;
+  REAL_TYPE HighTemp;
+  REAL_TYPE LowTemp;
   REAL_TYPE DiffTemp;
   REAL_TYPE Domain_p1;
   REAL_TYPE Domain_p2;
@@ -694,7 +696,8 @@ public:
     PlotIntvl = 0.0;
     Domain_p1 = Domain_p2 = 0.0;
     RefVelocity = RefLength = RefDensity = RefSoundSpeed = RefSpecificHeat = 0.0;
-    DiffTemp = BaseTemp = BasePrs = 0.0;
+    DiffTemp = BaseTemp = HighTemp  = LowTemp = 0.0;
+    BasePrs = 0.0;
     Gravity = Mach = SpecificHeatRatio =  0.0;
     timeflag = 0.0;
     Tscale = 0.0;

@@ -62,6 +62,11 @@ void FFV::PS_Binary()
   TIMING_stop(tm_copy_array, 0.0);
   
   
+  // 積算量のクリア，移動熱量は対流部と拡散部に分けて積算するため
+  for (int i=0; i<NOFACE; i++) {
+    C.H_Dface[i] = 0.0;
+  }
+  
   
   // 対流項の寄与
   if ( C.KindOfSolver != SOLID_CONDUCTION) // 流れの場合，対流項の寄与分のみを積分しdc_tで保持

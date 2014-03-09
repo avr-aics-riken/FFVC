@@ -570,7 +570,6 @@ extern "C" {
                          int* m_face,
                          int* bv,
                          REAL_TYPE* vec,
-                         REAL_TYPE* vsum,
                          int* nID);
   
   void vobc_get_massflow_ (REAL_TYPE* sum,
