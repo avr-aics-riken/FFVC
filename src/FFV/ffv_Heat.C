@@ -238,7 +238,7 @@ REAL_TYPE FFV::ps_Diff_SM_EE(REAL_TYPE* t, const REAL_TYPE dt, const REAL_TYPE* 
         
         size_t m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         
-#include "FindexS3D.h"
+#include "../FB/FindexS3D.h"
         
         t_p = t[m_p];
         t_w = t[m_w];
@@ -330,7 +330,7 @@ double FFV::ps_Diff_SM_PSOR(REAL_TYPE* t, double& b2, const REAL_TYPE dt, const 
         
         size_t m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         
-#include "FindexS3D.h"
+#include "../FB/FindexS3D.h"
         
         t_p = t[m_p];
         t_w = t[m_w];

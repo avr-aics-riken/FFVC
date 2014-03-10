@@ -323,15 +323,27 @@ void VoxInfo::copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const
 // #################################################################
 // bcd[]内にあるm_idのセルを数える
 // painted : ID=0以外でペイント済みを求める(true), bcd[]=0のセルをカウント(false)
-unsigned long VoxInfo::countCell (const int* bcd, bool painted, int m_id)
+unsigned long VoxInfo::countCell (const int* bcd, bool painted, int m_id, const int* Dsize)
 {
+  int ix, jx, kx, gd;
+  
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
+  
   unsigned long c=0;
   int id = m_id;
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
   bool sw = painted;
   
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, id, sw) schedule(static) reduction(+:c)
@@ -2547,13 +2559,26 @@ void VoxInfo::encVbitOBC (const int face, int* cdf, const string key, const bool
 // #################################################################
 // カットID情報に基づく流体媒質のフィルを実行
 // Symmetric fillにより反復回数を減少
-unsigned long VoxInfo::fillByBid (int* bid, int* bcd, float* cut, const int tgt_id, const int* suppress, unsigned long& substituted)
+unsigned long VoxInfo::fillByBid (int* bid, int* bcd, float* cut, const int tgt_id, const int* suppress, unsigned long& substituted, const int* Dsize)
 {
+  int ix, jx, kx, gd;
+  
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
+  
   int tg = tgt_id;
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
   unsigned long filled   = 0; ///< 流体IDでペイントされた数
   unsigned long replaced = 0; ///< 固体IDで置換された数
   
@@ -2615,12 +2640,24 @@ schedule(static) reduction(+:filled) reduction(+:replaced)
 
 // #################################################################
 // 未ペイントセルをFLUIDでフィル
-unsigned long VoxInfo::fillByFluid (int* bcd, const int fluid_id, const int* bid)
+unsigned long VoxInfo::fillByFluid (int* bcd, const int fluid_id, const int* bid, const int* Dsize)
 {
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
+  int ix, jx, kx, gd;
+  
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
   
   int fid = fluid_id;
   unsigned long c = 0; /// painted count
@@ -2727,12 +2764,24 @@ unsigned long VoxInfo::fillByModalSolid (int* bcd, const int fluid_id, const int
 
 // #################################################################
 // 交点が定義点にある場合にそのポリゴンのエントリ番号でフィルする
-unsigned long VoxInfo::fillCutOnCellCenter (int* bcd, const int* bid, const float* cut)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
+unsigned long VoxInfo::fillCutOnCellCenter (int* bcd, const int* bid, const float* cut, const int* Dsize)
+{  
+  int ix, jx, kx, gd;
+  
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
   
   unsigned long c = 0;
   
@@ -2787,12 +2836,26 @@ unsigned long VoxInfo::fillCutOnCellCenter (int* bcd, const int* bid, const floa
 // シード点をペイントする
 // ヒントとして与えられた外部境界面に接するセルにおいて，確実に流体セルであるセルをフィルする
 // もし，外部境界面以外に固体候補があれば、ぬれ面はフィルしない
-unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, const int* bid)
+unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, const int* bid, const int* Dsize)
 {
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
+  int ix, jx, kx, gd;
+  
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
+
+  
   int tg = target;     ///< order of FLUID ID
   unsigned long c = 0;
   

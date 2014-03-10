@@ -241,8 +241,9 @@ public:
    * @param [in] bcd     BCindex B
    * @param [in] painted ID=0以外でペイント済みを求める(true), bcd[]=0のセルをカウント(false)
    * @param [in] m_id    検査するID
+   * @param [in] Dsize   サイズ
    */
-  unsigned long countCell (const int* bcd, bool painted=true, int m_id=0);
+  unsigned long countCell (const int* bcd, bool painted=true, int m_id=0, const int* Dsize=NULL);
   
   
   /**
@@ -281,17 +282,19 @@ public:
    * @param [in]     tgt_id      フィルする流体IDのエントリ
    * @param [in]     suppress    各軸方向のフィル抑止モード（Periodic, Symmetric時の対策）
    * @param [out]    substituted 固体IDに置換された数
+   * @param [in]     Dsize       サイズ
    */
-  unsigned long fillByBid (int* bid, int* bcd, float* cut, const int tgt_id, const int* suppress, unsigned long& substituted);
+  unsigned long fillByBid (int* bid, int* bcd, float* cut, const int tgt_id, const int* suppress, unsigned long& substituted, const int* Dsize=NULL);
   
   
   /* @brief 未ペイントセルをフィル
    * @param [in,out] bcd      BCindex B
    * @param [in]     fluid_id フィルをする流体ID
    * @param [in]     bid      境界ID
+   * @param [in]     Dsize    サイズ
    * @retval 置換されたセル数
    */
-  unsigned long fillByFluid (int* bcd, const int fluid_id, const int* bid);
+  unsigned long fillByFluid (int* bcd, const int fluid_id, const int* bid, const int* Dsize=NULL);
   
   
   /* @brief 未ペイントセルをフィル
@@ -305,12 +308,13 @@ public:
   
   /**
    * @brief 交点が定義点にある場合にそのポリゴンのエントリ番号でフィルする
-   * @param [in,out] bcd         BCindex B
-   * @param [in]     bid         境界ID（5ビット幅x6方向）
-   * @param [in]     cut         カット情報
+   * @param [in,out] bcd    BCindex B
+   * @param [in]     bid    境界ID（5ビット幅x6方向）
+   * @param [in]     cut    カット情報
+   * @param [in]     Dsize  サイズ
    * @retval フィルされたセル数
    */
-  unsigned long fillCutOnCellCenter (int* bcd, const int* bid, const float* cut);
+  unsigned long fillCutOnCellCenter (int* bcd, const int* bid, const float* cut, const int* Dsize=NULL);
   
   
   /**
@@ -319,8 +323,9 @@ public:
    * @param [in]     face   ヒント面
    * @param [in]     target ペイントするIDのエントリ
    * @param [in]     bid    境界ID
+   * @param [in]     Dsize  サイズ
    */
-  unsigned long fillSeed (int* bcd, const int face, const int target, const int* bid);
+  unsigned long fillSeed (int* bcd, const int face, const int target, const int* bid, const int* Dsize=NULL);
   
   
   /**
@@ -452,7 +457,7 @@ public:
    * @param [in] m_NoCompo コンポーネントの総数
    * @param [in] ExRef  組み込み例題クラス
    */
-  void setControlVars (const int m_NoCompo, Intrinsic* ExRef);
+  void setControlVars (const int m_NoCompo, Intrinsic* ExRef=NULL);
   
   
   /**

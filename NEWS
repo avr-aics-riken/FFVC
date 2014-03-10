@@ -19,6 +19,10 @@ RELEASE
 =======
 
 -------------
+Version 1.6.8    2014-03-10
+  - ASD module & change structure
+
+-------------
 Version 1.6.7    2014-03-09
   - modify heat source bc
   

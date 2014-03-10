@@ -13,47 +13,41 @@
 #
 ###################################################################################
 
-bin_PROGRAMS = combsph
+bin_PROGRAMS = ffvc
 
-combsph_CXXFLAGS = \
+ffvc_CXXFLAGS = \
   -I. \
-  -I../FB \
+  -I./FB \
+  -I./F_CORE \
+  -I./IP \
+  -I./ASD \
+  -I./FFV \
   @CPM_CFLAGS@ \
   @CIO_CFLAGS@ \
   @TP_CFLAGS@ \
   @PM_CFLAGS@ \
+  @PL_CFLAGS@ \
+  @CUT_CFLAGS@ \
   @MPICH_CFLAGS@ \
-  @REALOPT@ \
-  @FREALOPT@
-  
-# -I../PLOT3D
+  @REALOPT@
 
-combsph_SOURCES = \
-  COMB_Define.h \
-  FileIO_read_sph.C \
-  FileIO_sph.C \
-  FileIO_sph.h \
-  comb.C \
-  comb.h \
-  comb_avs.C \
-  comb_sph.C \
-  endianUtil.h \
-  main.C \
-  util_Path.h
-  
-# comb_plot3d.C
+ffvc_SOURCES = main.C
 
-combsph_LDADD = \
-  -L../FB -lFB \
+ffvc_LDADD = \
+  -L./FB -lFB \
+  -L./IP -lIP \
+  -L./F_CORE -lFCORE \
+  -L./ASD -lASD \
+  -L./FFV -lFFV \
   @CPM_LDFLAGS@ \
   @CIO_LDFLAGS@ \
   @TP_LDFLAGS@ \
   @PM_LDFLAGS@ \
+  @PL_LDFLAGS@ \
+  @CUT_LDFLAGS@ \
   @MPICH_LDFLAGS@ \
   @MPICH_LIBS@ \
   @MPICH_FCLIBS@ \
   @FFVC_LIBS@
-  
-# -L../PLOT3D -lPLOT3D
 
-EXTRA_DIST = Makefile_hand depend.inc README comb_plot3d.C make_setting2
+EXTRA_DIST = Makefile_hand Makefile_ffvc depend.inc make_setting

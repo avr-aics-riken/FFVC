@@ -4753,7 +4753,6 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   size_t n_cell[3];
   
-  unsigned cut_gc[3] = {guide, guide, guide};
   double cut_org[3];
   double cut_dx[3];
   

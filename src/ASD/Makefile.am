@@ -13,44 +13,25 @@
 #
 ###################################################################################
 
-noinst_lib_LIBRARIES = libFFV.a
+noinst_lib_LIBRARIES = libASD.a
 
 noinst_libdir = ../lib
 
-
-libFFV_a_CXXFLAGS = \
+libASD_a_CXXFLAGS = \
   -I. \
   -I../FB \
-  -I../F_CORE \
-  -I../IP \
   @CPM_CFLAGS@ \
-  @CIO_CFLAGS@ \
   @TP_CFLAGS@ \
-  @PM_CFLAGS@ \
   @PL_CFLAGS@ \
   @CUT_CFLAGS@ \
   @MPICH_CFLAGS@ \
   @REALOPT@
 
-libFFV_a_SOURCES = \
-  NS_FS_E_Binary.C \
-  NS_FS_E_CDS.C \
-  PS_Binary.C \
-  ffv.C \
-  ffv.h \
-  ffv_Alloc.C \
-  ffv_Define.h \
-  ffv_Filter.C \
-  ffv_Heat.C \
-  ffv_Initialize.C \
-  ffv_LS.C \
-  ffv_Loop.C \
-  ffv_Post.C \
-  ffv_Restart.C \
-  ffv_SetBC.C \
-  ffv_SetBC.h \
-  ffv_TerminateCtrl.C \
-  ffv_TerminateCtrl.h \
-  ffv_Version.h
+libASD_a_SOURCES = \
+  SubDomain.C \
+  SubDomain.h \
+  ASDmodule.C \
+  ASDmodule.h
 
 EXTRA_DIST = Makefile_hand depend.inc
+

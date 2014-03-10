@@ -91,10 +91,9 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = combsph$(EXEEXT)
-subdir = src/Util_Combsph
+subdir = src/ASD
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
-	$(top_srcdir)/depcomp README
+	$(top_srcdir)/depcomp
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -103,16 +102,46 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am__installdirs = "$(DESTDIR)$(bindir)"
-PROGRAMS = $(bin_PROGRAMS)
-am_combsph_OBJECTS = combsph-FileIO_read_sph.$(OBJEXT) \
-	combsph-FileIO_sph.$(OBJEXT) combsph-comb.$(OBJEXT) \
-	combsph-comb_avs.$(OBJEXT) combsph-comb_sph.$(OBJEXT) \
-	combsph-main.$(OBJEXT)
-combsph_OBJECTS = $(am_combsph_OBJECTS)
-combsph_DEPENDENCIES =
-combsph_LINK = $(CXXLD) $(combsph_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
+am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
+am__vpath_adj = case $$p in \
+    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
+    *) f=$$p;; \
+  esac;
+am__strip_dir = f=`echo $$p | sed -e 's|^.*/||'`;
+am__install_max = 40
+am__nobase_strip_setup = \
+  srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*|]/\\\\&/g'`
+am__nobase_strip = \
+  for p in $$list; do echo "$$p"; done | sed -e "s|$$srcdirstrip/||"
+am__nobase_list = $(am__nobase_strip_setup); \
+  for p in $$list; do echo "$$p $$p"; done | \
+  sed "s| $$srcdirstrip/| |;"' / .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
+  $(AWK) 'BEGIN { files["."] = "" } { files[$$2] = files[$$2] " " $$1; \
+    if (++n[$$2] == $(am__install_max)) \
+      { print $$2, files[$$2]; n[$$2] = 0; files[$$2] = "" } } \
+    END { for (dir in files) print dir, files[dir] }'
+am__base_list = \
+  sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
+  sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
+am__uninstall_files_from_dir = { \
+  test -z "$$files" \
+    || { test ! -d "$$dir" && test ! -f "$$dir" && test ! -r "$$dir"; } \
+    || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
+         $(am__cd) "$$dir" && rm -f $$files; }; \
+  }
+am__installdirs = "$(DESTDIR)$(noinst_libdir)"
+LIBRARIES = $(noinst_lib_LIBRARIES)
+AR = ar
+ARFLAGS = cru
+AM_V_AR = $(am__v_AR_@AM_V@)
+am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
+am__v_AR_0 = @echo "  AR      " $@;
+am__v_AR_1 = 
+libASD_a_AR = $(AR) $(ARFLAGS)
+libASD_a_LIBADD =
+am_libASD_a_OBJECTS = libASD_a-SubDomain.$(OBJEXT) \
+	libASD_a-ASDmodule.$(OBJEXT)
+libASD_a_OBJECTS = $(am_libASD_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -158,8 +187,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(combsph_SOURCES)
-DIST_SOURCES = $(combsph_SOURCES)
+SOURCES = $(libASD_a_SOURCES)
+DIST_SOURCES = $(libASD_a_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -315,48 +344,25 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-combsph_CXXFLAGS = \
+noinst_lib_LIBRARIES = libASD.a
+noinst_libdir = ../lib
+libASD_a_CXXFLAGS = \
   -I. \
   -I../FB \
   @CPM_CFLAGS@ \
-  @CIO_CFLAGS@ \
   @TP_CFLAGS@ \
-  @PM_CFLAGS@ \
+  @PL_CFLAGS@ \
+  @CUT_CFLAGS@ \
   @MPICH_CFLAGS@ \
-  @REALOPT@ \
-  @FREALOPT@
+  @REALOPT@
 
+libASD_a_SOURCES = \
+  SubDomain.C \
+  SubDomain.h \
+  ASDmodule.C \
+  ASDmodule.h
 
-# -I../PLOT3D
-combsph_SOURCES = \
-  COMB_Define.h \
-  FileIO_read_sph.C \
-  FileIO_sph.C \
-  FileIO_sph.h \
-  comb.C \
-  comb.h \
-  comb_avs.C \
-  comb_sph.C \
-  endianUtil.h \
-  main.C \
-  util_Path.h
-
-
-# comb_plot3d.C
-combsph_LDADD = \
-  -L../FB -lFB \
-  @CPM_LDFLAGS@ \
-  @CIO_LDFLAGS@ \
-  @TP_LDFLAGS@ \
-  @PM_LDFLAGS@ \
-  @MPICH_LDFLAGS@ \
-  @MPICH_LIBS@ \
-  @MPICH_FCLIBS@ \
-  @FFVC_LIBS@
-
-
-# -L../PLOT3D -lPLOT3D
-EXTRA_DIST = Makefile_hand depend.inc README comb_plot3d.C make_setting2
+EXTRA_DIST = Makefile_hand depend.inc
 all: all-am
 
 .SUFFIXES:
@@ -370,9 +376,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/Util_Combsph/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/ASD/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu src/Util_Combsph/Makefile
+	  $(AUTOMAKE) --gnu src/ASD/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -391,52 +397,42 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
-install-binPROGRAMS: $(bin_PROGRAMS)
+install-noinst_libLIBRARIES: $(noinst_lib_LIBRARIES)
 	@$(NORMAL_INSTALL)
-	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
-	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(bindir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(bindir)" || exit 1; \
-	fi; \
-	for p in $$list; do echo "$$p $$p"; done | \
-	sed 's/$(EXEEXT)$$//' | \
-	while read p p1; do if test -f $$p \
-	  ; then echo "$$p"; echo "$$p"; else :; fi; \
-	done | \
-	sed -e 'p;s,.*/,,;n;h' \
-	    -e 's|.*|.|' \
-	    -e 'p;x;s,.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/' | \
-	sed 'N;N;N;s,\n, ,g' | \
-	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1 } \
-	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
-	    if ($$2 == $$4) files[d] = files[d] " " $$1; \
-	    else { print "f", $$3 "/" $$4, $$1; } } \
-	  END { for (d in files) print "f", d, files[d] }' | \
-	while read type dir files; do \
-	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
-	    test -z "$$files" || { \
-	      echo " $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(bindir)$$dir'"; \
-	      $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(bindir)$$dir" || exit $$?; \
-	    } \
-	; done
+	@list='$(noinst_lib_LIBRARIES)'; test -n "$(noinst_libdir)" || list=; \
+	list2=; for p in $$list; do \
+	  if test -f $$p; then \
+	    list2="$$list2 $$p"; \
+	  else :; fi; \
+	done; \
+	test -z "$$list2" || { \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(noinst_libdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(noinst_libdir)" || exit 1; \
+	  echo " $(INSTALL_DATA) $$list2 '$(DESTDIR)$(noinst_libdir)'"; \
+	  $(INSTALL_DATA) $$list2 "$(DESTDIR)$(noinst_libdir)" || exit $$?; }
+	@$(POST_INSTALL)
+	@list='$(noinst_lib_LIBRARIES)'; test -n "$(noinst_libdir)" || list=; \
+	for p in $$list; do \
+	  if test -f $$p; then \
+	    $(am__strip_dir) \
+	    echo " ( cd '$(DESTDIR)$(noinst_libdir)' && $(RANLIB) $$f )"; \
+	    ( cd "$(DESTDIR)$(noinst_libdir)" && $(RANLIB) $$f ) || exit $$?; \
+	  else :; fi; \
+	done
 
-uninstall-binPROGRAMS:
+uninstall-noinst_libLIBRARIES:
 	@$(NORMAL_UNINSTALL)
-	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
-	files=`for p in $$list; do echo "$$p"; done | \
-	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
-	      -e 's/$$/$(EXEEXT)/' \
-	`; \
-	test -n "$$list" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(bindir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(bindir)" && rm -f $$files
+	@list='$(noinst_lib_LIBRARIES)'; test -n "$(noinst_libdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(noinst_libdir)'; $(am__uninstall_files_from_dir)
 
-clean-binPROGRAMS:
-	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
+clean-noinst_libLIBRARIES:
+	-test -z "$(noinst_lib_LIBRARIES)" || rm -f $(noinst_lib_LIBRARIES)
 
-combsph$(EXEEXT): $(combsph_OBJECTS) $(combsph_DEPENDENCIES) $(EXTRA_combsph_DEPENDENCIES) 
-	@rm -f combsph$(EXEEXT)
-	$(AM_V_CXXLD)$(combsph_LINK) $(combsph_OBJECTS) $(combsph_LDADD) $(LIBS)
+libASD.a: $(libASD_a_OBJECTS) $(libASD_a_DEPENDENCIES) $(EXTRA_libASD_a_DEPENDENCIES) 
+	$(AM_V_at)-rm -f libASD.a
+	$(AM_V_AR)$(libASD_a_AR) libASD.a $(libASD_a_OBJECTS) $(libASD_a_LIBADD)
+	$(AM_V_at)$(RANLIB) libASD.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -444,12 +440,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/combsph-FileIO_read_sph.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/combsph-FileIO_sph.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/combsph-comb.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/combsph-comb_avs.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/combsph-comb_sph.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/combsph-main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libASD_a-ASDmodule.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libASD_a-SubDomain.Po@am__quote@
 
 .C.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -465,89 +457,33 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
-combsph-FileIO_read_sph.o: FileIO_read_sph.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-FileIO_read_sph.o -MD -MP -MF $(DEPDIR)/combsph-FileIO_read_sph.Tpo -c -o combsph-FileIO_read_sph.o `test -f 'FileIO_read_sph.C' || echo '$(srcdir)/'`FileIO_read_sph.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-FileIO_read_sph.Tpo $(DEPDIR)/combsph-FileIO_read_sph.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='FileIO_read_sph.C' object='combsph-FileIO_read_sph.o' libtool=no @AMDEPBACKSLASH@
+libASD_a-SubDomain.o: SubDomain.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libASD_a_CXXFLAGS) $(CXXFLAGS) -MT libASD_a-SubDomain.o -MD -MP -MF $(DEPDIR)/libASD_a-SubDomain.Tpo -c -o libASD_a-SubDomain.o `test -f 'SubDomain.C' || echo '$(srcdir)/'`SubDomain.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libASD_a-SubDomain.Tpo $(DEPDIR)/libASD_a-SubDomain.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='SubDomain.C' object='libASD_a-SubDomain.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-FileIO_read_sph.o `test -f 'FileIO_read_sph.C' || echo '$(srcdir)/'`FileIO_read_sph.C
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libASD_a_CXXFLAGS) $(CXXFLAGS) -c -o libASD_a-SubDomain.o `test -f 'SubDomain.C' || echo '$(srcdir)/'`SubDomain.C
 
-combsph-FileIO_read_sph.obj: FileIO_read_sph.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-FileIO_read_sph.obj -MD -MP -MF $(DEPDIR)/combsph-FileIO_read_sph.Tpo -c -o combsph-FileIO_read_sph.obj `if test -f 'FileIO_read_sph.C'; then $(CYGPATH_W) 'FileIO_read_sph.C'; else $(CYGPATH_W) '$(srcdir)/FileIO_read_sph.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-FileIO_read_sph.Tpo $(DEPDIR)/combsph-FileIO_read_sph.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='FileIO_read_sph.C' object='combsph-FileIO_read_sph.obj' libtool=no @AMDEPBACKSLASH@
+libASD_a-SubDomain.obj: SubDomain.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libASD_a_CXXFLAGS) $(CXXFLAGS) -MT libASD_a-SubDomain.obj -MD -MP -MF $(DEPDIR)/libASD_a-SubDomain.Tpo -c -o libASD_a-SubDomain.obj `if test -f 'SubDomain.C'; then $(CYGPATH_W) 'SubDomain.C'; else $(CYGPATH_W) '$(srcdir)/SubDomain.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libASD_a-SubDomain.Tpo $(DEPDIR)/libASD_a-SubDomain.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='SubDomain.C' object='libASD_a-SubDomain.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-FileIO_read_sph.obj `if test -f 'FileIO_read_sph.C'; then $(CYGPATH_W) 'FileIO_read_sph.C'; else $(CYGPATH_W) '$(srcdir)/FileIO_read_sph.C'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libASD_a_CXXFLAGS) $(CXXFLAGS) -c -o libASD_a-SubDomain.obj `if test -f 'SubDomain.C'; then $(CYGPATH_W) 'SubDomain.C'; else $(CYGPATH_W) '$(srcdir)/SubDomain.C'; fi`
 
-combsph-FileIO_sph.o: FileIO_sph.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-FileIO_sph.o -MD -MP -MF $(DEPDIR)/combsph-FileIO_sph.Tpo -c -o combsph-FileIO_sph.o `test -f 'FileIO_sph.C' || echo '$(srcdir)/'`FileIO_sph.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-FileIO_sph.Tpo $(DEPDIR)/combsph-FileIO_sph.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='FileIO_sph.C' object='combsph-FileIO_sph.o' libtool=no @AMDEPBACKSLASH@
+libASD_a-ASDmodule.o: ASDmodule.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libASD_a_CXXFLAGS) $(CXXFLAGS) -MT libASD_a-ASDmodule.o -MD -MP -MF $(DEPDIR)/libASD_a-ASDmodule.Tpo -c -o libASD_a-ASDmodule.o `test -f 'ASDmodule.C' || echo '$(srcdir)/'`ASDmodule.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libASD_a-ASDmodule.Tpo $(DEPDIR)/libASD_a-ASDmodule.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ASDmodule.C' object='libASD_a-ASDmodule.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-FileIO_sph.o `test -f 'FileIO_sph.C' || echo '$(srcdir)/'`FileIO_sph.C
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libASD_a_CXXFLAGS) $(CXXFLAGS) -c -o libASD_a-ASDmodule.o `test -f 'ASDmodule.C' || echo '$(srcdir)/'`ASDmodule.C
 
-combsph-FileIO_sph.obj: FileIO_sph.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-FileIO_sph.obj -MD -MP -MF $(DEPDIR)/combsph-FileIO_sph.Tpo -c -o combsph-FileIO_sph.obj `if test -f 'FileIO_sph.C'; then $(CYGPATH_W) 'FileIO_sph.C'; else $(CYGPATH_W) '$(srcdir)/FileIO_sph.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-FileIO_sph.Tpo $(DEPDIR)/combsph-FileIO_sph.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='FileIO_sph.C' object='combsph-FileIO_sph.obj' libtool=no @AMDEPBACKSLASH@
+libASD_a-ASDmodule.obj: ASDmodule.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libASD_a_CXXFLAGS) $(CXXFLAGS) -MT libASD_a-ASDmodule.obj -MD -MP -MF $(DEPDIR)/libASD_a-ASDmodule.Tpo -c -o libASD_a-ASDmodule.obj `if test -f 'ASDmodule.C'; then $(CYGPATH_W) 'ASDmodule.C'; else $(CYGPATH_W) '$(srcdir)/ASDmodule.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libASD_a-ASDmodule.Tpo $(DEPDIR)/libASD_a-ASDmodule.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ASDmodule.C' object='libASD_a-ASDmodule.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-FileIO_sph.obj `if test -f 'FileIO_sph.C'; then $(CYGPATH_W) 'FileIO_sph.C'; else $(CYGPATH_W) '$(srcdir)/FileIO_sph.C'; fi`
-
-combsph-comb.o: comb.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-comb.o -MD -MP -MF $(DEPDIR)/combsph-comb.Tpo -c -o combsph-comb.o `test -f 'comb.C' || echo '$(srcdir)/'`comb.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-comb.Tpo $(DEPDIR)/combsph-comb.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='comb.C' object='combsph-comb.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-comb.o `test -f 'comb.C' || echo '$(srcdir)/'`comb.C
-
-combsph-comb.obj: comb.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-comb.obj -MD -MP -MF $(DEPDIR)/combsph-comb.Tpo -c -o combsph-comb.obj `if test -f 'comb.C'; then $(CYGPATH_W) 'comb.C'; else $(CYGPATH_W) '$(srcdir)/comb.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-comb.Tpo $(DEPDIR)/combsph-comb.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='comb.C' object='combsph-comb.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-comb.obj `if test -f 'comb.C'; then $(CYGPATH_W) 'comb.C'; else $(CYGPATH_W) '$(srcdir)/comb.C'; fi`
-
-combsph-comb_avs.o: comb_avs.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-comb_avs.o -MD -MP -MF $(DEPDIR)/combsph-comb_avs.Tpo -c -o combsph-comb_avs.o `test -f 'comb_avs.C' || echo '$(srcdir)/'`comb_avs.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-comb_avs.Tpo $(DEPDIR)/combsph-comb_avs.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='comb_avs.C' object='combsph-comb_avs.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-comb_avs.o `test -f 'comb_avs.C' || echo '$(srcdir)/'`comb_avs.C
-
-combsph-comb_avs.obj: comb_avs.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-comb_avs.obj -MD -MP -MF $(DEPDIR)/combsph-comb_avs.Tpo -c -o combsph-comb_avs.obj `if test -f 'comb_avs.C'; then $(CYGPATH_W) 'comb_avs.C'; else $(CYGPATH_W) '$(srcdir)/comb_avs.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-comb_avs.Tpo $(DEPDIR)/combsph-comb_avs.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='comb_avs.C' object='combsph-comb_avs.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-comb_avs.obj `if test -f 'comb_avs.C'; then $(CYGPATH_W) 'comb_avs.C'; else $(CYGPATH_W) '$(srcdir)/comb_avs.C'; fi`
-
-combsph-comb_sph.o: comb_sph.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-comb_sph.o -MD -MP -MF $(DEPDIR)/combsph-comb_sph.Tpo -c -o combsph-comb_sph.o `test -f 'comb_sph.C' || echo '$(srcdir)/'`comb_sph.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-comb_sph.Tpo $(DEPDIR)/combsph-comb_sph.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='comb_sph.C' object='combsph-comb_sph.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-comb_sph.o `test -f 'comb_sph.C' || echo '$(srcdir)/'`comb_sph.C
-
-combsph-comb_sph.obj: comb_sph.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-comb_sph.obj -MD -MP -MF $(DEPDIR)/combsph-comb_sph.Tpo -c -o combsph-comb_sph.obj `if test -f 'comb_sph.C'; then $(CYGPATH_W) 'comb_sph.C'; else $(CYGPATH_W) '$(srcdir)/comb_sph.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-comb_sph.Tpo $(DEPDIR)/combsph-comb_sph.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='comb_sph.C' object='combsph-comb_sph.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-comb_sph.obj `if test -f 'comb_sph.C'; then $(CYGPATH_W) 'comb_sph.C'; else $(CYGPATH_W) '$(srcdir)/comb_sph.C'; fi`
-
-combsph-main.o: main.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-main.o -MD -MP -MF $(DEPDIR)/combsph-main.Tpo -c -o combsph-main.o `test -f 'main.C' || echo '$(srcdir)/'`main.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-main.Tpo $(DEPDIR)/combsph-main.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='main.C' object='combsph-main.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-main.o `test -f 'main.C' || echo '$(srcdir)/'`main.C
-
-combsph-main.obj: main.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-main.obj -MD -MP -MF $(DEPDIR)/combsph-main.Tpo -c -o combsph-main.obj `if test -f 'main.C'; then $(CYGPATH_W) 'main.C'; else $(CYGPATH_W) '$(srcdir)/main.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-main.Tpo $(DEPDIR)/combsph-main.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='main.C' object='combsph-main.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-main.obj `if test -f 'main.C'; then $(CYGPATH_W) 'main.C'; else $(CYGPATH_W) '$(srcdir)/main.C'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libASD_a_CXXFLAGS) $(CXXFLAGS) -c -o libASD_a-ASDmodule.obj `if test -f 'ASDmodule.C'; then $(CYGPATH_W) 'ASDmodule.C'; else $(CYGPATH_W) '$(srcdir)/ASDmodule.C'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -633,9 +569,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(PROGRAMS)
+all-am: Makefile $(LIBRARIES)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)"; do \
+	for dir in "$(DESTDIR)$(noinst_libdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -670,7 +606,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
+clean-am: clean-generic clean-noinst_libLIBRARIES mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -690,13 +626,13 @@ info: info-am
 
 info-am:
 
-install-data-am:
+install-data-am: install-noinst_libLIBRARIES
 
 install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-binPROGRAMS
+install-exec-am:
 
 install-html: install-html-am
 
@@ -735,23 +671,23 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS
+uninstall-am: uninstall-noinst_libLIBRARIES
 
 .MAKE: install-am install-strip
 
-.PHONY: CTAGS GTAGS TAGS all all-am check check-am clean \
-	clean-binPROGRAMS clean-generic cscopelist-am ctags ctags-am \
+.PHONY: CTAGS GTAGS TAGS all all-am check check-am clean clean-generic \
+	clean-noinst_libLIBRARIES cscopelist-am ctags ctags-am \
 	distclean distclean-compile distclean-generic distclean-tags \
 	distdir dvi dvi-am html html-am info info-am install \
-	install-am install-binPROGRAMS install-data install-data-am \
-	install-dvi install-dvi-am install-exec install-exec-am \
-	install-html install-html-am install-info install-info-am \
-	install-man install-pdf install-pdf-am install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic pdf pdf-am \
-	ps ps-am tags tags-am uninstall uninstall-am \
-	uninstall-binPROGRAMS
+	install-am install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-noinst_libLIBRARIES install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic pdf pdf-am ps ps-am tags tags-am uninstall \
+	uninstall-am uninstall-noinst_libLIBRARIES
 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

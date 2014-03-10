@@ -398,7 +398,8 @@ typedef struct {
 /// FFVC_EXEC_MODE
 enum ffvc_execution {
   ffvc_solver=1,
-  ffvc_filter
+  ffvc_filter,
+  ffvc_asd
 };
 
 /// 変数の種類

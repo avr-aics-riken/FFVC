@@ -91,10 +91,10 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = combsph$(EXEEXT)
-subdir = src/Util_Combsph
+bin_PROGRAMS = ffvc$(EXEEXT)
+subdir = src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
-	$(top_srcdir)/depcomp README
+	$(top_srcdir)/depcomp
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -105,13 +105,10 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_combsph_OBJECTS = combsph-FileIO_read_sph.$(OBJEXT) \
-	combsph-FileIO_sph.$(OBJEXT) combsph-comb.$(OBJEXT) \
-	combsph-comb_avs.$(OBJEXT) combsph-comb_sph.$(OBJEXT) \
-	combsph-main.$(OBJEXT)
-combsph_OBJECTS = $(am_combsph_OBJECTS)
-combsph_DEPENDENCIES =
-combsph_LINK = $(CXXLD) $(combsph_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
+am_ffvc_OBJECTS = ffvc-main.$(OBJEXT)
+ffvc_OBJECTS = $(am_ffvc_OBJECTS)
+ffvc_DEPENDENCIES =
+ffvc_LINK = $(CXXLD) $(ffvc_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -146,20 +143,8 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-AM_V_CC = $(am__v_CC_@AM_V@)
-am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
-am__v_CC_0 = @echo "  CC      " $@;
-am__v_CC_1 = 
-CCLD = $(CC)
-LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-AM_V_CCLD = $(am__v_CCLD_@AM_V@)
-am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
-am__v_CCLD_0 = @echo "  CCLD    " $@;
-am__v_CCLD_1 = 
-SOURCES = $(combsph_SOURCES)
-DIST_SOURCES = $(combsph_SOURCES)
+SOURCES = $(ffvc_SOURCES)
+DIST_SOURCES = $(ffvc_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -315,48 +300,41 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-combsph_CXXFLAGS = \
+ffvc_CXXFLAGS = \
   -I. \
-  -I../FB \
+  -I./FB \
+  -I./F_CORE \
+  -I./IP \
+  -I./ASD \
+  -I./FFV \
   @CPM_CFLAGS@ \
   @CIO_CFLAGS@ \
   @TP_CFLAGS@ \
   @PM_CFLAGS@ \
+  @PL_CFLAGS@ \
+  @CUT_CFLAGS@ \
   @MPICH_CFLAGS@ \
-  @REALOPT@ \
-  @FREALOPT@
+  @REALOPT@
 
-
-# -I../PLOT3D
-combsph_SOURCES = \
-  COMB_Define.h \
-  FileIO_read_sph.C \
-  FileIO_sph.C \
-  FileIO_sph.h \
-  comb.C \
-  comb.h \
-  comb_avs.C \
-  comb_sph.C \
-  endianUtil.h \
-  main.C \
-  util_Path.h
-
-
-# comb_plot3d.C
-combsph_LDADD = \
-  -L../FB -lFB \
+ffvc_SOURCES = main.C
+ffvc_LDADD = \
+  -L./FB -lFB \
+  -L./IP -lIP \
+  -L./F_CORE -lFCORE \
+  -L./ASD -lASD \
+  -L./FFV -lFFV \
   @CPM_LDFLAGS@ \
   @CIO_LDFLAGS@ \
   @TP_LDFLAGS@ \
   @PM_LDFLAGS@ \
+  @PL_LDFLAGS@ \
+  @CUT_LDFLAGS@ \
   @MPICH_LDFLAGS@ \
   @MPICH_LIBS@ \
   @MPICH_FCLIBS@ \
   @FFVC_LIBS@
 
-
-# -L../PLOT3D -lPLOT3D
-EXTRA_DIST = Makefile_hand depend.inc README comb_plot3d.C make_setting2
+EXTRA_DIST = Makefile_hand Makefile_ffvc depend.inc make_setting
 all: all-am
 
 .SUFFIXES:
@@ -370,9 +348,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/Util_Combsph/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu src/Util_Combsph/Makefile
+	  $(AUTOMAKE) --gnu src/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -434,9 +412,9 @@ uninstall-binPROGRAMS:
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
 
-combsph$(EXEEXT): $(combsph_OBJECTS) $(combsph_DEPENDENCIES) $(EXTRA_combsph_DEPENDENCIES) 
-	@rm -f combsph$(EXEEXT)
-	$(AM_V_CXXLD)$(combsph_LINK) $(combsph_OBJECTS) $(combsph_LDADD) $(LIBS)
+ffvc$(EXEEXT): $(ffvc_OBJECTS) $(ffvc_DEPENDENCIES) $(EXTRA_ffvc_DEPENDENCIES) 
+	@rm -f ffvc$(EXEEXT)
+	$(AM_V_CXXLD)$(ffvc_LINK) $(ffvc_OBJECTS) $(ffvc_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -444,12 +422,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/combsph-FileIO_read_sph.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/combsph-FileIO_sph.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/combsph-comb.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/combsph-comb_avs.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/combsph-comb_sph.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/combsph-main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffvc-main.Po@am__quote@
 
 .C.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -465,89 +438,19 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
-combsph-FileIO_read_sph.o: FileIO_read_sph.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-FileIO_read_sph.o -MD -MP -MF $(DEPDIR)/combsph-FileIO_read_sph.Tpo -c -o combsph-FileIO_read_sph.o `test -f 'FileIO_read_sph.C' || echo '$(srcdir)/'`FileIO_read_sph.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-FileIO_read_sph.Tpo $(DEPDIR)/combsph-FileIO_read_sph.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='FileIO_read_sph.C' object='combsph-FileIO_read_sph.o' libtool=no @AMDEPBACKSLASH@
+ffvc-main.o: main.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-main.o -MD -MP -MF $(DEPDIR)/ffvc-main.Tpo -c -o ffvc-main.o `test -f 'main.C' || echo '$(srcdir)/'`main.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-main.Tpo $(DEPDIR)/ffvc-main.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='main.C' object='ffvc-main.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-FileIO_read_sph.o `test -f 'FileIO_read_sph.C' || echo '$(srcdir)/'`FileIO_read_sph.C
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-main.o `test -f 'main.C' || echo '$(srcdir)/'`main.C
 
-combsph-FileIO_read_sph.obj: FileIO_read_sph.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-FileIO_read_sph.obj -MD -MP -MF $(DEPDIR)/combsph-FileIO_read_sph.Tpo -c -o combsph-FileIO_read_sph.obj `if test -f 'FileIO_read_sph.C'; then $(CYGPATH_W) 'FileIO_read_sph.C'; else $(CYGPATH_W) '$(srcdir)/FileIO_read_sph.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-FileIO_read_sph.Tpo $(DEPDIR)/combsph-FileIO_read_sph.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='FileIO_read_sph.C' object='combsph-FileIO_read_sph.obj' libtool=no @AMDEPBACKSLASH@
+ffvc-main.obj: main.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-main.obj -MD -MP -MF $(DEPDIR)/ffvc-main.Tpo -c -o ffvc-main.obj `if test -f 'main.C'; then $(CYGPATH_W) 'main.C'; else $(CYGPATH_W) '$(srcdir)/main.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-main.Tpo $(DEPDIR)/ffvc-main.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='main.C' object='ffvc-main.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-FileIO_read_sph.obj `if test -f 'FileIO_read_sph.C'; then $(CYGPATH_W) 'FileIO_read_sph.C'; else $(CYGPATH_W) '$(srcdir)/FileIO_read_sph.C'; fi`
-
-combsph-FileIO_sph.o: FileIO_sph.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-FileIO_sph.o -MD -MP -MF $(DEPDIR)/combsph-FileIO_sph.Tpo -c -o combsph-FileIO_sph.o `test -f 'FileIO_sph.C' || echo '$(srcdir)/'`FileIO_sph.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-FileIO_sph.Tpo $(DEPDIR)/combsph-FileIO_sph.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='FileIO_sph.C' object='combsph-FileIO_sph.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-FileIO_sph.o `test -f 'FileIO_sph.C' || echo '$(srcdir)/'`FileIO_sph.C
-
-combsph-FileIO_sph.obj: FileIO_sph.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-FileIO_sph.obj -MD -MP -MF $(DEPDIR)/combsph-FileIO_sph.Tpo -c -o combsph-FileIO_sph.obj `if test -f 'FileIO_sph.C'; then $(CYGPATH_W) 'FileIO_sph.C'; else $(CYGPATH_W) '$(srcdir)/FileIO_sph.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-FileIO_sph.Tpo $(DEPDIR)/combsph-FileIO_sph.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='FileIO_sph.C' object='combsph-FileIO_sph.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-FileIO_sph.obj `if test -f 'FileIO_sph.C'; then $(CYGPATH_W) 'FileIO_sph.C'; else $(CYGPATH_W) '$(srcdir)/FileIO_sph.C'; fi`
-
-combsph-comb.o: comb.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-comb.o -MD -MP -MF $(DEPDIR)/combsph-comb.Tpo -c -o combsph-comb.o `test -f 'comb.C' || echo '$(srcdir)/'`comb.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-comb.Tpo $(DEPDIR)/combsph-comb.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='comb.C' object='combsph-comb.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-comb.o `test -f 'comb.C' || echo '$(srcdir)/'`comb.C
-
-combsph-comb.obj: comb.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-comb.obj -MD -MP -MF $(DEPDIR)/combsph-comb.Tpo -c -o combsph-comb.obj `if test -f 'comb.C'; then $(CYGPATH_W) 'comb.C'; else $(CYGPATH_W) '$(srcdir)/comb.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-comb.Tpo $(DEPDIR)/combsph-comb.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='comb.C' object='combsph-comb.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-comb.obj `if test -f 'comb.C'; then $(CYGPATH_W) 'comb.C'; else $(CYGPATH_W) '$(srcdir)/comb.C'; fi`
-
-combsph-comb_avs.o: comb_avs.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-comb_avs.o -MD -MP -MF $(DEPDIR)/combsph-comb_avs.Tpo -c -o combsph-comb_avs.o `test -f 'comb_avs.C' || echo '$(srcdir)/'`comb_avs.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-comb_avs.Tpo $(DEPDIR)/combsph-comb_avs.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='comb_avs.C' object='combsph-comb_avs.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-comb_avs.o `test -f 'comb_avs.C' || echo '$(srcdir)/'`comb_avs.C
-
-combsph-comb_avs.obj: comb_avs.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-comb_avs.obj -MD -MP -MF $(DEPDIR)/combsph-comb_avs.Tpo -c -o combsph-comb_avs.obj `if test -f 'comb_avs.C'; then $(CYGPATH_W) 'comb_avs.C'; else $(CYGPATH_W) '$(srcdir)/comb_avs.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-comb_avs.Tpo $(DEPDIR)/combsph-comb_avs.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='comb_avs.C' object='combsph-comb_avs.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-comb_avs.obj `if test -f 'comb_avs.C'; then $(CYGPATH_W) 'comb_avs.C'; else $(CYGPATH_W) '$(srcdir)/comb_avs.C'; fi`
-
-combsph-comb_sph.o: comb_sph.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-comb_sph.o -MD -MP -MF $(DEPDIR)/combsph-comb_sph.Tpo -c -o combsph-comb_sph.o `test -f 'comb_sph.C' || echo '$(srcdir)/'`comb_sph.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-comb_sph.Tpo $(DEPDIR)/combsph-comb_sph.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='comb_sph.C' object='combsph-comb_sph.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-comb_sph.o `test -f 'comb_sph.C' || echo '$(srcdir)/'`comb_sph.C
-
-combsph-comb_sph.obj: comb_sph.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-comb_sph.obj -MD -MP -MF $(DEPDIR)/combsph-comb_sph.Tpo -c -o combsph-comb_sph.obj `if test -f 'comb_sph.C'; then $(CYGPATH_W) 'comb_sph.C'; else $(CYGPATH_W) '$(srcdir)/comb_sph.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-comb_sph.Tpo $(DEPDIR)/combsph-comb_sph.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='comb_sph.C' object='combsph-comb_sph.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-comb_sph.obj `if test -f 'comb_sph.C'; then $(CYGPATH_W) 'comb_sph.C'; else $(CYGPATH_W) '$(srcdir)/comb_sph.C'; fi`
-
-combsph-main.o: main.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-main.o -MD -MP -MF $(DEPDIR)/combsph-main.Tpo -c -o combsph-main.o `test -f 'main.C' || echo '$(srcdir)/'`main.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-main.Tpo $(DEPDIR)/combsph-main.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='main.C' object='combsph-main.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-main.o `test -f 'main.C' || echo '$(srcdir)/'`main.C
-
-combsph-main.obj: main.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -MT combsph-main.obj -MD -MP -MF $(DEPDIR)/combsph-main.Tpo -c -o combsph-main.obj `if test -f 'main.C'; then $(CYGPATH_W) 'main.C'; else $(CYGPATH_W) '$(srcdir)/main.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/combsph-main.Tpo $(DEPDIR)/combsph-main.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='main.C' object='combsph-main.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(combsph_CXXFLAGS) $(CXXFLAGS) -c -o combsph-main.obj `if test -f 'main.C'; then $(CYGPATH_W) 'main.C'; else $(CYGPATH_W) '$(srcdir)/main.C'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-main.obj `if test -f 'main.C'; then $(CYGPATH_W) 'main.C'; else $(CYGPATH_W) '$(srcdir)/main.C'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique

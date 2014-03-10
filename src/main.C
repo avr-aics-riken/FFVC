@@ -19,11 +19,9 @@
  * @author aics
  */
 
-#include "ffv.h"
+#include "FFV/ffv.h"
+#include "ASD/ASDmodule.h"
 
-#ifdef _DEBUG
-  #include "include/_debug.h"
-#endif
 
 // HPCPF status
 FILE* fp_hpcpf = NULL;
@@ -50,14 +48,19 @@ int main( int argc, char **argv )
   double main_str, main_end;
   double post_str, post_end;
   
-  // FFV classのインスタンス
+  // classのインスタンス
   FFV ffv;
+  ASD asd;
   
   
   // FFVCのモード
-  if ( !strcasecmp(argv[1], "--filter"))
+  if ( !strcasecmp(argv[1], "--filter") )
   {
     ffv.EXEC_MODE = ffvc_filter;
+  }
+  else if ( !strcasecmp(argv[1], "--asd") )
+  {
+    ffv.EXEC_MODE = ffvc_asd;
   }
   else
   {
@@ -68,15 +71,34 @@ int main( int argc, char **argv )
   
   // 並列管理クラスのインスタンスと初期化
   // ここでMPI_Initも行う
-  if ( !ffv.importCPM(cpm_ParaManager::get_instance(argc, argv)) )
+
+  if ( (ffv.EXEC_MODE == ffvc_solver) || (ffv.EXEC_MODE == ffvc_filter) )
   {
-    return 1;
+    if ( !ffv.importCPM(cpm_ParaManager::get_instance(argc, argv)) ) return 1;
+  }
+  else //  ffvc_asd
+  {
+    if ( !asd.importCPM(cpm_ParaManager::get_instance(argc, argv)) ) return 1;
   }
   
   
+  
   // 引数チェック
-  if ( ((ffv.EXEC_MODE == ffvc_solver) && (argc != 2)) ||
-       ((ffv.EXEC_MODE == ffvc_filter) && (argc != 3)) )
+  bool usage_flag = true;
+  if ( ffv.EXEC_MODE == ffvc_solver )
+  {
+    if ( argc != 2 ) usage_flag = false;
+  }
+  else if ( ffv.EXEC_MODE == ffvc_filter )
+  {
+    if ( argc != 3 ) usage_flag = false;
+  }
+  else // ffvc_asd
+  {
+    if ( (argc != 3) && (argc != 6) ) usage_flag = false;
+  }
+  
+  if ( !usage_flag )
   {
     if ( ffv.IsMaster() )
     {
@@ -84,6 +106,8 @@ int main( int argc, char **argv )
       printf("\n\t$ ffvc <parameter_file>\n");
       printf("\n\t$ ffvc --version\n");
       printf("\n\t$ ffvc --filter <parameter_file>\n");
+      printf("\n\t$ ffvc --asd hoge.tp         : In case of global division is described in hoge.tp\n");
+      printf("\n\t$ ffvc --asd hoge.tp 10 5 32 : command line mode\n");
     }
     
     if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
@@ -112,9 +136,15 @@ int main( int argc, char **argv )
   {
     init_ret = ffv.Initialize(argc, argv);
   }
-  else
+  else if ( ffv.EXEC_MODE == ffvc_filter )
   {
     init_ret = ffv.FilterInitialize(argc, argv);
+  }
+  else // ffvc_asd
+  {
+    asd.evaluateASD(argc, argv);
+    
+    return 0;
   }
   
   switch( init_ret )

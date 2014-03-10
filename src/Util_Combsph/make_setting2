@@ -176,22 +176,22 @@ UDEF_INC_PATH=`$(TP_DIR)/bin/tp-config --cflags`  \
               `$(CPM_DIR)/bin/cpm-config --cflags` \
               `$(CIO_DIR)/bin/cio-config --cflags` \
               -I. \
-              -I./FB \
-              -I./IP \
-              -I./F_CORE \
-              -I./ASD \
-              -I./FFV \
+              -I../FB \
+              -I../IP \
+              -I../F_CORE \
+              -I../ASD \
+              -I../FFV \
               -I$(MPI_DIR)/include
 
 #              -I../PLOT3D \
 
               
 UDEF_LIB_PATH=-L$(MPI_DIR)/lib \
-              -L./ASD -lASD \
-              -L./FB -lFB \
-              -L./IP -lIP \
-              -L./F_CORE -lFCORE \
-              -L./FFV -lFFV \
+              -L../ASD -lASD \
+              -L../FB -lFB \
+              -L../IP -lIP \
+              -L../F_CORE -lFCORE \
+              -L../FFV -lFFV \
               `$(TP_DIR)/bin/tp-config --libs`  \
               `$(PM_DIR)/bin/pm-config --libs` \
               `$(POLY_DIR)/bin/polylib-config --libs` \

@@ -19,6 +19,7 @@
 
 #include "Sampling.h"
 
+
 /// Helicityを計算
 ///
 ///   @param [in] v     速度配列

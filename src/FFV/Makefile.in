@@ -91,7 +91,6 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = ffvc$(EXEEXT)
 subdir = src/FFV
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(srcdir)/ffv_Version.h.in $(top_srcdir)/depcomp
@@ -103,20 +102,52 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES = ffv_Version.h
 CONFIG_CLEAN_VPATH_FILES =
-am__installdirs = "$(DESTDIR)$(bindir)"
-PROGRAMS = $(bin_PROGRAMS)
-am_ffvc_OBJECTS = ffvc-NS_FS_E_Binary.$(OBJEXT) \
-	ffvc-NS_FS_E_CDS.$(OBJEXT) ffvc-PS_Binary.$(OBJEXT) \
-	ffvc-ffv.$(OBJEXT) ffvc-ffv_Alloc.$(OBJEXT) \
-	ffvc-ffv_Filter.$(OBJEXT) ffvc-ffv_Heat.$(OBJEXT) \
-	ffvc-ffv_Initialize.$(OBJEXT) ffvc-ffv_LS.$(OBJEXT) \
-	ffvc-ffv_Loop.$(OBJEXT) ffvc-ffv_Post.$(OBJEXT) \
-	ffvc-ffv_Restart.$(OBJEXT) ffvc-ffv_SetBC.$(OBJEXT) \
-	ffvc-ffv_TerminateCtrl.$(OBJEXT) ffvc-main.$(OBJEXT)
-ffvc_OBJECTS = $(am_ffvc_OBJECTS)
-ffvc_DEPENDENCIES =
-ffvc_LINK = $(CXXLD) $(ffvc_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
+am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
+am__vpath_adj = case $$p in \
+    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
+    *) f=$$p;; \
+  esac;
+am__strip_dir = f=`echo $$p | sed -e 's|^.*/||'`;
+am__install_max = 40
+am__nobase_strip_setup = \
+  srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*|]/\\\\&/g'`
+am__nobase_strip = \
+  for p in $$list; do echo "$$p"; done | sed -e "s|$$srcdirstrip/||"
+am__nobase_list = $(am__nobase_strip_setup); \
+  for p in $$list; do echo "$$p $$p"; done | \
+  sed "s| $$srcdirstrip/| |;"' / .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
+  $(AWK) 'BEGIN { files["."] = "" } { files[$$2] = files[$$2] " " $$1; \
+    if (++n[$$2] == $(am__install_max)) \
+      { print $$2, files[$$2]; n[$$2] = 0; files[$$2] = "" } } \
+    END { for (dir in files) print dir, files[dir] }'
+am__base_list = \
+  sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
+  sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
+am__uninstall_files_from_dir = { \
+  test -z "$$files" \
+    || { test ! -d "$$dir" && test ! -f "$$dir" && test ! -r "$$dir"; } \
+    || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
+         $(am__cd) "$$dir" && rm -f $$files; }; \
+  }
+am__installdirs = "$(DESTDIR)$(noinst_libdir)"
+LIBRARIES = $(noinst_lib_LIBRARIES)
+AR = ar
+ARFLAGS = cru
+AM_V_AR = $(am__v_AR_@AM_V@)
+am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
+am__v_AR_0 = @echo "  AR      " $@;
+am__v_AR_1 = 
+libFFV_a_AR = $(AR) $(ARFLAGS)
+libFFV_a_LIBADD =
+am_libFFV_a_OBJECTS = libFFV_a-NS_FS_E_Binary.$(OBJEXT) \
+	libFFV_a-NS_FS_E_CDS.$(OBJEXT) libFFV_a-PS_Binary.$(OBJEXT) \
+	libFFV_a-ffv.$(OBJEXT) libFFV_a-ffv_Alloc.$(OBJEXT) \
+	libFFV_a-ffv_Filter.$(OBJEXT) libFFV_a-ffv_Heat.$(OBJEXT) \
+	libFFV_a-ffv_Initialize.$(OBJEXT) libFFV_a-ffv_LS.$(OBJEXT) \
+	libFFV_a-ffv_Loop.$(OBJEXT) libFFV_a-ffv_Post.$(OBJEXT) \
+	libFFV_a-ffv_Restart.$(OBJEXT) libFFV_a-ffv_SetBC.$(OBJEXT) \
+	libFFV_a-ffv_TerminateCtrl.$(OBJEXT)
+libFFV_a_OBJECTS = $(am_libFFV_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -162,8 +193,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(ffvc_SOURCES)
-DIST_SOURCES = $(ffvc_SOURCES)
+SOURCES = $(libFFV_a_SOURCES)
+DIST_SOURCES = $(libFFV_a_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -319,7 +350,9 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-ffvc_CXXFLAGS = \
+noinst_lib_LIBRARIES = libFFV.a
+noinst_libdir = ../lib
+libFFV_a_CXXFLAGS = \
   -I. \
   -I../FB \
   -I../F_CORE \
@@ -333,7 +366,7 @@ ffvc_CXXFLAGS = \
   @MPICH_CFLAGS@ \
   @REALOPT@
 
-ffvc_SOURCES = \
+libFFV_a_SOURCES = \
   NS_FS_E_Binary.C \
   NS_FS_E_CDS.C \
   PS_Binary.C \
@@ -352,23 +385,7 @@ ffvc_SOURCES = \
   ffv_SetBC.h \
   ffv_TerminateCtrl.C \
   ffv_TerminateCtrl.h \
-  main.C \
   ffv_Version.h
-
-ffvc_LDADD = \
-  -L../FB -lFB \
-  -L../IP -lIP \
-  -L../F_CORE -lFCORE \
-  @CPM_LDFLAGS@ \
-  @CIO_LDFLAGS@ \
-  @TP_LDFLAGS@ \
-  @PM_LDFLAGS@ \
-  @PL_LDFLAGS@ \
-  @CUT_LDFLAGS@ \
-  @MPICH_LDFLAGS@ \
-  @MPICH_LIBS@ \
-  @MPICH_FCLIBS@ \
-  @FFVC_LIBS@
 
 EXTRA_DIST = Makefile_hand depend.inc
 all: all-am
@@ -407,52 +424,42 @@ $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 $(am__aclocal_m4_deps):
 ffv_Version.h: $(top_builddir)/config.status $(srcdir)/ffv_Version.h.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-install-binPROGRAMS: $(bin_PROGRAMS)
+install-noinst_libLIBRARIES: $(noinst_lib_LIBRARIES)
 	@$(NORMAL_INSTALL)
-	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
-	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(bindir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(bindir)" || exit 1; \
-	fi; \
-	for p in $$list; do echo "$$p $$p"; done | \
-	sed 's/$(EXEEXT)$$//' | \
-	while read p p1; do if test -f $$p \
-	  ; then echo "$$p"; echo "$$p"; else :; fi; \
-	done | \
-	sed -e 'p;s,.*/,,;n;h' \
-	    -e 's|.*|.|' \
-	    -e 'p;x;s,.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/' | \
-	sed 'N;N;N;s,\n, ,g' | \
-	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1 } \
-	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
-	    if ($$2 == $$4) files[d] = files[d] " " $$1; \
-	    else { print "f", $$3 "/" $$4, $$1; } } \
-	  END { for (d in files) print "f", d, files[d] }' | \
-	while read type dir files; do \
-	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
-	    test -z "$$files" || { \
-	      echo " $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(bindir)$$dir'"; \
-	      $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(bindir)$$dir" || exit $$?; \
-	    } \
-	; done
+	@list='$(noinst_lib_LIBRARIES)'; test -n "$(noinst_libdir)" || list=; \
+	list2=; for p in $$list; do \
+	  if test -f $$p; then \
+	    list2="$$list2 $$p"; \
+	  else :; fi; \
+	done; \
+	test -z "$$list2" || { \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(noinst_libdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(noinst_libdir)" || exit 1; \
+	  echo " $(INSTALL_DATA) $$list2 '$(DESTDIR)$(noinst_libdir)'"; \
+	  $(INSTALL_DATA) $$list2 "$(DESTDIR)$(noinst_libdir)" || exit $$?; }
+	@$(POST_INSTALL)
+	@list='$(noinst_lib_LIBRARIES)'; test -n "$(noinst_libdir)" || list=; \
+	for p in $$list; do \
+	  if test -f $$p; then \
+	    $(am__strip_dir) \
+	    echo " ( cd '$(DESTDIR)$(noinst_libdir)' && $(RANLIB) $$f )"; \
+	    ( cd "$(DESTDIR)$(noinst_libdir)" && $(RANLIB) $$f ) || exit $$?; \
+	  else :; fi; \
+	done
 
-uninstall-binPROGRAMS:
+uninstall-noinst_libLIBRARIES:
 	@$(NORMAL_UNINSTALL)
-	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
-	files=`for p in $$list; do echo "$$p"; done | \
-	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
-	      -e 's/$$/$(EXEEXT)/' \
-	`; \
-	test -n "$$list" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(bindir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(bindir)" && rm -f $$files
+	@list='$(noinst_lib_LIBRARIES)'; test -n "$(noinst_libdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(noinst_libdir)'; $(am__uninstall_files_from_dir)
 
-clean-binPROGRAMS:
-	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
+clean-noinst_libLIBRARIES:
+	-test -z "$(noinst_lib_LIBRARIES)" || rm -f $(noinst_lib_LIBRARIES)
 
-ffvc$(EXEEXT): $(ffvc_OBJECTS) $(ffvc_DEPENDENCIES) $(EXTRA_ffvc_DEPENDENCIES) 
-	@rm -f ffvc$(EXEEXT)
-	$(AM_V_CXXLD)$(ffvc_LINK) $(ffvc_OBJECTS) $(ffvc_LDADD) $(LIBS)
+libFFV.a: $(libFFV_a_OBJECTS) $(libFFV_a_DEPENDENCIES) $(EXTRA_libFFV_a_DEPENDENCIES) 
+	$(AM_V_at)-rm -f libFFV.a
+	$(AM_V_AR)$(libFFV_a_AR) libFFV.a $(libFFV_a_OBJECTS) $(libFFV_a_LIBADD)
+	$(AM_V_at)$(RANLIB) libFFV.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -460,21 +467,20 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffvc-NS_FS_E_Binary.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffvc-NS_FS_E_CDS.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffvc-PS_Binary.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffvc-ffv.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffvc-ffv_Alloc.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffvc-ffv_Filter.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffvc-ffv_Heat.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffvc-ffv_Initialize.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffvc-ffv_LS.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffvc-ffv_Loop.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffvc-ffv_Post.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffvc-ffv_Restart.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffvc-ffv_SetBC.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffvc-ffv_TerminateCtrl.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffvc-main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFFV_a-NS_FS_E_Binary.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFFV_a-NS_FS_E_CDS.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFFV_a-PS_Binary.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFFV_a-ffv.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFFV_a-ffv_Alloc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFFV_a-ffv_Filter.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFFV_a-ffv_Heat.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFFV_a-ffv_Initialize.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFFV_a-ffv_LS.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFFV_a-ffv_Loop.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFFV_a-ffv_Post.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFFV_a-ffv_Restart.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFFV_a-ffv_SetBC.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFFV_a-ffv_TerminateCtrl.Po@am__quote@
 
 .C.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -490,215 +496,201 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
-ffvc-NS_FS_E_Binary.o: NS_FS_E_Binary.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-NS_FS_E_Binary.o -MD -MP -MF $(DEPDIR)/ffvc-NS_FS_E_Binary.Tpo -c -o ffvc-NS_FS_E_Binary.o `test -f 'NS_FS_E_Binary.C' || echo '$(srcdir)/'`NS_FS_E_Binary.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-NS_FS_E_Binary.Tpo $(DEPDIR)/ffvc-NS_FS_E_Binary.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='NS_FS_E_Binary.C' object='ffvc-NS_FS_E_Binary.o' libtool=no @AMDEPBACKSLASH@
+libFFV_a-NS_FS_E_Binary.o: NS_FS_E_Binary.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-NS_FS_E_Binary.o -MD -MP -MF $(DEPDIR)/libFFV_a-NS_FS_E_Binary.Tpo -c -o libFFV_a-NS_FS_E_Binary.o `test -f 'NS_FS_E_Binary.C' || echo '$(srcdir)/'`NS_FS_E_Binary.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-NS_FS_E_Binary.Tpo $(DEPDIR)/libFFV_a-NS_FS_E_Binary.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='NS_FS_E_Binary.C' object='libFFV_a-NS_FS_E_Binary.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-NS_FS_E_Binary.o `test -f 'NS_FS_E_Binary.C' || echo '$(srcdir)/'`NS_FS_E_Binary.C
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-NS_FS_E_Binary.o `test -f 'NS_FS_E_Binary.C' || echo '$(srcdir)/'`NS_FS_E_Binary.C
 
-ffvc-NS_FS_E_Binary.obj: NS_FS_E_Binary.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-NS_FS_E_Binary.obj -MD -MP -MF $(DEPDIR)/ffvc-NS_FS_E_Binary.Tpo -c -o ffvc-NS_FS_E_Binary.obj `if test -f 'NS_FS_E_Binary.C'; then $(CYGPATH_W) 'NS_FS_E_Binary.C'; else $(CYGPATH_W) '$(srcdir)/NS_FS_E_Binary.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-NS_FS_E_Binary.Tpo $(DEPDIR)/ffvc-NS_FS_E_Binary.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='NS_FS_E_Binary.C' object='ffvc-NS_FS_E_Binary.obj' libtool=no @AMDEPBACKSLASH@
+libFFV_a-NS_FS_E_Binary.obj: NS_FS_E_Binary.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-NS_FS_E_Binary.obj -MD -MP -MF $(DEPDIR)/libFFV_a-NS_FS_E_Binary.Tpo -c -o libFFV_a-NS_FS_E_Binary.obj `if test -f 'NS_FS_E_Binary.C'; then $(CYGPATH_W) 'NS_FS_E_Binary.C'; else $(CYGPATH_W) '$(srcdir)/NS_FS_E_Binary.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-NS_FS_E_Binary.Tpo $(DEPDIR)/libFFV_a-NS_FS_E_Binary.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='NS_FS_E_Binary.C' object='libFFV_a-NS_FS_E_Binary.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-NS_FS_E_Binary.obj `if test -f 'NS_FS_E_Binary.C'; then $(CYGPATH_W) 'NS_FS_E_Binary.C'; else $(CYGPATH_W) '$(srcdir)/NS_FS_E_Binary.C'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-NS_FS_E_Binary.obj `if test -f 'NS_FS_E_Binary.C'; then $(CYGPATH_W) 'NS_FS_E_Binary.C'; else $(CYGPATH_W) '$(srcdir)/NS_FS_E_Binary.C'; fi`
 
-ffvc-NS_FS_E_CDS.o: NS_FS_E_CDS.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-NS_FS_E_CDS.o -MD -MP -MF $(DEPDIR)/ffvc-NS_FS_E_CDS.Tpo -c -o ffvc-NS_FS_E_CDS.o `test -f 'NS_FS_E_CDS.C' || echo '$(srcdir)/'`NS_FS_E_CDS.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-NS_FS_E_CDS.Tpo $(DEPDIR)/ffvc-NS_FS_E_CDS.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='NS_FS_E_CDS.C' object='ffvc-NS_FS_E_CDS.o' libtool=no @AMDEPBACKSLASH@
+libFFV_a-NS_FS_E_CDS.o: NS_FS_E_CDS.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-NS_FS_E_CDS.o -MD -MP -MF $(DEPDIR)/libFFV_a-NS_FS_E_CDS.Tpo -c -o libFFV_a-NS_FS_E_CDS.o `test -f 'NS_FS_E_CDS.C' || echo '$(srcdir)/'`NS_FS_E_CDS.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-NS_FS_E_CDS.Tpo $(DEPDIR)/libFFV_a-NS_FS_E_CDS.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='NS_FS_E_CDS.C' object='libFFV_a-NS_FS_E_CDS.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-NS_FS_E_CDS.o `test -f 'NS_FS_E_CDS.C' || echo '$(srcdir)/'`NS_FS_E_CDS.C
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-NS_FS_E_CDS.o `test -f 'NS_FS_E_CDS.C' || echo '$(srcdir)/'`NS_FS_E_CDS.C
 
-ffvc-NS_FS_E_CDS.obj: NS_FS_E_CDS.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-NS_FS_E_CDS.obj -MD -MP -MF $(DEPDIR)/ffvc-NS_FS_E_CDS.Tpo -c -o ffvc-NS_FS_E_CDS.obj `if test -f 'NS_FS_E_CDS.C'; then $(CYGPATH_W) 'NS_FS_E_CDS.C'; else $(CYGPATH_W) '$(srcdir)/NS_FS_E_CDS.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-NS_FS_E_CDS.Tpo $(DEPDIR)/ffvc-NS_FS_E_CDS.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='NS_FS_E_CDS.C' object='ffvc-NS_FS_E_CDS.obj' libtool=no @AMDEPBACKSLASH@
+libFFV_a-NS_FS_E_CDS.obj: NS_FS_E_CDS.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-NS_FS_E_CDS.obj -MD -MP -MF $(DEPDIR)/libFFV_a-NS_FS_E_CDS.Tpo -c -o libFFV_a-NS_FS_E_CDS.obj `if test -f 'NS_FS_E_CDS.C'; then $(CYGPATH_W) 'NS_FS_E_CDS.C'; else $(CYGPATH_W) '$(srcdir)/NS_FS_E_CDS.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-NS_FS_E_CDS.Tpo $(DEPDIR)/libFFV_a-NS_FS_E_CDS.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='NS_FS_E_CDS.C' object='libFFV_a-NS_FS_E_CDS.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-NS_FS_E_CDS.obj `if test -f 'NS_FS_E_CDS.C'; then $(CYGPATH_W) 'NS_FS_E_CDS.C'; else $(CYGPATH_W) '$(srcdir)/NS_FS_E_CDS.C'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-NS_FS_E_CDS.obj `if test -f 'NS_FS_E_CDS.C'; then $(CYGPATH_W) 'NS_FS_E_CDS.C'; else $(CYGPATH_W) '$(srcdir)/NS_FS_E_CDS.C'; fi`
 
-ffvc-PS_Binary.o: PS_Binary.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-PS_Binary.o -MD -MP -MF $(DEPDIR)/ffvc-PS_Binary.Tpo -c -o ffvc-PS_Binary.o `test -f 'PS_Binary.C' || echo '$(srcdir)/'`PS_Binary.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-PS_Binary.Tpo $(DEPDIR)/ffvc-PS_Binary.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='PS_Binary.C' object='ffvc-PS_Binary.o' libtool=no @AMDEPBACKSLASH@
+libFFV_a-PS_Binary.o: PS_Binary.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-PS_Binary.o -MD -MP -MF $(DEPDIR)/libFFV_a-PS_Binary.Tpo -c -o libFFV_a-PS_Binary.o `test -f 'PS_Binary.C' || echo '$(srcdir)/'`PS_Binary.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-PS_Binary.Tpo $(DEPDIR)/libFFV_a-PS_Binary.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='PS_Binary.C' object='libFFV_a-PS_Binary.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-PS_Binary.o `test -f 'PS_Binary.C' || echo '$(srcdir)/'`PS_Binary.C
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-PS_Binary.o `test -f 'PS_Binary.C' || echo '$(srcdir)/'`PS_Binary.C
 
-ffvc-PS_Binary.obj: PS_Binary.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-PS_Binary.obj -MD -MP -MF $(DEPDIR)/ffvc-PS_Binary.Tpo -c -o ffvc-PS_Binary.obj `if test -f 'PS_Binary.C'; then $(CYGPATH_W) 'PS_Binary.C'; else $(CYGPATH_W) '$(srcdir)/PS_Binary.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-PS_Binary.Tpo $(DEPDIR)/ffvc-PS_Binary.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='PS_Binary.C' object='ffvc-PS_Binary.obj' libtool=no @AMDEPBACKSLASH@
+libFFV_a-PS_Binary.obj: PS_Binary.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-PS_Binary.obj -MD -MP -MF $(DEPDIR)/libFFV_a-PS_Binary.Tpo -c -o libFFV_a-PS_Binary.obj `if test -f 'PS_Binary.C'; then $(CYGPATH_W) 'PS_Binary.C'; else $(CYGPATH_W) '$(srcdir)/PS_Binary.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-PS_Binary.Tpo $(DEPDIR)/libFFV_a-PS_Binary.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='PS_Binary.C' object='libFFV_a-PS_Binary.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-PS_Binary.obj `if test -f 'PS_Binary.C'; then $(CYGPATH_W) 'PS_Binary.C'; else $(CYGPATH_W) '$(srcdir)/PS_Binary.C'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-PS_Binary.obj `if test -f 'PS_Binary.C'; then $(CYGPATH_W) 'PS_Binary.C'; else $(CYGPATH_W) '$(srcdir)/PS_Binary.C'; fi`
 
-ffvc-ffv.o: ffv.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-ffv.o -MD -MP -MF $(DEPDIR)/ffvc-ffv.Tpo -c -o ffvc-ffv.o `test -f 'ffv.C' || echo '$(srcdir)/'`ffv.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-ffv.Tpo $(DEPDIR)/ffvc-ffv.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv.C' object='ffvc-ffv.o' libtool=no @AMDEPBACKSLASH@
+libFFV_a-ffv.o: ffv.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-ffv.o -MD -MP -MF $(DEPDIR)/libFFV_a-ffv.Tpo -c -o libFFV_a-ffv.o `test -f 'ffv.C' || echo '$(srcdir)/'`ffv.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-ffv.Tpo $(DEPDIR)/libFFV_a-ffv.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv.C' object='libFFV_a-ffv.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-ffv.o `test -f 'ffv.C' || echo '$(srcdir)/'`ffv.C
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-ffv.o `test -f 'ffv.C' || echo '$(srcdir)/'`ffv.C
 
-ffvc-ffv.obj: ffv.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-ffv.obj -MD -MP -MF $(DEPDIR)/ffvc-ffv.Tpo -c -o ffvc-ffv.obj `if test -f 'ffv.C'; then $(CYGPATH_W) 'ffv.C'; else $(CYGPATH_W) '$(srcdir)/ffv.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-ffv.Tpo $(DEPDIR)/ffvc-ffv.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv.C' object='ffvc-ffv.obj' libtool=no @AMDEPBACKSLASH@
+libFFV_a-ffv.obj: ffv.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-ffv.obj -MD -MP -MF $(DEPDIR)/libFFV_a-ffv.Tpo -c -o libFFV_a-ffv.obj `if test -f 'ffv.C'; then $(CYGPATH_W) 'ffv.C'; else $(CYGPATH_W) '$(srcdir)/ffv.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-ffv.Tpo $(DEPDIR)/libFFV_a-ffv.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv.C' object='libFFV_a-ffv.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-ffv.obj `if test -f 'ffv.C'; then $(CYGPATH_W) 'ffv.C'; else $(CYGPATH_W) '$(srcdir)/ffv.C'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-ffv.obj `if test -f 'ffv.C'; then $(CYGPATH_W) 'ffv.C'; else $(CYGPATH_W) '$(srcdir)/ffv.C'; fi`
 
-ffvc-ffv_Alloc.o: ffv_Alloc.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-ffv_Alloc.o -MD -MP -MF $(DEPDIR)/ffvc-ffv_Alloc.Tpo -c -o ffvc-ffv_Alloc.o `test -f 'ffv_Alloc.C' || echo '$(srcdir)/'`ffv_Alloc.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-ffv_Alloc.Tpo $(DEPDIR)/ffvc-ffv_Alloc.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Alloc.C' object='ffvc-ffv_Alloc.o' libtool=no @AMDEPBACKSLASH@
+libFFV_a-ffv_Alloc.o: ffv_Alloc.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-ffv_Alloc.o -MD -MP -MF $(DEPDIR)/libFFV_a-ffv_Alloc.Tpo -c -o libFFV_a-ffv_Alloc.o `test -f 'ffv_Alloc.C' || echo '$(srcdir)/'`ffv_Alloc.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-ffv_Alloc.Tpo $(DEPDIR)/libFFV_a-ffv_Alloc.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Alloc.C' object='libFFV_a-ffv_Alloc.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-ffv_Alloc.o `test -f 'ffv_Alloc.C' || echo '$(srcdir)/'`ffv_Alloc.C
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-ffv_Alloc.o `test -f 'ffv_Alloc.C' || echo '$(srcdir)/'`ffv_Alloc.C
 
-ffvc-ffv_Alloc.obj: ffv_Alloc.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-ffv_Alloc.obj -MD -MP -MF $(DEPDIR)/ffvc-ffv_Alloc.Tpo -c -o ffvc-ffv_Alloc.obj `if test -f 'ffv_Alloc.C'; then $(CYGPATH_W) 'ffv_Alloc.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Alloc.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-ffv_Alloc.Tpo $(DEPDIR)/ffvc-ffv_Alloc.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Alloc.C' object='ffvc-ffv_Alloc.obj' libtool=no @AMDEPBACKSLASH@
+libFFV_a-ffv_Alloc.obj: ffv_Alloc.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-ffv_Alloc.obj -MD -MP -MF $(DEPDIR)/libFFV_a-ffv_Alloc.Tpo -c -o libFFV_a-ffv_Alloc.obj `if test -f 'ffv_Alloc.C'; then $(CYGPATH_W) 'ffv_Alloc.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Alloc.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-ffv_Alloc.Tpo $(DEPDIR)/libFFV_a-ffv_Alloc.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Alloc.C' object='libFFV_a-ffv_Alloc.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-ffv_Alloc.obj `if test -f 'ffv_Alloc.C'; then $(CYGPATH_W) 'ffv_Alloc.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Alloc.C'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-ffv_Alloc.obj `if test -f 'ffv_Alloc.C'; then $(CYGPATH_W) 'ffv_Alloc.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Alloc.C'; fi`
 
-ffvc-ffv_Filter.o: ffv_Filter.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-ffv_Filter.o -MD -MP -MF $(DEPDIR)/ffvc-ffv_Filter.Tpo -c -o ffvc-ffv_Filter.o `test -f 'ffv_Filter.C' || echo '$(srcdir)/'`ffv_Filter.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-ffv_Filter.Tpo $(DEPDIR)/ffvc-ffv_Filter.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Filter.C' object='ffvc-ffv_Filter.o' libtool=no @AMDEPBACKSLASH@
+libFFV_a-ffv_Filter.o: ffv_Filter.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-ffv_Filter.o -MD -MP -MF $(DEPDIR)/libFFV_a-ffv_Filter.Tpo -c -o libFFV_a-ffv_Filter.o `test -f 'ffv_Filter.C' || echo '$(srcdir)/'`ffv_Filter.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-ffv_Filter.Tpo $(DEPDIR)/libFFV_a-ffv_Filter.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Filter.C' object='libFFV_a-ffv_Filter.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-ffv_Filter.o `test -f 'ffv_Filter.C' || echo '$(srcdir)/'`ffv_Filter.C
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-ffv_Filter.o `test -f 'ffv_Filter.C' || echo '$(srcdir)/'`ffv_Filter.C
 
-ffvc-ffv_Filter.obj: ffv_Filter.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-ffv_Filter.obj -MD -MP -MF $(DEPDIR)/ffvc-ffv_Filter.Tpo -c -o ffvc-ffv_Filter.obj `if test -f 'ffv_Filter.C'; then $(CYGPATH_W) 'ffv_Filter.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Filter.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-ffv_Filter.Tpo $(DEPDIR)/ffvc-ffv_Filter.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Filter.C' object='ffvc-ffv_Filter.obj' libtool=no @AMDEPBACKSLASH@
+libFFV_a-ffv_Filter.obj: ffv_Filter.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-ffv_Filter.obj -MD -MP -MF $(DEPDIR)/libFFV_a-ffv_Filter.Tpo -c -o libFFV_a-ffv_Filter.obj `if test -f 'ffv_Filter.C'; then $(CYGPATH_W) 'ffv_Filter.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Filter.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-ffv_Filter.Tpo $(DEPDIR)/libFFV_a-ffv_Filter.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Filter.C' object='libFFV_a-ffv_Filter.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-ffv_Filter.obj `if test -f 'ffv_Filter.C'; then $(CYGPATH_W) 'ffv_Filter.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Filter.C'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-ffv_Filter.obj `if test -f 'ffv_Filter.C'; then $(CYGPATH_W) 'ffv_Filter.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Filter.C'; fi`
 
-ffvc-ffv_Heat.o: ffv_Heat.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-ffv_Heat.o -MD -MP -MF $(DEPDIR)/ffvc-ffv_Heat.Tpo -c -o ffvc-ffv_Heat.o `test -f 'ffv_Heat.C' || echo '$(srcdir)/'`ffv_Heat.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-ffv_Heat.Tpo $(DEPDIR)/ffvc-ffv_Heat.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Heat.C' object='ffvc-ffv_Heat.o' libtool=no @AMDEPBACKSLASH@
+libFFV_a-ffv_Heat.o: ffv_Heat.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-ffv_Heat.o -MD -MP -MF $(DEPDIR)/libFFV_a-ffv_Heat.Tpo -c -o libFFV_a-ffv_Heat.o `test -f 'ffv_Heat.C' || echo '$(srcdir)/'`ffv_Heat.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-ffv_Heat.Tpo $(DEPDIR)/libFFV_a-ffv_Heat.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Heat.C' object='libFFV_a-ffv_Heat.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-ffv_Heat.o `test -f 'ffv_Heat.C' || echo '$(srcdir)/'`ffv_Heat.C
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-ffv_Heat.o `test -f 'ffv_Heat.C' || echo '$(srcdir)/'`ffv_Heat.C
 
-ffvc-ffv_Heat.obj: ffv_Heat.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-ffv_Heat.obj -MD -MP -MF $(DEPDIR)/ffvc-ffv_Heat.Tpo -c -o ffvc-ffv_Heat.obj `if test -f 'ffv_Heat.C'; then $(CYGPATH_W) 'ffv_Heat.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Heat.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-ffv_Heat.Tpo $(DEPDIR)/ffvc-ffv_Heat.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Heat.C' object='ffvc-ffv_Heat.obj' libtool=no @AMDEPBACKSLASH@
+libFFV_a-ffv_Heat.obj: ffv_Heat.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-ffv_Heat.obj -MD -MP -MF $(DEPDIR)/libFFV_a-ffv_Heat.Tpo -c -o libFFV_a-ffv_Heat.obj `if test -f 'ffv_Heat.C'; then $(CYGPATH_W) 'ffv_Heat.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Heat.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-ffv_Heat.Tpo $(DEPDIR)/libFFV_a-ffv_Heat.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Heat.C' object='libFFV_a-ffv_Heat.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-ffv_Heat.obj `if test -f 'ffv_Heat.C'; then $(CYGPATH_W) 'ffv_Heat.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Heat.C'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-ffv_Heat.obj `if test -f 'ffv_Heat.C'; then $(CYGPATH_W) 'ffv_Heat.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Heat.C'; fi`
 
-ffvc-ffv_Initialize.o: ffv_Initialize.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-ffv_Initialize.o -MD -MP -MF $(DEPDIR)/ffvc-ffv_Initialize.Tpo -c -o ffvc-ffv_Initialize.o `test -f 'ffv_Initialize.C' || echo '$(srcdir)/'`ffv_Initialize.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-ffv_Initialize.Tpo $(DEPDIR)/ffvc-ffv_Initialize.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Initialize.C' object='ffvc-ffv_Initialize.o' libtool=no @AMDEPBACKSLASH@
+libFFV_a-ffv_Initialize.o: ffv_Initialize.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-ffv_Initialize.o -MD -MP -MF $(DEPDIR)/libFFV_a-ffv_Initialize.Tpo -c -o libFFV_a-ffv_Initialize.o `test -f 'ffv_Initialize.C' || echo '$(srcdir)/'`ffv_Initialize.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-ffv_Initialize.Tpo $(DEPDIR)/libFFV_a-ffv_Initialize.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Initialize.C' object='libFFV_a-ffv_Initialize.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-ffv_Initialize.o `test -f 'ffv_Initialize.C' || echo '$(srcdir)/'`ffv_Initialize.C
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-ffv_Initialize.o `test -f 'ffv_Initialize.C' || echo '$(srcdir)/'`ffv_Initialize.C
 
-ffvc-ffv_Initialize.obj: ffv_Initialize.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-ffv_Initialize.obj -MD -MP -MF $(DEPDIR)/ffvc-ffv_Initialize.Tpo -c -o ffvc-ffv_Initialize.obj `if test -f 'ffv_Initialize.C'; then $(CYGPATH_W) 'ffv_Initialize.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Initialize.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-ffv_Initialize.Tpo $(DEPDIR)/ffvc-ffv_Initialize.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Initialize.C' object='ffvc-ffv_Initialize.obj' libtool=no @AMDEPBACKSLASH@
+libFFV_a-ffv_Initialize.obj: ffv_Initialize.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-ffv_Initialize.obj -MD -MP -MF $(DEPDIR)/libFFV_a-ffv_Initialize.Tpo -c -o libFFV_a-ffv_Initialize.obj `if test -f 'ffv_Initialize.C'; then $(CYGPATH_W) 'ffv_Initialize.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Initialize.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-ffv_Initialize.Tpo $(DEPDIR)/libFFV_a-ffv_Initialize.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Initialize.C' object='libFFV_a-ffv_Initialize.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-ffv_Initialize.obj `if test -f 'ffv_Initialize.C'; then $(CYGPATH_W) 'ffv_Initialize.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Initialize.C'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-ffv_Initialize.obj `if test -f 'ffv_Initialize.C'; then $(CYGPATH_W) 'ffv_Initialize.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Initialize.C'; fi`
 
-ffvc-ffv_LS.o: ffv_LS.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-ffv_LS.o -MD -MP -MF $(DEPDIR)/ffvc-ffv_LS.Tpo -c -o ffvc-ffv_LS.o `test -f 'ffv_LS.C' || echo '$(srcdir)/'`ffv_LS.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-ffv_LS.Tpo $(DEPDIR)/ffvc-ffv_LS.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_LS.C' object='ffvc-ffv_LS.o' libtool=no @AMDEPBACKSLASH@
+libFFV_a-ffv_LS.o: ffv_LS.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-ffv_LS.o -MD -MP -MF $(DEPDIR)/libFFV_a-ffv_LS.Tpo -c -o libFFV_a-ffv_LS.o `test -f 'ffv_LS.C' || echo '$(srcdir)/'`ffv_LS.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-ffv_LS.Tpo $(DEPDIR)/libFFV_a-ffv_LS.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_LS.C' object='libFFV_a-ffv_LS.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-ffv_LS.o `test -f 'ffv_LS.C' || echo '$(srcdir)/'`ffv_LS.C
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-ffv_LS.o `test -f 'ffv_LS.C' || echo '$(srcdir)/'`ffv_LS.C
 
-ffvc-ffv_LS.obj: ffv_LS.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-ffv_LS.obj -MD -MP -MF $(DEPDIR)/ffvc-ffv_LS.Tpo -c -o ffvc-ffv_LS.obj `if test -f 'ffv_LS.C'; then $(CYGPATH_W) 'ffv_LS.C'; else $(CYGPATH_W) '$(srcdir)/ffv_LS.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-ffv_LS.Tpo $(DEPDIR)/ffvc-ffv_LS.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_LS.C' object='ffvc-ffv_LS.obj' libtool=no @AMDEPBACKSLASH@
+libFFV_a-ffv_LS.obj: ffv_LS.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-ffv_LS.obj -MD -MP -MF $(DEPDIR)/libFFV_a-ffv_LS.Tpo -c -o libFFV_a-ffv_LS.obj `if test -f 'ffv_LS.C'; then $(CYGPATH_W) 'ffv_LS.C'; else $(CYGPATH_W) '$(srcdir)/ffv_LS.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-ffv_LS.Tpo $(DEPDIR)/libFFV_a-ffv_LS.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_LS.C' object='libFFV_a-ffv_LS.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-ffv_LS.obj `if test -f 'ffv_LS.C'; then $(CYGPATH_W) 'ffv_LS.C'; else $(CYGPATH_W) '$(srcdir)/ffv_LS.C'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-ffv_LS.obj `if test -f 'ffv_LS.C'; then $(CYGPATH_W) 'ffv_LS.C'; else $(CYGPATH_W) '$(srcdir)/ffv_LS.C'; fi`
 
-ffvc-ffv_Loop.o: ffv_Loop.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-ffv_Loop.o -MD -MP -MF $(DEPDIR)/ffvc-ffv_Loop.Tpo -c -o ffvc-ffv_Loop.o `test -f 'ffv_Loop.C' || echo '$(srcdir)/'`ffv_Loop.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-ffv_Loop.Tpo $(DEPDIR)/ffvc-ffv_Loop.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Loop.C' object='ffvc-ffv_Loop.o' libtool=no @AMDEPBACKSLASH@
+libFFV_a-ffv_Loop.o: ffv_Loop.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-ffv_Loop.o -MD -MP -MF $(DEPDIR)/libFFV_a-ffv_Loop.Tpo -c -o libFFV_a-ffv_Loop.o `test -f 'ffv_Loop.C' || echo '$(srcdir)/'`ffv_Loop.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-ffv_Loop.Tpo $(DEPDIR)/libFFV_a-ffv_Loop.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Loop.C' object='libFFV_a-ffv_Loop.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-ffv_Loop.o `test -f 'ffv_Loop.C' || echo '$(srcdir)/'`ffv_Loop.C
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-ffv_Loop.o `test -f 'ffv_Loop.C' || echo '$(srcdir)/'`ffv_Loop.C
 
-ffvc-ffv_Loop.obj: ffv_Loop.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-ffv_Loop.obj -MD -MP -MF $(DEPDIR)/ffvc-ffv_Loop.Tpo -c -o ffvc-ffv_Loop.obj `if test -f 'ffv_Loop.C'; then $(CYGPATH_W) 'ffv_Loop.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Loop.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-ffv_Loop.Tpo $(DEPDIR)/ffvc-ffv_Loop.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Loop.C' object='ffvc-ffv_Loop.obj' libtool=no @AMDEPBACKSLASH@
+libFFV_a-ffv_Loop.obj: ffv_Loop.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-ffv_Loop.obj -MD -MP -MF $(DEPDIR)/libFFV_a-ffv_Loop.Tpo -c -o libFFV_a-ffv_Loop.obj `if test -f 'ffv_Loop.C'; then $(CYGPATH_W) 'ffv_Loop.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Loop.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-ffv_Loop.Tpo $(DEPDIR)/libFFV_a-ffv_Loop.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Loop.C' object='libFFV_a-ffv_Loop.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-ffv_Loop.obj `if test -f 'ffv_Loop.C'; then $(CYGPATH_W) 'ffv_Loop.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Loop.C'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-ffv_Loop.obj `if test -f 'ffv_Loop.C'; then $(CYGPATH_W) 'ffv_Loop.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Loop.C'; fi`
 
-ffvc-ffv_Post.o: ffv_Post.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-ffv_Post.o -MD -MP -MF $(DEPDIR)/ffvc-ffv_Post.Tpo -c -o ffvc-ffv_Post.o `test -f 'ffv_Post.C' || echo '$(srcdir)/'`ffv_Post.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-ffv_Post.Tpo $(DEPDIR)/ffvc-ffv_Post.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Post.C' object='ffvc-ffv_Post.o' libtool=no @AMDEPBACKSLASH@
+libFFV_a-ffv_Post.o: ffv_Post.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-ffv_Post.o -MD -MP -MF $(DEPDIR)/libFFV_a-ffv_Post.Tpo -c -o libFFV_a-ffv_Post.o `test -f 'ffv_Post.C' || echo '$(srcdir)/'`ffv_Post.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-ffv_Post.Tpo $(DEPDIR)/libFFV_a-ffv_Post.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Post.C' object='libFFV_a-ffv_Post.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-ffv_Post.o `test -f 'ffv_Post.C' || echo '$(srcdir)/'`ffv_Post.C
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-ffv_Post.o `test -f 'ffv_Post.C' || echo '$(srcdir)/'`ffv_Post.C
 
-ffvc-ffv_Post.obj: ffv_Post.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-ffv_Post.obj -MD -MP -MF $(DEPDIR)/ffvc-ffv_Post.Tpo -c -o ffvc-ffv_Post.obj `if test -f 'ffv_Post.C'; then $(CYGPATH_W) 'ffv_Post.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Post.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-ffv_Post.Tpo $(DEPDIR)/ffvc-ffv_Post.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Post.C' object='ffvc-ffv_Post.obj' libtool=no @AMDEPBACKSLASH@
+libFFV_a-ffv_Post.obj: ffv_Post.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-ffv_Post.obj -MD -MP -MF $(DEPDIR)/libFFV_a-ffv_Post.Tpo -c -o libFFV_a-ffv_Post.obj `if test -f 'ffv_Post.C'; then $(CYGPATH_W) 'ffv_Post.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Post.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-ffv_Post.Tpo $(DEPDIR)/libFFV_a-ffv_Post.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Post.C' object='libFFV_a-ffv_Post.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-ffv_Post.obj `if test -f 'ffv_Post.C'; then $(CYGPATH_W) 'ffv_Post.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Post.C'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-ffv_Post.obj `if test -f 'ffv_Post.C'; then $(CYGPATH_W) 'ffv_Post.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Post.C'; fi`
 
-ffvc-ffv_Restart.o: ffv_Restart.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-ffv_Restart.o -MD -MP -MF $(DEPDIR)/ffvc-ffv_Restart.Tpo -c -o ffvc-ffv_Restart.o `test -f 'ffv_Restart.C' || echo '$(srcdir)/'`ffv_Restart.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-ffv_Restart.Tpo $(DEPDIR)/ffvc-ffv_Restart.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Restart.C' object='ffvc-ffv_Restart.o' libtool=no @AMDEPBACKSLASH@
+libFFV_a-ffv_Restart.o: ffv_Restart.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-ffv_Restart.o -MD -MP -MF $(DEPDIR)/libFFV_a-ffv_Restart.Tpo -c -o libFFV_a-ffv_Restart.o `test -f 'ffv_Restart.C' || echo '$(srcdir)/'`ffv_Restart.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-ffv_Restart.Tpo $(DEPDIR)/libFFV_a-ffv_Restart.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Restart.C' object='libFFV_a-ffv_Restart.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-ffv_Restart.o `test -f 'ffv_Restart.C' || echo '$(srcdir)/'`ffv_Restart.C
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-ffv_Restart.o `test -f 'ffv_Restart.C' || echo '$(srcdir)/'`ffv_Restart.C
 
-ffvc-ffv_Restart.obj: ffv_Restart.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-ffv_Restart.obj -MD -MP -MF $(DEPDIR)/ffvc-ffv_Restart.Tpo -c -o ffvc-ffv_Restart.obj `if test -f 'ffv_Restart.C'; then $(CYGPATH_W) 'ffv_Restart.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Restart.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-ffv_Restart.Tpo $(DEPDIR)/ffvc-ffv_Restart.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Restart.C' object='ffvc-ffv_Restart.obj' libtool=no @AMDEPBACKSLASH@
+libFFV_a-ffv_Restart.obj: ffv_Restart.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-ffv_Restart.obj -MD -MP -MF $(DEPDIR)/libFFV_a-ffv_Restart.Tpo -c -o libFFV_a-ffv_Restart.obj `if test -f 'ffv_Restart.C'; then $(CYGPATH_W) 'ffv_Restart.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Restart.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-ffv_Restart.Tpo $(DEPDIR)/libFFV_a-ffv_Restart.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_Restart.C' object='libFFV_a-ffv_Restart.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-ffv_Restart.obj `if test -f 'ffv_Restart.C'; then $(CYGPATH_W) 'ffv_Restart.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Restart.C'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-ffv_Restart.obj `if test -f 'ffv_Restart.C'; then $(CYGPATH_W) 'ffv_Restart.C'; else $(CYGPATH_W) '$(srcdir)/ffv_Restart.C'; fi`
 
-ffvc-ffv_SetBC.o: ffv_SetBC.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-ffv_SetBC.o -MD -MP -MF $(DEPDIR)/ffvc-ffv_SetBC.Tpo -c -o ffvc-ffv_SetBC.o `test -f 'ffv_SetBC.C' || echo '$(srcdir)/'`ffv_SetBC.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-ffv_SetBC.Tpo $(DEPDIR)/ffvc-ffv_SetBC.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_SetBC.C' object='ffvc-ffv_SetBC.o' libtool=no @AMDEPBACKSLASH@
+libFFV_a-ffv_SetBC.o: ffv_SetBC.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-ffv_SetBC.o -MD -MP -MF $(DEPDIR)/libFFV_a-ffv_SetBC.Tpo -c -o libFFV_a-ffv_SetBC.o `test -f 'ffv_SetBC.C' || echo '$(srcdir)/'`ffv_SetBC.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-ffv_SetBC.Tpo $(DEPDIR)/libFFV_a-ffv_SetBC.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_SetBC.C' object='libFFV_a-ffv_SetBC.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-ffv_SetBC.o `test -f 'ffv_SetBC.C' || echo '$(srcdir)/'`ffv_SetBC.C
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-ffv_SetBC.o `test -f 'ffv_SetBC.C' || echo '$(srcdir)/'`ffv_SetBC.C
 
-ffvc-ffv_SetBC.obj: ffv_SetBC.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-ffv_SetBC.obj -MD -MP -MF $(DEPDIR)/ffvc-ffv_SetBC.Tpo -c -o ffvc-ffv_SetBC.obj `if test -f 'ffv_SetBC.C'; then $(CYGPATH_W) 'ffv_SetBC.C'; else $(CYGPATH_W) '$(srcdir)/ffv_SetBC.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-ffv_SetBC.Tpo $(DEPDIR)/ffvc-ffv_SetBC.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_SetBC.C' object='ffvc-ffv_SetBC.obj' libtool=no @AMDEPBACKSLASH@
+libFFV_a-ffv_SetBC.obj: ffv_SetBC.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-ffv_SetBC.obj -MD -MP -MF $(DEPDIR)/libFFV_a-ffv_SetBC.Tpo -c -o libFFV_a-ffv_SetBC.obj `if test -f 'ffv_SetBC.C'; then $(CYGPATH_W) 'ffv_SetBC.C'; else $(CYGPATH_W) '$(srcdir)/ffv_SetBC.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-ffv_SetBC.Tpo $(DEPDIR)/libFFV_a-ffv_SetBC.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_SetBC.C' object='libFFV_a-ffv_SetBC.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-ffv_SetBC.obj `if test -f 'ffv_SetBC.C'; then $(CYGPATH_W) 'ffv_SetBC.C'; else $(CYGPATH_W) '$(srcdir)/ffv_SetBC.C'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-ffv_SetBC.obj `if test -f 'ffv_SetBC.C'; then $(CYGPATH_W) 'ffv_SetBC.C'; else $(CYGPATH_W) '$(srcdir)/ffv_SetBC.C'; fi`
 
-ffvc-ffv_TerminateCtrl.o: ffv_TerminateCtrl.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-ffv_TerminateCtrl.o -MD -MP -MF $(DEPDIR)/ffvc-ffv_TerminateCtrl.Tpo -c -o ffvc-ffv_TerminateCtrl.o `test -f 'ffv_TerminateCtrl.C' || echo '$(srcdir)/'`ffv_TerminateCtrl.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-ffv_TerminateCtrl.Tpo $(DEPDIR)/ffvc-ffv_TerminateCtrl.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_TerminateCtrl.C' object='ffvc-ffv_TerminateCtrl.o' libtool=no @AMDEPBACKSLASH@
+libFFV_a-ffv_TerminateCtrl.o: ffv_TerminateCtrl.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-ffv_TerminateCtrl.o -MD -MP -MF $(DEPDIR)/libFFV_a-ffv_TerminateCtrl.Tpo -c -o libFFV_a-ffv_TerminateCtrl.o `test -f 'ffv_TerminateCtrl.C' || echo '$(srcdir)/'`ffv_TerminateCtrl.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-ffv_TerminateCtrl.Tpo $(DEPDIR)/libFFV_a-ffv_TerminateCtrl.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_TerminateCtrl.C' object='libFFV_a-ffv_TerminateCtrl.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-ffv_TerminateCtrl.o `test -f 'ffv_TerminateCtrl.C' || echo '$(srcdir)/'`ffv_TerminateCtrl.C
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-ffv_TerminateCtrl.o `test -f 'ffv_TerminateCtrl.C' || echo '$(srcdir)/'`ffv_TerminateCtrl.C
 
-ffvc-ffv_TerminateCtrl.obj: ffv_TerminateCtrl.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-ffv_TerminateCtrl.obj -MD -MP -MF $(DEPDIR)/ffvc-ffv_TerminateCtrl.Tpo -c -o ffvc-ffv_TerminateCtrl.obj `if test -f 'ffv_TerminateCtrl.C'; then $(CYGPATH_W) 'ffv_TerminateCtrl.C'; else $(CYGPATH_W) '$(srcdir)/ffv_TerminateCtrl.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-ffv_TerminateCtrl.Tpo $(DEPDIR)/ffvc-ffv_TerminateCtrl.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_TerminateCtrl.C' object='ffvc-ffv_TerminateCtrl.obj' libtool=no @AMDEPBACKSLASH@
+libFFV_a-ffv_TerminateCtrl.obj: ffv_TerminateCtrl.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-ffv_TerminateCtrl.obj -MD -MP -MF $(DEPDIR)/libFFV_a-ffv_TerminateCtrl.Tpo -c -o libFFV_a-ffv_TerminateCtrl.obj `if test -f 'ffv_TerminateCtrl.C'; then $(CYGPATH_W) 'ffv_TerminateCtrl.C'; else $(CYGPATH_W) '$(srcdir)/ffv_TerminateCtrl.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-ffv_TerminateCtrl.Tpo $(DEPDIR)/libFFV_a-ffv_TerminateCtrl.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_TerminateCtrl.C' object='libFFV_a-ffv_TerminateCtrl.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-ffv_TerminateCtrl.obj `if test -f 'ffv_TerminateCtrl.C'; then $(CYGPATH_W) 'ffv_TerminateCtrl.C'; else $(CYGPATH_W) '$(srcdir)/ffv_TerminateCtrl.C'; fi`
-
-ffvc-main.o: main.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-main.o -MD -MP -MF $(DEPDIR)/ffvc-main.Tpo -c -o ffvc-main.o `test -f 'main.C' || echo '$(srcdir)/'`main.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-main.Tpo $(DEPDIR)/ffvc-main.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='main.C' object='ffvc-main.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-main.o `test -f 'main.C' || echo '$(srcdir)/'`main.C
-
-ffvc-main.obj: main.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-main.obj -MD -MP -MF $(DEPDIR)/ffvc-main.Tpo -c -o ffvc-main.obj `if test -f 'main.C'; then $(CYGPATH_W) 'main.C'; else $(CYGPATH_W) '$(srcdir)/main.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-main.Tpo $(DEPDIR)/ffvc-main.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='main.C' object='ffvc-main.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-main.obj `if test -f 'main.C'; then $(CYGPATH_W) 'main.C'; else $(CYGPATH_W) '$(srcdir)/main.C'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-ffv_TerminateCtrl.obj `if test -f 'ffv_TerminateCtrl.C'; then $(CYGPATH_W) 'ffv_TerminateCtrl.C'; else $(CYGPATH_W) '$(srcdir)/ffv_TerminateCtrl.C'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -784,9 +776,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(PROGRAMS)
+all-am: Makefile $(LIBRARIES)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)"; do \
+	for dir in "$(DESTDIR)$(noinst_libdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -821,7 +813,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
+clean-am: clean-generic clean-noinst_libLIBRARIES mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -841,13 +833,13 @@ info: info-am
 
 info-am:
 
-install-data-am:
+install-data-am: install-noinst_libLIBRARIES
 
 install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-binPROGRAMS
+install-exec-am:
 
 install-html: install-html-am
 
@@ -886,23 +878,23 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS
+uninstall-am: uninstall-noinst_libLIBRARIES
 
 .MAKE: install-am install-strip
 
-.PHONY: CTAGS GTAGS TAGS all all-am check check-am clean \
-	clean-binPROGRAMS clean-generic cscopelist-am ctags ctags-am \
+.PHONY: CTAGS GTAGS TAGS all all-am check check-am clean clean-generic \
+	clean-noinst_libLIBRARIES cscopelist-am ctags ctags-am \
 	distclean distclean-compile distclean-generic distclean-tags \
 	distdir dvi dvi-am html html-am info info-am install \
-	install-am install-binPROGRAMS install-data install-data-am \
-	install-dvi install-dvi-am install-exec install-exec-am \
-	install-html install-html-am install-info install-info-am \
-	install-man install-pdf install-pdf-am install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic pdf pdf-am \
-	ps ps-am tags tags-am uninstall uninstall-am \
-	uninstall-binPROGRAMS
+	install-am install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-noinst_libLIBRARIES install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic pdf pdf-am ps ps-am tags tags-am uninstall \
+	uninstall-am uninstall-noinst_libLIBRARIES
 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

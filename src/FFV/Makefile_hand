@@ -15,10 +15,9 @@
 
 include ../make_setting
 
-TARGET = ffvc
+TARGET = libFFV.a
 
 CXXSRCS = \
-    main.C \
     ffv.C \
     ffv_Initialize.C \
     ffv_Alloc.C \
@@ -41,18 +40,16 @@ CXXOBJS = $(CXXSRCS:.C=.o)
 OBJS  = $(CXXOBJS) 
 
 $(TARGET):$(OBJS)
-	$(CXX) $(CXXFLAGS) $(UDEF_INC_PATH) -o $(TARGET) $(OBJS) \
-	$(UDEF_LIB_PATH) $(LIBS) $(UDEF_LIBS) $(UDEF_LIB_PATH_SPEC) $(LDFLAGS) 
-	-mkdir -p $(FFVC_DIR)/bin
-	mv $(TARGET) $(FFVC_DIR)/bin
+	$(AR) $(TARGET) $(OBJS)
+	$(RANLIB) $(TARGET)
 
 .C.o:
-	$(CXX) $(CXXFLAGS) $(UDEF_OPT) $(UDEF_INC_PATH) -c $<
+	$(CXX) $(CXXFLAGS) $(UDEF_INC_PATH) -o $@ -c $<
 
 clean:
 	$(RM) $(OBJS) $(TARGET)
 
-depend: $(OBJS:.o=.C)
+depend: $(CXXOBJS:.o=.C)
 	@ rm -rf depend.inc
 	@ for i in $^; do\
 		$(CXX) $(CXXFLAGS) $(UDEF_INC_PATH) -MM $$i >> depend.inc;\

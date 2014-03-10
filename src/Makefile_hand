@@ -13,14 +13,15 @@
 #
 ###################################################################################
 
-.PHONY: depend clean
+.PHONY: depend clean all
 
 all:
 	(cd IP; make -f Makefile_hand)
 	(cd FB; make -f Makefile_hand)
 	(cd F_CORE; make -f Makefile_hand)
-#	(cd PLOT3D; make -f Makefile_hand)
+	(cd ASD; make -f Makefile_hand)
 	(cd FFV; make -f Makefile_hand)
+	(make -f Makefile_ffvc)
 	(cd Util_Combsph; make -f Makefile_hand)
 #	(cd Util_Layout; make -f Makefile_hand)
 
@@ -28,8 +29,9 @@ clean:
 	(cd IP; make -f Makefile_hand clean)
 	(cd FB; make -f Makefile_hand clean)
 	(cd F_CORE; make -f Makefile_hand clean)
-#	(cd PLOT3D; make -f Makefile_hand clean)
+	(cd ASD; make -f Makefile_hand clean)
 	(cd FFV; make -f Makefile_hand clean)
+	(make -f Makefile_ffvc clean)
 	(cd Util_Combsph; make -f Makefile_hand clean)
 #	(cd Util_Layout; make -f Makefile_hand clean)
 
@@ -37,7 +39,8 @@ depend:
 	(cd IP; make -f Makefile_hand depend)
 	(cd FB; make -f Makefile_hand depend)
 	(cd F_CORE; make -f Makefile_hand depend)
-#	(cd PLOT3D; make -f Makefile_hand depend)
+	(cd ASD; make -f Makefile_hand depend)
 	(cd FFV; make -f Makefile_hand depend)
+	(make -f Makefile_ffvc depend)
 	(cd Util_Combsph; make -f Makefile_hand depend)
 #	(cd Util_Layout; make -f Makefile_hand depend)

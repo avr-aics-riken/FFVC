@@ -17,15 +17,15 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.57])
-AC_INIT([FFVC], [1.6.7], [keno@riken.jp], [FFVC])
+AC_INIT([FFVC], [1.6.8], [keno@riken.jp], [FFVC])
 AM_INIT_AUTOMAKE()
-AC_CONFIG_SRCDIR([src/FB/Alloc.C])
+AC_CONFIG_SRCDIR([src/main.C])
 AC_CONFIG_HEADERS([config.h])
 
 #
 # revision No.
 #
-FFVC_REVISION="20140309_1700"
+FFVC_REVISION="20140310_1930"
 AC_SUBST(FFVC_REVISION)
 
 
@@ -312,7 +312,7 @@ fi
 # MAKE_SUB_DIRS
 #
 AC_SUBST(MAKE_SUB_DIRS)
-MAKE_SUB_DIRS="src/IP src/FB src/F_CORE src/FFV src/Util_Combsph doc"
+MAKE_SUB_DIRS="src/IP src/FB src/F_CORE src/ASD src/FFV src src/Util_Combsph doc"
 
 
 
@@ -361,7 +361,9 @@ AC_CONFIG_FILES([Makefile \
                  src/F_CORE/Makefile \
                  src/FB/Makefile \
                  src/IP/Makefile \
+                 src/ASD/Makefile \
                  src/FFV/Makefile \
+                 src/Makefile \
                  src/Util_Combsph/Makefile \
                  src/FFV/ffv_Version.h \
                 ])
