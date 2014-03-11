@@ -169,35 +169,35 @@ endif
 
 ########################
 
-UDEF_INC_PATH=`$(TP_DIR)/bin/tp-config --cflags`  \
-              `$(PM_DIR)/bin/pm-config --cflags` \
-              `$(POLY_DIR)/bin/polylib-config --cflags` \
-              `$(CUT_DIR)/bin/cut-config --cflags` \
-              `$(CPM_DIR)/bin/cpm-config --cflags` \
-              `$(CIO_DIR)/bin/cio-config --cflags` \
-              -I. \
-              -I./FB \
-              -I./IP \
+UDEF_INC_PATH=-I. \
+              -I./FFV \
               -I./F_CORE \
               -I./ASD \
-              -I./FFV \
+              -I./IP \
+              -I./FB \
+              `$(CIO_DIR)/bin/cio-config --cflags` \
+              `$(CPM_DIR)/bin/cpm-config --cflags` \
+              `$(CUT_DIR)/bin/cut-config --cflags` \
+              `$(POLY_DIR)/bin/polylib-config --cflags` \
+              `$(PM_DIR)/bin/pm-config --cflags` \
+              `$(TP_DIR)/bin/tp-config --cflags`  \
               -I$(MPI_DIR)/include
 
 #              -I../PLOT3D \
 
               
-UDEF_LIB_PATH=-L$(MPI_DIR)/lib \
-              -L./ASD -lASD \
-              -L./FB -lFB \
-              -L./IP -lIP \
+UDEF_LIB_PATH=-L./FFV -lFFV \
               -L./F_CORE -lFCORE \
-              -L./FFV -lFFV \
-              `$(TP_DIR)/bin/tp-config --libs`  \
-              `$(PM_DIR)/bin/pm-config --libs` \
-              `$(POLY_DIR)/bin/polylib-config --libs` \
-              `$(CUT_DIR)/bin/cut-config --libs` \
+              -L./ASD -lASD \
+              -L./IP -lIP \
+              -L./FB -lFB \
+              `$(CIO_DIR)/bin/cio-config --libs` \
               `$(CPM_DIR)/bin/cpm-config --libs` \
-              `$(CIO_DIR)/bin/cio-config --libs`
+              `$(CUT_DIR)/bin/cut-config --libs` \
+              `$(POLY_DIR)/bin/polylib-config --libs` \
+              `$(PM_DIR)/bin/pm-config --libs` \
+              `$(TP_DIR)/bin/tp-config --libs` \
+              -L$(MPI_DIR)/lib \
               
 #              -L../PLOT3D -lPLOT3D \
 

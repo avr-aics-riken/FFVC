@@ -20,15 +20,15 @@ noinst_libdir = ../lib
 
 libFFV_a_CXXFLAGS = \
   -I. \
-  -I../FB \
   -I../F_CORE \
   -I../IP \
-  @CPM_CFLAGS@ \
+  -I../FB \
   @CIO_CFLAGS@ \
-  @TP_CFLAGS@ \
-  @PM_CFLAGS@ \
-  @PL_CFLAGS@ \
+  @CPM_CFLAGS@ \
   @CUT_CFLAGS@ \
+  @PL_CFLAGS@ \
+  @PM_CFLAGS@ \
+  @TP_CFLAGS@ \
   @MPICH_CFLAGS@ \
   @REALOPT@
 

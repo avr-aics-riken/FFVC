@@ -19,8 +19,8 @@ noinst_libdir = ../lib
 
 libFB_a_CXXFLAGS = \
   -I. \
-  @CPM_CFLAGS@ \
   @CIO_CFLAGS@ \
+  @CPM_CFLAGS@ \
   @TP_CFLAGS@ \
   @MPICH_CFLAGS@ \
   @REALOPT@ \

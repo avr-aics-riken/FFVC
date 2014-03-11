@@ -19,6 +19,10 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-03-11
+- r1612 bug fix : change link order [1.6.9]
+
+--------------------------
 2014-03-10
 - r1611 introduce Active subdomain module [1.6.8]
   - change Make structure, main.C is placed just under src/

@@ -17,34 +17,34 @@ bin_PROGRAMS = ffvc
 
 ffvc_CXXFLAGS = \
   -I. \
-  -I./FB \
-  -I./F_CORE \
-  -I./IP \
-  -I./ASD \
   -I./FFV \
-  @CPM_CFLAGS@ \
+  -I./F_CORE \
+  -I./ASD \
+  -I./IP \
+  -I./FB \
   @CIO_CFLAGS@ \
-  @TP_CFLAGS@ \
-  @PM_CFLAGS@ \
+  @CPM_CFLAGS@ \
   @PL_CFLAGS@ \
   @CUT_CFLAGS@ \
+  @PM_CFLAGS@ \
+  @TP_CFLAGS@ \
   @MPICH_CFLAGS@ \
   @REALOPT@
 
 ffvc_SOURCES = main.C
 
 ffvc_LDADD = \
-  -L./FB -lFB \
-  -L./IP -lIP \
+  -L./FFV -lFFV \
   -L./F_CORE -lFCORE \
   -L./ASD -lASD \
-  -L./FFV -lFFV \
-  @CPM_LDFLAGS@ \
+  -L./IP -lIP \
+  -L./FB -lFB \
   @CIO_LDFLAGS@ \
-  @TP_LDFLAGS@ \
-  @PM_LDFLAGS@ \
-  @PL_LDFLAGS@ \
+  @CPM_LDFLAGS@ \
   @CUT_LDFLAGS@ \
+  @PL_LDFLAGS@ \
+  @PM_LDFLAGS@ \
+  @TP_LDFLAGS@ \
   @MPICH_LDFLAGS@ \
   @MPICH_LIBS@ \
   @MPICH_FCLIBS@ \

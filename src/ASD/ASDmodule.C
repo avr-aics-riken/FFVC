@@ -177,6 +177,22 @@ void ASD::evaluateASD(int argc, char **argv)
   int dvz = G_division[2]+2*guide;
   unsigned char* usd = sd.get_ptr();
   
+  // from sd to bcd
+  for (int k=1; k<=G_division[2]; k++) {
+    for (int j=1; j<=G_division[1]; j++) {
+      for (int i=1; i<=G_division[0]; i++) {
+        size_t m = _F_IDX_S3D(i, j, k, G_division[0], G_division[1], G_division[2], guide);
+        size_t mc= _F_IDX_S3D(i, j, k, G_division[0], G_division[1], G_division[2], 0);
+        if ( usd[mc] == 1 ) {
+          d_bcd[m] = md_fluid;
+          ac++;
+        }
+      }
+    }
+  }
+  
+  ac = 0;
+  // from bcd to sd
   for (int k=1; k<=G_division[2]; k++) {
     for (int j=1; j<=G_division[1]; j++) {
       for (int i=1; i<=G_division[0]; i++) {
@@ -185,6 +201,9 @@ void ASD::evaluateASD(int argc, char **argv)
         if ( d_bcd[m] == md_fluid ) {
           usd[mc] = 1;
           ac++;
+        }
+        else{
+          usd[mc] = 0;
         }
       }
     }
@@ -197,38 +216,43 @@ void ASD::evaluateASD(int argc, char **argv)
   
   
   
-  // save active subdomain file
-  
-  label = "/DomainInfo/ActiveSubdomainFile";
-  if ( !(tpCntl.getInspectedValue(label, str )) )
-  {
-    stamped_printf("\tParsing error : Invalid char* value in '%s'\n", label.c_str());
-    Exit(0);
-  }
-
-
-  // subdomain
+  // save active subdomain file コマンドライン時はスキップ
   if ( !flag )
   {
-    if ( !sd.SaveActiveSubdomain(str) ) {
-      printf("File write error\n");
+    label = "/DomainInfo/ActiveSubdomainFile";
+    if ( !(tpCntl.getInspectedValue(label, str )) )
+    {
+      stamped_printf("\tParsing error : Invalid char* value in '%s'\n", label.c_str());
       Exit(0);
     }
-    printf("\n\tsaved '%s'\n", str.c_str());
+    
+    
+    // subdomain
+    if ( !flag )
+    {
+      if ( !sd.SaveActiveSubdomain(str) ) {
+        printf("File write error\n");
+        Exit(0);
+      }
+      printf("\n\tsaved '%s'\n", str.c_str());
+    }
+    
+    
+    
+    // for V-Xgen Debug
+    if ( !flag )
+    {
+      str = "test.svx";
+      if ( !sd.writeSVX(str, sd_rgn, G_origin)) {
+        printf("SVX file write error\n");
+        Exit(0);
+      }
+      printf("\tsaved '%s'\n\n", str.c_str());
+    }
+    
   }
-
-
   
-  // for V-Xgen
-  if ( !flag )
-  {
-    str = "test.svx";
-    if ( !sd.writeSVX(str, sd_rgn, G_origin)) {
-      printf("SVX file write error\n");
-      Exit(0);
-    }
-    printf("\tsaved '%s'\n\n", str.c_str());
-  }
+
   
   
   // 測定モード
@@ -242,7 +266,7 @@ void ASD::evaluateASD(int argc, char **argv)
   printf("Division %d %d %d\n", G_division[0], G_division[1], G_division[2]);
   printf("Active/Total %d %d %e\n", ac, xxx, (float)ac/(float)xxx);
   printf("Surface/Volume %e\n", sv_ratio);
-  printf("Proc-Workload %d %e\n", ac, load);
+  printf("N-Active-Workload %d %d %e\n", xxx, ac, load);
   
   if ( pos_x )  delete [] pos_x;
   if ( pos_y )  delete [] pos_y;

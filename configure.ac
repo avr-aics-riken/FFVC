@@ -17,7 +17,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.57])
-AC_INIT([FFVC], [1.6.8], [keno@riken.jp], [FFVC])
+AC_INIT([FFVC], [1.6.9], [keno@riken.jp], [FFVC])
 AM_INIT_AUTOMAKE()
 AC_CONFIG_SRCDIR([src/main.C])
 AC_CONFIG_HEADERS([config.h])
@@ -25,7 +25,7 @@ AC_CONFIG_HEADERS([config.h])
 #
 # revision No.
 #
-FFVC_REVISION="20140310_1930"
+FFVC_REVISION="20140311_1300"
 AC_SUBST(FFVC_REVISION)
 
 
@@ -343,9 +343,9 @@ AC_CHECK_HEADERS([fcntl.h float.h stdlib.h string.h strings.h sys/param.h unistd
 # Checks for typedefs, structures, and compiler characteristics.
 #
 AC_C_INLINE
-AC_TYPE_INT32_T
 AC_TYPE_MODE_T
 AC_TYPE_SIZE_T
+#AC_TYPE_INT32_T
 
 
 #

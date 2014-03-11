@@ -154,7 +154,6 @@ private:
   inline void tt_write(ostream& os, const void* _data, int size, int n)
   {
     const char* data = (const char*)_data;
-    char* tmp = 0;
     
     os.write(data, size * n);
   }

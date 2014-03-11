@@ -21,9 +21,9 @@ libASD_a_CXXFLAGS = \
   -I. \
   -I../FB \
   @CPM_CFLAGS@ \
-  @TP_CFLAGS@ \
-  @PL_CFLAGS@ \
   @CUT_CFLAGS@ \
+  @PL_CFLAGS@ \
+  @TP_CFLAGS@ \
   @MPICH_CFLAGS@ \
   @REALOPT@
 

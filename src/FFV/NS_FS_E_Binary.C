@@ -33,7 +33,6 @@ void FFV::NS_FS_E_Binary()
   
   REAL_TYPE dt = deltaT;               /// 時間積分幅
   REAL_TYPE dh = (REAL_TYPE)deltaX;    /// 空間格子幅
-  REAL_TYPE coef = deltaX/dt;          /// Poissonソース項の係数
   REAL_TYPE Re = C.Reynolds;           /// レイノルズ数
   REAL_TYPE rei = C.getRcpReynolds();  /// レイノルズ数の逆数
   REAL_TYPE half = 0.5;                /// 定数

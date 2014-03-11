@@ -75,7 +75,7 @@ public:
     m_base_step  = 0;
     m_intvl_step = 0;
     m_start_step = 0;
-    m_last_step  = -1;
+    m_last_step  = 0;
     m_base_time  = 0.0;
     m_intvl_time = 0.0;
     m_start_time = 0.0;

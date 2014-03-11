@@ -18,10 +18,10 @@ bin_PROGRAMS = combsph
 combsph_CXXFLAGS = \
   -I. \
   -I../FB \
-  @CPM_CFLAGS@ \
   @CIO_CFLAGS@ \
-  @TP_CFLAGS@ \
+  @CPM_CFLAGS@ \
   @PM_CFLAGS@ \
+  @TP_CFLAGS@ \
   @MPICH_CFLAGS@ \
   @REALOPT@ \
   @FREALOPT@
@@ -45,10 +45,10 @@ combsph_SOURCES = \
 
 combsph_LDADD = \
   -L../FB -lFB \
-  @CPM_LDFLAGS@ \
   @CIO_LDFLAGS@ \
-  @TP_LDFLAGS@ \
+  @CPM_LDFLAGS@ \
   @PM_LDFLAGS@ \
+  @TP_LDFLAGS@ \
   @MPICH_LDFLAGS@ \
   @MPICH_LIBS@ \
   @MPICH_FCLIBS@ \
