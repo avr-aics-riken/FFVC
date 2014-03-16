@@ -19,7 +19,11 @@ RELEASE
 =======
 
 -------------
-Version 1.7.0    2014-03-12
+Version 1.7.1    2014-03-16
+  - bug fix : restart by time
+
+-------------
+Version 1.7.0    2014-03-16
   - Automatic decision of subdomain division
 
 -------------

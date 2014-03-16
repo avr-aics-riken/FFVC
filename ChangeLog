@@ -20,23 +20,25 @@ REVISION HISTORY
 
 --------------------------
 2014-03-16
-- r1613 Automatic decision of subdomain division [1.7.0]
+- r1614 bug fix : restart by time [ver 1.7.1]
+
+- r1613 Automatic decision of subdomain division [ver 1.7.0]
   - source refers CPMlib and FXgen
   - bug fix : pitch check in getDomainInfo()
   - change abnormal termination >> isnan()
 
 --------------------------
 2014-03-11
-- r1612 bug fix : change link order [1.6.9]
+- r1612 bug fix : change link order [ver 1.6.9]
 
 --------------------------
 2014-03-10
-- r1611 introduce Active subdomain module [1.6.8]
+- r1611 introduce Active subdomain module [ver 1.6.8]
   - change Make structure, main.C is placed just under src/
 
 --------------------------
 2014-03-09
-- r1610 modify heat source bc [1.6.7]
+- r1610 modify heat source bc [ver 1.6.7]
 
 - r1609 bug fix outer IsoThermal BC [ver 1.6.6]
   - modify setBCindexH(), encAdiabatic() to flip adiabatic bit

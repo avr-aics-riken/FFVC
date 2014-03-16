@@ -2285,7 +2285,7 @@ void Control::getTimeControl(DTcntl* DT)
     Exit(0);
   }
   
-  // 丸め誤差の範囲でゼロ
+  // 丸め誤差の範囲でゼロの場合，イニシャルスタートとみなす
   if ( fabs(m_start)< ROUND_EPS )
   {
     Start = initial_start;
@@ -2293,14 +2293,13 @@ void Control::getTimeControl(DTcntl* DT)
   else
   {
     Start = restart_sameDiv_sameRes; // リスタートタイプのデフォルト
-    Restart_step = m_start;
   }
   
   // Intereval Manager への登録 >> 他はFFV::initInterval()で指定
   Interval[tg_compute].setStart(m_start);
   Interval[tg_compute].setLast(m_end);
   Interval[tg_compute].setInterval(m_end-m_start); // tg_computeのインターバルは計算するセッションの長さ
-  
+
   
   
   // 平均値の時刻指定モード
@@ -2339,8 +2338,6 @@ void Control::getTimeControl(DTcntl* DT)
   }
   double avr_start = ct;
   
-  Restart_stepAvr = avr_start;
-  
   
   // 平均操作終了
   label = "/TimeControl/Average/End";
@@ -2364,6 +2361,7 @@ void Control::getTimeControl(DTcntl* DT)
   // Intereval Manager への登録 >> 他はFFV::initInterval()で指定
   Interval[tg_average].setStart(avr_start);
   Interval[tg_average].setLast(avr_end);
+  Interval[tg_average].setInterval(avr_end-avr_start);
   
 
   /* 平均値操作の判断

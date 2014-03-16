@@ -100,6 +100,18 @@ void FFV::RestartAvrerage (FILE* fp, double& flop)
   unsigned m_Session_step = C.Interval[Control::tg_compute].getStartStep(); ///< セッションの開始ステップ
   double   m_Session_time = C.Interval[Control::tg_compute].getStartTime(); ///< セッションの開始時刻
   
+  // リスタートステップ
+  unsigned m_RestartStep;
+  if ( C.Interval[Control::tg_compute].getMode() == IntervalManager::By_step )
+  {
+    m_RestartStep = C.Interval[Control::tg_compute].getStartStep();
+  }
+  else // By_time
+  {
+    m_RestartStep = (unsigned)ceil( C.Interval[Control::tg_compute].getStartTime() / deltaT );
+  }
+  
+  
   // ガイド出力
   int gs = C.GuideOut;
   
@@ -188,9 +200,10 @@ void FFV::RestartAvrerage (FILE* fp, double& flop)
   int tail[3];
   for (int i=0; i<3; i++) tail[i] = head[i]+size[i]-1;
   
+  
   double r_time;
   if ( DFI_IN_PRSA->ReadData(d_ap,
-                             C.Restart_step,
+                             m_RestartStep,
                              guide,
                              G_size,
                              gdiv,
@@ -208,7 +221,7 @@ void FFV::RestartAvrerage (FILE* fp, double& flop)
   CurrentTime_Avr = time_avr;
   
   if ( DFI_IN_VELA->ReadData(d_wo,
-                             C.Restart_step,
+                             m_RestartStep,
                              guide,
                              G_size,
                              gdiv,
@@ -243,7 +256,7 @@ void FFV::RestartAvrerage (FILE* fp, double& flop)
   if ( C.isHeatProblem() )
   {
     if ( DFI_IN_TEMPA->ReadData(d_ae,
-                                C.Restart_step,
+                                m_RestartStep,
                                 guide,
                                 G_size,
                                 gdiv,
@@ -342,13 +355,24 @@ void FFV::RestartDisplayMinmax(FILE* fp, double& flop)
 void FFV::RestartInstantaneous(FILE* fp, double& flop)
 {
   double time, r_time;
-  const unsigned step = C.Restart_step;
   std::string fname;
   std::string fmt(C.file_fmt_ext);
 
   REAL_TYPE bp = ( C.Unit.Prs == Unit_Absolute ) ? C.BasePrs : 0.0;
   REAL_TYPE refD = C.RefDensity;
   REAL_TYPE refV = C.RefVelocity;
+  
+  
+  // リスタートステップ
+  unsigned m_RestartStep;
+  if ( C.Interval[Control::tg_compute].getMode() == IntervalManager::By_step )
+  {
+    m_RestartStep = C.Interval[Control::tg_compute].getStartStep();
+  }
+  else // By_time
+  {
+    m_RestartStep = (unsigned)ceil( C.Interval[Control::tg_compute].getStartTime() / deltaT );
+  }
   
   // ガイド出力
   int gs = C.GuideOut;
@@ -364,10 +388,9 @@ void FFV::RestartInstantaneous(FILE* fp, double& flop)
   int tail[3];
   for (int i=0;i<3;i++) tail[i]=head[i]+size[i]-1;
   
-  
   // Pressure
   if ( DFI_IN_PRS->ReadData(d_p,
-                            step,
+                            m_RestartStep,
                             guide,
                             G_size,
                             (int *)m_div,
@@ -389,14 +412,14 @@ void FFV::RestartInstantaneous(FILE* fp, double& flop)
   }
   
   Hostonly_ printf     ("\tPressure has read :\tstep=%d  time=%e [%s]\n",
-                        step, time, (C.Unit.File == DIMENSIONAL)?"sec.":"-");
+                        m_RestartStep, time, (C.Unit.File == DIMENSIONAL)?"sec.":"-");
   Hostonly_ fprintf(fp, "\tPressure has read :\tstep=%d  time=%e [%s]\n",
-                    step, time, (C.Unit.File == DIMENSIONAL)?"sec.":"-");
+                    m_RestartStep, time, (C.Unit.File == DIMENSIONAL)?"sec.":"-");
 
   
   // ここでタイムスタンプを得る
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
-  CurrentStep = step;
+  CurrentStep = m_RestartStep;
   CurrentTime = time;
   
   // v00[]に値をセット
@@ -405,7 +428,7 @@ void FFV::RestartInstantaneous(FILE* fp, double& flop)
   
   
   if ( DFI_IN_VEL->ReadData(d_wo,
-                            step,
+                            m_RestartStep,
                             guide,
                             G_size,
                             (int *)m_div,
@@ -426,9 +449,9 @@ void FFV::RestartInstantaneous(FILE* fp, double& flop)
   u0[3] = v00[3];
   
   Hostonly_ printf     ("\tVelocity has read :\tstep=%d  time=%e [%s]\n",
-                        step, time, (C.Unit.File == DIMENSIONAL)?"sec.":"-");
+                        m_RestartStep, time, (C.Unit.File == DIMENSIONAL)?"sec.":"-");
   Hostonly_ fprintf(fp, "\tVelocity has read :\tstep=%d  time=%e [%s]\n",
-                    step, time, (C.Unit.File == DIMENSIONAL)?"sec.":"-");
+                    m_RestartStep, time, (C.Unit.File == DIMENSIONAL)?"sec.":"-");
   
   time = r_time;
   
@@ -452,7 +475,7 @@ void FFV::RestartInstantaneous(FILE* fp, double& flop)
   
   // Instantaneous Temperature fields
   if ( DFI_IN_TEMP->ReadData(d_ws,
-                             C.Restart_step,
+                             m_RestartStep,
                              guide,
                              G_size,
                              (int *)m_div,
@@ -470,9 +493,9 @@ void FFV::RestartInstantaneous(FILE* fp, double& flop)
   if (C.Unit.File == DIMENSIONAL) time /= C.Tscale;
   
   Hostonly_ printf     ("\tTemperature has read :\tstep=%d  time=%e [%s]\n",
-                        step, time, (C.Unit.File == DIMENSIONAL)?"sec.":"-");
+                        m_RestartStep, time, (C.Unit.File == DIMENSIONAL)?"sec.":"-");
   Hostonly_ fprintf(fp, "\tTemperature has read :\tstep=%d  time=%e [%s]\n",
-                    step, time, (C.Unit.File == DIMENSIONAL)?"sec.":"-");
+                    m_RestartStep, time, (C.Unit.File == DIMENSIONAL)?"sec.":"-");
   
   if ( time != CurrentTime )
   {
