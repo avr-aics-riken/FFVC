@@ -117,7 +117,8 @@ private:
   unsigned long L_Fcell;   ///< ローカルなFluid cell
   unsigned long L_Wcell;   ///< ローカルなSolid cell
   
-  
+  // セッション：1回のrun
+  // ケース：ある一連の計算セッション
   double CurrentTime;           ///< 計算開始からの積算時刻（ケース）
   double CurrentTime_Avr;       ///< 平均値操作の積算時間（ケース）
   unsigned CurrentStep;         ///< 計算開始からの積算ステップ（ケース）
@@ -678,7 +679,7 @@ private:
   
   
   // V-P反復のdiv(u)ノルムを計算する
-  FB::Vec3i Norm_Div(IterationCtl* IC);
+  FB::Vec3i NormDiv(IterationCtl* IC);
   
   
   /**

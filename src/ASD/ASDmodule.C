@@ -30,11 +30,17 @@ void ASD::evaluateASD(int argc, char **argv)
   // 分割数がコマンドラインで陽に与えられている場合，不必要な表示はしない
   bool flag = false;
   
+  unsigned int NumDivSubDomain = 0;
+  
   if (argc == 6) {
     flag = true;
     G_division[0] = atoi(argv[3]);
     G_division[1] = atoi(argv[4]);
     G_division[2] = atoi(argv[5]);
+  }
+  else if (argc == 4) {
+    flag = true;
+    NumDivSubDomain = (unsigned int)atoi(argv[3]);
   }
 
   // TextPaserをインスタンス
@@ -71,6 +77,29 @@ void ASD::evaluateASD(int argc, char **argv)
 
   
   getDomainInfo(&tpCntl, flag);
+  
+  // サブドメイン分割数のみ指定された、自動分割の場合
+  if (argc == 4)
+  {
+    unsigned Sdiv[3]={0, 0, 0};
+    
+    if ( !DecideDivPattern(NumDivSubDomain, (unsigned*)size, Sdiv) )
+    {
+      printf("\tError at calculating division pattern\n");
+      Exit(0);
+    }
+    G_division[0] = (int)Sdiv[0];
+    G_division[1] = (int)Sdiv[1];
+    G_division[2] = (int)Sdiv[2];
+  }
+  
+  
+  // プロセス分割数のチェック
+  if ( (G_division[0]<=0) || (G_division[1]<=0) || (G_division[2]<=0) )
+  {
+    printf("ERROR : Subdomain (%d, %d, %d)\n", G_division[0], G_division[1], G_division[2] );
+    Exit(0);
+  }
 
   
   // 領域情報(serial)
@@ -175,16 +204,23 @@ void ASD::evaluateASD(int argc, char **argv)
   int dvx = G_division[0]+2*guide;
   int dvy = G_division[1]+2*guide;
   int dvz = G_division[2]+2*guide;
+  int ix  = G_division[0];
+  int jx  = G_division[1];
+  int kx  = G_division[2];
+  int gd  = guide;
+  int mdf = md_fluid;
   unsigned char* usd = sd.get_ptr();
   
   // from sd to bcd
-  for (int k=1; k<=G_division[2]; k++) {
-    for (int j=1; j<=G_division[1]; j++) {
-      for (int i=1; i<=G_division[0]; i++) {
-        size_t m = _F_IDX_S3D(i, j, k, G_division[0], G_division[1], G_division[2], guide);
-        size_t mc= _F_IDX_S3D(i, j, k, G_division[0], G_division[1], G_division[2], 0);
+//#pragma omp parallel for firstprivate(ix, jx, kx, gd, mdf) schedule(static) reduction(+:ac)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mdf) schedule(dynamic) collapse(3) reduction(+:ac)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        size_t mc= _F_IDX_S3D(i, j, k, ix, jx, kx, 0);
         if ( usd[mc] == 1 ) {
-          d_bcd[m] = md_fluid;
+          d_bcd[m] = mdf;
           ac++;
         }
       }
@@ -193,12 +229,14 @@ void ASD::evaluateASD(int argc, char **argv)
   
   ac = 0;
   // from bcd to sd
-  for (int k=1; k<=G_division[2]; k++) {
-    for (int j=1; j<=G_division[1]; j++) {
-      for (int i=1; i<=G_division[0]; i++) {
-        size_t m = _F_IDX_S3D(i, j, k, G_division[0], G_division[1], G_division[2], guide);
-        size_t mc= _F_IDX_S3D(i, j, k, G_division[0], G_division[1], G_division[2], 0);
-        if ( d_bcd[m] == md_fluid ) {
+//#pragma omp parallel for firstprivate(ix, jx, kx, gd, mdf) schedule(static) reduction(+:ac)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mdf) schedule(dynamic) collapse(3) reduction(+:ac)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        size_t mc= _F_IDX_S3D(i, j, k, ix, jx, kx, 0);
+        if ( d_bcd[m] == mdf ) {
           usd[mc] = 1;
           ac++;
         }
@@ -216,40 +254,44 @@ void ASD::evaluateASD(int argc, char **argv)
   
   
   
-  // save active subdomain file コマンドライン時はスキップ
-  if ( !flag )
+  /*
+   label = "/DomainInfo/ActiveSubdomainFile";
+   if ( !(tpCntl.getInspectedValue(label, str )) )
+   {
+   stamped_printf("\tParsing error : Invalid char* value in '%s'\n", label.c_str());
+   Exit(0);
+   }
+   */
+  
+  
+  // subdomain
+  if ( !strcasecmp(out_sub.c_str(), "no" ) )
   {
-    label = "/DomainInfo/ActiveSubdomainFile";
-    if ( !(tpCntl.getInspectedValue(label, str )) )
-    {
-      stamped_printf("\tParsing error : Invalid char* value in '%s'\n", label.c_str());
+    ;
+  }
+  else
+  {
+    if ( !sd.SaveActiveSubdomain(out_sub) ) {
+      printf("File write error\n");
       Exit(0);
     }
-    
-    
-    // subdomain
-    if ( !flag )
-    {
-      if ( !sd.SaveActiveSubdomain(str) ) {
-        printf("File write error\n");
-        Exit(0);
-      }
-      printf("\n\tsaved '%s'\n", str.c_str());
+    printf("\n\tsaved '%s'\n", out_sub.c_str());
+  }
+  
+  
+  
+  // for V-Xgen Debug
+  if ( !strcasecmp(out_svx.c_str(), "no" ) )
+  {
+    ;
+  }
+  else
+  {
+    if ( !sd.writeSVX(out_svx, sd_rgn, G_origin)) {
+      printf("SVX file write error\n");
+      Exit(0);
     }
-    
-    
-    
-    // for V-Xgen Debug
-    if ( !flag )
-    {
-      str = "test.svx";
-      if ( !sd.writeSVX(str, sd_rgn, G_origin)) {
-        printf("SVX file write error\n");
-        Exit(0);
-      }
-      printf("\tsaved '%s'\n\n", str.c_str());
-    }
-    
+    printf("\tsaved '%s'\n\n", out_svx.c_str());
   }
   
 
@@ -264,9 +306,11 @@ void ASD::evaluateASD(int argc, char **argv)
   
   int xxx = G_division[0] * G_division[1] * G_division[2];
   printf("Division %d %d %d\n", G_division[0], G_division[1], G_division[2]);
+  printf("Pitch %13.6e %13.6e %13.6e\n", pitch[0], pitch[1], pitch[2]);
+  printf("SubDomain_Size %d %d %d\n", (int)x, (int)y, (int)z);
   printf("Active/Total %d %d %e\n", ac, xxx, (float)ac/(float)xxx);
   printf("Surface/Volume %e\n", sv_ratio);
-  printf("N-Active-Workload %d %d %e\n", xxx, ac, load);
+  printf("N-Active-Workload-SV %d %d %e %e\n", xxx, ac, load, sv_ratio);
   
   if ( pos_x )  delete [] pos_x;
   if ( pos_y )  delete [] pos_y;
@@ -306,6 +350,8 @@ int ASD::active(const float* px,
   // count
   int c=0;
   
+//#pragma omp parallel for firstprivate(dvx, dvy, dvz) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(dvx, dvy, dvz) schedule(dynamic) collapse(3)  reduction(+:c)
   for (int k=0; k<dvz; k++) {
     for (int j=0; j<dvy; j++) {
       for (int i=0; i<dvx; i++) {
@@ -337,14 +383,17 @@ void ASD::createSubdomainTable(float* p_x, float* p_y, float* p_z)
   float ly = sd_rgn[1];
   float lz = sd_rgn[2];
   
+#pragma omp parallel for firstprivate(div_x, lx, ox) schedule(static)
   for (int i=1; i<=div_x; i++) {
     p_x[i-1] = (float)(i-1) * lx + ox;
   }
   
+#pragma omp parallel for firstprivate(div_y, ly, oy) schedule(static)
   for (int j=1; j<=div_y; j++) {
     p_y[j-1] = (float)(j-1) * ly + oy;
   }
   
+#pragma omp parallel for firstprivate(div_z, lz, oz) schedule(static)
   for (int k=1; k<=div_z; k++) {
     p_z[k-1] = (float)(k-1) * lz + oz;
   }
@@ -655,6 +704,8 @@ void ASD::findPolygon(const float* px,
   float ly = sd_rgn[1];
   float lz = sd_rgn[2];
   
+//#pragma omp parallel for firstprivate(dvx, dvy, dvz, lx, ly, lz) schedule(static)
+#pragma omp parallel for firstprivate(dvx, dvy, dvz, lx, ly, lz) schedule(dynamic) collapse(3)
   for (int k=1; k<=dvz; k++) {
     for (int j=1; j<=dvy; j++) {
       for (int i=1; i<=dvx; i++) {
@@ -764,21 +815,11 @@ void ASD::getDomainInfo(TextParser* tp, bool flag)
     }
   }
   
-  // プロセス分割数のチェック
-  if ( (G_division[0]>0) && (G_division[1]>0) && (G_division[2]>0) )
-  {
-    ;
-  }
-  else
-  {
-    printf("ERROR : in parsing [%s] >> (%d, %d, %d)\n", label.c_str(), G_division[0], G_division[1], G_division[2] );
-    Exit(0);
-  }
   
   // 流体セルのフィルの開始面指定
   label = "/DomainInfo/HintOfFillSeedDirection";
   
-  if ( !(tp->getInspectedValue(label, str )) )
+  if ( !(tp->getInspectedValue(label, str)) )
   {
     Hostonly_ stamped_printf("\tParsing error : Invalid value in '%s'\n", label.c_str());
     Exit(0);
@@ -797,6 +838,26 @@ void ASD::getDomainInfo(TextParser* tp, bool flag)
       Hostonly_ printf("\tDefault 'X_minus' is set for Hint Of FillSeed direction\n");
     }
   }
+  
+  // output
+  label = "/DomainInfo/outputSVX";
+  
+  if ( !(tp->getInspectedValue(label, str)) )
+  {
+    cout << "ERROR : in parsing [" << label << "]" << endl;
+    Exit(0);
+  }
+  out_svx = str;
+  
+  
+  label = "/DomainInfo/outputSubdomain";
+  
+  if ( !(tp->getInspectedValue(label, str)) )
+  {
+    cout << "ERROR : in parsing [" << label << "]" << endl;
+    Exit(0);
+  }
+  out_sub = str;
   
 }
 
@@ -855,8 +916,8 @@ void ASD::setupPolygonASD(const string fname, bool flag)
  
    if ( !flag ) {
      printf(     "\n\tNumber of Polygon Group = %d\n\n", num_of_polygrp);
-     printf(     "\t   Polygon Group Label     Medium Alias              Local BC      Element          Area\n");
-     printf(     "\t   -------------------------------------------------------------------------------------\n");
+     printf(     "\t   Polygon Group Label       Medium Alias              Local BC      Element          Area\n");
+     printf(     "\t   ---------------------------------------------------------------------------------------\n");
    }
 
  
@@ -886,7 +947,7 @@ void ASD::setupPolygonASD(const string fname, bool flag)
     }
     
     if ( !flag ) {
-      printf("\t  %20s %16s  %20s %12d  %e\n",
+      printf("\t  %20s %18s  %20s %12d  %e\n",
              m_pg.c_str(),
              m_mat.c_str(),
              m_bc.c_str(),
@@ -907,3 +968,120 @@ void ASD::setupPolygonASD(const string fname, bool flag)
   if ( !flag ) printf("\n");
  
  }
+
+
+// #################################################################
+// @brief 通信コストの計算
+// @param [in] iDiv    サブドメイン分割数（x方向）
+// @param [in] jDiv    サブドメイン分割数（y方向）
+// @param [in] kDiv    サブドメイン分割数（z方向）
+// @param [in] voxSize 全領域のボクセル分割数
+// @ret 全領域の通信面の和
+inline
+unsigned long long
+ASD::CalcCommSize(const unsigned long long iDiv,
+                  const unsigned long long jDiv,
+                  const unsigned long long kDiv,
+                  const unsigned long long voxSize[3])
+{
+  if( (iDiv==0) || (jDiv==0) || (kDiv==0) ) return 0;
+  if( !voxSize ) return 0;
+  
+  unsigned long long Len[3];
+  Len[0] = voxSize[0] / iDiv; if( Len[0] == 0 ) return 0;
+  Len[1] = voxSize[1] / jDiv; if( Len[1] == 0 ) return 0;
+  Len[2] = voxSize[2] / kDiv; if( Len[2] == 0 ) return 0;
+  
+  unsigned long long commFace[3];
+  if( iDiv != 1) commFace[0] = Len[1]*Len[2]*(iDiv-1);
+  else commFace[0] = 0;
+  
+  if( jDiv != 1) commFace[1] = Len[2]*Len[0]*(jDiv-1);
+  else commFace[1] = 0;
+  
+  if( kDiv != 1) commFace[2] = Len[0]*Len[1]*(kDiv-1);
+  else commFace[2] = 0;
+  
+  return (commFace[0] + commFace[1] + commFace[2]);
+}
+
+
+// #################################################################
+// @brief 最適分割数の計算
+// @param [in]  divNum  サブドメインの分割数
+// @param [in]  voxSize 全領域のボクセル分割数
+// @param [out] divPttn 最適サブドメイン分割数
+bool ASD::DecideDivPattern(const unsigned int divNum, const unsigned int voxSize[3], unsigned int divPttn[3])
+{
+  if ( !voxSize || !divPttn )
+  {
+    return false;
+  }
+  
+  if( (voxSize[0]==0) || (voxSize[1]==0) || (voxSize[2]==0) )
+  {
+    return false;
+  }
+  
+  if ( divNum <= 1 )
+  {
+    divPttn[0] = divPttn[1] = divPttn[2] = 1;
+    return true;
+  }
+  
+  divPttn[0] = divPttn[1] = divPttn[2] = 0;
+  
+  unsigned long long minCommSize = 0;
+  unsigned long long divNumll = divNum;
+  unsigned long long voxSizell[3] = {0, 0, 0};
+  unsigned long long divPttnll[3] = {0, 0, 0};
+  voxSizell[0] = voxSize[0];
+  voxSizell[1] = voxSize[1];
+  voxSizell[2] = voxSize[2];
+  
+  bool flag = false;
+  unsigned long long i, j, k;
+  for(i=1; i<=divNumll; i++)
+  {
+    if( divNumll%i != 0 ) continue;
+    if( voxSizell[0] < i ) break;
+    
+    unsigned long long jmax = divNumll/i;
+    
+    for (j=1; j<=jmax; j++)
+    {
+      if ( jmax%j != 0 ) continue;
+      if( voxSizell[1] < j ) break;
+      
+      k = jmax/j;
+      if( voxSizell[2] < k ) continue;
+      
+      
+      unsigned long long commSize;
+      if ( (commSize=CalcCommSize(i, j, k, voxSizell)) == 0 ) break;
+      
+      if ( !flag )
+      {
+        divPttnll[0] = i; divPttnll[1] = j; divPttnll[2] = k;
+        minCommSize = commSize;
+        flag = true;
+      }
+      else if( commSize < minCommSize )
+      {
+        divPttnll[0] = i; divPttnll[1] = j; divPttnll[2] = k;
+        minCommSize = commSize;
+      }
+    }
+  }
+  
+  divPttn[0] = (unsigned)divPttnll[0];
+  divPttn[1] = (unsigned)divPttnll[1];
+  divPttn[2] = (unsigned)divPttnll[2];
+  
+  if( (divPttn[0]==0) || (divPttn[1]==0) || (divPttn[2]==0) )
+  {
+    return false;
+  }
+  
+  return true;
+}

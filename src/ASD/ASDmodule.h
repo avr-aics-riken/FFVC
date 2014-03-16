@@ -27,8 +27,9 @@
  *   GlobalRegion   = (1.12e+01, 8.2e+00, 1.6e+00)
  *   GlobalVoxel    = (1120   , 820   , 160   )
  *   GlobalDivision = (10    , 6    , 4    )
- *   ActiveSubDomainFile = "curved.svx"
  *   Source = "polylib.tp"
+ *   outputSVX = "hoge.svx"
+ *   outputSubdomain = "no"
  * }
  */
 
@@ -72,6 +73,9 @@ private:
   
   float sd_rgn[3];   ///< subdomainサイズ
   unsigned G_Acell;  ///< グローバルなActive cell
+  
+  string out_svx;   ///< SVX 形式出力 >> VXgen
+  string out_sub;   ///< char形式出力 >> FXgen
   
   MPIPolylib* PL;     ///< Polylibクラス
   
@@ -128,26 +132,26 @@ public:
   
   
 private:
-  // @brief active subdomain flag
+  // active subdomain flag
   int active(const float* px,
              const float* py,
              const float* pz,
              unsigned char* sd);
   
   
-  // @brief カット計算
+  // カット計算
   void CalculateCut();
   
   
-  // @brief position of min/max for each subdomain
+  // position of min/max for each subdomain
   void createSubdomainTable(float* p_x, float* p_y, float* p_z);
   
   
-  // @brief fill
+  // フィル　FFVクラスを適用
   void fill(bool disp_flag);
   
   
-  // @brief サブドメイン内に含まれるポリゴンリストを検索し，フラグを立てる
+  // サブドメイン内に含まれるポリゴンリストを検索し，フラグを立てる
   void findPolygon(const float* px,
                    const float* py,
                    const float* pz,
@@ -155,12 +159,29 @@ private:
                    const string label);
   
   
-  // @brief グローバルな領域情報を取得
+  // グローバルな領域情報を取得
   void getDomainInfo(TextParser* tpCntl, bool flag);
   
   
-  // @brief 幾何形状情報のロード
+  // 幾何形状情報のロード
   void setupPolygonASD(const string fname, bool flag);
+  
+  
+  // FXgenのソースより移動
+  //
+  // 通信面コストの計算
+  inline
+  unsigned long long
+  CalcCommSize(const unsigned long long iDiv,
+               const unsigned long long jDiv,
+               const unsigned long long kDiv,
+               const unsigned long long voxSize[3]);
+  
+  
+  // 最適分割数の計算
+  bool DecideDivPattern(const unsigned int divNum,
+                        const unsigned int voxSize[3],
+                        unsigned int divPttn[3]);
 };
 
 #endif // _ASD_MODULE_H_

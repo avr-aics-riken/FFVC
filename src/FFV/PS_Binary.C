@@ -28,7 +28,6 @@ void FFV::PS_Binary()
   double flop;                         /// 浮動小数演算数
   double rhs_nrm = 0.0;                /// 反復解法での定数項ベクトルのL2ノルム
   double res_init = 0.0;               /// 反復解法での初期残差ベクトルのL2ノルム
-  double convergence=0.0;              /// 定常収束モニター量
   double res=0.0;                      /// 残差
   
   REAL_TYPE dt = deltaT;               /// 時間積分幅
@@ -235,20 +234,7 @@ void FFV::PS_Binary()
       // 線形ソルバー
       ps_LS(ICt, rhs_nrm, res_init);
       
-      switch (ICt->getNormType())
-      {
-        case dx_b:
-        case r_b:
-        case r_r0:
-          convergence = ICt->getNormValue();
-          break;
-          
-        default:
-          stamped_printf("\tInvalid convergence type\n");
-          Exit(0);
-      }
-      
-      if ( convergence < ICt->getCriterion() ) break;
+      if ( ICt->isConverged() ) break;
     }
     
   }
@@ -270,17 +256,5 @@ void FFV::PS_Binary()
   
   TIMING_stop(tm_heat_loop_post_sct, 0.0);
   // <<< Passive scalar Post
-  
-  
-  // ノルムの増加率が規定値をこえたら，終了
-  if (CM_H.previous != 0.0 )
-  {
-    CM_H.rate = convergence / CM_H.previous;
-  }
-  else
-  {
-    CM_H.rate = 1.0;
-  }
-  CM_H.previous = convergence;
   
 }

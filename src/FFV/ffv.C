@@ -259,7 +259,7 @@ double FFV::count_comm_size(const int sz[3], const int guide)
     if ( paraMngr->Allreduce(&tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
   
-  return c * sizeof(double); // Byte
+  return c * sizeof(REAL_TYPE); // Byte
 }
 
 
@@ -1123,7 +1123,7 @@ int FFV::MainLoop()
  * @param [in] IC IterationCtlクラス
  * @retval 発散値の最大の場所のインデクス
  */
-FB::Vec3i FFV::Norm_Div(IterationCtl* IC)
+FB::Vec3i FFV::NormDiv(IterationCtl* IC)
 {
   double nrm;
   double flop_count;

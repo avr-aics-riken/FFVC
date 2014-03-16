@@ -29,7 +29,6 @@ void FFV::NS_FS_E_CDS()
   double flop;                         /// 浮動小数演算数
   double rhs_nrm = 0.0;                /// 反復解法での定数項ベクトルのノルム
   double res_init = 0.0;               /// 反復解法での初期残差ベクトルのL2ノルム
-  double convergence=0.0;              /// 定常収束モニター量
   
   REAL_TYPE dt = deltaT;               /// 時間積分幅
   REAL_TYPE dh = (REAL_TYPE)deltaX;    /// 空間幅
@@ -530,7 +529,7 @@ void FFV::NS_FS_E_CDS()
  
     
     // ノルムの計算
-    Norm_Div(ICd);
+    NormDiv(ICd);
     
     /* Forcingコンポーネントによる速度の方向修正(収束判定から除外)  >> TEST
      TIMING_start(tm_prj_frc_dir);
@@ -540,7 +539,7 @@ void FFV::NS_FS_E_CDS()
      */
     
     // 収束判定　性能測定モードのときは収束判定を行わない
-    if ( (C.Hide.PM_Test == OFF) && (convergence < ICp->getCriterion()) ) break;
+    if ( (C.Hide.PM_Test == OFF) && ICd->isConverged() ) break;
   } // end of iteration
   
   TIMING_stop(tm_poi_itr_sct, 0.0);
@@ -580,17 +579,6 @@ void FFV::NS_FS_E_CDS()
       TIMING_stop(tm_LES_eddy_comm, face_comm_size*guide);
     }
   }
-  
-  // ノルムの増加率が規定値をこえたら，終了
-  if (CM_F.previous != 0.0 )
-  {
-    CM_F.rate = convergence / CM_F.previous;
-  }
-  else
-  {
-    CM_F.rate = 1.0;
-  }
-  CM_F.previous = convergence;
   
 
   

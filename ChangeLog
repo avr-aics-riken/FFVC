@@ -19,6 +19,13 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-03-16
+- r1613 Automatic decision of subdomain division [1.7.0]
+  - source refers CPMlib and FXgen
+  - bug fix : pitch check in getDomainInfo()
+  - change abnormal termination >> isnan()
+
+--------------------------
 2014-03-11
 - r1612 bug fix : change link order [1.6.9]
 

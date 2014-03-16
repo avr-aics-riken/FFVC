@@ -2064,7 +2064,7 @@ int FFV::getDomainInfo(TextParser* tp_dom)
         if ( Ex->mode == Intrinsic::dim_3d )
         {
           REAL_TYPE p1 = pitch[0] - pitch[1];
-          REAL_TYPE p2 = pitch[1] - pitch[2];
+          REAL_TYPE p2 = pitch[0] - pitch[2];
           if ( (p1 > SINGLE_EPSILON) || (p2 > SINGLE_EPSILON) )
           {
             Hostonly_ printf("\tGlobal Pitch must be same in all direction (%14.6e, %14.6e, %14.6e)\n", pitch[0], pitch[1], pitch[2]);
@@ -4560,10 +4560,10 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     printf(     "\tNumber of Polygon Group = %d\n\n", C.num_of_polygrp);
     fprintf(fp, "\tNumber of Polygon Group = %d\n\n", C.num_of_polygrp);
     
-    printf(     "\t   Polygon Group Label     Medium Alias              Local BC      Element          Area\n");
-    printf(     "\t   -------------------------------------------------------------------------------------\n");
-    fprintf(fp, "\t   Polygon Group Label     Medium Alias              Local BC      Element          Area\n");
-    fprintf(fp, "\t   -------------------------------------------------------------------------------------\n");
+    printf(     "\t   Polygon Group Label       Medium Alias              Local BC      Element          Area\n");
+    printf(     "\t   ---------------------------------------------------------------------------------------\n");
+    fprintf(fp, "\t   Polygon Group Label       Medium Alias              Local BC      Element          Area\n");
+    fprintf(fp, "\t   ---------------------------------------------------------------------------------------\n");
   }
   
   
@@ -4621,12 +4621,12 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
 
     Hostonly_
     {
-      printf(    "\t  %20s %16s  %20s %12d  %e\n", m_pg.c_str(),
+      printf(    "\t  %20s %18s  %20s %12d  %e\n", m_pg.c_str(),
                                                    m_mat.c_str(),
                                                    m_bc.c_str(),
                                                    ntria,
                                                    area);
-      fprintf(fp,"\t  %20s %16s  %20s %12d  %e\n", m_pg.c_str(),
+      fprintf(fp,"\t  %20s %18s  %20s %12d  %e\n", m_pg.c_str(),
                                                    m_mat.c_str(),
                                                    m_bc.c_str(),
                                                    ntria,

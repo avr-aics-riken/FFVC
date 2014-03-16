@@ -19,6 +19,10 @@ RELEASE
 =======
 
 -------------
+Version 1.7.0    2014-03-12
+  - Automatic decision of subdomain division
+
+-------------
 Version 1.6.9    2014-03-11
   - bug fix for 1.6.8
 

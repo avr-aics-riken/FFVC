@@ -2813,7 +2813,7 @@ unsigned long VoxInfo::fillCutOnCellCenter (int* bcd, const int* bid, const floa
         // いずれかの方向で交点が定義点上の場合
         if ( pos[0]*pos[1]*pos[2]*pos[3]*pos[4]*pos[5] == 0.0 )
         {
-          printf("%d %d %d : %f %f %f %f %f %f : %d\n",i,j,k,pos[0],pos[1],pos[2],pos[3],pos[4],pos[5], qw);
+          //printf("%d %d %d : %f %f %f %f %f %f : %d\n",i,j,k,pos[0],pos[1],pos[2],pos[3],pos[4],pos[5], qw);
           setBitID(bcd[m_p], qw); // qwで代表
           c++;
         }

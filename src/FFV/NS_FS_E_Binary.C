@@ -29,7 +29,6 @@ void FFV::NS_FS_E_Binary()
   double flop;                         /// 浮動小数演算数
   double rhs_nrm = 0.0;                /// 反復解法での定数項ベクトルのL2ノルム
   double res_init = 0.0;               /// 反復解法での初期残差ベクトルのL2ノルム
-  double convergence=0.0;              /// 定常収束モニター量
   
   REAL_TYPE dt = deltaT;               /// 時間積分幅
   REAL_TYPE dh = (REAL_TYPE)deltaX;    /// 空間格子幅
@@ -616,7 +615,8 @@ void FFV::NS_FS_E_Binary()
 
     
     // div(u^{n+1})の計算
-    FB::Vec3i divmaxidx = Norm_Div(ICd);
+    FB::Vec3i divmaxidx = NormDiv(ICd);
+    
     
     // 総反復回数を代入
     ICp->setLoopCount(loop_p);
@@ -642,7 +642,7 @@ void FFV::NS_FS_E_Binary()
     */
     
     
-    // 収束判定　性能測定モードのときは収束判定を行わない
+    // 収束判定　収束した場合は抜ける (性能測定モードはスキップ)
     if ( (C.Hide.PM_Test == OFF) && ICd->isConverged() ) break;
   } // end of iteration
 
@@ -689,19 +689,6 @@ void FFV::NS_FS_E_Binary()
     }
   }
   
-  
-  // ノルムの増加率が規定値をこえたら，終了
-  if (CM_F.previous != 0.0 )
-  {
-    CM_F.rate = convergence / CM_F.previous;
-  }
-  else 
-  {
-    CM_F.rate = 1.0;
-  }
-  CM_F.previous = convergence;
-  
-      
 
   TIMING_stop(tm_NS_loop_post_sct, 0.0);
   // >>> NS loop post section

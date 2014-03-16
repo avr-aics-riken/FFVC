@@ -33,6 +33,8 @@ int FFV::Loop(const unsigned step)
   double avr_Var[3];       /// 平均値（速度、圧力、温度）
   double rms_Var[3];       /// 変動値
   REAL_TYPE vMax=0.0;      /// 最大速度成分
+  
+  bool isNormal=true;      /// 発散チェックフラグ
 
   
   // Loop section
@@ -172,12 +174,32 @@ int FFV::Loop(const unsigned step)
   rms_Var[var_Velocity] = sqrt(rms_Var[var_Velocity]);
   rms_Var[var_Pressure] = sqrt(rms_Var[var_Pressure]);
   
+  
   if ( C.isHeatProblem() ) 
   {
     avr_Var[var_Temperature] /= (double)G_Acell;   // 温度の空間平均
     rms_Var[var_Temperature] /= (double)G_Acell;   // 温度の変動量
     rms_Var[var_Temperature] = sqrt(rms_Var[var_Temperature]);
   }
+  
+  // 発散チェック
+  if ( isnan(rms_Var[var_Velocity])
+    || isnan(rms_Var[var_Pressure])
+    || isnan(IC[ic_div].getNormValue())
+      )
+  {
+    isNormal = false;
+  }
+  
+  if ( C.isHeatProblem() )
+  {
+    if ( isnan(rms_Var[var_Temperature]) )
+    {
+      isNormal = false;
+    }
+  }
+  
+  
   
   //  <<< ステップループのユーティリティ 1
   TIMING_stop(tm_loop_uty_sct_1, 0.0);
@@ -389,49 +411,15 @@ int FFV::Loop(const unsigned step)
   
   
   // 発散時の打ち切り
-  if ( CurrentStep > 1 ) 
+  if ( !isNormal )
   {
-    
-    switch ( C.KindOfSolver )
-    {
-      case FLOW_ONLY:
-        if ( (CM_F.rate > 100.0) )
-        {
-          Hostonly_ {
-            printf      ("\tForced termination : converegence rate >> 100.0\n");
-            if ( C.Mode.Log_Base == ON) fprintf(fp_b,"\tForced termination : converegence rate >> 100.0\n");
-          }
-          return -1;
-        }
-        break;
-        
-      case THERMAL_FLOW:
-      case THERMAL_FLOW_NATURAL:
-      case CONJUGATE_HT:
-      case CONJUGATE_HT_NATURAL:
-        if ( (CM_F.rate > 100.0) || (CM_H.rate > 100.0) )
-        {
-          Hostonly_ {
-            printf      ("\tForced termination : converegence rate >> 100.0\n");
-            if ( C.Mode.Log_Base == ON) fprintf(fp_b,"\tForced termination : converegence rate >> 100.0\n");
-          }
-          return -1;
-        }
-        break;
-        
-      case SOLID_CONDUCTION:
-        if ( (CM_H.rate > 100.0) )
-        {
-          Hostonly_ {
-            printf      ("\tForced termination : converegence rate >> 100.0\n");
-            if ( C.Mode.Log_Base == ON) fprintf(fp_b,"\tForced termination : converegence rate >> 100.0\n");
-          }
-          return -1;
-        }
-        break;
+    Hostonly_ {
+      printf      ("\tForced termination : floating point exception\n");
+      if ( C.Mode.Log_Base == ON) fprintf(fp_b,"\tForced termination : floating point exception\n");
     }
-    
+    return -1;
   }
+  
   
   TIMING_stop(tm_loop_uty_sct, 0.0);
   //  <<< ステップループのユーティリティ

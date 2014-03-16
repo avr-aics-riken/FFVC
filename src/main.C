@@ -95,7 +95,7 @@ int main( int argc, char **argv )
   }
   else // ffvc_asd
   {
-    if ( (argc != 3) && (argc != 6) ) usage_flag = false;
+    if ( (argc != 3) && (argc != 4) && (argc != 6) ) usage_flag = false;
   }
   
   if ( !usage_flag )
@@ -107,7 +107,8 @@ int main( int argc, char **argv )
       printf("\n\t$ ffvc --version\n");
       printf("\n\t$ ffvc --filter <parameter_file>\n");
       printf("\n\t$ ffvc --asd hoge.tp         : In case of global division is described in hoge.tp\n");
-      printf("\n\t$ ffvc --asd hoge.tp 10 5 32 : command line mode\n");
+      printf("\n\t$ ffvc --asd hoge.tp 300     : command line mode with total number of division\n");
+      printf("\n\t$ ffvc --asd hoge.tp 10 5 32 : command line mode with number of division for each direction\n");
     }
     
     if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
