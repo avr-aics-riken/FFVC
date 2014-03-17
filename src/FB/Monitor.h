@@ -32,6 +32,7 @@
 #include "CompoFraction.h"
 
 using namespace std;
+using namespace Vec3class;
 
 /**
  *  モニタグループ管理クラス
@@ -50,11 +51,11 @@ protected:
   
   int nGroup;            ///< モニタリンググループ数
   int num_process;       ///< プロセス数
-  FB::Vec3r org;         ///< ローカル基点座標
-  FB::Vec3r pch;         ///< セル幅
-  FB::Vec3r box;         ///< ローカル領域サイズ
-  FB::Vec3r g_org;       ///< グローバル基点座標
-  FB::Vec3r g_box;       ///< グローバル領域サイズ
+  Vec3<REAL_TYPE> org;         ///< ローカル基点座標
+  Vec3<REAL_TYPE> pch;         ///< セル幅
+  Vec3<REAL_TYPE> box;         ///< ローカル領域サイズ
+  Vec3<REAL_TYPE> g_org;       ///< グローバル基点座標
+  Vec3<REAL_TYPE> g_box;       ///< グローバル領域サイズ
   int* bid;              ///< 境界ID
   int* bcd;              ///< BCindex B
   float* cut;            ///< 交点情報

@@ -95,11 +95,11 @@ void MonitorList::checkStatus()
 void MonitorList::clipLine(REAL_TYPE from[3], REAL_TYPE to[3])
 {
   const char* OUT_OF_REGION = "out of region";
-  FB::Vec3r st(from);
-  FB::Vec3r ed(to);
-  FB::Vec3r r0 = g_org;
-  FB::Vec3r r1 = r0 + g_box;
-  FB::Vec3r d = ed - st;
+  Vec3<REAL_TYPE> st(from);
+  Vec3<REAL_TYPE> ed(to);
+  Vec3<REAL_TYPE> r0 = g_org;
+  Vec3<REAL_TYPE> r1 = r0 + g_box;
+  Vec3<REAL_TYPE> d = ed - st;
   
   
   // 境界上に端点が存在する場合は、少し計算領域内にずらす

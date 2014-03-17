@@ -754,7 +754,7 @@ void History::printHistoryForceTitle(FILE* fp)
 
 // #################################################################
 // 反復履歴出力
-void History::printHistoryItr(FILE* fp, const IterationCtl* IC, const FB::Vec3i idx)
+void History::printHistoryItr(FILE* fp, const IterationCtl* IC, const Vec3i idx)
 {
   const IterationCtl* ICd = &IC[ic_div];   ///< 圧力-速度反復
   const IterationCtl* ICp = &IC[ic_prs1];  ///< 圧力のPoisson反復

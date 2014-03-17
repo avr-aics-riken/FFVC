@@ -29,7 +29,7 @@ void MonitorCompo::allocArray()
 {
   if (nPoint == 0) Exit(0); // サンプリング点数
   
-  if (!(crd  = new FB::Vec3r[nPoint]))    Exit(0);
+  if (!(crd  = new Vec3<REAL_TYPE>[nPoint]))    Exit(0);
   if (!(rank = new int[nPoint]))      Exit(0);
   if (!(comment = new string[nPoint])) Exit(0);
   if (!(pointStatus = new int[nPoint])) Exit(0);
@@ -50,8 +50,8 @@ void MonitorCompo::allocSamplingArray()
   
   if (variable[var_Velocity])
   {
-    if (!(vel = new FB::Vec3r[nPoint])) Exit(0);
-    for (int i = 0; i < nPoint; i++) vel[i] = FB::Vec3r(DUMMY, DUMMY, DUMMY);
+    if (!(vel = new Vec3<REAL_TYPE>[nPoint])) Exit(0);
+    for (int i = 0; i < nPoint; i++) vel[i] = Vec3<REAL_TYPE>(DUMMY, DUMMY, DUMMY);
   }
   
   if (variable[var_Pressure])
@@ -82,8 +82,8 @@ void MonitorCompo::allocSamplingArray()
   
   if (variable[var_Vorticity])
   {
-    if (!(vor = new FB::Vec3r[nPoint])) Exit(0);
-    for (int i = 0; i < nPoint; i++) vor[i] = FB::Vec3r(DUMMY, DUMMY, DUMMY);
+    if (!(vor = new Vec3<REAL_TYPE>[nPoint])) Exit(0);
+    for (int i = 0; i < nPoint; i++) vor[i] = Vec3<REAL_TYPE>(DUMMY, DUMMY, DUMMY);
   }
 }
 
@@ -194,7 +194,7 @@ REAL_TYPE MonitorCompo::averageScalar(REAL_TYPE* s)
 ///   @param [in] v ベクトル変数配列
 ///   @return モニタ領域内平均値
 ///
-FB::Vec3r MonitorCompo::averageVector(FB::Vec3r* v)
+Vec3<REAL_TYPE> MonitorCompo::averageVector(Vec3<REAL_TYPE>* v)
 {
   REAL_TYPE sum[3] = { 0.0, 0.0, 0.0 };
   
@@ -209,7 +209,7 @@ FB::Vec3r MonitorCompo::averageVector(FB::Vec3r* v)
   }
   allReduceSum(sum, 3);
   
-  return FB::Vec3r(sum) / nPoint;
+  return Vec3<REAL_TYPE>(sum) / nPoint;
 }
 
 
@@ -521,7 +521,7 @@ void MonitorCompo::gatherSampledScalar(REAL_TYPE* s, REAL_TYPE* sRecvBuf)
 ///   @param [in,out] v                  ベクトル変数配列
 ///   @param [in,out] vSendBuf,vRecvBuf  通信用work領域
 ///
-void MonitorCompo::gatherSampledVector(FB::Vec3r* v, REAL_TYPE* vSendBuf, REAL_TYPE* vRecvBuf)
+void MonitorCompo::gatherSampledVector(Vec3<REAL_TYPE>* v, REAL_TYPE* vSendBuf, REAL_TYPE* vRecvBuf)
 {
   int np = num_process;
   if ( numProc <= 1 ) return;
@@ -897,7 +897,7 @@ void MonitorCompo::samplingAverage()
   
   if (variable[var_Velocity]) 
   {
-    FB::Vec3r velAve = averageVector(vel);
+    Vec3<REAL_TYPE> velAve = averageVector(vel);
     val[var_Velocity] = velAve.x * nv[0] + velAve.y * nv[1] + velAve.z * nv[2];
   }
   if (variable[var_Pressure])     val[var_Pressure]    = averageScalar(prs);
@@ -906,7 +906,7 @@ void MonitorCompo::samplingAverage()
   
   if (variable[var_Vorticity])
   {
-    FB::Vec3r vrtAve = averageVector(vor);
+    Vec3<REAL_TYPE> vrtAve = averageVector(vor);
     val[var_Vorticity] = vrtAve.x * nv[0] + vrtAve.y * nv[1] + vrtAve.z * nv[2];
   }
   if (variable[var_TotalP])       val[var_TotalP]      = averageScalar(tp);
@@ -943,8 +943,8 @@ void MonitorCompo::setLine(const char* labelStr,
   allocArray();
   allocSamplingArray();
   
-  FB::Vec3r st(from), ed(to);
-  FB::Vec3r dd = ed - st;
+  Vec3<REAL_TYPE> st(from), ed(to);
+  Vec3<REAL_TYPE> dd = ed - st;
   dd /= nPoint - 1;
   
   

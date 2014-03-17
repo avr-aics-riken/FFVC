@@ -30,7 +30,6 @@
 #include "BndOuter.h"
 #include "Control.h"
 #include "Component.h"
-#include "vec3.h"
 #include "Medium.h"
 #include "TextParser.h"
 

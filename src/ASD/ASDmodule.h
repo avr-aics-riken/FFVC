@@ -50,11 +50,13 @@
 
 #include "Cutlib.h"
 #include "GridAccessor/Cell.h"
+#include "../FB/vec3.h"
 
 using namespace std;
 using namespace PolylibNS;
 using namespace ASubDomain;
 using namespace cutlib;
+using namespace Vec3class;
 
 class ASD : public DomainInfo {
   

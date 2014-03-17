@@ -615,7 +615,7 @@ void FFV::NS_FS_E_Binary()
 
     
     // div(u^{n+1})の計算
-    FB::Vec3i divmaxidx = NormDiv(ICd);
+    Vec3i divmaxidx = NormDiv(ICd);
     
     
     // 総反復回数を代入

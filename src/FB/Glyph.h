@@ -31,19 +31,19 @@
 #include "vec3.h"
 
 using namespace std;
-
+using namespace Vec3class;
 
 class Glyph {
   
 private:
-  FB::Vec3f pch;     ///< セル幅
-  FB::Vec3f org;     ///< 計算領域の基点
+  Vec3f pch;     ///< セル幅
+  Vec3f org;     ///< 計算領域の基点
   unsigned element;  ///< ポリゴン数
   unsigned poly;     ///< ポリゴンの番号
   int myRank;        ///< 自ノードのランク番号
   
-  FB::Vec3f* nvc; // array for normal vector of element
-  FB::Vec3f* xyz; // array for vertex coordiante
+  Vec3f* nvc; // array for normal vector of element
+  Vec3f* xyz; // array for vertex coordiante
   int* b_id;
 
 	
@@ -79,13 +79,13 @@ public:
 
     if (0 != element)
     {
-      if ( !(nvc=new FB::Vec3f[element]) )
+      if ( !(nvc=new Vec3f[element]) )
       {
         cout << "\tMemory allocation error!" << endl;
         Exit(-1);
       }
       
-      if ( !(xyz=new FB::Vec3f[element*3]) )
+      if ( !(xyz=new Vec3f[element*3]) )
       {
         cout << "\tMemory allocation error!" << endl;
         Exit(-1);
@@ -115,7 +115,7 @@ public:
    * @param [in] str    方向文字列
    * @param [in] m_bid  (i,j,k)の境界ID
    */
-  void generateVertex(const FB::Vec3i idx, const float* pos, const char* str, const int m_bid);
+  void generateVertex(const Vec3i idx, const float* pos, const char* str, const int m_bid);
   
   
   /**
@@ -141,7 +141,7 @@ private:
    * @param [in] p      頂点座標
    * @param [in] m_bid  境界ID
    */
-  void registerPolygon(const FB::Vec3f p[8], const int m_bid);
+  void registerPolygon(const Vec3f p[8], const int m_bid);
   
   
   /**

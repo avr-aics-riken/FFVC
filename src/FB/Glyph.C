@@ -23,11 +23,11 @@
 
 // #################################################################
 // グリフ作成のための頂点を生成
-void Glyph::generateVertex(const FB::Vec3i idx, const float* pos, const char* str, const int m_bid)
+void Glyph::generateVertex(const Vec3i idx, const float* pos, const char* str, const int m_bid)
 {
-  FB::Vec3f b;     // セルセンターのシフトインデクス
-  FB::Vec3f c;     // セルセンター座標
-  FB::Vec3f p[8];  // グリフの8頂点
+  Vec3f b;     // セルセンターのシフトインデクス
+  Vec3f c;     // セルセンター座標
+  Vec3f p[8];  // グリフの8頂点
   
   float w = 0.25;   // Glyph幅の係数
   float d = 0.05;   // Glyph厚さの係数
@@ -117,9 +117,9 @@ void Glyph::generateVertex(const FB::Vec3i idx, const float* pos, const char* st
 
 // #################################################################
 // ポリゴンを登録する．各方向２ポリゴン
-void Glyph::registerPolygon(const FB::Vec3f p[8], const int m_bid)
+void Glyph::registerPolygon(const Vec3f p[8], const int m_bid)
 {
-  FB::Vec3f b;
+  Vec3f b;
   
   size_t m1;
   size_t m2;

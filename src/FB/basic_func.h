@@ -30,7 +30,7 @@
  */
 template <typename T>
 inline T Linear(REAL_TYPE t, T v[2]) {
-  return ( (1.0-t)*v[0] + t*v[1] );
+  return ( (1.0f-t)*v[0] + t*v[1] );
 }
 
 /**

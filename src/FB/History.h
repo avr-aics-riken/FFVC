@@ -30,6 +30,8 @@
 
 #define CCNV_MAX 20
 
+using namespace Vec3class;
+
 class History {
 protected:
   REAL_TYPE Tscale;          ///< 時間スケール
@@ -313,7 +315,7 @@ public:
    * @param [in] IC  反復管理クラス
    * @param [in] idx divの最大値の発生セルインデクス
    */
-  void printHistoryItr(FILE* fp, const IterationCtl* IC, const FB::Vec3i idx);
+  void printHistoryItr(FILE* fp, const IterationCtl* IC, const Vec3i idx);
   
   
   /**

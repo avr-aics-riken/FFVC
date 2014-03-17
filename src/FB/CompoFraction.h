@@ -26,6 +26,7 @@
 #include "vec3.h"
 #include <stdio.h>
 
+using namespace Vec3class;
 
 class CompoFraction {
   
@@ -34,9 +35,9 @@ protected:
   int size[3];     ///< セル(ローカル)サイズ
   int guide;       ///< ガイドセル数
   int division;    ///< 細分化の分割数
-  FB::Vec3f pch;   ///< セル幅
-  FB::Vec3f org;   ///< 計算領域の基点
-  FB::Vec3f angle; ///< 変換の回転角度
+  Vec3f pch;       ///< セル幅
+  Vec3f org;       ///< 計算領域の基点
+  Vec3f angle;     ///< 変換の回転角度
   
   // 形状パラメータ
   int smode;         ///< 形状モード
@@ -45,11 +46,11 @@ protected:
   float height;      ///< 矩形の高さ
   float r_fan;       ///< ファン半径
   float r_boss;      ///< ボス半径
-  FB::Vec3f nv;      ///< 法線方向ベクトル（流出方向）
-  FB::Vec3f center;  ///< 形状の中心座標（前面の中心位置）
-  FB::Vec3f dir;     ///< 矩形の方向規定の参照ベクトル
-  FB::Vec3f box_min; ///< Bounding boxの最小値
-  FB::Vec3f box_max; ///< Bounding boxの最大値
+  Vec3f nv;      ///< 法線方向ベクトル（流出方向）
+  Vec3f center;  ///< 形状の中心座標（前面の中心位置）
+  Vec3f dir;     ///< 矩形の方向規定の参照ベクトル
+  Vec3f box_min; ///< Bounding boxの最小値
+  Vec3f box_max; ///< Bounding boxの最大値
   
 public:
   /** デフォルトコンストラクタ */
@@ -87,7 +88,7 @@ protected:
    * @param [in] mx bboxの最大位置
    * @erturn 投影面積
    */
-  float bbox_rect_cylinder(FB::Vec3f& mn, FB::Vec3f& mx);
+  float bbox_rect_cylinder(Vec3f& mn, Vec3f& mx);
   
   
   /**
@@ -96,7 +97,7 @@ protected:
    * @param [in] mx bboxの最大位置
    * @erturn 投影面積
    */
-  float bbox_circ_cylinder(FB::Vec3f& mn, FB::Vec3f& mx);
+  float bbox_circ_cylinder(Vec3f& mn, Vec3f& mx);
   
   
   /**
@@ -105,70 +106,70 @@ protected:
    * @param [in]  p テストする座標値
    * @note Fortran index
    */
-  void find_index(int* w, const FB::Vec3f p);
+  void find_index(int* w, const Vec3f p);
   
   
   /** インデックスを(1,0,0)シフト
    * @param [in] index 元のインデクス
    * @param [in] h     シフト幅
    */
-  inline FB::Vec3f shift_f1 (const FB::Vec3f index, const float h) 
+  inline Vec3f shift_f1 (const Vec3f index, const float h) 
   { 
-    return FB::Vec3f(index.x+h, index.y  , index.z  ); 
+    return Vec3f(index.x+h, index.y  , index.z  ); 
   }
   
   /** インデックスを(0,1,0)シフト
    * @param [in] index 元のインデクス
    * @param [in] h     シフト幅
    */
-  inline FB::Vec3f shift_f2 (const FB::Vec3f index, const float h) 
+  inline Vec3f shift_f2 (const Vec3f index, const float h) 
   { 
-    return FB::Vec3f(index.x  , index.y+h, index.z  ); 
+    return Vec3f(index.x  , index.y+h, index.z  ); 
   }
   
   /** インデックスを(1,1,0)シフト
    * @param [in] index 元のインデクス
    * @param [in] h     シフト幅
    */
-  inline FB::Vec3f shift_f3 (const FB::Vec3f index, const float h) 
+  inline Vec3f shift_f3 (const Vec3f index, const float h) 
   { 
-    return FB::Vec3f(index.x+h, index.y+h, index.z  ); 
+    return Vec3f(index.x+h, index.y+h, index.z  ); 
   }
   
   /** インデックスを(0,0,1)シフト
    * @param [in] index 元のインデクス
    * @param [in] h     シフト幅
    */
-  inline FB::Vec3f shift_f4 (const FB::Vec3f index, const float h) 
+  inline Vec3f shift_f4 (const Vec3f index, const float h) 
   {
-    return FB::Vec3f(index.x  , index.y  , index.z+h); 
+    return Vec3f(index.x  , index.y  , index.z+h); 
   }
   
   /** インデックスを(1,0,1)シフト
    * @param [in] index 元のインデクス
    * @param [in] h     シフト幅
    */
-  inline FB::Vec3f shift_f5 (const FB::Vec3f index, const float h) 
+  inline Vec3f shift_f5 (const Vec3f index, const float h) 
   { 
-    return FB::Vec3f(index.x+h, index.y  , index.z+h); 
+    return Vec3f(index.x+h, index.y  , index.z+h); 
   }
   
   /** インデックスを(0,1,1)シフト
    * @param [in] index 元のインデクス
    * @param [in] h     シフト幅
    */
-  inline FB::Vec3f shift_f6 (const FB::Vec3f index, const float h)
+  inline Vec3f shift_f6 (const Vec3f index, const float h)
   { 
-    return FB::Vec3f(index.x  , index.y+h, index.z+h); 
+    return Vec3f(index.x  , index.y+h, index.z+h); 
   }
   
   /** インデックスを(1,1,1)シフト
    * @param [in] index 元のインデクス
    * @param [in] h     シフト幅
    */
-  inline FB::Vec3f shift_f7 (const FB::Vec3f index, const float h) 
+  inline Vec3f shift_f7 (const Vec3f index, const float h) 
   {
-    return FB::Vec3f(index.x+h, index.y+h, index.z+h); 
+    return Vec3f(index.x+h, index.y+h, index.z+h); 
   }
 
   
@@ -178,9 +179,9 @@ protected:
    * @return 内部のときに1.0を返す
    * @note 186 flop
    */
-  inline float judge_cylinder(const FB::Vec3f p) 
+  inline float judge_cylinder(const Vec3f p) 
   {
-    FB::Vec3f q = rotate(angle, p-center); // 181 flop
+    Vec3f q = rotate(angle, p-center); // 181 flop
     
     if ( (q.z < 0.0) || (q.z > depth)  ) return 0.0;
     float r = sqrtf(q.x*q.x + q.y*q.y);
@@ -195,9 +196,9 @@ protected:
    * @return 内部のときに1.0を返す
    * @note 183 flop
    */
-  inline float judge_rect(const FB::Vec3f p) 
+  inline float judge_rect(const Vec3f p) 
   {
-    FB::Vec3f q = rotate(angle, p-center); // 181 flop
+    Vec3f q = rotate(angle, p-center); // 181 flop
     
     if ( (q.z < 0.0) || (q.z > depth)  ) return 0.0;
     if ( fabs(q.x) > 0.5*width )  return 0.0;
@@ -214,9 +215,9 @@ protected:
    * @return 角度
    * @note sin, cos = 5flop, dot=5flop, total 181flop
    */
-  inline FB::Vec3f rotate(const FB::Vec3f p, const FB::Vec3f u)
+  inline Vec3f rotate(const Vec3f p, const Vec3f u)
   {
-    FB::Vec3f a, b, c;
+    Vec3f a, b, c;
     
     // line vector expression
     a.x =  cos(p.y)*cos(p.z);
@@ -231,7 +232,7 @@ protected:
     c.y =  sin(p.x)*cos(p.y);
     c.z =  cos(p.x)*cos(p.y);
     
-    return FB::Vec3f( dot(a, u), dot(b, u), dot(c, u) );
+    return Vec3f( dot(a, u), dot(b, u), dot(c, u) );
   }
   
   
@@ -242,9 +243,9 @@ protected:
    * @return 角度
    * @note sin, cos = 5flop, dot=5flop, total 181flop
    */
-  inline FB::Vec3f rotate_inv(const FB::Vec3f p, const FB::Vec3f u)
+  inline Vec3f rotate_inv(const Vec3f p, const Vec3f u)
   {
-    FB::Vec3f a, b, c;
+    Vec3f a, b, c;
     
     // line vector expression
     a.x =  cos(p.y)*cos(p.z);
@@ -259,7 +260,7 @@ protected:
     c.y =  cos(p.x)*sin(p.y)*sin(p.z) - sin(p.x)*cos(p.z);
     c.z =  cos(p.x)*cos(p.y);
     
-    return FB::Vec3f( dot(a, u), dot(b, u), dot(c, u) );
+    return Vec3f( dot(a, u), dot(b, u), dot(c, u) );
   }
   
   
@@ -332,7 +333,7 @@ public:
    * @param [in,out] mn 比較して小さい成分
    * @param [in]     p  参照ベクトル
    */
-  static inline void get_min(FB::Vec3f& mn, const FB::Vec3f p)
+  static inline void get_min(Vec3f& mn, const Vec3f p)
   {
     mn.x = (mn.x < p.x) ? mn.x : p.x;
     mn.y = (mn.y < p.y) ? mn.y : p.y;
@@ -345,7 +346,7 @@ public:
    * @param [in,out] mx 比較して大きい成分
    * @param [in]     p  参照ベクトル
    */
-  static inline void get_max(FB::Vec3f& mx, const FB::Vec3f p)
+  static inline void get_max(Vec3f& mx, const Vec3f p)
   {
     mx.x = (mx.x > p.x) ? mx.x : p.x;
     mx.y = (mx.y > p.y) ? mx.y : p.y;

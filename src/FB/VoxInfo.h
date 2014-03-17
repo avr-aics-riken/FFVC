@@ -36,6 +36,8 @@
 #include "limits.h"
 #include "omp.h"
 
+using namespace Vec3class;
+
 class VoxInfo : public DomainInfo {
   
 private:

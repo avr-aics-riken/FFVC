@@ -709,8 +709,8 @@ void ASD::findPolygon(const float* px,
   for (int k=1; k<=dvz; k++) {
     for (int j=1; j<=dvy; j++) {
       for (int i=1; i<=dvx; i++) {
-        PolylibNS::Vec3f pos_min(px[i-1],    py[j-1],    pz[k-1]);
-        PolylibNS::Vec3f pos_max(px[i-1]+lx, py[j-1]+ly, pz[k-1]+lz);
+        Vec3f pos_min(px[i-1],    py[j-1],    pz[k-1]);
+        Vec3f pos_max(px[i-1]+lx, py[j-1]+ly, pz[k-1]+lz);
         
         // false; ポリゴンが一部でもかかる場合
         vector<Triangle*>* trias = PL->search_polygons(label, pos_min, pos_max, false);

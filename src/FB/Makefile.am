@@ -76,9 +76,7 @@ libFB_a_SOURCES = \
   fill_bid.h \
   mydebug.h \
   util_Path.h \
-  vec3.h \
-  vec3_func.h \
-  vec3f_func.h \
+  Vec3.h \
   Glyph.C \
   Glyph.h
 

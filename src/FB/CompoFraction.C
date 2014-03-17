@@ -31,9 +31,9 @@ void CompoFraction::bbox_index(int* st, int* ed)
 
 // #################################################################
 // 直方体領域のbboxを計算し、投影面積を計算
-float CompoFraction::bbox_rect_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
+float CompoFraction::bbox_rect_cylinder(Vec3f& mn, Vec3f& mx)
 {
-  FB::Vec3f p[8], o, u, v, w;
+  Vec3f p[8], o, u, v, w;
   
   o = center;
   u = dir;
@@ -42,7 +42,7 @@ float CompoFraction::bbox_rect_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
   v = cross(w, u).normalize();
   
   // 直方体の8頂点の生成
-  p[0] = o - 0.5*width*u - 0.5*height*v;
+  p[0] = o - 0.5f*width*u - 0.5f*height*v;
   p[1] = p[0] + depth *w;
   p[2] = p[1] + width *u;
   p[3] = p[0] + width *u;
@@ -67,9 +67,9 @@ float CompoFraction::bbox_rect_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
 // #################################################################
 // 円筒領域のbboxを計算
 // 標準位置で円周上の点をサンプリングし，逆変換後，min/max
-float CompoFraction::bbox_circ_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
+float CompoFraction::bbox_circ_cylinder(Vec3f& mn, Vec3f& mx)
 {
-  FB::Vec3f r, q;
+  Vec3f r, q;
   int div_r = 1000; // 周上の分割数
   float x, y;
   double d;
@@ -102,9 +102,9 @@ float CompoFraction::bbox_circ_cylinder(FB::Vec3f& mn, FB::Vec3f& mx)
 // #################################################################
 // 点pの属するセルインデクスを求める
 // Fortran index
-void CompoFraction::find_index(int* w, const FB::Vec3f p)
+void CompoFraction::find_index(int* w, const Vec3f p)
 {
-  FB::Vec3f q = (p-org)/pch;
+  Vec3f q = (p-org)/pch;
   
   w[0] = (int)ceil(q.x);
   w[1] = (int)ceil(q.y);
@@ -119,8 +119,8 @@ void CompoFraction::get_angle()
 {
   float alpha, beta, c, d, c_alp, c_bta;
   float eps = 1.0e-5, f_yz, f_xz;
-  FB::Vec3f p, q;
-  FB::Vec3f z(0.0, 0.0, 1.0);
+  Vec3f p, q;
+  Vec3f z(0.0, 0.0, 1.0);
   
   // 単位ベクトルnvがz軸の単位ベクトルと作る角度を返す
   // yz面への射影
@@ -166,7 +166,7 @@ void CompoFraction::get_angle()
   // 矩形の場合，単位ベクトルdirが回転した後，x軸の単位ベクトルへ回転する角度を計算
   if ( smode == mon_BOX ) {
     float c_gma, f_xy;
-    FB::Vec3f x(1.0, 0.0, 0.0);
+    Vec3f x(1.0, 0.0, 0.0);
     
     q = rotate(angle, dir); // 回転によりxy平面上に射影される > q.z=0.0
     c = q.length();
@@ -275,8 +275,8 @@ void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], co
 // 体積率が(0,1)の間のセルに対してサブディビジョンを実施
 void CompoFraction::subdivision(const int st[], const int ed[], float* vf, double& flop)
 {
-  FB::Vec3f base, b;
-  FB::Vec3f p, o;
+  Vec3f base, b;
+  Vec3f p, o;
   size_t m;
   float c, r, h, ff, ph;
   int ix, jx, kx, gd, dv;
@@ -378,8 +378,8 @@ void CompoFraction::subdivision(const int st[], const int ed[], float* vf, doubl
 // vfは加算するので、初期化しておく
 void CompoFraction::vertex8(const int st[], const int ed[], float* vf, double& flop)
 {
-  FB::Vec3f base, o, b;
-  FB::Vec3f p[8];
+  Vec3f base, o, b;
+  Vec3f p[8];
   size_t m;
   float c, ph;
   
@@ -458,8 +458,8 @@ void CompoFraction::vertex8(const int st[], const int ed[], float* vf, double& f
 // セルの8頂点の内外判定より50%以上のセルにIDを設定する
 void ShapeMonitor::setID(const int st[], const int ed[], int* bcd, const int id)
 {
-  FB::Vec3f base, o, b;
-  FB::Vec3f p[8];
+  Vec3f base, o, b;
+  Vec3f p[8];
   float c, ph;
   
   // for optimization > variables defined outside

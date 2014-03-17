@@ -1123,7 +1123,7 @@ int FFV::MainLoop()
  * @param [in] IC IterationCtlクラス
  * @retval 発散値の最大の場所のインデクス
  */
-FB::Vec3i FFV::NormDiv(IterationCtl* IC)
+Vec3i FFV::NormDiv(IterationCtl* IC)
 {
   double nrm;
   double flop_count;
@@ -1185,7 +1185,7 @@ FB::Vec3i FFV::NormDiv(IterationCtl* IC)
       Exit(0);
   }
   
-  FB::Vec3i idx ( index[0], index[1], index[2] );
+  Vec3i idx ( index[0], index[1], index[2] );
   
   return idx;
 }

@@ -1885,7 +1885,7 @@ void FFV::generateGlyph(const float* cut, const int* bid, FILE* fp)
   if (C.Hide.GlyphOutput == 2) inner_only=true;
   
   // カット点毎にグリフのポリゴン要素を生成し，配列にストア
-  FB::Vec3i idx;
+  Vec3i idx;
   
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
@@ -4918,8 +4918,8 @@ void FFV::setVOF()
  vector<Triangle*>* trias = PL->search_polygons(m_pg, m_min, m_max, false);
  
  PolylibNS::Vec3f *p;
- FB::Vec3f bbox_min( 1.0e6,  1.0e6,  1.0e6);
- FB::Vec3f bbox_max(-1.0e6, -1.0e6, -1.0e6);
+ Vec3f bbox_min( 1.0e6,  1.0e6,  1.0e6);
+ Vec3f bbox_max(-1.0e6, -1.0e6, -1.0e6);
  unsigned c=0;
  vector<Triangle*>::iterator it2;
  
@@ -4927,10 +4927,10 @@ void FFV::setVOF()
  {
  p = (*it2)->get_vertex();
  
- // PolulibNS::Vec3f >> FB::Vec3f
- FB::Vec3f p0(p[0].t[0], p[0].t[1], p[0].t[2]);
- FB::Vec3f p1(p[1].t[0], p[1].t[1], p[1].t[2]);
- FB::Vec3f p2(p[2].t[0], p[2].t[1], p[2].t[2]);
+ // PolulibNS::Vec3f >> Vec3f
+ Vec3f p0(p[0].t[0], p[0].t[1], p[0].t[2]);
+ Vec3f p1(p[1].t[0], p[1].t[1], p[1].t[2]);
+ Vec3f p2(p[2].t[0], p[2].t[1], p[2].t[2]);
  
  CompoFraction::get_min(bbox_min, p0);
  CompoFraction::get_min(bbox_min, p1);

@@ -2378,7 +2378,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
 {
   int m;
   bool flag;
-  FB::Vec3i st, ed;
+  Vec3i st, ed;
   
   // VBC ---------------------------------------------------
   if ( existComponent(SPEC_VEL, cmp) )

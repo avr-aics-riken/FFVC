@@ -679,7 +679,7 @@ private:
   
   
   // V-P反復のdiv(u)ノルムを計算する
-  FB::Vec3i NormDiv(IterationCtl* IC);
+  Vec3i NormDiv(IterationCtl* IC);
   
   
   /**

@@ -34,7 +34,7 @@
 #include "Intrinsic.h"
 
 using namespace std;
-
+using namespace Vec3class;
 
 class ParseBC : public DomainInfo {
 private:
@@ -141,9 +141,9 @@ private:
   
   
   // コンポーネントのBbox終点情報を返す
-  FB::Vec3i getCmpGbbox_ed(const int odr, const int* gci) const
+  Vec3i getCmpGbbox_ed(const int odr, const int* gci) const
   {
-    FB::Vec3i ed;
+    Vec3i ed;
     ed.x = gci[6*odr+3];
     ed.y = gci[6*odr+4];
     ed.z = gci[6*odr+5];
@@ -160,9 +160,9 @@ private:
    */
   
   // コンポーネントのBbox始点情報を返す
-  FB::Vec3i getCmpGbbox_st(const int odr, const int* gci) const
+  Vec3i getCmpGbbox_st(const int odr, const int* gci) const
   {
-    FB::Vec3i st;
+    Vec3i st;
     st.x = gci[6*odr+0];
     st.y = gci[6*odr+1];
     st.z = gci[6*odr+2];

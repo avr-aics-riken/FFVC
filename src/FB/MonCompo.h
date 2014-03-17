@@ -35,7 +35,7 @@
 #include "limits.h" // for UBUNTU
 
 using namespace std;
-
+using namespace Vec3class;
 
 /**
  *  モニタグループクラス
@@ -45,7 +45,7 @@ public:
   
   /// PointSet要素用構造体
   struct MonitorPoint {
-    FB::Vec3r crd;      ///< モニタ点座標
+    Vec3<REAL_TYPE> crd;      ///< モニタ点座標
     string label;       ///< モニタ点ラベル
     MonitorPoint(const REAL_TYPE v[3], const char* str) : crd(v), label(str) {}
     ~MonitorPoint() {}
@@ -62,7 +62,7 @@ public:
     REAL_TYPE refDensity;    /// 基準密度
     REAL_TYPE refLength;     /// 代表長さ
     REAL_TYPE basePrs;       /// 基準圧力
-    FB::Vec3r v00;           /// 参照（座標系移動）速度
+    Vec3<REAL_TYPE> v00;           /// 参照（座標系移動）速度
   };
   
   
@@ -78,11 +78,11 @@ protected:
   
   Sampling** mon;            ///< 「モニタ点毎のSampligクラスへのポインタ」の配列
   
-  FB::Vec3r org;             ///< ローカル基点座標
-  FB::Vec3r pch;             ///< セル幅
-  FB::Vec3r box;             ///< ローカル領域サイズ
-  FB::Vec3r g_org;           ///< グローバル基点座標
-  FB::Vec3r g_box;           ///< グローバル領域サイズ
+  Vec3<REAL_TYPE> org;             ///< ローカル基点座標
+  Vec3<REAL_TYPE> pch;             ///< セル幅
+  Vec3<REAL_TYPE> box;             ///< ローカル領域サイズ
+  Vec3<REAL_TYPE> g_org;           ///< グローバル基点座標
+  Vec3<REAL_TYPE> g_box;           ///< グローバル領域サイズ
   REAL_TYPE nv[3];           ///< 法線ベクトル
   REAL_TYPE val[var_END];    ///< サンプリング値
   int NoCompo;               ///< 物性テーブルの個数 >> 配列の大きさは[NoCompo+1]
@@ -103,17 +103,17 @@ protected:
   REAL_TYPE* vrSource;  ///< 渦度サンプリング元データ
   
   
-  FB::Vec3r* crd;      ///< モニタ点座標配列
+  Vec3<REAL_TYPE>* crd;      ///< モニタ点座標配列
   int* rank;           ///< モニタ点担当ランク番号配列
   string* comment;     ///< モニタ点コメント配列
   int* pointStatus;    ///< 不正モニタ点フラグ配列
   
-  FB::Vec3r* vel;      ///< 速度サンプリング結果配列
+  Vec3<REAL_TYPE>* vel;      ///< 速度サンプリング結果配列
   REAL_TYPE* prs;      ///< 圧力サンプリング結果配列
   REAL_TYPE* tmp;      ///< 温度サンプリング結果配列
   REAL_TYPE* tp;       ///< 全圧サンプリング結果配列
   REAL_TYPE* hlt;      ///< Helicityサンプリング結果配列
-  FB::Vec3r* vor;      ///< 渦度サンプリング結果配列
+  Vec3<REAL_TYPE>* vor;      ///< 渦度サンプリング結果配列
 
   
 public:
@@ -154,11 +154,11 @@ public:
   ///   @param [in] num_compo   物性テーブルの個数
   ///   @param [in] m_tbl       物性テーブル
   ///
-  MonitorCompo(FB::Vec3r org,
-               FB::Vec3r pch,
-               FB::Vec3r box,
-               FB::Vec3r g_org,
-               FB::Vec3r g_box,
+  MonitorCompo(Vec3<REAL_TYPE> org,
+               Vec3<REAL_TYPE> pch,
+               Vec3<REAL_TYPE> box,
+               Vec3<REAL_TYPE> g_org,
+               Vec3<REAL_TYPE> g_box,
                ReferenceVariables refVar,
                int* bid,
                int* bcd,
@@ -230,7 +230,7 @@ public:
   ///   @param [in] flag メッセージ出力フラグ(trueの時出力)
   ///   @return true=領域内/false=領域外
   ///
-  bool checkRegion(const int m, const FB::Vec3r org, const FB::Vec3r box, bool flag=false) const
+  bool checkRegion(const int m, const Vec3<REAL_TYPE> org, const Vec3<REAL_TYPE> box, bool flag=false) const
   {
     if ((crd[m].x< org.x)         ||
         (crd[m].x>(org.x+box.x))  ||
@@ -268,10 +268,10 @@ public:
   
   
   /// m番目のモニタ点を含むセルインデクスを返す
-  FB::Vec3i getSamplingCellIndex(int m) const
+  Vec3i getSamplingCellIndex(int m) const
   {
-    FB::Vec3i index;
-    FB::Vec3r c = (crd[m] - org) / pch;
+    Vec3i index;
+    Vec3<REAL_TYPE> c = (crd[m] - org) / pch;
     index.x = int(c.x) + 1;
     index.y = int(c.y) + 1;
     index.z = int(c.z) + 1;
@@ -525,7 +525,7 @@ protected:
   
   
   /// 指定されたモニタ領域内でベクトル変数を平均
-  FB::Vec3r averageVector(FB::Vec3r* v);
+  Vec3<REAL_TYPE> averageVector(Vec3<REAL_TYPE>* v);
   
   
   /// 座標の単位変換
@@ -593,7 +593,7 @@ protected:
   ///   @param [in,out] v ベクトル変数配列
   ///   @param  vSendBuf,vRecvBuf  通信用work領域
   ///
-  void gatherSampledVector(FB::Vec3r* v, REAL_TYPE* vSendBuf, REAL_TYPE* vRecvBuf);
+  void gatherSampledVector(Vec3<REAL_TYPE>* v, REAL_TYPE* vSendBuf, REAL_TYPE* vRecvBuf);
 
   
   

@@ -20,11 +20,14 @@
  */
 
 #include "IP_Sphere.h"
+#include "../FB/Vec3.h"
+
+using namespace Vec3class;
 
 
 // #################################################################
 // 交点の無次元距離を計算する
-float IP_Sphere::cut_line(const FB::Vec3f p, const int dir, const float r, const float dh)
+float IP_Sphere::cut_line(const Vec3f p, const int dir, const float r, const float dh)
 {
   float x, y, z, s;
   float c;
@@ -87,10 +90,10 @@ float IP_Sphere::cut_line(const FB::Vec3f p, const int dir, const float r, const
 // #################################################################
 //  点pの属するセルインデクスを求める
 // Fortran index
-FB::Vec3i IP_Sphere::find_index(const FB::Vec3f p, const FB::Vec3f ol)
+Vec3i IP_Sphere::find_index(const Vec3f p, const Vec3f ol)
 {
-  FB::Vec3f q = (p-ol)/pch;
-  FB::Vec3i idx( ceil(q.x), ceil(q.y), ceil(q.z) );
+  Vec3f q = (p-ol)/pch;
+  Vec3i idx( ceil(q.x), ceil(q.y), ceil(q.z) );
   
   int ix = size[0];
   int jx = size[1];
@@ -249,7 +252,7 @@ void IP_Sphere::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium
   REAL_TYPE ox, oy, oz, Lx, Ly, Lz;
   REAL_TYPE ox_g, oy_g, oz_g;
   
-  FB::Vec3f base, b, t, org_l;
+  Vec3f base, b, t, org_l;
   REAL_TYPE ph = pch.x;
   REAL_TYPE r;
   REAL_TYPE rs = radius/R->RefLength;
@@ -296,7 +299,7 @@ void IP_Sphere::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium
   
   
   // カット情報
-  FB::Vec3f p[7];
+  Vec3f p[7];
   float lb[7], s, r_min=10.0, r_max=0.0;
   
   for (int k=box_st.z-2; k<=box_ed.z+2; k++) {

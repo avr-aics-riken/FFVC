@@ -1545,7 +1545,7 @@ unsigned long VoxInfo::encPbitIBC (const int order,
     mode = false;
   }
   
-  FB::Vec3f nv(vec);
+  Vec3f nv(vec);
   
   // 反対方向のとき符号反転 > 内積が負のときに対象位置となる
   if ( bc_dir == CompoList::opposite_direction )
@@ -1553,12 +1553,12 @@ unsigned long VoxInfo::encPbitIBC (const int order,
     nv *= -1.0;
   }
   
-  FB::Vec3f e_w(-1.0,  0.0,  0.0);
-  FB::Vec3f e_e(+1.0,  0.0,  0.0);
-  FB::Vec3f e_s( 0.0, -1.0,  0.0);
-  FB::Vec3f e_n( 0.0, +1.0,  0.0);
-  FB::Vec3f e_b( 0.0,  0.0, -1.0);
-  FB::Vec3f e_t( 0.0,  0.0, +1.0);
+  Vec3f e_w(-1.0,  0.0,  0.0);
+  Vec3f e_e(+1.0,  0.0,  0.0);
+  Vec3f e_s( 0.0, -1.0,  0.0);
+  Vec3f e_n( 0.0, +1.0,  0.0);
+  Vec3f e_b( 0.0,  0.0, -1.0);
+  Vec3f e_t( 0.0,  0.0, +1.0);
   
   
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, odr, mode) \
@@ -2058,7 +2058,7 @@ unsigned long VoxInfo::encVbitIBC (const int order,
   int gd = guide;
   int odr = order;
   
-  FB::Vec3f nv(vec);
+  Vec3f nv(vec);
   
   // 反対方向のとき符号反転 > 内積が負のときに対象位置となる
   if ( bc_dir == CompoList::opposite_direction )
@@ -2066,12 +2066,12 @@ unsigned long VoxInfo::encVbitIBC (const int order,
     nv *= -1.0;
   }
   
-  FB::Vec3f e_w(-1.0,  0.0,  0.0);
-  FB::Vec3f e_e(+1.0,  0.0,  0.0);
-  FB::Vec3f e_s( 0.0, -1.0,  0.0);
-  FB::Vec3f e_n( 0.0, +1.0,  0.0);
-  FB::Vec3f e_b( 0.0,  0.0, -1.0);
-  FB::Vec3f e_t( 0.0,  0.0, +1.0);
+  Vec3f e_w(-1.0,  0.0,  0.0);
+  Vec3f e_e(+1.0,  0.0,  0.0);
+  Vec3f e_s( 0.0, -1.0,  0.0);
+  Vec3f e_n( 0.0, +1.0,  0.0);
+  Vec3f e_b( 0.0,  0.0, -1.0);
+  Vec3f e_t( 0.0,  0.0, +1.0);
   
 
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, odr) \
