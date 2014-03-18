@@ -26,7 +26,7 @@
 #include "Control.h"
 #include "Component.h"
 #include "FBUtility.h"
-#include "vec3.h"
+#include "Vec3.h"
 
 #define CCNV_MAX 20
 

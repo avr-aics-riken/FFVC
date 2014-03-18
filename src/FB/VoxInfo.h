@@ -31,7 +31,7 @@
 #include "Medium.h"
 #include "SetBC.h"
 #include "BndOuter.h"
-#include "vec3.h"
+#include "Vec3.h"
 #include "Intrinsic.h"
 #include "limits.h"
 #include "omp.h"

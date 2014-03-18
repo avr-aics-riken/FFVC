@@ -19,6 +19,10 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-03-18
+- r1616 change filename Vec3.h from vec3.h [ver 1.7.3]
+
+--------------------------
 2014-03-17
 - r1615 commn namespace Vec3class [ver 1.7.2]
 

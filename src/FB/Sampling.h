@@ -21,7 +21,7 @@
 //@author aics
 
 #include "FB_Define.h"
-#include "vec3.h"
+#include "Vec3.h"
 #include "basic_func.h"
 
 using namespace Vec3class;

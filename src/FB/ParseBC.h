@@ -30,7 +30,7 @@
 #include "Control.h"
 #include "Component.h"
 #include "Medium.h"
-#include "vec3.h"
+#include "Vec3.h"
 #include "Intrinsic.h"
 
 using namespace std;

@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 #include "FB_Define.h"
-#include "vec3.h"
+#include "Vec3.h"
 #include "MonCompo.h"
 #include "basic_func.h"
 #include "Component.h"

@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include <iomanip>
 #include "FB_Define.h"
-#include "vec3.h"
+#include "Vec3.h"
 
 using namespace std;
 using namespace Vec3class;

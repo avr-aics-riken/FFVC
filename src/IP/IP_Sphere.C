@@ -20,7 +20,6 @@
  */
 
 #include "IP_Sphere.h"
-#include "../FB/Vec3.h"
 
 using namespace Vec3class;
 
