@@ -1854,8 +1854,8 @@ void FFV::generateGlyph(const float* cut, const int* bid, FILE* fp)
   
   Hostonly_
   {
-    printf("\tNumber of Cut points = %ld\n", global_cut);
-    fprintf(fp, "\tNumber of Cut points = %ld\n", global_cut);
+    printf("\tNumber of Cut points = %u\n", global_cut);
+    fprintf(fp, "\tNumber of Cut points = %u\n", global_cut);
   }
   
   

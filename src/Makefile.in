@@ -309,8 +309,8 @@ ffvc_CXXFLAGS = \
   -I./FB \
   @CIO_CFLAGS@ \
   @CPM_CFLAGS@ \
-  @PL_CFLAGS@ \
   @CUT_CFLAGS@ \
+  @PL_CFLAGS@ \
   @PM_CFLAGS@ \
   @TP_CFLAGS@ \
   @MPICH_CFLAGS@ \

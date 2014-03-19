@@ -19,6 +19,10 @@ RELEASE
 =======
 
 -------------
+Version 1.7.4    2014-03-19
+  - header files
+  
+-------------
 Version 1.7.3    2014-03-18
   - change vec3.h filename
   

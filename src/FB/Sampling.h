@@ -20,6 +20,7 @@
 //@brief  FlowBase Sampling class Header
 //@author aics
 
+#include <stdio.h>
 #include "FB_Define.h"
 #include "Vec3.h"
 #include "basic_func.h"

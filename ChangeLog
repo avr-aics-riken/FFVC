@@ -19,6 +19,12 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-03-19
+- r1617 add include file [ver 1.7.4]
+  - add stdio.h in Sampling.h
+  - add string.h in SubDomain.h
+
+--------------------------
 2014-03-18
 - r1616 change filename Vec3.h from vec3.h [ver 1.7.3]
 
