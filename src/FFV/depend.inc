@@ -43,8 +43,8 @@ ffv.o: ffv.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
- ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
+ /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
@@ -63,9 +63,6 @@ ffv.o: ffv.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
  /usr/local/FFV/Polylib/include/common/Vec3.h \
- /usr/local/FFV/Polylib/include/common/vec3_func.h \
- /usr/local/FFV/Polylib/include/common/vec3f_func.h \
- /usr/local/FFV/Polylib/include/common/axis.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
@@ -158,8 +155,8 @@ ffv_Initialize.o: ffv_Initialize.C ffv.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
- ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
+ /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
@@ -178,9 +175,6 @@ ffv_Initialize.o: ffv_Initialize.C ffv.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
  /usr/local/FFV/Polylib/include/common/Vec3.h \
- /usr/local/FFV/Polylib/include/common/vec3_func.h \
- /usr/local/FFV/Polylib/include/common/vec3f_func.h \
- /usr/local/FFV/Polylib/include/common/axis.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
@@ -272,8 +266,8 @@ ffv_Alloc.o: ffv_Alloc.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
- ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
+ /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
@@ -292,9 +286,6 @@ ffv_Alloc.o: ffv_Alloc.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
  /usr/local/FFV/Polylib/include/common/Vec3.h \
- /usr/local/FFV/Polylib/include/common/vec3_func.h \
- /usr/local/FFV/Polylib/include/common/vec3f_func.h \
- /usr/local/FFV/Polylib/include/common/axis.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
@@ -387,8 +378,8 @@ ffv_SetBC.o: ffv_SetBC.C ffv_SetBC.h ../FB/SetBC.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/BndOuter.h \
  ../FB/Control.h ../FB/Medium.h ../FB/Component.h ../FB/FBUtility.h \
- ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
- ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
+ /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Intrinsic.h ffv_Define.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
@@ -439,8 +430,8 @@ ffv_Restart.o: ffv_Restart.C ffv.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
- ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
+ /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
@@ -459,9 +450,6 @@ ffv_Restart.o: ffv_Restart.C ffv.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
  /usr/local/FFV/Polylib/include/common/Vec3.h \
- /usr/local/FFV/Polylib/include/common/vec3_func.h \
- /usr/local/FFV/Polylib/include/common/vec3f_func.h \
- /usr/local/FFV/Polylib/include/common/axis.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
@@ -553,8 +541,8 @@ ffv_Loop.o: ffv_Loop.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
- ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
+ /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
@@ -573,9 +561,6 @@ ffv_Loop.o: ffv_Loop.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
  /usr/local/FFV/Polylib/include/common/Vec3.h \
- /usr/local/FFV/Polylib/include/common/vec3_func.h \
- /usr/local/FFV/Polylib/include/common/vec3f_func.h \
- /usr/local/FFV/Polylib/include/common/axis.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
@@ -667,8 +652,8 @@ ffv_LS.o: ffv_LS.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
- ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
+ /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
@@ -687,9 +672,6 @@ ffv_LS.o: ffv_LS.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
  /usr/local/FFV/Polylib/include/common/Vec3.h \
- /usr/local/FFV/Polylib/include/common/vec3_func.h \
- /usr/local/FFV/Polylib/include/common/vec3f_func.h \
- /usr/local/FFV/Polylib/include/common/axis.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
@@ -781,8 +763,8 @@ ffv_Post.o: ffv_Post.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
- ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
+ /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
@@ -801,9 +783,6 @@ ffv_Post.o: ffv_Post.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
  /usr/local/FFV/Polylib/include/common/Vec3.h \
- /usr/local/FFV/Polylib/include/common/vec3_func.h \
- /usr/local/FFV/Polylib/include/common/vec3f_func.h \
- /usr/local/FFV/Polylib/include/common/axis.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
@@ -895,8 +874,8 @@ ffv_Heat.o: ffv_Heat.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
- ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
+ /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
@@ -915,9 +894,6 @@ ffv_Heat.o: ffv_Heat.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
  /usr/local/FFV/Polylib/include/common/Vec3.h \
- /usr/local/FFV/Polylib/include/common/vec3_func.h \
- /usr/local/FFV/Polylib/include/common/vec3f_func.h \
- /usr/local/FFV/Polylib/include/common/axis.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
@@ -1010,8 +986,8 @@ ffv_Filter.o: ffv_Filter.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
- ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
+ /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
@@ -1030,9 +1006,6 @@ ffv_Filter.o: ffv_Filter.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
  /usr/local/FFV/Polylib/include/common/Vec3.h \
- /usr/local/FFV/Polylib/include/common/vec3_func.h \
- /usr/local/FFV/Polylib/include/common/vec3f_func.h \
- /usr/local/FFV/Polylib/include/common/axis.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
@@ -1170,8 +1143,8 @@ NS_FS_E_Binary.o: NS_FS_E_Binary.C ffv.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
- ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
+ /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
@@ -1190,9 +1163,6 @@ NS_FS_E_Binary.o: NS_FS_E_Binary.C ffv.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
  /usr/local/FFV/Polylib/include/common/Vec3.h \
- /usr/local/FFV/Polylib/include/common/vec3_func.h \
- /usr/local/FFV/Polylib/include/common/vec3f_func.h \
- /usr/local/FFV/Polylib/include/common/axis.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
@@ -1285,8 +1255,8 @@ NS_FS_E_CDS.o: NS_FS_E_CDS.C ffv.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
- ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
+ /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
@@ -1305,9 +1275,6 @@ NS_FS_E_CDS.o: NS_FS_E_CDS.C ffv.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
  /usr/local/FFV/Polylib/include/common/Vec3.h \
- /usr/local/FFV/Polylib/include/common/vec3_func.h \
- /usr/local/FFV/Polylib/include/common/vec3f_func.h \
- /usr/local/FFV/Polylib/include/common/axis.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
@@ -1399,8 +1366,8 @@ PS_Binary.o: PS_Binary.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
- ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
+ /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
@@ -1419,9 +1386,6 @@ PS_Binary.o: PS_Binary.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
  /usr/local/FFV/Polylib/include/common/Vec3.h \
- /usr/local/FFV/Polylib/include/common/vec3_func.h \
- /usr/local/FFV/Polylib/include/common/vec3f_func.h \
- /usr/local/FFV/Polylib/include/common/axis.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \

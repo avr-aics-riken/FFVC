@@ -83,11 +83,23 @@ void ASD::evaluateASD(int argc, char **argv)
   {
     unsigned Sdiv[3]={0, 0, 0};
     
-    if ( !DecideDivPattern(NumDivSubDomain, (unsigned*)size, Sdiv) )
+    if ( divPolicy == DIV_VOX_CUBE)
     {
-      printf("\tError at calculating division pattern\n");
-      Exit(0);
+      if ( !DecideDivPatternCube(NumDivSubDomain, (unsigned*)size, Sdiv) )
+      {
+        printf("\tError at calculating division pattern\n");
+        Exit(0);
+      }
     }
+    else // DIV_COMM_SIZE
+    {
+      if ( !DecideDivPatternCommSize(NumDivSubDomain, (unsigned*)size, Sdiv) )
+      {
+        printf("\tError at calculating division pattern\n");
+        Exit(0);
+      }
+    }
+
     G_division[0] = (int)Sdiv[0];
     G_division[1] = (int)Sdiv[1];
     G_division[2] = (int)Sdiv[2];
@@ -303,6 +315,7 @@ void ASD::evaluateASD(int argc, char **argv)
   float z = (float)size[2] / (float)G_division[2];
   float sv_ratio = 2.0*(x*y + y*z + z*x) / (x*y*z);
   float load = x*y*z * (float)ac;
+  float subload = x*y*z;
   
   int xxx = G_division[0] * G_division[1] * G_division[2];
   printf("Division %d %d %d\n", G_division[0], G_division[1], G_division[2]);
@@ -310,7 +323,7 @@ void ASD::evaluateASD(int argc, char **argv)
   printf("SubDomain_Size %d %d %d\n", (int)x, (int)y, (int)z);
   printf("Active/Total %d %d %e\n", ac, xxx, (float)ac/(float)xxx);
   printf("Surface/Volume %e\n", sv_ratio);
-  printf("N-Active-Workload-SV %d %d %e %e\n", xxx, ac, load, sv_ratio);
+  printf("N-Active-Workload-SV %d %d %e %e %e %e\n", xxx, ac, (float)ac/(float)xxx, load, subload, sv_ratio);
   
   if ( pos_x )  delete [] pos_x;
   if ( pos_y )  delete [] pos_y;
@@ -816,6 +829,27 @@ void ASD::getDomainInfo(TextParser* tp, bool flag)
   }
   
   
+  // 領域分割ポリシー
+  label = "/DomainInfo/DivisionPolicy";
+  
+  if ( !(tp->getInspectedValue(label, str)) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid value in '%s'\n", label.c_str());
+    Exit(0);
+  }
+  else
+  {
+    if     ( !strcasecmp(str.c_str(), "cube" ) )           divPolicy = DIV_VOX_CUBE;
+    else if( !strcasecmp(str.c_str(), "communication" ) )  divPolicy = DIV_COMM_SIZE;
+    else
+    {
+      Hostonly_ printf("\tInvalid string '%s'\n", str.c_str());
+      Exit(0);
+    }
+  }
+  
+  
+  
   // 流体セルのフィルの開始面指定
   label = "/DomainInfo/HintOfFillSeedDirection";
   
@@ -1007,11 +1041,16 @@ ASD::CalcCommSize(const unsigned long long iDiv,
 
 
 // #################################################################
-// @brief 最適分割数の計算
-// @param [in]  divNum  サブドメインの分割数
-// @param [in]  voxSize 全領域のボクセル分割数
-// @param [out] divPttn 最適サブドメイン分割数
-bool ASD::DecideDivPattern(const unsigned int divNum, const unsigned int voxSize[3], unsigned int divPttn[3])
+/** @brief 並列プロセス数からI,J,K方向の分割数を取得する
+ *  @note 通信面のトータルサイズが小さい分割パターンを採用する
+ *  @param [in]  divNum  ランク数
+ *  @param [in]  voxSize 空間全体のボクセル数
+ *  @param [out] divPttn 領域分割数
+ *  @return              終了コード(CPM_SUCCESS=正常終了)
+ */
+bool ASD::DecideDivPatternCommSize(const unsigned int divNum,
+                                   const unsigned int voxSize[3],
+                                   unsigned int divPttn[3])
 {
   if ( !voxSize || !divPttn )
   {
@@ -1078,10 +1117,127 @@ bool ASD::DecideDivPattern(const unsigned int divNum, const unsigned int voxSize
   divPttn[1] = (unsigned)divPttnll[1];
   divPttn[2] = (unsigned)divPttnll[2];
   
-  if( (divPttn[0]==0) || (divPttn[1]==0) || (divPttn[2]==0) )
+  if ( (divPttn[0]==0) || (divPttn[1]==0) || (divPttn[2]==0) )
   {
     return false;
   }
   
   return true;
+}
+
+
+
+// #################################################################
+/** @brief 並列プロセス数からI,J,K方向の分割数を取得する
+ *  @note １つのサブドメインが立方体に一番近い分割パターンを採用する
+ *  @param [in]  divNum  ランク数
+ *  @param [in]  voxSize 空間全体のボクセル数
+ *  @param [out] divPttn 領域分割数
+ *  @return              終了コード(CPM_SUCCESS=正常終了)
+ */
+bool ASD::DecideDivPatternCube(const unsigned int divNum,
+                               const unsigned int voxSize[3],
+                               unsigned int divPttn[3])
+{
+  if ( !voxSize || !divPttn )
+  {
+    return false;
+  }
+  
+  if ( (voxSize[0]==0) || (voxSize[1]==0) || (voxSize[2]==0) )
+  {
+    return false;
+  }
+  
+  if ( divNum <= 1 )
+  {
+    divPttn[0] = divPttn[1] = divPttn[2] = 1;
+    return true;
+  }
+  
+  divPttn[0] = divPttn[1] = divPttn[2] = 0;
+  
+  unsigned long long minVoxDiff = 0;
+  unsigned long long divNumll = divNum;
+  unsigned long long voxSizell[3] = {0, 0, 0};
+  unsigned long long divPttnll[3] = {0, 0, 0};
+  voxSizell[0] = voxSize[0];
+  voxSizell[1] = voxSize[1];
+  voxSizell[2] = voxSize[2];
+  
+  bool flag = false;
+  unsigned long long i, j, k;
+  for(i=1; i<=divNumll; i++)
+  {
+    if( divNumll%i != 0 ) continue;
+    if( voxSizell[0] < i ) break;
+    
+    unsigned long long jmax = divNumll/i;
+    
+    for(j=1; j<=jmax; j++)
+    {
+      if( jmax%j != 0 ) continue;
+      if( voxSizell[1] < j ) break;
+      
+      k = jmax/j;
+      if( voxSizell[2] < k ) continue;
+      
+      long long voxDiff;
+      if( (voxDiff=CheckCube(i, j, k, voxSizell)) < 0 ) break;
+      
+      if( !flag )
+      {
+        divPttnll[0] = i; divPttnll[1] = j; divPttnll[2] = k;
+        minVoxDiff = voxDiff;
+        flag = true;
+      }
+      else if( voxDiff < minVoxDiff )
+      {
+        divPttnll[0] = i; divPttnll[1] = j; divPttnll[2] = k;
+        minVoxDiff = voxDiff;
+      }
+    }
+  }
+  
+  divPttn[0] = (unsigned)divPttnll[0];
+  divPttn[1] = (unsigned)divPttnll[1];
+  divPttn[2] = (unsigned)divPttnll[2];
+  
+  if ( (divPttn[0]==0) || (divPttn[1]==0) || (divPttn[2]==0) )
+  {
+    return false;
+  }
+  
+  return true;
+}
+
+// #################################################################
+/** I,J,K分割を行った時のI,J,Kボクセル数の最大/最小の差を取得する
+ *  @param [in] iDiv    i方向領域分割数
+ *  @param [in] jDiv    j方向領域分割数
+ *  @param [in] kDiv    k方向領域分割数
+ *  @param [in] voxSize 空間全体のボクセル数
+ *  @retval 0以上        I,J,Kボクセル数の最大/最小の差
+ *  @retval 負値         領域分割不可のパターン
+ */
+long long ASD::CheckCube(const unsigned long long iDiv,
+                         const unsigned long long jDiv,
+                         const unsigned long long kDiv,
+                         const unsigned long long voxSize[3])
+{
+  if ( (iDiv==0) || (jDiv==0) || (kDiv==0) ) return -1;
+  if ( !voxSize ) return -1;
+  
+  unsigned long long Len[3];
+  Len[0] = voxSize[0] / iDiv; if( Len[0] == 0 ) return -1;
+  Len[1] = voxSize[1] / jDiv; if( Len[1] == 0 ) return -1;
+  Len[2] = voxSize[2] / kDiv; if( Len[2] == 0 ) return -1;
+  
+  unsigned long long minVox = (Len[0]<Len[1]?Len[0]:Len[1]);
+  minVox = (minVox<Len[2]?minVox:Len[2]);
+  
+  unsigned long long maxVox = (Len[0]>Len[1]?Len[0]:Len[1]);
+  maxVox = (maxVox>Len[2]?maxVox:Len[2]);
+  
+  return (maxVox-minVox);
 }

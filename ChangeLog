@@ -19,6 +19,10 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-03-22
+- r1618 update division pattern cube/comm [ver 1.7.5]
+
+--------------------------
 2014-03-19
 - r1617 add include file [ver 1.7.4]
   - add stdio.h in Sampling.h

@@ -398,6 +398,7 @@ typedef struct {
 /// FFVC_EXEC_MODE
 enum ffvc_execution {
   ffvc_solver=1,
+  ffvc_solverAS,
   ffvc_filter,
   ffvc_asd
 };

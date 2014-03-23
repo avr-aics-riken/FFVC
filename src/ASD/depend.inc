@@ -45,8 +45,8 @@ ASDmodule.o: ASDmodule.C ASDmodule.h ../FB/DomainInfo.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/FB_Define.h ../FB/mydebug.h SubDomain.h ../FB/VoxInfo.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Component.h ../FB/SetBC.h ../FB/BndOuter.h ../FB/Control.h \
- ../FB/CompoFraction.h ../FB/vec3.h ../FB/vec3_func.h ../FB/vec3f_func.h \
- ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
+ /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Intrinsic.h /usr/local/FFV/Polylib/include/Polylib.h \
@@ -55,9 +55,6 @@ ASDmodule.o: ASDmodule.C ASDmodule.h ../FB/DomainInfo.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
  /usr/local/FFV/Polylib/include/common/Vec3.h \
- /usr/local/FFV/Polylib/include/common/vec3_func.h \
- /usr/local/FFV/Polylib/include/common/vec3f_func.h \
- /usr/local/FFV/Polylib/include/common/axis.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \

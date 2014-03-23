@@ -1045,29 +1045,47 @@ void FFV::DomainInitialize(TextParser* tp_dom)
    */
   
   
-  // 分割数を元に分割する >> CPMlibの仕様
-  switch (div_type) 
+  // ノーマルモードとActive subdomainモードの切り替え
+  if ( EXEC_MODE == ffvc_solver )
   {
-    case 1: // 分割数が指示されている場合
-      if ( paraMngr->VoxelInit(m_div, m_sz, m_org, m_reg, Nvc, Ncmp) != CPM_SUCCESS )
-      {
-        cout << "Domain decomposition error : " << endl;
+    // 分割数を元に分割する >> CPMlibの仕様
+    switch (div_type)
+    {
+      case 1: // 分割数が指示されている場合
+        if ( paraMngr->VoxelInit(m_div, m_sz, m_org, m_reg, Nvc, Ncmp) != CPM_SUCCESS )
+        {
+          cout << "Domain decomposition error : " << endl;
+          Exit(0);
+        }
+        break;
+        
+      case 2: // 分割数が指示されていない場
+        if ( paraMngr->VoxelInit(m_sz, m_org, m_reg, Nvc, Ncmp) != CPM_SUCCESS )
+        {
+          cout << "Domain decomposition error : " << endl;
+          Exit(0);
+        }
+        break;
+        
+      default:
         Exit(0);
-      }
-      break;
-      
-    case 2: // 分割数が指示されていない場
-      if ( paraMngr->VoxelInit(m_sz, m_org, m_reg, Nvc, Ncmp) != CPM_SUCCESS )
-      {
-        cout << "Domain decomposition error : " << endl;
-        Exit(0);
-      }
-      break;
-      
-    default:
-      Exit(0);
-      break;
+        break;
+    }
   }
+  else if ( EXEC_MODE == ffvc_solverAS )
+  {
+    if ( paraMngr->VoxelInit_Subdomain(m_div, m_sz, m_org, m_reg, active_fname, Nvc, Ncmp) != CPM_SUCCESS )
+    {
+      cout << "Domain decomposition error : " << endl;
+      Exit(0);
+    }
+  }
+  else
+  {
+    Exit(0);
+  }
+  
+
 
 
   // 分割後のパラメータをDomainInfoクラスメンバ変数に保持
@@ -2249,15 +2267,23 @@ int FFV::getDomainInfo(TextParser* tp_dom)
   }
   
   
-  // ActiveSubdomainファイル名の取得
+  // ActiveSubdomainファイル名の取得 >> ファイル名が指定されている場合はASモード
   label = "/DomainInfo/ActiveSubDomainFile";
   
   if ( !tp_dom->getInspectedValue(label, str ) )
   {
     Hostonly_ cout << "\tNo option : in parsing [" << label << "]" << endl;
   }
-  //@todo  string hoge = str;
   
+  if ( str.empty() == true )
+  {
+    EXEC_MODE = ffvc_solver;
+  }
+  else
+  {
+    active_fname = str;
+    EXEC_MODE = ffvc_solverAS;
+  }
   
   return div_type;
 }

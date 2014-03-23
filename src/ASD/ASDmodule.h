@@ -83,6 +83,7 @@ private:
   
   int FillSeedDir;
   int guide;
+  int divPolicy;
   
   // カット
   CutPos32Array *cutPos;
@@ -99,6 +100,7 @@ public:
     G_Acell = 0;
     FillSeedDir=-1;
     guide = 1;
+    divPolicy = -1;
     
     for (int i=0; i<3; i++)
     {
@@ -171,7 +173,7 @@ private:
   
   // FXgenのソースより移動
   //
-  // 通信面コストの計算
+  // 通信面コストの計算 I,J,K分割を行った時の通信点数の総数を取得する
   inline
   unsigned long long
   CalcCommSize(const unsigned long long iDiv,
@@ -180,10 +182,25 @@ private:
                const unsigned long long voxSize[3]);
   
   
-  // 最適分割数の計算
-  bool DecideDivPattern(const unsigned int divNum,
-                        const unsigned int voxSize[3],
-                        unsigned int divPttn[3]);
+  // 並列プロセス数からI,J,K方向の分割数を取得する
+  // 通信面のトータルサイズが小さい分割パターンを採用する
+  bool DecideDivPatternCommSize(const unsigned int divNum,
+                                const unsigned int voxSize[3],
+                                unsigned int divPttn[3]);
+  
+  
+  // 並列プロセス数からI,J,K方向の分割数を取得する
+  // １つのサブドメインが立方体に一番近い分割パターンを採用する
+  bool DecideDivPatternCube(const unsigned int divNum,
+                            const unsigned int voxSize[3],
+                            unsigned int divPttn[3]);
+  
+  
+  // I,J,K分割を行った時のI,J,Kボクセル数の最大/最小の差を取得する
+  long long CheckCube(const unsigned long long iDiv,
+                      const unsigned long long jDiv,
+                      const unsigned long long kDiv,
+                      const unsigned long long voxSize[3]);
 };
 
 #endif // _ASD_MODULE_H_

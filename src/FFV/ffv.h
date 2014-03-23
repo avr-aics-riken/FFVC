@@ -257,6 +257,8 @@ private:
   
   
   char tm_label_ptr[tm_END][TM_LABEL_MAX];  ///< プロファイラ用のラベル
+  
+  string active_fname;      ///< Active subdomainのファイル名
 
   
   // pointers to CIO class

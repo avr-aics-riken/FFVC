@@ -64,7 +64,7 @@ int main( int argc, char **argv )
   }
   else
   {
-    ffv.EXEC_MODE = ffvc_solver;
+    ffv.EXEC_MODE = ffvc_solver; // ffv_Initialize() でffv_solver, ffv_solverASを選別
   }
 
   
