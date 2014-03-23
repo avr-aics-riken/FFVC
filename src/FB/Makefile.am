@@ -21,6 +21,7 @@ libFB_a_CXXFLAGS = \
   -I. \
   @CIO_CFLAGS@ \
   @CPM_CFLAGS@ \
+  @PL_CFLAGS@ \
   @TP_CFLAGS@ \
   @MPICH_CFLAGS@ \
   @REALOPT@ \
@@ -70,13 +71,11 @@ libFB_a_SOURCES = \
   SetBC.h \
   VoxInfo.C \
   VoxInfo.h \
-  basic_func.h \
   dbwrite.f90 \
   ffv_f_params.h \
   fill_bid.h \
   mydebug.h \
   util_Path.h \
-  Vec3.h \
   Glyph.C \
   Glyph.h
 

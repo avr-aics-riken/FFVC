@@ -28,7 +28,6 @@
 #include <cassert>
 #include "FB_Define.h"
 #include "Vec3.h"
-#include "basic_func.h"
 #include "Component.h"
 #include "Sampling.h"
 #include "FBUtility.h"
@@ -45,24 +44,24 @@ public:
   
   /// PointSet要素用構造体
   struct MonitorPoint {
-    Vec3<REAL_TYPE> crd;      ///< モニタ点座標
+    Vec3d crd;          ///< モニタ点座標
     string label;       ///< モニタ点ラベル
-    MonitorPoint(const REAL_TYPE v[3], const char* str) : crd(v), label(str) {}
+    MonitorPoint(const double v[3], const char* str) : crd(v), label(str) {}
     ~MonitorPoint() {}
   };
   
   /// 参照用パラメータ構造体
   struct ReferenceVariables {
-    int modeUnitOutput;      /// 出力単位指定フラグ (有次元，無次元)
-    int modePrecision;       /// 出力精度指定フラグ (単精度，倍精度)
-    int unitPrs;             /// 圧力単位指定フラグ (絶対値，ゲージ圧)
-    REAL_TYPE refVelocity;   /// 代表速度
-    REAL_TYPE baseTemp;      /// 基準温度
-    REAL_TYPE diffTemp;      /// 代表温度差
-    REAL_TYPE refDensity;    /// 基準密度
-    REAL_TYPE refLength;     /// 代表長さ
-    REAL_TYPE basePrs;       /// 基準圧力
-    Vec3<REAL_TYPE> v00;           /// 参照（座標系移動）速度
+    int modeUnitOutput;   /// 出力単位指定フラグ (有次元，無次元)
+    int modePrecision;    /// 出力精度指定フラグ (単精度，倍精度)
+    int unitPrs;          /// 圧力単位指定フラグ (絶対値，ゲージ圧)
+    double refVelocity;   /// 代表速度
+    double baseTemp;      /// 基準温度
+    double diffTemp;      /// 代表温度差
+    double refDensity;    /// 基準密度
+    double refLength;     /// 代表長さ
+    double basePrs;       /// 基準圧力
+    Vec3d v00;            /// 参照（座標系移動）速度
   };
   
   
@@ -78,15 +77,14 @@ protected:
   
   Sampling** mon;            ///< 「モニタ点毎のSampligクラスへのポインタ」の配列
   
-  Vec3<REAL_TYPE> org;             ///< ローカル基点座標
-  Vec3<REAL_TYPE> pch;             ///< セル幅
-  Vec3<REAL_TYPE> box;             ///< ローカル領域サイズ
-  Vec3<REAL_TYPE> g_org;           ///< グローバル基点座標
-  Vec3<REAL_TYPE> g_box;           ///< グローバル領域サイズ
-  REAL_TYPE nv[3];           ///< 法線ベクトル
-  REAL_TYPE val[var_END];    ///< サンプリング値
-  int NoCompo;               ///< 物性テーブルの個数 >> 配列の大きさは[NoCompo+1]
-  REAL_TYPE* mtbl;           ///< 物性テーブル
+  Vec3d org;             ///< ローカル基点座標
+  Vec3d pch;             ///< セル幅
+  Vec3d box;             ///< ローカル領域サイズ
+  Vec3d g_org;           ///< グローバル基点座標
+  Vec3d g_box;           ///< グローバル領域サイズ
+  double nv[3];          ///< 法線ベクトル
+  double val[var_END];   ///< サンプリング値
+  int NoCompo;           ///< 物性テーブルの個数 >> 配列の大きさは[NoCompo+1]
   
   ReferenceVariables refVar; ///< 参照用パラメータ変数
   
@@ -96,25 +94,24 @@ protected:
   
   FILE* fp;            ///< 出力ファイルポインタ
   
+  Vec3d* crd;          ///< モニタ点座標配列
+  int* rank;           ///< モニタ点担当ランク番号配列
+  string* comment;     ///< モニタ点コメント配列
+  int* pointStatus;    ///< 不正モニタ点フラグ配列
+  
+  Vec3d* vel;       ///< 速度サンプリング結果配列
+  double* prs;      ///< 圧力サンプリング結果配列
+  double* tmp;      ///< 温度サンプリング結果配列
+  double* tp;       ///< 全圧サンプリング結果配列
+  double* hlt;      ///< Helicityサンプリング結果配列
+  Vec3d* vor;       ///< 渦度サンプリング結果配列
+
   // サンプリング元データ
   REAL_TYPE* vSource;   ///< 速度サンプリング元データ
   REAL_TYPE* pSource;   ///< 圧力サンプリング元データ
   REAL_TYPE* tSource;   ///< 温度サンプリング元データ
   REAL_TYPE* vrSource;  ///< 渦度サンプリング元データ
-  
-  
-  Vec3<REAL_TYPE>* crd;      ///< モニタ点座標配列
-  int* rank;           ///< モニタ点担当ランク番号配列
-  string* comment;     ///< モニタ点コメント配列
-  int* pointStatus;    ///< 不正モニタ点フラグ配列
-  
-  Vec3<REAL_TYPE>* vel;      ///< 速度サンプリング結果配列
-  REAL_TYPE* prs;      ///< 圧力サンプリング結果配列
-  REAL_TYPE* tmp;      ///< 温度サンプリング結果配列
-  REAL_TYPE* tp;       ///< 全圧サンプリング結果配列
-  REAL_TYPE* hlt;      ///< Helicityサンプリング結果配列
-  Vec3<REAL_TYPE>* vor;      ///< 渦度サンプリング結果配列
-
+  REAL_TYPE* mtbl;      ///< 物性テーブルへのポインタ
   
 public:
   /// デフォルトコンストラクタ
@@ -154,11 +151,11 @@ public:
   ///   @param [in] num_compo   物性テーブルの個数
   ///   @param [in] m_tbl       物性テーブル
   ///
-  MonitorCompo(Vec3<REAL_TYPE> org,
-               Vec3<REAL_TYPE> pch,
-               Vec3<REAL_TYPE> box,
-               Vec3<REAL_TYPE> g_org,
-               Vec3<REAL_TYPE> g_box,
+  MonitorCompo(Vec3d org,
+               Vec3d pch,
+               Vec3d box,
+               Vec3d g_org,
+               Vec3d g_box,
                ReferenceVariables refVar,
                int* bid,
                int* bcd,
@@ -198,6 +195,7 @@ public:
   ~MonitorCompo() {
     if (crd) delete[] crd;
     if (vel) delete[] vel;
+    if (vor) delete[] vor;
     if (prs) delete[] prs;
     if (tmp) delete[] tmp;
     if (tp) delete[] tp;
@@ -230,7 +228,7 @@ public:
   ///   @param [in] flag メッセージ出力フラグ(trueの時出力)
   ///   @return true=領域内/false=領域外
   ///
-  bool checkRegion(const int m, const Vec3<REAL_TYPE> org, const Vec3<REAL_TYPE> box, bool flag=false) const
+  bool checkRegion(const int m, const Vec3d org, const Vec3d box, bool flag=false) const
   {
     if ((crd[m].x< org.x)         ||
         (crd[m].x>(org.x+box.x))  ||
@@ -271,7 +269,7 @@ public:
   Vec3i getSamplingCellIndex(int m) const
   {
     Vec3i index;
-    Vec3<REAL_TYPE> c = (crd[m] - org) / pch;
+    Vec3d c = (crd[m] - org) / pch;
     index.x = int(c.x) + 1;
     index.y = int(c.y) + 1;
     index.z = int(c.z) + 1;
@@ -322,7 +320,7 @@ public:
   ///
   ///   @note 全プロセスから呼ぶこと
   ///
-  void print_distribute(const unsigned step, const REAL_TYPE tm)
+  void print_distribute(const unsigned step, const double tm)
   {
     print(step, tm, false);
   }
@@ -335,7 +333,7 @@ public:
   ///
   ///   @note 内部でノード0に集計するため全プロセスから呼ぶこと
   ///
-  void print_gather(const unsigned step, const REAL_TYPE tm)
+  void print_gather(const unsigned step, const double tm)
   {
     gatherSampled();
     
@@ -432,8 +430,8 @@ public:
                vector<string>& variables,
                const char* methodStr,
                const char* modeStr,
-               REAL_TYPE from[3],
-               REAL_TYPE to[3],
+               double from[3],
+               double to[3],
                int nDivision,
                Monitor_Type m_type);
   
@@ -470,7 +468,7 @@ public:
                   const char* methodStr,
                   const char* modeStr,
                   const int order,
-                  const REAL_TYPE m_nv[3],
+                  const double m_nv[3],
                   Monitor_Type m_type);
   
   
@@ -489,7 +487,7 @@ public:
                     const char* methodStr,
                     const char* modeStr,
                     const int order,
-                    const REAL_TYPE m_nv[3],
+                    const double m_nv[3],
                     Monitor_Type m_type);
   
   
@@ -505,11 +503,11 @@ protected:
   
   
   /// Allreduceによる総和(実数配列上書き，work配列指定)
-  bool allReduceSum(REAL_TYPE* array, int n, REAL_TYPE* sendBuf);
+  bool allReduceSum(double* array, int n, double* sendBuf);
   
   
   /// Allreduceによる総和(実数配列上書き)
-  bool allReduceSum(REAL_TYPE* array, int n);
+  bool allReduceSum(double* array, int n);
   
   
   /// Allreduceによる総和(整数配列上書き，work配列指定)
@@ -521,57 +519,57 @@ protected:
   
   
   /// 指定されたモニタ領域内でスカラー変数を平均
-  REAL_TYPE averageScalar(REAL_TYPE* s);
+  double averageScalar(double* s);
   
   
   /// 指定されたモニタ領域内でベクトル変数を平均
-  Vec3<REAL_TYPE> averageVector(Vec3<REAL_TYPE>* v);
+  Vec3d averageVector(Vec3d* v);
   
   
   /// 座標の単位変換
-  REAL_TYPE convCrd(REAL_TYPE xyz) const
+  double convCrd(double xyz) const
   {
     return ( (refVar.modeUnitOutput==DIMENSIONAL) ? xyz*refVar.refLength : xyz );
   }
   
   /// 時間の単位変換
-  REAL_TYPE convTime(REAL_TYPE tm) const
+  double convTime(double tm) const
   {
     return ( (refVar.modeUnitOutput==DIMENSIONAL) ? tm*refVar.refLength/refVar.refVelocity : tm );
   }
   
   /// 速度成分の単位変換
-  REAL_TYPE convVel(REAL_TYPE vel) const
+  double convVel(double vel) const
   {
     return ( (refVar.modeUnitOutput==DIMENSIONAL) ? vel*refVar.refVelocity : vel );
   }
   
   /// 圧力の単位変換
-  REAL_TYPE convPrs(REAL_TYPE prs) const
+  double convPrs(double prs) const
   {
     return ( (refVar.modeUnitOutput==DIMENSIONAL) ? FBUtility::convPrsND2D(prs, refVar.basePrs, refVar.refDensity, refVar.refVelocity, refVar.unitPrs) : prs );
   }
   
   /// 温度の単位変換
-  REAL_TYPE convTmp(REAL_TYPE tmp) const
+  double convTmp(double tmp) const
   {
     return ( (refVar.modeUnitOutput==DIMENSIONAL) ? FBUtility::convTempND2D(tmp, refVar.baseTemp, refVar.diffTemp) : tmp);
   }
   
   /// 全圧の単位変換
-  REAL_TYPE convTP(REAL_TYPE tp) const
+  double convTP(double tp) const
   {
     return ( (refVar.modeUnitOutput==DIMENSIONAL) ? tp * (refVar.refVelocity * refVar.refVelocity * refVar.refDensity) : tp );
   }
   
   /// 渦度成分の単位変換
-  REAL_TYPE convVor(REAL_TYPE vor) const
+  double convVor(double vor) const
   {
     return ( (refVar.modeUnitOutput==DIMENSIONAL) ? vor*refVar.refVelocity/refVar.refLength : vor );
   }
   
   /// Helicityの単位変換
-  REAL_TYPE convHlt(REAL_TYPE hlt) const
+  double convHlt(double hlt) const
   {
     return ( (refVar.modeUnitOutput==DIMENSIONAL) ? hlt*refVar.refVelocity*refVar.refVelocity/refVar.refLength : hlt );
   }
@@ -585,7 +583,7 @@ protected:
   ///   @param [in,out] s スカラー変数配列
   ///   @param  sRecvBuf  通信用work領域
   ///
-  void gatherSampledScalar(REAL_TYPE* s, REAL_TYPE* sRecvBuf);
+  void gatherSampledScalar(double* s, double* sRecvBuf);
   
   
   /// サンプリングしたベクトル変数をノード0に集約
@@ -593,7 +591,7 @@ protected:
   ///   @param [in,out] v ベクトル変数配列
   ///   @param  vSendBuf,vRecvBuf  通信用work領域
   ///
-  void gatherSampledVector(Vec3<REAL_TYPE>* v, REAL_TYPE* vSendBuf, REAL_TYPE* vRecvBuf);
+  void gatherSampledVector(Vec3d* v, double* vSendBuf, double* vRecvBuf);
 
   
   
@@ -619,7 +617,7 @@ protected:
   ///   @param [in] tm   サンプリング時の計算時刻
   ///   @param [in] gathered 出力モードフラグ(true=gather出力/false=disutribute出力)
   ///
-  void print(unsigned step, REAL_TYPE tm, bool gathered);
+  void print(unsigned step, double tm, bool gathered);
   
   
   /*

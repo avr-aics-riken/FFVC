@@ -19,7 +19,11 @@ RELEASE
 =======
 
 -------------
-Version 1.7.5    2014-03-20
+Version 1.7.6    2014-03-23
+  - update Sampling
+
+-------------
+Version 1.7.5    2014-03-22
   - update division pattern cube/comm
 
 -------------

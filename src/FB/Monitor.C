@@ -92,23 +92,23 @@ void MonitorList::checkStatus()
 ///   @param [in,out] from Line始点
 ///   @param [in,out] to   Line終点
 ///
-void MonitorList::clipLine(REAL_TYPE from[3], REAL_TYPE to[3])
+void MonitorList::clipLine(double from[3], double to[3])
 {
   const char* OUT_OF_REGION = "out of region";
-  Vec3<REAL_TYPE> st(from);
-  Vec3<REAL_TYPE> ed(to);
-  Vec3<REAL_TYPE> r0 = g_org;
-  Vec3<REAL_TYPE> r1 = r0 + g_box;
-  Vec3<REAL_TYPE> d = ed - st;
+  Vec3d st(from);
+  Vec3d ed(to);
+  Vec3d r0 = g_org;
+  Vec3d r1 = r0 + g_box;
+  Vec3d d = ed - st;
   
   
   // 境界上に端点が存在する場合は、少し計算領域内にずらす
-  REAL_TYPE eps = 1.0e-5;
+  double eps = 1.0e-5;
   r0 += eps * pch;
   r1 -= eps * pch;
   
-  REAL_TYPE t_st = 0.0;
-  REAL_TYPE t_ed = 1.0;
+  double t_st = 0.0;
+  double t_ed = 1.0;
   
   try {
     if (d.x == 0) {
@@ -226,12 +226,12 @@ void MonitorList::closeFile()
  */
 void MonitorList::generatePrimitiveShape(const int odr,
                                          const Monitor_Type montyp,
-                                         REAL_TYPE nv[3],
-                                         REAL_TYPE ctr[3],
-                                         REAL_TYPE depth,
-                                         REAL_TYPE tmp,
-                                         REAL_TYPE height,
-                                         REAL_TYPE dr[3])
+                                         double nv[3],
+                                         double ctr[3],
+                                         double depth,
+                                         double tmp,
+                                         double height,
+                                         double dr[3])
 {
   ctr[0] /= refVar.refLength;
   ctr[1] /= refVar.refLength;
@@ -241,7 +241,7 @@ void MonitorList::generatePrimitiveShape(const int odr,
   tmp    /= refVar.refLength;
   height /= refVar.refLength;
   
-  // ShapeMonitorのインスタンス
+  // ShapeMonitorのインスタンス >> float引数
   ShapeMonitor SM(size, guide, (float*)pitch, (float*)origin);
   
   
@@ -287,12 +287,12 @@ void MonitorList::generatePrimitiveShape(const int odr,
  */
 void MonitorList::getLine(const Control* C,
                           const string label_base,
-                          REAL_TYPE from[3],
-                          REAL_TYPE to[3],
+                          double from[3],
+                          double to[3],
                           int& nDivision)
 {
   string str,label;
-  REAL_TYPE v[3];
+  double v[3];
   
   label=label_base+"/Division";
   
@@ -343,7 +343,7 @@ void MonitorList::getLine(const Control* C,
 // モニタ座標情報を取得し，リストに保持する
 bool MonitorList::getMonitor(Control* C, CompoList* cmp)
 {
-  REAL_TYPE f_val=0.0;
+  double f_val=0.0;
   Monitor_Type mon_type;
   vector<string> variables;
   
@@ -431,7 +431,7 @@ bool MonitorList::getMonitor(Control* C, CompoList* cmp)
     }
     else
     {
-      C->Interval[Control::tg_sampled].setInterval((double)f_val);
+      C->Interval[Control::tg_sampled].setInterval(f_val);
     }
   }
 
@@ -591,7 +591,7 @@ bool MonitorList::getMonitor(Control* C, CompoList* cmp)
       Hostonly_ stamped_printf("\tParsing error : fail to get 'SamplingMode' in '%s'\n", label.c_str());
       Exit(0);
     }
-    
+
     
     // set coordinate values
     if ( mon_type == mon_POINT_SET )
@@ -603,7 +603,7 @@ bool MonitorList::getMonitor(Control* C, CompoList* cmp)
     
     else if ( mon_type == mon_LINE )
     {
-      REAL_TYPE from[3], to[3];
+      double from[3], to[3];
       int nDivision;
       getLine(C, label_leaf, from, to, nDivision);
       setLine(name.c_str(), variables, method.c_str(), mode.c_str(), from, to, nDivision, mon_type);
@@ -628,13 +628,13 @@ bool MonitorList::getMonitor(Control* C, CompoList* cmp)
         Hostonly_ stamped_printf("\tSomthing wrong %d\n", odr);
         Exit(0);
       }
-      
+
 #if 0
       printf("%s %d\n", name.c_str(), odr);
 #endif
       
       // 法線ベクトル
-      REAL_TYPE nv[3];
+      double nv[3];
       label = label_leaf + "/Normal";
       if ( !Control::getVec(label, nv, tpCntl, true) ) Exit(0);
       
@@ -644,8 +644,8 @@ bool MonitorList::getMonitor(Control* C, CompoList* cmp)
     
     else if ( (mon_type == mon_CYLINDER) || (mon_type == mon_BOX) )
     {
-      REAL_TYPE nv[3], ctr[3], dir[3];
-      REAL_TYPE depth, tmp, height;
+      double nv[3], ctr[3], dir[3];
+      double depth, tmp, height;
       getPrimitive(mon_type, label_leaf, nv, ctr, depth, tmp, height, dir);
       generatePrimitiveShape(i+1, mon_type, nv, ctr, depth, tmp, height, dir);
       setPrimitive(name.c_str(), variables, method.c_str(), mode.c_str(), mon_type,
@@ -658,7 +658,7 @@ bool MonitorList::getMonitor(Control* C, CompoList* cmp)
       Exit(0);
     }
   }
-  
+
   nGroup = (int)monGroup.size();
   
   return true;
@@ -706,7 +706,7 @@ void MonitorList::getPointset(const Control* C,
                               const string label_base,
                               vector<MonitorCompo::MonitorPoint>& pointSet)
 {
-  REAL_TYPE v[3];
+  double v[3];
   char tmpstr[20];
   string str,label;
   string label_leaf;
@@ -797,12 +797,12 @@ void MonitorList::getPointset(const Control* C,
  */
 void MonitorList::getPrimitive(Monitor_Type mon_type,
                                const string label_base,
-                               REAL_TYPE nv[3],
-                               REAL_TYPE center[3],
-                               REAL_TYPE& depth,
-                               REAL_TYPE& tmp,
-                               REAL_TYPE& height,
-                               REAL_TYPE dir[3])
+                               double nv[3],
+                               double center[3],
+                               double& depth,
+                               double& tmp,
+                               double& height,
+                               double dir[3])
 {
   string label;
   
@@ -919,7 +919,7 @@ void MonitorList::openFile()
 ///
 ///   @note gatherの場合も全プロセスから呼ぶこと
 ///
-void MonitorList::print(const unsigned step, const REAL_TYPE tm)
+void MonitorList::print(const unsigned step, const double tm)
 {
   for (int i = 0; i < nGroup; i++)
   {
@@ -993,26 +993,36 @@ void MonitorList::registVars(const string label, vector<string>& variables, cons
 void MonitorList::setControlVars(int* bid,
                                  float* cut,
                                  int* bcd,
-                                 const REAL_TYPE refVelocity,
-                                 const REAL_TYPE baseTemp,
-                                 const REAL_TYPE diffTemp,
-                                 const REAL_TYPE refDensity,
-                                 const REAL_TYPE refLength,
-                                 const REAL_TYPE basePrs,
+                                 const double refVelocity,
+                                 const double baseTemp,
+                                 const double diffTemp,
+                                 const double refDensity,
+                                 const double refLength,
+                                 const double basePrs,
                                  const int modePrecision,
                                  const int unitPrs,
                                  const int num_process,
                                  const int m_NoCompo,
                                  REAL_TYPE* tbl)
 {
-  this->bid         = bid;
-  this->bcd         = bcd;
-  this->cut         = cut;
-  this->g_org       = G_origin;
-  this->g_box       = G_region;
-  this->org         = origin;
-  this->pch         = deltaX;
-  this->box         = region;
+  this->bid      = bid;
+  this->bcd      = bcd;
+  this->cut      = cut;
+  this->g_org.x  = (double)G_origin[0];
+  this->g_org.y  = (double)G_origin[1];
+  this->g_org.z  = (double)G_origin[2];
+  this->g_box.x  = (double)G_region[0];
+  this->g_box.y  = (double)G_region[1];
+  this->g_box.z  = (double)G_region[2];
+  this->org.x    = (double)origin[0];
+  this->org.y    = (double)origin[1];
+  this->org.z    = (double)origin[2];
+  this->pch.x    = (double)deltaX;
+  this->pch.y    = (double)deltaX;
+  this->pch.z    = (double)deltaX;
+  this->box.x    = (double)region[0];
+  this->box.y    = (double)region[1];
+  this->box.z    = (double)region[2];
   this->num_process = num_process;
   this->NoCompo     = m_NoCompo;
   this->mtbl        = tbl;
@@ -1044,8 +1054,8 @@ void MonitorList::setLine(const char* str,
                           vector<string>& variables,
                           const char* method,
                           const char* mode,
-                          REAL_TYPE from[3],
-                          REAL_TYPE to[3],
+                          double from[3],
+                          double to[3],
                           int nDivision,
                           Monitor_Type mon_type)
 {
@@ -1124,7 +1134,7 @@ void MonitorList::setPolygon(const char* str,
                              const char* method,
                              const char* mode,
                              const int order,
-                             const REAL_TYPE nv[3],
+                             const double nv[3],
                              Monitor_Type mon_type)
 {
   MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process, NoCompo, mtbl);
@@ -1158,12 +1168,12 @@ void MonitorList::setPrimitive(const char* str,
                                const char* method,
                                const char* mode,
                                Monitor_Type mon_type,
-                               const REAL_TYPE nv[3],
-                               const REAL_TYPE center[3],
-                               const REAL_TYPE& depth,
-                               const REAL_TYPE& tmp,
-                               const REAL_TYPE& height,
-                               const REAL_TYPE dir[3],
+                               const double nv[3],
+                               const double center[3],
+                               const double& depth,
+                               const double& tmp,
+                               const double& height,
+                               const double dir[3],
                                const int order)
 {
   MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process, NoCompo, mtbl);
@@ -1183,7 +1193,7 @@ void MonitorList::setPrimitive(const char* str,
 ///
 void MonitorList::setV00(REAL_TYPE v00[4])
 {
-  refVar.v00.x = v00[1];
-  refVar.v00.y = v00[2];
-  refVar.v00.z = v00[3];
+  refVar.v00.x = (double)v00[1];
+  refVar.v00.y = (double)v00[2];
+  refVar.v00.z = (double)v00[3];
 }

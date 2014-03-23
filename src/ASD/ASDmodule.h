@@ -50,7 +50,7 @@
 
 #include "Cutlib.h"
 #include "GridAccessor/Cell.h"
-#include "../FB/Vec3.h"
+#include "Vec3.h"
 
 using namespace std;
 using namespace PolylibNS;

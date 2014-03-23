@@ -44,20 +44,19 @@ main.o: main.C FFV/ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  FFV/../FB/DomainInfo.h FFV/../FB/FB_Define.h FFV/../FB/mydebug.h \
  FFV/../FB/FBUtility.h FFV/../FB/Medium.h FFV/../FB/Control.h \
  FFV/../FB/Component.h FFV/../FB/BndOuter.h FFV/../FB/CompoFraction.h \
- FFV/../FB/Vec3.h FFV/../FB/IterationControl.h \
+ /usr/local/FFV/Polylib/include/common/Vec3.h FFV/../FB/IterationControl.h \
  /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h FFV/../FB/IntervalManager.h \
  FFV/../FB/Alloc.h FFV/../FB/FileIO.h FFV/../FB/FB_Ffunc.h FFV/../FB/ParseBC.h \
  FFV/../FB/Intrinsic.h FFV/../FB/ParseMat.h FFV/../FB/VoxInfo.h FFV/../FB/SetBC.h \
  FFV/../FB/History.h FFV/../FB/Monitor.h FFV/../FB/MonCompo.h \
- FFV/../FB/basic_func.h FFV/../FB/Sampling.h FFV/ffv_Version.h FFV/ffv_Define.h \
- FFV/ffv_SetBC.h FFV/../F_CORE/ffv_Ffunc.h FFV/../IP/IP_Jet.h \
- FFV/../IP/IP_Define.h FFV/../F_CORE/ffv_Ffunc.h FFV/ffv_TerminateCtrl.h \
- FFV/../FB/Glyph.h FFV/../IP/IP_Duct.h FFV/../IP/IP_PPLT2D.h FFV/../IP/IP_PMT.h \
- FFV/../IP/IP_Rect.h FFV/../IP/IP_Step.h FFV/../IP/IP_Cylinder.h \
- FFV/../IP/IP_Polygon.h FFV/../IP/IP_Sphere.h \
- /usr/local/FFV/PMlib/include/PerfMonitor.h \
+ FFV/../FB/Sampling.h FFV/ffv_Version.h FFV/ffv_Define.h FFV/ffv_SetBC.h \
+ FFV/../F_CORE/ffv_Ffunc.h FFV/../IP/IP_Jet.h FFV/../IP/IP_Define.h \
+ FFV/../F_CORE/ffv_Ffunc.h FFV/ffv_TerminateCtrl.h FFV/../FB/Glyph.h \
+ FFV/../IP/IP_Duct.h FFV/../IP/IP_PPLT2D.h FFV/../IP/IP_PMT.h FFV/../IP/IP_Rect.h \
+ FFV/../IP/IP_Step.h FFV/../IP/IP_Cylinder.h FFV/../IP/IP_Polygon.h \
+ FFV/../IP/IP_Sphere.h /usr/local/FFV/PMlib/include/PerfMonitor.h \
  /usr/local/FFV/PMlib/include/PerfWatch.h \
  /usr/local/FFV/PMlib/include/pmVersion.h \
  /usr/local/FFV/Polylib/include/Polylib.h \
@@ -65,7 +64,6 @@ main.o: main.C FFV/ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/Polylib/include/common/PolylibStat.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
- /usr/local/FFV/Polylib/include/common/Vec3.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \

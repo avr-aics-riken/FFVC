@@ -26,7 +26,6 @@
 #include "FB_Define.h"
 #include "Vec3.h"
 #include "MonCompo.h"
-#include "basic_func.h"
 #include "Component.h"
 #include "Control.h"
 #include "CompoFraction.h"
@@ -51,11 +50,11 @@ protected:
   
   int nGroup;            ///< モニタリンググループ数
   int num_process;       ///< プロセス数
-  Vec3<REAL_TYPE> org;         ///< ローカル基点座標
-  Vec3<REAL_TYPE> pch;         ///< セル幅
-  Vec3<REAL_TYPE> box;         ///< ローカル領域サイズ
-  Vec3<REAL_TYPE> g_org;       ///< グローバル基点座標
-  Vec3<REAL_TYPE> g_box;       ///< グローバル領域サイズ
+  Vec3d org;             ///< ローカル基点座標
+  Vec3d pch;             ///< セル幅
+  Vec3d box;             ///< ローカル領域サイズ
+  Vec3d g_org;           ///< グローバル基点座標
+  Vec3d g_box;           ///< グローバル領域サイズ
   int* bid;              ///< 境界ID
   int* bcd;              ///< BCindex B
   float* cut;            ///< 交点情報
@@ -146,7 +145,7 @@ public:
   ///
   ///   @note gatherの場合も全プロセスから呼ぶこと
   ///
-  void print(const unsigned step, const REAL_TYPE tm);
+  void print(const unsigned step, const double tm);
   
   
   /// モニタ情報を出力
@@ -196,12 +195,12 @@ public:
   void setControlVars(int* bid,
                       float* cut,
                       int* bcd,
-                      const REAL_TYPE refVelocity,
-                      const REAL_TYPE baseTemp,
-                      const REAL_TYPE diffTemp,
-                      const REAL_TYPE refDensity,
-                      const REAL_TYPE refLength,
-                      const REAL_TYPE basePrs,
+                      const double refVelocity,
+                      const double baseTemp,
+                      const double diffTemp,
+                      const double refDensity,
+                      const double refLength,
+                      const double basePrs,
                       const int modePrecision,
                       const int unitPrs,
                       const int num_process,
@@ -241,25 +240,25 @@ public:
 protected:
   
   /// Line指定の端点座標をグローバル計算領域内にクリッピング
-  void clipLine(REAL_TYPE from[3], REAL_TYPE to[3]);
+  void clipLine(double from[3], double to[3]);
   
   
   /// プリミティブ形状を作成
   void generatePrimitiveShape(const int odr,
                               const Monitor_Type montyp,
-                              REAL_TYPE nv[3],
-                              REAL_TYPE ctr[3],
-                              REAL_TYPE depth,
-                              REAL_TYPE tmp,
-                              REAL_TYPE height,
-                              REAL_TYPE dr[3]);
+                              double nv[3],
+                              double ctr[3],
+                              double depth,
+                              double tmp,
+                              double height,
+                              double dr[3]);
   
   
   /// モニタ座標情報(Line)を取得
   void getLine(const Control* C,
                const string label_base,
-               REAL_TYPE from[3],
-               REAL_TYPE to[3],
+               double from[3],
+               double to[3],
                int& nDivision);
   
   
@@ -276,16 +275,16 @@ protected:
   /// プリミティブのモニタ形状情報を取得
   void getPrimitive(Monitor_Type mon_type,
                     const string label_base,
-                    REAL_TYPE nv[3],
-                    REAL_TYPE center[3],
-                    REAL_TYPE& depth,
-                    REAL_TYPE& tmp,
-                    REAL_TYPE& height,
-                    REAL_TYPE dir[3]);
+                    double nv[3],
+                    double center[3],
+                    double& depth,
+                    double& tmp,
+                    double& height,
+                    double dir[3]);
   
   
   /// 座標値を無次元化する
-  void normalizeCord(REAL_TYPE RefLength, REAL_TYPE x[3])
+  void normalizeCord(double RefLength, double x[3])
   {
     x[0] /= RefLength;
     x[1] /= RefLength;
@@ -302,8 +301,8 @@ protected:
                vector<string>& variables,
                const char* method,
                const char* mode,
-               REAL_TYPE from[3],
-               REAL_TYPE to[3],
+               double from[3],
+               double to[3],
                int nDivision,
                Monitor_Type mon_type);
   
@@ -330,7 +329,7 @@ protected:
                   const char* method,
                   const char* mode,
                   const int order,
-                  const REAL_TYPE nv[3],
+                  const double nv[3],
                   Monitor_Type mon_type);
   
   
@@ -340,12 +339,12 @@ protected:
                     const char* method,
                     const char* mode,
                     Monitor_Type mon_type,
-                    const REAL_TYPE nv[3],
-                    const REAL_TYPE center[3],
-                    const REAL_TYPE& depth,
-                    const REAL_TYPE& tmp,
-                    const REAL_TYPE& height,
-                    const REAL_TYPE dir[3],
+                    const double nv[3],
+                    const double center[3],
+                    const double& depth,
+                    const double& tmp,
+                    const double& height,
+                    const double dir[3],
                     const int order);
   
   

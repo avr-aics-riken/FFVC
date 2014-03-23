@@ -2568,7 +2568,7 @@ REAL_TYPE Control::getValueReal(const std::string label, TextParser* tpc)
 // #################################################################
 // ベクトル値を取得し，登録する
 // normalize = trueのとき，無次元化する
-bool Control::getVec(const std::string label, REAL_TYPE* v, TextParser* tpc, bool normalize)
+bool Control::getVec(const std::string label, double* v, TextParser* tpc, bool normalize)
 {
   for (int i=0; i<3; i++) v[i]=0.0f;
   
@@ -4183,9 +4183,9 @@ void Control::setRefParameters(MediumList* mat, ReferenceFrame* RF)
 
 // #################################################################
 //単位ベクトルを計算して戻す
-void Control::UnitVec(REAL_TYPE* v)
+void Control::UnitVec(double* v)
 {
-	REAL_TYPE a = sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
+	double a = sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
   
 	if ( a > 0.0 )
   {

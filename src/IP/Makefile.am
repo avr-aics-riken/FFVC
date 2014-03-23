@@ -21,6 +21,7 @@ libIP_a_CXXFLAGS = \
   -I. \
   -I../FB \
   @CPM_CFLAGS@ \
+  @PL_CFLAGS@ \
   @TP_CFLAGS@ \
   @MPICH_CFLAGS@ \
   @REALOPT@

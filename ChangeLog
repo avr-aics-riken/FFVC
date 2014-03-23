@@ -19,6 +19,13 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-03-23
+- r1619 update sampling [ver 1.7.6]
+  - remove Vec3.h from FB >> already included by Polylib
+  - move interpolation methods in basic_func.h to Smapling.h
+  - set type of floating-point to double in sampling procedure
+
+--------------------------
 2014-03-22
 - r1618 update division pattern cube/comm [ver 1.7.5]
 

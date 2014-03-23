@@ -203,7 +203,7 @@ void ParseBC::get_IBC_Fan(const string label_base, const int n, CompoList* cmp)
 {
   string str,str_u;
   string label;
-
+  double dv[3];
   
   // 入力単位の指定
   label=label_base+"/Unit";//
@@ -231,11 +231,17 @@ void ParseBC::get_IBC_Fan(const string label_base, const int n, CompoList* cmp)
   
   // 法線ベクトルの取得
   label = label_base + "/OrientationVector";
-  if ( !Control::getVec(label, cmp[n].nv, tpCntl, true) ) Exit(0);
+  if ( !Control::getVec(label, dv, tpCntl, true) ) Exit(0);
+  cmp[n].nv[0] = dv[0];
+  cmp[n].nv[1] = dv[1];
+  cmp[n].nv[2] = dv[2];
   
   // 中心座標の取得
   label = label_base + "/Center";
-  if ( !Control::getVec(label, cmp[n].oc, tpCntl, false) ) Exit(0);
+  if ( !Control::getVec(label, dv, tpCntl, false) ) Exit(0);
+  cmp[n].oc[0] = dv[0];
+  cmp[n].oc[1] = dv[1];
+  cmp[n].oc[2] = dv[2];
   
   // 形状パラメータ
   label=label_base+"/Depth";
@@ -447,11 +453,14 @@ void ParseBC::get_IBC_IBM_DF(const string label_base, const int n, CompoList* cm
 {
   string str;
   string label;
-  
+  double dv[3];
   
   // 法線ベクトル
   label = label_base + "/OrientationVector";
-  if ( !Control::getVec(label, cmp[n].nv, tpCntl, true) ) Exit(0);
+  if ( !Control::getVec(label, dv, tpCntl, true) ) Exit(0);
+  cmp[n].nv[0] = dv[0];
+  cmp[n].nv[1] = dv[1];
+  cmp[n].nv[2] = dv[2];
   
   // Velocity
   label=label_base+"/Velocity";
@@ -498,6 +507,7 @@ void ParseBC::getIbcOutflow(const string label_base, const int n, CompoList* cmp
 {
   string str;
   string label;
+  double dv[3];
   
   // 圧力境界のタイプ default
   cmp[n].set_P_BCtype( P_GRAD_ZERO );
@@ -532,7 +542,10 @@ void ParseBC::getIbcOutflow(const string label_base, const int n, CompoList* cmp
   
   // 法線ベクトルの取得
   label = label_base + "/OrientationVector";
-  if ( !Control::getVec(label, cmp[n].nv, tpCntl, true) ) Exit(0);
+  if ( !Control::getVec(label, dv, tpCntl, true) ) Exit(0);
+  cmp[n].nv[0] = dv[0];
+  cmp[n].nv[1] = dv[1];
+  cmp[n].nv[2] = dv[2];
   
   // 出口方向を指定
   cmp[n].setBClocation(CompoList::opposite_direction);
@@ -624,7 +637,7 @@ void ParseBC::get_IBC_PrsLoss(const string label_base, const int n, CompoList* c
   string str,str_u;
   string label;
   REAL_TYPE v[4];
-  
+  double dv[3];
   
   // 入力単位の指定
   label = label_base + "/Unit";
@@ -652,15 +665,24 @@ void ParseBC::get_IBC_PrsLoss(const string label_base, const int n, CompoList* c
   
   // 法線ベクトルの取得
   label = label_base + "/OrientationVector";
-  if ( !Control::getVec(label, cmp[n].nv, tpCntl, true) ) Exit(0);
+  if ( !Control::getVec(label, dv, tpCntl, true) ) Exit(0);
+  cmp[n].nv[0] = dv[0];
+  cmp[n].nv[1] = dv[1];
+  cmp[n].nv[2] = dv[2];
   
   // 方向ベクトルの取得
   label = label_base + "/Dir";
-  if ( !Control::getVec(label, cmp[n].dr, tpCntl, true) ) Exit(0);
+  if ( !Control::getVec(label, dv, tpCntl, true) ) Exit(0);
+  cmp[n].dr[0] = dv[0];
+  cmp[n].dr[1] = dv[1];
+  cmp[n].dr[2] = dv[2];
   
   // 中心座標の取得
   label = label_base + "/Center";
-  if ( !Control::getVec(label, cmp[n].oc, tpCntl, false) ) Exit(0);
+  if ( !Control::getVec(label, dv, tpCntl, false) ) Exit(0);
+  cmp[n].oc[0] = dv[0];
+  cmp[n].oc[1] = dv[1];
+  cmp[n].oc[2] = dv[2];
   
   // 形状パラメータ
   label = label_base + "/Depth";
@@ -744,6 +766,7 @@ void ParseBC::getIbcSpecVel(const string label_base, const int n, CompoList* cmp
   string str;
   string label;
   REAL_TYPE ct=0;
+  double dv[3];
   
   // 指定タイプの特定
   label = label_base + "/Type";
@@ -777,8 +800,10 @@ void ParseBC::getIbcSpecVel(const string label_base, const int n, CompoList* cmp
   
   // 法線ベクトル
   label = label_base + "/OrientationVector";
-  if ( !Control::getVec(label, cmp[n].nv, tpCntl, true) ) Exit(0);
-  
+  if ( !Control::getVec(label, dv, tpCntl, true) ) Exit(0);
+  cmp[n].nv[0] = dv[0];
+  cmp[n].nv[1] = dv[1];
+  cmp[n].nv[2] = dv[2];
 
   
   // 境界条件の方向
@@ -1338,7 +1363,7 @@ void ParseBC::getObcSpecVH(const string label_base, const int n)
   // 法線ベクトル
   if ( BaseBc[n].get_V_Profile() != CompoList::vel_zero )
   {
-    REAL_TYPE v[3];
+    double v[3];
     label = label_base + "/OrientationVector";
     if ( !Control::getVec(label, v, tpCntl, true) ) Exit(0);
     BaseBc[n].addVec(v);
@@ -1418,7 +1443,7 @@ void ParseBC::getObcTrcfree(const string label_base, const int n)
 void ParseBC::getObcWall(const string label_base, const int n)
 {
   REAL_TYPE ct=0.0;
-  REAL_TYPE v[3];
+  double dv[3];
   string str;
   string label, label2;
   
@@ -1451,8 +1476,8 @@ void ParseBC::getObcWall(const string label_base, const int n)
   if ( BaseBc[n].get_V_Profile() != CompoList::vel_zero )
   {
     label = label_base + "/OrientationVector";
-    if ( !Control::getVec(label, v, tpCntl, true) ) Exit(0);
-    BaseBc[n].addVec(v);
+    if ( !Control::getVec(label, dv, tpCntl, true) ) Exit(0);
+    BaseBc[n].addVec(dv);
   }
   
   // 速度のパラメータ読み込み

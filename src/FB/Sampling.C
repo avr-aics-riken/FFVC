@@ -26,25 +26,25 @@
 ///   @param [in] index 計算位置のセルインデックス
 ///   @return ヘリシティ値
 ///
-REAL_TYPE Sampling::calcHelicity(const REAL_TYPE* v, Vec3i index)
+double Sampling::calcHelicity(const REAL_TYPE* v, Vec3i index)
 {
   if (isFluid(index)) {
     
-    Vec3<REAL_TYPE> v0 = getVector(v, index);
-    Vec3<REAL_TYPE> v1 = 2.0f * v0 - v00;
+    Vec3d v0 = getVector(v, index);
+    Vec3d v1 = 2.0 * v0 - v00;
     
-    Vec3<REAL_TYPE> v_xm = isFluid(shift_xm(index)) ? getVector(v, shift_xm(index)) : v1;
-    Vec3<REAL_TYPE> v_xp = isFluid(shift_xp(index)) ? getVector(v, shift_xp(index)) : v1;
-    Vec3<REAL_TYPE> v_ym = isFluid(shift_ym(index)) ? getVector(v, shift_ym(index)) : v1;
-    Vec3<REAL_TYPE> v_yp = isFluid(shift_yp(index)) ? getVector(v, shift_yp(index)) : v1;
-    Vec3<REAL_TYPE> v_zm = isFluid(shift_zm(index)) ? getVector(v, shift_zm(index)) : v1;
-    Vec3<REAL_TYPE> v_zp = isFluid(shift_zp(index)) ? getVector(v, shift_zp(index)) : v1;
+    Vec3d v_xm = isFluid(shift_xm(index)) ? getVector(v, shift_xm(index)) : v1;
+    Vec3d v_xp = isFluid(shift_xp(index)) ? getVector(v, shift_xp(index)) : v1;
+    Vec3d v_ym = isFluid(shift_ym(index)) ? getVector(v, shift_ym(index)) : v1;
+    Vec3d v_yp = isFluid(shift_yp(index)) ? getVector(v, shift_yp(index)) : v1;
+    Vec3d v_zm = isFluid(shift_zm(index)) ? getVector(v, shift_zm(index)) : v1;
+    Vec3d v_zp = isFluid(shift_zp(index)) ? getVector(v, shift_zp(index)) : v1;
     
-    REAL_TYPE hx = 0.5 / pch.x;
-    REAL_TYPE hy = 0.5 / pch.y;
-    REAL_TYPE hz = 0.5 / pch.z;
+    double hx = 0.5 / pch.x;
+    double hy = 0.5 / pch.y;
+    double hz = 0.5 / pch.z;
     
-    Vec3<REAL_TYPE> omg;
+    Vec3d omg;
     omg.x = ( (v_yp.z - v_ym.z)*hy - (v_zp.y - v_zm.y)*hz ) * v0.x;
     omg.y = ( (v_zp.x - v_zm.x)*hz - (v_xp.z - v_xm.z)*hx ) * v0.y;
     omg.z = ( (v_xp.y - v_xm.y)*hx - (v_yp.x - v_ym.x)*hy ) * v0.z;
@@ -63,25 +63,25 @@ REAL_TYPE Sampling::calcHelicity(const REAL_TYPE* v, Vec3i index)
 ///   @param [in] index 計算位置のセルインデックス
 ///   @return 渦度ベクトル
 ///
-Vec3<REAL_TYPE> Sampling::calcVorticity(const REAL_TYPE* v, Vec3i index)
+Vec3d Sampling::calcVorticity(const REAL_TYPE* v, Vec3i index)
 {
   if (isFluid(index)) {
   
-    Vec3<REAL_TYPE> v0 = getVector(v, index);
-    Vec3<REAL_TYPE> v1 = 2.0f * v0 - v00;
+    Vec3d v0 = getVector(v, index);
+    Vec3d v1 = 2.0 * v0 - v00;
 
-    Vec3<REAL_TYPE> v_xm = isFluid(shift_xm(index)) ? getVector(v, shift_xm(index)) : v1;
-    Vec3<REAL_TYPE> v_xp = isFluid(shift_xp(index)) ? getVector(v, shift_xp(index)) : v1;
-    Vec3<REAL_TYPE> v_ym = isFluid(shift_ym(index)) ? getVector(v, shift_ym(index)) : v1;
-    Vec3<REAL_TYPE> v_yp = isFluid(shift_yp(index)) ? getVector(v, shift_yp(index)) : v1;
-    Vec3<REAL_TYPE> v_zm = isFluid(shift_zm(index)) ? getVector(v, shift_zm(index)) : v1;
-    Vec3<REAL_TYPE> v_zp = isFluid(shift_zp(index)) ? getVector(v, shift_zp(index)) : v1;
+    Vec3d v_xm = isFluid(shift_xm(index)) ? getVector(v, shift_xm(index)) : v1;
+    Vec3d v_xp = isFluid(shift_xp(index)) ? getVector(v, shift_xp(index)) : v1;
+    Vec3d v_ym = isFluid(shift_ym(index)) ? getVector(v, shift_ym(index)) : v1;
+    Vec3d v_yp = isFluid(shift_yp(index)) ? getVector(v, shift_yp(index)) : v1;
+    Vec3d v_zm = isFluid(shift_zm(index)) ? getVector(v, shift_zm(index)) : v1;
+    Vec3d v_zp = isFluid(shift_zp(index)) ? getVector(v, shift_zp(index)) : v1;
 
-    REAL_TYPE hx = 0.5 / pch.x;
-    REAL_TYPE hy = 0.5 / pch.y;
-    REAL_TYPE hz = 0.5 / pch.z;
+    double hx = 0.5 / pch.x;
+    double hy = 0.5 / pch.y;
+    double hz = 0.5 / pch.z;
 
-    Vec3<REAL_TYPE> omg;
+    Vec3d omg;
     omg.x = (v_yp.z - v_ym.z)*hy - (v_zp.y - v_zm.y)*hz;
     omg.y = (v_zp.x - v_zm.x)*hz - (v_xp.z - v_xm.z)*hx;
     omg.z = (v_xp.y - v_xm.y)*hx - (v_yp.x - v_ym.x)*hy;
@@ -112,10 +112,10 @@ Vec3<REAL_TYPE> Sampling::calcVorticity(const REAL_TYPE* v, Vec3i index)
 Nearest::Nearest(int mode,
                  int size[],
                  int guide,
-                 Vec3<REAL_TYPE> crd,
-                 Vec3<REAL_TYPE> org,
-                 Vec3<REAL_TYPE> pch,
-                 Vec3<REAL_TYPE> v00,
+                 Vec3d crd,
+                 Vec3d org,
+                 Vec3d pch,
+                 Vec3d v00,
                  int* bcd,
                  int num_compo,
                  REAL_TYPE* tbl)
@@ -128,7 +128,7 @@ Nearest::Nearest(int mode,
 ///
 ///   @param [in] s サンプリング元スカラー変数配列
 ///
-REAL_TYPE Nearest::samplingScalar(const REAL_TYPE* s)
+double Nearest::samplingScalar(const REAL_TYPE* s)
 {
   return getScalar(s, cIndex);
 }
@@ -138,7 +138,7 @@ REAL_TYPE Nearest::samplingScalar(const REAL_TYPE* s)
 ///
 ///   @param [in] s サンプリング元内部エネルギー変数配列
 ///
-REAL_TYPE Nearest::samplingTemp(const REAL_TYPE* s)
+double Nearest::samplingTemp(const REAL_TYPE* s)
 {
   return getTemp(s, cIndex);
 }
@@ -148,7 +148,7 @@ REAL_TYPE Nearest::samplingTemp(const REAL_TYPE* s)
 ///
 ///   @param [in] v サンプリング元速度配列
 ///
-Vec3<REAL_TYPE> Nearest::samplingVelocity(const REAL_TYPE* v)
+Vec3d Nearest::samplingVelocity(const REAL_TYPE* v)
 {
   return getVector(v, cIndex);
 }
@@ -159,7 +159,7 @@ Vec3<REAL_TYPE> Nearest::samplingVelocity(const REAL_TYPE* v)
 ///   @param [in] v サンプリング元速度配列
 ///   @param [in] p サンプリング元圧力配列
 ///
-REAL_TYPE Nearest::samplingTotalPressure(const REAL_TYPE* v, const REAL_TYPE* p)
+double Nearest::samplingTotalPressure(const REAL_TYPE* v, const REAL_TYPE* p)
 {
   return calcTotalPressure(getVector(v, cIndex), getScalar(p, cIndex));
 }
@@ -169,7 +169,7 @@ REAL_TYPE Nearest::samplingTotalPressure(const REAL_TYPE* v, const REAL_TYPE* p)
 ///
 ///   @param [in] v サンプリング元速度配列
 ///
-Vec3<REAL_TYPE> Nearest::samplingVorticity(const REAL_TYPE* v)
+Vec3d Nearest::samplingVorticity(const REAL_TYPE* v)
 {
   return calcVorticity(v, cIndex);
 }
@@ -178,7 +178,7 @@ Vec3<REAL_TYPE> Nearest::samplingVorticity(const REAL_TYPE* v)
 ///
 ///   @param [in] v サンプリング元速度配列
 ///
-REAL_TYPE Nearest::samplingHelicity(const REAL_TYPE* v)
+double Nearest::samplingHelicity(const REAL_TYPE* v)
 {
   return calcHelicity(v, cIndex);
 }
@@ -204,10 +204,10 @@ REAL_TYPE Nearest::samplingHelicity(const REAL_TYPE* v)
 Smoothing::Smoothing(int mode,
                      int size[],
                      int guide,
-                     Vec3<REAL_TYPE> crd,
-                     Vec3<REAL_TYPE> org,
-                     Vec3<REAL_TYPE> pch,
-                     Vec3<REAL_TYPE> v00,
+                     Vec3d crd,
+                     Vec3d org,
+                     Vec3d pch,
+                     Vec3d v00,
                      int* bcd,
                      int num_compo,
                      REAL_TYPE* tbl)
@@ -234,9 +234,9 @@ Smoothing::Smoothing(int mode,
 ///
 ///   @param [in] s サンプリング元スカラー変数配列
 ///
-REAL_TYPE Smoothing::samplingScalar(const REAL_TYPE* s)
+double Smoothing::samplingScalar(const REAL_TYPE* s)
 {
-  REAL_TYPE sRet = getScalar(s, cIndex);
+  double sRet = getScalar(s, cIndex);
   if (add_xm) sRet += getScalar(s, shift_xm(cIndex));
   if (add_xp) sRet += getScalar(s, shift_xp(cIndex));
   if (add_ym) sRet += getScalar(s, shift_ym(cIndex));
@@ -253,9 +253,9 @@ REAL_TYPE Smoothing::samplingScalar(const REAL_TYPE* s)
 ///
 ///   @param [in] s サンプリング元変数配列
 ///
-REAL_TYPE Smoothing::samplingTemp(const REAL_TYPE* s)
+double Smoothing::samplingTemp(const REAL_TYPE* s)
 {
-  REAL_TYPE sRet = getTemp(s, cIndex);
+  double sRet = getTemp(s, cIndex);
   if (add_xm) sRet += getTemp(s, shift_xm(cIndex));
   if (add_xp) sRet += getTemp(s, shift_xp(cIndex));
   if (add_ym) sRet += getTemp(s, shift_ym(cIndex));
@@ -272,9 +272,9 @@ REAL_TYPE Smoothing::samplingTemp(const REAL_TYPE* s)
 ///
 ///   @param [in] v サンプリング元速度配列
 ///
-Vec3<REAL_TYPE> Smoothing::samplingVelocity(const REAL_TYPE* v)
+Vec3d Smoothing::samplingVelocity(const REAL_TYPE* v)
 {
-  Vec3<REAL_TYPE> vRet = getVector(v, cIndex);
+  Vec3d vRet = getVector(v, cIndex);
   if (add_xm) vRet += getVector(v, shift_xm(cIndex));
   if (add_xm) vRet += getVector(v, shift_xp(cIndex));
   if (add_xm) vRet += getVector(v, shift_ym(cIndex));
@@ -292,9 +292,9 @@ Vec3<REAL_TYPE> Smoothing::samplingVelocity(const REAL_TYPE* v)
 ///   @param [in] v サンプリング元速度配列
 ///   @param [in] p サンプリング元圧力配列
 ///
-REAL_TYPE Smoothing::samplingTotalPressure(const REAL_TYPE* v, const REAL_TYPE* p)
+double Smoothing::samplingTotalPressure(const REAL_TYPE* v, const REAL_TYPE* p)
 {
-  REAL_TYPE tp = calcTotalPressure(getVector(v, cIndex), getScalar(p, cIndex));
+  double tp = calcTotalPressure(getVector(v, cIndex), getScalar(p, cIndex));
   if (add_xm) {
     tp += calcTotalPressure(getVector(v, shift_xm(cIndex)), getScalar(p, shift_xm(cIndex)));
   }
@@ -323,9 +323,9 @@ REAL_TYPE Smoothing::samplingTotalPressure(const REAL_TYPE* v, const REAL_TYPE* 
 ///
 ///   @param [in] v サンプリング元速度配列
 ///
-Vec3<REAL_TYPE> Smoothing::samplingVorticity(const REAL_TYPE* v)
+Vec3d Smoothing::samplingVorticity(const REAL_TYPE* v)
 {
-  Vec3<REAL_TYPE> omg = calcVorticity(v, cIndex);
+  Vec3d omg = calcVorticity(v, cIndex);
   if (add_xm) omg += calcVorticity(v, shift_xm(cIndex));
   if (add_xp) omg += calcVorticity(v, shift_xp(cIndex));
   if (add_ym) omg += calcVorticity(v, shift_ym(cIndex));
@@ -341,9 +341,9 @@ Vec3<REAL_TYPE> Smoothing::samplingVorticity(const REAL_TYPE* v)
 ///
 ///   @param [in] v サンプリング元速度配列
 ///
-REAL_TYPE Smoothing::samplingHelicity(const REAL_TYPE* v)
+double Smoothing::samplingHelicity(const REAL_TYPE* v)
 {
-  REAL_TYPE omg = calcHelicity(v, cIndex);
+  double omg = calcHelicity(v, cIndex);
   if (add_xm) omg += calcHelicity(v, shift_xm(cIndex));
   if (add_xp) omg += calcHelicity(v, shift_xp(cIndex));
   if (add_ym) omg += calcHelicity(v, shift_ym(cIndex));
@@ -378,22 +378,22 @@ REAL_TYPE Smoothing::samplingHelicity(const REAL_TYPE* v)
 Interpolation::Interpolation(int mode,
                              int size[],
                              int guide,
-                             Vec3<REAL_TYPE> crd,
-                             Vec3<REAL_TYPE> org,
-                             Vec3<REAL_TYPE> pch,
-                             Vec3<REAL_TYPE> v00,
+                             Vec3d crd,
+                             Vec3d org,
+                             Vec3d pch,
+                             Vec3d v00,
                              int* bcd,
                              int num_compo,
                              REAL_TYPE* tbl)
   : Sampling(mode, size, guide, crd, org, pch, v00, bcd, num_compo, tbl)
 {
-  Vec3<REAL_TYPE> c = (crd - org) / pch;
+  Vec3d c = (crd - org) / pch;
   base.x = (int)(c.x + 0.5);
   base.y = (int)(c.y + 0.5);
   base.z = (int)(c.z + 0.5);
-  coef[0] = c.x + 0.5 - (REAL_TYPE)base[0];
-  coef[1] = c.y + 0.5 - (REAL_TYPE)base[1];
-  coef[2] = c.z + 0.5 - (REAL_TYPE)base[2];
+  coef[0] = c.x + 0.5 - (double)base.x;
+  coef[1] = c.y + 0.5 - (double)base.y;
+  coef[2] = c.z + 0.5 - (double)base.z;
 
   onBoundary = false;
   if (checkBoundary(base))         onBoundary = true;
@@ -411,11 +411,11 @@ Interpolation::Interpolation(int mode,
 ///
 ///   @param [in] s サンプリング元スカラー変数配列
 ///
-REAL_TYPE Interpolation::samplingScalar(const REAL_TYPE* s)
+double Interpolation::samplingScalar(const REAL_TYPE* s)
 {
   if (onBoundary) return getScalar(s, cIndex);  // nearest
 
-  REAL_TYPE r[8];
+  double r[8];
   r[0] = getScalar(s, base);          // (0, 0, 0)
   r[1] = getScalar(s, shift1(base));  // (1, 0, 0)
   r[2] = getScalar(s, shift2(base));  // (0, 1, 0)
@@ -432,11 +432,11 @@ REAL_TYPE Interpolation::samplingScalar(const REAL_TYPE* s)
 ///
 ///   @param [in] s サンプリング元変数配列
 ///
-REAL_TYPE Interpolation::samplingTemp(const REAL_TYPE* s)
+double Interpolation::samplingTemp(const REAL_TYPE* s)
 {
   if (onBoundary) return getTemp(s, cIndex);  // nearest
   
-  REAL_TYPE r[8];
+  double r[8];
   r[0] = getTemp(s, base);          // (0, 0, 0)
   r[1] = getTemp(s, shift1(base));  // (1, 0, 0)
   r[2] = getTemp(s, shift2(base));  // (0, 1, 0)
@@ -453,11 +453,11 @@ REAL_TYPE Interpolation::samplingTemp(const REAL_TYPE* s)
 ///
 ///   @param [in] v サンプリング元速度配列
 ///
-Vec3<REAL_TYPE> Interpolation::samplingVelocity(const REAL_TYPE* v)
+Vec3d Interpolation::samplingVelocity(const REAL_TYPE* v)
 {
   if (onBoundary) return getVector(v, cIndex);  // nearest
 
-  Vec3<REAL_TYPE> r[8];
+  Vec3d r[8];
   r[0] = getVector(v, base);
   r[1] = getVector(v, shift1(base));
   r[2] = getVector(v, shift2(base));
@@ -475,11 +475,11 @@ Vec3<REAL_TYPE> Interpolation::samplingVelocity(const REAL_TYPE* v)
 ///   @param [in] v サンプリング元速度配列
 ///   @param [in] p サンプリング元圧力配列
 ///
-REAL_TYPE Interpolation::samplingTotalPressure(const REAL_TYPE* v, const REAL_TYPE* p)
+double Interpolation::samplingTotalPressure(const REAL_TYPE* v, const REAL_TYPE* p)
 {
   if (onBoundary) return calcTotalPressure(getVector(v, cIndex), getScalar(p, cIndex));  // nearest
 
-  REAL_TYPE r[8];
+  double r[8];
   r[0] = calcTotalPressure(getVector(v, base), getScalar(p, base));
   r[1] = calcTotalPressure(getVector(v, shift1(base)), getScalar(p, shift1(base)));
   r[2] = calcTotalPressure(getVector(v, shift2(base)), getScalar(p, shift2(base)));
@@ -496,11 +496,11 @@ REAL_TYPE Interpolation::samplingTotalPressure(const REAL_TYPE* v, const REAL_TY
 ///
 ///   @param [in] v サンプリング元速度配列
 ///
-Vec3<REAL_TYPE> Interpolation::samplingVorticity(const REAL_TYPE* v)
+Vec3d Interpolation::samplingVorticity(const REAL_TYPE* v)
 {
   if (onBoundary) return calcVorticity(v, cIndex);  // nearest
 
-  Vec3<REAL_TYPE> r[8];
+  Vec3d r[8];
   r[0] = calcVorticity(v, base);
   r[1] = calcVorticity(v, shift1(base));
   r[2] = calcVorticity(v, shift2(base));
@@ -517,11 +517,11 @@ Vec3<REAL_TYPE> Interpolation::samplingVorticity(const REAL_TYPE* v)
 ///
 ///   @param [in] v サンプリング元速度配列
 ///
-REAL_TYPE Interpolation::samplingHelicity(const REAL_TYPE* v)
+double Interpolation::samplingHelicity(const REAL_TYPE* v)
 {
   if (onBoundary) return calcHelicity(v, cIndex);  // nearest
   
-  REAL_TYPE r[8];
+  double r[8];
   r[0] = calcHelicity(v, base);
   r[1] = calcHelicity(v, shift1(base));
   r[2] = calcHelicity(v, shift2(base));
@@ -552,22 +552,22 @@ REAL_TYPE Interpolation::samplingHelicity(const REAL_TYPE* v)
 InterpolationStgV::InterpolationStgV(int mode,
                                      int size[],
                                      int guide,
-                                     Vec3<REAL_TYPE> crd,
-                                     Vec3<REAL_TYPE> org,
-                                     Vec3<REAL_TYPE> pch,
-                                     Vec3<REAL_TYPE> v00,
+                                     Vec3d crd,
+                                     Vec3d org,
+                                     Vec3d pch,
+                                     Vec3d v00,
                                      int* bcd,
                                      int num_compo,
                                      REAL_TYPE* tbl)
   : Interpolation(mode, size, guide, crd, org, pch, v00, bcd, num_compo, tbl)
 {
-  Vec3<REAL_TYPE> c = (crd - org) / pch;
-  base_s[0] = (int)(c.x);
-  base_s[1] = (int)(c.y);
-  base_s[2] = (int)(c.z);
-  coef_s[0] = c.x - (REAL_TYPE)base_s[0];
-  coef_s[1] = c.y - (REAL_TYPE)base_s[1];
-  coef_s[2] = c.z - (REAL_TYPE)base_s[2];
+  Vec3d c = (crd - org) / pch;
+  base_s.x = (int)(c.x);
+  base_s.y = (int)(c.y);
+  base_s.z = (int)(c.z);
+  coef_s[0] = c.x - (double)base_s.x;
+  coef_s[1] = c.y - (double)base_s.y;
+  coef_s[2] = c.z - (double)base_s.z;
 }
 
 
@@ -575,11 +575,11 @@ InterpolationStgV::InterpolationStgV(int mode,
 ///
 ///   @param [in] v サンプリング元速度配列
 ///
-Vec3<REAL_TYPE> InterpolationStgV::samplingVelocity(const REAL_TYPE* v)
+Vec3d InterpolationStgV::samplingVelocity(const REAL_TYPE* v)
 {
-  Vec3<REAL_TYPE> vRet;
-  REAL_TYPE t[3];
-  REAL_TYPE r[8];
+  Vec3d vRet;
+  double t[3];
+  double r[8];
   int i, j, k;
 
   int ix = size[0];

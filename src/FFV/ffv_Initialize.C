@@ -220,12 +220,11 @@ int FFV::Initialize(int argc, char **argv)
   displayMemoryInfo(fp, G_PrepMemory, PrepMemory, "Preprocessor");
   
 
-
   
   // サンプリング準備
   setMonitorList();
   
-  
+
   
   // Fill
   Hostonly_
@@ -238,7 +237,7 @@ int FFV::Initialize(int argc, char **argv)
   
   fill(fp);
   
-  
+
   // 全周カットのあるセルを固体セルIDで埋める
   V.replaceIsolatedFcell(d_bcd, C.FillID, d_bid);
   
@@ -2283,6 +2282,7 @@ int FFV::getDomainInfo(TextParser* tp_dom)
   {
     active_fname = str;
     EXEC_MODE = ffvc_solverAS;
+    Hostonly_ printf("\n\tActive subdomain mode\n");
   }
   
   return div_type;
@@ -4168,34 +4168,29 @@ void FFV::setMonitorList()
   MO.setControlVars(d_bid,
                     d_cut,
                     d_bcd,
-                    C.RefVelocity,
-                    C.BaseTemp,
-                    C.DiffTemp,
-                    C.RefDensity,
-                    C.RefLength,
-                    C.BasePrs,
+                    (double)C.RefVelocity,
+                    (double)C.BaseTemp,
+                    (double)C.DiffTemp,
+                    (double)C.RefDensity,
+                    (double)C.RefLength,
+                    (double)C.BasePrs,
                     C.Mode.Precision,
                     C.Unit.Prs,
                     C.num_process,
                     C.NoCompo,
                     mat_tbl);
   
-  
   // パラメータを取得し，サンプリングの座標値をセットする >> サンプリング指定がなければ，return
   if ( !MO.getMonitor(&C, cmp) ) return;
   
-  
   // モニター指定変数とKOSの整合性チェック
   if ( !MO.checkConsistency(C.KindOfSolver) )  Exit(0);
-  
 
   // Polygon指定のセルモニターの場合に交点と境界IDを除去
   MO.clearCut();
   
-  
   // モニタ結果出力ファイル群のオープン
   MO.openFile();
-  
 }
 
 
@@ -4699,11 +4694,11 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
 // ##########
 #if 0
   PolylibNS::Vec3f m_min, m_max, t1(poly_org), t2(poly_dx), t3;
-  t3.assign((float)size[0]*t2.t[0], (float)size[1]*t2.t[1], (float)size[2]*t2.t[2]);
+  t3.assign((float)size[0]*t2.x, (float)size[1]*t2.y, (float)size[2]*t2.z);
   m_min = t1 - t2;      // 1層外側まで
   m_max = t1 + t3 + t2; //
-  printf("min : %f %f %f\n", m_min.t[0], m_min.t[1], m_min.t[2]);
-  printf("max : %f %f %f\n", m_max.t[0], m_max.t[1], m_max.t[2]);
+  printf("min : %f %f %f\n", m_min.x, m_min.y, m_min.z);
+  printf("max : %f %f %f\n", m_max.x, m_max.y, m_max.z);
   vector<Triangle*>* trias = PL->search_polygons("Tube", m_min, m_max, false); // false; ポリゴンが一部でもかかる場合
   
   PolylibNS::Vec3f *p, nrl, n;
@@ -4713,10 +4708,10 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     p = (*it2)->get_vertex();
     n = (*it2)->get_normal();
     printf("%d : p0=(%6.3e %6.3e %6.3e)  p1=(%6.3e %6.3e %6.3e) p2=(%6.3e %6.3e %6.3e) n=(%6.3e %6.3e %6.3e)\n", c++,
-           p[0].t[0], p[0].t[1], p[0].t[2],
-           p[1].t[0], p[1].t[1], p[1].t[2],
-           p[2].t[0], p[2].t[1], p[2].t[2],
-           n.t[0], n.t[1], n.t[2]);
+           p[0].x, p[0].y, p[0].z,
+           p[1].x, p[1].y, p[1].z,
+           p[2].x, p[2].y, p[2].z,
+           n.x, n.y, n.z);
   }
   
   delete trias;  //後始末
@@ -4925,13 +4920,13 @@ void FFV::setVOF()
  PolylibNS::Vec3f m_min, m_max;
  PolylibNS::Vec3f t1(poly_org), t2(poly_dx), t3;
  
- t3.assign((float)size[0]*t2.t[0], (float)size[1]*t2.t[1], (float)size[2]*t2.t[2]);
+ t3.assign((float)size[0]*t2.x, (float)size[1]*t2.y, (float)size[2]*t2.z);
  
  // サブドメインの1層外側までをサーチ対象とする
  m_min = t1 - t2;
  m_max = t1 + t3 + t2;
- printf("Search area Bbox min : %f %f %f\n", m_min.t[0], m_min.t[1], m_min.t[2]);
- printf("Search area Bbox max : %f %f %f\n", m_max.t[0], m_max.t[1], m_max.t[2]);
+ printf("Search area Bbox min : %f %f %f\n", m_min.x, m_min.y, m_min.z);
+ printf("Search area Bbox max : %f %f %f\n", m_max.x, m_max.y, m_max.z);
  
  
  // ポリゴングループのループ
@@ -4954,9 +4949,9 @@ void FFV::setVOF()
  p = (*it2)->get_vertex();
  
  // PolulibNS::Vec3f >> Vec3f
- Vec3f p0(p[0].t[0], p[0].t[1], p[0].t[2]);
- Vec3f p1(p[1].t[0], p[1].t[1], p[1].t[2]);
- Vec3f p2(p[2].t[0], p[2].t[1], p[2].t[2]);
+ Vec3f p0(p[0].x, p[0].y, p[0].z);
+ Vec3f p1(p[1].x, p[1].y, p[1].z);
+ Vec3f p2(p[2].x, p[2].y, p[2].z);
  
  CompoFraction::get_min(bbox_min, p0);
  CompoFraction::get_min(bbox_min, p1);
@@ -4968,10 +4963,10 @@ void FFV::setVOF()
  
  #if 0
  printf("%d : p0=(%6.3e %6.3e %6.3e)  p1=(%6.3e %6.3e %6.3e) p2=(%6.3e %6.3e %6.3e) n=(%6.3e %6.3e %6.3e)\n", c++,
- p[0].t[0], p[0].t[1], p[0].t[2],
- p[1].t[0], p[1].t[1], p[1].t[2],
- p[2].t[0], p[2].t[1], p[2].t[2],
- n.t[0], n.t[1], n.t[2]);
+ p[0].x, p[0].y, p[0].z,
+ p[1].x, p[1].y, p[1].z,
+ p[2].x, p[2].y, p[2].z,
+ n.x, n.y, n.z);
  #endif
  }
  

@@ -29,7 +29,7 @@ void MonitorCompo::allocArray()
 {
   if (nPoint == 0) Exit(0); // サンプリング点数
   
-  if (!(crd  = new Vec3<REAL_TYPE>[nPoint]))    Exit(0);
+  if (!(crd  = new Vec3d[nPoint]))    Exit(0);
   if (!(rank = new int[nPoint]))      Exit(0);
   if (!(comment = new string[nPoint])) Exit(0);
   if (!(pointStatus = new int[nPoint])) Exit(0);
@@ -45,24 +45,24 @@ void MonitorCompo::allocSamplingArray()
 {
   if ( nPoint == 0 ) Exit(0); // サンプリング点数
   
-  const REAL_TYPE DUMMY = 1.0e10;
+  const double DUMMY = 1.0e10;
 
   
   if (variable[var_Velocity])
   {
-    if (!(vel = new Vec3<REAL_TYPE>[nPoint])) Exit(0);
-    for (int i = 0; i < nPoint; i++) vel[i] = Vec3<REAL_TYPE>(DUMMY, DUMMY, DUMMY);
+    if (!(vel = new Vec3d[nPoint])) Exit(0);
+    for (int i = 0; i < nPoint; i++) vel[i] = Vec3d(DUMMY, DUMMY, DUMMY);
   }
   
   if (variable[var_Pressure])
   {
-    if (!(prs = new REAL_TYPE[nPoint])) Exit(0);
+    if (!(prs = new double[nPoint])) Exit(0);
     for (int i = 0; i < nPoint; i++) prs[i] = DUMMY;
   }
   
   if (variable[var_Temperature])
   {
-    if (!(tmp = new REAL_TYPE[nPoint])) Exit(0);
+    if (!(tmp = new double[nPoint])) Exit(0);
     for (int i = 0; i < nPoint; i++) tmp[i] = DUMMY;
   }
 
@@ -70,40 +70,40 @@ void MonitorCompo::allocSamplingArray()
   
   if (variable[var_TotalP])
   {
-    if (!(tp = new REAL_TYPE[nPoint])) Exit(0);
+    if (!(tp = new double[nPoint])) Exit(0);
     for (int i = 0; i < nPoint; i++) tp[i] = DUMMY;
   }
   
   if (variable[var_Helicity])
   {
-    if (!(hlt = new REAL_TYPE[nPoint])) Exit(0);
+    if (!(hlt = new double[nPoint])) Exit(0);
     for (int i = 0; i < nPoint; i++) hlt[i] = DUMMY;
   }
   
   if (variable[var_Vorticity])
   {
-    if (!(vor = new Vec3<REAL_TYPE>[nPoint])) Exit(0);
-    for (int i = 0; i < nPoint; i++) vor[i] = Vec3<REAL_TYPE>(DUMMY, DUMMY, DUMMY);
+    if (!(vor = new Vec3d[nPoint])) Exit(0);
+    for (int i = 0; i < nPoint; i++) vor[i] = Vec3d(DUMMY, DUMMY, DUMMY);
   }
 }
 
 
 // #################################################################
 /// Allreduceによる総和(実数配列上書き，work配列指定)
-bool MonitorCompo::allReduceSum(REAL_TYPE* array, int n, REAL_TYPE* sendBuf)
+bool MonitorCompo::allReduceSum(double* array, int n, double* sendBuf)
 {
   if ( numProc <= 1 ) return true;
   
   for (int i = 0; i < n; i++) sendBuf[i] = array[i];
   
-  if( sizeof(REAL_TYPE) == 8 )
-  {
+  //if( sizeof(REAL_TYPE) == 8 )
+  //{
     if( MPI_Allreduce(sendBuf, array, n, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD) != MPI_SUCCESS ) return false;
-  }
-  else
-  {
-    if( MPI_Allreduce(sendBuf, array, n, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD) != MPI_SUCCESS ) return false;
-  }
+  //}
+  //else
+  //{
+  //  if( MPI_Allreduce(sendBuf, array, n, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD) != MPI_SUCCESS ) return false;
+  //}
   
   return true;
 }
@@ -111,12 +111,12 @@ bool MonitorCompo::allReduceSum(REAL_TYPE* array, int n, REAL_TYPE* sendBuf)
 
 // #################################################################
 /// Allreduceによる総和(実数配列上書き)
-bool MonitorCompo::allReduceSum(REAL_TYPE* array, int n)
+bool MonitorCompo::allReduceSum(double* array, int n)
 {
   if ( numProc <= 1 ) return true;
   
-  REAL_TYPE* sBuf=NULL;
-  if ( !(sBuf = new REAL_TYPE[n])) Exit(0);
+  double* sBuf=NULL;
+  if ( !(sBuf = new double[n])) Exit(0);
   
   bool ret = allReduceSum(array, n, sBuf);
 
@@ -174,9 +174,9 @@ bool MonitorCompo::allReduceSum(int* array, int n)
 ///   @param [in] s スカラー変数配列
 ///   @return モニタ領域内平均値
 ///
-REAL_TYPE MonitorCompo::averageScalar(REAL_TYPE* s)
+double MonitorCompo::averageScalar(double* s)
 {
-  REAL_TYPE sum= 0.0;
+  double sum= 0.0;
   
   for (int i = 0; i < nPoint; i++)
   {
@@ -194,9 +194,9 @@ REAL_TYPE MonitorCompo::averageScalar(REAL_TYPE* s)
 ///   @param [in] v ベクトル変数配列
 ///   @return モニタ領域内平均値
 ///
-Vec3<REAL_TYPE> MonitorCompo::averageVector(Vec3<REAL_TYPE>* v)
+Vec3d MonitorCompo::averageVector(Vec3d* v)
 {
-  REAL_TYPE sum[3] = { 0.0, 0.0, 0.0 };
+  double sum[3] = { 0.0, 0.0, 0.0 };
   
   for (int i = 0; i < nPoint; i++)
   {
@@ -209,7 +209,7 @@ Vec3<REAL_TYPE> MonitorCompo::averageVector(Vec3<REAL_TYPE>* v)
   }
   allReduceSum(sum, 3);
   
-  return Vec3<REAL_TYPE>(sum) / nPoint;
+  return Vec3d(sum) / nPoint;
 }
 
 
@@ -455,9 +455,9 @@ void MonitorCompo::closeFile()
 /// サンプリングした変数をノード0に集約
 void MonitorCompo::gatherSampled()
 {
-  REAL_TYPE* vSendBuf = NULL;
-  REAL_TYPE* vRecvBuf = NULL;
-  REAL_TYPE* sRecvBuf = NULL;
+  double* vSendBuf = NULL;
+  double* vRecvBuf = NULL;
+  double* sRecvBuf = NULL;
   
   if (variable[var_Velocity])      gatherSampledVector(vel, vSendBuf, vRecvBuf);
   if (variable[var_Pressure])      gatherSampledScalar(prs, sRecvBuf);
@@ -479,26 +479,26 @@ void MonitorCompo::gatherSampled()
 ///   @param [in,out] s         スカラー変数配列
 ///   @param          sRecvBuf  通信用work領域
 ///
-void MonitorCompo::gatherSampledScalar(REAL_TYPE* s, REAL_TYPE* sRecvBuf)
+void MonitorCompo::gatherSampledScalar(double* s, double* sRecvBuf)
 {
   int np = num_process;
   if ( numProc <= 1 ) return;
   
   if (myRank == 0 && !sRecvBuf)
   {
-    if (!(sRecvBuf = new REAL_TYPE[nPoint*np])) Exit(0);
+    if (!(sRecvBuf = new double[nPoint*np])) Exit(0);
   }
   
   if ( numProc > 1 ) 
   {
-    if ( sizeof(REAL_TYPE) == 8 )
-    {
+    //if ( sizeof(REAL_TYPE) == 8 )
+    //{
       if( MPI_Gather(s, nPoint, MPI_DOUBLE, sRecvBuf, nPoint, MPI_DOUBLE, 0, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);
-    }
-    else
-    {
-      if( MPI_Gather(s, nPoint, MPI_FLOAT, sRecvBuf, nPoint, MPI_FLOAT, 0, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);
-    }
+    //}
+    //else
+    //{
+    //  if( MPI_Gather(s, nPoint, MPI_FLOAT, sRecvBuf, nPoint, MPI_FLOAT, 0, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);
+    //}
   }
   
   if (myRank == 0) 
@@ -521,19 +521,19 @@ void MonitorCompo::gatherSampledScalar(REAL_TYPE* s, REAL_TYPE* sRecvBuf)
 ///   @param [in,out] v                  ベクトル変数配列
 ///   @param [in,out] vSendBuf,vRecvBuf  通信用work領域
 ///
-void MonitorCompo::gatherSampledVector(Vec3<REAL_TYPE>* v, REAL_TYPE* vSendBuf, REAL_TYPE* vRecvBuf)
+void MonitorCompo::gatherSampledVector(Vec3d* v, double* vSendBuf, double* vRecvBuf)
 {
   int np = num_process;
   if ( numProc <= 1 ) return;
   
   if (!vSendBuf) 
   {
-    if (!(vSendBuf = new REAL_TYPE[nPoint*3*np])) Exit(0);
+    if (!(vSendBuf = new double[nPoint*3*np])) Exit(0);
   }
   
   if (myRank == 0 && !vRecvBuf) 
   {
-    if (!(vRecvBuf = new REAL_TYPE[nPoint*3*np])) Exit(0);
+    if (!(vRecvBuf = new double[nPoint*3*np])) Exit(0);
   }
   
   for (int m = 0; m < nPoint; m++)
@@ -545,14 +545,14 @@ void MonitorCompo::gatherSampledVector(Vec3<REAL_TYPE>* v, REAL_TYPE* vSendBuf, 
   
   if ( numProc > 1 )
   {
-    if ( sizeof(REAL_TYPE) == 8 )
-    {
+    //if ( sizeof(REAL_TYPE) == 8 )
+    //{
       if( MPI_Gather(vSendBuf, nPoint*3, MPI_DOUBLE, vRecvBuf, nPoint*3, MPI_DOUBLE, 0, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);
-    }
-    else
-    {
-      if( MPI_Gather(vSendBuf, nPoint*3, MPI_FLOAT, vRecvBuf, nPoint*3, MPI_FLOAT, 0, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);
-    }
+    //}
+    //else
+    //{
+    //  if( MPI_Gather(vSendBuf, nPoint*3, MPI_FLOAT, vRecvBuf, nPoint*3, MPI_FLOAT, 0, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);
+    //}
   }
   
   if (myRank == 0) 
@@ -732,7 +732,7 @@ void MonitorCompo::openFile(const char* str, const bool gathered)
 ///   @param [in] tm       サンプリング時の計算時刻
 ///   @param [in] gathered 出力モードフラグ(true=gather出力/false=disutribute出力)
 ///
-void MonitorCompo::print(unsigned step, REAL_TYPE tm, bool gathered)
+void MonitorCompo::print(unsigned step, double tm, bool gathered)
 {
   assert(fp);
   
@@ -873,11 +873,11 @@ void MonitorCompo::sampling()
   {
     //  if (!(mon[i] && pointStatus[i] == Sampling::POINT_STATUS_OK)) continue;
     if (!mon[i]) continue;
-    
+
     if (variable[var_Velocity])     vel[i] = mon[i]->samplingVelocity(vSource);
     if (variable[var_Pressure])     prs[i] = mon[i]->samplingPressure(pSource);
     if (variable[var_Temperature])  tmp[i] = mon[i]->samplingTemperature(tSource);
-    
+
     if (variable[var_TotalP])       tp[i]  = mon[i]->samplingTotalPressure(vSource, pSource);
     if (variable[var_Vorticity])    vor[i] = mon[i]->samplingVorticity(vSource);
     if (variable[var_Helicity])     hlt[i] = mon[i]->samplingHelicity(vSource);
@@ -897,7 +897,7 @@ void MonitorCompo::samplingAverage()
   
   if (variable[var_Velocity]) 
   {
-    Vec3<REAL_TYPE> velAve = averageVector(vel);
+    Vec3d velAve = averageVector(vel);
     val[var_Velocity] = velAve.x * nv[0] + velAve.y * nv[1] + velAve.z * nv[2];
   }
   if (variable[var_Pressure])     val[var_Pressure]    = averageScalar(prs);
@@ -906,7 +906,7 @@ void MonitorCompo::samplingAverage()
   
   if (variable[var_Vorticity])
   {
-    Vec3<REAL_TYPE> vrtAve = averageVector(vor);
+    Vec3d vrtAve = averageVector(vor);
     val[var_Vorticity] = vrtAve.x * nv[0] + vrtAve.y * nv[1] + vrtAve.z * nv[2];
   }
   if (variable[var_TotalP])       val[var_TotalP]      = averageScalar(tp);
@@ -920,8 +920,8 @@ void MonitorCompo::setLine(const char* labelStr,
                            vector<string>& variables,
                            const char* methodStr,
                            const char* modeStr,
-                           REAL_TYPE from[3],
-                           REAL_TYPE to[3],
+                           double from[3],
+                           double to[3],
                            int nDivision,
                            Monitor_Type m_type)
 {
@@ -943,8 +943,8 @@ void MonitorCompo::setLine(const char* labelStr,
   allocArray();
   allocSamplingArray();
   
-  Vec3<REAL_TYPE> st(from), ed(to);
-  Vec3<REAL_TYPE> dd = ed - st;
+  Vec3d st(from), ed(to);
+  Vec3d dd = ed - st;
   dd /= nPoint - 1;
   
   
@@ -953,7 +953,7 @@ void MonitorCompo::setLine(const char* labelStr,
     ostringstream oss;
     oss << "point_" << m;
     
-    crd[m] = st + dd * (REAL_TYPE)m;
+    crd[m] = st + dd * (double)m;
     
     // 計算領域全体でのチェック
     if (!checkRegion(m, g_org, g_box, true)) Exit(0);
@@ -1093,7 +1093,7 @@ void MonitorCompo::setPolygon(const char* labelStr,
                               const char* methodStr,
                               const char* modeStr,
                               const int order,
-                              const REAL_TYPE m_nv[3],
+                              const double m_nv[3],
                               Monitor_Type m_type)
 {
   label = labelStr;
@@ -1181,8 +1181,8 @@ void MonitorCompo::setPolygon(const char* labelStr,
   
   
   // 座標値を保持するための配列，バッファ共用
-  REAL_TYPE* buf;
-  if (!(buf = new REAL_TYPE[nPoint*3])) Exit(0);
+  double* buf;
+  if (!(buf = new double[nPoint*3])) Exit(0);
   
   // 初期値にゼロをいれておき，MPI_SUMで集約
   for (int m = 0; m < nPoint*3; m++) buf[m] = 0.0;
@@ -1313,7 +1313,7 @@ void MonitorCompo::setPrimitive(const char* labelStr,
                                 const char* methodStr,
                                 const char* modeStr,
                                 const int order,
-                                const REAL_TYPE m_nv[3],
+                                const double m_nv[3],
                                 Monitor_Type m_type)
 {
   label = labelStr;
@@ -1392,8 +1392,8 @@ void MonitorCompo::setPrimitive(const char* labelStr,
   
   
   // 座標値を保持
-  REAL_TYPE* buf;
-  if (!(buf = new REAL_TYPE[nPoint*3])) Exit(0);
+  double* buf;
+  if (!(buf = new double[nPoint*3])) Exit(0);
 
   // 初期値にゼロをいれておき，MPI_SUMで集約
   for (int m = 0; m < nPoint*3; m++) buf[m] = 0.0;

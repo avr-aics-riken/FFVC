@@ -43,18 +43,17 @@ ffv.o: ffv.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
- /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h /usr/local/FFV/Polylib/include/common/Vec3.h \
+ ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
  ../FB/ParseMat.h ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h \
- ../FB/MonCompo.h ../FB/basic_func.h ../FB/Sampling.h ffv_Version.h ffv_Define.h \
- ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
- ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h \
- ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/FFV/PMlib/include/PerfMonitor.h \
+ ../FB/MonCompo.h ../FB/Sampling.h ffv_Version.h ffv_Define.h ffv_SetBC.h \
+ ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h ../F_CORE/ffv_Ffunc.h \
+ ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/FFV/PMlib/include/PerfMonitor.h \
  /usr/local/FFV/PMlib/include/PerfWatch.h \
  /usr/local/FFV/PMlib/include/pmVersion.h \
  /usr/local/FFV/Polylib/include/Polylib.h \
@@ -62,7 +61,6 @@ ffv.o: ffv.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/Polylib/include/common/PolylibStat.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
- /usr/local/FFV/Polylib/include/common/Vec3.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
@@ -155,18 +153,17 @@ ffv_Initialize.o: ffv_Initialize.C ffv.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
- /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h /usr/local/FFV/Polylib/include/common/Vec3.h \
+ ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
  ../FB/ParseMat.h ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h \
- ../FB/MonCompo.h ../FB/basic_func.h ../FB/Sampling.h ffv_Version.h ffv_Define.h \
- ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
- ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h \
- ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/FFV/PMlib/include/PerfMonitor.h \
+ ../FB/MonCompo.h ../FB/Sampling.h ffv_Version.h ffv_Define.h ffv_SetBC.h \
+ ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h ../F_CORE/ffv_Ffunc.h \
+ ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/FFV/PMlib/include/PerfMonitor.h \
  /usr/local/FFV/PMlib/include/PerfWatch.h \
  /usr/local/FFV/PMlib/include/pmVersion.h \
  /usr/local/FFV/Polylib/include/Polylib.h \
@@ -174,7 +171,6 @@ ffv_Initialize.o: ffv_Initialize.C ffv.h \
  /usr/local/FFV/Polylib/include/common/PolylibStat.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
- /usr/local/FFV/Polylib/include/common/Vec3.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
@@ -266,18 +262,17 @@ ffv_Alloc.o: ffv_Alloc.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
- /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h /usr/local/FFV/Polylib/include/common/Vec3.h \
+ ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
  ../FB/ParseMat.h ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h \
- ../FB/MonCompo.h ../FB/basic_func.h ../FB/Sampling.h ffv_Version.h ffv_Define.h \
- ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
- ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h \
- ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/FFV/PMlib/include/PerfMonitor.h \
+ ../FB/MonCompo.h ../FB/Sampling.h ffv_Version.h ffv_Define.h ffv_SetBC.h \
+ ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h ../F_CORE/ffv_Ffunc.h \
+ ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/FFV/PMlib/include/PerfMonitor.h \
  /usr/local/FFV/PMlib/include/PerfWatch.h \
  /usr/local/FFV/PMlib/include/pmVersion.h \
  /usr/local/FFV/Polylib/include/Polylib.h \
@@ -285,7 +280,6 @@ ffv_Alloc.o: ffv_Alloc.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/Polylib/include/common/PolylibStat.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
- /usr/local/FFV/Polylib/include/common/Vec3.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
@@ -378,8 +372,8 @@ ffv_SetBC.o: ffv_SetBC.C ffv_SetBC.h ../FB/SetBC.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/BndOuter.h \
  ../FB/Control.h ../FB/Medium.h ../FB/Component.h ../FB/FBUtility.h \
- ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
- /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h /usr/local/FFV/Polylib/include/common/Vec3.h \
+ ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Intrinsic.h ffv_Define.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h \
@@ -430,18 +424,17 @@ ffv_Restart.o: ffv_Restart.C ffv.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
- /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h /usr/local/FFV/Polylib/include/common/Vec3.h \
+ ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
  ../FB/ParseMat.h ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h \
- ../FB/MonCompo.h ../FB/basic_func.h ../FB/Sampling.h ffv_Version.h ffv_Define.h \
- ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
- ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h \
- ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/FFV/PMlib/include/PerfMonitor.h \
+ ../FB/MonCompo.h ../FB/Sampling.h ffv_Version.h ffv_Define.h ffv_SetBC.h \
+ ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h ../F_CORE/ffv_Ffunc.h \
+ ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/FFV/PMlib/include/PerfMonitor.h \
  /usr/local/FFV/PMlib/include/PerfWatch.h \
  /usr/local/FFV/PMlib/include/pmVersion.h \
  /usr/local/FFV/Polylib/include/Polylib.h \
@@ -449,7 +442,6 @@ ffv_Restart.o: ffv_Restart.C ffv.h \
  /usr/local/FFV/Polylib/include/common/PolylibStat.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
- /usr/local/FFV/Polylib/include/common/Vec3.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
@@ -541,18 +533,17 @@ ffv_Loop.o: ffv_Loop.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
- /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h /usr/local/FFV/Polylib/include/common/Vec3.h \
+ ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
  ../FB/ParseMat.h ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h \
- ../FB/MonCompo.h ../FB/basic_func.h ../FB/Sampling.h ffv_Version.h ffv_Define.h \
- ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
- ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h \
- ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/FFV/PMlib/include/PerfMonitor.h \
+ ../FB/MonCompo.h ../FB/Sampling.h ffv_Version.h ffv_Define.h ffv_SetBC.h \
+ ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h ../F_CORE/ffv_Ffunc.h \
+ ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/FFV/PMlib/include/PerfMonitor.h \
  /usr/local/FFV/PMlib/include/PerfWatch.h \
  /usr/local/FFV/PMlib/include/pmVersion.h \
  /usr/local/FFV/Polylib/include/Polylib.h \
@@ -560,7 +551,6 @@ ffv_Loop.o: ffv_Loop.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/Polylib/include/common/PolylibStat.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
- /usr/local/FFV/Polylib/include/common/Vec3.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
@@ -652,18 +642,17 @@ ffv_LS.o: ffv_LS.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
- /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h /usr/local/FFV/Polylib/include/common/Vec3.h \
+ ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
  ../FB/ParseMat.h ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h \
- ../FB/MonCompo.h ../FB/basic_func.h ../FB/Sampling.h ffv_Version.h ffv_Define.h \
- ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
- ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h \
- ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/FFV/PMlib/include/PerfMonitor.h \
+ ../FB/MonCompo.h ../FB/Sampling.h ffv_Version.h ffv_Define.h ffv_SetBC.h \
+ ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h ../F_CORE/ffv_Ffunc.h \
+ ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/FFV/PMlib/include/PerfMonitor.h \
  /usr/local/FFV/PMlib/include/PerfWatch.h \
  /usr/local/FFV/PMlib/include/pmVersion.h \
  /usr/local/FFV/Polylib/include/Polylib.h \
@@ -671,7 +660,6 @@ ffv_LS.o: ffv_LS.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/Polylib/include/common/PolylibStat.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
- /usr/local/FFV/Polylib/include/common/Vec3.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
@@ -763,18 +751,17 @@ ffv_Post.o: ffv_Post.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
- /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h /usr/local/FFV/Polylib/include/common/Vec3.h \
+ ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
  ../FB/ParseMat.h ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h \
- ../FB/MonCompo.h ../FB/basic_func.h ../FB/Sampling.h ffv_Version.h ffv_Define.h \
- ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
- ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h \
- ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/FFV/PMlib/include/PerfMonitor.h \
+ ../FB/MonCompo.h ../FB/Sampling.h ffv_Version.h ffv_Define.h ffv_SetBC.h \
+ ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h ../F_CORE/ffv_Ffunc.h \
+ ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/FFV/PMlib/include/PerfMonitor.h \
  /usr/local/FFV/PMlib/include/PerfWatch.h \
  /usr/local/FFV/PMlib/include/pmVersion.h \
  /usr/local/FFV/Polylib/include/Polylib.h \
@@ -782,7 +769,6 @@ ffv_Post.o: ffv_Post.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/Polylib/include/common/PolylibStat.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
- /usr/local/FFV/Polylib/include/common/Vec3.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
@@ -874,18 +860,17 @@ ffv_Heat.o: ffv_Heat.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
- /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h /usr/local/FFV/Polylib/include/common/Vec3.h \
+ ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
  ../FB/ParseMat.h ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h \
- ../FB/MonCompo.h ../FB/basic_func.h ../FB/Sampling.h ffv_Version.h ffv_Define.h \
- ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
- ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h \
- ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/FFV/PMlib/include/PerfMonitor.h \
+ ../FB/MonCompo.h ../FB/Sampling.h ffv_Version.h ffv_Define.h ffv_SetBC.h \
+ ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h ../F_CORE/ffv_Ffunc.h \
+ ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/FFV/PMlib/include/PerfMonitor.h \
  /usr/local/FFV/PMlib/include/PerfWatch.h \
  /usr/local/FFV/PMlib/include/pmVersion.h \
  /usr/local/FFV/Polylib/include/Polylib.h \
@@ -893,7 +878,6 @@ ffv_Heat.o: ffv_Heat.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/Polylib/include/common/PolylibStat.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
- /usr/local/FFV/Polylib/include/common/Vec3.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
@@ -986,18 +970,17 @@ ffv_Filter.o: ffv_Filter.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
- /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h /usr/local/FFV/Polylib/include/common/Vec3.h \
+ ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
  ../FB/ParseMat.h ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h \
- ../FB/MonCompo.h ../FB/basic_func.h ../FB/Sampling.h ffv_Version.h ffv_Define.h \
- ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
- ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h \
- ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/FFV/PMlib/include/PerfMonitor.h \
+ ../FB/MonCompo.h ../FB/Sampling.h ffv_Version.h ffv_Define.h ffv_SetBC.h \
+ ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h ../F_CORE/ffv_Ffunc.h \
+ ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/FFV/PMlib/include/PerfMonitor.h \
  /usr/local/FFV/PMlib/include/PerfWatch.h \
  /usr/local/FFV/PMlib/include/pmVersion.h \
  /usr/local/FFV/Polylib/include/Polylib.h \
@@ -1005,7 +988,6 @@ ffv_Filter.o: ffv_Filter.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h
  /usr/local/FFV/Polylib/include/common/PolylibStat.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
- /usr/local/FFV/Polylib/include/common/Vec3.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
@@ -1143,18 +1125,17 @@ NS_FS_E_Binary.o: NS_FS_E_Binary.C ffv.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
- /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h /usr/local/FFV/Polylib/include/common/Vec3.h \
+ ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
  ../FB/ParseMat.h ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h \
- ../FB/MonCompo.h ../FB/basic_func.h ../FB/Sampling.h ffv_Version.h ffv_Define.h \
- ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
- ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h \
- ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/FFV/PMlib/include/PerfMonitor.h \
+ ../FB/MonCompo.h ../FB/Sampling.h ffv_Version.h ffv_Define.h ffv_SetBC.h \
+ ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h ../F_CORE/ffv_Ffunc.h \
+ ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/FFV/PMlib/include/PerfMonitor.h \
  /usr/local/FFV/PMlib/include/PerfWatch.h \
  /usr/local/FFV/PMlib/include/pmVersion.h \
  /usr/local/FFV/Polylib/include/Polylib.h \
@@ -1162,7 +1143,6 @@ NS_FS_E_Binary.o: NS_FS_E_Binary.C ffv.h \
  /usr/local/FFV/Polylib/include/common/PolylibStat.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
- /usr/local/FFV/Polylib/include/common/Vec3.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
@@ -1255,18 +1235,17 @@ NS_FS_E_CDS.o: NS_FS_E_CDS.C ffv.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
- /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h /usr/local/FFV/Polylib/include/common/Vec3.h \
+ ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
  ../FB/ParseMat.h ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h \
- ../FB/MonCompo.h ../FB/basic_func.h ../FB/Sampling.h ffv_Version.h ffv_Define.h \
- ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
- ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h \
- ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/FFV/PMlib/include/PerfMonitor.h \
+ ../FB/MonCompo.h ../FB/Sampling.h ffv_Version.h ffv_Define.h ffv_SetBC.h \
+ ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h ../F_CORE/ffv_Ffunc.h \
+ ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/FFV/PMlib/include/PerfMonitor.h \
  /usr/local/FFV/PMlib/include/PerfWatch.h \
  /usr/local/FFV/PMlib/include/pmVersion.h \
  /usr/local/FFV/Polylib/include/Polylib.h \
@@ -1274,7 +1253,6 @@ NS_FS_E_CDS.o: NS_FS_E_CDS.C ffv.h \
  /usr/local/FFV/Polylib/include/common/PolylibStat.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
- /usr/local/FFV/Polylib/include/common/Vec3.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
@@ -1366,18 +1344,17 @@ PS_Binary.o: PS_Binary.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
  ../FB/DomainInfo.h ../FB/FB_Define.h ../FB/mydebug.h ../FB/FBUtility.h \
  ../FB/Medium.h ../FB/Control.h ../FB/Component.h ../FB/BndOuter.h \
- ../FB/CompoFraction.h ../FB/Vec3.h ../FB/IterationControl.h \
- /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/CompoFraction.h /usr/local/FFV/Polylib/include/common/Vec3.h \
+ ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
  ../FB/Alloc.h ../FB/FileIO.h ../FB/FB_Ffunc.h ../FB/ParseBC.h ../FB/Intrinsic.h \
  ../FB/ParseMat.h ../FB/VoxInfo.h ../FB/SetBC.h ../FB/History.h ../FB/Monitor.h \
- ../FB/MonCompo.h ../FB/basic_func.h ../FB/Sampling.h ffv_Version.h ffv_Define.h \
- ffv_SetBC.h ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h \
- ../F_CORE/ffv_Ffunc.h ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h \
- ../IP/IP_PPLT2D.h ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h \
- ../IP/IP_Cylinder.h ../IP/IP_Polygon.h ../IP/IP_Sphere.h \
- /usr/local/FFV/PMlib/include/PerfMonitor.h \
+ ../FB/MonCompo.h ../FB/Sampling.h ffv_Version.h ffv_Define.h ffv_SetBC.h \
+ ../F_CORE/ffv_Ffunc.h ../IP/IP_Jet.h ../IP/IP_Define.h ../F_CORE/ffv_Ffunc.h \
+ ffv_TerminateCtrl.h ../FB/Glyph.h ../IP/IP_Duct.h ../IP/IP_PPLT2D.h \
+ ../IP/IP_PMT.h ../IP/IP_Rect.h ../IP/IP_Step.h ../IP/IP_Cylinder.h \
+ ../IP/IP_Polygon.h ../IP/IP_Sphere.h /usr/local/FFV/PMlib/include/PerfMonitor.h \
  /usr/local/FFV/PMlib/include/PerfWatch.h \
  /usr/local/FFV/PMlib/include/pmVersion.h \
  /usr/local/FFV/Polylib/include/Polylib.h \
@@ -1385,7 +1362,6 @@ PS_Binary.o: PS_Binary.C ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/Polylib/include/common/PolylibStat.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
  /usr/local/FFV/Polylib/include/common/PolylibDefine.h \
- /usr/local/FFV/Polylib/include/common/Vec3.h \
  /usr/local/FFV/Polylib/include/polygons/TriMesh.h \
  /usr/local/FFV/Polylib/include/common/BBox.h \
  /usr/local/FFV/Polylib/include/common/Vec2.h \
