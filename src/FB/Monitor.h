@@ -48,7 +48,6 @@ public:
   
 protected:
   
-  int nGroup;            ///< モニタリンググループ数
   int num_process;       ///< プロセス数
   Vec3d org;             ///< ローカル基点座標
   Vec3d pch;             ///< セル幅
@@ -74,7 +73,6 @@ public:
   /// コンストラクタ
   MonitorList()
   {
-    nGroup = 0;
     outputType = NONE;
     num_process = 0;
     fname_sampling = "sampling.txt";
@@ -86,7 +84,7 @@ public:
   /// デストラクタ
   ~MonitorList()
   {
-    for (int i = 0; i < nGroup; i++) delete monGroup[i];
+    for (int i = 0; i < monGroup.size(); i++) delete monGroup[i];
   }
   
   
@@ -156,7 +154,7 @@ public:
   /// サンプリング
   void sampling()
   {
-    for (int i = 0; i < nGroup; i++)
+    for (int i = 0; i < monGroup.size(); i++)
     {
       switch ( monGroup[i]->getType() )
       {
@@ -217,7 +215,7 @@ public:
   ///
   void setDataPtrs(REAL_TYPE* v, REAL_TYPE* p, REAL_TYPE* t, REAL_TYPE* vr)
   {
-    for (int i = 0; i < nGroup; i++) monGroup[i]->setDataPtrs(v, p, t, vr);
+    for (int i = 0; i < monGroup.size(); i++) monGroup[i]->setDataPtrs(v, p, t, vr);
   }
   
   

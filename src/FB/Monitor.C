@@ -35,7 +35,7 @@ bool MonitorList::checkConsistency(const int KOS)
   // モニタで使用する変数を取得
   for (int k=var_Velocity; k<var_END; k++)
   {
-    for (int i = 0; i < nGroup; i++)
+    for (int i = 0; i < monGroup.size(); i++)
     {
       if (monGroup[i]->getStateVariable(k) == true) count[k]++;
     }
@@ -79,7 +79,7 @@ bool MonitorList::checkConsistency(const int KOS)
 /// Polygonモニターの交点の状況を確認
 void MonitorList::checkStatus()
 {
-  for (int i = 0; i < nGroup; i++)
+  for (int i = 0; i < monGroup.size(); i++)
   {
     monGroup[i]->checkMonitorPoints();
   }
@@ -180,7 +180,7 @@ void MonitorList::clipLine(double from[3], double to[3])
 /// Polygonモニターの交点と境界IDの除去
 void MonitorList::clearCut()
 {
-  for (int i = 0; i < nGroup; i++)
+  for (int i = 0; i < monGroup.size(); i++)
   {
     if ( monGroup[i]->getType() == mon_POLYGON )
     {
@@ -204,7 +204,7 @@ void MonitorList::closeFile()
 {
   if ((outputType == GATHER && myRank == 0) || outputType == DISTRIBUTE)
   {
-    for (int i = 0; i < nGroup; i++)
+    for (int i = 0; i < monGroup.size(); i++)
     {
       monGroup[i]->closeFile();
     }
@@ -658,8 +658,6 @@ bool MonitorList::getMonitor(Control* C, CompoList* cmp)
       Exit(0);
     }
   }
-
-  nGroup = (int)monGroup.size();
   
   return true;
 }
@@ -857,7 +855,7 @@ bool MonitorList::getStateVorticity()
   // モニタで使用する変数を取得
   for (int k=var_Velocity; k<var_END; k++)
   {
-    for (int i = 0; i < nGroup; i++)
+    for (int i = 0; i < monGroup.size(); i++)
     {
       if (monGroup[i]->getStateVariable(k) == true) count[k]++;
     }
@@ -889,7 +887,7 @@ void MonitorList::openFile()
 {
   if ((outputType == GATHER && myRank == 0) || outputType == DISTRIBUTE)
   {
-    for (int i = 0; i < nGroup; i++)
+    for (int i = 0; i < monGroup.size(); i++)
     {
       string fileName(fname_sampling);
       
@@ -921,7 +919,7 @@ void MonitorList::openFile()
 ///
 void MonitorList::print(const unsigned step, const double tm)
 {
-  for (int i = 0; i < nGroup; i++)
+  for (int i = 0; i < monGroup.size(); i++)
   {
     switch (outputType)
     {
@@ -954,7 +952,7 @@ void MonitorList::printMonitorInfo(FILE* fp, const char* str, const bool verbose
   
   if ( verbose )
   {
-    for (int i = 0; i < nGroup; i++)
+    for (int i = 0; i < monGroup.size(); i++)
     {
       monGroup[i]->printInfo(fp, i);
     }
@@ -1079,7 +1077,7 @@ void MonitorList::setMonitorNpoint(CompoList* cmp, const int NoCompo)
   {
     if ( cmp[m].getType() == MONITOR )
     {
-      for (int i = 0; i < nGroup; i++)
+      for (int i = 0; i < monGroup.size(); i++)
       {
         if (monGroup[i]->getPolyID() == m)  cmp[m].setElement(monGroup[i]->getSize());
       }

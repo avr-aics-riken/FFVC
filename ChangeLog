@@ -19,6 +19,12 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-04-02
+- r1620 update restart by time [ver 1.7.7]
+ - modify initInterval()
+ - expire nGroup in MonitorList class, instead use monGroup.size()
+
+--------------------------
 2014-03-23
 - r1619 update sampling [ver 1.7.6]
   - remove Vec3.h from FB >> already included by Polylib

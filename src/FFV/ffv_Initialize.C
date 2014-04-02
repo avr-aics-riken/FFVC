@@ -3068,11 +3068,17 @@ void FFV::initFileOut()
  */
 void FFV::initInterval()
 {
-  
-  unsigned m_Session_StartStep;   ///< セッションの開始ステップ
-  m_Session_StartStep = C.Interval[Control::tg_compute].getStartStep();
-  
   double m_dt = DT.get_DT();
+  unsigned m_Session_StartStep;   ///< セッションの開始ステップ
+  
+  if ( C.Interval[Control::tg_compute].getMode() == IntervalManager::By_step )
+  {
+    m_Session_StartStep = C.Interval[Control::tg_compute].getStartStep();
+  }
+  else
+  {
+    m_Session_StartStep = (unsigned)ceil( C.Interval[Control::tg_compute].getStartTime()  / (m_dt*C.Tscale) );
+  }
 
   
   // セッションの最終ステップ
@@ -3082,7 +3088,7 @@ void FFV::initInterval()
   }
   else
   {
-    Session_LastStep = (unsigned)ceil( C.Interval[Control::tg_compute].getIntervalTime() / (m_dt*C.Tscale) );
+    Session_LastStep = (unsigned)ceil( C.Interval[Control::tg_compute].getLastTime() / (m_dt*C.Tscale) );
   }
   
   
