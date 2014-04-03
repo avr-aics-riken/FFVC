@@ -764,7 +764,7 @@ void FFV::createTable(FILE* fp)
   
   
   // Fortran用のデータ保持配列 >> mat_tbl[C.NoCompo+1][3]のイメージ
-  if ( !(mat_tbl = new REAL_TYPE[3*(C.NoCompo+1)]) ) Exit(0);
+  if ( !(mat_tbl = new double[3*(C.NoCompo+1)]) ) Exit(0);
   for (int i=0; i<3*(C.NoCompo+1); i++) mat_tbl[i] = 1.0; // ゼロ割防止のため，1.0をいれておく
   
   

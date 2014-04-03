@@ -60,13 +60,13 @@ void FBUtility::cnv_Div(REAL_TYPE* dst, REAL_TYPE* src, int* sz, int gc, REAL_TY
 
 // #################################################################
 // 無次元内部エネルギーから有次元/無次元温度への変換
-void FBUtility::convArrayIE2Tmp(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE* src, const int* bd, const REAL_TYPE* mtbl, const REAL_TYPE Base_tmp, const REAL_TYPE Diff_tmp, const bool mode, double& flop)
+void FBUtility::convArrayIE2Tmp(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE* src, const int* bd, const double* mtbl, const REAL_TYPE Base_tmp, const REAL_TYPE Diff_tmp, const int mode, double& flop)
 {
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-  bool zz = mode; // dst[]の次元　true=dimensional, false=non-dimensional
+  int zz = mode; // dst[]の次元　1=dimensional, 0=non-dimensional
   
   REAL_TYPE dp = fabs(Diff_tmp);
   REAL_TYPE bt = Base_tmp;
@@ -83,7 +83,7 @@ void FBUtility::convArrayIE2Tmp(REAL_TYPE* dst, const int* size, const int guide
         REAL_TYPE rho = mtbl[3*l+0];
         REAL_TYPE cp  = mtbl[3*l+1];
         REAL_TYPE tn = src[m] / (rho * cp);
-        dst[m] = (zz) ? (tn * dp + bt) : tn;
+        dst[m] = (zz==1) ? (tn * dp + bt) : tn;
       }
     }
   }
@@ -148,13 +148,13 @@ void FBUtility::convArrayPrsND2D(REAL_TYPE* dst, const int* size, const int guid
 // #################################################################
 // 有次元/無次元温度から無次元内部エネルギーへの変換
 // mtbl[]は無次元パラメータ
-void FBUtility::convArrayTmp2IE(REAL_TYPE* dst, const int* size, const int guide, REAL_TYPE* src, const int* bd, const REAL_TYPE* mtbl, const REAL_TYPE Base_tmp, const REAL_TYPE Diff_tmp, const bool mode, double& flop)
+void FBUtility::convArrayTmp2IE(REAL_TYPE* dst, const int* size, const int guide, REAL_TYPE* src, const int* bd, const double* mtbl, const REAL_TYPE Base_tmp, const REAL_TYPE Diff_tmp, const int mode, double& flop)
 {
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-  bool zz = mode; // src[]の次元　true=dimensional, false=non-dimensional
+  int zz = mode; // src[]の次元　1=dimensional, 0=non-dimensional
   
   REAL_TYPE dp = 1.0 / fabs(Diff_tmp);
   REAL_TYPE bt = Base_tmp;
@@ -167,7 +167,7 @@ void FBUtility::convArrayTmp2IE(REAL_TYPE* dst, const int* size, const int guide
       for (int i=1-gd; i<=ix+gd; i++) {
         
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        REAL_TYPE tn = (zz) ? (src[m]-bt)*dp : src[m];
+        REAL_TYPE tn = (zz==1) ? (src[m]-bt)*dp : src[m];
         
         int l = bd[m] & MASK_5;
         REAL_TYPE rho = mtbl[3*l+0];

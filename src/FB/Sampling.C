@@ -107,7 +107,7 @@ Vec3d Sampling::calcVorticity(const REAL_TYPE* v, Vec3i index)
 ///   @param [in] v00       座標系移動速度
 ///   @param [in] bcd       BCindex B
 ///   @param [in] num_compo 物性テーブルの個数
-///   @param [in] tbl       物性テーブル
+///   @param [in] m_mtbl    物性テーブル
 ///
 Nearest::Nearest(int mode,
                  int size[],
@@ -118,8 +118,8 @@ Nearest::Nearest(int mode,
                  Vec3d v00,
                  int* bcd,
                  int num_compo,
-                 REAL_TYPE* tbl)
-  : Sampling(mode, size, guide, crd, org, pch, v00, bcd, num_compo, tbl)
+                 double* m_mtbl)
+  : Sampling(mode, size, guide, crd, org, pch, v00, bcd, num_compo, m_mtbl)
 {
 }
 
@@ -199,7 +199,7 @@ double Nearest::samplingHelicity(const REAL_TYPE* v)
 ///   @param [in] v00       座標系移動速度
 ///   @param [in] bcd       BCindex B
 ///   @param [in] num_compo 物性テーブルの個数
-///   @param [in] tbl       物性テーブル
+///   @param [in] m_mtbl    物性テーブル
 ///
 Smoothing::Smoothing(int mode,
                      int size[],
@@ -210,8 +210,8 @@ Smoothing::Smoothing(int mode,
                      Vec3d v00,
                      int* bcd,
                      int num_compo,
-                     REAL_TYPE* tbl)
-  : Sampling(mode, size, guide, crd, org, pch, v00, bcd, num_compo, tbl)
+                     double* m_mtbl)
+  : Sampling(mode, size, guide, crd, org, pch, v00, bcd, num_compo, m_mtbl)
 {
   add_xm = permitToAdd(shift_xm(cIndex)) ? true : false;
   add_xp = permitToAdd(shift_xp(cIndex)) ? true : false;
@@ -373,7 +373,7 @@ double Smoothing::samplingHelicity(const REAL_TYPE* v)
 ///   @param [in] v00       座標系移動速度
 ///   @param [in] bcd       BCindex B
 ///   @param [in] num_compo 物性テーブルの個数
-///   @param [in] tbl       物性テーブル
+///   @param [in] m_mtbl    物性テーブル
 ///
 Interpolation::Interpolation(int mode,
                              int size[],
@@ -384,8 +384,8 @@ Interpolation::Interpolation(int mode,
                              Vec3d v00,
                              int* bcd,
                              int num_compo,
-                             REAL_TYPE* tbl)
-  : Sampling(mode, size, guide, crd, org, pch, v00, bcd, num_compo, tbl)
+                             double* m_mtbl)
+  : Sampling(mode, size, guide, crd, org, pch, v00, bcd, num_compo, m_mtbl)
 {
   Vec3d c = (crd - org) / pch;
   base.x = (int)(c.x + 0.5);
@@ -547,7 +547,7 @@ double Interpolation::samplingHelicity(const REAL_TYPE* v)
 ///   @param [in] v00       座標系移動速度
 ///   @param [in] bcd       BCindex B
 ///   @param [in] num_compo 物性テーブルの個数
-///   @param [in] tbl       物性テーブル
+///   @param [in] m_mtbl    物性テーブル
 ///
 InterpolationStgV::InterpolationStgV(int mode,
                                      int size[],
@@ -558,8 +558,8 @@ InterpolationStgV::InterpolationStgV(int mode,
                                      Vec3d v00,
                                      int* bcd,
                                      int num_compo,
-                                     REAL_TYPE* tbl)
-  : Interpolation(mode, size, guide, crd, org, pch, v00, bcd, num_compo, tbl)
+                                     double* m_mtbl)
+  : Interpolation(mode, size, guide, crd, org, pch, v00, bcd, num_compo, m_mtbl)
 {
   Vec3d c = (crd - org) / pch;
   base_s.x = (int)(c.x);

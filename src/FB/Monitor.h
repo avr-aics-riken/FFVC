@@ -60,7 +60,7 @@ protected:
   TextParser* tpCntl;    ///< テキストパーサへのポインタ
   float area;            ///< 断面積 [m^2]
   int NoCompo;           ///< 物性テーブルの個数 >> 配列の大きさは[NoCompo+1]
-  REAL_TYPE* mtbl;       ///< 物性テーブルへのポインタ
+  double* mtbl;          ///< 物性テーブルへのポインタ
   
   OutputType outputType; ///< 出力タイプ
   vector<MonitorCompo*> monGroup;  ///< モニタリンググループ配列
@@ -188,7 +188,7 @@ public:
   ///   @param [in] unitPrs        圧力単位指定フラグ (絶対値，ゲージ圧)
   ///   @param [in] num_process    プロセス数
   ///   @param [in] m_NoCompo      物性テーブルの個数
-  ///   @param [in] tbl            物性テーブル
+  ///   @param [in] m_mtbl         物性テーブル
   ///
   void setControlVars(int* bid,
                       float* cut,
@@ -203,7 +203,7 @@ public:
                       const int unitPrs,
                       const int num_process,
                       const int m_NoCompo,
-                      REAL_TYPE* tbl);
+                      double* m_mtbl);
   
   
   /// サンプリング元データの登録

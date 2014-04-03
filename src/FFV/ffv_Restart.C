@@ -504,15 +504,7 @@ void FFV::RestartInstantaneous(FILE* fp, double& flop)
     Exit(0);
   }
   
-  if (C.Unit.File == DIMENSIONAL)
-  {
-    U.convArrayTmp2IE(d_ie, size, guide, d_ws, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, true, flop);
-  }
-  else
-  {
-    U.convArrayTmp2IE(d_ie, size, guide, d_ws, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, false, flop);
-  }
-  
+  U.convArrayTmp2IE(d_ie, size, guide, d_ws, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, C.Unit.File, flop);
 }
 
 

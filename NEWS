@@ -19,7 +19,11 @@ RELEASE
 =======
 
 -------------
-Version 1.7.7    2014-04-04
+Version 1.7.8    2014-04-03
+  - double mtbl
+
+-------------
+Version 1.7.7    2014-04-02
   - update restart
   
 -------------

@@ -98,7 +98,7 @@ public:
    * @param [in]     mtbl     rho, cp, lambdaの無次元値配列 mtbl[3*(NoCompo+1)]
    * @param [in]     Base_tmp 基準温度(C)
    * @param [in]     Diff_tmp 代表温度差(C)
-   * @param [in]     mode     温度の次元指定（true=dimensional, false=non-dimensional)
+   * @param [in]     mode     温度の次元指定（1=dimensional, 0=non-dimensional)
    * @param [in,out] flop     浮動小数演算数
    */
   void convArrayIE2Tmp(REAL_TYPE* dst,
@@ -106,10 +106,10 @@ public:
                        const int guide,
                        const REAL_TYPE* src,
                        const int* bd,
-                       const REAL_TYPE* mtbl,
+                       const double* mtbl,
                        const REAL_TYPE Base_tmp,
                        const REAL_TYPE Diff_tmp,
-                       const bool mode,
+                       const int mode,
                        double& flop);
   
   
@@ -163,7 +163,7 @@ public:
    * @param [in]     mtbl     rho, cp, lambdaの無次元値配列 mtbl[3*(NoCompo+1)]
    * @param [in]     Base_tmp 基準温度(C)
    * @param [in]     Diff_tmp 代表温度差(C)
-   * @param [in]     mode     温度の次元指定（true=dimensional, false=non-dimensional)
+   * @param [in]     mode     温度の次元指定（1=dimensional, 0=non-dimensional)
    * @param [in,out] flop     浮動小数演算数
    */
   void convArrayTmp2IE(REAL_TYPE* dst,
@@ -171,10 +171,10 @@ public:
                        const int guide,
                        REAL_TYPE* src,
                        const int* bd,
-                       const REAL_TYPE* mtbl,
+                       const double* mtbl,
                        const REAL_TYPE Base_tmp,
                        const REAL_TYPE Diff_tmp,
-                       const bool mode,
+                       const int mode,
                        double& flop);
   
   

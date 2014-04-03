@@ -494,16 +494,9 @@ void FFV::OutputAveragedVarables(double& flop)
 
   
   // Temperature
-  if( C.isHeatProblem() )
+  if ( C.isHeatProblem() )
   {
-    if (C.Unit.File == DIMENSIONAL)
-    {
-      U.convArrayIE2Tmp(d_ws, size, guide, d_ae, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, true, flop);
-    }
-    else
-    {
-      U.convArrayIE2Tmp(d_ws, size, guide, d_ae, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, false, flop);
-    }
+    U.convArrayIE2Tmp(d_ws, size, guide, d_ae, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, C.Unit.File, flop);
     
     fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
     
@@ -777,14 +770,7 @@ void FFV::OutputBasicVariables(double& flop)
   if ( !C.isHeatProblem() ) return;
   
   // Tempearture
-  if (C.Unit.File == DIMENSIONAL)
-  {
-    U.convArrayIE2Tmp(d_ws, size, guide, d_ie, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, true, flop);
-  }
-  else
-  {
-    U.convArrayIE2Tmp(d_ws, size, guide, d_ie, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, false, flop);
-  }
+  U.convArrayIE2Tmp(d_ws, size, guide, d_ie, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, C.Unit.File, flop);
   
   fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
   

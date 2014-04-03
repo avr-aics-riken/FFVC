@@ -69,7 +69,7 @@ public:
   ///   @param [in] v00       座標系移動速度
   ///   @param [in] bcd       BCindex B
   ///   @param [in] num_compo 物性テーブルの個数
-  ///   @param [in] tbl       物性テーブルへのポインタ
+  ///   @param [in] m_mtbl    物性テーブルへのポインタ
   ///
   Sampling(int mode,
            int size[],
@@ -80,7 +80,7 @@ public:
            Vec3d v00,
            int* bcd,
            int num_compo,
-           REAL_TYPE* tbl) {
+           double* m_mtbl) {
     
     this->mode = mode;
     this->size[0] = size[0];
@@ -103,7 +103,7 @@ public:
     
     for (int i=0; i<3*(NoCompo+1); i++)
     {
-      mtbl[i] = (double)tbl[i];
+      mtbl[i] = m_mtbl[i];
     }
   } 
 
@@ -255,7 +255,7 @@ protected:
   double getTemp(const REAL_TYPE* s, Vec3i index) {
     size_t m =_F_IDX_S3D(index.x, index.y, index.z, size[0], size[1], size[2], guide);
     int l = DECODE_CMP(bcd[m]);
-    return (s[m] / (mtbl[3*l+0] * mtbl[3*l+1]) ); //  t=ie/(rho cp)
+    return (s[m] / (REAL_TYPE)(mtbl[3*l+0] * mtbl[3*l+1]) ); //  t=ie/(rho cp)
   }
 
   /// セルでのベクトル値を取得
@@ -369,7 +369,7 @@ public:
   ///   @param [in] v00       座標系移動速度
   ///   @param [in] bcd       BCindex B
   ///   @param [in] num_compo 物性テーブルの個数
-  ///   @param [in] tbl       物性テーブル
+  ///   @param [in] m_mtbl    物性テーブル
   ///
   Nearest(int mode,
           int size[],
@@ -380,7 +380,7 @@ public:
           Vec3d v00,
           int* bcd,
           int num_compo,
-          REAL_TYPE* tbl);
+          double* m_mtbl);
 
   /// デストラクタ
   ~Nearest() {}
@@ -483,7 +483,7 @@ public:
   ///   @param [in] v00       座標系移動速度
   ///   @param [in] bcd       BCindex B
   ///   @param [in] num_compo 物性テーブルの個数
-  ///   @param [in] tbl       物性テーブル
+  ///   @param [in] m_mtbl    物性テーブル
   ///
   Smoothing(int mode,
             int size[],
@@ -494,7 +494,7 @@ public:
             Vec3d v00,
             int* bcd,
             int num_compo,
-            REAL_TYPE* tbl);
+            double* m_mtbl);
 
   /// デストラクタ
   ~Smoothing() {}
@@ -590,7 +590,7 @@ public:
   ///   @param [in] v00       座標系移動速度
   ///   @param [in] bcd       BCindex B
   ///   @param [in] num_compo 物性テーブルの個数
-  ///   @param [in] tbl       物性テーブル
+  ///   @param [in] m_mtbl    物性テーブル
   ///
   Interpolation(int mode,
                 int size[],
@@ -601,7 +601,7 @@ public:
                 Vec3d v00,
                 int* bcd,
                 int num_compo,
-                REAL_TYPE* tbl);
+                double* m_mtbl);
 
   /// デストラクタ
   ~Interpolation() {}
@@ -670,7 +670,7 @@ public:
   ///   @param [in] v00       座標系移動速度
   ///   @param [in] bcd       BCindex B
   ///   @param [in] num_compo 物性テーブルの個数
-  ///   @param [in] tbl       物性テーブル
+  ///   @param [in] m_mtbl    物性テーブル
   ///
   InterpolationStgV(int mode,
                     int size[],
@@ -681,7 +681,7 @@ public:
                     Vec3d v00,
                     int* bcd,
                     int num_compo,
-                    REAL_TYPE* tbl);
+                    double* m_mtbl);
 
   /// デストラクタ
   ~InterpolationStgV() {}

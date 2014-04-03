@@ -420,7 +420,7 @@ extern "C" {
                      REAL_TYPE* ie,
                      int* bd,
                      int* ncompo,
-                     REAL_TYPE* mtbl,
+                     double* mtbl,
                      double* flop);
   
   void ps_diff_ee_ (REAL_TYPE* ie,
@@ -433,7 +433,7 @@ extern "C" {
                     int* bh,
                     REAL_TYPE* ws,
                     int* ncompo,
-                    REAL_TYPE* mtbl,
+                    double* mtbl,
                     int* h_mode,
                     double* flop);
   

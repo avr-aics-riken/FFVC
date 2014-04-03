@@ -24,14 +24,14 @@
 
 // #################################################################
 // 無次元の媒質情報をコピー
-void SetBC::copyNDmatTable(const int m_compo, const REAL_TYPE* m_mat)
+void SetBC::copyNDmatTable(const int m_compo, const double* m_mtbl)
 {
-  // Fortran用のデータ保持配列 >> mat_tbl[C.NoCompo+1][3]のイメージ
-  if ( !(mtbl = new REAL_TYPE[3*(m_compo+1)]) ) Exit(0);
+  // Fortran用のデータ保持配列 >> m_mtbl[C.NoCompo+1][3]のイメージ
+  if ( !(mtbl = new double[3*(m_compo+1)]) ) Exit(0);
   
   for (int i=0; i<3*(m_compo+1); i++)
   {
-    mtbl[i] = m_mat[i];
+    mtbl[i] = m_mtbl[i];
   }
 }
 

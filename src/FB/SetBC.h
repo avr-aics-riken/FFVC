@@ -53,7 +53,7 @@ protected:
   Intrinsic       *Ex;
   
   // 無次元物性値テーブル
-  REAL_TYPE *mtbl;
+  double *mtbl;
   
   /** 外部境界の種類 */
   enum obc_kind 
@@ -94,7 +94,7 @@ public:
    * @param [in] m_compo コンポーネント数 NoCompo
    * @param [in] m_mat   外部で作成された媒質テーブル
    */
-  void copyNDmatTable(const int m_compo, const REAL_TYPE* m_mat);
+  void copyNDmatTable(const int m_compo, const double* m_mat);
   
   
   /**

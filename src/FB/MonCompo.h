@@ -111,7 +111,7 @@ protected:
   REAL_TYPE* pSource;   ///< 圧力サンプリング元データ
   REAL_TYPE* tSource;   ///< 温度サンプリング元データ
   REAL_TYPE* vrSource;  ///< 渦度サンプリング元データ
-  REAL_TYPE* mtbl;      ///< 物性テーブルへのポインタ
+  double* mtbl;         ///< 物性テーブルへのポインタ
   
 public:
   /// デフォルトコンストラクタ
@@ -149,7 +149,7 @@ public:
   ///   @param [in] cut         交点情報
   ///   @param [in] num_process プロセス数
   ///   @param [in] num_compo   物性テーブルの個数
-  ///   @param [in] m_tbl       物性テーブル
+  ///   @param [in] m_mtbl      物性テーブル
   ///
   MonitorCompo(Vec3d org,
                Vec3d pch,
@@ -162,7 +162,7 @@ public:
                float* cut,
                const int num_process,
                const int num_compo,
-               REAL_TYPE* m_tbl) {
+               double* m_mtbl) {
     nPoint = 0;
     for (int i = 0; i < var_END; i++)
     {
@@ -188,7 +188,7 @@ public:
     this->cut = cut;
     this->num_process = num_process;
     this->NoCompo = num_compo;
-    this->mtbl = m_tbl;
+    this->mtbl = m_mtbl;
   }
   
   /// デストラクタ

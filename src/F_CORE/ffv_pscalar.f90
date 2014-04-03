@@ -350,7 +350,7 @@
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  ie
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bd
-    real, dimension(3, 0:ncompo)                              ::  mtbl
+    real*8, dimension(3, 0:ncompo)                            ::  mtbl
 
     ix = sz(1)
     jx = sz(2)
@@ -415,7 +415,7 @@
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  ie, ws
     real, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  qbc
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bh
-    real, dimension(3, 0:ncompo)                              ::  mtbl
+    real*8, dimension(3, 0:ncompo)                            ::  mtbl
 
     ix = sz(1)
     jx = sz(2)

@@ -222,7 +222,7 @@ private:
   float  *d_cut; ///< 距離情報
   int    *d_bid; ///< BC
   
-  REAL_TYPE *mat_tbl; // Fortranでの多媒質対応ルーチンのため，rho, cp, lambdaの配列
+  double *mat_tbl; // Fortranでの多媒質対応ルーチンのため，rho, cp, lambdaの配列
   
   
   FILE *fp_b;  ///< 基本情報

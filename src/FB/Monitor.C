@@ -1001,7 +1001,7 @@ void MonitorList::setControlVars(int* bid,
                                  const int unitPrs,
                                  const int num_process,
                                  const int m_NoCompo,
-                                 REAL_TYPE* tbl)
+                                 double* m_mtbl)
 {
   this->bid      = bid;
   this->bcd      = bcd;
@@ -1023,7 +1023,7 @@ void MonitorList::setControlVars(int* bid,
   this->box.z    = (double)region[2];
   this->num_process = num_process;
   this->NoCompo     = m_NoCompo;
-  this->mtbl        = tbl;
+  this->mtbl        = m_mtbl;
   
   refVar.refVelocity   = refVelocity;
   refVar.baseTemp      = baseTemp;
