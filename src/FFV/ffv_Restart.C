@@ -92,7 +92,7 @@ void FFV::Restart(FILE* fp)
  * @param [in]  fp   ファイルポインタ
  * @param [out] flop 浮動小数点演算数
  */
-void FFV::RestartAvrerage (FILE* fp, double& flop)
+void FFV::RestartAvrerage(FILE* fp, double& flop)
 {
   std::string fname;
   std::string fmt(C.file_fmt_ext);
@@ -108,7 +108,7 @@ void FFV::RestartAvrerage (FILE* fp, double& flop)
   }
   else // By_time
   {
-    m_RestartStep = (unsigned)ceil( C.Interval[Control::tg_compute].getStartTime() / deltaT );
+    m_RestartStep = (unsigned)ceil( C.Interval[Control::tg_compute].getStartTime() / (deltaT*C.Tscale) );
   }
   
   
@@ -371,8 +371,9 @@ void FFV::RestartInstantaneous(FILE* fp, double& flop)
   }
   else // By_time
   {
-    m_RestartStep = (unsigned)ceil( C.Interval[Control::tg_compute].getStartTime() / deltaT );
+    m_RestartStep = (unsigned)ceil( C.Interval[Control::tg_compute].getStartTime() / (deltaT*C.Tscale) );
   }
+  
   
   // ガイド出力
   int gs = C.GuideOut;

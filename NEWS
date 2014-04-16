@@ -19,6 +19,10 @@ RELEASE
 =======
 
 -------------
+Version 1.7.9    2014-04-16
+  - Bug fix of restart
+
+-------------
 Version 1.7.8    2014-04-03
   - double mtbl
 

@@ -19,6 +19,11 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-04-16
+- r1622 Bug fix of restart for dimensional case [ver 1.7.9]
+ - deltaT -> (deltaT*C.Tscale) in RestartInstantaneous() and RestartAvrerage()
+
+--------------------------
 2014-04-03
 - r1621 double mtbl [ver 1.7.8]
  - assign double to mtbl
