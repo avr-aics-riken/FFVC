@@ -16,9 +16,10 @@
 //
 //##################################################################################
 
-//@file   Monitor.h
-//@brief  FlowBase MonitorList class Header
-//@author aics
+// @file   Monitor.h
+// @brief  FlowBase MonitorList class Header
+// @author aics
+// @note 浮動小数点の型はREAL_TYPE, mtblのみdouble
 
 #include "DomainInfo.h"
 #include <string>
@@ -47,18 +48,17 @@ public:
   };
   
 protected:
-  
   int num_process;       ///< プロセス数
-  Vec3d org;             ///< ローカル基点座標
-  Vec3d pch;             ///< セル幅
-  Vec3d box;             ///< ローカル領域サイズ
-  Vec3d g_org;           ///< グローバル基点座標
-  Vec3d g_box;           ///< グローバル領域サイズ
+  Vec3r org;             ///< ローカル基点座標
+  Vec3r pch;             ///< セル幅
+  Vec3r box;             ///< ローカル領域サイズ
+  Vec3r g_org;           ///< グローバル基点座標
+  Vec3r g_box;           ///< グローバル領域サイズ
   int* bid;              ///< 境界ID
   int* bcd;              ///< BCindex B
   float* cut;            ///< 交点情報
   TextParser* tpCntl;    ///< テキストパーサへのポインタ
-  float area;            ///< 断面積 [m^2]
+  REAL_TYPE area;        ///< 断面積 [m^2]
   int NoCompo;           ///< 物性テーブルの個数 >> 配列の大きさは[NoCompo+1]
   double* mtbl;          ///< 物性テーブルへのポインタ
   
@@ -193,12 +193,12 @@ public:
   void setControlVars(int* bid,
                       float* cut,
                       int* bcd,
-                      const double refVelocity,
-                      const double baseTemp,
-                      const double diffTemp,
-                      const double refDensity,
-                      const double refLength,
-                      const double basePrs,
+                      const REAL_TYPE refVelocity,
+                      const REAL_TYPE baseTemp,
+                      const REAL_TYPE diffTemp,
+                      const REAL_TYPE refDensity,
+                      const REAL_TYPE refLength,
+                      const REAL_TYPE basePrs,
                       const int modePrecision,
                       const int unitPrs,
                       const int num_process,
@@ -238,25 +238,25 @@ public:
 protected:
   
   /// Line指定の端点座標をグローバル計算領域内にクリッピング
-  void clipLine(double from[3], double to[3]);
+  void clipLine(REAL_TYPE from[3], REAL_TYPE to[3]);
   
   
   /// プリミティブ形状を作成
   void generatePrimitiveShape(const int odr,
                               const Monitor_Type montyp,
-                              double nv[3],
-                              double ctr[3],
-                              double depth,
-                              double tmp,
-                              double height,
-                              double dr[3]);
+                              REAL_TYPE nv[3],
+                              REAL_TYPE ctr[3],
+                              REAL_TYPE depth,
+                              REAL_TYPE tmp,
+                              REAL_TYPE height,
+                              REAL_TYPE dr[3]);
   
   
   /// モニタ座標情報(Line)を取得
   void getLine(const Control* C,
                const string label_base,
-               double from[3],
-               double to[3],
+               REAL_TYPE from[3],
+               REAL_TYPE to[3],
                int& nDivision);
   
   
@@ -273,20 +273,21 @@ protected:
   /// プリミティブのモニタ形状情報を取得
   void getPrimitive(Monitor_Type mon_type,
                     const string label_base,
-                    double nv[3],
-                    double center[3],
-                    double& depth,
-                    double& tmp,
-                    double& height,
-                    double dir[3]);
+                    REAL_TYPE nv[3],
+                    REAL_TYPE center[3],
+                    REAL_TYPE& depth,
+                    REAL_TYPE& tmp,
+                    REAL_TYPE& height,
+                    REAL_TYPE dir[3]);
   
   
   /// 座標値を無次元化する
-  void normalizeCord(double RefLength, double x[3])
+  /// @param [in,out] x  coordinate
+  void normalizeCord(REAL_TYPE x[3])
   {
-    x[0] /= RefLength;
-    x[1] /= RefLength;
-    x[2] /= RefLength;
+    x[0] /= refVar.refLength;
+    x[1] /= refVar.refLength;
+    x[2] /= refVar.refLength;
   }
   
   
@@ -299,8 +300,8 @@ protected:
                vector<string>& variables,
                const char* method,
                const char* mode,
-               double from[3],
-               double to[3],
+               REAL_TYPE from[3],
+               REAL_TYPE to[3],
                int nDivision,
                Monitor_Type mon_type);
   
@@ -327,7 +328,7 @@ protected:
                   const char* method,
                   const char* mode,
                   const int order,
-                  const double nv[3],
+                  const REAL_TYPE nv[3],
                   Monitor_Type mon_type);
   
   
@@ -336,14 +337,9 @@ protected:
                     vector<string>& variables,
                     const char* method,
                     const char* mode,
-                    Monitor_Type mon_type,
-                    const double nv[3],
-                    const double center[3],
-                    const double& depth,
-                    const double& tmp,
-                    const double& height,
-                    const double dir[3],
-                    const int order);
+                    const int order,
+                    const REAL_TYPE nv[3],
+                    Monitor_Type mon_type);
   
   
   /// サンプリングと出力の次元の設定

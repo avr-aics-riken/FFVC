@@ -92,62 +92,71 @@ void MonitorList::checkStatus()
 ///   @param [in,out] from Line始点
 ///   @param [in,out] to   Line終点
 ///
-void MonitorList::clipLine(double from[3], double to[3])
+void MonitorList::clipLine(REAL_TYPE from[3], REAL_TYPE to[3])
 {
   const char* OUT_OF_REGION = "out of region";
-  Vec3d st(from);
-  Vec3d ed(to);
-  Vec3d r0 = g_org;
-  Vec3d r1 = r0 + g_box;
-  Vec3d d = ed - st;
+  Vec3r st(from);
+  Vec3r ed(to);
+  Vec3r r0 = g_org;
+  Vec3r r1 = r0 + g_box;
+  Vec3r d = ed - st;
   
   
   // 境界上に端点が存在する場合は、少し計算領域内にずらす
-  double eps = 1.0e-5;
+  REAL_TYPE eps = 1.0e-5;
   r0 += eps * pch;
   r1 -= eps * pch;
   
-  double t_st = 0.0;
-  double t_ed = 1.0;
+  REAL_TYPE t_st = 0.0;
+  REAL_TYPE t_ed = 1.0;
   
   try {
-    if (d.x == 0) {
+    if (d.x == 0)
+    {
       if (st.x < r0.x || r1.x < st.x) throw OUT_OF_REGION;
     }
-    else if (d.x > 0) {
+    else if (d.x > 0)
+    {
       if (ed.x < r0.x || r1.x < st.x) throw OUT_OF_REGION;
       t_st = max(t_st, (r0.x-st.x)/d.x);
       t_ed = min(t_ed, (r1.x-st.x)/d.x);
     }
-    else if (d.x < 0) {
+    else if (d.x < 0)
+    {
       if (st.x < r0.x || r1.x < ed.x) throw OUT_OF_REGION;
       t_st = max(t_st, (r1.x-st.x)/d.x);
       t_ed = min(t_ed, (r0.x-st.x)/d.x);
     }
     
-    if (d.y == 0) {
+    if (d.y == 0)
+    {
       if (st.y < r0.y || r1.y < st.y) throw OUT_OF_REGION;
     }
-    else if (d.y > 0) {
+    else if (d.y > 0)
+    {
       if (ed.y < r0.y || r1.y < st.y) throw OUT_OF_REGION;
       t_st = max(t_st, (r0.y-st.y)/d.y);
       t_ed = min(t_ed, (r1.y-st.y)/d.y);
     }
-    else if (d.y < 0) {
+    else if (d.y < 0)
+    {
       if (st.y < r0.y || r1.y < ed.y) throw OUT_OF_REGION;
       t_st = max(t_st, (r1.y-st.y)/d.y);
       t_ed = min(t_ed, (r0.y-st.y)/d.y);
     }
     
-    if (d.z == 0) {
+    if (d.z == 0)
+    {
       if (st.z < r0.z || r1.z < st.z) throw OUT_OF_REGION;
     }
-    else if (d.z > 0) {
+    else if (d.z > 0)
+    {
       if (ed.z < r0.z || r1.z < st.z) throw OUT_OF_REGION;
       t_st = max(t_st, (r0.z-st.z)/d.z);
       t_ed = min(t_ed, (r1.z-st.z)/d.z);
     }
-    else if (d.z < 0) {
+    else if (d.z < 0)
+    {
       if (st.z < r0.z || r1.z < ed.z) throw OUT_OF_REGION;
       t_st = max(t_st, (r1.z-st.z)/d.z);
       t_ed = min(t_ed, (r0.z-st.z)/d.z);
@@ -155,9 +164,11 @@ void MonitorList::clipLine(double from[3], double to[3])
     
     if (t_st >= t_ed) throw OUT_OF_REGION;
   }
-  catch (const char *str) {
-    if (myRank == 0) {
-      printf("Line [%14.6e %14.6e %14.6e]-[%14.6e %14.6e %14.6e] is %s\n", // %12.4 >> %14.6
+  catch (const char *str)
+  {
+    if (myRank == 0)
+    {
+      printf("Line [%e %e %e]-[%e %e %e] is %s\n",
              from[0], from[1], from[2], to[0], to[1], to[2], str);
     }
     Exit(0);
@@ -226,12 +237,12 @@ void MonitorList::closeFile()
  */
 void MonitorList::generatePrimitiveShape(const int odr,
                                          const Monitor_Type montyp,
-                                         double nv[3],
-                                         double ctr[3],
-                                         double depth,
-                                         double tmp,
-                                         double height,
-                                         double dr[3])
+                                         REAL_TYPE nv[3],
+                                         REAL_TYPE ctr[3],
+                                         REAL_TYPE depth,
+                                         REAL_TYPE tmp,
+                                         REAL_TYPE height,
+                                         REAL_TYPE dr[3])
 {
   ctr[0] /= refVar.refLength;
   ctr[1] /= refVar.refLength;
@@ -242,17 +253,17 @@ void MonitorList::generatePrimitiveShape(const int odr,
   height /= refVar.refLength;
   
   // ShapeMonitorのインスタンス >> float引数
-  ShapeMonitor SM(size, guide, (float*)pitch, (float*)origin);
+  ShapeMonitor SM(size, guide, pitch, origin);
   
   
   switch ( montyp )
   {
     case mon_BOX:
-      SM.setShapeParam((float*)nv, (float*)ctr, (float*)dr, (float)depth, (float)tmp, (float)height);
+      SM.setShapeParam(nv, ctr, dr, depth, tmp, height);
       break;
       
     case mon_CYLINDER:
-      SM.setShapeParam((float*)nv, (float*)ctr, (float)depth, (float)tmp);
+      SM.setShapeParam(nv, ctr, depth, tmp);
       break;
       
     default:
@@ -266,11 +277,12 @@ void MonitorList::generatePrimitiveShape(const int odr,
   
   // bboxと投影面積の計算 [m^2]
   area = SM.get_BboxArea() * refVar.refLength * refVar.refLength;
-  printf("area = %f\n", area);
+  //printf("area = %f\n", area);
   
   // インデクスの計算
   int f_st[3], f_ed[3];
   SM.bbox_index(f_st, f_ed);
+  //printf("(%d %d %d) - (%d %d %d)\n", f_st[0], f_st[1], f_st[2], f_ed[0], f_ed[1], f_ed[2]);
   
   SM.setID(f_st, f_ed, bcd, odr);
 }
@@ -287,12 +299,12 @@ void MonitorList::generatePrimitiveShape(const int odr,
  */
 void MonitorList::getLine(const Control* C,
                           const string label_base,
-                          double from[3],
-                          double to[3],
+                          REAL_TYPE from[3],
+                          REAL_TYPE to[3],
                           int& nDivision)
 {
   string str,label;
-  double v[3];
+  REAL_TYPE v[3];
   
   label=label_base+"/Division";
   
@@ -317,7 +329,7 @@ void MonitorList::getLine(const Control* C,
   from[2]=v[2];
   
   // 入力パラメータの次元が有次元のとき，無次元化する
-  if (C->Unit.Output == DIMENSIONAL) normalizeCord(C->RefLength, from);
+  if (C->Unit.Output == DIMENSIONAL) normalizeCord(from);
 
   
   label=label_base+"/To";
@@ -333,7 +345,7 @@ void MonitorList::getLine(const Control* C,
   to[2]=v[2];
   
   // 入力パラメータの次元が有次元のとき，無次元化する
-  if (C->Unit.Output == DIMENSIONAL) normalizeCord(C->RefLength, to);
+  if (C->Unit.Output == DIMENSIONAL) normalizeCord(to);
 
 }
 
@@ -343,7 +355,6 @@ void MonitorList::getLine(const Control* C,
 // モニタ座標情報を取得し，リストに保持する
 bool MonitorList::getMonitor(Control* C, CompoList* cmp)
 {
-  double f_val=0.0;
   Monitor_Type mon_type;
   vector<string> variables;
   
@@ -423,6 +434,7 @@ bool MonitorList::getMonitor(Control* C, CompoList* cmp)
     }
     
     label="/MonitorList/Sampling/Interval";
+    double f_val=0.0;
     
     if ( !(tpCntl->getInspectedValue(label, f_val )) )
     {
@@ -603,7 +615,7 @@ bool MonitorList::getMonitor(Control* C, CompoList* cmp)
     
     else if ( mon_type == mon_LINE )
     {
-      double from[3], to[3];
+      REAL_TYPE from[3], to[3];
       int nDivision;
       getLine(C, label_leaf, from, to, nDivision);
       setLine(name.c_str(), variables, method.c_str(), mode.c_str(), from, to, nDivision, mon_type);
@@ -634,7 +646,7 @@ bool MonitorList::getMonitor(Control* C, CompoList* cmp)
 #endif
       
       // 法線ベクトル
-      double nv[3];
+      REAL_TYPE nv[3];
       label = label_leaf + "/Normal";
       if ( !Control::getVec(label, nv, tpCntl, true) ) Exit(0);
       
@@ -644,12 +656,11 @@ bool MonitorList::getMonitor(Control* C, CompoList* cmp)
     
     else if ( (mon_type == mon_CYLINDER) || (mon_type == mon_BOX) )
     {
-      double nv[3], ctr[3], dir[3];
-      double depth, tmp, height;
+      REAL_TYPE nv[3], ctr[3], dir[3];
+      REAL_TYPE depth, tmp, height;
       getPrimitive(mon_type, label_leaf, nv, ctr, depth, tmp, height, dir);
       generatePrimitiveShape(i+1, mon_type, nv, ctr, depth, tmp, height, dir);
-      setPrimitive(name.c_str(), variables, method.c_str(), mode.c_str(), mon_type,
-                   nv, ctr, depth, tmp, height, dir, i+1);
+      setPrimitive(name.c_str(), variables, method.c_str(), mode.c_str(), i+1, nv, mon_type);
       setOutputType(MonitorList::GATHER); // 強制
     }
     
@@ -704,7 +715,6 @@ void MonitorList::getPointset(const Control* C,
                               const string label_base,
                               vector<MonitorCompo::MonitorPoint>& pointSet)
 {
-  double v[3];
   char tmpstr[20];
   string str,label;
   string label_leaf;
@@ -717,7 +727,7 @@ void MonitorList::getPointset(const Control* C,
   
   if ( nnode == 0 )
   {
-    stamped_printf("\tcountLabels --- %s\n",label_base.c_str());
+    stamped_printf("\tcountLabels --- %s\n", label_base.c_str());
     Exit(0);
   }
   
@@ -750,6 +760,7 @@ void MonitorList::getPointset(const Control* C,
     
     // set coordinate
     label = label_leaf + "/Coordinate";
+    REAL_TYPE v[3];
     for (int n=0; n<3; n++) v[n]=0.0;
     
     if ( !(tpCntl->getInspectedVector(label, v, 3 )) )
@@ -759,7 +770,7 @@ void MonitorList::getPointset(const Control* C,
     }
     
     // 入力パラメータの次元が有次元のとき，無次元化する
-    if (C->Unit.Param == DIMENSIONAL) normalizeCord(C->RefLength, v);
+    if (C->Unit.Param == DIMENSIONAL) normalizeCord(v);
 
     
     // set tagの取得．ラベルなしでもエラーではない
@@ -771,7 +782,7 @@ void MonitorList::getPointset(const Control* C,
     }
     if ( !strcasecmp(str.c_str(), "") )
     {
-      sprintf(tmpstr, "point_%d",pc);
+      sprintf(tmpstr, "point_%d", pc);
       str = tmpstr;
     }
     
@@ -795,18 +806,19 @@ void MonitorList::getPointset(const Control* C,
  */
 void MonitorList::getPrimitive(Monitor_Type mon_type,
                                const string label_base,
-                               double nv[3],
-                               double center[3],
-                               double& depth,
-                               double& tmp,
-                               double& height,
-                               double dir[3])
+                               REAL_TYPE nv[3],
+                               REAL_TYPE center[3],
+                               REAL_TYPE& depth,
+                               REAL_TYPE& tmp,
+                               REAL_TYPE& height,
+                               REAL_TYPE dir[3])
 {
   string label;
   
   // 法線ベクトル
   label = label_base + "/Normal";
   if ( !Control::getVec(label, nv, tpCntl, true) ) Exit(0);
+  
   
   // 中心座標の取得
   label = label_base + "/Center";
@@ -991,12 +1003,12 @@ void MonitorList::registVars(const string label, vector<string>& variables, cons
 void MonitorList::setControlVars(int* bid,
                                  float* cut,
                                  int* bcd,
-                                 const double refVelocity,
-                                 const double baseTemp,
-                                 const double diffTemp,
-                                 const double refDensity,
-                                 const double refLength,
-                                 const double basePrs,
+                                 const REAL_TYPE refVelocity,
+                                 const REAL_TYPE baseTemp,
+                                 const REAL_TYPE diffTemp,
+                                 const REAL_TYPE refDensity,
+                                 const REAL_TYPE refLength,
+                                 const REAL_TYPE basePrs,
                                  const int modePrecision,
                                  const int unitPrs,
                                  const int num_process,
@@ -1006,21 +1018,21 @@ void MonitorList::setControlVars(int* bid,
   this->bid      = bid;
   this->bcd      = bcd;
   this->cut      = cut;
-  this->g_org.x  = (double)G_origin[0];
-  this->g_org.y  = (double)G_origin[1];
-  this->g_org.z  = (double)G_origin[2];
-  this->g_box.x  = (double)G_region[0];
-  this->g_box.y  = (double)G_region[1];
-  this->g_box.z  = (double)G_region[2];
-  this->org.x    = (double)origin[0];
-  this->org.y    = (double)origin[1];
-  this->org.z    = (double)origin[2];
-  this->pch.x    = (double)deltaX;
-  this->pch.y    = (double)deltaX;
-  this->pch.z    = (double)deltaX;
-  this->box.x    = (double)region[0];
-  this->box.y    = (double)region[1];
-  this->box.z    = (double)region[2];
+  this->g_org.x  = G_origin[0];
+  this->g_org.y  = G_origin[1];
+  this->g_org.z  = G_origin[2];
+  this->g_box.x  = G_region[0];
+  this->g_box.y  = G_region[1];
+  this->g_box.z  = G_region[2];
+  this->org.x    = origin[0];
+  this->org.y    = origin[1];
+  this->org.z    = origin[2];
+  this->pch.x    = deltaX;
+  this->pch.y    = deltaX;
+  this->pch.z    = deltaX;
+  this->box.x    = region[0];
+  this->box.y    = region[1];
+  this->box.z    = region[2];
   this->num_process = num_process;
   this->NoCompo     = m_NoCompo;
   this->mtbl        = m_mtbl;
@@ -1052,8 +1064,8 @@ void MonitorList::setLine(const char* str,
                           vector<string>& variables,
                           const char* method,
                           const char* mode,
-                          double from[3],
-                          double to[3],
+                          REAL_TYPE from[3],
+                          REAL_TYPE to[3],
                           int nDivision,
                           Monitor_Type mon_type)
 {
@@ -1132,7 +1144,7 @@ void MonitorList::setPolygon(const char* str,
                              const char* method,
                              const char* mode,
                              const int order,
-                             const double nv[3],
+                             const REAL_TYPE nv[3],
                              Monitor_Type mon_type)
 {
   MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process, NoCompo, mtbl);
@@ -1165,14 +1177,9 @@ void MonitorList::setPrimitive(const char* str,
                                vector<string>& variables,
                                const char* method,
                                const char* mode,
-                               Monitor_Type mon_type,
-                               const double nv[3],
-                               const double center[3],
-                               const double& depth,
-                               const double& tmp,
-                               const double& height,
-                               const double dir[3],
-                               const int order)
+                               const int order,
+                               const REAL_TYPE nv[3],
+                               Monitor_Type mon_type)
 {
   MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process, NoCompo, mtbl);
 
@@ -1191,7 +1198,7 @@ void MonitorList::setPrimitive(const char* str,
 ///
 void MonitorList::setV00(REAL_TYPE v00[4])
 {
-  refVar.v00.x = (double)v00[1];
-  refVar.v00.y = (double)v00[2];
-  refVar.v00.z = (double)v00[3];
+  refVar.v00.x = v00[1];
+  refVar.v00.y = v00[2];
+  refVar.v00.z = v00[3];
 }

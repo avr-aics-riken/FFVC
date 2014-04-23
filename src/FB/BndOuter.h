@@ -99,11 +99,11 @@ public:
    * @brief ベクトルのコピー
    * @param [in] コピー元
    */
-  void addVec(const double* vec)
+  void addVec(const REAL_TYPE* vec)
   {
-    nv[0] = (REAL_TYPE)vec[0];
-    nv[1] = (REAL_TYPE)vec[1];
-    nv[2] = (REAL_TYPE)vec[2];
+    nv[0] = vec[0];
+    nv[1] = vec[1];
+    nv[2] = vec[2];
   }
   
   

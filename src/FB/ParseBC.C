@@ -203,7 +203,7 @@ void ParseBC::get_IBC_Fan(const string label_base, const int n, CompoList* cmp)
 {
   string str,str_u;
   string label;
-  double dv[3];
+  REAL_TYPE dv[3];
   
   // 入力単位の指定
   label=label_base+"/Unit";//
@@ -453,7 +453,7 @@ void ParseBC::get_IBC_IBM_DF(const string label_base, const int n, CompoList* cm
 {
   string str;
   string label;
-  double dv[3];
+  REAL_TYPE dv[3];
   
   // 法線ベクトル
   label = label_base + "/OrientationVector";
@@ -507,7 +507,7 @@ void ParseBC::getIbcOutflow(const string label_base, const int n, CompoList* cmp
 {
   string str;
   string label;
-  double dv[3];
+  REAL_TYPE dv[3];
   
   // 圧力境界のタイプ default
   cmp[n].set_P_BCtype( P_GRAD_ZERO );
@@ -637,7 +637,7 @@ void ParseBC::get_IBC_PrsLoss(const string label_base, const int n, CompoList* c
   string str,str_u;
   string label;
   REAL_TYPE v[4];
-  double dv[3];
+  REAL_TYPE dv[3];
   
   // 入力単位の指定
   label = label_base + "/Unit";
@@ -766,7 +766,7 @@ void ParseBC::getIbcSpecVel(const string label_base, const int n, CompoList* cmp
   string str;
   string label;
   REAL_TYPE ct=0;
-  double dv[3];
+  REAL_TYPE dv[3];
   
   // 指定タイプの特定
   label = label_base + "/Type";
@@ -1363,7 +1363,7 @@ void ParseBC::getObcSpecVH(const string label_base, const int n)
   // 法線ベクトル
   if ( BaseBc[n].get_V_Profile() != CompoList::vel_zero )
   {
-    double v[3];
+    REAL_TYPE v[3];
     label = label_base + "/OrientationVector";
     if ( !Control::getVec(label, v, tpCntl, true) ) Exit(0);
     BaseBc[n].addVec(v);
@@ -1443,7 +1443,7 @@ void ParseBC::getObcTrcfree(const string label_base, const int n)
 void ParseBC::getObcWall(const string label_base, const int n)
 {
   REAL_TYPE ct=0.0;
-  double dv[3];
+  REAL_TYPE dv[3];
   string str;
   string label, label2;
   

@@ -35,22 +35,22 @@ protected:
   int size[3];     ///< セル(ローカル)サイズ
   int guide;       ///< ガイドセル数
   int division;    ///< 細分化の分割数
-  Vec3f pch;       ///< セル幅
-  Vec3f org;       ///< 計算領域の基点
-  Vec3f angle;     ///< 変換の回転角度
+  Vec3r pch;       ///< セル幅
+  Vec3r org;       ///< 計算領域の基点
+  Vec3r angle;     ///< 変換の回転角度
   
   // 形状パラメータ
   int smode;         ///< 形状モード
-  float depth;       ///< 厚さ
-  float width;       ///< 矩形の幅（dir方向)
-  float height;      ///< 矩形の高さ
-  float r_fan;       ///< ファン半径
-  float r_boss;      ///< ボス半径
-  Vec3f nv;      ///< 法線方向ベクトル（流出方向）
-  Vec3f center;  ///< 形状の中心座標（前面の中心位置）
-  Vec3f dir;     ///< 矩形の方向規定の参照ベクトル
-  Vec3f box_min; ///< Bounding boxの最小値
-  Vec3f box_max; ///< Bounding boxの最大値
+  REAL_TYPE depth;   ///< 厚さ
+  REAL_TYPE width;   ///< 矩形の幅（dir方向)
+  REAL_TYPE height;  ///< 矩形の高さ
+  REAL_TYPE r_fan;   ///< ファン半径
+  REAL_TYPE r_boss;  ///< ボス半径
+  Vec3r nv;          ///< 法線方向ベクトル（流出方向）
+  Vec3r center;      ///< 形状の中心座標（前面の中心位置）
+  Vec3r dir;         ///< 矩形の方向規定の参照ベクトル
+  Vec3r box_min;     ///< Bounding boxの最小値
+  Vec3r box_max;     ///< Bounding boxの最大値
   
 public:
   /** デフォルトコンストラクタ */
@@ -63,7 +63,7 @@ public:
    * @param [in] org    ローカル領域基点座標
    * @param [in] div    サブディビジョンの分割数
    */
-  CompoFraction(const int* size, const int guide, const float* pch, const float* org, const int div)
+  CompoFraction(const int* size, const int guide, const REAL_TYPE* pch, const REAL_TYPE* org, const int div)
   {
     this->size[0]  = size[0];
     this->size[1]  = size[1];
@@ -88,7 +88,7 @@ protected:
    * @param [in] mx bboxの最大位置
    * @erturn 投影面積
    */
-  float bbox_rect_cylinder(Vec3f& mn, Vec3f& mx);
+  REAL_TYPE bbox_rect_cylinder(Vec3r& mn, Vec3r& mx);
   
   
   /**
@@ -97,7 +97,7 @@ protected:
    * @param [in] mx bboxの最大位置
    * @erturn 投影面積
    */
-  float bbox_circ_cylinder(Vec3f& mn, Vec3f& mx);
+  REAL_TYPE bbox_circ_cylinder(Vec3r& mn, Vec3r& mx);
   
   
   /**
@@ -106,70 +106,70 @@ protected:
    * @param [in]  p テストする座標値
    * @note Fortran index
    */
-  void find_index(int* w, const Vec3f p);
+  void find_index(int* w, const Vec3r p);
   
   
   /** インデックスを(1,0,0)シフト
    * @param [in] index 元のインデクス
    * @param [in] h     シフト幅
    */
-  inline Vec3f shift_f1 (const Vec3f index, const float h) 
+  inline Vec3r shift_f1 (const Vec3r index, const REAL_TYPE h) 
   { 
-    return Vec3f(index.x+h, index.y  , index.z  ); 
+    return Vec3r(index.x+h, index.y  , index.z  ); 
   }
   
   /** インデックスを(0,1,0)シフト
    * @param [in] index 元のインデクス
    * @param [in] h     シフト幅
    */
-  inline Vec3f shift_f2 (const Vec3f index, const float h) 
+  inline Vec3r shift_f2 (const Vec3r index, const REAL_TYPE h) 
   { 
-    return Vec3f(index.x  , index.y+h, index.z  ); 
+    return Vec3r(index.x  , index.y+h, index.z  ); 
   }
   
   /** インデックスを(1,1,0)シフト
    * @param [in] index 元のインデクス
    * @param [in] h     シフト幅
    */
-  inline Vec3f shift_f3 (const Vec3f index, const float h) 
+  inline Vec3r shift_f3 (const Vec3r index, const REAL_TYPE h) 
   { 
-    return Vec3f(index.x+h, index.y+h, index.z  ); 
+    return Vec3r(index.x+h, index.y+h, index.z  ); 
   }
   
   /** インデックスを(0,0,1)シフト
    * @param [in] index 元のインデクス
    * @param [in] h     シフト幅
    */
-  inline Vec3f shift_f4 (const Vec3f index, const float h) 
+  inline Vec3r shift_f4 (const Vec3r index, const REAL_TYPE h) 
   {
-    return Vec3f(index.x  , index.y  , index.z+h); 
+    return Vec3r(index.x  , index.y  , index.z+h); 
   }
   
   /** インデックスを(1,0,1)シフト
    * @param [in] index 元のインデクス
    * @param [in] h     シフト幅
    */
-  inline Vec3f shift_f5 (const Vec3f index, const float h) 
+  inline Vec3r shift_f5 (const Vec3r index, const REAL_TYPE h) 
   { 
-    return Vec3f(index.x+h, index.y  , index.z+h); 
+    return Vec3r(index.x+h, index.y  , index.z+h); 
   }
   
   /** インデックスを(0,1,1)シフト
    * @param [in] index 元のインデクス
    * @param [in] h     シフト幅
    */
-  inline Vec3f shift_f6 (const Vec3f index, const float h)
+  inline Vec3r shift_f6 (const Vec3r index, const REAL_TYPE h)
   { 
-    return Vec3f(index.x  , index.y+h, index.z+h); 
+    return Vec3r(index.x  , index.y+h, index.z+h); 
   }
   
   /** インデックスを(1,1,1)シフト
    * @param [in] index 元のインデクス
    * @param [in] h     シフト幅
    */
-  inline Vec3f shift_f7 (const Vec3f index, const float h) 
+  inline Vec3r shift_f7 (const Vec3r index, const REAL_TYPE h) 
   {
-    return Vec3f(index.x+h, index.y+h, index.z+h); 
+    return Vec3r(index.x+h, index.y+h, index.z+h); 
   }
 
   
@@ -179,12 +179,12 @@ protected:
    * @return 内部のときに1.0を返す
    * @note 186 flop
    */
-  inline float judge_cylinder(const Vec3f p) 
+  inline REAL_TYPE judge_cylinder(const Vec3r p) 
   {
-    Vec3f q = rotate(angle, p-center); // 181 flop
+    Vec3r q = rotate(angle, p-center); // 181 flop
     
     if ( (q.z < 0.0) || (q.z > depth)  ) return 0.0;
-    float r = sqrtf(q.x*q.x + q.y*q.y);
+    REAL_TYPE r = sqrtf(q.x*q.x + q.y*q.y);
     
     return ( (r<=r_fan) && (r>=r_boss) ) ? 1.0 : 0.0;
   }
@@ -196,9 +196,9 @@ protected:
    * @return 内部のときに1.0を返す
    * @note 183 flop
    */
-  inline float judge_rect(const Vec3f p) 
+  inline REAL_TYPE judge_rect(const Vec3r p) 
   {
-    Vec3f q = rotate(angle, p-center); // 181 flop
+    Vec3r q = rotate(angle, p-center); // 181 flop
     
     if ( (q.z < 0.0) || (q.z > depth)  ) return 0.0;
     if ( fabs(q.x) > 0.5*width )  return 0.0;
@@ -215,9 +215,9 @@ protected:
    * @return 角度
    * @note sin, cos = 5flop, dot=5flop, total 181flop
    */
-  inline Vec3f rotate(const Vec3f p, const Vec3f u)
+  inline Vec3r rotate(const Vec3r p, const Vec3r u)
   {
-    Vec3f a, b, c;
+    Vec3r a, b, c;
     
     // line vector expression
     a.x =  cos(p.y)*cos(p.z);
@@ -232,7 +232,7 @@ protected:
     c.y =  sin(p.x)*cos(p.y);
     c.z =  cos(p.x)*cos(p.y);
     
-    return Vec3f( dot(a, u), dot(b, u), dot(c, u) );
+    return Vec3r( dot(a, u), dot(b, u), dot(c, u) );
   }
   
   
@@ -243,9 +243,9 @@ protected:
    * @return 角度
    * @note sin, cos = 5flop, dot=5flop, total 181flop
    */
-  inline Vec3f rotate_inv(const Vec3f p, const Vec3f u)
+  inline Vec3r rotate_inv(const Vec3r p, const Vec3r u)
   {
-    Vec3f a, b, c;
+    Vec3r a, b, c;
     
     // line vector expression
     a.x =  cos(p.y)*cos(p.z);
@@ -260,7 +260,7 @@ protected:
     c.y =  cos(p.x)*sin(p.y)*sin(p.z) - sin(p.x)*cos(p.z);
     c.z =  cos(p.x)*cos(p.y);
     
-    return Vec3f( dot(a, u), dot(b, u), dot(c, u) );
+    return Vec3r( dot(a, u), dot(b, u), dot(c, u) );
   }
   
   
@@ -270,7 +270,7 @@ public:
    * @brief 形状のbboxと投影面積を求める
    * @return 投影面積
    */
-  float get_BboxArea ();
+  REAL_TYPE get_BboxArea ();
   
   
   /**
@@ -295,7 +295,12 @@ public:
    * @param [in] m_width  幅
    * @param [in] m_height 高さ
    */
-  void setShapeParam(const float m_nv[], const float m_ctr[], const float m_dir[], const float m_depth, const float m_width, const float m_height);
+  void setShapeParam(const REAL_TYPE m_nv[3],
+                     const REAL_TYPE m_ctr[3],
+                     const REAL_TYPE m_dir[3],
+                     const REAL_TYPE m_depth,
+                     const REAL_TYPE m_width,
+                     const REAL_TYPE m_height);
   
   /**
    * @brief 円筒の形状パラメータをセットする
@@ -305,7 +310,11 @@ public:
    * @param [in] m_r_fan  外径
    * @param [in] m_r_boss 内径
    */
-  void setShapeParam(const float m_nv[], const float m_ctr[], const float m_depth, const float m_r_fan, const float m_r_boss=0.0f);
+  void setShapeParam(const REAL_TYPE m_nv[3],
+                     const REAL_TYPE m_ctr[3],
+                     const REAL_TYPE m_depth,
+                     const REAL_TYPE m_r_fan,
+                     const REAL_TYPE m_r_boss=0.0f);
   
   
   /**
@@ -333,7 +342,7 @@ public:
    * @param [in,out] mn 比較して小さい成分
    * @param [in]     p  参照ベクトル
    */
-  static inline void get_min(Vec3f& mn, const Vec3f p)
+  static inline void get_min(Vec3r& mn, const Vec3r p)
   {
     mn.x = (mn.x < p.x) ? mn.x : p.x;
     mn.y = (mn.y < p.y) ? mn.y : p.y;
@@ -346,7 +355,7 @@ public:
    * @param [in,out] mx 比較して大きい成分
    * @param [in]     p  参照ベクトル
    */
-  static inline void get_max(Vec3f& mx, const Vec3f p)
+  static inline void get_max(Vec3r& mx, const Vec3r p)
   {
     mx.x = (mx.x > p.x) ? mx.x : p.x;
     mx.y = (mx.y > p.y) ? mx.y : p.y;
@@ -370,7 +379,7 @@ public:
    * @param [in] pch    ローカル領域セル幅
    * @param [in] org    ローカル領域基点座標
    */
-  ShapeMonitor(const int* size, const int guide, const float* pch, const float* org) 
+  ShapeMonitor(const int* size, const int guide, const REAL_TYPE* pch, const REAL_TYPE* org) 
   {
     this->size[0]  = size[0];
     this->size[1]  = size[1];

@@ -984,7 +984,7 @@ public:
    * @param [in]  tpc       TextParser pointer
    * @param [in]  normalize trueのとき無次元化
    */
-  static bool getVec(const std::string label, double* v, TextParser* tpc, bool normalize=false);
+  static bool getVec(const std::string label, REAL_TYPE* v, TextParser* tpc, bool normalize=false);
   
   
   /**
@@ -1098,7 +1098,7 @@ public:
    * @brief 単位ベクトルを計算して戻す
    * @param [in,out] v ベクトル値
    */
-  static void UnitVec(double* v);
+  static void UnitVec(REAL_TYPE* v);
   
 };
 

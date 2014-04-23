@@ -4174,12 +4174,12 @@ void FFV::setMonitorList()
   MO.setControlVars(d_bid,
                     d_cut,
                     d_bcd,
-                    (double)C.RefVelocity,
-                    (double)C.BaseTemp,
-                    (double)C.DiffTemp,
-                    (double)C.RefDensity,
-                    (double)C.RefLength,
-                    (double)C.BasePrs,
+                    C.RefVelocity,
+                    C.BaseTemp,
+                    C.DiffTemp,
+                    C.RefDensity,
+                    C.RefLength,
+                    C.BasePrs,
                     C.Mode.Precision,
                     C.Unit.Prs,
                     C.num_process,
@@ -4197,6 +4197,32 @@ void FFV::setMonitorList()
   
   // モニタ結果出力ファイル群のオープン
   MO.openFile();
+  
+  
+  // ########## 確認のための出力
+  Ex->writeSVX(d_bcd, &C);
+#if 0
+  REAL_TYPE org[3], pit[3];
+  
+  //  ガイドセルがある場合(GuideOut != 0)にオリジナルポイントを調整
+  for (int i=0; i<3; i++)
+  {
+    org[i] = C.org[i] - C.dx[i]*(REAL_TYPE)C.GuideOut;
+    pit[i] = C.dx[i];
+  }
+  
+  // 出力ファイルの指定が有次元の場合
+  if ( C.Unit.File == DIMENSIONAL )
+  {
+    for (int i=0; i<3; i++)
+    {
+      org[i] *= C.RefLength;
+      pit[i] *= C.RefLength;
+    }
+  }
+  F.writeRawSPH(d_bcd, size, guide, org, pit, sizeof(float));
+#endif
+  // ##########
 }
 
 

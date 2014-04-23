@@ -31,9 +31,9 @@ void CompoFraction::bbox_index(int* st, int* ed)
 
 // #################################################################
 // 直方体領域のbboxを計算し、投影面積を計算
-float CompoFraction::bbox_rect_cylinder(Vec3f& mn, Vec3f& mx)
+REAL_TYPE CompoFraction::bbox_rect_cylinder(Vec3r& mn, Vec3r& mx)
 {
-  Vec3f p[8], o, u, v, w;
+  Vec3r p[8], o, u, v, w;
   
   o = center;
   u = dir;
@@ -51,14 +51,15 @@ float CompoFraction::bbox_rect_cylinder(Vec3f& mn, Vec3f& mx)
   p[6] = p[5] + width *u;
   p[7] = p[4] + width *u;
   
-  for (int i=0; i<8; i++) {
+  for (int i=0; i<8; i++)
+  {
     get_min(mn, p[i]);
     get_max(mx, p[i]);
   }
   
   // 投影面積
-  float a = (p[0]-p[3]).length();
-  float b = (p[0]-p[4]).length();
+  REAL_TYPE a = (p[0]-p[3]).length();
+  REAL_TYPE b = (p[0]-p[4]).length();
 
   return a*b;
 }
@@ -67,17 +68,18 @@ float CompoFraction::bbox_rect_cylinder(Vec3f& mn, Vec3f& mx)
 // #################################################################
 // 円筒領域のbboxを計算
 // 標準位置で円周上の点をサンプリングし，逆変換後，min/max
-float CompoFraction::bbox_circ_cylinder(Vec3f& mn, Vec3f& mx)
+REAL_TYPE CompoFraction::bbox_circ_cylinder(Vec3r& mn, Vec3r& mx)
 {
-  Vec3f r, q;
+  Vec3r r, q;
   int div_r = 1000; // 周上の分割数
-  float x, y;
-  double d;
-  double pi = 2.0*asin(1.0);
-  double dth = 2.0*pi/(double)div_r; // radian
+  REAL_TYPE x, y;
+  REAL_TYPE d;
+  REAL_TYPE pi = 2.0*asin(1.0);
+  REAL_TYPE dth = 2.0*pi/(REAL_TYPE)div_r; // radian
   
-  for (int i=0; i<div_r; i++) {
-    d = dth * (double)i;
+  for (int i=0; i<div_r; i++)
+  {
+    d = dth * (REAL_TYPE)i;
     x = r_fan * cos(d);
     y = r_fan * sin(d);
     
@@ -93,7 +95,7 @@ float CompoFraction::bbox_circ_cylinder(Vec3f& mn, Vec3f& mx)
   }
   
   // 投影面積
-  float a = (float)(pi*(r_fan*r_fan-r_boss*r_boss));
+  REAL_TYPE a = (REAL_TYPE)(pi*(r_fan*r_fan-r_boss*r_boss));
   
   return a;
 }
@@ -102,9 +104,9 @@ float CompoFraction::bbox_circ_cylinder(Vec3f& mn, Vec3f& mx)
 // #################################################################
 // 点pの属するセルインデクスを求める
 // Fortran index
-void CompoFraction::find_index(int* w, const Vec3f p)
+void CompoFraction::find_index(int* w, const Vec3r p)
 {
-  Vec3f q = (p-org)/pch;
+  Vec3r q = (p-org)/pch;
   
   w[0] = (int)ceil(q.x);
   w[1] = (int)ceil(q.y);
@@ -117,10 +119,10 @@ void CompoFraction::find_index(int* w, const Vec3f p)
 // 回転の符号はz軸に向かう回転が右ねじ方向の場合を正にとる
 void CompoFraction::get_angle()
 {
-  float alpha, beta, c, d, c_alp, c_bta;
-  float eps = 1.0e-5, f_yz, f_xz;
-  Vec3f p, q;
-  Vec3f z(0.0, 0.0, 1.0);
+  REAL_TYPE alpha, beta, c, d, c_alp, c_bta;
+  REAL_TYPE eps = 1.0e-5, f_yz, f_xz;
+  Vec3r p, q;
+  Vec3r z(0.0, 0.0, 1.0);
   
   // 単位ベクトルnvがz軸の単位ベクトルと作る角度を返す
   // yz面への射影
@@ -129,33 +131,39 @@ void CompoFraction::get_angle()
   p.z = nv.z;
   c = p.length();
   
-  if ( c != 0.0 ) {
+  if ( c != 0.0 )
+  {
     c_alp = dot(z, p)/c;
     d = acos( c_alp );
     f_yz = c_alp+1.0;
     alpha = (nv.y >= 0.0) ? d : -d;
   }
-  else {
+  else
+  {
     alpha = 0.0; // yz面への射影ベクトルがゼロの場合には回転しない
   }
+  printf("yz=%f : (%f %f %f)\n", alpha, p.x, p.y, p.z);
   
   // 参照ベクトルをalphaだけ回転して評価ベクトルを生成 > xz面への射影
   q.assign(alpha, 0.0, 0.0);
   p = rotate(q, nv);
   c = p.length();
   
-  if ( c != 0.0 ) {
+  if ( c != 0.0 )
+  {
     c_bta = dot(z, p)/c;
     d = acos( c_bta );
     f_xz = c_bta+1.0;
     beta = (nv.x >= 0.0) ? -d : d;
   }
-  else {
+  else
+  {
     beta = 0.0;
   }
   
   // x軸とy軸の両方から見てz軸と反対の場合にだけ，y軸回りのみ回転する
-  if ( (f_yz<eps) && (f_xz<eps) ) {
+  if ( (f_yz<eps) && (f_xz<eps) )
+  {
     alpha = 0.0;
     beta  = acos(-1.0);
   }
@@ -164,32 +172,38 @@ void CompoFraction::get_angle()
   
   
   // 矩形の場合，単位ベクトルdirが回転した後，x軸の単位ベクトルへ回転する角度を計算
-  if ( smode == mon_BOX ) {
-    float c_gma, f_xy;
-    Vec3f x(1.0, 0.0, 0.0);
+  if ( smode == mon_BOX )
+  {
+    REAL_TYPE c_gma, f_xy;
+    Vec3r x(1.0, 0.0, 0.0);
     
     q = rotate(angle, dir); // 回転によりxy平面上に射影される > q.z=0.0
     c = q.length();
     
-    if ( c != 0.0 ) {
+    if ( c != 0.0 )
+    {
       c_gma = dot(x, q)/c;
       d = acos( c_gma );
       f_xy = c_gma+1.0;
-      if ( f_xy<eps ) {
+      
+      if ( f_xy<eps )
+      {
         angle.z = 2.0*asin(1.0); // 反対方向なのでπ
       }
-      else {
+      else
+      {
         angle.z = (q.y >= 0.0) ? -d : d;
       }
     }
-    else {
+    else
+    {
       stamped_printf("\tInvalid Parameter of Heat exchanger : lateral vector is zero\n");
       Exit(0);
     }
   }
   
 // ##########
-#if 0
+#if 1
   stamped_printf("angle = (%f %f %f)\n", angle.x, angle.y, angle.z);
 #endif
 // ##########
@@ -200,11 +214,11 @@ void CompoFraction::get_angle()
 
 // #################################################################
 // 形状のbboxと投影面積を求める
-float CompoFraction::get_BboxArea()
+REAL_TYPE CompoFraction::get_BboxArea()
 {
   box_min.assign(1.0e6, 1.0e6, 1.0e6);
   box_max.assign(-1.0e6, -1.0e6, -1.0e6);
-  float a;
+  REAL_TYPE a;
   
   if ( smode == mon_BOX )
   {
@@ -228,7 +242,12 @@ float CompoFraction::get_BboxArea()
 
 // #################################################################
 // 矩形の形状パラメータをセットする
-void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_dir[3], const float m_depth, const float m_width, const float m_height)
+void CompoFraction::setShapeParam (const REAL_TYPE m_nv[3],
+                                   const REAL_TYPE m_ctr[3],
+                                   const REAL_TYPE m_dir[3],
+                                   const REAL_TYPE m_depth,
+                                   const REAL_TYPE m_width,
+                                   const REAL_TYPE m_height)
 {
   smode  = mon_BOX;
   nv     = m_nv;
@@ -240,12 +259,15 @@ void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], co
   
   nv.normalize();
   dir.normalize();
-  if ( (nv.length() == 0.0) || (dir.length() == 0.0) ) {
+  
+  if ( (nv.length() == 0.0) || (dir.length() == 0.0) )
+  {
     stamped_printf("\tError : Invalid parameter of Heat Exchanger : zero vector\n");
     Exit(0);
   }
   
-  if ( dot(nv, dir) != 0.0 ) {
+  if ( dot(nv, dir) != 0.0 )
+  {
     stamped_printf("\tError : Invalid parameter of Heat Exchanger : non-orthogonal vectors\n");
     Exit(0);
   }
@@ -254,7 +276,11 @@ void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], co
 
 // #################################################################
 // 円筒の形状パラメータをセットする
-void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], const float m_depth, const float m_r_fan, const float m_r_boss)
+void CompoFraction::setShapeParam (const REAL_TYPE m_nv[3],
+                                   const REAL_TYPE m_ctr[3],
+                                   const REAL_TYPE m_depth,
+                                   const REAL_TYPE m_r_fan,
+                                   const REAL_TYPE m_r_boss)
 {
   smode  = mon_CYLINDER;
   nv     = m_nv;
@@ -264,7 +290,9 @@ void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], co
   r_boss = m_r_boss;
   
   nv.normalize();
-  if ( nv.length() == 0.0 ) {
+  
+  if ( nv.length() == 0.0 )
+  {
     stamped_printf("\tError : Invalid parameter of Fan : zero vector\n");
     Exit(0);
   }
@@ -275,11 +303,12 @@ void CompoFraction::setShapeParam (const float m_nv[3], const float m_ctr[3], co
 // 体積率が(0,1)の間のセルに対してサブディビジョンを実施
 void CompoFraction::subdivision(const int st[], const int ed[], float* vf, double& flop)
 {
-  Vec3f base, b;
-  Vec3f p, o;
+  Vec3r base, b;
+  Vec3r p, o;
   size_t m;
-  float c, r, h, ff, ph;
+  REAL_TYPE c, h, ff, ph;
   int ix, jx, kx, gd, dv;
+  float r;
   
   // for optimization > variables defined outside
   ix = size[0];
@@ -287,13 +316,13 @@ void CompoFraction::subdivision(const int st[], const int ed[], float* vf, doubl
   kx = size[2];
   gd = guide;
   dv = division;
-  h  = pch.x/(float)dv;
-  ff = 1.0/(float)(dv*dv*dv);
+  h  = pch.x/(REAL_TYPE)dv;
+  ff = 1.0/(REAL_TYPE)(dv*dv*dv);
   o  = org;
   ph = pch.x;
   
-  if ( smode == mon_BOX ) {
-    
+  if ( smode == mon_BOX )
+  {
     for (int k=st[2]; k<=ed[2]; k++) {
       for (int j=st[1]; j<=ed[1]; j++) {
         for (int i=st[0]; i<=ed[0]; i++) {
@@ -301,27 +330,27 @@ void CompoFraction::subdivision(const int st[], const int ed[], float* vf, doubl
           r = vf[m];
           
           if ( (r>0.0) && (r<1.0) ) {
-            base.assign((float)i-1.0, (float)j-1.0, (float)k-1.0);
+            base.assign((REAL_TYPE)i-1.0, (REAL_TYPE)j-1.0, (REAL_TYPE)k-1.0);
             b = o + base * ph;
             
             c = 0.0;
             for (int k1=0; k1<dv; k1++) {
-              p.z = b.z + ((float)k1+0.5)*h;
+              p.z = b.z + ((REAL_TYPE)k1+0.5)*h;
               flop += 9.0;
               
               for (int j1=0; j1<dv; j1++) {
-                p.y = b.y + ((float)j1+0.5)*h;
+                p.y = b.y + ((REAL_TYPE)j1+0.5)*h;
                 flop += 9.0;
                 
                 for (int i1=0; i1<dv; i1++) {
-                  p.x = b.x + ((float)i1+0.5)*h;
+                  p.x = b.x + ((REAL_TYPE)i1+0.5)*h;
                   
                   c += judge_rect(p);
                   flop += 10.0 + 183.0;
                 }
               }
             } // k1
-            vf[m] = c*ff;
+            vf[m] = (float)(c*ff);
             flop += 10.0;
           }
           
@@ -329,8 +358,8 @@ void CompoFraction::subdivision(const int st[], const int ed[], float* vf, doubl
       }
     }
   }
-  else { // Cylinder
-    
+  else  // Cylinder
+  {
     for (int k=st[2]; k<=ed[2]; k++) {
       for (int j=st[1]; j<=ed[1]; j++) {
         for (int i=st[0]; i<=ed[0]; i++) {
@@ -338,27 +367,27 @@ void CompoFraction::subdivision(const int st[], const int ed[], float* vf, doubl
           r = vf[m];
           
           if ( (r>0.0) && (r<1.0) ) {
-            base.assign((float)i-1.0, (float)j-1.0, (float)k-1.0);
+            base.assign((REAL_TYPE)i-1.0, (REAL_TYPE)j-1.0, (REAL_TYPE)k-1.0);
             base = o + base * ph;
             
             c = 0.0;
             for (int k1=0; k1<dv; k1++) {
-              p.z = base.z + ((float)k1+0.5)*h;
+              p.z = base.z + ((REAL_TYPE)k1+0.5)*h;
               flop += 9.0;
               
               for (int j1=0; j1<dv; j1++) {
-                p.y = base.y + ((float)j1+0.5)*h;
+                p.y = base.y + ((REAL_TYPE)j1+0.5)*h;
                 flop += 9.0;
                 
                 for (int i1=0; i1<dv; i1++) {
-                  p.x = base.x + ((float)i1+0.5)*h;
+                  p.x = base.x + ((REAL_TYPE)i1+0.5)*h;
                   
                   c += judge_cylinder(p);
                   flop += 10.0 + 186.0;
                 }
               }
             } // k1
-            vf[m] = c*ff;
+            vf[m] = (float)(c*ff);
             flop += 10.0;
           }
           
@@ -378,10 +407,9 @@ void CompoFraction::subdivision(const int st[], const int ed[], float* vf, doubl
 // vfは加算するので、初期化しておく
 void CompoFraction::vertex8(const int st[], const int ed[], float* vf, double& flop)
 {
-  Vec3f base, o, b;
-  Vec3f p[8];
-  size_t m;
-  float c, ph;
+  Vec3r base, o, b;
+  Vec3r p[8];
+  REAL_TYPE c, ph;
   
   // for optimization > variables defined outside
   int ix = size[0];
@@ -391,12 +419,13 @@ void CompoFraction::vertex8(const int st[], const int ed[], float* vf, double& f
   o  = org;
   ph = pch.x;
   
-  if ( smode == mon_BOX ) {
+  if ( smode == mon_BOX )
+  {
     // Rect cylinder
     for (int k=st[2]; k<=ed[2]; k++) {
       for (int j=st[1]; j<=ed[1]; j++) {
         for (int i=st[0]; i<=ed[0]; i++) {
-          base.assign((float)i-1.0, (float)j-1.0, (float)k-1.0);
+          base.assign((REAL_TYPE)i-1.0, (REAL_TYPE)j-1.0, (REAL_TYPE)k-1.0);
           b    = o + base * ph;
           
           p[0] =          b;      // (0,0,0) 
@@ -413,20 +442,21 @@ void CompoFraction::vertex8(const int st[], const int ed[], float* vf, double& f
           for (int l=0; l<8; l++) {
             c += judge_rect(p[l]);
           }
-          m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          vf[m] += c*0.125; // 1/8
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          vf[m] += (float)(c*0.125); // 1/8
         }
       }
     }
     flop += (double)( (ed[0]-st[0]+1)*(ed[1]-st[1]+1)*(ed[2]-st[2]+1) )*
     (3.0 + 2.0*3.0 + 6.0 + 8.0*183.0 + 2.0);
   }
-  else {
+  else
+  {
     // Circular cylinder
     for (int k=st[2]; k<=ed[2]; k++) {
       for (int j=st[1]; j<=ed[1]; j++) {
         for (int i=st[0]; i<=ed[0]; i++) {
-          base.assign((float)i-1.0, (float)j-1.0, (float)k-1.0);
+          base.assign((REAL_TYPE)i-1.0, (REAL_TYPE)j-1.0, (REAL_TYPE)k-1.0);
           b    = o + base * ph;
           
           p[0] =          b;      // (0,0,0) 
@@ -443,8 +473,8 @@ void CompoFraction::vertex8(const int st[], const int ed[], float* vf, double& f
           for (int l=0; l<8; l++) {
             c += judge_cylinder(p[l]);
           }
-          m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          vf[m] += c*0.125; // 1/8
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          vf[m] += (float)(c*0.125); // 1/8
         }
       }
     }
@@ -458,9 +488,9 @@ void CompoFraction::vertex8(const int st[], const int ed[], float* vf, double& f
 // セルの8頂点の内外判定より50%以上のセルにIDを設定する
 void ShapeMonitor::setID(const int st[], const int ed[], int* bcd, const int id)
 {
-  Vec3f base, o, b;
-  Vec3f p[8];
-  float c, ph;
+  Vec3r base, o, b;
+  Vec3r p[8];
+  REAL_TYPE c, ph;
   
   // for optimization > variables defined outside
   int ix = size[0];
@@ -477,7 +507,7 @@ void ShapeMonitor::setID(const int st[], const int ed[], int* bcd, const int id)
     for (int k=st[2]; k<=ed[2]; k++) {
       for (int j=st[1]; j<=ed[1]; j++) {
         for (int i=st[0]; i<=ed[0]; i++) {
-          base.assign((float)i-1.0, (float)j-1.0, (float)k-1.0);
+          base.assign((REAL_TYPE)i-1.0, (REAL_TYPE)j-1.0, (REAL_TYPE)k-1.0);
           b    = o + base * ph;
           
           p[0] =          b;      // (0,0,0) 
@@ -491,7 +521,8 @@ void ShapeMonitor::setID(const int st[], const int ed[], int* bcd, const int id)
           
           c = 0.0;
           
-          for (int l=0; l<8; l++) {
+          for (int l=0; l<8; l++)
+          {
             c += judge_rect(p[l]);
           }
 
@@ -511,7 +542,7 @@ void ShapeMonitor::setID(const int st[], const int ed[], int* bcd, const int id)
     for (int k=st[2]; k<=ed[2]; k++) {
       for (int j=st[1]; j<=ed[1]; j++) {
         for (int i=st[0]; i<=ed[0]; i++) {
-          base.assign((float)i-1.0, (float)j-1.0, (float)k-1.0);
+          base.assign((REAL_TYPE)i-1.0, (REAL_TYPE)j-1.0, (REAL_TYPE)k-1.0);
           b    = o + base * ph;
           
           p[0] =          b;      // (0,0,0) 
@@ -525,7 +556,8 @@ void ShapeMonitor::setID(const int st[], const int ed[], int* bcd, const int id)
           
           c = 0.0;
           
-          for (int l=0; l<8; l++) {
+          for (int l=0; l<8; l++)
+          {
             c += judge_cylinder(p[l]);
           }
           
