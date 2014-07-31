@@ -38,12 +38,7 @@ protected:
   
   std::string m_driver;      ///< ドライバ部分のラベル
   std::string m_driver_face; ///< ドライバ指定面のラベル
-  
-  /** 形状 */
-  enum shape_type {
-    id_circular = 1,
-    id_rectangular
-  };
+
   
 public:
   /** コンストラクタ */
@@ -80,13 +75,12 @@ public:
    * @brief Ductの計算領域のセルIDを設定する
    * @param [in,out] bcd      BCindex B
    * @param [in]     R        Controlクラスのポインタ
-   * @param [in]     G_org    グローバルな原点（無次元）
    * @param [in]     NoMedium 媒質数
    * @param [in]     mat      MediumListクラスのポインタ
    * @param [out]    cut      カット情報
    * @param [out]    bid      境界ID
    */
-  virtual void setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut, int* bid);
+  virtual void setup(int* bcd, Control* R, const int NoMedium, const MediumList* mat, float* cut, int* bid);
   
 };
 #endif // _IP_DUCT_H_

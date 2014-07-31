@@ -66,6 +66,8 @@ int FFV::Initialize(int argc, char **argv)
     }
   }
   
+  //Hostonly_ printf("tp object= %d\n", sizeof(tp_ffv));
+  
   
   // TextParserクラスのポインタを各クラスに渡す
   C.importTP(&tp_ffv);
@@ -123,11 +125,12 @@ int FFV::Initialize(int argc, char **argv)
   // Intrinsic classの同定
   identifyExample(fp);
   
-
   
+
   // パラメータの取得と計算領域の初期化，並列モードを返す
+  // Polylibの基準値も設定
   std::string str_para = setupDomain(&tp_ffv);
- 
+
   
   // mat[], cmp[]の作成
   createTable(fp);
@@ -135,14 +138,14 @@ int FFV::Initialize(int argc, char **argv)
   
   // 媒質情報をパラメータファイルから読み込み，媒質リストを作成する
   setMediumList(fp);
-  
+
   
   V.setControlVars(C.NoCompo, Ex);
-  
+
   
   // CompoListの設定，外部境界条件の読み込み保持
   setBCinfo();
-  
+
   
   
   // タイミング測定の初期化
@@ -177,7 +180,6 @@ int FFV::Initialize(int argc, char **argv)
   
   TIMING_start(tm_voxel_prep_sct);
   
-
   
   // 各問題に応じてモデルを設定 >> Polylib + Cutlib
   // 外部境界面およびガイドセルのカットとIDの処理
@@ -225,6 +227,33 @@ int FFV::Initialize(int argc, char **argv)
   setMonitorList();
   
 
+  // ポリゴンを入力とする場合のみ
+  if ( C.Mode.Example == id_Polygon )
+  {
+    // Water tightening
+    Hostonly_
+    {
+      printf(    "\n---------------------------------------------------------------------------\n\n");
+      fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+      printf(    "\t>> Water Tightening Process\n\n");
+      fprintf(fp,"\t>> Water Tightening Process\n\n");
+    }
+    
+    WaterTightening(fp);
+    
+    
+    // Sub-sampling
+    Hostonly_
+    {
+      printf(    "\n---------------------------------------------------------------------------\n\n");
+      fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+      printf(    "\t>> Sub-sampling Process\n\n");
+      fprintf(fp,"\t>> Sub-sampling Process\n\n");
+    }
+    
+    SubSampling(fp);
+  }
+  
   
   // Fill
   Hostonly_
@@ -234,7 +263,7 @@ int FFV::Initialize(int argc, char **argv)
     printf(    "\t>> Fill\n\n");
     fprintf(fp,"\t>> Fill\n\n");
   }
-  
+
   fill(fp);
   
 
@@ -658,6 +687,7 @@ void FFV::allocate_Main(double &total)
 }
 
 
+
 // #################################################################
 /* @brief 全Voxelモデルの媒質数とKOSの整合性をチェック
  * @retval エラーコード
@@ -989,7 +1019,7 @@ void FFV::displayParameters(FILE* fp)
 
 // #################################################################
 /* @brief 計算領域情報を設定する
- * @param [in] tp_dom  TextParserクラス
+ * @param [in] tp_dom   TextParserクラス
  */
 void FFV::DomainInitialize(TextParser* tp_dom)
 {
@@ -1223,305 +1253,6 @@ void FFV::encodeBCindex(FILE* fp)
 
 
 // #################################################################
-/* @brief ポリゴンの場合のフィル操作
- * @param [in] fp    ファイルポインタ
- */
-void FFV::fill(FILE* fp)
-{
-  
-  // 指定媒質の属性をチェック
-  bool flag = false;
-  
-  
-  for (int i=1; i<=C.NoCompo; i++)
-  {
-    if ( (i == C.FillID) && (cmp[i].getState() == FLUID) )
-    {
-      flag = true;
-    }
-  }
-  if ( !flag )
-  {
-    Hostonly_ printf("\tSpecified Medium of filling fluid is not FLUID\n");
-    Exit(0);
-  }
-
-  
-  
-  unsigned long target_count; ///< フィルの対象となるセル数
-  unsigned long replaced;     ///< 置換された数
-  unsigned long filled;       ///< FLUIDでフィルされた数
-  unsigned long sum_replaced; ///< 置換された数の合計
-  unsigned long sum_filled;   ///< FLUIDでフィルされた数の合計
-  
-  
-  
-  // 最初にフィル対象のセル数を求める >> 全計算内部セル数
-  unsigned long total_cell = (unsigned long)size[0] * (unsigned long)size[1] * (unsigned long)size[2];
-  
-  
-  if ( numProc > 1 )
-  {
-    unsigned long tmp_fc = total_cell;
-    if ( paraMngr->Allreduce(&tmp_fc, &total_cell, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  
-  target_count = total_cell;
-  
-  Hostonly_
-  {
-    printf(    "\tFill initialize -----\n\n");
-    fprintf(fp,"\tFill initialize -----\n\n");
-    
-    printf    ("\t\tInitial target count   = %16ld\n", target_count);
-    fprintf(fp,"\t\tInitial target count   = %16ld\n", target_count);
-  }
-  
-  
-  // 定義点上に交点がある場合の処理 >> カットするポリゴンのエントリ番号でフィルする
-  unsigned long fill_cut = V.fillCutOnCellCenter(d_bcd, d_bid, d_cut);
-  target_count -= fill_cut;
-  
-  Hostonly_
-  {
-    if ( fill_cut > 0 )
-    {
-      printf(    "\t\tFill center cut        = %16ld\n", fill_cut);
-      fprintf(fp,"\t\tFill center cut        = %16ld\n", fill_cut);
-      
-      
-      printf    ("\t\tTarget count           = %16ld\n\n", target_count);
-      fprintf(fp,"\t\tTarget count           = %16ld\n\n", target_count);
-    }
-  }
-  
-  if ( numProc > 1 )
-  {
-    if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-  }
-  
-
-  
-  
-  Hostonly_
-  {
-    printf(    "\n\tFill -----\n\n");
-    printf(    "\t\tFilling Fluid Medium   : %s\n", mat[C.FillID].getAlias().c_str());
-    printf(    "\t\tHint of Seeding Dir.   : %s\n", FBUtility::getDirection(C.FillSeedDir).c_str());
-    printf(    "\t\tFill Seed Medium       : %s\n", mat[C.SeedID].getAlias().c_str());
-    printf(    "\t\tFill Control (X, Y, Z) : (%s, %s, %s)\n\n",
-           ( !C.FillSuppress[0] ) ? "Suppress" : "Fill",
-           ( !C.FillSuppress[1] ) ? "Suppress" : "Fill",
-           ( !C.FillSuppress[2] ) ? "Suppress" : "Fill");
-    
-    fprintf(fp,"\n\tFill -----\n\n");
-    fprintf(fp,"\t\tFilling Fluid Medium   : %s\n", mat[C.FillID].getAlias().c_str());
-    fprintf(fp,"\t\tHint of Seeding Dir.   : %s\n", FBUtility::getDirection(C.FillSeedDir).c_str());
-    fprintf(fp,"\t\tFill Seed Medium       : %s\n", mat[C.SeedID].getAlias().c_str());
-    fprintf(fp,"\t\tFill Control (X, Y, Z) : (%s, %s, %s)\n\n",
-          ( !C.FillSuppress[0] ) ? "Suppress" : "Fill",
-          ( !C.FillSuppress[1] ) ? "Suppress" : "Fill",
-          ( !C.FillSuppress[2] ) ? "Suppress" : "Fill");
-  }
-  
-  
-  // ヒントが与えられている場合
-  filled = V.fillSeed(d_bcd, C.FillSeedDir, C.SeedID, d_bid);
-  
-  if ( numProc > 1 )
-  {
-    if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  if ( filled == 0 )
-  {
-    Hostonly_
-    {
-      printf(    "No cells to paint\n");
-      fprintf(fp,"No cells to paint\n");
-    }
-    Exit(0);
-  }
-  
-  Hostonly_
-  {
-    printf(    "\t\tPainted cells          = %16ld\n", filled);
-    fprintf(fp,"\t\tPainted cells          = %16ld\n", filled);
-  }
-  
-  // ペイントされたシードセル数をターゲットから差し引く
-  target_count -= filled;
-
-  
-  
-  Hostonly_
-  {
-    printf(    "\t\tRemaining target cells = %16ld\n\n", target_count);
-    fprintf(fp,"\t\tRemaining target cells = %16ld\n\n", target_count);
-  }
-  
-  //Ex->writeSVX(d_bcd, &C); Exit(0);
-  
-  
-  // 隣接する流体セルと接続しており，かつ固体セルに挟まれていないセルのみペイントする
-  
-  int c=-1; // iteration
-  sum_replaced = 0;
-  sum_filled = 0;
-  
-  while (target_count > 0) {
-    
-    // SeedIDで指定された媒質でフィルする．FLUID/SOLIDの両方のケースがある
-    unsigned long fs;
-    filled = V.fillByBid(d_bid, d_bcd, d_cut, C.SeedID, C.FillSuppress, fs);
-    replaced = fs;
-    
-    if ( numProc > 1 )
-    {
-      if ( paraMngr->BndCommS4DEx(d_cut, 6, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-    }
-    
-    target_count -= filled;
-    target_count -= replaced;
-    sum_filled   += filled;
-    sum_replaced += replaced;
-    
-    if ( filled <= 0 ) break; // フィル対象がなくなったら終了
-    c++;
-  }
-  
-  
-  Hostonly_
-  {
-    printf(    "\t\tBID Iteration          = %5d\n", c+1);
-    fprintf(fp,"\t\tBID Iteration          = %5d\n", c+1);
-    printf(    "\t\t    Filled by [%02d]     = %16ld\n", C.SeedID, sum_filled);
-    fprintf(fp,"\t\t    Filled by [%02d]     = %16ld\n", C.SeedID, sum_filled);
-    printf(    "\t\t    SOLID replaced     = %16ld\n", sum_replaced);
-    fprintf(fp,"\t\t    SOLID replaced     = %16ld\n", sum_replaced);
-    printf(    "\t\t    Remaining cell     = %16ld\n\n", target_count);
-    fprintf(fp,"\t\t    Remaining cell     = %16ld\n\n", target_count);
-  }
-  
-#if 0
-  for (int k=1; k<=size[2]; k++) {
-    for (int j=1; j<=size[1]; j++) {
-      for (int i=1; i<=size[0]; i++) {
-        size_t m = _F_IDX_S3D(i  , j  , k  , size[0], size[1], size[2], guide);
-        if ( DECODE_CMP(d_bcd[m]) == 0 )
-        {
-          printf("(%d %d %d) = %d\n", i,j,k, DECODE_CMP(d_bcd[m]) );
-        }
-      }
-    }
-  }
-  Ex->writeSVX(d_bcd, &C);
-#endif
-  
-  if ( target_count == 0 ) return;
-  
-  
-  
-  // 未ペイント（ID=0）のセルを検出
-  unsigned long upc = V.countCell(d_bcd, false);
-  
-  if ( upc == 0 )
-  {
-    Hostonly_
-    {
-      printf(    "\t\tUnpainted cell         = %16ld\n\n", upc);
-      fprintf(fp,"\t\tUnpainted cell         = %16ld\n\n", upc);
-    }
-  }
-  
-  
-  
-  // SeedMediumと反対の媒質に変更
-  c = -1;
-  sum_replaced = 0;
-  int fill_mode = -1;
-  if ( cmp[C.SeedID].getState() == FLUID )
-  {
-    fill_mode = SOLID;
-  }
-  else
-  {
-    fill_mode = FLUID;
-  }
-
-  // 未ペイントのセルに対して、指定媒質でフィルする
-  while ( target_count > 0 ) {
-    
-    if ( fill_mode == SOLID )
-    {
-      replaced = V.fillByModalSolid(d_bcd, C.FillID, d_bid);
-    }
-    else
-    {
-      replaced = V.fillByFluid(d_bcd, C.FillID, d_bid);
-    }
-    
-    if ( numProc > 1 )
-    {
-      if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-    }
-    
-    target_count -= replaced;
-    sum_replaced += replaced;
-    
-    if ( replaced <= 0 ) break;
-    c++;
-  }
-  
-  
-  Hostonly_
-  {
-    printf(    "\t\tFinal Filling Iteration= %5d\n", c+1);
-    fprintf(fp,"\t\tFinal Filling Iteration= %5d\n", c+1);
-    printf(    "\t\t   Filled by %s     = %16ld\n\n", (fill_mode==FLUID)?"FLUID":"SOLID", sum_replaced);
-    fprintf(fp,"\t\t   Filled by %s     = %16ld\n\n", (fill_mode==FLUID)?"FLUID":"SOLID", sum_replaced);
-  }
-  
-  
-  
-#if 0
-  for (int k=1; k<=size[2]; k++) {
-    for (int j=1; j<=size[1]; j++) {
-      for (int i=1; i<=size[0]; i++) {
-        size_t m = _F_IDX_S3D(i  , j  , k  , size[0], size[1], size[2], guide);
-        if ( DECODE_CMP(d_bcd[m]) == 0 )
-        {
-          printf("(%d %d %d) = %d\n", i,j,k, DECODE_CMP(d_bcd[m]) );
-        }
-      }
-    }
-  }
-  Ex->writeSVX(d_bcd, &C);
-#endif
-  
-
-  
-  // ID=0をカウント
-  upc = V.countCell(d_bcd, false);
-  
-  if ( upc != 0 )
-  {
-    Hostonly_
-    {
-      printf(    "\tFill operation is done, but still remains %ld unpainted cells.\n", upc);
-      fprintf(fp,"\tFill operation is done, but still remains %ld unpainted cells.\n", upc);
-    }
-    Exit(0);
-  }
-  
-}
-
-
-
-// #################################################################
 /* @brief 固定パラメータの設定
  */
 void FFV::fixedParameters()
@@ -1538,6 +1269,7 @@ void FFV::fixedParameters()
   
   // 定数
   C.Gravity =9.8; // gravity acceleration
+  C.Hide.Subdivision = 20;
   
   
   // ファイル名
@@ -1969,7 +1701,7 @@ void FFV::generateGlyph(const float* cut, const int* bid, FILE* fp)
 
 // #################################################################
 /* @brief グローバルな領域情報を取得
- * @param [in] tp_dom  TextParserクラス
+ * @param [in] tp_dom   TextParserクラス
  * @return 分割指示 (1-with / 2-without)
  */
 int FFV::getDomainInfo(TextParser* tp_dom)
@@ -2010,6 +1742,26 @@ int FFV::getDomainInfo(TextParser* tp_dom)
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described at '%s'\n", label.c_str());
     Exit(0);
+  }
+  
+  // Polylibのサーチ用の値をセット >> C.get1stParameter() >> C.getUnit()で単位取得後, DomainInitialize()の前
+  switch ( C.Unit.Length )
+  {
+    case LTH_m:
+    case LTH_ND:
+      poly_factor = 1.0; // 変更なし
+      break;
+      
+    case LTH_cm:
+      poly_factor = 0.01;
+      break;
+      
+    case LTH_mm:
+      poly_factor = 0.001;
+      break;
+      
+    default:
+      Exit(0);
   }
   
   
@@ -2238,31 +1990,10 @@ int FFV::getDomainInfo(TextParser* tp_dom)
   }
 
   
-  // 有次元の場合には、単位をメートルに変換
-  REAL_TYPE factor;
-  switch ( C.Unit.Length )
-  {
-    case LTH_m:
-    case LTH_ND:
-      factor = 1.0; // 変更なし
-      break;
-      
-    case LTH_cm:
-      factor = 0.01;
-      break;
-      
-    case LTH_mm:
-      factor = 0.001;
-      break;
-      
-    default:
-      Exit(0);
-  }
-  
   for (int i=0; i<3; i++) {
-    pitch[i]    *= factor;
-    G_origin[i] *= factor;
-    G_region[i] *= factor;
+    pitch[i]    *= (REAL_TYPE)poly_factor;
+    G_origin[i] *= (REAL_TYPE)poly_factor;
+    G_region[i] *= (REAL_TYPE)poly_factor;
   }
   
   
@@ -2272,18 +2003,22 @@ int FFV::getDomainInfo(TextParser* tp_dom)
   if ( !tp_dom->getInspectedValue(label, str ) )
   {
     Hostonly_ cout << "\tNo option : in parsing [" << label << "]" << endl;
-  }
-  
-  if ( str.empty() == true )
-  {
-    EXEC_MODE = ffvc_solver;
+    Exit(0);
   }
   else
   {
-    active_fname = str;
-    EXEC_MODE = ffvc_solverAS;
-    Hostonly_ printf("\n\tActive subdomain mode\n");
+    if ( str.empty() == true )
+    {
+      EXEC_MODE = ffvc_solver;
+    }
+    else
+    {
+      active_fname = str;
+      EXEC_MODE = ffvc_solverAS;
+      Hostonly_ printf("\n\tActive subdomain mode\n");
+    }
   }
+
   
   return div_type;
 }
@@ -2304,7 +2039,7 @@ void FFV::identifyExample(FILE* fp)
   else if ( C.Mode.Example == id_Rect )    Ex = dynamic_cast<Intrinsic*>(new IP_Rect);
   else if ( C.Mode.Example == id_Cylinder) Ex = dynamic_cast<Intrinsic*>(new IP_Cylinder);
   else if ( C.Mode.Example == id_Step )    Ex = dynamic_cast<Intrinsic*>(new IP_Step);
-  else if ( C.Mode.Example == id_Polygon ) Ex = dynamic_cast<Intrinsic*>(new IP_Polygon);
+  else if ( C.Mode.Example == id_Polygon ) Ex = new Intrinsic;
   else if ( C.Mode.Example == id_Sphere )  Ex = dynamic_cast<Intrinsic*>(new IP_Sphere);
   else if ( C.Mode.Example == id_Jet )     Ex = dynamic_cast<Intrinsic*>(new IP_Jet);
   else
@@ -3530,7 +3265,7 @@ void FFV::setBCinfo()
   
   // パラメータファイルをパースして，外部境界条件を保持する
   B.loadOuterBC( BC.exportOBC(), mat, cmp );
-
+  
   
   // パラメータファイルの情報を元にCompoListの情報を設定する
   B.loadLocalBC(&C, mat, cmp);
@@ -3635,11 +3370,10 @@ void FFV::setBCinfo()
  */
 void FFV::setComponentVF()
 {
-  const int subsampling = 20; // 体積率のサブサンプリングの基数
   int f_st[3], f_ed[3];
   double flop;
   
-  CompoFraction CF(size, guide, (float*)pitch, (float*)origin, subsampling);
+  CompoFraction CF(size, guide, (float*)pitch, (float*)origin, C.Hide.Subdivision);
   
   for (int n=1; n<=C.NoCompo; n++)
   {
@@ -3712,7 +3446,7 @@ void FFV::setComponentVF()
       pit[i] *= C.RefLength;
     }
   }
-  F.writeRawSPH(cvf, size, guide, org, pit, sizeof(float));
+  F.writeRawSPH(cvf, size, guide, 0, org, pit, sizeof(float));
 #endif
 // ##########
   
@@ -4075,7 +3809,7 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
     case id_Cylinder:
     case id_Duct:
       setupCutInfo4IP(PrepMemory, TotalMemory, fp);
-      Ex->setup(d_bcd, &C, G_origin, C.NoCompo, mat, d_cut, d_bid);
+      Ex->setup(d_bcd, &C, C.NoCompo, mat, d_cut, d_bid);
       break;
       
     default: // ほかのIntrinsic problems
@@ -4220,7 +3954,7 @@ void FFV::setMonitorList()
       pit[i] *= C.RefLength;
     }
   }
-  F.writeRawSPH(d_bcd, size, guide, org, pit, sizeof(float));
+  F.writeRawSPH(d_bcd, size, guide, 0, org, pit, sizeof(float));
 #endif
   // ##########
 }
@@ -4409,31 +4143,30 @@ string FFV::setupDomain(TextParser* tpf)
   BC.setRankInfo   (paraMngr, procGrp);
   Ex->setRankInfo  (paraMngr, procGrp);
   MO.setRankInfo   (paraMngr, procGrp);
-
+  
   
   // 並列モードの取得
   string str = setParallelism();
   
   
-  // 最初のパラメータの取得
+  // 最初のパラメータの取得 >> C.guide
   C.get1stParameter(&DT);
-  
-  
+
   // 代表パラメータをコピー
   Ex->setRefParameter(&C);
-  
+
   
   // 例題クラス固有のパラメータを取得
   if ( !Ex->getTP(&C, tpf) ) Exit(0);
-  
+
   
   // 領域設定 計算領域全体のサイズ，並列計算時のローカルのサイズ，コンポーネントのサイズなどを設定
   DomainInitialize(tpf);
 
   
-  // 各例題の領域パラメータを設定する
+  // 各例題固有の領域パラメータを設定する
   Ex->setDomainParameter(&C, size, origin, region, pitch);
-  
+
   
   // 各クラスで領域情報を保持
   C.setNeighborInfo    (C.guide);
@@ -4444,9 +4177,23 @@ string FFV::setupDomain(TextParser* tpf)
   Ex->setNeighborInfo  (C.guide);
   MO.setNeighborInfo   (C.guide);
   
-  
   // 従属的なパラメータの取得
   C.get2ndParameter(&RF);
+  
+  
+  // 有次元に変換 Polylib: 並列計算領域情報　ポリゴンは実スケールで，ガイドセル領域部分も含めて指定する >> DomainInitialize()のあと
+  // C.Scaling_Factor{1.0, 0.1, 0.001}
+  // pitch[], origin[]などはm単位になっているので，poly_factorで除してFXgenで指定したときの単位系（DomainInfoのUnitOfLength）でポリゴンをサーチする
+  // ロード後はスケーリングする
+  poly_dx[0]  = pitch[0] * C.RefLength / poly_factor;
+  poly_dx[1]  = pitch[1] * C.RefLength / poly_factor;
+  poly_dx[2]  = pitch[2] * C.RefLength / poly_factor;
+  poly_org[0] = origin[0]* C.RefLength / poly_factor;
+  poly_org[1] = origin[1]* C.RefLength / poly_factor;
+  poly_org[2] = origin[2]* C.RefLength / poly_factor;
+  poly_gc[0] = guide;
+  poly_gc[1] = guide;
+  poly_gc[2] = guide;
 
   
   return str;
@@ -4461,45 +4208,6 @@ string FFV::setupDomain(TextParser* tpf)
  */
 void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
 {
-  unsigned poly_gc[3] = {guide, guide, guide};
-  
-  // float で定義すること
-  float poly_org[3];
-  float poly_dx[3];
-
-  float factor;
-  switch ( C.Unit.Length )
-  {
-      case LTH_m:
-      case LTH_ND:
-      factor = 1.0; // 変更なし
-      break;
-      
-      case LTH_cm:
-      factor = 0.01;
-      break;
-      
-      case LTH_mm:
-      factor = 0.001;
-      break;
-      
-    default:
-      Exit(0);
-  }
-  //printf("\n\tScaling Factor           :   %f\n", factor);
-  
-  
-  // 有次元に変換 Polylib: 並列計算領域情報　ポリゴンは実スケールで，ガイドセル領域部分も含めて指定する
-  // C.Scaling_Factor{1.0, 0.1, 0.001}
-  // pitch[], origin[]などはm単位になっているので，factorで除してFXgenで指定したときの単位系（DomainInfoのUnitOfLength）でポリゴンをサーチする
-  // ロード後はスケーリングする
-  poly_dx[0]  = pitch[0] * C.RefLength / factor;
-  poly_dx[1]  = pitch[1] * C.RefLength / factor;
-  poly_dx[2]  = pitch[2] * C.RefLength / factor;
-  poly_org[0] = origin[0]* C.RefLength / factor;
-  poly_org[1] = origin[1]* C.RefLength / factor;
-  poly_org[2] = origin[2]* C.RefLength / factor;
-  
   Hostonly_
   {
     fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
@@ -4581,7 +4289,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   int c=0;
   for (it2 = pg_roots->begin(); it2 != pg_roots->end(); it2++)
   {
-    poly_stat = (*it2)->rescale_polygons(factor);
+    poly_stat = (*it2)->rescale_polygons(poly_factor);
     if( poly_stat != PLSTAT_OK ) c++;
   }
   
@@ -4620,6 +4328,10 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   }
   
   
+  // PolygonPropertyの配列
+  PG = new PolygonProperty[C.num_of_polygrp];
+  
+  
   vector<PolygonGroup*>::iterator it;
   
   // ポリゴン情報の表示
@@ -4631,6 +4343,9 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     std::string m_bc = (*it)->get_type();     // 境界条件ラベル
     int ntria= (*it)->get_group_num_tria();   // ローカルのポリゴン数
     REAL_TYPE area = (*it)->get_group_area(); // ローカルのポリゴン面積
+    
+    PG[c].setLntria(ntria);
+
     
     // mat[]の格納順を探す
     int mat_id;
@@ -4670,6 +4385,12 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     
     // コンポーネント(BC+OBSTACLE)の面積を保持 >> @todo Polylibのバグ?で並列時に正しい値を返さない, ntriaとarea 暫定的処置
     cmp[mat_id].area = area;
+    
+    PG[c].setID(mat_id);
+    PG[c].setGroup(m_pg);
+    PG[c].setBClabel(m_bc);
+    PG[c].setMaterial(m_mat);
+    PG[c].setGntria(ntria);
     
 
     Hostonly_
@@ -4719,7 +4440,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   // ポリゴンの修正
   RepairPolygonData(PL, false);
 
-  //calcBboxfromPolygonGroup();
+  calcBboxFromPolygonGroup();
   
   
   // Triangle display >> Debug
@@ -4927,91 +4648,3 @@ void FFV::setVOF()
 }
 
 
-
-/* #################################################################
- // ポリゴングループの座標値からboxを計算する
- void FFV::calcBboxfromPolygonGroup()
- {
- // float で定義すること
- float poly_org[3];
- float poly_dx[3];
- 
- // 有次元に変換 Polylib: 並列計算領域情報　ポリゴンは実スケールで，ガイドセル領域部分も含めて指定する
- poly_dx[0]  = pitch[0] * C.RefLength;
- poly_dx[1]  = pitch[1] * C.RefLength;
- poly_dx[2]  = pitch[2] * C.RefLength;
- poly_org[0] = origin[0]* C.RefLength;
- poly_org[1] = origin[1]* C.RefLength;
- poly_org[2] = origin[2]* C.RefLength;
- 
- 
- // ポリゴン情報へのアクセス
- vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
- vector<PolygonGroup*>::iterator it;
- 
- PolylibNS::Vec3f m_min, m_max;
- PolylibNS::Vec3f t1(poly_org), t2(poly_dx), t3;
- 
- t3.assign((float)size[0]*t2.x, (float)size[1]*t2.y, (float)size[2]*t2.z);
- 
- // サブドメインの1層外側までをサーチ対象とする
- m_min = t1 - t2;
- m_max = t1 + t3 + t2;
- printf("Search area Bbox min : %f %f %f\n", m_min.x, m_min.y, m_min.z);
- printf("Search area Bbox max : %f %f %f\n", m_max.x, m_max.y, m_max.z);
- 
- 
- // ポリゴングループのループ
- int m=0;
- for (it = pg_roots->begin(); it != pg_roots->end(); it++)
- {
- string m_pg = PolyPP[m].get_Group();
- 
- // false; ポリゴンが一部でもかかればピックアップ
- vector<Triangle*>* trias = PL->search_polygons(m_pg, m_min, m_max, false);
- 
- PolylibNS::Vec3f *p;
- Vec3f bbox_min( 1.0e6,  1.0e6,  1.0e6);
- Vec3f bbox_max(-1.0e6, -1.0e6, -1.0e6);
- unsigned c=0;
- vector<Triangle*>::iterator it2;
- 
- for (it2 = trias->begin(); it2 != trias->end(); it2++)
- {
- p = (*it2)->get_vertex();
- 
- // PolulibNS::Vec3f >> Vec3f
- Vec3f p0(p[0].x, p[0].y, p[0].z);
- Vec3f p1(p[1].x, p[1].y, p[1].z);
- Vec3f p2(p[2].x, p[2].y, p[2].z);
- 
- CompoFraction::get_min(bbox_min, p0);
- CompoFraction::get_min(bbox_min, p1);
- CompoFraction::get_min(bbox_min, p2);
- 
- CompoFraction::get_max(bbox_max, p0);
- CompoFraction::get_max(bbox_max, p1);
- CompoFraction::get_max(bbox_max, p2);
- 
- #if 0
- printf("%d : p0=(%6.3e %6.3e %6.3e)  p1=(%6.3e %6.3e %6.3e) p2=(%6.3e %6.3e %6.3e) n=(%6.3e %6.3e %6.3e)\n", c++,
- p[0].x, p[0].y, p[0].z,
- p[1].x, p[1].y, p[1].z,
- p[2].x, p[2].y, p[2].z,
- n.x, n.y, n.z);
- #endif
- }
- 
- PolyPP[m].set_Min(bbox_min);
- PolyPP[m].set_Max(bbox_max);
- 
- printf("%20s : (%6.3e %6.3e %6.3e) - (%6.3e %6.3e %6.3e)\n",
- m_pg.c_str(), bbox_min.x, bbox_min.y, bbox_min.z,
- bbox_max.x, bbox_max.y, bbox_max.z);
- 
- delete trias; // 後始末
- m++;
- }
- 
- }
- */

@@ -55,9 +55,10 @@ main.o: main.C FFV/ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  FFV/../F_CORE/ffv_Ffunc.h FFV/../IP/IP_Jet.h FFV/../IP/IP_Define.h \
  FFV/../F_CORE/ffv_Ffunc.h FFV/ffv_TerminateCtrl.h FFV/../FB/Glyph.h \
  FFV/../IP/IP_Duct.h FFV/../IP/IP_PPLT2D.h FFV/../IP/IP_PMT.h FFV/../IP/IP_Rect.h \
- FFV/../IP/IP_Step.h FFV/../IP/IP_Cylinder.h FFV/../IP/IP_Polygon.h \
- FFV/../IP/IP_Sphere.h /usr/local/FFV/PMlib/include/PerfMonitor.h \
+ FFV/../IP/IP_Step.h FFV/../IP/IP_Cylinder.h FFV/../IP/IP_Sphere.h \
+ /usr/local/FFV/PMlib/include/PerfMonitor.h \
  /usr/local/FFV/PMlib/include/PerfWatch.h \
+ /usr/local/FFV/PMlib/include/pmlib_papi.h \
  /usr/local/FFV/PMlib/include/pmVersion.h \
  /usr/local/FFV/Polylib/include/Polylib.h \
  /usr/local/FFV/Polylib/include/polygons/Polygons.h \

@@ -132,7 +132,7 @@ private:
    */
   REAL_TYPE getValueReal(const string label)
   {
-    REAL_TYPE df=0.0f;
+    REAL_TYPE df=0.0;
     
     if ( !(tpCntl->getInspectedValue(label, df)) ) Exit(0);
     

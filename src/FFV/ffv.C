@@ -48,12 +48,16 @@ FFV::FFV()
   CM_H.rate     = 0.0;
   
   deltaT = 0.0;
+  poly_factor = 0.0;
   
   for (int i=0; i<3; i++) 
   {
     G_size[i]= 0;
     G_origin[i] = 0.0;
     G_region[i] = 0.0;
+    poly_org[i] = 0.0;
+    poly_dx[i] = 0.0;
+    poly_gc[i] = 0;
   }
   
   mat_tbl = NULL;
@@ -100,6 +104,7 @@ FFV::FFV()
   d_ap  = NULL;
   d_ae  = NULL;
   d_cvf = NULL;
+  d_pvf = NULL;
   d_vrt = NULL;
   
   // Coarse initial
@@ -1179,7 +1184,13 @@ Vec3i FFV::NormDiv(IterationCtl* IC)
 
 
 // #################################################################
-// タイミング測定区間にラベルを与えるラッパー
+/**
+ * @brief タイミング測定区間にラベルを与えるラッパー
+ * @param [in] key       キー番号
+ * @param [in] label     ラベル
+ * @param [in] type      測定対象タイプ(COMM or CALC)
+ * @param [in] exclusive 排他測定フラグ(ディフォルトtrue)
+ */
 void FFV::set_label(const int key, char* label, PerfMonitor::Type type, bool exclusive)
 {
   // 文字数がTM_LABEL_MAX-1を超えるものはカット
@@ -1206,7 +1217,9 @@ void FFV::set_label(const int key, char* label, PerfMonitor::Type type, bool exc
 
 
 // #################################################################
-// タイミング測定区間にラベルを与える
+/**
+ * @brief タイミング測定区間にラベルを与える
+ */
 void FFV::set_timing_label()
 {
   // ラベルの設定
@@ -1414,7 +1427,9 @@ bool FFV::stepPost()
 
 
 // #################################################################
-// 利用例の表示
+/**
+ * @brief コマンドラインヘルプ
+ */
 void FFV::Usage()
 {
   FBUtility::printVersion(stdout, "Frontflow/violet", FFVC_VERSION_NO);
@@ -1431,8 +1446,12 @@ void FFV::Usage()
 
 
 // #################################################################
-// 空間平均操作と変動量の計算を行う
-// スカラ値は算術平均，ベクトル値は自乗和
+/**
+ * @brief 空間平均操作と変動量の計算を行う
+ * @param [out]    avr  平均値
+ * @param [out]    rms  変動値
+ * @param [in,out] flop 浮動小数演算数
+ */
 void FFV::VariationSpace(double* avr, double* rms, double& flop)
 {
   double m_var[2];

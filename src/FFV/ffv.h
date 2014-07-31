@@ -67,7 +67,6 @@
 #include "../IP/IP_Rect.h"
 #include "../IP/IP_Step.h"
 #include "../IP/IP_Cylinder.h"
-#include "../IP/IP_Polygon.h"
 #include "../IP/IP_Sphere.h"
 #include "../IP/IP_Jet.h"
 
@@ -149,6 +148,17 @@ private:
     double rate;      ///< 収束値の増減比
   } ConvergenceMonitor;
   
+  
+  // Polylibのサーチ用基準値
+  float poly_org[3];
+  float poly_dx[3];
+  unsigned poly_gc[3];
+  float poly_factor;
+  
+  // Polygon管理用
+  PolygonProperty* PG;
+  
+  
   // データ領域ポインタ
   
   // Vector3D
@@ -181,8 +191,9 @@ private:
   REAL_TYPE *d_vof;
   REAL_TYPE *d_ap;  ///< 圧力（時間平均値）
   REAL_TYPE *d_ae;  ///< 内部エネルギー（時間平均値）
-  float *d_cvf;     ///< 体積率
+  REAL_TYPE *d_pvf; ///< ポリゴンによるセル体積率
   REAL_TYPE *d_pni; ///< 圧力Poissonの係数（Naive実装の実験）
+  float *d_cvf;     ///< 体積率
   
   // Coarse initial
   REAL_TYPE *d_r_v;  ///< 粗格子の速度
@@ -223,7 +234,6 @@ private:
   int    *d_bid; ///< BC
   
   double *mat_tbl; // Fortranでの多媒質対応ルーチンのため，rho, cp, lambdaの配列
-  
   
   FILE *fp_b;  ///< 基本情報
   FILE *fp_w;  ///< 壁面情報
@@ -295,6 +305,75 @@ public:
   
   
 private:
+  
+  // 点pの属するセルインデクスを求める
+  // @param [in]  pt 無次元座標
+  // @param [out] w  インデクス
+  void findIndex(const Vec3f pt, int* w) const
+  {
+    REAL_TYPE p[3], q[3];
+    p[0] = (REAL_TYPE)pt.x;
+    p[1] = (REAL_TYPE)pt.y;
+    p[2] = (REAL_TYPE)pt.z;
+    
+    q[0] = (p[0]-origin[0])/pitch[0];
+    q[1] = (p[1]-origin[1])/pitch[1];
+    q[2] = (p[2]-origin[2])/pitch[2];
+    
+    w[0] = (int)ceil(q[0]);
+    w[1] = (int)ceil(q[1]);
+    w[2] = (int)ceil(q[2]);
+  }
+  
+  
+  /**
+   * @brief プロファイラのラベル取り出し
+   * @param [in] key 格納番号
+   * @return ラベル
+   */
+  inline const char* get_tm_label(const int key)
+  {
+    return (const char*)tm_label_ptr[key];
+  }
+  
+  
+  /**
+   * @brief タイミング測定開始
+   * @param [in] key 格納番号
+   */
+  inline void TIMING_start(const int key)
+  {
+    // Intrinsic profiler
+    TIMING__ PM.start((unsigned)key);
+    
+    // Venus FX profiler
+#if defined __K_FPCOLL
+    start_collection( get_tm_label(key) );
+#elif defined __FX_FAPP
+    fapp_start( get_tm_label(key), 0, 0);
+#endif
+  }
+  
+  
+  /**
+   * @brief タイミング測定終了
+   * @param [in] key             格納番号
+   * @param [in] flopPerTask    「タスク」あたりの計算量/通信量(バイト) (ディフォルト0)
+   * @param [in] iterationCount  実行「タスク」数 (ディフォルト1)
+   */
+  inline void TIMING_stop(const int key, double flopPerTask=0.0, int iterationCount=1)
+  {
+    // Venus FX profiler
+#if defined __K_FPCOLL
+    stop_collection( get_tm_label(key) );
+#elif defined __FX_FAPP
+    fapp_stop( get_tm_label(key), 0, 0);
+#endif
+    
+    // Intrinsic profiler
+    TIMING__ PM.stop((unsigned)key, flopPerTask, (unsigned)iterationCount);
+  }
+  
   
   /** ffv_Alloc.C *******************************************************/
   
@@ -407,10 +486,6 @@ private:
   void encodeBCindex(FILE* fp);
   
   
-  // ポリゴンの場合のフィル操作
-  void fill(FILE* fp);
-  
-  
   // 固定パラメータの設定
   void fixedParameters();
   
@@ -467,10 +542,6 @@ private:
   void resizeCompoBbox();
   
   
-  // リスタートモードの選択
-  void selectRestartMode();
-  
-  
   // 外部境界条件を読み込み，Controlクラスに保持する
   void setBCinfo();
   
@@ -525,15 +596,133 @@ private:
 
   
   
+  /** ffv_Geometry.C *******************************************************/
+  
+  // d_mid[]の対象IDに対して、d_pvf[]に指定値を代入する
+  unsigned long assignVF(const int target, const REAL_TYPE value);
+  
+  
+  // ポリゴングループの座標値からboxを計算する
+  void calcBboxFromPolygonGroup();
+  
+
+  // ポリゴンの場合のフィル操作
+  void fill(FILE* fp);
+  
+  
+  // list[]内の最頻値IDを求める
+  int find_mode(const int m_sz, const int* list, const int m_noc);
+  
+  
+  // セルに含まれるポリゴンを探索し、d_midに記録
+  unsigned long findPolygonInCell();
+  
+  
+  // サブセルのペイント
+  int SubCellFill(float* svf,
+                  int* smd,
+                  const int sdv,
+                  const int dir,
+                  const int refID,
+                  const float refVf
+                  );
+  
+  
+  // サブセルのポリゴン含有テスト
+  int SubCellIncTest(float* svf,
+                     int* smd,
+                     const int sdv,
+                     const int ip,
+                     const int jp,
+                     const int kp,
+                     const Vec3f pch,
+                     const string m_pg
+                     );
+  
+  // sub-division
+  void SubDivision(float* svf,
+                   int* smd,
+                   const int sdv,
+                   const int ip,
+                   const int jp,
+                   const int kp
+                   );
+  
+  // sub-sampling
+  void SubSampling(FILE* fp);
+  
+  
+  // 水密化
+  void WaterTightening(FILE* fp);
+  
+  
+  
+  
   /** ffv.C *******************************************************/
+  
+  // 時間平均操作を行う
+  void Averaging(double& flop);
+  
+  
+  // 全ノードについて，ローカルノード1面・一層あたりの通信量の和を返す
+  double count_comm_size(const int sz[3], const int guide);
+  
+  
+  // 外部計算領域の各面における総流量と対流流出速度を計算する
+  void DomainMonitor(BoundaryOuter* ptr, Control* R);
+  
   
   // 時間平均値のファイル出力
   void OutputAveragedVarables(double& flop);
   
   
-  // 時間平均操作を行う
-  void Averaging(double& flop);
+  // 基本変数のファイル出力
+  void OutputBasicVariables(double& flop);
   
+  
+  // 基本変数のファイル出力
+  void OutputDerivedVariables(double& flop);
+  
+  
+  // V-P反復のdiv(u)ノルムを計算する
+  Vec3i NormDiv(IterationCtl* IC);
+  
+  
+  // タイミング測定区間にラベルを与えるラッパー
+  void set_label(const int key, char* label, PerfMonitor::Type type, bool exclusive=true);
+  
+  
+  // 毎ステップ後に行う処理
+  bool stepPost();
+  
+  
+  // タイミング測定区間にラベルを与える
+  void set_timing_label();
+  
+  
+  // 利用例の表示
+  void Usage();
+  
+  
+  // 空間平均操作と変動量の計算を行う
+  // スカラ値は算術平均，ベクトル値は自乗和
+  void VariationSpace(double* avr, double* rms, double& flop);
+  
+  
+  
+  
+  /** ffv_Heat.C *******************************************************/
+  
+  /**
+   * @brief 移流項のEuler陽解法による時間積分
+   * @param [in,out] ie_c    内部エネルギーの対流項の流束の和/部分段階
+   * @param [in]     delta_t 時間積分幅
+   * @param [in]     bd      BCindex B
+   * @param [in]     ie_0    nステップの内部エネルギー
+   * @param [in,out] flop    浮動小数演算数
+   * @note ie_c = ie_0 + dt/dh*sum_flux(n)
+   */
+  void ps_ConvectionEE(REAL_TYPE* ie_c, const REAL_TYPE delta_t, const int* bd, const REAL_TYPE* ie_0, double& flop);
   
   
   /**
@@ -548,6 +737,48 @@ private:
   
   
   /**
+   * @brief 単媒質に対する熱伝導方程式を陰解法で解く
+   * @param [in]  IC       IterationCtlクラス
+   * @param [in]  rhs_nrm  Poisson定数項ベクトルの自乗和ノルム
+   * @param [in]  r0       初期残差ベクトル
+   */
+  void ps_LS(IterationCtl* IC, const double rhs_nrm, const double r0);
+  
+  
+  /**
+   * @brief 単媒質に対する熱伝導方程式をEuler陽解法で解く
+   * @retval 拡散項の変化量Δθの絶対値
+   * @param [in,out] t    n+1時刻の温度場
+   * @param [in]     dt   時間積分幅
+   * @param [in]     qbc  境界条件熱流束
+   * @param [in]     bh   BCindex B
+   * @param [in]     ws   部分段階の温度
+   * @param [in,out] flop 浮動小数点演算数
+   */
+  REAL_TYPE ps_Diff_SM_EE(REAL_TYPE* t, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh, const REAL_TYPE* ws, double& flop);
+  
+  
+  /**
+   * @brief 単媒質に対する熱伝導方程式をEuler陰解法で解く
+   * @retval ローカルノードの変化量の自乗和
+   * @param [in,out] t    n+1時刻の温度場
+   * @param [out]    b2   ソースベクトルの自乗和
+   * @param [in]     dt   時間積分幅
+   * @param [in]     qbc  境界条件熱流束
+   * @param [in]     bh   BCindex B
+   * @param [in]     ws   部分段階の温度
+   * @param [in]     IC   IterationCtlクラス
+   * @param [in,out] flop 浮動小数点演算数
+   */
+  double ps_Diff_SM_PSOR(REAL_TYPE* t, double& b2, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh, const REAL_TYPE* ws, IterationCtl* IC, double& flop);
+  
+  
+  
+  
+  
+  /** ffv_LS.C *******************************************************/
+  
+  /**
    * @brief SOR2SMAの非同期通信処理
    * @param [in,out] d_x  解ベクトル
    * @param [in]     col  オーダリングカラーの番号
@@ -555,16 +786,7 @@ private:
    * @param [out]    key  送信ID
    */
   void comm_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request* key);
-  
-  
-  
-  // 全ノードについて，ローカルノード1面・一層あたりの通信量の和を返す
-  double count_comm_size(const int sz[3], const int guide);
-  
-  
-  // 外部計算領域の各面における総流量と対流流出速度を計算する
-  void DomainMonitor(BoundaryOuter* ptr, Control* R);
-  
+
   
   /**
    * @brief 種類Lの線形ソルバを利用する場合，trueを返す
@@ -573,15 +795,45 @@ private:
   bool hasLinearSolver(const int L);
   
   
-  /**
-   * @brief プロファイラのラベル取り出し
-   * @param [in] key 格納番号
-   * @return ラベル
+  /** SOR法
+   * @retval 反復数
+   * @param [in]     IC      IterationCtlクラス
+   * @param [in,out] x       解ベクトル
+   * @param [in]     b  RHS  vector
+   * @param [in]     rhs_nrm RHS vector
+   * @param [in]     r0      初期残差ベクトル
    */
-  inline const char* get_tm_label(const int key) 
-  {
-    return (const char*)tm_label_ptr[key];
-  }
+  int Point_SOR(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
+  
+  
+  /**
+   * @brief 反復の同期処理
+   * @param [in]     IC        IterationCtlクラス
+   * @param [in,out] d_class   対象データ
+   * @param [in]     num_layer 通信の袖数
+   */
+  void Sync_Scalar(IterationCtl* IC, REAL_TYPE* d_class, const int num_layer);
+  
+  
+  /** 2色オーダリングSORのストライドメモリアクセス版
+   * @retval 反復数
+   * @param [in]     IC      IterationCtlクラス
+   * @param [in,out] x       解ベクトル
+   * @param [in]     b  RHS  vector
+   * @param [in]     rhs_nrm RHS vector
+   * @param [in]     r0      初期残差ベクトル
+   */
+  int SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
+  
+  
+  /**
+   * @brief SOR2SMAの非同期通信処理
+   * @param [in,out] d_x 同期する変数
+   * @param [in]     col オーダリングカラーの番号
+   * @param [in]     ip  オーダリングカラー0の最初のインデクス
+   * @param [in,out] key 送信ID
+   */
+  void wait_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request* key);
   
   
   /**
@@ -593,7 +845,6 @@ private:
   void Fgmres(IterationCtl* IC, const double rhs_nrm, const double r0);
   
 
-  
   /**
    * @brief  FRBGS
    * @retval 反復数
@@ -661,113 +912,9 @@ private:
 	void Fdot(REAL_TYPE* xy, REAL_TYPE* x, REAL_TYPE* y);
   
   
-  /** 1ステップのコアの処理
-   * @param [in] m_step   現在のステップ数
-   */
-  int Loop(const unsigned m_step);
   
   
-  
-  /**
-   * @brief 線形ソルバーの選択実行
-   * @param [in]  IC       IterationCtlクラス
-   * @param [in]  rhs_nrm  Poisson定数項ベクトルの自乗和ノルム
-   * @param [in]  res_init 初期残差ベクトル
-   */
-  void LS_Binary(IterationCtl* IC, const double rhs_nrm, const double rhs_init);
-  
-  
-
-  
-  
-  // V-P反復のdiv(u)ノルムを計算する
-  Vec3i NormDiv(IterationCtl* IC);
-  
-  
-  /**
-   * @brief Fractional Step法でNavier-Stokes方程式を解く．バイナリ近似．
-   */
-  void NS_FS_E_Binary();
-  
-  
-  /**
-   * @brief Fractional Step法でNavier-Stokes方程式を解く．距離場近似．
-   */
-  void NS_FS_E_CDS();
-  
-  
-  // 基本変数のファイル出力
-  void OutputBasicVariables(double& flop);
-
-  
-  // 基本変数のファイル出力
-  void OutputDerivedVariables(double& flop);
-  
-  
-  /* 温度の移流拡散方程式をEuler陽解法/Adams-Bashforth法で解く
-   */
-  void PS_Binary();
-  
-  
-  /**
-   * @brief 移流項のEuler陽解法による時間積分
-   * @param [in,out] ie_c    内部エネルギーの対流項の流束の和/部分段階
-   * @param [in]     delta_t 時間積分幅
-   * @param [in]     bd      BCindex B
-   * @param [in]     ie_0    nステップの内部エネルギー
-   * @param [in,out] flop    浮動小数演算数
-   * @note ie_c = ie_0 + dt/dh*sum_flux(n)
-   */
-  void ps_ConvectionEE(REAL_TYPE* ie_c, const REAL_TYPE delta_t, const int* bd, const REAL_TYPE* ie_0, double& flop);
-  
-  
-  
-  /**
-   * @brief 単媒質に対する熱伝導方程式をEuler陽解法で解く
-   * @retval 拡散項の変化量Δθの絶対値
-   * @param [in,out] t    n+1時刻の温度場
-   * @param [in]     dt   時間積分幅
-   * @param [in]     qbc  境界条件熱流束
-   * @param [in]     bh   BCindex B
-   * @param [in]     ws   部分段階の温度
-   * @param [in,out] flop 浮動小数点演算数
-   */
-  REAL_TYPE ps_Diff_SM_EE(REAL_TYPE* t, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh, const REAL_TYPE* ws, double& flop);
-  
-  
-  /**
-   * @brief 単媒質に対する熱伝導方程式をEuler陰解法で解く
-   * @retval ローカルノードの変化量の自乗和
-   * @param [in,out] t    n+1時刻の温度場
-   * @param [out]    b2   ソースベクトルの自乗和
-   * @param [in]     dt   時間積分幅
-   * @param [in]     qbc  境界条件熱流束
-   * @param [in]     bh   BCindex B
-   * @param [in]     ws   部分段階の温度
-   * @param [in]     IC   IterationCtlクラス
-   * @param [in,out] flop 浮動小数点演算数
-   */
-  double ps_Diff_SM_PSOR(REAL_TYPE* t, double& b2, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh, const REAL_TYPE* ws, IterationCtl* IC, double& flop);
-  
-  
-  /** SOR法
-   * @retval 反復数
-   * @param [in]     IC      IterationCtlクラス
-   * @param [in,out] x       解ベクトル
-   * @param [in]     b  RHS  vector
-   * @param [in]     rhs_nrm RHS vector
-   * @param [in]     r0      初期残差ベクトル
-   */
-  int Point_SOR(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
-  
-  /**
-   * @brief 単媒質に対する熱伝導方程式を陰解法で解く
-   * @param [in]  IC       IterationCtlクラス
-   * @param [in]  rhs_nrm  Poisson定数項ベクトルの自乗和ノルム
-   * @param [in]  r0       初期残差ベクトル
-   */
-  void ps_LS(IterationCtl* IC, const double rhs_nrm, const double r0);
-  
+  /** ffv_Restart.C *******************************************************/
   
   // リスタートプロセス
   void Restart(FILE* fp);
@@ -785,20 +932,36 @@ private:
   void RestartInstantaneous(FILE* fp, double& flop);
   
   
-  /**
-   * @brief タイミング測定区間にラベルを与えるラッパー
-   * @param [in] key       キー番号
-   * @param [in] label     ラベル
-   * @param [in] type      測定対象タイプ(COMM or CALC)
-   * @param [in] exclusive 排他測定フラグ(ディフォルトtrue)
+  // リスタートモードの選択
+  void selectRestartMode();
+  
+  
+  
+  
+  
+  
+  /** 1ステップのコアの処理
+   * @param [in] m_step   現在のステップ数
    */
-  void set_label(const int key, char* label, PerfMonitor::Type type, bool exclusive=true);
+  int Loop(const unsigned m_step);
   
   
   /**
-   * @brief タイミング測定区間にラベルを与える
+   * @brief Fractional Step法でNavier-Stokes方程式を解く．バイナリ近似．
    */
-  void set_timing_label();
+  void NS_FS_E_Binary();
+  
+  
+  /**
+   * @brief Fractional Step法でNavier-Stokes方程式を解く．距離場近似．
+   */
+  void NS_FS_E_CDS();
+  
+  
+  /* 温度の移流拡散方程式をEuler陽解法/Adams-Bashforth法で解く
+   */
+  void PS_Binary();
+
   
   
   /**
@@ -806,94 +969,8 @@ private:
    */
   void setVOF();
   
-  
-  /** 毎ステップ後に行う処理 */
-  bool stepPost();
-  
-  
-  /** 2色オーダリングSORのストライドメモリアクセス版
-   * @retval 反復数
-   * @param [in]     IC      IterationCtlクラス
-   * @param [in,out] x       解ベクトル
-   * @param [in]     b  RHS  vector
-   * @param [in]     rhs_nrm RHS vector
-   * @param [in]     r0      初期残差ベクトル
-   */
-  int SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
-  
-  
-  /**
-   * @brief 反復の同期処理
-   * @param [in]     IC        IterationCtlクラス
-   * @param [in,out] d_class   対象データ
-   * @param [in]     num_layer 通信の袖数
-   */
-  void Sync_Scalar(IterationCtl* IC, REAL_TYPE* d_class, const int num_layer);
-  
-  
-  /**
-   * @brief タイミング測定開始
-   * @param [in] key 格納番号
-   */
-  inline void TIMING_start(const int key) 
-  {
-    // Intrinsic profiler
-    TIMING__ PM.start((unsigned)key);
-    
-    // Venus FX profiler
-#if defined __K_FPCOLL
-    start_collection( get_tm_label(key) );
-#elif defined __FX_FAPP
-    fapp_start( get_tm_label(key), 0, 0);
-#endif
-  }
-  
-  
-  /**
-   * @brief タイミング測定終了
-   * @param [in] key             格納番号
-   * @param [in] flopPerTask    「タスク」あたりの計算量/通信量(バイト) (ディフォルト0)
-   * @param [in] iterationCount  実行「タスク」数 (ディフォルト1)
-   */
-  inline void TIMING_stop(const int key, double flopPerTask=0.0, int iterationCount=1) 
-  {
-    // Venus FX profiler
-#if defined __K_FPCOLL
-    stop_collection( get_tm_label(key) );
-#elif defined __FX_FAPP
-    fapp_stop( get_tm_label(key), 0, 0);
-#endif
-    
-    // Intrinsic profiler
-    TIMING__ PM.stop((unsigned)key, flopPerTask, (unsigned)iterationCount);
-  }
-    
 
-  
-  
-  /**
-   * @brief コマンドラインヘルプ 
-   */
-  void Usage();
-  
-  
-  /**
-   * @brief 空間平均操作と変動量の計算を行う
-   * @param [out]    avr  平均値
-   * @param [out]    rms  変動値
-   * @param [in,out] flop 浮動小数演算数
-   */
-  void VariationSpace(double* avr, double* rms, double& flop);
-  
-  
-  /**
-   * @brief SOR2SMAの非同期通信処理
-   * @param [in,out] d_x 同期する変数
-   * @param [in]     col オーダリングカラーの番号
-   * @param [in]     ip  オーダリングカラー0の最初のインデクス
-   * @param [in,out] key 送信ID
-   */
-  void wait_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request* key);
+
   
 
   

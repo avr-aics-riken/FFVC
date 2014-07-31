@@ -38,8 +38,6 @@ libIP_a_SOURCES = \
   IP_PMT.h \
   IP_PPLT2D.C \
   IP_PPLT2D.h \
-  IP_Polygon.C \
-  IP_Polygon.h \
   IP_Rect.C \
   IP_Rect.h \
   IP_Sphere.C \

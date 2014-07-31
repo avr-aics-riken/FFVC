@@ -89,7 +89,7 @@ float IP_Sphere::cut_line(const Vec3f p, const int dir, const float r, const flo
 // #################################################################
 //  点pの属するセルインデクスを求める
 // Fortran index
-Vec3i IP_Sphere::find_index(const Vec3f p, const Vec3f ol)
+Vec3i IP_Sphere::find_index(const Vec3f p, const Vec3f ol, const Vec3f pch)
 {
   Vec3f q = (p-ol)/pch;
   Vec3i idx( ceil(q.x), ceil(q.y), ceil(q.z) );
@@ -225,55 +225,44 @@ void IP_Sphere::printPara(FILE* fp, const Control* R)
 
 
 // #################################################################
-// 領域パラメータを設定する
-void IP_Sphere::setDomainParameter(Control* R, const int* sz, REAL_TYPE* m_org, REAL_TYPE* m_reg, REAL_TYPE* m_pch)
-{
-  pch.x = (float)m_pch[0];
-  pch.y = (float)m_pch[1];
-  pch.z = (float)m_pch[2];
-  
-  org.x = (float)m_org[0];
-  org.y = (float)m_org[1];
-  org.z = (float)m_org[2];
-}
-
-
-// #################################################################
 // 計算領域のセルIDとカット情報を設定する
-void IP_Sphere::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut, int* bid)
+void IP_Sphere::setup(int* bcd, Control* R, const int NoMedium, const MediumList* mat, float* cut, int* bid)
 {
   int mid_fluid;        /// 流体
   int mid_solid;        /// 固体
   int mid_driver;       /// ドライバ部
   int mid_driver_face;  /// ドライバ流出面
-
-  REAL_TYPE x, y, z, dh, len;
-  REAL_TYPE ox, oy, oz, Lx, Ly, Lz;
-  REAL_TYPE ox_g, oy_g, oz_g;
   
-  Vec3f base, b, t, org_l;
-  REAL_TYPE ph = pch.x;
-  REAL_TYPE r;
-  REAL_TYPE rs = radius/R->RefLength;
+  float ph = (float)deltaX;
+  float rs = (float)(radius/R->RefLength);
   
   // ノードローカルの無次元値
-  org_l.x = (float)origin[0];
-  org_l.y = (float)origin[1];
-  org_l.z = (float)origin[2];
-  Lx = region[0];
-  Ly = region[1];
-  Lz = region[2];
-  dh = deltaX;
-
-  ox_g = G_origin[0];
-  oy_g = G_origin[1];
-  oz_g = G_origin[2];
+  REAL_TYPE Lx = region[0];
+  REAL_TYPE Ly = region[1];
+  REAL_TYPE Lz = region[2];
+  REAL_TYPE dh = deltaX;
+  
+  Vec3f pch;        ///< セル幅
+  pch.x = (float)pitch[0];
+  pch.y = (float)pitch[1];
+  pch.z = (float)pitch[2];
+  
+  Vec3f org;        ///< 計算領域の基点
+  org.x = (float)origin[0];
+  org.y = (float)origin[1];
+  org.z = (float)origin[2];
   
   // 球のbbox
+  Vec3f box_min;    ///< Bounding boxの最小値
+  Vec3f box_max;    ///< Bounding boxの最大値
+  Vec3i box_st;     ///< Bounding boxの始点インデクス
+  Vec3i box_ed;     ///< Bounding boxの終点インデクス
+  
   box_min = - rs;
   box_max = + rs;
-  box_st = find_index(box_min, org_l);
-  box_ed = find_index(box_max, org_l);
+  box_st = find_index(box_min, org, pch);
+  box_ed = find_index(box_max, org, pch);
+  
   
   // ローカルにコピー
   int ix = size[0];
@@ -294,17 +283,18 @@ void IP_Sphere::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium
     Exit(0);
   }
   
-
   
   
   // カット情報
   Vec3f p[7];
-  float lb[7], s, r_min=10.0, r_max=0.0;
+  Vec3f base, b;
+  float r_min=10.0, r_max=0.0;
+  float lb[7];
   
   for (int k=box_st.z-2; k<=box_ed.z+2; k++) {
     for (int j=box_st.y-2; j<=box_ed.y+2; j++) {
       for (int i=box_st.x-2; i<=box_ed.x+2; i++) {
-        
+
         base.assign((float)i-0.5, (float)j-0.5, (float)k-0.5);
         b = org + base*ph;
         
@@ -326,7 +316,7 @@ void IP_Sphere::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium
         for (int l=1; l<=6; l++) {
           if ( lb[0]*lb[l] < 0.0 )
           {
-            s = cut_line(p[0], l, rs, ph);
+            float s = cut_line(p[0], l, rs, ph);
             size_t m = _F_IDX_S4DEX(l-1, i, j, k, 6, ix, jx, kx, gd); // 注意！　インデクスが1-6
             cut[m] = s;
             setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_solid, l-1);
@@ -384,6 +374,8 @@ void IP_Sphere::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium
   if ( drv_mode == OFF ) return;
   
   
+  
+  
   if ( (mid_driver = R->findIDfromLabel(mat, NoMedium, m_driver)) == 0 )
   {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver.c_str());
@@ -396,8 +388,11 @@ void IP_Sphere::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium
     Exit(0);
   }
   
+  REAL_TYPE x, y, z;
+  REAL_TYPE ox, oy, oz;
+  
   // lengthは有次元値
-  len = ox_g + (drv_length)/R->RefLength; // グローバルな無次元位置
+  REAL_TYPE len = G_origin[0] + (drv_length)/R->RefLength; // グローバルな無次元位置
   
   // ドライバ部分　X-面からドライバ長さより小さい領域
   if ( drv_length > 0.0 )

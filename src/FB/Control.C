@@ -2557,7 +2557,7 @@ void Control::getUnit()
 //境界条件の値(REAL_TYPE型)を取得し，返す
 REAL_TYPE Control::getValueReal(const std::string label, TextParser* tpc)
 {
-  REAL_TYPE df=0.0f;
+  REAL_TYPE df=0.0;
   
   if ( !(tpc->getInspectedValue(label, df)) ) Exit(0);
   

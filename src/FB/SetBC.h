@@ -45,7 +45,6 @@ protected:
   int NoMedium;    ///< 媒質数
   int Example;     ///<
   int Unit_Prs;    ///<
-  bool inout_flag; ///<
   
   BoundaryOuter   obc[NOFACE];
   CompoList       *cmp;
@@ -73,7 +72,6 @@ public:
     rho_0 = cp_0 = lambda_0 = BasePrs = 0.0;
     Peclet = Reynolds = Rayleigh = Grashof = Prandtl = 0.0;
     Example = Unit_Prs = NoCompo = NoMedium = 0;
-    inout_flag = false;
     
     cmp = NULL;
     mat = NULL;
@@ -122,13 +120,6 @@ public:
    * @param [in] m_MAT        MediumListクラス
    */
   void importCMP_MAT(CompoList* m_CMP, MediumList* m_MAT);
-  
-  
-  // @brief 流入出境界条件が設定されている場合にtrueを返す
-  bool has_InOut() 
-  { 
-    return inout_flag; 
-  }
   
   
   /** 

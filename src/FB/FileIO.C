@@ -25,10 +25,9 @@
 
 // #################################################################
 // sphファイルの書き出し（内部領域のみ）
-void FileIO::writeRawSPH(const REAL_TYPE *vf, const int* sz, const int gc, const REAL_TYPE* org, const REAL_TYPE* ddx, const int m_ModePrecision)
+void FileIO::writeRawSPH(const REAL_TYPE *vf, const int* sz, const int gc, const int gc_out, const REAL_TYPE* org, const REAL_TYPE* ddx, const int m_ModePrecision)
 {
   int pad, dType, stp, svType;
-  int i, j, k;
   REAL_TYPE ox, oy, oz, dx, dy, dz, tm;
   long long szl[3], stpl;
   
@@ -47,20 +46,21 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const int* sz, const int gc, const
   ofstream ofs(sph_fname, ios::out | ios::binary);
   if (!ofs)
   {
-    cout << "\tCan't open " << sph_fname << " file" << endl;
+    printf("\tCan't open %s file\n", sph_fname);
     Exit(0);
   }
   
-  int ix = sz[0]; //+2*gc;
-  int jx = sz[1]; //+2*gc;
-  int kx = sz[2]; //+2*gc;
+  int m_sz[3];
+  m_sz[0] = sz[0]+2*gc_out;
+  m_sz[1] = sz[1]+2*gc_out;
+  m_sz[2] = sz[2]+2*gc_out;
   int gd = gc;
   
-  size_t nx = ix * jx * kx;
+  size_t nx = m_sz[0] * m_sz[1] * m_sz[2];
   
-  ox = org[0]; //-ddx[0]*(REAL_TYPE)gc;
-  oy = org[1]; //-ddx[1]*(REAL_TYPE)gc;
-  oz = org[2]; //-ddx[2]*(REAL_TYPE)gc;
+  ox = org[0]-ddx[0]*(REAL_TYPE)gc_out;
+  oy = org[1]-ddx[1]*(REAL_TYPE)gc_out;
+  oz = org[2]-ddx[2]*(REAL_TYPE)gc_out;
   dx = ddx[0];
   dy = ddx[1];
   dz = ddx[2];
@@ -70,18 +70,18 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const int* sz, const int gc, const
   svType = kind_scalar;
   if ( sizeof(REAL_TYPE) == sizeof(double) )
   {
-    for (i=0; i<3; i++)   szl[i] = (long long)sz[i];
+    for (int i=0; i<3; i++)   szl[i] = (long long)m_sz[i];
   }
   
   REAL_TYPE *f = new REAL_TYPE[nx];
   
   size_t m, l;
   
-  for (k=1; k<=kx; k++) {
-    for (j=1; j<=jx; j++) {
-      for (i=1; i<=ix; i++) {
-        l = _F_IDX_S3D(i, j, k, ix, jx, kx, 0);
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+  for (int k=1; k<=m_sz[2]; k++) {
+    for (int j=1; j<=m_sz[1]; j++) {
+      for (int i=1; i<=m_sz[0]; i++) {
+        l = _F_IDX_S3D(i, j, k, m_sz[0], m_sz[1], m_sz[2], gc_out);
+        m = _F_IDX_S3D(i, j, k, m_sz[0], m_sz[1], m_sz[2], gd);
         f[l] = (REAL_TYPE)vf[m];
       }
     }
@@ -99,9 +99,9 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const int* sz, const int gc, const
   if (dType == 1) {
     pad = sizeof(int)*3;
     ofs.write( (char*)&pad, sizeof(int) );
-    ofs.write( (char*)&ix, sizeof(int) );
-    ofs.write( (char*)&jx, sizeof(int) );
-    ofs.write( (char*)&kx, sizeof(int) );
+    ofs.write( (char*)&m_sz[0], sizeof(int) );
+    ofs.write( (char*)&m_sz[1], sizeof(int) );
+    ofs.write( (char*)&m_sz[2], sizeof(int) );
     ofs.write( (char*)&pad, sizeof(int) );
   }
   else {
@@ -170,7 +170,7 @@ void FileIO::writeRawSPH(const REAL_TYPE *vf, const int* sz, const int gc, const
   }
   
   if (svType == kind_scalar) {
-    pad = (m_ModePrecision == sizeof(float)) ? nx * sizeof(float) : nx * sizeof(double);
+    int pad = (m_ModePrecision == sizeof(float)) ? nx * sizeof(float) : nx * sizeof(double);
     ofs.write( (char*)&pad, sizeof(int) );
     ofs.write( (char*)f,   pad );
     ofs.write( (char*)&pad, sizeof(int) );
@@ -267,3 +267,101 @@ void FileIO::writeVector(const string fname,
   fb_write_sph_v_ (v, sz, &gc, tmp, &stp, &tm, o, p, &d_type, &g, &avs, &stp_a, &tm_a);
 
 }
+
+// #################################################################
+// svxフォーマットで出力する(ID)
+void FileIO::writeSVX(int* mid,
+                      const int ip,
+                      const int jp,
+                      const int kp,
+                      const int m_sz[3],
+                      const int m_gd,
+                      const float m_pit[3],
+                      const float m_org[3]
+                      )
+{
+  char svx_fname[512];
+  sprintf( svx_fname, "subc_%d_%d_%d.svx", ip,jp,kp );
+
+  ofstream ofs(svx_fname, ios::out | ios::binary);
+  if (!ofs) {
+    cout << "\tCan't open " << svx_fname << " file" << endl;
+    Exit(0);
+  }
+  
+  int imax = m_sz[0];
+  int jmax = m_sz[1];
+  int kmax = m_sz[2];
+  int gd = m_gd;
+  
+  int ix = imax+2*gd;  // guide cell
+  int jx = jmax+2*gd;
+  int kx = kmax+2*gd;
+  
+  size_t nx = (size_t)(ix*jx*kx);
+  
+  float dx = m_pit[0];
+  float dy = m_pit[1];
+  float dz = m_pit[2];
+  float ox = m_org[0] - dx*gd;
+  float oy = m_org[1] - dy*gd;
+  float oz = m_org[2] - dz*gd;
+  
+  int* q = mid;
+  
+  /*
+  int* q = new int[nx];
+  
+  for (int k=0; k<=(kmax+1); k++) {
+    for (int j=0; j<=(jmax+1); j++) {
+      for (int i=0; i<=(imax+1); i++) {
+        l = _F_IDX_S3D(i, j, k, imax, jmax, kmax, gd);
+        m = _F_IDX_S3D(i, j, k, imax, jmax, kmax, gd);
+        q[l] = mid[m];
+      }
+    }
+  }
+   */
+  
+  // voxel size
+  int sz = sizeof(int)*3;
+  ofs.write( (char*)&sz, sizeof(int) );
+  ofs.write( (char*)&ix, sizeof(int) );
+  ofs.write( (char*)&jx, sizeof(int) );
+  ofs.write( (char*)&kx, sizeof(int) );
+  ofs.write( (char*)&sz, sizeof(int) );
+  
+  // original point of domain
+  sz = sizeof(float)*3;
+  ofs.write( (char*)&sz, sizeof(int) );
+  ofs.write( (char*)&ox, sizeof(float) );
+  ofs.write( (char*)&oy, sizeof(float) );
+  ofs.write( (char*)&oz, sizeof(float) );
+  ofs.write( (char*)&sz, sizeof(int) );
+  
+  // pitch of voxel
+  ofs.write( (char*)&sz, sizeof(int) );
+  ofs.write( (char*)&dx, sizeof(float) );
+  ofs.write( (char*)&dy, sizeof(float) );
+  ofs.write( (char*)&dz, sizeof(float) );
+  ofs.write( (char*)&sz, sizeof(int) );
+  
+  // type of stored data
+  sz = sizeof(int)*1;
+  int dtype = 0;
+  dtype |= ( 0x1<<2 );  // medium ID
+  ofs.write( (char*)&sz,  sizeof(int) );
+  ofs.write( (char*)&dtype, sizeof(int) );
+  ofs.write( (char*)&sz,  sizeof(int) );
+  
+  // medium ID
+  sz = nx * sizeof(int);
+  ofs.write( (char*)&sz, sizeof(int) );
+  ofs.write( (char*)q,   sz );
+  ofs.write( (char*)&sz, sizeof(int) );
+  
+  ofs.close();
+  
+  //if (q) { delete [] q; q=NULL; }
+}
+

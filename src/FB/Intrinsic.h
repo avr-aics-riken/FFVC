@@ -54,6 +54,12 @@ public:
     dim_3d
   };
   
+  /** 形状 */
+  enum shape_type {
+    id_circular = 1,
+    id_rectangular
+  };
+  
   /** コンストラクタ */
   Intrinsic() 
   { 
@@ -146,7 +152,6 @@ public:
    * @brief 計算領域のセルIDとカット情報を設定する
    * @param [in,out] bcd      BCindex B
    * @param [in]     R        Controlクラスのポインタ
-   * @param [in]     G_org    グローバルな原点（無次元）
    * @param [in]     NoMedium 媒質数
    * @param [in]     mat      MediumListクラスのポインタ
    * @param [in]     cut      交点情報
@@ -154,7 +159,6 @@ public:
    */
   virtual void setup(int* bcd,
                      Control* R,
-                     REAL_TYPE* G_org,
                      const int NoMedium,
                      const MediumList* mat,
                      float* cut,

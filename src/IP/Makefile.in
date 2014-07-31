@@ -142,8 +142,8 @@ libIP_a_LIBADD =
 am_libIP_a_OBJECTS = libIP_a-IP_Cylinder.$(OBJEXT) \
 	libIP_a-IP_Duct.$(OBJEXT) libIP_a-IP_Jet.$(OBJEXT) \
 	libIP_a-IP_PMT.$(OBJEXT) libIP_a-IP_PPLT2D.$(OBJEXT) \
-	libIP_a-IP_Polygon.$(OBJEXT) libIP_a-IP_Rect.$(OBJEXT) \
-	libIP_a-IP_Sphere.$(OBJEXT) libIP_a-IP_Step.$(OBJEXT)
+	libIP_a-IP_Rect.$(OBJEXT) libIP_a-IP_Sphere.$(OBJEXT) \
+	libIP_a-IP_Step.$(OBJEXT)
 libIP_a_OBJECTS = $(am_libIP_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -370,8 +370,6 @@ libIP_a_SOURCES = \
   IP_PMT.h \
   IP_PPLT2D.C \
   IP_PPLT2D.h \
-  IP_Polygon.C \
-  IP_Polygon.h \
   IP_Rect.C \
   IP_Rect.h \
   IP_Sphere.C \
@@ -462,7 +460,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libIP_a-IP_Jet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libIP_a-IP_PMT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libIP_a-IP_PPLT2D.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libIP_a-IP_Polygon.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libIP_a-IP_Rect.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libIP_a-IP_Sphere.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libIP_a-IP_Step.Po@am__quote@
@@ -550,20 +547,6 @@ libIP_a-IP_PPLT2D.obj: IP_PPLT2D.C
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='IP_PPLT2D.C' object='libIP_a-IP_PPLT2D.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libIP_a_CXXFLAGS) $(CXXFLAGS) -c -o libIP_a-IP_PPLT2D.obj `if test -f 'IP_PPLT2D.C'; then $(CYGPATH_W) 'IP_PPLT2D.C'; else $(CYGPATH_W) '$(srcdir)/IP_PPLT2D.C'; fi`
-
-libIP_a-IP_Polygon.o: IP_Polygon.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libIP_a_CXXFLAGS) $(CXXFLAGS) -MT libIP_a-IP_Polygon.o -MD -MP -MF $(DEPDIR)/libIP_a-IP_Polygon.Tpo -c -o libIP_a-IP_Polygon.o `test -f 'IP_Polygon.C' || echo '$(srcdir)/'`IP_Polygon.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libIP_a-IP_Polygon.Tpo $(DEPDIR)/libIP_a-IP_Polygon.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='IP_Polygon.C' object='libIP_a-IP_Polygon.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libIP_a_CXXFLAGS) $(CXXFLAGS) -c -o libIP_a-IP_Polygon.o `test -f 'IP_Polygon.C' || echo '$(srcdir)/'`IP_Polygon.C
-
-libIP_a-IP_Polygon.obj: IP_Polygon.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libIP_a_CXXFLAGS) $(CXXFLAGS) -MT libIP_a-IP_Polygon.obj -MD -MP -MF $(DEPDIR)/libIP_a-IP_Polygon.Tpo -c -o libIP_a-IP_Polygon.obj `if test -f 'IP_Polygon.C'; then $(CYGPATH_W) 'IP_Polygon.C'; else $(CYGPATH_W) '$(srcdir)/IP_Polygon.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libIP_a-IP_Polygon.Tpo $(DEPDIR)/libIP_a-IP_Polygon.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='IP_Polygon.C' object='libIP_a-IP_Polygon.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libIP_a_CXXFLAGS) $(CXXFLAGS) -c -o libIP_a-IP_Polygon.obj `if test -f 'IP_Polygon.C'; then $(CYGPATH_W) 'IP_Polygon.C'; else $(CYGPATH_W) '$(srcdir)/IP_Polygon.C'; fi`
 
 libIP_a-IP_Rect.o: IP_Rect.C
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libIP_a_CXXFLAGS) $(CXXFLAGS) -MT libIP_a-IP_Rect.o -MD -MP -MF $(DEPDIR)/libIP_a-IP_Rect.Tpo -c -o libIP_a-IP_Rect.o `test -f 'IP_Rect.C' || echo '$(srcdir)/'`IP_Rect.C

@@ -57,6 +57,7 @@ if ( zp == 0 )
   
   // 最頻値ID >> tg以外
   int sd = find_mode_id(tg, qw, qe, qs, qn, qb, qt);
+
   
   // 各方向のテスト
   // 対象セルは，未評価セル(zp == 0) 

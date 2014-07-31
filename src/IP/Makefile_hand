@@ -24,7 +24,6 @@ CSRCS =
 CXXSRCS = \
   IP_PMT.C \
   IP_Rect.C \
-  IP_Polygon.C \
   IP_Cylinder.C \
   IP_Step.C \
   IP_PPLT2D.C \

@@ -573,7 +573,7 @@ void ASD::fill(bool disp_flag)
   }
   
   
-  filled = V.fillSeed(d_bcd, FillSeedDir, md_solid, d_bid, G_division);
+  filled = V.fillSeedBcd(d_bcd, FillSeedDir, md_solid, d_bid, G_division);
 
   
   if ( filled == 0 )
@@ -653,7 +653,7 @@ void ASD::fill(bool disp_flag)
   
   
   // 未ペイント（ID=0）のセルを検出
-  unsigned long upc = V.countCell(d_bcd, false, 0, G_division);
+  unsigned long upc = V.countCellB(d_bcd, 0, true, G_division);
   
   if ( upc == 0 )
   {
@@ -686,7 +686,7 @@ void ASD::fill(bool disp_flag)
   
   
   // ID=0をカウント
-  upc = V.countCell(d_bcd, false, 0, G_division);
+  upc = V.countCellB(d_bcd, 0, true, G_division);
   
   if ( upc != 0 )
   {

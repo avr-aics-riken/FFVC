@@ -533,10 +533,17 @@ void ParseBC::getIbcOutflow(const string label_base, const int n, CompoList* cmp
       printf("\tParsing error : Invalid string value for 'PressureType' : %s\n", str.c_str());
       Exit(0);
     }
+    
     if ( cmp[n].get_P_BCtype() == P_DIRICHLET )
     {
       label = label_base + "/PressureValue";
-      cmp[n].set_Pressure( getValueReal(label) );
+      REAL_TYPE tmp=0.0;
+      if ( !(tpCntl->getInspectedValue(label, tmp)) )
+      {
+        printf("\tParsing error : Missing for 'PressureValue'\n");
+        Exit(0);
+      }
+      cmp[n].set_Pressure(tmp);
     }
   }
   
@@ -1917,7 +1924,6 @@ void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp)
       }
     }
   }
-  
   
   
   // この時点まで，mat[]の媒質情報は媒質を保持しているオーダーにしかないので，媒質情報をLBCのオーダーにコピーする

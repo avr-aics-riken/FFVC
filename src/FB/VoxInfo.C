@@ -322,8 +322,8 @@ void VoxInfo::copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const
 
 // #################################################################
 // bcd[]内にあるm_idのセルを数える
-// painted : ID=0以外でペイント済みを求める(true), bcd[]=0のセルをカウント(false)
-unsigned long VoxInfo::countCell (const int* bcd, bool painted, int m_id, const int* Dsize)
+// painted : m_id以外のセル数をカウント(false), m_idのセル数をカウント(true)
+unsigned long VoxInfo::countCellB(const int* bcd, const int m_id, const bool painted, const int* Dsize)
 {
   int ix, jx, kx, gd;
   
@@ -344,25 +344,93 @@ unsigned long VoxInfo::countCell (const int* bcd, bool painted, int m_id, const 
   
   unsigned long c=0;
   int id = m_id;
-  bool sw = painted;
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, id, sw) schedule(static) reduction(+:c)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        
-        if ( sw )
-        {
-          if ( DECODE_CMP(bcd[m]) != id ) c++;
-        }
-        else
-        {
+  if ( painted )
+  {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, id) schedule(static) reduction(+:c)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
           if ( DECODE_CMP(bcd[m]) == id ) c++;
         }
       }
     }
   }
+  else
+  {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, id) schedule(static) reduction(+:c)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          if ( DECODE_CMP(bcd[m]) != id ) c++;
+        }
+      }
+    }
+  }
+
+  
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = c;
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  return c;
+}
+
+
+// #################################################################
+// mid[]内にあるm_idのセルを数える
+// painted : m_id以外のセル数をカウント(false), m_idのセル数をカウント(true)
+unsigned long VoxInfo::countCellM(const int* mid, const int m_id, const bool painted, const int* Dsize)
+{
+  int ix, jx, kx, gd;
+  
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
+  
+  unsigned long c=0;
+  int id = m_id;
+  
+  if ( painted )
+  {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, id) schedule(static) reduction(+:c)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          if ( mid[m] == id ) c++;
+        }
+      }
+    }
+  }
+  else
+  {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, id) schedule(static) reduction(+:c)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          if ( mid[m] != id ) c++;
+        }
+      }
+    }
+  }
+
   
   if ( numProc > 1 )
   {
@@ -2593,7 +2661,36 @@ unsigned long VoxInfo::fillByBid (int* bid, int* bcd, float* cut, const int tgt_
   int mode_x = suppress[0]; // if 0, suppress connectivity evaluation
   int mode_y = suppress[1];
   int mode_z = suppress[2];
-
+  
+  /*
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        
+        int qq = bid[m];
+        
+        // 隣接セルの方向に対する境界ID
+        int qw = getBit5(qq, 0);
+        int qe = getBit5(qq, 1);
+        int qs = getBit5(qq, 2);
+        int qn = getBit5(qq, 3);
+        int qb = getBit5(qq, 4);
+        int qt = getBit5(qq, 5);
+        
+        float* pos = &cut[ _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd) ];
+        
+        if ( (qw+qe+qs+qn+qb+qt) > 0 )
+        {
+          printf("%3d %3d %3d : %d %d %d %d %d %d : %e %e %e %e %e %e\n",
+                 i,j,k, qw, qe, qs, qn, qb, qt,
+                 pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
+        }
+        
+      }
+    }
+  }
+   */
   
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, sdw, sde, sds, sdn, sdb, sdt, mode_x, mode_y, mode_z) \
 schedule(static) reduction(+:filled) reduction(+:replaced)
@@ -2687,6 +2784,168 @@ unsigned long VoxInfo::fillByFluid (int* bcd, const int fluid_id, const int* bid
   }
   
   return c;
+}
+
+
+// #################################################################
+// 未ペイントセルをtargetでフィル
+unsigned long VoxInfo::fillByID(int* mid, const int target, const int* Dsize)
+{
+  int ix, jx, kx, gd;
+  
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
+  
+  int fid = target;
+  unsigned long c = 0; /// painted count
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, fid) schedule(static) reduction(+:c)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+
+        if ( mid[m] == -1 )
+        {
+          mid[m] = fid;
+          c++;
+        }
+      }
+    }
+  }
+  
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = c;
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  return c;
+}
+
+
+// #################################################################
+// 流体媒質のフィル
+// Symmetric fillにより反復回数を減少
+unsigned long VoxInfo::fillByMid(int* mid, const int tgt_id, const int* Dsize)
+{
+  int ix, jx, kx, gd;
+  
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
+  
+  int tg = tgt_id;
+  unsigned long filled = 0; ///< tgt_idでペイントされた数
+  
+  
+  /// 検査対象セル{-1}の隣接6方向を見て、tgt_idと同じIDがあれば対象セルをtgt_idでペイント
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) \
+schedule(static) reduction(+:filled) collapse(3)
+  
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t m_p = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
+        size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
+        size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
+        size_t m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd);
+        size_t m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd);
+        size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
+        size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
+        
+        if ( mid[m_p] == -1 )
+        {
+          int ff = 0;
+          
+          if ( mid[m_w] == tg ) ff++;
+          if ( mid[m_e] == tg ) ff++;
+          if ( mid[m_s] == tg ) ff++;
+          if ( mid[m_n] == tg ) ff++;
+          if ( mid[m_b] == tg ) ff++;
+          if ( mid[m_t] == tg ) ff++;
+          
+          if ( ff>0 )
+          {
+            mid[m_p] = tg;
+            filled++;
+          }
+        }
+      }
+    }
+  }
+  
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) \
+schedule(static) reduction(+:filled) collapse(3)
+  
+  for (int k=kx; k>=1; k--) {
+    for (int j=jx; j>=1; j--) {
+      for (int i=ix; i>=1; i--) {
+        
+        size_t m_p = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
+        size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
+        size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
+        size_t m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd);
+        size_t m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd);
+        size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
+        size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
+        
+        if ( mid[m_p] == -1 )
+        {
+          int ff = 0;
+          
+          if ( mid[m_w] == tg ) ff++;
+          if ( mid[m_e] == tg ) ff++;
+          if ( mid[m_s] == tg ) ff++;
+          if ( mid[m_n] == tg ) ff++;
+          if ( mid[m_b] == tg ) ff++;
+          if ( mid[m_t] == tg ) ff++;
+          
+          if ( ff>0 )
+          {
+            mid[m_p] = tg;
+            filled++;
+          }
+        }
+        
+      }
+    }
+  }
+  
+  if ( numProc > 1 )
+  {
+    unsigned long tmp = filled;
+    if ( paraMngr->Allreduce(&tmp, &filled, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  return filled;
 }
 
 
@@ -2836,7 +3095,7 @@ unsigned long VoxInfo::fillCutOnCellCenter (int* bcd, const int* bid, const floa
 // シード点をペイントする
 // ヒントとして与えられた外部境界面に接するセルにおいて，確実に流体セルであるセルをフィルする
 // もし，外部境界面以外に固体候補があれば、ぬれ面はフィルしない
-unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, const int* bid, const int* Dsize)
+unsigned long VoxInfo::fillSeedBcd(int* bcd, const int face, const int target, const int* bid, const int* Dsize)
 {
   int ix, jx, kx, gd;
   
@@ -2978,6 +3237,156 @@ unsigned long VoxInfo::fillSeed (int* bcd, const int face, const int target, con
             if ( ((s & mx_t) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
               setBitID(bcd[m], tg);
+              c++;
+            }
+          }
+        }
+      }
+      break;
+      
+  } // end of switch
+  
+  
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = c;
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  return c;
+}
+
+
+// #################################################################
+// シード点をペイントする
+// ヒントとして与えられた外部境界面に接するセルにおいて，-1のセルをtargetでペイントする
+unsigned long VoxInfo::fillSeedMid(int* mid, const int face, const int target, const int* Dsize)
+{
+  int ix, jx, kx, gd;
+  
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
+  
+  
+  int tg = target;
+  unsigned long c = 0;
+  
+  
+  switch (face)
+  {
+    case X_minus:
+      if ( nID[face] < 0 )
+      {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
+        for (int k=1; k<=kx; k++) {
+          for (int j=1; j<=jx; j++) {
+            size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
+            
+            if ( mid[m] == -1 )
+            {
+              mid[m] = tg;
+              c++;
+            }
+          }
+        }
+      }
+      break;
+      
+    case X_plus:
+      if ( nID[face] < 0 )
+      {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
+        for (int k=1; k<=kx; k++) {
+          for (int j=1; j<=jx; j++) {
+            size_t m = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
+            
+            if ( mid[m] == -1 )
+            {
+              mid[m] = tg;
+              c++;
+            }
+          }
+        }
+      }
+      break;
+      
+    case Y_minus:
+      if ( nID[face] < 0 )
+      {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
+        for (int k=1; k<=kx; k++) {
+          for (int i=1; i<=ix; i++) {
+            size_t m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
+            
+            if ( mid[m] == -1 )
+            {
+              mid[m] = tg;
+              c++;
+            }
+          }
+        }
+      }
+      break;
+      
+    case Y_plus:
+      if ( nID[face] < 0 )
+      {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
+        for (int k=1; k<=kx; k++) {
+          for (int i=1; i<=ix; i++) {
+            size_t m = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
+            
+            if ( mid[m] == -1 )
+            {
+              mid[m] = tg;
+              c++;
+            }
+          }
+        }
+      }
+      break;
+      
+    case Z_minus:
+      if ( nID[face] < 0 )
+      {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
+        for (int j=1; j<=jx; j++) {
+          for (int i=1; i<=ix; i++) {
+            size_t m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
+            
+            if ( mid[m] == -1 )
+            {
+              mid[m] = tg;
+              c++;
+            }
+          }
+        }
+      }
+      break;
+      
+    case Z_plus:
+      if ( nID[face] < 0 )
+      {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) schedule(static) reduction(+:c)
+        for (int j=1; j<=jx; j++) {
+          for (int i=1; i<=ix; i++) {
+            size_t m = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
+            
+            if ( mid[m] == -1 )
+            {
+              mid[m] = tg;
               c++;
             }
           }

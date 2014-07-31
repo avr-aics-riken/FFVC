@@ -33,6 +33,7 @@ main.o: main.C comb.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/file_inln.h \
  /usr/local/FFV/PMlib/include/PerfMonitor.h \
  /usr/local/FFV/PMlib/include/PerfWatch.h \
+ /usr/local/FFV/PMlib/include/pmlib_papi.h \
  /usr/local/FFV/PMlib/include/pmVersion.h \
  /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/CPMlib/include/cpm_Base.h \
@@ -102,6 +103,7 @@ comb.o: comb.C comb.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/file_inln.h \
  /usr/local/FFV/PMlib/include/PerfMonitor.h \
  /usr/local/FFV/PMlib/include/PerfWatch.h \
+ /usr/local/FFV/PMlib/include/pmlib_papi.h \
  /usr/local/FFV/PMlib/include/pmVersion.h \
  /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/CPMlib/include/cpm_Base.h \
@@ -171,6 +173,7 @@ comb_sph.o: comb_sph.C comb.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/file_inln.h \
  /usr/local/FFV/PMlib/include/PerfMonitor.h \
  /usr/local/FFV/PMlib/include/PerfWatch.h \
+ /usr/local/FFV/PMlib/include/pmlib_papi.h \
  /usr/local/FFV/PMlib/include/pmVersion.h \
  /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/CPMlib/include/cpm_Base.h \
@@ -240,6 +243,7 @@ comb_avs.o: comb_avs.C comb.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/openmpi/ompi/mpi/cxx/file_inln.h \
  /usr/local/FFV/PMlib/include/PerfMonitor.h \
  /usr/local/FFV/PMlib/include/PerfWatch.h \
+ /usr/local/FFV/PMlib/include/pmlib_papi.h \
  /usr/local/FFV/PMlib/include/pmVersion.h \
  /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/CPMlib/include/cpm_Base.h \

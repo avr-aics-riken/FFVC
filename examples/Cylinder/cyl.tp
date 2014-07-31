@@ -1,15 +1,31 @@
 
 ApplicationControl {
-  CheckParameter          = "Off"
-  Operator                = "Kenji_Ono"
-  DebugDivergence         = "off"
+  CheckParameter      = "Off"
+  Operator            = "Kenji_Ono"
+  DebugDivergence     = "off"
 }
 
 
 BcTable {
 
   OuterBoundary {
-      
+    
+    inlet {
+      class       = "SpecifiedVelocity"
+      Profile     = "Constant"
+      OrientationVector = (1.0, 0.0, 0.0)
+      velocity    = 3.0
+      Medium      = "air"
+      Temperature = 20
+    }
+
+    outlet {
+      class        = "Outflow"
+      Medium       = "air"
+      PressureType = "neumann"
+      PrsValue     = 0.0
+    }
+
     outerWall {
       class       = "Wall"
       Type        = "fixed"
@@ -25,11 +41,8 @@ BcTable {
       Medium      = "fe"
     }
 
-    inlet_1 {
-      class       = "SpecifiedVelocity"
-      Profile     = "Constant"
-      OrientationVector = (1.0, 0.0, 0.0)
-      velocity    = 5.0
+    symmetric {
+      class       = "Symmetric"
       Medium      = "air"
     }
     
@@ -39,13 +52,14 @@ BcTable {
     }
 
     FaceBC {
-      Xminus = "outerWall"
-      Xplus  = "outerWall"
-      Yminus = "outerWall"
-      Yplus  = "outerWall"
-      Zminus = "outerWall"
-      Zplus  = "slideWall"
+      Xminus = "inlet"
+      Xplus  = "outlet"
+      Yminus = "symmetric"
+      Yplus  = "symmetric"
+      Zminus = "symmetric"
+      Zplus  = "symmetric"
     }
+
   }
 }
 
@@ -58,11 +72,11 @@ ConvectionTerm {
 
 DomainInfo {
   UnitOfLength   = "NonDimensional"
-  GlobalOrigin   = (-0.5, -0.5, -0.5   )
-  GlobalRegion   = (1.0,  1.0,  1.0    )
-  GlobalVoxel    = (64   , 64   , 64   )
+  GlobalOrigin   = (-10.0, -10.0, 0.0)
+  GlobalRegion   = (25.0,  20.0,  0.15    )
+  //GlobalVoxel    = (64   , 64   , 3   )
   
-  //GlobalPitch    = (1.5625e-02, 1.5625e-02, 1.5625e-02)
+  GlobalPitch    = (5.0e-02, 5.0e-02, 5.0e-02)
   //GlobalDivision = (1    , 1    , 1    )
 
   ActiveSubDomainFile = ""
@@ -71,11 +85,13 @@ DomainInfo {
 
 
 GeometryModel {
-  Source = "rectangular"
+  Source                  = "cylinder"
   FillMedium              = "air"
-  HintOfFillSeedDirection = "no"
+  HintOfFillSeedDirection = "Xminus"
   HintOfFillSeedMedium    = "air"
-  VoxelOutput             = "off"
+  VoxelOutput             = "svx"
+  FillDirectionControl    = ("fill", "fill", "suppress")
+  OutputGlyph             = "off"
 }
 
 
@@ -90,31 +106,55 @@ GoverningEquation {
 
 IntrinsicExample {
   FluidMedium = "air"
-  SolidMedium = "fe"
-  CheckEven   = "yes"
-  Dimension   = "3d"
+  Dimension   = "2d"
+
+  Cylinder1 {
+    UseCylinder = "yes"
+    Shape = "rectangular"
+    LengthX = 1.0
+    LengthY = 1.0
+    //LengthZ = 0.0
+    //Radius = 0.5
+    PositionX = 0.0
+    PositionY = 0.0
+    SolidMedium = "fe1"
+  }
+  
+  Cylinder2 {
+    UseCylinder = "yes"
+    Shape = "circular"
+    //LengthX = 0.4
+    //LengthY = 1.0
+    //LengthZ = 0.0
+    Radius = 0.5
+    PositionX = 2.0
+    PositionY = 1.0
+    SolidMedium = "fe2"
+  }
+
+  Driver = 0.0
 }
 
 
 Iteration {
   LinearSolver[@] {
-    Alias                = "vp"
-    class                = "VPiteration"
-    MaxIteration         = 20
-    ConvergenceCriterion = 1.0e-4
-    NormType             = "VdivMax"
-  }
-
-  LinearSolver[@] {
     Alias                = "sor2_strict"
     class                = "sor2sma"
-    MaxIteration         = 100
-    ConvergenceCriterion = 1.0e-2
+    MaxIteration         = 50
+    ConvergenceCriterion = 1.0e-4
     NormType             = "RbyR0"
     Omega                = 1.1
     CommMode             = "async"
     NaiveImplementation  = "off"
     bit3option           = "off"
+  }
+
+  LinearSolver[@] {
+    Alias                = "vp"
+    class                = "VPiteration"
+    MaxIteration         = 100
+    ConvergenceCriterion = 1.0e-4
+    NormType             = "VdivMax"
   }
 
   LinearSolver[@] {
@@ -146,7 +186,14 @@ MediumTable {
     VolumeExpansion     = 0.04e-3
   }
 
-  Fe {
+  Fe1 {
+    state               = "Solid"
+    MassDensity         = 7870.0
+    SpecificHeat        = 442.0
+    ThermalConductivity = 80.3
+  }
+
+  Fe2 {
     state               = "Solid"
     MassDensity         = 7870.0
     SpecificHeat        = 442.0
@@ -156,105 +203,38 @@ MediumTable {
 
 
 MonitorList {
-  Log             = "On"
-  OutputMode      = "gather"
+  Log             = "Off"
+  OutputMode      = "Gather"
   Sampling {
     TemporalType  = "step"
-    Interval      = 10
+    Interval      = 100
   }
 
-  list[@] {
-    type            = "cylinder"
-    label           = "cyl_1"
-    SamplingMethod  = "nearest"
-    SamplingMode    = "Fluid"
-    Variables {
-      velocity      = "off"
-      vorticity     = "off"
-      totalPressure = "on"
-    }
-    normal = (1.0, 0.0, 0.0)
-    center = (0.0, 0.0, 0.0)
-    depth  = 0.1
-    radius = 0.15
-  }
-
-/*
   list[@] {
     type            = "Line"
-    label           = "grp1"
-    SamplingMethod  = "nearest"
+    label           = "line1"
+    SamplingMethod  = "Interpolation"
     SamplingMode    = "Fluid"
     Division        = 64
     From            = (-0.5, 0.0, 0.0)
     To              = (0.5, 0.0, 0.0)
     Variables {
       velocity      = "on"
-      vorticity     = "on"
-      totalPressure = "on"
     }
   }
 
   list[@] {
-    type            = "pointset"
-    label           = "grp2"
+    type            = "Line"
+    label           = "line2"
     SamplingMethod  = "Interpolation"
     SamplingMode    = "Fluid"
-    set[@] {
-      Coordinate    = (0.2, 0.2, 0.2)
-      tag           = "p1" 
-    }
-    set[@] {
-      Coordinate    = (0.3, 0.3, 0.3)
-      tag           = "p2" 
-    }
-    set[@] {
-      Coordinate    = (0.4, 0.4, 0.4)
-      tag           = "p3" 
-    }
-    Variables {
-      pressure      = "on"
-      helicity      = "on"
-      totalPressure = "off"
-    }
-  }
-
-  list[@] {
-    type              = "box"
-    label             = "grp3"
-    SamplingMethod    = "nearest"
-    SamplingMode      = "Fluid"
-    Normal            = (0.0, 0.0, 1.0)
-    Center            = (0.0, 0.0, 0.4)
-    Depth             = 0.05
-    orientationVector = (1.0, 0.0, 0.0)
-    width             = 0.4
-    height            = 0.2
+    Division        = 64
+    From            = (0.0, 0.0, -0.5)
+    To              = (0.0, 0.0, 0.5)
     Variables {
       velocity      = "on"
-      pressure      = "off"
-      temperature   = "off"
-      TotalPressure = "off"
     }
   }
-
-  list[@] {
-    type              = "cylinder"
-    label             = "grp4"
-    SamplingMethod    = "nearest"
-    SamplingMode      = "Fluid"
-    Normal            = (0.0,-1.0, 0.0)
-    Center            = (0.0, 0.2, 0.0)
-    Depth             = 0.1
-    radius            = 0.1
-    Variables {
-      velocity      = "on"
-      pressure      = "off"
-      temperature   = "off"
-      TotalPressure = "off"
-    }
-  }
-*/
 }
 
 
@@ -278,7 +258,7 @@ Output {
     BasicVariables {
       Format         = "sph"
       TemporalType   = "time"
-      Interval       = 0.02
+      Interval       = 0.1
     }
     DerivedVariables {
       Format         = "sph"
@@ -302,7 +282,7 @@ Output {
     SPH {
       GuideOut        = "Without"
       TimeSlice       = "off"
-      DirectoryPath   = "hoge_t1"
+      DirectoryPath   = "hoge"
     }
   }
 }
@@ -310,7 +290,7 @@ Output {
 
 Reference {
   Length        = 1.0
-  Velocity      = 1.0
+  Velocity      = 3.0
   BasePressure  = 0.0
   Medium        = "air"
   Temperature {
@@ -343,9 +323,9 @@ StartCondition {
     Staging     = "off"
 
     DFIfiles {
-      Velocity    = "vel-t0.dfi"
-      Pressure    = "prs-t0.dfi"
-      Fvelocity   = "fvel-t0.dfi"
+      Velocity    = "vel0.dfi"
+      Pressure    = "prs0.dfi"
+      Fvelocity   = "fvel.dfi"
     }
   }
 
@@ -364,13 +344,13 @@ TimeControl {
 
   TimeStep {
     Mode           = "CFLReferenceVelocity"
-    DeltaT         = 0.2
+    DeltaT         = 0.1
   }
 
   Session {
     TemporalType   = "time"
     Start          = 0    // 0 or 0.0の場合initial start
-    End            = 0.4
+    End            = 160
   }
 
   Average {
@@ -392,7 +372,7 @@ TurbulenceModeling {
 }
 
 Unit {
-  UnitOfInputParameter  = "nonDimensional"
-  UnitOfOutput          = "nonDimensional"
+  UnitOfInputParameter  = "Dimensional"
+  UnitOfOutput          = "Dimensional"
   Pressure              = "Gauge"
 }

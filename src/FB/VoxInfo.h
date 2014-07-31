@@ -142,7 +142,7 @@ private:
    * @param [in] qn  n方向のID
    * @param [in] qb  b方向のID
    * @param [in] qt  t方向のID
-   * @note 0が戻り値の場合には想定外のエラー
+   * @note 候補なしの場合には、0が戻り値
    */
   inline int find_mode_id (const int fid, const int qw, const int qe, const int qs, const int qn, const int qb, const int qt)
   {
@@ -151,6 +151,7 @@ private:
     
     memset(key, 0, sizeof(unsigned)*CMP_BIT_W);
     
+    // 0<= q <= Ncompo のはず
     val[0] = qw;
     val[1] = qe;
     val[2] = qs;
@@ -159,22 +160,15 @@ private:
     val[5] = qt;
     
     
-    // 周囲6方向をテスト
-    for (int l=0; l<6; l++)
+    for (int l=0; l<6; l++) key[ val[l] ]++;
+    
+    
+    int mode = 0;
+    int z = 0;
+    
+    for (int l=NoCompo; l>=1; l--)
     {
-      if ( (val[l] != fid) && (val[l] != 0) ) // 流体IDでも0でもない
-      {
-        key[ val[l] ]++;
-      }
-    }
-    
-    
-    int mode = key[NoCompo]; // サーチの初期値，IDの大きい方から
-    int z = NoCompo;         // 最頻値のID
-    
-    for (int l=NoCompo-1; l>=1; l--)
-    {
-      if ( (key[l] > mode) && (key[l]>0) )
+      if ( (l != fid) && (key[l] > mode) ) // 流体IDでなく、最大の頻度
       {
         mode = key[l];
         z = l;
@@ -241,11 +235,21 @@ public:
   /**
    * @brief セル数をカウント
    * @param [in] bcd     BCindex B
-   * @param [in] painted ID=0以外でペイント済みを求める(true), bcd[]=0のセルをカウント(false)
    * @param [in] m_id    検査するID
+   * @param [in] painted m_id以外のセル数をカウント(false), m_idのセル数をカウント(true)
    * @param [in] Dsize   サイズ
    */
-  unsigned long countCell (const int* bcd, bool painted=true, int m_id=0, const int* Dsize=NULL);
+  unsigned long countCellB(const int* bcd, const int m_id, const bool painted=true, const int* Dsize=NULL);
+  
+  
+  /**
+   * @brief セル数をカウント
+   * @param [in] mid     work array
+   * @param [in] m_id    検査するID
+   * @param [in] painted m_id以外のセル数をカウント(false), m_idのセル数をカウント(true)
+   * @param [in] Dsize   サイズ
+   */
+  unsigned long countCellM(const int* mid, const int m_id, const bool painted=true, const int* Dsize=NULL);
   
   
   /**
@@ -300,6 +304,24 @@ public:
   
   
   /* @brief 未ペイントセルをフィル
+   * @param [in,out] mid      work array
+   * @param [in]     target   フィルをするID
+   * @param [in]     Dsize    サイズ
+   * @retval 置換されたセル数
+   */
+  unsigned long fillByID(int* mid, const int target, const int* Dsize=NULL);
+  
+  
+  /**
+   * @brief 流体媒質のフィルをbid情報を元に実行
+   * @param [in,out] mid         work array
+   * @param [in]     tgt_id      フィルする流体IDのエントリ
+   * @param [in]     Dsize       サイズ
+   */
+  unsigned long fillByMid(int* mid, const int tgt_id, const int* Dsize=NULL);
+  
+  
+  /* @brief 未ペイントセルをフィル
    * @param [in,out] bcd      BCindex B
    * @param [in]     fluid_id フィルをする流体ID
    * @param [in]     bid      境界ID
@@ -327,7 +349,17 @@ public:
    * @param [in]     bid    境界ID
    * @param [in]     Dsize  サイズ
    */
-  unsigned long fillSeed (int* bcd, const int face, const int target, const int* bid, const int* Dsize=NULL);
+  unsigned long fillSeedBcd(int* bcd, const int face, const int target, const int* bid, const int* Dsize=NULL);
+  
+  
+  /**
+   * @brief シード点をペイントする
+   * @param [in,out] mid    work array
+   * @param [in]     face   ヒント面
+   * @param [in]     target ペイントするIDのエントリ
+   * @param [in]     Dsize  サイズ
+   */
+  unsigned long fillSeedMid(int* mid, const int face, const int target, const int* Dsize=NULL);
   
   
   /**

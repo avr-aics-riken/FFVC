@@ -42,13 +42,12 @@ public:
   /** 矩形の計算領域のセルIDを設定する
    * @param [in,out] bcd      BCindex
    * @param [in]     R        Controlクラスのポインタ
-   * @param [in]     G_org    グローバルな原点（無次元）
    * @param [in]     NoMedium 媒質数
    * @param [in]     mat      MediumListクラスのポインタ
    * @param [in]     cut      交点情報
    * @param [in]     bid      境界ID
    */
-  void setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat);
+  void setup(int* bcd, Control* R, const int NoMedium, const MediumList* mat);
 
 };
 #endif // _IP_RSP_H_

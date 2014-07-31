@@ -68,6 +68,7 @@ public:
    * @param [in] vf               スカラデータ
    * @param [in] sz               配列サイズ
    * @param [in] gc               ガイドセル
+   * @param [in] gc_out           出力するガイドセル数
    * @param [in] org              基点
    * @param [in] ddx              ピッチ
    * @param [in] m_ModePrecision  浮動小数点の精度
@@ -75,7 +76,8 @@ public:
    */
   void writeRawSPH(const REAL_TYPE *vf, 
                    const int* sz, 
-                   const int gc, 
+                   const int gc,
+                   const int gc_out,
                    const REAL_TYPE* org, 
                    const REAL_TYPE* ddx, 
                    const int m_ModePrecision);
@@ -137,6 +139,17 @@ public:
                    const bool mode=true,
                    const unsigned step_avr=0,
                    const double time_avr=0.0);
+  
+  // svxフォーマットで出力する(ID)
+  void writeSVX(int* mid,
+                const int ip,
+                const int jp,
+                const int kp,
+                const int m_sz[3],
+                const int m_gd,
+                const float m_pit[3],
+                const float m_org[3]
+                );
   
 };
 #endif // _FB_FILE_IO_H_

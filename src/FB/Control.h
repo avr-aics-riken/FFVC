@@ -45,11 +45,14 @@ class PolygonProperty {
 private:
   int l_ntria;       ///< ローカルなポリゴン数
   int g_ntria;       ///< グローバルなポリゴン数
+  int m_id;          ///< ID
   REAL_TYPE l_area;  ///< ローカルな面積
   REAL_TYPE g_area;  ///< グローバルな面積
   string group;      ///< ポリゴングループ名
   string material;   ///< Mediumtable[@]のalias
   string bc;         ///< BCのラベル
+  Vec3f bx_min;      ///< Bboxの最小値
+  Vec3f bx_max;      ///< Bboxの最大値
   
 public:
   PolygonProperty() {
@@ -64,6 +67,11 @@ public:
   string getGroup() const
   {
     return group;
+  }
+  
+  int getID() const
+  {
+    return m_id;
   }
   
   string getMaterial() const
@@ -101,6 +109,11 @@ public:
     group = key;
   }
   
+  void setID(int key)
+  {
+    m_id = key;
+  }
+  
   void setMaterial(string key)
   {
     material = key;
@@ -128,6 +141,26 @@ public:
   void setGarea(REAL_TYPE val)
   {
     g_area = val;
+  }
+  
+  Vec3f getBboxMax() const
+  {
+    return bx_max;
+  }
+  
+  Vec3f getBboxMin() const
+  {
+    return bx_min;
+  }
+  
+  void setBboxMax(const Vec3f bmax)
+  {
+    bx_max = bmax;
+  }
+  
+  void setBboxMin(const Vec3f bmin)
+  {
+    bx_min = bmin;
   }
   
 };
@@ -381,6 +414,7 @@ public:
     int PM_Test;
     int GeomOutput;
     int GlyphOutput;
+    int Subdivision;
   } Hidden_Parameter;
   
   /** File IO control */
@@ -750,6 +784,7 @@ public:
     Hide.PM_Test = 0;
     Hide.GeomOutput = OFF;
     Hide.GlyphOutput = OFF;
+    Hide.Subdivision = 0;
     
     Unit.Param  = 0;
     Unit.Output = 0;

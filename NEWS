@@ -19,6 +19,10 @@ RELEASE
 =======
 
 -------------
+Version 1.8.1    2014-08-01
+  - IP_Cylinder
+
+-------------
 Version 1.8.0    2014-04-24
   - Change base of floating type to REAL_TYPE in CompoFraction, MonitorList except mattbl
 

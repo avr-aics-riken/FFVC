@@ -193,7 +193,7 @@ void IP_Duct::printPara(FILE* fp, const Control* R)
 
 // #################################################################
 // Ductの計算領域のセルIDを設定する
-void IP_Duct::setup(int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut, int* bid)
+void IP_Duct::setup(int* bcd, Control* R, const int NoMedium, const MediumList* mat, float* cut, int* bid)
 {
   int mid_fluid;        /// 流体
   int mid_solid;        /// 固体
