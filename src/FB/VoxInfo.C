@@ -380,10 +380,11 @@ unsigned long VoxInfo::countCC (const int order, const int* bx, CompoList* cmp)
  * @param [in]     bx    BCindex B/H
  * @param [in]     bid   交点ID
  * @param [in,out] cmp   CompoList
+ * @param [in]     attrb サーチオプション（"Fluid", "Solid", "Both"）
  * @retval エンコードした個数
- * @note Fluidセルで固体の交点IDをもつセルを対象とする
+ * @note 固体の交点IDをもつセルを対象とする
  */
-unsigned long VoxInfo::countCF (const int key, const int* bx, const int* bid, CompoList* cmp)
+unsigned long VoxInfo::countCF(const int key, const int* bx, const int* bid, CompoList* cmp, const string attrb)
 {
 
   if ( key > 31 )
@@ -403,42 +404,158 @@ unsigned long VoxInfo::countCF (const int key, const int* bx, const int* bid, Co
   int gd = guide;
   int odr= key;
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, odr) schedule(static) reduction(+:g)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        int qq = bid[m];
-        int qw = getBit5(qq, 0);
-        int qe = getBit5(qq, 1);
-        int qs = getBit5(qq, 2);
-        int qn = getBit5(qq, 3);
-        int qb = getBit5(qq, 4);
-        int qt = getBit5(qq, 5);
-        int flag = 0;
-        
-        // Fluid
-        if ( BIT_SHIFT(bx[m], STATE_BIT) )
-        {
+  // 初期値はローカルノードの大きさ
+  int ist = ix;
+  int jst = jx;
+  int kst = kx;
+  int ied = 1;
+  int jed = 1;
+  int ked = 1;
+  
+
+  // attrb branch
+  if ( !strcasecmp("fluid", attrb.c_str()) )
+  {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, odr) collapse(2) schedule(dynamic,4)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          int qq = bid[m];
+          int qw = getBit5(qq, 0);
+          int qe = getBit5(qq, 1);
+          int qs = getBit5(qq, 2);
+          int qn = getBit5(qq, 3);
+          int qb = getBit5(qq, 4);
+          int qt = getBit5(qq, 5);
+          int flag = 0;
+          
+          if ( BIT_SHIFT(bx[m], STATE_BIT) )
+          {
+            if ( qw == odr ) flag++;
+            if ( qe == odr ) flag++;
+            if ( qs == odr ) flag++;
+            if ( qn == odr ) flag++;
+            if ( qb == odr ) flag++;
+            if ( qt == odr ) flag++;
+            
+            if ( flag != 0 )
+            {
+#pragma omp critical
+              {
+                if( i < ist ) ist = i;
+                if( i > ied ) ied = i;
+                if( j < jst ) jst = j;
+                if( j > jed ) jed = j;
+                if( k < kst ) kst = k;
+                if( k > ked ) ked = k;
+                g++;
+              }
+            }
+          } // STATE_BIT branch
+        }
+      }
+    }
+  }
+  else if ( !strcasecmp("solid", attrb.c_str()) )
+  {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, odr) collapse(2) schedule(dynamic,4)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          int qq = bid[m];
+          int qw = getBit5(qq, 0);
+          int qe = getBit5(qq, 1);
+          int qs = getBit5(qq, 2);
+          int qn = getBit5(qq, 3);
+          int qb = getBit5(qq, 4);
+          int qt = getBit5(qq, 5);
+          int flag = 0;
+          
+          if ( !BIT_SHIFT(bx[m], STATE_BIT) )
+          {
+            if ( qw == odr ) flag++;
+            if ( qe == odr ) flag++;
+            if ( qs == odr ) flag++;
+            if ( qn == odr ) flag++;
+            if ( qb == odr ) flag++;
+            if ( qt == odr ) flag++;
+            
+            if ( flag != 0 )
+            {
+#pragma omp critical
+              {
+                if( i < ist ) ist = i;
+                if( i > ied ) ied = i;
+                if( j < jst ) jst = j;
+                if( j > jed ) jed = j;
+                if( k < kst ) kst = k;
+                if( k > ked ) ked = k;
+                g++;
+              }
+            }
+          } // STATE_BIT branch
+        }
+      }
+    }
+  }
+  else // "both"
+  {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, odr) collapse(2) schedule(dynamic,4)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          int qq = bid[m];
+          int qw = getBit5(qq, 0);
+          int qe = getBit5(qq, 1);
+          int qs = getBit5(qq, 2);
+          int qn = getBit5(qq, 3);
+          int qb = getBit5(qq, 4);
+          int qt = getBit5(qq, 5);
+          int flag = 0;
+          
+
           if ( qw == odr ) flag++;
           if ( qe == odr ) flag++;
           if ( qs == odr ) flag++;
           if ( qn == odr ) flag++;
           if ( qb == odr ) flag++;
           if ( qt == odr ) flag++;
+          
+          if ( flag != 0 )
+          {
+#pragma omp critical
+            {
+              if( i < ist ) ist = i;
+              if( i > ied ) ied = i;
+              if( j < jst ) jst = j;
+              if( j > jed ) jed = j;
+              if( k < kst ) kst = k;
+              if( k > ked ) ked = k;
+              g++;
+            }
+          }
         }
-        
-        if ( flag > 0 ) g++;
-        
       }
     }
   }
+  
   
   if ( g > 0 )
   {
     cmp->setEnsLocal(ON);
   }
+  else
+  {
+    ist = ied = jst = jed = kst = ked = 0;
+    cmp->setEnsLocal(OFF);
+  }
+  
+  int nst[3] = {ist, jst, kst};
+  int ned[3] = {ied, jed, ked};
+  cmp->setBbox(nst, ned);
   
   if ( numProc > 1 )
   {
@@ -3826,7 +3943,7 @@ void VoxInfo::setBCIndexBase (int* bx,
       int key = getMediumOrder(mat, cmp[n].getMedium());
       if ( key > 0 )
       {
-        cmp[n].setElement( countCF(key, bx, bid, &cmp[n]) );
+        cmp[n].setElement( countCF(key, bx, bid, &cmp[n], "Fluid") );
       }
       else
       {

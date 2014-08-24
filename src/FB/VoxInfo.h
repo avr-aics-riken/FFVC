@@ -71,7 +71,7 @@ private:
   
   
   // セルフェイスの交点IDから対象IDのセル数をカウントし，サブドメイン内にコンポーネントがあれば存在フラグを立てる
-  unsigned long countCF (const int key, const int* bx, const int* bid, CompoList* cmp);
+  unsigned long countCF (const int key, const int* bx, const int* bid, CompoList* cmp, const string attrb);
   
   
   // 外部境界面の有効セル数をカウントする

@@ -448,18 +448,6 @@ private:
   
   // 主計算に用いる配列の確保
   void allocate_Main(double &total);
-
-  
-  // セルIDに対するBbox情報を計算する
-  void Bbox4Cell(const int order, const int* bcd);
-  
-  
-  // セルIDと交点ID情報を元に，Bbox情報を計算する
-  void BboxComponent();
-  
-  
-  // セルフェイスIDに対するBbox情報を計算する
-  void Bbox4Face(const int order, const int* bcd, const int* bid, const string attrb);
   
   
   // 全Voxelモデルの媒質数とKOSの整合性をチェック
