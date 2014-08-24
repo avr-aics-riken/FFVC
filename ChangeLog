@@ -19,6 +19,11 @@ REVISION HISTORY
 ================
 
 
+--------------------------
+2014-08-24
+r1625 bugfix restart by time
+ - getTimeControl() >> add /TimeControl/Session/RestartStep in order to detemine the accurate restart step when By_time is specified.
+ - Bbox calculation for components
 
 --------------------------
 2014-08-01

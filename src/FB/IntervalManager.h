@@ -49,6 +49,8 @@ public:
     By_time= 2,
   };
 
+  unsigned restartStep; ///< By_time指定時のリスタートステップの指定。浮動小数点では誤差がでるための対応策。
+  
   
 // メンバ変数
 protected:
@@ -81,6 +83,7 @@ public:
     m_start_time = 0.0;
     m_last_time  = -1.0;
     m_dt         = 0.0;
+    restartStep  = 0;
   }
 
   /// デストラクタ

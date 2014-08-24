@@ -160,7 +160,7 @@ void ASD::evaluateASD(int argc, char **argv)
   if ( !flag ) {
     printf("\tSubdomain size = %12.4e %12.4e %12.4e\n\n", sd_rgn[0], sd_rgn[1], sd_rgn[2]);
     
-    printf("\n---------------------------------------------------------------------------\n\n");
+    printf("\n----------\n\n");
     printf("\t>> Polylib configuration\n\n");
   }
 
@@ -528,7 +528,7 @@ void ASD::fill(bool disp_flag)
   unsigned long sum_filled;   ///< FLUIDでフィルされた数の合計
   
   VoxInfo V;
-  V.setControlVars(2); // fluid, solidのみ
+  V.setControlVars(2, 2); // fluid, solidのみ
   
   // 最初にフィル対象のセル数を求める >> 全計算内部セル数
   unsigned long total_cell = (unsigned long)G_division[0] * (unsigned long)G_division[1] * (unsigned long)G_division[2];

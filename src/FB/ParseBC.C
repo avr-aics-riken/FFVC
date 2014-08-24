@@ -1834,27 +1834,30 @@ void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp)
     }
     
     // check consitency between Polylib file and input parameter file
-    string m_class, m_medium;
-    loadLocalBCfromPolylibFile(C, cmp[m].getAlias(), m_class, m_medium);
-    
-    if ( !strcasecmp(m_class.c_str(), str.c_str()) )
+    if ( C->Mode.Example == id_Polygon )
     {
-      ;
-    }
-    else
-    {
-      Hostonly_ stamped_printf("\tError : Check consistency of LocalBC class name in between Polylib file and input parameter file. [%s , %s]\n", m_class.c_str(), str.c_str());
-      Exit(0);
-    }
-    
-    if ( !strcasecmp(m_medium.c_str(), cmp[m].getMedium().c_str()) )
-    {
-      ;
-    }
-    else
-    {
-      Hostonly_ stamped_printf("\tError : Check consistency of Medium name in between Polylib file and input parameter file. [%s , %s]\n", m_medium.c_str(), cmp[m].getMedium().c_str());
-      Exit(0);
+      string m_class, m_medium;
+      loadLocalBCfromPolylibFile(C, cmp[m].getAlias(), m_class, m_medium);
+      
+      if ( !strcasecmp(m_class.c_str(), str.c_str()) )
+      {
+        ;
+      }
+      else
+      {
+        Hostonly_ stamped_printf("\tError : Check consistency of LocalBC class name in between Polylib file and input parameter file. [%s , %s]\n", m_class.c_str(), str.c_str());
+        Exit(0);
+      }
+      
+      if ( !strcasecmp(m_medium.c_str(), cmp[m].getMedium().c_str()) )
+      {
+        ;
+      }
+      else
+      {
+        Hostonly_ stamped_printf("\tError : Check consistency of Medium name in between Polylib file and input parameter file. [%s , %s]\n", m_medium.c_str(), cmp[m].getMedium().c_str());
+        Exit(0);
+      }
     }
     
     

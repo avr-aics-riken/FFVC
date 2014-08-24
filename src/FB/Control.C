@@ -1990,7 +1990,7 @@ void Control::getStartCondition()
       Exit(0);
     }
   }
-
+  
   
   // リスタート時のDFIファイル名
   if ( Start != initial_start )
@@ -2301,6 +2301,30 @@ void Control::getTimeControl(DTcntl* DT)
   Interval[tg_compute].setInterval(m_end-m_start); // tg_computeのインターバルは計算するセッションの長さ
 
   
+  // By_time"のときのみRestartStepを指定する
+  if ( Interval[tg_compute].getMode() == IntervalManager::By_time )
+  {
+    label="/TimeControl/Session/RestartStep";
+    float m_rstep;
+    
+    if ( !(tpCntl->getInspectedValue(label, m_rstep)) )
+    {
+      if ( Start != initial_start )
+      {
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s\n", label.c_str());
+        Exit(0);
+      }
+    }
+    else
+    {
+      Interval[tg_compute].restartStep = (unsigned)m_rstep;
+    }
+  }
+  
+  
+  
+  
+  
   
   // 平均値の時刻指定モード
   label = "/TimeControl/Average/TemporalType";
@@ -2362,6 +2386,27 @@ void Control::getTimeControl(DTcntl* DT)
   Interval[tg_average].setStart(avr_start);
   Interval[tg_average].setLast(avr_end);
   Interval[tg_average].setInterval(avr_end-avr_start);
+  
+  
+  // By_time"のときのみRestartStepを指定する
+  if ( Interval[tg_average].getMode() == IntervalManager::By_time )
+  {
+    label="/TimeControl/Average/RestartStep";
+    float m_rstep;
+    
+    if ( !(tpCntl->getInspectedValue(label, m_rstep)) )
+    {
+      if ( Start != initial_start )
+      {
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s\n", label.c_str());
+        Exit(0);
+      }
+    }
+    else
+    {
+      Interval[tg_average].restartStep = (unsigned)m_rstep;
+    }
+  }
   
 
   /* 平均値操作の判断
@@ -2679,7 +2724,7 @@ void Control::printOuterArea(FILE* fp, unsigned long G_Fcell, unsigned long G_Ac
   
   REAL_TYPE cell_max = getCellSize(G_size);
   
-  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  fprintf(fp,"\n----------\n\n");
   fprintf(fp,"\n\t>> Effective cells and Open Area of Computational Domain\n\n");
   
   fprintf(fp,"\tFluid  cell inside whole Computational domain = %15ld (%8.4f %%)\n", G_Fcell, (REAL_TYPE)G_Fcell/cell_max *100.0);
@@ -2779,7 +2824,7 @@ void Control::printInitValues(FILE* fp, CompoList* cmp)
   // ここでは動圧を表示、方程式の無次元化は ( /rho u^2 ) 
   REAL_TYPE DynamicPrs = 0.5*RefDensity * RefVelocity * RefVelocity;
   
-  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  fprintf(fp,"\n----------\n\n");
   fprintf(fp,"\n\t>> Initial Values for Physical Variables\n\n");
   
   //fprintf(fp,"\tInitial  MassDensity [kg/m^3]/ [-]   : %12.5e / %12.5e\n", iv.Density, iv.Density/RefDensity);
@@ -2898,7 +2943,7 @@ void Control::printParaConditions(FILE* fp, const MediumList* mat)
     Exit(0);
   }
   
-  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  fprintf(fp,"\n----------\n\n");
   fprintf(fp,"\n\t>> Simulation Parameters\n\n");
   
   fprintf(fp,"\tReference Medium                      :  %s\n", mat[RefMat].getAlias().c_str());
@@ -2971,7 +3016,7 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
   double itm=0.0;
   unsigned stp;
   
-  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  fprintf(fp,"\n----------\n\n");
   fprintf(fp,"\n\t>> Library Information\n\n");
   fprintf(fp,"\t     CPMlib     Version %s\n", ver_CPM.c_str());
   fprintf(fp,"\t     CIOlib     Version %s\n", ver_CIO.c_str());
@@ -2981,7 +3026,7 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
   fprintf(fp,"\t     TextParser Version %s\n", ver_TP.c_str());
   fprintf(fp,"\n");
   
-  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  fprintf(fp,"\n----------\n\n");
   fprintf(fp,"\n\t>> Solver Control Parameters\n\n");
   
   // ソルバープロパティ ------------------

@@ -450,6 +450,18 @@ private:
   void allocate_Main(double &total);
 
   
+  // セルIDに対するBbox情報を計算する
+  void Bbox4Cell(const int order, const int* bcd);
+  
+  
+  // セルIDと交点ID情報を元に，Bbox情報を計算する
+  void BboxComponent();
+  
+  
+  // セルフェイスIDに対するBbox情報を計算する
+  void Bbox4Face(const int order, const int* bcd, const int* bid, const string attrb);
+  
+  
   // 全Voxelモデルの媒質数とKOSの整合性をチェック
   bool chkMediumConsistency();
   
@@ -530,18 +542,6 @@ private:
   void printDomainInfo();
   
   
-  // セルフェイスBCのBbox情報をリサイズする
-  void resizeBbox4Face(const int n, const int* bx);
-  
-  
-  // セルBCのBbox情報をリサイズする
-  void resizeBbox4Cell(const int n, const int* bx);
-  
-  
-  // コンポーネントリストに登録されたBbox情報をBCindexに基づき再計算する
-  void resizeCompoBbox();
-  
-  
   // 外部境界条件を読み込み，Controlクラスに保持する
   void setBCinfo();
   
@@ -551,7 +551,7 @@ private:
   
   
   // コンポーネントのローカルなBbox情報からグローバルなBbox情報を求め，CompoListの情報を表示
-  void setGlobalCompoIdx_displayInfo(FILE* fp);
+  void dispGlobalCompoInfo(FILE* fp);
   
   
   // 初期条件の設定

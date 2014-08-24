@@ -174,7 +174,7 @@ void IP_Duct::printPara(FILE* fp, const Control* R)
       break;
   }
   
-  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  fprintf(fp,"\n----------\n\n");
   fprintf(fp,"\n\t>> Intrinsic Duct Class Parameters\n\n");
   
   fprintf(fp,"\tShape of cross-section                :  %s\n", (driver.shape==id_circular)?"Circular":"Rectangular");

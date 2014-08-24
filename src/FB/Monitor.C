@@ -955,7 +955,7 @@ void MonitorList::print(const unsigned step, const double tm)
 /// モニタ情報を出力
 void MonitorList::printMonitorInfo(FILE* fp, const char* str, const bool verbose)
 {
-  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  fprintf(fp,"\n----------\n\n");
   fprintf(fp, "\n\t>> Sampling Information\n\n");
   
   fprintf(fp, "\t  Output Type              : %s\n", getOutputTypeStr().c_str());

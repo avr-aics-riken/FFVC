@@ -274,8 +274,6 @@ void FFV::fill(FILE* fp)
   }
   
   
-  
-  
   Hostonly_
   {
     printf(    "\n\tFill -----\n\n");
@@ -396,6 +394,9 @@ void FFV::fill(FILE* fp)
   if ( target_count == 0 ) return;
   
   
+  
+  
+  // 未ペイントのセルを最頻値IDでペイントする -------------------
   
   // 未ペイント（ID=0）のセルを検出
   unsigned long upc = V.countCellB(d_bcd, 0);

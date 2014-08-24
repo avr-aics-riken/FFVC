@@ -111,7 +111,7 @@ void IP_Step::printPara(FILE* fp, const Control* R)
     Exit(0);
   }
   
-  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  fprintf(fp,"\n----------\n\n");
   fprintf(fp,"\n\t>> Intrinsic Backstep Class Parameters\n\n");
   
   fprintf(fp,"\tDimension Mode                     :  %s\n", (mode==dim_2d)?"2 Dimensional":"3 Dimensional");

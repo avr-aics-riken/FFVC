@@ -212,7 +212,7 @@ void IP_Sphere::printPara(FILE* fp, const Control* R)
     Exit(0);
   }
   
-  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  fprintf(fp,"\n----------\n\n");
   fprintf(fp,"\n\t>> Intrinsic Sphere Class Parameters\n\n");
   
   fprintf(fp,"\tRadius of Sphere       [m] / [-]   : %12.5e / %12.5e\n", radius, radius/RefL);

@@ -151,6 +151,7 @@ public:
   REAL_TYPE val[var_END];   ///< データ保持用ワーク
   REAL_TYPE ca[6];          ///< 係数セット a
   REAL_TYPE cb[6];          ///< 係数セット b
+  REAL_TYPE f[3];           ///< 力の成分
   
   /** コンストラクタ */
   CompoList() {
@@ -172,6 +173,7 @@ public:
       oc[i] = 0.0;
       dr[i] = 0.0;
       c_size[i] = 0;
+      f[i] = 0.0;
     }
     for (int i=0; i<var_END; i++) val[i]=0.0;
     for (int i=0; i<6; i++) ca[i] = cb[i] = 0.0;

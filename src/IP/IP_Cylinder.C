@@ -478,7 +478,7 @@ void IP_Cylinder::printPara(FILE* fp, const Control* R)
     Exit(0);
   }
   
-  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  fprintf(fp,"\n----------\n\n");
   fprintf(fp,"\n\t>> Intrinsic Cylinder Class Parameters\n\n");
   
   fprintf(fp,"\tDimension Mode                     :  %s\n\n", (mode==dim_2d)?"2 Dimensional":"3 Dimensional");
@@ -610,6 +610,8 @@ void IP_Cylinder::setCircle(Control* R,
   float cy = (float)pos_y;  ///< 円柱の中心座標（無次元）
   float rs = (float)radius; ///< 円柱の半径（無次元）
   
+  int mid_s = mid_solid;
+  
   // 球のbbox
   Vec3f box_min;  ///< Bounding boxの最小値
   Vec3f box_max;  ///< Bounding boxの最大値
@@ -683,26 +685,26 @@ void IP_Cylinder::setCircle(Control* R,
               float s = cut_line_2d(p[0], l, rs, ph);
               size_t m = _F_IDX_S4DEX(l-1, i, j, k, 6, ix, jx, kx, gd); // 注意！　インデクスが1-4
               cut[m] = s;
-              setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_solid, l-1);
+              setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, l-1);
               
               switch (l-1) {
                 case X_minus:
-                  setBit5(bid[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)], mid_solid, X_plus);
+                  setBit5(bid[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)], mid_s, X_plus);
                   cut[_F_IDX_S4DEX(X_plus, i-1, j, k, 6, ix, jx, kx, gd)] = 1.0-s;
                   break;
                   
                 case X_plus:
-                  setBit5(bid[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)], mid_solid, X_minus);
+                  setBit5(bid[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)], mid_s, X_minus);
                   cut[_F_IDX_S4DEX(X_minus, i+1, j, k, 6, ix, jx, kx, gd)] = 1.0-s;
                   break;
                   
                 case Y_minus:
-                  setBit5(bid[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)], mid_solid, Y_plus);
+                  setBit5(bid[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)], mid_s, Y_plus);
                   cut[_F_IDX_S4DEX(Y_plus, i, j-1, k, 6, ix, jx, kx, gd)] = 1.0-s;
                   break;
                   
                 case Y_plus:
-                  setBit5(bid[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)], mid_solid, Y_minus);
+                  setBit5(bid[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)], mid_s, Y_minus);
                   cut[_F_IDX_S4DEX(Y_minus, i, j+1, k, 6, ix, jx, kx, gd)] = 1.0-s;
                   break;
               }
@@ -717,7 +719,7 @@ void IP_Cylinder::setCircle(Control* R,
   
   
   // Z+方向
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid, ox, oy, oz, ph, ze, rs, cx, cy) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_s, ox, oy, oz, ph, ze, rs, cx, cy) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -735,16 +737,16 @@ void IP_Cylinder::setCircle(Control* R,
           
           if ( (z <= ze) && (ze < z+ph) )
           {
-            setBit5(bid[m], mid_solid, Z_plus);
+            setBit5(bid[m], mid_s, Z_plus);
             cut[_F_IDX_S4DEX(Z_plus, i, j, k, 6, ix, jx, kx, gd)] = s;
-            setBit5(bid[_F_IDX_S3D(i, j, k+1, ix, jx, kx, gd)], mid_solid, Z_minus);
+            setBit5(bid[_F_IDX_S3D(i, j, k+1, ix, jx, kx, gd)], mid_s, Z_minus);
             cut[_F_IDX_S4DEX(Z_minus, i, j, k+1, 6, ix, jx, kx, gd)] = 1.0-s;
           }
           else if ( (z-ph < ze) && (ze < z) )
           {
-            setBit5(bid[m], mid_solid, Z_minus);
+            setBit5(bid[m], mid_s, Z_minus);
             cut[_F_IDX_S4DEX(Z_minus, i, j, k, 6, ix, jx, kx, gd)] = -s;
-            setBit5(bid[_F_IDX_S3D(i, j, k-1, ix, jx, kx, gd)], mid_solid, Z_plus);
+            setBit5(bid[_F_IDX_S3D(i, j, k-1, ix, jx, kx, gd)], mid_s, Z_plus);
             cut[_F_IDX_S4DEX(Z_plus, i, j, k-1, 6, ix, jx, kx, gd)] = 1.0+s;
           }
           
@@ -788,6 +790,8 @@ void IP_Cylinder::setRect(Control* R,
   int gd = guide;
   
   REAL_TYPE dh = deltaX;
+  
+  int mid_s = mid_solid;
   
   // ローカルな無次元基点座標
   REAL_TYPE ox = origin[0];
@@ -850,10 +854,10 @@ void IP_Cylinder::setRect(Control* R,
    b_i^-     = solid
    
    */
-
+  
   
   // Y+ face of Rect
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid, ox, oy, oz, dh, xs, xe, ye, ze) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_s, ox, oy, oz, dh, xs, xe, ye, ze) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -869,16 +873,16 @@ void IP_Cylinder::setRect(Control* R,
           {
             if ( (y <= ye) && (ye < y+dh) )
             {
-              setBit5(bid[m], mid_solid, Y_plus);
+              setBit5(bid[m], mid_s, Y_plus);
               cut[_F_IDX_S4DEX(Y_plus, i, j, k, 6, ix, jx, kx, gd)] = s;
-              setBit5(bid[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)], mid_solid, Y_minus);
+              setBit5(bid[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)], mid_s, Y_minus);
               cut[_F_IDX_S4DEX(Y_minus, i, j+1, k, 6, ix, jx, kx, gd)] = 1.0-s;
             }
             else if ( (y-dh < ye) && (ye < y) )
             {
-              setBit5(bid[m], mid_solid, Y_minus);
+              setBit5(bid[m], mid_s, Y_minus);
               cut[_F_IDX_S4DEX(Y_minus, i, j, k, 6, ix, jx, kx, gd)] = -s;
-              setBit5(bid[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)], mid_solid, Y_plus);
+              setBit5(bid[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)], mid_s, Y_plus);
               cut[_F_IDX_S4DEX(Y_plus, i, j-1, k, 6, ix, jx, kx, gd)] = 1.0+s;
             }
           }
@@ -887,9 +891,9 @@ void IP_Cylinder::setRect(Control* R,
       }
     }
   }
-  
+
   // Y- face of Rect
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid, ox, oy, oz, dh, xs, xe, ys, ze) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_s, ox, oy, oz, dh, xs, xe, ys, ze) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -905,16 +909,16 @@ void IP_Cylinder::setRect(Control* R,
           {
             if ( (y <= ys) && (ys < y+dh) )
             {
-              setBit5(bid[m], mid_solid, Y_plus);
+              setBit5(bid[m], mid_s, Y_plus);
               cut[_F_IDX_S4DEX(Y_plus, i, j, k, 6, ix, jx, kx, gd)] = s;
-              setBit5(bid[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)], mid_solid, Y_minus);
+              setBit5(bid[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)], mid_s, Y_minus);
               cut[_F_IDX_S4DEX(Y_minus, i, j+1, k, 6, ix, jx, kx, gd)] = 1.0-s;
             }
             else if ( (y-dh < ys) && (ys < y) )
             {
-              setBit5(bid[m], mid_solid, Y_minus);
+              setBit5(bid[m], mid_s, Y_minus);
               cut[_F_IDX_S4DEX(Y_minus, i, j, k, 6, ix, jx, kx, gd)] = -s;
-              setBit5(bid[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)], mid_solid, Y_plus);
+              setBit5(bid[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)], mid_s, Y_plus);
               cut[_F_IDX_S4DEX(Y_plus, i, j-1, k, 6, ix, jx, kx, gd)] = 1.0+s;
             }
           }
@@ -925,7 +929,7 @@ void IP_Cylinder::setRect(Control* R,
   }
 
   // X+ face of Rect
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid, ox, oy, oz, dh, xe, ys, ye, ze) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_s, ox, oy, oz, dh, xe, ys, ye, ze) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -941,16 +945,16 @@ void IP_Cylinder::setRect(Control* R,
           {
             if ( (x <= xe) && (xe < x+dh) )
             {
-              setBit5(bid[m], mid_solid, X_plus);
+              setBit5(bid[m], mid_s, X_plus);
               cut[_F_IDX_S4DEX(X_plus, i, j, k, 6, ix, jx, kx, gd)] = s;
-              setBit5(bid[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)], mid_solid, X_minus);
+              setBit5(bid[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)], mid_s, X_minus);
               cut[_F_IDX_S4DEX(X_minus, i+1, j, k, 6, ix, jx, kx, gd)] = 1.0-s;
             }
             else if ( (x-dh < xe) && (xe < x) )
             {
-              setBit5(bid[m], mid_solid, X_minus);
+              setBit5(bid[m], mid_s, X_minus);
               cut[_F_IDX_S4DEX(X_minus, i, j, k, 6, ix, jx, kx, gd)] = -s;
-              setBit5(bid[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)], mid_solid, X_plus);
+              setBit5(bid[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)], mid_s, X_plus);
               cut[_F_IDX_S4DEX(X_plus, i-1, j, k, 6, ix, jx, kx, gd)] = 1.0+s;
             }
           }
@@ -959,9 +963,9 @@ void IP_Cylinder::setRect(Control* R,
       }
     }
   }
-  
+
   // X- face of Rect
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid, ox, oy, oz, dh, xs, ys, ye, ze) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_s, ox, oy, oz, dh, xs, ys, ye, ze) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -977,16 +981,16 @@ void IP_Cylinder::setRect(Control* R,
           {
             if ( (x <= xs) && (xs < x+dh) )
             {
-              setBit5(bid[m], mid_solid, X_plus);
+              setBit5(bid[m], mid_s, X_plus);
               cut[_F_IDX_S4DEX(X_plus, i, j, k, 6, ix, jx, kx, gd)] = s;
-              setBit5(bid[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)], mid_solid, X_minus);
+              setBit5(bid[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)], mid_s, X_minus);
               cut[_F_IDX_S4DEX(X_minus, i+1, j, k, 6, ix, jx, kx, gd)] = 1.0-s;
             }
             else if ( (x-dh < xs) && (xs < x) )
             {
-              setBit5(bid[m], mid_solid, X_minus);
+              setBit5(bid[m], mid_s, X_minus);
               cut[_F_IDX_S4DEX(X_minus, i, j, k, 6, ix, jx, kx, gd)] = -s;
-              setBit5(bid[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)], mid_solid, X_plus);
+              setBit5(bid[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)], mid_s, X_plus);
               cut[_F_IDX_S4DEX(X_plus, i-1, j, k, 6, ix, jx, kx, gd)] = 1.0+s;
             }
           }
@@ -995,7 +999,6 @@ void IP_Cylinder::setRect(Control* R,
       }
     }
   }
-  
   
 }
 
@@ -1007,7 +1010,7 @@ void IP_Cylinder::setup(int* bcd, Control* R, const int NoMedium, const MediumLi
   int mid_fluid;        ///< 流体
   int mid_solid1;       ///< 固体1
   int mid_solid2;       ///< 固体2
-
+  
   // 流体
   if ( (mid_fluid = R->findIDfromLabel(mat, NoMedium, m_fluid)) == 0 )
   {
@@ -1033,7 +1036,7 @@ void IP_Cylinder::setup(int* bcd, Control* R, const int NoMedium, const MediumLi
       Exit(0);
     }
   }
-
+  
   
   // 媒質数チェック
   if ( (cyl1.ens==ON) && (cyl2.ens==ON) )
@@ -1044,7 +1047,7 @@ void IP_Cylinder::setup(int* bcd, Control* R, const int NoMedium, const MediumLi
       Exit(0);
     }
   }
-
+  
   
   if ( cyl1.ens == ON )
   {
@@ -1084,8 +1087,7 @@ void IP_Cylinder::setup(int* bcd, Control* R, const int NoMedium, const MediumLi
       setCircle(R, pos_x, pos_y, rad, len_z, mid_solid2, cut, bid);
     }
   }
-  
-  
+
 
   
   

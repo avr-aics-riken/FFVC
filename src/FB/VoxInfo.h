@@ -42,12 +42,14 @@ class VoxInfo : public DomainInfo {
   
 private:
   int NoCompo;       ///< コンポーネントの総数
+  int NoMedium;      ///< 媒質数
   Intrinsic *Ex;     ///< 例題クラスのポインタ
 
 public:
   /** コンストラクタ */
   VoxInfo() {
     NoCompo = 0;
+    NoMedium = 0;
     Ex = NULL;
   }
   
@@ -64,6 +66,14 @@ private:
   void copyCoefNaive(int* bx, REAL_TYPE* pn);
   
   
+  // セルセンターのIDから対象セル数をカウントし，サブドメイン内にコンポーネントがあれば存在フラグを立てる
+  unsigned long countCC (const int order, const int* bx, CompoList* cmp);
+  
+  
+  // セルフェイスの交点IDから対象IDのセル数をカウントし，サブドメイン内にコンポーネントがあれば存在フラグを立てる
+  unsigned long countCF (const int key, const int* bx, const int* bid, CompoList* cmp);
+  
+  
   // 外部境界面の有効セル数をカウントする
   unsigned long countValidCellOBC (const int face, const int* cdf, const int typ);
 
@@ -78,12 +88,6 @@ private:
   
   // セルの各面を調べ，境界条件が設定されていれば，ビットをON
   void encHbit (const int* cdf, int* bd);
-
-  
-  // CompoListのエントリをbx[]へエンコードする
-  unsigned long encOrder (const int order,
-                          int* bx,
-                          CompoList* cmp);
   
   
   // ディリクレ条件とノイマン条件の排他性をチェックし，反復行列の非対角要素/対角要素の係数をエンコードする
@@ -134,7 +138,7 @@ private:
   
   
   /**
-   * @brief 隣接6方向の最頻値IDを求める（0とfid以外）
+   * @brief 隣接6方向の最頻値IDを求める（fid以外）
    * @param [in] fid 流体のID
    * @param [in] qw  w方向のID
    * @param [in] qe  e方向のID
@@ -177,6 +181,10 @@ private:
     
     return z;
   }
+  
+  
+  // MediumTable内の文字列格納番号を返す
+  int getMediumOrder(const MediumList* mat, const std::string key);
   
   
   //@brief idxの第shiftビットをOFFにする
@@ -362,15 +370,6 @@ public:
   unsigned long fillSeedMid(int* mid, const int face, const int target, const int* Dsize=NULL);
   
   
-  /**
-   * @brief 孤立した流体セルを探し，周囲の個体媒質で置換，BCindexを修正する
-   * @param [in,out] bx       BCindex B
-   * @param [in]     fluid_id フィルする流体ID
-   * @attention 事前にbx[]の同期が必要 >> 隣接セルがすべて固体の場合をチェックするため
-   */
-  unsigned long findIsolatedFcell (int* bx, const int fluid_id);
-  
-  
   /* @brief 交点が定義点にある場合の修正
    * @param [in,out] bid      境界ID
    * @param [in]     cut      カット情報
@@ -399,7 +398,7 @@ public:
   /**
    * @brief bx[]に各境界条件の共通のビット情報をエンコードする
    * @param [in,out] bx    BCindex B
-   * @param [in]     cvf   コンポーネントの体積率
+   * @param [in]     bid   交点ID
    * @param [in]     mat   MediumList
    * @param [in,out] cmp   CompoList
    * @param [in,out] Lcell ノードローカルの有効セル数
@@ -407,7 +406,7 @@ public:
    * @param [in]     KOS   解くべき方程式の種類 KIND_OF_SOLVER
    */
   void setBCIndexBase (int* bx,
-                       const float* cvf,
+                       const int* bid,
                        const MediumList* mat,
                        CompoList* cmp,
                        unsigned long& Lcell,
@@ -488,10 +487,11 @@ public:
   
   /**
    * @brief コンポーネントの操作に必要な定数の設定
-   * @param [in] m_NoCompo コンポーネントの総数
-   * @param [in] ExRef  組み込み例題クラス
+   * @param [in] m_NoCompo  コンポーネントの総数
+   * @param [in] m_NoMedium 媒質数
+   * @param [in] ExRef      組み込み例題クラス
    */
-  void setControlVars (const int m_NoCompo, Intrinsic* ExRef=NULL);
+  void setControlVars (const int m_NoCompo, const int m_NoMedium, Intrinsic* ExRef=NULL);
   
   
   /**

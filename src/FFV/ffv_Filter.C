@@ -138,7 +138,7 @@ int FFV::FilterInitialize(int argc, char **argv)
   setMediumList(fp);
   
   
-  V.setControlVars(C.NoCompo, Ex);
+  V.setControlVars(C.NoCompo, C.NoMedium, Ex);
   
   
   // CompoListの設定，外部境界条件の読み込み保持
@@ -192,11 +192,11 @@ int FFV::FilterInitialize(int argc, char **argv)
   // 領域情報の表示
   Hostonly_
   {
-    printf("\n---------------------------------------------------------------------------\n");
+    printf("\n----------\n");
     printf("\n\t>> Global Domain Information\n\n");
     C.printGlobalDomain(stdout, G_size, G_origin, G_region, pitch);
     
-    fprintf(fp,"\n---------------------------------------------------------------------------\n");
+    fprintf(fp,"\n----------\n");
     fprintf(fp,"\n\t>> Global Domain Information\n\n");
     C.printGlobalDomain(fp, G_size, G_origin, G_region, pitch);
   }
@@ -205,8 +205,8 @@ int FFV::FilterInitialize(int argc, char **argv)
   // メモリ消費量の情報を表示
   Hostonly_
   {
-    printf(    "\n---------------------------------------------------------------------------\n\n");
-    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    printf(    "\n----------\n\n");
+    fprintf(fp,"\n----------\n\n");
   }
   G_PrepMemory = PrepMemory;
   
@@ -223,8 +223,8 @@ int FFV::FilterInitialize(int argc, char **argv)
   // Fill
   Hostonly_
   {
-    printf(    "\n---------------------------------------------------------------------------\n\n");
-    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    printf(    "\n----------\n\n");
+    fprintf(fp,"\n----------\n\n");
     printf(    "\t>> Fill\n\n");
     fprintf(fp,"\t>> Fill\n\n");
   }
@@ -232,8 +232,8 @@ int FFV::FilterInitialize(int argc, char **argv)
   fill(fp);
   
   
-  // 全周カットのあるセルを固体セルIDで埋める
-  V.replaceIsolatedFcell(d_bcd, C.FillID, d_bid);
+  // 全周カットのあるセルを固体セルIDで埋める > fill()で埋められているので不要．
+  // V.replaceIsolatedFcell(d_bcd, C.FillID, d_bid);
   
   
   
@@ -252,12 +252,12 @@ int FFV::FilterInitialize(int argc, char **argv)
   // パラメータファイルから得られた内部BCコンポーネント数を表示
   Hostonly_
   {
-    printf("\n---------------------------------------------------------------------------\n\n");
+    printf("\n----------\n\n");
     printf("\t>> Components\n\n");
     C.printNoCompo(stdout);
     printf("\n"); fflush(stdout);
     
-    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    fprintf(fp,"\n----------\n\n");
     fprintf(fp,"\t>> Components\n\n");
     C.printNoCompo(fp);
     fprintf(fp,"\n"); fflush(fp);
@@ -351,7 +351,7 @@ int FFV::FilterInitialize(int argc, char **argv)
   
   
   // コンポーネントのグローバルインデクス情報を取得し，CompoListの内容とセル数の情報を表示する
-  setGlobalCompoIdx_displayInfo(fp);
+  dispGlobalCompoInfo(fp);
   
   
   
@@ -362,8 +362,8 @@ int FFV::FilterInitialize(int argc, char **argv)
   
   Hostonly_
   {
-    fprintf(fp,"\n---------------------------------------------------------------------------\n\n\n");
-    printf(    "\n---------------------------------------------------------------------------\n\n\n");
+    fprintf(fp,"\n----------\n\n\n");
+    printf(    "\n----------\n\n\n");
   }
   
   if (C.FIO.IO_Voxel == ON)
@@ -373,8 +373,8 @@ int FFV::FilterInitialize(int argc, char **argv)
     {
       fprintf(fp,"\tVoxel file 'example.svx' was written.\n");
       printf(    "\tVoxel file 'example.svx' was written.\n");
-      fprintf(fp,"\n---------------------------------------------------------------------------\n\n\n");
-      printf(    "\n---------------------------------------------------------------------------\n\n\n");
+      fprintf(fp,"\n----------\n\n\n");
+      printf(    "\n----------\n\n\n");
     }
   }
   
@@ -402,8 +402,8 @@ int FFV::FilterInitialize(int argc, char **argv)
   // 初期値とリスタート処理 瞬時値と平均値に分けて処理　------------------
   Hostonly_
   {
-    printf(    "\n---------------------------------------------------------------------------\n\n");
-    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    printf(    "\n----------\n\n");
+    fprintf(fp,"\n----------\n\n");
   }
   
   // リスタートモードの選択
@@ -481,8 +481,8 @@ int FFV::FilterInitialize(int argc, char **argv)
   // メモリ使用量の表示
   Hostonly_
   {
-    printf(    "\n---------------------------------------------------------------------------\n\n");
-    fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+    printf(    "\n----------\n\n");
+    fprintf(fp,"\n----------\n\n");
   }
   
   G_TotalMemory = TotalMemory;

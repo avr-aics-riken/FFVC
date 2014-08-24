@@ -528,7 +528,7 @@ void IP_Jet::printPara(FILE* fp, const Control* R)
    
    */
   
-  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  fprintf(fp,"\n----------\n\n");
   fprintf(fp,"\n\t>> Intrinsic Jet Class Parameters\n\n");
   
   

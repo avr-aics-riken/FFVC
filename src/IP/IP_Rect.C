@@ -108,7 +108,7 @@ void IP_Rect::printPara(FILE* fp, const Control* R)
     Exit(0);
   }
   
-  fprintf(fp,"\n---------------------------------------------------------------------------\n\n");
+  fprintf(fp,"\n----------\n\n");
   fprintf(fp,"\n\t>> Intrinsic Rectangular Class Parameters\n\n");
   
   fprintf(fp,"\tDimension Mode                     :  %s\n", (mode==dim_2d)?"2 Dimensional":"3 Dimensional");

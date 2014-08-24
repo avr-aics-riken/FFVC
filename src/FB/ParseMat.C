@@ -99,7 +99,6 @@ bool ParseMat::chkList4Solver(const MediumList* mat, const int m)
 }
 
 
-
 // #################################################################
 // MediumTableを読んでMediumTableInfoクラスオブジェクトに格納
 void ParseMat::getMediumTable(const int m_NoMedium, MediumList* mat)

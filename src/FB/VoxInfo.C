@@ -321,6 +321,137 @@ void VoxInfo::copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const
 
 
 // #################################################################
+/**
+ * @brief セルセンターのIDから対象セル数をカウントし，サブドメイン内にコンポーネントがあれば存在フラグを立てる
+ * @param [in]     order エンコードする格納順
+ * @param [in]     bx    BCindex B/H
+ * @param [in,out] cmp   CompoList
+ * @retval エンコードした個数
+ */
+unsigned long VoxInfo::countCC (const int order, const int* bx, CompoList* cmp)
+{
+  if ( order > 31 )
+  {
+    Hostonly_
+    {
+      printf("Error : The encording order [%d] is greater than 31.\n", order);
+      Exit(0);
+    }
+  }
+  
+  unsigned long g=0;
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  int odr= order;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, odr) schedule(static) reduction(+:g)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        if ( DECODE_CMP( bx[m] )  == odr ) g++;
+      }
+    }
+  }
+  
+  if ( g > 0 )
+  {
+    cmp->setEnsLocal(ON);
+  }
+  
+  if ( numProc > 1 )
+  {
+    unsigned long tmp = g;
+    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  return g;
+}
+
+
+// #################################################################
+/**
+ * @brief セルフェイスの交点IDから対象セル数をカウントし，サブドメイン内にコンポーネントがあれば存在フラグを立てる
+ * @param [in]     key   エンコードする対象ID
+ * @param [in]     bx    BCindex B/H
+ * @param [in]     bid   交点ID
+ * @param [in,out] cmp   CompoList
+ * @retval エンコードした個数
+ * @note Fluidセルで固体の交点IDをもつセルを対象とする
+ */
+unsigned long VoxInfo::countCF (const int key, const int* bx, const int* bid, CompoList* cmp)
+{
+
+  if ( key > 31 )
+  {
+    Hostonly_
+    {
+      printf("Error : The encording order [%d] is greater than 31.\n", key);
+      Exit(0);
+    }
+  }
+  
+  unsigned long g=0;
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  int odr= key;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, odr) schedule(static) reduction(+:g)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int qq = bid[m];
+        int qw = getBit5(qq, 0);
+        int qe = getBit5(qq, 1);
+        int qs = getBit5(qq, 2);
+        int qn = getBit5(qq, 3);
+        int qb = getBit5(qq, 4);
+        int qt = getBit5(qq, 5);
+        int flag = 0;
+        
+        // Fluid
+        if ( BIT_SHIFT(bx[m], STATE_BIT) )
+        {
+          if ( qw == odr ) flag++;
+          if ( qe == odr ) flag++;
+          if ( qs == odr ) flag++;
+          if ( qn == odr ) flag++;
+          if ( qb == odr ) flag++;
+          if ( qt == odr ) flag++;
+        }
+        
+        if ( flag > 0 ) g++;
+        
+      }
+    }
+  }
+  
+  if ( g > 0 )
+  {
+    cmp->setEnsLocal(ON);
+  }
+  
+  if ( numProc > 1 )
+  {
+    unsigned long tmp = g;
+    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  return g;
+}
+
+
+
+// #################################################################
 // bcd[]内にあるm_idのセルを数える
 // painted : m_id以外のセル数をカウント(false), m_idのセル数をカウント(true)
 unsigned long VoxInfo::countCellB(const int* bcd, const int m_id, const bool painted, const int* Dsize)
@@ -1223,63 +1354,6 @@ void VoxInfo::encHbit (const int* cdf, int* bd)
   }
   
 }
-
-
-
-// #################################################################
-/**
- * @brief bx[]にエンコードされたmat[]/cmp[]の格納順をチェックし，コンポーネントの有無を設定
- * @param [in]     order エンコードする格納順
- * @param [in,out] bx    BCindex B/H
- * @param [in,out] cmp   CompoList
- * @retval エンコードした個数
- * @note 指定されたidならば，CompoListのエントリをbx[]エンコードする
- *       対象範囲はサブドメイン内であること．拡大すると，並列時に余計にカウントしてしまう
- */
-unsigned long VoxInfo::encOrder (const int order, int* bx, CompoList* cmp)
-{
-  if ( order > 31 )
-  {
-    Hostonly_
-    {
-      printf("Error : The encording order [%d] is greater than 31.\n", order);
-      Exit(0);
-    }
-  }
-  
-  unsigned long g=0;
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  int odr = order;
-  
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, odr) schedule(static) reduction(+:g)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        if ( DECODE_CMP( bx[m] )  == odr ) g++;
-      }
-    }
-  }
-  
-  if ( g > 0 )
-  {
-    cmp->setEnsLocal(ON);
-  }
-  
-  if ( numProc > 1 )
-  {
-    unsigned long tmp = g;
-    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-
-  return g;
-}
-
 
 
 // #################################################################
@@ -2662,35 +2736,6 @@ unsigned long VoxInfo::fillByBid (int* bid, int* bcd, float* cut, const int tgt_
   int mode_y = suppress[1];
   int mode_z = suppress[2];
   
-  /*
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        
-        int qq = bid[m];
-        
-        // 隣接セルの方向に対する境界ID
-        int qw = getBit5(qq, 0);
-        int qe = getBit5(qq, 1);
-        int qs = getBit5(qq, 2);
-        int qn = getBit5(qq, 3);
-        int qb = getBit5(qq, 4);
-        int qt = getBit5(qq, 5);
-        
-        float* pos = &cut[ _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd) ];
-        
-        if ( (qw+qe+qs+qn+qb+qt) > 0 )
-        {
-          printf("%3d %3d %3d : %d %d %d %d %d %d : %e %e %e %e %e %e\n",
-                 i,j,k, qw, qe, qs, qn, qb, qt,
-                 pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
-        }
-        
-      }
-    }
-  }
-   */
   
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, sdw, sde, sds, sdn, sdb, sdt, mode_x, mode_y, mode_z) \
 schedule(static) reduction(+:filled) reduction(+:replaced)
@@ -3407,73 +3452,26 @@ unsigned long VoxInfo::fillSeedMid(int* mid, const int face, const int target, c
 }
 
 
-// #################################################################
-// 孤立した流体セルを探し，周囲の固体媒質で置換，BCindexを修正する
-unsigned long VoxInfo::findIsolatedFcell (int* bx, const int fluid_id)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  int fid = fluid_id;
-  unsigned long c = 0;
-  
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, fid) schedule(static) reduction(+:c)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        size_t m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        int s = bx[m_p];
-        
-        if ( IS_FLUID(s) )
-        {
 
-#include "FindexS3D.h"
-          
-          int bb[6];
-          bb[0] = bx[m_e];
-          bb[1] = bx[m_w];
-          bb[2] = bx[m_n];
-          bb[3] = bx[m_s];
-          bb[4] = bx[m_t];
-          bb[5] = bx[m_b];
-          
-          // 隣接セルがすべて固体の場合
-          if ( !IS_FLUID(bb[0]) && !IS_FLUID(bb[1]) &&
-               !IS_FLUID(bb[2]) && !IS_FLUID(bb[3]) &&
-               !IS_FLUID(bb[4]) && !IS_FLUID(bb[5]) )
-          {
-            
-            // 最頻値を求める
-            int qe = DECODE_CMP( bb[0] );
-            int qw = DECODE_CMP( bb[1] );
-            int qn = DECODE_CMP( bb[2] );
-            int qs = DECODE_CMP( bb[3] );
-            int qt = DECODE_CMP( bb[4] );
-            int qb = DECODE_CMP( bb[5] );
-          
-            // 媒質オーダーの変更
-            int sd = find_mode_id(fid, qw, qe, qs, qn, qb, qt);
-            if ( sd == 0 ) Exit(0);
-            setBitID(s, sd);
-            
-            // 固体セルへ状態を変更　
-            bx[m_p] = offBit( s, STATE_BIT );
-          }
-        }
-      }
+// #################################################################
+/**
+ * @brief MediumTable内のkeyの格納番号を返す
+ * @param [in]   mat   MediumList
+ * @param [in]   key   検索対象文字列
+ * @ret 格納番号，該当なしの場合はゼロを返す
+ */
+int VoxInfo::getMediumOrder(const MediumList* mat, const std::string key)
+{
+  for (int m=1; m<=NoMedium; m++)
+  {
+    if ( FBUtility::compare(mat[m].getAlias(), key) )
+    {
+      return m;
     }
   }
   
-  if ( numProc > 1 )
-  {
-    unsigned long tmp = c;
-    if ( paraMngr->Allreduce(&tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  return c;
+  return 0;
 }
-
 
 
 // #################################################################
@@ -3772,7 +3770,7 @@ unsigned long VoxInfo::replaceIsolatedFcell(int* bcd, const int fluid_id, const 
 // #################################################################
 // bx[]に各境界条件の共通のビット情報をエンコードする
 void VoxInfo::setBCIndexBase (int* bx,
-                              const float* cvf,
+                              const int* bid,
                               const MediumList* mat,
                               CompoList* cmp,
                               unsigned long& Lcell,
@@ -3786,7 +3784,7 @@ void VoxInfo::setBCIndexBase (int* bx,
   
   size_t nx = (ix+2*gd) * (jx+2*gd) * (kx+2*gd); // ガイドセルを含む全領域を対象にする
   
-  // セルの状態を流体で初期化
+  // セルの状態を流体としておく
   for (size_t m=0; m<nx; m++)
   {
     bx[m] = onBit( bx[m], STATE_BIT );
@@ -3809,26 +3807,34 @@ void VoxInfo::setBCIndexBase (int* bx,
     }
     bx[m] = s;
   }
-
-
-  /* 後の境界条件処理でエンコードしない種類の格納順をエンコード
+  
+  
+  // サブドメイン内に媒質に対するコンポーネントがあれば存在フラグを立て，セル数を保持
   for (int n=1; n<=NoCompo; n++)
   {
-    switch ( cmp[n].getType() )
+    if ( !strcasecmp(cmp[n].getBCstr().c_str(), "medium") )
     {
-      case 0: // Medium
-      case OBSTACLE:
-        cmp[n].setElement( encOrder(n, bx, &cmp[n]) );
+      cmp[n].setElement( countCC(n, bx, &cmp[n]) );
     }
   }
-   */
   
-  // fillした結果に対して，セル媒質のエンコードチェック
+  // OBSTACLEの個数
   for (int n=1; n<=NoCompo; n++)
   {
-    cmp[n].setElement( encOrder(n, bx, &cmp[n]) );
+    if ( cmp[n].getType() == OBSTACLE )
+    {
+      int key = getMediumOrder(mat, cmp[n].getMedium());
+      if ( key > 0 )
+      {
+        cmp[n].setElement( countCF(key, bx, bid, &cmp[n]) );
+      }
+      else
+      {
+        Exit(0);
+      }
+    }
   }
-  
+
   
   // BCIndexにそのセルが計算に有効(active)かどうかをエンコードする．KindOfSolverによって異なる
   encActive(Lcell, Gcell, bx, KOS);
@@ -3990,7 +3996,7 @@ void VoxInfo::setBCIndexH (int* cdf, int* bd, SetBC* BC, const int kos, CompoLis
       // Q BC at Volume; idのガイドセルチェックなし
       case HEAT_SRC:
       case CNST_TEMP:
-        cmp[n].setElement( encOrder(n, bd, &cmp[n]) );
+        cmp[n].setElement( countCC(n, bd, &cmp[n]) );
         break;
     }
     
@@ -4266,9 +4272,10 @@ void VoxInfo::setCmpFraction (CompoList* cmp, int* bx, const float* vf)
 
 // #################################################################
 // コンポーネントの操作に必要な定数の設定
-void VoxInfo::setControlVars (const int m_NoCompo, Intrinsic* ExRef)
+void VoxInfo::setControlVars (const int m_NoCompo, const int m_NoMedium, Intrinsic* ExRef)
 {
   NoCompo = m_NoCompo;
+  NoMedium= m_NoMedium;
   Ex      = ExRef;
 }
 

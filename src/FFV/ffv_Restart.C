@@ -108,7 +108,7 @@ void FFV::RestartAvrerage(FILE* fp, double& flop)
   }
   else // By_time
   {
-    m_RestartStep = (unsigned)ceil( C.Interval[Control::tg_compute].getStartTime() / (deltaT*C.Tscale) );
+    m_RestartStep = C.Interval[Control::tg_compute].restartStep;
   }
   
   
@@ -371,7 +371,7 @@ void FFV::RestartInstantaneous(FILE* fp, double& flop)
   }
   else // By_time
   {
-    m_RestartStep = (unsigned)ceil( C.Interval[Control::tg_compute].getStartTime() / (deltaT*C.Tscale) );
+    m_RestartStep = C.Interval[Control::tg_compute].restartStep;
   }
   
   
