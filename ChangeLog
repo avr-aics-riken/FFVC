@@ -20,6 +20,11 @@ REVISION HISTORY
 
 
 --------------------------
+2014-08-26
+r1627 modify ASD/SubDomain.h
+ - bool writeSVX(const string& path, const float* pch, const REAL_TYPE* org) << const float* org
+
+--------------------------
 2014-08-24
 r1626 modify Bbox calculation for components
 
