@@ -21,6 +21,8 @@ REVISION HISTORY
 
 --------------------------
 2014-08-26
+r1628 modify ASD/SubDomain.C too
+
 r1627 modify ASD/SubDomain.h
  - bool writeSVX(const string& path, const float* pch, const REAL_TYPE* org) << const float* org
 

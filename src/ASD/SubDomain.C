@@ -125,7 +125,7 @@ bool ActiveSubdomain::SaveActiveSubdomain(const string& path)
 
 // #################################################################
 // svxフォーマットで出力する(IDのみ)
-bool ActiveSubdomain::writeSVX(const string& path, const float* pch, const float* org)
+bool ActiveSubdomain::writeSVX(const string& path, const float* pch, const REAL_TYPE* org)
 {
   ofstream ofs(path.c_str(), ios::out | ios::binary);
   if (!ofs) {
