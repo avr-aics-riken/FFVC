@@ -324,7 +324,7 @@ public:
    * @param [in,out] vf    フラクション
    * @param [in,out] flop  浮動小数点演算数
    */
-  void subdivision(const int st[], const int ed[], float* vf, double& flop);
+  void subdivision(const int st[], const int ed[], REAL_TYPE* vf, double& flop);
   
   
   /**
@@ -334,7 +334,7 @@ public:
    * @param [in,out] vf    フラクション
    * @param [in,out] flop  浮動小数点演算数
    */
-  void vertex8(const int st[], const int ed[], float* vf, double& flop);
+  void vertex8(const int st[], const int ed[], REAL_TYPE* vf, double& flop);
   
   
   /**

@@ -103,7 +103,7 @@ private:
                             int* bcd,
                             int* bcp,
                             const int* bid,
-                            const float* vec,
+                            const REAL_TYPE* vec,
                             const string condition,
                             const int bc_dir);
   
@@ -128,7 +128,7 @@ private:
                             int* cdf,
                             int* bp,
                             const int* cut_id,
-                            const float* vec,
+                            const REAL_TYPE* vec,
                             const int bc_dir,
                             CompoList* cmp);
   
@@ -482,7 +482,7 @@ public:
    * @param [in,out] bx  BCindex B
    * @param [in]     vf  体積率
    */
-  void setCmpFraction (CompoList* cmp, int* bx, const float* vf);
+  void setCmpFraction (CompoList* cmp, int* bx, const REAL_TYPE* vf);
   
   
   /**

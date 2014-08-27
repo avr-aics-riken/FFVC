@@ -45,7 +45,7 @@
     real                                                        ::  nx, ny, nz, b0, r_bt, uu, u1, u2, u3
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bd
-    real(4), dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  vf
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  vf
     real, dimension(0:3)                                        ::  v00
     real, dimension(3)                                          ::  nv
 
@@ -194,7 +194,7 @@
     real                                                        ::  q_w, q_e, q_s, q_n, q_b, q_t, q_p
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  src
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bd
-    real(4), dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  vf
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  vf
     real, dimension(-1:cz(1)+2, -1:cz(2)+2, -1:cz(3)+2, 3)      ::  wk
     real, dimension(6)                                          ::  c
     real, dimension(0:3)                                        ::  v00
@@ -298,7 +298,7 @@
     real                                                        ::  c1, c2, c3, c4, ep, bes
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, vc
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bd
-    real(4), dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  vf
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  vf
     real, dimension(6)                                          ::  c
     real, dimension(0:3)                                        ::  v00
     real, dimension(3)                                          ::  nv
@@ -423,7 +423,7 @@
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bd
-    real(4), dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  vf
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  vf
     real, dimension(-1:cz(1)+2, -1:cz(2)+2, -1:cz(3)+2, 3)      ::  wk
     real, dimension(6)                                          ::  c
     real, dimension(0:3)                                        ::  v00

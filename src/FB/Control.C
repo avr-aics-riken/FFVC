@@ -2305,7 +2305,7 @@ void Control::getTimeControl(DTcntl* DT)
   if ( Interval[tg_compute].getMode() == IntervalManager::By_time )
   {
     label="/TimeControl/Session/RestartStep";
-    float m_rstep;
+    REAL_TYPE m_rstep;
     
     if ( !(tpCntl->getInspectedValue(label, m_rstep)) )
     {
@@ -2392,7 +2392,7 @@ void Control::getTimeControl(DTcntl* DT)
   if ( Interval[tg_average].getMode() == IntervalManager::By_time )
   {
     label="/TimeControl/Average/RestartStep";
-    float m_rstep;
+    REAL_TYPE m_rstep;
     
     if ( !(tpCntl->getInspectedValue(label, m_rstep)) )
     {

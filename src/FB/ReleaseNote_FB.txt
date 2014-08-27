@@ -17,6 +17,11 @@
 RELEASE NOTE
 ============
 
+Ver 1.4.9   2014-08-27
+  - FileIO class削除．writeRwaSPH()をffvへ移動．
+  - FB_util.f90は倍精度のコンパイルオプションがconfigureで指定できないので，F_COREに移動
+  - FB_Ffunc.hの中身をF_CORE/ffv_Ffunc.hに統合
+
 Ver 1.4.8   2013-01-03
   - IterationControl.hに stdio.h, strings.h を追加
 

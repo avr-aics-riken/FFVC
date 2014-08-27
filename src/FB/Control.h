@@ -51,8 +51,8 @@ private:
   string group;      ///< ポリゴングループ名
   string material;   ///< Mediumtable[@]のalias
   string bc;         ///< BCのラベル
-  Vec3f bx_min;      ///< Bboxの最小値
-  Vec3f bx_max;      ///< Bboxの最大値
+  Vec3<REAL_TYPE> bx_min;      ///< Bboxの最小値
+  Vec3<REAL_TYPE> bx_max;      ///< Bboxの最大値
   
 public:
   PolygonProperty() {
@@ -143,22 +143,22 @@ public:
     g_area = val;
   }
   
-  Vec3f getBboxMax() const
+  Vec3<REAL_TYPE> getBboxMax() const
   {
     return bx_max;
   }
   
-  Vec3f getBboxMin() const
+  Vec3<REAL_TYPE> getBboxMin() const
   {
     return bx_min;
   }
   
-  void setBboxMax(const Vec3f bmax)
+  void setBboxMax(const Vec3<REAL_TYPE> bmax)
   {
     bx_max = bmax;
   }
   
-  void setBboxMin(const Vec3f bmin)
+  void setBboxMin(const Vec3<REAL_TYPE> bmin)
   {
     bx_min = bmin;
   }

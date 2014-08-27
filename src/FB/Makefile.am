@@ -24,8 +24,7 @@ libFB_a_CXXFLAGS = \
   @PL_CFLAGS@ \
   @TP_CFLAGS@ \
   @MPICH_CFLAGS@ \
-  @REALOPT@ \
-  @FREALOPT@
+  @REALOPT@
 
 libFB_a_SOURCES = \
   Alloc.C \
@@ -44,10 +43,6 @@ libFB_a_SOURCES = \
   FBUtility.C \
   FBUtility.h \
   FB_Define.h \
-  FB_Ffunc.h \
-  FB_util.f90 \
-  FileIO.C \
-  FileIO.h \
   FindexS3D.h \
   History.C \
   History.h \

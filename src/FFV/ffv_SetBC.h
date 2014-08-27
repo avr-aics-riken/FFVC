@@ -183,7 +183,7 @@ public:
                       double& flop);
   
   
-  void mod_Dir_Forcing (REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, double& flop);
+  void mod_Dir_Forcing (REAL_TYPE* d_v, int* d_bd, REAL_TYPE* d_cvf, REAL_TYPE* v00, double& flop);
   
   
   /**
@@ -224,7 +224,7 @@ public:
   void mod_Psrc_Forcing (REAL_TYPE* s_1,
                          REAL_TYPE* v,
                          int* bd,
-                         float* cvf,
+                         REAL_TYPE* cvf,
                          REAL_TYPE* v00,
                          REAL_TYPE** c_array,
                          double& flop);
@@ -250,7 +250,7 @@ public:
                     REAL_TYPE* v00,
                     double& flop);
   
-  void mod_Pvec_Forcing (REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, REAL_TYPE dt, double& flop);
+  void mod_Pvec_Forcing (REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, REAL_TYPE* d_cvf, REAL_TYPE* v00, REAL_TYPE dt, double& flop);
   
   /**
    * @brief 圧力損失部によるセルセンタ速度の修正と速度の発散値の修正
@@ -267,7 +267,7 @@ public:
    */
   void mod_Vdiv_Forcing (REAL_TYPE* v,
                          int* bd,
-                         float* cvf,
+                         REAL_TYPE* cvf,
                          REAL_TYPE* dv,
                          REAL_TYPE dt,
                          REAL_TYPE* v00,

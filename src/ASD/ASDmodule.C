@@ -153,9 +153,9 @@ void ASD::evaluateASD(int argc, char **argv)
   }
   
   
-  sd_rgn[0] = G_region[0] / (float)G_division[0];
-  sd_rgn[1] = G_region[1] / (float)G_division[1];
-  sd_rgn[2] = G_region[2] / (float)G_division[2];
+  sd_rgn[0] = G_region[0] / (REAL_TYPE)G_division[0];
+  sd_rgn[1] = G_region[1] / (REAL_TYPE)G_division[1];
+  sd_rgn[2] = G_region[2] / (REAL_TYPE)G_division[2];
 
   if ( !flag ) {
     printf("\tSubdomain size = %12.4e %12.4e %12.4e\n\n", sd_rgn[0], sd_rgn[1], sd_rgn[2]);
@@ -182,12 +182,12 @@ void ASD::evaluateASD(int argc, char **argv)
   setupPolygonASD(str, flag);
   
   
-  float *pos_x=NULL; 
-  float *pos_y=NULL; 
-  float *pos_z=NULL;
-  pos_x = new float[G_division[0]];
-  pos_y = new float[G_division[1]];
-  pos_z = new float[G_division[2]];
+  REAL_TYPE *pos_x=NULL; 
+  REAL_TYPE *pos_y=NULL; 
+  REAL_TYPE *pos_z=NULL;
+  pos_x = new REAL_TYPE[G_division[0]];
+  pos_y = new REAL_TYPE[G_division[1]];
+  pos_z = new REAL_TYPE[G_division[2]];
 
   createSubdomainTable(pos_x, pos_y, pos_z);
   
@@ -310,20 +310,20 @@ void ASD::evaluateASD(int argc, char **argv)
   
   
   // 測定モード
-  float x = (float)size[0] / (float)G_division[0];
-  float y = (float)size[1] / (float)G_division[1];
-  float z = (float)size[2] / (float)G_division[2];
-  float sv_ratio = 2.0*(x*y + y*z + z*x) / (x*y*z);
-  float load = x*y*z * (float)ac;
-  float subload = x*y*z;
+  REAL_TYPE x = (REAL_TYPE)size[0] / (REAL_TYPE)G_division[0];
+  REAL_TYPE y = (REAL_TYPE)size[1] / (REAL_TYPE)G_division[1];
+  REAL_TYPE z = (REAL_TYPE)size[2] / (REAL_TYPE)G_division[2];
+  REAL_TYPE sv_ratio = 2.0*(x*y + y*z + z*x) / (x*y*z);
+  REAL_TYPE load = x*y*z * (REAL_TYPE)ac;
+  REAL_TYPE subload = x*y*z;
   
   int xxx = G_division[0] * G_division[1] * G_division[2];
   printf("Division %d %d %d\n", G_division[0], G_division[1], G_division[2]);
   printf("Pitch %13.6e %13.6e %13.6e\n", pitch[0], pitch[1], pitch[2]);
   printf("SubDomain_Size %d %d %d\n", (int)x, (int)y, (int)z);
-  printf("Active/Total %d %d %e\n", ac, xxx, (float)ac/(float)xxx);
+  printf("Active/Total %d %d %e\n", ac, xxx, (REAL_TYPE)ac/(REAL_TYPE)xxx);
   printf("Surface/Volume %e\n", sv_ratio);
-  printf("N-Active-Workload-SV %d %d %e %e %e %e\n", xxx, ac, (float)ac/(float)xxx, load, subload, sv_ratio);
+  printf("N-Active-Workload-SV %d %d %e %e %e %e\n", xxx, ac, (REAL_TYPE)ac/(REAL_TYPE)xxx, load, subload, sv_ratio);
   
   if ( pos_x )  delete [] pos_x;
   if ( pos_y )  delete [] pos_y;
@@ -335,18 +335,18 @@ void ASD::evaluateASD(int argc, char **argv)
 
 // #################################################################
 // active subdomain flag
-int ASD::active(const float* px,
-                const float* py,
-                const float* pz,
+int ASD::active(const REAL_TYPE* px,
+                const REAL_TYPE* py,
+                const REAL_TYPE* pz,
                 unsigned char* sd)
 {
   int dvx = G_division[0];
   int dvy = G_division[1];
   int dvz = G_division[2];
 
-  float lx = sd_rgn[0];
-  float ly = sd_rgn[1];
-  float lz = sd_rgn[2];
+  REAL_TYPE lx = sd_rgn[0];
+  REAL_TYPE ly = sd_rgn[1];
+  REAL_TYPE lz = sd_rgn[2];
 
   vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
   vector<PolygonGroup*>::iterator it;
@@ -382,33 +382,33 @@ int ASD::active(const float* px,
 
 // #################################################################
 // position of min/max for each subdomain
-void ASD::createSubdomainTable(float* p_x, float* p_y, float* p_z)
+void ASD::createSubdomainTable(REAL_TYPE* p_x, REAL_TYPE* p_y, REAL_TYPE* p_z)
 {
   int div_x = G_division[0];
   int div_y = G_division[1];
   int div_z = G_division[2];
   
-  float ox = G_origin[0];
-  float oy = G_origin[1];
-  float oz = G_origin[2];
+  REAL_TYPE ox = G_origin[0];
+  REAL_TYPE oy = G_origin[1];
+  REAL_TYPE oz = G_origin[2];
   
-  float lx = sd_rgn[0];
-  float ly = sd_rgn[1];
-  float lz = sd_rgn[2];
+  REAL_TYPE lx = sd_rgn[0];
+  REAL_TYPE ly = sd_rgn[1];
+  REAL_TYPE lz = sd_rgn[2];
   
 #pragma omp parallel for firstprivate(div_x, lx, ox) schedule(static)
   for (int i=1; i<=div_x; i++) {
-    p_x[i-1] = (float)(i-1) * lx + ox;
+    p_x[i-1] = (REAL_TYPE)(i-1) * lx + ox;
   }
   
 #pragma omp parallel for firstprivate(div_y, ly, oy) schedule(static)
   for (int j=1; j<=div_y; j++) {
-    p_y[j-1] = (float)(j-1) * ly + oy;
+    p_y[j-1] = (REAL_TYPE)(j-1) * ly + oy;
   }
   
 #pragma omp parallel for firstprivate(div_z, lz, oz) schedule(static)
   for (int k=1; k<=div_z; k++) {
-    p_z[k-1] = (float)(k-1) * lz + oz;
+    p_z[k-1] = (REAL_TYPE)(k-1) * lz + oz;
   }
   
 }
@@ -703,9 +703,9 @@ void ASD::fill(bool disp_flag)
 
 // #################################################################
 // サブドメイン内に含まれるポリゴンリストを検索し，フラグを立てる
-void ASD::findPolygon(const float* px,
-                      const float* py,
-                      const float* pz,
+void ASD::findPolygon(const REAL_TYPE* px,
+                      const REAL_TYPE* py,
+                      const REAL_TYPE* pz,
                       unsigned char* sd,
                       const string label)
 {
@@ -713,17 +713,17 @@ void ASD::findPolygon(const float* px,
   int dvy = G_division[1];
   int dvz = G_division[2];
   
-  float lx = sd_rgn[0];
-  float ly = sd_rgn[1];
-  float lz = sd_rgn[2];
+  REAL_TYPE lx = sd_rgn[0];
+  REAL_TYPE ly = sd_rgn[1];
+  REAL_TYPE lz = sd_rgn[2];
   
 //#pragma omp parallel for firstprivate(dvx, dvy, dvz, lx, ly, lz) schedule(static)
 #pragma omp parallel for firstprivate(dvx, dvy, dvz, lx, ly, lz) schedule(dynamic) collapse(3)
   for (int k=1; k<=dvz; k++) {
     for (int j=1; j<=dvy; j++) {
       for (int i=1; i<=dvx; i++) {
-        Vec3f pos_min(px[i-1],    py[j-1],    pz[k-1]);
-        Vec3f pos_max(px[i-1]+lx, py[j-1]+ly, pz[k-1]+lz);
+        Vec3<REAL_TYPE> pos_min(px[i-1],    py[j-1],    pz[k-1]);
+        Vec3<REAL_TYPE> pos_max(px[i-1]+lx, py[j-1]+ly, pz[k-1]+lz);
         
         // false; ポリゴンが一部でもかかる場合
         vector<Triangle*>* trias = PL->search_polygons(label, pos_min, pos_max, false);
@@ -800,8 +800,8 @@ void ASD::getDomainInfo(TextParser* tp, bool flag)
     pitch[2] = G_region[2] / size[2];
     
     // 等方性チェック
-    float p1 = pitch[0] - pitch[1];
-    float p2 = pitch[1] - pitch[2];
+    REAL_TYPE p1 = pitch[0] - pitch[1];
+    REAL_TYPE p2 = pitch[1] - pitch[2];
     if ( (p1 > SINGLE_EPSILON) || (p2 > SINGLE_EPSILON) )
     {
       printf("\tGlobal Pitch must be same in all direction (%14.6e, %14.6e, %14.6e)\n", pitch[0], pitch[1], pitch[2]);
@@ -907,8 +907,8 @@ void ASD::setupPolygonASD(const string fname, bool flag)
   POLYLIB_STAT poly_stat;  ///< Polylibの戻り値
   
   unsigned poly_gc[3] = {0, 0, 0};
-  float poly_org[3];
-  float poly_dx[3];
+  REAL_TYPE poly_org[3];
+  REAL_TYPE poly_dx[3];
   
   poly_dx[0]  = pitch[0];
   poly_dx[1]  = pitch[1];
@@ -966,7 +966,7 @@ void ASD::setupPolygonASD(const string fname, bool flag)
     string m_mat = (*it)->get_label();   // 媒質ラベル
     string m_bc = (*it)->get_type();     // 境界条件ラベル
     int ntria= (*it)->get_group_num_tria();   // ローカルのポリゴン数
-    float area = (*it)->get_group_area(); // ローカルのポリゴン面積
+    REAL_TYPE area = (*it)->get_group_area(); // ローカルのポリゴン面積
     
     // PolygonにIDを割り当てる
     poly_stat = (*it)->set_all_exid_of_trias(mat_id);

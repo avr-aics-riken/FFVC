@@ -143,7 +143,6 @@ am_libFB_a_OBJECTS = libFB_a-Alloc.$(OBJEXT) \
 	libFB_a-BndOuter.$(OBJEXT) libFB_a-CompoFraction.$(OBJEXT) \
 	libFB_a-Component.$(OBJEXT) libFB_a-Control.$(OBJEXT) \
 	libFB_a-DataHolder.$(OBJEXT) libFB_a-FBUtility.$(OBJEXT) \
-	FB_util.$(OBJEXT) libFB_a-FileIO.$(OBJEXT) \
 	libFB_a-History.$(OBJEXT) libFB_a-Intrinsic.$(OBJEXT) \
 	libFB_a-IterationControl.$(OBJEXT) libFB_a-MonCompo.$(OBJEXT) \
 	libFB_a-Monitor.$(OBJEXT) libFB_a-ParseBC.$(OBJEXT) \
@@ -374,8 +373,7 @@ libFB_a_CXXFLAGS = \
   @PL_CFLAGS@ \
   @TP_CFLAGS@ \
   @MPICH_CFLAGS@ \
-  @REALOPT@ \
-  @FREALOPT@
+  @REALOPT@
 
 libFB_a_SOURCES = \
   Alloc.C \
@@ -394,10 +392,6 @@ libFB_a_SOURCES = \
   FBUtility.C \
   FBUtility.h \
   FB_Define.h \
-  FB_Ffunc.h \
-  FB_util.f90 \
-  FileIO.C \
-  FileIO.h \
   FindexS3D.h \
   History.C \
   History.h \
@@ -514,7 +508,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-Control.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-DataHolder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-FBUtility.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-FileIO.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-Glyph.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-History.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-Intrinsic.Po@am__quote@
@@ -638,20 +631,6 @@ libFB_a-FBUtility.obj: FBUtility.C
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='FBUtility.C' object='libFB_a-FBUtility.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -c -o libFB_a-FBUtility.obj `if test -f 'FBUtility.C'; then $(CYGPATH_W) 'FBUtility.C'; else $(CYGPATH_W) '$(srcdir)/FBUtility.C'; fi`
-
-libFB_a-FileIO.o: FileIO.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -MT libFB_a-FileIO.o -MD -MP -MF $(DEPDIR)/libFB_a-FileIO.Tpo -c -o libFB_a-FileIO.o `test -f 'FileIO.C' || echo '$(srcdir)/'`FileIO.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFB_a-FileIO.Tpo $(DEPDIR)/libFB_a-FileIO.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='FileIO.C' object='libFB_a-FileIO.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -c -o libFB_a-FileIO.o `test -f 'FileIO.C' || echo '$(srcdir)/'`FileIO.C
-
-libFB_a-FileIO.obj: FileIO.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -MT libFB_a-FileIO.obj -MD -MP -MF $(DEPDIR)/libFB_a-FileIO.Tpo -c -o libFB_a-FileIO.obj `if test -f 'FileIO.C'; then $(CYGPATH_W) 'FileIO.C'; else $(CYGPATH_W) '$(srcdir)/FileIO.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFB_a-FileIO.Tpo $(DEPDIR)/libFB_a-FileIO.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='FileIO.C' object='libFB_a-FileIO.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -c -o libFB_a-FileIO.obj `if test -f 'FileIO.C'; then $(CYGPATH_W) 'FileIO.C'; else $(CYGPATH_W) '$(srcdir)/FileIO.C'; fi`
 
 libFB_a-History.o: History.C
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -MT libFB_a-History.o -MD -MP -MF $(DEPDIR)/libFB_a-History.Tpo -c -o libFB_a-History.o `test -f 'History.C' || echo '$(srcdir)/'`History.C

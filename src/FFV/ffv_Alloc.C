@@ -101,9 +101,9 @@ void FFV::allocArray_CompoVF(double &prep, double &total)
   double mc = (double)(size[0] * size[1] * size[2]);
   
 
-  if ( !(d_cvf = paraMngr->AllocFloatS3D(guide)) ) Exit(0);
-  prep += mc * (double)sizeof(float);
-  total+= mc * (double)sizeof(float);
+  if ( !(d_cvf = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  prep += mc * (double)sizeof(REAL_TYPE);
+  total+= mc * (double)sizeof(REAL_TYPE);
 }
 
 

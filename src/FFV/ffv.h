@@ -45,7 +45,6 @@
 #include "../FB/FBUtility.h"
 #include "../FB/Control.h"
 #include "../FB/Alloc.h"
-#include "../FB/FileIO.h"
 #include "../FB/ParseBC.h"
 #include "../FB/ParseMat.h"
 #include "../FB/VoxInfo.h"
@@ -92,6 +91,22 @@
 // CIOlib
 #include "cio_DFI.h"
 
+
+#ifndef _WIN32
+#include <unistd.h>
+#include <strings.h>
+#else
+#include "sph_win32_util.h"
+#endif
+#include <sys/types.h>
+
+#if defined(IA32_LINUX) || defined(IA64_LINUX) || defined(SGI_ALTIX)
+#include <sys/stat.h>
+#endif
+
+#ifdef MacOSX
+#include <sys/uio.h>
+#endif
 
 
 using namespace std;
@@ -150,10 +165,10 @@ private:
   
   
   // Polylibのサーチ用基準値
-  float poly_org[3];
-  float poly_dx[3];
+  REAL_TYPE poly_org[3];
+  REAL_TYPE poly_dx[3];
   unsigned poly_gc[3];
-  float poly_factor;
+  REAL_TYPE poly_factor;
   
   // Polygon管理用
   PolygonProperty* PG;
@@ -193,7 +208,7 @@ private:
   REAL_TYPE *d_ae;  ///< 内部エネルギー（時間平均値）
   REAL_TYPE *d_pvf; ///< ポリゴンによるセル体積率
   REAL_TYPE *d_pni; ///< 圧力Poissonの係数（Naive実装の実験）
-  float *d_cvf;     ///< 体積率
+  REAL_TYPE *d_cvf;     ///< 体積率
   
   // Coarse initial
   REAL_TYPE *d_r_v;  ///< 粗格子の速度
@@ -243,7 +258,6 @@ private:
   FILE *fp_f;  ///< 力の履歴情報
   
   Control C;                 ///< 制御パラメータクラス
-  FileIO F;                  ///< ファイル入出力クラス
   DTcntl DT;                 ///< 時間制御クラス
   ParseMat M;                ///< 媒質パラメータ管理クラス
   Intrinsic* Ex;             ///< pointer to a base class
@@ -309,7 +323,7 @@ private:
   // 点pの属するセルインデクスを求める
   // @param [in]  pt 無次元座標
   // @param [out] w  インデクス
-  void findIndex(const Vec3f pt, int* w) const
+  void findIndex(const Vec3<REAL_TYPE> pt, int* w) const
   {
     REAL_TYPE p[3], q[3];
     p[0] = (REAL_TYPE)pt.x;
@@ -582,6 +596,14 @@ private:
   void setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp);
   
 
+  // sphファイルの書き出し（内部領域のみ）
+  void writeRawSPH(const REAL_TYPE *vf,
+                   const int* sz,
+                   const int gc,
+                   const int gc_out,
+                   const REAL_TYPE* org,
+                   const REAL_TYPE* ddx,
+                   const int m_ModePrecision);
   
   
   /** ffv_Geometry.C *******************************************************/
@@ -607,28 +629,28 @@ private:
   
   
   // サブセルのペイント
-  int SubCellFill(float* svf,
+  int SubCellFill(REAL_TYPE* svf,
                   int* smd,
                   const int sdv,
                   const int dir,
                   const int refID,
-                  const float refVf
+                  const REAL_TYPE refVf
                   );
   
   
   // サブセルのポリゴン含有テスト
-  int SubCellIncTest(float* svf,
+  int SubCellIncTest(REAL_TYPE* svf,
                      int* smd,
                      const int sdv,
                      const int ip,
                      const int jp,
                      const int kp,
-                     const Vec3f pch,
+                     const Vec3<REAL_TYPE> pch,
                      const string m_pg
                      );
   
   // sub-division
-  void SubDivision(float* svf,
+  void SubDivision(REAL_TYPE* svf,
                    int* smd,
                    const int sdv,
                    const int ip,

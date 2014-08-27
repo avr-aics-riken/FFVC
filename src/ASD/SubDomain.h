@@ -62,7 +62,7 @@ namespace ASubDomain {
     
     bool SaveActiveSubdomain(const string& path);
     
-    bool writeSVX(const string& path, const float* pch, const REAL_TYPE* org);
+    bool writeSVX(const string& path, const REAL_TYPE* pch, const REAL_TYPE* org);
     
     unsigned char* get_ptr() {
       return contents;

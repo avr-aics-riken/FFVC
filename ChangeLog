@@ -18,10 +18,18 @@
 REVISION HISTORY
 ================
 
+--------------------------
+2014-08-27
+r1629 bug fix double precision compilation
+ - search_polygons(..REAL_TYPE,..) in ASDmodule.C
+ - init_parallel_info(..REAL_TYPE,..) in ASDmodule.C
+ - remove FileIO class and related f90 routines
+ - move FB_util.f90 to F_CORE/ directory
 
 --------------------------
 2014-08-26
 r1628 modify ASD/SubDomain.C too
+ - modify ASD/SubDomain.C writeSVX(const string& path, const float* pch, const REAL_TYPE* org)
 
 r1627 modify ASD/SubDomain.h
  - bool writeSVX(const string& path, const float* pch, const REAL_TYPE* org) << const float* org

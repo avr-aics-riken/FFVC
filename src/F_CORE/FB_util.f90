@@ -80,6 +80,7 @@
   return
   end subroutine fb_interp_coarse0_s
 
+
 !> ********************************************************************
 !! @brief 粗い格子から密な格子への補間（ゼロ次）
 !! @param [out] dst 密な格子系
@@ -572,270 +573,6 @@
   return
   end subroutine fb_interp_coarse_v
 
-
-!> ********************************************************************
-!! @brief スカラー値の書き出し
-!! @param [in] s        スカラー値
-!! @param [in] sz       配列長
-!! @param [in] g        ガイドセル長
-!! @param [in] fname    ファイル名
-!! @param [in] step     ステップ数
-!! @param [in] time     時刻
-!! @param [in] org      起点座標
-!! @param [in] pit      格子幅
-!! @param [in] d_type   (1-float, 2-double)
-!! @param [in] gs       guide cell (0-without, others-with)
-!! @param [in] avs      平均値識別子 (0-average, 1-instantaneous) 
-!! @param [in] step_avr 平均ステップ
-!! @param [in] time_avr 平均時刻
-!<
-  subroutine fb_write_sph_s(s, sz, g, fname, step, time, org, pit, d_type, gs, avs, step_avr, time_avr)
-  implicit none
-  integer                                                   ::  i, j, k, ix, jx, kx, g, step, gs, step_avr, avs
-  integer                                                   ::  sv_type, d_type, imax, jmax, kmax
-  integer, dimension(3)                                     ::  sz
-  real                                                      ::  time, time_avr
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  s
-  real, dimension(3)                                        ::  org, pit
-  character(64)                                             ::  fname
-
-  ix = sz(1)
-  jx = sz(2)
-  kx = sz(3)
-
-  sv_type = 1 ! scalar
-
-  if ( gs == 0 ) then
-    imax = ix
-    jmax = jx
-    kmax = kx
-  else
-    imax = ix + 2*g
-    jmax = jx + 2*g
-    kmax = kx + 2*g
-  end if
-
-  open(16, file=fname, form='unformatted')
-  write(16) sv_type, d_type
-  write(16) imax, jmax, kmax
-  write(16) org(1), org(2), org(3)
-  write(16) pit(1), pit(2), pit(3)
-  write(16) step, time
-
-  if ( gs /= 0 ) then
-    write(16) (((s(i,j,k),i=1-g,ix+g),j=1-g,jx+g),k=1-g,kx+g)
-  else
-    write(16) (((s(i,j,k),i=1,ix),j=1,jx),k=1,kx)
-  end if
-  
-  if ( avs == 0 ) then
-    write(16) step_avr, time_avr
-  end if
-  
-  close (unit=16)
-
-  return
-  end subroutine fb_write_sph_s
-
-
-!> ********************************************************************
-!! @brief ベクトル値の書き出し
-!! @param [in] v        ベクトル値
-!! @param [in] sz       配列長
-!! @param [in] g        ガイドセル長
-!! @param [in] fname    ファイル名
-!! @param [in] step     ステップ数
-!! @param [in] time     時刻
-!! @param [in] org      起点座標
-!! @param [in] pit      格子幅
-!! @param [in] d_type   (1-float, 2-double)
-!! @param [in] gs       guide cell (0-without, others-with)
-!! @param [in] avs      平均値識別子 (0-average, 1-instantaneous)
-!! @param [in] step_avr 平均ステップ
-!! @param [in] time_avr 平均時刻
-!<
-  subroutine fb_write_sph_v(v, sz, g, fname, step, time, org, pit, d_type, gs, avs, step_avr, time_avr)
-  implicit none
-  integer                                                   ::  i, j, k, l, ix, jx, kx, g, step, gs, step_avr, avs
-  integer                                                   ::  sv_type, d_type, imax, jmax, kmax
-  integer, dimension(3)                                     ::  sz
-  real                                                      ::  time, time_avr
-  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
-  real, dimension(3)                                        ::  org, pit
-  character(64)                                             ::  fname
-
-  ix = sz(1)
-  jx = sz(2)
-  kx = sz(3)
-
-  sv_type = 2 ! vector
-
-  if ( gs == 0 ) then
-    imax = ix
-    jmax = jx
-    kmax = kx
-  else
-    imax = ix + 2*g
-    jmax = jx + 2*g
-    kmax = kx + 2*g
-  end if
-
-  open(16, file=fname, form='unformatted')
-  write(16) sv_type, d_type
-  write(16) imax, jmax, kmax
-  write(16) org(1), org(2), org(3)
-  write(16) pit(1), pit(2), pit(3)
-  write(16) step, time
-
-  if ( gs /= 0 ) then
-    write(16) ((((v(l,i,j,k),l=1,3),i=1-g,ix+g),j=1-g,jx+g),k=1-g,kx+g)
-  else
-    write(16) ((((v(l,i,j,k),l=1,3),i=1,ix),j=1,jx),k=1,kx)
-  end if
-
-  if ( avs == 0 ) then
-    write(16) step_avr, time_avr
-  end if
-  
-  close (unit=16)
-
-  return
-  end subroutine fb_write_sph_v
-
-
-!> ********************************************************************
-!! @brief スカラ値のロード
-!! @param [out] s        スカラ
-!! @param [in]  sz       配列長
-!! @param [in]  g        ガイドセル長
-!! @param [in]  fname    ファイル名
-!! @param [out] step     ステップ数
-!! @param [out] time     時刻
-!! @param [in]  gs       ガイドセルスイッチ (0-without, others-with)
-!! @param [in]  avs      平均値識別子 (0-average, 1-instantaneous) 
-!! @param [out] step_avr 平均ステップ数
-!! @param [out] time_avr 平均時刻
-!<
-  subroutine fb_read_sph_s(s, sz, g, fname, step, time, gs, avs, step_avr, time_avr)
-  implicit none
-  integer                                                   ::  i, j, k, ix, jx, kx, g, step, gs, step_avr, avs
-  integer                                                   ::  sv_type, d_type, imax, jmax, kmax
-  integer, dimension(3)                                     ::  sz
-  real                                                      ::  x_org, y_org, z_org, dx, dy, dz, time, time_avr
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  s
-  character(64)                                             ::  fname
-
-  ix = sz(1)
-  jx = sz(2)
-  kx = sz(3)
-
-  open(16, file=fname, form='unformatted')
-
-  read(16) sv_type, d_type
-  if ( sv_type /= 1 ) then
-    write(*,*) 'read error : scalar'
-    stop
-  end if
-  
-  read(16) imax, jmax, kmax
-  !write (*,*) imax, jmax, kmax, ix, jx, kx
-  if ( gs == 0 ) then
-    if ( (imax /= ix) .or. (jmax /= jx) .or. (kmax /= kx) ) then
-      write(*,*) 'read error : size'
-      stop
-    end if
-  else
-    if ( (imax /= (ix+2*g)) .or. (jmax /= (jx+2*g)) .or. (kmax /= (kx+2*g)) ) then
-      write(*,*) 'read error : size'
-      stop
-    end if
-  end if
-  
-  read(16) x_org, y_org, z_org
-  read(16) dx, dy, dz
-  read(16) step, time
-  
-  if ( gs == 0 ) then
-    read(16) (((s(i,j,k),i=1,ix),j=1,jx),k=1,kx)
-  else
-    read(16) (((s(i,j,k),i=1-g,ix+g),j=1-g,jx+g),k=1-g,kx+g)
-  end if
-  
-  if ( avs == 0 ) then
-    read(16) step_avr, time_avr
-  end if
-  
-  close (unit=16)
-
-  return
-  end subroutine fb_read_sph_s
-  
-!> ********************************************************************
-!! @brief ベクトルのロード
-!! @param [out] v        ベクトル値
-!! @param [in]  sz       配列長
-!! @param [in]  g        ガイドセル長
-!! @param [in]  fname    ファイル名
-!! @param [out] step     ステップ数
-!! @param [out] time     時刻
-!! @param [in]  gs       ガイドセルスイッチ (0-without, others-with)
-!! @param [in]  avs      平均値識別子 (0-average, 1-instantaneous)
-!! @param [out] step_avr 平均ステップ数
-!! @param [out] time_avr 平均時刻
-!<
-  subroutine fb_read_sph_v(v, sz, g, fname, step, time, gs, avs, step_avr, time_avr)
-  implicit none
-  integer                                                   ::  i, j, k, ix, jx, kx, g, step, gs, l, step_avr, avs
-  integer                                                   ::  sv_type, d_type, imax, jmax, kmax
-  integer, dimension(3)                                     ::  sz
-  real                                                      ::  x_org, y_org, z_org, dx, dy, dz, time, time_avr
-  real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
-  character(64)                                             ::  fname
-
-  ix = sz(1)
-  jx = sz(2)
-  kx = sz(3)
-
-  open(16, file=fname, form='unformatted')
-  
-  read(16) sv_type, d_type
-  if ( sv_type /= 2 ) then
-    write(*,*) 'read error : vector'
-    stop
-  end if
-  
-  read(16) imax, jmax, kmax
-  if ( gs == 0 ) then
-    if ( (imax /= ix) .or. (jmax /= jx) .or. (kmax /= kx) ) then
-      write(*,*) 'read error : size'
-      stop
-    end if
-  else
-    if ( (imax /= (ix+2*g)) .or. (jmax /= (jx+2*g)) .or. (kmax /= (kx+2*g)) ) then
-      write(*,*) 'read error : size'
-      stop
-    end if
-  end if
-  
-  read(16) x_org, y_org, z_org
-  read(16) dx, dy, dz
-  read(16) step, time
-
-  if ( gs == 0 ) then
-    read(16) ((((v(l,i,j,k),l=1,3),i=1,ix),j=1,jx),k=1,kx)
-  else
-    read(16) ((((v(l,i,j,k),l=1,3),i=-1,ix+2),j=-1,jx+2),k=-1,kx+2)
-  end if
-
-  if ( avs == 0 ) then
-    read(16) step_avr, time_avr
-  end if
-
-  close (unit=16)
-
-  return
-  end subroutine fb_read_sph_v
-
   
   
 !> ********************************************************************
@@ -1070,6 +807,8 @@
   return
   end subroutine fb_delta_v
 
+
+
 !> ********************************************************************
 !! @brief 有効セルに対する，1タイムステップ進行時の変化量の2乗和と平均値(RootMean)
 !! @param [out] d    戻り値（変化量の2乗和と平均値）
@@ -1126,8 +865,11 @@
   d(1) = rm
   d(2) = av
 
+
   return
   end subroutine fb_delta_s
+
+
 
 !> ********************************************************************
 !! @brief ベクトル値を加算する
@@ -1175,6 +917,8 @@
   return
   end subroutine fb_average_v
 
+
+
 !> ********************************************************************
 !! @brief スカラ値を加算する
 !! @param [in,out] avr  平均値
@@ -1218,6 +962,7 @@
 
   return
   end subroutine fb_average_s
+
 
 
 !> ********************************************************************
@@ -1270,6 +1015,8 @@
     
     return
     end subroutine fb_totalp
+
+
 
 !> ********************************************************************
 !! @brief 速度の最小値と最大値を計算する (shape:ijkn)
@@ -1550,6 +1297,8 @@ end do
 
 return
 end subroutine fb_set_fvector
+
+
 
 !> ********************************************************************
 !! @brief スカラ値の値を[0, 1]に制限する

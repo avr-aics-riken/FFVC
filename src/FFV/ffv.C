@@ -1475,3 +1475,171 @@ void FFV::VariationSpace(double* avr, double* rms, double& flop)
   }
   
 }
+
+// #################################################################
+/**
+ * @brief sphファイルの書き出し（内部領域のみ）
+ * @param [in] vf               スカラデータ
+ * @param [in] sz               配列サイズ
+ * @param [in] gc               ガイドセル
+ * @param [in] gc_out           出力するガイドセル数
+ * @param [in] org              基点
+ * @param [in] ddx              ピッチ
+ * @param [in] m_ModePrecision  浮動小数点の精度
+ * @note 標記上，long 対応になっているが，ファイルフォーマットとの対応を確認のこと
+ */
+void FFV::writeRawSPH(const REAL_TYPE *vf, const int* sz, const int gc, const int gc_out, const REAL_TYPE* org, const REAL_TYPE* ddx, const int m_ModePrecision)
+{
+  int pad, dType, stp, svType;
+  REAL_TYPE ox, oy, oz, dx, dy, dz, tm;
+  long long szl[3], stpl;
+  
+  
+  char sph_fname[512];
+  
+  if ( paraMngr->IsParallel() )
+  {
+    sprintf( sph_fname, "field%010d.sph", paraMngr->GetMyRankID() );
+  }
+  else
+  {
+    sprintf( sph_fname, "field.sph" );
+  }
+  
+  ofstream ofs(sph_fname, ios::out | ios::binary);
+  if (!ofs)
+  {
+    printf("\tCan't open %s file\n", sph_fname);
+    Exit(0);
+  }
+  
+  int m_sz[3];
+  m_sz[0] = sz[0]+2*gc_out;
+  m_sz[1] = sz[1]+2*gc_out;
+  m_sz[2] = sz[2]+2*gc_out;
+  int gd = gc;
+  
+  size_t nx = m_sz[0] * m_sz[1] * m_sz[2];
+  
+  ox = org[0]-ddx[0]*(REAL_TYPE)gc_out;
+  oy = org[1]-ddx[1]*(REAL_TYPE)gc_out;
+  oz = org[2]-ddx[2]*(REAL_TYPE)gc_out;
+  dx = ddx[0];
+  dy = ddx[1];
+  dz = ddx[2];
+  //printf("org: %f %f %f\n", ox, oy, oz);
+  //printf("dx : %f %f %f\n", dx, dy, dz);
+  
+  svType = kind_scalar;
+  if ( sizeof(REAL_TYPE) == sizeof(double) )
+  {
+    for (int i=0; i<3; i++)   szl[i] = (long long)m_sz[i];
+  }
+  
+  REAL_TYPE *f = new REAL_TYPE[nx];
+  
+  size_t m, l;
+  
+  for (int k=1; k<=m_sz[2]; k++) {
+    for (int j=1; j<=m_sz[1]; j++) {
+      for (int i=1; i<=m_sz[0]; i++) {
+        l = _F_IDX_S3D(i, j, k, m_sz[0], m_sz[1], m_sz[2], gc_out);
+        m = _F_IDX_S3D(i, j, k, m_sz[0], m_sz[1], m_sz[2], gd);
+        f[l] = (REAL_TYPE)vf[m];
+      }
+    }
+  }
+  
+  // data property
+  ( m_ModePrecision == sizeof(float) ) ? dType=1 : dType=2;
+  pad = sizeof(int)*2;
+  ofs.write( (char*)&pad, sizeof(int) );
+  ofs.write( (char*)&svType, sizeof(int) );
+  ofs.write( (char*)&dType, sizeof(int) );
+  ofs.write( (char*)&pad, sizeof(int) );
+  
+  // voxel size
+  if (dType == 1) {
+    pad = sizeof(int)*3;
+    ofs.write( (char*)&pad, sizeof(int) );
+    ofs.write( (char*)&m_sz[0], sizeof(int) );
+    ofs.write( (char*)&m_sz[1], sizeof(int) );
+    ofs.write( (char*)&m_sz[2], sizeof(int) );
+    ofs.write( (char*)&pad, sizeof(int) );
+  }
+  else {
+    pad = sizeof(long long)*3;
+    ofs.write( (char*)&pad, sizeof(int) );
+    ofs.write( (char*)&szl[0], sizeof(long long) );
+    ofs.write( (char*)&szl[1], sizeof(long long) );
+    ofs.write( (char*)&szl[2], sizeof(long long) );
+    ofs.write( (char*)&pad, sizeof(int) );
+  }
+  
+  // original point of domain
+  if (dType == 1) {
+    pad = sizeof(float)*3;
+    ofs.write( (char*)&pad, sizeof(int) );
+    ofs.write( (char*)&ox, sizeof(float) );
+    ofs.write( (char*)&oy, sizeof(float) );
+    ofs.write( (char*)&oz, sizeof(float) );
+    ofs.write( (char*)&pad, sizeof(int) );
+  }
+  else {
+    pad = sizeof(double)*3;
+    ofs.write( (char*)&pad, sizeof(int) );
+    ofs.write( (char*)&ox, sizeof(double) );
+    ofs.write( (char*)&oy, sizeof(double) );
+    ofs.write( (char*)&oz, sizeof(double) );
+    ofs.write( (char*)&pad, sizeof(int) );
+  }
+  
+  // pitch of voxel
+  if (dType == 1) {
+    pad = sizeof(float)*3;
+    ofs.write( (char*)&pad, sizeof(int) );
+    ofs.write( (char*)&dx, sizeof(float) );
+    ofs.write( (char*)&dy, sizeof(float) );
+    ofs.write( (char*)&dz, sizeof(float) );
+    ofs.write( (char*)&pad, sizeof(int) );
+  }
+  else {
+    pad = sizeof(double)*3;
+    ofs.write( (char*)&pad, sizeof(int) );
+    ofs.write( (char*)&dx, sizeof(double) );
+    ofs.write( (char*)&dy, sizeof(double) );
+    ofs.write( (char*)&dz, sizeof(double) );
+    ofs.write( (char*)&pad, sizeof(int) );
+  }
+  
+  // time stamp
+  if (dType == 1) {
+    stp = 0;
+    tm = 0.0;
+    pad = sizeof(int)+sizeof(float);
+    ofs.write( (char*)&pad, sizeof(int) );
+    ofs.write( (char*)&stp, sizeof(int) );
+    ofs.write( (char*)&tm, sizeof(float) );
+    ofs.write( (char*)&pad, sizeof(int) );
+  }
+  else {
+    stpl =0;
+    tm = 0.0;
+    pad = sizeof(long long)+sizeof(double);
+    ofs.write( (char*)&pad, sizeof(int) );
+    ofs.write( (char*)&stpl, sizeof(long long) );
+    ofs.write( (char*)&tm, sizeof(double) );
+    ofs.write( (char*)&pad, sizeof(int) );
+  }
+  
+  if (svType == kind_scalar) {
+    int pad = (m_ModePrecision == sizeof(float)) ? nx * sizeof(float) : nx * sizeof(double);
+    ofs.write( (char*)&pad, sizeof(int) );
+    ofs.write( (char*)f,   pad );
+    ofs.write( (char*)&pad, sizeof(int) );
+  }
+  
+  ofs.close();
+  
+  if (f) { delete [] f; f=NULL; }
+}

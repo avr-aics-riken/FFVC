@@ -73,7 +73,7 @@ private:
   ///< REAL_TYPE pitch[3];    格子幅
   /// 以上はDomainInfoで定義済み
   
-  float sd_rgn[3];   ///< subdomainサイズ
+  REAL_TYPE sd_rgn[3];   ///< subdomainサイズ
   unsigned G_Acell;  ///< グローバルなActive cell
   
   string out_svx;   ///< SVX 形式出力 >> VXgen
@@ -137,9 +137,9 @@ public:
   
 private:
   // active subdomain flag
-  int active(const float* px,
-             const float* py,
-             const float* pz,
+  int active(const REAL_TYPE* px,
+             const REAL_TYPE* py,
+             const REAL_TYPE* pz,
              unsigned char* sd);
   
   
@@ -148,7 +148,7 @@ private:
   
   
   // position of min/max for each subdomain
-  void createSubdomainTable(float* p_x, float* p_y, float* p_z);
+  void createSubdomainTable(REAL_TYPE* p_x, REAL_TYPE* p_y, REAL_TYPE* p_z);
   
   
   // フィル　FFVクラスを適用
@@ -156,9 +156,9 @@ private:
   
   
   // サブドメイン内に含まれるポリゴンリストを検索し，フラグを立てる
-  void findPolygon(const float* px,
-                   const float* py,
-                   const float* pz,
+  void findPolygon(const REAL_TYPE* px,
+                   const REAL_TYPE* py,
+                   const REAL_TYPE* pz,
                    unsigned char* sd,
                    const string label);
   

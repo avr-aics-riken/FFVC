@@ -142,7 +142,7 @@ void CompoFraction::get_angle()
   {
     alpha = 0.0; // yz面への射影ベクトルがゼロの場合には回転しない
   }
-  printf("yz=%f : (%f %f %f)\n", alpha, p.x, p.y, p.z);
+  //printf("yz=%f : (%f %f %f)\n", alpha, p.x, p.y, p.z);
   
   // 参照ベクトルをalphaだけ回転して評価ベクトルを生成 > xz面への射影
   q.assign(alpha, 0.0, 0.0);
@@ -203,7 +203,7 @@ void CompoFraction::get_angle()
   }
   
 // ##########
-#if 1
+#if 0
   stamped_printf("angle = (%f %f %f)\n", angle.x, angle.y, angle.z);
 #endif
 // ##########
@@ -301,14 +301,14 @@ void CompoFraction::setShapeParam (const REAL_TYPE m_nv[3],
 
 // #################################################################
 // 体積率が(0,1)の間のセルに対してサブディビジョンを実施
-void CompoFraction::subdivision(const int st[], const int ed[], float* vf, double& flop)
+void CompoFraction::subdivision(const int st[], const int ed[], REAL_TYPE* vf, double& flop)
 {
   Vec3r base, b;
   Vec3r p, o;
   size_t m;
   REAL_TYPE c, h, ff, ph;
   int ix, jx, kx, gd, dv;
-  float r;
+  REAL_TYPE r;
   
   // for optimization > variables defined outside
   ix = size[0];
@@ -350,7 +350,7 @@ void CompoFraction::subdivision(const int st[], const int ed[], float* vf, doubl
                 }
               }
             } // k1
-            vf[m] = (float)(c*ff);
+            vf[m] = (REAL_TYPE)(c*ff);
             flop += 10.0;
           }
           
@@ -387,7 +387,7 @@ void CompoFraction::subdivision(const int st[], const int ed[], float* vf, doubl
                 }
               }
             } // k1
-            vf[m] = (float)(c*ff);
+            vf[m] = (REAL_TYPE)(c*ff);
             flop += 10.0;
           }
           
@@ -405,7 +405,7 @@ void CompoFraction::subdivision(const int st[], const int ed[], float* vf, doubl
 // セルの8頂点の内外判定を行い，0, 1, otherに分類
 // テスト候補のループ範囲（st[], ed[]）内で，テストセルの8頂点座標を生成し，形状の範囲内かどうかを判定する
 // vfは加算するので、初期化しておく
-void CompoFraction::vertex8(const int st[], const int ed[], float* vf, double& flop)
+void CompoFraction::vertex8(const int st[], const int ed[], REAL_TYPE* vf, double& flop)
 {
   Vec3r base, o, b;
   Vec3r p[8];
@@ -443,7 +443,7 @@ void CompoFraction::vertex8(const int st[], const int ed[], float* vf, double& f
             c += judge_rect(p[l]);
           }
           size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          vf[m] += (float)(c*0.125); // 1/8
+          vf[m] += (REAL_TYPE)(c*0.125); // 1/8
         }
       }
     }
@@ -474,7 +474,7 @@ void CompoFraction::vertex8(const int st[], const int ed[], float* vf, double& f
             c += judge_cylinder(p[l]);
           }
           size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          vf[m] += (float)(c*0.125); // 1/8
+          vf[m] += (REAL_TYPE)(c*0.125); // 1/8
         }
       }
     }

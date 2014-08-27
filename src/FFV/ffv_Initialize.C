@@ -41,7 +41,6 @@ int FFV::Initialize(int argc, char **argv)
   
   // cpm_ParaManagerのポインタをセット
   C.importCPM(paraMngr);
-  F.importCPM(paraMngr);
   V.importCPM(paraMngr);
   B.importCPM(paraMngr);
   BC.importCPM(paraMngr);
@@ -1202,7 +1201,7 @@ void FFV::encodeBCindex(FILE* fp)
 
   
   // エンコードした面の数から表面積を近似
-  float dhd = (float)deltaX * (float)C.RefLength;
+  REAL_TYPE dhd = (REAL_TYPE)deltaX * (REAL_TYPE)C.RefLength;
   
   Hostonly_
   {
@@ -1219,8 +1218,8 @@ void FFV::encodeBCindex(FILE* fp)
   {
     if ( cmp[n].isKindMedium() ) continue;
     
-    float ap = (float)cmp[n].getElement() * dhd * dhd; // dhd は有次元値，近似的な面積
-    float ao = (float)cmp[n].area;
+    REAL_TYPE ap = (REAL_TYPE)cmp[n].getElement() * dhd * dhd; // dhd は有次元値，近似的な面積
+    REAL_TYPE ao = (REAL_TYPE)cmp[n].area;
     cmp[n].area = (REAL_TYPE)ap;
     
     Hostonly_
@@ -3161,7 +3160,7 @@ void FFV::setComponentVF()
   int f_st[3], f_ed[3];
   double flop;
   
-  CompoFraction CF(size, guide, (float*)pitch, (float*)origin, C.Hide.Subdivision);
+  CompoFraction CF(size, guide, (REAL_TYPE*)pitch, (REAL_TYPE*)origin, C.Hide.Subdivision);
   
   for (int n=1; n<=C.NoCompo; n++)
   {
@@ -3172,11 +3171,11 @@ void FFV::setComponentVF()
       switch ( cmp[n].getType() ) 
       {
         case HEX:
-          CF.setShapeParam((float*)cmp[n].nv, (float*)cmp[n].oc, (float*)cmp[n].dr, (float)cmp[n].depth, (float)cmp[n].shp_p1, (float)cmp[n].shp_p2);
+          CF.setShapeParam((REAL_TYPE*)cmp[n].nv, (REAL_TYPE*)cmp[n].oc, (REAL_TYPE*)cmp[n].dr, (REAL_TYPE)cmp[n].depth, (REAL_TYPE)cmp[n].shp_p1, (REAL_TYPE)cmp[n].shp_p2);
           break;
           
         case FAN:
-          CF.setShapeParam((float*)cmp[n].nv, (float*)cmp[n].oc, (float)cmp[n].depth, (float)cmp[n].shp_p1, (float)cmp[n].shp_p2);
+          CF.setShapeParam((REAL_TYPE*)cmp[n].nv, (REAL_TYPE*)cmp[n].oc, (REAL_TYPE)cmp[n].depth, (REAL_TYPE)cmp[n].shp_p1, (REAL_TYPE)cmp[n].shp_p2);
           break;
           
         case DARCY:
@@ -3234,7 +3233,7 @@ void FFV::setComponentVF()
       pit[i] *= C.RefLength;
     }
   }
-  F.writeRawSPH(cvf, size, guide, 0, org, pit, sizeof(float));
+  writeRawSPH(cvf, size, guide, 0, org, pit, sizeof(REAL_TYPE));
 #endif
 // ##########
   
@@ -3742,7 +3741,7 @@ void FFV::setMonitorList()
       pit[i] *= C.RefLength;
     }
   }
-  F.writeRawSPH(d_bcd, size, guide, 0, org, pit, sizeof(float));
+  writeRawSPH(d_bcd, size, guide, 0, org, pit, sizeof(REAL_TYPE));
 #endif
   // ##########
 }
@@ -3927,7 +3926,6 @@ string FFV::setupDomain(TextParser* tpf)
   C.setRankInfo    (paraMngr, procGrp);
   B.setRankInfo    (paraMngr, procGrp);
   V.setRankInfo    (paraMngr, procGrp);
-  F.setRankInfo    (paraMngr, procGrp);
   BC.setRankInfo   (paraMngr, procGrp);
   Ex->setRankInfo  (paraMngr, procGrp);
   MO.setRankInfo   (paraMngr, procGrp);
@@ -3960,7 +3958,6 @@ string FFV::setupDomain(TextParser* tpf)
   C.setNeighborInfo    (C.guide);
   B.setNeighborInfo    (C.guide);
   V.setNeighborInfo    (C.guide);
-  F.setNeighborInfo    (C.guide);
   BC.setNeighborInfo   (C.guide);
   Ex->setNeighborInfo  (C.guide);
   MO.setNeighborInfo   (C.guide);
@@ -4234,8 +4231,8 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   // Triangle display >> Debug
 // ##########
 #if 0
-  PolylibNS::Vec3f m_min, m_max, t1(poly_org), t2(poly_dx), t3;
-  t3.assign((float)size[0]*t2.x, (float)size[1]*t2.y, (float)size[2]*t2.z);
+  PolylibNS::Vec3<REAL_TYPE> m_min, m_max, t1(poly_org), t2(poly_dx), t3;
+  t3.assign((REAL_TYPE)size[0]*t2.x, (REAL_TYPE)size[1]*t2.y, (REAL_TYPE)size[2]*t2.z);
   m_min = t1 - t2;      // 1層外側まで
   m_max = t1 + t3 + t2; //
   printf("min : %f %f %f\n", m_min.x, m_min.y, m_min.z);

@@ -1782,7 +1782,7 @@ unsigned long VoxInfo::encPbitIBC (const int order,
                                    int* bcd,
                                    int* bcp,
                                    const int* bid,
-                                   const float* vec,
+                                   const REAL_TYPE* vec,
                                    const string condition,
                                    const int bc_dir)
 {
@@ -1804,7 +1804,9 @@ unsigned long VoxInfo::encPbitIBC (const int order,
     mode = false;
   }
   
-  Vec3f nv(vec);
+  float m_vec[3]={(float)vec[0], (float)vec[1], (float)vec[2]};
+  
+  Vec3f nv(m_vec);
   
   // 反対方向のとき符号反転 > 内積が負のときに対象位置となる
   if ( bc_dir == CompoList::opposite_direction )
@@ -2305,7 +2307,7 @@ unsigned long VoxInfo::encVbitIBC (const int order,
                                    int* cdf,
                                    int* bp,
                                    const int* bid,
-                                   const float* vec,
+                                   const REAL_TYPE* vec,
                                    const int bc_dir,
                                    CompoList* cmp)
 {
@@ -2317,7 +2319,8 @@ unsigned long VoxInfo::encVbitIBC (const int order,
   int gd = guide;
   int odr = order;
   
-  Vec3f nv(vec);
+  float m_vec[3]={(float)vec[0], (float)vec[1], (float)vec[2]};
+  Vec3f nv(m_vec);
   
   // 反対方向のとき符号反転 > 内積が負のときに対象位置となる
   if ( bc_dir == CompoList::opposite_direction )
@@ -4216,7 +4219,7 @@ unsigned long VoxInfo::setBCIndexP (int* bcd, int* bcp, SetBC* BC, CompoList* cm
   for (int n=1; n<=NoCompo; n++)
   {
     int m_dir = cmp[n].getBClocation();
-    float vec[3] = { (float)cmp[n].nv[0], (float)cmp[n].nv[1], (float)cmp[n].nv[2] };
+    REAL_TYPE vec[3] = { cmp[n].nv[0], cmp[n].nv[1], cmp[n].nv[2] };
     
     switch ( cmp[n].getType() )
     {
@@ -4326,12 +4329,11 @@ void VoxInfo::setBCIndexV (int* cdf, int* bp, SetBC* BC, CompoList* cmp, int icl
   
   // 内部境界のコンポーネントのエンコード
   int m_dir;
-  float vec[3];
   
   for (int n=1; n<=NoCompo; n++)
   {
     int m_dir = cmp[n].getBClocation(); // IN/same_direction=1, OUT/opposite_direction=2
-    float vec[3] = { (float)cmp[n].nv[0], (float)cmp[n].nv[1], (float)cmp[n].nv[2] };
+    REAL_TYPE vec[3] = { cmp[n].nv[0], cmp[n].nv[1], cmp[n].nv[2] };
     
     switch ( cmp[n].getType() )
     {
@@ -4348,7 +4350,7 @@ void VoxInfo::setBCIndexV (int* cdf, int* bp, SetBC* BC, CompoList* cmp, int icl
 
 // #################################################################
 // bx[]のコンポーネントエントリを参照して体積率を計算し，圧力損失コンポーネントの場合にはビットを立てる
-void VoxInfo::setCmpFraction (CompoList* cmp, int* bx, const float* vf)
+void VoxInfo::setCmpFraction (CompoList* cmp, int* bx, const REAL_TYPE* vf)
 {
 	size_t m;
   int st[3], ed[3];
@@ -4372,7 +4374,7 @@ void VoxInfo::setCmpFraction (CompoList* cmp, int* bx, const float* vf)
             s = bx[m];
             if ( ( s & MASK_5) == n )
             {
-              f = floorf(vf[m]*255.0 + 0.5); // 0.0<vf<1.0 の四捨五入 > 8ビットで量子化
+              f = floor(vf[m]*255.0 + 0.5); // 0.0<vf<1.0 の四捨五入 > 8ビットで量子化
               if ( f > 255 ) Exit(0);
               s |= (f << TOP_VF); // 8ビットで量子化
               if ( cmp[n].isFORCING() ) s = onBit(s, FORCING_BIT);

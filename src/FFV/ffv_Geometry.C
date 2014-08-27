@@ -21,8 +21,6 @@
 
 #include "ffv.h"
 
-
-
 // #################################################################
 /* @brief d_mid[]の対象IDに対して、d_pvf[]に指定値を代入する
  * @param [in] target 対象ID
@@ -74,10 +72,10 @@ unsigned long FFV::assignVF(const int target, const REAL_TYPE value)
 // ポリゴングループの座標値からboxを計算する
 void FFV::calcBboxFromPolygonGroup()
 {
-  Vec3f m_min, m_max;
-  Vec3f t1(poly_org), t2(poly_dx), t3;
+  Vec3<REAL_TYPE> m_min, m_max;
+  Vec3<REAL_TYPE> t1(poly_org), t2(poly_dx), t3;
   
-  t3.assign((float)size[0]*t2.x, (float)size[1]*t2.y, (float)size[2]*t2.z);
+  t3.assign((REAL_TYPE)size[0]*t2.x, (REAL_TYPE)size[1]*t2.y, (REAL_TYPE)size[2]*t2.z);
   
   // サブドメインの1層外側までをサーチ対象とする
   m_min = t1 - t2;
@@ -103,16 +101,16 @@ void FFV::calcBboxFromPolygonGroup()
       // false; ポリゴンが一部でもかかればピックアップ
       vector<Triangle*>* trias = PL->search_polygons(m_pg, m_min, m_max, false);
       
-      Vec3f *p;
-      Vec3f bbox_min( 1.0e6,  1.0e6,  1.0e6);
-      Vec3f bbox_max(-1.0e6, -1.0e6, -1.0e6);
+      Vec3<REAL_TYPE> *p;
+      Vec3<REAL_TYPE> bbox_min( 1.0e6,  1.0e6,  1.0e6);
+      Vec3<REAL_TYPE> bbox_max(-1.0e6, -1.0e6, -1.0e6);
       unsigned c=0;
       vector<Triangle*>::iterator it2;
       
       for (it2 = trias->begin(); it2 != trias->end(); it2++)
       {
         Vertex** org = (*it2)->get_vertex();
-        Vec3f p[3];
+        Vec3<REAL_TYPE> p[3];
         p[0] = *(org[0]);
         p[1] = *(org[1]);
         p[2] = *(org[2]);
@@ -147,7 +145,7 @@ void FFV::calcBboxFromPolygonGroup()
     }
     else // ntria == 0
     {
-      Vec3f dummy(0.0, 0.0, 0.0);
+      Vec3<REAL_TYPE> dummy(0.0, 0.0, 0.0);
       PG[m].setBboxMin(dummy);
       PG[m].setBboxMax(dummy);
     }
@@ -162,11 +160,11 @@ void FFV::calcBboxFromPolygonGroup()
   // 領域内に収まっているかどうかをチェック >> ポリゴンは少しでも触れれば対象となり、領域外にはみ出すことがある
   for (int i=0; i<C.num_of_polygrp; i++)
   {
-    Vec3f b_min = PG[i].getBboxMin();
-    Vec3f b_max = PG[i].getBboxMax();
+    Vec3<REAL_TYPE> b_min = PG[i].getBboxMin();
+    Vec3<REAL_TYPE> b_max = PG[i].getBboxMax();
     
-    float f_min[3];
-    float f_max[3];
+    REAL_TYPE f_min[3];
+    REAL_TYPE f_max[3];
     f_min[0] = b_min.x;
     f_min[1] = b_min.y;
     f_min[2] = b_min.z;
@@ -183,12 +181,12 @@ void FFV::calcBboxFromPolygonGroup()
     for (int q=0; q<3; q++)
     {
       if ( f_min[q] < origin[q] ) f_min[q] = origin[q];
-      float tmp = origin[q] + region[q];
+      REAL_TYPE tmp = origin[q] + region[q];
       if ( f_max[q] > tmp ) f_max[q] = tmp;
     }
     
-    Vec3f rmin(f_min);
-    Vec3f rmax(f_max);
+    Vec3<REAL_TYPE>  rmin(f_min);
+    Vec3<REAL_TYPE>  rmax(f_max);
     
     PG[i].setBboxMin(rmin);
     PG[i].setBboxMax(rmax);
@@ -582,12 +580,12 @@ unsigned long FFV::findPolygonInCell()
           for (int j=wmin[1]; j<=wmax[1]; j++) {
             for (int i=wmin[0]; i<=wmax[0]; i++) {
               
-              Vec3f bx_min(poly_org[0]+poly_dx[0]*(float)(i-1),
-                           poly_org[1]+poly_dx[1]*(float)(j-1),
-                           poly_org[2]+poly_dx[2]*(float)(k-1)); // セルBboxの対角座標
-              Vec3f bx_max(poly_org[0]+poly_dx[0]*(float)i,
-                           poly_org[1]+poly_dx[1]*(float)j,
-                           poly_org[2]+poly_dx[2]*(float)k);     // セルBboxの対角座標
+              Vec3<REAL_TYPE> bx_min(poly_org[0]+poly_dx[0]*(REAL_TYPE)(i-1),
+                                     poly_org[1]+poly_dx[1]*(REAL_TYPE)(j-1),
+                                     poly_org[2]+poly_dx[2]*(REAL_TYPE)(k-1)); // セルBboxの対角座標
+              Vec3<REAL_TYPE> bx_max(poly_org[0]+poly_dx[0]*(REAL_TYPE)i,
+                                     poly_org[1]+poly_dx[1]*(REAL_TYPE)j,
+                                     poly_org[2]+poly_dx[2]*(REAL_TYPE)k);     // セルBboxの対角座標
               
               vector<Triangle*>* trias = PL->search_polygons(m_pg, bx_min, bx_max, false); // false; ポリゴンが一部でもかかる場合
               int polys = trias->size();
@@ -660,12 +658,12 @@ unsigned long FFV::findPolygonInCell()
  * @param [in]     refVf     ペイントする体積率
  * @note single threadで実行
  */
-int FFV::SubCellFill(float* svf,
+int FFV::SubCellFill(REAL_TYPE* svf,
                      int* smd,
                      const int sdv,
                      const int dir,
                      const int refID,
-                     const float refVf
+                     const REAL_TYPE refVf
                      )
 {
   int filled = 0;
@@ -890,20 +888,20 @@ int FFV::SubCellFill(float* svf,
  * @retval ポリゴンを含むセル数
  * @note single threadで実行
  */
-int FFV::SubCellIncTest(float* svf,
+int FFV::SubCellIncTest(REAL_TYPE* svf,
                         int* smd,
                         const int sdv,
                         const int ip,
                         const int jp,
                         const int kp,
-                        const Vec3f pch,
+                        const Vec3<REAL_TYPE> pch,
                         const string m_pg
                         )
 {
   // プライマリセルの基点（有次元）
-  Vec3f o(poly_org[0]+poly_dx[0]*(float)(ip-1),
-          poly_org[1]+poly_dx[1]*(float)(jp-1),
-          poly_org[2]+poly_dx[2]*(float)(kp-1));
+  Vec3<REAL_TYPE> o(poly_org[0]+poly_dx[0]*(REAL_TYPE)(ip-1),
+                    poly_org[1]+poly_dx[1]*(REAL_TYPE)(jp-1),
+                    poly_org[2]+poly_dx[2]*(REAL_TYPE)(kp-1));
   
   int pic = 0;
   
@@ -913,12 +911,12 @@ int FFV::SubCellIncTest(float* svf,
       for (int i=1; i<=sdv; i++) {
         
         // サブセルのbbox
-        Vec3f b1(o.x + pch.x * (float)(i-1),
-                 o.y + pch.y * (float)(j-1),
-                 o.z + pch.z * (float)(k-1));
-        Vec3f b2(o.x + pch.x * (float)i,
-                 o.y + pch.y * (float)j,
-                 o.z + pch.z * (float)k);
+        Vec3<REAL_TYPE> b1(o.x + pch.x * (REAL_TYPE)(i-1),
+                           o.y + pch.y * (REAL_TYPE)(j-1),
+                           o.z + pch.z * (REAL_TYPE)(k-1));
+        Vec3<REAL_TYPE> b2(o.x + pch.x * (REAL_TYPE)i,
+                           o.y + pch.y * (REAL_TYPE)j,
+                           o.z + pch.z * (REAL_TYPE)k);
         
         vector<Triangle*>* trias = PL->search_polygons(m_pg, b1, b2, false); // false; ポリゴンが一部でもかかる場合
         int polys = trias->size();
@@ -965,7 +963,7 @@ int FFV::SubCellIncTest(float* svf,
  * @param [in]     ip,jp,kp  プライマリセルインデクス
  * @note single threadで実行
  */
-void FFV::SubDivision(float* svf,
+void FFV::SubDivision(REAL_TYPE* svf,
                       int* smd,
                       const int sdv,
                       const int ip,
@@ -1240,7 +1238,7 @@ void FFV::SubDivision(float* svf,
   
   int filled = 0;       ///< フィルされた数
   int sum_filled = 0;   ///< フィルされた数の合計
-  float refVf = (mat[refID].getState()==FLUID) ? 1.0 : 0.0; ///< refIDの体積率
+  REAL_TYPE refVf = (mat[refID].getState()==FLUID) ? 1.0 : 0.0; ///< refIDの体積率
   
   c = 0;
   while (target_count > 0) {
@@ -1271,7 +1269,7 @@ void FFV::SubDivision(float* svf,
   {
     // 逆の属性で残りをフィル
     int paintID = (refID == C.SeedID) ? C.FillID : C.SeedID;
-    float paintVf = (mat[refID].getState()==FLUID) ? 0.0 : 1.0;
+    REAL_TYPE paintVf = (mat[refID].getState()==FLUID) ? 0.0 : 1.0;
     
     for (int k=1; k<=sdv; k++) {
       for (int j=1; j<=sdv; j++) {
@@ -1305,7 +1303,7 @@ void FFV::SubDivision(float* svf,
 
   
   // サブセルの体積率からプライマリセルの体積率を求める
-  float sff = 0.0;
+  REAL_TYPE sff = 0.0;
   
   for (int k=1; k<=sdv; k++) {
     for (int j=1; j<=sdv; j++) {
@@ -1316,7 +1314,7 @@ void FFV::SubDivision(float* svf,
     }
   }
 
-  float ff = 1.0/(float)(sdv*sdv*sdv);
+  REAL_TYPE ff = 1.0/(REAL_TYPE)(sdv*sdv*sdv);
   d_pvf[_F_IDX_S3D(ip, jp, kp, ix, jx, kx, gd)] = sff*ff;
   
 }
@@ -1396,7 +1394,7 @@ void FFV::SubSampling(FILE* fp)
   
   // sub-cell work array
   size_t nx = (sdv+2)*(sdv+2)*(sdv+2);
-  float* svf = new float [nx]; // guide cell is 1 for each dir.
+  REAL_TYPE* svf = new REAL_TYPE [nx]; // guide cell is 1 for each dir.
   int* smd = new int [nx];
   
 #pragma omp parallel for firstprivate(sdv) schedule(static) collapse(3)
@@ -1430,11 +1428,11 @@ void FFV::SubSampling(FILE* fp)
         }
         
         // サブセルのファイル出力ヘッダ
-        for (int l=0; l<3; l++) m_pit[l] = poly_dx[l]/(float)sdv;
+        for (int l=0; l<3; l++) m_pit[l] = poly_dx[l]/(REAL_TYPE)sdv;
         
-        m_org[0] = poly_org[0]+poly_dx[0]*(float)(i-1);
-        m_org[1] = poly_org[1]+poly_dx[1]*(float)(j-1);
-        m_org[2] = poly_org[2]+poly_dx[2]*(float)(k-1);
+        m_org[0] = poly_org[0]+poly_dx[0]*(REAL_TYPE)(i-1);
+        m_org[1] = poly_org[1]+poly_dx[1]*(REAL_TYPE)(j-1);
+        m_org[2] = poly_org[2]+poly_dx[2]*(REAL_TYPE)(k-1);
         
         
         
@@ -1467,7 +1465,7 @@ void FFV::SubSampling(FILE* fp)
             }
           } // Polygon Group
           
-          F.writeSVX(smd, i, j, k, m_siz, 1, m_pit, m_org);
+          //writeSVX(smd, i, j, k, m_siz, 1, m_pit, m_org);
           
           /*
           for (it = pg_roots->begin(); it != pg_roots->end(); it++)
@@ -1584,7 +1582,7 @@ void FFV::SubSampling(FILE* fp)
   if ( svf ) delete [] svf;
   if ( smd ) delete [] smd;
   
-  F.writeRawSPH(d_pvf, size, guide, 0, m_org, m_pit, sizeof(REAL_TYPE));
+  writeRawSPH(d_pvf, size, guide, 0, m_org, m_pit, sizeof(REAL_TYPE));
   Exit(0);
 
 }

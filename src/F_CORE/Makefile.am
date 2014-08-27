@@ -40,6 +40,7 @@ libFCORE_a_SOURCES = \
   force.h \
   load_var_stencil5.h \
   muscl.h \
-  ffv_velocity_cds.f90
+  ffv_velocity_cds.f90 \
+  FB_util.f90
 
 EXTRA_DIST = Makefile_hand depend.inc unused.f90 ffv_poisson_cds.f90 

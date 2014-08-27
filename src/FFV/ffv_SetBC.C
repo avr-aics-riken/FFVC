@@ -360,7 +360,7 @@ void SetBC3D::modDivergence(REAL_TYPE* dv, int* d_cdf, double tm, REAL_TYPE* v00
  @param v00 参照速度
  @param[out] flop
  */
-void SetBC3D::mod_Dir_Forcing(REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, double &flop)
+void SetBC3D::mod_Dir_Forcing(REAL_TYPE* d_v, int* d_bd, REAL_TYPE* d_cvf, REAL_TYPE* v00, double &flop)
 {
   int st[3], ed[3];
   REAL_TYPE vec[3];
@@ -408,7 +408,7 @@ void SetBC3D::mod_Dir_Forcing(REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE
  @param [in]     dt   時間積分幅
  @param [in,out] flop 浮動小数点演算数
  */
-void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, float* d_cvf, REAL_TYPE* v00, REAL_TYPE dt, double &flop)
+void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, REAL_TYPE* d_cvf, REAL_TYPE* v00, REAL_TYPE dt, double &flop)
 {
   int st[3], ed[3];
   REAL_TYPE vec[3];
@@ -445,7 +445,7 @@ void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, float
 
 // #################################################################
 // 圧力損失部によるPoisosn式のソース項の修正とワーク用の速度を保持
-void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* s_1, REAL_TYPE* v, int* bd, float* cvf, REAL_TYPE* v00, REAL_TYPE** c_array, double &flop)
+void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* s_1, REAL_TYPE* v, int* bd, REAL_TYPE* cvf, REAL_TYPE* v00, REAL_TYPE** c_array, double &flop)
 {
   int st[3], ed[3], csz[3];
   REAL_TYPE vec[3];
@@ -489,7 +489,7 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* s_1, REAL_TYPE* v, int* bd, float* cvf
 // #################################################################
 // 圧力損失部によるセルセンタ速度の修正と速度の発散値の修正
 // am[]のインデクスに注意 (Fortran <-> C)
-void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, int* bd, float* cvf, REAL_TYPE* dv, REAL_TYPE dt, REAL_TYPE* v00, Gemini_R* am, REAL_TYPE** c_array, double &flop)
+void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, int* bd, REAL_TYPE* cvf, REAL_TYPE* dv, REAL_TYPE dt, REAL_TYPE* v00, Gemini_R* am, REAL_TYPE** c_array, double &flop)
 {
   int st[3], ed[3], csz[3];
   REAL_TYPE vec[3];
