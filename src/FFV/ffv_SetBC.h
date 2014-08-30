@@ -115,21 +115,24 @@ protected:
   
   void Pibc_Prdc                (REAL_TYPE* d_p, int* st, int* ed, int* d_bcd, int odr, int dir, REAL_TYPE pv);
   
-  void PobcPeriodicDirectional (REAL_TYPE* d_p, const int face, REAL_TYPE pv, int uod);
+  
+  // 圧力の外部周期境界条件（圧力差）
+  void PobcPeriodicDirectional (REAL_TYPE* d_p, const int* ens);
+  
   
   // 圧力の外部周期境界条件（単純コピー）
-  void PobcPeriodicSimple (REAL_TYPE* d_p, const int face);
+  void PobcPeriodicSimple (REAL_TYPE* d_p, const int* ens);
   
   
   //温度の外部周期境界条件（単純コピー）
-  void TobcPeriodicSimple (REAL_TYPE* d_ie, const int face);
+  void TobcPeriodicSimple (REAL_TYPE* d_ie, const int* ens);
   
   
   void Vibc_Prdc (REAL_TYPE* d_v, int* st, int* ed, int* d_bd, int odr, int dir);
   
   
   // 速度の外部周期境界条件（単純コピー）
-  void VobcPeriodicSimple (REAL_TYPE* d_v, const int face);
+  void VobcPeriodicSimple (REAL_TYPE* d_v, const int* ens);
 
   
   
@@ -279,9 +282,10 @@ public:
   
   /**
    * @brief 圧力の外部境界条件
-   * @param [in,out]d_p 圧力のデータクラス
+   * @param [in,out] d_p  圧力のデータクラス
+   * @param [in]     ens  周期境界方向フラグ
    */
-  void OuterPBC (REAL_TYPE* d_p);
+  void OuterPBC (REAL_TYPE* d_p, const int* ens);
   
   
   /**
@@ -299,10 +303,11 @@ public:
   /**
    * @brief 温度の外部周期境界条件処理
    * @param [in,out] d_ie 内部エネルギー
+   * @param [in]     ens  周期境界方向フラグ
    * @see OuterTBConvection(), OuterTBCdiffusion()
    * @note OBC_SYMMETRICは，断熱マスクで処理するため，不要
    */
-  void OuterTBCperiodic (REAL_TYPE* d_ie);
+  void OuterTBCperiodic (REAL_TYPE* d_ie, const int* ens);
   
   
   /**
@@ -313,8 +318,9 @@ public:
    * @param [in]     tm    時刻
    * @param [in]     C     コントロールクラス
    * @param [in]     v00   参照速度
+   * @param [in]     ens  周期境界方向フラグ
    */
-  void OuterVBC (REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_cdf, const double tm, Control* C, REAL_TYPE* v00);
+  void OuterVBC (REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_cdf, const double tm, Control* C, REAL_TYPE* v00, const int* ens);
   
   
   /**
@@ -322,12 +328,17 @@ public:
    * @param [out]    d_vc   疑似速度ベクトル v^*
    * @param [in]     d_cdf  BCindex C
    * @param [in]     C      Control class
+   * @param [in]     ens  周期境界方向フラグ
    */
-  void OuterVBCpseudo (REAL_TYPE* d_vc, int* d_cdf, Control* C);
+  void OuterVBCpseudo (REAL_TYPE* d_vc, int* d_cdf, Control* C, const int* ens);
   
   
-  // 周期境界の場合のインデクスの同期
-  void setBCIperiodic (int* d_bx);
+  /**
+   * @brief 周期境界の場合のインデクスの同期
+   * @param [in,out] d_bx  BCindexのデータクラス
+   * @param [in]     ens   周期境界方向フラグ
+   */
+  void setBCIperiodic (int* d_bx, const int* ens);
   
   
   /**

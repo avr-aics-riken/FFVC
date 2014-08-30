@@ -38,7 +38,6 @@ libFCORE_a_SOURCES = \
   ffv_velocity_binary.f90 \
   force.h \
   ffv_velocity_cds.f90 \
-  FB_util.f90 \
-  muscl.f90
+  FB_util.f90
 
 EXTRA_DIST = Makefile_hand depend.inc unused.f90 ffv_poisson_cds.f90 

@@ -37,6 +37,7 @@
 !! @param [out] flop      浮動小数点演算数
 !<
     subroutine pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bv, bp, vcs_coef, flop)
+!DIR$ ATTRIBUTES FORCEINLINE :: muscl
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, bpx
@@ -290,7 +291,7 @@
       dv3 = Ue1-Up0
       dv2 = Up0-Uw1
       dv1 = Uw1-Uw2
-      
+
       s4 = sign(1.0, dv4) ! sign is zero flop
       s3 = sign(1.0, dv3)
       s2 = sign(1.0, dv2)

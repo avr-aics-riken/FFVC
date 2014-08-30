@@ -353,8 +353,9 @@ public:
    * @param [in,out] bc   BoundaryOuter
    * @param [in]     mat  MediumList
    * @param [out]    cmp  CompoList
+   * @param [in,out] ens  周期境界の方向
    */
-  void loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* cmp);
+  void loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* cmp, int* ens);
   
   
   /**

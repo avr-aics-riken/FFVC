@@ -148,7 +148,7 @@ am_libFCORE_a_OBJECTS = libFCORE_a-ffv_blas.$(OBJEXT) \
 	libFCORE_a-ffv_vbc_outer.$(OBJEXT) \
 	libFCORE_a-ffv_velocity_binary.$(OBJEXT) \
 	libFCORE_a-ffv_velocity_cds.$(OBJEXT) \
-	libFCORE_a-FB_util.$(OBJEXT) libFCORE_a-muscl.$(OBJEXT)
+	libFCORE_a-FB_util.$(OBJEXT)
 libFCORE_a_OBJECTS = $(am_libFCORE_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -371,8 +371,7 @@ libFCORE_a_SOURCES = \
   ffv_velocity_binary.f90 \
   force.h \
   ffv_velocity_cds.f90 \
-  FB_util.f90 \
-  muscl.f90
+  FB_util.f90
 
 EXTRA_DIST = Makefile_hand depend.inc unused.f90 ffv_poisson_cds.f90 
 all: all-am
@@ -529,12 +528,6 @@ libFCORE_a-FB_util.o: FB_util.f90
 
 libFCORE_a-FB_util.obj: FB_util.f90
 	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-FB_util.obj `if test -f 'FB_util.f90'; then $(CYGPATH_W) 'FB_util.f90'; else $(CYGPATH_W) '$(srcdir)/FB_util.f90'; fi`
-
-libFCORE_a-muscl.o: muscl.f90
-	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-muscl.o `test -f 'muscl.f90' || echo '$(srcdir)/'`muscl.f90
-
-libFCORE_a-muscl.obj: muscl.f90
-	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-muscl.obj `if test -f 'muscl.f90'; then $(CYGPATH_W) 'muscl.f90'; else $(CYGPATH_W) '$(srcdir)/muscl.f90'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique

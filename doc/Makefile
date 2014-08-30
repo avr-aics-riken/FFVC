@@ -193,7 +193,7 @@ CUT_DIR = /usr/local/FFV/Cutlib
 CUT_LDFLAGS = -L/usr/local/FFV/Cutlib/lib -lCUT
 CXX = mpicxx
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -O3 -openmp -qopt-report-phase=par -qopt-report-phase=vec
+CXXFLAGS = -O3 -openmp -qopt-report=5
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -204,14 +204,14 @@ EGREP = /usr/bin/grep -E
 EXEEXT = 
 F77 = gfortran
 FC = mpif90
-FCFLAGS = -O3 -Warn unused -fpp -openmp -qopt-report-phase=par -qopt-report-phase=vec
+FCFLAGS = -O3 -Warn unused -fpp -openmp -qopt-report=5
 FFLAGS = -g -O2
 FFVC_CXX = mpicxx
 FFVC_FC = mpif90
 FFVC_FC_LD = 
 FFVC_LDFLAGS = 
 FFVC_LIBS =  -lstdc++ -lifcore
-FFVC_REVISION = 20140830_1200
+FFVC_REVISION = 20140830_1700
 FREALOPT = 
 GREP = /usr/bin/grep
 INSTALL = /usr/local/bin/ginstall -c
@@ -235,10 +235,10 @@ OBJEXT = o
 PACKAGE = FFVC
 PACKAGE_BUGREPORT = keno@riken.jp
 PACKAGE_NAME = FFVC
-PACKAGE_STRING = FFVC 1.8.2
+PACKAGE_STRING = FFVC 1.8.3
 PACKAGE_TARNAME = FFVC
 PACKAGE_URL = 
-PACKAGE_VERSION = 1.8.2
+PACKAGE_VERSION = 1.8.3
 PATH_SEPARATOR = :
 PL_CFLAGS = -I/usr/local/FFV/Polylib/include -I/usr/local/FFV/Polylib/include/common
 PL_DIR = /usr/local/FFV/Polylib
@@ -254,7 +254,7 @@ STRIP =
 TP_CFLAGS = -I/usr/local/FFV/TextParser/include
 TP_DIR = /usr/local/FFV/TextParser
 TP_LDFLAGS = -L/usr/local/FFV/TextParser/lib -lTPmpi
-VERSION = 1.8.2
+VERSION = 1.8.3
 abs_builddir = /Daily/Development/SphDev/Module/FFVC/FFVC-1.8.2/doc
 abs_srcdir = /Daily/Development/SphDev/Module/FFVC/FFVC-1.8.2/doc
 abs_top_builddir = /Daily/Development/SphDev/Module/FFVC/FFVC-1.8.2

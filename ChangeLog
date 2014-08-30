@@ -19,8 +19,10 @@ REVISION HISTORY
 ================
 
 --------------------------
-2014-08-29
-r1630
+2014-08-30
+r1631 bug fix of Periodic condistion
+
+r1630 modify the implementation of the convection part
  - add O4_Central scheme
  - remove getConvection()
  - expand load_var_stencil5.h into source codes and remove it to avoid including a file twice
@@ -28,8 +30,7 @@ r1630
  - expand muscl.h into source codes and remove it
  - refine pvec_muscl
  - change icpc compiler option because the current options will be deprecated
-     -par-report=3 >> -qopt-report-phase=par
-     -vec-report=3 >> -qopt-report-phase=vec
+     -vec-report=3 -par-report=3 >> -qopt-report=5
 
 --------------------------
 2014-08-27

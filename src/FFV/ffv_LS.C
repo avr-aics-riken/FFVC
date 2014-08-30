@@ -250,7 +250,7 @@ int FFV::Point_SOR(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rh
     
     // 境界条件
     TIMING_start(tm_poi_BC);
-    BC.OuterPBC(x);
+    BC.OuterPBC(x, ensPeriodic);
     if ( C.EnsCompo.periodic == ON ) BC.InnerPBCperiodic(x, d_bcd);
     TIMING_stop(tm_poi_BC, 0.0);
     
@@ -421,7 +421,7 @@ int FFV::SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rh
       
       // 境界条件
       TIMING_start(tm_poi_BC);
-      BC.OuterPBC(x);
+      BC.OuterPBC(x, ensPeriodic);
       if ( C.EnsCompo.periodic == ON ) BC.InnerPBCperiodic(x, d_bcd);
       TIMING_stop(tm_poi_BC, 0.0);
       
@@ -1065,7 +1065,7 @@ int FFV::Fpcg(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm
 		rr0 = rr1;
 	}
   
-	BC.OuterPBC(x);
+	BC.OuterPBC(x, ensPeriodic);
   
 	if ( C.EnsCompo.periodic == ON )
   {
@@ -1169,7 +1169,7 @@ int FFV::Fpbicgstab(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double r
 		rr0 = rr1;
 	}
   
-	BC.OuterPBC(x);
+	BC.OuterPBC(x, ensPeriodic);
 	if ( C.EnsCompo.periodic == ON )
   {
 		BC.InnerPBCperiodic(x, d_bcd);
@@ -1252,7 +1252,7 @@ void FFV::Fsmoother(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE omg)
   {
 		blas_smoother_core_(x, b, d_bcp, &ip, &color, &omg, size, &guide);
     
-		BC.OuterPBC(x);
+		BC.OuterPBC(x, ensPeriodic);
     
 		if ( C.EnsCompo.periodic == ON )
     {

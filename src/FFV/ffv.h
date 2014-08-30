@@ -173,6 +173,9 @@ private:
   // Polygon管理用
   PolygonProperty* PG;
   
+  // 周期境界の方向
+  int ensPeriodic[3];
+  
   
   // データ領域ポインタ
   

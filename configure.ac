@@ -17,7 +17,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.57])
-AC_INIT([FFVC], [1.8.2], [keno@riken.jp], [FFVC])
+AC_INIT([FFVC], [1.8.3], [keno@riken.jp], [FFVC])
 AM_INIT_AUTOMAKE()
 AC_CONFIG_SRCDIR([src/main.C])
 AC_CONFIG_HEADERS([config.h])
@@ -25,7 +25,7 @@ AC_CONFIG_HEADERS([config.h])
 #
 # revision No.
 #
-FFVC_REVISION="20140830_1200"
+FFVC_REVISION="20140830_1700"
 AC_SUBST(FFVC_REVISION)
 
 

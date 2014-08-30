@@ -322,9 +322,9 @@ int FFV::FilterInitialize(int argc, char **argv)
   
   
   // 周期境界条件が設定されている場合のBCIndexの周期条件の強制同期
-  BC.setBCIperiodic(d_bcd);
-  BC.setBCIperiodic(d_bcp);
-  BC.setBCIperiodic(d_cdf);
+  BC.setBCIperiodic(d_bcd, ensPeriodic);
+  BC.setBCIperiodic(d_bcp, ensPeriodic);
+  BC.setBCIperiodic(d_cdf, ensPeriodic);
   
   
   // bcd/bcp/cdfの同期

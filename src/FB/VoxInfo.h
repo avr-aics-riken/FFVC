@@ -496,12 +496,11 @@ public:
   
   /**
    * @brief 外部境界が周期境界の場合の距離情報・境界ID・媒質エントリをセット
-   * @param [in]     face      外部境界面番号
-   * @param [in]     prdc_mode 周期境界条件のモード
    * @param [in,out] bcd       BCindex B
+   * @param [in]     ens       周期境界方向フラグ
    * @note 領域境界面は全て流体を想定
    */
-  void setOBCperiodic (const int face, const int prdc_mode, int* bcd);
+  void setOBCperiodic (int* bcd, const int* ens);
   
   
   /**

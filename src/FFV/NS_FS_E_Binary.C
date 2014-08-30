@@ -261,7 +261,7 @@ void FFV::NS_FS_E_Binary()
   
   // 疑似ベクトルの境界条件
   TIMING_start(tm_pvec_BC);
-  BC.OuterVBCpseudo(d_vc, d_cdf, &C);
+  BC.OuterVBCpseudo(d_vc, d_cdf, &C, ensPeriodic);
   BC.InnerVBCperiodic(d_vc, d_bcd);
   TIMING_stop(tm_pvec_BC, 0.0);
 
@@ -627,7 +627,7 @@ void FFV::NS_FS_E_Binary()
     
     // 速度境界条件　値を代入する境界条件
     TIMING_start(tm_vec_BC);
-    BC.OuterVBC(d_v, d_vf, d_cdf, CurrentTime, &C, v00);
+    BC.OuterVBC(d_v, d_vf, d_cdf, CurrentTime, &C, v00, ensPeriodic);
     BC.InnerVBCperiodic(d_v, d_bcd);
     TIMING_stop(tm_vec_BC, 0.0);
     

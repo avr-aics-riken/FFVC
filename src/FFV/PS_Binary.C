@@ -98,7 +98,7 @@ void FFV::PS_Binary()
   
   // 外部周期境界条件
   TIMING_start(tm_heat_diff_OBC);
-  BC.OuterTBCperiodic(d_ws);
+  BC.OuterTBCperiodic(d_ws, ensPeriodic);
   TIMING_stop(tm_heat_diff_OBC, 0.0);
   
   
@@ -194,7 +194,7 @@ void FFV::PS_Binary()
     
     // 外部周期境界条件
     TIMING_start(tm_heat_diff_OBC);
-    BC.OuterTBCperiodic(d_ie);
+    BC.OuterTBCperiodic(d_ie, ensPeriodic);
     TIMING_stop(tm_heat_diff_OBC, 0.0);
     
     

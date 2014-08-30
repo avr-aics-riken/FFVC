@@ -58,6 +58,7 @@ FFV::FFV()
     poly_org[i] = 0.0;
     poly_dx[i] = 0.0;
     poly_gc[i] = 0;
+    ensPeriodic[i] = 0;
   }
   
   mat_tbl = NULL;

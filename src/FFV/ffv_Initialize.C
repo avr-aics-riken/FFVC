@@ -356,9 +356,9 @@ int FFV::Initialize(int argc, char **argv)
 
 
   // 周期境界条件が設定されている場合のBCIndexの周期条件の強制同期
-  BC.setBCIperiodic(d_bcd);
-  BC.setBCIperiodic(d_bcp);
-  BC.setBCIperiodic(d_cdf);
+  BC.setBCIperiodic(d_bcd, ensPeriodic);
+  BC.setBCIperiodic(d_bcp, ensPeriodic);
+  BC.setBCIperiodic(d_cdf, ensPeriodic);
 
 
   // bcd/bcp/cdfの同期
@@ -1152,7 +1152,7 @@ void FFV::encodeBCindex(FILE* fp)
     if ( paraMngr->BndCommS3D(d_bcd, ix, jx, kx, gd, 1) != CPM_SUCCESS ) Exit(0);
   }
   
-  BC.setBCIperiodic(d_bcd);
+  BC.setBCIperiodic(d_bcd, ensPeriodic);
 
   
 #if 0
@@ -3051,7 +3051,7 @@ void FFV::setBCinfo()
   
   
   // パラメータファイルをパースして，外部境界条件を保持する
-  B.loadOuterBC( BC.exportOBC(), mat, cmp );
+  B.loadOuterBC( BC.exportOBC(), mat, cmp, ensPeriodic);
   
   
   // パラメータファイルの情報を元にCompoListの情報を設定する
@@ -3438,7 +3438,7 @@ void FFV::setInitialCondition()
     
     
 		// 外部境界面の移流速度を計算し，外部境界条件を設定
-		BC.OuterVBC(d_v, d_vf, d_cdf, tm, &C, v00);
+		BC.OuterVBC(d_v, d_vf, d_cdf, tm, &C, v00, ensPeriodic);
     BC.InnerVBCperiodic(d_v, d_bcd);
     
 
@@ -3454,7 +3454,7 @@ void FFV::setInitialCondition()
     }
 
     U.initS3D(d_p, size, guide, ip);
-		BC.OuterPBC(d_p);
+		BC.OuterPBC(d_p, ensPeriodic);
 
 		// 温度　コンポーネントの初期値
 		if ( C.isHeatProblem() )
@@ -3464,7 +3464,7 @@ void FFV::setInitialCondition()
         BC.setInitialTempCompo(m, d_bcd, d_ie);
       }
       
-			BC.OuterTBCperiodic(d_ie);
+			BC.OuterTBCperiodic(d_ie, ensPeriodic);
 		}
     
   }
@@ -3475,7 +3475,7 @@ void FFV::setInitialCondition()
     BC.InnerPBCperiodic(d_p, d_bcd);
     
     // 外部境界条件
-    BC.OuterVBC(d_v, d_vf, d_cdf, tm, &C, v00);
+    BC.OuterVBC(d_v, d_vf, d_cdf, tm, &C, v00, ensPeriodic);
     
     // 流出境界の流出速度の算出
     BC.modDivergence(d_ws, d_cdf, tm, v00, m_buf, d_vf, d_v, &C, flop_task);
@@ -3639,16 +3639,11 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
     BoundaryOuter* m_obc = BC.exportOBC(face);
     int id = m_obc->getGuideMedium();
     int cls= m_obc->getClass();
-    int pm = m_obc->getPrdcMode();
     
     
     // 周期境界以外
     switch (cls)
     {
-      case OBC_PERIODIC:
-        V.setOBCperiodic(face, pm, d_bcd);
-        break;
-        
       case OBC_SYMMETRIC:
         if (mat[id].getState() != FLUID) Exit(0);
         V.setOBC(face, id, "fluid", d_bcd, d_cut, d_bid);
@@ -3663,6 +3658,9 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
         Ex->setOBC(face, d_bcd, &C, G_origin, C.NoCompo, mat, d_cut, d_bid);
         break;
         
+      case OBC_PERIODIC: // nothing
+        break;
+        
       default:
         if (mat[id].getState() != FLUID) {
           Exit(0);
@@ -3672,6 +3670,9 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
     }
   }
   
+  
+  // 周期境界の場合の外部境界面処理
+  V.setOBCperiodic(d_bcd, ensPeriodic);
   
 
   // ガイドセル同期

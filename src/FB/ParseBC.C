@@ -2082,7 +2082,7 @@ void ParseBC::loadLocalBCfromPolylibFile(Control* C, const string obj_name, stri
 
 // #################################################################
 // 外部境界条件を取得，保持する
-void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* cmp)
+void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* cmp, int* ensPrdc)
 {
   string label_base, label_leaf, label;
   string str;
@@ -2339,6 +2339,21 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
         }        
       }
     }
+    
+    // 周期境界の方向を保存
+    for (int n=0; n<NOFACE; n++)
+    {
+      if ( bc[n].getClass() == OBC_PERIODIC )
+      {
+        if ( n == X_minus )      ensPrdc[0]=ON;
+        else if ( n == X_plus )  ensPrdc[0]=ON;
+        else if ( n == Y_minus ) ensPrdc[1]=ON;
+        else if ( n == Y_plus )  ensPrdc[1]=ON;
+        else if ( n == Z_minus ) ensPrdc[2]=ON;
+        else if ( n == Z_plus )  ensPrdc[2]=ON;
+      }
+    }
+    
   }
   else { // Driverが指定された場合の内部境界との整合性をチェック
     int n_pair=0;

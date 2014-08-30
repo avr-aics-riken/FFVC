@@ -227,7 +227,7 @@ void FFV::NS_FS_E_CDS()
   
   // 疑似ベクトルの境界条件
   TIMING_start(tm_pvec_BC);
-  BC.OuterVBCpseudo(d_vc, d_cdf, &C);
+  BC.OuterVBCpseudo(d_vc, d_cdf, &C, ensPeriodic);
   BC.InnerVBCperiodic(d_vc, d_bcd);
   TIMING_stop(tm_pvec_BC, 0.0);
   

@@ -710,46 +710,22 @@ void SetBC3D::mod_Vis_EE(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE cf, int* d_
 
 // #################################################################
 // 圧力の外部境界条件
-void SetBC3D::OuterPBC(REAL_TYPE* d_p)
+void SetBC3D::OuterPBC(REAL_TYPE* d_p, const int* ens)
 {
-  int uod, F;
-  REAL_TYPE pv=0.0;
   int gd = guide;
   
   for (int face=0; face<NOFACE; face++)
   {
-    F = obc[face].getClass();
-    
-    // 周期境界条件
-    if ( F == OBC_PERIODIC )
+    if ( obc[face].getClass() == OBC_TRC_FREE )
     {
-      pv = FBUtility::convPrsD2ND(obc[face].p, BasePrs, rho_0, RefV, Unit_Prs);
-
-      switch ( obc[face].getPrdcMode() )
-      {
-        case BoundaryOuter::prdc_Simple:
-          PobcPeriodicSimple(d_p, face);
-          break;
-          
-        case BoundaryOuter::prdc_Directional:
-          uod = obc[face].get_FaceMode();
-          PobcPeriodicDirectional(d_p, face, pv, uod);
-          break;
-          
-        case BoundaryOuter::prdc_Driver:
-          // nothing
-          break;
-      }
-    }
-    else // 周期境界条件以外の処理
-    {
-      if ( F == OBC_TRC_FREE )
-      {
-        pobc_drchlt_ (d_p, size, &gd, &face, &pv, nID);
-      }
-
+      REAL_TYPE pv = FBUtility::convPrsD2ND(obc[face].p, BasePrs, rho_0, RefV, Unit_Prs);
+      pobc_drchlt_ (d_p, size, &gd, &face, &pv, nID);
     }
   }
+  
+  // 周期境界
+  PobcPeriodicSimple(d_p, ens);
+  PobcPeriodicDirectional(d_p, ens);
 }
 
 
@@ -804,45 +780,25 @@ void SetBC3D::OuterTBCdiffusion(REAL_TYPE* d_qbc, REAL_TYPE* d_ie, const REAL_TY
 
 // #################################################################
 // 温度の外部周期境界条件
-void SetBC3D::OuterTBCperiodic(REAL_TYPE* d_ie)
+void SetBC3D::OuterTBCperiodic(REAL_TYPE* d_ie, const int* ens)
 {
-  int F=0;
-  
-  for (int face=0; face<NOFACE; face++)
-  {
-    F = obc[face].getClass();
-    
-    // 周期境界条件
-    if ( F == OBC_PERIODIC )
-    {
-      switch ( obc[face].getPrdcMode() )
-      {
-        case BoundaryOuter::prdc_Simple:
-        case BoundaryOuter::prdc_Directional:
-          TobcPeriodicSimple(d_ie, face);
-          break;
-          
-        case BoundaryOuter::prdc_Driver:
-          // nothing
-          break;
-      }
-    }
-  }
+  TobcPeriodicSimple(d_ie, ens);
 }
 
 
 
 // #################################################################
 // 速度の外部境界条件処理（VP反復内で値を指定する境界条件）
-void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_cdf, const double tm, Control* C, REAL_TYPE* v00)
+void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_cdf, const double tm, Control* C, REAL_TYPE* v00, const int* ens)
 {
   REAL_TYPE vec[3];
   int gd = guide;
   REAL_TYPE dd=0.0;
   REAL_TYPE vsum=0.0;
   REAL_TYPE dummy;
-  int pm;
+
   
+  // 周期境界以外
   for (int face=0; face<NOFACE; face++)
   {
     switch ( obc[face].getClass() )
@@ -884,20 +840,20 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_cdf, const double
         }
         break;
         
-      case OBC_PERIODIC:
-        pm = obc[face].getPrdcMode();
-        
-        // BoundaryOuter::prdc_Driverに対しては処理不要
-        if ( (pm == BoundaryOuter::prdc_Simple) || (pm == BoundaryOuter::prdc_Directional))
-        {
-          VobcPeriodicSimple(d_v, face); // セルフェイスの値の周期処理は不要
-          vobc_get_massflow_(&vsum, size, &gd, &face, d_v, d_cdf, nID);
-          obc[face].setDomainMF(vsum);
-        }
-        break;
-        
       default:
         break;
+    }
+  }
+  
+  // 周期境界
+  VobcPeriodicSimple(d_v, ens); // セルフェイスの値の周期処理は不要
+  
+  for (int face=0; face<NOFACE; face++)
+  {
+    if ( obc[face].getClass() == OBC_PERIODIC )
+    {
+      vobc_get_massflow_(&vsum, size, &gd, &face, d_v, d_cdf, nID);
+      obc[face].setDomainMF(vsum);
     }
   }
   
@@ -906,12 +862,12 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_cdf, const double
 
 // #################################################################
 // 疑似速度の外部境界条件処理
-void SetBC3D::OuterVBCpseudo(REAL_TYPE* d_vc, int* d_cdf, Control* C)
+void SetBC3D::OuterVBCpseudo(REAL_TYPE* d_vc, int* d_cdf, Control* C, const int* ens)
 {
   REAL_TYPE dd=0.0;
   int gd = guide;
-  int pm;
   
+  // 周期境界以外
   for (int face=0; face<NOFACE; face++)
   {
     switch ( obc[face].getClass() )
@@ -921,19 +877,11 @@ void SetBC3D::OuterVBCpseudo(REAL_TYPE* d_vc, int* d_cdf, Control* C)
       case OBC_TRC_FREE:
         vobc_neumann_(d_vc, size, &gd, &face, &dd, nID);
         break;
-        
-      case OBC_PERIODIC:
-        pm = obc[face].getPrdcMode();
-        
-        // BoundaryOuter::prdc_Driverに対しては処理不要
-        if ( (pm == BoundaryOuter::prdc_Simple) || (pm == BoundaryOuter::prdc_Directional))
-        {
-          VobcPeriodicSimple(d_vc, face); // セルフェイスの値の周期処理は不要
-        }
-        break;
-        
     }
   }
+  
+  // 周期境界
+  VobcPeriodicSimple(d_vc, ens); // セルフェイスの値の周期処理は不要
 }
 
 
@@ -941,10 +889,10 @@ void SetBC3D::OuterVBCpseudo(REAL_TYPE* d_vc, int* d_cdf, Control* C)
 /**
  * @brief 圧力の外部周期境界条件（単純なコピー）
  * @param [in,out] d_p  圧力
- * @param [in]     face 面番号
- * @note 並列時には全ノードがPeriodicCommS3D()を評価すること
+ * @param [in]     ens  周期境界方向フラグ
+ * @note 並列時には全ノードがPeriodicCommS3D()を同じ引数で評価すること
  */
-void SetBC3D::PobcPeriodicSimple(REAL_TYPE* d_p, const int face)
+void SetBC3D::PobcPeriodicSimple(REAL_TYPE* d_p, const int* ens)
 {
   int ix = size[0];
   int jx = size[1];
@@ -953,105 +901,97 @@ void SetBC3D::PobcPeriodicSimple(REAL_TYPE* d_p, const int face)
   
   if ( numProc > 1 ) 
   {
-    switch (face)
+    // X方向
+    if ( (ens[0] == ON) && (obc[X_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) )
     {
-      case X_minus:
-        if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-        break;
-        
-      case X_plus:
-        if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
-        break;
-        
-      case Y_minus:
-        if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-        break;
-        
-      case Y_plus:
-        if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
-        break;
-        
-      case Z_minus:
-        if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-        break;
-        
-      case Z_plus:
-        if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
-        break;
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
     }
+    
+    // Y方向
+    if ( (ens[1] == ON) && (obc[Y_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) )
+    {
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    // Z方向
+    if ( (ens[2] == ON) && (obc[Z_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) )
+    {
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+    }
+    
   }
   else // Serial
   {
-    if ( nID[face] >= 0 ) return;
-    
-    switch (face) 
+
+    // X方向
+    if ( (ens[0] == ON) && (obc[X_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) )
     {
-      case X_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
-        for (int k=1; k<=kx; k++) {
-          for (int j=1; j<=jx; j++) {
-            size_t m0 = _F_IDX_S3D(0,  j, k, ix, jx, kx, gd);
-            size_t m1 = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
-            d_p[m0] = d_p[m1];
-          }
-        }
-        break;
-        
-      case X_plus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
-        for (int k=1; k<=kx; k++) {
-          for (int j=1; j<=jx; j++) {
-            size_t m0 = _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd);
-            size_t m1 = _F_IDX_S3D(1,    j, k, ix, jx, kx, gd);
-            d_p[m0] = d_p[m1];
-          }
-        }
-        break;
-        
-      case Y_minus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
-        for (int k=1; k<=kx; k++) {
-          for (int i=1; i<=ix; i++) {
-            size_t m0 = _F_IDX_S3D(i, 0,  k, ix, jx, kx, gd);
-            size_t m1 = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
-            d_p[m0] = d_p[m1];
-          }
-        }
-        break;
-        
-      case Y_plus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
-        for (int k=1; k<=kx; k++) {
-          for (int i=1; i<=ix; i++) {
-            size_t m0 = _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd);
-            size_t m1 = _F_IDX_S3D(i, 1,    k, ix, jx, kx, gd);
-            d_p[m0] = d_p[m1];
-          }
-        }
-        break;
-        
-      case Z_minus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+      for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
-          for (int i=1; i<=ix; i++) {
-            size_t m0 = _F_IDX_S3D(i, j, 0,  ix, jx, kx, gd);
-            size_t m1 = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
-            d_p[m0] = d_p[m1];
-          }
+          size_t m0 = _F_IDX_S3D(0,  j, k, ix, jx, kx, gd);
+          size_t m1 = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
+          d_p[m0] = d_p[m1];
         }
-        break;
-        
-      case Z_plus:
+      }
+      
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+      for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
-          for (int i=1; i<=ix; i++) {
-            size_t m0 = _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd);
-            size_t m1 = _F_IDX_S3D(i, j, 1,    ix, jx, kx, gd);
-            d_p[m0] = d_p[m1];
-          }
+          size_t m0 = _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd);
+          size_t m1 = _F_IDX_S3D(1,    j, k, ix, jx, kx, gd);
+          d_p[m0] = d_p[m1];
         }
-        break;
+      }
     }
+    
+    // Y方向
+    if ( (ens[1] == ON) && (obc[Y_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) )
+    {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+      for (int k=1; k<=kx; k++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m0 = _F_IDX_S3D(i, 0,  k, ix, jx, kx, gd);
+          size_t m1 = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
+          d_p[m0] = d_p[m1];
+        }
+      }
+      
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+      for (int k=1; k<=kx; k++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m0 = _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd);
+          size_t m1 = _F_IDX_S3D(i, 1,    k, ix, jx, kx, gd);
+          d_p[m0] = d_p[m1];
+        }
+      }
+    }
+    
+    // Z方向
+    if ( (ens[2] == ON) && (obc[Z_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) )
+    {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m0 = _F_IDX_S3D(i, j, 0,  ix, jx, kx, gd);
+          size_t m1 = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
+          d_p[m0] = d_p[m1];
+        }
+      }
+      
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m0 = _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd);
+          size_t m1 = _F_IDX_S3D(i, j, 1,    ix, jx, kx, gd);
+          d_p[m0] = d_p[m1];
+        }
+      }
+    }
+    
   }
 }
 
@@ -1060,40 +1000,29 @@ void SetBC3D::PobcPeriodicSimple(REAL_TYPE* d_p, const int face)
 /**
  * @brief 圧力の外部周期境界条件（双方向に圧力差を設定）
  * @param [in,out] d_p  圧力のデータクラス
- * @param [in]     face 面番号
- * @param [in]     pv   圧力差
- * @param [in]     uod  上流面 or 下流面
+ * @param [in]     ens  周期境界方向フラグ
  */
-void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int face, REAL_TYPE pv, int uod)
+void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int* ens)
 {
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
   
-  // 上流面か下流面かで，圧力差の方向を逆転する
-  REAL_TYPE pd = ( uod == BoundaryOuter::prdc_upstream ) ? pv : -pv;
+  REAL_TYPE pv; // 圧力差
+  REAL_TYPE pd;
   
   if ( numProc > 1 ) 
   {
-    switch (face) 
+    // X方向
+    if ( (ens[0] == ON) && (obc[X_minus].getPrdcMode() == BoundaryOuter::prdc_Directional) )
     {
-      case X_minus:
-        if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-        if ( nID[face] >= 0 ) return;
-        
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
-        for (int k=1; k<=kx; k++) {
-          for (int j=1; j<=jx; j++) {
-            size_t m0 = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
-            d_p[m0] += pd;
-          }
-        }
-        break;
-        
-      case X_plus:
-        if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
-        if ( nID[face] >= 0 ) return;
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+      if ( nID[X_minus] < 0 )
+      {
+        // 上流面か下流面かで，圧力差の方向を逆転する
+        pv = FBUtility::convPrsD2ND(obc[X_minus].p, BasePrs, rho_0, RefV, Unit_Prs);
+        pd = ( obc[X_minus].get_FaceMode() == BoundaryOuter::prdc_upstream ) ? pv : -pv;
         
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
         for (int k=1; k<=kx; k++) {
@@ -1102,11 +1031,33 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int face, REAL_TYPE 
             d_p[m0] += pd;
           }
         }
-        break;
+      }
+
+      
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      if ( nID[X_plus] < 0 )
+      {
+        pv = FBUtility::convPrsD2ND(obc[X_plus].p, BasePrs, rho_0, RefV, Unit_Prs);
+        pd = ( obc[X_plus].get_FaceMode() == BoundaryOuter::prdc_upstream ) ? pv : -pv;
         
-      case Y_minus:
-        if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-        if ( nID[face] >= 0 ) return;
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
+        for (int k=1; k<=kx; k++) {
+          for (int j=1; j<=jx; j++) {
+            size_t m0 = _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd);
+            d_p[m0] += pd;
+          }
+        }
+      }
+    }
+    
+    // Y方向
+    if ( (ens[1] == ON) && (obc[Y_minus].getPrdcMode() == BoundaryOuter::prdc_Directional) )
+    {
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+      if ( nID[Y_minus] >= 0 )
+      {
+        pv = FBUtility::convPrsD2ND(obc[Y_minus].p, BasePrs, rho_0, RefV, Unit_Prs);
+        pd = ( obc[Y_minus].get_FaceMode() == BoundaryOuter::prdc_upstream ) ? pv : -pv;
         
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
         for (int k=1; k<=kx; k++) {
@@ -1115,11 +1066,13 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int face, REAL_TYPE 
             d_p[m0] += pd;
           }
         }
-        break;
-        
-      case Y_plus:
-        if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
-        if ( nID[face] >= 0 ) return;
+      }
+      
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      if ( nID[Y_plus] < 0 )
+      {
+        pv = FBUtility::convPrsD2ND(obc[Y_plus].p, BasePrs, rho_0, RefV, Unit_Prs);
+        pd = ( obc[Y_plus].get_FaceMode() == BoundaryOuter::prdc_upstream ) ? pv : -pv;
         
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
         for (int k=1; k<=kx; k++) {
@@ -1128,11 +1081,18 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int face, REAL_TYPE 
             d_p[m0] += pd;
           }
         }
-        break;
-        
-      case Z_minus:
-        if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-        if ( nID[face] >= 0 ) return;
+      }
+      
+    }
+    
+    // Z方向
+    if ( (ens[2] == ON) && (obc[Z_minus].getPrdcMode() == BoundaryOuter::prdc_Directional) )
+    {
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+      if ( nID[Z_minus] < 0 )
+      {
+        pv = FBUtility::convPrsD2ND(obc[Z_minus].p, BasePrs, rho_0, RefV, Unit_Prs);
+        pd = ( obc[Z_minus].get_FaceMode() == BoundaryOuter::prdc_upstream ) ? pv : -pv;
         
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
         for (int j=1; j<=jx; j++) {
@@ -1141,11 +1101,13 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int face, REAL_TYPE 
             d_p[m0] += pd;
           }
         }
-        break;
-        
-      case Z_plus:
-        if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
-        if ( nID[face] >= 0 ) return;
+      }
+      
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      if ( nID[Z_plus] < 0 )
+      {
+        pv = FBUtility::convPrsD2ND(obc[Z_plus].p, BasePrs, rho_0, RefV, Unit_Prs);
+        pd = ( obc[Z_plus].get_FaceMode() == BoundaryOuter::prdc_upstream ) ? pv : -pv;
         
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
         for (int j=1; j<=jx; j++) {
@@ -1154,81 +1116,96 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int face, REAL_TYPE 
             d_p[m0] += pd;
           }
         }
-        break;
+      }
+      
     }
   }
   else // Serial
   {
-    if ( nID[face] >= 0 ) return;
-    
-    switch (face)
+    // X方向
+    if ( (ens[0] == ON) && (obc[X_minus].getPrdcMode() == BoundaryOuter::prdc_Directional) )
     {
-      case X_minus:
+      pv = FBUtility::convPrsD2ND(obc[X_minus].p, BasePrs, rho_0, RefV, Unit_Prs);
+      pd = ( obc[X_minus].get_FaceMode() == BoundaryOuter::prdc_upstream ) ? pv : -pv;
+      
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
-        for (int k=1; k<=kx; k++) {
-          for (int j=1; j<=jx; j++) {
-            size_t m0 = _F_IDX_S3D(0,  j, k, ix, jx, kx, gd);
-            size_t m1 = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
-            d_p[m0] = d_p[m1] + pd;
-          }
-        }
-        break;
-        
-      case X_plus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
-        for (int k=1; k<=kx; k++) {
-          for (int j=1; j<=jx; j++) {
-            size_t m0 = _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd);
-            size_t m1 = _F_IDX_S3D(1,    j, k, ix, jx, kx, gd);
-            d_p[m0] = d_p[m1] + pd;
-          }
-        }
-        break;
-        
-      case Y_minus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
-        for (int k=1; k<=kx; k++) {
-          for (int i=1; i<=ix; i++) {
-            size_t m0 = _F_IDX_S3D(i, 0,  k, ix, jx, kx, gd);
-            size_t m1 = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
-            d_p[m0] = d_p[m1] + pd;
-          }
-        }
-        break;
-        
-      case Y_plus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
-        for (int k=1; k<=kx; k++) {
-          for (int i=1; i<=ix; i++) {
-            size_t m0 = _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd);
-            size_t m1 = _F_IDX_S3D(i, 1,    k, ix, jx, kx, gd);
-            d_p[m0] = d_p[m1] + pd;
-          }
-        }
-        break;
-        
-      case Z_minus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
+      for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
-          for (int i=1; i<=ix; i++) {
-            size_t m0 = _F_IDX_S3D(i, j, 0,  ix, jx, kx, gd);
-            size_t m1 = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
-            d_p[m0] = d_p[m1] + pd;
-          }
+          size_t m0 = _F_IDX_S3D(0,  j, k, ix, jx, kx, gd);
+          size_t m1 = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
+          d_p[m0] = d_p[m1] + pd;
         }
-        break;
-        
-      case Z_plus:
+      }
+      
+      pv = FBUtility::convPrsD2ND(obc[X_plus].p, BasePrs, rho_0, RefV, Unit_Prs);
+      pd = ( obc[X_plus].get_FaceMode() == BoundaryOuter::prdc_upstream ) ? pv : -pv;
+      
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
+      for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
-          for (int i=1; i<=ix; i++) {
-            size_t m0 = _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd);
-            size_t m1 = _F_IDX_S3D(i, j, 1,    ix, jx, kx, gd);
-            d_p[m0] = d_p[m1] + pd;
-          }
+          size_t m0 = _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd);
+          size_t m1 = _F_IDX_S3D(1,    j, k, ix, jx, kx, gd);
+          d_p[m0] = d_p[m1] + pd;
         }
-        break;
+      }
     }
+    
+    // Y方向
+    if ( (ens[1] == ON) && (obc[Y_minus].getPrdcMode() == BoundaryOuter::prdc_Directional) )
+    {
+      pv = FBUtility::convPrsD2ND(obc[Y_minus].p, BasePrs, rho_0, RefV, Unit_Prs);
+      pd = ( obc[Y_minus].get_FaceMode() == BoundaryOuter::prdc_upstream ) ? pv : -pv;
+      
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
+      for (int k=1; k<=kx; k++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m0 = _F_IDX_S3D(i, 0,  k, ix, jx, kx, gd);
+          size_t m1 = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
+          d_p[m0] = d_p[m1] + pd;
+        }
+      }
+      
+      pv = FBUtility::convPrsD2ND(obc[Y_plus].p, BasePrs, rho_0, RefV, Unit_Prs);
+      pd = ( obc[Y_plus].get_FaceMode() == BoundaryOuter::prdc_upstream ) ? pv : -pv;
+      
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
+      for (int k=1; k<=kx; k++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m0 = _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd);
+          size_t m1 = _F_IDX_S3D(i, 1,    k, ix, jx, kx, gd);
+          d_p[m0] = d_p[m1] + pd;
+        }
+      }
+    }
+    
+    // Z方向
+    if ( (ens[2] == ON) && (obc[Z_minus].getPrdcMode() == BoundaryOuter::prdc_Directional) )
+    {
+      pv = FBUtility::convPrsD2ND(obc[Z_minus].p, BasePrs, rho_0, RefV, Unit_Prs);
+      pd = ( obc[Z_minus].get_FaceMode() == BoundaryOuter::prdc_upstream ) ? pv : -pv;
+      
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m0 = _F_IDX_S3D(i, j, 0,  ix, jx, kx, gd);
+          size_t m1 = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
+          d_p[m0] = d_p[m1] + pd;
+        }
+      }
+    
+      pv = FBUtility::convPrsD2ND(obc[Z_plus].p, BasePrs, rho_0, RefV, Unit_Prs);
+      pd = ( obc[Z_plus].get_FaceMode() == BoundaryOuter::prdc_upstream ) ? pv : -pv;
+      
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m0 = _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd);
+          size_t m1 = _F_IDX_S3D(i, j, 1,    ix, jx, kx, gd);
+          d_p[m0] = d_p[m1] + pd;
+        }
+      }
+    }
+    
   }
 }
 
@@ -3277,141 +3254,119 @@ void SetBC3D::setInitialTempCompo(const int n, const int* d_bx, REAL_TYPE* d_ie)
 
 
 // #################################################################
-/**
- * @brief 周期境界の場合のインデクスの同期
- * @param [in,out] bx BCindexのデータクラス
- */
-void SetBC3D::setBCIperiodic(int* d_bx)
+// 周期境界の場合のインデクスの同期
+// @note PeriodicCommS3D()は周期境界方向に通信が発生する、外部境界面に接している全ランクについて、
+//       その引数(最後の2つ)の cpm_DirFlag dir と cpm_PMFlag pm は、全てのランクで同じ値をセットしてコールすること
+
+void SetBC3D::setBCIperiodic(int* d_bx, const int* ens)
 {
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
   
-  size_t m0, m1;
 
   if ( numProc > 1 ) 
   {
-    for (int face=0; face<NOFACE; face++)
+    // X方向
+    if ( ens[0] == ON )
     {
-      if ( obc[face].getClass() != OBC_PERIODIC ) continue; // スキップしてfaceをインクリメント
-
-      switch (face)
-      {
-        case X_minus:
-          if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-          break;
-          
-        case X_plus:
-          if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
-          break;
-          
-        case Y_minus:
-          if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-          break;
-          
-        case Y_plus:
-          if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
-          break;
-          
-        case Z_minus:
-          if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-          break;
-          
-        case Z_plus:
-          if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
-          break;
-      }
+      if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    // Y方向
+    if ( ens[1] == ON )
+    {
+      if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    // Z方向
+    if ( ens[2] == ON )
+    {
+      if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
     }
   } 
   else // 逐次処理
   {
-    for (int face=0; face<NOFACE; face++)
+    // X方向
+    if ( ens[0] == ON )
     {
-      if ( obc[face].getClass() != OBC_PERIODIC ) continue; // スキップしてfaceをインクリメント
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+      for (int k=1; k<=kx; k++) {
+        for (int j=1; j<=jx; j++) {
+          for (int i=1-gd; i<=0; i++) {
+            size_t m0 = _F_IDX_S3D(i,    j, k, ix, jx, kx, gd);
+            size_t m1 = _F_IDX_S3D(i+ix, j, k, ix, jx, kx, gd);
+            d_bx[m0] = d_bx[m1];
+          }
+        }
+      }
       
-      if ( nID[face] >= 0 ) continue;
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+      for (int k=1; k<=kx; k++) {
+        for (int j=1; j<=jx; j++) {
+          for (int i=ix+1; i<=ix+gd; i++) {
+            size_t m0 = _F_IDX_S3D(i,    j, k, ix, jx, kx, gd);
+            size_t m1 = _F_IDX_S3D(i-ix, j, k, ix, jx, kx, gd);
+            d_bx[m0] = d_bx[m1];
+          }
+        }
+      }
+    }
+    
+    // Y方向
+    if ( ens[1] == ON )
+    {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+      for (int k=1; k<=kx; k++) {
+        for (int j=1-gd; j<=0; j++) {
+          for (int i=1; i<=ix; i++) {
+            size_t m0 = _F_IDX_S3D(i, j,    k, ix, jx, kx, gd);
+            size_t m1 = _F_IDX_S3D(i, j+jx, k, ix, jx, kx, gd);
+            d_bx[m0] = d_bx[m1];
+          }
+        }
+      }
       
-      switch (face)
-      {
-        case X_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
-          for (int k=1; k<=kx; k++) {
-            for (int j=1; j<=jx; j++) {
-              for (int i=1-gd; i<=0; i++) {
-                size_t m0 = _F_IDX_S3D(i,    j, k, ix, jx, kx, gd);
-                size_t m1 = _F_IDX_S3D(i+ix, j, k, ix, jx, kx, gd);
-                d_bx[m0] = d_bx[m1];
-              }
-            }
+      for (int k=1; k<=kx; k++) {
+        for (int j=jx+1; j<=jx+gd; j++) {
+          for (int i=1; i<=ix; i++) {
+            size_t m0 = _F_IDX_S3D(i, j,    k, ix, jx, kx, gd);
+            size_t m1 = _F_IDX_S3D(i, j-jx, k, ix, jx, kx, gd);
+            d_bx[m0] = d_bx[m1];
           }
-          break;
-          
-        case X_plus:
+        }
+      }
+    }
+    
+    // Z方向
+    if ( ens[2] == ON )
+    {
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
-          for (int k=1; k<=kx; k++) {
-            for (int j=1; j<=jx; j++) {
-              for (int i=ix+1; i<=ix+gd; i++) {
-                size_t m0 = _F_IDX_S3D(i,    j, k, ix, jx, kx, gd);
-                size_t m1 = _F_IDX_S3D(i-ix, j, k, ix, jx, kx, gd);
-                d_bx[m0] = d_bx[m1];
-              }
-            }
+      for (int k=1-gd; k<=0; k++) {
+        for (int j=1; j<=jx; j++) {
+          for (int i=1; i<=ix; i++) {
+            size_t m0 = _F_IDX_S3D(i, j, k,    ix, jx, kx, gd);
+            size_t m1 = _F_IDX_S3D(i, j, k+kx, ix, jx, kx, gd);
+            d_bx[m0] = d_bx[m1];
           }
-          break;
-          
-        case Y_minus:
+        }
+      }
+      
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
-          for (int k=1; k<=kx; k++) {
-            for (int j=1-gd; j<=0; j++) {
-              for (int i=1; i<=ix; i++) {
-                size_t m0 = _F_IDX_S3D(i, j,    k, ix, jx, kx, gd);
-                size_t m1 = _F_IDX_S3D(i, j+jx, k, ix, jx, kx, gd);
-                d_bx[m0] = d_bx[m1];
-              }
-            }
+      for (int k=kx+1; k<=kx+gd; k++) {
+        for (int j=1; j<=jx; j++) {
+          for (int i=1; i<=ix; i++) {
+            size_t m0 = _F_IDX_S3D(i, j, k,    ix, jx, kx, gd);
+            size_t m1 = _F_IDX_S3D(i, j, k-kx, ix, jx, kx, gd);
+            d_bx[m0] = d_bx[m1];
           }
-          break;
-          
-        case Y_plus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
-          for (int k=1; k<=kx; k++) {
-            for (int j=jx+1; j<=jx+gd; j++) {
-              for (int i=1; i<=ix; i++) {
-                size_t m0 = _F_IDX_S3D(i, j,    k, ix, jx, kx, gd);
-                size_t m1 = _F_IDX_S3D(i, j-jx, k, ix, jx, kx, gd);
-                d_bx[m0] = d_bx[m1];
-              }
-            }
-          }
-          break;
-          
-        case Z_minus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
-          for (int k=1-gd; k<=0; k++) {
-            for (int j=1; j<=jx; j++) {
-              for (int i=1; i<=ix; i++) {
-                size_t m0 = _F_IDX_S3D(i, j, k,    ix, jx, kx, gd);
-                size_t m1 = _F_IDX_S3D(i, j, k+kx, ix, jx, kx, gd);
-                d_bx[m0] = d_bx[m1];
-              }
-            }
-          }
-          break;
-          
-        case Z_plus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
-          for (int k=kx+1; k<=kx+gd; k++) {
-            for (int j=1; j<=jx; j++) {
-              for (int i=1; i<=ix; i++) {
-                size_t m0 = _F_IDX_S3D(i, j, k,    ix, jx, kx, gd);
-                size_t m1 = _F_IDX_S3D(i, j, k-kx, ix, jx, kx, gd);
-                d_bx[m0] = d_bx[m1];
-              }
-            }
-          }
-          break;
-      }    
+        }
+      }
     }
   }
 }
@@ -3596,9 +3551,9 @@ void SetBC3D::TBCconvection(REAL_TYPE* d_ws, const int* d_cdf, const REAL_TYPE* 
 /**
  * @brief 温度の外部周期境界条件（単純なコピー）
  * @param [in,out] d_ie 内部エネルギー
- * @param [in]     face 面番号
+ * @param [in]     ens  周期境界方向フラグ
  */
-void SetBC3D::TobcPeriodicSimple(REAL_TYPE* d_ie, const int face)
+void SetBC3D::TobcPeriodicSimple(REAL_TYPE* d_ie, const int* ens)
 {
   int ix = size[0];
   int jx = size[1];
@@ -3607,104 +3562,105 @@ void SetBC3D::TobcPeriodicSimple(REAL_TYPE* d_ie, const int face)
   
   if ( numProc > 1 ) 
   {
-    switch (face) 
+    // X方向
+    if ( (ens[0] == ON) &&
+        ( (obc[X_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) ||
+          (obc[X_minus].getPrdcMode() == BoundaryOuter::prdc_Directional) ))
     {
-      case X_minus:
-        if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-        break;
-        
-      case X_plus:
-        if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
-        break;
-        
-      case Y_minus:
-        if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-        break;
-        
-      case Y_plus:
-        if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
-        break;
-        
-      case Z_minus:
-        if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-        break;
-        
-      case Z_plus:
-        if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
-        break;
+      if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    // Y方向
+    if ( (ens[1] == ON) &&
+        ( (obc[Y_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) ||
+          (obc[Y_minus].getPrdcMode() == BoundaryOuter::prdc_Directional) ))
+    {
+      if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    // Z方向
+    if ( (ens[2] == ON) &&
+        ( (obc[Z_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) ||
+          (obc[Z_minus].getPrdcMode() == BoundaryOuter::prdc_Directional) ))
+    {
+      if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
     }
   }
   else  // Serial
   {
-    if ( nID[face] >= 0 ) return;
-    
-    switch (face)
+    // X方向
+    if ( (ens[0] == ON) &&
+        ( (obc[X_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) ||
+          (obc[X_minus].getPrdcMode() == BoundaryOuter::prdc_Directional) ))
     {
-      case X_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
-        for (int k=1; k<=kx; k++) {
-          for (int j=1; j<=jx; j++) {
-            size_t m0 = _F_IDX_S3D(0,  j, k, ix, jx, kx, gd);
-            size_t m1 = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
-            d_ie[m0] = d_ie[m1];
-          }
-        }
-        break;
-        
-      case X_plus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
-        for (int k=1; k<=kx; k++) {
-          for (int j=1; j<=jx; j++) {
-            size_t m0 = _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd);
-            size_t m1 = _F_IDX_S3D(1,    j, k, ix, jx, kx, gd);
-            d_ie[m0] = d_ie[m1];
-          }
-        }
-        break;
-        
-      case Y_minus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
-        for (int k=1; k<=kx; k++) {
-          for (int i=1; i<=ix; i++) {
-            size_t m0 = _F_IDX_S3D(i, 0,  k, ix, jx, kx, gd);
-            size_t m1 = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
-            d_ie[m0] = d_ie[m1];
-          }
-        }
-        break;
-        
-      case Y_plus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
-        for (int k=1; k<=kx; k++) {
-          for (int i=1; i<=ix; i++) {
-            size_t m0 = _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd);
-            size_t m1 = _F_IDX_S3D(i, 1,    k, ix, jx, kx, gd);
-            d_ie[m0] = d_ie[m1];
-          }
-        }
-        break;
-        
-      case Z_minus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+      for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
-          for (int i=1; i<=ix; i++) {
-            size_t m0 = _F_IDX_S3D(i, j, 0,  ix, jx, kx, gd);
-            size_t m1 = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
-            d_ie[m0] = d_ie[m1];
-          }
+          size_t m0 = _F_IDX_S3D(0,  j, k, ix, jx, kx, gd);
+          size_t m1 = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
+          d_ie[m0] = d_ie[m1];
         }
-        break;
-        
-      case Z_plus:
+      }
+      
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+      for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
-          for (int i=1; i<=ix; i++) {
-            size_t m0 = _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd);
-            size_t m1 = _F_IDX_S3D(i, j, 1,    ix, jx, kx, gd);
-            d_ie[m0] = d_ie[m1];
-          }
+          size_t m0 = _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd);
+          size_t m1 = _F_IDX_S3D(1,    j, k, ix, jx, kx, gd);
+          d_ie[m0] = d_ie[m1];
         }
-        break;
+      }
+    }
+    
+    // Y方向
+    if ( (ens[1] == ON) &&
+        ( (obc[Y_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) ||
+          (obc[Y_minus].getPrdcMode() == BoundaryOuter::prdc_Directional) ))
+    {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+      for (int k=1; k<=kx; k++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m0 = _F_IDX_S3D(i, 0,  k, ix, jx, kx, gd);
+          size_t m1 = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
+          d_ie[m0] = d_ie[m1];
+        }
+      }
+      
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+      for (int k=1; k<=kx; k++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m0 = _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd);
+          size_t m1 = _F_IDX_S3D(i, 1,    k, ix, jx, kx, gd);
+          d_ie[m0] = d_ie[m1];
+        }
+      }
+    }
+    
+    // Z方向
+    if ( (ens[2] == ON) &&
+        ( (obc[Z_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) ||
+          (obc[Z_minus].getPrdcMode() == BoundaryOuter::prdc_Directional) ))
+    {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m0 = _F_IDX_S3D(i, j, 0,  ix, jx, kx, gd);
+          size_t m1 = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
+          d_ie[m0] = d_ie[m1];
+        }
+      }
+      
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          size_t m0 = _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd);
+          size_t m1 = _F_IDX_S3D(i, j, 1,    ix, jx, kx, gd);
+          d_ie[m0] = d_ie[m1];
+        }
+      }
     }
   }
 }
@@ -3714,9 +3670,9 @@ void SetBC3D::TobcPeriodicSimple(REAL_TYPE* d_ie, const int face)
 /**
  * @brief 速度の外部周期境界条件（単純なコピー）
  * @param [in,out] d_v  速度ベクトル
- * @param [in]     face 面番号
+ * @param [in]     ens  周期境界方向フラグ
  */
-void SetBC3D::VobcPeriodicSimple(REAL_TYPE* d_v, const int face)
+void SetBC3D::VobcPeriodicSimple(REAL_TYPE* d_v, const int* ens)
 {
   int ix = size[0];
   int jx = size[1];
@@ -3725,116 +3681,117 @@ void SetBC3D::VobcPeriodicSimple(REAL_TYPE* d_v, const int face)
   
   if ( numProc > 1 )
   {
-    switch (face)
+    // X方向
+    if ( (ens[0] == ON) &&
+        ( (obc[X_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) ||
+          (obc[X_minus].getPrdcMode() == BoundaryOuter::prdc_Directional)) )
     {
-      case X_minus:
-        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-        break;
-        
-      case X_plus:
-        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
-        break;
-        
-      case Y_minus:
-        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-        break;
-        
-      case Y_plus:
-        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
-        break;
-        
-      case Z_minus:
-        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-        break;
-        
-      case Z_plus:
-        if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
-        break;
+      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    // Y方向
+    if ( (ens[1] == ON) &&
+        ( (obc[Y_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) ||
+          (obc[Y_minus].getPrdcMode() == BoundaryOuter::prdc_Directional)) )
+    {
+      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    // Z方向
+    if ( (ens[2] == ON) &&
+        ( (obc[Z_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) ||
+          (obc[Z_minus].getPrdcMode() == BoundaryOuter::prdc_Directional)) )
+    {
+      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
     }
   }
   else // Serial
   {
-    if ( nID[face] >= 0 ) return;
-    
-    switch (face) 
+    // X方向
+    if ( (ens[0] == ON) &&
+        ( (obc[X_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) ||
+          (obc[X_minus].getPrdcMode() == BoundaryOuter::prdc_Directional)) )
     {
-      case X_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
-        for (int k=1; k<=kx; k++) {
-          for (int j=1; j<=jx; j++) {
-            for (int i=1-gd; i<=0; i++) {
-              d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 0, ix, jx, kx, gd)];
-              d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 1, ix, jx, kx, gd)];
-              d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 2, ix, jx, kx, gd)];
-            }
-          }
-        }
-        break;
-        
-      case X_plus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
-        for (int k=1; k<=kx; k++) {
-          for (int j=1; j<=jx; j++) {
-            for (int i=ix+1; i<=ix+gd; i++) {
-              d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i-ix, j, k, 0, ix, jx, kx, gd)];
-              d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i-ix, j, k, 1, ix, jx, kx, gd)];
-              d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i-ix, j, k, 2, ix, jx, kx, gd)];
-            }
-          }
-        }
-        break;
-        
-      case Y_minus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
-        for (int k=1; k<=kx; k++) {
-          for (int i=1; i<=ix; i++) {
-            for (int j=1-gd; j<=0; j++) {
-              d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 0, ix, jx, kx, gd)];
-              d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 1, ix, jx, kx, gd)];
-              d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 2, ix, jx, kx, gd)];
-            }
-          }
-        }
-        break;
-        
-      case Y_plus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
-        for (int k=1; k<=kx; k++) {
-          for (int i=1; i<=ix; i++) {
-            for (int j=jx+1; j<=jx+gd; j++) {
-              d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j-jx, k, 0, ix, jx, kx, gd)];
-              d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j-jx, k, 1, ix, jx, kx, gd)];
-              d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j-jx, k, 2, ix, jx, kx, gd)];
-            }
-          }
-        }
-        break;
-        
-      case Z_minus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+      for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
-          for (int i=1; i<=ix; i++) {
-            for (int k=1-gd; k<=0; k++) {
-              d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 0, ix, jx, kx, gd)];
-              d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 1, ix, jx, kx, gd)];
-              d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 2, ix, jx, kx, gd)];
-            }
+          for (int i=1-gd; i<=0; i++) {
+            d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 0, ix, jx, kx, gd)];
+            d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 1, ix, jx, kx, gd)];
+            d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(ix+i, j, k, 2, ix, jx, kx, gd)];
           }
         }
-        break;
-        
-      case Z_plus:
+      }
+      
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+      for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
-          for (int i=1; i<=ix; i++) {
-            for (int k=kx+1; k<=kx+gd; k++) {
-              d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, k-kx, 0, ix, jx, kx, gd)];
-              d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, k-kx, 1, ix, jx, kx, gd)];
-              d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, k-kx, 2, ix, jx, kx, gd)];
-            }
+          for (int i=ix+1; i<=ix+gd; i++) {
+            d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i-ix, j, k, 0, ix, jx, kx, gd)];
+            d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i-ix, j, k, 1, ix, jx, kx, gd)];
+            d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i-ix, j, k, 2, ix, jx, kx, gd)];
           }
         }
-        break;
+      }
+    }
+    
+    // Y方向
+    if ( (ens[1] == ON) &&
+        ( (obc[Y_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) ||
+          (obc[Y_minus].getPrdcMode() == BoundaryOuter::prdc_Directional)) )
+    {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+      for (int k=1; k<=kx; k++) {
+        for (int i=1; i<=ix; i++) {
+          for (int j=1-gd; j<=0; j++) {
+            d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 0, ix, jx, kx, gd)];
+            d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 1, ix, jx, kx, gd)];
+            d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, jx+j, k, 2, ix, jx, kx, gd)];
+          }
+        }
+      }
+      
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+      for (int k=1; k<=kx; k++) {
+        for (int i=1; i<=ix; i++) {
+          for (int j=jx+1; j<=jx+gd; j++) {
+            d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j-jx, k, 0, ix, jx, kx, gd)];
+            d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j-jx, k, 1, ix, jx, kx, gd)];
+            d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j-jx, k, 2, ix, jx, kx, gd)];
+          }
+        }
+      }
+    }
+    
+    // Z方向
+    if ( (ens[2] == ON) &&
+        ( (obc[Z_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) ||
+          (obc[Z_minus].getPrdcMode() == BoundaryOuter::prdc_Directional)) )
+    {
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          for (int k=1-gd; k<=0; k++) {
+            d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 0, ix, jx, kx, gd)];
+            d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 1, ix, jx, kx, gd)];
+            d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, kx+k, 2, ix, jx, kx, gd)];
+          }
+        }
+      }
+      
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          for (int k=kx+1; k<=kx+gd; k++) {
+            d_v[_F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, k-kx, 0, ix, jx, kx, gd)];
+            d_v[_F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, k-kx, 1, ix, jx, kx, gd)];
+            d_v[_F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd)] = d_v[_F_IDX_V3D(i, j, k-kx, 2, ix, jx, kx, gd)];
+          }
+        }
+      }
     }
   }
   
