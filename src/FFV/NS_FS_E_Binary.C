@@ -37,7 +37,6 @@ void FFV::NS_FS_E_Binary()
   REAL_TYPE half = 0.5;                /// 定数
   REAL_TYPE one = 1.0;                 /// 定数
   REAL_TYPE zero = 0.0;                /// 定数
-  int wall_prof = C.Mode.Wall_profile; /// 壁面条件（slip/noslip）
   int cnv_scheme = C.CnvScheme;        /// 対流項スキーム
   
   
@@ -45,8 +44,7 @@ void FFV::NS_FS_E_Binary()
   Gemini_R* m_buf = new Gemini_R [C.NoCompo+1];
   REAL_TYPE* m_snd = new REAL_TYPE [(C.NoCompo+1)*2];
   REAL_TYPE* m_rcv = new REAL_TYPE [(C.NoCompo+1)*2];
-  
-  int v_mode=0;
+
   
   IterationCtl* ICp = &IC[ic_prs1];  /// 圧力のPoisson反復
   IterationCtl* ICv = &IC[ic_vel1];  /// 粘性項のCrank-Nicolson反復
@@ -88,15 +86,6 @@ void FFV::NS_FS_E_Binary()
   TIMING_stop(tm_copy_array, 0.0, 2);
   
 
-  // 壁関数指定時の摩擦速度の計算 src0をテンポラリのワークとして利用
-  if ( C.Mode.Wall_profile == Control::Log_Law ) 
-  {
-    TIMING_start(tm_WallFunc);
-    flop = 0.0;
-    friction_velocity_(d_ws, size, &guide, &dh, &Re, d_v0, d_bcp, range_Yp, range_Ut, v00, &flop);
-    TIMING_stop(tm_WallFunc, flop);
-  }
-
   TIMING_stop(tm_frctnl_stp_sct_1, 0.0);
   // <<< Fractional step subsection 1
 
@@ -110,45 +99,78 @@ void FFV::NS_FS_E_Binary()
   {
     case Flow_FS_EE_EE:
     case Flow_FS_AB2:
-      TIMING_start(tm_pseudo_vec);     
-      
+      TIMING_start(tm_pseudo_vec);
       flop = 0.0;
-      v_mode = (C.Mode.Wall_profile == Control::Log_Law) ? 2 : 1;
 
-      if ( C.LES.Calc == ON )
+      switch ( cnv_scheme )
       {
-        //pvec_les_(vc, sz, &guide, dh, (int*)&C.CnvScheme, v00, &rei, v0, vf, (int*)bcv, vt, &flop);
-        Exit(0);
-      }
-      else
-      {
-        pvec_muscl_(d_vc, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bcp, &v_mode, d_ws, &wall_prof, d_bcd, d_cvf, &one, &flop);
+        case Control::O1_upwind:
+        case Control::O3_muscl:
+          if ( C.LES.Calc == ON )
+          {
+            //pvec_les_(vc, sz, &guide, dh, (int*)&C.CnvScheme, v00, &rei, v0, vf, (int*)bcv, vt, &flop);
+          }
+          else
+          {
+            pvec_muscl_(d_vc, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bcp, &one, &flop);
+          }
+          break;
+          
+        case Control::O2_central:
+        case Control::O4_central:
+          if ( C.LES.Calc == ON )
+          {
+            //pvec_les_(vc, sz, &guide, dh, (int*)&C.CnvScheme, v00, &rei, v0, vf, (int*)bcv, vt, &flop);
+          }
+            else
+          {
+            pvec_central_(d_vc, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bcp, &one, &flop);
+          }
+          break;
       }
       TIMING_stop(tm_pseudo_vec, flop);
 
       TIMING_start(tm_pvec_flux);      
       flop = 0.0;
-      BC.modPvecFlux(d_vc, d_v0, d_cdf, CurrentTime, &C, v_mode, v00, flop);
+      BC.modPvecFlux(d_vc, d_v0, d_cdf, CurrentTime, &C, v00, flop);
       TIMING_stop(tm_pvec_flux, flop);
       break;
       
     case Flow_FS_AB_CN:
       TIMING_start(tm_pseudo_vec);
       flop = 0.0;
-      v_mode = 0;
-      if ( C.LES.Calc == ON )
+      
+      switch ( cnv_scheme )
       {
-        //pvec_les_(wv, sz, &guide, &dh, (int*)&C.CnvScheme, v00, &rei, v0, vf, (int*)bcv, vt, &flop);
-      }
-      else
-      {
-        pvec_muscl_(d_wv, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bcp, &v_mode, d_ws, &wall_prof, d_bcd, d_cvf, &half, &flop);
+        case Control::O1_upwind:
+        case Control::O3_muscl:
+          if ( C.LES.Calc == ON )
+          {
+            //pvec_les_(wv, sz, &guide, dh, (int*)&C.CnvScheme, v00, &rei, v0, vf, (int*)bcv, vt, &flop);
+          }
+            else
+          {
+            pvec_muscl_(d_wv, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bcp, &half, &flop);
+          }
+          break;
+        
+        case Control::O2_central:
+        case Control::O4_central:
+          if ( C.LES.Calc == ON )
+          {
+            //pvec_les_(wv, sz, &guide, dh, (int*)&C.CnvScheme, v00, &rei, v0, vf, (int*)bcv, vt, &flop);
+          }
+          else
+          {
+            pvec_central_(d_wv, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bcp, &half, &flop);
+          }
+          break;
       }
       TIMING_stop(tm_pseudo_vec, flop);
       
       TIMING_start(tm_pvec_flux);
       flop = 0.0;
-      BC.modPvecFlux(d_wv, d_v0, d_cdf, CurrentTime, &C, v_mode, v00, flop);
+      BC.modPvecFlux(d_wv, d_v0, d_cdf, CurrentTime, &C, v00, flop);
       TIMING_stop(tm_pvec_flux, flop);
       break;
       

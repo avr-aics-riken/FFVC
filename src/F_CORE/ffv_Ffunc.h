@@ -642,9 +642,6 @@ extern "C" {
                            int* bd,
                            double* flop);
   
-  void friction_velocity_ (REAL_TYPE* ut, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* re, REAL_TYPE* v, int* bp, 
-                           REAL_TYPE* range_Yp, REAL_TYPE* range_Ut, REAL_TYPE* v00, double* flop);
-  
   void pvec_muscl_        (REAL_TYPE* wv,
                            int* sz,
                            int* g,
@@ -656,11 +653,20 @@ extern "C" {
                            REAL_TYPE* vf,
                            int* bv,
                            int* bp,
-                           int* v_mode,
-                           REAL_TYPE* ut,
-                           int* wall_type,
-                           int* bd,
-                           REAL_TYPE* cvf,
+                           REAL_TYPE* vcs_coef,
+                           double* flop);
+  
+  void pvec_central_      (REAL_TYPE* wv,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* dh,
+                           int* c_scheme,
+                           REAL_TYPE* v00,
+                           REAL_TYPE* rei,
+                           REAL_TYPE* v,
+                           REAL_TYPE* vf,
+                           int* bv,
+                           int* bp,
                            REAL_TYPE* vcs_coef,
                            double* flop);
   

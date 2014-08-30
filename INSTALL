@@ -126,9 +126,9 @@ Here is examples.
       CC=mpicc \
       CFLAGS=-O3 \
       CXX=mpicxx \
-      CXXFLAGS="-O3 -openmp -par-report=3 -vec-report=2" \
+      CXXFLAGS="-O3 -openmp -qopt-report-phase=par -qopt-report-phase=vec" \
       F90=mpif90 \
-      F90FLAGS="-O3 -Warn unused -fpp -openmp -par-report=3 -vec-report=2"
+      F90FLAGS="-O3 -Warn unused -fpp -openmp -qopt-report-phase=par -qopt-report-phase=vec"
 
 
 ## for OpenMPI compiled by INTEL compiler, double precision, openmp.
@@ -146,9 +146,9 @@ Here is examples.
       CC=mpicc \
       CFLAGS=-O3 \
       CXX=mpicxx \
-      CXXFLAGS="-O3 -openmp -par-report=3 -vec-report=2" \
+      CXXFLAGS="-O3 -openmp -qopt-report-phase=par -qopt-report-phase=vec" \
       F90=mpif90 \
-      F90FLAGS="-O3 -Warn unused -fpp -openmp -par-report=3 -vec-report=2"
+      F90FLAGS="-O3 -Warn unused -fpp -openmp -qopt-report-phase=par -qopt-report-phase=vec"
 
 
 ## for GNU compiler

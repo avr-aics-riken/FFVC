@@ -180,14 +180,54 @@
       cnv_u = 0.0
       cnv_v = 0.0
       cnv_w = 0.0
-      
-      ! 変数のロード
-      include 'load_var_stencil5.h'
-            
+
+      ! 各軸方向5点の変数ロード
+      Ub2 = v(i  ,j  ,k-2, 1)
+      Ub1 = v(i  ,j  ,k-1, 1)
+      Us2 = v(i  ,j-2,k  , 1)
+      Us1 = v(i  ,j-1,k  , 1)
+      Uw2 = v(i-2,j  ,k  , 1)
+      Uw1 = v(i-1,j  ,k  , 1)
+      Up0 = v(i  ,j  ,k  , 1)
+      Ue1 = v(i+1,j  ,k  , 1)
+      Ue2 = v(i+2,j  ,k  , 1)
+      Un1 = v(i  ,j+1,k  , 1)
+      Un2 = v(i  ,j+2,k  , 1)
+      Ut1 = v(i  ,j  ,k+1, 1)
+      Ut2 = v(i  ,j  ,k+2, 1)
+
+      Vb2 = v(i  ,j  ,k-2, 2)
+      Vb1 = v(i  ,j  ,k-1, 2)
+      Vs2 = v(i  ,j-2,k  , 2)
+      Vs1 = v(i  ,j-1,k  , 2)
+      Vw2 = v(i-2,j  ,k  , 2)
+      Vw1 = v(i-1,j  ,k  , 2)
+      Vp0 = v(i  ,j  ,k  , 2)
+      Ve1 = v(i+1,j  ,k  , 2)
+      Ve2 = v(i+2,j  ,k  , 2)
+      Vn1 = v(i  ,j+1,k  , 2)
+      Vn2 = v(i  ,j+2,k  , 2)
+      Vt1 = v(i  ,j  ,k+1, 2)
+      Vt2 = v(i  ,j  ,k+2, 2)
+
+      Wb2 = v(i  ,j  ,k-2, 3)
+      Wb1 = v(i  ,j  ,k-1, 3)
+      Ws2 = v(i  ,j-2,k  , 3)
+      Ws1 = v(i  ,j-1,k  , 3)
+      Ww2 = v(i-2,j  ,k  , 3)
+      Ww1 = v(i-1,j  ,k  , 3)
+      Wp0 = v(i  ,j  ,k  , 3)
+      We1 = v(i+1,j  ,k  , 3)
+      We2 = v(i+2,j  ,k  , 3)
+      Wn1 = v(i  ,j+1,k  , 3)
+      Wn2 = v(i  ,j+2,k  , 3)
+      Wt1 = v(i  ,j  ,k+1, 3)
+      Wt2 = v(i  ,j  ,k+2, 3)
+
       bvx = bv(i,j,k)
       bpx = bp(i,j,k)
-      
-      ! 各面のVBCフラグ ibits() = 0(Normal) / others(BC) >> ce = 1.0(Normal) / 0.0(BC) 
+
+      ! 各面のVBCフラグ ibits() = 0(Normal) / others(BC) >> ce = 1.0(Normal) / 0.0(BC)
       cw = 1.0
       ce = 1.0
       cs = 1.0
@@ -389,8 +429,18 @@
       dv2 = Up0 - Uw1
       dv1 = Uw1 - Uw2
       
-      include 'muscl.h'
-      
+      s4 = sign(1.0, dv4) ! sign is zero flop
+      s3 = sign(1.0, dv3)
+      s2 = sign(1.0, dv2)
+      s1 = sign(1.0, dv1)
+
+      g6 = s4 * max(0.0, min( abs(dv4), s4 * b * dv3))
+      g5 = s3 * max(0.0, min( abs(dv3), s3 * b * dv4))
+      g4 = s3 * max(0.0, min( abs(dv3), s3 * b * dv2))
+      g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
+      g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
+      g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
+
       Uer = Ue1 - (cm1 * g6 + cm2 * g5) * s4e * lmt_e
       Uel = Up0 + (cm1 * g3 + cm2 * g4) * s4e
       Uwr = Up0 - (cm1 * g4 + cm2 * g3) * s4w
@@ -403,8 +453,18 @@
       dv2 = Vp0 - Vw1
       dv1 = Vw1 - Vw2
       
-      include 'muscl.h'
-      
+      s4 = sign(1.0, dv4) ! sign is zero flop
+      s3 = sign(1.0, dv3)
+      s2 = sign(1.0, dv2)
+      s1 = sign(1.0, dv1)
+
+      g6 = s4 * max(0.0, min( abs(dv4), s4 * b * dv3))
+      g5 = s3 * max(0.0, min( abs(dv3), s3 * b * dv4))
+      g4 = s3 * max(0.0, min( abs(dv3), s3 * b * dv2))
+      g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
+      g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
+      g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
+
       Ver = Ve1 - (cm1 * g6 + cm2 * g5) * s4e * lmt_e
       Vel = Vp0 + (cm1 * g3 + cm2 * g4) * s4e
       Vwr = Vp0 - (cm1 * g4 + cm2 * g3) * s4w
@@ -417,8 +477,18 @@
       dv2 = Wp0 - Ww1
       dv1 = Ww1 - Ww2
       
-      include 'muscl.h'
-      
+      s4 = sign(1.0, dv4) ! sign is zero flop
+      s3 = sign(1.0, dv3)
+      s2 = sign(1.0, dv2)
+      s1 = sign(1.0, dv1)
+
+      g6 = s4 * max(0.0, min( abs(dv4), s4 * b * dv3))
+      g5 = s3 * max(0.0, min( abs(dv3), s3 * b * dv4))
+      g4 = s3 * max(0.0, min( abs(dv3), s3 * b * dv2))
+      g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
+      g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
+      g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
+
       Wer = We1 - (cm1 * g6 + cm2 * g5) * s4e * lmt_e
       Wel = Wp0 + (cm1 * g3 + cm2 * g4) * s4e
       Wwr = Wp0 - (cm1 * g4 + cm2 * g3) * s4w
@@ -491,8 +561,18 @@
       dv2 = Up0 - Us1
       dv1 = Us1 - Us2
       
-      include 'muscl.h'
-      
+      s4 = sign(1.0, dv4) ! sign is zero flop
+      s3 = sign(1.0, dv3)
+      s2 = sign(1.0, dv2)
+      s1 = sign(1.0, dv1)
+
+      g6 = s4 * max(0.0, min( abs(dv4), s4 * b * dv3))
+      g5 = s3 * max(0.0, min( abs(dv3), s3 * b * dv4))
+      g4 = s3 * max(0.0, min( abs(dv3), s3 * b * dv2))
+      g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
+      g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
+      g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
+
       Unr = Un1 - (cm1 * g6 + cm2 * g5) * s4n * lmt_n
       Unl = Up0 + (cm1 * g3 + cm2 * g4) * s4n
       Usr = Up0 - (cm1 * g4 + cm2 * g3) * s4s
@@ -505,8 +585,18 @@
       dv2 = Vp0 - Vs1
       dv1 = Vs1 - Vs2
       
-      include 'muscl.h'
-      
+      s4 = sign(1.0, dv4) ! sign is zero flop
+      s3 = sign(1.0, dv3)
+      s2 = sign(1.0, dv2)
+      s1 = sign(1.0, dv1)
+
+      g6 = s4 * max(0.0, min( abs(dv4), s4 * b * dv3))
+      g5 = s3 * max(0.0, min( abs(dv3), s3 * b * dv4))
+      g4 = s3 * max(0.0, min( abs(dv3), s3 * b * dv2))
+      g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
+      g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
+      g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
+
       Vnr = Vn1 - (cm1 * g6 + cm2 * g5) * s4n * lmt_n
       Vnl = Vp0 + (cm1 * g3 + cm2 * g4) * s4n
       Vsr = Vp0 - (cm1 * g4 + cm2 * g3) * s4s
@@ -519,8 +609,18 @@
       dv2 = Wp0 - Ws1
       dv1 = Ws1 - Ws2
       
-      include 'muscl.h'
-      
+      s4 = sign(1.0, dv4) ! sign is zero flop
+      s3 = sign(1.0, dv3)
+      s2 = sign(1.0, dv2)
+      s1 = sign(1.0, dv1)
+
+      g6 = s4 * max(0.0, min( abs(dv4), s4 * b * dv3))
+      g5 = s3 * max(0.0, min( abs(dv3), s3 * b * dv4))
+      g4 = s3 * max(0.0, min( abs(dv3), s3 * b * dv2))
+      g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
+      g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
+      g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
+
       Wnr = Wn1 - (cm1 * g6 + cm2 * g5) * s4n * lmt_n
       Wnl = Wp0 + (cm1 * g3 + cm2 * g4) * s4n
       Wsr = Wp0 - (cm1 * g4 + cm2 * g3) * s4s
@@ -593,8 +693,18 @@
       dv2 = Up0 - Ub1
       dv1 = Ub1 - Ub2
       
-      include 'muscl.h'
-      
+s4 = sign(1.0, dv4) ! sign is zero flop
+s3 = sign(1.0, dv3)
+s2 = sign(1.0, dv2)
+s1 = sign(1.0, dv1)
+
+g6 = s4 * max(0.0, min( abs(dv4), s4 * b * dv3))
+g5 = s3 * max(0.0, min( abs(dv3), s3 * b * dv4))
+g4 = s3 * max(0.0, min( abs(dv3), s3 * b * dv2))
+g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
+g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
+g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
+
       Utr = Ut1 - (cm1 * g6 + cm2 * g5) * s4t * lmt_t
       Utl = Up0 + (cm1 * g3 + cm2 * g4) * s4t
       Ubr = Up0 - (cm1 * g4 + cm2 * g3) * s4b
@@ -607,8 +717,18 @@
       dv2 = Vp0 - Vb1
       dv1 = Vb1 - Vb2
       
-      include 'muscl.h'
-      
+s4 = sign(1.0, dv4) ! sign is zero flop
+s3 = sign(1.0, dv3)
+s2 = sign(1.0, dv2)
+s1 = sign(1.0, dv1)
+
+g6 = s4 * max(0.0, min( abs(dv4), s4 * b * dv3))
+g5 = s3 * max(0.0, min( abs(dv3), s3 * b * dv4))
+g4 = s3 * max(0.0, min( abs(dv3), s3 * b * dv2))
+g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
+g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
+g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
+
       Vtr = Vt1 - (cm1 * g6 + cm2 * g5) * s4t * lmt_t
       Vtl = Vp0 + (cm1 * g3 + cm2 * g4) * s4t
       Vbr = Vp0 - (cm1 * g4 + cm2 * g3) * s4b
@@ -621,8 +741,18 @@
       dv2 = Wp0 - Wb1
       dv1 = Wb1 - Wb2
       
-      include 'muscl.h'
-      
+s4 = sign(1.0, dv4) ! sign is zero flop
+s3 = sign(1.0, dv3)
+s2 = sign(1.0, dv2)
+s1 = sign(1.0, dv1)
+
+g6 = s4 * max(0.0, min( abs(dv4), s4 * b * dv3))
+g5 = s3 * max(0.0, min( abs(dv3), s3 * b * dv4))
+g4 = s3 * max(0.0, min( abs(dv3), s3 * b * dv2))
+g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
+g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
+g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
+
       Wtr = Wt1 - (cm1 * g6 + cm2 * g5) * s4t * lmt_t
       Wtl = Wp0 + (cm1 * g3 + cm2 * g4) * s4t
       Wbr = Wp0 - (cm1 * g4 + cm2 * g3) * s4b

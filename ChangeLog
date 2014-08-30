@@ -19,6 +19,19 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-08-29
+r1630
+ - add O4_Central scheme
+ - remove getConvection()
+ - expand load_var_stencil5.h into source codes and remove it to avoid including a file twice
+ - expand d_o_o_p.h into source codes and remove it
+ - expand muscl.h into source codes and remove it
+ - refine pvec_muscl
+ - change icpc compiler option because the current options will be deprecated
+     -par-report=3 >> -qopt-report-phase=par
+     -vec-report=3 >> -qopt-report-phase=vec
+
+--------------------------
 2014-08-27
 r1629 bug fix double precision compilation
  - search_polygons(..REAL_TYPE,..) in ASDmodule.C

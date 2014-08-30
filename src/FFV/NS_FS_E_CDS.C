@@ -38,7 +38,6 @@ void FFV::NS_FS_E_CDS()
   REAL_TYPE half = 0.5;                /// 定数
   REAL_TYPE one = 1.0;                 /// 定数
   REAL_TYPE zero = 0.0;                /// 定数
-  int wall_prof = C.Mode.Wall_profile; /// 壁面条件（slip/noslip）
   int cnv_scheme = C.CnvScheme;        /// 対流項スキーム
   
   
@@ -88,15 +87,6 @@ void FFV::NS_FS_E_CDS()
   TIMING_stop(tm_copy_array, 0.0, 2);
   
   
-  // 壁関数指定時の摩擦速度の計算 src0をテンポラリのワークとして利用
-  if ( C.Mode.Wall_profile == Control::Log_Law )
-  {
-    TIMING_start(tm_WallFunc);
-    flop = 0.0;
-    friction_velocity_(d_ws, size, &guide, &dh, &Re, d_v0, d_bcp, range_Yp, range_Ut, v00, &flop);
-    TIMING_stop(tm_WallFunc, flop);
-  }
-  
   TIMING_stop(tm_frctnl_stp_sct_1, 0.0);
   // <<< Fractional step subsection 1
   
@@ -112,7 +102,7 @@ void FFV::NS_FS_E_CDS()
       TIMING_start(tm_pseudo_vec);
       
       flop = 0.0;
-      v_mode = (C.Mode.Wall_profile == Control::Log_Law) ? 2 : 1;
+      v_mode = 1; // ?
 
       if ( C.LES.Calc == ON )
       {
@@ -127,7 +117,7 @@ void FFV::NS_FS_E_CDS()
 
       TIMING_start(tm_pvec_flux);
       flop = 0.0;
-      BC.modPvecFlux(d_vc, d_v0, d_cdf, CurrentTime, &C, v_mode, v00, flop);
+      BC.modPvecFlux(d_vc, d_v0, d_cdf, CurrentTime, &C, v00, flop);
       TIMING_stop(tm_pvec_flux, flop);
       break;
       
@@ -147,7 +137,7 @@ void FFV::NS_FS_E_CDS()
       
       TIMING_start(tm_pvec_flux);
       flop = 0.0;
-      BC.modPvecFlux(d_wv, d_v0, d_cdf, CurrentTime, &C, v_mode, v00, flop);
+      BC.modPvecFlux(d_wv, d_v0, d_cdf, CurrentTime, &C, v00, flop);
       TIMING_stop(tm_pvec_flux, flop);
       break;
       

@@ -237,7 +237,6 @@ public:
    * @param [in]     d_cdf  BCindex C
    * @param [in]     tm     無次元時刻
    * @param [in]     C      Control class
-   * @param [in]     v_mode 粘性項のモード (0=粘性項を計算しない, 1=粘性項を計算する, 2=壁法則)
    * @param [in]     v00    基準速度
    * @param [in,out] flop   flop count
    */
@@ -246,7 +245,6 @@ public:
                     int* d_cdf,
                     const double tm,
                     Control* C,
-                    int v_mode,
                     REAL_TYPE* v00,
                     double& flop);
   

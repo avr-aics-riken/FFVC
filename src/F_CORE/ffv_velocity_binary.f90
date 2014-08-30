@@ -26,49 +26,39 @@
 !! @param [in]  sz        配列長
 !! @param [in]  g         ガイドセル長
 !! @param [in]  dh        格子幅
-!! @param [in]  c_scheme  対流項スキームのモード（1-UWD, 2-center, 3-MUSCL）
+!! @param [in]  c_scheme  対流項スキームのモード（1-UWD, 3-MUSCL）
 !! @param [in]  v00       参照速度
 !! @param [in]  rei       レイノルズ数の逆数
 !! @param [in]  v         セルセンター速度ベクトル（n-step）
 !! @param [in]  vf        セルフェイス速度ベクトル（n-step）
 !! @param [in]  bv        BCindex C
 !! @param [in]  bp        BCindex P
-!! @param [in]  v_mode    粘性項のモード (0=対流項のみ, 1=対流項と粘性項，2=粘性項は壁法則)
-!! @param [in]  ut        摩擦速度
-!! @param [in]  wall_type 壁面条件 (0=no_slip, 1=slip)
-!! @param [in]  bd        BCindex B
-!! @param [in]  cvf       コンポーネント体積率
-!! @param [in]  vcs_coef  粘性項の係数
+!! @param [in]  vcs_coef  粘性項の係数（粘性項を計算しない場合には0.0）
 !! @param [out] flop      浮動小数点演算数
 !<
-    subroutine pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bv, bp, v_mode, ut, wall_type, bd, cvf, vcs_coef, flop)
+    subroutine pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bv, bp, vcs_coef, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, v_mode, bpx, wall_type, bdx
+    integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, bpx
     integer, dimension(3)                                     ::  sz
-    double precision                                          ::  flop, vflop
+    double precision                                          ::  flop
     real                                                      ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
     real                                                      ::  b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p
-    real                                                      ::  UPe, UPw, VPn, VPs, WPt, WPb, u1, u2, u3, ug, e1, e2, e3, u_tau
+    real                                                      ::  UPe, UPw, VPn, VPs, WPt, WPb
     real                                                      ::  Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2
     real                                                      ::  Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2
     real                                                      ::  Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2
-    real                                                      ::  ck, dh, dh1, dh2, vcs, vcs_coef, tmp1, tmp2
+    real                                                      ::  ck, dh, dh1, dh2, vcs, vcs_coef
     real                                                      ::  u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2
-    real                                                      ::  c_e, c_w, c_n, c_s, c_t, c_b, wls, wm1, wm2, cm1, cm2, ss_4
-    real                                                      ::  uu_e, uu_w, uu_s, uu_n, uu_b, uu_t
-    real                                                      ::  vv_e, vv_w, vv_s, vv_n, vv_b, vv_t
-    real                                                      ::  ww_e, ww_w, ww_s, ww_n, ww_b, ww_t
+    real                                                      ::  c_e, c_w, c_n, c_s, c_t, c_b, cm1, cm2, ss_4
     real                                                      ::  dv1, dv2, dv3, dv4, g1, g2, g3, g4, g5, g6, s1, s2, s3, s4, b
     real                                                      ::  Urr, Url, Ulr, Ull, Vrr, Vrl, Vlr, Vll, Wrr, Wrl, Wlr, Wll
-    real                                                      ::  cr, cl, acr, acl, cnv_u, cnv_v, cnv_w, EX, EY, EZ, rei, beta, qtz
+    real                                                      ::  cr, cl, acr, acl, cnv_u, cnv_v, cnv_w, EX, EY, EZ, rei
     real                                                      ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l, uq, vq, wq, ss
     real                                                      ::  lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, wv, vf
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  ut
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  cvf
     real, dimension(0:3)                                      ::  v00
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv, bp, bd
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv, bp
     
     ix = sz(1)
     jx = sz(2)
@@ -76,17 +66,9 @@
     
     dh1= 1.0/dh
     dh2= rei*dh1
-    qtz = 1.0/255.0
-    
-    ! 粘性項のマスク
-    if ( v_mode == 0 ) then ! 粘性項は計算しない
-      vcs = 0.0
-    else
-      vcs = 1.0
-    endif
 
-    ! vcs = 1.0 (Euler Explicit) / 0.5 (CN)
-    vcs = vcs * vcs_coef
+    ! vcs = 1.0 (Euler Explicit) / 0.5 (CN) / 0.0(No)
+    vcs = vcs_coef
     
     ! 参照座標系の速度
     u_ref = v00(1)
@@ -102,8 +84,6 @@
             
     if ( c_scheme == 1 ) then      !     1st order upwind
       ss = 0.0
-    else if ( c_scheme == 2 ) then !     2nd order central 
-      ck = 1.0     
     else if ( c_scheme == 3 ) then !     3rd order MUSCL
       ck = 1.0/3.0
       b  = (3.0-ck)/(1.0-ck)
@@ -116,16 +96,7 @@
     
     cm1 = 1.0 - ck
     cm2 = 1.0 + ck
-    
-    ! 壁面条件
-    if ( wall_type == 0 ) then ! no slip
-      wls = 0.0
-    else if ( wall_type == 1 ) then ! slip
-      wls = 1.0
-    endif
-    
-    wm1 = 2.0*(1.0-wls)
-    wm2 = 2.0*wls-1.0
+
     
 ! /4 + 12 = 8*4+13  = 45 flops
 ! /4 + 12 = 13*4+13 = 65 flops ! DP
@@ -137,28 +108,22 @@
 
     flop = flop + dble(ix)*dble(jx)*dble(kx)*798.0d0
     ! flop = flop + dble(ix)*dble(jx)*dble(kx)*991.0d0 ! DP
-    
-    vflop = 0.0d0
+
 
 !$OMP PARALLEL &
-!$OMP REDUCTION(+:vflop) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, dh1, dh2, qtz, vcs, b, ck, ss_4, ss, cm1, cm2, wls) &
-!$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, wm1, wm2, rei, v_mode) &
-!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bpx, uq, vq, wq, tmp1, tmp2, bdx) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, dh1, dh2, vcs, b, ck, ss_4, ss, cm1, cm2) &
+!$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, rei) &
+!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bpx, uq, vq, wq) &
 !$OMP PRIVATE(Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2) &
 !$OMP PRIVATE(Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2) &
 !$OMP PRIVATE(Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2) &
 !$OMP PRIVATE(b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p) &
 !$OMP PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b) &
 !$OMP PRIVATE(UPe, UPw, VPn, VPs, WPt, WPb) &
-!$OMP PRIVATE(cr, cl, acr, acl, beta) &
+!$OMP PRIVATE(cr, cl, acr, acl) &
 !$OMP PRIVATE(dv1, dv2, dv3, dv4, g1, g2, g3, g4, g5, g6, s1, s2, s3, s4) &
 !$OMP PRIVATE(Urr, Url, Ulr, Ull, Vrr, Vrl, Vlr, Vll, Wrr, Wrl, Wlr, Wll) &
 !$OMP PRIVATE(fu_r, fu_l, fv_r, fv_l, fw_r, fw_l) &
-!$OMP PRIVATE(uu_e, uu_w, uu_s, uu_n, uu_b, uu_t) &
-!$OMP PRIVATE(vv_e, vv_w, vv_s, vv_n, vv_b, vv_t) &
-!$OMP PRIVATE(ww_e, ww_w, ww_s, ww_n, ww_b, ww_t) &
-!$OMP PRIVATE(u1, u2, u3, ug, e1, e2, e3, u_tau) &
 !$OMP PRIVATE(lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t)
 
 !$OMP DO SCHEDULE(static)
@@ -170,12 +135,52 @@
       cnv_v = 0.0
       cnv_w = 0.0
 
-      ! 変数のロード
-      include 'load_var_stencil5.h'
-      
+      ! 各軸方向5点の変数ロード
+      Ub2 = v(i  ,j  ,k-2, 1)
+      Ub1 = v(i  ,j  ,k-1, 1)
+      Us2 = v(i  ,j-2,k  , 1)
+      Us1 = v(i  ,j-1,k  , 1)
+      Uw2 = v(i-2,j  ,k  , 1)
+      Uw1 = v(i-1,j  ,k  , 1)
+      Up0 = v(i  ,j  ,k  , 1)
+      Ue1 = v(i+1,j  ,k  , 1)
+      Ue2 = v(i+2,j  ,k  , 1)
+      Un1 = v(i  ,j+1,k  , 1)
+      Un2 = v(i  ,j+2,k  , 1)
+      Ut1 = v(i  ,j  ,k+1, 1)
+      Ut2 = v(i  ,j  ,k+2, 1)
+
+      Vb2 = v(i  ,j  ,k-2, 2)
+      Vb1 = v(i  ,j  ,k-1, 2)
+      Vs2 = v(i  ,j-2,k  , 2)
+      Vs1 = v(i  ,j-1,k  , 2)
+      Vw2 = v(i-2,j  ,k  , 2)
+      Vw1 = v(i-1,j  ,k  , 2)
+      Vp0 = v(i  ,j  ,k  , 2)
+      Ve1 = v(i+1,j  ,k  , 2)
+      Ve2 = v(i+2,j  ,k  , 2)
+      Vn1 = v(i  ,j+1,k  , 2)
+      Vn2 = v(i  ,j+2,k  , 2)
+      Vt1 = v(i  ,j  ,k+1, 2)
+      Vt2 = v(i  ,j  ,k+2, 2)
+
+      Wb2 = v(i  ,j  ,k-2, 3)
+      Wb1 = v(i  ,j  ,k-1, 3)
+      Ws2 = v(i  ,j-2,k  , 3)
+      Ws1 = v(i  ,j-1,k  , 3)
+      Ww2 = v(i-2,j  ,k  , 3)
+      Ww1 = v(i-1,j  ,k  , 3)
+      Wp0 = v(i  ,j  ,k  , 3)
+      We1 = v(i+1,j  ,k  , 3)
+      We2 = v(i+2,j  ,k  , 3)
+      Wn1 = v(i  ,j+1,k  , 3)
+      Wn2 = v(i  ,j+2,k  , 3)
+      Wt1 = v(i  ,j  ,k+1, 3)
+      Wt2 = v(i  ,j  ,k+2, 3)
+
       bvx = bv(i,j,k)
       bpx = bp(i,j,k)
-      
+
       ! (i,j,k)からみたセル状態 (0-solid / 1-fluid)
       b_p = real(ibits(bvx, State, 1))
 
@@ -243,7 +248,7 @@
       WPb = vf(i  , j  , k-1,3)*b_b1 + w_ref*(1.0-b_b1)
 
 
-      ! セルセンターからの壁面修正速度 > 2 flops
+      ! セルセンターからの壁面修正速度 > 3 flops
       uq = u_ref2 - Up0
       vq = v_ref2 - Vp0
       wq = w_ref2 - Wp0
@@ -252,31 +257,27 @@
       
       ! 速度指定の場合にMUSCLスキームの参照先として，固体内にテンポラリに与えた値を使う
       if ( (b_e2 == 0.0)  ) then  ! 7 flops
-        Ue2 = u_ref2    - v(i+1,j  ,k  , 1)
-        Ve2 = wm1*v_ref + v(i+1,j  ,k  , 2)*wm2
-        We2 = wm1*w_ref + v(i+1,j  ,k  , 3)*wm2
+        Ue2 = u_ref2 - v(i+1,j  ,k  , 1)
+        Ve2 = v_ref2 - v(i+1,j  ,k  , 2)
+        We2 = w_ref2 - v(i+1,j  ,k  , 3)
       endif
-      
-      ! 壁面の場合の参照速度の修正
-      tmp1 = wm1*v_ref + Vp0*wm2 ! 6 flops
-      tmp2 = wm1*w_ref + Wp0*wm2
       
       if ( b_e1 == 0.0 ) then
         Ue1 = uq
-        Ve1 = tmp1
-        We1 = tmp2
+        Ve1 = vq
+        We1 = wq
       endif
       
       if ( b_w1 == 0.0 ) then
         Uw1 = uq
-        Vw1 = tmp1
-        Ww1 = tmp2
+        Vw1 = vq
+        Ww1 = wq
       end if
       
       if ( (b_w2 == 0.0)  ) then ! 7 flops
-        Uw2 = u_ref2    - v(i-1,j  ,k  , 1)
-        Vw2 = wm1*v_ref + v(i-1,j  ,k  , 2)*wm2
-        Ww2 = wm1*w_ref + v(i-1,j  ,k  , 3)*wm2
+        Uw2 = u_ref2 - v(i-1,j  ,k  , 1)
+        Vw2 = v_ref2 - v(i-1,j  ,k  , 2)
+        Ww2 = w_ref2 - v(i-1,j  ,k  , 3)
       end if
       
       ! 流束　流体のみと固体壁の影響を含み，隣接セルが固体の場合にはマスクする
@@ -290,8 +291,18 @@
       dv2 = Up0-Uw1
       dv1 = Uw1-Uw2
       
-      include 'muscl.h'
-      
+      s4 = sign(1.0, dv4) ! sign is zero flop
+      s3 = sign(1.0, dv3)
+      s2 = sign(1.0, dv2)
+      s1 = sign(1.0, dv1)
+
+      g6 = s4 * max(0.0, min( abs(dv4), s4 * b * dv3))
+      g5 = s3 * max(0.0, min( abs(dv3), s3 * b * dv4))
+      g4 = s3 * max(0.0, min( abs(dv3), s3 * b * dv2))
+      g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
+      g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
+      g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
+
       Urr = Ue1 - (cm1*g6+cm2*g5)*ss_4 * lmt_e
       Url = Up0 + (cm1*g3+cm2*g4)*ss_4
       Ulr = Up0 - (cm1*g4+cm2*g3)*ss_4
@@ -304,8 +315,18 @@
       dv2 = Vp0-Vw1
       dv1 = Vw1-Vw2
       
-      include 'muscl.h'
-      
+      s4 = sign(1.0, dv4) ! sign is zero flop
+      s3 = sign(1.0, dv3)
+      s2 = sign(1.0, dv2)
+      s1 = sign(1.0, dv1)
+
+      g6 = s4 * max(0.0, min( abs(dv4), s4 * b * dv3))
+      g5 = s3 * max(0.0, min( abs(dv3), s3 * b * dv4))
+      g4 = s3 * max(0.0, min( abs(dv3), s3 * b * dv2))
+      g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
+      g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
+      g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
+
       Vrr = Ve1 - (cm1*g6+cm2*g5)*ss_4 * lmt_e
       Vrl = Vp0 + (cm1*g3+cm2*g4)*ss_4
       Vlr = Vp0 - (cm1*g4+cm2*g3)*ss_4
@@ -318,8 +339,18 @@
       dv2 = Wp0-Ww1
       dv1 = Ww1-Ww2
       
-      include 'muscl.h'
-      
+      s4 = sign(1.0, dv4) ! sign is zero flop
+      s3 = sign(1.0, dv3)
+      s2 = sign(1.0, dv2)
+      s1 = sign(1.0, dv1)
+
+      g6 = s4 * max(0.0, min( abs(dv4), s4 * b * dv3))
+      g5 = s3 * max(0.0, min( abs(dv3), s3 * b * dv4))
+      g4 = s3 * max(0.0, min( abs(dv3), s3 * b * dv2))
+      g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
+      g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
+      g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
+
       Wrr = We1 - (cm1*g6+cm2*g5)*ss_4 * lmt_e
       Wrl = Wp0 + (cm1*g3+cm2*g4)*ss_4
       Wlr = Wp0 - (cm1*g4+cm2*g3)*ss_4
@@ -335,30 +366,27 @@
       ! Y方向 ---------------------------------------
       
       if ( (b_n2 == 0.0)  ) then
-        Un2 = wm1*u_ref + v(i  ,j+1,k  , 1)*wm2
-        Vn2 = v_ref2    - v(i  ,j+1,k  , 2)
-        Wn2 = wm1*w_ref + v(i  ,j+1,k  , 3)*wm2
+        Un2 = u_ref2 - v(i  ,j+1,k  , 1)
+        Vn2 = v_ref2 - v(i  ,j+1,k  , 2)
+        Wn2 = w_ref2 - v(i  ,j+1,k  , 3)
       endif
       
-      tmp1 = wm1*u_ref + Up0*wm2
-      tmp2 = wm1*w_ref + Wp0*wm2
-      
       if ( b_n1 == 0.0 ) then
-        Un1 = tmp1
+        Un1 = uq
         Vn1 = vq
-        Wn1 = tmp2
+        Wn1 = wq
       endif
       
       if ( b_s1 == 0.0 ) then
-        Us1 = tmp1
+        Us1 = uq
         Vs1 = vq
-        Ws1 = tmp2
+        Ws1 = wq
       endif
       
       if ( (b_s2 == 0.0)  ) then
-        Us2 = wm1*u_ref + v(i  ,j-1,k  , 1)*wm2
-        Vs2 = v_ref2    - v(i  ,j-1,k  , 2)
-        Ws2 = wm1*w_ref + v(i  ,j-1,k  , 3)*wm2
+        Us2 = u_ref2 - v(i  ,j-1,k  , 1)
+        Vs2 = v_ref2 - v(i  ,j-1,k  , 2)
+        Ws2 = w_ref2 - v(i  ,j-1,k  , 3)
       endif
       
       ! 流束　流体のみと固体壁の影響を含み，隣接セルが固体の場合にはマスクする
@@ -372,8 +400,18 @@
       dv2 = Up0-Us1
       dv1 = Us1-Us2
       
-      include 'muscl.h'
-      
+      s4 = sign(1.0, dv4) ! sign is zero flop
+      s3 = sign(1.0, dv3)
+      s2 = sign(1.0, dv2)
+      s1 = sign(1.0, dv1)
+
+      g6 = s4 * max(0.0, min( abs(dv4), s4 * b * dv3))
+      g5 = s3 * max(0.0, min( abs(dv3), s3 * b * dv4))
+      g4 = s3 * max(0.0, min( abs(dv3), s3 * b * dv2))
+      g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
+      g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
+      g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
+
       Urr = Un1 - (cm1*g6+cm2*g5)*ss_4 * lmt_n
       Url = Up0 + (cm1*g3+cm2*g4)*ss_4
       Ulr = Up0 - (cm1*g4+cm2*g3)*ss_4
@@ -386,8 +424,18 @@
       dv2 = Vp0-Vs1
       dv1 = Vs1-Vs2
       
-      include 'muscl.h'
-      
+      s4 = sign(1.0, dv4) ! sign is zero flop
+      s3 = sign(1.0, dv3)
+      s2 = sign(1.0, dv2)
+      s1 = sign(1.0, dv1)
+
+      g6 = s4 * max(0.0, min( abs(dv4), s4 * b * dv3))
+      g5 = s3 * max(0.0, min( abs(dv3), s3 * b * dv4))
+      g4 = s3 * max(0.0, min( abs(dv3), s3 * b * dv2))
+      g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
+      g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
+      g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
+
       Vrr = Vn1 - (cm1*g6+cm2*g5)*ss_4 * lmt_n
       Vrl = Vp0 + (cm1*g3+cm2*g4)*ss_4
       Vlr = Vp0 - (cm1*g4+cm2*g3)*ss_4
@@ -400,8 +448,18 @@
       dv2 = Wp0-Ws1
       dv1 = Ws1-Ws2
       
-      include 'muscl.h'
-      
+      s4 = sign(1.0, dv4) ! sign is zero flop
+      s3 = sign(1.0, dv3)
+      s2 = sign(1.0, dv2)
+      s1 = sign(1.0, dv1)
+
+      g6 = s4 * max(0.0, min( abs(dv4), s4 * b * dv3))
+      g5 = s3 * max(0.0, min( abs(dv3), s3 * b * dv4))
+      g4 = s3 * max(0.0, min( abs(dv3), s3 * b * dv2))
+      g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
+      g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
+      g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
+
       Wrr = Wn1 - (cm1*g6+cm2*g5)*ss_4 * lmt_n
       Wrl = Wp0 + (cm1*g3+cm2*g4)*ss_4
       Wlr = Wp0 - (cm1*g4+cm2*g3)*ss_4
@@ -418,30 +476,27 @@
       
       ! 壁面の場合の参照速度の修正
       if ( (b_t2 == 0.0)  ) then
-        Ut2 = wm1*u_ref + v(i  ,j  ,k+1, 1)*wm2
-        Vt2 = wm1*v_ref + v(i  ,j  ,k+1, 2)*wm2
-        Wt2 = w_ref2    - v(i  ,j  ,k+1, 3)
+        Ut2 = u_ref2 - v(i  ,j  ,k+1, 1)
+        Vt2 = v_ref2 - v(i  ,j  ,k+1, 2)
+        Wt2 = w_ref2 - v(i  ,j  ,k+1, 3)
       end if
       
-      tmp1 = wm1*u_ref + Up0*wm2
-      tmp2 = wm1*v_ref + Vp0*wm2
-      
       if ( b_t1 == 0.0 ) then
-        Ut1 = tmp1
-        Vt1 = tmp2
+        Ut1 = uq
+        Vt1 = vq
         Wt1 = wq
       end if
       
       if ( b_b1 == 0.0 ) then
-        Ub1 = tmp1
-        Vb1 = tmp2
+        Ub1 = uq
+        Vb1 = vq
         Wb1 = wq
       end if
       
       if ( (b_b2 == 0.0)  ) then
-        Ub2 = wm1*u_ref + v(i  ,j  ,k-1, 1)*wm2
-        Vb2 = wm1*v_ref + v(i  ,j  ,k-1, 2)*wm2
-        Wb2 = w_ref2    - v(i  ,j  ,k-1, 3)
+        Ub2 = u_ref2 - v(i  ,j  ,k-1, 1)
+        Vb2 = v_ref2 - v(i  ,j  ,k-1, 2)
+        Wb2 = w_ref2 - v(i  ,j  ,k-1, 3)
       end if
       
       ! 流束　流体のみと固体壁の影響を含み，隣接セルが固体の場合にはマスクする
@@ -455,8 +510,18 @@
       dv2 = Up0-Ub1
       dv1 = Ub1-Ub2
       
-      include 'muscl.h'
-      
+      s4 = sign(1.0, dv4) ! sign is zero flop
+      s3 = sign(1.0, dv3)
+      s2 = sign(1.0, dv2)
+      s1 = sign(1.0, dv1)
+
+      g6 = s4 * max(0.0, min( abs(dv4), s4 * b * dv3))
+      g5 = s3 * max(0.0, min( abs(dv3), s3 * b * dv4))
+      g4 = s3 * max(0.0, min( abs(dv3), s3 * b * dv2))
+      g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
+      g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
+      g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
+
       Urr = Ut1 - (cm1*g6+cm2*g5)*ss_4 * lmt_t
       Url = Up0 + (cm1*g3+cm2*g4)*ss_4
       Ulr = Up0 - (cm1*g4+cm2*g3)*ss_4
@@ -469,8 +534,18 @@
       dv2 = Vp0-Vb1
       dv1 = Vb1-Vb2
       
-      include 'muscl.h'
-            
+      s4 = sign(1.0, dv4) ! sign is zero flop
+      s3 = sign(1.0, dv3)
+      s2 = sign(1.0, dv2)
+      s1 = sign(1.0, dv1)
+
+      g6 = s4 * max(0.0, min( abs(dv4), s4 * b * dv3))
+      g5 = s3 * max(0.0, min( abs(dv3), s3 * b * dv4))
+      g4 = s3 * max(0.0, min( abs(dv3), s3 * b * dv2))
+      g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
+      g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
+      g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
+
       Vrr = Vt1 - (cm1*g6+cm2*g5)*ss_4 * lmt_t
       Vrl = Vp0 + (cm1*g3+cm2*g4)*ss_4
       Vlr = Vp0 - (cm1*g4+cm2*g3)*ss_4
@@ -483,8 +558,18 @@
       dv2 = Wp0-Wb1
       dv1 = Wb1-Wb2
       
-      include 'muscl.h'
-            
+      s4 = sign(1.0, dv4) ! sign is zero flop
+      s3 = sign(1.0, dv3)
+      s2 = sign(1.0, dv2)
+      s1 = sign(1.0, dv1)
+
+      g6 = s4 * max(0.0, min( abs(dv4), s4 * b * dv3))
+      g5 = s3 * max(0.0, min( abs(dv3), s3 * b * dv4))
+      g4 = s3 * max(0.0, min( abs(dv3), s3 * b * dv2))
+      g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
+      g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
+      g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
+
       Wrr = Wt1 - (cm1*g6+cm2*g5)*ss_4 * lmt_t
       Wrl = Wp0 + (cm1*g3+cm2*g4)*ss_4
       Wlr = Wp0 - (cm1*g4+cm2*g3)*ss_4
@@ -497,123 +582,38 @@
       cnv_v = cnv_v + fv_r*c_t - fv_l*c_b
       cnv_w = cnv_w + fw_r*c_t - fw_l*c_b
 
-      
-      ! 粘性項の計算　セル界面の剪断力を計算し，必要に応じて置換する
-      uu_e = ( Ue1 - Up0 ) * dh2 ! 1/Re du/dx, e
-      uu_w = ( Up0 - Uw1 ) * dh2
-      uu_n = ( Un1 - Up0 ) * dh2
-      uu_s = ( Up0 - Us1 ) * dh2
-      uu_t = ( Ut1 - Up0 ) * dh2
-      uu_b = ( Up0 - Ub1 ) * dh2
-      
-      vv_e = ( Ve1 - Vp0 ) * dh2
-      vv_w = ( Vp0 - Vw1 ) * dh2
-      vv_n = ( Vn1 - Vp0 ) * dh2
-      vv_s = ( Vp0 - Vs1 ) * dh2
-      vv_t = ( Vt1 - Vp0 ) * dh2
-      vv_b = ( Vp0 - Vb1 ) * dh2
-      
-      ww_e = ( We1 - Wp0 ) * dh2
-      ww_w = ( Wp0 - Ww1 ) * dh2
-      ww_n = ( Wn1 - Wp0 ) * dh2
-      ww_s = ( Wp0 - Ws1 ) * dh2
-      ww_t = ( Wt1 - Wp0 ) * dh2
-      ww_b = ( Wp0 - Wb1 ) * dh2 ! > (2*6)*3 = 36 flops
-      
-      if ( v_mode == 2 ) then ! 壁法則の場合の壁面摩擦による剪断応力の置換
-        if ( ibits(bpx, facing_W, 6) /= 0 ) then ! 6面のうちのどれか方向フラグが立っている場合，つまり壁面隣接セル
-          u1 = Up0 - u_ref
-          u2 = Vp0 - v_ref
-          u3 = Wp0 - w_ref
-          ug = sqrt(u1*u1 + u2*u2 + u3*u3)
-          
-          if ( ug > 0.0 ) then
-            e1 = abs(u1/ug)
-            e2 = abs(u2/ug)
-            e3 = abs(u3/ug)
-          else
-            e1 = 0.0
-            e2 = 0.0
-            e3 = 0.0
-          endif
-          
-          u_tau = ut(i,j,k)*ut(i,j,k)
-          
-          if ( ibits(bpx, facing_E, 1) == 1 ) then ! ビットON -> 壁面
-          ! uu_eは法線方向で，既に壁面条件で計算されている
-            vv_e = u_tau * e2*e2
-            ww_e = u_tau * e3*e3
-          endif
-          
-          if ( ibits(bpx, facing_W, 1) == 1 ) then
-            vv_w = u_tau * e2*e2
-            ww_w = u_tau * e3*e3
-          endif
-          
-          if ( ibits(bpx, facing_N, 1) == 1 ) then
-            uu_n = u_tau * e1*e1
-            ww_n = u_tau * e3*e3
-          endif
-          
-          if ( ibits(bpx, facing_S, 1) == 1 ) then
-            uu_s = u_tau * e1*e1
-            ww_s = u_tau * e3*e3
-          endif
-          
-          if ( ibits(bpx, facing_T, 1) == 1 ) then
-            uu_t = u_tau * e1*e1
-            vv_t = u_tau * e2*e2
-          endif
-          
-          if ( ibits(bpx, facing_B, 1) == 1 ) then
-            uu_b = u_tau * e1*e1
-            vv_b = u_tau * e2*e2
-          endif
-          
-          vflop = vflop + 67.0d0
-          ! > 9 + sqrt*1 + /3 + 4*6 = 9+10+8*3+24 = 67 ! DP 9+20+13*3+24 = 92
-        endif
-      endif 
-      
-      beta = 1.0
-      bdx = bd(i,j,k)
-      if (ibits(bdx, forcing_bit, 1) == 1) then ! 圧力損失コンポの場合
-        ! beta = 1.0 - real(ibits( bdx, top_vf, bitw_8 )) * qtz ! 1-体積率
-        beta = 1.0 - cvf(i,j,k)
-      endif
-      
-      EX = ( uu_e * c_e &
-           - uu_w * c_w &
-           + uu_n * c_n &
-           - uu_s * c_s &
-           + uu_t * c_t &
-           - uu_b * c_b ) * dh1
-           
-      EY = ( vv_e * c_e &
-           - vv_w * c_w &
-           + vv_n * c_n &
-           - vv_s * c_s &
-           + vv_t * c_t &
-           - vv_b * c_b ) * dh1
-           
-      EZ = ( ww_e * c_e &
-           - ww_w * c_w &
-           + ww_n * c_n &
-           - ww_s * c_s &
-           + ww_t * c_t &
-           - ww_b * c_b ) * dh1 ! > 2*6*3 = 36 flops
-			
+
+     ! 粘性項の計算　セル界面の剪断力を計算し，必要に応じて置換する
+      EX = ( ( Ue1 - Up0 ) * c_e &
+           - ( Up0 - Uw1 ) * c_w &
+           + ( Un1 - Up0 ) * c_n &
+           - ( Up0 - Us1 ) * c_s &
+           + ( Ut1 - Up0 ) * c_t &
+           - ( Up0 - Ub1 ) * c_b ) * dh1 * dh2
+
+      EY = ( ( Ve1 - Vp0 ) * c_e &
+           - ( Vp0 - Vw1 ) * c_w &
+           + ( Vn1 - Vp0 ) * c_n &
+           - ( Vp0 - Vs1 ) * c_s &
+           + ( Vt1 - Vp0 ) * c_t &
+           - ( Vp0 - Vb1 ) * c_b ) * dh1 * dh2
+
+      EZ = ( ( We1 - Wp0 ) * c_e &
+           - ( Wp0 - Ww1 ) * c_w &
+           + ( Wn1 - Wp0 ) * c_n &
+           - ( Wp0 - Ws1 ) * c_s &
+           + ( Wt1 - Wp0 ) * c_t &
+           - ( Wp0 - Wb1 ) * c_b ) * dh1 * dh2
+
       ! 対流項と粘性項の和 > 4*3 = 12 flops
-      wv(i,j,k,1) = -cnv_u*dh1 + beta*EX*vcs
-      wv(i,j,k,2) = -cnv_v*dh1 + beta*EY*vcs
-      wv(i,j,k,3) = -cnv_w*dh1 + beta*EZ*vcs
+      wv(i,j,k,1) = -cnv_u*dh1 + EX*vcs
+      wv(i,j,k,2) = -cnv_v*dh1 + EY*vcs
+      wv(i,j,k,3) = -cnv_w*dh1 + EZ*vcs
     end do
     end do
     end do
 !$OMP END DO
 !$OMP END PARALLEL
-
-    flop = flop + vflop
 
     return
     end subroutine pvec_muscl
@@ -2104,118 +2104,463 @@
     return
     end subroutine vis_cn_mod_jcb
 
+
 !> ********************************************************************
-!! @brief 壁関数での摩擦速度の計算
-!! @param ut 摩擦速度
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param dh 格子幅
-!! @param re レイノルズ数
-!! @param v 速度ベクトル（nステップ）
-!! @param bp BCindex P
-!! @param range_Yp Y+の最小値と最大値
-!! @param range_Ut 摩擦速度（無次元）の最小値と最大値
-!! @param v00 参照速度
-!! @param flop
-!! @note NOCHECK
+!! @brief 対流項と粘性項の計算
+!! @param [out] wv        疑似ベクトルの空間項 u \frac{\partial u}{\partial x}
+!! @param [in]  sz        配列長
+!! @param [in]  g         ガイドセル長
+!! @param [in]  dh        格子幅
+!! @param [in]  c_scheme  対流項スキームのモード（2-Central_2nd, 4-Central_4th）
+!! @param [in]  v00       参照速度
+!! @param [in]  rei       レイノルズ数の逆数
+!! @param [in]  v         セルセンター速度ベクトル（n-step）
+!! @param [in]  vf        セルフェイス速度ベクトル（n-step）
+!! @param [in]  bv        BCindex C
+!! @param [in]  bp        BCindex P
+!! @param [in]  vcs_coef  粘性項の係数（粘性項を計算しない場合には0.0）
+!! @param [out] flop      浮動小数点演算数
 !<
-    subroutine friction_velocity (ut, sz, g, dh, re, v, bp, range_Yp, range_Ut, v00, flop)
-    implicit none
-    include 'ffv_f_params.h'
+subroutine pvec_central (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bv, bp, vcs_coef, flop)
+implicit none
+include 'ffv_f_params.h'
+integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, bpx
+integer, dimension(3)                                     ::  sz
+double precision                                          ::  flop
+real                                                      ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
+real                                                      ::  b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p
+real                                                      ::  Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2
+real                                                      ::  Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2
+real                                                      ::  Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2
+real                                                      ::  UPe, UPw, VPn, VPs, WPt, WPb
+real                                                      ::  dh, dh1, dh2, vcs, vcs_coef, ss, sw1, sw2
+real                                                      ::  u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2
+real                                                      ::  c_e, c_w, c_n, c_s, c_t, c_b
+real                                                      ::  cnv_u, cnv_v, cnv_w, EX, EY, EZ, rei
+real                                                      ::  uq, vq, wq
+real                                                      ::  lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t
+real                                                      ::  du2, du3, dv2, dv3, dw2, dw3
+real                                                      ::  ufr2, ufl2, vfr2, vfl2, wfr2, wfl2
+real                                                      ::  ufr4, ufl4, vfr4, vfl4, wfr4, wfl4
+real                                                      ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, wv, vf
+real, dimension(0:3)                                      ::  v00
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv, bp
 
-    integer                                                   ::  i, j, k, ix, jx, kx, g, bpx, itr, itrMax, iret, ierr
-    integer, dimension(3)                                     ::  sz
-    double precision                                          ::  flop
-    real, dimension(2)                                        ::  range_Yp, range_Ut, tmp_Max, tmp_Min, tmp
-    real                                                      ::  dh, dd, dis, eps1, eps2, re
-    real                                                      ::  T_w, U_t, U_t0, Yp, dut
-    real                                                      ::  u_ref, v_ref, w_ref, u1, u2, u3, ug
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  ut
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
-    real, dimension(0:3)                                      ::  v00
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
 
-    ix = sz(1)
-    jx = sz(2)
-    kx = sz(3)
+dh1= 1.0/dh
+dh2= rei*dh1
 
-    range_Yp(1) =  1.0e6
-    range_Yp(2) = -1.0e6
-    range_Ut(1) =  1.0e6
-    range_Ut(2) = -1.0e6
-    tmp(1) = 0.0
-    tmp(2) = 0.0
+! vcs = 1.0 (Euler Explicit) / 0.5 (CN) / 0.0(No)
+vcs = vcs_coef
 
-    dd    = 2.0/(dh*re)
-    dis   = 0.5*dh
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
-    
-    eps1 = 1.0e-3 ! 速度がeps1よりも小さい値のときには摩擦速度をゼロにする
-    eps2 = 1.0e-3 ! 反復の収束判定閾値
-    itrMax = 10   ! Newton反復の最大反復数
-    flop = flop + 4.0d0
 
-    do k=1,kx
-    do j=1,jx
-    do i=1,ix
-      bpx = bp(i,j,k)
+if ( c_scheme == 2 ) then      !     2nd
+ss = 0.0
+else if ( c_scheme == 4 ) then !     4th
+ss = 1.0
+else
+write(*,*) 'out of scheme selection'
+stop
+endif
 
-      u1 = v(i,j,k,1) - u_ref
-      u2 = v(i,j,k,2) - v_ref
-      u3 = v(i,j,k,3) - w_ref
-      ug = sqrt(u1*u1 + u2*u2 + u3*u3)
-      U_t0 = 0.0
-      
-      flop = flop + 23.0d0
 
-      ! 6面のうちのどれか隣接壁への方向フラグが立っている場合，かつ速度がeps1以上
-      if ( (0 /= ibits(bpx, facing_W, 6)) .and. (ug >= eps1) ) then
+! 参照座標系の速度
+u_ref = v00(1)
+v_ref = v00(2)
+w_ref = v00(3)
+u_ref2 = 2.0*u_ref
+v_ref2 = 2.0*v_ref
+w_ref2 = 2.0*w_ref
 
-        T_w = ug*dd
-        U_t0= sqrt(T_w)
-        Yp  = dis*U_t0*re
-        flop = flop + 18.0d0
-        
-        do itr=1,itrMax
-          dut = ( ug - (5.75*log10(Yp)+5.5)*U_t0 ) / ( ug/U_t0 + 1.0/0.4 )
-          U_t = U_t0 + dut
-          if ( U_t <= eps1 ) U_t=eps1
-          
-          U_t0 = U_t
-          Yp   = dis*U_t0*re
-          if ( abs(dut)/abs(U_t0) < eps2 ) exit
-        end do
-        
-        range_Yp(1) = min(range_Yp(1), Yp)
-        range_Yp(2) = max(range_Yp(2), Yp)
-        range_Ut(1) = min(range_Ut(1), U_t0)
-        range_Ut(2) = max(range_Ut(2), U_t0)
-        
-        flop = flop + dble(itr)*40.0d0
-      endif
-      
-      ut(i,j,k) = U_t0
-      
-    end do
-    end do
-    end do
-    
-!    call SklIsParallel(iret)
-		if ( iret == 1 ) then
-			tmp_Min(1) = range_Yp(1)
-      tmp_Min(2) = range_Ut(1)
-!      call SklAllreduce(tmp_Min, tmp, 2, SKL_REAL, SKL_MIN, SKL_DEFAULT_GROUP, ierr)
-      range_Yp(1) = tmp(1)
-      range_Ut(1) = tmp(2)
-      
-      tmp_Max(1) = range_Yp(2)
-      tmp_Max(2) = range_Ut(2)
-!      call SklAllreduce(tmp_Max, tmp, 2, SKL_REAL, SKL_MAX, SKL_DEFAULT_GROUP, ierr)
-      range_Yp(2) = tmp(1)
-      range_Ut(2) = tmp(2)
-		end if
 
-    return
-    end subroutine friction_velocity
+!  24 + 3 + 3*(26*3+17) + 19*3 + 9 = 378
+flop = flop + dble(ix)*dble(jx)*dble(kx)*378.0d0 + 13.0d0
+! flop = flop + dble(ix)*dble(jx)*dble(kx)*991.0d0 ! DP
+
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, dh1, dh2, vcs, ss) &
+!$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, rei) &
+!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bpx, uq, vq, wq, sw1, sw2) &
+!$OMP PRIVATE(Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2) &
+!$OMP PRIVATE(Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2) &
+!$OMP PRIVATE(Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2) &
+!$OMP PRIVATE(b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p) &
+!$OMP PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b) &
+!$OMP PRIVATE(UPe, UPw, VPn, VPs, WPt, WPb) &
+!$OMP PRIVATE(du2, du3, dv2, dv3, dw2, dw3) &
+!$OMP PRIVATE(ufr2, ufl2, vfr2, vfl2, wfr2, wfl2) &
+!$OMP PRIVATE(ufr4, ufl4, vfr4, vfl4, wfr4, wfl4) &
+!$OMP PRIVATE(fu_r, fu_l, fv_r, fv_l, fw_r, fw_l) &
+!$OMP PRIVATE(lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t)
+
+!$OMP DO SCHEDULE(static)
+
+do k=1,kx
+do j=1,jx
+do i=1,ix
+cnv_u = 0.0
+cnv_v = 0.0
+cnv_w = 0.0
+
+! 変数のロード
+! 各軸方向5点の変数ロード
+Ub2 = v(i  ,j  ,k-2, 1)
+Ub1 = v(i  ,j  ,k-1, 1)
+Us2 = v(i  ,j-2,k  , 1)
+Us1 = v(i  ,j-1,k  , 1)
+Uw2 = v(i-2,j  ,k  , 1)
+Uw1 = v(i-1,j  ,k  , 1)
+Up0 = v(i  ,j  ,k  , 1)
+Ue1 = v(i+1,j  ,k  , 1)
+Ue2 = v(i+2,j  ,k  , 1)
+Un1 = v(i  ,j+1,k  , 1)
+Un2 = v(i  ,j+2,k  , 1)
+Ut1 = v(i  ,j  ,k+1, 1)
+Ut2 = v(i  ,j  ,k+2, 1)
+
+Vb2 = v(i  ,j  ,k-2, 2)
+Vb1 = v(i  ,j  ,k-1, 2)
+Vs2 = v(i  ,j-2,k  , 2)
+Vs1 = v(i  ,j-1,k  , 2)
+Vw2 = v(i-2,j  ,k  , 2)
+Vw1 = v(i-1,j  ,k  , 2)
+Vp0 = v(i  ,j  ,k  , 2)
+Ve1 = v(i+1,j  ,k  , 2)
+Ve2 = v(i+2,j  ,k  , 2)
+Vn1 = v(i  ,j+1,k  , 2)
+Vn2 = v(i  ,j+2,k  , 2)
+Vt1 = v(i  ,j  ,k+1, 2)
+Vt2 = v(i  ,j  ,k+2, 2)
+
+Wb2 = v(i  ,j  ,k-2, 3)
+Wb1 = v(i  ,j  ,k-1, 3)
+Ws2 = v(i  ,j-2,k  , 3)
+Ws1 = v(i  ,j-1,k  , 3)
+Ww2 = v(i-2,j  ,k  , 3)
+Ww1 = v(i-1,j  ,k  , 3)
+Wp0 = v(i  ,j  ,k  , 3)
+We1 = v(i+1,j  ,k  , 3)
+We2 = v(i+2,j  ,k  , 3)
+Wn1 = v(i  ,j+1,k  , 3)
+Wn2 = v(i  ,j+2,k  , 3)
+Wt1 = v(i  ,j  ,k+1, 3)
+Wt2 = v(i  ,j  ,k+2, 3)
+
+bvx = bv(i,j,k)
+bpx = bp(i,j,k)
+
+! (i,j,k)からみたセル状態 (0-solid / 1-fluid)
+b_p = real(ibits(bvx, State, 1))
+
+! 各方向に物体があれば，マスクはゼロ
+! セル界面のフラグとしても利用 (0-wall face / 1-fluid)
+b_w1 = real(ibits(bpx, bc_n_W, 1))
+b_e1 = real(ibits(bpx, bc_n_E, 1))
+b_s1 = real(ibits(bpx, bc_n_S, 1))
+b_n1 = real(ibits(bpx, bc_n_N, 1))
+b_b1 = real(ibits(bpx, bc_n_B, 1))
+b_t1 = real(ibits(bpx, bc_n_T, 1))
+
+! (i,j,k)を基準にした遠い方向なので，隣接セルで判断
+b_w2 = real(ibits(bp(i-1,j  ,k  ), bc_n_W, 1))
+b_e2 = real(ibits(bp(i+1,j  ,k  ), bc_n_E, 1))
+b_s2 = real(ibits(bp(i  ,j-1,k  ), bc_n_S, 1))
+b_n2 = real(ibits(bp(i  ,j+1,k  ), bc_n_N, 1))
+b_b2 = real(ibits(bp(i  ,j  ,k-1), bc_n_B, 1))
+b_t2 = real(ibits(bp(i  ,j  ,k+1), bc_n_T, 1))
+
+
+! 各面のVBCフラグ ibits() = 0(Normal) / others(BC) >> c_e = 1.0(Normal) / 0.0(BC)
+c_e = 1.0
+c_w = 1.0
+c_n = 1.0
+c_s = 1.0
+c_t = 1.0
+c_b = 1.0
+if ( ibits(bvx, bc_face_E, bitw_5) /= 0 ) c_e = 0.0
+if ( ibits(bvx, bc_face_W, bitw_5) /= 0 ) c_w = 0.0
+if ( ibits(bvx, bc_face_N, bitw_5) /= 0 ) c_n = 0.0
+if ( ibits(bvx, bc_face_S, bitw_5) /= 0 ) c_s = 0.0
+if ( ibits(bvx, bc_face_T, bitw_5) /= 0 ) c_t = 0.0
+if ( ibits(bvx, bc_face_B, bitw_5) /= 0 ) c_b = 0.0
+
+! ステンシルの参照先がvspec, outflowである場合のスキームの破綻を回避(lmt_?=0.0)、デフォルトは1.0
+lmt_w = 1.0
+lmt_e = 1.0
+lmt_s = 1.0
+lmt_n = 1.0
+lmt_b = 1.0
+lmt_t = 1.0
+
+if ( ibits(bp(i-1, j  , k  ), vbc_uwd, 1) == 1) lmt_w = 0.0
+if ( ibits(bp(i+1, j  , k  ), vbc_uwd, 1) == 1) lmt_e = 0.0
+if ( ibits(bp(i  , j-1, k  ), vbc_uwd, 1) == 1) lmt_s = 0.0
+if ( ibits(bp(i  , j+1, k  ), vbc_uwd, 1) == 1) lmt_n = 0.0
+if ( ibits(bp(i  , j  , k-1), vbc_uwd, 1) == 1) lmt_b = 0.0
+if ( ibits(bp(i  , j  , k+1), vbc_uwd, 1) == 1) lmt_t = 0.0
+
+!if ( (ibits(bv(i-1, j  , k  ), bc_face_W, bitw_5) /= 0) .and. (ibits(bp(i-1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_w = 0.0
+!if ( (ibits(bv(i+1, j  , k  ), bc_face_E, bitw_5) /= 0) .and. (ibits(bp(i+1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_e = 0.0
+!if ( (ibits(bv(i  , j-1, k  ), bc_face_S, bitw_5) /= 0) .and. (ibits(bp(i  , j-1, k  ), vbc_uwd, 1) == 1) ) lmt_s = 0.0
+!if ( (ibits(bv(i  , j+1, k  ), bc_face_N, bitw_5) /= 0) .and. (ibits(bp(i  , j+1, k  ), vbc_uwd, 1) == 1) ) lmt_n = 0.0
+!if ( (ibits(bv(i  , j  , k-1), bc_face_B, bitw_5) /= 0) .and. (ibits(bp(i  , j  , k-1), vbc_uwd, 1) == 1) ) lmt_b = 0.0
+!if ( (ibits(bv(i  , j  , k+1), bc_face_T, bitw_5) /= 0) .and. (ibits(bp(i  , j  , k+1), vbc_uwd, 1) == 1) ) lmt_t = 0.0
+
+! 界面速度（スタガード位置） 24 flops
+UPe = vf(i  , j  , k  ,1)*b_e1 + u_ref*(1.0-b_e1)
+UPw = vf(i-1, j  , k  ,1)*b_w1 + u_ref*(1.0-b_w1)
+VPn = vf(i  , j  , k  ,2)*b_n1 + v_ref*(1.0-b_n1)
+VPs = vf(i  , j-1, k  ,2)*b_s1 + v_ref*(1.0-b_s1)
+WPt = vf(i  , j  , k  ,3)*b_t1 + w_ref*(1.0-b_t1)
+WPb = vf(i  , j  , k-1,3)*b_b1 + w_ref*(1.0-b_b1)
+
+! セルセンターからの壁面修正速度 3 flops
+uq = u_ref2 - Up0
+vq = v_ref2 - Vp0
+wq = w_ref2 - Wp0
+
+! X方向 ---------------------------------------
+
+! 速度指定の場合に参照先として，固体内にテンポラリに与えた値を使う
+if ( (b_e2 == 0.0)  ) then
+  Ue2 = u_ref2 - v(i+1,j  ,k  , 1)
+  Ve2 = v_ref2 - v(i+1,j  ,k  , 2)
+  We2 = w_ref2 - v(i+1,j  ,k  , 3)
+endif
+
+if ( b_e1 == 0.0 ) then
+  Ue1 = uq
+  Ve1 = vq
+  We1 = wq
+endif
+
+if ( b_w1 == 0.0 ) then
+  Uw1 = uq
+  Vw1 = vq
+  Ww1 = wq
+end if
+
+if ( (b_w2 == 0.0)  ) then
+  Uw2 = u_ref2 - v(i-1,j  ,k  , 1)
+  Vw2 = v_ref2 - v(i-1,j  ,k  , 2)
+  Ww2 = w_ref2 - v(i-1,j  ,k  , 3)
+end if
+
+! flux u \frac{\partial u}{\partial x}
+! 壁面がある場合　b_e1, b_w1 (0-wall face / 1-fluid)
+! vspec/outflowを参照する場合(lmt_e, lmt_w)は二次精度へおとす
+! 二次精度の時には、ssで強制
+sw1 = b_e1 * lmt_e * ss ! 2 flops
+sw2 = b_w1 * lmt_w * ss
+
+
+du3 = Ue1-Up0 ! 26 flops
+du2 = Up0-Uw1
+ufr2 = Upe * du3 * dh1
+ufr4 = Upe * (9.0/8.0* du3 - 1.0/24.0* (Ue2-Uw1) )* dh1
+ufl2 = Upw * du2 * dh1
+ufl4 = Upw * (9.0/8.0* du2 - 1.0/24.0* (Ue1-Uw2) )* dh1
+fu_r = ufr4 * sw1 + ufr2 * (1.0 - sw1)
+fu_l = ufl4 * sw2 + ufl2 * (1.0 - sw2)
+
+
+dv3 = Ve1-Vp0
+dv2 = Vp0-Vw1
+vfr2 = Upe * dv3 * dh1
+vfr4 = Upe * (9.0/8.0* dv3 - 1.0/24.0* (Ve2-Vw1) )* dh1
+vfl2 = Upw * dv2 * dh1
+vfl4 = Upw * (9.0/8.0* dv2 - 1.0/24.0* (Ve1-Vw2) )* dh1
+fv_r = vfr4 * sw1 + vfr2 * (1.0 - sw1)
+fv_l = vfl4 * sw2 + vfl2 * (1.0 - sw2)
+
+
+dw3 = We1-Wp0
+dw2 = Wp0-Ww1
+wfr2 = Upe * dw3 * dh1
+wfr4 = Upe * (9.0/8.0* dw3 - 1.0/24.0* (We2-Ww1) )* dh1
+wfl2 = Upw * dw2 * dh1
+wfl4 = Upw * (9.0/8.0* dw2 - 1.0/24.0* (We1-Ww2) )* dh1
+fw_r = wfr4 * sw1 + wfr2 * (1.0 - sw1)
+fw_l = wfl4 * sw2 + wfl2 * (1.0 - sw2)
+
+
+! 流束の加算　平均勾配　VBCでない面の寄与のみを評価する 15 flops
+cnv_u = cnv_u + 0.5*(fu_r*c_e + fu_l*c_w)
+cnv_v = cnv_v + 0.5*(fv_r*c_e + fv_l*c_w)
+cnv_w = cnv_w + 0.5*(fw_r*c_e + fw_l*c_w)
+
+
+! Y方向 ---------------------------------------
+
+if ( (b_n2 == 0.0)  ) then
+  Un2 = u_ref2 - v(i  ,j+1,k  , 1)
+  Vn2 = v_ref2 - v(i  ,j+1,k  , 2)
+  Wn2 = w_ref2 - v(i  ,j+1,k  , 3)
+endif
+
+if ( b_n1 == 0.0 ) then
+  Un1 = uq
+  Vn1 = vq
+  Wn1 = wq
+endif
+
+if ( b_s1 == 0.0 ) then
+  Us1 = uq
+  Vs1 = vq
+  Ws1 = wq
+endif
+
+if ( (b_s2 == 0.0)  ) then
+  Us2 = u_ref2 - v(i  ,j-1,k  , 1)
+  Vs2 = v_ref2 - v(i  ,j-1,k  , 2)
+  Ws2 = w_ref2 - v(i  ,j-1,k  , 3)
+endif
+
+! flux
+sw1 = b_n1 * lmt_n
+sw2 = b_s1 * lmt_s
+
+du3 = Un1-Up0
+du2 = Up0-Us1
+ufr2 = Vpn * du3 * dh1
+ufr4 = Vpn * (9.0/8.0* du3 - 1.0/24.0* (Un2-Us1) )* dh1
+ufl2 = Vps * du2 * dh1
+ufl4 = Vps * (9.0/8.0* du2 - 1.0/24.0* (Un1-Us2) )* dh1
+fu_r = ufr4 * sw1 + ufr2 * (1.0 - sw1)
+fu_l = ufl4 * sw2 + ufl2 * (1.0 - sw2)
+
+
+dv3 = Vn1-Vp0
+dv2 = Vp0-Vs1
+vfr2 = Vpn * dv3 * dh1
+vfr4 = Vpn * (9.0/8.0* dv3 - 1.0/24.0* (Vn2-Vs1) )* dh1
+vfl2 = Vps * dv2 * dh1
+vfl4 = Vps * (9.0/8.0* dv2 - 1.0/24.0* (Vn1-Vs2) )* dh1
+fv_r = vfr4 * sw1 + vfr2 * (1.0 - sw1)
+fv_l = vfl4 * sw2 + vfl2 * (1.0 - sw2)
+
+
+dw3 = Wn1-Wp0
+dw2 = Wp0-Ws1
+wfr2 = Vpn * dw3 * dh1
+wfr4 = Vpn * (9.0/8.0* dw3 - 1.0/24.0* (Wn2-Ws1) )* dh1
+wfl2 = Vps * dw2 * dh1
+wfl4 = Vps * (9.0/8.0* dw2 - 1.0/24.0* (Wn1-Ws2) )* dh1
+fw_r = wfr4 * sw1 + wfr2 * (1.0 - sw1)
+fw_l = wfl4 * sw2 + wfl2 * (1.0 - sw2)
+
+
+! 流束の加算　VBCでない面の寄与のみを評価する
+cnv_u = cnv_u + 0.5*(fu_r*c_n + fu_l*c_s)
+cnv_v = cnv_v + 0.5*(fv_r*c_n + fv_l*c_s)
+cnv_w = cnv_w + 0.5*(fw_r*c_n + fw_l*c_s)
+
+
+! Z方向 ---------------------------------------
+
+! 壁面の場合の参照速度の修正
+if ( (b_t2 == 0.0)  ) then
+  Ut2 = u_ref2 - v(i  ,j  ,k+1, 1)
+  Vt2 = v_ref2 - v(i  ,j  ,k+1, 2)
+  Wt2 = w_ref2 - v(i  ,j  ,k+1, 3)
+end if
+
+if ( b_t1 == 0.0 ) then
+  Ut1 = uq
+  Vt1 = vq
+  Wt1 = wq
+end if
+
+if ( b_b1 == 0.0 ) then
+  Ub1 = uq
+  Vb1 = vq
+  Wb1 = wq
+end if
+
+if ( (b_b2 == 0.0)  ) then
+  Ub2 = u_ref2 - v(i  ,j  ,k-1, 1)
+  Vb2 = v_ref2 - v(i  ,j  ,k-1, 2)
+  Wb2 = w_ref2 - v(i  ,j  ,k-1, 3)
+end if
+
+! flux
+sw1 = b_t1 * lmt_t
+sw2 = b_b1 * lmt_b
+
+du3 = Ut1-Up0
+du2 = Up0-Ub1
+ufr2 = Wpt * du3 * dh1
+ufr4 = Wpt * (9.0/8.0* du3 - 1.0/24.0* (Ut2-Ub1) )* dh1
+ufl2 = Wpb * du2 * dh1
+ufl4 = Wpb * (9.0/8.0* du2 - 1.0/24.0* (Ut1-Ub2) )* dh1
+fu_r = ufr4 * sw1 + ufr2 * (1.0 - sw1)
+fu_l = ufl4 * sw2 + ufl2 * (1.0 - sw2)
+
+
+dv3 = Vt1-Vp0
+dv2 = Vp0-Vb1
+vfr2 = Wpt * dv3 * dh1
+vfr4 = Wpt * (9.0/8.0* dv3 - 1.0/24.0* (Vt2-Vb1) )* dh1
+vfl2 = Wpb * dv2 * dh1
+vfl4 = Wpb * (9.0/8.0* dv2 - 1.0/24.0* (Vt1-Vb2) )* dh1
+fv_r = vfr4 * sw1 + vfr2 * (1.0 - sw1)
+fv_l = vfl4 * sw2 + vfl2 * (1.0 - sw2)
+
+
+dw3 = Wt1-Wp0
+dw2 = Wp0-Wb1
+wfr2 = Wpt * dw3 * dh1
+wfr4 = Wpt * (9.0/8.0* dw3 - 1.0/24.0* (Wt2-Wb1) )* dh1
+wfl2 = Wpb * dw2 * dh1
+wfl4 = Wpb * (9.0/8.0* dw2 - 1.0/24.0* (Wt1-Wb2) )* dh1
+fw_r = wfr4 * sw1 + wfr2 * (1.0 - sw1)
+fw_l = wfl4 * sw2 + wfl2 * (1.0 - sw2)
+
+
+! 流束の加算　VBCでない面の寄与のみを評価する
+cnv_u = cnv_u + 0.5*(fu_r*c_t + fu_l*c_b)
+cnv_v = cnv_v + 0.5*(fv_r*c_t + fv_l*c_b)
+cnv_w = cnv_w + 0.5*(fw_r*c_t + fw_l*c_b)
+
+
+! 粘性項の計算　1/Re du/dx
+EX = ( ( Ue1 - Up0 ) * c_e &
+     - ( Up0 - Uw1 ) * c_w &
+     + ( Un1 - Up0 ) * c_n &
+     - ( Up0 - Us1 ) * c_s &
+     + ( Ut1 - Up0 ) * c_t &
+     - ( Up0 - Ub1 ) * c_b ) * dh1 * dh2
+
+EY = ( ( Ve1 - Vp0 ) * c_e &
+     - ( Vp0 - Vw1 ) * c_w &
+     + ( Vn1 - Vp0 ) * c_n &
+     - ( Vp0 - Vs1 ) * c_s &
+     + ( Vt1 - Vp0 ) * c_t &
+     - ( Vp0 - Vb1 ) * c_b ) * dh1 * dh2
+
+EZ = ( ( We1 - Wp0 ) * c_e &
+     - ( Wp0 - Ww1 ) * c_w &
+     + ( Wn1 - Wp0 ) * c_n &
+     - ( Wp0 - Ws1 ) * c_s &
+     + ( Wt1 - Wp0 ) * c_t &
+     - ( Wp0 - Wb1 ) * c_b ) * dh1 * dh2
+
+! 対流項と粘性項の和 > 9 flops
+wv(i,j,k,1) = -cnv_u + EX*vcs
+wv(i,j,k,2) = -cnv_v + EY*vcs
+wv(i,j,k,3) = -cnv_w + EZ*vcs
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+flop = flop
+
+return
+end subroutine pvec_central

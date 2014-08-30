@@ -402,7 +402,6 @@ public:
     int PrsNeuamnnType;
     int ShapeAprx;
     int Steady;
-    int Wall_profile;
     int Base_Medium;
     int CCNV;
   } Mode_set;
@@ -766,7 +765,6 @@ public:
     Mode.PrsNeuamnnType = 0;
     Mode.ShapeAprx = 0;
     Mode.Steady = 0;
-    Mode.Wall_profile = 0;
     Mode.CCNV = 0;
     
     LES.Calc=0;
@@ -826,10 +824,6 @@ protected:
   
   // アプリケーションのパラメータを取得する
   void getApplicationControl();
-
-  
-  // 対流項スキームのパラメータを取得する
-  void getConvection();
   
   
   // 無次元パラメータを各種モードに応じて設定する

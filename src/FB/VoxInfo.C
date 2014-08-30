@@ -4401,6 +4401,8 @@ void VoxInfo::setControlVars (const int m_NoCompo, const int m_NoMedium, Intrins
 
 // #################################################################
 // 外部境界が周期境界の場合の距離情報・境界ID・媒質エントリをセット
+// @note PeriodicCommS3D()は周期境界方向に通信が発生する、外部境界面に接している全ランクについて、
+//       その引数(最後の2つ)の cpm_DirFlag dir と cpm_PMFlag pm は、全てのランクで同じ値をセットしてコールすること
 void VoxInfo::setOBCperiodic (const int face, const int prdc_mode, int* bcd)
 {
   int ix = size[0];

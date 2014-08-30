@@ -26,7 +26,7 @@
 !! @param [in]     sz     配列長
 !! @param [in]     g      ガイドセル長
 !! @param [in]     dh     格子幅
-!! @param [in]     scheme 対流項スキームのモード（1-UWD, 2-center, 3-MUSCL）
+!! @param [in]     scheme 対流項スキームのモード（1-UWD, 3-MUSCL）
 !! @param [in]     v00    参照速度
 !! @param [in]     v      cell center u^{n+1}
 !! @param [in]     ie     内部エネルギー
@@ -78,8 +78,6 @@
             
     if ( scheme == 1 ) then      !     1st order upwind
       ss = 0.0
-    else if ( scheme == 2 ) then !     2nd order central 
-      ck = 1.0     
     else if ( scheme == 3 ) then !     3rd order MUSCL
       ck = 1.0/3.0
       b  = (3.0-ck)/(1.0-ck)
@@ -241,8 +239,18 @@
       dv2 = Fp0 - Fw1
       dv1 = Fw1 - Fw2 ! 4 flop
       
-      include 'muscl.h' ! 36 flop
-      
+s4 = sign(1.0, dv4) ! sign is zero flop
+s3 = sign(1.0, dv3)
+s2 = sign(1.0, dv2)
+s1 = sign(1.0, dv1)
+
+g6 = s4 * max(0.0, min( abs(dv4), s4 * b * dv3))
+g5 = s3 * max(0.0, min( abs(dv3), s3 * b * dv4))
+g4 = s3 * max(0.0, min( abs(dv3), s3 * b * dv2))
+g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
+g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
+g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
+
       Fr_r = Fe1 - (cm1*g6+cm2*g5)*ss_4 * lmt_e
       Fr_l = Fp0 + (cm1*g3+cm2*g4)*ss_4
       Fl_r = Fp0 - (cm1*g4+cm2*g3)*ss_4
@@ -272,8 +280,18 @@
       dv2 = Fp0 - Fs1
       dv1 = Fs1 - Fs2
       
-      include 'muscl.h'
-      
+s4 = sign(1.0, dv4) ! sign is zero flop
+s3 = sign(1.0, dv3)
+s2 = sign(1.0, dv2)
+s1 = sign(1.0, dv1)
+
+g6 = s4 * max(0.0, min( abs(dv4), s4 * b * dv3))
+g5 = s3 * max(0.0, min( abs(dv3), s3 * b * dv4))
+g4 = s3 * max(0.0, min( abs(dv3), s3 * b * dv2))
+g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
+g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
+g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
+
       Fr_r = Fn1 - (cm1*g6+cm2*g5)*ss_4 * lmt_n
       Fr_l = Fp0 + (cm1*g3+cm2*g4)*ss_4
       Fl_r = Fp0 - (cm1*g4+cm2*g3)*ss_4
@@ -301,8 +319,18 @@
       dv2 = Fp0 - Fb1
       dv1 = Fb1 - Fb2
       
-      include 'muscl.h'
-      
+s4 = sign(1.0, dv4) ! sign is zero flop
+s3 = sign(1.0, dv3)
+s2 = sign(1.0, dv2)
+s1 = sign(1.0, dv1)
+
+g6 = s4 * max(0.0, min( abs(dv4), s4 * b * dv3))
+g5 = s3 * max(0.0, min( abs(dv3), s3 * b * dv4))
+g4 = s3 * max(0.0, min( abs(dv3), s3 * b * dv2))
+g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
+g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
+g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
+
       Fr_r = Ft1 - (cm1*g6+cm2*g5)*ss_4 * lmt_t
       Fr_l = Fp0 + (cm1*g3+cm2*g4)*ss_4
       Fl_r = Fp0 - (cm1*g4+cm2*g3)*ss_4

@@ -659,8 +659,31 @@
       bvx = bv(i,j,k)
       if ( 0 /= iand(bvx, bc_mask30) ) then ! 6面のうちのどれか速度境界フラグが立っている場合
 
-        include 'd_o_o_p.h' ! 42 flops
-        
+        ! セルの状態 (0-solid / 1-fluid)
+        b_p = real( ibits(bv(i  ,j  ,k  ), State, 1) )
+        b_w = real( ibits(bv(i-1,j  ,k  ), State, 1) )
+        b_e = real( ibits(bv(i+1,j  ,k  ), State, 1) )
+        b_s = real( ibits(bv(i  ,j-1,k  ), State, 1) )
+        b_n = real( ibits(bv(i  ,j+1,k  ), State, 1) )
+        b_b = real( ibits(bv(i  ,j  ,k-1), State, 1) )
+        b_t = real( ibits(bv(i  ,j  ,k+1), State, 1) )
+
+        ! セル界面のフラグ (0-wall face / 1-fluid) > real*6+ 6= 12 flops
+        w_e = real(b_e * b_p)
+        w_w = real(b_w * b_p)
+        w_n = real(b_n * b_p)
+        w_s = real(b_s * b_p)
+        w_t = real(b_t * b_p)
+        w_b = real(b_b * b_p)
+
+        ! 界面速度（スタガード位置） > 6 flops
+        Uw = vf(i-1, j  , k  ,1)*w_w
+        Ue = vf(i  , j  , k  ,1)*w_e
+        Vs = vf(i  , j-1, k  ,2)*w_s
+        Vn = vf(i  , j  , k  ,2)*w_n
+        Wb = vf(i  , j  , k-1,3)*w_b
+        Wt = vf(i  , j  , k  ,3)*w_t ! real*7 real*6 + 6 + 6 = 25 flopss
+
         ! 寄与をゼロにしておく
         Ue_t = 0.0
         Uw_t = 0.0

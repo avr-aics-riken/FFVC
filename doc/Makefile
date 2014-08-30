@@ -183,7 +183,7 @@ CFLAGS = -O3
 CIO_CFLAGS = -I/usr/local/FFV/CIOlib/include -I/usr/local/FFV/TextParser/include
 CIO_DIR = /usr/local/FFV/CIOlib
 CIO_LDFLAGS = -L/usr/local/FFV/CIOlib/lib -lCIO -L/usr/local/FFV/TextParser/lib -lTPmpi
-CPM_CFLAGS = -I/usr/local/FFV/CPMlib/include -D_REAL_IS_DOUBLE_
+CPM_CFLAGS = -I/usr/local/FFV/CPMlib/include
 CPM_DIR = /usr/local/FFV/CPMlib
 CPM_LDFLAGS = -L/usr/local/FFV/CPMlib/lib -lCPM -lstdc++
 CPP = mpicc -E
@@ -193,7 +193,7 @@ CUT_DIR = /usr/local/FFV/Cutlib
 CUT_LDFLAGS = -L/usr/local/FFV/Cutlib/lib -lCUT
 CXX = mpicxx
 CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -O3 -openmp -par-report=3 -vec-report=2
+CXXFLAGS = -O3 -openmp -qopt-report-phase=par -qopt-report-phase=vec
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -204,15 +204,15 @@ EGREP = /usr/bin/grep -E
 EXEEXT = 
 F77 = gfortran
 FC = mpif90
-FCFLAGS = -O3 -Warn unused -fpp -openmp -par-report=3 -vec-report=2
+FCFLAGS = -O3 -Warn unused -fpp -openmp -qopt-report-phase=par -qopt-report-phase=vec
 FFLAGS = -g -O2
 FFVC_CXX = mpicxx
 FFVC_FC = mpif90
 FFVC_FC_LD = 
 FFVC_LDFLAGS = 
 FFVC_LIBS =  -lstdc++ -lifcore
-FFVC_REVISION = 20140827_1100
-FREALOPT = -r8
+FFVC_REVISION = 20140830_1200
+FREALOPT = 
 GREP = /usr/bin/grep
 INSTALL = /usr/local/bin/ginstall -c
 INSTALL_DATA = ${INSTALL} -m 644
@@ -240,14 +240,14 @@ PACKAGE_TARNAME = FFVC
 PACKAGE_URL = 
 PACKAGE_VERSION = 1.8.2
 PATH_SEPARATOR = :
-PL_CFLAGS = -I/usr/local/FFV/Polylib/include -I/usr/local/FFV/Polylib/include/common -D_REAL_IS_DOUBLE_
+PL_CFLAGS = -I/usr/local/FFV/Polylib/include -I/usr/local/FFV/Polylib/include/common
 PL_DIR = /usr/local/FFV/Polylib
 PL_LDFLAGS = -L/usr/local/FFV/Polylib/lib -lPOLYmpi
 PM_CFLAGS = -I/usr/local/FFV/PMlib/include
 PM_DIR = /usr/local/FFV/PMlib
 PM_LDFLAGS = -L/usr/local/FFV/PMlib/lib -lPM
 RANLIB = ranlib
-REALOPT = -D_REAL_IS_DOUBLE_
+REALOPT = 
 SET_MAKE = 
 SHELL = /bin/sh
 STRIP = 

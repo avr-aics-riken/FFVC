@@ -22,7 +22,6 @@ libFCORE_a_FCFLAGS = \
   @FREALOPT@ 
 
 libFCORE_a_SOURCES = \
-  d_o_o_p.h \
   ffv_Ffunc.h \
   ffv_blas.f90 \
   ffv_forcing.f90 \
@@ -36,9 +35,7 @@ libFCORE_a_SOURCES = \
   ffv_vbc_outer.f90 \
   ffv_velocity_binary.f90 \
   ffv_velocity_cds.f90 \
-  force.h \
-  load_var_stencil5.h \
-  muscl.h
+  force.h
 
 libFCORE_LDADD = \
     @CPM_LDFLAGS@ \

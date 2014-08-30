@@ -508,54 +508,6 @@ REAL_TYPE Control::getCellSize(const int* G_size)
 }
 
 
-// #################################################################
-// @brief 対流項スキームのパラメータを取得する
-void Control::getConvection()
-{
-  string str;
-  string label;
-  
-  // scheme
-  label="/ConvectionTerm/scheme";
-  
-  if ( !(tpCntl->getInspectedValue(label, str)) )
-  {
-	  Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "O1Upwind") )    CnvScheme = O1_upwind;
-  else if( !strcasecmp(str.c_str(), "O3muscl") )     CnvScheme = O3_muscl;
-  else if( !strcasecmp(str.c_str(), "O2central") )   CnvScheme = O2_central;
-  else if( !strcasecmp(str.c_str(), "O4central") ) { CnvScheme = O4_central; Exit(0); }  // not yet implemented
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  // Limiter
-  if ( CnvScheme == O3_muscl )
-  {
-		label="/ConvectionTerm/limiter";
-    
-		if ( !(tpCntl->getInspectedValue(label, str )) )
-    {
-			Hostonly_ stamped_printf("\tParsing error : Invalid char* value for '%s'\n", label.c_str());
-			Exit(0);
-		}
-    
-		if     ( !strcasecmp(str.c_str(), "NoLimiter") )  Limiter = No_Limiter;
-		else if( !strcasecmp(str.c_str(), "Minmod") )     Limiter = MinMod;
-		else
-    {
-			Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-			Exit(0);
-		}
-  }
-}
-
-
 
 // #################################################################
 // @brief 無次元パラメータを各種モードに応じて設定する
@@ -1385,23 +1337,20 @@ void Control::getLog()
   
   
   // Log_Wall_Info
-  if ( Mode.Wall_profile == Log_Law )
+  label="/Output/Log/WallInfo";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
   {
-	  label="/Output/Log/WallInfo";
-    
-	  if ( !(tpCntl->getInspectedValue(label, str )) )
-    {
-		  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
-		  Exit(0);
-	  }
-	  
-	  if     ( !strcasecmp(str.c_str(), "on") )   Mode.Log_Wall = ON;
-	  else if( !strcasecmp(str.c_str(), "off") )  Mode.Log_Wall = OFF;
-	  else
-    {
-		  Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-		  Exit(0);
-	  }
+    Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "on") )   Mode.Log_Wall = ON;
+  else if( !strcasecmp(str.c_str(), "off") )  Mode.Log_Wall = OFF;
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Exit(0);
   }
   
   
@@ -1802,9 +1751,9 @@ void Control::getSolverProperties()
   }
   
   if     ( !strcasecmp(str.c_str(), "O1Upwind") )    CnvScheme = O1_upwind;
-  else if( !strcasecmp(str.c_str(), "O3muscl") )     CnvScheme = O3_muscl;
   else if( !strcasecmp(str.c_str(), "O2central") )   CnvScheme = O2_central;
-  else if( !strcasecmp(str.c_str(), "O4central") ) { CnvScheme = O4_central; Exit(0); }  // not yet implemented
+  else if( !strcasecmp(str.c_str(), "O3muscl") )     CnvScheme = O3_muscl;
+  else if( !strcasecmp(str.c_str(), "O4central") )   CnvScheme = O4_central;
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -1931,6 +1880,7 @@ void Control::getSolverProperties()
         break;
         
       case O3_muscl:
+      case O4_central:
         guide = 2;
         break;
         
@@ -2649,24 +2599,6 @@ void Control::getWallType()
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
-  
-  // 壁面摩擦応力の計算モード
-  label="/TreatmentOfWall/VelocityProfile";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "NoSlip") )    Mode.Wall_profile = No_Slip;
-  else if( !strcasecmp(str.c_str(), "Slip") )      Mode.Wall_profile = Slip;
-  else if( !strcasecmp(str.c_str(), "LawOfWall") ) Mode.Wall_profile = Log_Law;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
 }
 
 
@@ -3243,10 +3175,19 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
 		switch (CnvScheme)
     {
 			case O1_upwind:
-				fprintf(fp,"\t     Convective flux scheme   :   Upwind O(dx1)\n");
+				fprintf(fp,"\t     Convective flux scheme   :   Upwind O(dx^1)\n");
         break;
+        
+      case O2_central:
+				fprintf(fp,"\t     Convective flux scheme   :   Central O(dx^2)\n");
+        break;
+        
+      case O4_central:
+				fprintf(fp,"\t     Convective flux scheme   :   Central O(dx^4)\n");
+        break;
+        
 			case O3_muscl:
-				fprintf(fp,"\t     Convective flux scheme   :   MUSCL O(dx3)\n");
+				fprintf(fp,"\t     Convective flux scheme   :   MUSCL O(dx^3)\n");
         
 				switch (Limiter) {
 					case No_Limiter:
@@ -3723,26 +3664,6 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
       
     case P_GRAD_NS:
       fprintf(fp,"\t     Pressure Gradient        :   Navier-Stokes\n");
-      break;
-      
-    default:
-      stamped_printf("Error: Wall treatment section\n");
-      err=false;
-      break;
-  }
-  
-  switch (Mode.Wall_profile)
-  {
-    case No_Slip:
-      fprintf(fp,"\t     Velocity Profile         :   No Slip\n");
-      break;
-      
-    case Slip:
-      fprintf(fp,"\t     Velocity Profile         :   Slip\n");
-      break;
-      
-    case Log_Law:
-      fprintf(fp,"\t     Velocity Profile         :   Law of Wall\n");
       break;
       
     default:

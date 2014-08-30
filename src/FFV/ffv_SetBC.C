@@ -535,7 +535,7 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, int* bd, REAL_TYPE* cvf, REAL_TYPE*
 
 // #################################################################
 // 速度境界条件による流束の修正
-void SetBC3D::modPvecFlux(REAL_TYPE* wv, REAL_TYPE* v, int* d_cdf, const double tm, Control* C, int v_mode, REAL_TYPE* v00, double& flop)
+void SetBC3D::modPvecFlux(REAL_TYPE* wv, REAL_TYPE* v, int* d_cdf, const double tm, Control* C, REAL_TYPE* v00, double& flop)
 {
   REAL_TYPE vec[3], vel, dummy;
   int st[3], ed[3];

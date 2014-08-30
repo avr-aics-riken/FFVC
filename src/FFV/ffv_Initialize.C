@@ -3642,6 +3642,7 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
     int pm = m_obc->getPrdcMode();
     
     
+    // 周期境界以外
     switch (cls)
     {
       case OBC_PERIODIC:
@@ -3669,7 +3670,6 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
         V.setOBC(face, id, "fluid", d_bcd, d_cut, d_bid);
         break;
     }
-
   }
   
   
