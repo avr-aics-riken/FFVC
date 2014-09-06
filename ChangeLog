@@ -19,6 +19,11 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-09-06
+r1632 bug fix in PobcPeriodicDirectional()
+  - fix index in X_minus direction
+
+--------------------------
 2014-08-30
 r1631 bug fix of Periodic condistion
 

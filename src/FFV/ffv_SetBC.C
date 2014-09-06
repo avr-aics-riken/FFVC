@@ -1027,7 +1027,7 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int* ens)
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, pd) schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
-            size_t m0 = _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd);
+            size_t m0 = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
             d_p[m0] += pd;
           }
         }
