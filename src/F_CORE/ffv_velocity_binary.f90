@@ -125,7 +125,7 @@
 !$OMP PRIVATE(dv1, dv2, dv3, dv4, g1, g2, g3, g4, g5, g6, s1, s2, s3, s4) &
 !$OMP PRIVATE(Urr, Url, Ulr, Ull, Vrr, Vrl, Vlr, Vll, Wrr, Wrl, Wlr, Wll) &
 !$OMP PRIVATE(fu_r, fu_l, fv_r, fv_l, fw_r, fw_l) &
-!$OMP PRIVATE(lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t)
+!$OMP PRIVATE(lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t, EX, EY, EZ)
 
 !$OMP DO SCHEDULE(static)
 
@@ -2134,13 +2134,12 @@ real                                                      ::  Up0, Ue1, Ue2, Uw1
 real                                                      ::  Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2
 real                                                      ::  Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2
 real                                                      ::  UPe, UPw, VPn, VPs, WPt, WPb
-real                                                      ::  dh, dh1, dh2, vcs, vcs_coef, ss, sw1, sw2
+real                                                      ::  dh, dh1, dh2, vcs, vcs_coef, ss, sw1, sw2, c1, c2
 real                                                      ::  u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2
 real                                                      ::  c_e, c_w, c_n, c_s, c_t, c_b
 real                                                      ::  cnv_u, cnv_v, cnv_w, EX, EY, EZ, rei
 real                                                      ::  uq, vq, wq
 real                                                      ::  lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t
-real                                                      ::  du2, du3, dv2, dv3, dw2, dw3
 real                                                      ::  ufr2, ufl2, vfr2, vfl2, wfr2, wfl2
 real                                                      ::  ufr4, ufl4, vfr4, vfl4, wfr4, wfl4
 real                                                      ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l
@@ -2154,6 +2153,9 @@ kx = sz(3)
 
 dh1= 1.0/dh
 dh2= rei*dh1
+
+c1 = 9.0/8.0
+c2 = 1.0/24.0
 
 ! vcs = 1.0 (Euler Explicit) / 0.5 (CN) / 0.0(No)
 vcs = vcs_coef
@@ -2178,13 +2180,12 @@ v_ref2 = 2.0*v_ref
 w_ref2 = 2.0*w_ref
 
 
-!  24 + 3 + 3*(26*3+17) + 19*3 + 9 = 378
-flop = flop + dble(ix)*dble(jx)*dble(kx)*378.0d0 + 13.0d0
+flop = flop + dble(ix)*dble(jx)*dble(kx)*330.0d0 + 28.0d0
 ! flop = flop + dble(ix)*dble(jx)*dble(kx)*991.0d0 ! DP
 
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, dh1, dh2, vcs, ss) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, dh1, dh2, vcs, ss, c1, c2) &
 !$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, rei) &
 !$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bpx, uq, vq, wq, sw1, sw2) &
 !$OMP PRIVATE(Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2) &
@@ -2193,11 +2194,10 @@ flop = flop + dble(ix)*dble(jx)*dble(kx)*378.0d0 + 13.0d0
 !$OMP PRIVATE(b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p) &
 !$OMP PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b) &
 !$OMP PRIVATE(UPe, UPw, VPn, VPs, WPt, WPb) &
-!$OMP PRIVATE(du2, du3, dv2, dv3, dw2, dw3) &
 !$OMP PRIVATE(ufr2, ufl2, vfr2, vfl2, wfr2, wfl2) &
 !$OMP PRIVATE(ufr4, ufl4, vfr4, vfl4, wfr4, wfl4) &
 !$OMP PRIVATE(fu_r, fu_l, fv_r, fv_l, fw_r, fw_l) &
-!$OMP PRIVATE(lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t)
+!$OMP PRIVATE(lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t, EX, EY, EZ)
 
 !$OMP DO SCHEDULE(static)
 
@@ -2207,6 +2207,9 @@ do i=1,ix
 cnv_u = 0.0
 cnv_v = 0.0
 cnv_w = 0.0
+EX = 0.0
+EY = 0.0
+EZ = 0.0
 
 ! 変数のロード
 ! 各軸方向5点の変数ロード
@@ -2356,44 +2359,40 @@ end if
 ! 壁面がある場合　b_e1, b_w1 (0-wall face / 1-fluid)
 ! vspec/outflowを参照する場合(lmt_e, lmt_w)は二次精度へおとす
 ! 二次精度の時には、ssで強制
-sw1 = b_e1 * lmt_e * ss ! 2 flops
+sw1 = b_e1 * lmt_e * ss ! 4 flops
 sw2 = b_w1 * lmt_w * ss
 
+ufr2 = Ue1-Up0 ! 20 flops
+ufl2 = Up0-Uw1
+ufr4 = c1 * ufr2 - c2 * (Ue2-Uw1)
+ufl4 = c1 * ufl2 - c2 * (Ue1-Uw2)
+fu_r = ( ufr4 * sw1 + ufr2 * (1.0 - sw1) ) * dh1
+fu_l = ( ufl4 * sw2 + ufl2 * (1.0 - sw2) ) * dh1
 
-du3 = Ue1-Up0 ! 26 flops
-du2 = Up0-Uw1
-ufr2 = Upe * du3 * dh1
-ufr4 = Upe * (9.0/8.0* du3 - 1.0/24.0* (Ue2-Uw1) )* dh1
-ufl2 = Upw * du2 * dh1
-ufl4 = Upw * (9.0/8.0* du2 - 1.0/24.0* (Ue1-Uw2) )* dh1
-fu_r = ufr4 * sw1 + ufr2 * (1.0 - sw1)
-fu_l = ufl4 * sw2 + ufl2 * (1.0 - sw2)
+vfr2 = Ve1-Vp0
+vfl2 = Vp0-Vw1
+vfr4 = c1 * vfr2 - c2 * (Ve2-Vw1)
+vfl4 = c1 * vfl2 - c2 * (Ve1-Vw2)
+fv_r = ( vfr4 * sw1 + vfr2 * (1.0 - sw1) ) * dh1
+fv_l = ( vfl4 * sw2 + vfl2 * (1.0 - sw2) ) * dh1
 
-
-dv3 = Ve1-Vp0
-dv2 = Vp0-Vw1
-vfr2 = Upe * dv3 * dh1
-vfr4 = Upe * (9.0/8.0* dv3 - 1.0/24.0* (Ve2-Vw1) )* dh1
-vfl2 = Upw * dv2 * dh1
-vfl4 = Upw * (9.0/8.0* dv2 - 1.0/24.0* (Ve1-Vw2) )* dh1
-fv_r = vfr4 * sw1 + vfr2 * (1.0 - sw1)
-fv_l = vfl4 * sw2 + vfl2 * (1.0 - sw2)
-
-
-dw3 = We1-Wp0
-dw2 = Wp0-Ww1
-wfr2 = Upe * dw3 * dh1
-wfr4 = Upe * (9.0/8.0* dw3 - 1.0/24.0* (We2-Ww1) )* dh1
-wfl2 = Upw * dw2 * dh1
-wfl4 = Upw * (9.0/8.0* dw2 - 1.0/24.0* (We1-Ww2) )* dh1
-fw_r = wfr4 * sw1 + wfr2 * (1.0 - sw1)
-fw_l = wfl4 * sw2 + wfl2 * (1.0 - sw2)
+wfr2 = We1-Wp0
+wfl2 = Wp0-Ww1
+wfr4 = c1 * wfr2 - c2 * (We2-Ww1)
+wfl4 = c1 * wfl2 - c2 * (We1-Ww2)
+fw_r = ( wfr4 * sw1 + wfr2 * (1.0 - sw1) ) * dh1
+fw_l = ( wfl4 * sw2 + wfl2 * (1.0 - sw2) ) * dh1
 
 
-! 流束の加算　平均勾配　VBCでない面の寄与のみを評価する 15 flops
-cnv_u = cnv_u + 0.5*(fu_r*c_e + fu_l*c_w)
-cnv_v = cnv_v + 0.5*(fv_r*c_e + fv_l*c_w)
-cnv_w = cnv_w + 0.5*(fw_r*c_e + fw_l*c_w)
+! 流束の加算　平均勾配　VBCでない面の寄与のみを評価する 21 flops
+cnv_u = cnv_u + 0.5*(Upe * fu_r * c_e + Upw * fu_l * c_w)
+cnv_v = cnv_v + 0.5*(Upe * fv_r * c_e + Upw * fv_l * c_w)
+cnv_w = cnv_w + 0.5*(Upe * fw_r * c_e + Upw * fw_l * c_w)
+
+! 粘性項の加算 12 flops
+EX = EX + (fu_r * c_e - fu_l * c_w)
+EY = EY + (fv_r * c_e - fv_l * c_w)
+EZ = EZ + (fw_r * c_e - fw_l * c_w)
 
 
 ! Y方向 ---------------------------------------
@@ -2423,43 +2422,40 @@ if ( (b_s2 == 0.0)  ) then
 endif
 
 ! flux
-sw1 = b_n1 * lmt_n
-sw2 = b_s1 * lmt_s
+sw1 = b_n1 * lmt_n * ss
+sw2 = b_s1 * lmt_s * ss
 
-du3 = Un1-Up0
-du2 = Up0-Us1
-ufr2 = Vpn * du3 * dh1
-ufr4 = Vpn * (9.0/8.0* du3 - 1.0/24.0* (Un2-Us1) )* dh1
-ufl2 = Vps * du2 * dh1
-ufl4 = Vps * (9.0/8.0* du2 - 1.0/24.0* (Un1-Us2) )* dh1
-fu_r = ufr4 * sw1 + ufr2 * (1.0 - sw1)
-fu_l = ufl4 * sw2 + ufl2 * (1.0 - sw2)
+ufr2 = Un1-Up0
+ufl2 = Up0-Us1
+ufr4 = c1 * ufr2 - c2 * (Un2-Us1)
+ufl4 = c1 * ufl2 - c2 * (Un1-Us2)
+fu_r = ( ufr4 * sw1 + ufr2 * (1.0 - sw1) ) * dh1
+fu_l = ( ufl4 * sw2 + ufl2 * (1.0 - sw2) ) * dh1
 
+vfr2 = Vn1-Vp0
+vfl2 = Vp0-Vs1
+vfr4 = c1 * vfr2 - c2 * (Vn2-Vs1)
+vfl4 = c1 * vfl2 - c2 * (Vn1-Vs2)
+fv_r = ( vfr4 * sw1 + vfr2 * (1.0 - sw1) ) * dh1
+fv_l = ( vfl4 * sw2 + vfl2 * (1.0 - sw2) ) * dh1
 
-dv3 = Vn1-Vp0
-dv2 = Vp0-Vs1
-vfr2 = Vpn * dv3 * dh1
-vfr4 = Vpn * (9.0/8.0* dv3 - 1.0/24.0* (Vn2-Vs1) )* dh1
-vfl2 = Vps * dv2 * dh1
-vfl4 = Vps * (9.0/8.0* dv2 - 1.0/24.0* (Vn1-Vs2) )* dh1
-fv_r = vfr4 * sw1 + vfr2 * (1.0 - sw1)
-fv_l = vfl4 * sw2 + vfl2 * (1.0 - sw2)
-
-
-dw3 = Wn1-Wp0
-dw2 = Wp0-Ws1
-wfr2 = Vpn * dw3 * dh1
-wfr4 = Vpn * (9.0/8.0* dw3 - 1.0/24.0* (Wn2-Ws1) )* dh1
-wfl2 = Vps * dw2 * dh1
-wfl4 = Vps * (9.0/8.0* dw2 - 1.0/24.0* (Wn1-Ws2) )* dh1
-fw_r = wfr4 * sw1 + wfr2 * (1.0 - sw1)
-fw_l = wfl4 * sw2 + wfl2 * (1.0 - sw2)
+wfr2 = Wn1-Wp0
+wfl2 = Wp0-Ws1
+wfr4 = c1 * wfr2 - c2 * (Wn2-Ws1)
+wfl4 = c1 * wfl2 - c2 * (Wn1-Ws2)
+fw_r = ( wfr4 * sw1 + wfr2 * (1.0 - sw1) ) * dh1
+fw_l = ( wfl4 * sw2 + wfl2 * (1.0 - sw2) ) * dh1
 
 
 ! 流束の加算　VBCでない面の寄与のみを評価する
-cnv_u = cnv_u + 0.5*(fu_r*c_n + fu_l*c_s)
-cnv_v = cnv_v + 0.5*(fv_r*c_n + fv_l*c_s)
-cnv_w = cnv_w + 0.5*(fw_r*c_n + fw_l*c_s)
+cnv_u = cnv_u + 0.5*(Vpn * fu_r * c_n + Vps * fu_l * c_s)
+cnv_v = cnv_v + 0.5*(Vpn * fv_r * c_n + Vps * fv_l * c_s)
+cnv_w = cnv_w + 0.5*(Vpn * fw_r * c_n + Vps * fw_l * c_s)
+
+! 粘性項の加算
+EX = EX + (fu_r * c_n - fu_l * c_s)
+EY = EY + (fv_r * c_n - fv_l * c_s)
+EZ = EZ + (fw_r * c_n - fw_l * c_s)
 
 
 ! Z方向 ---------------------------------------
@@ -2490,78 +2486,52 @@ if ( (b_b2 == 0.0)  ) then
 end if
 
 ! flux
-sw1 = b_t1 * lmt_t
-sw2 = b_b1 * lmt_b
+sw1 = b_t1 * lmt_t * ss
+sw2 = b_b1 * lmt_b * ss
 
-du3 = Ut1-Up0
-du2 = Up0-Ub1
-ufr2 = Wpt * du3 * dh1
-ufr4 = Wpt * (9.0/8.0* du3 - 1.0/24.0* (Ut2-Ub1) )* dh1
-ufl2 = Wpb * du2 * dh1
-ufl4 = Wpb * (9.0/8.0* du2 - 1.0/24.0* (Ut1-Ub2) )* dh1
-fu_r = ufr4 * sw1 + ufr2 * (1.0 - sw1)
-fu_l = ufl4 * sw2 + ufl2 * (1.0 - sw2)
+ufr2 = Ut1-Up0
+ufl2 = Up0-Ub1
+ufr4 = c1 * ufr2 - c2 * (Ut2-Ub1)
+ufl4 = c1 * ufl2 - c2 * (Ut1-Ub2)
+fu_r = ( ufr4 * sw1 + ufr2 * (1.0 - sw1) ) * dh1
+fu_l = ( ufl4 * sw2 + ufl2 * (1.0 - sw2) ) * dh1
 
+vfr2 = Vt1-Vp0
+vfl2 = Vp0-Vb1
+vfr4 = c1 * vfr2 - c2 * (Vt2-Vb1)
+vfl4 = c1 * vfl2 - c2 * (Vt1-Vb2)
+fv_r = ( vfr4 * sw1 + vfr2 * (1.0 - sw1) ) * dh1
+fv_l = ( vfl4 * sw2 + vfl2 * (1.0 - sw2) ) * dh1
 
-dv3 = Vt1-Vp0
-dv2 = Vp0-Vb1
-vfr2 = Wpt * dv3 * dh1
-vfr4 = Wpt * (9.0/8.0* dv3 - 1.0/24.0* (Vt2-Vb1) )* dh1
-vfl2 = Wpb * dv2 * dh1
-vfl4 = Wpb * (9.0/8.0* dv2 - 1.0/24.0* (Vt1-Vb2) )* dh1
-fv_r = vfr4 * sw1 + vfr2 * (1.0 - sw1)
-fv_l = vfl4 * sw2 + vfl2 * (1.0 - sw2)
-
-
-dw3 = Wt1-Wp0
-dw2 = Wp0-Wb1
-wfr2 = Wpt * dw3 * dh1
-wfr4 = Wpt * (9.0/8.0* dw3 - 1.0/24.0* (Wt2-Wb1) )* dh1
-wfl2 = Wpb * dw2 * dh1
-wfl4 = Wpb * (9.0/8.0* dw2 - 1.0/24.0* (Wt1-Wb2) )* dh1
-fw_r = wfr4 * sw1 + wfr2 * (1.0 - sw1)
-fw_l = wfl4 * sw2 + wfl2 * (1.0 - sw2)
+wfr2 = Wt1-Wp0
+wfl2 = Wp0-Wb1
+wfr4 = c1 * wfr2 - c2 * (Wt2-Wb1)
+wfl4 = c1 * wfl2 - c2 * (Wt1-Wb2)
+fw_r = ( wfr4 * sw1 + wfr2 * (1.0 - sw1) ) * dh1
+fw_l = ( wfl4 * sw2 + wfl2 * (1.0 - sw2) ) * dh1
 
 
 ! 流束の加算　VBCでない面の寄与のみを評価する
-cnv_u = cnv_u + 0.5*(fu_r*c_t + fu_l*c_b)
-cnv_v = cnv_v + 0.5*(fv_r*c_t + fv_l*c_b)
-cnv_w = cnv_w + 0.5*(fw_r*c_t + fw_l*c_b)
+cnv_u = cnv_u + 0.5*(Wpt * fu_r * c_t + Wpb * fu_l * c_b)
+cnv_v = cnv_v + 0.5*(Wpt * fv_r * c_t + Wpb * fv_l * c_b)
+cnv_w = cnv_w + 0.5*(Wpt * fw_r * c_t + Wpb * fw_l * c_b)
 
 
-! 粘性項の計算　1/Re du/dx
-EX = ( ( Ue1 - Up0 ) * c_e &
-     - ( Up0 - Uw1 ) * c_w &
-     + ( Un1 - Up0 ) * c_n &
-     - ( Up0 - Us1 ) * c_s &
-     + ( Ut1 - Up0 ) * c_t &
-     - ( Up0 - Ub1 ) * c_b ) * dh1 * dh2
+! 粘性項の加算
+EX = EX + (fu_r * c_t - fu_l * c_b)
+EY = EY + (fv_r * c_t - fv_l * c_b)
+EZ = EZ + (fw_r * c_t - fw_l * c_b)
 
-EY = ( ( Ve1 - Vp0 ) * c_e &
-     - ( Vp0 - Vw1 ) * c_w &
-     + ( Vn1 - Vp0 ) * c_n &
-     - ( Vp0 - Vs1 ) * c_s &
-     + ( Vt1 - Vp0 ) * c_t &
-     - ( Vp0 - Vb1 ) * c_b ) * dh1 * dh2
 
-EZ = ( ( We1 - Wp0 ) * c_e &
-     - ( Wp0 - Ww1 ) * c_w &
-     + ( Wn1 - Wp0 ) * c_n &
-     - ( Wp0 - Ws1 ) * c_s &
-     + ( Wt1 - Wp0 ) * c_t &
-     - ( Wp0 - Wb1 ) * c_b ) * dh1 * dh2
-
-! 対流項と粘性項の和 > 9 flops
-wv(i,j,k,1) = -cnv_u + EX*vcs
-wv(i,j,k,2) = -cnv_v + EY*vcs
-wv(i,j,k,3) = -cnv_w + EZ*vcs
+! 対流項と粘性項の和 > 12 flops
+wv(i,j,k,1) = -cnv_u + EX * vcs * dh2
+wv(i,j,k,2) = -cnv_v + EY * vcs * dh2
+wv(i,j,k,3) = -cnv_w + EZ * vcs * dh2
 end do
 end do
 end do
 !$OMP END DO
 !$OMP END PARALLEL
-
-flop = flop
 
 return
 end subroutine pvec_central

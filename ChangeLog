@@ -19,6 +19,12 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-09-16
+r1633 estimate viscous terms as 4th-order
+  - change implementation of pvec_central()
+  - bug fix both 2nd and 4th central schemes
+
+--------------------------
 2014-09-06
 r1632 bug fix in PobcPeriodicDirectional()
   - fix index in X_minus direction
