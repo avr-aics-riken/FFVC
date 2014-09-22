@@ -130,6 +130,7 @@ private:
   int c_size[3];         /// コンポーネントワーク配列の大きさ
   int usw;               /// 汎用変数
   int heatmode;          /// 熱輸送のときON
+  int matodr;            /// MediumListのエントリ番号、Medium名と対応
   
   REAL_TYPE var1;        /// パラメータ保持 (Velocity, Pressure, Massflow, Epsiolon of Radiation)
   REAL_TYPE var2;        /// パラメータ保持 (Heat Value, Heat flux, Heat Transfer, Pressure loss, Projection of Radiation)
@@ -166,6 +167,8 @@ public:
     var_u1 = 0;
     phase = 0;
     heatmode = OFF;
+    matodr = 0;
+    
     for (int i=0; i<3; i++) {
       nv[i] = 0.0;
       st[i] = 0;
@@ -175,6 +178,7 @@ public:
       c_size[i] = 0;
       f[i] = 0.0;
     }
+    
     for (int i=0; i<var_END; i++) val[i]=0.0;
     for (int i=0; i<6; i++) ca[i] = cb[i] = 0.0;
     var1 = var2 = var3 = var_m = temp_init = 0.0;
@@ -310,6 +314,11 @@ public:
     return medium;
   }
   
+  
+  int getMatodr() const
+  {
+    return matodr;
+  }
   
   REAL_TYPE getMonCalorie() const
   { 
@@ -616,6 +625,15 @@ public:
   void setInitTemp         (const REAL_TYPE var);
   
   void set_Massflow        (const REAL_TYPE var);
+  
+  
+  // @brief MediumListのエントリ番号を保存
+  void setMatodr (const int key)
+  {
+    matodr = key;
+  }
+  
+  
   void setMedium           (const std::string pnt);
   
   // @brief モニター値を保持する

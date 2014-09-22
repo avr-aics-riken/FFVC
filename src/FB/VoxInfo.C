@@ -111,7 +111,12 @@ void VoxInfo::copyBCIbase (int* dst, const int* src)
     for (int j=1-gd; j<=jx+gd; j++) {
       for (int i=1-gd; i<=ix+gd; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        dst[m] = src[m] & 0xc0000000;
+        int s = src[m];
+        int d = dst[m];
+        //dst[m] = src[m] & 0xc0000000;
+        d = ( BIT_SHIFT(s, STATE_BIT) ) ? onBit(d, STATE_BIT)  : offBit(d, STATE_BIT);  // Fluid  -> 1
+        d = ( BIT_SHIFT(s, ACTIVE_BIT)) ? onBit(d, ACTIVE_BIT) : offBit(d, ACTIVE_BIT); // Active -> 1
+        dst[m] = d;
       }
     }
   }
@@ -3947,6 +3952,7 @@ void VoxInfo::setBCIndexBase (int* bx,
       if ( key > 0 )
       {
         cmp[n].setElement( countCF(key, bx, bid, &cmp[n], "Fluid") );
+        cmp[n].setMatodr(key); // MediumListのエントリ番号、力の計算時に使用
       }
       else
       {

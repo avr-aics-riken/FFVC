@@ -148,8 +148,17 @@ FFV::FFV()
   cf_y = NULL;
   cf_z = NULL;
   
+  
   // Poisson係数（Naive実装の実験）
   d_pni = NULL;
+  
+  
+  // OBSTACLEの力の積算
+  local_force = NULL;
+  global_force = NULL;
+  global_obstacle = NULL;
+  num_obstacle = 0;
+  buffer_force = NULL;
   
   
   // ファイル入出力
@@ -220,6 +229,34 @@ void FFV::Averaging(double& flop)
   {
     fb_average_s_(d_ae, size, &guide, d_ie, &nadd, &flop);
   }
+}
+
+
+
+// #################################################################
+// 物体に働く力の計算
+void FFV::calcForce(double& flop)
+{
+  REAL_TYPE dh = deltaX;
+  int gd = guide;
+  int st[3], ed[3];
+  REAL_TYPE vec[3];
+  
+  for (int n=1; n<=C.NoCompo; n++)
+  {
+    if ( cmp[n].getType()==OBSTACLE )
+    {
+      cmp[n].getBbox(st, ed);
+      int key = cmp[n].getMatodr();
+
+      force_compo_(vec, size, &gd, &key, d_p, d_bid, &dh, st, ed, &flop);
+      
+      local_force[3*n+0] = vec[0];
+      local_force[3*n+1] = vec[1];
+      local_force[3*n+2] = vec[2];
+    }
+  }
+  
 }
 
 
@@ -337,6 +374,55 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
   }
   
 }
+
+
+
+// #################################################################
+// 物体に働く力を各ランクから集めて積算する
+void FFV::gatherForce(REAL_TYPE* m_frc)
+{
+  
+  if( !m_frc ) Exit(0);
+  
+  for (int n=1; n<=C.NoCompo; n++)
+  {
+    
+    if ( cmp[n].getType()==OBSTACLE )
+    {
+      REAL_TYPE vec[3];
+      
+      vec[0] = local_force[3*n+0];
+      vec[1] = local_force[3*n+1];
+      vec[2] = local_force[3*n+2];
+      
+      if ( numProc > 1 )
+      {
+        if ( paraMngr->Gather(vec, 3, m_frc, 3, 0) != CPM_SUCCESS ) Exit(0);
+      }
+      else
+      {
+        memcpy(m_frc, vec, 3*sizeof(REAL_TYPE));
+      }
+    }
+
+    REAL_TYPE fx = 0.0;
+    REAL_TYPE fy = 0.0;
+    REAL_TYPE fz = 0.0;
+    
+    for (int i=0; i<numProc; i++)
+    {
+      fx = fx + m_frc[3*i+0];
+      fy = fy + m_frc[3*i+1];
+      fz = fz + m_frc[3*i+2];
+    }
+    
+    global_force[3*n+0] = fx;
+    global_force[3*n+1] = fy;
+    global_force[3*n+2] = fz;
+  }
+}
+
+
 
 
 // #################################################################
@@ -1394,13 +1480,13 @@ void FFV::set_timing_label()
   set_label(tm_loop_uty_sct_2,     "Loop_Utility_Sct_2",      PerfMonitor::CALC, false);
   set_label(tm_hstry_stdout,       "History_Stdout",          PerfMonitor::CALC);
   set_label(tm_file_out,           "File_Output",             PerfMonitor::CALC);
-  set_label(tm_hstry_base,         "History_Base",            PerfMonitor::CALC);
+  set_label(tm_hstry_base,         "History_Base",            PerfMonitor::CALC, false);
+  set_label(tm_cal_force,          "Force_Calculation",       PerfMonitor::CALC);
   set_label(tm_hstry_wall,         "History_Wall_Info",       PerfMonitor::CALC);
   set_label(tm_total_prs,          "Total_Pressure",          PerfMonitor::CALC);
   set_label(tm_sampling,           "Sampling",                PerfMonitor::CALC);
   set_label(tm_hstry_sampling,     "History_Sampling",        PerfMonitor::CALC);
-  set_label(tm_cal_force,          "Force_Calculation",       PerfMonitor::CALC);
-  set_label(tm_hstry_force,        "History_Force",           PerfMonitor::CALC);
+  
   // end of Loop Utility Sct:2
   
   // end of Loop Utility Section

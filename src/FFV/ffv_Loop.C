@@ -352,7 +352,24 @@ int FFV::Loop(const unsigned step)
       Hostonly_ H->printHistory(fp_b, avr_Var, rms_Var, IC, &C, step_end, true);
       
       // コンポーネント
-      if ( C.EnsCompo.monitor ) Hostonly_ H->printHistoryCompo(fp_c, cmp, &C, deltaT);
+      if ( C.EnsCompo.monitor )
+      {
+        Hostonly_ H->printHistoryCompo(fp_c, cmp, &C, deltaT);
+      }
+      
+      // 物体の力の計算
+      if ( C.EnsCompo.obstacle )
+      {
+        TIMING_start(tm_cal_force);
+        flop_count=0.0;
+        
+        calcForce(flop_count);
+        
+        gatherForce(buffer_force);
+        
+        Hostonly_ H->printHistoryForce(fp_f, cmp, &C, global_force);
+        TIMING_stop(tm_cal_force, 0.0);
+      }
       
       // 流量収支履歴
       Hostonly_ H->printHistoryDomfx(fp_d, &C, deltaT);
@@ -368,41 +385,6 @@ int FFV::Loop(const unsigned step)
       TIMING_stop(tm_hstry_wall, 0.0);
     }
     
-    
-    // 力の履歴
-    if ( C.Hide.PM_Test != ON ) 
-    {
-      REAL_TYPE frc[3];
-      
-      TIMING_start(tm_cal_force);
-      flop_count=0.0;
-      // 性能測定モードのときには出力しない
-      
-      if ( C.isBinary() )
-      {
-        force_(frc, size, &guide, d_p, d_bcd, &deltaX, &flop_count);
-      }
-      else 
-      {
-        //cds_force_(frc, size, &guide, d_p, d_bcd, d_bid, &id_of_solid, &deltaX, &flop_count);
-      }
-      
-      TIMING_stop(tm_cal_force, 0.0);
-      
-      
-      REAL_TYPE tmp_f[3];
-      tmp_f[0] = frc[0];
-      tmp_f[1] = frc[1];
-      tmp_f[2] = frc[2];
-      if ( numProc > 1 ) 
-      {
-        if ( paraMngr->Allreduce(tmp_f, frc, 3, MPI_SUM) != CPM_SUCCESS) Exit(0);
-      }
-      
-      TIMING_start(tm_hstry_force);
-      Hostonly_ if ( C.Mode.Log_Base == ON) H->printHistoryForce(fp_f, frc);
-      TIMING_stop(tm_hstry_force, 0.0);
-    }
   }
   
   TIMING_stop(tm_loop_uty_sct_2, 0.0);

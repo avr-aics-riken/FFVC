@@ -168,12 +168,11 @@ enum timing_key {
       tm_hstry_stdout,
       tm_file_out,
       tm_hstry_base,
+        tm_cal_force,
       tm_hstry_wall,
       tm_total_prs,
       tm_sampling,
       tm_hstry_sampling,
-      tm_cal_force,
-      tm_hstry_force,
   
   tm_statistic,
   

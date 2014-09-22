@@ -296,17 +296,21 @@ public:
   
   /**
    * @brief 物体に働く力の履歴の出力
-   * @param [in] fp    出力ファイルポインタ
-   * @param [in] force 力
+   * @param [in] fp  出力ファイルポインタ
+   * @param [in] cmp CompoListクラスのポインタ
+   * @param [in] C   Controlクラスへのポインタ
+   * @param [in] frc 積算された力
    */
-  void printHistoryForce(FILE* fp, const REAL_TYPE* force);
+  void printHistoryForce(FILE* fp, const CompoList* cmp, const Control* C, const REAL_TYPE* frc);
   
   
   /**
    * @brief 物体に働く力の履歴のヘッダー出力
-   * @param [in] fp 出力ファイルポインタ
+   * @param [in] fp  出力ファイルポインタ
+   * @param [in] cmp CompoListクラスのポインタ
+   * @param [in] C   Controlクラスへのポインタ
    */
-  void printHistoryForceTitle(FILE* fp);
+  void printHistoryForceTitle(FILE* fp, const CompoList* cmp, const Control* C);
   
   
   /**

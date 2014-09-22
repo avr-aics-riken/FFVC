@@ -103,6 +103,7 @@
 #define i2vgt_              I2VGT
 #define rot_v_              ROT_V
 #define find_vmax_          FIND_VMAX
+#define force_compo_        FORCE_COMPO
 
 
 #define cds_pvec_vibc_specv_    CDS_PVEC_VIBC_SPECV
@@ -725,8 +726,7 @@ extern "C" {
   void find_vmax_         (REAL_TYPE* v_max, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* v, double* flop);
   void face_avr_sampling_ (REAL_TYPE* p, int* sz, int* g, int* face, REAL_TYPE* avr);
   void shift_pressure_    (REAL_TYPE* p, int* sz, int* g, REAL_TYPE* avr);
-  void force_             (REAL_TYPE* force, int* sz, int* g, REAL_TYPE* p, int* bp, REAL_TYPE* dh, double* flop);
-  
+  void force_compo_       (REAL_TYPE* frc, int* sz, int* g, int* tgt, REAL_TYPE* p, int* bid, REAL_TYPE* dh, int* st, int* ed, double* flop);
 
 
   

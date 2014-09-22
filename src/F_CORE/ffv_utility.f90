@@ -837,86 +837,83 @@
     end subroutine shift_pressure
 
 !> ********************************************************************
-!! @brief 物体表面の力を計算する
-!! @param[out] frc 力の成分
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param p 圧力
-!! @param bp BCindex P
-!! @param dh 無次元格子幅
-!! @param[out] flop flop count
+!! @brief 物体表面の力の成分を計算する
+!! @param [out] frc  力の成分
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  tgt  コンポーネントのエントリ番号
+!! @param [in]  p    圧力
+!! @param [in]  bid  交点id配列
+!! @param [in]  dh   無次元格子幅
+!! @param [in]  st   開始インデクス
+!! @param [in]  ed   終了インデクス
+!! @param [out] flop flop count
+!!
+!!
+!!  力の符号は、軸の正方向の力をプラスの符号とする
 !<
-  subroutine force (frc, sz, g, p, bp, dh, flop)
+  subroutine force_compo (frc, sz, g, tgt, p, bid, dh, st, ed, flop)
   implicit none
   include 'ffv_f_params.h'
-  integer                                                   ::  i, j, k, ix, jx, kx, g
-  integer                                                   ::  bw, be, bs, bn, bb, bt
-  integer, dimension(3)                                     ::  sz
+  integer                                                   ::  i, j, k, g, bd, is, ie, js, je, ks, ke
+  integer, dimension(3)                                     ::  sz, st, ed
   double precision                                          ::  flop
+  integer                                                   ::  idw, ide, ids, idn, idb, idt, tgt, tg
   real                                                      ::  fx, fy, fz
-  real                                                      ::  qw, qe, qs, qn, qb, qt
-  real                                                      ::  actv, pp, dh, cf
+  real                                                      ::  pp, dh, cf
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p
-  integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
+  integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bid
   real, dimension(3)                                        ::  frc
 
-  ix = sz(1)
-  jx = sz(2)
-  kx = sz(3)
+  is = st(1)
+  js = st(2)
+  ks = st(3)
+  ie = ed(1)
+  je = ed(2)
+  ke = ed(3)
 
-  flop = flop + dble(ix)*dble(jx)*dble(kx)*12.0d0 + 5.0d0
+  tg = tgt
 
   fx = 0.0
   fy = 0.0
   fz = 0.0
 
+  flop = flop + dble(ie-is+1)*dble(je-js+1)*dble(ke-ks+1)*7.0d0 + 5.0d0
+
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:fx) &
 !$OMP REDUCTION(+:fy) &
 !$OMP REDUCTION(+:fz) &
-!$OMP FIRSTPRIVATE(ix, jx, kx) &
-!$OMP PRIVATE(actv, pp) &
-!$OMP PRIVATE(bw, be, bs, bn, bb, bt) &
-!$OMP PRIVATE(qw, qe, qs, qn, qb, qt)
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, tg) &
+!$OMP PRIVATE(pp, bd) &
+!$OMP PRIVATE(idw, ide, ids, idn, idb, idt)
 
 !$OMP DO SCHEDULE(static)
 
-  do k=1,kx
-  do j=1,jx
-  do i=1,ix
+  do k=ks,ke
+  do j=js,je
+  do i=is,ie
 
-    ! Fluid -> 1.0
-    actv= real(ibits(bp(i,j,k), State, 1))
-    bw = ibits(bp(i-1, j  , k  ), State, 1)
-    be = ibits(bp(i+1, j  , k  ), State, 1)
-    bs = ibits(bp(i  , j-1, k  ), State, 1)
-    bn = ibits(bp(i  , j+1, k  ), State, 1)
-    bb = ibits(bp(i  , j  , k-1), State, 1)
-    bt = ibits(bp(i  , j  , k+1), State, 1)
+    bd = bid(i,j,k)
 
+    ! 検査方向面のIDを取り出す >> CompoListのエントリ番号
+    idw = ibits(bd, bc_face_W, bitw_5)
+    ide = ibits(bd, bc_face_E, bitw_5)
+    ids = ibits(bd, bc_face_S, bitw_5)
+    idn = ibits(bd, bc_face_N, bitw_5)
+    idb = ibits(bd, bc_face_B, bitw_5)
+    idt = ibits(bd, bc_face_T, bitw_5)
 
-    ! if not cut -> q=0.0
-    qw = 0.0
-    qe = 0.0
-    qs = 0.0
-    qn = 0.0
-    qb = 0.0
-    qt = 0.0
+    ! セルマスク　Fluid -> 1.0 / Wall -> 0.0
+    pp = p(i,j,k) * real(ibits(bd, State, 1))
 
-    ! 参照先が固体である場合のみ
-    if ( bw == 0 ) qw = 1.0
-    if ( be == 0 ) qe = 1.0
-    if ( bs == 0 ) qs = 1.0
-    if ( bn == 0 ) qn = 1.0
-    if ( bb == 0 ) qb = 1.0
-    if ( bt == 0 ) qt = 1.0
-
-    pp = p(i,j,k) * actv
-
-    ! 各方向に壁がある場合、かつ流体セルのみ力を積算
-    fx = fx + pp * ( qe - qw )
-    fy = fy + pp * ( qn - qs )
-    fz = fz + pp * ( qt - qb )
+    ! 力の積算、軸方向を正にとる
+    if ( idw == tg ) fx = fx - pp
+    if ( ide == tg ) fx = fx + pp
+    if ( ids == tg ) fy = fy - pp
+    if ( idn == tg ) fy = fy + pp
+    if ( idb == tg ) fz = fz - pp
+    if ( idt == tg ) fz = fz + pp
 
   end do
   end do
@@ -931,4 +928,4 @@
   frc(3) = fz * cf
 
   return
-  end subroutine force
+  end subroutine force_compo

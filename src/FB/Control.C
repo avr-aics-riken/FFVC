@@ -3740,7 +3740,7 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
 
 // #################################################################
 // コンポーネントが存在するかを保持しておく
-void Control::setExistComponent(CompoList* cmp, BoundaryOuter* OBC)
+int Control::setExistComponent(CompoList* cmp, BoundaryOuter* OBC, int* g_obstacle)
 {
   int c;
   
@@ -3815,6 +3815,20 @@ void Control::setExistComponent(CompoList* cmp, BoundaryOuter* OBC)
   }
   if ( c>0 ) EnsCompo.monitor = ON;
   
+  
+  // 物体
+  c = 0;
+  for (int n=1; n<=NoCompo; n++)
+  {
+    if ( cmp[n].isKindObstacle() )
+    {
+      g_obstacle[n] = ON;
+      c++;
+    }
+  }
+  if ( c>0 ) EnsCompo.obstacle = ON;
+  
+  return c; // OBSTACLEの個数
 }
 
 

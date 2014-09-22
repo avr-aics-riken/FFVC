@@ -788,6 +788,26 @@ void FFV::createTable(FILE* fp)
   if ( !(cmp = new CompoList[C.NoCompo+1]) ) Exit(0);
   
   
+  // OBSTACLEコンポーネントの積算用 global_force[C.NoCompo+1][3]のイメージ
+  if ( !(global_force = new REAL_TYPE[3*(C.NoCompo+1)]) ) Exit(0);
+  for (int i=0; i<3*(C.NoCompo+1); i++) global_force[i] = 0.0;
+  
+  
+  // OBSTACLEコンポーネントの積算用 local_force[C.NoCompo+1][3]のイメージ
+  if ( !(local_force = new REAL_TYPE[3*(C.NoCompo+1)]) ) Exit(0);
+  for (int i=0; i<3*(C.NoCompo+1); i++) local_force[i] = 0.0;
+  
+  
+  // 積算用バッファ
+  if ( !(buffer_force = new REAL_TYPE[3*numProc]) ) Exit(0);
+  for (int i=0; i<3*numProc; i++) buffer_force[i] = 0.0;
+  
+  
+  // 各コンポーネントのOBSTACLEの有無
+  if ( !(global_obstacle = new int[C.NoCompo+1]) ) Exit(0);
+  for (int i=0; i<C.NoCompo+1; i++) global_obstacle[i] = 0;
+  
+  
   // CompoList, MediumListのポインタをセット
   BC.importCMP_MAT(cmp, mat);
   
@@ -1163,6 +1183,7 @@ void FFV::encodeBCindex(FILE* fp)
   // STATEとACTIVEビットのコピー
   V.copyBCIbase(d_bcp, d_bcd);
   V.copyBCIbase(d_cdf, d_bcd);
+  V.copyBCIbase(d_bid, d_bcd);
   
 
   
@@ -1389,7 +1410,8 @@ void FFV::gatherDomainInfo()
   
   double d1, d2, d3;
   
-  for (int i=0; i<numProc; i++) {
+  for (int i=0; i<numProc; i++)
+  {
     ix = m_size[3*i];
     jx = m_size[3*i+1];
     kx = m_size[3*i+2];
@@ -2989,7 +3011,7 @@ void FFV::prepHistoryOutput()
         stamped_printf("\tSorry, can't open 'history_force.txt' file. Write failed.\n");
         Exit(0);
       }
-      H->printHistoryForceTitle(fp_f);
+      H->printHistoryForceTitle(fp_f, cmp, &C);
     }
     
     // 反復履歴情報　history_itr.log
@@ -3063,8 +3085,9 @@ void FFV::setBCinfo()
 #endif
   
   
-  // 各コンポーネントが存在するかどうかを保持しておく
-  C.setExistComponent(cmp, BC.exportOBC());
+  // 各コンポーネントが存在するかどうかを保持し, OBSTACLEの個数を返す
+  num_obstacle = C.setExistComponent(cmp, BC.exportOBC(), global_obstacle);
+  
   
   // KOSと境界条件種類の整合性をチェック
   B.chkBCconsistency(C.KindOfSolver, cmp);

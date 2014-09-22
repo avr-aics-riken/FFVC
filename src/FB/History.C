@@ -716,10 +716,18 @@ void History::printHistoryDomfxTitle(FILE* fp, const Control* C)
 
 // #################################################################
 // 物体に働く力の履歴の出力
-void History::printHistoryForce(FILE* fp, const REAL_TYPE* force)
+void History::printHistoryForce(FILE* fp, const CompoList* cmp, const Control* C, const REAL_TYPE* frc)
 {
   fprintf(fp, "%8d %14.6e", step, printTime());
-  fprintf(fp, " %12.4e  %12.4e  %12.4e", printForce(force[0]), printForce(force[1]), printForce(force[2]) );
+  
+  for (int i=1; i<=C->NoCompo; i++)
+  {
+    
+    if ( cmp[i].getType() == OBSTACLE )
+    {
+      fprintf(fp, " %12.4e  %12.4e  %12.4e", printForce(frc[3*i+0]), printForce(frc[3*i+1]), printForce(frc[3*i+2]) );
+    }
+  }
   
   fprintf(fp, "\n");
   fflush(fp);
@@ -728,7 +736,7 @@ void History::printHistoryForce(FILE* fp, const REAL_TYPE* force)
 
 // #################################################################
 // 物体に働く力の履歴のヘッダー出力
-void History::printHistoryForceTitle(FILE* fp)
+void History::printHistoryForceTitle(FILE* fp, const CompoList* cmp, const Control* C)
 {
   if ( Unit_Log == DIMENSIONAL )
   {
@@ -739,13 +747,18 @@ void History::printHistoryForceTitle(FILE* fp)
     fprintf(fp, "    step        time[-]");
   }
   
-  if ( Unit_Log == DIMENSIONAL )
+  for (int i=1; i<=C->NoCompo; i++)
   {
-    fprintf(fp, "        Fx[N]         Fy[N]         Fz[N]");
-  }
-  else
-  {
-    fprintf(fp, "        Fx[-]         Fy[-]         Fz[-]");
+    
+    switch ( cmp[i].getType() )
+    {
+      case OBSTACLE:
+        fprintf(fp, "       Fx[%02d]        Fy[%02d]        Fz[%02d]", i, i, i);
+        break;
+        
+      default:
+        break;
+    }
   }
 
   fprintf(fp, "\n");

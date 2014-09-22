@@ -472,6 +472,7 @@ public:
     int tfree;
     int vspec;
     int monitor;
+    int obstacle;
   } Ens_of_Compo;
   
   /** ドライバ **/
@@ -800,6 +801,7 @@ public:
     EnsCompo.tfree   = 0;
     EnsCompo.vspec   = 0;
     EnsCompo.monitor = 0;
+    EnsCompo.obstacle= 0;
     
     drv.length = 0.0;
     
@@ -1092,10 +1094,12 @@ public:
 
   /**
    * @brief コンポーネントが存在するかを保持しておく
-   * @param [in,out] cmp CompoList
-   * @param [in,out] OBC BoundaryOuter
+   * @param [in,out] cmp        CompoList
+   * @param [in,out] OBC        BoundaryOuter
+   * @param [in,out] g_obstacle 各コンポーネント毎のOBSTACLEの有無
+   * @retval OBSTACLEの個数
    */
-  void setExistComponent(CompoList* cmp, BoundaryOuter* OBC);
+  int setExistComponent(CompoList* cmp, BoundaryOuter* OBC, int* g_obstacle);
   
   
   /**

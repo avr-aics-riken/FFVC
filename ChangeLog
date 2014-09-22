@@ -18,6 +18,17 @@
 REVISION HISTORY
 ================
 
+
+--------------------------
+2014-09-22
+r1634 Implementation of Cd/Cl
+ - modify copyBCIbase()
+ - add variables in ffv.h
+   local_force, global_force, buffer_force, global_obstacle, num_obstacle
+ - impliment calcforce(), gatherForce(), force_compo_()
+ - modify printHistoryForce()
+ - add variable matodr in Component.h
+
 --------------------------
 2014-09-16
 r1633 estimate viscous terms as 4th-order
