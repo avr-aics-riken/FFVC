@@ -18,6 +18,16 @@
 REVISION HISTORY
 ================
 
+--------------------------
+2014-09-28
+r1635 branch change-itr
+ - Test standard Projection method
+ - Expire v_div_? for Norm_Type
+ - /ApplicationControl/DebugDivergence in tp file -> /Output/Log/Iteration
+ - change interface of NormDiv()
+ - change IterationCtl class > Residual and Error
+ - expire bit3option
+ - Modify iteration process
 
 --------------------------
 2014-09-22

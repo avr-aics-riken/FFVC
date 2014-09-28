@@ -25,8 +25,11 @@
 
 #include "mydebug.h"
 
-#define FB_VERS "1.4.9"
+#define FB_VERS "1.5.0"
 
+#define SINGLE_EPSILON 1.19e-7
+#define DOUBLE_EPSILON 2.22e-16
+#define ROUND_EPS 4.0e-7
 
 // precision
 #ifdef _REAL_IS_DOUBLE_
@@ -40,9 +43,6 @@
 #define REAL_TYPE float
 #endif
 
-#define SINGLE_EPSILON 1.19e-7   // 5.96e-8  * 2
-#define DOUBLE_EPSILON 4.44e-16  // 2.22e-16 * 2
-#define ROUND_EPS 4.0e-7
 
 #define KELVIN    273.15
 #define BOLTZMAN  1.0
@@ -88,7 +88,6 @@
 #define RBGS          5
 #define PCG           6
 #define PBiCGSTAB     7
-#define VP_ITERATION  8
 
 
 // KindOfSolver
@@ -481,7 +480,6 @@ enum itr_cntl_key
   ic_prs2,
   ic_vel1,
   ic_tmp1,
-  ic_div,
   ic_END
 };
 
@@ -489,11 +487,11 @@ enum itr_cntl_key
 /** 反復法の収束基準種別 */
 enum norm_type
 {
-  v_div_max=1,
-  v_div_dbg,
-  dx_b,
-  r_b,
-  r_r0
+  nrm_dx,
+  nrm_dx_x,
+  nrm_r_b,
+  nrm_r_x,
+  nrm_r_r0
 };
 
 /** 組み込み例題のID */

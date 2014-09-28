@@ -106,7 +106,6 @@ enum timing_key {
   
       tm_poi_itr_sct_5,
         tm_norm_div_max,
-        tm_norm_div_dbg,
         tm_norm_comm,
   
       tm_gmres_sor_sct,

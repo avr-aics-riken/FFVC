@@ -30,8 +30,8 @@ int FFV::Loop(const unsigned step)
   double step_end;
   
   double flop_count=0.0;   /// 浮動小数演算数
-  double avr_Var[3];       /// 平均値（速度、圧力、温度）
-  double rms_Var[3];       /// 変動値
+  double rms_Var[3];       /// 変動値（速度、圧力、温度）
+  double avr_Var[3];       /// 平均値
   REAL_TYPE vMax=0.0;      /// 最大速度成分
   
   bool isNormal=true;      /// 発散チェックフラグ
@@ -135,10 +135,10 @@ int FFV::Loop(const unsigned step)
   flop_count=0.0;
   for (int i=0; i<3; i++) 
   {
-    avr_Var[i] = 0.0;
     rms_Var[i] = 0.0;
+    avr_Var[i] = 0.0;
   }
-  VariationSpace(avr_Var, rms_Var, flop_count);
+  VariationSpace(rms_Var, avr_Var, flop_count);
   TIMING_stop(tm_stat_space, flop_count);
 
   
@@ -152,40 +152,38 @@ int FFV::Loop(const unsigned step)
     TIMING_start(tm_stat_space_comm);
     
     for (int n=0; n<3; n++) {
-      src[n]   = avr_Var[n];
-      src[n+3] = rms_Var[n];
+      src[n]   = rms_Var[n];
+      src[n+3] = avr_Var[n];
     }
     
     if ( paraMngr->Allreduce(src, dst, 6, MPI_SUM) != CPM_SUCCESS) Exit(0); // 変数 x (平均値+変動値)
     
     for (int n=0; n<3; n++) {
-      avr_Var[n] = dst[n];
-      rms_Var[n] = dst[n+3];
+      rms_Var[n] = dst[n];
+      avr_Var[n] = dst[n+3];
     }
     
     TIMING_stop(tm_stat_space_comm, 2.0*numProc*6.0*2.0*sizeof(double) ); // 双方向 x ノード数 x 変数
   }
 
-  avr_Var[var_Velocity] /= (double)G_Acell;  // 速度の空間平均
+  rms_Var[var_Velocity] = sqrt(rms_Var[var_Velocity]); // 速度の変動量の空間総和
+  rms_Var[var_Pressure] = sqrt(rms_Var[var_Pressure]); // 圧力の変動量の空間総和
+  
+  //avr_Var[var_Velocity] /= (double)G_Acell;  // 速度の空間平均は計算しない
   avr_Var[var_Pressure] /= (double)G_Acell;  // 圧力の空間平均
   
-  rms_Var[var_Velocity] /= (double)G_Acell;  // 速度の変動量
-  rms_Var[var_Pressure] /= (double)G_Acell;  // 圧力の変動量
-  rms_Var[var_Velocity] = sqrt(rms_Var[var_Velocity]);
-  rms_Var[var_Pressure] = sqrt(rms_Var[var_Pressure]);
   
   
   if ( C.isHeatProblem() ) 
   {
+    rms_Var[var_Temperature] = sqrt(rms_Var[var_Temperature]); // 温度の変動量の空間総和
     avr_Var[var_Temperature] /= (double)G_Acell;   // 温度の空間平均
-    rms_Var[var_Temperature] /= (double)G_Acell;   // 温度の変動量
-    rms_Var[var_Temperature] = sqrt(rms_Var[var_Temperature]);
   }
   
   // 発散チェック
   if ( isnan(rms_Var[var_Velocity])
     || isnan(rms_Var[var_Pressure])
-    || isnan(IC[ic_div].getNormValue())
+    || isnan(div_value)
       )
   {
     isNormal = false;
@@ -328,11 +326,11 @@ int FFV::Loop(const unsigned step)
       TIMING_start(tm_hstry_stdout);
       Hostonly_
       {
-        H->printHistory(stdout, avr_Var, rms_Var, IC, &C, step_end, true);
+        H->printHistory(stdout, rms_Var, avr_Var, IC, &C, div_value, step_end, true);
         
         if ( C.Mode.CCNV == ON )
         {
-          H->printCCNV(avr_Var, rms_Var, IC, &C, step_end);
+          H->printCCNV(rms_Var, avr_Var, IC, &C, div_value, step_end);
         }
       }
       TIMING_stop(tm_hstry_stdout, 0.0);
@@ -349,7 +347,7 @@ int FFV::Loop(const unsigned step)
       TIMING_start(tm_hstry_base);
       
       // 基本履歴情報
-      Hostonly_ H->printHistory(fp_b, avr_Var, rms_Var, IC, &C, step_end, true);
+      Hostonly_ H->printHistory(fp_b, rms_Var, avr_Var, IC, &C, div_value, step_end, true);
       
       // コンポーネント
       if ( C.EnsCompo.monitor )

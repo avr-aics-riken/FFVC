@@ -17,6 +17,9 @@
 RELEASE NOTE
 ============
 
+Ver 1.5.0   2014-09-28
+ - IterationCtlクラスを改訂　誤差と残差の制御，反復解法周りの変更
+
 Ver 1.4.9   2014-08-27
   - FileIO class削除．writeRwaSPH()をffvへ移動．
   - FB_util.f90は倍精度のコンパイルオプションがconfigureで指定できないので，F_COREに移動

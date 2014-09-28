@@ -155,6 +155,8 @@ private:
   REAL_TYPE range_Ut[2]; ///< 
   REAL_TYPE range_Yp[2]; ///<
   
+  double div_value; ///< 無次元発散値　収束チェック用
+  
   
   // 定常収束モニター
   typedef struct
@@ -711,8 +713,8 @@ private:
   void OutputDerivedVariables(double& flop);
   
   
-  // V-P反復のdiv(u)ノルムを計算する
-  Vec3i NormDiv(IterationCtl* IC);
+  // div(u)を計算する
+  void NormDiv(int* idx);
   
   
   // タイミング測定区間にラベルを与えるラッパー
@@ -733,7 +735,7 @@ private:
   
   // 空間平均操作と変動量の計算を行う
   // スカラ値は算術平均，ベクトル値は自乗和
-  void VariationSpace(double* avr, double* rms, double& flop);
+  void VariationSpace(double* rms, double* avr, double& flop);
   
   
   
@@ -824,13 +826,13 @@ private:
   
   /** SOR法
    * @retval 反復数
-   * @param [in]     IC      IterationCtlクラス
-   * @param [in,out] x       解ベクトル
-   * @param [in]     b  RHS  vector
-   * @param [in]     rhs_nrm RHS vector
-   * @param [in]     r0      初期残差ベクトル
+   * @param [in]     IC     IterationCtlクラス
+   * @param [in,out] x      解ベクトル
+   * @param [in]     b      RHS  vector
+   * @param [in]     b_l2   L2 norm of b vector
+   * @param [in]     r0_l2  初期残差ベクトルのL2ノルム
    */
-  int Point_SOR(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
+  int Point_SOR(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2);
   
   
   /**

@@ -51,7 +51,6 @@ void FFV::NS_FS_E_CDS()
   
   IterationCtl* ICp = &IC[ic_prs1];  /// 圧力のPoisson反復
   IterationCtl* ICv = &IC[ic_vel1];  /// 粘性項のCrank-Nicolson反復
-  IterationCtl* ICd = &IC[ic_div];   /// 圧力-速度反復
   
   // point Data
   // d_v   セルセンタ速度 v^n -> v^{n+1}
@@ -258,7 +257,7 @@ void FFV::NS_FS_E_CDS()
     for (ICv->setLoopCount(0); ICv->getLoopCount()< ICv->getMaxIteration(); ICv->incLoopCount())
     {
       //CN_Itr(ICv);
-      if (  ICv->isConverged() ) break;
+      if ( ICv->isErrConverged() || ICv->isResConverged() ) break;
     }
   }
   
@@ -304,47 +303,30 @@ void FFV::NS_FS_E_CDS()
   // (Neumann_BCType_of_Pressure_on_solid_wall == grad_NS)　のとき，\gamma^{N2}の処理
   //hogehoge
   
-  // 定数項のL2ノルム　rhs_nrm
-  if ( (ICp->getNormType() == dx_b) || (ICp->getNormType() == r_b) )
+  // 定数項bの自乗和　b_l2
+  TIMING_start(tm_poi_src_nrm);
+  rhs_nrm = 0.0;
+  flop = 0.0;
+  poi_rhs_(&rhs_nrm, d_b, size, &guide, d_ws, d_sq, d_bcp, &dh, &dt, &flop);
+  TIMING_stop(tm_poi_src_nrm, flop);
+  
+  if ( numProc > 1 )
   {
-    TIMING_start(tm_poi_src_nrm);
-    rhs_nrm = 0.0;
-    flop = 0.0;
-    if (ICp->getBit3() == OFF)
-    {
-      poi_rhs_(&rhs_nrm, d_b, size, &guide, d_ws, d_sq, d_bcp, &dh, &dt, &flop);
-    }
-    else
-    {
-      poi_rhs_bit3_(&rhs_nrm, d_b, size, &guide, d_ws, d_sq, d_bcp, &dh, &dt, &flop);
-    }
-    TIMING_stop(tm_poi_src_nrm, flop);
-    
-    if ( numProc > 1 )
-    {
-      TIMING_start(tm_poi_src_comm);
-      double m_tmp = rhs_nrm;
-      if ( paraMngr->Allreduce(&m_tmp, &rhs_nrm, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-      TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
-    }
-    
-    rhs_nrm = sqrt(rhs_nrm);
+    TIMING_start(tm_poi_src_comm);
+    double m_tmp = rhs_nrm;
+    if ( paraMngr->Allreduce(&m_tmp, &rhs_nrm, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
   }
   
+  rhs_nrm = sqrt(rhs_nrm);
+  
   // Initial residual
-  if ( ICp->getNormType() == r_r0 )
+  if ( ICp->getResType() == nrm_r_r0 )
   {
     TIMING_start(tm_poi_src_nrm);
     res_init = 0.0;
     flop = 0.0;
-    if (ICp->getBit3() == OFF)
-    {
-      poi_residual_(&res_init, size, &guide, d_p, d_b, d_bcp, &flop);
-    }
-    else
-    {
-      poi_residual_bit3_(&res_init, size, &guide, d_p, d_b, d_bcp, &flop);
-    }
+    poi_residual_(&res_init, size, &guide, d_p, d_b, d_bcp, &flop);
     TIMING_stop(tm_poi_src_nrm, flop);
     
     if ( numProc > 1 )
@@ -519,7 +501,8 @@ void FFV::NS_FS_E_CDS()
  
     
     // ノルムの計算
-    NormDiv(ICd);
+    int divmaxidx[3];
+    NormDiv(divmaxidx);
     
     /* Forcingコンポーネントによる速度の方向修正(収束判定から除外)  >> TEST
      TIMING_start(tm_prj_frc_dir);
@@ -529,7 +512,7 @@ void FFV::NS_FS_E_CDS()
      */
     
     // 収束判定　性能測定モードのときは収束判定を行わない
-    if ( (C.Hide.PM_Test == OFF) && ICd->isConverged() ) break;
+    //if ( (C.Hide.PM_Test == OFF) && ICd->isConverged() ) break;
   } // end of iteration
   
   TIMING_stop(tm_poi_itr_sct, 0.0);

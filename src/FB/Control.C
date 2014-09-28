@@ -471,30 +471,6 @@ void Control::getApplicationControl()
     }
   }
   
-  
-  
-  // デバッグ用のdiv(u)の出力指定 (Hidden)
-  FIO.Div_Debug = OFF;
-  label = "/ApplicationControl/DebugDivergence";
-  
-  if ( tpCntl->chkLabel(label) )
-  {
-    if ( tpCntl->getInspectedValue(label, str) )
-    {
-      if     ( !strcasecmp(str.c_str(), "on") )    FIO.Div_Debug = ON;
-      else if( !strcasecmp(str.c_str(), "off") )   FIO.Div_Debug = OFF;
-      else
-      {
-        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-        Exit(0);
-      }
-    }
-    else
-    {
-      Exit(0);
-    }
-  }
-  
 }
 
 
@@ -1217,69 +1193,69 @@ void Control::getIteration()
     Criteria[i].setMaxIteration(i_val);
 
 
-    label = leaf + "/ConvergenceCriterion";
+    label = leaf + "/ResidualCriterion";
     if ( !(tpCntl->getInspectedValue(label, f_val )) )
     {
       Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
       Exit(0);
     }
-    Criteria[i].setCriterion(f_val);
+    Criteria[i].setResCriterion(f_val);
 
     
-    label = leaf + "/NormType";
+    // 残差ノルム
+    label = leaf + "/ResidualNorm";
     if ( !(tpCntl->getInspectedValue(label, str )) )
     {
       Hostonly_ printf("\tParsing error : No '%s'\n", label.c_str());
       Exit(0);
     }
-
     
     int ls = Criteria[i].getLS();
     
     // ノルム
-    switch (ls)
+    if ( !strcasecmp(str.c_str(), "RbyB") )
     {
-      case VP_ITERATION:
-        if ( !strcasecmp(str.c_str(), "VdivMax") )
-        {
-          Criteria[i].setNormType(v_div_max);
-        }
-        else if ( !strcasecmp(str.c_str(), "VdivDbg") )
-        {
-          Criteria[i].setNormType(v_div_dbg);
-          Mode.Log_Itr = ON;
-        }
-        else
-        {
-          Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' for VP iteration\n", str.c_str());
-          Exit(0);
-        }
-        break;
-        
-      default:
-        if ( !strcasecmp(str.c_str(), "DXbyB") )
-        {
-          Criteria[i].setNormType(dx_b);
-        }
-        else if ( !strcasecmp(str.c_str(), "RbyB") )
-        {
-          Criteria[i].setNormType(r_b);
-        }
-        else if ( !strcasecmp(str.c_str(), "RbyR0") )
-        {
-          Criteria[i].setNormType(r_r0);
-        }
-        else
-        {
-          Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' of Norm for Poisson iteration\n", str.c_str());
-          Exit(0);
-        }
-        break;
+      Criteria[i].setResType(nrm_r_b);
+    }
+    else if ( !strcasecmp(str.c_str(), "RbyR0") )
+    {
+      Criteria[i].setResType(nrm_r_r0);
+    }
+    else if ( !strcasecmp(str.c_str(), "RbyX") )
+    {
+      Criteria[i].setResType(nrm_r_x);
+    }
+    else
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' of Norm for Poisson iteration\n", str.c_str());
+      Exit(0);
     }
 
     
+    // 誤差ノルム
+    label = leaf + "/ErrorNorm";
+    if ( !(tpCntl->getInspectedValue(label, str )) )
+    {
+      Hostonly_ printf("\tParsing error : No '%s'\n", label.c_str());
+      Exit(0);
+    }
+    
+    if ( !strcasecmp(str.c_str(), "DeltaXbyX") )
+    {
+      Criteria[i].setErrType(nrm_dx_x);
+    }
+    else if ( !strcasecmp(str.c_str(), "DeltaX") )
+    {
+      Criteria[i].setErrType(nrm_dx);
+    }
+    else
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' of Norm for Poisson iteration\n", str.c_str());
+      Exit(0);
+    }
+    
     // 固有パラメータ
-    if ( !Criteria[i].getInherentPara(tpCntl, leaf, ExperimentNaive) )
+    if ( !Criteria[i].getInherentPara(tpCntl, leaf) )
     {
       Hostonly_ printf("\tError : Invalid Linear Solver[%d]\n", ls);
       Exit(0);
@@ -2811,14 +2787,7 @@ void Control::printLS(FILE* fp, const IterationCtl* IC)
     case SOR2SMA:
       if (IC->getNaive()==OFF)
       {
-        if ( IC->getBit3()==OFF )
-        {
-          fprintf(fp,"\t       Linear Solver          :   2-colored SOR SMA (Stride Memory Access, Bit compressed 1-decode)\n");
-        }
-        else
-        {
-          fprintf(fp,"\t       Linear Solver          :   2-colored SOR SMA (Stride Memory Access, Bit compressed 3-decodes)\n");
-        }
+        fprintf(fp,"\t       Linear Solver          :   2-colored SOR SMA (Stride Memory Access, Bit compressed 1-decode)\n");
       }
       else
       {
@@ -3582,7 +3551,6 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
     IterationCtl* ICp1= &IC[ic_prs1];  /// 圧力のPoisson反復
     IterationCtl* ICp2= &IC[ic_prs2];  /// 圧力のPoisson反復　2回目
     IterationCtl* ICv = &IC[ic_vel1];  /// 粘性項のCrank-Nicolson反復
-    IterationCtl* ICd = &IC[ic_div];   /// V-P反復
     
     if ( Hide.PM_Test == ON )
     {
@@ -3591,19 +3559,14 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
     
     if ( KindOfSolver != SOLID_CONDUCTION )
     {
-      // V-P iteration
-      fprintf(fp,"\t     V-P Iteration \n");
-      fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICd->getMaxIteration());
-      fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICd->getCriterion());
-      fprintf(fp,"\t       Norm type              :   %s\n",    ICd->getNormString().c_str());
-      
-      
       // 1st iteration
       fprintf(fp,"\t     1st Pressure Iteration \n");
       fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICp1->getMaxIteration());
-      fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICp1->getCriterion());
+      fprintf(fp,"\t       Residual Norm type     :   %s\n",    ICp1->getResNormString().c_str());
+      fprintf(fp,"\t       Threshold for residual :   %9.3e\n", ICp1->getResCriterion());
+      fprintf(fp,"\t       Error    Norm type     :   %s\n",    ICp1->getErrNormString().c_str());
+      fprintf(fp,"\t       Threshold for error    :   %9.3e\n", ICp1->getErrCriterion());
       fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICp1->getOmega());
-      fprintf(fp,"\t       Norm type              :   %s\n",    ICp1->getNormString().c_str());
       fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICp1->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
       printLS(fp, ICp1);
       
@@ -3611,9 +3574,11 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
       {
         fprintf(fp,"\t     2nd Pressure Iteration \n");
         fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICp2->getMaxIteration());
-        fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICp2->getCriterion());
+        fprintf(fp,"\t       Residual Norm type     :   %s\n",    ICp2->getResNormString().c_str());
+        fprintf(fp,"\t       Threshold for residual :   %9.3e\n", ICp2->getResCriterion());
+        fprintf(fp,"\t       Error    Norm type     :   %s\n",    ICp2->getErrNormString().c_str());
+        fprintf(fp,"\t       Threshold for error    :   %9.3e\n", ICp2->getErrCriterion());
         fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICp2->getOmega());
-        fprintf(fp,"\t       Norm type              :   %s\n",    ICp2->getNormString().c_str());
         fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICp2->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
         printLS(fp, ICp2);
       }
@@ -3623,11 +3588,13 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
       {
         fprintf(fp,"\n");
         fprintf(fp,"\t     Velocity CN Iteration \n");
-        fprintf(fp,"\t       Iteration max           :   %d\n"  ,  ICv->getMaxIteration());
-        fprintf(fp,"\t       Convergence eps         :   %9.3e\n", ICv->getCriterion());
-        fprintf(fp,"\t       Coef. of Relax./Accel.  :   %9.3e\n", ICv->getOmega());
-        fprintf(fp,"\t       Norm type               :   %s\n",    ICv->getNormString().c_str());
-        fprintf(fp,"\t       Communication Mode      :   %s\n",   (ICv->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
+        fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICv->getMaxIteration());
+        fprintf(fp,"\t       Residual Norm type     :   %s\n",    ICv->getResNormString().c_str());
+        fprintf(fp,"\t       Threshold for residual :   %9.3e\n", ICv->getResCriterion());
+        fprintf(fp,"\t       Error    Norm type     :   %s\n",    ICv->getErrNormString().c_str());
+        fprintf(fp,"\t       Threshold for error    :   %9.3e\n", ICv->getErrCriterion());
+        fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICv->getOmega());
+        fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICv->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
         printLS(fp, ICv);
       }
     }
@@ -3641,9 +3608,11 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
         fprintf(fp,"\n");
         fprintf(fp,"\t     Temperature Iteration  \n");
         fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICt->getMaxIteration());
-        fprintf(fp,"\t       Convergence eps        :   %9.3e\n", ICt->getCriterion());
+        fprintf(fp,"\t       Residual Norm type     :   %s\n",    ICt->getResNormString().c_str());
+        fprintf(fp,"\t       Threshold for residual :   %9.3e\n", ICt->getResCriterion());
+        fprintf(fp,"\t       Error    Norm type     :   %s\n",    ICt->getErrNormString().c_str());
+        fprintf(fp,"\t       Threshold for error    :   %9.3e\n", ICt->getErrCriterion());
         fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICt->getOmega());
-        fprintf(fp,"\t       Norm type              :   %s\n",    ICt->getNormString().c_str());
         fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICt->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
         printLS(fp, ICt);
       }

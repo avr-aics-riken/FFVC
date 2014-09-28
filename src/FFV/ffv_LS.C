@@ -227,12 +227,13 @@ bool FFV::hasLinearSolver(const int L)
 
 // #################################################################
 // Point SOR
-int FFV::Point_SOR(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
+int FFV::Point_SOR(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2)
 {
-  double flop_count=0.0;         /// 浮動小数点演算数
+  double flop_count=0.0;          /// 浮動小数点演算数
   REAL_TYPE omg = IC->getOmega(); /// 加速係数
-	double res = 0.0;              /// 残差
-  int lc=0;                      /// ループカウント
+	double var[3];                  /// 誤差、残差、解
+  double x_l2;                    /// 解ベクトルのL2ノルム
+  int lc=0;                       /// ループカウント
   
   // x     圧力 p^{n+1}
 	// b     RHS vector
@@ -242,11 +243,16 @@ int FFV::Point_SOR(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rh
   
   for (lc=0; lc<IC->getMaxIteration(); lc++)
   {
+    var[0] = 0.0; // 誤差
+    var[1] = 0.0; // 残差
+    var[2] = 0.0; // 解
+    
     // 反復処理
     TIMING_start(tm_poi_PSOR);
     flop_count = 0.0;
-    psor_(x, size, &guide, &omg, &res, b, d_bcp, &flop_count);
+    psor_(x, size, &guide, &omg, var, b, d_bcp, &flop_count);
     TIMING_stop(tm_poi_PSOR, flop_count);
+    
     
     // 境界条件
     TIMING_start(tm_poi_BC);
@@ -254,72 +260,72 @@ int FFV::Point_SOR(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rh
     if ( C.EnsCompo.periodic == ON ) BC.InnerPBCperiodic(x, d_bcd);
     TIMING_stop(tm_poi_BC, 0.0);
     
+    
     // 同期処理
     Sync_Scalar(IC, x, 1);
     
-    // 残差の集約
+    
+    // 残差と誤差の集約
     if ( numProc > 1 )
     {
       TIMING_start(tm_poi_res_comm);
-      double tmp = res;
-      if ( paraMngr->Allreduce(&tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-      TIMING_stop(tm_poi_res_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
+      double tmp[3];
+      tmp[0] = var[0];
+      tmp[1] = var[1];
+      tmp[2] = var[2];
+      if ( paraMngr->Allreduce(tmp, var, 3, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      TIMING_stop(tm_poi_res_comm, 6.0*numProc*sizeof(double) ); // 双方向 x ノード数　x 3
     }
     
-    res = sqrt(res); // L2 of (x^{m+1} - x^m)
+    var[0] = sqrt(var[0]); // L2 of (x^{(m+1)} - x^{(m)})
+    var[1] = sqrt(var[1]); // L2 of residual
+    var[2] = sqrt(var[2]); // L2 of solution vector x^{(m)}
+    x_l2 = var[2];
     
-    
-    // Residual
-    switch ( IC->getNormType() )
-    {
-      case r_b:
-      case r_r0:
-        
-        TIMING_start(tm_poi_src_nrm);
-        res = 0.0;
-        flop_count = 0.0;
-        poi_residual_(&res, size, &guide, x, b, d_bcp, &flop_count);
-        TIMING_stop(tm_poi_src_nrm, flop_count);
-        
-        if ( numProc > 1 )
-        {
-          TIMING_start(tm_poi_src_comm);
-          double m_tmp = res;
-          if ( paraMngr->Allreduce(&m_tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-          TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
-        }
-        
-        res = sqrt(res);
-        break;
-        
-      case dx_b:
-        // nothing to do, dx is already obtained in psor_(&res,...)
-        break;
-    }
     
     // 残差の保存
-    switch ( IC->getNormType() )
+    double ErrEPS = IC->getErrCriterion();
+    
+    switch ( IC->getResType() )
     {
-      case dx_b:
-        IC->setNormValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
+      case nrm_r_b:
+        IC->setResidual( (b_l2<ErrEPS) ? var[1]/ErrEPS : var[1]/b_l2 );
         break;
         
-      case r_b:
-        IC->setNormValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
+      case nrm_r_x:
+        IC->setResidual( (x_l2<ErrEPS) ? var[1]/ErrEPS : var[1]/x_l2 );
         break;
         
-      case r_r0:
-        IC->setNormValue( (r0==0.0) ? res : res/r0 );
+      case nrm_r_r0:
+        IC->setResidual( (r0_l2<ErrEPS) ? var[1]/ErrEPS : var[1]/r0_l2 );
         break;
         
       default:
-        printf("\tInvalid Linear Solver for Pressure\n");
+        printf("\tInvalid Residual Norm for Pressure\n");
+        Exit(0);
+        break;
+    }
+    
+    
+    // 誤差の保存
+    switch ( IC->getErrType() )
+    {
+      case nrm_dx:
+        IC->setError( var[0] );
+        break;
+        
+      case nrm_dx_x:
+        IC->setError( (x_l2<ErrEPS) ? var[0]/ErrEPS : var[0]/x_l2 );
+        break;
+        
+      default:
+        printf("\tInvalid Error Norm for Pressure\n");
         Exit(0);
         break;
     }
 
-    // 収束判定　性能測定モードのときは収束判定を行わない
-    if ( (C.Hide.PM_Test == OFF) && (IC->getNormValue() < IC->getCriterion()) ) break;
+    // 収束判定　性能測定モードでないときのみ収束判定を行う　誤差または残差が収束したら抜ける
+    if ( (C.Hide.PM_Test == OFF) && (IC->isResConverged() || IC->isErrConverged()) ) break;
     
   }
   
@@ -357,13 +363,14 @@ void FFV::Sync_Scalar(IterationCtl* IC, REAL_TYPE* d_class, const int num_layer)
 
 // #################################################################
 // SOR2SMA
-int FFV::SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
+int FFV::SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2)
 {
   int ip;                         /// ローカルノードの基点(1,1,1)のカラーを示すインデクス
                                   /// ip=0 > R, ip=1 > B
   double flop_count=0.0;          /// 浮動小数点演算数
   REAL_TYPE omg = IC->getOmega(); /// 加速係数
-	double res = 0.0;               /// 残差
+  double var[3];                  /// 誤差、残差、解
+  double x_l2;                    /// 解ベクトルのL2ノルム
   int lc=0;                       /// ループカウント
   
   // x     圧力 p^{n+1}
@@ -395,6 +402,10 @@ int FFV::SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rh
     TIMING_stop(tm_poi_setup, 0.0);
     
     
+    var[0] = 0.0; // 誤差
+    var[1] = 0.0; // 残差
+    var[2] = 0.0; // 解
+    
     // 各カラー毎の間に同期, 残差は色間で積算する
     // R - color=0 / B - color=1
     for (int color=0; color<2; color++) {
@@ -403,18 +414,11 @@ int FFV::SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rh
       flop_count = 0.0; // 色間で積算しない
       if ( IC->getNaive()==OFF)
       {
-        if (IC->getBit3() == OFF)
-        {
-          psor2sma_core_(x, size, &guide, &ip, &color, &omg, &res, b, d_bcp, &flop_count);
-        }
-        else
-        {
-          psor2sma_core_bit3_(x, size, &guide, &ip, &color, &omg, &res, b, d_bcp, &flop_count);
-        }
+        psor2sma_core_(x, size, &guide, &ip, &color, &omg, var, b, d_bcp, &flop_count);
       }
       else
       {
-        psor2sma_naive_(x, size, &guide, &ip, &color, &omg, &res, b, d_bcp, d_pni, &flop_count);
+        psor2sma_naive_(x, size, &guide, &ip, &color, &omg, var, b, d_bcp, d_pni, &flop_count);
       }
       
       TIMING_stop(tm_poi_SOR2SMA, flop_count);
@@ -451,57 +455,68 @@ int FFV::SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rh
     }
     
     
-    // Residual
-    switch ( IC->getNormType() )
-    {
-      case r_b:
-      case r_r0:
-        
-        TIMING_start(tm_poi_src_nrm);
-        res = 0.0;
-        poi_residual_(&res, size, &guide, x, b, d_bcp, &flop_count);
-        TIMING_stop(tm_poi_src_nrm, flop_count);
-        break;
-        
-      case dx_b:
-        // nothing to do, dx is already obtained in psor_(&res,...)
-        break;
-    }
-    
+    // 残差と誤差の集約
     if ( numProc > 1 )
     {
-      TIMING_start(tm_poi_src_comm);
-      double m_tmp = res;
-      if ( paraMngr->Allreduce(&m_tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-      TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
+      TIMING_start(tm_poi_res_comm);
+      double tmp[3];
+      tmp[0] = var[0];
+      tmp[1] = var[1];
+      tmp[2] = var[2];
+      if ( paraMngr->Allreduce(tmp, var, 3, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      TIMING_stop(tm_poi_res_comm, 6.0*numProc*sizeof(double) ); // 双方向 x ノード数　x 3
     }
     
-    res = sqrt(res);
+    var[0] = sqrt(var[0]); // L2 of (x^{(m+1)} - x^{(m)})
+    var[1] = sqrt(var[1]); // L2 of residual
+    var[2] = sqrt(var[2]); // L2 of solution vector x^{(m)}
+    x_l2 = var[2];
+    
     
     
     // 残差の保存
-    switch ( IC->getNormType() )
+    double ErrEPS = IC->getErrCriterion();
+    
+    switch ( IC->getResType() )
     {
-      case dx_b:
-        IC->setNormValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
+        case nrm_r_b:
+        IC->setResidual( (b_l2<ErrEPS) ? var[1]/ErrEPS : var[1]/b_l2 );
         break;
         
-      case r_b:
-        IC->setNormValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
+        case nrm_r_x:
+        IC->setResidual( (x_l2<ErrEPS) ? var[1]/ErrEPS : var[1]/x_l2 );
         break;
         
-      case r_r0:
-        IC->setNormValue( (r0==0.0) ? res : res/r0 );
+        case nrm_r_r0:
+        IC->setResidual( (r0_l2<ErrEPS) ? var[1]/ErrEPS : var[1]/r0_l2 );
         break;
         
-      default:
-        printf("\tInvalid Linear Solver for Pressure\n");
+        default:
+        printf("\tInvalid Residual Norm for Pressure\n");
         Exit(0);
         break;
     }
     
-    // 収束判定　性能測定モードのときは収束判定を行わない
-    if ( (C.Hide.PM_Test == OFF) && (IC->getNormValue() < IC->getCriterion()) ) break;
+    
+    // 誤差の保存
+    switch ( IC->getErrType() )
+    {
+        case nrm_dx:
+        IC->setError( var[0] );
+        break;
+        
+        case nrm_dx_x:
+        IC->setError( (x_l2<ErrEPS) ? var[0]/ErrEPS : var[0]/x_l2 );
+        break;
+        
+        default:
+        printf("\tInvalid Error Norm for Pressure\n");
+        Exit(0);
+        break;
+    }
+    
+    // 収束判定　性能測定モードでないときのみ収束判定を行う　誤差または残差が収束したら抜ける
+    if ( (C.Hide.PM_Test == OFF) && (IC->isResConverged() || IC->isErrConverged()) ) break;
     
   }
   
@@ -709,7 +724,7 @@ void FFV::wait_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
 void FFV::Fgmres(IterationCtl* IC, const double rhs_nrm, const double r0)
 {
   const double eps_1 = 1.0e-30;
-  const double eps_2 = IC->getCriterion();
+  const double eps_2 = IC->getResCriterion();
   int mode_precond = 1; // pre-conditioning
   
   // 残差収束チェック
@@ -1182,26 +1197,31 @@ int FFV::Fpbicgstab(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double r
 
 // #################################################################
 // Check
-bool FFV::Fcheck(IterationCtl* IC, REAL_TYPE res, const double rhs_nrm, const double r0)
+bool FFV::Fcheck(IterationCtl* IC, REAL_TYPE res, const double b_l2, const double r0_l2)
 {
-	switch ( IC->getNormType() )
+  double ErrEPS = IC->getErrCriterion();
+  
+	switch ( IC->getResType() )
   {
-		case dx_b:
-			IC->setNormValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
+    case nrm_r_x:
+      IC->setResidual( res );
+      break;
+      
+		case nrm_r_b:
+			IC->setResidual( (b_l2<ErrEPS) ? res/ErrEPS : res/b_l2 );
 			break;
-		case r_b:
-			IC->setNormValue( (rhs_nrm==0.0) ? res : res/rhs_nrm );
+      
+		case nrm_r_r0:
+			IC->setResidual( (r0_l2<ErrEPS) ? res/ErrEPS : res/r0_l2 );
 			break;
-		case r_r0:
-			IC->setNormValue( (r0==0.0) ? res : res/r0 );
-			break;
+      
 		default:
 			printf("\tInvalid Linear Solver for Pressure\n");
 			Exit(0);
 			break;
 	}
   
-	if ( (C.Hide.PM_Test == OFF) && (IC->getNormValue() < IC->getCriterion()) )
+	if ( (C.Hide.PM_Test == OFF) && (IC->isResConverged() || IC->isErrConverged()) )
   {
 		return true;
 	}

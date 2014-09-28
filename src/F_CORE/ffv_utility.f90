@@ -91,7 +91,7 @@
 !! @param [out] ds   最大値
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
-!! @param [in]  div  速度の発散
+!! @param [in]  div  セルに対する速度の和
 !! @param [in]  coef 係数
 !! @param [in]  bp   BCindex P
 !! @param [out] flop flop count

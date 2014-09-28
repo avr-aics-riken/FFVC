@@ -35,34 +35,40 @@ using namespace std;
 class IterationCtl {
   
 private:
-  double NormValue;     ///< ノルムの値 （計算実行中に利用）
-  double eps;           ///< 収束閾値
+  double residual;      ///< 残差
+  double error;         ///< 誤差
+  double eps_res;       ///< 残差の収束閾値
+  double eps_err;       ///< 残差の収束閾値
   double omg;           ///< 加速/緩和係数
-  int NormType;         ///< ノルムの種類
+  int ErrNorm;          ///< 誤差ノルムの種類
+  int ResNorm;          ///< 残差ノルムの種類
   int MaxIteration;     ///< 最大反復数
   int LinearSolver;     ///< 線形ソルバーの種類
   int LoopCount;        ///< 反復回数 （計算実行中に利用）
   int valid;            ///< 有効フラグ
   int Sync;             ///< 同期モード (comm_sync, comm_async)
   int Naive;            ///< Naive Implementation >> on/off
-  int Bit3option;       ///< bit option
   string alias;         ///< 別名
   
 public:
   
   /** コンストラクタ */
   IterationCtl() {
-    NormType = 0;
+    ErrNorm = 0;
+    ResNorm = 0;
     MaxIteration = 0;
     LoopCount = 0;
     LinearSolver = 0;
-    eps = 0.0;
-    NormValue = 0.0;
+    eps_res = 0.0;
+    eps_err = 0.0;
+    residual = 0.0;
+    error = 0.0;
     valid = -1;
     omg = 0.0;
     Sync = -1;
     Naive = OFF;
-    Bit3option = OFF;
+    
+    eps_err = ( sizeof(REAL_TYPE) == 4 ) ? 4.0*SINGLE_EPSILON : 4.0*DOUBLE_EPSILON;
   }
   
   /**　デストラクタ */
@@ -83,20 +89,25 @@ public:
   }
   
   
-  // @brief 収束閾値を返す
-  double getCriterion() const
-  {
-    return eps;
-  }
-  
-  
   /**
    * @brief 固有パラメータを取得
    * @param [in]  tpCntl   TextParser pointer
    * @param [in]  base     ラベル
-   * @param [out] m_naive  Naive option
    */
-  bool getInherentPara(TextParser* tpCntl, const string base, int& m_naive);
+  bool getInherentPara(TextParser* tpCntl, const string base);
+  
+  
+  // @brief 残差の収束閾値を返す
+  double getResCriterion() const
+  {
+    return eps_res;
+  }
+  
+  // @brief 誤差の収束閾値を返す
+  double getErrCriterion() const
+  {
+    return eps_err;
+  }
   
   
   // @brief 反復カウントを返す
@@ -126,30 +137,39 @@ public:
     return Naive;
   }
   
-  // @brief Bit3Optionを返す
-  int getBit3() const
+  
+  // @brief 誤差ノルムの文字列を返す
+  string getErrNormString();
+  
+  
+  // @brief 残差ノルムの文字列を返す
+  string getResNormString();
+  
+  
+  // @brief 誤差ノルムの種類を返す
+  int getErrType() const
   {
-    return Bit3option;
+    return ErrNorm;
+  }
+  
+  // @brief 残差ノルムの種類を返す
+  int getResType() const
+  {
+    return ResNorm;
   }
   
   
-  // @brief ノルムの文字列を返す
-  string getNormString();
-  
-  
-  // @brief ノルムのタイプを返す
-  int getNormType() const
+  // @brief keyに対応する残差を返す
+  double getResidual() const
   {
-    return NormType;
+    return residual;
   }
   
-  
-  // @brief keyに対応するノルムの値を返す
-  double getNormValue() const
+  // @brief keyに対応する誤差を返す
+  double getError() const
   {
-    return NormValue;
+    return error;
   }
-  
   
   // @brief 有効フラグを返す
   int getValid() const
@@ -165,12 +185,17 @@ public:
   }
   
   
-  // @brief 収束しているか > ture
-  bool isConverged()
+  // @brief 残差が収束しているか > ture
+  bool isResConverged()
   {
-    return (NormValue < eps) ? true : false;
+    return (residual < eps_res) ? true : false;
   }
   
+  // @brief 残差が収束しているか > ture
+  bool isErrConverged()
+  {
+    return (error < eps_err) ? true : false;
+  }
   
   // @brief aliasを設定する
   void setAlias(std::string key)
@@ -180,9 +205,9 @@ public:
   
   
   // @brief 収束閾値を保持
-  void setCriterion(const double r)
+  void setResCriterion(const double r)
   {
-    eps = r;
+    eps_res = r;
   }
   
   
@@ -207,17 +232,28 @@ public:
   }
   
   
-  // @brief ノルムのタイプを保持
-  void setNormType(const int n)
+  // @brief 誤差ノルムのタイプを保持
+  void setErrType(const int n)
   {
-    NormType = n;
+    ErrNorm = n;
   }
   
-  
-  // @brief ノルム値を保持
-  void setNormValue(const double r)
+  // @brief 残差ノルムのタイプを保持
+  void setResType(const int n)
   {
-    NormValue = r;
+    ResNorm = n;
+  }
+  
+  // @brief 残差を保持
+  void setResidual(const double r)
+  {
+    residual = r;
+  }
+  
+  // @brief 誤差を保持
+  void setError(const double r)
+  {
+    error = r;
   }
   
   

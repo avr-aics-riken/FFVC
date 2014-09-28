@@ -582,7 +582,6 @@ public:
   int BasicEqs;
   int CheckParam;
   int CnvScheme;
-  int ExperimentNaive; ///< Naive実装のスイッチ
   int FillSeedDir;     ///< フィルのヒント {x_minux | x_plus |...}
   int GuideOut;
   int KindOfSolver;
@@ -701,7 +700,6 @@ public:
     BasicEqs = 0;
     CheckParam = 0;
     CnvScheme = 0;
-    ExperimentNaive = OFF;
     FillSeedDir = -1;
     GuideOut = 0;
     KindOfSolver = 0;
@@ -774,7 +772,6 @@ public:
     LES.damping_factor=0.0;
     
     FIO.IOmode   = 0;
-    FIO.Div_Debug  = 0;
     FIO.IO_Voxel   = 0;
     FIO.Format     = 0; // 0:sph, 1:BOV
     FIO.Slice      = 0;

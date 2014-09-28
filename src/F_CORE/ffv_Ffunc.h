@@ -48,11 +48,8 @@
 #define sma_comm_           SMA_COMM
 #define sma_comm_wait_      SMA_COMM_WAIT
 #define cds_psor_           CDS_PSOR
-#define psor2sma_core_bit3_ PSOR2SMA_CORE_BIT3
 #define poi_residual_       POI_RESIDUAL
-#define poi_residual_bit3_  POI_RESIDUAL_BIT3
 #define poi_rhs_            POI_RHS
-#define poi_rhs_bit3_       POI_RHS_BIT3
 
 // ffv_pscalar.f90
 #define ps_muscl_           PS_MUSCL
@@ -233,7 +230,7 @@ extern "C" {
               int* sz,
               int* g,
               REAL_TYPE* omg,
-              double* res,
+              double* cnv,
               REAL_TYPE* b,
               int* bp,
               double* flop);
@@ -244,7 +241,7 @@ extern "C" {
                        int* ip,
                        int* color,
                        REAL_TYPE* omg,
-                       double* res,
+                       double* cnv,
                        REAL_TYPE* b,
                        int* bp,
                        double* flop);
@@ -255,7 +252,7 @@ extern "C" {
                         int* ip,
                         int* color,
                         REAL_TYPE* omg,
-                        double* res,
+                        double* cnv,
                         REAL_TYPE* b,
                         int* bp,
                         REAL_TYPE* pn,
@@ -283,36 +280,6 @@ extern "C" {
                        REAL_TYPE* cf_y,
                        REAL_TYPE* cf_z,
                        int* key);
-  
-  void poi_residual_bit3_ (double* res,
-                           int* sz,
-                           int* g,
-                           REAL_TYPE* p,
-                           REAL_TYPE* b,
-                           int* bp,
-                           double* flop);
-  
-  void poi_rhs_bit3_ (double* rhs,
-                      REAL_TYPE* b,
-                      int* sz,
-                      int* g,
-                      REAL_TYPE* s_0,
-                      REAL_TYPE* s_1,
-                      int* bp,
-                      REAL_TYPE* dh,
-                      REAL_TYPE* dt,
-                      double* flop);
-  
-  void psor2sma_core_bit3_ (REAL_TYPE* p,
-                            int* sz,
-                            int* g,
-                            int* ip,
-                            int* color,
-                            REAL_TYPE* omg,
-                            double* res,
-                            REAL_TYPE* b,
-                            int* bp,
-                            double* flop);
   
   //***********************************************************************************************
   // ffv_blas.f90

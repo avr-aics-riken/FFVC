@@ -26,8 +26,8 @@ void FFV::PS_Binary()
 {
   // local variables
   double flop;                         /// 浮動小数演算数
-  double rhs_nrm = 0.0;                /// 反復解法での定数項ベクトルのL2ノルム
-  double res_init = 0.0;               /// 反復解法での初期残差ベクトルのL2ノルム
+  double b_l2 = 0.0;                   /// 反復解法での定数項ベクトルのL2ノルム
+  double res0_l2 = 0.0;                /// 反復解法での初期残差ベクトルのL2ノルム
   double res=0.0;                      /// 残差
   
   REAL_TYPE dt = deltaT;               /// 時間積分幅
@@ -175,7 +175,7 @@ void FFV::PS_Binary()
     
     TIMING_start(tm_heat_diff_EE);
     flop = 0.0;
-    //res = ps_Diff_SM_EE(t, dt, qbc, bh, ws, flop); // resは拡散項のみの絶対残差
+    //res = ps_Diff_SM_EE(t, dt, qbc, bh, ws, flop); // resは拡散項のみの修正ベクトルの自乗和
     
     int h_mode;
     if ( (C.KindOfSolver == CONJUGATE_HT) || (C.KindOfSolver == CONJUGATE_HT_NATURAL) )
@@ -207,7 +207,7 @@ void FFV::PS_Binary()
     }
     
     
-    // 残差の集約
+    // 修正ベクトルの自乗和の集約
     if ( numProc > 1 )
     {
       TIMING_start(tm_heat_diff_res_comm);
@@ -215,7 +215,7 @@ void FFV::PS_Binary()
       if ( paraMngr->Allreduce(&tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
       TIMING_stop( tm_heat_diff_res_comm, 2.0*numProc*sizeof(REAL_TYPE) ); // 双方向 x ノード数
     }
-    ICt->setNormValue( sqrt(res/(double)G_Acell) ); // RMS
+    ICt->setError( sqrt(res) ); // RMS
     
     
     TIMING_stop(tm_heat_diff_sct_3, 0.0);
@@ -232,9 +232,9 @@ void FFV::PS_Binary()
     {
 
       // 線形ソルバー
-      ps_LS(ICt, rhs_nrm, res_init);
+      ps_LS(ICt, b_l2, res0_l2);
       
-      if ( ICt->isConverged() ) break;
+      if ( ICt->isErrConverged() || ICt->isResConverged() ) break;
     }
     
   }

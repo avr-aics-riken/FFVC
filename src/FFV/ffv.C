@@ -50,6 +50,8 @@ FFV::FFV()
   deltaT = 0.0;
   poly_factor = 0.0;
   
+  div_value = 0.0;
+  
   for (int i=0; i<3; i++) 
   {
     G_size[i]= 0;
@@ -666,7 +668,7 @@ void FFV::OutputBasicVariables(double& flop)
   
   
   // Divergence デバッグ用なので無次元のみ
-  if ( C.FIO.Div_Debug == ON ) 
+  if ( C.Mode.Log_Itr == ON )
   {
     
     REAL_TYPE coef = (REAL_TYPE)DT.get_DT()/(deltaX*deltaX); /// 発散値を計算するための係数　dt/h^2
@@ -1197,13 +1199,13 @@ int FFV::MainLoop()
 
 // #################################################################
 /**
- * @brief VP反復の発散値を計算する
- * @param [in] IC IterationCtlクラス
+ * @brief 発散値を計算する
+ * @param [out] idx インデクス
  * @retval 発散値の最大の場所のインデクス
  */
-Vec3i FFV::NormDiv(IterationCtl* IC)
+void FFV::NormDiv(int* idx)
 {
-  double nrm;
+  double dv;
   double flop_count;
   REAL_TYPE coef = 1.0/deltaX; /// 発散値を計算するための係数
 
@@ -1212,60 +1214,48 @@ Vec3i FFV::NormDiv(IterationCtl* IC)
   index[1] = 0;
   index[2] = 0;
   
-  switch (IC->getNormType())
+  TIMING_start(tm_poi_itr_sct_5); // >>> Poisson Iteration subsection 5
+  
+  if (C.Mode.Log_Itr == OFF)
   {
-
-    case v_div_max:
-      TIMING_start(tm_norm_div_max);
-      flop_count=0.0;
-      norm_v_div_max_(&nrm, size, &guide, d_dv, &coef, d_bcp, &flop_count);
-      TIMING_stop(tm_norm_div_max, flop_count);
-      
-      if ( numProc > 1 )
-      {
-        TIMING_start(tm_norm_comm);
-        double tmp;
-        tmp = nrm;
-        if ( paraMngr->Allreduce(&tmp, &nrm, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0); // 最大値
-        TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
-      }
-      IC->setNormValue(nrm);
-      break;
-      
-      
-    case v_div_dbg:
-      TIMING_start(tm_poi_itr_sct_5); // >>> Poisson Iteration subsection 5
-      
-      TIMING_start(tm_norm_div_dbg);
-      flop_count=0.0;
-      
-      norm_v_div_dbg_(&nrm, index, size, &guide, d_dv, &coef, d_bcp, &flop_count);
-      TIMING_stop(tm_norm_div_dbg, flop_count);
-      
-      //@todo ここで，最大値のグローバルなindexの位置を計算する
-      
-      if ( numProc > 1 )
-      {
-        TIMING_start(tm_norm_comm);
-        double tmp;
-        tmp = nrm;
-        if ( paraMngr->Allreduce(&tmp, &nrm, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0); // 最大値
-      }
-      IC->setNormValue(nrm);
-      
-      
-      TIMING_stop(tm_poi_itr_sct_5, 0.0); // <<< Poisson Iteration subsection 5
-      break;
-      
-      
-    default:
-      stamped_printf("\tInvalid convergence type\n");
-      Exit(0);
+    TIMING_start(tm_norm_div_max);
+    flop_count=0.0;
+    norm_v_div_max_(&dv, size, &guide, d_dv, &coef, d_bcp, &flop_count);
+    TIMING_stop(tm_norm_div_max, flop_count);
+    
+    if ( numProc > 1 )
+    {
+      TIMING_start(tm_norm_comm);
+      double tmp = dv;
+      if ( paraMngr->Allreduce(&tmp, &dv, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0); // 最大値
+      TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
+    }
+    div_value = dv;
+  }
+  else
+  {
+    TIMING_start(tm_norm_div_max);
+    flop_count=0.0;
+    norm_v_div_dbg_(&dv, index, size, &guide, d_dv, &coef, d_bcp, &flop_count);
+    TIMING_stop(tm_norm_div_max, flop_count);
+    
+    //@todo ここで，最大値のグローバルなindexの位置を計算する
+    
+    if ( numProc > 1 )
+    {
+      TIMING_start(tm_norm_comm);
+      double tmp = dv;
+      if ( paraMngr->Allreduce(&tmp, &dv, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0); // 最大値
+      TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(double));
+    }
+    div_value = dv;
   }
   
-  Vec3i idx ( index[0], index[1], index[2] );
+  TIMING_stop(tm_poi_itr_sct_5, 0.0); // <<< Poisson Iteration subsection 5
   
-  return idx;
+  idx[0] = index[0];
+  idx[1] = index[1];
+  idx[2] = index[2];
 }
 
 
@@ -1401,8 +1391,7 @@ void FFV::set_timing_label()
   // end of Poisson: Itr. Sct:4
   
   set_label(tm_poi_itr_sct_5,      "Poisson__Itr_Sct_5",      PerfMonitor::CALC, false);
-  set_label(tm_norm_div_max,       "Poisson_Norm_Div_max",    PerfMonitor::CALC);
-  set_label(tm_norm_div_dbg,       "Poisson_Norm_Div_dbg",    PerfMonitor::CALC);
+  set_label(tm_norm_div_max,       "Norm_Div_max",            PerfMonitor::CALC);
   set_label(tm_norm_comm,          "A_R_Poisson_Norm",        PerfMonitor::COMM);
   // end of Poisson: Itr. Sct:5
   
@@ -1535,18 +1524,18 @@ void FFV::Usage()
 // #################################################################
 /**
  * @brief 空間平均操作と変動量の計算を行う
- * @param [out]    avr  平均値
- * @param [out]    rms  変動値
+ * @param [out]    rms  変動値の自乗和
+ * @param [out]    avr  平均値の自乗和
  * @param [in,out] flop 浮動小数演算数
  */
-void FFV::VariationSpace(double* avr, double* rms, double& flop)
+void FFV::VariationSpace(double* rms, double* avr, double& flop)
 {
   double m_var[2];
   
   // 速度
   fb_delta_v_(m_var, size, &guide, d_v, d_v0, d_bcd, &flop); // 速度反復でV_res_L2_を計算している場合はスキップすること
   rms[var_Velocity] = m_var[0];
-  avr[var_Velocity] = m_var[1];
+  //avr[var_Velocity] = m_var[1]; 意味を持たない
   
   // 圧力
   fb_delta_s_(m_var, size, &guide, d_p, d_p0, d_bcd, &flop);

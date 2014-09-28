@@ -115,7 +115,7 @@ int FFV::Initialize(int argc, char **argv)
   
   // 線形ソルバーの特定
   identifyLinearSolver(&tp_ffv);
-
+  
 
   // 計算モデルの入力ソース情報を取得
   C.getGeometryModel();
@@ -168,7 +168,7 @@ int FFV::Initialize(int argc, char **argv)
   allocArray_Prep(PrepMemory, TotalMemory);
   
   // SOR2SMAのNaive実装
-  if ( (IC[ic_prs1].getLS()==SOR2SMA) && (IC[ic_prs1].getNaive() == ON) )
+  if ( IC[ic_prs1].getNaive() == ON )
   {
     Hostonly_ printf("\n\t << Extra arrays are allocated for Naive implementation. >>\n\n");
     allocArray_Naive(TotalMemory);
@@ -1188,7 +1188,7 @@ void FFV::encodeBCindex(FILE* fp)
 
   
   // 圧力計算のビット情報をエンコードする -----
-  C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid, C.ExperimentNaive, d_pni);
+  C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid, IC[ic_prs1].getNaive(), d_pni);
   
 
   
@@ -2078,20 +2078,17 @@ void FFV::identifyLinearSolver(TextParser* tpCntl)
     case Flow_FS_EE_EE:
     case Flow_FS_AB2:
       setLinearSolver(tpCntl, ic_prs1, "/Iteration/Pressure");
-      setLinearSolver(tpCntl, ic_div,  "/Iteration/VPiteration");
       break;
       
     case Flow_FS_AB_CN:
       setLinearSolver(tpCntl, ic_prs1, "/Iteration/Pressure");
       setLinearSolver(tpCntl, ic_vel1, "/Iteration/Velocity");
-      setLinearSolver(tpCntl, ic_div,  "/Iteration/VPiteration");
       break;
       
     case Flow_FS_RK_CN:
       setLinearSolver(tpCntl, ic_prs1, "/Iteration/Pressure");
       setLinearSolver(tpCntl, ic_prs2, "/Iteration/Pressure2nd");
       setLinearSolver(tpCntl, ic_vel1, "/Iteration/Velocity");
-      setLinearSolver(tpCntl, ic_div,  "/Iteration/VPiteration");
       break;
       
     default:
@@ -2273,7 +2270,7 @@ void FFV::initFileOut()
   
   
   // Divergence for Debug
-  if ( C.FIO.Div_Debug == ON )
+  if ( C.Mode.Log_Itr == ON )
   {
     comp = 1;
     DFI_OUT_DIV = cio_DFI::WriteInit(MPI_COMM_WORLD,
