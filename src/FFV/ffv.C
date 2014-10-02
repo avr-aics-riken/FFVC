@@ -122,7 +122,7 @@ FFV::FFV()
   d_zm  = NULL;
 
   
-  // PCG & PBiCGSTAB
+  // PCG & PBiCGSTAB & BiCGSTAB
 	d_pcg_r = NULL;
   d_pcg_p = NULL;
   
@@ -130,13 +130,15 @@ FFV::FFV()
 	d_pcg_q = NULL;
 	d_pcg_z = NULL;
   
-	// PBiCGSTAB
+	// PBiCGSTAB & BiCGSTAB
 	d_pcg_r0 = NULL;
-	d_pcg_p_ = NULL;
 	d_pcg_q_ = NULL;
-	d_pcg_s  = NULL;
 	d_pcg_s_ = NULL;
 	d_pcg_t_ = NULL;
+  
+  // PBiCGSTAB
+  d_pcg_s  = NULL;
+  d_pcg_p_ = NULL;
   
   cutPos = NULL;
   cutBid = NULL;
@@ -1487,6 +1489,21 @@ void FFV::set_timing_label()
   // 共通にまとめて利用
   set_label(tm_copy_array,         "Copy_Array",              PerfMonitor::CALC);
   set_label(tm_assign_const,       "assign_Const_to_Array",   PerfMonitor::CALC);
+  
+  // Blas
+  set_label(tm_blas_dot1,          "Blas_Dot1",               PerfMonitor::CALC);
+  set_label(tm_blas_dot2,          "Blas_Dot2",               PerfMonitor::CALC);
+  set_label(tm_blas_copy,          "Blas_Copy",               PerfMonitor::CALC);
+  set_label(tm_blas_calcr,         "Blas_Residual",           PerfMonitor::CALC);
+  set_label(tm_blas_ax,            "Blas_Ax",                 PerfMonitor::CALC);
+  set_label(tm_blas_triad,         "Blas_TRIAD" ,             PerfMonitor::CALC);
+  set_label(tm_blas_axpbypz,       "Blas_Z=Z+aX+bY",          PerfMonitor::CALC);
+  set_label(tm_blas_bicg_update_p, "Blas_BiCGupdateP",        PerfMonitor::CALC);
+  set_label(tm_blas_bicg_update_x, "Blas_BiCGupdateX",        PerfMonitor::CALC);
+  set_label(tm_blas_comm,          "Blas_Comm",               PerfMonitor::COMM);
+  
+  set_label(tm_bicgstab_sct,       "BiCG",                    PerfMonitor::CALC, false);
+  
   
   // 統計処理
   set_label(tm_statistic,          "Statistic",               PerfMonitor::CALC, false);

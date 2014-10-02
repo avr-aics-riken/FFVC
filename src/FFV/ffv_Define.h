@@ -48,6 +48,18 @@ enum timing_key {
   // common use
   tm_copy_array,
   tm_assign_const,
+  tm_blas_dot1,
+  tm_blas_dot2,
+  tm_blas_copy,
+  tm_blas_calcr,
+  tm_blas_ax,
+  tm_blas_triad,
+  tm_blas_axpbypz,
+  tm_blas_bicg_update_x,
+  tm_blas_bicg_update_p,
+  tm_blas_comm,
+  
+  tm_bicgstab_sct,
   
   tm_flow_sct,
     tm_frctnl_stp_sct,

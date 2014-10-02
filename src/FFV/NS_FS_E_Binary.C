@@ -366,15 +366,6 @@ void FFV::NS_FS_E_Binary()
   poi_rhs_(&b_l2, d_b, size, &guide, d_ws, d_sq, d_bcp, &dh, &dt, &flop);
   TIMING_stop(tm_poi_src_nrm, flop);
   
-  if ( ICp->getLS() == RBGS ||
-       ICp->getLS() == PCG  ||
-       ICp->getLS() == PBiCGSTAB )
-  {
-		blas_calcb_(d_b, d_ws, d_sq, d_bcp, &dh, &dt, size, &guide);
-		REAL_TYPE bb = 0.0;
-		blas_dot_(&bb, d_b, d_b, size, &guide);
-		b_l2 = (double)bb;
-	}
   
   if ( numProc > 1 )
   {
@@ -446,31 +437,35 @@ void FFV::NS_FS_E_Binary()
   // 線形ソルバー
   switch (ICp->getLS())
   {
-      case SOR:
+    case SOR:
       loop_p += Point_SOR(ICp, d_p, d_b, b_l2, res0_l2);
       break;
       
-      case SOR2SMA:
+    case SOR2SMA:
       loop_p += SOR_2_SMA(ICp, d_p, d_b, b_l2, res0_l2);
       break;
       
-      case GMRES:
-      Fgmres(ICp, b_l2, res0_l2);
+    //case GMRES:
+    //  Fgmres(ICp, b_l2, res0_l2);
+    //  break;
+      
+    //case RBGS:
+    //  loop_p += Frbgs(ICp, d_p, d_b, b_l2, res0_l2);
+    //  break;
+      
+    //case PCG:
+    //  loop_p += Fpcg(ICp, d_p, d_b, b_l2, res0_l2);
+    //  break;
+      
+    //case PBiCGSTAB:
+    //  loop_p += Fpbicgstab(ICp, d_p, d_b, b_l2, res0_l2);
+    //  break;
+      
+    case BiCGSTAB:
+      loop_p += BiCGstab(ICp, d_p, d_b, b_l2, res0_l2);
       break;
       
-      case RBGS:
-      loop_p += Frbgs(ICp, d_p, d_b, b_l2, res0_l2);
-      break;
-      
-      case PCG:
-      loop_p += Fpcg(ICp, d_p, d_b, b_l2, res0_l2);
-      break;
-      
-      case PBiCGSTAB:
-      loop_p += Fpbicgstab(ICp, d_p, d_b, b_l2, res0_l2);
-      break;
-      
-      default:
+    default:
       printf("\tInvalid Linear Solver for Pressure\n");
       Exit(0);
       break;

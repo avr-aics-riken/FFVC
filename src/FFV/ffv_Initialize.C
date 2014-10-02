@@ -577,6 +577,7 @@ int FFV::Initialize(int argc, char **argv)
     case RBGS:
 		case PCG:
 		case PBiCGSTAB:
+    case BiCGSTAB:
       allocate_SOR2SMA_buffer(TotalMemory);
       break;
   }
@@ -596,6 +597,10 @@ int FFV::Initialize(int argc, char **argv)
 		case PBiCGSTAB:
 			allocArray_PBiCGSTAB(TotalMemory);
 			break;
+      
+    case BiCGSTAB:
+      allocArray_BiCGstab(TotalMemory);
+      break;
   }
 
   
@@ -3742,7 +3747,7 @@ void FFV::setMonitorList()
   
   
   // ########## 確認のための出力
-  Ex->writeSVX(d_bcd, &C);
+  //Ex->writeSVX(d_bcd, &C);
 #if 0
   REAL_TYPE org[3], pit[3];
   

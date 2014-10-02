@@ -19,6 +19,12 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-10-02
+r1636 branch change-itr BiCG naive
+ - Naive implementation of BiCGstab
+ - Introduce F_LS directory for Linear Solver
+
+--------------------------
 2014-09-28
 r1635 branch change-itr
  - Test standard Projection method

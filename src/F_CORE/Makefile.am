@@ -26,11 +26,8 @@ libFCORE_a_FCFLAGS = \
 
 libFCORE_a_SOURCES = \
   ffv_Ffunc.h \
-  ffv_blas.f90 \
   ffv_forcing.f90 \
   ffv_pbc.f90 \
-  ffv_poisson.f90 \
-  ffv_poisson2.f90 \
   ffv_pscalar.f90 \
   ffv_utility.f90 \
   ffv_vbc_inner.f90 \
@@ -40,4 +37,4 @@ libFCORE_a_SOURCES = \
   ffv_velocity_cds.f90 \
   FB_util.f90
 
-EXTRA_DIST = Makefile_hand depend.inc unused.f90 ffv_poisson_cds.f90 
+EXTRA_DIST = Makefile_hand depend.inc unused.f90

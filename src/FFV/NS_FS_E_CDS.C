@@ -395,9 +395,9 @@ void FFV::NS_FS_E_CDS()
         SOR_2_SMA(ICp, d_p, d_b, rhs_nrm, res_init); // return x^{m+1} - x^m
         break;
         
-      case GMRES:
-        Fgmres(ICp, rhs_nrm, res_init); // return ?
-        break;
+      //case GMRES:
+      //  Fgmres(ICp, rhs_nrm, res_init); // return ?
+      //  break;
         
       default:
         printf("\tInvalid Linear Solver for Pressure\n");

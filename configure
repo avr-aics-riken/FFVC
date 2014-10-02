@@ -3005,7 +3005,7 @@ ac_config_headers="$ac_config_headers config.h"
 #
 # revision No.
 #
-FFVC_REVISION="20140928_1200"
+FFVC_REVISION="20141002_2200"
 
 
 
@@ -3355,7 +3355,7 @@ fi
 # MAKE_SUB_DIRS
 #
 
-MAKE_SUB_DIRS="src/IP src/FB src/F_CORE src/ASD src/FFV src src/Util_Combsph doc"
+MAKE_SUB_DIRS="src/IP src/FB src/F_CORE src/F_LS src/ASD src/FFV src src/Util_Combsph doc"
 
 
 
@@ -5880,7 +5880,7 @@ done
 
 
 
-ac_config_files="$ac_config_files Makefile doc/Makefile src/F_CORE/Makefile src/FB/Makefile src/IP/Makefile src/ASD/Makefile src/FFV/Makefile src/Makefile src/Util_Combsph/Makefile src/FFV/ffv_Version.h"
+ac_config_files="$ac_config_files Makefile doc/Makefile src/F_CORE/Makefile src/F_LS/Makefile src/FB/Makefile src/IP/Makefile src/ASD/Makefile src/FFV/Makefile src/Makefile src/Util_Combsph/Makefile src/FFV/ffv_Version.h"
 
 
 cat >confcache <<\_ACEOF
@@ -6617,6 +6617,7 @@ do
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
     "src/F_CORE/Makefile") CONFIG_FILES="$CONFIG_FILES src/F_CORE/Makefile" ;;
+    "src/F_LS/Makefile") CONFIG_FILES="$CONFIG_FILES src/F_LS/Makefile" ;;
     "src/FB/Makefile") CONFIG_FILES="$CONFIG_FILES src/FB/Makefile" ;;
     "src/IP/Makefile") CONFIG_FILES="$CONFIG_FILES src/IP/Makefile" ;;
     "src/ASD/Makefile") CONFIG_FILES="$CONFIG_FILES src/ASD/Makefile" ;;

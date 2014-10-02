@@ -58,7 +58,7 @@ flop = flop + dble(ix)*dble(jx)*dble(kx)*19.0d0 + 8.0d0
 !$OMP PRIVATE(dv, dd, d0, d1, d2, idx) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, c1, dh)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
 
 do k=1,kx
 do j=1,jx
@@ -83,7 +83,7 @@ end subroutine poi_rhs
 
 !> ********************************************************************
 !! @brief 残差計算
-!! @param [out] res  残差
+!! @param [out] res2 残差
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
 !! @param [in]  p    圧力
@@ -91,12 +91,12 @@ end subroutine poi_rhs
 !! @param [in]  bp   BCindex P
 !! @param [out] flop flop count
 !<
-subroutine poi_residual (res, sz, g, p, b, bp, flop)
+subroutine poi_residual (res2, sz, g, p, b, bp, flop)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, g, idx
 integer, dimension(3)                                     ::  sz
-double precision                                          ::  flop, res
+double precision                                          ::  flop, res, res2
 real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
 real                                                      ::  dd, ss, dp, d0, d1, d2
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
@@ -107,7 +107,7 @@ jx = sz(2)
 kx = sz(3)
 res = 0.0
 
-flop = flop + dble(ix)*dble(jx)*dble(kx)*29.0d0
+flop = flop + dble(ix)*dble(jx)*dble(kx)*21.0d0
 ! flop = flop + dble(ix)*dble(jx)*dble(kx)*39.0d0 ! DP
 
 !$OMP PARALLEL &
@@ -115,7 +115,7 @@ flop = flop + dble(ix)*dble(jx)*dble(kx)*29.0d0
 !$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t, dd, ss, dp, idx, d0, d1, d2) &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
 
 do k=1,kx
 do j=1,jx
@@ -131,8 +131,8 @@ ndag_b = real(ibits(idx, bc_ndag_B, 1))  ! b
 d0 = real(ibits(idx, bc_diag + 0, 1))
 d1 = real(ibits(idx, bc_diag + 1, 1))
 d2 = real(ibits(idx, bc_diag + 2, 1))
-dd = 1.0 / (d2*4.0 + d1*2.0 + d0)  ! diagonal
-! dd = 1.0 / real(ibits(idx, bc_diag, 3))  iff, K compiler is improved
+dd = d2*4.0 + d1*2.0 + d0  ! diagonal
+! dd = real(ibits(idx, bc_diag, 3))  iff, K compiler is improved
 
 ss =  ndag_e * p(i+1,j  ,k  ) &
     + ndag_w * p(i-1,j  ,k  ) &
@@ -140,13 +140,15 @@ ss =  ndag_e * p(i+1,j  ,k  ) &
     + ndag_s * p(i  ,j-1,k  ) &
     + ndag_t * p(i  ,j  ,k+1) &
     + ndag_b * p(i  ,j  ,k-1)
-dp = ( b(i,j,k) + dd*ss - p(i,j,k) ) * real(ibits(idx, Active, 1))
+dp = ( b(i,j,k) - (ss - p(i,j,k)*dd) ) * real(ibits(idx, Active, 1))
 res = res + dble(dp*dp)
 end do
 end do
 end do
 !$OMP END DO
 !$OMP END PARALLEL
+
+res2 = res
 
 return
 end subroutine poi_residual
@@ -195,7 +197,7 @@ end subroutine poi_residual
 !$OMP PRIVATE(idx, aa, d0, d1, d2, dd, pp, bb, ss, dp, de) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, omg)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
 
     do k=1,kx
     do j=1,jx
@@ -291,7 +293,7 @@ flop = flop + dble(ix)*dble(jx)*dble(kx) * 39.0d0 * 0.5d0
 !$OMP PRIVATE(idx, aa, d0, d1, d2, dd, pp, bb, ss, dp, de) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, color, ip, omg)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
 
 do k=1,kx
 do j=1,jx
@@ -391,7 +393,7 @@ end subroutine psor2sma_core
 !$OMP PRIVATE(dd, aa, pp, bb, ss, dp, de) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, color, ip, omg)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
 
   do k=1,kx
   do j=1,jx

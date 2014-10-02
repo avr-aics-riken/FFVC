@@ -356,6 +356,7 @@ noinst_libdir = ../lib
 libFFV_a_CXXFLAGS = \
   -I. \
   -I../F_CORE \
+  -I../F_LS \
   -I../IP \
   -I../FB \
   @CIO_CFLAGS@ \

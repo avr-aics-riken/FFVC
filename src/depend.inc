@@ -48,14 +48,14 @@ main.o: main.C FFV/ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h FFV/../FB/IntervalManager.h \
- FFV/../FB/Alloc.h FFV/../FB/FileIO.h FFV/../FB/FB_Ffunc.h FFV/../FB/ParseBC.h \
- FFV/../FB/Intrinsic.h FFV/../FB/ParseMat.h FFV/../FB/VoxInfo.h FFV/../FB/SetBC.h \
- FFV/../FB/History.h FFV/../FB/Monitor.h FFV/../FB/MonCompo.h \
- FFV/../FB/Sampling.h FFV/ffv_Version.h FFV/ffv_Define.h FFV/ffv_SetBC.h \
- FFV/../F_CORE/ffv_Ffunc.h FFV/../IP/IP_Jet.h FFV/../IP/IP_Define.h \
- FFV/../F_CORE/ffv_Ffunc.h FFV/ffv_TerminateCtrl.h FFV/../FB/Glyph.h \
- FFV/../IP/IP_Duct.h FFV/../IP/IP_PPLT2D.h FFV/../IP/IP_PMT.h FFV/../IP/IP_Rect.h \
- FFV/../IP/IP_Step.h FFV/../IP/IP_Cylinder.h FFV/../IP/IP_Sphere.h \
+ FFV/../FB/Alloc.h FFV/../FB/ParseBC.h FFV/../FB/Intrinsic.h FFV/../FB/ParseMat.h \
+ FFV/../FB/VoxInfo.h FFV/../FB/SetBC.h FFV/../FB/History.h FFV/../FB/Monitor.h \
+ FFV/../FB/MonCompo.h FFV/../FB/Sampling.h FFV/ffv_Version.h FFV/ffv_Define.h \
+ FFV/ffv_SetBC.h FFV/../F_CORE/ffv_Ffunc.h FFV/../IP/IP_Jet.h \
+ FFV/../IP/IP_Define.h FFV/../F_CORE/ffv_Ffunc.h FFV/../F_LS/ffv_LSfunc.h \
+ FFV/ffv_TerminateCtrl.h FFV/../FB/Glyph.h FFV/../IP/IP_Duct.h \
+ FFV/../IP/IP_PPLT2D.h FFV/../IP/IP_PMT.h FFV/../IP/IP_Rect.h FFV/../IP/IP_Step.h \
+ FFV/../IP/IP_Cylinder.h FFV/../IP/IP_Sphere.h \
  /usr/local/FFV/PMlib/include/PerfMonitor.h \
  /usr/local/FFV/PMlib/include/PerfWatch.h \
  /usr/local/FFV/PMlib/include/pmlib_papi.h \

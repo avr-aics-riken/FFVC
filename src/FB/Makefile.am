@@ -66,7 +66,6 @@ libFB_a_SOURCES = \
   SetBC.h \
   VoxInfo.C \
   VoxInfo.h \
-  dbwrite.f90 \
   ffv_f_params.h \
   fill_bid.h \
   mydebug.h \

@@ -232,14 +232,11 @@ int FFV::Point_SOR(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double b_
   double flop_count=0.0;          /// 浮動小数点演算数
   REAL_TYPE omg = IC->getOmega(); /// 加速係数
 	double var[3];                  /// 誤差、残差、解
-  double x_l2;                    /// 解ベクトルのL2ノルム
   int lc=0;                       /// ループカウント
   
   // x     圧力 p^{n+1}
 	// b     RHS vector
 	// d_bcp ビットフラグ
-  
-  TIMING_start(tm_poi_itr_sct_2); // >>> Poisson Iteration section 2
   
   for (lc=0; lc<IC->getMaxIteration(); lc++)
   {
@@ -265,71 +262,10 @@ int FFV::Point_SOR(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double b_
     Sync_Scalar(IC, x, 1);
     
     
-    // 残差と誤差の集約
-    if ( numProc > 1 )
-    {
-      TIMING_start(tm_poi_res_comm);
-      double tmp[3];
-      tmp[0] = var[0];
-      tmp[1] = var[1];
-      tmp[2] = var[2];
-      if ( paraMngr->Allreduce(tmp, var, 3, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-      TIMING_stop(tm_poi_res_comm, 6.0*numProc*sizeof(double) ); // 双方向 x ノード数　x 3
-    }
-    
-    var[0] = sqrt(var[0]); // L2 of (x^{(m+1)} - x^{(m)})
-    var[1] = sqrt(var[1]); // L2 of residual
-    var[2] = sqrt(var[2]); // L2 of solution vector x^{(m)}
-    x_l2 = var[2];
-    
-    
-    // 残差の保存
-    double ErrEPS = IC->getErrCriterion();
-    
-    switch ( IC->getResType() )
-    {
-      case nrm_r_b:
-        IC->setResidual( (b_l2<ErrEPS) ? var[1]/ErrEPS : var[1]/b_l2 );
-        break;
-        
-      case nrm_r_x:
-        IC->setResidual( (x_l2<ErrEPS) ? var[1]/ErrEPS : var[1]/x_l2 );
-        break;
-        
-      case nrm_r_r0:
-        IC->setResidual( (r0_l2<ErrEPS) ? var[1]/ErrEPS : var[1]/r0_l2 );
-        break;
-        
-      default:
-        printf("\tInvalid Residual Norm for Pressure\n");
-        Exit(0);
-        break;
-    }
-    
-    
-    // 誤差の保存
-    switch ( IC->getErrType() )
-    {
-      case nrm_dx:
-        IC->setError( var[0] );
-        break;
-        
-      case nrm_dx_x:
-        IC->setError( (x_l2<ErrEPS) ? var[0]/ErrEPS : var[0]/x_l2 );
-        break;
-        
-      default:
-        printf("\tInvalid Error Norm for Pressure\n");
-        Exit(0);
-        break;
-    }
-
-    // 収束判定　性能測定モードでないときのみ収束判定を行う　誤差または残差が収束したら抜ける
-    if ( (C.Hide.PM_Test == OFF) && (IC->isResConverged() || IC->isErrConverged()) ) break;
+    // 収束判定
+    if ( Fcheck(IC, var, b_l2, r0_l2) == true ) break;
     
   }
-  
-  TIMING_stop(tm_poi_itr_sct_2, 0.0); // <<< Poisson Iteration subsection 2
   
   return lc;
 }
@@ -370,15 +306,12 @@ int FFV::SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double b_
   double flop_count=0.0;          /// 浮動小数点演算数
   REAL_TYPE omg = IC->getOmega(); /// 加速係数
   double var[3];                  /// 誤差、残差、解
-  double x_l2;                    /// 解ベクトルのL2ノルム
   int lc=0;                       /// ループカウント
   
   // x     圧力 p^{n+1}
   // b     RHS vector
 	// d_bcp ビットフラグ
 
-  
-  TIMING_start(tm_poi_itr_sct_2); // >>> Poisson Iteration section 2
   
   for (lc=0; lc<IC->getMaxIteration(); lc++)
   {
@@ -455,72 +388,10 @@ int FFV::SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double b_
     }
     
     
-    // 残差と誤差の集約
-    if ( numProc > 1 )
-    {
-      TIMING_start(tm_poi_res_comm);
-      double tmp[3];
-      tmp[0] = var[0];
-      tmp[1] = var[1];
-      tmp[2] = var[2];
-      if ( paraMngr->Allreduce(tmp, var, 3, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-      TIMING_stop(tm_poi_res_comm, 6.0*numProc*sizeof(double) ); // 双方向 x ノード数　x 3
-    }
-    
-    var[0] = sqrt(var[0]); // L2 of (x^{(m+1)} - x^{(m)})
-    var[1] = sqrt(var[1]); // L2 of residual
-    var[2] = sqrt(var[2]); // L2 of solution vector x^{(m)}
-    x_l2 = var[2];
-    
-    
-    
-    // 残差の保存
-    double ErrEPS = IC->getErrCriterion();
-    
-    switch ( IC->getResType() )
-    {
-        case nrm_r_b:
-        IC->setResidual( (b_l2<ErrEPS) ? var[1]/ErrEPS : var[1]/b_l2 );
-        break;
-        
-        case nrm_r_x:
-        IC->setResidual( (x_l2<ErrEPS) ? var[1]/ErrEPS : var[1]/x_l2 );
-        break;
-        
-        case nrm_r_r0:
-        IC->setResidual( (r0_l2<ErrEPS) ? var[1]/ErrEPS : var[1]/r0_l2 );
-        break;
-        
-        default:
-        printf("\tInvalid Residual Norm for Pressure\n");
-        Exit(0);
-        break;
-    }
-    
-    
-    // 誤差の保存
-    switch ( IC->getErrType() )
-    {
-        case nrm_dx:
-        IC->setError( var[0] );
-        break;
-        
-        case nrm_dx_x:
-        IC->setError( (x_l2<ErrEPS) ? var[0]/ErrEPS : var[0]/x_l2 );
-        break;
-        
-        default:
-        printf("\tInvalid Error Norm for Pressure\n");
-        Exit(0);
-        break;
-    }
-    
-    // 収束判定　性能測定モードでないときのみ収束判定を行う　誤差または残差が収束したら抜ける
-    if ( (C.Hide.PM_Test == OFF) && (IC->isResConverged() || IC->isErrConverged()) ) break;
+    // 収束判定 varは自乗量
+    if ( Fcheck(IC, var, b_l2, r0_l2) == true ) break;
     
   }
-  
-  TIMING_stop(tm_poi_itr_sct_2, 0.0); // <<< Poisson Iteration subsection 2
   
   return lc;
 }
@@ -718,7 +589,172 @@ void FFV::wait_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request*
 }
 
 
+// #################################################################
+// BiCBSTAB
+int FFV::BiCGstab(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2)
+{
+  double flop_count=0.0;  /// 浮動小数点演算数
+  int lc=0;               /// ループカウント
+  double var[3];          /// 誤差, 残差, 解ベクトルのL2ノルム
+  double rho    = 1.0;    /// \rho
+  
+  
+  TIMING_start(tm_blas_calcr);
+  flop_count=0.0;
+  if ( IC->getNaive()==OFF)
+  {
+    blas_calcr_(d_pcg_r, x, b, d_bcp, size, &guide, &flop_count); // r = b - Ax
+  }
+  else
+  {
+    blas_calcr_naive_(d_pcg_r, x, b, d_bcp, size, &guide, d_pni, &flop_count); // r = b - Ax
+  }
+  
+  TIMING_stop(tm_blas_calcr, flop_count);
+  
+  // rho = (r, r)
+  rho = Fdot1(d_pcg_r);
+  
+  // 既に収束
+  if( fabs(rho) < FLT_MIN )
+  {
+    return 0;
+  }
+  
+  Sync_Scalar(IC, d_pcg_r, 1);
+  
+  
+  // 初期値
+  TIMING_start(tm_blas_copy);
+  blas_copy_(d_pcg_r0, d_pcg_r, size, &guide); // r0 = r
+  TIMING_stop(tm_blas_copy, 0.0, 2);
+  
+  blas_clear_(d_pcg_p , size, &guide); // p=0
+  blas_clear_(d_pcg_q_, size, &guide); // q=0
+  
+  rho    = 1.0;
+  double alpha  = 1.0;
+  double omega  = 1.0;
+  
+  for (lc=0; lc<IC->getMaxIteration(); lc++)
+  {
+    double rho_0 = rho;
+    
+    // rho = (r0, r)
+    rho = Fdot2(d_pcg_r0, d_pcg_r);
+    
+    double beta = (rho / rho_0) * (alpha / omega);
+    
+    
+    // p =  r + beta * ( p - omega * q )
+    TIMING_start(tm_blas_bicg_update_p);
+    flop_count=0.0;
+    bicg_update_p_(d_pcg_p, d_pcg_r, d_pcg_q_, &beta, &omega, size, &guide, &flop_count);
+    TIMING_stop(tm_blas_bicg_update_p, flop_count);
+    
+    
+    Sync_Scalar(IC, d_pcg_p, 1);
+    
+    
+    // q = A * p
+    TIMING_start(tm_blas_ax);
+    flop_count=0.0;
+    if ( IC->getNaive()==OFF)
+    {
+      blas_calcax_(d_pcg_q_, d_pcg_p, d_bcp, size, &guide, &flop_count);
+    }
+    else
+    {
+      blas_calcax_naive_(d_pcg_q_, d_pcg_p, d_bcp, size, &guide, d_pni, &flop_count);
+    }
+    TIMING_stop(tm_blas_ax, flop_count);
+    
+    
+    // alpha = rho / (r0, q)
+    alpha = rho / Fdot2(d_pcg_r0, d_pcg_q_);
+    
+    
+    // s = r - alpha * q
+    TIMING_start(tm_blas_triad);
+    double tmp = -alpha;
+    flop_count=0.0;
+    blas_triad_(d_pcg_s_, d_pcg_r, d_pcg_q_, &tmp, size, &guide, &flop_count);
+    TIMING_stop(tm_blas_triad, flop_count);
+    
+    
+    Sync_Scalar(IC, d_pcg_s_, 1);
+    
+    
+    // t = A * s
+    TIMING_start(tm_blas_ax);
+    flop_count=0.0;
+    if ( IC->getNaive()==OFF)
+    {
+      blas_calcax_(d_pcg_t_, d_pcg_s_, d_bcp, size, &guide, &flop_count);
+    }
+    else
+    {
+      blas_calcax_naive_(d_pcg_t_, d_pcg_s_, d_bcp, size, &guide, d_pni, &flop_count);
+    }
+    TIMING_stop(tm_blas_ax, flop_count);
+    
+    
+    // omega = (t, s) / (t, t)
+    double t_s = Fdot2(d_pcg_t_, d_pcg_s_);
+    
+    double t_t = Fdot1(d_pcg_t_);
+    
+    if( fabs(t_t) < FLT_MIN )
+    {
+      lc = -1;
+      break;
+    }
+    
+    omega = t_s / t_t;
+    
+    
+    // x = x + alpha * p + omega * s
+    double x_l2 = 0.0;
+    double delta_x = 0.0;
+    
+    TIMING_start(tm_blas_bicg_update_x);
+    flop_count=0.0;
+    bicg_update_x_(x, d_pcg_p, d_pcg_s_, d_bcp, &alpha, &omega, &x_l2, &delta_x, size, &guide, &flop_count);
+    TIMING_stop(tm_blas_bicg_update_x, flop_count);
+    
+    var[0] = delta_x;
+    var[2] = x_l2;
+    
+    
+    Sync_Scalar(IC, x, 1);
+    
+    
+    // 境界条件
+    TIMING_start(tm_poi_BC);
+    BC.OuterPBC(x, ensPeriodic);
+    if ( C.EnsCompo.periodic == ON ) BC.InnerPBCperiodic(x, d_bcd);
+    TIMING_stop(tm_poi_BC, 0.0);
+    
+    
+    // Residual r = s - omega * t
+    TIMING_start(tm_blas_triad);
+    tmp = -omega;
+    flop_count=0.0;
+    blas_triad_(d_pcg_r, d_pcg_s_, d_pcg_t_, &tmp, size, &guide, &flop_count);
+    TIMING_stop(tm_blas_triad, flop_count);
+    
+    var[1] = Fdot1(d_pcg_r);
+    
+    
+    // 収束判定
+    if ( Fcheck(IC, var, b_l2, r0_l2) == true ) break;
+  }
+  
+  return lc;
+}
 
+
+/*
 // #################################################################
 // Flexible Gmres(m)
 void FFV::Fgmres(IterationCtl* IC, const double rhs_nrm, const double r0)
@@ -982,13 +1018,16 @@ jump_4:
   TIMING_stop(tm_gmres_sor_sct, 0.0);
   // <<< Poisson Source section
 
-}
+}*/
 
+/*
 // #################################################################
 // RBGS
 int FFV::Frbgs(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
 {
   REAL_TYPE omg = IC->getOmega();
+  double var[2];          /// 誤差と残差のL2ノルム
+  
   int lc=0;                      /// ループカウント
   for (lc=0; lc<IC->getMaxIteration(); lc++)
   {
@@ -1004,28 +1043,34 @@ int FFV::Frbgs(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nr
     }
     
     REAL_TYPE res = sqrt(rr);
+    var[0] = 0.0; // error
+    var[1] = (double)res;
+    double x_l2 = 0.0;
     
-		if ( Fcheck(IC, res, rhs_nrm, r0) == true ) break;
+		if ( Fcheck(IC, var, rhs_nrm, r0, x_l2) == true ) break;
     
 	}
 	Sync_Scalar(IC, x, 1);
   
 	return lc;
-}
+}*/
 
+/*
 // #################################################################
 // PCG
 int FFV::Fpcg(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
 {
 	REAL_TYPE res = 0.0;
   REAL_TYPE omg = IC->getOmega();
+  double var[2];          /// 誤差と残差のL2ノルム
+  double flop_count=0.0;  /// 浮動小数点演算数
   
 	blas_clear_(d_pcg_r , size, &guide);
 	blas_clear_(d_pcg_p , size, &guide);
 	blas_clear_(d_pcg_q , size, &guide);
 	blas_clear_(d_pcg_z , size, &guide);
   
-	blas_calcr_(d_pcg_r, x, b, d_bcp, size, &guide);
+	blas_calcr_(d_pcg_r, x, b, d_bcp, size, &guide, &flop_count);
 	Sync_Scalar(IC, d_pcg_r, 1);
   
 	REAL_TYPE rr0 = 1.0;
@@ -1058,7 +1103,7 @@ int FFV::Fpcg(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm
 		}
 		Sync_Scalar(IC, d_pcg_p, 1);
     
-		blas_calcax_(d_pcg_q, d_pcg_p, d_bcp, size, &guide);
+		blas_calcax_(d_pcg_q, d_pcg_p, d_bcp, size, &guide, &flop_count);
     
 		REAL_TYPE qp = 0.0;
 		Fdot(&qp, d_pcg_q, d_pcg_p);
@@ -1074,8 +1119,11 @@ int FFV::Fpcg(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm
 		Fdot(&rr, d_pcg_r, d_pcg_r);
     
     res = sqrt(rr);
+    var[0] = 0.0; // error
+    var[1] = (double)res;
+    double x_l2 = 0.0;
     
-		if( Fcheck(IC, res, rhs_nrm, r0) == true ) break;
+		if( Fcheck(IC, var, rhs_nrm, r0, x_l2) == true ) break;
     
 		rr0 = rr1;
 	}
@@ -1090,14 +1138,17 @@ int FFV::Fpcg(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm
 	Sync_Scalar(IC, x, 1);
   
 	return lc;
-}
+}*/
 
+/*
 // #################################################################
 // PBiCBSTAB
 int FFV::Fpbicgstab(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0)
 {
+  double flop_count=0.0;          /// 浮動小数点演算数
 	REAL_TYPE res = 0.0;
   REAL_TYPE omg = IC->getOmega();
+  double var[2];          /// 誤差と残差のL2ノルム
   
 	blas_clear_(d_pcg_r , size, &guide);
 	blas_clear_(d_pcg_p , size, &guide);
@@ -1109,21 +1160,20 @@ int FFV::Fpbicgstab(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double r
 	blas_clear_(d_pcg_s_, size, &guide);
 	blas_clear_(d_pcg_t_, size, &guide);
   
-	blas_calcr_(d_pcg_r, x, b, d_bcp, size, &guide);
+	blas_calcr_(d_pcg_r, x, b, d_bcp, size, &guide, &flop_count);
 	Sync_Scalar(IC, d_pcg_r, 1);
   
 	blas_copy_(d_pcg_r0, d_pcg_r, size, &guide);
   
-	REAL_TYPE rr0 = 1.0;
-	REAL_TYPE alpha = 0.0;
-	REAL_TYPE gamma  = 1.0;
-	REAL_TYPE gamman = -gamma;
+	double rr0 = 1.0;
+	double alpha = 0.0;
+	double gamma  = 1.0;
+	double gamman = -gamma;
   int lc=0;                      /// ループカウント
   
   for (lc=0; lc<IC->getMaxIteration(); lc++)
   {
-		REAL_TYPE rr1 = 0.0;
-		Fdot(&rr1, d_pcg_r, d_pcg_r0);
+		double rr1 = Fdot2(d_pcg_r, d_pcg_r0);
     
 		if( fabs(rr1) < FLT_MIN )
     {
@@ -1138,8 +1188,8 @@ int FFV::Fpbicgstab(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double r
 		}
     else
     {
-			REAL_TYPE beta = rr1/rr0*alpha/gamma;
-			blas_axpy_(d_pcg_p, d_pcg_q_, &gamman, size, &guide);
+			double beta = rr1/rr0*alpha/gamma;
+			blas_axpy_(d_pcg_p, d_pcg_q_, (REAL_TYPE*)gamman, size, &guide);
 			blas_xpay_(d_pcg_p, d_pcg_r , &beta  , size, &guide);
 		}
 		Sync_Scalar(IC, d_pcg_p, 1);
@@ -1147,20 +1197,19 @@ int FFV::Fpbicgstab(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double r
 		blas_clear_(d_pcg_p_, size, &guide);
 		Fpreconditioner(IC, d_pcg_p_, d_pcg_p);
     
-		blas_calcax_(d_pcg_q_, d_pcg_p_, d_bcp, size, &guide);
+		blas_calcax_(d_pcg_q_, d_pcg_p_, d_bcp, size, &guide, &flop_count);
     
-		REAL_TYPE q_r0 = 0.0;
-		Fdot(&q_r0, d_pcg_q_, d_pcg_r0);
+		double q_r0 = Fdot2(d_pcg_q_, d_pcg_r0);
     
 		REAL_TYPE alpha  = rr1/q_r0;
 		REAL_TYPE alphan = -alpha;
-		blas_axpyz_(d_pcg_s, d_pcg_q_, d_pcg_r, &alphan, size, &guide);
+		blas_triad_(d_pcg_s, d_pcg_q_, d_pcg_r, &alphan, size, &guide, &flop_count);
 		Sync_Scalar(IC, d_pcg_s, 1);
     
 		blas_clear_(d_pcg_s_, size, &guide);
 		Fpreconditioner(IC, d_pcg_s_, d_pcg_s);
     
-		blas_calcax_(d_pcg_t_, d_pcg_s_, d_bcp, size, &guide);
+		blas_calcax_(d_pcg_t_, d_pcg_s_, d_bcp, size, &guide, &flop_count);
     
 		REAL_TYPE t_s = 0.0;
 		Fdot(&t_s, d_pcg_t_, d_pcg_s);
@@ -1171,15 +1220,19 @@ int FFV::Fpbicgstab(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double r
 		gamma  = t_s/t_t_;
 		gamman = -gamma;
     
-		blas_axpbypz_(x      , d_pcg_p_, d_pcg_s_, &alpha , &gamma, size, &guide);
-		blas_axpyz_  (d_pcg_r, d_pcg_t_, d_pcg_s , &gamman, size, &guide);
+		blas_axpbypz_(x      , d_pcg_p_, d_pcg_s_, &alpha , &gamma, size, &guide, &flop_count);
+		blas_axpyz_  (d_pcg_r, d_pcg_t_, d_pcg_s , &gamman, size, &guide, &flop_count);
     
 		REAL_TYPE rr = 0.0;
 		Fdot(&rr, d_pcg_r, d_pcg_r);
     
     res = sqrt(rr);
     
-		if ( Fcheck(IC, res, rhs_nrm, r0) == true ) break;
+    double x_l2=0.0;
+    var[0] = 0.0; // 誤差ダミー
+    var[1] = (double)res;
+    
+		if ( Fcheck(IC, var, rhs_nrm, r0, x_l2) == true ) break;
     
 		rr0 = rr1;
 	}
@@ -1193,18 +1246,41 @@ int FFV::Fpbicgstab(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double r
 	Sync_Scalar(IC, x, 1);
   
 	return lc;
-}
+}*/
 
 // #################################################################
 // Check
-bool FFV::Fcheck(IterationCtl* IC, REAL_TYPE res, const double b_l2, const double r0_l2)
+bool FFV::Fcheck(IterationCtl* IC, double* var, const double b_l2, const double r0_l2)
 {
+  
+  // 自乗量の集約
+  if ( numProc > 1 )
+  {
+    TIMING_start(tm_poi_res_comm);
+    double tmp[3];
+    tmp[0] = var[0];
+    tmp[1] = var[1];
+    tmp[2] = var[2];
+    if ( paraMngr->Allreduce(tmp, var, 3, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    TIMING_stop(tm_poi_res_comm, 6.0*numProc*sizeof(double) ); // 双方向 x ノード数　x 3
+  }
+  
+  // L2 ノルム
+  var[0] = sqrt(var[0]); // L2 of (x^{(m+1)} - x^{(m)})
+  var[1] = sqrt(var[1]); // L2 of residual
+  var[2] = sqrt(var[2]); // L2 of solution vector x^{(m)}
+  
+  double err = var[0];
+  double res = var[1];
+  double x_l2= var[2];  /// 解ベクトルのL2ノルム
+  
   double ErrEPS = IC->getErrCriterion();
   
+  // 残差の保存
 	switch ( IC->getResType() )
   {
     case nrm_r_x:
-      IC->setResidual( res );
+      IC->setResidual( (x_l2<ErrEPS) ? res/ErrEPS : res/x_l2 );
       break;
       
 		case nrm_r_b:
@@ -1221,6 +1297,24 @@ bool FFV::Fcheck(IterationCtl* IC, REAL_TYPE res, const double b_l2, const doubl
 			break;
 	}
   
+  // 誤差の保存
+  switch ( IC->getErrType() )
+  {
+    case nrm_dx:
+      IC->setError( err );
+      break;
+      
+    case nrm_dx_x:
+      IC->setError( (x_l2<ErrEPS) ? err/ErrEPS : err/x_l2 );
+      break;
+      
+    default:
+      printf("\tInvalid Error Norm for Pressure\n");
+      Exit(0);
+      break;
+  }
+  
+  // 収束判定　性能測定モードでないときのみ収束判定を行う　誤差または残差が収束したら抜ける
 	if ( (C.Hide.PM_Test == OFF) && (IC->isResConverged() || IC->isErrConverged()) )
   {
 		return true;
@@ -1298,14 +1392,47 @@ void FFV::Fsmoother(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE omg)
 }
 
 // #################################################################
-// Dot
-void FFV::Fdot(REAL_TYPE* xy, REAL_TYPE* x, REAL_TYPE* y)
+// Dot of 1 var
+double FFV::Fdot1(REAL_TYPE* x)
 {
-	blas_dot_(xy, x, y, size, &guide);
+  double flop_count=0.0;          /// 浮動小数点演算数
+  double xy = 0.0;
+  
+  TIMING_start(tm_blas_dot1);
+  flop_count=0.0;
+	blas_dot1_(&xy, x, size, &guide, &flop_count);
+  TIMING_stop(tm_blas_dot1, flop_count);
   
 	if ( numProc > 1 )
   {
-		REAL_TYPE xy_tmp = *xy;
-		if  ( paraMngr->Allreduce(&xy_tmp, xy, 1, MPI_SUM) != CPM_SUCCESS )Exit(0);
+    TIMING_start(tm_blas_comm);
+		double xy_tmp = xy;
+		if  ( paraMngr->Allreduce(&xy_tmp, &xy, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    TIMING_stop(tm_blas_comm, 2.0*numProc*sizeof(double) );
 	}
+  
+  return xy;
+}
+
+// #################################################################
+// Dot of 2 vars
+double FFV::Fdot2(REAL_TYPE* x, REAL_TYPE* y)
+{
+  double flop_count=0.0;          /// 浮動小数点演算数
+  double xy = 0.0;
+  
+  TIMING_start(tm_blas_dot2);
+  flop_count=0.0;
+  blas_dot2_(&xy, x, y, size, &guide, &flop_count);
+  TIMING_stop(tm_blas_dot2, flop_count);
+  
+  if ( numProc > 1 )
+  {
+    TIMING_start(tm_blas_comm);
+    double xy_tmp = xy;
+    if  ( paraMngr->Allreduce(&xy_tmp, &xy, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    TIMING_stop(tm_blas_comm, 2.0*numProc*sizeof(double) );
+  }
+  
+  return xy;
 }

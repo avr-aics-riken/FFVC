@@ -88,7 +88,7 @@
 #define RBGS          5
 #define PCG           6
 #define PBiCGSTAB     7
-
+#define BiCGSTAB      8
 
 // KindOfSolver
 #define FLOW_ONLY               0

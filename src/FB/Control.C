@@ -2811,6 +2811,17 @@ void Control::printLS(FILE* fp, const IterationCtl* IC)
       fprintf(fp,"\t       Linear Solver          :   PBiCGSTAB\n");
       break;
       
+    case BiCGSTAB:
+      if (IC->getNaive()==OFF)
+      {
+        fprintf(fp,"\t       Linear Solver          :   BiCGstab\n");
+      }
+      else
+      {
+        fprintf(fp,"\t       Linear Solver          :   BiCGstab (Naive)\n");
+      }
+      break;
+      
     default:
       stamped_printf("Error: Linear Solver section\n");
       Exit(0);

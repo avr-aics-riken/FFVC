@@ -55,6 +55,7 @@
 #include "ffv_Define.h"
 #include "ffv_SetBC.h"
 #include "../F_CORE/ffv_Ffunc.h"
+#include "../F_LS/ffv_LSfunc.h"
 #include "ffv_TerminateCtrl.h"
 #include "../FB/Glyph.h"
 
@@ -228,7 +229,7 @@ private:
   
 #define FREQ_OF_RESTART 15 // リスタート周期
   
-  // PCG & PBiCGSTAB
+  // PCG & PBiCGSTAB & BiCGstab
 	REAL_TYPE *d_pcg_r;
 	REAL_TYPE *d_pcg_p;
   
@@ -236,13 +237,15 @@ private:
 	REAL_TYPE *d_pcg_q;
 	REAL_TYPE *d_pcg_z;
   
-	// PBiCGSTAB
+	// PBiCGSTAB & BiCGstab
 	REAL_TYPE *d_pcg_r0;
-	REAL_TYPE *d_pcg_p_;
 	REAL_TYPE *d_pcg_q_;
-	REAL_TYPE *d_pcg_s;
 	REAL_TYPE *d_pcg_s_;
 	REAL_TYPE *d_pcg_t_;
+  
+  // PBiCGSTAB
+  REAL_TYPE *d_pcg_s;
+  REAL_TYPE *d_pcg_p_;
   
   REAL_TYPE** component_array; ///< コンポーネントワーク配列のアドレス管理
   
@@ -452,6 +455,10 @@ private:
   
   // PCG法に用いる配列のアロケーション
   void allocArray_PCG(double &total);
+  
+  
+  // BiCGSTAB法に用いる配列のアロケーション
+  void allocArray_BiCGstab(double &total);
   
   
   // PBiCGSTAB法に用いる配列のアロケーション
@@ -828,7 +835,7 @@ private:
    * @retval 反復数
    * @param [in]     IC     IterationCtlクラス
    * @param [in,out] x      解ベクトル
-   * @param [in]     b      RHS  vector
+   * @param [in]     b      RHS vector
    * @param [in]     b_l2   L2 norm of b vector
    * @param [in]     r0_l2  初期残差ベクトルのL2ノルム
    */
@@ -848,11 +855,11 @@ private:
    * @retval 反復数
    * @param [in]     IC      IterationCtlクラス
    * @param [in,out] x       解ベクトル
-   * @param [in]     b  RHS  vector
-   * @param [in]     rhs_nrm RHS vector
-   * @param [in]     r0      初期残差ベクトル
+   * @param [in]     b       RHS vector
+   * @param [in]     b_l2    L2 norm of b vector
+   * @param [in]     r0_l2   初期残差ベクトルのL2ノルム
    */
-  int SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
+  int SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2);
   
   
   /**
@@ -866,12 +873,24 @@ private:
   
   
   /**
+   * @brief  BiCGstab
+   * @retval 反復数
+   * @param [in]     IC      IterationCtlクラス
+   * @param [in,out] x       解ベクトル
+   * @param [in]     b       RHS vector
+   * @param [in]     b_l2    L2 norm of b vector
+   * @param [in]     r0_l2   初期残差ベクトルのL2ノルム
+   */
+  int BiCGstab(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2);
+  
+  
+  /**
    * @brief FGMRES
    * @param [in]     IC      IterationCtlクラス
    * @param [in]     rhs_nrm RHS vectorのL2ノルム
    * @param [in]     r0      初期残差ベクトル
    */
-  void Fgmres(IterationCtl* IC, const double rhs_nrm, const double r0);
+  //void Fgmres(IterationCtl* IC, const double rhs_nrm, const double r0);
   
 
   /**
@@ -883,7 +902,7 @@ private:
    * @param [in]     rhs_nrm RHS vector
    * @param [in]     r0      初期残差ベクトル
    */
-  int Frbgs(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
+  //int Frbgs(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
   
   /**
    * @brief  FPCG
@@ -894,7 +913,7 @@ private:
    * @param [in]     rhs_nrm RHS vector
    * @param [in]     r0      初期残差ベクトル
    */
-  int Fpcg(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
+  //int Fpcg(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
   
   /**
    * @brief  FPBiCGSTAB
@@ -905,15 +924,17 @@ private:
    * @param [in]     rhs_nrm RHS vector
    * @param [in]     r0      初期残差ベクトル
    */
-  int Fpbicgstab(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
+  //int Fpbicgstab(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
   
   /**
    * @brief  Fcheck
-   * @param [in,out] x       解ベクトル
-   * @param [in]     b  RHS  vector
-   * @param [in]       RHS  vector
+   * @retval 収束したら true
+   * @param [in]     IC  IterationCtlクラス
+   * @param [in]    var  誤差、残差、解ベクトルのL2ノルム
+   * @param [in]   b_l2  右辺ベクトルのL2ノルム
+   * @param [in]  r0_l2  初期残差ベクトルのL2ノルム
    */
-	bool Fcheck(IterationCtl* IC, REAL_TYPE res, const double rhs_nrm, const double r0);
+	bool Fcheck(IterationCtl* IC, double* var, const double b_l2, const double r0_l2);
   
   /**
    * @brief  Fpreconditioner
@@ -933,12 +954,19 @@ private:
 	void Fsmoother(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE omg);
   
   /**
-   * @brief  Fdot
-   * @param [in,out] x       解ベクトル
-   * @param [in]     b  RHS  vector
-   * @param [in]       RHS  vector
+   * @brief Fdot1
+   * @retval  内積値
+   * @param [in]   x   vector1
    */
-	void Fdot(REAL_TYPE* xy, REAL_TYPE* x, REAL_TYPE* y);
+	double Fdot1(REAL_TYPE* x);
+  
+  /**
+   * @brief Fdot2
+   * @retval  内積値
+   * @param [in]   x   vector1
+   * @param [in]   y   vector2
+   */
+  double Fdot2(REAL_TYPE* x, REAL_TYPE* y);
   
   
   

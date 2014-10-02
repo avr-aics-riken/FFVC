@@ -40,6 +40,7 @@ doxygen/        Doxygen files
 example/        Example files
 src/		 Source files
    F_CORE       f90 subroutines in ffvc
+   F_LS         f90 subroutines of linear solvers
    F_VOF        VOF routines
    FB           flow base class
    FFV          ffvc class

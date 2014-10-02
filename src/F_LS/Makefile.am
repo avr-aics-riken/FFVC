@@ -13,46 +13,22 @@
 #
 ###################################################################################
 
-noinst_lib_LIBRARIES = libFFV.a
+noinst_lib_LIBRARIES = libFLS.a
 
 noinst_libdir = ../lib
 
-
-libFFV_a_CXXFLAGS = \
+libFLS_a_FCFLAGS = \
   -I. \
-  -I../F_CORE \
-  -I../F_LS \
-  -I../IP \
   -I../FB \
-  @CIO_CFLAGS@ \
   @CPM_CFLAGS@ \
-  @CUT_CFLAGS@ \
-  @PL_CFLAGS@ \
-  @PM_CFLAGS@ \
-  @TP_CFLAGS@ \
   @MPICH_CFLAGS@ \
-  @REALOPT@
+  @FREALOPT@ 
 
-libFFV_a_SOURCES = \
-  NS_FS_E_Binary.C \
-  NS_FS_E_CDS.C \
-  PS_Binary.C \
-  ffv.C \
-  ffv.h \
-  ffv_Alloc.C \
-  ffv_Define.h \
-  ffv_Filter.C \
-  ffv_Geometry.C \
-  ffv_Heat.C \
-  ffv_Initialize.C \
-  ffv_LS.C \
-  ffv_Loop.C \
-  ffv_Post.C \
-  ffv_Restart.C \
-  ffv_SetBC.C \
-  ffv_SetBC.h \
-  ffv_TerminateCtrl.C \
-  ffv_TerminateCtrl.h \
-  ffv_Version.h
+libFLS_a_SOURCES = \
+  ffv_LSfunc.h \
+  ffv_blas.f90 \
+  ffv_bicg.f90 \
+  ffv_poisson.f90 \
+  ffv_poisson2.f90
 
-EXTRA_DIST = Makefile_hand depend.inc
+EXTRA_DIST = Makefile_hand depend.inc ffv_poisson_cds.f90

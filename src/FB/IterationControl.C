@@ -76,6 +76,7 @@ bool IterationCtl::getInherentPara(TextParser* tpCntl, const string base)
       break;
       
       case PBiCGSTAB:
+      case BiCGSTAB:
       getParaPBiCGSTAB(tpCntl, base);
       break;
       
@@ -141,7 +142,7 @@ void IterationCtl::getParaPCG(TextParser* tpCntl, const string base)
  */
 void IterationCtl::getParaPBiCGSTAB(TextParser* tpCntl, const string base)
 {
-  ;
+  getParaSOR2(tpCntl, base);
 }
 
 
@@ -271,6 +272,7 @@ bool IterationCtl::setLS(const string str)
   else if( !strcasecmp(str.c_str(), "RBGS") )         LinearSolver = RBGS;
   else if( !strcasecmp(str.c_str(), "PCG") )          LinearSolver = PCG;
   else if( !strcasecmp(str.c_str(), "PBiCGSTAB") )    LinearSolver = PBiCGSTAB;
+  else if( !strcasecmp(str.c_str(), "BiCGstab") )     LinearSolver = BiCGSTAB;
   else
   {
     return false;

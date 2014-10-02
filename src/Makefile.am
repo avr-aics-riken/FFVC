@@ -19,6 +19,7 @@ ffvc_CXXFLAGS = \
   -I. \
   -I./FFV \
   -I./F_CORE \
+  -I./F_LS \
   -I./ASD \
   -I./IP \
   -I./FB \
@@ -36,6 +37,7 @@ ffvc_SOURCES = main.C
 ffvc_LDADD = \
   -L./FFV -lFFV \
   -L./F_CORE -lFCORE \
+  -L./F_LS -lFLS \
   -L./ASD -lASD \
   -L./IP -lIP \
   -L./FB -lFB \
