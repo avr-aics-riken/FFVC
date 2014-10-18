@@ -46,8 +46,8 @@ void FFV::NS_FS_E_Binary()
   REAL_TYPE* m_rcv = new REAL_TYPE [(C.NoCompo+1)*2];
 
   
-  IterationCtl* ICp = &IC[ic_prs1];  /// 圧力のPoisson反復
-  IterationCtl* ICv = &IC[ic_vel1];  /// 粘性項のCrank-Nicolson反復
+  LinearSolver* LSp = &LS[ic_prs1];  /// 圧力のPoisson反復
+  LinearSolver* LSv = &LS[ic_vel1];  /// 粘性項のCrank-Nicolson反復
 
   // point Data
   // d_v   セルセンタ速度 v^n -> v^{n+1}
@@ -88,7 +88,7 @@ void FFV::NS_FS_E_Binary()
   TIMING_stop(tm_frctnl_stp_sct_1, 0.0);
   // <<< Fractional step subsection 1
 
-
+  
   
   // >>> Fractional step sub-section 2
   TIMING_start(tm_frctnl_stp_sct_2);
@@ -260,7 +260,7 @@ void FFV::NS_FS_E_Binary()
   
   // 疑似ベクトルの境界条件
   TIMING_start(tm_pvec_BC);
-  BC.OuterVBCpseudo(d_vc, d_cdf, &C, ensPeriodic);
+  BC.OuterVBCpseudo(d_vc, d_v0, d_cdf, &C, ensPeriodic);
   BC.InnerVBCperiodic(d_vc, d_bcd);
   TIMING_stop(tm_pvec_BC, 0.0);
 
@@ -288,10 +288,10 @@ void FFV::NS_FS_E_Binary()
     U.copyV3D(d_wv, size, guide, d_vc, one);
     TIMING_stop(tm_copy_array, 0.0);
     
-    for (ICv->setLoopCount(0); ICv->getLoopCount() < ICv->getMaxIteration(); ICv->incLoopCount())
+    for (LSv->setLoopCount(0); LSv->getLoopCount() < LSv->getMaxIteration(); LSv->incLoopCount())
     {
-      //CN_Itr(ICv);
-      if ( ICv->isErrConverged() || ICv->isResConverged() ) break;
+      //CN_Itr(LSv);
+      if ( LSv->isErrConverged() || LSv->isResConverged() ) break;
     }
   }
   
@@ -309,15 +309,15 @@ void FFV::NS_FS_E_Binary()
   
   
   // vの初期値をvcにしておく
-  TIMING_start(tm_copy_array);
-  U.copyV3D(d_v, size, guide, d_vc, one);
-  TIMING_stop(tm_copy_array, 0.0);
+  //TIMING_start(tm_copy_array);
+  //U.copyV3D(d_v, size, guide, d_vc, one);
+  //TIMING_stop(tm_copy_array, 0.0);
   
   
   // 非VBC面に対してのみ，セルセンターの値から \sum{u^*} を計算
   TIMING_start(tm_div_pvec);
   flop = 0.0;
-  divergence_(d_ws, size, &guide, d_vc, d_cdf, d_bcp, &flop);
+  divergence_cc_(d_ws, size, &guide, d_vc, d_cdf, d_bcp, &flop);
   TIMING_stop(tm_div_pvec, flop);
   
   
@@ -363,7 +363,7 @@ void FFV::NS_FS_E_Binary()
   TIMING_start(tm_poi_src_nrm);
   b_l2 = 0.0;
   flop = 0.0;
-  poi_rhs_(&b_l2, d_b, size, &guide, d_ws, d_sq, d_bcp, &dh, &dt, &flop);
+  blas_calc_b_(&b_l2, d_b, d_ws, d_bcp, size, &guide, &dh, &dt, &flop);
   TIMING_stop(tm_poi_src_nrm, flop);
   
   
@@ -380,12 +380,12 @@ void FFV::NS_FS_E_Binary()
   
   
   // Initial residual
-  if ( ICp->getResType() == nrm_r_r0 )
+  if ( LSp->getResType() == nrm_r_r0 )
   {
     TIMING_start(tm_poi_src_nrm);
     res0_l2 = 0.0;
     flop = 0.0;
-    poi_residual_(&res0_l2, size, &guide, d_p, d_b, d_bcp, &flop);
+    blas_calc_r2_(&res0_l2, d_p, d_b, d_bcp, size, &guide, &flop);
     TIMING_stop(tm_poi_src_nrm, flop);
     
     if ( numProc > 1 )
@@ -431,214 +431,227 @@ void FFV::NS_FS_E_Binary()
   }
   
   // 反復回数の積算
-  int loop_p = 0;
-  ICp->setLoopCount(0);
-
-  // 線形ソルバー
-  switch (ICp->getLS())
+  int loop_p  = 1;
+  int loop_vp;
+  
+  
+  for (loop_vp=1; loop_vp<DivC.MaxIteration; loop_vp++)
   {
-    case SOR:
-      loop_p += Point_SOR(ICp, d_p, d_b, b_l2, res0_l2);
-      break;
-      
-    case SOR2SMA:
-      loop_p += SOR_2_SMA(ICp, d_p, d_b, b_l2, res0_l2);
-      break;
-      
-    //case GMRES:
-    //  Fgmres(ICp, b_l2, res0_l2);
-    //  break;
-      
-    //case RBGS:
-    //  loop_p += Frbgs(ICp, d_p, d_b, b_l2, res0_l2);
-    //  break;
-      
-    //case PCG:
-    //  loop_p += Fpcg(ICp, d_p, d_b, b_l2, res0_l2);
-    //  break;
-      
-    //case PBiCGSTAB:
-    //  loop_p += Fpbicgstab(ICp, d_p, d_b, b_l2, res0_l2);
-    //  break;
-      
-    case BiCGSTAB:
-      loop_p += BiCGstab(ICp, d_p, d_b, b_l2, res0_l2);
-      break;
-      
-    default:
-      printf("\tInvalid Linear Solver for Pressure\n");
-      Exit(0);
-      break;
-  }
-
-  
-  // >>> Poisson Iteration subsection 4
-  TIMING_start(tm_poi_itr_sct_4);
-  
-  // 速度のスカラポテンシャルによる射影と速度の発散の計算 d_dvはdiv(u)のテンポラリ保持に利用
-  TIMING_start(tm_prj_vec);
-  flop = 0.0;
-  update_vec_(d_v, d_dv, size, &guide, &dt, &dh, d_vc, d_vf, d_p, d_bcp, d_cdf, &flop);
-  TIMING_stop(tm_prj_vec, flop);
-  
-  
-  // 速度の流束形式の境界条件による修正
-  TIMING_start(tm_prj_vec_bc);
-  flop=0.0;
-  BC.modDivergence(d_dv, d_cdf, CurrentTime, v00, m_buf, d_vf, d_v, &C, flop);
-  TIMING_stop(tm_prj_vec_bc, flop);
-
-  
-  // セルフェイス速度の境界条件の通信部分
-  if ( C.EnsCompo.outflow )
-  {
-    if ( numProc > 1 )
+    // 線形ソルバー
+    switch (LSp->getLS())
     {
-      for (int n=1; n<=C.NoCompo; n++)
-      {
-        m_snd[2*n]   = m_rcv[2*n]   = m_buf[n].p0; // 積算速度
-        m_snd[2*n+1] = m_rcv[2*n+1] = m_buf[n].p1; // 積算回数
-      }
-      
-      TIMING_start(tm_prj_vec_bc_comm);
-      if ( paraMngr->Allreduce(m_snd, m_rcv, 2*(C.NoCompo+1), MPI_SUM) != CPM_SUCCESS ) Exit(0);
-      TIMING_stop(tm_prj_vec_bc_comm, 2.0*C.NoCompo*numProc*sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数 x 変数
-      
-      for (int n=1; n<=C.NoCompo; n++)
-      {
-        m_buf[n].p0 = m_rcv[2*n];
-        m_buf[n].p1 = m_rcv[2*n+1];
-      }
+      case SOR:
+        if ( (loop_p += LSp->PointSOR(d_p, d_b, b_l2, res0_l2)) < 0 ) Exit(0);
+        break;
+        
+      case SOR2SMA:
+        if ( (loop_p += LSp->SOR2_SMA(d_p, d_b, LSp->getMaxIteration(), b_l2, res0_l2)) < 0 ) Exit(0);
+        break;
+        
+        //case GMRES:
+        //  Fgmres(LSp, b_l2, res0_l2);
+        //  break;
+        
+        //case RBGS:
+        //  loop_p += Frbgs(LSp, d_p, d_b, b_l2, res0_l2);
+        //  break;
+        
+        //case PCG:
+        //  loop_p += Fpcg(LSp, d_p, d_b, b_l2, res0_l2);
+        //  break;
+        
+      case BiCGSTAB:
+        if ( LSp->getPrecondition() == ON )
+        {
+          if ( (loop_p += LSp->PBiCGstab(d_p, d_b, b_l2, res0_l2)) < 0 ) Exit(0);
+        }
+        else
+        {
+          if ( (loop_p += LSp->BiCGstab(d_p, d_b, b_l2, res0_l2)) < 0 ) Exit(0);
+        }
+        break;
+        
+      default:
+        printf("\tInvalid Linear Solver for Pressure\n");
+        Exit(0);
+        break;
     }
     
-    for (int n=1; n<=C.NoCompo; n++)
-    {
-      if ( cmp[n].getType() == OUTFLOW )
-      {
-        cmp[n].val[var_Velocity] = m_buf[n].p0 / m_buf[n].p1; // 無次元平均流速
-        //printf("%e  = %e  / %e\n", cmp[n].val[var_Velocity], m_buf[n].p0, m_buf[n].p1);
-      }
-    }
-  }
-  
-  // Forcingコンポーネントによる速度と発散値の修正
-  if ( C.EnsCompo.forcing == ON )
-  {
-    TIMING_start(tm_prj_frc_mod);
-    flop=0.0;
-    BC.mod_Vdiv_Forcing(d_v, d_bcd, d_cvf, d_dv, dt, v00, m_buf, component_array, flop);
-    TIMING_stop(tm_prj_frc_mod, flop);
     
-    // 通信部分
-    if ( numProc > 1 )
-    {
-      for (int n=1; n<=C.NoCompo; n++)
-      {
-        m_snd[2*n]   = m_rcv[2*n]   = m_buf[n].p0; // 積算速度
-        m_snd[2*n+1] = m_rcv[2*n+1] = m_buf[n].p1; // 積算圧力損失
-      }
-      
-      TIMING_start(tm_prj_frc_mod_comm);
-      if ( paraMngr->Allreduce(m_snd, m_rcv, 2*(C.NoCompo+1), MPI_SUM) != CPM_SUCCESS ) Exit(0);
-      TIMING_stop(tm_prj_frc_mod_comm, 2.0*(C.NoCompo+1)*numProc*sizeof(REAL_TYPE)*2.0);
-      
-      for (int n=1; n<=C.NoCompo; n++)
-      {
-        m_buf[n].p0 = m_rcv[2*n];
-        m_buf[n].p1 = m_rcv[2*n+1];
-      }
-    }
+    // >>> Poisson Iteration subsection 4
+    TIMING_start(tm_poi_itr_sct_4);
     
-    for (int n=1; n<=C.NoCompo; n++)
-    {
-      if ( cmp[n].isFORCING() )
-      {
-        REAL_TYPE aa = (REAL_TYPE)cmp[n].getElement();
-        cmp[n].val[var_Velocity] = m_buf[n].p0 / aa; // 平均速度
-        cmp[n].val[var_Pressure] = m_buf[n].p1 / aa; // 平均圧力損失量
-      }
-    }
-  }
-
-  // 反復ソース項
-  if ( C.EnsCompo.forcing == ON )
-  {
-    TIMING_start(tm_force_src);
-    flop=0.0;
-    BC.mod_Psrc_Forcing(d_sq, d_v, d_bcd, d_cvf, v00, component_array, flop);
-    TIMING_stop(tm_force_src, flop);
-    
-    TIMING_start(tm_poi_src_nrm);
-    b_l2 = 0.0;
+    // 速度のスカラポテンシャルによる射影と速度の発散の計算 d_dvはdiv(u)のテンポラリ保持に利用
+    TIMING_start(tm_prj_vec);
     flop = 0.0;
-    poi_rhs_(&b_l2, d_b, size, &guide, d_ws, d_sq, d_bcp, &dh, &dt, &flop);
-    TIMING_stop(tm_poi_src_nrm, flop);
+    update_vec_(d_v, d_dv, size, &guide, &dt, &dh, d_vc, d_vf, d_p, d_bcp, d_cdf, &flop);
+    TIMING_stop(tm_prj_vec, flop);
     
-    if ( numProc > 1 )
+    
+    // 速度の流束形式の境界条件による修正
+    TIMING_start(tm_prj_vec_bc);
+    flop=0.0;
+    BC.modDivergence(d_dv, d_cdf, CurrentTime, v00, m_buf, d_vf, d_v, &C, flop);
+    TIMING_stop(tm_prj_vec_bc, flop);
+    
+    
+    
+    // セルフェイス速度の境界条件の通信部分
+    if ( C.EnsCompo.outflow )
     {
-      TIMING_start(tm_poi_src_comm);
-      double m_tmp = b_l2;
-      if ( paraMngr->Allreduce(&m_tmp, &b_l2, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-      TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
+      if ( numProc > 1 )
+      {
+        for (int n=1; n<=C.NoCompo; n++)
+        {
+          m_snd[2*n]   = m_rcv[2*n]   = m_buf[n].p0; // 積算速度
+          m_snd[2*n+1] = m_rcv[2*n+1] = m_buf[n].p1; // 積算回数
+        }
+        
+        TIMING_start(tm_prj_vec_bc_comm);
+        if ( paraMngr->Allreduce(m_snd, m_rcv, 2*(C.NoCompo+1), MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        TIMING_stop(tm_prj_vec_bc_comm, 2.0*C.NoCompo*numProc*sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数 x 変数
+        
+        for (int n=1; n<=C.NoCompo; n++)
+        {
+          m_buf[n].p0 = m_rcv[2*n];
+          m_buf[n].p1 = m_rcv[2*n+1];
+        }
+      }
+      
+      for (int n=1; n<=C.NoCompo; n++)
+      {
+        if ( cmp[n].getType() == OUTFLOW )
+        {
+          cmp[n].val[var_Velocity] = m_buf[n].p0 / m_buf[n].p1; // 無次元平均流速
+          //printf("%e  = %e  / %e\n", cmp[n].val[var_Velocity], m_buf[n].p0, m_buf[n].p1);
+        }
+      }
     }
     
-    b_l2 = sqrt(b_l2);
-  }
-
-
-  // トラクションフリーの場合
-  if ( C.EnsCompo.tfree )
-  {
-    if ( numProc > 1 )
+    // Forcingコンポーネントによる速度と発散値の修正
+    if ( C.EnsCompo.forcing == ON )
     {
-      TIMING_start(tm_vectors_comm);
-      if ( paraMngr->BndCommV3D(d_vf, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-      TIMING_stop(tm_vectors_comm, 2*face_comm_size*guide*3.0);
+      TIMING_start(tm_prj_frc_mod);
+      flop=0.0;
+      BC.mod_Vdiv_Forcing(d_v, d_bcd, d_cvf, d_dv, dt, v00, m_buf, component_array, flop);
+      TIMING_stop(tm_prj_frc_mod, flop);
+      
+      // 通信部分
+      if ( numProc > 1 )
+      {
+        for (int n=1; n<=C.NoCompo; n++)
+        {
+          m_snd[2*n]   = m_rcv[2*n]   = m_buf[n].p0; // 積算速度
+          m_snd[2*n+1] = m_rcv[2*n+1] = m_buf[n].p1; // 積算圧力損失
+        }
+        
+        TIMING_start(tm_prj_frc_mod_comm);
+        if ( paraMngr->Allreduce(m_snd, m_rcv, 2*(C.NoCompo+1), MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        TIMING_stop(tm_prj_frc_mod_comm, 2.0*(C.NoCompo+1)*numProc*sizeof(REAL_TYPE)*2.0);
+        
+        for (int n=1; n<=C.NoCompo; n++)
+        {
+          m_buf[n].p0 = m_rcv[2*n];
+          m_buf[n].p1 = m_rcv[2*n+1];
+        }
+      }
+      
+      for (int n=1; n<=C.NoCompo; n++)
+      {
+        if ( cmp[n].isFORCING() )
+        {
+          REAL_TYPE aa = (REAL_TYPE)cmp[n].getElement();
+          cmp[n].val[var_Velocity] = m_buf[n].p0 / aa; // 平均速度
+          cmp[n].val[var_Pressure] = m_buf[n].p1 / aa; // 平均圧力損失量
+        }
+      }
     }
+    
+    // 反復ソース項
+    if ( C.EnsCompo.forcing == ON )
+    {
+      TIMING_start(tm_force_src);
+      flop=0.0;
+      BC.mod_Psrc_Forcing(d_sq, d_v, d_bcd, d_cvf, v00, component_array, flop);
+      TIMING_stop(tm_force_src, flop);
+      
+      TIMING_start(tm_poi_src_nrm);
+      b_l2 = 0.0;
+      flop = 0.0;
+      blas_calc_b_(&b_l2, d_b, d_ws, d_bcp, size, &guide, &dh, &dt, &flop);
+      TIMING_stop(tm_poi_src_nrm, flop);
+      
+      if ( numProc > 1 )
+      {
+        TIMING_start(tm_poi_src_comm);
+        double m_tmp = b_l2;
+        if ( paraMngr->Allreduce(&m_tmp, &b_l2, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
+      }
+      
+      b_l2 = sqrt(b_l2);
+    }
+    
+    
+    // トラクションフリーの場合
+    if ( C.EnsCompo.tfree )
+    {
+      if ( numProc > 1 )
+      {
+        TIMING_start(tm_vectors_comm);
+        if ( paraMngr->BndCommV3D(d_vf, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+        TIMING_stop(tm_vectors_comm, 2*face_comm_size*guide*3.0);
+      }
+    }
+
+    
+    // 速度境界条件　値を代入する境界条件
+    TIMING_start(tm_vec_BC);
+    BC.OuterVBC(d_v, d_vf, d_cdf, CurrentTime, &C, v00, ensPeriodic);
+    BC.InnerVBCperiodic(d_v, d_bcd);
+    TIMING_stop(tm_vec_BC, 0.0);
+    
+    
+    TIMING_stop(tm_poi_itr_sct_4, 0.0);
+    // <<< Poisson Iteration subsection 4
+    
+    
+    // div(u^{n+1})の計算
+    NormDiv();
+    
+    
+    if ( C.Mode.Log_Itr == ON )
+    {
+      TIMING_start(tm_hstry_itr);
+      Hostonly_
+      {
+        H->printHistoryItr(fp_i, dynamic_cast<IterationCtl*>(LS), DivC.divergence);
+        fflush(fp_i);
+      }
+      TIMING_stop(tm_hstry_itr, 0.0);
+    }
+    
+    
+    /* Forcingコンポーネントによる速度の方向修正(収束判定から除外)  >> TEST
+     TIMING_start(tm_prj_frc_dir);
+     flop=0.0;
+     BC.mod_Dir_Forcing(d_v, d_bcd, d_cvf, v00, flop);
+     TIMING_stop(tm_prj_frc_dir, flop);
+     */
+    
+    LSp->setLoopCount(loop_p);
+    
+    // 収束判定
+    if ( DivC.divergence <= DivC.divEPS ) break;
   }
-  
-  // 速度境界条件　値を代入する境界条件
-  TIMING_start(tm_vec_BC);
-  BC.OuterVBC(d_v, d_vf, d_cdf, CurrentTime, &C, v00, ensPeriodic);
-  BC.InnerVBCperiodic(d_v, d_bcd);
-  TIMING_stop(tm_vec_BC, 0.0);
-  
-  
-  TIMING_stop(tm_poi_itr_sct_4, 0.0);
-  // <<< Poisson Iteration subsection 4
-  
-  
-  // div(u^{n+1})の計算
-  int divmaxidx[3];
-  NormDiv(divmaxidx);
   
   
   // 総反復回数を代入
-  ICp->setLoopCount(loop_p);
-  
-  if ( C.Mode.Log_Itr == ON )
-  {
-    TIMING_start(tm_hstry_itr);
-    Hostonly_
-    {
-      H->printHistoryItr(fp_i, IC, div_value, divmaxidx);
-      fflush(fp_i);
-    }
-    TIMING_stop(tm_hstry_itr, 0.0);
-  }
-  
+  DivC.Iteration = loop_vp;
 
-    /* Forcingコンポーネントによる速度の方向修正(収束判定から除外)  >> TEST
-    TIMING_start(tm_prj_frc_dir);
-    flop=0.0;
-    BC.mod_Dir_Forcing(d_v, d_bcd, d_cvf, v00, flop);
-    TIMING_stop(tm_prj_frc_dir, flop);
-    */
 
-  
   TIMING_stop(tm_poi_itr_sct, 0.0);
   // <<< Poisson Iteration section
-
   
   
   /// >>> NS Loop post section

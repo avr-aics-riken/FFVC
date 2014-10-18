@@ -36,25 +36,27 @@
 #define sma_comm_           SMA_COMM
 #define sma_comm_wait_      SMA_COMM_WAIT
 #define cds_psor_           CDS_PSOR
-#define poi_residual_       POI_RESIDUAL
-#define poi_rhs_            POI_RHS
+
 
 // ffv_blas.f90
 #define blas_clear_          BLAS_CLEAR
 #define blas_copy_           BLAS_COPY
-#define blas_xpay_           BLAS_XPAY
-#define blas_axpy_           BLAS_AXPY
-#define blas_triad_          BLAS_TRIAD
-#define blas_axpbypz_        BLAS_AXPBYPZ
+
+
+
+// keno version
+#define blas_y_xpay_         BLAS_Y_XPAY
+#define blas_y_axpy_         BLAS_Y_AXPY
+#define blas_z_xpay_         BLAS_Z_XPAY
 #define blas_dot1_           BLAS_DOT1
 #define blas_dot2_           BLAS_DOT2
-#define blas_calcr_          BLAS_CALCR
-#define blas_calcr2_         BLAS_CALCR2
-#define blas_calcax_         BLAS_CALCAX
-#define blas_smoother_core_  BLAS_SMOOTHER_CORE
-#define blas_preconditioner_ BLAS_PRECONDITIONER
-#define blas_calcr_naive_    BLAS_CALCR_NAIVE
-#define blas_calcax_naive_   BLAS_CALCAX_NAIVE
+#define blas_calc_b_         BLAS_CALC_B
+#define blas_calc_rk_        BLAS_CALC_RK
+#define blas_calc_r2_        BLAS_CALC_R2
+#define blas_calc_ax_        BLAS_CALC_AX
+#define blas_smoother_corek_ BLAS_SMOOTHER_COREK
+#define blas_calc_r_naive_   BLAS_CALC_R_NAIVE
+#define blas_calc_ax_naive_  BLAS_CALC_AX_NAIVE
 
 // ffv_cg.f90
 #define bicg_update_p_  BICG_UPDATE_P
@@ -67,24 +69,6 @@ extern "C" {
   
   //***********************************************************************************************
   // ffv_poisson.f90
-  void poi_residual_ (double* res,
-                      int* sz,
-                      int* g,
-                      REAL_TYPE* p,
-                      REAL_TYPE* b,
-                      int* bp,
-                      double* flop);
-  
-  void poi_rhs_ (double* rhs,
-                 REAL_TYPE* b,
-                 int* sz,
-                 int* g,
-                 REAL_TYPE* s_0,
-                 REAL_TYPE* s_1,
-                 int* bp,
-                 REAL_TYPE* dh,
-                 REAL_TYPE* dt,
-                 double* flop);
   
   void psor_ (REAL_TYPE* p,
               int* sz,
@@ -164,13 +148,12 @@ extern "C" {
                        int* sz,
                        int* g);
   
-  void blas_triad_    (REAL_TYPE* z,
+  void blas_axpyz_    (REAL_TYPE* z,
                        REAL_TYPE* x,
                        REAL_TYPE* y,
-                       double* a,
+                       REAL_TYPE* a,
                        int* sz,
-                       int* g,
-                       double* flop);
+                       int* g);
   
   void blas_axpbypz_  (REAL_TYPE* z,
                        REAL_TYPE* x,
@@ -178,38 +161,20 @@ extern "C" {
                        REAL_TYPE* a,
                        REAL_TYPE* b,
                        int* sz,
-                       int* g,
-                       double* flop);
+                       int* g);
   
-  void blas_dot1_     (double* r,
-                       REAL_TYPE* p,
-                       int* sz,
-                       int* g,
-                       double* flop);
-  
-  void blas_dot2_     (double* r,
+  void blas_dot_      (REAL_TYPE* pq,
                        REAL_TYPE* p,
                        REAL_TYPE* q,
                        int* sz,
-                       int* g,
-                       double* flop);
+                       int* g);
   
   void blas_calcr_    (REAL_TYPE* r,
                        REAL_TYPE* p,
                        REAL_TYPE* b,
                        int* bp,
                        int* sz,
-                       int* g,
-                       double* flop);
-  
-  void blas_calcr_naive_ (REAL_TYPE* r,
-                          REAL_TYPE* p,
-                          REAL_TYPE* b,
-                          int* bp,
-                          int* sz,
-                          int*g,
-                          REAL_TYPE* pn,
-                          double* flop);
+                       int* g);
   
   void blas_calcr2_   (REAL_TYPE* rr,
                        REAL_TYPE* p,
@@ -222,16 +187,16 @@ extern "C" {
                        REAL_TYPE* p,
                        int* bp,
                        int* sz,
-                       int* g,
-                       double* flop);
+                       int* g);
   
-  void blas_calcax_naive_ (REAL_TYPE* ap,
-                           REAL_TYPE* p,
-                           int* bp,
-                           int* sz,
-                           int* g,
-                           REAL_TYPE* pn,
-                           double* flop);
+  void blas_calcb_    (REAL_TYPE* b,
+                       REAL_TYPE* s_0,
+                       REAL_TYPE* s_1,
+                       int* bp,
+                       REAL_TYPE* dh,
+                       REAL_TYPE* dt,
+                       int* sz,
+                       int* g);
   
   void blas_smoother_core_  (REAL_TYPE* x,
                              REAL_TYPE* b,
@@ -248,6 +213,103 @@ extern "C" {
                               REAL_TYPE* omg,
                               int* sz,
                               int* g);
+  
+  
+  
+  void blas_y_xpay_   (REAL_TYPE* y,
+                       REAL_TYPE* x,
+                       REAL_TYPE* a,
+                       int* sz,
+                       int* g);
+  
+  void blas_y_axpy_   (REAL_TYPE* y,
+                       REAL_TYPE* a,
+                       REAL_TYPE* x,
+                       int* sz,
+                       int* g);
+  
+  void blas_z_xpay_   (REAL_TYPE* z,
+                       REAL_TYPE* x,
+                       double* a,
+                       REAL_TYPE* y,
+                       int* sz,
+                       int* g,
+                       double* flop);
+  
+  
+  void blas_dot1_     (double* r,
+                       REAL_TYPE* p,
+                       int* bp,
+                       int* sz,
+                       int* g,
+                       double* flop);
+  
+  void blas_dot2_     (double* r,
+                       REAL_TYPE* p,
+                       REAL_TYPE* q,
+                       int* bp,
+                       int* sz,
+                       int* g,
+                       double* flop);
+  
+  void blas_calc_b_ (double* rhs,
+                     REAL_TYPE* b,
+                     REAL_TYPE* s_0,
+                     int* bp,
+                     int* sz,
+                     int* g,
+                     REAL_TYPE* dh,
+                     REAL_TYPE* dt,
+                     double* flop);
+  
+  void blas_calc_rk_   (REAL_TYPE* r,
+                       REAL_TYPE* p,
+                       REAL_TYPE* b,
+                       int* bp,
+                       int* sz,
+                       int* g,
+                       double* flop);
+  
+  void blas_calc_r2_  (double* res,
+                       REAL_TYPE* p,
+                       REAL_TYPE* b,
+                       int* bp,
+                       int* sz,
+                       int* g,
+                       double* flop);
+  
+  void blas_calc_r_naive_(REAL_TYPE* r,
+                          REAL_TYPE* p,
+                          REAL_TYPE* b,
+                          int* bp,
+                          int* sz,
+                          int*g,
+                          REAL_TYPE* pn,
+                          double* flop);
+  
+  void blas_calc_ax_  (REAL_TYPE* ap,
+                       REAL_TYPE* p,
+                       int* bp,
+                       int* sz,
+                       int* g,
+                       double* flop);
+  
+  void blas_calc_ax_naive_(REAL_TYPE* ap,
+                           REAL_TYPE* p,
+                           int* bp,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* pn,
+                           double* flop);
+  
+  void blas_smoother_corek_  (REAL_TYPE* x,
+                             REAL_TYPE* b,
+                             int* bp,
+                             int* ip,
+                             int* color,
+                             REAL_TYPE* omg,
+                             int* sz,
+                             int* g);
 
   
   //***********************************************************************************************
@@ -255,19 +317,19 @@ extern "C" {
   
   void bicg_update_p_ (REAL_TYPE* p,
                        REAL_TYPE* r,
-                       REAL_TYPE* q,
                        double* beta,
                        double* omega,
+                       REAL_TYPE* q,
                        int* sz,
                        int* g,
                        double* flop);
   
   void bicg_update_x_ (REAL_TYPE* x,
+                       double* alpha,
                        REAL_TYPE* p,
+                       double* omega,
                        REAL_TYPE* s,
                        int* bp,
-                       double* alpha,
-                       double* omega,
                        double* x_l2,
                        double* err,
                        int* sz,

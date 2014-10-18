@@ -288,14 +288,14 @@ void Control::convertHexCoef(REAL_TYPE* cf)
 // #################################################################
 // 反復の収束判定パラメータをcopy
 // @see getIteration()
-void Control::copyCriteria(IterationCtl& IC, const string name)
+void Control::copyCriteria(IterationCtl* IC, const string name)
 {
   
   for (int i=0; i<NoBaseLS; i++)
   {
     if ( !strcasecmp( name.c_str(), Criteria[i].getAlias().c_str() ))
     {
-      IC.copy(&Criteria[i]);
+      IC->copy(&Criteria[i]);
     }
   }
   
@@ -304,16 +304,18 @@ void Control::copyCriteria(IterationCtl& IC, const string name)
 
 // #################################################################
 // 制御，計算パラメータ群の表示
-void Control::displayParams(FILE* mp, FILE* fp,
+void Control::displayParams(FILE* mp,
+                            FILE* fp,
                             IterationCtl* IC,
                             DTcntl* DT,
                             ReferenceFrame* RF,
+                            DivConvergence* DC,
                             MediumList* mat,
                             CompoList* cmp,
                             const int em)
 {
-  printSteerConditions(mp, IC, DT, RF, em);
-  printSteerConditions(fp, IC, DT, RF, em);
+  printSteerConditions(mp, IC, DT, RF, DC, em);
+  printSteerConditions(fp, IC, DT, RF, DC, em);
   printParaConditions(mp, mat);
   printParaConditions(fp, mat);
   printInitValues(mp, cmp);
@@ -1234,25 +1236,12 @@ void Control::getIteration()
     
     // 誤差ノルム
     label = leaf + "/ErrorNorm";
-    if ( !(tpCntl->getInspectedValue(label, str )) )
+    if ( !Criteria[i].setErrType(tpCntl, label) )
     {
-      Hostonly_ printf("\tParsing error : No '%s'\n", label.c_str());
+      Hostonly_ printf("\tParsing error : '%s'\n", label.c_str());
       Exit(0);
     }
     
-    if ( !strcasecmp(str.c_str(), "DeltaXbyX") )
-    {
-      Criteria[i].setErrType(nrm_dx_x);
-    }
-    else if ( !strcasecmp(str.c_str(), "DeltaX") )
-    {
-      Criteria[i].setErrType(nrm_dx);
-    }
-    else
-    {
-      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s' of Norm for Poisson iteration\n", str.c_str());
-      Exit(0);
-    }
     
     // 固有パラメータ
     if ( !Criteria[i].getInherentPara(tpCntl, leaf) )
@@ -2807,18 +2796,16 @@ void Control::printLS(FILE* fp, const IterationCtl* IC)
       fprintf(fp,"\t       Linear Solver          :   PCG\n");
       break;
       
-    case PBiCGSTAB:
-      fprintf(fp,"\t       Linear Solver          :   PBiCGSTAB\n");
-      break;
-      
     case BiCGSTAB:
       if (IC->getNaive()==OFF)
       {
-        fprintf(fp,"\t       Linear Solver          :   BiCGstab\n");
+        fprintf(fp,"\t       Linear Solver          :   BiCGstab");
+        if (IC->getPrecondition()==ON) fprintf(fp," with Preconditioner\n");
       }
       else
       {
-        fprintf(fp,"\t       Linear Solver          :   BiCGstab (Naive)\n");
+        fprintf(fp,"\t       Linear Solver          :   BiCGstab (Naive)");
+        if (IC->getPrecondition()==ON) fprintf(fp," with Preconditioner\n");
       }
       break;
       
@@ -2915,7 +2902,12 @@ void Control::printParaConditions(FILE* fp, const MediumList* mat)
 
 // #################################################################
 // 制御パラメータSTEERの表示
-void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT, const ReferenceFrame* RF, const int em)
+void Control::printSteerConditions(FILE* fp,
+                                   IterationCtl* IC,
+                                   const DTcntl* DT,
+                                   const ReferenceFrame* RF,
+                                   const DivConvergence* DC,
+                                   const int em)
 {
   if ( !fp )
   {
@@ -3563,6 +3555,7 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
     IterationCtl* ICp2= &IC[ic_prs2];  /// 圧力のPoisson反復　2回目
     IterationCtl* ICv = &IC[ic_vel1];  /// 粘性項のCrank-Nicolson反復
     
+    
     if ( Hide.PM_Test == ON )
     {
       fprintf(fp,"\t ### Performance Test Mode >> The iteration number is fixed by Iteration max.\n\n");
@@ -3608,6 +3601,19 @@ void Control::printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT,
         fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICv->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
         printLS(fp, ICv);
       }
+      fprintf(fp,"\n");
+      fprintf(fp,"\t     Div Iteration \n");
+      fprintf(fp,"\t       Iteration max          :   %d\n"  ,  DC->MaxIteration);
+      if ( DC->divType == nrm_div_max)
+      {
+        fprintf(fp,"\t       Error    Norm type     :   Max divergence\n");
+      }
+      else
+      {
+        fprintf(fp,"\t       Error    Norm type     :   L2 divergence\n");
+      }
+      
+      fprintf(fp,"\t       Threshold for Div.     :   %9.3e\n", DC->divEPS);
     }
     
     // for Temperature

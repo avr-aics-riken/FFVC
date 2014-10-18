@@ -24,6 +24,7 @@
  */
 
 #include "mydebug.h"
+#include <float.h>
 
 #define FB_VERS "1.5.0"
 
@@ -34,6 +35,7 @@
 // precision
 #ifdef _REAL_IS_DOUBLE_
 #define REAL_TYPE double
+#define REAL_TYPE_EPSILON DBL_MIN
 #else
 /** 実数型の指定
  * - デフォルトでは、REAL_TYPE=float
@@ -41,6 +43,7 @@
  *   REAL_TYPE=doubleになる
  */
 #define REAL_TYPE float
+#define REAL_TYPE_EPSILON FLT_MIN
 #endif
 
 
@@ -80,15 +83,14 @@
 #define TM_O_2ND    2
 #define TM_O_3RD    3
 
-// Linear Solver, do not use zero
+// Linear Solver, do not use zero. Zero indicates undefined.
 #define JACOBI        1
 #define SOR           2
 #define SOR2SMA       3
 #define GMRES         4
 #define RBGS          5
 #define PCG           6
-#define PBiCGSTAB     7
-#define BiCGSTAB      8
+#define BiCGSTAB      7
 
 // KindOfSolver
 #define FLOW_ONLY               0
@@ -371,6 +373,15 @@ _F_IDX_S3D(_I,_J,_K,_NI,_NJ,_NK,_VC) \
 
 
 /**
+ * @brief 2D配列アクセス
+ * @param [in] _I  最初の列
+ * @param [in] _J  次の列
+ * @param [in] _SZ 配列サイズ（1D方向）
+ */
+#define _IDX2D(_I,_J,_SZ) (_J*_SZ+_I)
+
+
+/**
  * @brief 非同期通信のリクエストIDアクセス
  * @param [in] _DIR 送受信方向
  * @param [in] _KEY オペレーション(send/recv)
@@ -393,6 +404,15 @@ typedef struct {
   REAL_TYPE p0;
   REAL_TYPE p1;
 } Gemini_R;
+
+// Divergence judgement
+typedef struct {
+  int MaxIteration;
+  int Iteration;
+  int divType;
+  double divEPS;
+  double divergence;
+} DivConvergence;
 
 /// FFVC_EXEC_MODE
 enum ffvc_execution {
@@ -476,7 +496,7 @@ enum File_format {
 /** 反復制御リスト */
 enum itr_cntl_key
 {
-  ic_prs1,
+  ic_prs1=0,
   ic_prs2,
   ic_vel1,
   ic_tmp1,
@@ -487,11 +507,13 @@ enum itr_cntl_key
 /** 反復法の収束基準種別 */
 enum norm_type
 {
-  nrm_dx,
+  nrm_dx=0,
   nrm_dx_x,
   nrm_r_b,
   nrm_r_x,
-  nrm_r_r0
+  nrm_r_r0,
+  nrm_div_l2,
+  nrm_div_max
 };
 
 /** 組み込み例題のID */

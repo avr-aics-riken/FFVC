@@ -58,6 +58,7 @@
 #include "../F_LS/ffv_LSfunc.h"
 #include "ffv_TerminateCtrl.h"
 #include "../FB/Glyph.h"
+#include "ffv_LS.h"
 
 
 // Intrinsic class
@@ -156,10 +157,9 @@ private:
   REAL_TYPE range_Ut[2]; ///< 
   REAL_TYPE range_Yp[2]; ///<
   
-  double div_value; ///< 無次元発散値　収束チェック用
+  DivConvergence DivC; ///< 発散収束判定
   
-  
-  // 定常収束モニター
+  // 定常収束モニタ
   typedef struct
   {
     double previous;  ///< 前回の反復の収束値
@@ -229,23 +229,24 @@ private:
   
 #define FREQ_OF_RESTART 15 // リスタート周期
   
-  // PCG & PBiCGSTAB & BiCGstab
+  // PCG & BiCGstab
 	REAL_TYPE *d_pcg_r;
 	REAL_TYPE *d_pcg_p;
   
 	// PCG
-	REAL_TYPE *d_pcg_q;
 	REAL_TYPE *d_pcg_z;
   
-	// PBiCGSTAB & BiCGstab
+	// BiCGstab
 	REAL_TYPE *d_pcg_r0;
-	REAL_TYPE *d_pcg_q_;
-	REAL_TYPE *d_pcg_s_;
-	REAL_TYPE *d_pcg_t_;
+	REAL_TYPE *d_pcg_q;
+	REAL_TYPE *d_pcg_s;
+	REAL_TYPE *d_pcg_t;
   
-  // PBiCGSTAB
-  REAL_TYPE *d_pcg_s;
+  // BiCGSTAB with Preconditioning
   REAL_TYPE *d_pcg_p_;
+  REAL_TYPE *d_pcg_s_;
+  REAL_TYPE *d_pcg_t_;
+  
   
   REAL_TYPE** component_array; ///< コンポーネントワーク配列のアドレス管理
   
@@ -288,7 +289,7 @@ private:
   FBUtility U;               ///< ユーティリティクラス
   MonitorList MO;            ///< Monitorクラス
   
-  IterationCtl IC[ic_END];   ///< 反復情報管理クラス
+  LinearSolver LS[ic_END];   ///< 反復解法
   
   ConvergenceMonitor CM_F;   ///< 流動の定常収束モニター
   ConvergenceMonitor CM_H;   ///< 熱の定常収束モニター
@@ -461,8 +462,8 @@ private:
   void allocArray_BiCGstab(double &total);
   
   
-  // PBiCGSTAB法に用いる配列のアロケーション
-  void allocArray_PBiCGSTAB(double &total);
+  // BiCGSTAB /w preconditionning に用いる配列のアロケーション
+  void allocArray_BiCGSTABwithPreconditioning(double &total);
   
   
   // 前処理に用いる配列のアロケーション
@@ -532,6 +533,10 @@ private:
   
   // グローバルな領域情報を取得
   int getDomainInfo(TextParser* tp_dom);
+  
+  
+  // DIv反復のパラメータ
+  bool getParaDiv(TextParser* tpCntl);
   
   
   // Intrinsic Classの同定
@@ -608,6 +613,10 @@ private:
   
   // パラメータのロードと計算領域を初期化し，並列モードを返す
   string setupDomain(TextParser* tpf);
+  
+  
+  // 線形ソルバークラス関連の初期化
+  void setupLinearSolvers(double& TotalMemory, TextParser* tpCntl);
   
   
   // 幾何形状情報を準備し，交点計算を行う
@@ -721,7 +730,7 @@ private:
   
   
   // div(u)を計算する
-  void NormDiv(int* idx);
+  void NormDiv();
   
   
   // タイミング測定区間にラベルを与えるラッパー
@@ -809,166 +818,7 @@ private:
   double ps_Diff_SM_PSOR(REAL_TYPE* t, double& b2, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh, const REAL_TYPE* ws, IterationCtl* IC, double& flop);
   
   
-  
-  
-  
-  /** ffv_LS.C *******************************************************/
-  
-  /**
-   * @brief SOR2SMAの非同期通信処理
-   * @param [in,out] d_x  解ベクトル
-   * @param [in]     col  オーダリングカラーの番号
-   * @param [in]     ip   オーダリングカラー0の最初のインデクス
-   * @param [out]    key  送信ID
-   */
-  void comm_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request* key);
 
-  
-  /**
-   * @brief 種類Lの線形ソルバを利用する場合，trueを返す
-   * @param [in] L 線形ソルバの種類
-   */
-  bool hasLinearSolver(const int L);
-  
-  
-  /** SOR法
-   * @retval 反復数
-   * @param [in]     IC     IterationCtlクラス
-   * @param [in,out] x      解ベクトル
-   * @param [in]     b      RHS vector
-   * @param [in]     b_l2   L2 norm of b vector
-   * @param [in]     r0_l2  初期残差ベクトルのL2ノルム
-   */
-  int Point_SOR(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2);
-  
-  
-  /**
-   * @brief 反復の同期処理
-   * @param [in]     IC        IterationCtlクラス
-   * @param [in,out] d_class   対象データ
-   * @param [in]     num_layer 通信の袖数
-   */
-  void Sync_Scalar(IterationCtl* IC, REAL_TYPE* d_class, const int num_layer);
-  
-  
-  /** 2色オーダリングSORのストライドメモリアクセス版
-   * @retval 反復数
-   * @param [in]     IC      IterationCtlクラス
-   * @param [in,out] x       解ベクトル
-   * @param [in]     b       RHS vector
-   * @param [in]     b_l2    L2 norm of b vector
-   * @param [in]     r0_l2   初期残差ベクトルのL2ノルム
-   */
-  int SOR_2_SMA(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2);
-  
-  
-  /**
-   * @brief SOR2SMAの非同期通信処理
-   * @param [in,out] d_x 同期する変数
-   * @param [in]     col オーダリングカラーの番号
-   * @param [in]     ip  オーダリングカラー0の最初のインデクス
-   * @param [in,out] key 送信ID
-   */
-  void wait_SOR2SMA(REAL_TYPE* d_x, const int col, const int ip, MPI_Request* key);
-  
-  
-  /**
-   * @brief  BiCGstab
-   * @retval 反復数
-   * @param [in]     IC      IterationCtlクラス
-   * @param [in,out] x       解ベクトル
-   * @param [in]     b       RHS vector
-   * @param [in]     b_l2    L2 norm of b vector
-   * @param [in]     r0_l2   初期残差ベクトルのL2ノルム
-   */
-  int BiCGstab(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2);
-  
-  
-  /**
-   * @brief FGMRES
-   * @param [in]     IC      IterationCtlクラス
-   * @param [in]     rhs_nrm RHS vectorのL2ノルム
-   * @param [in]     r0      初期残差ベクトル
-   */
-  //void Fgmres(IterationCtl* IC, const double rhs_nrm, const double r0);
-  
-
-  /**
-   * @brief  FRBGS
-   * @retval 反復数
-   * @param [in]     IC      IterationCtlクラス
-   * @param [in,out] x       解ベクトル
-   * @param [in]     b  RHS  vector
-   * @param [in]     rhs_nrm RHS vector
-   * @param [in]     r0      初期残差ベクトル
-   */
-  //int Frbgs(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
-  
-  /**
-   * @brief  FPCG
-   * @retval 反復数
-   * @param [in]     IC      IterationCtlクラス
-   * @param [in,out] x       解ベクトル
-   * @param [in]     b  RHS  vector
-   * @param [in]     rhs_nrm RHS vector
-   * @param [in]     r0      初期残差ベクトル
-   */
-  //int Fpcg(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
-  
-  /**
-   * @brief  FPBiCGSTAB
-   * @retval 反復数
-   * @param [in]     IC      IterationCtlクラス
-   * @param [in,out] x       解ベクトル
-   * @param [in]     b  RHS  vector
-   * @param [in]     rhs_nrm RHS vector
-   * @param [in]     r0      初期残差ベクトル
-   */
-  //int Fpbicgstab(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b, const double rhs_nrm, const double r0);
-  
-  /**
-   * @brief  Fcheck
-   * @retval 収束したら true
-   * @param [in]     IC  IterationCtlクラス
-   * @param [in]    var  誤差、残差、解ベクトルのL2ノルム
-   * @param [in]   b_l2  右辺ベクトルのL2ノルム
-   * @param [in]  r0_l2  初期残差ベクトルのL2ノルム
-   */
-	bool Fcheck(IterationCtl* IC, double* var, const double b_l2, const double r0_l2);
-  
-  /**
-   * @brief  Fpreconditioner
-   * @retval 反復数
-   * @param [in]     IC      IterationCtlクラス
-   * @param [in,out] x       解ベクトル
-   * @param [in]     b  RHS  vector
-   */
-	int Fpreconditioner(IterationCtl* IC, REAL_TYPE* x, REAL_TYPE* b);
-  
-  /**
-   * @brief  Fsmoother
-   * @param [in,out] x       解ベクトル
-   * @param [in]     b  RHS  vector
-   * @param [in]       RHS  vector
-   */
-	void Fsmoother(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE omg);
-  
-  /**
-   * @brief Fdot1
-   * @retval  内積値
-   * @param [in]   x   vector1
-   */
-	double Fdot1(REAL_TYPE* x);
-  
-  /**
-   * @brief Fdot2
-   * @retval  内積値
-   * @param [in]   x   vector1
-   * @param [in]   y   vector2
-   */
-  double Fdot2(REAL_TYPE* x, REAL_TYPE* y);
-  
-  
   
   
   /** ffv_Restart.C *******************************************************/
@@ -1003,20 +853,15 @@ private:
   int Loop(const unsigned m_step);
   
   
-  /**
-   * @brief Fractional Step法でNavier-Stokes方程式を解く．バイナリ近似．
-   */
+  // @brief Fractional Step法でNavier-Stokes方程式を解く．バイナリ近似．
   void NS_FS_E_Binary();
+  void NS_FS_E_Binary_CHSMAC();
   
-  
-  /**
-   * @brief Fractional Step法でNavier-Stokes方程式を解く．距離場近似．
-   */
+  // @brief Fractional Step法でNavier-Stokes方程式を解く．距離場近似．
   void NS_FS_E_CDS();
   
   
-  /* 温度の移流拡散方程式をEuler陽解法/Adams-Bashforth法で解く
-   */
+  // 温度の移流拡散方程式をEuler陽解法/Adams-Bashforth法で解く
   void PS_Binary();
 
   

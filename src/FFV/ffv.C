@@ -50,7 +50,6 @@ FFV::FFV()
   deltaT = 0.0;
   poly_factor = 0.0;
   
-  div_value = 0.0;
   
   for (int i=0; i<3; i++) 
   {
@@ -122,23 +121,23 @@ FFV::FFV()
   d_zm  = NULL;
 
   
-  // PCG & PBiCGSTAB & BiCGSTAB
+  // PCG & BiCGSTAB
 	d_pcg_r = NULL;
   d_pcg_p = NULL;
   
 	// PCG
-	d_pcg_q = NULL;
 	d_pcg_z = NULL;
   
-	// PBiCGSTAB & BiCGSTAB
+	// BiCGSTAB
 	d_pcg_r0 = NULL;
-	d_pcg_q_ = NULL;
-	d_pcg_s_ = NULL;
-	d_pcg_t_ = NULL;
+	d_pcg_q  = NULL;
+	d_pcg_s  = NULL;
+	d_pcg_t  = NULL;
   
-  // PBiCGSTAB
-  d_pcg_s  = NULL;
+  // BiCGSTAB with Preconditioning
   d_pcg_p_ = NULL;
+  d_pcg_s_ = NULL;
+  d_pcg_t_ = NULL;
   
   cutPos = NULL;
   cutBid = NULL;
@@ -163,6 +162,13 @@ FFV::FFV()
   global_obstacle = NULL;
   num_obstacle = 0;
   buffer_force = NULL;
+  
+  // 発散の収束判定
+  DivC.MaxIteration = 0;
+  DivC.Iteration = 0;
+  DivC.divType = 0;
+  DivC.divEPS = 0.0;
+  DivC.divergence = 0.0;
   
   
   // ファイル入出力
@@ -337,24 +343,25 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
     // 各プロセスの外部領域面の速度をvv[]にコピー
     REAL_TYPE* vv = obc[face].getDomainV();
     
+    REAL_TYPE q[2] = {0.0, 0.0};
+    
+    // 外部境界のみ値をもつ
+    if ( nID[face] < 0 )
+    {
+      q[0] = vv[0]; // 無次元流量
+      q[1] = vv[1]; // セル数
+    }
+    
+    if ( numProc > 1 )
+    {
+      REAL_TYPE tmp[2] = {q[0], q[1]};
+      if ( paraMngr->Allreduce(tmp, q, 2, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    
     // 特殊条件
     if ( (R->Mode.Example == id_Jet) && (face==X_minus) )
     {
-      REAL_TYPE q[2] = {0.0, 0.0};
-      
-      // 外部境界以外はゼロ
-      if ( nID[face] < 0 )
-      {
-        q[0] = vv[0]; // 無次元流量
-        q[1] = vv[1]; // セル数
-      }
-      
-      if ( numProc > 1 )
-      {
-        REAL_TYPE tmp[2] = {q[0], q[1]};
-        if ( paraMngr->Allreduce(tmp, q, 2, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-      }
-      
       R->V_Dface[face] = q[0]/q[1];  // 無次元平均流速
       R->Q_Dface[face] = q[0] * ddh; // 無次元流量
     }
@@ -425,8 +432,6 @@ void FFV::gatherForce(REAL_TYPE* m_frc)
     global_force[3*n+2] = fz;
   }
 }
-
-
 
 
 // #################################################################
@@ -1202,23 +1207,18 @@ int FFV::MainLoop()
 // #################################################################
 /**
  * @brief 発散値を計算する
- * @param [out] idx インデクス
- * @retval 発散値の最大の場所のインデクス
+ * @param [in] LSd  線形ソルバクラスのDiv反復
  */
-void FFV::NormDiv(int* idx)
+void FFV::NormDiv()
 {
-  double dv;
-  double flop_count;
+  REAL_TYPE dv;
+  double flop_count, tmp;
   REAL_TYPE coef = 1.0/deltaX; /// 発散値を計算するための係数
 
-  int index[3];
-  index[0] = 0;
-  index[1] = 0;
-  index[2] = 0;
   
   TIMING_start(tm_poi_itr_sct_5); // >>> Poisson Iteration subsection 5
   
-  if (C.Mode.Log_Itr == OFF)
+  if ( DivC.divType == nrm_div_max )
   {
     TIMING_start(tm_norm_div_max);
     flop_count=0.0;
@@ -1228,36 +1228,32 @@ void FFV::NormDiv(int* idx)
     if ( numProc > 1 )
     {
       TIMING_start(tm_norm_comm);
-      double tmp = dv;
+      REAL_TYPE tmp = dv;
       if ( paraMngr->Allreduce(&tmp, &dv, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0); // 最大値
       TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
     }
-    div_value = dv;
+    DivC.divergence = (double)dv;
   }
-  else
+  else // nrm_div_l2
   {
     TIMING_start(tm_norm_div_max);
     flop_count=0.0;
-    norm_v_div_dbg_(&dv, index, size, &guide, d_dv, &coef, d_bcp, &flop_count);
+    norm_v_div_l2_(&dv, size, &guide, d_dv, &coef, d_bcp, &flop_count);
     TIMING_stop(tm_norm_div_max, flop_count);
-    
-    //@todo ここで，最大値のグローバルなindexの位置を計算する
     
     if ( numProc > 1 )
     {
       TIMING_start(tm_norm_comm);
-      double tmp = dv;
-      if ( paraMngr->Allreduce(&tmp, &dv, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0); // 最大値
+      REAL_TYPE tmp = dv;
+      if ( paraMngr->Allreduce(&tmp, &dv, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0); // 自乗和
       TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(double));
     }
-    div_value = dv;
+    tmp = (double)dv;
+    DivC.divergence = sqrt( tmp );
   }
   
   TIMING_stop(tm_poi_itr_sct_5, 0.0); // <<< Poisson Iteration subsection 5
-  
-  idx[0] = index[0];
-  idx[1] = index[1];
-  idx[2] = index[2];
+
 }
 
 
@@ -1494,9 +1490,9 @@ void FFV::set_timing_label()
   set_label(tm_blas_dot1,          "Blas_Dot1",               PerfMonitor::CALC);
   set_label(tm_blas_dot2,          "Blas_Dot2",               PerfMonitor::CALC);
   set_label(tm_blas_copy,          "Blas_Copy",               PerfMonitor::CALC);
-  set_label(tm_blas_calcr,         "Blas_Residual",           PerfMonitor::CALC);
+  set_label(tm_blas_calc_r,        "Blas_Residual",           PerfMonitor::CALC);
   set_label(tm_blas_ax,            "Blas_Ax",                 PerfMonitor::CALC);
-  set_label(tm_blas_triad,         "Blas_TRIAD" ,             PerfMonitor::CALC);
+  set_label(tm_blas_z_xpay,        "Blas_Z=X+aY" ,            PerfMonitor::CALC);
   set_label(tm_blas_axpbypz,       "Blas_Z=Z+aX+bY",          PerfMonitor::CALC);
   set_label(tm_blas_bicg_update_p, "Blas_BiCGupdateP",        PerfMonitor::CALC);
   set_label(tm_blas_bicg_update_x, "Blas_BiCGupdateX",        PerfMonitor::CALC);

@@ -368,58 +368,35 @@ void FFV::allocArray_BiCGstab(double &total)
   total+= mc * (double)sizeof(REAL_TYPE);
   
   
-  if ( !(d_pcg_q_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_pcg_q = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
   
-  if ( !(d_pcg_s_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_pcg_s = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
   
-  if ( !(d_pcg_t_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_pcg_t = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
 }
 
 
 // #################################################################
 /**
- * @brief PBiCGSTAB Iteration
+ * @brief BiCGSTAB Iteration
  * @param [in,out] total ソルバーに使用するメモリ量
  */
-void FFV::allocArray_PBiCGSTAB(double &total)
+void FFV::allocArray_BiCGSTABwithPreconditioning(double &total)
 {
   double mc = (double)(size[0] * size[1] * size[2]);
-  
-  
-  if ( !(d_pcg_r = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
-  
-  
-  if ( !(d_pcg_p = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
-  
-  
-  if ( !(d_pcg_r0 = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
-  
   
   if ( !(d_pcg_p_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
-  
-  if ( !(d_pcg_q_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
-  
-  
-	if ( !(d_pcg_s = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
-  
-  
 	if ( !(d_pcg_s_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
   
-  
-	if ( !(d_pcg_t_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_pcg_t_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= mc * (double)sizeof(REAL_TYPE);
 }
 

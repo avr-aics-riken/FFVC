@@ -243,11 +243,18 @@ public:
    * @param [in] avr        1タイムステップの平均値　（0-pressure, 1-velocity, 2-temperature)
    * @param [in] IC         IterationCtlクラスのポインタ
    * @param [in] C          Controlクラスへのポインタ
-   * @param [in] divergence 無次元発散値
+   * @param [in] DC         無次元発散値収束判定パラメータ
    * @param [in] stptm      1タイムステップの計算時間
    * @param [in] disp       計算時間表示の有無
    */
-  void printHistory(FILE* fp, const double* rms, const double* avr, const IterationCtl* IC, const Control* C, const double divergence, const double stptm, const bool disp);
+  void printHistory(FILE* fp,
+                    const double* rms,
+                    const double* avr,
+                    const IterationCtl* IC,
+                    const Control* C,
+                    const DivConvergence* DC,
+                    const double stptm,
+                    const bool disp);
   
   
   /**
@@ -255,9 +262,10 @@ public:
    * @param [in] fp    出力ファイルポインタ
    * @param [in] IC    反復管理クラス
    * @param [in] C     制御クラス
+   * @param [in] DC    無次元発散値収束判定パラメータ
    * @param [in] disp  計算時間表示の有無
    */
-  void printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control* C, const bool disp);
+  void printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control* C, const DivConvergence* DC, const bool disp);
   
   
   /**
@@ -316,13 +324,12 @@ public:
   
   
   /**
-   * @brief コンポーネントモニタの履歴出力
+   * @brief 反復過程の履歴出力
    * @param [in] fp         出力ファイルポインタ
    * @param [in] IC         反復管理クラス
    * @param [in] divergence 無次元発散値
-   * @param [in] idx        divの最大値の発生セルインデクス
    */
-  void printHistoryItr(FILE* fp, const IterationCtl* IC, const double divergence, const int* idx);
+  void printHistoryItr(FILE* fp, IterationCtl* IC, const double divergence);
   
   
   /**

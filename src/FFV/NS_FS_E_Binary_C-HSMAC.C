@@ -13,8 +13,8 @@
 //
 //##################################################################################
 
-/**
- * @file   NS_FS_E_CDS.C
+/** 
+ * @file   NS_FS_E_C-HSMAC.C
  * @brief  FFV Class
  * @author aics
  */
@@ -22,17 +22,16 @@
 #include "ffv.h"
 
 
-// Fractional Step法でNavier-Stokes方程式を解く．距離情報近似．
-void FFV::NS_FS_E_CDS()
+// Fractional Step法でNavier-Stokes方程式を解く．バイナリ近似．
+void FFV::NS_FS_E_Binary_CHSMAC()
 {
   // local variables
   double flop;                         /// 浮動小数演算数
-  double rhs_nrm = 0.0;                /// 反復解法での定数項ベクトルのノルム
-  double res_init = 0.0;               /// 反復解法での初期残差ベクトルのL2ノルム
+  double b_l2 = 0.0;                   /// 反復解法での定数項ベクトルのL2ノルム
+  double res0_l2 = 0.0;                /// 反復解法での初期残差ベクトルのL2ノルム
   
   REAL_TYPE dt = deltaT;               /// 時間積分幅
-  REAL_TYPE dh = (REAL_TYPE)deltaX;    /// 空間幅
-  REAL_TYPE coef = deltaX/dt;          /// Poissonソース項の係数
+  REAL_TYPE dh = (REAL_TYPE)deltaX;    /// 空間格子幅
   REAL_TYPE Re = C.Reynolds;           /// レイノルズ数
   REAL_TYPE rei = C.getRcpReynolds();  /// レイノルズ数の逆数
   REAL_TYPE half = 0.5;                /// 定数
@@ -47,33 +46,33 @@ void FFV::NS_FS_E_CDS()
   REAL_TYPE* m_rcv = new REAL_TYPE [(C.NoCompo+1)*2];
 
   
-  int v_mode=0;
-  
   LinearSolver* LSp = &LS[ic_prs1];  /// 圧力のPoisson反復
   LinearSolver* LSv = &LS[ic_vel1];  /// 粘性項のCrank-Nicolson反復
-  
+
   // point Data
   // d_v   セルセンタ速度 v^n -> v^{n+1}
+  // d_vf  セルフェイス速度
   // d_v0  セルセンタ速度 v^nの保持
   // d_vc  疑似速度ベクトル
   // d_wv  ワーク　陰解法の時の疑似速度ベクトル，射影ステップの境界条件
-  // d_p   圧力 p^n -> p^{n+1}
+  // d_p   圧力 p^{n+1}
   // d_p0  圧力 p^nの保持
-  // d_ws  Poissonのソース項0　速度境界を考慮
-  // d_sq Poissonのソース項1　反復毎に変化するソース項，摩擦速度，発散値, div(u)の値を保持，出力のところまでは再利用しないこと
+  // d_dv  Poissonのソース項0　\sum{u} 速度の発散に対応
+  // d_sq  Poissonのソース項1　反復毎に変化するソース項，摩擦速度，
+  // d_ws  修正ポテンシャル
+  // d_b   反復の右辺ベクトル
   // d_bcd IDのビットフラグ
   // d_bcp 圧力のビットフラグ
   // d_cdf Component Directional BC Flag
   // d_wo  ワーク　壁関数利用時のWSS，ベクトル出力時のテンポラリ
   // d_cvf コンポーネントの体積率
-  // d_ie0 内部エネルギー
+  // d_ie0  内部エネルギー t^n
   // d_vt  LES計算の渦粘性係数
   // d_ab0 Adams-Bashforth用のワーク
-  // d_cut カット情報
-  
+
   
   // >>> Fractional step section
-  TIMING_start(tm_frctnl_stp_sct);
+  TIMING_start(tm_frctnl_stp_sct); 
   
   // >>> Fractional step sub-section 1
   TIMING_start(tm_frctnl_stp_sct_1); 
@@ -84,37 +83,53 @@ void FFV::NS_FS_E_CDS()
   U.copyS3D(d_p0, size, guide, d_p, one);
   U.copyV3D(d_v0, size, guide, d_v, one);
   TIMING_stop(tm_copy_array, 0.0, 2);
-  
+
   
   TIMING_stop(tm_frctnl_stp_sct_1, 0.0);
   // <<< Fractional step subsection 1
+
   
   
- 
   // >>> Fractional step sub-section 2
   TIMING_start(tm_frctnl_stp_sct_2);
   
-  // 対流項と粘性項の評価 >> In use (dc_vc, dc_wv)
-  switch (C.AlgorithmF) {
+  // 対流項と粘性項の評価 >> In use (d_vc, d_wv)
+  switch (C.AlgorithmF)
+  {
     case Flow_FS_EE_EE:
     case Flow_FS_AB2:
       TIMING_start(tm_pseudo_vec);
-      
       flop = 0.0;
-      v_mode = 1; // ?
 
-      if ( C.LES.Calc == ON )
+      switch ( cnv_scheme )
       {
-        Hostonly_ printf("not inplemented yet. sorry:-)\n");
-        Exit(0);
-      }
-      else
-      {
-        pvec_muscl_cds_(d_vc, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bcp, &v_mode, d_cut, &flop);
+        case Control::O1_upwind:
+        case Control::O3_muscl:
+          if ( C.LES.Calc == ON )
+          {
+            //pvec_les_(vc, sz, &guide, dh, (int*)&C.CnvScheme, v00, &rei, v0, vf, (int*)bcv, vt, &flop);
+          }
+          else
+          {
+            pvec_muscl_(d_vc, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bcp, &one, &flop);
+          }
+          break;
+          
+        case Control::O2_central:
+        case Control::O4_central:
+          if ( C.LES.Calc == ON )
+          {
+            //pvec_les_(vc, sz, &guide, dh, (int*)&C.CnvScheme, v00, &rei, v0, vf, (int*)bcv, vt, &flop);
+          }
+            else
+          {
+            pvec_central_(d_vc, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bcp, &one, &flop);
+          }
+          break;
       }
       TIMING_stop(tm_pseudo_vec, flop);
 
-      TIMING_start(tm_pvec_flux);
+      TIMING_start(tm_pvec_flux);      
       flop = 0.0;
       BC.modPvecFlux(d_vc, d_v0, d_cdf, CurrentTime, &C, v00, flop);
       TIMING_stop(tm_pvec_flux, flop);
@@ -123,14 +138,32 @@ void FFV::NS_FS_E_CDS()
     case Flow_FS_AB_CN:
       TIMING_start(tm_pseudo_vec);
       flop = 0.0;
-      v_mode = 0;
-      if ( C.LES.Calc == ON )
+      
+      switch ( cnv_scheme )
       {
-        Hostonly_ printf("not inplemented yet. sorry:-)\n");
-      }
-      else
-      {
-        pvec_muscl_cds_(d_wv, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bcp, &v_mode, d_cut, &flop);
+        case Control::O1_upwind:
+        case Control::O3_muscl:
+          if ( C.LES.Calc == ON )
+          {
+            //pvec_les_(wv, sz, &guide, dh, (int*)&C.CnvScheme, v00, &rei, v0, vf, (int*)bcv, vt, &flop);
+          }
+            else
+          {
+            pvec_muscl_(d_wv, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bcp, &half, &flop);
+          }
+          break;
+        
+        case Control::O2_central:
+        case Control::O4_central:
+          if ( C.LES.Calc == ON )
+          {
+            //pvec_les_(wv, sz, &guide, dh, (int*)&C.CnvScheme, v00, &rei, v0, vf, (int*)bcv, vt, &flop);
+          }
+          else
+          {
+            pvec_central_(d_wv, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bcp, &half, &flop);
+          }
+          break;
       }
       TIMING_stop(tm_pseudo_vec, flop);
       
@@ -145,7 +178,7 @@ void FFV::NS_FS_E_CDS()
   }
 
   // 時間積分
-  switch (C.AlgorithmF)
+  switch (C.AlgorithmF) 
   {
     case Flow_FS_EE_EE:
       TIMING_start(tm_pvec_ee);
@@ -161,21 +194,21 @@ void FFV::NS_FS_E_CDS()
       {
         euler_explicit_ (d_vc, size, &guide, &dt, d_v0, d_bcd, &flop);
       }
-      else
+      else 
       {
         ab2_(d_vc, size, &guide, &dt, d_v0, d_abf, d_bcd, v00, &flop);
       }
       TIMING_stop(tm_pvec_ab, flop);
       break;
       
-    case Flow_FS_AB_CN: // 未対応20110918
+    case Flow_FS_AB_CN:
       TIMING_start(tm_pvec_abcn);
       flop = 0.0;
-      if ( Session_CurrentStep == 1 )
+      if ( Session_CurrentStep == 1 ) 
       {
         euler_explicit_ (d_wv, size, &guide, &dt, d_v0, d_bcd, &flop);
       }
-      else
+      else 
       {
         ab2_(d_wv, size, &guide, &dt, d_v0, d_abf, d_bcd, v00, &flop);
       }
@@ -195,7 +228,7 @@ void FFV::NS_FS_E_CDS()
     default:
       Exit(0);
   }
-  
+
   TIMING_stop(tm_frctnl_stp_sct_2, 0.0);
   // <<< Fractional step subsection 2
   
@@ -204,41 +237,48 @@ void FFV::NS_FS_E_CDS()
   // >>> Fractional step sub-section 3
   TIMING_start(tm_frctnl_stp_sct_3);
   
-  // FORCINGコンポーネントの疑似速度ベクトルの方向修正
-  if ( C.EnsCompo.forcing == ON )
+  // FORCINGコンポーネントの疑似速度ベクトルの方向修正と力の加算
+  if ( C.EnsCompo.forcing == ON ) 
   {
     TIMING_start(tm_forcing);
     flop = 0.0;
     BC.mod_Pvec_Forcing(d_vc, d_v, d_bcd, d_cvf, v00, dt, flop);
     TIMING_stop(tm_forcing, flop);
   }
-  
+
   // 浮力項
-  if ( C.isHeatProblem() && (C.Mode.Buoyancy == BOUSSINESQ) )
+  if ( C.isHeatProblem() && (C.Mode.Buoyancy == BOUSSINESQ) ) 
   {
     TIMING_start(tm_buoyancy);
-    REAL_TYPE dgr = dt*C.Grashof*rei*rei;
+    REAL_TYPE dgr = dt*C.Grashof*rei*rei * v00[0];
     flop = 3.0;
-    Buoyancy(d_vc, dgr, d_ie0, d_bcd, flop);
+    //Buoyancy(d_vc, dgr, d_ie0, d_bcd, flop);
+    ps_buoyancy_(d_vc, size, &guide, &dgr, d_ie0, d_bcd, &C.NoCompo, mat_tbl, &flop);
     TIMING_stop(tm_buoyancy, flop);
   }
   
   
-  // 疑似ベクトルの境界条件
+  // セルフェイス速度の境界を決めるための準備
+  // 疑似速度ベクトルとn+1ステップの速度場に値を保持(流出・ノイマン・トラクションフリー)
   TIMING_start(tm_pvec_BC);
-  BC.OuterVBCpseudo(d_vc, d_v, d_cdf, &C, ensPeriodic);
-  BC.InnerVBCperiodic(d_vc, d_bcd);
+  //BC.OuterVBCfacePrep (d_vc, d_v0, d_cdf, dt, &C, ensPeriodic);
+  //BC.InnerVBCperiodic(d_vc, d_bcd);
   TIMING_stop(tm_pvec_BC, 0.0);
   
-  
-  // 疑似ベクトルの同期
-  if ( numProc > 1 )
+  // ベクトルの同期
+  if ( numProc > 1 ) 
   {
     TIMING_start(tm_pvec_comm);
     if ( paraMngr->BndCommV3D(d_vc, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
     TIMING_stop(tm_pvec_comm, face_comm_size*1.0*3.0); // ガイドセル数 x ベクトル
   }
   
+  
+  // セルフェイスベクトルの境界条件
+  //IMING_start(tm_pvec_BC);
+  //BC.OuterVBCface(d_vf, d_cdf, &C, ensPeriodic);
+  //TIMING_stop(tm_pvec_BC, 0.0);
+
   TIMING_stop(tm_frctnl_stp_sct_3, 0.0);
   // <<< Fractional step subsection 3
   
@@ -248,18 +288,20 @@ void FFV::NS_FS_E_CDS()
   TIMING_start(tm_frctnl_stp_sct_4);
   
   // Crank-Nicolson Iteration
-  if ( C.AlgorithmF == Flow_FS_AB_CN )
+  /*
+  if ( C.AlgorithmF == Flow_FS_AB_CN ) 
   {
-    TIMING_start(tm_copy_array);
+    TIMING_start(tm_copy_array);;
     U.copyV3D(d_wv, size, guide, d_vc, one);
     TIMING_stop(tm_copy_array, 0.0);
     
-    for (LSv->setLoopCount(0); LSv->getLoopCount()< LSv->getMaxIteration(); LSv->incLoopCount())
+    for (LSv->setLoopCount(0); LSv->getLoopCount() < LSv->getMaxIteration(); LSv->incLoopCount())
     {
       //CN_Itr(LSv);
       if ( LSv->isErrConverged() || LSv->isResConverged() ) break;
     }
   }
+   */
   
   TIMING_stop(tm_frctnl_stp_sct_4, 0.0);
   // <<< Fractional step subsection 4
@@ -268,86 +310,124 @@ void FFV::NS_FS_E_CDS()
   // <<< Fractional step section
   
 
-  
   // Poissonのソース部分
   // >>> Poisson Source section
   TIMING_start(tm_poi_src_sct);
   
   
-  // vの初期値をvcにしておく
-  TIMING_start(tm_copy_array);
-  U.copyV3D(d_v, size, guide, d_vc, one);
-  TIMING_stop(tm_copy_array, 0.0);
-  
-  
-  // 非反復ソース項のゼロクリア src0
-  TIMING_start(tm_assign_const);
-  U.initS3D(d_ws, size, guide, zero);
-  TIMING_stop(tm_assign_const, 0.0);
-  
-  
-  // 非VBC面に対してのみ，セルセンターの値から発散量を計算
-  TIMING_start(tm_div_pvec);
+  // {}^f \tilde{\bm{u}}^{n+1}と，非VBC面に対してのみ \sum{u} を計算
   flop = 0.0;
-  divergence_cds_(d_ws, size, &guide, &coef, d_vc, d_cdf, d_cut, v00, &flop);
-  TIMING_stop(tm_div_pvec, flop);
+  div_update_vec_(d_dv, d_vf, size, &guide, &dt, &dh, d_vc, d_p, d_bcp, d_cdf, &flop);
   
   
   // Poissonソース項の速度境界条件（VBC）面による修正
   TIMING_start(tm_poi_src_vbc);
   flop = 0.0;
-  BC.modPsrcVBC(d_ws, d_vc, d_v0, d_vf, d_cdf, CurrentTime, dt, &C, v00, flop);
+  BC.modPsrcVBC(d_dv, d_vc, d_v0, d_vf, d_cdf, CurrentTime, dt, &C, v00, flop);
   TIMING_stop(tm_poi_src_vbc, flop);
+
+  
+  // 修正ポテンシャルの初期値をゼロにしておく  \phi^{1} = 0
+  blas_clear_(d_ws, size, &guide);
   
   
   // (Neumann_BCType_of_Pressure_on_solid_wall == grad_NS)　のとき，\gamma^{N2}の処理
   //hogehoge
   
-  // 定数項bの自乗和　b_l2
+
+  // ソース項のコピー
+  //TIMING_start(tm_copy_array);
+  //flop = 0.0;
+  //U.copyS3D(d_sq, size, guide, d_ws, one);
+  //TIMING_stop(tm_copy_array, flop);
+
+  // 反復ソースの初期化
+  //TIMING_start(tm_assign_const);
+  //U.initS3D(d_sq, size, guide, zero);
+  //TIMING_stop(tm_assign_const, 0.0);
+  
+  // Forcingコンポーネントによるソース項の寄与分
+  /*
+  if ( C.EnsCompo.forcing == ON )
+  {
+    TIMING_start(tm_force_src);
+    flop=0.0;
+    BC.mod_Psrc_Forcing(d_sq, d_v0, d_bcd, d_cvf, v00, component_array, flop);
+    TIMING_stop(tm_force_src, flop);
+  }
+   */
+  
+  
+  // 内部周期境界部分のディリクレソース項
+  //TIMING_start(tm_prdc_src);
+  //BC.InnerPrdc_Src(d_sq, d_p, d_bcd);
+  //TIMING_stop(tm_prdc_src, flop);
+  
+
+  
+  /* 定数項bの自乗和　b_l2
   TIMING_start(tm_poi_src_nrm);
-  rhs_nrm = 0.0;
+  b_l2 = 0.0;
   flop = 0.0;
-  blas_calc_b_(&rhs_nrm, d_b, d_ws, d_bcp, size, &guide, &dh, &dt, &flop);
+  blas_calc_b_(&b_l2, d_b, d_dv, d_bcp, size, &guide, &dh, &dt, &flop);
   TIMING_stop(tm_poi_src_nrm, flop);
+  
   
   if ( numProc > 1 )
   {
     TIMING_start(tm_poi_src_comm);
-    double m_tmp = rhs_nrm;
-    if ( paraMngr->Allreduce(&m_tmp, &rhs_nrm, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    double m_tmp = b_l2;
+    if ( paraMngr->Allreduce(&m_tmp, &b_l2, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
     TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
   }
   
-  rhs_nrm = sqrt(rhs_nrm);
+  // L2 norm of b vector
+  b_l2 = sqrt(b_l2);
+  */
   
-  // Initial residual
+  /* Initial residual
   if ( LSp->getResType() == nrm_r_r0 )
   {
     TIMING_start(tm_poi_src_nrm);
-    res_init = 0.0;
+    res0_l2 = 0.0;
     flop = 0.0;
-    blas_calc_r2_(&res_init, d_p, d_b, d_bcp, size, &guide, &flop);
+    blas_calc_r2_(&res0_l2, d_p, d_b, d_bcp, size, &guide, &flop);
     TIMING_stop(tm_poi_src_nrm, flop);
     
     if ( numProc > 1 )
     {
       TIMING_start(tm_poi_src_comm);
-      double m_tmp = res_init;
-      if ( paraMngr->Allreduce(&m_tmp, &res_init, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      double m_tmp = res0_l2;
+      if ( paraMngr->Allreduce(&m_tmp, &res0_l2, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
       TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
     }
     
-    res_init = sqrt(res_init);
+    res0_l2 = sqrt(res0_l2);
   }
+   */
   
+
   TIMING_stop(tm_poi_src_sct, 0.0);
   // <<< Poisson Source section
   
+
+  /* 流出境界条件のアップデート（u^{n+1}を先に）
+  for (int face=0; face<NOFACE; face++)
+  {
+    BoundaryOuter* T = BC.exportOBC(face);
+    
+    if ( T->getClass() == OBC_OUTFLOW )
+    {
+      vobc_update_(d_v, size, &guide, &face, d_vc, nID);
+    }
+  }
+   */
   
   
   // VP-Iteration
   // >>> Poisson Iteration section
   TIMING_start(tm_poi_itr_sct);
+  
   
   if ( C.Mode.Log_Itr == ON )
   {
@@ -355,74 +435,112 @@ void FFV::NS_FS_E_CDS()
     Hostonly_ H->printHistoryItrTitle(fp_i);
     TIMING_stop(tm_hstry_itr, 0.0);
   }
-
-  for (LSp->setLoopCount(0); LSp->getLoopCount() <= LSp->getMaxIteration(); LSp->incLoopCount())
+  
+  
+  /* 定数項bの自乗和　b_l2
+  TIMING_start(tm_poi_src_nrm);
+  b_l2 = 0.0;
+  flop = 0.0;
+  blas_calc_b_(&b_l2, d_b, d_dv, d_bcp, size, &guide, &dh, &dt, &flop);
+  TIMING_stop(tm_poi_src_nrm, flop);
+  
+  
+  if ( numProc > 1 )
+  {
+    TIMING_start(tm_poi_src_comm);
+    double m_tmp = b_l2;
+    if ( paraMngr->Allreduce(&m_tmp, &b_l2, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
+  }
+  
+  // L2 norm of b vector
+  b_l2 = sqrt(b_l2);
+  */
+  
+  // 反復回数の積算
+  int loop_vp = 0;
+  int loop_p = 0;
+  
+  
+  for (loop_vp=1; loop_vp<DivC.MaxIteration; loop_vp++)
   {
     
-    // >>> Poisson Iteration subsection 1
-    TIMING_start(tm_poi_itr_sct_1);
+    // 定数項bの自乗和　b_l2
+    TIMING_start(tm_poi_src_nrm);
+    b_l2 = 0.0;
+    flop = 0.0;
+    blas_calc_b_(&b_l2, d_b, d_dv, d_bcp, size, &guide, &dh, &dt, &flop);
+    TIMING_stop(tm_poi_src_nrm, flop);
     
-    // 反復ソース項のゼロクリア => src1
-    TIMING_start(tm_assign_const);
-    U.initS3D(d_sq, size, guide, zero);
-    TIMING_stop(tm_assign_const, 0.0);
     
-    // Forcingコンポーネントによるソース項の寄与分
-    if ( C.EnsCompo.forcing == ON )
+    if ( numProc > 1 )
     {
-      TIMING_start(tm_force_src);
-      flop=0.0;
-      BC.mod_Psrc_Forcing(d_sq, d_v, d_bcd, d_cvf, v00, component_array, flop);
-      TIMING_stop(tm_force_src, flop);
+      TIMING_start(tm_poi_src_comm);
+      double m_tmp = b_l2;
+      if ( paraMngr->Allreduce(&m_tmp, &b_l2, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
     }
     
-    // 内部周期境界部分のディリクレソース項
-    //TIMING_start(tm_prdc_src);
-    //BC.InnerPrdc_Src(dc_wk2, dc_p, dc_bcd);
-    //TIMING_stop(tm_prdc_src, flop);
+    // L2 norm of b vector
+    b_l2 = sqrt(b_l2);
     
-    TIMING_stop(tm_poi_itr_sct_1, 0.0);
-    // <<< Poisson Iteration subsection 1
-
-    // 線形ソルバー
-    switch (LSp->getLS())
+    
+    // ポテンシャル反復
+    switch ( LSp->getLS() )
     {
-      case SOR:
-        LSp->PointSOR(d_p, d_b, rhs_nrm, res_init); // return x^{m+1} - x^m
+        case SOR:
+        if ( (loop_p += LSp->PointSOR(d_ws, d_b, b_l2, res0_l2)) < 0 ) Exit(0);
         break;
         
-      case SOR2SMA:
-        LSp->SOR2_SMA(d_p, d_b, LSp->getMaxIteration(), rhs_nrm, res_init); // return x^{m+1} - x^m
+        case SOR2SMA:
+        if ( (loop_p += LSp->SOR2_SMA(d_ws, d_b, LSp->getMaxIteration(), b_l2, res0_l2)) < 0 ) Exit(0);
         break;
         
-      //case GMRES:
-      //  Fgmres(LSp, rhs_nrm, res_init); // return ?
-      //  break;
-        
-      default:
-        printf("\tInvalid Linear Solver for Pressure\n");
-        Exit(0);
+        default:
         break;
     }
     
-
-    // >>> Poisson Iteration subsection 4
-    TIMING_start(tm_poi_itr_sct_4);
+    LSp->setLoopCount(loop_p);
     
-    // 速度のスカラポテンシャルによる射影と発散値 src1は，反復毎のソース項をワークとして利用
+    
+    // {}^f u^{k+1} = {}^f u^{k} - dt * \phi^{k}
     TIMING_start(tm_prj_vec);
     flop = 0.0;
-    update_vec_cds_(d_v, d_dv, size, &guide, &dt, &dh, d_vc, d_p, d_bcp, d_cdf, d_cut, v00, &flop);
+    div_update_vec_(d_dv, d_vf, size, &guide, &dt, &dh, d_v, d_ws, d_bcp, d_cdf, &flop);
     TIMING_stop(tm_prj_vec, flop);
     
-    // セルフェイス速度の境界条件による修正
+    
+    // 速度の流束形式の境界条件による修正
     TIMING_start(tm_prj_vec_bc);
     flop=0.0;
     BC.modDivergence(d_dv, d_cdf, CurrentTime, v00, m_buf, d_vf, d_v, &C, flop);
     TIMING_stop(tm_prj_vec_bc, flop);
     
+    
+    // div(u^{n+1})の計算
+    NormDiv();
+    
+    
+    flop = 0.0;
+    update_p_(d_p, size, &guide, d_ws, d_bcp, &flop);
+    
+    // セルセンタ速度の更新
+    flop = 0.0;
+    update_cc_vec_(d_v, size, &guide, &dt, &dh, d_vc, d_p, d_bcp, &flop);
+    
+    // 収束判定
+    if ( DivC.divergence <= DivC.divEPS ) break;
+    
+    
+
+    
+    
+    // >>> Poisson Iteration subsection 4
+    TIMING_start(tm_poi_itr_sct_4);
+    
+    /*
     // セルフェイス速度の境界条件の通信部分
-    if ( C.EnsCompo.outflow == ON )
+    if ( C.EnsCompo.outflow )
     {
       if ( numProc > 1 )
       {
@@ -434,7 +552,7 @@ void FFV::NS_FS_E_CDS()
         
         TIMING_start(tm_prj_vec_bc_comm);
         if ( paraMngr->Allreduce(m_snd, m_rcv, 2*(C.NoCompo+1), MPI_SUM) != CPM_SUCCESS ) Exit(0);
-        TIMING_stop(tm_prj_vec_bc_comm, 2.0*(C.NoCompo+1)*numProc*sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数 x 変数
+        TIMING_stop(tm_prj_vec_bc_comm, 2.0*C.NoCompo*numProc*sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数 x 変数
         
         for (int n=1; n<=C.NoCompo; n++)
         {
@@ -448,6 +566,7 @@ void FFV::NS_FS_E_CDS()
         if ( cmp[n].getType() == OUTFLOW )
         {
           cmp[n].val[var_Velocity] = m_buf[n].p0 / m_buf[n].p1; // 無次元平均流速
+          //printf("%e  = %e  / %e\n", cmp[n].val[var_Velocity], m_buf[n].p0, m_buf[n].p1);
         }
       }
     }
@@ -490,18 +609,67 @@ void FFV::NS_FS_E_CDS()
         }
       }
     }
+    
+    // 反復ソース項
+    if ( C.EnsCompo.forcing == ON )
+    {
+      TIMING_start(tm_force_src);
+      flop=0.0;
+      BC.mod_Psrc_Forcing(d_sq, d_v, d_bcd, d_cvf, v00, component_array, flop);
+      TIMING_stop(tm_force_src, flop);
+      
+      TIMING_start(tm_poi_src_nrm);
+      b_l2 = 0.0;
+      flop = 0.0;
+      blas_calc_b_(&b_l2, d_b, d_ws, d_bcp, size, &guide, &dh, &dt, &flop);
+      TIMING_stop(tm_poi_src_nrm, flop);
+      
+      if ( numProc > 1 )
+      {
+        TIMING_start(tm_poi_src_comm);
+        double m_tmp = b_l2;
+        if ( paraMngr->Allreduce(&m_tmp, &b_l2, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
+      }
+      
+      b_l2 = sqrt(b_l2);
+    }
+    
+    
+    // トラクションフリーの場合
+    if ( C.EnsCompo.tfree )
+    {
+      if ( numProc > 1 )
+      {
+        TIMING_start(tm_vectors_comm);
+        if ( paraMngr->BndCommV3D(d_vf, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+        TIMING_stop(tm_vectors_comm, 2*face_comm_size*guide*3.0);
+      }
+    }
+     */
+    
 
-    // 周期型の速度境界条件
-    TIMING_start(tm_vec_BC);
-    BC.InnerVBCperiodic(d_v, d_bcd);
-    TIMING_stop(tm_vec_BC, 0.0);
+    
     
     TIMING_stop(tm_poi_itr_sct_4, 0.0);
     // <<< Poisson Iteration subsection 4
- 
     
-    // ノルムの計算
-    NormDiv();
+    
+
+    
+    
+ 
+    if ( C.Mode.Log_Itr == ON )
+    {
+      TIMING_start(tm_hstry_itr);
+      Hostonly_
+      {
+        H->printHistoryItr(fp_i, dynamic_cast<IterationCtl*>(LS), DivC.divergence);
+        fflush(fp_i);
+      }
+      TIMING_stop(tm_hstry_itr, 0.0);
+    }
+    
     
     /* Forcingコンポーネントによる速度の方向修正(収束判定から除外)  >> TEST
      TIMING_start(tm_prj_frc_dir);
@@ -510,17 +678,31 @@ void FFV::NS_FS_E_CDS()
      TIMING_stop(tm_prj_frc_dir, flop);
      */
     
-    // 収束判定　性能測定モードのときは収束判定を行わない
-    //if ( (C.Hide.PM_Test == OFF) && LSd->isConverged() ) break;
-  } // end of iteration
+    
+  } // loop_vp
+  
+  DivC.Iteration = loop_vp;
+  
   
   TIMING_stop(tm_poi_itr_sct, 0.0);
   // <<< Poisson Iteration section
   
   
   
+  
   /// >>> NS Loop post section
   TIMING_start(tm_NS_loop_post_sct);
+  
+  
+
+  
+  
+  // 速度境界条件　値を代入する境界条件
+  TIMING_start(tm_vec_BC);
+  BC.OuterVBC(d_v, d_vf, d_cdf, CurrentTime, &C, v00, ensPeriodic);
+  BC.InnerVBCperiodic(d_v, d_bcd);
+  TIMING_stop(tm_vec_BC, 0.0);
+  
   
   // 同期
   if ( numProc > 1 )
@@ -530,10 +712,13 @@ void FFV::NS_FS_E_CDS()
     TIMING_stop(tm_vectors_comm, 2*face_comm_size*guide*3.0);
   }
   
+  
+  
   // 外部領域境界面での速度や流量を計算 > 外部流出境界条件の移流速度に利用
   TIMING_start(tm_domain_monitor);
   DomainMonitor(BC.exportOBC(), &C);
   TIMING_stop(tm_domain_monitor, 0.0);
+  
   
   
   // 非同期にして隠す
@@ -552,7 +737,6 @@ void FFV::NS_FS_E_CDS()
     }
   }
   
-
   
   TIMING_stop(tm_NS_loop_post_sct, 0.0);
   // >>> NS loop post section
@@ -561,5 +745,5 @@ void FFV::NS_FS_E_CDS()
   if ( m_buf ) delete [] m_buf;
   if ( m_snd ) delete [] m_snd;
   if ( m_rcv ) delete [] m_rcv;
-  
+
 }

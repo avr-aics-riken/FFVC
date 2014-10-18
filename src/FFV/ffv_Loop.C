@@ -79,6 +79,7 @@ int FFV::Loop(const unsigned step)
         if (C.Mode.ShapeAprx == BINARY)
         {
           NS_FS_E_Binary();
+          //NS_FS_E_Binary_CHSMAC();
         }
         else if (C.Mode.ShapeAprx == CUT_INFO)
         {
@@ -183,7 +184,7 @@ int FFV::Loop(const unsigned step)
   // 発散チェック
   if ( isnan(rms_Var[var_Velocity])
     || isnan(rms_Var[var_Pressure])
-    || isnan(div_value)
+    || isnan(DivC.divergence)
       )
   {
     isNormal = false;
@@ -326,11 +327,11 @@ int FFV::Loop(const unsigned step)
       TIMING_start(tm_hstry_stdout);
       Hostonly_
       {
-        H->printHistory(stdout, rms_Var, avr_Var, IC, &C, div_value, step_end, true);
+        H->printHistory(stdout, rms_Var, avr_Var, dynamic_cast<IterationCtl*>(LS), &C, &DivC, step_end, true);
         
         if ( C.Mode.CCNV == ON )
         {
-          H->printCCNV(rms_Var, avr_Var, IC, &C, div_value, step_end);
+          H->printCCNV(rms_Var, avr_Var, dynamic_cast<IterationCtl*>(LS), &C, DivC.divergence, step_end);
         }
       }
       TIMING_stop(tm_hstry_stdout, 0.0);
@@ -347,7 +348,7 @@ int FFV::Loop(const unsigned step)
       TIMING_start(tm_hstry_base);
       
       // 基本履歴情報
-      Hostonly_ H->printHistory(fp_b, rms_Var, avr_Var, IC, &C, div_value, step_end, true);
+      Hostonly_ H->printHistory(fp_b, rms_Var, avr_Var, dynamic_cast<IterationCtl*>(LS), &C, &DivC, step_end, true);
       
       // コンポーネント
       if ( C.EnsCompo.monitor )

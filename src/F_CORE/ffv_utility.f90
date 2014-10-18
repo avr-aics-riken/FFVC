@@ -21,9 +21,8 @@
 !<
 
 !> ********************************************************************
-!! @brief 有効セルに対する発散の最大値を計算，絶対値の最大値の位置を返す
-!! @param [out] ds   残差の絶対値
-!! @param [out] idx  ノルムの最大値の位置
+!! @brief 有効セルに対する発散の自乗和を計算
+!! @param [out] ds   残差の自乗和
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
 !! @param [in]  div  発散値のベース
@@ -31,13 +30,13 @@
 !! @param [in]  bp   BCindex P
 !! @param [out] flop flop count
 !<
-    subroutine norm_v_div_dbg (ds, idx, sz, g, div, coef, bp, flop)
+    subroutine norm_v_div_l2 (ds, sz, g, div, coef, bp, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, g, i0, j0, k0
-    integer, dimension(3)                                     ::  sz, idx
-    double precision                                          ::  flop, ds, r, d
-    real                                                      ::  coef
+    integer                                                   ::  i, j, k, ix, jx, kx, g
+    integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop
+    real                                                      ::  coef, ds, r
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
@@ -45,46 +44,28 @@
     jx = sz(2)
     kx = sz(3)
     ds = 0.0
-    i0 = 0
-    j0 = 0
-    k0 = 0
-    ds = 0.0
 
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*5.0d0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*4.0d0
 
 !$OMP PARALLEL &
-!$OMP PRIVATE(r, d) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, coef) &
-!$OMP SHARED(ds, i0, j0, k0)
+!$OMP PRIVATE(r) &
+!$OMP REDUCTION(+:ds) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, coef)
 
-!$OMP DO SCHEDULE(static)
-
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      r = dble(div(i,j,k) * coef) * dble(ibits(bp(i,j,k), vld_cnvg, 1)) ! 有効セルの場合 1.0
-      d = abs(r)
-      
-      if ( d > ds ) then
-!$OMP CRITICAL
-        i0 = i
-        j0 = j
-        k0 = k
-        ds = d
-!$OMP END CRITICAL
-      endif
+      r = div(i,j,k) * coef * real(ibits(bp(i,j,k), vld_cnvg, 1)) ! 有効セルの場合 1.0
+      ds = ds + r*r
     end do
     end do
     end do
 !$OMP END DO
 !$OMP END PARALLEL
-    
-    idx(1) = i0
-    idx(2) = j0
-    idx(3) = k0
 
     return
-    end subroutine norm_v_div_dbg
+    end subroutine norm_v_div_l2
 
 !> ********************************************************************
 !! @brief 速度成分の最大値を計算する
@@ -101,8 +82,8 @@
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
-    double precision                                          ::  flop, ds, r
-    real                                                      ::  coef
+    double precision                                          ::  flop
+    real                                                      ::  coef, ds, r
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
@@ -111,18 +92,18 @@
     kx = sz(3)
     ds = 0.0
 
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*6.0d0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*4.0d0
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(max:ds) &
 !$OMP PRIVATE(r) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, coef)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      r = dble(div(i,j,k) * coef) * dble(ibits(bp(i,j,k), vld_cnvg, 1)) ! 有効セルの場合 1.0
+      r = div(i,j,k) * coef * real(ibits(bp(i,j,k), vld_cnvg, 1)) ! 有効セルの場合 1.0
       ds = max(ds, abs(r) )
     end do
     end do
@@ -169,7 +150,7 @@
 !$OMP REDUCTION(max:vm3) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, vx, vy, vz)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
 
     do k=1,kx
     do j=1,jx
@@ -245,7 +226,7 @@
 !$OMP PRIVATE(q11, q22, q33, q12, q13, q23) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, h, u_ref, v_ref, w_ref)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
 
     do k=1,kx
     do j=1,jx
@@ -415,7 +396,7 @@
 !$OMP PRIVATE(r1, r2, r3) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, h, u_ref, v_ref, w_ref)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
 
     do k=1,kx
     do j=1,jx
@@ -574,7 +555,7 @@
 !$OMP PRIVATE(r1, r2, r3, u1, u2, u3) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, h, u_ref, v_ref, w_ref)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
 
     do k=1,kx
     do j=1,jx
@@ -716,7 +697,7 @@
     
     case (X_minus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
       do k=1,kx
       do j=1,jx
         avr = avr + p(1,j,k)
@@ -729,7 +710,7 @@
       
     case (X_plus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
       do k=1,kx
       do j=1,jx
         avr = avr + p(ix,j,k)
@@ -742,7 +723,7 @@
       
     case (Y_minus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
       do k=1,kx
       do i=1,ix
         avr = avr + p(i,1,k)
@@ -755,7 +736,7 @@
       
     case (Y_plus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
       do k=1,kx
       do i=1,ix
         avr = avr + p(i,jx,k)
@@ -768,7 +749,7 @@
       
     case (Z_minus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
       do j=1,jx
       do i=1,ix
         avr = avr + p(i,j,1)
@@ -781,7 +762,7 @@
     
     case (Z_plus)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
       do j=1,jx
       do i=1,ix
         avr = avr + p(i,j,kx)
@@ -820,7 +801,7 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, avr)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
 
     do k=1,kx
     do j=1,jx
@@ -888,7 +869,7 @@
 !$OMP PRIVATE(pp, bd) &
 !$OMP PRIVATE(idw, ide, ids, idn, idb, idt)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
 
   do k=ks,ke
   do j=js,je

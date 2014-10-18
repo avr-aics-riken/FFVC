@@ -898,9 +898,15 @@ protected:
    * @param [in] IC  IterationCtl
    * @param [in] DT  DTcntl
    * @param [in] RF  ReferenceFrame
+   * @param [in] DC  発散収束判定のコンテナ
    * @param [in] em  ffvcの実行モード
    */
-  void printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT, const ReferenceFrame* RF, const int em);
+  void printSteerConditions(FILE* fp,
+                            IterationCtl* IC,
+                            const DTcntl* DT,
+                            const ReferenceFrame* RF,
+                            const DivConvergence* DC,
+                            const int em);
   
   
   
@@ -912,7 +918,7 @@ public:
    * @param [in,out] IC   反復制御用クラスの基底へのポインタ
    * @param [in]     name ラベル
    */
-  void copyCriteria(IterationCtl& IC, const string name);
+  void copyCriteria(IterationCtl* IC, const string name);
   
   
   /**
@@ -922,6 +928,7 @@ public:
    * @param [in] IC   IterationCtl
    * @param [in] DT   DTcntl
    * @param [in] RF   ReferenceFrame
+   * @param [in] DC   発散値収束判定パラメータ
    * @param [in] mat  MediumList
    * @param [in] cmp  CompoList
    * @param [in] em   ffvcの実行モード
@@ -930,6 +937,7 @@ public:
                      IterationCtl* IC,
                      DTcntl* DT,
                      ReferenceFrame* RF,
+                     DivConvergence* DC,
                      MediumList* mat,
                      CompoList* cmp,
                      const int em);

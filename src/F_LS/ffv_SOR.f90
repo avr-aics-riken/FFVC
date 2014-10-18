@@ -15,144 +15,10 @@
 !
 !###################################################################################
 
-!> @file   ffv_poisson.f90
-!! @brief  Poisson routine
+!> @file   ffv_SOR.f90
+!! @brief  SOR series routine
 !! @author aics
 !<
-
-
-!> ********************************************************************
-!! @brief 圧力Poissonの定数項の計算
-!! @param [out] rhs  右辺ベクトルbの自乗和
-!! @param [out] b    RHS vector b
-!! @param [in]  sz   配列長
-!! @param [in]  g    ガイドセル長
-!! @param [in]  s_0  \sum {u^*}
-!! @param [in]  s_1  \sum {\beta F}
-!! @param [in]  bp   BCindex P
-!! @param [in]  dh   格子幅
-!! @param [in]  dt   時間積分幅
-!! @param [out] flop flop count
-!<
-subroutine poi_rhs (rhs, b, sz, g, s_0, s_1, bp, dh, dt, flop)
-implicit none
-include 'ffv_f_params.h'
-integer                                                     ::  i, j, k, ix, jx, kx, g, idx
-integer, dimension(3)                                       ::  sz
-double precision                                            ::  flop, rhs
-real                                                        ::  dh, dt, c1, dv, dd, d0, d1, d2
-real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  s_0, s_1, b
-integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bp
-
-ix = sz(1)
-jx = sz(2)
-kx = sz(3)
-rhs = 0.0
-c1 = dh / dt
-
-flop = flop + dble(ix)*dble(jx)*dble(kx)*19.0d0 + 8.0d0
-! flop = flop + dble(ix)*dble(jx)*dble(kx)*20.0d0
-
-!$OMP PARALLEL &
-!$OMP REDUCTION(+:rhs) &
-!$OMP PRIVATE(dv, dd, d0, d1, d2, idx) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, c1, dh)
-
-!$OMP DO SCHEDULE(static) COLLAPSE(2)
-
-do k=1,kx
-do j=1,jx
-do i=1,ix
-  idx = bp(i,j,k)
-  d0 = real(ibits(idx, bc_diag + 0, 1)) ! 京のコンパイラが３ビットデコードをSIMD化できれば，ibits(idx, bc_diag, 3)
-  d1 = real(ibits(idx, bc_diag + 1, 1))
-  d2 = real(ibits(idx, bc_diag + 2, 1))
-  dd = 1.0 / (d2*4.0 + d1*2.0 + d0)  ! diagonal
-  dv = dd * real( c1 * s_0(i,j,k) + dh * s_1(i,j,k) ) * real(ibits(idx, Active, 1))
-  b(i,j,k) = dv ! \frac{h^2}{\Delta t} \nabla u^*
-  rhs = rhs + dble(dv*dv)
-end do
-end do
-end do
-!$OMP END DO
-!$OMP END PARALLEL
-
-return
-end subroutine poi_rhs
-
-
-!> ********************************************************************
-!! @brief 残差計算
-!! @param [out] res2 残差
-!! @param [in]  sz   配列長
-!! @param [in]  g    ガイドセル長
-!! @param [in]  p    圧力
-!! @param [in]  b    RHS vector
-!! @param [in]  bp   BCindex P
-!! @param [out] flop flop count
-!<
-subroutine poi_residual (res2, sz, g, p, b, bp, flop)
-implicit none
-include 'ffv_f_params.h'
-integer                                                   ::  i, j, k, ix, jx, kx, g, idx
-integer, dimension(3)                                     ::  sz
-double precision                                          ::  flop, res, res2
-real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
-real                                                      ::  dd, ss, dp, d0, d1, d2
-real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
-integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
-
-ix = sz(1)
-jx = sz(2)
-kx = sz(3)
-res = 0.0
-
-flop = flop + dble(ix)*dble(jx)*dble(kx)*21.0d0
-! flop = flop + dble(ix)*dble(jx)*dble(kx)*39.0d0 ! DP
-
-!$OMP PARALLEL &
-!$OMP REDUCTION(+:res) &
-!$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t, dd, ss, dp, idx, d0, d1, d2) &
-!$OMP FIRSTPRIVATE(ix, jx, kx)
-
-!$OMP DO SCHEDULE(static) COLLAPSE(2)
-
-do k=1,kx
-do j=1,jx
-do i=1,ix
-idx = bp(i,j,k)
-ndag_e = real(ibits(idx, bc_ndag_E, 1))  ! e, non-diagonal
-ndag_w = real(ibits(idx, bc_ndag_W, 1))  ! w
-ndag_n = real(ibits(idx, bc_ndag_N, 1))  ! n
-ndag_s = real(ibits(idx, bc_ndag_S, 1))  ! s
-ndag_t = real(ibits(idx, bc_ndag_T, 1))  ! t
-ndag_b = real(ibits(idx, bc_ndag_B, 1))  ! b
-
-d0 = real(ibits(idx, bc_diag + 0, 1))
-d1 = real(ibits(idx, bc_diag + 1, 1))
-d2 = real(ibits(idx, bc_diag + 2, 1))
-dd = d2*4.0 + d1*2.0 + d0  ! diagonal
-! dd = real(ibits(idx, bc_diag, 3))  iff, K compiler is improved
-
-ss =  ndag_e * p(i+1,j  ,k  ) &
-    + ndag_w * p(i-1,j  ,k  ) &
-    + ndag_n * p(i  ,j+1,k  ) &
-    + ndag_s * p(i  ,j-1,k  ) &
-    + ndag_t * p(i  ,j  ,k+1) &
-    + ndag_b * p(i  ,j  ,k-1)
-dp = ( b(i,j,k) - (ss - p(i,j,k)*dd) ) * real(ibits(idx, Active, 1))
-res = res + dble(dp*dp)
-end do
-end do
-end do
-!$OMP END DO
-!$OMP END PARALLEL
-
-res2 = res
-
-return
-end subroutine poi_residual
-
 
 
 !> ********************************************************************
@@ -174,7 +40,7 @@ end subroutine poi_residual
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, res, err, aa, xl2
     real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
-    real                                                      ::  omg, dd, ss, dp, pp, d0, d1, d2, bb, de
+    real                                                      ::  omg, dd, ss, dp, pp, d0, d1, d2, bb, de, pn
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
     double precision, dimension(3)                            ::  cnv
@@ -194,7 +60,7 @@ end subroutine poi_residual
 !$OMP REDUCTION(+:err) &
 !$OMP REDUCTION(+:xl2) &
 !$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t) &
-!$OMP PRIVATE(idx, aa, d0, d1, d2, dd, pp, bb, ss, dp, de) &
+!$OMP PRIVATE(idx, aa, d0, d1, d2, dd, pp, bb, ss, dp, de, pn) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, omg)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
@@ -227,11 +93,12 @@ end subroutine poi_residual
          + ndag_t * p(i  ,j  ,k+1) &
          + ndag_b * p(i  ,j  ,k-1)
       dp = ( (ss - bb)/dd - pp ) * omg
-      p(i,j,k) = pp + dp
+      pn = pp + dp
+      p(i,j,k) = pn
 
-      de  = bb - (ss - pp * dd)
+      de  = bb - (ss - pn * dd)
       res = res + dble(de*de) * aa
-      xl2 = xl2 + dble(pp*pp) * aa
+      xl2 = xl2 + dble(pn*pn) * aa
       err = err + dble(dp*dp) * aa
     end do
     end do
@@ -268,7 +135,7 @@ integer                                                   ::  i, j, k, ix, jx, k
 integer, dimension(3)                                     ::  sz
 double precision                                          ::  flop, res, err, xl2, aa
 real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
-real                                                      ::  omg, dd, ss, dp, pp, d0, d1, d2, bb, de
+real                                                      ::  omg, dd, ss, dp, pp, d0, d1, d2, bb, de, pn
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 integer                                                   ::  ip, color
@@ -290,7 +157,7 @@ flop = flop + dble(ix)*dble(jx)*dble(kx) * 39.0d0 * 0.5d0
 !$OMP REDUCTION(+:err) &
 !$OMP REDUCTION(+:xl2) &
 !$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t) &
-!$OMP PRIVATE(idx, aa, d0, d1, d2, dd, pp, bb, ss, dp, de) &
+!$OMP PRIVATE(idx, aa, d0, d1, d2, dd, pp, bb, ss, dp, de, pn) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, color, ip, omg)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
@@ -324,11 +191,12 @@ do i=1+mod(k+j+color+ip,2), ix, 2
      + ndag_t * p(i  ,j  ,k+1) &
      + ndag_b * p(i  ,j  ,k-1)
   dp = ( (ss - bb)/dd - pp ) * omg
-  p(i,j,k) = pp + dp
+  pn = pp + dp
+  p(i,j,k) = pn
 
-  de  = bb - (ss - pp * dd)
+  de  = bb - (ss - pn * dd)
   res = res + dble(de*de) * aa
-  xl2 = xl2 + dble(pp*pp) * aa
+  xl2 = xl2 + dble(pn*pn) * aa
   err = err + dble(dp*dp) * aa
 end do
 end do
@@ -367,7 +235,7 @@ end subroutine psor2sma_core
   integer, dimension(3)                                     ::  sz
   double precision                                          ::  flop, res, err, xl2, aa
   real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
-  real                                                      ::  omg, dd, ss, dp, pp, bb, de
+  real                                                      ::  omg, dd, ss, dp, pp, bb, de, pnew
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 7) ::  pn
   integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
@@ -390,7 +258,7 @@ end subroutine psor2sma_core
 !$OMP REDUCTION(+:err) &
 !$OMP REDUCTION(+:xl2) &
 !$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t) &
-!$OMP PRIVATE(dd, aa, pp, bb, ss, dp, de) &
+!$OMP PRIVATE(dd, aa, pp, bb, ss, dp, de, pnew) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, color, ip, omg)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
@@ -418,11 +286,12 @@ end subroutine psor2sma_core
        + ndag_t * p(i  ,j  ,k+1) &
        + ndag_b * p(i  ,j  ,k-1)
     dp = ( (ss - bb)/dd - pp ) * omg
-    p(i,j,k) = pp + dp
+    pnew = pp + dp
+    p(i,j,k) = pnew
 
-    de  = bb - (ss - pp * dd)
+    de  = bb - (ss - pnew * dd)
     res = res + dble(de*de) * aa
-    xl2 = xl2 + dble(pp*pp) * aa
+    xl2 = xl2 + dble(pnew*pnew) * aa
     err = err + dble(dp*dp) * aa
   end do
   end do

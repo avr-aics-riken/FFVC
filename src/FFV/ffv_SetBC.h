@@ -311,7 +311,7 @@ public:
   
   
   /**
-   * @brief 速度の外部境界条件処理（VP反復内で値を指定する境界条件）
+   * @brief 速度の外部境界条件処理（Div反復内で値を指定する境界条件）
    * @param [in,out] d_v   セルセンター速度ベクトル v^{n+1}
    * @param [in]     d_vf  セルフェイス速度ベクトル v^{n+1}
    * @param [in]     d_cdf BCindex C
@@ -324,13 +324,41 @@ public:
   
   
   /**
-   * @brief 疑似速度の外部境界条件処理
-   * @param [out]    d_vc   疑似速度ベクトル v^*
-   * @param [in]     d_cdf  BCindex C
-   * @param [in]     C      Control class
+   * @brief 速度の外部境界条件処理（セルフェイス）
+   * @param [in]     d_vf  セルフェイス速度ベクトル
+   * @param [in]     d_cdf BCindex C
+   * @param [in]     tm    時刻
+   * @param [in]     C     コントロールクラス
+   * @param [in]     v00   参照速度
    * @param [in]     ens  周期境界方向フラグ
    */
-  void OuterVBCpseudo (REAL_TYPE* d_vc, int* d_cdf, Control* C, const int* ens);
+  void OuterVBCface (REAL_TYPE* d_vf, int* d_cdf, const double tm, Control* C, REAL_TYPE* v00, const int* ens);
+  
+  
+  /**
+   * @brief 速度の外部境界条件処理（セルフェイス）の準備
+   * @param [in]     d_vc  疑似速度ベクトル
+   * @param [in]     d_v   セルセンター速度ベクトル v^{n}
+   * @param [in]     d_cdf BCindex C
+   * @param [in]     dt    時間積分幅
+   * @param [in]     C     コントロールクラス
+   * @param [in]     ens  周期境界方向フラグ
+   */
+  void OuterVBCfacePrep (REAL_TYPE* d_vc,
+                         REAL_TYPE* d_v,
+                         int* d_cdf,
+                         REAL_TYPE dt,
+                         Control* C,
+                         const int* ens);
+  /**
+   * @brief 疑似速度の外部境界条件処理
+   * @param [out]    d_vc   疑似速度ベクトル v^*
+   * @param [in]     d_v0   速度ベクトル v^n
+   * @param [in]     d_cdf  BCindex C
+   * @param [in]     C      Control class
+   * @param [in]     ens    周期境界方向フラグ
+   */
+  void OuterVBCpseudo (REAL_TYPE* d_vc, REAL_TYPE* d_v0, int* d_cdf, Control* C, const int* ens);
   
   
   /**

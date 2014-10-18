@@ -28,7 +28,7 @@ libFLS_a_SOURCES = \
   ffv_LSfunc.h \
   ffv_blas.f90 \
   ffv_bicg.f90 \
-  ffv_poisson.f90 \
-  ffv_poisson2.f90
+  ffv_SOR.f90
 
-EXTRA_DIST = Makefile_hand depend.inc ffv_poisson_cds.f90
+
+EXTRA_DIST = Makefile_hand depend.inc ffv_poisson_cds.f90 ffv_poisson2.f90

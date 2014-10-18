@@ -20,6 +20,7 @@
  * @file   IterationControl.h
  * @brief  FlowBase IterationCtl class Header
  * @author aics
+ * @todo 先に、pressure="sor"の文字列を確認して、リストアップされたパラメータを読み込むようにした方がいいかも
  */
 
 #include "FB_Define.h"
@@ -34,36 +35,37 @@ using namespace std;
 // #################################################################
 class IterationCtl {
   
-private:
+protected:
+  
   double residual;      ///< 残差
   double error;         ///< 誤差
   double eps_res;       ///< 残差の収束閾値
-  double eps_err;       ///< 残差の収束閾値
+  double eps_err;       ///< 誤差の収束閾値
   double omg;           ///< 加速/緩和係数
   int ErrNorm;          ///< 誤差ノルムの種類
   int ResNorm;          ///< 残差ノルムの種類
   int MaxIteration;     ///< 最大反復数
   int LinearSolver;     ///< 線形ソルバーの種類
   int LoopCount;        ///< 反復回数 （計算実行中に利用）
-  int valid;            ///< 有効フラグ
   int Sync;             ///< 同期モード (comm_sync, comm_async)
   int Naive;            ///< Naive Implementation >> on/off
+  int precondition;     ///< 前処理mode
   string alias;         ///< 別名
   
 public:
   
   /** コンストラクタ */
   IterationCtl() {
+    precondition = OFF;
     ErrNorm = 0;
     ResNorm = 0;
     MaxIteration = 0;
     LoopCount = 0;
-    LinearSolver = 0;
+    LinearSolver = 0; // zero indicates undefined state.
     eps_res = 0.0;
     eps_err = 0.0;
     residual = 0.0;
     error = 0.0;
-    valid = -1;
     omg = 0.0;
     Sync = -1;
     Naive = OFF;
@@ -72,10 +74,8 @@ public:
   }
   
   /**　デストラクタ */
-  ~IterationCtl() {}
+  virtual ~IterationCtl() {}
   
-  
-public:
   
   // @brief 基本メンバー変数のコピー
   // @param [in] src コピー元
@@ -89,25 +89,37 @@ public:
   }
   
   
-  /**
-   * @brief 固有パラメータを取得
-   * @param [in]  tpCntl   TextParser pointer
-   * @param [in]  base     ラベル
-   */
-  bool getInherentPara(TextParser* tpCntl, const string base);
-  
-  
-  // @brief 残差の収束閾値を返す
-  double getResCriterion() const
+  // @brief keyに対応する誤差を返す
+  double getError() const
   {
-    return eps_res;
+    return error;
   }
+  
   
   // @brief 誤差の収束閾値を返す
   double getErrCriterion() const
   {
     return eps_err;
   }
+  
+  
+  // @brief 誤差ノルムの文字列を返す
+  string getErrNormString();
+  
+  
+  // @brief 誤差ノルムの種類を返す
+  int getErrType() const
+  {
+    return ErrNorm;
+  }
+  
+  
+  /**
+   * @brief 固有パラメータを取得
+   * @param [in]  tpCntl   TextParser pointer
+   * @param [in]  base     ラベル
+   */
+  bool getInherentPara(TextParser* tpCntl, const string base);
   
   
   // @brief 反復カウントを返す
@@ -138,19 +150,50 @@ public:
   }
   
   
-  // @brief 誤差ノルムの文字列を返す
-  string getErrNormString();
+  // @brief 緩和/加速係数を返す
+  double getOmega() const
+  {
+    return omg;
+  }
+  
+  
+  // Gmres反復固有のパラメータを指定する
+  void getParaGmres(TextParser* tpCntl, const string base);
+  
+  
+  // Jacobi反復固有のパラメータを指定する
+  void getParaJacobi(TextParser* tpCntl, const string base);
+  
+  
+  // BiCGSTAB反復固有のパラメータを指定する
+  void getParaBiCGSTAB(TextParser* tpCntl, const string base);
+  
+  
+  // RB-SOR反復固有のパラメータを指定する
+  void getParaSOR2(TextParser* tpCntl, const string base);
+  
+  
+  // Div反復固有のパラメータを指定する
+  bool getParaVP(TextParser* tpCntl);
+  
+  
+  // @brief 前処理モードを返す
+  int getPrecondition() const
+  {
+    return precondition;
+  }
+  
+  
+  // @brief 残差の収束閾値を返す
+  double getResCriterion() const
+  {
+    return eps_res;
+  }
   
   
   // @brief 残差ノルムの文字列を返す
   string getResNormString();
   
-  
-  // @brief 誤差ノルムの種類を返す
-  int getErrType() const
-  {
-    return ErrNorm;
-  }
   
   // @brief 残差ノルムの種類を返す
   int getResType() const
@@ -165,16 +208,11 @@ public:
     return residual;
   }
   
-  // @brief keyに対応する誤差を返す
-  double getError() const
-  {
-    return error;
-  }
   
-  // @brief 有効フラグを返す
-  int getValid() const
+  // @brief 同期モードを返す
+  int getSyncMode() const
   {
-    return valid;
+    return Sync;
   }
   
   
@@ -232,11 +270,13 @@ public:
   }
   
   
-  // @brief 誤差ノルムのタイプを保持
-  void setErrType(const int n)
-  {
-    ErrNorm = n;
-  }
+  /**
+   * @brief 誤差ノルムのタイプを保持
+   * @param [in]  tpCntl   TextParser pointer
+   * @param [in]  label    ラベル
+   */
+  bool setErrType(TextParser* tpCntl, const string label);
+
   
   // @brief 残差ノルムのタイプを保持
   void setResType(const int n)
@@ -244,11 +284,13 @@ public:
     ResNorm = n;
   }
   
+  
   // @brief 残差を保持
   void setResidual(const double r)
   {
     residual = r;
   }
+  
   
   // @brief 誤差を保持
   void setError(const double r)
@@ -257,68 +299,11 @@ public:
   }
   
   
-  // @brief validフラグを設定
-  void setValid(const int n)
-  {
-    valid = n;
-  }
-  
-  
-  // @brief 緩和/加速係数を返す
-  double getOmega() const
-  {
-    return omg;
-  }
-  
-  
-  // @brief 同期モードを返す
-  int getSyncMode() const
-  {
-    return Sync;
-  }
-  
-  
-  // @brief 緩和/加速係数を保持
-  void setOmega(const double r)
-  {
-    omg = r;
-  }
-  
-  
   // @brief 同期モードを保持
   void setSyncMode(const Synch_Mode r)
   {
     Sync = r;
   }
-  
-private:
-
-  // Gmres反復固有のパラメータを指定する
-  void getParaGmres(TextParser* tpCntl, const string base);
-  
-  
-  // Jacobi反復固有のパラメータを指定する
-  void getParaJacobi(TextParser* tpCntl, const string base);
-  
-  
-  // PBiCGSTAB反復固有のパラメータを指定する
-  void getParaPBiCGSTAB(TextParser* tpCntl, const string base);
-  
-  
-  // PCG反復固有のパラメータを指定する
-  void getParaPCG(TextParser* tpCntl, const string base);
-  
-  
-  // RBGS反復固有のパラメータを指定する
-  void getParaRBGS(TextParser* tpCntl, const string base);
-  
-  
-  // SOR反復固有のパラメータを指定する
-  void getParaSOR(TextParser* tpCntl, const string base);
-  
-  
-  // RB-SOR反復固有のパラメータを指定する
-  void getParaSOR2(TextParser* tpCntl, const string base);
   
 };
 

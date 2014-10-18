@@ -35,6 +35,7 @@ libFFV_a_CXXFLAGS = \
 
 libFFV_a_SOURCES = \
   NS_FS_E_Binary.C \
+  NS_FS_E_Binary_C-HSMAC.C \
   NS_FS_E_CDS.C \
   PS_Binary.C \
   ffv.C \
@@ -46,6 +47,7 @@ libFFV_a_SOURCES = \
   ffv_Heat.C \
   ffv_Initialize.C \
   ffv_LS.C \
+  ffv_LS.h \
   ffv_Loop.C \
   ffv_Post.C \
   ffv_Restart.C \

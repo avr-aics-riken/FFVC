@@ -140,6 +140,7 @@ am__v_AR_1 =
 libFFV_a_AR = $(AR) $(ARFLAGS)
 libFFV_a_LIBADD =
 am_libFFV_a_OBJECTS = libFFV_a-NS_FS_E_Binary.$(OBJEXT) \
+	libFFV_a-NS_FS_E_Binary_C-HSMAC.$(OBJEXT) \
 	libFFV_a-NS_FS_E_CDS.$(OBJEXT) libFFV_a-PS_Binary.$(OBJEXT) \
 	libFFV_a-ffv.$(OBJEXT) libFFV_a-ffv_Alloc.$(OBJEXT) \
 	libFFV_a-ffv_Filter.$(OBJEXT) libFFV_a-ffv_Geometry.$(OBJEXT) \
@@ -370,6 +371,7 @@ libFFV_a_CXXFLAGS = \
 
 libFFV_a_SOURCES = \
   NS_FS_E_Binary.C \
+  NS_FS_E_Binary_C-HSMAC.C \
   NS_FS_E_CDS.C \
   PS_Binary.C \
   ffv.C \
@@ -381,6 +383,7 @@ libFFV_a_SOURCES = \
   ffv_Heat.C \
   ffv_Initialize.C \
   ffv_LS.C \
+  ffv_LS.h \
   ffv_Loop.C \
   ffv_Post.C \
   ffv_Restart.C \
@@ -471,6 +474,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFFV_a-NS_FS_E_Binary.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFFV_a-NS_FS_E_Binary_C-HSMAC.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFFV_a-NS_FS_E_CDS.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFFV_a-PS_Binary.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFFV_a-ffv.Po@am__quote@
@@ -513,6 +517,20 @@ libFFV_a-NS_FS_E_Binary.obj: NS_FS_E_Binary.C
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='NS_FS_E_Binary.C' object='libFFV_a-NS_FS_E_Binary.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-NS_FS_E_Binary.obj `if test -f 'NS_FS_E_Binary.C'; then $(CYGPATH_W) 'NS_FS_E_Binary.C'; else $(CYGPATH_W) '$(srcdir)/NS_FS_E_Binary.C'; fi`
+
+libFFV_a-NS_FS_E_Binary_C-HSMAC.o: NS_FS_E_Binary_C-HSMAC.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-NS_FS_E_Binary_C-HSMAC.o -MD -MP -MF $(DEPDIR)/libFFV_a-NS_FS_E_Binary_C-HSMAC.Tpo -c -o libFFV_a-NS_FS_E_Binary_C-HSMAC.o `test -f 'NS_FS_E_Binary_C-HSMAC.C' || echo '$(srcdir)/'`NS_FS_E_Binary_C-HSMAC.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-NS_FS_E_Binary_C-HSMAC.Tpo $(DEPDIR)/libFFV_a-NS_FS_E_Binary_C-HSMAC.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='NS_FS_E_Binary_C-HSMAC.C' object='libFFV_a-NS_FS_E_Binary_C-HSMAC.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-NS_FS_E_Binary_C-HSMAC.o `test -f 'NS_FS_E_Binary_C-HSMAC.C' || echo '$(srcdir)/'`NS_FS_E_Binary_C-HSMAC.C
+
+libFFV_a-NS_FS_E_Binary_C-HSMAC.obj: NS_FS_E_Binary_C-HSMAC.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-NS_FS_E_Binary_C-HSMAC.obj -MD -MP -MF $(DEPDIR)/libFFV_a-NS_FS_E_Binary_C-HSMAC.Tpo -c -o libFFV_a-NS_FS_E_Binary_C-HSMAC.obj `if test -f 'NS_FS_E_Binary_C-HSMAC.C'; then $(CYGPATH_W) 'NS_FS_E_Binary_C-HSMAC.C'; else $(CYGPATH_W) '$(srcdir)/NS_FS_E_Binary_C-HSMAC.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFFV_a-NS_FS_E_Binary_C-HSMAC.Tpo $(DEPDIR)/libFFV_a-NS_FS_E_Binary_C-HSMAC.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='NS_FS_E_Binary_C-HSMAC.C' object='libFFV_a-NS_FS_E_Binary_C-HSMAC.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -c -o libFFV_a-NS_FS_E_Binary_C-HSMAC.obj `if test -f 'NS_FS_E_Binary_C-HSMAC.C'; then $(CYGPATH_W) 'NS_FS_E_Binary_C-HSMAC.C'; else $(CYGPATH_W) '$(srcdir)/NS_FS_E_Binary_C-HSMAC.C'; fi`
 
 libFFV_a-NS_FS_E_CDS.o: NS_FS_E_CDS.C
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFFV_a_CXXFLAGS) $(CXXFLAGS) -MT libFFV_a-NS_FS_E_CDS.o -MD -MP -MF $(DEPDIR)/libFFV_a-NS_FS_E_CDS.Tpo -c -o libFFV_a-NS_FS_E_CDS.o `test -f 'NS_FS_E_CDS.C' || echo '$(srcdir)/'`NS_FS_E_CDS.C

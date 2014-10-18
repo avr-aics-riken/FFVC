@@ -32,6 +32,8 @@ libFCORE_a_SOURCES = \
   ffv_utility.f90 \
   ffv_vbc_inner.f90 \
   ffv_vbc_outer.f90 \
+  ffv_vbc_outer_face.f90 \
+  ffv_vbc_outer_flux.f90 \
   ffv_velocity_binary.f90 \
   force.h \
   ffv_velocity_cds.f90 \

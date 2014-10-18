@@ -56,7 +56,7 @@ void History::printCCNV(const double* rms, const double* avr, const IterationCtl
       case Flow_FS_AB2:
       case Flow_FS_AB_CN:
         // Iteration Pressure
-        data[c++] = (double)ICp1->getLoopCount()+1.0;
+        data[c++] = (double)ICp1->getLoopCount();
         
         // Residual Pressure
         data[c++] = (double)ICp1->getResidual();
@@ -69,7 +69,7 @@ void History::printCCNV(const double* rms, const double* avr, const IterationCtl
     if (C->AlgorithmF == Flow_FS_AB_CN)
     {
       // Iteration Velocity
-      data[c++] = (double)ICv->getLoopCount()+1.0;
+      data[c++] = (double)ICv->getLoopCount();
       
       // Residual Velocity
       data[c++] = (double)ICv->getResidual();
@@ -100,7 +100,7 @@ void History::printCCNV(const double* rms, const double* avr, const IterationCtl
           
         case Heat_EE_EI:
           // Iteration Energy
-          data[c++] = (double)ICt->getLoopCount()+1.0;
+          data[c++] = (double)ICt->getLoopCount();
           
           // Residual Energy
           data[c++] = (double)ICt->getResidual();
@@ -126,7 +126,7 @@ void History::printCCNV(const double* rms, const double* avr, const IterationCtl
         
       case Heat_EE_EI:
         // Iteration Energy
-        data[c++] = (double)ICt->getLoopCount()+1.0;
+        data[c++] = (double)ICt->getLoopCount();
         
         // Residual Energy
         data[c++] = (double)ICt->getResidual();
@@ -361,7 +361,14 @@ void History::printCCNVtitle(const IterationCtl* IC, const Control* C)
 
 // #################################################################
 // 標準履歴の出力
-void History::printHistory(FILE* fp, const double* rms, const double* avr, const IterationCtl* IC, const Control* C, const double divergence, const double stptm, const bool disp)
+void History::printHistory(FILE* fp,
+                           const double* rms,
+                           const double* avr,
+                           const IterationCtl* IC,
+                           const Control* C,
+                           const DivConvergence* DC,
+                           const double stptm,
+                           const bool disp)
 {
   const IterationCtl* ICp1 = &IC[ic_prs1];  ///< 圧力のPoisson反復
   const IterationCtl* ICv  = &IC[ic_vel1];  ///< 粘性項のCrank-Nicolson反復
@@ -375,24 +382,23 @@ void History::printHistory(FILE* fp, const double* rms, const double* avr, const
       ( C->KindOfSolver==CONJUGATE_HT) ||
       ( C->KindOfSolver==CONJUGATE_HT_NATURAL) )
   {
-    fprintf(fp, " %11.4e", printVmax() );
+    fprintf(fp, " %11.4e %5d    %12.5e", printVmax(), DC->Iteration, DC->divergence);
     
     switch (C->AlgorithmF)
     {
       case Flow_FS_EE_EE:
       case Flow_FS_AB2:
       case Flow_FS_AB_CN:
-        fprintf(fp, " %5d %11.4e %11.4e", ICp1->getLoopCount()+1, ICp1->getResidual(), ICp1->getError());
+        fprintf(fp, " %5d %11.4e %11.4e", ICp1->getLoopCount(), ICp1->getResidual(), ICp1->getError());
         break;
     }
     
     if (C->AlgorithmF == Flow_FS_AB_CN)
     {
-      fprintf(fp, " %5d %11.4e %11.4e", ICv->getLoopCount()+1, ICv->getResidual(), ICv->getError());
+      fprintf(fp, " %5d %11.4e %11.4e", ICv->getLoopCount(), ICv->getResidual(), ICv->getError());
     }
     
-    fprintf(fp, "  %11.4e %10.3e %10.3e %10.3e",
-            divergence,
+    fprintf(fp, "  %10.3e %10.3e %10.3e",
             rms[var_Pressure],
             avr[var_Pressure],
             rms[var_Velocity]);
@@ -405,7 +411,7 @@ void History::printHistory(FILE* fp, const double* rms, const double* avr, const
           break;
           
         case Heat_EE_EI:
-          fprintf(fp, " %5d %11.4e %11.4e", ICt->getLoopCount()+1, ICt->getResidual(), ICt->getError());
+          fprintf(fp, " %5d %11.4e %11.4e", ICt->getLoopCount(), ICt->getResidual(), ICt->getError());
           break;
       }
       
@@ -420,7 +426,7 @@ void History::printHistory(FILE* fp, const double* rms, const double* avr, const
         break;
         
       case Heat_EE_EI:
-        fprintf(fp, " %5d %11.4e %11.4e", ICt->getLoopCount()+1, ICt->getResidual(), ICt->getError());
+        fprintf(fp, " %5d %11.4e %11.4e", ICt->getLoopCount(), ICt->getResidual(), ICt->getError());
         break;
     }
     fprintf(fp, " %10.3e %10.3e", rms[var_Temperature], avr[var_Temperature]);
@@ -438,7 +444,7 @@ void History::printHistory(FILE* fp, const double* rms, const double* avr, const
 
 // #################################################################
 // 標準履歴モニタのヘッダー出力
-void History::printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control* C, const bool disp)
+void History::printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control* C, const DivConvergence* DC, const bool disp)
 {
   const IterationCtl* ICp1 = &IC[ic_prs1];  /// 圧力のPoisson反復
   const IterationCtl* ICv  = &IC[ic_vel1];  /// 粘性項のCrank-Nicolson反復
@@ -468,6 +474,16 @@ void History::printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control*
       fprintf(fp, "    v_max[-]");
     }
     
+    fprintf(fp, "  ItrD");
+    if ( DC->divType == nrm_div_max )
+    {
+      fprintf(fp, " Divergence[max]");
+    }
+    else
+    {
+      fprintf(fp, "  Divergence[L2]");
+    }
+    
     switch (C->AlgorithmF)
     {
       case Flow_FS_EE_EE:
@@ -494,7 +510,7 @@ void History::printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control*
       else if (ICv->getErrType() == nrm_dx_x)    fprintf(fp, "    deltaV_V");
     }
     
-    fprintf(fp, "    v_div_max       rmsP       avrP       rmsV");
+    fprintf(fp, "        rmsP       avrP       rmsV");
     
     if ( C->isHeatProblem() )
     {
@@ -780,12 +796,11 @@ void History::printHistoryForceTitle(FILE* fp, const CompoList* cmp, const Contr
 
 // #################################################################
 // 反復履歴出力
-void History::printHistoryItr(FILE* fp, const IterationCtl* IC, const double divergence, const int* idx)
+void History::printHistoryItr(FILE* fp, IterationCtl* IC, const double divergence)
 {
   const IterationCtl* ICp = &IC[ic_prs1];  ///< 圧力のPoisson反復
-	fprintf(fp, "                                           %8d %13.6e %13.6e %13.6e (%12d, %12d, %12d)\n",
-          ICp->getLoopCount()+1, ICp->getResidual(), ICp->getError(), divergence,
-          idx[0], idx[1], idx[2]);
+	fprintf(fp, "                                           %8d %13.6e %13.6e %13.6e\n",
+          ICp->getLoopCount(), ICp->getResidual(), ICp->getError(), divergence);
 }
 
 
@@ -793,7 +808,7 @@ void History::printHistoryItr(FILE* fp, const IterationCtl* IC, const double div
 // 反復過程の状況モニタのヘッダー出力
 void History::printHistoryItrTitle(FILE* fp)
 {
-  fprintf(fp, "step=%16d  time=%13.6e      Itr_P   Residual      Error      Div_V   MaxNorm (           i,            j,            k)\n", step, printTime());
+  fprintf(fp, "step=%16d  time=%13.6e      Itr_P   Residual      Error      Div_V\n", step, printTime());
 }
 
 

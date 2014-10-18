@@ -38,10 +38,10 @@ void IterationCtl::copy(IterationCtl* src)
   MaxIteration = src->MaxIteration;
   LinearSolver = src->LinearSolver;
   LoopCount    = src->LoopCount;
-  valid        = src->valid;
   Sync         = src->Sync;
   Naive        = src->Naive;
   alias        = src->alias;
+  precondition = src->precondition;
 }
 
 
@@ -51,33 +51,32 @@ bool IterationCtl::getInherentPara(TextParser* tpCntl, const string base)
 {
   switch (LinearSolver)
   {
-      case JACOBI:
-      getParaJacobi(tpCntl, base);
-      break;
+      //case JACOBI:
+      //getParaJacobi(tpCntl, base);
+      //break;
       
       case SOR:
-      getParaSOR(tpCntl, base);
+      getParaJacobi(tpCntl, base);
       break;
       
       case SOR2SMA:
       getParaSOR2(tpCntl, base);
       break;
       
-      case RBGS:
-      getParaRBGS(tpCntl, base);
-      break;
+      //case RBGS:
+      //getParaRBGS(tpCntl, base);
+      //break;
       
-      case GMRES:
-      getParaGmres(tpCntl, base);
-      break;
+      //case GMRES:
+      //getParaGmres(tpCntl, base);
+      //break;
       
-      case PCG:
-      getParaPCG(tpCntl, base);
-      break;
+      //case PCG:
+      //getParaPCG(tpCntl, base);
+      //break;
       
-      case PBiCGSTAB:
       case BiCGSTAB:
-      getParaPBiCGSTAB(tpCntl, base);
+      getParaBiCGSTAB(tpCntl, base);
       break;
       
       default:
@@ -117,57 +116,39 @@ void IterationCtl::getParaJacobi(TextParser* tpCntl, const string base)
   {
     Exit(0);
   }
-  setOmega(tmp);
+  omg = tmp;
   
 }
 
 
 // #################################################################
 /**
- * @brief PCG反復固有のパラメータを指定する
+ * @brief BiCGSTAB反復固有のパラメータを指定する
  * @param [in] tpCntl TextParser pointer
  * @param [in] base   ラベル
  */
-void IterationCtl::getParaPCG(TextParser* tpCntl, const string base)
-{
-  ;
-}
-
-
-// #################################################################
-/**
- * @brief PBiCGSTAB反復固有のパラメータを指定する
- * @param [in] tpCntl TextParser pointer
- * @param [in] base   ラベル
- */
-void IterationCtl::getParaPBiCGSTAB(TextParser* tpCntl, const string base)
+void IterationCtl::getParaBiCGSTAB(TextParser* tpCntl, const string base)
 {
   getParaSOR2(tpCntl, base);
+  
+  string str, label;
+  
+  // not mandatory
+  label = base + "/Precondition";
+  
+  if ( tpCntl->chkLabel(label) )
+  {
+    if ( !(tpCntl->getInspectedValue(label, str )) )
+    {
+      Exit(0);
+    }
+    else
+    {
+      if ( !strcasecmp(str.c_str(), "on") ) precondition = ON;
+    }
+  }
 }
 
-
-// #################################################################
-/**
- * @brief RBGS反復固有のパラメータを指定する
- * @param [in] tpCntl TextParser pointer
- * @param [in] base   ラベル
- */
-void IterationCtl::getParaRBGS(TextParser* tpCntl, const string base)
-{
-  ;
-}
-
-
-// #################################################################
-/**
- * @brief SOR反復固有のパラメータを指定する
- * @param [in] tpCntl TextParser pointer
- * @param [in] base   ラベル
- */
-void IterationCtl::getParaSOR(TextParser* tpCntl, const string base)
-{
-  getParaJacobi(tpCntl, base);
-}
 
 
 // #################################################################
@@ -218,7 +199,6 @@ void IterationCtl::getParaSOR2(TextParser* tpCntl, const string base)
 }
 
 
-
 // #################################################################
 // 残差ノルムのラベルを返す
 string IterationCtl::getResNormString()
@@ -256,8 +236,48 @@ string IterationCtl::getErrNormString()
   {
     nrm = "dx_x : Increment vector x(k+1)-x(k) divided by solution vector x(k)";
   }
+  else if (ErrNorm == nrm_div_max)
+  {
+    nrm = "div_max : Max(Divergence)";
+  }
+  else if (ErrNorm == nrm_div_l2)
+  {
+    nrm = "div_L2 : |Divergence|_L2";
+  }
+  else
+  {
+    Exit(0);
+  }
   
   return nrm;
+}
+
+
+// #################################################################
+// 誤差ノルムのタイプを保持
+bool IterationCtl::setErrType(TextParser* tpCntl, const string label)
+{
+  string str;
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    return false;
+  }
+  
+  if ( !strcasecmp(str.c_str(), "DeltaXbyX") )
+  {
+    ErrNorm = nrm_dx_x;
+  }
+  else if ( !strcasecmp(str.c_str(), "DeltaX") )
+  {
+    ErrNorm = nrm_dx;
+  }
+  else
+  {
+    return false;
+  }
+  
+  return true;
 }
 
 
@@ -271,7 +291,6 @@ bool IterationCtl::setLS(const string str)
   else if( !strcasecmp(str.c_str(), "GMRES") )        LinearSolver = GMRES;
   else if( !strcasecmp(str.c_str(), "RBGS") )         LinearSolver = RBGS;
   else if( !strcasecmp(str.c_str(), "PCG") )          LinearSolver = PCG;
-  else if( !strcasecmp(str.c_str(), "PBiCGSTAB") )    LinearSolver = PBiCGSTAB;
   else if( !strcasecmp(str.c_str(), "BiCGstab") )     LinearSolver = BiCGSTAB;
   else
   {

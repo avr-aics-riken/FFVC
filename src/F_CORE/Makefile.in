@@ -143,6 +143,8 @@ am_libFCORE_a_OBJECTS = libFCORE_a-ffv_forcing.$(OBJEXT) \
 	libFCORE_a-ffv_utility.$(OBJEXT) \
 	libFCORE_a-ffv_vbc_inner.$(OBJEXT) \
 	libFCORE_a-ffv_vbc_outer.$(OBJEXT) \
+	libFCORE_a-ffv_vbc_outer_face.$(OBJEXT) \
+	libFCORE_a-ffv_vbc_outer_flux.$(OBJEXT) \
 	libFCORE_a-ffv_velocity_binary.$(OBJEXT) \
 	libFCORE_a-ffv_velocity_cds.$(OBJEXT) \
 	libFCORE_a-FB_util.$(OBJEXT)
@@ -362,6 +364,8 @@ libFCORE_a_SOURCES = \
   ffv_utility.f90 \
   ffv_vbc_inner.f90 \
   ffv_vbc_outer.f90 \
+  ffv_vbc_outer_face.f90 \
+  ffv_vbc_outer_flux.f90 \
   ffv_velocity_binary.f90 \
   force.h \
   ffv_velocity_cds.f90 \
@@ -486,6 +490,18 @@ libFCORE_a-ffv_vbc_outer.o: ffv_vbc_outer.f90
 
 libFCORE_a-ffv_vbc_outer.obj: ffv_vbc_outer.f90
 	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-ffv_vbc_outer.obj `if test -f 'ffv_vbc_outer.f90'; then $(CYGPATH_W) 'ffv_vbc_outer.f90'; else $(CYGPATH_W) '$(srcdir)/ffv_vbc_outer.f90'; fi`
+
+libFCORE_a-ffv_vbc_outer_face.o: ffv_vbc_outer_face.f90
+	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-ffv_vbc_outer_face.o `test -f 'ffv_vbc_outer_face.f90' || echo '$(srcdir)/'`ffv_vbc_outer_face.f90
+
+libFCORE_a-ffv_vbc_outer_face.obj: ffv_vbc_outer_face.f90
+	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-ffv_vbc_outer_face.obj `if test -f 'ffv_vbc_outer_face.f90'; then $(CYGPATH_W) 'ffv_vbc_outer_face.f90'; else $(CYGPATH_W) '$(srcdir)/ffv_vbc_outer_face.f90'; fi`
+
+libFCORE_a-ffv_vbc_outer_flux.o: ffv_vbc_outer_flux.f90
+	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-ffv_vbc_outer_flux.o `test -f 'ffv_vbc_outer_flux.f90' || echo '$(srcdir)/'`ffv_vbc_outer_flux.f90
+
+libFCORE_a-ffv_vbc_outer_flux.obj: ffv_vbc_outer_flux.f90
+	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-ffv_vbc_outer_flux.obj `if test -f 'ffv_vbc_outer_flux.f90'; then $(CYGPATH_W) 'ffv_vbc_outer_flux.f90'; else $(CYGPATH_W) '$(srcdir)/ffv_vbc_outer_flux.f90'; fi`
 
 libFCORE_a-ffv_velocity_binary.o: ffv_velocity_binary.f90
 	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-ffv_velocity_binary.o `test -f 'ffv_velocity_binary.f90' || echo '$(srcdir)/'`ffv_velocity_binary.f90

@@ -19,6 +19,12 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-10-18
+r1637 branch change-itr HSMAC
+ - test HSMAC
+ - redesign Iteration class
+
+--------------------------
 2014-10-02
 r1636 branch change-itr BiCG naive
  - Naive implementation of BiCGstab

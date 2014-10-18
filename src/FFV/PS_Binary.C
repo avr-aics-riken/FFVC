@@ -40,7 +40,7 @@ void FFV::PS_Binary()
   REAL_TYPE zero = 0.0;                /// 定数
   int cnv_scheme = C.CnvScheme;        /// 対流項スキーム
   
-  IterationCtl* ICt = &IC[ic_tmp1];  /// 拡散項の反復
+  LinearSolver* LSt = &LS[ic_tmp1];    /// 拡散項の反復
 
   // point Data
   // d_v   セルセンタ速度 v^{n+1}
@@ -215,7 +215,7 @@ void FFV::PS_Binary()
       if ( paraMngr->Allreduce(&tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
       TIMING_stop( tm_heat_diff_res_comm, 2.0*numProc*sizeof(REAL_TYPE) ); // 双方向 x ノード数
     }
-    ICt->setError( sqrt(res) ); // RMS
+    LSt->setError( sqrt(res) ); // RMS
     
     
     TIMING_stop(tm_heat_diff_sct_3, 0.0);
@@ -228,13 +228,13 @@ void FFV::PS_Binary()
     U.copyS3D(d_ie, size, guide, d_ws, one);
     TIMING_stop(tm_copy_array, 0.0);
     
-    for (ICt->setLoopCount(0); ICt->getLoopCount()< ICt->getMaxIteration(); ICt->incLoopCount())
+    for (LSt->setLoopCount(0); LSt->getLoopCount()< LSt->getMaxIteration(); LSt->incLoopCount())
     {
 
       // 線形ソルバー
-      ps_LS(ICt, b_l2, res0_l2);
+      ps_LS(dynamic_cast<IterationCtl*>(LSt), b_l2, res0_l2);
       
-      if ( ICt->isErrConverged() || ICt->isResConverged() ) break;
+      if ( LSt->isErrConverged() || LSt->isResConverged() ) break;
     }
     
   }

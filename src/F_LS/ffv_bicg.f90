@@ -22,20 +22,20 @@
 
 
 !> ********************************************************************
-!! @brief BiCG update x
+!! @brief BiCG update x = x + alpha * p + omega * s
 !! @param [in,out] x     ベクトル
+!! @param [in]     alpha 係数
 !! @param [in]     p     ベクトル
+!! @param [in]     omega 係数
 !! @param [in]     s     ベクトル
 !! @param [in]     bp    BCindex P
-!! @param [in]     alpha 係数
-!! @param [in]     omega 係数
 !! @param [out]    x_l2  解ベクトルの自乗和
 !! @param [out]    err   修正ベクトルの自乗和
 !! @param [in]     sz    配列長
 !! @param [in]     g     ガイドセル
 !! @param [out]    flop  flop count
 !<
-subroutine bicg_update_x(x, p, s, bp, alpha, omega, x_l2, err, sz, g, flop)
+subroutine bicg_update_x(x, alpha, p, omega, s, bp, x_l2, err, sz, g, flop)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, g, aa
@@ -53,7 +53,7 @@ err = 0.0
 alp = real(alpha)
 omg = real(omega)
 
-flop = flop + dble(ix)*dble(jx)*dble(kx)*12.0d0
+flop = flop + dble(ix)*dble(jx)*dble(kx)*11.0d0
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:x_l2) &
@@ -67,7 +67,7 @@ do j=1,jx
 do i=1,ix
   aa = ibits(bp(i,j,k), Active, 1)
   xx = x(i, j, k)
-  pp = ( xx + alp * p(i, j, k) + omg * s(i, j, k) ) * real(aa)
+  pp = xx + alp * p(i, j, k) + omg * s(i, j, k)
   dx = pp - xx
   x(i, j, k) = pp
   x_l2 = x_l2 + dble(pp*pp) * dble(aa)
@@ -83,17 +83,17 @@ end subroutine bicg_update_x
 
 
 !> ********************************************************************
-!! @brief BiCG update p
+!! @brief BiCG update p =  r + beta * ( p - omega * q )
 !! @param [in,out] p     ベクトル
 !! @param [in]     r     ベクトル
-!! @param [in]     q     ベクトル
 !! @param [in]     beta  係数
 !! @param [in]     omega 係数
+!! @param [in]     q     ベクトル
 !! @param [in]     sz    配列長
 !! @param [in]     g     ガイドセル
 !! @param [out]    flop  flop count
 !<
-subroutine bicg_update_p(p, r, q, beta, omega, sz, g, flop)
+subroutine bicg_update_p(p, r, beta, omega, q, sz, g, flop)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, g
