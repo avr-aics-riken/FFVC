@@ -174,15 +174,28 @@ public:
   void InnerVBCperiodic (REAL_TYPE* d_v, int* d_bd);
   
   
-  // 速度境界条件による速度の発散の修正ほか
+  /**
+   * @brief 速度境界条件による速度の発散の修正ほか
+   * @param [in,out] dv     \sum{u}
+   * @param [in]     d_cdf  BCindex C
+   * @param [in]     tm     無次元時刻
+   * @param [in]     C      Controlクラス
+   * @param [in]     v00    基準速度
+   * @param [in,out] vf     セルフェイス速度 u^{n+1}
+   * @param [in,out] v      セルセンター速度 u^{n+1}
+   * @param [in]     avr    平均値計算のテンポラリ値
+   * @param [in]     flop   flop count
+   * @note 外部境界面のdiv(u)の修正時に領域境界の流量などのモニタ値を計算し，BoundaryOuterクラスに保持 > 反復後にDomainMonitor()で集約
+   *       avr[]のインデクスに注意 (Fortran <-> C)
+   */
   void modDivergence (REAL_TYPE* dv,
                       int* d_cdf,
                       double tm_d,
+                      Control* C,
                       REAL_TYPE* v00,
-                      Gemini_R* avr,
                       REAL_TYPE* vf,
                       REAL_TYPE* v,
-                      Control* C,
+                      Gemini_R* avr,
                       double& flop);
   
   
@@ -191,26 +204,26 @@ public:
   
   /**
    * @brief 速度境界条件によるPoisosn式のソース項の修正
-   * @param [in,out] s_0   \sum{u^*}
-   * @param [in]     vc    セルセンタ疑似速度 u^*
-   * @param [in]     v0    セルセンタ速度 u^n
-   * @param [in]     vf    セルフェイス速度 u^n
+   * @param [in,out] dv    \sum{u^*}
    * @param [in]     d_cdf BCindex C
    * @param [in]     tm    無次元時刻
-   * @param [in]     dt    時間積分幅
    * @param [in]     C     Control class
    * @param [in]     v00   基準速度
+   * @param [in]     vf    セルフェイス速度 u^n
+   * @param [in]     vc    セルセンタ疑似速度 u^*
+   * @param [in]     v0    セルセンタ速度 u^n
+   * @param [in]     dt    時間積分幅
    * @param [in,out] flop  flop count
    */
-  void modPsrcVBC (REAL_TYPE* s_0,
-                   REAL_TYPE* vc,
-                   REAL_TYPE* v0,
-                   REAL_TYPE* vf,
+  void modPsrcVBC (REAL_TYPE* dv,
                    int* d_cdf,
                    const double tm,
-                   REAL_TYPE dt,
                    Control* C,
                    REAL_TYPE* v00,
+                   REAL_TYPE* vf,
+                   REAL_TYPE* vc,
+                   REAL_TYPE* v0,
+                   REAL_TYPE dt,
                    double& flop);
   
   
@@ -277,9 +290,6 @@ public:
                          double& flop);
   
   
-  void mod_Vis_EE (REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE cf, int* d_bx, const double tm, REAL_TYPE dt, REAL_TYPE* v00, double& flop);
-  
-  
   /**
    * @brief 圧力の外部境界条件
    * @param [in,out] d_p  圧力のデータクラス
@@ -320,45 +330,32 @@ public:
    * @param [in]     v00   参照速度
    * @param [in]     ens  周期境界方向フラグ
    */
-  void OuterVBC (REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_cdf, const double tm, Control* C, REAL_TYPE* v00, const int* ens);
-  
-  
-  /**
-   * @brief 速度の外部境界条件処理（セルフェイス）
-   * @param [in]     d_vf  セルフェイス速度ベクトル
-   * @param [in]     d_cdf BCindex C
-   * @param [in]     tm    時刻
-   * @param [in]     C     コントロールクラス
-   * @param [in]     v00   参照速度
-   * @param [in]     ens  周期境界方向フラグ
-   */
-  void OuterVBCface (REAL_TYPE* d_vf, int* d_cdf, const double tm, Control* C, REAL_TYPE* v00, const int* ens);
+  void OuterVBC (REAL_TYPE* d_v,
+                 REAL_TYPE* d_vf,
+                 int* d_cdf,
+                 const double tm,
+                 Control* C,
+                 REAL_TYPE* v00,
+                 const int* ens);
   
   
   /**
    * @brief 速度の外部境界条件処理（セルフェイス）の準備
-   * @param [in]     d_vc  疑似速度ベクトル
-   * @param [in]     d_v   セルセンター速度ベクトル v^{n}
-   * @param [in]     d_cdf BCindex C
-   * @param [in]     dt    時間積分幅
-   * @param [in]     C     コントロールクラス
-   * @param [in]     ens  周期境界方向フラグ
+   * @param [in] d_vc   疑似速度ベクトル
+   * @param [in] d_v    セルセンター速度ベクトル v^{n}
+   * @param [in] d_cdf  BCindex C
+   * @param [in] dt     時間積分幅
+   * @param [in] C      コントロールクラス
+   * @param [in] ens    周期境界方向フラグ
+   * @param [in] m_step セッションステップ数
    */
   void OuterVBCfacePrep (REAL_TYPE* d_vc,
                          REAL_TYPE* d_v,
                          int* d_cdf,
                          REAL_TYPE dt,
                          Control* C,
-                         const int* ens);
-  /**
-   * @brief 疑似速度の外部境界条件処理
-   * @param [out]    d_vc   疑似速度ベクトル v^*
-   * @param [in]     d_v0   速度ベクトル v^n
-   * @param [in]     d_cdf  BCindex C
-   * @param [in]     C      Control class
-   * @param [in]     ens    周期境界方向フラグ
-   */
-  void OuterVBCpseudo (REAL_TYPE* d_vc, REAL_TYPE* d_v0, int* d_cdf, Control* C, const int* ens);
+                         const int* ens,
+                         const unsigned m_step);
   
   
   /**

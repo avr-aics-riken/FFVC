@@ -285,6 +285,128 @@
 
 
 
+!> ********************************************************************
+!! @brief 外部境界面の速度をコピーする
+!! @param [out] v      速度ベクトル（セルセンタ）
+!! @param [in]  sz     配列長
+!! @param [in]  g      ガイドセル長
+!! @param [in]  m_face 面番号
+!! @param [in]  vc     セルセンタ疑似速度 u^*
+!! @param [in]  nID    隣接ランク番号（nID[]<0の時外部境界面）
+!<
+subroutine vobc_cc_copy (v, sz, g, m_face, vc, nID)
+implicit none
+include 'ffv_f_params.h'
+integer                                                     ::  i, j, k, g, ix, jx, kx, face, gc, m_face
+integer, dimension(3)                                       ::  sz
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, vc
+integer, dimension(0:5)                                     ::  nID
+
+if ( nID(m_face) >= 0 ) return
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+gc = g
+face = m_face
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, face, gc) PRIVATE(i, j, k)
+
+FACES : select case (face)
+case (X_minus)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1,kx
+do j=1,jx
+do i=1-gc, 0
+v(i, j, k, 1) = vc(i, j, k, 1)
+v(i, j, k, 2) = vc(i, j, k, 2)
+v(i, j, k, 3) = vc(i, j, k, 3)
+end do
+end do
+end do
+!$OMP END DO
+
+case (X_plus)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1,kx
+do j=1,jx
+do i=ix+1, ix+gc
+v(i, j, k, 1) = vc(i, j, k, 1)
+v(i, j, k, 2) = vc(i, j, k, 2)
+v(i, j, k, 3) = vc(i, j, k, 3)
+end do
+end do
+end do
+!$OMP END DO
+
+case (Y_minus)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1,kx
+do i=1,ix
+do j=1-gc, 0
+v(i, j, k, 1) = vc(i, j, k, 1)
+v(i, j, k, 2) = vc(i, j, k, 2)
+v(i, j, k, 3) = vc(i, j, k, 3)
+end do
+end do
+end do
+!$OMP END DO
+
+case (Y_plus)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1,kx
+do i=1,ix
+do j=jx+1, jx+gc
+v(i, j, k, 1) = vc(i, j, k, 1)
+v(i, j, k, 2) = vc(i, j, k, 2)
+v(i, j, k, 3) = vc(i, j, k, 3)
+end do
+end do
+end do
+!$OMP END DO
+
+case (Z_minus)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do j=1,jx
+do i=1,ix
+do k=1-gc, 0
+v(i, j, k, 1) = vc(i, j, k, 1)
+v(i, j, k, 2) = vc(i, j, k, 2)
+v(i, j, k, 3) = vc(i, j, k, 3)
+end do
+end do
+end do
+!$OMP END DO
+
+case (Z_plus)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do j=1,jx
+do i=1,ix
+do k=kx+1, kx+gc
+v(i, j, k, 1) = vc(i, j, k, 1)
+v(i, j, k, 2) = vc(i, j, k, 2)
+v(i, j, k, 3) = vc(i, j, k, 3)
+end do
+end do
+end do
+!$OMP END DO
+
+case default
+end select FACES
+
+!$OMP END PARALLEL
+
+return
+end subroutine vobc_cc_copy
+
+
 
 !> ********************************************************************
 !! @brief 速度の外部境界：　トラクションフリー
@@ -293,17 +415,16 @@
 !! @param [in]     g      ガイドセル長
 !! @param [in]     m_face 外部境界面の番号
 !! @param [in,out] vf     セルフェイス速度
-!! @param [out]    sum    積算値 \sum{v}
 !! @param [in]     nID    隣接ランク番号（nID[]<0の時外部境界面）
 !! @note 今のところ、トラクションフリー面は全て流体
 !! 後半のループは1~ix，flopはtfree1,2の合計
 !<
-    subroutine vobc_tfree2 (v, sz, g, m_face, vf, sum, nID)
+    subroutine vobc_tfree2 (v, sz, g, m_face, vf, nID)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, face, g, gc, m_face
     integer, dimension(3)                                     ::  sz
-    real                                                      ::  ut, vt, wt, aa, sum
+    real                                                      ::  ut, vt, wt, aa
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vf
     integer, dimension(0:5)                                   ::  nID
 
@@ -314,8 +435,6 @@
     kx = sz(3)
     gc = g
     face = m_face
-
-    aa = 0.0
 
 !$OMP PARALLEL REDUCTION(+:aa) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, gc, face) &
@@ -458,9 +577,6 @@
 
 !$OMP END PARALLEL
 
-
-    sum = aa
-
     return
     end subroutine vobc_tfree2
 
@@ -575,127 +691,6 @@
   return
   end subroutine vobc_tfree1
 
-
-!> ********************************************************************
-!! @brief 疑似速度から次ステップ速度へ参照する速度をコピーする
-!! @param [out] v      速度ベクトル（セルセンタ）
-!! @param [in]  sz     配列長
-!! @param [in]  g      ガイドセル長
-!! @param [in]  m_face 面番号
-!! @param [in]  vc     セルセンタ疑似速度 u^*
-!! @param [in]  nID    隣接ランク番号（nID[]<0の時外部境界面）
-!<
-    subroutine vobc_update (v, sz, g, m_face, vc, nID)
-    implicit none
-    include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, ix, jx, kx, face, gc, m_face
-    integer, dimension(3)                                       ::  sz
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, vc
-    integer, dimension(0:5)                                     ::  nID
-
-    if ( nID(m_face) >= 0 ) return
-
-    ix = sz(1)
-    jx = sz(2)
-    kx = sz(3)
-    gc = g
-    face = m_face
-
-!$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, face, gc) PRIVATE(i, j, k)
-
-    FACES : select case (face)
-    case (X_minus)
-
-!$OMP DO SCHEDULE(static) COLLAPSE(2)
-      do k=1,kx
-      do j=1,jx
-      do i=1-gc, 0
-        v(i, j, k, 1) = vc(i, j, k, 1)
-        v(i, j, k, 2) = vc(i, j, k, 2)
-        v(i, j, k, 3) = vc(i, j, k, 3)
-      end do
-      end do
-      end do
-!$OMP END DO
-
-    case (X_plus)
-
-!$OMP DO SCHEDULE(static) COLLAPSE(2)
-      do k=1,kx
-      do j=1,jx
-      do i=ix+1, ix+gc
-        v(i, j, k, 1) = vc(i, j, k, 1)
-        v(i, j, k, 2) = vc(i, j, k, 2)
-        v(i, j, k, 3) = vc(i, j, k, 3)
-      end do
-      end do
-      end do
-!$OMP END DO
-      
-    case (Y_minus)
-
-!$OMP DO SCHEDULE(static) COLLAPSE(2)
-      do k=1,kx
-      do i=1,ix
-      do j=1-gc, 0
-        v(i, j, k, 1) = vc(i, j, k, 1)
-        v(i, j, k, 2) = vc(i, j, k, 2)
-        v(i, j, k, 3) = vc(i, j, k, 3)
-      end do
-      end do
-      end do
-!$OMP END DO
-      
-    case (Y_plus)
-
-!$OMP DO SCHEDULE(static) COLLAPSE(2)
-      do k=1,kx
-      do i=1,ix
-      do j=jx+1, jx+gc
-        v(i, j, k, 1) = vc(i, j, k, 1)
-        v(i, j, k, 2) = vc(i, j, k, 2)
-        v(i, j, k, 3) = vc(i, j, k, 3)
-      end do
-      end do
-      end do
-!$OMP END DO
-      
-    case (Z_minus)
-
-!$OMP DO SCHEDULE(static) COLLAPSE(2)
-      do j=1,jx
-      do i=1,ix
-      do k=1-gc, 0
-        v(i, j, k, 1) = vc(i, j, k, 1)
-        v(i, j, k, 2) = vc(i, j, k, 2)
-        v(i, j, k, 3) = vc(i, j, k, 3)
-      end do
-      end do
-      end do
-!$OMP END DO
-      
-    case (Z_plus)
-
-!$OMP DO SCHEDULE(static) COLLAPSE(2)
-      do j=1,jx
-      do i=1,ix
-      do k=kx+1, kx+gc
-        v(i, j, k, 1) = vc(i, j, k, 1)
-        v(i, j, k, 2) = vc(i, j, k, 2)
-        v(i, j, k, 3) = vc(i, j, k, 3)
-      end do
-      end do
-      end do
-!$OMP END DO
-      
-    case default
-    end select FACES
-
-!$OMP END PARALLEL
-    
-    return
-    end subroutine vobc_update
 
 
 !> ********************************************************************
@@ -834,124 +829,6 @@
     return
     end subroutine vobc_div_drchlt
 
-
-!> ********************************************************************
-!! @brief 外部境界面の流入出量を求める
-!! @param [out]    sum    領域境界の流速の積算値 \sum{vf}
-!! @param [in]     sz     配列長
-!! @param [in]     g      ガイドセル長
-!! @param [in]     m_face 面番号
-!! @param [in]     v      セルセンター速度 n+1
-!! @param [in]     bv     BCindex C
-!! @param [in]     nID    隣接ランク番号（nID[]<0の時外部境界面）
-!! @note 有効セルのマスクを掛けて、流量を積算
-!<
-    subroutine vobc_get_massflow (sum, sz, g, m_face, v, bv, nID)
-    implicit none
-    include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, g, ix, jx, kx, face, m_face
-    integer, dimension(3)                                     ::  sz
-    real                                                      ::  sum, a, s
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
-    integer, dimension(0:5)                                   ::  nID
-
-    if ( nID(m_face) >= 0 ) return
-
-    ix = sz(1)
-    jx = sz(2)
-    kx = sz(3)
-    face = m_face
-
-    a = 0.0   ! sum
-
-
-!$OMP PARALLEL &
-!$OMP REDUCTION(+:a) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, face) &
-!$OMP PRIVATE(s)
-
-    FACES : select case (face)
-
-    case (X_minus)
-
-!$OMP DO SCHEDULE(static) PRIVATE(j, k) COLLAPSE(2)
-      do k=1,kx
-      do j=1,jx
-        s = real(ibits(bv(0,j,k), State, 1)) * real(ibits(bv(1,j,k), State, 1))
-        a = a + 0.5*( v(0,j,k,1) + v(1,j,k,1)) * s
-      end do
-      end do
-!$OMP END DO
-
-
-    case (X_plus)
-
-!$OMP DO SCHEDULE(static) PRIVATE(j, k) COLLAPSE(2)
-      do k=1,kx
-      do j=1,jx
-        s = real(ibits(bv(ix,j,k), State, 1)) * real(ibits(bv(ix+1,j,k), State, 1))
-        a = a + 0.5*( v(ix,j,k,1) + v(ix+1,j,k,1)) * s
-      end do
-      end do
-!$OMP END DO
-
-
-    case (Y_minus)
-
-!$OMP DO SCHEDULE(static) PRIVATE(i, k) COLLAPSE(2)
-      do k=1,kx
-      do i=1,ix
-        s = real(ibits(bv(i,0,k), State, 1)) * real(ibits(bv(i,1,k), State, 1))
-        a = a + 0.5*( v(i,0,k,2) + v(i,1,k,2)) * s
-      end do
-      end do
-!$OMP END DO
-
-
-    case (Y_plus)
-
-!$OMP DO SCHEDULE(static) PRIVATE(i, k) COLLAPSE(2)
-      do k=1,kx
-      do i=1,ix
-        s = real(ibits(bv(i,jx,k), State, 1)) * real(ibits(bv(i,jx+1,k), State, 1))
-        a = a + 0.5*( v(i,jx,k,2) + v(i,jx+1,k,2)) * s
-      end do
-      end do
-!$OMP END DO
-
-
-    case (Z_minus)
-
-!$OMP DO SCHEDULE(static) PRIVATE(i, j) COLLAPSE(2)
-      do j=1,jx
-      do i=1,ix
-        s = real(ibits(bv(i,j,0), State, 1)) * real(ibits(bv(i,j,1), State, 1))
-        a = a + 0.5*( v(i,j,0,3) + v(i,j,1,3)) * s
-      end do
-      end do
-!$OMP END DO
-
-
-    case (Z_plus)
-
-!$OMP DO SCHEDULE(static) PRIVATE(i, j) COLLAPSE(2)
-      do j=1,jx
-      do i=1,ix
-        s = real(ibits(bv(i,j,kx), State, 1)) * real(ibits(bv(i,j,kx+1), State, 1))
-        a = a + 0.5*( v(i,j,kx,3) + v(i,j,kx+1,3)) * s
-      end do
-      end do
-!$OMP END DO
-
-    case default
-    end select FACES
-!$OMP END PARALLEL
-
-    sum = a
-
-    return
-    end subroutine vobc_get_massflow
 
 
 !> **************************************************************************

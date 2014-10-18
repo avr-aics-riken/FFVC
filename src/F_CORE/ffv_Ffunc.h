@@ -54,17 +54,21 @@
 #define div_ibc_oflow_vec_  DIV_IBC_OFLOW_VEC
 
 // ffv_vbc_outer.f90
-#define vobc_pv_specv_      VOBC_PV_SPECV
-#define vobc_pv_wall_       VOBC_PV_WALL
-#define vobc_drchlt_        VOBC_DRCHLT
-#define vobc_face_drchlt_   VOBC_FACE_DRCHLT
-#define vobc_outflow_       VOBC_OUTFLOW
+#define vobc_cc_drchlt_     VOBC_CC_DRCHLT
+#define vobc_cc_neumann_    VOBC_CC_NEUMANN
+#define vobc_cc_copy_       VOBC_CC_COPY
+#define vobc_div_drchlt_    VOBC_DIV_DRCHLT
+#define vobc_cc_outflow_    VOBC_CC_OUTFLOW
 #define vobc_tfree1_        VOBC_TFREE1
 #define vobc_tfree2_        VOBC_TFREE2
-#define vobc_update_        VOBC_UPDATE
-#define vobc_div_drchlt_    VOBC_DIV_DRCHLT
-#define vobc_get_massflow_  VOBC_GET_MASSFLOW
-#define vobc_cc_neumann_    VOBC_CC_NEUMANN
+
+// ffv_vbc_outer_face.f90
+#define vobc_face_drchlt_   VOBC_FACE_DRCHLT
+#define vobc_face_massflow_ VOBC_FACE_MASSFLOW
+
+// ffv_vbc_outer_flux.f90
+#define vobc_pv_specv_      VOBC_PV_SPECV
+#define vobc_pv_wall_       VOBC_PV_WALL
 
 // ffv_velocity_binary.f90
 #define ab2_                AB2
@@ -75,12 +79,6 @@
 #define pvec_muscl_         PVEC_MUSCL
 #define pvec_les_           PVEC_LES
 #define update_vec_         UPDATE_VEC
-#define vis_cn_jcb_         VIS_CN_JCB
-#define vis_cn_mod_jcb_     VIS_CN_MOD_JCB
-#define vis_cn_mod_sor_     VIS_CN_MOD_SOR
-#define vis_cn_sor_         VIS_CN_SOR
-#define vis_ee_             VIS_EE
-#define vis_ee_vbc_         VIS_EE_VBC
 #define update_face_vec_    UPDATA_FACE_VEC
 #define predict_face_vec_   PREDICT_FACE_VEC
 #define update_cc_vec_      UPDATE_CC_VEC
@@ -333,14 +331,18 @@ extern "C" {
                          int* nID,
                          double* flop);
   
-
+  void vobc_cc_copy_ (REAL_TYPE* v,
+                      int* sz,
+                      int* g,
+                      int* m_face,
+                      REAL_TYPE* vc,
+                      int* nID);
 
   void vobc_tfree2_ (REAL_TYPE* v,
                      int* sz,
                      int* g,
                      int* m_face,
                      REAL_TYPE* vf,
-                     REAL_TYPE* sum,
                      int* nID);
   
   void vobc_tfree1_ (REAL_TYPE* vf,
@@ -349,12 +351,7 @@ extern "C" {
                      int* m_face,
                      int* nID);
   
-  void vobc_update_ (REAL_TYPE* v,
-                     int* sz,
-                     int* g,
-                     int* m_face,
-                     REAL_TYPE* vc,
-                     int* nID);
+
   
   void vobc_div_drchlt_ (REAL_TYPE* div,
                          int* sz,
@@ -363,14 +360,6 @@ extern "C" {
                          int* bv,
                          REAL_TYPE* vec,
                          int* nID);
-  
-  void vobc_get_massflow_ (REAL_TYPE* sum,
-                           int* sz,
-                           int* g,
-                           int* m_face,
-                           REAL_TYPE* v,
-                           int* bv,
-                           int* nID);
   
   
   
@@ -383,9 +372,7 @@ extern "C" {
                            int* m_face,
                            int* bv,
                            REAL_TYPE* vec,
-                           REAL_TYPE* vsum,
-                           int* nID,
-                           double* flop);
+                           int* nID);
   
   void vobc_face_massflow_ (REAL_TYPE* sum,
                             int* sz,
@@ -394,7 +381,6 @@ extern "C" {
                             REAL_TYPE* vf,
                             int* bv,
                             int* nID);
-  
   
   
   //***********************************************************************************************
@@ -422,6 +408,7 @@ extern "C" {
                       REAL_TYPE* vec,
                       int* nID,
                       double* flop);
+  
   
   //***********************************************************************************************
   // ffv_velocity_binary.f90
@@ -483,60 +470,19 @@ extern "C" {
                            REAL_TYPE* vcs_coef,
                            double* flop);
   
-  void update_vec_        (REAL_TYPE* v,
-                           REAL_TYPE* div,
-                           int* sz,
-                           int* g,
-                           REAL_TYPE* dt,
-                           REAL_TYPE* dh,
-                           REAL_TYPE* vc,
-                           REAL_TYPE* vf,
-                           REAL_TYPE* p,
-                           int* bp,
-                           int* bv,
-                           double* flop);
+  void update_vec_ (REAL_TYPE* v,
+                    REAL_TYPE* vf,
+                    REAL_TYPE* div,
+                    int* sz,
+                    int* g,
+                    REAL_TYPE* dt,
+                    REAL_TYPE* dh,
+                    REAL_TYPE* vc,
+                    REAL_TYPE* p,
+                    int* bp,
+                    int* bv,
+                    double* flop);
   
-  void vis_cn_jcb_        (REAL_TYPE* vc, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, 
-                           REAL_TYPE* omg, REAL_TYPE* wv, int* bx, REAL_TYPE* wk, REAL_TYPE* coef, REAL_TYPE* res, double* flop);
-  void vis_cn_mod_jcb_    (REAL_TYPE* vc, int* sz, int* g, int* st, int* ed, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, 
-                           REAL_TYPE* omg, REAL_TYPE* wv, int* bx, REAL_TYPE* wk, REAL_TYPE* coef, REAL_TYPE* res, REAL_TYPE* vec, double* flop);
-  void vis_cn_mod_sor_    (REAL_TYPE* vc, int* sz, int* g, int* st, int* ed, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, 
-                           REAL_TYPE* omg, REAL_TYPE* wv, int* bx, REAL_TYPE* coef, REAL_TYPE* res, REAL_TYPE* vec, double* flop);
-  void vis_cn_sor_        (REAL_TYPE* vc, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, 
-                           REAL_TYPE* omg, REAL_TYPE* wv, int* bx, REAL_TYPE* coef, REAL_TYPE* res, double* flop);
-  void vis_ee_            (REAL_TYPE* vc, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, REAL_TYPE* wv, 
-                           REAL_TYPE* v, int* bx, REAL_TYPE* coef, double* flop);
-  void vis_ee_vbc_        (REAL_TYPE* vc, int* sz, int* g, int* st, int* ed, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, 
-                           REAL_TYPE* v0, int* bx, int* odr, REAL_TYPE* coef, REAL_TYPE* vec, double* flop);
-  
-  void div_update_vec_ (REAL_TYPE* div,
-                        REAL_TYPE* vf,
-                        int* sz,
-                        int* g,
-                        REAL_TYPE* dt,
-                        REAL_TYPE* dh,
-                        REAL_TYPE* vc,
-                        REAL_TYPE* p,
-                        int* bp,
-                        int* bv,
-                        double* flop);
-  
-  void update_cc_vec_ (REAL_TYPE* v,
-                       int* sz,
-                       int* g,
-                       REAL_TYPE* dt,
-                       REAL_TYPE* dh,
-                       REAL_TYPE* vc,
-                       REAL_TYPE* p,
-                       int* bp,
-                       double* flop);
-
-  void update_p_ (REAL_TYPE* p,
-                  int* sz,
-                  int* g,
-                  REAL_TYPE* dp,
-                  int* bp,
-                  double* flop);
   
   //***********************************************************************************************
   // ffv_utility.f90

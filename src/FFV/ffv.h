@@ -855,7 +855,7 @@ private:
   
   // @brief Fractional Step法でNavier-Stokes方程式を解く．バイナリ近似．
   void NS_FS_E_Binary();
-  void NS_FS_E_Binary_CHSMAC();
+  
   
   // @brief Fractional Step法でNavier-Stokes方程式を解く．距離場近似．
   void NS_FS_E_CDS();

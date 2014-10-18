@@ -257,22 +257,8 @@ void SetBC3D::InnerPBCperiodic(REAL_TYPE* d_p, int* d_bcd)
 
 
 // #################################################################
-/**
- * @brief 速度境界条件による速度の発散の修正ほか
- * @param [in,out] dv     \sum{u}
- * @param [in]     d_cdf  BCindex C
- * @param [in]     tm     無次元時刻
- * @param [in]     v00    基準速度
- * @param [in]     avr    平均値計算のテンポラリ値
- * @param [in,out] vf     セルフェイス速度 u^{n+1}
- * @param [in,out] v      セルセンター速度 u^{n+1}
- * @param [in]     C      Controlクラス
- * @param [in]     flop   flop count
- * @note 外部境界面のdiv(u)の修正時に領域境界の流量などのモニタ値を計算し，BoundaryOuterクラスに保持 > 反復後にDomainMonitor()で集約
- *       avr[]のインデクスに注意 (Fortran <-> C)
- */
-
-void SetBC3D::modDivergence(REAL_TYPE* dv, int* d_cdf, double tm, REAL_TYPE* v00, Gemini_R* avr, REAL_TYPE* vf, REAL_TYPE* v, Control* C, double& flop)
+// 速度境界条件による速度の発散の修正ほか
+void SetBC3D::modDivergence(REAL_TYPE* dv, int* d_cdf, double tm, Control* C, REAL_TYPE* v00, REAL_TYPE* vf, REAL_TYPE* v, Gemini_R* avr, double& flop)
 {
   REAL_TYPE vec[3], dummy;
   int st[3], ed[3];
@@ -318,28 +304,22 @@ void SetBC3D::modDivergence(REAL_TYPE* dv, int* d_cdf, double tm, REAL_TYPE* v00
   {
     typ = obc[face].getClass();
     
-    REAL_TYPE dd=0.0;
-    
     switch (typ)
     {
       case OBC_SPEC_VEL:
       case OBC_WALL:
         dummy = extractVelOBC(face, vec, tm, v00);
         vobc_div_drchlt_(dv, size, &gd, &face, d_cdf, vec, nID);
-        obc[face].setDomainMF(dd);
         break;
         
       case OBC_SYMMETRIC:
         // no contribution
-        dd = 0.0;
-        obc[face].setDomainMF(dd);
         break;
         
       case OBC_INTRINSIC:
         if ( C->Mode.Example == id_Jet )
         {
-          ((IP_Jet*)Ex)->divJetInflow(dv, face, vf, aa, fcount);
-          obc[face].setDomainV(aa);
+          ((IP_Jet*)Ex)->divJetInflow(dv, face, vf, fcount);
         }
         break;
     }
@@ -598,7 +578,7 @@ void SetBC3D::modPvecFlux(REAL_TYPE* wv, REAL_TYPE* v, int* d_cdf, const double 
 
 // #################################################################
 // 速度境界条件によるPoisosn式のソース項の修正
-void SetBC3D::modPsrcVBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE* vf, int* d_cdf, const double tm, REAL_TYPE dt, Control* C, REAL_TYPE* v00, double &flop)
+void SetBC3D::modPsrcVBC(REAL_TYPE* dv, int* d_cdf, const double tm, Control* C, REAL_TYPE* v00, REAL_TYPE* vf, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE dt, double &flop)
 {
   int st[3], ed[3];
   REAL_TYPE vec[3], vel;
@@ -617,13 +597,13 @@ void SetBC3D::modPsrcVBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE
       case SPEC_VEL:
       {
         REAL_TYPE dummy = extractVelLBC(n, vec, tm, v00);
-        div_ibc_drchlt_(s_0, size, &gd, st, ed, v00, d_cdf, &n, vec, &fcount);
+        div_ibc_drchlt_(dv, size, &gd, st, ed, v00, d_cdf, &n, vec, &fcount);
         break;
       }
         
       case OUTFLOW:
         vel = cmp[n].val[var_Velocity] * dt / dh; // modDivergence()でval[var_Velocity]にセット
-        div_ibc_oflow_pvec_(s_0, size, &gd, st, ed, v00, &vel, d_cdf, &n, v0, vf, &fcount);
+        div_ibc_oflow_pvec_(dv, size, &gd, st, ed, v00, &vel, d_cdf, &n, v0, vf, &fcount);
         break;
         
       default:
@@ -644,7 +624,7 @@ void SetBC3D::modPsrcVBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE
       case OBC_WALL:
       {
         REAL_TYPE dummy = extractVelOBC(face, vec, tm, v00);
-        vobc_div_drchlt_(s_0, size, &gd, &face, d_cdf, vec, nID);
+        vobc_div_drchlt_(dv, size, &gd, &face, d_cdf, vec, nID);
         break;
       }
         
@@ -655,7 +635,7 @@ void SetBC3D::modPsrcVBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE
       case OBC_INTRINSIC:
         if ( C->Mode.Example == id_Jet )
         {
-          ((IP_Jet*)Ex)->divJetInflow(s_0, face, vf, vec, flop);
+          ((IP_Jet*)Ex)->divJetInflow(dv, face, vf, flop);
         }
         break;
         
@@ -665,45 +645,6 @@ void SetBC3D::modPsrcVBC(REAL_TYPE* s_0, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE
   }
   
   flop += fcount;
-}
-
-
-// #################################################################
-/**
- @brief Euler陽解法のときの速度境界条件による粘性項の修正
- @param[out] vc 疑似ベクトル
- @param v0 コロケートの速度ベクトル (n step)
- @param cf 係数
- @param bx BCindex for V
- @param tm 無次元時刻
- @param dt 時間積分幅
- @param v00
- @param[out] flop
- @todo symmetricのときの修正
- */
-void SetBC3D::mod_Vis_EE(REAL_TYPE* d_vc, REAL_TYPE* d_v0, REAL_TYPE cf, int* d_bx, const double tm, REAL_TYPE dt, REAL_TYPE* v00, double& flop)
-{
-  int st[3], ed[3];
-  REAL_TYPE vec[3];
-  REAL_TYPE dh = deltaX;
-  int typ;
-  int gd = guide;
-  
-  for (int n=1; n<=NoCompo; n++) {
-    typ = cmp[n].getType();
-    
-    if ( typ==SPEC_VEL )
-    {
-      REAL_TYPE dummy = extractVelLBC(n, vec, tm, v00);
-    }
-    else if ( typ==OUTFLOW )
-    {
-      vec[0] = vec[1] = vec[2] = cmp[n].val[var_Velocity];
-    }
-    
-    cmp[n].getBbox(st, ed);
-    vis_ee_vbc_(d_vc, size, &gd, st, ed, &dh, &dt, v00, &rei, d_v0, d_bx, &n, &cf, vec, &flop);
-  }
 }
 
 
@@ -793,7 +734,6 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_cdf, const double
   REAL_TYPE vec[3];
   int gd = guide;
   REAL_TYPE dd=0.0;
-  REAL_TYPE vsum=0.0;
   REAL_TYPE dummy;
 
   
@@ -809,7 +749,7 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_cdf, const double
           if ( paraMngr->BndCommV3D(d_vf, size[0], size[1], size[2], gd, gd) != CPM_SUCCESS ) Exit(0);
         }
         
-        vobc_tfree2_(d_v, size, &gd, &face, d_vf, &vsum, nID);
+        vobc_tfree2_(d_v, size, &gd, &face, d_vf, nID);
         if ( numProc > 1 )
         {
           if ( paraMngr->BndCommV3D(d_v, size[0], size[1], size[2], gd, gd) != CPM_SUCCESS ) Exit(0);
@@ -821,13 +761,14 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_cdf, const double
         break;
         
       case OBC_OUTFLOW:
-        vobc_get_massflow_(&vsum, size, &gd, &face, d_v, d_cdf, nID);
+        // {}^c \hat{u} で計算した値　vobc_cc_neumann_(d_v, size, &gd, &face, nID);
         break;
         
       case OBC_WALL:
       case OBC_SPEC_VEL:
         dummy = extractVelOBC(face, vec, tm, v00);
         vobc_cc_drchlt_(d_v, size, &gd, &face, vec, nID);
+        vobc_face_drchlt_(d_vf, size, &gd, &face, d_cdf, vec, nID);
         break;
         
       case OBC_INTRINSIC:
@@ -845,75 +786,13 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_cdf, const double
   // 周期境界
   VobcPeriodicSimple(d_v, ens); // セルフェイスの値の周期処理は不要
   
-  for (int face=0; face<NOFACE; face++)
-  {
-    if ( obc[face].getClass() == OBC_PERIODIC )
-    {
-      vobc_get_massflow_(&vsum, size, &gd, &face, d_v, d_cdf, nID);
-      obc[face].setDomainMF(vsum);
-    }
-  }
-  
 }
 
-
-
-// #################################################################
-// 速度の外部境界条件処理　セルフェイス
-void SetBC3D::OuterVBCface(REAL_TYPE* d_vf, int* d_cdf, const double tm, Control* C, REAL_TYPE* v00, const int* ens)
-{
-  REAL_TYPE vec[3];
-  int gd = guide;
-  REAL_TYPE dd=0.0;
-  REAL_TYPE vsum=0.0;
-  REAL_TYPE dummy;
-  double flop;
-  
-  
-  // 周期境界以外　外部境界上の法線方向速度を与える
-  for (int face=0; face<NOFACE; face++)
-  {
-    switch ( obc[face].getClass() )
-    {
-      case OBC_SPEC_VEL:
-        dummy = extractVelOBC(face, vec, tm, v00);
-        flop = 0.0;
-        vobc_face_drchlt_(d_vf, size, &gd, &face, d_cdf, vec, &vsum, nID, &flop);
-        break;
-        
-      case OBC_WALL:
-      case OBC_SYMMETRIC:
-        vec[0] = vec[1] = vec[2] = 0.0;
-        vobc_face_drchlt_(d_vf, size, &gd, &face, d_cdf, vec, &vsum, nID, &flop);
-        break;
-        
-        /*
-      case OBC_INTRINSIC:
-        if ( C->Mode.Example == id_Jet )
-        {
-          ((IP_Jet*)Ex)->vobcJetInflowGC(d_v, face);
-        }
-        break;
-         */
-        
-      // 以下のケースは，{}^c \hat{u}_{ix+1}の値を計算し，外部境界上のセルフェイスの値を計算するので，処理不要
-      //case OBC_FAR_FIELD:
-      //case OBC_TRC_FREE:
-      //case OBC_OUTFLOW:
-        
-      default:
-        break;
-    }
-  }
-  
-  // 周期境界
-  VobcPeriodicSimple(d_vf, ens);
-}
 
 
 // #################################################################
 // 速度の外部境界条件処理（セルフェイス境界のための準備）
-void SetBC3D::OuterVBCfacePrep(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_cdf, REAL_TYPE dt, Control* C, const int* ens)
+void SetBC3D::OuterVBCfacePrep(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_cdf, REAL_TYPE dt, Control* C, const int* ens, const unsigned m_step)
 {
   int gd = guide;
   REAL_TYPE dh = deltaX;
@@ -921,76 +800,82 @@ void SetBC3D::OuterVBCfacePrep(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_cdf, REAL
   double flop;
   
   // 周期境界以外
-  for (int face=0; face<NOFACE; face++)
+  
+  // 最初ｎ1ステップ目は，ガイドセル部の情報がないのでノイマンを使う
+  if ( m_step == 1 )
   {
-    switch ( obc[face].getClass() )
+    for (int face=0; face<NOFACE; face++)
     {
-      case OBC_TRC_FREE:
-        /*
-         vobc_tfree1_(d_vf, size, &gd, &face, nID);
-         if ( numProc > 1 )
-         {
-         if ( paraMngr->BndCommV3D(d_vf, size[0], size[1], size[2], gd, gd) != CPM_SUCCESS ) Exit(0);
-         }
-         
-         vobc_tfree2_(d_v, size, &gd, &face, d_vf, &vsum, nID);
-         if ( numProc > 1 )
-         {
-         if ( paraMngr->BndCommV3D(d_v, size[0], size[1], size[2], gd, gd) != CPM_SUCCESS ) Exit(0);
-         }
-         obc[face].setDomainMF(vsum); // DomainMonitor()で集約する
-         */
-        break;
-        
-      case OBC_FAR_FIELD:
-        vobc_cc_neumann_(d_vc, size, &gd, &face, nID);
-        break;
-        
-      case OBC_OUTFLOW:
-        v_cnv = C->V_Dface[face];
-        vobc_cc_outflow_(d_vc, d_v, size, &gd, &dh, &dt, d_cdf, &v_cnv, &face, nID, &flop);
-        break;
-        
-      case OBC_INTRINSIC:
-        if ( C->Mode.Example == id_Jet )
-        {
-          ((IP_Jet*)Ex)->vobcJetInflowGC(d_vc, face);
-        }
-        break;
-        
-      default:
-        break;
+      switch ( obc[face].getClass() )
+      {
+        case OBC_TRC_FREE:
+        case OBC_FAR_FIELD:
+        case OBC_OUTFLOW:
+          vobc_cc_neumann_(d_vc, size, &gd, &face, nID);
+          break;
+          
+        case OBC_INTRINSIC:
+          if ( C->Mode.Example == id_Jet )
+          {
+            ((IP_Jet*)Ex)->vobcJetInflowGC(d_vc, face);
+          }
+          break;
+          
+        default:
+          break;
+      }
     }
   }
+  else
+  {
+    for (int face=0; face<NOFACE; face++)
+    {
+      switch ( obc[face].getClass() )
+      {
+        case OBC_TRC_FREE:
+          /*
+           vobc_tfree1_(d_vf, size, &gd, &face, nID);
+           if ( numProc > 1 )
+           {
+           if ( paraMngr->BndCommV3D(d_vf, size[0], size[1], size[2], gd, gd) != CPM_SUCCESS ) Exit(0);
+           }
+           
+           vobc_tfree2_(d_v, size, &gd, &face, d_vf, &vsum, nID);
+           if ( numProc > 1 )
+           {
+           if ( paraMngr->BndCommV3D(d_v, size[0], size[1], size[2], gd, gd) != CPM_SUCCESS ) Exit(0);
+           }
+           obc[face].setDomainMF(vsum); // DomainMonitor()で集約する
+           */
+          break;
+          
+        case OBC_FAR_FIELD:
+          vobc_cc_neumann_(d_vc, size, &gd, &face, nID);
+          break;
+          
+        case OBC_OUTFLOW:
+          //vobc_cc_neumann_(d_vc, size, &gd, &face, nID);
+          v_cnv = C->V_Dface[face];
+          vobc_cc_outflow_(d_vc, d_v, size, &gd, &dh, &dt, d_cdf, &v_cnv, &face, nID, &flop);
+          break;
+          
+        case OBC_INTRINSIC:
+          if ( C->Mode.Example == id_Jet )
+          {
+            ((IP_Jet*)Ex)->vobcJetInflowGC(d_vc, face);
+          }
+          break;
+          
+        default:
+          break;
+      }
+    }
+  }
+
   
   // 周期境界
   VobcPeriodicSimple(d_vc, ens);
   
-}
-
-
-// #################################################################
-// 疑似速度の外部境界条件処理
-void SetBC3D::OuterVBCpseudo(REAL_TYPE* d_vc, REAL_TYPE* d_v0, int* d_cdf, Control* C, const int* ens)
-{
-  int gd = guide;
-  
-  // 周期境界以外
-  for (int face=0; face<NOFACE; face++)
-  {
-    switch ( obc[face].getClass() )
-    {
-      case OBC_OUTFLOW:
-      case OBC_FAR_FIELD:
-      case OBC_TRC_FREE:
-        vobc_cc_neumann_(d_vc, size, &gd, &face, nID);
-        //vobc_cc_outflow_(d_vc, size, &gd, &dh, &dt, d_cdf, &dd, &face, d_v0, &flop);
-        break;
-    }
-  }
-  
-  // 周期境界
-  VobcPeriodicSimple(d_vc, ens);
 }
 
 

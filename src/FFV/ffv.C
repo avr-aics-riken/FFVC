@@ -336,6 +336,77 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
   
   for (int face=0; face<NOFACE; face++) 
   {
+    // 外部境界面でない場合にはゼロが戻る
+    u_sum = 0.0;
+    vobc_face_massflow_(&u_sum, size, &guide, &face, d_vf, d_cdf, nID);
+    
+    
+    // 有効セル数 => 外部境界でガイドセルと内側のセルで挟まれる面がFluidの場合のセル数
+    REAL_TYPE ec = (REAL_TYPE)obc[face].getValidCell();
+    
+    // 各プロセスの外部領域面の速度をvv[]にコピー
+    REAL_TYPE* vv = obc[face].getDomainV();
+    
+    REAL_TYPE q[2] = {0.0, 0.0};
+    
+    // 外部境界のみ値をもつ
+    if ( nID[face] < 0 )
+    {
+      q[0] = u_sum; // 無次元流量
+      q[1] = vv[1]; // セル数
+    }
+    
+    if ( numProc > 1 )
+    {
+      REAL_TYPE tmp[2] = {q[0], q[1]};
+      if ( paraMngr->Allreduce(tmp, q, 2, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    
+    // 特殊条件
+    if ( (R->Mode.Example == id_Jet) && (face==X_minus) )
+    {
+      R->V_Dface[face] = q[0]/q[1];  // 無次元平均流速
+      R->Q_Dface[face] = q[0] * ddh; // 無次元流量
+    }
+    else // 標準
+    {
+      if ( numProc > 1 )
+      {
+        REAL_TYPE tmp_sum = u_sum;
+        if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      }
+      
+      u_avr = (ec != 0.0) ? u_sum / ec : 0.0;
+      
+      R->V_Dface[face] = u_avr;       // 無次元平均流速
+      R->Q_Dface[face] = u_sum * ddh; // 無次元流量
+    }
+
+  }
+  
+}
+
+// #################################################################
+/**
+ * @brief 外部計算領域の各面における総流量と対流流出速度を計算する
+ * @param [in] ptr  BoundaryOuterクラスのポインタ
+ * @param [in] R    Controlクラスのポインタ
+ * @note 系への流入を正の符号とする
+ *
+void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
+{
+  if ( !ptr ) Exit(0);
+  BoundaryOuter* obc=NULL;
+  
+  obc = ptr;
+  
+  REAL_TYPE ddh = deltaX * deltaX;
+  REAL_TYPE u_sum, u_avr;
+  
+  
+  for (int face=0; face<NOFACE; face++)
+  {
     
     // 有効セル数 => 外部境界でガイドセルと内側のセルで挟まれる面がFluidの場合のセル数
     REAL_TYPE ec = (REAL_TYPE)obc[face].getValidCell();
@@ -381,10 +452,10 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
       R->V_Dface[face] = u_avr;       // 無次元平均流速
       R->Q_Dface[face] = u_sum * ddh; // 無次元流量
     }
-
+    
   }
   
-}
+}*/
 
 
 

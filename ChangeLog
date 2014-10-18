@@ -20,6 +20,9 @@ REVISION HISTORY
 
 --------------------------
 2014-10-18
+r1638 branch change-itr cleanup
+ - clean test functions
+
 r1637 branch change-itr HSMAC
  - test HSMAC
  - redesign Iteration class

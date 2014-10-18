@@ -214,15 +214,7 @@ void FFV::NS_FS_E_Binary()
       }
       TIMING_stop(tm_pvec_abcn, flop);
       
-      TIMING_start(tm_pvec_abcn_df_ee);
-      flop = 0.0;
-      vis_ee_(d_vc, size, &guide, &dh, &dt, v00, &rei, d_wv, d_v0, d_cdf, &half, &flop);
-      TIMING_stop(tm_pvec_abcn_df_ee, flop);
-      
-      TIMING_start(tm_pvec_abcn_df_ee_BC);
-      flop = 0.0;
-      BC.mod_Vis_EE(d_vc, d_v0, half, d_cdf, CurrentTime, dt, v00, flop);
-      TIMING_stop(tm_pvec_abcn_df_ee_BC, flop);
+// 陰解法部分
       break;
       
     default:
@@ -260,13 +252,13 @@ void FFV::NS_FS_E_Binary()
   
   // 疑似ベクトルの境界条件
   TIMING_start(tm_pvec_BC);
-  BC.OuterVBCpseudo(d_vc, d_v0, d_cdf, &C, ensPeriodic);
+  BC.OuterVBCfacePrep (d_vc, d_v0, d_cdf, dt, &C, ensPeriodic, Session_CurrentStep);
   BC.InnerVBCperiodic(d_vc, d_bcd);
   TIMING_stop(tm_pvec_BC, 0.0);
 
   
   // 疑似ベクトルの同期
-  if ( numProc > 1 ) 
+  if ( numProc > 1 )
   {
     TIMING_start(tm_pvec_comm);
     if ( paraMngr->BndCommV3D(d_vc, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
@@ -281,7 +273,7 @@ void FFV::NS_FS_E_Binary()
   // >>> Fractional step sub-section 4
   TIMING_start(tm_frctnl_stp_sct_4);
   
-  // Crank-Nicolson Iteration
+  /* Crank-Nicolson Iteration
   if ( C.AlgorithmF == Flow_FS_AB_CN ) 
   {
     TIMING_start(tm_copy_array);;
@@ -294,6 +286,7 @@ void FFV::NS_FS_E_Binary()
       if ( LSv->isErrConverged() || LSv->isResConverged() ) break;
     }
   }
+   */
   
   TIMING_stop(tm_frctnl_stp_sct_4, 0.0);
   // <<< Fractional step subsection 4
@@ -308,11 +301,6 @@ void FFV::NS_FS_E_Binary()
   TIMING_start(tm_poi_src_sct);
   
   
-  // vの初期値をvcにしておく
-  //TIMING_start(tm_copy_array);
-  //U.copyV3D(d_v, size, guide, d_vc, one);
-  //TIMING_stop(tm_copy_array, 0.0);
-  
   
   // 非VBC面に対してのみ，セルセンターの値から \sum{u^*} を計算
   TIMING_start(tm_div_pvec);
@@ -324,9 +312,10 @@ void FFV::NS_FS_E_Binary()
   // Poissonソース項の速度境界条件（VBC）面による修正
   TIMING_start(tm_poi_src_vbc);
   flop = 0.0;
-  BC.modPsrcVBC(d_ws, d_vc, d_v0, d_vf, d_cdf, CurrentTime, dt, &C, v00, flop);
+  BC.modPsrcVBC(d_ws, d_cdf, CurrentTime, &C, v00, d_vf, d_vc, d_v0, dt, flop);
   TIMING_stop(tm_poi_src_vbc, flop);
-
+  
+  
   
   // (Neumann_BCType_of_Pressure_on_solid_wall == grad_NS)　のとき，\gamma^{N2}の処理
   //hogehoge
@@ -379,6 +368,7 @@ void FFV::NS_FS_E_Binary()
   b_l2 = sqrt(b_l2);
   
   
+  
   // Initial residual
   if ( LSp->getResType() == nrm_r_r0 )
   {
@@ -400,13 +390,14 @@ void FFV::NS_FS_E_Binary()
   }
   
 
+  
   TIMING_stop(tm_poi_src_sct, 0.0);
   // <<< Poisson Source section
   
 
   
   
-  // P-Iteration
+  // VP-Iteration
   // >>> Poisson Iteration section
   TIMING_start(tm_poi_itr_sct);
   
@@ -418,7 +409,7 @@ void FFV::NS_FS_E_Binary()
     
     if ( T->getClass() == OBC_OUTFLOW )
     {
-      vobc_update_(d_v, size, &guide, &face, d_vc, nID);
+      vobc_cc_copy_(d_v, size, &guide, &face, d_vc, nID);
     }
   }
   
@@ -481,20 +472,20 @@ void FFV::NS_FS_E_Binary()
     // >>> Poisson Iteration subsection 4
     TIMING_start(tm_poi_itr_sct_4);
     
-    // 速度のスカラポテンシャルによる射影と速度の発散の計算 d_dvはdiv(u)のテンポラリ保持に利用
+    // スカラポテンシャルによる射影と速度の発散の計算 d_dvはdiv(u)のテンポラリ保持に利用
     TIMING_start(tm_prj_vec);
     flop = 0.0;
-    update_vec_(d_v, d_dv, size, &guide, &dt, &dh, d_vc, d_vf, d_p, d_bcp, d_cdf, &flop);
+    update_vec_(d_v, d_vf, d_dv, size, &guide, &dt, &dh, d_vc, d_p, d_bcp, d_cdf, &flop);
     TIMING_stop(tm_prj_vec, flop);
     
     
-    // 速度の流束形式の境界条件による修正
+    // 速度の流束形式の境界条件による発散値の修正
     TIMING_start(tm_prj_vec_bc);
     flop=0.0;
-    BC.modDivergence(d_dv, d_cdf, CurrentTime, v00, m_buf, d_vf, d_v, &C, flop);
+    BC.modDivergence(d_dv, d_cdf, CurrentTime, &C, v00, d_vf, d_v, m_buf, flop);
     TIMING_stop(tm_prj_vec_bc, flop);
     
-    
+
     
     // セルフェイス速度の境界条件の通信部分
     if ( C.EnsCompo.outflow )
@@ -616,7 +607,7 @@ void FFV::NS_FS_E_Binary()
     // <<< Poisson Iteration subsection 4
     
     
-    // div(u^{n+1})の計算
+    // \nabla {}^f u^{n+1})の計算
     NormDiv();
     
     

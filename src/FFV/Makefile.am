@@ -35,7 +35,6 @@ libFFV_a_CXXFLAGS = \
 
 libFFV_a_SOURCES = \
   NS_FS_E_Binary.C \
-  NS_FS_E_Binary_C-HSMAC.C \
   NS_FS_E_CDS.C \
   PS_Binary.C \
   ffv.C \

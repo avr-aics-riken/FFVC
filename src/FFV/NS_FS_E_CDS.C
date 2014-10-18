@@ -181,15 +181,8 @@ void FFV::NS_FS_E_CDS()
       }
       TIMING_stop(tm_pvec_abcn, flop);
       
-      TIMING_start(tm_pvec_abcn_df_ee);
-      flop = 0.0;
-      vis_ee_(d_vc, size, &guide, &dh, &dt, v00, &rei, d_wv, d_v0, d_cdf, &half, &flop);
-      TIMING_stop(tm_pvec_abcn_df_ee, flop);
-      
-      TIMING_start(tm_pvec_abcn_df_ee_BC);
-      flop = 0.0;
-      BC.mod_Vis_EE(d_vc, d_v0, half, d_cdf, CurrentTime, dt, v00, flop);
-      TIMING_stop(tm_pvec_abcn_df_ee_BC, flop);
+
+      // implicit part
       break;
       
     default:
@@ -226,7 +219,7 @@ void FFV::NS_FS_E_CDS()
   
   // 疑似ベクトルの境界条件
   TIMING_start(tm_pvec_BC);
-  BC.OuterVBCpseudo(d_vc, d_v, d_cdf, &C, ensPeriodic);
+  BC.OuterVBCfacePrep(d_vc, d_v0, d_cdf, dt, &C, ensPeriodic, Session_CurrentStep);
   BC.InnerVBCperiodic(d_vc, d_bcd);
   TIMING_stop(tm_pvec_BC, 0.0);
   
@@ -296,8 +289,9 @@ void FFV::NS_FS_E_CDS()
   // Poissonソース項の速度境界条件（VBC）面による修正
   TIMING_start(tm_poi_src_vbc);
   flop = 0.0;
-  BC.modPsrcVBC(d_ws, d_vc, d_v0, d_vf, d_cdf, CurrentTime, dt, &C, v00, flop);
+  BC.modPsrcVBC(d_ws, d_cdf, CurrentTime, &C, v00, d_vf, d_vc, d_v0, dt, flop);
   TIMING_stop(tm_poi_src_vbc, flop);
+  
   
   
   // (Neumann_BCType_of_Pressure_on_solid_wall == grad_NS)　のとき，\gamma^{N2}の処理
@@ -418,8 +412,10 @@ void FFV::NS_FS_E_CDS()
     // セルフェイス速度の境界条件による修正
     TIMING_start(tm_prj_vec_bc);
     flop=0.0;
-    BC.modDivergence(d_dv, d_cdf, CurrentTime, v00, m_buf, d_vf, d_v, &C, flop);
+    BC.modDivergence(d_dv, d_cdf, CurrentTime, &C, v00, d_vf, d_v, m_buf, flop);
     TIMING_stop(tm_prj_vec_bc, flop);
+
+    
     
     // セルフェイス速度の境界条件の通信部分
     if ( C.EnsCompo.outflow == ON )
