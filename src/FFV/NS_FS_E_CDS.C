@@ -49,9 +49,8 @@ void FFV::NS_FS_E_CDS()
   
   int v_mode=0;
   
-  IterationCtl* ICp = &IC[ic_prs1];  /// 圧力のPoisson反復
-  IterationCtl* ICv = &IC[ic_vel1];  /// 粘性項のCrank-Nicolson反復
-  IterationCtl* ICd = &IC[ic_div];   /// 圧力-速度反復
+  LinearSolver* LSp = &LS[ic_prs1];  /// 圧力のPoisson反復
+  LinearSolver* LSv = &LS[ic_vel1];  /// 粘性項のCrank-Nicolson反復
   
   // point Data
   // d_v   セルセンタ速度 v^n -> v^{n+1}
@@ -182,15 +181,8 @@ void FFV::NS_FS_E_CDS()
       }
       TIMING_stop(tm_pvec_abcn, flop);
       
-      TIMING_start(tm_pvec_abcn_df_ee);
-      flop = 0.0;
-      vis_ee_(d_vc, size, &guide, &dh, &dt, v00, &rei, d_wv, d_v0, d_cdf, &half, &flop);
-      TIMING_stop(tm_pvec_abcn_df_ee, flop);
-      
-      TIMING_start(tm_pvec_abcn_df_ee_BC);
-      flop = 0.0;
-      BC.mod_Vis_EE(d_vc, d_v0, half, d_cdf, CurrentTime, dt, v00, flop);
-      TIMING_stop(tm_pvec_abcn_df_ee_BC, flop);
+
+      // implicit part
       break;
       
     default:
@@ -227,7 +219,7 @@ void FFV::NS_FS_E_CDS()
   
   // 疑似ベクトルの境界条件
   TIMING_start(tm_pvec_BC);
-  BC.OuterVBCpseudo(d_vc, d_cdf, &C, ensPeriodic);
+  BC.OuterVBCfacePrep(d_vc, d_v0, d_cdf, dt, &C, ensPeriodic, Session_CurrentStep);
   BC.InnerVBCperiodic(d_vc, d_bcd);
   TIMING_stop(tm_pvec_BC, 0.0);
   
@@ -255,10 +247,10 @@ void FFV::NS_FS_E_CDS()
     U.copyV3D(d_wv, size, guide, d_vc, one);
     TIMING_stop(tm_copy_array, 0.0);
     
-    for (ICv->setLoopCount(0); ICv->getLoopCount()< ICv->getMaxIteration(); ICv->incLoopCount())
+    for (LSv->setLoopCount(0); LSv->getLoopCount()< LSv->getMaxIteration(); LSv->incLoopCount())
     {
-      //CN_Itr(ICv);
-      if (  ICv->isConverged() ) break;
+      //CN_Itr(LSv);
+      if ( LSv->isErrConverged() || LSv->isResConverged() ) break;
     }
   }
   
@@ -297,54 +289,38 @@ void FFV::NS_FS_E_CDS()
   // Poissonソース項の速度境界条件（VBC）面による修正
   TIMING_start(tm_poi_src_vbc);
   flop = 0.0;
-  BC.modPsrcVBC(d_ws, d_vc, d_v0, d_vf, d_cdf, CurrentTime, dt, &C, v00, flop);
+  BC.modPsrcVBC(d_ws, d_cdf, CurrentTime, &C, v00, d_vf, d_vc, d_v0, dt, flop);
   TIMING_stop(tm_poi_src_vbc, flop);
+  
   
   
   // (Neumann_BCType_of_Pressure_on_solid_wall == grad_NS)　のとき，\gamma^{N2}の処理
   //hogehoge
   
-  // 定数項のL2ノルム　rhs_nrm
-  if ( (ICp->getNormType() == dx_b) || (ICp->getNormType() == r_b) )
+  // 定数項bの自乗和　b_l2
+  TIMING_start(tm_poi_src_nrm);
+  rhs_nrm = 0.0;
+  flop = 0.0;
+  blas_calc_b_(&rhs_nrm, d_b, d_ws, d_bcp, size, &guide, &dh, &dt, &flop);
+  TIMING_stop(tm_poi_src_nrm, flop);
+  
+  if ( numProc > 1 )
   {
-    TIMING_start(tm_poi_src_nrm);
-    rhs_nrm = 0.0;
-    flop = 0.0;
-    if (ICp->getBit3() == OFF)
-    {
-      poi_rhs_(&rhs_nrm, d_b, size, &guide, d_ws, d_sq, d_bcp, &dh, &dt, &flop);
-    }
-    else
-    {
-      poi_rhs_bit3_(&rhs_nrm, d_b, size, &guide, d_ws, d_sq, d_bcp, &dh, &dt, &flop);
-    }
-    TIMING_stop(tm_poi_src_nrm, flop);
-    
-    if ( numProc > 1 )
-    {
-      TIMING_start(tm_poi_src_comm);
-      double m_tmp = rhs_nrm;
-      if ( paraMngr->Allreduce(&m_tmp, &rhs_nrm, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-      TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
-    }
-    
-    rhs_nrm = sqrt(rhs_nrm);
+    TIMING_start(tm_poi_src_comm);
+    double m_tmp = rhs_nrm;
+    if ( paraMngr->Allreduce(&m_tmp, &rhs_nrm, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
   }
   
+  rhs_nrm = sqrt(rhs_nrm);
+  
   // Initial residual
-  if ( ICp->getNormType() == r_r0 )
+  if ( LSp->getResType() == nrm_r_r0 )
   {
     TIMING_start(tm_poi_src_nrm);
     res_init = 0.0;
     flop = 0.0;
-    if (ICp->getBit3() == OFF)
-    {
-      poi_residual_(&res_init, size, &guide, d_p, d_b, d_bcp, &flop);
-    }
-    else
-    {
-      poi_residual_bit3_(&res_init, size, &guide, d_p, d_b, d_bcp, &flop);
-    }
+    blas_calc_r2_(&res_init, d_p, d_b, d_bcp, size, &guide, &flop);
     TIMING_stop(tm_poi_src_nrm, flop);
     
     if ( numProc > 1 )
@@ -374,7 +350,7 @@ void FFV::NS_FS_E_CDS()
     TIMING_stop(tm_hstry_itr, 0.0);
   }
 
-  for (ICp->setLoopCount(0); ICp->getLoopCount() <= ICp->getMaxIteration(); ICp->incLoopCount())
+  for (LSp->setLoopCount(0); LSp->getLoopCount() <= LSp->getMaxIteration(); LSp->incLoopCount())
   {
     
     // >>> Poisson Iteration subsection 1
@@ -403,19 +379,19 @@ void FFV::NS_FS_E_CDS()
     // <<< Poisson Iteration subsection 1
 
     // 線形ソルバー
-    switch (ICp->getLS())
+    switch (LSp->getLS())
     {
       case SOR:
-        Point_SOR(ICp, d_p, d_b, rhs_nrm, res_init); // return x^{m+1} - x^m
+        LSp->PointSOR(d_p, d_b, rhs_nrm, res_init); // return x^{m+1} - x^m
         break;
         
       case SOR2SMA:
-        SOR_2_SMA(ICp, d_p, d_b, rhs_nrm, res_init); // return x^{m+1} - x^m
+        LSp->SOR2_SMA(d_p, d_b, LSp->getMaxIteration(), rhs_nrm, res_init); // return x^{m+1} - x^m
         break;
         
-      case GMRES:
-        Fgmres(ICp, rhs_nrm, res_init); // return ?
-        break;
+      //case GMRES:
+      //  Fgmres(LSp, rhs_nrm, res_init); // return ?
+      //  break;
         
       default:
         printf("\tInvalid Linear Solver for Pressure\n");
@@ -436,8 +412,10 @@ void FFV::NS_FS_E_CDS()
     // セルフェイス速度の境界条件による修正
     TIMING_start(tm_prj_vec_bc);
     flop=0.0;
-    BC.modDivergence(d_dv, d_cdf, CurrentTime, v00, m_buf, d_vf, d_v, &C, flop);
+    BC.modDivergence(d_dv, d_cdf, CurrentTime, &C, v00, d_vf, d_v, m_buf, flop);
     TIMING_stop(tm_prj_vec_bc, flop);
+
+    
     
     // セルフェイス速度の境界条件の通信部分
     if ( C.EnsCompo.outflow == ON )
@@ -519,7 +497,7 @@ void FFV::NS_FS_E_CDS()
  
     
     // ノルムの計算
-    NormDiv(ICd);
+    NormDiv();
     
     /* Forcingコンポーネントによる速度の方向修正(収束判定から除外)  >> TEST
      TIMING_start(tm_prj_frc_dir);
@@ -529,7 +507,7 @@ void FFV::NS_FS_E_CDS()
      */
     
     // 収束判定　性能測定モードのときは収束判定を行わない
-    if ( (C.Hide.PM_Test == OFF) && ICd->isConverged() ) break;
+    //if ( (C.Hide.PM_Test == OFF) && LSd->isConverged() ) break;
   } // end of iteration
   
   TIMING_stop(tm_poi_itr_sct, 0.0);

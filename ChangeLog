@@ -18,6 +18,31 @@
 REVISION HISTORY
 ================
 
+--------------------------
+2014-10-18
+r1638 branch change-itr cleanup
+ - clean test functions
+
+r1637 branch change-itr HSMAC
+ - test HSMAC
+ - redesign Iteration class
+
+--------------------------
+2014-10-02
+r1636 branch change-itr BiCG naive
+ - Naive implementation of BiCGstab
+ - Introduce F_LS directory for Linear Solver
+
+--------------------------
+2014-09-28
+r1635 branch change-itr
+ - Test standard Projection method
+ - Expire v_div_? for Norm_Type
+ - /ApplicationControl/DebugDivergence in tp file -> /Output/Log/Iteration
+ - change interface of NormDiv()
+ - change IterationCtl class > Residual and Error
+ - expire bit3option
+ - Modify iteration process
 
 --------------------------
 2014-09-22

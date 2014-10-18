@@ -46,6 +46,12 @@ int FFV::Initialize(int argc, char **argv)
   BC.importCPM(paraMngr);
   MO.importCPM(paraMngr);
   
+  for (int i=0; i<ic_END; i++)
+  {
+    LS[i].importCPM(paraMngr);
+  }
+  
+  
   // 入力ファイルの指定
   std::string input_file = argv[1];
   
@@ -115,7 +121,7 @@ int FFV::Initialize(int argc, char **argv)
   
   // 線形ソルバーの特定
   identifyLinearSolver(&tp_ffv);
-
+  
 
   // 計算モデルの入力ソース情報を取得
   C.getGeometryModel();
@@ -124,6 +130,9 @@ int FFV::Initialize(int argc, char **argv)
   // Intrinsic classの同定
   identifyExample(fp);
   
+  
+  // Divパラメータのロード
+  if ( !getParaDiv(&tp_ffv) ) Exit(0);
   
 
   // パラメータの取得と計算領域の初期化，並列モードを返す
@@ -168,7 +177,7 @@ int FFV::Initialize(int argc, char **argv)
   allocArray_Prep(PrepMemory, TotalMemory);
   
   // SOR2SMAのNaive実装
-  if ( (IC[ic_prs1].getLS()==SOR2SMA) && (IC[ic_prs1].getNaive() == ON) )
+  if ( LS[ic_prs1].getNaive() == ON )
   {
     Hostonly_ printf("\n\t << Extra arrays are allocated for Naive implementation. >>\n\n");
     allocArray_Naive(TotalMemory);
@@ -519,13 +528,6 @@ int FFV::Initialize(int argc, char **argv)
   C.ver_TP  = tp_ffv.getVersionInfo();
   
 
-  // 制御パラメータ，物理パラメータの表示
-  Hostonly_ 
-  {
-    displayParameters(fp);
-  }
-  
-
   
   // ドライバ条件のチェック
   BC.checkDriver(fp);
@@ -568,36 +570,28 @@ int FFV::Initialize(int argc, char **argv)
     OutputBasicVariables(flop_task);
   }
 
-
-  // SOR2SMA
-  switch (IC[ic_prs1].getLS())
-  {
-    case SOR2SMA:
-    case GMRES:
-    case RBGS:
-		case PCG:
-		case PBiCGSTAB:
-      allocate_SOR2SMA_buffer(TotalMemory);
-      break;
-  }
   
-  
-  // Krylov subspace
-  switch (IC[ic_prs1].getLS())
+  // セルフェイス速度から領域境界平均速度を求める
+  for (int face=0; face<NOFACE; face++)
   {
-    case GMRES:
-      allocArray_Krylov(TotalMemory);
-      break;
-      
-    case PCG:
-			allocArray_PCG(TotalMemory);
-			break;
-      
-		case PBiCGSTAB:
-			allocArray_PBiCGSTAB(TotalMemory);
-			break;
+    REAL_TYPE vsum = 0.0;
+    BoundaryOuter* T = BC.exportOBC(face);
+    
+    vobc_face_massflow_(&vsum, size, &guide, &face, d_vf, d_cdf, nID);
+    T->setDomainMF(vsum);
   }
 
+  
+  // 反復法クラスの初期化
+  setupLinearSolvers(TotalMemory, &tp_ffv);
+  
+  
+  // 制御パラメータ，物理パラメータの表示
+  Hostonly_
+  {
+    displayParameters(fp);
+  }
+  
   
   // メモリ使用量の表示
   Hostonly_
@@ -996,7 +990,7 @@ void FFV::displayMemoryInfo(FILE* fp, double G_mem, double L_mem, const char* st
  */
 void FFV::displayParameters(FILE* fp)
 {
-  C.displayParams(stdout, fp, IC, &DT, &RF, mat, cmp, EXEC_MODE);
+  C.displayParams(stdout, fp, dynamic_cast<IterationCtl*>(LS), &DT, &RF, &DivC, mat, cmp, EXEC_MODE);
 
   
   Ex->printPara(stdout, &C);
@@ -1188,7 +1182,7 @@ void FFV::encodeBCindex(FILE* fp)
 
   
   // 圧力計算のビット情報をエンコードする -----
-  C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid, C.ExperimentNaive, d_pni);
+  C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid, LS[ic_prs1].getNaive(), d_pni);
   
 
   
@@ -2030,6 +2024,58 @@ int FFV::getDomainInfo(TextParser* tp_dom)
 }
 
 
+// #################################################################
+/**
+ * @brief Div反復固有のパラメータを指定する
+ * @param [in] tpCntl TextParser pointer
+ */
+bool FFV::getParaDiv(TextParser* tpCntl)
+{
+  string str, label;
+  double tmp=0.0;
+  int inp=0;
+  
+  label = "/Iteration/DivMaxIteration";
+  
+  if ( !(tpCntl->getInspectedValue(label, inp)) )
+  {
+    Exit(0);
+  }
+  DivC.MaxIteration = inp;
+  
+  
+  label = "/Iteration/DivCriterion";
+  
+  if ( !(tpCntl->getInspectedValue(label, tmp)) )
+  {
+    Exit(0);
+  }
+  DivC.divEPS = tmp;
+  
+  
+  label = "/Iteration/DivNorm";
+  
+  if ( !(tpCntl->getInspectedValue(label, str)) )
+  {
+    Exit(0);
+  }
+  
+  if ( !strcasecmp(str.c_str(), "L2") )
+  {
+    DivC.divType = nrm_div_l2;
+  }
+  else if ( !strcasecmp(str.c_str(), "max") )
+  {
+    DivC.divType = nrm_div_max;
+  }
+  else
+  {
+    Exit(0);
+  }
+  
+  return true;
+}
+
 
 // #################################################################
 /* @brief Intrisic classの同定
@@ -2078,26 +2124,22 @@ void FFV::identifyLinearSolver(TextParser* tpCntl)
     case Flow_FS_EE_EE:
     case Flow_FS_AB2:
       setLinearSolver(tpCntl, ic_prs1, "/Iteration/Pressure");
-      setLinearSolver(tpCntl, ic_div,  "/Iteration/VPiteration");
       break;
       
     case Flow_FS_AB_CN:
       setLinearSolver(tpCntl, ic_prs1, "/Iteration/Pressure");
       setLinearSolver(tpCntl, ic_vel1, "/Iteration/Velocity");
-      setLinearSolver(tpCntl, ic_div,  "/Iteration/VPiteration");
       break;
       
     case Flow_FS_RK_CN:
       setLinearSolver(tpCntl, ic_prs1, "/Iteration/Pressure");
       setLinearSolver(tpCntl, ic_prs2, "/Iteration/Pressure2nd");
       setLinearSolver(tpCntl, ic_vel1, "/Iteration/Velocity");
-      setLinearSolver(tpCntl, ic_div,  "/Iteration/VPiteration");
       break;
       
     default:
       Exit(0);
   }
-
   
 
   if ( !C.isHeatProblem() ) return;
@@ -2273,7 +2315,7 @@ void FFV::initFileOut()
   
   
   // Divergence for Debug
-  if ( C.FIO.Div_Debug == ON )
+  if ( C.Mode.Log_Itr == ON )
   {
     comp = 1;
     DFI_OUT_DIV = cio_DFI::WriteInit(MPI_COMM_WORLD,
@@ -2973,7 +3015,7 @@ void FFV::prepHistoryOutput()
   
   Hostonly_
   {
-    H->printHistoryTitle(stdout, IC, &C, true);
+    H->printHistoryTitle(stdout, dynamic_cast<IterationCtl*>(LS), &C, &DivC, true);
     
     // コンポーネント情報
     if ( C.Mode.Log_Base == ON ) 
@@ -2984,7 +3026,7 @@ void FFV::prepHistoryOutput()
         stamped_printf("\tSorry, can't open 'history_base.txt' file. Write failed.\n");
         Exit(0);
       }
-      H->printHistoryTitle(fp_b, IC, &C, true);
+      H->printHistoryTitle(fp_b, dynamic_cast<IterationCtl*>(LS), &C, &DivC, true);
       
       // コンポーネント履歴情報
       if ( C.EnsCompo.monitor )
@@ -3038,7 +3080,7 @@ void FFV::prepHistoryOutput()
     // CCNVfile
     if ( C.Mode.CCNV == ON )
     {
-      H->printCCNVtitle(IC, &C);
+      H->printCCNVtitle(dynamic_cast<IterationCtl*>(LS), &C);
     }
   }
   
@@ -3453,11 +3495,8 @@ void FFV::setInitialCondition()
     
     
     // セルフェイスの設定　発散値は関係なし
-    BC.modDivergence(d_dv, d_cdf, CurrentTime, v00, m_buf, d_vf, d_v, &C, flop_task);
+    BC.modDivergence(d_dv, d_cdf, CurrentTime, &C, v00, d_vf, d_v, m_buf, flop_task);
     
-    
-		// 外部境界面の流出流量と移流速度
-    DomainMonitor( BC.exportOBC(), &C);
     
     
 		// 外部境界面の移流速度を計算し，外部境界条件を設定
@@ -3501,14 +3540,18 @@ void FFV::setInitialCondition()
     BC.OuterVBC(d_v, d_vf, d_cdf, tm, &C, v00, ensPeriodic);
     
     // 流出境界の流出速度の算出
-    BC.modDivergence(d_ws, d_cdf, tm, v00, m_buf, d_vf, d_v, &C, flop_task);
-    
-    DomainMonitor(BC.exportOBC(), &C);
-    
+    BC.modDivergence(d_ws, d_cdf, CurrentTime, &C, v00, d_vf, d_v, m_buf, flop_task);
+
     //if ( C.isHeatProblem() ) BC.InnerTBC_Periodic()
     
   }
+  
+  
+  
+  // 外部境界面の流出流量と移流速度
+  DomainMonitor( BC.exportOBC(), &C);
 
+  
   
   // 初期解およびリスタート解の同期
   if ( numProc > 1 )
@@ -3557,7 +3600,7 @@ void FFV::setLinearSolver(TextParser* tpCntl, const int odr, const string label)
     Exit(0);
   }
   
-  C.copyCriteria(IC[odr], str);
+  C.copyCriteria(dynamic_cast<IterationCtl*>(&LS[odr]), str);
 }
 
 
@@ -3745,7 +3788,7 @@ void FFV::setMonitorList()
   
   
   // ########## 確認のための出力
-  Ex->writeSVX(d_bcd, &C);
+  //Ex->writeSVX(d_bcd, &C);
 #if 0
   REAL_TYPE org[3], pit[3];
   
@@ -3954,6 +3997,11 @@ string FFV::setupDomain(TextParser* tpf)
   Ex->setRankInfo  (paraMngr, procGrp);
   MO.setRankInfo   (paraMngr, procGrp);
   
+  for (int i=0; i<ic_END; i++)
+  {
+    LS[i].setRankInfo(paraMngr, procGrp);
+  }
+  
   
   // 並列モードの取得
   string str = setParallelism();
@@ -3986,6 +4034,12 @@ string FFV::setupDomain(TextParser* tpf)
   Ex->setNeighborInfo  (C.guide);
   MO.setNeighborInfo   (C.guide);
   
+  for (int i=0; i<ic_END; i++)
+  {
+    LS[i].setNeighborInfo(C.guide);
+  }
+  
+  
   // 従属的なパラメータの取得
   C.get2ndParameter(&RF);
   
@@ -4006,6 +4060,80 @@ string FFV::setupDomain(TextParser* tpf)
 
   
   return str;
+}
+
+
+// #################################################################
+/**
+ * @brief 線形ソルバー関連の初期化
+ * @param [in,out] m_total  本計算用のメモリリサイズ
+ * @param [in]     tpCntl   テキストパーサーのツリーポインタ
+ */
+void FFV::setupLinearSolvers(double& TotalMemory, TextParser* tpCntl)
+{
+  
+  // communication buffer
+  switch (LS[ic_prs1].getLS())
+  {
+    case SOR2SMA:
+    case GMRES:
+    case RBGS:
+    case PCG:
+    case BiCGSTAB:
+      allocate_SOR2SMA_buffer(TotalMemory);
+      break;
+  }
+  
+  
+  // extra arrays for Krylov subspace
+  switch (LS[ic_prs1].getLS())
+  {
+    case GMRES:
+      allocArray_Krylov(TotalMemory);
+      break;
+      
+    case PCG:
+      allocArray_PCG(TotalMemory);
+      break;
+      
+    case BiCGSTAB:
+      allocArray_BiCGstab(TotalMemory);
+      if ( LS[ic_prs1].getPrecondition()==ON )
+      {
+        allocArray_BiCGSTABwithPreconditioning(TotalMemory);
+      }
+      break;
+  }
+  
+  
+  // Initialize
+  
+  for (int i=0; i<ic_END; i++)
+  {
+    if ( LS[i].getLS() != 0)
+    {
+      LS[i].Initialize(&C,
+                       &BC,
+                       d_bcp,
+                       d_bcd,
+                       d_pni,
+                       d_pcg_p,
+                       d_pcg_p_,
+                       d_pcg_r,
+                       d_pcg_r0,
+                       d_pcg_q,
+                       d_pcg_s,
+                       d_pcg_s_,
+                       d_pcg_t,
+                       d_pcg_t_,
+                       ensPeriodic,
+                       cf_sz,
+                       cf_x,
+                       cf_y,
+                       cf_z);
+    }
+  }
+
 }
 
 

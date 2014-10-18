@@ -24,12 +24,11 @@
 
 // #################################################################
 // 履歴のCCNVファイルへの出力
-void History::printCCNV(const double* avr, const double* rms, const IterationCtl* IC, const Control* C, const double stptm)
+void History::printCCNV(const double* rms, const double* avr, const IterationCtl* IC, const Control* C, const double divergence, const double stptm)
 {
   const IterationCtl* ICp1 = &IC[ic_prs1];  ///< 圧力のPoisson反復
   const IterationCtl* ICv  = &IC[ic_vel1];  ///< 粘性項のCrank-Nicolson反復
   const IterationCtl* ICt  = &IC[ic_tmp1];  ///< 温度の拡散項の反復
-  const IterationCtl* ICd  = &IC[ic_div];   ///< 圧力-速度反復
   
   
   // データ出力用
@@ -49,12 +48,7 @@ void History::printCCNV(const double* avr, const double* rms, const IterationCtl
   {
     // Max Velocity
     data[c++] = (double)printVmax();
-    
-    // Iteration VP
-    data[c++] = (double)ICd->getLoopCount()+1.0;
-    
-    // max divergence
-    data[c++] = (double)ICd->getNormValue();
+
     
     switch (C->AlgorithmF)
     {
@@ -62,21 +56,30 @@ void History::printCCNV(const double* avr, const double* rms, const IterationCtl
       case Flow_FS_AB2:
       case Flow_FS_AB_CN:
         // Iteration Pressure
-        data[c++] = (double)ICp1->getLoopCount()+1.0;
+        data[c++] = (double)ICp1->getLoopCount();
         
-        // Norm Pressure
-        data[c++] = (double)ICp1->getNormValue();
+        // Residual Pressure
+        data[c++] = (double)ICp1->getResidual();
+        
+        // Error Pressure
+        data[c++] = (double)ICp1->getError();
         break;
     }
     
     if (C->AlgorithmF == Flow_FS_AB_CN)
     {
       // Iteration Velocity
-      data[c++] = (double)ICv->getLoopCount()+1.0;
+      data[c++] = (double)ICv->getLoopCount();
       
-      // Norm Velocity
-      data[c++] = (double)ICv->getNormValue();
+      // Residual Velocity
+      data[c++] = (double)ICv->getResidual();
+      
+      // Error Velocity
+      data[c++] = (double)ICv->getError();
     }
+    
+    // max divergence
+    data[c++] = divergence;
     
     // Delta Pressure[-];
     data[c++] = rms[var_Pressure];
@@ -86,9 +89,6 @@ void History::printCCNV(const double* avr, const double* rms, const IterationCtl
     
     // Delta Velocity[-]
     data[c++] = rms[var_Velocity];
-    
-    // Average Velocity[-]
-    data[c++] = avr[var_Velocity];
     
     
     if ( C->isHeatProblem() )
@@ -100,10 +100,13 @@ void History::printCCNV(const double* avr, const double* rms, const IterationCtl
           
         case Heat_EE_EI:
           // Iteration Energy
-          data[c++] = (double)ICt->getLoopCount()+1.0;
+          data[c++] = (double)ICt->getLoopCount();
           
-          // Norm Energy
-          data[c++] = (double)ICt->getNormValue();
+          // Residual Energy
+          data[c++] = (double)ICt->getResidual();
+          
+          // Error Energy
+          data[c++] = (double)ICt->getError();
           break;
       }
       
@@ -123,10 +126,13 @@ void History::printCCNV(const double* avr, const double* rms, const IterationCtl
         
       case Heat_EE_EI:
         // Iteration Energy
-        data[c++] = (double)ICt->getLoopCount()+1.0;
+        data[c++] = (double)ICt->getLoopCount();
         
-        // Norm Energy
-        data[c++] = (double)ICt->getNormValue();
+        // Residual Energy
+        data[c++] = (double)ICt->getResidual();
+        
+        // Error Energy
+        data[c++] = (double)ICt->getError();
         break;
     }
     
@@ -189,12 +195,7 @@ void History::printCCNVtitle(const IterationCtl* IC, const Control* C)
   {
     str = (Unit_Log == DIMENSIONAL) ? "Maximum Velocity[m/s]" : "Maximum Velocity[-]";
     sprintf(y_title[c++], "%s", str.c_str()); // c=0
-    
-    str = "Iteration VP";
-    sprintf(y_title[c++], "%s", str.c_str()); // c=1
-    
-    str = "Maximum Divergence[-]";
-    sprintf(y_title[c++], "%s", str.c_str()); // c=2
+
     
     switch (C->AlgorithmF)
     {
@@ -204,9 +205,13 @@ void History::printCCNVtitle(const IterationCtl* IC, const Control* C)
         str = "Iteration Pressure";
         sprintf(y_title[c++], "%s", str.c_str());
         
-        if      (ICp1->getNormType() == dx_b)  str = "dx_b";
-        else if (ICp1->getNormType() == r_b)   str = "r_b";
-        else if (ICp1->getNormType() == r_r0)  str = "r_r0";
+        if      (ICp1->getResType() == nrm_r_b)  str = "r_b";
+        else if (ICp1->getResType() == nrm_r_x)  str = "r_x";
+        else if (ICp1->getResType() == nrm_r_r0) str = "r_r0";
+        sprintf(y_title[c++], "%s", str.c_str());
+        
+        if      (ICp1->getErrType() == nrm_dx)   str = "dx";
+        else if (ICp1->getErrType() == nrm_dx_x) str = "dx_x";
         sprintf(y_title[c++], "%s", str.c_str());
         break;
     }
@@ -216,13 +221,20 @@ void History::printCCNVtitle(const IterationCtl* IC, const Control* C)
       str = "Iteration Velocity";
       sprintf(y_title[c++], "%s", str.c_str());
       
-      if      (ICv->getNormType() == dx_b)  str = "dx_b";
-      else if (ICv->getNormType() == r_b)   str = "r_b";
-      else if (ICv->getNormType() == r_r0)  str = "r_r0";
+      if      (ICv->getResType() == nrm_r_b)  str = "r_b";
+      else if (ICv->getResType() == nrm_r_x)  str = "r_x";
+      else if (ICv->getResType() == nrm_r_r0) str = "r_r0";
+      sprintf(y_title[c++], "%s", str.c_str());
+      
+      if      (ICv->getErrType() == nrm_dx)   str = "dx";
+      else if (ICv->getErrType() == nrm_dx_x) str = "dx_x";
       sprintf(y_title[c++], "%s", str.c_str());
     }
     
-    str = "Delta Pressure[-]";
+    str = "Maximum Divergence[-]";
+    sprintf(y_title[c++], "%s", str.c_str()); // c=2
+    
+    str = "RMS Pressure[-]";
     sprintf(y_title[c++], "%s", str.c_str());
     
     str = "Average Pressure[-]";
@@ -231,8 +243,6 @@ void History::printCCNVtitle(const IterationCtl* IC, const Control* C)
     str = "Delta Velocity[-]";
     sprintf(y_title[c++], "%s", str.c_str());
     
-    str = "Average Velocity[-]";
-    sprintf(y_title[c++], "%s", str.c_str());
     
     if ( C->isHeatProblem() )
     {
@@ -245,14 +255,18 @@ void History::printCCNVtitle(const IterationCtl* IC, const Control* C)
           str = "Iteration Energy";
           sprintf(y_title[c++], "%s", str.c_str());
           
-          if      (ICt->getNormType() == dx_b)   str = "dx_b";
-          else if (ICt->getNormType() == r_b)    str = "r_b";
-          else if (ICt->getNormType() == r_r0)   str = "r_r0";
+          if      (ICt->getResType() == nrm_r_b)  str = "r_b";
+          else if (ICt->getResType() == nrm_r_x)  str = "r_x";
+          else if (ICt->getResType() == nrm_r_r0) str = "r_r0";
+          sprintf(y_title[c++], "%s", str.c_str());
+          
+          if      (ICt->getErrType() == nrm_dx)   str = "dx";
+          else if (ICt->getErrType() == nrm_dx_x) str = "dx_x";
           sprintf(y_title[c++], "%s", str.c_str());
           break;
       }
       
-      str = "Delta Energy[-]";
+      str = "RMS Energy[-]";
       sprintf(y_title[c++], "%s", str.c_str());
       
       str = "Average Energy[-]";
@@ -270,14 +284,18 @@ void History::printCCNVtitle(const IterationCtl* IC, const Control* C)
         str = "Iteration Energy";
         sprintf(y_title[c++], "%s", str.c_str());
         
-        if      (ICt->getNormType() == dx_b)   str = "dx_b";
-        else if (ICt->getNormType() == r_b)    str = "r_b";
-        else if (ICt->getNormType() == r_r0)   str = "r_r0";
+        if      (ICt->getResType() == nrm_r_b)  str = "r_b";
+        else if (ICt->getResType() == nrm_r_x)  str = "r_x";
+        else if (ICt->getResType() == nrm_r_r0) str = "r_r0";
+        sprintf(y_title[c++], "%s", str.c_str());
+        
+        if      (ICt->getErrType() == nrm_dx)   str = "dx";
+        else if (ICt->getErrType() == nrm_dx_x) str = "dx_x";
         sprintf(y_title[c++], "%s", str.c_str());
         break;
     }
     
-    str = "Delta Energy[-]";
+    str = "RMS Energy[-]";
     sprintf(y_title[c++], "%s", str.c_str());
     
     str = "Average Energy[-]";
@@ -343,12 +361,18 @@ void History::printCCNVtitle(const IterationCtl* IC, const Control* C)
 
 // #################################################################
 // 標準履歴の出力
-void History::printHistory(FILE* fp, const double* avr, const double* rms, const IterationCtl* IC, const Control* C, const double stptm, const bool disp)
+void History::printHistory(FILE* fp,
+                           const double* rms,
+                           const double* avr,
+                           const IterationCtl* IC,
+                           const Control* C,
+                           const DivConvergence* DC,
+                           const double stptm,
+                           const bool disp)
 {
   const IterationCtl* ICp1 = &IC[ic_prs1];  ///< 圧力のPoisson反復
   const IterationCtl* ICv  = &IC[ic_vel1];  ///< 粘性項のCrank-Nicolson反復
   const IterationCtl* ICt  = &IC[ic_tmp1];  ///< 温度の拡散項の反復
-  const IterationCtl* ICd  = &IC[ic_div];   ///< 圧力-速度反復
   
   fprintf(fp, "%8d %14.6e", step, printTime());
   
@@ -358,28 +382,26 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
       ( C->KindOfSolver==CONJUGATE_HT) ||
       ( C->KindOfSolver==CONJUGATE_HT_NATURAL) )
   {
-    fprintf(fp, " %11.4e %5d  %11.4e",
-            printVmax(), ICd->getLoopCount(), ICd->getNormValue() );
+    fprintf(fp, " %11.4e %5d    %12.5e", printVmax(), DC->Iteration, DC->divergence);
     
     switch (C->AlgorithmF)
     {
       case Flow_FS_EE_EE:
       case Flow_FS_AB2:
       case Flow_FS_AB_CN:
-        fprintf(fp, " %5d %11.4e", ICp1->getLoopCount()+1, ICp1->getNormValue());
+        fprintf(fp, " %5d %11.4e %11.4e", ICp1->getLoopCount(), ICp1->getResidual(), ICp1->getError());
         break;
     }
     
     if (C->AlgorithmF == Flow_FS_AB_CN)
     {
-      fprintf(fp, " %5d %11.4e", ICv->getLoopCount()+1, ICv->getNormValue());
+      fprintf(fp, " %5d %11.4e %11.4e", ICv->getLoopCount(), ICv->getResidual(), ICv->getError());
     }
     
-    fprintf(fp, " %10.3e %10.3e %10.3e %10.3e",
+    fprintf(fp, "  %10.3e %10.3e %10.3e",
             rms[var_Pressure],
             avr[var_Pressure],
-            rms[var_Velocity],
-            avr[var_Velocity]);
+            rms[var_Velocity]);
     
     if ( C->isHeatProblem() )
     {
@@ -389,7 +411,7 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
           break;
           
         case Heat_EE_EI:
-          fprintf(fp, " %5d %11.4e", ICt->getLoopCount()+1, ICt->getNormValue());
+          fprintf(fp, " %5d %11.4e %11.4e", ICt->getLoopCount(), ICt->getResidual(), ICt->getError());
           break;
       }
       
@@ -404,7 +426,7 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
         break;
         
       case Heat_EE_EI:
-        fprintf(fp, " %5d %11.4e", ICt->getLoopCount()+1, ICt->getNormValue());
+        fprintf(fp, " %5d %11.4e %11.4e", ICt->getLoopCount(), ICt->getResidual(), ICt->getError());
         break;
     }
     fprintf(fp, " %10.3e %10.3e", rms[var_Temperature], avr[var_Temperature]);
@@ -422,7 +444,7 @@ void History::printHistory(FILE* fp, const double* avr, const double* rms, const
 
 // #################################################################
 // 標準履歴モニタのヘッダー出力
-void History::printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control* C, const bool disp)
+void History::printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control* C, const DivConvergence* DC, const bool disp)
 {
   const IterationCtl* ICp1 = &IC[ic_prs1];  /// 圧力のPoisson反復
   const IterationCtl* ICv  = &IC[ic_vel1];  /// 粘性項のCrank-Nicolson反復
@@ -445,11 +467,21 @@ void History::printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control*
   {
     if ( Unit_Log == DIMENSIONAL )
     {
-      fprintf(fp, "  v_max[m/s] ItrVP v_div_max[-]");
+      fprintf(fp, "  v_max[m/s]");
     }
     else
     {
-      fprintf(fp, "    v_max[-] ItrVP v_div_max[-]");
+      fprintf(fp, "    v_max[-]");
+    }
+    
+    fprintf(fp, "  ItrD");
+    if ( DC->divType == nrm_div_max )
+    {
+      fprintf(fp, " Divergence[max]");
+    }
+    else
+    {
+      fprintf(fp, "  Divergence[L2]");
     }
     
     switch (C->AlgorithmF)
@@ -458,26 +490,27 @@ void History::printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control*
       case Flow_FS_AB2:
       case Flow_FS_AB_CN:
         fprintf(fp, "  ItrP");
-        if      (ICp1->getNormType() == dx_b)       fprintf(fp, "        dx_b");
-        else if (ICp1->getNormType() == r_b)        fprintf(fp, "         r_b");
-        else if (ICp1->getNormType() == r_r0)       fprintf(fp, "        r_r0");
+        if      (ICp1->getResType() == nrm_r_b)     fprintf(fp, "         r_b");
+        else if (ICp1->getResType() == nrm_r_x)     fprintf(fp, "         r_x");
+        else if (ICp1->getResType() == nrm_r_r0)    fprintf(fp, "        r_r0");
+        
+        if      (ICp1->getErrType() == nrm_dx)      fprintf(fp, "      deltaP");
+        else if (ICp1->getErrType() == nrm_dx_x)    fprintf(fp, "    deltaP_P");
         break;
     }
     
     if (C->AlgorithmF == Flow_FS_AB_CN)
     {
       fprintf(fp, "  ItrV");
-      if      (ICv->getNormType() == dx_b)       fprintf(fp, "        dx_b");
-      else if (ICv->getNormType() == r_b)        fprintf(fp, "         r_b");
-      else if (ICv->getNormType() == r_r0)       fprintf(fp, "        r_r0");
-      else
-      {
-        printf("\n\tError : Norm selection type=%d\n", ICv->getNormType());
-        Exit(0);
-      }
+      if      (ICv->getResType() == nrm_r_b)     fprintf(fp, "         r_b");
+      else if (ICv->getResType() == nrm_r_x)     fprintf(fp, "         r_x");
+      else if (ICv->getResType() == nrm_r_r0)    fprintf(fp, "        r_r0");
+
+      if      (ICv->getErrType() == nrm_dx)      fprintf(fp, "      deltaV");
+      else if (ICv->getErrType() == nrm_dx_x)    fprintf(fp, "    deltaV_V");
     }
     
-    fprintf(fp, "     deltaP       avrP     deltaV       avrV");
+    fprintf(fp, "        rmsP       avrP       rmsV");
     
     if ( C->isHeatProblem() )
     {
@@ -488,18 +521,16 @@ void History::printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control*
           
         case Heat_EE_EI:
           fprintf(fp, "  ItrT");
-          if      (ICt->getNormType() == dx_b)       fprintf(fp, "        dx_b");
-          else if (ICt->getNormType() == r_b)        fprintf(fp, "         r_b");
-          else if (ICt->getNormType() == r_r0)       fprintf(fp, "        r_r0");
-          else
-          {
-            printf("\n\tError : Norm selection type=%d\n", ICt->getNormType());
-            Exit(0);
-          }
+          if      (ICt->getResType() == nrm_r_b)     fprintf(fp, "         r_b");
+          else if (ICt->getResType() == nrm_r_x)     fprintf(fp, "         r_x");
+          else if (ICt->getResType() == nrm_r_r0)    fprintf(fp, "        r_r0");
+          
+          if      (ICt->getErrType() == nrm_dx)      fprintf(fp, "      deltaT");
+          else if (ICt->getErrType() == nrm_dx_x)    fprintf(fp, "    deltaT_T");
           break;
       }
       
-      fprintf(fp, "     deltaT       avrT");
+      fprintf(fp, "       rmsT       avrT");
     }
   }
   else if ( C->KindOfSolver == SOLID_CONDUCTION )
@@ -511,18 +542,16 @@ void History::printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control*
         
       case Heat_EE_EI:
         fprintf(fp, "  ItrT");
-        if      (ICt->getNormType() == dx_b)       fprintf(fp, "        dx_b");
-        else if (ICt->getNormType() == r_b)        fprintf(fp, "         r_b");
-        else if (ICt->getNormType() == r_r0)       fprintf(fp, "        r_r0");
-        else
-        {
-          printf("\n\tError : Norm selection type=%d\n", ICt->getNormType());
-          Exit(0);
-        }
+        if      (ICt->getResType() == nrm_r_b)     fprintf(fp, "         r_b");
+        else if (ICt->getResType() == nrm_r_x)     fprintf(fp, "         r_x");
+        else if (ICt->getResType() == nrm_r_r0)    fprintf(fp, "        r_r0");
+
+        if      (ICt->getErrType() == nrm_dx)      fprintf(fp, "      deltaT");
+        else if (ICt->getErrType() == nrm_dx_x)    fprintf(fp, "    deltaT_T");
         break;
     }
     
-    fprintf(fp, "     deltaT       avrT");
+    fprintf(fp, "       rmsT       avrT");
   }
 
   
@@ -767,14 +796,11 @@ void History::printHistoryForceTitle(FILE* fp, const CompoList* cmp, const Contr
 
 // #################################################################
 // 反復履歴出力
-void History::printHistoryItr(FILE* fp, const IterationCtl* IC, const Vec3i idx)
+void History::printHistoryItr(FILE* fp, IterationCtl* IC, const double divergence)
 {
-  const IterationCtl* ICd = &IC[ic_div];   ///< 圧力-速度反復
   const IterationCtl* ICp = &IC[ic_prs1];  ///< 圧力のPoisson反復
-	fprintf(fp, "                                           %8d %13.6e %8d %13.6e (%12d, %12d, %12d)\n",
-          ICd->getLoopCount(), ICd->getNormValue(),
-          ICp->getLoopCount()+1, ICp->getNormValue(),
-          idx.x, idx.y, idx.z);
+	fprintf(fp, "                                           %8d %13.6e %13.6e %13.6e\n",
+          ICp->getLoopCount(), ICp->getResidual(), ICp->getError(), divergence);
 }
 
 
@@ -782,7 +808,7 @@ void History::printHistoryItr(FILE* fp, const IterationCtl* IC, const Vec3i idx)
 // 反復過程の状況モニタのヘッダー出力
 void History::printHistoryItrTitle(FILE* fp)
 {
-  fprintf(fp, "step=%16d  time=%13.6e    Itr_VP         Div_V    Itr_P          Norm (           i,            j,            k)\n", step, printTime());
+  fprintf(fp, "step=%16d  time=%13.6e      Itr_P   Residual      Error      Div_V\n", step, printTime());
 }
 
 

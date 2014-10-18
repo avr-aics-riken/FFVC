@@ -40,20 +40,6 @@
 #define pobc_neumann_       POBC_NEUMANN
 
 
-// ffv_poisson.f90
-#define div_cnst_           DIV_CNST
-#define psor_               PSOR
-#define psor2sma_core_      PSOR2SMA_CORE
-#define psor2sma_naive_     PSOR2SMA_NAIVE
-#define sma_comm_           SMA_COMM
-#define sma_comm_wait_      SMA_COMM_WAIT
-#define cds_psor_           CDS_PSOR
-#define psor2sma_core_bit3_ PSOR2SMA_CORE_BIT3
-#define poi_residual_       POI_RESIDUAL
-#define poi_residual_bit3_  POI_RESIDUAL_BIT3
-#define poi_rhs_            POI_RHS
-#define poi_rhs_bit3_       POI_RHS_BIT3
-
 // ffv_pscalar.f90
 #define ps_muscl_           PS_MUSCL
 #define ps_buoyancy_        PS_BUOYANCY
@@ -68,36 +54,38 @@
 #define div_ibc_oflow_vec_  DIV_IBC_OFLOW_VEC
 
 // ffv_vbc_outer.f90
-#define vobc_pv_specv_      VOBC_PV_SPECV
-#define vobc_pv_wall_       VOBC_PV_WALL
-#define vobc_drchlt_        VOBC_DRCHLT
-#define vobc_face_drchlt_   VOBC_FACE_DRCHLT
-#define vobc_outflow_       VOBC_OUTFLOW
+#define vobc_cc_drchlt_     VOBC_CC_DRCHLT
+#define vobc_cc_neumann_    VOBC_CC_NEUMANN
+#define vobc_cc_copy_       VOBC_CC_COPY
+#define vobc_div_drchlt_    VOBC_DIV_DRCHLT
+#define vobc_cc_outflow_    VOBC_CC_OUTFLOW
 #define vobc_tfree1_        VOBC_TFREE1
 #define vobc_tfree2_        VOBC_TFREE2
-#define vobc_update_        VOBC_UPDATE
-#define vobc_div_drchlt_    VOBC_DIV_DRCHLT
-#define vobc_get_massflow_  VOBC_GET_MASSFLOW
-#define vobc_neumann_       VOBC_NEUMANN
+
+// ffv_vbc_outer_face.f90
+#define vobc_face_drchlt_   VOBC_FACE_DRCHLT
+#define vobc_face_massflow_ VOBC_FACE_MASSFLOW
+
+// ffv_vbc_outer_flux.f90
+#define vobc_pv_specv_      VOBC_PV_SPECV
+#define vobc_pv_wall_       VOBC_PV_WALL
 
 // ffv_velocity_binary.f90
 #define ab2_                AB2
-#define divergence_         DIVERGENCE
+#define divergence_cc_      DIVERGENCE_CC
 #define eddy_viscosity_     EDDY_VISCOSITY
 #define euler_explicit_     EULER_EXPLICIT
 #define friction_velocity_  FRICTION_VELOCITY
 #define pvec_muscl_         PVEC_MUSCL
 #define pvec_les_           PVEC_LES
 #define update_vec_         UPDATE_VEC
-#define vis_cn_jcb_         VIS_CN_JCB
-#define vis_cn_mod_jcb_     VIS_CN_MOD_JCB
-#define vis_cn_mod_sor_     VIS_CN_MOD_SOR
-#define vis_cn_sor_         VIS_CN_SOR
-#define vis_ee_             VIS_EE
-#define vis_ee_vbc_         VIS_EE_VBC
+#define update_face_vec_    UPDATA_FACE_VEC
+#define predict_face_vec_   PREDICT_FACE_VEC
+#define update_cc_vec_      UPDATE_CC_VEC
+#define update_p_           UPDATE_P
 
 // ffv_utility.f90
-#define norm_v_div_dbg_     NORM_V_DIV_DBG
+#define norm_v_div_l2_      NORM_V_DIV_L2
 #define norm_v_div_max_     NORM_V_DIV_MAX
 #define helicity_           HELICITY
 #define i2vgt_              I2VGT
@@ -208,214 +196,6 @@ extern "C" {
   
   
   
-  //***********************************************************************************************
-  // ffv_poisson.f90
-  void poi_residual_ (double* res,
-                      int* sz,
-                      int* g,
-                      REAL_TYPE* p,
-                      REAL_TYPE* b,
-                      int* bp,
-                      double* flop);
-  
-  void poi_rhs_ (double* rhs,
-                 REAL_TYPE* b,
-                 int* sz,
-                 int* g,
-                 REAL_TYPE* s_0,
-                 REAL_TYPE* s_1,
-                 int* bp,
-                 REAL_TYPE* dh,
-                 REAL_TYPE* dt,
-                 double* flop);
-  
-  void psor_ (REAL_TYPE* p,
-              int* sz,
-              int* g,
-              REAL_TYPE* omg,
-              double* res,
-              REAL_TYPE* b,
-              int* bp,
-              double* flop);
-  
-  void psor2sma_core_ (REAL_TYPE* p,
-                       int* sz,
-                       int* g,
-                       int* ip,
-                       int* color,
-                       REAL_TYPE* omg,
-                       double* res,
-                       REAL_TYPE* b,
-                       int* bp,
-                       double* flop);
-  
-  void psor2sma_naive_ (REAL_TYPE* p,
-                        int* sz,
-                        int* g,
-                        int* ip,
-                        int* color,
-                        REAL_TYPE* omg,
-                        double* res,
-                        REAL_TYPE* b,
-                        int* bp,
-                        REAL_TYPE* pn,
-                        double* flop);
-  
-  void sma_comm_      (REAL_TYPE* p,
-                       int* sz,
-                       int* g,
-                       int* col,
-                       int* ip,
-                       int* cf_sz,
-                       REAL_TYPE* cf_x,
-                       REAL_TYPE* cf_y,
-                       REAL_TYPE* cf_z,
-                       int* key,
-                       int* nID);
-  
-  void sma_comm_wait_ (REAL_TYPE* p,
-                       int* sz,
-                       int* g,
-                       int* col,
-                       int* ip,
-                       int* cf_sz,
-                       REAL_TYPE* cf_x,
-                       REAL_TYPE* cf_y,
-                       REAL_TYPE* cf_z,
-                       int* key);
-  
-  void poi_residual_bit3_ (double* res,
-                           int* sz,
-                           int* g,
-                           REAL_TYPE* p,
-                           REAL_TYPE* b,
-                           int* bp,
-                           double* flop);
-  
-  void poi_rhs_bit3_ (double* rhs,
-                      REAL_TYPE* b,
-                      int* sz,
-                      int* g,
-                      REAL_TYPE* s_0,
-                      REAL_TYPE* s_1,
-                      int* bp,
-                      REAL_TYPE* dh,
-                      REAL_TYPE* dt,
-                      double* flop);
-  
-  void psor2sma_core_bit3_ (REAL_TYPE* p,
-                            int* sz,
-                            int* g,
-                            int* ip,
-                            int* color,
-                            REAL_TYPE* omg,
-                            double* res,
-                            REAL_TYPE* b,
-                            int* bp,
-                            double* flop);
-  
-  //***********************************************************************************************
-  // ffv_blas.f90
-	void blas_clear_    (REAL_TYPE* x,
-											 int* sz,
-											 int* g);
-  
-	void blas_copy_     (REAL_TYPE* y,
-											 REAL_TYPE* x,
-											 int* sz,
-											 int* g);
-  
-	void blas_xpay_     (REAL_TYPE* y,
-											 REAL_TYPE* x,
-											 REAL_TYPE* a,
-											 int* sz,
-											 int* g);
-  
-	void blas_axpy_     (REAL_TYPE* y,
-											 REAL_TYPE* x,
-											 REAL_TYPE* a,
-											 int* sz,
-											 int* g);
-  
-	void blas_axpyz_    (REAL_TYPE* z,
-											 REAL_TYPE* x,
-											 REAL_TYPE* y,
-											 REAL_TYPE* a,
-											 int* sz,
-											 int* g);
-  
-	void blas_axpbypz_  (REAL_TYPE* z,
-											 REAL_TYPE* x,
-											 REAL_TYPE* y,
-											 REAL_TYPE* a,
-											 REAL_TYPE* b,
-											 int* sz,
-											 int* g);
-  
-	void blas_dot_      (REAL_TYPE* pq,
-											 REAL_TYPE* p,
-											 REAL_TYPE* q,
-											 int* sz,
-											 int* g);
-  
-	void blas_calcr_    (REAL_TYPE* r,
-											 REAL_TYPE* p,
-											 REAL_TYPE* b,
-											 int* bp,
-											 int* sz,
-											 int* g);
-  
-	void blas_calcr2_   (REAL_TYPE* rr,
-											 REAL_TYPE* p,
-											 REAL_TYPE* b,
-											 int* bp,
-											 int* sz,
-											 int* g);
-  
-	void blas_calcax_   (REAL_TYPE* ap,
-											 REAL_TYPE* p,
-											 int* bp,
-											 int* sz,
-											 int* g);
-  
-	void blas_calcb_    (REAL_TYPE* b,
-											 REAL_TYPE* s_0,
-											 REAL_TYPE* s_1,
-											 int* bp,
-											 REAL_TYPE* dh,
-											 REAL_TYPE* dt,
-											 int* sz,
-											 int* g);
-  
-	void blas_smoother_core_  (REAL_TYPE* x,
-                             REAL_TYPE* b,
-                             int* bp,
-                             int* ip,
-                             int* color,
-                             REAL_TYPE* omg,
-                             int* sz,
-                             int* g);
-
-	void blas_preconditioner_  (REAL_TYPE* y,
-                              REAL_TYPE* x,
-                              int* bp,
-                              REAL_TYPE* omg,
-                              int* sz,
-                              int* g);
-  
-  
-  //***********************************************************************************************
-  // ffv_poisson2.f90
-  void matvec_p_   (REAL_TYPE* ax,  int* sz, int* g, REAL_TYPE* p, int* bp, double* flop);
-  void residual_   (REAL_TYPE* rs,  int* sz, int* g, double* res_a, REAL_TYPE* div, REAL_TYPE* src, int* bp, double* flop);
-  void orth_basis_ (REAL_TYPE* dst, int* sz, int* g, int* nc, int* l, double* s, REAL_TYPE* src, double* flop);
-  void cp_orth_basis_ (REAL_TYPE* z, int* sz, int* g, REAL_TYPE* v);
-  void copy_1_   (REAL_TYPE* dst, int* sz, int* g, int* nc, REAL_TYPE* src, int* im);
-  void copy_2_   (REAL_TYPE* dst, int* sz, int* g, int* nc, REAL_TYPE* src, int* im);
-  void ml_add_1_ (double* ac,     int* sz, int* g, int* nc, REAL_TYPE* s4, REAL_TYPE* s3, int* lm, double* flop);
-  void ml_add_2_ (double* ac,     int* sz, int* g, REAL_TYPE* s3, double* flop);
-  void ml_add_3_ (REAL_TYPE* s3,  int* sz, int* g, int* nc, double* s, REAL_TYPE* s4, int* lm, double* flop);
-  void ml_add_4_ (REAL_TYPE* s3,  int* sz, int* g, int* nc, double* s, REAL_TYPE* s4, int* lm, double* flop);
   
   //***********************************************************************************************
   // ffv_pscalar.f90
@@ -526,6 +306,86 @@ extern "C" {
   //***********************************************************************************************
   // ffv_vbc_outer.f90
   
+  void vobc_cc_drchlt_ (REAL_TYPE* v,
+                        int* sz,
+                        int* g,
+                        int* m_face,
+                        REAL_TYPE* vec,
+                        int* nID);
+  
+  void vobc_cc_neumann_ (REAL_TYPE* v,
+                         int* sz,
+                         int* g,
+                         int* m_face,
+                         int* nID);
+  
+  void vobc_cc_outflow_ (REAL_TYPE* vc,
+                         REAL_TYPE* v0,
+                         int* sz,
+                         int* g,
+                         REAL_TYPE* dh,
+                         REAL_TYPE* dt,
+                         int* bv,
+                         REAL_TYPE* v_cnv,
+                         int* m_face,
+                         int* nID,
+                         double* flop);
+  
+  void vobc_cc_copy_ (REAL_TYPE* v,
+                      int* sz,
+                      int* g,
+                      int* m_face,
+                      REAL_TYPE* vc,
+                      int* nID);
+
+  void vobc_tfree2_ (REAL_TYPE* v,
+                     int* sz,
+                     int* g,
+                     int* m_face,
+                     REAL_TYPE* vf,
+                     int* nID);
+  
+  void vobc_tfree1_ (REAL_TYPE* vf,
+                     int* sz,
+                     int* g,
+                     int* m_face,
+                     int* nID);
+  
+
+  
+  void vobc_div_drchlt_ (REAL_TYPE* div,
+                         int* sz,
+                         int* g,
+                         int* m_face,
+                         int* bv,
+                         REAL_TYPE* vec,
+                         int* nID);
+  
+  
+  
+  //***********************************************************************************************
+  // ffv_vbc_outer_face.f90
+  
+  void vobc_face_drchlt_  (REAL_TYPE* vf,
+                           int* sz,
+                           int* g,
+                           int* m_face,
+                           int* bv,
+                           REAL_TYPE* vec,
+                           int* nID);
+  
+  void vobc_face_massflow_ (REAL_TYPE* sum,
+                            int* sz,
+                            int* g,
+                            int* m_face,
+                            REAL_TYPE* vf,
+                            int* bv,
+                            int* nID);
+  
+  
+  //***********************************************************************************************
+  // ffv_vbc_outer_flux.f90
+  
   void vobc_pv_specv_ (REAL_TYPE* wv,
                        int* sz,
                        int* g,
@@ -549,79 +409,18 @@ extern "C" {
                       int* nID,
                       double* flop);
   
-  void vobc_drchlt_ (REAL_TYPE* v,
-                     int* sz,
-                     int* g,
-                     int* m_face,
-                     int* bv,
-                     REAL_TYPE* vec,
-                     int* nID);
-  
-  void vobc_neumann_ (REAL_TYPE* v,
-                      int* sz,
-                      int* g,
-                      int* m_face,
-                      REAL_TYPE* sum,
-                      int* nID);
-
-  void vobc_tfree2_ (REAL_TYPE* v,
-                     int* sz,
-                     int* g,
-                     int* m_face,
-                     REAL_TYPE* vf,
-                     REAL_TYPE* sum,
-                     int* nID);
-  
-  void vobc_tfree1_ (REAL_TYPE* vf,
-                     int* sz,
-                     int* g,
-                     int* m_face,
-                     int* nID);
-  
-  void vobc_update_ (REAL_TYPE* v,
-                     int* sz,
-                     int* g,
-                     int* m_face,
-                     REAL_TYPE* vc,
-                     int* nID);
-  
-  void vobc_div_drchlt_ (REAL_TYPE* div,
-                         int* sz,
-                         int* g,
-                         int* m_face,
-                         int* bv,
-                         REAL_TYPE* vec,
-                         int* nID);
-  
-  void vobc_get_massflow_ (REAL_TYPE* sum,
-                           int* sz,
-                           int* g,
-                           int* m_face,
-                           REAL_TYPE* v,
-                           int* bv,
-                           int* nID);
-  
-  void vobc_face_drchlt_  (REAL_TYPE* vf,
-                           int* sz,
-                           int* g,
-                           int* m_face,
-                           int* bv,
-                           REAL_TYPE* vec,
-                           REAL_TYPE* vsum,
-                           int* nID);
-
   
   //***********************************************************************************************
   // ffv_velocity_binary.f90
   void ab2_               (REAL_TYPE* vc, int* sz, int* g, REAL_TYPE* dt, REAL_TYPE* v, REAL_TYPE* ab, int* bd, REAL_TYPE* v00, double* flop);
   
-  void divergence_        (REAL_TYPE* dv,
-                           int* sz,
-                           int* g,
-                           REAL_TYPE* vc,
-                           int* bv,
-                           int* bp,
-                           double* flop);
+  void divergence_cc_ (REAL_TYPE* dv,
+                       int* sz,
+                       int* g,
+                       REAL_TYPE* vc,
+                       int* bv,
+                       int* bp,
+                       double* flop);
   
   void eddy_viscosity_    (REAL_TYPE* vt,
                            int* sz,
@@ -671,40 +470,23 @@ extern "C" {
                            REAL_TYPE* vcs_coef,
                            double* flop);
   
-  void update_vec_        (REAL_TYPE* v,
-                           REAL_TYPE* div,
-                           int* sz,
-                           int* g,
-                           REAL_TYPE* dt,
-                           REAL_TYPE* dh,
-                           REAL_TYPE* vc,
-                           REAL_TYPE* vf,
-                           REAL_TYPE* p,
-                           int* bp,
-                           int* bv,
-                           double* flop);
+  void update_vec_ (REAL_TYPE* v,
+                    REAL_TYPE* vf,
+                    REAL_TYPE* div,
+                    int* sz,
+                    int* g,
+                    REAL_TYPE* dt,
+                    REAL_TYPE* dh,
+                    REAL_TYPE* vc,
+                    REAL_TYPE* p,
+                    int* bp,
+                    int* bv,
+                    double* flop);
   
-  void vis_cn_jcb_        (REAL_TYPE* vc, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, 
-                           REAL_TYPE* omg, REAL_TYPE* wv, int* bx, REAL_TYPE* wk, REAL_TYPE* coef, REAL_TYPE* res, double* flop);
-  void vis_cn_mod_jcb_    (REAL_TYPE* vc, int* sz, int* g, int* st, int* ed, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, 
-                           REAL_TYPE* omg, REAL_TYPE* wv, int* bx, REAL_TYPE* wk, REAL_TYPE* coef, REAL_TYPE* res, REAL_TYPE* vec, double* flop);
-  void vis_cn_mod_sor_    (REAL_TYPE* vc, int* sz, int* g, int* st, int* ed, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, 
-                           REAL_TYPE* omg, REAL_TYPE* wv, int* bx, REAL_TYPE* coef, REAL_TYPE* res, REAL_TYPE* vec, double* flop);
-  void vis_cn_sor_        (REAL_TYPE* vc, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, 
-                           REAL_TYPE* omg, REAL_TYPE* wv, int* bx, REAL_TYPE* coef, REAL_TYPE* res, double* flop);
-  void vis_ee_            (REAL_TYPE* vc, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, REAL_TYPE* wv, 
-                           REAL_TYPE* v, int* bx, REAL_TYPE* coef, double* flop);
-  void vis_ee_vbc_        (REAL_TYPE* vc, int* sz, int* g, int* st, int* ed, REAL_TYPE* dh, REAL_TYPE* dt, REAL_TYPE* v00, REAL_TYPE* rei, 
-                           REAL_TYPE* v0, int* bx, int* odr, REAL_TYPE* coef, REAL_TYPE* vec, double* flop);
-  
-  
-
-
   
   //***********************************************************************************************
   // ffv_utility.f90
-  void norm_v_div_dbg_ (double* ds,
-                        int* index,
+  void norm_v_div_l2_ (REAL_TYPE* ds,
                         int* sz,
                         int* g,
                         REAL_TYPE* div,
@@ -712,7 +494,7 @@ extern "C" {
                         int* bp,
                         double* flop);
   
-  void norm_v_div_max_ (double* ds,
+  void norm_v_div_max_ (REAL_TYPE* ds,
                         int* sz,
                         int* g,
                         REAL_TYPE* div,
@@ -728,11 +510,6 @@ extern "C" {
   void shift_pressure_    (REAL_TYPE* p, int* sz, int* g, REAL_TYPE* avr);
   void force_compo_       (REAL_TYPE* frc, int* sz, int* g, int* tgt, REAL_TYPE* p, int* bid, REAL_TYPE* dh, int* st, int* ed, double* flop);
 
-
-  
-  // cds_poisson.f90
-  void cds_psor_          (REAL_TYPE* p,   int* sz, int* g, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* div, REAL_TYPE* bnd, REAL_TYPE* cut, 
-                          REAL_TYPE* epsilon, int* para_key);
   
   
   // c3d_vof.f90

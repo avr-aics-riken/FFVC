@@ -582,7 +582,6 @@ public:
   int BasicEqs;
   int CheckParam;
   int CnvScheme;
-  int ExperimentNaive; ///< Naive実装のスイッチ
   int FillSeedDir;     ///< フィルのヒント {x_minux | x_plus |...}
   int GuideOut;
   int KindOfSolver;
@@ -701,7 +700,6 @@ public:
     BasicEqs = 0;
     CheckParam = 0;
     CnvScheme = 0;
-    ExperimentNaive = OFF;
     FillSeedDir = -1;
     GuideOut = 0;
     KindOfSolver = 0;
@@ -774,7 +772,6 @@ public:
     LES.damping_factor=0.0;
     
     FIO.IOmode   = 0;
-    FIO.Div_Debug  = 0;
     FIO.IO_Voxel   = 0;
     FIO.Format     = 0; // 0:sph, 1:BOV
     FIO.Slice      = 0;
@@ -901,9 +898,15 @@ protected:
    * @param [in] IC  IterationCtl
    * @param [in] DT  DTcntl
    * @param [in] RF  ReferenceFrame
+   * @param [in] DC  発散収束判定のコンテナ
    * @param [in] em  ffvcの実行モード
    */
-  void printSteerConditions(FILE* fp, IterationCtl* IC, const DTcntl* DT, const ReferenceFrame* RF, const int em);
+  void printSteerConditions(FILE* fp,
+                            IterationCtl* IC,
+                            const DTcntl* DT,
+                            const ReferenceFrame* RF,
+                            const DivConvergence* DC,
+                            const int em);
   
   
   
@@ -915,7 +918,7 @@ public:
    * @param [in,out] IC   反復制御用クラスの基底へのポインタ
    * @param [in]     name ラベル
    */
-  void copyCriteria(IterationCtl& IC, const string name);
+  void copyCriteria(IterationCtl* IC, const string name);
   
   
   /**
@@ -925,6 +928,7 @@ public:
    * @param [in] IC   IterationCtl
    * @param [in] DT   DTcntl
    * @param [in] RF   ReferenceFrame
+   * @param [in] DC   発散値収束判定パラメータ
    * @param [in] mat  MediumList
    * @param [in] cmp  CompoList
    * @param [in] em   ffvcの実行モード
@@ -933,6 +937,7 @@ public:
                      IterationCtl* IC,
                      DTcntl* DT,
                      ReferenceFrame* RF,
+                     DivConvergence* DC,
                      MediumList* mat,
                      CompoList* cmp,
                      const int em);

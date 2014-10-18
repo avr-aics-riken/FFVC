@@ -2,7 +2,6 @@
 ApplicationControl {
   CheckParameter      = "Off"
   Operator            = "Kenji_Ono"
-  DebugDivergence     = "Off"
 }
 
 
@@ -128,14 +127,6 @@ Iteration {
   }
 
   LinearSolver[@] {
-    Alias                = "vp"
-    class                = "VPiteration"
-    MaxIteration         = 50
-    ConvergenceCriterion = 1.0e-4
-    NormType             = "VdivMax"
-  }
-
-  LinearSolver[@] {
     Alias                = "sor2_loose"
     class                = "sor"
     MaxIteration         = 10
@@ -146,7 +137,6 @@ Iteration {
 
   Pressure    = "sor2_moderate"
   Velocity    = ""
-  VPiteration = "vp"
   Temperature = "sor2_loose"   
 }
 

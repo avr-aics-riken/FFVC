@@ -127,7 +127,7 @@
 !$OMP PRIVATE(fu_r, fu_l, fv_r, fv_l, fw_r, fw_l) &
 !$OMP PRIVATE(lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t, EX, EY, EZ)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
 
     do k=1,kx
     do j=1,jx
@@ -620,15 +620,15 @@
     end subroutine pvec_muscl
 
 !> ********************************************************************
-!! @brief 次ステップのセルセンターの速度を更新
-!! @param [out] v    n+1時刻の速度ベクトル
+!! @brief 次ステップのセルセンター，フェイスの速度と発散値を更新
+!! @param [out] v    n+1時刻のセルセンター速度ベクトル
+!! @param [in]  vf   n+1時刻のセルフェイス速度ベクトル
 !! @param [out] div  \sum {u^{n+1}}
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
 !! @param [in]  dt   時間積分幅
 !! @param [in]  dh   格子幅
 !! @param [in]  vc   セルセンター疑似速度ベクトル
-!! @param [in]  vf   セルフェイス速度ベクトル
 !! @param [in]  p    圧力
 !! @param [in]  bp   BCindex P
 !! @param [in]  bv   BCindex C
@@ -636,7 +636,7 @@
 !! @note 
 !!    - actvのマスクはSPEC_VEL/OUTFLOWの参照セルをマスクしないようにbvを使う
 !<
-    subroutine update_vec (v, div, sz, g, dt, dh, vc, vf, p, bp, bv, flop)
+    subroutine update_vec (v, vf, div, sz, g, dt, dh, vc, p, bp, bv, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, bpx, bvx
@@ -673,7 +673,7 @@
 !$OMP PRIVATE(pc, px, py, pz, pxw, pxe, pys, pyn, pzb, pzt) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dd)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -747,20 +747,20 @@
       pz = 0.5*(pzt + pzb)
 
       ! セルフェイス VBCの寄与と壁面の影響は除外 18flop
-      Uwf = (Uw - dd * pxw) * c1
-      Uef = (Ue - dd * pxe) * c2
-      Vsf = (Vs - dd * pys) * c3
-      Vnf = (Vn - dd * pyn) * c4
-      Wbf = (Wb - dd * pzb) * c5
-      Wtf = (Wt - dd * pzt) * c6
+      Uwf = (Uw - dd * pxw) * c1 * N_w
+      Uef = (Ue - dd * pxe) * c2 * N_e
+      Vsf = (Vs - dd * pys) * c3 * N_s
+      Vnf = (Vn - dd * pyn) * c4 * N_n
+      Wbf = (Wb - dd * pzb) * c5 * N_b
+      Wtf = (Wt - dd * pzt) * c6 * N_t
 
       ! i=1...ix >> vfは0...ixの範囲をカバーするので，通信不要 6flop
-      vf(i-1,j  ,k  ,1) = Uwf * N_w
-      vf(i  ,j  ,k  ,1) = Uef * N_e
-      vf(i  ,j-1,k  ,2) = Vsf * N_s
-      vf(i  ,j  ,k  ,2) = Vnf * N_n
-      vf(i  ,j  ,k-1,3) = Wbf * N_b
-      vf(i  ,j  ,k  ,3) = Wtf * N_t
+      vf(i-1,j  ,k  ,1) = Uwf
+      vf(i  ,j  ,k  ,1) = Uef
+      vf(i  ,j-1,k  ,2) = Vsf
+      vf(i  ,j  ,k  ,2) = Vnf
+      vf(i  ,j  ,k-1,3) = Wbf
+      vf(i  ,j  ,k  ,3) = Wtf
 
       div(i,j,k) = (Uef - Uwf + Vnf - Vsf + Wtf - Wbf) * actv ! 6flop
       
@@ -781,15 +781,15 @@
 
 !> ********************************************************************
 !! @brief 速度の発散に使う\sum{u^*}を計算する
-!! @param [out]    div  速度の発散値
+!! @param [out]    div  速度の和
 !! @param [in]     sz   配列長
 !! @param [in]     g    ガイドセル長
-!! @param [in]     v0   セルセンター疑似ベクトル
+!! @param [in]     vc   セルセンター疑似ベクトル
 !! @param [in]     bv   BCindex C
 !! @param [in]     bp   BCindex P
 !! @param [in,out] flop 浮動小数点演算数
 !<
-    subroutine divergence (div, sz, g, v0, bv, bp, flop)
+    subroutine divergence_cc (div, sz, g, vc, bv, bp, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, bvx, bpx
@@ -799,7 +799,7 @@
     real                                                      ::  Ue0, Uw0, Up0, Vn0, Vs0, Vp0, Wb0, Wt0, Wp0
     real                                                      ::  c_e, c_w, c_n, c_s, c_t, c_b
     real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vc
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv, bp
 
@@ -818,7 +818,7 @@
 !$OMP PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b) &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
 
     do k=1,kx
     do j=1,jx
@@ -828,17 +828,17 @@
       actv= real(ibits(bvx, State, 1))
       
       ! 各セルセンター位置の変数ロード
-      Uw0 = v0(i-1,j  ,k  , 1)
-      Up0 = v0(i  ,j  ,k  , 1)
-      Ue0 = v0(i+1,j  ,k  , 1)
+      Uw0 = vc(i-1,j  ,k  , 1)
+      Up0 = vc(i  ,j  ,k  , 1)
+      Ue0 = vc(i+1,j  ,k  , 1)
 
-      Vs0 = v0(i  ,j-1,k  , 2)
-      Vp0 = v0(i  ,j  ,k  , 2)
-      Vn0 = v0(i  ,j+1,k  , 2)
+      Vs0 = vc(i  ,j-1,k  , 2)
+      Vp0 = vc(i  ,j  ,k  , 2)
+      Vn0 = vc(i  ,j+1,k  , 2)
 
-      Wb0 = v0(i  ,j  ,k-1, 3)
-      Wp0 = v0(i  ,j  ,k  , 3)
-      Wt0 = v0(i  ,j  ,k+1, 3)
+      Wb0 = vc(i  ,j  ,k-1, 3)
+      Wp0 = vc(i  ,j  ,k  , 3)
+      Wt0 = vc(i  ,j  ,k+1, 3)
 
       ! 物体があればノイマン条件なので，セルフェイスマスクとしても利用 (0-solid / 1-fluid)
       b_w = real(ibits(bpx, bc_n_W, 1))
@@ -879,11 +879,11 @@
 !$OMP END PARALLEL
 
     return
-    end subroutine divergence
+    end subroutine divergence_cc
     
 !> ********************************************************************
 !! @brief 疑似ベクトルの時間積分（Euler陽解法）
-!! @param [in,out] vc   疑似ベクトル
+!! @param [in,out] vc   対流項と粘性項の和 > 疑似ベクトル
 !! @param [in]     sz   配列長
 !! @param [in]     g    ガイドセル長
 !! @param [in]     dt   時間積分幅
@@ -912,7 +912,7 @@
 !$OMP PRIVATE(actv) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dt)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
     do k=1,kx
     do j=1,jx
     do i=1,ix
@@ -930,657 +930,6 @@
     return
     end subroutine euler_explicit
 
-
-!> ********************************************************************
-!! @brief 粘性項の計算（Euler陽解法，壁面境界の影響のみ考慮する）
-!! @param[out] vc 疑似ベクトル
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param dh 格子幅
-!! @param dt 時間積分幅
-!! @param v00 参照速度
-!! @param rei 1/Re
-!! @param wv 疑似ベクトルの対流項分
-!! @param v 速度ベクトル（n-step, collocated）
-!! @param bx BC index for v
-!! @param cf 粘性項の係数 (0.0=only convection, 1.0=convection+viscous)
-!! @param[out] flop
-!<
-    subroutine vis_ee (vc, sz, g, dh, dt, v00, rei, wv, v, bx, cf, flop)
-    implicit none
-    include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, g, bvx
-    integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
-    integer, dimension(3)                                     ::  sz
-    double precision                                          ::  flop
-    real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
-    real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
-    real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
-    real                                                      ::  u_ref, v_ref, w_ref, dh, dh1, dh2
-    real                                                      ::  EX, EY, EZ, rei, cf, dt, uq, vq, wq, actv
-    real                                                      ::  c_e, c_w, c_n, c_s, c_t, c_b
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, wv, vc
-    real, dimension(0:3)                                      ::  v00
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bx
-    
-    ix = sz(1)
-    jx = sz(2)
-    kx = sz(3)
-    dh1= 1.0/dh
-    dh2= dt*rei*dh1*dh1 * cf
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
-    flop = flop + dble(ix*jx*kx)*48.0d0 + 5.0d0
-    
-    do k=1,kx
-    do j=1,jx
-    do i=1,ix
-      Up0 = v(i  ,j  ,k  , 1)
-      Uw1 = v(i-1,j  ,k  , 1)
-      Ue1 = v(i+1,j  ,k  , 1)
-      Us1 = v(i  ,j-1,k  , 1)
-      Un1 = v(i  ,j+1,k  , 1)
-      Ub1 = v(i  ,j  ,k-1, 1)
-      Ut1 = v(i  ,j  ,k+1, 1)
-			
-      Vp0 = v(i  ,j  ,k  , 2)
-      Vw1 = v(i-1,j  ,k  , 2)
-      Ve1 = v(i+1,j  ,k  , 2)
-      Vs1 = v(i  ,j-1,k  , 2)
-      Vn1 = v(i  ,j+1,k  , 2)
-      Vb1 = v(i  ,j  ,k-1, 2)
-      Vt1 = v(i  ,j  ,k+1, 2)
-
-      Wp0 = v(i  ,j  ,k  , 3)
-      Ww1 = v(i-1,j  ,k  , 3)
-      We1 = v(i+1,j  ,k  , 3)
-      Ws1 = v(i  ,j-1,k  , 3)
-      Wn1 = v(i  ,j+1,k  , 3)
-      Wb1 = v(i  ,j  ,k-1, 3)
-      Wt1 = v(i  ,j  ,k+1, 3)
-      
-      uq = 2.0*u_ref - Up0
-      vq = 2.0*v_ref - Vp0
-      wq = 2.0*w_ref - Wp0
-        
-      ! セルフェイスのマスク関数
-      bvx = bx(i,j,k)
-      actv= real(ibits(bvx,        State, 1))
-      b_w1= ibits(bx(i-1,j  ,k  ), State, 1)
-      b_e1= ibits(bx(i+1,j  ,k  ), State, 1)
-      b_s1= ibits(bx(i  ,j-1,k  ), State, 1)
-      b_n1= ibits(bx(i  ,j+1,k  ), State, 1)
-      b_b1= ibits(bx(i  ,j  ,k-1), State, 1)
-      b_t1= ibits(bx(i  ,j  ,k+1), State, 1)
-      
-      ! 各面のVBCフラグ ibits() = 0(Normal) / others(BC) >> c_e = 1.0(Normal) / 0.0(BC) 
-      c_e = 1.0
-      c_w = 1.0
-      c_n = 1.0
-      c_s = 1.0
-      c_t = 1.0
-      c_b = 1.0
-      if ( ibits(bvx, bc_face_E, bitw_5) /= 0 ) c_e = 0.0
-      if ( ibits(bvx, bc_face_W, bitw_5) /= 0 ) c_w = 0.0
-      if ( ibits(bvx, bc_face_N, bitw_5) /= 0 ) c_n = 0.0
-      if ( ibits(bvx, bc_face_S, bitw_5) /= 0 ) c_s = 0.0
-      if ( ibits(bvx, bc_face_T, bitw_5) /= 0 ) c_t = 0.0
-      if ( ibits(bvx, bc_face_B, bitw_5) /= 0 ) c_b = 0.0
-			
-      if ( b_e1 == 0 ) then
-        Ue1 = uq
-        Ve1 = vq
-        We1 = wq
-      endif
-      
-      if ( b_w1 == 0 ) then
-        Uw1 = uq
-        Vw1 = vq
-        Ww1 = wq
-      end if
-			
-      if ( b_n1 == 0 ) then
-        Un1 = uq
-        Vn1 = vq
-        Wn1 = wq
-      end if
-      
-      if ( b_s1 == 0 ) then
-        Us1 = uq
-        Vs1 = vq
-        Ws1 = wq
-      end if
-			
-      if ( b_t1 == 0 ) then
-        Ut1 = uq
-        Vt1 = vq
-        Wt1 = wq
-      end if
-      
-      if ( b_b1 == 0 ) then
-        Ub1 = uq
-        Vb1 = vq
-        Wb1 = wq
-      end if
-      
-      ! 粘性項　Euler陽解法
-      EX = ( Ue1 - Up0 ) * c_e &
-         + ( Uw1 - Up0 ) * c_w &
-         + ( Un1 - Up0 ) * c_n &
-         + ( Us1 - Up0 ) * c_s &
-         + ( Ut1 - Up0 ) * c_t &
-         + ( Ub1 - Up0 ) * c_b
-      EY = ( Ve1 - Vp0 ) * c_e &
-         + ( Vw1 - Vp0 ) * c_w &
-         + ( Vn1 - Vp0 ) * c_n &
-         + ( Vs1 - Vp0 ) * c_s &
-         + ( Vt1 - Vp0 ) * c_t &
-         + ( Vb1 - Vp0 ) * c_b
-      EZ = ( We1 - Wp0 ) * c_e &
-         + ( Ww1 - Wp0 ) * c_w &
-         + ( Wn1 - Wp0 ) * c_n &
-         + ( Ws1 - Wp0 ) * c_s &
-         + ( Wt1 - Wp0 ) * c_t &
-         + ( Wb1 - Wp0 ) * c_b
-			
-      vc(i,j,k,1) = ( wv(i,j,k,1) + EX*dh2 )
-      vc(i,j,k,2) = ( wv(i,j,k,2) + EY*dh2 )
-      vc(i,j,k,3) = ( wv(i,j,k,3) + EZ*dh2 )
-    end do
-    end do
-    end do
-
-    return
-    end subroutine vis_ee
-
-!> ********************************************************************
-!! @brief 速度境界条件による粘性項の修正（Euler陽解法）
-!! @param[out] vc 疑似ベクトル
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param st ループの開始インデクス
-!! @param ed ループの終了インデクス
-!! @param dh 格子幅
-!! @param dt 時間積分幅
-!! @param v00 参照速度
-!! @param rei 1/Re
-!! @param v 速度ベクトル（n-step, collocated）
-!! @param bx BC index for v
-!! @param odr 内部境界処理時の速度境界条件のエントリ
-!! @param cf 粘性項の係数
-!! @param vec 指定する速度ベクトル
-!! @param[out] flop
-!! @note NOCHECK
-!<
-    subroutine vis_ee_vbc (vc, sz, g, st, ed, dh, dt, v00, rei, v, bx, odr, cf, vec, flop)
-    implicit none
-    include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, g, bvx, m, odr
-    integer, dimension(3)                                     ::  sz, st, ed
-    double precision                                          ::  flop
-    real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
-    real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
-    real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
-    real                                                      ::  u_ref, v_ref, w_ref, dh, dh1, dh2
-    real                                                      ::  EX, EY, EZ, rei, cf, dt
-    real                                                      ::  u_bc_ref, v_bc_ref, w_bc_ref
-    real                                                      ::  c_e, c_w, c_n, c_s, c_t, c_b
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vc, v
-    real, dimension(0:3)                                      ::  v00
-    real, dimension(3)                                        ::  vec
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bx
-    
-    dh1= 1.0/dh
-    dh2= dt*rei*dh1*dh1 * cf
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
-    u_bc_ref = vec(1) + u_ref
-    v_bc_ref = vec(2) + v_ref
-    w_bc_ref = vec(3) + w_ref
-    m = 0
-    
-    Uw1 = 0.0
-    Ue1 = 0.0
-    Us1 = 0.0
-    Un1 = 0.0
-    Ub1 = 0.0
-    Ut1 = 0.0
-    Vw1 = 0.0
-    Ve1 = 0.0
-    Vs1 = 0.0
-    Vn1 = 0.0
-    Vb1 = 0.0
-    Vt1 = 0.0
-    Ww1 = 0.0
-    We1 = 0.0
-    Ws1 = 0.0
-    Wn1 = 0.0
-    Wb1 = 0.0
-    Wt1 = 0.0
-    
-    do k=st(3),ed(3)
-    do j=st(2),ed(2)
-    do i=st(1),ed(1)
-      bvx = bx(i,j,k)
-      if ( 0 /= iand(bvx, bc_mask30) ) then ! 6面のうちのどれか速度境界フラグが立っている場合
-        
-        Up0 = v(i  ,j  ,k  ,1)
-        Vp0 = v(i  ,j  ,k  ,2)
-        Wp0 = v(i  ,j  ,k  ,3)
-        
-        ! 内部境界のときの各面のVBCフラグ ibits() = 0(Normal) / others(BC) >> c_e = 0.0(Normal) / 1.0(BC) 
-        c_e = 0.0
-        c_w = 0.0
-        c_n = 0.0
-        c_s = 0.0
-        c_t = 0.0
-        c_b = 0.0
-        
-        if ( ibits(bvx, bc_face_E, bitw_5) == odr ) then
-          c_e = 1.0
-          Ue1 = u_bc_ref
-          Ve1 = v_bc_ref
-          We1 = w_bc_ref
-        endif
-        
-        if ( ibits(bvx, bc_face_W, bitw_5) == odr ) then
-          c_w = 1.0
-          Uw1 = u_bc_ref
-          Vw1 = v_bc_ref
-          Ww1 = w_bc_ref
-        endif
-        
-        if ( ibits(bvx, bc_face_N, bitw_5) == odr ) then
-          c_n = 1.0
-          Un1 = u_bc_ref
-          Vn1 = v_bc_ref
-          Wn1 = w_bc_ref
-        endif
-        
-        if ( ibits(bvx, bc_face_S, bitw_5) == odr ) then
-          c_s = 1.0
-          Us1 = u_bc_ref
-          Vs1 = v_bc_ref
-          Ws1 = w_bc_ref
-        endif
-        
-        if ( ibits(bvx, bc_face_T, bitw_5) == odr ) then
-          c_t = 1.0
-          Ut1 = u_bc_ref
-          Vt1 = v_bc_ref
-          Wt1 = w_bc_ref
-        endif
-        
-        if ( ibits(bvx, bc_face_B, bitw_5) == odr ) then
-          c_b = 1.0
-          Ub1 = u_bc_ref
-          Vb1 = v_bc_ref
-          Wb1 = w_bc_ref
-        endif
-        
-        EX = ( Ue1 - Up0 ) * c_e &
-           + ( Uw1 - Up0 ) * c_w &
-           + ( Un1 - Up0 ) * c_n &
-           + ( Us1 - Up0 ) * c_s &
-           + ( Ut1 - Up0 ) * c_t &
-           + ( Ub1 - Up0 ) * c_b
-        EY = ( Ve1 - Vp0 ) * c_e &
-           + ( Vw1 - Vp0 ) * c_w &
-           + ( Vn1 - Vp0 ) * c_n &
-           + ( Vs1 - Vp0 ) * c_s &
-           + ( Vt1 - Vp0 ) * c_t &
-           + ( Vb1 - Vp0 ) * c_b
-        EZ = ( We1 - Wp0 ) * c_e &
-           + ( Ww1 - Wp0 ) * c_w &
-           + ( Wn1 - Wp0 ) * c_n &
-           + ( Ws1 - Wp0 ) * c_s &
-           + ( Wt1 - Wp0 ) * c_t &
-           + ( Wb1 - Wp0 ) * c_b
-			
-        vc(i,j,k,1) = vc(i,j,k,1) + EX*dh2
-        vc(i,j,k,2) = vc(i,j,k,2) + EY*dh2
-        vc(i,j,k,3) = vc(i,j,k,3) + EZ*dh2
-        
-        m = m+1
-      end if
-    end do
-    end do
-    end do
-    
-    flop = flop + dble(m)*42d0 + 8.0d0
-
-    return
-    end subroutine vis_ee_vbc
-    
-!> ********************************************************************
-!! @brief SOR法による粘性項の計算
-!! @param[out] v 疑似ベクトル
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param dh 格子幅
-!! @param dt 時間積分幅
-!! @param v00 参照速度
-!! @param rei 1/Re
-!! @param omg SOR法の加速係数（1<omg<2）
-!! @param vc 疑似ベクトル（n-step, collocated）
-!! @param bx BC index for V
-!! @param cf 粘性項の係数 (0.5=CN, 1.0=Euler Implicit)
-!! @param dv 残差
-!! @param[out] flop
-!! @note NOCHECK
-!<
-    subroutine vis_cn_sor (v, sz, g, dh, dt, v00, rei, omg, vc, bx, cf, dv, flop)
-    implicit none
-    include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, g, bvx
-    integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
-    integer, dimension(3)                                     ::  sz
-    double precision                                          ::  flop
-    real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
-    real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
-    real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
-    real                                                      ::  u_ref, v_ref, w_ref, dh, dh1, dh2
-    real                                                      ::  rei, dd, dv, dv1, dv2, dv3, uq, vq, wq, ddv
-    real                                                      ::  omg, s1, s2, s3, cf, dt, actv, b_vbc
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vc
-    real, dimension(0:3)                                      ::  v00
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bx
-    
-    ix = sz(1)
-    jx = sz(2)
-    kx = sz(3)
-    dh1= 1.0/dh
-    dh2= dt*rei*dh1*dh1*cf
-    dd = 1.0 / (1.0 + 6.0*dh2)
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
-    flop = flop + dble(ix*jx*kx)*52.0d0 + 8.0d0
-    
-    do k=1,kx
-    do j=1,jx
-    do i=1,ix
-      Up0 = v(i  ,j  ,k  ,1)
-      Uw1 = v(i-1,j  ,k  ,1)
-      Ue1 = v(i+1,j  ,k  ,1)
-      Us1 = v(i  ,j-1,k  ,1)
-      Un1 = v(i  ,j+1,k  ,1)
-      Ub1 = v(i  ,j  ,k-1,1)
-      Ut1 = v(i  ,j  ,k+1,1)
-			
-      Vp0 = v(i  ,j  ,k  ,2)
-      Vw1 = v(i-1,j  ,k  ,2)
-      Ve1 = v(i+1,j  ,k  ,2)
-      Vs1 = v(i  ,j-1,k  ,2)
-      Vn1 = v(i  ,j+1,k  ,2)
-      Vb1 = v(i  ,j  ,k-1,2)
-      Vt1 = v(i  ,j  ,k+1,2)
-
-      Wp0 = v(i  ,j  ,k  ,3)
-      Ww1 = v(i-1,j  ,k  ,3)
-      We1 = v(i+1,j  ,k  ,3)
-      Ws1 = v(i  ,j-1,k  ,3)
-      Wn1 = v(i  ,j+1,k  ,3)
-      Wb1 = v(i  ,j  ,k-1,3)
-      Wt1 = v(i  ,j  ,k+1,3)
-      
-      uq = 2.0*u_ref - Up0
-      vq = 2.0*v_ref - Vp0
-      wq = 2.0*w_ref - Wp0
-      
-      ! セルフェイスのマスク関数
-      bvx = bx(i,j,k)
-      actv= real(ibits(bvx,        State, 1))
-      b_w1= ibits(bx(i-1,j  ,k  ), State, 1)
-      b_e1= ibits(bx(i+1,j  ,k  ), State, 1)
-      b_s1= ibits(bx(i  ,j-1,k  ), State, 1)
-      b_n1= ibits(bx(i  ,j+1,k  ), State, 1)
-      b_b1= ibits(bx(i  ,j  ,k-1), State, 1)
-      b_t1= ibits(bx(i  ,j  ,k+1), State, 1)
-      
-      b_vbc = 1.0 ! dummy
-			
-      if ( b_e1 == 0 ) then
-        Ue1 = uq
-        Ve1 = vq
-        We1 = wq
-      endif
-      
-      if ( b_w1 == 0 ) then
-        Uw1 = uq
-        Vw1 = vq
-        Ww1 = wq
-      end if
-			
-      if ( b_n1 == 0 ) then
-        Un1 = uq
-        Vn1 = vq
-        Wn1 = wq
-      end if
-      
-      if ( b_s1 == 0 ) then
-        Us1 = uq
-        Vs1 = vq
-        Ws1 = wq
-      end if
-			
-      if ( b_t1 == 0 ) then
-        Ut1 = uq
-        Vt1 = vq
-        Wt1 = wq
-      end if
-      
-      if ( b_b1 == 0 ) then
-        Ub1 = uq
-        Vb1 = vq
-        Wb1 = wq
-      end if
-      
-      s1 = (Ue1 + Uw1 + Un1 + Us1 + Ut1 + Ub1) * dh2 + vc(i,j,k,1)
-      s2 = (Ve1 + Vw1 + Vn1 + Vs1 + Vt1 + Vb1) * dh2 + vc(i,j,k,2)
-      s3 = (We1 + Ww1 + Wn1 + Ws1 + Wt1 + Wb1) * dh2 + vc(i,j,k,3)
-      dv1= (dd*s1-Up0)*actv * b_vbc ! to exclude vbc cell
-      dv2= (dd*s2-Vp0)*actv * b_vbc
-      dv3= (dd*s3-Wp0)*actv * b_vbc
-      v(i,j,k,1) = Up0 + omg*dv1
-      v(i,j,k,2) = Vp0 + omg*dv2
-      v(i,j,k,3) = Wp0 + omg*dv3
-      ddv = dv1*dv1 + dv2*dv2 + dv3*dv3
-      dv = max( dv, sqrt(ddv) )
-    end do
-    end do
-    end do
-
-    return
-    end subroutine vis_cn_sor
-
-!> ********************************************************************
-!! @brief SOR法による粘性項計算の境界条件による修正
-!! @param[in,out] v 疑似ベクトル
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param st ループの開始インデクス
-!! @param ed ループの終了インデクス
-!! @param dh 格子幅
-!! @param dt 時間積分幅
-!! @param v00 参照速度
-!! @param rei 1/Re
-!! @param omg SOR法の加速係数（1<omg<2）
-!! @param vc 疑似ベクトル（n-step, collocated）
-!! @param bx BC index for V
-!! @param cf 粘性項の係数 (0.5=CN, 1.0=Euler Implicit)
-!! @param[out] dv 残差
-!! @param vec 指定する速度ベクトル
-!! @param[out] flop
-!! @note NOCHECK
-!<
-    subroutine vis_cn_mod_sor (v, sz, g, st, ed, dh, dt, v00, rei, omg, vc, bx, cf, dv, vec, flop)
-    implicit none
-    include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, g, bvx, m
-    integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
-    integer, dimension(3)                                     ::  sz, st, ed
-    double precision                                          ::  flop
-    real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
-    real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
-    real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
-    real                                                      ::  u_ref, v_ref, w_ref, dh, dh1, dh2
-    real                                                      ::  rei, dd, dv, dv1, dv2, dv3, ddv
-    real                                                      ::  u_bc, v_bc, w_bc, uq, vq, wq
-    real                                                      ::  omg, s1, s2, s3, cf, dt, actv
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vc
-    real, dimension(0:3)                                      ::  v00
-    real, dimension(3)                                        ::  vec
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bx
-    
-    dh1= 1.0/dh
-    dh2= dt*rei*dh1*dh1*cf
-    dd = 1.0 / (1.0 + 6.0*dh2)
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
-    u_bc = vec(1) + u_ref
-    v_bc = vec(2) + v_ref
-    w_bc = vec(3) + w_ref
-    m = 0
-
-    do k=st(3),ed(3)
-    do j=st(2),ed(2)
-    do i=st(1),ed(1)
-      bvx = bx(i,j,k)
-      if ( 0 /= iand(bvx, bc_mask30) ) then ! 6面のうちのどれか速度境界フラグが立っている場合
-        m = m+1
-        Up0 = v(i  ,j  ,k  ,1)
-        Uw1 = v(i-1,j  ,k  ,1)
-        Ue1 = v(i+1,j  ,k  ,1)
-        Us1 = v(i  ,j-1,k  ,1)
-        Un1 = v(i  ,j+1,k  ,1)
-        Ub1 = v(i  ,j  ,k-1,1)
-        Ut1 = v(i  ,j  ,k+1,1)
-			
-        Vp0 = v(i  ,j  ,k  ,2)
-        Vw1 = v(i-1,j  ,k  ,2)
-        Ve1 = v(i+1,j  ,k  ,2)
-        Vs1 = v(i  ,j-1,k  ,2)
-        Vn1 = v(i  ,j+1,k  ,2)
-        Vb1 = v(i  ,j  ,k-1,2)
-        Vt1 = v(i  ,j  ,k+1,2)
-
-        Wp0 = v(i  ,j  ,k  ,3)
-        Ww1 = v(i-1,j  ,k  ,3)
-        We1 = v(i+1,j  ,k  ,3)
-        Ws1 = v(i  ,j-1,k  ,3)
-        Wn1 = v(i  ,j+1,k  ,3)
-        Wb1 = v(i  ,j  ,k-1,3)
-        Wt1 = v(i  ,j  ,k+1,3)
-        
-        uq = 2.0*u_ref - Up0
-        vq = 2.0*v_ref - Vp0
-        wq = 2.0*w_ref - Wp0
-      
-        actv= real(ibits(bvx,        State, 1))
-        b_w1= ibits(bx(i-1,j  ,k  ), State, 1)
-        b_e1= ibits(bx(i+1,j  ,k  ), State, 1)
-        b_s1= ibits(bx(i  ,j-1,k  ), State, 1)
-        b_n1= ibits(bx(i  ,j+1,k  ), State, 1)
-        b_b1= ibits(bx(i  ,j  ,k-1), State, 1)
-        b_t1= ibits(bx(i  ,j  ,k+1), State, 1)
-			
-        if ( b_e1 == 0 ) then
-          Ue1 = uq
-          Ve1 = vq
-          We1 = wq
-        endif
-      
-        if ( b_w1 == 0 ) then
-          Uw1 = uq
-          Vw1 = vq
-          Ww1 = wq
-        end if
-			
-        if ( b_n1 == 0 ) then
-          Un1 = uq
-          Vn1 = vq
-          Wn1 = wq
-        end if
-      
-        if ( b_s1 == 0 ) then
-          Us1 = uq
-          Vs1 = vq
-          Ws1 = wq
-        end if
-			
-        if ( b_t1 == 0 ) then
-          Ut1 = uq
-          Vt1 = vq
-          Wt1 = wq
-        end if
-      
-        if ( b_b1 == 0 ) then
-          Ub1 = uq
-          Vb1 = vq
-          Wb1 = wq
-        end if
-        
-        if ( ibits(bvx, bc_face_E, 1) == 0 ) then
-          Ue1 = u_bc
-          Ve1 = v_bc
-          We1 = w_bc
-        end if
-        
-        if ( ibits(bvx, bc_face_W, 1) == 0 ) then
-          Uw1 = u_bc
-          Vw1 = v_bc
-          Ww1 = w_bc
-        end if
-        
-        if ( ibits(bvx, bc_face_N, 1) == 0 ) then
-          Un1 = u_bc
-          Vn1 = v_bc
-          Wn1 = w_bc
-        end if
-        
-        if ( ibits(bvx, bc_face_S, 1) == 0 ) then
-          Us1 = u_bc
-          Vs1 = v_bc
-          Ws1 = w_bc
-        end if
-        
-        if ( ibits(bvx, bc_face_T, 1) == 0 ) then
-          Ut1 = u_bc
-          Vt1 = v_bc
-          Wt1 = w_bc
-        end if
-        
-        if ( ibits(bvx, bc_face_B, 1) == 0 ) then
-          Ub1 = u_bc
-          Vb1 = v_bc
-          Wb1 = w_bc
-        end if
-      
-        s1 = (Ue1 + Uw1 + Un1 + Us1 + Ut1 + Ub1) * dh2 + vc(i,j,k,1)
-        s2 = (Ve1 + Vw1 + Vn1 + Vs1 + Vt1 + Vb1) * dh2 + vc(i,j,k,2)
-        s3 = (We1 + Ww1 + Wn1 + Ws1 + Wt1 + Wb1) * dh2 + vc(i,j,k,3)
-        dv1= (dd*s1-Up0)*actv
-        dv2= (dd*s2-Vp0)*actv
-        dv3= (dd*s3-Wp0)*actv
-        v(i,j,k,1) = Up0 + omg*dv1
-        v(i,j,k,2) = Vp0 + omg*dv2
-        v(i,j,k,3) = Wp0 + omg*dv3
-
-        ddv = dv1*dv1 + dv2*dv2 + dv3*dv3
-        dv = max( dv, sqrt(ddv) )
-      end if
-    end do
-    end do
-    end do
-    
-    flop = flop + dble(m)*48.0d0 + 8.0d0
-
-    return
-    end subroutine vis_cn_mod_sor
 
 !> ********************************************************************
 !! @brief Smagorinsky Modelによる乱流渦粘性係数の計算，減衰関数を併用
@@ -1773,338 +1122,6 @@
     return
     end subroutine ab2
     
-!> ********************************************************************
-!! @brief 緩和Jacobi法による粘性項の計算
-!! @param[out] v 疑似ベクトル
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param dh 格子幅
-!! @param dt 時間積分幅
-!! @param v00 参照速度
-!! @param rei 1/Re
-!! @param omg 緩和Jacobi法の加速係数（0<omg<1）
-!! @param vc 疑似ベクトル（n-step, collocated）
-!! @param bx BC index for V
-!! @param wk ワーク用配列
-!! @param cf 粘性項の係数 (0.5=CN, 1.0=Euler Implicit)
-!! @param[out] dv 残差
-!! @param[out] flop
-!! @note NOCHECK
-!<
-    subroutine vis_cn_jcb (v, sz, g, dh, dt, v00, rei, omg, vc, bx, wk, cf, dv, flop)
-    implicit none
-    include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, g, bvx
-    integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
-    integer, dimension(3)                                     ::  sz
-    double precision                                          ::  flop
-    real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
-    real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
-    real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
-    real                                                      ::  u_ref, v_ref, w_ref, dh, dh1, dh2
-    real                                                      ::  rei, dd, dv, dv1, dv2, dv3, uq, vq, wq, ddv
-    real                                                      ::  omg, s1, s2, s3, cf, dt, actv, b_vbc
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vc, wk
-    real, dimension(0:3)                                      ::  v00
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bx
-    
-    ix = sz(1)
-    jx = sz(2)
-    kx = sz(3)
-    dh1= 1.0/dh
-    dh2= dt*rei*dh1*dh1*cf
-    dd = 1.0 / (1.0 + 6.0*dh2)
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
-    flop = flop + dble(ix*jx*kx)*52.0d0 + 8.0d0
-    
-    do k=1,kx
-    do j=1,jx
-    do i=1,ix
-      Up0 = v(i  ,j  ,k  ,1)
-      Uw1 = v(i-1,j  ,k  ,1)
-      Ue1 = v(i+1,j  ,k  ,1)
-      Us1 = v(i  ,j-1,k  ,1)
-      Un1 = v(i  ,j+1,k  ,1)
-      Ub1 = v(i  ,j  ,k-1,1)
-      Ut1 = v(i  ,j  ,k+1,1)
-			
-      Vp0 = v(i  ,j  ,k  ,2)
-      Vw1 = v(i-1,j  ,k  ,2)
-      Ve1 = v(i+1,j  ,k  ,2)
-      Vs1 = v(i  ,j-1,k  ,2)
-      Vn1 = v(i  ,j+1,k  ,2)
-      Vb1 = v(i  ,j  ,k-1,2)
-      Vt1 = v(i  ,j  ,k+1,2)
-
-      Wp0 = v(i  ,j  ,k  ,3)
-      Ww1 = v(i-1,j  ,k  ,3)
-      We1 = v(i+1,j  ,k  ,3)
-      Ws1 = v(i  ,j-1,k  ,3)
-      Wn1 = v(i  ,j+1,k  ,3)
-      Wb1 = v(i  ,j  ,k-1,3)
-      Wt1 = v(i  ,j  ,k+1,3)
-      
-      uq = 2.0*u_ref - Up0
-      vq = 2.0*v_ref - Vp0
-      wq = 2.0*w_ref - Wp0
-      
-      ! セルフェイスのマスク関数
-      bvx = bx(i,j,k)
-      actv= real(ibits(bvx,        State, 1))
-      b_w1= ibits(bx(i-1,j  ,k  ), State, 1)
-      b_e1= ibits(bx(i+1,j  ,k  ), State, 1)
-      b_s1= ibits(bx(i  ,j-1,k  ), State, 1)
-      b_n1= ibits(bx(i  ,j+1,k  ), State, 1)
-      b_b1= ibits(bx(i  ,j  ,k-1), State, 1)
-      b_t1= ibits(bx(i  ,j  ,k+1), State, 1)
-      
-      b_vbc = 1.0 ! dummy
-			
-      if ( b_e1 == 0 ) then
-        Ue1 = uq
-        Ve1 = vq
-        We1 = wq
-      endif
-      
-      if ( b_w1 == 0 ) then
-        Uw1 = uq
-        Vw1 = vq
-        Ww1 = wq
-      end if
-			
-      if ( b_n1 == 0 ) then
-        Un1 = uq
-        Vn1 = vq
-        Wn1 = wq
-      end if
-      
-      if ( b_s1 == 0 ) then
-        Us1 = uq
-        Vs1 = vq
-        Ws1 = wq
-      end if
-			
-      if ( b_t1 == 0 ) then
-        Ut1 = uq
-        Vt1 = vq
-        Wt1 = wq
-      end if
-      
-      if ( b_b1 == 0 ) then
-        Ub1 = uq
-        Vb1 = vq
-        Wb1 = wq
-      end if
-      
-      s1 = (Ue1 + Uw1 + Un1 + Us1 + Ut1 + Ub1) * dh2 + vc(i,j,k,1)
-      s2 = (Ve1 + Vw1 + Vn1 + Vs1 + Vt1 + Vb1) * dh2 + vc(i,j,k,2)
-      s3 = (We1 + Ww1 + Wn1 + Ws1 + Wt1 + Wb1) * dh2 + vc(i,j,k,3)
-      dv1= (dd*s1-Up0)*actv * b_vbc ! to exclude vbc cell
-      dv2= (dd*s2-Vp0)*actv * b_vbc
-      dv3= (dd*s3-Wp0)*actv * b_vbc
-      wk(i,j,k,1) = Up0 + omg*dv1
-      wk(i,j,k,2) = Vp0 + omg*dv2
-      wk(i,j,k,3) = Wp0 + omg*dv3
-      ddv = dv1*dv1 + dv2*dv2 + dv3*dv3
-      dv = max( dv, sqrt(ddv) )
-    end do
-    end do
-    end do
-    
-! update should be done after modification
-
-    return
-    end subroutine vis_cn_jcb
-
-!> ********************************************************************
-!! @brief 緩和Jacobi法による粘性項の計算
-!! @param[in,out] v 疑似ベクトル
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param st ループの開始インデクス
-!! @param ed ループの終了インデクス
-!! @param dh 格子幅
-!! @param dt 時間積分幅
-!! @param v00 参照速度
-!! @param rei 1/Re
-!! @param omg 緩和Jacobi法の加速係数（0<omg<1）
-!! @param vc 疑似ベクトル（n-step, collocated）
-!! @param bx BC index for V
-!! @param wk ワーク用配列
-!! @param cf 粘性項の係数 (0.5=CN, 1.0=Euler Implicit)
-!! @param[out] dv 残差
-!! @param vec 指定する速度ベクトル
-!! @param[out] flop
-!! @note NOCHECK
-!<
-    subroutine vis_cn_mod_jcb (v, sz, g, st, ed, dh, dt, v00, rei, omg, vc, bx, wk, cf, dv, vec, flop)
-    implicit none
-    include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, g, bvx, m
-    integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
-    integer, dimension(3)                                     ::  sz, st, ed
-    double precision                                          ::  flop
-    real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
-    real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
-    real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
-    real                                                      ::  u_ref, v_ref, w_ref, dh, dh1, dh2
-    real                                                      ::  rei, dd, dv, dv1, dv2, dv3, ddv
-    real                                                      ::  u_bc, v_bc, w_bc, uq, vq, wq
-    real                                                      ::  omg, s1, s2, s3, cf, dt, actv
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vc, wk
-    real, dimension(0:3)                                      ::  v00
-    real, dimension(3)                                        ::  vec
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bx
-    
-    dh1= 1.0/dh
-    dh2= dt*rei*dh1*dh1*cf
-    dd = 1.0 / (1.0 + 6.0*dh2)
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
-    u_bc = vec(1) + u_ref
-    v_bc = vec(2) + v_ref
-    w_bc = vec(3) + w_ref
-    m = 0
-
-    do k=st(3),ed(3)
-    do j=st(2),ed(2)
-    do i=st(1),ed(1)
-      bvx = bx(i,j,k)
-      if ( 0 /= iand(bvx, bc_mask30) ) then ! 6面のうちのどれか速度境界フラグが立っている場合
-        m = m+1
-        Up0 = v(i  ,j  ,k  ,1)
-        Uw1 = v(i-1,j  ,k  ,1)
-        Ue1 = v(i+1,j  ,k  ,1)
-        Us1 = v(i  ,j-1,k  ,1)
-        Un1 = v(i  ,j+1,k  ,1)
-        Ub1 = v(i  ,j  ,k-1,1)
-        Ut1 = v(i  ,j  ,k+1,1)
-			
-        Vp0 = v(i  ,j  ,k  ,2)
-        Vw1 = v(i-1,j  ,k  ,2)
-        Ve1 = v(i+1,j  ,k  ,2)
-        Vs1 = v(i  ,j-1,k  ,2)
-        Vn1 = v(i  ,j+1,k  ,2)
-        Vb1 = v(i  ,j  ,k-1,2)
-        Vt1 = v(i  ,j  ,k+1,2)
-
-        Wp0 = v(i  ,j  ,k  ,3)
-        Ww1 = v(i-1,j  ,k  ,3)
-        We1 = v(i+1,j  ,k  ,3)
-        Ws1 = v(i  ,j-1,k  ,3)
-        Wn1 = v(i  ,j+1,k  ,3)
-        Wb1 = v(i  ,j  ,k-1,3)
-        Wt1 = v(i  ,j  ,k+1,3)
-        
-        uq = 2.0*u_ref - Up0
-        vq = 2.0*v_ref - Vp0
-        wq = 2.0*w_ref - Wp0
-      
-        actv= real(ibits(bvx,        State, 1))
-        b_w1= ibits(bx(i-1,j  ,k  ), State, 1)
-        b_e1= ibits(bx(i+1,j  ,k  ), State, 1)
-        b_s1= ibits(bx(i  ,j-1,k  ), State, 1)
-        b_n1= ibits(bx(i  ,j+1,k  ), State, 1)
-        b_b1= ibits(bx(i  ,j  ,k-1), State, 1)
-        b_t1= ibits(bx(i  ,j  ,k+1), State, 1)
-			
-        if ( b_e1 == 0 ) then
-          Ue1 = uq
-          Ve1 = vq
-          We1 = wq
-        endif
-      
-        if ( b_w1 == 0 ) then
-          Uw1 = uq
-          Vw1 = vq
-          Ww1 = wq
-        end if
-			
-        if ( b_n1 == 0 ) then
-          Un1 = uq
-          Vn1 = vq
-          Wn1 = wq
-        end if
-      
-        if ( b_s1 == 0 ) then
-          Us1 = uq
-          Vs1 = vq
-          Ws1 = wq
-        end if
-			
-        if ( b_t1 == 0 ) then
-          Ut1 = uq
-          Vt1 = vq
-          Wt1 = wq
-        end if
-      
-        if ( b_b1 == 0 ) then
-          Ub1 = uq
-          Vb1 = vq
-          Wb1 = wq
-        end if
-        
-        if ( ibits(bvx, bc_face_E, 1) == 0 ) then
-          Ue1 = u_bc
-          Ve1 = v_bc
-          We1 = w_bc
-        end if
-        
-        if ( ibits(bvx, bc_face_W, 1) == 0 ) then
-          Uw1 = u_bc
-          Vw1 = v_bc
-          Ww1 = w_bc
-        end if
-        
-        if ( ibits(bvx, bc_face_N, 1) == 0 ) then
-          Un1 = u_bc
-          Vn1 = v_bc
-          Wn1 = w_bc
-        end if
-        
-        if ( ibits(bvx, bc_face_S, 1) == 0 ) then
-          Us1 = u_bc
-          Vs1 = v_bc
-          Ws1 = w_bc
-        end if
-        
-        if ( ibits(bvx, bc_face_T, 1) == 0 ) then
-          Ut1 = u_bc
-          Vt1 = v_bc
-          Wt1 = w_bc
-        end if
-        
-        if ( ibits(bvx, bc_face_B, 1) == 0 ) then
-          Ub1 = u_bc
-          Vb1 = v_bc
-          Wb1 = w_bc
-        end if
-      
-        s1 = (Ue1 + Uw1 + Un1 + Us1 + Ut1 + Ub1) * dh2 + vc(i,j,k,1)
-        s2 = (Ve1 + Vw1 + Vn1 + Vs1 + Vt1 + Vb1) * dh2 + vc(i,j,k,2)
-        s3 = (We1 + Ww1 + Wn1 + Ws1 + Wt1 + Wb1) * dh2 + vc(i,j,k,3)
-        dv1= (dd*s1-Up0)*actv
-        dv2= (dd*s2-Vp0)*actv
-        dv3= (dd*s3-Wp0)*actv
-        wk(i,j,k,1) = Up0 + omg*dv1
-        wk(i,j,k,2) = Vp0 + omg*dv2
-        wk(i,j,k,3) = Wp0 + omg*dv3
-
-        ddv = dv1*dv1 + dv2*dv2 + dv3*dv3
-        dv = max( dv, sqrt(ddv) )
-      end if
-    end do
-    end do
-    end do
-    
-    flop = flop + dble(m)*48.0d0 + 8.0d0
-
-    return
-    end subroutine vis_cn_mod_jcb
-
 
 !> ********************************************************************
 !! @brief 対流項と粘性項の計算
@@ -2199,7 +1216,7 @@ flop = flop + dble(ix)*dble(jx)*dble(kx)*330.0d0 + 28.0d0
 !$OMP PRIVATE(fu_r, fu_l, fv_r, fv_l, fw_r, fw_l) &
 !$OMP PRIVATE(lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t, EX, EY, EZ)
 
-!$OMP DO SCHEDULE(static)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
 
 do k=1,kx
 do j=1,jx

@@ -148,7 +148,7 @@ am_libFB_a_OBJECTS = libFB_a-Alloc.$(OBJEXT) \
 	libFB_a-Monitor.$(OBJEXT) libFB_a-ParseBC.$(OBJEXT) \
 	libFB_a-ParseMat.$(OBJEXT) libFB_a-Sampling.$(OBJEXT) \
 	libFB_a-SetBC.$(OBJEXT) libFB_a-VoxInfo.$(OBJEXT) \
-	dbwrite.$(OBJEXT) libFB_a-Glyph.$(OBJEXT)
+	libFB_a-Glyph.$(OBJEXT)
 libFB_a_OBJECTS = $(am_libFB_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -183,18 +183,6 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-FCCOMPILE = $(FC) $(AM_FCFLAGS) $(FCFLAGS)
-AM_V_FC = $(am__v_FC_@AM_V@)
-am__v_FC_ = $(am__v_FC_@AM_DEFAULT_V@)
-am__v_FC_0 = @echo "  FC      " $@;
-am__v_FC_1 = 
-FCLD = $(FC)
-FCLINK = $(FCLD) $(AM_FCFLAGS) $(FCFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o \
-	$@
-AM_V_FCLD = $(am__v_FCLD_@AM_V@)
-am__v_FCLD_ = $(am__v_FCLD_@AM_DEFAULT_V@)
-am__v_FCLD_0 = @echo "  FCLD    " $@;
-am__v_FCLD_1 = 
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 AM_V_CC = $(am__v_CC_@AM_V@)
@@ -415,7 +403,6 @@ libFB_a_SOURCES = \
   SetBC.h \
   VoxInfo.C \
   VoxInfo.h \
-  dbwrite.f90 \
   ffv_f_params.h \
   fill_bid.h \
   mydebug.h \
@@ -427,7 +414,7 @@ EXTRA_DIST = Makefile_hand depend.inc ReleaseNote_FB.txt
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .C .f90 .o .obj
+.SUFFIXES: .C .o .obj
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -785,12 +772,6 @@ libFB_a-Glyph.obj: Glyph.C
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='Glyph.C' object='libFB_a-Glyph.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -c -o libFB_a-Glyph.obj `if test -f 'Glyph.C'; then $(CYGPATH_W) 'Glyph.C'; else $(CYGPATH_W) '$(srcdir)/Glyph.C'; fi`
-
-.f90.o:
-	$(AM_V_FC)$(FCCOMPILE) -c -o $@ $<
-
-.f90.obj:
-	$(AM_V_FC)$(FCCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique

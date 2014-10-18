@@ -13,30 +13,22 @@
 #
 ###################################################################################
 
-noinst_lib_LIBRARIES = libFCORE.a
+noinst_lib_LIBRARIES = libFLS.a
 
 noinst_libdir = ../lib
 
-libFCORE_a_FCFLAGS = \
+libFLS_a_FCFLAGS = \
   -I. \
   -I../FB \
   @CPM_CFLAGS@ \
   @MPICH_CFLAGS@ \
   @FREALOPT@ 
 
-libFCORE_a_SOURCES = \
-  ffv_Ffunc.h \
-  ffv_forcing.f90 \
-  ffv_pbc.f90 \
-  ffv_pscalar.f90 \
-  ffv_utility.f90 \
-  ffv_vbc_inner.f90 \
-  ffv_vbc_outer.f90 \
-  ffv_vbc_outer_face.f90 \
-  ffv_vbc_outer_flux.f90 \
-  ffv_velocity_binary.f90 \
-  force.h \
-  ffv_velocity_cds.f90 \
-  FB_util.f90
+libFLS_a_SOURCES = \
+  ffv_LSfunc.h \
+  ffv_blas.f90 \
+  ffv_bicg.f90 \
+  ffv_SOR.f90
 
-EXTRA_DIST = Makefile_hand depend.inc unused.f90
+
+EXTRA_DIST = Makefile_hand depend.inc ffv_poisson_cds.f90 ffv_poisson2.f90

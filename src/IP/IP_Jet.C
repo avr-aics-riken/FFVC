@@ -24,7 +24,7 @@
 
 // #################################################################
 // Jetの流入境界条件による発散値の修正
-void IP_Jet::divJetInflow(REAL_TYPE* div, const int face, REAL_TYPE* vf, REAL_TYPE* sum, double& flop)
+void IP_Jet::divJetInflow(REAL_TYPE* div, const int face, REAL_TYPE* vf, double& flop)
 {
   // X_MINUS面の外部境界面のみ
   if ( nID[face] >= 0) return;
@@ -42,8 +42,6 @@ void IP_Jet::divJetInflow(REAL_TYPE* div, const int face, REAL_TYPE* vf, REAL_TY
   int kx = size[2];
   int gd = guide;
   
-  REAL_TYPE s = 0.0;
-  REAL_TYPE a = 0.0;
   
   // Ring1
   if ( pat_1 == ON )
@@ -53,7 +51,7 @@ void IP_Jet::divJetInflow(REAL_TYPE* div, const int face, REAL_TYPE* vf, REAL_TY
     REAL_TYPE u_in = q1 / a1;
     
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ri, ro, dh, u_in) \
-schedule(static) reduction(+:s) reduction(+:a)
+schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         
@@ -67,13 +65,11 @@ schedule(static) reduction(+:s) reduction(+:a)
           size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
           div[m] -= u_in;
           vf[_F_IDX_V3D(0, j, k, 0, ix, jx, kx, gd)] = u_in;
-          s += u_in;
-          a += 1.0;
         }
       }
     }
     
-    flop += (double)jx * (double)kx * 21.0; // DP 31.0
+    flop += (double)jx * (double)kx * 19.0; // DP 31.0
   }
   
   
@@ -85,7 +81,7 @@ schedule(static) reduction(+:s) reduction(+:a)
     REAL_TYPE u_in = q2 / a2;
     
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, ri, ro, dh, u_in) \
-schedule(static) reduction(+:s) reduction(+:a)
+schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         
@@ -99,17 +95,13 @@ schedule(static) reduction(+:s) reduction(+:a)
           size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
           div[m] -= u_in;
           vf[_F_IDX_V3D(0, j, k, 0, ix, jx, kx, gd)] = u_in;
-          s += u_in;
-          a += 1.0;
         }
       }
     }
     
-    flop += (double)jx * (double)kx * 21.0; // DP 31.0
+    flop += (double)jx * (double)kx * 19.0; // DP 31.0
   }
   
-  sum[0] = s;
-  sum[1] = a;
 }
 
 

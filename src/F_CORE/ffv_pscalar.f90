@@ -414,7 +414,7 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
 !! @param [in,out] ie     内部エネルギー
 !! @param [in]     sz     配列長
 !! @param [in]     g      ガイドセル長
-!! @param [out]    res    残差
+!! @param [out]    res_l2 残差の自乗和
 !! @param [in]     dh     格子幅
 !! @param [in]     dt     時間積分幅
 !! @param [in]     qbc    境界条件の熱流束
@@ -425,13 +425,13 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
 !! @param [in]     h_mode mode(0-conjugate heat transfer / 1-othres)
 !! @param [in,out] flop   浮動小数演算数
 !<
-    subroutine ps_diff_ee (ie, sz, g, res, dh, dt, qbc, bh, ws, ncompo, mtbl, h_mode, flop)
+    subroutine ps_diff_ee (ie, sz, g, res_l2, dh, dt, qbc, bh, ws, ncompo, mtbl, h_mode, flop)
     implicit none
     include '../FB/ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx, ncompo, h_mode, hm
     integer                                                   ::  l_p, l_w, l_e, l_s, l_n, l_b, l_t
     integer, dimension(3)                                     ::  sz
-    double precision                                          ::  flop, res
+    double precision                                          ::  flop, res, res_l2
     real                                                      ::  dh, dt, dth1, dth2, delta, sw
     real                                                      ::  t_p, t_w, t_e, t_s, t_n, t_b, t_t
     real                                                      ::  g_w, g_e, g_s, g_n, g_b, g_t, g_p
@@ -571,6 +571,8 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
     end do
 !$OMP END DO
 !$OMP END PARALLEL
+
+    res_l2 = res
 
     return
     end subroutine ps_diff_ee

@@ -90,13 +90,15 @@ void FFV::Buoyancy(REAL_TYPE* v, const REAL_TYPE dgr, const REAL_TYPE* t, const 
 
 // #################################################################
 // 単媒質に対する熱伝導方程式を陰解法で解く
-void FFV::ps_LS(IterationCtl* IC, const double rhs_nrm, const double r0)
+void FFV::ps_LS(IterationCtl* IC, const double b_l2, const double r0_l2)
 {
   double flop = 0.0;      /// 浮動小数点演算数
   double res=0.0;         /// 残差
   double b2=0.0;          /// 反復式のソースベクトルのノルム
   double nrm = 0.0;       ///
   REAL_TYPE dt = deltaT;  /// 時間積分幅
+  double var[3];          /// 誤差、残差、解
+  double x_l2;            /// 解ベクトルのL2ノルム
   
   // d_ie  内部エネルギー n+1 step
   // d_ie0 内部エネルギー n step
@@ -146,8 +148,8 @@ void FFV::ps_LS(IterationCtl* IC, const double rhs_nrm, const double r0)
         if ( paraMngr->Allreduce(tmp_wk, m_tmp, 2, MPI_SUM) != CPM_SUCCESS ) Exit(0);
         TIMING_stop(tm_heat_diff_res_comm, 2.0*numProc*2.0*sizeof(REAL_TYPE) );
         
-        res = sqrt( m_tmp[0]/(REAL_TYPE)G_Acell ); // 残差のRMS
-        b2  = sqrt( m_tmp[1]/(REAL_TYPE)G_Acell ); // ソースベクトルのRMS
+        res = sqrt( m_tmp[0] ); // 残差のRMS
+        b2  = sqrt( m_tmp[1] ); // ソースベクトルのRMS
       }
       
       TIMING_stop(tm_heat_diff_sct_3, 0.0);
@@ -161,43 +163,42 @@ void FFV::ps_LS(IterationCtl* IC, const double rhs_nrm, const double r0)
   }
   
   // Residual resを上書き
-  switch ( IC->getNormType() )
+  TIMING_start(tm_poi_src_nrm);
+  res = 0.0;
+  flop = 0.0;
+  //poi_residual_(&res, size, &guide, d_p, d_ws, d_bcp, &flop);
+  TIMING_stop(tm_poi_src_nrm, flop);
+  
+  if ( numProc > 1 )
   {
-    case r_b:
-    case r_r0:
-      
-      TIMING_start(tm_poi_src_nrm);
-      res = 0.0;
-      flop = 0.0;
-      //poi_residual_(&res, size, &guide, d_p, d_ws, d_bcp, &flop);
-      TIMING_stop(tm_poi_src_nrm, flop);
-      
-      if ( numProc > 1 )
-      {
-        TIMING_start(tm_poi_src_comm);
-        double m_tmp = res;
-        if ( paraMngr->Allreduce(&m_tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-        TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
-      }
-      
-      res = sqrt(res);
-      break;
+    TIMING_start(tm_poi_src_comm);
+    double m_tmp = res;
+    if ( paraMngr->Allreduce(&m_tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
   }
   
+  res = sqrt(res);
+  
   // 残差の保存
-  switch ( IC->getNormType() )
+  double ErrEPS = IC->getErrCriterion();
+  
+  switch ( IC->getResType() )
   {
-      
-    case dx_b:
-      IC->setNormValue( res/rhs_nrm );
+      case nrm_r_b:
+      IC->setResidual( (b_l2<ErrEPS) ? res/ErrEPS : res/b_l2 );
       break;
       
-    case r_b:
-      IC->setNormValue( res/rhs_nrm );
+      case nrm_r_x:
+      IC->setResidual( (x_l2<ErrEPS) ? res/ErrEPS : res/x_l2 );
       break;
       
-    case r_r0:
-      IC->setNormValue( res/r0 );
+      case nrm_r_r0:
+      IC->setResidual( (r0_l2<ErrEPS) ? res/ErrEPS : res/r0_l2 );
+      break;
+      
+      default:
+      printf("\tInvalid Residual Norm for Pressure\n");
+      Exit(0);
       break;
   }
   
@@ -293,7 +294,7 @@ REAL_TYPE FFV::ps_Diff_SM_EE(REAL_TYPE* t, const REAL_TYPE dt, const REAL_TYPE* 
 
 // #################################################################
 // 単媒質に対する熱伝導方程式をEuler陰解法で解く
-double FFV::ps_Diff_SM_PSOR(REAL_TYPE* t, double& b2, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh, const REAL_TYPE* ws, IterationCtl* IC, double& flop)
+double FFV::ps_Diff_SM_PSOR(REAL_TYPE* t, double& b_l2, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh, const REAL_TYPE* ws, IterationCtl* IC, double& flop)
 {
   REAL_TYPE g_p, g_w, g_e, g_s, g_n, g_b, g_t;
   REAL_TYPE t_p, t_w, t_e, t_s, t_n, t_b, t_t;
@@ -314,7 +315,7 @@ double FFV::ps_Diff_SM_PSOR(REAL_TYPE* t, double& b2, const REAL_TYPE dt, const 
   dth1 = dt/dh;
   dth2 = dth1*C.getRcpPeclet()/dh;
   omg = IC->getOmega();
-  res = b2 = 0.0;
+  res = b_l2 = 0.0;
   flop += (double)(ix*jx*kx)* 58.0;
 
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, dth1, dth2, omg) \
@@ -382,7 +383,7 @@ double FFV::ps_Diff_SM_PSOR(REAL_TYPE* t, double& b2, const REAL_TYPE dt, const 
     }
   }
   
-  b2 = bb;
+  b_l2 = bb;
 
 	return res;
 }

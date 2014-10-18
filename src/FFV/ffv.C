@@ -50,6 +50,7 @@ FFV::FFV()
   deltaT = 0.0;
   poly_factor = 0.0;
   
+  
   for (int i=0; i<3; i++) 
   {
     G_size[i]= 0;
@@ -120,21 +121,23 @@ FFV::FFV()
   d_zm  = NULL;
 
   
-  // PCG & PBiCGSTAB
+  // PCG & BiCGSTAB
 	d_pcg_r = NULL;
   d_pcg_p = NULL;
   
 	// PCG
-	d_pcg_q = NULL;
 	d_pcg_z = NULL;
   
-	// PBiCGSTAB
+	// BiCGSTAB
 	d_pcg_r0 = NULL;
-	d_pcg_p_ = NULL;
-	d_pcg_q_ = NULL;
+	d_pcg_q  = NULL;
 	d_pcg_s  = NULL;
-	d_pcg_s_ = NULL;
-	d_pcg_t_ = NULL;
+	d_pcg_t  = NULL;
+  
+  // BiCGSTAB with Preconditioning
+  d_pcg_p_ = NULL;
+  d_pcg_s_ = NULL;
+  d_pcg_t_ = NULL;
   
   cutPos = NULL;
   cutBid = NULL;
@@ -159,6 +162,13 @@ FFV::FFV()
   global_obstacle = NULL;
   num_obstacle = 0;
   buffer_force = NULL;
+  
+  // 発散の収束判定
+  DivC.MaxIteration = 0;
+  DivC.Iteration = 0;
+  DivC.divType = 0;
+  DivC.divEPS = 0.0;
+  DivC.divergence = 0.0;
   
   
   // ファイル入出力
@@ -326,6 +336,10 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
   
   for (int face=0; face<NOFACE; face++) 
   {
+    // 外部境界面でない場合にはゼロが戻る
+    u_sum = 0.0;
+    vobc_face_massflow_(&u_sum, size, &guide, &face, d_vf, d_cdf, nID);
+    
     
     // 有効セル数 => 外部境界でガイドセルと内側のセルで挟まれる面がFluidの場合のセル数
     REAL_TYPE ec = (REAL_TYPE)obc[face].getValidCell();
@@ -333,24 +347,92 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
     // 各プロセスの外部領域面の速度をvv[]にコピー
     REAL_TYPE* vv = obc[face].getDomainV();
     
+    REAL_TYPE q[2] = {0.0, 0.0};
+    
+    // 外部境界のみ値をもつ
+    if ( nID[face] < 0 )
+    {
+      q[0] = u_sum; // 無次元流量
+      q[1] = vv[1]; // セル数
+    }
+    
+    if ( numProc > 1 )
+    {
+      REAL_TYPE tmp[2] = {q[0], q[1]};
+      if ( paraMngr->Allreduce(tmp, q, 2, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    
     // 特殊条件
     if ( (R->Mode.Example == id_Jet) && (face==X_minus) )
     {
-      REAL_TYPE q[2] = {0.0, 0.0};
-      
-      // 外部境界以外はゼロ
-      if ( nID[face] < 0 )
-      {
-        q[0] = vv[0]; // 無次元流量
-        q[1] = vv[1]; // セル数
-      }
-      
+      R->V_Dface[face] = q[0]/q[1];  // 無次元平均流速
+      R->Q_Dface[face] = q[0] * ddh; // 無次元流量
+    }
+    else // 標準
+    {
       if ( numProc > 1 )
       {
-        REAL_TYPE tmp[2] = {q[0], q[1]};
-        if ( paraMngr->Allreduce(tmp, q, 2, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        REAL_TYPE tmp_sum = u_sum;
+        if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
       }
       
+      u_avr = (ec != 0.0) ? u_sum / ec : 0.0;
+      
+      R->V_Dface[face] = u_avr;       // 無次元平均流速
+      R->Q_Dface[face] = u_sum * ddh; // 無次元流量
+    }
+
+  }
+  
+}
+
+// #################################################################
+/**
+ * @brief 外部計算領域の各面における総流量と対流流出速度を計算する
+ * @param [in] ptr  BoundaryOuterクラスのポインタ
+ * @param [in] R    Controlクラスのポインタ
+ * @note 系への流入を正の符号とする
+ *
+void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
+{
+  if ( !ptr ) Exit(0);
+  BoundaryOuter* obc=NULL;
+  
+  obc = ptr;
+  
+  REAL_TYPE ddh = deltaX * deltaX;
+  REAL_TYPE u_sum, u_avr;
+  
+  
+  for (int face=0; face<NOFACE; face++)
+  {
+    
+    // 有効セル数 => 外部境界でガイドセルと内側のセルで挟まれる面がFluidの場合のセル数
+    REAL_TYPE ec = (REAL_TYPE)obc[face].getValidCell();
+    
+    // 各プロセスの外部領域面の速度をvv[]にコピー
+    REAL_TYPE* vv = obc[face].getDomainV();
+    
+    REAL_TYPE q[2] = {0.0, 0.0};
+    
+    // 外部境界のみ値をもつ
+    if ( nID[face] < 0 )
+    {
+      q[0] = vv[0]; // 無次元流量
+      q[1] = vv[1]; // セル数
+    }
+    
+    if ( numProc > 1 )
+    {
+      REAL_TYPE tmp[2] = {q[0], q[1]};
+      if ( paraMngr->Allreduce(tmp, q, 2, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    
+    // 特殊条件
+    if ( (R->Mode.Example == id_Jet) && (face==X_minus) )
+    {
       R->V_Dface[face] = q[0]/q[1];  // 無次元平均流速
       R->Q_Dface[face] = q[0] * ddh; // 無次元流量
     }
@@ -370,10 +452,10 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
       R->V_Dface[face] = u_avr;       // 無次元平均流速
       R->Q_Dface[face] = u_sum * ddh; // 無次元流量
     }
-
+    
   }
   
-}
+}*/
 
 
 
@@ -421,8 +503,6 @@ void FFV::gatherForce(REAL_TYPE* m_frc)
     global_force[3*n+2] = fz;
   }
 }
-
-
 
 
 // #################################################################
@@ -666,7 +746,7 @@ void FFV::OutputBasicVariables(double& flop)
   
   
   // Divergence デバッグ用なので無次元のみ
-  if ( C.FIO.Div_Debug == ON ) 
+  if ( C.Mode.Log_Itr == ON )
   {
     
     REAL_TYPE coef = (REAL_TYPE)DT.get_DT()/(deltaX*deltaX); /// 発散値を計算するための係数　dt/h^2
@@ -1197,75 +1277,54 @@ int FFV::MainLoop()
 
 // #################################################################
 /**
- * @brief VP反復の発散値を計算する
- * @param [in] IC IterationCtlクラス
- * @retval 発散値の最大の場所のインデクス
+ * @brief 発散値を計算する
+ * @param [in] LSd  線形ソルバクラスのDiv反復
  */
-Vec3i FFV::NormDiv(IterationCtl* IC)
+void FFV::NormDiv()
 {
-  double nrm;
-  double flop_count;
+  REAL_TYPE dv;
+  double flop_count, tmp;
   REAL_TYPE coef = 1.0/deltaX; /// 発散値を計算するための係数
 
-  int index[3];
-  index[0] = 0;
-  index[1] = 0;
-  index[2] = 0;
   
-  switch (IC->getNormType())
+  TIMING_start(tm_poi_itr_sct_5); // >>> Poisson Iteration subsection 5
+  
+  if ( DivC.divType == nrm_div_max )
   {
-
-    case v_div_max:
-      TIMING_start(tm_norm_div_max);
-      flop_count=0.0;
-      norm_v_div_max_(&nrm, size, &guide, d_dv, &coef, d_bcp, &flop_count);
-      TIMING_stop(tm_norm_div_max, flop_count);
-      
-      if ( numProc > 1 )
-      {
-        TIMING_start(tm_norm_comm);
-        double tmp;
-        tmp = nrm;
-        if ( paraMngr->Allreduce(&tmp, &nrm, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0); // 最大値
-        TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
-      }
-      IC->setNormValue(nrm);
-      break;
-      
-      
-    case v_div_dbg:
-      TIMING_start(tm_poi_itr_sct_5); // >>> Poisson Iteration subsection 5
-      
-      TIMING_start(tm_norm_div_dbg);
-      flop_count=0.0;
-      
-      norm_v_div_dbg_(&nrm, index, size, &guide, d_dv, &coef, d_bcp, &flop_count);
-      TIMING_stop(tm_norm_div_dbg, flop_count);
-      
-      //@todo ここで，最大値のグローバルなindexの位置を計算する
-      
-      if ( numProc > 1 )
-      {
-        TIMING_start(tm_norm_comm);
-        double tmp;
-        tmp = nrm;
-        if ( paraMngr->Allreduce(&tmp, &nrm, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0); // 最大値
-      }
-      IC->setNormValue(nrm);
-      
-      
-      TIMING_stop(tm_poi_itr_sct_5, 0.0); // <<< Poisson Iteration subsection 5
-      break;
-      
-      
-    default:
-      stamped_printf("\tInvalid convergence type\n");
-      Exit(0);
+    TIMING_start(tm_norm_div_max);
+    flop_count=0.0;
+    norm_v_div_max_(&dv, size, &guide, d_dv, &coef, d_bcp, &flop_count);
+    TIMING_stop(tm_norm_div_max, flop_count);
+    
+    if ( numProc > 1 )
+    {
+      TIMING_start(tm_norm_comm);
+      REAL_TYPE tmp = dv;
+      if ( paraMngr->Allreduce(&tmp, &dv, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0); // 最大値
+      TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
+    }
+    DivC.divergence = (double)dv;
+  }
+  else // nrm_div_l2
+  {
+    TIMING_start(tm_norm_div_max);
+    flop_count=0.0;
+    norm_v_div_l2_(&dv, size, &guide, d_dv, &coef, d_bcp, &flop_count);
+    TIMING_stop(tm_norm_div_max, flop_count);
+    
+    if ( numProc > 1 )
+    {
+      TIMING_start(tm_norm_comm);
+      REAL_TYPE tmp = dv;
+      if ( paraMngr->Allreduce(&tmp, &dv, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0); // 自乗和
+      TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(double));
+    }
+    tmp = (double)dv;
+    DivC.divergence = sqrt( tmp );
   }
   
-  Vec3i idx ( index[0], index[1], index[2] );
-  
-  return idx;
+  TIMING_stop(tm_poi_itr_sct_5, 0.0); // <<< Poisson Iteration subsection 5
+
 }
 
 
@@ -1401,8 +1460,7 @@ void FFV::set_timing_label()
   // end of Poisson: Itr. Sct:4
   
   set_label(tm_poi_itr_sct_5,      "Poisson__Itr_Sct_5",      PerfMonitor::CALC, false);
-  set_label(tm_norm_div_max,       "Poisson_Norm_Div_max",    PerfMonitor::CALC);
-  set_label(tm_norm_div_dbg,       "Poisson_Norm_Div_dbg",    PerfMonitor::CALC);
+  set_label(tm_norm_div_max,       "Norm_Div_max",            PerfMonitor::CALC);
   set_label(tm_norm_comm,          "A_R_Poisson_Norm",        PerfMonitor::COMM);
   // end of Poisson: Itr. Sct:5
   
@@ -1499,6 +1557,21 @@ void FFV::set_timing_label()
   set_label(tm_copy_array,         "Copy_Array",              PerfMonitor::CALC);
   set_label(tm_assign_const,       "assign_Const_to_Array",   PerfMonitor::CALC);
   
+  // Blas
+  set_label(tm_blas_dot1,          "Blas_Dot1",               PerfMonitor::CALC);
+  set_label(tm_blas_dot2,          "Blas_Dot2",               PerfMonitor::CALC);
+  set_label(tm_blas_copy,          "Blas_Copy",               PerfMonitor::CALC);
+  set_label(tm_blas_calc_r,        "Blas_Residual",           PerfMonitor::CALC);
+  set_label(tm_blas_ax,            "Blas_Ax",                 PerfMonitor::CALC);
+  set_label(tm_blas_z_xpay,        "Blas_Z=X+aY" ,            PerfMonitor::CALC);
+  set_label(tm_blas_axpbypz,       "Blas_Z=Z+aX+bY",          PerfMonitor::CALC);
+  set_label(tm_blas_bicg_update_p, "Blas_BiCGupdateP",        PerfMonitor::CALC);
+  set_label(tm_blas_bicg_update_x, "Blas_BiCGupdateX",        PerfMonitor::CALC);
+  set_label(tm_blas_comm,          "Blas_Comm",               PerfMonitor::COMM);
+  
+  set_label(tm_bicgstab_sct,       "BiCG",                    PerfMonitor::CALC, false);
+  
+  
   // 統計処理
   set_label(tm_statistic,          "Statistic",               PerfMonitor::CALC, false);
   
@@ -1535,18 +1608,18 @@ void FFV::Usage()
 // #################################################################
 /**
  * @brief 空間平均操作と変動量の計算を行う
- * @param [out]    avr  平均値
- * @param [out]    rms  変動値
+ * @param [out]    rms  変動値の自乗和
+ * @param [out]    avr  平均値の自乗和
  * @param [in,out] flop 浮動小数演算数
  */
-void FFV::VariationSpace(double* avr, double* rms, double& flop)
+void FFV::VariationSpace(double* rms, double* avr, double& flop)
 {
   double m_var[2];
   
   // 速度
   fb_delta_v_(m_var, size, &guide, d_v, d_v0, d_bcd, &flop); // 速度反復でV_res_L2_を計算している場合はスキップすること
   rms[var_Velocity] = m_var[0];
-  avr[var_Velocity] = m_var[1];
+  //avr[var_Velocity] = m_var[1]; 意味を持たない
   
   // 圧力
   fb_delta_s_(m_var, size, &guide, d_p, d_p0, d_bcd, &flop);

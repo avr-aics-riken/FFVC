@@ -741,8 +741,8 @@
 
 
 !> ********************************************************************
-!! @brief 有効セルに対する，1タイムステップ進行時のベクトルの絶対値の変化量の和と平均値
-!! @param [out] d    戻り値（変化量の2乗和と平均値）
+!! @brief 有効セルに対する，1タイムステップ進行時のベクトルの絶対値の変化量の和のみ
+!! @param [out] d    戻り値（変化量の2乗和）
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
 !! @param [in]  vn   ベクトル値 n+1 step
@@ -785,10 +785,10 @@
 
     actv = real(ibits(bx(i,j,k), State, 1))
     
-    u = dble(vn(i,j,k,1))
-    v = dble(vn(i,j,k,2))
-    w = dble(vn(i,j,k,3))
-    av = av + sqrt(u*u + v*v + w*w)*actv
+    !u = dble(vn(i,j,k,1))
+    !v = dble(vn(i,j,k,2))
+    !w = dble(vn(i,j,k,3))
+    !av = av + sqrt(u*u + v*v + w*w)*actv
     
     x = u - dble(vo(i,j,k,1))
     y = v - dble(vo(i,j,k,2))
@@ -802,7 +802,7 @@
 !$OMP END PARALLEL
 
   d(1) = rm
-  d(2) = av
+  !d(2) = av
 
   return
   end subroutine fb_delta_v
@@ -810,8 +810,8 @@
 
 
 !> ********************************************************************
-!! @brief 有効セルに対する，1タイムステップ進行時の変化量の2乗和と平均値(RootMean)
-!! @param [out] d    戻り値（変化量の2乗和と平均値）
+!! @brief 有効セルに対する，1タイムステップ進行時の変化量の2乗和と値の和
+!! @param [out] d    戻り値（変化量の2乗和と値の和）
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
 !! @param [in]  sn   スカラー値 n+1 step

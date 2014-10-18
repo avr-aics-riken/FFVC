@@ -21,6 +21,7 @@ noinst_libdir = ../lib
 libFFV_a_CXXFLAGS = \
   -I. \
   -I../F_CORE \
+  -I../F_LS \
   -I../IP \
   -I../FB \
   @CIO_CFLAGS@ \
@@ -45,6 +46,7 @@ libFFV_a_SOURCES = \
   ffv_Heat.C \
   ffv_Initialize.C \
   ffv_LS.C \
+  ffv_LS.h \
   ffv_Loop.C \
   ffv_Post.C \
   ffv_Restart.C \

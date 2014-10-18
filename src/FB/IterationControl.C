@@ -28,58 +28,58 @@ void IterationCtl::copy(IterationCtl* src)
 {
   if ( !src ) return;
   
-  valid        = src->valid;
-  alias        = src->alias;
-  LinearSolver = src->LinearSolver;
-  MaxIteration = src->MaxIteration;
-  NormType     = src->NormType;
-  eps          = src->eps;
-  Sync         = src->Sync;
+  residual     = src->residual;
+  error        = src->error;
+  eps_res      = src->eps_res;
+  eps_err      = src->eps_err;
   omg          = src->omg;
+  ErrNorm      = src->ErrNorm;
+  ResNorm      = src->ResNorm;
+  MaxIteration = src->MaxIteration;
+  LinearSolver = src->LinearSolver;
+  LoopCount    = src->LoopCount;
+  Sync         = src->Sync;
   Naive        = src->Naive;
-  Bit3option   = src->Bit3option;
+  alias        = src->alias;
+  precondition = src->precondition;
 }
 
 
 // #################################################################
 // 固有パラメータを取得
-bool IterationCtl::getInherentPara(TextParser* tpCntl, const string base, int& m_naive)
+bool IterationCtl::getInherentPara(TextParser* tpCntl, const string base)
 {
   switch (LinearSolver)
   {
-    case JACOBI:
+      //case JACOBI:
+      //getParaJacobi(tpCntl, base);
+      //break;
+      
+      case SOR:
       getParaJacobi(tpCntl, base);
       break;
       
-    case SOR:
-      getParaSOR(tpCntl, base);
-      break;
-      
-    case SOR2SMA:
+      case SOR2SMA:
       getParaSOR2(tpCntl, base);
-      m_naive = Naive;
       break;
       
-    case RBGS:
-      getParaRBGS(tpCntl, base);
+      //case RBGS:
+      //getParaRBGS(tpCntl, base);
+      //break;
+      
+      //case GMRES:
+      //getParaGmres(tpCntl, base);
+      //break;
+      
+      //case PCG:
+      //getParaPCG(tpCntl, base);
+      //break;
+      
+      case BiCGSTAB:
+      getParaBiCGSTAB(tpCntl, base);
       break;
       
-    case GMRES:
-      getParaGmres(tpCntl, base);
-      break;
-      
-    case PCG:
-      getParaPCG(tpCntl, base);
-      break;
-      
-    case PBiCGSTAB:
-      getParaPBiCGSTAB(tpCntl, base);
-      break;
-      
-    case VP_ITERATION:
-      break;
-      
-    default:
+      default:
       return false;
   }
   
@@ -116,57 +116,39 @@ void IterationCtl::getParaJacobi(TextParser* tpCntl, const string base)
   {
     Exit(0);
   }
-  setOmega(tmp);
+  omg = tmp;
   
 }
 
 
 // #################################################################
 /**
- * @brief PCG反復固有のパラメータを指定する
+ * @brief BiCGSTAB反復固有のパラメータを指定する
  * @param [in] tpCntl TextParser pointer
  * @param [in] base   ラベル
  */
-void IterationCtl::getParaPCG(TextParser* tpCntl, const string base)
+void IterationCtl::getParaBiCGSTAB(TextParser* tpCntl, const string base)
 {
-  ;
+  getParaSOR2(tpCntl, base);
+  
+  string str, label;
+  
+  // not mandatory
+  label = base + "/Precondition";
+  
+  if ( tpCntl->chkLabel(label) )
+  {
+    if ( !(tpCntl->getInspectedValue(label, str )) )
+    {
+      Exit(0);
+    }
+    else
+    {
+      if ( !strcasecmp(str.c_str(), "on") ) precondition = ON;
+    }
+  }
 }
 
-
-// #################################################################
-/**
- * @brief PBiCGSTAB反復固有のパラメータを指定する
- * @param [in] tpCntl TextParser pointer
- * @param [in] base   ラベル
- */
-void IterationCtl::getParaPBiCGSTAB(TextParser* tpCntl, const string base)
-{
-  ;
-}
-
-
-// #################################################################
-/**
- * @brief RBGS反復固有のパラメータを指定する
- * @param [in] tpCntl TextParser pointer
- * @param [in] base   ラベル
- */
-void IterationCtl::getParaRBGS(TextParser* tpCntl, const string base)
-{
-  ;
-}
-
-
-// #################################################################
-/**
- * @brief SOR反復固有のパラメータを指定する
- * @param [in] tpCntl TextParser pointer
- * @param [in] base   ラベル
- */
-void IterationCtl::getParaSOR(TextParser* tpCntl, const string base)
-{
-  getParaJacobi(tpCntl, base);
-}
 
 
 // #################################################################
@@ -214,53 +196,88 @@ void IterationCtl::getParaSOR2(TextParser* tpCntl, const string base)
     }
   }
   
-  // Bit3Test (NOT mandatory)
-  label = "/Bit3option";
-  
-  if ( tpCntl->chkLabel(label) )
-  {
-    if ( !(tpCntl->getInspectedValue(label, str )) )
-    {
-      Exit(0);
-    }
-    else
-    {
-      if ( !strcasecmp(str.c_str(), "on") ) Bit3option = ON;
-    }
-  }
-  
 }
 
 
-
 // #################################################################
-// ノルムのラベルを返す
-string IterationCtl::getNormString()
+// 残差ノルムのラベルを返す
+string IterationCtl::getResNormString()
 {
   string nrm;
 	
-	if (NormType == v_div_dbg)
+  if (ResNorm == nrm_r_b)
   {
-    nrm = "Max. Norm : Divergence of velocity with Monitoring  ### Forced to be selected since Iteration Log is specified ###";
+    nrm = "r_b  : Residual vector divided by constant vector b";
   }
-  else if (NormType == v_div_max)
+  else if (ResNorm == nrm_r_x)
   {
-    nrm = "Max. Norm : Divergence of velocity";
+    nrm = "r_x  : Residual vector divided by solution vector x";
   }
-  else if (NormType == dx_b)
-  {
-    nrm = "dx_b : Increment of vector x divided by RHS vector b";
-  }
-  else if (NormType == r_b)
-  {
-    nrm = "r_b  : Residual vector divided by RHS vector b";
-  }
-	else if (NormType == r_r0)
+	else if (ResNorm == nrm_r_r0)
   {
     nrm = "r_r0 : Residual vector divided by initial residual vector";
   }
 	
   return nrm;
+}
+
+
+// #################################################################
+// 誤差ノルムのラベルを返す
+string IterationCtl::getErrNormString()
+{
+  string nrm;
+  
+  if (ErrNorm == nrm_dx)
+  {
+    nrm = "dx   : Increment vector x(k+1)-x(k)";
+  }
+  else if (ErrNorm == nrm_dx_x)
+  {
+    nrm = "dx_x : Increment vector x(k+1)-x(k) divided by solution vector x(k)";
+  }
+  else if (ErrNorm == nrm_div_max)
+  {
+    nrm = "div_max : Max(Divergence)";
+  }
+  else if (ErrNorm == nrm_div_l2)
+  {
+    nrm = "div_L2 : |Divergence|_L2";
+  }
+  else
+  {
+    Exit(0);
+  }
+  
+  return nrm;
+}
+
+
+// #################################################################
+// 誤差ノルムのタイプを保持
+bool IterationCtl::setErrType(TextParser* tpCntl, const string label)
+{
+  string str;
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    return false;
+  }
+  
+  if ( !strcasecmp(str.c_str(), "DeltaXbyX") )
+  {
+    ErrNorm = nrm_dx_x;
+  }
+  else if ( !strcasecmp(str.c_str(), "DeltaX") )
+  {
+    ErrNorm = nrm_dx;
+  }
+  else
+  {
+    return false;
+  }
+  
+  return true;
 }
 
 
@@ -274,8 +291,7 @@ bool IterationCtl::setLS(const string str)
   else if( !strcasecmp(str.c_str(), "GMRES") )        LinearSolver = GMRES;
   else if( !strcasecmp(str.c_str(), "RBGS") )         LinearSolver = RBGS;
   else if( !strcasecmp(str.c_str(), "PCG") )          LinearSolver = PCG;
-  else if( !strcasecmp(str.c_str(), "PBiCGSTAB") )    LinearSolver = PBiCGSTAB;
-  else if( !strcasecmp(str.c_str(), "VPiteration") )  LinearSolver = VP_ITERATION;
+  else if( !strcasecmp(str.c_str(), "BiCGstab") )     LinearSolver = BiCGSTAB;
   else
   {
     return false;

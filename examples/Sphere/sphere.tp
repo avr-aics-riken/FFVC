@@ -2,7 +2,6 @@
 ApplicationControl {
   CheckParameter      = "Off"
   Operator            = "Kenji_Ono"
-  DebugDivergence     = "off"
 }
 
 BcTable {
@@ -100,14 +99,6 @@ Iteration {
   }
 
   LinearSolver[@] {
-    Alias                = "vp"
-    class                = "VPiteration"
-    MaxIteration         = 5
-    ConvergenceCriterion = 1.0e-4
-    NormType             = "VdivMax"
-  }
-
-  LinearSolver[@] {
     Alias                = "sor2_loose"
     class                = "sor"
     MaxIteration         = 20
@@ -118,7 +109,6 @@ Iteration {
 
   Pressure    = "sor2_strict"
   Velocity    = ""
-  VPiteration = "vp"
   Temperature = "sor2_loose"   
 }
 

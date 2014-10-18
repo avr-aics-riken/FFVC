@@ -138,14 +138,13 @@ am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 libFCORE_a_AR = $(AR) $(ARFLAGS)
 libFCORE_a_LIBADD =
-am_libFCORE_a_OBJECTS = libFCORE_a-ffv_blas.$(OBJEXT) \
-	libFCORE_a-ffv_forcing.$(OBJEXT) libFCORE_a-ffv_pbc.$(OBJEXT) \
-	libFCORE_a-ffv_poisson.$(OBJEXT) \
-	libFCORE_a-ffv_poisson2.$(OBJEXT) \
-	libFCORE_a-ffv_pscalar.$(OBJEXT) \
+am_libFCORE_a_OBJECTS = libFCORE_a-ffv_forcing.$(OBJEXT) \
+	libFCORE_a-ffv_pbc.$(OBJEXT) libFCORE_a-ffv_pscalar.$(OBJEXT) \
 	libFCORE_a-ffv_utility.$(OBJEXT) \
 	libFCORE_a-ffv_vbc_inner.$(OBJEXT) \
 	libFCORE_a-ffv_vbc_outer.$(OBJEXT) \
+	libFCORE_a-ffv_vbc_outer_face.$(OBJEXT) \
+	libFCORE_a-ffv_vbc_outer_flux.$(OBJEXT) \
 	libFCORE_a-ffv_velocity_binary.$(OBJEXT) \
 	libFCORE_a-ffv_velocity_cds.$(OBJEXT) \
 	libFCORE_a-FB_util.$(OBJEXT)
@@ -359,21 +358,20 @@ libFCORE_a_FCFLAGS = \
 
 libFCORE_a_SOURCES = \
   ffv_Ffunc.h \
-  ffv_blas.f90 \
   ffv_forcing.f90 \
   ffv_pbc.f90 \
-  ffv_poisson.f90 \
-  ffv_poisson2.f90 \
   ffv_pscalar.f90 \
   ffv_utility.f90 \
   ffv_vbc_inner.f90 \
   ffv_vbc_outer.f90 \
+  ffv_vbc_outer_face.f90 \
+  ffv_vbc_outer_flux.f90 \
   ffv_velocity_binary.f90 \
   force.h \
   ffv_velocity_cds.f90 \
   FB_util.f90
 
-EXTRA_DIST = Makefile_hand depend.inc unused.f90 ffv_poisson_cds.f90 
+EXTRA_DIST = Makefile_hand depend.inc unused.f90
 all: all-am
 
 .SUFFIXES:
@@ -457,12 +455,6 @@ distclean-compile:
 .f90.obj:
 	$(AM_V_FC)$(FCCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
-libFCORE_a-ffv_blas.o: ffv_blas.f90
-	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-ffv_blas.o `test -f 'ffv_blas.f90' || echo '$(srcdir)/'`ffv_blas.f90
-
-libFCORE_a-ffv_blas.obj: ffv_blas.f90
-	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-ffv_blas.obj `if test -f 'ffv_blas.f90'; then $(CYGPATH_W) 'ffv_blas.f90'; else $(CYGPATH_W) '$(srcdir)/ffv_blas.f90'; fi`
-
 libFCORE_a-ffv_forcing.o: ffv_forcing.f90
 	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-ffv_forcing.o `test -f 'ffv_forcing.f90' || echo '$(srcdir)/'`ffv_forcing.f90
 
@@ -474,18 +466,6 @@ libFCORE_a-ffv_pbc.o: ffv_pbc.f90
 
 libFCORE_a-ffv_pbc.obj: ffv_pbc.f90
 	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-ffv_pbc.obj `if test -f 'ffv_pbc.f90'; then $(CYGPATH_W) 'ffv_pbc.f90'; else $(CYGPATH_W) '$(srcdir)/ffv_pbc.f90'; fi`
-
-libFCORE_a-ffv_poisson.o: ffv_poisson.f90
-	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-ffv_poisson.o `test -f 'ffv_poisson.f90' || echo '$(srcdir)/'`ffv_poisson.f90
-
-libFCORE_a-ffv_poisson.obj: ffv_poisson.f90
-	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-ffv_poisson.obj `if test -f 'ffv_poisson.f90'; then $(CYGPATH_W) 'ffv_poisson.f90'; else $(CYGPATH_W) '$(srcdir)/ffv_poisson.f90'; fi`
-
-libFCORE_a-ffv_poisson2.o: ffv_poisson2.f90
-	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-ffv_poisson2.o `test -f 'ffv_poisson2.f90' || echo '$(srcdir)/'`ffv_poisson2.f90
-
-libFCORE_a-ffv_poisson2.obj: ffv_poisson2.f90
-	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-ffv_poisson2.obj `if test -f 'ffv_poisson2.f90'; then $(CYGPATH_W) 'ffv_poisson2.f90'; else $(CYGPATH_W) '$(srcdir)/ffv_poisson2.f90'; fi`
 
 libFCORE_a-ffv_pscalar.o: ffv_pscalar.f90
 	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-ffv_pscalar.o `test -f 'ffv_pscalar.f90' || echo '$(srcdir)/'`ffv_pscalar.f90
@@ -510,6 +490,18 @@ libFCORE_a-ffv_vbc_outer.o: ffv_vbc_outer.f90
 
 libFCORE_a-ffv_vbc_outer.obj: ffv_vbc_outer.f90
 	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-ffv_vbc_outer.obj `if test -f 'ffv_vbc_outer.f90'; then $(CYGPATH_W) 'ffv_vbc_outer.f90'; else $(CYGPATH_W) '$(srcdir)/ffv_vbc_outer.f90'; fi`
+
+libFCORE_a-ffv_vbc_outer_face.o: ffv_vbc_outer_face.f90
+	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-ffv_vbc_outer_face.o `test -f 'ffv_vbc_outer_face.f90' || echo '$(srcdir)/'`ffv_vbc_outer_face.f90
+
+libFCORE_a-ffv_vbc_outer_face.obj: ffv_vbc_outer_face.f90
+	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-ffv_vbc_outer_face.obj `if test -f 'ffv_vbc_outer_face.f90'; then $(CYGPATH_W) 'ffv_vbc_outer_face.f90'; else $(CYGPATH_W) '$(srcdir)/ffv_vbc_outer_face.f90'; fi`
+
+libFCORE_a-ffv_vbc_outer_flux.o: ffv_vbc_outer_flux.f90
+	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-ffv_vbc_outer_flux.o `test -f 'ffv_vbc_outer_flux.f90' || echo '$(srcdir)/'`ffv_vbc_outer_flux.f90
+
+libFCORE_a-ffv_vbc_outer_flux.obj: ffv_vbc_outer_flux.f90
+	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-ffv_vbc_outer_flux.obj `if test -f 'ffv_vbc_outer_flux.f90'; then $(CYGPATH_W) 'ffv_vbc_outer_flux.f90'; else $(CYGPATH_W) '$(srcdir)/ffv_vbc_outer_flux.f90'; fi`
 
 libFCORE_a-ffv_velocity_binary.o: ffv_velocity_binary.f90
 	$(AM_V_FC)$(FC) $(libFCORE_a_FCFLAGS) $(FCFLAGS) -c -o libFCORE_a-ffv_velocity_binary.o `test -f 'ffv_velocity_binary.f90' || echo '$(srcdir)/'`ffv_velocity_binary.f90
