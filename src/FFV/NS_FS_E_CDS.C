@@ -343,12 +343,6 @@ void FFV::NS_FS_E_CDS()
   // >>> Poisson Iteration section
   TIMING_start(tm_poi_itr_sct);
   
-  if ( C.Mode.Log_Itr == ON )
-  {
-    TIMING_start(tm_hstry_itr);
-    Hostonly_ H->printHistoryItrTitle(fp_i);
-    TIMING_stop(tm_hstry_itr, 0.0);
-  }
 
   for (LSp->setLoopCount(0); LSp->getLoopCount() <= LSp->getMaxIteration(); LSp->incLoopCount())
   {

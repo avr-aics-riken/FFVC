@@ -21,9 +21,273 @@
 
 #include "ffv.h"
 
+#define SafeDelClass(_C) if(_C){delete _C; _C=NULL;}
+#define SafeDelArray(_A) if(_A){delete[] _A; _A=NULL;}
+#define SafeDelArray_(_A, _S) if(_A){delete[] _A; _A=NULL; _S=0;}
+
+
 int FFV::FilterLoop()
 {
+  int ret = 1;
+  
   printf("\n\n\tData sampling....\n\n");
+  
+  C.Interval[Control::tg_compute].printInfo("tg_compute");
+  C.Interval[Control::tg_console].printInfo("tg_console");
+  C.Interval[Control::tg_history].printInfo("tg_history");
+  C.Interval[Control::tg_basic].printInfo("tg_basic");
+  C.Interval[Control::tg_average].printInfo("tg_average");
+  C.Interval[Control::tg_derived].printInfo("tg_derived");
+  C.Interval[Control::tg_accelra].printInfo("tg_accelra");
+  C.Interval[Control::tg_sampled].printInfo("tg_sampled");
+  C.Interval[Control::tg_END].printInfo("tg_END");
+  
+  //FFVのデータから取得できれば、ここでハードコードする必要がない。zrm
+  int interval = 32;
+  int i = 0;
+  
+  for(;;)
+  {
+    printf("\n\n\tData sampling i=%d\n\n", i);
+    
+    if ( FFV_TerminateCtrl::getTerminateFlag() )
+    {
+      break;// forced terminate
+    }
+    
+    /////////////////////////////////// FilterLoop(i)
+    //
+    int loop_ret = FilterLoop(i);
+    //
+    /////////////////////////////////// FilterLoop(i)
+    
+    if( loop_ret != CDM::E_CDM_SUCCESS ) break;
+    
+    i += interval;
+  }
+  
+  printf("\n\n\tClose MO, End FilterLoop()\n\n");
+  
+  // サンプリングファイルのクローズ
+  MO.closeFile();
+  
+  if ( fp_b ) fclose(fp_b);  ///< 基本情報
+  if ( fp_w ) fclose(fp_w);  ///< 壁面情報
+  if ( fp_c ) fclose(fp_c);  ///< コンポーネント情報
+  if ( fp_d ) fclose(fp_d);  ///< 流量収支情報
+  if ( fp_i ) fclose(fp_i);  ///< 反復履歴情報
+  if ( fp_f ) fclose(fp_f);  ///< 力の履歴情報
+  
+  if ( !stepPost() ) ret = -1;
+  
+  return ret;
+}
+
+
+int FFV::FilterLoop(unsigned int step)
+{
+  int ret=CDM::E_CDM_SUCCESS;
+  
+  {
+    char work_path[1024]="";
+    getcwd( work_path, sizeof(work_path) );
+    printf("\n\twork_path = %s\n", work_path);
+    
+    int my_rank = paraMngr->GetMyRankID();
+    int n_rank  = paraMngr->GetNumRank();
+    std::string host_name = paraMngr->GetHostName();
+    
+    //printf("\n\t\t my_rank=%d, n_rank=%d, host_name=%s\n", my_rank, n_rank, host_name.c_str());
+    //printf("\n\t\t C.num_thread = %d, C.num_process=%d\n", C.num_thread, C.num_process );
+    
+    //char tmp_str[1024]="";
+    ////例えば、fvel_stepno_rankno.sph, %010d_%10d よいのか、要相談。
+    //if ( paraMngr->IsParallel() )   sprintf( tmp_str, "fval_%010d.sph", my_rank );
+    //else                            sprintf( tmp_str, "fval_%010d.sph", step );
+    
+    //std::string inFile = tmp_str;
+    
+    //for( int k=Control::tg_compute; k<Control::tg_END; k++ )
+    //{
+    //    unsigned int step_intv = C.Interval[k].getIntervalStep();
+    //    double       time_invl = C.Interval[k].getIntervalTime();
+    //    printf("\t\t step_intv = %d time_invl=%lf\n", step_intv, time_invl);
+    //}
+    
+    //if( DFI_OUT_PRS )   printf("\n\t\t DFI_OUT_PRS != NULL\n");     ///< Pressure
+    //if( DFI_OUT_VEL )   printf("\t\t DFI_OUT_VEL != NULL\n");       ///< Velocity
+    //if( DFI_OUT_FVEL )  printf("\t\t DFI_OUT_FVEL != NULL\n");      ///< Face velocity
+    
+    //if( DFI_OUT_TEMP )  printf("\t\t DFI_OUT_TEMP != NULL\n");      ///< Temperature
+    //if( DFI_OUT_PRSA )  printf("\t\t DFI_OUT_PRSA != NULL\n");      ///< Averaged Pressure
+    //if( DFI_OUT_VELA )  printf("\t\t DFI_OUT_VELA != NULL\n");      ///< Averaged velocity
+    //if( DFI_OUT_TEMPA ) printf("\t\t DFI_OUT_TEMPA != NULL\n");     ///< Averaged temperature
+    //if( DFI_OUT_TP )    printf("\t\t DFI_OUT_TP != NULL\n");        ///< Total Pressure
+    //if( DFI_OUT_VRT )   printf("\t\t DFI_OUT_VRT != NULL\n");       ///< Vorticity
+    //if( DFI_OUT_I2VGT ) printf("\t\t DFI_OUT_I2VGT != NULL\n");     ///< 2nd Invariant of Velocity Gradient Tensor
+    //if( DFI_OUT_HLT )   printf("\t\t DFI_OUT_HLT != NULL\n");       ///< Helicity
+    //if( DFI_OUT_DIV )   printf("\t\t DFI_OUT_DIV != NULL\n");       ///< Divergence for debug
+    
+    if( DFI_OUT_PRS == NULL || DFI_OUT_VEL == NULL ){
+      printf("\n\t\tdfi is NULL, return.\n");
+      ret = CDM::E_CDM_ERROR;
+      return ret;
+    }
+    
+    //bool is_gathered = (MO.getOutputType()==MonitorList::GATHER ? true : false);
+    
+    int istep = step;
+    
+    bool mio = (n_rank > 1 ? true : false);//並列判定フラグ（逐次or並列の判定用）
+    
+    for( int rank_id=0; rank_id<n_rank; rank_id++ )
+    {
+      cdm_Rank rank_v;   if(DFI_OUT_VEL!=NULL)  rank_v   = DFI_OUT_VEL->GetcdmProcess()->RankList[rank_id];
+      cdm_Rank rank_p;   if(DFI_OUT_PRS!=NULL)  rank_p   = DFI_OUT_PRS->GetcdmProcess()->RankList[rank_id];
+      cdm_Rank rank_t;   if(DFI_OUT_TEMP!=NULL) rank_t   = DFI_OUT_TEMP->GetcdmProcess()->RankList[rank_id];
+      cdm_Rank rank_vrt; if(DFI_OUT_VRT!=NULL)  rank_vrt = DFI_OUT_VRT->GetcdmProcess()->RankList[rank_id];
+      
+      //printf("\t\t rank_v:   id=%d, host=%s\n",   rank_v.RankID,   rank_v.HostName.c_str());
+      //printf("\t\t rank_p:   id=%d, host=%s\n",   rank_p.RankID,   rank_p.HostName.c_str());
+      //printf("\t\t rank_t:   id=%d, host=%s\n",   rank_t.RankID,   rank_t.HostName.c_str());
+      //printf("\t\t rank_vrt: id=%d, host=%s\n\n", rank_vrt.RankID, rank_vrt.HostName.c_str());
+      
+      bool b_alloc = false; //false の場合、FFVに既にある配列を使用する。
+      
+      //----------------------------------------------------------------
+      //デフォルトでは、REAL_TYPE=float ,コンパイル時オプション-D_REAL_IS_DOUBLE_
+      //を付与することで, REAL_TYPE=doubleになる
+      REAL_TYPE *p_arr_v=NULL, *p_arr_p=NULL, *p_arr_t=NULL, *p_arr_vrt=NULL;
+      int        n_arr_v=0,     n_arr_p=0,     n_arr_t=0,     n_arr_vrt=0;
+      
+      if( b_alloc == false )
+      {
+        p_arr_v  = d_v;     //dv--セルセンター速度, d_wo--入出力のバッファワーク
+        p_arr_p  = d_p;     //dp--圧力
+        p_arr_t  = d_ws;    //d_ws--反復中に固定のソース, d_ie--内部エネルギー
+        p_arr_vrt= d_vrt;   //d_vrt--渦度ベクトル
+      }
+      
+      //フィールドデータの読込み
+      
+      int rc1 = FilterGetArrayFromSph(DFI_OUT_VEL,  &rank_v,  istep, &p_arr_v,  &n_arr_v );
+      if( rc1 != CDM::E_CDM_SUCCESS ){ p_arr_v=NULL; n_arr_v=0;}
+      
+      int rc2 = FilterGetArrayFromSph(DFI_OUT_PRS,  &rank_p,  istep, &p_arr_p,  &n_arr_p );
+      if( rc2 != CDM::E_CDM_SUCCESS ){ p_arr_p=NULL; n_arr_p=0;}
+      
+      int rc3 = FilterGetArrayFromSph(DFI_OUT_TEMP, &rank_t,  istep, &p_arr_t,  &n_arr_t );
+      if( rc3 != CDM::E_CDM_SUCCESS ){ p_arr_t=NULL; n_arr_t=0;}
+      
+      int rc4 = FilterGetArrayFromSph(DFI_OUT_FVEL, &rank_vrt, istep, &p_arr_vrt, &n_arr_vrt);
+      if( rc4 != CDM::E_CDM_SUCCESS ){ p_arr_vrt=NULL; n_arr_vrt=0;}
+      
+      if( rc1!=CDM::E_CDM_SUCCESS && rc2!=CDM::E_CDM_SUCCESS )
+      {
+        ret = CDM::E_CDM_ERROR;
+        return ret;
+      }
+      
+      if( rc1!=CDM::E_CDM_SUCCESS && rc2!=CDM::E_CDM_SUCCESS && rc3!=CDM::E_CDM_SUCCESS && rc4!=CDM::E_CDM_SUCCESS )
+      {
+        ret = CDM::E_CDM_ERROR;
+        return ret;
+      }
+      
+      //ここで、明示的にサンプリング元となるデータ配列(REAL_TYPE)の登録必要
+      //   v  速度変数配列       p   圧力変数配列
+      //   t  温度変数配列       vrt 渦度変数配列
+      MO.setDataPtrs(p_arr_v, p_arr_p, p_arr_t, p_arr_vrt);
+      
+      //ランク毎に、サンプリングを行う
+      MO.sampling();
+      
+      if( b_alloc == true )
+      {
+        SafeDelArray_(p_arr_v, n_arr_p);
+        SafeDelArray_(p_arr_p, n_arr_p);
+        SafeDelArray_(p_arr_t, n_arr_t);
+        SafeDelArray_(p_arr_vrt, n_arr_vrt);
+      }
+    }
+    
+    //getherされた結果を出力する。
+    MO.print( step, 0.0 );
+  }
+  
+  return ret;
+}
+
+
+int FFV::FilterGetArrayFromSph( cdm_DFI *dfi, cdm_Rank *rank, int step, REAL_TYPE **pArray, int *nArray)
+{
+  CDM::E_CDM_ERRORCODE ret = CDM::E_CDM_SUCCESS;
+  
+  if( dfi == NULL || rank == NULL || step < 0 || pArray == NULL || nArray == NULL )
+  {
+    ret = CDM::E_CDM_ERROR;
+    return (int)ret;
+  }
+  if( rank->RankID == 0 && rank->HostName == "" )
+  {
+    ret = CDM::E_CDM_ERROR;
+    return (int)ret;
+  }
+  
+  int istep = step;
+  int outGc = C.GuideOut;
+  
+  int read_sta[3],read_end[3];
+  for(int k=0; k<3; k++) {
+    read_sta[k] = rank->HeadIndex[k] - outGc;
+    read_end[k] = rank->TailIndex[k] + outGc;
+  }
+  
+  float r_time=0.0, f_dummy=0.0;
+  unsigned i_dummy=0;
+  
+  //計算空間の定義
+  const int *Gdiv = paraMngr->GetDivNum();
+  const int *Gvox = paraMngr->GetLocalVoxelSize();
+  
+  //読込み配列のサイズ
+  int  ncomp=dfi->GetNumComponent();
+  size_t  size=(Gvox[0]+2*outGc)*(Gvox[1]+2*outGc)*(Gvox[2]+2*outGc);
+  if( size <= 0 ) return (int)ret;
+  
+  bool b_alloc=false;
+  REAL_TYPE *p_array = *pArray;
+  if( p_array == NULL ){ p_array = new REAL_TYPE[size*ncomp]; b_alloc=true;}
+  
+  //フィールドデータの読込み
+  bool b_donot_avr = true;
+  
+  ret = dfi->ReadData(    p_array,    ///<読込み先配列のポインタ
+                      istep,      ///<読込みフィールドデータのステップ番号
+                      outGc,      ///<計算空間の仮想セル数
+                      Gvox,       ///<計算空間全体のボクセルサイズ
+                      (int*)Gdiv, ///<領域分割数
+                      read_sta,   ///<計算領域の開始位置
+                      read_end,   ///<計算領域の終了位置
+                      r_time,     ///<dfi から読込んだ時間
+                      b_donot_avr,///<平均を読込まない
+                      i_dummy,
+                      f_dummy  );
+  
+  if( ret != CDM::E_CDM_SUCCESS )
+  {
+    if( b_alloc == true ){ SafeDelArray_(p_array, size);}
+  }
+  else
+  {
+    ret = CDM::E_CDM_SUCCESS;
+  }
+  
+  *pArray = p_array;
+  *nArray = size;
+  
+  
+  return (int)ret;
 }
 
 
@@ -125,6 +389,16 @@ int FFV::FilterInitialize(int argc, char **argv)
   identifyExample(fp);
   
   
+  //CAUTION: setupDomain() --> DomainInitialize(tpf); --> getDomainInfo() TextParserから
+  //         /DomainInfo/ActiveSubDomainFile の値を取得しています、値がstr.empty()==true
+  //         EXEC_MODE = ffvc_solver;
+  
+  //EXEC_MODE 値を保存する
+  int prev_EXEC_MODE = EXEC_MODE;
+  
+  //元の EXEC_MODE 値に戻る
+  EXEC_MODE = prev_EXEC_MODE;
+  
   
   // パラメータの取得と計算領域の初期化，並列モードを返す
   std::string str_para = setupDomain(&tp_ffv);
@@ -216,6 +490,11 @@ int FFV::FilterInitialize(int argc, char **argv)
   
   
   // サンプリング準備
+  //
+  // In setMonitorList(), MO.getMonitor(&C, cmp); will be called.
+  // All defined sampling objects were added into MonitorList.
+  // Output file(s) were opened.
+  //
   setMonitorList();
   
   

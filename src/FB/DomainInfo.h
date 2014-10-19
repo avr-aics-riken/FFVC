@@ -187,6 +187,29 @@ public:
     head[2] = hdx[2] + 1;
   }
   
+  // for Graph Ploter
+  const char * _ss(const char *label, double *v, int n=3)
+  {
+    char tmp_str[256]="";
+    if( n == 3 ) sprintf(tmp_str,"%s=%lf %lf %lf", label, v[0], v[1], v[2]);
+    if( n == 2 ) sprintf(tmp_str,"%s=%lf %lf", label, v[0], v[1]);
+    if( n == 1 ) sprintf(tmp_str,"%s=%lf", label, v[0]);
+    if( n == 0 ) sprintf(tmp_str,"%s=", label);
+    std::string str = tmp_str;
+    return str.c_str();
+  }
+  
+  const char * _ss(const char *label, float *v, int n=3)
+  {
+    char tmp_str[256]="";
+    if( n == 3 ) sprintf(tmp_str,"%s=%f %f %f", label, v[0], v[1], v[2]);
+    if( n == 2 ) sprintf(tmp_str,"%s=%f %f", label, v[0], v[1]);
+    if( n == 1 ) sprintf(tmp_str,"%s=%f", label, v[0]);
+    if( n == 0 ) sprintf(tmp_str,"%s=", label);
+    std::string str = tmp_str;
+    return str.c_str();
+  }
+  
 };
 
 #endif // _FB_DOMAIN_INFO_H_

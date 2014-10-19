@@ -794,23 +794,6 @@ void History::printHistoryForceTitle(FILE* fp, const CompoList* cmp, const Contr
 }
 
 
-// #################################################################
-// 反復履歴出力
-void History::printHistoryItr(FILE* fp, IterationCtl* IC, const double divergence)
-{
-  const IterationCtl* ICp = &IC[ic_prs1];  ///< 圧力のPoisson反復
-	fprintf(fp, "                                           %8d %13.6e %13.6e %13.6e\n",
-          ICp->getLoopCount(), ICp->getResidual(), ICp->getError(), divergence);
-}
-
-
-// #################################################################
-// 反復過程の状況モニタのヘッダー出力
-void History::printHistoryItrTitle(FILE* fp)
-{
-  fprintf(fp, "step=%16d  time=%13.6e      Itr_P   Residual      Error      Div_V\n", step, printTime());
-}
-
 
 // #################################################################
 // 壁面履歴の出力

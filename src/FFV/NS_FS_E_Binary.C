@@ -413,13 +413,7 @@ void FFV::NS_FS_E_Binary()
     }
   }
   
-  
-  if ( C.Mode.Log_Itr == ON )
-  {
-    TIMING_start(tm_hstry_itr);
-    Hostonly_ H->printHistoryItrTitle(fp_i);
-    TIMING_stop(tm_hstry_itr, 0.0);
-  }
+
   
   // 反復回数の積算
   int loop_p  = 1;
@@ -609,18 +603,6 @@ void FFV::NS_FS_E_Binary()
     
     // \nabla {}^f u^{n+1})の計算
     NormDiv();
-    
-    
-    if ( C.Mode.Log_Itr == ON )
-    {
-      TIMING_start(tm_hstry_itr);
-      Hostonly_
-      {
-        H->printHistoryItr(fp_i, dynamic_cast<IterationCtl*>(LS), DivC.divergence);
-        fflush(fp_i);
-      }
-      TIMING_stop(tm_hstry_itr, 0.0);
-    }
     
     
     /* Forcingコンポーネントによる速度の方向修正(収束判定から除外)  >> TEST

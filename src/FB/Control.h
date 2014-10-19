@@ -394,7 +394,6 @@ public:
     int Buoyancy;
     int Example;
     int Log_Base;
-    int Log_Itr;
     int Log_Wall;
     int PDE;
     int Precision;
@@ -756,7 +755,6 @@ public:
     Mode.Buoyancy = 0;
     Mode.Example = 0;
     Mode.Log_Base = 0;
-    Mode.Log_Itr = 0;
     Mode.Log_Wall = 0;
     Mode.PDE = 0;
     Mode.Precision = 0;
@@ -1021,6 +1019,15 @@ public:
    * @param [in]  normalize trueのとき無次元化
    */
   static bool getVec(const std::string label, REAL_TYPE* v, TextParser* tpc, bool normalize=false);
+  
+  
+  /**
+   * @brief ベクトル値(2D)を取得する
+   * @param [in]  label     ラベルディレクトリ
+   * @param [out] v         ベクトル値
+   * @param [in]  tpc       TextParser pointer
+   */
+  static bool getVec2(const std::string label, REAL_TYPE* v, TextParser* tpc);
   
   
   /**

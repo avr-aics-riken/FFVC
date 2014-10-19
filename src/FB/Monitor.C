@@ -35,7 +35,7 @@ bool MonitorList::checkConsistency(const int KOS)
   // モニタで使用する変数を取得
   for (int k=var_Velocity; k<var_END; k++)
   {
-    for (int i = 0; i < monGroup.size(); i++)
+    for (int i = 0; i < nGroup; i++)
     {
       if (monGroup[i]->getStateVariable(k) == true) count[k]++;
     }
@@ -79,7 +79,7 @@ bool MonitorList::checkConsistency(const int KOS)
 /// Polygonモニターの交点の状況を確認
 void MonitorList::checkStatus()
 {
-  for (int i = 0; i < monGroup.size(); i++)
+  for (int i = 0; i < nGroup; i++)
   {
     monGroup[i]->checkMonitorPoints();
   }
@@ -94,9 +94,26 @@ void MonitorList::checkStatus()
 ///
 void MonitorList::clipLine(REAL_TYPE from[3], REAL_TYPE to[3])
 {
-  const char* OUT_OF_REGION = "out of region";
+  //>> Graph Ploter
+  int dbg_pos = -1;
+  const char* OUT_OF_REGION1 = "out of region 1";
+  const char* OUT_OF_REGION2 = "out of region 2";
+  const char* OUT_OF_REGION3 = "out of region 3";
+  const char* OUT_OF_REGION4 = "out of region 4";
+  const char* OUT_OF_REGION5 = "out of region 5";
+  const char* OUT_OF_REGION6 = "out of region 6";
+  const char* OUT_OF_REGION7 = "out of region 7";
+  const char* OUT_OF_REGION8 = "out of region 8";
+  const char* OUT_OF_REGION9 = "out of region 9";
+  const char* OUT_OF_REGION0 = "out of region 0";
+  //<< Graph Ploter
+
   Vec3r st(from);
   Vec3r ed(to);
+  
+  st.x=from[0]; st.y=from[1]; st.z=from[2];
+  ed.x=to[0];   ed.y=to[1];   ed.z=to[2];
+  
   Vec3r r0 = g_org;
   Vec3r r1 = r0 + g_box;
   Vec3r d = ed - st;
@@ -111,58 +128,55 @@ void MonitorList::clipLine(REAL_TYPE from[3], REAL_TYPE to[3])
   REAL_TYPE t_ed = 1.0;
   
   try {
-    if (d.x == 0)
-    {
-      if (st.x < r0.x || r1.x < st.x) throw OUT_OF_REGION;
+    if (d.x == 0) {
+      if (st.x < r0.x || r1.x < st.x) throw OUT_OF_REGION1;
     }
-    else if (d.x > 0)
-    {
-      if (ed.x < r0.x || r1.x < st.x) throw OUT_OF_REGION;
+    else if (d.x > 0) {
+      if (ed.x < r0.x || r1.x < st.x) throw OUT_OF_REGION2;
       t_st = max(t_st, (r0.x-st.x)/d.x);
       t_ed = min(t_ed, (r1.x-st.x)/d.x);
+      dbg_pos = 1;
     }
-    else if (d.x < 0)
-    {
-      if (st.x < r0.x || r1.x < ed.x) throw OUT_OF_REGION;
+    else if (d.x < 0) {
+      if (st.x < r0.x || r1.x < ed.x) throw OUT_OF_REGION3;
       t_st = max(t_st, (r1.x-st.x)/d.x);
       t_ed = min(t_ed, (r0.x-st.x)/d.x);
+      dbg_pos = 2;
     }
     
-    if (d.y == 0)
-    {
-      if (st.y < r0.y || r1.y < st.y) throw OUT_OF_REGION;
+    if (d.y == 0) {
+      if (st.y < r0.y || r1.y < st.y) throw OUT_OF_REGION4;
     }
-    else if (d.y > 0)
-    {
-      if (ed.y < r0.y || r1.y < st.y) throw OUT_OF_REGION;
+    else if (d.y > 0) {
+      if (ed.y < r0.y || r1.y < st.y) throw OUT_OF_REGION5;
       t_st = max(t_st, (r0.y-st.y)/d.y);
       t_ed = min(t_ed, (r1.y-st.y)/d.y);
+      dbg_pos = 3;
     }
-    else if (d.y < 0)
-    {
-      if (st.y < r0.y || r1.y < ed.y) throw OUT_OF_REGION;
+    else if (d.y < 0) {
+      if (st.y < r0.y || r1.y < ed.y) throw OUT_OF_REGION6;
       t_st = max(t_st, (r1.y-st.y)/d.y);
       t_ed = min(t_ed, (r0.y-st.y)/d.y);
+      dbg_pos = 4;
     }
     
-    if (d.z == 0)
-    {
-      if (st.z < r0.z || r1.z < st.z) throw OUT_OF_REGION;
+    if (d.z == 0) {
+      if (st.z < r0.z || r1.z < st.z) throw OUT_OF_REGION7;
     }
-    else if (d.z > 0)
-    {
-      if (ed.z < r0.z || r1.z < st.z) throw OUT_OF_REGION;
+    else if (d.z > 0) {
+      if (ed.z < r0.z || r1.z < st.z) throw OUT_OF_REGION8;
       t_st = max(t_st, (r0.z-st.z)/d.z);
       t_ed = min(t_ed, (r1.z-st.z)/d.z);
+      dbg_pos = 5;
     }
-    else if (d.z < 0)
-    {
-      if (st.z < r0.z || r1.z < ed.z) throw OUT_OF_REGION;
+    else if (d.z < 0) {
+      if (st.z < r0.z || r1.z < ed.z) throw OUT_OF_REGION9;
       t_st = max(t_st, (r1.z-st.z)/d.z);
       t_ed = min(t_ed, (r0.z-st.z)/d.z);
+      dbg_pos = 6;
     }
     
-    if (t_st >= t_ed) throw OUT_OF_REGION;
+    if (t_st >= t_ed) throw OUT_OF_REGION0;
   }
   catch (const char *str)
   {
@@ -191,7 +205,7 @@ void MonitorList::clipLine(REAL_TYPE from[3], REAL_TYPE to[3])
 /// Polygonモニターの交点と境界IDの除去
 void MonitorList::clearCut()
 {
-  for (int i = 0; i < monGroup.size(); i++)
+  for (int i = 0; i < nGroup; i++)
   {
     if ( monGroup[i]->getType() == mon_POLYGON )
     {
@@ -215,7 +229,7 @@ void MonitorList::closeFile()
 {
   if ((outputType == GATHER && myRank == 0) || outputType == DISTRIBUTE)
   {
-    for (int i = 0; i < monGroup.size(); i++)
+    for (int i = 0; i < nGroup; i++)
     {
       monGroup[i]->closeFile();
     }
@@ -381,7 +395,10 @@ bool MonitorList::getMonitor(Control* C, CompoList* cmp)
     Exit(0);
   }
   
-  if (C->SamplingMode == OFF) return false;
+  if (C->SamplingMode == OFF)
+  {
+    return false;
+  }
   
   
   
@@ -528,9 +545,13 @@ bool MonitorList::getMonitor(Control* C, CompoList* cmp)
     {
       mon_type = mon_POLYGON;
     }
+    else if ( !strcasecmp(str.c_str(), "Plane") )
+    {
+      mon_type = mon_PLANE;
+    }
     else
     {
-      Hostonly_ stamped_printf("\tParsing error : Invalid keyword in '%s'\n", label.c_str());
+      Hostonly_ stamped_printf("\tParsing error : Invalid keyword in label='%s', str=%s\n", label.c_str(), str.c_str());
       Exit(0);
     }
     
@@ -610,7 +631,11 @@ bool MonitorList::getMonitor(Control* C, CompoList* cmp)
     {
       vector<MonitorCompo::MonitorPoint> pointSet;
       getPointset(C, label_leaf, pointSet);
-      setPointSet(name.c_str(), variables, method.c_str(), mode.c_str(), pointSet, mon_type);
+      MonitorCompo *m = setPointSet(name.c_str(), variables, method.c_str(), mode.c_str(), pointSet, mon_type);
+      if( m != NULL )
+      {
+        m->setObjType(mon_POINT_SET);
+      }
     }
     
     else if ( mon_type == mon_LINE )
@@ -618,8 +643,37 @@ bool MonitorList::getMonitor(Control* C, CompoList* cmp)
       REAL_TYPE from[3], to[3];
       int nDivision;
       getLine(C, label_leaf, from, to, nDivision);
-      setLine(name.c_str(), variables, method.c_str(), mode.c_str(), from, to, nDivision, mon_type);
+      MonitorCompo *m = setLine(name.c_str(), variables, method.c_str(), mode.c_str(), from, to, nDivision, mon_type);
+      if( m != NULL )
+      {
+        m->setObjType(mon_LINE);
+      }
+
     }
+    
+    else if( mon_type == mon_PLANE )
+    {
+      REAL_TYPE c[3], z[3], x[3], dim[2], div[2];
+      getPlane( mon_type, label_leaf, c, z, x, dim, div );
+      
+      vector<MonitorCompo::MonitorPoint> pointSet;
+      vector<int> grid_flags;
+      
+      Vec3r orig_o( c[0], c[1], c[2] );
+      Vec3r axis_z( z[0], z[1], z[2] );
+      Vec3r axis_x( x[0], x[1], x[2] );
+      getPointsOnPlane(orig_o, axis_z, axis_x, dim, div, &pointSet, &grid_flags);
+      
+      MonitorCompo *m = setPointSet(name.c_str(), variables, method.c_str(), mode.c_str(), pointSet, mon_POINT_SET);
+      
+      if( m != NULL )
+      {
+        m->setPlaneData(c, z, x, dim, div);
+        m->setPlaneFlags(&grid_flags);
+        m->setObjType(mon_PLANE);
+      }
+    }
+    
     
     else if ( mon_type == mon_POLYGON )
     {
@@ -669,6 +723,8 @@ bool MonitorList::getMonitor(Control* C, CompoList* cmp)
       Exit(0);
     }
   }
+  
+  nGroup = (int)monGroup.size();
   
   return true;
 }
@@ -852,6 +908,262 @@ void MonitorList::getPrimitive(Monitor_Type mon_type,
   
 }
 
+// #################################################################
+// Graph Ploter
+void MonitorList::getBox(Monitor_Type mon_type,
+                         const string label_base,
+                         REAL_TYPE center[3],
+                         REAL_TYPE main_vec[3],
+                         REAL_TYPE ref_vec[3],
+                         REAL_TYPE dim_vec[3])
+{
+  string label;
+  
+  // 中心座標の取得
+  label = label_base + "/Center";
+  if ( !Control::getVec(label, center, tpCntl, false) ) Exit(0);
+  
+  // 主座標軸ベクトル　ローカル　Ｚ
+  label = label_base + "/MainDirection";
+  if ( !Control::getVec(label, main_vec, tpCntl, true) ) Exit(0);
+  
+  // 参考座標軸ベクトル　ローカル　Ｘ
+  label = label_base + "/RefDirection";
+  if ( !Control::getVec(label, ref_vec, tpCntl, true) ) Exit(0);
+  
+  // 箱のサイズ　ローカル座標系　ｄｘ、ｄｙ、ｄｚ
+  label = label_base + "/Dimension";
+  if ( !Control::getVec(label, dim_vec, tpCntl, false) ) Exit(0);
+}
+
+// #################################################################
+// Graph Ploter
+void MonitorList::getPointsInBox( Vec3r orig_o, Vec3r axis_z, Vec3r axis_x, REAL_TYPE dim[3], vector<MonitorCompo::MonitorPoint> *pointSet )
+{
+  char   tmpstr[256]="";
+  
+  REAL_TYPE x0 = origin[0],  y0 = origin[1],     z0 = origin[2];
+  REAL_TYPE dx = pitch[0],   dy = pitch[1],      dz = pitch[2];
+  REAL_TYPE hdx= dx*0.5,     hdy= dy*0.5,        hdz= dz*0.5;
+  
+  Vec3r axis_y = cross(axis_z, axis_x);
+  axis_y.normalize();
+  
+  int ii=0;
+  for( int _k=0; _k<size[2]; _k++ )
+  {
+    REAL_TYPE _z = z0 + _k*dz + hdz;
+    
+    for( int _j=0; _j<size[1]; _j++ )
+    {
+      REAL_TYPE _y = y0 + _j*dy + hdy;
+      
+      for( int _i=0; _i<size[0]; _i++ )
+      {
+        REAL_TYPE _x = x0 + _i*dx + hdx;
+        
+        Vec3r global_pt(_x, _y, _z);
+        
+        Vec3r local_pt = localPt(orig_o, axis_z, axis_x, axis_y, global_pt);
+        
+        if( isInBox(local_pt, dim) == true )
+        {
+          REAL_TYPE v[3] = {_x, _y, _z};
+          sprintf(tmpstr, "point_in_box_%d", ii++);
+          pointSet->push_back( MonitorCompo::MonitorPoint(v, (const char*)tmpstr) );
+        }
+      }
+    }
+  }
+  
+  return;
+}
+
+// #################################################################
+// Graph Ploter
+void MonitorList::getPointsInCyl( Vec3r orig_o, Vec3r axis_z, Vec3r axis_x, REAL_TYPE dim[3], vector<MonitorCompo::MonitorPoint> *pointSet )
+{
+  char   tmpstr[256]="";
+  
+  REAL_TYPE x0 = origin[0],  y0 = origin[1],     z0 = origin[2];
+  REAL_TYPE dx = pitch[0],   dy = pitch[1],      dz = pitch[2];
+  REAL_TYPE hdx= dx*0.5,     hdy= dy*0.5,        hdz= dz*0.5;
+  
+  Vec3r axis_y = cross(axis_z, axis_x);
+  axis_y.normalize();
+  
+  int ii=0;
+  for( int _k=0; _k<size[2]; _k++ )
+  {
+    REAL_TYPE _z = z0 + _k*dz + hdz;
+    
+    for( int _j=0; _j<size[1]; _j++ )
+    {
+      REAL_TYPE _y = y0 + _j*dy + hdy;
+      
+      for( int _i=0; _i<size[0]; _i++ )
+      {
+        REAL_TYPE _x = x0 + _i*dx + hdx;
+        
+        Vec3r global_pt(_x, _y, _z);
+        
+        Vec3r local_pt = localPt(orig_o, axis_z, axis_x, axis_y, global_pt);
+        
+        if( isInCyl(local_pt, dim) == true )
+        {
+          REAL_TYPE v[3] = {_x, _y, _z};
+          sprintf(tmpstr, "point_in_cyl_%d", ii++);
+          pointSet->push_back( MonitorCompo::MonitorPoint(v, (const char*)tmpstr) );
+        }
+      }
+    }
+  }
+  
+  return;
+}
+
+// #################################################################
+// Graph Ploter
+void MonitorList::getPointsOnPlane( Vec3r orig_o, Vec3r axis_z, Vec3r axis_x, REAL_TYPE dim[2], REAL_TYPE div[2],
+                                   vector<MonitorCompo::MonitorPoint> *pointSet, std::vector<int> *grid_flags )
+{
+  char   tmpstr[256]="";
+  
+  int m = (int)div[0];//分割数
+  int n = (int)div[1];//分割数
+  
+  REAL_TYPE x0 = - dim[0] * 0.5;
+  REAL_TYPE y0 = - dim[1] * 0.5;
+  REAL_TYPE dx = dim[0] / m;
+  REAL_TYPE dy = dim[1] / n;
+  
+  Vec3r axis_y = cross(axis_z, axis_x);
+  axis_y.normalize();
+  
+  int jj=0;
+  for( int j=0; j<n+1; j++ )
+  {
+    REAL_TYPE y = y0 + j * dy;
+    
+    for( int i=0; i<m+1; i++ )
+    {
+      REAL_TYPE x = x0 + i * dx;
+      
+      Vec3r local_pt(x, y, 0.0);
+      Vec3r global_pt = globalPt(orig_o, axis_z, axis_x, axis_y, local_pt);
+      
+      REAL_TYPE lp[3] = {local_pt.x, local_pt.y, local_pt.z};
+      REAL_TYPE gp[3] = {global_pt.x, global_pt.y, global_pt.z};
+      
+      int  index = -1;
+      
+      if ((global_pt.x < origin[0]) || (global_pt.x > (origin[0]+region[0]))  ||
+          (global_pt.y < origin[1]) || (global_pt.y > (origin[1]+region[1]))  ||
+          (global_pt.z < origin[2]) || (global_pt.z > (origin[2]+region[2]))  )
+      {
+        index = -1;
+      }
+      else
+      {
+        index = jj;
+        
+        sprintf(tmpstr, "point_in_pln_%d", index);
+        pointSet->push_back( MonitorCompo::MonitorPoint(gp, (const char*)tmpstr) );
+        
+        jj++;
+      }
+      
+      grid_flags->push_back(index);
+    }
+  }
+}
+
+// #################################################################
+// Graph Ploter
+void MonitorList::getCylinder(Monitor_Type mon_type,
+                              const string label_base,
+                              REAL_TYPE center[3],
+                              REAL_TYPE main_vec[3],
+                              REAL_TYPE ref_vec[3],
+                              REAL_TYPE dim_vec[3])
+{
+  string label;
+  
+  // 中心座標の取得
+  label = label_base + "/Center";
+  if ( !Control::getVec(label, center, tpCntl, false) ) Exit(0);
+  
+  // 主座標軸ベクトル　ローカル　Ｚ
+  label = label_base + "/MainDirection";
+  if ( !Control::getVec(label, main_vec, tpCntl, true) ) Exit(0);
+  
+  // 参考座標軸ベクトル　ローカル　Ｘ
+  label = label_base + "/RefDirection";
+  if ( !Control::getVec(label, ref_vec, tpCntl, true) ) Exit(0);
+  
+  // 円柱（円錐）の寸法　dim_vec[0]---底面半径、dim_vec[1]---上面半径、dim_vec[3]---高さ
+  label = label_base + "/Dimension";
+  if ( !Control::getVec(label, dim_vec, tpCntl, false) ) Exit(0);
+}
+
+void MonitorList::getPlane(Monitor_Type mon_type,
+                           const string label_base,
+                           REAL_TYPE center[3],
+                           REAL_TYPE main_vec[3],
+                           REAL_TYPE ref_vec[3],
+                           REAL_TYPE dim_vec[2],
+                           REAL_TYPE div_vec[2])
+{
+  string label;
+  
+  // 中心座標の取得
+  label = label_base + "/Center";
+  if ( !Control::getVec(label, center, tpCntl, false) ) Exit(0);
+  
+  // 主座標軸ベクトル　ローカル　Ｚ
+  label = label_base + "/MainDirection";
+  if ( !Control::getVec(label, main_vec, tpCntl, true) ) Exit(0);
+  
+  // 参考座標軸ベクトル　ローカル　Ｘ
+  label = label_base + "/RefDirection";
+  if ( !Control::getVec(label, ref_vec, tpCntl, true) ) Exit(0);
+  
+  // ローカル座標系　ｄｘ、ｄｙ
+  label = label_base + "/Dimension";
+  if ( !Control::getVec2(label, dim_vec, tpCntl) ) Exit(0);
+  
+  // ローカル座標系　グリッド分割数　nx、ny
+  label = label_base + "/Grid";
+  if ( !Control::getVec2(label, div_vec, tpCntl) ) Exit(0);
+  
+  //matplotlib は、ｍ＝ｎが要求していますので、ここで、最大分割数を使用します。
+  int m = (int)div_vec[0];
+  int n = (int)div_vec[1];
+  int n_div = max(m, n);
+  div_vec[0] = (REAL_TYPE) n_div;
+  div_vec[1] = (REAL_TYPE) n_div;
+  
+  return;
+}
+
+// #################################################################
+// Graph Ploter
+void MonitorList::getPolygon(Monitor_Type mon_type,
+                             const string label_base,
+                             string & stl_filename )
+{
+  std::string label=label_base+"/DefFile";
+  std::string val_str = "";
+  
+  if ( !(tpCntl->getInspectedValue(label, val_str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : /DefFile\n");
+    Exit(0);
+  }
+  stl_filename = val_str;
+}
+
+
 
 // #################################################################
 /// VorticityとHelicityのサンプリングが指定されている場合にtrueを返す
@@ -867,7 +1179,7 @@ bool MonitorList::getStateVorticity()
   // モニタで使用する変数を取得
   for (int k=var_Velocity; k<var_END; k++)
   {
-    for (int i = 0; i < monGroup.size(); i++)
+    for (int i = 0; i < nGroup; i++)
     {
       if (monGroup[i]->getStateVariable(k) == true) count[k]++;
     }
@@ -897,9 +1209,15 @@ void MonitorList::importTP(TextParser* tp)
 ///
 void MonitorList::openFile()
 {
+  if( nGroup != monGroup.size() )
+  {
+    printf("\t\t Graph Ploter --- MonitorList::openFile(), ***CAUTION: monGroup.size()=%d, nGroup=%d, we do nGroup = monGroup.size();\n", monGroup.size(), nGroup );
+    nGroup = monGroup.size();
+  }
+  
   if ((outputType == GATHER && myRank == 0) || outputType == DISTRIBUTE)
   {
-    for (int i = 0; i < monGroup.size(); i++)
+    for (int i = 0; i < nGroup; i++)
     {
       string fileName(fname_sampling);
       
@@ -931,7 +1249,16 @@ void MonitorList::openFile()
 ///
 void MonitorList::print(const unsigned step, const double tm)
 {
-  for (int i = 0; i < monGroup.size(); i++)
+  std::string type_str = getOutputTypeStr().c_str();
+  
+  if( nGroup != monGroup.size() )
+  {
+    printf("\t\t Graph ploter --- MonitorList::print(), ***CAUTION: this=%ld, monGroup.size()=%d, nGroup=%d, we do nGroup = monGroup.size();\n",(long)this, monGroup.size(), nGroup );
+    nGroup = monGroup.size();
+    
+  }
+  
+  for (int i = 0; i < nGroup; i++)
   {
     switch (outputType)
     {
@@ -964,7 +1291,7 @@ void MonitorList::printMonitorInfo(FILE* fp, const char* str, const bool verbose
   
   if ( verbose )
   {
-    for (int i = 0; i < monGroup.size(); i++)
+    for (int i = 0; i < nGroup; i++)
     {
       monGroup[i]->printInfo(fp, i);
     }
@@ -973,6 +1300,55 @@ void MonitorList::printMonitorInfo(FILE* fp, const char* str, const bool verbose
   fprintf(fp,"\n");
   fflush(fp);
 }
+
+
+// #################################################################
+// Graph Ploter
+void MonitorList::printTextParser(std::string given_label)
+{
+  int ierror=0;
+  TextParser *tp = tpCntl;
+  if( tp != NULL )
+  {
+    // 全てのパラメータのラベルを取得
+    std::vector<std::string> labels;
+    ierror = tp->getAllLabels(labels);
+    
+    for (int i = 0; i < labels.size(); i++)
+    {
+      std::string label_str = labels[i];
+      
+      if( given_label.empty() == false )
+      {
+        if( label_str.find(given_label.c_str()) == string::npos )
+        {
+          continue;
+        }
+      }
+      
+      std::string value_str = "";
+      ierror = tp->getValue(labels[i], value_str);
+      
+      TextParserValueType type = tp->getType(labels[i], &ierror);
+      /*
+       typedef enum {
+       TP_UNDEFFINED_VALUE = 0,  //!< 不定
+       TP_NUMERIC_VALUE = 1,     //!< 数値
+       TP_STRING_VALUE = 2,      //!< 文字列
+       TP_DEPENDENCE_VALUE = 3,  //!< 依存関係付き値
+       TP_VECTOR_UNDEFFINED = 4, //!< ベクトル型不定
+       TP_VECTOR_NUMERIC = 5,    //!< ベクトル型数値
+       TP_VECTOR_STRING = 6,     //!< ベクトル型文字列
+       TP_RANGE_NUMERIC = 7,     //!< 値領域指定型 @range
+       TP_LIST_NUMERIC = 8,      //!< 値領域指定型 @list
+       } TextParserValueType;
+       */
+      
+    }
+  }
+}
+
+
 
 
 // #################################################################
@@ -1060,7 +1436,7 @@ void MonitorList::setControlVars(int* bid,
 ///   @param [in] nDivision 分割数(モニタ点数-1)
 ///   @param [in] mon_type  モニタタイプ
 ///
-void MonitorList::setLine(const char* str,
+MonitorCompo* MonitorList::setLine(const char* str,
                           vector<string>& variables,
                           const char* method,
                           const char* mode,
@@ -1078,6 +1454,13 @@ void MonitorList::setLine(const char* str,
   m->setLine(str, variables, method, mode, from, to, nDivision, mon_type);
   
   monGroup.push_back(m);
+  
+  if( nGroup != nGroup )
+  {
+    printf("\t\t\tGraph Ploter --- MonitorList::setLine(), ***CAUTION: monGroup.size()=%d, nGroup=%d, we do nGroup = monGroup.size();\n", monGroup.size(), nGroup );
+    nGroup = monGroup.size();
+  }
+  return m;
 }
 
 
@@ -1089,7 +1472,7 @@ void MonitorList::setMonitorNpoint(CompoList* cmp, const int NoCompo)
   {
     if ( cmp[m].getType() == MONITOR )
     {
-      for (int i = 0; i < monGroup.size(); i++)
+      for (int i = 0; i < nGroup; i++)
       {
         if (monGroup[i]->getPolyID() == m)  cmp[m].setElement(monGroup[i]->getSize());
       }
@@ -1110,13 +1493,17 @@ void MonitorList::setMonitorNpoint(CompoList* cmp, const int NoCompo)
 ///   @param [in] pointSet  PointSet
 ///   @param [in] mon_type  モニタタイプ
 ///
-void MonitorList::setPointSet(const char* str,
+MonitorCompo* MonitorList::setPointSet(const char* str,
                               vector<string>& variables,
                               const char* method,
                               const char* mode,
                               vector<MonitorCompo::MonitorPoint>& pointSet,
                               Monitor_Type mon_type)
 {
+  int n_pts = pointSet.size();
+  
+  if( n_pts <= 0 ) return NULL;
+  
   MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process, NoCompo, mtbl);
   
   m->setRankInfo(paraMngr, procGrp);
@@ -1124,6 +1511,7 @@ void MonitorList::setPointSet(const char* str,
   m->setPointSet(str, variables, method, mode, pointSet, mon_type);
   
   monGroup.push_back(m);
+  return m;
 }
 
 

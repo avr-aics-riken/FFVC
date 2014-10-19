@@ -304,6 +304,7 @@ public:
       {
         return false;
       }
+      
       // 次の出力ステップかどうか
       if( step == calcNextStep( step ) )
       {
@@ -457,6 +458,24 @@ public:
     return true;
   }
   
+  /*
+   * @brief Graph Ploter用
+   * @param [in] msg デバッグ出力用
+   */
+  void printInfo(std::string msg)
+  {
+    unsigned interval_i   = this->getIntervalStep();
+    double   interval_f   = this->getIntervalTime();
+    int      by_mode      = this->getMode();
+    unsigned last_step    = this->getLastStep();
+    double last_time      = this->getLastTime();
+    unsigned start_step   = this->getStartStep();
+    double start_time     = this->getStartTime();
+    //printf("\t\t\tGraphPlot --- %s interval_i=%d, interval=%lf, mode=%d\n", msg.c_str(), interval_i, interval_f, by_mode);
+    //printf("\t\t\tGraphPlot --- %s start_step=%d, last_step=%d, start_time=%lf, last_time=%lf\n", msg.c_str(), start_step, last_step, start_time, last_time);
+
+    return;
+  }
   
   
 protected:

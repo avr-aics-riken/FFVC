@@ -78,6 +78,7 @@ enum Kind_of_vars {
   var_Helicity,
   var_Vorticity,
   var_Qcr,
+  var_Div,
   var_END
 };
 

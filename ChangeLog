@@ -20,6 +20,11 @@ REVISION HISTORY
 
 --------------------------
 2014-10-19
+r1641 Graph ploter function
+ - still ther are issues in getMonitor()
+ - expire printHistoryItr()
+ - move output of divergence to derived variables
+
 r1640 master trunk
  - remove src/PLOT3D src/Util_Layout
 

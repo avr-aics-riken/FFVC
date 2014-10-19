@@ -801,6 +801,23 @@ void Control::getFieldData()
   }
 
   
+  // 発散値
+  label="/Output/Data/DerivedVariables/Divergence";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "on") )  varState[var_Div] = ON;
+  else if( !strcasecmp(str.c_str(), "off") ) varState[var_Div] = OFF;
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
   
   // 平均値操作に関するパラメータを取得
   if ( Mode.Average == ON )
@@ -1284,24 +1301,6 @@ void Control::getLog()
   
   if     ( !strcasecmp(str.c_str(), "on") )   Mode.Log_Base = ON;
   else if( !strcasecmp(str.c_str(), "off") )  Mode.Log_Base = OFF;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  
-  // Log_Iteration
-  label="/Output/Log/Iteration";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "on") )   Mode.Log_Itr = ON;
-  else if( !strcasecmp(str.c_str(), "off") )  Mode.Log_Itr = OFF;
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -2550,6 +2549,18 @@ bool Control::getVec(const std::string label, REAL_TYPE* v, TextParser* tpc, boo
 
 
 // #################################################################
+// ベクトル値(2D)を取得し，登録する
+bool Control::getVec2(const std::string label, REAL_TYPE* v, TextParser* tpc)
+{
+  for (int i=0; i<2; i++) v[i]=0.0f;
+  
+  if( !(tpc->getInspectedVector(label, v, 2)) ) return false;
+  
+  return true;
+}
+
+
+// #################################################################
 //壁面上の扱いを指定する
 void Control::getWallType()
 {
@@ -2819,7 +2830,7 @@ void Control::printLS(FILE* fp, const IterationCtl* IC)
       
     default:
       stamped_printf("Error: Linear Solver section\n");
-      Exit(0);
+      //Exit(0);
   }
 }
 
@@ -3469,8 +3480,6 @@ void Control::printSteerConditions(FILE* fp,
           (Mode.Log_Base == ON) ? "history_compo.txt" : "",
           (Mode.Log_Base == ON) ? "history_domainflux.txt" : "", 
           (Mode.Log_Base == ON) ? "history_force.txt" : "");
-  fprintf(fp,"\t     Iteration Log            :   %4s  %s\n", 
-          (Mode.Log_Itr == ON)?"ON >":"OFF ", (Mode.Log_Itr == ON) ? "history_iteration.txt" : "");
   fprintf(fp,"\t     Profiling report         :   %4s  %s%s\n", 
           (Mode.Profiling != OFF)?"ON >":"OFF ", 
           (Mode.Profiling == DETAIL)? "Detail mode, ":"",
@@ -3703,6 +3712,15 @@ void Control::printSteerConditions(FILE* fp,
   //　速度勾配テンソルの第二不変量の出力モード
   if ( varState[var_Qcr] == ON ) {
     fprintf(fp,"\t     2nd Invariant of VGT     :   ON\n");
+  }
+  else
+  {
+    fprintf(fp,"\t     2nd Invariant of VGT     :   OFF\n");
+  }
+  
+  //　発散値
+  if ( varState[var_Div] == ON ) {
+    fprintf(fp,"\t     Divergence               :   ON\n");
   }
   else
   {

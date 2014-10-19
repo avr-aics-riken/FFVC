@@ -745,47 +745,6 @@ void FFV::OutputBasicVariables(double& flop)
   CDM::E_CDM_ERRORCODE ret;
   
   
-  // Divergence デバッグ用なので無次元のみ
-  if ( C.Mode.Log_Itr == ON )
-  {
-    
-    REAL_TYPE coef = (REAL_TYPE)DT.get_DT()/(deltaX*deltaX); /// 発散値を計算するための係数　dt/h^2
-    U.cnv_Div(d_ws, d_dv, size, guide, coef);
-    
-    fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
-    
-    if ( numProc > 1 )
-    {
-      min_tmp = f_min;
-      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
-      
-      max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
-    }
-    minmax[0] = f_min;
-    minmax[1] = f_max;
-    
-    if( !DFI_OUT_DIV )
-    {
-      printf("[%d] DFI_OUT_DIV Pointer Error\n", paraMngr->GetMyRankID());
-      Exit(-1);
-    }
-
-    ret = DFI_OUT_DIV->WriteData(m_step,
-                                 m_time,
-                                 size,
-                                 1,
-                                 guide,
-                                 d_ws,
-                                 minmax,
-                                 true,
-                                 0,
-                                 0.0);
-
-    if( ret != CDM::E_CDM_SUCCESS ) Exit(0);
-    
-  }
-  
   
   if ( C.KindOfSolver != SOLID_CONDUCTION )
   {
@@ -1211,6 +1170,46 @@ void FFV::OutputDerivedVariables(double& flop)
 
     if( ret != CDM::E_CDM_SUCCESS ) Exit(0);
   }
+  
+  // Divergence for Debug
+  if (C.varState[var_Div] == ON )
+  {
+    REAL_TYPE coef = 1.0/deltaX; /// 発散値を計算するための係数　1/h
+    U.cnv_Div(d_ws, d_dv, size, guide, coef);
+    
+    fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
+    
+    if ( numProc > 1 )
+    {
+      min_tmp = f_min;
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      max_tmp = f_max;
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    minmax[0] = f_min;
+    minmax[1] = f_max;
+    
+    if( !DFI_OUT_DIV )
+    {
+      printf("[%d] DFI_OUT_DIV Pointer Error\n", paraMngr->GetMyRankID());
+      Exit(-1);
+    }
+    
+    ret = DFI_OUT_DIV->WriteData(m_step,
+                                 m_time,
+                                 size,
+                                 1,
+                                 guide,
+                                 d_ws,
+                                 minmax,
+                                 true,
+                                 0,
+                                 0.0);
+    
+    if( ret != CDM::E_CDM_SUCCESS ) Exit(0);
+  }
+  
 }
 
 
@@ -1221,6 +1220,18 @@ void FFV::OutputDerivedVariables(double& flop)
  */
 int FFV::MainLoop()
 {
+  //>> Graph Ploter
+  C.Interval[Control::tg_compute].printInfo("tg_compute");
+  C.Interval[Control::tg_console].printInfo("tg_console");
+  C.Interval[Control::tg_history].printInfo("tg_history");
+  C.Interval[Control::tg_basic].printInfo("tg_basic");
+  C.Interval[Control::tg_average].printInfo("tg_average");
+  C.Interval[Control::tg_derived].printInfo("tg_derived");
+  C.Interval[Control::tg_accelra].printInfo("tg_accelra");
+  C.Interval[Control::tg_sampled].printInfo("tg_sampled");
+  C.Interval[Control::tg_END].printInfo("tg_END");
+  //<< Graph Ploter
+  
   int ret = 1;
   
   for (int i=1; i<=Session_LastStep; i++)

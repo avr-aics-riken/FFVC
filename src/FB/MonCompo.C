@@ -715,7 +715,7 @@ void MonitorCompo::openFile(const char* str, const bool gathered)
       fflush(fp);
     }
   }
-  else // mon_POLYGON, mon_CYLINDER, mon_BOX >> gatherd only
+  else // mon_POLYGON, mon_CYLINDER, mon_BOX, mon_PLANE>> gatherd only
   {
     if (!(fp = fopen(str, "w"))) { perror(str); Exit(0); }
     
@@ -734,9 +734,13 @@ void MonitorCompo::openFile(const char* str, const bool gathered)
 ///
 void MonitorCompo::print(unsigned step, double tm, bool gathered)
 {
+  printf("\t\tMonitorCompo print() label=%s\n", getLabel());
+  
   assert(fp);
   
-  if ( (monitor_type == mon_LINE) || (monitor_type == mon_POINT_SET) )
+  if ( (monitor_type == mon_LINE) ||
+       (monitor_type == mon_POINT_SET && m_ObjType == mon_POINT_SET)
+      )
   {
     char* sFmtSingle = "%15.7e ";
     char* vFmtSingle = "%15.7e %15.7e %15.7e ";
@@ -756,7 +760,8 @@ void MonitorCompo::print(unsigned step, double tm, bool gathered)
       vFmt = vFmtDouble;
     }
     
-    fprintf(fp, "\n");
+    // GraphPloter.py does not allow empty line.
+    //fprintf(fp, "\n");
     
     if (refVar.modePrecision == sizeof(float))
     {
@@ -788,41 +793,147 @@ void MonitorCompo::print(unsigned step, double tm, bool gathered)
       fprintf(fp, "\n");
     }
   }
-  else // mon_POLYGON, mon_CYLINDER, mon_BOX >> gatherd only
+  else if( m_ObjType == mon_PLANE || monitor_type == mon_PLANE )
   {
-    if ( !gathered ) Exit(0);
-    
-    char* sFmtSingle = "    %15.7e";
-    char* sFmtDouble = "  %24.16e";
+    char* sFmtSingle = "%15.7e ";
+    char* vFmtSingle = "%15.7e %15.7e %15.7e ";
+    char* sFmtDouble = "%24.16e ";
+    char* vFmtDouble = "%24.16e %24.16e %24.16e ";
     char* sFmt;
     char* vFmt;
     
     if (refVar.modePrecision == sizeof(float))
     {
       sFmt = sFmtSingle;
+      vFmt = vFmtSingle;
     }
     else
     {
       sFmt = sFmtDouble;
+      vFmt = vFmtDouble;
+    }
+    
+    //GraphPloter.py does not allow empty line.
+    //fprintf(fp, "\n");
+    
+    //int dummy_i = -99999;
+    
+    if (refVar.modePrecision == sizeof(float))
+    {
+      fprintf(fp, "%d %14.6e\n", step, convTime(tm));
+    }
+    else
+    {
+      fprintf(fp, "%d %24.16e\n", step, convTime(tm));
+    }
+    
+    int m = (int)m_Div[0];//分割数
+    int n = (int)m_Div[1];//分割数
+    
+    int i = -1;
+    for( int jj=0; jj<n+1; jj++ )
+    {
+      for( int ii=0; ii<m+1; ii++ )
+      {
+        i++;
+        
+        int pi = plane_grid_flags.at(i);
+        
+        if( pi < 0 )
+        {
+          fprintf(fp, "%s\n", "  *NA*");
+          continue;
+        }
+        
+        if (variable[var_Velocity])    fprintf(fp, vFmt, convVel(vel[pi].x), convVel(vel[pi].y), convVel(vel[pi].z));
+        if (variable[var_Pressure])    fprintf(fp, sFmt, convPrs(prs[pi]));
+        if (variable[var_Temperature]) fprintf(fp, sFmt, convTmp(tmp[pi]));
+        
+        if (variable[var_TotalP])      fprintf(fp, sFmt, convTP(tp[pi]));
+        if (variable[var_Helicity])    fprintf(fp, sFmt, convHlt(hlt[pi]));
+        if (variable[var_Vorticity])   fprintf(fp, vFmt, convVor(vor[pi].x), convVor(vor[pi].y), convVor(vor[pi].z));
+        
+        fprintf(fp, "\n");
+      }
+    }
+  }
+  else if( m_ObjType == mon_CYLINDER || m_ObjType == mon_BOX || monitor_type == mon_CYLINDER || monitor_type == mon_BOX ) //gatherd only
+  {
+    if ( !gathered ) Exit(0);
+    
+    char* sFmtSingle = "%15.7e ";
+    char* sFmtDouble = "%24.16e ";
+    char* vFmtSingle = "%15.7e %15.7e %15.7e ";
+    char* vFmtDouble = "%24.16e %24.16e %24.16e ";
+    char* sFmt;
+    char* vFmt;
+    
+    if (refVar.modePrecision == sizeof(float))
+    {
+      sFmt = sFmtSingle;
+      vFmt = vFmtSingle;
+    }
+    else
+    {
+      sFmt = sFmtDouble;
+      vFmt = vFmtDouble;
     }
     
     if (refVar.modePrecision == sizeof(float))
     {
-      fprintf(fp, "%10d %14.6e", step, convTime(tm));
+      fprintf(fp, "%d %14.6e\n", step, convTime(tm));
     }
     else
     {
-      fprintf(fp, "%10d %24.16e", step, convTime(tm));
+      fprintf(fp, "%d %24.16e\n", step, convTime(tm));
     }
 
-    if (variable[var_Velocity])    fprintf(fp, sFmt, convVel(val[var_Velocity]));
-    if (variable[var_Pressure])    fprintf(fp, sFmt, convPrs(val[var_Pressure]));
-    if (variable[var_Temperature]) fprintf(fp, sFmt, convTmp(val[var_Temperature]));
+    Vec3r velo, vort;
+    REAL_TYPE pres=0.0, temp=0.0, tolp=0.0, helt=0.0, velx=0.0, vely=0.0, velz=0.0, vorx=0.0, vory=0.0, vorz=0.0;
+    int count=0;
+    for (int i = 0; i < nPoint; i++)
+    {
+      if (!gathered && rank[i] != myRank) continue;
+      
+      if (pointStatus[i] != Sampling::POINT_STATUS_OK)
+      {
+        fprintf(fp, "%s\n", "  *NA*");
+        continue;
+      }
+      
+      if (variable[var_Velocity])     { velx += vel[i].x; vely += vel[i].y; velz += vel[i].z; }
+      if (variable[var_Pressure])     pres = pres + convPrs(prs[i]);
+      if (variable[var_Temperature])  temp = temp + convTmp(tmp[i]);
+      
+      if (variable[var_TotalP])       tolp = tolp + convTP(tp[i]);
+      if (variable[var_Helicity])     helt = helt + convHlt(hlt[i]);
+      if (variable[var_Vorticity])   { vorx += vor[i].x; vory += vor[i].y; vorz += vor[i].z; }
+      
+      count++;
+    }
     
-    if (variable[var_TotalP])      fprintf(fp, sFmt, convTP(val[var_TotalP]));
-    if (variable[var_Helicity])    fprintf(fp, sFmt, convHlt(val[var_Helicity]));
-    if (variable[var_Vorticity])   fprintf(fp, sFmt, convVor(val[var_Vorticity]));
+    if( count < 0 ){fflush(fp); return;}
+    
+    velo = velo / (REAL_TYPE) count;
+    vort = vort / (REAL_TYPE) count;
+    pres /= (REAL_TYPE) count;
+    temp /= (REAL_TYPE) count;
+    tolp /= (REAL_TYPE) count;
+    helt /= (REAL_TYPE) count;
+    
+    if (variable[var_Velocity])    fprintf(fp, vFmt, convVel(velo.x), convVel(velo.y), convVel(velo.z));
+    if (variable[var_Pressure])    fprintf(fp, sFmt, pres);
+    if (variable[var_Temperature]) fprintf(fp, sFmt, temp);
+    
+    if (variable[var_TotalP])      fprintf(fp, sFmt, tolp);
+    if (variable[var_Helicity])    fprintf(fp, sFmt, helt);
+    if (variable[var_Vorticity])   fprintf(fp, vFmt, convVor(vort.x), convVor(vort.y), convVor(vort.z));
+    
     fprintf(fp, "\n");
+  }
+  else if( monitor_type == mon_POLYGON )
+  {
+    int aaa=0;
   }
 
   fflush(fp);
@@ -1051,7 +1162,10 @@ void MonitorCompo::setPointSet(const char* labelStr,
     crd[m] = pointSet[m].crd;
     
     // 計算領域全体でのチェック
-    if (!checkRegion(m, g_org, g_box, true)) Exit(0);
+    if (!checkRegion(m, g_org, g_box, true))
+    {
+      Exit(0);
+    }
     
     comment[m] = pointSet[m].label;
   }
@@ -1561,6 +1675,40 @@ void MonitorCompo::setSamplingMode(const char* str)
   }
 }
 
+// #################################################################
+/// Graph Ploter
+void MonitorCompo::setPlaneData(REAL_TYPE c[3], REAL_TYPE z[3], REAL_TYPE x[3], REAL_TYPE dim[2], REAL_TYPE div[2] )
+{
+  VEC3_EQUATE( m_Center, c );
+  VEC3_EQUATE( m_MainDir, z );
+  VEC3_EQUATE( m_RefDir, x );
+  VEC2_EQUATE( m_Dim2, dim );
+  VEC2_EQUATE( m_Div, div );
+  setObjType(mon_PLANE);
+  
+}
+
+// #################################################################
+/// Graph Ploter
+void MonitorCompo::setCylinderData(REAL_TYPE c[3], REAL_TYPE z[3], REAL_TYPE x[3], REAL_TYPE dim[3])
+{
+  VEC3_EQUATE( m_Center, c );
+  VEC3_EQUATE( m_MainDir, z );
+  VEC3_EQUATE( m_RefDir, x );
+  VEC3_EQUATE( m_Dim3, dim );
+  setObjType(mon_CYLINDER);
+}
+
+// #################################################################
+/// Graph Ploter
+void MonitorCompo::setBoxData(REAL_TYPE c[3], REAL_TYPE z[3], REAL_TYPE x[3], REAL_TYPE dim[3])
+{
+  VEC3_EQUATE( m_Center, c );
+  VEC3_EQUATE( m_MainDir, z );
+  VEC3_EQUATE( m_RefDir, x );
+  VEC3_EQUATE( m_Dim3, dim );
+  setObjType(mon_BOX);
+}
 
 // #################################################################
 /// モニタ結果出力ファイルにヘッダ部を出力
@@ -1582,28 +1730,133 @@ void MonitorCompo::writeHeader(bool gathered)
     for (int i = 0; i < nPoint; i++) if (rank[i] == myRank) n++;
   }
   
-  fprintf(fp, "%d %s\n", n, getVarStr().c_str());
+  std::string type  = getTypeStr();
+  std::string label = getLabel();
   
-  for (int i = 0; i < nPoint; i++)
+  std::string s_val = "", s_comp = "";
+  int n_var = 0;
+  if (variable[var_Velocity])     { n_var++; s_val +=" Velocity";     s_comp += " 3";}
+  if (variable[var_Pressure])     { n_var++; s_val +=" TotalPresure"; s_comp += " 1";}
+  if (variable[var_Temperature])  { n_var++; s_val +=" Temperature";  s_comp += " 1";}
+  if (variable[var_TotalP])       { n_var++; s_val +=" TotalIP";      s_comp += " 1";}
+  if (variable[var_Helicity])     { n_var++; s_val +=" Helicity";     s_comp += " 1";}
+  if (variable[var_Vorticity])    { n_var++; s_val +=" Vorticity";    s_comp += " 3";}
+  
+  if( monitor_type == mon_LINE )
   {
-    if (gathered || rank[i] == myRank) 
+    REAL_TYPE p1[3] = { convCrd(crd[0].x), convCrd(crd[0].y), convCrd(crd[0].z) };
+    REAL_TYPE p2[3] = { convCrd(crd[nPoint-1].x), convCrd(crd[nPoint-1].y), convCrd(crd[nPoint-1].z) };
+    
+    fprintf(fp, "Line    %s\n", label.c_str());
+    fprintf(fp, "%d     %14.6e %14.6e %14.6e %14.6e %14.6e %14.6e\n", n, p1[0],p1[1],p1[2],  p2[0],p2[1],p2[2]);
+    fprintf(fp, "%d %s %s\n", n_var, s_val.c_str(), s_comp.c_str() );
+    
+    for (int i = 0; i < nPoint; i++)
     {
-      fprintf(fp, "%14.6e %14.6e %14.6e  #%s",
-              convCrd(crd[i].x), convCrd(crd[i].y), convCrd(crd[i].z), comment[i].c_str());
-      
-      if (pointStatus[i] == Sampling::UNEXPECTED_SOLID)      // 流体セルを指定したが固体だった
+      if (gathered || rank[i] == myRank)
       {
-        fprintf(fp, "  *skip(unexpected solid)*\n");
-      }
-      else if (pointStatus[i] == Sampling::UNEXPECTED_FLUID) // 固体セルを指定したが流体だった
-      {
-        fprintf(fp, "  *skip(unexpected fluid)*\n");
-      }
-      else 
-      {
-        fprintf(fp, "\n");
+        //例： 0.000000e+00   0.000000e+00   0.000000e+00
+        fprintf(fp, "%14.6e %14.6e %14.6e %s", convCrd(crd[i].x), convCrd(crd[i].y), convCrd(crd[i].z), comment[i].c_str());
+        
+        if (pointStatus[i] == Sampling::UNEXPECTED_SOLID)      // 流体セルを指定したが固体だった
+        {
+          fprintf(fp, "  *skip(unexpected solid)*\n");
+        }
+        else if (pointStatus[i] == Sampling::UNEXPECTED_FLUID) // 固体セルを指定したが流体だった
+        {
+          fprintf(fp, "  *skip(unexpected fluid)*\n");
+        }
+        else
+        {
+          fprintf(fp, "\n");
+        }
       }
     }
+  }
+  else if( monitor_type == mon_POINT_SET &&  m_ObjType == mon_POINT_SET )
+  {
+    fprintf(fp, "Pointset    %s\n", label.c_str());
+    fprintf(fp, "%d\n", n );
+    fprintf(fp, "%d %s %s\n", n_var, s_val.c_str(), s_comp.c_str() );
+    
+    for (int i = 0; i < nPoint; i++)
+    {
+      if (gathered || rank[i] == myRank)
+      {
+        //例： 0.000000e+00   0.000000e+00   0.000000e+00
+        fprintf(fp, "%14.6e %14.6e %14.6e %s", convCrd(crd[i].x), convCrd(crd[i].y), convCrd(crd[i].z), comment[i].c_str());
+        
+        if (pointStatus[i] == Sampling::UNEXPECTED_SOLID)      // 流体セルを指定したが固体だった
+        {
+          fprintf(fp, "  *skip(unexpected solid)*\n");
+        }
+        else if (pointStatus[i] == Sampling::UNEXPECTED_FLUID) // 固体セルを指定したが流体だった
+        {
+          fprintf(fp, "  *skip(unexpected fluid)*\n");
+        }
+        else
+        {
+          fprintf(fp, "\n");
+        }
+      }
+    }
+  }
+  else if( m_ObjType ==mon_PLANE ||  monitor_type == mon_PLANE )
+  {
+    fprintf(fp, "Plane    %s\n", label.c_str());
+    fprintf(fp, "%14.6e %14.6e %14.6e\n", m_Center[0], m_Center[1], m_Center[2]);     //Center
+    fprintf(fp, "%14.6e %14.6e %14.6e\n", m_MainDir[0], m_MainDir[1], m_MainDir[2]);  //MainDirection
+    fprintf(fp, "%14.6e %14.6e %14.6e\n", m_RefDir[0], m_RefDir[1], m_RefDir[2]);     //RefDirection
+    fprintf(fp, "%d %d\n", (int)m_Div[0]+1, (int)m_Div[1]+1);                         //uGrid, vGrid
+    fprintf(fp, "%14.6e %14.6e\n", m_Dim2[0]/m_Div[0], m_Dim2[1]/m_Div[1]);           //uSize, vSize
+    fprintf(fp, "%d %s %s\n", n_var, s_val.c_str(), s_comp.c_str() );
+    
+    int m = (int)m_Div[0];//分割数
+    int n = (int)m_Div[1];//分割数
+    REAL_TYPE x0 = - m_Dim2[0] * 0.5;
+    REAL_TYPE y0 = - m_Dim2[1] * 0.5;
+    REAL_TYPE dx = m_Dim2[0] / m;
+    REAL_TYPE dy = m_Dim2[1] / n;
+    
+    Vec3r orig_o( m_Center[0], m_Center[1], m_Center[2] );
+    Vec3r axis_z( m_MainDir[0], m_MainDir[1], m_MainDir[2] );
+    Vec3r axis_x( m_RefDir[0], m_RefDir[1], m_RefDir[2] );
+    Vec3r axis_y = cross(axis_z, axis_x);
+    axis_y.normalize();
+    REAL_TYPE axis_yy[3] = {axis_y.x, axis_y.y, axis_y.z};
+    
+    for( int j=0; j<n+1; j++ )
+    {
+      REAL_TYPE y = y0 + j * dy;
+      for( int i=0; i<m+1; i++ )
+      {
+        REAL_TYPE x = x0 + i * dx;
+        Vec3r local_pt(x, y, 0.0);
+        Vec3r gp = globalPt(orig_o, axis_z, axis_x, axis_y, local_pt);
+        
+        fprintf(fp, "%14.6e %14.6e %14.6e\n", convCrd(gp.x), convCrd(gp.y), convCrd(gp.z));
+      }
+    }
+  }
+  else if( m_ObjType ==mon_BOX || m_ObjType ==mon_CYLINDER || monitor_type == mon_BOX  || monitor_type == mon_CYLINDER )
+  {
+    fprintf(fp, "Pointet    %s\n", label.c_str());
+    fprintf(fp, "%d\n", 1 );
+    fprintf(fp, "%d %s %s\n", n_var, s_val.c_str(), s_comp.c_str() );
+    
+    int count=0;
+    Vec3r sum_vec, vec;
+    for (int i = 0; i < nPoint; i++)
+    {
+      if (gathered || rank[i] == myRank)
+      {
+        Vec3r vec(crd[i].x, crd[i].y, crd[i].z);
+        sum_vec = sum_vec + vec;
+        count++;
+      }
+    }
+    vec = sum_vec / (REAL_TYPE)count;
+    fprintf(fp, "%14.6e %14.6e %14.6e   %s\n", convCrd(vec.x), convCrd(vec.y), convCrd(vec.z), "averaged_pt");
   }
   
   fflush(fp);

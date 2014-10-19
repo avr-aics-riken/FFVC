@@ -34,6 +34,10 @@
 #include "FBUtility.h"
 #include "limits.h" // for UBUNTU
 
+// Graph Ploter
+#define VEC3_EQUATE(A, B) (A[0]=B[0], A[1]=B[1], A[2]=B[2])
+#define VEC2_EQUATE(A, B) (A[0]=B[0], A[1]=B[1])
+
 using namespace std;
 using namespace Vec3class;
 
@@ -64,6 +68,25 @@ public:
     REAL_TYPE basePrs;     /// 基準圧力
     Vec3r v00;             /// 参照（座標系移動）速度
   };
+  
+  // Graph Ploter
+public:
+  std::vector<int> plane_grid_flags; ///< 平面断面のグリッドをサンプリングする際に、mｘｎ分割の際に、各格子点有効性flagの配列
+  ///< plane_grid_flags.size() は, (m+1)*(n+2) です。
+  
+  void setPlaneFlags( std::vector<int> *grid_glags )
+  {
+    if( grid_glags != NULL )
+    {
+      plane_grid_flags.clear();
+      for( int i=0; i<grid_glags->size(); i++ )
+      {
+        int flag = grid_glags->at(i);
+        plane_grid_flags.push_back(flag);
+      }
+    }
+    return;
+  }
   
   
 protected:
@@ -114,6 +137,16 @@ protected:
   REAL_TYPE* vrSource; ///< 渦度サンプリング元データ
   double* mtbl;        ///< 物性テーブルへのポインタ
   
+  // Graph ploter
+  REAL_TYPE m_Center[3];
+  REAL_TYPE m_MainDir[3];
+  REAL_TYPE m_RefDir[3];
+  REAL_TYPE m_Dim3[3];
+  REAL_TYPE m_Dim2[2];
+  REAL_TYPE m_Div[2];
+  Monitor_Type m_ObjType;
+  
+  
 public:
   /// デフォルトコンストラクタ
   MonitorCompo() {
@@ -137,6 +170,9 @@ public:
     bcd = NULL;
     cut = NULL;
     mtbl= NULL;
+    
+    // Graph ploter
+    setObjType(mon_UNKNOWN);
   }
   
   /// コンストラクタ
@@ -215,6 +251,30 @@ public:
       delete[] mon;
     }
   }
+  
+  //>> Graph Ploter
+  void setCylinderData(REAL_TYPE c[3], REAL_TYPE z[3], REAL_TYPE x[3], REAL_TYPE dim[3]);
+  void setBoxData(REAL_TYPE c[3], REAL_TYPE z[3], REAL_TYPE x[3], REAL_TYPE dim[3]);
+  void setPlaneData(REAL_TYPE c[3], REAL_TYPE z[3], REAL_TYPE x[3], REAL_TYPE dim[2], REAL_TYPE div[2] );
+  void setObjType(Monitor_Type the_type){m_ObjType = the_type;}
+  
+  //指定点　gp　は、指定された座標系内部のローカル座標を求める
+  Vec3r localPt( Vec3r orig, Vec3r unit_z, Vec3r unit_x, Vec3r unit_y, Vec3r global_pt )
+  {
+    Vec3r vec = global_pt - orig;
+    Vec3r local_pt( dot(vec, unit_x), dot(vec, unit_y), dot(vec, unit_z) );
+    //Vec3r local_pt( vec.dot(unit_x), vec.dot(unit_y), vec.dot(unit_z) );
+    //lp->setIt( vec*unitX, vec*unitY, vec*unitZ );
+    return local_pt;
+  }
+  
+  //指定された座標系内部のローカル点　lp　のグローバル座標を求める
+  Vec3r globalPt( Vec3r orig, Vec3r unit_z, Vec3r unit_x, Vec3r unit_y, Vec3r local_pt )
+  {
+    Vec3r global_pt = orig + unit_x*local_pt.x + unit_y*local_pt.y + unit_z*local_pt.z;
+    return global_pt;
+  }
+  //<< Graph Ploter
   
   
   /// モニタ点の状態を調べ，不正モニタ点フラグ配列pointStatusを設定

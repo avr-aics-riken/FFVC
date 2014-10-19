@@ -2322,46 +2322,6 @@ void FFV::initFileOut()
   std::string UnitT = "Celsius";
   
   
-  // Divergence for Debug
-  if ( C.Mode.Log_Itr == ON )
-  {
-    comp = 1;
-    DFI_OUT_DIV = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                     cdm_DFI::Generate_DFI_Name(C.f_DivDebug),
-                                     path,
-                                     C.f_DivDebug,
-                                     format,
-                                     gc_out,
-                                     datatype,
-                                     CDM::E_CDM_IJKN,
-                                     comp,
-                                     process,
-                                     G_size,
-                                     cdm_pit,
-                                     cdm_org,
-                                     cdm_div,
-                                     head,
-                                     cdm_tail,
-                                     hostname,
-                                     TimeSliceDir);
-    
-    if ( DFI_OUT_DIV == NULL )
-    {
-      Hostonly_ stamped_printf("\tFails to instance Divergence dfi.\n");
-      Exit(0);
-    }
-    
-    if( C.FIO.Slice == ON )
-    {
-      DFI_OUT_DIV->SetTimeSliceFlag(CDM::E_CDM_ON);
-    }
-    else
-    {
-      DFI_OUT_DIV->SetTimeSliceFlag(CDM::E_CDM_OFF);
-    }
-  }
-  
-  
   // Pressure
   comp = 1;
   DFI_OUT_PRS = cdm_DFI::WriteInit(MPI_COMM_WORLD,
@@ -2850,6 +2810,49 @@ void FFV::initFileOut()
     DFI_OUT_HLT->AddUnit("Pressure", UnitP, (double)C.BasePrs, DiffPrs, true);
   }
   
+  // Divergence for Debug
+  if ( C.varState[var_Div] == ON )
+  {
+    comp = 1;
+    DFI_OUT_DIV = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+                                     cdm_DFI::Generate_DFI_Name(C.f_DivDebug),
+                                     path,
+                                     C.f_DivDebug,
+                                     format,
+                                     gc_out,
+                                     datatype,
+                                     CDM::E_CDM_IJKN,
+                                     comp,
+                                     process,
+                                     G_size,
+                                     cdm_pit,
+                                     cdm_org,
+                                     cdm_div,
+                                     head,
+                                     cdm_tail,
+                                     hostname,
+                                     TimeSliceDir);
+    
+    if ( DFI_OUT_DIV == NULL )
+    {
+      Hostonly_ stamped_printf("\tFails to instance Divergence dfi.\n");
+      Exit(0);
+    }
+    
+    if( C.FIO.Slice == ON )
+    {
+      DFI_OUT_DIV->SetTimeSliceFlag(CDM::E_CDM_ON);
+    }
+    else
+    {
+      DFI_OUT_DIV->SetTimeSliceFlag(CDM::E_CDM_OFF);
+    }
+    
+    DFI_OUT_DIV->AddUnit("Length"  , UnitL, (double)C.RefLength);
+    DFI_OUT_DIV->AddUnit("Velocity", UnitV, (double)C.RefVelocity);
+    DFI_OUT_DIV->AddUnit("Pressure", UnitP, (double)C.BasePrs, DiffPrs, true);
+  }
+  
 }
 
 
@@ -3064,15 +3067,6 @@ void FFV::prepHistoryOutput()
       H->printHistoryForceTitle(fp_f, cmp, &C);
     }
     
-    // 反復履歴情報　history_itr.log
-    if ( C.Mode.Log_Itr == ON ) 
-    {
-      if ( !(fp_i=fopen("history_iteration.txt", "w")) ) 
-      {
-				stamped_printf("\tSorry, can't open 'history_iteration.txt' file.\n");
-        Exit(0);
-      }
-    }
     
     // 壁面情報　history_wall.log
     if ( C.Mode.Log_Wall == ON ) 

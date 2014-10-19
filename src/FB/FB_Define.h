@@ -435,6 +435,7 @@ enum Kind_of_vars {
   var_Helicity,
   var_Vorticity,
   var_Qcr,
+  var_Div,
   var_END
 };
 
@@ -550,11 +551,13 @@ enum Algorithm_Heat
 
 /// モニタ点指定タイプ型
 enum Monitor_Type {
-  mon_POINT_SET,
-  mon_LINE,
-  mon_CYLINDER,
-  mon_BOX,
-  mon_POLYGON
+  mon_POINT_SET
+  ,mon_LINE
+  ,mon_CYLINDER
+  ,mon_BOX
+  ,mon_PLANE
+  ,mon_POLYGON
+  ,mon_UNKNOWN
 };
 
 enum DIRection {

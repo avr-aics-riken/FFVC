@@ -878,12 +878,18 @@ private:
   
 public:
   
-  // フィルタ処理初期か
+  // フィルタ処理初期化
   int FilterInitialize(int argc, char **argv);
   
   
   // フィルタ処理ループ
   int FilterLoop();
+  
+  int FilterLoop(unsigned int step);
+  
+  
+  // SPHファイルのデータを取り出し、配列に格納する
+  int FilterGetArrayFromSph( cdm_DFI *dfi, cdm_Rank *rank, int step, REAL_TYPE **pArray, int *nArray);
   
   
   /**

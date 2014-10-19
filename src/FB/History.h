@@ -323,21 +323,6 @@ public:
   void printHistoryForceTitle(FILE* fp, const CompoList* cmp, const Control* C);
   
   
-  /**
-   * @brief 反復過程の履歴出力
-   * @param [in] fp         出力ファイルポインタ
-   * @param [in] IC         反復管理クラス
-   * @param [in] divergence 無次元発散値
-   */
-  void printHistoryItr(FILE* fp, IterationCtl* IC, const double divergence);
-  
-  
-  /**
-   * @brief 反復過程の状況モニタのヘッダー出力
-   * @param [in] fp 出力ファイルポインタ
-   */
-  void printHistoryItrTitle(FILE* fp);
-  
   
   /**
    * @brief 壁面履歴の出力

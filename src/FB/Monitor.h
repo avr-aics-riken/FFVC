@@ -48,6 +48,7 @@ public:
   };
   
 protected:
+  int nGroup;            ///< モニタリンググループ数
   int num_process;       ///< プロセス数
   Vec3r org;             ///< ローカル基点座標
   Vec3r pch;             ///< セル幅
@@ -73,18 +74,20 @@ public:
   /// コンストラクタ
   MonitorList()
   {
+    nGroup = 0;
     outputType = NONE;
     num_process = 0;
     fname_sampling = "sampling.txt";
     area = 0.0;
     NoCompo = 0;
     mtbl = NULL;
+    tpCntl = NULL;
   }
   
   /// デストラクタ
   ~MonitorList()
   {
-    for (int i = 0; i < monGroup.size(); i++) delete monGroup[i];
+    for (int i = 0; i < nGroup; i++) delete monGroup[i];
   }
   
   
@@ -151,22 +154,37 @@ public:
   void printMonitorInfo(FILE* fp, const char* str, const bool verbose);
   
   
+  /// TextParserの中身を出力する
+  ///
+  void printTextParser(std::string given_label="");
+  
+  
   /// サンプリング
   void sampling()
   {
-    for (int i = 0; i < monGroup.size(); i++)
+    for (int i = 0; i < nGroup; i++)
     {
       switch ( monGroup[i]->getType() )
       {
         case mon_LINE:
+          monGroup[i]->sampling();
+          break;
+          
         case mon_POINT_SET:
           monGroup[i]->sampling();
           break;
           
         case mon_CYLINDER:
+          break;
+          
         case mon_BOX:
+          break;
+          
         case mon_POLYGON:
           monGroup[i]->samplingAverage();
+          break;
+          
+        default:
           break;
       }
     }
@@ -215,7 +233,7 @@ public:
   ///
   void setDataPtrs(REAL_TYPE* v, REAL_TYPE* p, REAL_TYPE* t, REAL_TYPE* vr)
   {
-    for (int i = 0; i < monGroup.size(); i++) monGroup[i]->setDataPtrs(v, p, t, vr);
+    for (int i = 0; i < nGroup; i++) monGroup[i]->setDataPtrs(v, p, t, vr);
   }
   
   
@@ -280,6 +298,84 @@ protected:
                     REAL_TYPE& height,
                     REAL_TYPE dir[3]);
   
+  //>> Graph ploter
+  void getBox(Monitor_Type mon_type,
+              const string label_base,
+              REAL_TYPE center[3],
+              REAL_TYPE main_vec[3],
+              REAL_TYPE ref_vec[3],
+              REAL_TYPE dim_vec[3]);
+  
+  void getCylinder(Monitor_Type mon_type,
+                   const string label_base,
+                   REAL_TYPE center[3],
+                   REAL_TYPE main_vec[3],
+                   REAL_TYPE ref_vec[3],
+                   REAL_TYPE dim_vec[3]);
+  
+  void getPlane(Monitor_Type mon_type,
+                const string label_base,
+                REAL_TYPE center[3],
+                REAL_TYPE main_vec[3],
+                REAL_TYPE ref_vec[3],
+                REAL_TYPE dim_vec[2],
+                REAL_TYPE div_vec[2]);
+  
+  void getPolygon(Monitor_Type mon_type,
+                  const string label_base,
+                  string & stl_filename );
+  
+  //指定点　gp　は、指定された座標系内部のローカル座標を求める
+  Vec3r localPt( Vec3r orig, Vec3r unit_z, Vec3r unit_x, Vec3r unit_y, Vec3r global_pt )
+  {
+    Vec3r vec = global_pt - orig;
+    Vec3r local_pt( dot(vec, unit_x), dot(vec, unit_y), dot(vec, unit_z) );
+    //lp->setIt( vec*unitX, vec*unitY, vec*unitZ );
+    return local_pt;
+  }
+  
+  //指定された座標系内部のローカル点　lp　のグローバル座標を求める
+  Vec3r globalPt( Vec3r orig, Vec3r unit_z, Vec3r unit_x, Vec3r unit_y, Vec3r local_pt )
+  {
+    Vec3r global_pt = orig + unit_x*local_pt.x + unit_y*local_pt.y + unit_z*local_pt.z;
+    return global_pt;
+  }
+  
+  void getPointsInBox( Vec3r orig_o, Vec3r axis_z, Vec3r axis_x, REAL_TYPE dim[3], vector<MonitorCompo::MonitorPoint> *pointSet );
+  void getPointsInCyl( Vec3r orig_o, Vec3r axis_z, Vec3r axis_x, REAL_TYPE dim[3], vector<MonitorCompo::MonitorPoint> *pointSet );
+  void getPointsOnPlane( Vec3r orig_o, Vec3r axis_z, Vec3r axis_x, REAL_TYPE dim[2], REAL_TYPE div[2],
+                        vector<MonitorCompo::MonitorPoint> *pointSet, vector<int> *grid_flags );
+  
+  //ローカル座標系内部で判定する。原点は箱の中心
+  bool isInBox(Vec3r pt, REAL_TYPE dim[3])
+  {
+    REAL_TYPE hdx = dim[0]*0.5;
+    REAL_TYPE hdy = dim[1]*0.5;
+    REAL_TYPE hdz = dim[2]*0.5;
+    if( pt.x < -hdx || pt.x > hdx ) return false;
+    if( pt.y < -hdy || pt.y > hdy ) return false;
+    if( pt.z < -hdz || pt.z > hdz ) return false;
+    return true;
+  }
+  
+  //ローカル座標系内部で判定する。原点は円柱の底面中心
+  bool isInCyl(Vec3r pt, REAL_TYPE dim[3])
+  {
+    static REAL_TYPE _tol = 1.0e-6;
+    
+    REAL_TYPE r1 = dim[0];
+    REAL_TYPE r2 = dim[1];
+    REAL_TYPE h  = dim[2];
+    
+    if( pt.z > h || pt.z < 0.0 ) return false;
+    
+    REAL_TYPE rz = r1 + (r2-r1) * pt.z / h;
+    REAL_TYPE rr = sqrt( pt.x*pt.x + pt.y*pt.y );
+    
+    return( rr<rz ? true : false );
+  }
+  //<< Graph ploter
+  
   
   /// 座標値を無次元化する
   /// @param [in,out] x  coordinate
@@ -296,14 +392,14 @@ protected:
   
   
   /// Line登録
-  void setLine(const char* str,
-               vector<string>& variables,
-               const char* method,
-               const char* mode,
-               REAL_TYPE from[3],
-               REAL_TYPE to[3],
-               int nDivision,
-               Monitor_Type mon_type);
+  MonitorCompo* setLine(const char* str,
+                        vector<string>& variables,
+                        const char* method,
+                        const char* mode,
+                        REAL_TYPE from[3],
+                        REAL_TYPE to[3],
+                        int nDivision,
+                        Monitor_Type mon_type);
   
   
   /// 出力タイプの設定
@@ -314,12 +410,12 @@ protected:
   
   
   /// PointSet登録
-  void setPointSet(const char* str,
-                   vector<string>& variables,
-                   const char* method,
-                   const char* mode,
-                   vector<MonitorCompo::MonitorPoint>& pointSet,
-                   Monitor_Type mon_type);
+  MonitorCompo* setPointSet(const char* str,
+                            vector<string>& variables,
+                            const char* method,
+                            const char* mode,
+                            vector<MonitorCompo::MonitorPoint>& pointSet,
+                            Monitor_Type mon_type);
   
   
   /// Polygon登録
