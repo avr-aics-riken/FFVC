@@ -16,8 +16,7 @@
 
 SUBDIRS = @MAKE_SUB_DIRS@
 
-EXTRA_DIST     = LICENSE Makefile_hand doc doxygen examples \
-                 src/F_VOF src/PLOT3D src/Util_Layout
+EXTRA_DIST     = LICENSE Makefile_hand doc doxygen examples src/F_VOF
 dist_data_DATA = AUTHORS COPYING ChangeLog README LICENSE
 
 clean-local:

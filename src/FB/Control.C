@@ -603,8 +603,9 @@ void Control::getFieldData()
 	  Exit(0);
   }
   
-  if     ( !strcasecmp(str.c_str(), "sph") )     FIO.Format = sph_fmt;
-  else if( !strcasecmp(str.c_str(), "bov") )     FIO.Format = bov_fmt;
+  if     ( !strcasecmp(str.c_str(), "sph") )    FIO.Format = sph_fmt;
+  else if( !strcasecmp(str.c_str(), "bov") )    FIO.Format = bov_fmt;
+  else if( !strcasecmp(str.c_str(), "plot3d") ) FIO.Format = plt3d_fun_fmt;
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -681,10 +682,15 @@ void Control::getFieldData()
   switch ( FIO.Format )
   {
     case sph_fmt:
-      getFormat_sph();
+      getFormatOption("sph");
       break;
       
     case bov_fmt:
+      getFormatOption("bov");
+      break;
+      
+    case plt3d_fun_fmt:
+      getFormatOption("plot3d");
       break;
   }
   
@@ -848,26 +854,28 @@ void Control::getFieldData()
 }
 
 
+
 // #################################################################
 // @brief ファイルフォーマットのオプションを指定する．
-void Control::getFormat_sph()
+void Control::getFormatOption(const string form)
 {
   string str;
   string label;
+  string dir;
   
   
-  // sphディレクトリのチェック
-  label = "/Output/FormatOption/SPH";
+  // ディレクトリのチェック
+  dir = "/Output/FormatOption/" + form;
   
-  if ( !(tpCntl->chkNode(label)) )
+  if ( !(tpCntl->chkNode(dir)) )
   {
-    Hostonly_ stamped_printf("\tParsing error : Missing '%s'\n", label.c_str());
+    Hostonly_ stamped_printf("\tParsing error : Missing '%s'\n", dir.c_str());
     Exit(0);
   }
   
   
   // 出力ガイドセルモード
-  label = "/Output/FormatOption/SPH/GuideOut";
+  label = dir + "/GuideOut";
   
   if ( !(tpCntl->getInspectedValue(label, str)) )
   {
@@ -885,7 +893,7 @@ void Control::getFormat_sph()
   }
   
   // Output Directory_Path
-  label = "/Output/FormatOption/SPH/DirectoryPath";
+  label = dir + "/DirectoryPath";
   
   if ( !(tpCntl->getInspectedValue(label, str)) )
   {
@@ -900,7 +908,7 @@ void Control::getFormat_sph()
   
   
   // TimeSlice option
-  label = "/Output/FormatOption/SPH/TimeSlice";
+  label = dir + "/TimeSlice";
   
   if ( !(tpCntl->getInspectedValue(label, str)) )
   {
@@ -2923,7 +2931,7 @@ void Control::printSteerConditions(FILE* fp,
   fprintf(fp,"\n----------\n\n");
   fprintf(fp,"\n\t>> Library Information\n\n");
   fprintf(fp,"\t     CPMlib     Version %s\n", ver_CPM.c_str());
-  fprintf(fp,"\t     CIOlib     Version %s\n", ver_CIO.c_str());
+  fprintf(fp,"\t     CDMlib     Version %s\n", ver_CDM.c_str());
   fprintf(fp,"\t     Polylib    Version %s\n", ver_Poly.c_str());
   fprintf(fp,"\t     Cutlib     Version %s\n", ver_CUT.c_str());
   fprintf(fp,"\t     PMlib      Version %s\n", ver_PM.c_str());

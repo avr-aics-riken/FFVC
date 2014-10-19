@@ -24,7 +24,7 @@ libFFV_a_CXXFLAGS = \
   -I../F_LS \
   -I../IP \
   -I../FB \
-  @CIO_CFLAGS@ \
+  @CDM_CFLAGS@ \
   @CPM_CFLAGS@ \
   @CUT_CFLAGS@ \
   @PL_CFLAGS@ \

@@ -194,10 +194,10 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
+CDM_CFLAGS = @CDM_CFLAGS@
+CDM_DIR = @CDM_DIR@
+CDM_LDFLAGS = @CDM_LDFLAGS@
 CFLAGS = @CFLAGS@
-CIO_CFLAGS = @CIO_CFLAGS@
-CIO_DIR = @CIO_DIR@
-CIO_LDFLAGS = @CIO_LDFLAGS@
 CPM_CFLAGS = @CPM_CFLAGS@
 CPM_DIR = @CPM_DIR@
 CPM_LDFLAGS = @CPM_LDFLAGS@
@@ -318,7 +318,7 @@ top_srcdir = @top_srcdir@
 combsph_CXXFLAGS = \
   -I. \
   -I../FB \
-  @CIO_CFLAGS@ \
+  @CDM_CFLAGS@ \
   @CPM_CFLAGS@ \
   @PM_CFLAGS@ \
   @TP_CFLAGS@ \
@@ -345,7 +345,7 @@ combsph_SOURCES = \
 # comb_plot3d.C
 combsph_LDADD = \
   -L../FB -lFB \
-  @CIO_LDFLAGS@ \
+  @CDM_LDFLAGS@ \
   @CPM_LDFLAGS@ \
   @PM_LDFLAGS@ \
   @TP_LDFLAGS@ \

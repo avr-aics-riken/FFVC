@@ -602,16 +602,16 @@ void COMB::ReadDfiFiles()
   ic=0;
   int tempg[3];
   int tempd[3];
-  CIO::E_CIO_ERRORCODE ret = CIO::E_CIO_SUCCESS;
+  CDM::E_CDM_ERRORCODE ret = CDM::E_CDM_SUCCESS;
   for (it = dfi_name.begin(); it != dfi_name.end(); it++) {
     string fname=(*it).c_str();
-    cio_DFI* dfi_in = cio_DFI::ReadInit(MPI_COMM_WORLD,
+    cdm_DFI* dfi_in = cdm_DFI::ReadInit(MPI_COMM_WORLD,
                                         fname,
                                         tempg,
                                         tempd,
                                         ret);
     if( dfi_in == NULL ) exit(0);
-    if( ret != CIO::E_CIO_SUCCESS && ret != CIO::E_CIO_ERROR_INVALID_DIVNUM ) exit(0);
+    if( ret != CDM::E_CDM_SUCCESS && ret != CDM::E_CDM_ERROR_INVALID_DIVNUM ) exit(0);
     dfi.push_back(dfi_in);
     ic++;
   }
@@ -622,7 +622,7 @@ void COMB::ReadDfiFiles()
     fprintf(fplog,"\n");
     //for(int i=0;i<ndfi;i++){
     for(int i=0;i<dfi.size();i++){
-      const cio_FileInfo *DFI_Info = dfi[i]->GetcioFileInfo();
+      const cdm_FileInfo *DFI_Info = dfi[i]->GetcdmFileInfo();
       fprintf(fplog,"\tDFI_Info->DirectoryPath            = %s\n",DFI_Info->DirectoryPath.c_str());
       fprintf(fplog,"\tDFI_Info->TimeSliceDirFlag         = %d\n",DFI_Info->TimeSliceDirFlag);
       fprintf(fplog,"\tDFI_Info->Prefix                   = %s\n",DFI_Info->Prefix.c_str());
@@ -633,11 +633,11 @@ void COMB::ReadDfiFiles()
       fprintf(fplog,"\tDFI_Info->ArrayShape               = %d\n",DFI_Info->ArrayShape);
       fprintf(fplog,"\tDFI_Info->Component                = %d\n",DFI_Info->Component);
       
-      const cio_MPI *DFI_MPI = dfi[i]->GetcioMPI();
+      const cdm_MPI *DFI_MPI = dfi[i]->GetcdmMPI();
       fprintf(fplog,"\tDFI_MPI->NumberOfRank              = %d\n",DFI_MPI->NumberOfRank);
       fprintf(fplog,"\tDFI_MPI->NumberOfGroup             = %d\n",DFI_MPI->NumberOfGroup);
       
-      const cio_Domain *DFI_Domain = dfi[i]->GetcioDomain();
+      const cdm_Domain *DFI_Domain = dfi[i]->GetcdmDomain();
       fprintf(fplog,"\tDFI_Domain->GlobalVoxel[0]         = %d\n",DFI_Domain->GlobalVoxel[0]);
       fprintf(fplog,"\tDFI_Domain->GlobalVoxel[1]         = %d\n",DFI_Domain->GlobalVoxel[1]);
       fprintf(fplog,"\tDFI_Domain->GlobalVoxel[2]         = %d\n",DFI_Domain->GlobalVoxel[2]);
@@ -645,7 +645,7 @@ void COMB::ReadDfiFiles()
       fprintf(fplog,"\tDFI_Domain->GlobalDivision[1]      = %d\n",DFI_Domain->GlobalDivision[1]);
       fprintf(fplog,"\tDFI_Domain->GlobalDivision[2]      = %d\n",DFI_Domain->GlobalDivision[2]);
       
-      const cio_Process *DFI_Process = dfi[i]->GetcioProcess();
+      const cdm_Process *DFI_Process = dfi[i]->GetcdmProcess();
       fprintf(fplog,"\n");
       fprintf(fplog,"\tDFI_Process->RankList.size()       = %d\n",DFI_Process->RankList.size());
       for(int j=0; j< DFI_Process->RankList.size(); j++ ) {
@@ -663,7 +663,7 @@ void COMB::ReadDfiFiles()
       }
       
       fprintf(fplog,"\n");
-      const cio_TimeSlice* DFI_TSlice = dfi[i]->GetcioTimeSlice();
+      const cdm_TimeSlice* DFI_TSlice = dfi[i]->GetcdmTimeSlice();
       for(int j=0; j< DFI_TSlice->SliceList.size(); j++ ) {
         fprintf(fplog,"\t  DFI_TSlice->SliceList[%d].step         = %d\n",j,DFI_TSlice->SliceList[j].step);
         fprintf(fplog,"\t  DFI_TSlice->SliceList[%d}.time         = %f\n",j,DFI_TSlice->SliceList[j].time);
@@ -677,7 +677,7 @@ void COMB::ReadDfiFiles()
     printf("*** dfi file info ***\n");
     printf("\n");
     for(int i=0;i<dfi.size();i++){
-      const cio_FileInfo *DFI_Info = dfi[i]->GetcioFileInfo();
+      const cdm_FileInfo *DFI_Info = dfi[i]->GetcdmFileInfo();
       printf("\tDFI_Info->DirectoryPath            = %s\n",DFI_Info->DirectoryPath.c_str());
       printf("\tDFI_Info->TimeSliceDirFlag         = %d\n",DFI_Info->TimeSliceDirFlag);
       printf("\tDFI_Info->Prefix                   = %s\n",DFI_Info->Prefix.c_str());
@@ -688,11 +688,11 @@ void COMB::ReadDfiFiles()
       printf("\tDFI_Info->ArrayShape               = %d\n",DFI_Info->ArrayShape);
       printf("\tDFI_Info->Component                = %d\n",DFI_Info->Component);
       
-      const cio_MPI *DFI_MPI = dfi[i]->GetcioMPI();
+      const cdm_MPI *DFI_MPI = dfi[i]->GetcdmMPI();
       printf("\tDFI_MPI->NumberOfRank              = %d\n",DFI_MPI->NumberOfRank);
       printf("\tDFI_MPI->NumberOfGroup             = %d\n",DFI_MPI->NumberOfGroup);
       
-      const cio_Domain *DFI_Domain = dfi[i]->GetcioDomain();
+      const cdm_Domain *DFI_Domain = dfi[i]->GetcdmDomain();
       printf("\tDFI_Domain->GlobalVoxel[0]         = %d\n",DFI_Domain->GlobalVoxel[0]);
       printf("\tDFI_Domain->GlobalVoxel[1]         = %d\n",DFI_Domain->GlobalVoxel[1]);
       printf("\tDFI_Domain->GlobalVoxel[2]         = %d\n",DFI_Domain->GlobalVoxel[2]);
@@ -700,7 +700,7 @@ void COMB::ReadDfiFiles()
       printf("\tDFI_Domain->GlobalDivision[1]      = %d\n",DFI_Domain->GlobalDivision[1]);
       printf("\tDFI_Domain->GlobalDivision[2]      = %d\n",DFI_Domain->GlobalDivision[2]);
       
-      const cio_Process *DFI_Process = dfi[i]->GetcioProcess();
+      const cdm_Process *DFI_Process = dfi[i]->GetcdmProcess();
       printf("\n");
       printf("\tDFI_Process->RankList.size()       = %d\n",(int)DFI_Process->RankList.size());
       for(int j=0; j< DFI_Process->RankList.size(); j++ ) {
@@ -718,7 +718,7 @@ void COMB::ReadDfiFiles()
       }
       
       printf("\n");
-      const cio_TimeSlice* DFI_TSlice = dfi[i]->GetcioTimeSlice();
+      const cdm_TimeSlice* DFI_TSlice = dfi[i]->GetcdmTimeSlice();
       for(int j=0; j< DFI_TSlice->SliceList.size(); j++ ) {
         printf("\t  DFI_TSlice->SliceList[%d].step         = %d\n",j,DFI_TSlice->SliceList[j].step);
         printf("\t  DFI_TSlice->SliceList[%d}.time         = %f\n",j,DFI_TSlice->SliceList[j].time);
@@ -748,9 +748,9 @@ void COMB::CheckDir(string dirstr)
       if( errno == ENOENT ) {
         mode_t mode = S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
         //if ( !FBUtility::mkdirs(dirstr.c_str()) )
-//CIO.20131008.s
-        //if ( !cio_DFI::MakeDirectorySub(dirstr) )
-        if ( cio_DFI::MakeDirectorySub(dirstr) != 0 )
+//CDM.20131008.s
+        //if ( !cdm_DFI::MakeDirectorySub(dirstr) )
+        if ( cdm_DFI::MakeDirectorySub(dirstr) != 0 )
         {
           printf("\tCan't generate directory(%s).\n", dirstr.c_str());
           Exit(0);
@@ -859,11 +859,11 @@ void COMB::CombineFiles()
   }
   else if( out_format == OUTFORMAT_IS_AVS )
   {
-//CIO.20131008.s
+//CDM.20131008.s
     //output_avs();
     output_sph();
     output_avs_header();
-//CIO.20131008.e
+//CDM.20131008.e
   }
 
 }
@@ -931,7 +931,7 @@ std::string COMB::Generate_FileName_Free(const std::string prefix, const std::st
   }
   else
   {
-//CIO.20131008.s
+//CDM.20131008.s
    if( !strcasecmp(xxx.c_str(), "sph") || !strcasecmp(xxx.c_str(), "dat") )
    { 
     sprintf(tmp, "%s_%010d.%s", prefix.c_str(), m_step, xxx.c_str());
@@ -1369,8 +1369,8 @@ bool COMB::read_HeaderRecord(FILE* fp,
 // #################################################################
 //
 bool COMB::combineXY(bool matchEndian,
-                     cio_Array* buf,
-                     cio_Array* &src,
+                     cdm_Array* buf,
+                     cdm_Array* &src,
                      int headS[3],
                      int tailS[3])
 {
@@ -1391,29 +1391,29 @@ bool COMB::combineXY(bool matchEndian,
   //同じデータ型のコピー
   if( buf->getDataType() == src->getDataType() ) {
     // float to float
-    if( buf->getDataType() == CIO::E_CIO_FLOAT32 ) {
-      cio_TypeArray<float> *B = dynamic_cast<cio_TypeArray<float>*>(buf);
-      cio_TypeArray<float> *S = dynamic_cast<cio_TypeArray<float>*>(src);
+    if( buf->getDataType() == CDM::E_CDM_FLOAT32 ) {
+      cdm_TypeArray<float> *B = dynamic_cast<cdm_TypeArray<float>*>(buf);
+      cdm_TypeArray<float> *S = dynamic_cast<cdm_TypeArray<float>*>(src);
       copyArray(B, S, sta, end);
       //copyArray(buf, src, sta, end);
       // double to double
     } else {
-      cio_TypeArray<double> *B = dynamic_cast<cio_TypeArray<double>*>(buf);
-      cio_TypeArray<double> *S = dynamic_cast<cio_TypeArray<double>*>(src);
+      cdm_TypeArray<double> *B = dynamic_cast<cdm_TypeArray<double>*>(buf);
+      cdm_TypeArray<double> *S = dynamic_cast<cdm_TypeArray<double>*>(src);
       copyArray(B, S, sta, end);
     }
     //違う型のコピー
   } else {
     // float to double
-    if( buf->getDataType() == CIO::E_CIO_FLOAT32 &&
-       src->getDataType() == CIO::E_CIO_FLOAT64 ) {
-      cio_TypeArray<float>  *B = dynamic_cast<cio_TypeArray<float>*>(buf);
-      cio_TypeArray<double> *S = dynamic_cast<cio_TypeArray<double>*>(src);
+    if( buf->getDataType() == CDM::E_CDM_FLOAT32 &&
+       src->getDataType() == CDM::E_CDM_FLOAT64 ) {
+      cdm_TypeArray<float>  *B = dynamic_cast<cdm_TypeArray<float>*>(buf);
+      cdm_TypeArray<double> *S = dynamic_cast<cdm_TypeArray<double>*>(src);
       copyArray(B, S, sta, end);
       //doubel to float
     } else {
-      cio_TypeArray<double> *B = dynamic_cast<cio_TypeArray<double>*>(buf);
-      cio_TypeArray<float>  *S = dynamic_cast<cio_TypeArray<float>*>(src);
+      cdm_TypeArray<double> *B = dynamic_cast<cdm_TypeArray<double>*>(buf);
+      cdm_TypeArray<float>  *S = dynamic_cast<cdm_TypeArray<float>*>(src);
       copyArray(B, S, sta, end);
     }
   }

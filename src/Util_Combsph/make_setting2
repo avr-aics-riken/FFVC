@@ -20,7 +20,7 @@
 INSTALL_BASE = /usr/local/FFV
 
 CPM_DIR  = $(INSTALL_BASE)/CPMlib
-CIO_DIR  = $(INSTALL_BASE)/CIOlib
+CDM_DIR  = $(INSTALL_BASE)/CDMlib
 TP_DIR   = $(INSTALL_BASE)/TextParser
 POLY_DIR = $(INSTALL_BASE)/Polylib
 CUT_DIR  = $(INSTALL_BASE)/Cutlib
@@ -174,7 +174,7 @@ UDEF_INC_PATH=`$(TP_DIR)/bin/tp-config --cflags`  \
               `$(POLY_DIR)/bin/polylib-config --cflags` \
               `$(CUT_DIR)/bin/cut-config --cflags` \
               `$(CPM_DIR)/bin/cpm-config --cflags` \
-              `$(CIO_DIR)/bin/cio-config --cflags` \
+              `$(CDM_DIR)/bin/cdm-config --cflags` \
               -I. \
               -I../FB \
               -I../IP \
@@ -197,7 +197,7 @@ UDEF_LIB_PATH=-L$(MPI_DIR)/lib \
               `$(POLY_DIR)/bin/polylib-config --libs` \
               `$(CUT_DIR)/bin/cut-config --libs` \
               `$(CPM_DIR)/bin/cpm-config --libs` \
-              `$(CIO_DIR)/bin/cio-config --libs`
+              `$(CDM_DIR)/bin/cdm-config --libs`
               
 #              -L../PLOT3D -lPLOT3D \
 

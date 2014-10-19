@@ -21,7 +21,7 @@ SOFTWARE REQUIREMENT
 - MPI library
 - Cartesian partition library
 - Text parser library
-- Cartesian I/O library
+- Cartesian Data Management library
 - Performance monitor library
 - Polygon management library
 - Cut information library
@@ -53,8 +53,8 @@ Configure options:
  --prefix=INSTALL_DIR
     Specify a directory to be installed. The default directory is /usr/local/FFVC
 
- --with-cio=CIOLIB_DIR
-    Specify the directory path that is installed CIO library.
+ --with-cdm=CDMLIB_DIR
+    Specify the directory path that is installed CDM library.
 
  --with-comp=(INTEL|FJ|GNU)
     If Intel compiler is used, choose INTEL, and if Fujitsu compiler, specify FJ. 
@@ -117,7 +117,7 @@ Here is examples.
   $ ./configure \
       --prefix=/usr/local/FFV/FFVC \
       --with-cpm=/usr/local/FFV/CPMlib \
-      --with-cio=/usr/local/FFV/CIOlib \
+      --with-cdm=/usr/local/FFV/CDMlib \
       --with-cut=/usr/local/FFV/Cutlib \
       --with-pm=/usr/local/FFV/PMlib \
       --with-polylib=/usr/local/FFV/Polylib \
@@ -136,7 +136,7 @@ Here is examples.
   $ ./configure \
       --prefix=/usr/local/FFV/FFVC \
       --with-cpm=/usr/local/FFV/CPMlib \
-      --with-cio=/usr/local/FFV/CIOlib \
+      --with-cdm=/usr/local/FFV/CDMlib \
       --with-cut=/usr/local/FFV/Cutlib \
       --with-pm=/usr/local/FFV/PMlib \
       --with-polylib=/usr/local/FFV/Polylib \
@@ -156,7 +156,7 @@ Here is examples.
   $ ./configure \
       --prefix=/usr/local/FFV/FFVC \
       --with-cpm=/usr/local/FFV/CPMlib \
-      --with-cio=/usr/local/FFV/CIOlib \
+      --with-cdm=/usr/local/FFV/CDMlib \
       --with-cut=/usr/local/FFV/Cutlib \
       --with-pm=/usr/local/FFV/PMlib \
       --with-polylib=/usr/local/FFV/Polylib \
@@ -175,7 +175,7 @@ Here is examples.
   $ ./configure \
       --prefix=/home/foo/FFVC \
       --with-cpm=/home/foo/CPMlib \
-      --with-cio=/home/foo/CIOlib \
+      --with-cdm=/home/foo/CDMlib \
       --with-cut=/home/foo/Cutlib \
       --with-pm=/home/foo/PMlib \
       --with-polylib=/home/foo/Polylib \

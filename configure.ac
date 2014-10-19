@@ -17,7 +17,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.57])
-AC_INIT([FFVC], [1.8.7], [keno@riken.jp], [FFVC])
+AC_INIT([FFVC], [1.8.9], [keno@riken.jp], [FFVC])
 AM_INIT_AUTOMAKE()
 AC_CONFIG_SRCDIR([src/main.C])
 AC_CONFIG_HEADERS([config.h])
@@ -25,7 +25,7 @@ AC_CONFIG_HEADERS([config.h])
 #
 # revision No.
 #
-FFVC_REVISION="20141018_1400"
+FFVC_REVISION="20141018_1800"
 AC_SUBST(FFVC_REVISION)
 
 
@@ -209,19 +209,19 @@ fi
 
 
 #
-# CIOlib
+# CDMlib
 #
-AC_ARG_WITH(cio, [AC_HELP_STRING([--with-cio=dir],[Specify CIOlib installed directory])], , with_cio=none)
-AC_SUBST(CIO_DIR)
-AC_SUBST(CIO_CFLAGS)
-AC_SUBST(CIO_LDFLAGS)
-if test x"$with_cio" != x"none" ; then
-  CIO_DIR=$with_cio;
-  CIO_CFLAGS=`$CIO_DIR/bin/cio-config --cflags`
-  CIO_LDFLAGS=`$CIO_DIR/bin/cio-config --libs`
+AC_ARG_WITH(cdm, [AC_HELP_STRING([--with-cdm=dir],[Specify CDMlib installed directory])], , with_cdm=none)
+AC_SUBST(CDM_DIR)
+AC_SUBST(CDM_CFLAGS)
+AC_SUBST(CDM_LDFLAGS)
+if test x"$with_cdm" != x"none" ; then
+  CDM_DIR=$with_cdm;
+  CDM_CFLAGS=`$CDM_DIR/bin/cdm-config --cflags`
+  CDM_LDFLAGS=`$CDM_DIR/bin/cdm-config --libs`
 else
-  echo "  Error: CIO library is not specified."
-  echo "         Specify --with-cio option."
+  echo "  Error: CDM library is not specified."
+  echo "         Specify --with-cdm option."
   exit 1
 fi
 

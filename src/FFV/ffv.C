@@ -514,10 +514,10 @@ void FFV::OutputAveragedVarables(double& flop)
 {
   REAL_TYPE f_min, f_max, min_tmp, max_tmp, vec_min[4], vec_max[4];
   REAL_TYPE minmax[2];
-  REAL_TYPE cio_minmax[8];
+  REAL_TYPE cdm_minmax[8];
   
   // エラーコード
-  CIO::E_CIO_ERRORCODE ret;
+  CDM::E_CDM_ERRORCODE ret;
   
   
   // 出力ファイルの指定が有次元の場合
@@ -602,14 +602,14 @@ void FFV::OutputAveragedVarables(double& flop)
                                   stepAvr,  // 平均をとったステップ数
                                   timeAvr); // 平均をとった時刻
 
-    if ( ret != CIO::E_CIO_SUCCESS ) Exit(0);
+    if ( ret != CDM::E_CDM_SUCCESS ) Exit(0);
     
     
     
     // Velocity
     REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
     
-    if ( DFI_OUT_VELA->GetArrayShape() == CIO::E_CIO_NIJK ) // Velocityの型は CIO::E_CIO_NIJK
+    if ( DFI_OUT_VELA->GetArrayShape() == CDM::E_CDM_NIJK ) // Velocityの型は CDM::E_CDM_NIJK
     {
       fb_vout_nijk_(d_wo, d_av, size, &guide, v00, &unit_velocity, &flop); // 配列並びを変換
       fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
@@ -637,14 +637,14 @@ void FFV::OutputAveragedVarables(double& flop)
       Exit(-1);
     }
     
-    cio_minmax[0] = vec_min[1]; ///<<< vec_u min
-    cio_minmax[1] = vec_max[1]; ///<<< vec_u max
-    cio_minmax[2] = vec_min[2]; ///<<< vec_v min
-    cio_minmax[3] = vec_max[2]; ///<<< vec_v max
-    cio_minmax[4] = vec_min[3]; ///<<< vec_w min
-    cio_minmax[5] = vec_max[3]; ///<<< vec_w max
-    cio_minmax[6] = vec_min[0]; ///<<< u,v,wの合成値のmin
-    cio_minmax[7] = vec_max[0]; ///<<< u,v,wの合成値のmax
+    cdm_minmax[0] = vec_min[1]; ///<<< vec_u min
+    cdm_minmax[1] = vec_max[1]; ///<<< vec_u max
+    cdm_minmax[2] = vec_min[2]; ///<<< vec_v min
+    cdm_minmax[3] = vec_max[2]; ///<<< vec_v max
+    cdm_minmax[4] = vec_min[3]; ///<<< vec_w min
+    cdm_minmax[5] = vec_max[3]; ///<<< vec_w max
+    cdm_minmax[6] = vec_min[0]; ///<<< u,v,wの合成値のmin
+    cdm_minmax[7] = vec_max[0]; ///<<< u,v,wの合成値のmax
     
     DFI_OUT_VELA->setComponentVariable(0, "u");
     DFI_OUT_VELA->setComponentVariable(1, "v");
@@ -656,12 +656,12 @@ void FFV::OutputAveragedVarables(double& flop)
                                   3,
                                   guide,
                                   d_wo,
-                                  cio_minmax,
+                                  cdm_minmax,
                                   false,
                                   stepAvr,
                                   timeAvr);
 
-    if ( ret != CIO::E_CIO_SUCCESS ) Exit(0);
+    if ( ret != CDM::E_CDM_SUCCESS ) Exit(0);
   }
 
   
@@ -701,7 +701,7 @@ void FFV::OutputAveragedVarables(double& flop)
                                    stepAvr,
                                    timeAvr);
 
-    if ( ret != CIO::E_CIO_SUCCESS ) Exit(0);
+    if ( ret != CDM::E_CDM_SUCCESS ) Exit(0);
   }
 }
 
@@ -738,11 +738,11 @@ void FFV::OutputBasicVariables(double& flop)
   // 最大値と最小値
   REAL_TYPE f_min, f_max, min_tmp, max_tmp, vec_min[4], vec_max[4];
   REAL_TYPE minmax[2];
-  REAL_TYPE cio_minmax[8];
+  REAL_TYPE cdm_minmax[8];
   
   
   // エラーコード
-  CIO::E_CIO_ERRORCODE ret;
+  CDM::E_CDM_ERRORCODE ret;
   
   
   // Divergence デバッグ用なので無次元のみ
@@ -782,7 +782,7 @@ void FFV::OutputBasicVariables(double& flop)
                                  0,
                                  0.0);
 
-    if( ret != CIO::E_CIO_SUCCESS ) Exit(0);
+    if( ret != CDM::E_CDM_SUCCESS ) Exit(0);
     
   }
   
@@ -830,13 +830,13 @@ void FFV::OutputBasicVariables(double& flop)
                                  0,
                                  0.0);
 
-    if( ret != CIO::E_CIO_SUCCESS ) Exit(0);
+    if( ret != CDM::E_CDM_SUCCESS ) Exit(0);
     
     
     // Velocity
     REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
     
-    if ( DFI_OUT_VEL->GetArrayShape() == CIO::E_CIO_NIJK ) // Velocityの型は CIO::E_CIO_NIJK
+    if ( DFI_OUT_VEL->GetArrayShape() == CDM::E_CDM_NIJK ) // Velocityの型は CDM::E_CDM_NIJK
     {
       fb_vout_nijk_(d_wo, d_v, size, &guide, v00, &unit_velocity, &flop);
       fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
@@ -862,14 +862,14 @@ void FFV::OutputBasicVariables(double& flop)
       Exit(-1);
     }
     
-    cio_minmax[0] = vec_min[1]; ///<<< vec_u min
-    cio_minmax[1] = vec_max[1]; ///<<< vec_u max
-    cio_minmax[2] = vec_min[2]; ///<<< vec_v min
-    cio_minmax[3] = vec_max[2]; ///<<< vec_v max
-    cio_minmax[4] = vec_min[3]; ///<<< vec_w min
-    cio_minmax[5] = vec_max[3]; ///<<< vec_w max
-    cio_minmax[6] = vec_min[0]; ///<<< u,v,wの合成値のmin
-    cio_minmax[7] = vec_max[0]; ///<<< u,v,wの合成値のmax
+    cdm_minmax[0] = vec_min[1]; ///<<< vec_u min
+    cdm_minmax[1] = vec_max[1]; ///<<< vec_u max
+    cdm_minmax[2] = vec_min[2]; ///<<< vec_v min
+    cdm_minmax[3] = vec_max[2]; ///<<< vec_v max
+    cdm_minmax[4] = vec_min[3]; ///<<< vec_w min
+    cdm_minmax[5] = vec_max[3]; ///<<< vec_w max
+    cdm_minmax[6] = vec_min[0]; ///<<< u,v,wの合成値のmin
+    cdm_minmax[7] = vec_max[0]; ///<<< u,v,wの合成値のmax
     
     DFI_OUT_VEL->setComponentVariable(0, "u");
     DFI_OUT_VEL->setComponentVariable(1, "v");
@@ -881,16 +881,16 @@ void FFV::OutputBasicVariables(double& flop)
                                  3,
                                  guide,
                                  d_wo,
-                                 cio_minmax,
+                                 cdm_minmax,
                                  true,
                                  0,
                                  0.0);
 
-    if( ret != CIO::E_CIO_SUCCESS ) Exit(0);
+    if( ret != CDM::E_CDM_SUCCESS ) Exit(0);
     
     
     // Face Velocity
-    if ( DFI_OUT_VEL->GetArrayShape() == CIO::E_CIO_NIJK ) // FVelocityの型は CIO::E_CIO_NIJK
+    if ( DFI_OUT_VEL->GetArrayShape() == CDM::E_CDM_NIJK ) // FVelocityの型は CDM::E_CDM_NIJK
     {
       fb_vout_nijk_(d_wo, d_vf, size, &guide, v00, &unit_velocity, &flop);
       fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
@@ -910,14 +910,14 @@ void FFV::OutputBasicVariables(double& flop)
       if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
     
-    cio_minmax[0] = vec_min[1]; ///<<< vec_u min
-    cio_minmax[1] = vec_max[1]; ///<<< vec_u max
-    cio_minmax[2] = vec_min[2]; ///<<< vec_v min
-    cio_minmax[3] = vec_max[2]; ///<<< vec_v max
-    cio_minmax[4] = vec_min[3]; ///<<< vec_w min
-    cio_minmax[5] = vec_max[3]; ///<<< vec_w max
-    cio_minmax[6] = vec_min[0]; ///<<< u,v,wの合成値のmin
-    cio_minmax[7] = vec_max[0]; ///<<< u,v,wの合成値のmax
+    cdm_minmax[0] = vec_min[1]; ///<<< vec_u min
+    cdm_minmax[1] = vec_max[1]; ///<<< vec_u max
+    cdm_minmax[2] = vec_min[2]; ///<<< vec_v min
+    cdm_minmax[3] = vec_max[2]; ///<<< vec_v max
+    cdm_minmax[4] = vec_min[3]; ///<<< vec_w min
+    cdm_minmax[5] = vec_max[3]; ///<<< vec_w max
+    cdm_minmax[6] = vec_min[0]; ///<<< u,v,wの合成値のmin
+    cdm_minmax[7] = vec_max[0]; ///<<< u,v,wの合成値のmax
     
     DFI_OUT_FVEL->setComponentVariable(0, "u");
     DFI_OUT_FVEL->setComponentVariable(1, "v");
@@ -929,12 +929,12 @@ void FFV::OutputBasicVariables(double& flop)
                                   3,
                                   guide,
                                   d_wo,
-                                  cio_minmax,
+                                  cdm_minmax,
                                   true,
                                   0,
                                   0.0);
     
-    if ( ret != CIO::E_CIO_SUCCESS ) Exit(0);
+    if ( ret != CDM::E_CDM_SUCCESS ) Exit(0);
   }
   
   
@@ -974,7 +974,7 @@ void FFV::OutputBasicVariables(double& flop)
                                 0,
                                 0.0);
   
-  if ( ret != CIO::E_CIO_SUCCESS ) Exit(0);
+  if ( ret != CDM::E_CDM_SUCCESS ) Exit(0);
   
 }
 
@@ -1010,11 +1010,11 @@ void FFV::OutputDerivedVariables(double& flop)
   // 最大値と最小値
   REAL_TYPE f_min, f_max, min_tmp, max_tmp, vec_min[4], vec_max[4];
   REAL_TYPE minmax[2];
-  REAL_TYPE cio_minmax[8];
+  REAL_TYPE cdm_minmax[8];
   
   
   // エラーコード
-  CIO::E_CIO_ERRORCODE ret;
+  CDM::E_CDM_ERRORCODE ret;
   
   
   REAL_TYPE unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity : 1.0;
@@ -1066,7 +1066,7 @@ void FFV::OutputDerivedVariables(double& flop)
                                 0,
                                 0.0);
 
-    if ( ret != CIO::E_CIO_SUCCESS ) Exit(0);
+    if ( ret != CDM::E_CDM_SUCCESS ) Exit(0);
   }
   
   
@@ -1079,7 +1079,7 @@ void FFV::OutputDerivedVariables(double& flop)
     vz[0] = vz[1] = vz[2] = 0.0;
     unit_velocity = (C.Unit.File == DIMENSIONAL) ? C.RefVelocity/C.RefLength : 1.0;
     
-    if ( DFI_OUT_VRT->GetArrayShape() == CIO::E_CIO_NIJK ) // Vorticityの型は CIO::E_CIO_NIJK
+    if ( DFI_OUT_VRT->GetArrayShape() == CDM::E_CDM_NIJK ) // Vorticityの型は CDM::E_CDM_NIJK
     {
       fb_vout_nijk_(d_wo, d_wv, size, &guide, vz, &unit_velocity, &flop);
       fb_minmax_vex_ (vec_min, vec_max, size, &guide, v00, d_wo, &flop);
@@ -1105,14 +1105,14 @@ void FFV::OutputDerivedVariables(double& flop)
       Exit(-1);
     }
     
-    cio_minmax[0] = vec_min[1]; ///<<< vec_u min
-    cio_minmax[1] = vec_max[1]; ///<<< vec_u max
-    cio_minmax[2] = vec_min[2]; ///<<< vec_v min
-    cio_minmax[3] = vec_max[2]; ///<<< vec_v max
-    cio_minmax[4] = vec_min[3]; ///<<< vec_w min
-    cio_minmax[5] = vec_max[3]; ///<<< vec_w max
-    cio_minmax[6] = vec_min[0]; ///<<< u,v,wの合成値のmin
-    cio_minmax[7] = vec_max[0]; ///<<< u,v,wの合成値のmax
+    cdm_minmax[0] = vec_min[1]; ///<<< vec_u min
+    cdm_minmax[1] = vec_max[1]; ///<<< vec_u max
+    cdm_minmax[2] = vec_min[2]; ///<<< vec_v min
+    cdm_minmax[3] = vec_max[2]; ///<<< vec_v max
+    cdm_minmax[4] = vec_min[3]; ///<<< vec_w min
+    cdm_minmax[5] = vec_max[3]; ///<<< vec_w max
+    cdm_minmax[6] = vec_min[0]; ///<<< u,v,wの合成値のmin
+    cdm_minmax[7] = vec_max[0]; ///<<< u,v,wの合成値のmax
 
     ret = DFI_OUT_VRT->WriteData(m_step,
                                  m_time,
@@ -1120,12 +1120,12 @@ void FFV::OutputDerivedVariables(double& flop)
                                  3,
                                  guide,
                                  d_wo,
-                                 cio_minmax,
+                                 cdm_minmax,
                                  true,
                                  0,
                                  0.0);
 
-    if ( ret != CIO::E_CIO_SUCCESS ) Exit(0);
+    if ( ret != CDM::E_CDM_SUCCESS ) Exit(0);
   }
   
   
@@ -1167,7 +1167,7 @@ void FFV::OutputDerivedVariables(double& flop)
                                    0,
                                    0.0);
 
-    if( ret != CIO::E_CIO_SUCCESS ) Exit(0);
+    if( ret != CDM::E_CDM_SUCCESS ) Exit(0);
   }
   
   
@@ -1209,7 +1209,7 @@ void FFV::OutputDerivedVariables(double& flop)
                                  0,
                                  0.0);
 
-    if( ret != CIO::E_CIO_SUCCESS ) Exit(0);
+    if( ret != CDM::E_CDM_SUCCESS ) Exit(0);
   }
 }
 

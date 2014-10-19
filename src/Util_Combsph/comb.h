@@ -47,7 +47,7 @@
 #include "FileIO_sph.h"
 //#include "omp.h"
 
-#include "cio_DFI.h"
+#include "cdm_DFI.h"
 
 
 #include "limits.h" // for UBUNTU
@@ -155,7 +155,7 @@ public:
   // PLOT3Dfunctions_20131005 FileIO_PLOT3D_READ  FP3DR; ///< PLOT3D READクラス
   // PLOT3Dfunctions_20131005 FileIO_PLOT3D_WRITE FP3DW; ///< PLOT3D WRITEクラス
 
-  vector<cio_DFI *>dfi;
+  vector<cdm_DFI *>dfi;
   
   /** AVS オプション */
   int output_format_type;  ///< avsファイルの形式     0:binary     1:ascii
@@ -319,8 +319,8 @@ public:
   bool read_DataRecord(FILE* fp,
                        int k,
                        bool matchEndian,
-                       cio_Array* buf,
-                       cio_Array* &src,
+                       cdm_Array* buf,
+                       cdm_Array* &src,
                        int headS[3],
                        int tailS[3]);
   
@@ -331,8 +331,8 @@ public:
    * @param[out] src         読み込んだデータを格納した配列のポインタ
    */
   bool combineXY(bool matchEndian,
-                 cio_Array* buf,
-                 cio_Array* &src,
+                 cdm_Array* buf,
+                 cdm_Array* &src,
                  int headS[3],
                  int tailS[3]);
   
@@ -346,8 +346,8 @@ public:
    */
 /*
   template<class T1, class T2>
-  bool copyArray(cio_TypeArray<T1> *buf,
-                 cio_TypeArray<T2> *&src,
+  bool copyArray(cdm_TypeArray<T1> *buf,
+                 cdm_TypeArray<T2> *&src,
                  int sta[3],
                  int end[3],
                  int sta_thin[3])
@@ -356,11 +356,11 @@ public:
     int ic,jc,kc;
     
     //配列形状
-    CIO::E_CIO_ARRAYSHAPE shape = buf->getArrayShape();
+    CDM::E_CDM_ARRAYSHAPE shape = buf->getArrayShape();
     //成分数
     int ncomp = src->getNcomp();
     //コピー
-    if( shape == CIO::E_CIO_IJKN )
+    if( shape == CDM::E_CDM_IJKN )
     {
       for( int n=0;n<ncomp;n++ ){
         kc=sta_thin[2]-1;
@@ -408,19 +408,19 @@ public:
    *
    */
   template<class T1, class T2>
-  bool copyArray(cio_TypeArray<T1> *buf,
-                 cio_TypeArray<T2> *&src,
+  bool copyArray(cdm_TypeArray<T1> *buf,
+                 cdm_TypeArray<T2> *&src,
                  int sta[3],
                  int end[3])
   {
     
     
     //配列形状
-    CIO::E_CIO_ARRAYSHAPE shape = buf->getArrayShape();
+    CDM::E_CDM_ARRAYSHAPE shape = buf->getArrayShape();
     //成分数
     int ncomp = src->getNcomp();
     //IJKN
-    if( shape == CIO::E_CIO_IJKN )
+    if( shape == CDM::E_CDM_IJKN )
     {
       for( int n=0;n<ncomp;n++ ){
         for( int k=sta[2];k<=end[2];k++ ){
@@ -1183,10 +1183,10 @@ public:
   /**
    * @brief avsファイルの連結
    */
-//CIO.20131008.s
+//CDM.20131008.s
   //void output_avs();
   void output_avs_header();
-//CIO.20131008.e
+//CDM.20131008.e
   
 };
 

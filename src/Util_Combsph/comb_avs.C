@@ -42,10 +42,10 @@ void COMB::output_avs_header()
 
   for(int i=0; i<ndfi; i++) {
 
-    //ヘッダー出力に必用なcioクラスを取得しておく
-    const cio_Domain* DFI_Domain  = dfi[i]->GetcioDomain();
-    const cio_FileInfo* DFI_FInfo = dfi[i]->GetcioFileInfo();
-    const cio_TimeSlice* TSlice   = dfi[i]->GetcioTimeSlice();
+    //ヘッダー出力に必用なcdmクラスを取得しておく
+    const cdm_Domain* DFI_Domain  = dfi[i]->GetcdmDomain();
+    const cdm_FileInfo* DFI_FInfo = dfi[i]->GetcdmFileInfo();
+    const cdm_TimeSlice* TSlice   = dfi[i]->GetcdmTimeSlice();
 
     //間引きを考慮しての計算空間サイズをセット
     dims[0]=(DFI_Domain->GlobalVoxel[0]+2*DFI_FInfo->GuideCell)/thin_count;
@@ -56,10 +56,10 @@ void COMB::output_avs_header()
     if((DFI_Domain->GlobalVoxel[2]+2*DFI_FInfo->GuideCell)%thin_count != 0 ) dims[2]++;
 
     //データタイプのセット
-    if( dfi[i]->GetDataType() == CIO::E_CIO_FLOAT32 ) 
+    if( dfi[i]->GetDataType() == CDM::E_CDM_FLOAT32 ) 
     {
       dType = "float";
-    } else if( dfi[i]->GetDataType() == CIO::E_CIO_FLOAT64 )
+    } else if( dfi[i]->GetDataType() == CDM::E_CDM_FLOAT64 )
     {
       dType = "double";
     } else {

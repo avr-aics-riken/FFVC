@@ -244,10 +244,10 @@ AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
+CDM_CFLAGS = @CDM_CFLAGS@
+CDM_DIR = @CDM_DIR@
+CDM_LDFLAGS = @CDM_LDFLAGS@
 CFLAGS = @CFLAGS@
-CIO_CFLAGS = @CIO_CFLAGS@
-CIO_DIR = @CIO_DIR@
-CIO_LDFLAGS = @CIO_LDFLAGS@
 CPM_CFLAGS = @CPM_CFLAGS@
 CPM_DIR = @CPM_DIR@
 CPM_LDFLAGS = @CPM_LDFLAGS@
@@ -366,9 +366,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = @MAKE_SUB_DIRS@
-EXTRA_DIST = LICENSE Makefile_hand doc doxygen examples \
-                 src/F_VOF src/PLOT3D src/Util_Layout
-
+EXTRA_DIST = LICENSE Makefile_hand doc doxygen examples src/F_VOF
 dist_data_DATA = AUTHORS COPYING ChangeLog README LICENSE
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive

@@ -490,7 +490,8 @@ enum sv_type {
 /// File Format
 enum File_format {
   sph_fmt=0,
-  bov_fmt
+  bov_fmt,
+  plt3d_fun_fmt
 };
 
 /** 反復制御リスト */

@@ -687,7 +687,7 @@ public:
   
   string ver_TP;   ///< TextPerser version no.
   string ver_CPM;  ///< CPMlib
-  string ver_CIO;  ///< CIOlib
+  string ver_CDM;  ///< CDMlib
   string ver_PM;   ///< PMlib
   string ver_Poly; ///< Polylib
   string ver_CUT;  ///< Cutlib
@@ -837,8 +837,8 @@ protected:
   void getFieldData();
   
   
-  // sphフォーマットのオプションを指定
-  void getFormat_sph();
+  // フォーマットのオプションを指定
+  void getFormatOption(const string form);
   
 
   // ログ出力のパラメータを取得

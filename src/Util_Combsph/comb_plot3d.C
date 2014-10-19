@@ -76,16 +76,16 @@ void COMB::output_plot3d()
   double *dd_thin;
   
   // set loop count
-  const cio_TimeSlice* TSlice = dfi[0]->GetcioTimeSlice();
+  const cdm_TimeSlice* TSlice = dfi[0]->GetcdmTimeSlice();
   int nstep=TSlice->SliceList.size();
-  const cio_Process* DFI_Process = dfi[0]->GetcioProcess();
+  const cdm_Process* DFI_Process = dfi[0]->GetcdmProcess();
   int nnode=DFI_Process->RankList.size();
   
   // 出力モード
   bool mio = false;
   cout << "1 mio = " << mio << endl;
 
-  const cio_MPI* DFI_MPI = dfi[0]->GetcioMPI();
+  const cdm_MPI* DFI_MPI = dfi[0]->GetcdmMPI();
   if( DFI_MPI->NumberOfRank > 1) mio=true;
   cout << "2 mio = " << mio << endl;
   
@@ -124,7 +124,7 @@ void COMB::output_plot3d()
   
   // copy dfi file
 
-  const cio_FileInfo* DFI_FInfo = dfi[0]->GetcioFileInfo();
+  const cdm_FileInfo* DFI_FInfo = dfi[0]->GetcdmFileInfo();
 
   string dfi_in = Generate_DFI_Name(DFI_FInfo->Prefix);
 
@@ -135,7 +135,7 @@ void COMB::output_plot3d()
       dfi_mng[var_Plot3D]=0;//本来はカウンターだが初期判定にのみ利用
       std::string dfipre;
 
-      const cio_FileInfo* _FInfo = dfi[i]->GetcioFileInfo();
+      const cdm_FileInfo* _FInfo = dfi[i]->GetcdmFileInfo();
 
       dfipre = _FInfo->Prefix + "_" + P3Op.basename_f;
       cout << "dfipre = " << dfipre << endl;
@@ -160,9 +160,9 @@ void COMB::output_plot3d()
   } else Exit(0);
   
   //m_d_typeのセット (float or double)
-  if( dfi[0]->GetDataType() == CIO::E_CIO_FLOAT32 ) {
+  if( dfi[0]->GetDataType() == CDM::E_CDM_FLOAT32 ) {
     m_d_type = SPH_FLOAT;
-  } else if( dfi[0]->GetDataType() == CIO::E_CIO_FLOAT64 ) {
+  } else if( dfi[0]->GetDataType() == CDM::E_CDM_FLOAT64 ) {
     m_d_type = SPH_DOUBLE;
   }
 
@@ -203,7 +203,7 @@ void COMB::output_plot3d()
       int ivar=0;
       for(int i=0;i<ndfi;i++){
 
-        const cio_FileInfo* FInfo = dfi[i]->GetcioFileInfo();
+        const cdm_FileInfo* FInfo = dfi[i]->GetcdmFileInfo();
 
         dim=FInfo->Component;
 
@@ -531,10 +531,10 @@ void COMB::output_plot3d()
       int ivar=0;
       for(int i=0;i<ndfi;i++){
 
-        const cio_FileInfo* FInfo = dfi[i]->GetcioFileInfo();
+        const cdm_FileInfo* FInfo = dfi[i]->GetcdmFileInfo();
 
         prefix=FInfo->Prefix;
-        const cio_Process* _Process = dfi[i]->GetcioProcess();
+        const cdm_Process* _Process = dfi[i]->GetcdmProcess();
 
         
         LOG_OUTV_ fprintf(fplog,"\t    COMPONENT : %s\n", prefix.c_str());
@@ -849,7 +849,7 @@ void COMB::output_plot3d()
   // open file
   if(P3Op.IS_DivideFunc == OFF){ // 一括出力のとき
     std::string ptmp;
-    ptmp = Generate_FileName_Free(P3Op.basename_f, "nam", 0, 0, false); // cio
+    ptmp = Generate_FileName_Free(P3Op.basename_f, "nam", 0, 0, false); // cdm
     ptmp = out_dirname + ptmp;
     FP3DW.setFileName(ptmp.c_str());
     if(!FP3DW.OpenFile()){
@@ -861,7 +861,7 @@ void COMB::output_plot3d()
   int unknowncomp=0;
   for(int i=0;i<ndfi;i++){
 
-    const cio_FileInfo* FInfo = dfi[i]->GetcioFileInfo();
+    const cdm_FileInfo* FInfo = dfi[i]->GetcdmFileInfo();
 
     string comp = FInfo->Prefix;
 
@@ -872,7 +872,7 @@ void COMB::output_plot3d()
     if(P3Op.IS_DivideFunc == ON){ // 分割出力のとき
       std::string ptmp;
 
-      ptmp = Generate_FileName_Free(P3Op.basename_f, "nam", 0, 0, false); // cio
+      ptmp = Generate_FileName_Free(P3Op.basename_f, "nam", 0, 0, false); // cdm
 
       ptmp = comp + ptmp;
       ptmp = out_dirname + ptmp;

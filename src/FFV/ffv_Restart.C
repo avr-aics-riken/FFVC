@@ -162,25 +162,25 @@ void FFV::RestartAvrerage(FILE* fp, double& flop)
   
   
   // エラーコード
-  CIO::E_CIO_ERRORCODE cio_error;
+  CDM::E_CDM_ERRORCODE cdm_error;
   
   
   // Averaged dataの初期化
   if ( C.Mode.Average == ON && C.Interval[Control::tg_average].isStarted(CurrentStep, CurrentTime) )
   {
-    DFI_IN_PRSA = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_prsa, G_size, gdiv, cio_error);
-    if ( cio_error != CIO::E_CIO_SUCCESS ) Exit(0);
+    DFI_IN_PRSA = cdm_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_prsa, G_size, gdiv, cdm_error);
+    if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
     
-    DFI_IN_VELA = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_vela, G_size, gdiv, cio_error);
-    if ( cio_error != CIO::E_CIO_SUCCESS ) Exit(0);
+    DFI_IN_VELA = cdm_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_vela, G_size, gdiv, cdm_error);
+    if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
     
     if ( DFI_IN_PRSA == NULL || DFI_IN_VELA == NULL ) Exit(0);
     
     
     if ( C.isHeatProblem() )
     {
-      DFI_IN_TEMPA = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_tempa, G_size, gdiv, cio_error);
-      if ( cio_error != CIO::E_CIO_SUCCESS ) Exit(0);
+      DFI_IN_TEMPA = cdm_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_tempa, G_size, gdiv, cdm_error);
+      if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
       if ( DFI_IN_TEMPA == NULL ) Exit(0);
     }
   }
@@ -212,7 +212,7 @@ void FFV::RestartAvrerage(FILE* fp, double& flop)
                              r_time,
                              false,
                              step_avr,
-                             time_avr) != CIO::E_CIO_SUCCESS ) Exit(0);
+                             time_avr) != CDM::E_CDM_SUCCESS ) Exit(0);
   
   if( d_ap == NULL ) Exit(0);
   
@@ -230,7 +230,7 @@ void FFV::RestartAvrerage(FILE* fp, double& flop)
                              r_time,
                              false,
                              step_avr,
-                             time_avr) != CIO::E_CIO_SUCCESS ) Exit(0);
+                             time_avr) != CDM::E_CDM_SUCCESS ) Exit(0);
   
   if( d_wo == NULL ) Exit(0);
   
@@ -265,7 +265,7 @@ void FFV::RestartAvrerage(FILE* fp, double& flop)
                                 r_time,
                                 false,
                                 step_avr,
-                                time_avr) != CIO::E_CIO_SUCCESS ) Exit(0);
+                                time_avr) != CDM::E_CDM_SUCCESS ) Exit(0);
     
     if ( d_ae == NULL ) Exit(0);
     
@@ -400,7 +400,7 @@ void FFV::RestartInstantaneous(FILE* fp, double& flop)
                             r_time,
                             true,
                             i_dummy,
-                            f_dummy) != CIO::E_CIO_SUCCESS ) Exit(0);
+                            f_dummy) != CDM::E_CDM_SUCCESS ) Exit(0);
   
   if ( d_p == NULL ) Exit(0);
   time = r_time;
@@ -438,7 +438,7 @@ void FFV::RestartInstantaneous(FILE* fp, double& flop)
                             r_time,
                             true,
                             i_dummy,
-                            f_dummy) != CIO::E_CIO_SUCCESS ) Exit(0);
+                            f_dummy) != CDM::E_CDM_SUCCESS ) Exit(0);
   
   if( d_wo == NULL ) Exit(0);
   
@@ -485,7 +485,7 @@ void FFV::RestartInstantaneous(FILE* fp, double& flop)
                              r_time,
                              true,
                              i_dummy,
-                             f_dummy) != CIO::E_CIO_SUCCESS ) Exit(0);
+                             f_dummy) != CDM::E_CDM_SUCCESS ) Exit(0);
   
   if( d_ws == NULL ) Exit(0);
   
@@ -515,7 +515,7 @@ void FFV::RestartInstantaneous(FILE* fp, double& flop)
 void FFV::selectRestartMode()
 {
   // エラーコード
-  CIO::E_CIO_ERRORCODE cio_error;
+  CDM::E_CDM_ERRORCODE cdm_error;
   
   
   // 現在のセッションの領域分割数の取得
@@ -531,47 +531,47 @@ void FFV::selectRestartMode()
   // Instantaneous dataの初期化
   
   // Pressure
-  DFI_IN_PRS = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_prs, G_size, gdiv, cio_error);
-  if ( cio_error != CIO::E_CIO_SUCCESS ) Exit(0);
+  DFI_IN_PRS = cdm_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_prs, G_size, gdiv, cdm_error);
+  if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
   
   
   // Velocity
-  DFI_IN_VEL = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_vel, G_size, gdiv, cio_error);
-  if ( cio_error != CIO::E_CIO_SUCCESS ) Exit(0);
+  DFI_IN_VEL = cdm_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_vel, G_size, gdiv, cdm_error);
+  if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
   
   if ( DFI_IN_PRS == NULL || DFI_IN_VEL == NULL ) Exit(0);
   
   
   // Fvelocity
-  DFI_IN_FVEL = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_fvel, G_size, gdiv, cio_error);
-  if ( cio_error != CIO::E_CIO_SUCCESS ) Exit(0);
+  DFI_IN_FVEL = cdm_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_fvel, G_size, gdiv, cdm_error);
+  if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
   if ( DFI_IN_FVEL == NULL ) Exit(0);
   
   // Temperature
   if ( C.isHeatProblem() )
   {
-    DFI_IN_TEMP = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_temp, G_size, gdiv, cio_error);
-    if ( cio_error != CIO::E_CIO_SUCCESS ) Exit(0);
+    DFI_IN_TEMP = cdm_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_temp, G_size, gdiv, cdm_error);
+    if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
     if ( DFI_IN_TEMP == NULL ) Exit(0);
   }
   
   
-  ///CIO FileInfoの成分名の取得、成分名が登録されていないときは、空白が戻される
+  ///CDM FileInfoの成分名の取得、成分名が登録されていないときは、空白が戻される
   /*
    std::string VCompVariable[3];
    VCompVariable[0]=DFI_IN_VEL->getComponentVariable(0);
    VCompVariable[1]=DFI_IN_VEL->getComponentVariable(1);
    VCompVariable[2]=DFI_IN_VEL->getComponentVariable(2);
    
-   ///CIO TimeSliceのVectorMinMaxの取得、取得出来たときはCIO::E_CIO_SUCCESS
+   ///CDM TimeSliceのVectorMinMaxの取得、取得出来たときはCDM::E_CDM_SUCCESS
    double vec_minmax[2];
-   cio_error = DFI_IN_VEL->getVectorMinMax(C.Restart_step,vec_minmax[0],vec_minmax[1]);
+   cdm_error = DFI_IN_VEL->getVectorMinMax(C.Restart_step,vec_minmax[0],vec_minmax[1]);
    
-   ///CIO TimeSlice minmaxの取得、取得出来たときはCIO::E_CIO_SUCCESS
+   ///CDM TimeSlice minmaxの取得、取得出来たときはCDM::E_CDM_SUCCESS
    double minmax[6];
-   cio_error =  DFI_IN_VEL->getMinMax(C.Restart_step,0,minmax[0],minmax[1]);
-   cio_error =  DFI_IN_VEL->getMinMax(C.Restart_step,1,minmax[2],minmax[3]);
-   cio_error =  DFI_IN_VEL->getMinMax(C.Restart_step,2,minmax[4],minmax[5]);
+   cdm_error =  DFI_IN_VEL->getMinMax(C.Restart_step,0,minmax[0],minmax[1]);
+   cdm_error =  DFI_IN_VEL->getMinMax(C.Restart_step,1,minmax[2],minmax[3]);
+   cdm_error =  DFI_IN_VEL->getMinMax(C.Restart_step,2,minmax[4],minmax[5]);
    */
   
   
@@ -579,19 +579,19 @@ void FFV::selectRestartMode()
   /* Averaged dataの初期化
   if ( C.Mode.Average == ON && C.Interval[Control::tg_average].isStarted(CurrentStep, CurrentTime) )
   {
-    DFI_IN_PRSA = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_prsa, G_size, gdiv, cio_error);
-    if ( cio_error != CIO::E_CIO_SUCCESS ) Exit(0);
+    DFI_IN_PRSA = cdm_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_prsa, G_size, gdiv, cdm_error);
+    if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
     
-    DFI_IN_VELA = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_vela, G_size, gdiv, cio_error);
-    if ( cio_error != CIO::E_CIO_SUCCESS ) Exit(0);
+    DFI_IN_VELA = cdm_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_vela, G_size, gdiv, cdm_error);
+    if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
     
     if ( DFI_IN_PRSA == NULL || DFI_IN_VELA == NULL ) Exit(0);
     
     
     if ( C.isHeatProblem() )
     {
-      DFI_IN_TEMPA = cio_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_tempa, G_size, gdiv, cio_error);
-      if ( cio_error != CIO::E_CIO_SUCCESS ) Exit(0);
+      DFI_IN_TEMPA = cdm_DFI::ReadInit(MPI_COMM_WORLD, C.f_dfi_in_tempa, G_size, gdiv, cdm_error);
+      if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
       if ( DFI_IN_TEMPA == NULL ) Exit(0);
     }
   }

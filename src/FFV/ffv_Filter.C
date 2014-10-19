@@ -442,7 +442,7 @@ int FFV::FilterInitialize(int argc, char **argv)
   
   // 利用ライブラリのバージョン番号取得
   C.ver_CPM = cpm_Base::getVersionInfo();
-  C.ver_CIO = cio_DFI::getVersionInfo();
+  C.ver_CDM = cdm_DFI::getVersionInfo();
   C.ver_Poly= PL->getVersionInfo();
   C.ver_PM  = PM.getVersionInfo();
   C.ver_CUT = cutlib_VersionInfo();

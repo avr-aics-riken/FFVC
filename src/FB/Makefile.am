@@ -19,7 +19,7 @@ noinst_libdir = ../lib
 
 libFB_a_CXXFLAGS = \
   -I. \
-  @CIO_CFLAGS@ \
+  @CDM_CFLAGS@ \
   @CPM_CFLAGS@ \
   @PL_CFLAGS@ \
   @TP_CFLAGS@ \

@@ -521,7 +521,7 @@ int FFV::Initialize(int argc, char **argv)
   
   // 利用ライブラリのバージョン番号取得
   C.ver_CPM = cpm_Base::getVersionInfo();
-  C.ver_CIO = cio_DFI::getVersionInfo();
+  C.ver_CDM = cdm_DFI::getVersionInfo();
   C.ver_Poly= PL->getVersionInfo();
   C.ver_PM  = PM.getVersionInfo();
   C.ver_CUT = cutlib_VersionInfo();
@@ -2172,27 +2172,35 @@ void FFV::initFileOut()
   
   
   // Format
-  CIO::E_CIO_FORMAT format;
+  CDM::E_CDM_FORMAT format;
   
   if ( C.FIO.Format == sph_fmt )
   {
-    format = CIO::E_CIO_FMT_SPH;
+    format = CDM::E_CDM_FMT_SPH;
   }
   else if ( C.FIO.Format == bov_fmt )
   {
-    format = CIO::E_CIO_FMT_BOV;
+    format = CDM::E_CDM_FMT_BOV;
+  }
+  else if ( C.FIO.Format == plt3d_fun_fmt )
+  {
+    format = CDM::E_CDM_FMT_PLOT3D;
+  }
+  else
+  {
+    Exit(0);
   }
   
   // Datatype
-  CIO::E_CIO_DTYPE datatype;
+  CDM::E_CDM_DTYPE datatype;
   
   if ( sizeof(REAL_TYPE) == 4 )
   {
-    datatype = CIO::E_CIO_FLOAT32;
+    datatype = CDM::E_CDM_FLOAT32;
   }
   else if ( sizeof(REAL_TYPE) == 8 )
   {
-    datatype = CIO::E_CIO_FLOAT64;
+    datatype = CDM::E_CDM_FLOAT64;
   }
   else
   {
@@ -2201,33 +2209,33 @@ void FFV::initFileOut()
   
   
   // 出力ファイルヘッダ
-  int cio_tail[3], cio_div[3];
-  for (int i=0; i<3; i++) cio_tail[i]=size[i];
-  for (int i=0; i<3; i++) cio_div[i]=1;
+  int cdm_tail[3], cdm_div[3];
+  for (int i=0; i<3; i++) cdm_tail[i]=size[i];
+  for (int i=0; i<3; i++) cdm_div[i]=1;
   
   if ( numProc > 1)
   {
     const int* p_tail = paraMngr->GetVoxelTailIndex();
-    for (int i=0; i<3; i++ ) cio_tail[i]=p_tail[i]+1;
+    for (int i=0; i<3; i++ ) cdm_tail[i]=p_tail[i]+1;
     
     const int* p_div = paraMngr->GetDivNum();
-    for (int i=0; i<3; i++ ) cio_div[i] = p_div[i];
+    for (int i=0; i<3; i++ ) cdm_div[i] = p_div[i];
   }
   
 
   int gc_out = C.GuideOut;
-  REAL_TYPE cio_org[3], cio_pit[3];
+  REAL_TYPE cdm_org[3], cdm_pit[3];
   
   for (int i=0; i<3; i++)
   {
-    cio_org[i] = origin[i]; // CIO用オリジナルポイントのセット
-    cio_pit[i] = pitch[i];
+    cdm_org[i] = origin[i]; // CDM用オリジナルポイントのセット
+    cdm_pit[i] = pitch[i];
   }
   
-  /* セルセンター位置を基点とする >> CIOlib-1.5.1からセルセンターへの更新処理を削除する
+  /* セルセンター位置を基点とする >> CDMlib-1.5.1からセルセンターへの更新処理を削除する
   for (int i=0; i<3; i++)
   {
-    cio_org[i] += 0.5*cio_pit[i];
+    cdm_org[i] += 0.5*cdm_pit[i];
   }
    */
   
@@ -2236,8 +2244,8 @@ void FFV::initFileOut()
   {
     for (int i=0; i<3; i++)
     {
-      cio_org[i] *= C.RefLength;
-      cio_pit[i] *= C.RefLength;
+      cdm_org[i] *= C.RefLength;
+      cdm_pit[i] *= C.RefLength;
     }
   }
   
@@ -2246,14 +2254,14 @@ void FFV::initFileOut()
 
   
   // タイムスライス出力オプション
-  CIO::E_CIO_ONOFF TimeSliceDir;
+  CDM::E_CDM_ONOFF TimeSliceDir;
   if ( C.FIO.Slice == ON )
   {
-    TimeSliceDir = CIO::E_CIO_ON;
+    TimeSliceDir = CDM::E_CDM_ON;
   }
   else
   {
-    TimeSliceDir = CIO::E_CIO_OFF;
+    TimeSliceDir = CDM::E_CDM_OFF;
   }
   
   
@@ -2318,22 +2326,22 @@ void FFV::initFileOut()
   if ( C.Mode.Log_Itr == ON )
   {
     comp = 1;
-    DFI_OUT_DIV = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                     cio_DFI::Generate_DFI_Name(C.f_DivDebug),
+    DFI_OUT_DIV = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+                                     cdm_DFI::Generate_DFI_Name(C.f_DivDebug),
                                      path,
                                      C.f_DivDebug,
                                      format,
                                      gc_out,
                                      datatype,
-                                     CIO::E_CIO_IJKN,
+                                     CDM::E_CDM_IJKN,
                                      comp,
                                      process,
                                      G_size,
-                                     cio_pit,
-                                     cio_org,
-                                     cio_div,
+                                     cdm_pit,
+                                     cdm_org,
+                                     cdm_div,
                                      head,
-                                     cio_tail,
+                                     cdm_tail,
                                      hostname,
                                      TimeSliceDir);
     
@@ -2345,33 +2353,33 @@ void FFV::initFileOut()
     
     if( C.FIO.Slice == ON )
     {
-      DFI_OUT_DIV->SetTimeSliceFlag(CIO::E_CIO_ON);
+      DFI_OUT_DIV->SetTimeSliceFlag(CDM::E_CDM_ON);
     }
     else
     {
-      DFI_OUT_DIV->SetTimeSliceFlag(CIO::E_CIO_OFF);
+      DFI_OUT_DIV->SetTimeSliceFlag(CDM::E_CDM_OFF);
     }
   }
   
   
   // Pressure
   comp = 1;
-  DFI_OUT_PRS = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                   cio_DFI::Generate_DFI_Name(C.f_Pressure),
+  DFI_OUT_PRS = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+                                   cdm_DFI::Generate_DFI_Name(C.f_Pressure),
                                    path,
                                    C.f_Pressure,
                                    format,
                                    gc_out,
                                    datatype,
-                                   CIO::E_CIO_IJKN,
+                                   CDM::E_CDM_IJKN,
                                    comp,
                                    process,
                                    G_size,
-                                   cio_pit,
-                                   cio_org,
-                                   cio_div,
+                                   cdm_pit,
+                                   cdm_org,
+                                   cdm_div,
                                    head,
-                                   cio_tail,
+                                   cdm_tail,
                                    hostname,
                                    TimeSliceDir);
   
@@ -2383,11 +2391,11 @@ void FFV::initFileOut()
   
   if( C.FIO.Slice == ON )
   {
-    DFI_OUT_PRS->SetTimeSliceFlag(CIO::E_CIO_ON);
+    DFI_OUT_PRS->SetTimeSliceFlag(CDM::E_CDM_ON);
   }
   else
   {
-    DFI_OUT_PRS->SetTimeSliceFlag(CIO::E_CIO_OFF);
+    DFI_OUT_PRS->SetTimeSliceFlag(CDM::E_CDM_OFF);
   }
   
   
@@ -2401,22 +2409,22 @@ void FFV::initFileOut()
   
   // Velocity
   comp = 3;
-  DFI_OUT_VEL = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                   cio_DFI::Generate_DFI_Name(C.f_Velocity),
+  DFI_OUT_VEL = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+                                   cdm_DFI::Generate_DFI_Name(C.f_Velocity),
                                    path,
                                    C.f_Velocity,
                                    format,
                                    gc_out,
                                    datatype,
-                                   CIO::E_CIO_NIJK,
+                                   CDM::E_CDM_NIJK,
                                    comp,
                                    process,
                                    G_size,
-                                   cio_pit,
-                                   cio_org,
-                                   cio_div,
+                                   cdm_pit,
+                                   cdm_org,
+                                   cdm_div,
                                    head,
-                                   cio_tail,
+                                   cdm_tail,
                                    hostname,
                                    TimeSliceDir);
   
@@ -2428,11 +2436,11 @@ void FFV::initFileOut()
   
   if ( C.FIO.Slice == ON )
   {
-    DFI_OUT_VEL->SetTimeSliceFlag(CIO::E_CIO_ON);
+    DFI_OUT_VEL->SetTimeSliceFlag(CDM::E_CDM_ON);
   }
   else
   {
-    DFI_OUT_VEL->SetTimeSliceFlag(CIO::E_CIO_OFF);
+    DFI_OUT_VEL->SetTimeSliceFlag(CDM::E_CDM_OFF);
   }
   
   DFI_OUT_VEL->AddUnit("Length"  , UnitL, (double)C.RefLength);
@@ -2443,22 +2451,22 @@ void FFV::initFileOut()
   
   // Fvelocity
   comp = 3;
-  DFI_OUT_FVEL = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                    cio_DFI::Generate_DFI_Name(C.f_Fvelocity),
+  DFI_OUT_FVEL = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+                                    cdm_DFI::Generate_DFI_Name(C.f_Fvelocity),
                                     path,
                                     C.f_Fvelocity,
                                     format,
                                     gc_out,
                                     datatype,
-                                    CIO::E_CIO_NIJK,
+                                    CDM::E_CDM_NIJK,
                                     comp,
                                     process,
                                     G_size,
-                                    cio_pit,
-                                    cio_org,
-                                    cio_div,
+                                    cdm_pit,
+                                    cdm_org,
+                                    cdm_div,
                                     head,
-                                    cio_tail,
+                                    cdm_tail,
                                     hostname,
                                     TimeSliceDir);
   
@@ -2470,11 +2478,11 @@ void FFV::initFileOut()
   
   if ( C.FIO.Slice == ON )
   {
-    DFI_OUT_FVEL->SetTimeSliceFlag(CIO::E_CIO_ON);
+    DFI_OUT_FVEL->SetTimeSliceFlag(CDM::E_CDM_ON);
   }
   else
   {
-    DFI_OUT_FVEL->SetTimeSliceFlag(CIO::E_CIO_OFF);
+    DFI_OUT_FVEL->SetTimeSliceFlag(CDM::E_CDM_OFF);
   }
 
   DFI_OUT_FVEL->AddUnit("Length"  , UnitL, (double)C.RefLength);
@@ -2487,22 +2495,22 @@ void FFV::initFileOut()
   if ( C.isHeatProblem() )
   {
     comp = 1;
-    DFI_OUT_TEMP = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                      cio_DFI::Generate_DFI_Name(C.f_Temperature),
+    DFI_OUT_TEMP = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+                                      cdm_DFI::Generate_DFI_Name(C.f_Temperature),
                                       path,
                                       C.f_Temperature,
                                       format,
                                       gc_out,
                                       datatype,
-                                      CIO::E_CIO_IJKN,
+                                      CDM::E_CDM_IJKN,
                                       comp,
                                       process,
                                       G_size,
-                                      cio_pit,
-                                      cio_org,
-                                      cio_div,
+                                      cdm_pit,
+                                      cdm_org,
+                                      cdm_div,
                                       head,
-                                      cio_tail,
+                                      cdm_tail,
                                       hostname,
                                       TimeSliceDir);
     
@@ -2514,11 +2522,11 @@ void FFV::initFileOut()
     
     if ( C.FIO.Slice == ON )
     {
-      DFI_OUT_TEMP->SetTimeSliceFlag(CIO::E_CIO_ON);
+      DFI_OUT_TEMP->SetTimeSliceFlag(CDM::E_CDM_ON);
     }
     else
     {
-      DFI_OUT_TEMP->SetTimeSliceFlag(CIO::E_CIO_OFF);
+      DFI_OUT_TEMP->SetTimeSliceFlag(CDM::E_CDM_OFF);
     }
     
     DFI_OUT_TEMP->AddUnit("Length"  , UnitL, (double)C.RefLength);
@@ -2535,22 +2543,22 @@ void FFV::initFileOut()
     
     // Pressure
     comp = 1;
-    DFI_OUT_PRSA = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                      cio_DFI::Generate_DFI_Name(C.f_AvrPressure),
+    DFI_OUT_PRSA = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+                                      cdm_DFI::Generate_DFI_Name(C.f_AvrPressure),
                                       path,
                                       C.f_AvrPressure,
                                       format,
                                       gc_out,
                                       datatype,
-                                      CIO::E_CIO_IJKN,
+                                      CDM::E_CDM_IJKN,
                                       comp,
                                       process,
                                       G_size,
-                                      cio_pit,
-                                      cio_org,
-                                      cio_div,
+                                      cdm_pit,
+                                      cdm_org,
+                                      cdm_div,
                                       head,
-                                      cio_tail,
+                                      cdm_tail,
                                       hostname,
                                       TimeSliceDir);
     
@@ -2562,11 +2570,11 @@ void FFV::initFileOut()
     
     if ( C.FIO.Slice == ON )
     {
-      DFI_OUT_PRSA->SetTimeSliceFlag(CIO::E_CIO_ON);
+      DFI_OUT_PRSA->SetTimeSliceFlag(CDM::E_CDM_ON);
     }
     else
     {
-      DFI_OUT_PRSA->SetTimeSliceFlag(CIO::E_CIO_OFF);
+      DFI_OUT_PRSA->SetTimeSliceFlag(CDM::E_CDM_OFF);
     }
     
     DFI_OUT_PRSA->AddUnit("Length"  , UnitL, (double)C.RefLength);
@@ -2577,22 +2585,22 @@ void FFV::initFileOut()
     
     // Velocity
     comp = 3;
-    DFI_OUT_VELA = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                      cio_DFI::Generate_DFI_Name(C.f_AvrVelocity),
+    DFI_OUT_VELA = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+                                      cdm_DFI::Generate_DFI_Name(C.f_AvrVelocity),
                                       path,
                                       C.f_AvrVelocity,
                                       format,
                                       gc_out,
                                       datatype,
-                                      CIO::E_CIO_NIJK,
+                                      CDM::E_CDM_NIJK,
                                       comp,
                                       process,
                                       G_size,
-                                      cio_pit,
-                                      cio_org,
-                                      cio_div,
+                                      cdm_pit,
+                                      cdm_org,
+                                      cdm_div,
                                       head,
-                                      cio_tail,
+                                      cdm_tail,
                                       hostname,
                                       TimeSliceDir);
     
@@ -2604,11 +2612,11 @@ void FFV::initFileOut()
     
     if ( C.FIO.Slice == ON )
     {
-      DFI_OUT_VELA->SetTimeSliceFlag(CIO::E_CIO_ON);
+      DFI_OUT_VELA->SetTimeSliceFlag(CDM::E_CDM_ON);
     }
     else
     {
-      DFI_OUT_VELA->SetTimeSliceFlag(CIO::E_CIO_OFF);
+      DFI_OUT_VELA->SetTimeSliceFlag(CDM::E_CDM_OFF);
     }
     
     DFI_OUT_VELA->AddUnit("Length"  , UnitL, (double)C.RefLength);
@@ -2621,22 +2629,22 @@ void FFV::initFileOut()
     if ( C.isHeatProblem() )
     {
       comp = 1;
-      DFI_OUT_TEMPA = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                         cio_DFI::Generate_DFI_Name(C.f_AvrTemperature),
+      DFI_OUT_TEMPA = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+                                         cdm_DFI::Generate_DFI_Name(C.f_AvrTemperature),
                                          path,
                                          C.f_AvrTemperature,
                                          format,
                                          gc_out,
                                          datatype,
-                                         CIO::E_CIO_IJKN,
+                                         CDM::E_CDM_IJKN,
                                          comp,
                                          process,
                                          G_size,
-                                         cio_pit,
-                                         cio_org,
-                                         cio_div,
+                                         cdm_pit,
+                                         cdm_org,
+                                         cdm_div,
                                          head,
-                                         cio_tail,
+                                         cdm_tail,
                                          hostname,
                                          TimeSliceDir);
       
@@ -2648,11 +2656,11 @@ void FFV::initFileOut()
       
       if ( C.FIO.Slice == ON )
       {
-        DFI_OUT_TEMPA->SetTimeSliceFlag(CIO::E_CIO_ON);
+        DFI_OUT_TEMPA->SetTimeSliceFlag(CDM::E_CDM_ON);
       }
       else
       {
-        DFI_OUT_TEMPA->SetTimeSliceFlag(CIO::E_CIO_OFF);
+        DFI_OUT_TEMPA->SetTimeSliceFlag(CDM::E_CDM_OFF);
       }
       
       DFI_OUT_TEMPA->AddUnit("Length"  , UnitL, (double)C.RefLength);
@@ -2670,22 +2678,22 @@ void FFV::initFileOut()
   if (C.varState[var_TotalP] == ON )
   {
     comp = 1;
-    DFI_OUT_TP = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                    cio_DFI::Generate_DFI_Name(C.f_TotalP),
+    DFI_OUT_TP = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+                                    cdm_DFI::Generate_DFI_Name(C.f_TotalP),
                                     path,
                                     C.f_TotalP,
                                     format,
                                     gc_out,
                                     datatype,
-                                    CIO::E_CIO_IJKN,
+                                    CDM::E_CDM_IJKN,
                                     comp,
                                     process,
                                     G_size,
-                                    cio_pit,
-                                    cio_org,
-                                    cio_div,
+                                    cdm_pit,
+                                    cdm_org,
+                                    cdm_div,
                                     head,
-                                    cio_tail,
+                                    cdm_tail,
                                     hostname,
                                     TimeSliceDir);
     
@@ -2697,11 +2705,11 @@ void FFV::initFileOut()
     
     if ( C.FIO.Slice == ON )
     {
-      DFI_OUT_TP->SetTimeSliceFlag(CIO::E_CIO_ON);
+      DFI_OUT_TP->SetTimeSliceFlag(CDM::E_CDM_ON);
     }
     else
     {
-      DFI_OUT_TP->SetTimeSliceFlag(CIO::E_CIO_OFF);
+      DFI_OUT_TP->SetTimeSliceFlag(CDM::E_CDM_OFF);
     }
     
     DFI_OUT_TP->AddUnit("Length"  , UnitL, (double)C.RefLength);
@@ -2715,22 +2723,22 @@ void FFV::initFileOut()
   if (C.varState[var_Vorticity] == ON )
   {
     comp = 3;
-    DFI_OUT_VRT = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                     cio_DFI::Generate_DFI_Name(C.f_Vorticity),
+    DFI_OUT_VRT = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+                                     cdm_DFI::Generate_DFI_Name(C.f_Vorticity),
                                      path,
                                      C.f_Vorticity,
                                      format,
                                      gc_out,
                                      datatype,
-                                     CIO::E_CIO_NIJK,
+                                     CDM::E_CDM_NIJK,
                                      comp,
                                      process,
                                      G_size,
-                                     cio_pit,
-                                     cio_org,
-                                     cio_div,
+                                     cdm_pit,
+                                     cdm_org,
+                                     cdm_div,
                                      head,
-                                     cio_tail,
+                                     cdm_tail,
                                      hostname,
                                      TimeSliceDir);
     if( DFI_OUT_VRT == NULL )
@@ -2740,11 +2748,11 @@ void FFV::initFileOut()
     }
     if( C.FIO.Slice == ON )
     {
-      DFI_OUT_VRT->SetTimeSliceFlag(CIO::E_CIO_ON);
+      DFI_OUT_VRT->SetTimeSliceFlag(CDM::E_CDM_ON);
     }
     else
     {
-      DFI_OUT_VRT->SetTimeSliceFlag(CIO::E_CIO_OFF);
+      DFI_OUT_VRT->SetTimeSliceFlag(CDM::E_CDM_OFF);
     }
     
     DFI_OUT_VRT->AddUnit("Length"  , UnitL, (double)C.RefLength);
@@ -2758,22 +2766,22 @@ void FFV::initFileOut()
   if ( C.varState[var_Qcr] == ON )
   {
     comp = 1;
-    DFI_OUT_I2VGT = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                       cio_DFI::Generate_DFI_Name(C.f_I2VGT),
+    DFI_OUT_I2VGT = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+                                       cdm_DFI::Generate_DFI_Name(C.f_I2VGT),
                                        path,
                                        C.f_I2VGT,
                                        format,
                                        gc_out,
                                        datatype,
-                                       CIO::E_CIO_IJKN,
+                                       CDM::E_CDM_IJKN,
                                        comp,
                                        process,
                                        G_size,
-                                       cio_pit,
-                                       cio_org,
-                                       cio_div,
+                                       cdm_pit,
+                                       cdm_org,
+                                       cdm_div,
                                        head,
-                                       cio_tail,
+                                       cdm_tail,
                                        hostname,
                                        TimeSliceDir);
     
@@ -2785,11 +2793,11 @@ void FFV::initFileOut()
     
     if ( C.FIO.Slice == ON )
     {
-      DFI_OUT_I2VGT->SetTimeSliceFlag(CIO::E_CIO_ON);
+      DFI_OUT_I2VGT->SetTimeSliceFlag(CDM::E_CDM_ON);
     }
     else
     {
-      DFI_OUT_I2VGT->SetTimeSliceFlag(CIO::E_CIO_OFF);
+      DFI_OUT_I2VGT->SetTimeSliceFlag(CDM::E_CDM_OFF);
     }
     
     DFI_OUT_I2VGT->AddUnit("Length"  , UnitL, (double)C.RefLength);
@@ -2803,22 +2811,22 @@ void FFV::initFileOut()
   if ( C.varState[var_Helicity] == ON )
   {
     comp = 1;
-    DFI_OUT_HLT = cio_DFI::WriteInit(MPI_COMM_WORLD,
-                                     cio_DFI::Generate_DFI_Name(C.f_Helicity),
+    DFI_OUT_HLT = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+                                     cdm_DFI::Generate_DFI_Name(C.f_Helicity),
                                      path,
                                      C.f_Helicity,
                                      format,
                                      gc_out,
                                      datatype,
-                                     CIO::E_CIO_IJKN,
+                                     CDM::E_CDM_IJKN,
                                      comp,
                                      process,
                                      G_size,
-                                     cio_pit,
-                                     cio_org,
-                                     cio_div,
+                                     cdm_pit,
+                                     cdm_org,
+                                     cdm_div,
                                      head,
-                                     cio_tail,
+                                     cdm_tail,
                                      hostname,
                                      TimeSliceDir);
     
@@ -2830,11 +2838,11 @@ void FFV::initFileOut()
     
     if ( C.FIO.Slice == ON )
     {
-      DFI_OUT_HLT->SetTimeSliceFlag(CIO::E_CIO_ON);
+      DFI_OUT_HLT->SetTimeSliceFlag(CDM::E_CDM_ON);
     }
     else
     {
-      DFI_OUT_HLT->SetTimeSliceFlag(CIO::E_CIO_OFF);
+      DFI_OUT_HLT->SetTimeSliceFlag(CDM::E_CDM_OFF);
     }
     
     DFI_OUT_HLT->AddUnit("Length",   UnitL, (double)C.RefLength);

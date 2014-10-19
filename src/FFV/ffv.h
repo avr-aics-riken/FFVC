@@ -90,8 +90,8 @@
 #include "Cutlib.h"
 #include "GridAccessor/Cell.h"
 
-// CIOlib
-#include "cio_DFI.h"
+// CDMlib
+#include "cdm_DFI.h"
 
 
 #ifndef _WIN32
@@ -300,30 +300,30 @@ private:
   string active_fname;      ///< Active subdomainのファイル名
 
   
-  // pointers to CIO class
+  // pointers to CDM class
   
   // InFile
-  cio_DFI *DFI_IN_PRS;      ///< Pressure
-  cio_DFI *DFI_IN_VEL;      ///< Velocity
-  cio_DFI *DFI_IN_FVEL;     ///< Face velocity
-  cio_DFI *DFI_IN_TEMP;     ///< Temperature
-  cio_DFI *DFI_IN_PRSA;     ///< Averaged pressure
-  cio_DFI *DFI_IN_VELA;     ///< Averaged velocity
-  cio_DFI *DFI_IN_TEMPA;    ///< Averaged temperature
+  cdm_DFI *DFI_IN_PRS;      ///< Pressure
+  cdm_DFI *DFI_IN_VEL;      ///< Velocity
+  cdm_DFI *DFI_IN_FVEL;     ///< Face velocity
+  cdm_DFI *DFI_IN_TEMP;     ///< Temperature
+  cdm_DFI *DFI_IN_PRSA;     ///< Averaged pressure
+  cdm_DFI *DFI_IN_VELA;     ///< Averaged velocity
+  cdm_DFI *DFI_IN_TEMPA;    ///< Averaged temperature
   
   // OutFile
-  cio_DFI *DFI_OUT_PRS;     ///< Pressure
-  cio_DFI *DFI_OUT_VEL;     ///< Velocity
-  cio_DFI *DFI_OUT_FVEL;    ///< Face velocity
-  cio_DFI *DFI_OUT_TEMP;    ///< Temperature
-  cio_DFI *DFI_OUT_PRSA;    ///< Averaged Pressure
-  cio_DFI *DFI_OUT_VELA;    ///< Averaged velocity
-  cio_DFI *DFI_OUT_TEMPA;   ///< Averaged temperature
-  cio_DFI *DFI_OUT_TP;      ///< Total Pressure
-  cio_DFI *DFI_OUT_VRT;     ///< Vorticity
-  cio_DFI *DFI_OUT_I2VGT;   ///< 2nd Invariant of Velocity Gradient Tensor
-  cio_DFI *DFI_OUT_HLT;     ///< Helicity
-  cio_DFI *DFI_OUT_DIV;     ///< Divergence for debug
+  cdm_DFI *DFI_OUT_PRS;     ///< Pressure
+  cdm_DFI *DFI_OUT_VEL;     ///< Velocity
+  cdm_DFI *DFI_OUT_FVEL;    ///< Face velocity
+  cdm_DFI *DFI_OUT_TEMP;    ///< Temperature
+  cdm_DFI *DFI_OUT_PRSA;    ///< Averaged Pressure
+  cdm_DFI *DFI_OUT_VELA;    ///< Averaged velocity
+  cdm_DFI *DFI_OUT_TEMPA;   ///< Averaged temperature
+  cdm_DFI *DFI_OUT_TP;      ///< Total Pressure
+  cdm_DFI *DFI_OUT_VRT;     ///< Vorticity
+  cdm_DFI *DFI_OUT_I2VGT;   ///< 2nd Invariant of Velocity Gradient Tensor
+  cdm_DFI *DFI_OUT_HLT;     ///< Helicity
+  cdm_DFI *DFI_OUT_DIV;     ///< Divergence for debug
   
 public:
   /** コンストラクタ */

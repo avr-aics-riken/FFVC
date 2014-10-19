@@ -23,7 +23,7 @@ ffvc_CXXFLAGS = \
   -I./ASD \
   -I./IP \
   -I./FB \
-  @CIO_CFLAGS@ \
+  @CDM_CFLAGS@ \
   @CPM_CFLAGS@ \
   @CUT_CFLAGS@ \
   @PL_CFLAGS@ \
@@ -41,7 +41,7 @@ ffvc_LDADD = \
   -L./ASD -lASD \
   -L./IP -lIP \
   -L./FB -lFB \
-  @CIO_LDFLAGS@ \
+  @CDM_LDFLAGS@ \
   @CPM_LDFLAGS@ \
   @CUT_LDFLAGS@ \
   @PL_LDFLAGS@ \
