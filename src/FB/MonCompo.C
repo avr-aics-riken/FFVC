@@ -734,8 +734,6 @@ void MonitorCompo::openFile(const char* str, const bool gathered)
 ///
 void MonitorCompo::print(unsigned step, double tm, bool gathered)
 {
-  printf("\t\tMonitorCompo print() label=%s\n", getLabel());
-  
   assert(fp);
   
   if ( (monitor_type == mon_LINE) ||

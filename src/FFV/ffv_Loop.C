@@ -46,7 +46,8 @@ int FFV::Loop(const unsigned step)
   
   
   // 参照座標速度をv00に保持する
-  copyV00fromRF(CurrentTime);
+  RF.setV00(CurrentTime);
+  RF.copyV00(v00);
   
   // モニタークラスに参照速度を渡す
   if (C.SamplingMode == ON) MO.setV00(v00);
@@ -79,7 +80,6 @@ int FFV::Loop(const unsigned step)
         if (C.Mode.ShapeAprx == BINARY)
         {
           NS_FS_E_Binary();
-          //NS_FS_E_Binary_CHSMAC();
         }
         else if (C.Mode.ShapeAprx == CUT_INFO)
         {
@@ -121,6 +121,7 @@ int FFV::Loop(const unsigned step)
   
   //  >>> ステップループのユーティリティ 1
   TIMING_start(tm_loop_uty_sct_1);
+  
   
   // 時間平均値操作
   if ( (C.Mode.Average == ON) && C.Interval[Control::tg_average].isStarted(CurrentStep, CurrentTime))
@@ -224,7 +225,7 @@ int FFV::Loop(const unsigned step)
     {
       TIMING_start(tm_file_out);
       flop_count=0.0;
-      OutputBasicVariables(flop_count);
+      F->OutputBasicVariables(CurrentStep, CurrentTime, flop_count);
       TIMING_stop(tm_file_out, flop_count);
     }
     
@@ -232,7 +233,7 @@ int FFV::Loop(const unsigned step)
     {
       TIMING_start(tm_file_out);
       flop_count=0.0;
-      OutputDerivedVariables(flop_count);
+      F->OutputDerivedVariables(CurrentStep, CurrentTime, flop_count);
       TIMING_stop(tm_file_out, flop_count);
     }
     
@@ -244,7 +245,7 @@ int FFV::Loop(const unsigned step)
       {
         TIMING_start(tm_file_out);
         flop_count=0.0;
-        OutputBasicVariables(flop_count);
+        F->OutputBasicVariables(CurrentStep, CurrentTime, flop_count);
         TIMING_stop(tm_file_out, flop_count);
       }
       
@@ -252,7 +253,7 @@ int FFV::Loop(const unsigned step)
       {
         TIMING_start(tm_file_out);
         flop_count=0.0;
-        OutputDerivedVariables(flop_count);
+        F->OutputDerivedVariables(CurrentStep, CurrentTime, flop_count);
         TIMING_stop(tm_file_out, flop_count);
       }
     }
@@ -272,7 +273,7 @@ int FFV::Loop(const unsigned step)
       {
         TIMING_start(tm_file_out);
         flop_count=0.0;
-        OutputAveragedVarables(flop_count);
+        F->OutputAveragedVarables(CurrentStep, CurrentTime, CurrentStep_Avr, CurrentTime_Avr, flop_count);
         TIMING_stop(tm_file_out, flop_count);
       }
       
@@ -284,7 +285,7 @@ int FFV::Loop(const unsigned step)
         {
           TIMING_start(tm_file_out);
           flop_count=0.0;
-          OutputAveragedVarables(flop_count);
+          F->OutputAveragedVarables(CurrentStep, CurrentTime, CurrentStep_Avr, CurrentTime_Avr, flop_count);
           TIMING_stop(tm_file_out, flop_count);
         }
       }

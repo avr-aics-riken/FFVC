@@ -24,10 +24,8 @@
  */
 
 #include "DomainInfo.h"
-#include <string>
 #include <vector>
 #include <cassert>
-#include "FB_Define.h"
 #include "Vec3.h"
 #include "Component.h"
 #include "Sampling.h"

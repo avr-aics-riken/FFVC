@@ -283,10 +283,10 @@ public:
 class ReferenceFrame {
   
 protected:
-  int Frame;         ///< 参照座標系
-  double TimeAccel;  ///< 加速時間（無次元）
-  double v00[4];     ///< 参照速度（無次元
-  double GridVel[3]; ///< 座標系の移動速度（無次元）
+  int Frame;            ///< 参照座標系
+  double TimeAccel;     ///< 加速時間（無次元）
+  REAL_TYPE v00[4];     ///< 参照速度（無次元
+  REAL_TYPE GridVel[3]; ///< 座標系の移動速度（無次元）
   
 public:
   /** 参照系の定義 */
@@ -328,7 +328,7 @@ public:
    * @brief 格子速度成分の単位方向ベクトルをセットする
    * @param [in] m_Gvel 格子速度成分の単位方向ベクトル
    */
-  void setGridVel(const double* m_Gvel);
+  void setGridVel(const REAL_TYPE* m_Gvel);
   
   
   /**
@@ -356,12 +356,21 @@ public:
     return TimeAccel;
   }
   
+  
+  /**
+   * @brief v00のアドレスを返す
+   */
+  REAL_TYPE* getV00()
+  {
+    return v00;
+  }
+  
 
   /** 
    * @brief v00をコピーする
    * @param [out] m_v0 コピー元
    */
-  void copyV00(double* m_v0)
+  void copyV00(REAL_TYPE* m_v0)
   {
     for (int i=0; i<4; i++) m_v0[i] = v00[i];
   }
@@ -371,7 +380,7 @@ public:
    * @brief GridVelocityをコピーする
    * @param [out] m_gv 格子速度
    */
-  void copyGridVel(double* m_gv)
+  void copyGridVel(REAL_TYPE* m_gv)
   {
     for (int i=0; i<3; i++) m_gv[i] = GridVel[i];
   }
@@ -414,18 +423,6 @@ public:
     int GlyphOutput;
     int Subdivision;
   } Hidden_Parameter;
-  
-  /** File IO control */
-  typedef struct 
-  {
-    int IOmode;
-    int Div_Debug;
-    int IO_Voxel;
-    int Format;
-    int Slice;
-    string OutDirPath;
-    string InDirPath;
-  } File_IO_Cntl;
   
   
   /** LESパラメータ */
@@ -538,12 +535,6 @@ public:
     Log_Law  // 2
   };
   
-  /** ボクセルファイルフォーマット */
-  enum Voxel_Type 
-  {
-    Sphere_SVX=1,
-    Sphere_SBX
-  };
   
   /** 並列化モード */
   enum Parallel_mode 
@@ -642,7 +633,6 @@ public:
   Mode_set          Mode;
   Initial_Value     iv;
   LES_Parameter     LES;
-  File_IO_Cntl      FIO;
   Hidden_Parameter  Hide;
   Unit_Def          Unit;
   Ens_of_Compo      EnsCompo;
@@ -652,32 +642,8 @@ public:
   IntervalManager Interval[tg_END];  ///< タイミング制御
   IterationCtl* Criteria;            ///< 反復解法の収束判定パラメータ
   
-  string file_fmt_ext;
   string PolylibConfigName;
 
-  
-  // 入力dfiファイルのプレフィックス
-  string f_dfi_in_prs;
-  string f_dfi_in_vel;
-  string f_dfi_in_fvel;
-  string f_dfi_in_temp;
-  string f_dfi_in_prsa;
-  string f_dfi_in_vela;
-  string f_dfi_in_tempa;
-  
-  // 出力ファイルのプレフィックス
-  string f_Velocity;
-  string f_Pressure;
-  string f_Temperature;
-  string f_AvrPressure;
-  string f_AvrVelocity;
-  string f_AvrTemperature;
-  string f_DivDebug;
-  string f_Helicity;
-  string f_TotalP;
-  string f_I2VGT;
-  string f_Vorticity;
-  string f_Fvelocity;
   
   string RefMedium;      ///< 参照媒質名 -> int RefMat
   string FillMedium;     ///< フィルに使う媒質 -> int FillID
@@ -769,11 +735,6 @@ public:
     LES.Cs = 0.0;
     LES.damping_factor=0.0;
     
-    FIO.IOmode   = 0;
-    FIO.IO_Voxel   = 0;
-    FIO.Format     = 0; // 0:sph, 1:BOV
-    FIO.Slice      = 0;
-    
     Hide.Range_Limit = 0;
     Hide.PM_Test = 0;
     Hide.GeomOutput = OFF;
@@ -830,14 +791,6 @@ protected:
   // ドライバー情報を取得
   void getDriver();
   
-  
-  // ファイル入出力に関するパラメータを取得し，sphフォーマットの出力の並列モードを指定する
-  void getFieldData();
-  
-  
-  // フォーマットのオプションを指定
-  void getFormatOption(const string form);
-  
 
   // ログ出力のパラメータを取得
   void getLog();
@@ -859,10 +812,6 @@ protected:
   void getSolverProperties ();
   
   
-  // 初期値とリスタート条件
-  void getStartCondition();
-  
-  
   // 時間制御に関するパラメータを取得する
   void getTimeControl(DTcntl* DT);
   
@@ -879,32 +828,8 @@ protected:
   void getWallType();
   
   
-  // 初期値の表示
-  void printInitValues(FILE* fp, CompoList* cmp);
-  
-  
   // 線形ソルバー種別の表示
   void printLS(FILE* fp, const IterationCtl* IC);
-  
-  
-  // 計算パラメータの表示
-  void printParaConditions(FILE* fp, const MediumList* mat);
-  
-  
-  /**
-   * @brief 制御パラメータSTEERの表示
-   * @param [in] IC  IterationCtl
-   * @param [in] DT  DTcntl
-   * @param [in] RF  ReferenceFrame
-   * @param [in] DC  発散収束判定のコンテナ
-   * @param [in] em  ffvcの実行モード
-   */
-  void printSteerConditions(FILE* fp,
-                            IterationCtl* IC,
-                            const DTcntl* DT,
-                            const ReferenceFrame* RF,
-                            const DivConvergence* DC,
-                            const int em);
   
   
   
@@ -918,27 +843,6 @@ public:
    */
   void copyCriteria(IterationCtl* IC, const string name);
   
-  
-  /**
-   * @brief 制御，計算パラメータ群の表示
-   * @param [in] mp   ファイルポインタ（標準出力）
-   * @param [in] fp   ファイルポインタ（ファイル出力）
-   * @param [in] IC   IterationCtl
-   * @param [in] DT   DTcntl
-   * @param [in] RF   ReferenceFrame
-   * @param [in] DC   発散値収束判定パラメータ
-   * @param [in] mat  MediumList
-   * @param [in] cmp  CompoList
-   * @param [in] em   ffvcの実行モード
-   */
-  void displayParams(FILE* mp, FILE* fp,
-                     IterationCtl* IC,
-                     DTcntl* DT,
-                     ReferenceFrame* RF,
-                     DivConvergence* DC,
-                     MediumList* mat,
-                     CompoList* cmp,
-                     const int em);
   
   
   /** MediumList中に登録されているkeyに対するIDを返す
@@ -1075,6 +979,30 @@ public:
    */
   REAL_TYPE OpenDomainRatio(const int dir, const REAL_TYPE area, const int* G_size);
 	
+  
+  // 初期値の表示
+  void printInitValues(FILE* fp, CompoList* cmp);
+  
+  
+  // 計算パラメータの表示
+  void printParaConditions(FILE* fp, const MediumList* mat);
+  
+  
+  /**
+   * @brief 制御パラメータSTEERの表示
+   * @param [in] IC  IterationCtl
+   * @param [in] DT  DTcntl
+   * @param [in] RF  ReferenceFrame
+   * @param [in] DC  発散収束判定のコンテナ
+   * @param [in] em  ffvcの実行モード
+   */
+  void printSteerConditions(FILE* fp,
+                            IterationCtl* IC,
+                            const DTcntl* DT,
+                            const ReferenceFrame* RF,
+                            const DivConvergence* DC,
+                            const int em);
+  
   
   /**
    * @brief 全計算領域の有効セル数と外部境界面の開口率を表示する

@@ -187,7 +187,7 @@ void ReferenceFrame::setFrame(const int m_frame)
 
 // #################################################################
 // 格子速度成分の単位方向ベクトルをセットする
-void ReferenceFrame::setGridVel(const double* m_Gvel)
+void ReferenceFrame::setGridVel(const REAL_TYPE* m_Gvel)
 {
   GridVel[0] = m_Gvel[0];
   GridVel[1] = m_Gvel[1];
@@ -217,7 +217,7 @@ void ReferenceFrame::setV00(const double time, const bool init)
     }
   }
   
-  double u0 = v00[0];
+  REAL_TYPE u0 = v00[0];
   
   switch (Frame)
   {
@@ -302,26 +302,6 @@ void Control::copyCriteria(IterationCtl* IC, const string name)
 }
 
 
-// #################################################################
-// 制御，計算パラメータ群の表示
-void Control::displayParams(FILE* mp,
-                            FILE* fp,
-                            IterationCtl* IC,
-                            DTcntl* DT,
-                            ReferenceFrame* RF,
-                            DivConvergence* DC,
-                            MediumList* mat,
-                            CompoList* cmp,
-                            const int em)
-{
-  printSteerConditions(mp, IC, DT, RF, DC, em);
-  printSteerConditions(fp, IC, DT, RF, DC, em);
-  printParaConditions(mp, mat);
-  printParaConditions(fp, mat);
-  printInitValues(mp, cmp);
-  printInitValues(fp, cmp);
-}
-
 
 // #################################################################
 // MediumList中に登録されているkeyに対するIDを返す。発見できない場合はzero 
@@ -364,9 +344,6 @@ void Control::get1stParameter(DTcntl* DT)
   // 時間制御パラメータ
   getTimeControl(DT);
   
-  
-  // ファイル入出力に関するパラメータ
-  getFieldData();
 }
 
 
@@ -395,9 +372,6 @@ void Control::get2ndParameter(ReferenceFrame* RF)
   
   
   getTurbulenceModel();
-  
-  
-  getStartCondition();
   
   
   getShapeApproximation();
@@ -569,388 +543,6 @@ void Control::getDriver()
 }
 
 
-// #################################################################
-// @brief ファイル入出力に関するパラメータを取得し，sphフォーマットの出力の並列モードを指定する．
-// @note インターバルパラメータは，setParameters()で無次元して保持
-// @pre getTimeControl()
-void Control::getFieldData()
-{
-  
-  REAL_TYPE f_val=0.0;
-  string str;
-  string label, leaf;
-
-  
-  // Default setting
-  FIO.IOmode = IO_DISTRIBUTE;
-  
-  // 逐次実行の場合には、強制的に IO_GATHER
-  if ( (Parallelism == Serial) || (Parallelism == OpenMP) )
-  {
-    FIO.IOmode = IO_GATHER;
-  }
-  
-  
-  
-  // 基本変数の瞬時値データ
-  
-  // ファイルフォーマット
-  label = "/Output/Data/BasicVariables/Format";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "sph") )    FIO.Format = sph_fmt;
-  else if( !strcasecmp(str.c_str(), "bov") )    FIO.Format = bov_fmt;
-  else if( !strcasecmp(str.c_str(), "plot3d") ) FIO.Format = plt3d_fun_fmt;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  
-  // インターバル
-  label = "/Output/Data/BasicVariables/TemporalType";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    Exit(0);
-  }
-  else
-  {
-    if     ( !strcasecmp(str.c_str(), "step") )
-    {
-      Interval[tg_basic].setMode(IntervalManager::By_step);
-    }
-    else if( !strcasecmp(str.c_str(), "time") )
-    {
-      Interval[tg_basic].setMode(IntervalManager::By_time);
-    }
-    else
-    {
-      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
-      Exit(0);
-    }
-    
-    label="/Output/Data/BasicVariables/Interval";
-    
-    if ( !(tpCntl->getInspectedValue(label, f_val )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
-    }
-    else
-    {
-      Interval[tg_basic].setInterval((double)f_val);
-    }
-  }
-  
-  
-  
-  // 派生変数
-  
-  /* ファイルフォーマット >> 基本変数と同じ
-  label = "/Output/Data/DerivedVariables/Format";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "sph") )
-  {
-    FIO.Format = sph_fmt;
-    file_fmt_ext = "sph";
-  }
-  else if( !strcasecmp(str.c_str(), "bov") )
-  {
-    FIO.Format = bov_fmt;
-    file_fmt_ext = "dat";
-  }
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }*/
-  
-  switch ( FIO.Format )
-  {
-    case sph_fmt:
-      getFormatOption("sph");
-      break;
-      
-    case bov_fmt:
-      getFormatOption("bov");
-      break;
-      
-    case plt3d_fun_fmt:
-      getFormatOption("plot3d");
-      break;
-  }
-  
-  
-  // インターバル
-  label = "/Output/Data/DerivedVariables/TemporalType";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    Exit(0);
-  }
-  else
-  {
-    if     ( !strcasecmp(str.c_str(), "step") )
-    {
-      Interval[tg_derived].setMode(IntervalManager::By_step);
-    }
-    else if( !strcasecmp(str.c_str(), "time") )
-    {
-      Interval[tg_derived].setMode(IntervalManager::By_time);
-    }
-    else
-    {
-      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
-      Exit(0);
-    }
-    
-    label="/Output/Data/DerivedVariables/Interval";
-    
-    if ( !(tpCntl->getInspectedValue(label, f_val )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
-    }
-    else
-    {
-      Interval[tg_derived].setInterval((double)f_val);
-    }
-  }
-  
-  // 全圧
-  label="/Output/Data/DerivedVariables/TotalPressure";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "on") )  varState[var_TotalP] = ON;
-  else if( !strcasecmp(str.c_str(), "off") ) varState[var_TotalP] = OFF;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  // 渦度ベクトル
-  label="/Output/Data/DerivedVariables/Vorticity";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "on") )  varState[var_Vorticity] = ON;
-  else if( !strcasecmp(str.c_str(), "off") ) varState[var_Vorticity] = OFF;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  // 速度勾配テンソルの第2不変量
-  label="/Output/Data/DerivedVariables/Qcriterion";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "on") )  varState[var_Qcr] = ON;
-  else if( !strcasecmp(str.c_str(), "off") ) varState[var_Qcr] = OFF;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  // ヘリシティ
-  label="/Output/Data/DerivedVariables/Helicity";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-	  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "on") )  varState[var_Helicity] = ON;
-  else if( !strcasecmp(str.c_str(), "off") ) varState[var_Helicity] = OFF;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-
-  
-  // 発散値
-  label="/Output/Data/DerivedVariables/Divergence";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "on") )  varState[var_Div] = ON;
-  else if( !strcasecmp(str.c_str(), "off") ) varState[var_Div] = OFF;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  
-  // 平均値操作に関するパラメータを取得
-  if ( Mode.Average == ON )
-  {
-	  label = "/Output/Data/AveragedVariables/TemporalType";
-    
-	  if ( !(tpCntl->getInspectedValue(label, str )) )
-    {
-		  Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-		  Exit(0);
-	  }
-	  else
-    {
-		  if     ( !strcasecmp(str.c_str(), "step") )
-      {
-        if ( Interval[tg_average].getMode() == IntervalManager::By_time )
-        {
-          Hostonly_ stamped_printf("\tError : Specified temporal mode is not consistent with '/TimeControl/Average/TemporalType'\n");
-          Exit(0);
-        }
-		  }
-		  else if( !strcasecmp(str.c_str(), "time") )
-      {
-        if ( Interval[tg_average].getMode() == IntervalManager::By_step )
-        {
-          Hostonly_ stamped_printf("\tError : Specified temporal mode is not consistent with '/TimeControl/Average/TemporalType'\n");
-          Exit(0);
-        }
-		  }
-		  else
-      {
-			  Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
-			  Exit(0);
-		  }
-    }
-    
-    double val;
-    label="/Output/Data/AveragedVariables/Interval";
-    
-    if ( !(tpCntl->getInspectedValue(label, val )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
-    }
-    else
-    {
-      Interval[tg_average].setInterval(val);
-    }
-  }
-
-}
-
-
-
-// #################################################################
-// @brief ファイルフォーマットのオプションを指定する．
-void Control::getFormatOption(const string form)
-{
-  string str;
-  string label;
-  string dir;
-  
-  
-  // ディレクトリのチェック
-  dir = "/Output/FormatOption/" + form;
-  
-  if ( !(tpCntl->chkNode(dir)) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : Missing '%s'\n", dir.c_str());
-    Exit(0);
-  }
-  
-  
-  // 出力ガイドセルモード
-  label = dir + "/GuideOut";
-  
-  if ( !(tpCntl->getInspectedValue(label, str)) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    Exit(0);
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "without") )  GuideOut = 0;
-  else if( !strcasecmp(str.c_str(), "with") )     GuideOut = guide;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  // Output Directory_Path
-  label = dir + "/DirectoryPath";
-  
-  if ( !(tpCntl->getInspectedValue(label, str)) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    Exit(0);
-  }
-  // 指定が無ければ，空のまま
-  if ( !str.empty() )
-  {
-    FIO.OutDirPath = str;
-  }
-  
-  
-  // TimeSlice option
-  label = dir + "/TimeSlice";
-  
-  if ( !(tpCntl->getInspectedValue(label, str)) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  if ( !strcasecmp(str.c_str(), "on") )
-  {
-    FIO.Slice = ON;
-  }
-  else
-  {
-    FIO.Slice = OFF;
-  }
-  
-  // 1プロセスの場合にはランク番号がないので、タイムスライス毎のディレクトリは作らない
-  if ( (Parallelism == Serial) || (Parallelism == OpenMP) )
-  {
-    FIO.Slice = OFF;
-  }
-  
-  
-}
-
 
 // #################################################################
 // 計算モデルの入力ソース情報を取得
@@ -1083,29 +675,6 @@ void Control::getGeometryModel()
     {
       if ( !strcasecmp(str.c_str(), "on") ) Hide.GlyphOutput = ON;
       if ( !strcasecmp(str.c_str(), "InnerOnly") ) Hide.GlyphOutput = 2; // special treatment
-    }
-  }
-  
-  
-  // ボクセルファイル出力 (Hidden)
-  FIO.IO_Voxel = OFF;
-  label = "/GeometryModel/VoxelOutput";
-  
-  if ( tpCntl->chkLabel(label) )
-  {
-    if ( tpCntl->getInspectedValue(label, str) )
-    {
-      if     ( !strcasecmp(str.c_str(), "svx") )  FIO.IO_Voxel = Sphere_SVX;
-      else if( !strcasecmp(str.c_str(), "off") )  FIO.IO_Voxel = OFF;
-      else
-      {
-        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-        Exit(0);
-      }
-    }
-    else
-    {
-      Exit(0);
     }
   }
   
@@ -1612,7 +1181,7 @@ void Control::getReferenceFrame(ReferenceFrame* RF)
       Hostonly_ stamped_printf("\tParsing error : Invalid values for '%s'\n", label.c_str());
       Exit(0);
     }
-    RF->setGridVel((double*)xyz);
+    RF->setGridVel(xyz);
   }
   else
   {
@@ -1883,153 +1452,6 @@ void Control::getSolverProperties()
   
 }
 
-
-
-// #################################################################
-// @brief 初期値とリスタート条件
-// @todo セルフェイスの粗格子リスタート  >> 近似なのでサボる？
-// @ see getTimeControl()
-void Control::getStartCondition()
-{
-  string str;
-  string label, leaf;
-  
-  
-  // Staging option
-  label="/StartCondition/Restart/Staging";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-    ;
-  }
-  else
-  {
-    if     ( !strcasecmp(str.c_str(), "on") )  Restart_staging = ON;
-    else if( !strcasecmp(str.c_str(), "off") ) Restart_staging = OFF;
-    else
-    {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-      Exit(0);
-    }
-  }
-  
-  
-  // リスタート時のDFIファイル名
-  if ( Start != initial_start )
-  {
-    label="/StartCondition/Restart/DFIfiles/Pressure";
-    
-    if ( tpCntl->getInspectedValue(label, str ) )
-    {
-      f_dfi_in_prs = str.c_str();
-    }
-    if ( f_dfi_in_prs.empty() == true ) f_dfi_in_prs = "prs";
-    
-    
-    label="/StartCondition/Restart/DFIfiles/Velocity";
-    
-    if ( tpCntl->getInspectedValue(label, str ) )
-    {
-      f_dfi_in_vel = str.c_str();
-    }
-    if ( f_dfi_in_vel.empty() == true ) f_dfi_in_vel = "vel";
-    
-    
-    label="/StartCondition/Restart/DFIfiles/Fvelocity";
-    
-    if ( tpCntl->getInspectedValue(label, str ) )
-    {
-      f_dfi_in_fvel = str.c_str();
-    }
-    if ( f_dfi_in_fvel.empty() == true ) f_dfi_in_fvel = "fvel";
-    
-    
-    if ( isHeatProblem() )
-    {
-      label="/StartCondition/Restart/DFIfiles/Temperature";
-      
-      if ( tpCntl->getInspectedValue(label, str ) )
-      {
-        f_dfi_in_temp = str.c_str();
-      }
-      if ( f_dfi_in_temp.empty() == true ) f_dfi_in_temp = "tmp";
-    }
-    
-    
-    // 平均値
-    if ( Mode.Average == ON )
-    {
-      label="/StartCondition/Restart/DFIfiles/AveragedPressure";
-      
-      if ( tpCntl->getInspectedValue(label, str ) )
-      {
-        f_dfi_in_prsa = str.c_str();
-      }
-      if ( f_dfi_in_prsa.empty() == true ) f_dfi_in_prsa = "prsa";
-      
-      
-      label="/StartCondition/Restart/DFIfiles/AveragedVelocity";
-      
-      if ( tpCntl->getInspectedValue(label, str ) )
-      {
-        f_dfi_in_vela = str.c_str();
-      }
-      if ( f_dfi_in_vela.empty() == true ) f_dfi_in_vela = "vela";
-      
-      
-      if ( isHeatProblem() )
-      {
-        label="/StartCondition/Restart/DFIfiles/AveragedTemperature";
-        
-        if ( tpCntl->getInspectedValue(label, str ) )
-        {
-          f_dfi_in_tempa = str.c_str();
-        }
-        if ( f_dfi_in_tempa.empty() == true ) f_dfi_in_tempa = "tmpa";
-      }
-    }
-  }
-  
-  
-
-  // 初期条件 温度はParseBC::getInitTempOfMedium()
-  if ( Start == initial_start )
-  {
-    /* Density
-    label="/StartCondition/InitialState/MassDensity";
-    
-    if ( !(tpCntl->getInspectedValue(label, iv.Density )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
-      Exit(0);
-    }
-    */
-    
-    // Pressure
-    label="/StartCondition/InitialState/Pressure";
-    
-    if ( !(tpCntl->getInspectedValue(label, iv.Pressure )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
-      Exit(0);
-    }
-    
-    // Velocity
-    REAL_TYPE v[3];
-    for (int n=0; n<3; n++) v[n]=0.0;
-    label="/StartCondition/InitialState/Velocity";
-    
-    if( !(tpCntl->getInspectedVector(label, v, 3)) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : fail to get velocity in '%s'\n", label.c_str());
-      Exit(0);
-    }
-    iv.VecU = v[0];
-    iv.VecV = v[1];
-    iv.VecW = v[2];
-  }
-  
-}
 
 
 // #################################################################
@@ -3447,30 +2869,6 @@ void Control::printSteerConditions(FILE* fp,
   
   
   
-  // File IO mode ------------------
-  fprintf(fp,"\n\tFile IO Mode\n");
-  
-  fprintf(fp,"\t     Unit of File             :   %s\n", (Unit.File == DIMENSIONAL) ? "Dimensional" : "Non-Dimensional");
-  
-  // InputMode >> Distributed by default
-  fprintf(fp,"\t     IO Mode                  :   %s\n", (FIO.IOmode==IO_GATHER) ? "Gathered" : "Distributed");
-  
-  
-  // Output guide
-  fprintf(fp,"\t     Guide cell for output    :   %d\n", GuideOut);
-  
-  // Voxel output
-  fprintf(fp,"\t     Voxel model output       :   %s\n", (FIO.IO_Voxel==Sphere_SVX) ? "svx" : "None");
-  
-  
-  // IO Directory
-  fprintf(fp,"\t     I/O Directory Input      :   \"%s\"\n", FIO.InDirPath.c_str());
-  fprintf(fp,"\t     I/O Directory Output     :   \"%s\"\n", FIO.OutDirPath.c_str());
-  
-  // Time Slice option
-  fprintf(fp,"\t     Time Slie Directory      :   %s\n", (FIO.Slice==ON) ? "On" : "Off");
-  
-  
   // ログ出力 ------------------
   fprintf(fp,"\n\tLogs\n");
   fprintf(fp,"\t     Unit for Output          :   %s\n", (Unit.Log == DIMENSIONAL) ? "Dimensional" : "Non-Dimensional");
@@ -4162,7 +3560,7 @@ void Control::setRefParameters(MediumList* mat, ReferenceFrame* RF)
   // 参照速度の無次元化
   if ( Unit.Param == DIMENSIONAL )
   {
-    double g[3];
+    REAL_TYPE g[3];
     RF->copyGridVel(g);
     g[0] /= (double)RefVelocity;
     g[1] /= (double)RefVelocity;

@@ -32,7 +32,7 @@ class DomainInfo {
 public:
   cpm_ParaManager* paraMngr; ///< Cartesian Partition Manager
   
-public:
+
   int procGrp;         ///< プロセスグループ番号
   int myRank;          ///< 自ノードのランク番号
   int numProc;         ///< 全ランク数
@@ -55,8 +55,6 @@ public:
   
   std::string HostName;  ///< ホスト名
 
-  
-public:
   
   /** コンストラクタ */
   DomainInfo() {
@@ -86,7 +84,6 @@ public:
   /**　デストラクタ */
   virtual ~DomainInfo() {}
   
-public:
   
   /**
    * @brief CPMのポインタをコピーし、ランク情報を設定

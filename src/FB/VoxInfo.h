@@ -22,10 +22,9 @@
  * @author aics
  */
 
-#include "cpm_ParaManager.h"
+#include "DomainInfo.h"
 #include <math.h>
 #include <cstdlib>
-#include "DomainInfo.h"
 #include "FBUtility.h"
 #include "Component.h"
 #include "Medium.h"

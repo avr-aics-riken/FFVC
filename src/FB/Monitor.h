@@ -22,9 +22,7 @@
 // @note 浮動小数点の型はREAL_TYPE, mtblのみdouble
 
 #include "DomainInfo.h"
-#include <string>
 #include <vector>
-#include "FB_Define.h"
 #include "Vec3.h"
 #include "MonCompo.h"
 #include "Component.h"

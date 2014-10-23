@@ -49,7 +49,6 @@ libFFV_a_SOURCES = \
   ffv_LS.h \
   ffv_Loop.C \
   ffv_Post.C \
-  ffv_Restart.C \
   ffv_SetBC.C \
   ffv_SetBC.h \
   ffv_TerminateCtrl.C \

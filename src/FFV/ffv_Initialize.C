@@ -84,7 +84,15 @@ int FFV::Initialize(int argc, char **argv)
   // 固定パラメータ
   fixedParameters();
   
-
+  
+  
+  // File IO classのインスタンス
+  identifyFIO(&tp_ffv);
+  
+  F->importCPM(paraMngr);
+  F->importExtClass(&tp_ffv, &RF, &C);
+  
+  
   
   
   // ------------------------------------
@@ -138,7 +146,7 @@ int FFV::Initialize(int argc, char **argv)
   // パラメータの取得と計算領域の初期化，並列モードを返す
   // Polylibの基準値も設定
   std::string str_para = setupDomain(&tp_ffv);
-
+  
   
   // mat[], cmp[]の作成
   createTable(fp);
@@ -432,9 +440,9 @@ int FFV::Initialize(int argc, char **argv)
     printf(    "\n----------\n\n\n");
   }
   
-  if (C.FIO.IO_Voxel == ON)
-  {
-    Ex->writeSVX(d_bcd, &C);
+
+  // 指定のボクセルファイル出力が指定されている場合 true
+  if ( F->writeSVX(d_bcd) ) {
     Hostonly_
     {
       fprintf(fp,"\tVoxel file 'example.svx' was written.\n");
@@ -477,6 +485,29 @@ int FFV::Initialize(int argc, char **argv)
   allocate_Main(TotalMemory);
   
 
+  // File IO class への配列ポインタ
+  F->setVarPointers(d_p,
+                    d_v,
+                    d_vf,
+                    d_ie,
+                    d_ws,
+                    d_p0,
+                    d_wo,
+                    d_wv,
+                    d_ap,
+                    d_av,
+                    d_ae,
+                    d_dv,
+                    d_bcd,
+                    d_cdf,
+                    mat_tbl);
+  
+  F->getStartCondition();
+  
+  F->getStagingOption();
+  
+  F->getRestartDFI();
+  
   
   // 初期値とリスタート処理 瞬時値と平均値に分けて処理　------------------
   Hostonly_
@@ -488,13 +519,13 @@ int FFV::Initialize(int argc, char **argv)
   // リスタートモードの選択
   if ( C.Start != initial_start)
   {
-    selectRestartMode();
+    F->selectRestartMode();
   }
   
   
   // 瞬時値のリスタート
   TIMING_start(tm_restart);
-  Restart(fp);
+  F->Restart(fp, CurrentStep, CurrentTime);
   TIMING_stop(tm_restart);
   
   
@@ -506,7 +537,7 @@ int FFV::Initialize(int argc, char **argv)
   if ( C.Mode.AverageRestart == ON )
   {
     TIMING_start(tm_restart);
-    RestartAvrerage(fp, flop_task);
+    F->RestartAvrerage(fp, CurrentStep, CurrentTime, CurrentStep_Avr, CurrentTime_Avr, flop_task);
     TIMING_stop(tm_restart);
   }
   
@@ -514,7 +545,7 @@ int FFV::Initialize(int argc, char **argv)
   // リスタートの最大値と最小値の表示
   if ( C.Start != initial_start )
   {
-    RestartDisplayMinmax(fp, flop_task);
+    F->RestartDisplayMinmax(fp, flop_task);
   }
 
   
@@ -546,19 +577,19 @@ int FFV::Initialize(int argc, char **argv)
 
   
   // 出力ファイルの初期化
-  initFileOut();
+  F->initFileOut();
   
 
   // セッションを開始したときに、初期値をファイル出力  性能測定モードのときには出力しない
   if ( (C.Hide.PM_Test == OFF) && (0 == CurrentStep) )
   {
     flop_task = 0.0;
-    OutputBasicVariables(flop_task);
+    F->OutputBasicVariables(CurrentStep, CurrentTime, flop_task);
     
     if ( (C.Mode.Average == ON) && (C.Start != initial_start) )
     {
       double flop_count=0.0;
-      OutputAveragedVarables(flop_count);
+      F->OutputAveragedVarables(CurrentStep, CurrentTime, CurrentStep_Avr, CurrentTime_Avr, flop_count);
     }
   }
 
@@ -567,7 +598,7 @@ int FFV::Initialize(int argc, char **argv)
   if ( (C.Start == restart_sameDiv_refinement) || (C.Start == restart_diffDiv_refinement) )
   {
     flop_task = 0.0;
-    OutputBasicVariables(flop_task);
+    F->OutputBasicVariables(CurrentStep, CurrentTime, flop_task);
   }
 
   
@@ -738,20 +769,6 @@ bool FFV::chkMediumConsistency()
   return true;
 }
 
-
-
-// #################################################################
-/* @brief 時刻をRFクラスからv00[4]にコピーする
- * @param [in] time 設定する時刻
- */
-void FFV::copyV00fromRF(double m_time)
-{
-  RF.setV00(m_time);
-  
-  double g[4];
-  RF.copyV00(g);
-  for (int i=0; i<4; i++) v00[i]=(REAL_TYPE)g[i];
-}
 
 
 // #################################################################
@@ -990,15 +1007,27 @@ void FFV::displayMemoryInfo(FILE* fp, double G_mem, double L_mem, const char* st
  */
 void FFV::displayParameters(FILE* fp)
 {
-  C.displayParams(stdout, fp, dynamic_cast<IterationCtl*>(LS), &DT, &RF, &DivC, mat, cmp, EXEC_MODE);
-
   
+  C.printSteerConditions(stdout, dynamic_cast<IterationCtl*>(LS), &DT, &RF, &DivC, EXEC_MODE);
+  C.printSteerConditions(fp,     dynamic_cast<IterationCtl*>(LS), &DT, &RF, &DivC, EXEC_MODE);
+  
+  F->printSteerConditions(stdout);
+  F->printSteerConditions(fp);
+  
+  C.printParaConditions(stdout, mat);
+  C.printParaConditions(fp,     mat);
+  
+  C.printInitValues(stdout, cmp);
+  C.printInitValues(fp,     cmp);
+
   Ex->printPara(stdout, &C);
   Ex->printPara(fp, &C);
+  
   
   // 外部境界面の開口率を表示
   C.printOuterArea(stdout, G_Fcell, G_Acell, G_size);
   C.printOuterArea(fp, G_Fcell, G_Acell, G_size);
+  
   
   // 境界条件のリストと外部境界面のBC設定を表示
 
@@ -1269,20 +1298,6 @@ void FFV::fixedParameters()
   C.Gravity =9.8; // gravity acceleration
   C.Hide.Subdivision = 20;
   
-  
-  // ファイル名
-  C.f_Pressure       = "prs";
-  C.f_Velocity       = "vel";
-  C.f_Fvelocity      = "fvel";
-  C.f_Temperature    = "tmp";
-  C.f_AvrPressure    = "prsa";
-  C.f_AvrVelocity    = "vela";
-  C.f_AvrTemperature = "tmpa";
-  C.f_DivDebug       = "div";
-  C.f_Helicity       = "hlt";
-  C.f_TotalP         = "tp";
-  C.f_I2VGT          = "qcr";
-  C.f_Vorticity      = "vrt";
 }
 
 
@@ -2078,6 +2093,53 @@ bool FFV::getParaDiv(TextParser* tpCntl)
 
 
 // #################################################################
+// * @brief FielIO classの同定
+// * @param [in] tpCntl  テキストパーサー
+void FFV::identifyFIO(TextParser* tpCntl)
+{
+  string str;
+  string label, leaf;
+  int Format=0;
+  
+  
+  // フォーマットパラメータの取得
+  label = "/Output/Data/BasicVariables/Format";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  if     ( !strcasecmp(str.c_str(), "sph") )    Format = sph_fmt;
+  else if( !strcasecmp(str.c_str(), "bov") )    Format = bov_fmt;
+  else if( !strcasecmp(str.c_str(), "plot3d") ) Format = plt3d_fun_fmt;
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  
+  // インスタンス
+  if      ( Format == sph_fmt )
+  {
+    F = dynamic_cast<IO_BASE*>(new SPH);
+    F->setFormat(sph_fmt);
+  }
+  else if ( Format == bov_fmt )
+  {
+    F->setFormat(bov_fmt);
+  }
+  else if ( Format == plt3d_fun_fmt )
+  {
+    F->setFormat(plt3d_fun_fmt);
+  }
+  
+}
+
+
+// #################################################################
 /* @brief Intrisic classの同定
  * @param [in] fp  ファイル出力ポインタ
  */
@@ -2156,701 +2218,6 @@ void FFV::identifyLinearSolver(TextParser* tpCntl)
       
     default:
       Exit(0);
-  }
-  
-}
-
-
-
-// #################################################################
-/* @brief ファイル出力の初期化
- */
-void FFV::initFileOut()
-{
-  std::string hostname;
-  hostname = paraMngr->GetHostName();
-  
-  
-  // Format
-  CDM::E_CDM_FORMAT format;
-  
-  if ( C.FIO.Format == sph_fmt )
-  {
-    format = CDM::E_CDM_FMT_SPH;
-  }
-  else if ( C.FIO.Format == bov_fmt )
-  {
-    format = CDM::E_CDM_FMT_BOV;
-  }
-  else if ( C.FIO.Format == plt3d_fun_fmt )
-  {
-    format = CDM::E_CDM_FMT_PLOT3D;
-  }
-  else
-  {
-    Exit(0);
-  }
-  
-  // Datatype
-  CDM::E_CDM_DTYPE datatype;
-  
-  if ( sizeof(REAL_TYPE) == 4 )
-  {
-    datatype = CDM::E_CDM_FLOAT32;
-  }
-  else if ( sizeof(REAL_TYPE) == 8 )
-  {
-    datatype = CDM::E_CDM_FLOAT64;
-  }
-  else
-  {
-    Exit(0);
-  }
-  
-  
-  // 出力ファイルヘッダ
-  int cdm_tail[3], cdm_div[3];
-  for (int i=0; i<3; i++) cdm_tail[i]=size[i];
-  for (int i=0; i<3; i++) cdm_div[i]=1;
-  
-  if ( numProc > 1)
-  {
-    const int* p_tail = paraMngr->GetVoxelTailIndex();
-    for (int i=0; i<3; i++ ) cdm_tail[i]=p_tail[i]+1;
-    
-    const int* p_div = paraMngr->GetDivNum();
-    for (int i=0; i<3; i++ ) cdm_div[i] = p_div[i];
-  }
-  
-
-  int gc_out = C.GuideOut;
-  REAL_TYPE cdm_org[3], cdm_pit[3];
-  
-  for (int i=0; i<3; i++)
-  {
-    cdm_org[i] = origin[i]; // CDM用オリジナルポイントのセット
-    cdm_pit[i] = pitch[i];
-  }
-  
-  /* セルセンター位置を基点とする >> CDMlib-1.5.1からセルセンターへの更新処理を削除する
-  for (int i=0; i<3; i++)
-  {
-    cdm_org[i] += 0.5*cdm_pit[i];
-  }
-   */
-  
-  // 出力ファイルの指定が有次元の場合
-  if ( C.Unit.File == DIMENSIONAL )
-  {
-    for (int i=0; i<3; i++)
-    {
-      cdm_org[i] *= C.RefLength;
-      cdm_pit[i] *= C.RefLength;
-    }
-  }
-  
-  // make output directory
-  std::string path = C.FIO.OutDirPath;
-
-  
-  // タイムスライス出力オプション
-  CDM::E_CDM_ONOFF TimeSliceDir;
-  if ( C.FIO.Slice == ON )
-  {
-    TimeSliceDir = CDM::E_CDM_ON;
-  }
-  else
-  {
-    TimeSliceDir = CDM::E_CDM_OFF;
-  }
-  
-  
-  std::string process="./proc.dfi";
-  int comp = 1;
-  
-  
-  // 単位の設定
-  
-  std::string UnitL;
-  switch (C.Unit.Length)
-  {
-    case LTH_ND:
-      UnitL = "NonDimensional";
-      break;
-      
-    case LTH_m:
-      UnitL = "M";
-      break;
-      
-    case LTH_cm:
-      UnitL = "cm";
-      break;
-      
-    case LTH_mm:
-      UnitL = "mm";
-      break;
-      
-    default:
-      break;
-  }
-  
-  
-  std::string UnitV;
-  if ( C.Unit.File == DIMENSIONAL )
-  {
-    UnitV = "m/s";
-  }
-  else
-  {
-    UnitV = "NonDimensional";
-  }
-  
-  
-  std::string UnitP;
-  if ( C.Unit.File == DIMENSIONAL )
-  {
-    UnitP = "Pa";
-  }
-  else
-  {
-    UnitP = "NonDimensional";
-  }
-  
-  double DiffPrs = (double)C.RefDensity * (double)C.RefVelocity * (double)C.RefVelocity;
-  
-  
-  std::string UnitT = "Celsius";
-  
-  
-  // Pressure
-  comp = 1;
-  DFI_OUT_PRS = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                   cdm_DFI::Generate_DFI_Name(C.f_Pressure),
-                                   path,
-                                   C.f_Pressure,
-                                   format,
-                                   gc_out,
-                                   datatype,
-                                   CDM::E_CDM_IJKN,
-                                   comp,
-                                   process,
-                                   G_size,
-                                   cdm_pit,
-                                   cdm_org,
-                                   cdm_div,
-                                   head,
-                                   cdm_tail,
-                                   hostname,
-                                   TimeSliceDir);
-  
-  if ( DFI_OUT_PRS == NULL )
-  {
-    Hostonly_ stamped_printf("\tFails to instance Pressure dfi.\n");
-    Exit(0);
-  }
-  
-  if( C.FIO.Slice == ON )
-  {
-    DFI_OUT_PRS->SetTimeSliceFlag(CDM::E_CDM_ON);
-  }
-  else
-  {
-    DFI_OUT_PRS->SetTimeSliceFlag(CDM::E_CDM_OFF);
-  }
-  
-  
-  DFI_OUT_PRS->AddUnit("Length",   UnitL, (double)C.RefLength);
-  DFI_OUT_PRS->AddUnit("Velocity", UnitV, (double)C.RefVelocity);
-  DFI_OUT_PRS->AddUnit("Pressure", UnitP, (double)C.BasePrs, DiffPrs, true);
-  
-  DFI_OUT_PRS->WriteProcDfiFile(MPI_COMM_WORLD, true);
-  
-  
-  
-  // Velocity
-  comp = 3;
-  DFI_OUT_VEL = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                   cdm_DFI::Generate_DFI_Name(C.f_Velocity),
-                                   path,
-                                   C.f_Velocity,
-                                   format,
-                                   gc_out,
-                                   datatype,
-                                   CDM::E_CDM_NIJK,
-                                   comp,
-                                   process,
-                                   G_size,
-                                   cdm_pit,
-                                   cdm_org,
-                                   cdm_div,
-                                   head,
-                                   cdm_tail,
-                                   hostname,
-                                   TimeSliceDir);
-  
-  if ( DFI_OUT_VEL == NULL )
-  {
-    Hostonly_ stamped_printf("\tFails to instance Velocity dfi.\n");
-    Exit(0);
-  }
-  
-  if ( C.FIO.Slice == ON )
-  {
-    DFI_OUT_VEL->SetTimeSliceFlag(CDM::E_CDM_ON);
-  }
-  else
-  {
-    DFI_OUT_VEL->SetTimeSliceFlag(CDM::E_CDM_OFF);
-  }
-  
-  DFI_OUT_VEL->AddUnit("Length"  , UnitL, (double)C.RefLength);
-  DFI_OUT_VEL->AddUnit("Velocity", UnitV, (double)C.RefVelocity);
-  DFI_OUT_VEL->AddUnit("Pressure", UnitP, (double)C.BasePrs, DiffPrs, true);
-  
-  
-  
-  // Fvelocity
-  comp = 3;
-  DFI_OUT_FVEL = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                    cdm_DFI::Generate_DFI_Name(C.f_Fvelocity),
-                                    path,
-                                    C.f_Fvelocity,
-                                    format,
-                                    gc_out,
-                                    datatype,
-                                    CDM::E_CDM_NIJK,
-                                    comp,
-                                    process,
-                                    G_size,
-                                    cdm_pit,
-                                    cdm_org,
-                                    cdm_div,
-                                    head,
-                                    cdm_tail,
-                                    hostname,
-                                    TimeSliceDir);
-  
-  if ( DFI_OUT_FVEL == NULL )
-  {
-    Hostonly_ stamped_printf("\tFails to instance Fvelocity dfi.\n");
-    Exit(0);
-  }
-  
-  if ( C.FIO.Slice == ON )
-  {
-    DFI_OUT_FVEL->SetTimeSliceFlag(CDM::E_CDM_ON);
-  }
-  else
-  {
-    DFI_OUT_FVEL->SetTimeSliceFlag(CDM::E_CDM_OFF);
-  }
-
-  DFI_OUT_FVEL->AddUnit("Length"  , UnitL, (double)C.RefLength);
-  DFI_OUT_FVEL->AddUnit("Velocity", UnitV, (double)C.RefVelocity);
-  DFI_OUT_FVEL->AddUnit("Pressure", UnitP, (double)C.BasePrs, DiffPrs, true);
-  
-  
-  
-  // Temperature
-  if ( C.isHeatProblem() )
-  {
-    comp = 1;
-    DFI_OUT_TEMP = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                      cdm_DFI::Generate_DFI_Name(C.f_Temperature),
-                                      path,
-                                      C.f_Temperature,
-                                      format,
-                                      gc_out,
-                                      datatype,
-                                      CDM::E_CDM_IJKN,
-                                      comp,
-                                      process,
-                                      G_size,
-                                      cdm_pit,
-                                      cdm_org,
-                                      cdm_div,
-                                      head,
-                                      cdm_tail,
-                                      hostname,
-                                      TimeSliceDir);
-    
-    if ( DFI_OUT_TEMP == NULL )
-    {
-      Hostonly_ stamped_printf("\tFails to instance Temperature dfi.\n");
-      Exit(0);
-    }
-    
-    if ( C.FIO.Slice == ON )
-    {
-      DFI_OUT_TEMP->SetTimeSliceFlag(CDM::E_CDM_ON);
-    }
-    else
-    {
-      DFI_OUT_TEMP->SetTimeSliceFlag(CDM::E_CDM_OFF);
-    }
-    
-    DFI_OUT_TEMP->AddUnit("Length"  , UnitL, (double)C.RefLength);
-    DFI_OUT_TEMP->AddUnit("Velocity", UnitV, (double)C.RefVelocity);
-    DFI_OUT_TEMP->AddUnit("Pressure", UnitP, (double)C.BasePrs, DiffPrs, true);
-    DFI_OUT_TEMP->AddUnit("Temperature", UnitT, (double)C.BaseTemp, (double)C.DiffTemp, true);
-  }
-  
-  
-  
-  // 平均値
-  if ( C.Mode.Average == ON )
-  {
-    
-    // Pressure
-    comp = 1;
-    DFI_OUT_PRSA = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                      cdm_DFI::Generate_DFI_Name(C.f_AvrPressure),
-                                      path,
-                                      C.f_AvrPressure,
-                                      format,
-                                      gc_out,
-                                      datatype,
-                                      CDM::E_CDM_IJKN,
-                                      comp,
-                                      process,
-                                      G_size,
-                                      cdm_pit,
-                                      cdm_org,
-                                      cdm_div,
-                                      head,
-                                      cdm_tail,
-                                      hostname,
-                                      TimeSliceDir);
-    
-    if ( DFI_OUT_PRSA == NULL )
-    {
-      Hostonly_ stamped_printf("\tFails to instance AvrPressure dfi.\n");
-      Exit(0);
-    }
-    
-    if ( C.FIO.Slice == ON )
-    {
-      DFI_OUT_PRSA->SetTimeSliceFlag(CDM::E_CDM_ON);
-    }
-    else
-    {
-      DFI_OUT_PRSA->SetTimeSliceFlag(CDM::E_CDM_OFF);
-    }
-    
-    DFI_OUT_PRSA->AddUnit("Length"  , UnitL, (double)C.RefLength);
-    DFI_OUT_PRSA->AddUnit("Velocity", UnitV, (double)C.RefVelocity);
-    DFI_OUT_PRSA->AddUnit("Pressure", UnitP, (double)C.BasePrs, DiffPrs, true);
-    
-    
-    
-    // Velocity
-    comp = 3;
-    DFI_OUT_VELA = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                      cdm_DFI::Generate_DFI_Name(C.f_AvrVelocity),
-                                      path,
-                                      C.f_AvrVelocity,
-                                      format,
-                                      gc_out,
-                                      datatype,
-                                      CDM::E_CDM_NIJK,
-                                      comp,
-                                      process,
-                                      G_size,
-                                      cdm_pit,
-                                      cdm_org,
-                                      cdm_div,
-                                      head,
-                                      cdm_tail,
-                                      hostname,
-                                      TimeSliceDir);
-    
-    if ( DFI_OUT_VELA == NULL )
-    {
-      Hostonly_ stamped_printf("\tcan not instance AvrVelocity dfi\n");
-      Exit(0);
-    }
-    
-    if ( C.FIO.Slice == ON )
-    {
-      DFI_OUT_VELA->SetTimeSliceFlag(CDM::E_CDM_ON);
-    }
-    else
-    {
-      DFI_OUT_VELA->SetTimeSliceFlag(CDM::E_CDM_OFF);
-    }
-    
-    DFI_OUT_VELA->AddUnit("Length"  , UnitL, (double)C.RefLength);
-    DFI_OUT_VELA->AddUnit("Velocity", UnitV, (double)C.RefVelocity);
-    DFI_OUT_VELA->AddUnit("Pressure", UnitP, (double)C.BasePrs, DiffPrs, true);
-    
-    
-    
-    // Temperature
-    if ( C.isHeatProblem() )
-    {
-      comp = 1;
-      DFI_OUT_TEMPA = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                         cdm_DFI::Generate_DFI_Name(C.f_AvrTemperature),
-                                         path,
-                                         C.f_AvrTemperature,
-                                         format,
-                                         gc_out,
-                                         datatype,
-                                         CDM::E_CDM_IJKN,
-                                         comp,
-                                         process,
-                                         G_size,
-                                         cdm_pit,
-                                         cdm_org,
-                                         cdm_div,
-                                         head,
-                                         cdm_tail,
-                                         hostname,
-                                         TimeSliceDir);
-      
-      if ( DFI_OUT_TEMPA == NULL )
-      {
-        Hostonly_ stamped_printf("\tFails to instance AvrTemperature dfi.\n");
-        Exit(0);
-      }
-      
-      if ( C.FIO.Slice == ON )
-      {
-        DFI_OUT_TEMPA->SetTimeSliceFlag(CDM::E_CDM_ON);
-      }
-      else
-      {
-        DFI_OUT_TEMPA->SetTimeSliceFlag(CDM::E_CDM_OFF);
-      }
-      
-      DFI_OUT_TEMPA->AddUnit("Length"  , UnitL, (double)C.RefLength);
-      DFI_OUT_TEMPA->AddUnit("Velocity", UnitV, (double)C.RefVelocity);
-      DFI_OUT_TEMPA->AddUnit("Pressure", UnitP, (double)C.BasePrs, DiffPrs, true);
-      DFI_OUT_TEMP->AddUnit("Temperature", UnitT, (double)C.BaseTemp, (double)C.DiffTemp, true);
-    }
-  }
-  
-  
-  
-  // Derived Variables
-  
-  // Total Pressure
-  if (C.varState[var_TotalP] == ON )
-  {
-    comp = 1;
-    DFI_OUT_TP = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                    cdm_DFI::Generate_DFI_Name(C.f_TotalP),
-                                    path,
-                                    C.f_TotalP,
-                                    format,
-                                    gc_out,
-                                    datatype,
-                                    CDM::E_CDM_IJKN,
-                                    comp,
-                                    process,
-                                    G_size,
-                                    cdm_pit,
-                                    cdm_org,
-                                    cdm_div,
-                                    head,
-                                    cdm_tail,
-                                    hostname,
-                                    TimeSliceDir);
-    
-    if ( DFI_OUT_TP == NULL )
-    {
-      Hostonly_ stamped_printf("\tFails to instance TotalPressure dfi.\n");
-      Exit(0);
-    }
-    
-    if ( C.FIO.Slice == ON )
-    {
-      DFI_OUT_TP->SetTimeSliceFlag(CDM::E_CDM_ON);
-    }
-    else
-    {
-      DFI_OUT_TP->SetTimeSliceFlag(CDM::E_CDM_OFF);
-    }
-    
-    DFI_OUT_TP->AddUnit("Length"  , UnitL, (double)C.RefLength);
-    DFI_OUT_TP->AddUnit("Velocity", UnitV, (double)C.RefVelocity);
-    DFI_OUT_TP->AddUnit("Pressure", UnitP, (double)C.BasePrs, DiffPrs, true);
-  }
-  
-  
-  
-  // Vorticity
-  if (C.varState[var_Vorticity] == ON )
-  {
-    comp = 3;
-    DFI_OUT_VRT = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                     cdm_DFI::Generate_DFI_Name(C.f_Vorticity),
-                                     path,
-                                     C.f_Vorticity,
-                                     format,
-                                     gc_out,
-                                     datatype,
-                                     CDM::E_CDM_NIJK,
-                                     comp,
-                                     process,
-                                     G_size,
-                                     cdm_pit,
-                                     cdm_org,
-                                     cdm_div,
-                                     head,
-                                     cdm_tail,
-                                     hostname,
-                                     TimeSliceDir);
-    if( DFI_OUT_VRT == NULL )
-    {
-      Hostonly_ stamped_printf("\tFails to instance Vorticity dfi.\n");
-      Exit(0);
-    }
-    if( C.FIO.Slice == ON )
-    {
-      DFI_OUT_VRT->SetTimeSliceFlag(CDM::E_CDM_ON);
-    }
-    else
-    {
-      DFI_OUT_VRT->SetTimeSliceFlag(CDM::E_CDM_OFF);
-    }
-    
-    DFI_OUT_VRT->AddUnit("Length"  , UnitL, (double)C.RefLength);
-    DFI_OUT_VRT->AddUnit("Velocity", UnitV, (double)C.RefVelocity);
-    DFI_OUT_VRT->AddUnit("Pressure", UnitP, (double)C.BasePrs, DiffPrs, true);
-  }
-  
-  
-  
-  // 2nd Invariant of VGT
-  if ( C.varState[var_Qcr] == ON )
-  {
-    comp = 1;
-    DFI_OUT_I2VGT = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                       cdm_DFI::Generate_DFI_Name(C.f_I2VGT),
-                                       path,
-                                       C.f_I2VGT,
-                                       format,
-                                       gc_out,
-                                       datatype,
-                                       CDM::E_CDM_IJKN,
-                                       comp,
-                                       process,
-                                       G_size,
-                                       cdm_pit,
-                                       cdm_org,
-                                       cdm_div,
-                                       head,
-                                       cdm_tail,
-                                       hostname,
-                                       TimeSliceDir);
-    
-    if ( DFI_OUT_I2VGT == NULL )
-    {
-      Hostonly_ stamped_printf("\tFails to instance 2nd Invariant of VGT dfi.\n");
-      Exit(0);
-    }
-    
-    if ( C.FIO.Slice == ON )
-    {
-      DFI_OUT_I2VGT->SetTimeSliceFlag(CDM::E_CDM_ON);
-    }
-    else
-    {
-      DFI_OUT_I2VGT->SetTimeSliceFlag(CDM::E_CDM_OFF);
-    }
-    
-    DFI_OUT_I2VGT->AddUnit("Length"  , UnitL, (double)C.RefLength);
-    DFI_OUT_I2VGT->AddUnit("Velocity", UnitV, (double)C.RefVelocity);
-    DFI_OUT_I2VGT->AddUnit("Pressure", UnitP, (double)C.BasePrs, DiffPrs, true);
-  }
-  
-  
-  
-  // Helicity
-  if ( C.varState[var_Helicity] == ON )
-  {
-    comp = 1;
-    DFI_OUT_HLT = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                     cdm_DFI::Generate_DFI_Name(C.f_Helicity),
-                                     path,
-                                     C.f_Helicity,
-                                     format,
-                                     gc_out,
-                                     datatype,
-                                     CDM::E_CDM_IJKN,
-                                     comp,
-                                     process,
-                                     G_size,
-                                     cdm_pit,
-                                     cdm_org,
-                                     cdm_div,
-                                     head,
-                                     cdm_tail,
-                                     hostname,
-                                     TimeSliceDir);
-    
-    if ( DFI_OUT_HLT == NULL )
-    {
-      Hostonly_ stamped_printf("\tFails to instance Helicity dfi.\n");
-      Exit(0);
-    }
-    
-    if ( C.FIO.Slice == ON )
-    {
-      DFI_OUT_HLT->SetTimeSliceFlag(CDM::E_CDM_ON);
-    }
-    else
-    {
-      DFI_OUT_HLT->SetTimeSliceFlag(CDM::E_CDM_OFF);
-    }
-    
-    DFI_OUT_HLT->AddUnit("Length",   UnitL, (double)C.RefLength);
-    DFI_OUT_HLT->AddUnit("Velocity", UnitV, (double)C.RefVelocity);
-    DFI_OUT_HLT->AddUnit("Pressure", UnitP, (double)C.BasePrs, DiffPrs, true);
-  }
-  
-  // Divergence for Debug
-  if ( C.varState[var_Div] == ON )
-  {
-    comp = 1;
-    DFI_OUT_DIV = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                     cdm_DFI::Generate_DFI_Name(C.f_DivDebug),
-                                     path,
-                                     C.f_DivDebug,
-                                     format,
-                                     gc_out,
-                                     datatype,
-                                     CDM::E_CDM_IJKN,
-                                     comp,
-                                     process,
-                                     G_size,
-                                     cdm_pit,
-                                     cdm_org,
-                                     cdm_div,
-                                     head,
-                                     cdm_tail,
-                                     hostname,
-                                     TimeSliceDir);
-    
-    if ( DFI_OUT_DIV == NULL )
-    {
-      Hostonly_ stamped_printf("\tFails to instance Divergence dfi.\n");
-      Exit(0);
-    }
-    
-    if( C.FIO.Slice == ON )
-    {
-      DFI_OUT_DIV->SetTimeSliceFlag(CDM::E_CDM_ON);
-    }
-    else
-    {
-      DFI_OUT_DIV->SetTimeSliceFlag(CDM::E_CDM_OFF);
-    }
-    
-    DFI_OUT_DIV->AddUnit("Length"  , UnitL, (double)C.RefLength);
-    DFI_OUT_DIV->AddUnit("Velocity", UnitV, (double)C.RefVelocity);
-    DFI_OUT_DIV->AddUnit("Pressure", UnitP, (double)C.BasePrs, DiffPrs, true);
   }
   
 }
@@ -3998,6 +3365,7 @@ string FFV::setupDomain(TextParser* tpf)
   BC.setRankInfo   (paraMngr, procGrp);
   Ex->setRankInfo  (paraMngr, procGrp);
   MO.setRankInfo   (paraMngr, procGrp);
+  F->setRankInfo    (paraMngr, procGrp);
   
   for (int i=0; i<ic_END; i++)
   {
@@ -4011,6 +3379,11 @@ string FFV::setupDomain(TextParser* tpf)
   
   // 最初のパラメータの取得 >> C.guide
   C.get1stParameter(&DT);
+  
+  
+  // ファイルIOパラメータ
+  F->getFIOparams();
+  
 
   // 代表パラメータをコピー
   Ex->setRefParameter(&C);
@@ -4035,6 +3408,7 @@ string FFV::setupDomain(TextParser* tpf)
   BC.setNeighborInfo   (C.guide);
   Ex->setNeighborInfo  (C.guide);
   MO.setNeighborInfo   (C.guide);
+  F->setNeighborInfo    (C.guide);
   
   for (int i=0; i<ic_END; i++)
   {

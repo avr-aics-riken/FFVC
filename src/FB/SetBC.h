@@ -22,10 +22,7 @@
  * @author aics
  */
 
-#include "cpm_ParaManager.h"
-
 #include "DomainInfo.h"
-#include "FB_Define.h"
 #include "BndOuter.h"
 #include "Control.h"
 #include "Component.h"

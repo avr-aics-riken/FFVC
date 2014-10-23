@@ -13,45 +13,30 @@
 #
 ###################################################################################
 
-bin_PROGRAMS = ffvc
+noinst_lib_LIBRARIES = libFIO.a
 
-ffvc_CXXFLAGS = \
+noinst_libdir = ../lib
+
+libFIO_a_CXXFLAGS = \
   -I. \
-  -I./FFV \
-  -I./F_CORE \
-  -I./F_LS \
-  -I./FILE_IO \
-  -I./ASD \
-  -I./IP \
-  -I./FB \
+  -I../FB \
+  -I../F_CORE \
   @CDM_CFLAGS@ \
   @CPM_CFLAGS@ \
-  @CUT_CFLAGS@ \
   @PL_CFLAGS@ \
+  @MPICH_CFLAGS@ \
   @PM_CFLAGS@ \
   @TP_CFLAGS@ \
-  @MPICH_CFLAGS@ \
   @REALOPT@
 
-ffvc_SOURCES = main.C
 
-ffvc_LDADD = \
-  -L./FFV -lFFV \
-  -L./FILE_IO -lFIO \
-  -L./F_CORE -lFCORE \
-  -L./F_LS -lFLS \
-  -L./ASD -lASD \
-  -L./IP -lIP \
-  -L./FB -lFB \
-  @CDM_LDFLAGS@ \
-  @CPM_LDFLAGS@ \
-  @CUT_LDFLAGS@ \
-  @PL_LDFLAGS@ \
-  @PM_LDFLAGS@ \
-  @TP_LDFLAGS@ \
-  @MPICH_LDFLAGS@ \
-  @MPICH_LIBS@ \
-  @MPICH_FCLIBS@ \
-  @FFVC_LIBS@
+libFIO_a_SOURCES = \
+  ffv_io_base.h \
+  ffv_io_base.C \
+  ffv_sph.h \
+  ffv_sph.C \
+  ffv_plot3d.h \
+  ffv_plot3d.C
 
-EXTRA_DIST = Makefile_hand Makefile_ffvc depend.inc make_setting
+
+EXTRA_DIST = Makefile_hand depend.inc

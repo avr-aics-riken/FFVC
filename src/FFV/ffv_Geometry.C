@@ -1582,7 +1582,7 @@ void FFV::SubSampling(FILE* fp)
   if ( svf ) delete [] svf;
   if ( smd ) delete [] smd;
   
-  writeRawSPH(d_pvf, size, guide, 0, m_org, m_pit, sizeof(REAL_TYPE));
+  F->writeRawSPH(d_pvf, size, guide, 0, m_org, m_pit, sizeof(REAL_TYPE));
   Exit(0);
 
 }

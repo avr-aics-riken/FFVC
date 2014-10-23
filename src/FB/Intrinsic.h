@@ -22,7 +22,7 @@
  * @author aics
  */
 
-#include "cpm_ParaManager.h"
+#include "cpm_ParaManager.h" // 最初に必要
 #include <math.h>
 #include <fstream>
 #include "DomainInfo.h"

@@ -405,6 +405,7 @@ typedef struct {
   REAL_TYPE p1;
 } Gemini_R;
 
+
 // Divergence judgement
 typedef struct {
   int MaxIteration;
@@ -413,6 +414,7 @@ typedef struct {
   double divEPS;
   double divergence;
 } DivConvergence;
+
 
 /// FFVC_EXEC_MODE
 enum ffvc_execution {
@@ -568,6 +570,15 @@ enum DIRection {
   Z_minus,
   Z_plus
 };
+
+/** ボクセルファイルフォーマット */
+enum Voxel_Type
+{
+  Sphere_SVX=1,
+  Sphere_SBX
+};
+
+
 
 /*
  * @brief 指定面方向のカットIDをとりだす

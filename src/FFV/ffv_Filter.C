@@ -42,7 +42,7 @@ int FFV::FilterLoop()
   C.Interval[Control::tg_sampled].printInfo("tg_sampled");
   C.Interval[Control::tg_END].printInfo("tg_END");
   
-  //FFVのデータから取得できれば、ここでハードコードする必要がない。zrm
+  //FFVのデータから取得できれば、ここでハードコードする必要がない。
   int interval = 32;
   int i = 0;
   
@@ -61,7 +61,7 @@ int FFV::FilterLoop()
     //
     /////////////////////////////////// FilterLoop(i)
     
-    if( loop_ret != CDM::E_CDM_SUCCESS ) break;
+    if ( loop_ret == 0 ) break;
     
     i += interval;
   }
@@ -83,74 +83,140 @@ int FFV::FilterLoop()
   return ret;
 }
 
-
 int FFV::FilterLoop(unsigned int step)
 {
-  int ret=CDM::E_CDM_SUCCESS;
+  
+}
+
+/*
+int FFV::FilterLoop(unsigned int step)
+{
+  int ret=1;
   
   {
     char work_path[1024]="";
     getcwd( work_path, sizeof(work_path) );
     printf("\n\twork_path = %s\n", work_path);
     
-    int my_rank = paraMngr->GetMyRankID();
-    int n_rank  = paraMngr->GetNumRank();
-    std::string host_name = paraMngr->GetHostName();
     
-    //printf("\n\t\t my_rank=%d, n_rank=%d, host_name=%s\n", my_rank, n_rank, host_name.c_str());
-    //printf("\n\t\t C.num_thread = %d, C.num_process=%d\n", C.num_thread, C.num_process );
-    
-    //char tmp_str[1024]="";
-    ////例えば、fvel_stepno_rankno.sph, %010d_%10d よいのか、要相談。
-    //if ( paraMngr->IsParallel() )   sprintf( tmp_str, "fval_%010d.sph", my_rank );
-    //else                            sprintf( tmp_str, "fval_%010d.sph", step );
-    
-    //std::string inFile = tmp_str;
-    
-    //for( int k=Control::tg_compute; k<Control::tg_END; k++ )
-    //{
-    //    unsigned int step_intv = C.Interval[k].getIntervalStep();
-    //    double       time_invl = C.Interval[k].getIntervalTime();
-    //    printf("\t\t step_intv = %d time_invl=%lf\n", step_intv, time_invl);
-    //}
-    
-    //if( DFI_OUT_PRS )   printf("\n\t\t DFI_OUT_PRS != NULL\n");     ///< Pressure
-    //if( DFI_OUT_VEL )   printf("\t\t DFI_OUT_VEL != NULL\n");       ///< Velocity
-    //if( DFI_OUT_FVEL )  printf("\t\t DFI_OUT_FVEL != NULL\n");      ///< Face velocity
-    
-    //if( DFI_OUT_TEMP )  printf("\t\t DFI_OUT_TEMP != NULL\n");      ///< Temperature
-    //if( DFI_OUT_PRSA )  printf("\t\t DFI_OUT_PRSA != NULL\n");      ///< Averaged Pressure
-    //if( DFI_OUT_VELA )  printf("\t\t DFI_OUT_VELA != NULL\n");      ///< Averaged velocity
-    //if( DFI_OUT_TEMPA ) printf("\t\t DFI_OUT_TEMPA != NULL\n");     ///< Averaged temperature
-    //if( DFI_OUT_TP )    printf("\t\t DFI_OUT_TP != NULL\n");        ///< Total Pressure
-    //if( DFI_OUT_VRT )   printf("\t\t DFI_OUT_VRT != NULL\n");       ///< Vorticity
-    //if( DFI_OUT_I2VGT ) printf("\t\t DFI_OUT_I2VGT != NULL\n");     ///< 2nd Invariant of Velocity Gradient Tensor
-    //if( DFI_OUT_HLT )   printf("\t\t DFI_OUT_HLT != NULL\n");       ///< Helicity
-    //if( DFI_OUT_DIV )   printf("\t\t DFI_OUT_DIV != NULL\n");       ///< Divergence for debug
-    
-    if( DFI_OUT_PRS == NULL || DFI_OUT_VEL == NULL ){
+    if ( !F.checkOutFile() )
+    {
       printf("\n\t\tdfi is NULL, return.\n");
-      ret = CDM::E_CDM_ERROR;
-      return ret;
+      return 0;
     }
     
     //bool is_gathered = (MO.getOutputType()==MonitorList::GATHER ? true : false);
     
     int istep = step;
     
-    bool mio = (n_rank > 1 ? true : false);//並列判定フラグ（逐次or並列の判定用）
+    bool mio = (numProc > 1 ? true : false); //並列判定フラグ（逐次or並列の判定用）
     
-    for( int rank_id=0; rank_id<n_rank; rank_id++ )
+    for( int rank_id=0; rank_id<numProc; rank_id++ )
     {
       cdm_Rank rank_v;   if(DFI_OUT_VEL!=NULL)  rank_v   = DFI_OUT_VEL->GetcdmProcess()->RankList[rank_id];
       cdm_Rank rank_p;   if(DFI_OUT_PRS!=NULL)  rank_p   = DFI_OUT_PRS->GetcdmProcess()->RankList[rank_id];
       cdm_Rank rank_t;   if(DFI_OUT_TEMP!=NULL) rank_t   = DFI_OUT_TEMP->GetcdmProcess()->RankList[rank_id];
       cdm_Rank rank_vrt; if(DFI_OUT_VRT!=NULL)  rank_vrt = DFI_OUT_VRT->GetcdmProcess()->RankList[rank_id];
+      ;
       
-      //printf("\t\t rank_v:   id=%d, host=%s\n",   rank_v.RankID,   rank_v.HostName.c_str());
-      //printf("\t\t rank_p:   id=%d, host=%s\n",   rank_p.RankID,   rank_p.HostName.c_str());
-      //printf("\t\t rank_t:   id=%d, host=%s\n",   rank_t.RankID,   rank_t.HostName.c_str());
-      //printf("\t\t rank_vrt: id=%d, host=%s\n\n", rank_vrt.RankID, rank_vrt.HostName.c_str());
+      bool b_alloc = false; //false の場合、FFVに既にある配列を使用する。
+      
+      //----------------------------------------------------------------
+      //デフォルトでは、REAL_TYPE=float ,コンパイル時オプション-D_REAL_IS_DOUBLE_
+      //を付与することで, REAL_TYPE=doubleになる
+      REAL_TYPE *p_arr_v=NULL, *p_arr_p=NULL, *p_arr_t=NULL, *p_arr_vrt=NULL;
+      int        n_arr_v=0,     n_arr_p=0,     n_arr_t=0,     n_arr_vrt=0;
+      
+      if( b_alloc == false )
+      {
+        p_arr_v  = d_v;     //dv--セルセンター速度, d_wo--入出力のバッファワーク
+        p_arr_p  = d_p;     //dp--圧力
+        p_arr_t  = d_ws;    //d_ws--反復中に固定のソース, d_ie--内部エネルギー
+        p_arr_vrt= d_vrt;   //d_vrt--渦度ベクトル
+      }
+      
+      //フィールドデータの読込み
+      
+      int rc1 = FilterGetArrayFromSph(DFI_OUT_VEL,  &rank_v,  istep, &p_arr_v,  &n_arr_v );
+      if( rc1 != CDM::E_CDM_SUCCESS ){ p_arr_v=NULL; n_arr_v=0;}
+      
+      int rc2 = FilterGetArrayFromSph(DFI_OUT_PRS,  &rank_p,  istep, &p_arr_p,  &n_arr_p );
+      if( rc2 != CDM::E_CDM_SUCCESS ){ p_arr_p=NULL; n_arr_p=0;}
+      
+      int rc3 = FilterGetArrayFromSph(DFI_OUT_TEMP, &rank_t,  istep, &p_arr_t,  &n_arr_t );
+      if( rc3 != CDM::E_CDM_SUCCESS ){ p_arr_t=NULL; n_arr_t=0;}
+      
+      int rc4 = FilterGetArrayFromSph(DFI_OUT_FVEL, &rank_vrt, istep, &p_arr_vrt, &n_arr_vrt);
+      if( rc4 != CDM::E_CDM_SUCCESS ){ p_arr_vrt=NULL; n_arr_vrt=0;}
+      
+      if( rc1!=CDM::E_CDM_SUCCESS && rc2!=CDM::E_CDM_SUCCESS )
+      {
+        ret = CDM::E_CDM_ERROR;
+        return ret;
+      }
+      
+      if( rc1!=CDM::E_CDM_SUCCESS && rc2!=CDM::E_CDM_SUCCESS && rc3!=CDM::E_CDM_SUCCESS && rc4!=CDM::E_CDM_SUCCESS )
+      {
+        ret = CDM::E_CDM_ERROR;
+        return ret;
+      }
+      
+      //ここで、明示的にサンプリング元となるデータ配列(REAL_TYPE)の登録必要
+      //   v  速度変数配列       p   圧力変数配列
+      //   t  温度変数配列       vrt 渦度変数配列
+      MO.setDataPtrs(p_arr_v, p_arr_p, p_arr_t, p_arr_vrt);
+      
+      //ランク毎に、サンプリングを行う
+      MO.sampling();
+      
+      if( b_alloc == true )
+      {
+        SafeDelArray_(p_arr_v, n_arr_p);
+        SafeDelArray_(p_arr_p, n_arr_p);
+        SafeDelArray_(p_arr_t, n_arr_t);
+        SafeDelArray_(p_arr_vrt, n_arr_vrt);
+      }
+    }
+    
+    //getherされた結果を出力する。
+    MO.print( step, 0.0 );
+  }
+  
+  return ret;
+}*/
+
+
+
+/* ZRM
+int FFV::FilterLoop(unsigned int step)
+{
+  int ret=1;
+  
+  {
+    char work_path[1024]="";
+    getcwd( work_path, sizeof(work_path) );
+    printf("\n\twork_path = %s\n", work_path);
+    
+    
+    if ( !F.checkOutFile() )
+    {
+      printf("\n\t\tdfi is NULL, return.\n");
+      return 0;
+    }
+    
+    //bool is_gathered = (MO.getOutputType()==MonitorList::GATHER ? true : false);
+    
+    int istep = step;
+    
+    bool mio = (numProc > 1 ? true : false); //並列判定フラグ（逐次or並列の判定用）
+    
+    for( int rank_id=0; rank_id<numProc; rank_id++ )
+    {
+      cdm_Rank rank_v;   if(DFI_OUT_VEL!=NULL)  rank_v   = DFI_OUT_VEL->GetcdmProcess()->RankList[rank_id];
+      cdm_Rank rank_p;   if(DFI_OUT_PRS!=NULL)  rank_p   = DFI_OUT_PRS->GetcdmProcess()->RankList[rank_id];
+      cdm_Rank rank_t;   if(DFI_OUT_TEMP!=NULL) rank_t   = DFI_OUT_TEMP->GetcdmProcess()->RankList[rank_id];
+      cdm_Rank rank_vrt; if(DFI_OUT_VRT!=NULL)  rank_vrt = DFI_OUT_VRT->GetcdmProcess()->RankList[rank_id];
+      ;
       
       bool b_alloc = false; //false の場合、FFVに既にある配列を使用する。
       
@@ -217,8 +283,12 @@ int FFV::FilterLoop(unsigned int step)
   
   return ret;
 }
-
-
+*/
+int FFV::FilterGetArrayFromSph( cdm_DFI *dfi, cdm_Rank *rank, int step, REAL_TYPE **pArray, int *nArray)
+{
+  
+}
+/*
 int FFV::FilterGetArrayFromSph( cdm_DFI *dfi, cdm_Rank *rank, int step, REAL_TYPE **pArray, int *nArray)
 {
   CDM::E_CDM_ERRORCODE ret = CDM::E_CDM_SUCCESS;
@@ -288,15 +358,19 @@ int FFV::FilterGetArrayFromSph( cdm_DFI *dfi, cdm_Rank *rank, int step, REAL_TYP
   
   
   return (int)ret;
+}*/
+
+
+
+int FFV::FilterInitialize(int argc, char **argv)
+{
+  
 }
-
-
-
 // #################################################################
 /* @brief フィルタ処理の初期化
  * @param [in] argc  main関数の引数の個数
  * @param [in] argv  main関数の引数リスト
- */
+ *
 int FFV::FilterInitialize(int argc, char **argv)
 {
   double TotalMemory   = 0.0;  ///< 計算に必要なメモリ量（ローカル）
@@ -780,4 +854,4 @@ int FFV::FilterInitialize(int argc, char **argv)
   TIMING_stop(tm_init_sct);
   
   return 1;
-}
+}*/

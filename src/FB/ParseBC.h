@@ -20,11 +20,9 @@
 //@brief  FlowBase ParseBC class Header
 //@author aics
 
-#include <stdlib.h>
-#include "cpm_ParaManager.h"
-#include "string.h"
 #include "DomainInfo.h"
-#include "FB_Define.h"
+#include <stdlib.h>
+#include "string.h"
 #include "FBUtility.h"
 #include "BndOuter.h"
 #include "Control.h"

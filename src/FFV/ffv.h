@@ -60,6 +60,9 @@
 #include "../FB/Glyph.h"
 #include "ffv_LS.h"
 
+// FileIO class
+#include "../FILE_IO/ffv_sph.h"
+
 
 // Intrinsic class
 #include "../IP/IP_Duct.h"
@@ -288,6 +291,7 @@ private:
   POLYLIB_STAT poly_stat;    ///< Polylibの戻り値
   FBUtility U;               ///< ユーティリティクラス
   MonitorList MO;            ///< Monitorクラス
+  IO_BASE* F;                ///< File IO class
   
   LinearSolver LS[ic_END];   ///< 反復解法
   
@@ -299,31 +303,7 @@ private:
   
   string active_fname;      ///< Active subdomainのファイル名
 
-  
-  // pointers to CDM class
-  
-  // InFile
-  cdm_DFI *DFI_IN_PRS;      ///< Pressure
-  cdm_DFI *DFI_IN_VEL;      ///< Velocity
-  cdm_DFI *DFI_IN_FVEL;     ///< Face velocity
-  cdm_DFI *DFI_IN_TEMP;     ///< Temperature
-  cdm_DFI *DFI_IN_PRSA;     ///< Averaged pressure
-  cdm_DFI *DFI_IN_VELA;     ///< Averaged velocity
-  cdm_DFI *DFI_IN_TEMPA;    ///< Averaged temperature
-  
-  // OutFile
-  cdm_DFI *DFI_OUT_PRS;     ///< Pressure
-  cdm_DFI *DFI_OUT_VEL;     ///< Velocity
-  cdm_DFI *DFI_OUT_FVEL;    ///< Face velocity
-  cdm_DFI *DFI_OUT_TEMP;    ///< Temperature
-  cdm_DFI *DFI_OUT_PRSA;    ///< Averaged Pressure
-  cdm_DFI *DFI_OUT_VELA;    ///< Averaged velocity
-  cdm_DFI *DFI_OUT_TEMPA;   ///< Averaged temperature
-  cdm_DFI *DFI_OUT_TP;      ///< Total Pressure
-  cdm_DFI *DFI_OUT_VRT;     ///< Vorticity
-  cdm_DFI *DFI_OUT_I2VGT;   ///< 2nd Invariant of Velocity Gradient Tensor
-  cdm_DFI *DFI_OUT_HLT;     ///< Helicity
-  cdm_DFI *DFI_OUT_DIV;     ///< Divergence for debug
+
   
 public:
   /** コンストラクタ */
@@ -487,10 +467,6 @@ private:
   bool chkMediumConsistency();
   
   
-  // 時刻をRFクラスからv00[4]にコピーする
-  void copyV00fromRF(double m_time);
-  
-  
   // mat[], cmp[]のテーブルを作成
   void createTable(FILE* fp);
   
@@ -543,12 +519,12 @@ private:
   void identifyExample(FILE* fp);
   
   
+  // FielIO classの同定
+  void identifyFIO(TextParser* tpCntl);
+  
+  
   // 線形ソルバを特定
   void identifyLinearSolver(TextParser* tpCntl);
-  
-  
-  // 出力ファイルの初期化
-  void initFileOut();
   
   
   // インターバルの初期化
@@ -622,15 +598,6 @@ private:
   // 幾何形状情報を準備し，交点計算を行う
   void setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp);
   
-
-  // sphファイルの書き出し（内部領域のみ）
-  void writeRawSPH(const REAL_TYPE *vf,
-                   const int* sz,
-                   const int gc,
-                   const int gc_out,
-                   const REAL_TYPE* org,
-                   const REAL_TYPE* ddx,
-                   const int m_ModePrecision);
   
   
   /** ffv_Geometry.C *******************************************************/
@@ -715,18 +682,6 @@ private:
   
   // 力の成分を集める
   void gatherForce(REAL_TYPE* m_frc);
-  
-  
-  // 時間平均値のファイル出力
-  void OutputAveragedVarables(double& flop);
-  
-  
-  // 基本変数のファイル出力
-  void OutputBasicVariables(double& flop);
-  
-  
-  // 基本変数のファイル出力
-  void OutputDerivedVariables(double& flop);
   
   
   // div(u)を計算する
@@ -816,31 +771,6 @@ private:
    * @param [in,out] flop 浮動小数点演算数
    */
   double ps_Diff_SM_PSOR(REAL_TYPE* t, double& b2, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh, const REAL_TYPE* ws, IterationCtl* IC, double& flop);
-  
-  
-
-  
-  
-  /** ffv_Restart.C *******************************************************/
-  
-  // リスタートプロセス
-  void Restart(FILE* fp);
-  
-  
-  // リスタート時の平均値ファイル読み込み
-  void RestartAvrerage(FILE* fp, double& flop);
-  
-  
-  // リスタートの最大値と最小値の表示
-  void RestartDisplayMinmax(FILE* fp, double& flop);
-  
-  
-  // リスタート時の瞬時値ファイル読み込み
-  void RestartInstantaneous(FILE* fp, double& flop);
-  
-  
-  // リスタートモードの選択
-  void selectRestartMode();
   
   
   

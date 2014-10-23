@@ -91,8 +91,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = ffvc$(EXEEXT)
-subdir = src
+subdir = src/FILE_IO
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/depcomp
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -103,13 +102,46 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am__installdirs = "$(DESTDIR)$(bindir)"
-PROGRAMS = $(bin_PROGRAMS)
-am_ffvc_OBJECTS = ffvc-main.$(OBJEXT)
-ffvc_OBJECTS = $(am_ffvc_OBJECTS)
-ffvc_DEPENDENCIES =
-ffvc_LINK = $(CXXLD) $(ffvc_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
+am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
+am__vpath_adj = case $$p in \
+    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
+    *) f=$$p;; \
+  esac;
+am__strip_dir = f=`echo $$p | sed -e 's|^.*/||'`;
+am__install_max = 40
+am__nobase_strip_setup = \
+  srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*|]/\\\\&/g'`
+am__nobase_strip = \
+  for p in $$list; do echo "$$p"; done | sed -e "s|$$srcdirstrip/||"
+am__nobase_list = $(am__nobase_strip_setup); \
+  for p in $$list; do echo "$$p $$p"; done | \
+  sed "s| $$srcdirstrip/| |;"' / .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
+  $(AWK) 'BEGIN { files["."] = "" } { files[$$2] = files[$$2] " " $$1; \
+    if (++n[$$2] == $(am__install_max)) \
+      { print $$2, files[$$2]; n[$$2] = 0; files[$$2] = "" } } \
+    END { for (dir in files) print dir, files[dir] }'
+am__base_list = \
+  sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
+  sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
+am__uninstall_files_from_dir = { \
+  test -z "$$files" \
+    || { test ! -d "$$dir" && test ! -f "$$dir" && test ! -r "$$dir"; } \
+    || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
+         $(am__cd) "$$dir" && rm -f $$files; }; \
+  }
+am__installdirs = "$(DESTDIR)$(noinst_libdir)"
+LIBRARIES = $(noinst_lib_LIBRARIES)
+AR = ar
+ARFLAGS = cru
+AM_V_AR = $(am__v_AR_@AM_V@)
+am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
+am__v_AR_0 = @echo "  AR      " $@;
+am__v_AR_1 = 
+libFIO_a_AR = $(AR) $(ARFLAGS)
+libFIO_a_LIBADD =
+am_libFIO_a_OBJECTS = libFIO_a-ffv_io_base.$(OBJEXT) \
+	libFIO_a-ffv_sph.$(OBJEXT) libFIO_a-ffv_plot3d.$(OBJEXT)
+libFIO_a_OBJECTS = $(am_libFIO_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -143,8 +175,20 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(ffvc_SOURCES)
-DIST_SOURCES = $(ffvc_SOURCES)
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+AM_V_CC = $(am__v_CC_@AM_V@)
+am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
+am__v_CC_0 = @echo "  CC      " $@;
+am__v_CC_1 = 
+CCLD = $(CC)
+LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CCLD = $(am__v_CCLD_@AM_V@)
+am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
+am__v_CCLD_0 = @echo "  CCLD    " $@;
+am__v_CCLD_1 = 
+SOURCES = $(libFIO_a_SOURCES)
+DIST_SOURCES = $(libFIO_a_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -300,45 +344,29 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-ffvc_CXXFLAGS = \
+noinst_lib_LIBRARIES = libFIO.a
+noinst_libdir = ../lib
+libFIO_a_CXXFLAGS = \
   -I. \
-  -I./FFV \
-  -I./F_CORE \
-  -I./F_LS \
-  -I./FILE_IO \
-  -I./ASD \
-  -I./IP \
-  -I./FB \
+  -I../FB \
+  -I../F_CORE \
   @CDM_CFLAGS@ \
   @CPM_CFLAGS@ \
-  @CUT_CFLAGS@ \
   @PL_CFLAGS@ \
+  @MPICH_CFLAGS@ \
   @PM_CFLAGS@ \
   @TP_CFLAGS@ \
-  @MPICH_CFLAGS@ \
   @REALOPT@
 
-ffvc_SOURCES = main.C
-ffvc_LDADD = \
-  -L./FFV -lFFV \
-  -L./FILE_IO -lFIO \
-  -L./F_CORE -lFCORE \
-  -L./F_LS -lFLS \
-  -L./ASD -lASD \
-  -L./IP -lIP \
-  -L./FB -lFB \
-  @CDM_LDFLAGS@ \
-  @CPM_LDFLAGS@ \
-  @CUT_LDFLAGS@ \
-  @PL_LDFLAGS@ \
-  @PM_LDFLAGS@ \
-  @TP_LDFLAGS@ \
-  @MPICH_LDFLAGS@ \
-  @MPICH_LIBS@ \
-  @MPICH_FCLIBS@ \
-  @FFVC_LIBS@
+libFIO_a_SOURCES = \
+  ffv_io_base.h \
+  ffv_io_base.C \
+  ffv_sph.h \
+  ffv_sph.C \
+  ffv_plot3d.h \
+  ffv_plot3d.C
 
-EXTRA_DIST = Makefile_hand Makefile_ffvc depend.inc make_setting
+EXTRA_DIST = Makefile_hand depend.inc
 all: all-am
 
 .SUFFIXES:
@@ -352,9 +380,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/FILE_IO/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu src/Makefile
+	  $(AUTOMAKE) --gnu src/FILE_IO/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -373,52 +401,42 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
-install-binPROGRAMS: $(bin_PROGRAMS)
+install-noinst_libLIBRARIES: $(noinst_lib_LIBRARIES)
 	@$(NORMAL_INSTALL)
-	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
-	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(bindir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(bindir)" || exit 1; \
-	fi; \
-	for p in $$list; do echo "$$p $$p"; done | \
-	sed 's/$(EXEEXT)$$//' | \
-	while read p p1; do if test -f $$p \
-	  ; then echo "$$p"; echo "$$p"; else :; fi; \
-	done | \
-	sed -e 'p;s,.*/,,;n;h' \
-	    -e 's|.*|.|' \
-	    -e 'p;x;s,.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/' | \
-	sed 'N;N;N;s,\n, ,g' | \
-	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1 } \
-	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
-	    if ($$2 == $$4) files[d] = files[d] " " $$1; \
-	    else { print "f", $$3 "/" $$4, $$1; } } \
-	  END { for (d in files) print "f", d, files[d] }' | \
-	while read type dir files; do \
-	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
-	    test -z "$$files" || { \
-	      echo " $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(bindir)$$dir'"; \
-	      $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(bindir)$$dir" || exit $$?; \
-	    } \
-	; done
+	@list='$(noinst_lib_LIBRARIES)'; test -n "$(noinst_libdir)" || list=; \
+	list2=; for p in $$list; do \
+	  if test -f $$p; then \
+	    list2="$$list2 $$p"; \
+	  else :; fi; \
+	done; \
+	test -z "$$list2" || { \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(noinst_libdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(noinst_libdir)" || exit 1; \
+	  echo " $(INSTALL_DATA) $$list2 '$(DESTDIR)$(noinst_libdir)'"; \
+	  $(INSTALL_DATA) $$list2 "$(DESTDIR)$(noinst_libdir)" || exit $$?; }
+	@$(POST_INSTALL)
+	@list='$(noinst_lib_LIBRARIES)'; test -n "$(noinst_libdir)" || list=; \
+	for p in $$list; do \
+	  if test -f $$p; then \
+	    $(am__strip_dir) \
+	    echo " ( cd '$(DESTDIR)$(noinst_libdir)' && $(RANLIB) $$f )"; \
+	    ( cd "$(DESTDIR)$(noinst_libdir)" && $(RANLIB) $$f ) || exit $$?; \
+	  else :; fi; \
+	done
 
-uninstall-binPROGRAMS:
+uninstall-noinst_libLIBRARIES:
 	@$(NORMAL_UNINSTALL)
-	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
-	files=`for p in $$list; do echo "$$p"; done | \
-	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
-	      -e 's/$$/$(EXEEXT)/' \
-	`; \
-	test -n "$$list" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(bindir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(bindir)" && rm -f $$files
+	@list='$(noinst_lib_LIBRARIES)'; test -n "$(noinst_libdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(noinst_libdir)'; $(am__uninstall_files_from_dir)
 
-clean-binPROGRAMS:
-	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
+clean-noinst_libLIBRARIES:
+	-test -z "$(noinst_lib_LIBRARIES)" || rm -f $(noinst_lib_LIBRARIES)
 
-ffvc$(EXEEXT): $(ffvc_OBJECTS) $(ffvc_DEPENDENCIES) $(EXTRA_ffvc_DEPENDENCIES) 
-	@rm -f ffvc$(EXEEXT)
-	$(AM_V_CXXLD)$(ffvc_LINK) $(ffvc_OBJECTS) $(ffvc_LDADD) $(LIBS)
+libFIO.a: $(libFIO_a_OBJECTS) $(libFIO_a_DEPENDENCIES) $(EXTRA_libFIO_a_DEPENDENCIES) 
+	$(AM_V_at)-rm -f libFIO.a
+	$(AM_V_AR)$(libFIO_a_AR) libFIO.a $(libFIO_a_OBJECTS) $(libFIO_a_LIBADD)
+	$(AM_V_at)$(RANLIB) libFIO.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -426,7 +444,9 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ffvc-main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFIO_a-ffv_io_base.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFIO_a-ffv_plot3d.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFIO_a-ffv_sph.Po@am__quote@
 
 .C.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -442,19 +462,47 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
-ffvc-main.o: main.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-main.o -MD -MP -MF $(DEPDIR)/ffvc-main.Tpo -c -o ffvc-main.o `test -f 'main.C' || echo '$(srcdir)/'`main.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-main.Tpo $(DEPDIR)/ffvc-main.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='main.C' object='ffvc-main.o' libtool=no @AMDEPBACKSLASH@
+libFIO_a-ffv_io_base.o: ffv_io_base.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -MT libFIO_a-ffv_io_base.o -MD -MP -MF $(DEPDIR)/libFIO_a-ffv_io_base.Tpo -c -o libFIO_a-ffv_io_base.o `test -f 'ffv_io_base.C' || echo '$(srcdir)/'`ffv_io_base.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFIO_a-ffv_io_base.Tpo $(DEPDIR)/libFIO_a-ffv_io_base.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_io_base.C' object='libFIO_a-ffv_io_base.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-main.o `test -f 'main.C' || echo '$(srcdir)/'`main.C
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -c -o libFIO_a-ffv_io_base.o `test -f 'ffv_io_base.C' || echo '$(srcdir)/'`ffv_io_base.C
 
-ffvc-main.obj: main.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -MT ffvc-main.obj -MD -MP -MF $(DEPDIR)/ffvc-main.Tpo -c -o ffvc-main.obj `if test -f 'main.C'; then $(CYGPATH_W) 'main.C'; else $(CYGPATH_W) '$(srcdir)/main.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ffvc-main.Tpo $(DEPDIR)/ffvc-main.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='main.C' object='ffvc-main.obj' libtool=no @AMDEPBACKSLASH@
+libFIO_a-ffv_io_base.obj: ffv_io_base.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -MT libFIO_a-ffv_io_base.obj -MD -MP -MF $(DEPDIR)/libFIO_a-ffv_io_base.Tpo -c -o libFIO_a-ffv_io_base.obj `if test -f 'ffv_io_base.C'; then $(CYGPATH_W) 'ffv_io_base.C'; else $(CYGPATH_W) '$(srcdir)/ffv_io_base.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFIO_a-ffv_io_base.Tpo $(DEPDIR)/libFIO_a-ffv_io_base.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_io_base.C' object='libFIO_a-ffv_io_base.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(ffvc_CXXFLAGS) $(CXXFLAGS) -c -o ffvc-main.obj `if test -f 'main.C'; then $(CYGPATH_W) 'main.C'; else $(CYGPATH_W) '$(srcdir)/main.C'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -c -o libFIO_a-ffv_io_base.obj `if test -f 'ffv_io_base.C'; then $(CYGPATH_W) 'ffv_io_base.C'; else $(CYGPATH_W) '$(srcdir)/ffv_io_base.C'; fi`
+
+libFIO_a-ffv_sph.o: ffv_sph.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -MT libFIO_a-ffv_sph.o -MD -MP -MF $(DEPDIR)/libFIO_a-ffv_sph.Tpo -c -o libFIO_a-ffv_sph.o `test -f 'ffv_sph.C' || echo '$(srcdir)/'`ffv_sph.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFIO_a-ffv_sph.Tpo $(DEPDIR)/libFIO_a-ffv_sph.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_sph.C' object='libFIO_a-ffv_sph.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -c -o libFIO_a-ffv_sph.o `test -f 'ffv_sph.C' || echo '$(srcdir)/'`ffv_sph.C
+
+libFIO_a-ffv_sph.obj: ffv_sph.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -MT libFIO_a-ffv_sph.obj -MD -MP -MF $(DEPDIR)/libFIO_a-ffv_sph.Tpo -c -o libFIO_a-ffv_sph.obj `if test -f 'ffv_sph.C'; then $(CYGPATH_W) 'ffv_sph.C'; else $(CYGPATH_W) '$(srcdir)/ffv_sph.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFIO_a-ffv_sph.Tpo $(DEPDIR)/libFIO_a-ffv_sph.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_sph.C' object='libFIO_a-ffv_sph.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -c -o libFIO_a-ffv_sph.obj `if test -f 'ffv_sph.C'; then $(CYGPATH_W) 'ffv_sph.C'; else $(CYGPATH_W) '$(srcdir)/ffv_sph.C'; fi`
+
+libFIO_a-ffv_plot3d.o: ffv_plot3d.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -MT libFIO_a-ffv_plot3d.o -MD -MP -MF $(DEPDIR)/libFIO_a-ffv_plot3d.Tpo -c -o libFIO_a-ffv_plot3d.o `test -f 'ffv_plot3d.C' || echo '$(srcdir)/'`ffv_plot3d.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFIO_a-ffv_plot3d.Tpo $(DEPDIR)/libFIO_a-ffv_plot3d.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_plot3d.C' object='libFIO_a-ffv_plot3d.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -c -o libFIO_a-ffv_plot3d.o `test -f 'ffv_plot3d.C' || echo '$(srcdir)/'`ffv_plot3d.C
+
+libFIO_a-ffv_plot3d.obj: ffv_plot3d.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -MT libFIO_a-ffv_plot3d.obj -MD -MP -MF $(DEPDIR)/libFIO_a-ffv_plot3d.Tpo -c -o libFIO_a-ffv_plot3d.obj `if test -f 'ffv_plot3d.C'; then $(CYGPATH_W) 'ffv_plot3d.C'; else $(CYGPATH_W) '$(srcdir)/ffv_plot3d.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFIO_a-ffv_plot3d.Tpo $(DEPDIR)/libFIO_a-ffv_plot3d.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_plot3d.C' object='libFIO_a-ffv_plot3d.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -c -o libFIO_a-ffv_plot3d.obj `if test -f 'ffv_plot3d.C'; then $(CYGPATH_W) 'ffv_plot3d.C'; else $(CYGPATH_W) '$(srcdir)/ffv_plot3d.C'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -540,9 +588,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(PROGRAMS)
+all-am: Makefile $(LIBRARIES)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)"; do \
+	for dir in "$(DESTDIR)$(noinst_libdir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -577,7 +625,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
+clean-am: clean-generic clean-noinst_libLIBRARIES mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -597,13 +645,13 @@ info: info-am
 
 info-am:
 
-install-data-am:
+install-data-am: install-noinst_libLIBRARIES
 
 install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-binPROGRAMS
+install-exec-am:
 
 install-html: install-html-am
 
@@ -642,23 +690,23 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS
+uninstall-am: uninstall-noinst_libLIBRARIES
 
 .MAKE: install-am install-strip
 
-.PHONY: CTAGS GTAGS TAGS all all-am check check-am clean \
-	clean-binPROGRAMS clean-generic cscopelist-am ctags ctags-am \
+.PHONY: CTAGS GTAGS TAGS all all-am check check-am clean clean-generic \
+	clean-noinst_libLIBRARIES cscopelist-am ctags ctags-am \
 	distclean distclean-compile distclean-generic distclean-tags \
 	distdir dvi dvi-am html html-am info info-am install \
-	install-am install-binPROGRAMS install-data install-data-am \
-	install-dvi install-dvi-am install-exec install-exec-am \
-	install-html install-html-am install-info install-info-am \
-	install-man install-pdf install-pdf-am install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic pdf pdf-am \
-	ps ps-am tags tags-am uninstall uninstall-am \
-	uninstall-binPROGRAMS
+	install-am install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-noinst_libLIBRARIES install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic pdf pdf-am ps ps-am tags tags-am uninstall \
+	uninstall-am uninstall-noinst_libLIBRARIES
 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
