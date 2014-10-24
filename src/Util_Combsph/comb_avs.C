@@ -100,7 +100,7 @@ void COMB::output_avs_header()
     fprintf(fp,"nspace=%d\n",nspace);
 
     //成分数の出力
-    fprintf(fp,"veclen=%d\n",DFI_FInfo->Component);
+    fprintf(fp,"veclen=%d\n",DFI_FInfo->NumVariables);
 
     //データのタイプ出力
     fprintf(fp,"data=%s\n",dType.c_str());
@@ -113,8 +113,8 @@ void COMB::output_avs_header()
     fprintf(fp,"max_ext=%.6f %.6f %.6f\n",max_ext[0],max_ext[1],max_ext[2]);
 
     //labelの出力
-    for(int j=0; j<DFI_FInfo->Component; j++) {
-     std::string label=dfi[i]->getComponentVariable(j);
+    for(int j=0; j<DFI_FInfo->NumVariables; j++) {
+     std::string label=dfi[i]->getVariableName(j);
      if( label == "" ) continue;
      fprintf(fp,"label=%s\n",label.c_str());
     }
@@ -125,7 +125,7 @@ void COMB::output_avs_header()
     }
     for(int j=0; j<TSlice->SliceList.size(); j++ ) {
       fprintf(fp,"time value=%.6f\n",TSlice->SliceList[j].time);
-      for(int n=1; n<=DFI_FInfo->Component; n++) {
+      for(int n=1; n<=DFI_FInfo->NumVariables; n++) {
         int skip;
         if( dType == "float" ) {
           skip=96+(n-1)*4;
@@ -134,7 +134,7 @@ void COMB::output_avs_header()
         }
         out_fname=Generate_FileName(prefix, TSlice->SliceList[j].step, 0, false);
         fprintf(fp,"variable %d file=%s filetype=binary skip=%d stride=%d\n",
-                n,out_fname.c_str(),skip,DFI_FInfo->Component);
+                n,out_fname.c_str(),skip,DFI_FInfo->NumVariables);
       }
       fprintf(fp,"EOT\n");
     }

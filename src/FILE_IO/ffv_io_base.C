@@ -33,7 +33,7 @@ int IO_BASE::checkOutFile()
                              
                              
 // #################################################################
-// ファイル入出力に関するパラメータを取得し，出力の並列モードを指定する
+// ファイル入出力に関するパラメータを取得し，出力の並列モードを指定, PLOT3Dバッファサイズ
 // @pre Control::getTimeControl()
 void IO_BASE::getFIOparams()
 {
@@ -69,10 +69,12 @@ void IO_BASE::getFIOparams()
     if     ( !strcasecmp(str.c_str(), "step") )
     {
       C->Interval[Control::tg_basic].setMode(IntervalManager::By_step);
+      C->Interval[Control::tg_derived].setMode(IntervalManager::By_step);
     }
     else if( !strcasecmp(str.c_str(), "time") )
     {
       C->Interval[Control::tg_basic].setMode(IntervalManager::By_time);
+      C->Interval[Control::tg_derived].setMode(IntervalManager::By_time);
     }
     else
     {
@@ -90,37 +92,10 @@ void IO_BASE::getFIOparams()
     else
     {
       C->Interval[Control::tg_basic].setInterval((double)f_val);
+      C->Interval[Control::tg_derived].setInterval((double)f_val);
     }
   }
   
-  
-  
-  // 派生変数
-  
-  /* ファイルフォーマット >> 基本変数と同じ
-   label = "/Output/Data/DerivedVariables/Format";
-   
-   if ( !(tpCntl->getInspectedValue(label, str )) )
-   {
-   Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-	  Exit(0);
-   }
-   
-   if     ( !strcasecmp(str.c_str(), "sph") )
-   {
-   Format = sph_fmt;
-   file_fmt_ext = "sph";
-   }
-   else if( !strcasecmp(str.c_str(), "bov") )
-   {
-   Format = bov_fmt;
-   file_fmt_ext = "dat";
-   }
-   else
-   {
-   Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-   Exit(0);
-   }*/
   
   switch ( Format )
   {
@@ -138,45 +113,9 @@ void IO_BASE::getFIOparams()
   }
   
   
-  // インターバル
-  label = "/Output/Data/DerivedVariables/TemporalType";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    Exit(0);
-  }
-  else
-  {
-    if     ( !strcasecmp(str.c_str(), "step") )
-    {
-      C->Interval[Control::tg_derived].setMode(IntervalManager::By_step);
-    }
-    else if( !strcasecmp(str.c_str(), "time") )
-    {
-      C->Interval[Control::tg_derived].setMode(IntervalManager::By_time);
-    }
-    else
-    {
-      Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
-      Exit(0);
-    }
-    
-    label="/Output/Data/DerivedVariables/Interval";
-    
-    if ( !(tpCntl->getInspectedValue(label, f_val )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
-    }
-    else
-    {
-      C->Interval[Control::tg_derived].setInterval((double)f_val);
-    }
-  }
   
   // 全圧
-  label="/Output/Data/DerivedVariables/TotalPressure";
+  label="/Output/Data/BasicVariables/TotalPressure";
   if ( tpCntl->chkLabel(label) )
   {
     if ( !(tpCntl->getInspectedValue(label, str )) )
@@ -185,7 +124,11 @@ void IO_BASE::getFIOparams()
       Exit(0);
     }
     
-    if     ( !strcasecmp(str.c_str(), "on") )  C->varState[var_TotalP] = ON;
+    if     ( !strcasecmp(str.c_str(), "on") )
+    {
+      C->varState[var_TotalP] = ON;
+      C->NvarsIns_plt3d += 1;
+    }
     else if( !strcasecmp(str.c_str(), "off") ) C->varState[var_TotalP] = OFF;
     else
     {
@@ -196,7 +139,7 @@ void IO_BASE::getFIOparams()
 
   
   // 渦度ベクトル
-  label="/Output/Data/DerivedVariables/Vorticity";
+  label="/Output/Data/BasicVariables/Vorticity";
   if ( tpCntl->chkLabel(label) )
   {
     if ( !(tpCntl->getInspectedValue(label, str )) )
@@ -205,7 +148,11 @@ void IO_BASE::getFIOparams()
       Exit(0);
     }
     
-    if     ( !strcasecmp(str.c_str(), "on") )  C->varState[var_Vorticity] = ON;
+    if     ( !strcasecmp(str.c_str(), "on") )
+    {
+      C->varState[var_Vorticity] = ON;
+      C->NvarsIns_plt3d += 3;
+    }
     else if( !strcasecmp(str.c_str(), "off") ) C->varState[var_Vorticity] = OFF;
     else
     {
@@ -216,7 +163,7 @@ void IO_BASE::getFIOparams()
 
   
   // 速度勾配テンソルの第2不変量
-  label="/Output/Data/DerivedVariables/Qcriterion";
+  label="/Output/Data/BasicVariables/Qcriterion";
   if ( tpCntl->chkLabel(label) )
   {
     if ( !(tpCntl->getInspectedValue(label, str )) )
@@ -225,7 +172,11 @@ void IO_BASE::getFIOparams()
       Exit(0);
     }
     
-    if     ( !strcasecmp(str.c_str(), "on") )  C->varState[var_Qcr] = ON;
+    if     ( !strcasecmp(str.c_str(), "on") )
+    {
+      C->varState[var_Qcr] = ON;
+      C->NvarsIns_plt3d += 1;
+    }
     else if( !strcasecmp(str.c_str(), "off") ) C->varState[var_Qcr] = OFF;
     else
     {
@@ -236,7 +187,7 @@ void IO_BASE::getFIOparams()
 
   
   // ヘリシティ
-  label="/Output/Data/DerivedVariables/Helicity";
+  label="/Output/Data/BasicVariables/Helicity";
   if ( tpCntl->chkLabel(label) )
   {
     if ( !(tpCntl->getInspectedValue(label, str )) )
@@ -245,7 +196,11 @@ void IO_BASE::getFIOparams()
       Exit(0);
     }
     
-    if     ( !strcasecmp(str.c_str(), "on") )  C->varState[var_Helicity] = ON;
+    if     ( !strcasecmp(str.c_str(), "on") )
+    {
+      C->varState[var_Helicity] = ON;
+      C->NvarsIns_plt3d += 1;
+    }
     else if( !strcasecmp(str.c_str(), "off") ) C->varState[var_Helicity] = OFF;
     else
     {
@@ -256,7 +211,7 @@ void IO_BASE::getFIOparams()
 
   
   // 発散値
-  label="/Output/Data/DerivedVariables/Divergence";
+  label="/Output/Data/BasicVariables/Divergence";
   if ( tpCntl->chkLabel(label) )
   {
     if ( !(tpCntl->getInspectedValue(label, str )) )
@@ -265,7 +220,11 @@ void IO_BASE::getFIOparams()
       Exit(0);
     }
     
-    if     ( !strcasecmp(str.c_str(), "on") )  C->varState[var_Div] = ON;
+    if     ( !strcasecmp(str.c_str(), "on") )
+    {
+      C->varState[var_Div] = ON;
+      C->NvarsIns_plt3d += 1;
+    }
     else if( !strcasecmp(str.c_str(), "off") ) C->varState[var_Div] = OFF;
     else
     {
@@ -432,6 +391,30 @@ void IO_BASE::getFormatOption(const string form)
   }
   
   
+  // PLOT3DのときにIBLANKファイルを使うオプション
+  if ( plt3d_fun_fmt == Format )
+  {
+    label = dir + "/IblankFile";
+    
+    if ( tpCntl->chkLabel(label) )
+    {
+      if ( tpCntl->getInspectedValue(label, str) )
+      {
+        if     ( !strcasecmp(str.c_str(), "on") )   Iblank = ON;
+        else if( !strcasecmp(str.c_str(), "off") )  Iblank = OFF;
+        else
+        {
+          Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+          Exit(0);
+        }
+      }
+      else
+      {
+        Exit(0);
+      }
+    }
+  }
+  
 }
 
 
@@ -546,59 +529,6 @@ void IO_BASE::printSteerConditions(FILE* fp)
 }
 
 
-// #################################################################
-// リスタートプロセス
-void IO_BASE::Restart(FILE* fp, unsigned& m_CurrentStep, double& m_CurrentTime)
-{
-  // 初期スタートのステップ，時間を設定する
-  if ( (C->Start == initial_start) || (C->Hide.PM_Test == ON)  )
-  {
-    m_CurrentStep = 0;
-    m_CurrentTime = 0.0;
-    
-    // V00の値のセット．モードがONの場合はV00[0]=1.0に設定，そうでなければtmに応じた値
-    if ( C->CheckParam == ON ) RF->setV00(m_CurrentTime, true);
-    else                       RF->setV00(m_CurrentTime);
-    
-    return;
-  }
-  
-  
-  
-  switch (C->Start)
-  {
-      
-      // 同一解像度・同一分割数のリスタート
-    case restart_sameDiv_sameRes:
-      Hostonly_ fprintf(stdout, "\t>> Restart with same resolution and same num. of division\n\n");
-      Hostonly_ fprintf(fp, "\t>> Restart with same resolution and same num. of division\n\n");
-      break;
-      
-    case restart_sameDiv_refinement: // 同一分割数・リファインメント
-      Hostonly_ fprintf(stdout, "\t>> Restart with refinemnt and same num. of division\n\n");
-      Hostonly_ fprintf(fp, "\t>> Restart with refinemnt and same num. of division\n\n");
-      break;
-      
-    case restart_diffDiv_sameRes:    // 異なる分割数・同一解像度
-      Hostonly_ fprintf(stdout, "\t>> Restart with same resolution and different division\n\n");
-      Hostonly_ fprintf(fp, "\t>> Restart with same resolution and different division\n\n");
-      break;
-      
-    case restart_diffDiv_refinement: // 異なる分割数・リファインメント
-      Hostonly_ fprintf(stdout, "\t>> Restart with refinement and different division\n\n");
-      Hostonly_ fprintf(fp, "\t>> Restart with refinement and different division\n\n");
-      break;
-      
-    default:
-      Exit(0);
-      break;
-  }
-  
-  double flop_task = 0.0;
-  RestartInstantaneous(fp, m_CurrentStep, m_CurrentTime, flop_task);
-  
-}
-
 
 
 // #################################################################
@@ -675,15 +605,17 @@ void IO_BASE::setVarPointers(REAL_TYPE* m_d_p,
                              REAL_TYPE* m_d_ie,
                              REAL_TYPE* m_d_ws,
                              REAL_TYPE* m_d_p0,
-                             REAL_TYPE* m_d_wo,
+                             REAL_TYPE* m_d_iob,
                              REAL_TYPE* m_d_wv,
+                             REAL_TYPE* m_d_vc,
                              REAL_TYPE* m_d_ap,
                              REAL_TYPE* m_d_av,
                              REAL_TYPE* m_d_ae,
                              REAL_TYPE* m_d_dv,
                              int* m_d_bcd,
                              int* m_d_cdf,
-                             double* m_mat_tbl)
+                             double* m_mat_tbl,
+                             int* m_d_iblk)
 {
   d_p     = m_d_p;
   d_v     = m_d_v;
@@ -691,8 +623,9 @@ void IO_BASE::setVarPointers(REAL_TYPE* m_d_p,
   d_ie    = m_d_ie;
   d_ws    = m_d_ws;
   d_p0    = m_d_p0;
-  d_wo    = m_d_wo;
+  d_iobuf = m_d_iob;
   d_wv    = m_d_wv;
+  d_vc    = m_d_vc;
   d_ap    = m_d_ap;
   d_av    = m_d_av;
   d_ae    = m_d_ae;
@@ -700,6 +633,7 @@ void IO_BASE::setVarPointers(REAL_TYPE* m_d_p,
   d_bcd   = m_d_bcd;
   d_cdf   = m_d_cdf;
   mat_tbl = m_mat_tbl;
+  d_iblk  = m_d_iblk;
 }
 
 

@@ -122,6 +122,7 @@
 #define fb_set_vector_           FB_SET_VECTOR
 #define fb_set_fvector_          FB_SET_FVECTOR
 #define fb_vin_nijk_             FB_VIN_NIJK
+#define fb_vin_ijkn_             FB_VIN_IJKN
 #define fb_vout_nijk_            FB_VOUT_NIJK
 #define fb_vout_ijkn_            FB_VOUT_IJKN
 #define fb_totalp_               FB_TOTALP
@@ -643,6 +644,13 @@ extern "C" {
                            int* g,
                            REAL_TYPE* val,
                            int* bv);
+  
+  void fb_vin_ijkn_       (REAL_TYPE* vo,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* v00,
+                           REAL_TYPE* refv,
+                           double* flop);
   
   void fb_vin_nijk_       (REAL_TYPE* vo,
                            int* sz,

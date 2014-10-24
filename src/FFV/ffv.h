@@ -28,23 +28,11 @@
  * @author aics
  */
 
-#include "cpm_ParaManager.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <string>
-#include <iostream>
-#include <fstream>
+#include "ffv_Alloc.h"
 #include <math.h>
 #include <float.h>
 
 #include "omp.h"
-#include "../FB/DomainInfo.h"
-#include "../FB/FB_Define.h"
-#include "../FB/mydebug.h"
-#include "../FB/FBUtility.h"
-#include "../FB/Control.h"
-#include "../FB/Alloc.h"
 #include "../FB/ParseBC.h"
 #include "../FB/ParseMat.h"
 #include "../FB/VoxInfo.h"
@@ -62,7 +50,7 @@
 
 // FileIO class
 #include "../FILE_IO/ffv_sph.h"
-
+#include "../FILE_IO/ffv_plot3d.h"
 
 // Intrinsic class
 #include "../IP/IP_Duct.h"
@@ -120,7 +108,7 @@ using namespace PolylibNS;
 using namespace cutlib;
 
 
-class FFV : public DomainInfo {
+class FFV : public FALLOC {
 public:
   int EXEC_MODE;           ///< solver と filter の識別
   
@@ -151,11 +139,6 @@ private:
   
   int communication_mode; ///< synchronous, asynchronous
   
-  int cf_sz[3];     ///< SOR2SMAの反復の場合のバッファサイズ
-  REAL_TYPE *cf_x;  ///< i方向のバッファ
-  REAL_TYPE *cf_y;  ///< j方向のバッファ
-  REAL_TYPE *cf_z;  ///< k方向のバッファ
-  
   REAL_TYPE v00[4];      ///< 参照速度
   REAL_TYPE range_Ut[2]; ///< 
   REAL_TYPE range_Yp[2]; ///<
@@ -181,84 +164,11 @@ private:
   
   // 周期境界の方向
   int ensPeriodic[3];
-  
-  
-  // データ領域ポインタ
-  
-  // Vector3D
-  REAL_TYPE *d_v;   ///< セルセンター速度
-  REAL_TYPE *d_vf;  ///< セルフェイス速度
-  REAL_TYPE *d_vc;  ///< セルセンター疑似速度
-  REAL_TYPE *d_v0;  ///< n-stepの速度保持
-  REAL_TYPE *d_wv;  ///< ワーク配列
-  REAL_TYPE *d_abf; ///< Adams-bashforthワーク
-  REAL_TYPE *d_av;  ///< 平均値
-  REAL_TYPE *d_wo;  ///< 入出力のバッファワーク
-  REAL_TYPE *d_qbc; ///< 熱BC flux保持
-  
-  // Scalar3D
-  int *d_mid;
-  int *d_bcd;
-  int *d_bcp;
-  int *d_cdf;
-  
-  REAL_TYPE *d_p;   ///< 圧力
-  REAL_TYPE *d_p0;  ///< 圧力（1ステップ前）
-  REAL_TYPE *d_ws;  ///< 反復中に固定のソース
-  REAL_TYPE *d_sq;  ///< 反復中に変化するソース
-  REAL_TYPE *d_dv;  ///< div(u)の保存
-  REAL_TYPE *d_b;   ///< Ax=bの右辺ベクトル
-  REAL_TYPE *d_ie;  ///< 内部エネルギー
-  REAL_TYPE *d_ie0; ///< 内部エネルギー（1ステップ前）
-  REAL_TYPE *d_vrt; ///< 渦度ベクトル
-  REAL_TYPE *d_vt;
-  REAL_TYPE *d_vof;
-  REAL_TYPE *d_ap;  ///< 圧力（時間平均値）
-  REAL_TYPE *d_ae;  ///< 内部エネルギー（時間平均値）
-  REAL_TYPE *d_pvf; ///< ポリゴンによるセル体積率
-  REAL_TYPE *d_pni; ///< 圧力Poissonの係数（Naive実装の実験）
-  REAL_TYPE *d_cvf;     ///< 体積率
-  
-  // Coarse initial
-  REAL_TYPE *d_r_v;  ///< 粗格子の速度
-  REAL_TYPE *d_r_p;  ///< 粗格子の圧力
-  REAL_TYPE *d_r_t;  ///< 粗格子の温度
-  
-  // GMRES
-  REAL_TYPE * d_wg;   ///< テンポラリの配列 [size] 
-  REAL_TYPE * d_res;  ///< 残差 = b - Ax
-  REAL_TYPE * d_vm;   ///< Kryolov subspaceの直交基底 [size*FREQ_OF_RESTART]
-  REAL_TYPE * d_zm;   ///< Right-hand side vector for the residual minimization problem [size*FREQ_OF_RESTART]
-  
-#define FREQ_OF_RESTART 15 // リスタート周期
-  
-  // PCG & BiCGstab
-	REAL_TYPE *d_pcg_r;
-	REAL_TYPE *d_pcg_p;
-  
-	// PCG
-	REAL_TYPE *d_pcg_z;
-  
-	// BiCGstab
-	REAL_TYPE *d_pcg_r0;
-	REAL_TYPE *d_pcg_q;
-	REAL_TYPE *d_pcg_s;
-	REAL_TYPE *d_pcg_t;
-  
-  // BiCGSTAB with Preconditioning
-  REAL_TYPE *d_pcg_p_;
-  REAL_TYPE *d_pcg_s_;
-  REAL_TYPE *d_pcg_t_;
-  
-  
-  REAL_TYPE** component_array; ///< コンポーネントワーク配列のアドレス管理
+
   
   // カット
   CutPos32Array *cutPos;
   CutBid5Array  *cutBid;
-  
-  float  *d_cut; ///< 距離情報
-  int    *d_bid; ///< BC
   
   double *mat_tbl; // Fortranでの多媒質対応ルーチンのため，rho, cp, lambdaの配列
   
@@ -384,77 +294,6 @@ private:
   }
   
   
-  /** ffv_Alloc.C *******************************************************/
-  
-  // Adams-Bashforth法に用いる配列のアロケーション
-  void allocArray_AB2 (double &total);
-  
-  
-  // 平均値処理に用いる配列のアロケーション
-  void allocArray_Average (double &total);
-  
-  
-  // 粗格子読み込みに用いる配列のアロケーション
-  void allocArray_CoarseMesh(const int* r_size, double &prep);
-  
-  
-  // コンポーネント体積率の配列のアロケーション
-  void allocArray_CompoVF(double &prep, double &total);
-  
-  
-  // カット情報の配列
-  void allocArray_Cut(double &total);
-  
-  
-  // コンポーネントのワーク用配列のアロケート
-  void allocArray_Forcing(double& m_prep, double& m_total, FILE* fp);
-  
-  
-  // 熱の主計算部分に用いる配列のアロケーション
-  void allocArray_Heat(double &total);
-  
-  
-  // 体積率の配列のアロケーション
-  void allocArray_Interface(double &total);
-  
-  
-  // Krylov-subspace法に用いる配列のアロケーション
-  void allocArray_Krylov(double &total);
-  
-  
-  // LES計算に用いる配列のアロケーション
-  void allocArray_LES(double &total);
-  
-  
-  // 主計算部分に用いる配列のアロケーション
-  void allocArray_Main(double &total);
-  
-  
-  // Poissonのナイーブ実装試験
-  void allocArray_Naive(double &total);
-  
-  
-  // PCG法に用いる配列のアロケーション
-  void allocArray_PCG(double &total);
-  
-  
-  // BiCGSTAB法に用いる配列のアロケーション
-  void allocArray_BiCGstab(double &total);
-  
-  
-  // BiCGSTAB /w preconditionning に用いる配列のアロケーション
-  void allocArray_BiCGSTABwithPreconditioning(double &total);
-  
-  
-  // 前処理に用いる配列のアロケーション
-  void allocArray_Prep(double &prep, double &total);
-  
-  
-  // SOR2SMAのバッファ確保
-  void allocate_SOR2SMA_buffer(double &total);
-  
-  
-  
   
   
   /** ffv_Initialize.C *******************************************************/
@@ -539,6 +378,10 @@ private:
   void prepHistoryOutput();
   
   
+  // 収束判定条件の表示
+  void printCriteria(FILE* fp);
+  
+  
   // 読み込んだ領域情報のデバッグライト
   void printDomainInfo();
   
@@ -553,6 +396,10 @@ private:
   
   // コンポーネントのローカルなBbox情報からグローバルなBbox情報を求め，CompoListの情報を表示
   void dispGlobalCompoInfo(FILE* fp);
+  
+  
+  // 線形ソルバー種別の表示
+  void printLS(FILE* fp, const LinearSolver* IC);
   
   
   // 初期条件の設定
@@ -685,7 +532,7 @@ private:
   
   
   // div(u)を計算する
-  void NormDiv();
+  void NormDiv(REAL_TYPE* div);
   
   
   // タイミング測定区間にラベルを与えるラッパー
@@ -738,11 +585,11 @@ private:
   
   /**
    * @brief 単媒質に対する熱伝導方程式を陰解法で解く
-   * @param [in]  IC       IterationCtlクラス
+   * @param [in]  IC       LinearSolverクラス
    * @param [in]  rhs_nrm  Poisson定数項ベクトルの自乗和ノルム
    * @param [in]  r0       初期残差ベクトル
    */
-  void ps_LS(IterationCtl* IC, const double rhs_nrm, const double r0);
+  void ps_LS(LinearSolver* IC, const double rhs_nrm, const double r0);
   
   
   /**

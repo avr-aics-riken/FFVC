@@ -664,7 +664,7 @@ int FFV::FilterInitialize(int argc, char **argv)
   
   // 体積力を使う場合のコンポーネント配列の確保
   TIMING_start(tm_init_alloc);
-  allocArray_Forcing(PrepMemory, TotalMemory, fp);
+  allocArray_Forcing(PrepMemory, TotalMemory, fp, C.NoCompo);
   TIMING_stop(tm_init_alloc);
   
   

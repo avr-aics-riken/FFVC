@@ -101,7 +101,7 @@ void COMB::output_sph()
     STD_OUTV_ printf("  COMBINE SPH START : %s\n", prefix.c_str());
     
     //Scalar or Vector
-    dim=DFI_FInfo->Component;
+    dim=DFI_FInfo->NumVariables;
     
     const cdm_Domain* DFI_Domian = dfi[i]->GetcdmDomain();
     
@@ -164,9 +164,9 @@ void COMB::output_sph()
       if( eType == UnMatch ) matchEndian = false;
       
       //m_sv_typeのセット (スカラー or ベクター)
-      if( dfi[i]->GetNumComponent() == 1 ) {
+      if( dfi[i]->GetNumVariables() == 1 ) {
         m_sv_type = SPH_SCALAR;
-      } else if( dfi[i]->GetNumComponent() >= 3 ) {
+      } else if( dfi[i]->GetNumVariables() >= 3 ) {
         m_sv_type = SPH_VECTOR;
       } else Exit(0);
       
@@ -308,7 +308,7 @@ void COMB::output_sph()
        , DFI_FInfo->ArrayShape
        , szS
        , 0
-       , DFI_FInfo->Component );
+       , DFI_FInfo->NumVariables );
       
       int kdiv,jdiv,idiv;
       //z方向の分割数回のループ
@@ -422,7 +422,7 @@ void COMB::output_sph()
           } //y --- ity
           
           //一層分出力
-          size_t dLen = szS[0]*szS[1]*szS[2]*DFI_FInfo->Component;
+          size_t dLen = szS[0]*szS[1]*szS[2]*DFI_FInfo->NumVariables;
           if( src->writeBinary(fp) != dLen ) Exit(0);
           
         } //z --- kp

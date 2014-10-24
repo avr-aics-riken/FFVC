@@ -41,7 +41,9 @@
 #include "../FB/Control.h"
 #include "../FB/FBUtility.h"
 #include "../FB/IntervalManager.h"
+#include "../FFV/ffv_Define.h"
 
+#include "../F_LS/ffv_LSfunc.h"
 #include "../F_CORE/ffv_Ffunc.h"
 
 #include "TextParser.h"
@@ -59,6 +61,7 @@ protected:
   int IO_Voxel;        ///< デバッグ用にボクセルを出力
   int Format;          ///< ファイル入出力モード（sph, bov, plot3d）
   int Slice;           ///< タイムスライス毎にまとめる
+  int Iblank;          ///< PLOT3DのIBLANKオプション
   string OutDirPath;   ///< 出力ディレクトリパス
   string InDirPath;    ///< 入力ディレクトリパス
   string file_fmt_ext; ///< フォーマット識別子
@@ -69,10 +72,11 @@ protected:
   REAL_TYPE* d_v;    ///< velocity
   REAL_TYPE* d_vf;   ///< face velocity
   REAL_TYPE* d_ie;   ///< internal energy
+  REAL_TYPE* d_iobuf;///< IO buffer
   REAL_TYPE* d_ws;   ///< work for scalar
   REAL_TYPE* d_p0;   ///< work for scalar
-  REAL_TYPE* d_wo;   ///< work for vector
   REAL_TYPE* d_wv;   ///< work for vector
+  REAL_TYPE* d_vc;   ///< work for vector
   REAL_TYPE* d_ap;   ///< averaged pressure
   REAL_TYPE* d_av;   ///< averaged velocity
   REAL_TYPE* d_ae;   ///< averaged internal energy
@@ -80,6 +84,7 @@ protected:
   int* d_bcd;        ///< BCindex D
   int* d_cdf;        ///< BCindex C
   double* mat_tbl;   ///< material table
+  int* d_iblk;       ///< IBLANK
   
   
   // class pointer
@@ -100,6 +105,7 @@ public:
     IO_Voxel = 0;
     Format   = 0;
     Slice    = 0;
+    Iblank   = 0;
     
     // 変数
     d_p = NULL;
@@ -108,8 +114,9 @@ public:
     d_ie = NULL;
     d_ws = NULL;
     d_p0 = NULL;
-    d_wo = NULL;
+    d_iobuf = NULL;
     d_wv = NULL;
+    d_vc = NULL;
     d_ap = NULL;
     d_av = NULL;
     d_ae = NULL;
@@ -118,6 +125,7 @@ public:
     mat_tbl = NULL;
     d_bcd = NULL;
     d_cdf = NULL;
+    d_iblk = NULL;
   }
   
   
@@ -150,10 +158,17 @@ public:
 
   
   
-  // formatを登録
+  // formatを返す
   int getFormat() const
   {
     return Format;
+  }
+  
+  
+  // Iblankの利用の有無を返す
+  int getIblank() const
+  {
+    return Iblank;
   }
   
   
@@ -243,9 +258,10 @@ public:
    * @param [out]    m_CurrentStep     CurrentStep
    * @param [out]    m_CurrentTime     CurrentTime
    */
-  void Restart(FILE* fp,
-               unsigned& m_CurrentStep,
-               double& m_CurrentTime);
+  virtual void Restart(FILE* fp,
+                       unsigned& m_CurrentStep,
+                       double& m_CurrentTime) {
+  }
   
   
   /**
@@ -289,12 +305,6 @@ public:
   }
   
   
-  /**
-   * @brief リスタートモードを判定
-   */
-  virtual void selectRestartMode() {}
-  
-  
   // formatを登録
   void setFormat(const int key)
   {
@@ -309,15 +319,17 @@ public:
                       REAL_TYPE* m_d_ie,
                       REAL_TYPE* m_d_ws,
                       REAL_TYPE* m_d_p0,
-                      REAL_TYPE* m_d_wo,
+                      REAL_TYPE* m_d_iob,
                       REAL_TYPE* m_d_wv,
+                      REAL_TYPE* m_d_vc,
                       REAL_TYPE* m_d_ap,
                       REAL_TYPE* m_d_av,
                       REAL_TYPE* m_d_ae,
                       REAL_TYPE* m_d_dv,
                       int* m_d_bcd,
                       int* m_d_cdf,
-                      double* m_mat_tbl);
+                      double* m_mat_tbl,
+                      int* d_iblk);
   
   
   /**

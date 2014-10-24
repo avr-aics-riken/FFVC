@@ -35,76 +35,53 @@ void PLT3D::getRestartDFI()
   // リスタート時のDFIファイル名
   if ( C->Start != initial_start )
   {
-    label="/StartCondition/Restart/DFIfiles/Pressure";
+    label="/StartCondition/Restart/DFIfiles/Instantaneous";
     
     if ( tpCntl->getInspectedValue(label, str ) )
     {
-      f_dfi_in_prs = str.c_str();
+      f_dfi_in_ins = str.c_str();
     }
-    if ( f_dfi_in_prs.empty() == true ) f_dfi_in_prs = "prs";
+    if ( f_dfi_in_ins.empty() == true ) f_dfi_in_ins = "field";
     
-    
-    label="/StartCondition/Restart/DFIfiles/Velocity";
-    
-    if ( tpCntl->getInspectedValue(label, str ) )
-    {
-      f_dfi_in_vel = str.c_str();
-    }
-    if ( f_dfi_in_vel.empty() == true ) f_dfi_in_vel = "vel";
-    
-    
-    label="/StartCondition/Restart/DFIfiles/Fvelocity";
-    
-    if ( tpCntl->getInspectedValue(label, str ) )
-    {
-      f_dfi_in_fvel = str.c_str();
-    }
-    if ( f_dfi_in_fvel.empty() == true ) f_dfi_in_fvel = "fvel";
-    
-    
-    if ( C->isHeatProblem() )
-    {
-      label="/StartCondition/Restart/DFIfiles/Temperature";
-      
-      if ( tpCntl->getInspectedValue(label, str ) )
-      {
-        f_dfi_in_temp = str.c_str();
-      }
-      if ( f_dfi_in_temp.empty() == true ) f_dfi_in_temp = "tmp";
-    }
     
     
     // 平均値
     if ( C->Mode.Average == ON )
     {
-      label="/StartCondition/Restart/DFIfiles/AveragedPressure";
+      label="/StartCondition/Restart/DFIfiles/Average";
       
       if ( tpCntl->getInspectedValue(label, str ) )
       {
-        f_dfi_in_prsa = str.c_str();
+        f_dfi_in_avr = str.c_str();
       }
-      if ( f_dfi_in_prsa.empty() == true ) f_dfi_in_prsa = "prsa";
+      if ( f_dfi_in_avr.empty() == true ) f_dfi_in_avr = "field_avr";
       
-      
-      label="/StartCondition/Restart/DFIfiles/AveragedVelocity";
-      
-      if ( tpCntl->getInspectedValue(label, str ) )
-      {
-        f_dfi_in_vela = str.c_str();
-      }
-      if ( f_dfi_in_vela.empty() == true ) f_dfi_in_vela = "vela";
-      
-      
-      if ( C->isHeatProblem() )
-      {
-        label="/StartCondition/Restart/DFIfiles/AveragedTemperature";
-        
-        if ( tpCntl->getInspectedValue(label, str ) )
-        {
-          f_dfi_in_tempa = str.c_str();
-        }
-        if ( f_dfi_in_tempa.empty() == true ) f_dfi_in_tempa = "tmpa";
-      }
+    }
+  }
+  
+}
+
+// #################################################################
+// IBLANKを生成
+void PLT3D::generateIBLANK()
+{
+  int nx = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
+
+  // クリア
+  memset(d_iblk, 0, sizeof(int)*nx);
+  
+#pragma omp parallel for firstprivate(nx) schedule(static)
+  for (unsigned m=0; m<nx; m++)
+  {
+    int s = d_bcd[m];
+    
+    if ( BIT_SHIFT(s, ACTIVE_BIT) ) // 計算領域の場合
+    {
+      d_iblk[m] = IS_FLUID(s) ? 1 : 2; // Fluid >> 1, Solid >> 2
+    }
+    else // 非計算領域 >> 0
+    {
+      d_iblk[m] = 0;
     }
   }
   
@@ -116,25 +93,32 @@ void PLT3D::getRestartDFI()
  */
 void PLT3D::initFileOut()
 {
-  // Format
-  CDM::E_CDM_FORMAT cdm_format;
-  
-  if ( Format == sph_fmt )
+  // バッファサイズチェック  バッファサイズdnumはFALLOC::allocArray_Main()の数をハードコード
+  // Control::getSolverProperty(), IO_BASE::getFIOparams()で書き出しサイズNvarsIns_plt3d, NvarsAvr_plt3dを計算
+  int dnum;
+  if ( C->isHeatProblem() )
   {
-    cdm_format = CDM::E_CDM_FMT_SPH;
-  }
-  else if ( Format == bov_fmt )
-  {
-    cdm_format = CDM::E_CDM_FMT_BOV;
-  }
-  else if ( Format == plt3d_fun_fmt )
-  {
-    cdm_format = CDM::E_CDM_FMT_PLOT3D;
+    dnum = IO_BLOCK_SIZE_HEAT;
   }
   else
   {
+    dnum = IO_BLOCK_SIZE_FLOW;
+  }
+  
+  int NumVars    = C->NvarsIns_plt3d;
+  int NumVarsAvr = C->NvarsAvr_plt3d;
+  
+  if ( (NumVars > dnum) || (NumVarsAvr > dnum) )
+  {
+    Hostonly_ printf("Error : Buffer size of PLOT3D exseeds predetermined value. Control the number of derived arrays for output.\n");
     Exit(0);
   }
+  
+
+  
+  // Format
+  CDM::E_CDM_FORMAT cdm_format = CDM::E_CDM_FMT_PLOT3D;
+
   
   // Datatype
   CDM::E_CDM_DTYPE datatype;
@@ -204,8 +188,7 @@ void PLT3D::initFileOut()
   }
   
   
-  std::string process="./proc.dfi";
-  int comp = 1;
+  std::string procfile="./proc.dfi";
   
   
   // 単位の設定
@@ -261,207 +244,85 @@ void PLT3D::initFileOut()
   std::string UnitT = "Celsius";
   
   
-  // Pressure
-  comp = 1;
-  DFI_OUT_PRS = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                   cdm_DFI::Generate_DFI_Name(f_Pressure),
-                                   path,
-                                   f_Pressure,
-                                   cdm_format,
-                                   gc_out,
-                                   datatype,
-                                   CDM::E_CDM_IJKN,
-                                   comp,
-                                   process,
-                                   G_size,
-                                   cdm_pit,
-                                   cdm_org,
-                                   cdm_div,
-                                   head,
-                                   cdm_tail,
-                                   HostName,
-                                   TimeSliceDir);
-  
-  if ( DFI_OUT_PRS == NULL )
+  // IBLANKファイルのモード
+  if ( Iblank == OFF )
   {
-    Hostonly_ stamped_printf("\tFails to instance Pressure dfi.\n");
+    d_iblk = NULL;
+  }
+  else
+  {
+    if ( !d_iblk ) Exit(0);
+    generateIBLANK();
+  }
+  
+  
+  // 瞬時値と派生データ
+  DFI_OUT_INS = cdm_DFI::WriteInit(MPI_COMM_WORLD, ///<MPI コミュニケータ
+                                   cdm_DFI::Generate_DFI_Name(f_dfi_out_ins), ///<dfi ファイル名
+                                   path,          ///<出力ディレクトリ
+                                   f_dfi_out_ins, ///<ベースファイル名
+                                   cdm_format,    ///<出力フォーマット
+                                   gc_out,        ///<出力仮想セル数
+                                   datatype,      ///<データ型
+                                   NumVars,       ///<データの変数の個数
+                                   procfile,      ///<proc ファイル名
+                                   G_size,        ///<計算空間全体のボクセルサイズ
+                                   cdm_pit,       ///<ピッチ
+                                   cdm_org,       ///<原点座標値
+                                   cdm_div,       ///<領域分割数
+                                   head,          ///<計算領域の開始位置
+                                   cdm_tail,      ///<計算領域の終了位置
+                                   HostName,      ///<ホスト名
+                                   TimeSliceDir,  ///<タイムスライス出力オプション
+                                   d_iblk);       ///<出力するiblankデータポインタ (PLOT3Dでiblankも出力しない場合にはNULL)
+  
+  if ( DFI_OUT_INS == NULL )
+  {
+    Hostonly_ stamped_printf("\tFails to instance Index.dfi.\n");
     Exit(0);
   }
   
   if( Slice == ON )
   {
-    DFI_OUT_PRS->SetTimeSliceFlag(CDM::E_CDM_ON);
+    DFI_OUT_INS->SetTimeSliceFlag(CDM::E_CDM_ON);
   }
   else
   {
-    DFI_OUT_PRS->SetTimeSliceFlag(CDM::E_CDM_OFF);
+    DFI_OUT_INS->SetTimeSliceFlag(CDM::E_CDM_OFF);
   }
   
   
-  DFI_OUT_PRS->AddUnit("Length",   UnitL, (double)C->RefLength);
-  DFI_OUT_PRS->AddUnit("Velocity", UnitV, (double)C->RefVelocity);
-  DFI_OUT_PRS->AddUnit("Pressure", UnitP, (double)C->BasePrs, DiffPrs, true);
+  DFI_OUT_INS->AddUnit("Length",   UnitL, (double)C->RefLength);
+  DFI_OUT_INS->AddUnit("Velocity", UnitV, (double)C->RefVelocity);
+  DFI_OUT_INS->AddUnit("Pressure", UnitP, (double)C->BasePrs, DiffPrs, true);
   
-  DFI_OUT_PRS->WriteProcDfiFile(MPI_COMM_WORLD, true);
-  
-  
-  
-  // Velocity
-  comp = 3;
-  DFI_OUT_VEL = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                   cdm_DFI::Generate_DFI_Name(f_Velocity),
-                                   path,
-                                   f_Velocity,
-                                   cdm_format,
-                                   gc_out,
-                                   datatype,
-                                   CDM::E_CDM_NIJK,
-                                   comp,
-                                   process,
-                                   G_size,
-                                   cdm_pit,
-                                   cdm_org,
-                                   cdm_div,
-                                   head,
-                                   cdm_tail,
-                                   HostName,
-                                   TimeSliceDir);
-  
-  if ( DFI_OUT_VEL == NULL )
-  {
-    Hostonly_ stamped_printf("\tFails to instance Velocity dfi.\n");
-    Exit(0);
-  }
-  
-  if ( Slice == ON )
-  {
-    DFI_OUT_VEL->SetTimeSliceFlag(CDM::E_CDM_ON);
-  }
-  else
-  {
-    DFI_OUT_VEL->SetTimeSliceFlag(CDM::E_CDM_OFF);
-  }
-  
-  DFI_OUT_VEL->AddUnit("Length"  , UnitL, (double)C->RefLength);
-  DFI_OUT_VEL->AddUnit("Velocity", UnitV, (double)C->RefVelocity);
-  DFI_OUT_VEL->AddUnit("Pressure", UnitP, (double)C->BasePrs, DiffPrs, true);
-  
-  
-  
-  // Fvelocity
-  comp = 3;
-  DFI_OUT_FVEL = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                    cdm_DFI::Generate_DFI_Name(f_Fvelocity),
-                                    path,
-                                    f_Fvelocity,
-                                    cdm_format,
-                                    gc_out,
-                                    datatype,
-                                    CDM::E_CDM_NIJK,
-                                    comp,
-                                    process,
-                                    G_size,
-                                    cdm_pit,
-                                    cdm_org,
-                                    cdm_div,
-                                    head,
-                                    cdm_tail,
-                                    HostName,
-                                    TimeSliceDir);
-  
-  if ( DFI_OUT_FVEL == NULL )
-  {
-    Hostonly_ stamped_printf("\tFails to instance Fvelocity dfi.\n");
-    Exit(0);
-  }
-  
-  if ( Slice == ON )
-  {
-    DFI_OUT_FVEL->SetTimeSliceFlag(CDM::E_CDM_ON);
-  }
-  else
-  {
-    DFI_OUT_FVEL->SetTimeSliceFlag(CDM::E_CDM_OFF);
-  }
-  
-  DFI_OUT_FVEL->AddUnit("Length"  , UnitL, (double)C->RefLength);
-  DFI_OUT_FVEL->AddUnit("Velocity", UnitV, (double)C->RefVelocity);
-  DFI_OUT_FVEL->AddUnit("Pressure", UnitP, (double)C->BasePrs, DiffPrs, true);
-  
-  
-  
-  // Temperature
-  if ( C->isHeatProblem() )
-  {
-    comp = 1;
-    DFI_OUT_TEMP = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                      cdm_DFI::Generate_DFI_Name(f_Temperature),
-                                      path,
-                                      f_Temperature,
-                                      cdm_format,
-                                      gc_out,
-                                      datatype,
-                                      CDM::E_CDM_IJKN,
-                                      comp,
-                                      process,
-                                      G_size,
-                                      cdm_pit,
-                                      cdm_org,
-                                      cdm_div,
-                                      head,
-                                      cdm_tail,
-                                      HostName,
-                                      TimeSliceDir);
-    
-    if ( DFI_OUT_TEMP == NULL )
-    {
-      Hostonly_ stamped_printf("\tFails to instance Temperature dfi.\n");
-      Exit(0);
-    }
-    
-    if ( Slice == ON )
-    {
-      DFI_OUT_TEMP->SetTimeSliceFlag(CDM::E_CDM_ON);
-    }
-    else
-    {
-      DFI_OUT_TEMP->SetTimeSliceFlag(CDM::E_CDM_OFF);
-    }
-    
-    DFI_OUT_TEMP->AddUnit("Length"  , UnitL, (double)C->RefLength);
-    DFI_OUT_TEMP->AddUnit("Velocity", UnitV, (double)C->RefVelocity);
-    DFI_OUT_TEMP->AddUnit("Pressure", UnitP, (double)C->BasePrs, DiffPrs, true);
-    DFI_OUT_TEMP->AddUnit("Temperature", UnitT, (double)C->BaseTemp, (double)C->DiffTemp, true);
-  }
+  DFI_OUT_INS->WriteProcDfiFile(MPI_COMM_WORLD, true);
   
   
   
   // 平均値
   if ( C->Mode.Average == ON )
   {
+    DFI_OUT_AVR = cdm_DFI::WriteInit(MPI_COMM_WORLD, ///<MPI コミュニケータ
+                                     cdm_DFI::Generate_DFI_Name(f_dfi_out_avr), ///<dfi ファイル名
+                                     path,          ///<出力ディレクトリ
+                                     f_dfi_out_avr, ///<ベースファイル名
+                                     cdm_format,    ///<出力フォーマット
+                                     gc_out,        ///<出力仮想セル数
+                                     datatype,      ///<データ型
+                                     NumVarsAvr,    ///<データの変数の個数
+                                     procfile,      ///<proc ファイル名
+                                     G_size,        ///<計算空間全体のボクセルサイズ
+                                     cdm_pit,       ///<ピッチ
+                                     cdm_org,       ///<原点座標値
+                                     cdm_div,       ///<領域分割数
+                                     head,          ///<計算領域の開始位置
+                                     cdm_tail,      ///<計算領域の終了位置
+                                     HostName,      ///<ホスト名
+                                     TimeSliceDir,  ///<タイムスライス出力オプション
+                                     d_iblk);       ///<出力するiblankデータポインタ (PLOT3Dでiblankも出力する場合にこの引数も追加)
     
-    // Pressure
-    comp = 1;
-    DFI_OUT_PRSA = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                      cdm_DFI::Generate_DFI_Name(f_AvrPressure),
-                                      path,
-                                      f_AvrPressure,
-                                      cdm_format,
-                                      gc_out,
-                                      datatype,
-                                      CDM::E_CDM_IJKN,
-                                      comp,
-                                      process,
-                                      G_size,
-                                      cdm_pit,
-                                      cdm_org,
-                                      cdm_div,
-                                      head,
-                                      cdm_tail,
-                                      HostName,
-                                      TimeSliceDir);
-    
-    if ( DFI_OUT_PRSA == NULL )
+    if ( DFI_OUT_AVR == NULL )
     {
       Hostonly_ stamped_printf("\tFails to instance AvrPressure dfi.\n");
       Exit(0);
@@ -469,327 +330,16 @@ void PLT3D::initFileOut()
     
     if ( Slice == ON )
     {
-      DFI_OUT_PRSA->SetTimeSliceFlag(CDM::E_CDM_ON);
+      DFI_OUT_AVR->SetTimeSliceFlag(CDM::E_CDM_ON);
     }
     else
     {
-      DFI_OUT_PRSA->SetTimeSliceFlag(CDM::E_CDM_OFF);
+      DFI_OUT_AVR->SetTimeSliceFlag(CDM::E_CDM_OFF);
     }
     
-    DFI_OUT_PRSA->AddUnit("Length"  , UnitL, (double)C->RefLength);
-    DFI_OUT_PRSA->AddUnit("Velocity", UnitV, (double)C->RefVelocity);
-    DFI_OUT_PRSA->AddUnit("Pressure", UnitP, (double)C->BasePrs, DiffPrs, true);
-    
-    
-    
-    // Velocity
-    comp = 3;
-    DFI_OUT_VELA = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                      cdm_DFI::Generate_DFI_Name(f_AvrVelocity),
-                                      path,
-                                      f_AvrVelocity,
-                                      cdm_format,
-                                      gc_out,
-                                      datatype,
-                                      CDM::E_CDM_NIJK,
-                                      comp,
-                                      process,
-                                      G_size,
-                                      cdm_pit,
-                                      cdm_org,
-                                      cdm_div,
-                                      head,
-                                      cdm_tail,
-                                      HostName,
-                                      TimeSliceDir);
-    
-    if ( DFI_OUT_VELA == NULL )
-    {
-      Hostonly_ stamped_printf("\tcan not instance AvrVelocity dfi\n");
-      Exit(0);
-    }
-    
-    if ( Slice == ON )
-    {
-      DFI_OUT_VELA->SetTimeSliceFlag(CDM::E_CDM_ON);
-    }
-    else
-    {
-      DFI_OUT_VELA->SetTimeSliceFlag(CDM::E_CDM_OFF);
-    }
-    
-    DFI_OUT_VELA->AddUnit("Length"  , UnitL, (double)C->RefLength);
-    DFI_OUT_VELA->AddUnit("Velocity", UnitV, (double)C->RefVelocity);
-    DFI_OUT_VELA->AddUnit("Pressure", UnitP, (double)C->BasePrs, DiffPrs, true);
-    
-    
-    
-    // Temperature
-    if ( C->isHeatProblem() )
-    {
-      comp = 1;
-      DFI_OUT_TEMPA = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                         cdm_DFI::Generate_DFI_Name(f_AvrTemperature),
-                                         path,
-                                         f_AvrTemperature,
-                                         cdm_format,
-                                         gc_out,
-                                         datatype,
-                                         CDM::E_CDM_IJKN,
-                                         comp,
-                                         process,
-                                         G_size,
-                                         cdm_pit,
-                                         cdm_org,
-                                         cdm_div,
-                                         head,
-                                         cdm_tail,
-                                         HostName,
-                                         TimeSliceDir);
-      
-      if ( DFI_OUT_TEMPA == NULL )
-      {
-        Hostonly_ stamped_printf("\tFails to instance AvrTemperature dfi.\n");
-        Exit(0);
-      }
-      
-      if ( Slice == ON )
-      {
-        DFI_OUT_TEMPA->SetTimeSliceFlag(CDM::E_CDM_ON);
-      }
-      else
-      {
-        DFI_OUT_TEMPA->SetTimeSliceFlag(CDM::E_CDM_OFF);
-      }
-      
-      DFI_OUT_TEMPA->AddUnit("Length"  , UnitL, (double)C->RefLength);
-      DFI_OUT_TEMPA->AddUnit("Velocity", UnitV, (double)C->RefVelocity);
-      DFI_OUT_TEMPA->AddUnit("Pressure", UnitP, (double)C->BasePrs, DiffPrs, true);
-      DFI_OUT_TEMP->AddUnit("Temperature", UnitT, (double)C->BaseTemp, (double)C->DiffTemp, true);
-    }
-  }
-  
-  
-  
-  // Derived Variables
-  
-  // Total Pressure
-  if (C->varState[var_TotalP] == ON )
-  {
-    comp = 1;
-    DFI_OUT_TP = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                    cdm_DFI::Generate_DFI_Name(f_TotalP),
-                                    path,
-                                    f_TotalP,
-                                    cdm_format,
-                                    gc_out,
-                                    datatype,
-                                    CDM::E_CDM_IJKN,
-                                    comp,
-                                    process,
-                                    G_size,
-                                    cdm_pit,
-                                    cdm_org,
-                                    cdm_div,
-                                    head,
-                                    cdm_tail,
-                                    HostName,
-                                    TimeSliceDir);
-    
-    if ( DFI_OUT_TP == NULL )
-    {
-      Hostonly_ stamped_printf("\tFails to instance TotalPressure dfi.\n");
-      Exit(0);
-    }
-    
-    if ( Slice == ON )
-    {
-      DFI_OUT_TP->SetTimeSliceFlag(CDM::E_CDM_ON);
-    }
-    else
-    {
-      DFI_OUT_TP->SetTimeSliceFlag(CDM::E_CDM_OFF);
-    }
-    
-    DFI_OUT_TP->AddUnit("Length"  , UnitL, (double)C->RefLength);
-    DFI_OUT_TP->AddUnit("Velocity", UnitV, (double)C->RefVelocity);
-    DFI_OUT_TP->AddUnit("Pressure", UnitP, (double)C->BasePrs, DiffPrs, true);
-  }
-  
-  
-  
-  // Vorticity
-  if (C->varState[var_Vorticity] == ON )
-  {
-    comp = 3;
-    DFI_OUT_VRT = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                     cdm_DFI::Generate_DFI_Name(f_Vorticity),
-                                     path,
-                                     f_Vorticity,
-                                     cdm_format,
-                                     gc_out,
-                                     datatype,
-                                     CDM::E_CDM_NIJK,
-                                     comp,
-                                     process,
-                                     G_size,
-                                     cdm_pit,
-                                     cdm_org,
-                                     cdm_div,
-                                     head,
-                                     cdm_tail,
-                                     HostName,
-                                     TimeSliceDir);
-    if( DFI_OUT_VRT == NULL )
-    {
-      Hostonly_ stamped_printf("\tFails to instance Vorticity dfi.\n");
-      Exit(0);
-    }
-    if( Slice == ON )
-    {
-      DFI_OUT_VRT->SetTimeSliceFlag(CDM::E_CDM_ON);
-    }
-    else
-    {
-      DFI_OUT_VRT->SetTimeSliceFlag(CDM::E_CDM_OFF);
-    }
-    
-    DFI_OUT_VRT->AddUnit("Length"  , UnitL, (double)C->RefLength);
-    DFI_OUT_VRT->AddUnit("Velocity", UnitV, (double)C->RefVelocity);
-    DFI_OUT_VRT->AddUnit("Pressure", UnitP, (double)C->BasePrs, DiffPrs, true);
-  }
-  
-  
-  
-  // 2nd Invariant of VGT
-  if ( C->varState[var_Qcr] == ON )
-  {
-    comp = 1;
-    DFI_OUT_I2VGT = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                       cdm_DFI::Generate_DFI_Name(f_I2VGT),
-                                       path,
-                                       f_I2VGT,
-                                       cdm_format,
-                                       gc_out,
-                                       datatype,
-                                       CDM::E_CDM_IJKN,
-                                       comp,
-                                       process,
-                                       G_size,
-                                       cdm_pit,
-                                       cdm_org,
-                                       cdm_div,
-                                       head,
-                                       cdm_tail,
-                                       HostName,
-                                       TimeSliceDir);
-    
-    if ( DFI_OUT_I2VGT == NULL )
-    {
-      Hostonly_ stamped_printf("\tFails to instance 2nd Invariant of VGT dfi.\n");
-      Exit(0);
-    }
-    
-    if ( Slice == ON )
-    {
-      DFI_OUT_I2VGT->SetTimeSliceFlag(CDM::E_CDM_ON);
-    }
-    else
-    {
-      DFI_OUT_I2VGT->SetTimeSliceFlag(CDM::E_CDM_OFF);
-    }
-    
-    DFI_OUT_I2VGT->AddUnit("Length"  , UnitL, (double)C->RefLength);
-    DFI_OUT_I2VGT->AddUnit("Velocity", UnitV, (double)C->RefVelocity);
-    DFI_OUT_I2VGT->AddUnit("Pressure", UnitP, (double)C->BasePrs, DiffPrs, true);
-  }
-  
-  
-  
-  // Helicity
-  if ( C->varState[var_Helicity] == ON )
-  {
-    comp = 1;
-    DFI_OUT_HLT = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                     cdm_DFI::Generate_DFI_Name(f_Helicity),
-                                     path,
-                                     f_Helicity,
-                                     cdm_format,
-                                     gc_out,
-                                     datatype,
-                                     CDM::E_CDM_IJKN,
-                                     comp,
-                                     process,
-                                     G_size,
-                                     cdm_pit,
-                                     cdm_org,
-                                     cdm_div,
-                                     head,
-                                     cdm_tail,
-                                     HostName,
-                                     TimeSliceDir);
-    
-    if ( DFI_OUT_HLT == NULL )
-    {
-      Hostonly_ stamped_printf("\tFails to instance Helicity dfi.\n");
-      Exit(0);
-    }
-    
-    if ( Slice == ON )
-    {
-      DFI_OUT_HLT->SetTimeSliceFlag(CDM::E_CDM_ON);
-    }
-    else
-    {
-      DFI_OUT_HLT->SetTimeSliceFlag(CDM::E_CDM_OFF);
-    }
-    
-    DFI_OUT_HLT->AddUnit("Length",   UnitL, (double)C->RefLength);
-    DFI_OUT_HLT->AddUnit("Velocity", UnitV, (double)C->RefVelocity);
-    DFI_OUT_HLT->AddUnit("Pressure", UnitP, (double)C->BasePrs, DiffPrs, true);
-  }
-  
-  // Divergence for Debug
-  if ( C->varState[var_Div] == ON )
-  {
-    comp = 1;
-    DFI_OUT_DIV = cdm_DFI::WriteInit(MPI_COMM_WORLD,
-                                     cdm_DFI::Generate_DFI_Name(f_DivDebug),
-                                     path,
-                                     f_DivDebug,
-                                     cdm_format,
-                                     gc_out,
-                                     datatype,
-                                     CDM::E_CDM_IJKN,
-                                     comp,
-                                     process,
-                                     G_size,
-                                     cdm_pit,
-                                     cdm_org,
-                                     cdm_div,
-                                     head,
-                                     cdm_tail,
-                                     HostName,
-                                     TimeSliceDir);
-    
-    if ( DFI_OUT_DIV == NULL )
-    {
-      Hostonly_ stamped_printf("\tFails to instance Divergence dfi.\n");
-      Exit(0);
-    }
-    
-    if( Slice == ON )
-    {
-      DFI_OUT_DIV->SetTimeSliceFlag(CDM::E_CDM_ON);
-    }
-    else
-    {
-      DFI_OUT_DIV->SetTimeSliceFlag(CDM::E_CDM_OFF);
-    }
-    
-    DFI_OUT_DIV->AddUnit("Length"  , UnitL, (double)C->RefLength);
-    DFI_OUT_DIV->AddUnit("Velocity", UnitV, (double)C->RefVelocity);
-    DFI_OUT_DIV->AddUnit("Pressure", UnitP, (double)C->BasePrs, DiffPrs, true);
+    DFI_OUT_AVR->AddUnit("Length"  , UnitL, (double)C->RefLength);
+    DFI_OUT_AVR->AddUnit("Velocity", UnitV, (double)C->RefVelocity);
+    DFI_OUT_AVR->AddUnit("Pressure", UnitP, (double)C->BasePrs, DiffPrs, true);
   }
   
 }
@@ -799,15 +349,24 @@ void PLT3D::initFileOut()
 
 // #################################################################
 // 時間平均値のファイル出力
+// @note d_ws,d_wvをワークに使用
 void PLT3D::OutputAveragedVarables(const unsigned m_CurrentStep,
-                                 const double m_CurrentTime,
-                                 const unsigned m_CurrentStepAvr,
-                                 const double m_CurrentTimeAvr,
-                                 double& flop)
+                                   const double m_CurrentTime,
+                                   const unsigned m_CurrentStepAvr,
+                                   const double m_CurrentTimeAvr,
+                                   double& flop)
 {
-  REAL_TYPE f_min, f_max, min_tmp, max_tmp, vec_min[4], vec_max[4];
-  REAL_TYPE minmax[2];
-  REAL_TYPE cdm_minmax[8];
+  
+  // packing  >> ap, av, atの順（全5 scalar）
+  size_t dims[3], nx;
+  dims[0] = (size_t)(size[0] + 2*guide);
+  dims[1] = (size_t)(size[1] + 2*guide);
+  dims[2] = (size_t)(size[2] + 2*guide);
+  nx = dims[0] * dims[1] * dims[2];
+  
+  REAL_TYPE f_min, f_max, vec_min[3], vec_max[3];
+  REAL_TYPE minmax[10];
+  
   
   // エラーコード
   CDM::E_CDM_ERRORCODE ret;
@@ -827,7 +386,6 @@ void PLT3D::OutputAveragedVarables(const unsigned m_CurrentStep,
   
   // 平均操作の母数
   unsigned stepAvr = m_CurrentStepAvr;
-  REAL_TYPE scale = 1.0;
   
   // ガイドセル出力
   int gc_out = C->GuideOut;
@@ -859,7 +417,7 @@ void PLT3D::OutputAveragedVarables(const unsigned m_CurrentStep,
     }
     else
     {
-      U.copyS3D(d_ws, size, guide, d_ap, scale);
+      blas_copy_(d_ws, d_ap, size, &guide);
     }
     
     // 最大値と最小値
@@ -867,94 +425,61 @@ void PLT3D::OutputAveragedVarables(const unsigned m_CurrentStep,
     
     if ( numProc > 1 )
     {
-      min_tmp = f_min;
+      REAL_TYPE min_tmp = f_min;
       if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
       
-      max_tmp = f_max;
+      REAL_TYPE max_tmp = f_max;
       if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
     
-    minmax[0] = f_min;
-    minmax[1] = f_max;
+    minmax[0] = f_min;  ///<<< p min
+    minmax[1] = f_max;  ///<<< p max
     
     
-    if ( !DFI_OUT_PRSA )
-    {
-      printf("[%d] DFI_OUT_PRSA Pointer Error\n", paraMngr->GetMyRankID());
-      Exit(-1);
-    }
-    
-    ret = DFI_OUT_PRSA->WriteData(m_step,   // 出力step番号
-                                  m_time,   // 出力時刻
-                                  size,     // d_wsの実ボクセル数
-                                  1,        // 成分数
-                                  guide,    // 仮想セル数
-                                  d_ws,     // フィールドデータポインタ
-                                  minmax,   // 最小値と最大値
-                                  false,    // 平均出力指示 false:出力あり
-                                  stepAvr,  // 平均をとったステップ数
-                                  timeAvr); // 平均をとった時刻
-    
-    if ( ret != CDM::E_CDM_SUCCESS ) Exit(0);
+    // ap
+    blas_copy_(&d_iobuf[0], d_ws, size, &guide);
+    DFI_OUT_AVR->setVariableName(0, l_avr_pressure);
     
     
+
     
     // Velocity
     REAL_TYPE unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
+
+    fb_vout_ijkn_(d_wv, d_av, size, &guide, RF->getV00(), &unit_velocity, &flop);
     
-    if ( DFI_OUT_VELA->GetArrayShape() == CDM::E_CDM_NIJK ) // Velocityの型は CDM::E_CDM_NIJK
-    {
-      fb_vout_nijk_(d_wo, d_av, size, &guide, RF->getV00(), &unit_velocity, &flop); // 配列並びを変換
-      fb_minmax_vex_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wo, &flop);
-    }
-    else
-    {
-      fb_vout_ijkn_(d_wo, d_av, size, &guide, RF->getV00(), &unit_velocity, &flop); // 並び変換なし
-      fb_minmax_v_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wo, &flop);
-    }
+    fb_minmax_v_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wv, &flop);
+
     
     
     if ( numProc > 1 )
     {
-      REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
-      if ( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      REAL_TYPE vmin_tmp[3] = {vec_min[0], vec_min[1], vec_min[2]};
+      if ( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN) != CPM_SUCCESS ) Exit(0);
       
-      REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
-      if ( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      REAL_TYPE vmax_tmp[3] = {vec_max[0], vec_max[1], vec_max[2]};
+      if ( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
     
+    minmax[2] = vec_min[0]; ///<<< vec_u min
+    minmax[3] = vec_max[0]; ///<<< vec_u max
+    minmax[4] = vec_min[1]; ///<<< vec_v min
+    minmax[5] = vec_max[1]; ///<<< vec_v max
+    minmax[6] = vec_min[2]; ///<<< vec_w min
+    minmax[7] = vec_max[2]; ///<<< vec_w max
     
-    if ( !DFI_OUT_VELA )
-    {
-      printf("[%d] DFI_OUT_VELA Pointer Error\n", paraMngr->GetMyRankID());
-      Exit(-1);
-    }
+    // av-u
+    blas_copy_(&d_iobuf[nx], &d_wv[0], size, &guide);
     
-    cdm_minmax[0] = vec_min[1]; ///<<< vec_u min
-    cdm_minmax[1] = vec_max[1]; ///<<< vec_u max
-    cdm_minmax[2] = vec_min[2]; ///<<< vec_v min
-    cdm_minmax[3] = vec_max[2]; ///<<< vec_v max
-    cdm_minmax[4] = vec_min[3]; ///<<< vec_w min
-    cdm_minmax[5] = vec_max[3]; ///<<< vec_w max
-    cdm_minmax[6] = vec_min[0]; ///<<< u,v,wの合成値のmin
-    cdm_minmax[7] = vec_max[0]; ///<<< u,v,wの合成値のmax
+    // av-v
+    blas_copy_(&d_iobuf[nx*2], &d_wv[nx], size, &guide);
     
-    DFI_OUT_VELA->setComponentVariable(0, "u");
-    DFI_OUT_VELA->setComponentVariable(1, "v");
-    DFI_OUT_VELA->setComponentVariable(2, "w");
+    // av-w
+    blas_copy_(&d_iobuf[nx*3], &d_wv[nx*2], size, &guide);
     
-    ret = DFI_OUT_VELA->WriteData(m_step,
-                                  m_time,
-                                  size,
-                                  3,
-                                  guide,
-                                  d_wo,
-                                  cdm_minmax,
-                                  false,
-                                  stepAvr,
-                                  timeAvr);
-    
-    if ( ret != CDM::E_CDM_SUCCESS ) Exit(0);
+    DFI_OUT_AVR->setVariableName(1, l_avr_velocity_x);
+    DFI_OUT_AVR->setVariableName(2, l_avr_velocity_y);
+    DFI_OUT_AVR->setVariableName(3, l_avr_velocity_z);
   }
   
   
@@ -967,45 +492,59 @@ void PLT3D::OutputAveragedVarables(const unsigned m_CurrentStep,
     
     if ( numProc > 1 )
     {
-      min_tmp = f_min;
+      REAL_TYPE min_tmp = f_min;
       if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
       
-      max_tmp = f_max;
+      REAL_TYPE max_tmp = f_max;
       if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
     
-    minmax[0] = f_min;
-    minmax[1] = f_max;
+    minmax[8] = f_min; ///<<< t min
+    minmax[9] = f_max; ///<<< t max
     
-    if ( !DFI_OUT_TEMPA )
-    {
-      printf("[%d] DFI_OUT_TEMPA Pointer Error\n", paraMngr->GetMyRankID());
-      Exit(-1);
-    }
-    
-    ret = DFI_OUT_TEMPA->WriteData(m_step,
-                                   m_time,
-                                   size,
-                                   1,
-                                   guide,
-                                   d_ws,
-                                   minmax,
-                                   false,
-                                   stepAvr,
-                                   timeAvr);
-    
-    if ( ret != CDM::E_CDM_SUCCESS ) Exit(0);
+    // ae
+    blas_copy_(&d_iobuf[nx*4], d_ws, size, &guide);
+    DFI_OUT_AVR->setVariableName(4, l_avr_temperature);
   }
+  
+  if ( !DFI_OUT_AVR )
+  {
+    printf("[%d] DFI_OUT_TEMPA Pointer Error\n", paraMngr->GetMyRankID());
+    Exit(-1);
+  }
+  
+  int NumVarsAvr = C->NvarsAvr_plt3d;
+  
+  ret = DFI_OUT_AVR->WriteData(m_step,     // 出力step番号
+                               m_time,     // 出力時刻
+                               size,       // 配列サイズ
+                               NumVarsAvr, // 成分数
+                               guide,      // 仮想セル数
+                               d_iobuf,    // フィールドデータポインタ
+                               minmax,     // 最小値と最大値
+                               false,      // 平均出力指示 false:出力あり
+                               stepAvr,    // 平均をとったステップ数
+                               timeAvr);   // 平均をとった時刻
+  
+  if ( ret != CDM::E_CDM_SUCCESS ) Exit(0);
 }
 
 
 // #################################################################
 // 基本変数のファイル出力
+// @note d_ws,d_wvをワークに使用
 void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
-                               const double m_CurrentTime,
-                               double& flop)
+                                 const double m_CurrentTime,
+                                 double& flop)
 {
-  REAL_TYPE scale = 1.0;
+  // packing >> p, v, vf, t, tp, vor, q, hlt, divの順（全15 scalarあるが，バッファ以上はinitOutFile()でチェック）
+  
+  size_t dims[3], nx;
+  dims[0] = (size_t)(size[0] + 2*guide);
+  dims[1] = (size_t)(size[1] + 2*guide);
+  dims[2] = (size_t)(size[2] + 2*guide);
+  nx = dims[0] * dims[1] * dims[2];
+
   
   // ステップ数
   unsigned m_step = m_CurrentStep;
@@ -1026,14 +565,14 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
   
   
   // 最大値と最小値
-  REAL_TYPE f_min, f_max, min_tmp, max_tmp, vec_min[4], vec_max[4];
-  REAL_TYPE minmax[2];
-  REAL_TYPE cdm_minmax[8];
+  REAL_TYPE f_min, f_max, vec_min[3], vec_max[3];
+  REAL_TYPE minmax[15*2];
   
   
   // エラーコード
   CDM::E_CDM_ERRORCODE ret;
   
+  REAL_TYPE unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
   
   
   if ( C->KindOfSolver != SOLID_CONDUCTION )
@@ -1046,417 +585,231 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
     }
     else
     {
-      U.copyS3D(d_ws, size, guide, d_p, scale);
+      blas_copy_(d_ws, d_p, size, &guide);
     }
     
     fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
     
     if ( numProc > 1 )
     {
-      min_tmp = f_min;
+      REAL_TYPE min_tmp = f_min;
       if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
       
-      max_tmp = f_max;
+      REAL_TYPE max_tmp = f_max;
       if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
-    minmax[0] = f_min;
-    minmax[1] = f_max;
+    minmax[0] = f_min; ///<<< p min
+    minmax[1] = f_max; ///<<< p max
     
-    if( !DFI_OUT_PRS )
+    // p
+    blas_copy_(&d_iobuf[0], d_ws, size, &guide);
+    DFI_OUT_INS->setVariableName(0, l_pressure);
+    
+    
+    if( !DFI_OUT_INS )
     {
       printf("[%d] DFI_OUT_PRS Pointer Error\n", paraMngr->GetMyRankID());
       Exit(-1);
     }
     
-    ret = DFI_OUT_PRS->WriteData(m_step,
-                                 m_time,
-                                 size,
-                                 1,
-                                 guide,
-                                 d_ws,
-                                 minmax,
-                                 true,
-                                 0,
-                                 0.0);
-    
-    if( ret != CDM::E_CDM_SUCCESS ) Exit(0);
     
     
     // Velocity
-    REAL_TYPE unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
+    fb_vout_ijkn_(d_wv, d_v, size, &guide, RF->getV00(), &unit_velocity, &flop);
     
-    if ( DFI_OUT_VEL->GetArrayShape() == CDM::E_CDM_NIJK ) // Velocityの型は CDM::E_CDM_NIJK
-    {
-      fb_vout_nijk_(d_wo, d_v, size, &guide, RF->getV00(), &unit_velocity, &flop);
-      fb_minmax_vex_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wo, &flop);
-    }
-    else
-    {
-      fb_vout_ijkn_(d_wo, d_v, size, &guide, RF->getV00(), &unit_velocity, &flop);
-      fb_minmax_v_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wo, &flop);
-    }
+    fb_minmax_v_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wv, &flop);
     
     if ( numProc > 1 )
     {
-      REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
-      if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      REAL_TYPE vmin_tmp[3] = {vec_min[0], vec_min[1], vec_min[2]};
+      if( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN) != CPM_SUCCESS ) Exit(0);
       
-      REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
-      if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      REAL_TYPE vmax_tmp[3] = {vec_max[0], vec_max[1], vec_max[2]};
+      if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
     
-    if ( !DFI_OUT_VEL )
-    {
-      printf("[%d] DFI_OUT_VEL Pointer Error\n", paraMngr->GetMyRankID());
-      Exit(-1);
-    }
+    minmax[2] = vec_min[0]; ///<<< vec_u min
+    minmax[3] = vec_max[0]; ///<<< vec_u max
+    minmax[4] = vec_min[1]; ///<<< vec_v min
+    minmax[5] = vec_max[1]; ///<<< vec_v max
+    minmax[6] = vec_min[2]; ///<<< vec_w min
+    minmax[7] = vec_max[2]; ///<<< vec_w max
+
+    // u
+    blas_copy_(&d_iobuf[nx], &d_wv[0], size, &guide);
     
-    cdm_minmax[0] = vec_min[1]; ///<<< vec_u min
-    cdm_minmax[1] = vec_max[1]; ///<<< vec_u max
-    cdm_minmax[2] = vec_min[2]; ///<<< vec_v min
-    cdm_minmax[3] = vec_max[2]; ///<<< vec_v max
-    cdm_minmax[4] = vec_min[3]; ///<<< vec_w min
-    cdm_minmax[5] = vec_max[3]; ///<<< vec_w max
-    cdm_minmax[6] = vec_min[0]; ///<<< u,v,wの合成値のmin
-    cdm_minmax[7] = vec_max[0]; ///<<< u,v,wの合成値のmax
+    // v
+    blas_copy_(&d_iobuf[nx*2], &d_wv[nx], size, &guide);
     
-    DFI_OUT_VEL->setComponentVariable(0, "u");
-    DFI_OUT_VEL->setComponentVariable(1, "v");
-    DFI_OUT_VEL->setComponentVariable(2, "w");
+    // w
+    blas_copy_(&d_iobuf[nx*3], &d_wv[nx*2], size, &guide);
     
-    ret = DFI_OUT_VEL->WriteData(m_step,
-                                 m_time,
-                                 size,
-                                 3,
-                                 guide,
-                                 d_wo,
-                                 cdm_minmax,
-                                 true,
-                                 0,
-                                 0.0);
+    DFI_OUT_INS->setVariableName(1, l_velocity_x);
+    DFI_OUT_INS->setVariableName(2, l_velocity_y);
+    DFI_OUT_INS->setVariableName(3, l_velocity_z);
     
-    if( ret != CDM::E_CDM_SUCCESS ) Exit(0);
     
     
     // Face Velocity
-    if ( DFI_OUT_VEL->GetArrayShape() == CDM::E_CDM_NIJK ) // FVelocityの型は CDM::E_CDM_NIJK
-    {
-      fb_vout_nijk_(d_wo, d_vf, size, &guide, RF->getV00(), &unit_velocity, &flop);
-      fb_minmax_vex_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wo, &flop);
-    }
-    else
-    {
-      fb_vout_ijkn_(d_wo, d_vf, size, &guide, RF->getV00(), &unit_velocity, &flop);
-      fb_minmax_v_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wo, &flop);
-    }
+    fb_vout_ijkn_(d_wv, d_vf, size, &guide, RF->getV00(), &unit_velocity, &flop);
+    
+    fb_minmax_v_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wv, &flop);
     
     if ( numProc > 1 )
     {
-      REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
-      if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      REAL_TYPE vmin_tmp[3] = {vec_min[0], vec_min[1], vec_min[2]};
+      if( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN) != CPM_SUCCESS ) Exit(0);
       
-      REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
-      if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      REAL_TYPE vmax_tmp[3] = {vec_max[0], vec_max[1], vec_max[2]};
+      if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
     
-    cdm_minmax[0] = vec_min[1]; ///<<< vec_u min
-    cdm_minmax[1] = vec_max[1]; ///<<< vec_u max
-    cdm_minmax[2] = vec_min[2]; ///<<< vec_v min
-    cdm_minmax[3] = vec_max[2]; ///<<< vec_v max
-    cdm_minmax[4] = vec_min[3]; ///<<< vec_w min
-    cdm_minmax[5] = vec_max[3]; ///<<< vec_w max
-    cdm_minmax[6] = vec_min[0]; ///<<< u,v,wの合成値のmin
-    cdm_minmax[7] = vec_max[0]; ///<<< u,v,wの合成値のmax
+    minmax[8]  = vec_min[0]; ///<<< vec_u min
+    minmax[9]  = vec_max[0]; ///<<< vec_u max
+    minmax[10] = vec_min[1]; ///<<< vec_v min
+    minmax[11] = vec_max[1]; ///<<< vec_v max
+    minmax[12] = vec_min[2]; ///<<< vec_w min
+    minmax[13] = vec_max[2]; ///<<< vec_w max
     
-    DFI_OUT_FVEL->setComponentVariable(0, "u");
-    DFI_OUT_FVEL->setComponentVariable(1, "v");
-    DFI_OUT_FVEL->setComponentVariable(2, "w");
+    DFI_OUT_INS->setVariableName(4, l_fvelocity_x);
+    DFI_OUT_INS->setVariableName(5, l_fvelocity_y);
+    DFI_OUT_INS->setVariableName(6, l_fvelocity_z);
+  }
+  
+  
+  int var = 13; // 現在のminmaxのインデクス
+  int varN= 6;  // 現在の変数登録のインデクス
+  
+  if ( C->isHeatProblem() )
+  {
+    // Tempearture
+    U.convArrayIE2Tmp(d_ws, size, guide, d_ie, d_bcd, mat_tbl, C->BaseTemp, C->DiffTemp, C->Unit.File, flop);
     
-    ret = DFI_OUT_FVEL->WriteData(m_step,
-                                  m_time,
-                                  size,
-                                  3,
-                                  guide,
-                                  d_wo,
-                                  cdm_minmax,
-                                  true,
-                                  0,
-                                  0.0);
+    fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
     
-    if ( ret != CDM::E_CDM_SUCCESS ) Exit(0);
-  }
-  
-  
-  
-  if ( !C->isHeatProblem() ) return;
-  
-  // Tempearture
-  U.convArrayIE2Tmp(d_ws, size, guide, d_ie, d_bcd, mat_tbl, C->BaseTemp, C->DiffTemp, C->Unit.File, flop);
-  
-  fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
-  
-  if ( numProc > 1 )
-  {
-    min_tmp = f_min;
-    if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+    if ( numProc > 1 )
+    {
+      REAL_TYPE min_tmp = f_min;
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      REAL_TYPE max_tmp = f_max;
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    minmax[++var] = f_min;
+    minmax[++var] = f_max;
     
-    max_tmp = f_max;
-    if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
-  }
-  minmax[0] = f_min;
-  minmax[1] = f_max;
-  
-  if ( !DFI_OUT_TEMP )
-  {
-    printf("[%d] DFI_OUT_TEMP Pointer Error\n", paraMngr->GetMyRankID());
-    Exit(-1);
+    DFI_OUT_INS->setVariableName(++varN, l_temperature);
   }
   
-  ret = DFI_OUT_TEMP->WriteData(m_step,
-                                m_time,
-                                size,
-                                1,
-                                guide,
-                                d_ws,
-                                minmax,
-                                true,
-                                0,
-                                0.0);
   
-  if ( ret != CDM::E_CDM_SUCCESS ) Exit(0);
-  
-}
-
-
-// #################################################################
-// 派生変数のファイル出力
-// @note d_p0をワークとして使用
-void PLT3D::OutputDerivedVariables(const unsigned m_CurrentStep, const double m_CurrentTime, double& flop)
-{
-  REAL_TYPE scale = 1.0;
-  
-  // ステップ数
-  unsigned m_step = m_CurrentStep;
-  
-  // 時間の次元変換
-  REAL_TYPE m_time;
-  if (C->Unit.File == DIMENSIONAL)
-  {
-    m_time = (REAL_TYPE)(m_CurrentTime * C->Tscale);
-  }
-  else
-  {
-    m_time = (REAL_TYPE)m_CurrentTime;
-  }
-  
-  // ガイドセル出力
-  int gc_out = C->GuideOut;
-  
-  
-  // 最大値と最小値
-  REAL_TYPE f_min, f_max, min_tmp, max_tmp, vec_min[4], vec_max[4];
-  REAL_TYPE minmax[2];
-  REAL_TYPE cdm_minmax[8];
-  
-  
-  // エラーコード
-  CDM::E_CDM_ERRORCODE ret;
-  
-  
-  REAL_TYPE unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
-  
+  // 派生変数
   
   // Total Pressure
   if (C->varState[var_TotalP] == ON )
   {
-    fb_totalp_ (d_p0, size, &guide, d_v, d_p, RF->getV00(), &flop);
+    fb_totalp_ (d_ws, size, &guide, d_v, d_p, RF->getV00(), &flop);
     
     // convert non-dimensional to dimensional, iff file is dimensional
     if (C->Unit.File == DIMENSIONAL)
     {
-      U.convArrayTpND2D(d_ws, d_p0, size, guide, C->RefDensity, C->RefVelocity);
-    }
-    else
-    {
-      REAL_TYPE* tp;
-      tp = d_ws; d_ws = d_p0; d_p0 = tp;
+      U.convArrayTpND2D(d_ws, size, guide, C->RefDensity, C->RefVelocity);
     }
     
     fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
     
     if ( numProc > 1 )
     {
-      min_tmp = f_min;
+      REAL_TYPE min_tmp = f_min;
       if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
       
-      max_tmp = f_max;
+      REAL_TYPE max_tmp = f_max;
       if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
-    minmax[0] = f_min;
-    minmax[1] = f_max;
+    minmax[++var] = f_min;
+    minmax[++var] = f_max;
     
-    if ( !DFI_OUT_TP )
-    {
-      printf("[%d] DFI_OUT_TP Pointer Error\n",paraMngr->GetMyRankID());
-      Exit(-1);
-    }
-    
-    ret = DFI_OUT_TP->WriteData(m_step,
-                                m_time,
-                                size,
-                                1,
-                                guide,
-                                d_ws,
-                                minmax,
-                                true,
-                                0,
-                                0.0);
-    
-    if ( ret != CDM::E_CDM_SUCCESS ) Exit(0);
+    DFI_OUT_INS->setVariableName(++varN, l_totalp);
   }
   
   
   // Vorticity
   if (C->varState[var_Vorticity] == ON )
   {
-    rot_v_(d_wv, size, &guide, &deltaX, d_v, d_cdf, RF->getV00(), &flop);
+    rot_v_ (d_wv, size, &guide, &deltaX, d_v, d_cdf, RF->getV00(), &flop);
     
-    REAL_TYPE  vz[3];
+    REAL_TYPE vz[3]; // dummy
     vz[0] = vz[1] = vz[2] = 0.0;
-    unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity/C->RefLength : 1.0;
+    REAL_TYPE unit_vort = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity/C->RefLength : 1.0;
     
-    if ( DFI_OUT_VRT->GetArrayShape() == CDM::E_CDM_NIJK ) // Vorticityの型は CDM::E_CDM_NIJK
-    {
-      fb_vout_nijk_(d_wo, d_wv, size, &guide, vz, &unit_velocity, &flop);
-      fb_minmax_vex_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wo, &flop);
-    }
-    else
-    {
-      fb_vout_ijkn_(d_wo, d_wv, size, &guide, vz, &unit_velocity, &flop);
-      fb_minmax_v_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wo, &flop);
-    }
+    fb_vout_ijkn_(d_wv, d_wv, size, &guide, vz, &unit_vort, &flop);
+    fb_minmax_v_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wv, &flop);
     
     if ( numProc > 1 )
     {
-      REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
-      if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      REAL_TYPE vmin_tmp[3] = {vec_min[0], vec_min[1], vec_min[2]};
+      if( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN) != CPM_SUCCESS ) Exit(0);
       
-      REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
-      if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      REAL_TYPE vmax_tmp[3] = {vec_max[0], vec_max[1], vec_max[2]};
+      if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
     
-    if ( !DFI_OUT_VRT )
-    {
-      printf("[%d] DFI_OUT_VRT Pointer Error\n", paraMngr->GetMyRankID());
-      Exit(-1);
-    }
+    minmax[++var] = vec_min[0]; ///<<< vec_u min
+    minmax[++var] = vec_max[0]; ///<<< vec_u max
+    minmax[++var] = vec_min[1]; ///<<< vec_v min
+    minmax[++var] = vec_max[1]; ///<<< vec_v max
+    minmax[++var] = vec_min[2]; ///<<< vec_w min
+    minmax[++var] = vec_max[2]; ///<<< vec_w max
     
-    cdm_minmax[0] = vec_min[1]; ///<<< vec_u min
-    cdm_minmax[1] = vec_max[1]; ///<<< vec_u max
-    cdm_minmax[2] = vec_min[2]; ///<<< vec_v min
-    cdm_minmax[3] = vec_max[2]; ///<<< vec_v max
-    cdm_minmax[4] = vec_min[3]; ///<<< vec_w min
-    cdm_minmax[5] = vec_max[3]; ///<<< vec_w max
-    cdm_minmax[6] = vec_min[0]; ///<<< u,v,wの合成値のmin
-    cdm_minmax[7] = vec_max[0]; ///<<< u,v,wの合成値のmax
-    
-    ret = DFI_OUT_VRT->WriteData(m_step,
-                                 m_time,
-                                 size,
-                                 3,
-                                 guide,
-                                 d_wo,
-                                 cdm_minmax,
-                                 true,
-                                 0,
-                                 0.0);
-    
-    if ( ret != CDM::E_CDM_SUCCESS ) Exit(0);
+    DFI_OUT_INS->setVariableName(++varN, l_vorticity_x);
+    DFI_OUT_INS->setVariableName(++varN, l_vorticity_y);
+    DFI_OUT_INS->setVariableName(++varN, l_vorticity_z);
   }
+
   
-  
-  // 2nd Invariant of Velocity Gradient Tensor
+  // 2nd Invariant of Velocity Gradient Tensor 無次元で出力
   if (C->varState[var_Qcr] == ON )
   {
-    i2vgt_ (d_p0, size, &guide, &deltaX, d_v, d_cdf, RF->getV00(), &flop);
-    
-    // 無次元で出力
-    U.copyS3D(d_ws, size, guide, d_p0, scale);
+    i2vgt_ (d_ws, size, &guide, &deltaX, d_v, d_cdf, RF->getV00(), &flop);
     
     fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
     
     if ( numProc > 1 )
     {
-      min_tmp = f_min;
+      REAL_TYPE min_tmp = f_min;
       if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
       
-      max_tmp = f_max;
+      REAL_TYPE max_tmp = f_max;
       if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
-    minmax[0] = f_min;
-    minmax[1] = f_max;
+    minmax[++var] = f_min;
+    minmax[++var] = f_max;
     
-    if ( !DFI_OUT_I2VGT )
-    {
-      printf("[%d] DFI_OUT_I2VGT Pointer Error\n", paraMngr->GetMyRankID());
-      Exit(-1);
-    }
-    
-    ret = DFI_OUT_I2VGT->WriteData(m_step,
-                                   m_time,
-                                   size,
-                                   1,
-                                   guide,
-                                   d_ws,
-                                   minmax,
-                                   true,
-                                   0,
-                                   0.0);
-    
-    if( ret != CDM::E_CDM_SUCCESS ) Exit(0);
+    DFI_OUT_INS->setVariableName(++varN, l_invariantQ);
   }
   
   
-  // Helicity
+  // Helicity 無次元で出力
   if (C->varState[var_Helicity] == ON )
   {
-    helicity_(d_p0, size, &guide, &deltaX, d_v, d_cdf, RF->getV00(), &flop);
-    
-    // 無次元で出力
-    U.copyS3D(d_ws, size, guide, d_p0, scale);
+    helicity_ (d_ws, size, &guide, &deltaX, d_v, d_cdf, RF->getV00(), &flop);
     
     fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
     
     if ( numProc > 1 )
     {
-      min_tmp = f_min;
+      REAL_TYPE min_tmp = f_min;
       if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
       
-      max_tmp = f_max;
+      REAL_TYPE max_tmp = f_max;
       if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
-    minmax[0] = f_min;
-    minmax[1] = f_max;
+
+    minmax[++var] = f_min;
+    minmax[++var] = f_max;
     
-    if ( !DFI_OUT_HLT )
-    {
-      printf("[%d] DFI_OUT_HLT Pointer Error\n", paraMngr->GetMyRankID());
-      Exit(-1);
-    }
-    
-    ret = DFI_OUT_HLT->WriteData(m_step,
-                                 m_time,
-                                 size,
-                                 1,
-                                 guide,
-                                 d_ws,
-                                 minmax,
-                                 true,
-                                 0,
-                                 0.0);
-    
-    if( ret != CDM::E_CDM_SUCCESS ) Exit(0);
+    DFI_OUT_INS->setVariableName(++varN, l_helicity);
   }
+  
   
   // Divergence for Debug
   if (C->varState[var_Div] == ON )
@@ -1468,34 +821,41 @@ void PLT3D::OutputDerivedVariables(const unsigned m_CurrentStep, const double m_
     
     if ( numProc > 1 )
     {
-      min_tmp = f_min;
+      REAL_TYPE min_tmp = f_min;
       if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
       
-      max_tmp = f_max;
+      REAL_TYPE max_tmp = f_max;
       if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
-    minmax[0] = f_min;
-    minmax[1] = f_max;
+
+    minmax[++var] = f_min;
+    minmax[++var] = f_max;
     
-    if( !DFI_OUT_DIV )
-    {
-      printf("[%d] DFI_OUT_DIV Pointer Error\n", paraMngr->GetMyRankID());
-      Exit(-1);
-    }
-    
-    ret = DFI_OUT_DIV->WriteData(m_step,
-                                 m_time,
-                                 size,
-                                 1,
-                                 guide,
-                                 d_ws,
-                                 minmax,
-                                 true,
-                                 0,
-                                 0.0);
-    
-    if( ret != CDM::E_CDM_SUCCESS ) Exit(0);
+    DFI_OUT_INS->setVariableName(++varN, l_divergence);
   }
+  
+  
+  if ( !DFI_OUT_INS )
+  {
+    printf("[%d] DFI_OUT_TEMP Pointer Error\n", paraMngr->GetMyRankID());
+    Exit(-1);
+  }
+  
+  // 変数の数
+  varN++;
+  
+  ret = DFI_OUT_INS->WriteData(m_step,
+                               m_time,
+                               size,
+                               varN,
+                               guide,
+                               d_iobuf,
+                               minmax,
+                               true,
+                               0,
+                               0.0);
+  
+  if ( ret != CDM::E_CDM_SUCCESS ) Exit(0);
   
 }
 
@@ -1584,32 +944,73 @@ void PLT3D::RestartAvrerage(FILE* fp,
   // Averaged dataの初期化
   if ( C->Mode.Average == ON && C->Interval[Control::tg_average].isStarted(m_CurrentStep, m_CurrentTime) )
   {
-    DFI_IN_PRSA = cdm_DFI::ReadInit(MPI_COMM_WORLD, f_dfi_in_prsa, G_size, gdiv, cdm_error);
-    if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
+    // 読込み用インスタンスのポインタ取得
+    DFI_IN_AVR = cdm_DFI::ReadInit(MPI_COMM_WORLD,
+                                   f_dfi_in_avr,
+                                   G_size,
+                                   gdiv,
+                                   cdm_error);
     
-    DFI_IN_VELA = cdm_DFI::ReadInit(MPI_COMM_WORLD, f_dfi_in_vela, G_size, gdiv, cdm_error);
-    if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
-    
-    if ( DFI_IN_PRSA == NULL || DFI_IN_VELA == NULL ) Exit(0);
-    
-    
-    if ( C->isHeatProblem() )
-    {
-      DFI_IN_TEMPA = cdm_DFI::ReadInit(MPI_COMM_WORLD, f_dfi_in_tempa, G_size, gdiv, cdm_error);
-      if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
-      if ( DFI_IN_TEMPA == NULL ) Exit(0);
-    }
+    if ( cdm_error != CDM::E_CDM_SUCCESS || DFI_IN_AVR == NULL  ) Exit(0);
   }
   
+  // Datatype
+  CDM::E_CDM_DTYPE datatype;
+  
+  if ( sizeof(REAL_TYPE) == 4 )
+  {
+    datatype = CDM::E_CDM_FLOAT32;
+  }
+  else if ( sizeof(REAL_TYPE) == 8 )
+  {
+    datatype = CDM::E_CDM_FLOAT64;
+  }
+  else
+  {
+    Exit(0);
+  }
+  
+  // 読込みフィールドデータ型のチェック
+  if( DFI_IN_AVR->GetDataType() != datatype )
+  {
+    Hostonly_ printf("Error Datatype unmatch.\n");
+    Exit(0);
+  }
+  
+  
+  size_t dims[3], nx;
+  dims[0] = (size_t)(size[0] + 2*guide);
+  dims[1] = (size_t)(size[1] + 2*guide);
+  dims[2] = (size_t)(size[2] + 2*guide);
+  nx = dims[0] * dims[1] * dims[2];
+  
+  int dnum;
+  if ( C->isHeatProblem() )
+  {
+    dnum = IO_BLOCK_SIZE_HEAT;
+  }
+  else
+  {
+    dnum = IO_BLOCK_SIZE_FLOW;
+  }
+  
+  // 読込みフィールドデータの成分数を取得
+  int NumVarsAvr = DFI_IN_AVR->GetNumVariables();
+  
+  if ( NumVarsAvr > dnum )
+  {
+    Hostonly_ printf("Error : The number of stored variables exceeds current limitation.\n");
+    Exit(0);
+  }
+  
+  
+  // 領域クリア
+  memset(d_iobuf, 0, sizeof(REAL_TYPE)*nx*dnum);
   
   
   
   unsigned step_avr = 0;
   double time_avr = 0.0;
-  
-  
-  // Pressure
-  REAL_TYPE bp = ( C->Unit.Prs == Unit_Absolute ) ? C->BasePrs : 0.0;
   
   
   //自身の領域終点インデックス
@@ -1618,79 +1019,83 @@ void PLT3D::RestartAvrerage(FILE* fp,
   
   
   double r_time;
-  if ( DFI_IN_PRSA->ReadData(d_ap,
-                             m_RestartStep,
-                             guide,
-                             G_size,
-                             gdiv,
-                             head,
-                             tail,
-                             r_time,
-                             false,
-                             step_avr,
-                             time_avr) != CDM::E_CDM_SUCCESS ) Exit(0);
+  if ( DFI_IN_AVR->ReadData(d_iobuf,        ///< 読込み先配列のポインタ
+                            m_RestartStep,  ///< 読込みフィールドデータのステップ番号
+                            guide,          ///< 計算空間の仮想セル数
+                            G_size,         ///< 計算空間全体のボクセルサイズ
+                            gdiv,           ///< 領域分割数
+                            head,           ///< 自サブドメインの開始インデクス
+                            tail,           ///< 自サブドメインの終端インデクス
+                            r_time,         ///< dfi から読込んだ時間
+                            false,          ///< 平均値指定
+                            step_avr,
+                            time_avr) != CDM::E_CDM_SUCCESS ) Exit(0);
   
-  if( d_ap == NULL ) Exit(0);
+  if( d_iobuf == NULL ) Exit(0);
   
   
   m_CurrentStepAvr = step_avr;
   m_CurrentTimeAvr = time_avr;
   
-  if ( DFI_IN_VELA->ReadData(d_wo,
-                             m_RestartStep,
-                             guide,
-                             G_size,
-                             gdiv,
-                             head,
-                             tail,
-                             r_time,
-                             false,
-                             step_avr,
-                             time_avr) != CDM::E_CDM_SUCCESS ) Exit(0);
+  Hostonly_ printf     ("\tAveraged fields have read :\tRestart step=%d time=%e  : Averaged step=%d time=%e [%s]\n",
+                        m_RestartStep,
+                        r_time,
+                        step_avr,
+                        time_avr, (C->Unit.File == DIMENSIONAL)?"sec.":"-");
+  Hostonly_ fprintf(fp, "\tAveraged fields have read :\tRestart step=%d time=%e  : Averaged step=%d time=%e [%s]\n",
+                    m_RestartStep,
+                    r_time,
+                    step_avr,
+                    time_avr, (C->Unit.File == DIMENSIONAL)?"sec.":"-");
   
-  if( d_wo == NULL ) Exit(0);
   
   REAL_TYPE refv = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
-  REAL_TYPE scale = (REAL_TYPE)step_avr;
   REAL_TYPE u0[4];
   
   RF->copyV00(u0);
   
   
-  fb_vin_nijk_(d_av, size, &guide, d_wo, u0, &refv, &flop);
+  // unpacking >> ap, av, at
   
-  if ( (step_avr != m_CurrentStepAvr) || (time_avr != m_CurrentTimeAvr) ) // 圧力とちがう場合
+  // 変数名をキーにしてデータロード
+  int block = 0;
+  for (int n=0; n<NumVarsAvr; n++)
   {
-    Hostonly_ printf     ("\n\tTime stamp is different between files\n");
-    Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
-    Exit(0);
-  }
-  
-  
-  // Temperature
-  if ( C->isHeatProblem() )
-  {
-    if ( DFI_IN_TEMPA->ReadData(d_ae,
-                                m_RestartStep,
-                                guide,
-                                G_size,
-                                gdiv,
-                                head,
-                                tail,
-                                r_time,
-                                false,
-                                step_avr,
-                                time_avr) != CDM::E_CDM_SUCCESS ) Exit(0);
+    string variable = DFI_IN_AVR->getVariableName(n);
     
-    if ( d_ae == NULL ) Exit(0);
+    if ( variable.empty() == true || variable == "" ) Exit(0);
     
-    if ( (step_avr != m_CurrentStepAvr) || (time_avr != m_CurrentTimeAvr) )
+    // pressure
+    if ( !strcasecmp(variable.c_str(), l_avr_pressure.c_str()) )
     {
-      Hostonly_ printf     ("\n\tTime stamp is different between files\n");
-      Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
-      Exit(0);
+      block = extract_scalar(block, d_ap);
+      
+      if ( C->Unit.File == DIMENSIONAL ) // 有次元の場合，無次元に変換する
+      {
+        REAL_TYPE bp = ( C->Unit.Prs == Unit_Absolute ) ? C->BasePrs : 0.0;
+        U.convArrayPrsD2ND(d_ap, size, guide, bp, C->RefDensity, C->RefVelocity, flop);
+      }
+    }
+    
+    // velocity
+    else if ( !strcasecmp(variable.c_str(), l_avr_velocity_x.c_str()) ) // 先頭はvec_Xが書かれていると仮定
+    {
+      block = extract_vector(block, d_av);
+      
+      fb_vin_ijkn_(d_av, size, &guide, u0, &refv, &flop);
+    }
+    
+    // temperature
+    else if ( !strcasecmp(variable.c_str(), l_avr_temperature.c_str()) )
+    {
+      if ( C->isHeatProblem() )
+      {
+        block = extract_scalar(block, d_ws);
+        U.convArrayTmp2IE(d_ae, size, guide, d_ws, d_bcd, mat_tbl, C->BaseTemp, C->DiffTemp, C->Unit.File, flop);
+      }
     }
   }
+  
 }
 
 
@@ -1702,7 +1107,7 @@ void PLT3D::RestartInstantaneous(FILE* fp,
                                double& m_CurrentTime,
                                double& flop)
 {
-  double time, r_time;
+  
   std::string fname;
   std::string fmt(file_fmt_ext);
   
@@ -1726,301 +1131,371 @@ void PLT3D::RestartInstantaneous(FILE* fp,
   // ガイド出力
   int gs = C->GuideOut;
   
-  // dummy
-  unsigned i_dummy=0;
-  double f_dummy=0.0;
   
+  // 現在のセッションの領域分割数の取得
+  int gdiv[3] = {1, 1, 1};
+  if ( numProc > 1)
+  {
+    const int* m_div = paraMngr->GetDivNum();
+    for (int i=0; i<3; i++ ) gdiv[i]=m_div[i];
+  }
   
-  const int* m_div = paraMngr->GetDivNum();
   
   // 自身の領域終点インデクス
   int tail[3];
   for (int i=0;i<3;i++) tail[i]=head[i]+size[i]-1;
   
-  // Pressure
-  if ( DFI_IN_PRS->ReadData(d_p,
-                            m_RestartStep,
-                            guide,
-                            G_size,
-                            (int *)m_div,
-                            head,
-                            tail,
-                            r_time,
-                            true,
+  
+  
+  // Datatype
+  CDM::E_CDM_DTYPE datatype;
+  
+  if ( sizeof(REAL_TYPE) == 4 )
+  {
+    datatype = CDM::E_CDM_FLOAT32;
+  }
+  else if ( sizeof(REAL_TYPE) == 8 )
+  {
+    datatype = CDM::E_CDM_FLOAT64;
+  }
+  else
+  {
+    Exit(0);
+  }
+  
+  // 読込みフィールドデータ型のチェック
+  if( DFI_IN_INS->GetDataType() != datatype )
+  {
+    Hostonly_ printf("Error Datatype unmatch.\n");
+    Exit(0);
+  }
+  
+
+  size_t dims[3], nx;
+  dims[0] = (size_t)(size[0] + 2*guide);
+  dims[1] = (size_t)(size[1] + 2*guide);
+  dims[2] = (size_t)(size[2] + 2*guide);
+  nx = dims[0] * dims[1] * dims[2];
+  
+  int dnum;
+  if ( C->isHeatProblem() )
+  {
+    dnum = IO_BLOCK_SIZE_HEAT;
+  }
+  else
+  {
+    dnum = IO_BLOCK_SIZE_FLOW;
+  }
+  
+  // 読込みフィールドデータの成分数を取得
+  int NumVars = DFI_IN_INS->GetNumVariables();
+  
+  if ( NumVars > dnum )
+  {
+    Hostonly_ printf("Error : The number of stored variables exceeds current limitation.\n");
+    Exit(0);
+  }
+  
+    
+    
+  // バッファクリア
+  memset(d_iobuf, 0, sizeof(REAL_TYPE)*nx*dnum);
+
+  
+  
+  // dummy
+  unsigned i_dummy=0;
+  double f_dummy=0.0;
+  
+  double r_time;
+
+  if ( DFI_IN_INS->ReadData(d_iobuf,        ///< 読込み先配列のポインタ
+                            m_RestartStep,  ///< 読込みフィールドデータのステップ番号
+                            guide,          ///< 計算空間の仮想セル数
+                            G_size,         ///< 計算空間全体のボクセルサイズ
+                            gdiv,           ///< 領域分割数
+                            head,           ///< 自サブドメインの開始インデクス
+                            tail,           ///< 自サブドメインの終端インデクス
+                            r_time,         ///< dfi から読込んだ時間
+                            true,           ///< 瞬時値値指定
                             i_dummy,
                             f_dummy) != CDM::E_CDM_SUCCESS ) Exit(0);
   
-  if ( d_p == NULL ) Exit(0);
-  time = r_time;
-  
-  // 有次元の場合，無次元に変換する
-  if ( C->Unit.File == DIMENSIONAL )
-  {
-    REAL_TYPE bp = ( C->Unit.Prs == Unit_Absolute ) ? C->BasePrs : 0.0;
-    U.convArrayPrsD2ND(d_p, size, guide, bp, C->RefDensity, C->RefVelocity, flop);
-  }
-  
-  Hostonly_ printf     ("\tPressure has read :\tstep=%d  time=%e [%s]\n",
-                        m_RestartStep, time, (C->Unit.File == DIMENSIONAL)?"sec.":"-");
-  Hostonly_ fprintf(fp, "\tPressure has read :\tstep=%d  time=%e [%s]\n",
-                    m_RestartStep, time, (C->Unit.File == DIMENSIONAL)?"sec.":"-");
+  if( d_iobuf == NULL ) Exit(0);
   
   
   // ここでタイムスタンプを得る
-  if (C->Unit.File == DIMENSIONAL) time /= C->Tscale;
+  if (C->Unit.File == DIMENSIONAL) r_time /= C->Tscale;
   m_CurrentStep = m_RestartStep;
-  m_CurrentTime = time;
+  m_CurrentTime = r_time;
   
   // v00[]に値をセット
-  RF->setV00(time);
+  RF->setV00(r_time);
+  
+  Hostonly_ printf     ("\tPressure has read :\tstep=%d  time=%e [%s]\n",
+                        m_RestartStep, r_time, (C->Unit.File == DIMENSIONAL)?"sec.":"-");
+  Hostonly_ fprintf(fp, "\tPressure has read :\tstep=%d  time=%e [%s]\n",
+                    m_RestartStep, r_time, (C->Unit.File == DIMENSIONAL)?"sec.":"-");
   
   
-  if ( DFI_IN_VEL->ReadData(d_wo,
-                            m_RestartStep,
-                            guide,
-                            G_size,
-                            (int *)m_div,
-                            head,
-                            tail,
-                            r_time,
-                            true,
-                            i_dummy,
-                            f_dummy) != CDM::E_CDM_SUCCESS ) Exit(0);
-  
-  if( d_wo == NULL ) Exit(0);
-  
-  REAL_TYPE refv = (C->Unit.File == DIMENSIONAL) ? refV : 1.0;
+  REAL_TYPE refv = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity  : 1.0;
   REAL_TYPE u0[4];
   RF->copyV00(u0);
   
   
-  Hostonly_ printf     ("\tVelocity has read :\tstep=%d  time=%e [%s]\n",
-                        m_RestartStep, time, (C->Unit.File == DIMENSIONAL)?"sec.":"-");
-  Hostonly_ fprintf(fp, "\tVelocity has read :\tstep=%d  time=%e [%s]\n",
-                    m_RestartStep, time, (C->Unit.File == DIMENSIONAL)?"sec.":"-");
   
-  time = r_time;
+  // unpacking >> p, v, vf, t
   
-  if (C->Unit.File == DIMENSIONAL) time /= C->Tscale;
-  
-  if ( time != m_CurrentTime )
+  // 変数名をキーにしてデータロード
+  int block = 0;
+  for (int n=0; n<NumVars; n++)
   {
-    Hostonly_ printf     ("\n\tTime stamp is different between files\n");
-    Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
-    Exit(0);
-  }
-  
-  // indexの変換と無次元化
-  fb_vin_nijk_(d_v, size, &guide, d_wo, u0, &refv, &flop);
-  
-  
-  
-  if ( !C->isHeatProblem() ) return;
-  
-  
-  
-  // Instantaneous Temperature fields
-  if ( DFI_IN_TEMP->ReadData(d_ws,
-                             m_RestartStep,
-                             guide,
-                             G_size,
-                             (int *)m_div,
-                             head,
-                             tail,
-                             r_time,
-                             true,
-                             i_dummy,
-                             f_dummy) != CDM::E_CDM_SUCCESS ) Exit(0);
-  
-  if( d_ws == NULL ) Exit(0);
-  
-  time = r_time;
-  
-  if (C->Unit.File == DIMENSIONAL) time /= C->Tscale;
-  
-  Hostonly_ printf     ("\tTemperature has read :\tstep=%d  time=%e [%s]\n",
-                        m_RestartStep, time, (C->Unit.File == DIMENSIONAL)?"sec.":"-");
-  Hostonly_ fprintf(fp, "\tTemperature has read :\tstep=%d  time=%e [%s]\n",
-                    m_RestartStep, time, (C->Unit.File == DIMENSIONAL)?"sec.":"-");
-  
-  if ( time != m_CurrentTime )
-  {
-    Hostonly_ printf     ("\n\tTime stamp is different between files\n");
-    Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
-    Exit(0);
-  }
-  
-  U.convArrayTmp2IE(d_ie, size, guide, d_ws, d_bcd, mat_tbl, C->BaseTemp, C->DiffTemp, C->Unit.File, flop);
-}
-
-
-
-
-// #################################################################
-// リスタートモードを判定
-void PLT3D::selectRestartMode()
-{
-  // エラーコード
-  CDM::E_CDM_ERRORCODE cdm_error;
-  
-  
-  // 現在のセッションの領域分割数の取得
-  int gdiv[3] = {1, 1, 1};
-  
-  if ( numProc > 1)
-  {
-    const int* p_div = paraMngr->GetDivNum();
-    for (int i=0; i<3; i++ ) gdiv[i]=p_div[i];
-  }
-  
-  
-  // Instantaneous dataの初期化
-  
-  // Pressure
-  DFI_IN_PRS = cdm_DFI::ReadInit(MPI_COMM_WORLD, f_dfi_in_prs, G_size, gdiv, cdm_error);
-  if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
-  
-  
-  // Velocity
-  DFI_IN_VEL = cdm_DFI::ReadInit(MPI_COMM_WORLD, f_dfi_in_vel, G_size, gdiv, cdm_error);
-  if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
-  
-  if ( DFI_IN_PRS == NULL || DFI_IN_VEL == NULL ) Exit(0);
-  
-  
-  // Fvelocity
-  DFI_IN_FVEL = cdm_DFI::ReadInit(MPI_COMM_WORLD, f_dfi_in_fvel, G_size, gdiv, cdm_error);
-  if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
-  if ( DFI_IN_FVEL == NULL ) Exit(0);
-  
-  // Temperature
-  if ( C->isHeatProblem() )
-  {
-    DFI_IN_TEMP = cdm_DFI::ReadInit(MPI_COMM_WORLD, f_dfi_in_temp, G_size, gdiv, cdm_error);
-    if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
-    if ( DFI_IN_TEMP == NULL ) Exit(0);
-  }
-  
-  
-  ///CDM FileInfoの成分名の取得、成分名が登録されていないときは、空白が戻される
-  /*
-   std::string VCompVariable[3];
-   VCompVariable[0]=DFI_IN_VEL->getComponentVariable(0);
-   VCompVariable[1]=DFI_IN_VEL->getComponentVariable(1);
-   VCompVariable[2]=DFI_IN_VEL->getComponentVariable(2);
-   
-   ///CDM TimeSliceのVectorMinMaxの取得、取得出来たときはCDM::E_CDM_SUCCESS
-   double vec_minmax[2];
-   cdm_error = DFI_IN_VEL->getVectorMinMax(C->Restart_step,vec_minmax[0],vec_minmax[1]);
-   
-   ///CDM TimeSlice minmaxの取得、取得出来たときはCDM::E_CDM_SUCCESS
-   double minmax[6];
-   cdm_error =  DFI_IN_VEL->getMinMax(C->Restart_step,0,minmax[0],minmax[1]);
-   cdm_error =  DFI_IN_VEL->getMinMax(C->Restart_step,1,minmax[2],minmax[3]);
-   cdm_error =  DFI_IN_VEL->getMinMax(C->Restart_step,2,minmax[4],minmax[5]);
-   */
-  
-  
-  
-  /* Averaged dataの初期化
-   if ( C->Mode.Average == ON && C->Interval[Control::tg_average].isStarted(CurrentStep, CurrentTime) )
-   {
-   DFI_IN_PRSA = cdm_DFI::ReadInit(MPI_COMM_WORLD, C->f_dfi_in_prsa, G_size, gdiv, cdm_error);
-   if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
-   
-   DFI_IN_VELA = cdm_DFI::ReadInit(MPI_COMM_WORLD, C->f_dfi_in_vela, G_size, gdiv, cdm_error);
-   if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
-   
-   if ( DFI_IN_PRSA == NULL || DFI_IN_VELA == NULL ) Exit(0);
-   
-   
-   if ( C->isHeatProblem() )
-   {
-   DFI_IN_TEMPA = cdm_DFI::ReadInit(MPI_COMM_WORLD, C->f_dfi_in_tempa, G_size, gdiv, cdm_error);
-   if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
-   if ( DFI_IN_TEMPA == NULL ) Exit(0);
-   }
-   }
-   */
-  
-  
-  bool isSameDiv = true; // 同一分割数
-  bool isSameRes = true; // 同一解像度
-  
-  
-  // 前のセッションの領域分割数の取得
-  int* DFI_div=NULL;
-  
-  if ( C->KindOfSolver != SOLID_CONDUCTION )
-  {
-    DFI_div = DFI_IN_PRS->GetDFIGlobalDivision();
-  }
-  else
-  {
-    DFI_div = DFI_IN_TEMP->GetDFIGlobalDivision();
-  }
-  
-  
-  
-  // 前セッションと領域分割数が異なる場合
-  for (int i=0; i<3; i++ )
-  {
-    if ( gdiv[i] != DFI_div[i] )
+    string variable = DFI_IN_AVR->getVariableName(n);
+    
+    if ( !variable.empty() == true || variable == "" ) Exit(0);
+    
+    
+    // pressure
+    if ( !strcasecmp(variable.c_str(), l_pressure.c_str()) )
     {
-      isSameDiv = false;
-    }
-  }
-  
-  // 前のセッションの全要素数の取得
-  int* DFI_G_size = DFI_IN_PRS->GetDFIGlobalVoxel();
-  
-  
-  // 前セッションと全要素数が異なる場合
-  for (int i=0; i<3; i++ )
-  {
-    if ( G_size[i] != DFI_G_size[i] )
-    {
-      isSameRes = false;
-    }
-  }
-  
-  //  ボクセル数が2倍のチェック
-  if ( !isSameRes )
-  {
-    for(int i=0; i<3; i++)
-    {
-      if ( G_size[i] != DFI_G_size[i]*2 )
+      block = extract_scalar(block, d_p);
+      
+      if ( C->Unit.File == DIMENSIONAL ) // 有次元の場合，無次元に変換する
       {
-        printf("\tDimension size error (%d %d %d)\n", G_size[0], G_size[1], G_size[2]);
-        Exit(0);
+        REAL_TYPE bp = ( C->Unit.Prs == Unit_Absolute ) ? C->BasePrs : 0.0;
+        U.convArrayPrsD2ND(d_p, size, guide, bp, C->RefDensity, C->RefVelocity, flop);
+      }
+    }
+    
+    // Velocity
+    else if ( !strcasecmp(variable.c_str(), l_velocity_x.c_str()) ) // 先頭はvec_Xが書かれていると仮定
+    {
+      block = extract_vector(block, d_v);
+      
+      fb_vin_ijkn_(d_v, size, &guide, u0, &refv, &flop);
+    }
+    
+    // Fvelocity
+    else if ( !strcasecmp(variable.c_str(), l_fvelocity_x.c_str()) ) // 先頭はvec_Xが書かれていると仮定
+    {
+      block = extract_vector(block, d_vf);
+      
+      fb_vin_ijkn_(d_vf, size, &guide, u0, &refv, &flop);
+    }
+    
+    // Temperature
+    else if ( !strcasecmp(variable.c_str(), l_temperature.c_str()) )
+    {
+      if ( C->isHeatProblem() )
+      {
+        block = extract_scalar(block, d_ws);
+        U.convArrayTmp2IE(d_ie, size, guide, d_ws, d_bcd, mat_tbl, C->BaseTemp, C->DiffTemp, C->Unit.File, flop);
       }
     }
   }
   
+}
+
+
+// #################################################################
+// ベクタデータの取り出し
+int PLT3D::extract_vector(int blk, REAL_TYPE* vec)
+{
+  size_t dims[3], nx;
+  dims[0] = (size_t)(size[0] + 2*guide);
+  dims[1] = (size_t)(size[1] + 2*guide);
+  dims[2] = (size_t)(size[2] + 2*guide);
+  nx = dims[0] * dims[1] * dims[2];
   
-  // モード判定と登録
-  if ( isSameDiv )
+  // u
+  blas_copy_(&vec[0], &d_iobuf[nx*blk], size, &guide);
+  
+  // v
+  blas_copy_(&vec[nx], &d_iobuf[nx*(blk+1)], size, &guide);
+  
+  // w
+  blas_copy_(&vec[nx*2], &d_iobuf[nx*(blk+2)], size, &guide);
+  
+  blk += 3;
+  return blk;
+}
+
+
+// #################################################################
+// スカラデータの取り出し
+int PLT3D::extract_scalar(int blk, REAL_TYPE* scl)
+{
+  size_t dims[3], nx;
+  dims[0] = (size_t)(size[0] + 2*guide);
+  dims[1] = (size_t)(size[1] + 2*guide);
+  dims[2] = (size_t)(size[2] + 2*guide);
+  nx = dims[0] * dims[1] * dims[2];
+  
+  // av-u
+  blas_copy_(scl, &d_iobuf[nx*blk], size, &guide);
+  
+  blk++;
+  
+  return blk;
+}
+
+
+
+// #################################################################
+// リスタートモードを判定し，瞬時値のデータをロードする
+void PLT3D::Restart(FILE* fp, unsigned& m_CurrentStep, double& m_CurrentTime)
+{
+  if ( C->Start != initial_start)
   {
-    if ( isSameRes ) // 同一解像度、同一分割数
+    
+    // エラーコード
+    CDM::E_CDM_ERRORCODE cdm_error;
+    
+    
+    // 現在のセッションの領域分割数の取得
+    int gdiv[3] = {1, 1, 1};
+    
+    if ( numProc > 1)
     {
-      C->Start = restart_sameDiv_sameRes;
+      const int* p_div = paraMngr->GetDivNum();
+      for (int i=0; i<3; i++ ) gdiv[i]=p_div[i];
     }
-    else // Refinement、同一分割数
+    
+    
+    // Instantaneous dataの初期化
+    
+    DFI_IN_INS = cdm_DFI::ReadInit(MPI_COMM_WORLD,
+                                   f_dfi_in_ins,
+                                   G_size,
+                                   gdiv,
+                                   cdm_error);
+    
+    if ( cdm_error != CDM::E_CDM_SUCCESS || DFI_IN_INS == NULL ) Exit(0);
+    
+    
+    
+    bool isSameDiv = true; // 同一分割数
+    bool isSameRes = true; // 同一解像度
+    
+    
+    // 前のセッションの領域分割数の取得
+    int* DFI_div=NULL;
+    
+    DFI_div = DFI_IN_INS->GetDFIGlobalDivision();
+    
+    
+    
+    // 前セッションと領域分割数が異なる場合
+    for (int i=0; i<3; i++ )
     {
-      C->Start = restart_sameDiv_refinement;
+      if ( gdiv[i] != DFI_div[i] )
+      {
+        isSameDiv = false;
+      }
     }
-  }
-  else
-  {
-    if ( isSameRes ) // 同一解像度、異なる分割数
+    
+    // 前のセッションの全要素数の取得
+    int* DFI_G_size = DFI_IN_INS->GetDFIGlobalVoxel();
+    
+    
+    // 前セッションと全要素数が異なる場合
+    for (int i=0; i<3; i++ )
     {
-      C->Start = restart_diffDiv_sameRes;
+      if ( G_size[i] != DFI_G_size[i] )
+      {
+        isSameRes = false;
+      }
     }
-    else // Refinement、異なる分割数
+    
+    //  ボクセル数が2倍のチェック
+    if ( !isSameRes )
     {
-      C->Start = restart_diffDiv_refinement;
+      for(int i=0; i<3; i++)
+      {
+        if ( G_size[i] != DFI_G_size[i]*2 )
+        {
+          printf("\tDimension size error (%d %d %d)\n", G_size[0], G_size[1], G_size[2]);
+          Exit(0);
+        }
+      }
     }
+    
+    
+    // モード判定と登録
+    if ( isSameDiv )
+    {
+      if ( isSameRes ) // 同一解像度、同一分割数
+      {
+        C->Start = restart_sameDiv_sameRes;
+      }
+      else // Refinement、同一分割数
+      {
+        C->Start = restart_sameDiv_refinement;
+      }
+    }
+    else
+    {
+      if ( isSameRes ) // 同一解像度、異なる分割数
+      {
+        C->Start = restart_diffDiv_sameRes;
+      }
+      else // Refinement、異なる分割数
+      {
+        C->Start = restart_diffDiv_refinement;
+      }
+    }
+
   }
   
+  
+  //
+  //
+  // 初期スタートのステップ，時間を設定する
+  if ( C->Start == initial_start || C->Hide.PM_Test == ON  )
+  {
+    m_CurrentStep = 0;
+    m_CurrentTime = 0.0;
+    
+    // V00の値のセット．モードがONの場合はV00[0]=1.0に設定，そうでなければtmに応じた値
+    if ( C->CheckParam == ON ) RF->setV00(m_CurrentTime, true);
+    else                       RF->setV00(m_CurrentTime);
+    
+    return;
+  }
+  
+  
+  
+  switch (C->Start)
+  {
+      
+      // 同一解像度・同一分割数のリスタート
+    case restart_sameDiv_sameRes:
+      Hostonly_ fprintf(stdout, "\t>> Restart with same resolution and same num. of division\n\n");
+      Hostonly_ fprintf(fp, "\t>> Restart with same resolution and same num. of division\n\n");
+      break;
+      
+    case restart_sameDiv_refinement: // 同一分割数・リファインメント
+      Hostonly_ fprintf(stdout, "\t>> Restart with refinemnt and same num. of division\n\n");
+      Hostonly_ fprintf(fp, "\t>> Restart with refinemnt and same num. of division\n\n");
+      break;
+      
+    case restart_diffDiv_sameRes:    // 異なる分割数・同一解像度
+      Hostonly_ fprintf(stdout, "\t>> Restart with same resolution and different division\n\n");
+      Hostonly_ fprintf(fp, "\t>> Restart with same resolution and different division\n\n");
+      break;
+      
+    case restart_diffDiv_refinement: // 異なる分割数・リファインメント
+      Hostonly_ fprintf(stdout, "\t>> Restart with refinement and different division\n\n");
+      Hostonly_ fprintf(fp, "\t>> Restart with refinement and different division\n\n");
+      break;
+      
+    default:
+      Exit(0);
+      break;
+  }
+  
+  double flop_task = 0.0;
+  RestartInstantaneous(fp, m_CurrentStep, m_CurrentTime, flop_task);
+
 }
 

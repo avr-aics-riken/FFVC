@@ -577,7 +577,7 @@
   
 !> ********************************************************************
 !! @brief 速度ベクトルの配列の添え字変換
-!! @param [out]    vo    変換されたベクトル（平均場の場合は積算値）
+!! @param [out]    vo    変換されたベクトル
 !! @param [in]     sz    配列長
 !! @param [in]     g     ガイドセル長
 !! @param [in]     vi    入力速度場
@@ -629,7 +629,63 @@
 
   return
   end subroutine fb_vin_nijk
-  
+
+
+!> ********************************************************************
+!! @brief 速度ベクトルのスカラ倍変換
+!! @param [in,out] vo    入力 > 変換されたベクトル
+!! @param [in]     sz    配列長
+!! @param [in]     g     ガイドセル長
+!! @param [in]     v00   参照速度
+!! @param [in]     refv  代表速度
+!! @param [out]    flop  浮動小数演算数
+!! @note dst[] = src[]/refv + v00 有次元のときrefvは次元速度，無次元のとき1.0
+!<
+subroutine fb_vin_ijkn (vo, sz, g, v00, refv, flop)
+implicit none
+integer                                                   ::  i, j, k, ix, jx, kx, g
+integer, dimension(3)                                     ::  sz
+real                                                      ::  u_ref, v_ref, w_ref, refv, rr
+double precision                                          ::  flop
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vo
+real, dimension(0:3)                                      ::  v00
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+u_ref = v00(1)
+v_ref = v00(2)
+w_ref = v00(3)
+
+rr = 1.0/refv
+
+flop = flop + dble(ix)*dble(jx)*dble(kx)*9.0d0 + 8.0d0
+
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, rr)
+
+!$OMP DO SCHEDULE(static)
+
+do k=1,kx
+do j=1,jx
+do i=1,ix
+vo(i,j,k,1) = vo(i,j,k,1) * rr + u_ref
+vo(i,j,k,2) = vo(i,j,k,2) * rr + v_ref
+vo(i,j,k,3) = vo(i,j,k,3) * rr + w_ref
+end do
+end do
+end do
+
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine fb_vin_ijkn
+
+
+
 !> ********************************************************************
 !! @brief 速度ベクトルの添え字変換をして，scale倍する
 !! @param [out] vout   変換されたベクトル

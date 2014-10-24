@@ -141,6 +141,19 @@ public:
   }
   
   
+private:
+  /**
+   * @brief リスタート時の瞬時値ファイル読み込み
+   * @param [in]  fp             ファイルポインタ
+   * @param [out] m_CurrentStep  CurrentStep
+   * @param [out] m_CurrentTime  CurrentTime
+   * @param [out] flop           浮動小数点演算数
+   */
+  virtual void RestartInstantaneous(FILE* fp,
+                                    unsigned& m_CurrentStep,
+                                    double& m_CurrentTime,
+                                    double& flop);
+  
   
 public:
   
@@ -191,6 +204,17 @@ public:
   
   
   /**
+   * @brief リスタートプロセス
+   * @param [in]     fp                ファイルポインタ
+   * @param [out]    m_CurrentStep     CurrentStep
+   * @param [out]    m_CurrentTime     CurrentTime
+   */
+  virtual void Restart(FILE* fp,
+                       unsigned& m_CurrentStep,
+                       double& m_CurrentTime);
+  
+  
+  /**
    * @brief リスタート時の平均値ファイル読み込み
    * @param [in]  fp                ファイルポインタ
    * @param [in]  m_CurrentStep     CurrentStep
@@ -205,26 +229,6 @@ public:
                                unsigned& m_CurrentStepAvr,
                                double& m_CurrentTimeAvr,
                                double& flop);
-  
-  
-  /**
-   * @brief リスタート時の瞬時値ファイル読み込み
-   * @param [in]  fp             ファイルポインタ
-   * @param [out] m_CurrentStep  CurrentStep
-   * @param [out] m_CurrentTime  CurrentTime
-   * @param [out] flop           浮動小数点演算数
-   */
-  virtual void RestartInstantaneous(FILE* fp,
-                                    unsigned& m_CurrentStep,
-                                    double& m_CurrentTime,
-                                    double& flop);
-  
-  
-  
-  /**
-   * @brief リスタートモードを判定
-   */
-  virtual void selectRestartMode();
   
   
 };

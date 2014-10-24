@@ -593,6 +593,8 @@ public:
   int Start;
   int SamplingMode;   ///< サンプリング指定
   int FillSuppress[3];///< PeriodicとSymmetricの外部境界面フィル抑制
+  int NvarsIns_plt3d; ///< Plot3dのバッファサイズ　瞬時値
+  int NvarsAvr_plt3d; ///< Plot3dのバッファサイズ　平均値
   
   unsigned Restart_staging;    ///< リスタート時にリスタートファイルがSTAGINGされているか
   unsigned long NoWallSurface; ///< 固体表面セル数
@@ -685,6 +687,8 @@ public:
     RefMat = -1;
     Restart_staging = 0;
     Start = 0;
+    NvarsIns_plt3d = 0;
+    NvarsAvr_plt3d = 0;
     
     PlotIntvl = 0.0;
     Domain_p1 = Domain_p2 = 0.0;
@@ -826,10 +830,6 @@ protected:
   
   // 壁面上の扱いを指定する
   void getWallType();
-  
-  
-  // 線形ソルバー種別の表示
-  void printLS(FILE* fp, const IterationCtl* IC);
   
   
   
@@ -990,18 +990,12 @@ public:
   
   /**
    * @brief 制御パラメータSTEERの表示
-   * @param [in] IC  IterationCtl
    * @param [in] DT  DTcntl
    * @param [in] RF  ReferenceFrame
-   * @param [in] DC  発散収束判定のコンテナ
-   * @param [in] em  ffvcの実行モード
    */
   void printSteerConditions(FILE* fp,
-                            IterationCtl* IC,
                             const DTcntl* DT,
-                            const ReferenceFrame* RF,
-                            const DivConvergence* DC,
-                            const int em);
+                            const ReferenceFrame* RF);
   
   
   /**

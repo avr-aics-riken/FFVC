@@ -23,7 +23,14 @@
  */
 
 #define TM_LABEL_MAX 24
-  
+
+
+// PLOT3DのときのIOバッファのブロックサイズ
+// FALLOC::allocArray_Main()
+#define IO_BLOCK_SIZE_FLOW 9
+#define IO_BLOCK_SIZE_HEAT 16
+
+
 /** 計算性能測定キー番号 */
 enum timing_key {
   tm_init_sct,

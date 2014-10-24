@@ -320,6 +320,17 @@ int FFV::Loop(const unsigned step)
   step_end = cpm_Base::GetWTime() - step_start;
   
   
+  // dynamic_cast<IterationCtl*>(LS)で生じるコンパイラエラー（gnu）対策
+  double container[3*ic_END];
+  
+  for (int i=0; i<ic_END; i++)
+  {
+    container[3*i+0] = (double)LS[ic_prs1].getLoopCount();
+    container[3*i+1] = LS[ic_prs1].getResidual();
+    container[3*i+1] = LS[ic_prs1].getError();
+  }
+  
+  
   // 基本履歴情報をコンソールに出力
   if ( C.Mode.Log_Base == ON)
   {
@@ -328,11 +339,11 @@ int FFV::Loop(const unsigned step)
       TIMING_start(tm_hstry_stdout);
       Hostonly_
       {
-        H->printHistory(stdout, rms_Var, avr_Var, dynamic_cast<IterationCtl*>(LS), &C, &DivC, step_end, true);
+        H->printHistory(stdout, rms_Var, avr_Var, container, &C, &DivC, step_end, true);
         
         if ( C.Mode.CCNV == ON )
         {
-          H->printCCNV(rms_Var, avr_Var, dynamic_cast<IterationCtl*>(LS), &C, DivC.divergence, step_end);
+          H->printCCNV(rms_Var, avr_Var, container, &C, DivC.divergence, step_end);
         }
       }
       TIMING_stop(tm_hstry_stdout, 0.0);
@@ -349,7 +360,7 @@ int FFV::Loop(const unsigned step)
       TIMING_start(tm_hstry_base);
       
       // 基本履歴情報
-      Hostonly_ H->printHistory(fp_b, rms_Var, avr_Var, dynamic_cast<IterationCtl*>(LS), &C, &DivC, step_end, true);
+      Hostonly_ H->printHistory(fp_b, rms_Var, avr_Var, container, &C, &DivC, step_end, true);
       
       // コンポーネント
       if ( C.EnsCompo.monitor )

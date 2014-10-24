@@ -180,17 +180,15 @@ public:
   
   /**
    * @brief 全圧データについて，無次元から有次元単位に変換する
-   * @param [out]    dst     単位変換後のデータ
-   * @param [in]     src     単位変換前のデータ
-   * @param [in]     sz      分割数
-   * @param [in]     gc      ガイドセル数
+   * @param [in,out] src     単位変換前のデータ > 単位変換後のデータ
+   * @param [in]     size    分割数
+   * @param [in]     guide   ガイドセル数
    * @param [in]     Ref_rho 代表密度(kg/m^3)
    * @param [in]     Ref_v   代表速度(m/s)
    */
-  void convArrayTpND2D(REAL_TYPE* dst,
-                       REAL_TYPE* src,
-                       int* sz,
-                       int gc,
+  void convArrayTpND2D(REAL_TYPE* src,
+                       const int* size,
+                       const int guide,
                        const REAL_TYPE Ref_rho,
                        const REAL_TYPE Ref_v);
   

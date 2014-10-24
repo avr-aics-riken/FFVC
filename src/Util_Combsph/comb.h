@@ -419,7 +419,7 @@ public:
     //配列形状
     CDM::E_CDM_ARRAYSHAPE shape = buf->getArrayShape();
     //成分数
-    int ncomp = src->getNcomp();
+    int ncomp = src->getNvari();
     //IJKN
     if( shape == CDM::E_CDM_IJKN )
     {

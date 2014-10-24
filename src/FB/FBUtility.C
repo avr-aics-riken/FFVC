@@ -181,11 +181,25 @@ void FBUtility::convArrayTmp2IE(REAL_TYPE* dst, const int* size, const int guide
 
 // #################################################################
 // 全圧データについて，無次元から有次元単位に変換する
-void FBUtility::convArrayTpND2D(REAL_TYPE* dst, REAL_TYPE* src, int* sz, int gc, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v)
+void FBUtility::convArrayTpND2D(REAL_TYPE* src, const int* size, const int guide, const REAL_TYPE Ref_rho, const REAL_TYPE Ref_v)
 {
   REAL_TYPE cf = Ref_rho * Ref_v * Ref_v;
   
-  copyS3D(dst, sz, gc, src, cf);
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, cf) schedule(static)
+  for (int k=1-gd; k<=kx+gd; k++) {
+    for (int j=1-gd; j<=jx+gd; j++) {
+      for (int i=1-gd; i<=ix+gd; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        src[m] *= cf;
+      }
+    }
+  }
 }
 
 

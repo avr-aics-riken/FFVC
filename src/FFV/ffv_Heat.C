@@ -90,7 +90,7 @@ void FFV::Buoyancy(REAL_TYPE* v, const REAL_TYPE dgr, const REAL_TYPE* t, const 
 
 // #################################################################
 // 単媒質に対する熱伝導方程式を陰解法で解く
-void FFV::ps_LS(IterationCtl* IC, const double b_l2, const double r0_l2)
+void FFV::ps_LS(LinearSolver* IC, const double b_l2, const double r0_l2)
 {
   double flop = 0.0;      /// 浮動小数点演算数
   double res=0.0;         /// 残差

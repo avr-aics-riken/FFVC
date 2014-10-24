@@ -40,6 +40,7 @@ libFFV_a_SOURCES = \
   ffv.C \
   ffv.h \
   ffv_Alloc.C \
+  ffv_Alloc.h \
   ffv_Define.h \
   ffv_Filter.C \
   ffv_Geometry.C \

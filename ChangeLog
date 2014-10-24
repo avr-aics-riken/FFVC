@@ -19,6 +19,15 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-10-24
+r1643 change memory allocation structure
+ - introduce ffv_Alloc.C/h
+ - modify for CDMlib-0.3.1
+ - change input format for /Output/Data/Format
+ - merge DerivedVariables with BasicVariables
+ - Measures of GNU Compile error dyanmic_cast<IterationCtl*>(LS)
+
+--------------------------
 2014-10-23
 r1642 introduce FILE_IO
  - IO_BASE class

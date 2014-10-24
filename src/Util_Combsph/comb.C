@@ -631,7 +631,7 @@ void COMB::ReadDfiFiles()
       fprintf(fplog,"\tDFI_Info->DataType                 = %d\n",DFI_Info->DataType);
       fprintf(fplog,"\tDFI_Info->Endian                   = %d\n",DFI_Info->Endian);
       fprintf(fplog,"\tDFI_Info->ArrayShape               = %d\n",DFI_Info->ArrayShape);
-      fprintf(fplog,"\tDFI_Info->Component                = %d\n",DFI_Info->Component);
+      fprintf(fplog,"\tDFI_Info->NumVariables             = %d\n",DFI_Info->NumVariables);
       
       const cdm_MPI *DFI_MPI = dfi[i]->GetcdmMPI();
       fprintf(fplog,"\tDFI_MPI->NumberOfRank              = %d\n",DFI_MPI->NumberOfRank);
@@ -686,7 +686,7 @@ void COMB::ReadDfiFiles()
       printf("\tDFI_Info->DataType                 = %d\n",DFI_Info->DataType);
       printf("\tDFI_Info->Endian                   = %d\n",DFI_Info->Endian);
       printf("\tDFI_Info->ArrayShape               = %d\n",DFI_Info->ArrayShape);
-      printf("\tDFI_Info->Component                = %d\n",DFI_Info->Component);
+      printf("\tDFI_Info->NumVariables             = %d\n",DFI_Info->NumVariables);
       
       const cdm_MPI *DFI_MPI = dfi[i]->GetcdmMPI();
       printf("\tDFI_MPI->NumberOfRank              = %d\n",DFI_MPI->NumberOfRank);

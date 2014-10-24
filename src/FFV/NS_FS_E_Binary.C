@@ -64,7 +64,6 @@ void FFV::NS_FS_E_Binary()
   // d_bcd IDのビットフラグ
   // d_bcp 圧力のビットフラグ
   // d_cdf Component Directional BC Flag
-  // d_wo  ワーク　壁関数利用時のWSS，ベクトル出力時のテンポラリ
   // d_cvf コンポーネントの体積率
   // d_ie0  内部エネルギー t^n
   // d_vt  LES計算の渦粘性係数
@@ -602,7 +601,7 @@ void FFV::NS_FS_E_Binary()
     
     
     // \nabla {}^f u^{n+1})の計算
-    NormDiv();
+    NormDiv(d_dv);
     
     
     /* Forcingコンポーネントによる速度の方向修正(収束判定から除外)  >> TEST

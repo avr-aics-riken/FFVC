@@ -232,7 +232,7 @@ void FFV::PS_Binary()
     {
 
       // 線形ソルバー
-      ps_LS(dynamic_cast<IterationCtl*>(LSt), b_l2, res0_l2);
+      ps_LS(LSt, b_l2, res0_l2);
       
       if ( LSt->isErrConverged() || LSt->isResConverged() ) break;
     }

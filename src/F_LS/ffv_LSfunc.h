@@ -131,8 +131,8 @@ extern "C" {
                        int* sz,
                        int* g);
   
-  void blas_copy_     (REAL_TYPE* y,
-                       REAL_TYPE* x,
+  void blas_copy_     (REAL_TYPE* dst,
+                       REAL_TYPE* src,
                        int* sz,
                        int* g);
   

@@ -75,85 +75,9 @@ FFV::FFV()
   mat = NULL;
   cmp = NULL;
   paraMngr = NULL;
-  
-  // Vector3D
-  d_v   = NULL;
-  d_vf  = NULL;
-  d_vc  = NULL;
-  d_v0  = NULL;
-  d_wv  = NULL;
-  d_abf = NULL;
-  d_av  = NULL;
-  d_wo  = NULL;
-  d_qbc = NULL;
-  
-  // Scalar3D
-  d_mid = NULL;
-  d_bcd = NULL;
-  d_bcp = NULL;
-  d_cdf = NULL;
-  
-  d_p   = NULL;
-  d_p0  = NULL;
-  d_ws  = NULL;
-  d_sq  = NULL;
-  d_dv  = NULL;
-  d_b   = NULL;
-  d_ie  = NULL;
-  d_ie0 = NULL;
-  d_vt  = NULL;
-  d_vof = NULL;
-  d_ap  = NULL;
-  d_ae  = NULL;
-  d_cvf = NULL;
-  d_pvf = NULL;
-  d_vrt = NULL;
-  
-  // Coarse initial
-  d_r_v = NULL;
-  d_r_p = NULL;
-  d_r_t = NULL;
-  
-  // GMRES
-  d_wg  = NULL;
-  d_res = NULL;
-  d_vm  = NULL;
-  d_zm  = NULL;
 
-  
-  // PCG & BiCGSTAB
-	d_pcg_r = NULL;
-  d_pcg_p = NULL;
-  
-	// PCG
-	d_pcg_z = NULL;
-  
-	// BiCGSTAB
-	d_pcg_r0 = NULL;
-	d_pcg_q  = NULL;
-	d_pcg_s  = NULL;
-	d_pcg_t  = NULL;
-  
-  // BiCGSTAB with Preconditioning
-  d_pcg_p_ = NULL;
-  d_pcg_s_ = NULL;
-  d_pcg_t_ = NULL;
-  
   cutPos = NULL;
   cutBid = NULL;
-  
-  // カット情報
-  d_cut = NULL;
-  d_bid = NULL;
-  
-  // SOR2のバッファ
-  cf_x = NULL;
-  cf_y = NULL;
-  cf_z = NULL;
-  
-  
-  // Poisson係数（Naive実装の実験）
-  d_pni = NULL;
   
   
   // OBSTACLEの力の積算
@@ -169,7 +93,6 @@ FFV::FFV()
   DivC.divType = 0;
   DivC.divEPS = 0.0;
   DivC.divergence = 0.0;
-  
 }
 
 
@@ -540,9 +463,9 @@ int FFV::MainLoop()
 // #################################################################
 /**
  * @brief 発散値を計算する
- * @param [in] LSd  線形ソルバクラスのDiv反復
+ * @param [in] div  \sum{u}
  */
-void FFV::NormDiv()
+void FFV::NormDiv(REAL_TYPE* div)
 {
   REAL_TYPE dv;
   double flop_count, tmp;
@@ -555,7 +478,7 @@ void FFV::NormDiv()
   {
     TIMING_start(tm_norm_div_max);
     flop_count=0.0;
-    norm_v_div_max_(&dv, size, &guide, d_dv, &coef, d_bcp, &flop_count);
+    norm_v_div_max_(&dv, size, &guide, div, &coef, d_bcp, &flop_count);
     TIMING_stop(tm_norm_div_max, flop_count);
     
     if ( numProc > 1 )
@@ -571,7 +494,7 @@ void FFV::NormDiv()
   {
     TIMING_start(tm_norm_div_max);
     flop_count=0.0;
-    norm_v_div_l2_(&dv, size, &guide, d_dv, &coef, d_bcp, &flop_count);
+    norm_v_div_l2_(&dv, size, &guide, div, &coef, d_bcp, &flop_count);
     TIMING_stop(tm_norm_div_max, flop_count);
     
     if ( numProc > 1 )
@@ -587,6 +510,162 @@ void FFV::NormDiv()
   
   TIMING_stop(tm_poi_itr_sct_5, 0.0); // <<< Poisson Iteration subsection 5
 
+}
+
+
+
+void FFV::printCriteria(FILE* fp)
+{
+  // Criteria ------------------
+  if ( EXEC_MODE == ffvc_solver )
+  {
+    fprintf(fp,"\n\tParameter of Linear Equation\n");
+    LinearSolver* ICp1= &LS[ic_prs1];  /// 圧力のPoisson反復
+    LinearSolver* ICp2= &LS[ic_prs2];  /// 圧力のPoisson反復　2回目
+    LinearSolver* ICv = &LS[ic_vel1];  /// 粘性項のCrank-Nicolson反復
+    LinearSolver* ICt = &LS[ic_tmp1];  /// 温度の拡散項の反復
+    
+    if ( C.Hide.PM_Test == ON )
+    {
+      fprintf(fp,"\t ### Performance Test Mode >> The iteration number is fixed by Iteration max.\n\n");
+    }
+    
+    if ( C.KindOfSolver != SOLID_CONDUCTION )
+    {
+      // 1st iteration
+      fprintf(fp,"\t     1st Pressure Iteration \n");
+      fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICp1->getMaxIteration());
+      fprintf(fp,"\t       Residual Norm type     :   %s\n",    ICp1->getResNormString().c_str());
+      fprintf(fp,"\t       Threshold for residual :   %9.3e\n", ICp1->getResCriterion());
+      fprintf(fp,"\t       Error    Norm type     :   %s\n",    ICp1->getErrNormString().c_str());
+      fprintf(fp,"\t       Threshold for error    :   %9.3e\n", ICp1->getErrCriterion());
+      fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICp1->getOmega());
+      fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICp1->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
+      printLS(fp, ICp1);
+      
+      if ( C.AlgorithmF == Flow_FS_RK_CN )
+      {
+        fprintf(fp,"\t     2nd Pressure Iteration \n");
+        fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICp2->getMaxIteration());
+        fprintf(fp,"\t       Residual Norm type     :   %s\n",    ICp2->getResNormString().c_str());
+        fprintf(fp,"\t       Threshold for residual :   %9.3e\n", ICp2->getResCriterion());
+        fprintf(fp,"\t       Error    Norm type     :   %s\n",    ICp2->getErrNormString().c_str());
+        fprintf(fp,"\t       Threshold for error    :   %9.3e\n", ICp2->getErrCriterion());
+        fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICp2->getOmega());
+        fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICp2->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
+        printLS(fp, ICp2);
+      }
+      
+      // CN iteration
+      if ( (C.AlgorithmF == Flow_FS_AB_CN) || (C.AlgorithmF == Flow_FS_RK_CN) )
+      {
+        fprintf(fp,"\n");
+        fprintf(fp,"\t     Velocity CN Iteration \n");
+        fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICv->getMaxIteration());
+        fprintf(fp,"\t       Residual Norm type     :   %s\n",    ICv->getResNormString().c_str());
+        fprintf(fp,"\t       Threshold for residual :   %9.3e\n", ICv->getResCriterion());
+        fprintf(fp,"\t       Error    Norm type     :   %s\n",    ICv->getErrNormString().c_str());
+        fprintf(fp,"\t       Threshold for error    :   %9.3e\n", ICv->getErrCriterion());
+        fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICv->getOmega());
+        fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICv->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
+        printLS(fp, ICv);
+      }
+      fprintf(fp,"\n");
+      fprintf(fp,"\t     Div Iteration \n");
+      fprintf(fp,"\t       Iteration max          :   %d\n"  ,  DivC.MaxIteration);
+      if ( DivC.divType == nrm_div_max)
+      {
+        fprintf(fp,"\t       Error    Norm type     :   Max divergence\n");
+      }
+      else
+      {
+        fprintf(fp,"\t       Error    Norm type     :   L2 divergence\n");
+      }
+      
+      fprintf(fp,"\t       Threshold for Div.     :   %9.3e\n", DivC.divEPS);
+    }
+    
+    // for Temperature
+    if ( C.isHeatProblem() )
+    {
+      if ( C.AlgorithmH == Heat_EE_EI )
+      {
+        fprintf(fp,"\n");
+        fprintf(fp,"\t     Temperature Iteration  \n");
+        fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICt->getMaxIteration());
+        fprintf(fp,"\t       Residual Norm type     :   %s\n",    ICt->getResNormString().c_str());
+        fprintf(fp,"\t       Threshold for residual :   %9.3e\n", ICt->getResCriterion());
+        fprintf(fp,"\t       Error    Norm type     :   %s\n",    ICt->getErrNormString().c_str());
+        fprintf(fp,"\t       Threshold for error    :   %9.3e\n", ICt->getErrCriterion());
+        fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICt->getOmega());
+        fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICt->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
+        printLS(fp, ICt);
+      }
+    }
+    
+  } // End of Criteria
+}
+
+
+
+// #################################################################
+/**
+ * @brief 線形ソルバー種別の表示
+ * @param [in] fp ファイルポインタ
+ * @param [in] IC LinearSOlver
+ */
+void FFV::printLS(FILE* fp, const LinearSolver* IC)
+{
+  switch (IC->getLS())
+  {
+    case JACOBI:
+      fprintf(fp,"\t       Linear Solver          :   Jacobi method\n");
+      break;
+      
+    case SOR:
+      fprintf(fp,"\t       Linear Solver          :   Point SOR method\n");
+      break;
+      
+    case SOR2SMA:
+      if (IC->getNaive()==OFF)
+      {
+        fprintf(fp,"\t       Linear Solver          :   2-colored SOR SMA (Stride Memory Access, Bit compressed 1-decode)\n");
+      }
+      else
+      {
+        fprintf(fp,"\t       Linear Solver          :   2-colored SOR SMA (Stride Memory Access, Naive Implementation)\n");
+      }
+      break;
+      
+    case GMRES:
+      fprintf(fp,"\t       Linear Solver          :   GMRES\n");
+      break;
+      
+    case RBGS:
+      fprintf(fp,"\t       Linear Solver          :   RBGS\n");
+      break;
+      
+    case PCG:
+      fprintf(fp,"\t       Linear Solver          :   PCG\n");
+      break;
+      
+    case BiCGSTAB:
+      if (IC->getNaive()==OFF)
+      {
+        fprintf(fp,"\t       Linear Solver          :   BiCGstab");
+        if (IC->getPrecondition()==ON) fprintf(fp," with Preconditioner\n");
+      }
+      else
+      {
+        fprintf(fp,"\t       Linear Solver          :   BiCGstab (Naive)");
+        if (IC->getPrecondition()==ON) fprintf(fp," with Preconditioner\n");
+      }
+      break;
+      
+    default:
+      stamped_printf("Error: Linear Solver section\n");
+      //Exit(0);
+  }
 }
 
 

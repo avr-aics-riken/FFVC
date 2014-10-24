@@ -31,115 +31,122 @@ class PLT3D : public IO_BASE {
   
 private:
   // 入力dfiファイルのプレフィックス
-  string f_dfi_in_prs;
-  string f_dfi_in_vel;
-  string f_dfi_in_fvel;
-  string f_dfi_in_temp;
-  string f_dfi_in_prsa;
-  string f_dfi_in_vela;
-  string f_dfi_in_tempa;
-  
+  string f_dfi_in_ins;
+  string f_dfi_in_avr;
+
   // 出力ファイルのプレフィックス
-  string f_Velocity;
-  string f_Pressure;
-  string f_Temperature;
-  string f_AvrPressure;
-  string f_AvrVelocity;
-  string f_AvrTemperature;
-  string f_DivDebug;
-  string f_Helicity;
-  string f_TotalP;
-  string f_I2VGT;
-  string f_Vorticity;
-  string f_Fvelocity;
-  
-  // pointers to CDM class
+  string f_dfi_out_ins;
+  string f_dfi_out_avr;
   
   // InFile
-  cdm_DFI *DFI_IN_PRS;      ///< Pressure
-  cdm_DFI *DFI_IN_VEL;      ///< Velocity
-  cdm_DFI *DFI_IN_FVEL;     ///< Face velocity
-  cdm_DFI *DFI_IN_TEMP;     ///< Temperature
-  cdm_DFI *DFI_IN_PRSA;     ///< Averaged pressure
-  cdm_DFI *DFI_IN_VELA;     ///< Averaged velocity
-  cdm_DFI *DFI_IN_TEMPA;    ///< Averaged temperature
+  cdm_DFI *DFI_IN_INS;      ///< Instantaneus field
+  cdm_DFI *DFI_IN_AVR;      ///< Averaged field
   
   // OutFile
-  cdm_DFI *DFI_OUT_PRS;     ///< Pressure
-  cdm_DFI *DFI_OUT_VEL;     ///< Velocity
-  cdm_DFI *DFI_OUT_FVEL;    ///< Face velocity
-  cdm_DFI *DFI_OUT_TEMP;    ///< Temperature
-  cdm_DFI *DFI_OUT_PRSA;    ///< Averaged Pressure
-  cdm_DFI *DFI_OUT_VELA;    ///< Averaged velocity
-  cdm_DFI *DFI_OUT_TEMPA;   ///< Averaged temperature
-  cdm_DFI *DFI_OUT_TP;      ///< Total Pressure
-  cdm_DFI *DFI_OUT_VRT;     ///< Vorticity
-  cdm_DFI *DFI_OUT_I2VGT;   ///< 2nd Invariant of Velocity Gradient Tensor
-  cdm_DFI *DFI_OUT_HLT;     ///< Helicity
-  cdm_DFI *DFI_OUT_DIV;     ///< Divergence for debug
+  cdm_DFI *DFI_OUT_INS;     ///< Instantaneus field
+  cdm_DFI *DFI_OUT_AVR;     ///< Averaged field
+  
+  // ラベル名
+  string l_divergence;
+  string l_helicity;
+  string l_vorticity_x;
+  string l_vorticity_y;
+  string l_vorticity_z;
+  string l_invariantQ;
+  string l_totalp;
+  string l_velocity_x;
+  string l_velocity_y;
+  string l_velocity_z;
+  string l_fvelocity_x;
+  string l_fvelocity_y;
+  string l_fvelocity_z;
+  string l_pressure;
+  string l_temperature;
+  string l_avr_pressure;
+  string l_avr_temperature;
+  string l_avr_velocity_x;
+  string l_avr_velocity_y;
+  string l_avr_velocity_z;
   
   
 public:
   
   PLT3D() {
     // ファイル入出力
-    DFI_IN_PRS   = NULL;
-    DFI_IN_VEL   = NULL;
-    DFI_IN_FVEL  = NULL;
-    DFI_IN_TEMP  = NULL;
-    DFI_IN_PRSA  = NULL;
-    DFI_IN_VELA  = NULL;
-    DFI_IN_TEMPA = NULL;
-    DFI_OUT_PRS  = NULL;
-    DFI_OUT_VEL  = NULL;
-    DFI_OUT_FVEL = NULL;
-    DFI_OUT_TEMP = NULL;
-    DFI_OUT_PRSA = NULL;
-    DFI_OUT_VELA = NULL;
-    DFI_OUT_TEMPA= NULL;
-    DFI_OUT_TP   = NULL;
-    DFI_OUT_VRT  = NULL;
-    DFI_OUT_I2VGT= NULL;
-    DFI_OUT_HLT  = NULL;
-    DFI_OUT_DIV  = NULL;
+    DFI_IN_INS   = NULL;
+    DFI_IN_AVR   = NULL;
+    DFI_OUT_INS  = NULL;
+    DFI_OUT_AVR  = NULL;
     
     // ファイル名
-    f_Pressure       = "prs";
-    f_Velocity       = "vel";
-    f_Fvelocity      = "fvel";
-    f_Temperature    = "tmp";
-    f_AvrPressure    = "prsa";
-    f_AvrVelocity    = "vela";
-    f_AvrTemperature = "tmpa";
-    f_DivDebug       = "div";
-    f_Helicity       = "hlt";
-    f_TotalP         = "tp";
-    f_I2VGT          = "qcr";
-    f_Vorticity      = "vrt";
+    f_dfi_out_ins = "field";
+    f_dfi_out_avr = "field_avr";
+    
+    l_divergence  = "Divergence_V";
+    l_helicity    = "Helicity";
+    l_vorticity_x = "Vorticity_X";
+    l_vorticity_y = "Vorticity_Y";
+    l_vorticity_z = "Vorticity_Z";
+    l_invariantQ  = "Invariant_Q";
+    l_totalp      = "TotalPressure";
+    l_velocity_x  = "Velocity_X";
+    l_velocity_y  = "Velocity_Y";
+    l_velocity_z  = "Velocity_Z";
+    l_fvelocity_x = "Face_Velocity_X";
+    l_fvelocity_y = "Face_Velocity_Y";
+    l_fvelocity_z = "Face_Velocity_Z";
+    l_pressure    = "Pressure";
+    l_temperature = "Temperature";
+    l_avr_pressure    = "Avr_Pressure";
+    l_avr_temperature = "Avr_Temperature";
+    l_avr_velocity_x  = "Avr_Velocity_X";
+    l_avr_velocity_y  = "Avr_Velocity_Y";
+    l_avr_velocity_z  = "Avr_Velocity_Z";
   }
   
   ~PLT3D() {
-    if( DFI_IN_PRS    != NULL ) delete DFI_IN_PRS;
-    if( DFI_IN_VEL    != NULL ) delete DFI_IN_VEL;
-    if( DFI_IN_FVEL   != NULL ) delete DFI_IN_FVEL;
-    if( DFI_IN_TEMP   != NULL ) delete DFI_IN_TEMP;
-    if( DFI_IN_PRSA   != NULL ) delete DFI_IN_PRSA;
-    if( DFI_IN_VELA   != NULL ) delete DFI_IN_VELA;
-    if( DFI_IN_TEMPA  != NULL ) delete DFI_IN_TEMPA;
-    if( DFI_OUT_PRS   != NULL ) delete DFI_OUT_PRS;
-    if( DFI_OUT_VEL   != NULL ) delete DFI_OUT_VEL;
-    if( DFI_OUT_FVEL  != NULL ) delete DFI_OUT_FVEL;
-    if( DFI_OUT_TEMP  != NULL ) delete DFI_OUT_TEMP;
-    if( DFI_OUT_PRSA  != NULL ) delete DFI_OUT_PRSA;
-    if( DFI_OUT_VELA  != NULL ) delete DFI_OUT_VELA;
-    if( DFI_OUT_TEMPA != NULL ) delete DFI_OUT_TEMPA;
-    if( DFI_OUT_TP    != NULL ) delete DFI_OUT_TP;
-    if( DFI_OUT_VRT   != NULL ) delete DFI_OUT_VRT;
-    if( DFI_OUT_I2VGT != NULL ) delete DFI_OUT_I2VGT;
-    if( DFI_OUT_HLT   != NULL ) delete DFI_OUT_HLT;
-    if( DFI_OUT_DIV   != NULL ) delete DFI_OUT_DIV;
+    if( DFI_IN_INS    != NULL ) delete DFI_IN_INS;
+    if( DFI_IN_AVR    != NULL ) delete DFI_IN_AVR;
+    if( DFI_OUT_INS   != NULL ) delete DFI_OUT_INS;
+    if( DFI_OUT_AVR   != NULL ) delete DFI_OUT_AVR;
   }
   
+ 
+private:
+  
+  /**
+   * @brief スカラデータをバッファから抜き出す
+   * @param [in]  blk  先頭ブロック数
+   * @apram [out] vec  スカラ配列
+   * @retval 次の先頭ブロック数
+   */
+  int extract_scalar(int blk, REAL_TYPE* scl);
+  
+  
+  /**
+   * @brief ベクトルデータをバッファから抜き出す
+   * @param [in]  blk  先頭ブロック数
+   * @apram [out] vec  ベクトル配列
+   * @retval 次の先頭ブロック数
+   */
+  int extract_vector(int blk, REAL_TYPE* vec);
+  
+  
+  // @brief IBLANK ファイルを作成
+  void generateIBLANK();
+  
+  
+  /**
+   * @brief リスタート時の瞬時値ファイル読み込み
+   * @param [in]  fp             ファイルポインタ
+   * @param [out] m_CurrentStep  CurrentStep
+   * @param [out] m_CurrentTime  CurrentTime
+   * @param [out] flop           浮動小数点演算数
+   */
+  virtual void RestartInstantaneous(FILE* fp,
+                                    unsigned& m_CurrentStep,
+                                    double& m_CurrentTime,
+                                    double& flop);
   
   
 public:
@@ -179,15 +186,14 @@ public:
   
   
   /**
-   * @brief 派生変数のファイル出力
-   * @param [in]     m_CurrentStep  CurrentStep
-   * @param [in]     m_CurrentTime  CurrentTime
-   * @param [in,out] flop           浮動小数点演算数
-   * @note d_p0をワークとして使用
+   * @brief リスタートプロセス
+   * @param [in]     fp                ファイルポインタ
+   * @param [out]    m_CurrentStep     CurrentStep
+   * @param [out]    m_CurrentTime     CurrentTime
    */
-  virtual void OutputDerivedVariables(const unsigned m_CurrentStep,
-                                      const double m_CurrentTime,
-                                      double& flop);
+  virtual void Restart(FILE* fp,
+                       unsigned& m_CurrentStep,
+                       double& m_CurrentTime);
   
   
   /**
@@ -205,28 +211,7 @@ public:
                                unsigned& m_CurrentStepAvr,
                                double& m_CurrentTimeAvr,
                                double& flop);
-  
-  
-  /**
-   * @brief リスタート時の瞬時値ファイル読み込み
-   * @param [in]  fp             ファイルポインタ
-   * @param [out] m_CurrentStep  CurrentStep
-   * @param [out] m_CurrentTime  CurrentTime
-   * @param [out] flop           浮動小数点演算数
-   */
-  virtual void RestartInstantaneous(FILE* fp,
-                                    unsigned& m_CurrentStep,
-                                    double& m_CurrentTime,
-                                    double& flop);
-  
-  
-  
-  /**
-   * @brief リスタートモードを判定
-   */
-  virtual void selectRestartMode();
-  
-  
+
 };
 
 #endif // _FFV_PLT3D_H_

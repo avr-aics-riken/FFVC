@@ -84,15 +84,16 @@ int FFV::Initialize(int argc, char **argv)
   // 固定パラメータ
   fixedParameters();
   
-  
+ 
   
   // File IO classのインスタンス
   identifyFIO(&tp_ffv);
   
+  
   F->importCPM(paraMngr);
   F->importExtClass(&tp_ffv, &RF, &C);
   
-  
+ 
   
   
   // ------------------------------------
@@ -362,7 +363,7 @@ int FFV::Initialize(int argc, char **argv)
   
   // 体積力を使う場合のコンポーネント配列の確保
   TIMING_start(tm_init_alloc);
-  allocArray_Forcing(PrepMemory, TotalMemory, fp);
+  allocArray_Forcing(PrepMemory, TotalMemory, fp, &C, cmp);
   TIMING_stop(tm_init_alloc); 
   
 
@@ -452,9 +453,6 @@ int FFV::Initialize(int argc, char **argv)
     }
   }
   
-  // mid[]を解放する  ---------------------------
-  if ( d_mid ) delete [] d_mid;
-  
   
   
   // 各ノードの領域情報をファイル出力
@@ -482,7 +480,11 @@ int FFV::Initialize(int argc, char **argv)
 
   
   // 計算に用いる配列のアロケート ----------------------------------------------------------------------------------
+  // SamplingでHelicityあるいはVorticityが指定されている場合には，Vorticityの配列を使う
+  if ( MO.getStateVorticity() ) C.varState[var_Vorticity] = ON;
+  
   allocate_Main(TotalMemory);
+  
   
 
   // File IO class への配列ポインタ
@@ -492,15 +494,17 @@ int FFV::Initialize(int argc, char **argv)
                     d_ie,
                     d_ws,
                     d_p0,
-                    d_wo,
+                    d_io_buffer,
                     d_wv,
+                    d_vc,
                     d_ap,
                     d_av,
                     d_ae,
                     d_dv,
                     d_bcd,
                     d_cdf,
-                    mat_tbl);
+                    mat_tbl,
+                    d_mid);
   
   F->getStartCondition();
   
@@ -516,16 +520,12 @@ int FFV::Initialize(int argc, char **argv)
     fprintf(fp,"\n----------\n\n");
   }
   
-  // リスタートモードの選択
-  if ( C.Start != initial_start)
-  {
-    F->selectRestartMode();
-  }
   
-  
-  // 瞬時値のリスタート
+  // リスタートモードの選択と瞬時値のリスタート
   TIMING_start(tm_restart);
+  
   F->Restart(fp, CurrentStep, CurrentTime);
+  
   TIMING_stop(tm_restart);
   
   
@@ -547,7 +547,6 @@ int FFV::Initialize(int argc, char **argv)
   {
     F->RestartDisplayMinmax(fp, flop_task);
   }
-
   
   
   // 利用ライブラリのバージョン番号取得
@@ -579,7 +578,12 @@ int FFV::Initialize(int argc, char **argv)
   // 出力ファイルの初期化
   F->initFileOut();
   
-
+  
+  // IBLANK 出力後に　mid[]を解放する  ---------------------------
+  if ( d_mid ) delete [] d_mid;
+  
+  
+  
   // セッションを開始したときに、初期値をファイル出力  性能測定モードのときには出力しない
   if ( (C.Hide.PM_Test == OFF) && (0 == CurrentStep) )
   {
@@ -612,7 +616,7 @@ int FFV::Initialize(int argc, char **argv)
     T->setDomainMF(vsum);
   }
 
-  
+
   // 反復法クラスの初期化
   setupLinearSolvers(TotalMemory, &tp_ffv);
   
@@ -672,18 +676,11 @@ int FFV::Initialize(int argc, char **argv)
 void FFV::allocate_Main(double &total)
 {
   TIMING_start(tm_init_alloc);
-  allocArray_Main(total);
-  
-  //allocArray_Collocate (total);
+  allocArray_Main(total, &C);
   
   if ( C.LES.Calc == ON )
   {
     allocArray_LES (total);
-  }
-  
-  if ( C.isHeatProblem() )
-  {
-    allocArray_Heat(total);
   }
   
   if ( (C.AlgorithmF == Flow_FS_AB2) || (C.AlgorithmF == Flow_FS_AB_CN) )
@@ -699,7 +696,7 @@ void FFV::allocate_Main(double &total)
   // 時間平均用の配列をアロケート
   if ( C.Mode.Average == ON )
   {
-    allocArray_Average(total);
+    allocArray_Average(total, C.isHeatProblem());
     
     C.varState[var_VelocityAvr] = true;
     C.varState[var_PressureAvr] = true;
@@ -1008,8 +1005,11 @@ void FFV::displayMemoryInfo(FILE* fp, double G_mem, double L_mem, const char* st
 void FFV::displayParameters(FILE* fp)
 {
   
-  C.printSteerConditions(stdout, dynamic_cast<IterationCtl*>(LS), &DT, &RF, &DivC, EXEC_MODE);
-  C.printSteerConditions(fp,     dynamic_cast<IterationCtl*>(LS), &DT, &RF, &DivC, EXEC_MODE);
+  C.printSteerConditions(stdout, &DT, &RF);
+  C.printSteerConditions(fp,     &DT, &RF);
+  
+  printCriteria(stdout);
+  printCriteria(fp);
   
   F->printSteerConditions(stdout);
   F->printSteerConditions(fp);
@@ -2103,7 +2103,7 @@ void FFV::identifyFIO(TextParser* tpCntl)
   
   
   // フォーマットパラメータの取得
-  label = "/Output/Data/BasicVariables/Format";
+  label = "/Output/Data/Format";
   
   if ( !(tpCntl->getInspectedValue(label, str )) )
   {
@@ -2119,7 +2119,7 @@ void FFV::identifyFIO(TextParser* tpCntl)
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
     Exit(0);
   }
-  
+
   
   // インスタンス
   if      ( Format == sph_fmt )
@@ -2133,9 +2133,10 @@ void FFV::identifyFIO(TextParser* tpCntl)
   }
   else if ( Format == plt3d_fun_fmt )
   {
+    F = dynamic_cast<IO_BASE*>(new PLT3D);
     F->setFormat(plt3d_fun_fmt);
   }
-  
+
 }
 
 
@@ -2391,9 +2392,17 @@ void FFV::prepHistoryOutput()
   // マスターノードでの履歴出力準備
   H = new History(&C);
   
+  // gnu compilerでdynamic_castでエラーがでるため，一度配列に入れて渡す
+  int container[2*ic_END];
+  for (int i=0; i<ic_END; i++)
+  {
+    container[2*i+0] = LS[i].getResType();
+    container[2*i+1] = LS[i].getErrType();
+  }
+  
   Hostonly_
   {
-    H->printHistoryTitle(stdout, dynamic_cast<IterationCtl*>(LS), &C, &DivC, true);
+    H->printHistoryTitle(stdout, container, &C, &DivC, true);
     
     // コンポーネント情報
     if ( C.Mode.Log_Base == ON ) 
@@ -2404,7 +2413,7 @@ void FFV::prepHistoryOutput()
         stamped_printf("\tSorry, can't open 'history_base.txt' file. Write failed.\n");
         Exit(0);
       }
-      H->printHistoryTitle(fp_b, dynamic_cast<IterationCtl*>(LS), &C, &DivC, true);
+      H->printHistoryTitle(fp_b, container, &C, &DivC, true);
       
       // コンポーネント履歴情報
       if ( C.EnsCompo.monitor )
@@ -2449,7 +2458,7 @@ void FFV::prepHistoryOutput()
     // CCNVfile
     if ( C.Mode.CCNV == ON )
     {
-      H->printCCNVtitle(dynamic_cast<IterationCtl*>(LS), &C);
+      H->printCCNVtitle(container, &C);
     }
   }
   
@@ -2969,7 +2978,16 @@ void FFV::setLinearSolver(TextParser* tpCntl, const int odr, const string label)
     Exit(0);
   }
   
-  C.copyCriteria(dynamic_cast<IterationCtl*>(&LS[odr]), str);
+  //C.copyCriteria(dynamic_cast<IterationCtl*>(&LS[odr]), str);
+  
+  for (int i=0; i<C.NoBaseLS; i++)
+  {
+    if ( !strcasecmp( str.c_str(), C.Criteria[i].getAlias().c_str() ))
+    {
+      LS[odr].copy(&C.Criteria[i]);
+    }
+  }
+  
 }
 
 

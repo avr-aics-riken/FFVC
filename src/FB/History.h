@@ -220,20 +220,20 @@ public:
    * @brief 履歴のCCNVファイルへの出力
    * @param [in] rms        1タイムステップの変化量　（0-pressure, 1-velocity, 2-temperature)
    * @param [in] avr        1タイムステップの平均値　（0-pressure, 1-velocity, 2-temperature)
-   * @param [in] IC         IterationCtlクラスのポインタ
+   * @param [in] container  反復回数，残差，エラー
    * @param [in] C          Controlクラスへのポインタ
    * @param [in] divergence 無次元発散値
    * @param [in] stptm      1タイムステップの計算時間
    */
-  void printCCNV(const double* rms, const double* avr, const IterationCtl* IC, const Control* C, const double divergence, const double stptm);
+  void printCCNV(const double* rms, const double* avr, const double* container, const Control* C, const double divergence, const double stptm);
   
   
   /**
    * @brief CCNV履歴のヘッダ出力
-   * @param [in] IC    IterationCtlクラスのポインタ
-   * @param [in] C     Controlクラスへのポインタ
+   * @param [in] container Res, Errの型
+   * @param [in] C         Controlクラスへのポインタ
    */
-  void printCCNVtitle(const IterationCtl* IC, const Control* C);
+  void printCCNVtitle(const int* container, const Control* C);
   
   
   /**
@@ -241,7 +241,7 @@ public:
    * @param [in] fp         出力ファイルポインタ
    * @param [in] rms        1タイムステップの変化量　（0-pressure, 1-velocity, 2-temperature)
    * @param [in] avr        1タイムステップの平均値　（0-pressure, 1-velocity, 2-temperature)
-   * @param [in] IC         IterationCtlクラスのポインタ
+   * @param [in] container  反復回数，残差，エラー
    * @param [in] C          Controlクラスへのポインタ
    * @param [in] DC         無次元発散値収束判定パラメータ
    * @param [in] stptm      1タイムステップの計算時間
@@ -250,7 +250,7 @@ public:
   void printHistory(FILE* fp,
                     const double* rms,
                     const double* avr,
-                    const IterationCtl* IC,
+                    const double* container,
                     const Control* C,
                     const DivConvergence* DC,
                     const double stptm,
@@ -259,13 +259,13 @@ public:
   
   /**
    * @brief 反復過程の状況モニタのヘッダー出力
-   * @param [in] fp    出力ファイルポインタ
-   * @param [in] IC    反復管理クラス
-   * @param [in] C     制御クラス
-   * @param [in] DC    無次元発散値収束判定パラメータ
-   * @param [in] disp  計算時間表示の有無
+   * @param [in] fp        出力ファイルポインタ
+   * @param [in] container Res, Errの型
+   * @param [in] C         制御クラス
+   * @param [in] DC        無次元発散値収束判定パラメータ
+   * @param [in] disp      計算時間表示の有無
    */
-  void printHistoryTitle(FILE* fp, const IterationCtl* IC, const Control* C, const DivConvergence* DC, const bool disp);
+  void printHistoryTitle(FILE* fp, const int* container, const Control* C, const DivConvergence* DC, const bool disp);
   
   
   /**

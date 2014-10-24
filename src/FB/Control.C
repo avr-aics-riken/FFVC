@@ -1337,6 +1337,8 @@ void Control::getSolverProperties()
     varState[var_Velocity]    = true;
     varState[var_Fvelocity]   = true;
     varState[var_Pressure]    = true;
+    NvarsIns_plt3d = 3 + 3 + 1;
+    NvarsAvr_plt3d = 3 + 1;
   }
   else if( !strcasecmp(str.c_str(), "ThermalFlow" ) )
   {
@@ -1345,6 +1347,8 @@ void Control::getSolverProperties()
     varState[var_Fvelocity]   = true;
     varState[var_Pressure]    = true;
     varState[var_Temperature] = true;
+    NvarsIns_plt3d = 3 + 3 + 1 + 1;
+    NvarsAvr_plt3d = 3 + 1 + 1;
   }
   else if( !strcasecmp(str.c_str(), "ThermalFlowNatural" ) )
   {
@@ -1353,6 +1357,8 @@ void Control::getSolverProperties()
     varState[var_Fvelocity]   = true;
     varState[var_Pressure]    = true;
     varState[var_Temperature] = true;
+    NvarsIns_plt3d = 3 + 3 + 1 + 1;
+    NvarsAvr_plt3d = 3 + 1 + 1;
   }
   else if( !strcasecmp(str.c_str(), "ConjugateHeatTransfer" ) )
   {
@@ -1361,6 +1367,8 @@ void Control::getSolverProperties()
     varState[var_Fvelocity]   = true;
     varState[var_Pressure]    = true;
     varState[var_Temperature] = true;
+    NvarsIns_plt3d = 3 + 3 + 1 + 1;
+    NvarsAvr_plt3d = 3 + 1 + 1;
   }
   else if( !strcasecmp(str.c_str(), "ConjugateHeatTransferNatural" ) )
   {
@@ -1369,11 +1377,15 @@ void Control::getSolverProperties()
     varState[var_Fvelocity]   = true;
     varState[var_Pressure]    = true;
     varState[var_Temperature] = true;
+    NvarsIns_plt3d = 3 + 3 + 1 + 1;
+    NvarsAvr_plt3d = 3 + 1 + 1;
   }
   else if( !strcasecmp(str.c_str(), "SolidConduction" ) )
   {
     KindOfSolver = SOLID_CONDUCTION;
     varState[var_Temperature] = true;
+    NvarsIns_plt3d = 1;
+    NvarsAvr_plt3d = 1;
   }
   else
   {
@@ -2196,66 +2208,6 @@ void Control::printInitValues(FILE* fp, CompoList* cmp)
 }
 
 
-// #################################################################
-/**
- * @brief 線形ソルバー種別の表示
- * @param [in] fp ファイルポインタ
- * @param [in] IC IterationCtl
- */
-void Control::printLS(FILE* fp, const IterationCtl* IC)
-{
-  switch (IC->getLS()) 
-  {
-    case JACOBI:
-      fprintf(fp,"\t       Linear Solver          :   Jacobi method\n");
-      break;
-      
-    case SOR:
-      fprintf(fp,"\t       Linear Solver          :   Point SOR method\n");
-      break;
-      
-    case SOR2SMA:
-      if (IC->getNaive()==OFF)
-      {
-        fprintf(fp,"\t       Linear Solver          :   2-colored SOR SMA (Stride Memory Access, Bit compressed 1-decode)\n");
-      }
-      else
-      {
-        fprintf(fp,"\t       Linear Solver          :   2-colored SOR SMA (Stride Memory Access, Naive Implementation)\n");
-      }
-      break;
-      
-    case GMRES:
-      fprintf(fp,"\t       Linear Solver          :   GMRES\n");
-      break;
-      
-    case RBGS:
-      fprintf(fp,"\t       Linear Solver          :   RBGS\n");
-      break;
-      
-    case PCG:
-      fprintf(fp,"\t       Linear Solver          :   PCG\n");
-      break;
-      
-    case BiCGSTAB:
-      if (IC->getNaive()==OFF)
-      {
-        fprintf(fp,"\t       Linear Solver          :   BiCGstab");
-        if (IC->getPrecondition()==ON) fprintf(fp," with Preconditioner\n");
-      }
-      else
-      {
-        fprintf(fp,"\t       Linear Solver          :   BiCGstab (Naive)");
-        if (IC->getPrecondition()==ON) fprintf(fp," with Preconditioner\n");
-      }
-      break;
-      
-    default:
-      stamped_printf("Error: Linear Solver section\n");
-      //Exit(0);
-  }
-}
-
 
 // #################################################################
 // 内部BCコンポーネントの数を表示する
@@ -2344,11 +2296,8 @@ void Control::printParaConditions(FILE* fp, const MediumList* mat)
 // #################################################################
 // 制御パラメータSTEERの表示
 void Control::printSteerConditions(FILE* fp,
-                                   IterationCtl* IC,
                                    const DTcntl* DT,
-                                   const ReferenceFrame* RF,
-                                   const DivConvergence* DC,
-                                   const int em)
+                                   const ReferenceFrame* RF)
 {
   if ( !fp )
   {
@@ -2960,97 +2909,6 @@ void Control::printSteerConditions(FILE* fp,
       fprintf(fp,"\t     Sampled data             :   %12d [step]\n", Interval[tg_sampled].getIntervalStep());
     }
   }
-  
-
-  // Criteria ------------------
-  if ( em == ffvc_solver )
-  {
-    fprintf(fp,"\n\tParameter of Linear Equation\n");
-    IterationCtl* ICp1= &IC[ic_prs1];  /// 圧力のPoisson反復
-    IterationCtl* ICp2= &IC[ic_prs2];  /// 圧力のPoisson反復　2回目
-    IterationCtl* ICv = &IC[ic_vel1];  /// 粘性項のCrank-Nicolson反復
-    
-    
-    if ( Hide.PM_Test == ON )
-    {
-      fprintf(fp,"\t ### Performance Test Mode >> The iteration number is fixed by Iteration max.\n\n");
-    }
-    
-    if ( KindOfSolver != SOLID_CONDUCTION )
-    {
-      // 1st iteration
-      fprintf(fp,"\t     1st Pressure Iteration \n");
-      fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICp1->getMaxIteration());
-      fprintf(fp,"\t       Residual Norm type     :   %s\n",    ICp1->getResNormString().c_str());
-      fprintf(fp,"\t       Threshold for residual :   %9.3e\n", ICp1->getResCriterion());
-      fprintf(fp,"\t       Error    Norm type     :   %s\n",    ICp1->getErrNormString().c_str());
-      fprintf(fp,"\t       Threshold for error    :   %9.3e\n", ICp1->getErrCriterion());
-      fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICp1->getOmega());
-      fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICp1->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
-      printLS(fp, ICp1);
-      
-      if ( AlgorithmF == Flow_FS_RK_CN )
-      {
-        fprintf(fp,"\t     2nd Pressure Iteration \n");
-        fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICp2->getMaxIteration());
-        fprintf(fp,"\t       Residual Norm type     :   %s\n",    ICp2->getResNormString().c_str());
-        fprintf(fp,"\t       Threshold for residual :   %9.3e\n", ICp2->getResCriterion());
-        fprintf(fp,"\t       Error    Norm type     :   %s\n",    ICp2->getErrNormString().c_str());
-        fprintf(fp,"\t       Threshold for error    :   %9.3e\n", ICp2->getErrCriterion());
-        fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICp2->getOmega());
-        fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICp2->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
-        printLS(fp, ICp2);
-      }
-      
-      // CN iteration
-      if ( (AlgorithmF == Flow_FS_AB_CN) || (AlgorithmF == Flow_FS_RK_CN) )
-      {
-        fprintf(fp,"\n");
-        fprintf(fp,"\t     Velocity CN Iteration \n");
-        fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICv->getMaxIteration());
-        fprintf(fp,"\t       Residual Norm type     :   %s\n",    ICv->getResNormString().c_str());
-        fprintf(fp,"\t       Threshold for residual :   %9.3e\n", ICv->getResCriterion());
-        fprintf(fp,"\t       Error    Norm type     :   %s\n",    ICv->getErrNormString().c_str());
-        fprintf(fp,"\t       Threshold for error    :   %9.3e\n", ICv->getErrCriterion());
-        fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICv->getOmega());
-        fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICv->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
-        printLS(fp, ICv);
-      }
-      fprintf(fp,"\n");
-      fprintf(fp,"\t     Div Iteration \n");
-      fprintf(fp,"\t       Iteration max          :   %d\n"  ,  DC->MaxIteration);
-      if ( DC->divType == nrm_div_max)
-      {
-        fprintf(fp,"\t       Error    Norm type     :   Max divergence\n");
-      }
-      else
-      {
-        fprintf(fp,"\t       Error    Norm type     :   L2 divergence\n");
-      }
-      
-      fprintf(fp,"\t       Threshold for Div.     :   %9.3e\n", DC->divEPS);
-    }
-    
-    // for Temperature
-    if ( isHeatProblem() )
-    {
-      if ( AlgorithmH == Heat_EE_EI )
-      {
-        IterationCtl* ICt = &IC[ic_tmp1];  /// 温度の拡散項の反復
-        fprintf(fp,"\n");
-        fprintf(fp,"\t     Temperature Iteration  \n");
-        fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICt->getMaxIteration());
-        fprintf(fp,"\t       Residual Norm type     :   %s\n",    ICt->getResNormString().c_str());
-        fprintf(fp,"\t       Threshold for residual :   %9.3e\n", ICt->getResCriterion());
-        fprintf(fp,"\t       Error    Norm type     :   %s\n",    ICt->getErrNormString().c_str());
-        fprintf(fp,"\t       Threshold for error    :   %9.3e\n", ICt->getErrCriterion());
-        fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICt->getOmega());
-        fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICt->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
-        printLS(fp, ICt);
-      }
-    }
-
-  } // End of Criteria
   
 
 
