@@ -19,6 +19,11 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-10-25
+r1644 fix a minor bug of r1643
+ - compatible with CDMlib-0.4.0
+
+--------------------------
 2014-10-24
 r1643 change memory allocation structure
  - introduce ffv_Alloc.C/h

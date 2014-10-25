@@ -2867,11 +2867,11 @@ void Control::printSteerConditions(FILE* fp,
   if ( Interval[tg_basic].getMode() == IntervalManager::By_time )
   {
     itm = Interval[tg_basic].getIntervalTime();
-    fprintf(fp,"\t     Basic Variables          :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
+    fprintf(fp,"\t     Basic/Derived Variables  :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
   }
   else
   {
-    fprintf(fp,"\t     Basic Variables          :   %12d [step]\n", Interval[tg_basic].getIntervalStep());
+    fprintf(fp,"\t     Basic/Derived Variables  :   %12d [step]\n", Interval[tg_basic].getIntervalStep());
   }
   
   // 平均値のファイル出力
@@ -2885,7 +2885,7 @@ void Control::printSteerConditions(FILE* fp,
     fprintf(fp,"\t     Averaged Variables       :   %12d [step]\n", Interval[tg_average].getIntervalStep());
   }
   
-  // 派生変数のファイル出力
+  /* 派生変数のファイル出力 >> 基本変数と同じにする 20141025
   if ( Interval[tg_derived].getMode() == IntervalManager::By_time )
   {
     itm = Interval[tg_derived].getIntervalTime();
@@ -2894,7 +2894,7 @@ void Control::printSteerConditions(FILE* fp,
   else
   {
     fprintf(fp,"\t     Derived Variables        :   %12d [step]\n", Interval[tg_derived].getIntervalStep());
-  }
+  }*/
   
   // サンプリング情報のファイル出力
   if ( SamplingMode == ON )
@@ -2980,7 +2980,7 @@ void Control::printSteerConditions(FILE* fp,
   }
   else
   {
-    fprintf(fp,"\t     2nd Invariant of VGT     :   OFF\n");
+    fprintf(fp,"\t     Divergence              :   OFF\n");
   }
   
   

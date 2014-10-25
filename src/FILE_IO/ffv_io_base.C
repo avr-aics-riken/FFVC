@@ -525,7 +525,7 @@ void IO_BASE::printSteerConditions(FILE* fp)
   fprintf(fp,"\t     I/O Directory Output     :   \"%s\"\n", OutDirPath.c_str());
   
   // Time Slice option
-  fprintf(fp,"\t     Time Slie Directory      :   %s\n", (Slice==ON) ? "On" : "Off");
+  fprintf(fp,"\t     Time Slice Directory     :   %s\n", (Slice==ON) ? "On" : "Off");
 }
 
 
