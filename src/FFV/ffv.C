@@ -35,12 +35,12 @@ FFV::FFV()
   L_Wcell = 0;
   
   CurrentTime = 0.0;
-  CurrentTime_Avr = 0.0;
+  CurrentTimeStat = 0.0;
 
   Session_CurrentStep = 0;
   Session_LastStep = 0;
   CurrentStep = 0;
-  CurrentStep_Avr = 0;
+  CurrentStepStat = 0;
   
   CM_F.previous = 0.0;
   CM_F.rate     = 0.0;
@@ -109,9 +109,9 @@ FFV::~FFV() {}
  */
 void FFV::Averaging(double& flop)
 {
-  CurrentStep_Avr++;
-  CurrentTime_Avr += DT.get_DT();
-  REAL_TYPE nadd = (REAL_TYPE)CurrentStep_Avr;
+  CurrentStepStat++;
+  CurrentTimeStat += DT.get_DT();
+  REAL_TYPE nadd = (REAL_TYPE)CurrentStepStat;
   
   fb_average_s_(d_ap, size, &guide, d_p, &nadd, &flop);
   fb_average_v_(d_av, size, &guide, d_v, &nadd, &flop);
@@ -399,7 +399,7 @@ int FFV::MainLoop()
   C.Interval[Control::tg_console].printInfo("tg_console");
   C.Interval[Control::tg_history].printInfo("tg_history");
   C.Interval[Control::tg_basic].printInfo("tg_basic");
-  C.Interval[Control::tg_average].printInfo("tg_average");
+  C.Interval[Control::tg_statistic].printInfo("tg_statistic");
   C.Interval[Control::tg_derived].printInfo("tg_derived");
   C.Interval[Control::tg_accelra].printInfo("tg_accelra");
   C.Interval[Control::tg_sampled].printInfo("tg_sampled");

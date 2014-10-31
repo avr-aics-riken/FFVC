@@ -208,7 +208,7 @@ Output {
       Qcriterion     = "On"
     }
 
-    AveragedVariables {
+    StatisticalVariables {
       Format        = "sph"
       TemporalType  = "step"
       Interval      = 100
@@ -289,7 +289,7 @@ TimeControl {
     End              = 20000
   }
 
-  Average {
+  Statistic {
     TemporalType   = "step"
     Start          = 0
     End            = 0

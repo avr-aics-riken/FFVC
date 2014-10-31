@@ -127,9 +127,9 @@ private:
   // セッション：1回のrun
   // ケース：ある一連の計算セッション
   double CurrentTime;           ///< 計算開始からの積算時刻（ケース）
-  double CurrentTime_Avr;       ///< 平均値操作の積算時間（ケース）
+  double CurrentTimeStat;       ///< 統計値操作の積算時間（ケース）
   unsigned CurrentStep;         ///< 計算開始からの積算ステップ（ケース）
-  unsigned CurrentStep_Avr;     ///< 平均操作の積算ステップ数（ケース）
+  unsigned CurrentStepStat;     ///< 統計操作の積算ステップ数（ケース）
   unsigned Session_CurrentStep; ///< セッションの現在のステップ
   unsigned Session_LastStep;    ///< セッションの終了ステップ数
   
@@ -372,6 +372,14 @@ private:
   
   // 距離の最小値を求める
   void minDistance(const float* cut, const int* bid, FILE* fp);
+  
+  
+  
+  /**
+   * @brief 初期擾乱
+   * @note x方向の流れが主方向で、それに垂直なdir方向のチャネルを想定
+   */
+  void perturbation();
   
   
   // 履歴の出力準備

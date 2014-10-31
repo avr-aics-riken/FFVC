@@ -36,7 +36,7 @@ int FFV::FilterLoop()
   C.Interval[Control::tg_console].printInfo("tg_console");
   C.Interval[Control::tg_history].printInfo("tg_history");
   C.Interval[Control::tg_basic].printInfo("tg_basic");
-  C.Interval[Control::tg_average].printInfo("tg_average");
+  C.Interval[Control::tg_statistic].printInfo("tg_statistic");
   C.Interval[Control::tg_derived].printInfo("tg_derived");
   C.Interval[Control::tg_accelra].printInfo("tg_accelra");
   C.Interval[Control::tg_sampled].printInfo("tg_sampled");
@@ -512,6 +512,7 @@ int FFV::FilterInitialize(int argc, char **argv)
   
   // 前処理に用いるデータクラスのアロケート -----------------------------------------------------
 
+  setArraySize();
   allocArray_Prep(PrepMemory, TotalMemory);
   
   
@@ -752,7 +753,7 @@ int FFV::FilterInitialize(int argc, char **argv)
   
   
   
-  // 初期値とリスタート処理 瞬時値と平均値に分けて処理　------------------
+  // 初期値とリスタート処理 瞬時値と統計値に分けて処理　------------------
   Hostonly_
   {
     printf(    "\n----------\n\n");
@@ -776,11 +777,11 @@ int FFV::FilterInitialize(int argc, char **argv)
   initInterval();
   
   
-  // 平均値のリスタート
-  if ( C.Mode.AverageRestart == ON )
+  // 統計値のリスタート
+  if ( C.Mode.StatisticRestart == ON )
   {
     TIMING_start(tm_restart);
-    RestartAvrerage(fp, flop_task);
+    RestartStatistic(fp, flop_task);
     TIMING_stop(tm_restart);
   }
   

@@ -32,19 +32,19 @@ class PLT3D : public IO_BASE {
 private:
   // 入力dfiファイルのプレフィックス
   string f_dfi_in_ins;
-  string f_dfi_in_avr;
+  string f_dfi_in_stat;
 
   // 出力ファイルのプレフィックス
   string f_dfi_out_ins;
-  string f_dfi_out_avr;
+  string f_dfi_out_stat;
   
   // InFile
   cdm_DFI *DFI_IN_INS;      ///< Instantaneus field
-  cdm_DFI *DFI_IN_AVR;      ///< Averaged field
+  cdm_DFI *DFI_IN_STAT;      ///< Statistical field
   
   // OutFile
   cdm_DFI *DFI_OUT_INS;     ///< Instantaneus field
-  cdm_DFI *DFI_OUT_AVR;     ///< Averaged field
+  cdm_DFI *DFI_OUT_STAT;     ///< Statistical field
   
   // ラベル名
   string l_divergence;
@@ -67,6 +67,12 @@ private:
   string l_avr_velocity_x;
   string l_avr_velocity_y;
   string l_avr_velocity_z;
+  string l_vmean_x;
+  string l_vmean_y;
+  string l_vmean_z;
+  string l_rmsmean_x;
+  string l_rmsmean_y;
+  string l_rmsmean_z;
   
   
 public:
@@ -74,13 +80,13 @@ public:
   PLT3D() {
     // ファイル入出力
     DFI_IN_INS   = NULL;
-    DFI_IN_AVR   = NULL;
+    DFI_IN_STAT   = NULL;
     DFI_OUT_INS  = NULL;
-    DFI_OUT_AVR  = NULL;
+    DFI_OUT_STAT  = NULL;
     
     // ファイル名
     f_dfi_out_ins = "field";
-    f_dfi_out_avr = "field_avr";
+    f_dfi_out_stat= "field_stat";
     
     l_divergence  = "Divergence_V";
     l_helicity    = "Helicity";
@@ -102,13 +108,19 @@ public:
     l_avr_velocity_x  = "Avr_Velocity_X";
     l_avr_velocity_y  = "Avr_Velocity_Y";
     l_avr_velocity_z  = "Avr_Velocity_Z";
+    l_vmean_x   = "Vmean_X";
+    l_vmean_y   = "Vmean_Y";
+    l_vmean_z   = "Vmean_Z";
+    l_rmsmean_x = "Rms_mean_X";
+    l_rmsmean_y = "Rms_mean_Y";
+    l_rmsmean_z = "Rms_mean_Z";
   }
   
   ~PLT3D() {
     if( DFI_IN_INS    != NULL ) delete DFI_IN_INS;
-    if( DFI_IN_AVR    != NULL ) delete DFI_IN_AVR;
+    if( DFI_IN_STAT    != NULL ) delete DFI_IN_STAT;
     if( DFI_OUT_INS   != NULL ) delete DFI_OUT_INS;
-    if( DFI_OUT_AVR   != NULL ) delete DFI_OUT_AVR;
+    if( DFI_OUT_STAT   != NULL ) delete DFI_OUT_STAT;
   }
   
  
@@ -160,18 +172,18 @@ public:
   
   
   /**
-   * @brief 時間平均値のファイル出力
+   * @brief 時間統計値のファイル出力
    * @param [in]     m_CurrentStep     CurrentStep
    * @param [in]     m_CurrentTime     CurrentTime
-   * @param [in]     m_CurrentStepAvr  CurrentStepAvr
-   * @param [in]     m_CurrentTimeAvr  CurrentTimeAvr
+   * @param [in]     m_CurrentStepStat CurrentStepStat
+   * @param [in]     m_CurrentTimeStat CurrentTimeStat
    * @param [in,out] flop              浮動小数点演算数
    */
-  virtual void OutputAveragedVarables(const unsigned m_CurrentStep,
-                                      const double m_CurrentTime,
-                                      const unsigned m_CurrentStepAvr,
-                                      const double m_CurrentTimeAvr,
-                                      double& flop);
+  virtual void OutputStatisticalVarables(const unsigned m_CurrentStep,
+                                         const double m_CurrentTime,
+                                         const unsigned m_CurrentStepStat,
+                                         const double m_CurrentTimeStat,
+                                         double& flop);
   
   
   /**
@@ -197,20 +209,20 @@ public:
   
   
   /**
-   * @brief リスタート時の平均値ファイル読み込み
+   * @brief リスタート時の統計値ファイル読み込み
    * @param [in]  fp                ファイルポインタ
    * @param [in]  m_CurrentStep     CurrentStep
    * @param [in]  m_CurrentTime     CurrentTime
-   * @param [out] m_CurrentStepAvr  CurrentStepAvr
-   * @param [out] m_CurrentTimeAvr  CurrentTimeAvr
+   * @param [out] m_CurrentStepStat CurrentStepStat
+   * @param [out] m_CurrentTimeStat CurrentTimeStat
    * @param [out] flop              浮動小数点演算数
    */
-  virtual void RestartAvrerage(FILE* fp,
-                               const unsigned m_CurrentStep,
-                               const double m_CurrentTime,
-                               unsigned& m_CurrentStepAvr,
-                               double& m_CurrentTimeAvr,
-                               double& flop);
+  virtual void RestartStatistic(FILE* fp,
+                                const unsigned m_CurrentStep,
+                                const double m_CurrentTime,
+                                unsigned& m_CurrentStepStat,
+                                double& m_CurrentTimeStat,
+                                double& flop);
 
 };
 

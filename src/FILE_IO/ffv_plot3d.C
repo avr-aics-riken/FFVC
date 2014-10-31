@@ -45,16 +45,16 @@ void PLT3D::getRestartDFI()
     
     
     
-    // 平均値
-    if ( C->Mode.Average == ON )
+    // 統計値
+    if ( C->Mode.Statistic == ON )
     {
-      label="/StartCondition/Restart/DFIfiles/Average";
+      label="/StartCondition/Restart/DFIfiles/Statistic";
       
       if ( tpCntl->getInspectedValue(label, str ) )
       {
-        f_dfi_in_avr = str.c_str();
+        f_dfi_in_stat = str.c_str();
       }
-      if ( f_dfi_in_avr.empty() == true ) f_dfi_in_avr = "field_avr";
+      if ( f_dfi_in_stat.empty() == true ) f_dfi_in_stat = "field_stat";
       
     }
   }
@@ -94,7 +94,12 @@ void PLT3D::generateIBLANK()
 void PLT3D::initFileOut()
 {
   // バッファサイズチェック  バッファサイズdnumはFALLOC::allocArray_Main()の数をハードコード
-  // Control::getSolverProperty(), IO_BASE::getFIOparams()で書き出しサイズNvarsIns_plt3d, NvarsAvr_plt3dを計算
+  // 書き出しサイズNvarsIns_plt3d, NvarsAvr_plt3dは、以下のメソッドに依存
+  // Control::getSolverProperty()
+  // IO_BASE::getFIOparams()
+  // Control::getTurbulenceModel()
+  
+  // IO バッファサイズ
   int dnum;
   if ( C->isHeatProblem() )
   {
@@ -105,10 +110,10 @@ void PLT3D::initFileOut()
     dnum = IO_BLOCK_SIZE_FLOW;
   }
   
-  int NumVars    = C->NvarsIns_plt3d;
-  int NumVarsAvr = C->NvarsAvr_plt3d;
+  int NumVars     = C->NvarsIns_plt3d;
+  int NumVarsStat = C->NvarsAvr_plt3d;
   
-  if ( (NumVars > dnum) || (NumVarsAvr > dnum) )
+  if ( (NumVars > dnum) || (NumVarsStat > dnum) )
   {
     Hostonly_ printf("Error : Buffer size of PLOT3D exseeds predetermined value. Control the number of derived arrays for output.\n");
     Exit(0);
@@ -251,8 +256,10 @@ void PLT3D::initFileOut()
   }
   else
   {
+    d_iblk = d_mid;
     if ( !d_iblk ) Exit(0);
     generateIBLANK();
+    Hostonly_ printf("\tIBLANK was successfully generated from BCindex.\n");
   }
   
   
@@ -300,29 +307,29 @@ void PLT3D::initFileOut()
   
   
   
-  // 平均値
-  if ( C->Mode.Average == ON )
+  // 統計値
+  if ( C->Mode.Statistic == ON )
   {
-    DFI_OUT_AVR = cdm_DFI::WriteInit(MPI_COMM_WORLD, ///<MPI コミュニケータ
-                                     cdm_DFI::Generate_DFI_Name(f_dfi_out_avr), ///<dfi ファイル名
-                                     path,          ///<出力ディレクトリ
-                                     f_dfi_out_avr, ///<ベースファイル名
-                                     cdm_format,    ///<出力フォーマット
-                                     gc_out,        ///<出力仮想セル数
-                                     datatype,      ///<データ型
-                                     NumVarsAvr,    ///<データの変数の個数
-                                     procfile,      ///<proc ファイル名
-                                     G_size,        ///<計算空間全体のボクセルサイズ
-                                     cdm_pit,       ///<ピッチ
-                                     cdm_org,       ///<原点座標値
-                                     cdm_div,       ///<領域分割数
-                                     head,          ///<計算領域の開始位置
-                                     cdm_tail,      ///<計算領域の終了位置
-                                     HostName,      ///<ホスト名
-                                     TimeSliceDir,  ///<タイムスライス出力オプション
-                                     d_iblk);       ///<出力するiblankデータポインタ (PLOT3Dでiblankも出力する場合にこの引数も追加)
+    DFI_OUT_STAT = cdm_DFI::WriteInit(MPI_COMM_WORLD, ///<MPI コミュニケータ
+                                      cdm_DFI::Generate_DFI_Name(f_dfi_out_stat), ///<dfi ファイル名
+                                      path,          ///<出力ディレクトリ
+                                      f_dfi_out_stat, ///<ベースファイル名
+                                      cdm_format,    ///<出力フォーマット
+                                      gc_out,        ///<出力仮想セル数
+                                      datatype,      ///<データ型
+                                      NumVarsStat,   ///<データの変数の個数
+                                      procfile,      ///<proc ファイル名
+                                      G_size,        ///<計算空間全体のボクセルサイズ
+                                      cdm_pit,       ///<ピッチ
+                                      cdm_org,       ///<原点座標値
+                                      cdm_div,       ///<領域分割数
+                                      head,          ///<計算領域の開始位置
+                                      cdm_tail,      ///<計算領域の終了位置
+                                      HostName,      ///<ホスト名
+                                      TimeSliceDir,  ///<タイムスライス出力オプション
+                                      d_iblk);       ///<出力するiblankデータポインタ (PLOT3Dでiblankも出力する場合にこの引数も追加)
     
-    if ( DFI_OUT_AVR == NULL )
+    if ( DFI_OUT_STAT == NULL )
     {
       Hostonly_ stamped_printf("\tFails to instance AvrPressure dfi.\n");
       Exit(0);
@@ -330,31 +337,41 @@ void PLT3D::initFileOut()
     
     if ( Slice == ON )
     {
-      DFI_OUT_AVR->SetTimeSliceFlag(CDM::E_CDM_ON);
+      DFI_OUT_STAT->SetTimeSliceFlag(CDM::E_CDM_ON);
     }
     else
     {
-      DFI_OUT_AVR->SetTimeSliceFlag(CDM::E_CDM_OFF);
+      DFI_OUT_STAT->SetTimeSliceFlag(CDM::E_CDM_OFF);
     }
     
-    DFI_OUT_AVR->AddUnit("Length"  , UnitL, (double)C->RefLength);
-    DFI_OUT_AVR->AddUnit("Velocity", UnitV, (double)C->RefVelocity);
-    DFI_OUT_AVR->AddUnit("Pressure", UnitP, (double)C->BasePrs, DiffPrs, true);
+    DFI_OUT_STAT->AddUnit("Length"  , UnitL, (double)C->RefLength);
+    DFI_OUT_STAT->AddUnit("Velocity", UnitV, (double)C->RefVelocity);
+    DFI_OUT_STAT->AddUnit("Pressure", UnitP, (double)C->BasePrs, DiffPrs, true);
   }
   
+  
+  /* 座標値 debug
+  size_t dims[3], nx;
+  dims[0] = (size_t)(size[0] + 2*guide);
+  dims[1] = (size_t)(size[1] + 2*guide);
+  dims[2] = (size_t)(size[2] + 2*guide);
+  nx = dims[0] * dims[1] * dims[2];
+  
+  plot3d_write_xyz_(&d_wv[0], &d_wv[nx], &d_wv[nx*2], d_iblk, size, &guide, &deltaX, origin);
+   */
 }
 
 
 
 
 // #################################################################
-// 時間平均値のファイル出力
+// 時間統計値のファイル出力
 // @note d_ws,d_wvをワークに使用
-void PLT3D::OutputAveragedVarables(const unsigned m_CurrentStep,
-                                   const double m_CurrentTime,
-                                   const unsigned m_CurrentStepAvr,
-                                   const double m_CurrentTimeAvr,
-                                   double& flop)
+void PLT3D::OutputStatisticalVarables(const unsigned m_CurrentStep,
+                                      const double m_CurrentTime,
+                                      const unsigned m_CurrentStepStat,
+                                      const double m_CurrentTimeStat,
+                                      double& flop)
 {
   
   // packing  >> ap, av, atの順（全5 scalar）
@@ -365,7 +382,7 @@ void PLT3D::OutputAveragedVarables(const unsigned m_CurrentStep,
   nx = dims[0] * dims[1] * dims[2];
   
   REAL_TYPE f_min, f_max, vec_min[3], vec_max[3];
-  REAL_TYPE minmax[10];
+  REAL_TYPE minmax[15*2];
   
   
   // エラーコード
@@ -373,19 +390,19 @@ void PLT3D::OutputAveragedVarables(const unsigned m_CurrentStep,
   
   
   // 出力ファイルの指定が有次元の場合
-  double timeAvr;
+  double timeStat;
   
   if (C->Unit.File == DIMENSIONAL)
   {
-    timeAvr = m_CurrentTimeAvr * C->Tscale;
+    timeStat = m_CurrentTimeStat * C->Tscale;
   }
   else
   {
-    timeAvr = m_CurrentTimeAvr;
+    timeStat = m_CurrentTimeStat;
   }
   
-  // 平均操作の母数
-  unsigned stepAvr = m_CurrentStepAvr;
+  // 統計操作の母数
+  unsigned stepStat = m_CurrentStepStat;
   
   // ガイドセル出力
   int gc_out = C->GuideOut;
@@ -405,6 +422,11 @@ void PLT3D::OutputAveragedVarables(const unsigned m_CurrentStep,
   {
     m_time = (REAL_TYPE)m_CurrentTime;
   }
+  
+  REAL_TYPE unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
+  
+  int varN = 0; // 変数登録のインデクス
+  int var  = 0; // minmaxのインデクス
   
   
   if ( C->KindOfSolver != SOLID_CONDUCTION )
@@ -432,25 +454,21 @@ void PLT3D::OutputAveragedVarables(const unsigned m_CurrentStep,
       if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
     
-    minmax[0] = f_min;  ///<<< p min
-    minmax[1] = f_max;  ///<<< p max
+    minmax[var++] = f_min;  ///<<< p min
+    minmax[var++] = f_max;  ///<<< p max
     
     
-    // ap
-    blas_copy_(&d_iobuf[0], d_ws, size, &guide);
-    DFI_OUT_AVR->setVariableName(0, l_avr_pressure);
+    // pressure
+    blas_copy_(&d_iobuf[nx*varN], d_ws, size, &guide);
+    DFI_OUT_STAT->setVariableName(varN++, l_avr_pressure);
     
     
 
     
     // Velocity
-    REAL_TYPE unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
-
     fb_vout_ijkn_(d_wv, d_av, size, &guide, RF->getV00(), &unit_velocity, &flop);
     
     fb_minmax_v_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wv, &flop);
-
-    
     
     if ( numProc > 1 )
     {
@@ -461,26 +479,26 @@ void PLT3D::OutputAveragedVarables(const unsigned m_CurrentStep,
       if ( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
     
-    minmax[2] = vec_min[0]; ///<<< vec_u min
-    minmax[3] = vec_max[0]; ///<<< vec_u max
-    minmax[4] = vec_min[1]; ///<<< vec_v min
-    minmax[5] = vec_max[1]; ///<<< vec_v max
-    minmax[6] = vec_min[2]; ///<<< vec_w min
-    minmax[7] = vec_max[2]; ///<<< vec_w max
+    minmax[var++] = vec_min[0]; ///<<< vec_u min
+    minmax[var++] = vec_max[0]; ///<<< vec_u max
+    minmax[var++] = vec_min[1]; ///<<< vec_v min
+    minmax[var++] = vec_max[1]; ///<<< vec_v max
+    minmax[var++] = vec_min[2]; ///<<< vec_w min
+    minmax[var++] = vec_max[2]; ///<<< vec_w max
     
     // av-u
-    blas_copy_(&d_iobuf[nx], &d_wv[0], size, &guide);
+    blas_copy_(&d_iobuf[nx*varN], &d_wv[0], size, &guide);
+    DFI_OUT_STAT->setVariableName(varN++, l_avr_velocity_x);
     
     // av-v
-    blas_copy_(&d_iobuf[nx*2], &d_wv[nx], size, &guide);
+    blas_copy_(&d_iobuf[nx*varN], &d_wv[nx], size, &guide);
+    DFI_OUT_STAT->setVariableName(varN++, l_avr_velocity_y);
     
     // av-w
-    blas_copy_(&d_iobuf[nx*3], &d_wv[nx*2], size, &guide);
-    
-    DFI_OUT_AVR->setVariableName(1, l_avr_velocity_x);
-    DFI_OUT_AVR->setVariableName(2, l_avr_velocity_y);
-    DFI_OUT_AVR->setVariableName(3, l_avr_velocity_z);
+    blas_copy_(&d_iobuf[nx*varN], &d_wv[nx*2], size, &guide);
+    DFI_OUT_STAT->setVariableName(varN++, l_avr_velocity_z);
   }
+
   
   
   // Temperature
@@ -499,32 +517,75 @@ void PLT3D::OutputAveragedVarables(const unsigned m_CurrentStep,
       if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
     
-    minmax[8] = f_min; ///<<< t min
-    minmax[9] = f_max; ///<<< t max
+    minmax[var++] = f_min; ///<<< t min
+    minmax[var++] = f_max; ///<<< t max
     
     // ae
-    blas_copy_(&d_iobuf[nx*4], d_ws, size, &guide);
-    DFI_OUT_AVR->setVariableName(4, l_avr_temperature);
+    blas_copy_(&d_iobuf[nx*varN], d_ws, size, &guide);
+    DFI_OUT_STAT->setVariableName(varN++, l_avr_temperature);
   }
   
-  if ( !DFI_OUT_AVR )
+  
+  // LES
+  if ( C->LES.Calc == ON )
+  {
+    // rms mean
+    fb_vout_ijkn_(d_wv, d_rmsmean, size, &guide, RF->getV00(), &unit_velocity, &flop);
+    
+    fb_minmax_v_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wv, &flop);
+    
+    if ( numProc > 1 )
+    {
+      REAL_TYPE vmin_tmp[3] = {vec_min[0], vec_min[1], vec_min[2]};
+      if( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      REAL_TYPE vmax_tmp[3] = {vec_max[0], vec_max[1], vec_max[2]};
+      if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    minmax[var++] = vec_min[0]; ///<<< vec_u min
+    minmax[var++] = vec_max[0]; ///<<< vec_u max
+    minmax[var++] = vec_min[1]; ///<<< vec_v min
+    minmax[var++] = vec_max[1]; ///<<< vec_v max
+    minmax[var++] = vec_min[2]; ///<<< vec_w min
+    minmax[var++] = vec_max[2]; ///<<< vec_w max
+    
+    blas_copy_(&d_iobuf[nx*varN], &d_wv[0], size, &guide);
+    DFI_OUT_STAT->setVariableName(varN++, l_rmsmean_x);
+    
+    blas_copy_(&d_iobuf[nx*varN], &d_wv[nx], size, &guide);
+    DFI_OUT_STAT->setVariableName(varN++, l_rmsmean_y);
+    
+    blas_copy_(&d_iobuf[nx*varN], &d_wv[nx*2], size, &guide);
+    DFI_OUT_STAT->setVariableName(varN++, l_rmsmean_z);
+  }
+  
+  
+  if ( C->NvarsAvr_plt3d != varN )
+  {
+    Hostonly_ printf("\tThe number of variables to be written is inconsistent. NvarsAvr=%d, varN=%d\n",
+                     C->NvarsAvr_plt3d, varN);
+    Exit(0);
+  }
+  
+  
+  if ( !DFI_OUT_STAT )
   {
     printf("[%d] DFI_OUT_TEMPA Pointer Error\n", paraMngr->GetMyRankID());
     Exit(-1);
   }
+
   
-  int NumVarsAvr = C->NvarsAvr_plt3d;
-  
-  ret = DFI_OUT_AVR->WriteData(m_step,     // 出力step番号
-                               m_time,     // 出力時刻
-                               size,       // 配列サイズ
-                               NumVarsAvr, // 成分数
-                               guide,      // 仮想セル数
-                               d_iobuf,    // フィールドデータポインタ
-                               minmax,     // 最小値と最大値
-                               false,      // 平均出力指示 false:出力あり
-                               stepAvr,    // 平均をとったステップ数
-                               timeAvr);   // 平均をとった時刻
+  ret = DFI_OUT_STAT->WriteData(m_step,     // 出力step番号
+                                m_time,     // 出力時刻
+                                size,       // 配列サイズ
+                                varN,       // 成分数
+                                guide,      // 仮想セル数
+                                d_iobuf,    // フィールドデータポインタ
+                                minmax,     // 最小値と最大値
+                                false,      // 統計出力指示 false:出力あり
+                                stepStat,   // 統計をとったステップ数
+                                timeStat);  // 統計をとった時刻
   
   if ( ret != CDM::E_CDM_SUCCESS ) Exit(0);
 }
@@ -575,6 +636,10 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
   REAL_TYPE unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
   
   
+  int varN = 0; // 変数登録のインデクス
+  int var  = 0; // minmaxのインデクス
+  
+  
   if ( C->KindOfSolver != SOLID_CONDUCTION )
   {
     // Pressure
@@ -598,12 +663,12 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
       REAL_TYPE max_tmp = f_max;
       if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
-    minmax[0] = f_min; ///<<< p min
-    minmax[1] = f_max; ///<<< p max
+    minmax[var++] = f_min; ///<<< p min
+    minmax[var++] = f_max; ///<<< p max
     
     // p
-    blas_copy_(&d_iobuf[0], d_ws, size, &guide);
-    DFI_OUT_INS->setVariableName(0, l_pressure);
+    blas_copy_(&d_iobuf[nx*varN], d_ws, size, &guide);
+    DFI_OUT_INS->setVariableName(varN++, l_pressure);
     
     
     if( !DFI_OUT_INS )
@@ -628,25 +693,24 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
       if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
     
-    minmax[2] = vec_min[0]; ///<<< vec_u min
-    minmax[3] = vec_max[0]; ///<<< vec_u max
-    minmax[4] = vec_min[1]; ///<<< vec_v min
-    minmax[5] = vec_max[1]; ///<<< vec_v max
-    minmax[6] = vec_min[2]; ///<<< vec_w min
-    minmax[7] = vec_max[2]; ///<<< vec_w max
+    minmax[var++] = vec_min[0]; ///<<< vec_u min
+    minmax[var++] = vec_max[0]; ///<<< vec_u max
+    minmax[var++] = vec_min[1]; ///<<< vec_v min
+    minmax[var++] = vec_max[1]; ///<<< vec_v max
+    minmax[var++] = vec_min[2]; ///<<< vec_w min
+    minmax[var++] = vec_max[2]; ///<<< vec_w max
 
     // u
-    blas_copy_(&d_iobuf[nx], &d_wv[0], size, &guide);
+    blas_copy_(&d_iobuf[nx*varN], &d_wv[0], size, &guide);
+    DFI_OUT_INS->setVariableName(varN++, l_velocity_x);
     
     // v
-    blas_copy_(&d_iobuf[nx*2], &d_wv[nx], size, &guide);
+    blas_copy_(&d_iobuf[nx*varN], &d_wv[nx], size, &guide);
+    DFI_OUT_INS->setVariableName(varN++, l_velocity_y);
     
     // w
-    blas_copy_(&d_iobuf[nx*3], &d_wv[nx*2], size, &guide);
-    
-    DFI_OUT_INS->setVariableName(1, l_velocity_x);
-    DFI_OUT_INS->setVariableName(2, l_velocity_y);
-    DFI_OUT_INS->setVariableName(3, l_velocity_z);
+    blas_copy_(&d_iobuf[nx*varN], &d_wv[nx*2], size, &guide);
+    DFI_OUT_INS->setVariableName(varN++, l_velocity_z);
     
     
     
@@ -664,21 +728,23 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
       if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
     
-    minmax[8]  = vec_min[0]; ///<<< vec_u min
-    minmax[9]  = vec_max[0]; ///<<< vec_u max
-    minmax[10] = vec_min[1]; ///<<< vec_v min
-    minmax[11] = vec_max[1]; ///<<< vec_v max
-    minmax[12] = vec_min[2]; ///<<< vec_w min
-    minmax[13] = vec_max[2]; ///<<< vec_w max
+    minmax[var++] = vec_min[0]; ///<<< vec_u min
+    minmax[var++] = vec_max[0]; ///<<< vec_u max
+    minmax[var++] = vec_min[1]; ///<<< vec_v min
+    minmax[var++] = vec_max[1]; ///<<< vec_v max
+    minmax[var++] = vec_min[2]; ///<<< vec_w min
+    minmax[var++] = vec_max[2]; ///<<< vec_w max
     
-    DFI_OUT_INS->setVariableName(4, l_fvelocity_x);
-    DFI_OUT_INS->setVariableName(5, l_fvelocity_y);
-    DFI_OUT_INS->setVariableName(6, l_fvelocity_z);
+    blas_copy_(&d_iobuf[nx*varN], &d_wv[0], size, &guide);
+    DFI_OUT_INS->setVariableName(varN++, l_fvelocity_x);
+    
+    blas_copy_(&d_iobuf[nx*varN], &d_wv[nx], size, &guide);
+    DFI_OUT_INS->setVariableName(varN++, l_fvelocity_y);
+    
+    blas_copy_(&d_iobuf[nx*varN], &d_wv[nx*2], size, &guide);
+    DFI_OUT_INS->setVariableName(varN++, l_fvelocity_z);
   }
   
-  
-  int var = 13; // 現在のminmaxのインデクス
-  int varN= 6;  // 現在の変数登録のインデクス
   
   if ( C->isHeatProblem() )
   {
@@ -695,11 +761,13 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
       REAL_TYPE max_tmp = f_max;
       if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
-    minmax[++var] = f_min;
-    minmax[++var] = f_max;
+    minmax[var++] = f_min;
+    minmax[var++] = f_max;
     
-    DFI_OUT_INS->setVariableName(++varN, l_temperature);
+    blas_copy_(&d_iobuf[nx*varN], d_ws, size, &guide);
+    DFI_OUT_INS->setVariableName(varN++, l_temperature);
   }
+  
   
   
   // 派生変数
@@ -725,10 +793,11 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
       REAL_TYPE max_tmp = f_max;
       if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
-    minmax[++var] = f_min;
-    minmax[++var] = f_max;
+    minmax[var++] = f_min;
+    minmax[var++] = f_max;
     
-    DFI_OUT_INS->setVariableName(++varN, l_totalp);
+    blas_copy_(&d_iobuf[nx*varN], d_ws, size, &guide);
+    DFI_OUT_INS->setVariableName(varN++, l_totalp);
   }
   
   
@@ -753,16 +822,21 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
       if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
     
-    minmax[++var] = vec_min[0]; ///<<< vec_u min
-    minmax[++var] = vec_max[0]; ///<<< vec_u max
-    minmax[++var] = vec_min[1]; ///<<< vec_v min
-    minmax[++var] = vec_max[1]; ///<<< vec_v max
-    minmax[++var] = vec_min[2]; ///<<< vec_w min
-    minmax[++var] = vec_max[2]; ///<<< vec_w max
+    minmax[var++] = vec_min[0]; ///<<< vec_u min
+    minmax[var++] = vec_max[0]; ///<<< vec_u max
+    minmax[var++] = vec_min[1]; ///<<< vec_v min
+    minmax[var++] = vec_max[1]; ///<<< vec_v max
+    minmax[var++] = vec_min[2]; ///<<< vec_w min
+    minmax[var++] = vec_max[2]; ///<<< vec_w max
     
-    DFI_OUT_INS->setVariableName(++varN, l_vorticity_x);
-    DFI_OUT_INS->setVariableName(++varN, l_vorticity_y);
-    DFI_OUT_INS->setVariableName(++varN, l_vorticity_z);
+    blas_copy_(&d_iobuf[nx*varN], &d_wv[0], size, &guide);
+    DFI_OUT_INS->setVariableName(varN++, l_vorticity_x);
+    
+    blas_copy_(&d_iobuf[nx*varN], &d_wv[nx], size, &guide);
+    DFI_OUT_INS->setVariableName(varN++, l_vorticity_y);
+    
+    blas_copy_(&d_iobuf[nx*varN], &d_wv[nx*2], size, &guide);
+    DFI_OUT_INS->setVariableName(varN++, l_vorticity_z);
   }
 
   
@@ -781,10 +855,11 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
       REAL_TYPE max_tmp = f_max;
       if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
-    minmax[++var] = f_min;
-    minmax[++var] = f_max;
+    minmax[var++] = f_min;
+    minmax[var++] = f_max;
     
-    DFI_OUT_INS->setVariableName(++varN, l_invariantQ);
+    blas_copy_(&d_iobuf[nx*varN], d_ws, size, &guide);
+    DFI_OUT_INS->setVariableName(varN++, l_invariantQ);
   }
   
   
@@ -804,10 +879,11 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
       if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
 
-    minmax[++var] = f_min;
-    minmax[++var] = f_max;
+    minmax[var++] = f_min;
+    minmax[var++] = f_max;
     
-    DFI_OUT_INS->setVariableName(++varN, l_helicity);
+    blas_copy_(&d_iobuf[nx*varN], d_ws, size, &guide);
+    DFI_OUT_INS->setVariableName(varN++, l_helicity);
   }
   
   
@@ -828,21 +904,26 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
       if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
 
-    minmax[++var] = f_min;
-    minmax[++var] = f_max;
+    minmax[var++] = f_min;
+    minmax[var++] = f_max;
     
-    DFI_OUT_INS->setVariableName(++varN, l_divergence);
+    blas_copy_(&d_iobuf[nx*varN], d_ws, size, &guide);
+    DFI_OUT_INS->setVariableName(varN++, l_divergence);
   }
   
+  if ( C->NvarsIns_plt3d != varN )
+  {
+    Hostonly_ printf("\tThe number of variables to be written is inconsistent. NvarsIns=%d, varN=%d\n",
+                     C->NvarsIns_plt3d, varN);
+    Exit(0);
+  }
   
   if ( !DFI_OUT_INS )
   {
     printf("[%d] DFI_OUT_TEMP Pointer Error\n", paraMngr->GetMyRankID());
     Exit(-1);
   }
-  
-  // 変数の数
-  varN++;
+
   
   ret = DFI_OUT_INS->WriteData(m_step,
                                m_time,
@@ -862,13 +943,13 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
 
 
 // #################################################################
-// リスタート時の平均値ファイル読み込み
-void PLT3D::RestartAvrerage(FILE* fp,
-                          const unsigned m_CurrentStep,
-                          const double m_CurrentTime,
-                          unsigned& m_CurrentStepAvr,
-                          double& m_CurrentTimeAvr,
-                          double& flop)
+// リスタート時の統計値ファイル読み込み
+void PLT3D::RestartStatistic(FILE* fp,
+                             const unsigned m_CurrentStep,
+                             const double m_CurrentTime,
+                             unsigned& m_CurrentStepStat,
+                             double& m_CurrentTimeStat,
+                             double& flop)
 {
   std::string fname;
   std::string fmt(file_fmt_ext);
@@ -892,13 +973,13 @@ void PLT3D::RestartAvrerage(FILE* fp,
   int gs = C->GuideOut;
   
   
-  // まだ平均値開始時刻になっていなければ，何もしない
-  if ( C->Interval[Control::tg_average].getMode() == IntervalManager::By_step )
+  // まだ統計値開始時刻になっていなければ，何もしない
+  if ( C->Interval[Control::tg_statistic].getMode() == IntervalManager::By_step )
   {
-    if ( m_Session_step >= C->Interval[Control::tg_average].getStartStep() )
+    if ( m_Session_step >= C->Interval[Control::tg_statistic].getStartStep() )
     {
-      Hostonly_ printf     ("\tRestart from Previous Calculation Results of averaged field\n");
-      Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of averaged field\n");
+      Hostonly_ printf     ("\tRestart from Previous Calculation Results of Statistical field\n");
+      Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of Statistical field\n");
       Hostonly_ printf     ("\tStep : base=%u current=%u\n", m_Session_step, m_CurrentStep);
       Hostonly_ fprintf(fp, "\tStep : base=%u current=%u\n", m_Session_step, m_CurrentStep);
     }
@@ -907,12 +988,12 @@ void PLT3D::RestartAvrerage(FILE* fp,
       return;
     }
   }
-  else if ( C->Interval[Control::tg_average].getMode() == IntervalManager::By_time )
+  else if ( C->Interval[Control::tg_statistic].getMode() == IntervalManager::By_time )
   {
-    if ( m_Session_time >= C->Interval[Control::tg_average].getStartTime() )
+    if ( m_Session_time >= C->Interval[Control::tg_statistic].getStartTime() )
     {
-      Hostonly_ printf     ("\tRestart from Previous Calculation Results of averaged field\n");
-      Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of averaged field\n");
+      Hostonly_ printf     ("\tRestart from Previous Calculation Results of Statistical field\n");
+      Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of Statistical field\n");
       Hostonly_ printf     ("\tTime : base=%e[sec.]/%e[-] current=%e[-]\n", m_Session_time*C->Tscale, m_Session_time, m_CurrentTime);
       Hostonly_ fprintf(fp, "\tTime : base=%e[sec.]/%e[-] current=%e[-]\n", m_Session_time*C->Tscale, m_Session_time, m_CurrentTime);
     }
@@ -941,17 +1022,17 @@ void PLT3D::RestartAvrerage(FILE* fp,
   CDM::E_CDM_ERRORCODE cdm_error;
   
   
-  // Averaged dataの初期化
-  if ( C->Mode.Average == ON && C->Interval[Control::tg_average].isStarted(m_CurrentStep, m_CurrentTime) )
+  // Statistical dataの初期化
+  if ( C->Mode.Statistic == ON && C->Interval[Control::tg_statistic].isStarted(m_CurrentStep, m_CurrentTime) )
   {
     // 読込み用インスタンスのポインタ取得
-    DFI_IN_AVR = cdm_DFI::ReadInit(MPI_COMM_WORLD,
-                                   f_dfi_in_avr,
+    DFI_IN_STAT = cdm_DFI::ReadInit(MPI_COMM_WORLD,
+                                   f_dfi_in_stat,
                                    G_size,
                                    gdiv,
                                    cdm_error);
     
-    if ( cdm_error != CDM::E_CDM_SUCCESS || DFI_IN_AVR == NULL  ) Exit(0);
+    if ( cdm_error != CDM::E_CDM_SUCCESS || DFI_IN_STAT == NULL  ) Exit(0);
   }
   
   // Datatype
@@ -971,7 +1052,7 @@ void PLT3D::RestartAvrerage(FILE* fp,
   }
   
   // 読込みフィールドデータ型のチェック
-  if( DFI_IN_AVR->GetDataType() != datatype )
+  if( DFI_IN_STAT->GetDataType() != datatype )
   {
     Hostonly_ printf("Error Datatype unmatch.\n");
     Exit(0);
@@ -995,9 +1076,9 @@ void PLT3D::RestartAvrerage(FILE* fp,
   }
   
   // 読込みフィールドデータの成分数を取得
-  int NumVarsAvr = DFI_IN_AVR->GetNumVariables();
+  int NumVarsStat = DFI_IN_STAT->GetNumVariables();
   
-  if ( NumVarsAvr > dnum )
+  if ( NumVarsStat > dnum )
   {
     Hostonly_ printf("Error : The number of stored variables exceeds current limitation.\n");
     Exit(0);
@@ -1009,8 +1090,8 @@ void PLT3D::RestartAvrerage(FILE* fp,
   
   
   
-  unsigned step_avr = 0;
-  double time_avr = 0.0;
+  unsigned step_stat = 0;
+  double time_stat = 0.0;
   
   
   //自身の領域終点インデックス
@@ -1019,7 +1100,7 @@ void PLT3D::RestartAvrerage(FILE* fp,
   
   
   double r_time;
-  if ( DFI_IN_AVR->ReadData(d_iobuf,        ///< 読込み先配列のポインタ
+  if ( DFI_IN_STAT->ReadData(d_iobuf,        ///< 読込み先配列のポインタ
                             m_RestartStep,  ///< 読込みフィールドデータのステップ番号
                             guide,          ///< 計算空間の仮想セル数
                             G_size,         ///< 計算空間全体のボクセルサイズ
@@ -1027,26 +1108,26 @@ void PLT3D::RestartAvrerage(FILE* fp,
                             head,           ///< 自サブドメインの開始インデクス
                             tail,           ///< 自サブドメインの終端インデクス
                             r_time,         ///< dfi から読込んだ時間
-                            false,          ///< 平均値指定
-                            step_avr,
-                            time_avr) != CDM::E_CDM_SUCCESS ) Exit(0);
+                            false,          ///< 統計値指定
+                            step_stat,
+                            time_stat) != CDM::E_CDM_SUCCESS ) Exit(0);
   
   if( d_iobuf == NULL ) Exit(0);
   
   
-  m_CurrentStepAvr = step_avr;
-  m_CurrentTimeAvr = time_avr;
+  m_CurrentStepStat = step_stat;
+  m_CurrentTimeStat = time_stat;
   
-  Hostonly_ printf     ("\tAveraged fields have read :\tRestart step=%d time=%e  : Averaged step=%d time=%e [%s]\n",
+  Hostonly_ printf     ("\tStatistical fields have read :\tRestart step=%d time=%e  : Statistical step=%d time=%e [%s]\n",
                         m_RestartStep,
                         r_time,
-                        step_avr,
-                        time_avr, (C->Unit.File == DIMENSIONAL)?"sec.":"-");
-  Hostonly_ fprintf(fp, "\tAveraged fields have read :\tRestart step=%d time=%e  : Averaged step=%d time=%e [%s]\n",
+                        step_stat,
+                        time_stat, (C->Unit.File == DIMENSIONAL)?"sec.":"-");
+  Hostonly_ fprintf(fp, "\tStatistical fields have read :\tRestart step=%d time=%e  : Statistical step=%d time=%e [%s]\n",
                     m_RestartStep,
                     r_time,
-                    step_avr,
-                    time_avr, (C->Unit.File == DIMENSIONAL)?"sec.":"-");
+                    step_stat,
+                    time_stat, (C->Unit.File == DIMENSIONAL)?"sec.":"-");
   
   
   REAL_TYPE refv = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
@@ -1059,9 +1140,9 @@ void PLT3D::RestartAvrerage(FILE* fp,
   
   // 変数名をキーにしてデータロード
   int block = 0;
-  for (int n=0; n<NumVarsAvr; n++)
+  for (int n=0; n<NumVarsStat; n++)
   {
-    string variable = DFI_IN_AVR->getVariableName(n);
+    string variable = DFI_IN_STAT->getVariableName(n);
     
     if ( variable.empty() == true || variable == "" ) Exit(0);
     
@@ -1094,6 +1175,13 @@ void PLT3D::RestartAvrerage(FILE* fp,
         U.convArrayTmp2IE(d_ae, size, guide, d_ws, d_bcd, mat_tbl, C->BaseTemp, C->DiffTemp, C->Unit.File, flop);
       }
     }
+    
+    // LES rms mean
+    else if ( !strcasecmp(variable.c_str(), l_rmsmean_x.c_str()) && C->LES.Calc==ON )
+    {
+      block = extract_vector(block, d_rmsmean);
+      fb_vin_ijkn_(d_rmsmean, size, &guide, u0, &refv, &flop);
+    }
   }
   
 }
@@ -1112,8 +1200,6 @@ void PLT3D::RestartInstantaneous(FILE* fp,
   std::string fmt(file_fmt_ext);
   
   REAL_TYPE bp = ( C->Unit.Prs == Unit_Absolute ) ? C->BasePrs : 0.0;
-  REAL_TYPE refD = C->RefDensity;
-  REAL_TYPE refV = C->RefVelocity;
   
   
   // リスタートステップ
@@ -1244,13 +1330,13 @@ void PLT3D::RestartInstantaneous(FILE* fp,
   
   
   
-  // unpacking >> p, v, vf, t
+  // unpacking >> p, v, vf, t, LES(vmean, rmsmean)
   
   // 変数名をキーにしてデータロード
   int block = 0;
   for (int n=0; n<NumVars; n++)
   {
-    string variable = DFI_IN_AVR->getVariableName(n);
+    string variable = DFI_IN_STAT->getVariableName(n);
     
     if ( !variable.empty() == true || variable == "" ) Exit(0);
     
@@ -1262,7 +1348,6 @@ void PLT3D::RestartInstantaneous(FILE* fp,
       
       if ( C->Unit.File == DIMENSIONAL ) // 有次元の場合，無次元に変換する
       {
-        REAL_TYPE bp = ( C->Unit.Prs == Unit_Absolute ) ? C->BasePrs : 0.0;
         U.convArrayPrsD2ND(d_p, size, guide, bp, C->RefDensity, C->RefVelocity, flop);
       }
     }
@@ -1271,7 +1356,6 @@ void PLT3D::RestartInstantaneous(FILE* fp,
     else if ( !strcasecmp(variable.c_str(), l_velocity_x.c_str()) ) // 先頭はvec_Xが書かれていると仮定
     {
       block = extract_vector(block, d_v);
-      
       fb_vin_ijkn_(d_v, size, &guide, u0, &refv, &flop);
     }
     
@@ -1279,7 +1363,6 @@ void PLT3D::RestartInstantaneous(FILE* fp,
     else if ( !strcasecmp(variable.c_str(), l_fvelocity_x.c_str()) ) // 先頭はvec_Xが書かれていると仮定
     {
       block = extract_vector(block, d_vf);
-      
       fb_vin_ijkn_(d_vf, size, &guide, u0, &refv, &flop);
     }
     
@@ -1292,6 +1375,7 @@ void PLT3D::RestartInstantaneous(FILE* fp,
         U.convArrayTmp2IE(d_ie, size, guide, d_ws, d_bcd, mat_tbl, C->BaseTemp, C->DiffTemp, C->Unit.File, flop);
       }
     }
+    
   }
   
 }

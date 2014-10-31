@@ -68,7 +68,7 @@ void FFV::NS_FS_E_Binary()
   // d_ie0  内部エネルギー t^n
   // d_vt  LES計算の渦粘性係数
   // d_ab0 Adams-Bashforth用のワーク
-
+  
   
   // >>> Fractional step section
   TIMING_start(tm_frctnl_stp_sct); 
@@ -106,7 +106,7 @@ void FFV::NS_FS_E_Binary()
         case Control::O3_muscl:
           if ( C.LES.Calc == ON )
           {
-            //pvec_les_(vc, sz, &guide, dh, (int*)&C.CnvScheme, v00, &rei, v0, vf, (int*)bcv, vt, &flop);
+            pvec_muscl_les_ (d_vc, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bcp, &one, &C.LES.Cs, &C.LES.Model, &C.RefKviscosity, &C.RefDensity, &flop);
           }
           else
           {
@@ -118,9 +118,9 @@ void FFV::NS_FS_E_Binary()
         case Control::O4_central:
           if ( C.LES.Calc == ON )
           {
-            //pvec_les_(vc, sz, &guide, dh, (int*)&C.CnvScheme, v00, &rei, v0, vf, (int*)bcv, vt, &flop);
+            pvec_central_les_(d_vc, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bcp, &one, &C.LES.Cs, &C.LES.Model, &C.RefKviscosity, &C.RefDensity, &flop);
           }
-            else
+          else
           {
             pvec_central_(d_vc, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bcp, &one, &flop);
           }
@@ -415,7 +415,7 @@ void FFV::NS_FS_E_Binary()
 
   
   // 反復回数の積算
-  int loop_p  = 1;
+  int loop_p  = 0;
   int loop_vp;
   
   
@@ -469,6 +469,7 @@ void FFV::NS_FS_E_Binary()
     TIMING_start(tm_prj_vec);
     flop = 0.0;
     update_vec_(d_v, d_vf, d_dv, size, &guide, &dt, &dh, d_vc, d_p, d_bcp, d_cdf, &flop);
+    // update_vec_(d_v, d_dv, size, &guide, &dt, &dh, d_vc, d_vf, d_p, d_bcp, d_cdf, &flop, &cnv_scheme); << LES
     TIMING_stop(tm_prj_vec, flop);
     
     
@@ -646,7 +647,7 @@ void FFV::NS_FS_E_Binary()
   
   
   
-  // 非同期にして隠す
+  /* 非同期にして隠す
   if (C.LES.Calc==ON) 
   {
     TIMING_start(tm_LES_eddy);
@@ -661,6 +662,7 @@ void FFV::NS_FS_E_Binary()
       TIMING_stop(tm_LES_eddy_comm, face_comm_size*guide);
     }
   }
+   */
   
 
   TIMING_stop(tm_NS_loop_post_sct, 0.0);

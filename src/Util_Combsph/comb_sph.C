@@ -430,7 +430,7 @@ void COMB::output_sph()
       
       delete src;
       
-      //平均値識別の記述 ---> なし？
+      //統計値識別の記述 ---> なし？
       
       //データのフッタ書き込み
       if( !(WriteCombineDataMarker(dummy, fp)) ) {

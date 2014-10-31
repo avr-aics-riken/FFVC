@@ -62,29 +62,35 @@ protected:
   int Format;          ///< ファイル入出力モード（sph, bov, plot3d）
   int Slice;           ///< タイムスライス毎にまとめる
   int Iblank;          ///< PLOT3DのIBLANKオプション
+  
+  int output_vtk;      ///< debug用vtk出力オプション
+  int output_debug;    ///< debug用データ出力
+  
   string OutDirPath;   ///< 出力ディレクトリパス
   string InDirPath;    ///< 入力ディレクトリパス
   string file_fmt_ext; ///< フォーマット識別子
   
   
   // variables
-  REAL_TYPE* d_p;    ///< pressure
-  REAL_TYPE* d_v;    ///< velocity
-  REAL_TYPE* d_vf;   ///< face velocity
-  REAL_TYPE* d_ie;   ///< internal energy
-  REAL_TYPE* d_iobuf;///< IO buffer
-  REAL_TYPE* d_ws;   ///< work for scalar
-  REAL_TYPE* d_p0;   ///< work for scalar
-  REAL_TYPE* d_wv;   ///< work for vector
-  REAL_TYPE* d_vc;   ///< work for vector
-  REAL_TYPE* d_ap;   ///< averaged pressure
-  REAL_TYPE* d_av;   ///< averaged velocity
-  REAL_TYPE* d_ae;   ///< averaged internal energy
-  REAL_TYPE* d_dv;   ///< Divergence
-  int* d_bcd;        ///< BCindex D
-  int* d_cdf;        ///< BCindex C
-  double* mat_tbl;   ///< material table
-  int* d_iblk;       ///< IBLANK
+  REAL_TYPE* d_p;       ///< pressure
+  REAL_TYPE* d_v;       ///< velocity
+  REAL_TYPE* d_vf;      ///< face velocity
+  REAL_TYPE* d_ie;      ///< internal energy
+  REAL_TYPE* d_iobuf;   ///< IO buffer
+  REAL_TYPE* d_ws;      ///< work for scalar
+  REAL_TYPE* d_p0;      ///< work for scalar
+  REAL_TYPE* d_wv;      ///< work for vector
+  REAL_TYPE* d_vc;      ///< work for vector
+  REAL_TYPE* d_ap;      ///< averaged pressure
+  REAL_TYPE* d_av;      ///< averaged velocity
+  REAL_TYPE* d_ae;      ///< averaged internal energy
+  REAL_TYPE* d_dv;      ///< Divergence
+  REAL_TYPE* d_rmsmean; ///< LES rms mean
+  int* d_bcd;           ///< BCindex D
+  int* d_cdf;           ///< BCindex C
+  double* mat_tbl;      ///< material table
+  int* d_iblk;          ///< IBLANK
+  int* d_mid;           ///< Iblankの実体
   
   
   // class pointer
@@ -107,6 +113,9 @@ public:
     Slice    = 0;
     Iblank   = 0;
     
+    output_vtk = 0;
+    output_debug = 0;
+    
     // 変数
     d_p = NULL;
     d_v = NULL;
@@ -126,6 +135,8 @@ public:
     d_bcd = NULL;
     d_cdf = NULL;
     d_iblk = NULL;
+    d_rmsmean = NULL;
+    d_mid = NULL;
   }
   
   
@@ -142,11 +153,16 @@ protected:
 
   
   
-  
 public:
   
   // @brief 出力ファイルをチェック
   //int checkOutFile();
+  
+  
+  bool isVtk()
+  {
+    return (output_vtk == ON) ? true : false;
+  }
   
   
   /*
@@ -208,18 +224,18 @@ public:
   
   
   /**
-   * @brief 時間平均値のファイル出力
+   * @brief 時間統計値のファイル出力
    * @param [in]     m_CurrentStep     CurrentStep
    * @param [in]     m_CurrentTime     CurrentTime
-   * @param [in]     m_CurrentStepAvr  CurrentStepAvr
-   * @param [in]     m_CurrentTimeAvr  CurrentTimeAvr
+   * @param [in]     m_CurrentStepStat CurrentStepStat
+   * @param [in]     m_CurrentTimeStat CurrentTimeStat
    * @param [in,out] flop              浮動小数点演算数
    */
-  virtual void OutputAveragedVarables(const unsigned m_CurrentStep,
-                                      const double m_CurrentTime,
-                                      const unsigned m_CurrentStepAvr,
-                                      const double m_CurrentTimeAvr,
-                                      double& flop) {
+  virtual void OutputStatisticalVarables(const unsigned m_CurrentStep,
+                                         const double m_CurrentTime,
+                                         const unsigned m_CurrentStepStat,
+                                         const double m_CurrentTimeStat,
+                                         double& flop) {
   }
   
   
@@ -232,19 +248,6 @@ public:
   virtual void OutputBasicVariables(const unsigned m_CurrentStep,
                                     const double m_CurrentTime,
                                     double& flop) {
-  }
-  
-  
-  /**
-   * @brief 派生変数のファイル出力
-   * @param [in]     m_CurrentStep  CurrentStep
-   * @param [in]     m_CurrentTime  CurrentTime
-   * @param [in,out] flop           浮動小数点演算数
-   * @note d_p0をワークとして使用
-   */
-  virtual void OutputDerivedVariables(const unsigned m_CurrentStep,
-                                      const double m_CurrentTime,
-                                      double& flop) {
   }
   
   
@@ -265,20 +268,20 @@ public:
   
   
   /**
-   * @brief リスタート時の平均値ファイル読み込み
+   * @brief リスタート時の統計値ファイル読み込み
    * @param [in]  fp                ファイルポインタ
    * @param [in]  m_CurrentStep     CurrentStep
    * @param [in]  m_CurrentTime     CurrentTime
-   * @param [out] m_CurrentStepAvr  CurrentStepAvr
-   * @param [out] m_CurrentTimeAvr  CurrentTimeAvr
+   * @param [out] m_CurrentStepStat CurrentStepStat
+   * @param [out] m_CurrentTimeStat CurrentTimeStat
    * @param [out] flop              浮動小数点演算数
    */
-  virtual void RestartAvrerage(FILE* fp,
-                               const unsigned m_CurrentStep,
-                               const double m_CurrentTime,
-                               unsigned& m_CurrentStepAvr,
-                               double& m_CurrentTimeAvr,
-                               double& flop) {
+  virtual void RestartStatistic(FILE* fp,
+                                const unsigned m_CurrentStep,
+                                const double m_CurrentTime,
+                                unsigned& m_CurrentStepStat,
+                                double& m_CurrentTimeStat,
+                                double& flop) {
   }
   
 
@@ -326,10 +329,11 @@ public:
                       REAL_TYPE* m_d_av,
                       REAL_TYPE* m_d_ae,
                       REAL_TYPE* m_d_dv,
+                      REAL_TYPE* m_d_rmsmean,
                       int* m_d_bcd,
                       int* m_d_cdf,
                       double* m_mat_tbl,
-                      int* d_iblk);
+                      int* d_mid);
   
   
   /**

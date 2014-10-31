@@ -169,14 +169,14 @@ public:
    * @brief 時間平均値のファイル出力
    * @param [in]     m_CurrentStep     CurrentStep
    * @param [in]     m_CurrentTime     CurrentTime
-   * @param [in]     m_CurrentStepAvr  CurrentStepAvr
-   * @param [in]     m_CurrentTimeAvr  CurrentTimeAvr
+   * @param [in]     m_CurrentStepStat CurrentStepStat
+   * @param [in]     m_CurrentTimeStat CurrentTimeStat
    * @param [in,out] flop              浮動小数点演算数
    */
-  virtual void OutputAveragedVarables(const unsigned m_CurrentStep,
+  virtual void OutputStatisticalVarables(const unsigned m_CurrentStep,
                                       const double m_CurrentTime,
-                                      const unsigned m_CurrentStepAvr,
-                                      const double m_CurrentTimeAvr,
+                                      const unsigned m_CurrentStepStat,
+                                      const double m_CurrentTimeStat,
                                       double& flop);
   
   
@@ -219,16 +219,16 @@ public:
    * @param [in]  fp                ファイルポインタ
    * @param [in]  m_CurrentStep     CurrentStep
    * @param [in]  m_CurrentTime     CurrentTime
-   * @param [out] m_CurrentStepAvr  CurrentStepAvr
-   * @param [out] m_CurrentTimeAvr  CurrentTimeAvr
+   * @param [out] m_CurrentStepStat CurrentStepStat
+   * @param [out] m_CurrentTimeStat CurrentTimeStat
    * @param [out] flop              浮動小数点演算数
    */
-  virtual void RestartAvrerage(FILE* fp,
-                               const unsigned m_CurrentStep,
-                               const double m_CurrentTime,
-                               unsigned& m_CurrentStepAvr,
-                               double& m_CurrentTimeAvr,
-                               double& flop);
+  virtual void RestartStatistic(FILE* fp,
+                                const unsigned m_CurrentStep,
+                                const double m_CurrentTime,
+                                unsigned& m_CurrentStepStat,
+                                double& m_CurrentTimeStat,
+                                double& flop);
   
   
 };

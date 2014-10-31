@@ -60,6 +60,9 @@ using namespace std;
 
 class FALLOC : public DomainInfo {
 
+private:
+  double array_size;
+  
 public:
   
   // [*]印はタイムステップ間でデータを保持しておかなければならない配列
@@ -129,7 +132,9 @@ public:
   
   
   // LES計算
-  REAL_TYPE *d_vt;  ///< [*] 渦粘性係数
+  REAL_TYPE *d_vt;      ///< [*] 渦粘性係数
+  REAL_TYPE *d_rms;     ///< [*] セルセンター乱流強度
+  REAL_TYPE *d_rmsmean; ///< [*] セルセンター時間平均乱流強度
   
   
   // 界面計算
@@ -176,6 +181,7 @@ public:
   /** コンストラクタ */
   FALLOC() {
     
+    array_size = 0.0;
     cf_sz[0] = cf_sz[1] = cf_sz[2] = 0;
     cf_x = NULL;
     cf_y = NULL;
@@ -206,13 +212,17 @@ public:
     d_ie = NULL;
     d_ie0 = NULL;
     d_vrt = NULL;
-    d_vt = NULL;
+    
     d_vof = NULL;
     d_ap = NULL;
     d_ae = NULL;
     d_pvf = NULL;
     d_pni = NULL;
     d_cvf = NULL;
+    
+    d_vt = NULL;
+    d_rms = NULL;
+    d_rmsmean = NULL;
     
     d_r_v = NULL;
     d_r_p = NULL;
@@ -253,8 +263,8 @@ public:
   void allocArray_AB2 (double &total);
   
   
-  // 平均値処理に用いる配列のアロケーション
-  void allocArray_Average (double &total, const bool isHeat);
+  // 統計処理に用いる配列のアロケーション
+  void allocArray_Statistic (double &total, const bool isHeat);
   
   
   // 粗格子読み込みに用いる配列のアロケーション
@@ -316,6 +326,15 @@ public:
   // SOR2SMAのバッファ確保
   void allocate_SOR2SMA_buffer(double &total);
 
+  
+  // スカラの配列サイズを計算
+  void setArraySize()
+  {
+    array_size = (double)(
+                          (size[0]+2*guide) *
+                          (size[1]+2*guide) *
+                          (size[2]+2*guide) );
+  }
   
 };
 

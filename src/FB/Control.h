@@ -398,8 +398,8 @@ public:
   /** 各種モード　パラメータ */
   typedef struct 
   {
-    int Average;
-    int AverageRestart;
+    int Statistic;
+    int StatisticRestart;
     int Buoyancy;
     int Example;
     int Log_Base;
@@ -430,8 +430,13 @@ public:
   {
     int Calc;
     int Model;
+    int InitialPerturbation;
+    int ChannelDir;
     REAL_TYPE Cs;
     REAL_TYPE damping_factor;
+    REAL_TYPE BulkVelocity;
+    REAL_TYPE ChannelWidth;
+    REAL_TYPE TurbulentReynoldsNum;
   } LES_Parameter;
   
   /** 初期値 */
@@ -522,9 +527,10 @@ public:
   /** LES Model */
   enum LES_model 
   {
-    Smagorinsky=1,
-    Low_Reynolds,
-    Dynamic
+    no=0,
+    Smagorinsky,
+    CSM,
+    WALE
   };
   
   /** 壁面の扱い */
@@ -559,7 +565,7 @@ public:
     tg_console,    ///< コンソール出力
     tg_history,    ///< ファイル出力
     tg_basic,      ///< 基本変数の瞬時値出力
-    tg_average,    ///< 平均値出力
+    tg_statistic,  ///< 統計値出力
     tg_derived,    ///< 派生変数の出力
     tg_accelra,    ///< 加速時間
     tg_sampled,    ///< サンプリング出力
@@ -594,7 +600,7 @@ public:
   int SamplingMode;   ///< サンプリング指定
   int FillSuppress[3];///< PeriodicとSymmetricの外部境界面フィル抑制
   int NvarsIns_plt3d; ///< Plot3dのバッファサイズ　瞬時値
-  int NvarsAvr_plt3d; ///< Plot3dのバッファサイズ　平均値
+  int NvarsAvr_plt3d; ///< Plot3dのバッファサイズ　統計値
   
   unsigned Restart_staging;    ///< リスタート時にリスタートファイルがSTAGINGされているか
   unsigned long NoWallSurface; ///< 固体表面セル数
@@ -625,6 +631,7 @@ public:
   REAL_TYPE RefLength;
   REAL_TYPE RefSoundSpeed;
   REAL_TYPE RefSpecificHeat;
+  REAL_TYPE RefKviscosity;
   REAL_TYPE RefVelocity;
   REAL_TYPE Reynolds;
   REAL_TYPE SpecificHeatRatio;
@@ -692,7 +699,7 @@ public:
     
     PlotIntvl = 0.0;
     Domain_p1 = Domain_p2 = 0.0;
-    RefVelocity = RefLength = RefDensity = RefSoundSpeed = RefSpecificHeat = 0.0;
+    RefVelocity = RefLength = RefDensity = RefSoundSpeed = RefSpecificHeat = RefKviscosity = 0.0;
     DiffTemp = BaseTemp = HighTemp  = LowTemp = 0.0;
     BasePrs = 0.0;
     Gravity = Mach = SpecificHeatRatio =  0.0;
@@ -719,8 +726,8 @@ public:
     iv.Energy      = 0.0;
     iv.Pressure    = 0.0;
     
-    Mode.Average = 0;
-    Mode.AverageRestart = 0;
+    Mode.Statistic = 0;
+    Mode.StatisticRestart = 0;
     Mode.Base_Medium = 0;
     Mode.Buoyancy = 0;
     Mode.Example = 0;
@@ -734,10 +741,17 @@ public:
     Mode.Steady = 0;
     Mode.CCNV = 0;
     
+
     LES.Calc=0;
     LES.Model=0;
+    LES.InitialPerturbation = 0;
     LES.Cs = 0.0;
-    LES.damping_factor=0.0;
+    LES.damping_factor = 0.0;
+    LES.ChannelDir = 0;
+    LES.BulkVelocity = 0.0;
+    LES.ChannelWidth = 0.0;
+    LES.TurbulentReynoldsNum = 0.0;
+
     
     Hide.Range_Limit = 0;
     Hide.PM_Test = 0;
@@ -796,6 +810,10 @@ protected:
   void getDriver();
   
 
+  // 初期値擾乱
+  void getInitialPerturbation();
+  
+  
   // ログ出力のパラメータを取得
   void getLog();
   

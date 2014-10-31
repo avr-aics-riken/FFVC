@@ -123,14 +123,23 @@ int FFV::Loop(const unsigned step)
   TIMING_start(tm_loop_uty_sct_1);
   
   
-  // 時間平均値操作
-  if ( (C.Mode.Average == ON) && C.Interval[Control::tg_average].isStarted(CurrentStep, CurrentTime))
+  // 統計処理操作 >> 毎ステップ
+  if ( (C.Mode.Statistic == ON) && C.Interval[Control::tg_statistic].isStarted(CurrentStep, CurrentTime))
   {
     TIMING_start(tm_average_time);
     flop_count=0.0;
     Averaging(flop_count);
     TIMING_stop(tm_average_time, flop_count);
+    
+    // 乱流統計量
+    if ( C.LES.Calc == ON )
+    {
+      flop_count = 0.0;
+      REAL_TYPE accum = (REAL_TYPE)CurrentStepStat;
+      calc_rms_v_(d_rms, d_rmsmean, size, &guide, d_v, d_av, &accum, &flop_count);
+    }
   }
+  
   
   // 空間平均値操作と変動量
   TIMING_start(tm_stat_space);
@@ -142,10 +151,9 @@ int FFV::Loop(const unsigned step)
   }
   VariationSpace(rms_Var, avr_Var, flop_count);
   TIMING_stop(tm_stat_space, flop_count);
-
   
   
-  if ( numProc > 1 ) 
+  if ( numProc > 1 )
   {
     /// var_Velocity=0,  > FB_Define.h
     /// var_Pressure,
@@ -208,6 +216,8 @@ int FFV::Loop(const unsigned step)
   
   // 1ステップ後のモニタ処理 -------------------------------
   
+  
+  
   //  >>> ステップループのユーティリティ 2
   TIMING_start(tm_loop_uty_sct_2);
   
@@ -227,15 +237,13 @@ int FFV::Loop(const unsigned step)
       flop_count=0.0;
       F->OutputBasicVariables(CurrentStep, CurrentTime, flop_count);
       TIMING_stop(tm_file_out, flop_count);
+      
+      if ( F->isVtk() )
+      {
+        output_vtk_((int*)&CurrentStep, G_origin, G_division, G_size, &myRank, size, &pitch[0], &guide, d_v, d_p);
+      }
     }
-    
-    if ( C.Interval[Control::tg_derived].isTriggered(CurrentStep, CurrentTime) )
-    {
-      TIMING_start(tm_file_out);
-      flop_count=0.0;
-      F->OutputDerivedVariables(CurrentStep, CurrentTime, flop_count);
-      TIMING_stop(tm_file_out, flop_count);
-    }
+
     
     // 最終ステップ
     if ( C.Interval[Control::tg_compute].isLast(CurrentStep, CurrentTime) )
@@ -248,44 +256,40 @@ int FFV::Loop(const unsigned step)
         F->OutputBasicVariables(CurrentStep, CurrentTime, flop_count);
         TIMING_stop(tm_file_out, flop_count);
       }
-      
-      if ( !C.Interval[Control::tg_derived].isTriggered(CurrentStep, CurrentTime) )
-      {
-        TIMING_start(tm_file_out);
-        flop_count=0.0;
-        F->OutputDerivedVariables(CurrentStep, CurrentTime, flop_count);
-        TIMING_stop(tm_file_out, flop_count);
-      }
     }
     
   }
 
   
-  // 平均値のデータ出力 
-  if (C.Mode.Average == ON) 
+  // 統計値のデータ出力 
+  if (C.Mode.Statistic == ON) 
   {
     
     // 開始時刻を過ぎているか
-    if ( C.Interval[Control::tg_average].isStarted(CurrentStep, CurrentTime) )
+    if ( C.Interval[Control::tg_statistic].isStarted(CurrentStep, CurrentTime) )
     {
       // 通常
-      if ( C.Interval[Control::tg_average].isTriggered(CurrentStep, CurrentTime) ) 
+      if ( C.Interval[Control::tg_statistic].isTriggered(CurrentStep, CurrentTime) ) 
       {
         TIMING_start(tm_file_out);
         flop_count=0.0;
-        F->OutputAveragedVarables(CurrentStep, CurrentTime, CurrentStep_Avr, CurrentTime_Avr, flop_count);
+        F->OutputStatisticalVarables(CurrentStep, CurrentTime, CurrentStepStat, CurrentTimeStat, flop_count);
         TIMING_stop(tm_file_out, flop_count);
+        
+        // special
+        output_mean_((int*)&CurrentStep, G_origin, G_region, G_division, G_size, &myRank, size, &pitch[0], &guide, d_av, d_rms, d_rmsmean);
+        
       }
       
       // 最終ステップ
       if ( C.Interval[Control::tg_compute].isLast(CurrentStep, CurrentTime) )
       {
         // 指定間隔の出力がない場合のみ（重複を避ける）
-        if ( !C.Interval[Control::tg_average].isTriggered(CurrentStep, CurrentTime) )
+        if ( !C.Interval[Control::tg_statistic].isTriggered(CurrentStep, CurrentTime) )
         {
           TIMING_start(tm_file_out);
           flop_count=0.0;
-          F->OutputAveragedVarables(CurrentStep, CurrentTime, CurrentStep_Avr, CurrentTime_Avr, flop_count);
+          F->OutputStatisticalVarables(CurrentStep, CurrentTime, CurrentStepStat, CurrentTimeStat, flop_count);
           TIMING_stop(tm_file_out, flop_count);
         }
       }

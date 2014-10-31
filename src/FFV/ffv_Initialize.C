@@ -182,7 +182,10 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // 前処理に用いるデータクラスのアロケート -----------------------------------------------------
-  TIMING_start(tm_init_alloc); 
+  TIMING_start(tm_init_alloc);
+  
+  // 配列アロケート前に一度コール
+  setArraySize();
   allocArray_Prep(PrepMemory, TotalMemory);
   
   // SOR2SMAのNaive実装
@@ -501,6 +504,7 @@ int FFV::Initialize(int argc, char **argv)
                     d_av,
                     d_ae,
                     d_dv,
+                    d_rmsmean,
                     d_bcd,
                     d_cdf,
                     mat_tbl,
@@ -513,7 +517,7 @@ int FFV::Initialize(int argc, char **argv)
   F->getRestartDFI();
   
   
-  // 初期値とリスタート処理 瞬時値と平均値に分けて処理　------------------
+  // 初期値とリスタート処理 瞬時値と統計値に分けて処理　------------------
   Hostonly_
   {
     printf(    "\n----------\n\n");
@@ -533,11 +537,11 @@ int FFV::Initialize(int argc, char **argv)
   initInterval();
   
 
-  // 平均値のリスタート
-  if ( C.Mode.AverageRestart == ON )
+  // 統計値のリスタート
+  if ( C.Mode.StatisticRestart == ON )
   {
     TIMING_start(tm_restart);
-    F->RestartAvrerage(fp, CurrentStep, CurrentTime, CurrentStep_Avr, CurrentTime_Avr, flop_task);
+    F->RestartStatistic(fp, CurrentStep, CurrentTime, CurrentStepStat, CurrentTimeStat, flop_task);
     TIMING_stop(tm_restart);
   }
   
@@ -580,7 +584,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // IBLANK 出力後に　mid[]を解放する  ---------------------------
-  if ( d_mid ) delete [] d_mid;
+  //if ( d_mid ) delete [] d_mid;
   
   
   
@@ -590,10 +594,10 @@ int FFV::Initialize(int argc, char **argv)
     flop_task = 0.0;
     F->OutputBasicVariables(CurrentStep, CurrentTime, flop_task);
     
-    if ( (C.Mode.Average == ON) && (C.Start != initial_start) )
+    if ( (C.Mode.Statistic == ON) && (C.Start != initial_start) )
     {
       double flop_count=0.0;
-      F->OutputAveragedVarables(CurrentStep, CurrentTime, CurrentStep_Avr, CurrentTime_Avr, flop_count);
+      F->OutputStatisticalVarables(CurrentStep, CurrentTime, CurrentStepStat, CurrentTimeStat, flop_count);
     }
   }
 
@@ -694,9 +698,9 @@ void FFV::allocate_Main(double &total)
   }
   
   // 時間平均用の配列をアロケート
-  if ( C.Mode.Average == ON )
+  if ( C.Mode.Statistic == ON )
   {
-    allocArray_Average(total, C.isHeatProblem());
+    allocArray_Statistic(total, C.isHeatProblem());
     
     C.varState[var_VelocityAvr] = true;
     C.varState[var_PressureAvr] = true;
@@ -2258,7 +2262,7 @@ void FFV::initInterval()
   // セッションの開始・終了時刻をセット >> @see Control::getTimeControl()
   for (int i=0; i<Control::tg_END; i++)
   {
-    if ( (i != Control::tg_average) && (i != Control::tg_compute) )
+    if ( (i != Control::tg_statistic) && (i != Control::tg_compute) )
     {
       C.Interval[i].setStart(m_Session_StartStep);
       C.Interval[i].setLast(Session_LastStep);
@@ -2382,6 +2386,50 @@ void FFV::minDistance(const float* cut, const int* bid, FILE* fp)
 
 }
 
+
+
+// #################################################################
+// 初期擾乱
+void FFV::perturbation()
+{
+  REAL_TYPE width  = C.LES.ChannelWidth;
+  REAL_TYPE Re_tau = C.LES.TurbulentReynoldsNum;
+  REAL_TYPE Ubar   = C.LES.BulkVelocity;
+  REAL_TYPE visc   = C.RefKviscosity;
+  int mode;
+  
+  switch (C.LES.ChannelDir)
+  {
+    case X_minus:
+    case X_plus:
+      Hostonly_ printf("Currently, not supported.\n");
+      Exit(0);
+      break;
+      
+    case Y_minus:
+    case Y_plus:
+      mode = 1;
+      perturb_u_y_ (d_v, size, &guide, &deltaX, origin, &width, &Re_tau, &Ubar, &visc, &mode);
+      
+      mode = 2;
+      perturb_u_y_ (d_vf, size, &guide, &deltaX, origin, &width, &Re_tau, &Ubar, &visc, &mode);
+      break;
+      
+    case Z_minus:
+    case Z_plus:
+      mode = 1;
+      perturb_u_z_ (d_v, size, &guide, &deltaX, origin, &width, &Re_tau, &Ubar, &visc, &mode);
+      
+      mode = 2;
+      perturb_u_z_ (d_vf, size, &guide, &deltaX, origin, &width, &Re_tau, &Ubar, &visc, &mode);
+      break;
+      
+    default:
+      Exit(0);
+      break;
+  }
+  
+}
 
 
 // #################################################################
@@ -2870,6 +2918,13 @@ void FFV::setInitialCondition()
     }
 		fb_set_vector_(d_v, size, &guide, U0, d_bcd);
     fb_set_fvector_(d_vf, size, &guide, U0, d_bcd);
+    
+    
+    // LESの初期擾乱
+    if (C.LES.InitialPerturbation == ON)
+    {
+      perturbation();
+    }
     
     
     // セルフェイスの設定　発散値は関係なし
@@ -3399,7 +3454,7 @@ string FFV::setupDomain(TextParser* tpf)
   C.get1stParameter(&DT);
   
   
-  // ファイルIOパラメータ
+  // ファイルIOパラメータ << get1stParameter()でgetTurbulenceModel()を呼んだあと
   F->getFIOparams();
   
 

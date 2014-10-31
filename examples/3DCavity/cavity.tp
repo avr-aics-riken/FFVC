@@ -280,7 +280,7 @@ Output {
       Qcriterion     = "Off"
     }
 
-    AveragedVariables {
+    StatisticalVariables {
       Format        = "sph"
       TemporalType  = "step"
       Interval      = 10
@@ -362,9 +362,9 @@ TimeControl {
     End            = 0.4
   }
 
-  Average {
+  Statistic {
     TemporalType   = "step"
-    Start          = 0  // 指定区間の平均をとる．両方とも0のときoff
+    Start          = 0  // 指定区間の統計をとる．両方とも0のときoff
     End            = 0 
   }
 }

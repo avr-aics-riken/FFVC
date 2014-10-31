@@ -19,7 +19,196 @@
 !! @brief  計算領域内部の境界条件
 !! @author aics
 !<
-    
+
+
+!> ********************************************************************
+!! @brief 乱流の初期擾乱 Y方向の壁面
+!! @param [out] v       速度場
+!! @param [in]  sz      配列長
+!! @param [in]  g       ガイドセル長
+!! @param [in]  dh      格子幅
+!! @param [in]  origin  サブドメインの領域基点
+!! @param [in]  width   代表流路幅
+!! @param [in]  Re_tau  レイノルズ数
+!! @param [in]  Ubar    Bulk velocity
+!! @param [in]  nu      動粘性係数
+!! @param [in]  mode    cell center(1) or face(2)
+!!<
+subroutine perturb_u_y (v, sz, g, dh, origin, width, Re_tau, Ubar, nu, mode)
+implicit none
+include 'ffv_f_params.h'
+integer                                                   :: ix, jx, kx, i, j, k, g, mode
+integer, dimension(3)                                     :: sz
+real                                                      :: duplus, deviation, eps, nu
+real                                                      :: width, Re_tau, u_tau, Ubar, tmp1, tmp2, rhalf
+real                                                      :: half, dh, xc, yc, zc, xplus, yplus, zplus, perturb
+real, dimension(3)                                        :: origin
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) :: v
+real, parameter :: sigmaC     = 0.00055d0,                           & !
+                   duplusC    = 0.25d0,                              & !
+                   epsilonC   = 0.05d0,                              & !
+                   deviationC = 0.2d0,                               & !
+                   betaPlusC  = 2.0d0 * 3.14d0 * (1.0d0 / 200.0d0),  & !
+                   alphaPlusC = 2.0d0 * 3.14d0 * (1.0d0 / 500.0d0)     !
+
+
+half      = width * 0.5d0          ! channel half width
+u_tau     = Re_tau * nu / half     ! friction velocity
+duplus    = Ubar * duplusC / u_tau
+eps       = Ubar * epsilonC
+rhalf     = Re_tau / half
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+
+!$OMP PARALLEL &
+!$OMP PRIVATE(xc, yc, zc, i, j, k, tmp1, tmp2, xplus, yplus, zplus) &
+!$OMP PRIVATE(perturb, deviation) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, g, dh, half, rhalf, width, u_tau, duplus, eps, mode)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k = 1-g, kx+g
+do j = 1-g, jx+g
+do i = 1-g, ix+g
+
+  if ( mode == 1 ) then
+    xc = origin(1) + (i - 0.5d0)*dh
+  else
+    xc = origin(1) + i * dh
+  end if
+
+  yc = origin(2) + (j - 0.5d0)*dh
+  zc = origin(3) + (k - 0.5d0)*dh
+
+! 壁面からの距離
+  if ( yc .gt. half ) then
+    yc = width - yc
+  end if
+
+  xplus = xc * rhalf
+  yplus = yc * rhalf
+  zplus = zc * rhalf
+
+  perturb = 0.0
+  call RANDOM_NUMBER(perturb)
+
+  deviation = 1.0d0 + deviationC * perturb
+
+  tmp1 = -sigmaC * yplus * yplus
+  tmp2 = yc / half
+
+  v(i, j, k, 1) = 3.0d0 * Ubar * (tmp2 - 0.5d0 * tmp2*tmp2) &
+                + u_tau * duplus * 0.5d0 * (yplus/40.0d0)   &
+                * exp(tmp1 + 0.5d0) * cos(betaPlusC * zplus) * deviation
+  v(i, j, k, 2) = 0.0d0
+  v(i, j, k, 3) = eps * sin(alphaPlusC * xplus) * yplus * exp(tmp1) * deviation
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+
+end subroutine perturb_u_y
+
+
+!> ********************************************************************
+!! @brief 乱流の初期擾乱 Z方向
+!! @param [out] v       セルセンター速度場
+!! @param [in]  sz      配列長
+!! @param [in]  g       ガイドセル長
+!! @param [in]  dh      格子幅
+!! @param [in]  origin  サブドメインの領域基点
+!! @param [in]  width   代表流路幅
+!! @param [in]  Re_tau  レイノルズ数
+!! @param [in]  Ubar    Bulk velocity
+!! @param [in]  nu      動粘性係数
+!! @param [in]  mode    cell center(1) or face(2)
+!!<
+subroutine perturb_u_z (v, sz, g, dh, origin, width, Re_tau, Ubar, nu, mode)
+implicit none
+include 'ffv_f_params.h'
+integer                                                   :: ix, jx, kx, i, j, k, g, mode
+integer, dimension(3)                                     :: sz
+real                                                      :: duplus, deviation, eps, nu
+real                                                      :: width, Re_tau, u_tau, Ubar, tmp1, tmp2, rhalf
+real                                                      :: half, dh, xc, yc, zc, xplus, yplus, zplus, perturb
+real, dimension(3)                                        :: origin
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) :: v
+real, parameter :: sigmaC     = 0.00055d0,                           &
+                   duplusC    = 0.25d0,                              &
+                   epsilonC   = 0.05d0,                              &
+                   deviationC = 0.2d0,                               &
+                   betaPlusC  = 2.0d0 * 3.14d0 * (1.0d0 / 200.0d0),  &
+                   alphaPlusC = 2.0d0 * 3.14d0 * (1.0d0 / 500.0d0)
+
+
+half      = width * 0.5d0          ! channel half width
+u_tau     = Re_tau * nu / half
+duplus    = Ubar * duplusC / u_tau
+eps       = Ubar * epsilonC
+rhalf     = Re_tau / half
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+
+!$OMP PARALLEL &
+!$OMP PRIVATE(xc, yc, zc, i, j, k, tmp1, tmp2, xplus, yplus, zplus) &
+!$OMP PRIVATE(perturb, deviation) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, g, dh, half, rhalf, width, u_tau, duplus, eps, mode)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k = 1-g, kx+g
+do j = 1-g, jx+g
+do i = 1-g, ix+g
+
+  if ( mode == 1 ) then
+    xc = origin(1) + (i - 0.5d0)*dh
+  else
+    xc = origin(1) + i * dh
+  end if
+
+  yc = origin(2) + (j - 0.5d0)*dh
+  zc = origin(3) + (k - 0.5d0)*dh
+
+  ! 壁面からの距離
+  if ( zc .gt. half ) then
+    zc = width - zc
+  end if
+
+  xplus = xc * rhalf
+  yplus = yc * rhalf
+  zplus = zc * rhalf
+
+  perturb = 0.0
+  call RANDOM_NUMBER(perturb)
+
+  deviation = 1.0d0 + deviationC * perturb
+
+  tmp1 = -sigmaC * zplus * zplus
+  tmp2 = zc / half
+
+  v(i, j, k, 1) = 3.0d0 * Ubar * (tmp2 - 0.5d0 * tmp2*tmp2) &
+                + u_tau * duplus * 0.5d0 * (zplus/40.0d0)   &
+                * exp(tmp1 + 0.5d0) * cos(betaPlusC * yplus) * deviation
+  v(i, j, k, 2) = eps * sin(alphaPlusC * xplus) * zplus * exp(tmp1) * deviation
+  v(i, j, k, 3) = 0.0d0
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+
+end subroutine perturb_u_z
+
+
 
 !> ********************************************************************
 !! @brief 内部速度境界条件による対流項と粘性項の流束の修正

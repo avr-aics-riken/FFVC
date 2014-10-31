@@ -251,18 +251,6 @@
 #define SAMPLING_SOLID_ONLY 3 ///< 固体セルのみを対象
 
 
-// GRIDの種類
-#define SINGLE_GRID 0
-#define MULTI_GRID  1
-
-// *.xyzファイルの出力を時刻暦にするかどうか
-#define GRID_NOT_MOVE 0
-#define GRID_MOVE     1
-
-// IBLANKフラグのセットの有無
-#define NOT_SET_IBLANK 0
-#define SET_IBLANK     1
-
 
 // 判定マクロ
 // BCindex aの状態が流体であればtrueを返す (uint a)

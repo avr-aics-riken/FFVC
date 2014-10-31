@@ -47,6 +47,8 @@
 #define hbc_drchlt_         HBC_DRCHLT
 
 // ffv_vbc_inner.f90
+#define perturb_u_y_        perturb_U_Y
+#define perturb_u_z_        perturb_U_Z
 #define pvec_vibc_specv_    PVEC_VIBC_SPECV
 #define pvec_vibc_oflow_    PVEC_VIBC_OFLOW
 #define div_ibc_drchlt_     DIV_IBC_DRCHLT
@@ -77,8 +79,11 @@
 #define euler_explicit_     EULER_EXPLICIT
 #define friction_velocity_  FRICTION_VELOCITY
 #define pvec_muscl_         PVEC_MUSCL
-#define pvec_les_           PVEC_LES
+#define pvec_muscl_les_     PVEC_MUSCL_LES
+#define pvec_central_       PVEC_CENTRAL
+#define pvec_central_les_   PVEC_CENTRAL_LES
 #define update_vec_         UPDATE_VEC
+#define update_vec4_        UPDATE_VEC4
 #define update_face_vec_    UPDATA_FACE_VEC
 #define predict_face_vec_   PREDICT_FACE_VEC
 #define update_cc_vec_      UPDATE_CC_VEC
@@ -92,6 +97,9 @@
 #define rot_v_              ROT_V
 #define find_vmax_          FIND_VMAX
 #define force_compo_        FORCE_COMPO
+#define calc_rms_v_         CALC_RMS_V
+#define output_vtk_         OUTPUT_VTK
+#define perturbu_           PERTURBU
 
 
 #define cds_pvec_vibc_specv_    CDS_PVEC_VIBC_SPECV
@@ -126,6 +134,7 @@
 #define fb_vout_nijk_            FB_VOUT_NIJK
 #define fb_vout_ijkn_            FB_VOUT_IJKN
 #define fb_totalp_               FB_TOTALP
+
 
 #endif // _WIN32
 
@@ -242,6 +251,29 @@ extern "C" {
   
   //***********************************************************************************************
   // ffv_vbc_inner.f90
+  
+  void perturb_u_y_ (REAL_TYPE* v,
+                     int* sz,
+                     int* g,
+                     REAL_TYPE* dh,
+                     REAL_TYPE* origin,
+                     REAL_TYPE* width,
+                     REAL_TYPE* Re_tau,
+                     REAL_TYPE* Ubar,
+                     REAL_TYPE* nu,
+                     int* mode);
+  
+  void perturb_u_z_ (REAL_TYPE* v,
+                     int* sz,
+                     int* g,
+                     REAL_TYPE* dh,
+                     REAL_TYPE* origin,
+                     REAL_TYPE* width,
+                     REAL_TYPE* Re_tau,
+                     REAL_TYPE* Ubar,
+                     REAL_TYPE* nu,
+                     int* mode);
+  
   void pvec_vibc_oflow_   (REAL_TYPE* wv,
                            int* sz,
                            int* g,
@@ -484,6 +516,56 @@ extern "C" {
                     int* bv,
                     double* flop);
   
+  void update_vec4_ (REAL_TYPE* v,
+                     REAL_TYPE* vf,
+                     REAL_TYPE* div,
+                     int* sz,
+                     int* g,
+                     REAL_TYPE* dt,
+                     REAL_TYPE* dh,
+                     REAL_TYPE* vc,
+                     REAL_TYPE* p,
+                     int* bp,
+                     int* bv,
+                     double* flop,
+                     int* c_scheme);
+  
+  void pvec_muscl_les_ (REAL_TYPE* wv,
+                        int* sz,
+                        int* g,
+                        REAL_TYPE* dh,
+                        int* c_scheme,
+                        REAL_TYPE* v00,
+                        REAL_TYPE* rei,
+                        REAL_TYPE* v,
+                        REAL_TYPE* vf,
+                        int* bv,
+                        int* bp,
+                        REAL_TYPE* vcs_coef,
+                        REAL_TYPE* Cs,
+                        int* imodel,
+                        REAL_TYPE* nu,
+                        REAL_TYPE* rho,
+                        double* flop);
+  
+  void pvec_central_les_ (REAL_TYPE* wv,
+                          int* sz,
+                          int* g,
+                          REAL_TYPE* dh,
+                          int* c_scheme,
+                          REAL_TYPE* v00,
+                          REAL_TYPE* rei,
+                          REAL_TYPE* v,
+                          REAL_TYPE* vf,
+                          int* bv,
+                          int* bp,
+                          REAL_TYPE* vcs_coef,
+                          REAL_TYPE* Cs,
+                          int* imodel,
+                          REAL_TYPE* nu,
+                          REAL_TYPE* rho,
+                          double* flop);
+  
   
   //***********************************************************************************************
   // ffv_utility.f90
@@ -511,8 +593,53 @@ extern "C" {
   void shift_pressure_    (REAL_TYPE* p, int* sz, int* g, REAL_TYPE* avr);
   void force_compo_       (REAL_TYPE* frc, int* sz, int* g, int* tgt, REAL_TYPE* p, int* bid, REAL_TYPE* dh, int* st, int* ed, double* flop);
 
+  void calc_rms_v_ (REAL_TYPE* rms,
+                    REAL_TYPE* rmsmean,
+                    int* sz,
+                    int* g,
+                    REAL_TYPE* v,
+                    REAL_TYPE* av,
+                    REAL_TYPE* accum,
+                    double* flop);
+  
+  void plot3d_write_xyz_ (REAL_TYPE* x,
+                          REAL_TYPE* y,
+                          REAL_TYPE* z,
+                          int* iblank,
+                          int* sz,
+                          int*g,
+                          REAL_TYPE* dh,
+                          REAL_TYPE* org);
+  
+  void output_vtk_(int* step,
+                   REAL_TYPE* G_origin,
+                   int* G_division,
+                   int* G_size,
+                   int* myRank,
+                   int* sz,
+                   REAL_TYPE* dh,
+                   int* g,
+                   REAL_TYPE* v,
+                   REAL_TYPE* p
+                   );
+  
+  void output_mean_(int* step,
+                    REAL_TYPE* G_origin,
+                    REAL_TYPE* G_region,
+                    int* G_division,
+                    int* G_size,
+                    int* myRank,
+                    int* sz,
+                    REAL_TYPE* dh,
+                    int* g,
+                    REAL_TYPE* av,
+                    REAL_TYPE* rms,
+                    REAL_TYPE* rmsmean
+                    );
+
   
   
+  //***********************************************************************************************
   // c3d_vof.f90
   void vof_uwd_    (REAL_TYPE* f, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* dt, REAL_TYPE* dh, REAL_TYPE* v, REAL_TYPE* q, int* bx, double* flop);
   void vof_muscl_  (REAL_TYPE* f, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* dt, REAL_TYPE* dh, REAL_TYPE* v, REAL_TYPE* q, int* bx, double* flop);

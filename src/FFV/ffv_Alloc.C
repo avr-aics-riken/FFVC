@@ -29,36 +29,32 @@
  */
 void FALLOC::allocArray_AB2 (double &total)
 {
-  double mc = (double)(size[0] * size[1] * size[2]);
-  
   // d_abf
   if ( !(d_abf = Alloc::Real_V3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE) * 3.0;
+  total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
 }
 
 
 // #################################################################
-/* @brief 平均値処理に用いる配列のアロケーション
+/* @brief 統計処理に用いる配列のアロケーション
  * @param [in,out] total  ソルバーに使用するメモリ量
  * @param [in]     isHeat 熱問題のときtrue
  */
-void FALLOC::allocArray_Average (double &total, const bool isHeat)
+void FALLOC::allocArray_Statistic (double &total, const bool isHeat)
 {
-  double mc = (double)(size[0] * size[1] * size[2]);
-  
   // d_ap
   if ( !(d_ap = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total += mc * (double)sizeof(REAL_TYPE);
+  total += array_size * (double)sizeof(REAL_TYPE);
   
   // d_av
   if ( !(d_av = Alloc::Real_V3D(size, guide)) ) Exit(0);
-  total += mc * (double)sizeof(REAL_TYPE) * 3.0;
+  total += array_size * (double)sizeof(REAL_TYPE) * 3.0;
   
   if ( isHeat )
   {
     // d_ae
     if ( !(d_ae = Alloc::Real_S3D(size, guide)) ) Exit(0);
-    total += mc * (double)sizeof(REAL_TYPE);
+    total += array_size * (double)sizeof(REAL_TYPE);
   }
 }
 
@@ -71,22 +67,20 @@ void FALLOC::allocArray_Average (double &total, const bool isHeat)
  */
 void FALLOC::allocArray_CoarseMesh(const int* r_size, double &prep, const bool isHeat)
 {
-  double mc = (double)(r_size[0] * r_size[1] * r_size[2]);
-  
   // d_r_p
   if ( !(d_r_p = Alloc::Real_S3D(r_size, guide)) ) Exit(0);
-  prep += mc * (double)sizeof(REAL_TYPE);
+  prep += array_size * (double)sizeof(REAL_TYPE);
   
   // d_r_v
   if ( !(d_r_v = Alloc::Real_V3D(r_size, guide)) ) Exit(0);
-  prep += mc * (double)sizeof(REAL_TYPE) * 3.0;
+  prep += array_size * (double)sizeof(REAL_TYPE) * 3.0;
   
   
   if ( isHeat )
   {
     // d_r_t
     if ( !(d_r_t = Alloc::Real_S3D(r_size, guide)) ) Exit(0);
-    prep += mc * (double)sizeof(REAL_TYPE);
+    prep += array_size * (double)sizeof(REAL_TYPE);
     
   }
 }
@@ -100,12 +94,9 @@ void FALLOC::allocArray_CoarseMesh(const int* r_size, double &prep, const bool i
  */
 void FALLOC::allocArray_CompoVF(double &prep, double &total)
 {
-  double mc = (double)(size[0] * size[1] * size[2]);
-  
-
   if ( !(d_cvf = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  prep += mc * (double)sizeof(REAL_TYPE);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  prep += array_size * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
 }
 
 
@@ -116,15 +107,12 @@ void FALLOC::allocArray_CompoVF(double &prep, double &total)
  */
 void FALLOC::allocArray_Cut(double &total)
 {
-  double mc = (double)(size[0] * size[1] * size[2]);
-  
-
   if ( !(d_cut = paraMngr->AllocFloatS4DEx(6, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(float) * 6.0;
+  total+= array_size * (double)sizeof(float) * 6.0;
   
 
   if ( !(d_bid = paraMngr->AllocIntS3D(guide)) ) Exit(0);
-  total += mc * (double)sizeof(int);
+  total += array_size * (double)sizeof(int);
 }
 
 
@@ -199,23 +187,20 @@ void FALLOC::allocArray_Forcing(double& m_prep, double& m_total, FILE* fp, Contr
  */
 void FALLOC::allocArray_Krylov(double &total)
 {
-  double mc = (double)(size[0] * size[1] * size[2]);
-  
-  
   if ( !(d_wg = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
   
   
   if ( !(d_res = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
   
   
   if ( !(d_vm = Alloc::Real_S4D(size, guide, FREQ_OF_RESTART+1)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
   
   
   if ( !(d_zm = Alloc::Real_S4D(size, guide, FREQ_OF_RESTART+1)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
   
 }
 
@@ -228,11 +213,8 @@ void FALLOC::allocArray_Krylov(double &total)
  */
 void FALLOC::allocArray_Interface(double &total)
 {
-  double mc = (double)(size[0] * size[1] * size[2]);
-  
-
   if ( !(d_vof = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
   
 }
 
@@ -244,11 +226,14 @@ void FALLOC::allocArray_Interface(double &total)
  */
 void FALLOC::allocArray_LES(double &total)
 {
-  double mc = (double)(size[0] * size[1] * size[2]);
-  
-
   if ( !(d_vt = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
+  
+  if ( !(d_rms = Alloc::Real_V3D(size, guide)) ) Exit(0);
+  total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
+  
+  if ( !(d_rmsmean = Alloc::Real_V3D(size, guide)) ) Exit(0);
+  total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
 }
 
 
@@ -259,34 +244,31 @@ void FALLOC::allocArray_LES(double &total)
  */
 void FALLOC::allocArray_Main(double &total, Control* C)
 {
-  double mc = (double)(size[0] * size[1] * size[2]);
-  
-
   // [*] ステップ間でデータを保持
   if ( !(d_v = Alloc::Real_V3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE) * 3.0;
+  total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
   
 
   if ( !(d_vf = Alloc::Real_V3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE) * 3.0;
+  total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
   
 
   if ( !(d_p = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
   
   
   if ( !(d_dv = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
   
   
   if ( !(d_wv = Alloc::Real_V3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE) * 3.0;
+  total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
   
   
   if ( C->isHeatProblem() )
   {
     if ( !(d_ie = Alloc::Real_S3D(size, guide)) ) Exit(0);
-    total+= mc * (double)sizeof(REAL_TYPE);
+    total+= array_size * (double)sizeof(REAL_TYPE);
   }
   
   
@@ -303,7 +285,7 @@ void FALLOC::allocArray_Main(double &total, Control* C)
   }
   
   if ( !(d_io_buffer = Alloc::Real_S4D(size, guide, dnum)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE) * (double)dnum;
+  total+= array_size * (double)sizeof(REAL_TYPE) * (double)dnum;
   
   
   // 割り当て
@@ -331,25 +313,25 @@ void FALLOC::allocArray_Main(double &total, Control* C)
   
   /*
   if ( !(d_vc = Alloc::Real_V3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE) * 3.0;
+  total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
 
   if ( !(d_v0 = Alloc::Real_V3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE) * 3.0;
+  total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
 
   if ( !(d_p0 = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
   
   if ( !(d_sq = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
 
   if ( !(d_b = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
    
   if ( !(d_ie0 = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
    
   if ( !(d_qbc = Alloc::Real_S4D(size, guide, 6)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE) * 6.0;
+  total+= array_size * (double)sizeof(REAL_TYPE) * 6.0;
   */
   
   
@@ -357,7 +339,7 @@ void FALLOC::allocArray_Main(double &total, Control* C)
   if ( C->varState[var_Vorticity] )
   {
     if ( !(d_vrt = Alloc::Real_V3D(size, guide)) ) Exit(0);
-    total+= mc * (double)sizeof(REAL_TYPE) * 3.0;
+    total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
   }
 }
 
@@ -368,10 +350,8 @@ void FALLOC::allocArray_Main(double &total, Control* C)
  */
 void FALLOC::allocArray_Naive(double &total)
 {
-  double mc = (double)(size[0] * size[1] * size[2]);
-  
   if ( !(d_pni = Alloc::Real_S4D(size, guide, 7)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE) * 7.0;
+  total+= array_size * (double)sizeof(REAL_TYPE) * 7.0;
 }
 
 
@@ -382,31 +362,28 @@ void FALLOC::allocArray_Naive(double &total)
  */
 void FALLOC::allocArray_BiCGstab(double &total)
 {
-  double mc = (double)(size[0] * size[1] * size[2]);
-  
-  
   if ( !(d_pcg_r = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
   
   
   if ( !(d_pcg_p = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
   
   
   if ( !(d_pcg_r0 = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
   
   
   if ( !(d_pcg_q = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
   
   
   if ( !(d_pcg_s = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
   
   
   if ( !(d_pcg_t = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
 }
 
 
@@ -417,16 +394,14 @@ void FALLOC::allocArray_BiCGstab(double &total)
  */
 void FALLOC::allocArray_BiCGSTABwithPreconditioning(double &total)
 {
-  double mc = (double)(size[0] * size[1] * size[2]);
-  
   if ( !(d_pcg_p_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
   
 	if ( !(d_pcg_s_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
   
   if ( !(d_pcg_t_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
 }
 
 
@@ -437,23 +412,20 @@ void FALLOC::allocArray_BiCGSTABwithPreconditioning(double &total)
  */
 void FALLOC::allocArray_PCG(double &total)
 {
-  double mc = (double)(size[0] * size[1] * size[2]);
-  
-  
   if ( !(d_pcg_r = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
   
   
   if ( !(d_pcg_p = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
   
   
   if ( !(d_pcg_q = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
   
   
   if ( !(d_pcg_z = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
 }
 
 
@@ -465,35 +437,32 @@ void FALLOC::allocArray_PCG(double &total)
  */
 void FALLOC::allocArray_Prep(double &prep, double &total)
 {
-  double mc = (double)(size[0] * size[1] * size[2]);
-  
-
   if ( !(d_ws = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  prep += mc * (double)sizeof(REAL_TYPE);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  prep += array_size * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
   
 
   if ( !(d_mid = Alloc::Int_S3D(size, guide)) ) Exit(0);
-  prep += mc * (double)sizeof(int);
+  prep += array_size * (double)sizeof(int);
   
 
   if ( !(d_bcd = Alloc::Int_S3D(size, guide)) ) Exit(0);
-  prep += mc * (double)sizeof(int);
-  total+= mc * (double)sizeof(int);
+  prep += array_size * (double)sizeof(int);
+  total+= array_size * (double)sizeof(int);
   
 
   if ( !(d_bcp = Alloc::Int_S3D(size, guide)) ) Exit(0);
-  prep += mc * (double)sizeof(int);
-  total+= mc * (double)sizeof(int);
+  prep += array_size * (double)sizeof(int);
+  total+= array_size * (double)sizeof(int);
   
 
   if ( !(d_cdf = Alloc::Int_S3D(size, guide)) ) Exit(0);
-  prep += mc * (double)sizeof(int);
-  total+= mc * (double)sizeof(int);
+  prep += array_size * (double)sizeof(int);
+  total+= array_size * (double)sizeof(int);
   
   if ( !(d_pvf = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  prep += mc * (double)sizeof(REAL_TYPE);
-  total+= mc * (double)sizeof(REAL_TYPE);
+  prep += array_size * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
 }
 
 

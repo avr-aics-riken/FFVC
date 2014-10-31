@@ -804,7 +804,7 @@ end subroutine fb_vin_ijkn
 !! @param [in]  vn   ベクトル値 n+1 step
 !! @param [in]  vo   ベクトル値 n step
 !! @param [in]  bx   BCindex
-!! @param [out] flop 浮動小数演算数
+!! @param [in,out] flop 浮動小数演算数
 !<
   subroutine fb_delta_v (d, sz, g, vn, vo, bx, flop)
   implicit none
@@ -873,7 +873,7 @@ end subroutine fb_vin_ijkn
 !! @param [in]  sn   スカラー値 n+1 step
 !! @param [in]  so   スカラー値 n step
 !! @param [in]  bx   BCindex
-!! @param [out] flop 浮動小数演算数
+!! @param [in,out] flop 浮動小数演算数
 !<
   subroutine fb_delta_s (d, sz, g, sn, so, bx, flop)
   implicit none
@@ -934,7 +934,7 @@ end subroutine fb_vin_ijkn
 !! @param [in]     g    ガイドセル長
 !! @param [in]     v    ベクトル値
 !! @param [in]     nadd 加算回数
-!! @param [out]    flop 浮動小数演算数
+!! @param [i,out]  flop 浮動小数演算数
 !<
   subroutine fb_average_v (avr, sz, g, v, nadd, flop)
   implicit none
@@ -948,7 +948,7 @@ end subroutine fb_vin_ijkn
   jx = sz(2)
   kx = sz(3)
 
-  flop = flop + dble(ix)*dble(jx)*dble(kx)*9.0d0
+  flop = flop + dble(ix)*dble(jx)*dble(kx)*9.0d0 + 9.0d0
 
   val2 = 1.0/nadd
   val1 = 1.0 - val2
@@ -982,7 +982,7 @@ end subroutine fb_vin_ijkn
 !! @param [in]     g    ガイドセル長
 !! @param [in]     s    スカラ値
 !! @param [in]     nadd 加算回数
-!! @param [out]    flop 浮動小数演算数
+!! @param [in,out] flop 浮動小数演算数
 !<
   subroutine fb_average_s (avr, sz, g, s, nadd, flop)
   implicit none
@@ -996,7 +996,7 @@ end subroutine fb_vin_ijkn
   jx = sz(2)
   kx = sz(3)
 
-  flop = flop + dble(ix)*dble(jx)*dble(kx)*3.0d0
+  flop = flop + dble(ix)*dble(jx)*dble(kx)*3.0d0 + 9.0d0
 
   val2 = 1.0/nadd
   val1 = 1.0 - val2

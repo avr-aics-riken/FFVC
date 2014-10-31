@@ -74,8 +74,8 @@ void SPH::getRestartDFI()
     }
     
     
-    // 平均値
-    if ( C->Mode.Average == ON )
+    // 統計値
+    if ( C->Mode.Statistic == ON )
     {
       label="/StartCondition/Restart/DFIfiles/AveragedPressure";
       
@@ -417,7 +417,7 @@ void SPH::initFileOut()
   
   
   // 平均値
-  if ( C->Mode.Average == ON )
+  if ( C->Mode.Statistic == ON )
   {
     
     // Pressure
@@ -771,10 +771,10 @@ void SPH::initFileOut()
 
 // #################################################################
 // 時間平均値のファイル出力
-void SPH::OutputAveragedVarables(const unsigned m_CurrentStep,
+void SPH::OutputStatisticalVarables(const unsigned m_CurrentStep,
                                  const double m_CurrentTime,
-                                 const unsigned m_CurrentStepAvr,
-                                 const double m_CurrentTimeAvr,
+                                 const unsigned m_CurrentStepStat,
+                                 const double m_CurrentTimeStat,
                                  double& flop)
 {
   REAL_TYPE f_min, f_max, min_tmp, max_tmp, vec_min[4], vec_max[4];
@@ -790,15 +790,15 @@ void SPH::OutputAveragedVarables(const unsigned m_CurrentStep,
   
   if (C->Unit.File == DIMENSIONAL)
   {
-    timeAvr = m_CurrentTimeAvr * C->Tscale;
+    timeAvr = m_CurrentTimeStat * C->Tscale;
   }
   else
   {
-    timeAvr = m_CurrentTimeAvr;
+    timeAvr = m_CurrentTimeStat;
   }
   
   // 平均操作の母数
-  unsigned stepAvr = m_CurrentStepAvr;
+  unsigned stepAvr = m_CurrentStepStat;
   REAL_TYPE scale = 1.0;
   
   // ガイドセル出力
@@ -1455,12 +1455,12 @@ void SPH::OutputDerivedVariables(const unsigned m_CurrentStep, const double m_Cu
 
 // #################################################################
 // リスタート時の平均値ファイル読み込み
-void SPH::RestartAvrerage(FILE* fp,
-                          const unsigned m_CurrentStep,
-                          const double m_CurrentTime,
-                          unsigned& m_CurrentStepAvr,
-                          double& m_CurrentTimeAvr,
-                          double& flop)
+void SPH::RestartStatistic(FILE* fp,
+                           const unsigned m_CurrentStep,
+                           const double m_CurrentTime,
+                           unsigned& m_CurrentStepStat,
+                           double& m_CurrentTimeStat,
+                           double& flop)
 {
   std::string fname;
   std::string fmt(file_fmt_ext);
@@ -1485,12 +1485,12 @@ void SPH::RestartAvrerage(FILE* fp,
   
   
   // まだ平均値開始時刻になっていなければ，何もしない
-  if ( C->Interval[Control::tg_average].getMode() == IntervalManager::By_step )
+  if ( C->Interval[Control::tg_statistic].getMode() == IntervalManager::By_step )
   {
-    if ( m_Session_step >= C->Interval[Control::tg_average].getStartStep() )
+    if ( m_Session_step >= C->Interval[Control::tg_statistic].getStartStep() )
     {
-      Hostonly_ printf     ("\tRestart from Previous Calculation Results of averaged field\n");
-      Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of averaged field\n");
+      Hostonly_ printf     ("\tRestart from Previous Calculation Results of Statistical field\n");
+      Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of Statistical field\n");
       Hostonly_ printf     ("\tStep : base=%u current=%u\n", m_Session_step, m_CurrentStep);
       Hostonly_ fprintf(fp, "\tStep : base=%u current=%u\n", m_Session_step, m_CurrentStep);
     }
@@ -1499,12 +1499,12 @@ void SPH::RestartAvrerage(FILE* fp,
       return;
     }
   }
-  else if ( C->Interval[Control::tg_average].getMode() == IntervalManager::By_time )
+  else if ( C->Interval[Control::tg_statistic].getMode() == IntervalManager::By_time )
   {
-    if ( m_Session_time >= C->Interval[Control::tg_average].getStartTime() )
+    if ( m_Session_time >= C->Interval[Control::tg_statistic].getStartTime() )
     {
-      Hostonly_ printf     ("\tRestart from Previous Calculation Results of averaged field\n");
-      Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of averaged field\n");
+      Hostonly_ printf     ("\tRestart from Previous Calculation Results of Statistical field\n");
+      Hostonly_ fprintf(fp, "\tRestart from Previous Calculation Results of Statistical field\n");
       Hostonly_ printf     ("\tTime : base=%e[sec.]/%e[-] current=%e[-]\n", m_Session_time*C->Tscale, m_Session_time, m_CurrentTime);
       Hostonly_ fprintf(fp, "\tTime : base=%e[sec.]/%e[-] current=%e[-]\n", m_Session_time*C->Tscale, m_Session_time, m_CurrentTime);
     }
@@ -1533,8 +1533,8 @@ void SPH::RestartAvrerage(FILE* fp,
   CDM::E_CDM_ERRORCODE cdm_error;
   
   
-  // Averaged dataの初期化
-  if ( C->Mode.Average == ON && C->Interval[Control::tg_average].isStarted(m_CurrentStep, m_CurrentTime) )
+  // Statistical dataの初期化
+  if ( C->Mode.Statistic == ON && C->Interval[Control::tg_statistic].isStarted(m_CurrentStep, m_CurrentTime) )
   {
     DFI_IN_PRSA = cdm_DFI::ReadInit(MPI_COMM_WORLD, f_dfi_in_prsa, G_size, gdiv, cdm_error);
     if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
@@ -1556,8 +1556,8 @@ void SPH::RestartAvrerage(FILE* fp,
   
   
   
-  unsigned step_avr = 0;
-  double time_avr = 0.0;
+  unsigned step_stat = 0;
+  double time_stat = 0.0;
   
   
   // Pressure
@@ -1579,14 +1579,14 @@ void SPH::RestartAvrerage(FILE* fp,
                              tail,
                              r_time,
                              false,
-                             step_avr,
-                             time_avr) != CDM::E_CDM_SUCCESS ) Exit(0);
+                             step_stat,
+                             time_stat) != CDM::E_CDM_SUCCESS ) Exit(0);
   
   if( d_ap == NULL ) Exit(0);
   
   
-  m_CurrentStepAvr = step_avr;
-  m_CurrentTimeAvr = time_avr;
+  m_CurrentStepStat = step_stat;
+  m_CurrentTimeStat = time_stat;
   
   if ( DFI_IN_VELA->ReadData(d_wv,
                              m_RestartStep,
@@ -1597,13 +1597,13 @@ void SPH::RestartAvrerage(FILE* fp,
                              tail,
                              r_time,
                              false,
-                             step_avr,
-                             time_avr) != CDM::E_CDM_SUCCESS ) Exit(0);
+                             step_stat,
+                             time_stat) != CDM::E_CDM_SUCCESS ) Exit(0);
   
   if( d_wv == NULL ) Exit(0);
   
   REAL_TYPE refv = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
-  REAL_TYPE scale = (REAL_TYPE)step_avr;
+  REAL_TYPE scale = (REAL_TYPE)step_stat;
   REAL_TYPE u0[4];
   
   RF->copyV00(u0);
@@ -1611,7 +1611,7 @@ void SPH::RestartAvrerage(FILE* fp,
   
   fb_vin_nijk_(d_av, size, &guide, d_wv, u0, &refv, &flop);
   
-  if ( (step_avr != m_CurrentStepAvr) || (time_avr != m_CurrentTimeAvr) ) // 圧力とちがう場合
+  if ( (step_stat != m_CurrentStepStat) || (time_stat != m_CurrentTimeStat) ) // 圧力とちがう場合
   {
     Hostonly_ printf     ("\n\tTime stamp is different between files\n");
     Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
@@ -1631,12 +1631,12 @@ void SPH::RestartAvrerage(FILE* fp,
                                 tail,
                                 r_time,
                                 false,
-                                step_avr,
-                                time_avr) != CDM::E_CDM_SUCCESS ) Exit(0);
+                                step_stat,
+                                time_stat) != CDM::E_CDM_SUCCESS ) Exit(0);
     
     if ( d_ae == NULL ) Exit(0);
     
-    if ( (step_avr != m_CurrentStepAvr) || (time_avr != m_CurrentTimeAvr) )
+    if ( (step_stat != m_CurrentStepStat) || (time_stat != m_CurrentTimeStat) )
     {
       Hostonly_ printf     ("\n\tTime stamp is different between files\n");
       Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
@@ -1876,8 +1876,8 @@ void SPH::Restart(FILE* fp, unsigned& m_CurrentStep, double& m_CurrentTime)
     
     
     
-    /* Averaged dataの初期化
-     if ( C->Mode.Average == ON && C->Interval[Control::tg_average].isStarted(CurrentStep, CurrentTime) )
+    /* Statistical dataの初期化
+     if ( C->Mode.Statistic == ON && C->Interval[Control::tg_statistic].isStarted(CurrentStep, CurrentTime) )
      {
      DFI_IN_PRSA = cdm_DFI::ReadInit(MPI_COMM_WORLD, C->f_dfi_in_prsa, G_size, gdiv, cdm_error);
      if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);

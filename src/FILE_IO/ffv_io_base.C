@@ -234,12 +234,59 @@ void IO_BASE::getFIOparams()
   }
 
   
-  
-  
-  // 平均値操作に関するパラメータを取得
-  if ( C->Mode.Average == ON )
+  // LES vmean
+  label="/Output/Data/BasicVariables/Divergence";
+  if ( tpCntl->chkLabel(label) )
   {
-    label = "/Output/Data/AveragedVariables/TemporalType";
+    if ( !(tpCntl->getInspectedValue(label, str )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    
+    if     ( !strcasecmp(str.c_str(), "on") )
+    {
+      C->varState[var_Div] = ON;
+      C->NvarsIns_plt3d += 1;
+    }
+    else if( !strcasecmp(str.c_str(), "off") ) C->varState[var_Div] = OFF;
+    else
+    {
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
+    }
+  }
+  
+  
+  // LES rmsmean
+  label="/Output/Data/BasicVariables/Divergence";
+  if ( tpCntl->chkLabel(label) )
+  {
+    if ( !(tpCntl->getInspectedValue(label, str )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    
+    if     ( !strcasecmp(str.c_str(), "on") )
+    {
+      C->varState[var_Div] = ON;
+      C->NvarsIns_plt3d += 1;
+    }
+    else if( !strcasecmp(str.c_str(), "off") ) C->varState[var_Div] = OFF;
+    else
+    {
+      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+      Exit(0);
+    }
+  }
+  
+  
+  
+  // 統計値操作に関するパラメータを取得
+  if ( C->Mode.Statistic == ON )
+  {
+    label = "/Output/Data/StatisticalVariables/TemporalType";
     
     if ( !(tpCntl->getInspectedValue(label, str )) )
     {
@@ -250,17 +297,17 @@ void IO_BASE::getFIOparams()
     {
       if     ( !strcasecmp(str.c_str(), "step") )
       {
-        if ( C->Interval[Control::tg_average].getMode() == IntervalManager::By_time )
+        if ( C->Interval[Control::tg_statistic].getMode() == IntervalManager::By_time )
         {
-          Hostonly_ stamped_printf("\tError : Specified temporal mode is not consistent with '/TimeControl/Average/TemporalType'\n");
+          Hostonly_ stamped_printf("\tError : Specified temporal mode is not consistent with '/TimeControl/Statistic/TemporalType'\n");
           Exit(0);
         }
       }
       else if( !strcasecmp(str.c_str(), "time") )
       {
-        if ( C->Interval[Control::tg_average].getMode() == IntervalManager::By_step )
+        if ( C->Interval[Control::tg_statistic].getMode() == IntervalManager::By_step )
         {
-          Hostonly_ stamped_printf("\tError : Specified temporal mode is not consistent with '/TimeControl/Average/TemporalType'\n");
+          Hostonly_ stamped_printf("\tError : Specified temporal mode is not consistent with '/TimeControl/Statistic/TemporalType'\n");
           Exit(0);
         }
       }
@@ -272,7 +319,7 @@ void IO_BASE::getFIOparams()
     }
     
     double val;
-    label="/Output/Data/AveragedVariables/Interval";
+    label="/Output/Data/StatisticalVariables/Interval";
     
     if ( !(tpCntl->getInspectedValue(label, val )) )
     {
@@ -281,7 +328,7 @@ void IO_BASE::getFIOparams()
     }
     else
     {
-      C->Interval[Control::tg_average].setInterval(val);
+      C->Interval[Control::tg_statistic].setInterval(val);
     }
   }
   
@@ -310,6 +357,48 @@ void IO_BASE::getFIOparams()
   }
   
   
+  // デバッグ用出力 (Hidden)
+
+  label="/Output/Data/VTKoption";
+  
+  if ( tpCntl->chkLabel(label) )
+  {
+    if ( tpCntl->getInspectedValue(label, str) )
+    {
+      if     ( !strcasecmp(str.c_str(), "on") )  output_vtk = ON;
+      else if( !strcasecmp(str.c_str(), "off") ) output_vtk = OFF;
+      else
+      {
+        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+        Exit(0);
+      }
+    }
+    else
+    {
+      Exit(0);
+    }
+  }
+  
+  
+  label="/Output/Data/OutputDebug";
+  
+  if ( tpCntl->chkLabel(label) )
+  {
+    if ( tpCntl->getInspectedValue(label, str) )
+    {
+      if     ( !strcasecmp(str.c_str(), "on") )  output_debug = ON;
+      else if( !strcasecmp(str.c_str(), "off") ) output_debug = OFF;
+      else
+      {
+        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+        Exit(0);
+      }
+    }
+    else
+    {
+      Exit(0);
+    }
+  }
   
 }
 
@@ -512,13 +601,8 @@ void IO_BASE::printSteerConditions(FILE* fp)
   // InputMode >> Distributed by default
   fprintf(fp,"\t     IO Mode                  :   %s\n", (IOmode==IO_GATHER) ? "Gathered" : "Distributed");
   
-  
   // Output guide
   fprintf(fp,"\t     Guide cell for output    :   %d\n", C->GuideOut);
-  
-  // Voxel output
-  fprintf(fp,"\t     Voxel model output       :   %s\n", (IO_Voxel==Sphere_SVX) ? "svx" : "None");
-  
   
   // IO Directory
   fprintf(fp,"\t     I/O Directory Input      :   \"%s\"\n", InDirPath.c_str());
@@ -526,6 +610,12 @@ void IO_BASE::printSteerConditions(FILE* fp)
   
   // Time Slice option
   fprintf(fp,"\t     Time Slice Directory     :   %s\n", (Slice==ON) ? "On" : "Off");
+  
+  
+  // Hidden
+  fprintf(fp,"\t     Voxel model output       :   %s\n", (IO_Voxel==Sphere_SVX) ? "svx" : "None");
+  fprintf(fp,"\t     VTK output               :   %s\n", (output_vtk==ON) ? "On" : "Off");
+  fprintf(fp,"\t     Debug output             :   %s\n", (output_debug==ON) ? "On" : "Off");
 }
 
 
@@ -612,28 +702,30 @@ void IO_BASE::setVarPointers(REAL_TYPE* m_d_p,
                              REAL_TYPE* m_d_av,
                              REAL_TYPE* m_d_ae,
                              REAL_TYPE* m_d_dv,
+                             REAL_TYPE* m_d_rmsmean,
                              int* m_d_bcd,
                              int* m_d_cdf,
                              double* m_mat_tbl,
-                             int* m_d_iblk)
+                             int* m_d_mid)
 {
-  d_p     = m_d_p;
-  d_v     = m_d_v;
-  d_vf    = m_d_vf;
-  d_ie    = m_d_ie;
-  d_ws    = m_d_ws;
-  d_p0    = m_d_p0;
-  d_iobuf = m_d_iob;
-  d_wv    = m_d_wv;
-  d_vc    = m_d_vc;
-  d_ap    = m_d_ap;
-  d_av    = m_d_av;
-  d_ae    = m_d_ae;
-  d_dv    = m_d_dv;
-  d_bcd   = m_d_bcd;
-  d_cdf   = m_d_cdf;
-  mat_tbl = m_mat_tbl;
-  d_iblk  = m_d_iblk;
+  d_p       = m_d_p;
+  d_v       = m_d_v;
+  d_vf      = m_d_vf;
+  d_ie      = m_d_ie;
+  d_ws      = m_d_ws;
+  d_p0      = m_d_p0;
+  d_iobuf   = m_d_iob;
+  d_wv      = m_d_wv;
+  d_vc      = m_d_vc;
+  d_ap      = m_d_ap;
+  d_av      = m_d_av;
+  d_ae      = m_d_ae;
+  d_dv      = m_d_dv;
+  d_bcd     = m_d_bcd;
+  d_cdf     = m_d_cdf;
+  mat_tbl   = m_mat_tbl;
+  d_mid     = m_d_mid;
+  d_rmsmean = m_d_rmsmean;
 }
 
 

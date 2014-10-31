@@ -344,6 +344,13 @@ void Control::get1stParameter(DTcntl* DT)
   // 時間制御パラメータ
   getTimeControl(DT);
   
+  
+  // 乱流モデル
+  getTurbulenceModel();
+  
+  // 初期擾乱
+  getInitialPerturbation();
+  
 }
 
 
@@ -369,9 +376,6 @@ void Control::get2ndParameter(ReferenceFrame* RF)
   
 
   getLog();
-  
-  
-  getTurbulenceModel();
   
   
   getShapeApproximation();
@@ -680,6 +684,74 @@ void Control::getGeometryModel()
   
 }
 
+
+
+// #################################################################
+// 初期値擾乱
+void Control::getInitialPerturbation()
+{
+  string str;
+  string label, leaf;
+  double ct=0.0;
+  
+  if ( Start == initial_start && LES.Calc == ON )
+  {
+    label="/StartCondition/InitialState/perturbation/DirectionOfChannelWall";
+    
+    if ( !(tpCntl->getInspectedValue(label, str )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
+      Exit(0);
+    }
+    
+    if ( !strcasecmp("X", str.c_str()) )
+    {
+      LES.ChannelDir = X_minus;
+    }
+    else if ( !strcasecmp("Y", str.c_str()) )
+    {
+      LES.ChannelDir = Y_minus;
+    }
+    else if ( !strcasecmp("Z", str.c_str()) )
+    {
+      LES.ChannelDir = Z_minus;
+    }
+    
+    
+    
+    label="/StartCondition/InitialState/perturbation/ChannelWidth";
+    
+    if ( !(tpCntl->getInspectedValue(label, ct )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
+      Exit(0);
+    }
+    LES.ChannelWidth = (REAL_TYPE)ct;
+    
+    
+    
+    label="/StartCondition/InitialState/perturbation/BulkVelocity";
+    
+    if ( !(tpCntl->getInspectedValue(label, ct )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
+      Exit(0);
+    }
+    LES.BulkVelocity = (REAL_TYPE)ct;
+    
+    
+    
+    label="/StartCondition/InitialState/perturbation/TubulenceReynoldsNumber";
+    
+    if ( !(tpCntl->getInspectedValue(label, ct )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
+      Exit(0);
+    }
+    LES.TurbulentReynoldsNum = (REAL_TYPE)ct;
+  }
+  
+}
 
 
 // #################################################################
@@ -1682,8 +1754,8 @@ void Control::getTimeControl(DTcntl* DT)
   
   
   
-  // 平均値の時刻指定モード
-  label = "/TimeControl/Average/TemporalType";
+  // 統計値の時刻指定モード
+  label = "/TimeControl/Statistic/TemporalType";
   
   if ( !(tpCntl->getInspectedValue(label, str)) )
   {
@@ -1694,11 +1766,11 @@ void Control::getTimeControl(DTcntl* DT)
   {
     if     ( !strcasecmp(str.c_str(), "step") )
     {
-      Interval[tg_average].setMode(IntervalManager::By_step);
+      Interval[tg_statistic].setMode(IntervalManager::By_step);
     }
     else if( !strcasecmp(str.c_str(), "time") )
     {
-      Interval[tg_average].setMode(IntervalManager::By_time);
+      Interval[tg_statistic].setMode(IntervalManager::By_time);
     }
     else
     {
@@ -1708,46 +1780,46 @@ void Control::getTimeControl(DTcntl* DT)
   }
   
   
-  // 平均操作開始
-  label = "/TimeControl/Average/Start";
+  // 統計操作開始
+  label = "/TimeControl/Statistic/Start";
   
   if ( !(tpCntl->getInspectedValue(label, ct )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
-  double avr_start = ct;
+  double stat_start = ct;
   
   
-  // 平均操作終了
-  label = "/TimeControl/Average/End";
+  // 統計操作終了
+  label = "/TimeControl/Statistic/End";
   
   if ( !(tpCntl->getInspectedValue(label, ct )) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
   }
-  double avr_end = ct;
+  double stat_end = ct;
   
   
   // チェック
-  if ( !(avr_start <= avr_end) )
+  if ( !(stat_start <= stat_end) )
   {
-    Hostonly_ stamped_printf("\tError : Average/Start msut be less than Average/End.\n");
+    Hostonly_ stamped_printf("\tError : Statistic/Start msut be less than Statistic/End.\n");
     Exit(0);
   }
   
   
   // Intereval Manager への登録 >> 他はFFV::initInterval()で指定
-  Interval[tg_average].setStart(avr_start);
-  Interval[tg_average].setLast(avr_end);
-  Interval[tg_average].setInterval(avr_end-avr_start);
+  Interval[tg_statistic].setStart(stat_start);
+  Interval[tg_statistic].setLast(stat_end);
+  Interval[tg_statistic].setInterval(stat_end-stat_start);
   
   
   // By_time"のときのみRestartStepを指定する
-  if ( Interval[tg_average].getMode() == IntervalManager::By_time )
+  if ( Interval[tg_statistic].getMode() == IntervalManager::By_time )
   {
-    label="/TimeControl/Average/RestartStep";
+    label="/TimeControl/Statistic/RestartStep";
     REAL_TYPE m_rstep;
     
     if ( !(tpCntl->getInspectedValue(label, m_rstep)) )
@@ -1760,52 +1832,52 @@ void Control::getTimeControl(DTcntl* DT)
     }
     else
     {
-      Interval[tg_average].restartStep = (unsigned)m_rstep;
+      Interval[tg_statistic].restartStep = (unsigned)m_rstep;
     }
   }
   
 
-  /* 平均値操作の判断
+  /* 統計処理操作の判断
    
    1    |     2      |   3     << m_start (restart step)
    ---------+------------+-------
         ^            ^
-     avr_start    avr_end
+     stat_start    stat_end
    
-   case 1 : 平均操作は行うが，まだ指定時刻に到達していないので，平均値ファイルは存在せず，平均値のリスタートはない
-        2 : 前セッションから継続して平均操作を行うが，既に平均値ファイルが存在する（はず）ので，平均値のリスタート処理を行う
-        3 : 既に平均値操作の区間は終了しているので，平均操作は行わない
+   case 1 : 統計操作は行うが，まだ指定時刻に到達していないので，統計値ファイルは存在せず，統計値のリスタートはない
+        2 : 前セッションから継続して統計操作を行うが，既に統計値ファイルが存在する（はず）ので，統計値のリスタート処理を行う
+        3 : 既に統計値操作の区間は終了しているので，統計操作は行わない
    */
   
   if ( Start == initial_start )
   {
-    Mode.AverageRestart = OFF; // default
+    Mode.StatisticRestart = OFF; // default
     
-    if ( (avr_end > 0.0) && (avr_start >= 0.0) ) // avr_end >= avr_startは既にチェック済み
+    if ( (stat_end > 0.0) && (stat_start >= 0.0) ) // stat_end >= stat_startは既にチェック済み
     {
-      Mode.Average = ON;
+      Mode.Statistic = ON;
     }
     else
     {
-      Mode.Average = OFF;
+      Mode.Statistic = OFF;
     }
   }
   else
   {
-    if ( (avr_start < m_start) && (avr_end < m_start) ) // case 3
+    if ( (stat_start < m_start) && (stat_end < m_start) ) // case 3
     {
-      Mode.Average = OFF;
-      Mode.AverageRestart = OFF;
+      Mode.Statistic = OFF;
+      Mode.StatisticRestart = OFF;
     }
-    else if ( (avr_start < m_start) && (avr_end > m_start) ) // case 2
+    else if ( (stat_start < m_start) && (stat_end > m_start) ) // case 2
     {
-      Mode.Average = ON;
-      Mode.AverageRestart = ON;
+      Mode.Statistic = ON;
+      Mode.StatisticRestart = ON;
     }
-    else if ( (avr_start > m_start) && (avr_end > m_start) ) // case 1
+    else if ( (stat_start > m_start) && (stat_end > m_start) ) // case 1
     {
-      Mode.Average = ON;
-      Mode.AverageRestart = OFF;
+      Mode.Statistic = ON;
+      Mode.StatisticRestart = OFF;
     }
   }
 
@@ -1833,7 +1905,13 @@ void Control::getTurbulenceModel()
 	  Exit(0);
   }
   
+  
+  // 乱流モデルの場合には、d_rmsmeanをリスタート時に使うので、NvarsIns_plt3d += 1
   if      ( !strcasecmp(str.c_str(), "no") )
+  {
+    LES.Calc = OFF;
+  }
+  else if ( !strcasecmp(str.c_str(), "laminar") )
   {
     LES.Calc = OFF;
   }
@@ -1841,22 +1919,27 @@ void Control::getTurbulenceModel()
   {
     LES.Calc = ON;
     LES.Model = Smagorinsky;
+    NvarsAvr_plt3d++;
   }
-  else if ( !strcasecmp(str.c_str(), "LowReynolds") )
+  else if ( !strcasecmp(str.c_str(), "csm") )
   {
-    LES.Calc = ON;
-    LES.Model = Low_Reynolds;
+    LES.Calc  = ON;
+    LES.Model = CSM;
+    NvarsAvr_plt3d++;
   }
-  else if ( !strcasecmp(str.c_str(), "Dynamic") )
+  else if ( !strcasecmp(str.c_str(), "wale") )
   {
-    LES.Calc = ON;
-    LES.Model = Dynamic;
+    LES.Calc  = ON;
+    LES.Model = WALE;
+    NvarsAvr_plt3d++;
   }
   else
   {
     Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
     Exit(0);
   }
+  
+  if ( LES.Calc == OFF ) return;
   
   // スマゴリンスキーモデル
   if ( LES.Model == Smagorinsky )
@@ -1870,7 +1953,7 @@ void Control::getTurbulenceModel()
     }
     LES.Cs = ct;
     
-    // damping factor
+    /* damping factor
     label="/TurbulenceModeling/DampingFactor";
     if ( !(tpCntl->getInspectedValue(label, ct )) )
     {
@@ -1878,6 +1961,19 @@ void Control::getTurbulenceModel()
       Exit(0);
     }
     LES.damping_factor = ct;
+     */
+    
+  }
+  
+  label = "/TurbulenceModeling/InitialPerturbation";
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  if ( !strcasecmp(str.c_str(), "on") )
+  {
+    LES.InitialPerturbation = ON;
   }
   
 }
@@ -2247,6 +2343,7 @@ void Control::printParaConditions(FILE* fp, const MediumList* mat)
 	fprintf(fp,"\tBase Pressure             [Pa]        : %12.5e\n", BasePrs);
   fprintf(fp,"\tRef. Mass Density         [kg/m^3]    : %12.5e\n", RefDensity);
   fprintf(fp,"\tRef. Specific Heat        [J/(kg K)]  : %12.5e\n", RefSpecificHeat);
+  fprintf(fp,"\tRef. Kinematic Viscosity  [m^2/s]     : %12.5e\n", RefKviscosity);
   fprintf(fp,"\tRef. Speed of Sound       [m/s]       : %12.5e\n", RefSoundSpeed);
   fprintf(fp,"\tGravity                   [m/s^2]     : %12.5e\n", Gravity);
   fprintf(fp,"\n");
@@ -2599,6 +2696,50 @@ void Control::printSteerConditions(FILE* fp,
       err=false;
   }
 
+  
+  // 乱流モデル ------------------
+  fprintf(fp, "\n\tTurbulence Modeling\n");
+  switch (LES.Model)
+  {
+    case no:
+      fprintf(fp,"\t     Model                    :   Nothing (DNS)\n");
+      break;
+      
+    case Smagorinsky:
+      fprintf(fp,"\t     Model                    :   Smagorinsky \n");
+      break;
+      
+    case CSM:
+      fprintf(fp,"\t     Model                    :   Coherent Smagorinsky Model (CSM) \n");
+      break;
+      
+    case WALE:
+      fprintf(fp,"\t     Model                    :   Wall-Adapting Local Eddy-viscosity (WALE) \n");
+      break;
+      
+    default:
+      stamped_printf("Error: Turbulence Modeling section\n");
+      err = false;
+  }
+  
+  if (LES.Model == Smagorinsky )
+  {
+    fprintf(fp,"\t     Cs                       :   %f \n", LES.Cs);
+  }
+  
+  if ( LES.InitialPerturbation == ON )
+  {
+    fprintf(fp,"\t     Initial Perturbation     :   On \n");
+    fprintf(fp,"\t     Direction of Channel wall:   %s \n", FBUtility::getDirection(LES.ChannelDir).c_str());
+    fprintf(fp,"\t     Channel Width            :   %f \n", LES.ChannelWidth);
+    fprintf(fp,"\t     Bulk Velocity            :   %e \n", LES.BulkVelocity);
+    fprintf(fp,"\t     Turbulent Reynolds Number:   %e \n", LES.TurbulentReynoldsNum);
+  }
+  else
+  {
+    fprintf(fp,"\t     Initial Perturbation     :   Off \n");
+  }
+
 
   // 単位系 ------------------
   fprintf(fp,"\n\tUnit\n");
@@ -2622,24 +2763,24 @@ void Control::printSteerConditions(FILE* fp,
   }
   
   // 時間平均
-  if ( Mode.Average == ON )
+  if ( Mode.Statistic == ON )
   {
-    if ( Interval[tg_average].getMode() == IntervalManager::By_time )
+    if ( Interval[tg_statistic].getMode() == IntervalManager::By_time )
     {
-      itm = Interval[tg_average].getStartTime();
-      stp = (unsigned)ceil(Interval[Control::tg_average].getStartTime() / dt);
-      fprintf(fp,"\t     Averaging Start          :   %12.5e [sec] / %12.5e [-] : %12d [step]\n", itm*Tscale, itm, stp);
+      itm = Interval[tg_statistic].getStartTime();
+      stp = (unsigned)ceil(Interval[Control::tg_statistic].getStartTime() / dt);
+      fprintf(fp,"\t     Statistic Start          :   %12.5e [sec] / %12.5e [-] : %12d [step]\n", itm*Tscale, itm, stp);
     }
     else
     {
-      itm = (double)Interval[Control::tg_average].getStartStep() * dt;
-      stp = Interval[tg_average].getStartStep();
-      fprintf(fp,"\t     Averaging Start          :   %12.5e [sec] / %12.5e [-] : %12d [step]\n", itm*Tscale, itm, stp);
+      itm = (double)Interval[Control::tg_statistic].getStartStep() * dt;
+      stp = Interval[tg_statistic].getStartStep();
+      fprintf(fp,"\t     Statistic Start          :   %12.5e [sec] / %12.5e [-] : %12d [step]\n", itm*Tscale, itm, stp);
     }
   }
   else
   {
-    fprintf(fp,"\t     Averaging Start          :   OFF\n");
+    fprintf(fp,"\t     Statistic Start          :   OFF\n");
   }
   
   
@@ -2874,15 +3015,15 @@ void Control::printSteerConditions(FILE* fp,
     fprintf(fp,"\t     Basic/Derived Variables  :   %12d [step]\n", Interval[tg_basic].getIntervalStep());
   }
   
-  // 平均値のファイル出力
-  if ( Interval[tg_average].getMode() == IntervalManager::By_time )
+  // 統計値のファイル出力
+  if ( Interval[tg_statistic].getMode() == IntervalManager::By_time )
   {
-    itm = Interval[tg_average].getIntervalTime();
-    fprintf(fp,"\t     Averaged Variables       :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
+    itm = Interval[tg_statistic].getIntervalTime();
+    fprintf(fp,"\t     Statistical Variables    :   %12.6e [sec] / %12.6e [-]\n", itm*Tscale, itm);
   }
   else
   {
-    fprintf(fp,"\t     Averaged Variables       :   %12d [step]\n", Interval[tg_average].getIntervalStep());
+    fprintf(fp,"\t     Statistical Variables    :   %12d [step]\n", Interval[tg_statistic].getIntervalStep());
   }
   
   /* 派生変数のファイル出力 >> 基本変数と同じにする 20141025
@@ -2980,7 +3121,7 @@ void Control::printSteerConditions(FILE* fp,
   }
   else
   {
-    fprintf(fp,"\t     Divergence              :   OFF\n");
+    fprintf(fp,"\t     Divergence               :   OFF\n");
   }
   
   
@@ -3317,6 +3458,7 @@ void Control::setRefParameters(MediumList* mat, ReferenceFrame* RF)
   RefDensity      = rho;
   RefSpecificHeat = cp;
   RefSoundSpeed   = snd_spd;
+  RefKviscosity   = nyu;
   
   if (KindOfSolver == SOLID_CONDUCTION)
   {

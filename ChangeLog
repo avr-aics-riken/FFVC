@@ -19,6 +19,13 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-10-31
+r1645 update LES
+ - update_vec4_(), pvec_muscl_les_(), pvec_cental_les_(), calc_rms_v_(), perturb_u_?_()
+ - Average >> Statistic
+
+
+--------------------------
 2014-10-25
 r1644 fix a minor bug of r1643
  - compatible with CDMlib-0.4.0

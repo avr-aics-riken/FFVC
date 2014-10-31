@@ -204,9 +204,9 @@ Output {
       Qcriterion     = "On"
     }
 
-    AveragedVariables {
+    StatisticalVariables {
       Format        = "sph"
-      TemporalType  = "step" // /TimeControl/Average/TemporalTypeでの指定と整合性をとる
+      TemporalType  = "step" // /TimeControl/Statistic/TemporalTypeでの指定と整合性をとる
       Interval      = 10
     }
   }
@@ -284,9 +284,9 @@ TimeControl {
     End            = 30000
   }
 
-  Average {
+  Statistic {
     TemporalType   = "step"
-    Start          = 0  // 指定区間の平均をとる．両方とも0のときoff
+    Start          = 0  // 指定区間の統計をとる．両方とも0のときoff
     End            = 0 
   }
 }
