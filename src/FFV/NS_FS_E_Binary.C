@@ -426,6 +426,7 @@ void FFV::NS_FS_E_Binary()
     {
       case SOR:
         if ( (loop_p += LSp->PointSOR(d_p, d_b, b_l2, res0_l2)) < 0 ) Exit(0);
+        //if ( (loop_p += LSp->PointSOR_4th(d_p, d_b, d_ws, d_p0, d_sq, dt, dh, b_l2, res0_l2)) < 0 ) Exit(0);
         break;
         
       case SOR2SMA:
@@ -469,7 +470,7 @@ void FFV::NS_FS_E_Binary()
     TIMING_start(tm_prj_vec);
     flop = 0.0;
     update_vec_(d_v, d_vf, d_dv, size, &guide, &dt, &dh, d_vc, d_p, d_bcp, d_cdf, &flop);
-    // update_vec_(d_v, d_dv, size, &guide, &dt, &dh, d_vc, d_vf, d_p, d_bcp, d_cdf, &flop, &cnv_scheme); << LES
+    //update_vec4_(d_v, d_vf, d_dv, size, &guide, &dt, &dh, d_vc, d_p, d_bcp, d_cdf, &flop, &cnv_scheme);
     TIMING_stop(tm_prj_vec, flop);
     
     

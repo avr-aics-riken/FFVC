@@ -1084,13 +1084,15 @@ end subroutine fb_vin_ijkn
 !! @param [in]  v     速度ベクトル
 !! @param [out] flop  浮動小数演算数
 !<
-    subroutine fb_minmax_v (v_min, v_max, sz, g, v00, v)
+    subroutine fb_minmax_v (v_min, v_max, sz, g, v00, v, flop)
     implicit none
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
-    real                                                      ::  u1, u2, u3, uu, flop, vx, vy, vz
+    real                                                      ::  u1, u2, u3, vx, vy, vz
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
-    real, dimension(0:3)                                      ::  v00, v_min, v_max
+    real, dimension(0:3)                                      ::  v00
+    real, dimension(3)                                        ::  v_min, v_max
+    double precision                                          ::  flop
 
     ix = sz(1)
     jx = sz(2)
@@ -1098,23 +1100,20 @@ end subroutine fb_vin_ijkn
     vx = v00(1)
     vy = v00(2)
     vz = v00(3)
-    v_min(0) =  1.0e6
     v_min(1) =  1.0e6
     v_min(2) =  1.0e6
     v_min(3) =  1.0e6
-    v_max(0) = -1.0e6
     v_max(1) = -1.0e6
     v_max(2) = -1.0e6
     v_max(3) = -1.0e6
-    
-    ! 16 + sqrt*1 = 26 ! DP 36
-    flop = flop + real(ix)*real(jx)*real(kx)*26.0d0
+
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*9.0d0
     ! flop = flop + real(ix)*real(jx)*real(kx)*30.0 ! DP
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(min:v_min) &
 !$OMP REDUCTION(max:v_max) &
-!$OMP PRIVATE(u1, u2, u3, uu) &
+!$OMP PRIVATE(u1, u2, u3) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, vx, vy, vz)
 
 !$OMP DO SCHEDULE(static)
@@ -1125,9 +1124,6 @@ end subroutine fb_vin_ijkn
 			u1 = v(i,j,k,1)-vx
 			u2 = v(i,j,k,2)-vy
 			u3 = v(i,j,k,3)-vz
-			uu = sqrt( u1*u1 + u2*u2 + u3*u3 )
-      v_min(0) = min(v_min(0), uu)
-      v_max(0) = max(v_max(0), uu)
       v_min(1) = min(v_min(1), u1)
       v_max(1) = max(v_max(1), u1)
       v_min(2) = min(v_min(2), u2)
@@ -1153,13 +1149,14 @@ end subroutine fb_vin_ijkn
 !! @param [in]  v     速度ベクトル
 !! @param [out] flop  浮動小数演算数
 !<
-  subroutine fb_minmax_vex (v_min, v_max, sz, g, v00, v)
+  subroutine fb_minmax_vex (v_min, v_max, sz, g, v00, v, flop)
   implicit none
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
-  real                                                      ::  u1, u2, u3, uu, flop, vx, vy, vz
+  real                                                      ::  u1, u2, u3, uu, vx, vy, vz
   real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
   real, dimension(0:3)                                      ::  v00, v_min, v_max
+  double precision                                          ::  flop
 
   ix = sz(1)
   jx = sz(2)

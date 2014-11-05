@@ -113,6 +113,10 @@ void IO_BASE::getFIOparams()
   }
   
   
+  // 固有のオプション
+  getInherentOption();
+  
+  
   
   // 全圧
   label="/Output/Data/BasicVariables/TotalPressure";
@@ -232,55 +236,9 @@ void IO_BASE::getFIOparams()
       Exit(0);
     }
   }
+  
+  
 
-  
-  // LES vmean
-  label="/Output/Data/BasicVariables/Divergence";
-  if ( tpCntl->chkLabel(label) )
-  {
-    if ( !(tpCntl->getInspectedValue(label, str )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
-    }
-    
-    if     ( !strcasecmp(str.c_str(), "on") )
-    {
-      C->varState[var_Div] = ON;
-      C->NvarsIns_plt3d += 1;
-    }
-    else if( !strcasecmp(str.c_str(), "off") ) C->varState[var_Div] = OFF;
-    else
-    {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-      Exit(0);
-    }
-  }
-  
-  
-  // LES rmsmean
-  label="/Output/Data/BasicVariables/Divergence";
-  if ( tpCntl->chkLabel(label) )
-  {
-    if ( !(tpCntl->getInspectedValue(label, str )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
-    }
-    
-    if     ( !strcasecmp(str.c_str(), "on") )
-    {
-      C->varState[var_Div] = ON;
-      C->NvarsIns_plt3d += 1;
-    }
-    else if( !strcasecmp(str.c_str(), "off") ) C->varState[var_Div] = OFF;
-    else
-    {
-      Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-      Exit(0);
-    }
-  }
-  
   
   
   // 統計値操作に関するパラメータを取得
@@ -330,8 +288,56 @@ void IO_BASE::getFIOparams()
     {
       C->Interval[Control::tg_statistic].setInterval(val);
     }
+    
+    // LES rms
+    label="/Output/Data/BasicVariables/RMSvelocity";
+    if ( tpCntl->chkLabel(label) )
+    {
+      if ( !(tpCntl->getInspectedValue(label, str )) )
+      {
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+        Exit(0);
+      }
+      
+      if     ( !strcasecmp(str.c_str(), "on") )
+      {
+        C->varState[var_RmsV] = ON;
+        C->NvarsAvr_plt3d += 3;
+      }
+      else if( !strcasecmp(str.c_str(), "off") ) C->varState[var_RmsV] = OFF;
+      else
+      {
+        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+        Exit(0);
+      }
+    }
+    
+    // LES rmsmean
+    label="/Output/Data/BasicVariables/RMSmeanVelocity";
+    if ( tpCntl->chkLabel(label) )
+    {
+      if ( !(tpCntl->getInspectedValue(label, str )) )
+      {
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+        Exit(0);
+      }
+      
+      if     ( !strcasecmp(str.c_str(), "on") )
+      {
+        C->varState[var_RmsMeanV] = ON;
+        C->NvarsAvr_plt3d += 3;
+      }
+      else if( !strcasecmp(str.c_str(), "off") ) C->varState[var_RmsMeanV] = OFF;
+      else
+      {
+        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+        Exit(0);
+      }
+    }
+    
   }
   
+
   
   
   // ボクセルファイル出力 (Hidden)
@@ -404,12 +410,13 @@ void IO_BASE::getFIOparams()
 
 
 // #################################################################
-// ファイルフォーマットのオプションを指定する．
+// ファイルフォーマットのオプションを指定する
 void IO_BASE::getFormatOption(const string form)
 {
   string str;
   string label;
   string dir;
+  int ct;
   
   
   // ディレクトリのチェック
@@ -425,20 +432,19 @@ void IO_BASE::getFormatOption(const string form)
   // 出力ガイドセルモード
   label = dir + "/GuideOut";
   
-  if ( !(tpCntl->getInspectedValue(label, str)) )
+  if ( !(tpCntl->getInspectedValue(label, ct)) )
   {
     Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
     Exit(0);
     Exit(0);
   }
-  
-  if     ( !strcasecmp(str.c_str(), "without") )  C->GuideOut = 0;
-  else if( !strcasecmp(str.c_str(), "with") )     C->GuideOut = guide;
-  else
+  if ( ct < 0 || ct > guide )
   {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Hostonly_ stamped_printf("\tInvalid range of guide out : 0 <= guideout <= %d\n", guide);
     Exit(0);
   }
+  C->GuideOut = GuideOut = ct;
+
   
   // Output Directory_Path
   label = dir + "/DirectoryPath";
@@ -477,31 +483,6 @@ void IO_BASE::getFormatOption(const string form)
   if ( (C->Parallelism == Control::Serial) || (C->Parallelism == Control::OpenMP) )
   {
     Slice = OFF;
-  }
-  
-  
-  // PLOT3DのときにIBLANKファイルを使うオプション
-  if ( plt3d_fun_fmt == Format )
-  {
-    label = dir + "/IblankFile";
-    
-    if ( tpCntl->chkLabel(label) )
-    {
-      if ( tpCntl->getInspectedValue(label, str) )
-      {
-        if     ( !strcasecmp(str.c_str(), "on") )   Iblank = ON;
-        else if( !strcasecmp(str.c_str(), "off") )  Iblank = OFF;
-        else
-        {
-          Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-          Exit(0);
-        }
-      }
-      else
-      {
-        Exit(0);
-      }
-    }
   }
   
 }
@@ -612,6 +593,10 @@ void IO_BASE::printSteerConditions(FILE* fp)
   fprintf(fp,"\t     Time Slice Directory     :   %s\n", (Slice==ON) ? "On" : "Off");
   
   
+  // 固有パラメータ
+  printSteerConditionsInherent(fp);
+  
+  
   // Hidden
   fprintf(fp,"\t     Voxel model output       :   %s\n", (IO_Voxel==Sphere_SVX) ? "svx" : "None");
   fprintf(fp,"\t     VTK output               :   %s\n", (output_vtk==ON) ? "On" : "Off");
@@ -631,22 +616,46 @@ void IO_BASE::RestartDisplayMinmax(FILE* fp, double& flop)
 {
   Hostonly_ fprintf(stdout, "\n\tNon-dimensional value\n");
   Hostonly_ fprintf(fp, "\n\tNon-dimensional value\n");
-  REAL_TYPE f_min, f_max, min_tmp, max_tmp, vec_min[4], vec_max[4];
+  REAL_TYPE f_min, f_max, vec_min[3], vec_max[3];
   
   // Velocity
   fb_minmax_v_ (vec_min, vec_max, size, &guide, RF->getV00(), d_v, &flop); // allreduceすること
   
   if ( numProc > 1 )
   {
-    REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
-    if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+    REAL_TYPE vmin_tmp[3] = {vec_min[0], vec_min[1], vec_min[2]};
+    if( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN) != CPM_SUCCESS ) Exit(0);
     
-    REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
-    if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    REAL_TYPE vmax_tmp[3] = {vec_max[0], vec_max[1], vec_max[2]};
+    if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX) != CPM_SUCCESS ) Exit(0);
   }
   
-  Hostonly_ fprintf(stdout, "\t\tV : min=%13.6e / max=%13.6e\n", vec_min[0], vec_max[0]);
-  Hostonly_ fprintf(fp, "\t\tV : min=%13.6e / max=%13.6e\n", vec_min[0], vec_max[0]);
+  Hostonly_ fprintf(stdout, "\t\tVelocity U      : min=%13.6e / max=%13.6e\n", vec_min[0], vec_max[0]);
+  Hostonly_ fprintf(stdout, "\t\t         V      : min=%13.6e / max=%13.6e\n", vec_min[1], vec_max[1]);
+  Hostonly_ fprintf(stdout, "\t\t         W      : min=%13.6e / max=%13.6e\n", vec_min[2], vec_max[2]);
+  Hostonly_ fprintf(fp,     "\t\tVelocity U      : min=%13.6e / max=%13.6e\n", vec_min[0], vec_max[0]);
+  Hostonly_ fprintf(fp,     "\t\t         V      : min=%13.6e / max=%13.6e\n", vec_min[1], vec_max[1]);
+  Hostonly_ fprintf(fp,     "\t\t         W      : min=%13.6e / max=%13.6e\n", vec_min[2], vec_max[2]);
+  
+  
+  // FVelocity
+  fb_minmax_v_ (vec_min, vec_max, size, &guide, RF->getV00(), d_vf, &flop); // allreduceすること
+  
+  if ( numProc > 1 )
+  {
+    REAL_TYPE vmin_tmp[3] = {vec_min[0], vec_min[1], vec_min[2]};
+    if( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+    
+    REAL_TYPE vmax_tmp[3] = {vec_max[0], vec_max[1], vec_max[2]};
+    if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  Hostonly_ fprintf(stdout, "\t\tFace Velocity U : min=%13.6e / max=%13.6e\n", vec_min[0], vec_max[0]);
+  Hostonly_ fprintf(stdout, "\t\t              V : min=%13.6e / max=%13.6e\n", vec_min[1], vec_max[1]);
+  Hostonly_ fprintf(stdout, "\t\t              W : min=%13.6e / max=%13.6e\n", vec_min[2], vec_max[2]);
+  Hostonly_ fprintf(fp,     "\t\tFace Velocity U : min=%13.6e / max=%13.6e\n", vec_min[0], vec_max[0]);
+  Hostonly_ fprintf(fp,     "\t\t              V : min=%13.6e / max=%13.6e\n", vec_min[1], vec_max[1]);
+  Hostonly_ fprintf(fp,     "\t\t              W : min=%13.6e / max=%13.6e\n", vec_min[2], vec_max[2]);
   
   
   // Pressure
@@ -654,15 +663,15 @@ void IO_BASE::RestartDisplayMinmax(FILE* fp, double& flop)
   
   if ( numProc > 1 )
   {
-    min_tmp = f_min;
+    REAL_TYPE min_tmp = f_min;
     if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
     
-    max_tmp = f_max;
+    REAL_TYPE max_tmp = f_max;
     if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
   }
   
-  Hostonly_ fprintf(stdout, "\t\tP : min=%13.6e / max=%13.6e\n", f_min, f_max);
-  Hostonly_ fprintf(fp, "\t\tP : min=%13.6e / max=%13.6e\n", f_min, f_max);
+  Hostonly_ fprintf(stdout, "\t\tPressure        : min=%13.6e / max=%13.6e\n", f_min, f_max);
+  Hostonly_ fprintf(fp,     "\t\tPressure        : min=%13.6e / max=%13.6e\n", f_min, f_max);
   
   
   // temperature
@@ -672,15 +681,15 @@ void IO_BASE::RestartDisplayMinmax(FILE* fp, double& flop)
     
     if ( numProc > 1 )
     {
-      min_tmp = f_min;
+      REAL_TYPE min_tmp = f_min;
       if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
       
-      max_tmp = f_max;
+      REAL_TYPE max_tmp = f_max;
       if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
     }
     
-    Hostonly_ fprintf(stdout, "\t\tT : min=%13.6e / max=%13.6e\n", f_min, f_max);
-    Hostonly_ fprintf(fp, "\t\tT : min=%13.6e / max=%13.6e\n", f_min, f_max);
+    Hostonly_ fprintf(stdout, "\t\tTemperature    : min=%13.6e / max=%13.6e\n", f_min, f_max);
+    Hostonly_ fprintf(fp,     "\t\tTemperature    : min=%13.6e / max=%13.6e\n", f_min, f_max);
   }
   
 }
@@ -694,38 +703,36 @@ void IO_BASE::setVarPointers(REAL_TYPE* m_d_p,
                              REAL_TYPE* m_d_vf,
                              REAL_TYPE* m_d_ie,
                              REAL_TYPE* m_d_ws,
-                             REAL_TYPE* m_d_p0,
-                             REAL_TYPE* m_d_iob,
                              REAL_TYPE* m_d_wv,
-                             REAL_TYPE* m_d_vc,
                              REAL_TYPE* m_d_ap,
                              REAL_TYPE* m_d_av,
                              REAL_TYPE* m_d_ae,
                              REAL_TYPE* m_d_dv,
+                             REAL_TYPE* m_d_rms,
                              REAL_TYPE* m_d_rmsmean,
                              int* m_d_bcd,
                              int* m_d_cdf,
                              double* m_mat_tbl,
-                             int* m_d_mid)
+                             int* m_d_mid,
+                             REAL_TYPE* m_d_iob)
 {
   d_p       = m_d_p;
   d_v       = m_d_v;
   d_vf      = m_d_vf;
   d_ie      = m_d_ie;
   d_ws      = m_d_ws;
-  d_p0      = m_d_p0;
-  d_iobuf   = m_d_iob;
   d_wv      = m_d_wv;
-  d_vc      = m_d_vc;
   d_ap      = m_d_ap;
   d_av      = m_d_av;
   d_ae      = m_d_ae;
   d_dv      = m_d_dv;
+  d_rms     = m_d_rms;
+  d_rmsmean = m_d_rmsmean;
   d_bcd     = m_d_bcd;
   d_cdf     = m_d_cdf;
   mat_tbl   = m_mat_tbl;
   d_mid     = m_d_mid;
-  d_rmsmean = m_d_rmsmean;
+  d_iobuf   = m_d_iob;
 }
 
 

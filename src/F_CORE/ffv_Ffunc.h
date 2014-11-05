@@ -100,7 +100,13 @@
 #define calc_rms_v_         CALC_RMS_V
 #define output_vtk_         OUTPUT_VTK
 #define perturbu_           PERTURBU
-
+#define generate_iblank_    GENERATE_IBLANK
+#define pack_scalar_        PACK_SCALAR
+#define pack_vector_        PACK_VECTOR
+#define unpack_scalar_      UNPACK_SCALAR
+#define unpack_vector_      UNPACK_VECTOR
+#deifne write_plot3d_       WRITE_PLOT3D
+#deifne read_plot3d_        READ_PLOT3D
 
 #define cds_pvec_vibc_specv_    CDS_PVEC_VIBC_SPECV
 
@@ -602,15 +608,6 @@ extern "C" {
                     REAL_TYPE* accum,
                     double* flop);
   
-  void plot3d_write_xyz_ (REAL_TYPE* x,
-                          REAL_TYPE* y,
-                          REAL_TYPE* z,
-                          int* iblank,
-                          int* sz,
-                          int*g,
-                          REAL_TYPE* dh,
-                          REAL_TYPE* org);
-  
   void output_vtk_(int* step,
                    REAL_TYPE* G_origin,
                    int* G_division,
@@ -637,6 +634,40 @@ extern "C" {
                     REAL_TYPE* rmsmean
                     );
 
+  void src_trnc_ (REAL_TYPE* rhs,
+                  int* sz,
+                  int* g,
+                  REAL_TYPE* dt,
+                  REAL_TYPE* dh,
+                  REAL_TYPE* u_sum,
+                  double* flop);
+  
+  void src_1st_ (REAL_TYPE* rhs,
+                 int* sz,
+                 int* g,
+                 REAL_TYPE* dt,
+                 REAL_TYPE* dh,
+                 REAL_TYPE* u_sum,
+                 REAL_TYPE* b,
+                 double* flop);
+  
+  void src_2nd_ (REAL_TYPE* rhs,
+                 int* sz,
+                 int* g,
+                 REAL_TYPE* dh,
+                 REAL_TYPE* b,
+                 REAL_TYPE* psi,
+                 double* flop);
+  
+  void generate_iblank_ (int* iblk, int* sz, int* g, int* bcd, int* g_out);
+  
+  void pack_scalar_   (REAL_TYPE* dst, int* sz, int* g, REAL_TYPE* src, int* g_out);
+  void pack_vector_   (REAL_TYPE* dst, int* sz, int* g, REAL_TYPE* src, int* g_out);
+  void unpack_scalar_ (REAL_TYPE* dst, int* sz, int* g, REAL_TYPE* src, int* g_out);
+  void unpack_vector_ (REAL_TYPE* dst, int* sz, int* g, REAL_TYPE* src, int* g_out);
+  
+  void write_plot3d_ (REAL_TYPE* buf, int* sz, int* g, int* nx, char* fname);
+  void read_plot3d_  (REAL_TYPE* buf, int* sz, int* g, int* nx, char* fname);
   
   
   //***********************************************************************************************

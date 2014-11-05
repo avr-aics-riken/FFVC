@@ -75,7 +75,7 @@ public:
   int *d_bcd;       ///< [*] BCindex ID
   int *d_bcp;       ///< [*] BCindex P
   int *d_cdf;       ///< [*] BCindex C
-  REAL_TYPE *d_pvf; ///< [*] ポリゴンによるセル体積率
+  REAL_TYPE *d_pvf; ///< [*] によるセル体積率
   
   
   // Main
@@ -85,8 +85,10 @@ public:
   REAL_TYPE *d_dv;  ///< [*] \sum{u}の保存
   REAL_TYPE *d_ie;  ///< [*] 内部エネルギー
   
-  // Main >> file IO用のバッファと共用
+  REAL_TYPE *d_wv;  ///<     ワーク配列, file IO用のバッファには使わない
+  
   REAL_TYPE *d_io_buffer; ///< 大きなバッファ　以下と共用
+  // >> file IO用のバッファと共用
   REAL_TYPE *d_vc;  ///<     セルセンター疑似速度
   REAL_TYPE *d_v0;  ///<     n-stepの速度保持
   REAL_TYPE *d_p0;  ///<     圧力（1ステップ前）
@@ -94,8 +96,7 @@ public:
   REAL_TYPE *d_b;   ///<     Ax=bの右辺ベクトル
   REAL_TYPE *d_ie0; ///<     内部エネルギー（1ステップ前） >> file IO用のバッファと共用
   REAL_TYPE *d_qbc; ///<     熱BC flux保持 >> file IO用のバッファと共用
-  
-  REAL_TYPE *d_wv;  ///<     ワーク配列, file IO用のバッファには使わない
+  // << file IO用のバッファと共用
   
   
   // 渦度関連オプション

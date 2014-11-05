@@ -1505,6 +1505,7 @@ end subroutine pvec_muscl_les
     end subroutine update_vec
 
 
+
 !> ********************************************************************
 !! @brief 次ステップのセルセンターの速度を更新
 !! @param [out] v        n+1時刻の速度ベクトル
@@ -1580,7 +1581,7 @@ flop = flop + dble(ix)*dble(jx)*dble(kx)*159.0 + 8.0d0
 !$OMP PRIVATE(Vs2, Vs1, Vp0, Vn1, Vn2) &
 !$OMP PRIVATE(Wb2, Wb1, Wp0, Wt1, Wt2) &
 !$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
-!$OMP PRIVATE(lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t) &
+!$OMP PRIVATE(lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t, sw1, sw2) &
 !$OMP PRIVATE(pc, pe1, pe2, pw1, pw2, pn1, pn2, ps1, ps2, pt1, pt2, pb1, pb2) &
 !$OMP PRIVATE(dp_e4, dp_w4, dp_n4, dp_s4, dp_t4, dp_b4) &
 !$OMP PRIVATE(dp_e2, dp_w2, dp_n2, dp_s2, dp_t2, dp_b2) &
@@ -3105,3 +3106,173 @@ end do
 
 return
 end subroutine pvec_central_les
+
+!> ********************************************************************
+!! @brief 4次精度の打ち切り誤差を持つポアソン反復の1ステップ目のソース項
+!! @param [out]    rhs   ソース項
+!! @param [in]     sz    配列長
+!! @param [in]     g     ガイドセル長
+!! @param [in]     dt    時間積分幅
+!! @param [in]     dh    格子幅
+!! @param [in]     u_sum \sum{u}
+!! @param [in,out] flop  浮動小数点演算数
+!<
+subroutine src_trnc (rhs, sz, g, dt, dh, u_sum, flop)
+implicit none
+include 'ffv_f_params.h'
+integer                                                   ::  i, j, k, ix, jx, kx, g
+integer, dimension(3)                                     ::  sz
+double precision                                          ::  flop
+real                                                      ::  dh, dt, dth
+real                                                      ::  bw2, bw1, be2, be1, bs2, bs1, bn2, bn1, bb2, bb1, bt2, bt1, b0
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  rhs, u_sum
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+dth = 1.0 / (dt*dh)
+
+flop  = flop + dble(ix)*dble(jx)*dble(kx)*24.0d0
+
+!$OMP PARALLEL &
+!$OMP PRIVATE(bw2, bw1, be2, be1, bs2, bs1, bn2, bn1, bb2, bb1, bt2, bt1, b0) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, dth)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+
+do k=1,kx
+do j=1,jx
+do i=1,ix
+
+b0  = u_sum(i  , j  , k  )
+
+bw2 = u_sum(i-2, j  , k  )
+bw1 = u_sum(i-1, j  , k  )
+be1 = u_sum(i+1, j  , k  )
+be2 = u_sum(i+2, j  , k  )
+
+bs2 = u_sum(i  , j-2, k  )
+bs1 = u_sum(i  , j-1, k  )
+bn1 = u_sum(i  , j+1, k  )
+bn2 = u_sum(i  , j+2, k  )
+
+bb2 = u_sum(i  , j  , k-2)
+bb1 = u_sum(i  , j  , k-1)
+bt1 = u_sum(i  , j  , k+1)
+bt2 = u_sum(i  , j  , k+2)
+
+rhs(i,j,k) = ( bw2 - 4.0*bw1 + 6.0*b0 - 4.0*be1 + be2 &
++   bs2 - 4.0*bs1 + 6.0*b0 - 4.0*bn1 + bn2 &
++   bb2 - 4.0*bb1 + 6.0*b0 - 4.0*bt1 + bt2 ) * dth
+
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine src_trnc
+
+
+!> ********************************************************************
+!! @brief 4次精度の打ち切り誤差を持つポアソン反復の1ステップ目のソース項
+!! @param [out]    rhs  ソース項
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [in]     dt   時間積分幅
+!! @param [in]     dh   格子幅
+!! @param [in]     u_sum \sum{u}
+!! @param [in]     b    h^2/dt \nabla{u}
+!! @param [in,out] flop 浮動小数点演算数
+!<
+subroutine src_1st (rhs, sz, g, dt, dh, u_sum, b, flop)
+implicit none
+include 'ffv_f_params.h'
+integer                                                   ::  i, j, k, ix, jx, kx, g
+integer, dimension(3)                                     ::  sz
+double precision                                          ::  flop
+real                                                      ::  dh, dt, dth
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  rhs, u_sum, b
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+dth = 0.25 * dh / dt
+
+flop  = flop + dble(ix)*dble(jx)*dble(kx)*9.0d0 + 9.0d0
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, dth)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+
+do k=1,kx
+do j=1,jx
+do i=1,ix
+
+rhs(i,j,k) = b(i,j,k) - &
+( u_sum(i+1,j  ,k  ) + u_sum(i-1,j  ,k  ) &
++ u_sum(i  ,j+1,k  ) + u_sum(i  ,j-1,k  ) &
++ u_sum(i  ,j  ,k+1) + u_sum(i  ,j  ,k-1) &
+- 6.0 * u_sum(i,j,k) ) * dth
+
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine src_1st
+
+
+!> ********************************************************************
+!! @brief 4次精度の打ち切り誤差を持つポアソン反復の2ステップ目のソース項
+!! @param [out]    rhs  ソース項
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [in]     dh   格子幅
+!! @param [in]     b    h^2/dt \nabla{u}
+!! @param [in]     psi  1ステップ目の反復結果
+!! @param [in,out] flop 浮動小数点演算数
+!<
+subroutine src_2nd (rhs, sz, g, dh, b, psi, flop)
+implicit none
+include 'ffv_f_params.h'
+integer                                                   ::  i, j, k, ix, jx, kx, g
+integer, dimension(3)                                     ::  sz
+double precision                                          ::  flop
+real                                                      ::  dh, h2
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  rhs, b, psi
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+h2 = 0.25*dh*dh
+
+flop  = flop + dble(ix)*dble(jx)*dble(kx)*2.0d0
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, h2)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+
+do k=1,kx
+do j=1,jx
+do i=1,ix
+
+rhs(i,j,k) = b(i,j,k) - h2 * psi(i,j,k)
+
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine src_2nd
+

@@ -53,6 +53,7 @@
 
 using namespace std;
 
+
 class IO_BASE : public DomainInfo {
 
 protected:
@@ -61,7 +62,8 @@ protected:
   int IO_Voxel;        ///< デバッグ用にボクセルを出力
   int Format;          ///< ファイル入出力モード（sph, bov, plot3d）
   int Slice;           ///< タイムスライス毎にまとめる
-  int Iblank;          ///< PLOT3DのIBLANKオプション
+  int GuideIn;         ///< ファイル出力されたデータのもつガイドセル数（リスタートに利用）
+  int GuideOut;        ///< 出力時のガイドセル数
   
   int output_vtk;      ///< debug用vtk出力オプション
   int output_debug;    ///< debug用データ出力
@@ -78,18 +80,16 @@ protected:
   REAL_TYPE* d_ie;      ///< internal energy
   REAL_TYPE* d_iobuf;   ///< IO buffer
   REAL_TYPE* d_ws;      ///< work for scalar
-  REAL_TYPE* d_p0;      ///< work for scalar
   REAL_TYPE* d_wv;      ///< work for vector
-  REAL_TYPE* d_vc;      ///< work for vector
   REAL_TYPE* d_ap;      ///< averaged pressure
   REAL_TYPE* d_av;      ///< averaged velocity
   REAL_TYPE* d_ae;      ///< averaged internal energy
   REAL_TYPE* d_dv;      ///< Divergence
+  REAL_TYPE* d_rms;     ///< LES rms
   REAL_TYPE* d_rmsmean; ///< LES rms mean
   int* d_bcd;           ///< BCindex D
   int* d_cdf;           ///< BCindex C
   double* mat_tbl;      ///< material table
-  int* d_iblk;          ///< IBLANK
   int* d_mid;           ///< Iblankの実体
   
   
@@ -111,7 +111,8 @@ public:
     IO_Voxel = 0;
     Format   = 0;
     Slice    = 0;
-    Iblank   = 0;
+    GuideIn  = 0;
+    GuideOut = 0;
     
     output_vtk = 0;
     output_debug = 0;
@@ -122,10 +123,8 @@ public:
     d_vf = NULL;
     d_ie = NULL;
     d_ws = NULL;
-    d_p0 = NULL;
     d_iobuf = NULL;
     d_wv = NULL;
-    d_vc = NULL;
     d_ap = NULL;
     d_av = NULL;
     d_ae = NULL;
@@ -134,7 +133,7 @@ public:
     mat_tbl = NULL;
     d_bcd = NULL;
     d_cdf = NULL;
-    d_iblk = NULL;
+    d_rms = NULL;
     d_rmsmean = NULL;
     d_mid = NULL;
   }
@@ -151,6 +150,15 @@ protected:
    */
   void getFormatOption(const string form);
 
+  
+  /*
+   * @brief フォーマットの固有のオプションを指定
+   */
+  virtual void getInherentOption() {}
+  
+  
+  // 固有パラメータの表示
+  virtual void printSteerConditionsInherent(FILE* fp) {}
   
   
 public:
@@ -178,13 +186,6 @@ public:
   int getFormat() const
   {
     return Format;
-  }
-  
-  
-  // Iblankの利用の有無を返す
-  int getIblank() const
-  {
-    return Iblank;
   }
   
   
@@ -321,19 +322,18 @@ public:
                       REAL_TYPE* m_d_vf,
                       REAL_TYPE* m_d_ie,
                       REAL_TYPE* m_d_ws,
-                      REAL_TYPE* m_d_p0,
-                      REAL_TYPE* m_d_iob,
                       REAL_TYPE* m_d_wv,
-                      REAL_TYPE* m_d_vc,
                       REAL_TYPE* m_d_ap,
                       REAL_TYPE* m_d_av,
                       REAL_TYPE* m_d_ae,
                       REAL_TYPE* m_d_dv,
+                      REAL_TYPE* m_d_rms,
                       REAL_TYPE* m_d_rmsmean,
                       int* m_d_bcd,
                       int* m_d_cdf,
                       double* m_mat_tbl,
-                      int* d_mid);
+                      int* m_d_mid,
+                      REAL_TYPE* m_d_iob);
   
   
   /**

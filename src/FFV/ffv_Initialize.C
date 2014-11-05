@@ -496,19 +496,18 @@ int FFV::Initialize(int argc, char **argv)
                     d_vf,
                     d_ie,
                     d_ws,
-                    d_p0,
-                    d_io_buffer,
                     d_wv,
-                    d_vc,
                     d_ap,
                     d_av,
                     d_ae,
                     d_dv,
+                    d_rms,
                     d_rmsmean,
                     d_bcd,
                     d_cdf,
                     mat_tbl,
-                    d_mid);
+                    d_mid,
+                    d_io_buffer);
   
   F->getStartCondition();
   
@@ -584,7 +583,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // IBLANK 出力後に　mid[]を解放する  ---------------------------
-  //if ( d_mid ) delete [] d_mid;
+  if ( d_mid ) delete [] d_mid;
   
   
   
@@ -3438,7 +3437,7 @@ string FFV::setupDomain(TextParser* tpf)
   BC.setRankInfo   (paraMngr, procGrp);
   Ex->setRankInfo  (paraMngr, procGrp);
   MO.setRankInfo   (paraMngr, procGrp);
-  F->setRankInfo    (paraMngr, procGrp);
+  F->setRankInfo   (paraMngr, procGrp);
   
   for (int i=0; i<ic_END; i++)
   {
@@ -3452,10 +3451,6 @@ string FFV::setupDomain(TextParser* tpf)
   
   // 最初のパラメータの取得 >> C.guide
   C.get1stParameter(&DT);
-  
-  
-  // ファイルIOパラメータ << get1stParameter()でgetTurbulenceModel()を呼んだあと
-  F->getFIOparams();
   
 
   // 代表パラメータをコピー
@@ -3481,12 +3476,16 @@ string FFV::setupDomain(TextParser* tpf)
   BC.setNeighborInfo   (C.guide);
   Ex->setNeighborInfo  (C.guide);
   MO.setNeighborInfo   (C.guide);
-  F->setNeighborInfo    (C.guide);
+  F->setNeighborInfo   (C.guide);
   
   for (int i=0; i<ic_END; i++)
   {
     LS[i].setNeighborInfo(C.guide);
   }
+  
+  
+  // ファイルIOパラメータ << get1stParameter()でgetTurbulenceModel()を呼んだあと
+  F->getFIOparams();
   
   
   // 従属的なパラメータの取得

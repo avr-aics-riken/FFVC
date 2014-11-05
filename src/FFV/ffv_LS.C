@@ -1268,3 +1268,97 @@ void LinearSolver::Fdot(REAL_TYPE* xy, REAL_TYPE* x, REAL_TYPE* y)
     if  ( paraMngr->Allreduce(&xy_tmp, xy, 1, MPI_SUM) != CPM_SUCCESS )Exit(0);
   }
 }
+
+// #################################################################
+int LinearSolver::PointSOR_4th(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE* u_sum, REAL_TYPE* w1, REAL_TYPE* w2, REAL_TYPE dt, REAL_TYPE dh, const double b_l2, const double r0_l2)
+{
+  double flop_count=0.0;          /// 浮動小数点演算数
+  REAL_TYPE omg = getOmega();     /// 加速係数
+  double var[3];                  /// 誤差、残差、解
+  int lc=0;                       /// ループカウント
+  int c;
+  
+  
+  // x  Pressure
+  // b  src for Poisson
+  // w1 work, source of 1st and 2nd step iteration
+  // w2 work, solution of 1st step iteration
+  
+  //blas_clear_(w2, size, &guide);
+  
+  SyncScalar(u_sum, 2);
+  
+  //src_trnc_(w1, size, &guide, &dt, &dh, u_sum, &flop_count);
+  //SyncScalar(w1, 1);
+  
+  /*
+   for (c=1; c<getMaxIteration(); c++)
+   {
+   var[0] = 0.0; // 誤差
+   var[1] = 0.0; // 残差
+   var[2] = 0.0; // 解
+   
+   // 反復処理
+   //TIMING_start(tm_poi_PSOR);
+   flop_count = 0.0;
+   psor_unmask_(w2, size, &guide, &omg, var, w1, &flop_count);
+   //TIMING_stop(tm_poi_PSOR, flop_count);
+   
+   
+   // 境界条件 >> @todo w2に適した実装が必要　マスク部はゼロ
+   //TIMING_start(tm_poi_BC);
+   BC->OuterPBC(w2, ensPeriodic);
+   if ( C->EnsCompo.periodic == ON ) BC->InnerPBCperiodic(w2, bcd);
+   //TIMING_stop(tm_poi_BC, 0.0);
+   
+   
+   // 同期処理
+   SyncScalar(w2, 1);
+   
+   
+   // 収束判定
+   if ( Fcheck(var, b_l2, r0_l2) == true ) break;
+   
+   }
+   
+   lc = c;
+   printf("1st : itr=%d err=%e res=%e\n", lc, var[0], var[1]);
+   */
+  
+  src_1st_(w1, size, &guide, &dt, &dh, u_sum, b, &flop_count);
+  //src_2nd_(w1, size, &guide, &dh, b, w2, &flop_count);
+  
+  
+  for (c=1; c<getMaxIteration(); c++)
+  {
+    var[0] = 0.0; // 誤差
+    var[1] = 0.0; // 残差
+    var[2] = 0.0; // 解
+    
+    // 反復処理
+    //TIMING_start(tm_poi_PSOR);
+    flop_count = 0.0;
+    psor_(x, size, &guide, &omg, var, w1, bcp, &flop_count);
+    //TIMING_stop(tm_poi_PSOR, flop_count);
+    
+    
+    // 境界条件
+    //TIMING_start(tm_poi_BC);
+    BC->OuterPBC(x, ensPeriodic);
+    if ( C->EnsCompo.periodic == ON ) BC->InnerPBCperiodic(x, bcd);
+    //TIMING_stop(tm_poi_BC, 0.0);
+    
+    
+    // 同期処理
+    SyncScalar(x, 1);
+    
+    
+    // 収束判定
+    if ( Fcheck(var, b_l2, r0_l2) == true ) break;
+    
+  }
+  
+  lc += c;
+  
+  return lc;
+}

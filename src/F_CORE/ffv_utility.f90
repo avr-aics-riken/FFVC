@@ -982,58 +982,287 @@ return
 end subroutine calc_rms_v
 
 
-
 !> ********************************************************************
-!! @brief PLOT3Dの座標出力
-!! @param [in]  x       座標データ
-!! @param [in]  y       座標データ
-!! @param [in]  z       座標データ
-!! @param [in]  iblank  IBLANKデータ
-!! @param [in]  sz      配列長
-!! @param [in]  g       ガイドセル長
-!! @param [in]  dh      格子幅
-!! @param [in]  org     基点
+!! @brief スカラ変数のガイドセルを調整してパックする
+!! @param [out]  iblk  IBLANK
+!! @param [in]   sz    配列長
+!! @param [in]   g     アロケート時のガイドセル長
+!! @param [in]   bcd   BCibdex D
+!! @param [in]   w     出力するガイドセル数
 !<
-subroutine plot3d_write_xyz(x, y, z, iblank, sz, g, dh, org)
+subroutine generate_iblank (iblk, sz, g, bcd, w)
 implicit none
 include 'ffv_f_params.h'
-integer                                                   :: idm, jdm, kdm, i, j, k, g, ix, jx, kx
-integer, dimension(3)                                     :: sz
-real, dimension(3)                                        :: org
-real                                                      :: dh
-real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    :: x, y, z
-integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) :: iblank
+integer                                                   ::  i, j, k, ix, jx, kx, g, w, bd
+integer, dimension(3)                                     ::  sz
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bcd
+integer, dimension(1-w:sz(1)+w, 1-w:sz(2)+w, 1-w:sz(3)+w) ::  iblk
 
 ix = sz(1)
 jx = sz(2)
 kx = sz(3)
 
-idm = ix + 2*g
-jdm = jx + 2*g
-kdm = kx + 2*g
+!$OMP PARALLEL &
+!$OMP PRIVATE(i, j, k) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, w)
 
-do k=1-g, kx+g
-do j=1-g, jx+g
-do i=1-g, ix+g
-  x(i,j,k) = org(1) + (i-0.5)*dh
-  y(i,j,k) = org(2) + (j-0.5)*dh
-  z(i,j,k) = org(3) + (k-0.5)*dh
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1-w, kx+w
+do j=1-w, jx+w
+do i=1-w, ix+w
+  iblk(i,j,k) = 0
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+
+!$OMP PARALLEL &
+!$OMP PRIVATE(i, j, k, bd) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, w)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1-w, kx+w
+do j=1-w, jx+w
+do i=1-w, ix+w
+  bd = bcd(i,j,k)
+  if ( ibits(bd, Active, 1) == 1 ) then
+
+    if ( ibits(bd, State, 1) == 1 ) then
+       iblk(i,j,k) = 1  ! Fluid >> 1
+    else
+       iblk(i,j,k) = 2  ! Solid >> 2
+    end if
+
+  else
+    iblk(i,j,k) = 0  ! Inactive >> 0
+  end if
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine generate_iblank
+
+
+!> ********************************************************************
+!! @brief スカラ変数のガイドセルを調整してパックする
+!! @param [out]  dst   出力先
+!! @param [in]   sz    配列長
+!! @param [in]   g     アロケート時のガイドセル長
+!! @param [in]   src   入力
+!! @param [in]   w     出力するガイドセル数
+!<
+subroutine pack_scalar (dst, sz, g, src, w)
+implicit none
+integer                                                   ::  i, j, k, ix, jx, kx, g, w
+integer, dimension(3)                                     ::  sz
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  src
+real, dimension(1-w:sz(1)+w, 1-w:sz(2)+w, 1-w:sz(3)+w)    ::  dst
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+!$OMP PARALLEL &
+!$OMP PRIVATE(i, j, k) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, w)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1-w, kx+w
+do j=1-w, jx+w
+do i=1-w, ix+w
+  dst(i,j,k) = src(i,j,k)
 end do
 end do
 end do
 
+!$OMP END DO
+!$OMP END PARALLEL
 
-open (unit=30, file='field0.xyz', form='unformatted')
-write(30) idm, jdm, kdm
-write(30) (((x(i,j,k),i=1-g,ix+g),j=1-g,jx+g),k=1-g,kx+g), &
-          (((y(i,j,k),i=1-g,ix+g),j=1-g,jx+g),k=1-g,kx+g), &
-          (((z(i,j,k),i=1-g,ix+g),j=1-g,jx+g),k=1-g,kx+g), &
-          (((iblank(i,j,k),i=1-g,ix+g),j=1-g,jx+g),k=1-g,kx+g)
+return
+end subroutine pack_scalar
+
+
+!> ********************************************************************
+!! @brief ベクタ変数のガイドセルを調整してパックする
+!! @param [out]  dst   出力先
+!! @param [in]   sz    配列長
+!! @param [in]   g     アロケート時のガイドセル長
+!! @param [in]   src   入力
+!! @param [in]   w     出力するガイドセル数
+!<
+subroutine pack_vector (dst, sz, g, src, w)
+implicit none
+integer                                                   ::  i, j, k, ix, jx, kx, g, w
+integer, dimension(3)                                     ::  sz
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  src
+real, dimension(1-w:sz(1)+w, 1-w:sz(2)+w, 1-w:sz(3)+w, 3) ::  dst
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+!$OMP PARALLEL &
+!$OMP PRIVATE(i, j, k) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, w)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1-w, kx+w
+do j=1-w, jx+w
+do i=1-w, ix+w
+dst(i,j,k,1) = src(i,j,k,1)
+dst(i,j,k,2) = src(i,j,k,2)
+dst(i,j,k,3) = src(i,j,k,3)
+end do
+end do
+end do
+
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine pack_vector
+
+
+!> ********************************************************************
+!! @brief スカラ変数のガイドセルを調整してアンパックする
+!! @param [out]  dst   出力先
+!! @param [in]   sz    配列長
+!! @param [in]   g     アロケート時のガイドセル長
+!! @param [in]   src   入力
+!! @param [in]   w     リスタートファイルに記録されたガイドセル数
+!<
+subroutine unpack_scalar (dst, sz, g, src, w)
+implicit none
+integer                                                   ::  i, j, k, ix, jx, kx, g, w
+integer, dimension(3)                                     ::  sz
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  dst
+real, dimension(1-w:sz(1)+w, 1-w:sz(2)+w, 1-w:sz(3)+w)    ::  src
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+!$OMP PARALLEL &
+!$OMP PRIVATE(i, j, k) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, w)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1-w, kx+w
+do j=1-w, jx+w
+do i=1-w, ix+w
+  dst(i,j,k) = src(i,j,k)
+end do
+end do
+end do
+
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine unpack_scalar
+
+
+!> ********************************************************************
+!! @brief ベクタ変数のガイドセルを調整してアンパックする
+!! @param [out]  dst   出力先
+!! @param [in]   sz    配列長
+!! @param [in]   g     アロケート時のガイドセル長
+!! @param [in]   src   入力
+!! @param [in]   w     リスタートファイルに記録されたガイドセル数
+!<
+subroutine unpack_vector (dst, sz, g, src, w)
+implicit none
+integer                                                   ::  i, j, k, ix, jx, kx, g, w
+integer, dimension(3)                                     ::  sz
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  dst
+real, dimension(1-w:sz(1)+w, 1-w:sz(2)+w, 1-w:sz(3)+w, 3) ::  src
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+!$OMP PARALLEL &
+!$OMP PRIVATE(i, j, k) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, w)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1-w, kx+w
+do j=1-w, jx+w
+do i=1-w, ix+w
+dst(i,j,k,1) = src(i,j,k,1)
+dst(i,j,k,2) = src(i,j,k,2)
+dst(i,j,k,3) = src(i,j,k,3)
+end do
+end do
+end do
+
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine unpack_vector
+
+
+
+!> ********************************************************************
+!! @brief PLOT3D function format出力
+!! @param [out]  buf   出力バッファ
+!! @param [in]   sz    配列長
+!! @param [in]   g     出力ガイドセル長
+!! @param [in]   nvar  ブロック数
+!! @param [in]   fname filename
+!<
+subroutine read_plot3d (buf, sz, g, nvar, fname)
+implicit none
+integer                                                  ::  i, j, k, ix, jx, kx, g, n, nx, nvar
+integer, dimension(3)                                    ::  sz
+real, dimension(sz(1)+2*g, sz(2)+2*g, sz(3)+2*g, nvar)   ::  buf
+character*256                                            ::  fname
+
+open(unit=30, file=fname, form='unformatted')
+read(30) ix, jx, kx, nx
+if ( (ix /= sz(1)+2*g) .or. (jx /= sz(2)+2*g) .or. (kx /= sz(3)+2*g) .or. (nx /= nvar) ) then
+write(*,*) 'Read header error'
+stop
+end if
+read(30) ((((buf(i,j,k,n),i=1,ix),j=1,jx),k=1,kx),n=1,nx)
 close(unit=30)
 
 return
-end subroutine plot3d_write_xyz
+end subroutine read_plot3d
 
+
+!> ********************************************************************
+!! @brief PLOT3D function format出力
+!! @param [out]  buf   出力バッファ
+!! @param [in]   sz    配列長
+!! @param [in]   g     出力ガイドセル長
+!! @param [in]   nx    ブロック数
+!! @param [in]   fname filename
+!<
+subroutine write_plot3d (buf, sz, g, nx, fname)
+implicit none
+integer                                                  ::  i, j, k, ix, jx, kx, g, n, nx
+integer, dimension(3)                                    ::  sz
+real, dimension(sz(1)+2*g, sz(2)+2*g, sz(3)+2*g, nx)     ::  buf
+character*256                                            ::  fname
+
+ix = sz(1)+2*g
+jx = sz(2)+2*g
+kx = sz(3)+2*g
+
+open(unit=30, file=fname, form='unformatted')
+write(30) ix, jx, kx, nx
+write(30) ((((buf(i,j,k,n),i=1,ix),j=1,jx),k=1,kx),n=1,nx)
+close(unit=30)
+
+return
+end subroutine write_plot3d
 
 
 !********************************************************************

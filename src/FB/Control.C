@@ -3077,52 +3077,32 @@ void Control::printSteerConditions(FILE* fp,
   fprintf(fp, "\n\tDerived variables\n");
   
   //　全圧の出力モード
-  if ( varState[var_TotalP] == ON )
-  {
-    fprintf(fp,"\t     Total Pressure           :   ON\n");
-  }
-  else
-  {
-    fprintf(fp,"\t     Total Pressure           :   OFF\n");
-  }
+  fprintf(fp,"\t     Total Pressure           :   ");
+  fprintf(fp, ( varState[var_TotalP] == ON ) ? "ON\n" : "OFF\n");
   
   //　渦度の出力モード
-  if ( varState[var_Vorticity] == ON )
-  {
-    fprintf(fp,"\t     Vorticity                :   ON\n");
-  }
-  else
-  {
-    fprintf(fp,"\t     Vorticity                :   OFF\n");
-  }
+  fprintf(fp,"\t     Vorticity                :   ");
+  fprintf(fp, ( varState[var_Vorticity] == ON ) ? "ON\n" : "OFF\n");
   
   //　ヘリシティの出力モード
-  if ( varState[var_Helicity] == ON )
-  {
-    fprintf(fp,"\t     Helicity                 :   ON\n");
-  }
-  else
-  {
-    fprintf(fp,"\t     Helicity                 :   OFF\n");
-  }
+  fprintf(fp,"\t     Helicity                 :   ");
+  fprintf(fp, ( varState[var_Helicity] == ON ) ? "ON\n" : "OFF\n");
   
   //　速度勾配テンソルの第二不変量の出力モード
-  if ( varState[var_Qcr] == ON ) {
-    fprintf(fp,"\t     2nd Invariant of VGT     :   ON\n");
-  }
-  else
-  {
-    fprintf(fp,"\t     2nd Invariant of VGT     :   OFF\n");
-  }
+  fprintf(fp,"\t     2nd Invariant of VGT     :   ");
+  fprintf(fp, ( varState[var_Qcr] == ON ) ? "ON\n" : "OFF\n");
   
   //　発散値
-  if ( varState[var_Div] == ON ) {
-    fprintf(fp,"\t     Divergence               :   ON\n");
-  }
-  else
-  {
-    fprintf(fp,"\t     Divergence               :   OFF\n");
-  }
+  fprintf(fp,"\t     Divergence               :   ");
+  fprintf(fp, ( varState[var_Div] == ON ) ? "ON\n" : "OFF\n");
+
+  //　RMS
+  fprintf(fp,"\t     RMS of velocity          :   ");
+  fprintf(fp, ( varState[var_RmsV] == ON ) ? "ON\n" : "OFF\n");
+  
+  //　RMSmean
+  fprintf(fp,"\t     RMS Mean of velocity     :   ");
+  fprintf(fp, ( varState[var_RmsMeanV] == ON ) ? "ON\n" : "OFF\n");
   
   
   // Driver ------------------

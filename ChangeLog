@@ -19,6 +19,33 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-11-05
+r1649 CDMlib plot3d restart ok
+ - improve plot3d format in CDMlib-0.5.3
+ - d_iobuf was examined
+ - confirm restart by plot3d format
+
+--------------------------
+2014-11-01
+r1648 CDMlib plot3d restart
+ - extract_scalar()/_vector()
+ - pack_to_buffer_(), unapck_from_buffer_()
+
+
+--------------------------
+2014-11-01
+r1647 CDMlib plot3d branch test
+ - XYZ file, Iblank option
+ - Control::GuideOut >> change input from "with/without" to the number
+
+
+--------------------------
+2014-10-31
+r1646 Experiment 4th div error
+ - PointSOR_4th(), src_1st_(), src_2nd(), src_trunc_()
+ - Currently, it does not give good result.
+
+--------------------------
 2014-10-31
 r1645 update LES
  - update_vec4_(), pvec_muscl_les_(), pvec_cental_les_(), calc_rms_v_(), perturb_u_?_()

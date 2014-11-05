@@ -289,13 +289,12 @@ void FALLOC::allocArray_Main(double &total, Control* C)
   
   
   // 割り当て
-  size_t dims[3], nx;
-  
+  size_t dims[3];
   dims[0] = (size_t)(size[0] + 2*guide);
   dims[1] = (size_t)(size[1] + 2*guide);
   dims[2] = (size_t)(size[2] + 2*guide);
   
-  nx = dims[0] * dims[1] * dims[2];
+  size_t nx = dims[0] * dims[1] * dims[2];
   
   
   d_vc = &d_io_buffer[0];
@@ -310,29 +309,6 @@ void FALLOC::allocArray_Main(double &total, Control* C)
     d_qbc= &d_io_buffer[nx*10];
   }
   
-  
-  /*
-  if ( !(d_vc = Alloc::Real_V3D(size, guide)) ) Exit(0);
-  total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
-
-  if ( !(d_v0 = Alloc::Real_V3D(size, guide)) ) Exit(0);
-  total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
-
-  if ( !(d_p0 = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= array_size * (double)sizeof(REAL_TYPE);
-  
-  if ( !(d_sq = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= array_size * (double)sizeof(REAL_TYPE);
-
-  if ( !(d_b = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= array_size * (double)sizeof(REAL_TYPE);
-   
-  if ( !(d_ie0 = Alloc::Real_S3D(size, guide)) ) Exit(0);
-  total+= array_size * (double)sizeof(REAL_TYPE);
-   
-  if ( !(d_qbc = Alloc::Real_S4D(size, guide, 6)) ) Exit(0);
-  total+= array_size * (double)sizeof(REAL_TYPE) * 6.0;
-  */
   
   
   // 渦度の出力指定がある，あるいは渦度関連のサンプリングがある場合にアロケート

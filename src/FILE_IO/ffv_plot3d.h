@@ -30,6 +30,15 @@
 class PLT3D : public IO_BASE {
   
 private:
+  
+  
+  size_t size_allocated; ///< ソルバーでアロケートされたスカラ配列のサイズ >> InitFileOut()で計算
+  size_t size_OutBuffer; ///< 出力時のバッファサイズ（スカラ配列）
+  size_t size_InBuffer;  ///< リスタート入力時のバッファサイズ
+  int XYZfile;           ///< XYZ fike出力オプション
+  int Iblank;            ///< PLOT3DのIBLANKオプション
+  
+  
   // 入力dfiファイルのプレフィックス
   string f_dfi_in_ins;
   string f_dfi_in_stat;
@@ -39,11 +48,11 @@ private:
   string f_dfi_out_stat;
   
   // InFile
-  cdm_DFI *DFI_IN_INS;      ///< Instantaneus field
+  cdm_DFI *DFI_IN_INS;       ///< Instantaneus field
   cdm_DFI *DFI_IN_STAT;      ///< Statistical field
   
   // OutFile
-  cdm_DFI *DFI_OUT_INS;     ///< Instantaneus field
+  cdm_DFI *DFI_OUT_INS;      ///< Instantaneus field
   cdm_DFI *DFI_OUT_STAT;     ///< Statistical field
   
   // ラベル名
@@ -67,17 +76,23 @@ private:
   string l_avr_velocity_x;
   string l_avr_velocity_y;
   string l_avr_velocity_z;
-  string l_vmean_x;
-  string l_vmean_y;
-  string l_vmean_z;
-  string l_rmsmean_x;
-  string l_rmsmean_y;
-  string l_rmsmean_z;
+  string l_rmsV_x;
+  string l_rmsV_y;
+  string l_rmsV_z;
+  string l_rmsmeanV_x;
+  string l_rmsmeanV_y;
+  string l_rmsmeanV_z;
   
   
 public:
   
   PLT3D() {
+    size_allocated = 0;
+    size_OutBuffer = 0;
+    size_InBuffer  = 0;
+    Iblank   = 0;
+    XYZfile  = 0;
+    
     // ファイル入出力
     DFI_IN_INS   = NULL;
     DFI_IN_STAT   = NULL;
@@ -108,12 +123,12 @@ public:
     l_avr_velocity_x  = "Avr_Velocity_X";
     l_avr_velocity_y  = "Avr_Velocity_Y";
     l_avr_velocity_z  = "Avr_Velocity_Z";
-    l_vmean_x   = "Vmean_X";
-    l_vmean_y   = "Vmean_Y";
-    l_vmean_z   = "Vmean_Z";
-    l_rmsmean_x = "Rms_mean_X";
-    l_rmsmean_y = "Rms_mean_Y";
-    l_rmsmean_z = "Rms_mean_Z";
+    l_rmsV_x   = "V_rms_X";
+    l_rmsV_y   = "V_rms_Y";
+    l_rmsV_z   = "V_rms_Z";
+    l_rmsmeanV_x = "V_rms_mean_X";
+    l_rmsmeanV_y = "V_rms_mean_Y";
+    l_rmsmeanV_z = "V_rms_mean_Z";
   }
   
   ~PLT3D() {
@@ -126,26 +141,9 @@ public:
  
 private:
   
-  /**
-   * @brief スカラデータをバッファから抜き出す
-   * @param [in]  blk  先頭ブロック数
-   * @apram [out] vec  スカラ配列
-   * @retval 次の先頭ブロック数
-   */
-  int extract_scalar(int blk, REAL_TYPE* scl);
   
-  
-  /**
-   * @brief ベクトルデータをバッファから抜き出す
-   * @param [in]  blk  先頭ブロック数
-   * @apram [out] vec  ベクトル配列
-   * @retval 次の先頭ブロック数
-   */
-  int extract_vector(int blk, REAL_TYPE* vec);
-  
-  
-  // @brief IBLANK ファイルを作成
-  void generateIBLANK();
+  // 固有のオプション
+  virtual void getInherentOption();
   
   
   /**
@@ -161,7 +159,18 @@ private:
                                     double& flop);
   
   
+  // 固有パラメータの表示
+  virtual void printSteerConditionsInherent(FILE* fp);
+  
+  
 public:
+  
+  // Iblankの利用の有無を返す
+  int getIblank() const
+  {
+    return Iblank;
+  }
+  
   
   // リスタートに必要なDFIファイルを取得
   virtual void getRestartDFI();

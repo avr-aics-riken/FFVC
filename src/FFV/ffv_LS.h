@@ -229,6 +229,22 @@ public:
   
   
   /**
+   * @brief 速度の発散の打ち切り誤差が4次となるSOR法
+   * @retval 反復数
+   * @param [in,out] x      解ベクトル
+   * @param [in]     b      RHS vector
+   * @param [in]     u_sum  \sum{u^*}
+   * @param [in]     w1     ワーク配列
+   * @param [in]     w2     ワーク配列
+   * @param [in]     dt     時間積分幅
+   * @param [in]     dh     格子幅
+   * @param [in]     b_l2   L2 norm of b vector
+   * @param [in]     r0_l2  初期残差ベクトルのL2ノルム
+   */
+  int PointSOR_4th(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE* u_sum, REAL_TYPE* w1, REAL_TYPE* w2, REAL_TYPE dt, REAL_TYPE dh, const double b_l2, const double r0_l2);
+  
+  
+  /**
    * @brief 2色オーダリングSORのストライドメモリアクセス版
    * @retval 反復数
    * @param [in,out] x       解ベクトル

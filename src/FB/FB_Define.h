@@ -428,6 +428,8 @@ enum Kind_of_vars {
   var_Vorticity,
   var_Qcr,
   var_Div,
+  var_RmsV,
+  var_RmsMeanV,
   var_END
 };
 
