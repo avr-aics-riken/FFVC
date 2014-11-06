@@ -544,7 +544,7 @@ void SPH::initFileOut()
       DFI_OUT_TEMPA->AddUnit("Pressure", UnitP, (double)C->BasePrs, DiffPrs, true);
       DFI_OUT_TEMP->AddUnit("Temperature", UnitT, (double)C->BaseTemp, (double)C->DiffTemp, true);
     }
-  }
+  } // statistic
   
   
   
@@ -722,7 +722,8 @@ void SPH::initFileOut()
     DFI_OUT_HLT->AddUnit("Pressure", UnitP, (double)C->BasePrs, DiffPrs, true);
   }
   
-  // Divergence for Debug
+  
+  // Divergence
   if ( C->varState[var_Div] == ON )
   {
     comp = 1;
@@ -763,7 +764,7 @@ void SPH::initFileOut()
     DFI_OUT_DIV->AddUnit("Velocity", UnitV, (double)C->RefVelocity);
     DFI_OUT_DIV->AddUnit("Pressure", UnitP, (double)C->BasePrs, DiffPrs, true);
   }
-  
+
 }
 
 
@@ -1004,6 +1005,8 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
   // エラーコード
   CDM::E_CDM_ERRORCODE ret;
   
+  // Velocity
+  REAL_TYPE unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
   
   
   if ( C->KindOfSolver != SOLID_CONDUCTION )
@@ -1054,8 +1057,6 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
     if( ret != CDM::E_CDM_SUCCESS ) Exit(0);
     
     
-    // Velocity
-    REAL_TYPE unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
     
     fb_vout_nijk_(d_wv, d_v, size, &guide, RF->getV00(), &unit_velocity, &flop);
     
@@ -1147,85 +1148,49 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
   }
   
   
-  
-  if ( !C->isHeatProblem() ) return;
-  
   // Tempearture
-  U.convArrayIE2Tmp(d_ws, size, guide, d_ie, d_bcd, mat_tbl, C->BaseTemp, C->DiffTemp, C->Unit.File, flop);
-  
-  fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
-  
-  if ( numProc > 1 )
+  if ( C->isHeatProblem() )
   {
-    min_tmp = f_min;
-    if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
     
-    max_tmp = f_max;
-    if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    U.convArrayIE2Tmp(d_ws, size, guide, d_ie, d_bcd, mat_tbl, C->BaseTemp, C->DiffTemp, C->Unit.File, flop);
+    
+    fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
+    
+    if ( numProc > 1 )
+    {
+      min_tmp = f_min;
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      
+      max_tmp = f_max;
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    }
+    minmax[0] = f_min;
+    minmax[1] = f_max;
+    
+    if ( !DFI_OUT_TEMP )
+    {
+      printf("[%d] DFI_OUT_TEMP Pointer Error\n", paraMngr->GetMyRankID());
+      Exit(-1);
+    }
+    
+    DFI_OUT_TEMP->setVariableName(0, "Temperature");
+    
+    ret = DFI_OUT_TEMP->WriteData(m_step,
+                                  m_time,
+                                  size,
+                                  1,
+                                  guide,
+                                  d_ws,
+                                  minmax,
+                                  true,
+                                  0,
+                                  0.0);
+    
+    if ( ret != CDM::E_CDM_SUCCESS ) Exit(0);
   }
-  minmax[0] = f_min;
-  minmax[1] = f_max;
   
-  if ( !DFI_OUT_TEMP )
-  {
-    printf("[%d] DFI_OUT_TEMP Pointer Error\n", paraMngr->GetMyRankID());
-    Exit(-1);
-  }
-  
-  DFI_OUT_TEMP->setVariableName(0, "Temperature");
-  
-  ret = DFI_OUT_TEMP->WriteData(m_step,
-                                m_time,
-                                size,
-                                1,
-                                guide,
-                                d_ws,
-                                minmax,
-                                true,
-                                0,
-                                0.0);
-  
-  if ( ret != CDM::E_CDM_SUCCESS ) Exit(0);
-  
-}
 
-
-// #################################################################
-// 派生変数のファイル出力
-// @note d_p0をワークとして使用
-void SPH::OutputDerivedVariables(const unsigned m_CurrentStep, const double m_CurrentTime, double& flop)
-{
-  REAL_TYPE scale = 1.0;
   
-  // ステップ数
-  unsigned m_step = m_CurrentStep;
-  
-  // 時間の次元変換
-  REAL_TYPE m_time;
-  if (C->Unit.File == DIMENSIONAL)
-  {
-    m_time = (REAL_TYPE)(m_CurrentTime * C->Tscale);
-  }
-  else
-  {
-    m_time = (REAL_TYPE)m_CurrentTime;
-  }
-  
-  // ガイドセル出力
-  int gc_out = C->GuideOut;
-  
-  
-  // 最大値と最小値
-  REAL_TYPE f_min, f_max, min_tmp, max_tmp, vec_min[4], vec_max[4];
-  REAL_TYPE minmax[2];
-  REAL_TYPE cdm_minmax[8];
-  
-  
-  // エラーコード
-  CDM::E_CDM_ERRORCODE ret;
-  
-  
-  REAL_TYPE unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
   
   
   // Total Pressure
@@ -1238,7 +1203,7 @@ void SPH::OutputDerivedVariables(const unsigned m_CurrentStep, const double m_Cu
     {
       U.convArrayTpND2D(d_ws, size, guide, C->RefDensity, C->RefVelocity);
     }
-
+    
     
     fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
     
@@ -1258,6 +1223,8 @@ void SPH::OutputDerivedVariables(const unsigned m_CurrentStep, const double m_Cu
       printf("[%d] DFI_OUT_TP Pointer Error\n",paraMngr->GetMyRankID());
       Exit(-1);
     }
+    
+    DFI_OUT_TP->setVariableName(0, "TotalPressure");
     
     ret = DFI_OUT_TP->WriteData(m_step,
                                 m_time,
@@ -1285,7 +1252,7 @@ void SPH::OutputDerivedVariables(const unsigned m_CurrentStep, const double m_Cu
     
     fb_vout_nijk_(d_iobuf, d_wv, size, &guide, vz, &unit_velocity, &flop);
     fb_minmax_vex_ (vec_min, vec_max, size, &guide, RF->getV00(), d_iobuf, &flop);
-
+    
     
     if ( numProc > 1 )
     {
@@ -1310,6 +1277,10 @@ void SPH::OutputDerivedVariables(const unsigned m_CurrentStep, const double m_Cu
     cdm_minmax[5] = vec_max[3]; ///<<< vec_w max
     cdm_minmax[6] = vec_min[0]; ///<<< u,v,wの合成値のmin
     cdm_minmax[7] = vec_max[0]; ///<<< u,v,wの合成値のmax
+    
+    DFI_OUT_VRT->setVariableName(0, "vrt_u");
+    DFI_OUT_VRT->setVariableName(1, "vrt_v");
+    DFI_OUT_VRT->setVariableName(2, "vrt_w");
     
     ret = DFI_OUT_VRT->WriteData(m_step,
                                  m_time,
@@ -1353,6 +1324,8 @@ void SPH::OutputDerivedVariables(const unsigned m_CurrentStep, const double m_Cu
       Exit(-1);
     }
     
+    DFI_OUT_I2VGT->setVariableName(0, "Qcriterion");
+    
     ret = DFI_OUT_I2VGT->WriteData(m_step,
                                    m_time,
                                    size,
@@ -1395,6 +1368,8 @@ void SPH::OutputDerivedVariables(const unsigned m_CurrentStep, const double m_Cu
       Exit(-1);
     }
     
+    DFI_OUT_HLT->setVariableName(0, "Helicity");
+    
     ret = DFI_OUT_HLT->WriteData(m_step,
                                  m_time,
                                  size,
@@ -1435,6 +1410,8 @@ void SPH::OutputDerivedVariables(const unsigned m_CurrentStep, const double m_Cu
       Exit(-1);
     }
     
+    DFI_OUT_DIV->setVariableName(0, "Divergence");
+    
     ret = DFI_OUT_DIV->WriteData(m_step,
                                  m_time,
                                  size,
@@ -1448,7 +1425,7 @@ void SPH::OutputDerivedVariables(const unsigned m_CurrentStep, const double m_Cu
     
     if( ret != CDM::E_CDM_SUCCESS ) Exit(0);
   }
-  
+
 }
 
 

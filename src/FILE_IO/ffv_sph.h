@@ -191,17 +191,6 @@ public:
                                     double& flop);
   
   
-  /**
-   * @brief 派生変数のファイル出力
-   * @param [in]     m_CurrentStep  CurrentStep
-   * @param [in]     m_CurrentTime  CurrentTime
-   * @param [in,out] flop           浮動小数点演算数
-   * @note d_p0をワークとして使用
-   */
-  virtual void OutputDerivedVariables(const unsigned m_CurrentStep,
-                                      const double m_CurrentTime,
-                                      double& flop);
-  
   
   /**
    * @brief リスタートプロセス

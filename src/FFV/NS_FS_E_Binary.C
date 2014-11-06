@@ -49,25 +49,27 @@ void FFV::NS_FS_E_Binary()
   LinearSolver* LSp = &LS[ic_prs1];  /// 圧力のPoisson反復
   LinearSolver* LSv = &LS[ic_vel1];  /// 粘性項のCrank-Nicolson反復
 
-  // point Data
+  // #### タイムステップ間で保持されるデータ ####
   // d_v   セルセンタ速度 v^n -> v^{n+1}
   // d_vf  セルフェイス速度
-  // d_v0  セルセンタ速度 v^nの保持
-  // d_vc  疑似速度ベクトル
-  // d_wv  ワーク　陰解法の時の疑似速度ベクトル，射影ステップの境界条件
   // d_p   圧力 p^n -> p^{n+1}
-  // d_p0  圧力 p^nの保持
-  // d_ws  Poissonのソース項0　速度境界を考慮
-  // d_sq  Poissonのソース項1　反復毎に変化するソース項，摩擦速度，
   // d_dv  発散値, div(u)の値を保持
-  // d_b   反復の右辺ベクトル
   // d_bcd IDのビットフラグ
   // d_bcp 圧力のビットフラグ
   // d_cdf Component Directional BC Flag
-  // d_cvf コンポーネントの体積率
   // d_ie0  内部エネルギー t^n
+  
+  // #### タイムステップ間で保持されるないテンポラリ ####
+  // d_v0  セルセンタ速度 v^nの保持
+  // d_vc  疑似速度ベクトル
+  // d_wv  陰解法の時の疑似速度ベクトル，射影ステップの境界条件
+  // d_p0  圧力 p^nの保持
+  // d_ws  Poissonのソース項0　速度境界を考慮
+  // d_sq  Poissonのソース項1　反復毎に変化するソース項，摩擦速度，
+  // d_b   反復の右辺ベクトル
+  // d_cvf コンポーネントの体積率
   // d_vt  LES計算の渦粘性係数
-  // d_ab0 Adams-Bashforth用のワーク
+  // d_ab0 Adams-Bashforth用のワークク
   
   
   // >>> Fractional step section
@@ -400,17 +402,6 @@ void FFV::NS_FS_E_Binary()
   // >>> Poisson Iteration section
   TIMING_start(tm_poi_itr_sct);
   
-  
-  // 流出境界条件のアップデート（u^{n+1}を先に）
-  for (int face=0; face<NOFACE; face++)
-  {
-    BoundaryOuter* T = BC.exportOBC(face);
-    
-    if ( T->getClass() == OBC_OUTFLOW )
-    {
-      vobc_cc_copy_(d_v, size, &guide, &face, d_vc, nID);
-    }
-  }
   
 
   

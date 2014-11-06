@@ -856,7 +856,7 @@ void SetBC3D::OuterVBCfacePrep(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_cdf, REAL
         case OBC_OUTFLOW:
           //vobc_cc_neumann_(d_vc, size, &gd, &face, nID);
           v_cnv = C->V_Dface[face];
-          vobc_cc_outflow_(d_vc, d_v, size, &gd, &dh, &dt, d_cdf, &v_cnv, &face, nID, &flop);
+          vobc_cc_outflow_(d_vc, d_v, size, &gd, &dh, &dt, d_cdf, &v_cnv, &face, nID);
           break;
           
         case OBC_INTRINSIC:

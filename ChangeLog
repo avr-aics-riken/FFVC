@@ -19,6 +19,12 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-11-06
+r1650 outflow condition modify
+ - vobc_cc_outflow_() exclude cell of OBC_MASK
+ - sph derived >> fix
+
+--------------------------
 2014-11-05
 r1649 CDMlib plot3d restart ok
  - improve plot3d format in CDMlib-0.5.3

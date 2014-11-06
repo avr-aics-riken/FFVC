@@ -843,20 +843,18 @@ end subroutine vobc_cc_copy
 !! @param [in]  v_cnv   対流流出速度
 !! @param [in]  m_face  外部境界の面番号
 !! @param [in]  nID     隣接ランク番号（nID[]<0の時外部境界面）
-!! @param [out] flop    浮動小数演算数
 !! @note 壁の場合には、OBC_MASKが設定されていないので、内部壁として認識される
 !!       u^nのガイドセルには，u^{n+1}の予測値を入れておく > {}^c \hat{u}_{ix+1}を {}^f \hat{u}_{ix}の計算に使う
 !<
-subroutine vobc_cc_outflow (vc, v0, sz, g, dh, dt, bv, v_cnv, m_face, nID, flop)
+subroutine vobc_cc_outflow (vc, v0, sz, g, dh, dt, bv, v_cnv, m_face, nID)
 implicit none
 include 'ffv_f_params.h'
-integer                                                     ::  i, j, k, g, face, ix, jx, kx, m, bvx, gc, m_face
+integer                                                     ::  i, j, k, g, face, ix, jx, kx, bvx, gc, m_face
 integer, dimension(3)                                       ::  sz
 real                                                        ::  Ue, Uw, Un, Us, Ut, Ub
 real                                                        ::  Ve, Vw, Vn, Vs, Vt, Vb
 real                                                        ::  We, Ww, Wn, Ws, Wt, Wb
 real                                                        ::  dh, dt, c, v_cnv, up, vp, wp
-double precision                                            ::  flop
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  vc, v0
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
 integer, dimension(0:5)                                     ::  nID
@@ -870,10 +868,8 @@ gc = g
 face = m_face
 
 c = v_cnv*dt/dh
-m = 0
 
 !$OMP PARALLEL &
-!$OMP REDUCTION(+:m) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, gc, c, face) &
 !$OMP PRIVATE(bvx, up, vp, wp, i, j, k)
 
@@ -888,7 +884,7 @@ if ( c>0.0 ) c=0.0
 do k=1,kx
 do j=1,jx
 bvx = bv(1, j, k)
-if ( ibits(bvx, bc_face_W, bitw_5) == obc_mask ) then
+if ( (ibits(bvx, State, 1) == id_fluid) .and. (ibits(bvx, bc_face_W, bitw_5) /= obc_mask) ) then
 
   Uw = v0(0, j  ,k  ,1)
   Vw = v0(0, j  ,k  ,2)
@@ -907,7 +903,6 @@ if ( ibits(bvx, bc_face_W, bitw_5) == obc_mask ) then
     v0(i, j, k, 3) = wp
   end do
 
-  m = m+1
 endif
 end do
 end do
@@ -923,7 +918,7 @@ if ( c<0.0 ) c=0.0
 do k=1,kx
 do j=1,jx
 bvx = bv(ix, j, k)
-if ( ibits(bvx, bc_face_E, bitw_5) == obc_mask ) then
+if ( (ibits(bvx, State, 1) == id_fluid) .and. (ibits(bvx, bc_face_E, bitw_5) /= obc_mask) ) then
 
   Ue = v0(ix+1,j  ,k  ,1)
   Ve = v0(ix+1,j  ,k  ,2)
@@ -942,7 +937,6 @@ if ( ibits(bvx, bc_face_E, bitw_5) == obc_mask ) then
     v0(i, j, k, 3) = wp
   end do
 
-  m = m+1
 endif
 end do
 end do
@@ -958,7 +952,7 @@ if ( c>0.0 ) c=0.0
 do k=1,kx
 do i=1,ix
 bvx = bv(i, 1, k)
-if ( ibits(bvx, bc_face_S, bitw_5) == obc_mask ) then
+if ( (ibits(bvx, State, 1) == id_fluid) .and. (ibits(bvx, bc_face_S, bitw_5) /= obc_mask) ) then
 
   Us = v0(i, 0, k, 1)
   Vs = v0(i, 0, k, 2)
@@ -977,7 +971,6 @@ if ( ibits(bvx, bc_face_S, bitw_5) == obc_mask ) then
     v0(i, j, k, 3) = wp
   end do
 
-  m = m+1
 endif
 end do
 end do
@@ -993,7 +986,7 @@ if ( c<0.0 ) c=0.0
 do k=1,kx
 do i=1,ix
 bvx = bv(i, jx, k)
-if ( ibits(bvx, bc_face_N, bitw_5) == obc_mask ) then
+if ( (ibits(bvx, State, 1) == id_fluid) .and. (ibits(bvx, bc_face_N, bitw_5) /= obc_mask) ) then
 
   Un = v0(i  ,jx+1,k  ,1)
   Vn = v0(i  ,jx+1,k  ,2)
@@ -1012,7 +1005,6 @@ if ( ibits(bvx, bc_face_N, bitw_5) == obc_mask ) then
     v0(i, j, k, 3) = wp
   end do
 
-  m = m+1
 endif
 end do
 end do
@@ -1028,7 +1020,7 @@ if ( c>0.0 ) c=0.0
 do j=1,jx
 do i=1,ix
 bvx = bv(i, j, 1)
-if ( ibits(bvx, bc_face_B, bitw_5) == obc_mask ) then
+if ( (ibits(bvx, State, 1) == id_fluid) .and. (ibits(bvx, bc_face_B, bitw_5) /= obc_mask) ) then
   Ub = v0(i  ,j  , 0,1)
   Vb = v0(i  ,j  , 0,2)
   Wb = v0(i  ,j  , 0,3)
@@ -1046,7 +1038,6 @@ if ( ibits(bvx, bc_face_B, bitw_5) == obc_mask ) then
     v0(i, j, k, 3) = wp
   end do
 
-  m = m+1
 endif
 end do
 end do
@@ -1062,7 +1053,7 @@ if ( c<0.0 ) c=0.0
 do j=1,jx
 do i=1,ix
 bvx = bv(i, j, kx)
-if ( ibits(bvx, bc_face_T, bitw_5) == obc_mask ) then
+if ( (ibits(bvx, State, 1) == id_fluid) .and. (ibits(bvx, bc_face_T, bitw_5) /= obc_mask) ) then
   Ut = v0(i  ,j  ,kx+1,1)
   Vt = v0(i  ,j  ,kx+1,2)
   Wt = v0(i  ,j  ,kx+1,3)
@@ -1080,7 +1071,6 @@ if ( ibits(bvx, bc_face_T, bitw_5) == obc_mask ) then
     v0(i, j, k, 3) = wp
   end do
 
-  m = m+1
 endif
 end do
 end do
@@ -1091,7 +1081,6 @@ end select FACES
 
 !$OMP END PARALLEL
 
-flop = flop + real(m*9)
 
 return
 end subroutine vobc_cc_outflow

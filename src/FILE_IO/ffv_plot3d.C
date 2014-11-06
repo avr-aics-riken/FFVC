@@ -93,43 +93,34 @@ void PLT3D::getInherentOption()
   // XYZファイル出力オプション
   label = "/Output/FormatOption/PLOT3D/XYZfile";
   
-  if ( tpCntl->chkLabel(label) )
+  if ( !tpCntl->getInspectedValue(label, str) )
   {
-    if ( tpCntl->getInspectedValue(label, str) )
-    {
-      if     ( !strcasecmp(str.c_str(), "on") )   XYZfile = ON;
-      else if( !strcasecmp(str.c_str(), "off") )  XYZfile = OFF;
-      else
-      {
-        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-        Exit(0);
-      }
-    }
-    else
-    {
-      Exit(0);
-    }
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Exit(0);
   }
+  if     ( !strcasecmp(str.c_str(), "on") )   XYZfile = ON;
+  else if( !strcasecmp(str.c_str(), "off") )  XYZfile = OFF;
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
   
   // IBLANKファイルを使うオプション
   label = "/Output/FormatOption/PLOT3D/IblankFile";
   
-  if ( tpCntl->chkLabel(label) )
+  if ( !tpCntl->getInspectedValue(label, str) )
   {
-    if ( tpCntl->getInspectedValue(label, str) )
-    {
-      if     ( !strcasecmp(str.c_str(), "on") )   Iblank = ON;
-      else if( !strcasecmp(str.c_str(), "off") )  Iblank = OFF;
-      else
-      {
-        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-        Exit(0);
-      }
-    }
-    else
-    {
-      Exit(0);
-    }
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  if     ( !strcasecmp(str.c_str(), "on") )   Iblank = ON;
+  else if( !strcasecmp(str.c_str(), "off") )  Iblank = OFF;
+  else
+  {
+    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+    Exit(0);
   }
 
 }

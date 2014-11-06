@@ -367,8 +367,7 @@ extern "C" {
                          int* bv,
                          REAL_TYPE* v_cnv,
                          int* m_face,
-                         int* nID,
-                         double* flop);
+                         int* nID);
   
   void vobc_cc_copy_ (REAL_TYPE* v,
                       int* sz,
