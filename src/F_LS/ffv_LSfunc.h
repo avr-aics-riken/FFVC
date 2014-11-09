@@ -162,35 +162,6 @@ extern "C" {
                        int* g,
                        double* flop);
   
-  void blas_calcr_    (REAL_TYPE* r,
-                       REAL_TYPE* p,
-                       REAL_TYPE* b,
-                       int* bp,
-                       int* sz,
-                       int* g);
-  
-  void blas_calcr2_   (REAL_TYPE* rr,
-                       REAL_TYPE* p,
-                       REAL_TYPE* b,
-                       int* bp,
-                       int* sz,
-                       int* g);
-  
-  void blas_calcax_   (REAL_TYPE* ap,
-                       REAL_TYPE* p,
-                       int* bp,
-                       int* sz,
-                       int* g);
-  
-  void blas_calcb_    (REAL_TYPE* b,
-                       REAL_TYPE* s_0,
-                       REAL_TYPE* s_1,
-                       int* bp,
-                       REAL_TYPE* dh,
-                       REAL_TYPE* dt,
-                       int* sz,
-                       int* g);
-  
   
   void blas_dot1_     (double* r,
                        REAL_TYPE* p,

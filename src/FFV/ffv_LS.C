@@ -759,14 +759,7 @@ int LinearSolver::PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const
   double flop = 0.0;
   
   TIMING_start("Blas_Clear");
-  FBUtility::initS3D(pcg_r , size, guide, 0.0);
-  FBUtility::initS3D(pcg_p , size, guide, 0.0);
-  FBUtility::initS3D(pcg_r0, size, guide, 0.0);
-  FBUtility::initS3D(pcg_p_, size, guide, 0.0);
   FBUtility::initS3D(pcg_q , size, guide, 0.0);
-  FBUtility::initS3D(pcg_s , size, guide, 0.0);
-  FBUtility::initS3D(pcg_s_, size, guide, 0.0);
-  FBUtility::initS3D(pcg_t_, size, guide, 0.0);
   TIMING_stop("Blas_Clear", 0.0, 8);
   
   TIMING_start("Blas_Residual");

@@ -20,6 +20,9 @@ REVISION HISTORY
 
 --------------------------
 2014-11-09
+r1562 improve PBiCGstab
+ - suppress initialization of arrays in PBiCGstab
+
 r1651 modify for PMlib-3.0.0
  - improve PBiCGstab algorithm
  - chnage policy of 2D limitation when 2D must be 1 layer in Z-direction (3 layers in the past)
