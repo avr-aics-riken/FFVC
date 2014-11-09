@@ -20,6 +20,8 @@ REVISION HISTORY
 
 --------------------------
 2014-11-09
+r1563 improve calcForce()
+
 r1562 improve PBiCGstab
  - suppress initialization of arrays in PBiCGstab
 

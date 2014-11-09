@@ -869,7 +869,7 @@
 !$OMP PRIVATE(pp, bd) &
 !$OMP PRIVATE(idw, ide, ids, idn, idb, idt)
 
-!$OMP DO SCHEDULE(static) COLLAPSE(2)
+!$OMP DO SCHEDULE(static) COLLAPSE(3)
 
   do k=ks,ke
   do j=js,je
@@ -903,7 +903,7 @@
 !$OMP END DO
 !$OMP END PARALLEL
 
-  cf = 2.0 * dh * dh
+  cf = dh * dh
   frc(1) = fx * cf
   frc(2) = fy * cf
   frc(3) = fz * cf

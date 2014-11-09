@@ -321,7 +321,9 @@ void FFV::gatherForce(REAL_TYPE* m_frc)
       }
       else
       {
-        memcpy(m_frc, vec, 3*sizeof(REAL_TYPE));
+        m_frc[0] = vec[0];
+        m_frc[1] = vec[1];
+        m_frc[2] = vec[2];
       }
     }
 
