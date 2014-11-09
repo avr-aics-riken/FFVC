@@ -295,7 +295,7 @@ public:
    * @param [in]     src   入力
    * @param [in]     scale スカラー倍数
    */
-  void copyS3D (REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE* src, const REAL_TYPE scale);
+  static void copyS3D (REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE* src, const REAL_TYPE scale);
   
   /**
    * @brief V3D配列のコピー
@@ -305,7 +305,7 @@ public:
    * @param [in]     src   入力
    * @param [in]     scale スカラー倍数
    */
-  void copyV3D (REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE* src, const REAL_TYPE scale);
+  static void copyV3D (REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE* src, const REAL_TYPE scale);
   
   
   /**
@@ -333,7 +333,7 @@ public:
    * @param [in]     guide ガイドセルサイズ
    * @param [in]     init  定数
    */
-  void initS3D (REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE init);
+  static void initS3D (REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE init);
   
   
   /**
@@ -343,7 +343,7 @@ public:
    * @param [in]     guide ガイドセルサイズ
    * @param [in]     init  定数
    */
-  void initS4DEX (REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE init);
+  static void initS4DEX (REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE init);
   
   
   // 階層ディレクトリの作成

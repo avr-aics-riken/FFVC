@@ -114,46 +114,40 @@ void FFV::ps_LS(LinearSolver* IC, const double b_l2, const double r0_l2)
   {
     case SOR:
       
-      // >>> Passive scalar Diffusion subsection 3
-      TIMING_start(tm_heat_diff_sct_3);
-      
       // 反復処理
-      TIMING_start(tm_heat_diff_PSOR);
+      TIMING_start("Thermal_Diff_PSOR");
       
       flop = 0.0;
       res = ps_Diff_SM_PSOR(d_ie, b2, dt, d_qbc, d_bcd, d_ws, IC, flop);
       
-      TIMING_stop(tm_heat_diff_PSOR, flop);
+      TIMING_stop("Thermal_Diff_PSOR", flop);
       
       // 外部周期境界条件
-      TIMING_start(tm_heat_diff_OBC);
+      TIMING_start("Thermal_Diff_OBC_Face");
       BC.OuterTBCperiodic(d_ie, ensPeriodic);
-      TIMING_stop(tm_heat_diff_OBC, 0.0);
+      TIMING_stop("Thermal_Diff_OBC_Face", 0.0);
       
       // 温度の同期
       if ( numProc > 1 )
       {
-        TIMING_start(tm_heat_update_comm);
+        TIMING_start("Sync_Thermal_Update");
         if ( paraMngr->BndCommS3D(d_ie, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-        TIMING_stop(tm_heat_update_comm, face_comm_size*guide);
+        TIMING_stop("Sync_Thermal_Update", face_comm_size*guide*sizeof(REAL_TYPE));
       }
       
       // 残差の集約
       if ( numProc > 1 )
       {
-        TIMING_start(tm_heat_diff_res_comm);
+        TIMING_start("A_R_Thermal_Diff_Res");
         REAL_TYPE tmp_wk[2], m_tmp[2];
         tmp_wk[0] = m_tmp[0] = res;
         tmp_wk[1] = m_tmp[1] = b2;
         if ( paraMngr->Allreduce(tmp_wk, m_tmp, 2, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-        TIMING_stop(tm_heat_diff_res_comm, 2.0*numProc*2.0*sizeof(REAL_TYPE) );
+        TIMING_stop("A_R_Thermal_Diff_Res", 2.0*numProc*2.0*sizeof(REAL_TYPE) );
         
         res = sqrt( m_tmp[0] ); // 残差のRMS
         b2  = sqrt( m_tmp[1] ); // ソースベクトルのRMS
       }
-      
-      TIMING_stop(tm_heat_diff_sct_3, 0.0);
-      // <<< Passive scalar Diffusion subsection 3
       break;
 
     default:
@@ -163,21 +157,22 @@ void FFV::ps_LS(LinearSolver* IC, const double b_l2, const double r0_l2)
   }
   
   // Residual resを上書き
-  TIMING_start(tm_poi_src_nrm);
-  res = 0.0;
-  flop = 0.0;
+  //TIMING_start(tm_poi_src_nrm);
+  //res = 0.0;
+  //flop = 0.0;
   //poi_residual_(&res, size, &guide, d_p, d_ws, d_bcp, &flop);
-  TIMING_stop(tm_poi_src_nrm, flop);
+  //TIMING_stop(tm_poi_src_nrm, flop);
   
   if ( numProc > 1 )
   {
-    TIMING_start(tm_poi_src_comm);
+    TIMING_start("All_Reduce");
     double m_tmp = res;
     if ( paraMngr->Allreduce(&m_tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-    TIMING_stop(tm_poi_src_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
+    TIMING_stop("All_Reduce", 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
   }
   
   res = sqrt(res);
+  
   
   // 残差の保存
   double ErrEPS = IC->getErrCriterion();

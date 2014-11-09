@@ -23,22 +23,36 @@
 
 #include "cpm_ParaManager.h"
 
-#include "../FB/FB_Define.h"
-#include "../FB/DomainInfo.h"
-#include "../FB/IterationControl.h"
-#include "../FB/Control.h"
-#include "../F_CORE/ffv_Ffunc.h"
-#include "../F_LS/ffv_LSfunc.h"
+#include "FB_Define.h"
+#include "DomainInfo.h"
+#include "IterationControl.h"
+#include "Control.h"
+#include "ffv_Ffunc.h"
+#include "ffv_LSfunc.h"
 #include "ffv_SetBC.h"
+#include "FBUtility.h"
 
+// FX10 profiler
+#if defined __K_FPCOLL
+#include "fjcoll.h"
+#elif defined __FX_FAPP
+#include "fj_tool/fjcoll.h"
+#endif
+
+#include "PerfMonitor.h"
+
+using namespace pm_lib;
 
 class LinearSolver : public DomainInfo, public IterationCtl {
   
 private:
   int ensPeriodic[3];
+  int ModeTiming;    ///< タイミング測定管理フラグ
+  double face_comm_size; ///< 通信量
   
   Control* C;        ///< Controlクラス
   SetBC3D* BC;       ///< BCクラス
+  PerfMonitor* PM;   ///< PerfMonitor class
   int* bcp;          ///< BCindex P
   int* bcd;          ///< BCindex ID
   REAL_TYPE* pni;    ///< coef fot naive implementation test
@@ -64,6 +78,7 @@ public:
   LinearSolver() : DomainInfo(), IterationCtl() {
     C   = NULL;
     BC  = NULL;
+    PM  = NULL;
     bcp = NULL;
     bcd = NULL;
     pni = NULL;
@@ -79,6 +94,9 @@ public:
     cf_x = NULL;
     cf_y = NULL;
     cf_z = NULL;
+    
+    ModeTiming = 0;
+    face_comm_size = 0.0;
     
     for (int i=0; i<3; i++)
     {
@@ -105,7 +123,7 @@ protected:
   
   
   /**
-   * @brief Fdot1
+   * @brief Fdot for 1 array
    * @retval  内積値
    * @param [in]   x   vector1
    */
@@ -113,7 +131,7 @@ protected:
   
   
   /**
-   * @brief Fdot2
+   * @brief Fdot for 2 arrays
    * @retval  内積値
    * @param [in]   x   vector1
    * @param [in]   y   vector2
@@ -129,13 +147,6 @@ protected:
   void Preconditioner(REAL_TYPE* x, REAL_TYPE* b);
   
   
-  /**
-   * @brief Smoother
-   * @param [in,out] x    解ベクトル
-   * @param [in]     b    RHS vector
-   */
-  void Smoother(REAL_TYPE* x, REAL_TYPE* b);
-  
   
   /**
    * @brief 反復の同期処理
@@ -143,41 +154,60 @@ protected:
    * @param [in]     num_layer 通信の袖数
    */
   void SyncScalar(REAL_TYPE* d_class, const int num_layer);
+
   
   
-  int Fpreconditioner(REAL_TYPE* x, REAL_TYPE* b);
-  void Fsmoother(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE omg);
-  void Fdot(REAL_TYPE* xy, REAL_TYPE* x, REAL_TYPE* y);
+  /**
+   * @brief タイミング測定開始
+   * @param [in] key ラベル
+   */
+  inline void TIMING_start(const string key)
+  {
+    // PMlib Intrinsic profiler
+    TIMING__ PM->start(key);
+    
+    const char* s_label = key.c_str();
+    
+    // Venus FX profiler
+#if defined __K_FPCOLL
+    start_collection( s_label );
+#elif defined __FX_FAPP
+    fapp_start( s_label, 0, 0);
+#endif
+  }
+  
+  
+  /**
+   * @brief タイミング測定終了
+   * @param [in] key             ラベル
+   * @param [in] flopPerTask    「タスク」あたりの計算量/通信量(バイト) (ディフォルト0)
+   * @param [in] iterationCount  実行「タスク」数 (ディフォルト1)
+   */
+  inline void TIMING_stop(const string key, double flopPerTask=0.0, int iterationCount=1)
+  {
+    // Venus FX profiler
+    const char* s_label = key.c_str();
+    
+#if defined __K_FPCOLL
+    stop_collection( s_label );
+#elif defined __FX_FAPP
+    fapp_stop( s_label, 0, 0);
+#endif
+    
+    // PMlib Intrinsic profiler
+    TIMING__ PM->stop(key, flopPerTask, (unsigned)iterationCount);
+  }
   
   
 public:
   
   /**
-   * @brief  BiCGstab
-   * @retval 反復数
-   * @param [in,out] x       解ベクトル
-   * @param [in]     b       RHS vector
-   * @param [in]     b_l2    L2 norm of b vector
-   * @param [in]     r0_l2   初期残差ベクトルのL2ノルム
-   */
-  int BiCGstab(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2);
-  
-  
-  /**
-   * @brief  PBiCGstab
-   * @retval 反復数
-   * @param [in,out] x       解ベクトル
-   * @param [in]     b       RHS vector
-   * @param [in]     b_l2    L2 norm of b vector
-   * @param [in]     r0_l2   初期残差ベクトルのL2ノルム
-   */
-  int PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2);
-  
-  
-  /**
    * @brief 初期化
    * @param [in]  C      Controlクラス
    * @param [in]  BC     SetBC3Dクラス
+   * @param [in]  ModeT  タイミング測定モード
+   * @param [in]  f_comm 通信量
+   * @param [in]  PM     PerfMonitorクラス
    * @param [in]  bcp    BCindex P
    * @param [in]  bcd    BCindex ID
    * @param [in]  pni    array for naive implementation
@@ -198,6 +228,9 @@ public:
    */
   void Initialize(Control* C,
                   SetBC3D* BC,
+                  int ModeT,
+                  double f_comm,
+                  PerfMonitor* PM,
                   int* bcp,
                   int* bcd,
                   REAL_TYPE* pni,
@@ -244,25 +277,41 @@ public:
   int PointSOR_4th(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE* u_sum, REAL_TYPE* w1, REAL_TYPE* w2, REAL_TYPE dt, REAL_TYPE dh, const double b_l2, const double r0_l2);
   
   
+  
+  /**
+   * @brief Residual Cut SOR法
+   * @retval 反復数
+   * @param [in,out] x       解ベクトル
+   * @param [in]     poi_rhs RHS vector of Poisson
+   * @param [in]     b       RHS of Ax=b
+   * @param [in]     bcp     BCindex P
+   * @param [in]     r0_l2   初期残差ベクトルのL2ノルム
+   */
+  int RC_sor(REAL_TYPE* x, REAL_TYPE* pos_rhs, REAL_TYPE* b, int* bcp, const double r0_l2);
+  
+  
   /**
    * @brief 2色オーダリングSORのストライドメモリアクセス版
    * @retval 反復数
-   * @param [in,out] x       解ベクトル
-   * @param [in]     b       RHS vector
-   * @param [in]     itrMax  反復最大値
-   * @param [in]     b_l2    L2 norm of b vector
-   * @param [in]     r0_l2   初期残差ベクトルのL2ノルム
+   * @param [in,out] x              解ベクトル
+   * @param [in]     b              RHS vector
+   * @param [in]     itrMax         反復最大値
+   * @param [in]     b_l2           L2 norm of b vector
+   * @param [in]     r0_l2          初期残差ベクトルのL2ノルム
+   * @param [in]     converge_check 収束判定を行う(true)
    */
-  int SOR2_SMA(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const double b_l2, const double r0_l2);
+  int SOR2_SMA(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const double b_l2, const double r0_l2, bool converge_check=true);
   
 
   /**
-   * @brief FGMRES
-   * @param [in]     IC      IterationCtlクラス
-   * @param [in]     rhs_nrm RHS vectorのL2ノルム
-   * @param [in]     r0      初期残差ベクトル
+   * @brief 前処理つきBiCGstab
+   * @retval 反復数
+   * @param [in,out] x       解ベクトル
+   * @param [in]     b       RHS vector
+   * @param [in]     b_l2    L2 norm of b vector
+   * @param [in]     r0_l2   初期残差ベクトルのL2ノルム
    */
-  //void Fgmres(IterationCtl* IC, const double rhs_nrm, const double r0);
+  int PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2);
   
   
   /**

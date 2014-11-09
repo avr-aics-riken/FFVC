@@ -169,7 +169,7 @@ int FFV::Initialize(int argc, char **argv)
   if ( C.Mode.Profiling != OFF )
   {
     ModeTiming = ON;
-    TIMING__ PM.initialize( tm_END );
+    TIMING__ PM.initialize( PM_NUM_MAX );
     TIMING__ PM.setRankInfo( paraMngr->GetMyRankID() );
     TIMING__ PM.setParallelMode(str_para, C.num_thread, C.num_process);
     set_timing_label();
@@ -177,12 +177,13 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // タイミング測定開始
-  TIMING_start(tm_init_sct); 
+  TIMING_start("Initialization_Section");
   
   
   
   // 前処理に用いるデータクラスのアロケート -----------------------------------------------------
-  TIMING_start(tm_init_alloc);
+  TIMING_start("Allocate_Arrays");
+  
   
   // 配列アロケート前に一度コール
   setArraySize();
@@ -194,11 +195,11 @@ int FFV::Initialize(int argc, char **argv)
     Hostonly_ printf("\n\t << Extra arrays are allocated for Naive implementation. >>\n\n");
     allocArray_Naive(TotalMemory);
   }
-  TIMING_stop(tm_init_alloc);
+  TIMING_stop("Allocate_Arrays");
   
 
   
-  TIMING_start(tm_voxel_prep_sct);
+  TIMING_start("Voxel_Prep_Section");
   
   
   // 各問題に応じてモデルを設定 >> Polylib + Cutlib
@@ -259,8 +260,9 @@ int FFV::Initialize(int argc, char **argv)
       fprintf(fp,"\t>> Water Tightening Process\n\n");
     }
     
+    TIMING_start("WaterTightning");
     WaterTightening(fp);
-    
+    TIMING_stop("WaterTightning");
     
     // Sub-sampling
     Hostonly_
@@ -271,7 +273,9 @@ int FFV::Initialize(int argc, char **argv)
       fprintf(fp,"\t>> Sub-sampling Process\n\n");
     }
     
+    TIMING_start("SubSampling");
     SubSampling(fp);
+    TIMING_stop("SubSampling");
   }
   
   
@@ -284,7 +288,9 @@ int FFV::Initialize(int argc, char **argv)
     fprintf(fp,"\t>> Fill\n\n");
   }
 
+  TIMING_start("Fill");
   fill(fp);
+  TIMING_stop("Fill");
   
 
   // 全周カットのあるセルを固体セルIDで埋める > fill()で埋められているので不要．
@@ -324,9 +330,9 @@ int FFV::Initialize(int argc, char **argv)
   // HEX/FANコンポーネントの形状情報からBboxと体積率を計算
   if ( C.EnsCompo.fraction )
   {
-    TIMING_start(tm_init_alloc);
+    TIMING_start("Allocate_Arrays");
     allocArray_CompoVF(PrepMemory, TotalMemory);
-    TIMING_stop(tm_init_alloc); 
+    TIMING_stop("Allocate_Arrays");
     
     setComponentVF();
   }
@@ -352,7 +358,9 @@ int FFV::Initialize(int argc, char **argv)
 
   
   // BCIndexにビット情報をエンコードとコンポーネントインデクスの再構築
+  TIMING_start("Encode_BCindex");
   encodeBCindex(fp);
+  TIMING_stop("Encode_BCindex");
 
 
 
@@ -365,13 +373,15 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // 体積力を使う場合のコンポーネント配列の確保
-  TIMING_start(tm_init_alloc);
+  TIMING_start("Allocate_Arrays");
   allocArray_Forcing(PrepMemory, TotalMemory, fp, &C, cmp);
-  TIMING_stop(tm_init_alloc); 
+  TIMING_stop("Allocate_Arrays");
   
 
   // コンポーネントの体積率を8bitで量子化し，圧力損失コンポの場合にはFORCING_BITをON > bcdにエンコード
+  TIMING_start("Compo_Fraction");
   V.setCmpFraction(cmp, d_bcd, d_cvf);
+  TIMING_stop("Compo_Fraction");
 
 
 
@@ -459,18 +469,21 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // 各ノードの領域情報をファイル出力
+  TIMING_start("Gather_DomainInfo");
   gatherDomainInfo();
-  
+  TIMING_stop("Gather_DomainInfo");
   
   
   // 交点のグリフを出力
   if ( C.Hide.GlyphOutput != OFF )
   {
+    TIMING_start("Generate_Glyph");
     generateGlyph(d_cut, d_bid, fp);
+    TIMING_stop("Generate_Glyph");
   }
   
   
-  TIMING_stop(tm_voxel_prep_sct);
+  TIMING_stop("Voxel_Prep_Section");
   // ここまでが準備の時間セクション
   
   
@@ -486,7 +499,9 @@ int FFV::Initialize(int argc, char **argv)
   // SamplingでHelicityあるいはVorticityが指定されている場合には，Vorticityの配列を使う
   if ( MO.getStateVorticity() ) C.varState[var_Vorticity] = ON;
   
+  TIMING_start("Allocate_Arrays");
   allocate_Main(TotalMemory);
+  TIMING_stop("Allocate_Arrays");
   
   
 
@@ -525,11 +540,9 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // リスタートモードの選択と瞬時値のリスタート
-  TIMING_start(tm_restart);
-  
+  TIMING_start("Restart_Process");
   F->Restart(fp, CurrentStep, CurrentTime);
-  
-  TIMING_stop(tm_restart);
+  TIMING_stop("Restart_Process");
   
   
   // 制御インターバルの初期化
@@ -539,9 +552,9 @@ int FFV::Initialize(int argc, char **argv)
   // 統計値のリスタート
   if ( C.Mode.StatisticRestart == ON )
   {
-    TIMING_start(tm_restart);
+    TIMING_start("Restart_Process");
     F->RestartStatistic(fp, CurrentStep, CurrentTime, CurrentStepStat, CurrentTimeStat, flop_task);
-    TIMING_stop(tm_restart);
+    TIMING_stop("Restart_Process");
   }
   
 
@@ -651,11 +664,7 @@ int FFV::Initialize(int argc, char **argv)
   Hostonly_ if ( fp ) fclose(fp);
   
   
-  // 通信量を計算する
-  face_comm_size = count_comm_size(size, 1);
-  
-  
-  TIMING_stop(tm_init_sct);
+  TIMING_stop("Initialization_Section");
   
   // チェックモードの場合のコメント表示，前処理のみで中止---------------------------------------------------------
   if ( C.CheckParam == ON)
@@ -678,7 +687,6 @@ int FFV::Initialize(int argc, char **argv)
  */
 void FFV::allocate_Main(double &total)
 {
-  TIMING_start(tm_init_alloc);
   allocArray_Main(total, &C);
   
   if ( C.LES.Calc == ON )
@@ -706,8 +714,6 @@ void FFV::allocate_Main(double &total)
     
     if ( C.isHeatProblem() ) C.varState[var_TemperatureAvr] = true;
   }
-  
-  TIMING_stop(tm_init_alloc);
 }
 
 
@@ -1954,13 +1960,14 @@ int FFV::getDomainInfo(TextParser* tp_dom)
 
 
   // 2D check
-  if ( (Ex->mode == Intrinsic::dim_2d) && (G_size[2] != 3) )
+  if ( (Ex->mode == Intrinsic::dim_2d) && (G_size[2] != 1) )
   {
     Hostonly_ {
-      printf("\tError : In case of 2 dimensional problem, kmax must be 3 >> %d.\n", G_size[2]);
+      printf("\tError : In case of 2 dimensional problem, kmax must be 1 >> %d.\n", G_size[2]);
       Exit(0);
     }
   }
+
   
   // 偶数のチェック
   if ( Ex->even == ON )
@@ -2331,9 +2338,6 @@ void FFV::minDistance(const float* cut, const int* bid, FILE* fp)
   int kx = size[2];
   int gd = guide;
   
-  
-  TIMING_start(tm_cut_min);
-  
 #pragma omp parallel firstprivate(ix, jx, kx, gd)
   {
     float th_min = 1.0;
@@ -2374,8 +2378,6 @@ void FFV::minDistance(const float* cut, const int* bid, FILE* fp)
     float tmp = global_min;
     if ( paraMngr->Allreduce(&tmp, &global_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
   }
-  
-  TIMING_stop(tm_cut_min);
   
   Hostonly_
   {
@@ -2691,15 +2693,15 @@ void FFV::setComponentVF()
       cmp[n].setEnsLocal(ON);
       
       // 体積率
-      TIMING_start(tm_cmp_vertex8);
+      TIMING_start("Compo_Vertex8");
       flop = 0.0;
       CF.vertex8(f_st, f_ed, d_cvf, flop);
-      TIMING_stop(tm_cmp_vertex8, flop);
+      TIMING_stop("Compo_Vertex8", flop);
       
-      TIMING_start(tm_cmp_subdivision);
+      TIMING_start("Compo_Subdivision");
       flop = 0.0;
       CF.subdivision(f_st, f_ed, d_cvf, flop);
-      TIMING_stop(tm_cmp_subdivision, flop);
+      TIMING_stop("Compo_Subdivision", flop);
     }
   }
   
@@ -3393,9 +3395,8 @@ void FFV::setupCutInfo4IP(double& m_prep, double& m_total, FILE* fp)
   
   
   // カット情報保持領域のアロケート
-  TIMING_start(tm_init_alloc);
   allocArray_Cut(m_total);
-  TIMING_stop(tm_init_alloc);
+  
   
   // 使用メモリ量　
   double cut_mem, G_cut_mem;
@@ -3507,6 +3508,43 @@ string FFV::setupDomain(TextParser* tpf)
   poly_gc[2] = guide;
 
   
+  // 全ノードについて，ローカルノード1面・一層あたりの通信量の和（要素数）を計算
+  double c = 0.0;
+  
+  // 内部面のみをカウントする
+  for (int n=0; n<6; n++)
+  {
+    if ( nID[n] >= 0 ) {
+      
+      switch (n)
+      {
+        case X_minus:
+        case X_plus:
+          c += (double)(size[1]*size[2]);
+          break;
+          
+        case Y_minus:
+        case Y_plus:
+          c += (double)(size[0]*size[2]);
+          break;
+          
+        case Z_minus:
+        case Z_plus:
+          c += (double)(size[0]*size[1]);
+          break;
+      }
+    }
+  }
+  
+  if ( numProc > 1 )
+  {
+    double tmp = c;
+    if ( paraMngr->Allreduce(&tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  face_comm_size = c;
+  
+  
   return str;
 }
 
@@ -3562,6 +3600,9 @@ void FFV::setupLinearSolvers(double& TotalMemory, TextParser* tpCntl)
     {
       LS[i].Initialize(&C,
                        &BC,
+                       ModeTiming,
+                       face_comm_size,
+                       &PM,
                        d_bcp,
                        d_bcd,
                        d_pni,
@@ -3593,6 +3634,9 @@ void FFV::setupLinearSolvers(double& TotalMemory, TextParser* tpCntl)
  */
 void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
 {
+  TIMING_start("Polylib_Section");
+  
+  
   Hostonly_
   {
     fprintf(fp,"\n----------\n\n");
@@ -3637,7 +3681,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   
   // Polylib: STLデータ読み込み
-  TIMING_start(tm_polygon_load);
+  TIMING_start("Loading_Polygon_File");
   
   // ロード
   poly_stat = PL->load_rank0( C.PolylibConfigName );
@@ -3652,7 +3696,9 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     Exit(0);
   }
   
-  TIMING_stop(tm_polygon_load);
+  TIMING_stop("Loading_Polygon_File");
+  
+  
   
   // 階層情報表示 debug brief hierarchy
 // ##########
@@ -3857,11 +3903,12 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
 // ##########
   
   
-  
   // Polylib: STLデータ書き出し
   // DomainInfo/UnitOfLength={"mm", "cm"}のとき，"m"でスケーリングされたポリゴンが出力される
   if ( C.Hide.GeomOutput == ON )
   {
+    TIMING_start("Write_Polygon");
+    
     unsigned poly_out_para = IO_DISTRIBUTE;
     if ( (C.Parallelism == Control::Serial) || (C.Parallelism == Control::OpenMP) ) poly_out_para = IO_GATHER;
     
@@ -3895,11 +3942,17 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
         Exit(0);
       }
     }
+    
+    TIMING_stop("Write_Polygon");
   }
   
-
+  TIMING_stop("Polylib_Section");
 
   
+  
+  
+
+  TIMING_start("Cutlib_Section");
   
   // Cutlib
   Hostonly_
@@ -3962,10 +4015,10 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
 #endif
   
   // Cutlibの配列は各方向(引数)のサイズ
-  TIMING_start(tm_init_alloc);
+  TIMING_start("Allocate_Arrays");
   cutPos = new CutPos32Array(n_cell); // 6*(float)
   cutBid = new CutBid5Array (n_cell); // (int32_t)
-  TIMING_stop(tm_init_alloc);
+  TIMING_stop("Allocate_Arrays");
   
   
   // グリッド情報アクセッサクラス
@@ -3973,9 +4026,9 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   
   // 交点計算
-  TIMING_start(tm_cutinfo);
+  TIMING_start("Cut_Information");
   CalcCutInfo(GRID, PL, cutPos, cutBid);
-  TIMING_stop(tm_cutinfo);
+  TIMING_stop("Cut_Information");
   
   
   // 使用メモリ量
@@ -3994,12 +4047,15 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   
   // カットの最小値
+  TIMING_start("Cut_Minimum_search");
   minDistance(d_cut, d_bid, fp);
-
+  TIMING_stop("Cut_Minimum_search");
   
 #if 0
   displayCutInfo(d_cut, d_bid);
 #endif
+  
+  TIMING_stop("Cutlib_Section");
   
 }
 

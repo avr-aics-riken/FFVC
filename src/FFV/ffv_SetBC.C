@@ -312,10 +312,6 @@ void SetBC3D::modDivergence(REAL_TYPE* dv, int* d_cdf, double tm, Control* C, RE
         vobc_div_drchlt_(dv, size, &gd, &face, d_cdf, vec, nID);
         break;
         
-      case OBC_SYMMETRIC:
-        // no contribution
-        break;
-        
       case OBC_INTRINSIC:
         if ( C->Mode.Example == id_Jet )
         {
@@ -560,10 +556,6 @@ void SetBC3D::modPvecFlux(REAL_TYPE* wv, REAL_TYPE* v, int* d_cdf, const double 
         vobc_pv_wall_(wv, size, &gd, &face, &dh, &rei, v, vec, nID, &flop);
         break;
         
-      // nothing, no flux contribution
-      // case OBC_SYMMETRIC:
-      // break;
-        
       case OBC_INTRINSIC:
         if ( C->Mode.Example == id_Jet )
         {
@@ -627,10 +619,6 @@ void SetBC3D::modPsrcVBC(REAL_TYPE* dv, int* d_cdf, const double tm, Control* C,
         vobc_div_drchlt_(dv, size, &gd, &face, d_cdf, vec, nID);
         break;
       }
-        
-      case OBC_SYMMETRIC:
-        // 修正量はゼロ
-        break;
         
       case OBC_INTRINSIC:
         if ( C->Mode.Example == id_Jet )

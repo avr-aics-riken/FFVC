@@ -41,9 +41,9 @@ bool FFV::Post()
     }
     
     // 測定結果の集計(gathreメソッドは全ノードで呼ぶこと)
-    TIMING_start(tm_statistic);
+    TIMING_start("Statistic");
     PM.gather();
-    TIMING_stop(tm_statistic, 0.0);
+    TIMING_stop("Statistic", 0.0);
     
     if ( IsMaster() ) 
     {

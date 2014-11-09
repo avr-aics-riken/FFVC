@@ -133,7 +133,7 @@ private:
   unsigned Session_CurrentStep; ///< セッションの現在のステップ
   unsigned Session_LastStep;    ///< セッションの終了ステップ数
   
-  double face_comm_size;       ///< 全ノードについて，ローカルノード1面・一層あたりの通信量の和
+  double face_comm_size;       ///< 全ノードについて，ローカルノード1面・一層あたりの通信量の和（要素数）
   
   REAL_TYPE deltaT; ///< 時間積分幅（無次元）
   
@@ -209,7 +209,8 @@ private:
   ConvergenceMonitor CM_H;   ///< 熱の定常収束モニター
   
   
-  char tm_label_ptr[tm_END][TM_LABEL_MAX];  ///< プロファイラ用のラベル
+  char tm_label_ptr[PM_NUM_MAX][TM_LABEL_MAX];  ///< プロファイラ用のラベル
+  int order_of_PM_key;      ///< PMlib用の登録番号カウンタ < PM_NUM_MAX
   
   string active_fname;      ///< Active subdomainのファイル名
 
@@ -243,54 +244,48 @@ private:
     w[1] = (int)ceil(q[1]);
     w[2] = (int)ceil(q[2]);
   }
-  
-  
-  /**
-   * @brief プロファイラのラベル取り出し
-   * @param [in] key 格納番号
-   * @return ラベル
-   */
-  inline const char* get_tm_label(const int key)
-  {
-    return (const char*)tm_label_ptr[key];
-  }
+
   
   
   /**
    * @brief タイミング測定開始
-   * @param [in] key 格納番号
+   * @param [in] key ラベル
    */
-  inline void TIMING_start(const int key)
+  inline void TIMING_start(const string key)
   {
-    // Intrinsic profiler
-    TIMING__ PM.start((unsigned)key);
+    // PMlib Intrinsic profiler
+    TIMING__ PM.start(key);
+    
+    const char* s_label = key.c_str();
     
     // Venus FX profiler
 #if defined __K_FPCOLL
-    start_collection( get_tm_label(key) );
+    start_collection( s_label );
 #elif defined __FX_FAPP
-    fapp_start( get_tm_label(key), 0, 0);
+    fapp_start( s_label, 0, 0);
 #endif
   }
   
   
   /**
    * @brief タイミング測定終了
-   * @param [in] key             格納番号
+   * @param [in] key             ラベル
    * @param [in] flopPerTask    「タスク」あたりの計算量/通信量(バイト) (ディフォルト0)
    * @param [in] iterationCount  実行「タスク」数 (ディフォルト1)
    */
-  inline void TIMING_stop(const int key, double flopPerTask=0.0, int iterationCount=1)
+  inline void TIMING_stop(const string key, double flopPerTask=0.0, int iterationCount=1)
   {
     // Venus FX profiler
+    const char* s_label = key.c_str();
+    
 #if defined __K_FPCOLL
-    stop_collection( get_tm_label(key) );
+    stop_collection( s_label );
 #elif defined __FX_FAPP
-    fapp_stop( get_tm_label(key), 0, 0);
+    fapp_stop( s_label, 0, 0);
 #endif
     
-    // Intrinsic profiler
-    TIMING__ PM.stop((unsigned)key, flopPerTask, (unsigned)iterationCount);
+    // PMlib Intrinsic profiler
+    TIMING__ PM.stop(key, flopPerTask, (unsigned)iterationCount);
   }
   
   
@@ -527,10 +522,6 @@ private:
   void calcForce(double& flop);
   
   
-  // 全ノードについて，ローカルノード1面・一層あたりの通信量の和を返す
-  double count_comm_size(const int sz[3], const int guide);
-  
-  
   // 外部計算領域の各面における総流量と対流流出速度を計算する
   void DomainMonitor(BoundaryOuter* ptr, Control* R);
   
@@ -544,7 +535,7 @@ private:
   
   
   // タイミング測定区間にラベルを与えるラッパー
-  void set_label(const int key, char* label, PerfMonitor::Type type, bool exclusive=true);
+  void set_label(const string label, PerfMonitor::Type type, bool exclusive=true);
   
   
   // 毎ステップ後に行う処理

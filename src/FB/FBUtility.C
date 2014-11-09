@@ -73,7 +73,7 @@ void FBUtility::convArrayIE2Tmp(REAL_TYPE* dst, const int* size, const int guide
   
   flop += (double)ix * (double)jx * (double)kx * 11.0 + 1.0;
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, dp, bt, zz) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dp, bt, zz) schedule(static) collapse(2)
   for (int k=1-gd; k<=kx+gd; k++) {
     for (int j=1-gd; j<=jx+gd; j++) {
       for (int i=1-gd; i<=ix+gd; i++) {
@@ -105,7 +105,7 @@ void FBUtility::convArrayPrsD2ND(REAL_TYPE* dst, const int* size, const int guid
 
   flop += (double)ix * (double)jx * (double)kx * 2.0 + 10.0;
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, dp, bp) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dp, bp) schedule(static) collapse(2)
   for (int k=1-gd; k<=kx+gd; k++) {
     for (int j=1-gd; j<=jx+gd; j++) {
       for (int i=1-gd; i<=ix+gd; i++) {
@@ -132,7 +132,7 @@ void FBUtility::convArrayPrsND2D(REAL_TYPE* dst, const int* size, const int guid
   
   flop += (double)ix * (double)jx * (double)kx * 2.0 + 3.0;
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, dp, bp) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dp, bp) schedule(static) collapse(2)
   for (int k=1-gd; k<=kx+gd; k++) {
     for (int j=1-gd; j<=jx+gd; j++) {
       for (int i=1-gd; i<=ix+gd; i++) {
@@ -161,7 +161,7 @@ void FBUtility::convArrayTmp2IE(REAL_TYPE* dst, const int* size, const int guide
   
   flop += (double)ix * (double)jx * (double)kx * 4.0 + 9.0;
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, dp, bt, zz) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dp, bt, zz) schedule(static) collapse(2)
   for (int k=1-gd; k<=kx+gd; k++) {
     for (int j=1-gd; j<=jx+gd; j++) {
       for (int i=1-gd; i<=ix+gd; i++) {
@@ -190,7 +190,7 @@ void FBUtility::convArrayTpND2D(REAL_TYPE* src, const int* size, const int guide
   int kx = size[2];
   int gd = guide;
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, cf) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, cf) schedule(static) collapse(2)
   for (int k=1-gd; k<=kx+gd; k++) {
     for (int j=1-gd; j<=jx+gd; j++) {
       for (int i=1-gd; i<=ix+gd; i++) {
@@ -213,7 +213,7 @@ void FBUtility::copyS3D(REAL_TYPE* dst, const int* size, const int guide, const 
   int kx = size[2];
   int gd = guide;
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, s) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, s) schedule(static) collapse(2)
   for (int k=1-gd; k<=kx+gd; k++) {
     for (int j=1-gd; j<=jx+gd; j++) {
       for (int i=1-gd; i<=ix+gd; i++) {
@@ -238,7 +238,7 @@ void FBUtility::copyV3D(REAL_TYPE* dst, const int* size, const int guide, const 
   
     for (int l=0; l<3; l++) {
       
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, s, l) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, s, l) schedule(static) collapse(2)
       for (int k=1-gd; k<=kx+gd; k++) {
         for (int j=1-gd; j<=jx+gd; j++) {
           for (int i=1-gd; i<=ix+gd; i++) {
@@ -257,19 +257,12 @@ void FBUtility::copyV3D(REAL_TYPE* dst, const int* size, const int guide, const 
 void FBUtility::initS3D(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE init)
 {
   REAL_TYPE s = init;
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
+  size_t nx = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, s) schedule(static)
-  for (int k=1-gd; k<=kx+gd; k++) {
-    for (int j=1-gd; j<=jx+gd; j++) {
-      for (int i=1-gd; i<=ix+gd; i++) {
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        dst[m] = s;
-      }
-    }
+#pragma omp parallel for firstprivate(nx, s) schedule(static)
+  for (int m=0; m<nx; m++)
+  {
+    dst[m] = s;
   }
   
 }
@@ -280,25 +273,12 @@ void FBUtility::initS3D(REAL_TYPE* dst, const int* size, const int guide, const 
 void FBUtility::initS4DEX(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE init)
 {
   REAL_TYPE s = init;
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
+  size_t nx = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide) * 6;
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, s) schedule(static)
-  for (int k=1-gd; k<=kx+gd; k++) {
-    for (int j=1-gd; j<=jx+gd; j++) {
-      for (int i=1-gd; i<=ix+gd; i++) {
-        
-        size_t m = _F_IDX_S4DEX(0, i, j, k, NOFACE, ix, jx, kx, gd);
-        dst[m+0] = s;
-        dst[m+1] = s;
-        dst[m+2] = s;
-        dst[m+3] = s;
-        dst[m+4] = s;
-        dst[m+5] = s;
-      }
-    }
+#pragma omp parallel for firstprivate(nx, s) schedule(static)
+  for (int m=0; m<nx; m++)
+  {
+    dst[m] = s;
   }
 }
 

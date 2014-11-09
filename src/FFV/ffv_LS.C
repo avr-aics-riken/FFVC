@@ -23,220 +23,33 @@
 
 
 // #################################################################
-int LinearSolver::BiCGstab(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2)
-{
-  double flop_count=0.0;  /// 浮動小数点演算数
-  int lc=0;               /// ループカウント
-  double var[3];          /// 誤差, 残差, 解ベクトルのL2ノルム
-  double rho    = 1.0;    /// \rho
-  
-  
-  
-  //TIMING_start(tm_blas_calc_r);
-  flop_count=0.0;
-  if ( getNaive()==OFF )
-  {
-    blas_calc_rk_(pcg_r, x, b, bcp, size, &guide, &flop_count); // r = b - Ax
-  }
-  else
-  {
-    blas_calc_r_naive_(pcg_r, x, b, bcp, size, &guide, pni, &flop_count); // r = b - Ax
-  }
-  
-  //TIMING_stop(tm_blas_calc_r, flop_count);
-  
-  // rho = (r, r)
-  rho = Fdot1(pcg_r);
-  
-  // 既に収束
-  if( fabs(rho) < REAL_TYPE_EPSILON )
-  {
-    return 0;
-  }
-  
-  
-  SyncScalar(pcg_r, 1);
-
-  
-  
-  // 初期値
-  //TIMING_start(tm_blas_copy);
-  blas_copy_(pcg_r0, pcg_r, size, &guide); // r0 = r
-  //blas_copy_(pcg_p,  pcg_r, size, &guide); // p = r
-  //TIMING_stop(tm_blas_copy, 0.0, 2);
-  
-  blas_clear_(pcg_p , size, &guide); // p=0
-  blas_clear_(pcg_q , size, &guide); // q=0
-  
-  rho    = 1.0;
-  double alpha  = 1.0;
-  double omega  = 1.0;
-  
-  for (lc=1; lc<getMaxIteration(); lc++)
-  {
-    double rho_0 = rho;
-    
-    
-    // rho = (r0, r)
-    rho = Fdot2(pcg_r0, pcg_r);
-    
-    if( fabs(rho) < REAL_TYPE_EPSILON )
-    {
-      lc = 0;
-      break;
-    }
-    
-    
-    double beta = (rho / rho_0) * (alpha / omega);
-    
-    
-    // p =  r + beta * ( p - omega * q )
-    //TIMING_start(tm_blas_bicg_update_p);
-    flop_count=0.0;
-    bicg_update_p_(pcg_p, pcg_r, &beta, &omega, pcg_q, size, &guide, &flop_count);
-    //TIMING_stop(tm_blas_bicg_update_p, flop_count);
-    
-    
-    SyncScalar(pcg_p, 1);
-    
-    
-    // q = A * p
-    //TIMING_start(tm_blas_ax);
-    flop_count=0.0;
-    if ( getNaive()==OFF )
-    {
-      blas_calc_ax_(pcg_q, pcg_p, bcp, size, &guide, &flop_count);
-    }
-    else
-    {
-      blas_calc_ax_naive_(pcg_q, pcg_p, bcp, size, &guide, pni, &flop_count);
-    }
-    //TIMING_stop(tm_blas_ax, flop_count);
-    
-    
-    // alpha = rho / (r0, q)
-    double tmp = Fdot2(pcg_r0, pcg_q);
-    
-    if( fabs(tmp) < REAL_TYPE_EPSILON )
-    {
-      Hostonly_ printf("BiCGstab : Fdot2(pcg_r0, pcg_q)\n");
-      lc = -1;
-      break;
-    }
-    
-    alpha = rho / tmp;
-    
-    
-    // s = r - alpha * q
-    //TIMING_start(tm_blas_z_xpay);
-    tmp = -alpha;
-    flop_count=0.0;
-    blas_z_xpay_(pcg_s, pcg_r, &tmp, pcg_q, size, &guide, &flop_count);
-    //TIMING_stop(tm_blas_z_xpay, flop_count);
-    
-    
-    SyncScalar(pcg_s, 1);
-    
-    
-    // t = A * s
-    //TIMING_start(tm_blas_ax);
-    flop_count=0.0;
-    if ( getNaive()==OFF )
-    {
-      blas_calc_ax_(pcg_t, pcg_s, bcp, size, &guide, &flop_count);
-    }
-    else
-    {
-      blas_calc_ax_naive_(pcg_t, pcg_s, bcp, size, &guide, pni, &flop_count);
-    }
-    //TIMING_stop(tm_blas_ax, flop_count);
-    
-    
-    // omega = (t, s) / (t, t)
-    double t_s = Fdot2(pcg_t, pcg_s);
-    
-    double t_t = Fdot1(pcg_t);
-    
-    if ( fabs(t_t) < REAL_TYPE_EPSILON )
-    {
-      Hostonly_ printf("BiCGstab : Fdot1(pcg_t)\n");
-      lc = -1;
-      break;
-    }
-    
-    if ( t_s == 0.0 )
-    {
-      Hostonly_ printf("BiCGstab : omega = 0.0\n");
-      lc = -1;
-      break;
-    }
-    
-    omega = t_s / t_t;
-    
-    
-    // x = x + alpha * p + omega * s
-    double x_l2 = 0.0;
-    double delta_x = 0.0;
-    
-    //TIMING_start(tm_blas_bicg_update_x);
-    flop_count=0.0;
-    bicg_update_x_(x, &alpha, pcg_p, &omega, pcg_s, bcp, &x_l2, &delta_x, size, &guide, &flop_count);
-    //TIMING_stop(tm_blas_bicg_update_x, flop_count);
-    
-    var[0] = delta_x;
-    var[2] = x_l2;
-    
-    
-    // r = s - omega * t
-    //TIMING_start(tm_blas_z_xpay);
-    tmp = -omega;
-    flop_count=0.0;
-    blas_z_xpay_(pcg_r, pcg_s, &tmp, pcg_t, size, &guide, &flop_count);
-    //TIMING_stop(tm_blas_z_xpay, flop_count);
-    
-    var[1] = Fdot1(pcg_r);
-    
-    
-    // 収束判定
-    if ( Fcheck(var, b_l2, r0_l2) == true ) break;
-
-  }
-  
-  
-  // 境界条件
-  //TIMING_start(tm_poi_BC);
-  BC->OuterPBC(x, ensPeriodic);
-  
-  if ( C->EnsCompo.periodic == ON ) BC->InnerPBCperiodic(x, bcd);
-  //TIMING_stop(tm_poi_BC, 0.0);
-  
-  SyncScalar(x, 1);
-  
-  return lc;
-}
-
-
-// #################################################################
 // 収束判定　非Div反復
 bool LinearSolver::Fcheck(double* var, const double b_l2, const double r0_l2)
 {
-  
-  // 自乗量の集約
-  if ( numProc > 1 )
+  if ( getLS() == BiCGSTAB)
   {
-    //TIMING_start(tm_poi_res_comm);
-    double tmp[3];
-    tmp[0] = var[0];
-    tmp[1] = var[1];
-    tmp[2] = var[2];
-    if ( paraMngr->Allreduce(tmp, var, 3, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-    //TIMING_stop(tm_poi_res_comm, 6.0*numProc*sizeof(double) ); // 双方向 x ノード数　x 3
+    ;
   }
-  
-  // L2 ノルム
-  var[0] = sqrt(var[0]); // L2 of (x^{(m+1)} - x^{(m)})
-  var[1] = sqrt(var[1]); // L2 of residual
-  var[2] = sqrt(var[2]); // L2 of solution vector x^{(m)}
+  else
+  {
+    // 自乗量の集約
+    if ( numProc > 1 )
+    {
+      TIMING_start("A_R_Convergence");
+      double tmp[3];
+      tmp[0] = var[0];
+      tmp[1] = var[1];
+      tmp[2] = var[2];
+      if ( paraMngr->Allreduce(tmp, var, 3, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      TIMING_stop("A_R_Convergence", 6.0*numProc*sizeof(double) ); // 双方向 x ノード数　x 3
+    }
+    
+    // L2 ノルム
+    var[0] = sqrt(var[0]); // L2 of (x^{(m+1)} - x^{(m)})
+    var[1] = sqrt(var[1]); // L2 of residual
+    var[2] = sqrt(var[2]); // L2 of solution vector x^{(m)}
+  }
+
   
   double err = var[0];
   double res = var[1];
@@ -282,7 +95,7 @@ bool LinearSolver::Fcheck(double* var, const double b_l2, const double r0_l2)
       break;
   }
   
-  // 収束判定　性能測定モードでないときのみ収束判定を行う　誤差または残差が収束したら抜ける
+  // 収束判定　性能測定モードでないときのみ収束判定を行う　残差が収束したら抜ける
   //if ( (C->Hide.PM_Test == OFF) && ( isResConverged() || isErrConverged()) )
   if ( (C->Hide.PM_Test == OFF) && isResConverged() )
   {
@@ -293,23 +106,23 @@ bool LinearSolver::Fcheck(double* var, const double b_l2, const double r0_l2)
 }
 
 
+
 // #################################################################
 double LinearSolver::Fdot1(REAL_TYPE* x)
 {
   double flop_count=0.0;          /// 浮動小数点演算数
   double xy = 0.0;
   
-  //TIMING_start(tm_blas_dot1);
-  flop_count=0.0;
+  TIMING_start("Dot1");
   blas_dot1_(&xy, x, bcp, size, &guide, &flop_count);
-  //TIMING_stop(tm_blas_dot1, flop_count);
+  TIMING_stop("Dot1", flop_count);
   
   if ( numProc > 1 )
   {
-    //TIMING_start(tm_blas_comm);
+    TIMING_start("A_R_Dot");
     double xy_tmp = xy;
     if  ( paraMngr->Allreduce(&xy_tmp, &xy, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-    //TIMING_stop(tm_blas_comm, 2.0*numProc*sizeof(double) );
+    TIMING_stop("A_R_Dot", 2.0*numProc*sizeof(double) );
   }
   
   return xy;
@@ -322,17 +135,16 @@ double LinearSolver::Fdot2(REAL_TYPE* x, REAL_TYPE* y)
   double flop_count=0.0;          /// 浮動小数点演算数
   double xy = 0.0;
   
-  //TIMING_start(tm_blas_dot2);
-  flop_count=0.0;
+  TIMING_start("Dot2");
   blas_dot2_(&xy, x, y, bcp, size, &guide, &flop_count);
-  //TIMING_stop(tm_blas_dot2, flop_count);
+  TIMING_stop("Dot2", flop_count);
   
   if ( numProc > 1 )
   {
-    //TIMING_start(tm_blas_comm);
+    TIMING_start("A_R_Dot");
     double xy_tmp = xy;
     if  ( paraMngr->Allreduce(&xy_tmp, &xy, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-    //TIMING_stop(tm_blas_comm, 2.0*numProc*sizeof(double) );
+    TIMING_stop("A_R_Dot", 2.0*numProc*sizeof(double) );
   }
   
   return xy;
@@ -342,6 +154,9 @@ double LinearSolver::Fdot2(REAL_TYPE* x, REAL_TYPE* y)
 // #################################################################
 void LinearSolver::Initialize(Control* C,
                               SetBC3D* BC,
+                              int ModeT,
+                              double f_comm,
+                              PerfMonitor* PM,
                               int* bcp,
                               int* bcd,
                               REAL_TYPE* pni,
@@ -362,6 +177,9 @@ void LinearSolver::Initialize(Control* C,
 {
   this->C = C;
   this->BC = BC;
+  this->ModeTiming = ModeT;
+  this->face_comm_size = f_comm;
+  this->PM = PM;
   this->bcp = bcp;
   this->bcd = bcd;
   this->pni = pni;
@@ -385,320 +203,6 @@ void LinearSolver::Initialize(Control* C,
   }
 }
 
-// #################################################################
-// PBiCBSTAB
-int LinearSolver::PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2)
-{
-  double var[3];          /// 誤差, 残差, 解ベクトルのL2ノルム
-  REAL_TYPE res = 0.0;
-  REAL_TYPE omg = getOmega();
-  
-  blas_clear_(pcg_r , size, &guide);
-  blas_clear_(pcg_p , size, &guide);
-  
-  blas_clear_(pcg_r0, size, &guide);
-  blas_clear_(pcg_p_, size, &guide);
-  blas_clear_(pcg_q, size, &guide);
-  blas_clear_(pcg_s , size, &guide);
-  blas_clear_(pcg_s_, size, &guide);
-  blas_clear_(pcg_t_, size, &guide);
-  
-  blas_calcr_(pcg_r, x, b, bcp, size, &guide);             // (1)
-  SyncScalar(pcg_r, 1);
-  
-  blas_copy_(pcg_r0, pcg_r, size, &guide);                 // (2)
-  
-  REAL_TYPE rr0 = 1.0;
-  REAL_TYPE alpha = 0.0;
-  REAL_TYPE gamma  = 1.0;
-  REAL_TYPE gamman = -gamma;
-  int lc=0;                      /// ループカウント
-  
-  for (lc=1; lc<getMaxIteration(); lc++)
-  {
-    REAL_TYPE rr1 = 0.0;
-    Fdot(&rr1, pcg_r, pcg_r0);                             // (4)
-    
-    if( fabs(rr1) < FLT_MIN )                                  // (5)
-    {
-      res = rr1;
-      lc = 0;
-      break;
-    }
-    
-    if( lc == 1 )
-    {
-      blas_copy_(pcg_p, pcg_r, size, &guide);              // (7)
-    }
-    else
-    {
-      REAL_TYPE beta = rr1/rr0*alpha/gamma;                    // (9)
-      blas_axpy_(pcg_p, pcg_q, &gamman, size, &guide);    // (10)
-      blas_xpay_(pcg_p, pcg_r , &beta  , size, &guide);    // (10)
-    }
-    SyncScalar(pcg_p, 1);
-    
-    blas_clear_(pcg_p_, size, &guide);
-    Fpreconditioner(pcg_p_, pcg_p);                    // (12)
-    
-    blas_calcax_(pcg_q, pcg_p_, bcp, size, &guide);     // (13)
-    
-    REAL_TYPE q_r0 = 0.0;
-    Fdot(&q_r0, pcg_q, pcg_r0);                           // (14)
-    
-    REAL_TYPE alpha  = rr1/q_r0;
-    REAL_TYPE alphan = -alpha;
-    blas_axpyz_(pcg_s, pcg_q, pcg_r, &alphan, size, &guide); // (15)
-    SyncScalar(pcg_s, 1);
-    
-    blas_clear_(pcg_s_, size, &guide);
-    Fpreconditioner(pcg_s_, pcg_s);                    // (17)
-    
-    blas_calcax_(pcg_t_, pcg_s_, bcp, size, &guide);     // (18)
-    
-    REAL_TYPE t_s = 0.0;
-    Fdot(&t_s, pcg_t_, pcg_s);                             // (19a)
-    
-    REAL_TYPE t_t_ = 0.0;
-    Fdot(&t_t_, pcg_t_, pcg_t_);                           // (19b)
-    
-    gamma  = t_s/t_t_;                                         // (19)
-    gamman = -gamma;
-    
-    blas_axpbypz_(x      , pcg_p_, pcg_s_, &alpha , &gamma, size, &guide);  // (20)
-    blas_axpyz_  (pcg_r, pcg_t_, pcg_s , &gamman, size, &guide);          // (21)
-    
-    REAL_TYPE rr = 0.0;
-    Fdot(&rr, pcg_r, pcg_r);
-    
-    res = sqrt(rr);
-    var[1] = res;
-    
-
-    if ( Fcheck(var, b_l2, r0_l2) == true ) break;
-    
-    rr0 = rr1;
-  }
-  
-  BC->OuterPBC(x, ensPeriodic);
-  if ( C->EnsCompo.periodic == ON )
-  {
-    BC->InnerPBCperiodic(x, bcd);
-  }
-  
-  SyncScalar(x, 1);
-  
-  return lc;
-}
-
-
-
-/*
-// #################################################################
-int LinearSolver::PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2)
-{
-  double flop_count=0.0;  /// 浮動小数点演算数
-  int lc=0;               /// ループカウント
-  double var[3];          /// 誤差, 残差, 解ベクトルのL2ノルム
-  double rho    = 1.0;    /// \rho
-  
-  
-  
-  //TIMING_start(tm_blas_calc_r);
-  flop_count=0.0;
-  if ( getNaive()==OFF )
-  {
-    blas_calc_r_(pcg_r, x, b, bcp, size, &guide, &flop_count); // r = b - Ax
-  }
-  else
-  {
-    blas_calc_r_naive_(pcg_r, x, b, bcp, size, &guide, pni, &flop_count); // r = b - Ax
-  }
-  
-  //TIMING_stop(tm_blas_calc_r, flop_count);
-  
-  // rho = (r, r)
-  rho = Fdot1(pcg_r);
-  
-  // 既に収束
-  if( fabs(rho) < REAL_TYPE_EPSILON )
-  {
-    return 0;
-  }
-  
-  
-  SyncScalar(pcg_r, 1);
-  
-  
-  
-  // 初期値
-  //TIMING_start(tm_blas_copy);
-  blas_copy_(pcg_r0, pcg_r, size, &guide); // r0 = r
-  //blas_copy_(pcg_p,  pcg_r, size, &guide); // p = r
-  //TIMING_stop(tm_blas_copy, 0.0, 2);
-  
-  blas_clear_(pcg_p , size, &guide); // p=0
-  blas_clear_(pcg_q , size, &guide); // q=0
-  
-  
-  rho    = 1.0;
-  double alpha  = 1.0;
-  double omega  = 1.0;
-  
-  for (lc=0; lc<getMaxIteration(); lc++)
-  {
-    double rho_0 = rho;
-    
-    
-    // rho = (r0, r)
-    rho = Fdot2(pcg_r0, pcg_r);
-    
-    if( fabs(rho) < REAL_TYPE_EPSILON )
-    {
-      lc = 0;
-      break;
-    }
-    
-    
-    double beta = (rho / rho_0) * (alpha / omega);
-    
-    
-    // p =  r + beta * ( p - omega * q )
-    //TIMING_start(tm_blas_bicg_update_p);
-    flop_count=0.0;
-    bicg_update_p_(pcg_p, pcg_r, &beta, &omega, pcg_q, size, &guide, &flop_count);
-    //TIMING_stop(tm_blas_bicg_update_p, flop_count);
-    
-    
-    SyncScalar(pcg_p, 1);
-    
-    
-    // p^* = M * p
-    blas_clear_(pcg_p_ , size, &guide);
-    Preconditioner(pcg_p_, pcg_p);
-    
-    
-    // q = A * p^*
-    //TIMING_start(tm_blas_ax);
-    flop_count=0.0;
-    if ( getNaive()==OFF )
-    {
-      blas_calc_ax_(pcg_q, pcg_p, bcp, size, &guide, &flop_count);
-    }
-    else
-    {
-      blas_calc_ax_naive_(pcg_q, pcg_p, bcp, size, &guide, pni, &flop_count);
-    }
-    //TIMING_stop(tm_blas_ax, flop_count);
-    
-    
-    // alpha = rho / (r0, q)
-    double tmp = Fdot2(pcg_r0, pcg_q);
-    
-    if( fabs(tmp) < REAL_TYPE_EPSILON )
-    {
-      Hostonly_ printf("BiCGstab : Fdot2(pcg_r0, pcg_q)\n");
-      lc = -1;
-      break;
-    }
-    
-    alpha = rho / tmp;
-    
-    
-    // s = r - alpha * q
-    //TIMING_start(tm_blas_z_xpay);
-    tmp = -alpha;
-    flop_count=0.0;
-    blas_z_xpay_(pcg_s, pcg_r, &tmp, pcg_q, size, &guide, &flop_count);
-    //TIMING_stop(tm_blas_z_xpay, flop_count);
-    
-    
-    SyncScalar(pcg_s, 1);
-    
-    
-    // s^* = M * s
-    blas_clear_(pcg_s_ , size, &guide);
-    Preconditioner(pcg_s_, pcg_s);
-    
-    
-    // t = A * s^*
-    //TIMING_start(tm_blas_ax);
-    flop_count=0.0;
-    if ( getNaive()==OFF )
-    {
-      blas_calc_ax_(pcg_t, pcg_s_, bcp, size, &guide, &flop_count);
-    }
-    else
-    {
-      blas_calc_ax_naive_(pcg_t, pcg_s_, bcp, size, &guide, pni, &flop_count);
-    }
-    //TIMING_stop(tm_blas_ax, flop_count);
-    
-    
-    // omega = (t, s) / (t, t)
-    double t_s = Fdot2(pcg_t, pcg_s);
-    
-    double t_t = Fdot1(pcg_t);
-    
-    if ( fabs(t_t) < REAL_TYPE_EPSILON )
-    {
-      Hostonly_ printf("BiCGstab : Fdot1(pcg_t)\n");
-      lc = -1;
-      break;
-    }
-    
-    if ( t_s == 0.0 )
-    {
-      Hostonly_ printf("BiCGstab : omega = 0.0\n");
-      lc = -1;
-      break;
-    }
-    
-    omega = t_s / t_t;
-    
-    
-    // x = x + alpha * p^* + omega * s^*
-    double x_l2 = 0.0;
-    double delta_x = 0.0;
-    
-    //TIMING_start(tm_blas_bicg_update_x);
-    flop_count=0.0;
-    bicg_update_x_(x, &alpha, pcg_p_, &omega, pcg_s_, bcp, &x_l2, &delta_x, size, &guide, &flop_count);
-    //TIMING_stop(tm_blas_bicg_update_x, flop_count);
-    
-    var[0] = delta_x;
-    var[2] = x_l2;
-    
-    
-    // r = s - omega * t
-    //TIMING_start(tm_blas_z_xpay);
-    tmp = -omega;
-    flop_count=0.0;
-    blas_z_xpay_(pcg_r, pcg_s, &tmp, pcg_t, size, &guide, &flop_count);
-    //TIMING_stop(tm_blas_z_xpay, flop_count);
-    
-    var[1] = Fdot1(pcg_r);
-    
-    
-    // 収束判定
-    if ( ConvergenceTest(var, b_l2, r0_l2) == true ) break;
-    
-  }
-  
-  
-  // 境界条件
-  //TIMING_start(tm_poi_BC);
-  BC->OuterPBC(x, ensPeriodic);
-  
-  if ( C->EnsCompo.periodic == ON ) BC->InnerPBCperiodic(x, bcd);
-  //TIMING_stop(tm_poi_BC, 0.0);
-  
-  SyncScalar(x, 1);
-  
-  return lc;
-}
-*/
-
 
 
 // #################################################################
@@ -720,17 +224,17 @@ int LinearSolver::PointSOR(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const 
     var[2] = 0.0; // 解
     
     // 反復処理
-    //TIMING_start(tm_poi_PSOR);
+    TIMING_start("Poisson_PSOR");
     flop_count = 0.0;
     psor_(x, size, &guide, &omg, var, b, bcp, &flop_count);
-    //TIMING_stop(tm_poi_PSOR, flop_count);
+    TIMING_stop("Poisson_PSOR", flop_count);
     
     
     // 境界条件
-    //TIMING_start(tm_poi_BC);
+    TIMING_start("Poisson_BC");
     BC->OuterPBC(x, ensPeriodic);
     if ( C->EnsCompo.periodic == ON ) BC->InnerPBCperiodic(x, bcd);
-    //TIMING_stop(tm_poi_BC, 0.0);
+    TIMING_stop("Poisson_BC", 0.0);
     
     
     // 同期処理
@@ -749,65 +253,26 @@ int LinearSolver::PointSOR(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const 
 // #################################################################
 void LinearSolver::Preconditioner(REAL_TYPE* x, REAL_TYPE* b)
 {
-  int lc_max = 3;
+  int lc_max = 4;
   double dummy = 1.0;
   
-  //for (int lc=0; lc<lc_max; lc++)
-  //{
-  //  Smoother(x, b);
-  //}
-  SOR2_SMA(x, b, lc_max, dummy, dummy);
+  // 前処理なし(コピー)
+  if ( getPrecondition() != ON )
+  {
+    TIMING_start("Blas_Copy");
+    blas_copy_(x, b, size, &guide);
+    TIMING_stop("Blas_Copy");
+    return;
+  }
+  
+  // 前処理
+  SOR2_SMA(x, b, lc_max, dummy, dummy, false);
 }
 
 
-// #################################################################
-// Smoother
-void LinearSolver::Smoother(REAL_TYPE* x, REAL_TYPE* b)
-{
-  int ip = 0;
-  REAL_TYPE omg = getOmega();     /// 加速係数
-  
-  if ( numProc > 1 )
-  {
-    ip = (head[0]+head[1]+head[2]+1) % 2;
-  }
-  else
-  {
-    ip = 0;
-  }
-  
-  for (int color=0; color<2; color++)
-  {
-    blas_smoother_core_(x, b, bcp, &ip, &color, &omg, size, &guide);
-    
-    BC->OuterPBC(x, ensPeriodic);
-    
-    if ( C->EnsCompo.periodic == ON )
-    {
-      BC->InnerPBCperiodic(x, bcd);
-    }
-    
-    if ( numProc > 1 )
-    {
-      if ( getSyncMode() == comm_sync )
-      {
-        if ( paraMngr->BndCommS3D(x, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) {
-          Exit(0);
-        }
-      }
-      else
-      {
-        int ireq[12];
-        sma_comm_     (x, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, ireq, nID);
-        sma_comm_wait_(x, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, ireq);
-      }
-    }
-  }
-}
-
 
 // #################################################################
-int LinearSolver::SOR2_SMA(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const double b_l2, const double r0_l2)
+int LinearSolver::SOR2_SMA(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const double b_l2, const double r0_l2, bool converge_check)
 {
   int ip;                         /// ローカルノードの基点(1,1,1)のカラーを示すインデクス
   /// ip=0 > R, ip=1 > B
@@ -824,7 +289,6 @@ int LinearSolver::SOR2_SMA(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const d
   for (lc=1; lc<=itrMax; lc++)
   {
     // 2色のマルチカラー(Red&Black)のセットアップ
-    //TIMING_start(tm_poi_setup);
     
     // ip = 0 基点(1,1,1)がRからスタート
     //    = 1 基点(1,1,1)がBからスタート
@@ -836,7 +300,6 @@ int LinearSolver::SOR2_SMA(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const d
     {
       ip = 0;
     }
-    //TIMING_stop(tm_poi_setup, 0.0);
     
     
     var[0] = 0.0; // 誤差
@@ -847,7 +310,7 @@ int LinearSolver::SOR2_SMA(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const d
     // R - color=0 / B - color=1
     for (int color=0; color<2; color++) {
       
-      //TIMING_start(tm_poi_SOR2SMA);
+      TIMING_start("Poisson_SOR2_SMA");
       flop_count = 0.0; // 色間で積算しない
       if ( getNaive()==OFF)
       {
@@ -858,19 +321,20 @@ int LinearSolver::SOR2_SMA(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const d
         psor2sma_naive_(x, size, &guide, &ip, &color, &omg, var, b, bcp, pni, &flop_count);
       }
       
-      //TIMING_stop(tm_poi_SOR2SMA, flop_count);
+      TIMING_stop("Poisson_SOR2_SMA", flop_count);
+      
       
       // 境界条件
-      //TIMING_start(tm_poi_BC);
+      TIMING_start("Poisson_BC");
       BC->OuterPBC(x, ensPeriodic);
       if ( C->EnsCompo.periodic == ON ) BC->InnerPBCperiodic(x, bcd);
-      //TIMING_stop(tm_poi_BC, 0.0);
+      TIMING_stop("Poisson_BC", 0.0);
       
       
       // 同期処理
       if ( numProc > 1 )
       {
-        //TIMING_start(tm_poi_comm);
+        TIMING_start("Sync_Poisson");
         
         if ( getSyncMode() == comm_sync )
         {
@@ -882,13 +346,15 @@ int LinearSolver::SOR2_SMA(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const d
           sma_comm_     (x, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, ireq, nID);
           sma_comm_wait_(x, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, ireq);
         }
-        //TIMING_stop(tm_poi_comm, face_comm_size*0.5);
+        TIMING_stop("Sync_Poisson", face_comm_size*0.5*sizeof(REAL_TYPE));
       }
     }
     
-    
-    // 収束判定 varは自乗量
-    if ( Fcheck(var, b_l2, r0_l2) == true ) break;
+    if ( converge_check )
+    {
+      // 収束判定 varは自乗量
+      if ( Fcheck(var, b_l2, r0_l2) == true ) break;
+    }
     
   }
   
@@ -903,7 +369,7 @@ void LinearSolver::SyncScalar(REAL_TYPE* d_class, const int num_layer)
 {
   if ( numProc > 1 )
   {
-    //TIMING_start(tm_poi_comm);
+    TIMING_start("Sync_Poisson");
     
     if ( getSyncMode() == comm_sync )
     {
@@ -917,7 +383,7 @@ void LinearSolver::SyncScalar(REAL_TYPE* d_class, const int num_layer)
       if ( paraMngr->BndCommS3D_nowait(d_class, size[0], size[1], size[2], guide, num_layer, req ) != CPM_SUCCESS ) Exit(0);
       if ( paraMngr->wait_BndCommS3D  (d_class, size[0], size[1], size[2], guide, num_layer, req ) != CPM_SUCCESS ) Exit(0);
     }
-    //TIMING_stop(tm_poi_comm, face_comm_size*(double)num_layer);
+    TIMING_stop("Sync_Poisson", face_comm_size*(double)num_layer*sizeof(REAL_TYPE));
   }
 }
 
@@ -1188,86 +654,6 @@ jump_4:
 
 }*/
 
-// #################################################################
-// Preconditioner
-int LinearSolver::Fpreconditioner(REAL_TYPE* x, REAL_TYPE* b)
-{
-  REAL_TYPE omg = getOmega();
-  
-  int lc=0;                      /// ループカウント
-  int lc_max = 4;
-  
-  // 前処理なし(コピー)
-  if( lc_max == 0 )
-  {
-    blas_copy_(x, b, size, &guide);
-    return lc;
-  }
-  
-  for (lc=0; lc<lc_max; lc++)
-  {
-    Fsmoother(x, b, omg);
-  }
-  
-  return lc;
-}
-
-// #################################################################
-// Smoother
-void LinearSolver::Fsmoother(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE omg)
-{
-  int ip = 0;
-  
-  if ( numProc > 1 )
-  {
-    ip = (head[0]+head[1]+head[2]+1) % 2;
-  }
-  else
-  {
-    ip = 0;
-  }
-  
-  for (int color=0; color<2; color++)
-  {
-    blas_smoother_core_(x, b, bcp, &ip, &color, &omg, size, &guide);
-    
-    BC->OuterPBC(x, ensPeriodic);
-    
-    if ( C->EnsCompo.periodic == ON )
-    {
-      BC->InnerPBCperiodic(x, bcd);
-    }
-    
-    if ( numProc > 1 )
-    {
-      if (getSyncMode() == comm_sync )
-      {
-        if ( paraMngr->BndCommS3D(x, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) {
-          Exit(0);
-        }
-      }
-      else
-      {
-        int ireq[12];
-        sma_comm_     (x, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, ireq, nID);
-        sma_comm_wait_(x, size, &guide, &color, &ip, cf_sz, cf_x, cf_y, cf_z, ireq);
-      }
-    }
-  }
-}
-
-// #################################################################
-// Dot
-void LinearSolver::Fdot(REAL_TYPE* xy, REAL_TYPE* x, REAL_TYPE* y)
-{
-  blas_dot_(xy, x, y, size, &guide);
-  
-  if ( numProc > 1 )
-  {
-    REAL_TYPE xy_tmp = *xy;
-    if  ( paraMngr->Allreduce(&xy_tmp, xy, 1, MPI_SUM) != CPM_SUCCESS )Exit(0);
-  }
-}
 
 // #################################################################
 int LinearSolver::PointSOR_4th(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE* u_sum, REAL_TYPE* w1, REAL_TYPE* w2, REAL_TYPE dt, REAL_TYPE dh, const double b_l2, const double r0_l2)
@@ -1336,17 +722,17 @@ int LinearSolver::PointSOR_4th(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE* u_sum, REA
     var[2] = 0.0; // 解
     
     // 反復処理
-    //TIMING_start(tm_poi_PSOR);
+    TIMING_start("Poisson_PSOR");
     flop_count = 0.0;
     psor_(x, size, &guide, &omg, var, w1, bcp, &flop_count);
-    //TIMING_stop(tm_poi_PSOR, flop_count);
+    TIMING_stop("Poisson_PSOR", flop_count);
     
     
     // 境界条件
-    //TIMING_start(tm_poi_BC);
+    TIMING_start("Poisson_BC");
     BC->OuterPBC(x, ensPeriodic);
     if ( C->EnsCompo.periodic == ON ) BC->InnerPBCperiodic(x, bcd);
-    //TIMING_stop(tm_poi_BC, 0.0);
+    TIMING_stop("Poisson_BC", 0.0);
     
     
     // 同期処理
@@ -1362,3 +748,227 @@ int LinearSolver::PointSOR_4th(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE* u_sum, REA
   
   return lc;
 }
+
+// #################################################################
+// PBiCBSTAB 収束判定は残差
+int LinearSolver::PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2)
+{
+  double var[3];          /// 誤差, 残差, 解ベクトルのL2ノルム
+  var[0] = var[1] = var[2] = 0.0;
+  REAL_TYPE omg = getOmega();
+  double flop = 0.0;
+  
+  TIMING_start("Blas_Clear");
+  FBUtility::initS3D(pcg_r , size, guide, 0.0);
+  FBUtility::initS3D(pcg_p , size, guide, 0.0);
+  FBUtility::initS3D(pcg_r0, size, guide, 0.0);
+  FBUtility::initS3D(pcg_p_, size, guide, 0.0);
+  FBUtility::initS3D(pcg_q , size, guide, 0.0);
+  FBUtility::initS3D(pcg_s , size, guide, 0.0);
+  FBUtility::initS3D(pcg_s_, size, guide, 0.0);
+  FBUtility::initS3D(pcg_t_, size, guide, 0.0);
+  TIMING_stop("Blas_Clear", 0.0, 8);
+  
+  TIMING_start("Blas_Residual");
+  flop = 0.0;
+  blas_calc_rk_(pcg_r, x, b, bcp, size, &guide, &flop);    // (1)
+  TIMING_stop("Blas_Residual", flop);
+  
+  SyncScalar(pcg_r, 1);
+  
+  TIMING_start("Blas_Copy");
+  blas_copy_(pcg_r0, pcg_r, size, &guide);                 // (2)
+  TIMING_stop("Blas_Copy");
+  
+  double rr0 = 1.0;
+  double alpha = 0.0;
+  double gamma  = 1.0;
+  double gamman = -gamma;
+  int lc=0;                      /// ループカウント
+  
+  for (lc=1; lc<getMaxIteration(); lc++)
+  {
+    double rr1 = 0.0;
+    rr1 = Fdot2(pcg_r, pcg_r0);                             // (4)
+    
+    if( fabs(rr1) < FLT_MIN )                              // (5)
+    {
+      lc = 0;
+      break;
+    }
+    
+    if( lc == 1 )
+    {
+      TIMING_start("Blas_Copy");
+      blas_copy_(pcg_p, pcg_r, size, &guide);              // (7)
+      TIMING_stop("Blas_Copy");
+    }
+    else
+    {
+      double beta = rr1/rr0*alpha/gamma;                // (9)
+      TIMING_start("Blas_AXPY");
+      flop = 0.0;
+      blas_axpy_(pcg_p, pcg_q, &gamman, size, &guide, &flop);     // (10)
+      TIMING_stop("Blas_AXPY", flop);
+      
+      TIMING_start("Blas_XPAY");
+      flop = 0.0;
+      blas_xpay_(pcg_p, pcg_r, &beta, size, &guide, &flop);    // (10)
+      TIMING_stop("Blas_XPAY", flop);
+    }
+    SyncScalar(pcg_p, 1);
+    
+    TIMING_start("Blas_Clear");
+    FBUtility::initS3D(pcg_p_, size, guide, 0.0);
+    TIMING_stop("Blas_Clear");
+    
+    Preconditioner(pcg_p_, pcg_p);                    // (12)
+    
+    TIMING_start("Blas_AX");
+    flop = 0.0;
+    blas_calc_ax_(pcg_q, pcg_p_, bcp, size, &guide, &flop); // (13)
+    TIMING_stop("Blas_AX", flop);
+    
+    double q_r0 = 0.0;
+    q_r0 = Fdot2(pcg_q, pcg_r0);                           // (14)
+    
+    alpha  = rr1/q_r0;
+    double alphan = -alpha;
+    TIMING_start("Blas_AXPYZ");
+    flop = 0.0;
+    blas_axpyz_(pcg_s, pcg_q, pcg_r, &alphan, size, &guide, &flop); // (15)
+    TIMING_stop("Blas_AXPYZ", flop);
+    
+    SyncScalar(pcg_s, 1);
+    
+    TIMING_start("Blas_Clear");
+    FBUtility::initS3D(pcg_s_, size, guide, 0.0);
+    TIMING_stop("Blas_Clear");
+    
+    Preconditioner(pcg_s_, pcg_s);                    // (17)
+    
+    TIMING_start("Blas_AX");
+    flop = 0.0;
+    blas_calc_ax_(pcg_t_, pcg_s_, bcp, size, &guide, &flop);     // (18)
+    TIMING_stop("Blas_AX", flop);
+    
+    double t_s = 0.0;
+    t_s = Fdot2(pcg_t_, pcg_s);                             // (19a)
+    
+    double t_t_ = 0.0;
+    t_t_ = Fdot1(pcg_t_);                           // (19b)
+    
+    gamma  = t_s/t_t_;                                     // (19)
+    gamman = -gamma;
+    
+    TIMING_start("Blas_AXPBYPZ");
+    flop = 0.0;
+    blas_axpbypz_(x, pcg_p_, pcg_s_, &alpha , &gamma, size, &guide, &flop);  // (20)
+    TIMING_stop("Blas_AXPBYPZ", flop);
+    
+    TIMING_start("Blas_AXPYZ");
+    flop = 0.0;
+    blas_axpyz_  (pcg_r, pcg_t_, pcg_s, &gamman, size, &guide, &flop);            // (21)
+    TIMING_stop("Blas_AXPYZ", flop);
+    
+    double rr = 0.0;
+    rr = Fdot1(pcg_r);
+    
+    var[1] = rr;
+    
+    if ( Fcheck(var, b_l2, r0_l2) == true ) break;
+    
+    rr0 = rr1;
+  }
+  
+  
+  TIMING_start("Poisson_BC");
+  BC->OuterPBC(x, ensPeriodic);
+  if ( C->EnsCompo.periodic == ON )
+  {
+    BC->InnerPBCperiodic(x, bcd);
+  }
+  TIMING_stop("Poisson_BC");
+  
+  
+  SyncScalar(x, 1);
+  
+  return lc;
+}
+
+// #################################################################
+// PBiCBSTAB 収束判定は残差
+int LinearSolver::RC_sor(REAL_TYPE* x, REAL_TYPE* pos_rhs, REAL_TYPE* b, int* bcp, const double r0_l2)
+{
+  double var[3];          /// 誤差, 残差, 解ベクトルのL2ノルム
+  var[0] = var[1] = var[2] = 0.0;
+  REAL_TYPE res = 0.0;
+  REAL_TYPE omg = getOmega();
+  double flop = 0.0;
+  
+  int iparam[10];
+  double rparam[10];
+  int err[2];
+  int nrc_max = 20;
+  int iter_max = 100;
+  int isneum = 0;
+  int i_inner, n_inner;
+  int mrc, i_iter;
+  double al, t_eps, f_v;
+  REAL_TYPE e, ee;
+  
+  if (iparam[7] < 0) return 0;
+  
+  err[0] = 0;
+  iparam[0] = 0;
+  iparam[1] = 0;
+  iparam[2] = 0;
+  //    n_iter = min(iparam[7], iter_max)
+  //    nrc    = min(iparam[7], nrc_max)
+  int oki = 5;
+  int step = 10;
+  int n_iter = iter_max;
+  int nrc    = nrc_max;
+
+  
+  if (sizeof(REAL_TYPE) == 4)
+  {
+    e = 2.4e-7;
+    t_eps = 0.995*rparam[0]*rparam[0];
+  }
+  else
+  {
+    e = 4.4e-16;
+    t_eps = 0.999*rparam[0]*rparam[0];
+  }
+
+  ee = 1.0 + e;
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int lg = 1 - guide;
+  int ig = ix + guide;
+  int jg = jx + guide;
+  int kg = kx + guide;
+  int tneum = 0;
+  
+  if ( (isneum !=0 ) && (guide > 0) )
+  {
+    tneum = 1;
+  }
+  
+  //allocate(xt(lg:ig,lg:jg,lg:kg),      yt(lg:ig,lg:jg,lg:kg), rest(lg:ig,lg:jg,lg:kg), res_fct(lg:ig,lg:jg,lg:kg))
+  //allocate(xrc(ix,jx,kx,nrc), yrc(ix,jx,kx,nrc))
+  //allocate(scalprod(nrc*nrc), alph(nrc), stolb(nrc), matr(nrc*nrc))
+  
+  int iter = 1;
+  
+  double b_l2 = 0.0;
+  
+  //rc_calc_b_(b, pos_rhs, bcp, size, &guide, &b_l2, &flop);
+  
+  
+  
+}
+

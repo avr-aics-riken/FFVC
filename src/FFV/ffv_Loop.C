@@ -38,7 +38,7 @@ int FFV::Loop(const unsigned step)
 
   
   // Loop section
-  TIMING_start(tm_loop_sct);
+  TIMING_start("Time_Step_Loop_Section");
   
   // 時間進行
   CurrentTime += DT.get_DT(); // 戻り値はdouble
@@ -53,24 +53,24 @@ int FFV::Loop(const unsigned step)
   if (C.SamplingMode == ON) MO.setV00(v00);
   
   // 速度成分の最大値
-  TIMING_start(tm_vmax);
+  TIMING_start("Search_Vmax");
   flop_count = 0.0;
   find_vmax_(&vMax, size, &guide, v00, d_v, &flop_count);
-  TIMING_stop(tm_vmax, flop_count);
+  TIMING_stop("Search_Vmax", flop_count);
   
   if ( numProc > 1 ) 
   {
-    TIMING_start(tm_vmax_comm);
+    TIMING_start("All_Reduce");
     REAL_TYPE vMax_tmp = vMax;
     if ( paraMngr->Allreduce(&vMax_tmp, &vMax, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
-    TIMING_stop( tm_vmax_comm, 2.0*numProc*sizeof(REAL_TYPE) ); // 双方向 x ノード数
+    TIMING_stop( "All_Reduce", 2.0*numProc*sizeof(REAL_TYPE) ); // 双方向 x ノード数
   }
   
   
   // Flow
   if ( C.KindOfSolver != SOLID_CONDUCTION )
   {
-    TIMING_start(tm_flow_sct);
+    TIMING_start("Flow_Section");
     
     switch (C.AlgorithmF) 
     {
@@ -93,15 +93,15 @@ int FFV::Loop(const unsigned step)
       default:
         break;
     }
-    TIMING_stop(tm_flow_sct, 0.0);
+    TIMING_stop("Flow_Section", 0.0);
   }
   
   // Heat
   if ( C.isHeatProblem() ) 
   {
-    TIMING_start(tm_heat_sct);
+    TIMING_start("Heat_Section");
     PS_Binary();
-    TIMING_stop(tm_heat_sct, 0.0);
+    TIMING_stop("Heat_Section", 0.0);
   }
   
   
@@ -109,40 +109,40 @@ int FFV::Loop(const unsigned step)
   // Interface Equation
   if ( C.BasicEqs == INCMP_2PHASE ) 
   {
-    TIMING_start(tm_vof_sct);
+    TIMING_start("VOF_Section");
     //IF_TRP_VOF();
-    TIMING_stop(tm_vof_sct, 0.0);
+    TIMING_stop("VOF_Section", 0.0);
   }
   
   
   
   // >>> ステップループのユーティリティ
-  TIMING_start(tm_loop_uty_sct);
+  TIMING_start("Loop_Utility_Section");
   
-  //  >>> ステップループのユーティリティ 1
-  TIMING_start(tm_loop_uty_sct_1);
   
   
   // 統計処理操作 >> 毎ステップ
   if ( (C.Mode.Statistic == ON) && C.Interval[Control::tg_statistic].isStarted(CurrentStep, CurrentTime))
   {
-    TIMING_start(tm_average_time);
+    TIMING_start("Averaging");
     flop_count=0.0;
     Averaging(flop_count);
-    TIMING_stop(tm_average_time, flop_count);
+    TIMING_stop("Averaging", flop_count);
     
     // 乱流統計量
     if ( C.LES.Calc == ON )
     {
+      TIMING_start("LES statistic");
       flop_count = 0.0;
       REAL_TYPE accum = (REAL_TYPE)CurrentStepStat;
       calc_rms_v_(d_rms, d_rmsmean, size, &guide, d_v, d_av, &accum, &flop_count);
+      TIMING_stop("LES statistic", flop_count);
     }
   }
   
   
   // 空間平均値操作と変動量
-  TIMING_start(tm_stat_space);
+  TIMING_start("Variation_Space");
   flop_count=0.0;
   for (int i=0; i<3; i++) 
   {
@@ -150,7 +150,7 @@ int FFV::Loop(const unsigned step)
     avr_Var[i] = 0.0;
   }
   VariationSpace(rms_Var, avr_Var, flop_count);
-  TIMING_stop(tm_stat_space, flop_count);
+  TIMING_stop("Variation_Space", flop_count);
   
   
   if ( numProc > 1 )
@@ -159,7 +159,7 @@ int FFV::Loop(const unsigned step)
     /// var_Pressure,
     /// var_Temperature,
     double src[6], dst[6]; // Vel, Prs, Tempで3*2
-    TIMING_start(tm_stat_space_comm);
+    TIMING_start("A_R_variation_space");
     
     for (int n=0; n<3; n++) {
       src[n]   = rms_Var[n];
@@ -173,7 +173,7 @@ int FFV::Loop(const unsigned step)
       avr_Var[n] = dst[n+3];
     }
     
-    TIMING_stop(tm_stat_space_comm, 2.0*numProc*6.0*2.0*sizeof(double) ); // 双方向 x ノード数 x 変数
+    TIMING_stop("A_R_variation_space", 2.0*numProc*6.0*2.0*sizeof(double) ); // 双方向 x ノード数 x 変数
   }
 
   rms_Var[var_Velocity] = sqrt(rms_Var[var_Velocity]); // 速度の変動量の空間総和
@@ -209,17 +209,8 @@ int FFV::Loop(const unsigned step)
   
   
   
-  //  <<< ステップループのユーティリティ 1
-  TIMING_stop(tm_loop_uty_sct_1, 0.0);
-  
-  
-  
   // 1ステップ後のモニタ処理 -------------------------------
   
-  
-  
-  //  >>> ステップループのユーティリティ 2
-  TIMING_start(tm_loop_uty_sct_2);
   
   // Historyクラスのタイムスタンプを更新
   H->updateTimeStamp(CurrentStep, (REAL_TYPE)CurrentTime, vMax);
@@ -233,10 +224,10 @@ int FFV::Loop(const unsigned step)
     // 通常
     if ( C.Interval[Control::tg_basic].isTriggered(CurrentStep, CurrentTime) )
     {
-      TIMING_start(tm_file_out);
+      TIMING_start("File_Output");
       flop_count=0.0;
       F->OutputBasicVariables(CurrentStep, CurrentTime, flop_count);
-      TIMING_stop(tm_file_out, flop_count);
+      TIMING_stop("File_Output", flop_count);
       
       if ( F->isVtk() )
       {
@@ -251,13 +242,12 @@ int FFV::Loop(const unsigned step)
       // 指定間隔の出力がない場合のみ（重複を避ける）
       if ( !C.Interval[Control::tg_basic].isTriggered(CurrentStep, CurrentTime) )
       {
-        TIMING_start(tm_file_out);
+        TIMING_start("File_Output");
         flop_count=0.0;
         F->OutputBasicVariables(CurrentStep, CurrentTime, flop_count);
-        TIMING_stop(tm_file_out, flop_count);
+        TIMING_stop("File_Output", flop_count);
       }
     }
-    
   }
 
   
@@ -271,10 +261,10 @@ int FFV::Loop(const unsigned step)
       // 通常
       if ( C.Interval[Control::tg_statistic].isTriggered(CurrentStep, CurrentTime) ) 
       {
-        TIMING_start(tm_file_out);
+        TIMING_start("File_Output");
         flop_count=0.0;
         F->OutputStatisticalVarables(CurrentStep, CurrentTime, CurrentStepStat, CurrentTimeStat, flop_count);
-        TIMING_stop(tm_file_out, flop_count);
+        TIMING_stop("File_Output", flop_count);
         
         // special
         output_mean_((int*)&CurrentStep, G_origin, G_region, G_division, G_size, &myRank, size, &pitch[0], &guide, d_av, d_rms, d_rmsmean);
@@ -287,10 +277,10 @@ int FFV::Loop(const unsigned step)
         // 指定間隔の出力がない場合のみ（重複を避ける）
         if ( !C.Interval[Control::tg_statistic].isTriggered(CurrentStep, CurrentTime) )
         {
-          TIMING_start(tm_file_out);
+          TIMING_start("File_Output");
           flop_count=0.0;
           F->OutputStatisticalVarables(CurrentStep, CurrentTime, CurrentStepStat, CurrentTimeStat, flop_count);
-          TIMING_stop(tm_file_out, flop_count);
+          TIMING_stop("File_Output", flop_count);
         }
       }
     }
@@ -298,10 +288,10 @@ int FFV::Loop(const unsigned step)
   
   if (C.varState[var_TotalP] == ON )
   {
-    TIMING_start(tm_total_prs);
+    TIMING_start("Total_Pressure");
     flop_count=0.0;
     fb_totalp_ (d_p0, size, &guide, d_v, d_p, v00, &flop_count);
-    TIMING_stop(tm_total_prs, flop_count);
+    TIMING_stop("Total_Pressure", flop_count);
   }
   
 
@@ -309,13 +299,10 @@ int FFV::Loop(const unsigned step)
   // サンプリング履歴
   if ( (C.SamplingMode == ON) && C.Interval[Control::tg_sampled].isTriggered(CurrentStep, CurrentTime) )
   {
-    TIMING_start(tm_sampling);
+    TIMING_start("Sampling");
     MO.sampling();
-    TIMING_stop(tm_sampling, 0.0);
-    
-    TIMING_start(tm_hstry_sampling);
     MO.print(CurrentStep, (REAL_TYPE)CurrentTime);
-    TIMING_stop(tm_hstry_sampling, 0.0);
+    TIMING_stop("Sampling", 0.0);
   }
 
   
@@ -331,7 +318,7 @@ int FFV::Loop(const unsigned step)
   {
     container[3*i+0] = (double)LS[ic_prs1].getLoopCount();
     container[3*i+1] = LS[ic_prs1].getResidual();
-    container[3*i+1] = LS[ic_prs1].getError();
+    container[3*i+2] = LS[ic_prs1].getError();
   }
   
   
@@ -340,7 +327,7 @@ int FFV::Loop(const unsigned step)
   {
     if ( C.Interval[Control::tg_console].isTriggered(CurrentStep, CurrentTime) )
     {
-      TIMING_start(tm_hstry_stdout);
+      TIMING_start("History_out");
       Hostonly_
       {
         H->printHistory(stdout, rms_Var, avr_Var, container, &C, &DivC, step_end, true);
@@ -350,7 +337,7 @@ int FFV::Loop(const unsigned step)
           H->printCCNV(rms_Var, avr_Var, container, &C, DivC.divergence, step_end);
         }
       }
-      TIMING_stop(tm_hstry_stdout, 0.0);
+      TIMING_stop("History_out", 0.0);
     }
   }
   
@@ -361,50 +348,53 @@ int FFV::Loop(const unsigned step)
     
     if ( C.Mode.Log_Base == ON ) 
     {
-      TIMING_start(tm_hstry_base);
-      
       // 基本履歴情報
+      TIMING_start("History_out");
       Hostonly_ H->printHistory(fp_b, rms_Var, avr_Var, container, &C, &DivC, step_end, true);
+      TIMING_stop("History_out", 0.0);
       
       // コンポーネント
       if ( C.EnsCompo.monitor )
       {
+        TIMING_start("History_out");
         Hostonly_ H->printHistoryCompo(fp_c, cmp, &C, deltaT);
+        TIMING_stop("History_out", 0.0);
       }
       
       // 物体の力の計算
       if ( C.EnsCompo.obstacle )
       {
-        TIMING_start(tm_cal_force);
+        TIMING_start("Force_Calculation");
         flop_count=0.0;
-        
         calcForce(flop_count);
+        TIMING_stop("Force_Calculation", flop_count);
         
+        TIMING_start("Gather_Force");
         gatherForce(buffer_force);
+        TIMING_stop("Gather_Force");
         
+        
+        TIMING_start("History_out");
         Hostonly_ H->printHistoryForce(fp_f, cmp, &C, global_force);
-        TIMING_stop(tm_cal_force, 0.0);
+        TIMING_stop("History_out", 0.0);
       }
       
       // 流量収支履歴
+      TIMING_start("History_out");
       Hostonly_ H->printHistoryDomfx(fp_d, &C, deltaT);
-      
-      TIMING_stop(tm_hstry_base, 0.0);
+      TIMING_stop("History_out", 0.0);
     }
     
     // 壁面履歴情報
     if ( C.Mode.Log_Wall == ON ) 
     {
-      TIMING_start(tm_hstry_wall);
       //Hostonly_ H->printHistoryWall(fp_w, range_Yp, range_Ut);
-      TIMING_stop(tm_hstry_wall, 0.0);
     }
     
   }
   
-  TIMING_stop(tm_loop_uty_sct_2, 0.0);
-  //  <<< ステップループのユーティリティ 2
-  
+  TIMING_stop("Loop_Utility_Section", 0.0);
+  TIMING_stop("Time_Step_Loop_Section", 0.0);
   
   
   // 発散時の打ち切り
@@ -416,12 +406,6 @@ int FFV::Loop(const unsigned step)
     }
     return -1;
   }
-  
-  
-  TIMING_stop(tm_loop_uty_sct, 0.0);
-  //  <<< ステップループのユーティリティ
-  
-  TIMING_stop(tm_loop_sct, 0.0);
   
   
   

@@ -3005,7 +3005,7 @@ ac_config_headers="$ac_config_headers config.h"
 #
 # revision No.
 #
-FFVC_REVISION="20141106_1400"
+FFVC_REVISION="20141109_1600"
 
 
 

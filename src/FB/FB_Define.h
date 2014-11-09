@@ -26,7 +26,7 @@
 #include "mydebug.h"
 #include <float.h>
 
-#define FB_VERS "1.5.0"
+#define FB_VERS "1.5.1"
 
 #define SINGLE_EPSILON 1.19e-7
 #define DOUBLE_EPSILON 2.22e-16

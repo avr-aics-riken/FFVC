@@ -498,7 +498,7 @@ int FFV::FilterInitialize(int argc, char **argv)
   if ( C.Mode.Profiling != OFF )
   {
     ModeTiming = ON;
-    TIMING__ PM.initialize( tm_END );
+    TIMING__ PM.initialize( PM_NUM_MAX );
     TIMING__ PM.setRankInfo( paraMngr->GetMyRankID() );
     TIMING__ PM.setParallelMode(str_para, C.num_thread, C.num_process);
     set_timing_label();

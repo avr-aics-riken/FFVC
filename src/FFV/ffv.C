@@ -24,6 +24,8 @@
 // コンストラクタ
 FFV::FFV()
 {
+  order_of_PM_key = 0;
+  
   EXEC_MODE = -1;
   ffv_procGrp = 0;
   ModeTiming = 0;
@@ -150,51 +152,6 @@ void FFV::calcForce(double& flop)
   
 }
 
-
-// #################################################################
-/**
- * @brief 全ノードについて，ローカルノード1面・一層あたりの通信量の和を返す
- * @retval 通信量(Byte)
- * @param [in] sz    配列サイズ
- * @param [in] guide ガイドセル
- */
-double FFV::count_comm_size(const int sz[3], const int guide)
-{
-  double c = 0.0;
-  
-  // 内部面のみをカウントする
-  for (int n=0; n<6; n++) 
-  {
-    if ( nID[n] >= 0 ) {
-      
-      switch (n) 
-      {
-        case X_minus:
-        case X_plus:
-          c += (double)(sz[1]*sz[2]);
-          break;
-          
-        case Y_minus:
-        case Y_plus:
-          c += (double)(sz[0]*sz[2]);
-          break;
-          
-        case Z_minus:
-        case Z_plus:
-          c += (double)(sz[0]*sz[1]);
-          break;
-      }
-    }
-  }
-  
-  if ( numProc > 1 )
-  {
-    double tmp = c;
-    if ( paraMngr->Allreduce(&tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  return c * sizeof(REAL_TYPE); // Byte
-}
 
 
 // #################################################################
@@ -472,43 +429,41 @@ void FFV::NormDiv(REAL_TYPE* div)
   REAL_TYPE coef = 1.0/deltaX; /// 発散値を計算するための係数
 
   
-  TIMING_start(tm_poi_itr_sct_5); // >>> Poisson Iteration subsection 5
-  
   if ( DivC.divType == nrm_div_max )
   {
-    TIMING_start(tm_norm_div_max);
+    TIMING_start("Norm_Div_max");
     flop_count=0.0;
     norm_v_div_max_(&dv, size, &guide, div, &coef, d_bcp, &flop_count);
-    TIMING_stop(tm_norm_div_max, flop_count);
+    TIMING_stop("Norm_Div_max", flop_count);
     
     if ( numProc > 1 )
     {
-      TIMING_start(tm_norm_comm);
+      TIMING_start("All_Reduce");
       REAL_TYPE tmp = dv;
       if ( paraMngr->Allreduce(&tmp, &dv, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0); // 最大値
-      TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
+      TIMING_stop("All_Reduce", 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
     }
     DivC.divergence = (double)dv;
   }
   else // nrm_div_l2
   {
-    TIMING_start(tm_norm_div_max);
+    TIMING_start("Norm_Div_L2");
     flop_count=0.0;
     norm_v_div_l2_(&dv, size, &guide, div, &coef, d_bcp, &flop_count);
-    TIMING_stop(tm_norm_div_max, flop_count);
+    TIMING_stop("Norm_Div_L2", flop_count);
     
     if ( numProc > 1 )
     {
-      TIMING_start(tm_norm_comm);
+      TIMING_start("All_Reduce");
       REAL_TYPE tmp = dv;
       if ( paraMngr->Allreduce(&tmp, &dv, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0); // 自乗和
-      TIMING_stop(tm_norm_comm, 2.0*numProc*sizeof(double));
+      TIMING_stop("All_Reduce", 2.0*numProc*sizeof(double));
     }
     tmp = (double)dv;
     DivC.divergence = sqrt( tmp );
   }
   
-  TIMING_stop(tm_poi_itr_sct_5, 0.0); // <<< Poisson Iteration subsection 5
+
 
 }
 
@@ -673,33 +628,29 @@ void FFV::printLS(FILE* fp, const LinearSolver* IC)
 // #################################################################
 /**
  * @brief タイミング測定区間にラベルを与えるラッパー
- * @param [in] key       キー番号
  * @param [in] label     ラベル
  * @param [in] type      測定対象タイプ(COMM or CALC)
  * @param [in] exclusive 排他測定フラグ(ディフォルトtrue)
  */
-void FFV::set_label(const int key, char* label, PerfMonitor::Type type, bool exclusive)
+void FFV::set_label(const string label, PerfMonitor::Type type, bool exclusive)
 {
-  // 文字数がTM_LABEL_MAX-1を超えるものはカット
-  int len = strlen(label);
-  char label_tmp[TM_LABEL_MAX];
+  // 登録個数のチェック
+  order_of_PM_key++;
   
-  if ( len>TM_LABEL_MAX-1 ) 
+  if ( order_of_PM_key > PM_NUM_MAX )
   {
-    strncpy(label_tmp, label, TM_LABEL_MAX-1);
-    printf("\tWarning: Length of timing label must be less than %d\n", TM_LABEL_MAX-1);
+    Hostonly_ printf("\tThe number of labels for Performance monitor goes over limit.\n");
+    Exit(0);
   }
-  else 
+  
+  // 文字数がTM_LABEL_MAX-1を超えるものはカット
+  if ( strlen(label.c_str()) > TM_LABEL_MAX-1 )
   {
-    strcpy(label_tmp, label);
+    printf("\tWarning: Length of timing label must be less than %d\n", TM_LABEL_MAX-1);
   }
   
   // Performance Monitorへの登録
-  string tmp(label_tmp);
-  PM.setProperties(key, tmp, type, exclusive);
-  
-  // FX用プロファイラの文字列登録
-  strcpy(tm_label_ptr[key], label_tmp);
+  PM.setProperties(label, type, exclusive);
 }
 
 
@@ -709,213 +660,172 @@ void FFV::set_label(const int key, char* label, PerfMonitor::Type type, bool exc
  */
 void FFV::set_timing_label()
 {
-  // ラベルの設定
-  set_label(tm_init_sct,           "Initialization_Section",  PerfMonitor::CALC, false);
-  set_label(tm_init_alloc,         "Allocate_Arrays",         PerfMonitor::CALC);
-  
-  set_label(tm_voxel_prep_sct,     "Voxel_Prep_Section",      PerfMonitor::CALC, false);
-  set_label(tm_voxel_load,         "Loading_Voxel_File",      PerfMonitor::CALC);
-  set_label(tm_polygon_load,       "Loading_Polygon_File",    PerfMonitor::CALC);
-  set_label(tm_cutinfo,            "Cut_Information",         PerfMonitor::CALC);
-  set_label(tm_cut_min,            "Cut_Minimum_search",      PerfMonitor::CALC);
-  set_label(tm_cmp_vertex8,        "Compo_Vertex8",           PerfMonitor::CALC);
-  set_label(tm_cmp_subdivision,    "Compo_Subdivision",       PerfMonitor::CALC);
-  // end of Voxel Prep. Section
-  
-  set_label(tm_restart,            "Restart_Process",         PerfMonitor::CALC);
-  
-  // end of Initialization Section
+  // common
+  set_label("Allocate_Arrays",         PerfMonitor::CALC);
+  set_label("Copy_Array",              PerfMonitor::CALC);
+  set_label("assign_Const_to_Array",   PerfMonitor::CALC);
+  set_label("All_Reduce",              PerfMonitor::COMM);
   
   
-  // Loop section
-  set_label(tm_loop_sct,           "Time_Step_Loop_Section",  PerfMonitor::CALC, false); 
   
-  set_label(tm_vmax,               "Search_Vmax",             PerfMonitor::CALC);
-  set_label(tm_vmax_comm,          "A_R_Vmax",                PerfMonitor::COMM);
+  set_label("Initialization_Section",  PerfMonitor::CALC, false);
   
-  set_label(tm_flow_sct,           "Flow_Section",            PerfMonitor::CALC, false); 
+  set_label("Voxel_Prep_Section",      PerfMonitor::CALC, false);
   
-  set_label(tm_frctnl_stp_sct,     "NS__F_Step_Section",      PerfMonitor::CALC, false); 
+  set_label("Polylib_Section",         PerfMonitor::CALC, false);
+  set_label("Loading_Polygon",         PerfMonitor::CALC);
+  set_label("Write_Polygon",           PerfMonitor::CALC);
+  // Polylib_Section
   
-  set_label(tm_frctnl_stp_sct_1,   "NS__F_Step_Sct_1",        PerfMonitor::CALC, false);
-  set_label(tm_spec_vel,           "Assign_BC_Velocity",      PerfMonitor::CALC);
-  set_label(tm_WallFunc,           "Friction_Velocity",       PerfMonitor::CALC);
-  // end of NS: F-Step Sct:1
+  set_label("Cutlib_Section",          PerfMonitor::CALC, false);
+  set_label("Cut_Information",         PerfMonitor::CALC);
+  set_label("Cut_Minimum_search",      PerfMonitor::CALC);
+  // Cutlib_Section
   
-  set_label(tm_frctnl_stp_sct_2,   "NS__F_Step_Sct_2",        PerfMonitor::CALC, false);
-  set_label(tm_pseudo_vec,         "Pseudo_Velocity",         PerfMonitor::CALC);
-  set_label(tm_pvec_flux,          "Pseudo_Vel_Flux_BC",      PerfMonitor::CALC);
-  set_label(tm_pvec_ee,            "Pvec_Euler_Explicit",     PerfMonitor::CALC);
-  set_label(tm_pvec_ab,            "Pvec_Adams_Bashforth",    PerfMonitor::CALC);
-  set_label(tm_pvec_abcn,          "Pvec_AB_CN",              PerfMonitor::CALC);
-  set_label(tm_pvec_abcn_df_ee,    "Pvec_AB_CN_Diff_EE",      PerfMonitor::CALC);
-  set_label(tm_pvec_abcn_df_ee_BC, "Pvec_AB_CN_Diff_EE_BC",   PerfMonitor::CALC);
-  // end of NS: F-Step Sct:2
+  set_label("Geometry_Section",        PerfMonitor::CALC, false);
+  set_label("WaterTightning",          PerfMonitor::CALC);
+  set_label("SubSampling",             PerfMonitor::CALC);
+  set_label("Fill",                    PerfMonitor::CALC);
+  // Geometry_Section
   
-  set_label(tm_frctnl_stp_sct_3,   "NS__F_Step_Sct_3",        PerfMonitor::CALC, false);
-  set_label(tm_forcing,            "Forcing_Pseudo_Velocity", PerfMonitor::CALC);
-  set_label(tm_buoyancy,           "Buoyancy",                PerfMonitor::CALC);
-  set_label(tm_pvec_BC,            "Pseudo_Velocity_BC",      PerfMonitor::CALC);
-  set_label(tm_pvec_comm,          "Sync_Pseudo_Velocity",    PerfMonitor::COMM);
-  // end of NS: F-Step Sct:3
+  set_label("Compo_Vertex8",           PerfMonitor::CALC);
+  set_label("Compo_Subdivision",       PerfMonitor::CALC);
+  set_label("Compo_Fraction",          PerfMonitor::CALC);
   
-  set_label(tm_frctnl_stp_sct_4,   "NS__F_Step_Sct_4",        PerfMonitor::CALC, false);
-  // end of NS: F-Step Sct:4
+  set_label("Encode_BCindex",          PerfMonitor::CALC);
   
-  // end of NS: F-Step Section
+  set_label("Gather_DomainInfo",       PerfMonitor::CALC);
   
-  set_label(tm_poi_src_sct,        "Poisson__Source_Section", PerfMonitor::CALC, false);
-  set_label(tm_div_pvec,           "Divergence_of_Pvec",      PerfMonitor::CALC);
-  set_label(tm_poi_src_vbc,        "Poisson_Src_VBC",         PerfMonitor::CALC);
-  set_label(tm_poi_src_nrm,        "Poisson_Src_Norm",        PerfMonitor::CALC);
-  set_label(tm_poi_src_comm,       "A_R_Poisson_Src",         PerfMonitor::COMM);
-  // end of Poisson: Source Section
+  set_label("Generate_Glyph",          PerfMonitor::CALC);
   
-  set_label(tm_poi_itr_sct,        "Poisson__Iteration_Sct",  PerfMonitor::CALC, false);
-  set_label(tm_hstry_itr,          "History_Iteration",       PerfMonitor::CALC);
-  
-  set_label(tm_poi_itr_sct_1,      "Poisson__Itr_Sct_1",      PerfMonitor::CALC, false);
-  set_label(tm_force_src,          "Forcing Source",          PerfMonitor::CALC);
-  // end of Poisson: Itr. Sct:1
-  
-  set_label(tm_poi_itr_sct_2,      "Poisson__Itr_Sct_2",      PerfMonitor::CALC, false); // LS_Binary(), LS_Planar()
-  set_label(tm_poi_PSOR,           "Poisson_PSOR",            PerfMonitor::CALC);
-  set_label(tm_poi_setup,          "Poisson_Setup_for_Itr",   PerfMonitor::CALC);
-  set_label(tm_poi_SOR2SMA,        "Poisson_SOR2_SMA",        PerfMonitor::CALC);
-  set_label(tm_poi_BC,             "Poisson_BC",              PerfMonitor::CALC);
-  // end of Poisson: Itr. Sct:2
-  
-  set_label(tm_poi_itr_sct_3,      "Poisson__Itr_Sct_3",      PerfMonitor::CALC, false); // LS_Binary(), LS_Planar()
-  set_label(tm_poi_comm,           "Sync_Pressure",           PerfMonitor::COMM);
-  set_label(tm_poi_res_comm,       "A_R_Poisson_Residual",    PerfMonitor::COMM);
-  // end of Poisson: Itr. Sct:3
-  
-  set_label(tm_poi_itr_sct_4,      "Poisson__Itr_Sct_4",      PerfMonitor::CALC, false);
-  set_label(tm_prj_vec,            "Projection_Velocity",     PerfMonitor::CALC);
-  set_label(tm_prj_vec_bc,         "Projection_Velocity_BC",  PerfMonitor::CALC);
-  set_label(tm_prj_vec_bc_comm,    "A_R_Projection_VBC",      PerfMonitor::COMM);
-  set_label(tm_prj_frc_mod,        "Projection_Forcing",      PerfMonitor::CALC);
-  set_label(tm_prj_frc_mod_comm,   "A_R_Projection_Forcing",  PerfMonitor::COMM);
-  set_label(tm_prj_frc_dir,        "Forcing_Direction",       PerfMonitor::CALC);
-  set_label(tm_vec_BC,             "Velocity_BC",             PerfMonitor::CALC);
-  // end of Poisson: Itr. Sct:4
-  
-  set_label(tm_poi_itr_sct_5,      "Poisson__Itr_Sct_5",      PerfMonitor::CALC, false);
-  set_label(tm_norm_div_max,       "Norm_Div_max",            PerfMonitor::CALC);
-  set_label(tm_norm_comm,          "A_R_Poisson_Norm",        PerfMonitor::COMM);
-  // end of Poisson: Itr. Sct:5
-  
-  // end of Poisson: Iteration Sct.
-  
-  set_label(tm_NS_loop_post_sct,   "NS__Loop_Post_Section",   PerfMonitor::CALC, false);
-  set_label(tm_vectors_comm,       "Sync_Velocity",           PerfMonitor::COMM);
-  set_label(tm_domain_monitor,     "Domain_Monitor",          PerfMonitor::CALC);
-  set_label(tm_VBC_update,         "Velocity_BC_Update",      PerfMonitor::CALC);
-  set_label(tm_LES_eddy,           "Eddy_Viscosity",          PerfMonitor::CALC);
-  set_label(tm_LES_eddy_comm,      "Sync_Eddy_Viscosity",     PerfMonitor::COMM);
-  // end of NS: Loop Post Section
-  
-  set_label(tm_gmres_sor_sct,      "Poisson__GMRES_Sct",      PerfMonitor::CALC, false);
-  set_label(tm_gmres_mvprod,       "GMRES_MatVec_Product",    PerfMonitor::CALC);
-  set_label(tm_gmres_res_sample,   "GMRES_Res_sample",        PerfMonitor::CALC);
-  set_label(tm_gmres_others,       "GMRES_Others",            PerfMonitor::CALC);
-  set_label(tm_gmres_comm,         "A_R_GMRES",               PerfMonitor::COMM);
-  
-  // end of Flow section
+  // Voxel_Prep_Section
+  // Initialization_Section
   
   
-  set_label(tm_heat_sct,           "Heat_Section",            PerfMonitor::CALC, false);
-  
-  set_label(tm_heat_convection_sct,"Thermal_Convection_Sct",  PerfMonitor::CALC, false);
-  set_label(tm_heat_spec_temp,     "Thermal_Assign_BC_Temp",  PerfMonitor::CALC);
-  set_label(tm_heat_cnv,           "Thermal_Convection",      PerfMonitor::CALC);
-  set_label(tm_heat_cnv_BC,        "Thermal_Convection_BC",   PerfMonitor::CALC);
-  set_label(tm_heat_cnv_EE,        "Thermal_Convection_EE",   PerfMonitor::CALC);
-  // end of Thermal Convection Sct.
-  
-  set_label(tm_heat_diffusion_sct, "Thermal_Diffusion_Sct",   PerfMonitor::CALC, false);
-  set_label(tm_heat_diff_OBC,      "Thermal_Diff_Outer_BC",   PerfMonitor::CALC);
-  // end of Thermal Diffusion Sct.
-  
-  set_label(tm_heat_diff_sct_1,    "Thermal_Diffusion_Sct_1", PerfMonitor::CALC, false);
-  set_label(tm_heat_diff_IBC_vol,  "Thermal_Diff_IBC_Vol",    PerfMonitor::CALC);
-  set_label(tm_heat_diff_comm,     "Sync_Thermal",            PerfMonitor::COMM);
-  // end of Thermal Diffusion Sct:1
-  
-  set_label(tm_heat_diff_sct_2,    "Thermal_Diffusion_Sct_2", PerfMonitor::CALC, false);
-  set_label(tm_heat_diff_IBC_face, "Thermal_Diff_IBC_Face",   PerfMonitor::CALC);
-  set_label(tm_heat_diff_OBC_face, "Thermal_Diff_OBC_Face",   PerfMonitor::CALC);
-  set_label(tm_heat_diff_QBC_comm, "Sync_Thermal_QBC",        PerfMonitor::COMM);
-  // end of Thermal Diffusion Sct:2
-  
-  set_label(tm_heat_diff_sct_3,    "Thermal_Diffusion_Sct_3", PerfMonitor::CALC, false);
-  set_label(tm_heat_diff_EE,       "Thermal_Diff_EE",         PerfMonitor::CALC);
-  set_label(tm_heat_diff_PSOR,     "Thermal_Diff_PSOR",       PerfMonitor::CALC);
-  set_label(tm_heat_update_comm,   "Sync_Thermal_Update",     PerfMonitor::COMM);
-  set_label(tm_heat_diff_res_comm, "A_R_Thermal_Diff_Res",    PerfMonitor::COMM);
-  // end of Thermal Diffusion Sct:3
-  
-  set_label(tm_heat_loop_post_sct, "Thermal_Loop_Post_Sct",   PerfMonitor::CALC, false);
-  set_label(tm_heat_range,         "Thermal_Range_Cut",       PerfMonitor::CALC);
-  // end of Thermal Loop Post Sct.
-  
-  // end of Heat Section
+  set_label("Restart_Process",         PerfMonitor::CALC);
   
   
-  set_label(tm_vof_sct,            "VOF_Section",             PerfMonitor::CALC, false);
-  set_label(tm_vof_cnv,            "VOF_Convection",          PerfMonitor::CALC);
-  set_label(tm_vof_cnv_comm,       "Sync_VOF_Convection",     PerfMonitor::COMM);
-  // end of VOF section
+  set_label("Time_Step_Loop_Section",  PerfMonitor::CALC, false);
+  
+  set_label("Search_Vmax",             PerfMonitor::CALC);
+
+  set_label("Flow_Section",            PerfMonitor::CALC, false);
+  
+  set_label("NS__F_Step_Section",      PerfMonitor::CALC, false);
+  set_label("Pvec_MUSCL",              PerfMonitor::CALC);
+  set_label("Pvec_MUSCL_LES",          PerfMonitor::CALC);
+  set_label("Pvec_Central",            PerfMonitor::CALC);
+  set_label("Pvec_Central_LES",        PerfMonitor::CALC);
+  set_label("Pvec_Flux_BC",            PerfMonitor::CALC);
+  set_label("Pvec_Euler_Explicit",     PerfMonitor::CALC);
+  set_label("Pvec_Adams_Bashforth",    PerfMonitor::CALC);
+  set_label("Pvec_AB_CN",              PerfMonitor::CALC);
+  set_label("Pvec_Forcing",            PerfMonitor::CALC);
+  set_label("Pvec_Buoyancy",           PerfMonitor::CALC);
+  set_label("Pvec_BC",                 PerfMonitor::CALC);
+  set_label("Sync_Pvec",               PerfMonitor::COMM);
+  // NS__F_Step_Section
   
   
-  set_label(tm_loop_uty_sct,       "Loop_Utility_Section",    PerfMonitor::CALC, false);
-  
-  set_label(tm_loop_uty_sct_1,     "Loop_Utility_Sct_1",      PerfMonitor::CALC, false);
-  set_label(tm_average_time,       "Averaging",               PerfMonitor::CALC);
-  set_label(tm_stat_space,         "Variation_Space",         PerfMonitor::CALC);
-  set_label(tm_stat_space_comm,    "Sync_Variation",          PerfMonitor::COMM);
-  // end of Loop Utility Sct:1
-  
-  set_label(tm_loop_uty_sct_2,     "Loop_Utility_Sct_2",      PerfMonitor::CALC, false);
-  set_label(tm_hstry_stdout,       "History_Stdout",          PerfMonitor::CALC);
-  set_label(tm_file_out,           "File_Output",             PerfMonitor::CALC);
-  set_label(tm_hstry_base,         "History_Base",            PerfMonitor::CALC, false);
-  set_label(tm_cal_force,          "Force_Calculation",       PerfMonitor::CALC);
-  set_label(tm_hstry_wall,         "History_Wall_Info",       PerfMonitor::CALC);
-  set_label(tm_total_prs,          "Total_Pressure",          PerfMonitor::CALC);
-  set_label(tm_sampling,           "Sampling",                PerfMonitor::CALC);
-  set_label(tm_hstry_sampling,     "History_Sampling",        PerfMonitor::CALC);
-  
-  // end of Loop Utility Sct:2
-  
-  // end of Loop Utility Section
+  set_label("Poisson__Source_Section", PerfMonitor::CALC, false);
+  set_label("Divergence_of_Pvec",      PerfMonitor::CALC);
+  set_label("Poisson_Src_VBC",         PerfMonitor::CALC);
+  set_label("Poisson_Src_Norm",        PerfMonitor::CALC);
+  set_label("A_R_Poisson_Src_L2",      PerfMonitor::COMM);
+  set_label("Poisson_Init_Res",        PerfMonitor::CALC);
+  set_label("A_R_Poisson_Init_Res_L2", PerfMonitor::COMM);
+  // Poisson__Source_Section
   
   
-  // end of Loop Section
+  set_label("VP-Iteration_Section",    PerfMonitor::CALC, false);
+  set_label("Point_SOR",               PerfMonitor::CALC, false);
+  set_label("2-colored_SOR_stride",    PerfMonitor::CALC, false);
+  set_label("PBiCGstab",               PerfMonitor::CALC, false);
+  set_label("Projection_Velocity",     PerfMonitor::CALC);
+  set_label("Projection_Velocity_BC",  PerfMonitor::CALC);
+  set_label("A_R_Projection_VBC",      PerfMonitor::COMM);
+  set_label("Projection_Forcing",      PerfMonitor::CALC);
+  set_label("A_R_Projection_Forcing",  PerfMonitor::COMM);
+  set_label("Forcing Source",          PerfMonitor::CALC);
+  set_label("Sync_Face_Velocity",      PerfMonitor::COMM);
+  set_label("Velocity_BC",             PerfMonitor::CALC);
+  set_label("Norm_Div_max",            PerfMonitor::CALC);
+  set_label("Norm_Div_L2",             PerfMonitor::CALC);
+  // VP-Iteration_Section
+
+  
+  set_label("NS__Loop_Post_Section",   PerfMonitor::CALC, false);
+  set_label("Sync_Velocity",           PerfMonitor::COMM);
+  set_label("Domain_Monitor",          PerfMonitor::CALC);
+  // NS__Loop_Post_Section
+  
+  // Flow_Section
   
   
-  // 共通にまとめて利用
-  set_label(tm_copy_array,         "Copy_Array",              PerfMonitor::CALC);
-  set_label(tm_assign_const,       "assign_Const_to_Array",   PerfMonitor::CALC);
+  set_label("Heat_Section",            PerfMonitor::CALC, false);
   
-  // Blas
-  set_label(tm_blas_dot1,          "Blas_Dot1",               PerfMonitor::CALC);
-  set_label(tm_blas_dot2,          "Blas_Dot2",               PerfMonitor::CALC);
-  set_label(tm_blas_copy,          "Blas_Copy",               PerfMonitor::CALC);
-  set_label(tm_blas_calc_r,        "Blas_Residual",           PerfMonitor::CALC);
-  set_label(tm_blas_ax,            "Blas_Ax",                 PerfMonitor::CALC);
-  set_label(tm_blas_z_xpay,        "Blas_Z=X+aY" ,            PerfMonitor::CALC);
-  set_label(tm_blas_axpbypz,       "Blas_Z=Z+aX+bY",          PerfMonitor::CALC);
-  set_label(tm_blas_bicg_update_p, "Blas_BiCGupdateP",        PerfMonitor::CALC);
-  set_label(tm_blas_bicg_update_x, "Blas_BiCGupdateX",        PerfMonitor::CALC);
-  set_label(tm_blas_comm,          "Blas_Comm",               PerfMonitor::COMM);
-  
-  set_label(tm_bicgstab_sct,       "BiCG",                    PerfMonitor::CALC, false);
+  set_label("Thermal_Convection",      PerfMonitor::CALC);
+  set_label("Thermal_Convection_BC",   PerfMonitor::CALC);
+  set_label("Thermal_Convection_EE",   PerfMonitor::CALC);
+  set_label("Thermal_Diff_Outer_BC",   PerfMonitor::CALC);
+  set_label("Thermal_Diff_IBC_Vol",    PerfMonitor::CALC);
+  set_label("Sync_Thermal",            PerfMonitor::COMM);
+  set_label("Thermal_Diff_IBC_Face",   PerfMonitor::CALC);
+  set_label("Thermal_Diff_OBC_Face",   PerfMonitor::CALC);
+  set_label("Sync_Thermal_QBC",        PerfMonitor::COMM);
+  set_label("Thermal_Diff_EE",         PerfMonitor::CALC);
+  set_label("A_R_Thermal_Diff_Res",    PerfMonitor::COMM);
+  set_label("Thermal_Range_Cut",       PerfMonitor::CALC);
   
   
-  // 統計処理
-  set_label(tm_statistic,          "Statistic",               PerfMonitor::CALC, false);
+  set_label("Thermal_Diff_PSOR",       PerfMonitor::CALC); //
   
+  
+  
+  
+  
+  set_label("VOF_Section",             PerfMonitor::CALC, false);
+  set_label("VOF_Convection",          PerfMonitor::CALC);
+  set_label("Sync_VOF_Convection",     PerfMonitor::COMM);
+  
+  
+  set_label("Loop_Utility_Section",    PerfMonitor::CALC, false);
+  set_label("Averaging",               PerfMonitor::CALC);
+  set_label("LES statistic",           PerfMonitor::CALC);
+  set_label("Variation_Space",         PerfMonitor::CALC);
+  set_label("A_R_variation_space",     PerfMonitor::COMM);
+  set_label("File_Output",             PerfMonitor::CALC);
+  set_label("Total_Pressure",          PerfMonitor::CALC);
+  set_label("Sampling",                PerfMonitor::CALC);
+  set_label("History_out",             PerfMonitor::CALC);
+  set_label("Force_Calculation",       PerfMonitor::CALC);
+  set_label("Gather_Force",            PerfMonitor::COMM);
+  // Loop_Utility_Section
+  
+  // Time_Step_Loop_Section
+ 
+  set_label("Statistic",               PerfMonitor::CALC, false);
+  
+  
+  // LinearSolver class
+  set_label("A_R_Convergence",         PerfMonitor::COMM);
+  set_label("Dot",                     PerfMonitor::CALC);
+  set_label("Dot1",                    PerfMonitor::CALC);
+  set_label("Dot2",                    PerfMonitor::CALC);
+  set_label("A_R_Dot",                 PerfMonitor::COMM);
+  set_label("Poisson_PSOR",            PerfMonitor::CALC);
+  set_label("Poisson_BC",              PerfMonitor::CALC);
+  set_label("Sync_Poisson",            PerfMonitor::COMM);
+  set_label("Poisson_SOR2_SMA",        PerfMonitor::CALC);
+  set_label("Blas_Clear",              PerfMonitor::CALC);
+  set_label("Blas_Copy",               PerfMonitor::CALC);
+  set_label("Blas_Residual",           PerfMonitor::CALC);
+  set_label("Blas_AXPY" ,              PerfMonitor::CALC);
+  set_label("Blas_XPAY",               PerfMonitor::CALC);
+  set_label("Blas_AX",                 PerfMonitor::CALC);
+  set_label("Blas_AXPYZ",              PerfMonitor::CALC);
+  set_label("Blas_AXPBYPZ",            PerfMonitor::CALC);
+
 }
 
 

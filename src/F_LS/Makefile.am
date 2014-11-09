@@ -31,4 +31,4 @@ libFLS_a_SOURCES = \
   ffv_SOR.f90
 
 
-EXTRA_DIST = Makefile_hand depend.inc ffv_poisson_cds.f90 ffv_poisson2.f90
+EXTRA_DIST = Makefile_hand depend.inc ffv_poisson_cds.f90 ffv_poisson2.f90 ffv_rc.f90

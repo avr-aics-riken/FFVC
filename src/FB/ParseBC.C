@@ -2190,10 +2190,10 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
         getObcPeriodic(label_leaf, i);
         break;
         
-      case OBC_SYMMETRIC:
-      case OBC_INTRINSIC:
-        // nothing to do
-        break;
+      // nothing to do
+      //case OBC_SYMMETRIC:
+      //case OBC_INTRINSIC:
+      //break;
     }
   }
   
@@ -3353,7 +3353,7 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
       }
       break;
       
-      
+    // nothing to do
     case OBC_SYMMETRIC:
     case OBC_INTRINSIC:
       break;
