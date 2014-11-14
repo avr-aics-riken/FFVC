@@ -1874,7 +1874,7 @@ void Control::getTimeControl(DTcntl* DT)
       Mode.Statistic = ON;
       Mode.StatisticRestart = ON;
     }
-    else if ( (stat_start > m_start) && (stat_end > m_start) ) // case 1
+    else if ( (stat_start >= m_start) && (stat_end > m_start) ) // case 1
     {
       Mode.Statistic = ON;
       Mode.StatisticRestart = OFF;

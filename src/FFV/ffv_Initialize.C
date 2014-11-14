@@ -3563,7 +3563,6 @@ void FFV::setupLinearSolvers(double& TotalMemory, TextParser* tpCntl)
   {
     case SOR2SMA:
     case GMRES:
-    case RBGS:
     case PCG:
     case BiCGSTAB:
       allocate_SOR2SMA_buffer(TotalMemory);
@@ -3584,7 +3583,7 @@ void FFV::setupLinearSolvers(double& TotalMemory, TextParser* tpCntl)
       
     case BiCGSTAB:
       allocArray_BiCGstab(TotalMemory);
-      if ( LS[ic_prs1].getPrecondition()==ON )
+      if ( LS[ic_prs1].isPreconditioned() )
       {
         allocArray_BiCGSTABwithPreconditioning(TotalMemory);
       }

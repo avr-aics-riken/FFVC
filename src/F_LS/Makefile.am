@@ -27,7 +27,6 @@ libFLS_a_FCFLAGS = \
 libFLS_a_SOURCES = \
   ffv_LSfunc.h \
   ffv_blas.f90 \
-  ffv_bicg.f90 \
   ffv_SOR.f90
 
 

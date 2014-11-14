@@ -491,26 +491,12 @@ void FFV::printCriteria(FILE* fp)
     {
       // 1st iteration
       fprintf(fp,"\t     1st Pressure Iteration \n");
-      fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICp1->getMaxIteration());
-      fprintf(fp,"\t       Residual Norm type     :   %s\n",    ICp1->getResNormString().c_str());
-      fprintf(fp,"\t       Threshold for residual :   %9.3e\n", ICp1->getResCriterion());
-      fprintf(fp,"\t       Error    Norm type     :   %s\n",    ICp1->getErrNormString().c_str());
-      fprintf(fp,"\t       Threshold for error    :   %9.3e\n", ICp1->getErrCriterion());
-      fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICp1->getOmega());
-      fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICp1->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
-      printLS(fp, ICp1);
+      printIteratoinParameter(fp, ICp1);
       
       if ( C.AlgorithmF == Flow_FS_RK_CN )
       {
         fprintf(fp,"\t     2nd Pressure Iteration \n");
-        fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICp2->getMaxIteration());
-        fprintf(fp,"\t       Residual Norm type     :   %s\n",    ICp2->getResNormString().c_str());
-        fprintf(fp,"\t       Threshold for residual :   %9.3e\n", ICp2->getResCriterion());
-        fprintf(fp,"\t       Error    Norm type     :   %s\n",    ICp2->getErrNormString().c_str());
-        fprintf(fp,"\t       Threshold for error    :   %9.3e\n", ICp2->getErrCriterion());
-        fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICp2->getOmega());
-        fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICp2->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
-        printLS(fp, ICp2);
+        printIteratoinParameter(fp, ICp2);
       }
       
       // CN iteration
@@ -518,15 +504,10 @@ void FFV::printCriteria(FILE* fp)
       {
         fprintf(fp,"\n");
         fprintf(fp,"\t     Velocity CN Iteration \n");
-        fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICv->getMaxIteration());
-        fprintf(fp,"\t       Residual Norm type     :   %s\n",    ICv->getResNormString().c_str());
-        fprintf(fp,"\t       Threshold for residual :   %9.3e\n", ICv->getResCriterion());
-        fprintf(fp,"\t       Error    Norm type     :   %s\n",    ICv->getErrNormString().c_str());
-        fprintf(fp,"\t       Threshold for error    :   %9.3e\n", ICv->getErrCriterion());
-        fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICv->getOmega());
-        fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICv->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
-        printLS(fp, ICv);
+        printIteratoinParameter(fp, ICv);
       }
+      
+      // Divergence
       fprintf(fp,"\n");
       fprintf(fp,"\t     Div Iteration \n");
       fprintf(fp,"\t       Iteration max          :   %d\n"  ,  DivC.MaxIteration);
@@ -549,14 +530,7 @@ void FFV::printCriteria(FILE* fp)
       {
         fprintf(fp,"\n");
         fprintf(fp,"\t     Temperature Iteration  \n");
-        fprintf(fp,"\t       Iteration max          :   %d\n"  ,  ICt->getMaxIteration());
-        fprintf(fp,"\t       Residual Norm type     :   %s\n",    ICt->getResNormString().c_str());
-        fprintf(fp,"\t       Threshold for residual :   %9.3e\n", ICt->getResCriterion());
-        fprintf(fp,"\t       Error    Norm type     :   %s\n",    ICt->getErrNormString().c_str());
-        fprintf(fp,"\t       Threshold for error    :   %9.3e\n", ICt->getErrCriterion());
-        fprintf(fp,"\t       Coef. of Relax./Accel. :   %9.3e\n", ICt->getOmega());
-        fprintf(fp,"\t       Communication Mode     :   %s\n",   (ICt->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
-        printLS(fp, ICt);
+        printIteratoinParameter(fp, ICt);
       }
     }
     
@@ -564,14 +538,13 @@ void FFV::printCriteria(FILE* fp)
 }
 
 
-
 // #################################################################
 /**
- * @brief 線形ソルバー種別の表示
+ * @brief 線形ソルバー種別のパラメータ表示
  * @param [in] fp ファイルポインタ
  * @param [in] IC LinearSOlver
  */
-void FFV::printLS(FILE* fp, const LinearSolver* IC)
+void FFV::printIteratoinParameter(FILE* fp, LinearSolver* IC)
 {
   switch (IC->getLS())
   {
@@ -598,10 +571,6 @@ void FFV::printLS(FILE* fp, const LinearSolver* IC)
       fprintf(fp,"\t       Linear Solver          :   GMRES\n");
       break;
       
-    case RBGS:
-      fprintf(fp,"\t       Linear Solver          :   RBGS\n");
-      break;
-      
     case PCG:
       fprintf(fp,"\t       Linear Solver          :   PCG\n");
       break;
@@ -610,19 +579,61 @@ void FFV::printLS(FILE* fp, const LinearSolver* IC)
       if (IC->getNaive()==OFF)
       {
         fprintf(fp,"\t       Linear Solver          :   BiCGstab");
-        if (IC->getPrecondition()==ON) fprintf(fp," with Preconditioner\n");
+        if ( IC->isPreconditioned() ) fprintf(fp," with Preconditioner\n");
       }
       else
       {
         fprintf(fp,"\t       Linear Solver          :   BiCGstab (Naive)");
-        if (IC->getPrecondition()==ON) fprintf(fp," with Preconditioner\n");
+        if ( IC->isPreconditioned() ) fprintf(fp," with Preconditioner\n");
       }
       break;
       
     default:
       stamped_printf("Error: Linear Solver section\n");
-      //Exit(0);
   }
+  
+  fprintf(fp,"\t       Iteration max          :   %d\n"  ,  IC->getMaxIteration());
+  fprintf(fp,"\t       Residual Norm type     :   %s\n",    IC->getResNormString().c_str());
+  fprintf(fp,"\t       Threshold for residual :   %9.3e\n", IC->getResCriterion());
+  fprintf(fp,"\t       Error    Norm type     :   %s\n",    IC->getErrNormString().c_str());
+  fprintf(fp,"\t       Threshold for error    :   %9.3e\n", IC->getErrCriterion());
+  
+  switch (IC->getLS())
+  {
+    case JACOBI:
+      fprintf(fp,"\t       Coef. of Relaxation    :   %9.3e\n", IC->getOmega());
+      break;
+      
+    case SOR:
+      fprintf(fp,"\t       Coef. of Acceleration  :   %9.3e\n", IC->getOmega());
+      break;
+      
+    case SOR2SMA:
+      fprintf(fp,"\t       Coef. of Acceleration  :   %9.3e\n", IC->getOmega());
+      fprintf(fp,"\t       Communication Mode     :   %s\n",   (IC->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
+      break;
+      
+    case GMRES:
+      fprintf(fp,"\t       Linear Solver          :   GMRES\n");
+      break;
+      
+    case PCG:
+      fprintf(fp,"\t       Linear Solver          :   PCG\n");
+      break;
+      
+    case BiCGSTAB:
+      if (IC->isPreconditioned() == true)
+      {
+        fprintf(fp,"\t       Inner Iteration        :   %d\n"  ,  IC->getInnerItr());
+        fprintf(fp,"\t       Coef. of Acceleration  :   %9.3e\n", IC->getOmega());
+        fprintf(fp,"\t       Communication Mode     :   %s\n",   (IC->getSyncMode()==comm_sync) ? "SYNC" : "ASYNC");
+      }
+      break;
+      
+    default:
+      stamped_printf("Error: Linear Solver section\n");
+  }
+  
 }
 
 
@@ -822,11 +833,10 @@ void FFV::set_timing_label()
   set_label("Blas_Clear",              PerfMonitor::CALC);
   set_label("Blas_Copy",               PerfMonitor::CALC);
   set_label("Blas_Residual",           PerfMonitor::CALC);
-  set_label("Blas_AXPY" ,              PerfMonitor::CALC);
-  set_label("Blas_XPAY",               PerfMonitor::CALC);
+  set_label("Blas_BiCG_1" ,            PerfMonitor::CALC);
+  set_label("Blas_BiCG_2",             PerfMonitor::CALC);
   set_label("Blas_AX",                 PerfMonitor::CALC);
-  set_label("Blas_AXPYZ",              PerfMonitor::CALC);
-  set_label("Blas_AXPBYPZ",            PerfMonitor::CALC);
+  set_label("Blas_TRIAD",              PerfMonitor::CALC);
 
 }
 

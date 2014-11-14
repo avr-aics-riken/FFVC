@@ -19,6 +19,18 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-11-14
+r1565 arrangement ffv_blas.f90
+
+
+--------------------------
+2014-11-13
+r1564 bug fix : restart statistic and cast pointer to fortran subroutine
+ - Control::getTimeControl()
+ - modify cast to fortran subroutine in ffv_Loop.C
+ - add InnerIteration of BiCGstab
+
+--------------------------
 2014-11-09
 r1563 improve calcForce()
 

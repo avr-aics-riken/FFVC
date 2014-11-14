@@ -94,88 +94,6 @@
 
 
 !> ********************************************************************
-!! @brief XPAY
-!! @param [in,out] y    ベクトル
-!! @param [in]     x    ベクトル
-!! @param [in]     a    係数
-!! @param [in]     sz   配列長
-!! @param [in]     g    ガイドセル
-!! @param [in]     flop 浮動小数点演算数
-!<
-subroutine blas_xpay(y, x, a, sz, g, flop)
-implicit none
-include 'ffv_f_params.h'
-integer                                                   ::  i, j, k, ix, jx, kx, g
-integer, dimension(3)                                     ::  sz
-real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  y, x
-double precision                                          ::  flop, a
-
-ix = sz(1)
-jx = sz(2)
-kx = sz(3)
-
-flop = dble(ix) * dble(jx) * dble(kx) * 2.0d0
-
-!$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, a)
-
-!$OMP DO SCHEDULE(static) COLLAPSE(2)
-do k=1,kx
-do j=1,jx
-do i=1,ix
-y(i, j, k) = x(i, j, k) + a * y(i, j, k)
-end do
-end do
-end do
-!$OMP END DO
-!$OMP END PARALLEL
-
-return
-end subroutine blas_xpay
-
-
-!> ********************************************************************
-!! @brief AXPY
-!! @param [in,out] y    ベクトル
-!! @param [in]     x    ベクトル
-!! @param [in]     a    係数
-!! @param [in]     sz   配列長
-!! @param [in]     g    ガイドセル
-!! @param [in]     flop 浮動小数点演算数
-!<
-subroutine blas_axpy(y, x, a, sz, g, flop)
-implicit none
-include 'ffv_f_params.h'
-integer                                                   ::  i, j, k, ix, jx, kx, g
-integer, dimension(3)                                     ::  sz
-real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  y, x
-double precision                                          ::  flop, a
-
-ix = sz(1)
-jx = sz(2)
-kx = sz(3)
-
-flop = dble(ix) * dble(jx) * dble(kx) * 2.0d0
-
-!$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, a)
-
-!$OMP DO SCHEDULE(static) COLLAPSE(2)
-do k=1,kx
-do j=1,jx
-do i=1,ix
-y(i, j, k) = a * x(i, j, k) + y(i, j, k)
-end do
-end do
-end do
-!$OMP END DO
-!$OMP END PARALLEL
-
-return
-end subroutine blas_axpy
-
-
-!> ********************************************************************
 !! @brief AXPYZ
 !! @param [out]    z    ベクトル
 !! @param [in]     y    ベクトル
@@ -185,7 +103,7 @@ end subroutine blas_axpy
 !! @param [in]     g    ガイドセル
 !! @param [in]     flop 浮動小数点演算数
 !<
-subroutine blas_axpyz(z, x, y, a, sz, g, flop)
+subroutine blas_triad(z, x, y, a, sz, g, flop)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, g
@@ -214,11 +132,11 @@ end do
 !$OMP END PARALLEL
 
 return
-end subroutine blas_axpyz
+end subroutine blas_triad
 
 
 !> ********************************************************************
-!! @brief AXPBYPZ
+!! @brief BiCGstab 2
 !! @param [in,out] z    ベクトル
 !! @param [in]     y    ベクトル
 !! @param [in]     x    ベクトル
@@ -228,7 +146,7 @@ end subroutine blas_axpyz
 !! @param [in]     g    ガイドセル
 !! @param [in]     flop 浮動小数点演算数
 !<
-subroutine blas_axpbypz(z, x, y, a, b, sz, g, flop)
+subroutine blas_bicg_2(z, x, y, a, b, sz, g, flop)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, g
@@ -257,7 +175,7 @@ end do
 !$OMP END PARALLEL
 
 return
-end subroutine blas_axpbypz
+end subroutine blas_bicg_2
 
 
 
@@ -726,3 +644,47 @@ end do
 
 return
 end subroutine blas_calc_ax_naive
+
+
+!> ********************************************************************
+!! @brief BiCGstabの部分演算1
+!! @param [in,out] p    ベクトル
+!! @param [in]     r    ベクトル
+!! @param [in]     q    ベクトル
+!! @param [in]     beta 係数
+!! @param [in]     omg  係数
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル
+!! @param [in]     flop 浮動小数点演算数
+!<
+subroutine blas_bicg_1(p, r, q, beta, omg, sz, g, flop)
+implicit none
+include 'ffv_f_params.h'
+integer                                                   ::  i, j, k, ix, jx, kx, g
+integer, dimension(3)                                     ::  sz
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, r, q
+double precision                                          ::  flop, beta, omg
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+flop = dble(ix) * dble(jx) * dble(kx) * 4.0d0
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, beta, omg)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1,kx
+do j=1,jx
+do i=1,ix
+  p(i,j,k) = r(i,j,k) + beta * ( p(i,j,k) - omg * q(i,j,k) )
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine blas_bicg_1
+

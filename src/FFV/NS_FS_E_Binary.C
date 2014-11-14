@@ -421,10 +421,6 @@ void FFV::NS_FS_E_Binary()
         //  Fgmres(LSp, b_l2, res0_l2);
         //  break;
         
-        //case RBGS:
-        //  loop_p += Frbgs(LSp, d_p, d_b, b_l2, res0_l2);
-        //  break;
-        
         //case PCG:
         //  loop_p += Fpcg(LSp, d_p, d_b, b_l2, res0_l2);
         //  break;

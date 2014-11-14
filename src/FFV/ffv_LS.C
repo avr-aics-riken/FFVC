@@ -253,17 +253,19 @@ int LinearSolver::PointSOR(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const 
 // #################################################################
 void LinearSolver::Preconditioner(REAL_TYPE* x, REAL_TYPE* b)
 {
-  int lc_max = 4;
+  
   double dummy = 1.0;
   
   // 前処理なし(コピー)
-  if ( getPrecondition() != ON )
+  if ( !isPreconditioned() )
   {
     TIMING_start("Blas_Copy");
     blas_copy_(x, b, size, &guide);
     TIMING_stop("Blas_Copy");
     return;
   }
+  
+  int lc_max = getInnerItr();
   
   // 前処理
   SOR2_SMA(x, b, lc_max, dummy, dummy, false);
@@ -751,11 +753,14 @@ int LinearSolver::PointSOR_4th(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE* u_sum, REA
 
 // #################################################################
 // PBiCBSTAB 収束判定は残差
+// @note 反復回数がマシンによって異なる現象がある．
+// Xeon E5では同じ反復回数になるのに対して，Core i7では反復回数が試行毎に異なる．
+// コンパイラは同じIntel(R) C++ Intel(R) 64 Compiler XE for applications running on Intel(R) 64, Version 15.0.0.077 Build 20140716
+// 内積のOpenMP並列のためか？？
 int LinearSolver::PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2)
 {
   double var[3];          /// 誤差, 残差, 解ベクトルのL2ノルム
   var[0] = var[1] = var[2] = 0.0;
-  REAL_TYPE omg = getOmega();
   double flop = 0.0;
   
   TIMING_start("Blas_Clear");
@@ -764,27 +769,26 @@ int LinearSolver::PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const
   
   TIMING_start("Blas_Residual");
   flop = 0.0;
-  blas_calc_rk_(pcg_r, x, b, bcp, size, &guide, &flop);    // (1)
+  blas_calc_rk_(pcg_r, x, b, bcp, size, &guide, &flop);
   TIMING_stop("Blas_Residual", flop);
   
   SyncScalar(pcg_r, 1);
   
   TIMING_start("Blas_Copy");
-  blas_copy_(pcg_r0, pcg_r, size, &guide);                 // (2)
+  blas_copy_(pcg_r0, pcg_r, size, &guide);
   TIMING_stop("Blas_Copy");
   
-  double rr0 = 1.0;
+  double rho_old = 1.0;
   double alpha = 0.0;
-  double gamma  = 1.0;
-  double gamman = -gamma;
+  double omega  = 1.0;
+  double r_omega = -omega;
   int lc=0;                      /// ループカウント
   
   for (lc=1; lc<getMaxIteration(); lc++)
   {
-    double rr1 = 0.0;
-    rr1 = Fdot2(pcg_r, pcg_r0);                             // (4)
+    double rho = Fdot2(pcg_r, pcg_r0);
     
-    if( fabs(rr1) < FLT_MIN )                              // (5)
+    if( fabs(rho) < FLT_MIN )
     {
       lc = 0;
       break;
@@ -793,21 +797,17 @@ int LinearSolver::PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const
     if( lc == 1 )
     {
       TIMING_start("Blas_Copy");
-      blas_copy_(pcg_p, pcg_r, size, &guide);              // (7)
+      blas_copy_(pcg_p, pcg_r, size, &guide);
       TIMING_stop("Blas_Copy");
     }
     else
     {
-      double beta = rr1/rr0*alpha/gamma;                // (9)
-      TIMING_start("Blas_AXPY");
-      flop = 0.0;
-      blas_axpy_(pcg_p, pcg_q, &gamman, size, &guide, &flop);     // (10)
-      TIMING_stop("Blas_AXPY", flop);
+      double beta = rho / rho_old * alpha / omega;
       
-      TIMING_start("Blas_XPAY");
+      TIMING_start("Blas_BiCG_1");
       flop = 0.0;
-      blas_xpay_(pcg_p, pcg_r, &beta, size, &guide, &flop);    // (10)
-      TIMING_stop("Blas_XPAY", flop);
+      blas_bicg_1_(pcg_p, pcg_r, pcg_q, &beta, &omega, size, &guide, &flop);
+      TIMING_stop("Blas_BiCG_1", flop);
     }
     SyncScalar(pcg_p, 1);
     
@@ -815,22 +815,20 @@ int LinearSolver::PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const
     FBUtility::initS3D(pcg_p_, size, guide, 0.0);
     TIMING_stop("Blas_Clear");
     
-    Preconditioner(pcg_p_, pcg_p);                    // (12)
+    Preconditioner(pcg_p_, pcg_p);
     
     TIMING_start("Blas_AX");
     flop = 0.0;
-    blas_calc_ax_(pcg_q, pcg_p_, bcp, size, &guide, &flop); // (13)
+    blas_calc_ax_(pcg_q, pcg_p_, bcp, size, &guide, &flop);
     TIMING_stop("Blas_AX", flop);
     
-    double q_r0 = 0.0;
-    q_r0 = Fdot2(pcg_q, pcg_r0);                           // (14)
+    alpha = rho / Fdot2(pcg_q, pcg_r0);
     
-    alpha  = rr1/q_r0;
-    double alphan = -alpha;
-    TIMING_start("Blas_AXPYZ");
+    double r_alpha = -alpha;
+    TIMING_start("Blas_TRIAD");
     flop = 0.0;
-    blas_axpyz_(pcg_s, pcg_q, pcg_r, &alphan, size, &guide, &flop); // (15)
-    TIMING_stop("Blas_AXPYZ", flop);
+    blas_triad_(pcg_s, pcg_q, pcg_r, &r_alpha, size, &guide, &flop);
+    TIMING_stop("Blas_TRIAD", flop);
     
     SyncScalar(pcg_s, 1);
     
@@ -838,40 +836,31 @@ int LinearSolver::PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const
     FBUtility::initS3D(pcg_s_, size, guide, 0.0);
     TIMING_stop("Blas_Clear");
     
-    Preconditioner(pcg_s_, pcg_s);                    // (17)
+    Preconditioner(pcg_s_, pcg_s);
     
     TIMING_start("Blas_AX");
     flop = 0.0;
-    blas_calc_ax_(pcg_t_, pcg_s_, bcp, size, &guide, &flop);     // (18)
+    blas_calc_ax_(pcg_t_, pcg_s_, bcp, size, &guide, &flop);
     TIMING_stop("Blas_AX", flop);
     
-    double t_s = 0.0;
-    t_s = Fdot2(pcg_t_, pcg_s);                             // (19a)
+    omega = Fdot2(pcg_t_, pcg_s) / Fdot1(pcg_t_);
+    r_omega = -omega;
     
-    double t_t_ = 0.0;
-    t_t_ = Fdot1(pcg_t_);                           // (19b)
-    
-    gamma  = t_s/t_t_;                                     // (19)
-    gamman = -gamma;
-    
-    TIMING_start("Blas_AXPBYPZ");
+    TIMING_start("Blas_BiCG_2");
     flop = 0.0;
-    blas_axpbypz_(x, pcg_p_, pcg_s_, &alpha , &gamma, size, &guide, &flop);  // (20)
-    TIMING_stop("Blas_AXPBYPZ", flop);
+    blas_bicg_2_(x, pcg_p_, pcg_s_, &alpha , &omega, size, &guide, &flop);
+    TIMING_stop("Blas_BiCG_2", flop);
     
-    TIMING_start("Blas_AXPYZ");
+    TIMING_start("Blas_TRIAD");
     flop = 0.0;
-    blas_axpyz_  (pcg_r, pcg_t_, pcg_s, &gamman, size, &guide, &flop);            // (21)
-    TIMING_stop("Blas_AXPYZ", flop);
+    blas_triad_  (pcg_r, pcg_t_, pcg_s, &r_omega, size, &guide, &flop);
+    TIMING_stop("Blas_TRIAD", flop);
     
-    double rr = 0.0;
-    rr = Fdot1(pcg_r);
-    
-    var[1] = rr;
+    var[1] = Fdot1(pcg_r);
     
     if ( Fcheck(var, b_l2, r0_l2) == true ) break;
     
-    rr0 = rr1;
+    rho_old = rho;
   }
   
   

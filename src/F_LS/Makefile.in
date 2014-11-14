@@ -139,7 +139,7 @@ am__v_AR_1 =
 libFLS_a_AR = $(AR) $(ARFLAGS)
 libFLS_a_LIBADD =
 am_libFLS_a_OBJECTS = libFLS_a-ffv_blas.$(OBJEXT) \
-	libFLS_a-ffv_bicg.$(OBJEXT) libFLS_a-ffv_SOR.$(OBJEXT)
+	libFLS_a-ffv_SOR.$(OBJEXT)
 libFLS_a_OBJECTS = $(am_libFLS_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -351,7 +351,6 @@ libFLS_a_FCFLAGS = \
 libFLS_a_SOURCES = \
   ffv_LSfunc.h \
   ffv_blas.f90 \
-  ffv_bicg.f90 \
   ffv_SOR.f90
 
 EXTRA_DIST = Makefile_hand depend.inc ffv_poisson_cds.f90 ffv_poisson2.f90 ffv_rc.f90
@@ -443,12 +442,6 @@ libFLS_a-ffv_blas.o: ffv_blas.f90
 
 libFLS_a-ffv_blas.obj: ffv_blas.f90
 	$(AM_V_FC)$(FC) $(libFLS_a_FCFLAGS) $(FCFLAGS) -c -o libFLS_a-ffv_blas.obj `if test -f 'ffv_blas.f90'; then $(CYGPATH_W) 'ffv_blas.f90'; else $(CYGPATH_W) '$(srcdir)/ffv_blas.f90'; fi`
-
-libFLS_a-ffv_bicg.o: ffv_bicg.f90
-	$(AM_V_FC)$(FC) $(libFLS_a_FCFLAGS) $(FCFLAGS) -c -o libFLS_a-ffv_bicg.o `test -f 'ffv_bicg.f90' || echo '$(srcdir)/'`ffv_bicg.f90
-
-libFLS_a-ffv_bicg.obj: ffv_bicg.f90
-	$(AM_V_FC)$(FC) $(libFLS_a_FCFLAGS) $(FCFLAGS) -c -o libFLS_a-ffv_bicg.obj `if test -f 'ffv_bicg.f90'; then $(CYGPATH_W) 'ffv_bicg.f90'; else $(CYGPATH_W) '$(srcdir)/ffv_bicg.f90'; fi`
 
 libFLS_a-ffv_SOR.o: ffv_SOR.f90
 	$(AM_V_FC)$(FC) $(libFLS_a_FCFLAGS) $(FCFLAGS) -c -o libFLS_a-ffv_SOR.o `test -f 'ffv_SOR.f90' || echo '$(srcdir)/'`ffv_SOR.f90

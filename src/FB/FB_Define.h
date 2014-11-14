@@ -88,9 +88,8 @@
 #define SOR           2
 #define SOR2SMA       3
 #define GMRES         4
-#define RBGS          5
-#define PCG           6
-#define BiCGSTAB      7
+#define PCG           5
+#define BiCGSTAB      6
 
 #define FREQ_OF_RESTART 15 // リスタート周期
 

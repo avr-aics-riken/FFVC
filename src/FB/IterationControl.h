@@ -50,6 +50,7 @@ protected:
   int Sync;             ///< 同期モード (comm_sync, comm_async)
   int Naive;            ///< Naive Implementation >> on/off
   int precondition;     ///< 前処理mode
+  int InnerItr;         ///< 内部反復回数
   string alias;         ///< 別名
   
 public:
@@ -69,6 +70,7 @@ public:
     omg = 0.0;
     Sync = -1;
     Naive = OFF;
+    InnerItr = 0;
     
     eps_err = ( sizeof(REAL_TYPE) == 4 ) ? 4.0*SINGLE_EPSILON : 4.0*DOUBLE_EPSILON;
   }
@@ -121,6 +123,12 @@ public:
    */
   bool getInherentPara(TextParser* tpCntl, const string base);
   
+  
+  // @brief 内部反復数を返す
+  int getInnerItr() const
+  {
+    return InnerItr;
+  }
   
   // @brief 反復カウントを返す
   int getLoopCount() const
@@ -177,13 +185,6 @@ public:
   bool getParaVP(TextParser* tpCntl);
   
   
-  // @brief 前処理モードを返す
-  int getPrecondition() const
-  {
-    return precondition;
-  }
-  
-  
   // @brief 残差の収束閾値を返す
   double getResCriterion() const
   {
@@ -216,6 +217,14 @@ public:
   }
   
   
+  // @brief 前処理の有無を返す
+  // @retval true -> preconditioned
+  bool isPreconditioned() const
+  {
+    return (precondition == ON) ? true : false;
+  }
+  
+  
   // @brief 反復ループカウントを設定する
   void incLoopCount()
   {
@@ -224,16 +233,18 @@ public:
   
   
   // @brief 残差が収束しているか > ture
-  bool isResConverged()
+  bool isResConverged() const
   {
     return (residual < eps_res) ? true : false;
   }
   
+  
   // @brief 残差が収束しているか > ture
-  bool isErrConverged()
+  bool isErrConverged() const
   {
     return (error < eps_err) ? true : false;
   }
+  
   
   // @brief aliasを設定する
   void setAlias(std::string key)

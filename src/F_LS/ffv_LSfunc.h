@@ -41,9 +41,9 @@
 // ffv_blas.f90
 #define blas_clear_          BLAS_CLEAR
 #define blas_copy_           BLAS_COPY
-
-
-// keno version
+#define blas_triad_          BLAS_TRIAD
+#define blas_bicg_1_         BLAS_BICG_1
+#define blas_bicg_2_         BLAS_BICG_2
 #define blas_dot1_           BLAS_DOT1
 #define blas_dot2_           BLAS_DOT2
 #define blas_calc_b_         BLAS_CALC_B
@@ -53,9 +53,6 @@
 #define blas_calc_r_naive_   BLAS_CALC_R_NAIVE
 #define blas_calc_ax_naive_  BLAS_CALC_AX_NAIVE
 
-// ffv_cg.f90
-#define bicg_update_p_  BICG_UPDATE_P
-#define bicg_update_x_  BICG_UPDATE_X
 
 #endif // _WIN32
 
@@ -131,21 +128,7 @@ extern "C" {
                        int* sz,
                        int* g);
   
-  void blas_xpay_     (REAL_TYPE* y,
-                       REAL_TYPE* x,
-                       double* a,
-                       int* sz,
-                       int* g,
-                       double* flop);
-  
-  void blas_axpy_     (REAL_TYPE* y,
-                       REAL_TYPE* x,
-                       double* a,
-                       int* sz,
-                       int* g,
-                       double* flop);
-  
-  void blas_axpyz_    (REAL_TYPE* z,
+  void blas_triad_    (REAL_TYPE* z,
                        REAL_TYPE* x,
                        REAL_TYPE* y,
                        double* a,
@@ -153,7 +136,16 @@ extern "C" {
                        int* g,
                        double* flop);
   
-  void blas_axpbypz_  (REAL_TYPE* z,
+  void blas_bicg_1_ (REAL_TYPE* p,
+                     REAL_TYPE* r,
+                     REAL_TYPE* q,
+                     double* beta,
+                     double* omg,
+                     int* sz,
+                     int* g,
+                     double* flop);
+  
+  void blas_bicg_2_   (REAL_TYPE* z,
                        REAL_TYPE* x,
                        REAL_TYPE* y,
                        double* a,
@@ -227,7 +219,6 @@ extern "C" {
                            int* g,
                            REAL_TYPE* pn,
                            double* flop);
-
   
   //***********************************************************************************************
   // ffv_cg.f90

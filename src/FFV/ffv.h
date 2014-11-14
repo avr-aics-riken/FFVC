@@ -401,8 +401,8 @@ private:
   void dispGlobalCompoInfo(FILE* fp);
   
   
-  // 線形ソルバー種別の表示
-  void printLS(FILE* fp, const LinearSolver* IC);
+  // 線形ソルバー種別のパラメータ表示
+  void printIteratoinParameter(FILE* fp, LinearSolver* IC);
   
   
   // 初期条件の設定

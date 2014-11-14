@@ -42,6 +42,7 @@ void IterationCtl::copy(IterationCtl* src)
   Naive        = src->Naive;
   alias        = src->alias;
   precondition = src->precondition;
+  InnerItr     = src->InnerItr;
 }
 
 
@@ -51,9 +52,9 @@ bool IterationCtl::getInherentPara(TextParser* tpCntl, const string base)
 {
   switch (LinearSolver)
   {
-      //case JACOBI:
-      //getParaJacobi(tpCntl, base);
-      //break;
+      case JACOBI:
+      getParaJacobi(tpCntl, base);
+      break;
       
       case SOR:
       getParaJacobi(tpCntl, base);
@@ -62,10 +63,6 @@ bool IterationCtl::getInherentPara(TextParser* tpCntl, const string base)
       case SOR2SMA:
       getParaSOR2(tpCntl, base);
       break;
-      
-      //case RBGS:
-      //getParaRBGS(tpCntl, base);
-      //break;
       
       //case GMRES:
       //getParaGmres(tpCntl, base);
@@ -129,24 +126,37 @@ void IterationCtl::getParaJacobi(TextParser* tpCntl, const string base)
  */
 void IterationCtl::getParaBiCGSTAB(TextParser* tpCntl, const string base)
 {
-  getParaSOR2(tpCntl, base);
-  
   string str, label;
   
-  // not mandatory
   label = base + "/Precondition";
   
-  if ( tpCntl->chkLabel(label) )
+  if ( !tpCntl->chkLabel(label) )
   {
-    if ( !(tpCntl->getInspectedValue(label, str )) )
-    {
-      Exit(0);
-    }
-    else
-    {
-      if ( !strcasecmp(str.c_str(), "on") ) precondition = ON;
-    }
+    Exit(0);
   }
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    Exit(0);
+  }
+  else
+  {
+    if ( !strcasecmp(str.c_str(), "on") ) precondition = ON;
+  }
+  
+  if ( precondition == OFF ) return;
+
+  
+  int ct = 0;
+  label = base + "/InnerIteration";
+  if ( !(tpCntl->getInspectedValue(label, ct )) )
+  {
+    Exit(0);
+  }
+  InnerItr = ct;
+  
+  getParaSOR2(tpCntl, base);
+
 }
 
 
@@ -289,7 +299,6 @@ bool IterationCtl::setLS(const string str)
   else if( !strcasecmp(str.c_str(), "SOR2SMA") )      LinearSolver = SOR2SMA;
   else if( !strcasecmp(str.c_str(), "JACOBI") )       LinearSolver = JACOBI;
   else if( !strcasecmp(str.c_str(), "GMRES") )        LinearSolver = GMRES;
-  else if( !strcasecmp(str.c_str(), "RBGS") )         LinearSolver = RBGS;
   else if( !strcasecmp(str.c_str(), "PCG") )          LinearSolver = PCG;
   else if( !strcasecmp(str.c_str(), "BiCGstab") )     LinearSolver = BiCGSTAB;
   else

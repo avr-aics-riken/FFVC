@@ -231,7 +231,8 @@ int FFV::Loop(const unsigned step)
       
       if ( F->isVtk() )
       {
-        output_vtk_((int*)&CurrentStep, G_origin, G_division, G_size, &myRank, size, &pitch[0], &guide, d_v, d_p);
+        int cs = CurrentStep;
+        output_vtk_(&cs, G_origin, G_division, G_size, &myRank, size, &pitch[0], &guide, d_v, d_p);
       }
     }
 
@@ -267,7 +268,8 @@ int FFV::Loop(const unsigned step)
         TIMING_stop("File_Output", flop_count);
         
         // special
-        output_mean_((int*)&CurrentStep, G_origin, G_region, G_division, G_size, &myRank, size, &pitch[0], &guide, d_av, d_rms, d_rmsmean);
+        int cs = CurrentStep;
+        output_mean_(&cs, G_origin, G_region, G_division, G_size, &myRank, size, &pitch[0], &guide, d_av, d_rms, d_rmsmean);
         
       }
       
