@@ -813,9 +813,9 @@ void COMB::OpenLogFile()
     printf("\tFile Open Error : '%s'\n",logname.c_str());
     Exit(0);
   }
-  fprintf(fplog,"####################\n",logname.c_str());
-  fprintf(fplog,"### log_comb.txt ###\n",logname.c_str());
-  fprintf(fplog,"####################\n",logname.c_str());
+  fprintf(fplog,"####################\n");
+  fprintf(fplog,"### log_comb.txt ###\n");
+  fprintf(fplog,"####################\n");
   fprintf(fplog,"\n");
   
   fprintf(fplog,"procGrp  = %d\n", procGrp);

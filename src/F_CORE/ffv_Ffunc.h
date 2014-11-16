@@ -98,6 +98,7 @@
 #define find_vmax_          FIND_VMAX
 #define force_compo_        FORCE_COMPO
 #define calc_rms_v_         CALC_RMS_V
+#define calc_rms_s_         CALC_RMS_S
 #define output_vtk_         OUTPUT_VTK
 #define perturbu_           PERTURBU
 #define generate_iblank_    GENERATE_IBLANK
@@ -140,6 +141,7 @@
 #define fb_vout_nijk_            FB_VOUT_NIJK
 #define fb_vout_ijkn_            FB_VOUT_IJKN
 #define fb_totalp_               FB_TOTALP
+
 
 
 #endif // _WIN32
@@ -604,6 +606,15 @@ extern "C" {
                     int* g,
                     REAL_TYPE* v,
                     REAL_TYPE* av,
+                    REAL_TYPE* accum,
+                    double* flop);
+  
+  void calc_rms_s_ (REAL_TYPE* rms,
+                    REAL_TYPE* rmsmean,
+                    int* sz,
+                    int* g,
+                    REAL_TYPE* s,
+                    REAL_TYPE* as,
                     REAL_TYPE* accum,
                     double* flop);
   

@@ -412,6 +412,9 @@ public:
     int Steady;
     int Base_Medium;
     int CCNV;
+    int StatVelocity;
+    int StatPressure;
+    int StatTemperature;
   } Mode_set;
   
   /** 隠しパラメータ */
@@ -740,6 +743,9 @@ public:
     Mode.ShapeAprx = 0;
     Mode.Steady = 0;
     Mode.CCNV = 0;
+    Mode.StatVelocity = 0;
+    Mode.StatPressure = 0;
+    Mode.StatTemperature = 0;
     
 
     LES.Calc=0;

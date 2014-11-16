@@ -74,23 +74,27 @@ protected:
   
   
   // variables
-  REAL_TYPE* d_p;       ///< pressure
-  REAL_TYPE* d_v;       ///< velocity
-  REAL_TYPE* d_vf;      ///< face velocity
-  REAL_TYPE* d_ie;      ///< internal energy
-  REAL_TYPE* d_iobuf;   ///< IO buffer
-  REAL_TYPE* d_ws;      ///< work for scalar
-  REAL_TYPE* d_wv;      ///< work for vector
-  REAL_TYPE* d_ap;      ///< averaged pressure
-  REAL_TYPE* d_av;      ///< averaged velocity
-  REAL_TYPE* d_ae;      ///< averaged internal energy
-  REAL_TYPE* d_dv;      ///< Divergence
-  REAL_TYPE* d_rms;     ///< LES rms
-  REAL_TYPE* d_rmsmean; ///< LES rms mean
-  int* d_bcd;           ///< BCindex D
-  int* d_cdf;           ///< BCindex C
-  double* mat_tbl;      ///< material table
-  int* d_mid;           ///< Iblankの実体
+  REAL_TYPE* d_p;          ///< pressure
+  REAL_TYPE* d_v;          ///< velocity
+  REAL_TYPE* d_vf;         ///< face velocity
+  REAL_TYPE* d_ie;         ///< internal energy
+  REAL_TYPE* d_iobuf;      ///< IO buffer
+  REAL_TYPE* d_ws;         ///< work for scalar
+  REAL_TYPE* d_wv;         ///< work for vector
+  REAL_TYPE* d_ap;         ///< averaged pressure
+  REAL_TYPE* d_av;         ///< averaged velocity
+  REAL_TYPE* d_ae;         ///< averaged internal energy
+  REAL_TYPE* d_dv;         ///< Divergence
+  REAL_TYPE* d_rms_v;      ///< velocity rms
+  REAL_TYPE* d_rms_mean_v; ///< velocity rms mean
+  REAL_TYPE* d_rms_p;      ///< pressure rms
+  REAL_TYPE* d_rms_mean_p; ///< pressure rms mean
+  REAL_TYPE* d_rms_t;      ///< temperature rms
+  REAL_TYPE* d_rms_mean_t; ///< temperature rms mean
+  int* d_bcd;              ///< BCindex D
+  int* d_cdf;              ///< BCindex C
+  double* mat_tbl;         ///< material table
+  int* d_mid;              ///< Iblankの実体
   
   
   // class pointer
@@ -133,8 +137,12 @@ public:
     mat_tbl = NULL;
     d_bcd = NULL;
     d_cdf = NULL;
-    d_rms = NULL;
-    d_rmsmean = NULL;
+    d_rms_v = NULL;
+    d_rms_p = NULL;
+    d_rms_t = NULL;
+    d_rms_mean_v = NULL;
+    d_rms_mean_p = NULL;
+    d_rms_mean_t = NULL;
     d_mid = NULL;
   }
   
@@ -327,8 +335,12 @@ public:
                       REAL_TYPE* m_d_av,
                       REAL_TYPE* m_d_ae,
                       REAL_TYPE* m_d_dv,
-                      REAL_TYPE* m_d_rms,
-                      REAL_TYPE* m_d_rmsmean,
+                      REAL_TYPE* m_d_rms_v,
+                      REAL_TYPE* m_d_rms_mean_v,
+                      REAL_TYPE* m_d_rms_p,
+                      REAL_TYPE* m_d_rms_mean_p,
+                      REAL_TYPE* m_d_rms_t,
+                      REAL_TYPE* m_d_rms_mean_t,
                       int* m_d_bcd,
                       int* m_d_cdf,
                       double* m_mat_tbl,

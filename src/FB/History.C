@@ -434,6 +434,8 @@ void History::printHistory(FILE* fp,
 // 標準履歴モニタのヘッダー出力
 void History::printHistoryTitle(FILE* fp, const int* container, const Control* C, const DivConvergence* DC, const bool disp)
 {
+  fprintf(fp, "Column_Data_00\n");
+  
   if ( Unit_Log == DIMENSIONAL )
   {
     fprintf(fp, "    step      time[sec]");
@@ -607,11 +609,13 @@ void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C
   fflush(fp);
 }
 
-
+visio
 // #################################################################
 // コンポーネントモニタのヘッダー出力
 void History::printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Control* C)
 {
+  fprintf(fp, "Column_Data_00\n");
+  
   if ( Unit_Log == DIMENSIONAL )
   {
     fprintf(fp, "    step      time[sec]");
@@ -701,6 +705,8 @@ void History::printHistoryDomfx(FILE* fp, const Control* C, const REAL_TYPE dt)
 // 計算領域の流束履歴のヘッダー出力
 void History::printHistoryDomfxTitle(FILE* fp, const Control* C)
 {
+  fprintf(fp, "Column_Data_00\n");
+  
   if ( Unit_Log == DIMENSIONAL )
   {
     fprintf(fp, "    step      time[sec]");
@@ -728,55 +734,131 @@ void History::printHistoryDomfxTitle(FILE* fp, const Control* C)
 
 
 // #################################################################
-// 物体に働く力の履歴の出力
-void History::printHistoryForce(FILE* fp, const CompoList* cmp, const Control* C, const REAL_TYPE* frc)
+// 物体に働く力の履歴の出力（コンポーネント毎）
+bool History::printHistoryForce(const CompoList* cmp, const REAL_TYPE* frc)
 {
-  fprintf(fp, "%8d %14.6e", step, printTime());
-  
-  for (int i=1; i<=C->NoCompo; i++)
+  for (int n=1; n<=NoCompo; n++)
   {
-    
-    if ( cmp[i].getType() == OBSTACLE )
+    if ( cmp[n].getType()==OBSTACLE )
     {
-      fprintf(fp, " %12.4e  %12.4e  %12.4e", printForce(frc[3*i+0]), printForce(frc[3*i+1]), printForce(frc[3*i+2]) );
+      char fname[128];
+      sprintf( fname, "history_force_%s.txt", cmp[n].getAlias().c_str() );
+      
+      FILE* fp;
+      
+      if ( !(fp=fopen(fname, "a")) )
+      {
+        stamped_printf("\tSorry, can't open '%s' file.\n", fname);
+        return false;
+      }
+      
+      fprintf(fp, "%8d %14.6e %12.4e  %12.4e  %12.4e\n",
+              step,
+              printTime(),
+              printForce(frc[3*n+0]),
+              printForce(frc[3*n+1]),
+              printForce(frc[3*n+2])
+              );
+      
+      fclose(fp);
     }
   }
-  
-  fprintf(fp, "\n");
-  fflush(fp);
+  return true;
 }
 
 
 // #################################################################
-// 物体に働く力の履歴のヘッダー出力
-void History::printHistoryForceTitle(FILE* fp, const CompoList* cmp, const Control* C)
+// 物体に働く力の履歴のヘッダー出力（コンポーネント毎）
+bool History::printHistoryForceTitle(const CompoList* cmp)
 {
-  if ( Unit_Log == DIMENSIONAL )
+  for (int n=1; n<=NoCompo; n++)
   {
-    fprintf(fp, "    step      time[sec]");
-  }
-  else
-  {
-    fprintf(fp, "    step        time[-]");
-  }
-  
-  for (int i=1; i<=C->NoCompo; i++)
-  {
-    
-    switch ( cmp[i].getType() )
+    if ( cmp[n].getType()==OBSTACLE )
     {
-      case OBSTACLE:
-        fprintf(fp, "       Fx[%02d]        Fy[%02d]        Fz[%02d]", i, i, i);
-        break;
-        
-      default:
-        break;
+      char fname[128];
+      sprintf( fname, "history_force_%s.txt", cmp[n].getAlias().c_str() );
+      
+      FILE* fp;
+      
+      if ( !(fp=fopen(fname, "w")) )
+      {
+        stamped_printf("\tSorry, can't open '%s' file.\n", fname);
+        return false;
+      }
+      
+      fprintf(fp, "Column_Data_00\n");
+      
+      if ( Unit_Log == DIMENSIONAL )
+      {
+        fprintf(fp, "    step      time[sec]          F_x           F_y           F_z\n");
+      }
+      else
+      {
+        fprintf(fp, "    step        time[-]          F_x           F_y           F_z\n");
+      }
+
+      fclose(fp);
     }
   }
-
-  fprintf(fp, "\n");
+  return true;
 }
 
+
+// #################################################################
+// 物体に働く力の統計量出力
+bool History::printCompoStatistics(const CompoList* cmp, const REAL_TYPE* frc)
+{
+  FILE* fp = NULL;
+  
+  if ( !(fp=fopen("component_statistic.txt", "w")) )
+  {
+    stamped_printf("\tSorry, can't open 'component_statistic.txt' file.\n");
+    return false;
+  }
+  
+  fprintf(fp, "   No           Compo. Label          F_x           F_y           F_z\n");
+  
+  for (int i=1; i<=NoCompo; i++)
+  {
+    if ( cmp[i].getType() )
+    {
+      fprintf(fp, "%5d %22s %12.4e  %12.4e  %12.4e\n",
+              i,
+              cmp[i].getAlias().c_str(),
+              printForce(frc[3*i+0]),
+              printForce(frc[3*i+1]),
+              printForce(frc[3*i+2]) );
+    }
+  }
+  fclose(fp);
+  return true;
+}
+
+
+// #################################################################
+// 物体に働く力の統計量のリスタート
+void History::loadCompoStatistics(FILE* fp, const CompoList* cmp, const Control* C, REAL_TYPE* frc)
+{
+  char buf[1024];
+  int idummy;
+  
+  // 1行目を読み込み
+  fgets(buf, 1, fp);
+  
+  // 2行目以降
+  for (int i=1; i<=C->NoCompo; i++)
+  {
+    if ( cmp[i].getType() )
+    {
+      fscanf(fp, "%d %s %e %e %e",
+              &idummy,
+              buf,
+              &frc[3*i+0],
+              &frc[3*i+1],
+              &frc[3*i+2] );
+    }
+  }
+}
 
 
 // #################################################################

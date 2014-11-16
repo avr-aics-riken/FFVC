@@ -1409,8 +1409,8 @@ void Control::getSolverProperties()
     varState[var_Velocity]    = true;
     varState[var_Fvelocity]   = true;
     varState[var_Pressure]    = true;
-    NvarsIns_plt3d = 3 + 3 + 1;
-    NvarsAvr_plt3d = 3 + 1;
+    NvarsIns_plt3d = 3 + 3 + 1; // v, vf, p
+    NvarsAvr_plt3d = 3 + 1;     // av, ap
   }
   else if( !strcasecmp(str.c_str(), "ThermalFlow" ) )
   {
@@ -1419,8 +1419,8 @@ void Control::getSolverProperties()
     varState[var_Fvelocity]   = true;
     varState[var_Pressure]    = true;
     varState[var_Temperature] = true;
-    NvarsIns_plt3d = 3 + 3 + 1 + 1;
-    NvarsAvr_plt3d = 3 + 1 + 1;
+    NvarsIns_plt3d = 3 + 3 + 1 + 1; // v, vf, p, t
+    NvarsAvr_plt3d = 3 + 1 + 1;     // av, ap, at
   }
   else if( !strcasecmp(str.c_str(), "ThermalFlowNatural" ) )
   {
@@ -1429,8 +1429,8 @@ void Control::getSolverProperties()
     varState[var_Fvelocity]   = true;
     varState[var_Pressure]    = true;
     varState[var_Temperature] = true;
-    NvarsIns_plt3d = 3 + 3 + 1 + 1;
-    NvarsAvr_plt3d = 3 + 1 + 1;
+    NvarsIns_plt3d = 3 + 3 + 1 + 1; // v, vf, p, t
+    NvarsAvr_plt3d = 3 + 1 + 1;     // av, ap, at
   }
   else if( !strcasecmp(str.c_str(), "ConjugateHeatTransfer" ) )
   {
@@ -1439,8 +1439,8 @@ void Control::getSolverProperties()
     varState[var_Fvelocity]   = true;
     varState[var_Pressure]    = true;
     varState[var_Temperature] = true;
-    NvarsIns_plt3d = 3 + 3 + 1 + 1;
-    NvarsAvr_plt3d = 3 + 1 + 1;
+    NvarsIns_plt3d = 3 + 3 + 1 + 1; // v, vf, p, t
+    NvarsAvr_plt3d = 3 + 1 + 1;     // av, ap, at
   }
   else if( !strcasecmp(str.c_str(), "ConjugateHeatTransferNatural" ) )
   {
@@ -1449,15 +1449,15 @@ void Control::getSolverProperties()
     varState[var_Fvelocity]   = true;
     varState[var_Pressure]    = true;
     varState[var_Temperature] = true;
-    NvarsIns_plt3d = 3 + 3 + 1 + 1;
-    NvarsAvr_plt3d = 3 + 1 + 1;
+    NvarsIns_plt3d = 3 + 3 + 1 + 1; // v, vf, p, t
+    NvarsAvr_plt3d = 3 + 1 + 1;     // av, ap, at
   }
   else if( !strcasecmp(str.c_str(), "SolidConduction" ) )
   {
     KindOfSolver = SOLID_CONDUCTION;
     varState[var_Temperature] = true;
-    NvarsIns_plt3d = 1;
-    NvarsAvr_plt3d = 1;
+    NvarsIns_plt3d = 1; // t
+    NvarsAvr_plt3d = 1; // at
   }
   else
   {
@@ -1880,6 +1880,14 @@ void Control::getTimeControl(DTcntl* DT)
       Mode.StatisticRestart = OFF;
     }
   }
+  
+  if ( Mode.Statistic == ON )
+  {
+    varState[var_VelocityAvr] = true;
+    varState[var_PressureAvr] = true;
+    
+    if ( isHeatProblem() ) varState[var_TemperatureAvr] = true;
+  }
 
 }
 
@@ -1906,7 +1914,6 @@ void Control::getTurbulenceModel()
   }
   
   
-  // 乱流モデルの場合には、d_rmsmeanをリスタート時に使うので、NvarsIns_plt3d += 1
   if      ( !strcasecmp(str.c_str(), "no") )
   {
     LES.Calc = OFF;
@@ -1919,19 +1926,16 @@ void Control::getTurbulenceModel()
   {
     LES.Calc = ON;
     LES.Model = Smagorinsky;
-    NvarsAvr_plt3d++;
   }
   else if ( !strcasecmp(str.c_str(), "csm") )
   {
     LES.Calc  = ON;
     LES.Model = CSM;
-    NvarsAvr_plt3d++;
   }
   else if ( !strcasecmp(str.c_str(), "wale") )
   {
     LES.Calc  = ON;
     LES.Model = WALE;
-    NvarsAvr_plt3d++;
   }
   else
   {
@@ -2740,6 +2744,14 @@ void Control::printSteerConditions(FILE* fp,
     fprintf(fp,"\t     Initial Perturbation     :   Off \n");
   }
 
+  
+  // 統計 ------------------
+  fprintf(fp, "\n\tStatistic Information\n");
+  fprintf(fp,"\t     Pressure                 :   %s\n", ( Mode.StatPressure == ON ) ? "Yes" : "No");
+  fprintf(fp,"\t     Velocity                 :   %s\n", ( Mode.StatVelocity == ON ) ? "Yes" : "No");
+  fprintf(fp,"\t     Temperature              :   %s\n", ( Mode.StatTemperature == ON ) ? "Yes" : "No");
+  
+  
 
   // 単位系 ------------------
   fprintf(fp,"\n\tUnit\n");

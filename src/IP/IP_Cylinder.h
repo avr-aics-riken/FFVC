@@ -59,6 +59,7 @@ protected:
   int drv_mode;              ///< ドライバのON/OFF
   std::string m_driver;      ///< ドライバ部分のラベル
   std::string m_driver_face; ///< ドライバ指定面のラベル
+  int num_cyls;              ///< Cylinderの個数
   CYL cyl1;
   CYL cyl2;
 
@@ -66,7 +67,7 @@ protected:
 public:
   /** コンストラクタ */
   IP_Cylinder(){
-    
+    num_cyls = 0;
     drv_mode = 0;
     drv_length = 0.0;
   }
@@ -75,6 +76,7 @@ public:
   ~IP_Cylinder() {}
 
 protected:
+  
   
   /**
    * @brief 交点の無次元距離を計算する
@@ -142,6 +144,15 @@ protected:
   
   
 public:
+  
+  /**
+   * @brief Cylinderの個数を返す
+   */
+  int get_num_cyls() const
+  {
+    return num_cyls;
+  }
+  
   
   /**
    * @brief パラメータをロード

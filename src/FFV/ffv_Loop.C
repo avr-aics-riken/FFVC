@@ -128,16 +128,33 @@ int FFV::Loop(const unsigned step)
     flop_count=0.0;
     Averaging(flop_count);
     TIMING_stop("Averaging", flop_count);
+    REAL_TYPE accum = (REAL_TYPE)CurrentStepStat;
     
     // 乱流統計量
-    if ( C.LES.Calc == ON )
+    TIMING_start("Turbulence Statistic");
+    
+    if ( C.Mode.StatVelocity == ON )
     {
-      TIMING_start("LES statistic");
       flop_count = 0.0;
-      REAL_TYPE accum = (REAL_TYPE)CurrentStepStat;
-      calc_rms_v_(d_rms, d_rmsmean, size, &guide, d_v, d_av, &accum, &flop_count);
-      TIMING_stop("LES statistic", flop_count);
+      calc_rms_v_(d_rms_v, d_rms_mean_v, size, &guide, d_v, d_av, &accum, &flop_count);
     }
+    
+    if ( C.Mode.StatPressure == ON )
+    {
+      flop_count = 0.0;
+      calc_rms_s_(d_rms_p, d_rms_mean_p, size, &guide, d_p, d_ap, &accum, &flop_count);
+    }
+    
+    if ( C.Mode.StatTemperature == ON )
+    {
+      flop_count = 0.0;
+      U.convArrayIE2Tmp(d_ws,  size, guide, d_ie, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, C.Unit.File, flop_count);
+      U.convArrayIE2Tmp(d_ie0, size, guide, d_ae, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, C.Unit.File, flop_count); // d_ie0はワーク
+      calc_rms_s_(d_rms_t, d_rms_mean_t, size, &guide, d_ws, d_ie0, &accum, &flop_count);
+    }
+    
+    TIMING_stop("Turbulence Statistic", flop_count);
+    
   }
   
   
@@ -268,9 +285,8 @@ int FFV::Loop(const unsigned step)
         TIMING_stop("File_Output", flop_count);
         
         // special
-        int cs = CurrentStep;
-        output_mean_(&cs, G_origin, G_region, G_division, G_size, &myRank, size, &pitch[0], &guide, d_av, d_rms, d_rmsmean);
-        
+        //int cs = CurrentStep;
+        //output_mean_(&cs, G_origin, G_region, G_division, G_size, &myRank, size, &pitch[0], &guide, d_av, d_rms_v, d_rms_mean_v);
       }
       
       // 最終ステップ
@@ -371,13 +387,9 @@ int FFV::Loop(const unsigned step)
         calcForce(flop_count);
         TIMING_stop("Force_Calculation", flop_count);
         
-        TIMING_start("Gather_Force");
-        gatherForce(buffer_force);
-        TIMING_stop("Gather_Force");
-        
         
         TIMING_start("History_out");
-        Hostonly_ H->printHistoryForce(fp_f, cmp, &C, global_force);
+        Hostonly_ H->printHistoryForce(cmp, cmp_force_global);
         TIMING_stop("History_out", 0.0);
       }
       

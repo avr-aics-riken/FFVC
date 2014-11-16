@@ -83,8 +83,9 @@ FFV::FFV()
   
   
   // OBSTACLEの力の積算
-  local_force = NULL;
-  global_force = NULL;
+  cmp_force_local = NULL;
+  cmp_force_global = NULL;
+  cmp_force_avr = NULL;
   global_obstacle = NULL;
   num_obstacle = 0;
   buffer_force = NULL;
@@ -127,13 +128,14 @@ void FFV::Averaging(double& flop)
 
 
 // #################################################################
-// 物体に働く力の計算
+// 物体に働く力を計算し、各ランクから集めて積算する
 void FFV::calcForce(double& flop)
 {
   REAL_TYPE dh = deltaX;
   int gd = guide;
   int st[3], ed[3];
   REAL_TYPE vec[3];
+  
   
   for (int n=1; n<=C.NoCompo; n++)
   {
@@ -142,11 +144,52 @@ void FFV::calcForce(double& flop)
       cmp[n].getBbox(st, ed);
       int key = cmp[n].getMatodr();
 
+      // 力の計算
       force_compo_(vec, size, &gd, &key, d_p, d_bid, &dh, st, ed, &flop);
       
-      local_force[3*n+0] = vec[0];
-      local_force[3*n+1] = vec[1];
-      local_force[3*n+2] = vec[2];
+      cmp_force_local[3*n+0] = vec[0];
+      cmp_force_local[3*n+1] = vec[1];
+      cmp_force_local[3*n+2] = vec[2];
+      
+      
+      // 集約
+      if ( numProc > 1 )
+      {
+        if ( paraMngr->Gather(vec, 3, buffer_force, 3, 0) != CPM_SUCCESS ) Exit(0);
+      }
+      else
+      {
+        buffer_force[0] = vec[0];
+        buffer_force[1] = vec[1];
+        buffer_force[2] = vec[2];
+      }
+      
+      REAL_TYPE fx = 0.0;
+      REAL_TYPE fy = 0.0;
+      REAL_TYPE fz = 0.0;
+      
+      for (int i=0; i<numProc; i++)
+      {
+        fx = fx + buffer_force[3*i+0];
+        fy = fy + buffer_force[3*i+1];
+        fz = fz + buffer_force[3*i+2];
+      }
+      
+      cmp_force_global[3*n+0] = fx;
+      cmp_force_global[3*n+1] = fy;
+      cmp_force_global[3*n+2] = fz;
+      
+      
+      // average マスターノードのみ、有効な値
+      if ( C.Mode.Statistic == ON && C.Interval[Control::tg_statistic].isStarted(CurrentStep, CurrentTime) )
+      {
+        REAL_TYPE c2 = 1.0 / (REAL_TYPE)CurrentStepStat;
+        REAL_TYPE c1 = 1.0 - c2;
+        cmp_force_avr[3*n+0] = c1 * cmp_force_avr[3*n+0] + c2 * fx;
+        cmp_force_avr[3*n+1] = c1 * cmp_force_avr[3*n+1] + c2 * fy;
+        cmp_force_avr[3*n+2] = c1 * cmp_force_avr[3*n+2] + c2 * fz;
+      }
+      
     }
   }
   
@@ -294,55 +337,6 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
   }
   
 }*/
-
-
-
-// #################################################################
-// 物体に働く力を各ランクから集めて積算する
-void FFV::gatherForce(REAL_TYPE* m_frc)
-{
-  
-  if( !m_frc ) Exit(0);
-  
-  for (int n=1; n<=C.NoCompo; n++)
-  {
-    
-    if ( cmp[n].getType()==OBSTACLE )
-    {
-      REAL_TYPE vec[3];
-      
-      vec[0] = local_force[3*n+0];
-      vec[1] = local_force[3*n+1];
-      vec[2] = local_force[3*n+2];
-      
-      if ( numProc > 1 )
-      {
-        if ( paraMngr->Gather(vec, 3, m_frc, 3, 0) != CPM_SUCCESS ) Exit(0);
-      }
-      else
-      {
-        m_frc[0] = vec[0];
-        m_frc[1] = vec[1];
-        m_frc[2] = vec[2];
-      }
-    }
-
-    REAL_TYPE fx = 0.0;
-    REAL_TYPE fy = 0.0;
-    REAL_TYPE fz = 0.0;
-    
-    for (int i=0; i<numProc; i++)
-    {
-      fx = fx + m_frc[3*i+0];
-      fy = fy + m_frc[3*i+1];
-      fz = fz + m_frc[3*i+2];
-    }
-    
-    global_force[3*n+0] = fx;
-    global_force[3*n+1] = fy;
-    global_force[3*n+2] = fz;
-  }
-}
 
 
 
@@ -804,7 +798,7 @@ void FFV::set_timing_label()
   
   set_label("Loop_Utility_Section",    PerfMonitor::CALC, false);
   set_label("Averaging",               PerfMonitor::CALC);
-  set_label("LES statistic",           PerfMonitor::CALC);
+  set_label("Turbulence Statistic",    PerfMonitor::CALC);
   set_label("Variation_Space",         PerfMonitor::CALC);
   set_label("A_R_variation_space",     PerfMonitor::COMM);
   set_label("File_Output",             PerfMonitor::CALC);
@@ -812,7 +806,6 @@ void FFV::set_timing_label()
   set_label("Sampling",                PerfMonitor::CALC);
   set_label("History_out",             PerfMonitor::CALC);
   set_label("Force_Calculation",       PerfMonitor::CALC);
-  set_label("Gather_Force",            PerfMonitor::COMM);
   // Loop_Utility_Section
   
   // Time_Step_Loop_Section

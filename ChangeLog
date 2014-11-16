@@ -19,9 +19,16 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-11-16
+r1566 output summary for averaged force of components
+ - split rms and rmsmean to rmsV, rmsmeanV, rmsP, rmsmeanP, rmsT, rmsmeanT
+ - change trigger of statistic from LES.calc to Mode.StatVelocity
+ - check the number of cylinders in IP_Cylinder
+ - write a separate force file for each obstacle
+
+--------------------------
 2014-11-14
 r1565 arrangement ffv_blas.f90
-
 
 --------------------------
 2014-11-13
@@ -147,7 +154,7 @@ r1635 branch change-itr
 r1634 Implementation of Cd/Cl
  - modify copyBCIbase()
  - add variables in ffv.h
-   local_force, global_force, buffer_force, global_obstacle, num_obstacle
+   cmp_force_local, cmp_force_global, buffer_force, global_obstacle, num_obstacle
  - impliment calcforce(), gatherForce(), force_compo_()
  - modify printHistoryForce()
  - add variable matodr in Component.h

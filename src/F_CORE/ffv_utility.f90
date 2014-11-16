@@ -915,39 +915,38 @@
 
 !> ********************************************************************
 !! @brief 乱流の統計情報
-!! @param [in]  rms
-!! @param [in]  rmsmean 無次元格子幅
-!! @param [in]  sz      配列長
-!! @param [in]  g       ガイドセル長
-!! @param [in]  v       速度
-!! @param [in]  av      速度の時間平均値
-!! @param [in] step     加算ステップ
-!! @param [out] flop flop count
+!! @param [out]    rms     瞬間の変動速度
+!! @param [in,out] rmsmean 変動速度の二乗和の平方根（実効値）
+!! @param [in]     sz      配列長
+!! @param [in]     g       ガイドセル長
+!! @param [in]     v       速度
+!! @param [in]     av      速度の時間平均値
+!! @param [in]     accum   積算ステップ数
+!! @param [out]    flop    flop count
 !!
-!! @note 力の符号は、軸の正方向の力をプラスの符号とする
 !!  u          ; 瞬時値
 !!  \var{u}    ; 時間平均値
 !!  u^{\prime} ; 変動値 = u - \var{u}
 !!  \sigma     ; 標準偏差 RMS, \sigma = \sqrt{ \var{ {u^{\prime}}^2 } }
 !! Turbulent Intensity = \frac{\sigma}{\var{U}}
 !<
-subroutine calc_rms_v(rms, rmsmean, sz, g, v, av, step, flop)
+subroutine calc_rms_v(rms, rmsmean, sz, g, v, av, accum, flop)
 implicit none
 include 'ffv_f_params.h'
-integer                                                   :: ix, jx, kx, i, j, k, g, step
+integer                                                   :: ix, jx, kx, i, j, k, g
 double precision                                          :: flop
 integer, dimension(3)                                     :: sz
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) :: v, av, rms, rmsmean
-real                                                      :: val1, val2, u1, u2, u3
+real                                                      :: val1, val2, u1, u2, u3, accum
 
 ix = sz(1)
 jx = sz(2)
 kx = sz(3)
 
-val2 = 1.0/real(step)
+val2 = 1.0/accum
 val1 = 1.0 - val2
 
-flop = dble(ix+2*g) * dble(jx+2*g) * dble(kx+2*g) * 45.0d0 + 9.0d0
+flop = flop + dble(ix+2*g) * dble(jx+2*g) * dble(kx+2*g) * 45.0d0 + 9.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(u1, u2, u3) &
@@ -980,6 +979,66 @@ end do
 
 return
 end subroutine calc_rms_v
+
+
+!> ********************************************************************
+!! @brief スカラ変数の変動統計情報
+!! @param [out]    rms     瞬間の変動値
+!! @param [in,out] rmsmean 変動値の二乗和の平方根（実効値）
+!! @param [in]     sz      配列長
+!! @param [in]     g       ガイドセル長
+!! @param [in]     s       スカラ変数
+!! @param [in]     as      スカラ変数の時間平均値
+!! @param [in]     accum   積算ステップ数
+!! @param [out]    flop    flop count
+!!
+!!  u          ; 瞬時値
+!!  \var{u}    ; 時間平均値
+!!  u^{\prime} ; 変動値 = u - \var{u}
+!!  \sigma     ; 標準偏差 RMS, \sigma = \sqrt{ \var{ {u^{\prime}}^2 } }
+!! Turbulent Intensity = \frac{\sigma}{\var{U}}
+!<
+subroutine calc_rms_s(rms, rmsmean, sz, g, s, as, accum, flop)
+implicit none
+include 'ffv_f_params.h'
+integer                                                   :: ix, jx, kx, i, j, k, g
+double precision                                          :: flop
+integer, dimension(3)                                     :: sz
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    :: s, as, rms, rmsmean
+real                                                      :: val1, val2, u, u2, accum
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+val2 = 1.0/accum
+val1 = 1.0 - val2
+
+flop = flop + dble(ix+2*g) * dble(jx+2*g) * dble(kx+2*g) * 15.0d0 + 9.0d0
+
+!$OMP PARALLEL &
+!$OMP PRIVATE(u, u2) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, g, val1, val2)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k = 1-g, kx+g
+do j = 1-g, jx+g
+do i = 1-g, ix+g
+u = s(i, j, k) - as(i, j, k)
+u2 = sqrt( u*u )
+
+! 瞬間の標準偏差
+rms(i, j, k) = u2
+
+! 時間平均 >> RMS
+rmsmean(i, j, k) = val1 * rmsmean(i, j, k) + val2 * u2
+end do
+end do
+end do
+!$OMP END PARALLEL
+
+return
+end subroutine calc_rms_s
 
 
 !> ********************************************************************
@@ -1428,17 +1487,16 @@ end subroutine output_vtk
 !********************************************************************
 subroutine output_mean(step, G_origin, G_region, G_division, G_size, myRank, sz, dh, g, vmean, rms, rmsmean)
 implicit none
-integer :: step
-real, dimension(3) ::  G_origin, G_region
-integer, dimension(3) :: G_division, G_size, sz
-integer :: g
+integer                                                   :: step
+real, dimension(3)                                        :: G_origin, G_region
+integer, dimension(3)                                     :: G_division, G_size, sz
+integer                                                   :: g
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) :: vmean, rms, rmsmean
-real, dimension(1:sz(2), 3) ::  global_vmean, global_rmsmean
-integer :: ix, jx, kx, i, j, k, ip, jp, kp, ii, jj, kk, myRank
-real :: dh, xc, yc, zc, ymean
+real, dimension(1:sz(2), 3)                               :: global_vmean, global_rmsmean
+integer                                                   :: ix, jx, kx, i, j, k, ip, jp, kp, ii, jj, kk, myRank
+real                                                      :: dh, xc, yc, zc, ymean
 
-character fname1*128, fname2*128, fname3*128, fname4*128, &
-fname5*128, fname6*128, fname7*128, fname8*128
+character fname1*128, fname2*128, fname3*128, fname4*128, fname5*128, fname6*128, fname7*128, fname8*128
 
 ix = sz(1)
 jx = sz(2)

@@ -135,7 +135,6 @@ void PLT3D::initFileOut()
   // 書き出しサイズNvarsIns_plt3d, NvarsAvr_plt3dは、以下のメソッドに依存
   // Control::getSolverProperty()
   // IO_BASE::getFIOparams()
-  // Control::getTurbulenceModel()
   
   
   // ソルバーでアロケートしたスカラー配列サイズ
@@ -431,7 +430,7 @@ void PLT3D::OutputStatisticalVarables(const unsigned m_CurrentStep,
                                       double& flop)
 {
   
-  // packing  >> ap, av, atの順（全5 scalar）
+  // packing  >> ap, av, atの順
   
   REAL_TYPE f_min, f_max, vec_min[3], vec_max[3];
   REAL_TYPE minmax[15*2];
@@ -576,13 +575,13 @@ void PLT3D::OutputStatisticalVarables(const unsigned m_CurrentStep,
   }
   
   
-  // LES
-  if ( C->LES.Calc == ON )
+  // 統計
+  if ( C->Mode.StatVelocity == ON )
   {
     // rms
     if (C->varState[var_RmsV] == ON )
     {
-      fb_vout_ijkn_(d_wv, d_rms, size, &guide, RF->getV00(), &unit_velocity, &flop);
+      fb_vout_ijkn_(d_wv, d_rms_v, size, &guide, RF->getV00(), &unit_velocity, &flop);
       
       fb_minmax_v_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wv, &flop);
       
@@ -607,13 +606,11 @@ void PLT3D::OutputStatisticalVarables(const unsigned m_CurrentStep,
       DFI_OUT_STAT->setVariableName(varN++, l_rmsV_y);
       DFI_OUT_STAT->setVariableName(varN++, l_rmsV_z);
     }
-
-    
     
     // rms mean
     if (C->varState[var_RmsMeanV] == ON )
     {
-      fb_vout_ijkn_(d_wv, d_rmsmean, size, &guide, RF->getV00(), &unit_velocity, &flop);
+      fb_vout_ijkn_(d_wv, d_rms_mean_v, size, &guide, RF->getV00(), &unit_velocity, &flop);
       
       fb_minmax_v_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wv, &flop);
       
@@ -638,7 +635,124 @@ void PLT3D::OutputStatisticalVarables(const unsigned m_CurrentStep,
       DFI_OUT_STAT->setVariableName(varN++, l_rmsmeanV_y);
       DFI_OUT_STAT->setVariableName(varN++, l_rmsmeanV_z);
     }
+  }
+  
+  
+  if ( C->Mode.StatPressure == ON )
+  {
+    // rms
+    if (C->varState[var_RmsP] == ON )
+    {
+      if (C->Unit.File == DIMENSIONAL)
+      {
+        REAL_TYPE bp = ( C->Unit.Prs == Unit_Absolute ) ? C->BasePrs : 0.0;
+        U.convArrayPrsND2D(d_ws, size, guide, d_rms_p, bp, C->RefDensity, C->RefVelocity, flop);
+      }
+      else
+      {
+        blas_copy_(d_ws, d_rms_p, size, &guide);
+      }
+      
+      // 最大値と最小値
+      fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
+      
+      if ( numProc > 1 )
+      {
+        REAL_TYPE min_tmp = f_min;
+        if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+        
+        REAL_TYPE max_tmp = f_max;
+        if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      }
+      
+      minmax[var++] = f_min;  ///<<< p min
+      minmax[var++] = f_max;  ///<<< p max
+      
+      pack_scalar_(&d_iobuf[size_OutBuffer*varN], size, &guide, d_ws, &GuideOut);
+      DFI_OUT_STAT->setVariableName(varN++, l_rmsP);
+    }
+    
+    // rms mean
+    if (C->varState[var_RmsMeanP] == ON )
+    {
+      if (C->Unit.File == DIMENSIONAL)
+      {
+        REAL_TYPE bp = ( C->Unit.Prs == Unit_Absolute ) ? C->BasePrs : 0.0;
+        U.convArrayPrsND2D(d_ws, size, guide, d_rms_mean_p, bp, C->RefDensity, C->RefVelocity, flop);
+      }
+      else
+      {
+        blas_copy_(d_ws, d_rms_mean_p, size, &guide);
+      }
+      
+      // 最大値と最小値
+      fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
+      
+      if ( numProc > 1 )
+      {
+        REAL_TYPE min_tmp = f_min;
+        if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+        
+        REAL_TYPE max_tmp = f_max;
+        if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      }
+      
+      minmax[var++] = f_min;  ///<<< p min
+      minmax[var++] = f_max;  ///<<< p max
+      
+      pack_scalar_(&d_iobuf[size_OutBuffer*varN], size, &guide, d_ws, &GuideOut);
+      DFI_OUT_STAT->setVariableName(varN++, l_rmsmeanP);
+    }
+  }
 
+  
+  if ( C->Mode.StatTemperature == ON )
+  {
+    // rms
+    if (C->varState[var_RmsT] == ON )
+    {
+      U.convArrayIE2Tmp(d_ws, size, guide, d_rms_t, d_bcd, mat_tbl, C->BaseTemp, C->DiffTemp, C->Unit.File, flop);
+      
+      fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
+      
+      if ( numProc > 1 )
+      {
+        REAL_TYPE min_tmp = f_min;
+        if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+        
+        REAL_TYPE max_tmp = f_max;
+        if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      }
+      
+      minmax[var++] = f_min; ///<<< t min
+      minmax[var++] = f_max; ///<<< t max
+      
+      pack_scalar_(&d_iobuf[size_OutBuffer*varN], size, &guide, d_ws, &GuideOut);
+      DFI_OUT_STAT->setVariableName(varN++, l_rmsT);
+    }
+    
+    // rms mean
+    if (C->varState[var_RmsMeanT] == ON )
+    {
+      U.convArrayIE2Tmp(d_ws, size, guide, d_rms_mean_t, d_bcd, mat_tbl, C->BaseTemp, C->DiffTemp, C->Unit.File, flop);
+      
+      fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
+      
+      if ( numProc > 1 )
+      {
+        REAL_TYPE min_tmp = f_min;
+        if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+        
+        REAL_TYPE max_tmp = f_max;
+        if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      }
+      
+      minmax[var++] = f_min; ///<<< t min
+      minmax[var++] = f_max; ///<<< t max
+      
+      pack_scalar_(&d_iobuf[size_OutBuffer*varN], size, &guide, d_ws, &GuideOut);
+      DFI_OUT_STAT->setVariableName(varN++, l_rmsmeanT);
+    }
   }
   
   
@@ -1173,7 +1287,7 @@ void PLT3D::RestartStatistic(FILE* fp,
   
   RF->copyV00(u0);
   
-  
+  REAL_TYPE bp = ( C->Unit.Prs == Unit_Absolute ) ? C->BasePrs : 0.0;
   
   // 変数名をキーにしてデータロード
   int block = 0;
@@ -1191,7 +1305,6 @@ void PLT3D::RestartStatistic(FILE* fp,
       
       if ( C->Unit.File == DIMENSIONAL ) // 有次元の場合，無次元に変換する
       {
-        REAL_TYPE bp = ( C->Unit.Prs == Unit_Absolute ) ? C->BasePrs : 0.0;
         U.convArrayPrsD2ND(d_ap, size, guide, bp, C->RefDensity, C->RefVelocity, flop);
       }
     }
@@ -1211,27 +1324,42 @@ void PLT3D::RestartStatistic(FILE* fp,
       if ( C->isHeatProblem() )
       {
         unpack_scalar_(d_ws, size, &guide, &d_iobuf[size_InBuffer*block], &GuideIn);
+        block++;
+        
         U.convArrayTmp2IE(d_ae, size, guide, d_ws, d_bcd, mat_tbl, C->BaseTemp, C->DiffTemp, C->Unit.File, flop);
       }
     }
     
-    // LES rms mean
-    else if ( !strcasecmp(variable.c_str(), l_rmsmeanV_x.c_str()) && C->LES.Calc==ON )
+    // rms mean V
+    else if ( !strcasecmp(variable.c_str(), l_rmsmeanV_x.c_str()) && C->Mode.StatVelocity==ON )
     {
-      unpack_vector_(d_rmsmean, size, &guide, &d_iobuf[size_InBuffer*block], &GuideIn);
+      unpack_vector_(d_rms_mean_v, size, &guide, &d_iobuf[size_InBuffer*block], &GuideIn);
       block += 3;
 
-      fb_vin_ijkn_(d_rmsmean, size, &guide, u0, &refv, &flop);
+      fb_vin_ijkn_(d_rms_mean_v, size, &guide, u0, &refv, &flop);
     }
     
-    // LES rms
-    else if ( !strcasecmp(variable.c_str(), l_rmsV_x.c_str()) && C->LES.Calc==ON )
+    // rms mean P
+    else if ( !strcasecmp(variable.c_str(), l_rmsmeanP.c_str()) && C->Mode.StatPressure==ON )
     {
-      unpack_vector_(d_rms, size, &guide, &d_iobuf[size_InBuffer*block], &GuideIn);
-      block += 3;
-
-      fb_vin_ijkn_(d_rms, size, &guide, u0, &refv, &flop);
+      unpack_scalar_(d_rms_mean_p, size, &guide, &d_iobuf[size_InBuffer*block], &GuideIn);
+      block ++;
+      
+      if ( C->Unit.File == DIMENSIONAL ) // 有次元の場合，無次元に変換する
+      {
+        U.convArrayPrsD2ND(d_rms_mean_p, size, guide, bp, C->RefDensity, C->RefVelocity, flop);
+      }
     }
+    
+    // rms mean T
+    else if ( !strcasecmp(variable.c_str(), l_rmsmeanT.c_str()) && C->Mode.StatTemperature==ON )
+    {
+      unpack_scalar_(d_ws, size, &guide, &d_iobuf[size_InBuffer*block], &GuideIn);
+      block ++;
+      
+      U.convArrayTmp2IE(d_rms_mean_t, size, guide, d_ws, d_bcd, mat_tbl, C->BaseTemp, C->DiffTemp, C->Unit.File, flop);
+    }
+    
   }
   
   Hostonly_ printf     ("\tStatistical fields have read :\tRestart step=%d time=%e  : Statistical step=%d time=%e [%s]\n",

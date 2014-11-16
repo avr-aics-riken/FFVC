@@ -172,11 +172,12 @@ private:
   
   double *mat_tbl; // Fortranでの多媒質対応ルーチンのため，rho, cp, lambdaの配列
   
-  REAL_TYPE *local_force;  ///< 各ランクの力の成分
-  REAL_TYPE *global_force; ///< 各ランクのCompoListで計算した力の成分を積算する
-  REAL_TYPE *buffer_force; ///< 力の積算用バッファ
-  int *global_obstacle;    ///< 各コンポーネント毎のOBSTACLEの有無
-  int num_obstacle;        ///< OBSTACLEの個数
+  REAL_TYPE *cmp_force_local;      ///< コンポーネントの各ランクの力の成分
+  REAL_TYPE *cmp_force_global;     ///< コンポーネントの各ランクのCompoListで計算した力の成分を積算する
+  REAL_TYPE *cmp_force_avr;        ///< コンポーネントの力の成分の平均値
+  REAL_TYPE *buffer_force;     ///< 力の積算用バッファ
+  int *global_obstacle;        ///< 各コンポーネント毎のOBSTACLEの有無
+  int num_obstacle;            ///< OBSTACLEの個数
   
   FILE *fp_b;  ///< 基本情報
   FILE *fp_w;  ///< 壁面情報
@@ -518,16 +519,12 @@ private:
   void Averaging(double& flop);
   
   
-  // OBSTACLEコンポーネントの力の成分を計算
+  // OBSTACLEコンポーネントの力の成分を計算し、集める
   void calcForce(double& flop);
   
   
   // 外部計算領域の各面における総流量と対流流出速度を計算する
   void DomainMonitor(BoundaryOuter* ptr, Control* R);
-  
-  
-  // 力の成分を集める
-  void gatherForce(REAL_TYPE* m_frc);
   
   
   // div(u)を計算する

@@ -51,6 +51,7 @@ protected:
   int step;                  ///< ステップ数
   int Unit_Prs;              ///< 圧力基準モード
   int Unit_Log;              ///< ログ出力の単位
+  int NoCompo;               ///< コンポネント数
   
   // CCNVファイル名（固定）
   char ccnvfile[16];
@@ -73,6 +74,7 @@ public:
     Unit_Prs        = Cref->Unit.Prs;
     Unit_Log        = Cref->Unit.Log;
     dh              = Cref->deltaX;
+    NoCompo         = Cref->NoCompo;
     Tscale          = RefLength / RefVelocity;
     dhd             = dh*RefLength;
     dynamic_p       = RefVelocity * RefVelocity * RefDensity;
@@ -305,22 +307,18 @@ public:
   
   
   /**
-   * @brief 物体に働く力の履歴の出力
-   * @param [in] fp  出力ファイルポインタ
+   * @brief 物体に働く力の履歴の出力（コンポーネント毎）
    * @param [in] cmp CompoListクラスのポインタ
-   * @param [in] C   Controlクラスへのポインタ
    * @param [in] frc 積算された力
    */
-  void printHistoryForce(FILE* fp, const CompoList* cmp, const Control* C, const REAL_TYPE* frc);
+  bool printHistoryForce(const CompoList* cmp, const REAL_TYPE* frc);
   
   
   /**
-   * @brief 物体に働く力の履歴のヘッダー出力
-   * @param [in] fp  出力ファイルポインタ
+   * @brief 物体に働く力の履歴のヘッダー出力（コンポーネント毎）
    * @param [in] cmp CompoListクラスのポインタ
-   * @param [in] C   Controlクラスへのポインタ
    */
-  void printHistoryForceTitle(FILE* fp, const CompoList* cmp, const Control* C);
+  bool printHistoryForceTitle(const CompoList* cmp);
   
   
   
@@ -347,6 +345,24 @@ public:
    * @param [in] vMax  速度最大値成分
    */
   void updateTimeStamp(const int m_stp, const REAL_TYPE m_tm, const REAL_TYPE vMax);
+  
+  
+  /**
+   * @brief 物体に働く力の統計量を出力
+   * @param [in] cmp CompoListクラスのポインタ
+   * @param [in] frc 積算された力
+   */
+  bool printCompoStatistics(const CompoList* cmp, const REAL_TYPE* frc);
+  
+  
+  /**
+   * @brief 物体に働く力の統計量を読み込み
+   * @param [in] fp  出力ファイルポインタ
+   * @param [in] cmp CompoListクラスのポインタ
+   * @param [in] C   Controlクラスへのポインタ
+   * @param [in] frc 積算された力
+   */
+  void loadCompoStatistics(FILE* fp, const CompoList* cmp, const Control* C, REAL_TYPE* frc);
 };
 
 #endif // _FB_HISTORY_H_

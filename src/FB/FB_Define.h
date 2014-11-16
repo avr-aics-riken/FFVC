@@ -429,6 +429,10 @@ enum Kind_of_vars {
   var_Div,
   var_RmsV,
   var_RmsMeanV,
+  var_RmsP,
+  var_RmsMeanP,
+  var_RmsT,
+  var_RmsMeanT,
   var_END
 };
 

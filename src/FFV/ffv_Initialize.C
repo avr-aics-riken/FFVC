@@ -487,6 +487,20 @@ int FFV::Initialize(int argc, char **argv)
   // ここまでが準備の時間セクション
   
   
+  
+  // IP_Cylinderの場合、物体の個数をチェック
+  if ( C.Mode.Example == id_Cylinder )
+  {
+    if ( num_obstacle != ((IP_Cylinder*)Ex)->get_num_cyls() )
+    {
+      Hostonly_ printf("\tNumber of cylinders does not agree with the number of local boundaries %d %d\n",
+                       num_obstacle, ((IP_Cylinder*)Ex)->get_num_cyls());
+      Exit(0);
+    }
+  }
+  
+  
+  
 // ##########  
 #if 0
   write_distance(cut);
@@ -516,8 +530,12 @@ int FFV::Initialize(int argc, char **argv)
                     d_av,
                     d_ae,
                     d_dv,
-                    d_rms,
-                    d_rmsmean,
+                    d_rms_v,
+                    d_rms_mean_v,
+                    d_rms_p,
+                    d_rms_mean_p,
+                    d_rms_t,
+                    d_rms_mean_t,
                     d_bcd,
                     d_cdf,
                     mat_tbl,
@@ -563,6 +581,29 @@ int FFV::Initialize(int argc, char **argv)
   {
     F->RestartDisplayMinmax(fp, flop_task);
   }
+  
+  
+  // コンポーネントの統計値のリスタート
+  if ( C.Mode.StatisticRestart == ON && num_obstacle > 0 )
+  {
+    if (C.Mode.Statistic == ON)
+    {
+      Hostonly_
+      {
+        if ( !(fp=fopen("component_statistic.txt", "r")) )
+        {
+          stamped_printf("\tSorry, can't open 'component_statistic.txt' file.\n");
+          Exit(0);
+        }
+        
+        H->loadCompoStatistics(fp, cmp, &C, cmp_force_avr);
+        
+        H->printCompoStatistics(cmp, cmp_force_avr);
+      }
+    }
+  }
+  
+  
   
   
   // 利用ライブラリのバージョン番号取得
@@ -691,8 +732,9 @@ void FFV::allocate_Main(double &total)
   
   if ( C.LES.Calc == ON )
   {
-    allocArray_LES (total);
+    allocArray_LES(total);
   }
+  
   
   if ( (C.AlgorithmF == Flow_FS_AB2) || (C.AlgorithmF == Flow_FS_AB_CN) )
   {
@@ -704,15 +746,13 @@ void FFV::allocate_Main(double &total)
     allocArray_Interface(total);
   }
   
-  // 時間平均用の配列をアロケート
+  
+  // 時間平均・統計処理用の配列をアロケート
   if ( C.Mode.Statistic == ON )
   {
-    allocArray_Statistic(total, C.isHeatProblem());
+    allocArray_Average(total, &C);
     
-    C.varState[var_VelocityAvr] = true;
-    C.varState[var_PressureAvr] = true;
-    
-    if ( C.isHeatProblem() ) C.varState[var_TemperatureAvr] = true;
+    allocArray_Statistic(total, &C);
   }
 }
 
@@ -805,14 +845,17 @@ void FFV::createTable(FILE* fp)
   if ( !(cmp = new CompoList[C.NoCompo+1]) ) Exit(0);
   
   
-  // OBSTACLEコンポーネントの積算用 global_force[C.NoCompo+1][3]のイメージ
-  if ( !(global_force = new REAL_TYPE[3*(C.NoCompo+1)]) ) Exit(0);
-  for (int i=0; i<3*(C.NoCompo+1); i++) global_force[i] = 0.0;
+  // OBSTACLEコンポーネントの積算用 cmp_force_global[C.NoCompo+1][3]のイメージ
+  if ( !(cmp_force_global = new REAL_TYPE[3*(C.NoCompo+1)]) ) Exit(0);
+  if ( !(cmp_force_avr    = new REAL_TYPE[3*(C.NoCompo+1)]) ) Exit(0);
+  if ( !(cmp_force_local  = new REAL_TYPE[3*(C.NoCompo+1)]) ) Exit(0);
   
-  
-  // OBSTACLEコンポーネントの積算用 local_force[C.NoCompo+1][3]のイメージ
-  if ( !(local_force = new REAL_TYPE[3*(C.NoCompo+1)]) ) Exit(0);
-  for (int i=0; i<3*(C.NoCompo+1); i++) local_force[i] = 0.0;
+  for (int i=0; i<3*(C.NoCompo+1); i++)
+  {
+    cmp_force_global[i] = 0.0;
+    cmp_force_avr[i]    = 0.0;
+    cmp_force_local[i]  = 0.0;
+  }
   
   
   // 積算用バッファ
@@ -2483,13 +2526,9 @@ void FFV::prepHistoryOutput()
       }
       H->printHistoryDomfxTitle(fp_d, &C);
       
-      // 力の履歴情報　
-      if ( !(fp_f=fopen("history_force.txt", "w")) ) 
-      {
-        stamped_printf("\tSorry, can't open 'history_force.txt' file. Write failed.\n");
-        Exit(0);
-      }
-      H->printHistoryForceTitle(fp_f, cmp, &C);
+      
+      // 力の履歴情報（コンポーネント毎）
+      H->printHistoryForceTitle(cmp);
     }
     
     
@@ -3491,6 +3530,7 @@ string FFV::setupDomain(TextParser* tpf)
   
   // 従属的なパラメータの取得
   C.get2ndParameter(&RF);
+  
   
   
   // 有次元に変換 Polylib: 並列計算領域情報　ポリゴンは実スケールで，ガイドセル領域部分も含めて指定する >> DomainInitialize()のあと

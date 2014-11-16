@@ -94,8 +94,8 @@ public:
   REAL_TYPE *d_p0;  ///<     圧力（1ステップ前）
   REAL_TYPE *d_sq;  ///<     反復中に変化するソース
   REAL_TYPE *d_b;   ///<     Ax=bの右辺ベクトル
-  REAL_TYPE *d_ie0; ///<     内部エネルギー（1ステップ前） >> file IO用のバッファと共用
-  REAL_TYPE *d_qbc; ///<     熱BC flux保持 >> file IO用のバッファと共用
+  REAL_TYPE *d_ie0; ///<     内部エネルギー（1ステップ前）
+  REAL_TYPE *d_qbc; ///<     熱BC flux保持
   // << file IO用のバッファと共用
   
   
@@ -134,8 +134,14 @@ public:
   
   // LES計算
   REAL_TYPE *d_vt;      ///< [*] 渦粘性係数
-  REAL_TYPE *d_rms;     ///< [*] セルセンター乱流強度
-  REAL_TYPE *d_rmsmean; ///< [*] セルセンター時間平均乱流強度
+  
+  // 統計
+  REAL_TYPE *d_rms_v;      ///< [*] セルセンター速度の乱流強度
+  REAL_TYPE *d_rms_mean_v; ///< [*] セルセンター速度の時間平均乱流強度
+  REAL_TYPE *d_rms_p;      ///< [*] 圧力の変動強度
+  REAL_TYPE *d_rms_mean_p; ///< [*] 圧力の時間平均変動強度
+  REAL_TYPE *d_rms_t;      ///< [*] 温度の変動強度
+  REAL_TYPE *d_rms_mean_t; ///< [*] 温度の時間平均変動強度
   
   
   // 界面計算
@@ -222,8 +228,12 @@ public:
     d_cvf = NULL;
     
     d_vt = NULL;
-    d_rms = NULL;
-    d_rmsmean = NULL;
+    d_rms_v = NULL;
+    d_rms_p = NULL;
+    d_rms_t = NULL;
+    d_rms_mean_v = NULL;
+    d_rms_mean_p = NULL;
+    d_rms_mean_t = NULL;
     
     d_r_v = NULL;
     d_r_p = NULL;
@@ -261,11 +271,11 @@ public:
   
   
   // Adams-Bashforth法に用いる配列のアロケーション
-  void allocArray_AB2 (double &total);
+  void allocArray_AB2(double &total);
   
   
-  // 統計処理に用いる配列のアロケーション
-  void allocArray_Statistic (double &total, const bool isHeat);
+  // 平均処理に用いる配列のアロケーション
+  void allocArray_Average(double &total, Control* C);
   
   
   // 粗格子読み込みに用いる配列のアロケーション
@@ -298,6 +308,10 @@ public:
   
   // LES計算に用いる配列のアロケーション
   void allocArray_LES(double &total);
+  
+  
+  // 統計処理に用いる配列のアロケーション
+  void allocArray_Statistic(double &total, Control* C);
   
   
   // 主計算部分に用いる配列のアロケーション

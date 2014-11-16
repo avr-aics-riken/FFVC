@@ -82,6 +82,10 @@ private:
   string l_rmsmeanV_x;
   string l_rmsmeanV_y;
   string l_rmsmeanV_z;
+  string l_rmsP;
+  string l_rmsmeanP;
+  string l_rmsT;
+  string l_rmsmeanT;
   
   
 public:
@@ -123,19 +127,23 @@ public:
     l_avr_velocity_x  = "Avr_Velocity_X";
     l_avr_velocity_y  = "Avr_Velocity_Y";
     l_avr_velocity_z  = "Avr_Velocity_Z";
-    l_rmsV_x   = "V_rms_X";
-    l_rmsV_y   = "V_rms_Y";
-    l_rmsV_z   = "V_rms_Z";
-    l_rmsmeanV_x = "V_rms_mean_X";
-    l_rmsmeanV_y = "V_rms_mean_Y";
-    l_rmsmeanV_z = "V_rms_mean_Z";
+    l_rmsV_x     = "RMS_Velocity_X";
+    l_rmsV_y     = "RMS_Velocity_Y";
+    l_rmsV_z     = "RMS_Velocity_Z";
+    l_rmsmeanV_x = "RMS_mean_Velocity_X";
+    l_rmsmeanV_y = "RMS_mean_Velocity_Y";
+    l_rmsmeanV_z = "RMS_mean_Velocity_Z";
+    l_rmsP       = "RMS_Pressure";
+    l_rmsmeanP   = "RMS_mean_Pressure";
+    l_rmsT       = "RMS_Temperature";
+    l_rmsmeanT   = "RMS_mean_Temperature";
   }
   
   ~PLT3D() {
-    if( DFI_IN_INS    != NULL ) delete DFI_IN_INS;
-    if( DFI_IN_STAT    != NULL ) delete DFI_IN_STAT;
-    if( DFI_OUT_INS   != NULL ) delete DFI_OUT_INS;
-    if( DFI_OUT_STAT   != NULL ) delete DFI_OUT_STAT;
+    if( DFI_IN_INS   != NULL ) delete DFI_IN_INS;
+    if( DFI_IN_STAT  != NULL ) delete DFI_IN_STAT;
+    if( DFI_OUT_INS  != NULL ) delete DFI_OUT_INS;
+    if( DFI_OUT_STAT != NULL ) delete DFI_OUT_STAT;
   }
   
  

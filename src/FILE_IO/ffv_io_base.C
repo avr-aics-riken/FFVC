@@ -289,8 +289,8 @@ void IO_BASE::getFIOparams()
       C->Interval[Control::tg_statistic].setInterval(val);
     }
     
-    // LES rms
-    label="/Output/Data/BasicVariables/RMSvelocity";
+    // Statistic for velocity
+    label="/Output/Data/StatisticalVariables/VelocityStat";
     if ( tpCntl->chkLabel(label) )
     {
       if ( !(tpCntl->getInspectedValue(label, str )) )
@@ -299,12 +299,22 @@ void IO_BASE::getFIOparams()
         Exit(0);
       }
       
-      if     ( !strcasecmp(str.c_str(), "on") )
+      if ( !strcasecmp(str.c_str(), "on") )
       {
+        C->Mode.StatVelocity = ON;
+        
         C->varState[var_RmsV] = ON;
         C->NvarsAvr_plt3d += 3;
+        
+        C->varState[var_RmsMeanV] = ON;
+        C->NvarsAvr_plt3d += 3;
       }
-      else if( !strcasecmp(str.c_str(), "off") ) C->varState[var_RmsV] = OFF;
+      else if( !strcasecmp(str.c_str(), "off") )
+      {
+        C->Mode.StatVelocity = OFF;
+        C->varState[var_RmsV] = OFF;
+        C->varState[var_RmsMeanV] = OFF;
+      }
       else
       {
         Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -312,8 +322,8 @@ void IO_BASE::getFIOparams()
       }
     }
     
-    // LES rmsmean
-    label="/Output/Data/BasicVariables/RMSmeanVelocity";
+    // Statistic for pressure
+    label="/Output/Data/StatisticalVariables/PressureStat";
     if ( tpCntl->chkLabel(label) )
     {
       if ( !(tpCntl->getInspectedValue(label, str )) )
@@ -322,16 +332,62 @@ void IO_BASE::getFIOparams()
         Exit(0);
       }
       
-      if     ( !strcasecmp(str.c_str(), "on") )
+      if ( !strcasecmp(str.c_str(), "on") )
       {
-        C->varState[var_RmsMeanV] = ON;
-        C->NvarsAvr_plt3d += 3;
+        C->Mode.StatPressure = ON;
+        
+        C->varState[var_RmsP] = ON;
+        C->NvarsAvr_plt3d += 1;
+        
+        C->varState[var_RmsMeanP] = ON;
+        C->NvarsAvr_plt3d += 1;
       }
-      else if( !strcasecmp(str.c_str(), "off") ) C->varState[var_RmsMeanV] = OFF;
+      else if( !strcasecmp(str.c_str(), "off") )
+      {
+        C->Mode.StatPressure = OFF;
+        C->varState[var_RmsP] = OFF;
+        C->varState[var_RmsMeanP] = OFF;
+      }
       else
       {
         Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
         Exit(0);
+      }
+    }
+    
+    // Statistic for temperature
+    if ( C->isHeatProblem() )
+    {
+      label="/Output/Data/StatisticalVariables/TemperatureStat";
+      if ( tpCntl->chkLabel(label) )
+      {
+        if ( !(tpCntl->getInspectedValue(label, str )) )
+        {
+          Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+          Exit(0);
+        }
+        
+        if ( !strcasecmp(str.c_str(), "on") )
+        {
+          C->Mode.StatTemperature = ON;
+          
+          C->varState[var_RmsT] = ON;
+          C->NvarsAvr_plt3d += 1;
+          
+          C->varState[var_RmsMeanT] = ON;
+          C->NvarsAvr_plt3d += 1;
+        }
+        else if( !strcasecmp(str.c_str(), "off") )
+        {
+          C->Mode.StatTemperature = OFF;
+          C->varState[var_RmsT] = OFF;
+          C->varState[var_RmsMeanT] = OFF;
+        }
+        else
+        {
+          Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+          Exit(0);
+        }
       }
     }
     
@@ -708,31 +764,39 @@ void IO_BASE::setVarPointers(REAL_TYPE* m_d_p,
                              REAL_TYPE* m_d_av,
                              REAL_TYPE* m_d_ae,
                              REAL_TYPE* m_d_dv,
-                             REAL_TYPE* m_d_rms,
-                             REAL_TYPE* m_d_rmsmean,
+                             REAL_TYPE* m_d_rms_v,
+                             REAL_TYPE* m_d_rms_mean_v,
+                             REAL_TYPE* m_d_rms_p,
+                             REAL_TYPE* m_d_rms_mean_p,
+                             REAL_TYPE* m_d_rms_t,
+                             REAL_TYPE* m_d_rms_mean_t,
                              int* m_d_bcd,
                              int* m_d_cdf,
                              double* m_mat_tbl,
                              int* m_d_mid,
                              REAL_TYPE* m_d_iob)
 {
-  d_p       = m_d_p;
-  d_v       = m_d_v;
-  d_vf      = m_d_vf;
-  d_ie      = m_d_ie;
-  d_ws      = m_d_ws;
-  d_wv      = m_d_wv;
-  d_ap      = m_d_ap;
-  d_av      = m_d_av;
-  d_ae      = m_d_ae;
-  d_dv      = m_d_dv;
-  d_rms     = m_d_rms;
-  d_rmsmean = m_d_rmsmean;
-  d_bcd     = m_d_bcd;
-  d_cdf     = m_d_cdf;
-  mat_tbl   = m_mat_tbl;
-  d_mid     = m_d_mid;
-  d_iobuf   = m_d_iob;
+  d_p          = m_d_p;
+  d_v          = m_d_v;
+  d_vf         = m_d_vf;
+  d_ie         = m_d_ie;
+  d_ws         = m_d_ws;
+  d_wv         = m_d_wv;
+  d_ap         = m_d_ap;
+  d_av         = m_d_av;
+  d_ae         = m_d_ae;
+  d_dv         = m_d_dv;
+  d_rms_v      = m_d_rms_v;
+  d_rms_mean_v = m_d_rms_mean_v;
+  d_rms_p      = m_d_rms_p;
+  d_rms_mean_p = m_d_rms_mean_p;
+  d_rms_t      = m_d_rms_t;
+  d_rms_mean_t = m_d_rms_mean_t;
+  d_bcd        = m_d_bcd;
+  d_cdf        = m_d_cdf;
+  mat_tbl      = m_mat_tbl;
+  d_mid        = m_d_mid;
+  d_iobuf      = m_d_iob;
 }
 
 

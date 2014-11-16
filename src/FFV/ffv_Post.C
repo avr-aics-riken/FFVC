@@ -26,12 +26,24 @@
 // 終了時の処理
 bool FFV::Post() 
 {
+  FILE* fp = NULL;
   
-  TIMING__ 
-  { 
-    FILE* fp = NULL;
+  
+  // 統計情報
+  if (C.Mode.Statistic == ON)
+  {
+    Hostonly_
+    {
+      if ( !H->printCompoStatistics(cmp, cmp_force_avr) ) Exit(0);
+    }
+  }
+  
+  
+  TIMING__
+  {
+    fp = NULL;
     
-    if ( IsMaster() ) 
+    Hostonly_
     {
       if ( !(fp=fopen("profiling.txt", "w")) ) 
       {
@@ -45,7 +57,7 @@ bool FFV::Post()
     PM.gather();
     TIMING_stop("Statistic", 0.0);
     
-    if ( IsMaster() ) 
+    Hostonly_
     {
       // 結果出力(排他測定のみ)
       PM.print(stdout, HostName, C.OperatorName);

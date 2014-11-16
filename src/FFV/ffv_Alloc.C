@@ -36,11 +36,11 @@ void FALLOC::allocArray_AB2 (double &total)
 
 
 // #################################################################
-/* @brief 統計処理に用いる配列のアロケーション
+/* @brief 平均処理に用いる配列のアロケーション
  * @param [in,out] total  ソルバーに使用するメモリ量
- * @param [in]     isHeat 熱問題のときtrue
+ * @param [in]     C      Control class
  */
-void FALLOC::allocArray_Statistic (double &total, const bool isHeat)
+void FALLOC::allocArray_Average(double &total, Control* C)
 {
   // d_ap
   if ( !(d_ap = Alloc::Real_S3D(size, guide)) ) Exit(0);
@@ -50,7 +50,7 @@ void FALLOC::allocArray_Statistic (double &total, const bool isHeat)
   if ( !(d_av = Alloc::Real_V3D(size, guide)) ) Exit(0);
   total += array_size * (double)sizeof(REAL_TYPE) * 3.0;
   
-  if ( isHeat )
+  if ( C->isHeatProblem() )
   {
     // d_ae
     if ( !(d_ae = Alloc::Real_S3D(size, guide)) ) Exit(0);
@@ -228,12 +228,48 @@ void FALLOC::allocArray_LES(double &total)
 {
   if ( !(d_vt = Alloc::Real_S3D(size, guide)) ) Exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE);
+}
+
+
+// #################################################################
+/**
+ * @brief 統計に用いる配列のアロケーション
+ * @param [in,out] total ソルバーに使用するメモリ量
+ */
+void FALLOC::allocArray_Statistic(double &total, Control* C)
+{
+  // Velocity
+  if ( C->Mode.StatVelocity == ON )
+  {
+    if ( !(d_rms_v = Alloc::Real_V3D(size, guide)) ) Exit(0);
+    total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
+    
+    if ( !(d_rms_mean_v = Alloc::Real_V3D(size, guide)) ) Exit(0);
+    total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
+  }
   
-  if ( !(d_rms = Alloc::Real_V3D(size, guide)) ) Exit(0);
-  total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
   
-  if ( !(d_rmsmean = Alloc::Real_V3D(size, guide)) ) Exit(0);
-  total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
+  // Pressure
+  if ( C->Mode.StatPressure == ON )
+  {
+    if ( !(d_rms_p = Alloc::Real_S3D(size, guide)) ) Exit(0);
+    total+= array_size * (double)sizeof(REAL_TYPE);
+    
+    if ( !(d_rms_mean_p = Alloc::Real_S3D(size, guide)) ) Exit(0);
+    total+= array_size * (double)sizeof(REAL_TYPE);
+  }
+  
+  
+  // Temperature
+  if ( C->isHeatProblem() && C->Mode.StatTemperature==ON )
+  {
+    if ( !(d_rms_t = Alloc::Real_S3D(size, guide)) ) Exit(0);
+    total+= array_size * (double)sizeof(REAL_TYPE);
+    
+    if ( !(d_rms_mean_t = Alloc::Real_S3D(size, guide)) ) Exit(0);
+    total+= array_size * (double)sizeof(REAL_TYPE);
+  }
+
 }
 
 

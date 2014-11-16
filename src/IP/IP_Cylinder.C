@@ -133,6 +133,7 @@ bool IP_Cylinder::getTP(Control* R, TextParser* tpCntl)
   if     ( !strcasecmp(str.c_str(), "yes") )
   {
     cyl1.ens = ON;
+    num_cyls++;
   }
   else if( !strcasecmp(str.c_str(), "no") )
   {
@@ -272,6 +273,7 @@ bool IP_Cylinder::getTP(Control* R, TextParser* tpCntl)
   if     ( !strcasecmp(str.c_str(), "yes") )
   {
     cyl2.ens = ON;
+    num_cyls++;
   }
   else if( !strcasecmp(str.c_str(), "no") )
   {
