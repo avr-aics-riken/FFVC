@@ -19,6 +19,10 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-11-17
+r1567 remove unrecognized charcters in History.C
+
+--------------------------
 2014-11-16
 r1566 output summary for averaged force of components
  - split rms and rmsmean to rmsV, rmsmeanV, rmsP, rmsmeanP, rmsT, rmsmeanT

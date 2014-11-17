@@ -609,7 +609,7 @@ void History::printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C
   fflush(fp);
 }
 
-visio
+
 // #################################################################
 // コンポーネントモニタのヘッダー出力
 void History::printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Control* C)
