@@ -20,7 +20,7 @@
  */
 
 #include "cpm_Define.h"
-#include "../FB/FB_Define.h"
+#include "FB_Define.h"
 
 #ifndef _FFV_LS_FUNC_H_
 #define _FFV_LS_FUNC_H_

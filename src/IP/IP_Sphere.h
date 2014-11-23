@@ -25,6 +25,8 @@
 #include "../FB/Intrinsic.h"
 #include "IP_Define.h"
 #include "Vec3.h"
+#include "FBUtility.h"
+
 
 using namespace Vec3class;
 

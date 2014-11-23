@@ -863,8 +863,8 @@ void SPH::OutputStatisticalVarables(const unsigned m_CurrentStep,
     ret = DFI_OUT_PRSA->WriteData(m_step,   // 出力step番号
                                   m_time,   // 出力時刻
                                   size,     // d_wsの実ボクセル数
-                                  1,        // 成分数
-                                  guide,    // 仮想セル数
+                                  1,        // d_wsの成分数
+                                  guide,    // d_wsの仮想セル数
                                   d_ws,     // フィールドデータポインタ
                                   minmax,   // 最小値と最大値
                                   false,    // 平均出力指示 false:出力あり
@@ -1054,7 +1054,11 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
                                  0,
                                  0.0);
     
-    if( ret != CDM::E_CDM_SUCCESS ) Exit(0);
+    if( ret != CDM::E_CDM_SUCCESS )
+    {
+      Hostonly_ printf("CDMlib error code = %d\n", ret);
+      Exit(0);
+    }
     
     
     

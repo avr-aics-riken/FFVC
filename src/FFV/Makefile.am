@@ -24,6 +24,8 @@ libFFV_a_CXXFLAGS = \
   -I../F_LS \
   -I../IP \
   -I../FB \
+  -I../Geometry \
+  -I../FILE_IO \
   @CDM_CFLAGS@ \
   @CPM_CFLAGS@ \
   @CUT_CFLAGS@ \
@@ -43,7 +45,6 @@ libFFV_a_SOURCES = \
   ffv_Alloc.h \
   ffv_Define.h \
   ffv_Filter.C \
-  ffv_Geometry.C \
   ffv_Heat.C \
   ffv_Initialize.C \
   ffv_LS.C \

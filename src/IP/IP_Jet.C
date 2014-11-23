@@ -595,13 +595,13 @@ void IP_Jet::setOBC(const int face, int* bcd, Control* R, REAL_TYPE* G_org, cons
   int mid_solid;        /// 固体  
   
   // 媒質設定のチェック
-  if ( (mid_fluid = R->findIDfromLabel(mat, NoMedium, m_fluid)) == 0 )
+  if ( (mid_fluid = FBUtility::findIDfromLabel(mat, NoMedium, m_fluid)) == 0 )
   {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_fluid.c_str());
     Exit(0);
   }
   
-  if ( (mid_solid = R->findIDfromLabel(mat, NoMedium, m_solid)) == 0 )
+  if ( (mid_solid = FBUtility::findIDfromLabel(mat, NoMedium, m_solid)) == 0 )
   {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_solid.c_str());
     Exit(0);

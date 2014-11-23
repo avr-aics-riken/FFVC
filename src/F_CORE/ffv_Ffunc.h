@@ -20,7 +20,7 @@
  */
 
 #include "cpm_Define.h"
-#include "../FB/FB_Define.h"
+#include "FB_Define.h"
 
 #ifndef _FFV_F_FUNC_H_
 #define _FFV_F_FUNC_H_
@@ -49,8 +49,8 @@
 // ffv_vbc_inner.f90
 #define perturb_u_y_        perturb_U_Y
 #define perturb_u_z_        perturb_U_Z
-#define pvec_vibc_specv_    PVEC_VIBC_SPECV
-#define pvec_vibc_oflow_    PVEC_VIBC_OFLOW
+#define pvec_ibc_specv_fvm_ PVEC_IBC_SPECV_FVM
+#define pvec_ibc_oflow_     PVEC_IBC_OFLOW
 #define div_ibc_drchlt_     DIV_IBC_DRCHLT
 #define div_ibc_oflow_pvec_ DIV_IBC_OFLOW_PVEC
 #define div_ibc_oflow_vec_  DIV_IBC_OFLOW_VEC
@@ -61,15 +61,16 @@
 #define vobc_cc_copy_       VOBC_CC_COPY
 #define vobc_div_drchlt_    VOBC_DIV_DRCHLT
 #define vobc_cc_outflow_    VOBC_CC_OUTFLOW
-#define vobc_tfree1_        VOBC_TFREE1
-#define vobc_tfree2_        VOBC_TFREE2
+#define vobc_tfree_cc_      VOBC_TFREE_CC
+#define vobc_tfree_cf_      VOBC_TFREE_CF
 
 // ffv_vbc_outer_face.f90
 #define vobc_face_drchlt_   VOBC_FACE_DRCHLT
 #define vobc_face_massflow_ VOBC_FACE_MASSFLOW
 
 // ffv_vbc_outer_flux.f90
-#define vobc_pv_specv_      VOBC_PV_SPECV
+#define vobc_pv_specv_fvm   VOBC_PV_SPECV_FVM
+#define vobc_pv_specv_fdm   VOBC_PV_SPECV_FDM
 #define vobc_pv_wall_       VOBC_PV_WALL
 
 // ffv_velocity_binary.f90
@@ -282,32 +283,46 @@ extern "C" {
                      REAL_TYPE* nu,
                      int* mode);
   
-  void pvec_vibc_oflow_   (REAL_TYPE* wv,
-                           int* sz,
-                           int* g,
-                           int* st,
-                           int* ed,
-                           REAL_TYPE* dh,
-                           REAL_TYPE* rei,
-                           REAL_TYPE* v,
-                           int* bv,
-                           int* odr,
-                           REAL_TYPE* vec,
-                           double* flop);
+  void pvec_ibc_oflow_ (REAL_TYPE* wv,
+                        int* sz,
+                        int* g,
+                        int* st,
+                        int* ed,
+                        REAL_TYPE* dh,
+                        REAL_TYPE* rei,
+                        REAL_TYPE* v,
+                        int* bv,
+                        int* odr,
+                        REAL_TYPE* vec,
+                        double* flop);
   
-  void pvec_vibc_specv_   (REAL_TYPE* wv,
-                           int* sz,
-                           int* g,
-                           int* st,
-                           int* ed,
-                           REAL_TYPE* dh,
-                           REAL_TYPE* v00,
-                           REAL_TYPE* rei,
-                           REAL_TYPE* v,
-                           int* bv,
-                           int* odr,
-                           REAL_TYPE* vec,
-                           double* flop);
+  void pvec_ibc_specv_fvm_ (REAL_TYPE* wv,
+                            int* sz,
+                            int* g,
+                            int* st,
+                            int* ed,
+                            REAL_TYPE* dh,
+                            REAL_TYPE* v00,
+                            REAL_TYPE* rei,
+                            REAL_TYPE* v,
+                            int* bv,
+                            int* odr,
+                            REAL_TYPE* vec,
+                            double* flop);
+  
+  void pvec_ibc_specv_fdm_ (REAL_TYPE* wv,
+                            int* sz,
+                            int* g,
+                            int* st,
+                            int* ed,
+                            REAL_TYPE* dh,
+                            REAL_TYPE* v00,
+                            REAL_TYPE* rei,
+                            REAL_TYPE* v,
+                            int* bv,
+                            int* odr,
+                            REAL_TYPE* vec,
+                            double* flop);
   
   void div_ibc_drchlt_    (REAL_TYPE* div,
                            int* sz,
@@ -378,18 +393,18 @@ extern "C" {
                       REAL_TYPE* vc,
                       int* nID);
 
-  void vobc_tfree2_ (REAL_TYPE* v,
-                     int* sz,
-                     int* g,
-                     int* m_face,
-                     REAL_TYPE* vf,
-                     int* nID);
+  void vobc_tfree_cc_ (REAL_TYPE* v,
+                       int* sz,
+                       int* g,
+                       int* m_face,
+                       REAL_TYPE* vf,
+                       int* nID);
   
-  void vobc_tfree1_ (REAL_TYPE* vf,
-                     int* sz,
-                     int* g,
-                     int* m_face,
-                     int* nID);
+  void vobc_tfree_cf_ (REAL_TYPE* vf,
+                       int* sz,
+                       int* g,
+                       int* m_face,
+                       int* nID);
   
 
   
@@ -426,17 +441,29 @@ extern "C" {
   //***********************************************************************************************
   // ffv_vbc_outer_flux.f90
   
-  void vobc_pv_specv_ (REAL_TYPE* wv,
-                       int* sz,
-                       int* g,
-                       int* m_face,
-                       REAL_TYPE* dh,
-                       REAL_TYPE* rei,
-                       REAL_TYPE* v,
-                       int* bv,
-                       REAL_TYPE* vec,
-                       int* nID,
-                       double* flop);
+  void vobc_pv_specv_fdm_ (REAL_TYPE* wv,
+                           int* sz,
+                           int* g,
+                           int* m_face,
+                           REAL_TYPE* dh,
+                           REAL_TYPE* rei,
+                           REAL_TYPE* v,
+                           int* bv,
+                           REAL_TYPE* vec,
+                           int* nID,
+                           double* flop);
+  
+  void vobc_pv_specv_fvm_ (REAL_TYPE* wv,
+                           int* sz,
+                           int* g,
+                           int* m_face,
+                           REAL_TYPE* dh,
+                           REAL_TYPE* rei,
+                           REAL_TYPE* v,
+                           int* bv,
+                           REAL_TYPE* vec,
+                           int* nID,
+                           double* flop);
   
   void vobc_pv_wall_ (REAL_TYPE* wv,
                       int* sz,

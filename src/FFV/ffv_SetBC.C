@@ -528,12 +528,20 @@ void SetBC3D::modPvecFlux(REAL_TYPE* wv, REAL_TYPE* v, int* d_cdf, const double 
     if ( typ==SPEC_VEL )
     {
       dummy = extractVelLBC(n, vec, tm, v00);
-      pvec_vibc_specv_(wv, size, &gd, st, ed, &dh, v00, &rei, v, d_cdf, &n, vec, &flop);
+      
+      if ( C->CnvScheme==Control::O1_upwind || C->CnvScheme==Control::O3_muscl )
+      {
+        pvec_ibc_specv_fvm_(wv, size, &gd, st, ed, &dh, v00, &rei, v, d_cdf, &n, vec, &flop);
+      }
+      else // Central scheme
+      {
+        pvec_ibc_specv_fdm_(wv, size, &gd, st, ed, &dh, v00, &rei, v, d_cdf, &n, vec, &flop);
+      }
     }
     else if ( typ==OUTFLOW )
     {
       vec[0] = vec[1] = vec[2] = cmp[n].val[var_Velocity]; // modDivergence()でセルフェイス流出速度がval[var_Velocity]にセット
-      pvec_vibc_oflow_(wv, size, &gd, st, ed, &dh, &rei, v, d_cdf, &n, vec, &flop);
+      pvec_ibc_oflow_(wv, size, &gd, st, ed, &dh, &rei, v, d_cdf, &n, vec, &flop);
     }
     
   }
@@ -548,7 +556,16 @@ void SetBC3D::modPvecFlux(REAL_TYPE* wv, REAL_TYPE* v, int* d_cdf, const double 
     {
       case OBC_SPEC_VEL:
         dummy = extractVelOBC(face, vec, tm, v00);
-        vobc_pv_specv_(wv, size, &gd, &face, &dh, &rei, v, d_cdf, vec, nID, &flop);
+        
+        if ( C->CnvScheme==Control::O1_upwind || C->CnvScheme==Control::O3_muscl )
+        {
+          vobc_pv_specv_fvm_(wv, size, &gd, &face, &dh, &rei, v, d_cdf, vec, nID, &flop);
+        }
+        else // Central scheme
+        {
+          vobc_pv_specv_fdm_(wv, size, &gd, &face, &dh, &rei, v, d_cdf, vec, nID, &flop);
+        }
+        
         break;
         
       case OBC_WALL:
@@ -731,13 +748,13 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_cdf, const double
     switch ( obc[face].getClass() )
     {
       case OBC_TRC_FREE:
-        vobc_tfree1_(d_vf, size, &gd, &face, nID);
-        if ( numProc > 1 )
-        {
-          if ( paraMngr->BndCommV3D(d_vf, size[0], size[1], size[2], gd, gd) != CPM_SUCCESS ) Exit(0);
-        }
+        vobc_tfree_cf_(d_vf, size, &gd, &face, nID);
+        //if ( numProc > 1 )
+        //{
+        //  if ( paraMngr->BndCommV3D(d_vf, size[0], size[1], size[2], gd, gd) != CPM_SUCCESS ) Exit(0);
+        //}
         
-        vobc_tfree2_(d_v, size, &gd, &face, d_vf, nID);
+        vobc_tfree_cc_(d_v, size, &gd, &face, d_vf, nID);
         if ( numProc > 1 )
         {
           if ( paraMngr->BndCommV3D(d_v, size[0], size[1], size[2], gd, gd) != CPM_SUCCESS ) Exit(0);
@@ -785,7 +802,6 @@ void SetBC3D::OuterVBCfacePrep(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_cdf, REAL
   int gd = guide;
   REAL_TYPE dh = deltaX;
   REAL_TYPE v_cnv=0.0;
-  double flop;
   
   // 周期境界以外
   
@@ -821,20 +837,7 @@ void SetBC3D::OuterVBCfacePrep(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_cdf, REAL
       switch ( obc[face].getClass() )
       {
         case OBC_TRC_FREE:
-          /*
-           vobc_tfree1_(d_vf, size, &gd, &face, nID);
-           if ( numProc > 1 )
-           {
-           if ( paraMngr->BndCommV3D(d_vf, size[0], size[1], size[2], gd, gd) != CPM_SUCCESS ) Exit(0);
-           }
-           
-           vobc_tfree2_(d_v, size, &gd, &face, d_vf, &vsum, nID);
-           if ( numProc > 1 )
-           {
-           if ( paraMngr->BndCommV3D(d_v, size[0], size[1], size[2], gd, gd) != CPM_SUCCESS ) Exit(0);
-           }
-           obc[face].setDomainMF(vsum); // DomainMonitor()で集約する
-           */
+          vobc_cc_neumann_(d_vc, size, &gd, &face, nID);
           break;
           
         case OBC_FAR_FIELD:
@@ -842,7 +845,6 @@ void SetBC3D::OuterVBCfacePrep(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_cdf, REAL
           break;
           
         case OBC_OUTFLOW:
-          //vobc_cc_neumann_(d_vc, size, &gd, &face, nID);
           v_cnv = C->V_Dface[face];
           vobc_cc_outflow_(d_vc, d_v, size, &gd, &dh, &dt, d_cdf, &v_cnv, &face, nID);
           break;

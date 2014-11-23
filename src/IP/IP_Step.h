@@ -24,6 +24,8 @@
 
 #include "../FB/Intrinsic.h"
 #include "IP_Define.h"
+#include "FBUtility.h"
+
 
 class IP_Step : public Intrinsic {
   

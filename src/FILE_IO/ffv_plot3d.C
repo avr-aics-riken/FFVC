@@ -1074,7 +1074,7 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
     minmax[var++] = f_min;
     minmax[var++] = f_max;
     
-    pack_scalar_(&d_iobuf[size_OutBuffer*varN], size, &guide, d_ws, &GuideOut);
+    pack_scalar_(&d_iobuf[size_OutBuffer*varN], size, &guide, d_ws, &GuideOut); // << check
     DFI_OUT_INS->setVariableName(varN++, l_divergence);
   }
   
@@ -1090,7 +1090,7 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
                                m_time,
                                size,
                                varN,
-                               GuideOut, // 出力するガイドセル数
+                               GuideOut, // 出力するガイドセル数 << check
                                d_iobuf,
                                minmax,
                                true,

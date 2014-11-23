@@ -33,34 +33,35 @@
 #include <float.h>
 
 #include "omp.h"
-#include "../FB/ParseBC.h"
-#include "../FB/ParseMat.h"
-#include "../FB/VoxInfo.h"
-#include "../FB/CompoFraction.h"
-#include "../FB/History.h"
-#include "../FB/Monitor.h"
+#include "ParseBC.h"
+#include "ParseMat.h"
+#include "VoxInfo.h"
+#include "CompoFraction.h"
+#include "History.h"
+#include "Monitor.h"
 #include "ffv_Version.h"
 #include "ffv_Define.h"
 #include "ffv_SetBC.h"
-#include "../F_CORE/ffv_Ffunc.h"
-#include "../F_LS/ffv_LSfunc.h"
+#include "ffv_Ffunc.h"
+#include "ffv_LSfunc.h"
 #include "ffv_TerminateCtrl.h"
-#include "../FB/Glyph.h"
+#include "Glyph.h"
 #include "ffv_LS.h"
+#include "Geometry.h"
 
 // FileIO class
-#include "../FILE_IO/ffv_sph.h"
-#include "../FILE_IO/ffv_plot3d.h"
+#include "ffv_sph.h"
+#include "ffv_plot3d.h"
 
 // Intrinsic class
-#include "../IP/IP_Duct.h"
-#include "../IP/IP_PPLT2D.h"
-#include "../IP/IP_PMT.h"
-#include "../IP/IP_Rect.h"
-#include "../IP/IP_Step.h"
-#include "../IP/IP_Cylinder.h"
-#include "../IP/IP_Sphere.h"
-#include "../IP/IP_Jet.h"
+#include "IP_Duct.h"
+#include "IP_PPLT2D.h"
+#include "IP_PMT.h"
+#include "IP_Rect.h"
+#include "IP_Step.h"
+#include "IP_Cylinder.h"
+#include "IP_Sphere.h"
+#include "IP_Jet.h"
 
 
 // FX10 profiler
@@ -203,6 +204,7 @@ private:
   FBUtility U;               ///< ユーティリティクラス
   MonitorList MO;            ///< Monitorクラス
   IO_BASE* F;                ///< File IO class
+  Geometry GM;               ///< Geometry class
   
   LinearSolver LS[ic_END];   ///< 反復解法
   
@@ -226,27 +228,6 @@ public:
   
   
 private:
-  
-  // 点pの属するセルインデクスを求める
-  // @param [in]  pt 無次元座標
-  // @param [out] w  インデクス
-  void findIndex(const Vec3<REAL_TYPE> pt, int* w) const
-  {
-    REAL_TYPE p[3], q[3];
-    p[0] = (REAL_TYPE)pt.x;
-    p[1] = (REAL_TYPE)pt.y;
-    p[2] = (REAL_TYPE)pt.z;
-    
-    q[0] = (p[0]-origin[0])/pitch[0];
-    q[1] = (p[1]-origin[1])/pitch[1];
-    q[2] = (p[2]-origin[2])/pitch[2];
-    
-    w[0] = (int)ceil(q[0]);
-    w[1] = (int)ceil(q[1]);
-    w[2] = (int)ceil(q[2]);
-  }
-
-  
   
   /**
    * @brief タイミング測定開始
@@ -448,68 +429,6 @@ private:
   
   // 幾何形状情報を準備し，交点計算を行う
   void setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp);
-  
-  
-  
-  /** ffv_Geometry.C *******************************************************/
-  
-  // d_mid[]の対象IDに対して、d_pvf[]に指定値を代入する
-  unsigned long assignVF(const int target, const REAL_TYPE value);
-  
-  
-  // ポリゴングループの座標値からboxを計算する
-  void calcBboxFromPolygonGroup();
-  
-
-  // ポリゴンの場合のフィル操作
-  void fill(FILE* fp);
-  
-  
-  // list[]内の最頻値IDを求める
-  int find_mode(const int m_sz, const int* list, const int m_noc);
-  
-  
-  // セルに含まれるポリゴンを探索し、d_midに記録
-  unsigned long findPolygonInCell();
-  
-  
-  // サブセルのペイント
-  int SubCellFill(REAL_TYPE* svf,
-                  int* smd,
-                  const int sdv,
-                  const int dir,
-                  const int refID,
-                  const REAL_TYPE refVf
-                  );
-  
-  
-  // サブセルのポリゴン含有テスト
-  int SubCellIncTest(REAL_TYPE* svf,
-                     int* smd,
-                     const int sdv,
-                     const int ip,
-                     const int jp,
-                     const int kp,
-                     const Vec3<REAL_TYPE> pch,
-                     const string m_pg
-                     );
-  
-  // sub-division
-  void SubDivision(REAL_TYPE* svf,
-                   int* smd,
-                   const int sdv,
-                   const int ip,
-                   const int jp,
-                   const int kp
-                   );
-  
-  // sub-sampling
-  void SubSampling(FILE* fp);
-  
-  
-  // 水密化
-  void WaterTightening(FILE* fp);
-  
   
   
   

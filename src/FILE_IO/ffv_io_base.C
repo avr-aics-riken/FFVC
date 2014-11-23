@@ -496,7 +496,7 @@ void IO_BASE::getFormatOption(const string form)
   }
   if ( ct < 0 || ct > guide )
   {
-    Hostonly_ stamped_printf("\tInvalid range of guide out : 0 <= guideout <= %d\n", guide);
+    Hostonly_ stamped_printf("\tInvalid range of guide out /Output/FormatOption/*/GuideOut : 0 <= guideout <= %d\n", guide);
     Exit(0);
   }
   C->GuideOut = GuideOut = ct;

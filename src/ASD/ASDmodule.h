@@ -33,16 +33,16 @@
  * }
  */
 
-#include "../FB/DomainInfo.h"
+#include "DomainInfo.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <string>
 #include <iostream>
 #include <math.h>
-#include "../FB/mydebug.h"
+#include "mydebug.h"
 #include "SubDomain.h"
-#include "../FB/VoxInfo.h"
+#include "Geometry.h"
 
 #include "TextParser.h"
 #include "Polylib.h"
@@ -151,8 +151,8 @@ private:
   void createSubdomainTable(REAL_TYPE* p_x, REAL_TYPE* p_y, REAL_TYPE* p_z);
   
   
-  // フィル　FFVクラスを適用
-  void fill(bool disp_flag);
+  // フィル　Geometryクラスを適用
+  void fill(bool disp_flag, Geometry* GM);
   
   
   // サブドメイン内に含まれるポリゴンリストを検索し，フラグを立てる

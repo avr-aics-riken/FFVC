@@ -19,6 +19,17 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-11-23
+r1568 Introduce boundary conditions for Central scheme
+ - pvec_ibc_specv_fdm_(), vobc_pv_specv_fdm_()
+ - guide=2 is required for all cases owing to the implementation of traction free BC
+ - vobc_tfree_cc_(), vobc_tfree_cf_()
+ - Introduce Geometry class
+ - move findIDfromLabel() from Control to FBUtility
+ - move variables related fill function from Control to Geometry
+ - move fill functions from VoxInfo to Geometry
+
+--------------------------
 2014-11-17
 r1567 remove unrecognized charcters in History.C
 

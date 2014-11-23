@@ -421,9 +421,6 @@ void FFV::NS_FS_E_Binary()
         //  Fgmres(LSp, b_l2, res0_l2);
         //  break;
         
-        //case PCG:
-        //  loop_p += Fpcg(LSp, d_p, d_b, b_l2, res0_l2);
-        //  break;
         
       case BiCGSTAB:
         TIMING_start("PBiCGstab");
@@ -552,7 +549,7 @@ void FFV::NS_FS_E_Binary()
     }
     
     
-    // トラクションフリーの場合
+    /* トラクションフリーの場合 >> not neccesarry
     if ( C.EnsCompo.tfree )
     {
       if ( numProc > 1 )
@@ -562,6 +559,7 @@ void FFV::NS_FS_E_Binary()
         TIMING_stop("Sync_Face_Velocity", face_comm_size*guide*3.0*sizeof(REAL_TYPE));
       }
     }
+     */
 
     
     // 速度境界条件　値を代入する境界条件

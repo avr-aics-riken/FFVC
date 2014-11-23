@@ -40,15 +40,11 @@ using namespace Vec3class;
 class VoxInfo : public DomainInfo {
   
 private:
-  int NoCompo;       ///< コンポーネントの総数
-  int NoMedium;      ///< 媒質数
-  Intrinsic *Ex;     ///< 例題クラスのポインタ
+  Intrinsic *Ex;       ///< 例題クラスのポインタ
 
 public:
   /** コンストラクタ */
   VoxInfo() {
-    NoCompo = 0;
-    NoMedium = 0;
     Ex = NULL;
   }
   
@@ -136,54 +132,8 @@ private:
   void encVbitOBC (int face, int* cdf, string key, const bool enc_sw, string chk, int* bp, bool enc_uwd=false);
   
   
-  /**
-   * @brief 隣接6方向の最頻値IDを求める（fid以外）
-   * @param [in] fid 流体のID
-   * @param [in] qw  w方向のID
-   * @param [in] qe  e方向のID
-   * @param [in] qs  s方向のID
-   * @param [in] qn  n方向のID
-   * @param [in] qb  b方向のID
-   * @param [in] qt  t方向のID
-   * @note 候補なしの場合には、0が戻り値
-   */
-  inline int find_mode_id (const int fid, const int qw, const int qe, const int qs, const int qn, const int qb, const int qt)
-  {
-    unsigned key[CMP_BIT_W]; ///< ID毎の頻度 @note ffv_Initialize() >> fill()でif ( C.NoCompo+1 > CMP_BIT_W )をチェック
-    int val[6];              ///< ID
-    
-    memset(key, 0, sizeof(unsigned)*CMP_BIT_W);
-    
-    // 0<= q <= Ncompo のはず
-    val[0] = qw;
-    val[1] = qe;
-    val[2] = qs;
-    val[3] = qn;
-    val[4] = qb;
-    val[5] = qt;
-    
-    
-    for (int l=0; l<6; l++) key[ val[l] ]++;
-    
-    
-    int mode = 0;
-    int z = 0;
-    
-    for (int l=NoCompo; l>=1; l--)
-    {
-      if ( (l != fid) && (key[l] > mode) ) // 流体IDでなく、最大の頻度
-      {
-        mode = key[l];
-        z = l;
-      }
-    }
-    
-    return z;
-  }
-  
-  
   // MediumTable内の文字列格納番号を返す
-  int getMediumOrder(const MediumList* mat, const std::string key);
+  int getMediumOrder(const MediumList* mat, const std::string key, const int m_NoMedium);
   
   
   //@brief idxの第shiftビットをOFFにする
@@ -218,10 +168,11 @@ public:
   
   /**
    * @brief 外部境界に接するガイドセルのbcd[]にIDをエンコードする（内部周期境界の場合）
-   * @param [in,out] bcd  BCindex B
-   * @param [in]     cmp  CompoList
+   * @param [in,out] bcd        BCindex B
+   * @param [in]     cmp        CompoList
+   * @param [in]     m_NoCompo  コンポーネントの総数
    */
-  void adjMediumPrdcInner (int* bcd, CompoList* cmp);
+  void adjMediumPrdcInner(int* bcd, CompoList* cmp, const int m_NoCompo);
   
   
   /**
@@ -237,26 +188,6 @@ public:
    * @param [in]  src コピー元
    */
   void copyBCIbase (int* dst, const int* src);
-  
-  
-  /**
-   * @brief セル数をカウント
-   * @param [in] bcd     BCindex B
-   * @param [in] m_id    検査するID
-   * @param [in] painted m_id以外のセル数をカウント(false), m_idのセル数をカウント(true)
-   * @param [in] Dsize   サイズ
-   */
-  unsigned long countCellB(const int* bcd, const int m_id, const bool painted=true, const int* Dsize=NULL);
-  
-  
-  /**
-   * @brief セル数をカウント
-   * @param [in] mid     work array
-   * @param [in] m_id    検査するID
-   * @param [in] painted m_id以外のセル数をカウント(false), m_idのセル数をカウント(true)
-   * @param [in] Dsize   サイズ
-   */
-  unsigned long countCellM(const int* mid, const int m_id, const bool painted=true, const int* Dsize=NULL);
   
   
   /**
@@ -287,95 +218,17 @@ public:
   void dbg_chkBCIndex (const int* bcd, const int* cdf, const int* bcp, const char* fname);
   
   
-  /**
-   * @brief 流体媒質のフィルをbid情報を元に実行
-   * @param [in,out] bid         境界ID（5ビット幅x6方向）
-   * @param [in,out] bcd         BCindex B
-   * @param [in,out] cut         カット情報
-   * @param [in]     tgt_id      フィルする流体IDのエントリ
-   * @param [in]     suppress    各軸方向のフィル抑止モード（Periodic, Symmetric時の対策）
-   * @param [out]    substituted 固体IDに置換された数
-   * @param [in]     Dsize       サイズ
-   */
-  unsigned long fillByBid (int* bid, int* bcd, float* cut, const int tgt_id, const int* suppress, unsigned long& substituted, const int* Dsize=NULL);
-  
-  
-  /* @brief 未ペイントセルをフィル
-   * @param [in,out] bcd      BCindex B
-   * @param [in]     fluid_id フィルをする流体ID
-   * @param [in]     bid      境界ID
-   * @param [in]     Dsize    サイズ
-   * @retval 置換されたセル数
-   */
-  unsigned long fillByFluid (int* bcd, const int fluid_id, const int* bid, const int* Dsize=NULL);
-  
-  
-  /* @brief 未ペイントセルをフィル
-   * @param [in,out] mid      work array
-   * @param [in]     target   フィルをするID
-   * @param [in]     Dsize    サイズ
-   * @retval 置換されたセル数
-   */
-  unsigned long fillByID(int* mid, const int target, const int* Dsize=NULL);
-  
-  
-  /**
-   * @brief 流体媒質のフィルをbid情報を元に実行
-   * @param [in,out] mid         work array
-   * @param [in]     tgt_id      フィルする流体IDのエントリ
-   * @param [in]     Dsize       サイズ
-   */
-  unsigned long fillByMid(int* mid, const int tgt_id, const int* Dsize=NULL);
-  
-  
-  /* @brief 未ペイントセルをフィル
-   * @param [in,out] bcd      BCindex B
-   * @param [in]     fluid_id フィルをする流体ID
-   * @param [in]     bid      境界ID
-   * @retval 置換されたセル数
-   */
-  unsigned long fillByModalSolid (int* bcd, const int fluid_id, const int* bid);
-  
-  
-  /**
-   * @brief 交点が定義点にある場合にそのポリゴンのエントリ番号でフィルする
-   * @param [in,out] bcd    BCindex B
-   * @param [in]     bid    境界ID（5ビット幅x6方向）
-   * @param [in]     cut    カット情報
-   * @param [in]     Dsize  サイズ
-   * @retval フィルされたセル数
-   */
-  unsigned long fillCutOnCellCenter (int* bcd, const int* bid, const float* cut, const int* Dsize=NULL);
-  
-  
-  /**
-   * @brief シード点をペイントする
-   * @param [in,out] bcd    BCindex B
-   * @param [in]     face   ヒント面
-   * @param [in]     target ペイントするIDのエントリ
-   * @param [in]     bid    境界ID
-   * @param [in]     Dsize  サイズ
-   */
-  unsigned long fillSeedBcd(int* bcd, const int face, const int target, const int* bid, const int* Dsize=NULL);
-  
-  
-  /**
-   * @brief シード点をペイントする
-   * @param [in,out] mid    work array
-   * @param [in]     face   ヒント面
-   * @param [in]     target ペイントするIDのエントリ
-   * @param [in]     Dsize  サイズ
-   */
-  unsigned long fillSeedMid(int* mid, const int face, const int target, const int* Dsize=NULL);
-  
-  
   /* @brief 交点が定義点にある場合の修正
-   * @param [in,out] bid      境界ID
-   * @param [in]     cut      カット情報
-   * @param [in]     fluid_id フィルをする流体ID
+   * @param [in,out] bid        境界ID
+   * @param [in]     cut        カット情報
+   * @param [in]     fluid_id   フィルをする流体ID
+   * @param [in]     m_NoCompo  コンポーネント数
    * @retval 置換されたセル数
    */
-  unsigned long modifyCutOnCellCenter (int* bid, const float* cut, const int fluid_id);
+  unsigned long modifyCutOnCellCenter(int* bid,
+                                      const float* cut,
+                                      const int fluid_id,
+                                      const int m_NoCompo);
   
   
   /* @brief 領域境界のセルで境界方向にカットがある場合にガイドセルをそのIDで埋める
@@ -387,110 +240,126 @@ public:
   
   
   /* @brief 孤立したゼロIDのセルを隣接セルIDで埋める
-   * @param [in,out] bcd      BCindex B
-   * @param [in]     fluid_id フィルする流体ID
-   * @param [in]     bid      境界ID
+   * @param [in,out] bcd        BCindex B
+   * @param [in]     fluid_id   フィルする流体ID
+   * @param [in]     bid        境界ID
+   * @param [in]     m_NoCompo  コンポーネント数
    */
-  unsigned long replaceIsolatedFcell (int* bcd, const int fluid_id, const int* bid);
+  unsigned long replaceIsolatedFcell(int* bcd,
+                                     const int fluid_id,
+                                     const int* bid,
+                                     const int m_NoCompo);
   
   
   /**
    * @brief bx[]に各境界条件の共通のビット情報をエンコードする
-   * @param [in,out] bx    BCindex B
-   * @param [in]     bid   交点ID
-   * @param [in]     mat   MediumList
-   * @param [in,out] cmp   CompoList
-   * @param [in,out] Lcell ノードローカルの有効セル数
-   * @param [in,out] Gcell グローバルの有効セル数
-   * @param [in]     KOS   解くべき方程式の種類 KIND_OF_SOLVER
+   * @param [in,out] bx         BCindex B
+   * @param [in]     bid        交点ID
+   * @param [in]     mat        MediumList
+   * @param [in,out] cmp        CompoList
+   * @param [in,out] Lcell      ノードローカルの有効セル数
+   * @param [in,out] Gcell      グローバルの有効セル数
+   * @param [in]     KOS        解くべき方程式の種類 KIND_OF_SOLVER
+   * @param [in]     m_NoMedium 媒質数
+   * @param [in]     m_NoCompo  コンポーネント数
    */
-  void setBCIndexBase (int* bx,
-                       const int* bid,
-                       const MediumList* mat,
-                       CompoList* cmp,
-                       unsigned long& Lcell,
-                       unsigned long& Gcell,
-                       const int KOS);
+  void setBCIndexBase(int* bx,
+                      const int* bid,
+                      const MediumList* mat,
+                      CompoList* cmp,
+                      unsigned long& Lcell,
+                      unsigned long& Gcell,
+                      const int KOS,
+                      const int m_NoMedium,
+                      const int m_NoCompo);
   
   
   /**
    * @brief 温度境界条件のビット情報をエンコードする
-   * @param [in,out] cdf    BCindex C
-   * @param [in,out] bd     BCindex B
-   * @param [in]     BC     SetBCクラスのポインタ
-   * @param [in]     kos    KindOfSolver
-   * @param [in,out] cmp    CompoList
-   * @param [in]     cut    距離情報
-   * @param [in]     cut_id カット点ID
+   * @param [in,out] cdf        BCindex C
+   * @param [in,out] bd         BCindex B
+   * @param [in]     BC         SetBCクラスのポインタ
+   * @param [in]     kos        KindOfSolver
+   * @param [in,out] cmp        CompoList
+   * @param [in]     cut        距離情報
+   * @param [in]     cut_id     カット点ID
+   * @param [in]     m_NoCompo  コンポーネント数
    */
-  void setBCIndexH (int* cdf,
-                    int* bd,
-                    SetBC* BC,
-                    const int kos,
-                    CompoList* cmp,
-                    float* cut,
-                    int* cut_id);
+  void setBCIndexH(int* cdf,
+                   int* bd,
+                   SetBC* BC,
+                   const int kos,
+                   CompoList* cmp,
+                   float* cut,
+                   int* cut_id,
+                   const int m_NoCompo);
   
   
   /**
    * @brief 圧力境界条件のビット情報をエンコードする
-   * @param [in,out] bcd      BCindex B
-   * @param [in,out] bcp      BCindex P
-   * @param [in]     BC       SetBCクラスのポインタ
-   * @param [in,out] cmp      CompoList
-   * @param [in]     icls     Intrinsic class
-   * @param [in]     cut      距離情報
-   * @param [in]     bid      カットID情報
-   * @param [in]     naive    ナイーブ実装のON/OFF
-   * @param [out]    pni      Naive実装の係数
+   * @param [in,out] bcd        BCindex B
+   * @param [in,out] bcp        BCindex P
+   * @param [in]     BC         SetBCクラスのポインタ
+   * @param [in,out] cmp        CompoList
+   * @param [in]     icls       Intrinsic class
+   * @param [in]     cut        距離情報
+   * @param [in]     bid        カットID情報
+   * @param [in]     naive      ナイーブ実装のON/OFF
+   * @param [out]    pni        Naive実装の係数
+   * @param [in]     m_NoCompo  コンポーネント数
    * @retval 表面セル数
    */
-  unsigned long setBCIndexP (int* bcd,
-                             int* bcp,
-                             SetBC* BC,
-                             CompoList* cmp,
-                             int icls,
-                             const float* cut,
-                             const int* bid,
-                             const int naive,
-                             REAL_TYPE* pni);
+  unsigned long setBCIndexP(int* bcd,
+                            int* bcp,
+                            SetBC* BC,
+                            CompoList* cmp,
+                            int icls,
+                            const float* cut,
+                            const int* bid,
+                            const int naive,
+                            REAL_TYPE* pni,
+                            const int m_NoCompo);
   
   
   /**
    * @brief cdf[]に境界条件のビット情報をエンコードする
-   * @param [in,out] cdf    BCindex C
-   * @param [in,out] bp     BCindex P
-   * @param [in]     BC     SetBCクラスのポインタ
-   * @param [in]     cmp    CompoListクラスのポインタ
-   * @param [in]     icls   Intrinsic class
-   * @param [in]     cut    カット配列
-   * @param [in]     cut_id BID配列
+   * @param [in,out] cdf        BCindex C
+   * @param [in,out] bp         BCindex P
+   * @param [in]     BC         SetBCクラスのポインタ
+   * @param [in]     cmp        CompoListクラスのポインタ
+   * @param [in]     icls       Intrinsic class
+   * @param [in]     cut        カット配列
+   * @param [in]     cut_id     BID配列
+   * @param [in]     m_NoCompo  コンポーネント数
    */
-  void setBCIndexV (int* cdf,
-                    int* bp,
-                    SetBC* BC,
-                    CompoList* cmp,
-                    int icls,
-                    float* cut,
-                    int* cut_id);
+  void setBCIndexV(int* cdf,
+                   int* bp,
+                   SetBC* BC,
+                   CompoList* cmp,
+                   int icls,
+                   float* cut,
+                   int* cut_id,
+                   const int m_NoCompo);
   
   
   /**
    * @brief bx[]のコンポーネントエントリを参照して体積率を計算し，圧力損失コンポーネントの場合にはビットを立てる
-   * @param [in]     cmp コンポーネントリスト
-   * @param [in,out] bx  BCindex B
-   * @param [in]     vf  体積率
+   * @param [in]     cmp        コンポーネントリスト
+   * @param [in,out] bx         BCindex B
+   * @param [in]     vf         体積率
+   * @param [in]     m_NoCompo  コンポーネント数
    */
-  void setCmpFraction (CompoList* cmp, int* bx, const REAL_TYPE* vf);
+  void setCmpFraction(CompoList* cmp,
+                      int* bx,
+                      const REAL_TYPE* vf,
+                      const int m_NoCompo);
   
   
   /**
    * @brief コンポーネントの操作に必要な定数の設定
-   * @param [in] m_NoCompo  コンポーネントの総数
-   * @param [in] m_NoMedium 媒質数
    * @param [in] ExRef      組み込み例題クラス
    */
-  void setControlVars (const int m_NoCompo, const int m_NoMedium, Intrinsic* ExRef=NULL);
+  void setControlVars(Intrinsic* ExRef=NULL);
   
   
   /**

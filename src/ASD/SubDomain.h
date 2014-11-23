@@ -22,7 +22,7 @@
  * @author aics
  */
 
-#include "../FB/FB_Define.h"
+#include "FB_Define.h"
 #include <stdio.h>
 #include <string>
 #include <string.h>

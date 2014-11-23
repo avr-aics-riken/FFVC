@@ -429,7 +429,7 @@ int FFV::Loop(const unsigned step)
     Hostonly_
     {
       printf      ("\tFinish : Time = %e\n", CurrentTime);
-      if ( C.Mode.Log_Base == ON) fprintf(fp_b,"\tFinish : Time = %e\n", CurrentTime);
+      //if ( C.Mode.Log_Base == ON) fprintf(fp_b,"\tFinish : Time = %e\n", CurrentTime); >> suppress for history plot
     }
     return 0;
   }

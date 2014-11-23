@@ -304,22 +304,6 @@ void Control::copyCriteria(IterationCtl* IC, const string name)
 
 
 // #################################################################
-// MediumList中に登録されているkeyに対するIDを返す。発見できない場合はzero 
-int Control::findIDfromLabel(const MediumList* mat, const int Nmax, const std::string key)
-{
-  std::string str = key;
-
-  for (int i=1; i<=Nmax; i++) 
-  {
-    if ( !strcasecmp(str.c_str(), mat[i].getAlias().c_str()) ) return i;
-  }
-
-  return 0;
-}
-
-
-
-// #################################################################
 /**
  * @brief 制御，計算パラメータ群の取得
  * @param [in] DT     DTctlクラス ポインタ
@@ -585,69 +569,6 @@ void Control::getGeometryModel()
     PolylibConfigName = str;
   }
   
-  
-  // フィルの媒質指定
-  label = "/GeometryModel/FillMedium";
-  if ( !(tpCntl->getInspectedValue(label, str)) )
-  {
-    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  FillMedium = str;
-  
-  
-  // 流体セルのフィルの開始面指定
-  label = "/GeometryModel/HintOfFillSeedDirection";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid value in '%s'\n", label.c_str());
-    Exit(0);
-  }
-  else
-  {
-    if     ( !strcasecmp(str.c_str(), "xminus" ) ) FillSeedDir = X_minus;
-    else if( !strcasecmp(str.c_str(), "xplus" ) )  FillSeedDir = X_plus;
-    else if( !strcasecmp(str.c_str(), "yminus" ) ) FillSeedDir = Y_minus;
-    else if( !strcasecmp(str.c_str(), "yplus" ) )  FillSeedDir = Y_plus;
-    else if( !strcasecmp(str.c_str(), "zminus" ) ) FillSeedDir = Z_minus;
-    else if( !strcasecmp(str.c_str(), "zplus" ) )  FillSeedDir = Z_plus;
-    else
-    {
-      FillSeedDir = X_minus;
-      Hostonly_ printf("\tDefault 'X_minus' is set for Hint Of FillSeed direction\n");
-    }
-  }
-  
-  
-  // ヒントに使うフィルの媒質指定
-  label = "/GeometryModel/HintOfFillSeedMedium";
-  if ( !(tpCntl->getInspectedValue(label, str)) )
-  {
-    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  SeedMedium = str;
-  
-  
-  // フィル方向制御 (NOT mandatory)
-  string dir[3];
-  label = "/GeometryModel/FillDirectionControl";
-  if ( tpCntl->chkLabel(label) )
-  {
-    if ( !(tpCntl->getInspectedVector(label, dir, 3)) )
-    {
-      Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
-      Exit(0);
-    }
-    else
-    {
-      FillSuppress[0] = ( !strcasecmp(dir[0].c_str(), "fill" ) ) ? 1 : 0;
-      FillSuppress[1] = ( !strcasecmp(dir[1].c_str(), "fill" ) ) ? 1 : 0;
-      FillSuppress[2] = ( !strcasecmp(dir[2].c_str(), "fill" ) ) ? 1 : 0;
-    }
-  }
-
   
   // Geometry output (NOT mandatory)
   label = "/GeometryModel/Output";
@@ -1499,11 +1420,8 @@ void Control::getSolverProperties()
   {
     switch (CnvScheme)
     {
-      case O1_upwind:
+      case O1_upwind: // traction free条件はguide=2の必要がある
       case O2_central:
-        guide = 1;
-        break;
-        
       case O3_muscl:
       case O4_central:
         guide = 2;

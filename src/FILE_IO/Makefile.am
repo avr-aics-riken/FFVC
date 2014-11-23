@@ -21,6 +21,8 @@ libFIO_a_CXXFLAGS = \
   -I. \
   -I../FB \
   -I../F_CORE \
+  -I../F_LS \
+  -I../FFV \
   @CDM_CFLAGS@ \
   @CPM_CFLAGS@ \
   @PL_CFLAGS@ \

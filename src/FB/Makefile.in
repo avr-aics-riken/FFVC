@@ -404,7 +404,6 @@ libFB_a_SOURCES = \
   VoxInfo.C \
   VoxInfo.h \
   ffv_f_params.h \
-  fill_bid.h \
   mydebug.h \
   util_Path.h \
   Glyph.C \

@@ -201,8 +201,10 @@ void ASD::evaluateASD(int argc, char **argv)
   CalculateCut();
   
   
+  Geometry GM;
+  
   // fill
-  fill(flag);
+  fill(flag, &GM);
 
   
   // サブドメインにかかるポリゴンがあれば活性にする >> フィルが必要
@@ -519,16 +521,14 @@ void ASD::CalculateCut()
 
 // #################################################################
 // @brief フィル
-void ASD::fill(bool disp_flag)
+void ASD::fill(bool disp_flag, Geometry* GM)
 {
   unsigned long target_count; ///< フィルの対象となるセル数
   unsigned long replaced;     ///< 置換された数
   unsigned long filled;       ///< FLUIDでフィルされた数
   unsigned long sum_replaced; ///< 置換された数の合計
   unsigned long sum_filled;   ///< FLUIDでフィルされた数の合計
-  
-  VoxInfo V;
-  V.setControlVars(2, 2); // fluid, solidのみ
+
   
   // 最初にフィル対象のセル数を求める >> 全計算内部セル数
   unsigned long total_cell = (unsigned long)G_division[0] * (unsigned long)G_division[1] * (unsigned long)G_division[2];
@@ -544,7 +544,7 @@ void ASD::fill(bool disp_flag)
   
   
   // 定義点上に交点がある場合の処理 >> カットするポリゴンのエントリ番号でフィルする
-  unsigned long fill_cut = V.fillCutOnCellCenter(d_bcd, d_bid, d_cut, G_division);
+  unsigned long fill_cut = GM->fillCutOnCellCenter(d_bcd, d_bid, d_cut, G_division);
   target_count -= fill_cut;
   
   if ( !disp_flag )
@@ -573,7 +573,7 @@ void ASD::fill(bool disp_flag)
   }
   
   
-  filled = V.fillSeedBcd(d_bcd, FillSeedDir, md_solid, d_bid, G_division);
+  filled = GM->fillSeedBcd(d_bcd, FillSeedDir, md_solid, d_bid, G_division);
 
   
   if ( filled == 0 )
@@ -612,7 +612,7 @@ void ASD::fill(bool disp_flag)
     
     // SeedIDで指定された媒質でフィルする．FLUID/SOLIDの両方のケースがある
     unsigned long fs;
-    filled = V.fillByBid(d_bid, d_bcd, d_cut, md_solid, FillSuppress, fs, G_division);
+    filled = GM->fillByBid(d_bid, d_bcd, d_cut, md_solid, FillSuppress, fs, G_division);
     replaced = fs;
     
     target_count -= filled;
@@ -653,7 +653,7 @@ void ASD::fill(bool disp_flag)
   
   
   // 未ペイント（ID=0）のセルを検出
-  unsigned long upc = V.countCellB(d_bcd, 0, true, G_division);
+  unsigned long upc = GM->countCellB(d_bcd, 0, true, G_division);
   
   if ( upc == 0 )
   {
@@ -667,7 +667,7 @@ void ASD::fill(bool disp_flag)
   // 未ペイントのセルに対して、指定媒質でフィルする
   while ( target_count > 0 ) {
     
-    replaced = V.fillByFluid(d_bcd, md_fluid, d_bid, G_division);
+    replaced = GM->fillByFluid(d_bcd, md_fluid, d_bid, G_division);
     
     target_count -= replaced;
     sum_replaced += replaced;
@@ -686,7 +686,7 @@ void ASD::fill(bool disp_flag)
   
   
   // ID=0をカウント
-  upc = V.countCellB(d_bcd, 0, true, G_division);
+  upc = GM->countCellB(d_bcd, 0, true, G_division);
   
   if ( upc != 0 )
   {

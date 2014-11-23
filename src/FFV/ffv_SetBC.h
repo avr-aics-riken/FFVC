@@ -22,11 +22,11 @@
  * @author aics
  */
 
-#include "../FB/SetBC.h"
+#include "SetBC.h"
 #include <math.h>
 #include "ffv_Define.h"
-#include "../F_CORE/ffv_Ffunc.h"
-#include "../IP/IP_Jet.h"
+#include "ffv_Ffunc.h"
+#include "IP_Jet.h"
 
 
 class SetBC3D : public SetBC {

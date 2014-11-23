@@ -680,8 +680,8 @@ void FFV::set_timing_label()
   set_label("Voxel_Prep_Section",      PerfMonitor::CALC, false);
   
   set_label("Polylib_Section",         PerfMonitor::CALC, false);
-  set_label("Loading_Polygon",         PerfMonitor::CALC);
-  set_label("Write_Polygon",           PerfMonitor::CALC);
+  set_label("Loading_Polygon_File",    PerfMonitor::CALC);
+  set_label("Write_Polygon_File",      PerfMonitor::CALC);
   // Polylib_Section
   
   set_label("Cutlib_Section",          PerfMonitor::CALC, false);

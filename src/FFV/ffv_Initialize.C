@@ -45,6 +45,7 @@ int FFV::Initialize(int argc, char **argv)
   B.importCPM(paraMngr);
   BC.importCPM(paraMngr);
   MO.importCPM(paraMngr);
+  GM.importCPM(paraMngr);
   
   for (int i=0; i<ic_END; i++)
   {
@@ -135,6 +136,9 @@ int FFV::Initialize(int argc, char **argv)
   // 計算モデルの入力ソース情報を取得
   C.getGeometryModel();
   
+  // フィルパラメータ
+  GM.getFillParam(&tp_ffv);
+  
  
   // Intrinsic classの同定
   identifyExample(fp);
@@ -157,7 +161,7 @@ int FFV::Initialize(int argc, char **argv)
   setMediumList(fp);
 
   
-  V.setControlVars(C.NoCompo, C.NoMedium, Ex);
+  V.setControlVars(Ex);
 
   
   // CompoListの設定，外部境界条件の読み込み保持
@@ -189,7 +193,7 @@ int FFV::Initialize(int argc, char **argv)
   setArraySize();
   allocArray_Prep(PrepMemory, TotalMemory);
   
-  // SOR2SMAのNaive実装
+  // SOR2SMAのNaive実装 >> Experimental
   if ( LS[ic_prs1].getNaive() == ON )
   {
     Hostonly_ printf("\n\t << Extra arrays are allocated for Naive implementation. >>\n\n");
@@ -209,7 +213,7 @@ int FFV::Initialize(int argc, char **argv)
 
   
   // 定義点上に交点がある場合の処理 >> カットするポリゴンのエントリ番号でフィルする
-  unsigned long fill_cut = V.modifyCutOnCellCenter(d_bid, d_cut, C.FillID);
+  unsigned long fill_cut = V.modifyCutOnCellCenter(d_bid, d_cut, GM.FillID, C.NoCompo);
   
   Hostonly_
   {
@@ -247,6 +251,10 @@ int FFV::Initialize(int argc, char **argv)
   // サンプリング準備
   setMonitorList();
   
+  
+  // Geometry classの初期化
+  GM.Initialize(PL, PG, poly_org, poly_dx, C.NoCompo, C.num_of_polygrp);
+
 
   // ポリゴンを入力とする場合のみ
   if ( C.Mode.Example == id_Polygon )
@@ -261,7 +269,7 @@ int FFV::Initialize(int argc, char **argv)
     }
     
     TIMING_start("WaterTightning");
-    WaterTightening(fp);
+    GM.WaterTightening(fp, cmp, mat, d_mid);
     TIMING_stop("WaterTightning");
     
     // Sub-sampling
@@ -274,7 +282,7 @@ int FFV::Initialize(int argc, char **argv)
     }
     
     TIMING_start("SubSampling");
-    SubSampling(fp);
+    GM.SubSampling(fp, mat, d_mid, d_pvf);
     TIMING_stop("SubSampling");
   }
   
@@ -289,12 +297,12 @@ int FFV::Initialize(int argc, char **argv)
   }
 
   TIMING_start("Fill");
-  fill(fp);
+  GM.fill(fp, cmp, mat, d_bcd, d_cut, d_bid);
   TIMING_stop("Fill");
   
 
   // 全周カットのあるセルを固体セルIDで埋める > fill()で埋められているので不要．
-  // V.replaceIsolatedFcell(d_bcd, C.FillID, d_bid);
+  // V.replaceIsolatedFcell(d_bcd, GM.FillID, d_bid);
   
   
   
@@ -340,7 +348,7 @@ int FFV::Initialize(int argc, char **argv)
 
   
   // 内部周期境界の場合のガイドセルのコピー処理
-  V.adjMediumPrdcInner(d_bcd, cmp);
+  V.adjMediumPrdcInner(d_bcd, cmp, C.NoCompo);
 
   
   // 媒質数とKindOfSolverの整合性をチェックする
@@ -380,7 +388,7 @@ int FFV::Initialize(int argc, char **argv)
 
   // コンポーネントの体積率を8bitで量子化し，圧力損失コンポの場合にはFORCING_BITをON > bcdにエンコード
   TIMING_start("Compo_Fraction");
-  V.setCmpFraction(cmp, d_bcd, d_cvf);
+  V.setCmpFraction(cmp, d_bcd, d_cvf, C.NoCompo);
   TIMING_stop("Compo_Fraction");
 
 
@@ -1237,7 +1245,7 @@ void FFV::encodeBCindex(FILE* fp)
   int gd = guide;
   
   // 基本ビット情報（Active, State, コンポ，媒質情報）を全領域についてエンコードする
-  V.setBCIndexBase(d_bcd, d_bid, mat, cmp, L_Acell, G_Acell, C.KindOfSolver);
+  V.setBCIndexBase(d_bcd, d_bid, mat, cmp, L_Acell, G_Acell, C.KindOfSolver, C.NoMedium, C.NoCompo);
   
 
   
@@ -1263,20 +1271,20 @@ void FFV::encodeBCindex(FILE* fp)
 
   
   // 圧力計算のビット情報をエンコードする -----
-  C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid, LS[ic_prs1].getNaive(), d_pni);
+  C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid, LS[ic_prs1].getNaive(), d_pni, C.NoCompo);
   
 
   
   
   // 速度計算のビット情報をエンコードする -----
-  V.setBCIndexV(d_cdf, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid);
+  V.setBCIndexV(d_cdf, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid, C.NoCompo);
   
   
   
   // 温度計算のビット情報をエンコードする -----
   if ( C.isHeatProblem() )
   {
-    V.setBCIndexH(d_cdf, d_bcd, &BC, C.KindOfSolver, cmp, d_cut, d_bid);
+    V.setBCIndexH(d_cdf, d_bcd, &BC, C.KindOfSolver, cmp, d_cut, d_bid, C.NoCompo);
   }
   
   // 内部領域のFluid, Solidのセル数を数える C.Wcell(Local), G_Wcell(global)
@@ -1348,7 +1356,7 @@ void FFV::fixedParameters()
   
   // 定数
   C.Gravity =9.8; // gravity acceleration
-  C.Hide.Subdivision = 20;
+  GM.setSubDivision(20);
   
 }
 
@@ -2602,7 +2610,7 @@ void FFV::setBCinfo()
   
   
   // RefMediumがMediumList中にあるかどうかをチェックし、RefMatを設定
-  if ( (C.RefMat = C.findIDfromLabel(mat, C.NoMedium, C.RefMedium)) == 0 )
+  if ( (C.RefMat = U.findIDfromLabel(mat, C.NoMedium, C.RefMedium)) == 0 )
   {
     Hostonly_
     {
@@ -2612,21 +2620,21 @@ void FFV::setBCinfo()
   }
   
   // FillMediumがMediumList中にあるかどうかをチェックし、FillIDを設定
-  if ( (C.FillID = C.findIDfromLabel(mat, C.NoMedium, C.FillMedium)) == 0 )
+  if ( (GM.FillID = U.findIDfromLabel(mat, C.NoMedium, GM.FillMedium)) == 0 )
   {
     Hostonly_
     {
-      printf("/ApplicationControl/FillMedium = \"%s\" is not listed in MediumTable.\n", C.FillMedium.c_str());
+      printf("/ApplicationControl/FillMedium = \"%s\" is not listed in MediumTable.\n", GM.FillMedium.c_str());
     }
     Exit(0);
   }
   
   // SeedMediumがMediumList中にあるかどうかをチェックし、SeedIDを設定
-  if ( (C.SeedID = C.findIDfromLabel(mat, C.NoMedium, C.SeedMedium)) == 0 )
+  if ( (GM.SeedID = U.findIDfromLabel(mat, C.NoMedium, GM.SeedMedium)) == 0 )
   {
     Hostonly_
     {
-      printf("/ApplicationControl/HintOfFillSeedMedium = \"%s\" is not listed in MediumTable.\n", C.SeedMedium.c_str());
+      printf("/ApplicationControl/HintOfFillSeedMedium = \"%s\" is not listed in MediumTable.\n", GM.SeedMedium.c_str());
     }
     Exit(0);
   }
@@ -2691,7 +2699,7 @@ void FFV::setComponentVF()
   int f_st[3], f_ed[3];
   double flop;
   
-  CompoFraction CF(size, guide, (REAL_TYPE*)pitch, (REAL_TYPE*)origin, C.Hide.Subdivision);
+  CompoFraction CF(size, guide, (REAL_TYPE*)pitch, (REAL_TYPE*)origin, 20);
   
   for (int n=1; n<=C.NoCompo; n++)
   {
@@ -3478,6 +3486,7 @@ string FFV::setupDomain(TextParser* tpf)
   Ex->setRankInfo  (paraMngr, procGrp);
   MO.setRankInfo   (paraMngr, procGrp);
   F->setRankInfo   (paraMngr, procGrp);
+  GM.setRankInfo   (paraMngr, procGrp);
   
   for (int i=0; i<ic_END; i++)
   {
@@ -3517,6 +3526,7 @@ string FFV::setupDomain(TextParser* tpf)
   Ex->setNeighborInfo  (C.guide);
   MO.setNeighborInfo   (C.guide);
   F->setNeighborInfo   (C.guide);
+  GM.setNeighborInfo   (C.guide);
   
   for (int i=0; i<ic_END; i++)
   {
@@ -3910,7 +3920,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   // ポリゴンの修正
   RepairPolygonData(PL, false);
 
-  calcBboxFromPolygonGroup();
+  GM.calcBboxFromPolygonGroup();
   
   
   // Triangle display >> Debug
@@ -3946,7 +3956,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   // DomainInfo/UnitOfLength={"mm", "cm"}のとき，"m"でスケーリングされたポリゴンが出力される
   if ( C.Hide.GeomOutput == ON )
   {
-    TIMING_start("Write_Polygon");
+    TIMING_start("Write_Polygon_File");
     
     unsigned poly_out_para = IO_DISTRIBUTE;
     if ( (C.Parallelism == Control::Serial) || (C.Parallelism == Control::OpenMP) ) poly_out_para = IO_GATHER;
@@ -3982,7 +3992,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
       }
     }
     
-    TIMING_stop("Write_Polygon");
+    TIMING_stop("Write_Polygon_File");
   }
   
   TIMING_stop("Polylib_Section");

@@ -24,6 +24,7 @@ ffvc_CXXFLAGS = \
   -I./ASD \
   -I./IP \
   -I./FB \
+  -I./Geometry \
   @CDM_CFLAGS@ \
   @CPM_CFLAGS@ \
   @CUT_CFLAGS@ \
@@ -41,6 +42,7 @@ ffvc_LDADD = \
   -L./F_CORE -lFCORE \
   -L./F_LS -lFLS \
   -L./ASD -lASD \
+  -L./Geometry -lGEOM \
   -L./IP -lIP \
   -L./FB -lFB \
   @CDM_LDFLAGS@ \

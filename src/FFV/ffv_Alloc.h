@@ -31,11 +31,11 @@
 #include <iostream>
 #include <fstream>
 
-#include "../FB/DomainInfo.h"
-#include "../FB/mydebug.h"
-#include "../FB/FBUtility.h"
-#include "../FB/Alloc.h"
-#include "../FB/Control.h"
+#include "DomainInfo.h"
+#include "mydebug.h"
+#include "FBUtility.h"
+#include "Alloc.h"
+#include "Control.h"
 #include "ffv_Define.h"
 
 
@@ -75,7 +75,7 @@ public:
   int *d_bcd;       ///< [*] BCindex ID
   int *d_bcp;       ///< [*] BCindex P
   int *d_cdf;       ///< [*] BCindex C
-  REAL_TYPE *d_pvf; ///< [*] によるセル体積率
+  REAL_TYPE *d_pvf; ///< [*] セル体積率
   
   
   // Main

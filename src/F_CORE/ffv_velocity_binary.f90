@@ -2323,6 +2323,7 @@ if ( ibits(bp(i  , j+1, k  ), vbc_uwd, 1) == 1) lmt_n = 0.0
 if ( ibits(bp(i  , j  , k-1), vbc_uwd, 1) == 1) lmt_b = 0.0
 if ( ibits(bp(i  , j  , k+1), vbc_uwd, 1) == 1) lmt_t = 0.0
 
+
 !if ( (ibits(bv(i-1, j  , k  ), bc_face_W, bitw_5) /= 0) .and. (ibits(bp(i-1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_w = 0.0
 !if ( (ibits(bv(i+1, j  , k  ), bc_face_E, bitw_5) /= 0) .and. (ibits(bp(i+1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_e = 0.0
 !if ( (ibits(bv(i  , j-1, k  ), bc_face_S, bitw_5) /= 0) .and. (ibits(bp(i  , j-1, k  ), vbc_uwd, 1) == 1) ) lmt_s = 0.0
@@ -2531,7 +2532,6 @@ cnv_u = cnv_u + 0.5*(Wpt * fu_r * c_t + Wpb * fu_l * c_b)
 cnv_v = cnv_v + 0.5*(Wpt * fv_r * c_t + Wpb * fv_l * c_b)
 cnv_w = cnv_w + 0.5*(Wpt * fw_r * c_t + Wpb * fw_l * c_b)
 
-
 ! 粘性項の加算
 EX = EX + (fu_r * c_t - fu_l * c_b)
 EY = EY + (fv_r * c_t - fv_l * c_b)
@@ -2550,6 +2550,7 @@ end do
 
 return
 end subroutine pvec_central
+
 
 !> ********************************************************************
 !! @brief 対流項と粘性項の計算

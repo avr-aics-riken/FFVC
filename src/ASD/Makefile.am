@@ -20,6 +20,7 @@ noinst_libdir = ../lib
 libASD_a_CXXFLAGS = \
   -I. \
   -I../FB \
+  -I../Geometry \
   @CPM_CFLAGS@ \
   @CUT_CFLAGS@ \
   @PL_CFLAGS@ \

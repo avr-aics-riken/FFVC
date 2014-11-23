@@ -22,7 +22,7 @@
 
 
 !> ********************************************************************
-!! @brief 外部速度境界条件による対流項と粘性項の流束の修正
+!! @brief 外部速度境界条件による対流項と粘性項の流束の修正（有限体積型のスキーム）
 !! @param [out] wv     疑似ベクトルの空間項の評価値
 !! @param [in]  sz     配列長
 !! @param [in]  g      ガイドセル長
@@ -37,7 +37,7 @@
 !! @note vecには，流入条件のとき指定速度
 !!  mskで部分的な速度を与える
 !<
-subroutine vobc_pv_specv (wv, sz, g, m_face, dh, rei, v0, bv, vec, nID, flop)
+subroutine vobc_pv_specv_fvm (wv, sz, g, m_face, dh, rei, v0, bv, vec, nID, flop)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, g, face, m_face
@@ -310,7 +310,241 @@ end select FACES
 flop = flop + dble(m)*28.0d0
 
 return
-end subroutine vobc_pv_specv
+end subroutine vobc_pv_specv_fvm
+
+
+
+!> ********************************************************************
+!! @brief 外部速度境界条件による対流項と粘性項の流束の修正（差分型のスキーム）
+!! @param [out] wv     疑似ベクトルの空間項の評価値
+!! @param [in]  sz     配列長
+!! @param [in]  g      ガイドセル長
+!! @param [in]  m_face 外部境界処理のときの面番号
+!! @param [in]  dh     格子幅
+!! @param [in]  rei    Reynolds数の逆数
+!! @param [in]  v0     速度ベクトル（n-step）
+!! @param [in]  bv     BCindex C
+!! @param [in]  vec    指定する速度ベクトル
+!! @param [in]  nID    隣接ランク番号（nID[]<0の時外部境界面）
+!! @param [out] flop   浮動小数点演算数
+!! @note vecには，流入条件のとき指定速度
+!!  mskで部分的な速度を与える
+!!
+!! wv(i,j,k) = -frac{1}{2} ( u {\frac{\partial u}{\partial x}}_R + u {\frac{\partial u}{\partial x}}_L )
+!!             + ( {\frac{\partial u}{\partial x}}_R - {\frac{\partial u}{\partial x}}_L ) \frac{1}{Re h}
+!!
+!<
+subroutine vobc_pv_specv_fdm (wv, sz, g, m_face, dh, rei, v0, bv, vec, nID, flop)
+implicit none
+include 'ffv_f_params.h'
+integer                                                   ::  i, j, k, g, face, m_face
+integer                                                   ::  ix, jx, kx
+integer, dimension(3)                                     ::  sz
+double precision                                          ::  flop
+real                                                      ::  Up, Vp, Wp, gu, gv, gw
+real                                                      ::  dh, dh1, dh2, rei
+real                                                      ::  u_bc, v_bc, w_bc, m, msk
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0, wv
+real, dimension(3)                                        ::  vec
+integer, dimension(0:5)                                   ::  nID
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
+
+if ( nID(m_face) >= 0 ) return
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+face = m_face
+
+dh1= 1.0/dh
+dh2= rei*dh1
+
+! u_bcは境界速度
+u_bc = vec(1)
+v_bc = vec(2)
+w_bc = vec(3)
+
+flop = flop + 10.0d0 ! DP 18 flop
+
+m = 0.0
+
+!$OMP PARALLEL REDUCTION(+:m) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc, v_bc, w_bc, face, dh1, dh2) &
+!$OMP PRIVATE(Up, Vp, Wp, gu, gv, gw, msk) &
+!$OMP PRIVATE(i, j, k)
+
+FACES : select case (face)
+
+case (X_minus)
+
+i = 1
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1,kx
+do j=1,jx
+if ( ibits(bv(i,j,k), bc_face_W, bitw_5) == obc_mask ) then
+Up = v0(i,j,k,1)
+Vp = v0(i,j,k,2)
+Wp = v0(i,j,k,3)
+
+gu = 2.0 * (Up - u_bc) * dh1
+gv = 2.0 * (Vp - v_bc) * dh1
+gw = 2.0 * (Wp - w_bc) * dh1
+
+msk = real(ibits(bv(0,j,k), State, 1))
+
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * u_bc * gu + gu * dh2 ) * msk
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * u_bc * gv + gv * dh2 ) * msk
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * u_bc * gw + gw * dh2 ) * msk
+m = m + 1.0
+endif
+end do
+end do
+!$OMP END DO
+
+
+case (X_plus)
+
+i = ix
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1,kx
+do j=1,jx
+if ( ibits(bv(i,j,k), bc_face_E, bitw_5) == obc_mask ) then
+Up = v0(i,j,k,1)
+Vp = v0(i,j,k,2)
+Wp = v0(i,j,k,3)
+
+gu = 2.0 * (u_bc - Up) * dh1
+gv = 2.0 * (v_bc - Vp) * dh1
+gw = 2.0 * (w_bc - Wp) * dh1
+
+msk = real(ibits(bv(ix+1,j,k), State, 1))
+
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * u_bc * gu - gu * dh2 ) * msk
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * u_bc * gv - gv * dh2 ) * msk
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * u_bc * gw - gw * dh2 ) * msk
+m = m + 1.0
+endif
+end do
+end do
+!$OMP END DO
+
+
+case (Y_minus)
+
+j = 1
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1,kx
+do i=1,ix
+if ( ibits(bv(i,j,k), bc_face_S, bitw_5) == obc_mask ) then
+Up = v0(i,j,k,1)
+Vp = v0(i,j,k,2)
+Wp = v0(i,j,k,3)
+
+gu = 2.0 * (Up - u_bc) * dh1
+gv = 2.0 * (Vp - v_bc) * dh1
+gw = 2.0 * (Wp - w_bc) * dh1
+
+msk = real(ibits(bv(i,0,k), State, 1))
+
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * v_bc * gu + gu * dh2 ) * msk
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * v_bc * gv + gv * dh2 ) * msk
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * v_bc * gw + gw * dh2 ) * msk
+m = m + 1.0
+endif
+end do
+end do
+!$OMP END DO
+
+
+case (Y_plus)
+
+j = jx
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1,kx
+do i=1,ix
+if ( ibits(bv(i,j,k), bc_face_N, bitw_5) == obc_mask ) then
+Up = v0(i,j,k,1)
+Vp = v0(i,j,k,2)
+Wp = v0(i,j,k,3)
+
+gu = 2.0 * (u_bc - Up) * dh1
+gv = 2.0 * (v_bc - Vp) * dh1
+gw = 2.0 * (w_bc - Wp) * dh1
+
+msk = real(ibits(bv(i,jx+1,k), State, 1))
+
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * v_bc * gu - gu * dh2 ) * msk
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * v_bc * gv - gv * dh2 ) * msk
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * v_bc * gw - gw * dh2 ) * msk
+m = m + 1.0
+endif
+end do
+end do
+!$OMP END DO
+
+
+case (Z_minus)
+
+k = 1
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do j=1,jx
+do i=1,ix
+if ( ibits(bv(i,j,k), bc_face_B, bitw_5) == obc_mask ) then
+Up = v0(i,j,k,1)
+Vp = v0(i,j,k,2)
+Wp = v0(i,j,k,3)
+
+gu = 2.0 * (Up - u_bc) * dh1
+gv = 2.0 * (Vp - v_bc) * dh1
+gw = 2.0 * (Wp - w_bc) * dh1
+
+msk = real(ibits(bv(i,j,0), State, 1))
+
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * w_bc * gu + gu * dh2 ) * msk
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * w_bc * gv + gv * dh2 ) * msk
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * w_bc * gw + gw * dh2 ) * msk
+m = m + 1.0
+endif
+end do
+end do
+!$OMP END DO
+
+
+case (Z_plus)
+
+k = kx
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do j=1,jx
+do i=1,ix
+if ( ibits(bv(i,j,k), bc_face_T, bitw_5) == obc_mask ) then
+Up = v0(i,j,k,1)
+Vp = v0(i,j,k,2)
+Wp = v0(i,j,k,3)
+
+gu = 2.0 * (u_bc - Up) * dh1
+gv = 2.0 * (v_bc - Vp) * dh1
+gw = 2.0 * (w_bc - Wp) * dh1
+
+msk = real(ibits(bv(i,j,kx+1), State, 1))
+
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * w_bc * gu - gu * dh2 ) * msk
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * w_bc * gv - gv * dh2 ) * msk
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * w_bc * gw - gw * dh2 ) * msk
+m = m + 1.0
+endif
+end do
+end do
+!$OMP END DO
+
+
+case default
+end select FACES
+!$OMP END PARALLEL
+
+flop = flop + dble(m)*27.0d0
+
+return
+end subroutine vobc_pv_specv_fdm
 
 
 !> ********************************************************************

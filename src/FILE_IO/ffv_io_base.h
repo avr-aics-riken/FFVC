@@ -35,16 +35,16 @@
 #include <float.h>
 
 #include "omp.h"
-#include "../FB/DomainInfo.h"
-#include "../FB/FB_Define.h"
-#include "../FB/mydebug.h"
-#include "../FB/Control.h"
-#include "../FB/FBUtility.h"
-#include "../FB/IntervalManager.h"
-#include "../FFV/ffv_Define.h"
+#include "DomainInfo.h"
+#include "FB_Define.h"
+#include "mydebug.h"
+#include "Control.h"
+#include "FBUtility.h"
+#include "IntervalManager.h"
+#include "ffv_Define.h"
 
-#include "../F_LS/ffv_LSfunc.h"
-#include "../F_CORE/ffv_Ffunc.h"
+#include "ffv_LSfunc.h"
+#include "ffv_Ffunc.h"
 
 #include "TextParser.h"
 

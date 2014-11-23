@@ -228,7 +228,7 @@ end subroutine perturb_u_z
 !! @todo 内部と外部の分離 do loopの内側に条件分岐を入れているので修正
 !! @todo 流出境界はローカルの流束となるように変更する（外部境界参照）
 !<
-    subroutine pvec_vibc_oflow (wv, sz, g, st, ed, dh, rei, v, bv, odr, vec, flop)
+    subroutine pvec_ibc_oflow (wv, sz, g, st, ed, dh, rei, v, bv, odr, vec, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
@@ -444,10 +444,10 @@ end subroutine perturb_u_z
     flop = flop + m*117.0
     
     return
-    end subroutine pvec_vibc_oflow
+    end subroutine pvec_ibc_oflow
 
 !> ********************************************************************
-!! @brief 内部速度境界条件による対流項と粘性項の流束の修正
+!! @brief 内部速度境界条件による対流項と粘性項の流束の修正（有限体積型のスキーム）
 !! @param [out] wv   疑似ベクトルの空間項の評価値
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
@@ -464,7 +464,7 @@ end subroutine perturb_u_z
 !! @note vecには，流入条件のとき指定速度，流出条件のとき対流流出速度，カット位置に関わらず指定速度で流束を計算
 !! @todo 流出境界はローカルの流束となるように変更する（外部境界参照）
 !<
-    subroutine pvec_vibc_specv (wv, sz, g, st, ed, dh, v00, rei, v, bv, odr, vec, flop)
+    subroutine pvec_ibc_specv_fvm (wv, sz, g, st, ed, dh, v00, rei, v, bv, odr, vec, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
@@ -700,7 +700,189 @@ end subroutine perturb_u_z
     flop = flop + m1*99.0 + m2*19.0
 
     return
-    end subroutine pvec_vibc_specv
+    end subroutine pvec_ibc_specv_fvm
+
+
+
+!> ********************************************************************
+!! @brief 内部速度境界条件による対流項と粘性項の流束の修正（有限差分型のスキーム）
+!! @param [out] wv   疑似ベクトルの空間項の評価値
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  st   ループの開始インデクス
+!! @param [in]  ed   ループの終了インデクス
+!! @param [in]  dh   格子幅
+!! @param [in]  v00  参照速度
+!! @param [in]  rei  Reynolds数の逆数
+!! @param [in]  v    セルセンター速度ベクトル（u^n）
+!! @param [in]  bv   BCindex C
+!! @param [in]  odr  内部境界処理時の速度境界条件のエントリ
+!! @param [in]  vec  指定する速度ベクトル
+!! @param [out] flop 浮動小数点演算数
+!! @note vecには，流入条件のとき指定速度，流出条件のとき対流流出速度，カット位置に関わらず指定速度で流束を計算
+!! @todo 流出境界はローカルの流束となるように変更する（外部境界参照）
+!!
+!! wv(i,j,k) = -frac{1}{2} ( u {\frac{\partial u}{\partial x}}_R + u {\frac{\partial u}{\partial x}}_L )
+!!             + ( {\frac{\partial u}{\partial x}}_R - {\frac{\partial u}{\partial x}}_L ) \frac{1}{Re h}
+!!
+!<
+subroutine pvec_ibc_specv_fdm (wv, sz, g, st, ed, dh, v00, rei, v, bv, odr, vec, flop)
+implicit none
+include 'ffv_f_params.h'
+integer                                                     ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
+integer, dimension(3)                                       ::  sz, st, ed
+double precision                                            ::  flop
+real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b
+real                                                        ::  dh, dh1, dh2, rei, Up, Vp, Wp
+real                                                        ::  u_ref, v_ref, w_ref, m2, gu, gv, gw
+real                                                        ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, wv
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
+real, dimension(0:3)                                        ::  v00
+real, dimension(3)                                          ::  vec
+
+is = st(1)
+ie = ed(1)
+js = st(2)
+je = ed(2)
+ks = st(3)
+ke = ed(3)
+
+dh1= 1.0/dh
+dh2= rei*dh1
+
+! 参照座標系の速度
+u_ref = v00(1)
+v_ref = v00(2)
+w_ref = v00(3)
+
+! u_bcは境界速度
+u_bc = vec(1)
+v_bc = vec(2)
+w_bc = vec(3)
+
+! u_bc_refは参照座標系での境界速度
+u_bc_ref = u_bc + u_ref
+v_bc_ref = v_bc + v_ref
+w_bc_ref = w_bc + w_ref
+
+m2 = 0.0
+
+flop = flop + 13.0d0 ! DP 18 flop
+
+!$OMP PARALLEL &
+!$OMP REDUCTION(+:m2) &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref) &
+!$OMP FIRSTPRIVATE(dh1, dh2, odr) &
+!$OMP PRIVATE(bvx, Up, Vp, Wp, gu, gv, gw, i, j, k) &
+!$OMP PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(3)
+
+do k=ks,ke
+do j=js,je
+do i=is,ie
+bvx = bv(i,j,k)
+
+if ( 0 /= iand(bvx, bc_mask30) ) then ! 6面のうちのどれか速度境界フラグが立っている場合
+
+! 変数のロード
+Up = v(i,j,k,1)
+Vp = v(i,j,k,2)
+Wp = v(i,j,k,3)
+
+! 内部境界のときの各面のBCフラグ ibits() = 0(Normal) / others(BC) >> c_e = 0.0(Normal) / 1.0(BC)
+c_e = 0.0
+c_w = 0.0
+c_n = 0.0
+c_s = 0.0
+c_t = 0.0
+c_b = 0.0
+if ( ibits(bvx, bc_face_E, bitw_5) == odr ) c_e = 1.0
+if ( ibits(bvx, bc_face_W, bitw_5) == odr ) c_w = 1.0
+if ( ibits(bvx, bc_face_N, bitw_5) == odr ) c_n = 1.0
+if ( ibits(bvx, bc_face_S, bitw_5) == odr ) c_s = 1.0
+if ( ibits(bvx, bc_face_T, bitw_5) == odr ) c_t = 1.0
+if ( ibits(bvx, bc_face_B, bitw_5) == odr ) c_b = 1.0
+
+
+! X方向 ---------------------------------------
+if ( c_w == 1.0 ) then
+gu = 2.0 * (Up - u_bc_ref) * dh1
+gv = 2.0 * (Vp - v_bc_ref) * dh1
+gw = 2.0 * (Wp - w_bc_ref) * dh1
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * u_bc * gu + gu * dh2 )
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * u_bc * gv + gv * dh2 )
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * u_bc * gw + gw * dh2 )
+m2 = m2 + 1.0
+end if
+
+if ( c_e == 1.0 ) then
+gu = 2.0 * (u_bc_ref - Up) * dh1
+gv = 2.0 * (v_bc_ref - Vp) * dh1
+gw = 2.0 * (w_bc_ref - Wp) * dh1
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * u_bc * gu - gu * dh2 )
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * u_bc * gv - gv * dh2 )
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * u_bc * gw - gw * dh2 )
+m2 = m2 + 1.0
+end if
+
+
+! Y方向 ---------------------------------------
+if ( c_s == 1.0 ) then
+gu = 2.0 * (Up - u_bc_ref) * dh1
+gv = 2.0 * (Vp - v_bc_ref) * dh1
+gw = 2.0 * (Wp - w_bc_ref) * dh1
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * v_bc * gu + gu * dh2 )
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * v_bc * gv + gv * dh2 )
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * v_bc * gw + gw * dh2 )
+m2 = m2 + 1.0
+end if
+
+if ( c_n == 1.0 ) then
+gu = 2.0 * (u_bc_ref - Up) * dh1
+gv = 2.0 * (v_bc_ref - Vp) * dh1
+gw = 2.0 * (w_bc_ref - Wp) * dh1
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * v_bc * gu - gu * dh2 )
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * v_bc * gv - gv * dh2 )
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * v_bc * gw - gw * dh2 )
+m2 = m2 + 1.0
+end if
+
+
+! Z方向 ---------------------------------------
+if ( c_b == 1.0 ) then
+gu = 2.0 * (Up - u_bc_ref) * dh1
+gv = 2.0 * (Vp - v_bc_ref) * dh1
+gw = 2.0 * (Wp - w_bc_ref) * dh1
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * w_bc * gu + gu * dh2 )
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * w_bc * gv + gv * dh2 )
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * w_bc * gw + gw * dh2 )
+m2 = m2 + 1.0
+end if
+
+if ( c_t == 1.0 ) then
+gu = 2.0 * (u_bc_ref - Up) * dh1
+gv = 2.0 * (v_bc_ref - Vp) * dh1
+gw = 2.0 * (w_bc_ref - Wp) * dh1
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * w_bc * gu - gu * dh2 )
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * w_bc * gv - gv * dh2 )
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * w_bc * gw - gw * dh2 )
+m2 = m2 + 1.0
+end if
+
+
+endif
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+flop = flop + m2*24.0
+
+return
+end subroutine pvec_ibc_specv_fdm
 
 
 
@@ -729,7 +911,7 @@ end subroutine perturb_u_z
     real, dimension(0:3)                                      ::  v00
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
-    
+
     ! u_bc_refは参照座標系での境界速度
     u_bc_ref = vec(1) + v00(1)
     v_bc_ref = vec(2) + v00(2)
@@ -741,7 +923,7 @@ end subroutine perturb_u_z
     je = ed(2)
     ks = st(3)
     ke = ed(3)
-    
+
     m = dble( (ie-is+1)*(je-js+1)*(ke-ks+1) )
     flop = flop + m*6.0d0
 

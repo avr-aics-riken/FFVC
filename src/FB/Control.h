@@ -424,7 +424,6 @@ public:
     int PM_Test;
     int GeomOutput;
     int GlyphOutput;
-    int Subdivision;
   } Hidden_Parameter;
   
   
@@ -581,7 +580,6 @@ public:
   int BasicEqs;
   int CheckParam;
   int CnvScheme;
-  int FillSeedDir;     ///< フィルのヒント {x_minux | x_plus |...}
   int GuideOut;
   int KindOfSolver;
   int Limiter;
@@ -596,12 +594,9 @@ public:
   int num_thread;     ///< スレッド数
   int num_of_polygrp; ///< ポリゴングループ数
   int Parallelism;    ///< 並列モード
-  int FillID;         ///< フィル媒質ID
-  int SeedID;         ///< フィルシード媒質ID
   int RefMat;         ///< 参照媒質インデクス
   int Start;
   int SamplingMode;   ///< サンプリング指定
-  int FillSuppress[3];///< PeriodicとSymmetricの外部境界面フィル抑制
   int NvarsIns_plt3d; ///< Plot3dのバッファサイズ　瞬時値
   int NvarsAvr_plt3d; ///< Plot3dのバッファサイズ　統計値
   
@@ -658,8 +653,6 @@ public:
 
   
   string RefMedium;      ///< 参照媒質名 -> int RefMat
-  string FillMedium;     ///< フィルに使う媒質 -> int FillID
-  string SeedMedium;     ///< ヒントに使う媒質 -> int SeedID
   string OperatorName;
   
   string ver_TP;   ///< TextPerser version no.
@@ -677,7 +670,6 @@ public:
     BasicEqs = 0;
     CheckParam = 0;
     CnvScheme = 0;
-    FillSeedDir = -1;
     GuideOut = 0;
     KindOfSolver = 0;
     Limiter = 0;
@@ -692,8 +684,6 @@ public:
     num_process = 0;
     num_thread = 0;
     Parallelism = 0;
-    FillID = -1;
-    SeedID = -1;
     RefMat = -1;
     Restart_staging = 0;
     Start = 0;
@@ -722,8 +712,6 @@ public:
     Prandtl = Rayleigh = Grashof = 0.0;
     
     for (int i=0; i<var_END; i++) varState[i]=false;
-    
-    for (int i=0; i<3; i++)  FillSuppress[i] = -1;
     
     iv.Density     = 0.0;
     iv.Energy      = 0.0;
@@ -763,7 +751,6 @@ public:
     Hide.PM_Test = 0;
     Hide.GeomOutput = OFF;
     Hide.GlyphOutput = OFF;
-    Hide.Subdivision = 0;
     
     Unit.Param  = 0;
     Unit.Output = 0;
@@ -866,16 +853,6 @@ public:
    * @param [in]     name ラベル
    */
   void copyCriteria(IterationCtl* IC, const string name);
-  
-  
-  
-  /** MediumList中に登録されているkeyに対するIDを返す
-   * @param [in] mat  MediumListクラス
-   * @param [in] Namx リストの最大数
-   * @param [in] key  探査するラベル
-   * @return keyに対するIDを返す。発見できない場合はzero
-   */
-  int findIDfromLabel(const MediumList* mat, const int Nmax, const std::string key);
   
   
   // @brief 反復関連の情報を取得する

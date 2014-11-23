@@ -223,13 +223,13 @@ void IP_Duct::setup(int* bcd, Control* R, const int NoMedium, const MediumList* 
   
   
   // 媒質設定
-  if ( (mid_fluid = R->findIDfromLabel(mat, NoMedium, m_fluid)) == 0 )
+  if ( (mid_fluid = FBUtility::findIDfromLabel(mat, NoMedium, m_fluid)) == 0 )
   {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_fluid.c_str());
     Exit(0);
   }
   
-  if ( (mid_solid = R->findIDfromLabel(mat, NoMedium, m_solid)) == 0 )
+  if ( (mid_solid = FBUtility::findIDfromLabel(mat, NoMedium, m_solid)) == 0 )
   {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_solid.c_str());
     Exit(0);

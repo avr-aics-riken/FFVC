@@ -409,7 +409,7 @@ end subroutine vobc_cc_copy
 
 
 !> ********************************************************************
-!! @brief 速度の外部境界：　トラクションフリー
+!! @brief 速度の外部境界：　トラクションフリー（セルセンタ速度）
 !! @param [in,out] v      セルセンタ速度ベクトル
 !! @param [in]     sz     配列長
 !! @param [in]     g      ガイドセル長
@@ -417,172 +417,196 @@ end subroutine vobc_cc_copy
 !! @param [in,out] vf     セルフェイス速度
 !! @param [in]     nID    隣接ランク番号（nID[]<0の時外部境界面）
 !! @note 今のところ、トラクションフリー面は全て流体
-!! 後半のループは1~ix，flopはtfree1,2の合計
 !<
-    subroutine vobc_tfree2 (v, sz, g, m_face, vf, nID)
-    implicit none
-    include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, face, g, gc, m_face
-    integer, dimension(3)                                     ::  sz
-    real                                                      ::  ut, vt, wt, aa
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vf
-    integer, dimension(0:5)                                   ::  nID
+subroutine vobc_tfree_cc (v, sz, g, m_face, vf, nID)
+implicit none
+include 'ffv_f_params.h'
+integer                                                   ::  i, j, k, ix, jx, kx, face, g, m_face
+integer, dimension(3)                                     ::  sz
+real                                                      ::  ut, vt, wt
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vf
+integer, dimension(0:5)                                   ::  nID
 
-    if ( nID(m_face) >= 0 ) return
+if ( nID(m_face) >= 0 ) return
 
-    ix = sz(1)
-    jx = sz(2)
-    kx = sz(3)
-    gc = g
-    face = m_face
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+face = m_face
 
-!$OMP PARALLEL REDUCTION(+:aa) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, gc, face) &
-!$OMP PRIVATE(i, j, k, ut, vt, wt)
 
-    FACES : select case (face)
-    case (X_minus)
+FACES : select case (face)
+case (X_minus)
 
-!$OMP DO SCHEDULE(static) COLLAPSE(2)
-      do k=1,kx
-      do j=1,jx
-        ut = v(1, j, k, 1)
-        vt = 0.5 * (vf(0, j, k, 2) + vf(0, j-1, k  , 2))
-        wt = 0.5 * (vf(0, j, k, 3) + vf(0, j  , k-1, 3))
-
-        aa = aa + vf(0, j, k, 1)
-
-        do i=1-gc, 0
-          v(i, j, k, 1) = ut
-          v(i, j, k, 2) = vt
-          v(i, j, k, 3) = wt
-        end do
-
-      end do
-      end do
-!$OMP END DO
-      
-
-    case (X_plus)
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx) &
+!$OMP PRIVATE(ut, vt, wt) &
+!$OMP PRIVATE(j, k)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
-      do k=1,kx
-      do j=1,jx
-        ut = v(ix, j, k, 1)
-        vt = 0.5 * (vf(ix+1, j, k, 2) + vf(ix+1, j-1, k  , 2))
-        wt = 0.5 * (vf(ix+1, j, k, 3) + vf(ix+1, j  , k-1, 3))
+do k=1,kx
+do j=1,jx
+ut = 0.5 * (vf(-1, j, k, 1) + vf(0, j  , k  , 1))
+vt = 0.5 * (vf( 0, j, k, 2) + vf(0, j-1, k  , 2))
+wt = 0.5 * (vf( 0, j, k, 3) + vf(0, j  , k-1, 3))
 
-        aa = aa + vf(ix, j, k, 1)
+v(-1, j, k, 1) = ut
+v(-1, j, k, 2) = vt
+v(-1, j, k, 3) = wt
 
-        do i=ix+1, ix+gc
-          v(i, j, k, 1) = ut
-          v(i, j, k, 2) = vt
-          v(i, j, k, 3) = wt
-        end do
-
-      end do
-      end do
+v(0, j, k, 1) = ut
+v(0, j, k, 2) = vt
+v(0, j, k, 3) = wt
+end do
+end do
 !$OMP END DO
-      
-
-    case (Y_minus)
-
-!$OMP DO SCHEDULE(static) COLLAPSE(2)
-      do k=1,kx
-      do i=1,ix
-        ut = 0.5 * (vf(i, 0, k, 1) + vf(i-1, 0, k  , 1))
-        vt = v(i, 1, k, 2)
-        wt = 0.5 * (vf(i, 0, k, 3) + vf(i  , 0, k-1, 3))
-
-        aa = aa + vf(i, 0, k, 2)
-
-        do j=1-gc, 0
-          v(i, j, k, 1) = ut
-          v(i, j, k, 2) = vt
-          v(i, j, k, 3) = wt
-        end do
-
-      end do
-      end do
-!$OMP END DO
-      
-
-    case (Y_plus)
-
-!$OMP DO SCHEDULE(static) COLLAPSE(2)
-      do k=1,kx
-      do i=1,ix
-        ut = 0.5 * (vf(i, jx+1, k, 1) + vf(i-1, jx+1, k  , 1))
-        vt = v(i, jx, k, 2)
-        wt = 0.5 * (vf(i, jx+1, k, 3) + vf(i  , jx+1, k-1, 3))
-
-        aa = aa + vf(i, jx, k, 2)
-
-        do j=jx+1, jx+gc
-          v(i, j, k, 1) = ut
-          v(i, j, k, 2) = vt
-          v(i, j, k, 3) = wt
-        end do
-
-      end do
-      end do
-!$OMP END DO
-      
-
-    case (Z_minus)
-
-!$OMP DO SCHEDULE(static) COLLAPSE(2)
-      do j=1,jx
-      do i=1,ix
-        ut = 0.5 * (vf(i, j, 0, 1) + vf(i-1, j  , 0, 1))
-        vt = 0.5 * (vf(i, j, 0, 2) + vf(i  , j-1, 0, 2))
-        wt = v(i, j, 1, 3)
-
-        aa = aa + vf(i, j, 0, 3)
-
-        do k=1-gc, 0
-          v(i, j, k, 1) = ut
-          v(i, j, k, 2) = vt
-          v(i, j, k, 3) = wt
-        end do
-
-      end do
-      end do
-!$OMP END DO
-      
-
-    case (Z_plus)
-
-!$OMP DO SCHEDULE(static) COLLAPSE(2)
-      do j=1,jx
-      do i=1,ix
-        ut = 0.5 * (vf(i, j, kx+1, 1) + vf(i-1, j  , kx+1, 1))
-        vt = 0.5 * (vf(i, j, kx+1, 2) + vf(i  , j-1, kx+1, 2))
-        wt = v(i, j, kx, 3)
-
-        aa = aa + vf(i, j, kx, 3)
-
-        do k=kx+1, kx+gc
-          v(i, j, k, 1) = ut
-          v(i, j, k, 2) = vt
-          v(i, j, k, 3) = wt
-        end do
-
-      end do
-      end do
-!$OMP END DO
-      
-    case default
-    end select FACES
-
 !$OMP END PARALLEL
 
-    return
-    end subroutine vobc_tfree2
+
+case (X_plus)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx) &
+!$OMP PRIVATE(ut, vt, wt) &
+!$OMP PRIVATE(j, k)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1,kx
+do j=1,jx
+ut = 0.5 * (vf(ix  , j, k, 1) + vf(ix+1, j  , k  , 1))
+vt = 0.5 * (vf(ix+1, j, k, 2) + vf(ix+1, j-1, k  , 2))
+wt = 0.5 * (vf(ix+1, j, k, 3) + vf(ix+1, j  , k-1, 3))
+
+v(ix+1, j, k, 1) = ut
+v(ix+1, j, k, 2) = vt
+v(ix+1, j, k, 3) = wt
+
+v(ix+2, j, k, 1) = ut
+v(ix+2, j, k, 2) = vt
+v(ix+2, j, k, 3) = wt
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+
+case (Y_minus)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx) &
+!$OMP PRIVATE(ut, vt, wt) &
+!$OMP PRIVATE(i, k)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1,kx
+do i=1,ix
+ut = 0.5 * (vf(i, 0, k, 1) + vf(i-1, 0, k  , 1))
+vt = 0.5 * (vf(i,-1, k, 2) + vf(i  , 0, k  , 2))
+wt = 0.5 * (vf(i, 0, k, 3) + vf(i  , 0, k-1, 3))
+
+v(i, -1, k, 1) = ut
+v(i, -1, k, 2) = vt
+v(i, -1, k, 3) = wt
+
+v(i, 0, k, 1) = ut
+v(i, 0, k, 2) = vt
+v(i, 0, k, 3) = wt
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+
+case (Y_plus)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx) &
+!$OMP PRIVATE(ut, vt, wt) &
+!$OMP PRIVATE(i, k)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1,kx
+do i=1,ix
+ut = 0.5 * (vf(i, jx+1, k, 1) + vf(i-1, jx+1, k  , 1))
+vt = 0.5 * (vf(i, jx  , k, 2) + vf(i  , jx+1, k  , 2))
+wt = 0.5 * (vf(i, jx+1, k, 3) + vf(i  , jx+1, k-1, 3))
+
+v(i, jx+1, k, 1) = ut
+v(i, jx+1, k, 2) = vt
+v(i, jx+1, k, 3) = wt
+
+v(i, jx+2, k, 1) = ut
+v(i, jx+2, k, 2) = vt
+v(i, jx+2, k, 3) = wt
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+
+case (Z_minus)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx) &
+!$OMP PRIVATE(ut, vt, wt) &
+!$OMP PRIVATE(i, j)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do j=1,jx
+do i=1,ix
+ut = 0.5 * (vf(i, j, 0, 1) + vf(i-1, j  , 0, 1))
+vt = 0.5 * (vf(i, j, 0, 2) + vf(i  , j-1, 0, 2))
+wt = 0.5 * (vf(i, j,-1, 3) + vf(i  , j  , 0, 3))
+
+v(i, j, -1, 1) = ut
+v(i, j, -1, 2) = vt
+v(i, j, -1, 3) = wt
+
+v(i, j, 0, 1) = ut
+v(i, j, 0, 2) = vt
+v(i, j, 0, 3) = wt
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+
+case (Z_plus)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx) &
+!$OMP PRIVATE(ut, vt, wt) &
+!$OMP PRIVATE(i, j)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do j=1,jx
+do i=1,ix
+ut = 0.5 * (vf(i, j, kx+1, 1) + vf(i-1, j  , kx+1, 1))
+vt = 0.5 * (vf(i, j, kx+1, 2) + vf(i  , j-1, kx+1, 2))
+wt = 0.5 * (vf(i, j, kx  , 3) + vf(i  , j  , kx+1, 3))
+
+v(i, j, kx+1, 1) = ut
+v(i, j, kx+1, 2) = vt
+v(i, j, kx+1, 3) = wt
+
+v(i, j, kx+2, 1) = ut
+v(i, j, kx+2, 2) = vt
+v(i, j, kx+2, 3) = wt
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+case default
+end select FACES
+
+
+return
+end subroutine vobc_tfree_cc
 
 
 !> ********************************************************************
-!! @brief 速度の外部境界：　トラクションフリーの前半処理
+!! @brief 速度の外部境界：　トラクションフリー（セルフェイス速度）
 !! @param [in,out] vf     セルフェイス速度
 !! @param [in]     sz     配列長
 !! @param [in]     g      ガイドセル長
@@ -590,106 +614,215 @@ end subroutine vobc_cc_copy
 !! @param [in]     nID    隣接ランク番号（nID[]<0の時外部境界面）
 !! ループは0~ixで回す．0から始めるのは，後半処理でスタガード位置の変数からセンターへ内挿するときに
 !! 参照する端点を含めるため．
-!! 処理の間に同期が必要なので，サブルーチンを分割
 !<
-  subroutine vobc_tfree1 (vf, sz, g, m_face, nID)
-  implicit none
-  include 'ffv_f_params.h'
-  integer                                                   ::  i, j, k, ix, jx, kx, face, g, m_face
-  integer, dimension(3)                                     ::  sz
-  integer, dimension(0:5)                                   ::  nID
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vf
+subroutine vobc_tfree_cf (vf, sz, g, m_face, nID)
+implicit none
+include 'ffv_f_params.h'
+integer                                                   ::  i, j, k, ix, jx, kx, face, g, m_face
+integer, dimension(3)                                     ::  sz
+integer, dimension(0:5)                                   ::  nID
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vf
 
-  if ( nID(m_face) >= 0 ) return
+if ( nID(m_face) >= 0 ) return
 
-  ix = sz(1)
-  jx = sz(2)
-  kx = sz(3)
-  face = m_face
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+face = m_face
+
+
+FACES : select case (face)
+case (X_minus)
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, face)
-
-  FACES : select case (face)
-  case (X_minus)
+!$OMP FIRSTPRIVATE(ix, jx, kx)
 
 !$OMP DO SCHEDULE(static) PRIVATE(j, k) COLLAPSE(2)
-    do k=0,kx
-    do j=0,jx
-      vf(0, j, k, 2) = vf(1, j, k, 2) + vf(0, j+1, k  , 1) - vf(0, j, k, 1)
-      vf(0, j, k, 3) = vf(1, j, k, 3) + vf(0, j  , k+1, 1) - vf(0, j, k, 1)
-    end do
-    end do
+do k=1,kx
+do j=1,jx
+vf(-1, j, k, 1) = vf(0, j, k, 1)
+end do
+end do
 !$OMP END DO
-
-
-  case (X_plus)
 
 !$OMP DO SCHEDULE(static) PRIVATE(j, k) COLLAPSE(2)
-    do k=0,kx
-    do j=0,jx
-      vf(ix+1, j, k, 2) = vf(ix, j, k, 2) - vf(ix, j+1, k  , 1) + vf(ix, j, k, 1)
-      vf(ix+1, j, k, 3) = vf(ix, j, k, 3) - vf(ix, j  , k+1, 1) + vf(ix, j, k, 1)
-    end do
-    end do
+do k=1,kx
+do j=0,jx
+vf(0, j, k, 2) = vf(1, j, k, 2) + vf(0, j+1, k  , 1) - vf(0, j, k, 1)
+end do
+end do
 !$OMP END DO
 
-
-  case (Y_minus)
-
-!$OMP DO SCHEDULE(static) PRIVATE(i, k) COLLAPSE(2)
-    do k=0,kx
-    do i=0,ix
-      vf(i, 0, k, 1) = vf(i, 1, k, 1) + vf(i+1, 0, k  , 2) - vf(i, 0, k, 2)
-      vf(i, 0, k, 3) = vf(i, 1, k, 3) + vf(i  , 0, k+1, 2) - vf(i, 0, k, 2)
-    end do
-    end do
+!$OMP DO SCHEDULE(static) PRIVATE(j, k) COLLAPSE(2)
+do k=0,kx
+do j=1,jx
+vf(0, j, k, 3) = vf(1, j, k, 3) + vf(0, j  , k+1, 1) - vf(0, j, k, 1)
+end do
+end do
 !$OMP END DO
-
-
-  case (Y_plus)
-
-!$OMP DO SCHEDULE(static) PRIVATE(i, k) COLLAPSE(2)
-    do k=0,kx
-    do i=0,ix
-      vf(i, jx+1, k, 1) = vf(i, jx, k, 1) - vf(i+1, jx, k  , 2) + vf(i, jx, k, 2)
-      vf(i, jx+1, k, 3) = vf(i, jx, k, 3) - vf(i  , jx, k+1, 2) + vf(i, jx, k, 2)
-    end do
-    end do
-!$OMP END DO
-
-
-  case (Z_minus)
-
-!$OMP DO SCHEDULE(static) PRIVATE(i, j) COLLAPSE(2)
-    do j=0,jx
-    do i=0,ix
-      vf(i, j, 0, 1) = vf(i, j, 1, 1) + vf(i+1, j  , 0, 3) - vf(i, j, 0, 3)
-      vf(i, j, 0, 2) = vf(i, j, 1, 2) + vf(i  , j+1, 0, 3) - vf(i, j, 0, 3)
-    end do
-    end do
-!$OMP END DO
-
-
-  case (Z_plus)
-
-!$OMP DO SCHEDULE(static) PRIVATE(i, j) COLLAPSE(2)
-    do j=0,jx
-    do i=0,ix
-      vf(i, j, kx+1, 1) = vf(i, j, kx, 1) - vf(i+1, j  , kx, 3) + vf(i, j, kx, 3)
-      vf(i, j, kx+1, 2) = vf(i, j, kx, 2) - vf(i  , j+1, kx, 3) + vf(i, j, kx, 3)
-    end do
-    end do
-!$OMP END DO
-
-
-  case default
-  end select FACES
-
 !$OMP END PARALLEL
 
-  return
-  end subroutine vobc_tfree1
+
+case (X_plus)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx)
+
+!$OMP DO SCHEDULE(static) PRIVATE(j, k) COLLAPSE(2)
+do k=1,kx
+do j=1,jx
+vf(ix+1, j, k, 1) = vf(ix, j, k, 1)
+end do
+end do
+!$OMP END DO
+
+!$OMP DO SCHEDULE(static) PRIVATE(j, k) COLLAPSE(2)
+do k=1,kx
+do j=0,jx
+vf(ix+1, j, k, 2) = vf(ix, j, k, 2) - vf(ix, j+1, k  , 1) + vf(ix, j, k, 1)
+end do
+end do
+!$OMP END DO
+
+!$OMP DO SCHEDULE(static) PRIVATE(j, k) COLLAPSE(2)
+do k=0,kx
+do j=1,jx
+vf(ix+1, j, k, 3) = vf(ix, j, k, 3) - vf(ix, j  , k+1, 1) + vf(ix, j, k, 1)
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+
+case (Y_minus)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx)
+
+!$OMP DO SCHEDULE(static) PRIVATE(i, k) COLLAPSE(2)
+do k=1,kx
+do i=1,ix
+vf(i, -1, k, 2) = vf(i, 0, k, 2)
+end do
+end do
+!$OMP END DO
+
+!$OMP DO SCHEDULE(static) PRIVATE(i, k) COLLAPSE(2)
+do k=1,kx
+do i=0,ix
+vf(i, 0, k, 1) = vf(i, 1, k, 1) + vf(i+1, 0, k  , 2) - vf(i, 0, k, 2)
+end do
+end do
+!$OMP END DO
+
+!$OMP DO SCHEDULE(static) PRIVATE(i, k) COLLAPSE(2)
+do k=0,kx
+do i=1,ix
+vf(i, 0, k, 3) = vf(i, 1, k, 3) + vf(i  , 0, k+1, 2) - vf(i, 0, k, 2)
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+
+case (Y_plus)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx)
+
+!$OMP DO SCHEDULE(static) PRIVATE(i, k) COLLAPSE(2)
+do k=1,kx
+do i=1,ix
+vf(i, jx+1, k, 2) = vf(i, jx, k, 2)
+end do
+end do
+!$OMP END DO
+
+!$OMP DO SCHEDULE(static) PRIVATE(i, k) COLLAPSE(2)
+do k=1,kx
+do i=0,ix
+vf(i, jx+1, k, 1) = vf(i, jx, k, 1) - vf(i+1, jx, k  , 2) + vf(i, jx, k, 2)
+end do
+end do
+!$OMP END DO
+
+!$OMP DO SCHEDULE(static) PRIVATE(i, k) COLLAPSE(2)
+do k=0,kx
+do i=1,ix
+vf(i, jx+1, k, 3) = vf(i, jx, k, 3) - vf(i  , jx, k+1, 2) + vf(i, jx, k, 2)
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+
+case (Z_minus)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx)
+
+!$OMP DO SCHEDULE(static) PRIVATE(i, j) COLLAPSE(2)
+do j=1,jx
+do i=1,ix
+vf(i, j, -1, 3) = vf(i, j, 0, 3)
+end do
+end do
+!$OMP END DO
+
+!$OMP DO SCHEDULE(static) PRIVATE(i, j) COLLAPSE(2)
+do j=1,jx
+do i=0,ix
+vf(i, j, 0, 1) = vf(i, j, 1, 1) + vf(i+1, j  , 0, 3) - vf(i, j, 0, 3)
+end do
+end do
+!$OMP END DO
+
+!$OMP DO SCHEDULE(static) PRIVATE(i, j) COLLAPSE(2)
+do j=0,jx
+do i=1,ix
+vf(i, j, 0, 2) = vf(i, j, 1, 2) + vf(i  , j+1, 0, 3) - vf(i, j, 0, 3)
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+
+case (Z_plus)
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx)
+
+!$OMP DO SCHEDULE(static) PRIVATE(i, j) COLLAPSE(2)
+do j=1,jx
+do i=1,ix
+vf(i, j, kx+1, 3) = vf(i, j, kx, 3)
+end do
+end do
+!$OMP END DO
+
+!$OMP DO SCHEDULE(static) PRIVATE(i, j) COLLAPSE(2)
+do j=1,jx
+do i=0,ix
+vf(i, j, kx+1, 1) = vf(i, j, kx, 1) - vf(i+1, j  , kx, 3) + vf(i, j, kx, 3)
+end do
+end do
+!$OMP END DO
+
+!$OMP DO SCHEDULE(static) PRIVATE(i, j) COLLAPSE(2)
+do j=0,jx
+do i=1,ix
+vf(i, j, kx+1, 2) = vf(i, j, kx, 2) - vf(i  , j+1, kx, 3) + vf(i, j, kx, 3)
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+case default
+end select FACES
+
+
+return
+end subroutine vobc_tfree_cf
 
 
 

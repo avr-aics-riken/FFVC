@@ -1014,7 +1014,7 @@ void IP_Cylinder::setup(int* bcd, Control* R, const int NoMedium, const MediumLi
   int mid_solid2;       ///< 固体2
   
   // 流体
-  if ( (mid_fluid = R->findIDfromLabel(mat, NoMedium, m_fluid)) == 0 )
+  if ( (mid_fluid = FBUtility::findIDfromLabel(mat, NoMedium, m_fluid)) == 0 )
   {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_fluid.c_str());
     Exit(0);
@@ -1023,7 +1023,7 @@ void IP_Cylinder::setup(int* bcd, Control* R, const int NoMedium, const MediumLi
   // 固体
   if (cyl1.ens==ON)
   {
-    if ( (mid_solid1 = R->findIDfromLabel(mat, NoMedium, cyl1.solid)) == 0 )
+    if ( (mid_solid1 = FBUtility::findIDfromLabel(mat, NoMedium, cyl1.solid)) == 0 )
     {
       Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", cyl1.solid.c_str());
       Exit(0);
@@ -1032,7 +1032,7 @@ void IP_Cylinder::setup(int* bcd, Control* R, const int NoMedium, const MediumLi
   
   if (cyl2.ens==ON)
   {
-    if ( (mid_solid2 = R->findIDfromLabel(mat, NoMedium, cyl2.solid)) == 0 )
+    if ( (mid_solid2 = FBUtility::findIDfromLabel(mat, NoMedium, cyl2.solid)) == 0 )
     {
       Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", cyl2.solid.c_str());
       Exit(0);
@@ -1097,13 +1097,13 @@ void IP_Cylinder::setup(int* bcd, Control* R, const int NoMedium, const MediumLi
   if ( drv_mode == OFF ) return;
   
   
-  if ( (mid_driver = R->findIDfromLabel(mat, NoMedium, m_driver)) == 0 )
+  if ( (mid_driver = FBUtility::findIDfromLabel(mat, NoMedium, m_driver)) == 0 )
   {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver.c_str());
     Exit(0);
   }
   
-  if ( (mid_driver_face = R->findIDfromLabel(mat, NoMedium, m_driver_face)) == 0 )
+  if ( (mid_driver_face = FBUtility::findIDfromLabel(mat, NoMedium, m_driver_face)) == 0 )
   {
     Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_driver_face.c_str());
     Exit(0);

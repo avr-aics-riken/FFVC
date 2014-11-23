@@ -308,6 +308,64 @@ public:
   static void copyV3D (REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE* src, const REAL_TYPE scale);
   
   
+  /** 
+   * @brief MediumList中に登録されているkeyに対するIDを返す
+   * @param [in] mat  MediumListクラス
+   * @param [in] Namx リストの最大数
+   * @param [in] key  探査するラベル
+   * @return keyに対するIDを返す。発見できない場合はzero
+   */
+  static int findIDfromLabel(const MediumList* mat, const int Nmax, const std::string key);
+  
+  
+  // #################################################################
+  /**
+   * @brief 隣接6方向の最頻値IDを求める（fid以外）
+   * @param [in] fid    流体のID
+   * @param [in] qw      w方向のID
+   * @param [in] qe      e方向のID
+   * @param [in] qs      s方向のID
+   * @param [in] qn      n方向のID
+   * @param [in] qb      b方向のID
+   * @param [in] qt      t方向のID
+   * @param [in] NoCompo コンポーネント数
+   * @note 候補なしの場合には、0が戻り値
+   */
+  static inline int find_mode_id (const int fid, const int qw, const int qe, const int qs, const int qn, const int qb, const int qt, const int NoCompo)
+  {
+    unsigned key[CMP_BIT_W]; ///< ID毎の頻度 @note ffv_Initialize() >> fill()でif ( C.NoCompo+1 > CMP_BIT_W )をチェック
+    int val[6];              ///< ID
+    
+    memset(key, 0, sizeof(unsigned)*CMP_BIT_W);
+    
+    // 0 <= q <= Ncompo のはず
+    val[0] = qw;
+    val[1] = qe;
+    val[2] = qs;
+    val[3] = qn;
+    val[4] = qb;
+    val[5] = qt;
+    
+    
+    for (int l=0; l<6; l++) key[ val[l] ]++;
+    
+    
+    int mode = 0;
+    int z = 0;
+    
+    for (int l=NoCompo; l>=1; l--)
+    {
+      if ( (l != fid) && (key[l] > mode) ) // 流体IDでなく、最大の頻度
+      {
+        mode = key[l];
+        z = l;
+      }
+    }
+    
+    return z;
+  }
+  
+  
   /**
    * @brief dirの方向ラベルを返す
    * @param [in] dir 方向コード
