@@ -1,0 +1,45 @@
+###################################################################################
+#
+# FFV-C : Frontflow / violet Cartesian
+#
+# Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
+# All rights reserved.
+#
+# Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo. 
+# All rights reserved.
+#
+# Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+# All rights reserved. 
+#
+###################################################################################
+
+include ../make_setting
+
+TARGET = libGEOM.a
+
+CXXSRCS = Geometry.C
+
+
+SRCS  = $(CXXSRCS)
+
+.SUFFIXES: .o .C
+CXXOBJS = $(CXXSRCS:.C=.o)
+OBJS  = $(CXXOBJS)
+
+$(TARGET):$(OBJS)
+	$(AR) $(TARGET) $(OBJS)
+	$(RANLIB) $(TARGET)
+
+.C.o:
+	$(CXX) $(CXXFLAGS) $(UDEF_INC_PATH) -o $@ -c $<
+
+clean:
+	$(RM) $(OBJS) $(TARGET)
+
+depend: $(CXXOBJS:.o=.C)
+	@ rm -rf depend.inc
+	@ for i in $^; do\
+		$(CXX) $(CXXFLAGS) $(UDEF_INC_PATH) -MM $$i >> depend.inc;\
+	done
+
+-include depend.inc
