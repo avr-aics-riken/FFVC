@@ -36,21 +36,19 @@
 
 using namespace std;
 using namespace PolylibNS;
-
+using namespace Vec3class;
 
 class Geometry : public DomainInfo {
   
 private:
-
-  MPIPolylib* PL;      ///< Polylibクラス
-  PolygonProperty* PG; ///< ポリゴン情報
   
   REAL_TYPE m_poly_org[3]; ///< ポリゴンの基点
   REAL_TYPE m_poly_dx[3];  ///< ポリゴンのピッチ
-  
-  int m_NoCompo;       ///< コンポーネント数
-  int m_NoPolyGrp;     ///< ポリゴングループ数
+
   int NumSuvDiv;       ///< 再分割数
+  int FillSeedDir;     ///< フィルのヒント {x_minux | x_plus |...}
+  string FillMedium;   ///< フィルに使う媒質 -> int FillID
+  string SeedMedium;   ///< ヒントに使う媒質 -> int SeedID
   
   
 public:
@@ -58,30 +56,22 @@ public:
   int FillID;          ///< フィル媒質ID
   int SeedID;          ///< フィルシード媒質ID
   int FillSuppress[3]; ///< PeriodicとSymmetricの外部境界面フィル抑制
-  int FillSeedDir;     ///< フィルのヒント {x_minux | x_plus |...}
-
-  string FillMedium;   ///< フィルに使う媒質 -> int FillID
-  string SeedMedium;   ///< ヒントに使う媒質 -> int SeedID
   
   
 public:
   
   /** コンストラクタ */
   Geometry() {
-    PL  = NULL;
-    PG  = NULL;
 
     FillID = -1;
     SeedID = -1;
     NumSuvDiv = 0;
     FillSeedDir = -1;
-    m_NoCompo   = 0;
-    m_NoPolyGrp = 0;
     
     for (int i=0; i<3; i++) {
       m_poly_org[i] = 0.0;
       m_poly_dx[i] = 0.0;
-      FillSuppress[i] = -1;
+      FillSuppress[i] = ON; // default is "fill"
     }
   }
   
@@ -94,7 +84,7 @@ private:
   // 点pの属するセルインデクスを求める
   // @param [in]  pt 無次元座標
   // @param [out] w  インデクス
-  void findIndex(const Vec3<REAL_TYPE> pt, int* w) const
+  void findIndex(const Vec3r pt, int* w) const
   {
     REAL_TYPE p[3], q[3];
     p[0] = (REAL_TYPE)pt.x;
@@ -140,10 +130,26 @@ protected:
                           const int* Dsize=NULL);
   
   
-  // 未ペイントセルを周囲の媒質IDの固体最頻値でフィル
+  // 未ペイントセルを周囲のbidの固体最頻値でフィル
   unsigned long fillByModalSolid(int* bcd,
                                  const int fluid_id,
-                                 const int* bid);
+                                 const int* bid,
+                                 const int m_NoCompo);
+  
+  
+  // 未ペイントセルを周囲のmidの固体最頻値でフィル
+  unsigned long fillByModalSolid(int* mid, const int fluid_id, const int m_NoCompo);
+  
+  
+  // サブセルのSolid部分の値を代入
+  unsigned long fillSubCellSolid(int* smd, REAL_TYPE* svf);
+  
+  
+  // サブセルの未ペイントセルを周囲の媒質IDの固体最頻値でフィル
+  unsigned long fillSubCellByModalSolid(int* smd,
+                                        const int m_NoCompo,
+                                        REAL_TYPE* svf,
+                                        const MediumList* mat);
   
   
   // シード点をmid[]にペイントする
@@ -155,11 +161,19 @@ protected:
   
   // list[]内の最頻値IDを求める
   int find_mode(const int m_sz,
-                const int* list);
+                const int* list,
+                const int m_NoCompo);
+  
+  
+  // サブセル内の最頻値IDを求める
+  int find_mode_smd(const int* smd, const int m_NoCompo);
   
   
   // セルに含まれるポリゴンを探索し、d_midに記録
-  unsigned long findPolygonInCell(int* d_mid);
+  unsigned long findPolygonInCell(int* d_mid,
+                                  MPIPolylib* PL,
+                                  PolygonProperty* PG,
+                                  const int m_NoCompo);
   
   
   // フィルパラメータを取得
@@ -180,8 +194,10 @@ protected:
                      const int ip,
                      const int jp,
                      const int kp,
-                     const Vec3<REAL_TYPE> pch,
-                     const string m_pg);
+                     const Vec3r pch,
+                     const string m_pg,
+                     MPIPolylib* PL,
+                     const int m_NoCompo);
   
   
   // sub-division
@@ -190,15 +206,24 @@ protected:
                    const int ip,
                    const int jp,
                    const int kp,
-                   const int* d_mid,
+                   int* d_mid,
                    const MediumList* mat,
-                   REAL_TYPE* d_pvf);
+                   REAL_TYPE* d_pvf,
+                   const int m_NoCompo);
   
   
 public:
   
   // ポリゴングループの座標値からboxを計算する
-  void calcBboxFromPolygonGroup();
+  void calcBboxFromPolygonGroup(MPIPolylib* PL,
+                                PolygonProperty* PG,
+                                const int m_NoPolyGrp,
+                                const REAL_TYPE* poly_org,
+                                const REAL_TYPE* poly_dx);
+  
+  
+  // ガイドセルのIDをbcdからmidに転写
+  void copyIDonGuide(const int face, const int* bcd, int* mid);
   
   
   // bcd[]内にあるm_idのセルを数える
@@ -214,7 +239,8 @@ public:
             MediumList* mat,
             int* d_bcd,
             float* d_cut,
-            int* d_bid);
+            int* d_bid,
+            const int m_NoCompo);
 
   
   // カットID情報に基づく流体媒質のフィルを実行
@@ -222,8 +248,8 @@ public:
                           int* bcd,
                           float* cut,
                           const int tgt_id,
-                          const int* suppress,
                           unsigned long& substituted,
+                          const int m_NoCompo,
                           const int* Dsize=NULL);
   
   
@@ -249,52 +275,31 @@ public:
                             const int* Dsize=NULL);
   
   
-  /*
-   * @brief フィルパラメータを取得
-   * @param [in] tpCntl  TextParser
-   */
+  // フィルパラメータを取得
   void getFillParam(TextParser* tpCntl);
   
   
-  /* @brief sub-sampling
-   * @param [in]  fp      ファイルポインタ
-   * @param [in]  mat     MediumList
-   * @param [in]  d_mid   識別子配列
-   * @param [out] d_pvf   体積率
-   */
+  // FIllIDとSeedIDをセット
+  void setFillMedium(MediumList* mat, const int m_NoMedium);
+  
+  
+  // サブサンプリング
   void SubSampling(FILE* fp,
                    MediumList* mat,
                    int* d_mid,
-                   REAL_TYPE* d_pvf);
+                   REAL_TYPE* d_pvf,
+                   MPIPolylib* PL,
+                   const int m_NoCompo);
   
   
-  /* @brief 水密化
-   * @param [in]  fp      ファイルポインタ
-   * @param [in]  cmp     CompoList class
-   * @param [in]  mat     MediumList
-   * @param [in]  d_mid   識別子配列
-   */
-  void WaterTightening(FILE* fp,
-                       CompoList* cmp,
-                       MediumList* mat,
-                       int* d_mid);
-  
-  
-  /**
-   * @brief 初期化
-   * @param [in]     PL           Polygonクラス
-   * @param [in,out] PG           PolygonPropertyクラス
-   * @param [in]     poly_org     ポリゴンの基点
-   * @param [in]     poly_dx      ポリゴンのピッチ
-   * @param [in]     NoCompo      コンポーネント数
-   * @param [in]     NoPolyGrp    ポリゴングループ数
-   */
-  void Initialize(MPIPolylib* PL,
-                  PolygonProperty* PG,
-                  const REAL_TYPE* poly_org,
-                  const REAL_TYPE* poly_dx,
-                  const int NoCompo,
-                  const int NoPolyGrp);
+  // ポリゴンの水密化
+  void SeedFilling(FILE* fp,
+                   CompoList* cmp,
+                   MediumList* mat,
+                   int* d_mid,
+                   MPIPolylib* PL,
+                   PolygonProperty* PG,
+                   const int m_NoCompo);
   
   
   // @brief 再分割数を設定

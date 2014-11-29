@@ -557,7 +557,7 @@ void ASD::fill(bool disp_flag, Geometry* GM)
   }
   
   
-  int FillSuppress[3] = {1, 1, 1};
+  //int FillSuppress[3] = {1, 1, 1};
   
   
   if ( !disp_flag )
@@ -566,10 +566,10 @@ void ASD::fill(bool disp_flag, Geometry* GM)
     printf(    "\t\tFilling Fluid Medium   : Solid\n");
     printf(    "\t\tFill Seed Medium       : Solid\n");
     printf(    "\t\tFill Seed Direction    : %d\n", FillSeedDir);
-    printf(    "\t\tFill Control (X, Y, Z) : (%s, %s, %s)\n\n",
-           ( !FillSuppress[0] ) ? "Suppress" : "Fill",
-           ( !FillSuppress[1] ) ? "Suppress" : "Fill",
-           ( !FillSuppress[2] ) ? "Suppress" : "Fill");
+    //printf(    "\t\tFill Control (X, Y, Z) : (%s, %s, %s)\n\n",
+    //       ( !FillSuppress[0] ) ? "Suppress" : "Fill",
+    //       ( !FillSuppress[1] ) ? "Suppress" : "Fill",
+    //       ( !FillSuppress[2] ) ? "Suppress" : "Fill");
   }
   
   
@@ -612,7 +612,8 @@ void ASD::fill(bool disp_flag, Geometry* GM)
     
     // SeedIDで指定された媒質でフィルする．FLUID/SOLIDの両方のケースがある
     unsigned long fs;
-    filled = GM->fillByBid(d_bid, d_bcd, d_cut, md_solid, FillSuppress, fs, G_division);
+    int cs=1; // @todo 適当なので正しく動かない　修正の必要あり
+    filled = GM->fillByBid(d_bid, d_bcd, d_cut, md_solid, fs, cs, G_division);
     replaced = fs;
     
     target_count -= filled;
@@ -722,8 +723,8 @@ void ASD::findPolygon(const REAL_TYPE* px,
   for (int k=1; k<=dvz; k++) {
     for (int j=1; j<=dvy; j++) {
       for (int i=1; i<=dvx; i++) {
-        Vec3<REAL_TYPE> pos_min(px[i-1],    py[j-1],    pz[k-1]);
-        Vec3<REAL_TYPE> pos_max(px[i-1]+lx, py[j-1]+ly, pz[k-1]+lz);
+        Vec3r pos_min(px[i-1],    py[j-1],    pz[k-1]);
+        Vec3r pos_max(px[i-1]+lx, py[j-1]+ly, pz[k-1]+lz);
         
         // false; ポリゴンが一部でもかかる場合
         vector<Triangle*>* trias = PL->search_polygons(label, pos_min, pos_max, false);

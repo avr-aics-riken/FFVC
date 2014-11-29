@@ -136,6 +136,7 @@ int FFV::Initialize(int argc, char **argv)
   // 計算モデルの入力ソース情報を取得
   C.getGeometryModel();
   
+  
   // フィルパラメータ
   GM.getFillParam(&tp_ffv);
   
@@ -252,25 +253,38 @@ int FFV::Initialize(int argc, char **argv)
   setMonitorList();
   
   
-  // Geometry classの初期化
-  GM.Initialize(PL, PG, poly_org, poly_dx, C.NoCompo, C.num_of_polygrp);
+  // d_midを初期化して識別子として利用
+  U.initS3D(d_mid, size, guide, -1);
+  
+  
 
-
-  // ポリゴンを入力とする場合のみ
+  /* ポリゴンを入力とする場合のみ
   if ( C.Mode.Example == id_Polygon )
   {
-    // Water tightening
+    
+    // ガイドセルのIDをd_midに転写
+    for (int face=0; face<NOFACE; face++)
+    {
+      if( nID[face] >= 0 ) continue;
+      
+      GM.copyIDonGuide(face, d_bcd, d_mid);
+    }
+    
+    
+    // Fill by Seed >> d_mid={-1, SeedID}
     Hostonly_
     {
       printf(    "\n----------\n\n");
       fprintf(fp,"\n----------\n\n");
-      printf(    "\t>> Water Tightening Process\n\n");
-      fprintf(fp,"\t>> Water Tightening Process\n\n");
+      printf(    "\t>> Seed Filling Process\n\n");
+      fprintf(fp,"\t>> Seed Filling Process\n\n");
     }
     
-    TIMING_start("WaterTightning");
-    GM.WaterTightening(fp, cmp, mat, d_mid);
-    TIMING_stop("WaterTightning");
+    TIMING_start("SeedFilling");
+    GM.SeedFilling(fp, cmp, mat, d_mid, PL, PG, C.NoCompo);
+    TIMING_stop("SeedFilling");
+    
+    //F->writeSVX(d_mid);
     
     // Sub-sampling
     Hostonly_
@@ -282,10 +296,10 @@ int FFV::Initialize(int argc, char **argv)
     }
     
     TIMING_start("SubSampling");
-    GM.SubSampling(fp, mat, d_mid, d_pvf);
+    GM.SubSampling(fp, mat, d_mid, d_pvf, PL, C.NoCompo);
     TIMING_stop("SubSampling");
   }
-  
+  */
   
   // Fill
   Hostonly_
@@ -297,7 +311,7 @@ int FFV::Initialize(int argc, char **argv)
   }
 
   TIMING_start("Fill");
-  GM.fill(fp, cmp, mat, d_bcd, d_cut, d_bid);
+  GM.fill(fp, cmp, mat, d_bcd, d_cut, d_bid, C.NoCompo);
   TIMING_stop("Fill");
   
 
@@ -2619,24 +2633,38 @@ void FFV::setBCinfo()
     Exit(0);
   }
   
-  // FillMediumがMediumList中にあるかどうかをチェックし、FillIDを設定
-  if ( (GM.FillID = U.findIDfromLabel(mat, C.NoMedium, GM.FillMedium)) == 0 )
-  {
-    Hostonly_
-    {
-      printf("/ApplicationControl/FillMedium = \"%s\" is not listed in MediumTable.\n", GM.FillMedium.c_str());
-    }
-    Exit(0);
-  }
+  // FillID と SeedID をセット
+  GM.setFillMedium(mat, C.NoMedium);
   
-  // SeedMediumがMediumList中にあるかどうかをチェックし、SeedIDを設定
-  if ( (GM.SeedID = U.findIDfromLabel(mat, C.NoMedium, GM.SeedMedium)) == 0 )
+  
+  // 各軸方向のフィル抑止モード（Periodic, Symmetric時の対策）
+  for (int face=0; face<NOFACE; face++)
   {
-    Hostonly_
+    if( nID[face] >= 0 ) continue;
+    
+    BoundaryOuter* m_obc = BC.exportOBC(face);
+    
+    switch (m_obc->getClass())
     {
-      printf("/ApplicationControl/HintOfFillSeedMedium = \"%s\" is not listed in MediumTable.\n", GM.SeedMedium.c_str());
+      case OBC_SYMMETRIC:
+      case OBC_PERIODIC:
+        if (face==X_minus || face==X_plus)
+        {
+          GM.FillSuppress[0] = OFF;
+        }
+        else if (face==Y_minus || face==Y_plus)
+        {
+          GM.FillSuppress[1] = OFF;
+        }
+        else
+        {
+          GM.FillSuppress[2] = OFF;
+        }
+        break;
+        
+      default:
+        break;
     }
-    Exit(0);
   }
   
   
@@ -3838,6 +3866,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
         break;
       }
     }
+    //printf("mat_id=%d\n", mat_id);
 
     // PolygonにIDを割り当てる
     poly_stat = (*it)->set_all_exid_of_trias(mat_id);
@@ -3920,35 +3949,41 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   // ポリゴンの修正
   RepairPolygonData(PL, false);
 
-  GM.calcBboxFromPolygonGroup();
   
+  // ポリゴンのBbox
+  GM.calcBboxFromPolygonGroup(PL, PG, C.num_of_polygrp, poly_org, poly_dx);
+
   
   // Triangle display >> Debug
 // ##########
 #if 0
-  PolylibNS::Vec3<REAL_TYPE> m_min, m_max, t1(poly_org), t2(poly_dx), t3;
+  Vec3r m_min, m_max, t1(poly_org), t2(poly_dx), t3;
   t3.assign((REAL_TYPE)size[0]*t2.x, (REAL_TYPE)size[1]*t2.y, (REAL_TYPE)size[2]*t2.z);
   m_min = t1 - t2;      // 1層外側まで
   m_max = t1 + t3 + t2; //
   printf("min : %f %f %f\n", m_min.x, m_min.y, m_min.z);
   printf("max : %f %f %f\n", m_max.x, m_max.y, m_max.z);
-  vector<Triangle*>* trias = PL->search_polygons("Tube", m_min, m_max, false); // false; ポリゴンが一部でもかかる場合
+  vector<Triangle*>* trias = PL->search_polygons("Ducky", m_min, m_max, false); // false; ポリゴンが一部でもかかる場合
   
-  PolylibNS::Vec3f *p, nrl, n;
+  //Vec3r *p, nrl, n;
+  Vec3r n;
+  Vertex** p;
   c=0;
-  vector<Triangle*>::iterator it2;
-  for (it2 = trias->begin(); it2 != trias->end(); it2++) {
-    p = (*it2)->get_vertex();
-    n = (*it2)->get_normal();
+  vector<Triangle*>::iterator it3;
+  for (it3 = trias->begin(); it3 != trias->end(); it3++) {
+    p = (*it3)->get_vertex();
+    n = (*it3)->get_normal();
     printf("%d : p0=(%6.3e %6.3e %6.3e)  p1=(%6.3e %6.3e %6.3e) p2=(%6.3e %6.3e %6.3e) n=(%6.3e %6.3e %6.3e)\n", c++,
-           p[0].x, p[0].y, p[0].z,
-           p[1].x, p[1].y, p[1].z,
-           p[2].x, p[2].y, p[2].z,
+           (*(p[0]))[0], (*(p[0]))[1], (*(p[0]))[2],
+           (*(p[1]))[0], (*(p[1]))[1], (*(p[1]))[2],
+           (*(p[2]))[0], (*(p[2]))[1], (*(p[2]))[2],
            n.x, n.y, n.z);
   }
   
   delete trias;  //後始末
 #endif
+  
+  
 // ##########
   
   

@@ -77,6 +77,7 @@ if ( zp == 0 )
     // 検査方向に壁をおく場合にインクリメント
     int fill_flag = 0;
     
+    // qs+qn==0は両方とも流体、qb*qt>0は両方とも物体を意味する
     if ( ((qs+qn)==0) && ((qb*qt)>0) && (qe==0) ) fill_flag++; // Y方向の両側にはカットが無く，Z方向の両側にカットがある，X+方向にカットなし
     if ( ((qb+qt)==0) && ((qs*qn)>0) && (qe==0) ) fill_flag++; // Z方向の両側にはカットが無く，Y方向の両側にカットがある，X+方向にカットなし
     if ( ((qs*qn*qb*qt)>0)           && (qe==0) ) fill_flag++; // Y方向とZ方向の両側にカットがある，X+方向にカットなし
@@ -287,8 +288,11 @@ if ( zp == 0 )
 
   if ( tag>0 )
   {
-    setBitID(bcd[m_p], tg);
-    filled++;
+    if ( (DECODE_CMP(bcd[m_p]) == 0) )
+    {
+      setBitID(bcd[m_p], tg);
+      filled++;
+    }
   }
 
   

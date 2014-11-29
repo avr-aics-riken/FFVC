@@ -268,6 +268,7 @@ void LinearSolver::Preconditioner(REAL_TYPE* x, REAL_TYPE* b)
   int lc_max = getInnerItr();
   
   // 前処理
+  // 境界条件処理が実行される場合には、要注意
   SOR2_SMA(x, b, lc_max, dummy, dummy, false);
 }
 

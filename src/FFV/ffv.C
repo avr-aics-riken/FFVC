@@ -690,7 +690,7 @@ void FFV::set_timing_label()
   // Cutlib_Section
   
   set_label("Geometry_Section",        PerfMonitor::CALC, false);
-  set_label("WaterTightning",          PerfMonitor::CALC);
+  set_label("SeedFilling",             PerfMonitor::CALC);
   set_label("SubSampling",             PerfMonitor::CALC);
   set_label("Fill",                    PerfMonitor::CALC);
   // Geometry_Section

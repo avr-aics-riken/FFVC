@@ -86,7 +86,7 @@ private:
   
   
   // ディリクレ条件とノイマン条件の排他性をチェックし，反復行列の非対角要素/対角要素の係数をエンコードする
-  void encPbit (int* bx);
+  void encPbit (int* bx, const int* bid);
   
   
   // 圧力のノイマン境界ビットをエンコードする（カット）

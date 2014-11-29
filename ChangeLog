@@ -19,6 +19,11 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-11-29
+r1569 ducky
+ - bug fix : calulate the number of OBSTACLE in setBCIndexBase()
+
+--------------------------
 2014-11-23
 r1568 Introduce boundary conditions for Central scheme
  - pvec_ibc_specv_fdm_(), vobc_pv_specv_fdm_()
@@ -226,7 +231,7 @@ r1625 bugfix restart by time
 2014-08-01
 r1624 update IP_Cylinder class [ver 1.8.1]
  - new functions in ffv_Geometry.C
-   >> WaterTightening(), findPolygonInCell(), calcBboxFromPolygonGroup()
+   >> SeedFilling(), findPolygonInCell(), calcBboxFromPolygonGroup()
    >> SubSampling()
  - introduce d_pvf to represent a volume fraction owing to polygons
  - remove message() from FB_Define.h to avoid confliction with func. in <locale>

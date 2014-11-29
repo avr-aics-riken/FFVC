@@ -384,14 +384,12 @@ public:
   }
   
   
-  /**
-   * @brief S3D配列の初期化
-   * @param [out]    dst   出力
-   * @param [in]     size  配列サイズ
-   * @param [in]     guide ガイドセルサイズ
-   * @param [in]     init  定数
-   */
+  // S3D配列の初期化 (REAL_TYPE)
   static void initS3D (REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE init);
+  
+  
+  // S3D配列の初期化 (Int)
+  static void initS3D(int* dst, const int* size, const int guide, const int init);
   
   
   /**

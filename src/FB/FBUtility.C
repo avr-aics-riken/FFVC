@@ -268,16 +268,59 @@ int FBUtility::findIDfromLabel(const MediumList* mat, const int Nmax, const std:
 
 
 // #################################################################
-// S3D配列の初期化
+/**
+ * @brief S3D配列の初期化 (REAL_TYPE)
+ * @param [out]    dst   出力
+ * @param [in]     size  配列サイズ
+ * @param [in]     guide ガイドセルサイズ
+ * @param [in]     init  定数
+ */
 void FBUtility::initS3D(REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE init)
 {
   REAL_TYPE s = init;
-  size_t nx = (size[0]+2*guide) * (size[1]+2*guide) * (size[2]+2*guide);
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
   
-#pragma omp parallel for firstprivate(nx, s) schedule(static)
-  for (int m=0; m<nx; m++)
-  {
-    dst[m] = s;
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, s) schedule(static) collapse(2)
+  for (int k=1-gd; k<=kx+gd; k++) {
+    for (int j=1-gd; j<=jx+gd; j++) {
+      for (int i=1-gd; i<=ix+gd; i++) {
+
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        dst[m] = s;
+      }
+    }
+  }
+  
+}
+
+// #################################################################
+/**
+ * @brief S3D配列の初期化 (Int)
+ * @param [out]    dst   出力
+ * @param [in]     size  配列サイズ
+ * @param [in]     guide ガイドセルサイズ
+ * @param [in]     init  定数
+ */
+void FBUtility::initS3D(int* dst, const int* size, const int guide, const int init)
+{
+  int s = init;
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, s) schedule(static) collapse(2)
+  for (int k=1-gd; k<=kx+gd; k++) {
+    for (int j=1-gd; j<=jx+gd; j++) {
+      for (int i=1-gd; i<=ix+gd; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        dst[m] = s;
+      }
+    }
   }
   
 }
