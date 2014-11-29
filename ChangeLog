@@ -20,6 +20,9 @@ REVISION HISTORY
 
 --------------------------
 2014-11-29
+r1570 ducky isothermal flow
+ - calculate component's bbox
+
 r1569 ducky
  - bug fix : calulate the number of OBSTACLE in setBCIndexBase()
 

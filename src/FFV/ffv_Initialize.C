@@ -2824,6 +2824,8 @@ void FFV::dispGlobalCompoInfo(FILE* fp)
   
   for (int i=0; i<6*(C.NoCompo+1); i++) cgb[i] = 0;
   
+
+  
   // ローカルインデクスからグローバルインデクスに変換
   for (int m=1; m<=C.NoCompo; m++) 
   {
@@ -2945,7 +2947,7 @@ void FFV::dispGlobalCompoInfo(FILE* fp)
     }
     
   }
-  
+
   
   // CompoListの内容とセル数の情報を表示する
   Hostonly_

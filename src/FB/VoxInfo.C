@@ -352,13 +352,35 @@ unsigned long VoxInfo::countCC (const int order, const int* bx, CompoList* cmp)
   int gd = guide;
   int odr= order;
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, odr) schedule(static) reduction(+:g)
+  // 初期値はローカルノードの大きさ
+  int ist = ix;
+  int jst = jx;
+  int kst = kx;
+  int ied = 1;
+  int jed = 1;
+  int ked = 1;
+  
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, odr) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        if ( DECODE_CMP( bx[m] )  == odr ) g++;
+        if ( DECODE_CMP( bx[m] )  == odr )
+        {
+#pragma omp critical
+          {
+            if( i < ist ) ist = i;
+            if( i > ied ) ied = i;
+            if( j < jst ) jst = j;
+            if( j > jed ) jed = j;
+            if( k < kst ) kst = k;
+            if( k > ked ) ked = k;
+            g++;
+          }
+        }
+        
       }
     }
   }
@@ -367,6 +389,15 @@ unsigned long VoxInfo::countCC (const int order, const int* bx, CompoList* cmp)
   {
     cmp->setEnsLocal(ON);
   }
+  else
+  {
+    ist = ied = jst = jed = kst = ked = 0;
+    cmp->setEnsLocal(OFF);
+  }
+  
+  int nst[3] = {ist, jst, kst};
+  int ned[3] = {ied, jed, ked};
+  cmp->setBbox(nst, ned);
   
   if ( numProc > 1 )
   {
@@ -2079,6 +2110,15 @@ unsigned long VoxInfo::encQface (const int order,
   int state = target;
   
   
+  // 初期値はローカルノードの大きさ
+  int ist = ix;
+  int jst = jx;
+  int kst = kx;
+  int ied = 1;
+  int jed = 1;
+  int ked = 1;
+  
+  
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, odr, es, state) schedule(static) reduction(+:g)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
@@ -2112,12 +2152,15 @@ unsigned long VoxInfo::encQface (const int order,
           int b4 = getBit5(d, 4);
           int b5 = getBit5(d, 5);
           
+          int flag = 0;
+          
           // X-
           if ( b0 == odr )
           {
             setBit5raw(s1, odr, BC_FACE_W); // エントリをエンコード
             s2 = ( es == true ) ? onBit(s2, ADIABATIC_W) : offBit( s2, ADIABATIC_W ); // offBitが断熱状態
             g++;
+            flag++;
           }
           
           // X+
@@ -2126,6 +2169,7 @@ unsigned long VoxInfo::encQface (const int order,
             setBit5raw(s1, odr, BC_FACE_E);
             s2 = ( es == true ) ? onBit(s2, ADIABATIC_E) : offBit( s2, ADIABATIC_E );
             g++;
+            flag++;
           }
           
           // Y-
@@ -2134,6 +2178,7 @@ unsigned long VoxInfo::encQface (const int order,
             setBit5raw(s1, odr, BC_FACE_S);
             s2 = ( es == true ) ? onBit(s2, ADIABATIC_S) : offBit( s2, ADIABATIC_S );
             g++;
+            flag++;
           }
           
           // Y+
@@ -2142,6 +2187,7 @@ unsigned long VoxInfo::encQface (const int order,
             setBit5raw(s1, odr, BC_FACE_N);
             s2 = ( es == true ) ? onBit(s2, ADIABATIC_N) : offBit( s2, ADIABATIC_N );
             g++;
+            flag++;
           }
           
           // Z-
@@ -2150,6 +2196,7 @@ unsigned long VoxInfo::encQface (const int order,
             setBit5raw(s1, odr, BC_FACE_B);
             s2 = ( es == true ) ? onBit(s2, ADIABATIC_B) : offBit( s2, ADIABATIC_B );
             g++;
+            flag++;
           }
           
           // Z+
@@ -2158,11 +2205,26 @@ unsigned long VoxInfo::encQface (const int order,
             setBit5raw(s1, odr, BC_FACE_T);
             s2 = ( es == true ) ? onBit(s2, ADIABATIC_T) : offBit( s2, ADIABATIC_T );
             g++;
+            flag++;
           }
           
           cdf[m]= s1;
           bd[m] = s2;
-        }
+          
+          if ( flag != 0 )
+          {
+#pragma omp critical
+            {
+              if( i < ist ) ist = i;
+              if( i > ied ) ied = i;
+              if( j < jst ) jst = j;
+              if( j > jed ) jed = j;
+              if( k < kst ) kst = k;
+              if( k > ked ) ked = k;
+            }
+          }
+          
+        } // TEST_BC
         
       }
     }
@@ -2173,6 +2235,15 @@ unsigned long VoxInfo::encQface (const int order,
   {
     cmp->setEnsLocal(ON);
   }
+  else
+  {
+    ist = ied = jst = jed = kst = ked = 0;
+    cmp->setEnsLocal(OFF);
+  }
+  
+  int nst[3] = {ist, jst, kst};
+  int ned[3] = {ied, jed, ked};
+  cmp->setBbox(nst, ned);
   
   
   if ( numProc > 1 )
@@ -2214,6 +2285,14 @@ unsigned long VoxInfo::encVbitIBC (const int order,
   int kx = size[2];
   int gd = guide;
   int odr = order;
+  
+  // 初期値はローカルノードの大きさ
+  int ist = ix;
+  int jst = jx;
+  int kst = kx;
+  int ied = 1;
+  int jed = 1;
+  int ked = 1;
   
   float m_vec[3]={(float)vec[0], (float)vec[1], (float)vec[2]};
   Vec3f nv(m_vec);
@@ -2257,6 +2336,8 @@ unsigned long VoxInfo::encVbitIBC (const int order,
             int id_b = getBit5(bd, 4);
             int id_t = getBit5(bd, 5);
             
+            int flag = 0;
+            
             // X-
             if ( (id_w == odr) && (dot(e_w, nv) < 0.0) )
             {
@@ -2264,6 +2345,7 @@ unsigned long VoxInfo::encVbitIBC (const int order,
               q = offBit(q, FACING_W);
               q = onBit(q, VBC_UWD);
               g++;
+              flag++;
             }
             
             // X+
@@ -2273,6 +2355,7 @@ unsigned long VoxInfo::encVbitIBC (const int order,
               q = offBit(q, FACING_E);
               q = onBit(q, VBC_UWD);
               g++;
+              flag++;
             }
             
             // Y-
@@ -2282,6 +2365,7 @@ unsigned long VoxInfo::encVbitIBC (const int order,
               q = offBit(q, FACING_S);
               q = onBit(q, VBC_UWD);
               g++;
+              flag++;
             }
             
             // Y+
@@ -2291,6 +2375,7 @@ unsigned long VoxInfo::encVbitIBC (const int order,
               q = offBit(q, FACING_N);
               q = onBit(q, VBC_UWD);
               g++;
+              flag++;
             }
             
             // Z-
@@ -2300,6 +2385,7 @@ unsigned long VoxInfo::encVbitIBC (const int order,
               q = offBit(q, FACING_B);
               q = onBit(q, VBC_UWD);
               g++;
+              flag++;
             }
             
             // Z+
@@ -2309,11 +2395,27 @@ unsigned long VoxInfo::encVbitIBC (const int order,
               q = offBit(q, FACING_T);
               q = onBit(q, VBC_UWD);
               g++;
+              flag++;
             }
+            
+            if ( flag != 0 )
+            {
+#pragma omp critical
+              {
+                if( i < ist ) ist = i;
+                if( i > ied ) ied = i;
+                if( j < jst ) jst = j;
+                if( j > jed ) jed = j;
+                if( k < kst ) kst = k;
+                if( k > ked ) ked = k;
+                g++;
+              }
+            }
+            
+            cdf[mp]= s;
+            bp[mp] = q;
+            
           } // if fluid
-          
-          cdf[mp]= s;
-          bp[mp] = q;
           
         } // if TEST_BC()
         
@@ -2327,6 +2429,15 @@ unsigned long VoxInfo::encVbitIBC (const int order,
   {
     cmp->setEnsLocal(ON);
   }
+  else
+  {
+    ist = ied = jst = jed = kst = ked = 0;
+    cmp->setEnsLocal(OFF);
+  }
+  
+  int nst[3] = {ist, jst, kst};
+  int ned[3] = {ied, jed, ked};
+  cmp->setBbox(nst, ned);
 
 // ########## check for debug
 # if 0
