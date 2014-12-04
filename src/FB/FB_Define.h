@@ -566,13 +566,6 @@ enum DIRection {
   Z_plus
 };
 
-/** ボクセルファイルフォーマット */
-enum Voxel_Type
-{
-  Sphere_SVX=1,
-  Sphere_SBX
-};
-
 
 
 /*

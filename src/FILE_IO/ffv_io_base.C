@@ -21,15 +21,13 @@
 
 #include "ffv_io_base.h"
 
+#include "FileCommon.h"
+#include "BitVoxel.h"
+#include "RLE.h"
+#include "FileSystemUtil.h"
+#include "type.h"
+#include "BlockSaver.h"
 
-/* #################################################################
-// 出力ファイルをチェック
-int IO_BASE::checkOutFile()
-{
-  if ( DFI_OUT_PRS == NULL || DFI_OUT_VEL == NULL ) return 0;
-  return 1;
-}
-*/
                              
                              
 // #################################################################
@@ -404,7 +402,8 @@ void IO_BASE::getFIOparams()
   {
     if ( tpCntl->getInspectedValue(label, str) )
     {
-      if     ( !strcasecmp(str.c_str(), "svx") )  IO_Voxel = Sphere_SVX;
+      if     ( !strcasecmp(str.c_str(), "svx") )  IO_Voxel = voxel_SVX;
+      else if( !strcasecmp(str.c_str(), "bvx") )  IO_Voxel = voxel_BVX;
       else if( !strcasecmp(str.c_str(), "off") )  IO_Voxel = OFF;
       else
       {
@@ -417,6 +416,29 @@ void IO_BASE::getFIOparams()
       Exit(0);
     }
   }
+  
+  
+  // BCflag出力 (Hidden)
+  IO_BCflag = OFF;
+  label = "/GeometryModel/BCflagOutput";
+  
+  if ( tpCntl->chkLabel(label) )
+  {
+    if ( tpCntl->getInspectedValue(label, str) )
+    {
+      if     ( !strcasecmp(str.c_str(), "on") )  IO_BCflag = ON;
+      else
+      {
+        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+        Exit(0);
+      }
+    }
+    else
+    {
+      Exit(0);
+    }
+  }
+  
   
   
   // デバッグ用出力 (Hidden)
@@ -654,7 +676,21 @@ void IO_BASE::printSteerConditions(FILE* fp)
   
   
   // Hidden
-  fprintf(fp,"\t     Voxel model output       :   %s\n", (IO_Voxel==Sphere_SVX) ? "svx" : "None");
+  fprintf(fp,"\t     Voxel model output       :   ");
+  switch (IO_Voxel) {
+    case voxel_SVX:
+      fprintf(fp,"svx");
+      break;
+      
+    case voxel_BVX:
+      fprintf(fp,"bvx");
+      break;
+      
+    default:
+      fprintf(fp,"none");
+      break;
+  }
+  fprintf(fp,"\t     BC flag output           :   %s\n", (IO_BCflag==ON) ? "On" : "Off");
   fprintf(fp,"\t     VTK output               :   %s\n", (output_vtk==ON) ? "On" : "Off");
   fprintf(fp,"\t     Debug output             :   %s\n", (output_debug==ON) ? "On" : "Off");
 }
@@ -753,7 +789,7 @@ void IO_BASE::RestartDisplayMinmax(FILE* fp, double& flop)
 
 
 // #################################################################
-// リスタートモードを判定
+// 配列ポインタのセット
 void IO_BASE::setVarPointers(REAL_TYPE* m_d_p,
                              REAL_TYPE* m_d_v,
                              REAL_TYPE* m_d_vf,
@@ -797,6 +833,92 @@ void IO_BASE::setVarPointers(REAL_TYPE* m_d_p,
   mat_tbl      = m_mat_tbl;
   d_mid        = m_d_mid;
   d_iobuf      = m_d_iob;
+}
+
+
+// #################################################################
+// BCflagをbvxで出力する
+bool IO_BASE::writeBCflag(const int out_gc)
+{
+  if (IO_BCflag != ON) return true;
+  
+  unsigned bitWidth = 5;
+  int rank = paraMngr->GetMyRankID();
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gc = out_gc;
+  int gd = guide;
+  
+  size_t nx = (ix+2*gc) * (jx+2*gc) * (kx+2*gc);
+  
+  // unsignd int
+  unsigned* buf = new unsigned[nx];
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gc, gd) schedule(static)
+  for (int k=1-gc; k<=kx+gc; k++) {
+    for (int j=1-gc; j<=jx+gc; j++) {
+      for (int i=1-gc; i<=ix+gc; i++) {
+        size_t m0 = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        size_t m1 = _F_IDX_S3D(i, j, k, ix, jx, kx, gc);
+        buf[m1] = (unsigned)d_cdf[m0];
+      }
+    }
+  }
+  
+  bool ret = BVX_IO::Save_Block_BCflag(size, gc, bitWidth, rank, OutDirPath, buf, BVXcomp);
+  
+  if (buf)
+  {
+    delete [] buf;
+    buf = NULL;
+  }
+  
+  return ret;
+}
+
+
+// #################################################################
+// Cell IDをbvxで出力する
+bool IO_BASE::writeCellID(const int out_gc)
+{
+  if (IO_Voxel != voxel_BVX) return true;
+  
+  unsigned bitWidth = 5;
+  int rank = paraMngr->GetMyRankID();
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gc = out_gc;
+  int gd = guide;
+  
+  size_t nx = (ix+2*gc) * (jx+2*gc) * (kx+2*gc);
+  
+  // unsignd char
+  u8 *buf = new u8[nx];
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gc, gd) schedule(static)
+  for (int k=1-gc; k<=kx+gc; k++) {
+    for (int j=1-gc; j<=jx+gc; j++) {
+      for (int i=1-gc; i<=ix+gc; i++) {
+        size_t m0 = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        size_t m1 = _F_IDX_S3D(i, j, k, ix, jx, kx, gc);
+        buf[m1] = DECODE_CMP(d_bcd[m0]);
+      }
+    }
+  }
+  
+  bool ret = BVX_IO::Save_Block_CellID(size, gc, bitWidth, rank, OutDirPath, buf, BVXcomp);
+
+  if (buf)
+  {
+    delete [] buf;
+    buf = NULL;
+  }
+
+  return ret;
 }
 
 
@@ -968,7 +1090,7 @@ void IO_BASE::writeRawSPH(const REAL_TYPE *vf,
 // 例題のモデルをsvxフォーマットで出力する(体積率とID)
 bool IO_BASE::writeSVX(REAL_TYPE *vf, int *id)
 {
-  if ( IO_Voxel != Sphere_SVX ) return false;
+  if ( IO_Voxel != voxel_SVX ) return false;
   
   int    sz, ix, jx, kx;
   size_t m, l;
@@ -1078,7 +1200,7 @@ bool IO_BASE::writeSVX(REAL_TYPE *vf, int *id)
 // 例題のモデルをsvxフォーマットで出力する(ID)
 bool IO_BASE::writeSVX(const int* bcd)
 {
-  if ( IO_Voxel != Sphere_SVX ) return false;
+  if ( IO_Voxel != voxel_SVX ) return false;
   
   int   sz, ix, jx, kx;
   size_t m, l;

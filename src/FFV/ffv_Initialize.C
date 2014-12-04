@@ -571,6 +571,11 @@ int FFV::Initialize(int argc, char **argv)
   F->getRestartDFI();
   
   
+  // CellIDとBCflagの出力 (guide cell=0)
+  F->writeCellID(0);
+  F->writeBCflag(0);
+  
+  
   // 初期値とリスタート処理 瞬時値と統計値に分けて処理　------------------
   Hostonly_
   {

@@ -19,6 +19,11 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-12-04
+r1571 introduce bvx in FILEIO
+- output vbx file
+
+--------------------------
 2014-11-29
 r1570 ducky isothermal flow
  - calculate component's bbox

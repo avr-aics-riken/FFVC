@@ -38,7 +38,16 @@ libFIO_a_SOURCES = \
   ffv_sph.h \
   ffv_sph.C \
   ffv_plot3d.h \
-  ffv_plot3d.C
+  ffv_plot3d.C \
+  BlockSaver.C \
+  BlockSaver.h \
+  BitVoxel.C \
+  BitVoxel.h \
+  RLE.h \
+  type.h \
+  FileSystemUtil.C \
+  FileSystemUtil.h \
+  FileCommon.h
 
 
 EXTRA_DIST = Makefile_hand depend.inc

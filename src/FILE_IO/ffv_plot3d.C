@@ -1609,7 +1609,7 @@ void PLT3D::Restart(FILE* fp, unsigned& m_CurrentStep, double& m_CurrentTime)
     
     
     // 前のセッションの領域分割数の取得
-    int* DFI_div=NULL;
+    const int* DFI_div=NULL;
     
     DFI_div = DFI_IN_INS->GetDFIGlobalDivision();
     
@@ -1625,7 +1625,7 @@ void PLT3D::Restart(FILE* fp, unsigned& m_CurrentStep, double& m_CurrentTime)
     }
     
     // 前のセッションの全要素数の取得
-    int* DFI_G_size = DFI_IN_INS->GetDFIGlobalVoxel();
+    const int* DFI_G_size = DFI_IN_INS->GetDFIGlobalVoxel();
     
     
     // 前セッションと全要素数が異なる場合

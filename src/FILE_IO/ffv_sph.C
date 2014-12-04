@@ -1884,7 +1884,7 @@ void SPH::Restart(FILE* fp, unsigned& m_CurrentStep, double& m_CurrentTime)
     
     
     // 前のセッションの領域分割数の取得
-    int* DFI_div=NULL;
+    const int* DFI_div=NULL;
     
     if ( C->KindOfSolver != SOLID_CONDUCTION )
     {
@@ -1907,7 +1907,7 @@ void SPH::Restart(FILE* fp, unsigned& m_CurrentStep, double& m_CurrentTime)
     }
     
     // 前のセッションの全要素数の取得
-    int* DFI_G_size = DFI_IN_PRS->GetDFIGlobalVoxel();
+    const int* DFI_G_size = DFI_IN_PRS->GetDFIGlobalVoxel();
     
     
     // 前セッションと全要素数が異なる場合

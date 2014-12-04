@@ -51,6 +51,16 @@
 // CDMlib
 #include "cdm_DFI.h"
 
+
+
+/** ボクセルファイルフォーマット */
+enum Voxel_Type
+{
+  voxel_SVX=1,
+  voxel_BVX
+};
+
+
 using namespace std;
 
 
@@ -59,11 +69,13 @@ class IO_BASE : public DomainInfo {
 protected:
   
   int IOmode;          ///< 逐次 or 並列
-  int IO_Voxel;        ///< デバッグ用にボクセルを出力
+  int IO_Voxel;        ///< ボクセルを出力
+  int IO_BCflag;       ///< BCflagを出力
   int Format;          ///< ファイル入出力モード（sph, bov, plot3d）
   int Slice;           ///< タイムスライス毎にまとめる
   int GuideIn;         ///< ファイル出力されたデータのもつガイドセル数（リスタートに利用）
   int GuideOut;        ///< 出力時のガイドセル数
+  bool BVXcomp;        ///< BVXファイルの圧縮（true=圧縮する）
   
   int output_vtk;      ///< debug用vtk出力オプション
   int output_debug;    ///< debug用データ出力
@@ -113,13 +125,14 @@ public:
     
     IOmode   = 0;
     IO_Voxel = 0;
+    IO_BCflag= 0;
     Format   = 0;
     Slice    = 0;
     GuideIn  = 0;
     GuideOut = 0;
-    
     output_vtk = 0;
     output_debug = 0;
+    BVXcomp = true;  // 圧縮する
     
     // 変数
     d_p = NULL;
@@ -346,6 +359,21 @@ public:
                       double* m_mat_tbl,
                       int* m_d_mid,
                       REAL_TYPE* m_d_iob);
+  
+  
+  
+  /**
+   * @brief BCflagの書き出し
+   * @param [in] out_gc       出力するガイドセル数
+   */
+  bool writeBCflag(const int out_gc);
+  
+  
+  /**
+   * @brief CellIDの書き出し
+   * @param [in] out_gc       出力するガイドセル数
+   */
+  bool writeCellID(const int out_gc);
   
   
   /**

@@ -140,7 +140,9 @@ am__v_AR_1 =
 libFIO_a_AR = $(AR) $(ARFLAGS)
 libFIO_a_LIBADD =
 am_libFIO_a_OBJECTS = libFIO_a-ffv_io_base.$(OBJEXT) \
-	libFIO_a-ffv_sph.$(OBJEXT) libFIO_a-ffv_plot3d.$(OBJEXT)
+	libFIO_a-ffv_sph.$(OBJEXT) libFIO_a-ffv_plot3d.$(OBJEXT) \
+	libFIO_a-BlockSaver.$(OBJEXT) libFIO_a-BitVoxel.$(OBJEXT) \
+	libFIO_a-FileSystemUtil.$(OBJEXT)
 libFIO_a_OBJECTS = $(am_libFIO_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -366,7 +368,16 @@ libFIO_a_SOURCES = \
   ffv_sph.h \
   ffv_sph.C \
   ffv_plot3d.h \
-  ffv_plot3d.C
+  ffv_plot3d.C \
+  BlockSaver.C \
+  BlockSaver.h \
+  BitVoxel.C \
+  BitVoxel.h \
+  RLE.h \
+  type.h \
+  FileSystemUtil.C \
+  FileSystemUtil.h \
+  FileCommon.h
 
 EXTRA_DIST = Makefile_hand depend.inc
 all: all-am
@@ -446,6 +457,9 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFIO_a-BitVoxel.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFIO_a-BlockSaver.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFIO_a-FileSystemUtil.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFIO_a-ffv_io_base.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFIO_a-ffv_plot3d.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFIO_a-ffv_sph.Po@am__quote@
@@ -505,6 +519,48 @@ libFIO_a-ffv_plot3d.obj: ffv_plot3d.C
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ffv_plot3d.C' object='libFIO_a-ffv_plot3d.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -c -o libFIO_a-ffv_plot3d.obj `if test -f 'ffv_plot3d.C'; then $(CYGPATH_W) 'ffv_plot3d.C'; else $(CYGPATH_W) '$(srcdir)/ffv_plot3d.C'; fi`
+
+libFIO_a-BlockSaver.o: BlockSaver.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -MT libFIO_a-BlockSaver.o -MD -MP -MF $(DEPDIR)/libFIO_a-BlockSaver.Tpo -c -o libFIO_a-BlockSaver.o `test -f 'BlockSaver.C' || echo '$(srcdir)/'`BlockSaver.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFIO_a-BlockSaver.Tpo $(DEPDIR)/libFIO_a-BlockSaver.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='BlockSaver.C' object='libFIO_a-BlockSaver.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -c -o libFIO_a-BlockSaver.o `test -f 'BlockSaver.C' || echo '$(srcdir)/'`BlockSaver.C
+
+libFIO_a-BlockSaver.obj: BlockSaver.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -MT libFIO_a-BlockSaver.obj -MD -MP -MF $(DEPDIR)/libFIO_a-BlockSaver.Tpo -c -o libFIO_a-BlockSaver.obj `if test -f 'BlockSaver.C'; then $(CYGPATH_W) 'BlockSaver.C'; else $(CYGPATH_W) '$(srcdir)/BlockSaver.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFIO_a-BlockSaver.Tpo $(DEPDIR)/libFIO_a-BlockSaver.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='BlockSaver.C' object='libFIO_a-BlockSaver.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -c -o libFIO_a-BlockSaver.obj `if test -f 'BlockSaver.C'; then $(CYGPATH_W) 'BlockSaver.C'; else $(CYGPATH_W) '$(srcdir)/BlockSaver.C'; fi`
+
+libFIO_a-BitVoxel.o: BitVoxel.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -MT libFIO_a-BitVoxel.o -MD -MP -MF $(DEPDIR)/libFIO_a-BitVoxel.Tpo -c -o libFIO_a-BitVoxel.o `test -f 'BitVoxel.C' || echo '$(srcdir)/'`BitVoxel.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFIO_a-BitVoxel.Tpo $(DEPDIR)/libFIO_a-BitVoxel.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='BitVoxel.C' object='libFIO_a-BitVoxel.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -c -o libFIO_a-BitVoxel.o `test -f 'BitVoxel.C' || echo '$(srcdir)/'`BitVoxel.C
+
+libFIO_a-BitVoxel.obj: BitVoxel.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -MT libFIO_a-BitVoxel.obj -MD -MP -MF $(DEPDIR)/libFIO_a-BitVoxel.Tpo -c -o libFIO_a-BitVoxel.obj `if test -f 'BitVoxel.C'; then $(CYGPATH_W) 'BitVoxel.C'; else $(CYGPATH_W) '$(srcdir)/BitVoxel.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFIO_a-BitVoxel.Tpo $(DEPDIR)/libFIO_a-BitVoxel.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='BitVoxel.C' object='libFIO_a-BitVoxel.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -c -o libFIO_a-BitVoxel.obj `if test -f 'BitVoxel.C'; then $(CYGPATH_W) 'BitVoxel.C'; else $(CYGPATH_W) '$(srcdir)/BitVoxel.C'; fi`
+
+libFIO_a-FileSystemUtil.o: FileSystemUtil.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -MT libFIO_a-FileSystemUtil.o -MD -MP -MF $(DEPDIR)/libFIO_a-FileSystemUtil.Tpo -c -o libFIO_a-FileSystemUtil.o `test -f 'FileSystemUtil.C' || echo '$(srcdir)/'`FileSystemUtil.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFIO_a-FileSystemUtil.Tpo $(DEPDIR)/libFIO_a-FileSystemUtil.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='FileSystemUtil.C' object='libFIO_a-FileSystemUtil.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -c -o libFIO_a-FileSystemUtil.o `test -f 'FileSystemUtil.C' || echo '$(srcdir)/'`FileSystemUtil.C
+
+libFIO_a-FileSystemUtil.obj: FileSystemUtil.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -MT libFIO_a-FileSystemUtil.obj -MD -MP -MF $(DEPDIR)/libFIO_a-FileSystemUtil.Tpo -c -o libFIO_a-FileSystemUtil.obj `if test -f 'FileSystemUtil.C'; then $(CYGPATH_W) 'FileSystemUtil.C'; else $(CYGPATH_W) '$(srcdir)/FileSystemUtil.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFIO_a-FileSystemUtil.Tpo $(DEPDIR)/libFIO_a-FileSystemUtil.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='FileSystemUtil.C' object='libFIO_a-FileSystemUtil.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFIO_a_CXXFLAGS) $(CXXFLAGS) -c -o libFIO_a-FileSystemUtil.obj `if test -f 'FileSystemUtil.C'; then $(CYGPATH_W) 'FileSystemUtil.C'; else $(CYGPATH_W) '$(srcdir)/FileSystemUtil.C'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique

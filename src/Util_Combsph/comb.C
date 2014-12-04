@@ -782,7 +782,8 @@ void COMB::CheckDir(string dirstr)
     }
     
     // make directory
-    if(!CreateDirectory(dirstr.c_str(), NULL)){
+    if(!CreateDirectory(dirstr.c_str()))
+    {
       printf("\tCan't generate directory(%s).\n", dirstr.c_str());
       Exit(0);
     }

@@ -40,10 +40,7 @@
 #include "PerfMonitor.h"
 #include "cpm_ParaManager.h"
 
-/* PLOT3Dfunctions_20131005
-#include "PLOT3D_read.h"
-#include "PLOT3D_write.h"
-*/
+
 #include "FileIO_sph.h"
 //#include "omp.h"
 
