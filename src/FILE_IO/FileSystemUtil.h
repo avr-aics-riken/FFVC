@@ -21,8 +21,10 @@
 #ifndef __FFV_FILESYSTEM_UTIL_H__
 #define __FFV_FILESYSTEM_UTIL_H__
 
+#include "mpi.h"
 #include <string>
 #include <stdlib.h>
+#include <string.h>
 
 namespace BVX_IO {
 

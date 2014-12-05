@@ -21,6 +21,8 @@
 #ifndef __FFV_BLOCK_SAVER_H__
 #define __FFV_BLOCK_SAVER_H__
 
+#include "mpi.h"
+#include <stdio.h>
 #include <string>
 
 #include "FileCommon.h"

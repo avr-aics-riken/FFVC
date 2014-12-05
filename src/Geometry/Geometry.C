@@ -2042,11 +2042,13 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
 {
   int filled = 0;
   int sdv = NumSuvDiv; // OpenMPのfirstprivateで使うためローカル変数にコピー
+  int rD = refID;
+  int rV = refVf;
   
   if ( dir == X_minus )
   {
     
-#pragma omp parallel for firstprivate(sdv, refID, refVf) reduction(+:filled) schedule(static) collapse(3)
+#pragma omp parallel for firstprivate(sdv, rD, rV) reduction(+:filled) schedule(static) collapse(3)
     for (int i=1; i<=sdv; i++) {
       for (int k=1; k<=sdv; k++) {
         for (int j=1; j<=sdv; j++) {
@@ -2061,17 +2063,17 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
           if ( smd[m_p] == -1 )
           {
             int ff = 0;
-            if ( smd[m_w] == refID ) ff++;
-            if ( smd[m_e] == refID ) ff++;
-            if ( smd[m_s] == refID ) ff++;
-            if ( smd[m_n] == refID ) ff++;
-            if ( smd[m_b] == refID ) ff++;
-            if ( smd[m_t] == refID ) ff++;
+            if ( smd[m_w] == rD ) ff++;
+            if ( smd[m_e] == rD ) ff++;
+            if ( smd[m_s] == rD ) ff++;
+            if ( smd[m_n] == rD ) ff++;
+            if ( smd[m_b] == rD ) ff++;
+            if ( smd[m_t] == rD ) ff++;
             
             if ( ff>0 )
             {
-              smd[m_p] = refID;
-              svf[m_p] = refVf;
+              smd[m_p] = rD;
+              svf[m_p] = rV;
               filled++;
             }
           }
@@ -2083,7 +2085,7 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
   else if ( dir == X_plus)
   {
     
-#pragma omp parallel for firstprivate(sdv, refID, refVf) reduction(+:filled) schedule(static) collapse(3)
+#pragma omp parallel for firstprivate(sdv, rD, rV) reduction(+:filled) schedule(static) collapse(3)
     for (int i=sdv; i>=1; i--) {
       for (int k=1; k<=sdv; k++) {
         for (int j=1; j<=sdv; j++) {
@@ -2098,17 +2100,17 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
           if ( smd[m_p] == -1 )
           {
             int ff = 0;
-            if ( smd[m_w] == refID ) ff++;
-            if ( smd[m_e] == refID ) ff++;
-            if ( smd[m_s] == refID ) ff++;
-            if ( smd[m_n] == refID ) ff++;
-            if ( smd[m_b] == refID ) ff++;
-            if ( smd[m_t] == refID ) ff++;
+            if ( smd[m_w] == rD ) ff++;
+            if ( smd[m_e] == rD ) ff++;
+            if ( smd[m_s] == rD ) ff++;
+            if ( smd[m_n] == rD ) ff++;
+            if ( smd[m_b] == rD ) ff++;
+            if ( smd[m_t] == rD ) ff++;
             
             if ( ff>0 )
             {
-              smd[m_p] = refID;
-              svf[m_p] = refVf;
+              smd[m_p] = rD;
+              svf[m_p] = rV;
               filled++;
             }
           }
@@ -2120,7 +2122,7 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
   else if ( dir == Y_minus)
   {
     
-#pragma omp parallel for firstprivate(sdv, refID, refVf) reduction(+:filled) schedule(static) collapse(3)
+#pragma omp parallel for firstprivate(sdv, rD, rV) reduction(+:filled) schedule(static) collapse(3)
     for (int j=1; j<=sdv; j++) {
       for (int k=1; k<=sdv; k++) {
         for (int i=1; i<=sdv; i++) {
@@ -2135,17 +2137,17 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
           if ( smd[m_p] == -1 )
           {
             int ff = 0;
-            if ( smd[m_w] == refID ) ff++;
-            if ( smd[m_e] == refID ) ff++;
-            if ( smd[m_s] == refID ) ff++;
-            if ( smd[m_n] == refID ) ff++;
-            if ( smd[m_b] == refID ) ff++;
-            if ( smd[m_t] == refID ) ff++;
+            if ( smd[m_w] == rD ) ff++;
+            if ( smd[m_e] == rD ) ff++;
+            if ( smd[m_s] == rD ) ff++;
+            if ( smd[m_n] == rD ) ff++;
+            if ( smd[m_b] == rD ) ff++;
+            if ( smd[m_t] == rD ) ff++;
             
             if ( ff>0 )
             {
-              smd[m_p] = refID;
-              svf[m_p] = refVf;
+              smd[m_p] = rD;
+              svf[m_p] = rV;
               filled++;
             }
           }
@@ -2157,7 +2159,7 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
   else if ( dir == Y_plus)
   {
 
-#pragma omp parallel for firstprivate(sdv, refID, refVf) reduction(+:filled) schedule(static) collapse(3)
+#pragma omp parallel for firstprivate(sdv, rD, rV) reduction(+:filled) schedule(static) collapse(3)
     for (int j=sdv; j>=1; j--) {
       for (int k=1; k<=sdv; k++) {
         for (int i=1; i<=sdv; i++) {
@@ -2172,17 +2174,17 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
           if ( smd[m_p] == -1 )
           {
             int ff = 0;
-            if ( smd[m_w] == refID ) ff++;
-            if ( smd[m_e] == refID ) ff++;
-            if ( smd[m_s] == refID ) ff++;
-            if ( smd[m_n] == refID ) ff++;
-            if ( smd[m_b] == refID ) ff++;
-            if ( smd[m_t] == refID ) ff++;
+            if ( smd[m_w] == rD ) ff++;
+            if ( smd[m_e] == rD ) ff++;
+            if ( smd[m_s] == rD ) ff++;
+            if ( smd[m_n] == rD ) ff++;
+            if ( smd[m_b] == rD ) ff++;
+            if ( smd[m_t] == rD ) ff++;
             
             if ( ff>0 )
             {
-              smd[m_p] = refID;
-              svf[m_p] = refVf;
+              smd[m_p] = rD;
+              svf[m_p] = rV;
               filled++;
             }
           }
@@ -2194,7 +2196,7 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
   else if ( dir == Z_minus)
   {
     
-#pragma omp parallel for firstprivate(sdv, refID, refVf) reduction(+:filled) schedule(static) collapse(3)
+#pragma omp parallel for firstprivate(sdv, rD, rV) reduction(+:filled) schedule(static) collapse(3)
     for (int k=1; k<=sdv; k++) {
       for (int j=1; j<=sdv; j++) {
         for (int i=1; i<=sdv; i++) {
@@ -2209,17 +2211,17 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
           if ( smd[m_p] == -1 )
           {
             int ff = 0;
-            if ( smd[m_w] == refID ) ff++;
-            if ( smd[m_e] == refID ) ff++;
-            if ( smd[m_s] == refID ) ff++;
-            if ( smd[m_n] == refID ) ff++;
-            if ( smd[m_b] == refID ) ff++;
-            if ( smd[m_t] == refID ) ff++;
+            if ( smd[m_w] == rD ) ff++;
+            if ( smd[m_e] == rD ) ff++;
+            if ( smd[m_s] == rD ) ff++;
+            if ( smd[m_n] == rD ) ff++;
+            if ( smd[m_b] == rD ) ff++;
+            if ( smd[m_t] == rD ) ff++;
             
             if ( ff>0 )
             {
-              smd[m_p] = refID;
-              svf[m_p] = refVf;
+              smd[m_p] = rD;
+              svf[m_p] = rV;
               filled++;
             }
           }
@@ -2231,7 +2233,7 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
   else if ( dir == Z_plus)
   {
     
-#pragma omp parallel for firstprivate(sdv, refID, refVf) reduction(+:filled) schedule(static) collapse(3)
+#pragma omp parallel for firstprivate(sdv, rD, rV) reduction(+:filled) schedule(static) collapse(3)
     for (int k=sdv; k>=1; k--) {
       for (int j=1; j<=sdv; j++) {
         for (int i=1; i<=sdv; i++) {
@@ -2246,17 +2248,17 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
           if ( smd[m_p] == -1 )
           {
             int ff = 0;
-            if ( smd[m_w] == refID ) ff++;
-            if ( smd[m_e] == refID ) ff++;
-            if ( smd[m_s] == refID ) ff++;
-            if ( smd[m_n] == refID ) ff++;
-            if ( smd[m_b] == refID ) ff++;
-            if ( smd[m_t] == refID ) ff++;
+            if ( smd[m_w] == rD ) ff++;
+            if ( smd[m_e] == rD ) ff++;
+            if ( smd[m_s] == rD ) ff++;
+            if ( smd[m_n] == rD ) ff++;
+            if ( smd[m_b] == rD ) ff++;
+            if ( smd[m_t] == rD ) ff++;
             
             if ( ff>0 )
             {
-              smd[m_p] = refID;
-              svf[m_p] = refVf;
+              smd[m_p] = rD;
+              svf[m_p] = rV;
               filled++;
             }
           }
