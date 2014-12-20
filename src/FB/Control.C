@@ -3139,7 +3139,7 @@ int Control::setExistComponent(CompoList* cmp, BoundaryOuter* OBC, int* g_obstac
   c = 0;
   for (int n=1; n<=NoCompo; n++)
   {
-    if ( cmp[n].isKindObstacle() )
+    if ( cmp[n].getType() == OBSTACLE || cmp[n].getType() == SOLIDREV )
     {
       g_obstacle[n] = ON;
       c++;

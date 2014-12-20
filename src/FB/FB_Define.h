@@ -26,24 +26,24 @@
 #include "mydebug.h"
 #include <float.h>
 
-#define FB_VERS "1.5.1"
+#define FB_VERS "1.5.2"
 
 #define SINGLE_EPSILON 1.19e-7
 #define DOUBLE_EPSILON 2.22e-16
-#define ROUND_EPS 4.0e-7
 
-// precision
-#ifdef _REAL_IS_DOUBLE_
-#define REAL_TYPE double
-#define REAL_TYPE_EPSILON DBL_MIN
-#else
 /** 実数型の指定
  * - デフォルトでは、REAL_TYPE=float
  * - コンパイル時オプション-D_REAL_IS_DOUBLE_を付与することで
  *   REAL_TYPE=doubleになる
  */
+#ifdef _REAL_IS_DOUBLE_
+#define REAL_TYPE double
+#define REAL_TYPE_EPSILON DBL_MIN
+#define ROUND_EPS SINGLE_EPSILON*5.0
+#else
 #define REAL_TYPE float
 #define REAL_TYPE_EPSILON FLT_MIN
+#define ROUND_EPS SINGLE_EPSILON*5.0
 #endif
 
 
@@ -216,6 +216,7 @@
 #define DARCY        14
 #define PERIODIC     15
 #define MONITOR      16
+#define SOLIDREV     17
 
 
 // 熱伝達係数のモード コンポーネントタイプと並列

@@ -286,16 +286,13 @@ void MonitorList::generatePrimitiveShape(const int odr,
   }
   
   // 回転角度の計算
-  SM.get_angle();
+  SM.getAngle();
   
   
-  // bboxと投影面積の計算 [m^2]
-  area = SM.get_BboxArea() * refVar.refLength * refVar.refLength;
-  //printf("area = %f\n", area);
-  
-  // インデクスの計算
+  // bboxと投影面積の計算 [m^2]とインデクスの計算
   int f_st[3], f_ed[3];
-  SM.bbox_index(f_st, f_ed);
+  area = SM.getBboxArea(f_st, f_ed) * refVar.refLength * refVar.refLength;
+  //printf("area = %f\n", area);
   //printf("(%d %d %d) - (%d %d %d)\n", f_st[0], f_st[1], f_st[2], f_ed[0], f_ed[1], f_ed[2]);
   
   SM.setID(f_st, f_ed, bcd, odr);

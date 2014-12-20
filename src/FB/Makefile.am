@@ -19,6 +19,7 @@ noinst_libdir = ../lib
 
 libFB_a_CXXFLAGS = \
   -I. \
+  -I../Geometry \
   @CDM_CFLAGS@ \
   @CPM_CFLAGS@ \
   @PL_CFLAGS@ \
@@ -31,8 +32,6 @@ libFB_a_SOURCES = \
   Alloc.h \
   BndOuter.C \
   BndOuter.h \
-  CompoFraction.C \
-  CompoFraction.h \
   Component.C \
   Component.h \
   Control.C \

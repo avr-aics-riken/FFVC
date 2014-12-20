@@ -30,13 +30,13 @@
 #include "Component.h"
 #include "FBUtility.h"
 #include "BndOuter.h"
-#include "CompoFraction.h"
+#include "Vec3.h"
 #include "IterationControl.h"
 #include "TextParser.h"
 #include "IntervalManager.h"
 
 using namespace std;
-
+using namespace Vec3class;
 
 
 // #################################################################
@@ -51,8 +51,8 @@ private:
   string group;      ///< ポリゴングループ名
   string material;   ///< Mediumtable[@]のalias
   string bc;         ///< BCのラベル
-  Vec3<REAL_TYPE> bx_min;      ///< Bboxの最小値
-  Vec3<REAL_TYPE> bx_max;      ///< Bboxの最大値
+  Vec3r bx_min;      ///< Bboxの最小値
+  Vec3r bx_max;      ///< Bboxの最大値
   
 public:
   PolygonProperty() {

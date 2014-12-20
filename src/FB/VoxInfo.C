@@ -2297,7 +2297,7 @@ unsigned long VoxInfo::encVbitIBC (const int order,
   float m_vec[3]={(float)vec[0], (float)vec[1], (float)vec[2]};
   Vec3f nv(m_vec);
   
-  // 反対方向のとき符号反転 > 内積が負のときに対象位置となる
+  // 反対方向のとき符号反転 > 内積が負のときに対象位置となる << ここ、いらないんじゃない？
   if ( bc_dir == CompoList::opposite_direction )
   {
     nv *= -1.0;
@@ -3199,15 +3199,8 @@ void VoxInfo::setBCIndexBase (int* bx,
     {
       int key = getMediumOrder(mat, cmp[n].getMedium(), m_NoMedium);
 
-      //if ( key > 0 )
-      //{
       cmp[n].setElement( countCF(n, bx, bid, &cmp[n], "Fluid") );
       cmp[n].setMatodr(key); // MediumListのエントリ番号、力の計算時に使用
-      //}
-      //else
-      //{
-      //  Exit(0);
-      //}
     }
   }
 
@@ -3490,6 +3483,7 @@ unsigned long VoxInfo::setBCIndexP(int* bcd,
     {
       case SPEC_VEL:
       case OUTFLOW:
+      case SOLIDREV:
         encPbitIBC(n, bcd, bcp, bid, vec, "neumann", m_dir);
         break;
     }
@@ -3604,6 +3598,7 @@ void VoxInfo::setBCIndexV(int* cdf, int* bp, SetBC* BC, CompoList* cmp, int icls
     {
       case SPEC_VEL:
       case OUTFLOW:
+      case SOLIDREV:
         cmp[n].setElement( encVbitIBC(n, cdf, bp, bid, vec, m_dir, &cmp[n]) );
         break;
     }

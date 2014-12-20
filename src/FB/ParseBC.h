@@ -216,6 +216,10 @@ private:
   void getIbcPeriodic(const string label_base, const int n, CompoList* cmp);
   
   
+  // 回転体のパラメータを取得する
+  void getIbcSolidRev(const string label_base, const int n, CompoList* cmp);
+  
+  
   // HeatExchangerのパラメータを取得する
   void get_IBC_PrsLoss(const string label_base, const int n, CompoList* cmp);
   

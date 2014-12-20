@@ -139,7 +139,8 @@ am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 libGEOM_a_AR = $(AR) $(ARFLAGS)
 libGEOM_a_LIBADD =
-am_libGEOM_a_OBJECTS = libGEOM_a-Geometry.$(OBJEXT)
+am_libGEOM_a_OBJECTS = libGEOM_a-Geometry.$(OBJEXT) \
+	libGEOM_a-CompoFraction.$(OBJEXT)
 libGEOM_a_OBJECTS = $(am_libGEOM_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -358,6 +359,8 @@ libGEOM_a_CXXFLAGS = \
 libGEOM_a_SOURCES = \
   Geometry.C \
   Geometry.h \
+  CompoFraction.C \
+  CompoFraction.h \
   fill_bid.h
 
 EXTRA_DIST = Makefile_hand depend.inc
@@ -438,6 +441,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libGEOM_a-CompoFraction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libGEOM_a-Geometry.Po@am__quote@
 
 .C.o:
@@ -467,6 +471,20 @@ libGEOM_a-Geometry.obj: Geometry.C
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='Geometry.C' object='libGEOM_a-Geometry.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libGEOM_a_CXXFLAGS) $(CXXFLAGS) -c -o libGEOM_a-Geometry.obj `if test -f 'Geometry.C'; then $(CYGPATH_W) 'Geometry.C'; else $(CYGPATH_W) '$(srcdir)/Geometry.C'; fi`
+
+libGEOM_a-CompoFraction.o: CompoFraction.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libGEOM_a_CXXFLAGS) $(CXXFLAGS) -MT libGEOM_a-CompoFraction.o -MD -MP -MF $(DEPDIR)/libGEOM_a-CompoFraction.Tpo -c -o libGEOM_a-CompoFraction.o `test -f 'CompoFraction.C' || echo '$(srcdir)/'`CompoFraction.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libGEOM_a-CompoFraction.Tpo $(DEPDIR)/libGEOM_a-CompoFraction.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='CompoFraction.C' object='libGEOM_a-CompoFraction.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libGEOM_a_CXXFLAGS) $(CXXFLAGS) -c -o libGEOM_a-CompoFraction.o `test -f 'CompoFraction.C' || echo '$(srcdir)/'`CompoFraction.C
+
+libGEOM_a-CompoFraction.obj: CompoFraction.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libGEOM_a_CXXFLAGS) $(CXXFLAGS) -MT libGEOM_a-CompoFraction.obj -MD -MP -MF $(DEPDIR)/libGEOM_a-CompoFraction.Tpo -c -o libGEOM_a-CompoFraction.obj `if test -f 'CompoFraction.C'; then $(CYGPATH_W) 'CompoFraction.C'; else $(CYGPATH_W) '$(srcdir)/CompoFraction.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libGEOM_a-CompoFraction.Tpo $(DEPDIR)/libGEOM_a-CompoFraction.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='CompoFraction.C' object='libGEOM_a-CompoFraction.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libGEOM_a_CXXFLAGS) $(CXXFLAGS) -c -o libGEOM_a-CompoFraction.obj `if test -f 'CompoFraction.C'; then $(CYGPATH_W) 'CompoFraction.C'; else $(CYGPATH_W) '$(srcdir)/CompoFraction.C'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique

@@ -19,7 +19,9 @@
  * @author aics
  */
 
+#include "FBUtility.h"
 #include "Geometry.h"
+#include "CompoFraction.h"
 
 // #################################################################
 /* @brief d_mid[]がtargetであるセルに対して、d_pvf[]に指定値valueを代入する
@@ -574,8 +576,8 @@ void Geometry::fill(FILE* fp,
   
   Hostonly_
   {
-    printf(    "\t\tPainted cells          = %16ld\n", filled);
-    fprintf(fp,"\t\tPainted cells          = %16ld\n", filled);
+    printf(    "\t\tPainted cells by hint  = %16ld\n", filled);
+    fprintf(fp,"\t\tPainted cells by hint  = %16ld\n", filled);
   }
   
   // ペイントされたシードセル数をターゲットから差し引く

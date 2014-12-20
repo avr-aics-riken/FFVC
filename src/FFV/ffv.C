@@ -65,6 +65,7 @@ FFV::FFV()
   }
   
   mat_tbl = NULL;
+  vec_tbl = NULL;
   
   fp_b = NULL;
   fp_w = NULL;
@@ -139,7 +140,7 @@ void FFV::calcForce(double& flop)
   
   for (int n=1; n<=C.NoCompo; n++)
   {
-    if ( cmp[n].getType()==OBSTACLE )
+    if ( cmp[n].getType()==OBSTACLE || cmp[n].getType()==SOLIDREV )
     {
       cmp[n].getBbox(st, ed);
       int key = cmp[n].getMatodr();

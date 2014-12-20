@@ -21,6 +21,9 @@
 
 #include "ffv_sph.h"
 
+#include "ffv_LSfunc.h"
+#include "ffv_Ffunc.h"
+
 
 // #################################################################
 // リスタートのDFIファイル

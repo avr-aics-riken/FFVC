@@ -257,7 +257,10 @@ int FFV::Initialize(int argc, char **argv)
   U.initS3D(d_mid, size, guide, -1);
   
   
-
+  // 回転体
+  setComponentSR();
+  
+  
   /* ポリゴンを入力とする場合のみ
   if ( C.Mode.Example == id_Polygon )
   {
@@ -349,15 +352,17 @@ int FFV::Initialize(int argc, char **argv)
 
   
   
-  // HEX/FANコンポーネントの形状情報からBboxと体積率を計算
+  // 体積率コンポーネントの配列確保
   if ( C.EnsCompo.fraction )
   {
     TIMING_start("Allocate_Arrays");
     allocArray_CompoVF(PrepMemory, TotalMemory);
     TIMING_stop("Allocate_Arrays");
-    
-    setComponentVF();
   }
+  
+  
+  // 形状情報からBboxと体積率を計算
+  setComponentVF();
 
 
   
@@ -902,6 +907,10 @@ void FFV::createTable(FILE* fp)
   // Fortran用のデータ保持配列 >> mat_tbl[C.NoCompo+1][3]のイメージ
   if ( !(mat_tbl = new double[3*(C.NoCompo+1)]) ) Exit(0);
   for (int i=0; i<3*(C.NoCompo+1); i++) mat_tbl[i] = 1.0; // ゼロ割防止のため，1.0をいれておく
+  
+  // vec_tbl[C.NoCompo+1][7]のイメージ
+  if ( !(vec_tbl = new REAL_TYPE[7*(C.NoCompo+1)]) ) Exit(0);
+  for (int i=0; i<7*(C.NoCompo+1); i++) vec_tbl[i] = 0.0;
   
   
   Hostonly_
@@ -2691,9 +2700,49 @@ void FFV::setBCinfo()
     mat_tbl[n*3+2] = mat[n].P[p_thermal_conductivity] / lmd0;
   }
   
-  // 無次元媒質情報をコピー
-  BC.copyNDmatTable(C.NoCompo, mat_tbl);
   
+  // コンポーネントの無次元速度パラメータ
+  const REAL_TYPE c_pai = (REAL_TYPE)(2.0*asin(1.0));
+  
+  for (int n=1; n<=C.NoCompo; n++)
+  {
+    if ( cmp[n].getType() == SPEC_VEL )
+    {
+      vec_tbl[n*7+0] = cmp[n].nv[0]; // normal vector
+      vec_tbl[n*7+1] = cmp[n].nv[1];
+      vec_tbl[n*7+2] = cmp[n].nv[2];
+      vec_tbl[n*7+3] = cmp[n].ca[CompoList::amplitude] / C.RefVelocity;
+      vec_tbl[n*7+4] = cmp[n].ca[CompoList::frequency] * C.RefLength / C.RefVelocity * 2.0*c_pai;
+      vec_tbl[n*7+5] = cmp[n].ca[CompoList::initphase];
+      vec_tbl[n*7+6] = cmp[n].ca[CompoList::bias] / C.RefVelocity;
+    }
+    else if ( cmp[n].getType() == SOLIDREV )
+    {
+      REAL_TYPE omg = cmp[n].ca[0] * C.RefLength / C.RefVelocity; // [rad]
+      vec_tbl[n*7+0] = cmp[n].nv[0] * omg; // normal vector x angular velocity
+      vec_tbl[n*7+1] = cmp[n].nv[1] * omg;
+      vec_tbl[n*7+2] = cmp[n].nv[2] * omg;
+      vec_tbl[n*7+3] = cmp[n].oc[0] / C.RefLength;
+      vec_tbl[n*7+4] = cmp[n].oc[1] / C.RefLength;
+      vec_tbl[n*7+5] = cmp[n].oc[2] / C.RefLength;
+      vec_tbl[n*7+6] = 0.0;
+    }
+    else
+    {
+      vec_tbl[n*7+0] = 0.0;
+      vec_tbl[n*7+1] = 0.0;
+      vec_tbl[n*7+2] = 0.0;
+      vec_tbl[n*7+3] = 0.0;
+      vec_tbl[n*7+4] = 0.0;
+      vec_tbl[n*7+5] = 0.0;
+      vec_tbl[n*7+6] = 0.0;
+    }
+
+  }
+  
+  
+  // 無次元媒質情報をコピー
+  BC.copyNDmatTable(C.NoCompo, mat_tbl, vec_tbl);
   
   
   // 温度計算の場合の媒質毎の初期値指定オプション
@@ -2706,7 +2755,8 @@ void FFV::setBCinfo()
   // 境界条件の媒質に初期温度にコピー
   for (int n=1; n<=C.NoCompo; n++)
   {
-    if ( cmp[n].isKindCompo() )
+    // OBSTACLEより上のコンポーネントは境界条件
+    if ( cmp[n].getType() > OBSTACLE )
     {
       for (int j=1; j<=C.NoMedium; j++)
       {
@@ -2722,57 +2772,155 @@ void FFV::setBCinfo()
 }
 
 
-
 // #################################################################
-/* @brief HEX,FANコンポーネントなどの体積率とbboxなどをセット
- * @note インデクスの登録と配列確保はVoxEncode()で、コンポーネント領域のリサイズ後に行う
+/* @brief 回転体をセット
  */
-void FFV::setComponentVF()
+void FFV::setComponentSR()
 {
-  int f_st[3], f_ed[3];
-  double flop;
-  
-  CompoFraction CF(size, guide, (REAL_TYPE*)pitch, (REAL_TYPE*)origin, 20);
+  // 無次元パラメータを渡す
+  CompoFraction CF(size, guide, myRank, pitch, origin, 20);
   
   for (int n=1; n<=C.NoCompo; n++)
   {
+    REAL_TYPE center[3];
+    REAL_TYPE dirvec[3];
+    REAL_TYPE depth, p1, p2;
     
-    if ( cmp[n].isFORCING() )
+    // 形状パラメータのセット
+    int Ctype = cmp[n].getType();
+    
+    if ( Ctype==SOLIDREV )
     {
-      // 形状パラメータのセット
-      switch ( cmp[n].getType() ) 
-      {
-        case HEX:
-          CF.setShapeParam((REAL_TYPE*)cmp[n].nv, (REAL_TYPE*)cmp[n].oc, (REAL_TYPE*)cmp[n].dr, (REAL_TYPE)cmp[n].depth, (REAL_TYPE)cmp[n].shp_p1, (REAL_TYPE)cmp[n].shp_p2);
-          break;
-          
-        case FAN:
-          CF.setShapeParam((REAL_TYPE*)cmp[n].nv, (REAL_TYPE*)cmp[n].oc, (REAL_TYPE)cmp[n].depth, (REAL_TYPE)cmp[n].shp_p1, (REAL_TYPE)cmp[n].shp_p2);
-          break;
-          
-        case DARCY:
-          Exit(0);
-          break;
-          
-        default:
-          Exit(0);
-          break;
-      }
+      center[0] = cmp[n].oc[0] / C.RefLength;
+      center[1] = cmp[n].oc[1] / C.RefLength;
+      center[2] = cmp[n].oc[2] / C.RefLength;
+      dirvec[0] = cmp[n].dr[0] / C.RefLength;
+      dirvec[1] = cmp[n].dr[1] / C.RefLength;
+      dirvec[2] = cmp[n].dr[2] / C.RefLength;
+      depth = cmp[n].depth  / C.RefLength;
+      p1    = cmp[n].shp_p1 / C.RefLength;
+      p2    = cmp[n].shp_p2 / C.RefLength;
+      
+      CF.setShapeParam(cmp[n].nv, center, depth, p1, p2);
+
       
       // 回転角度の計算
-      CF.get_angle(); 
+      CF.getAngle();
       
-      // bboxと投影面積の計算
-      cmp[n].area = CF.get_BboxArea();
       
-      // インデクスの計算 > あとで，VoxEncode()でresize
-      CF.bbox_index(f_st, f_ed);
+      // bboxと投影面積、インデクスの計算
+      int f_st[3], f_ed[3];
+      cmp[n].area = CF.getBboxArea(f_st, f_ed);
+      
       
       // インデクスのサイズ登録と存在フラグ
       cmp[n].setBbox(f_st, f_ed);
       cmp[n].setEnsLocal(ON);
       
-      // 体積率
+      
+      double flop=0.0;
+      
+      // 交点計算
+      flop = 0.0;
+      CF.intersectCylinder(f_st, f_ed, d_bid, d_cut, n);
+      
+    
+      // ########## 確認のための出力
+#if 0
+      REAL_TYPE org[3], pit[3];
+      
+      //  ガイドセルがある場合(GuideOut != 0)にオリジナルポイントを調整
+      for (int i=0; i<3; i++)
+      {
+        org[i] = C.org[i] - C.dx[i]*(REAL_TYPE)C.GuideOut;
+        pit[i] = C.dx[i];
+      }
+      
+      // 出力ファイルの指定が有次元の場合
+      if ( C.Unit.File == DIMENSIONAL )
+      {
+        for (int i=0; i<3; i++)
+        {
+          org[i] *= C.RefLength;
+          pit[i] *= C.RefLength;
+        }
+      }
+      writeRawSPH(cvf, size, guide, 0, org, pit, sizeof(REAL_TYPE));
+#endif
+      // ##########
+    }
+    
+  } // loop - NoCmpo
+  
+}
+
+
+
+// #################################################################
+/* @brief HEX,FANコンポーネントなどの体積率とbboxなどをセット
+ */
+void FFV::setComponentVF()
+{
+  // 無次元パラメータを渡す
+  CompoFraction CF(size, guide, myRank, pitch, origin, 20);
+  
+  for (int n=1; n<=C.NoCompo; n++)
+  {
+    REAL_TYPE center[3];
+    REAL_TYPE dirvec[3];
+    REAL_TYPE depth, p1, p2;
+    
+    // 形状パラメータのセット
+    int Ctype = cmp[n].getType();
+    
+    if ( Ctype==HEX || Ctype==FAN )
+    {
+      switch ( Ctype )
+      {
+        case HEX:
+          center[0] = cmp[n].oc[0] / C.RefLength;
+          center[1] = cmp[n].oc[1] / C.RefLength;
+          center[2] = cmp[n].oc[2] / C.RefLength;
+          dirvec[0] = cmp[n].dr[0] / C.RefLength;
+          dirvec[1] = cmp[n].dr[1] / C.RefLength;
+          dirvec[2] = cmp[n].dr[2] / C.RefLength;
+          depth = cmp[n].depth  / C.RefLength;
+          p1    = cmp[n].shp_p1 / C.RefLength;
+          p2    = cmp[n].shp_p2 / C.RefLength;
+          CF.setShapeParam(cmp[n].nv, center, dirvec, depth, p1, p2);
+          break;
+          
+        case FAN:
+          center[0] = cmp[n].oc[0] / C.RefLength;
+          center[1] = cmp[n].oc[1] / C.RefLength;
+          center[2] = cmp[n].oc[2] / C.RefLength;
+          depth = cmp[n].depth  / C.RefLength;
+          p1    = cmp[n].shp_p1 / C.RefLength;
+          p2    = cmp[n].shp_p2 / C.RefLength;
+          CF.setShapeParam(cmp[n].nv, center, depth, p1, p2);
+          break;
+          
+        case DARCY:
+          Exit(0);
+          break;
+      }
+      
+      // 回転角度の計算
+      CF.getAngle();
+      
+      
+      // bboxと投影面積、インデクスの計算
+      int f_st[3], f_ed[3];
+      cmp[n].area = CF.getBboxArea(f_st, f_ed);
+      
+      
+      // インデクスのサイズ登録と存在フラグ
+      cmp[n].setBbox(f_st, f_ed);
+      cmp[n].setEnsLocal(ON);
+      
+      
+      double flop=0.0;
+      
       TIMING_start("Compo_Vertex8");
       flop = 0.0;
       CF.vertex8(f_st, f_ed, d_cvf, flop);
@@ -2782,32 +2930,33 @@ void FFV::setComponentVF()
       flop = 0.0;
       CF.subdivision(f_st, f_ed, d_cvf, flop);
       TIMING_stop("Compo_Subdivision", flop);
-    }
-  }
-  
-// ########## 確認のための出力
+      
+      // ########## 確認のための出力
 #if 0
-  REAL_TYPE org[3], pit[3];
-  
-  //  ガイドセルがある場合(GuideOut != 0)にオリジナルポイントを調整
-  for (int i=0; i<3; i++) 
-  {
-    org[i] = C.org[i] - C.dx[i]*(REAL_TYPE)C.GuideOut;
-    pit[i] = C.dx[i];
-  }
-  
-  // 出力ファイルの指定が有次元の場合
-  if ( C.Unit.File == DIMENSIONAL ) 
-  {
-    for (int i=0; i<3; i++) 
-    {
-      org[i] *= C.RefLength;
-      pit[i] *= C.RefLength;
-    }
-  }
-  writeRawSPH(cvf, size, guide, 0, org, pit, sizeof(REAL_TYPE));
+      REAL_TYPE org[3], pit[3];
+      
+      //  ガイドセルがある場合(GuideOut != 0)にオリジナルポイントを調整
+      for (int i=0; i<3; i++)
+      {
+        org[i] = C.org[i] - C.dx[i]*(REAL_TYPE)C.GuideOut;
+        pit[i] = C.dx[i];
+      }
+      
+      // 出力ファイルの指定が有次元の場合
+      if ( C.Unit.File == DIMENSIONAL )
+      {
+        for (int i=0; i<3; i++)
+        {
+          org[i] *= C.RefLength;
+          pit[i] *= C.RefLength;
+        }
+      }
+      writeRawSPH(cvf, size, guide, 0, org, pit, sizeof(REAL_TYPE));
 #endif
-// ##########
+      // ##########
+    }
+
+  } // loop - NoCmpo
   
 }
 

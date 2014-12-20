@@ -146,34 +146,6 @@ void ParseBC::countMedium(Control* Cref, const MediumList* mat)
 
 
 
-// #################################################################
-/**
- * @brief
- * @param [in]  label_base ラベルディレクトリ
- * @param [in]  n          コンポーネントリストの格納番号
- * @param [out] cmp        CompoList
- */
-void ParseBC::get_Darcy(const string label_base, const int n, CompoList* cmp)
-{
-  REAL_TYPE v[3];
-  string label;
-  
-  for (int n=0; n<3; n++) v[n]=0.0;
-  
-  
-  // 透過率の取得
-  label = label_base + "/Permeability";
-  
-  if( !(tpCntl->getInspectedVector(label, v, 3)) ) {
-    stamped_printf("\tParsing error : fail to get permeability params in 'Darcy'\n");
-    Exit(0);
-  }
-  cmp[n].ca[0] = v[0]; // 透過率[m^2]は境界条件設定時に無次元化する
-  cmp[n].ca[1] = v[1];
-  cmp[n].ca[2] = v[2];
-}
-
-
 
 // #################################################################
 /**
@@ -188,77 +160,6 @@ void ParseBC::getIbcCnstTemp(const string label_base, const int n, CompoList* cm
   
   REAL_TYPE tmp = getValueReal(label);
   cmp[n].setTemp( tmp );
-}
-
-
-
-// #################################################################
-/**
- * @brief Fanのパラメータを取得する
- * @param [in]  label_base ラベルディレクトリ
- * @param [in]  n          コンポーネントリストの格納番号
- * @param [out] cmp        CompoList
- */
-void ParseBC::get_IBC_Fan(const string label_base, const int n, CompoList* cmp)
-{
-  string str,str_u;
-  string label;
-  REAL_TYPE dv[3];
-  
-  // 入力単位の指定
-  label=label_base+"/Unit";//
-  //cout <<  "label : " << label << endl;
-  if ( !(tpCntl->getInspectedValue(label, str_u )) ) {
-		stamped_printf("\tParsing error : Invalid float value for 'unit' in 'Pressure_Loss'\n");
-		Exit(0);
-  }
-  if ( !strcasecmp("mmaq", str_u.c_str()) ) {
-    cmp[n].setPrsUnit(CompoList::unit_mmAq);
-  }
-  else if ( !strcasecmp("mmhg", str_u.c_str()) ) {
-    cmp[n].setPrsUnit(CompoList::unit_mmHg);
-  }
-  else if ( !strcasecmp("pa", str_u.c_str()) ) {
-    cmp[n].setPrsUnit(CompoList::unit_Pa);
-  }
-  else if ( !strcasecmp("nondimension", str_u.c_str()) ) {
-    cmp[n].setPrsUnit(CompoList::unit_NonDimensional);
-  }
-  else {
-    stamped_printf("\tDescribed unit is out of scope.\n");
-    Exit(0);
-  }
-  
-  // 法線ベクトルの取得
-  label = label_base + "/OrientationVector";
-  if ( !Control::getVec(label, dv, tpCntl, true) ) Exit(0);
-  cmp[n].nv[0] = dv[0];
-  cmp[n].nv[1] = dv[1];
-  cmp[n].nv[2] = dv[2];
-  
-  // 中心座標の取得
-  label = label_base + "/Center";
-  if ( !Control::getVec(label, dv, tpCntl, false) ) Exit(0);
-  cmp[n].oc[0] = dv[0];
-  cmp[n].oc[1] = dv[1];
-  cmp[n].oc[2] = dv[2];
-  
-  // 形状パラメータ
-  label=label_base+"/Depth";
-  cmp[n].depth  = getValueReal(label);
-  
-  label=label_base+"/FanRadius";
-  cmp[n].shp_p1 = getValueReal(label);
-  
-  label=label_base+"/BossRadius";
-  cmp[n].shp_p2 = getValueReal(label);
-  
-  if ( cmp[n].shp_p1 <= cmp[n].shp_p2 )
-  {
-    stamped_printf("\tError : Radius of boss is greater than fan.\n");
-    Exit(0);
-  }
-  
 }
 
 
@@ -389,6 +290,7 @@ void ParseBC::getIbcHT_SF(const string label_base, const int n, CompoList* cmp)
 }
 
 
+
 // #################################################################
 /**
  * @brief HeatTransferSNのパラメータを取得する
@@ -439,41 +341,6 @@ void ParseBC::getIbcHT_SN(const string label_base, const int n, CompoList* cmp)
   
   label = label_base + "/LowerRaCritial";
   cmp[n].cb[CompoList::lower_Ra_critial]      = getValueReal(label);
-}
-
-
-// #################################################################
-/**
- * @brief Direct Forcingのパラメータを取得する
- * @param [in]  label_base ラベルディレクトリ
- * @param [in]  n          コンポーネントリストの格納番号
- * @param [out] cmp        CompoList
- */
-void ParseBC::get_IBC_IBM_DF(const string label_base, const int n, CompoList* cmp)
-{
-  string str;
-  string label;
-  REAL_TYPE dv[3];
-  
-  // 法線ベクトル
-  label = label_base + "/OrientationVector";
-  if ( !Control::getVec(label, dv, tpCntl, true) ) Exit(0);
-  cmp[n].nv[0] = dv[0];
-  cmp[n].nv[1] = dv[1];
-  cmp[n].nv[2] = dv[2];
-  
-  // Velocity
-  label=label_base+"/Velocity";
-  
-  REAL_TYPE ct = getValueReal(label);
-  
-  if ( Unit_Param == DIMENSIONAL )
-  {
-    cmp[n].set_Velocity( ct );
-  }
-  else {
-    cmp[n].set_Velocity( ct * RefVelocity );
-  }
 }
 
 
@@ -632,6 +499,326 @@ void ParseBC::getIbcPeriodic(const string label_base, const int n, CompoList* cm
 
 // #################################################################
 /**
+ * @brief 回転体のパラメータを取得する
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ */
+void ParseBC::getIbcSolidRev(const string label_base, const int n, CompoList* cmp)
+{
+  string str;
+  string label;
+  REAL_TYPE dv[3], ct;
+  
+  
+  // 法線ベクトルの取得 trueで単位ベクトル化
+  label = label_base + "/OrientationVector";
+  if ( !Control::getVec(label, dv, tpCntl, true) ) Exit(0);
+  cmp[n].nv[0] = dv[0];
+  cmp[n].nv[1] = dv[1];
+  cmp[n].nv[2] = dv[2];
+  
+  
+  // 中心座標の取得
+  label = label_base + "/Center";
+  if ( !Control::getVec(label, dv, tpCntl, false) ) Exit(0);
+  if ( Unit_Param == DIMENSIONAL )
+  {
+    cmp[n].oc[0] = dv[0];
+    cmp[n].oc[1] = dv[1];
+    cmp[n].oc[2] = dv[2];
+  }
+  else
+  {
+    cmp[n].oc[0] = dv[0] * RefLength;
+    cmp[n].oc[1] = dv[1] * RefLength;
+    cmp[n].oc[2] = dv[2] * RefLength;
+  }
+  
+  
+  // 形状パラメータ
+  label = label_base + "/Depth";
+  ct = getValueReal(label);
+  if ( Unit_Param == DIMENSIONAL )
+  {
+    cmp[n].depth = ct;
+  }
+  else
+  {
+    cmp[n].depth = ct * RefLength;
+  }
+  
+  
+  
+  label = label_base + "/Radius";
+  ct = getValueReal(label);
+  if ( Unit_Param == DIMENSIONAL )
+  {
+    cmp[n].shp_p1 = ct;
+  }
+  else
+  {
+    cmp[n].shp_p1 = ct * RefLength;
+  }
+  
+  
+  // 回転数
+  label = label_base + "/RotationFrequency";
+  if ( !(tpCntl->getInspectedValue(label, ct)) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  REAL_TYPE pi = 2.0*asin(1.0);
+  REAL_TYPE omg = 2.0*pi*ct/60.0; // [rad/s]
+  
+  cmp[n].ca[0] = ( Unit_Param == DIMENSIONAL ) ? omg : ct;
+  
+}
+
+
+
+
+// #################################################################
+/**
+ * @brief 内部の流入境界のパラメータを取得する
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ * @note Control::setparameters()でcmp[].ca[]に値をセットする
+ */
+void ParseBC::getIbcSpecVel(const string label_base, const int n, CompoList* cmp)
+{
+  string str;
+  string label;
+  REAL_TYPE ct=0;
+  REAL_TYPE dv[3];
+  
+  // 指定タイプの特定
+  label = label_base + "/Type";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid SpecifiedType in '%s'\n", label.c_str());
+    Exit(0);
+  }
+  if ( !strcasecmp("Velocity", str.c_str()) )
+  {
+    cmp[n].set_VBC_policy(true);
+  }
+  else if ( !strcasecmp("Massflow", str.c_str()) )
+  {
+    cmp[n].set_VBC_policy(false);
+  }
+  else
+  {
+    Hostonly_ printf("\tParsing error : Invalid string value '%s' for 'Type'\n", str.c_str());
+    Exit(0);
+  }
+  
+  // 速度指定タイプ
+  cmp[n].set_V_profile( getVprofile(label_base) );
+  
+  
+  // 速度パラメータの読み込み
+  getVelocity(label_base, cmp[n].get_V_Profile(), cmp[n].ca, "LocalBoundary", cmp[n].isPolicy_Massflow());
+  
+  
+  // 法線ベクトル
+  label = label_base + "/OrientationVector";
+  if ( !Control::getVec(label, dv, tpCntl, true) ) Exit(0);
+  cmp[n].nv[0] = dv[0];
+  cmp[n].nv[1] = dv[1];
+  cmp[n].nv[2] = dv[2];
+  
+  
+  // 境界条件の方向
+  label = label_base + "/InOut";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  if ( !strcasecmp("in", str.c_str()) )
+  {
+    cmp[n].setBClocation(CompoList::same_direction);
+  }
+  else if ( !strcasecmp("out", str.c_str()) )
+  {
+    cmp[n].setBClocation(CompoList::opposite_direction);
+  }
+  else
+  {
+    printf("\tParsing error : Invalid string value '%s' for 'InOut'\n", str.c_str());
+    Exit(0);
+  }
+  
+  
+  // heat problem
+  if ( HeatProblem )
+  {
+    label = label_base + "/Temperature";
+    
+    if ( !(tpCntl->getInspectedValue(label, ct )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      Exit(0);
+    }
+    
+    cmp[n].setTemp( ct );
+    
+    if ( Unit_Param != DIMENSIONAL )
+    {
+      Hostonly_ stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
+      Exit(0);
+    }
+    
+  }
+  
+}
+
+
+
+// #################################################################
+/**
+ * @brief
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ */
+void ParseBC::get_Darcy(const string label_base, const int n, CompoList* cmp)
+{
+  REAL_TYPE v[3];
+  string label;
+  
+  for (int n=0; n<3; n++) v[n]=0.0;
+  
+  
+  // 透過率の取得
+  label = label_base + "/Permeability";
+  
+  if( !(tpCntl->getInspectedVector(label, v, 3)) ) {
+    stamped_printf("\tParsing error : fail to get permeability params in 'Darcy'\n");
+    Exit(0);
+  }
+  cmp[n].ca[0] = v[0]; // 透過率[m^2]は境界条件設定時に無次元化する
+  cmp[n].ca[1] = v[1];
+  cmp[n].ca[2] = v[2];
+}
+
+
+
+// #################################################################
+/**
+ * @brief Fanのパラメータを取得する
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ */
+void ParseBC::get_IBC_Fan(const string label_base, const int n, CompoList* cmp)
+{
+  string str,str_u;
+  string label;
+  REAL_TYPE dv[3];
+  
+  // 入力単位の指定
+  label=label_base+"/Unit";//
+  //cout <<  "label : " << label << endl;
+  if ( !(tpCntl->getInspectedValue(label, str_u )) ) {
+    stamped_printf("\tParsing error : Invalid float value for 'unit' in 'Pressure_Loss'\n");
+    Exit(0);
+  }
+  if ( !strcasecmp("mmaq", str_u.c_str()) ) {
+    cmp[n].setPrsUnit(CompoList::unit_mmAq);
+  }
+  else if ( !strcasecmp("mmhg", str_u.c_str()) ) {
+    cmp[n].setPrsUnit(CompoList::unit_mmHg);
+  }
+  else if ( !strcasecmp("pa", str_u.c_str()) ) {
+    cmp[n].setPrsUnit(CompoList::unit_Pa);
+  }
+  else if ( !strcasecmp("nondimension", str_u.c_str()) ) {
+    cmp[n].setPrsUnit(CompoList::unit_NonDimensional);
+  }
+  else {
+    stamped_printf("\tDescribed unit is out of scope.\n");
+    Exit(0);
+  }
+  
+  // 法線ベクトルの取得
+  label = label_base + "/OrientationVector";
+  if ( !Control::getVec(label, dv, tpCntl, true) ) Exit(0);
+  cmp[n].nv[0] = dv[0];
+  cmp[n].nv[1] = dv[1];
+  cmp[n].nv[2] = dv[2];
+  
+  // 中心座標の取得
+  label = label_base + "/Center";
+  if ( !Control::getVec(label, dv, tpCntl, false) ) Exit(0);
+  cmp[n].oc[0] = dv[0];
+  cmp[n].oc[1] = dv[1];
+  cmp[n].oc[2] = dv[2];
+  
+  // 形状パラメータ
+  label=label_base+"/Depth";
+  cmp[n].depth  = getValueReal(label);
+  
+  label=label_base+"/FanRadius";
+  cmp[n].shp_p1 = getValueReal(label);
+  
+  label=label_base+"/BossRadius";
+  cmp[n].shp_p2 = getValueReal(label);
+  
+  if ( cmp[n].shp_p1 <= cmp[n].shp_p2 )
+  {
+    stamped_printf("\tError : Radius of boss is greater than fan.\n");
+    Exit(0);
+  }
+  
+}
+
+
+
+// #################################################################
+/**
+ * @brief Direct Forcingのパラメータを取得する
+ * @param [in]  label_base ラベルディレクトリ
+ * @param [in]  n          コンポーネントリストの格納番号
+ * @param [out] cmp        CompoList
+ */
+void ParseBC::get_IBC_IBM_DF(const string label_base, const int n, CompoList* cmp)
+{
+  string str;
+  string label;
+  REAL_TYPE dv[3];
+  
+  // 法線ベクトル
+  label = label_base + "/OrientationVector";
+  if ( !Control::getVec(label, dv, tpCntl, true) ) Exit(0);
+  cmp[n].nv[0] = dv[0];
+  cmp[n].nv[1] = dv[1];
+  cmp[n].nv[2] = dv[2];
+  
+  // Velocity
+  label=label_base+"/Velocity";
+  
+  REAL_TYPE ct = getValueReal(label);
+  
+  if ( Unit_Param == DIMENSIONAL )
+  {
+    cmp[n].set_Velocity( ct );
+  }
+  else {
+    cmp[n].set_Velocity( ct * RefVelocity );
+  }
+}
+
+
+
+
+// #################################################################
+/**
  * @brief HeatExchangerのパラメータを取得する
  * @param [in]  label_base ラベルディレクトリ
  * @param [in]  n          コンポーネントリストの格納番号
@@ -759,105 +946,6 @@ void ParseBC::get_IBC_Radiant(const string label_base, const int n, CompoList* c
 }
 
 
-
-// #################################################################
-/**
- * @brief 内部の流入境界のパラメータを取得する
- * @param [in]  label_base ラベルディレクトリ
- * @param [in]  n          コンポーネントリストの格納番号
- * @param [out] cmp        CompoList
- * @note Control::setparameters()でcmp[].ca[]に値をセットする
- */
-void ParseBC::getIbcSpecVel(const string label_base, const int n, CompoList* cmp)
-{
-  string str;
-  string label;
-  REAL_TYPE ct=0;
-  REAL_TYPE dv[3];
-  
-  // 指定タイプの特定
-  label = label_base + "/Type";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid SpecifiedType in '%s'\n", label.c_str());
-    Exit(0);
-  }
-  if ( !strcasecmp("Velocity", str.c_str()) )
-  {
-	  cmp[n].set_VBC_policy(true);
-  }
-  else if ( !strcasecmp("Massflow", str.c_str()) )
-  {
-	  cmp[n].set_VBC_policy(false);
-  }
-  else
-  {
-	  Hostonly_ printf("\tParsing error : Invalid string value '%s' for 'Type'\n", str.c_str());
-	  Exit(0);
-  }
-  
-  // 速度指定タイプ
-  cmp[n].set_V_profile( getVprofile(label_base) );
-  
-  
-  // 速度パラメータの読み込み
-  getVelocity(label_base, cmp[n].get_V_Profile(), cmp[n].ca, "LocalBoundary", cmp[n].isPolicy_Massflow());
-
-  
-  // 法線ベクトル
-  label = label_base + "/OrientationVector";
-  if ( !Control::getVec(label, dv, tpCntl, true) ) Exit(0);
-  cmp[n].nv[0] = dv[0];
-  cmp[n].nv[1] = dv[1];
-  cmp[n].nv[2] = dv[2];
-
-  
-  // 境界条件の方向
-  label = label_base + "/InOut";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-    stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    Exit(0);
-  }
-  if ( !strcasecmp("in", str.c_str()) )
-  {
-    cmp[n].setBClocation(CompoList::same_direction);
-  }
-  else if ( !strcasecmp("out", str.c_str()) )
-  {
-    cmp[n].setBClocation(CompoList::opposite_direction);
-  }
-  else
-  {
-    printf("\tParsing error : Invalid string value '%s' for 'InOut'\n", str.c_str());
-    Exit(0);
-  }
-  
-  
-  // heat problem
-  if ( HeatProblem )
-  {
-    label = label_base + "/Temperature";
-    
-    if ( !(tpCntl->getInspectedValue(label, ct )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
-    }
-
-    cmp[n].setTemp( ct );
-    
-    if ( Unit_Param != DIMENSIONAL )
-    {
-      Hostonly_ stamped_printf("\tWarning: Heat condition must be a dimensional value\n");
-      Exit(0);
-    }
-
-  }
-  
-}
 
 
 // #################################################################
@@ -1877,6 +1965,7 @@ void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp)
     else if ( tp == DARCY )         get_Darcy(label_leaf, m, cmp);
     else if ( tp == PERIODIC )      getIbcPeriodic(label_leaf, m, cmp);
     else if ( tp == MONITOR )       { ; }
+    else if ( tp == SOLIDREV )      getIbcSolidRev(label_leaf, m, cmp);
     
     
     if ( HeatProblem )
@@ -1920,6 +2009,7 @@ void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp)
       else if ( tp == HEAT_SRC )     getIbcHeatSrc(label_leaf, m, cmp);
       else if ( tp == CNST_TEMP )    getIbcCnstTemp(label_leaf, m, cmp);
       else if ( tp == SPEC_VEL ) { ; } // 既に読み込み済み
+      else if ( tp == SOLIDREV ) { ; } // 既に読み込み済み
       else 
       {
         Hostonly_ printf("\tError : Invalid Local BC keyword [%d]\n", tp);
@@ -2374,7 +2464,7 @@ void ParseBC::loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* c
           int cflag=0;
           for (int c=1; c<=NoCompo; c++)
           {
-            if ( (cmp[c].getType() == PERIODIC) && !cmp[c].isKindCompo() )
+            if ( (cmp[c].getType() == PERIODIC) )
             {
               if ( (int)cmp[c].getPeriodicDir() != bc[n].get_DriverDir() )
               {
@@ -2696,6 +2786,52 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
      }*/
   }
   
+  // Solid Revolution
+  if ( existComponent(SOLIDREV, cmp) )
+  {
+    fprintf(fp, "\n\t[Solid Revolution]\n");
+    
+    fprintf(fp, "\t no                    Label        n_x        n_y        n_z     O_x[m]     O_y[m]     O_z[m]\n");
+    for (int n=1; n<=NoCompo; n++)
+    {
+      if ( cmp[n].getType() == SOLIDREV )
+      {
+        fprintf(fp, "\t%3d %24s %10.3e %10.3e %10.3e %10.3e %10.3e %10.3e\n",
+                n, cmp[n].getAlias().c_str(),
+                cmp[n].nv[0], cmp[n].nv[1], cmp[n].nv[2],
+                cmp[n].oc[0], cmp[n].oc[1], cmp[n].oc[2]);
+      }
+    }
+    fprintf(fp, "\n");
+    
+    fprintf(fp, "\t                               Depth[m]  Radius[m]  Rot. Frequency[Hz]\n");
+    for (int n=1; n<=NoCompo; n++)
+    {
+      if ( cmp[n].getType() == SOLIDREV )
+      {
+        fprintf(fp, "\t%3d %24s %10.3e %10.3e          %10.3e\n",
+                n, cmp[n].getAlias().c_str(), cmp[n].depth, cmp[n].shp_p1, cmp[n].ca[0]);
+      }
+    }
+    fprintf(fp, "\n");
+    
+    fprintf(fp, "\t                                i_st    i_ed    j_st    j_ed    k_st    k_ed\n");
+    for (int n=1; n<=NoCompo; n++)
+    {
+      if ( cmp[n].getType() == SOLIDREV )
+      {
+        st = getCmpGbbox_st(n, gci);
+        ed = getCmpGbbox_ed(n, gci);
+        
+        fprintf(fp, "\t%3d %24s %7d %7d %7d %7d %7d %7d\n",
+                n, cmp[n].getAlias().c_str(),
+                st.x, ed.x, st.y, ed.y, st.z, ed.z);
+      }
+    }
+    fprintf(fp, "\n");
+  }
+  
+    
 	// Darcy Law
   if ( existComponent(DARCY, cmp) )
   {
@@ -3461,6 +3597,7 @@ void ParseBC::setKeywordLBC(const string keyword, const int m, CompoList* cmp)
   else if( FBUtility::compare(keyword, "Periodic") )             cmp[m].setType(PERIODIC);
   else if( FBUtility::compare(keyword, "Obstacle") )             cmp[m].setType(OBSTACLE);
   else if( FBUtility::compare(keyword, "Monitor") )              cmp[m].setType(MONITOR);
+  else if( FBUtility::compare(keyword, "SolidRevolution") )      cmp[m].setType(SOLIDREV);
   else {
     Hostonly_ stamped_printf("\tInvalid keyword is described '%s'\n", keyword.c_str());
     Exit(0);

@@ -17,7 +17,7 @@ include ../make_setting
 
 TARGET = libGEOM.a
 
-CXXSRCS = Geometry.C
+CXXSRCS = Geometry.C CompoFraction.C
 
 
 SRCS  = $(CXXSRCS)

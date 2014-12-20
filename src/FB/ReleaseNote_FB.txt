@@ -17,6 +17,9 @@
 RELEASE NOTE
 ============
 
+Ver 1.5.2   2014-12-13
+ - ROUND_EPS >> SINGLE or DOUBLEの10倍
+
 Ver 1.5.1   2014-11-08
  - 変数識別子修正　Kind_of_vars
 

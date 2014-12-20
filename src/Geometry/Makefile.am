@@ -30,6 +30,8 @@ libGEOM_a_CXXFLAGS = \
 libGEOM_a_SOURCES = \
   Geometry.C \
   Geometry.h \
+  CompoFraction.C \
+  CompoFraction.h \
   fill_bid.h
 
 EXTRA_DIST = Makefile_hand depend.inc

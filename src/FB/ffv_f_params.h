@@ -29,7 +29,7 @@ integer     ::  adbtc_T, adbtc_B, adbtc_N, adbtc_S, adbtc_E, adbtc_W
 integer     ::  X_plus, X_minus, Y_plus, Y_minus, Z_plus, Z_minus
 integer     ::  id_specvel, id_wall, id_symmetric, id_periodic
 integer     ::  obc_periodic, obc_outflow, obc_mask
-integer     ::  cmp_typ_outflow, cmp_typ_hex, cmp_typ_vspec
+integer     ::  cmp_typ_outflow, cmp_typ_hex, cmp_typ_vspec, cmp_typ_solidrev
 integer     ::  facing_t, facing_b, facing_n, facing_s, facing_e, facing_w, vld_cnvg
 integer     ::  gma_T, gma_B, gma_N, gma_S, gma_E, gma_W, h_diag
 integer     ::  top_vf, bitw_8, forcing_bit, bitw_6, bitw_5, vbc_uwd
@@ -120,6 +120,7 @@ parameter ( id_periodic  = 4 ) ! SetBC.h
 parameter ( cmp_typ_vspec   = 7  ) ! FB_Define.h SPEC_VEL
 parameter ( cmp_typ_outflow = 8  ) ! FB_Define.h OUTFLOW
 parameter ( cmp_typ_hex     = 12 ) ! FB_Define.h HEX
+parameter ( cmp_typ_solidrev= 17 ) ! FB_Define.h SOLIDREV
 
 ! 外部境界条件番号
 parameter ( obc_mask     = 31) ! FB_Define.h OBC_MASK 内外部境界条件の識別子

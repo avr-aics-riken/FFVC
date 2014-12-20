@@ -171,7 +171,8 @@ private:
   CutPos32Array *cutPos;
   CutBid5Array  *cutBid;
   
-  double *mat_tbl; // Fortranでの多媒質対応ルーチンのため，rho, cp, lambdaの配列
+  double *mat_tbl;    // Fortranでの多媒質対応ルーチンのため，rho, cp, lambdaの配列
+  REAL_TYPE *vec_tbl; // Fortranでの速度境界条件参照用配列
   
   REAL_TYPE *cmp_force_local;      ///< コンポーネントの各ランクの力の成分
   REAL_TYPE *cmp_force_global;     ///< コンポーネントの各ランクのCompoListで計算した力の成分を積算する
@@ -373,6 +374,10 @@ private:
   
   // 外部境界条件を読み込み，Controlクラスに保持する
   void setBCinfo();
+  
+  
+  // 回転体をセット
+  void setComponentSR();
   
   
   // HEX,FANコンポーネントなどの体積率とbboxなどをセット

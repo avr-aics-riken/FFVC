@@ -293,6 +293,9 @@ void SetBC3D::modDivergence(REAL_TYPE* dv, int* d_cdf, double tm, Control* C, RE
         div_ibc_drchlt_(dv, size, &gd, st, ed, v00, d_cdf, &n, vec, &fcount);
         break;
         
+      case SOLIDREV:
+        break;
+        
       default:
         break;
     }
@@ -543,6 +546,10 @@ void SetBC3D::modPvecFlux(REAL_TYPE* wv, REAL_TYPE* v, int* d_cdf, const double 
       vec[0] = vec[1] = vec[2] = cmp[n].val[var_Velocity]; // modDivergence()でセルフェイス流出速度がval[var_Velocity]にセット
       pvec_ibc_oflow_(wv, size, &gd, st, ed, &dh, &rei, v, d_cdf, &n, vec, &flop);
     }
+    else if ( typ==SOLIDREV )
+    {
+      ;
+    }
     
   }
   
@@ -613,6 +620,9 @@ void SetBC3D::modPsrcVBC(REAL_TYPE* dv, int* d_cdf, const double tm, Control* C,
       case OUTFLOW:
         vel = cmp[n].val[var_Velocity] * dt / dh; // modDivergence()でval[var_Velocity]にセット
         div_ibc_oflow_pvec_(dv, size, &gd, st, ed, v00, &vel, d_cdf, &n, v0, vf, &fcount);
+        break;
+        
+      case SOLIDREV:
         break;
         
       default:
@@ -3523,6 +3533,9 @@ void SetBC3D::TBCconvection(REAL_TYPE* d_ws, const int* d_cdf, const REAL_TYPE* 
         
       case OUTFLOW:
         cmp[n].setMonitorValue( psIbcOutflow(d_ws, d_cdf, n, d_vf, d_ie0, v00) );
+        break;
+        
+      case SOLIDREV:
         break;
     }
     

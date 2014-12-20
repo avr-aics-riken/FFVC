@@ -739,7 +739,7 @@ bool History::printHistoryForce(const CompoList* cmp, const REAL_TYPE* frc)
 {
   for (int n=1; n<=NoCompo; n++)
   {
-    if ( cmp[n].getType()==OBSTACLE )
+    if ( cmp[n].getType()==OBSTACLE || cmp[n].getType()==SOLIDREV )
     {
       char fname[128];
       sprintf( fname, "history_force_%s.txt", cmp[n].getAlias().c_str() );
@@ -773,7 +773,7 @@ bool History::printHistoryForceTitle(const CompoList* cmp)
 {
   for (int n=1; n<=NoCompo; n++)
   {
-    if ( cmp[n].getType()==OBSTACLE )
+    if ( cmp[n].getType()==OBSTACLE || cmp[n].getType()==SOLIDREV )
     {
       char fname[128];
       sprintf( fname, "history_force_%s.txt", cmp[n].getAlias().c_str() );

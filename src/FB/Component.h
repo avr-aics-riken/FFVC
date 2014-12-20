@@ -453,30 +453,11 @@ public:
   
   
   /**
-   * @brief typeがコンポーネントであればtrue
-   * @note OBSTACLE=1, BCは2以上，非設定=-1（媒質）
-   */
-  bool isKindCompo() const
-  {
-    return (type > OBSTACLE) ? true : false;
-  }
-  
-  
-  /**
    * @brief typeが媒質であればtrue
    */
   bool isKindMedium() const
   {
     return (type == 0) ? true : false;
-  }
-  
-  
-  /**
-   * @brief typeがOBSTACLEであればtrue
-   */
-  bool isKindObstacle() const
-  {
-    return (type == OBSTACLE) ? true : false;
   }
   
   
@@ -513,6 +494,7 @@ public:
         (type == IBM_DF) ||
         (type == HEX) ||
         (type == FAN) ||
+        (type == SOLIDREV) ||
         (type == DARCY) ) return true;
     return false;
   }
@@ -521,6 +503,7 @@ public:
   bool isVBC_IO() const
   {
     if ((type == SPEC_VEL) ||
+        (type == SOLIDREV) ||
         (type == OUTFLOW) ) return true;
     return false;
   }

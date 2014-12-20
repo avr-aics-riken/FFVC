@@ -28,6 +28,8 @@
 #include "type.h"
 #include "BlockSaver.h"
 
+#include "ffv_LSfunc.h"
+#include "ffv_Ffunc.h"
                              
                              
 // #################################################################

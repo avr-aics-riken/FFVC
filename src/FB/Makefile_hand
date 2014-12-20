@@ -22,7 +22,6 @@ CSRCS =
 
 CXXSRCS = Alloc.C \
           BndOuter.C \
-          CompoFraction.C \
           Component.C \
           Control.C \
           DataHolder.C \

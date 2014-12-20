@@ -50,6 +50,7 @@ protected:
   
   // 無次元物性値テーブル
   double *mtbl;
+  REAL_TYPE* vtbl;
   
   /** 外部境界の種類 */
   enum obc_kind 
@@ -74,11 +75,13 @@ public:
     mat = NULL;
     Ex  = NULL;
     mtbl= NULL;
+    vtbl= NULL;
   }
   
   /**　デストラクタ */
   virtual ~SetBC() {
     if ( mtbl ) delete [] mtbl;
+    if ( vtbl ) delete [] vtbl;
   }
   
 
@@ -88,8 +91,9 @@ public:
    * @biref 無次元の媒質情報をコピー
    * @param [in] m_compo コンポーネント数 NoCompo
    * @param [in] m_mat   外部で作成された媒質テーブル
+   * @param [in] m_vtbl  外部で作成された速度パラメータテーブル
    */
-  void copyNDmatTable(const int m_compo, const double* m_mat);
+  void copyNDmatTable(const int m_compo, const double* m_mat, const REAL_TYPE* m_vtbl);
   
   
   /**

@@ -43,9 +43,6 @@
 #include "IntervalManager.h"
 #include "ffv_Define.h"
 
-#include "ffv_LSfunc.h"
-#include "ffv_Ffunc.h"
-
 #include "TextParser.h"
 
 // CDMlib

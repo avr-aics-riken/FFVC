@@ -140,15 +140,14 @@ am__v_AR_1 =
 libFB_a_AR = $(AR) $(ARFLAGS)
 libFB_a_LIBADD =
 am_libFB_a_OBJECTS = libFB_a-Alloc.$(OBJEXT) \
-	libFB_a-BndOuter.$(OBJEXT) libFB_a-CompoFraction.$(OBJEXT) \
-	libFB_a-Component.$(OBJEXT) libFB_a-Control.$(OBJEXT) \
-	libFB_a-DataHolder.$(OBJEXT) libFB_a-FBUtility.$(OBJEXT) \
-	libFB_a-History.$(OBJEXT) libFB_a-Intrinsic.$(OBJEXT) \
-	libFB_a-IterationControl.$(OBJEXT) libFB_a-MonCompo.$(OBJEXT) \
-	libFB_a-Monitor.$(OBJEXT) libFB_a-ParseBC.$(OBJEXT) \
-	libFB_a-ParseMat.$(OBJEXT) libFB_a-Sampling.$(OBJEXT) \
-	libFB_a-SetBC.$(OBJEXT) libFB_a-VoxInfo.$(OBJEXT) \
-	libFB_a-Glyph.$(OBJEXT)
+	libFB_a-BndOuter.$(OBJEXT) libFB_a-Component.$(OBJEXT) \
+	libFB_a-Control.$(OBJEXT) libFB_a-DataHolder.$(OBJEXT) \
+	libFB_a-FBUtility.$(OBJEXT) libFB_a-History.$(OBJEXT) \
+	libFB_a-Intrinsic.$(OBJEXT) libFB_a-IterationControl.$(OBJEXT) \
+	libFB_a-MonCompo.$(OBJEXT) libFB_a-Monitor.$(OBJEXT) \
+	libFB_a-ParseBC.$(OBJEXT) libFB_a-ParseMat.$(OBJEXT) \
+	libFB_a-Sampling.$(OBJEXT) libFB_a-SetBC.$(OBJEXT) \
+	libFB_a-VoxInfo.$(OBJEXT) libFB_a-Glyph.$(OBJEXT)
 libFB_a_OBJECTS = $(am_libFB_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -356,6 +355,7 @@ noinst_lib_LIBRARIES = libFB.a
 noinst_libdir = ../lib
 libFB_a_CXXFLAGS = \
   -I. \
+  -I../Geometry \
   @CDM_CFLAGS@ \
   @CPM_CFLAGS@ \
   @PL_CFLAGS@ \
@@ -368,8 +368,6 @@ libFB_a_SOURCES = \
   Alloc.h \
   BndOuter.C \
   BndOuter.h \
-  CompoFraction.C \
-  CompoFraction.h \
   Component.C \
   Component.h \
   Control.C \
@@ -489,7 +487,6 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-Alloc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-BndOuter.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-CompoFraction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-Component.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-Control.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-DataHolder.Po@am__quote@
@@ -547,20 +544,6 @@ libFB_a-BndOuter.obj: BndOuter.C
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='BndOuter.C' object='libFB_a-BndOuter.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -c -o libFB_a-BndOuter.obj `if test -f 'BndOuter.C'; then $(CYGPATH_W) 'BndOuter.C'; else $(CYGPATH_W) '$(srcdir)/BndOuter.C'; fi`
-
-libFB_a-CompoFraction.o: CompoFraction.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -MT libFB_a-CompoFraction.o -MD -MP -MF $(DEPDIR)/libFB_a-CompoFraction.Tpo -c -o libFB_a-CompoFraction.o `test -f 'CompoFraction.C' || echo '$(srcdir)/'`CompoFraction.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFB_a-CompoFraction.Tpo $(DEPDIR)/libFB_a-CompoFraction.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='CompoFraction.C' object='libFB_a-CompoFraction.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -c -o libFB_a-CompoFraction.o `test -f 'CompoFraction.C' || echo '$(srcdir)/'`CompoFraction.C
-
-libFB_a-CompoFraction.obj: CompoFraction.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -MT libFB_a-CompoFraction.obj -MD -MP -MF $(DEPDIR)/libFB_a-CompoFraction.Tpo -c -o libFB_a-CompoFraction.obj `if test -f 'CompoFraction.C'; then $(CYGPATH_W) 'CompoFraction.C'; else $(CYGPATH_W) '$(srcdir)/CompoFraction.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFB_a-CompoFraction.Tpo $(DEPDIR)/libFB_a-CompoFraction.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='CompoFraction.C' object='libFB_a-CompoFraction.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -c -o libFB_a-CompoFraction.obj `if test -f 'CompoFraction.C'; then $(CYGPATH_W) 'CompoFraction.C'; else $(CYGPATH_W) '$(srcdir)/CompoFraction.C'; fi`
 
 libFB_a-Component.o: Component.C
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -MT libFB_a-Component.o -MD -MP -MF $(DEPDIR)/libFB_a-Component.Tpo -c -o libFB_a-Component.o `test -f 'Component.C' || echo '$(srcdir)/'`Component.C

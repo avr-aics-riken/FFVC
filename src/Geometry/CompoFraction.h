@@ -24,7 +24,7 @@
 
 #include "FB_Define.h"
 #include "Vec3.h"
-#include <stdio.h>
+#include <math.h>
 
 using namespace Vec3class;
 
@@ -34,6 +34,7 @@ protected:
   // ローカル計算領域情報
   int size[3];     ///< セル(ローカル)サイズ
   int guide;       ///< ガイドセル数
+  int myrank;      ///< rank
   int division;    ///< 細分化の分割数
   Vec3r pch;       ///< セル幅
   Vec3r org;       ///< 計算領域の基点
@@ -44,8 +45,8 @@ protected:
   REAL_TYPE depth;   ///< 厚さ
   REAL_TYPE width;   ///< 矩形の幅（dir方向)
   REAL_TYPE height;  ///< 矩形の高さ
-  REAL_TYPE r_fan;   ///< ファン半径
-  REAL_TYPE r_boss;  ///< ボス半径
+  REAL_TYPE R1;      ///< ファン半径
+  REAL_TYPE R2;      ///< ボス半径
   Vec3r nv;          ///< 法線方向ベクトル（流出方向）
   Vec3r center;      ///< 形状の中心座標（前面の中心位置）
   Vec3r dir;         ///< 矩形の方向規定の参照ベクトル
@@ -59,16 +60,18 @@ public:
   /** コンストラクタ
    * @param [in] size   ローカルセル数
    * @param [in] guide  ガイドセル数
+   * @param [in] m_rank rank
    * @param [in] pch    ローカル領域セル幅
    * @param [in] org    ローカル領域基点座標
    * @param [in] div    サブディビジョンの分割数
    */
-  CompoFraction(const int* size, const int guide, const REAL_TYPE* pch, const REAL_TYPE* org, const int div)
+  CompoFraction(const int* size, const int guide, const int m_rank, const REAL_TYPE* pch, const REAL_TYPE* org, const int div)
   {
     this->size[0]  = size[0];
     this->size[1]  = size[1];
     this->size[2]  = size[2];
     this->guide    = guide;
+    this->myrank   = m_rank;
     this->pch.x    = pch[0];
     this->pch.y    = pch[1];
     this->pch.z    = pch[2];
@@ -88,7 +91,7 @@ protected:
    * @param [in] mx bboxの最大位置
    * @erturn 投影面積
    */
-  REAL_TYPE bbox_rect_cylinder(Vec3r& mn, Vec3r& mx);
+  REAL_TYPE calcBboxRect(Vec3r& mn, Vec3r& mx);
   
   
   /**
@@ -97,7 +100,43 @@ protected:
    * @param [in] mx bboxの最大位置
    * @erturn 投影面積
    */
-  REAL_TYPE bbox_circ_cylinder(Vec3r& mn, Vec3r& mx);
+  REAL_TYPE calcBboxCircle(Vec3r& mn, Vec3r& mx);
+  
+  
+  /**
+   * @brief 円柱底面と線分の交点を求める
+   * @param [in] st         bbox開始インデクス
+   * @param [in] ed         bbox終了インデクス
+   * @param [in,out] bid    境界ID（5ビット幅x6方向）
+   * @param [in,out] cut    カット情報
+   * @param [in]     pl     テストする平面方程式の係数
+   * @param [in]     s_id   エンコードするID
+   * @param [in]     Dsize  サイズ
+   */
+  int CylinderPlane(const int st[],
+                    const int ed[],
+                    int* bid,
+                    float* cut,
+                    const REAL_TYPE pl[4],
+                    const int s_id,
+                    const int* Dsize);
+  
+  
+  /**
+   * @brief 円柱側面と線分の交点を求める
+   * @param [in] st         bbox開始インデクス
+   * @param [in] ed         bbox終了インデクス
+   * @param [in,out] bid    境界ID（5ビット幅x6方向）
+   * @param [in,out] cut    カット情報
+   * @param [in]     s_id   エンコードするID
+   * @param [in]     Dsize  サイズ
+   */
+  int CylinderSide(const int st[],
+                   const int ed[],
+                   int* bid,
+                   float* cut,
+                   const int s_id,
+                   const int* Dsize);
   
   
   /**
@@ -106,105 +145,98 @@ protected:
    * @param [in]  p テストする座標値
    * @note Fortran index
    */
-  void find_index(int* w, const Vec3r p);
-  
-  
-  /** インデックスを(1,0,0)シフト
-   * @param [in] index 元のインデクス
-   * @param [in] h     シフト幅
-   */
-  inline Vec3r shift_f1 (const Vec3r index, const REAL_TYPE h) 
-  { 
-    return Vec3r(index.x+h, index.y  , index.z  ); 
-  }
-  
-  /** インデックスを(0,1,0)シフト
-   * @param [in] index 元のインデクス
-   * @param [in] h     シフト幅
-   */
-  inline Vec3r shift_f2 (const Vec3r index, const REAL_TYPE h) 
-  { 
-    return Vec3r(index.x  , index.y+h, index.z  ); 
-  }
-  
-  /** インデックスを(1,1,0)シフト
-   * @param [in] index 元のインデクス
-   * @param [in] h     シフト幅
-   */
-  inline Vec3r shift_f3 (const Vec3r index, const REAL_TYPE h) 
-  { 
-    return Vec3r(index.x+h, index.y+h, index.z  ); 
-  }
-  
-  /** インデックスを(0,0,1)シフト
-   * @param [in] index 元のインデクス
-   * @param [in] h     シフト幅
-   */
-  inline Vec3r shift_f4 (const Vec3r index, const REAL_TYPE h) 
+  void findIndex(int* w, const Vec3r p)
   {
-    return Vec3r(index.x  , index.y  , index.z+h); 
+    Vec3r q = (p-org)/pch;
+    
+    w[0] = (int)ceil(q.x);
+    w[1] = (int)ceil(q.y);
+    w[2] = (int)ceil(q.z);
+    
+    if ( w[0] < 1 ) w[0] = 1;
+    if ( w[1] < 1 ) w[1] = 1;
+    if ( w[2] < 1 ) w[2] = 1;
+    
+    if ( w[0] > size[0] ) w[0] = size[0];
+    if ( w[1] > size[1] ) w[1] = size[1];
+    if ( w[2] > size[2] ) w[2] = size[2];
   }
   
-  /** インデックスを(1,0,1)シフト
-   * @param [in] index 元のインデクス
-   * @param [in] h     シフト幅
-   */
-  inline Vec3r shift_f5 (const Vec3r index, const REAL_TYPE h) 
-  { 
-    return Vec3r(index.x+h, index.y  , index.z+h); 
-  }
   
-  /** インデックスを(0,1,1)シフト
-   * @param [in] index 元のインデクス
-   * @param [in] h     シフト幅
+  /** 
+   * @brief 円と線分の交点を求める
+   * @param [out]  X      交点Xの座標
+   * @param [in]   A      始点座標ベクトル
+   * @param [in]   B      終点座標ベクトル
+   * @retval  交点距離の小さい方を返す。負値の場合は交点が無い
    */
-  inline Vec3r shift_f6 (const Vec3r index, const REAL_TYPE h)
-  { 
-    return Vec3r(index.x  , index.y+h, index.z+h); 
-  }
+  REAL_TYPE intersectLineByCylinder(Vec3r& X, const Vec3r A, const Vec3r B);
   
-  /** インデックスを(1,1,1)シフト
-   * @param [in] index 元のインデクス
-   * @param [in] h     シフト幅
+  
+  /**
+   * @brief 平面と線分の交点を求める
+   * @param [out]  X   平面P上の交点Xの座標
+   * @param [in]   A   線分ABの端点
+   * @param [in]   B   線分ABの端点
+   * @param [in]   PL  平面PLの係数 ax+by+cz+d=0
+   * @retval 平面P上の交点XのAからの距離, 負値の場合は交点が無い
+   * @see http://www.sousakuba.com/Programming/gs_plane_line_intersect.html
    */
-  inline Vec3r shift_f7 (const Vec3r index, const REAL_TYPE h) 
-  {
-    return Vec3r(index.x+h, index.y+h, index.z+h); 
-  }
-
+  REAL_TYPE intersectLineByPlane(Vec3r& X, const Vec3r A, const Vec3r B, const REAL_TYPE PL[4]);
+  
   
   /**
    * @brief 円筒形状の内外判定
-   * @param [in] p テスト点座標
-   * @return 内部のときに1.0を返す
+   * @param [in] p    テスト点座標
+   * @param [in] mode 変換モード
+   * @return 内部のときに1を返す
    * @note 186 flop
    */
-  inline REAL_TYPE judge_cylinder(const Vec3r p) 
+  inline int judgeCylider(const Vec3r p, bool mode=false)
   {
-    Vec3r q = rotate(angle, p-center); // 181 flop
+    Vec3r q;
     
-    if ( (q.z < 0.0) || (q.z > depth)  ) return 0.0;
+    if ( !mode )
+    {
+      q = rotate(angle, p-center); // 181 flop
+    }
+    else
+    {
+      q = p;
+    }
+    
+    if ( (q.z < 0.0) || (q.z > depth)  ) return 0;
     REAL_TYPE r = sqrtf(q.x*q.x + q.y*q.y);
     
-    return ( (r<=r_fan) && (r>=r_boss) ) ? 1.0 : 0.0;
+    return ( r<=R1 && r>=R2 ) ? 1 : 0;
   }
   
   
   /**
    * @brief 矩形形状の内外判定
-   * @param [in] p テスト点座標
-   * @return 内部のときに1.0を返す
+   * @param [in] p    テスト点座標
+   * @param [in] mode 変換モード
+   * @return 内部のときに1を返す
    * @note 183 flop
    */
-  inline REAL_TYPE judge_rect(const Vec3r p) 
+  inline int judgeRect(const Vec3r p, bool mode=false)
   {
-    Vec3r q = rotate(angle, p-center); // 181 flop
+    Vec3r q;
     
-    if ( (q.z < 0.0) || (q.z > depth)  ) return 0.0;
-    if ( fabs(q.x) > 0.5*width )  return 0.0;
-    if ( fabs(q.y) > 0.5*height ) return 0.0;
+    if ( !mode )
+    {
+      q = rotate(angle, p-center); // 181 flop
+    }
+    else
+    {
+      q = p;
+    }
     
-    return 1.0;
+    if ( (q.z < 0.0) || (q.z > depth)  ) return 0;
+    if ( fabs(q.x) > 0.5*width )  return 0;
+    if ( fabs(q.y) > 0.5*height ) return 0;
+    
+    return 1;
   }
   
   
@@ -264,27 +296,182 @@ protected:
   }
   
   
+  /**
+   * @brief インデックスを(1,0,0)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
+  inline Vec3r shift_f1(const Vec3r index, const Vec3r h)
+  {
+    return Vec3r(index.x+h.x, index.y, index.z);
+  }
+  
+  
+  /**
+   * @brief インデックスを(0,1,0)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
+  inline Vec3r shift_f2 (const Vec3r index, const Vec3r h)
+  {
+    return Vec3r(index.x, index.y+h.y, index.z);
+  }
+  
+  
+  /**
+   * @brief インデックスを(1,1,0)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
+  inline Vec3r shift_f3 (const Vec3r index, const Vec3r h)
+  {
+    return Vec3r(index.x+h.x, index.y+h.y, index.z);
+  }
+  
+  
+  /**
+   * @brief インデックスを(0,0,1)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
+  inline Vec3r shift_f4 (const Vec3r index, const Vec3r h)
+  {
+    return Vec3r(index.x, index.y, index.z+h.z);
+  }
+  
+  
+  /**
+   * @brief インデックスを(1,0,1)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
+  inline Vec3r shift_f5 (const Vec3r index, const Vec3r h)
+  {
+    return Vec3r(index.x+h.x, index.y, index.z+h.z);
+  }
+  
+  
+  /**
+   * @brief インデックスを(0,1,1)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
+  inline Vec3r shift_f6 (const Vec3r index, const Vec3r h)
+  {
+    return Vec3r(index.x, index.y+h.y, index.z+h.z);
+  }
+  
+  
+  /**
+   * @brief インデックスを(1,1,1)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
+  inline Vec3r shift_f7 (const Vec3r index, const Vec3r h)
+  {
+    return Vec3r(index.x+h.x, index.y+h.y, index.z+h.z);
+  }
+  
+  
+  /**
+   * @brief インデックスを(1,0,0)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
+  inline Vec3r shift_E(const Vec3r index, const Vec3r h)
+  {
+    return shift_f1(index, h);
+  }
+  
+  
+  /**
+   * @brief インデックスを(-1,0,0)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
+  inline Vec3r shift_W(const Vec3r index, const Vec3r h)
+  {
+    return Vec3r(index.x-h.x, index.y, index.z  );
+  }
+  
+  
+  /**
+   * @brief インデックスを(0,1,0)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
+  inline Vec3r shift_N(const Vec3r index, const Vec3r h)
+  {
+    return shift_f2(index, h);
+  }
+  
+  
+  /**
+   * @brief インデックスを(0,-1,0)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
+  inline Vec3r shift_S(const Vec3r index, const Vec3r h)
+  {
+    return Vec3r(index.x, index.y-h.y, index.z);
+  }
+  
+  
+  /**
+   * @brief インデックスを(0,0,1)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
+  inline Vec3r shift_T(const Vec3r index, const Vec3r h)
+  {
+    return shift_f4(index, h);
+  }
+  
+  
+  /**
+   * @brief インデックスを(0,0,-1)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
+  inline Vec3r shift_B(const Vec3r index, const Vec3r h)
+  {
+    return Vec3r(index.x, index.y, index.z-h.z);
+  }
+  
+
+  
+  
 public:
   
   /** 
    * @brief 形状のbboxと投影面積を求める
-   * @return 投影面積
-   */
-  REAL_TYPE get_BboxArea ();
-  
-  
-  /**
-   * @brief コンポーネントの属するセルインデクスを求める
    * @param [out] st 開始インデクス
    * @param [out] ed 終了インデクス
+   * @return 投影面積
    */
-  void bbox_index(int* st, int* ed);
+  REAL_TYPE getBboxArea (int* st, int* ed);
+  
   
   /**
    * @brief 指定法線nvがz軸の方向ベクトルに向かう回転角を計算する
    */
-  void get_angle();
+  void getAngle();
   
+  
+  /** 円柱と線分の交点を求める
+   * @param [in] st         bbox開始インデクス
+   * @param [in] ed         bbox終了インデクス
+   * @param [in,out] bid    境界ID（5ビット幅x6方向）
+   * @param [in,out] cut    カット情報
+   * @param [in]     tgt_id 固体媒質ID
+   * @param [in]     Dsize  サイズ
+   */
+  bool intersectCylinder(const int st[],
+                         const int ed[],
+                         int* bid,
+                         float* cut,
+                         const int tgt_id,
+                         const int* Dsize=NULL);
   
   /**
    * @brief 矩形の形状パラメータをセットする
@@ -307,14 +494,14 @@ public:
    * @param [in] m_nv     法線ベクトル
    * @param [in] m_ctr    中心座標
    * @param [in] m_depth  厚み
-   * @param [in] m_r_fan  外径
-   * @param [in] m_r_boss 内径
+   * @param [in] m_R1     外径
+   * @param [in] m_R2     内径
    */
   void setShapeParam(const REAL_TYPE m_nv[3],
                      const REAL_TYPE m_ctr[3],
                      const REAL_TYPE m_depth,
-                     const REAL_TYPE m_r_fan,
-                     const REAL_TYPE m_r_boss=0.0f);
+                     const REAL_TYPE m_R1,
+                     const REAL_TYPE m_R2=0.0f);
   
   
   /**
@@ -396,6 +583,7 @@ public:
   
    /** デストラクタ */
   virtual ~ShapeMonitor() {}
+  
   
 public:
   /**

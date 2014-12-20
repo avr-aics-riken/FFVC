@@ -21,6 +21,8 @@
 
 #include "ffv_plot3d.h"
 
+#include "ffv_LSfunc.h"
+#include "ffv_Ffunc.h"
 
 // #################################################################
 // リスタートのDFIファイル

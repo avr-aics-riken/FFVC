@@ -44,6 +44,7 @@ std::string CompoList::getBCstr()
   else if ( type == CNST_TEMP )     bc = "Constant Temperature";
   else if ( type == HEX )           bc = "Pressure Loss";
   else if ( type == FAN )           bc = "Fan";
+  else if ( type == SOLIDREV )      bc = "Solid Revolution";
   else if ( type == DARCY )         bc = "Darcy";
   else if ( type == PERIODIC )      bc = "Periodic";
   else if ( type == TRANSFER )

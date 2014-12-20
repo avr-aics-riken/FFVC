@@ -19,6 +19,10 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-12-21
+r1573 Introduction of BC for solid revolution SOLIDREV
+
+--------------------------
 2014-12-05
 r1572 header issue for BlockSaver.h
 
@@ -2687,7 +2691,7 @@ r481 try & error geometry
 ----------------------------
 Date:    Feb 26 22:46:34 2012 
 
-r480 modify judge_cylinder() 
+r480 modify judgeCylider() 
 
 - add center in CompoFraction class
 
