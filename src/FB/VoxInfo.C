@@ -2435,9 +2435,11 @@ unsigned long VoxInfo::encVbitIBC (const int order,
     cmp->setEnsLocal(OFF);
   }
   
+  
   int nst[3] = {ist, jst, kst};
   int ned[3] = {ied, jed, ked};
   cmp->setBbox(nst, ned);
+
 
 // ########## check for debug
 # if 0
@@ -2473,6 +2475,179 @@ unsigned long VoxInfo::encVbitIBC (const int order,
   return g;
 }
 
+
+// #################################################################
+/**
+ * @brief cdf[]にVBCの境界条件に必要な情報をエンコードし，流入流出の場合にbp[]の隣接壁の方向フラグを除く．
+ *        境界条件指定キーセルのSTATEを流体に変更する
+ * @retval エンコードしたセル数
+ * @param [in]     order  cmp[]のエントリ番号
+ * @param [in,out] cdf    BCindex C
+ * @param [in,out] bp     BCindex P
+ * @param [in]     bid    カット点ID
+ * @param [in,out] cmp    CompoList
+ * @note 指定法線とセルのカット方向ベクトルの内積で判断，vspecとoutflowなのでbp[]のVBC_UWDにマスクビットを立てる
+ */
+unsigned long VoxInfo::encVbitIBCrev (const int order,
+                                      int* cdf,
+                                      int* bp,
+                                      const int* bid,
+                                      CompoList* cmp)
+{
+  unsigned long g=0;
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  int odr = order;
+  
+  // 初期値はローカルノードの大きさ
+  int ist = ix;
+  int jst = jx;
+  int kst = kx;
+  int ied = 1;
+  int jed = 1;
+  int ked = 1;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, odr) schedule(static) reduction(+:g)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t mp = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int bd = bid[mp];
+        
+        if ( TEST_BC(bd) ) // 6方向のうちいずれかにカットがある
+        {
+          int s = cdf[mp];
+          int q = bp[mp];
+          
+          if ( IS_FLUID(s) ) // 流体セルがテスト対象
+          {
+            // 各方向のID
+            int id_w = getBit5(bd, 0);
+            int id_e = getBit5(bd, 1);
+            int id_s = getBit5(bd, 2);
+            int id_n = getBit5(bd, 3);
+            int id_b = getBit5(bd, 4);
+            int id_t = getBit5(bd, 5);
+            
+            int flag = 0;
+            
+            // X-
+            if ( id_w == odr )
+            {
+              setBit5raw(s, odr, BC_FACE_W);
+              q = offBit(q, FACING_W);
+              q = onBit(q, VBC_UWD);
+              g++;
+              flag++;
+            }
+            
+            // X+
+            if ( id_e == odr )
+            {
+              setBit5raw(s, odr, BC_FACE_E);
+              q = offBit(q, FACING_E);
+              q = onBit(q, VBC_UWD);
+              g++;
+              flag++;
+            }
+            
+            // Y-
+            if ( id_s == odr )
+            {
+              setBit5raw(s, odr, BC_FACE_S);
+              q = offBit(q, FACING_S);
+              q = onBit(q, VBC_UWD);
+              g++;
+              flag++;
+            }
+            
+            // Y+
+            if ( id_n == odr )
+            {
+              setBit5raw(s, odr, BC_FACE_N);
+              q = offBit(q, FACING_N);
+              q = onBit(q, VBC_UWD);
+              g++;
+              flag++;
+            }
+            
+            // Z-
+            if ( id_b == odr )
+            {
+              setBit5raw(s, odr, BC_FACE_B);
+              q = offBit(q, FACING_B);
+              q = onBit(q, VBC_UWD);
+              g++;
+              flag++;
+            }
+            
+            // Z+
+            if ( id_t == odr )
+            {
+              setBit5raw(s, odr, BC_FACE_T);
+              q = offBit(q, FACING_T);
+              q = onBit(q, VBC_UWD);
+              g++;
+              flag++;
+            }
+            
+            if ( flag != 0 )
+            {
+#pragma omp critical
+              {
+                if( i < ist ) ist = i;
+                if( i > ied ) ied = i;
+                if( j < jst ) jst = j;
+                if( j > jed ) jed = j;
+                if( k < kst ) kst = k;
+                if( k > ked ) ked = k;
+                g++;
+              }
+            }
+            
+            cdf[mp]= s;
+            bp[mp] = q;
+            
+          } // if fluid
+          
+        } // if TEST_BC()
+        
+      } // i-loop
+    }
+  }
+  
+  
+  // Local
+  if ( g > 0 )
+  {
+    cmp->setEnsLocal(ON);
+  }
+  else
+  {
+    ist = ied = jst = jed = kst = ked = 0;
+    cmp->setEnsLocal(OFF);
+  }
+  
+  
+  int nst[3] = {ist, jst, kst};
+  int ned[3] = {ied, jed, ked};
+  cmp->setBbox(nst, ned);
+  //stamped_printf("bbox min : %3d %3d %3d\n", nst[0], nst[1], nst[2]);
+  //stamped_printf("bbox max : %3d %3d %3d\n", ned[0], ned[1], ned[2]);
+  
+  
+  if ( numProc > 1 )
+  {
+    unsigned long tmp = g;
+    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  return g;
+}
 
 
 // #################################################################
@@ -3598,8 +3773,11 @@ void VoxInfo::setBCIndexV(int* cdf, int* bp, SetBC* BC, CompoList* cmp, int icls
     {
       case SPEC_VEL:
       case OUTFLOW:
-      case SOLIDREV:
         cmp[n].setElement( encVbitIBC(n, cdf, bp, bid, vec, m_dir, &cmp[n]) );
+        break;
+        
+      case SOLIDREV:
+        cmp[n].setElement( encVbitIBCrev(n, cdf, bp, bid, &cmp[n]) );
         break;
     }
   }

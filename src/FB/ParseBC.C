@@ -574,6 +574,29 @@ void ParseBC::getIbcSolidRev(const string label_base, const int n, CompoList* cm
   
   cmp[n].ca[0] = ( Unit_Param == DIMENSIONAL ) ? omg : ct;
   
+  
+  // 形状
+  label = label_base + "/shape";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid SpecifiedType in '%s'\n", label.c_str());
+    Exit(0);
+  }
+  if ( !strcasecmp("plate", str.c_str()) )
+  {
+    cmp[n].setAttrb(1);
+  }
+  else if ( !strcasecmp("cylinder", str.c_str()) )
+  {
+    cmp[n].setAttrb(2);
+  }
+  else
+  {
+    Hostonly_ printf("\tParsing error : Invalid string value '%s' for 'Type'\n", str.c_str());
+    Exit(0);
+  }
+  
 }
 
 

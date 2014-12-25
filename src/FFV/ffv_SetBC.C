@@ -104,6 +104,27 @@ void SetBC3D::checkDriver(FILE* fp)
   }  
 }
 
+// #################################################################
+/**
+ * @brief コンポーネントの角速度成分を取り出す
+ * @param [in]     n    コンポーネントのインデクス
+ * @param [out]    vec  ベクトル成分
+ * @param [out]    ctr  中心座標
+ * @param [in]     tm   時刻
+ * @param [in]     v00  格子速度
+ */
+void SetBC3D::extractAngularVel(const int n, REAL_TYPE* vec, REAL_TYPE* ctr, const double tm, const REAL_TYPE* v00)
+{
+  REAL_TYPE omg = cmp[n].ca[0] * RefL / RefV * (REAL_TYPE)tm * v00[0]; // [rad]
+  vec[0] = cmp[n].nv[0] * omg; // normal vector x angular velocity
+  vec[1] = cmp[n].nv[1] * omg;
+  vec[2] = cmp[n].nv[2] * omg;
+  ctr[0] = cmp[n].oc[0] / RefL;
+  ctr[1] = cmp[n].oc[1] / RefL;
+  ctr[2] = cmp[n].oc[2] / RefL;
+}
+
+
 
 // #################################################################
 /**
@@ -260,7 +281,7 @@ void SetBC3D::InnerPBCperiodic(REAL_TYPE* d_p, int* d_bcd)
 // 速度境界条件による速度の発散の修正ほか
 void SetBC3D::modDivergence(REAL_TYPE* dv, int* d_cdf, double tm, Control* C, REAL_TYPE* v00, REAL_TYPE* vf, REAL_TYPE* v, Gemini_R* avr, double& flop)
 {
-  REAL_TYPE vec[3], dummy;
+  REAL_TYPE vec[3], dummy, ctr[3];
   int st[3], ed[3];
   int typ=0;
   int gd = guide;
@@ -294,6 +315,8 @@ void SetBC3D::modDivergence(REAL_TYPE* dv, int* d_cdf, double tm, Control* C, RE
         break;
         
       case SOLIDREV:
+        extractAngularVel(n, vec, ctr, tm, v00);
+        div_ibc_sldrev_(dv, size, &gd, st, ed, pitch, v00, d_cdf, &n, vec, ctr, region, &fcount);
         break;
         
       default:
@@ -515,7 +538,7 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, int* bd, REAL_TYPE* cvf, REAL_TYPE*
 // 速度境界条件による流束の修正
 void SetBC3D::modPvecFlux(REAL_TYPE* wv, REAL_TYPE* v, int* d_cdf, const double tm, Control* C, REAL_TYPE* v00, double& flop)
 {
-  REAL_TYPE vec[3], dummy;
+  REAL_TYPE vec[3], dummy, ctr[3];
   int st[3], ed[3];
   int typ;
   REAL_TYPE dh = deltaX;
@@ -548,7 +571,16 @@ void SetBC3D::modPvecFlux(REAL_TYPE* wv, REAL_TYPE* v, int* d_cdf, const double 
     }
     else if ( typ==SOLIDREV )
     {
-      ;
+      extractAngularVel(n, vec, ctr, tm, v00);
+      
+      if ( C->CnvScheme==Control::O1_upwind || C->CnvScheme==Control::O3_muscl )
+      {
+        pvec_ibc_sldrev_fvm_(wv, size, &gd, st, ed, &dh, &rei, v, d_cdf, &n, vec, ctr, origin, &flop);
+      }
+      else // Central scheme
+      {
+        //pvec_ibc_specv_fdm_(wv, size, &gd, st, ed, &dh, v00, &rei, v, d_cdf, &n, vec, &flop);
+      }
     }
     
   }
@@ -597,7 +629,7 @@ void SetBC3D::modPvecFlux(REAL_TYPE* wv, REAL_TYPE* v, int* d_cdf, const double 
 void SetBC3D::modPsrcVBC(REAL_TYPE* dv, int* d_cdf, const double tm, Control* C, REAL_TYPE* v00, REAL_TYPE* vf, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE dt, double &flop)
 {
   int st[3], ed[3];
-  REAL_TYPE vec[3], vel;
+  REAL_TYPE vec[3], vel, ctr[3];
   REAL_TYPE dh = deltaX;
   int typ;
   int gd = guide;
@@ -623,6 +655,8 @@ void SetBC3D::modPsrcVBC(REAL_TYPE* dv, int* d_cdf, const double tm, Control* C,
         break;
         
       case SOLIDREV:
+        extractAngularVel(n, vec, ctr, tm, v00);
+        div_ibc_sldrev_(dv, size, &gd, st, ed, pitch, v00, d_cdf, &n, vec, ctr, region, &fcount);
         break;
         
       default:

@@ -128,6 +128,13 @@ private:
                             CompoList* cmp);
   
   
+  unsigned long encVbitIBCrev (const int order,
+                               int* cdf,
+                               int* bp,
+                               const int* bid,
+                               CompoList* cmp);
+  
+  
   // cdf[]に境界条件のビット情報をエンコードする
   void encVbitOBC (int face, int* cdf, string key, const bool enc_sw, string chk, int* bp, bool enc_uwd=false);
   

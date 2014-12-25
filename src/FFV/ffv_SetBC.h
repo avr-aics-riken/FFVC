@@ -41,6 +41,9 @@ public:
   
 protected:
   
+  // コンポーネントの角速度成分を取り出す
+  void extractAngularVel(const int n, REAL_TYPE* vec, REAL_TYPE* ctr, const double tm, const REAL_TYPE* v00);
+  
   // コンポーネントの速度境界条件の成分を取り出す
   REAL_TYPE extractVelLBC (const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE* v00);
   

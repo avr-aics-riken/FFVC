@@ -212,6 +212,9 @@ int FFV::Initialize(int argc, char **argv)
   setModel(PrepMemory, TotalMemory, fp);
 
 
+  // 回転体
+  setComponentSR();
+  
   
   // 定義点上に交点がある場合の処理 >> カットするポリゴンのエントリ番号でフィルする
   unsigned long fill_cut = V.modifyCutOnCellCenter(d_bid, d_cut, GM.FillID, C.NoCompo);
@@ -255,10 +258,6 @@ int FFV::Initialize(int argc, char **argv)
   
   // d_midを初期化して識別子として利用
   U.initS3D(d_mid, size, guide, -1);
-  
-  
-  // 回転体
-  setComponentSR();
   
   
   /* ポリゴンを入力とする場合のみ
@@ -1351,7 +1350,7 @@ void FFV::encodeBCindex(FILE* fp)
     if ( cmp[n].isKindMedium() ) continue;
     
     REAL_TYPE ap = (REAL_TYPE)cmp[n].getElement() * dhd * dhd; // dhd は有次元値，近似的な面積
-    REAL_TYPE ao = (REAL_TYPE)cmp[n].area;
+    REAL_TYPE ao = (REAL_TYPE)cmp[n].area * C.RefLength*C.RefLength;
     cmp[n].area = (REAL_TYPE)ap;
     
     Hostonly_
@@ -2801,7 +2800,9 @@ void FFV::setComponentSR()
       p1    = cmp[n].shp_p1 / C.RefLength;
       p2    = cmp[n].shp_p2 / C.RefLength;
       
-      CF.setShapeParam(cmp[n].nv, center, depth, p1, p2);
+      
+      // getAttrb()にはオプションが入っている "palte" or "cylinder"
+      CF.setShapeParam(cmp[n].nv, center, depth, p1, p2, cmp[n].getAttrb());
 
       
       // 回転角度の計算
@@ -2816,6 +2817,7 @@ void FFV::setComponentSR()
       // インデクスのサイズ登録と存在フラグ
       cmp[n].setBbox(f_st, f_ed);
       cmp[n].setEnsLocal(ON);
+      // ここで得られたst[],ed[]の値は、VoxInfo.CのencVIBCrev()で書き換えられる
       
       
       double flop=0.0;
@@ -3385,12 +3387,20 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
     switch (cls)
     {
       case OBC_SYMMETRIC:
-        if (mat[id].getState() != FLUID) Exit(0);
+        if (mat[id].getState() != FLUID)
+        {
+          Hostonly_ printf("Specified medium in '%s' is not FLUID or not listed.\n", m_obc->getAlias().c_str());
+          Exit(0);
+        }
         V.setOBC(face, id, "fluid", d_bcd, d_cut, d_bid);
         break;
         
       case OBC_WALL:
-        if (mat[id].getState() != SOLID) Exit(0);
+        if (mat[id].getState() != SOLID)
+        {
+          Hostonly_ printf("Specified medium in '%s' is not SOLID or not listed.\n", m_obc->getAlias().c_str());
+          Exit(0);
+        }
         V.setOBC(face, id, "solid", d_bcd, d_cut, d_bid);
         break;
         

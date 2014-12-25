@@ -40,12 +40,16 @@ REAL_TYPE CompoFraction::calcBboxCircle(Vec3r& mn, Vec3r& mx)
     REAL_TYPE x = R1 * cos(d);
     REAL_TYPE y = R1 * sin(d);
     
-    // 表面
-    q = rotate_inv(angle, r.assign(x, y, 0.0)) + center;
-    get_min(mn, q);
-    get_max(mx, q);
+    // 下面
+    if (shape == shape_cylinder)
+    {
+      q = rotate_inv(angle, r.assign(x, y, 0.0)) + center;
+      get_min(mn, q);
+      get_max(mx, q);
+    }
+
     
-    // 裏面
+    // 上面
     q = rotate_inv(angle, r.assign(x, y, depth)) + center;
     get_min(mn, q);
     get_max(mx, q);
@@ -141,9 +145,9 @@ int CompoFraction::CylinderPlane(const int st[],
    */
   
   
-  for (int k=st[2]-1; k<=ed[2]+1; k++) {
-    for (int j=st[1]-1; j<=ed[1]+1; j++) {
-      for (int i=st[0]-1; i<=ed[0]+1; i++) {
+  for (int k=st[2]; k<=ed[2]; k++) {
+    for (int j=st[1]; j<=ed[1]; j++) {
+      for (int i=st[0]; i<=ed[0]; i++) {
         
         // position of cell center
         base.assign((REAL_TYPE)i-0.5, (REAL_TYPE)j-0.5, (REAL_TYPE)k-0.5);
@@ -170,8 +174,10 @@ int CompoFraction::CylinderPlane(const int st[],
             {
               setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, X_minus);
               cut[_F_IDX_S4DEX(X_minus, i, j, k, 6, ix, jx, kx, gd)] = t;
+              
+              //setBit5(bid[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)], mid_s, X_plus);
+              //cut[_F_IDX_S4DEX(X_plus, i-1, j, k, 6, ix, jx, kx, gd)] = 1.0-t;
               count++;
-              //printf("%3d %3d %3d : %3d %e W\n",i,j,k, mid_s, t);
             }
           }
           
@@ -182,8 +188,10 @@ int CompoFraction::CylinderPlane(const int st[],
             {
               setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, X_plus);
               cut[_F_IDX_S4DEX(X_plus, i, j, k, 6, ix, jx, kx, gd)] = t;
+              
+              //setBit5(bid[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)], mid_s, X_minus);
+              //cut[_F_IDX_S4DEX(X_minus, i+1, j, k, 6, ix, jx, kx, gd)] = 1.0-t;
               count++;
-              //printf("%3d %3d %3d : %3d %e E\n",i,j,k, mid_s, t);
             }
           }
           
@@ -194,8 +202,10 @@ int CompoFraction::CylinderPlane(const int st[],
             {
               setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, Y_minus);
               cut[_F_IDX_S4DEX(Y_minus, i, j, k, 6, ix, jx, kx, gd)] = t;
+              
+              //setBit5(bid[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)], mid_s, Y_plus);
+              //cut[_F_IDX_S4DEX(Y_plus, i, j-1, k, 6, ix, jx, kx, gd)] = 1.0-t;
               count++;
-              //printf("%3d %3d %3d : %3d %e S\n",i,j,k, mid_s, t);
             }
           }
           
@@ -206,8 +216,10 @@ int CompoFraction::CylinderPlane(const int st[],
             {
               setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, Y_plus);
               cut[_F_IDX_S4DEX(Y_plus, i, j, k, 6, ix, jx, kx, gd)] = t;
+              
+              //setBit5(bid[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)], mid_s, Y_minus);
+              //cut[_F_IDX_S4DEX(Y_minus, i, j+1, k, 6, ix, jx, kx, gd)] = 1.0-t;
               count++;
-              //printf("%3d %3d %3d : %3d %e N\n",i,j,k, mid_s, t);
             }
           }
           
@@ -218,8 +230,10 @@ int CompoFraction::CylinderPlane(const int st[],
             {
               setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, Z_minus);
               cut[_F_IDX_S4DEX(Z_minus, i, j, k, 6, ix, jx, kx, gd)] = t;
+              
+              //setBit5(bid[_F_IDX_S3D(i, j, k-1, ix, jx, kx, gd)], mid_s, Z_plus);
+              //cut[_F_IDX_S4DEX(Z_plus, i, j, k-1, 6, ix, jx, kx, gd)] = 1.0-t;
               count++;
-              //printf("%3d %3d %3d : %3d %e B\n",i,j,k, mid_s, t);
             }
           }
           
@@ -230,8 +244,10 @@ int CompoFraction::CylinderPlane(const int st[],
             {
               setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, Z_plus);
               cut[_F_IDX_S4DEX(Z_plus, i, j, k, 6, ix, jx, kx, gd)] = t;
+              
+              //setBit5(bid[_F_IDX_S3D(i, j, k+1, ix, jx, kx, gd)], mid_s, Z_minus);
+              //cut[_F_IDX_S4DEX(Z_minus, i, j, k+1, 6, ix, jx, kx, gd)] = 1.0-t;
               count++;
-              //printf("%3d %3d %3d : %3d %e T\n",i,j,k, mid_s, t);
             }
           }
           
@@ -292,9 +308,9 @@ int CompoFraction::CylinderSide(const int st[],
    *    必ず、円柱の外側の点を基準とする。パラメータtで線分を表すと、解が2点あるときには近い方の交点を選択する
    */
   
-  for (int k=st[2]-1; k<=ed[2]+1; k++) {
-    for (int j=st[1]-1; j<=ed[1]+1; j++) {
-      for (int i=st[0]-1; i<=ed[0]+1; i++) {
+  for (int k=st[2]; k<=ed[2]; k++) {
+    for (int j=st[1]; j<=ed[1]; j++) {
+      for (int i=st[0]; i<=ed[0]; i++) {
         
         // position of cell center
         base.assign((REAL_TYPE)i-0.5, (REAL_TYPE)j-0.5, (REAL_TYPE)k-0.5);
@@ -321,8 +337,10 @@ int CompoFraction::CylinderSide(const int st[],
             {
               setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, X_minus);
               cut[_F_IDX_S4DEX(X_minus, i, j, k, 6, ix, jx, kx, gd)] = t;
+              
+              //setBit5(bid[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)], mid_s, X_plus);
+              //cut[_F_IDX_S4DEX(X_plus, i-1, j, k, 6, ix, jx, kx, gd)] = 1.0-t;
               count++;
-              printf("%3d %3d %3d : %e W\n",i,j,k, t);
             }
           }
           
@@ -333,8 +351,10 @@ int CompoFraction::CylinderSide(const int st[],
             {
               setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, X_plus);
               cut[_F_IDX_S4DEX(X_plus, i, j, k, 6, ix, jx, kx, gd)] = t;
+              
+              //setBit5(bid[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)], mid_s, X_minus);
+              //cut[_F_IDX_S4DEX(X_minus, i+1, j, k, 6, ix, jx, kx, gd)] = 1.0-t;
               count++;
-              printf("%3d %3d %3d : %e E\n",i,j,k, t);
             }
           }
           
@@ -345,8 +365,10 @@ int CompoFraction::CylinderSide(const int st[],
             {
               setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, Y_minus);
               cut[_F_IDX_S4DEX(Y_minus, i, j, k, 6, ix, jx, kx, gd)] = t;
+              
+              //setBit5(bid[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)], mid_s, Y_plus);
+              //cut[_F_IDX_S4DEX(Y_plus, i, j-1, k, 6, ix, jx, kx, gd)] = 1.0-t;
               count++;
-              printf("%3d %3d %3d : %e S\n",i,j,k, t);
             }
           }
           
@@ -357,8 +379,10 @@ int CompoFraction::CylinderSide(const int st[],
             {
               setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, Y_plus);
               cut[_F_IDX_S4DEX(Y_plus, i, j, k, 6, ix, jx, kx, gd)] = t;
+              
+              //setBit5(bid[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)], mid_s, Y_minus);
+              //cut[_F_IDX_S4DEX(Y_minus, i, j+1, k, 6, ix, jx, kx, gd)] = 1.0-t;
               count++;
-              printf("%3d %3d %3d : %e N\n",i,j,k, t);
             }
           }
           
@@ -369,8 +393,10 @@ int CompoFraction::CylinderSide(const int st[],
             {
               setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, Z_minus);
               cut[_F_IDX_S4DEX(Z_minus, i, j, k, 6, ix, jx, kx, gd)] = t;
+              
+              //setBit5(bid[_F_IDX_S3D(i, j, k-1, ix, jx, kx, gd)], mid_s, Z_plus);
+              //cut[_F_IDX_S4DEX(Z_plus, i, j, k-1, 6, ix, jx, kx, gd)] = 1.0-t;
               count++;
-              printf("%3d %3d %3d : %e B\n",i,j,k, t);
             }
           }
           
@@ -381,8 +407,10 @@ int CompoFraction::CylinderSide(const int st[],
             {
               setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, Z_plus);
               cut[_F_IDX_S4DEX(Z_plus, i, j, k, 6, ix, jx, kx, gd)] = t;
+              
+              //setBit5(bid[_F_IDX_S3D(i, j, k+1, ix, jx, kx, gd)], mid_s, Z_minus);
+              //cut[_F_IDX_S4DEX(Z_minus, i, j, k+1, 6, ix, jx, kx, gd)] = 1.0-t;
               count++;
-              printf("%3d %3d %3d : %e T\n",i,j,k, t);
             }
           }
           
@@ -523,6 +551,24 @@ REAL_TYPE CompoFraction::getBboxArea(int* st, int* ed)
   findIndex(st, box_min);
   findIndex(ed, box_max);
   
+  // >> 1層外側まで拡大
+  st[0]--;
+  st[1]--;
+  st[2]--;
+  ed[0]++;
+  ed[1]++;
+  ed[2]++;
+  
+  if ( st[0] < 1 ) st[0] = 1;
+  if ( st[1] < 1 ) st[1] = 1;
+  if ( st[2] < 1 ) st[2] = 1;
+  
+  if ( ed[0] > size[0] ) ed[0] = size[0];
+  if ( ed[1] > size[1] ) ed[1] = size[1];
+  if ( ed[2] > size[2] ) ed[2] = size[2];
+  
+  // ここで得られたst[],ed[]の値は、VoxInfo.CのencVIBCrev()で書き換えられる
+  
   return a;
 }
 
@@ -574,17 +620,20 @@ bool CompoFraction::intersectCylinder(const int st[],
   pl[2] = 1.0;
   
   
-  // 下面
-  pl[3] = 0.0;
-  count += CylinderPlane(st, ed, bid, cut, pl, tgt_id, m_sz);
-
   // 上面
   pl[3] = depth;
   count += CylinderPlane(st, ed, bid, cut, pl, tgt_id, m_sz);
   
   
-  // 側面
-  count += CylinderSide(st, ed, bid, cut, tgt_id, m_sz);
+  if (shape == shape_cylinder)
+  {
+    // 下面
+    pl[3] = 0.0;
+    count += CylinderPlane(st, ed, bid, cut, pl, tgt_id, m_sz);
+    
+    // 側面
+    count += CylinderSide(st, ed, bid, cut, tgt_id, m_sz);
+  }
   
   return true;
 }
@@ -743,7 +792,8 @@ void CompoFraction::setShapeParam (const REAL_TYPE m_nv[3],
                                    const REAL_TYPE m_ctr[3],
                                    const REAL_TYPE m_depth,
                                    const REAL_TYPE m_R1,
-                                   const REAL_TYPE m_R2)
+                                   const REAL_TYPE m_R2,
+                                   const int m_shape)
 {
   smode  = mon_CYLINDER;
   nv     = m_nv;
@@ -751,6 +801,7 @@ void CompoFraction::setShapeParam (const REAL_TYPE m_nv[3],
   depth  = m_depth;
   R1     = m_R1;
   R2     = m_R2;
+  shape  = m_shape;
   
   nv.normalize();
   
@@ -759,6 +810,8 @@ void CompoFraction::setShapeParam (const REAL_TYPE m_nv[3],
     stamped_printf("\tError : Invalid parameter of Fan : zero vector\n");
     Exit(0);
   }
+  
+  printf("\tSolid Revolution : %s\n\n", (shape == shape_plate)? "PLATE":"CYLINDER");
 }
 
 

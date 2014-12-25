@@ -45,7 +45,7 @@ if ( zp == 0 )
 {
   int qq = bid[m_p];
   
-  // 隣接セルの方向に対する境界ID
+  // 隣接セル方向に対する境界ID
   int qw = getBit5(qq, 0);
   int qe = getBit5(qq, 1);
   int qs = getBit5(qq, 2);
@@ -211,7 +211,7 @@ if ( zp == 0 )
   }
 
   
-  
+  /* ?
   if ( sd_flag > 0 )
   {
     setBitID(bcd[m_p], sd);
@@ -223,6 +223,7 @@ if ( zp == 0 )
     }
     replaced++;
   }
+   */
   
   
   // フラッドフィル

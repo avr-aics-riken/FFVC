@@ -681,15 +681,15 @@ void IO_BASE::printSteerConditions(FILE* fp)
   fprintf(fp,"\t     Voxel model output       :   ");
   switch (IO_Voxel) {
     case voxel_SVX:
-      fprintf(fp,"svx");
+      fprintf(fp,"svx\n");
       break;
       
     case voxel_BVX:
-      fprintf(fp,"bvx");
+      fprintf(fp,"bvx\n");
       break;
       
     default:
-      fprintf(fp,"none");
+      fprintf(fp,"none\n");
       break;
   }
   fprintf(fp,"\t     BC flag output           :   %s\n", (IO_BCflag==ON) ? "On" : "Off");

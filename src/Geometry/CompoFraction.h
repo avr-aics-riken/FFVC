@@ -30,6 +30,14 @@ using namespace Vec3class;
 
 class CompoFraction {
   
+public:
+  /** 形状 */
+  enum ShapeList
+  {
+    shape_plate=1,
+    shape_cylinder
+  };
+  
 protected:
   // ローカル計算領域情報
   int size[3];     ///< セル(ローカル)サイズ
@@ -42,6 +50,7 @@ protected:
   
   // 形状パラメータ
   int smode;         ///< 形状モード
+  int shape;         ///< 形状（1-plate, 2-cylinder）
   REAL_TYPE depth;   ///< 厚さ
   REAL_TYPE width;   ///< 矩形の幅（dir方向)
   REAL_TYPE height;  ///< 矩形の高さ
@@ -55,7 +64,15 @@ protected:
   
 public:
   /** デフォルトコンストラクタ */
-  CompoFraction() {}
+  CompoFraction() {
+    smode = 0;
+    shape = 0;
+    depth = 0.0;
+    width = 0.0;
+    height = 0.0;
+    R1 = 0.0;
+    R2 = 0.0;
+  }
   
   /** コンストラクタ
    * @param [in] size   ローカルセル数
@@ -205,7 +222,12 @@ protected:
       q = p;
     }
     
-    if ( (q.z < 0.0) || (q.z > depth)  ) return 0;
+    // palteの場合には、半径方向の判断のみでよい
+    if ( shape == shape_cylinder )
+    {
+      if ( (q.z < 0.0) || (q.z > depth)  ) return 0;
+    }
+    
     REAL_TYPE r = sqrtf(q.x*q.x + q.y*q.y);
     
     return ( r<=R1 && r>=R2 ) ? 1 : 0;
@@ -496,12 +518,14 @@ public:
    * @param [in] m_depth  厚み
    * @param [in] m_R1     外径
    * @param [in] m_R2     内径
+   * @param [in] m_shape  形状 デフォルトでCYLINDER
    */
   void setShapeParam(const REAL_TYPE m_nv[3],
                      const REAL_TYPE m_ctr[3],
                      const REAL_TYPE m_depth,
                      const REAL_TYPE m_R1,
-                     const REAL_TYPE m_R2=0.0f);
+                     const REAL_TYPE m_R2=0.0f,
+                     const int m_shape=shape_cylinder);
   
   
   /**

@@ -358,6 +358,35 @@ extern "C" {
                            REAL_TYPE* av,
                            double* flop);
   
+  void pvec_ibc_sldrev_fvm_ (REAL_TYPE* wv,
+                             int* sz,
+                             int* g,
+                             int* st,
+                             int* ed,
+                             REAL_TYPE* dh,
+                             REAL_TYPE* rei,
+                             REAL_TYPE* v,
+                             int* bv,
+                             int* odr,
+                             REAL_TYPE* vec,
+                             REAL_TYPE* ctr,
+                             REAL_TYPE* org,
+                             double* flop);
+  
+  void div_ibc_sldrev_ (REAL_TYPE* div,
+                        int* sz,
+                        int* g,
+                        int* st,
+                        int* ed,
+                        REAL_TYPE* pch,
+                        REAL_TYPE* v00,
+                        int* bv,
+                        int* odr,
+                        REAL_TYPE* vec,
+                        REAL_TYPE* ctr,
+                        REAL_TYPE* org,
+                        double* flop);
+  
   
   //***********************************************************************************************
   // ffv_vbc_outer.f90
