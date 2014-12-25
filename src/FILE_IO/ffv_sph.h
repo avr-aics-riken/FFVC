@@ -161,8 +161,12 @@ public:
   virtual void getRestartDFI();
   
   
-  // @brief ファイル出力の初期化
-  virtual void initFileOut();
+  /**
+   * @brief ファイル出力の初期化
+   * @param [in] id_cell   CellID
+   * @param [in] id_bcf    BCflagID
+   */
+  virtual void initFileOut(const int id_cell, const int id_bcf);
   
 
   /**

@@ -480,18 +480,6 @@ int FFV::Initialize(int argc, char **argv)
     printf(    "\n----------\n\n\n");
   }
   
-
-  // 指定のボクセルファイル出力が指定されている場合 true
-  if ( F->writeSVX(d_bcd) ) {
-    Hostonly_
-    {
-      fprintf(fp,"\tVoxel file 'example.svx' was written.\n");
-      printf(    "\tVoxel file 'example.svx' was written.\n");
-      fprintf(fp,"\n----------\n\n\n");
-      printf(    "\n----------\n\n\n");
-    }
-  }
-  
   
   
   // 各ノードの領域情報をファイル出力
@@ -573,11 +561,7 @@ int FFV::Initialize(int argc, char **argv)
   F->getStagingOption();
   
   F->getRestartDFI();
-  
-  
-  // CellIDとBCflagの出力 (guide cell=0)
-  F->writeCellID(0);
-  F->writeBCflag(0);
+
   
   
   // 初期値とリスタート処理 瞬時値と統計値に分けて処理　------------------
@@ -663,12 +647,33 @@ int FFV::Initialize(int argc, char **argv)
   }
 
   
+  
+  // CellIDとBCflagの出力 (guide cell=0)
+  int id_cell = F->writeCellID(0);
+  int id_bcf  = F->writeBCflag(0);
+  
+  
   // 出力ファイルの初期化
-  F->initFileOut();
+  F->initFileOut(id_cell, id_bcf);
+  
+  
+  // 指定のボクセルファイル出力が指定されている場合 true
+  if ( F->writeSVX(d_bcd) )
+  {
+    Hostonly_
+    {
+      fprintf(fp,"\tVoxel file 'example.svx' was written.\n");
+      printf(    "\tVoxel file 'example.svx' was written.\n");
+      fprintf(fp,"\n----------\n\n\n");
+      printf(    "\n----------\n\n\n");
+    }
+  }
   
   
   // IBLANK 出力後に　mid[]を解放する  ---------------------------
   if ( d_mid ) delete [] d_mid;
+  
+  
   
   
   

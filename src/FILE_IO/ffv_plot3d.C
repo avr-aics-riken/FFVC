@@ -131,7 +131,7 @@ void PLT3D::getInherentOption()
 // #################################################################
 /* @brief ファイル出力の初期化
  */
-void PLT3D::initFileOut()
+void PLT3D::initFileOut(const int id_cell, const int id_bcf)
 {
   // バッファサイズチェック  バッファサイズdnumはFALLOC::allocArray_Main()の数をハードコード
   // 書き出しサイズNvarsIns_plt3d, NvarsAvr_plt3dは、以下のメソッドに依存
@@ -349,7 +349,7 @@ void PLT3D::initFileOut()
   
   
   // Proc file
-  DFI_OUT_INS->WriteProcDfiFile(MPI_COMM_WORLD, true);
+  DFI_OUT_INS->WriteProcDfiFile(MPI_COMM_WORLD, true, id_cell, id_bcf);
   
 
   

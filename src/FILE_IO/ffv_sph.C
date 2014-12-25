@@ -117,7 +117,7 @@ void SPH::getRestartDFI()
 // #################################################################
 /* @brief ファイル出力の初期化
  */
-void SPH::initFileOut()
+void SPH::initFileOut(const int id_cell, const int id_bcf)
 {
   // Format
   CDM::E_CDM_FORMAT cdm_format = CDM::E_CDM_FMT_SPH;
@@ -288,7 +288,7 @@ void SPH::initFileOut()
   DFI_OUT_PRS->AddUnit("Velocity", UnitV, (double)C->RefVelocity);
   DFI_OUT_PRS->AddUnit("Pressure", UnitP, (double)C->BasePrs, DiffPrs, true);
   
-  DFI_OUT_PRS->WriteProcDfiFile(MPI_COMM_WORLD, true);
+  DFI_OUT_PRS->WriteProcDfiFile(MPI_COMM_WORLD, true, id_cell, id_bcf);
   
   
   

@@ -238,8 +238,12 @@ public:
   }
   
   
-  // @brief ファイル出力の初期化
-  virtual void initFileOut() {}
+  /**
+   * @brief ファイル出力の初期化
+   * @param [in] id_cell   CellID
+   * @param [in] id_bcf    BCflagID
+   */
+  virtual void initFileOut(const int id_cell, const int id_bcf) {}
   
   
   /**
@@ -362,15 +366,17 @@ public:
   /**
    * @brief BCflagの書き出し
    * @param [in] out_gc       出力するガイドセル数
+   * @retval 配列を書き出す場合には-1, 同じ値の場合は-1でない値
    */
-  bool writeBCflag(const int out_gc);
+  int writeBCflag(const int out_gc);
   
   
   /**
    * @brief CellIDの書き出し
    * @param [in] out_gc       出力するガイドセル数
+   * @retval 配列を書き出す場合には-1, 同じ値の場合は-1でない値
    */
-  bool writeCellID(const int out_gc);
+  int writeCellID(const int out_gc);
   
   
   /**

@@ -840,7 +840,7 @@ void IO_BASE::setVarPointers(REAL_TYPE* m_d_p,
 
 // #################################################################
 // BCflagをbvxで出力する
-bool IO_BASE::writeBCflag(const int out_gc)
+int IO_BASE::writeBCflag(const int out_gc)
 {
   if (IO_BCflag != ON) return true;
   
@@ -858,18 +858,42 @@ bool IO_BASE::writeBCflag(const int out_gc)
   // unsignd int
   unsigned* buf = new unsigned[nx];
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gc, gd) schedule(static)
+  // start index Active, State bitはマスクする >> 30bitのみ
+  unsigned val = (unsigned)(d_cdf[ _F_IDX_S3D(1-gc, 1-gc, 1-gc, ix, jx, kx, gd) ] & 0x3fffffff);
+  int c=0;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gc, gd, val) schedule(static) reduction(+:c)
   for (int k=1-gc; k<=kx+gc; k++) {
     for (int j=1-gc; j<=jx+gc; j++) {
       for (int i=1-gc; i<=ix+gc; i++) {
         size_t m0 = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         size_t m1 = _F_IDX_S3D(i, j, k, ix, jx, kx, gc);
-        buf[m1] = (unsigned)d_cdf[m0];
+        unsigned tmp = (unsigned)(d_cdf[m0] & 0x3fffffff);
+        buf[m1] = tmp;
+        if ( tmp != val ) c++;
       }
     }
   }
   
-  bool ret = BVX_IO::Save_Block_BCflag(size, gc, bitWidth, rank, OutDirPath, buf, BVXcomp);
+  bool ret = false;
+  int ret_val;
+  
+  // サブドメイン内が同じ値の時には、BCflag配列を書き出さない
+  if ( c>0 )
+  {
+    ret = BVX_IO::Save_Block_BCflag(size, gc, bitWidth, rank, OutDirPath, buf, BVXcomp);
+    if ( !ret )
+    {
+      stamped_printf("\tError : when saving BCflag\n");
+      Exit(0);
+    }
+    ret_val = -1;
+  }
+  else
+  {
+    ret_val = (int)val;
+  }
+  
   
   if (buf)
   {
@@ -877,13 +901,13 @@ bool IO_BASE::writeBCflag(const int out_gc)
     buf = NULL;
   }
   
-  return ret;
+  return ret_val;
 }
 
 
 // #################################################################
 // Cell IDをbvxで出力する
-bool IO_BASE::writeCellID(const int out_gc)
+int IO_BASE::writeCellID(const int out_gc)
 {
   if (IO_Voxel != voxel_BVX) return true;
   
@@ -901,18 +925,42 @@ bool IO_BASE::writeCellID(const int out_gc)
   // unsignd char
   u8 *buf = new u8[nx];
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gc, gd) schedule(static)
+  // start index 下位5bitの値のみ
+  u8 val = DECODE_CMP(d_bcd[ _F_IDX_S3D(1-gc, 1-gc, 1-gc, ix, jx, kx, gd) ]);
+  int c=0;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gc, gd, val) schedule(static) reduction(+:c)
   for (int k=1-gc; k<=kx+gc; k++) {
     for (int j=1-gc; j<=jx+gc; j++) {
       for (int i=1-gc; i<=ix+gc; i++) {
         size_t m0 = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         size_t m1 = _F_IDX_S3D(i, j, k, ix, jx, kx, gc);
-        buf[m1] = DECODE_CMP(d_bcd[m0]);
+        u8 tmp = DECODE_CMP(d_bcd[m0]);
+        buf[m1] = tmp;
+        if ( tmp != val ) c++;
       }
     }
   }
   
-  bool ret = BVX_IO::Save_Block_CellID(size, gc, bitWidth, rank, OutDirPath, buf, BVXcomp);
+  bool ret = false;
+  int ret_val;
+  
+  // サブドメイン内が同じ値の時には、CellID配列を書き出さない
+  if ( c>0 )
+  {
+    ret = BVX_IO::Save_Block_CellID(size, gc, bitWidth, rank, OutDirPath, buf, BVXcomp);
+    if ( !ret )
+    {
+      stamped_printf("\tError : when saving CellID\n");
+      Exit(0);
+    }
+    ret_val = -1;
+  }
+  else
+  {
+    ret_val = (int)val;
+  }
+  
 
   if (buf)
   {
@@ -920,7 +968,7 @@ bool IO_BASE::writeCellID(const int out_gc)
     buf = NULL;
   }
 
-  return ret;
+  return ret_val;
 }
 
 
