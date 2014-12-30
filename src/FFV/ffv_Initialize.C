@@ -21,6 +21,7 @@
 
 #include "ffv.h"
 #include "limits.h"
+#include <algorithm>
 
 
 // #################################################################
@@ -626,7 +627,6 @@ int FFV::Initialize(int argc, char **argv)
   C.ver_CDM = cdm_DFI::getVersionInfo();
   C.ver_Poly= PL->getVersionInfo();
   C.ver_PM  = PM.getVersionInfo();
-  C.ver_CUT = cutlib_VersionInfo();
   C.ver_TP  = tp_ffv.getVersionInfo();
   
 
@@ -764,7 +764,12 @@ int FFV::Initialize(int argc, char **argv)
  */
 void FFV::allocate_Main(double &total)
 {
+  // 基本変数と必須領域
   allocArray_Main(total, &C);
+  
+  // カット情報保持領域
+  allocArray_Cut(total);
+  
   
   if ( C.LES.Calc == ON )
   {
@@ -783,7 +788,7 @@ void FFV::allocate_Main(double &total)
   }
   
   
-  // 時間平均・統計処理用の配列をアロケート
+  // 時間平均・統計処理用の配列
   if ( C.Mode.Statistic == ON )
   {
     allocArray_Average(total, &C);
@@ -1009,7 +1014,7 @@ void FFV::displayCompoInfo(const int* cgb, FILE* fp)
  * @param [in,out] cut カット情報の配列
  * @param [in]     bid カット情報の配列
  */
-void FFV::displayCutInfo(float* cut, int* bid)
+void FFV::displayCutInfo(const long long* cut, const int* bid)
 {
   
   int ix = size[0];
@@ -1029,27 +1034,27 @@ void FFV::displayCutInfo(float* cut, int* bid)
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         
-        size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
-        size_t mb = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        int bd = bid[mb];
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int bd = bid[m];
         
-        int b0 = getBit5(bd, X_minus); // (bd >> 0)  & MASK_5;
-        int b1 = getBit5(bd, X_plus);  // (bd >> 5)  & MASK_5;
-        int b2 = getBit5(bd, Y_minus); // (bd >> 10) & MASK_5;
-        int b3 = getBit5(bd, Y_plus);  // (bd >> 15) & MASK_5;
-        int b4 = getBit5(bd, Z_minus); // (bd >> 20) & MASK_5;
-        int b5 = getBit5(bd, Z_plus);  // (bd >> 25) & MASK_5;
+        const int b0 = getBit5(bd, X_minus); // (bd >> 0)  & MASK_5;
+        const int b1 = getBit5(bd, X_plus);  // (bd >> 5)  & MASK_5;
+        const int b2 = getBit5(bd, Y_minus); // (bd >> 10) & MASK_5;
+        const int b3 = getBit5(bd, Y_plus);  // (bd >> 15) & MASK_5;
+        const int b4 = getBit5(bd, Z_minus); // (bd >> 20) & MASK_5;
+        const int b5 = getBit5(bd, Z_plus);  // (bd >> 25) & MASK_5;
         
-        //fprintf(fp, "%d %d %d %d %d %d : ", b0, b1, b2, b3, b4, b5);
+        long long pos = cut[m];
         
-        fprintf(fp, "%5d %5d %5d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n", i,j,k,
-               d_cut[mp+0], // x- w
-               d_cut[mp+1], // x+ e
-               d_cut[mp+2], // y- s
-               d_cut[mp+3], // y+ n
-               d_cut[mp+4], // z- b
-               d_cut[mp+5], // z+ t
-               b0, b1, b2, b3, b4, b5);
+        fprintf(fp, "%5d %5d %5d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n",
+                i,j,k,
+                getCut9(pos, X_minus),
+                getCut9(pos, X_plus),
+                getCut9(pos, Y_minus),
+                getCut9(pos, Y_plus),
+                getCut9(pos, Z_minus),
+                getCut9(pos, Z_plus),
+                b0, b1, b2, b3, b4, b5);
         
       }
     }
@@ -1157,7 +1162,7 @@ void FFV::displayParameters(FILE* fp)
  */
 void FFV::DomainInitialize(TextParser* tp_dom)
 {
-  // メンバ変数にパラメータをロード : 分割指示 (1-with / 2-without)
+  // メンバ変数にパラメータをロード : 分割指示 (divtype = 1-with / 2-without)
   int div_type = getDomainInfo(tp_dom);
 
   
@@ -1171,15 +1176,44 @@ void FFV::DomainInitialize(TextParser* tp_dom)
 
   // 袖通信の最大数
   size_t Nvc  = (size_t)C.guide;
-  size_t Ncmp = 6; // カットを使うので6成分（面）
+  size_t Ncmp = 3; // 最大はベクトル3成分
   
   int m_sz[3]  = {G_size[0], G_size[1], G_size[2]};
   int m_div[3] = {G_division[0], G_division[1], G_division[2]};
   
 
+  // Polylibでリスケールする値をセット
+  switch ( C.Unit.Length )
+  {
+    case LTH_m:
+    case LTH_ND:
+      poly_factor = 1.0; // 変更なし
+      break;
+      
+    case LTH_cm:
+      poly_factor = 0.01;
+      break;
+      
+    case LTH_mm:
+      poly_factor = 0.001;
+      break;
+      
+    default:
+      Exit(0);
+  }
+  
+  
   // 有次元の場合に無次元化する　paraMngr->VoxelInit()で計算する基本量
   if (C.Unit.Param == DIMENSIONAL )
   {
+    // スケーリング
+    for (int i=0; i<3; i++) {
+      pitch[i]    *= poly_factor;
+      G_origin[i] *= poly_factor;
+      G_region[i] *= poly_factor;
+    }
+    
+    // 無次元化
     for (int i=0; i<3; i++) {
       pitch[i]    /= C.RefLength;
       G_origin[i] /= C.RefLength;
@@ -1254,15 +1288,26 @@ void FFV::DomainInitialize(TextParser* tp_dom)
   // 分割後のパラメータをDomainInfoクラスメンバ変数に保持
   setNeighborInfo(C.guide);
   
+
   
-  // チェック
-  unsigned long tz = (unsigned long)size[0] * (unsigned long)size[1] * (unsigned long)size[2];
-  if ( tz >= UINT_MAX)
+  size_t n_cell[3];
+  
+  for ( int i=0; i<3; i++)
   {
-    Hostonly_ stamped_printf("\n\tError : Product of size[] exceeds UINT_MAX\n\n");
+    n_cell[i] = (size_t)(size[i] + 2*guide);  // 分割数+ガイドセル両側
+  }
+  
+  size_t size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
+  
+  if (size_n_cell*6  > UINT_MAX)
+  {
+    Hostonly_
+    {
+      stamped_printf("\n\tError : Product of size[]*6 exceeds UINT_MAX\n\n");
+    }
     Exit(0);
   }
-
+  
 }
 
 
@@ -1665,7 +1710,7 @@ void FFV::gatherDomainInfo()
  * @param [in] bid 境界IDの配列
  * @param [in] fp  file pointer
  */
-void FFV::generateGlyph(const float* cut, const int* bid, FILE* fp)
+void FFV::generateGlyph(const long long* cut, const int* bid, FILE* fp)
 {
   int ix = size[0];
   int jx = size[1];
@@ -1728,8 +1773,6 @@ void FFV::generateGlyph(const float* cut, const int* bid, FILE* fp)
     (float)origin[2]*C.RefLength
   };
   
-  //printf("org = %e %e %e\n", m_org[0], m_org[1], m_org[2]);
-  //printf("pch = %e %e %e\n", m_pch[0], m_pch[1], m_pch[2]);
   
   // ポリゴンをストアする配列を確保
   Glyph glyph(m_pch, m_org, local_cut, myRank);
@@ -1751,7 +1794,7 @@ void FFV::generateGlyph(const float* cut, const int* bid, FILE* fp)
         
         if ( TEST_BC(qq) ) // カットがあるか，IDによる判定
         {
-          const float* pos = &cut[ _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd) ];
+          const long long pos = cut[m];
           
           idx.assign(i, j, k);
           
@@ -1759,37 +1802,37 @@ void FFV::generateGlyph(const float* cut, const int* bid, FILE* fp)
           {
             if (i != 1 )
             {
-              if (getBit5(qq, 0) != 0) glyph.generateVertex(idx, pos, "x-", qq);
+              if (getBit5(qq, 0) != 0) glyph.generateVertex(idx, pos, X_minus, qq);
             }
             if ( i != ix )
             {
-              if (getBit5(qq, 1) != 0) glyph.generateVertex(idx, pos, "x+", qq);
+              if (getBit5(qq, 1) != 0) glyph.generateVertex(idx, pos, X_plus, qq);
             }
             if ( j != 1 )
             {
-              if (getBit5(qq, 2) != 0) glyph.generateVertex(idx, pos, "y-", qq);
+              if (getBit5(qq, 2) != 0) glyph.generateVertex(idx, pos, Y_minus, qq);
             }
             if ( j != jx )
             {
-              if (getBit5(qq, 3) != 0) glyph.generateVertex(idx, pos, "y+", qq);
+              if (getBit5(qq, 3) != 0) glyph.generateVertex(idx, pos, Y_plus, qq);
             }
             if ( k != 1 )
             {
-              if (getBit5(qq, 4) != 0) glyph.generateVertex(idx, pos, "z-", qq);
+              if (getBit5(qq, 4) != 0) glyph.generateVertex(idx, pos, Z_minus, qq);
             }
             if ( k != kx )
             {
-              if (getBit5(qq, 5) != 0) glyph.generateVertex(idx, pos, "z+", qq);
+              if (getBit5(qq, 5) != 0) glyph.generateVertex(idx, pos, Z_plus, qq);
             }
           }
           else
           {
-            if (getBit5(qq, 0) != 0) glyph.generateVertex(idx, pos, "x-", qq);
-            if (getBit5(qq, 1) != 0) glyph.generateVertex(idx, pos, "x+", qq);
-            if (getBit5(qq, 2) != 0) glyph.generateVertex(idx, pos, "y-", qq);
-            if (getBit5(qq, 3) != 0) glyph.generateVertex(idx, pos, "y+", qq);
-            if (getBit5(qq, 4) != 0) glyph.generateVertex(idx, pos, "z-", qq);
-            if (getBit5(qq, 5) != 0) glyph.generateVertex(idx, pos, "z+", qq);
+            if (getBit5(qq, 0) != 0) glyph.generateVertex(idx, pos, X_minus, qq);
+            if (getBit5(qq, 1) != 0) glyph.generateVertex(idx, pos, X_plus , qq);
+            if (getBit5(qq, 2) != 0) glyph.generateVertex(idx, pos, Y_minus, qq);
+            if (getBit5(qq, 3) != 0) glyph.generateVertex(idx, pos, Y_plus , qq);
+            if (getBit5(qq, 4) != 0) glyph.generateVertex(idx, pos, Z_minus, qq);
+            if (getBit5(qq, 5) != 0) glyph.generateVertex(idx, pos, Z_plus , qq);
           }
         }
         
@@ -1809,6 +1852,7 @@ void FFV::generateGlyph(const float* cut, const int* bid, FILE* fp)
 /* @brief グローバルな領域情報を取得
  * @param [in] tp_dom   TextParserクラス
  * @return 分割指示 (1-with / 2-without)
+ * @note この時点では、単位はC.Unit.Lengthで指定する値になっている
  */
 int FFV::getDomainInfo(TextParser* tp_dom)
 {
@@ -1848,26 +1892,6 @@ int FFV::getDomainInfo(TextParser* tp_dom)
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described at '%s'\n", label.c_str());
     Exit(0);
-  }
-  
-  // Polylibのサーチ用の値をセット >> C.get1stParameter() >> C.getUnit()で単位取得後, DomainInitialize()の前
-  switch ( C.Unit.Length )
-  {
-    case LTH_m:
-    case LTH_ND:
-      poly_factor = 1.0; // 変更なし
-      break;
-      
-    case LTH_cm:
-      poly_factor = 0.01;
-      break;
-      
-    case LTH_mm:
-      poly_factor = 0.001;
-      break;
-      
-    default:
-      Exit(0);
   }
   
   
@@ -2096,12 +2120,6 @@ int FFV::getDomainInfo(TextParser* tp_dom)
     }
   }
 
-  
-  for (int i=0; i<3; i++) {
-    pitch[i]    *= (REAL_TYPE)poly_factor;
-    G_origin[i] *= (REAL_TYPE)poly_factor;
-    G_region[i] *= (REAL_TYPE)poly_factor;
-  }
   
   
   // ActiveSubdomainファイル名の取得 >> ファイル名が指定されている場合はASモード
@@ -2411,10 +2429,10 @@ void FFV::initInterval()
  * @param [in]     bid 境界IDの配列
  * @param [in]     fp  file pointer
  */
-void FFV::minDistance(const float* cut, const int* bid, FILE* fp)
+void FFV::minDistance(const long long* cut, const int* bid, FILE* fp)
 {
-  float global_min;
-  float local_min = 1.0;
+  int global_min = 1024;
+  int local_min = 1024;
   
   int ix = size[0];
   int jx = size[1];
@@ -2423,23 +2441,23 @@ void FFV::minDistance(const float* cut, const int* bid, FILE* fp)
   
 #pragma omp parallel firstprivate(ix, jx, kx, gd)
   {
-    float th_min = 1.0;
+    int th_min = 1024;
     
 #pragma omp for schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
           
-          size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
-          size_t mb = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          int bd = bid[mb];
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          int bd = bid[m];
           
           if ( TEST_BC(bd) ) // カットがあるか，IDによる判定
           {
-            for (int n=0; n<6; n++) {
-              float c = cut[mp+n];
-              th_min = min(th_min, c);
-              //th_min = min(th_min, cutPos->getPos(i+1,j+1,k+1,n)); slower than above inplementation
+            const long long c = cut[m];
+            
+            for (int n=0; n<6; n++)
+            {
+              th_min = (std::min)(th_min, getBit9(c, n));
             }
           }
 
@@ -2449,7 +2467,7 @@ void FFV::minDistance(const float* cut, const int* bid, FILE* fp)
     
 #pragma omp critical
     {
-      local_min = min(local_min, th_min);
+      local_min = (std::min)(local_min, th_min);
     }
   }
     
@@ -2458,14 +2476,14 @@ void FFV::minDistance(const float* cut, const int* bid, FILE* fp)
   
   if ( numProc > 1 )
   {
-    float tmp = global_min;
+    int tmp = global_min;
     if ( paraMngr->Allreduce(&tmp, &global_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
   }
   
   Hostonly_
   {
-    fprintf(fp, "\tMinimum non-dimnensional distance is %e\n\n", global_min);
-    printf     ("\tMinimum non-dimnensional distance is %e\n\n", global_min);
+    fprintf(fp, "\tMinimum non-dimnensional distance is %e\n\n", (REAL_TYPE)global_min/512.0); // 9bit幅
+    printf     ("\tMinimum non-dimnensional distance is %e\n\n", (REAL_TYPE)global_min/512.0);
   }
 
 }
@@ -3435,7 +3453,7 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
   {
     if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
     if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->BndCommS4DEx(d_cut, 6, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_cut, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
   }
 
 }
@@ -3640,10 +3658,6 @@ void FFV::setupCutInfo4IP(double& m_prep, double& m_total, FILE* fp)
   size_t size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
   
   
-  // カット情報保持領域のアロケート
-  allocArray_Cut(m_total);
-  
-  
   // 使用メモリ量　
   double cut_mem, G_cut_mem;
   G_cut_mem = cut_mem = (double)size_n_cell * (double)(6*sizeof(float) + sizeof(int));
@@ -3656,11 +3670,16 @@ void FFV::setupCutInfo4IP(double& m_prep, double& m_total, FILE* fp)
   
   
   // 初期値のセット
-  for (size_t i=0; i<size_n_cell*6; i++) {
-    d_cut[i] = 1.0f;
+  for (size_t i=0; i<size_n_cell; i++)
+  {
+    for (int dir=0; dir<6; dir++)
+    {
+      setBit10(d_cut[i], quantize9(1.0), dir);
+    }
   }
   
-  for (size_t i=0; i<size_n_cell; i++) {
+  for (size_t i=0; i<size_n_cell; i++)
+  {
     d_bid[i] = 0;
   }
   
@@ -3741,20 +3760,6 @@ string FFV::setupDomain(TextParser* tpf)
   C.get2ndParameter(&RF);
   
   
-  
-  // 有次元に変換 Polylib: 並列計算領域情報　ポリゴンは実スケールで，ガイドセル領域部分も含めて指定する >> DomainInitialize()のあと
-  // C.Scaling_Factor{1.0, 0.1, 0.001}
-  // pitch[], origin[]などはm単位になっているので，poly_factorで除してFXgenで指定したときの単位系（DomainInfoのUnitOfLength）でポリゴンをサーチする
-  // ロード後はスケーリングする
-  poly_dx[0]  = pitch[0] * C.RefLength / poly_factor;
-  poly_dx[1]  = pitch[1] * C.RefLength / poly_factor;
-  poly_dx[2]  = pitch[2] * C.RefLength / poly_factor;
-  poly_org[0] = origin[0]* C.RefLength / poly_factor;
-  poly_org[1] = origin[1]* C.RefLength / poly_factor;
-  poly_org[2] = origin[2]* C.RefLength / poly_factor;
-  poly_gc[0] = guide;
-  poly_gc[1] = guide;
-  poly_gc[2] = guide;
 
   
   // 全ノードについて，ローカルノード1面・一層あたりの通信量の和（要素数）を計算
@@ -3896,12 +3901,6 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     printf("\tfile name = %s\n\n", C.PolylibConfigName.c_str());
   }
   
-  // debug
-#if 0
-  printf("%d : %d %d %d : %e %e %e : %e %e %e\n", myRank, size[0], size[1], size[2],
-         poly_dx[0], poly_dx[1], poly_dx[2],
-         poly_org[0], poly_org[1], poly_org[2]);
-#endif
   
   // Polylib: インスタンス取得
   PL = MPIPolylib::get_instance();
@@ -3910,11 +3909,14 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   //PL->set_factory( new MyPolygonGroupFactory() );
   
   // Polylib: 並列計算領域情報を設定
+  unsigned poly_gc[3] = {guide, guide, guide};
+  
+  // 読み込むデータは有次元であるが、無次元で指定し、ポリゴンの値は無次元にスケーリングする
   poly_stat = PL->init_parallel_info(MPI_COMM_WORLD,
-                                     poly_org,         // 自ランクの基点座標
+                                     origin,           // 自ランクの基点座標
                                      (unsigned*)size,  // 自ランクの分割数
                                      poly_gc,          // ガイドセル数
-                                     poly_dx           // 格子幅
+                                     pitch             // 格子幅
                                      );
   if ( poly_stat != PLSTAT_OK )
   {
@@ -3962,13 +3964,15 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   
   
-  // スケーリング
+  // スケーリング M or NDの単位に変換し、無次元化する
   vector<PolygonGroup*>::iterator it2;
+  
+  REAL_TYPE r_factor = poly_factor/C.RefLength;
   
   int c=0;
   for (it2 = pg_roots->begin(); it2 != pg_roots->end(); it2++)
   {
-    poly_stat = (*it2)->rescale_polygons(poly_factor);
+    poly_stat = (*it2)->rescale_polygons(r_factor);
     if( poly_stat != PLSTAT_OK ) c++;
   }
   
@@ -4115,20 +4119,16 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   m_total+= poly_mem;
   
   displayMemoryInfo(fp, G_poly_mem, poly_mem, "Polygon");
-  
-  
-  // ポリゴンの修正
-  RepairPolygonData(PL, false);
 
   
   // ポリゴンのBbox
-  GM.calcBboxFromPolygonGroup(PL, PG, C.num_of_polygrp, poly_org, poly_dx);
+  GM.calcBboxFromPolygonGroup(PL, PG, C.num_of_polygrp);
 
   
   // Triangle display >> Debug
 // ##########
 #if 0
-  Vec3r m_min, m_max, t1(poly_org), t2(poly_dx), t3;
+  Vec3r m_min, m_max, t1(origin), t2(pitch), t3;
   t3.assign((REAL_TYPE)size[0]*t2.x, (REAL_TYPE)size[1]*t2.y, (REAL_TYPE)size[2]*t2.z);
   m_min = t1 - t2;      // 1層外側まで
   m_max = t1 + t3 + t2; //
@@ -4207,98 +4207,21 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   
 
-  TIMING_start("Cutlib_Section");
-  
-  // Cutlib
+  TIMING_start("Cut_Section");
+
   Hostonly_
   {
     fprintf(fp,"\n----------\n\n");
-    fprintf(fp,"\t>> Cut Info\n\n");
+    fprintf(fp,"\t>> Calculate cut and quantize\n\n");
     printf("\n----------\n\n");
-    printf("\t>> Cut Info\n\n");
+    printf("\t>> Calculate cut and quantize\n\n");
   }
-  
-  size_t n_cell[3];
-  
-  double cut_org[3];
-  double cut_dx[3];
-  
-  // 有次元に変換 Polylib: 並列計算領域情報　ポリゴンはMスケール
-  cut_dx[0]  = (double)(pitch[0] * C.RefLength);
-  cut_dx[1]  = (double)(pitch[1] * C.RefLength);
-  cut_dx[2]  = (double)(pitch[2] * C.RefLength);
-  cut_org[0] = (double)(origin[0]* C.RefLength);
-  cut_org[1] = (double)(origin[1]* C.RefLength);
-  cut_org[2] = (double)(origin[2]* C.RefLength);
-
-  /*
-   
-          Outer < | >     Inner      < | > Outer
-        +----+----+----+----+-...-+----+----+----+
-      0 |    |    |    |    |     |    |    |    |
-        |    |    |    |    |     |    |    |    |
-        +----+----+----+----+-...-+----+----+----+
-        ^ -1   0    1    2    ...   ix  ix+1 ix+2
-          sx                                  ex
-   
-   グリッド情報アクセッサクラスCell(const double org[3], const double pitch[3])
-   のコンストラクタに渡す引数
-     org[]はインデクス空間で(0,0,0)のセルの最小位置（上図の^の部分）
-   
-   */
-  
-  for ( int i=0; i<3; i++)
-  {
-    n_cell[i] = (size_t)(size[i] + 2*guide);  // 分割数+ガイドセル両側
-    cut_org[i] -= cut_dx[i]*(double)guide;    // ガイドセルを含む領域のマイナス側頂点の座標
-  }
-  
-  size_t size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
-  
-  if (size_n_cell*6  > UINT_MAX)
-  {
-    Hostonly_
-    {
-      stamped_printf("\n\tError : Product of size[]*6 exceeds UINT_MAX\n\n");
-      stamped_fprintf(fp,"\n\tError : Product of size[]*6 exceeds UINT_MAX\n\n");
-    }
-    Exit(0);
-  }
-
-#if 0
-  printf("Rank=%d : %d %d %d : %e %e %e : %e %e %e\n", myRank, size[0], size[1], size[2], cut_dx[0], cut_dx[1], cut_dx[2], cut_org[0], cut_org[1], cut_org[2]);
-#endif
-  
-  // Cutlibの配列は各方向(引数)のサイズ
-  TIMING_start("Allocate_Arrays");
-  cutPos = new CutPos32Array(n_cell); // 6*(float)
-  cutBid = new CutBid5Array (n_cell); // (int32_t)
-  TIMING_stop("Allocate_Arrays");
-  
-  
-  // グリッド情報アクセッサクラス
-  GridAccessor* GRID = new Cell(cut_org, cut_dx);
   
   
   // 交点計算
   TIMING_start("Cut_Information");
-  CalcCutInfo(GRID, PL, cutPos, cutBid);
+  GM.quantizeCut(d_cut, d_bid, PL, PG);
   TIMING_stop("Cut_Information");
-  
-  
-  // 使用メモリ量
-  double cut_mem, G_cut_mem;
-  G_cut_mem = cut_mem = (double)size_n_cell * (double)(6*sizeof(float) + sizeof(int)); // float
-  m_prep += cut_mem;
-  m_total+= cut_mem;
-  
-  
-  displayMemoryInfo(fp, G_cut_mem, cut_mem, "Cut");
-  
-  
-  // カットとID情報をポイント
-  d_cut = (float*)cutPos->getDataPointer();
-  d_bid = (int*)cutBid->getDataPointer();
   
   
   // カットの最小値
@@ -4310,7 +4233,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   displayCutInfo(d_cut, d_bid);
 #endif
   
-  TIMING_stop("Cutlib_Section");
+  TIMING_stop("Cut_Section");
   
 }
 

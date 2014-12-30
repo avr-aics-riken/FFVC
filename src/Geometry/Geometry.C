@@ -19,9 +19,8 @@
  * @author aics
  */
 
-#include "FBUtility.h"
 #include "Geometry.h"
-#include "CompoFraction.h"
+#include "FBUtility.h"
 
 // #################################################################
 /* @brief d_mid[]がtargetであるセルに対して、d_pvf[]に指定値valueを代入する
@@ -75,25 +74,15 @@ unsigned long Geometry::assignVF(const int target, const REAL_TYPE value, const 
  * @param [in]     PL         MPIPolylibのインスタンス
  * @param [in,out] PG         PolygonPropertyクラス
  * @param [in]     NoPolyGrp  ポリゴングループ数
- * @param [in]     poly_org   ポリゴンの基点
- * @param [in]     poly_dx    ポリゴンのピッチ
  */
 void Geometry::calcBboxFromPolygonGroup(MPIPolylib* PL,
                                         PolygonProperty* PG,
-                                        const int m_NoPolyGrp,
-                                        const REAL_TYPE* poly_org,
-                                        const REAL_TYPE* poly_dx)
+                                        const int m_NoPolyGrp)
 {
-  for ( int i=0; i<3; i++)
-  {
-    m_poly_org[i] = poly_org[i];
-    m_poly_dx[i]  = poly_dx[i];
-  }
-  
   Vec3r m_min;
   Vec3r m_max;
-  Vec3r t1(m_poly_org);
-  Vec3r t2(m_poly_dx);
+  Vec3r t1(origin);
+  Vec3r t2(pitch);
   Vec3r t3;
   
   t3.assign((REAL_TYPE)size[0]*t2.x, (REAL_TYPE)size[1]*t2.y, (REAL_TYPE)size[2]*t2.z);
@@ -103,13 +92,13 @@ void Geometry::calcBboxFromPolygonGroup(MPIPolylib* PL,
   m_max = t1 + t3 + t2;
   
 #if 0 // debug
-  printf("poly : %f %f %f\n", m_poly_org[0], m_poly_org[1], m_poly_org[2]);
-  printf("dx   : %f %f %f\n", m_poly_dx[0], m_poly_dx[1], m_poly_dx[2]);
+  printf("poly : %f %f %f\n", t1.x, t1.y, t1.z);
+  printf("dx   : %f %f %f\n", t2.x, t2.y, t2.z);
   printf("Search area Bbox min : %f %f %f\n", m_min.x, m_min.y, m_min.z);
   printf("Search area Bbox max : %f %f %f\n", m_max.x, m_max.y, m_max.z);
 #endif
   
-  //printf("\tBounding box for polygon group\n");
+
   
   // ポリゴン情報へのアクセス
   vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
@@ -143,13 +132,13 @@ void Geometry::calcBboxFromPolygonGroup(MPIPolylib* PL,
         p[1] = *(org[1]);
         p[2] = *(org[2]);
         
-        CompoFraction::get_min(bbox_min, p[0]);
-        CompoFraction::get_min(bbox_min, p[1]);
-        CompoFraction::get_min(bbox_min, p[2]);
+        get_min(bbox_min, p[0]);
+        get_min(bbox_min, p[1]);
+        get_min(bbox_min, p[2]);
         
-        CompoFraction::get_max(bbox_max, p[0]);
-        CompoFraction::get_max(bbox_max, p[1]);
-        CompoFraction::get_max(bbox_max, p[2]);
+        get_max(bbox_max, p[0]);
+        get_max(bbox_max, p[1]);
+        get_max(bbox_max, p[2]);
         
 #if 0
         /*
@@ -469,7 +458,7 @@ void Geometry::fill(FILE* fp,
                     CompoList* cmp,
                     MediumList* mat,
                     int* d_bcd,
-                    float* d_cut,
+                    long long* d_cut,
                     int* d_bid,
                     const int m_NoCompo)
 {
@@ -607,7 +596,7 @@ void Geometry::fill(FILE* fp,
     
     if ( numProc > 1 )
     {
-      if ( paraMngr->BndCommS4DEx(d_cut, 6, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->BndCommS3D(d_cut, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
       if ( paraMngr->BndCommS3D(d_bcd, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
       if ( paraMngr->BndCommS3D(d_bid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
     }
@@ -882,7 +871,7 @@ unsigned long Geometry::fillByID(int* mid, const int target, const int* Dsize)
  */
 unsigned long Geometry::fillByBid(int* bid,
                                   int* bcd,
-                                  float* cut,
+                                  long long* cut,
                                   const int tgt_id,
                                   unsigned long& substituted,
                                   const int m_NoCompo,
@@ -929,7 +918,7 @@ schedule(static) reduction(+:filled) reduction(+:replaced)
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         
-#include "fill_bid.h"
+#include "fill_bid_naive.h"
         
       }
     }
@@ -943,7 +932,7 @@ schedule(static) reduction(+:filled) reduction(+:replaced)
     for (int j=jx; j>=1; j--) {
       for (int i=ix; i>=1; i--) {
         
-#include "fill_bid.h"
+#include "fill_bid_naive.h"
         
       }
     }
@@ -1326,7 +1315,7 @@ unsigned long Geometry::fillSubCellSolid(int* smd, REAL_TYPE* svf)
  * @param [in]     Dsize  サイズ
  * @retval フィルされたセル数
  */
-unsigned long Geometry::fillCutOnCellCenter(int* bcd, const int* bid, const float* cut, const int* Dsize)
+unsigned long Geometry::fillCutOnCellCenter(int* bcd, const int* bid, const long long* cut, const int* Dsize)
 {
   int ix, jx, kx, gd;
   
@@ -1353,12 +1342,6 @@ unsigned long Geometry::fillCutOnCellCenter(int* bcd, const int* bid, const floa
       for (int i=1; i<=ix; i++) {
         
         size_t m_p = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
-        size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
-        size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
-        size_t m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd);
-        size_t m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd);
-        size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
-        size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
         
         int qq = bid[m_p];
         
@@ -1370,13 +1353,26 @@ unsigned long Geometry::fillCutOnCellCenter(int* bcd, const int* bid, const floa
         int qb = getBit5(qq, Z_minus);
         int qt = getBit5(qq, Z_plus);
         
-        const float* pos = &cut[ _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd) ];
+        const long long pos = cut[m_p];
         
         // いずれかの方向で交点が定義点上の場合
-        if ( pos[0]*pos[1]*pos[2]*pos[3]*pos[4]*pos[5] == 0.0 )
+        if ( chkZeroCut(pos, X_minus)
+            +chkZeroCut(pos, X_plus)
+            +chkZeroCut(pos, Y_minus)
+            +chkZeroCut(pos, Y_plus)
+            +chkZeroCut(pos, Z_minus)
+            +chkZeroCut(pos, Z_plus) > 0 )
         {
-          //printf("%d %d %d : %f %f %f %f %f %f : %d\n",i,j,k,pos[0],pos[1],pos[2],pos[3],pos[4],pos[5], qw);
-          setBitID(bcd[m_p], qw); // qwで代表
+          /*printf("%d %d %d : %f %f %f %f %f %f : %d\n",
+           i,j,k,
+           getCut9(pos, X_minus),
+           getCut9(pos, X_plus),
+           getCut9(pos, Y_minus),
+           getCut9(pos, Y_plus),
+           getCut9(pos, Z_minus),
+           getCut9(pos, Z_plus), qw);
+           */
+           setBitID(bcd[m_p], qw); // qwで代表
           c++;
         }
         
@@ -1816,8 +1812,6 @@ unsigned long Geometry::findPolygonInCell(int* d_mid, MPIPolylib* PL, PolygonPro
   int kx = size[2];
   int gd = guide;
   
-
-  
   
   // ポリゴングループ毎にアクセス
   vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
@@ -1856,12 +1850,12 @@ unsigned long Geometry::findPolygonInCell(int* d_mid, MPIPolylib* PL, PolygonPro
           for (int j=wmin[1]; j<=wmax[1]; j++) {
             for (int i=wmin[0]; i<=wmax[0]; i++) {
               
-              Vec3r bx_min(m_poly_org[0]+m_poly_dx[0]*(REAL_TYPE)(i-1),
-                           m_poly_org[1]+m_poly_dx[1]*(REAL_TYPE)(j-1),
-                           m_poly_org[2]+m_poly_dx[2]*(REAL_TYPE)(k-1)); // セルBboxの対角座標
-              Vec3r bx_max(m_poly_org[0]+m_poly_dx[0]*(REAL_TYPE)i,
-                           m_poly_org[1]+m_poly_dx[1]*(REAL_TYPE)j,
-                           m_poly_org[2]+m_poly_dx[2]*(REAL_TYPE)k);     // セルBboxの対角座標
+              Vec3r bx_min(origin[0]+pitch[0]*(REAL_TYPE)(i-1),
+                           origin[1]+pitch[1]*(REAL_TYPE)(j-1),
+                           origin[2]+pitch[2]*(REAL_TYPE)(k-1)); // セルBboxの対角座標
+              Vec3r bx_max(origin[0]+pitch[0]*(REAL_TYPE)i,
+                           origin[1]+pitch[1]*(REAL_TYPE)j,
+                           origin[2]+pitch[2]*(REAL_TYPE)k);     // セルBboxの対角座標
               
               vector<Triangle*>* trias = PL->search_polygons(m_pg, bx_min, bx_max, false); // false; ポリゴンが一部でもかかる場合
               int polys = trias->size();
@@ -1993,6 +1987,212 @@ void Geometry::getFillParam(TextParser* tpCntl)
     }
   }
   */
+}
+
+
+// #################################################################
+/**
+ * @brief 平面と線分の交点を求める
+ * @param [out]  X   平面P上の交点Xの座標
+ * @param [in]   A   線分ABの端点
+ * @param [in]   B   線分ABの端点
+ * @param [in]   PL  平面PLの係数 ax+by+cz+d=0
+ * @retval 平面P上の交点XのAからの距離(0<=r<=1), 負値の場合は交点が無い
+ * @see http://www.sousakuba.com/Programming/gs_plane_line_intersect.html
+ */
+
+REAL_TYPE Geometry::intersectLineByPlane(Vec3r& X, const Vec3r A, const Vec3r B, const REAL_TYPE PL[4])
+{
+  // 平面PLの法線
+  Vec3r n(PL[0], PL[1], PL[2]);
+  
+  // 平面PL上の点P
+  Vec3r P = n * PL[3];
+  
+  // vectors
+  Vec3r a(A.x-P.x, A.y-P.y, A.z-P.z);
+  Vec3r b(B.x-P.x, B.y-P.y, B.z-P.z);
+  
+  // 平面法線と内積をとり交点があるかを符号から判別
+  REAL_TYPE da = dot(a, n);
+  REAL_TYPE db = dot(b, n);
+  REAL_TYPE abs_da = fabs(da);
+  REAL_TYPE abs_db = fabs(db);
+  
+  
+  // 平面上の場合の計算誤差を調整
+  if ( abs_da < ROUND_EPS )
+  {
+    abs_da = da = 0.0;
+  }
+  if ( abs_db < ROUND_EPS )
+  {
+    abs_db = db = 0.0;
+  }
+  
+  REAL_TYPE r;
+  
+  // 交差判定
+  if ( da == 0.0 && db == 0.0 )
+  {
+    r = -1.0; // 両端A, Bが平面PL上にあり、交点なし
+  }
+  else if ( (da >= 0.0 && db <= 0.0) || (da <= 0.0 && db >= 0.0) )
+  {
+    // 比率を求める
+    r = abs_da / ( abs_da + abs_db );
+    
+    // 交点を求める
+    Vec3r ab(B.x-A.x, B.y-A.y, B.z-A.z);
+    X = A + ab * r;
+  }
+  else
+  {
+    r = -1.0; // 交差なし
+  }
+  
+  return r;
+}
+
+
+// #################################################################
+/**
+ * @brief 交点計算を行い、量子化する
+ * @param [out]   cut        量子化した交点
+ * @param [out]   bid        交点ID
+ * @param [in]    PL         Polylibインスタンス
+ * @param [in]    PG         PolygonPropertyクラス
+ */
+void Geometry::quantizeCut(long long* cut,
+                           int* bid,
+                           MPIPolylib* PL,
+                           PolygonProperty* PG)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  Vec3r org(origin);
+  Vec3r pch(pitch);
+  
+  
+  // ポリゴン情報へのアクセス
+  vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
+  vector<PolygonGroup*>::iterator it;
+  
+  // ポリゴングループのループ
+  int odr = 0;
+  unsigned count = 0;
+  for (it = pg_roots->begin(); it != pg_roots->end(); it++)
+  {
+    string m_pg = (*it)->get_name();     // グループラベル
+    string m_bc = (*it)->get_type();     // 境界条件ラベル
+    
+    // サブドメイン内にポリゴンが存在する場合のみ処理する
+    int ntria = (*it)->get_group_num_tria();  // ローカルのポリゴン数
+    
+    if ( ntria > 0 )
+    {
+      // Monitor属性のポリゴンはスキップ
+      if ( strcasecmp(m_bc.c_str(), "monitor"))
+      {
+        // ポリゴングループのインデクス
+        int wmin[3];
+        int wmax[3];
+        findIndex( PG[odr].getBboxMin(), wmin );
+        findIndex( PG[odr].getBboxMax(), wmax );
+        
+        printf("\t\t[rank=%6d] (%4d %4d %4d) - (%4d %4d %4d) %s \n",
+               myRank, wmin[0], wmin[1], wmin[2], wmax[0], wmax[1], wmax[2], m_pg.c_str());
+        
+        // ポリゴングループの存在するbbox内のセルに対して交点計算
+        for (int k=wmin[2]; k<=wmax[2]; k++) {
+          for (int j=wmin[1]; j<=wmax[1]; j++) {
+            for (int i=wmin[0]; i<=wmax[0]; i++) {
+              
+              // position of cell center
+              Vec3r base((REAL_TYPE)i-0.5, (REAL_TYPE)j-0.5, (REAL_TYPE)k-0.5);
+              
+              // セルセンターを中心に2*pitch[]の矩形領域
+              Vec3r ctr(org + base * pch);
+              
+              // 1%マージンを与える
+              Vec3r bx_min(ctr - pch * 1.01);
+              Vec3r bx_max(ctr + pch * 1.01);
+              
+              
+              vector<Triangle*>* trias = PL->search_polygons(m_pg, bx_min, bx_max, false); // false; ポリゴンが一部でもかかる場合
+              int polys = trias->size();
+              
+              if (polys>0)
+              {
+                // 隣接点の座標値
+                Vec3r q[6];
+                q[0] = shift_W(ctr, pch); // (-1, 0, 0)
+                q[1] = shift_E(ctr, pch); // ( 1, 0, 0)
+                q[2] = shift_S(ctr, pch); // ( 0,-1, 0)
+                q[3] = shift_N(ctr, pch); // ( 0, 1, 0)
+                q[4] = shift_B(ctr, pch); // ( 0, 0,-1)
+                q[5] = shift_T(ctr, pch); // ( 0, 0, 1)
+                
+                
+                vector<Triangle*>::iterator it2;
+                
+                for (it2 = trias->begin(); it2 != trias->end(); it2++)
+                {
+                  Vertex** tmp = (*it2)->get_vertex();
+                  Vec3r p[3];
+                  p[0] = *(tmp[0]);
+                  p[1] = *(tmp[1]);
+                  p[2] = *(tmp[2]);
+                  
+                  // 平面の式
+                  Vec3r A(p[1].x-p[0].x, p[1].y-p[0].y, p[1].z-p[0].z);
+                  Vec3r B(p[2].x-p[0].x, p[2].y-p[0].y, p[2].z-p[0].z);
+                  Vec3r C = cross(A, B);
+                  REAL_TYPE pl[4] = {C.x, C.y, C.z, -(C.x * p[0].x + C.y * p[0].y + C.z * p[0].z)};
+                  
+                  
+                  // Polygon ID
+                  int poly_id = (*it2)->get_exid();
+                  
+                  
+                  // テンポラリに保持
+                  size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+                  int bb = bid[m];
+                  long long cc = cut[m];
+                  
+                  // 各方向の交点を評価、短い距離を記録する。新規記録の場合のみカウント
+                  count += updateCut(ctr, q[0], pl, cc, bb, X_minus, poly_id);
+                  count += updateCut(ctr, q[1], pl, cc, bb, X_plus,  poly_id);
+                  count += updateCut(ctr, q[2], pl, cc, bb, Y_minus, poly_id);
+                  count += updateCut(ctr, q[3], pl, cc, bb, Y_plus,  poly_id);
+                  count += updateCut(ctr, q[4], pl, cc, bb, Z_minus, poly_id);
+                  count += updateCut(ctr, q[5], pl, cc, bb, Z_plus,  poly_id);
+                  
+                  bid[m] = bb;
+                  cut[m] = cc;
+                } // trias
+                
+              } // polys
+              
+              //後始末
+              delete trias;
+            }
+          }
+        } // for i,j,k
+        
+      } // skip monitor
+    } // ntria
+    
+    odr ++;
+  }
+  
+  printf("quantize cut = %d\n", count);
+  
+  delete pg_roots;
+  
 }
 
 
@@ -2297,9 +2497,9 @@ int Geometry::SubCellIncTest(REAL_TYPE* svf,
                              const int m_NoCompo)
 {
   // プライマリセルの基点（有次元）
-  Vec3r o(m_poly_org[0]+m_poly_dx[0]*(REAL_TYPE)(ip-1),
-          m_poly_org[1]+m_poly_dx[1]*(REAL_TYPE)(jp-1),
-          m_poly_org[2]+m_poly_dx[2]*(REAL_TYPE)(kp-1));
+  Vec3r o(origin[0]+pitch[0]*(REAL_TYPE)(ip-1),
+          origin[1]+pitch[1]*(REAL_TYPE)(jp-1),
+          origin[2]+pitch[2]*(REAL_TYPE)(kp-1));
   
   int pic = 0;
   
@@ -2889,11 +3089,11 @@ void Geometry::SubSampling(FILE* fp,
         REAL_TYPE m_org[3], m_pit[3];
         
         // サブセルのファイル出力ヘッダ
-        for (int l=0; l<3; l++) m_pit[l] = m_poly_dx[l]/(REAL_TYPE)sdv;
+        for (int l=0; l<3; l++) m_pit[l] = pitch[l]/(REAL_TYPE)sdv;
         
-        m_org[0] = m_poly_org[0]+m_poly_dx[0]*(REAL_TYPE)(i-1);
-        m_org[1] = m_poly_org[1]+m_poly_dx[1]*(REAL_TYPE)(j-1);
-        m_org[2] = m_poly_org[2]+m_poly_dx[2]*(REAL_TYPE)(k-1);
+        m_org[0] = origin[0]+pitch[0]*(REAL_TYPE)(i-1);
+        m_org[1] = origin[1]+pitch[1]*(REAL_TYPE)(j-1);
+        m_org[2] = origin[2]+pitch[2]*(REAL_TYPE)(k-1);
         
         
         

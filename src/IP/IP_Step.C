@@ -123,7 +123,7 @@ void IP_Step::printPara(FILE* fp, const Control* R)
 
 // #################################################################
 // 計算領域のセルIDとカット情報を設定する
-void IP_Step::setup(int* bcd, Control* R, const int NoMedium, const MediumList* mat, float* cut, int* bid)
+void IP_Step::setup(int* bcd, Control* R, const int NoMedium, const MediumList* mat, long long* cut, int* bid)
 {
   int mid_fluid;        /// 流体
   int mid_solid;        /// 固体
@@ -179,16 +179,24 @@ void IP_Step::setup(int* bcd, Control* R, const int NoMedium, const MediumList* 
           if ( (x <= len) && (len < x+dh) )
           {
             setBit5(bid[m], mid_solid, X_plus);
-            cut[_F_IDX_S4DEX(X_plus, i, j, k, 6, ix, jx, kx, gd)] = s;
-            setBit5(bid[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)], mid_solid, X_minus);
-            cut[_F_IDX_S4DEX(X_minus, i+1, j, k, 6, ix, jx, kx, gd)] = 1.0-s;
+            int r = quantize9(s);
+            setBit10(cut[m], r, X_plus);
+            
+            size_t m1 = _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd);
+            setBit5(bid[m1], mid_solid, X_minus);
+            int rr = quantize9(1.0-s);
+            setBit10(cut[m1], rr, X_minus);
           }
           else if ( (x-dh < len) && (len < x) )
           {
             setBit5(bid[m], mid_solid, X_minus);
-            cut[_F_IDX_S4DEX(X_minus, i, j, k, 6, ix, jx, kx, gd)] = -s;
-            setBit5(bid[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)], mid_solid, X_plus);
-            cut[_F_IDX_S4DEX(X_plus, i-1, j, k, 6, ix, jx, kx, gd)] = 1.0+s;
+            int r = quantize9(-s);
+            setBit10(cut[m], r, X_minus);
+            
+            size_t m1 = _F_IDX_S3D(i-1, j, k, ix, jx, kx, gd);
+            setBit5(bid[m1], mid_solid, X_plus);
+            int rr = quantize9(1.0+s);
+            setBit10(cut[m1], rr, X_plus);
           }
         }
 
@@ -210,16 +218,24 @@ void IP_Step::setup(int* bcd, Control* R, const int NoMedium, const MediumList* 
           if ( (z <= ht) && (ht < z+dh) )
           {
             setBit5(bid[m], mid_solid, Z_plus);
-            cut[_F_IDX_S4DEX(Z_plus, i, j, k, 6, ix, jx, kx, gd)] = c;
-            setBit5(bid[_F_IDX_S3D(i, j, k+1, ix, jx, kx, gd)], mid_solid, Z_minus);
-            cut[_F_IDX_S4DEX(Z_minus, i, j, k+1, 6, ix, jx, kx, gd)] = 1.0-c;
+            int r = quantize9(c);
+            setBit10(cut[m], r, Z_plus);
+
+            size_t m1 = _F_IDX_S3D(i, j, k+1, ix, jx, kx, gd);
+            setBit5(bid[m1], mid_solid, Z_minus);
+            int rr = quantize9(1.0-c);
+            setBit10(cut[m1], rr, Z_minus);
           }
           else if ( (z-dh < ht) && (ht < z) )
           {
             setBit5(bid[m], mid_solid, Z_minus);
-            cut[_F_IDX_S4DEX(Z_minus, i, j, k, 6, ix, jx, kx, gd)] = -c;
-            setBit5(bid[_F_IDX_S3D(i, j, k-1, ix, jx, kx, gd)], mid_solid, Z_plus);
-            cut[_F_IDX_S4DEX(Z_plus, i, j, k-1, 6, ix, jx, kx, gd)] = 1.0+c;
+            int r = quantize9(-c);
+            setBit10(cut[m], r, Z_minus);
+
+            size_t m1 = _F_IDX_S3D(i, j, k-1, ix, jx, kx, gd);
+            setBit5(bid[m1], mid_solid, Z_plus);
+            int rr = quantize9(1.0+c);
+            setBit10(cut[m1], rr, Z_plus);
           }
         }
         
@@ -244,11 +260,11 @@ void IP_Step::setup(int* bcd, Control* R, const int NoMedium, const MediumList* 
         setBitID(bcd[m], mid_solid);
         
         // 交点
-        size_t m1 = _F_IDX_S4DEX(X_minus, 1, j, k, 6, ix, jx, kx, gd);
-        cut[m1] = 0.5; /// 壁面までの距離
+        size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
+        int r = quantize9(0.5);
+        setBit10(cut[l], r, X_minus);
         
         // 境界ID
-        size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
         setBit5(bid[l], mid_solid, X_minus);
       }
     }
@@ -266,10 +282,9 @@ void IP_Step::setup(int* bcd, Control* R, const int NoMedium, const MediumList* 
           size_t m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
           setBitID(bcd[m], mid_fluid);
           
-          size_t m1 = _F_IDX_S4DEX(X_minus, 1, j, k, 6, ix, jx, kx, gd);
-          cut[m1] = 1.0;
-          
           size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
+          int r = quantize9(1.0);
+          setBit10(cut[l], r, X_minus);
           setBit5(bid[l], 0, X_minus);
         }
       }

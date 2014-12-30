@@ -22,7 +22,7 @@
  * @author aics
  */
 
-#include "../FB/Intrinsic.h"
+#include "Intrinsic.h"
 #include "IP_Define.h"
 #include "FBUtility.h"
 
@@ -82,7 +82,7 @@ public:
    * @param [out]    cut      カット情報
    * @param [out]    bid      境界ID
    */
-  virtual void setup(int* bcd, Control* R, const int NoMedium, const MediumList* mat, float* cut, int* bid);
+  virtual void setup(int* bcd, Control* R, const int NoMedium, const MediumList* mat, long long* cut, int* bid);
   
 };
 #endif // _IP_DUCT_H_

@@ -58,9 +58,6 @@ FFV::FFV()
     G_size[i]= 0;
     G_origin[i] = 0.0;
     G_region[i] = 0.0;
-    poly_org[i] = 0.0;
-    poly_dx[i] = 0.0;
-    poly_gc[i] = 0;
     ensPeriodic[i] = 0;
   }
   
@@ -78,9 +75,6 @@ FFV::FFV()
   mat = NULL;
   cmp = NULL;
   paraMngr = NULL;
-
-  cutPos = NULL;
-  cutBid = NULL;
   
   
   // OBSTACLEの力の積算
@@ -685,10 +679,10 @@ void FFV::set_timing_label()
   set_label("Write_Polygon_File",      PerfMonitor::CALC);
   // Polylib_Section
   
-  set_label("Cutlib_Section",          PerfMonitor::CALC, false);
+  set_label("Cut_Section",             PerfMonitor::CALC, false);
   set_label("Cut_Information",         PerfMonitor::CALC);
   set_label("Cut_Minimum_search",      PerfMonitor::CALC);
-  // Cutlib_Section
+  // Cut_Section
   
   set_label("Geometry_Section",        PerfMonitor::CALC, false);
   set_label("SeedFilling",             PerfMonitor::CALC);

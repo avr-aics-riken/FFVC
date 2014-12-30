@@ -589,7 +589,7 @@ void IP_Jet::printPara(FILE* fp, const Control* R)
 
 // #################################################################
 // 外部境界の設定
-void IP_Jet::setOBC(const int face, int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, float* cut, int*bid)
+void IP_Jet::setOBC(const int face, int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, long long* cut, int*bid)
 {
   int mid_fluid;        /// 流体
   int mid_solid;        /// 固体  
@@ -641,11 +641,11 @@ schedule(static)
           setBitID(bcd[m], mid_solid);
           
           // 交点
-          size_t m1 = _F_IDX_S4DEX(X_minus, 1, j, k, 6, ix, jx, kx, gd);
-          cut[m1] = 0.5; /// 壁面までの距離
+          size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
+          int r = quantize9(0.5); /// 壁面までの距離
+          setBit10(cut[l], r, X_minus);
           
           // 境界ID
-          size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
           setBit5(bid[l], mid_solid, X_minus);
         }
       }
@@ -672,10 +672,9 @@ schedule(static)
               size_t m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
               setBitID(bcd[m], mid_fluid);
               
-              size_t m1 = _F_IDX_S4DEX(X_minus, 1, j, k, 6, ix, jx, kx, gd);
-              cut[m1] = 1.0;
-              
               size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
+              int r = quantize9(1.0);
+              setBit10(cut[l], r, X_minus);
               setBit5(bid[l], 0, X_minus);
             }
             
@@ -705,10 +704,9 @@ schedule(static)
               size_t m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
               setBitID(bcd[m], mid_fluid);
               
-              size_t m1 = _F_IDX_S4DEX(X_minus, 1, j, k, 6, ix, jx, kx, gd);
-              cut[m1] = 1.0;
-              
               size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
+              int r = quantize9(1.0);
+              setBit10(cut[l], r, X_minus);
               setBit5(bid[l], 0, X_minus);
             }
             

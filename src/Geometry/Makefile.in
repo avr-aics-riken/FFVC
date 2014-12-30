@@ -140,7 +140,7 @@ am__v_AR_1 =
 libGEOM_a_AR = $(AR) $(ARFLAGS)
 libGEOM_a_LIBADD =
 am_libGEOM_a_OBJECTS = libGEOM_a-Geometry.$(OBJEXT) \
-	libGEOM_a-CompoFraction.$(OBJEXT)
+	libGEOM_a-CompoFraction.$(OBJEXT) libGEOM_a-Glyph.$(OBJEXT)
 libGEOM_a_OBJECTS = $(am_libGEOM_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -232,9 +232,6 @@ CPM_DIR = @CPM_DIR@
 CPM_LDFLAGS = @CPM_LDFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
-CUT_CFLAGS = @CUT_CFLAGS@
-CUT_DIR = @CUT_DIR@
-CUT_LDFLAGS = @CUT_LDFLAGS@
 CXX = @CXX@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
@@ -350,7 +347,6 @@ libGEOM_a_CXXFLAGS = \
   -I. \
   -I../FB \
   @CPM_CFLAGS@ \
-  @CUT_CFLAGS@ \
   @PL_CFLAGS@ \
   @TP_CFLAGS@ \
   @MPICH_CFLAGS@ \
@@ -361,9 +357,11 @@ libGEOM_a_SOURCES = \
   Geometry.h \
   CompoFraction.C \
   CompoFraction.h \
-  fill_bid.h
+  fill_bid_naive.h \
+  Glyph.C \
+  Glyph.h
 
-EXTRA_DIST = Makefile_hand depend.inc
+EXTRA_DIST = Makefile_hand depend.inc fill_bid.h
 all: all-am
 
 .SUFFIXES:
@@ -443,6 +441,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libGEOM_a-CompoFraction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libGEOM_a-Geometry.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libGEOM_a-Glyph.Po@am__quote@
 
 .C.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -485,6 +484,20 @@ libGEOM_a-CompoFraction.obj: CompoFraction.C
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='CompoFraction.C' object='libGEOM_a-CompoFraction.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libGEOM_a_CXXFLAGS) $(CXXFLAGS) -c -o libGEOM_a-CompoFraction.obj `if test -f 'CompoFraction.C'; then $(CYGPATH_W) 'CompoFraction.C'; else $(CYGPATH_W) '$(srcdir)/CompoFraction.C'; fi`
+
+libGEOM_a-Glyph.o: Glyph.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libGEOM_a_CXXFLAGS) $(CXXFLAGS) -MT libGEOM_a-Glyph.o -MD -MP -MF $(DEPDIR)/libGEOM_a-Glyph.Tpo -c -o libGEOM_a-Glyph.o `test -f 'Glyph.C' || echo '$(srcdir)/'`Glyph.C
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libGEOM_a-Glyph.Tpo $(DEPDIR)/libGEOM_a-Glyph.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='Glyph.C' object='libGEOM_a-Glyph.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libGEOM_a_CXXFLAGS) $(CXXFLAGS) -c -o libGEOM_a-Glyph.o `test -f 'Glyph.C' || echo '$(srcdir)/'`Glyph.C
+
+libGEOM_a-Glyph.obj: Glyph.C
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libGEOM_a_CXXFLAGS) $(CXXFLAGS) -MT libGEOM_a-Glyph.obj -MD -MP -MF $(DEPDIR)/libGEOM_a-Glyph.Tpo -c -o libGEOM_a-Glyph.obj `if test -f 'Glyph.C'; then $(CYGPATH_W) 'Glyph.C'; else $(CYGPATH_W) '$(srcdir)/Glyph.C'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libGEOM_a-Glyph.Tpo $(DEPDIR)/libGEOM_a-Glyph.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='Glyph.C' object='libGEOM_a-Glyph.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libGEOM_a_CXXFLAGS) $(CXXFLAGS) -c -o libGEOM_a-Glyph.obj `if test -f 'Glyph.C'; then $(CYGPATH_W) 'Glyph.C'; else $(CYGPATH_W) '$(srcdir)/Glyph.C'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique

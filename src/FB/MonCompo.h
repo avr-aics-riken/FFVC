@@ -112,7 +112,7 @@ protected:
   
   int* bid;            ///< 境界ID
   int* bcd;            ///< BCindex B
-  float* cut;          ///< 交点情報
+  long long* cut;      ///< 交点情報
   
   FILE* fp;            ///< 出力ファイルポインタ
   
@@ -194,7 +194,7 @@ public:
                ReferenceVariables refVar,
                int* bid,
                int* bcd,
-               float* cut,
+               long long* cut,
                const int num_process,
                const int num_compo,
                double* m_mtbl) {

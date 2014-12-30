@@ -136,7 +136,7 @@ public:
                       REAL_TYPE* G_org,
                       const int NoMedium,
                       const MediumList* mat,
-                      float* cut,
+                      long long* cut,
                       int* bid) {};
   
   
@@ -161,7 +161,7 @@ public:
                      Control* R,
                      const int NoMedium,
                      const MediumList* mat,
-                     float* cut,
+                     long long* cut,
                      int* bid) {};
   
   

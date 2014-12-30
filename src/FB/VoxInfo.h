@@ -90,7 +90,7 @@ private:
   
   
   // 圧力のノイマン境界ビットをエンコードする（カット）
-  unsigned long encPbitN (int* bx, const int* bid, const float* cut, const bool convergence);
+  unsigned long encPbitN (int* bx, const int* bid, const long long* cut, const bool convergence);
   
   
   // 計算領域内部のコンポーネントの圧力境界条件フラグをbcp[]にエンコードする
@@ -233,7 +233,7 @@ public:
    * @retval 置換されたセル数
    */
   unsigned long modifyCutOnCellCenter(int* bid,
-                                      const float* cut,
+                                      const long long* cut,
                                       const int fluid_id,
                                       const int m_NoCompo);
   
@@ -297,7 +297,7 @@ public:
                    SetBC* BC,
                    const int kos,
                    CompoList* cmp,
-                   float* cut,
+                   long long* cut,
                    int* cut_id,
                    const int m_NoCompo);
   
@@ -321,7 +321,7 @@ public:
                             SetBC* BC,
                             CompoList* cmp,
                             int icls,
-                            const float* cut,
+                            const long long* cut,
                             const int* bid,
                             const int naive,
                             REAL_TYPE* pni,
@@ -344,7 +344,7 @@ public:
                    SetBC* BC,
                    CompoList* cmp,
                    int icls,
-                   float* cut,
+                   long long* cut,
                    int* cut_id,
                    const int m_NoCompo);
   
@@ -387,7 +387,7 @@ public:
    * @param [in,out] cut   距離情報
    * @param [in,out] bid   カットID情報
    */
-  void setOBC (const int face, const int c_id, const char* str, int* bcd, float* cut, int* bid);
+  void setOBC (const int face, const int c_id, const char* str, int* bcd, long long* cut, int* bid);
   
 };
 

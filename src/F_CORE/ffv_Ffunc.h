@@ -757,14 +757,14 @@ extern "C" {
                         int* bv,
                         int* bp,
                         int* v_mode,
-                        float* cut,
+                        long long* cut,
                         double* flop);
   
   void update_vec_cds_    (REAL_TYPE* v, REAL_TYPE* div, int* sz, int* g, REAL_TYPE* dt, REAL_TYPE* dh, REAL_TYPE* vc, REAL_TYPE* p,
-                           int* bp, int* bv, float* cut, REAL_TYPE* v00, double* flop);
-  void divergence_cds_    (REAL_TYPE* div, int* sz, int* g, REAL_TYPE* coef, REAL_TYPE* v, int* bv, float* cut, REAL_TYPE* v00, double* flop);
+                           int* bp, int* bv, long long* cut, REAL_TYPE* v00, double* flop);
+  void divergence_cds_    (REAL_TYPE* div, int* sz, int* g, REAL_TYPE* coef, REAL_TYPE* v, int* bv, long long* cut, REAL_TYPE* v00, double* flop);
   void force_cds_         (REAL_TYPE* force, int* sz, int* g, REAL_TYPE* p, int* bp, int* bid, int* id, REAL_TYPE* dh, double* flop);
-  void eddy_viscosity_cds_(REAL_TYPE* vt, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* re, REAL_TYPE* cs, REAL_TYPE* v, float* cut,
+  void eddy_viscosity_cds_(REAL_TYPE* vt, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* re, REAL_TYPE* cs, REAL_TYPE* v, long long* cut,
                            REAL_TYPE* vt_range, REAL_TYPE* yp_range, REAL_TYPE* v00, double* flop);
   
   

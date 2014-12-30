@@ -23,7 +23,6 @@ CPM_DIR  = $(INSTALL_BASE)/CPMlib
 CDM_DIR  = $(INSTALL_BASE)/CDMlib
 TP_DIR   = $(INSTALL_BASE)/TextParser
 POLY_DIR = $(INSTALL_BASE)/Polylib
-CUT_DIR  = $(INSTALL_BASE)/Cutlib
 PM_DIR   = $(INSTALL_BASE)/PMlib
 FFVC_DIR = $(INSTALL_BASE)/FFVC
 
@@ -172,7 +171,6 @@ endif
 UDEF_INC_PATH=`$(TP_DIR)/bin/tp-config --cflags`  \
               `$(PM_DIR)/bin/pm-config --cflags` \
               `$(POLY_DIR)/bin/polylib-config --cflags` \
-              `$(CUT_DIR)/bin/cut-config --cflags` \
               `$(CPM_DIR)/bin/cpm-config --cflags` \
               `$(CDM_DIR)/bin/cdm-config --cflags` \
               -I. \
@@ -195,7 +193,6 @@ UDEF_LIB_PATH=-L$(MPI_DIR)/lib \
               `$(TP_DIR)/bin/tp-config --libs`  \
               `$(PM_DIR)/bin/pm-config --libs` \
               `$(POLY_DIR)/bin/polylib-config --libs` \
-              `$(CUT_DIR)/bin/cut-config --libs` \
               `$(CPM_DIR)/bin/cpm-config --libs` \
               `$(CDM_DIR)/bin/cdm-config --libs`
               

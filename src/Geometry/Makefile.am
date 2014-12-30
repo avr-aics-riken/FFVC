@@ -21,7 +21,6 @@ libGEOM_a_CXXFLAGS = \
   -I. \
   -I../FB \
   @CPM_CFLAGS@ \
-  @CUT_CFLAGS@ \
   @PL_CFLAGS@ \
   @TP_CFLAGS@ \
   @MPICH_CFLAGS@ \
@@ -32,7 +31,9 @@ libGEOM_a_SOURCES = \
   Geometry.h \
   CompoFraction.C \
   CompoFraction.h \
-  fill_bid.h
+  fill_bid_naive.h \
+  Glyph.C \
+  Glyph.h
 
-EXTRA_DIST = Makefile_hand depend.inc
+EXTRA_DIST = Makefile_hand depend.inc fill_bid.h
 

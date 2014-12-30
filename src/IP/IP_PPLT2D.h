@@ -22,7 +22,7 @@
  * @author aics
  */
 
-#include "../FB/Intrinsic.h"
+#include "Intrinsic.h"
 #include "IP_Define.h"
 
 class IP_PPLT2D : public Intrinsic {

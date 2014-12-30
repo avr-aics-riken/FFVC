@@ -661,9 +661,6 @@ LDFLAGS
 CXXFLAGS
 CXX
 MAKE_SUB_DIRS
-CUT_LDFLAGS
-CUT_CFLAGS
-CUT_DIR
 PL_LDFLAGS
 PL_CFLAGS
 PL_DIR
@@ -769,7 +766,6 @@ with_cdm
 with_parser
 with_pm
 with_polylib
-with_cut
 enable_dependency_tracking
 '
       ac_precious_vars='build_alias
@@ -1422,7 +1418,6 @@ Optional Packages:
   --with-parser=dir       Specify TextParser install directory
   --with-pm=dir           Specify PMlib install directory
   --with-polylib=dir      Specify Polylib install directory
-  --with-cut=dir          Specify Cutlib install directory
 
 Some influential environment variables:
   CXX         C++ compiler command
@@ -3318,33 +3313,6 @@ if test x"$with_polylib" != x"none" ; then
 else
   echo "  Error: Polylib is not specified."
   echo "         Specify --with-polylib option."
-  exit 1
-fi
-
-
-
-#
-# Cutlib
-#
-
-# Check whether --with-cut was given.
-if test "${with_cut+set}" = set; then :
-  withval=$with_cut;
-else
-  with_cut=none
-fi
-
-
-
-
-
-if test x"$with_cut" != x"none" ; then
-  CUT_DIR=$with_cut;
-  CUT_CFLAGS=`$CUT_DIR/bin/cut-config --cflags`
-  CUT_LDFLAGS=`$CUT_DIR/bin/cut-config --libs`
-else
-  echo "  Error: Cutlib is not specified."
-  echo "         Specify --with-cut option."
   exit 1
 fi
 

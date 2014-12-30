@@ -53,7 +53,6 @@ if ( zp == 0 )
   int qb = getBit5(qq, 4);
   int qt = getBit5(qq, 5);
   
-  float* pos = &cut[ _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd) ];
   
   // 最頻値ID >> tg以外
   int sd = FBUtility::find_mode_id(tg, qw, qe, qs, qn, qb, qt, m_NoCompo);
@@ -212,6 +211,8 @@ if ( zp == 0 )
 
   
   /* ?
+   long long pos = cut[m_p];
+   
   if ( sd_flag > 0 )
   {
     setBitID(bcd[m_p], sd);

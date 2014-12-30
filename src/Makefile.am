@@ -27,7 +27,6 @@ ffvc_CXXFLAGS = \
   -I./Geometry \
   @CDM_CFLAGS@ \
   @CPM_CFLAGS@ \
-  @CUT_CFLAGS@ \
   @PL_CFLAGS@ \
   @PM_CFLAGS@ \
   @TP_CFLAGS@ \
@@ -47,7 +46,6 @@ ffvc_LDADD = \
   -L./FB -lFB \
   @CDM_LDFLAGS@ \
   @CPM_LDFLAGS@ \
-  @CUT_LDFLAGS@ \
   @PL_LDFLAGS@ \
   @PM_LDFLAGS@ \
   @TP_LDFLAGS@ \

@@ -1539,7 +1539,7 @@ void VoxInfo::encPbit (int* bx, const int* bid)
  *   - 固体セルに隣接する流体セルに方向フラグを付与する．全内部領域．
  *   - 収束判定の有効フラグをカット情報からエンコードする
  */
-unsigned long VoxInfo::encPbitN (int* bx, const int* bid, const float* cut, const bool convergence)
+unsigned long VoxInfo::encPbitN (int* bx, const int* bid, const long long* cut, const bool convergence)
 {
   int ix = size[0];
   int jx = size[1];
@@ -1645,33 +1645,31 @@ unsigned long VoxInfo::encPbitN (int* bx, const int* bid, const float* cut, cons
     g = 0;
 
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:g)
-    
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
-          size_t m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          int s = bx[m_p];
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          int s = bx[m];
           
           if ( IS_FLUID( s ) )
           {
-            size_t m = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
-            const float* pos = &cut[m];
+            const long long pos = cut[m];
             
-            float q0 = floor(pos[0]);
-            float q1 = floor(pos[1]);
-            float q2 = floor(pos[2]);
-            float q3 = floor(pos[3]);
-            float q4 = floor(pos[4]);
-            float q5 = floor(pos[5]);
+            int q0 = ensCut(pos, X_minus);
+            int q1 = ensCut(pos, X_plus);
+            int q2 = ensCut(pos, Y_minus);
+            int q3 = ensCut(pos, Y_plus);
+            int q4 = ensCut(pos, Z_minus);
+            int q5 = ensCut(pos, Z_plus);
             
             // いずれかのセルがひとつでもカットがある場合
-            if ( (q0+q1+q2+q3+q4+q5) != 6.0 )
+            if ( (q0+q1+q2+q3+q4+q5) != 0 )
             {
               s = offBit(s, VLD_CNVG);    // Out of scope  @todo check
               g++;
             }
             
-            bx[m_p] = s;
+            bx[m] = s;
           }
         }
       }
@@ -3023,7 +3021,7 @@ int VoxInfo::getMediumOrder(const MediumList* mat, const std::string key, const 
 
 // #################################################################
 // 交点が定義点にある場合にそのポリゴンのエントリ番号でフィルする
-unsigned long VoxInfo::modifyCutOnCellCenter(int* bid, const float* cut, const int fluid_id, const int m_NoCompo)
+unsigned long VoxInfo::modifyCutOnCellCenter(int* bid, const long long* cut, const int fluid_id, const int m_NoCompo)
 {
   int ix = size[0];
   int jx = size[1];
@@ -3054,10 +3052,15 @@ unsigned long VoxInfo::modifyCutOnCellCenter(int* bid, const float* cut, const i
         int qb = getBit5(bid[m_t], 4);
         int qt = getBit5(bid[m_b], 5);
         
-        const float* pos = &cut[ _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd) ];
+        const long long pos = cut[m_p];
         
-        // いずれかの方向で交点が定義点上の場合
-        if ( pos[0]*pos[1]*pos[2]*pos[3]*pos[4]*pos[5] == 0.0 )
+        // いずれかの方向で交点が定義点上の場合 = 交点があり、かつ、距離が0
+        if ( chkZeroCut(pos, X_minus) ||
+             chkZeroCut(pos, X_plus)  ||
+             chkZeroCut(pos, Y_minus) ||
+             chkZeroCut(pos, Y_plus)  ||
+             chkZeroCut(pos, Z_minus) ||
+             chkZeroCut(pos, Z_plus) )
         {
           int sd = FBUtility::find_mode_id(fid, qw, qe, qs, qn, qb, qt, m_NoCompo);
           if ( sd == 0 ) Exit(0);
@@ -3065,7 +3068,12 @@ unsigned long VoxInfo::modifyCutOnCellCenter(int* bid, const float* cut, const i
           // check
           int qq = bid[m_p];
           printf("(%d %d %d) : (%e %e %e %e %e %e) (%d %d %d %d %d %d) >> %d\n", i,j,k,
-                 pos[0], pos[1], pos[2], pos[3], pos[4], pos[5],
+                 getCut9(pos, X_minus),
+                 getCut9(pos, X_plus),
+                 getCut9(pos, Y_minus),
+                 getCut9(pos, Y_plus),
+                 getCut9(pos, Z_minus),
+                 getCut9(pos, Z_plus),
                  getBit5(qq, 0),
                  getBit5(qq, 1),
                  getBit5(qq, 2),
@@ -3082,7 +3090,7 @@ unsigned long VoxInfo::modifyCutOnCellCenter(int* bid, const float* cut, const i
           setBit5(bid[m_p], sd, Z_plus);
           c++;
         }
-        
+
       }
     }
   }
@@ -3389,7 +3397,7 @@ void VoxInfo::setBCIndexBase (int* bx,
 
 // #################################################################
 // 温度境界条件のビット情報をエンコードする
-void VoxInfo::setBCIndexH(int* cdf, int* bd, SetBC* BC, const int kos, CompoList* cmp, float* cut, int* bid, const int m_NoCompo)
+void VoxInfo::setBCIndexH(int* cdf, int* bd, SetBC* BC, const int kos, CompoList* cmp, long long* cut, int* bid, const int m_NoCompo)
 {
   int ix = size[0];
   int jx = size[1];
@@ -3560,7 +3568,7 @@ unsigned long VoxInfo::setBCIndexP(int* bcd,
                                    SetBC* BC,
                                    CompoList* cmp,
                                    int icls,
-                                   const float* cut,
+                                   const long long* cut,
                                    const int* bid,
                                    const int naive,
                                    REAL_TYPE* pni,
@@ -3702,7 +3710,7 @@ unsigned long VoxInfo::setBCIndexP(int* bcd,
 
 // #################################################################
 // cdf[]に境界条件のビット情報をエンコードする
-void VoxInfo::setBCIndexV(int* cdf, int* bp, SetBC* BC, CompoList* cmp, int icls, float* cut, int* bid, const int m_NoCompo)
+void VoxInfo::setBCIndexV(int* cdf, int* bp, SetBC* BC, CompoList* cmp, int icls, long long* cut, int* bid, const int m_NoCompo)
 {
   // ガイドセルの媒質情報をチェックし，流束形式のBCの場合にビットフラグをセット
   BoundaryOuter* m_obc=NULL;
@@ -3961,7 +3969,7 @@ void VoxInfo::setOBCperiodic (int* bcd, const int* ens)
 
 // #################################################################
 // 外部境界の距離情報・境界ID・媒質エントリをセット
-void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd, float* cut, int* bid)
+void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd, long long* cut, int* bid)
 {
   int ix = size[0];
   int jx = size[1];
@@ -3995,13 +4003,10 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
           
           if ( DECODE_CMP(bcd[m]) == 0 ) // ガイドセルに値がセットされていないこと
           {
-            size_t mc = _F_IDX_S4DEX(X_minus, 1, j, k, 6, ix, jx, kx, gd);
-            cut[mc] = pos;
-            
             size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
             setBit5(bid[l], did, X_minus);
-            
             setBitID(bcd[m], tgt);
+            setBit10(cut[l], quantize9(pos), X_minus);
           }
         }
       }
@@ -4017,13 +4022,10 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
           
           if ( DECODE_CMP(bcd[m]) == 0 ) // ガイドセルに値がセットされていないこと
           {
-            size_t mc = _F_IDX_S4DEX(X_plus, ix, j, k, 6, ix, jx, kx, gd);
-            cut[mc] = pos;
-            
             size_t l = _F_IDX_S3D(ix  , j  , k  , ix, jx, kx, gd);
             setBit5(bid[l], did, X_plus);
-            
             setBitID(bcd[m], tgt);
+            setBit10(cut[l], quantize9(pos), X_plus);
           }
         }
       }
@@ -4039,13 +4041,10 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
           
           if ( DECODE_CMP(bcd[m]) == 0 ) // ガイドセルに値がセットされていないこと
           {
-            size_t mc = _F_IDX_S4DEX(Y_minus, i, 1, k, 6, ix, jx, kx, gd);
-            cut[mc] = pos;
-            
             size_t l = _F_IDX_S3D(i  , 1  , k  , ix, jx, kx, gd);
             setBit5(bid[l], did, Y_minus);
-            
             setBitID(bcd[m], tgt);
+            setBit10(cut[l], quantize9(pos), Y_minus);
           }
         }
       }
@@ -4061,13 +4060,10 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
           
           if ( DECODE_CMP(bcd[m]) == 0 ) // ガイドセルに値がセットされていないこと
           {
-            size_t mc = _F_IDX_S4DEX(Y_plus, i, jx, k, 6, ix, jx, kx, gd);
-            cut[mc] = pos;
-            
             size_t l = _F_IDX_S3D(i  , jx  , k  , ix, jx, kx, gd);
             setBit5(bid[l], did, Y_plus);
-            
             setBitID(bcd[m], tgt);
+            setBit10(cut[l], quantize9(pos), Y_plus);
           }
         }
       }
@@ -4083,13 +4079,10 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
           
           if ( DECODE_CMP(bcd[m]) == 0 ) // ガイドセルに値がセットされていないこと
           {
-            size_t mc = _F_IDX_S4DEX(Z_minus, i, j, 1, 6, ix, jx, kx, gd);
-            cut[mc] = pos;
-            
             size_t l = _F_IDX_S3D(i  , j  , 1  , ix, jx, kx, gd);
             setBit5(bid[l], did, Z_minus);
-            
             setBitID(bcd[m], tgt);
+            setBit10(cut[l], quantize9(pos), Z_minus);
           }
         }
       }
@@ -4104,13 +4097,10 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
           
           if ( DECODE_CMP(bcd[m]) == 0 ) // ガイドセルに値がセットされていないこと
           {
-            size_t mc = _F_IDX_S4DEX(Z_plus, i, j, kx, 6, ix, jx, kx, gd);
-            cut[mc] = pos;
-            
             size_t l = _F_IDX_S3D(i  , j  , kx  , ix, jx, kx, gd);
             setBit5(bid[l], did, Z_plus);
-            
             setBitID(bcd[m], tgt);
+            setBit10(cut[l], quantize9(pos), Z_plus);
           }
         }
       }

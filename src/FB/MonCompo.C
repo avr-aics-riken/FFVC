@@ -244,7 +244,7 @@ unsigned long MonitorCompo::clearMonitorCut()
   int gd = guide;
   int odr = polyID;
   
-  float* ct = cut;
+  long long* ct = cut;
   int* bd = bid;
   
   unsigned long c = 0;
@@ -259,7 +259,7 @@ unsigned long MonitorCompo::clearMonitorCut()
         
         if ( TEST_BC(qq) ) // 6面のいずれかにIDがある
         {
-          float* pos = &ct[ _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd) ];
+          long long pos = ct[m];
           
           size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
           size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
@@ -287,135 +287,138 @@ unsigned long MonitorCompo::clearMonitorCut()
           
           int flag = 0;
           
+          REAL_TYPE p_xm = getCut9(pos, X_minus);
+          REAL_TYPE p_xp = getCut9(pos, X_plus);
+          REAL_TYPE p_ym = getCut9(pos, Y_minus);
+          REAL_TYPE p_yp = getCut9(pos, Y_plus);
+          REAL_TYPE p_zm = getCut9(pos, Z_minus);
+          REAL_TYPE p_zp = getCut9(pos, Z_plus);
+          
+          int r1 = quantize9(1.0);
+          
           // X-
-          if ( (pos[X_minus] <= 0.5) && (qw == odr) )
+          if ( (p_xm <= 0.5) && (qw == odr) )
           {
-            size_t m1 = _F_IDX_S4DEX(X_plus, i-1, j, k, 6, ix, jx, kx, gd);
-            float dd = 1.0 - ct[m1];
+            REAL_TYPE dd = 1.0 - getCut9(ct[m_w], X_plus);
             
-            if ( (fabsf(dd-pos[X_minus]) < ROUND_EPS) && ( qw == rw ) ) // 流体にする
+            if ( (fabs(dd-p_xm) < ROUND_EPS) && ( qw == rw ) ) // 流体にする
             {
               // iセルのX-方向
-              pos[X_minus] = 1.0;
+              setBit10(ct[m], r1, X_minus);
               setBit5(qq, 0, X_minus);
               
               // i-1セルのX+方向
-              ct[m1] = 1.0;
+              setBit10(ct[m_w], r1, X_plus);
               setBit5(bd[m_w], 0, X_plus);
             }
             else // 反対側の固体で置き換え
             {
-              pos[X_minus] = dd;
+              setBit10(ct[m], quantize9(dd), X_minus);
               setBit5(qq, rw, X_minus);
             }
             flag++;
           }
           
           // X+
-          if ( (pos[X_plus] <= 0.5) && (qe == odr) )
+          if ( (p_xp <= 0.5) && (qe == odr) )
           {
-            size_t m1 = _F_IDX_S4DEX(X_minus, i+1, j, k, 6, ix, jx, kx, gd);
-            float dd = 1.0 - ct[m1];
+            REAL_TYPE dd = 1.0 - getCut9(ct[m_e], X_minus);
             
-            if ( (fabsf(dd-pos[X_plus]) < ROUND_EPS) && ( qe == re ) )
+            if ( (fabs(dd-p_xp) < ROUND_EPS) && ( qe == re ) )
             {
-              pos[X_plus] = 1.0;
+              setBit10(ct[m], r1, X_plus);
               setBit5(qq, 0, X_plus);
               
-              ct[m1] = 1.0;
+              setBit10(ct[m_e], r1, X_minus);
               setBit5(bd[m_e], 0, X_minus);
             }
             else
             {
-              pos[X_plus] = dd;
+              setBit10(ct[m], quantize9(dd), X_plus);
               setBit5(qq, re, X_plus);
             }
             flag++;
           }
           
           // Y-
-          if ( (pos[Y_minus] <= 0.5) && (qs == odr) )
+          if ( (p_ym <= 0.5) && (qs == odr) )
           {
-            size_t m1 = _F_IDX_S4DEX(Y_plus, i, j-1, k, 6, ix, jx, kx, gd);
-            float dd = 1.0 - ct[m1];
+            REAL_TYPE dd = 1.0 - getCut9(ct[m_s], Y_plus);
             
-            if ( (fabsf(dd-pos[Y_minus]) < ROUND_EPS) && ( qs == rs ) )
+            if ( (fabs(dd-p_ym) < ROUND_EPS) && ( qs == rs ) )
             {
-              pos[Y_minus] = 1.0;
+              setBit10(ct[m], r1, Y_minus);
               setBit5(qq, 0, Y_minus);
               
-              ct[m1] = 1.0;
+              setBit10(ct[m_s], r1, Y_plus);
               setBit5(bd[m_s], 0, Y_plus);
             }
             else
             {
-              pos[Y_minus] = dd;
+              setBit10(ct[m], quantize9(dd), Y_minus);
               setBit5(qq, rs, Y_minus);
             }
             flag++;
           }
           
           // Y+
-          if ( (pos[Y_plus] <= 0.5) && (qn == odr) )
+          if ( (p_yp <= 0.5) && (qn == odr) )
           {
-            size_t m1 = _F_IDX_S4DEX(Y_minus, i, j+1, k, 6, ix, jx, kx, gd);
-            float dd = 1.0 - ct[m1];
+            REAL_TYPE dd = 1.0 - getCut9(ct[m_n], Y_minus);
             
-            if ( (fabsf(dd-pos[Y_plus]) < ROUND_EPS) && ( qn == rn ) )
+            if ( (fabs(dd-p_yp) < ROUND_EPS) && ( qn == rn ) )
             {
-              pos[Y_plus] = 1.0;
+              setBit10(ct[m], r1, Y_plus);
               setBit5(qq, 0, Y_plus);
               
-              ct[m1] = 1.0;
+              setBit10(ct[m_n], r1, Y_minus);
               setBit5(bd[m_n], 0, Y_minus);
             }
             else
             {
-              pos[Y_plus] = dd;
+              setBit10(ct[m], quantize9(dd), Y_plus);
               setBit5(qq, rn, Y_plus);
             }
             flag++;
           }
           
           // Z-
-          if ( (pos[Z_minus] <= 0.5) && (qb == odr) )
+          if ( (p_zm <= 0.5) && (qb == odr) )
           {
-            size_t m1 = _F_IDX_S4DEX(Z_plus, i, j, k-1, 6, ix, jx, kx, gd);
-            float dd = 1.0 - ct[m1];
+            REAL_TYPE dd = 1.0 - getCut9(ct[m_b], Z_plus);
             
-            if ( (fabsf(dd-pos[Z_minus]) < ROUND_EPS) && ( qb == rb ) )
+            if ( (fabs(dd-p_zm) < ROUND_EPS) && ( qb == rb ) )
             {
-              pos[Z_minus] = 1.0;
+              setBit10(ct[m], r1, Z_minus);
               setBit5(qq, 0, Z_minus);
               
-              ct[m1] = 1.0;
+              setBit10(ct[m_b], r1, Z_plus);
               setBit5(bd[m_b], 0, Z_plus);
             }
             else
             {
-              pos[Z_minus] = dd;
+              setBit10(ct[m], quantize9(dd), Z_minus);
               setBit5(qq, rb, Z_minus);
             }
             flag++;
           }
           
           // Z+
-          if ( (pos[Z_plus] <= 0.5) && (qt == odr) )
+          if ( (p_zp <= 0.5) && (qt == odr) )
           {
-            size_t m1 = _F_IDX_S4DEX(Z_minus, i, j, k+1, 6, ix, jx, kx, gd);
-            float dd = 1.0 - ct[m1];
+            REAL_TYPE dd = 1.0 - getCut9(ct[m_t], Z_minus);
             
-            if ( (fabsf(dd-pos[Z_plus]) < ROUND_EPS) && ( qt == rt ) )
+            if ( (fabs(dd-p_zp) < ROUND_EPS) && ( qt == rt ) )
             {
-              pos[Z_plus] = 1.0;
+              setBit10(ct[m], r1, Z_plus);
               setBit5(qq, 0, Z_plus);
               
-              ct[m1] = 1.0;
+              setBit10(ct[m_t], r1, Z_minus);
               setBit5(bd[m_t], 0, Z_minus);
             }
             else
             {
-              pos[Z_plus] = dd;
+              setBit10(ct[m], quantize9(dd), Z_plus);
               setBit5(qq, rt, Z_plus);
             }
             flag++;
@@ -1249,12 +1252,12 @@ void MonitorCompo::setPolygon(const char* labelStr,
         
         if ( TEST_BC(bd) ) // 6面のいずれかにIDがある
         {
-          const float* pos = &cut[ _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd) ];
+          const long long pos = cut[m];
           
           for (int i=0; i<6; i++)
           {
             int d = (bd >> i*5) & MASK_5;
-            if ( (pos[i] <= 0.5) && (d == odr) ) nPointList[myRank]++; // セル内部にカットが存在し，境界IDがエントリ番号
+            if ( (getCut9(pos, i) <= 0.5) && (d == odr) ) nPointList[myRank]++; // セル内部にカットが存在し，境界IDがエントリ番号
           }
         }
       }
@@ -1323,20 +1326,22 @@ void MonitorCompo::setPolygon(const char* labelStr,
         
         if ( TEST_BC(bd) ) // 6面のいずれかにIDがある
         {
-          const float* pos = &cut[ _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd) ];
+          const long long pos = cut[m];
           
           for (int i=0; i<6; i++)
           {
             int d = (bd >> i*5) & MASK_5;
             
-            if ( (pos[i] <= 0.5) && (d == odr) ) // セル内部に存在する
+            REAL_TYPE pp = getCut9(pos, i);
+            
+            if ( (pp <= 0.5) && (d == odr) ) // セル内部に存在する
             {
-              if      (i == 0) cx = -pos[i];
-              else if (i == 1) cx =  pos[i];
-              else if (i == 2) cy = -pos[i];
-              else if (i == 3) cy =  pos[i];
-              else if (i == 4) cz = -pos[i];
-              else if (i == 5) cz =  pos[i];
+              if      (i == 0) cx = -pp;
+              else if (i == 1) cx =  pp;
+              else if (i == 2) cy = -pp;
+              else if (i == 3) cy =  pp;
+              else if (i == 4) cz = -pp;
+              else if (i == 5) cz =  pp;
               flag++;
             }
           }

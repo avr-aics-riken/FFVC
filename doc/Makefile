@@ -188,9 +188,6 @@ CPM_DIR = /usr/local/FFV/CPMlib
 CPM_LDFLAGS = -L/usr/local/FFV/CPMlib/lib -lCPM -lstdc++
 CPP = mpicc -E
 CPPFLAGS = 
-CUT_CFLAGS = -I/usr/local/FFV/Cutlib/include -DCUTINFO_NORMAL_DOUBLE
-CUT_DIR = /usr/local/FFV/Cutlib
-CUT_LDFLAGS = -L/usr/local/FFV/Cutlib/lib -lCUT
 CXX = mpicxx
 CXXDEPMODE = depmode=gcc3
 CXXFLAGS = -O3 -openmp -qopt-report=5

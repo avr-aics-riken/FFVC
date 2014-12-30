@@ -59,6 +59,7 @@ libFB_a_SOURCES = \
   ParseBC.h \
   ParseMat.C \
   ParseMat.h \
+  PolyProperty.h \
   Sampling.C \
   Sampling.h \
   SetBC.C \
@@ -67,9 +68,7 @@ libFB_a_SOURCES = \
   VoxInfo.h \
   ffv_f_params.h \
   mydebug.h \
-  util_Path.h \
-  Glyph.C \
-  Glyph.h
+  util_Path.h
 
 EXTRA_DIST = Makefile_hand depend.inc ReleaseNote_FB.txt
 

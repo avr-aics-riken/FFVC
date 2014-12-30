@@ -21,14 +21,15 @@
 
 #include "IP_Cylinder.h"
 
+
 using namespace Vec3class;
 
 
 // #################################################################
 // XY面内の交点の無次元距離を計算する
-float IP_Cylinder::cut_line_2d(const Vec3f p, const int dir, const float r, const float px)
+REAL_TYPE IP_Cylinder::cut_line_2d(const Vec3r p, const int dir, const REAL_TYPE r, const REAL_TYPE px)
 {
-  float x, y, s, c;
+  REAL_TYPE x, y, s, c;
   
   x = p.x;
   y = p.y;
@@ -70,9 +71,9 @@ float IP_Cylinder::cut_line_2d(const Vec3f p, const int dir, const float r, cons
  * @return cell index
  * @note Fortran index
  */
-Vec3i IP_Cylinder::find_index(const Vec3f p, const Vec3f ol, const Vec3f pch)
+Vec3i IP_Cylinder::find_index(const Vec3r p, const Vec3r ol, const Vec3r pch)
 {
-  Vec3f q = (p-ol)/pch;
+  Vec3r q = (p-ol)/pch;
   Vec3i idx( ceil(q.x), ceil(q.y), ceil(q.z) );
   
   int ix = size[0];
@@ -594,33 +595,27 @@ void IP_Cylinder::setCircle(Control* R,
                             const REAL_TYPE radius,
                             const REAL_TYPE len_z,
                             const int mid_solid,
-                            float* cut,
+                            long long* cut,
                             int* bid)
 {
-  Vec3f pch;      ///< 無次元格子幅
-  pch.x = (float)pitch[0];
-  pch.y = (float)pitch[1];
-  pch.z = (float)pitch[2];
+  Vec3r pch(pitch);      ///< 無次元格子幅
+  Vec3r org(origin);     ///< ノードローカル基点座標の無次元値
+
   
-  Vec3f org;      ///< ノードローカル基点座標の無次元値
-  org.x = (float)origin[0];
-  org.y = (float)origin[1];
-  org.z = (float)origin[2];
-  
-  float ph = (float)deltaX; ///< 格子幅（無次元）
-  float cx = (float)pos_x;  ///< 円柱の中心座標（無次元）
-  float cy = (float)pos_y;  ///< 円柱の中心座標（無次元）
-  float rs = (float)radius; ///< 円柱の半径（無次元）
+  REAL_TYPE ph = deltaX; ///< 格子幅（無次元）
+  REAL_TYPE cx = pos_x;  ///< 円柱の中心座標（無次元）
+  REAL_TYPE cy = pos_y;  ///< 円柱の中心座標（無次元）
+  REAL_TYPE rs = radius; ///< 円柱の半径（無次元）
   
   int mid_s = mid_solid;
   
   // 球のbbox
-  Vec3f box_min;  ///< Bounding boxの最小値
-  Vec3f box_max;  ///< Bounding boxの最大値
+  Vec3r box_min;  ///< Bounding boxの最小値
+  Vec3r box_max;  ///< Bounding boxの最大値
   Vec3i box_st;   ///< Bounding boxの始点インデクス
   Vec3i box_ed;   ///< Bounding boxの終点インデクス
-  box_min.assign( -(float)rs+cx, -(float)rs+cy, 0.0 ); // Z方向はダミー
-  box_max.assign(  (float)rs+cx,  (float)rs+cy, 0.0 );
+  box_min.assign( -(REAL_TYPE)rs+cx, -(REAL_TYPE)rs+cy, 0.0 ); // Z方向はダミー
+  box_max.assign(  (REAL_TYPE)rs+cx,  (REAL_TYPE)rs+cy, 0.0 );
   box_st = find_index(box_min, org, pch);
   box_ed = find_index(box_max, org, pch);
   
@@ -631,12 +626,12 @@ void IP_Cylinder::setCircle(Control* R,
   
   
   // ローカルな無次元基点座標
-  float ox = origin[0];
-  float oy = origin[1];
-  float oz = origin[2];
+  REAL_TYPE ox = origin[0];
+  REAL_TYPE oy = origin[1];
+  REAL_TYPE oz = origin[2];
   
   // グローバルな無次元座標
-  float ze;
+  REAL_TYPE ze;
   
   if ( mode == dim_2d )
   {
@@ -649,20 +644,20 @@ void IP_Cylinder::setCircle(Control* R,
   
   
   // カット情報
-  Vec3f p[5];
-  Vec3f base;  // セルのシフト量
-  Vec3f b;     // セルセンタ座標
-  float lb[5]; // 内外判定フラグ
+  Vec3r p[5];
+  Vec3r base;  // セルのシフト量
+  Vec3r b;     // セルセンタ座標
+  REAL_TYPE lb[5]; // 内外判定フラグ
   
   for (int k=1; k<=kx; k++) {
     for (int j=box_st.y-1; j<=box_ed.y+1; j++) {
       for (int i=box_st.x-1; i<=box_ed.x+1; i++) {
         
-        float z = org.z + 0.5*ph + ph*(float)(k-1);
+        REAL_TYPE z = org.z + 0.5*ph + ph*(REAL_TYPE)(k-1);
         
         if ( z <= ze )
         {
-          base.assign((float)i-0.5, (float)j-0.5, (float)k-0.5);
+          base.assign((REAL_TYPE)i-0.5, (REAL_TYPE)j-0.5, (REAL_TYPE)k-0.5);
           b = org + base*ph;
           
           p[0].assign(b.x   , b.y   , b.z   ); // p
@@ -673,41 +668,50 @@ void IP_Cylinder::setCircle(Control* R,
           
           // (cx, cy, *)が球の中心
           for (int l=0; l<5; l++) {
-            float x = p[l].x - cx;
-            float y = p[l].y - cy;
-            float rr = sqrtf(x*x + y*y);
+            REAL_TYPE x = p[l].x - cx;
+            REAL_TYPE y = p[l].y - cy;
+            REAL_TYPE rr = sqrt(x*x + y*y);
             lb[l] = ( rr <= rs ) ? -1.0 : 1.0; // 内側がマイナス
           }
           
-          // cut test
+          // cut test  注意！　インデクスが1-4
           for (int l=1; l<=4; l++)
           {
             if ( lb[0]*lb[l] < 0.0 )
             {
-              float s = cut_line_2d(p[0], l, rs, ph);
-              size_t m = _F_IDX_S4DEX(l-1, i, j, k, 6, ix, jx, kx, gd); // 注意！　インデクスが1-4
-              cut[m] = s;
-              setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, l-1);
+              REAL_TYPE s = cut_line_2d(p[0], l, rs, ph);
+              size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+              
+              int r = quantize9(s);
+              setBit10(cut[m], r, l-1);
+              setBit5(bid[m], mid_s, l-1);
+              
+              int rr = quantize9(1.0-s);
+              size_t m1;
               
               switch (l-1) {
                 case X_minus:
-                  setBit5(bid[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)], mid_s, X_plus);
-                  cut[_F_IDX_S4DEX(X_plus, i-1, j, k, 6, ix, jx, kx, gd)] = 1.0-s;
+                  m1 = _F_IDX_S3D(i-1, j, k, ix, jx, kx, gd);
+                  setBit5(bid[m1], mid_s, X_plus);
+                  setBit10(cut[m1], rr, X_plus);
                   break;
                   
                 case X_plus:
-                  setBit5(bid[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)], mid_s, X_minus);
-                  cut[_F_IDX_S4DEX(X_minus, i+1, j, k, 6, ix, jx, kx, gd)] = 1.0-s;
+                  m1 = _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd);
+                  setBit5(bid[m1], mid_s, X_minus);
+                  setBit10(cut[m1], rr, X_minus);
                   break;
                   
                 case Y_minus:
-                  setBit5(bid[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)], mid_s, Y_plus);
-                  cut[_F_IDX_S4DEX(Y_plus, i, j-1, k, 6, ix, jx, kx, gd)] = 1.0-s;
+                  m1 = _F_IDX_S3D(i, j-1, k, ix, jx, kx, gd);
+                  setBit5(bid[m1], mid_s, Y_plus);
+                  setBit10(cut[m1], rr, Y_plus);
                   break;
                   
                 case Y_plus:
-                  setBit5(bid[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)], mid_s, Y_minus);
-                  cut[_F_IDX_S4DEX(Y_minus, i, j+1, k, 6, ix, jx, kx, gd)] = 1.0-s;
+                  m1 = _F_IDX_S3D(i, j+1, k, ix, jx, kx, gd);
+                  setBit5(bid[m1], mid_s, Y_minus);
+                  setBit10(cut[m1], rr, Y_minus);
                   break;
               }
 
@@ -726,13 +730,13 @@ void IP_Cylinder::setCircle(Control* R,
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        float x = ox + 0.5*ph + ph*(i-1); // position of cell center
-        float y = oy + 0.5*ph + ph*(j-1);
-        float z = oz + 0.5*ph + ph*(k-1);
-        float s = (ze - z)/ph;
+        REAL_TYPE x = ox + 0.5*ph + ph*(i-1); // position of cell center
+        REAL_TYPE y = oy + 0.5*ph + ph*(j-1);
+        REAL_TYPE z = oz + 0.5*ph + ph*(k-1);
+        REAL_TYPE s = (ze - z)/ph;
         
-        float xx = (float)x - cx;
-        float yy = (float)y - cy;
+        REAL_TYPE xx = x - cx;
+        REAL_TYPE yy = y - cy;
         
         if ( (xx*xx + yy*yy) <= rs*rs )
         {
@@ -740,16 +744,24 @@ void IP_Cylinder::setCircle(Control* R,
           if ( (z <= ze) && (ze < z+ph) )
           {
             setBit5(bid[m], mid_s, Z_plus);
-            cut[_F_IDX_S4DEX(Z_plus, i, j, k, 6, ix, jx, kx, gd)] = s;
-            setBit5(bid[_F_IDX_S3D(i, j, k+1, ix, jx, kx, gd)], mid_s, Z_minus);
-            cut[_F_IDX_S4DEX(Z_minus, i, j, k+1, 6, ix, jx, kx, gd)] = 1.0-s;
+            int r = quantize9(s);
+            setBit10(cut[m], r, Z_plus);
+
+            size_t m1 = _F_IDX_S3D(i, j, k+1, ix, jx, kx, gd);
+            setBit5(bid[m1], mid_s, Z_minus);
+            int rr = quantize9(1.0-s);
+            setBit10(cut[m1], rr, Z_minus);
           }
           else if ( (z-ph < ze) && (ze < z) )
           {
             setBit5(bid[m], mid_s, Z_minus);
-            cut[_F_IDX_S4DEX(Z_minus, i, j, k, 6, ix, jx, kx, gd)] = -s;
-            setBit5(bid[_F_IDX_S3D(i, j, k-1, ix, jx, kx, gd)], mid_s, Z_plus);
-            cut[_F_IDX_S4DEX(Z_plus, i, j, k-1, 6, ix, jx, kx, gd)] = 1.0+s;
+            int r = quantize9(-s);
+            setBit10(cut[m], r, Z_minus);
+
+            size_t m1 = _F_IDX_S3D(i, j, k-1, ix, jx, kx, gd);
+            setBit5(bid[m1], mid_s, Z_plus);
+            int rr = quantize9(1.0+s);
+            setBit10(cut[m1], rr, Z_plus);
           }
           
         }
@@ -782,7 +794,7 @@ void IP_Cylinder::setRect(Control* R,
                           const REAL_TYPE len_y,
                           const REAL_TYPE len_z,
                           const int mid_solid,
-                          float* cut,
+                          long long* cut,
                           int* bid)
 {
   // ローカル
@@ -876,16 +888,24 @@ void IP_Cylinder::setRect(Control* R,
             if ( (y <= ye) && (ye < y+dh) )
             {
               setBit5(bid[m], mid_s, Y_plus);
-              cut[_F_IDX_S4DEX(Y_plus, i, j, k, 6, ix, jx, kx, gd)] = s;
-              setBit5(bid[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)], mid_s, Y_minus);
-              cut[_F_IDX_S4DEX(Y_minus, i, j+1, k, 6, ix, jx, kx, gd)] = 1.0-s;
+              int r = quantize9(s);
+              setBit10(cut[m], r, Y_plus);
+              
+              size_t m1 = _F_IDX_S3D(i, j+1, k, ix, jx, kx, gd);
+              setBit5(bid[m1], mid_s, Y_minus);
+              int rr = quantize9(1.0-s);
+              setBit10(cut[m1], rr, Y_minus);
             }
             else if ( (y-dh < ye) && (ye < y) )
             {
               setBit5(bid[m], mid_s, Y_minus);
-              cut[_F_IDX_S4DEX(Y_minus, i, j, k, 6, ix, jx, kx, gd)] = -s;
-              setBit5(bid[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)], mid_s, Y_plus);
-              cut[_F_IDX_S4DEX(Y_plus, i, j-1, k, 6, ix, jx, kx, gd)] = 1.0+s;
+              int r = quantize9(-s);
+              setBit10(cut[m], r, Y_minus);
+              
+              size_t m1 = _F_IDX_S3D(i, j-1, k, ix, jx, kx, gd);
+              setBit5(bid[m1], mid_s, Y_plus);
+              int rr = quantize9(1.0+s);
+              setBit10(cut[m1], rr, Y_plus);
             }
           }
         } // Z
@@ -912,16 +932,24 @@ void IP_Cylinder::setRect(Control* R,
             if ( (y <= ys) && (ys < y+dh) )
             {
               setBit5(bid[m], mid_s, Y_plus);
-              cut[_F_IDX_S4DEX(Y_plus, i, j, k, 6, ix, jx, kx, gd)] = s;
-              setBit5(bid[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)], mid_s, Y_minus);
-              cut[_F_IDX_S4DEX(Y_minus, i, j+1, k, 6, ix, jx, kx, gd)] = 1.0-s;
+              int r = quantize9(s);
+              setBit10(cut[m], r, Y_plus);
+
+              size_t m1 = _F_IDX_S3D(i, j+1, k, ix, jx, kx, gd);
+              setBit5(bid[m1], mid_s, Y_minus);
+              int rr = quantize9(1.0-s);
+              setBit10(cut[m1], rr, Y_minus);
             }
             else if ( (y-dh < ys) && (ys < y) )
             {
               setBit5(bid[m], mid_s, Y_minus);
-              cut[_F_IDX_S4DEX(Y_minus, i, j, k, 6, ix, jx, kx, gd)] = -s;
-              setBit5(bid[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)], mid_s, Y_plus);
-              cut[_F_IDX_S4DEX(Y_plus, i, j-1, k, 6, ix, jx, kx, gd)] = 1.0+s;
+              int r = quantize9(-s);
+              setBit10(cut[m], r, Y_minus);
+              
+              size_t m1 = _F_IDX_S3D(i, j-1, k, ix, jx, kx, gd);
+              setBit5(bid[m1], mid_s, Y_plus);
+              int rr = quantize9(1.0+s);
+              setBit10(cut[m1], rr, Y_plus);
             }
           }
         } // Z
@@ -948,16 +976,24 @@ void IP_Cylinder::setRect(Control* R,
             if ( (x <= xe) && (xe < x+dh) )
             {
               setBit5(bid[m], mid_s, X_plus);
-              cut[_F_IDX_S4DEX(X_plus, i, j, k, 6, ix, jx, kx, gd)] = s;
-              setBit5(bid[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)], mid_s, X_minus);
-              cut[_F_IDX_S4DEX(X_minus, i+1, j, k, 6, ix, jx, kx, gd)] = 1.0-s;
+              int r = quantize9(s);
+              setBit10(cut[m], r, X_plus);
+
+              size_t m1 = _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd);
+              setBit5(bid[m1], mid_s, X_minus);
+              int rr = quantize9(1.0-s);
+              setBit10(cut[m1], rr, X_minus);
             }
             else if ( (x-dh < xe) && (xe < x) )
             {
               setBit5(bid[m], mid_s, X_minus);
-              cut[_F_IDX_S4DEX(X_minus, i, j, k, 6, ix, jx, kx, gd)] = -s;
-              setBit5(bid[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)], mid_s, X_plus);
-              cut[_F_IDX_S4DEX(X_plus, i-1, j, k, 6, ix, jx, kx, gd)] = 1.0+s;
+              int r = quantize9(-s);
+              setBit10(cut[m], r, X_minus);
+
+              size_t m1 = _F_IDX_S3D(i-1, j, k, ix, jx, kx, gd);
+              setBit5(bid[m1], mid_s, X_plus);
+              int rr = quantize9(1.0+s);
+              setBit10(cut[m1], r, X_plus);
             }
           }
         } // Z
@@ -984,16 +1020,24 @@ void IP_Cylinder::setRect(Control* R,
             if ( (x <= xs) && (xs < x+dh) )
             {
               setBit5(bid[m], mid_s, X_plus);
-              cut[_F_IDX_S4DEX(X_plus, i, j, k, 6, ix, jx, kx, gd)] = s;
-              setBit5(bid[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)], mid_s, X_minus);
-              cut[_F_IDX_S4DEX(X_minus, i+1, j, k, 6, ix, jx, kx, gd)] = 1.0-s;
+              int r = quantize9(s);
+              setBit10(cut[m], r, X_plus);
+
+              size_t m1 = _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd);
+              setBit5(bid[m1], mid_s, X_minus);
+              int rr = quantize9(1.0-s);
+              setBit10(cut[m1], rr, X_minus);
             }
             else if ( (x-dh < xs) && (xs < x) )
             {
               setBit5(bid[m], mid_s, X_minus);
-              cut[_F_IDX_S4DEX(X_minus, i, j, k, 6, ix, jx, kx, gd)] = -s;
-              setBit5(bid[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)], mid_s, X_plus);
-              cut[_F_IDX_S4DEX(X_plus, i-1, j, k, 6, ix, jx, kx, gd)] = 1.0+s;
+              int r = quantize9(-s);
+              setBit10(cut[m], r, X_minus);
+              
+              size_t m1 = _F_IDX_S3D(i-1, j, k, ix, jx, kx, gd);
+              setBit5(bid[m1], mid_s, X_plus);
+              int rr = quantize9(1.0+s);
+              setBit10(cut[m1], r, X_plus);
             }
           }
         } // Z
@@ -1007,7 +1051,7 @@ void IP_Cylinder::setRect(Control* R,
 
 // #################################################################
 // Cylinderの計算領域のカット情報を設定する
-void IP_Cylinder::setup(int* bcd, Control* R, const int NoMedium, const MediumList* mat, float* cut, int* bid)
+void IP_Cylinder::setup(int* bcd, Control* R, const int NoMedium, const MediumList* mat, long long* cut, int* bid)
 {
   int mid_fluid;        ///< 流体
   int mid_solid1;       ///< 固体1

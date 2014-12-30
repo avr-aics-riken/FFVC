@@ -32,9 +32,11 @@ integer     ::  obc_periodic, obc_outflow, obc_mask
 integer     ::  cmp_typ_outflow, cmp_typ_hex, cmp_typ_vspec, cmp_typ_solidrev
 integer     ::  facing_t, facing_b, facing_n, facing_s, facing_e, facing_w, vld_cnvg
 integer     ::  gma_T, gma_B, gma_N, gma_S, gma_E, gma_W, h_diag
-integer     ::  top_vf, bitw_8, forcing_bit, bitw_6, bitw_5, vbc_uwd
+integer     ::  top_vf, bitw_8, forcing_bit, bitw_6, bitw_5, vbc_uwd, bitw_9, bitw_10
 
 parameter ( bc_mask30 = Z'3fffffff') ! 16進表記，VBCの6面(30bit)をまとめたマスク
+parameter ( bitw_10= 10) ! FB_Define.h MASK_10 10bit幅
+parameter ( bitw_9 = 9)  ! FB_Define.h MASK_9 9bit幅
 parameter ( bitw_8 = 8)  ! FB_Define.h MASK_8 8bit幅
 parameter ( bitw_6 = 6)  ! FB_Define.h MASK_6 6bit幅
 parameter ( bitw_5 = 5)  ! FB_Define.h MASK_5 5bit幅

@@ -287,26 +287,6 @@ fi
 
 
 
-#
-# Cutlib
-#
-AC_ARG_WITH(cut, [AC_HELP_STRING([--with-cut=dir],[Specify Cutlib install directory])], , with_cut=none)
-AC_SUBST(CUT_DIR)
-AC_SUBST(CUT_CFLAGS)
-AC_SUBST(CUT_LDFLAGS)
-
-if test x"$with_cut" != x"none" ; then
-  CUT_DIR=$with_cut;
-  CUT_CFLAGS=`$CUT_DIR/bin/cut-config --cflags`
-  CUT_LDFLAGS=`$CUT_DIR/bin/cut-config --libs`
-else
-  echo "  Error: Cutlib is not specified."
-  echo "         Specify --with-cut option."
-  exit 1
-fi
-
-
-
 
 #
 # MAKE_SUB_DIRS

@@ -133,14 +133,14 @@ void MonitorList::clipLine(REAL_TYPE from[3], REAL_TYPE to[3])
     }
     else if (d.x > 0) {
       if (ed.x < r0.x || r1.x < st.x) throw OUT_OF_REGION2;
-      t_st = max(t_st, (r0.x-st.x)/d.x);
-      t_ed = min(t_ed, (r1.x-st.x)/d.x);
+      t_st = (std::max)(t_st, (r0.x-st.x)/d.x);
+      t_ed = (std::min)(t_ed, (r1.x-st.x)/d.x);
       dbg_pos = 1;
     }
     else if (d.x < 0) {
       if (st.x < r0.x || r1.x < ed.x) throw OUT_OF_REGION3;
-      t_st = max(t_st, (r1.x-st.x)/d.x);
-      t_ed = min(t_ed, (r0.x-st.x)/d.x);
+      t_st = (std::max)(t_st, (r1.x-st.x)/d.x);
+      t_ed = (std::min)(t_ed, (r0.x-st.x)/d.x);
       dbg_pos = 2;
     }
     
@@ -149,14 +149,14 @@ void MonitorList::clipLine(REAL_TYPE from[3], REAL_TYPE to[3])
     }
     else if (d.y > 0) {
       if (ed.y < r0.y || r1.y < st.y) throw OUT_OF_REGION5;
-      t_st = max(t_st, (r0.y-st.y)/d.y);
-      t_ed = min(t_ed, (r1.y-st.y)/d.y);
+      t_st = (std::max)(t_st, (r0.y-st.y)/d.y);
+      t_ed = (std::min)(t_ed, (r1.y-st.y)/d.y);
       dbg_pos = 3;
     }
     else if (d.y < 0) {
       if (st.y < r0.y || r1.y < ed.y) throw OUT_OF_REGION6;
-      t_st = max(t_st, (r1.y-st.y)/d.y);
-      t_ed = min(t_ed, (r0.y-st.y)/d.y);
+      t_st = (std::max)(t_st, (r1.y-st.y)/d.y);
+      t_ed = (std::min)(t_ed, (r0.y-st.y)/d.y);
       dbg_pos = 4;
     }
     
@@ -165,14 +165,14 @@ void MonitorList::clipLine(REAL_TYPE from[3], REAL_TYPE to[3])
     }
     else if (d.z > 0) {
       if (ed.z < r0.z || r1.z < st.z) throw OUT_OF_REGION8;
-      t_st = max(t_st, (r0.z-st.z)/d.z);
-      t_ed = min(t_ed, (r1.z-st.z)/d.z);
+      t_st = (std::max)(t_st, (r0.z-st.z)/d.z);
+      t_ed = (std::min)(t_ed, (r1.z-st.z)/d.z);
       dbg_pos = 5;
     }
     else if (d.z < 0) {
       if (st.z < r0.z || r1.z < ed.z) throw OUT_OF_REGION9;
-      t_st = max(t_st, (r1.z-st.z)/d.z);
-      t_ed = min(t_ed, (r0.z-st.z)/d.z);
+      t_st = (std::max)(t_st, (r1.z-st.z)/d.z);
+      t_ed = (std::min)(t_ed, (r0.z-st.z)/d.z);
       dbg_pos = 6;
     }
     
@@ -1136,7 +1136,7 @@ void MonitorList::getPlane(Monitor_Type mon_type,
   //matplotlib は、ｍ＝ｎが要求していますので、ここで、最大分割数を使用します。
   int m = (int)div_vec[0];
   int n = (int)div_vec[1];
-  int n_div = max(m, n);
+  int n_div = (std::max)(m, n);
   div_vec[0] = (REAL_TYPE) n_div;
   div_vec[1] = (REAL_TYPE) n_div;
   
@@ -1374,7 +1374,7 @@ void MonitorList::registVars(const string label, vector<string>& variables, cons
 // #################################################################
 /// 必要なパラメータのコピー
 void MonitorList::setControlVars(int* bid,
-                                 float* cut,
+                                 long long* cut,
                                  int* bcd,
                                  const REAL_TYPE refVelocity,
                                  const REAL_TYPE baseTemp,

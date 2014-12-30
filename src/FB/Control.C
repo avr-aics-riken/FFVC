@@ -2334,7 +2334,6 @@ void Control::printSteerConditions(FILE* fp,
   fprintf(fp,"\t     CPMlib     Version %s\n", ver_CPM.c_str());
   fprintf(fp,"\t     CDMlib     Version %s\n", ver_CDM.c_str());
   fprintf(fp,"\t     Polylib    Version %s\n", ver_Poly.c_str());
-  fprintf(fp,"\t     Cutlib     Version %s\n", ver_CUT.c_str());
   fprintf(fp,"\t     PMlib      Version %s\n", ver_PM.c_str());
   fprintf(fp,"\t     TextParser Version %s\n", ver_TP.c_str());
   fprintf(fp,"\n");

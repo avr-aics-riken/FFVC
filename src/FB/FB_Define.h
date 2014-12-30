@@ -25,8 +25,9 @@
 
 #include "mydebug.h"
 #include <float.h>
+#include <math.h>
 
-#define FB_VERS "1.5.2"
+#define FB_VERS "1.5.3"
 
 #define SINGLE_EPSILON 1.19e-7
 #define DOUBLE_EPSILON 2.22e-16
@@ -126,10 +127,12 @@
 
 
 // マスクのビット幅
-#define MASK_8     0xff // 8 bit幅
-#define MASK_6     0x3f // 6 bit幅
-#define MASK_5     0x1f // 5 bit幅
-#define CMP_BIT_W  32 // 5bit
+#define MASK_10    0x3ff // 10 bit幅
+#define MASK_9     0x1ff // 9 bit幅
+#define MASK_8     0xff  // 8 bit幅
+#define MASK_6     0x3f  // 6 bit幅
+#define MASK_5     0x1f  // 5 bit幅
+#define CMP_BIT_W  32    // 5bit
 
 
 // エンコードビット　共通
@@ -568,6 +571,25 @@ enum DIRection {
 };
 
 
+// 9bit幅の量子化 第2項目は調整パラメータ
+inline int quantize9(REAL_TYPE a)
+{
+  return (int)ceil(a * 512.0 - (0.5-1.0/1024.0));
+}
+
+
+/*
+ * @brief 10bit幅の値の設定（9bit幅の値と9bitめのフラグ）
+ * @param [in,out] b   long long 変数
+ * @param [in]     q   10-bit幅の値
+ * @param [in]     dir 方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+ */
+inline void setBit10 (long long& b, const int q, const int dir)
+{
+  b &= (~(MASK_10 << (dir*10)) ); // 対象10bitをゼロにする
+  b |= ( (q+512) << (dir*10));    // 9bitめのフラグをONにして、書き込む
+}
+
 
 /*
  * @brief 指定面方向のカットIDをとりだす
@@ -590,6 +612,56 @@ inline void setBit5 (int& b, const int q, const int dir)
 {
   b &= (~(0x1f << (dir*5)) ); // 対象5bitをゼロにする
   b |= (q << (dir*5));        // 書き込む
+}
+
+
+/*
+ * @brief 10bit幅から指定方向交点の有無を返す
+ * @param [in] bid  long long variable
+ * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+ * @retval 交点あり(1)、なし(0)
+ */
+inline int ensCut (const long long b, const int dir)
+{
+  return ( ( (b >> dir*10) >> 10 ) & 0x1 );
+}
+
+
+/*
+ * @brief 指定方向交点の有無と距離0のチェック
+ * @param [in] bid  long long variable
+ * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+ * @retval 交点があり、かつ、距離がゼロのとき1
+ */
+inline int chkZeroCut (const long long b, const int dir)
+{
+  long long c = b >> dir*10;
+  int ens = (c >> 10 ) & 0x1;
+  int d = c & MASK_9;
+  return ( ens & !d ) ? 1 : 0;
+}
+
+
+
+/*
+ * @brief 10bit幅から指定方向の量子化値をとりだす
+ * @param [in] bid  long long variable
+ * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+ */
+inline int getBit9 (const long long b, const int dir)
+{
+  return ( (b >> dir*10) & MASK_9 );
+}
+
+
+/*
+ * @brief 10bit幅から指定方向の距離を取り出す
+ * @param [in] bid  long long variable
+ * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+ */
+inline REAL_TYPE getCut9 (const long long b, const int dir)
+{
+  return (REAL_TYPE)( (b >> dir*10) & MASK_9 ) / 512.0;
 }
 
 

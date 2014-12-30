@@ -22,7 +22,7 @@
  * @author aics
  */
 
-#include "../FB/Intrinsic.h"
+#include "Intrinsic.h"
 #include "IP_Define.h"
 #include "Vec3.h"
 #include "FBUtility.h"
@@ -87,7 +87,7 @@ protected:
    * @param [in] px  格子幅
    * @return 交点距離
    */
-  float cut_line_2d(const Vec3f p, const int dir, const float r, const float px);
+  REAL_TYPE cut_line_2d(const Vec3r p, const int dir, const REAL_TYPE r, const REAL_TYPE px);
   
   
   /**
@@ -97,7 +97,7 @@ protected:
    * @param [in] pch 格子幅
    * @return cell index
    */
-  Vec3i find_index(const Vec3f p, const Vec3f ol, const Vec3f pch);
+  Vec3i find_index(const Vec3r p, const Vec3r ol, const Vec3r pch);
   
   
   /**
@@ -117,7 +117,7 @@ protected:
                  const REAL_TYPE radius,
                  const REAL_TYPE len_z,
                  const int mid_solid,
-                 float* cut,
+                 long long* cut,
                  int* bid);
   
   
@@ -140,7 +140,7 @@ protected:
                const REAL_TYPE len_y,
                const REAL_TYPE len_z,
                const int mid_solid,
-               float* cut,
+               long long* cut,
                int* bid);
   
   
@@ -181,7 +181,7 @@ public:
    * @param [out]    cut      カット情報
    * @param [out]    bid      境界ID
    */
-  virtual void setup(int* bcd, Control* R, const int NoMedium, const MediumList* mat, float* cut, int* bid);
+  virtual void setup(int* bcd, Control* R, const int NoMedium, const MediumList* mat, long long* cut, int* bid);
   
 };
 #endif // _IP_CYL_H_

@@ -19,6 +19,13 @@ REVISION HISTORY
 ================
 
 --------------------------
+2014-12-30
+r1576 branch compressed-cut, initial comit
+- d_cut : float >> long long
+- add fill_bit_naive.h
+- separate PolygonProperty class from Control.h
+
+--------------------------
 2014-12-25
 r1575 modify CellID, BCflag output
 

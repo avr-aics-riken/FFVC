@@ -23,37 +23,9 @@
  * @author aics
  */
 
-#include "cpm_ParaManager.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <string>
-#include <iostream>
-#include <fstream>
-
 #include "DomainInfo.h"
-#include "mydebug.h"
-#include "FBUtility.h"
-#include "Alloc.h"
 #include "Control.h"
 #include "ffv_Define.h"
-
-
-#ifndef _WIN32
-#include <unistd.h>
-#include <strings.h>
-#else
-#include "sph_win32_util.h"
-#endif
-#include <sys/types.h>
-
-#if defined(IA32_LINUX) || defined(IA64_LINUX) || defined(SGI_ALTIX)
-#include <sys/stat.h>
-#endif
-
-#ifdef MacOSX
-#include <sys/uio.h>
-#endif
 
 
 using namespace std;
@@ -103,8 +75,8 @@ public:
   REAL_TYPE *d_vrt; ///< [*] 渦度ベクトル
   
   // Polygon
-  float  *d_cut;    ///< [*] 距離情報
-  int    *d_bid;    ///< [*] BC
+  long long  *d_cut;    ///< [*] 距離情報
+  int        *d_bid;    ///< [*] BC
   
   
   // 平均値

@@ -28,7 +28,6 @@ libFFV_a_CXXFLAGS = \
   -I../FILE_IO \
   @CDM_CFLAGS@ \
   @CPM_CFLAGS@ \
-  @CUT_CFLAGS@ \
   @PL_CFLAGS@ \
   @PM_CFLAGS@ \
   @TP_CFLAGS@ \

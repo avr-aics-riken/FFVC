@@ -1,6 +1,6 @@
 //##################################################################################
 //
-// Flow Base class
+// Glyph class
 //
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
@@ -14,7 +14,7 @@
 //##################################################################################
 
 //@file   Glyph.C
-//@brief  FlowBase Glyph class Header
+//@brief  Glyph class
 //@author aics
 
 #include "Glyph.h"
@@ -23,7 +23,7 @@
 
 // #################################################################
 // グリフ作成のための頂点を生成
-void Glyph::generateVertex(const Vec3i idx, const float* pos, const char* str, const int m_bid)
+void Glyph::generateVertex(const Vec3i idx, const long long pos, const int dir, const int m_bid)
 {
   Vec3f b;     // セルセンターのシフトインデクス
   Vec3f c;     // セルセンター座標
@@ -34,77 +34,78 @@ void Glyph::generateVertex(const Vec3i idx, const float* pos, const char* str, c
   
   b.assign((float)idx.x-0.5, (float)idx.y-0.5, (float)idx.z-0.5);
   c = org + b * pch;
+  float r = (float)getCut9(pos, dir);
   
-  if ( !strcasecmp("x-", str))
+  if ( X_minus == dir )
   {
-    b.assign( -pos[0], -w, -w);  p[0] = c + b * pch;
-    b.assign(d-pos[0], -w, -w);  p[1] = c + b * pch;
-    b.assign(d-pos[0],  w, -w);  p[2] = c + b * pch;
-    b.assign( -pos[0],  w, -w);  p[3] = c + b * pch;
-    b.assign( -pos[0], -w,  w);  p[4] = c + b * pch;
-    b.assign(d-pos[0], -w,  w);  p[5] = c + b * pch;
-    b.assign(d-pos[0],  w,  w);  p[6] = c + b * pch;
-    b.assign( -pos[0],  w,  w);  p[7] = c + b * pch;
+    b.assign( -r, -w, -w);  p[0] = c + b * pch;
+    b.assign(d-r, -w, -w);  p[1] = c + b * pch;
+    b.assign(d-r,  w, -w);  p[2] = c + b * pch;
+    b.assign( -r,  w, -w);  p[3] = c + b * pch;
+    b.assign( -r, -w,  w);  p[4] = c + b * pch;
+    b.assign(d-r, -w,  w);  p[5] = c + b * pch;
+    b.assign(d-r,  w,  w);  p[6] = c + b * pch;
+    b.assign( -r,  w,  w);  p[7] = c + b * pch;
     registerPolygon(p, m_bid);
   }
-  else if ( !strcasecmp("x+", str))
+  else if ( X_plus == dir )
   {
-    b.assign(pos[1]-d, -w, -w);  p[0] = c + b * pch;
-    b.assign(pos[1]  , -w, -w);  p[1] = c + b * pch;
-    b.assign(pos[1]  ,  w, -w);  p[2] = c + b * pch;
-    b.assign(pos[1]-d,  w, -w);  p[3] = c + b * pch;
-    b.assign(pos[1]-d, -w,  w);  p[4] = c + b * pch;
-    b.assign(pos[1]  , -w,  w);  p[5] = c + b * pch;
-    b.assign(pos[1]  ,  w,  w);  p[6] = c + b * pch;
-    b.assign(pos[1]-d,  w,  w);  p[7] = c + b * pch;
+    b.assign(r-d, -w, -w);  p[0] = c + b * pch;
+    b.assign(r  , -w, -w);  p[1] = c + b * pch;
+    b.assign(r  ,  w, -w);  p[2] = c + b * pch;
+    b.assign(r-d,  w, -w);  p[3] = c + b * pch;
+    b.assign(r-d, -w,  w);  p[4] = c + b * pch;
+    b.assign(r  , -w,  w);  p[5] = c + b * pch;
+    b.assign(r  ,  w,  w);  p[6] = c + b * pch;
+    b.assign(r-d,  w,  w);  p[7] = c + b * pch;
     registerPolygon(p, m_bid);
   }
-  else if ( !strcasecmp("y-", str))
+  else if ( Y_minus == dir )
   {
-    b.assign(-w,  -pos[2], -w);  p[0] = c + b * pch;
-    b.assign( w,  -pos[2], -w);  p[1] = c + b * pch;
-    b.assign( w, d-pos[2], -w);  p[2] = c + b * pch;
-    b.assign(-w, d-pos[2], -w);  p[3] = c + b * pch;
-    b.assign(-w,  -pos[2],  w);  p[4] = c + b * pch;
-    b.assign( w,  -pos[2],  w);  p[5] = c + b * pch;
-    b.assign( w, d-pos[2],  w);  p[6] = c + b * pch;
-    b.assign(-w, d-pos[2],  w);  p[7] = c + b * pch;
+    b.assign(-w,  -r, -w);  p[0] = c + b * pch;
+    b.assign( w,  -r, -w);  p[1] = c + b * pch;
+    b.assign( w, d-r, -w);  p[2] = c + b * pch;
+    b.assign(-w, d-r, -w);  p[3] = c + b * pch;
+    b.assign(-w,  -r,  w);  p[4] = c + b * pch;
+    b.assign( w,  -r,  w);  p[5] = c + b * pch;
+    b.assign( w, d-r,  w);  p[6] = c + b * pch;
+    b.assign(-w, d-r,  w);  p[7] = c + b * pch;
     registerPolygon(p, m_bid);
   }
-  else if ( !strcasecmp("y+", str))
+  else if ( Y_plus == dir )
   {
-    b.assign(-w, pos[3]-d, -w);  p[0] = c + b * pch;
-    b.assign( w, pos[3]-d, -w);  p[1] = c + b * pch;
-    b.assign( w, pos[3]  , -w);  p[2] = c + b * pch;
-    b.assign(-w, pos[3]  , -w);  p[3] = c + b * pch;
-    b.assign(-w, pos[3]-d,  w);  p[4] = c + b * pch;
-    b.assign( w, pos[3]-d,  w);  p[5] = c + b * pch;
-    b.assign( w, pos[3]  ,  w);  p[6] = c + b * pch;
-    b.assign(-w, pos[3]  ,  w);  p[7] = c + b * pch;
+    b.assign(-w, r-d, -w);  p[0] = c + b * pch;
+    b.assign( w, r-d, -w);  p[1] = c + b * pch;
+    b.assign( w, r  , -w);  p[2] = c + b * pch;
+    b.assign(-w, r  , -w);  p[3] = c + b * pch;
+    b.assign(-w, r-d,  w);  p[4] = c + b * pch;
+    b.assign( w, r-d,  w);  p[5] = c + b * pch;
+    b.assign( w, r  ,  w);  p[6] = c + b * pch;
+    b.assign(-w, r  ,  w);  p[7] = c + b * pch;
     registerPolygon(p, m_bid);
   }
-  else if ( !strcasecmp("z-", str))
+  else if ( Z_minus == dir )
   {
-    b.assign(-w, -w,  -pos[4]);  p[0] = c + b * pch;
-    b.assign( w, -w,  -pos[4]);  p[1] = c + b * pch;
-    b.assign( w,  w,  -pos[4]);  p[2] = c + b * pch;
-    b.assign(-w,  w,  -pos[4]);  p[3] = c + b * pch;
-    b.assign(-w, -w, d-pos[4]);  p[4] = c + b * pch;
-    b.assign( w, -w, d-pos[4]);  p[5] = c + b * pch;
-    b.assign( w,  w, d-pos[4]);  p[6] = c + b * pch;
-    b.assign(-w,  w, d-pos[4]);  p[7] = c + b * pch;
+    b.assign(-w, -w,  -r);  p[0] = c + b * pch;
+    b.assign( w, -w,  -r);  p[1] = c + b * pch;
+    b.assign( w,  w,  -r);  p[2] = c + b * pch;
+    b.assign(-w,  w,  -r);  p[3] = c + b * pch;
+    b.assign(-w, -w, d-r);  p[4] = c + b * pch;
+    b.assign( w, -w, d-r);  p[5] = c + b * pch;
+    b.assign( w,  w, d-r);  p[6] = c + b * pch;
+    b.assign(-w,  w, d-r);  p[7] = c + b * pch;
     registerPolygon(p, m_bid);
   }
-  else if ( !strcasecmp("z+", str))
+  else if ( Z_plus == dir )
   {
-    b.assign(-w, -w, pos[5]-d);  p[0] = c + b * pch;
-    b.assign( w, -w, pos[5]-d);  p[1] = c + b * pch;
-    b.assign( w,  w, pos[5]-d);  p[2] = c + b * pch;
-    b.assign(-w,  w, pos[5]-d);  p[3] = c + b * pch;
-    b.assign(-w, -w, pos[5]  );  p[4] = c + b * pch;
-    b.assign( w, -w, pos[5]  );  p[5] = c + b * pch;
-    b.assign( w,  w, pos[5]  );  p[6] = c + b * pch;
-    b.assign(-w,  w, pos[5]  );  p[7] = c + b * pch;
+    b.assign(-w, -w, r-d);  p[0] = c + b * pch;
+    b.assign( w, -w, r-d);  p[1] = c + b * pch;
+    b.assign( w,  w, r-d);  p[2] = c + b * pch;
+    b.assign(-w,  w, r-d);  p[3] = c + b * pch;
+    b.assign(-w, -w, r  );  p[4] = c + b * pch;
+    b.assign( w, -w, r  );  p[5] = c + b * pch;
+    b.assign( w,  w, r  );  p[6] = c + b * pch;
+    b.assign(-w,  w, r  );  p[7] = c + b * pch;
     registerPolygon(p, m_bid);
   }
   else

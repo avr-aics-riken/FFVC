@@ -25,6 +25,7 @@
 #include "FB_Define.h"
 #include "Vec3.h"
 #include <math.h>
+#include "Geometry.h"
 
 using namespace Vec3class;
 
@@ -133,7 +134,7 @@ protected:
   int CylinderPlane(const int st[],
                     const int ed[],
                     int* bid,
-                    float* cut,
+                    long long* cut,
                     const REAL_TYPE pl[4],
                     const int s_id,
                     const int* Dsize);
@@ -151,7 +152,7 @@ protected:
   int CylinderSide(const int st[],
                    const int ed[],
                    int* bid,
-                   float* cut,
+                   long long* cut,
                    const int s_id,
                    const int* Dsize);
   
@@ -188,18 +189,6 @@ protected:
    * @retval  交点距離の小さい方を返す。負値の場合は交点が無い
    */
   REAL_TYPE intersectLineByCylinder(Vec3r& X, const Vec3r A, const Vec3r B);
-  
-  
-  /**
-   * @brief 平面と線分の交点を求める
-   * @param [out]  X   平面P上の交点Xの座標
-   * @param [in]   A   線分ABの端点
-   * @param [in]   B   線分ABの端点
-   * @param [in]   PL  平面PLの係数 ax+by+cz+d=0
-   * @retval 平面P上の交点XのAからの距離, 負値の場合は交点が無い
-   * @see http://www.sousakuba.com/Programming/gs_plane_line_intersect.html
-   */
-  REAL_TYPE intersectLineByPlane(Vec3r& X, const Vec3r A, const Vec3r B, const REAL_TYPE PL[4]);
   
   
   /**
@@ -461,6 +450,129 @@ protected:
   }
   
 
+  /**
+   * @brief 交点情報をアップデート
+   * @param [in]     A   線分ABの端点
+   * @param [in]     B   線分ABの端点
+   * @param [in,out] cut 量子化交点距離情報
+   * @param [in,out] bid 交点ID情報
+   * @param [in]     dir テストする方向
+   * @param [in]     pid polygon id
+   * @retval 新規交点の数
+   * @note 短い距離を記録
+   */
+  inline unsigned updateCutCylinder(const Vec3r A,
+                                    const Vec3r B,
+                                    long long& cut,
+                                    int& bid,
+                                    const int dir,
+                                    const int pid)
+  {
+    /* 内外判定：judgeCylinder()の戻り値が 1 のとき内側
+     * テストする2点が内側の場合には交点がない、それ以外をテスト
+     * 外側から内側に向かう線分に対して、交点距離とIDを設定
+     */
+    
+    unsigned count = 0;
+    
+    // 交点座標
+    Vec3r X;
+    
+    // 交点計算
+    REAL_TYPE t = intersectLineByCylinder(X, A, B);
+    
+    // 9bit幅の量子化 第2項目は調整パラメータ
+    int r = quantize9(t);
+    
+    bool record = false;
+    
+    if ( 0.0 <= t && judgeCylider(X, true) )
+    {
+      // 交点が記録されていない場合 >> 新規記録
+      if ( ensCut(cut, dir) == 0 )
+      {
+        record = true;
+        count = 1;
+      }
+      else // 交点が既に記録されている場合 >> 短い方を記録
+      {
+        if ( r < getBit9(cut, dir)) record = true;
+      }
+    }
+    
+    if ( record )
+    {
+      setBit5(bid, pid, dir);
+      setBit10(cut, r, dir);
+      printf("%10.6f %6d dir=%d\n", t,r,dir);
+    }
+    
+    return count;
+  }
+  
+  
+  /**
+   * @brief 交点情報をアップデート
+   * @param [in]     A   線分ABの端点
+   * @param [in]     B   線分ABの端点
+   * @param [in]     pl  平面PLの係数 ax+by+cz+d=0
+   * @param [in,out] cut 量子化交点距離情報
+   * @param [in,out] bid 交点ID情報
+   * @param [in]     dir テストする方向
+   * @param [in]     pid polygon id
+   * @retval 新規交点の数
+   * @note 短い距離を記録
+   */
+  inline unsigned updateCutPlane(const Vec3r A,
+                                 const Vec3r B,
+                                 const REAL_TYPE pl[4],
+                                 long long& cut,
+                                 int& bid,
+                                 const int dir,
+                                 const int pid)
+  {
+    /* 内外判定：judgeCylinder()の戻り値が 1 のとき内側
+     * テストする2点が内側の場合には交点がない、それ以外をテスト
+     * 外側から内側に向かう線分に対して、交点距離とIDを設定
+     */
+    
+    unsigned count = 0;
+    
+    // 交点座標
+    Vec3r X;
+    
+    // 交点計算
+    REAL_TYPE t = Geometry::intersectLineByPlane(X, A, B, pl);
+    
+    // 9bit幅の量子化 第2項目は調整パラメータ
+    int r = quantize9(t);
+    
+    bool record = false;
+    
+    if ( 0.0 <= t && t <= 1.0 && judgeCylider(X, true) )
+    {
+      // 交点が記録されていない場合 >> 新規記録
+      if ( ensCut(cut, dir) == 0 )
+      {
+        record = true;
+        count = 1;
+      }
+      else // 交点が既に記録されている場合 >> 短い方を記録
+      {
+        if ( r < getBit9(cut, dir)) record = true;
+      }
+    }
+    
+    if ( record )
+    {
+      setBit5(bid, pid, dir);
+      setBit10(cut, r, dir);
+      printf("%10.6f %6d dir=%d\n", t,r,dir);
+    }
+    
+    return count;
+  }
+  
   
   
 public:
@@ -491,7 +603,7 @@ public:
   bool intersectCylinder(const int st[],
                          const int ed[],
                          int* bid,
-                         float* cut,
+                         long long* cut,
                          const int tgt_id,
                          const int* Dsize=NULL);
   
@@ -546,32 +658,6 @@ public:
    * @param [in,out] flop  浮動小数点演算数
    */
   void vertex8(const int st[], const int ed[], REAL_TYPE* vf, double& flop);
-  
-  
-  /**
-   * @brief ベクトルの最小成分
-   * @param [in,out] mn 比較して小さい成分
-   * @param [in]     p  参照ベクトル
-   */
-  static inline void get_min(Vec3r& mn, const Vec3r p)
-  {
-    mn.x = (mn.x < p.x) ? mn.x : p.x;
-    mn.y = (mn.y < p.y) ? mn.y : p.y;
-    mn.z = (mn.z < p.z) ? mn.z : p.z;
-  }
-  
-  
-  /**
-   * @brief ベクトルの最大値成分
-   * @param [in,out] mx 比較して大きい成分
-   * @param [in]     p  参照ベクトル
-   */
-  static inline void get_max(Vec3r& mx, const Vec3r p)
-  {
-    mx.x = (mx.x > p.x) ? mx.x : p.x;
-    mx.y = (mx.y > p.y) ? mx.y : p.y;
-    mx.z = (mx.z > p.z) ? mx.z : p.z;
-  }
   
 };
 

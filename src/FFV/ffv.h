@@ -37,6 +37,7 @@
 #include "ParseMat.h"
 #include "VoxInfo.h"
 #include "CompoFraction.h"
+#include "PolyProperty.h"
 #include "History.h"
 #include "Monitor.h"
 #include "ffv_Version.h"
@@ -78,9 +79,6 @@
 #include "Polylib.h"
 #include "MPIPolylib.h"
 
-// Cutlib
-#include "Cutlib.h"
-#include "GridAccessor/Cell.h"
 
 // CDMlib
 #include "cdm_DFI.h"
@@ -106,7 +104,6 @@
 using namespace std;
 using namespace pm_lib;
 using namespace PolylibNS;
-using namespace cutlib;
 
 
 class FFV : public FALLOC {
@@ -155,10 +152,7 @@ private:
   
   
   // Polylibのサーチ用基準値
-  REAL_TYPE poly_org[3];
-  REAL_TYPE poly_dx[3];
-  unsigned poly_gc[3];
-  REAL_TYPE poly_factor;
+  REAL_TYPE poly_factor; // cm, mm >> M, NDへの変換スケール
   
   // Polygon管理用
   PolygonProperty* PG;
@@ -166,10 +160,6 @@ private:
   // 周期境界の方向
   int ensPeriodic[3];
 
-  
-  // カット
-  CutPos32Array *cutPos;
-  CutBid5Array  *cutBid;
   
   double *mat_tbl;    // Fortranでの多媒質対応ルーチンのため，rho, cp, lambdaの配列
   REAL_TYPE *vec_tbl; // Fortranでの速度境界条件参照用配列
@@ -293,7 +283,7 @@ private:
   
   
   // 交点情報の表示（デバッグ）
-  void displayCutInfo(float* cut, int* bid);
+  void displayCutInfo(const long long* cut, const int* bid);
   
   
   // メモリ使用量の表示
@@ -321,7 +311,7 @@ private:
   
   
   // Glyphを生成・出力
-  void generateGlyph(const float* cut, const int* bid, FILE* fp);
+  void generateGlyph(const long long* cut, const int* bid, FILE* fp);
   
   
   // グローバルな領域情報を取得
@@ -349,7 +339,7 @@ private:
   
   
   // 距離の最小値を求める
-  void minDistance(const float* cut, const int* bid, FILE* fp);
+  void minDistance(const long long* cut, const int* bid, FILE* fp);
   
   
   

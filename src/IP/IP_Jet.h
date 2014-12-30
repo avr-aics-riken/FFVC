@@ -22,7 +22,7 @@
  * @author aics
  */
 
-#include "../FB/Intrinsic.h"
+#include "Intrinsic.h"
 #include "IP_Define.h"
 #include "FBUtility.h"
 
@@ -128,7 +128,7 @@ public:
                       REAL_TYPE* G_org,
                       const int NoMedium,
                       const MediumList* mat,
-                      float* cut,
+                      long long* cut,
                       int* bid);
   
   

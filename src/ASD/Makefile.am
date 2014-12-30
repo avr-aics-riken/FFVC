@@ -22,7 +22,6 @@ libASD_a_CXXFLAGS = \
   -I../FB \
   -I../Geometry \
   @CPM_CFLAGS@ \
-  @CUT_CFLAGS@ \
   @PL_CFLAGS@ \
   @TP_CFLAGS@ \
   @MPICH_CFLAGS@ \

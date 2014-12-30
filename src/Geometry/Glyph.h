@@ -3,7 +3,7 @@
 
 //##################################################################################
 //
-// Flow Base class
+// Glyph class
 //
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
@@ -17,7 +17,7 @@
 //##################################################################################
 
 //@file   Glyph.h
-//@brief  FlowBase Glyph class Header
+//@brief  Glyph class Header
 //@author aics
 
 #include "mpi.h" // add header explicitly to avoid compile error for Intel MPI
@@ -36,8 +36,8 @@ using namespace Vec3class;
 class Glyph {
   
 private:
-  Vec3f pch;     ///< セル幅
-  Vec3f org;     ///< 計算領域の基点
+  Vec3f pch;         ///< セル幅
+  Vec3f org;         ///< 計算領域の基点
   unsigned element;  ///< ポリゴン数
   unsigned poly;     ///< ポリゴンの番号
   int myRank;        ///< 自ノードのランク番号
@@ -112,10 +112,10 @@ public:
    * @brief グリフ作成のための頂点を生成
    * @param [in] idx    セルインデクス
    * @param [in] pos    カット距離
-   * @param [in] str    方向文字列
+   * @param [in] dir    方向
    * @param [in] m_bid  (i,j,k)の境界ID
    */
-  void generateVertex(const Vec3i idx, const float* pos, const char* str, const int m_bid);
+  void generateVertex(const Vec3i idx, const long long pos, const int dir, const int m_bid);
   
   
   /**
