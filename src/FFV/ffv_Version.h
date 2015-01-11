@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -20,8 +20,8 @@
 #ifndef _FFVC_VERSION_H_
 #define _FFVC_VERSION_H_
 
-#define FFVC_VERSION_NO  "2.0.3"
-#define FFVC_REVISION    "20141225_1300"
+#define FFVC_VERSION_NO  "2.0.4"
+#define FFVC_REVISION    "20150111_1500"
 
 #endif /* _FFVC_VERSION_H_ */
 

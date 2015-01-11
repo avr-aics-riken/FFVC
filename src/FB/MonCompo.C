@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -294,7 +294,7 @@ unsigned long MonitorCompo::clearMonitorCut()
           REAL_TYPE p_zm = getCut9(pos, Z_minus);
           REAL_TYPE p_zp = getCut9(pos, Z_plus);
           
-          int r1 = quantize9(1.0);
+          int r1 = (int)quantize9(1.0);
           
           // X-
           if ( (p_xm <= 0.5) && (qw == odr) )
@@ -313,7 +313,7 @@ unsigned long MonitorCompo::clearMonitorCut()
             }
             else // 反対側の固体で置き換え
             {
-              setBit10(ct[m], quantize9(dd), X_minus);
+              setBit10(ct[m], (int)quantize9(dd), X_minus);
               setBit5(qq, rw, X_minus);
             }
             flag++;
@@ -334,7 +334,7 @@ unsigned long MonitorCompo::clearMonitorCut()
             }
             else
             {
-              setBit10(ct[m], quantize9(dd), X_plus);
+              setBit10(ct[m], (int)quantize9(dd), X_plus);
               setBit5(qq, re, X_plus);
             }
             flag++;
@@ -355,7 +355,7 @@ unsigned long MonitorCompo::clearMonitorCut()
             }
             else
             {
-              setBit10(ct[m], quantize9(dd), Y_minus);
+              setBit10(ct[m], (int)quantize9(dd), Y_minus);
               setBit5(qq, rs, Y_minus);
             }
             flag++;
@@ -376,7 +376,7 @@ unsigned long MonitorCompo::clearMonitorCut()
             }
             else
             {
-              setBit10(ct[m], quantize9(dd), Y_plus);
+              setBit10(ct[m], (int)quantize9(dd), Y_plus);
               setBit5(qq, rn, Y_plus);
             }
             flag++;
@@ -397,7 +397,7 @@ unsigned long MonitorCompo::clearMonitorCut()
             }
             else
             {
-              setBit10(ct[m], quantize9(dd), Z_minus);
+              setBit10(ct[m], (int)quantize9(dd), Z_minus);
               setBit5(qq, rb, Z_minus);
             }
             flag++;
@@ -418,7 +418,7 @@ unsigned long MonitorCompo::clearMonitorCut()
             }
             else
             {
-              setBit10(ct[m], quantize9(dd), Z_plus);
+              setBit10(ct[m], (int)quantize9(dd), Z_plus);
               setBit5(qq, rt, Z_plus);
             }
             flag++;

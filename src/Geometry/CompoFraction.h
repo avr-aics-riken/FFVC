@@ -8,10 +8,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -481,8 +481,8 @@ protected:
     // 交点計算
     REAL_TYPE t = intersectLineByCylinder(X, A, B);
     
-    // 9bit幅の量子化 第2項目は調整パラメータ
-    int r = quantize9(t);
+    // 9bit幅の量子化
+    int r = (int)quantize9(t);
     
     bool record = false;
     
@@ -504,7 +504,7 @@ protected:
     {
       setBit5(bid, pid, dir);
       setBit10(cut, r, dir);
-      printf("%10.6f %6d dir=%d\n", t,r,dir);
+      //printf("%10.6f %6d dir=%d\n", t,r,dir);
     }
     
     return count;
@@ -523,13 +523,13 @@ protected:
    * @retval 新規交点の数
    * @note 短い距離を記録
    */
-  inline unsigned updateCutPlane(const Vec3r A,
-                                 const Vec3r B,
-                                 const REAL_TYPE pl[4],
-                                 long long& cut,
-                                 int& bid,
-                                 const int dir,
-                                 const int pid)
+  unsigned updateCutPlane(const Vec3r A,
+                          const Vec3r B,
+                          const REAL_TYPE pl[4],
+                          long long& cut,
+                          int& bid,
+                          const int dir,
+                          const int pid)
   {
     /* 内外判定：judgeCylinder()の戻り値が 1 のとき内側
      * テストする2点が内側の場合には交点がない、それ以外をテスト
@@ -544,8 +544,11 @@ protected:
     // 交点計算
     REAL_TYPE t = Geometry::intersectLineByPlane(X, A, B, pl);
     
-    // 9bit幅の量子化 第2項目は調整パラメータ
-    int r = quantize9(t);
+    if ( t < 0.0 || 1.0 < t ) return 0;
+    
+    
+    // 9bit幅の量子化
+    int r = (int)quantize9(t);
     
     bool record = false;
     
@@ -567,7 +570,7 @@ protected:
     {
       setBit5(bid, pid, dir);
       setBit10(cut, r, dir);
-      printf("%10.6f %6d dir=%d\n", t,r,dir);
+      //printf("%10.6f %6d dir=%d %d %d\n", t,r,dir, getBit5(bid, dir), getBit9(cut, dir));
     }
     
     return count;

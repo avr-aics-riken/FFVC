@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -2009,6 +2009,8 @@ REAL_TYPE Geometry::intersectLineByPlane(Vec3r& X, const Vec3r A, const Vec3r B,
   // 平面PL上の点P
   Vec3r P = n * PL[3];
   
+  //printf("(%f %f %f %f) (%f %f %f) (%f %f %f)\n", PL[0], PL[1], PL[2], PL[3], A.x, A.y, A.z, B.x, B.y, B.z);
+  
   // vectors
   Vec3r a(A.x-P.x, A.y-P.y, A.z-P.z);
   Vec3r b(B.x-P.x, B.y-P.y, B.z-P.z);
@@ -2050,6 +2052,7 @@ REAL_TYPE Geometry::intersectLineByPlane(Vec3r& X, const Vec3r A, const Vec3r B,
   {
     r = -1.0; // 交差なし
   }
+  //printf("(%f %f %f) da=%f : %f db=%f : %f r=%f\n", n.x, n.y, n.z, da, abs_da, db, abs_db, r);
   
   return r;
 }
@@ -2147,15 +2150,26 @@ void Geometry::quantizeCut(long long* cut,
                   p[1] = *(tmp[1]);
                   p[2] = *(tmp[2]);
                   
+                  
                   // 平面の式
                   Vec3r A(p[1].x-p[0].x, p[1].y-p[0].y, p[1].z-p[0].z);
                   Vec3r B(p[2].x-p[0].x, p[2].y-p[0].y, p[2].z-p[0].z);
                   Vec3r C = cross(A, B);
-                  REAL_TYPE pl[4] = {C.x, C.y, C.z, -(C.x * p[0].x + C.y * p[0].y + C.z * p[0].z)};
+                  C.normalize();
+
+                  const REAL_TYPE pl[4] = {C.x, C.y, C.z, -(C.x * p[0].x + C.y * p[0].y + C.z * p[0].z)};
                   
                   
                   // Polygon ID
                   int poly_id = (*it2)->get_exid();
+                  
+#if 0
+                  printf("[%3d %3d %3d] (%f %f %f), (%f %f %f), (%f %f %f), %f %f %f %f\n", i,j,k,
+                         p[0].x, p[0].y, p[0].z,
+                         p[1].x, p[1].y, p[1].z,
+                         p[2].x, p[2].y, p[2].z,
+                         pl[0], pl[1], pl[2], pl[3]);
+#endif
                   
                   
                   // テンポラリに保持
@@ -2189,7 +2203,7 @@ void Geometry::quantizeCut(long long* cut,
     odr ++;
   }
   
-  printf("quantize cut = %d\n", count);
+  printf("\tquantize cut = %d\n\n", count);
   
   delete pg_roots;
   

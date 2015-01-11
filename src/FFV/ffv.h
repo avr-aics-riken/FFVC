@@ -8,10 +8,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -358,8 +358,8 @@ private:
   void printCriteria(FILE* fp);
   
   
-  // 読み込んだ領域情報のデバッグライト
-  void printDomainInfo();
+  // 全領域情報
+  void printGlobalDomain(FILE* fp);
   
   
   // 外部境界条件を読み込み，Controlクラスに保持する

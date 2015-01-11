@@ -6,10 +6,10 @@
  * Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
  * All rights reserved.
  *
- * Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo. 
+ * Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
  * All rights reserved.
  *
- * Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN. 
+ * Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN. 
  * All rights reserved.
  *
  */
@@ -18,391 +18,180 @@
 RELEASE
 =======
 
--------------
+Version 2.0.4    2015-01-11
+
 Version 2.0.3    2014-12-25
 
--------------
 Version 2.0.2    2014-12-05
 
--------------
 Version 2.0.1    2014-12-04
 
--------------
 Version 2.0.0    2014-11-29
 
--------------
 Version 1.9.9    2014-11-23
 
--------------
 Version 1.9.8    2014-11-16
 
--------------
 Version 1.9.6    2014-11-06
 
--------------
 Version 1.9.5    2014-11-05
 
--------------
 Version 1.8.9    2014-10-19
 
--------------
 Version 1.8.8    2014-10-18
 
--------------
 Version 1.8.7    2014-10-18
 
--------------
 Version 1.8.6    2014-09-22
 
--------------
 Version 1.8.5    2014-09-16
 
--------------
 Version 1.8.4    2014-09-06
 
--------------
 Version 1.8.3    2014-08-30
 
--------------
 Version 1.8.2    2014-08-26
-  - bug fix restart by time & compilation of double precision
 
--------------
 Version 1.8.1    2014-08-01
-  - IP_Cylinder
 
--------------
 Version 1.8.0    2014-04-24
-  - Change base of floating type to REAL_TYPE in CompoFraction, MonitorList except mattbl
 
--------------
 Version 1.7.9    2014-04-16
-  - Bug fix of restart
 
--------------
 Version 1.7.8    2014-04-03
-  - double mtbl
 
--------------
 Version 1.7.7    2014-04-02
-  - update restart
-  
--------------
+
 Version 1.7.6    2014-03-23
-  - update Sampling
 
--------------
 Version 1.7.5    2014-03-22
-  - update division pattern cube/comm
 
--------------
 Version 1.7.4    2014-03-19
-  - header files
-  
--------------
+
 Version 1.7.3    2014-03-18
-  - change vec3.h filename
-  
--------------
+
 Version 1.7.2    2014-03-17
-  - commn namespace Vec3class
 
--------------
 Version 1.7.1    2014-03-16
-  - bug fix : restart by time
 
--------------
 Version 1.7.0    2014-03-16
-  - Automatic decision of subdomain division
 
--------------
 Version 1.6.9    2014-03-11
-  - bug fix for 1.6.8
 
--------------
 Version 1.6.8    2014-03-10
-  - ASD module & change structure
 
--------------
 Version 1.6.7    2014-03-09
-  - modify heat source bc
-  
--------------
+
 Version 1.6.6    2014-03-09
-  - add example of Thermal cavity
 
--------------
 Version 1.6.5    2014-03-08
-  - Filter module
 
--------------
 Version 1.6.4    2014-03-04
-  - conjugate heat transfer
 
--------------
 Version 1.6.3    2014-03-04
-  - intmprove robustness of fill
-  
--------------
+
 Version 1.6.2    2014-02-26
-  - introduce fill direction control
 
--------------
 Version 1.6.1    2014-02-19
-  - change implementation of symmetric condition
-  
--------------
+
 Version 1.6.0    2014-02-11
-  - CC compiler wrapper for NERSC Hopper
 
--------------
 Version 1.5.9    2014-02-09
-  - CIOlib-1.5.2 compatible
 
--------------
 Version 1.5.8    2014-02-08
-  - GNU compiler
 
--------------
 Version 1.5.4    2014-01-03
-  - Naive implementation for SOR2SMA
-  
--------------
+
 Version 1.5.3    2013-12-29
-  - bug fix : issues #1 again
-  
--------------
+
 Version 1.5.2    2013-12-23
-  - bug fix : issues #1 & #5
 
--------------
 Version 1.5.1    2013-12-05
-  - bug fix : incorrect calculation end
-  
--------------
+
 Version 1.5.0    2013-11-13
-  - This version enables us to calculate natural thermal flow with un-watertight polygons
-  
--------------
+
 Version 1.4.9    2013-11-03
-  - bugfix for initial temperature setting
 
--------------
 Version 1.4.8    2013-10-30
-  - compile on K/FX
 
--------------
 Version 1.4.7    2013-10-27
-  - renew pre-precess algorithm and sampling
 
--------------
 Version 1.4.6    2013-10-12
-  - repalce IntervalManager.h from CIOlib
-  
--------------
+
 Version 1.4.5    2013-10-11
-  - update for CIOlib-1.3.8
 
--------------
 Version 1.4.4    2013-10-06
-  - modify algorithm for Binary
 
--------------
 Version 1.4.3    2013-10-05
-  - exception of PLOT3D
-  
--------------
+
 Version 1.4.2    2013-10-03
-  - modify for intel MPI
 
--------------
 Version 1.4.1    2013-10-01
-  - add a HeatedPlate example
-  
--------------
+
 Version 1.4.0    2013-09-29
-  - Compile with CIOlib-1.3.6
 
--------------
 Version 1.3.9    2013-09-22
-  - PLOT3Dフォーマット出力を一時復活
 
--------------
 Version 1.3.8    2013-09-13
-  - 温度のパラメータを整理，Celsiusに統一
-  
--------------
+
 Version 1.3.7    2013-09-08
-  - 多媒質の共役熱伝達コードへ変更
 
--------------
 Version 1.3.5    2013-08-31
-  - フィルアルゴリズムの改善
 
--------------
 Version 1.3.4    2013-08-22
-  - パラメータの構成を変更 ApplicationControl
 
--------------
 Version 1.3.3    2013-08-19
-  - SHC1Dクラスをポリゴンで実行
-  
--------------
+
 Version 1.3.2    2013-08-14
-  - TPControl classを廃止
 
--------------
 Version 1.3.1    2013-08-12
-  - 外部境界面の判定方法の変更
-  
--------------
+
 Version 1.3.0    2013-08-05
-  - パラメータ構造の変更
-  
--------------
+
 Version 1.2.9    2013-08-02
-  - Traction free境界条件の再実装
 
--------------
 Version 1.2.8    2013-08-01
-  - 動的配列のバグ修正ほか
 
--------------
 Version 1.2.7    2013-07-28
-  - ポリゴン例題，stokes2nd, Utubeの計算が可能
-  - モニタの並列時のサンプリング
-  
--------------
+
 Version 1.2.6    2013-07-27
-  - Polygon problem has been able to compute.
-  
--------------
+
 Version 1.2.5    2013-07-16
-  - Binary model generated from cut info.
 
--------------
 Version 1.2.4    2013-07-13
-  - confirm operation /w Polylib-2.6.4 and Cutlib-3.1.2
 
--------------
 Version 1.2.3    2013-07-11
-  - vector min/max -> absolute[v] and components
 
--------------
 Version 1.2.2    2013-07-11
-  - Change parameter format
 
--------------
 Version 1.2.1    2013-07-10
-  - Bug fix at linking
 
--------------
 Version 1.2.0    2013-07-06
-  - Packaging by autotools
 
--------------
 Version 1.1.8    2013-07-05
-  - パッケージ形式をautotoolsを利用したインストールに合わせて変更開始
-  - Cutlib-3.1.1対応のため，GridAccessorクラスを用いたインターフェイスに変更
 
--------------
 Version 1.1.7    2013-06-15
-  - PMlibを外部ライブラリとしてパッケージを構成
-  - CIOlib導入による修正
-  - 分割ポリシーのバグ修正
-  - CIOlibを外部ライブラリとしてリンク, CIOlib-1.1をテスト実装
 
--------------
 Version 1.1.4    2013-05-08
-  - リスタート時のインターバル不正のバグ修正
 
--------------
 Version 1.1.3    2013-04-26
-  - 周期境界のバグ修正
-  - OBC_OUTFLOWを値指定方式に変更
-  - OBC_FAR_FIELDを値指定のノイマン条件実装に変更
-  - OBC_SYMMETRICを値指定実装
-  - vobc_face_drchletの配列領域侵害のバグを修正
-  - FaceVelocity出力をオプションに変更
-  - CIOlib導入
-  - C.Tscale, time周りをdoubleに修正
-  
--------------
+
 Version 1.0.8    2013-03-31
-  - /Steer/FIleIO/IOmode >> distributed is default
-  - 領域分割時　G_Region = G_Voxel * G_Pitch でない場合のバグを修正 (get_DomainInfo)
-    分割のポリシー
-      G_regionは必須
-      G_voxelとG_pitchでは，G_voxelが優先．
-      両方が指定されている場合には，エラー
-      G_pitchが指定されている場合には，割り切れない場合，
-       G_voxel = (int)ceil(G_region/G_pitch)
-       G_region = G_pitch * G_voxel
-  - OBC_FAR_FIELDのノイマン条件実装
-  - Polylib 2.3 対応
-  - OBC_TRC_FREE再実装
-  - 初期化ルーチン再構築 >> setupDomain()
 
--------------
 Version 1.0.3    2013-02-17
-  - PLOT3D出力の様式変更への対応 >> ffv_Initialize.C, ffv_Loop.C
- 
--------------
+
 Version 1.0.2    2013-01-26
-  - ベクトルのファイル出力フォーマットを V(i,j,k,3) -> V(3,i,j,k)に戻す
-  - ファイル出力タイミングの修正
-  - DFIフォーマットの変更、新フォーマットに対応するまでplot3d出力は使えない（PLOT3Dディレクトリのソースを修正のこと）
-  - リスタートのパラメータ指定を変更
-  - シグナルイベントハンドラを実装 FFV_TerminateCtrlクラス
-  - 外部境界条件で部分的に流速を与える（ガイドセルに固体IDを入れておきマスクする）
 
--------------
 Version 0.9.7    2012-12-01
-  - Polylib-2.2, TextParser-1.2対応
 
--------------
 Version 0.9.6    2012-11-16
-  - PLOT3D関連ソースをPLOT3Dディレクトリに移動
-  - 反復解法に PCG, PBiCGSTAB, RBGSを追加
-  - セルフェイス速度d_vf
-  - 速度を V(3,i,j,k) -> V(i,j,k,3)
-  - makeの方法を変更．コマンドラインでマクロを指定し，分岐
-  - OpenMPのDOループはSTATICに固定
-  - パラメータをアンダースコア区切りから，大文字小文字区切りへ変更, ex.) Time_Control >> TimeControl
 
--------------
 Version 0.8.9    2012-10-18
-  - リスタートパラメータの指定を変更．ステージングオプション
-  - ビルドを一括で行う >> Polylib-2.1.2, CUtlib-2.0.5, PMlib-1.5, TextParser-1.1
-  - ファイル出力のディレクトリ対応
-  - 入力ファイルをひとつにする
-  - plot3d関連修正
-  - Util_Combsph, Util_Layoutを追加
 
--------------
 Version 0.8.4    2012-09-30
-  - 反復法のプロセスを変更
-  - Gmres追加
-  - coarse restartの特殊版getCoraseResult2
-  - ポリゴンのスケーリング機能 >> Hidden
-  - 温度計算組み込み
 
--------------
 Version 0.7.2    2012-08-25
-  - CPMlib-1.0.6対応
-  - 領域情報関連の浮動小数点変数はdoubleのインターフェイス
-  - domain.tpにlength_of_unitパラメータを導入
-  - dfi対応
-  - textparser 1.1対応
 
--------------
 Version 0.6.0    2012-07-30
-  - Polylib-2.1_Dev_b対応
-  - PLOT3Dフォーマット導入
-  - SOR2SMAのCPMlib実装
-  - データクラスをポインタへ置換
 
--------------
 Version 0.2.0    2013-06-30
-  - 関数名を再構築
-  - CPMライブラリを用いて並列管理テスト

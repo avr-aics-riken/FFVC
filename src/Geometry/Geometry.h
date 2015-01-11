@@ -7,10 +7,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -278,24 +278,26 @@ private:
    * @retval 新規交点の数
    * @note 短い距離を記録
    */
-  inline unsigned updateCut(const Vec3r A,
-                            const Vec3r B,
-                            const REAL_TYPE pl[4],
-                            long long& cut,
-                            int& bid,
-                            const int dir,
-                            const int pid)
+  unsigned updateCut(const Vec3r A,
+                     const Vec3r B,
+                     const REAL_TYPE pl[4],
+                     long long& cut,
+                     int& bid,
+                     const int dir,
+                     const int pid)
   {
-    unsigned count = 0;
-    
     // 交点座標 >> 使わない
     Vec3r X;
     
     // 交点計算
     REAL_TYPE t = intersectLineByPlane(X, A, B, pl);
     
-    // 9bit幅の量子化 第2項目は調整パラメータ
-    int r = quantize9(t);
+    if ( t < 0.0 || 1.0 < t ) return 0;
+    
+    unsigned count = 0;
+    
+    // 9bit幅の量子化
+    int r = (int)quantize9(t);
     
     bool record = false;
     
@@ -317,7 +319,7 @@ private:
     {
       setBit5(bid, pid, dir);
       setBit10(cut, r, dir);
-      printf("%10.6f %6d dir=%d\n", t,r, dir);
+      //printf("%10.6f %6d dir=%d id=%d\n", t, r, dir, pid);
     }
     
     return count;

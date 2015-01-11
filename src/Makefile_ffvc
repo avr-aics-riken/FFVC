@@ -5,10 +5,10 @@
 # Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
 # All rights reserved.
 #
-# Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo. 
+# Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
 # All rights reserved.
 #
-# Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN. 
+# Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN. 
 # All rights reserved. 
 #
 ###################################################################################
@@ -23,7 +23,8 @@ SRCS = $(CXXSRCS)
 
 .SUFFIXES: .o .C
 CXXOBJS = $(CXXSRCS:.C=.o)
-OBJS  = $(CXXOBJS) 
+OBJS  = $(CXXOBJS)
+CXXFLAGS += -I./FFV -I./Geometry -I./F_LS -I./F_CORE -I./FB -I./IP -I./FILE_IO
 
 $(TARGET):$(OBJS)
 	$(CXX) $(CXXFLAGS) $(UDEF_INC_PATH) -o $(TARGET) $(OBJS) \

@@ -5,10 +5,10 @@
 # Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
 # All rights reserved.
 #
-# Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo. 
+# Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
 # All rights reserved.
 #
-# Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+# Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 # All rights reserved. 
 #
 ###################################################################################
@@ -17,7 +17,7 @@ include ../make_setting
 
 TARGET = libGEOM.a
 
-CXXSRCS = Geometry.C CompoFraction.C
+CXXSRCS = Geometry.C CompoFraction.C Glyph.C
 
 
 SRCS  = $(CXXSRCS)
@@ -25,6 +25,7 @@ SRCS  = $(CXXSRCS)
 .SUFFIXES: .o .C
 CXXOBJS = $(CXXSRCS:.C=.o)
 OBJS  = $(CXXOBJS)
+CXXFLAGS += -I../FB
 
 $(TARGET):$(OBJS)
 	$(AR) $(TARGET) $(OBJS)

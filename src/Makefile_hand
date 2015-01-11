@@ -5,10 +5,10 @@
 # Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
 # All rights reserved.
 #
-# Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo. 
+# Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
 # All rights reserved.
 #
-# Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN. 
+# Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN. 
 # All rights reserved. 
 #
 ###################################################################################
@@ -21,6 +21,7 @@ all:
 	(cd F_CORE; make -f Makefile_hand)
 	(cd F_LS; make -f Makefile_hand)
 	(cd Geometry; make -f Makefile_hand)
+	(cd FILE_IO; make -f Makefile_hand)
 	(cd ASD; make -f Makefile_hand)
 	(cd FFV; make -f Makefile_hand)
 	(make -f Makefile_ffvc)
@@ -32,6 +33,7 @@ clean:
 	(cd F_CORE; make -f Makefile_hand clean)
 	(cd F_LS; make -f Makefile_hand clean)
 	(cd Geometry; make -f Makefile_hand clean)
+	(cd FILE_IO; make -f Makefile_hand clean)
 	(cd ASD; make -f Makefile_hand clean)
 	(cd FFV; make -f Makefile_hand clean)
 	(make -f Makefile_ffvc clean)
@@ -43,6 +45,7 @@ depend:
 	(cd F_CORE; make -f Makefile_hand depend)
 	(cd F_LS; make -f Makefile_hand depend)
 	(cd Geometry; make -f Makefile_hand depend)
+	(cd FILE_IO; make -f Makefile_hand depend)
 	(cd ASD; make -f Makefile_hand depend)
 	(cd FFV; make -f Makefile_hand depend)
 	(make -f Makefile_ffvc depend)

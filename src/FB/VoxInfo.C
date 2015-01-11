@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -1655,15 +1655,13 @@ unsigned long VoxInfo::encPbitN (int* bx, const int* bid, const long long* cut, 
           {
             const long long pos = cut[m];
             
-            int q0 = ensCut(pos, X_minus);
-            int q1 = ensCut(pos, X_plus);
-            int q2 = ensCut(pos, Y_minus);
-            int q3 = ensCut(pos, Y_plus);
-            int q4 = ensCut(pos, Z_minus);
-            int q5 = ensCut(pos, Z_plus);
-            
-            // いずれかのセルがひとつでもカットがある場合
-            if ( (q0+q1+q2+q3+q4+q5) != 0 )
+            // いずれかの方向で交点が定義点上の場合
+            if ( chkZeroCut(pos, X_minus)
+                +chkZeroCut(pos, X_plus)
+                +chkZeroCut(pos, Y_minus)
+                +chkZeroCut(pos, Y_plus)
+                +chkZeroCut(pos, Z_minus)
+                +chkZeroCut(pos, Z_plus) > 0 )
             {
               s = offBit(s, VLD_CNVG);    // Out of scope  @todo check
               g++;
@@ -3031,7 +3029,7 @@ unsigned long VoxInfo::modifyCutOnCellCenter(int* bid, const long long* cut, con
   int fid = fluid_id;
   unsigned long c = 0;
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, fid) schedule(static) reduction(+:c)
+//#pragma omp parallel for firstprivate(ix, jx, kx, gd, fid) schedule(static) reduction(+:c)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -3044,13 +3042,14 @@ unsigned long VoxInfo::modifyCutOnCellCenter(int* bid, const long long* cut, con
         size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
         size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
         
-        // 隣接セルから検査セルを見た場合の境界ID
-        int qw = getBit5(bid[m_e], 0);
-        int qe = getBit5(bid[m_w], 1);
-        int qs = getBit5(bid[m_n], 2);
-        int qn = getBit5(bid[m_s], 3);
-        int qb = getBit5(bid[m_t], 4);
-        int qt = getBit5(bid[m_b], 5);
+        // 評価点の各方向の境界ID
+        int qq = bid[m_p];
+        int qw = getBit5(qq, 0);
+        int qe = getBit5(qq, 1);
+        int qs = getBit5(qq, 2);
+        int qn = getBit5(qq, 3);
+        int qb = getBit5(qq, 4);
+        int qt = getBit5(qq, 5);
         
         const long long pos = cut[m_p];
         
@@ -3064,31 +3063,27 @@ unsigned long VoxInfo::modifyCutOnCellCenter(int* bid, const long long* cut, con
         {
           int sd = FBUtility::find_mode_id(fid, qw, qe, qs, qn, qb, qt, m_NoCompo);
           if ( sd == 0 ) Exit(0);
+          
 #if 0
-          // check
-          int qq = bid[m_p];
-          printf("(%d %d %d) : (%e %e %e %e %e %e) (%d %d %d %d %d %d) >> %d\n", i,j,k,
-                 getCut9(pos, X_minus),
-                 getCut9(pos, X_plus),
-                 getCut9(pos, Y_minus),
-                 getCut9(pos, Y_plus),
-                 getCut9(pos, Z_minus),
-                 getCut9(pos, Z_plus),
-                 getBit5(qq, 0),
-                 getBit5(qq, 1),
-                 getBit5(qq, 2),
-                 getBit5(qq, 3),
-                 getBit5(qq, 4),
-                 getBit5(qq, 5),
-                 sd);
+          printf("(%3d %3d %3d) %d %d %d %d %d %d : %d : %3d %3d %3d %3d %3d %3d\n",
+                 i,j,k,
+                 qw, qe, qs, qn, qb, qt,
+                 getBit9(pos, 0),
+                 getBit9(pos, 1),
+                 getBit9(pos, 2),
+                 getBit9(pos, 3),
+                 getBit9(pos, 4),
+                 getBit9(pos, 5) );
 #endif
-          setBit5(bid[m_p], sd, X_minus);
-          setBit5(bid[m_p], sd, X_plus);
-          setBit5(bid[m_p], sd, Y_minus);
-          setBit5(bid[m_p], sd, Y_plus);
-          setBit5(bid[m_p], sd, Z_minus);
-          setBit5(bid[m_p], sd, Z_plus);
+          
+          setBit5(qq, sd, X_minus);
+          setBit5(qq, sd, X_plus);
+          setBit5(qq, sd, Y_minus);
+          setBit5(qq, sd, Y_plus);
+          setBit5(qq, sd, Z_minus);
+          setBit5(qq, sd, Z_plus);
           c++;
+          bid[m_p] = qq;
         }
 
       }
@@ -4006,7 +4001,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
             size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
             setBit5(bid[l], did, X_minus);
             setBitID(bcd[m], tgt);
-            setBit10(cut[l], quantize9(pos), X_minus);
+            setBit10(cut[l], (int)quantize9(pos), X_minus);
           }
         }
       }
@@ -4025,7 +4020,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
             size_t l = _F_IDX_S3D(ix  , j  , k  , ix, jx, kx, gd);
             setBit5(bid[l], did, X_plus);
             setBitID(bcd[m], tgt);
-            setBit10(cut[l], quantize9(pos), X_plus);
+            setBit10(cut[l], (int)quantize9(pos), X_plus);
           }
         }
       }
@@ -4044,7 +4039,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
             size_t l = _F_IDX_S3D(i  , 1  , k  , ix, jx, kx, gd);
             setBit5(bid[l], did, Y_minus);
             setBitID(bcd[m], tgt);
-            setBit10(cut[l], quantize9(pos), Y_minus);
+            setBit10(cut[l], (int)quantize9(pos), Y_minus);
           }
         }
       }
@@ -4063,7 +4058,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
             size_t l = _F_IDX_S3D(i  , jx  , k  , ix, jx, kx, gd);
             setBit5(bid[l], did, Y_plus);
             setBitID(bcd[m], tgt);
-            setBit10(cut[l], quantize9(pos), Y_plus);
+            setBit10(cut[l], (int)quantize9(pos), Y_plus);
           }
         }
       }
@@ -4082,7 +4077,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
             size_t l = _F_IDX_S3D(i  , j  , 1  , ix, jx, kx, gd);
             setBit5(bid[l], did, Z_minus);
             setBitID(bcd[m], tgt);
-            setBit10(cut[l], quantize9(pos), Z_minus);
+            setBit10(cut[l], (int)quantize9(pos), Z_minus);
           }
         }
       }
@@ -4100,7 +4095,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
             size_t l = _F_IDX_S3D(i  , j  , kx  , ix, jx, kx, gd);
             setBit5(bid[l], did, Z_plus);
             setBitID(bcd[m], tgt);
-            setBit10(cut[l], quantize9(pos), Z_plus);
+            setBit10(cut[l], (int)quantize9(pos), Z_plus);
           }
         }
       }

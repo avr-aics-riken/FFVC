@@ -5,10 +5,10 @@
 # Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
 # All rights reserved.
 #
-# Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo. 
+# Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
 # All rights reserved.
 #
-# Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN. 
+# Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN. 
 # All rights reserved. 
 #
 ###################################################################################
@@ -131,7 +131,7 @@ ifeq ($(ARCH),intel)
   RANLIB      = ranlib
   RM          = \rm -f
   MPI_DIR     = /opt/openmpi
-  OMP_FLAGS   = -openmp -par-report=3 -vec-report=2
+  OMP_FLAGS   = -openmp -qopt-report=5
   UDEF_OPT    =
   CC          = mpicc
   CFLAGS      = -O3

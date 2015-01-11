@@ -6,10 +6,10 @@
  * Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
  * All rights reserved.
  *
- * Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo. 
+ * Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
  * All rights reserved.
  *
- * Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN. 
+ * Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN. 
  * All rights reserved.
  *
  */
@@ -39,15 +39,16 @@ doc/            Documents
 doxygen/        Doxygen files
 example/        Example files
 src/		 Source files
+   ASD          Acttive Subdomain class
    F_CORE       f90 subroutines in ffvc
    F_LS         f90 subroutines of linear solvers
    F_VOF        VOF routines
    FB           flow base class
    FFV          ffvc class
+   FILE_IO      file io utilities
+   Geometry     Geometry manipulation
    IP           Intrinsic problems
-   PLOT3D       Plot3d routines
-   Util_Combsph 
-   Util_Layout 
+   Util_Combsph
 
 
 

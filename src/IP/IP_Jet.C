@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -642,7 +642,7 @@ schedule(static)
           
           // 交点
           size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
-          int r = quantize9(0.5); /// 壁面までの距離
+          int r = (int)quantize9(0.5); /// 壁面までの距離
           setBit10(cut[l], r, X_minus);
           
           // 境界ID
@@ -673,7 +673,7 @@ schedule(static)
               setBitID(bcd[m], mid_fluid);
               
               size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
-              int r = quantize9(1.0);
+              int r = (int)quantize9(1.0);
               setBit10(cut[l], r, X_minus);
               setBit5(bid[l], 0, X_minus);
             }
@@ -705,7 +705,7 @@ schedule(static)
               setBitID(bcd[m], mid_fluid);
               
               size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
-              int r = quantize9(1.0);
+              int r = (int)quantize9(1.0);
               setBit10(cut[l], r, X_minus);
               setBit5(bid[l], 0, X_minus);
             }

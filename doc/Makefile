@@ -21,10 +21,10 @@
 # Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
 # All rights reserved.
 #
-# Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo. 
+# Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
 # All rights reserved.
 #
-# Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN. 
+# Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN. 
 # All rights reserved. 
 #
 ###################################################################################
@@ -208,7 +208,7 @@ FFVC_FC = mpif90
 FFVC_FC_LD = 
 FFVC_LDFLAGS = 
 FFVC_LIBS =  -lstdc++ -lifcore
-FFVC_REVISION = 20141225_1300
+FFVC_REVISION = 20150111_1500
 FREALOPT = 
 GREP = /usr/bin/grep
 INSTALL = /usr/local/bin/ginstall -c
@@ -232,10 +232,10 @@ OBJEXT = o
 PACKAGE = FFVC
 PACKAGE_BUGREPORT = keno@riken.jp
 PACKAGE_NAME = FFVC
-PACKAGE_STRING = FFVC 2.0.3
+PACKAGE_STRING = FFVC 2.0.4
 PACKAGE_TARNAME = FFVC
 PACKAGE_URL = 
-PACKAGE_VERSION = 2.0.3
+PACKAGE_VERSION = 2.0.4
 PATH_SEPARATOR = :
 PL_CFLAGS = -I/usr/local/FFV/Polylib/include -I/usr/local/FFV/Polylib/include/common
 PL_DIR = /usr/local/FFV/Polylib
@@ -251,11 +251,11 @@ STRIP =
 TP_CFLAGS = -I/usr/local/FFV/TextParser/include
 TP_DIR = /usr/local/FFV/TextParser
 TP_LDFLAGS = -L/usr/local/FFV/TextParser/lib -lTPmpi
-VERSION = 2.0.3
-abs_builddir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.0.3/doc
-abs_srcdir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.0.3/doc
-abs_top_builddir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.0.3
-abs_top_srcdir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.0.3
+VERSION = 2.0.4
+abs_builddir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.0.4/doc
+abs_srcdir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.0.4/doc
+abs_top_builddir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.0.4
+abs_top_srcdir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.0.4
 ac_ct_CC = mpicc
 ac_ct_CXX = 
 ac_ct_F77 = gfortran
@@ -277,7 +277,7 @@ host_alias =
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /Daily/Development/SphDev/Module/FFVC/FFVC-2.0.3/install-sh
+install_sh = ${SHELL} /Daily/Development/SphDev/Module/FFVC/FFVC-2.0.4/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale

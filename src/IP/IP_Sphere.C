@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -311,11 +311,11 @@ void IP_Sphere::setup(int* bcd, Control* R, const int NoMedium, const MediumList
           {
             REAL_TYPE s = cut_line(p[0], l, rs, ph);
             size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-            int r = quantize9(s);
+            int r = (int)quantize9(s);
             setBit10(cut[m], r, l-1);
             setBit5(bid[m], mid_solid, l-1);
             
-            int rr = quantize9(1.0-s);
+            int rr = (int)quantize9(1.0-s);
             size_t m1;
             
             switch (l-1) {

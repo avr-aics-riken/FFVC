@@ -5,10 +5,10 @@
 # Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
 # All rights reserved.
 #
-# Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo. 
+# Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
 # All rights reserved.
 #
-# Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN. 
+# Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN. 
 # All rights reserved. 
 #
 ###################################################################################
@@ -131,16 +131,16 @@ ifeq ($(ARCH),intel)
   RANLIB      = ranlib
   RM          = \rm -f
   MPI_DIR     = /opt/openmpi
-  OMP_FLAGS   = -openmp -par-report=3 -vec-report=2
+  OMP_FLAGS   = -openmp
   UDEF_OPT    =
   CC          = mpicc
   CFLAGS      = -O3
   CXX         = mpicxx
-  CXXFLAGS    = -O3 $(OMP_FLAGS)
+  CXXFLAGS    = -O3 -qopt-report=5 $(OMP_FLAGS)
 #  FC          = ifort
 #  FCFLAGS     = -O3
   F90         = mpif90
-  F90FLAGS    = -O3 -Warn unused -fpp $(OMP_FLAGS)
+  F90FLAGS    = -O3 -Warn unused -fpp -qopt-report=5 $(OMP_FLAGS)
   LDFLAGS     =
   LIBS        = -lifport -lifcore
   UDEF_LIB_PATH_SPEC =
@@ -181,8 +181,6 @@ UDEF_INC_PATH=-I. \
               `$(TP_DIR)/bin/tp-config --cflags`  \
               -I$(MPI_DIR)/include
 
-#              -I../PLOT3D \
-
               
 UDEF_LIB_PATH=-L./FFV -lFFV \
               -L./F_CORE -lFCORE \
@@ -195,8 +193,6 @@ UDEF_LIB_PATH=-L./FFV -lFFV \
               `$(PM_DIR)/bin/pm-config --libs` \
               `$(TP_DIR)/bin/tp-config --libs` \
               -L$(MPI_DIR)/lib \
-              
-#              -L../PLOT3D -lPLOT3D \
 
               
 #UDEF_LIBS = -lmpi -lFFV -lFB -lIP -lFCORE -lASD $(UDEF_LIBS_SPEC)

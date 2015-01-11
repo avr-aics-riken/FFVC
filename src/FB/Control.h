@@ -8,10 +8,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -880,16 +880,6 @@ public:
    */
   void printOuterArea(FILE* fp, unsigned long G_Fcell, unsigned long G_Acell, int* G_size);
   
-  
-  /**
-   * @brief グローバルな領域情報を表示する
-   * @param [in] fp      ファイルポインタ
-   * @param [in] G_size  グローバルな分割数
-   * @param [in] G_org   グローバルな領域基点
-   * @param [in] G_reg   グローバルな領域サイズ
-   * @param [in] pch     格子幅
-   */
-  void printGlobalDomain(FILE* fp, const int* G_size, const REAL_TYPE* G_org, const REAL_TYPE* G_reg, const REAL_TYPE* pch);
   
   
   /**

@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -195,6 +195,11 @@ int FFV::Initialize(int argc, char **argv)
   setArraySize();
   allocArray_Prep(PrepMemory, TotalMemory);
   
+  // カット情報保持領域
+  allocArray_Cut(TotalMemory);
+  
+  
+  
   // SOR2SMAのNaive実装 >> Experimental
   if ( LS[ic_prs1].getNaive() == ON )
   {
@@ -208,7 +213,7 @@ int FFV::Initialize(int argc, char **argv)
   TIMING_start("Voxel_Prep_Section");
   
   
-  // 各問題に応じてモデルを設定 >> Polylib + Cutlib
+  // 各問題に応じてモデルを設定 >> Polylib
   // 外部境界面およびガイドセルのカットとIDの処理
   setModel(PrepMemory, TotalMemory, fp);
 
@@ -233,11 +238,11 @@ int FFV::Initialize(int argc, char **argv)
   {
     printf("\n----------\n");
     printf("\n\t>> Global Domain Information\n\n");
-    C.printGlobalDomain(stdout, G_size, G_origin, G_region, pitch);
+    printGlobalDomain(stdout);
     
     fprintf(fp,"\n----------\n");
     fprintf(fp,"\n\t>> Global Domain Information\n\n");
-    C.printGlobalDomain(fp, G_size, G_origin, G_region, pitch);
+    printGlobalDomain(fp);
   }
   
   
@@ -767,9 +772,6 @@ void FFV::allocate_Main(double &total)
   // 基本変数と必須領域
   allocArray_Main(total, &C);
   
-  // カット情報保持領域
-  allocArray_Cut(total);
-  
   
   if ( C.LES.Calc == ON )
   {
@@ -1164,14 +1166,6 @@ void FFV::DomainInitialize(TextParser* tp_dom)
 {
   // メンバ変数にパラメータをロード : 分割指示 (divtype = 1-with / 2-without)
   int div_type = getDomainInfo(tp_dom);
-
-  
-// ##########  
-# if 0
-  printDomainInfo();
-  fflush(stdout);
-#endif
-// ##########
   
 
   // 袖通信の最大数
@@ -1220,6 +1214,16 @@ void FFV::DomainInitialize(TextParser* tp_dom)
       G_region[i] /= C.RefLength;
     }
   }
+  
+  // 無次元値をもとに有次元値を計算
+  for (int i=0; i<3; i++) {
+    pitchD[i]    *= C.RefLength;
+    G_originD[i] *= C.RefLength;
+    G_regionD[i] *= C.RefLength;
+    originD[i]   *= C.RefLength;
+    regionD[i]   *= C.RefLength;
+  }
+  
 
   double m_org[3] = {(double)G_origin[0], (double)G_origin[1], (double)G_origin[2]};
   double m_reg[3] = {(double)G_region[0], (double)G_region[1], (double)G_region[2]};
@@ -1581,7 +1585,8 @@ void FFV::gatherDomainInfo()
   }
   
   // 全体情報の表示
-  C.printGlobalDomain(fp, G_size, G_origin, G_region, pitch);
+  printGlobalDomain(fp);
+  
   
   // ローカルノードの情報を表示
   for (int i=0; i<numProc; i++)
@@ -1954,36 +1959,16 @@ int FFV::getDomainInfo(TextParser* tp_dom)
     {
       if ( (G_size[0]>0) && (G_size[1]>0) && (G_size[2]>0) )
       {
-        
         pitch[0] = G_region[0] / G_size[0];
         pitch[1] = G_region[1] / G_size[1];
         pitch[2] = G_region[2] / G_size[2];
         
-        // 等方性チェック
-        if ( Ex->mode == Intrinsic::dim_3d )
+        if ( Ex->mode == Intrinsic::dim_2d )
         {
-          REAL_TYPE p1 = pitch[0] - pitch[1];
-          REAL_TYPE p2 = pitch[0] - pitch[2];
-          if ( (p1 > SINGLE_EPSILON) || (p2 > SINGLE_EPSILON) )
-          {
-            Hostonly_ printf("\tGlobal Pitch must be same in all direction (%14.6e, %14.6e, %14.6e)\n", pitch[0], pitch[1], pitch[2]);
-            Exit(0);
-          }
-          pitch[2] = pitch[1] = pitch[0];
-        }
-        else // dim_2d
-        {
-          REAL_TYPE p1 = pitch[0] - pitch[1];
-          if ( p1 > SINGLE_EPSILON )
-          {
-            Hostonly_ printf("\tGlobal Pitch must be same in X-Y direction (%14.7e, %14.7e)\n", pitch[0], pitch[1]);
-            Exit(0);
-          }
-          pitch[2] = pitch[1] = pitch[0];
+          pitch[2] = pitch[0];
           G_region[2] = (REAL_TYPE)G_size[2] * pitch[2];
           G_origin[2] = -0.5 * pitch[2];
         }
-        
         
       }
       else
@@ -1997,13 +1982,6 @@ int FFV::getDomainInfo(TextParser* tp_dom)
   {
     if ( (pitch[0]>0.0) && (pitch[1]>0.0) && (pitch[2]>0.0) )
     {
-      
-      // 等方性チェック
-      if ( !( (pitch[0] == pitch[1]) && (pitch[1] == pitch[2]) ) )
-      {
-        Hostonly_ printf("\tGlobal Pitch must be same in all direction (%14.6e, %14.6e, %14.6e)\n", pitch[0], pitch[1], pitch[2]);
-        Exit(0);
-      }
       
       // pitchを基準にして、全計算領域の分割数を計算する。切り上げ
       G_size[0] = (int)ceil(G_region[0]/pitch[0]);
@@ -2612,16 +2590,69 @@ void FFV::prepHistoryOutput()
 
 
 // #################################################################
-/* @brief 読み込んだ領域情報のデバッグライト
- */
-void FFV::printDomainInfo()
+// グローバルな領域情報を表示する
+void FFV::printGlobalDomain(FILE* fp)
 {
-  cout << "\n####### read parameters ########" << endl;
-  cout << " Gorg      = " << G_origin[0] << "," << G_origin[1] << "," << G_origin[2] << endl;
-  cout << " Gvoxel    = " << G_size[0]   << "," << G_size[1]   << "," << G_size[2]   << endl;
-  cout << " Gpitch    = " << pitch[0]    << "," << pitch[1]    << "," << pitch[2]    << endl;
-  cout << " Gregion   = " << G_region[0] << "," << G_region[1] << "," << G_region[2] << endl;
-  cout << " Gdiv      = " << G_division[0]  << "," << G_division[1]  << "," << G_division[2]  << endl;
+  REAL_TYPE PB=0.0, TB=0.0, GB=0.0, MB=0.0, KB=0.0, total=0.0;
+  KB = 1000.0;
+  MB = 1000.0*KB;
+  GB = 1000.0*MB;
+  TB = 1000.0*GB;
+  PB = 1000.0*TB;
+  
+  fprintf(fp,"\timax, jmax, kmax    = %13d %13d %13d     >> ",
+          G_size[0],
+          G_size[1],
+          G_size[2]);
+  
+  total = (REAL_TYPE)G_size[0] * (REAL_TYPE)G_size[1] * (REAL_TYPE)G_size[2];
+  
+  if ( total > PB ) {
+    fprintf (fp,"%6.2f (P cells)\n", total / PB);
+  }
+  else if ( total > TB ) {
+    fprintf (fp,"%6.2f (T cells)\n", total / TB);
+  }
+  else if ( total > GB ) {
+    fprintf (fp,"%6.2f (G cells)\n", total / GB);
+  }
+  else if ( total > MB ) {
+    fprintf (fp,"%6.2f (M cells)\n", total / MB);
+  }
+  else if ( total > KB ) {
+    fprintf (fp,"%6.2f (K cells)\n", total / KB);
+  }
+  else if ( total <= KB ){
+    fprintf (fp,"%6.2f (cells)\n", total);
+  }
+  fprintf(fp,"\n");
+  
+  fprintf(fp,"\t(dx, dy, dz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n",
+          pitchD[0],
+          pitchD[1],
+          pitchD[2],
+          pitch[0],
+          pitch[1],
+          pitch[2]);
+  
+  fprintf(fp,"\t(ox, oy, oz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n",
+          G_originD[0],
+          G_originD[1],
+          G_originD[2],
+          G_origin[0],
+          G_origin[1],
+          G_origin[2]);
+  
+  fprintf(fp,"\t(Lx, Ly, Lz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n",
+          G_regionD[0],
+          G_regionD[1],
+          G_regionD[2],
+          G_region[0],
+          G_region[1],
+          G_region[2]);
+  fprintf(fp,"\n");
+  
+  fflush(fp);
 }
 
 
@@ -3674,7 +3705,7 @@ void FFV::setupCutInfo4IP(double& m_prep, double& m_total, FILE* fp)
   {
     for (int dir=0; dir<6; dir++)
     {
-      setBit10(d_cut[i], quantize9(1.0), dir);
+      setBit10(d_cut[i], (int)quantize9(1.0), dir);
     }
   }
   
@@ -3908,10 +3939,11 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   // Polylib: ポリゴングループのFactoryクラスを登録
   //PL->set_factory( new MyPolygonGroupFactory() );
   
-  // Polylib: 並列計算領域情報を設定
-  unsigned poly_gc[3] = {guide, guide, guide};
+  // Polylib: 並列計算領域情報を設定 >> 有次元
+  unsigned  poly_gc[3] = {guide, guide, guide};
+
   
-  // 読み込むデータは有次元であるが、無次元で指定し、ポリゴンの値は無次元にスケーリングする
+  // 読み込むデータは無次元
   poly_stat = PL->init_parallel_info(MPI_COMM_WORLD,
                                      origin,           // 自ランクの基点座標
                                      (unsigned*)size,  // 自ランクの分割数
@@ -3968,6 +4000,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   vector<PolygonGroup*>::iterator it2;
   
   REAL_TYPE r_factor = poly_factor/C.RefLength;
+  //printf("poly scaling factor = %f\n", r_factor);
   
   int c=0;
   for (it2 = pg_roots->begin(); it2 != pg_roots->end(); it2++)
@@ -3985,7 +4018,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     }
     Exit(0);
   }
-  
+
   
   
   
@@ -4216,7 +4249,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
     printf("\n----------\n\n");
     printf("\t>> Calculate cut and quantize\n\n");
   }
-  
+
   
   // 交点計算
   TIMING_start("Cut_Information");

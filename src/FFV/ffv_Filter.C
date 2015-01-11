@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -524,7 +524,7 @@ int FFV::FilterInitialize(int argc, char **argv)
   
   
   
-  // 各問題に応じてモデルを設定 >> Polylib + Cutlib
+  // 各問題に応じてモデルを設定 >> Polylib
   // 外部境界面およびガイドセルのカットとIDの処理
   setModel(PrepMemory, TotalMemory, fp);
   
@@ -546,11 +546,11 @@ int FFV::FilterInitialize(int argc, char **argv)
   {
     printf("\n----------\n");
     printf("\n\t>> Global Domain Information\n\n");
-    C.printGlobalDomain(stdout, G_size, G_origin, G_region, pitch);
+    printGlobalDomain(stdout, G_size, G_origin, G_region, pitch);
     
     fprintf(fp,"\n----------\n");
     fprintf(fp,"\n\t>> Global Domain Information\n\n");
-    C.printGlobalDomain(fp, G_size, G_origin, G_region, pitch);
+    printGlobalDomain(fp, G_size, G_origin, G_region, pitch);
   }
   
   
@@ -802,7 +802,6 @@ int FFV::FilterInitialize(int argc, char **argv)
   C.ver_CDM = cdm_DFI::getVersionInfo();
   C.ver_Poly= PL->getVersionInfo();
   C.ver_PM  = PM.getVersionInfo();
-  C.ver_CUT = cutlib_VersionInfo();
   C.ver_TP  = tp_ffv.getVersionInfo();
   
   

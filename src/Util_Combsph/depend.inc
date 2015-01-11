@@ -46,27 +46,38 @@ main.o: main.C comb.h /opt/openmpi/include/mpi.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h FileIO_sph.h \
- endianUtil.h /usr/local/FFV/CIOlib/include/cio_DFI.h \
- /usr/local/FFV/CIOlib/include/cio_Define.h \
- /usr/local/FFV/CIOlib/include/cio_Version.h \
- /usr/local/FFV/CIOlib/include/cio_PathUtil.h \
- /usr/local/FFV/CIOlib/include/cio_TextParser.h \
+ endianUtil.h /usr/local/FFV/CDMlib/include/cdm_DFI.h \
+ /usr/local/FFV/CDMlib/include/cdm_Define.h \
+ /usr/local/FFV/CDMlib/include/cdm_Version.h \
+ /usr/local/FFV/CDMlib/include/cdm_PathUtil.h \
+ /usr/local/FFV/CDMlib/include/cdm_TextParser.h \
  /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h \
- /usr/local/FFV/CIOlib/include/cio_ActiveSubDomain.h \
- /usr/local/FFV/CIOlib/include/cio_endianUtil.h \
- /usr/local/FFV/CIOlib/include/cio_TypeArray.h \
- /usr/local/FFV/CIOlib/include/cio_Array.h \
- /usr/local/FFV/CIOlib/include/inline/cio_Array_inline.h \
- /usr/local/FFV/CIOlib/include/cio_FileInfo.h \
- /usr/local/FFV/CIOlib/include/cio_FilePath.h \
- /usr/local/FFV/CIOlib/include/cio_Unit.h \
- /usr/local/FFV/CIOlib/include/cio_TimeSlice.h \
- /usr/local/FFV/CIOlib/include/cio_Domain.h \
- /usr/local/FFV/CIOlib/include/cio_MPI.h \
- /usr/local/FFV/CIOlib/include/cio_Process.h \
- /usr/local/FFV/CIOlib/include/inline/cio_DFI_inline.h COMB_Define.h \
+ /usr/local/FFV/CDMlib/include/cdm_ActiveSubDomain.h \
+ /usr/local/FFV/CDMlib/include/cdm_endianUtil.h \
+ /usr/local/FFV/CDMlib/include/cdm_TypeArray.h \
+ /usr/local/FFV/CDMlib/include/cdm_Array.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_Array_inline.h \
+ /usr/local/FFV/CDMlib/include/cdm_FileInfo.h \
+ /usr/local/FFV/CDMlib/include/cdm_FilePath.h \
+ /usr/local/FFV/CDMlib/include/cdm_VisIt.h \
+ /usr/local/FFV/CDMlib/include/cdm_Unit.h \
+ /usr/local/FFV/CDMlib/include/cdm_TimeSlice.h \
+ /usr/local/FFV/CDMlib/include/cdm_Domain.h \
+ /usr/local/FFV/CDMlib/include/cdm_MPI.h \
+ /usr/local/FFV/CDMlib/include/cdm_Process.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_DFI_inline.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_SPH.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_BOV.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_BOV_inline.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_AVS.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_PLOT3D.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_Plot3d_inline.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_VTK.h \
+ /usr/local/FFV/CDMlib/include/cdm_NonUniformDomain.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_NonUniformDomain_inline.h COMB_Define.h \
  ../FB/mydebug.h
 comb.o: comb.C comb.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/mpi_portable_platform.h \
@@ -116,27 +127,38 @@ comb.o: comb.C comb.h /opt/openmpi/include/mpi.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h FileIO_sph.h \
- endianUtil.h /usr/local/FFV/CIOlib/include/cio_DFI.h \
- /usr/local/FFV/CIOlib/include/cio_Define.h \
- /usr/local/FFV/CIOlib/include/cio_Version.h \
- /usr/local/FFV/CIOlib/include/cio_PathUtil.h \
- /usr/local/FFV/CIOlib/include/cio_TextParser.h \
+ endianUtil.h /usr/local/FFV/CDMlib/include/cdm_DFI.h \
+ /usr/local/FFV/CDMlib/include/cdm_Define.h \
+ /usr/local/FFV/CDMlib/include/cdm_Version.h \
+ /usr/local/FFV/CDMlib/include/cdm_PathUtil.h \
+ /usr/local/FFV/CDMlib/include/cdm_TextParser.h \
  /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h \
- /usr/local/FFV/CIOlib/include/cio_ActiveSubDomain.h \
- /usr/local/FFV/CIOlib/include/cio_endianUtil.h \
- /usr/local/FFV/CIOlib/include/cio_TypeArray.h \
- /usr/local/FFV/CIOlib/include/cio_Array.h \
- /usr/local/FFV/CIOlib/include/inline/cio_Array_inline.h \
- /usr/local/FFV/CIOlib/include/cio_FileInfo.h \
- /usr/local/FFV/CIOlib/include/cio_FilePath.h \
- /usr/local/FFV/CIOlib/include/cio_Unit.h \
- /usr/local/FFV/CIOlib/include/cio_TimeSlice.h \
- /usr/local/FFV/CIOlib/include/cio_Domain.h \
- /usr/local/FFV/CIOlib/include/cio_MPI.h \
- /usr/local/FFV/CIOlib/include/cio_Process.h \
- /usr/local/FFV/CIOlib/include/inline/cio_DFI_inline.h COMB_Define.h \
+ /usr/local/FFV/CDMlib/include/cdm_ActiveSubDomain.h \
+ /usr/local/FFV/CDMlib/include/cdm_endianUtil.h \
+ /usr/local/FFV/CDMlib/include/cdm_TypeArray.h \
+ /usr/local/FFV/CDMlib/include/cdm_Array.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_Array_inline.h \
+ /usr/local/FFV/CDMlib/include/cdm_FileInfo.h \
+ /usr/local/FFV/CDMlib/include/cdm_FilePath.h \
+ /usr/local/FFV/CDMlib/include/cdm_VisIt.h \
+ /usr/local/FFV/CDMlib/include/cdm_Unit.h \
+ /usr/local/FFV/CDMlib/include/cdm_TimeSlice.h \
+ /usr/local/FFV/CDMlib/include/cdm_Domain.h \
+ /usr/local/FFV/CDMlib/include/cdm_MPI.h \
+ /usr/local/FFV/CDMlib/include/cdm_Process.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_DFI_inline.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_SPH.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_BOV.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_BOV_inline.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_AVS.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_PLOT3D.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_Plot3d_inline.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_VTK.h \
+ /usr/local/FFV/CDMlib/include/cdm_NonUniformDomain.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_NonUniformDomain_inline.h COMB_Define.h \
  ../FB/mydebug.h
 comb_sph.o: comb_sph.C comb.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/mpi_portable_platform.h \
@@ -186,27 +208,38 @@ comb_sph.o: comb_sph.C comb.h /opt/openmpi/include/mpi.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h FileIO_sph.h \
- endianUtil.h /usr/local/FFV/CIOlib/include/cio_DFI.h \
- /usr/local/FFV/CIOlib/include/cio_Define.h \
- /usr/local/FFV/CIOlib/include/cio_Version.h \
- /usr/local/FFV/CIOlib/include/cio_PathUtil.h \
- /usr/local/FFV/CIOlib/include/cio_TextParser.h \
+ endianUtil.h /usr/local/FFV/CDMlib/include/cdm_DFI.h \
+ /usr/local/FFV/CDMlib/include/cdm_Define.h \
+ /usr/local/FFV/CDMlib/include/cdm_Version.h \
+ /usr/local/FFV/CDMlib/include/cdm_PathUtil.h \
+ /usr/local/FFV/CDMlib/include/cdm_TextParser.h \
  /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h \
- /usr/local/FFV/CIOlib/include/cio_ActiveSubDomain.h \
- /usr/local/FFV/CIOlib/include/cio_endianUtil.h \
- /usr/local/FFV/CIOlib/include/cio_TypeArray.h \
- /usr/local/FFV/CIOlib/include/cio_Array.h \
- /usr/local/FFV/CIOlib/include/inline/cio_Array_inline.h \
- /usr/local/FFV/CIOlib/include/cio_FileInfo.h \
- /usr/local/FFV/CIOlib/include/cio_FilePath.h \
- /usr/local/FFV/CIOlib/include/cio_Unit.h \
- /usr/local/FFV/CIOlib/include/cio_TimeSlice.h \
- /usr/local/FFV/CIOlib/include/cio_Domain.h \
- /usr/local/FFV/CIOlib/include/cio_MPI.h \
- /usr/local/FFV/CIOlib/include/cio_Process.h \
- /usr/local/FFV/CIOlib/include/inline/cio_DFI_inline.h COMB_Define.h \
+ /usr/local/FFV/CDMlib/include/cdm_ActiveSubDomain.h \
+ /usr/local/FFV/CDMlib/include/cdm_endianUtil.h \
+ /usr/local/FFV/CDMlib/include/cdm_TypeArray.h \
+ /usr/local/FFV/CDMlib/include/cdm_Array.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_Array_inline.h \
+ /usr/local/FFV/CDMlib/include/cdm_FileInfo.h \
+ /usr/local/FFV/CDMlib/include/cdm_FilePath.h \
+ /usr/local/FFV/CDMlib/include/cdm_VisIt.h \
+ /usr/local/FFV/CDMlib/include/cdm_Unit.h \
+ /usr/local/FFV/CDMlib/include/cdm_TimeSlice.h \
+ /usr/local/FFV/CDMlib/include/cdm_Domain.h \
+ /usr/local/FFV/CDMlib/include/cdm_MPI.h \
+ /usr/local/FFV/CDMlib/include/cdm_Process.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_DFI_inline.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_SPH.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_BOV.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_BOV_inline.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_AVS.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_PLOT3D.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_Plot3d_inline.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_VTK.h \
+ /usr/local/FFV/CDMlib/include/cdm_NonUniformDomain.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_NonUniformDomain_inline.h COMB_Define.h \
  ../FB/mydebug.h
 comb_avs.o: comb_avs.C comb.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/mpi_portable_platform.h \
@@ -256,27 +289,38 @@ comb_avs.o: comb_avs.C comb.h /opt/openmpi/include/mpi.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h FileIO_sph.h \
- endianUtil.h /usr/local/FFV/CIOlib/include/cio_DFI.h \
- /usr/local/FFV/CIOlib/include/cio_Define.h \
- /usr/local/FFV/CIOlib/include/cio_Version.h \
- /usr/local/FFV/CIOlib/include/cio_PathUtil.h \
- /usr/local/FFV/CIOlib/include/cio_TextParser.h \
+ endianUtil.h /usr/local/FFV/CDMlib/include/cdm_DFI.h \
+ /usr/local/FFV/CDMlib/include/cdm_Define.h \
+ /usr/local/FFV/CDMlib/include/cdm_Version.h \
+ /usr/local/FFV/CDMlib/include/cdm_PathUtil.h \
+ /usr/local/FFV/CDMlib/include/cdm_TextParser.h \
  /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
  /usr/local/FFV/TextParser/include/tpVersion.h \
- /usr/local/FFV/CIOlib/include/cio_ActiveSubDomain.h \
- /usr/local/FFV/CIOlib/include/cio_endianUtil.h \
- /usr/local/FFV/CIOlib/include/cio_TypeArray.h \
- /usr/local/FFV/CIOlib/include/cio_Array.h \
- /usr/local/FFV/CIOlib/include/inline/cio_Array_inline.h \
- /usr/local/FFV/CIOlib/include/cio_FileInfo.h \
- /usr/local/FFV/CIOlib/include/cio_FilePath.h \
- /usr/local/FFV/CIOlib/include/cio_Unit.h \
- /usr/local/FFV/CIOlib/include/cio_TimeSlice.h \
- /usr/local/FFV/CIOlib/include/cio_Domain.h \
- /usr/local/FFV/CIOlib/include/cio_MPI.h \
- /usr/local/FFV/CIOlib/include/cio_Process.h \
- /usr/local/FFV/CIOlib/include/inline/cio_DFI_inline.h COMB_Define.h \
+ /usr/local/FFV/CDMlib/include/cdm_ActiveSubDomain.h \
+ /usr/local/FFV/CDMlib/include/cdm_endianUtil.h \
+ /usr/local/FFV/CDMlib/include/cdm_TypeArray.h \
+ /usr/local/FFV/CDMlib/include/cdm_Array.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_Array_inline.h \
+ /usr/local/FFV/CDMlib/include/cdm_FileInfo.h \
+ /usr/local/FFV/CDMlib/include/cdm_FilePath.h \
+ /usr/local/FFV/CDMlib/include/cdm_VisIt.h \
+ /usr/local/FFV/CDMlib/include/cdm_Unit.h \
+ /usr/local/FFV/CDMlib/include/cdm_TimeSlice.h \
+ /usr/local/FFV/CDMlib/include/cdm_Domain.h \
+ /usr/local/FFV/CDMlib/include/cdm_MPI.h \
+ /usr/local/FFV/CDMlib/include/cdm_Process.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_DFI_inline.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_SPH.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_BOV.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_BOV_inline.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_AVS.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_PLOT3D.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_Plot3d_inline.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_VTK.h \
+ /usr/local/FFV/CDMlib/include/cdm_NonUniformDomain.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_NonUniformDomain_inline.h COMB_Define.h \
  ../FB/mydebug.h
 FileIO_sph.o: FileIO_sph.C FileIO_sph.h endianUtil.h
 FileIO_read_sph.o: FileIO_read_sph.C FileIO_sph.h endianUtil.h
