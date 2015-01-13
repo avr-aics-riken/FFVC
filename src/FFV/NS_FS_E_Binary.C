@@ -39,7 +39,7 @@ void FFV::NS_FS_E_Binary()
   REAL_TYPE zero = 0.0;                /// 定数
   int cnv_scheme = C.CnvScheme;        /// 対流項スキーム
   
-  
+
   // 境界処理用
   Gemini_R* m_buf = new Gemini_R [C.NoCompo+1];
   REAL_TYPE* m_snd = new REAL_TYPE [(C.NoCompo+1)*2];
@@ -230,7 +230,7 @@ void FFV::NS_FS_E_Binary()
       Exit(0);
   }
 
-  
+
   // FORCINGコンポーネントの疑似速度ベクトルの方向修正と力の加算
   if ( C.EnsCompo.forcing == ON ) 
   {
@@ -393,7 +393,7 @@ void FFV::NS_FS_E_Binary()
   // >>> Poisson Iteration section
   TIMING_start("VP-Iteration_Section");
 
-  
+
   // 反復回数の積算
   int loop_p  = 0;
   int loop_vp;
@@ -434,7 +434,6 @@ void FFV::NS_FS_E_Binary()
         break;
     }
     
-
     
     // スカラポテンシャルによる射影と速度の発散の計算 d_dvはdiv(u)のテンポラリ保持に利用
     TIMING_start("Projection_Velocity");
@@ -586,7 +585,7 @@ void FFV::NS_FS_E_Binary()
     // 収束判定
     if ( DivC.divergence <= DivC.divEPS ) break;
   }
-  
+
   
   // 総反復回数を代入
   DivC.Iteration = loop_vp;
@@ -634,7 +633,7 @@ void FFV::NS_FS_E_Binary()
     }
   }
    */
-  
+
 
   TIMING_stop("NS__Loop_Post_Section", 0.0);
   // >>> NS loop post section

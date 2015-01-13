@@ -3062,19 +3062,25 @@ unsigned long VoxInfo::modifyCutOnCellCenter(int* bid, const long long* cut, con
              chkZeroCut(pos, Z_plus) )
         {
           int sd = FBUtility::find_mode_id(fid, qw, qe, qs, qn, qb, qt, m_NoCompo);
-          if ( sd == 0 ) Exit(0);
-          
 #if 0
-          printf("(%3d %3d %3d) %d %d %d %d %d %d : %d : %3d %3d %3d %3d %3d %3d\n",
+          printf("(%3d %3d %3d) %d %d %d %d %d %d : %d : %3d %3d %3d %3d %3d %3d : %d %d %d %d %d %d\n",
                  i,j,k,
-                 qw, qe, qs, qn, qb, qt,
+                 qw, qe, qs, qn, qb, qt, sd,
                  getBit9(pos, 0),
                  getBit9(pos, 1),
                  getBit9(pos, 2),
                  getBit9(pos, 3),
                  getBit9(pos, 4),
-                 getBit9(pos, 5) );
+                 getBit9(pos, 5),
+                 ensCut(pos, X_minus),
+                 ensCut(pos, X_plus),
+                 ensCut(pos, Y_minus),
+                 ensCut(pos, Y_plus),
+                 ensCut(pos, Z_minus),
+                 ensCut(pos, Z_plus)
+                 );
 #endif
+          if ( sd == 0 ) Exit(0);
           
           setBit5(qq, sd, X_minus);
           setBit5(qq, sd, X_plus);
@@ -4001,7 +4007,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
             size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
             setBit5(bid[l], did, X_minus);
             setBitID(bcd[m], tgt);
-            setBit10(cut[l], (int)quantize9(pos), X_minus);
+            setBit10(cut[l], quantize9(pos), X_minus);
           }
         }
       }
@@ -4020,7 +4026,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
             size_t l = _F_IDX_S3D(ix  , j  , k  , ix, jx, kx, gd);
             setBit5(bid[l], did, X_plus);
             setBitID(bcd[m], tgt);
-            setBit10(cut[l], (int)quantize9(pos), X_plus);
+            setBit10(cut[l], quantize9(pos), X_plus);
           }
         }
       }
@@ -4039,7 +4045,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
             size_t l = _F_IDX_S3D(i  , 1  , k  , ix, jx, kx, gd);
             setBit5(bid[l], did, Y_minus);
             setBitID(bcd[m], tgt);
-            setBit10(cut[l], (int)quantize9(pos), Y_minus);
+            setBit10(cut[l], quantize9(pos), Y_minus);
           }
         }
       }
@@ -4058,7 +4064,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
             size_t l = _F_IDX_S3D(i  , jx  , k  , ix, jx, kx, gd);
             setBit5(bid[l], did, Y_plus);
             setBitID(bcd[m], tgt);
-            setBit10(cut[l], (int)quantize9(pos), Y_plus);
+            setBit10(cut[l], quantize9(pos), Y_plus);
           }
         }
       }
@@ -4077,7 +4083,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
             size_t l = _F_IDX_S3D(i  , j  , 1  , ix, jx, kx, gd);
             setBit5(bid[l], did, Z_minus);
             setBitID(bcd[m], tgt);
-            setBit10(cut[l], (int)quantize9(pos), Z_minus);
+            setBit10(cut[l], quantize9(pos), Z_minus);
           }
         }
       }
@@ -4095,7 +4101,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
             size_t l = _F_IDX_S3D(i  , j  , kx  , ix, jx, kx, gd);
             setBit5(bid[l], did, Z_plus);
             setBitID(bcd[m], tgt);
-            setBit10(cut[l], (int)quantize9(pos), Z_plus);
+            setBit10(cut[l], quantize9(pos), Z_plus);
           }
         }
       }

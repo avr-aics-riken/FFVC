@@ -1842,10 +1842,11 @@ unsigned long Geometry::findPolygonInCell(int* d_mid, MPIPolylib* PL, PolygonPro
         findIndex( PG[odr].getBboxMin(), wmin );
         findIndex( PG[odr].getBboxMax(), wmax );
         
+#if 0
         printf("\t\t[rank=%6d] (%4d %4d %4d) - (%4d %4d %4d) %s \n",
                myRank, wmin[0], wmin[1], wmin[2], wmax[0], wmax[1], wmax[2], m_pg.c_str());
+#endif
         
-        //#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c) collapse(3), thread safe?
         for (int k=wmin[2]; k<=wmax[2]; k++) {
           for (int j=wmin[1]; j<=wmax[1]; j++) {
             for (int i=wmin[0]; i<=wmax[0]; i++) {
@@ -1875,9 +1876,7 @@ unsigned long Geometry::findPolygonInCell(int* d_mid, MPIPolylib* PL, PolygonPro
                 
                 int z = find_mode(polys, ary, m_NoCompo);
                 if ( z == 0 ) Exit(0);
-                //printf("(%3d %3d %3d) = %2d [ ", i,j,k, z);
-                //for (int l=0; l<polys; l++) printf("%d ", ary[l]);
-                //printf("]\n");
+
                 size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
                 d_mid[m] = z;
                 
@@ -1992,69 +1991,81 @@ void Geometry::getFillParam(TextParser* tpCntl)
 
 // #################################################################
 /**
- * @brief 平面と線分の交点を求める
- * @param [out]  X   平面P上の交点Xの座標
- * @param [in]   A   線分ABの端点
- * @param [in]   B   線分ABの端点
- * @param [in]   PL  平面PLの係数 ax+by+cz+d=0
- * @retval 平面P上の交点XのAからの距離(0<=r<=1), 負値の場合は交点が無い
- * @see http://www.sousakuba.com/Programming/gs_plane_line_intersect.html
+ * @brief ポリゴンと線分の交点計算
+ * @param [in]   ray_o      レイの開始点
+ * @param [in]   dir        レイの方向ベクトル（単位ベクトル）
+ * @param [in]   v0         ポリゴンの頂点
+ * @param [in]   v1         ポリゴンの頂点
+ * @param [in]   v2         ポリゴンの頂点
+ * @param [out]  pRetT      交点距離
+ * @param [out]  pRetU      交点情報
+ * @param [out]  pRetV      交点情報
+ * @retval true -> 交点あり
+ * @note Tomas Möller and Ben Trumbore.
+   Journal of Graphics Tools, 2(1):21--28, 1997.
+   http://www.graphics.cornell.edu/pubs/1997/MT97.html
  */
-
-REAL_TYPE Geometry::intersectLineByPlane(Vec3r& X, const Vec3r A, const Vec3r B, const REAL_TYPE PL[4])
+bool Geometry::TriangleIntersect(const Vec3r ray_o,
+                                 const Vec3r dir,
+                                 const Vec3r v0,
+                                 const Vec3r v1,
+                                 const Vec3r v2,
+                                 REAL_TYPE *pRetT,
+                                 REAL_TYPE *pRetU,
+                                 REAL_TYPE *pRetV)
 {
-  // 平面PLの法線
-  Vec3r n(PL[0], PL[1], PL[2]);
+  const REAL_TYPE m_eps = REAL_TYPE_EPSILON*2.0; //ROUND_EPS;
+  Vec3r tvec, qvec;
   
-  // 平面PL上の点P
-  Vec3r P = n * PL[3];
+  REAL_TYPE t; // 交点距離
+  REAL_TYPE u; // 交点情報
+  REAL_TYPE v; // 交点情報
   
-  //printf("(%f %f %f %f) (%f %f %f) (%f %f %f)\n", PL[0], PL[1], PL[2], PL[3], A.x, A.y, A.z, B.x, B.y, B.z);
+  Vec3r e1 = v1 - v0;
+  Vec3r e2 = v2 - v0;
+  Vec3r pvec = cross(dir, e2);
   
-  // vectors
-  Vec3r a(A.x-P.x, A.y-P.y, A.z-P.z);
-  Vec3r b(B.x-P.x, B.y-P.y, B.z-P.z);
+  REAL_TYPE det = dot(e1, pvec);
   
-  // 平面法線と内積をとり交点があるかを符号から判別
-  REAL_TYPE da = dot(a, n);
-  REAL_TYPE db = dot(b, n);
-  REAL_TYPE abs_da = fabs(da);
-  REAL_TYPE abs_db = fabs(db);
-  
-  
-  // 平面上の場合の計算誤差を調整
-  if ( abs_da < ROUND_EPS )
+  if (det > m_eps)
   {
-    abs_da = da = 0.0;
-  }
-  if ( abs_db < ROUND_EPS )
-  {
-    abs_db = db = 0.0;
-  }
-  
-  REAL_TYPE r;
-  
-  // 交差判定
-  if ( da == 0.0 && db == 0.0 )
-  {
-    r = -1.0; // 両端A, Bが平面PL上にあり、交点なし
-  }
-  else if ( (da >= 0.0 && db <= 0.0) || (da <= 0.0 && db >= 0.0) )
-  {
-    // 比率を求める
-    r = abs_da / ( abs_da + abs_db );
+    tvec = ray_o - v0;
+    u = dot(tvec, pvec);
+    if (u < 0.0 || u > det) return false;
     
-    // 交点を求める
-    Vec3r ab(B.x-A.x, B.y-A.y, B.z-A.z);
-    X = A + ab * r;
+    qvec = cross(tvec, e1);
+    v = dot(dir, qvec);
+    if (v < 0.0 || u + v > det) return false;
+  }
+  else if (det < -m_eps)
+  {
+    tvec = ray_o - v0;
+    u = dot(tvec, pvec);
+    if (u > 0.0 || u < det) return false;
+    
+    qvec = cross(tvec, e1);
+    v = dot(dir, qvec);
+    if (v > 0.0 || u + v < det) return false;
+    
   }
   else
   {
-    r = -1.0; // 交差なし
+    return false;
   }
-  //printf("(%f %f %f) da=%f : %f db=%f : %f r=%f\n", n.x, n.y, n.z, da, abs_da, db, abs_db, r);
   
-  return r;
+  REAL_TYPE inv_det = 1.0 / det;
+  
+  t = dot(e2, qvec);
+  
+  t *= inv_det;
+  u *= inv_det;
+  v *= inv_det;
+  
+  *pRetT = t;
+  *pRetU = u;
+  *pRetV = v;
+  
+  return true;
 }
 
 
@@ -2075,6 +2086,7 @@ void Geometry::quantizeCut(long long* cut,
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
+
   
   Vec3r org(origin);
   Vec3r pch(pitch);
@@ -2106,8 +2118,10 @@ void Geometry::quantizeCut(long long* cut,
         findIndex( PG[odr].getBboxMin(), wmin );
         findIndex( PG[odr].getBboxMax(), wmax );
         
+#if 0
         printf("\t\t[rank=%6d] (%4d %4d %4d) - (%4d %4d %4d) %s \n",
                myRank, wmin[0], wmin[1], wmin[2], wmax[0], wmax[1], wmax[2], m_pg.c_str());
+#endif
         
         // ポリゴングループの存在するbbox内のセルに対して交点計算
         for (int k=wmin[2]; k<=wmax[2]; k++) {
@@ -2128,18 +2142,9 @@ void Geometry::quantizeCut(long long* cut,
               vector<Triangle*>* trias = PL->search_polygons(m_pg, bx_min, bx_max, false); // false; ポリゴンが一部でもかかる場合
               int polys = trias->size();
               
+              
               if (polys>0)
               {
-                // 隣接点の座標値
-                Vec3r q[6];
-                q[0] = shift_W(ctr, pch); // (-1, 0, 0)
-                q[1] = shift_E(ctr, pch); // ( 1, 0, 0)
-                q[2] = shift_S(ctr, pch); // ( 0,-1, 0)
-                q[3] = shift_N(ctr, pch); // ( 0, 1, 0)
-                q[4] = shift_B(ctr, pch); // ( 0, 0,-1)
-                q[5] = shift_T(ctr, pch); // ( 0, 0, 1)
-                
-                
                 vector<Triangle*>::iterator it2;
                 
                 for (it2 = trias->begin(); it2 != trias->end(); it2++)
@@ -2150,40 +2155,26 @@ void Geometry::quantizeCut(long long* cut,
                   p[1] = *(tmp[1]);
                   p[2] = *(tmp[2]);
                   
-                  
-                  // 平面の式
-                  Vec3r A(p[1].x-p[0].x, p[1].y-p[0].y, p[1].z-p[0].z);
-                  Vec3r B(p[2].x-p[0].x, p[2].y-p[0].y, p[2].z-p[0].z);
-                  Vec3r C = cross(A, B);
-                  C.normalize();
-
-                  const REAL_TYPE pl[4] = {C.x, C.y, C.z, -(C.x * p[0].x + C.y * p[0].y + C.z * p[0].z)};
-                  
-                  
                   // Polygon ID
                   int poly_id = (*it2)->get_exid();
-                  
 #if 0
-                  printf("[%3d %3d %3d] (%f %f %f), (%f %f %f), (%f %f %f), %f %f %f %f\n", i,j,k,
+                  printf("[%3d %3d %3d] (%f %f %f), (%f %f %f), (%f %f %f)\n", i,j,k,
                          p[0].x, p[0].y, p[0].z,
                          p[1].x, p[1].y, p[1].z,
-                         p[2].x, p[2].y, p[2].z,
-                         pl[0], pl[1], pl[2], pl[3]);
+                         p[2].x, p[2].y, p[2].z);
 #endif
-                  
-                  
-                  // テンポラリに保持
+
                   size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
                   int bb = bid[m];
                   long long cc = cut[m];
                   
                   // 各方向の交点を評価、短い距離を記録する。新規記録の場合のみカウント
-                  count += updateCut(ctr, q[0], pl, cc, bb, X_minus, poly_id);
-                  count += updateCut(ctr, q[1], pl, cc, bb, X_plus,  poly_id);
-                  count += updateCut(ctr, q[2], pl, cc, bb, Y_minus, poly_id);
-                  count += updateCut(ctr, q[3], pl, cc, bb, Y_plus,  poly_id);
-                  count += updateCut(ctr, q[4], pl, cc, bb, Z_minus, poly_id);
-                  count += updateCut(ctr, q[5], pl, cc, bb, Z_plus,  poly_id);
+                  count += updateCut(ctr, X_minus, p[0], p[1], p[2], cc, bb, poly_id);
+                  count += updateCut(ctr, X_plus,  p[0], p[1], p[2], cc, bb, poly_id);
+                  count += updateCut(ctr, Y_minus, p[0], p[1], p[2], cc, bb, poly_id);
+                  count += updateCut(ctr, Y_plus,  p[0], p[1], p[2], cc, bb, poly_id);
+                  count += updateCut(ctr, Z_minus, p[0], p[1], p[2], cc, bb, poly_id);
+                  count += updateCut(ctr, Z_plus,  p[0], p[1], p[2], cc, bb, poly_id);
                   
                   bid[m] = bb;
                   cut[m] = cc;
@@ -3486,3 +3477,117 @@ void Geometry::SeedFilling(FILE* fp,
   
 }
 
+
+/**
+ * @brief 交点情報をアップデート
+ * @param [in]     ray_o  レイの始点
+ * @param [in]     dir    レイの方向
+ * @param [in]     v0     テストする三角形の頂点
+ * @param [in]     v1     テストする三角形の頂点
+ * @param [in]     v2     テストする三角形の頂点
+ * @param [in,out] cut    量子化交点距離情報
+ * @param [in,out] bid    交点ID情報
+ * @param [in]     pid    polygon id
+ * @retval 新規交点の数
+ * @note 短い距離を記録
+ */
+unsigned Geometry::updateCut(const Vec3r ray_o,
+                             const int dir,
+                             const Vec3r v0,
+                             const Vec3r v1,
+                             const Vec3r v2,
+                             long long& cut,
+                             int& bid,
+                             const int pid)
+{
+  // 単位方向ベクトルと格子幅
+  Vec3r d;
+  REAL_TYPE pit;
+  
+  switch (dir)
+  {
+    case X_minus:
+      d.assign(-1.0, 0.0, 0.0);
+      pit = pitch[0];
+      break;
+      
+    case X_plus:
+      d.assign(1.0, 0.0, 0.0);
+      pit = pitch[0];
+      break;
+      
+    case Y_minus:
+      d.assign(0.0, -1.0, 0.0);
+      pit = pitch[1];
+      break;
+      
+    case Y_plus:
+      d.assign(0.0, 1.0, 0.0);
+      pit = pitch[1];
+      break;
+      
+    case Z_minus:
+      d.assign(0.0, 0.0, -1.0);
+      pit = pitch[2];
+      break;
+      
+    case Z_plus:
+      d.assign(0.0, 0.0, 1.0);
+      pit = pitch[2];
+      break;
+  }
+  
+  // カウンタ
+  unsigned count = 0;
+  
+  // 交点計算
+  REAL_TYPE t, u, v;
+  if ( !TriangleIntersect(ray_o, d, v0, v1, v2, &t, &u, &v) ) return 0;
+
+  /* 交点
+   px = d.x * t + ray_o.x;
+   py = d.y * t + ray_o.y;
+   pz = d.z * t + ray_o.z;
+   
+   // 法線
+   float fDat = 1.0 - u - v;
+   n1 = n1 * fDat;
+   n2 = n2 * U;
+   n3 = n3 * V;
+   n = n1 + n2 + n3;
+   */
+
+  // 格子幅で正規化
+  REAL_TYPE tn = t / pit;
+  //printf("t = %f\n", t);
+  
+  if ( tn < 0.0 || 1.0 < tn ) return 0;
+
+  
+  // 9bit幅の量子化
+  int r = quantize9(tn);
+  
+  bool record = false;
+  
+  
+  // 交点が記録されていない場合 >> 新規記録
+  if ( ensCut(cut, dir) == 0 )
+  {
+    record = true;
+    count = 1;
+  }
+  else // 交点が既に記録されている場合 >> 短い方を記録
+  {
+    if ( r < getBit9(cut, dir)) record = true;
+  }
+  
+  
+  if ( record )
+  {
+    setBit5(bid, pid, dir);
+    setBit10(cut, r, dir);
+    //printf("%10.6f %6d dir=%d id=%d\n", tn, r, dir, pid);
+  }
+  
+  return count;
+}

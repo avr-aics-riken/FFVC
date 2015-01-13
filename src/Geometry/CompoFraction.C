@@ -528,6 +528,56 @@ REAL_TYPE CompoFraction::intersectLineByCylinder(Vec3r& X,
 }
 
 
+// #################################################################
+/**
+ * @brief 平面と線分の交点を求める
+ * @param [out]  X   平面P上の交点Xの座標
+ * @param [in]   A   線分ABの端点
+ * @param [in]   B   線分ABの端点
+ * @param [in]   PL  平面PLの係数 ax+by+cz+d=0
+ * @retval 平面P上の交点XのAからの距離(0<=r<=1), 負値の場合は交点が無い
+ * @see http://www.sousakuba.com/Programming/gs_plane_line_intersect.html
+ */
+
+REAL_TYPE CompoFraction::intersectLineByPlane(Vec3r& X, const Vec3r A, const Vec3r B, const REAL_TYPE PL[4])
+{
+  // 平面PLの法線
+  Vec3r n(PL[0], PL[1], PL[2]);
+  
+  // 平面PL上の点P
+  Vec3r P = n * PL[3];
+  
+  //printf("(%f %f %f %f) (%f %f %f) (%f %f %f)\n", PL[0], PL[1], PL[2], PL[3], A.x, A.y, A.z, B.x, B.y, B.z);
+  
+  // vectors
+  Vec3r a(A.x-P.x, A.y-P.y, A.z-P.z);
+  Vec3r b(B.x-P.x, B.y-P.y, B.z-P.z);
+  
+  // 平面法線と内積をとり交点があるかを符号から判別
+  REAL_TYPE da = dot(a, n);
+  REAL_TYPE db = dot(b, n);
+  REAL_TYPE r;
+  
+  if ( da * db <= 0.0 )
+  {
+    // 比率を求める
+    REAL_TYPE abs_da = fabs(da);
+    REAL_TYPE abs_db = fabs(db);
+    r = abs_da / ( abs_da + abs_db );
+    
+    // 交点を求める
+    Vec3r ab(B.x-A.x, B.y-A.y, B.z-A.z);
+    X = A + ab * r;
+    //printf("(%f %f %f) da=%f : %f db=%f : %f r=%f\n", n.x, n.y, n.z, da, abs_da, db, abs_db, r);
+  }
+  else
+  {
+    r = -1.0;
+  }
+  
+  return r;
+}
+
 
 // #################################################################
 // 矩形の形状パラメータをセットする

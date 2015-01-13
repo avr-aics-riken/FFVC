@@ -133,13 +133,15 @@ void FALLOC::allocArray_CompoVF(double &prep, double &total)
  * @brief カット情報の配列
  * @param [in,out] total ソルバーに使用するメモリ量
  */
-void FALLOC::allocArray_Cut(double &total)
+void FALLOC::allocArray_Cut(double &prep, double &total)
 {
   if ( !(d_cut = Alloc::LLong_S3D(size, guide)) ) Exit(0);
-  total+= array_size * (double)sizeof(long long);
+  prep  += array_size * (double)sizeof(long long);
+  total += array_size * (double)sizeof(long long);
   
   
   if ( !(d_bid = Alloc::Int_S3D(size, guide)) ) Exit(0);
+  prep  += array_size * (double)sizeof(int);
   total += array_size * (double)sizeof(int);
 }
 

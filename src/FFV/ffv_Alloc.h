@@ -35,6 +35,7 @@ class FALLOC : public DomainInfo {
 private:
   double array_size;
   
+  
 public:
   
   // [*]印はタイムステップ間でデータを保持しておかなければならない配列
@@ -259,7 +260,7 @@ public:
   
   
   // カット情報の配列
-  void allocArray_Cut(double &total);
+  void allocArray_Cut(double &prep, double &total);
   
   
   // コンポーネントのワーク用配列のアロケート

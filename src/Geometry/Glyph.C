@@ -29,7 +29,7 @@ void Glyph::generateVertex(const Vec3i idx, const long long pos, const int dir, 
   Vec3f c;     // セルセンター座標
   Vec3f p[8];  // グリフの8頂点
   
-  float w = 0.25;   // Glyph幅の係数
+  float w = 0.45;// 0.25;   // Glyph幅の係数
   float d = 0.05;   // Glyph厚さの係数
   
   b.assign((float)idx.x-0.5, (float)idx.y-0.5, (float)idx.z-0.5);

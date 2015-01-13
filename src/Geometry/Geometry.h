@@ -266,64 +266,27 @@ private:
                    REAL_TYPE* d_pvf,
                    const int m_NoCompo);
   
-  /**
-   * @brief 交点情報をアップデート
-   * @param [in]     A   線分ABの端点
-   * @param [in]     B   線分ABの端点
-   * @param [in]     pl  平面PLの係数 ax+by+cz+d=0
-   * @param [in,out] cut 量子化交点距離情報
-   * @param [in,out] bid 交点ID情報
-   * @param [in]     dir テストする方向
-   * @param [in]     pid polygon id
-   * @retval 新規交点の数
-   * @note 短い距離を記録
-   */
-  unsigned updateCut(const Vec3r A,
-                     const Vec3r B,
-                     const REAL_TYPE pl[4],
+  
+  // ポリゴンと線分の交点計算
+  bool TriangleIntersect(const Vec3r ray_o,
+                         const Vec3r dir,
+                         const Vec3r v0,
+                         const Vec3r v1,
+                         const Vec3r v2,
+                         REAL_TYPE *pRetT,
+                         REAL_TYPE *pRetU,
+                         REAL_TYPE *pRetV);
+  
+  
+  // 交点情報をアップデート
+  unsigned updateCut(const Vec3r ray_o,
+                     const int dir,
+                     const Vec3r v0,
+                     const Vec3r v1,
+                     const Vec3r v2,
                      long long& cut,
                      int& bid,
-                     const int dir,
-                     const int pid)
-  {
-    // 交点座標 >> 使わない
-    Vec3r X;
-    
-    // 交点計算
-    REAL_TYPE t = intersectLineByPlane(X, A, B, pl);
-    
-    if ( t < 0.0 || 1.0 < t ) return 0;
-    
-    unsigned count = 0;
-    
-    // 9bit幅の量子化
-    int r = (int)quantize9(t);
-    
-    bool record = false;
-    
-    if ( 0.0 <= t && t <= 1.0 )
-    {
-      // 交点が記録されていない場合 >> 新規記録
-      if ( ensCut(cut, dir) == 0 )
-      {
-        record = true;
-        count = 1;
-      }
-      else // 交点が既に記録されている場合 >> 短い方を記録
-      {
-        if ( r < getBit9(cut, dir)) record = true;
-      }
-    }
-    
-    if ( record )
-    {
-      setBit5(bid, pid, dir);
-      setBit10(cut, r, dir);
-      //printf("%10.6f %6d dir=%d id=%d\n", t, r, dir, pid);
-    }
-    
-    return count;
-  }
+                     const int pid);
   
   
   
@@ -399,6 +362,7 @@ public:
   // フィルパラメータを取得
   void getFillParam(TextParser* tpCntl);
   
+  
   /**
    * @brief ベクトルの最小成分
    * @param [in,out] mn 比較して小さい成分
@@ -423,18 +387,6 @@ public:
     mx.y = (mx.y > p.y) ? mx.y : p.y;
     mx.z = (mx.z > p.z) ? mx.z : p.z;
   }
-  
-  
-  /**
-   * @brief 平面と線分の交点を求める
-   * @param [out]  X   平面P上の交点Xの座標
-   * @param [in]   A   線分ABの端点
-   * @param [in]   B   線分ABの端点
-   * @param [in]   PL  平面PLの係数 ax+by+cz+d=0
-   * @retval 平面P上の交点XのAからの距離, 負値の場合は交点が無い
-   * @see http://www.sousakuba.com/Programming/gs_plane_line_intersect.html
-   */
-  static REAL_TYPE intersectLineByPlane(Vec3r& X, const Vec3r A, const Vec3r B, const REAL_TYPE PL[4]);
   
   
   // FIllIDとSeedIDをセット

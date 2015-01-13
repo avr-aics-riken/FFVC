@@ -192,6 +192,18 @@ protected:
   
   
   /**
+   * @brief 平面と線分の交点を求める
+   * @param [out]  X   平面P上の交点Xの座標
+   * @param [in]   A   線分ABの端点
+   * @param [in]   B   線分ABの端点
+   * @param [in]   PL  平面PLの係数 ax+by+cz+d=0
+   * @retval 平面P上の交点XのAからの距離, 負値の場合は交点が無い
+   * @see http://www.sousakuba.com/Programming/gs_plane_line_intersect.html
+   */
+  REAL_TYPE intersectLineByPlane(Vec3r& X, const Vec3r A, const Vec3r B, const REAL_TYPE PL[4]);
+  
+  
+  /**
    * @brief 円筒形状の内外判定
    * @param [in] p    テスト点座標
    * @param [in] mode 変換モード
@@ -482,7 +494,7 @@ protected:
     REAL_TYPE t = intersectLineByCylinder(X, A, B);
     
     // 9bit幅の量子化
-    int r = (int)quantize9(t);
+    int r = quantize9(t);
     
     bool record = false;
     
@@ -542,13 +554,13 @@ protected:
     Vec3r X;
     
     // 交点計算
-    REAL_TYPE t = Geometry::intersectLineByPlane(X, A, B, pl);
+    REAL_TYPE t = intersectLineByPlane(X, A, B, pl);
     
     if ( t < 0.0 || 1.0 < t ) return 0;
     
     
     // 9bit幅の量子化
-    int r = (int)quantize9(t);
+    int r = quantize9(t);
     
     bool record = false;
     

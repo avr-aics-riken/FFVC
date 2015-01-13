@@ -682,11 +682,13 @@ void IP_Cylinder::setCircle(Control* R,
               REAL_TYPE s = cut_line_2d(p[0], l, rs, ph);
               size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
               
-              int r = (int)quantize9(s);
+              int r = quantize9(s);
+
               setBit10(cut[m], r, l-1);
               setBit5(bid[m], mid_s, l-1);
               
-              int rr = (int)quantize9(1.0-s);
+              int rr = quantize9(1.0-s);
+
               size_t m1;
               
               switch (l-1) {
@@ -744,23 +746,23 @@ void IP_Cylinder::setCircle(Control* R,
           if ( (z <= ze) && (ze < z+ph) )
           {
             setBit5(bid[m], mid_s, Z_plus);
-            int r = (int)quantize9(s);
+            int r = quantize9(s);
             setBit10(cut[m], r, Z_plus);
 
             size_t m1 = _F_IDX_S3D(i, j, k+1, ix, jx, kx, gd);
             setBit5(bid[m1], mid_s, Z_minus);
-            int rr = (int)quantize9(1.0-s);
+            int rr = quantize9(1.0-s);
             setBit10(cut[m1], rr, Z_minus);
           }
           else if ( (z-ph < ze) && (ze < z) )
           {
             setBit5(bid[m], mid_s, Z_minus);
-            int r = (int)quantize9(-s);
+            int r = quantize9(-s);
             setBit10(cut[m], r, Z_minus);
 
             size_t m1 = _F_IDX_S3D(i, j, k-1, ix, jx, kx, gd);
             setBit5(bid[m1], mid_s, Z_plus);
-            int rr = (int)quantize9(1.0+s);
+            int rr = quantize9(1.0+s);
             setBit10(cut[m1], rr, Z_plus);
           }
           
@@ -888,23 +890,23 @@ void IP_Cylinder::setRect(Control* R,
             if ( (y <= ye) && (ye < y+dh) )
             {
               setBit5(bid[m], mid_s, Y_plus);
-              int r = (int)quantize9(s);
+              int r = quantize9(s);
               setBit10(cut[m], r, Y_plus);
               
               size_t m1 = _F_IDX_S3D(i, j+1, k, ix, jx, kx, gd);
               setBit5(bid[m1], mid_s, Y_minus);
-              int rr = (int)quantize9(1.0-s);
+              int rr = quantize9(1.0-s);
               setBit10(cut[m1], rr, Y_minus);
             }
             else if ( (y-dh < ye) && (ye < y) )
             {
               setBit5(bid[m], mid_s, Y_minus);
-              int r = (int)quantize9(-s);
+              int r = quantize9(-s);
               setBit10(cut[m], r, Y_minus);
               
               size_t m1 = _F_IDX_S3D(i, j-1, k, ix, jx, kx, gd);
               setBit5(bid[m1], mid_s, Y_plus);
-              int rr = (int)quantize9(1.0+s);
+              int rr = quantize9(1.0+s);
               setBit10(cut[m1], rr, Y_plus);
             }
           }
@@ -932,23 +934,23 @@ void IP_Cylinder::setRect(Control* R,
             if ( (y <= ys) && (ys < y+dh) )
             {
               setBit5(bid[m], mid_s, Y_plus);
-              int r = (int)quantize9(s);
+              int r = quantize9(s);
               setBit10(cut[m], r, Y_plus);
 
               size_t m1 = _F_IDX_S3D(i, j+1, k, ix, jx, kx, gd);
               setBit5(bid[m1], mid_s, Y_minus);
-              int rr = (int)quantize9(1.0-s);
+              int rr = quantize9(1.0-s);
               setBit10(cut[m1], rr, Y_minus);
             }
             else if ( (y-dh < ys) && (ys < y) )
             {
               setBit5(bid[m], mid_s, Y_minus);
-              int r = (int)quantize9(-s);
+              int r = quantize9(-s);
               setBit10(cut[m], r, Y_minus);
               
               size_t m1 = _F_IDX_S3D(i, j-1, k, ix, jx, kx, gd);
               setBit5(bid[m1], mid_s, Y_plus);
-              int rr = (int)quantize9(1.0+s);
+              int rr = quantize9(1.0+s);
               setBit10(cut[m1], rr, Y_plus);
             }
           }
@@ -976,23 +978,23 @@ void IP_Cylinder::setRect(Control* R,
             if ( (x <= xe) && (xe < x+dh) )
             {
               setBit5(bid[m], mid_s, X_plus);
-              int r = (int)quantize9(s);
+              int r = quantize9(s);
               setBit10(cut[m], r, X_plus);
 
               size_t m1 = _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd);
               setBit5(bid[m1], mid_s, X_minus);
-              int rr = (int)quantize9(1.0-s);
+              int rr = quantize9(1.0-s);
               setBit10(cut[m1], rr, X_minus);
             }
             else if ( (x-dh < xe) && (xe < x) )
             {
               setBit5(bid[m], mid_s, X_minus);
-              int r = (int)quantize9(-s);
+              int r = quantize9(-s);
               setBit10(cut[m], r, X_minus);
 
               size_t m1 = _F_IDX_S3D(i-1, j, k, ix, jx, kx, gd);
               setBit5(bid[m1], mid_s, X_plus);
-              int rr = (int)quantize9(1.0+s);
+              int rr = quantize9(1.0+s);
               setBit10(cut[m1], r, X_plus);
             }
           }
@@ -1020,23 +1022,23 @@ void IP_Cylinder::setRect(Control* R,
             if ( (x <= xs) && (xs < x+dh) )
             {
               setBit5(bid[m], mid_s, X_plus);
-              int r = (int)quantize9(s);
+              int r = quantize9(s);
               setBit10(cut[m], r, X_plus);
 
               size_t m1 = _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd);
               setBit5(bid[m1], mid_s, X_minus);
-              int rr = (int)quantize9(1.0-s);
+              int rr = quantize9(1.0-s);
               setBit10(cut[m1], rr, X_minus);
             }
             else if ( (x-dh < xs) && (xs < x) )
             {
               setBit5(bid[m], mid_s, X_minus);
-              int r = (int)quantize9(-s);
+              int r = quantize9(-s);
               setBit10(cut[m], r, X_minus);
               
               size_t m1 = _F_IDX_S3D(i-1, j, k, ix, jx, kx, gd);
               setBit5(bid[m1], mid_s, X_plus);
-              int rr = (int)quantize9(1.0+s);
+              int rr = quantize9(1.0+s);
               setBit10(cut[m1], r, X_plus);
             }
           }

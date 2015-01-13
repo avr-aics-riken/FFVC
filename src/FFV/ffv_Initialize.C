@@ -192,19 +192,19 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // 配列アロケート前に一度コール
-  setArraySize();
-  allocArray_Prep(PrepMemory, TotalMemory);
+  FALLOC::setArraySize();
+  FALLOC::allocArray_Prep(PrepMemory, TotalMemory);
   
   // カット情報保持領域
-  allocArray_Cut(TotalMemory);
-  
+  FALLOC::allocArray_Cut(PrepMemory, TotalMemory);
+  initCutInfo();
   
   
   // SOR2SMAのNaive実装 >> Experimental
   if ( LS[ic_prs1].getNaive() == ON )
   {
     Hostonly_ printf("\n\t << Extra arrays are allocated for Naive implementation. >>\n\n");
-    allocArray_Naive(TotalMemory);
+    FALLOC::allocArray_Naive(TotalMemory);
   }
   TIMING_stop("Allocate_Arrays");
   
@@ -3391,12 +3391,10 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
     case id_Step:
     case id_Cylinder:
     case id_Duct:
-      setupCutInfo4IP(PrepMemory, TotalMemory, fp);
       Ex->setup(d_bcd, &C, C.NoCompo, mat, d_cut, d_bid);
       break;
       
     default: // ほかのIntrinsic problems
-      setupCutInfo4IP(PrepMemory, TotalMemory, fp);
       break;
   }
   
@@ -3665,21 +3663,10 @@ void FFV::setParameters()
 
 
 // #################################################################
-/* @brief IP用にカット領域をアロケートする
- * @param [in,out] m_prep  前処理用のメモリサイズ
- * @param [in,out] m_total 本計算用のメモリリサイズ
- * @param [in]     fp      ファイルポインタ
+/* @brief 距離情報の初期化
  */
-void FFV::setupCutInfo4IP(double& m_prep, double& m_total, FILE* fp)
+void FFV::initCutInfo()
 {
-  Hostonly_ 
-  {
-    fprintf(fp, "\n----------\n\n");
-    fprintf(fp, "\t>> Cut Info\n\n");
-    printf("\n----------\n\n");
-    printf("\t>> Cut Info\n\n");
-  }
-  
   size_t n_cell[3];
   
   for (int i=0; i<3; i++) 
@@ -3689,34 +3676,16 @@ void FFV::setupCutInfo4IP(double& m_prep, double& m_total, FILE* fp)
   size_t size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
   
   
-  // 使用メモリ量　
-  double cut_mem, G_cut_mem;
-  G_cut_mem = cut_mem = (double)size_n_cell * (double)(6*sizeof(float) + sizeof(int));
-  m_prep += cut_mem;
-  m_total+= cut_mem;
-  
-  
-  displayMemoryInfo(fp, G_cut_mem, cut_mem, "Cut");
-  
-  
-  
   // 初期値のセット
   for (size_t i=0; i<size_n_cell; i++)
   {
     for (int dir=0; dir<6; dir++)
     {
-      setBit10(d_cut[i], (int)quantize9(1.0), dir);
+      initBit9(d_cut[i], dir);
     }
   }
   
-  for (size_t i=0; i<size_n_cell; i++)
-  {
-    d_bid[i] = 0;
-  }
-  
 }
-
-
 
 
 // #################################################################

@@ -26,6 +26,7 @@
 #include "mydebug.h"
 #include <float.h>
 #include <math.h>
+#include <stdio.h>
 
 #define FB_VERS "1.5.3"
 
@@ -570,11 +571,31 @@ enum DIRection {
   Z_plus
 };
 
-
-// 9bit幅の量子化 第2項目は調整パラメータ
-inline REAL_TYPE quantize9(REAL_TYPE a)
+/*
+ * @brief 9bit幅の量子化
+ * @param [in]  a  入力数値
+ */
+inline int quantize9(REAL_TYPE a)
 {
-  return (REAL_TYPE)ceil(a * 512.0 - (0.5-1.0/1024.0));
+  int s;
+  REAL_TYPE x = a * 511.0;
+  
+  if ( x > 0.0 )
+  {
+    s = (int)floor(x + 0.5);
+  }
+  else
+  {
+    s = (int)(-1.0 * floor(fabs(x) + 0.5));
+  }
+  
+  if (s<0 || 511<s)
+  {
+    printf("quantize error : out of range %f > %d\n", a, s);
+    exit(0);
+  }
+  
+  return s;
 }
 
 
@@ -623,7 +644,7 @@ inline void setBitID (int& b, const int q)
 inline int ensCut (const long long b, const int dir)
 {
   long long a = 1;
-  return (int)( ( (b >> dir*10) >> 10 ) & a );
+  return (((b >> (dir*10+9)) & a ) == 1) ? 1 : 0;
 }
 
 
@@ -635,11 +656,17 @@ inline int ensCut (const long long b, const int dir)
  */
 inline int chkZeroCut (const long long b, const int dir)
 {
+  // 各方向の10ビット
   long long c = b >> dir*10;
   long long a = 1;
-  int ens = (int)((c >> 10 ) & a);
+  
+  // 交点の有無
+  int ens = (int)((c >> 9) & a);
+  
+  // 量子化した距離 9ビット幅
   a = MASK_9;
   int d = (int)(c & a);
+  
   return ( ens & !d ) ? 1 : 0;
 }
 
@@ -671,17 +698,32 @@ inline REAL_TYPE getCut9 (const long long b, const int dir)
 /*
  * @brief 10bit幅の値の設定（9bit幅の値と9bitめのフラグ）
  * @param [in,out] b   long long 変数
- * @param [in]     q   10-bit幅の値
+ * @param [in]     q   9-bit幅の値
  * @param [in]     dir 方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
  */
 inline void setBit10 (long long& b, const int q, const int dir)
 {
   long long a = MASK_10;
   long long c = q;
-  b &= (~(a << (dir*10)) );       // 対象10bitをゼロにする
-  b |= ( c << (dir*10));          // 値を書き込む
+  b &= (~(a << (dir*10)) );     // 対象10bitをゼロにする
+  b |= ( c << (dir*10));        // 値を書き込む
   a = 1;
-  b |= ((a << 9) << (dir*10));  // 9bitめのフラグをON
+  b |= (a << (dir*10+9) );      // 第9bitのフラグをON
+}
+
+
+/*
+ * @brief 9bit幅の値を511で初期化
+ * @param [in,out] b   long long 変数
+ * @param [in]     dir 方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+ */
+inline void initBit9 (long long& b, const int dir)
+{
+  long long a = MASK_10;
+  const long long c = 511;
+  
+  b &= (~(a << (dir*10)) );  // 対象10bitをゼロにする
+  b |= ( c << (dir*10));     // 値を書き込む
 }
 
 

@@ -32,23 +32,28 @@
 #include <math.h>
 #include <float.h>
 
+// FB
 #include "omp.h"
 #include "ParseBC.h"
 #include "ParseMat.h"
 #include "VoxInfo.h"
-#include "CompoFraction.h"
 #include "PolyProperty.h"
 #include "History.h"
 #include "Monitor.h"
+
+// FFV
 #include "ffv_Version.h"
 #include "ffv_Define.h"
 #include "ffv_SetBC.h"
 #include "ffv_Ffunc.h"
 #include "ffv_LSfunc.h"
 #include "ffv_TerminateCtrl.h"
-#include "Glyph.h"
 #include "ffv_LS.h"
+
+// Geometry
 #include "Geometry.h"
+#include "Glyph.h"
+#include "CompoFraction.h"
 
 // FileIO class
 #include "ffv_sph.h"
@@ -78,7 +83,6 @@
 // Polylib
 #include "Polylib.h"
 #include "MPIPolylib.h"
-
 
 // CDMlib
 #include "cdm_DFI.h"
@@ -334,13 +338,16 @@ private:
   void identifyLinearSolver(TextParser* tpCntl);
   
   
+  //距離情報の初期化
+  void initCutInfo();
+  
+  
   // インターバルの初期化
   void initInterval();
   
   
   // 距離の最小値を求める
   void minDistance(const long long* cut, const int* bid, FILE* fp);
-  
   
   
   /**
@@ -408,10 +415,6 @@ private:
   
   // 時間積分幅や物理パラメータの設定
   void setParameters();
-  
-  
-  // IP用にカット領域をアロケートする
-  void setupCutInfo4IP(double& m_prep, double& m_total, FILE* fp);
   
   
   // パラメータのロードと計算領域を初期化し，並列モードを返す
