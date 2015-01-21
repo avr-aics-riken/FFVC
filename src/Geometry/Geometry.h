@@ -31,7 +31,6 @@
 #include "Polylib.h"
 #include "MPIPolylib.h"
 
-
 using namespace std;
 using namespace PolylibNS;
 using namespace Vec3class;
@@ -137,9 +136,9 @@ private:
     p[1] = (REAL_TYPE)pt.y;
     p[2] = (REAL_TYPE)pt.z;
     
-    q[0] = (p[0]-origin[0])/pitch[0];
-    q[1] = (p[1]-origin[1])/pitch[1];
-    q[2] = (p[2]-origin[2])/pitch[2];
+    q[0] = (p[0]-originD[0])/pitchD[0];
+    q[1] = (p[1]-originD[1])/pitchD[1];
+    q[2] = (p[2]-originD[2])/pitchD[2];
     
     w[0] = (int)ceil(q[0]);
     w[1] = (int)ceil(q[1]);
@@ -166,6 +165,10 @@ private:
   
   // フィルパラメータを取得
   void getFillParam();
+  
+  
+  // 交点が定義点にある場合の処理をした場合に、反対側のセルの状態を修正
+  unsigned long modifyCutOnPoint(int* bid, long long* cut, const int* bcd, const int* Dsize=NULL);
   
   
   /**
@@ -303,13 +306,6 @@ public:
   void copyIDonGuide(const int face, const int* bcd, int* mid);
   
   
-  // 交点計算を行い、量子化
-  void quantizeCut(long long* cut,
-                   int* bid,
-                   MPIPolylib* PL,
-                   PolygonProperty* PG);
-  
-  
   // bcd[]内にあるm_idのセルを数える
   unsigned long countCellB(const int* bcd,
                            const int m_id,
@@ -342,13 +338,6 @@ public:
                             const int fluid_id,
                             const int* bid,
                             const int* Dsize=NULL);
-  
-  
-  // 交点が定義点にある場合にそのポリゴンのエントリ番号でフィルする
-  unsigned long fillCutOnCellCenter(int* bcd,
-                                    const int* bid,
-                                    const long long* cut,
-                                    const int* Dsize=NULL);
   
   
   // シード点をbcd[]にペイントする
@@ -389,17 +378,22 @@ public:
   }
   
   
-  // FIllIDとSeedIDをセット
-  void setFillMedium(MediumList* mat, const int m_NoMedium);
+  // 交点が定義点にある場合にそのポリゴンのエントリ番号でフィルする
+  unsigned long paintCutOnPoint(int* bcd,
+                                int* bid,
+                                const long long* cut,
+                                const int m_NoCompo,
+                                const int* Dsize=NULL);
   
   
-  // サブサンプリング
-  void SubSampling(FILE* fp,
-                   MediumList* mat,
-                   int* d_mid,
-                   REAL_TYPE* d_pvf,
+  // 交点計算を行い、量子化
+  void quantizeCut(FILE* fp,
+                   long long* cut,
+                   int* bid,
+                   int* bcd,
+                   const int m_NoCompo,
                    MPIPolylib* PL,
-                   const int m_NoCompo);
+                   PolygonProperty* PG);
   
   
   // ポリゴンの水密化
@@ -412,6 +406,10 @@ public:
                    const int m_NoCompo);
   
   
+  // FIllIDとSeedIDをセット
+  void setFillMedium(MediumList* mat, const int m_NoMedium);
+  
+  
   // @brief 再分割数を設定
   // @param [in] num 再分割数
   void setSubDivision(int num)
@@ -419,6 +417,15 @@ public:
     if ( num < 1 ) Exit(0);
     NumSuvDiv = num;
   }
+  
+  
+  // サブサンプリング
+  void SubSampling(FILE* fp,
+                   MediumList* mat,
+                   int* d_mid,
+                   REAL_TYPE* d_pvf,
+                   MPIPolylib* PL,
+                   const int m_NoCompo);
 
 };
 

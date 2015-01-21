@@ -466,7 +466,7 @@ int FFV::FilterInitialize(int argc, char **argv)
   identifyExample(fp);
   
   
-  //CAUTION: setupDomain() --> DomainInitialize(tpf); --> getDomainInfo() TextParserから
+  //CAUTION: setupDomain() --> DomainInitialize(tpf); --> getDomainParameter() TextParserから
   //         /DomainInfo/ActiveSubDomainFile の値を取得しています、値がstr.empty()==true
   //         EXEC_MODE = ffvc_solver;
   

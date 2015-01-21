@@ -1382,6 +1382,7 @@ void MonitorList::setControlVars(int* bid,
                                  const REAL_TYPE refDensity,
                                  const REAL_TYPE refLength,
                                  const REAL_TYPE basePrs,
+                                 const REAL_TYPE m_RefL,
                                  const int modePrecision,
                                  const int unitPrs,
                                  const int num_process,
@@ -1400,15 +1401,16 @@ void MonitorList::setControlVars(int* bid,
   this->org.x    = origin[0];
   this->org.y    = origin[1];
   this->org.z    = origin[2];
-  this->pch.x    = deltaX;
-  this->pch.y    = deltaX;
-  this->pch.z    = deltaX;
+  this->pch.x    = pitch[0];
+  this->pch.y    = pitch[1];
+  this->pch.z    = pitch[2];
   this->box.x    = region[0];
   this->box.y    = region[1];
   this->box.z    = region[2];
   this->num_process = num_process;
   this->NoCompo     = m_NoCompo;
   this->mtbl        = m_mtbl;
+  this->RefL     = m_RefL;
   
   refVar.refVelocity   = refVelocity;
   refVar.baseTemp      = baseTemp;
@@ -1447,7 +1449,7 @@ MonitorCompo* MonitorList::setLine(const char* str,
   MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process, NoCompo, mtbl);
   
   m->setRankInfo(paraMngr, procGrp);
-  m->setNeighborInfo(guide);
+  m->setDomainInfo(guide, RefL);
   m->setLine(str, variables, method, mode, from, to, nDivision, mon_type);
   
   monGroup.push_back(m);
@@ -1504,7 +1506,7 @@ MonitorCompo* MonitorList::setPointSet(const char* str,
   MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process, NoCompo, mtbl);
   
   m->setRankInfo(paraMngr, procGrp);
-  m->setNeighborInfo(guide);
+  m->setDomainInfo(guide, RefL);
   m->setPointSet(str, variables, method, mode, pointSet, mon_type);
   
   monGroup.push_back(m);
@@ -1535,7 +1537,7 @@ void MonitorList::setPolygon(const char* str,
   MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process, NoCompo, mtbl);
   
   m->setRankInfo(paraMngr, procGrp);
-  m->setNeighborInfo(guide);
+  m->setDomainInfo(guide, RefL);
   m->setPolygon(str, variables, method, mode, order, nv, mon_type);
   
   monGroup.push_back(m);
@@ -1569,7 +1571,7 @@ void MonitorList::setPrimitive(const char* str,
   MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process, NoCompo, mtbl);
 
   m->setRankInfo(paraMngr, procGrp);
-  m->setNeighborInfo(guide);
+  m->setDomainInfo(guide, RefL);
   m->setPrimitive(str, variables, method, mode, order, nv, mon_type);
   
   monGroup.push_back(m);

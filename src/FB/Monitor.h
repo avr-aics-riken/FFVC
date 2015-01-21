@@ -59,6 +59,7 @@ protected:
   TextParser* tpCntl;    ///< テキストパーサへのポインタ
   REAL_TYPE area;        ///< 断面積 [m^2]
   int NoCompo;           ///< 物性テーブルの個数 >> 配列の大きさは[NoCompo+1]
+  REAL_TYPE RefL;        ///< 代表長さ
   double* mtbl;          ///< 物性テーブルへのポインタ
   
   OutputType outputType; ///< 出力タイプ
@@ -78,6 +79,7 @@ public:
     fname_sampling = "sampling.txt";
     area = 0.0;
     NoCompo = 0;
+    RefL = 0.0;
     mtbl = NULL;
     tpCntl = NULL;
   }
@@ -200,6 +202,7 @@ public:
   ///   @param [in] refDensity     基準密度
   ///   @param [in] refLength      代表長さ
   ///   @param [in] basePrs        基準圧力
+  ///   @param [in] m_RefL         代表長さ
   ///   @param [in] modePrecision  出力精度指定フラグ (単精度，倍精度)
   ///   @param [in] unitPrs        圧力単位指定フラグ (絶対値，ゲージ圧)
   ///   @param [in] num_process    プロセス数
@@ -215,6 +218,7 @@ public:
                       const REAL_TYPE refDensity,
                       const REAL_TYPE refLength,
                       const REAL_TYPE basePrs,
+                      const REAL_TYPE m_RefL,
                       const int modePrecision,
                       const int unitPrs,
                       const int num_process,

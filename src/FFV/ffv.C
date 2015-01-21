@@ -50,7 +50,6 @@ FFV::FFV()
   CM_H.rate     = 0.0;
   
   deltaT = 0.0;
-  poly_factor = 0.0;
   
   
   for (int i=0; i<3; i++) 

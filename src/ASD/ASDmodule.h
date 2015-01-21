@@ -163,7 +163,7 @@ private:
   
   
   // グローバルな領域情報を取得
-  void getDomainInfo(TextParser* tpCntl, bool flag);
+  void getDomainParameter(TextParser* tpCntl, bool flag);
   
   
   // 幾何形状情報のロード

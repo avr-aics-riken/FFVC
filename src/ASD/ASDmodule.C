@@ -76,7 +76,7 @@ void ASD::evaluateASD(int argc, char **argv)
   }
 
   
-  getDomainInfo(&tpCntl, flag);
+  getDomainParameter(&tpCntl, flag);
   
   // サブドメイン分割数のみ指定された、自動分割の場合
   if (argc == 4)
@@ -532,7 +532,8 @@ void ASD::fill(bool disp_flag, Geometry* GM)
   
   
   // 定義点上に交点がある場合の処理 >> カットするポリゴンのエントリ番号でフィルする
-  unsigned long fill_cut = GM->fillCutOnCellCenter(d_bcd, d_bid, d_cut, G_division);
+  int NoCompo = 1; // あとでやりなおし、テンポラリ
+  unsigned long fill_cut = GM->paintCutOnPoint(d_bcd, d_bid, d_cut, NoCompo, G_division);
   target_count -= fill_cut;
   
   if ( !disp_flag )
@@ -736,7 +737,7 @@ void ASD::findPolygon(const REAL_TYPE* px,
 // @brief グローバルな領域情報を取得
 // @param [in] tpCntl テキストパーサー
 // @param [in] flag   表示フラグ
-void ASD::getDomainInfo(TextParser* tp, bool flag)
+void ASD::getDomainParameter(TextParser* tp, bool flag)
 {
   if ( !tp ) Exit(0);
   

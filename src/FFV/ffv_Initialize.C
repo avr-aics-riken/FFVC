@@ -145,10 +145,6 @@ int FFV::Initialize(int argc, char **argv)
   // Intrinsic classの同定
   identifyExample(fp);
   
-  
-  // Divパラメータのロード
-  if ( !getParaDiv(&tp_ffv) ) Exit(0);
-  
 
   // パラメータの取得と計算領域の初期化，並列モードを返す
   // Polylibの基準値も設定
@@ -192,11 +188,11 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // 配列アロケート前に一度コール
-  FALLOC::setArraySize();
-  FALLOC::allocArray_Prep(PrepMemory, TotalMemory);
+  setArraySize();
+  allocArray_Prep(PrepMemory, TotalMemory);
   
   // カット情報保持領域
-  FALLOC::allocArray_Cut(PrepMemory, TotalMemory);
+  allocArray_Cut(PrepMemory, TotalMemory);
   initCutInfo();
   
   
@@ -204,7 +200,7 @@ int FFV::Initialize(int argc, char **argv)
   if ( LS[ic_prs1].getNaive() == ON )
   {
     Hostonly_ printf("\n\t << Extra arrays are allocated for Naive implementation. >>\n\n");
-    FALLOC::allocArray_Naive(TotalMemory);
+    allocArray_Naive(TotalMemory);
   }
   TIMING_stop("Allocate_Arrays");
   
@@ -220,16 +216,6 @@ int FFV::Initialize(int argc, char **argv)
 
   // 回転体
   setComponentSR();
-  
-  
-  // 定義点上に交点がある場合の処理 >> カットするポリゴンのエントリ番号でフィルする
-  unsigned long fill_cut = V.modifyCutOnCellCenter(d_bid, d_cut, GM.FillID, C.NoCompo);
-  
-  Hostonly_
-  {
-    printf(    "\tCut on cell center = %16ld\n\n", fill_cut);
-    fprintf(fp,"\tCut on cell center = %16ld\n\n", fill_cut);
-  }
   
   
   
@@ -321,6 +307,25 @@ int FFV::Initialize(int argc, char **argv)
   TIMING_start("Fill");
   GM.fill(fp, cmp, mat, d_bcd, d_cut, d_bid, C.NoCompo);
   TIMING_stop("Fill");
+  
+#if 0
+  /*
+  for (int k=1; k<=size[2]; k++) {
+    for (int j=1; j<=size[1]; j++) {
+      for (int i=1; i<=size[0]; i++) {
+        size_t m = _F_IDX_S3D(i  , j  , k  , size[0], size[1], size[2], guide);
+        if ( DECODE_CMP(d_bcd[m]) == 0 )
+        {
+          printf("(%d %d %d) = %d\n", i,j,k, DECODE_CMP(d_bcd[m]) );
+        }
+      }
+    }
+  }
+   */
+  F->writeSVX(d_bcd);
+    exit(0);
+#endif
+
   
 
   // 全周カットのあるセルを固体セルIDで埋める > fill()で埋められているので不要．
@@ -1160,71 +1165,17 @@ void FFV::displayParameters(FILE* fp)
 
 // #################################################################
 /* @brief 計算領域情報を設定する
+ * @param [in] div_type 分割数モード
  * @param [in] tp_dom   TextParserクラス
  */
-void FFV::DomainInitialize(TextParser* tp_dom)
+void FFV::DomainInitialize(const int div_type, TextParser* tp_dom)
 {
-  // メンバ変数にパラメータをロード : 分割指示 (divtype = 1-with / 2-without)
-  int div_type = getDomainInfo(tp_dom);
-  
-
   // 袖通信の最大数
   size_t Nvc  = (size_t)C.guide;
   size_t Ncmp = 3; // 最大はベクトル3成分
   
   int m_sz[3]  = {G_size[0], G_size[1], G_size[2]};
   int m_div[3] = {G_division[0], G_division[1], G_division[2]};
-  
-
-  // Polylibでリスケールする値をセット
-  switch ( C.Unit.Length )
-  {
-    case LTH_m:
-    case LTH_ND:
-      poly_factor = 1.0; // 変更なし
-      break;
-      
-    case LTH_cm:
-      poly_factor = 0.01;
-      break;
-      
-    case LTH_mm:
-      poly_factor = 0.001;
-      break;
-      
-    default:
-      Exit(0);
-  }
-  
-  
-  // 有次元の場合に無次元化する　paraMngr->VoxelInit()で計算する基本量
-  if (C.Unit.Param == DIMENSIONAL )
-  {
-    // スケーリング
-    for (int i=0; i<3; i++) {
-      pitch[i]    *= poly_factor;
-      G_origin[i] *= poly_factor;
-      G_region[i] *= poly_factor;
-    }
-    
-    // 無次元化
-    for (int i=0; i<3; i++) {
-      pitch[i]    /= C.RefLength;
-      G_origin[i] /= C.RefLength;
-      G_region[i] /= C.RefLength;
-    }
-  }
-  
-  // 無次元値をもとに有次元値を計算
-  for (int i=0; i<3; i++) {
-    pitchD[i]    *= C.RefLength;
-    G_originD[i] *= C.RefLength;
-    G_regionD[i] *= C.RefLength;
-    originD[i]   *= C.RefLength;
-    regionD[i]   *= C.RefLength;
-  }
-  
-
   double m_org[3] = {(double)G_origin[0], (double)G_origin[1], (double)G_origin[2]};
   double m_reg[3] = {(double)G_region[0], (double)G_region[1], (double)G_region[2]};
   
@@ -1232,17 +1183,17 @@ void FFV::DomainInitialize(TextParser* tp_dom)
   
   // 領域分割モードのパターン
   //     分割指定(G_div指定)         domain.txt
-  // 1)  G_div指定なし |  G_orign + G_region + (G_pitch || G_voxel)
-  // 2)  G_div指定あり |  G_orign + G_region + (G_pitch || G_voxel)
+  // 1)  G_div指定なし |  G_orign + G_region + (pitch || G_voxel)
+  // 2)  G_div指定あり |  G_orign + G_region + (pitch || G_voxel)
   // 3)  G_div指定なし |          + ActiveDomainInfo
   // 4)  G_div指定あり |          + ActiveDomainInfo
   
   /* Policy
    * G_regionは必須
-   * G_voxelとG_pitchでは，G_voxelが優先．両方が指定されている場合はエラー
+   * G_voxelとpitchでは，G_voxelが優先．両方が指定されている場合はエラー
    * G_pitchが指定されており，割り切れない場合は，領域を拡大
-   *        G_voxel = (int)ceil(G_region/G_pitch)
-   *        G_region = G_pitch * G_voxel
+   *        G_voxel = (int)ceil(G_region/pitch)
+   *        G_region = pitch * G_voxel
    */
   
   
@@ -1286,14 +1237,8 @@ void FFV::DomainInitialize(TextParser* tp_dom)
     Exit(0);
   }
   
-
-
-
-  // 分割後のパラメータをDomainInfoクラスメンバ変数に保持
-  setNeighborInfo(C.guide);
   
-
-  
+  // アドレスサイズのチェック
   size_t n_cell[3];
   
   for ( int i=0; i<3; i++)
@@ -1358,7 +1303,7 @@ void FFV::encodeBCindex(FILE* fp)
   
   
   // 速度計算のビット情報をエンコードする -----
-  V.setBCIndexV(d_cdf, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid, C.NoCompo);
+  V.setBCIndexV(d_cdf, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid, C.NoCompo, C.NoMedium, mat);
   
   
   
@@ -1854,12 +1799,12 @@ void FFV::generateGlyph(const long long* cut, const int* bid, FILE* fp)
 
 
 // #################################################################
-/* @brief グローバルな領域情報を取得
+/* @brief グローバルな領域情報を取得し、無次元の領域基本パラメータを返す
  * @param [in] tp_dom   TextParserクラス
  * @return 分割指示 (1-with / 2-without)
- * @note この時点では、単位はC.Unit.Lengthで指定する値になっている
+ * @note この関数では、pitch[], G_region[], G_origin[]を確定する
  */
-int FFV::getDomainInfo(TextParser* tp_dom)
+int FFV::getDomainParameter(TextParser* tp_dom)
 {
   // 領域分割モードのパターン
   //     分割指定(G_div指定)         domain.txt
@@ -1891,8 +1836,6 @@ int FFV::getDomainInfo(TextParser* tp_dom)
   
   if     ( !strcasecmp(str.c_str(), "NonDimensional") )  C.Unit.Length = LTH_ND;
   else if( !strcasecmp(str.c_str(), "M") )               C.Unit.Length = LTH_m;
-  else if( !strcasecmp(str.c_str(), "cm") )              C.Unit.Length = LTH_cm;
-  else if( !strcasecmp(str.c_str(), "mm") )              C.Unit.Length = LTH_mm;
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described at '%s'\n", label.c_str());
@@ -2042,6 +1985,21 @@ int FFV::getDomainInfo(TextParser* tp_dom)
     Exit(0);
   }
   
+  
+  
+  
+  // 有次元の場合に無次元化する　paraMngr->VoxelInit()で計算する基本量
+  if (C.Unit.Param == DIMENSIONAL )
+  {
+    // 無次元化
+    for (int i=0; i<3; i++) {
+      pitch[i]    /= C.RefLength;
+      G_origin[i] /= C.RefLength;
+      G_region[i] /= C.RefLength;
+    }
+  }
+  
+  
 
 
   // 2D check
@@ -2124,61 +2082,10 @@ int FFV::getDomainInfo(TextParser* tp_dom)
     }
   }
   
+  
   return div_type;
 }
 
-
-// #################################################################
-/**
- * @brief Div反復固有のパラメータを指定する
- * @param [in] tpCntl TextParser pointer
- */
-bool FFV::getParaDiv(TextParser* tpCntl)
-{
-  string str, label;
-  double tmp=0.0;
-  int inp=0;
-  
-  label = "/Iteration/DivMaxIteration";
-  
-  if ( !(tpCntl->getInspectedValue(label, inp)) )
-  {
-    Exit(0);
-  }
-  DivC.MaxIteration = inp;
-  
-  
-  label = "/Iteration/DivCriterion";
-  
-  if ( !(tpCntl->getInspectedValue(label, tmp)) )
-  {
-    Exit(0);
-  }
-  DivC.divEPS = tmp;
-  
-  
-  label = "/Iteration/DivNorm";
-  
-  if ( !(tpCntl->getInspectedValue(label, str)) )
-  {
-    Exit(0);
-  }
-  
-  if ( !strcasecmp(str.c_str(), "L2") )
-  {
-    DivC.divType = nrm_div_l2;
-  }
-  else if ( !strcasecmp(str.c_str(), "max") )
-  {
-    DivC.divType = nrm_div_max;
-  }
-  else
-  {
-    Exit(0);
-  }
-  
-  return true;
-}
 
 
 // #################################################################
@@ -2270,6 +2177,48 @@ void FFV::identifyExample(FILE* fp)
  */
 void FFV::identifyLinearSolver(TextParser* tpCntl)
 {
+  string str, label;
+  double tmp=0.0;
+  int inp=0;
+  
+  label = "/Iteration/DivMaxIteration";
+  
+  if ( !(tpCntl->getInspectedValue(label, inp)) )
+  {
+    Exit(0);
+  }
+  DivC.MaxIteration = inp;
+  
+  
+  label = "/Iteration/DivCriterion";
+  
+  if ( !(tpCntl->getInspectedValue(label, tmp)) )
+  {
+    Exit(0);
+  }
+  DivC.divEPS = tmp;
+  
+  
+  label = "/Iteration/DivNorm";
+  
+  if ( !(tpCntl->getInspectedValue(label, str)) )
+  {
+    Exit(0);
+  }
+  
+  if ( !strcasecmp(str.c_str(), "L2") )
+  {
+    DivC.divType = nrm_div_l2;
+  }
+  else if ( !strcasecmp(str.c_str(), "max") )
+  {
+    DivC.divType = nrm_div_max;
+  }
+  else
+  {
+    Exit(0);
+  }
+  
   
   switch (C.AlgorithmF)
   {
@@ -2460,8 +2409,8 @@ void FFV::minDistance(const long long* cut, const int* bid, FILE* fp)
   
   Hostonly_
   {
-    fprintf(fp, "\tMinimum non-dimnensional distance is %e\n\n", (REAL_TYPE)global_min/512.0); // 9bit幅
-    printf     ("\tMinimum non-dimnensional distance is %e\n\n", (REAL_TYPE)global_min/512.0);
+    fprintf(fp, "\n\tMinimum non-dimnensional distance       = %e\n\n", (REAL_TYPE)global_min/(REAL_TYPE)QT_9); // 9bit幅
+    printf     ("\n\tMinimum non-dimnensional distance       = %e\n\n", (REAL_TYPE)global_min/(REAL_TYPE)QT_9);
   }
 
 }
@@ -2830,8 +2779,8 @@ void FFV::setBCinfo()
  */
 void FFV::setComponentSR()
 {
-  // 無次元パラメータを渡す
-  CompoFraction CF(size, guide, myRank, pitch, origin, 20);
+  // 有次元パラメータを渡す
+  CompoFraction CF(size, guide, myRank, pitchD, originD, 20);
   
   for (int n=1; n<=C.NoCompo; n++)
   {
@@ -2917,8 +2866,8 @@ void FFV::setComponentSR()
  */
 void FFV::setComponentVF()
 {
-  // 無次元パラメータを渡す
-  CompoFraction CF(size, guide, myRank, pitch, origin, 20);
+  // 有次元パラメータを渡す
+  CompoFraction CF(size, guide, myRank, pitchD, originD, 20);
   
   for (int n=1; n<=C.NoCompo; n++)
   {
@@ -3504,6 +3453,7 @@ void FFV::setMonitorList()
                     C.RefDensity,
                     C.RefLength,
                     C.BasePrs,
+                    C.RefLength,
                     C.Mode.Precision,
                     C.Unit.Prs,
                     C.num_process,
@@ -3728,8 +3678,13 @@ string FFV::setupDomain(TextParser* tpf)
   if ( !Ex->getTP(&C, tpf) ) Exit(0);
 
   
+  // メンバ変数にパラメータをロード : 分割指示 (divtype = 1-with / 2-without)
+  // pitch[], G_region[], G_origin[]が確定する >> パラメータファイルで指定した値
+  int div_type = getDomainParameter(tpf);
+  
+  
   // 領域設定 計算領域全体のサイズ，並列計算時のローカルのサイズ，コンポーネントのサイズなどを設定
-  DomainInitialize(tpf);
+  DomainInitialize(div_type, tpf);
 
   
   // 各例題固有の領域パラメータを設定する
@@ -3737,19 +3692,21 @@ string FFV::setupDomain(TextParser* tpf)
 
   
   // 各クラスで領域情報を保持
-  C.setNeighborInfo    (C.guide);
-  B.setNeighborInfo    (C.guide);
-  V.setNeighborInfo    (C.guide);
-  BC.setNeighborInfo   (C.guide);
-  Ex->setNeighborInfo  (C.guide);
-  MO.setNeighborInfo   (C.guide);
-  F->setNeighborInfo   (C.guide);
-  GM.setNeighborInfo   (C.guide);
+  setDomainInfo      (C.guide, C.RefLength);
+  C.setDomainInfo    (C.guide, C.RefLength);
+  B.setDomainInfo    (C.guide, C.RefLength);
+  V.setDomainInfo    (C.guide, C.RefLength);
+  BC.setDomainInfo   (C.guide, C.RefLength);
+  Ex->setDomainInfo  (C.guide, C.RefLength);
+  MO.setDomainInfo   (C.guide, C.RefLength);
+  F->setDomainInfo   (C.guide, C.RefLength);
+  GM.setDomainInfo   (C.guide, C.RefLength);
   
   for (int i=0; i<ic_END; i++)
   {
-    LS[i].setNeighborInfo(C.guide);
+    LS[i].setDomainInfo(C.guide, C.RefLength);
   }
+  
   
   
   // ファイルIOパラメータ << get1stParameter()でgetTurbulenceModel()を呼んだあと
@@ -3811,7 +3768,6 @@ string FFV::setupDomain(TextParser* tpf)
  */
 void FFV::setupLinearSolvers(double& TotalMemory, TextParser* tpCntl)
 {
-  
   // communication buffer
   switch (LS[ic_prs1].getLS())
   {
@@ -3912,12 +3868,12 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   unsigned  poly_gc[3] = {guide, guide, guide};
 
   
-  // 読み込むデータは無次元
+  // 読み込むデータはオリジナルのまま >> Polylib管理のメソッドで検索などを行うため
   poly_stat = PL->init_parallel_info(MPI_COMM_WORLD,
-                                     origin,           // 自ランクの基点座標
-                                     (unsigned*)size,  // 自ランクの分割数
-                                     poly_gc,          // ガイドセル数
-                                     pitch             // 格子幅
+                                     originD,           // 自ランクの基点座標
+                                     (unsigned*)size,   // 自ランクの分割数
+                                     poly_gc,           // ガイドセル数
+                                     pitchD             // 格子幅
                                      );
   if ( poly_stat != PLSTAT_OK )
   {
@@ -3964,33 +3920,6 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
   
   
-  
-  // スケーリング M or NDの単位に変換し、無次元化する
-  vector<PolygonGroup*>::iterator it2;
-  
-  REAL_TYPE r_factor = poly_factor/C.RefLength;
-  //printf("poly scaling factor = %f\n", r_factor);
-  
-  int c=0;
-  for (it2 = pg_roots->begin(); it2 != pg_roots->end(); it2++)
-  {
-    poly_stat = (*it2)->rescale_polygons(r_factor);
-    if( poly_stat != PLSTAT_OK ) c++;
-  }
-  
-  if ( c>0 )
-  {
-    Hostonly_
-    {
-      printf    ("\tRank [%6d]: p_polylib->rescale_polygons() failed.", myRank);
-      fprintf(fp,"\tRank [%6d]: p_polylib->rescale_polygons() failed.", myRank);
-    }
-    Exit(0);
-  }
-
-  
-  
-  
   // Polygon Groupの数
   C.num_of_polygrp = pg_roots->size();
   
@@ -4020,7 +3949,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   vector<PolygonGroup*>::iterator it;
   
   // ポリゴン情報の表示
-  c = 0;
+  int c = 0;
   for (it = pg_roots->begin(); it != pg_roots->end(); it++)
   {
     std::string m_pg = (*it)->get_name();     // グループラベル
@@ -4222,7 +4151,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   // 交点計算
   TIMING_start("Cut_Information");
-  GM.quantizeCut(d_cut, d_bid, PL, PG);
+  GM.quantizeCut(fp, d_cut, d_bid, d_bcd, C.NoCompo, PL, PG);
   TIMING_stop("Cut_Information");
   
   

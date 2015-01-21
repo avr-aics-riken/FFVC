@@ -1697,8 +1697,7 @@ unsigned long VoxInfo::encPbitN (int* bx, const int* bid, const long long* cut, 
  * @param [in,out] bcp        BCindex P
  * @param [in]     bid        カット点ID
  * @param [in]     vec        法線ベクトル
- * @param [in]     consdition "Neumann" or "Dirichlet"
- * @param [in]     bc_dir     境界条件の方向
+ * @param [in]     condition "Neumann" or "Dirichlet"
  * @note エンコードしたセルのフェイスの裏面を壁面（ノイマン）にする
  */
 unsigned long VoxInfo::encPbitIBC (const int order,
@@ -1706,8 +1705,7 @@ unsigned long VoxInfo::encPbitIBC (const int order,
                                    int* bcp,
                                    const int* bid,
                                    const REAL_TYPE* vec,
-                                   const string condition,
-                                   const int bc_dir)
+                                   const string condition)
 {
   unsigned long g=0;
   
@@ -1727,26 +1725,10 @@ unsigned long VoxInfo::encPbitIBC (const int order,
     mode = false;
   }
   
-  float m_vec[3]={(float)vec[0], (float)vec[1], (float)vec[2]};
-  
-  Vec3f nv(m_vec);
-  
-  // 反対方向のとき符号反転 > 内積が負のときに対象位置となる
-  if ( bc_dir == CompoList::opposite_direction )
-  {
-    nv *= -1.0;
-  }
-  
-  Vec3f e_w(-1.0,  0.0,  0.0);
-  Vec3f e_e(+1.0,  0.0,  0.0);
-  Vec3f e_s( 0.0, -1.0,  0.0);
-  Vec3f e_n( 0.0, +1.0,  0.0);
-  Vec3f e_b( 0.0,  0.0, -1.0);
-  Vec3f e_t( 0.0,  0.0, +1.0);
+  REAL_TYPE nv[3]={vec[0], vec[1], vec[2]};
   
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, odr, mode) \
-firstprivate(e_w, e_e, e_s, e_n, e_b, e_t, nv) \
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, odr, mode, nv) \
 schedule(static) reduction(+:g)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
@@ -1772,7 +1754,7 @@ schedule(static) reduction(+:g)
 #include "FindexS3D.h"
             
             // X_MINUS
-            if ( (id_w == odr) && (dot(e_w, nv) < 0.0) )
+            if ( id_w == odr && nv[0] < 0.0 ) // X-方向単位ベクトルとの内積
             {
               setBitID(d, odr);
               s = (mode) ? offBit( s, BC_N_W ) : offBit( s, BC_D_W );
@@ -1781,7 +1763,7 @@ schedule(static) reduction(+:g)
             }
             
             // X_PLUS
-            if ( (id_e == odr) && (dot(e_e, nv) < 0.0) )
+            if ( id_e == odr && nv[0] > 0.0 )
             {
               setBitID(d, odr);
               s = (mode) ? offBit( s, BC_N_E ) : offBit( s, BC_D_E );
@@ -1790,7 +1772,7 @@ schedule(static) reduction(+:g)
             }
             
             // Y_MINUS
-            if ( (id_s == odr) && (dot(e_s, nv) < 0.0) )
+            if ( id_s == odr && nv[1] < 0.0 )
             {
               setBitID(d, odr);
               s = (mode) ? offBit( s, BC_N_S ) : offBit( s, BC_D_S );
@@ -1799,7 +1781,7 @@ schedule(static) reduction(+:g)
             }
             
             // Y_PLUS
-            if ( (id_n == odr) && (dot(e_n, nv) < 0.0) )
+            if ( id_n == odr && nv[1] > 0.0 )
             {
               setBitID(d, odr);
               s = (mode) ? offBit( s, BC_N_N ) : offBit( s, BC_D_N );
@@ -1808,7 +1790,7 @@ schedule(static) reduction(+:g)
             }
             
             // Z_MINUS
-            if ( (id_b == odr) && (dot(e_b, nv) < 0.0) )
+            if ( id_b == odr && nv[2] < 0.0 )
             {
               setBitID(d, odr);
               s = (mode) ? offBit( s, BC_N_B ) : offBit( s, BC_D_B );
@@ -1817,7 +1799,7 @@ schedule(static) reduction(+:g)
             }
             
             // Z_PLUS
-            if ( (id_t == odr) && (dot(e_t, nv) < 0.0) )
+            if ( id_t == odr && nv[2] > 0.0 )
             {
               setBitID(d, odr);
               s = (mode) ? offBit( s, BC_N_T ) : offBit( s, BC_D_T );
@@ -2257,22 +2239,22 @@ unsigned long VoxInfo::encQface (const int order,
  * @brief cdf[]にVBCの境界条件に必要な情報をエンコードし，流入流出の場合にbp[]の隣接壁の方向フラグを除く．
  *        境界条件指定キーセルのSTATEを流体に変更する
  * @retval エンコードしたセル数
- * @param [in]     order  cmp[]のエントリ番号
- * @param [in,out] cdf    BCindex C
- * @param [in,out] bp     BCindex P
- * @param [in]     bid    カット点ID
- * @param [in]     vec    法線ベクトル
- * @param [in]     bc_dir 境界条件の方向 IN/same_direction=1, OUT/opposite_direction=2
- * @param [in,out] cmp    CompoList
+ * @param [in]     order    cmp[]のエントリ番号
+ * @param [in,out] cdf      BCindex C
+ * @param [in,out] bp       BCindex P
+ * @param [in]     bid      カット点ID
+ * @param [in]     vec      法線ベクトル
+ * @param [in,out] cmp      CompoList
+ * @param [in]     solid_id 境界条件のバックリングに使うSOLID
  * @note 指定法線とセルのカット方向ベクトルの内積で判断，vspecとoutflowなのでbp[]のVBC_UWDにマスクビットを立てる
  */
 unsigned long VoxInfo::encVbitIBC (const int order,
                                    int* cdf,
                                    int* bp,
-                                   const int* bid,
+                                   int* bid,
                                    const REAL_TYPE* vec,
-                                   const int bc_dir,
-                                   CompoList* cmp)
+                                   CompoList* cmp,
+                                   const int solid_id)
 {
   unsigned long g=0;
   
@@ -2290,25 +2272,13 @@ unsigned long VoxInfo::encVbitIBC (const int order,
   int jed = 1;
   int ked = 1;
   
-  float m_vec[3]={(float)vec[0], (float)vec[1], (float)vec[2]};
-  Vec3f nv(m_vec);
-  
-  // 反対方向のとき符号反転 > 内積が負のときに対象位置となる << ここ、いらないんじゃない？
-  if ( bc_dir == CompoList::opposite_direction )
-  {
-    nv *= -1.0;
-  }
-  
-  Vec3f e_w(-1.0,  0.0,  0.0);
-  Vec3f e_e(+1.0,  0.0,  0.0);
-  Vec3f e_s( 0.0, -1.0,  0.0);
-  Vec3f e_n( 0.0, +1.0,  0.0);
-  Vec3f e_b( 0.0,  0.0, -1.0);
-  Vec3f e_t( 0.0,  0.0, +1.0);
-  
+  int sid = solid_id;
+  REAL_TYPE nv[3]={vec[0], vec[1], vec[2]};
 
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, odr) \
-        firstprivate(e_w, e_e, e_s, e_n, e_b, e_t, nv) \
+
+  // nvと同じテスト方向（dot>0）に境界条件を与え、その反対方向には壁面条件とする
+
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, odr, nv, sid) \
         schedule(static) reduction(+:g)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
@@ -2335,63 +2305,69 @@ unsigned long VoxInfo::encVbitIBC (const int order,
             int flag = 0;
             
             // X-
-            if ( (id_w == odr) && (dot(e_w, nv) < 0.0) )
+            if ( id_w == odr && nv[0] < 0.0 ) // X-方向単位ベクトルとの内積
             {
               setBit5raw(s, odr, BC_FACE_W);
               q = offBit(q, FACING_W);
               q = onBit(q, VBC_UWD);
-              g++;
               flag++;
+              
+              setBit5(bid[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)], sid, X_plus);
             }
             
             // X+
-            if ( (id_e == odr) && (dot(e_e, nv) < 0.0) )
+            if ( id_e == odr && nv[0] > 0.0 )
             {
               setBit5raw(s, odr, BC_FACE_E);
               q = offBit(q, FACING_E);
               q = onBit(q, VBC_UWD);
-              g++;
               flag++;
+              
+              setBit5(bid[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)], sid, X_minus);
             }
             
             // Y-
-            if ( (id_s == odr) && (dot(e_s, nv) < 0.0) )
+            if ( id_s == odr && nv[1] < 0.0 )
             {
               setBit5raw(s, odr, BC_FACE_S);
               q = offBit(q, FACING_S);
               q = onBit(q, VBC_UWD);
-              g++;
               flag++;
+              
+              setBit5(bid[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)], sid, Y_plus);
             }
             
             // Y+
-            if ( (id_n == odr) && (dot(e_n, nv) < 0.0) )
+            if ( id_n == odr && nv[1] > 0.0 )
             {
               setBit5raw(s, odr, BC_FACE_N);
               q = offBit(q, FACING_N);
               q = onBit(q, VBC_UWD);
-              g++;
               flag++;
+              
+              setBit5(bid[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)], sid, Y_minus);
             }
             
             // Z-
-            if ( (id_b == odr) && (dot(e_b, nv) < 0.0) )
+            if ( id_b == odr && nv[2] < 0.0 )
             {
               setBit5raw(s, odr, BC_FACE_B);
               q = offBit(q, FACING_B);
               q = onBit(q, VBC_UWD);
-              g++;
               flag++;
+              
+              setBit5(bid[_F_IDX_S3D(i, j, k-1, ix, jx, kx, gd)], sid, Z_plus);
             }
             
             // Z+
-            if ( (id_t == odr) && (dot(e_t, nv) < 0.0) )
+            if ( id_t == odr && nv[2] > 0.0 )
             {
               setBit5raw(s, odr, BC_FACE_T);
               q = offBit(q, FACING_T);
               q = onBit(q, VBC_UWD);
-              g++;
               flag++;
+              
+              setBit5(bid[_F_IDX_S3D(i, j, k+1, ix, jx, kx, gd)], sid, Z_minus);
             }
             
             if ( flag != 0 )
@@ -2996,117 +2972,6 @@ void VoxInfo::encVbitOBC (const int face, int* cdf, const string key, const bool
 
 
 // #################################################################
-/**
- * @brief MediumTable内のkeyの格納番号を返す
- * @param [in] mat        MediumList
- * @param [in] key        検索対象文字列
- * @param [in] m_NoMedium 媒質数
- * @ret 格納番号，該当なしの場合はゼロを返す
- */
-int VoxInfo::getMediumOrder(const MediumList* mat, const std::string key, const int m_NoMedium)
-{
-  for (int m=1; m<=m_NoMedium; m++)
-  {
-    if ( FBUtility::compare(mat[m].getAlias(), key) )
-    {
-      return m;
-    }
-  }
-  
-  return 0;
-}
-
-
-// #################################################################
-// 交点が定義点にある場合にそのポリゴンのエントリ番号でフィルする
-unsigned long VoxInfo::modifyCutOnCellCenter(int* bid, const long long* cut, const int fluid_id, const int m_NoCompo)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-  int fid = fluid_id;
-  unsigned long c = 0;
-  
-//#pragma omp parallel for firstprivate(ix, jx, kx, gd, fid) schedule(static) reduction(+:c)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        
-        size_t m_p = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
-        size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
-        size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
-        size_t m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd);
-        size_t m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd);
-        size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
-        size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
-        
-        // 評価点の各方向の境界ID
-        int qq = bid[m_p];
-        int qw = getBit5(qq, 0);
-        int qe = getBit5(qq, 1);
-        int qs = getBit5(qq, 2);
-        int qn = getBit5(qq, 3);
-        int qb = getBit5(qq, 4);
-        int qt = getBit5(qq, 5);
-        
-        const long long pos = cut[m_p];
-        
-        // いずれかの方向で交点が定義点上の場合 = 交点があり、かつ、距離が0
-        if ( chkZeroCut(pos, X_minus) ||
-             chkZeroCut(pos, X_plus)  ||
-             chkZeroCut(pos, Y_minus) ||
-             chkZeroCut(pos, Y_plus)  ||
-             chkZeroCut(pos, Z_minus) ||
-             chkZeroCut(pos, Z_plus) )
-        {
-          int sd = FBUtility::find_mode_id(fid, qw, qe, qs, qn, qb, qt, m_NoCompo);
-#if 0
-          printf("(%3d %3d %3d) %d %d %d %d %d %d : %d : %3d %3d %3d %3d %3d %3d : %d %d %d %d %d %d\n",
-                 i,j,k,
-                 qw, qe, qs, qn, qb, qt, sd,
-                 getBit9(pos, 0),
-                 getBit9(pos, 1),
-                 getBit9(pos, 2),
-                 getBit9(pos, 3),
-                 getBit9(pos, 4),
-                 getBit9(pos, 5),
-                 ensCut(pos, X_minus),
-                 ensCut(pos, X_plus),
-                 ensCut(pos, Y_minus),
-                 ensCut(pos, Y_plus),
-                 ensCut(pos, Z_minus),
-                 ensCut(pos, Z_plus)
-                 );
-#endif
-          if ( sd == 0 ) Exit(0);
-          
-          setBit5(qq, sd, X_minus);
-          setBit5(qq, sd, X_plus);
-          setBit5(qq, sd, Y_minus);
-          setBit5(qq, sd, Y_plus);
-          setBit5(qq, sd, Z_minus);
-          setBit5(qq, sd, Z_plus);
-          c++;
-          bid[m_p] = qq;
-        }
-
-      }
-    }
-  }
-  
-  if ( numProc > 1 )
-  {
-    unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  return c;
-}
-
-
-// #################################################################
 // ガイドセルに接するセルにカットがある場合にはガイドセルをペイント
 void VoxInfo::paintSolidGC (int* bcd, const int* bid, unsigned long* painted)
 {
@@ -3381,7 +3246,7 @@ void VoxInfo::setBCIndexBase (int* bx,
   {
     if ( cmp[n].getType() == OBSTACLE )
     {
-      int key = getMediumOrder(mat, cmp[n].getMedium(), m_NoMedium);
+      int key = FBUtility::findIDfromLabel(mat, m_NoMedium, cmp[n].getMedium());
 
       cmp[n].setElement( countCF(n, bx, bid, &cmp[n], "Fluid") );
       cmp[n].setMatodr(key); // MediumListのエントリ番号、力の計算時に使用
@@ -3660,7 +3525,6 @@ unsigned long VoxInfo::setBCIndexP(int* bcd,
   
   for (int n=1; n<=m_NoCompo; n++)
   {
-    int m_dir = cmp[n].getBClocation();
     REAL_TYPE vec[3] = { cmp[n].nv[0], cmp[n].nv[1], cmp[n].nv[2] };
     
     switch ( cmp[n].getType() )
@@ -3668,7 +3532,7 @@ unsigned long VoxInfo::setBCIndexP(int* bcd,
       case SPEC_VEL:
       case OUTFLOW:
       case SOLIDREV:
-        encPbitIBC(n, bcd, bcp, bid, vec, "neumann", m_dir);
+        encPbitIBC(n, bcd, bcp, bid, vec, "neumann");
         break;
     }
   }
@@ -3711,7 +3575,16 @@ unsigned long VoxInfo::setBCIndexP(int* bcd,
 
 // #################################################################
 // cdf[]に境界条件のビット情報をエンコードする
-void VoxInfo::setBCIndexV(int* cdf, int* bp, SetBC* BC, CompoList* cmp, int icls, long long* cut, int* bid, const int m_NoCompo)
+void VoxInfo::setBCIndexV(int* cdf,
+                          int* bp,
+                          SetBC* BC,
+                          CompoList* cmp,
+                          int icls,
+                          long long* cut,
+                          int* bid,
+                          const int m_NoCompo,
+                          const int m_NoMedium,
+                          MediumList* mat)
 {
   // ガイドセルの媒質情報をチェックし，流束形式のBCの場合にビットフラグをセット
   BoundaryOuter* m_obc=NULL;
@@ -3770,19 +3643,21 @@ void VoxInfo::setBCIndexV(int* cdf, int* bp, SetBC* BC, CompoList* cmp, int icls
   }
   
   
+  
   // 内部境界のコンポーネントのエンコード
   int m_dir;
   
   for (int n=1; n<=m_NoCompo; n++)
   {
-    int m_dir = cmp[n].getBClocation(); // IN/same_direction=1, OUT/opposite_direction=2
     REAL_TYPE vec[3] = { cmp[n].nv[0], cmp[n].nv[1], cmp[n].nv[2] };
+    
+    int m_solid_id = FBUtility::findIDfromLabel(mat, m_NoMedium, cmp[n].getMedium());
     
     switch ( cmp[n].getType() )
     {
       case SPEC_VEL:
       case OUTFLOW:
-        cmp[n].setElement( encVbitIBC(n, cdf, bp, bid, vec, m_dir, &cmp[n]) );
+        cmp[n].setElement( encVbitIBC(n, cdf, bp, bid, vec, &cmp[n], m_solid_id) );
         break;
         
       case SOLIDREV:

@@ -81,8 +81,8 @@ void Geometry::calcBboxFromPolygonGroup(MPIPolylib* PL,
 {
   Vec3r m_min;
   Vec3r m_max;
-  Vec3r t1(origin);
-  Vec3r t2(pitch);
+  Vec3r t1(originD);
+  Vec3r t2(pitchD);
   Vec3r t3;
   
   t3.assign((REAL_TYPE)size[0]*t2.x, (REAL_TYPE)size[1]*t2.y, (REAL_TYPE)size[2]*t2.z);
@@ -177,8 +177,8 @@ void Geometry::calcBboxFromPolygonGroup(MPIPolylib* PL,
   }
   
   //printf("R[%d] : (%10.3e %10.3e %10.3e) - (%10.3e %10.3e %10.3e)\n",
-  //       myRank, origin[0], origin[1], origin[2],
-  //       origin[0] + region[0], origin[1] + region[1], origin[2] + region[2]);
+  //       myRank, originD[0], originD[1], originD[2],
+  //       originD[0] + region[0], originD[1] + region[1], originD[2] + region[2]);
   
   // 領域内に収まっているかどうかをチェック >> ポリゴンは少しでも触れれば対象となり、領域外にはみ出すことがある
   for (int i=0; i<m_NoPolyGrp; i++)
@@ -203,8 +203,8 @@ void Geometry::calcBboxFromPolygonGroup(MPIPolylib* PL,
     
     for (int q=0; q<3; q++)
     {
-      if ( f_min[q] < origin[q] ) f_min[q] = origin[q];
-      REAL_TYPE tmp = origin[q] + region[q];
+      if ( f_min[q] < originD[q] ) f_min[q] = originD[q];
+      REAL_TYPE tmp = originD[q] + regionD[q];
       if ( f_max[q] > tmp ) f_max[q] = tmp;
     }
     
@@ -475,8 +475,6 @@ void Geometry::fill(FILE* fp,
   int kx = size[2];
   int gd = guide;
   
-  
-  unsigned long target_count; ///< フィルの対象となるセル数
   unsigned long replaced;     ///< 置換された数
   unsigned long filled;       ///< FLUIDでフィルされた数
   unsigned long sum_replaced; ///< 置換された数の合計
@@ -484,9 +482,8 @@ void Geometry::fill(FILE* fp,
   
 
   
-  // 最初にフィル対象のセル数を求める >> 全計算内部セル数
+  // 全計算内部セル数
   unsigned long total_cell = (unsigned long)ix * (unsigned long)jx * (unsigned long)kx;
-  
   
   if ( numProc > 1 )
   {
@@ -495,43 +492,28 @@ void Geometry::fill(FILE* fp,
   }
   
   
-  target_count = total_cell;
+  // 最初にフィル対象のセル数を求める
+  unsigned long target_count = countCellB(d_bcd, 0);
+  
+  if ( numProc > 1 )
+  {
+    unsigned long tmp_fc = target_count;
+    if ( paraMngr->Allreduce(&tmp_fc, &target_count, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+
   
   Hostonly_
   {
     printf(    "\tFill initialize -----\n\n");
     fprintf(fp,"\tFill initialize -----\n\n");
     
+    printf    ("\t\tTotal cell count       = %16ld\n", total_cell);
+    fprintf(fp,"\t\tTotal cel count        = %16ld\n", total_cell);
+    
     printf    ("\t\tInitial target count   = %16ld\n", target_count);
     fprintf(fp,"\t\tInitial target count   = %16ld\n", target_count);
-  }
-  
 
-  // 定義点上に交点がある場合の処理 >> カットするポリゴンのエントリ番号でフィルする
-  unsigned long fill_cut = fillCutOnCellCenter(d_bcd, d_bid, d_cut);
-  target_count -= fill_cut;
-  
-  Hostonly_
-  {
-    if ( fill_cut > 0 )
-    {
-      printf(    "\t\tFill center cut        = %16ld\n", fill_cut);
-      fprintf(fp,"\t\tFill center cut        = %16ld\n", fill_cut);
-      
-      
-      printf    ("\t\tTarget count           = %16ld\n\n", target_count);
-      fprintf(fp,"\t\tTarget count           = %16ld\n\n", target_count);
-    }
-  }
-  
-  if ( numProc > 1 )
-  {
-    if ( paraMngr->BndCommS3D(d_bcd, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  
-  Hostonly_
-  {
     printf(    "\n\tFill -----\n\n");
     printf(    "\t\tFill medium of FLUID   : %s\n", mat[FillID].getAlias().c_str());
     printf(    "\t\tHint of Seeding Dir.   : %s\n", FBUtility::getDirection(FillSeedDir).c_str());
@@ -542,7 +524,13 @@ void Geometry::fill(FILE* fp,
     fprintf(fp,"\t\tFill medium of FLUID   : %s\n", mat[FillID].getAlias().c_str());
     fprintf(fp,"\t\tHint of Seeding Dir.   : %s\n", FBUtility::getDirection(FillSeedDir).c_str());
     fprintf(fp,"\t\tFill medium of SEED    : %s\n", mat[SeedID].getAlias().c_str());
+    fprintf(fp,"\t\tFill mode for each dir.: %d %d %d\n", FillSuppress[0], FillSuppress[1], FillSuppress[2]);
   }
+  
+#if 0 // debug
+  return;
+#endif
+  
   
   
   // ヒントの方向から
@@ -623,20 +611,6 @@ void Geometry::fill(FILE* fp,
     fprintf(fp,"\t\t    Remaining cell     = %16ld\n\n", target_count);
   }
   
-#if 0
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        size_t m = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
-        if ( DECODE_CMP(d_bcd[m]) == 0 )
-        {
-          printf("(%d %d %d) = %d\n", i,j,k, DECODE_CMP(d_bcd[m]) );
-        }
-      }
-    }
-  }
-  F->writeSVX(d_bcd, &C);
-#endif
   
   if ( target_count == 0 ) return;
   
@@ -705,23 +679,6 @@ void Geometry::fill(FILE* fp,
     printf(    "\t\t   Filled           = %16ld by %s\n\n", sum_replaced, (fill_mode==FLUID)?"FLUID":"SOLID");
     fprintf(fp,"\t\t   Filled           = %16ld by %s\n\n", sum_replaced, (fill_mode==FLUID)?"FLUID":"SOLID");
   }
-  
-  
-  
-#if 0
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        size_t m = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
-        if ( DECODE_CMP(d_bcd[m]) == 0 )
-        {
-          printf("(%d %d %d) = %d\n", i,j,k, DECODE_CMP(d_bcd[m]) );
-        }
-      }
-    }
-  }
-  Ex->writeSVX(d_bcd, &C);
-#endif
   
 
   
@@ -1306,89 +1263,6 @@ unsigned long Geometry::fillSubCellSolid(int* smd, REAL_TYPE* svf)
 }
 
 
-// #################################################################
-/**
- * @brief 交点が定義点にある場合にそのポリゴンのエントリ番号でフィルする
- * @param [in,out] bcd    BCindex B
- * @param [in]     bid    境界ID（5ビット幅x6方向）
- * @param [in]     cut    カット情報
- * @param [in]     Dsize  サイズ
- * @retval フィルされたセル数
- */
-unsigned long Geometry::fillCutOnCellCenter(int* bcd, const int* bid, const long long* cut, const int* Dsize)
-{
-  int ix, jx, kx, gd;
-  
-  if ( !Dsize )
-  {
-    ix = size[0];
-    jx = size[1];
-    kx = size[2];
-    gd = guide;
-  }
-  else // ASD module用
-  {
-    ix = Dsize[0];
-    jx = Dsize[1];
-    kx = Dsize[2];
-    gd = 1;
-  }
-  
-  unsigned long c = 0;
-  
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        
-        size_t m_p = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
-        
-        int qq = bid[m_p];
-        
-        // 隣接セルの方向に対する境界ID
-        int qw = getBit5(qq, X_minus);
-        int qe = getBit5(qq, X_plus);
-        int qs = getBit5(qq, Y_minus);
-        int qn = getBit5(qq, Y_plus);
-        int qb = getBit5(qq, Z_minus);
-        int qt = getBit5(qq, Z_plus);
-        
-        const long long pos = cut[m_p];
-        
-        // いずれかの方向で交点が定義点上の場合
-        if ( chkZeroCut(pos, X_minus)
-            +chkZeroCut(pos, X_plus)
-            +chkZeroCut(pos, Y_minus)
-            +chkZeroCut(pos, Y_plus)
-            +chkZeroCut(pos, Z_minus)
-            +chkZeroCut(pos, Z_plus) > 0 )
-        {
-          /*printf("%d %d %d : %f %f %f %f %f %f : %d\n",
-           i,j,k,
-           getCut9(pos, X_minus),
-           getCut9(pos, X_plus),
-           getCut9(pos, Y_minus),
-           getCut9(pos, Y_plus),
-           getCut9(pos, Z_minus),
-           getCut9(pos, Z_plus), qw);
-           */
-           setBitID(bcd[m_p], qw); // qwで代表
-          c++;
-        }
-        
-      }
-    }
-  }
-  
-  if ( numProc > 1 )
-  {
-    unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  return c;
-}
-
 
 // #################################################################
 /**
@@ -1851,12 +1725,12 @@ unsigned long Geometry::findPolygonInCell(int* d_mid, MPIPolylib* PL, PolygonPro
           for (int j=wmin[1]; j<=wmax[1]; j++) {
             for (int i=wmin[0]; i<=wmax[0]; i++) {
               
-              Vec3r bx_min(origin[0]+pitch[0]*(REAL_TYPE)(i-1),
-                           origin[1]+pitch[1]*(REAL_TYPE)(j-1),
-                           origin[2]+pitch[2]*(REAL_TYPE)(k-1)); // セルBboxの対角座標
-              Vec3r bx_max(origin[0]+pitch[0]*(REAL_TYPE)i,
-                           origin[1]+pitch[1]*(REAL_TYPE)j,
-                           origin[2]+pitch[2]*(REAL_TYPE)k);     // セルBboxの対角座標
+              Vec3r bx_min(originD[0]+pitchD[0]*(REAL_TYPE)(i-1),
+                           originD[1]+pitchD[1]*(REAL_TYPE)(j-1),
+                           originD[2]+pitchD[2]*(REAL_TYPE)(k-1)); // セルBboxの対角座標
+              Vec3r bx_max(originD[0]+pitchD[0]*(REAL_TYPE)i,
+                           originD[1]+pitchD[1]*(REAL_TYPE)j,
+                           originD[2]+pitchD[2]*(REAL_TYPE)k);     // セルBboxの対角座標
               
               vector<Triangle*>* trias = PL->search_polygons(m_pg, bx_min, bx_max, false); // false; ポリゴンが一部でもかかる場合
               int polys = trias->size();
@@ -1991,94 +1865,240 @@ void Geometry::getFillParam(TextParser* tpCntl)
 
 // #################################################################
 /**
- * @brief ポリゴンと線分の交点計算
- * @param [in]   ray_o      レイの開始点
- * @param [in]   dir        レイの方向ベクトル（単位ベクトル）
- * @param [in]   v0         ポリゴンの頂点
- * @param [in]   v1         ポリゴンの頂点
- * @param [in]   v2         ポリゴンの頂点
- * @param [out]  pRetT      交点距離
- * @param [out]  pRetU      交点情報
- * @param [out]  pRetV      交点情報
- * @retval true -> 交点あり
- * @note Tomas Möller and Ben Trumbore.
-   Journal of Graphics Tools, 2(1):21--28, 1997.
-   http://www.graphics.cornell.edu/pubs/1997/MT97.html
+ * @brief 交点が定義点にある場合の処理をした場合に、反対側のセルの状態を修正
+ * @param [in,out] bid    境界ID（5ビット幅x6方向）
+ * @param [in,out] cut    カット情報
+ * @param [in]     bcd    セルID
+ * @param [in]     Dsize  サイズ
+ * @retval 修正されたセル数
  */
-bool Geometry::TriangleIntersect(const Vec3r ray_o,
-                                 const Vec3r dir,
-                                 const Vec3r v0,
-                                 const Vec3r v1,
-                                 const Vec3r v2,
-                                 REAL_TYPE *pRetT,
-                                 REAL_TYPE *pRetU,
-                                 REAL_TYPE *pRetV)
+unsigned long Geometry::modifyCutOnPoint(int* bid, long long* cut, const int* bcd, const int* Dsize)
 {
-  const REAL_TYPE m_eps = REAL_TYPE_EPSILON*2.0; //ROUND_EPS;
-  Vec3r tvec, qvec;
+  int ix, jx, kx, gd;
   
-  REAL_TYPE t; // 交点距離
-  REAL_TYPE u; // 交点情報
-  REAL_TYPE v; // 交点情報
-  
-  Vec3r e1 = v1 - v0;
-  Vec3r e2 = v2 - v0;
-  Vec3r pvec = cross(dir, e2);
-  
-  REAL_TYPE det = dot(e1, pvec);
-  
-  if (det > m_eps)
+  if ( !Dsize )
   {
-    tvec = ray_o - v0;
-    u = dot(tvec, pvec);
-    if (u < 0.0 || u > det) return false;
-    
-    qvec = cross(tvec, e1);
-    v = dot(dir, qvec);
-    if (v < 0.0 || u + v > det) return false;
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
   }
-  else if (det < -m_eps)
+  else // ASD module用
   {
-    tvec = ray_o - v0;
-    u = dot(tvec, pvec);
-    if (u > 0.0 || u < det) return false;
-    
-    qvec = cross(tvec, e1);
-    v = dot(dir, qvec);
-    if (v > 0.0 || u + v < det) return false;
-    
-  }
-  else
-  {
-    return false;
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
   }
   
-  REAL_TYPE inv_det = 1.0 / det;
+  unsigned long c = 0;
   
-  t = dot(e2, qvec);
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t m_p = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
+        size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
+        size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
+        size_t m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd);
+        size_t m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd);
+        size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
+        size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
+        
+        const int qq = bid[m_p];
+        const int bb = DECODE_CMP(bcd[m_p]);
+        const long long pos = cut[m_p];
+        
+        // 定義点上に交点があり、反対側のセルから見て交点がない場合
+        if ( chkZeroCut(pos, X_minus) > 0 && !ensCut(cut[m_w], X_plus) )
+        {
+          setBit5 (bid[m_w], bb,   X_plus);
+          setBit10(cut[m_w], QT_9, X_plus);
+          c++;
+        }
+        
+        if ( chkZeroCut(pos, X_plus) > 0  && !ensCut(cut[m_e], X_minus) )
+        {
+          setBit5 (bid[m_e], bb,   X_minus);
+          setBit10(cut[m_e], QT_9, X_minus);
+          c++;
+        }
+        
+        if ( chkZeroCut(pos, Y_minus) > 0 && !ensCut(cut[m_s], Y_plus) )
+        {
+          setBit5 (bid[m_s], bb,   Y_plus);
+          setBit10(cut[m_s], QT_9, Y_plus);
+          c++;
+        }
+        
+        if ( chkZeroCut(pos, Y_plus) > 0  && !ensCut(cut[m_n], Y_minus) )
+        {
+          setBit5 (bid[m_n], bb,   Y_minus);
+          setBit10(cut[m_n], QT_9, Y_minus);
+          c++;
+        }
+        
+        if ( chkZeroCut(pos, Z_minus) > 0 && !ensCut(cut[m_b], Z_plus) )
+        {
+          setBit5 (bid[m_b], bb,   Z_plus);
+          setBit10(cut[m_b], QT_9, Z_plus);
+          c++;
+        }
+        
+        if ( chkZeroCut(pos, Z_plus) > 0  && !ensCut(cut[m_t], Z_minus) )
+        {
+          setBit5 (bid[m_t], bb,   Z_minus);
+          setBit10(cut[m_t], QT_9, Z_minus);
+          c++;
+        }
+      }
+    }
+  }
   
-  t *= inv_det;
-  u *= inv_det;
-  v *= inv_det;
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = c;
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
   
-  *pRetT = t;
-  *pRetU = u;
-  *pRetV = v;
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->BndCommS3D(bid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+  }
   
-  return true;
+  return c;
 }
 
 
 // #################################################################
 /**
- * @brief 交点計算を行い、量子化する
- * @param [out]   cut        量子化した交点
- * @param [out]   bid        交点ID
- * @param [in]    PL         Polylibインスタンス
- * @param [in]    PG         PolygonPropertyクラス
+ * @brief 交点が定義点にある場合にそのポリゴンのエントリ番号でフィルする
+ * @param [in,out] bcd       BCindex B
+ * @param [in]     bid       境界ID（5ビット幅x6方向）
+ * @param [in]     cut       カット情報
+ * @param [in]     m_NoCompo コンポーネント数
+ * @param [in]     Dsize     サイズ
+ * @retval フィルされたセル数
  */
-void Geometry::quantizeCut(long long* cut,
+unsigned long Geometry::paintCutOnPoint(int* bcd, int* bid, const long long* cut, const int m_NoCompo, const int* Dsize)
+{
+  int ix, jx, kx, gd;
+  
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
+  
+  unsigned long c = 0;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t m = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
+        
+        int qq = bid[m];
+        const long long pos = cut[m];
+        
+        // 定義点上の場合（交点があり、かつ距離がゼロ）
+        if ( chkZeroCut(pos, X_minus) ||
+             chkZeroCut(pos, X_plus ) ||
+             chkZeroCut(pos, Y_minus) ||
+             chkZeroCut(pos, Y_plus ) ||
+             chkZeroCut(pos, Z_minus) ||
+             chkZeroCut(pos, Z_plus ) )
+        {
+          int sd = FBUtility::find_mode_id(FillID,
+                                           getBit5(qq, X_minus),
+                                           getBit5(qq, X_plus),
+                                           getBit5(qq, Y_minus),
+                                           getBit5(qq, Y_plus),
+                                           getBit5(qq, Z_minus),
+                                           getBit5(qq, Z_plus),
+                                           m_NoCompo);
+#if 0
+          printf("(%3d %3d %3d) %d %d %d %d %d %d : %d : %3d %3d %3d %3d %3d %3d : %d %d %d %d %d %d\n",
+                 i,j,k,
+                 qw, qe, qs, qn, qb, qt, sd,
+                 getBit9(pos, 0),
+                 getBit9(pos, 1),
+                 getBit9(pos, 2),
+                 getBit9(pos, 3),
+                 getBit9(pos, 4),
+                 getBit9(pos, 5),
+                 ensCut(pos, X_minus),
+                 ensCut(pos, X_plus),
+                 ensCut(pos, Y_minus),
+                 ensCut(pos, Y_plus),
+                 ensCut(pos, Z_minus),
+                 ensCut(pos, Z_plus)
+                 );
+#endif
+          if ( sd == 0 ) Exit(0);
+          
+          setBitID(bcd[m], sd);
+          
+          setBit5(qq, sd, X_minus);
+          setBit5(qq, sd, X_plus);
+          setBit5(qq, sd, Y_minus);
+          setBit5(qq, sd, Y_plus);
+          setBit5(qq, sd, Z_minus);
+          setBit5(qq, sd, Z_plus);
+          bid[m] = qq;
+          
+          c++;
+        }
+        
+      }
+    }
+  }
+  
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = c;
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->BndCommS3D(bcd, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(bid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  return c;
+}
+
+
+
+// #################################################################
+/**
+ * @brief 交点計算を行い、量子化する
+ * @param [in]      fp        ファイルポインタ
+ * @param [out]    cut        量子化した交点
+ * @param [out]    bid        交点ID
+ * @param [in,out] bcd        セルID
+ * @param [in]     m_NoCompo  コンポーネント数
+ * @param [in]     PL         Polylibインスタンス
+ * @param [in]     PG         PolygonPropertyクラス
+ */
+void Geometry::quantizeCut(FILE* fp,
+                           long long* cut,
                            int* bid,
+                           int* bcd,
+                           const int m_NoCompo,
                            MPIPolylib* PL,
                            PolygonProperty* PG)
 {
@@ -2088,8 +2108,8 @@ void Geometry::quantizeCut(long long* cut,
   int gd = guide;
 
   
-  Vec3r org(origin);
-  Vec3r pch(pitch);
+  Vec3r org(originD);
+  Vec3r pch(pitchD);
   
   
   // ポリゴン情報へのアクセス
@@ -2118,6 +2138,13 @@ void Geometry::quantizeCut(long long* cut,
         findIndex( PG[odr].getBboxMin(), wmin );
         findIndex( PG[odr].getBboxMax(), wmax );
         
+        // 1層外側まで拡大
+        for (int i=0; i<3; i++)
+        {
+          wmin[i] -= 1;
+          wmax[i] += 1;
+        }
+        
 #if 0
         printf("\t\t[rank=%6d] (%4d %4d %4d) - (%4d %4d %4d) %s \n",
                myRank, wmin[0], wmin[1], wmin[2], wmax[0], wmax[1], wmax[2], m_pg.c_str());
@@ -2131,7 +2158,7 @@ void Geometry::quantizeCut(long long* cut,
               // position of cell center
               Vec3r base((REAL_TYPE)i-0.5, (REAL_TYPE)j-0.5, (REAL_TYPE)k-0.5);
               
-              // セルセンターを中心に2*pitch[]の矩形領域
+              // セルセンターを中心に2*pitchD[]の矩形領域
               Vec3r ctr(org + base * pch);
               
               // 1%マージンを与える
@@ -2197,6 +2224,33 @@ void Geometry::quantizeCut(long long* cut,
   printf("\tquantize cut = %d\n\n", count);
   
   delete pg_roots;
+  
+  
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->BndCommS3D(bid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  
+  
+  // 修正
+  
+  // 定義点上に交点がある場合の処理 >> カットするポリゴンのエントリ番号でフィルする
+  unsigned long fill_cut = paintCutOnPoint(bcd, bid, cut, m_NoCompo);
+  
+  unsigned long cm = modifyCutOnPoint(bid, cut, bcd);
+  
+  Hostonly_
+  {
+    if ( fill_cut > 0 )
+    {
+      printf(    "\n\tPaint cell which has cut on point       = %16ld\n", fill_cut);
+      fprintf(fp,"\n\tPaint cell which has cut on point       = %16ld\n", fill_cut);
+      printf(      "\tModify neighbor cells owing to painting = %16ld\n", cm);
+      fprintf(fp,  "\tModify neighbor cells owing to painting = %16ld\n", cm);
+    }
+  }
   
 }
 
@@ -2502,9 +2556,9 @@ int Geometry::SubCellIncTest(REAL_TYPE* svf,
                              const int m_NoCompo)
 {
   // プライマリセルの基点（有次元）
-  Vec3r o(origin[0]+pitch[0]*(REAL_TYPE)(ip-1),
-          origin[1]+pitch[1]*(REAL_TYPE)(jp-1),
-          origin[2]+pitch[2]*(REAL_TYPE)(kp-1));
+  Vec3r o(originD[0]+pitchD[0]*(REAL_TYPE)(ip-1),
+          originD[1]+pitchD[1]*(REAL_TYPE)(jp-1),
+          originD[2]+pitchD[2]*(REAL_TYPE)(kp-1));
   
   int pic = 0;
   
@@ -3094,11 +3148,11 @@ void Geometry::SubSampling(FILE* fp,
         REAL_TYPE m_org[3], m_pit[3];
         
         // サブセルのファイル出力ヘッダ
-        for (int l=0; l<3; l++) m_pit[l] = pitch[l]/(REAL_TYPE)sdv;
+        for (int l=0; l<3; l++) m_pit[l] = pitchD[l]/(REAL_TYPE)sdv;
         
-        m_org[0] = origin[0]+pitch[0]*(REAL_TYPE)(i-1);
-        m_org[1] = origin[1]+pitch[1]*(REAL_TYPE)(j-1);
-        m_org[2] = origin[2]+pitch[2]*(REAL_TYPE)(k-1);
+        m_org[0] = originD[0]+pitchD[0]*(REAL_TYPE)(i-1);
+        m_org[1] = originD[1]+pitchD[1]*(REAL_TYPE)(j-1);
+        m_org[2] = originD[2]+pitchD[2]*(REAL_TYPE)(k-1);
         
         
         
@@ -3478,6 +3532,86 @@ void Geometry::SeedFilling(FILE* fp,
 }
 
 
+// #################################################################
+/**
+ * @brief ポリゴンと線分の交点計算
+ * @param [in]   ray_o      レイの開始点
+ * @param [in]   dir        レイの方向ベクトル（単位ベクトル）
+ * @param [in]   v0         ポリゴンの頂点
+ * @param [in]   v1         ポリゴンの頂点
+ * @param [in]   v2         ポリゴンの頂点
+ * @param [out]  pRetT      交点距離
+ * @param [out]  pRetU      交点情報
+ * @param [out]  pRetV      交点情報
+ * @retval true -> 交点あり
+ * @note Tomas Möller and Ben Trumbore.
+         Journal of Graphics Tools, 2(1):21--28, 1997.
+         http://www.graphics.cornell.edu/pubs/1997/MT97.html
+ */
+bool Geometry::TriangleIntersect(const Vec3r ray_o,
+                                 const Vec3r dir,
+                                 const Vec3r v0,
+                                 const Vec3r v1,
+                                 const Vec3r v2,
+                                 REAL_TYPE *pRetT,
+                                 REAL_TYPE *pRetU,
+                                 REAL_TYPE *pRetV)
+{
+  const REAL_TYPE m_eps = REAL_TYPE_EPSILON*2.0; //ROUND_EPS;
+  Vec3r tvec, qvec;
+  
+  REAL_TYPE t; // 交点距離
+  REAL_TYPE u; // 交点情報
+  REAL_TYPE v; // 交点情報
+  
+  Vec3r e1 = v1 - v0;
+  Vec3r e2 = v2 - v0;
+  Vec3r pvec = cross(dir, e2);
+  
+  REAL_TYPE det = dot(e1, pvec);
+  
+  if (det > m_eps)
+  {
+    tvec = ray_o - v0;
+    u = dot(tvec, pvec);
+    if (u < 0.0 || u > det) return false;
+    
+    qvec = cross(tvec, e1);
+    v = dot(dir, qvec);
+    if (v < 0.0 || u + v > det) return false;
+  }
+  else if (det < -m_eps)
+  {
+    tvec = ray_o - v0;
+    u = dot(tvec, pvec);
+    if (u > 0.0 || u < det) return false;
+    
+    qvec = cross(tvec, e1);
+    v = dot(dir, qvec);
+    if (v > 0.0 || u + v < det) return false;
+    
+  }
+  else
+  {
+    return false;
+  }
+  
+  REAL_TYPE inv_det = 1.0 / det;
+  
+  t = dot(e2, qvec);
+  
+  t *= inv_det;
+  u *= inv_det;
+  v *= inv_det;
+  
+  *pRetT = t;
+  *pRetU = u;
+  *pRetV = v;
+  
+  return true;
+}
+
+
 /**
  * @brief 交点情報をアップデート
  * @param [in]     ray_o  レイの始点
@@ -3508,32 +3642,32 @@ unsigned Geometry::updateCut(const Vec3r ray_o,
   {
     case X_minus:
       d.assign(-1.0, 0.0, 0.0);
-      pit = pitch[0];
+      pit = pitchD[0];
       break;
       
     case X_plus:
       d.assign(1.0, 0.0, 0.0);
-      pit = pitch[0];
+      pit = pitchD[0];
       break;
       
     case Y_minus:
       d.assign(0.0, -1.0, 0.0);
-      pit = pitch[1];
+      pit = pitchD[1];
       break;
       
     case Y_plus:
       d.assign(0.0, 1.0, 0.0);
-      pit = pitch[1];
+      pit = pitchD[1];
       break;
       
     case Z_minus:
       d.assign(0.0, 0.0, -1.0);
-      pit = pitch[2];
+      pit = pitchD[2];
       break;
       
     case Z_plus:
       d.assign(0.0, 0.0, 1.0);
-      pit = pitch[2];
+      pit = pitchD[2];
       break;
   }
   
@@ -3544,7 +3678,7 @@ unsigned Geometry::updateCut(const Vec3r ray_o,
   REAL_TYPE t, u, v;
   if ( !TriangleIntersect(ray_o, d, v0, v1, v2, &t, &u, &v) ) return 0;
 
-  /* 交点
+  /* 交点 >> 必要な場合に使う
    px = d.x * t + ray_o.x;
    py = d.y * t + ray_o.y;
    pz = d.z * t + ray_o.z;

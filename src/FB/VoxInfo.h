@@ -99,8 +99,7 @@ private:
                             int* bcp,
                             const int* bid,
                             const REAL_TYPE* vec,
-                            const string condition,
-                            const int bc_dir);
+                            const string condition);
   
   
   // 外部境界に接するセルにおいて，bx[]に圧力境界条件keyに対応するビットフラグを設定する
@@ -122,10 +121,10 @@ private:
   unsigned long encVbitIBC (const int order,
                             int* cdf,
                             int* bp,
-                            const int* cut_id,
+                            int* bid,
                             const REAL_TYPE* vec,
-                            const int bc_dir,
-                            CompoList* cmp);
+                            CompoList* cmp,
+                            const int fill_id);
   
   
   unsigned long encVbitIBCrev (const int order,
@@ -137,10 +136,6 @@ private:
   
   // cdf[]に境界条件のビット情報をエンコードする
   void encVbitOBC (int face, int* cdf, string key, const bool enc_sw, string chk, int* bp, bool enc_uwd=false);
-  
-  
-  // MediumTable内の文字列格納番号を返す
-  int getMediumOrder(const MediumList* mat, const std::string key, const int m_NoMedium);
   
   
   //@brief idxの第shiftビットをOFFにする
@@ -223,19 +218,6 @@ public:
    * @param [in] fname 出力用ファイル名
    */
   void dbg_chkBCIndex (const int* bcd, const int* cdf, const int* bcp, const char* fname);
-  
-  
-  /* @brief 交点が定義点にある場合の修正
-   * @param [in,out] bid        境界ID
-   * @param [in]     cut        カット情報
-   * @param [in]     fluid_id   フィルをする流体ID
-   * @param [in]     m_NoCompo  コンポーネント数
-   * @retval 置換されたセル数
-   */
-  unsigned long modifyCutOnCellCenter(int* bid,
-                                      const long long* cut,
-                                      const int fluid_id,
-                                      const int m_NoCompo);
   
   
   /* @brief 領域境界のセルで境界方向にカットがある場合にガイドセルをそのIDで埋める
@@ -338,6 +320,8 @@ public:
    * @param [in]     cut        カット配列
    * @param [in]     cut_id     BID配列
    * @param [in]     m_NoCompo  コンポーネント数
+   * @param [in]     m_NoMedium 媒質数
+   * @param [in]     mat        MediumList
    */
   void setBCIndexV(int* cdf,
                    int* bp,
@@ -346,7 +330,9 @@ public:
                    int icls,
                    long long* cut,
                    int* cut_id,
-                   const int m_NoCompo);
+                   const int m_NoCompo,
+                   const int m_NoMedium,
+                   MediumList* mat);
   
   
   /**

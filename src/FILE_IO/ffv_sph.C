@@ -207,17 +207,6 @@ void SPH::initFileOut(const int id_cell, const int id_bcf)
     case LTH_m:
       UnitL = "M";
       break;
-      
-    case LTH_cm:
-      UnitL = "cm";
-      break;
-      
-    case LTH_mm:
-      UnitL = "mm";
-      break;
-      
-    default:
-      break;
   }
   
   

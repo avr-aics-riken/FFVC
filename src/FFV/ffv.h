@@ -155,9 +155,6 @@ private:
   } ConvergenceMonitor;
   
   
-  // Polylibのサーチ用基準値
-  REAL_TYPE poly_factor; // cm, mm >> M, NDへの変換スケール
-  
   // Polygon管理用
   PolygonProperty* PG;
   
@@ -299,7 +296,7 @@ private:
   
   
   // 計算領域情報を設定する
-  void DomainInitialize(TextParser* tp_dom);
+  void DomainInitialize(const int div_type, TextParser* tp_dom);
   
   
   // BCIndexにビット情報をエンコードする
@@ -318,8 +315,8 @@ private:
   void generateGlyph(const long long* cut, const int* bid, FILE* fp);
   
   
-  // グローバルな領域情報を取得
-  int getDomainInfo(TextParser* tp_dom);
+  // グローバルな領域情報を取得し、無次元の領域基本パラメータを返す
+  int getDomainParameter(TextParser* tp_dom);
   
   
   // DIv反復のパラメータ

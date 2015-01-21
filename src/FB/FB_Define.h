@@ -134,6 +134,7 @@
 #define MASK_6     0x3f  // 6 bit幅
 #define MASK_5     0x1f  // 5 bit幅
 #define CMP_BIT_W  32    // 5bit
+#define QT_9       511   // 9bit幅の最大値
 
 
 // エンコードビット　共通
@@ -459,9 +460,7 @@ enum Unit_Pressure {
 /// 長さ単位
 enum Length_Unit {
   LTH_ND=0,
-  LTH_m,
-  LTH_cm,
-  LTH_mm
+  LTH_m
 };
 
 /// 同期モード
@@ -578,7 +577,7 @@ enum DIRection {
 inline int quantize9(REAL_TYPE a)
 {
   int s;
-  REAL_TYPE x = a * 511.0;
+  REAL_TYPE x = a * (REAL_TYPE)QT_9;
   
   if ( x > 0.0 )
   {
@@ -589,7 +588,7 @@ inline int quantize9(REAL_TYPE a)
     s = (int)(-1.0 * floor(fabs(x) + 0.5));
   }
   
-  if (s<0 || 511<s)
+  if (s<0 || QT_9<s)
   {
     printf("quantize error : out of range %f > %d\n", a, s);
     exit(0);
@@ -684,14 +683,14 @@ inline int getBit9 (const long long b, const int dir)
 
 
 /*
- * @brief 10bit幅から指定方向の距離を取り出す
+ * @brief 9bit幅から指定方向の距離を取り出す
  * @param [in] b    long long variable
  * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
  */
 inline REAL_TYPE getCut9 (const long long b, const int dir)
 {
   long long a = MASK_9;
-  return (REAL_TYPE)( (b >> dir*10) & a ) / 512.0;
+  return (REAL_TYPE)( (b >> dir*10) & a ) / (REAL_TYPE)QT_9;
 }
 
 
@@ -720,7 +719,7 @@ inline void setBit10 (long long& b, const int q, const int dir)
 inline void initBit9 (long long& b, const int dir)
 {
   long long a = MASK_10;
-  const long long c = 511;
+  const long long c = QT_9;
   
   b &= (~(a << (dir*10)) );  // 対象10bitをゼロにする
   b |= ( c << (dir*10));     // 値を書き込む

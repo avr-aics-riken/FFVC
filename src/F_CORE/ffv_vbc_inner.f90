@@ -575,6 +575,7 @@ end subroutine perturb_u_z
         if ( ibits(bvx, bc_face_S, bitw_5) == odr ) c_s = 1.0
         if ( ibits(bvx, bc_face_T, bitw_5) == odr ) c_t = 1.0
         if ( ibits(bvx, bc_face_B, bitw_5) == odr ) c_b = 1.0
+
       
         ! X方向 ---------------------------------------
         if ( c_w == 1.0 ) then
