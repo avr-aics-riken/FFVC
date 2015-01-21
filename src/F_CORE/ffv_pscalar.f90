@@ -30,13 +30,13 @@
 !! @param [in]     v00    参照速度
 !! @param [in]     v      cell center u^{n+1}
 !! @param [in]     ie     内部エネルギー
-!! @param [in]     bp     BCindex P
+!! @param [in]     bid    Cut ID
 !! @param [in]     cdf    BCindex C
 !! @param [in[     bh     BCindex B
 !! @param [in]     swt    固定壁の扱い（0-断熱，1-共役熱移動）
 !! @param [out]    flop   浮動小数点演算数
 !<
-    subroutine ps_muscl (ws, sz, g, dh, scheme, v00, v, ie, bp, cdf, bh, swt, flop)
+    subroutine ps_muscl (ws, sz, g, dh, scheme, v00, v, ie, bid, cdf, bh, swt, flop)
     implicit none
     include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, scheme, idx, swt, hdx
@@ -60,7 +60,7 @@
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  ie, ws
     real, dimension(0:3)                                        ::  v00
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  cdf, bh, bp
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  cdf, bh, bid
     
     ix = sz(1)
     jx = sz(2)
@@ -190,20 +190,20 @@
       lmt_b = 1.0
       lmt_t = 1.0
 
-      if ( (ibits(cdf(i-1, j  , k  ), bc_face_W, bitw_5) /= 0) .and. (ibits(bp(i-1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_w = 0.0
-      if ( (ibits(cdf(i+1, j  , k  ), bc_face_E, bitw_5) /= 0) .and. (ibits(bp(i+1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_e = 0.0
-      if ( (ibits(cdf(i  , j-1, k  ), bc_face_S, bitw_5) /= 0) .and. (ibits(bp(i  , j-1, k  ), vbc_uwd, 1) == 1) ) lmt_s = 0.0
-      if ( (ibits(cdf(i  , j+1, k  ), bc_face_N, bitw_5) /= 0) .and. (ibits(bp(i  , j+1, k  ), vbc_uwd, 1) == 1) ) lmt_n = 0.0
-      if ( (ibits(cdf(i  , j  , k-1), bc_face_B, bitw_5) /= 0) .and. (ibits(bp(i  , j  , k-1), vbc_uwd, 1) == 1) ) lmt_b = 0.0
-      if ( (ibits(cdf(i  , j  , k+1), bc_face_T, bitw_5) /= 0) .and. (ibits(bp(i  , j  , k+1), vbc_uwd, 1) == 1) ) lmt_t = 0.0
+      if ( (ibits(cdf(i-1, j  , k  ), bc_face_W, bitw_5) /= 0) .and. (ibits(bid(i-1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_w = 0.0
+      if ( (ibits(cdf(i+1, j  , k  ), bc_face_E, bitw_5) /= 0) .and. (ibits(bid(i+1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_e = 0.0
+      if ( (ibits(cdf(i  , j-1, k  ), bc_face_S, bitw_5) /= 0) .and. (ibits(bid(i  , j-1, k  ), vbc_uwd, 1) == 1) ) lmt_s = 0.0
+      if ( (ibits(cdf(i  , j+1, k  ), bc_face_N, bitw_5) /= 0) .and. (ibits(bid(i  , j+1, k  ), vbc_uwd, 1) == 1) ) lmt_n = 0.0
+      if ( (ibits(cdf(i  , j  , k-1), bc_face_B, bitw_5) /= 0) .and. (ibits(bid(i  , j  , k-1), vbc_uwd, 1) == 1) ) lmt_b = 0.0
+      if ( (ibits(cdf(i  , j  , k+1), bc_face_T, bitw_5) /= 0) .and. (ibits(bid(i  , j  , k+1), vbc_uwd, 1) == 1) ) lmt_t = 0.0
 
       ! 外部境界条件の場合
-      if ( (i == 1)  .and. (ibits(bp(0   , j   , k   ), vbc_uwd, 1) == 1) ) lmt_w = 0.0
-      if ( (i == ix) .and. (ibits(bp(ix+1, j   , k   ), vbc_uwd, 1) == 1) ) lmt_e = 0.0
-      if ( (j == 1)  .and. (ibits(bp(i   , 0   , k   ), vbc_uwd, 1) == 1) ) lmt_s = 0.0
-      if ( (j == jx) .and. (ibits(bp(i   , jx+1, k   ), vbc_uwd, 1) == 1) ) lmt_n = 0.0
-      if ( (k == 1)  .and. (ibits(bp(i   , j   , 0   ), vbc_uwd, 1) == 1) ) lmt_b = 0.0
-      if ( (k == kx) .and. (ibits(bp(i   , j   , kx+1), vbc_uwd, 1) == 1) ) lmt_t = 0.0
+      if ( (i == 1)  .and. (ibits(bid(0   , j   , k   ), vbc_uwd, 1) == 1) ) lmt_w = 0.0
+      if ( (i == ix) .and. (ibits(bid(ix+1, j   , k   ), vbc_uwd, 1) == 1) ) lmt_e = 0.0
+      if ( (j == 1)  .and. (ibits(bid(i   , 0   , k   ), vbc_uwd, 1) == 1) ) lmt_s = 0.0
+      if ( (j == jx) .and. (ibits(bid(i   , jx+1, k   ), vbc_uwd, 1) == 1) ) lmt_n = 0.0
+      if ( (k == 1)  .and. (ibits(bid(i   , j   , 0   ), vbc_uwd, 1) == 1) ) lmt_b = 0.0
+      if ( (k == kx) .and. (ibits(bid(i   , j   , kx+1), vbc_uwd, 1) == 1) ) lmt_t = 0.0
 
       Uw1 = v(i-1,j  ,k  , 1)
       Up0 = v(i  ,j  ,k  , 1)

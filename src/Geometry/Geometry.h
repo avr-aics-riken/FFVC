@@ -42,7 +42,7 @@ private:
   int FillSeedDir;     ///< フィルのヒント {x_minux | x_plus |...}
   string FillMedium;   ///< フィルに使う媒質 -> int FillID
   string SeedMedium;   ///< ヒントに使う媒質 -> int SeedID
-  
+  unsigned temporary;
   
 public:
   int FillID;          ///< フィル媒質ID
@@ -59,6 +59,7 @@ public:
     SeedID = -1;
     NumSuvDiv = 0;
     FillSeedDir = -1;
+    temporary = 0;
     
     for (int i=0; i<3; i++) {
       FillSuppress[i] = ON; // default is "fill"
@@ -276,9 +277,9 @@ private:
                          const Vec3r v0,
                          const Vec3r v1,
                          const Vec3r v2,
-                         REAL_TYPE *pRetT,
-                         REAL_TYPE *pRetU,
-                         REAL_TYPE *pRetV);
+                         REAL_TYPE& pRetT,
+                         REAL_TYPE& pRetU,
+                         REAL_TYPE& pRetV);
   
   
   // 交点情報をアップデート
@@ -381,7 +382,7 @@ public:
   // 交点が定義点にある場合にそのポリゴンのエントリ番号でフィルする
   unsigned long paintCutOnPoint(int* bcd,
                                 int* bid,
-                                const long long* cut,
+                                long long* cut,
                                 const int m_NoCompo,
                                 const int* Dsize=NULL);
   

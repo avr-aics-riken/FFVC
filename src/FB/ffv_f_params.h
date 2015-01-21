@@ -101,7 +101,7 @@ parameter ( facing_s  =  5 ) ! FB_Define.h FACING_S
 parameter ( facing_e  =  4 ) ! FB_Define.h FACING_E
 parameter ( facing_w  =  3 ) ! FB_Define.h FACING_W
 parameter ( vld_cnvg  =  2 ) ! FB_Define.h VLD_CNVG
-parameter ( vbc_uwd   =  1 ) ! FB_Define.h VBC_UWD
+
 
 ! BCindex C
 parameter ( bc_face_T = 25 ) ! FB_Define.h BC_FACE_T
@@ -110,6 +110,9 @@ parameter ( bc_face_N = 15 ) ! FB_Define.h BC_FACE_N
 parameter ( bc_face_S = 10 ) ! FB_Define.h BC_FACE_S
 parameter ( bc_face_E = 5  ) ! FB_Define.h BC_FACE_E
 parameter ( bc_face_W = 0  ) ! FB_Define.h BC_FACE_W
+
+! bid
+parameter ( vbc_uwd   = 30 ) ! FB_Define.h VBC_UWD
 
 
 ! 速度境界条件の種類

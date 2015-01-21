@@ -32,14 +32,14 @@
 !! @param [in]  v         セルセンター速度ベクトル（n-step）
 !! @param [in]  vf        セルフェイス速度ベクトル（n-step）
 !! @param [in]  bv        BCindex C
-!! @param [in]  bp        BCindex P
+!! @param [in]  bid       Cut ID
 !! @param [in]  vcs_coef  粘性項の係数（粘性項を計算しない場合には0.0）
 !! @param [out] flop      浮動小数点演算数
 !<
-    subroutine pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bv, bp, vcs_coef, flop)
+    subroutine pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bv, bid, vcs_coef, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, bpx
+    integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, bix
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
     real                                                      ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
@@ -58,7 +58,7 @@
     real                                                      ::  lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, wv, vf
     real, dimension(0:3)                                      ::  v00
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv, bp
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv, bid
     
     ix = sz(1)
     jx = sz(2)
@@ -113,7 +113,7 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dh1, dh2, vcs, b, ck, ss_4, ss, cm1, cm2) &
 !$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, rei) &
-!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bpx, uq, vq, wq) &
+!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bix, uq, vq, wq) &
 !$OMP PRIVATE(Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2) &
 !$OMP PRIVATE(Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2) &
 !$OMP PRIVATE(Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2) &
@@ -179,27 +179,40 @@
       Wt2 = v(i  ,j  ,k+2, 3)
 
       bvx = bv(i,j,k)
-      bpx = bp(i,j,k)
+      bix = bid(i,j,k)
 
       ! (i,j,k)からみたセル状態 (0-solid / 1-fluid)
       b_p = real(ibits(bvx, State, 1))
 
       ! 各方向に物体があれば，マスクはゼロ
-      ! セル界面のフラグとしても利用 (0-wall face / 1-fluid)
-      b_w1 = real(ibits(bpx, bc_n_W, 1))
-      b_e1 = real(ibits(bpx, bc_n_E, 1))
-      b_s1 = real(ibits(bpx, bc_n_S, 1))
-      b_n1 = real(ibits(bpx, bc_n_N, 1))
-      b_b1 = real(ibits(bpx, bc_n_B, 1))
-      b_t1 = real(ibits(bpx, bc_n_T, 1))
+      ! セル界面のフラグ b_?1={0.0-wall face / 1.0-fluid} <<= bix={0-fluid, ID-wall}
+      b_w1 = 1.0
+      b_e1 = 1.0
+      b_s1 = 1.0
+      b_n1 = 1.0
+      b_b1 = 1.0
+      b_t1 = 1.0
+      if ( ibits(bix, bc_face_W, bitw_5) /= 0 ) b_w1 = 0.0
+      if ( ibits(bix, bc_face_E, bitw_5) /= 0 ) b_e1 = 0.0
+      if ( ibits(bix, bc_face_S, bitw_5) /= 0 ) b_s1 = 0.0
+      if ( ibits(bix, bc_face_N, bitw_5) /= 0 ) b_n1 = 0.0
+      if ( ibits(bix, bc_face_B, bitw_5) /= 0 ) b_b1 = 0.0
+      if ( ibits(bix, bc_face_T, bitw_5) /= 0 ) b_t1 = 0.0
+
 
       ! (i,j,k)を基準にした遠い方向なので，隣接セルで判断
-      b_w2 = real(ibits(bp(i-1,j  ,k  ), bc_n_W, 1))
-      b_e2 = real(ibits(bp(i+1,j  ,k  ), bc_n_E, 1))
-      b_s2 = real(ibits(bp(i  ,j-1,k  ), bc_n_S, 1))
-      b_n2 = real(ibits(bp(i  ,j+1,k  ), bc_n_N, 1))
-      b_b2 = real(ibits(bp(i  ,j  ,k-1), bc_n_B, 1))
-      b_t2 = real(ibits(bp(i  ,j  ,k+1), bc_n_T, 1))
+      b_w2 = 1.0
+      b_e2 = 1.0
+      b_s2 = 1.0
+      b_n2 = 1.0
+      b_b2 = 1.0
+      b_t2 = 1.0
+      if ( ibits(bid(i-1,j  ,k  ), bc_face_W, bitw_5) /= 0 ) b_w2 = 0.0
+      if ( ibits(bid(i+1,j  ,k  ), bc_face_E, bitw_5) /= 0 ) b_e2 = 0.0
+      if ( ibits(bid(i  ,j-1,k  ), bc_face_S, bitw_5) /= 0 ) b_s2 = 0.0
+      if ( ibits(bid(i  ,j+1,k  ), bc_face_N, bitw_5) /= 0 ) b_n2 = 0.0
+      if ( ibits(bid(i  ,j  ,k-1), bc_face_B, bitw_5) /= 0 ) b_b2 = 0.0
+      if ( ibits(bid(i  ,j  ,k+1), bc_face_T, bitw_5) /= 0 ) b_t2 = 0.0
 
 
       ! 各面のVBCフラグ ibits() = 0(Normal) / others(BC) >> c_e = 1.0(Normal) / 0.0(BC)
@@ -215,7 +228,8 @@
       if ( ibits(bvx, bc_face_S, bitw_5) /= 0 ) c_s = 0.0
       if ( ibits(bvx, bc_face_T, bitw_5) /= 0 ) c_t = 0.0
       if ( ibits(bvx, bc_face_B, bitw_5) /= 0 ) c_b = 0.0
-      
+
+
       ! ステンシルの参照先がvspec, outflowである場合のスキームの破綻を回避，１次精度におとす
       lmt_w = 1.0
       lmt_e = 1.0
@@ -223,20 +237,12 @@
       lmt_n = 1.0
       lmt_b = 1.0
       lmt_t = 1.0
-
-      if ( ibits(bp(i-1, j  , k  ), vbc_uwd, 1) == 1) lmt_w = 0.0
-      if ( ibits(bp(i+1, j  , k  ), vbc_uwd, 1) == 1) lmt_e = 0.0
-      if ( ibits(bp(i  , j-1, k  ), vbc_uwd, 1) == 1) lmt_s = 0.0
-      if ( ibits(bp(i  , j+1, k  ), vbc_uwd, 1) == 1) lmt_n = 0.0
-      if ( ibits(bp(i  , j  , k-1), vbc_uwd, 1) == 1) lmt_b = 0.0
-      if ( ibits(bp(i  , j  , k+1), vbc_uwd, 1) == 1) lmt_t = 0.0
-
-!if ( (ibits(bv(i-1, j  , k  ), bc_face_W, bitw_5) /= 0) .and. (ibits(bp(i-1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_w = 0.0
-!if ( (ibits(bv(i+1, j  , k  ), bc_face_E, bitw_5) /= 0) .and. (ibits(bp(i+1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_e = 0.0
-!if ( (ibits(bv(i  , j-1, k  ), bc_face_S, bitw_5) /= 0) .and. (ibits(bp(i  , j-1, k  ), vbc_uwd, 1) == 1) ) lmt_s = 0.0
-!if ( (ibits(bv(i  , j+1, k  ), bc_face_N, bitw_5) /= 0) .and. (ibits(bp(i  , j+1, k  ), vbc_uwd, 1) == 1) ) lmt_n = 0.0
-!if ( (ibits(bv(i  , j  , k-1), bc_face_B, bitw_5) /= 0) .and. (ibits(bp(i  , j  , k-1), vbc_uwd, 1) == 1) ) lmt_b = 0.0
-!if ( (ibits(bv(i  , j  , k+1), bc_face_T, bitw_5) /= 0) .and. (ibits(bp(i  , j  , k+1), vbc_uwd, 1) == 1) ) lmt_t = 0.0
+      if ( ibits(bid(i-1, j  , k  ), vbc_uwd, 1) == 1) lmt_w = 0.0
+      if ( ibits(bid(i+1, j  , k  ), vbc_uwd, 1) == 1) lmt_e = 0.0
+      if ( ibits(bid(i  , j-1, k  ), vbc_uwd, 1) == 1) lmt_s = 0.0
+      if ( ibits(bid(i  , j+1, k  ), vbc_uwd, 1) == 1) lmt_n = 0.0
+      if ( ibits(bid(i  , j  , k-1), vbc_uwd, 1) == 1) lmt_b = 0.0
+      if ( ibits(bid(i  , j  , k+1), vbc_uwd, 1) == 1) lmt_t = 0.0
 
 
       ! 界面速度（スタガード位置） > 24 flops
@@ -631,7 +637,7 @@
 !! @param [in]  v         セルセンター速度ベクトル（n-step）
 !! @param [in]  vf        セルフェイス速度ベクトル（n-step）
 !! @param [in]  bv        BCindex C
-!! @param [in]  bp        BCindex P
+!! @param [in]  bid       Cut ID
 !! @param [in]  vcs_coef  粘性項の係数（粘性項を計算しない場合には0.0）
 !! @param [in]  Cs        定数CS
 !! @param [in]  imodel    乱流モデル
@@ -639,10 +645,10 @@
 !! @param [in]  rho       密度
 !! @param [out] flop      浮動小数点演算数
 !<
-subroutine pvec_muscl_les (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bv, bp, vcs_coef, Cs, imodel, nu, rho, flop)
+subroutine pvec_muscl_les (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bv, bid, vcs_coef, Cs, imodel, nu, rho, flop)
 implicit none
 include 'ffv_f_params.h'
-integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, bpx
+integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, bix
 integer, dimension(3)                                     ::  sz
 double precision                                          ::  flop
 real                                                      ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
@@ -661,7 +667,7 @@ real                                                      ::  fu_r, fu_l, fv_r, 
 real                                                      ::  lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, wv, vf
 real, dimension(0:3)                                      ::  v00
-integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv, bp
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv, bid
 integer                                                   ::  imodel
 real                                                      ::  Cs, nu, rho, Cw
 real                                                      ::  DUDX, DUDY, DUDZ
@@ -731,7 +737,7 @@ flop = flop + dble(ix)*dble(jx)*dble(kx)*798.0d0
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dh1, dh2, vcs, b, ck, ss_4, ss, cm1, cm2) &
 !$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, rei) &
-!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bpx, uq, vq, wq) &
+!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bix, uq, vq, wq) &
 !$OMP PRIVATE(Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2) &
 !$OMP PRIVATE(Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2) &
 !$OMP PRIVATE(Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2) &
@@ -805,27 +811,40 @@ Wt1 = v(i  ,j  ,k+1, 3)
 Wt2 = v(i  ,j  ,k+2, 3)
 
 bvx = bv(i,j,k)
-bpx = bp(i,j,k)
+bix = bid(i,j,k)
 
 ! (i,j,k)からみたセル状態 (0-solid / 1-fluid)
 b_p = real(ibits(bvx, State, 1))
 
 ! 各方向に物体があれば，マスクはゼロ
-! セル界面のフラグとしても利用 (0-wall face / 1-fluid)
-b_w1 = real(ibits(bpx, bc_n_W, 1))
-b_e1 = real(ibits(bpx, bc_n_E, 1))
-b_s1 = real(ibits(bpx, bc_n_S, 1))
-b_n1 = real(ibits(bpx, bc_n_N, 1))
-b_b1 = real(ibits(bpx, bc_n_B, 1))
-b_t1 = real(ibits(bpx, bc_n_T, 1))
+! セル界面のフラグ b_?1={0.0-wall face / 1.0-fluid} <<= bix={0-fluid, ID-wall}
+b_w1 = 1.0
+b_e1 = 1.0
+b_s1 = 1.0
+b_n1 = 1.0
+b_b1 = 1.0
+b_t1 = 1.0
+if ( ibits(bix, bc_face_W, bitw_5) /= 0 ) b_w1 = 0.0
+if ( ibits(bix, bc_face_E, bitw_5) /= 0 ) b_e1 = 0.0
+if ( ibits(bix, bc_face_S, bitw_5) /= 0 ) b_s1 = 0.0
+if ( ibits(bix, bc_face_N, bitw_5) /= 0 ) b_n1 = 0.0
+if ( ibits(bix, bc_face_B, bitw_5) /= 0 ) b_b1 = 0.0
+if ( ibits(bix, bc_face_T, bitw_5) /= 0 ) b_t1 = 0.0
+
 
 ! (i,j,k)を基準にした遠い方向なので，隣接セルで判断
-b_w2 = real(ibits(bp(i-1,j  ,k  ), bc_n_W, 1))
-b_e2 = real(ibits(bp(i+1,j  ,k  ), bc_n_E, 1))
-b_s2 = real(ibits(bp(i  ,j-1,k  ), bc_n_S, 1))
-b_n2 = real(ibits(bp(i  ,j+1,k  ), bc_n_N, 1))
-b_b2 = real(ibits(bp(i  ,j  ,k-1), bc_n_B, 1))
-b_t2 = real(ibits(bp(i  ,j  ,k+1), bc_n_T, 1))
+b_w2 = 1.0
+b_e2 = 1.0
+b_s2 = 1.0
+b_n2 = 1.0
+b_b2 = 1.0
+b_t2 = 1.0
+if ( ibits(bid(i-1,j  ,k  ), bc_face_W, bitw_5) /= 0 ) b_w2 = 0.0
+if ( ibits(bid(i+1,j  ,k  ), bc_face_E, bitw_5) /= 0 ) b_e2 = 0.0
+if ( ibits(bid(i  ,j-1,k  ), bc_face_S, bitw_5) /= 0 ) b_s2 = 0.0
+if ( ibits(bid(i  ,j+1,k  ), bc_face_N, bitw_5) /= 0 ) b_n2 = 0.0
+if ( ibits(bid(i  ,j  ,k-1), bc_face_B, bitw_5) /= 0 ) b_b2 = 0.0
+if ( ibits(bid(i  ,j  ,k+1), bc_face_T, bitw_5) /= 0 ) b_t2 = 0.0
 
 
 ! 各面のVBCフラグ ibits() = 0(Normal) / others(BC) >> c_e = 1.0(Normal) / 0.0(BC)
@@ -842,6 +861,7 @@ if ( ibits(bvx, bc_face_S, bitw_5) /= 0 ) c_s = 0.0
 if ( ibits(bvx, bc_face_T, bitw_5) /= 0 ) c_t = 0.0
 if ( ibits(bvx, bc_face_B, bitw_5) /= 0 ) c_b = 0.0
 
+
 ! ステンシルの参照先がvspec, outflowである場合のスキームの破綻を回避，１次精度におとす
 lmt_w = 1.0
 lmt_e = 1.0
@@ -849,13 +869,12 @@ lmt_s = 1.0
 lmt_n = 1.0
 lmt_b = 1.0
 lmt_t = 1.0
-
-if ( ibits(bp(i-1, j  , k  ), vbc_uwd, 1) == 1) lmt_w = 0.0
-if ( ibits(bp(i+1, j  , k  ), vbc_uwd, 1) == 1) lmt_e = 0.0
-if ( ibits(bp(i  , j-1, k  ), vbc_uwd, 1) == 1) lmt_s = 0.0
-if ( ibits(bp(i  , j+1, k  ), vbc_uwd, 1) == 1) lmt_n = 0.0
-if ( ibits(bp(i  , j  , k-1), vbc_uwd, 1) == 1) lmt_b = 0.0
-if ( ibits(bp(i  , j  , k+1), vbc_uwd, 1) == 1) lmt_t = 0.0
+if ( ibits(bid(i-1, j  , k  ), vbc_uwd, 1) == 1) lmt_w = 0.0
+if ( ibits(bid(i+1, j  , k  ), vbc_uwd, 1) == 1) lmt_e = 0.0
+if ( ibits(bid(i  , j-1, k  ), vbc_uwd, 1) == 1) lmt_s = 0.0
+if ( ibits(bid(i  , j+1, k  ), vbc_uwd, 1) == 1) lmt_n = 0.0
+if ( ibits(bid(i  , j  , k-1), vbc_uwd, 1) == 1) lmt_b = 0.0
+if ( ibits(bid(i  , j  , k+1), vbc_uwd, 1) == 1) lmt_t = 0.0
 
 !if ( (ibits(bv(i-1, j  , k  ), bc_face_W, bitw_5) /= 0) .and. (ibits(bp(i-1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_w = 0.0
 !if ( (ibits(bv(i+1, j  , k  ), bc_face_E, bitw_5) /= 0) .and. (ibits(bp(i+1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_e = 0.0
@@ -1519,12 +1538,13 @@ end subroutine pvec_muscl_les
 !! @param [in]  p        圧力
 !! @param [in]  bp       BCindex P
 !! @param [in]  bv       BCindex C
+!! @param [in]  bid      Cut ID
 !! @param [out] flop     浮動小数点演算数
 !! @param [in   c_scheme 対流項スキーム
 !! @note
 !!    - actvのマスクはSPEC_VEL/OUTFLOWの参照セルをマスクしないようにbvを使う
 !<
-subroutine update_vec4 (v, vf, div, sz, g, dt, dh, vc, p, bp, bv, flop, c_scheme)
+subroutine update_vec4 (v, vf, div, sz, g, dt, dh, vc, p, bp, bv, bid, flop, c_scheme)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, g, bpx, bvx, c_scheme
@@ -1548,7 +1568,7 @@ real                                                      ::  dpx, dpy, dpz, dp_
 real                                                      ::  Uef, Uwf, Vnf, Vsf, Wtf, Wbf
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vc, vf
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div, p
-integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp, bv
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp, bv, bid
 
 
 c1 = 9.0/8.0
@@ -1679,13 +1699,12 @@ lmt_s = 1.0
 lmt_n = 1.0
 lmt_b = 1.0
 lmt_t = 1.0
-
-if ( ibits(bp(i-1, j,   k),   vbc_uwd, 1) == 1) lmt_w = 0.0
-if ( ibits(bp(i+1, j,   k),   vbc_uwd, 1) == 1) lmt_e = 0.0
-if ( ibits(bp(i,   j-1, k),   vbc_uwd, 1) == 1) lmt_s = 0.0
-if ( ibits(bp(i,   j+1, k),   vbc_uwd, 1) == 1) lmt_n = 0.0
-if ( ibits(bp(i,   j,   k-1), vbc_uwd, 1) == 1) lmt_b = 0.0
-if ( ibits(bp(i,   j,   k+1), vbc_uwd, 1) == 1) lmt_t = 0.0
+if ( ibits(bid(i-1, j,   k),   vbc_uwd, 1) == 1) lmt_w = 0.0
+if ( ibits(bid(i+1, j,   k),   vbc_uwd, 1) == 1) lmt_e = 0.0
+if ( ibits(bid(i,   j-1, k),   vbc_uwd, 1) == 1) lmt_s = 0.0
+if ( ibits(bid(i,   j+1, k),   vbc_uwd, 1) == 1) lmt_n = 0.0
+if ( ibits(bid(i,   j,   k-1), vbc_uwd, 1) == 1) lmt_b = 0.0
+if ( ibits(bid(i,   j,   k+1), vbc_uwd, 1) == 1) lmt_t = 0.0
 
 
 !---- target cell >> 24 flops
@@ -1784,13 +1803,13 @@ end subroutine update_vec4
 !! @param [in]     g    ガイドセル長
 !! @param [in]     vc   セルセンター疑似ベクトル
 !! @param [in]     bv   BCindex C
-!! @param [in]     bp   BCindex P
+!! @param [in]     bid  Cut ID
 !! @param [in,out] flop 浮動小数点演算数
 !<
-    subroutine divergence_cc (div, sz, g, vc, bv, bp, flop)
+    subroutine divergence_cc (div, sz, g, vc, bv, bid, flop)
     implicit none
     include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, g, bvx, bpx
+    integer                                                   ::  i, j, k, ix, jx, kx, g, bvx, bix
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
     real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb, actv
@@ -1799,7 +1818,7 @@ end subroutine update_vec4
     real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vc
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv, bp
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv, bid
 
     ix = sz(1)
     jx = sz(2)
@@ -1809,7 +1828,7 @@ end subroutine update_vec4
     flop  = flop + dble(ix)*dble(jx)*dble(kx)*37.0d0
 
 !$OMP PARALLEL &
-!$OMP PRIVATE(bvx, actv, bpx) &
+!$OMP PRIVATE(bvx, actv, bix) &
 !$OMP PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t) &
 !$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
 !$OMP PRIVATE(Ue0, Uw0, Up0, Vn0, Vs0, Vp0, Wb0, Wt0, Wp0) &
@@ -1822,7 +1841,7 @@ end subroutine update_vec4
     do j=1,jx
     do i=1,ix
       bvx = bv(i,j,k)
-      bpx = bp(i,j,k)
+      bix = bid(i,j,k)
       actv= real(ibits(bvx, State, 1))
       
       ! 各セルセンター位置の変数ロード
@@ -1838,13 +1857,19 @@ end subroutine update_vec4
       Wp0 = vc(i  ,j  ,k  , 3)
       Wt0 = vc(i  ,j  ,k+1, 3)
 
-      ! 物体があればノイマン条件なので，セルフェイスマスクとしても利用 (0-solid / 1-fluid)
-      b_w = real(ibits(bpx, bc_n_W, 1))
-      b_e = real(ibits(bpx, bc_n_E, 1))
-      b_s = real(ibits(bpx, bc_n_S, 1))
-      b_n = real(ibits(bpx, bc_n_N, 1))
-      b_b = real(ibits(bpx, bc_n_B, 1))
-      b_t = real(ibits(bpx, bc_n_T, 1))
+      ! 0-solid / 1-fluid
+b_w = 1.0
+b_e = 1.0
+b_s = 1.0
+b_n = 1.0
+b_b = 1.0
+b_t = 1.0
+if ( ibits(bix, bc_face_W, bitw_5) /= 0 ) b_w = 0.0
+if ( ibits(bix, bc_face_E, bitw_5) /= 0 ) b_e = 0.0
+if ( ibits(bix, bc_face_S, bitw_5) /= 0 ) b_s = 0.0
+if ( ibits(bix, bc_face_N, bitw_5) /= 0 ) b_n = 0.0
+if ( ibits(bix, bc_face_B, bitw_5) /= 0 ) b_b = 0.0
+if ( ibits(bix, bc_face_T, bitw_5) /= 0 ) b_t = 0.0
 
       Uw = 0.5*( Up0 + Uw0 )*b_w
       Ue = 0.5*( Up0 + Ue0 )*b_e
@@ -2133,14 +2158,14 @@ end subroutine update_vec4
 !! @param [in]  v         セルセンター速度ベクトル（n-step）
 !! @param [in]  vf        セルフェイス速度ベクトル（n-step）
 !! @param [in]  bv        BCindex C
-!! @param [in]  bp        BCindex P
+!! @param [in]  bid       Cut ID
 !! @param [in]  vcs_coef  粘性項の係数（粘性項を計算しない場合には0.0）
 !! @param [out] flop      浮動小数点演算数
 !<
-subroutine pvec_central (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bv, bp, vcs_coef, flop)
+subroutine pvec_central (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bv, bid, vcs_coef, flop)
 implicit none
 include 'ffv_f_params.h'
-integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, bpx
+integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, bix
 integer, dimension(3)                                     ::  sz
 double precision                                          ::  flop
 real                                                      ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
@@ -2160,7 +2185,7 @@ real                                                      ::  ufr4, ufl4, vfr4, 
 real                                                      ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, wv, vf
 real, dimension(0:3)                                      ::  v00
-integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv, bp
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv, bid
 
 ix = sz(1)
 jx = sz(2)
@@ -2202,7 +2227,7 @@ flop = flop + dble(ix)*dble(jx)*dble(kx)*330.0d0 + 28.0d0
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dh1, dh2, vcs, ss, c1, c2) &
 !$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, rei) &
-!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bpx, uq, vq, wq, sw1, sw2) &
+!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bix, uq, vq, wq, sw1, sw2) &
 !$OMP PRIVATE(Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2) &
 !$OMP PRIVATE(Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2) &
 !$OMP PRIVATE(Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2) &
@@ -2271,27 +2296,40 @@ Wt1 = v(i  ,j  ,k+1, 3)
 Wt2 = v(i  ,j  ,k+2, 3)
 
 bvx = bv(i,j,k)
-bpx = bp(i,j,k)
+bix = bid(i,j,k)
 
 ! (i,j,k)からみたセル状態 (0-solid / 1-fluid)
 b_p = real(ibits(bvx, State, 1))
 
 ! 各方向に物体があれば，マスクはゼロ
-! セル界面のフラグとしても利用 (0-wall face / 1-fluid)
-b_w1 = real(ibits(bpx, bc_n_W, 1))
-b_e1 = real(ibits(bpx, bc_n_E, 1))
-b_s1 = real(ibits(bpx, bc_n_S, 1))
-b_n1 = real(ibits(bpx, bc_n_N, 1))
-b_b1 = real(ibits(bpx, bc_n_B, 1))
-b_t1 = real(ibits(bpx, bc_n_T, 1))
+! セル界面のフラグ b_?1={0.0-wall face / 1.0-fluid} <<= bix={0-fluid, ID-wall}
+b_w1 = 1.0
+b_e1 = 1.0
+b_s1 = 1.0
+b_n1 = 1.0
+b_b1 = 1.0
+b_t1 = 1.0
+if ( ibits(bix, bc_face_W, bitw_5) /= 0 ) b_w1 = 0.0
+if ( ibits(bix, bc_face_E, bitw_5) /= 0 ) b_e1 = 0.0
+if ( ibits(bix, bc_face_S, bitw_5) /= 0 ) b_s1 = 0.0
+if ( ibits(bix, bc_face_N, bitw_5) /= 0 ) b_n1 = 0.0
+if ( ibits(bix, bc_face_B, bitw_5) /= 0 ) b_b1 = 0.0
+if ( ibits(bix, bc_face_T, bitw_5) /= 0 ) b_t1 = 0.0
+
 
 ! (i,j,k)を基準にした遠い方向なので，隣接セルで判断
-b_w2 = real(ibits(bp(i-1,j  ,k  ), bc_n_W, 1))
-b_e2 = real(ibits(bp(i+1,j  ,k  ), bc_n_E, 1))
-b_s2 = real(ibits(bp(i  ,j-1,k  ), bc_n_S, 1))
-b_n2 = real(ibits(bp(i  ,j+1,k  ), bc_n_N, 1))
-b_b2 = real(ibits(bp(i  ,j  ,k-1), bc_n_B, 1))
-b_t2 = real(ibits(bp(i  ,j  ,k+1), bc_n_T, 1))
+b_w2 = 1.0
+b_e2 = 1.0
+b_s2 = 1.0
+b_n2 = 1.0
+b_b2 = 1.0
+b_t2 = 1.0
+if ( ibits(bid(i-1,j  ,k  ), bc_face_W, bitw_5) /= 0 ) b_w2 = 0.0
+if ( ibits(bid(i+1,j  ,k  ), bc_face_E, bitw_5) /= 0 ) b_e2 = 0.0
+if ( ibits(bid(i  ,j-1,k  ), bc_face_S, bitw_5) /= 0 ) b_s2 = 0.0
+if ( ibits(bid(i  ,j+1,k  ), bc_face_N, bitw_5) /= 0 ) b_n2 = 0.0
+if ( ibits(bid(i  ,j  ,k-1), bc_face_B, bitw_5) /= 0 ) b_b2 = 0.0
+if ( ibits(bid(i  ,j  ,k+1), bc_face_T, bitw_5) /= 0 ) b_t2 = 0.0
 
 
 ! 各面のVBCフラグ ibits() = 0(Normal) / others(BC) >> c_e = 1.0(Normal) / 0.0(BC)
@@ -2315,13 +2353,12 @@ lmt_s = 1.0
 lmt_n = 1.0
 lmt_b = 1.0
 lmt_t = 1.0
-
-if ( ibits(bp(i-1, j  , k  ), vbc_uwd, 1) == 1) lmt_w = 0.0
-if ( ibits(bp(i+1, j  , k  ), vbc_uwd, 1) == 1) lmt_e = 0.0
-if ( ibits(bp(i  , j-1, k  ), vbc_uwd, 1) == 1) lmt_s = 0.0
-if ( ibits(bp(i  , j+1, k  ), vbc_uwd, 1) == 1) lmt_n = 0.0
-if ( ibits(bp(i  , j  , k-1), vbc_uwd, 1) == 1) lmt_b = 0.0
-if ( ibits(bp(i  , j  , k+1), vbc_uwd, 1) == 1) lmt_t = 0.0
+if ( ibits(bid(i-1, j  , k  ), vbc_uwd, 1) == 1) lmt_w = 0.0
+if ( ibits(bid(i+1, j  , k  ), vbc_uwd, 1) == 1) lmt_e = 0.0
+if ( ibits(bid(i  , j-1, k  ), vbc_uwd, 1) == 1) lmt_s = 0.0
+if ( ibits(bid(i  , j+1, k  ), vbc_uwd, 1) == 1) lmt_n = 0.0
+if ( ibits(bid(i  , j  , k-1), vbc_uwd, 1) == 1) lmt_b = 0.0
+if ( ibits(bid(i  , j  , k+1), vbc_uwd, 1) == 1) lmt_t = 0.0
 
 
 !if ( (ibits(bv(i-1, j  , k  ), bc_face_W, bitw_5) /= 0) .and. (ibits(bp(i-1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_w = 0.0
@@ -2564,7 +2601,7 @@ end subroutine pvec_central
 !! @param [in]  v         セルセンター速度ベクトル（n-step）
 !! @param [in]  vf        セルフェイス速度ベクトル（n-step）
 !! @param [in]  bv        BCindex C
-!! @param [in]  bp        BCindex P
+!! @param [in]  bid       Cut ID
 !! @param [in]  vcs_coef  粘性項の係数（粘性項を計算しない場合には0.0）
 !! @param [in]  Cs        定数CS
 !! @param [in]  imodel    乱流モデル
@@ -2572,10 +2609,10 @@ end subroutine pvec_central
 !! @param [in]  rho       密度
 !! @param [out] flop      浮動小数点演算数
 !<
-subroutine pvec_central_les (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bv, bp, vcs_coef, Cs, imodel, nu, rho, flop)
+subroutine pvec_central_les (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bv, bid, vcs_coef, Cs, imodel, nu, rho, flop)
 implicit none
 include 'ffv_f_params.h'
-integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, bpx
+integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, bix
 integer, dimension(3)                                     ::  sz
 double precision                                          ::  flop
 real                                                      ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
@@ -2595,7 +2632,7 @@ real                                                      ::  ufr4, ufl4, vfr4, 
 real                                                      ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, wv, vf
 real, dimension(0:3)                                      ::  v00
-integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv, bp
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv, bid
 integer                                                   :: imodel
 real                                                      ::  Cs, nu, rho, Cw
 real                                                      ::  DUDX, DUDY, DUDZ
@@ -2651,7 +2688,7 @@ flop = flop + dble(ix)*dble(jx)*dble(kx)*330.0d0 + 28.0d0
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dh1, dh2, vcs, ss, c1, c2) &
 !$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, rei) &
-!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bpx, uq, vq, wq, sw1, sw2) &
+!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bix, uq, vq, wq, sw1, sw2) &
 !$OMP PRIVATE(Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2) &
 !$OMP PRIVATE(Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2) &
 !$OMP PRIVATE(Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2) &
@@ -2728,27 +2765,40 @@ Wt1 = v(i  ,j  ,k+1, 3)
 Wt2 = v(i  ,j  ,k+2, 3)
 
 bvx = bv(i,j,k)
-bpx = bp(i,j,k)
+bix = bid(i,j,k)
 
 ! (i,j,k)からみたセル状態 (0-solid / 1-fluid)
 b_p = real(ibits(bvx, State, 1))
 
 ! 各方向に物体があれば，マスクはゼロ
-! セル界面のフラグとしても利用 (0-wall face / 1-fluid)
-b_w1 = real(ibits(bpx, bc_n_W, 1))
-b_e1 = real(ibits(bpx, bc_n_E, 1))
-b_s1 = real(ibits(bpx, bc_n_S, 1))
-b_n1 = real(ibits(bpx, bc_n_N, 1))
-b_b1 = real(ibits(bpx, bc_n_B, 1))
-b_t1 = real(ibits(bpx, bc_n_T, 1))
+! セル界面のフラグ b_?1={0.0-wall face / 1.0-fluid} <<= bix={0-fluid, ID-wall}
+b_w1 = 1.0
+b_e1 = 1.0
+b_s1 = 1.0
+b_n1 = 1.0
+b_b1 = 1.0
+b_t1 = 1.0
+if ( ibits(bix, bc_face_W, bitw_5) /= 0 ) b_w1 = 0.0
+if ( ibits(bix, bc_face_E, bitw_5) /= 0 ) b_e1 = 0.0
+if ( ibits(bix, bc_face_S, bitw_5) /= 0 ) b_s1 = 0.0
+if ( ibits(bix, bc_face_N, bitw_5) /= 0 ) b_n1 = 0.0
+if ( ibits(bix, bc_face_B, bitw_5) /= 0 ) b_b1 = 0.0
+if ( ibits(bix, bc_face_T, bitw_5) /= 0 ) b_t1 = 0.0
+
 
 ! (i,j,k)を基準にした遠い方向なので，隣接セルで判断
-b_w2 = real(ibits(bp(i-1,j  ,k  ), bc_n_W, 1))
-b_e2 = real(ibits(bp(i+1,j  ,k  ), bc_n_E, 1))
-b_s2 = real(ibits(bp(i  ,j-1,k  ), bc_n_S, 1))
-b_n2 = real(ibits(bp(i  ,j+1,k  ), bc_n_N, 1))
-b_b2 = real(ibits(bp(i  ,j  ,k-1), bc_n_B, 1))
-b_t2 = real(ibits(bp(i  ,j  ,k+1), bc_n_T, 1))
+b_w2 = 1.0
+b_e2 = 1.0
+b_s2 = 1.0
+b_n2 = 1.0
+b_b2 = 1.0
+b_t2 = 1.0
+if ( ibits(bid(i-1,j  ,k  ), bc_face_W, bitw_5) /= 0 ) b_w2 = 0.0
+if ( ibits(bid(i+1,j  ,k  ), bc_face_E, bitw_5) /= 0 ) b_e2 = 0.0
+if ( ibits(bid(i  ,j-1,k  ), bc_face_S, bitw_5) /= 0 ) b_s2 = 0.0
+if ( ibits(bid(i  ,j+1,k  ), bc_face_N, bitw_5) /= 0 ) b_n2 = 0.0
+if ( ibits(bid(i  ,j  ,k-1), bc_face_B, bitw_5) /= 0 ) b_b2 = 0.0
+if ( ibits(bid(i  ,j  ,k+1), bc_face_T, bitw_5) /= 0 ) b_t2 = 0.0
 
 
 ! 各面のVBCフラグ ibits() = 0(Normal) / others(BC) >> c_e = 1.0(Normal) / 0.0(BC)
@@ -2772,13 +2822,12 @@ lmt_s = 1.0
 lmt_n = 1.0
 lmt_b = 1.0
 lmt_t = 1.0
-
-if ( ibits(bp(i-1, j  , k  ), vbc_uwd, 1) == 1) lmt_w = 0.0
-if ( ibits(bp(i+1, j  , k  ), vbc_uwd, 1) == 1) lmt_e = 0.0
-if ( ibits(bp(i  , j-1, k  ), vbc_uwd, 1) == 1) lmt_s = 0.0
-if ( ibits(bp(i  , j+1, k  ), vbc_uwd, 1) == 1) lmt_n = 0.0
-if ( ibits(bp(i  , j  , k-1), vbc_uwd, 1) == 1) lmt_b = 0.0
-if ( ibits(bp(i  , j  , k+1), vbc_uwd, 1) == 1) lmt_t = 0.0
+if ( ibits(bid(i-1, j  , k  ), vbc_uwd, 1) == 1) lmt_w = 0.0
+if ( ibits(bid(i+1, j  , k  ), vbc_uwd, 1) == 1) lmt_e = 0.0
+if ( ibits(bid(i  , j-1, k  ), vbc_uwd, 1) == 1) lmt_s = 0.0
+if ( ibits(bid(i  , j+1, k  ), vbc_uwd, 1) == 1) lmt_n = 0.0
+if ( ibits(bid(i  , j  , k-1), vbc_uwd, 1) == 1) lmt_b = 0.0
+if ( ibits(bid(i  , j  , k+1), vbc_uwd, 1) == 1) lmt_t = 0.0
 
 !if ( (ibits(bv(i-1, j  , k  ), bc_face_W, bitw_5) /= 0) .and. (ibits(bp(i-1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_w = 0.0
 !if ( (ibits(bv(i+1, j  , k  ), bc_face_E, bitw_5) /= 0) .and. (ibits(bp(i+1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_e = 0.0

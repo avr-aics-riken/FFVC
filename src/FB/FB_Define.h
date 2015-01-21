@@ -192,10 +192,8 @@
 #define FACING_E   4
 #define FACING_W   3
 #define VLD_CNVG   2
-#define VBC_UWD    1
 
-
-// エンコードビット　C
+// エンコードビット　C, bid
 #define BC_FACE_T  25
 #define BC_FACE_B  20
 #define BC_FACE_N  15
@@ -203,8 +201,12 @@
 #define BC_FACE_E  5
 #define BC_FACE_W  0
 
+// エンコードビット bid
+#define VBC_UWD 30
+
 // エンコードビット CUT
 #define TOP_CUT 6
+
 
 // Component Type
 #define OBSTACLE     1

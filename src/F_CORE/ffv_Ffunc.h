@@ -226,7 +226,7 @@ extern "C" {
                   REAL_TYPE* v00,
                   REAL_TYPE* v,
                   REAL_TYPE* ie,
-                  int* bp,
+                  int* bid,
                   int* cdf,
                   int* bh,
                   int* swt,
@@ -515,7 +515,7 @@ extern "C" {
                        int* g,
                        REAL_TYPE* vc,
                        int* bv,
-                       int* bp,
+                       int* bid,
                        double* flop);
   
   void eddy_viscosity_    (REAL_TYPE* vt,
@@ -548,7 +548,7 @@ extern "C" {
                            REAL_TYPE* v,
                            REAL_TYPE* vf,
                            int* bv,
-                           int* bp,
+                           int* bid,
                            REAL_TYPE* vcs_coef,
                            double* flop);
   
@@ -562,7 +562,7 @@ extern "C" {
                            REAL_TYPE* v,
                            REAL_TYPE* vf,
                            int* bv,
-                           int* bp,
+                           int* bid,
                            REAL_TYPE* vcs_coef,
                            double* flop);
   
@@ -590,6 +590,7 @@ extern "C" {
                      REAL_TYPE* p,
                      int* bp,
                      int* bv,
+                     int* bid,
                      double* flop,
                      int* c_scheme);
   
@@ -603,7 +604,7 @@ extern "C" {
                         REAL_TYPE* v,
                         REAL_TYPE* vf,
                         int* bv,
-                        int* bp,
+                        int* bid,
                         REAL_TYPE* vcs_coef,
                         REAL_TYPE* Cs,
                         int* imodel,
@@ -621,7 +622,7 @@ extern "C" {
                           REAL_TYPE* v,
                           REAL_TYPE* vf,
                           int* bv,
-                          int* bp,
+                          int* bid,
                           REAL_TYPE* vcs_coef,
                           REAL_TYPE* Cs,
                           int* imodel,

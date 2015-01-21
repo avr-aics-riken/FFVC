@@ -20,6 +20,8 @@ REVISION HISTORY
 
 --------------------------
 2015-01-21
+r1581 bug fix in paintedCutOnPoint in Geometry.C
+
 r1580 modify cut index and related functions
 
 --------------------------

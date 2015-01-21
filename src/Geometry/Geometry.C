@@ -1982,7 +1982,7 @@ unsigned long Geometry::modifyCutOnPoint(int* bid, long long* cut, const int* bc
  * @param [in]     Dsize     サイズ
  * @retval フィルされたセル数
  */
-unsigned long Geometry::paintCutOnPoint(int* bcd, int* bid, const long long* cut, const int m_NoCompo, const int* Dsize)
+unsigned long Geometry::paintCutOnPoint(int* bcd, int* bid, long long* cut, const int m_NoCompo, const int* Dsize)
 {
   int ix, jx, kx, gd;
   
@@ -2003,7 +2003,7 @@ unsigned long Geometry::paintCutOnPoint(int* bcd, int* bid, const long long* cut
   
   unsigned long c = 0;
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
+//#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -2011,9 +2011,9 @@ unsigned long Geometry::paintCutOnPoint(int* bcd, int* bid, const long long* cut
         size_t m = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
         
         int qq = bid[m];
-        const long long pos = cut[m];
+        long long pos = cut[m];
         
-        // 定義点上の場合（交点があり、かつ距離がゼロ）
+        // どの方向かが、定義点上の場合（交点があり、かつ距離がゼロ）
         if ( chkZeroCut(pos, X_minus) ||
              chkZeroCut(pos, X_plus ) ||
              chkZeroCut(pos, Y_minus) ||
@@ -2030,9 +2030,8 @@ unsigned long Geometry::paintCutOnPoint(int* bcd, int* bid, const long long* cut
                                            getBit5(qq, Z_plus),
                                            m_NoCompo);
 #if 0
-          printf("(%3d %3d %3d) %d %d %d %d %d %d : %d : %3d %3d %3d %3d %3d %3d : %d %d %d %d %d %d\n",
+          printf("(%3d %3d %3d) %3d %3d %3d %3d %3d %3d : %d %d %d %d %d %d\n",
                  i,j,k,
-                 qw, qe, qs, qn, qb, qt, sd,
                  getBit9(pos, 0),
                  getBit9(pos, 1),
                  getBit9(pos, 2),
@@ -2049,7 +2048,18 @@ unsigned long Geometry::paintCutOnPoint(int* bcd, int* bid, const long long* cut
 #endif
           if ( sd == 0 ) Exit(0);
           
+          // セルを固体にする
           setBitID(bcd[m], sd);
+          
+          
+          // 6方向とも交点ゼロにする
+          setCut9(pos, 0, X_minus);
+          setCut9(pos, 0, X_plus);
+          setCut9(pos, 0, Y_minus);
+          setCut9(pos, 0, Y_plus);
+          setCut9(pos, 0, Z_minus);
+          setCut9(pos, 0, Z_plus);
+          cut[m] = pos;
           
           setBit5(qq, sd, X_minus);
           setBit5(qq, sd, X_plus);
@@ -3553,16 +3563,12 @@ bool Geometry::TriangleIntersect(const Vec3r ray_o,
                                  const Vec3r v0,
                                  const Vec3r v1,
                                  const Vec3r v2,
-                                 REAL_TYPE *pRetT,
-                                 REAL_TYPE *pRetU,
-                                 REAL_TYPE *pRetV)
+                                 REAL_TYPE& t,
+                                 REAL_TYPE& u,
+                                 REAL_TYPE& v)
 {
   const REAL_TYPE m_eps = REAL_TYPE_EPSILON*2.0; //ROUND_EPS;
   Vec3r tvec, qvec;
-  
-  REAL_TYPE t; // 交点距離
-  REAL_TYPE u; // 交点情報
-  REAL_TYPE v; // 交点情報
   
   Vec3r e1 = v1 - v0;
   Vec3r e2 = v2 - v0;
@@ -3603,10 +3609,6 @@ bool Geometry::TriangleIntersect(const Vec3r ray_o,
   t *= inv_det;
   u *= inv_det;
   v *= inv_det;
-  
-  *pRetT = t;
-  *pRetU = u;
-  *pRetV = v;
   
   return true;
 }
@@ -3676,7 +3678,7 @@ unsigned Geometry::updateCut(const Vec3r ray_o,
   
   // 交点計算
   REAL_TYPE t, u, v;
-  if ( !TriangleIntersect(ray_o, d, v0, v1, v2, &t, &u, &v) ) return 0;
+  if ( !TriangleIntersect(ray_o, d, v0, v1, v2, t, u, v) ) return 0;
 
   /* 交点 >> 必要な場合に使う
    px = d.x * t + ray_o.x;
