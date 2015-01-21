@@ -515,7 +515,7 @@ protected:
     if ( record )
     {
       setBit5(bid, pid, dir);
-      setBit10(cut, r, dir);
+      setCut9(cut, r, dir);
       //printf("%10.6f %6d dir=%d\n", t,r,dir);
     }
     
@@ -581,7 +581,7 @@ protected:
     if ( record )
     {
       setBit5(bid, pid, dir);
-      setBit10(cut, r, dir);
+      setCut9(cut, r, dir);
       //printf("%10.6f %6d dir=%d %d %d\n", t,r,dir, getBit5(bid, dir), getBit9(cut, dir));
     }
     

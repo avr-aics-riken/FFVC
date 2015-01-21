@@ -203,6 +203,8 @@
 #define BC_FACE_E  5
 #define BC_FACE_W  0
 
+// エンコードビット CUT
+#define TOP_CUT 6
 
 // Component Type
 #define OBSTACLE     1
@@ -635,94 +637,95 @@ inline void setBitID (int& b, const int q)
 
 
 /*
- * @brief 10bit幅から指定方向交点の有無を返す
- * @param [in] b    long long variable
+ * @brief cut indexから指定方向交点の有無を返す
+ * @param [in] c    cut index
  * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
  * @retval 交点あり(1)、なし(0)
  */
-inline int ensCut (const long long b, const int dir)
+inline int ensCut (const long long c, const int dir)
 {
   long long a = 1;
-  return (((b >> (dir*10+9)) & a ) == 1) ? 1 : 0;
+  return (int)((c >> dir) & a);
 }
 
 
 /*
  * @brief 指定方向交点の有無と距離0のチェック
- * @param [in] b    long long variable
+ * @param [in] c    cut index
  * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
  * @retval 交点があり、かつ、距離がゼロのとき1
  */
-inline int chkZeroCut (const long long b, const int dir)
+inline int chkZeroCut (const long long c, const int dir)
 {
   // 各方向の10ビット
-  long long c = b >> dir*10;
+  long long b = (c >> TOP_CUT) >> dir*9;
   long long a = 1;
   
   // 交点の有無
-  int ens = (int)((c >> 9) & a);
+  int ens = (int)((c >> dir) & a);
   
   // 量子化した距離 9ビット幅
   a = MASK_9;
-  int d = (int)(c & a);
+  int d = (int)(b & a);
   
   return ( ens & !d ) ? 1 : 0;
 }
 
 
 /*
- * @brief 10bit幅から指定方向の量子化値をとりだす
- * @param [in] b    long long variable
+ * @brief cut indexから指定方向の量子化値をとりだす
+ * @param [in] c    cut index
  * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
  */
-inline int getBit9 (const long long b, const int dir)
+inline int getBit9 (const long long c, const int dir)
 {
   long long a = MASK_9;
-  return (int)( (b >> dir*10) & a );
+  return (int)( ((c >> TOP_CUT) >> dir*9) & a );
 }
 
 
 /*
- * @brief 9bit幅から指定方向の距離を取り出す
- * @param [in] b    long long variable
+ * @brief cut indexから指定方向の距離を取り出す
+ * @param [in] c    cut index
  * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
  */
-inline REAL_TYPE getCut9 (const long long b, const int dir)
+inline REAL_TYPE getCut9 (const long long c, const int dir)
 {
   long long a = MASK_9;
-  return (REAL_TYPE)( (b >> dir*10) & a ) / (REAL_TYPE)QT_9;
+  return (REAL_TYPE)( ((c >> TOP_CUT) >> dir*9) & a ) / (REAL_TYPE)QT_9;
 }
 
 
 /*
- * @brief 10bit幅の値の設定（9bit幅の値と9bitめのフラグ）
- * @param [in,out] b   long long 変数
+ * @brief cut indexの値の設定（9bit幅の値と交点フラグ）
+ * @param [in,out] c   cut index
  * @param [in]     q   9-bit幅の値
  * @param [in]     dir 方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
  */
-inline void setBit10 (long long& b, const int q, const int dir)
+inline void setCut9 (long long& c, const int q, const int dir)
 {
-  long long a = MASK_10;
-  long long c = q;
-  b &= (~(a << (dir*10)) );     // 対象10bitをゼロにする
-  b |= ( c << (dir*10));        // 値を書き込む
+  long long a = MASK_9;
+  long long b = q;
+  c &= ( ~( (a<<dir*9) << TOP_CUT) );  // 対象9bitをゼロにする
+  c |= ( (b<<dir*9) << TOP_CUT );      // 値を書き込む
   a = 1;
-  b |= (a << (dir*10+9) );      // 第9bitのフラグをON
+  c &= ( ~(a<<dir) );   // 交点フラグをクリア
+  c |= (a<<dir);        // 交点フラグをON
 }
 
 
 /*
- * @brief 9bit幅の値を511で初期化
- * @param [in,out] b   long long 変数
+ * @brief cut indexを511で初期化
+ * @param [in,out] c   cut index
  * @param [in]     dir 方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
  */
-inline void initBit9 (long long& b, const int dir)
+inline void initBit9 (long long& c, const int dir)
 {
-  long long a = MASK_10;
-  const long long c = QT_9;
+  long long a = MASK_9;
+  const long long b = QT_9; // 511
   
-  b &= (~(a << (dir*10)) );  // 対象10bitをゼロにする
-  b |= ( c << (dir*10));     // 値を書き込む
+  c &= ( ~( (a<<dir*9) << TOP_CUT) );  // 対象9bitをゼロにする
+  c |= ( (b<<dir*9) << TOP_CUT );      // 値を書き込む
 }
 
 

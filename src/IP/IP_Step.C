@@ -180,23 +180,23 @@ void IP_Step::setup(int* bcd, Control* R, const int NoMedium, const MediumList* 
           {
             setBit5(bid[m], mid_solid, X_plus);
             int r = quantize9(s);
-            setBit10(cut[m], r, X_plus);
+            setCut9(cut[m], r, X_plus);
             
             size_t m1 = _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd);
             setBit5(bid[m1], mid_solid, X_minus);
             int rr = quantize9(1.0-s);
-            setBit10(cut[m1], rr, X_minus);
+            setCut9(cut[m1], rr, X_minus);
           }
           else if ( (x-dh < len) && (len < x) )
           {
             setBit5(bid[m], mid_solid, X_minus);
             int r = quantize9(-s);
-            setBit10(cut[m], r, X_minus);
+            setCut9(cut[m], r, X_minus);
             
             size_t m1 = _F_IDX_S3D(i-1, j, k, ix, jx, kx, gd);
             setBit5(bid[m1], mid_solid, X_plus);
             int rr = quantize9(1.0+s);
-            setBit10(cut[m1], rr, X_plus);
+            setCut9(cut[m1], rr, X_plus);
           }
         }
 
@@ -219,23 +219,23 @@ void IP_Step::setup(int* bcd, Control* R, const int NoMedium, const MediumList* 
           {
             setBit5(bid[m], mid_solid, Z_plus);
             int r = quantize9(c);
-            setBit10(cut[m], r, Z_plus);
+            setCut9(cut[m], r, Z_plus);
 
             size_t m1 = _F_IDX_S3D(i, j, k+1, ix, jx, kx, gd);
             setBit5(bid[m1], mid_solid, Z_minus);
             int rr = quantize9(1.0-c);
-            setBit10(cut[m1], rr, Z_minus);
+            setCut9(cut[m1], rr, Z_minus);
           }
           else if ( (z-dh < ht) && (ht < z) )
           {
             setBit5(bid[m], mid_solid, Z_minus);
             int r = quantize9(-c);
-            setBit10(cut[m], r, Z_minus);
+            setCut9(cut[m], r, Z_minus);
 
             size_t m1 = _F_IDX_S3D(i, j, k-1, ix, jx, kx, gd);
             setBit5(bid[m1], mid_solid, Z_plus);
             int rr = quantize9(1.0+c);
-            setBit10(cut[m1], rr, Z_plus);
+            setCut9(cut[m1], rr, Z_plus);
           }
         }
         
@@ -262,7 +262,7 @@ void IP_Step::setup(int* bcd, Control* R, const int NoMedium, const MediumList* 
         // 交点
         size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
         int r = quantize9(0.5);
-        setBit10(cut[l], r, X_minus);
+        setCut9(cut[l], r, X_minus);
         
         // 境界ID
         setBit5(bid[l], mid_solid, X_minus);
@@ -284,7 +284,7 @@ void IP_Step::setup(int* bcd, Control* R, const int NoMedium, const MediumList* 
           
           size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
           int r = quantize9(1.0);
-          setBit10(cut[l], r, X_minus);
+          setCut9(cut[l], r, X_minus);
           setBit5(bid[l], 0, X_minus);
         }
       }

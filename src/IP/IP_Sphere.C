@@ -312,7 +312,7 @@ void IP_Sphere::setup(int* bcd, Control* R, const int NoMedium, const MediumList
             REAL_TYPE s = cut_line(p[0], l, rs, ph);
             size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
             int r = quantize9(s);
-            setBit10(cut[m], r, l-1);
+            setCut9(cut[m], r, l-1);
             setBit5(bid[m], mid_solid, l-1);
             
             int rr = quantize9(1.0-s);
@@ -322,37 +322,37 @@ void IP_Sphere::setup(int* bcd, Control* R, const int NoMedium, const MediumList
               case X_minus:
                 m1 = _F_IDX_S3D(i-1, j, k, ix, jx, kx, gd);
                 setBit5(bid[m1], mid_solid, X_plus);
-                setBit10(cut[m1], rr, X_plus);
+                setCut9(cut[m1], rr, X_plus);
                 break;
                 
               case X_plus:
                 m1 = _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd);
                 setBit5(bid[m1], mid_solid, X_minus);
-                setBit10(cut[m1], rr, X_minus);
+                setCut9(cut[m1], rr, X_minus);
                 break;
                 
               case Y_minus:
                 m1 = _F_IDX_S3D(i, j-1, k, ix, jx, kx, gd);
                 setBit5(bid[m1], mid_solid, Y_plus);
-                setBit10(cut[m1], rr, Y_plus);
+                setCut9(cut[m1], rr, Y_plus);
                 break;
                 
               case Y_plus:
                 m1 = _F_IDX_S3D(i, j+1, k, ix, jx, kx, gd);
                 setBit5(bid[m1], mid_solid, Y_minus);
-                setBit10(cut[m1], rr, Y_minus);
+                setCut9(cut[m1], rr, Y_minus);
                 break;
                 
               case Z_minus:
                 m1 = _F_IDX_S3D(i, j, k-1, ix, jx, kx, gd);
                 setBit5(bid[m1], mid_solid, Z_plus);
-                setBit10(cut[m1], rr, Z_plus);;
+                setCut9(cut[m1], rr, Z_plus);;
                 break;
                 
               case Z_plus:
                 m1 = _F_IDX_S3D(i, j, k+1, ix, jx, kx, gd);
                 setBit5(bid[m1], mid_solid, Z_minus);
-                setBit10(cut[m1], rr, Z_minus);
+                setCut9(cut[m1], rr, Z_minus);
                 break;
             }
             

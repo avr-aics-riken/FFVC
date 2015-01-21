@@ -304,16 +304,16 @@ unsigned long MonitorCompo::clearMonitorCut()
             if ( (fabs(dd-p_xm) < ROUND_EPS) && ( qw == rw ) ) // 流体にする
             {
               // iセルのX-方向
-              setBit10(ct[m], r1, X_minus);
+              setCut9(ct[m], r1, X_minus);
               setBit5(qq, 0, X_minus);
               
               // i-1セルのX+方向
-              setBit10(ct[m_w], r1, X_plus);
+              setCut9(ct[m_w], r1, X_plus);
               setBit5(bd[m_w], 0, X_plus);
             }
             else // 反対側の固体で置き換え
             {
-              setBit10(ct[m], quantize9(dd), X_minus);
+              setCut9(ct[m], quantize9(dd), X_minus);
               setBit5(qq, rw, X_minus);
             }
             flag++;
@@ -326,15 +326,15 @@ unsigned long MonitorCompo::clearMonitorCut()
             
             if ( (fabs(dd-p_xp) < ROUND_EPS) && ( qe == re ) )
             {
-              setBit10(ct[m], r1, X_plus);
+              setCut9(ct[m], r1, X_plus);
               setBit5(qq, 0, X_plus);
               
-              setBit10(ct[m_e], r1, X_minus);
+              setCut9(ct[m_e], r1, X_minus);
               setBit5(bd[m_e], 0, X_minus);
             }
             else
             {
-              setBit10(ct[m], quantize9(dd), X_plus);
+              setCut9(ct[m], quantize9(dd), X_plus);
               setBit5(qq, re, X_plus);
             }
             flag++;
@@ -347,15 +347,15 @@ unsigned long MonitorCompo::clearMonitorCut()
             
             if ( (fabs(dd-p_ym) < ROUND_EPS) && ( qs == rs ) )
             {
-              setBit10(ct[m], r1, Y_minus);
+              setCut9(ct[m], r1, Y_minus);
               setBit5(qq, 0, Y_minus);
               
-              setBit10(ct[m_s], r1, Y_plus);
+              setCut9(ct[m_s], r1, Y_plus);
               setBit5(bd[m_s], 0, Y_plus);
             }
             else
             {
-              setBit10(ct[m], quantize9(dd), Y_minus);
+              setCut9(ct[m], quantize9(dd), Y_minus);
               setBit5(qq, rs, Y_minus);
             }
             flag++;
@@ -368,15 +368,15 @@ unsigned long MonitorCompo::clearMonitorCut()
             
             if ( (fabs(dd-p_yp) < ROUND_EPS) && ( qn == rn ) )
             {
-              setBit10(ct[m], r1, Y_plus);
+              setCut9(ct[m], r1, Y_plus);
               setBit5(qq, 0, Y_plus);
               
-              setBit10(ct[m_n], r1, Y_minus);
+              setCut9(ct[m_n], r1, Y_minus);
               setBit5(bd[m_n], 0, Y_minus);
             }
             else
             {
-              setBit10(ct[m], quantize9(dd), Y_plus);
+              setCut9(ct[m], quantize9(dd), Y_plus);
               setBit5(qq, rn, Y_plus);
             }
             flag++;
@@ -389,15 +389,15 @@ unsigned long MonitorCompo::clearMonitorCut()
             
             if ( (fabs(dd-p_zm) < ROUND_EPS) && ( qb == rb ) )
             {
-              setBit10(ct[m], r1, Z_minus);
+              setCut9(ct[m], r1, Z_minus);
               setBit5(qq, 0, Z_minus);
               
-              setBit10(ct[m_b], r1, Z_plus);
+              setCut9(ct[m_b], r1, Z_plus);
               setBit5(bd[m_b], 0, Z_plus);
             }
             else
             {
-              setBit10(ct[m], quantize9(dd), Z_minus);
+              setCut9(ct[m], quantize9(dd), Z_minus);
               setBit5(qq, rb, Z_minus);
             }
             flag++;
@@ -410,15 +410,15 @@ unsigned long MonitorCompo::clearMonitorCut()
             
             if ( (fabs(dd-p_zp) < ROUND_EPS) && ( qt == rt ) )
             {
-              setBit10(ct[m], r1, Z_plus);
+              setCut9(ct[m], r1, Z_plus);
               setBit5(qq, 0, Z_plus);
               
-              setBit10(ct[m_t], r1, Z_minus);
+              setCut9(ct[m_t], r1, Z_minus);
               setBit5(bd[m_t], 0, Z_minus);
             }
             else
             {
-              setBit10(ct[m], quantize9(dd), Z_plus);
+              setCut9(ct[m], quantize9(dd), Z_plus);
               setBit5(qq, rt, Z_plus);
             }
             flag++;

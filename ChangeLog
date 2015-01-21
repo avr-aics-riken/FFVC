@@ -19,6 +19,10 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-01-21
+r1580 modify cut index and related functions
+
+--------------------------
 2015-01-20
 r1579 expire polygon scaling, then Unit.Length is limited to "M" and "Non-dimensional"
 

@@ -643,7 +643,7 @@ schedule(static)
           // 交点
           size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
           int r = quantize9(0.5); /// 壁面までの距離
-          setBit10(cut[l], r, X_minus);
+          setCut9(cut[l], r, X_minus);
           
           // 境界ID
           setBit5(bid[l], mid_solid, X_minus);
@@ -674,7 +674,7 @@ schedule(static)
               
               size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
               int r = quantize9(1.0);
-              setBit10(cut[l], r, X_minus);
+              setCut9(cut[l], r, X_minus);
               setBit5(bid[l], 0, X_minus);
             }
             
@@ -706,7 +706,7 @@ schedule(static)
               
               size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
               int r = quantize9(1.0);
-              setBit10(cut[l], r, X_minus);
+              setCut9(cut[l], r, X_minus);
               setBit5(bid[l], 0, X_minus);
             }
             

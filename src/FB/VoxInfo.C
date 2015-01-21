@@ -3882,7 +3882,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
             size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
             setBit5(bid[l], did, X_minus);
             setBitID(bcd[m], tgt);
-            setBit10(cut[l], quantize9(pos), X_minus);
+            setCut9(cut[l], quantize9(pos), X_minus);
           }
         }
       }
@@ -3901,7 +3901,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
             size_t l = _F_IDX_S3D(ix  , j  , k  , ix, jx, kx, gd);
             setBit5(bid[l], did, X_plus);
             setBitID(bcd[m], tgt);
-            setBit10(cut[l], quantize9(pos), X_plus);
+            setCut9(cut[l], quantize9(pos), X_plus);
           }
         }
       }
@@ -3920,7 +3920,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
             size_t l = _F_IDX_S3D(i  , 1  , k  , ix, jx, kx, gd);
             setBit5(bid[l], did, Y_minus);
             setBitID(bcd[m], tgt);
-            setBit10(cut[l], quantize9(pos), Y_minus);
+            setCut9(cut[l], quantize9(pos), Y_minus);
           }
         }
       }
@@ -3939,7 +3939,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
             size_t l = _F_IDX_S3D(i  , jx  , k  , ix, jx, kx, gd);
             setBit5(bid[l], did, Y_plus);
             setBitID(bcd[m], tgt);
-            setBit10(cut[l], quantize9(pos), Y_plus);
+            setCut9(cut[l], quantize9(pos), Y_plus);
           }
         }
       }
@@ -3958,7 +3958,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
             size_t l = _F_IDX_S3D(i  , j  , 1  , ix, jx, kx, gd);
             setBit5(bid[l], did, Z_minus);
             setBitID(bcd[m], tgt);
-            setBit10(cut[l], quantize9(pos), Z_minus);
+            setCut9(cut[l], quantize9(pos), Z_minus);
           }
         }
       }
@@ -3976,7 +3976,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
             size_t l = _F_IDX_S3D(i  , j  , kx  , ix, jx, kx, gd);
             setBit5(bid[l], did, Z_plus);
             setBitID(bcd[m], tgt);
-            setBit10(cut[l], quantize9(pos), Z_plus);
+            setCut9(cut[l], quantize9(pos), Z_plus);
           }
         }
       }

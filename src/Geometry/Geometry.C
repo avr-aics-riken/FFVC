@@ -1914,42 +1914,42 @@ unsigned long Geometry::modifyCutOnPoint(int* bid, long long* cut, const int* bc
         if ( chkZeroCut(pos, X_minus) > 0 && !ensCut(cut[m_w], X_plus) )
         {
           setBit5 (bid[m_w], bb,   X_plus);
-          setBit10(cut[m_w], QT_9, X_plus);
+          setCut9(cut[m_w], QT_9, X_plus);
           c++;
         }
         
         if ( chkZeroCut(pos, X_plus) > 0  && !ensCut(cut[m_e], X_minus) )
         {
           setBit5 (bid[m_e], bb,   X_minus);
-          setBit10(cut[m_e], QT_9, X_minus);
+          setCut9(cut[m_e], QT_9, X_minus);
           c++;
         }
         
         if ( chkZeroCut(pos, Y_minus) > 0 && !ensCut(cut[m_s], Y_plus) )
         {
           setBit5 (bid[m_s], bb,   Y_plus);
-          setBit10(cut[m_s], QT_9, Y_plus);
+          setCut9(cut[m_s], QT_9, Y_plus);
           c++;
         }
         
         if ( chkZeroCut(pos, Y_plus) > 0  && !ensCut(cut[m_n], Y_minus) )
         {
           setBit5 (bid[m_n], bb,   Y_minus);
-          setBit10(cut[m_n], QT_9, Y_minus);
+          setCut9(cut[m_n], QT_9, Y_minus);
           c++;
         }
         
         if ( chkZeroCut(pos, Z_minus) > 0 && !ensCut(cut[m_b], Z_plus) )
         {
           setBit5 (bid[m_b], bb,   Z_plus);
-          setBit10(cut[m_b], QT_9, Z_plus);
+          setCut9(cut[m_b], QT_9, Z_plus);
           c++;
         }
         
         if ( chkZeroCut(pos, Z_plus) > 0  && !ensCut(cut[m_t], Z_minus) )
         {
           setBit5 (bid[m_t], bb,   Z_minus);
-          setBit10(cut[m_t], QT_9, Z_minus);
+          setCut9(cut[m_t], QT_9, Z_minus);
           c++;
         }
       }
@@ -3719,7 +3719,7 @@ unsigned Geometry::updateCut(const Vec3r ray_o,
   if ( record )
   {
     setBit5(bid, pid, dir);
-    setBit10(cut, r, dir);
+    setCut9(cut, r, dir);
     //printf("%10.6f %6d dir=%d id=%d\n", tn, r, dir, pid);
   }
   
