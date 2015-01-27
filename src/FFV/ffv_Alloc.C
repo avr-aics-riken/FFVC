@@ -385,17 +385,6 @@ void FALLOC::allocArray_Main(double &total, Control* C)
   }
 }
 
-// #################################################################
-/**
- * @brief PoissonのNaiveな実装テスト
- * @param [in,out] total 使用するメモリ量
- */
-void FALLOC::allocArray_Naive(double &total)
-{
-  if ( !(d_pni = Alloc::Real_S4D(size, guide, 7)) ) Exit(0);
-  total+= array_size * (double)sizeof(REAL_TYPE) * 7.0;
-}
-
 
 // #################################################################
 /**

@@ -327,6 +327,7 @@ extern "C" {
   void div_ibc_drchlt_    (REAL_TYPE* div,
                            int* sz,
                            int* g,
+                           REAL_TYPE* dh,
                            int* st,
                            int* ed,
                            REAL_TYPE* v00,
@@ -342,6 +343,8 @@ extern "C" {
                            int* ed,
                            REAL_TYPE* v00,
                            REAL_TYPE* v_cnv,
+                           REAL_TYPE* dt,
+                           REAL_TYPE* dh,
                            int* bv,
                            int* odr,
                            REAL_TYPE* v0,
@@ -351,6 +354,7 @@ extern "C" {
   void div_ibc_oflow_vec_ (REAL_TYPE* div,
                            int* sz,
                            int* g,
+                           REAL_TYPE* dh,
                            int* st,
                            int* ed,
                            int* bv,
@@ -440,6 +444,7 @@ extern "C" {
   void vobc_div_drchlt_ (REAL_TYPE* div,
                          int* sz,
                          int* g,
+                         REAL_TYPE* dh,
                          int* m_face,
                          int* bv,
                          REAL_TYPE* vec,
@@ -513,6 +518,7 @@ extern "C" {
   void divergence_cc_ (REAL_TYPE* dv,
                        int* sz,
                        int* g,
+                       REAL_TYPE* dh,
                        REAL_TYPE* vc,
                        int* bv,
                        int* bid,
@@ -637,7 +643,6 @@ extern "C" {
                         int* sz,
                         int* g,
                         REAL_TYPE* div,
-                        REAL_TYPE* coef,
                         int* bp,
                         double* flop);
   
@@ -645,13 +650,35 @@ extern "C" {
                         int* sz,
                         int* g,
                         REAL_TYPE* div,
-                        REAL_TYPE* coef,
                         int* bp,
                         double* flop);
   
-  void helicity_          (REAL_TYPE* ht,    int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* v, int* bv, REAL_TYPE* v00, double* flop);
-  void i2vgt_             (REAL_TYPE* q,     int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* v, int* bv, REAL_TYPE* v00, double* flop);
-  void rot_v_             (REAL_TYPE* rot,   int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* v, int* bv, REAL_TYPE* v00, double* flop);
+  void helicity_ (REAL_TYPE* ht,
+                  int* sz, int* g,
+                  REAL_TYPE* dh,
+                  REAL_TYPE* v,
+                  int* bv,
+                  REAL_TYPE* v00,
+                  double* flop);
+  
+  void i2vgt_ (REAL_TYPE* q,
+               int* sz,
+               int* g,
+               REAL_TYPE* dh,
+               REAL_TYPE* v,
+               int* bv,
+               REAL_TYPE* v00,
+               double* flop);
+  
+  void rot_v_ (REAL_TYPE* rot,
+               int* sz,
+               int* g,
+               REAL_TYPE* dh,
+               REAL_TYPE* v,
+               int* bv,
+               REAL_TYPE* v00,
+               double* flop);
+  
   void find_vmax_         (REAL_TYPE* v_max, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* v, double* flop);
   void face_avr_sampling_ (REAL_TYPE* p, int* sz, int* g, int* face, REAL_TYPE* avr);
   void shift_pressure_    (REAL_TYPE* p, int* sz, int* g, REAL_TYPE* avr);

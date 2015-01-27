@@ -49,7 +49,7 @@
     real                                                        ::  Vp0, Vs1, Vn1
     real                                                        ::  Wp0, Wb1, Wt1
     real                                                        ::  Fp0, Fe1, Fe2, Fw1, Fw2, Fs1, Fs2, Fn1, Fn2, Fb1, Fb2, Ft1, Ft2
-    real                                                        ::  ck, u_ref, v_ref, w_ref, dh, dh1, actv
+    real                                                        ::  ck, u_ref, v_ref, w_ref, actv, rx, ry, rz
     real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b
     real                                                        ::  a_e, a_w, a_n, a_s, a_t, a_b
     real                                                        ::  dv1, dv2, dv3, dv4, g1, g2, g3, g4, g5, g6, s1, s2, s3, s4
@@ -60,13 +60,17 @@
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  ie, ws
     real, dimension(0:3)                                        ::  v00
+    real, dimension(3)                                          ::  dh
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  cdf, bh, bid
     
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
     
-    dh1= 1.0/dh
+    rx = 1.0/dh(1)
+    ry = 1.0/dh(2)
+    rz = 1.0/dh(3)
+
     ss = 1.0
     ck = 0.0
     b = 0.0
@@ -95,7 +99,7 @@
     
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, dh1, ss, ck, b, u_ref, v_ref, w_ref, swt, cm1, cm2, ss_4) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, rx, ry, rz, ss, ck, b, u_ref, v_ref, w_ref, swt, cm1, cm2, ss_4) &
 !$OMP PRIVATE(cnv, idx, hdx, actv) &
 !$OMP PRIVATE(b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p) &
 !$OMP PRIVATE(w_e, w_w, w_n, w_s, w_t, w_b) &
@@ -263,8 +267,8 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
       acl = abs(cl)
       
       ! 境界条件の面の寄与はスキップ > 17 flop
-      cnv = 0.5*(cr*(Fr_r+Fr_l) - acr*(Fr_r-Fr_l)) * c_e * a_e &
-          - 0.5*(cl*(Fl_r+Fl_l) - acl*(Fl_r-Fl_l)) * c_w * a_w
+      cnv = (0.5*(cr*(Fr_r+Fr_l) - acr*(Fr_r-Fr_l)) * c_e * a_e &
+          -  0.5*(cl*(Fl_r+Fl_l) - acl*(Fl_r-Fl_l)) * c_w * a_w ) * rx
 
       ! Y方向 ---------------------------------------
       ! 壁面の扱い
@@ -302,8 +306,8 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
       acr = abs(cr)
       acl = abs(cl)
       
-      cnv = 0.5*(cr*(Fr_r+Fr_l) - acr*(Fr_r-Fr_l)) * c_n * a_n &
-          - 0.5*(cl*(Fl_r+Fl_l) - acl*(Fl_r-Fl_l)) * c_s * a_s + cnv
+      cnv = (0.5*(cr*(Fr_r+Fr_l) - acr*(Fr_r-Fr_l)) * c_n * a_n &
+          -  0.5*(cl*(Fl_r+Fl_l) - acl*(Fl_r-Fl_l)) * c_s * a_s ) * ry + cnv
 
       ! Z方向 ---------------------------------------
       ! 壁面の扱い
@@ -341,10 +345,10 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
       acr = abs(cr)
       acl = abs(cl)
       
-      cnv = 0.5*(cr*(Fr_r+Fr_l) - acr*(Fr_r-Fr_l)) * c_t * a_t &
-          - 0.5*(cl*(Fl_r+Fl_l) - acl*(Fl_r-Fl_l)) * c_b * a_b + cnv
+      cnv = (0.5*(cr*(Fr_r+Fr_l) - acr*(Fr_r-Fr_l)) * c_t * a_t &
+          -  0.5*(cl*(Fl_r+Fl_l) - acl*(Fl_r-Fl_l)) * c_b * a_b ) * rz + cnv
 
-      ws(i,j,k) = ( -cnv*dh1 ) * actv
+      ws(i,j,k) = -cnv * actv
     end do
     end do
     end do
@@ -410,7 +414,7 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
     end subroutine ps_buoyancy
 
 !> ********************************************************************
-!! @brief 温度の拡散項の半陰的時間積分（対流項を積分した結果を用いて粘性項を計算）
+!! @brief 温度の拡散項の半陰的時間積分（対流項を積分した結果を用いて粘性項を計算） >> @todo　見直し
 !! @param [in,out] ie     内部エネルギー
 !! @param [in]     sz     配列長
 !! @param [in]     g      ガイドセル長
@@ -432,7 +436,7 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
     integer                                                   ::  l_p, l_w, l_e, l_s, l_n, l_b, l_t
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop, res, res_l2
-    real                                                      ::  dh, dt, dth1, dth2, delta, sw
+    real                                                      ::  dt, delta, sw, rx, ry, rz
     real                                                      ::  t_p, t_w, t_e, t_s, t_n, t_b, t_t
     real                                                      ::  g_w, g_e, g_s, g_n, g_b, g_t, g_p
     real                                                      ::  a_w, a_e, a_s, a_n, a_b, a_t
@@ -444,24 +448,26 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
     real, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  qbc
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bh
     real*8, dimension(3, 0:ncompo)                            ::  mtbl
+    real, dimension(3)                                        ::  dh
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    dth1 = dt/dh
-    dth2 = dth1/dh
+
+    rx = 1.0/dh(1)
+    ry = 1.0/dh(2)
+    rz = 1.0/dh(3)
+
     res  = 0.0
     hm = 1
     if ( h_mode == 0) hm = 0
 
-    ! /2 + 1 = 17 flop ! DP 27 flop
-    ! loop : 6 + 6 + 1 + 51 = 64 flop
     flop = flop + dble(ix)*dble(jx)*dble(kx)*195.0d0 + 24.0d0
-    ! flop = flop + dble(ix)*dble(jx)*dble(kx)*64.0d0 + 27.0d0
+
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:res) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, dth1, dth2, hm) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, dt, rx, ry, rz, hm) &
 !$OMP PRIVATE(idx, delta, sw) &
 !$OMP PRIVATE(t_p, t_w, t_e, t_s, t_n, t_b, t_t) &
 !$OMP PRIVATE(g_w, g_e, g_s, g_n, g_b, g_t, g_p) &
@@ -550,21 +556,21 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
           + c_b * tc_b &
           + c_t * tc_t    ! 11
 
-      delta =(dth2*( c_w * tc_w * t_w  & ! west
-                   + c_e * tc_e * t_e  & ! east
-                   + c_s * tc_s * t_s  & ! south
-                   + c_n * tc_n * t_n  & ! north
-                   + c_b * tc_b * t_b  & ! bottom
-                   + c_t * tc_t * t_t  & ! top
-                   - g_p *        t_p) &
-            - dth1*(-(1.0-g_w)*a_w * qbc(1, i, j, k)  & ! west   gamma
-                    +(1.0-g_e)*a_e * qbc(2, i, j, k)  & ! east   gamma
-                    -(1.0-g_s)*a_s * qbc(3, i, j, k)  & ! south  gamma
-                    +(1.0-g_n)*a_n * qbc(4, i, j, k)  & ! north  gamma
-                    -(1.0-g_b)*a_b * qbc(5, i, j, k)  & ! bottom gamma
-                    +(1.0-g_t)*a_t * qbc(6, i, j, k)  & ! top    gamma
-            ) )  * sw                        ! 20 + 26 = 46
-      ie(i,j,k) = ws(i,j,k) + delta
+      delta = rx*rx*( c_w * tc_w * t_w  & ! west
+                    + c_e * tc_e * t_e) & ! east
+             +ry*ry*( c_s * tc_s * t_s  & ! south
+                    + c_n * tc_n * t_n) & ! north
+             +rz*rz*( c_b * tc_b * t_b  & ! bottom
+                    + c_t * tc_t * t_t) & ! top
+                    - g_p *        t_p &
+            - ( rx* (-(1.0-g_w)*a_w * qbc(1, i, j, k)  & ! west   gamma
+                     +(1.0-g_e)*a_e * qbc(2, i, j, k)) & ! east   gamma
+               +ry* (-(1.0-g_s)*a_s * qbc(3, i, j, k)  & ! south  gamma
+                     +(1.0-g_n)*a_n * qbc(4, i, j, k)) & ! north  gamma
+               +rz* (-(1.0-g_b)*a_b * qbc(5, i, j, k)  & ! bottom gamma
+                     +(1.0-g_t)*a_t * qbc(6, i, j, k)) & ! top    gamma
+             )  * sw                        ! 20 + 26 = 46
+      ie(i,j,k) = ws(i,j,k) + delta * dt
       res = res + dble(delta*delta) ! 3
     end do
     end do

@@ -48,7 +48,6 @@ protected:
   int LinearSolver;     ///< 線形ソルバーの種類
   int LoopCount;        ///< 反復回数 （計算実行中に利用）
   int Sync;             ///< 同期モード (comm_sync, comm_async)
-  int Naive;            ///< Naive Implementation >> on/off
   int precondition;     ///< 前処理mode
   int InnerItr;         ///< 内部反復回数
   string alias;         ///< 別名
@@ -69,7 +68,6 @@ public:
     error = 0.0;
     omg = 0.0;
     Sync = -1;
-    Naive = OFF;
     InnerItr = 0;
     
     eps_err = ( sizeof(REAL_TYPE) == 4 ) ? 4.0*SINGLE_EPSILON : 4.0*DOUBLE_EPSILON;
@@ -148,13 +146,6 @@ public:
   int getMaxIteration() const
   {
     return MaxIteration;
-  }
-  
-  
-  // @brief NaiveOptionを返す
-  int getNaive() const
-  {
-    return Naive;
   }
   
   

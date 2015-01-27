@@ -84,10 +84,9 @@ protected:
    * @param [in] p   基点座標
    * @param [in] dir テスト方向
    * @param [in] r   radius
-   * @param [in] px  格子幅
    * @return 交点距離
    */
-  REAL_TYPE cut_line_2d(const Vec3r p, const int dir, const REAL_TYPE r, const REAL_TYPE px);
+  REAL_TYPE cut_line_2d(const Vec3r p, const int dir, const REAL_TYPE r);
   
   
   /**

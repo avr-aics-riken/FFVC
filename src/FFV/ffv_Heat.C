@@ -208,7 +208,7 @@ REAL_TYPE FFV::ps_Diff_SM_EE(REAL_TYPE* t, const REAL_TYPE dt, const REAL_TYPE* 
   REAL_TYPE t_p, t_w, t_e, t_s, t_n, t_b, t_t;
   REAL_TYPE      a_w, a_e, a_s, a_n, a_b, a_t;
   REAL_TYPE dth1, dth2, delta, res;
-  REAL_TYPE dh = (REAL_TYPE)deltaX;    /// 空間格子幅
+  REAL_TYPE dh = (REAL_TYPE)pitch[0];    /// 空間格子幅
   int s;
   
   int ix = size[0];
@@ -299,7 +299,7 @@ double FFV::ps_Diff_SM_PSOR(REAL_TYPE* t, double& b_l2, const REAL_TYPE dt, cons
   double bb=0.0;
   REAL_TYPE omg;
   double res; // 残差の自乗和
-  REAL_TYPE dh = (REAL_TYPE)deltaX;    /// 空間格子幅
+  REAL_TYPE dh = (REAL_TYPE)pitch[0];    /// 空間格子幅
   int s;
 
   int ix = size[0];

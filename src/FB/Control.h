@@ -61,7 +61,7 @@ private:
   int mode;        ///< 入力パラメータの次元モード（無次元/有次元）
   double CFL;      ///< Δtの決定に使うCFLなど
   double deltaT;   ///< Δt（無次元）
-  double dh;       ///< 格子幅（無次元）
+  double min_dx;   ///< 最小格子幅（無次元）
   double Reynolds; ///< レイノルズ数
   double Peclet;   ///< ペクレ数
   
@@ -73,7 +73,7 @@ public:
     KOS = 0;
     mode = 0;
     deltaT = 0.0;
-    dh = Reynolds = Peclet = 0.0;
+    min_dx = Reynolds = Peclet = 0.0;
   }
   
   /**　デストラクタ */
@@ -105,7 +105,7 @@ public:
   double dtCFL(const double Uref) const 
   {
     double v = (Uref < 1.0) ? 1.0 : Uref; // 1.0 is non-dimensional reference velocity
-    return (dh*CFL / v);
+    return (min_dx*CFL / v);
   }
 
 
@@ -114,7 +114,7 @@ public:
    */
   double dtDFN(const double coef) const 
   { 
-    return coef * dh*dh/6.0; 
+    return coef * min_dx*min_dx/6.0;
   }
   
   
@@ -142,13 +142,13 @@ public:
   
   /**
    * @brief 基本変数をコピー
-   * @param [in] m_kos  ソルバーの種類
-   * @param [in] m_mode 次元モード
-   * @param [in] m_dh   無次元格子幅
-   * @param [in] re     レイノルズ数
-   * @param [in] pe     ペクレ数
+   * @param [in] m_kos     ソルバーの種類
+   * @param [in] m_mode    次元モード
+   * @param [in] m_min_dx  無次元最小格子幅
+   * @param [in] re        レイノルズ数
+   * @param [in] pe        ペクレ数
    */
-  void set_Vars(const int m_kos, const int m_mode, const double m_dh, const double re, const double pe);
+  void set_Vars(const int m_kos, const int m_mode, const double m_min_dx, const double re, const double pe);
 };
 
 

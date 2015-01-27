@@ -26,17 +26,16 @@
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
 !! @param [in]  div  発散値のベース
-!! @param [in]  coef 係数
 !! @param [in]  bp   BCindex P
 !! @param [out] flop flop count
 !<
-    subroutine norm_v_div_l2 (ds, sz, g, div, coef, bp, flop)
+    subroutine norm_v_div_l2 (ds, sz, g, div, bp, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
-    real                                                      ::  coef, ds, r
+    real                                                      ::  ds, r
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
@@ -45,18 +44,18 @@
     kx = sz(3)
     ds = 0.0
 
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*4.0d0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*3.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(r) &
 !$OMP REDUCTION(+:ds) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, coef)
+!$OMP FIRSTPRIVATE(ix, jx, kx)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      r = div(i,j,k) * coef * real(ibits(bp(i,j,k), vld_cnvg, 1)) ! 有効セルの場合 1.0
+      r = div(i,j,k) * real(ibits(bp(i,j,k), vld_cnvg, 1)) ! 有効セルの場合 1.0
       ds = ds + r*r
     end do
     end do
@@ -68,22 +67,21 @@
     end subroutine norm_v_div_l2
 
 !> ********************************************************************
-!! @brief 速度成分の最大値を計算する
+!! @brief 発散量の最大値を計算する
 !! @param [out] ds   最大値
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
-!! @param [in]  div  セルに対する速度の和
-!! @param [in]  coef 係数
+!! @param [in]  div  発散値
 !! @param [in]  bp   BCindex P
 !! @param [out] flop flop count
 !<
-    subroutine norm_v_div_max (ds, sz, g, div, coef, bp, flop)
+    subroutine norm_v_div_max (ds, sz, g, div, bp, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
-    real                                                      ::  coef, ds, r
+    real                                                      ::  ds, r
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
@@ -92,18 +90,18 @@
     kx = sz(3)
     ds = 0.0
 
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*4.0d0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*2.0d0
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(max:ds) &
 !$OMP PRIVATE(r) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, coef)
+!$OMP FIRSTPRIVATE(ix, jx, kx)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      r = div(i,j,k) * coef * real(ibits(bp(i,j,k), vld_cnvg, 1)) ! 有効セルの場合 1.0
+      r = div(i,j,k) * real(ibits(bp(i,j,k), vld_cnvg, 1)) ! 有効セルの場合 1.0
       ds = max(ds, abs(r) )
     end do
     end do
@@ -188,7 +186,7 @@
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
     integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
-    real                                                      ::  u_ref, v_ref, w_ref, dh, h, actv
+    real                                                      ::  u_ref, v_ref, w_ref, actv, rx, ry, rz
     real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
     real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
     real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
@@ -196,6 +194,7 @@
     real                                                      ::  d11, d22, d33, d12, d13, d23
     real                                                      ::  w12, w13, w23
     real                                                      ::  q11, q22, q33, q12, q13, q23
+    real, dimension(3)                                        ::  dh
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  q
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
@@ -204,15 +203,17 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    h = 0.25 / dh
-    
+    rx = 0.25 / dh(1)
+    ry = 0.25 / dh(2)
+    rz = 0.25 / dh(3)
+
     ! 参照座標系の速度
     u_ref = v00(1)
     v_ref = v00(2)
     w_ref = v00(3)
 
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*72.0d0 + 8.0d0
-    ! flop = flop + dble(ix)*dble(jx)*dble(kx)*72.0d0 + 13.0d0 ! DP
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*78.0d0 + 24.0d0
+
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(idx, actv, uq, vq, wq) &
@@ -224,7 +225,7 @@
 !$OMP PRIVATE(d11, d22, d33, d12, d13, d23) &
 !$OMP PRIVATE(w12, w13, w23) &
 !$OMP PRIVATE(q11, q22, q33, q12, q13, q23) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, h, u_ref, v_ref, w_ref)
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, rx, ry, rz)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 
@@ -317,16 +318,17 @@
         Wb1 = wq
       end if
 
-      d11 = h*( 2.0*(Ue1-Uw1) )
-      d22 = h*( 2.0*(Vn1-Vs1) )
-      d33 = h*( 2.0*(Wt1-Wb1) )
-      d12 = h*( (Un1-Us1) + (Ve1-Vw1) )
-      d13 = h*( (Ut1-Ub1) + (We1-Ww1) )
-      d23 = h*( (Vt1-Vb1) + (Wn1-Ws1) )
+      d11 = rx * ( 2.0*(Ue1-Uw1) )
+      d22 = ry * ( 2.0*(Vn1-Vs1) )
+      d33 = rz * ( 2.0*(Wt1-Wb1) )
+
+      d12 = ry * (Un1-Us1) + rx * (Ve1-Vw1)
+      d13 = rz * (Ut1-Ub1) + rx * (We1-Ww1)
+      d23 = rz * (Vt1-Vb1) + ry * (Wn1-Ws1)
       
-      w12 = h*( (Un1-Us1) - (Ve1-Vw1) )
-      w13 = h*( (Ut1-Ub1) - (We1-Ww1) )
-      w23 = h*( (Vt1-Vb1) - (Wn1-Ws1) )
+      w12 = ry * (Un1-Us1) - rx * (Ve1-Vw1)
+      w13 = rz * (Ut1-Ub1) - rx * (We1-Ww1)
+      w23 = rz * (Vt1-Vb1) - ry * (Wn1-Ws1)
       
       q11 = -d11*d11
       q22 = -d22*d22
@@ -363,12 +365,13 @@
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
     integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
-    real                                                      ::  u_ref, v_ref, w_ref, dh, h, actv
+    real                                                      ::  u_ref, v_ref, w_ref, actv, rx, ry, rz
     real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
     real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
     real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
     real                                                      ::  w_e, w_w, w_n, w_s, w_t, w_b, uq, vq, wq
     real                                                      ::  r1, r2, r3
+    real, dimension(3)                                        ::  dh
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, rot
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
     real, dimension(0:3)                                      ::  v00
@@ -376,15 +379,17 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    h = 0.5 / dh
+    rx = 0.5 / dh(1)
+    ry = 0.5 / dh(2)
+    rz = 0.5 / dh(3)
     
     ! 参照座標系の速度
     u_ref = v00(1)
     v_ref = v00(2)
     w_ref = v00(3)
 
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*34.0d0 + 8.0d0
-    ! flop = flop + dble(ix)*dble(jx)*dble(kx)*34.0d0 + 13.0d0 ! DP
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*37.0d0 + 24.0d0
+
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(idx, actv, uq, vq, wq) &
@@ -394,7 +399,7 @@
 !$OMP PRIVATE(b_e1, b_w1, b_n1, b_s1, b_t1, b_b1) &
 !$OMP PRIVATE(w_e, w_w, w_n, w_s, w_t, w_b) &
 !$OMP PRIVATE(r1, r2, r3) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, h, u_ref, v_ref, w_ref)
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, rx, ry, rz)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 
@@ -487,9 +492,9 @@
         Wb1 = wq
       end if
       
-      r1 = h*( (Wn1-Ws1) - (Vt1-Vb1) ) ! 12 flop
-      r2 = h*( (Ut1-Ub1) - (We1-Ww1) )
-      r3 = h*( (Ve1-Vw1) - (Un1-Us1) )
+      r1 = ry * (Wn1-Ws1) - rz * (Vt1-Vb1) ! 12 flop
+      r2 = rz * (Ut1-Ub1) - rx * (We1-Ww1)
+      r3 = rx * (Ve1-Vw1) - ry * (Un1-Us1)
       
       rot(i,j,k,1) = r1 * actv ! 3 flop
       rot(i,j,k,2) = r2 * actv
@@ -505,14 +510,14 @@
 
 !> ********************************************************************
 !! @brief ヘリシティの計算
-!! @param[out] ht ヘリシティ
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param dh 格子幅
-!! @param v セルセンター速度ベクトル
-!! @param bv BCindex C
-!! @param v00 参照速度
-!! @param[out] flop
+!! @param [out] ht   ヘリシティ
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  dh   格子幅
+!! @param [in]  v    セルセンター速度ベクトル
+!! @param [in]  bv   BCindex C
+!! @param [in]  v00  参照速度
+!! @param [out] flop flop count
 !<
     subroutine helicity (ht, sz, g, dh, v, bv, v00, flop)
     implicit none
@@ -521,12 +526,13 @@
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
     integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
-    real                                                      ::  u_ref, v_ref, w_ref, dh, h, actv
+    real                                                      ::  u_ref, v_ref, w_ref, actv, rx, ry, rz
     real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
     real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
     real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
     real                                                      ::  w_e, w_w, w_n, w_s, w_t, w_b, uq, vq, wq
     real                                                      ::  r1, r2, r3, u1, u2, u3
+    real, dimension(3)                                        ::  dh
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  ht
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
@@ -535,15 +541,18 @@
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    h = 0.5 / dh
-    
+
+    rx = 0.5 / dh(1)
+    ry = 0.5 / dh(2)
+    rz = 0.5 / dh(3)
+
     ! 参照座標系の速度
     u_ref = v00(1)
     v_ref = v00(2)
     w_ref = v00(3)
 
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*40.0d0 + 8.0d0
-    ! flop = flop + dble(ix)*dble(jx)*dble(kx)*40.0d0 + 13.0d0 ! DP
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*43.0d0 + 24.0d0
+
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(idx, actv, uq, vq, wq) &
@@ -553,7 +562,7 @@
 !$OMP PRIVATE(b_e1, b_w1, b_n1, b_s1, b_t1, b_b1) &
 !$OMP PRIVATE(w_e, w_w, w_n, w_s, w_t, w_b) &
 !$OMP PRIVATE(r1, r2, r3, u1, u2, u3) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, h, u_ref, v_ref, w_ref)
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, rx, ry, rz)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 
@@ -646,9 +655,9 @@
         Wb1 = wq
       end if
       
-      r1 = h*( (Wn1-Ws1) - (Vt1-Vb1) ) ! 12 flop
-      r2 = h*( (Ut1-Ub1) - (We1-Ww1) )
-      r3 = h*( (Ve1-Vw1) - (Un1-Us1) )
+      r1 = ry * (Wn1-Ws1) - rz * (Vt1-Vb1) ! 12 flop
+      r2 = rz * (Ut1-Ub1) - rx * (We1-Ww1)
+      r3 = rx * (Ve1-Vw1) - ry * (Un1-Us1)
       
       u1 = Up0 - u_ref ! 3 flop
       u2 = Vp0 - v_ref
@@ -840,11 +849,10 @@
   integer, dimension(3)                                     ::  sz, st, ed
   double precision                                          ::  flop
   integer                                                   ::  idw, ide, ids, idn, idb, idt, tgt, tg
-  real                                                      ::  fx, fy, fz
-  real                                                      ::  pp, dh, cf
+  real                                                      ::  fx, fy, fz, pp
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p
   integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bid
-  real, dimension(3)                                        ::  frc
+  real, dimension(3)                                        ::  frc, dh
 
   is = st(1)
   js = st(2)
@@ -903,10 +911,9 @@
 !$OMP END DO
 !$OMP END PARALLEL
 
-  cf = dh * dh
-  frc(1) = fx * cf
-  frc(2) = fy * cf
-  frc(3) = fz * cf
+  frc(1) = fx * dh(2)*dh(3)
+  frc(2) = fy * dh(1)*dh(3)
+  frc(3) = fz * dh(1)*dh(2)
 
   return
   end subroutine force_compo
@@ -1336,7 +1343,7 @@ integer :: g
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  p
 integer :: ix, jx, kx, i, j, k, myRank, ip, jp, kp, ii, jj, kk
-real :: dh
+real,dimension(3) :: dh
 
 character fname*128
 
@@ -1420,35 +1427,37 @@ write(10, "('v_vmean_p.vtk')")
 write(10, "('ASCII')")
 
 write(10, "('DATASET STRUCTURED_GRID')")
-write(10, "('DIMENSIONS ', 3(1x, i8))") ix+1, jx+1, kx+1
-write(10, "('POINTS ', i20, ' float')") (ix+1)*(jx+1)*(kx+1)
+write(10, "('DIMENSIONS ', 3(1x, i8))") ix+2*g, jx+2*g, kx+2*g
+write(10, "('POINTS ', i20, ' float')") (ix+2*g)*(jx+2*g)*(kx+2*g)
 
-do kp = 0, kx
-do jp = 0, jx
-do ip = 0, ix
+do kp = 1-g, kx+g
+do jp = 1-g, jx+g
+do ip = 1-g, ix+g
 kk = int(myRank/(G_division(1)*G_division(2)))
-jj = int((myRank - kk*G_division(1)*G_division(3))/G_division(1))
-ii = mod(myRank, G_division(1))
+!jj = int((myRank - kk*G_division(1)*G_division(3))/G_division(1))
+!ii = mod(myRank, G_division(1))
+jj = 1
+ii = 1
 
 k = kp + kk * int(G_size(3)/G_division(3))
 j = jp + jj * int(G_size(2)/G_division(2))
 i = ip + ii * int(G_size(1)/G_division(1))
 
-write(10, *) G_origin(1) + (i - 0.5d0)*dh,  &
-G_origin(2) + (j - 0.5d0)*dh,  &
-G_origin(3) + (k - 0.5d0)*dh
+write(10, *) G_origin(1) + (i - 0.5d0)*dh(1),  &
+G_origin(2) + (j - 0.5d0)*dh(2),  &
+G_origin(3) + (k - 0.5d0)*dh(3)
 end do
 end do
 end do
 
 
-write(10, "('POINT_DATA ', i9)") (ix+1)*(jx+1)*(kx+1)
+write(10, "('POINT_DATA ', i9)") (ix+2*g)*(jx+2*g)*(kx+2*g)
 
 ! velocity
 write(10, "('VECTORS velocity float')")
-do k = 0, kx
-do j = 0, jx
-do i = 0, ix
+do k = 1-g, kx+g
+do j = 1-g, jx+g
+do i = 1-g, ix+g
 write(10, *) v(i, j, k, 1), v(i, j, k, 2), v(i, j, k, 3)
 end do
 end do
@@ -1468,9 +1477,9 @@ end do
 ! pressure
 write(10, "('SCALARS pressure float')")
 write(10, "('LOOKUP_TABLE default')")
-do k = 0, kx
-do j = 0, jx
-do i = 0, ix
+do k = 1-g, kx+g
+do j = 1-g, jx+g
+do i = 1-g, ix+g
 write(10, *) p(i, j, k)
 end do
 end do
@@ -1488,13 +1497,13 @@ end subroutine output_vtk
 subroutine output_mean(step, G_origin, G_region, G_division, G_size, myRank, sz, dh, g, vmean, rms, rmsmean)
 implicit none
 integer                                                   :: step
-real, dimension(3)                                        :: G_origin, G_region
+real, dimension(3)                                        :: G_origin, G_region, dh
 integer, dimension(3)                                     :: G_division, G_size, sz
 integer                                                   :: g
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) :: vmean, rms, rmsmean
 real, dimension(1:sz(2), 3)                               :: global_vmean, global_rmsmean
 integer                                                   :: ix, jx, kx, i, j, k, ip, jp, kp, ii, jj, kk, myRank
-real                                                      :: dh, xc, yc, zc, ymean
+real                                                      :: xc, yc, zc, ymean
 
 character fname1*128, fname2*128, fname3*128, fname4*128, fname5*128, fname6*128, fname7*128, fname8*128
 
@@ -1596,12 +1605,12 @@ ii = mod(myRank, G_division(1))
 k = kp + kk * int(G_size(3)/G_division(3))
 j = jp + jj * int(G_size(2)/G_division(2))
 i = ip + ii * int(G_size(1)/G_division(1))
-xc = G_origin(1) + (i - 0.5d0)*dh
-yc = G_origin(2) + (j - 0.5d0)*dh
-zc = G_origin(3) + (k - 0.5d0)*dh
+xc = G_origin(1) + (i - 0.5d0)*dh(1)
+yc = G_origin(2) + (j - 0.5d0)*dh(2)
+zc = G_origin(3) + (k - 0.5d0)*dh(3)
 
-if ( (abs(xc - G_region(1)/2.0d0) < dh).and.(abs(yc - G_region(2)/2.0d0) < dh) &
-.and.(abs(zc - G_region(3)/2.0d0) < dh).and.(xc < G_region(1)/2.0d0) &
+if ( (abs(xc - G_region(1)/2.0d0) < dh(1)).and.(abs(yc - G_region(2)/2.0d0) < dh(2)) &
+.and.(abs(zc - G_region(3)/2.0d0) < dh(3)).and.(xc < G_region(1)/2.0d0) &
 .and.(yc < G_region(2)/2.0d0).and.(zc < G_region(3)/2.0d0) ) then
 open(10, file = fname1)
 open(11, file = fname2)
@@ -1612,7 +1621,7 @@ open(21, file = "urmsmean_latest.dat")
 open(22, file = "vrmsmean_latest.dat")
 open(23, file = "wrmsmean_latest.dat")
 do jj = 1, jx
-ymean = G_origin(2) + (jj - 0.5d0)*dh
+ymean = G_origin(2) + (jj - 0.5d0)*dh(2)
 write(10, *) ymean, vmean(ip, jj, kp, 1)
 write(11, *) ymean, rmsmean(ip, jj, kp, 1)
 write(12, *) ymean, rmsmean(ip, jj, kp, 2)
@@ -1642,7 +1651,7 @@ open(25, file = "global_urmsmean_latest.dat")
 open(26, file = "global_vrmsmean_latest.dat")
 open(27, file = "global_wrmsmean_latest.dat")
 do jj = 1, jx
-ymean = G_origin(2) + (jj - 0.5d0)*dh
+ymean = G_origin(2) + (jj - 0.5d0)*dh(2)
 write(14, *) ymean, global_vmean(jj, 1)
 write(15, *) ymean, global_rmsmean(jj, 1)
 write(16, *) ymean, global_rmsmean(jj, 2)

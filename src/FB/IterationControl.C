@@ -39,7 +39,6 @@ void IterationCtl::copy(IterationCtl* src)
   LinearSolver = src->LinearSolver;
   LoopCount    = src->LoopCount;
   Sync         = src->Sync;
-  Naive        = src->Naive;
   alias        = src->alias;
   precondition = src->precondition;
   InnerItr     = src->InnerItr;
@@ -189,21 +188,6 @@ void IterationCtl::getParaSOR2(TextParser* tpCntl, const string base)
   else
   {
     Exit(0);
-  }
-  
-  // not mandatory
-  label = base + "/NaiveImplementation";
-  
-  if ( tpCntl->chkLabel(label) )
-  {
-    if ( !(tpCntl->getInspectedValue(label, str )) )
-    {
-      Exit(0);
-    }
-    else
-    {
-      if ( !strcasecmp(str.c_str(), "on") ) Naive = ON;
-    }
   }
   
 }

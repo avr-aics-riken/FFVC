@@ -98,7 +98,6 @@ Iteration {
     NormType             = "DXbyB"
     Omega                = 1.1
     CommMode             = "async"
-    NaiveImplementation  = "off"
   }
 
   LinearSolver[@] {

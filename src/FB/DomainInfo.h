@@ -45,7 +45,6 @@ public:
   
   REAL_TYPE pitch[3];     ///< 格子幅 (Non-dimensional)
   REAL_TYPE pitchD[3];    ///< 格子幅 (有次元)
-  REAL_TYPE deltaX;       ///< 等間隔格子の無次元格子幅
   
   int size[3];            ///< 領域分割数 (Local, Non-dimensional)
   REAL_TYPE origin[3];    ///< 領域基点   (Local, Non-dimensional)
@@ -87,7 +86,6 @@ public:
       G_regionD[i]  = 0.0;
     }
     
-    deltaX = 0.0;
     guide = 0;
     paraMngr = NULL;
   }
@@ -176,7 +174,6 @@ public:
     
     // 格子幅
     const double* m_pch = paraMngr->GetPitch();
-    deltaX   = (REAL_TYPE)m_pch[0];
     pitch[0] = (REAL_TYPE)m_pch[0];
     pitch[1] = (REAL_TYPE)m_pch[1];
     pitch[2] = (REAL_TYPE)m_pch[2];

@@ -57,10 +57,6 @@ private:
   void copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const int m_id, const int m_dir);
   
   
-  // Naive実装に使う係数を保持
-  void copyCoefNaive(int* bx, REAL_TYPE* pn);
-  
-  
   // セルセンターのIDから対象セル数をカウントし，サブドメイン内にコンポーネントがあれば存在フラグを立てる
   unsigned long countCC (const int order, const int* bx, CompoList* cmp);
   
@@ -90,7 +86,7 @@ private:
   
   
   // 圧力のノイマン境界ビットをエンコードする（カット）
-  unsigned long encPbitN (int* bx, const int* bid, const long long* cut, const bool convergence);
+  void encPbitN (int* bx, const int* bid, const long long* cut, const bool convergence);
   
   
   // 計算領域内部のコンポーネントの圧力境界条件フラグをbcp[]にエンコードする
@@ -293,21 +289,16 @@ public:
    * @param [in]     icls       Intrinsic class
    * @param [in]     cut        距離情報
    * @param [in]     bid        カットID情報
-   * @param [in]     naive      ナイーブ実装のON/OFF
-   * @param [out]    pni        Naive実装の係数
    * @param [in]     m_NoCompo  コンポーネント数
-   * @retval 表面セル数
    */
-  unsigned long setBCIndexP(int* bcd,
-                            int* bcp,
-                            SetBC* BC,
-                            CompoList* cmp,
-                            int icls,
-                            const long long* cut,
-                            const int* bid,
-                            const int naive,
-                            REAL_TYPE* pni,
-                            const int m_NoCompo);
+  void setBCIndexP(int* bcd,
+                   int* bcp,
+                   SetBC* BC,
+                   CompoList* cmp,
+                   int icls,
+                   const long long* cut,
+                   const int* bid,
+                   const int m_NoCompo);
   
   
   /**

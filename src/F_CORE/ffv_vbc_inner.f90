@@ -39,10 +39,10 @@ implicit none
 include 'ffv_f_params.h'
 integer                                                   :: ix, jx, kx, i, j, k, g, mode
 integer, dimension(3)                                     :: sz
-real                                                      :: duplus, deviation, eps, nu
+real                                                      :: duplus, deviation, eps, nu, dx, dy, dz, ox, oy, oz
 real                                                      :: width, Re_tau, u_tau, Ubar, tmp1, tmp2, rhalf
-real                                                      :: half, dh, xc, yc, zc, xplus, yplus, zplus, perturb
-real, dimension(3)                                        :: origin
+real                                                      :: half, xc, yc, zc, xplus, yplus, zplus, perturb
+real, dimension(3)                                        :: origin, dh
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) :: v
 real, parameter :: sigmaC     = 0.00055d0,                           & !
                    duplusC    = 0.25d0,                              & !
@@ -62,11 +62,20 @@ ix = sz(1)
 jx = sz(2)
 kx = sz(3)
 
+dx = dh(1)
+dy = dh(2)
+dz = dh(3)
+
+ox = origin(1)
+oy = origin(2)
+oz = origin(3)
+
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(xc, yc, zc, i, j, k, tmp1, tmp2, xplus, yplus, zplus) &
 !$OMP PRIVATE(perturb, deviation) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, g, dh, half, rhalf, width, u_tau, duplus, eps, mode)
+!$OMP FIRSTPRIVATE(ix, jx, kx, g, half, rhalf, width, u_tau, duplus, eps, mode) &
+!$OMP FIRSTPRIVATE(dx, dy, dz, ox, oy, oz)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 do k = 1-g, kx+g
@@ -74,13 +83,13 @@ do j = 1-g, jx+g
 do i = 1-g, ix+g
 
   if ( mode == 1 ) then
-    xc = origin(1) + (i - 0.5d0)*dh
+    xc = ox + (i - 0.5d0)*dx
   else
-    xc = origin(1) + i * dh
+    xc = ox + i * dh(1)
   end if
 
-  yc = origin(2) + (j - 0.5d0)*dh
-  zc = origin(3) + (k - 0.5d0)*dh
+  yc = oy + (j - 0.5d0)*dy
+  zc = oz + (k - 0.5d0)*dz
 
 ! 壁面からの距離
   if ( yc .gt. half ) then
@@ -133,10 +142,10 @@ implicit none
 include 'ffv_f_params.h'
 integer                                                   :: ix, jx, kx, i, j, k, g, mode
 integer, dimension(3)                                     :: sz
-real                                                      :: duplus, deviation, eps, nu
+real                                                      :: duplus, deviation, eps, nu, dx, dy, dz, ox, oy, oz
 real                                                      :: width, Re_tau, u_tau, Ubar, tmp1, tmp2, rhalf
-real                                                      :: half, dh, xc, yc, zc, xplus, yplus, zplus, perturb
-real, dimension(3)                                        :: origin
+real                                                      :: half, xc, yc, zc, xplus, yplus, zplus, perturb
+real, dimension(3)                                        :: origin, dh
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) :: v
 real, parameter :: sigmaC     = 0.00055d0,                           &
                    duplusC    = 0.25d0,                              &
@@ -156,11 +165,19 @@ ix = sz(1)
 jx = sz(2)
 kx = sz(3)
 
+dx = dh(1)
+dy = dh(2)
+dz = dh(3)
+
+ox = origin(1)
+oy = origin(2)
+oz = origin(3)
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(xc, yc, zc, i, j, k, tmp1, tmp2, xplus, yplus, zplus) &
 !$OMP PRIVATE(perturb, deviation) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, g, dh, half, rhalf, width, u_tau, duplus, eps, mode)
+!$OMP FIRSTPRIVATE(ix, jx, kx, g, half, rhalf, width, u_tau, duplus, eps, mode) &
+!$OMP FIRSTPRIVATE(dx, dy, dz, ox, oy, oz)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 do k = 1-g, kx+g
@@ -168,13 +185,13 @@ do j = 1-g, jx+g
 do i = 1-g, ix+g
 
   if ( mode == 1 ) then
-    xc = origin(1) + (i - 0.5d0)*dh
+    xc = ox + (i - 0.5d0)*dx
   else
-    xc = origin(1) + i * dh
+    xc = ox + i * dx
   end if
 
-  yc = origin(2) + (j - 0.5d0)*dh
-  zc = origin(3) + (k - 0.5d0)*dh
+  yc = oy + (j - 0.5d0)*dy
+  zc = oz + (k - 0.5d0)*dz
 
   ! 壁面からの距離
   if ( zc .gt. half ) then
@@ -228,46 +245,51 @@ end subroutine perturb_u_z
 !! @todo 内部と外部の分離 do loopの内側に条件分岐を入れているので修正
 !! @todo 流出境界はローカルの流束となるように変更する（外部境界参照）
 !<
-    subroutine pvec_ibc_oflow (wv, sz, g, st, ed, dh, rei, v, bv, odr, vec, flop)
-    implicit none
-    include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
-    integer, dimension(3)                                     ::  sz, st, ed
-    double precision                                          ::  flop
-    real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
-    real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
-    real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
-    real                                                      ::  c_e, c_w, c_n, c_s, c_t, c_b
-    real                                                      ::  dh, dh1, dh2, EX, EY, EZ, rei
-    real                                                      ::  cnv_u, cnv_v, cnv_w, cr, cl, m
-    real                                                      ::  u_bc, v_bc, w_bc
-    real                                                      ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, wv
-    real, dimension(3)                                        ::  vec
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
-    
-    dh1= 1.0/dh
-    dh2= rei*dh1*dh1
-    
-    ! u_bcは境界速度
-    u_bc = vec(1)
-    v_bc = vec(2)
-    w_bc = vec(3)
-    
-    is = st(1)
-    ie = ed(1)
-    js = st(2)
-    je = ed(2)
-    ks = st(3)
-    ke = ed(3)
-    
-    flop = flop + 10.0d0 ! DP 15 flops
-    
-    m = 0.0
+subroutine pvec_ibc_oflow (wv, sz, g, st, ed, dh, rei, v, bv, odr, vec, flop)
+implicit none
+include 'ffv_f_params.h'
+integer                                                   ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
+integer, dimension(3)                                     ::  sz, st, ed
+double precision                                          ::  flop
+real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
+real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
+real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
+real                                                      ::  c_e, c_w, c_n, c_s, c_t, c_b
+real                                                      ::  EX, EY, EZ, rei, rx, ry, rz, dx2, dy2, dz2
+real                                                      ::  cnv_u, cnv_v, cnv_w, cr, cl, m
+real                                                      ::  u_bc, v_bc, w_bc
+real                                                      ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, wv
+real, dimension(3)                                        ::  vec, dh
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
+
+rx = 1.0/dh(1)
+ry = 1.0/dh(2)
+rz = 1.0/dh(3)
+
+dx2 = rei * rx * rx
+dy2 = rei * ry * ry
+dz2 = rei * rz * rz
+
+! u_bcは境界速度
+u_bc = vec(1)
+v_bc = vec(2)
+w_bc = vec(3)
+
+is = st(1)
+ie = ed(1)
+js = st(2)
+je = ed(2)
+ks = st(3)
+ke = ed(3)
+
+flop = flop + 30.0d0 ! DP 15 flops
+
+m = 0.0
 
 !$OMP PARALLEL REDUCTION(+:m) &
 !$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_bc, v_bc, w_bc, odr) &
-!$OMP FIRSTPRIVATE(dh1, dh2) &
+!$OMP FIRSTPRIVATE(rx, ry, rz, dx2, dy2, dz2) &
 !$OMP PRIVATE(bvx, cnv_u, cnv_v, cnv_w, cr, cl) &
 !$OMP PRIVATE(Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1) &
 !$OMP PRIVATE(Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1) &
@@ -408,28 +430,30 @@ end subroutine perturb_u_z
         cnv_w = cnv_w + fw_r*c_t - fw_l*c_b
       
         ! 粘性項
-        EX = ( Ue1 - Up0 ) * c_e &
-           + ( Uw1 - Up0 ) * c_w &
-           + ( Un1 - Up0 ) * c_n &
-           + ( Us1 - Up0 ) * c_s &
-           + ( Ut1 - Up0 ) * c_t &
-           + ( Ub1 - Up0 ) * c_b ! 17 flops
-        EY = ( Ve1 - Vp0 ) * c_e &
-           + ( Vw1 - Vp0 ) * c_w &
-           + ( Vn1 - Vp0 ) * c_n &
-           + ( Vs1 - Vp0 ) * c_s &
-           + ( Vt1 - Vp0 ) * c_t &
-           + ( Vb1 - Vp0 ) * c_b
-        EZ = ( We1 - Wp0 ) * c_e &
-           + ( Ww1 - Wp0 ) * c_w &
-           + ( Wn1 - Wp0 ) * c_n &
-           + ( Ws1 - Wp0 ) * c_s &
-           + ( Wt1 - Wp0 ) * c_t &
-           + ( Wb1 - Wp0 ) * c_b
+        EX = ( Ue1 - Up0 ) * c_e * dx2 &
+           + ( Uw1 - Up0 ) * c_w * dx2 &
+           + ( Un1 - Up0 ) * c_n * dy2 &
+           + ( Us1 - Up0 ) * c_s * dy2 &
+           + ( Ut1 - Up0 ) * c_t * dz2 &
+           + ( Ub1 - Up0 ) * c_b * dz2 ! 17 flops
 
-        wv(i,j,k,1) = wv(i,j,k,1) + ( -cnv_u*dh1 + EX*dh2 )
-        wv(i,j,k,2) = wv(i,j,k,2) + ( -cnv_v*dh1 + EY*dh2 )
-        wv(i,j,k,3) = wv(i,j,k,3) + ( -cnv_w*dh1 + EZ*dh2 ) ! 4*3 = 12 flops
+        EY = ( Ve1 - Vp0 ) * c_e * dx2 &
+           + ( Vw1 - Vp0 ) * c_w * dx2 &
+           + ( Vn1 - Vp0 ) * c_n * dy2 &
+           + ( Vs1 - Vp0 ) * c_s * dy2 &
+           + ( Vt1 - Vp0 ) * c_t * dz2 &
+           + ( Vb1 - Vp0 ) * c_b * dz2
+
+        EZ = ( We1 - Wp0 ) * c_e * dx2 &
+           + ( Ww1 - Wp0 ) * c_w * dx2 &
+           + ( Wn1 - Wp0 ) * c_n * dy2 &
+           + ( Ws1 - Wp0 ) * c_s * dy2 &
+           + ( Wt1 - Wp0 ) * c_t * dz2 &
+           + ( Wb1 - Wp0 ) * c_b * dz2
+
+        wv(i,j,k,1) = wv(i,j,k,1) + ( -cnv_u * rx + EX )
+        wv(i,j,k,2) = wv(i,j,k,2) + ( -cnv_v * ry + EY )
+        wv(i,j,k,3) = wv(i,j,k,3) + ( -cnv_w * rz + EZ ) ! 3*3 = 9 flops
         m = m + 1.0
       endif
     end do
@@ -439,12 +463,13 @@ end subroutine perturb_u_z
 !$OMP END DO
 !$OMP END PARALLEL
 
-    ! loop :  (3+3+12)*3dir + 17*3 + 12 = 117 flops
+! loop :  (3+3+12)*3dir + 17*3 + 9 = 114 flops
 
-    flop = flop + m*117.0
-    
-    return
-    end subroutine pvec_ibc_oflow
+flop = flop + m*114.0
+
+return
+end subroutine pvec_ibc_oflow
+
 
 !> ********************************************************************
 !! @brief 内部速度境界条件による対流項と粘性項の流束の修正（有限体積型のスキーム）
@@ -464,61 +489,66 @@ end subroutine perturb_u_z
 !! @note vecには，流入条件のとき指定速度，流出条件のとき対流流出速度，カット位置に関わらず指定速度で流束を計算
 !! @todo 流出境界はローカルの流束となるように変更する（外部境界参照）
 !<
-    subroutine pvec_ibc_specv_fvm (wv, sz, g, st, ed, dh, v00, rei, v, bv, odr, vec, flop)
-    implicit none
-    include 'ffv_f_params.h'
-    integer                                                     ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
-    integer, dimension(3)                                       ::  sz, st, ed
-    double precision                                            ::  flop
-    real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
-    real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
-    real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
-    real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b
-    real                                                        ::  dh, dh1, dh2, EX, EY, EZ, rei
-    real                                                        ::  u_ref, v_ref, w_ref, m1, m2
-    real                                                        ::  cnv_u, cnv_v, cnv_w, cr, cl, acr, acl
-    real                                                        ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
-    real                                                        ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, wv
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
-    real, dimension(0:3)                                        ::  v00
-    real, dimension(3)                                          ::  vec
-    
-    is = st(1)
-    ie = ed(1)
-    js = st(2)
-    je = ed(2)
-    ks = st(3)
-    ke = ed(3)
+subroutine pvec_ibc_specv_fvm (wv, sz, g, st, ed, dh, v00, rei, v, bv, odr, vec, flop)
+implicit none
+include 'ffv_f_params.h'
+integer                                                     ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
+integer, dimension(3)                                       ::  sz, st, ed
+double precision                                            ::  flop
+real                                                        ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
+real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
+real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
+real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b
+real                                                        ::  EX, EY, EZ, rei, rx, ry, rz, dx2, dy2, dz2
+real                                                        ::  u_ref, v_ref, w_ref, m1, m2
+real                                                        ::  cnv_u, cnv_v, cnv_w, cr, cl, acr, acl
+real                                                        ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
+real                                                        ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, wv
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
+real, dimension(0:3)                                        ::  v00
+real, dimension(3)                                          ::  vec, dh
 
-    dh1= 1.0/dh
-    dh2= rei*dh1*dh1
+is = st(1)
+ie = ed(1)
+js = st(2)
+je = ed(2)
+ks = st(3)
+ke = ed(3)
 
-    ! 参照座標系の速度
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
-    
-    ! u_bcは境界速度
-    u_bc = vec(1)
-    v_bc = vec(2)
-    w_bc = vec(3)
-    
-    ! u_bc_refは参照座標系での境界速度
-    u_bc_ref = u_bc + u_ref
-    v_bc_ref = v_bc + v_ref
-    w_bc_ref = w_bc + w_ref
-    
-    m1 = 0.0
-    m2 = 0.0
-    
-    flop = flop + 13.0d0 ! DP 18 flop
+rx = 1.0/dh(1)
+ry = 1.0/dh(2)
+rz = 1.0/dh(3)
+
+dx2 = rei * rx * rx
+dy2 = rei * ry * ry
+dz2 = rei * rz * rz
+
+! 参照座標系の速度
+u_ref = v00(1)
+v_ref = v00(2)
+w_ref = v00(3)
+
+! u_bcは境界速度
+u_bc = vec(1)
+v_bc = vec(2)
+w_bc = vec(3)
+
+! u_bc_refは参照座標系での境界速度
+u_bc_ref = u_bc + u_ref
+v_bc_ref = v_bc + v_ref
+w_bc_ref = w_bc + w_ref
+
+m1 = 0.0
+m2 = 0.0
+
+flop = flop + 33.0d0 ! DP 18 flop
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:m1) &
 !$OMP REDUCTION(+:m2) &
-!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref) &
-!$OMP FIRSTPRIVATE(dh1, dh2, odr) &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref, odr) &
+!$OMP FIRSTPRIVATE(rx, ry, rz, dx2, dy2, dz2) &
 !$OMP PRIVATE(bvx, cnv_u, cnv_v, cnv_w, EX, EY, EZ, cr, cl, acr, acl) &
 !$OMP PRIVATE(Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1) &
 !$OMP PRIVATE(Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1) &
@@ -665,28 +695,30 @@ end subroutine perturb_u_z
         cnv_w = cnv_w + fw_r*c_t - fw_l*c_b
       
         ! 粘性項
-        EX = ( Ue1 - Up0 ) * c_e &
-           + ( Uw1 - Up0 ) * c_w &
-           + ( Un1 - Up0 ) * c_n &
-           + ( Us1 - Up0 ) * c_s &
-           + ( Ut1 - Up0 ) * c_t &
-           + ( Ub1 - Up0 ) * c_b ! 17 flops
-        EY = ( Ve1 - Vp0 ) * c_e &
-           + ( Vw1 - Vp0 ) * c_w &
-           + ( Vn1 - Vp0 ) * c_n &
-           + ( Vs1 - Vp0 ) * c_s &
-           + ( Vt1 - Vp0 ) * c_t &
-           + ( Vb1 - Vp0 ) * c_b
-        EZ = ( We1 - Wp0 ) * c_e &
-           + ( Ww1 - Wp0 ) * c_w &
-           + ( Wn1 - Wp0 ) * c_n &
-           + ( Ws1 - Wp0 ) * c_s &
-           + ( Wt1 - Wp0 ) * c_t &
-           + ( Wb1 - Wp0 ) * c_b
+        EX = ( Ue1 - Up0 ) * c_e * dx2 &
+           + ( Uw1 - Up0 ) * c_w * dx2 &
+           + ( Un1 - Up0 ) * c_n * dy2 &
+           + ( Us1 - Up0 ) * c_s * dy2 &
+           + ( Ut1 - Up0 ) * c_t * dz2 &
+           + ( Ub1 - Up0 ) * c_b * dz2 ! 17 flops
 
-        wv(i,j,k,1) = wv(i,j,k,1) + ( -cnv_u*dh1 + EX*dh2 )
-        wv(i,j,k,2) = wv(i,j,k,2) + ( -cnv_v*dh1 + EY*dh2 )
-        wv(i,j,k,3) = wv(i,j,k,3) + ( -cnv_w*dh1 + EZ*dh2 ) ! 4*3 = 12 flops
+        EY = ( Ve1 - Vp0 ) * c_e * dx2 &
+           + ( Vw1 - Vp0 ) * c_w * dx2 &
+           + ( Vn1 - Vp0 ) * c_n * dy2 &
+           + ( Vs1 - Vp0 ) * c_s * dy2 &
+           + ( Vt1 - Vp0 ) * c_t * dz2 &
+           + ( Vb1 - Vp0 ) * c_b * dz2
+
+        EZ = ( We1 - Wp0 ) * c_e * dx2 &
+           + ( Ww1 - Wp0 ) * c_w * dx2 &
+           + ( Wn1 - Wp0 ) * c_n * dy2 &
+           + ( Ws1 - Wp0 ) * c_s * dy2 &
+           + ( Wt1 - Wp0 ) * c_t * dz2 &
+           + ( Wb1 - Wp0 ) * c_b * dz2
+
+        wv(i,j,k,1) = wv(i,j,k,1) + ( -cnv_u * rx + EX )
+        wv(i,j,k,2) = wv(i,j,k,2) + ( -cnv_v * ry + EY )
+        wv(i,j,k,3) = wv(i,j,k,3) + ( -cnv_w * rz + EZ ) ! 3*3 = 9 flops
         m1 = m1 + 1.0
         
       endif
@@ -696,9 +728,9 @@ end subroutine perturb_u_z
 !$OMP END DO
 !$OMP END PARALLEL
 
-    ! loop :  (12*3 + 17*3 + 12)*m1 + 19*m2 = 99*m1 + 19*m2
+    ! loop :  (12*3 + 17*3 + 9)*m1 + 19*m2 = 96*m1 + 19*m2
 
-    flop = flop + m1*99.0 + m2*19.0
+    flop = flop + m1*96.0 + m2*19.0
 
     return
     end subroutine pvec_ibc_specv_fvm
@@ -734,13 +766,13 @@ integer                                                     ::  i, j, k, g, bvx,
 integer, dimension(3)                                       ::  sz, st, ed
 double precision                                            ::  flop
 real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b
-real                                                        ::  dh, dh1, dh2, rei, Up, Vp, Wp
+real                                                        ::  rei, Up, Vp, Wp, rx, ry, rz, dx2, dy2, dz2
 real                                                        ::  u_ref, v_ref, w_ref, m2, gu, gv, gw
 real                                                        ::  u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, wv
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
 real, dimension(0:3)                                        ::  v00
-real, dimension(3)                                          ::  vec
+real, dimension(3)                                          ::  vec, dh
 
 is = st(1)
 ie = ed(1)
@@ -749,8 +781,14 @@ je = ed(2)
 ks = st(3)
 ke = ed(3)
 
-dh1= 1.0/dh
-dh2= rei*dh1
+rx = 1.0/dh(1)
+ry = 1.0/dh(2)
+rz = 1.0/dh(3)
+
+! FVMとは違うので注意
+dx2 = rei * rx
+dy2 = rei * ry
+dz2 = rei * rz
 
 ! 参照座標系の速度
 u_ref = v00(1)
@@ -769,12 +807,12 @@ w_bc_ref = w_bc + w_ref
 
 m2 = 0.0
 
-flop = flop + 13.0d0 ! DP 18 flop
+flop = flop + 30.0d0
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:m2) &
-!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref) &
-!$OMP FIRSTPRIVATE(dh1, dh2, odr) &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_bc, v_bc, w_bc, u_bc_ref, v_bc_ref, w_bc_ref, odr) &
+!$OMP FIRSTPRIVATE(rx, ry, rz, dx2, dy2, dz2) &
 !$OMP PRIVATE(bvx, Up, Vp, Wp, gu, gv, gw, i, j, k) &
 !$OMP PRIVATE(c_e, c_w, c_n, c_s, c_t, c_b)
 
@@ -809,66 +847,66 @@ if ( ibits(bvx, bc_face_B, bitw_5) == odr ) c_b = 1.0
 
 ! X方向 ---------------------------------------
 if ( c_w == 1.0 ) then
-gu = 2.0 * (Up - u_bc_ref) * dh1
-gv = 2.0 * (Vp - v_bc_ref) * dh1
-gw = 2.0 * (Wp - w_bc_ref) * dh1
-wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * u_bc * gu + gu * dh2 )
-wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * u_bc * gv + gv * dh2 )
-wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * u_bc * gw + gw * dh2 )
+gu = 2.0 * (Up - u_bc_ref) * rx
+gv = 2.0 * (Vp - v_bc_ref) * rx
+gw = 2.0 * (Wp - w_bc_ref) * rx
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * u_bc * gu + gu * dx2 )
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * u_bc * gv + gv * dx2 )
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * u_bc * gw + gw * dx2 )
 m2 = m2 + 1.0
 end if
 
 if ( c_e == 1.0 ) then
-gu = 2.0 * (u_bc_ref - Up) * dh1
-gv = 2.0 * (v_bc_ref - Vp) * dh1
-gw = 2.0 * (w_bc_ref - Wp) * dh1
-wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * u_bc * gu - gu * dh2 )
-wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * u_bc * gv - gv * dh2 )
-wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * u_bc * gw - gw * dh2 )
+gu = 2.0 * (u_bc_ref - Up) * rx
+gv = 2.0 * (v_bc_ref - Vp) * rx
+gw = 2.0 * (w_bc_ref - Wp) * rx
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * u_bc * gu - gu * dx2 )
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * u_bc * gv - gv * dx2 )
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * u_bc * gw - gw * dx2 )
 m2 = m2 + 1.0
 end if
 
 
 ! Y方向 ---------------------------------------
 if ( c_s == 1.0 ) then
-gu = 2.0 * (Up - u_bc_ref) * dh1
-gv = 2.0 * (Vp - v_bc_ref) * dh1
-gw = 2.0 * (Wp - w_bc_ref) * dh1
-wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * v_bc * gu + gu * dh2 )
-wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * v_bc * gv + gv * dh2 )
-wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * v_bc * gw + gw * dh2 )
+gu = 2.0 * (Up - u_bc_ref) * ry
+gv = 2.0 * (Vp - v_bc_ref) * ry
+gw = 2.0 * (Wp - w_bc_ref) * ry
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * v_bc * gu + gu * dy2 )
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * v_bc * gv + gv * dy2 )
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * v_bc * gw + gw * dy2 )
 m2 = m2 + 1.0
 end if
 
 if ( c_n == 1.0 ) then
-gu = 2.0 * (u_bc_ref - Up) * dh1
-gv = 2.0 * (v_bc_ref - Vp) * dh1
-gw = 2.0 * (w_bc_ref - Wp) * dh1
-wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * v_bc * gu - gu * dh2 )
-wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * v_bc * gv - gv * dh2 )
-wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * v_bc * gw - gw * dh2 )
+gu = 2.0 * (u_bc_ref - Up) * ry
+gv = 2.0 * (v_bc_ref - Vp) * ry
+gw = 2.0 * (w_bc_ref - Wp) * ry
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * v_bc * gu - gu * dy2 )
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * v_bc * gv - gv * dy2 )
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * v_bc * gw - gw * dy2 )
 m2 = m2 + 1.0
 end if
 
 
 ! Z方向 ---------------------------------------
 if ( c_b == 1.0 ) then
-gu = 2.0 * (Up - u_bc_ref) * dh1
-gv = 2.0 * (Vp - v_bc_ref) * dh1
-gw = 2.0 * (Wp - w_bc_ref) * dh1
-wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * w_bc * gu + gu * dh2 )
-wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * w_bc * gv + gv * dh2 )
-wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * w_bc * gw + gw * dh2 )
+gu = 2.0 * (Up - u_bc_ref) * rz
+gv = 2.0 * (Vp - v_bc_ref) * rz
+gw = 2.0 * (Wp - w_bc_ref) * rz
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * w_bc * gu + gu * dz2 )
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * w_bc * gv + gv * dz2 )
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * w_bc * gw + gw * dz2 )
 m2 = m2 + 1.0
 end if
 
 if ( c_t == 1.0 ) then
-gu = 2.0 * (u_bc_ref - Up) * dh1
-gv = 2.0 * (v_bc_ref - Vp) * dh1
-gw = 2.0 * (w_bc_ref - Wp) * dh1
-wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * w_bc * gu - gu * dh2 )
-wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * w_bc * gv - gv * dh2 )
-wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * w_bc * gw - gw * dh2 )
+gu = 2.0 * (u_bc_ref - Up) * rz
+gv = 2.0 * (v_bc_ref - Vp) * rz
+gw = 2.0 * (w_bc_ref - Wp) * rz
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * w_bc * gu - gu * dz2 )
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * w_bc * gv - gv * dz2 )
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * w_bc * gw - gw * dz2 )
 m2 = m2 + 1.0
 end if
 
@@ -914,14 +952,14 @@ real                                                        ::  Up0, Ue1, Uw1, U
 real                                                        ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
 real                                                        ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
 real                                                        ::  c_e, c_w, c_n, c_s, c_t, c_b
-real                                                        ::  dh, dh1, dh2, EX, EY, EZ, rei
+real                                                        ::  EX, EY, EZ, rei, rh1, rh2, rh3, dh1, dh2, dh3
 real                                                        ::  m1, m2, cx, cy, cz
 real                                                        ::  cnv_u, cnv_v, cnv_w, cr, cl, acr, acl
 real                                                        ::  u_bc, v_bc, w_bc, dx, dy, dz
 real                                                        ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, wv
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
-real, dimension(3)                                          ::  vec, org, ctr
+real, dimension(3)                                          ::  vec, org, ctr, dh
 real                                                        ::  r_u, r_v, r_w, omg_u, omg_v, omg_w, ox, oy, oz
 
 is = st(1)
@@ -931,8 +969,13 @@ je = ed(2)
 ks = st(3)
 ke = ed(3)
 
-dh1= 1.0/dh
-dh2= rei*dh1*dh1
+rh1= 1.0/dh(1)
+rh2= 1.0/dh(2)
+rh3= 1.0/dh(3)
+
+dh1= rei*rh1*rh1
+dh2= rei*rh2*rh2
+dh3= rei*rh3*rh3
 
 ox = org(1)
 oy = org(2)
@@ -946,9 +989,9 @@ omg_u = vec(1)
 omg_v = vec(2)
 omg_w = vec(3)
 
-dx = dh
-dy = dh
-dz = dh
+dx = dh(1)
+dy = dh(2)
+dz = dh(3)
 
 m1 = 0.0
 m2 = 0.0
@@ -958,8 +1001,8 @@ flop = flop + 13.0d0 ! DP 18 flop
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:m1) &
 !$OMP REDUCTION(+:m2) &
-!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, ox, oy, oz) &
-!$OMP FIRSTPRIVATE(dh1, dh2, odr, dx, dy, dz, cx, cy, cz, omg_u, omg_v, omg_w) &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, ox, oy, oz, rh1, rh2, rh3, dh1, dh2, dh3) &
+!$OMP FIRSTPRIVATE(odr, dx, dy, dz, cx, cy, cz, omg_u, omg_v, omg_w) &
 !$OMP PRIVATE(bvx, cnv_u, cnv_v, cnv_w, EX, EY, EZ, cr, cl, acr, acl) &
 !$OMP PRIVATE(Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1) &
 !$OMP PRIVATE(Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1) &
@@ -1162,9 +1205,9 @@ EZ = ( We1 - Wp0 ) * c_e &
    + ( Wt1 - Wp0 ) * c_t &
    + ( Wb1 - Wp0 ) * c_b
 
-wv(i,j,k,1) = wv(i,j,k,1) + ( -cnv_u*dh1 + EX*dh2 )
-wv(i,j,k,2) = wv(i,j,k,2) + ( -cnv_v*dh1 + EY*dh2 )
-wv(i,j,k,3) = wv(i,j,k,3) + ( -cnv_w*dh1 + EZ*dh2 ) ! 4*3 = 12 flops
+wv(i,j,k,1) = wv(i,j,k,1) + ( -cnv_u*rh1 + EX*dh1 )
+wv(i,j,k,2) = wv(i,j,k,2) + ( -cnv_v*rh2 + EY*dh2 )
+wv(i,j,k,3) = wv(i,j,k,3) + ( -cnv_w*rh3 + EZ*dh3 ) ! 4*3 = 12 flops
 m1 = m1 + 1.0
 
 endif
@@ -1184,10 +1227,11 @@ end subroutine pvec_ibc_sldrev_fvm
 
 
 !> ********************************************************************
-!! @brief 内部速度指定境界条件による疑似速度の\sum{u}の修正
-!! @param [in,out] div  \sum{u_j}
+!! @brief 内部速度指定境界条件による疑似速度のdiv{u}の修正
+!! @param [in,out] div  div{u}
 !! @param [in]     sz   配列長
 !! @param [in]     g    ガイドセル長
+!! @param [in]     dh   格子幅
 !! @param [in]     st   ループの開始インデクス
 !! @param [in]     ed   ループの終了インデクス
 !! @param [in]     v00  参照速度
@@ -1196,36 +1240,40 @@ end subroutine pvec_ibc_sldrev_fvm
 !! @param [in]     vec  指定する速度ベクトル
 !! @param [in,out] flop flop count 近似
 !<
-    subroutine div_ibc_drchlt (div, sz, g, st, ed, v00, bv, odr, vec, flop)
-    implicit none
-    include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
-    integer, dimension(3)                                     ::  sz, st, ed
-    double precision                                          ::  flop, m
-    real                                                      ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
-    real                                                      ::  u_bc_ref, v_bc_ref, w_bc_ref
-    real, dimension(3)                                        ::  vec
-    real, dimension(0:3)                                      ::  v00
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
+subroutine div_ibc_drchlt (div, sz, g, dh, st, ed, v00, bv, odr, vec, flop)
+implicit none
+include 'ffv_f_params.h'
+integer                                                   ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
+integer, dimension(3)                                     ::  sz, st, ed
+double precision                                          ::  flop, m
+real                                                      ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
+real                                                      ::  u_bc_ref, v_bc_ref, w_bc_ref, rx, ry, rz
+real, dimension(3)                                        ::  vec, dh
+real, dimension(0:3)                                      ::  v00
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
 
-    ! u_bc_refは参照座標系での境界速度
-    u_bc_ref = vec(1) + v00(1)
-    v_bc_ref = vec(2) + v00(2)
-    w_bc_ref = vec(3) + v00(3)
+! u_bc_refは参照座標系での境界速度によるdiv(u)の修正
+u_bc_ref = (vec(1) + v00(1))
+v_bc_ref = (vec(2) + v00(2))
+w_bc_ref = (vec(3) + v00(3))
 
-    is = st(1)
-    ie = ed(1)
-    js = st(2)
-    je = ed(2)
-    ks = st(3)
-    ke = ed(3)
+rx = 1.0 / dh(1)
+ry = 1.0 / dh(2)
+rz = 1.0 / dh(3)
 
-    m = dble( (ie-is+1)*(je-js+1)*(ke-ks+1) )
-    flop = flop + m*6.0d0
+is = st(1)
+ie = ed(1)
+js = st(2)
+je = ed(2)
+ks = st(3)
+ke = ed(3)
+
+m = dble( (ie-is+1)*(je-js+1)*(ke-ks+1) )
+flop = flop + m*6.0d0 + 27.0d0
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_bc_ref, v_bc_ref, w_bc_ref, odr) &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_bc_ref, v_bc_ref, w_bc_ref, odr, rx, ry, rz) &
 !$OMP PRIVATE(bvx, Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t)
 
 !$OMP DO SCHEDULE(static)
@@ -1250,7 +1298,7 @@ end subroutine pvec_ibc_sldrev_fvm
         if ( ibits(bvx, bc_face_T, bitw_5) == odr ) Wt_t = w_bc_ref
 
         ! VBCの面だけUe_tなどは値をもつ  対象セルは流体なのでマスク不要
-        div(i,j,k) = div(i,j,k) + ( Ue_t - Uw_t + Vn_t - Vs_t + Wt_t - Wb_t )
+        div(i,j,k) = div(i,j,k) + ( (Ue_t - Uw_t)*rx + (Vn_t - Vs_t)*ry + (Wt_t - Wb_t)*rz )
       end if
     end do
     end do
@@ -1287,7 +1335,7 @@ integer                                                   ::  i, j, k, g, bvx, o
 integer, dimension(3)                                     ::  sz, st, ed
 double precision                                          ::  flop, m
 real                                                      ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
-real                                                      ::  u_bc, v_bc, w_bc, cx, cy, cz, dx, dy, dz
+real                                                      ::  u_bc, v_bc, w_bc, cx, cy, cz, dx, dy, dz, rx, ry, rz
 real, dimension(3)                                        ::  vec, ctr, org, pch
 real, dimension(0:3)                                      ::  v00
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
@@ -1310,6 +1358,10 @@ dx = pch(1)
 dy = pch(2)
 dz = pch(3)
 
+rx = 1.0/dx
+ry = 1.0/dy
+rz = 1.0/dz
+
 is = st(1)
 ie = ed(1)
 js = st(2)
@@ -1318,10 +1370,10 @@ ks = st(3)
 ke = ed(3)
 
 m = dble( (ie-is+1)*(je-js+1)*(ke-ks+1) )
-flop = flop + m*6.0d0
+flop = flop + m*9.0d0 + 24.0d0
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke) &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, rx, ry, rz) &
 !$OMP FIRSTPRIVATE(dx, dy, dz, cx, cy, cz, omg_u, omg_v, omg_w, ox, oy, oz) &
 !$OMP PRIVATE(bvx, Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t) &
 !$OMP PRIVATE(r_u, r_v, r_w, u_bc, v_bc, w_bc)
@@ -1401,7 +1453,9 @@ Wt_t = w_bc
 endif
 
 ! VBCの面だけUe_tなどは値をもつ  対象セルは流体なのでマスク不要
-div(i,j,k) = div(i,j,k) + ( Ue_t - Uw_t + Vn_t - Vs_t + Wt_t - Wb_t )
+div(i,j,k) = div(i,j,k) + ( rx * (Ue_t - Uw_t) &
+                        +   ry * (Vn_t - Vs_t) &
+                        +   rz * (Wt_t - Wb_t) ) ! 9 flops
 end if
 end do
 end do
@@ -1423,7 +1477,9 @@ end subroutine div_ibc_sldrev
 !! @param [in]     st   ループの開始インデクス
 !! @param [in]     ed   ループの終了インデクス
 !! @param [in]     v00  参照速度
-!! @param [in]     cf   u_out*dt/dh
+!! @param [in]     vel  流出速度
+!! @param [in]     dt   時間積分幅
+!! @param [in]     dh   格子幅
 !! @param [in]     bv   BCindex C
 !! @param [in]     odr  速度境界条件のエントリ
 !! @param [in]     v0   セルセンター速度　u^n
@@ -1432,7 +1488,7 @@ end subroutine div_ibc_sldrev
 !! @note 流出境界面ではu_e^{n+1}=u_e^n-cf*(u_e^n-u_w^n)を予測値としてdivの寄与として加算
 !! @note flop countはコスト軽減のため近似
 !<
-    subroutine div_ibc_oflow_pvec (div, sz, g, st, ed, v00, cf, bv, odr, v0, vf, flop)
+    subroutine div_ibc_oflow_pvec (div, sz, g, st, ed, v00, vel, dt, dh, bv, odr, v0, vf, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
@@ -1441,10 +1497,11 @@ end subroutine div_ibc_sldrev
     real                                                      ::  m
     real                                                      ::  b_w, b_e, b_s, b_n, b_b, b_t, b_p
     real                                                      ::  w_e, w_w, w_n, w_s, w_t, w_b
-    real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb
+    real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb, rx, ry, rz
     real                                                      ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
-    real                                                      ::  cf, u_ref, v_ref, w_ref
+    real                                                      ::  vel, dt, u_ref, v_ref, w_ref, cf1, cf2, cf3, cf
     real, dimension(0:3)                                      ::  v00
+    real, dimension(3)                                        ::  dh
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0, vf
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
@@ -1461,10 +1518,21 @@ end subroutine div_ibc_sldrev
     ks = st(3)
     ke = ed(3)
 
+    cf = vel * dt
+
+    rx = 1.0/dh(1)
+    ry = 1.0/dh(2)
+    rz = 1.0/dh(3)
+
+    cf1 = cf * rx
+    cf2 = cf * ry
+    cf3 = cf * rz
+
     m = 0.0
     
 !$OMP PARALLEL REDUCTION(+:m) &
-!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_ref, v_ref, w_ref, odr, cf) &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_ref, v_ref, w_ref, odr) &
+!$OMP FIRSTPRIVATE(cf1, cf2, cf3, rx, ry, rz) &
 !$OMP PRIVATE(bvx) &
 !$OMP PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t, b_p) &
 !$OMP PRIVATE(w_e, w_w, w_n, w_s, w_t, w_b) &
@@ -1488,7 +1556,7 @@ end subroutine div_ibc_sldrev
         b_b = real( ibits(bv(i  ,j  ,k-1), State, 1) )
         b_t = real( ibits(bv(i  ,j  ,k+1), State, 1) )
 
-        ! セル界面のフラグ (0-wall face / 1-fluid) > real*6+ 6= 12 flops
+        ! セル界面のフラグ (0-wall face / 1-fluid) > 6 flops
         w_e = real(b_e * b_p)
         w_w = real(b_w * b_p)
         w_n = real(b_n * b_p)
@@ -1497,12 +1565,12 @@ end subroutine div_ibc_sldrev
         w_b = real(b_b * b_p)
 
         ! 界面速度（スタガード位置） > 6 flops
-        Uw = vf(i-1, j  , k  ,1)*w_w
-        Ue = vf(i  , j  , k  ,1)*w_e
-        Vs = vf(i  , j-1, k  ,2)*w_s
-        Vn = vf(i  , j  , k  ,2)*w_n
-        Wb = vf(i  , j  , k-1,3)*w_b
-        Wt = vf(i  , j  , k  ,3)*w_t ! real*7 real*6 + 6 + 6 = 25 flopss
+        Uw = vf(i-1, j  , k  ,1) * w_w
+        Ue = vf(i  , j  , k  ,1) * w_e
+        Vs = vf(i  , j-1, k  ,2) * w_s
+        Vn = vf(i  , j  , k  ,2) * w_n
+        Wb = vf(i  , j  , k-1,3) * w_b
+        Wt = vf(i  , j  , k  ,3) * w_t ! 6 flops
 
         ! 寄与をゼロにしておく
         Ue_t = 0.0
@@ -1515,44 +1583,46 @@ end subroutine div_ibc_sldrev
         ! X方向 ---------------------------------------
         if ( ibits(bvx, bc_face_W, bitw_5) == odr ) then
           !Uw = Ue + (Vn - Vs + Wt - Wb) ! 連続の式から流出面の速度を推定，これは移動座標系上の速度成分
-          if ( cf>0.0 ) cf=0.0
-          Uw_t = Uw - cf*(Ue-Uw)
+          if ( cf1>0.0 ) cf1=0.0
+          Uw_t = Uw - cf1*(Ue-Uw)
         endif
         
         if ( ibits(bvx, bc_face_E, bitw_5) == odr ) then
           !Ue = Uw - (Vn - Vs + Wt - Wb)
-          if ( cf<0.0 ) cf=0.0
-          Ue_t = Ue - cf*(Ue-Uw)
+          if ( cf1<0.0 ) cf1=0.0
+          Ue_t = Ue - cf1*(Ue-Uw)
         endif
         
         ! Y方向 ---------------------------------------
         if ( ibits(bvx, bc_face_S, bitw_5) == odr ) then
           !Vs = Vn + (Ue - Uw + Wt - Wb)
-          if ( cf>0.0 ) cf=0.0
-          Vs_t = Vs - cf*(Vn-Vs)
+          if ( cf2>0.0 ) cf2=0.0
+          Vs_t = Vs - cf2*(Vn-Vs)
         endif
         
         if ( ibits(bvx, bc_face_N, bitw_5) == odr ) then
           !Vn = Vs - (Ue - Uw + Wt - Wb)
-          if ( cf<0.0 ) cf=0.0
-          Vn_t = Vn - cf*(Vn-Vs)
+          if ( cf2<0.0 ) cf2=0.0
+          Vn_t = Vn - cf2*(Vn-Vs)
         endif
         
         ! Z方向 ---------------------------------------
         if ( ibits(bvx, bc_face_B, bitw_5) == odr ) then
           !Wb = Wt + (Ue - Uw + Vn - Vs)
-          if ( cf>0.0 ) cf=0.0
-          Wb_t = Wb - cf*(Wt-Wb)
+          if ( cf3>0.0 ) cf3=0.0
+          Wb_t = Wb - cf3*(Wt-Wb)
         endif
         
         if ( ibits(bvx, bc_face_T, bitw_5) == odr ) then
           !Wt = Wb - (Ue - Uw + Vn - Vs)
-          if ( cf<0.0 ) cf=0.0
-          Wt_t = Wt - cf*(Wt-Wb)
+          if ( cf3<0.0 ) cf3=0.0
+          Wt_t = Wt - cf3*(Wt-Wb)
         endif
 
         ! VBCの面だけUe_tなどは値をもつ
-        div(i,j,k) = div(i,j,k) + ( Ue_t - Uw_t + Vn_t - Vs_t + Wt_t - Wb_t ) ! 対象セルは流体なのでマスク不要
+        div(i,j,k) = div(i,j,k) + ( rx * (Ue_t - Uw_t) &
+                                +   ry * (Vn_t - Vs_t) &
+                                +   rz * (Wt_t - Wb_t) ) ! 対象セルは流体なのでマスク不要 9 flops
         m = m + 1.0
       end if
     end do
@@ -1561,7 +1631,7 @@ end subroutine div_ibc_sldrev
 !$OMP END DO
 !$OMP END PARALLEL
 
-    flop = flop + dble(m)*66.0d0
+    flop = flop + dble(m)*21.0d0 + 24.0d0
 
     return
     end subroutine div_ibc_oflow_pvec
@@ -1571,6 +1641,7 @@ end subroutine div_ibc_sldrev
 !! @param [in,out] div  速度の発散
 !! @param [in]     sz   配列長
 !! @param [in]     g    ガイドセル長
+!! @param [in]     dh   格子幅
 !! @param [in]     st   ループの開始インデクス
 !! @param [in]     ed   ループの終了インデクス
 !! @param [in]     bv   BCindex C
@@ -1581,13 +1652,14 @@ end subroutine div_ibc_sldrev
 !! @note 1つのセルに複数の速度境界条件がある場合にはだめ
 !! @note flop countはコスト軽減のため近似
 !<
-    subroutine div_ibc_oflow_vec (div, sz, g, st, ed, bv, odr, av, flop)
+    subroutine div_ibc_oflow_vec (div, sz, g, dh, st, ed, bv, odr, av, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, bvx, odr, is, ie, js, je, ks, ke
     integer, dimension(3)                                     ::  sz, st, ed
     double precision                                          ::  flop
-    real                                                      ::  dv, a1, m
+    real                                                      ::  dv, a1, m, dx, dy, dz
+    real, dimension(3)                                        ::  dh
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
     real, dimension(2)                                        ::  av
@@ -1602,11 +1674,15 @@ end subroutine div_ibc_sldrev
     ks = st(3)
     ke = ed(3)
 
+    dx = dh(1)
+    dy = dh(2)
+    dz = dh(3)
+
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:a1) &
 !$OMP REDUCTION(+:m) &
-!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, odr) &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, odr, dx, dy, dz) &
 !$OMP PRIVATE(bvx, dv)
 
 !$OMP DO SCHEDULE(static)
@@ -1618,27 +1694,27 @@ end subroutine div_ibc_sldrev
         dv = div(i,j,k)
         
         if ( ibits(bvx, bc_face_W, bitw_5) == odr ) then ! u_w
-          a1 = a1 + dv
+          a1 = a1 + dv * dx
         endif
 
         if ( ibits(bvx, bc_face_E, bitw_5) == odr ) then ! u_e
-          a1 = a1 - dv
+          a1 = a1 - dv * dx
         endif
         
         if ( ibits(bvx, bc_face_S, bitw_5) == odr ) then
-          a1 = a1 + dv
+          a1 = a1 + dv * dy
         endif
         
         if ( ibits(bvx, bc_face_N, bitw_5) == odr ) then
-          a1 = a1 - dv
+          a1 = a1 - dv * dy
         endif
         
         if ( ibits(bvx, bc_face_B, bitw_5) == odr ) then
-          a1 = a1 + dv
+          a1 = a1 + dv * dz
         endif
         
         if ( ibits(bvx, bc_face_T, bitw_5) == odr ) then
-          a1 = a1 - dv
+          a1 = a1 - dv * dz
         endif
 
         div(i,j,k) = 0.0 ! 対象セルは発散をゼロにする

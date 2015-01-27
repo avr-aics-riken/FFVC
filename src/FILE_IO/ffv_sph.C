@@ -1240,7 +1240,7 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
   // Vorticity
   if (C->varState[var_Vorticity] == ON )
   {
-    rot_v_(d_wv, size, &guide, &deltaX, d_v, d_cdf, RF->getV00(), &flop);
+    rot_v_(d_wv, size, &guide, pitch, d_v, d_cdf, RF->getV00(), &flop);
     
     REAL_TYPE  vz[3];
     vz[0] = vz[1] = vz[2] = 0.0;
@@ -1296,7 +1296,7 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
   // 2nd Invariant of Velocity Gradient Tensor
   if (C->varState[var_Qcr] == ON )
   {
-    i2vgt_ (d_iobuf, size, &guide, &deltaX, d_v, d_cdf, RF->getV00(), &flop);
+    i2vgt_ (d_iobuf, size, &guide, pitch, d_v, d_cdf, RF->getV00(), &flop);
     
     // 無次元で出力
     U.copyS3D(d_ws, size, guide, d_iobuf, scale);
@@ -1340,7 +1340,7 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
   // Helicity
   if (C->varState[var_Helicity] == ON )
   {
-    helicity_(d_iobuf, size, &guide, &deltaX, d_v, d_cdf, RF->getV00(), &flop);
+    helicity_(d_iobuf, size, &guide, pitch, d_v, d_cdf, RF->getV00(), &flop);
     
     // 無次元で出力
     U.copyS3D(d_ws, size, guide, d_iobuf, scale);
@@ -1384,8 +1384,7 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
   // Divergence for Debug
   if (C->varState[var_Div] == ON )
   {
-    REAL_TYPE coef = 1.0/deltaX; /// 発散値を計算するための係数　1/h
-    U.cnv_Div(d_ws, d_dv, size, guide, coef);
+    U.cnv_Div(d_ws, d_dv, size, guide);
     
     fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
     

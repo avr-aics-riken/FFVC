@@ -31,8 +31,8 @@ void FFV::NS_FS_E_CDS()
   double res_init = 0.0;               /// 反復解法での初期残差ベクトルのL2ノルム
   
   REAL_TYPE dt = deltaT;               /// 時間積分幅
-  REAL_TYPE dh = (REAL_TYPE)deltaX;    /// 空間幅
-  REAL_TYPE coef = deltaX/dt;          /// Poissonソース項の係数
+  REAL_TYPE dh = pitch[0];    /// 空間幅
+  REAL_TYPE coef = dh/dt;          /// Poissonソース項の係数
   REAL_TYPE Re = C.Reynolds;           /// レイノルズ数
   REAL_TYPE rei = C.getRcpReynolds();  /// レイノルズ数の逆数
   REAL_TYPE half = 0.5;                /// 定数
@@ -266,7 +266,7 @@ void FFV::NS_FS_E_CDS()
   TIMING_start("Poisson_Src_Norm");
   rhs_nrm = 0.0;
   flop = 0.0;
-  blas_calc_b_(&rhs_nrm, d_b, d_ws, d_bcp, size, &guide, &dh, &dt, &flop);
+  blas_calc_b_(&rhs_nrm, d_b, d_ws, d_bcp, size, &guide, pitch, &dt, &flop);
   TIMING_stop("Poisson_Src_Norm", flop);
   
   if ( numProc > 1 )
@@ -285,7 +285,7 @@ void FFV::NS_FS_E_CDS()
     TIMING_start("Poisson_Init_Res");
     res_init = 0.0;
     flop = 0.0;
-    blas_calc_r2_(&res_init, d_p, d_b, d_bcp, size, &guide, &flop);
+    blas_calc_r2_(&res_init, d_p, d_b, d_bcp, size, &guide, pitch, &flop);
     TIMING_stop("Poisson_Init_Res", flop);
     
     if ( numProc > 1 )

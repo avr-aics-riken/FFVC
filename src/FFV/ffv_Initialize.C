@@ -195,13 +195,6 @@ int FFV::Initialize(int argc, char **argv)
   allocArray_Cut(PrepMemory, TotalMemory);
   initCutInfo();
   
-  
-  // SOR2SMAのNaive実装 >> Experimental
-  if ( LS[ic_prs1].getNaive() == ON )
-  {
-    Hostonly_ printf("\n\t << Extra arrays are allocated for Naive implementation. >>\n\n");
-    allocArray_Naive(TotalMemory);
-  }
   TIMING_stop("Allocate_Arrays");
   
 
@@ -1297,7 +1290,7 @@ void FFV::encodeBCindex(FILE* fp)
 
   
   // 圧力計算のビット情報をエンコードする -----
-  C.NoWallSurface = V.setBCIndexP(d_bcd, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid, LS[ic_prs1].getNaive(), d_pni, C.NoCompo);
+  V.setBCIndexP(d_bcd, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid, C.NoCompo);
   
 
   
@@ -1327,39 +1320,6 @@ void FFV::encodeBCindex(FILE* fp)
   
   // エンコードされているエントリ番号のチェック 1<=order<=31
   V.chkOrder(d_bcd);
-  
-
-  
-  // エンコードした面の数から表面積を近似
-  REAL_TYPE dhd = (REAL_TYPE)deltaX * (REAL_TYPE)C.RefLength;
-  
-  Hostonly_
-  {
-    printf("\n----------\n\n");
-    printf("\t>> Comparison of Component area\n\n");
-    printf("\t  No.  Area [m*m] Org./  Approx.     Err.[%%]\n");
-    
-    fprintf(fp, "\n----------\n\n");
-    fprintf(fp, "\t>> Comparison of Component normal and area\n\n");
-    fprintf(fp,"\t  No.  Area [m*m] Org./  Approx.     Err.[%%]\n");
-  }
-  
-  for (int n=1; n<=C.NoCompo; n++)
-  {
-    if ( cmp[n].isKindMedium() ) continue;
-    
-    REAL_TYPE ap = (REAL_TYPE)cmp[n].getElement() * dhd * dhd; // dhd は有次元値，近似的な面積
-    REAL_TYPE ao = (REAL_TYPE)cmp[n].area * C.RefLength*C.RefLength;
-    cmp[n].area = (REAL_TYPE)ap;
-    
-    Hostonly_
-    {
-      printf("\t %3d    %12.5e  / %12.5e  %6.2f\n",
-             n, ao, ap, fabs(ap-ao)/ao*100.0);
-      fprintf(fp,"\t %3d    %12.5e  / %12.5e  %6.2f\n",
-              n, ao, ap, fabs(ap-ao)/ao*100.0);
-    }
-  }
   
 }
 
@@ -2438,19 +2398,19 @@ void FFV::perturbation()
     case Y_minus:
     case Y_plus:
       mode = 1;
-      perturb_u_y_ (d_v, size, &guide, &deltaX, origin, &width, &Re_tau, &Ubar, &visc, &mode);
+      perturb_u_y_ (d_v, size, &guide, pitch, origin, &width, &Re_tau, &Ubar, &visc, &mode);
       
       mode = 2;
-      perturb_u_y_ (d_vf, size, &guide, &deltaX, origin, &width, &Re_tau, &Ubar, &visc, &mode);
+      perturb_u_y_ (d_vf, size, &guide, pitch, origin, &width, &Re_tau, &Ubar, &visc, &mode);
       break;
       
     case Z_minus:
     case Z_plus:
       mode = 1;
-      perturb_u_z_ (d_v, size, &guide, &deltaX, origin, &width, &Re_tau, &Ubar, &visc, &mode);
+      perturb_u_z_ (d_v, size, &guide, pitch, origin, &width, &Re_tau, &Ubar, &visc, &mode);
       
       mode = 2;
-      perturb_u_z_ (d_vf, size, &guide, &deltaX, origin, &width, &Re_tau, &Ubar, &visc, &mode);
+      perturb_u_z_ (d_vf, size, &guide, pitch, origin, &width, &Re_tau, &Ubar, &visc, &mode);
       break;
       
     default:
@@ -3552,8 +3512,10 @@ void FFV::setParameters()
 {
   // 無次元数などの計算パラメータを設定する．MediumListを決定した後，かつ，SetBC3Dクラスの初期化前に実施すること
   // 代表物性値をRefMatの示す媒質から取得
-  // Δt=constとして，無次元の時間積分幅 deltaTを計算する．ただし，一定幅の場合に限られる．不定幅の場合には別途考慮の必要
-  DT.set_Vars(C.KindOfSolver, C.Unit.Param, (double)deltaX, (double)C.Reynolds, (double)C.Peclet);
+  // Δt=constとして，無次元の時間積分幅 deltaTを計算する
+  
+  double min_dx = std::min(pitch[0], std::min(pitch[1], pitch[2]));
+  DT.set_Vars(C.KindOfSolver, C.Unit.Param, min_dx, (double)C.Reynolds, (double)C.Peclet);
   
   
   // 無次元速度1.0を与えてdeltaTをセットし，エラーチェック
@@ -3814,7 +3776,6 @@ void FFV::setupLinearSolvers(double& TotalMemory, TextParser* tpCntl)
                        &PM,
                        d_bcp,
                        d_bcd,
-                       d_pni,
                        d_pcg_p,
                        d_pcg_p_,
                        d_pcg_r,

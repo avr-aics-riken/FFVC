@@ -19,6 +19,13 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-01-27
+r1582 Introduce flags for unisotropic Cartesian
+- expire naive implementation
+- expire facing_? flags and introduce bc_dn_? flags
+- divergence_cc => change calculation from sum_(u^*) to div(u^*)
+
+--------------------------
 2015-01-21
 r1581 bug fix in paintedCutOnPoint in Geometry.C
 

@@ -20,9 +20,10 @@
 !<
 
 integer     ::  Active, State, id_fluid, id_solid
-integer     ::  bc_diag, bc_mask30, file_path_length
+integer     ::  bc_mask30, file_path_length
 integer     ::  bc_d_T, bc_d_B, bc_d_N, bc_d_S, bc_d_E, bc_d_W
 integer     ::  bc_n_T, bc_n_B, bc_n_N, bc_n_S, bc_n_E, bc_n_W
+integer     ::  bc_dn_T, bc_dn_B, bc_dn_N, bc_dn_S, bc_dn_E, bc_dn_W
 integer     ::  bc_ndag_T, bc_ndag_B, bc_ndag_N, bc_ndag_S, bc_ndag_E, bc_ndag_W
 integer     ::  bc_face_T, bc_face_B, bc_face_N, bc_face_S, bc_face_E, bc_face_W
 integer     ::  adbtc_T, adbtc_B, adbtc_N, adbtc_S, adbtc_E, adbtc_W
@@ -30,7 +31,7 @@ integer     ::  X_plus, X_minus, Y_plus, Y_minus, Z_plus, Z_minus
 integer     ::  id_specvel, id_wall, id_symmetric, id_periodic
 integer     ::  obc_periodic, obc_outflow, obc_mask
 integer     ::  cmp_typ_outflow, cmp_typ_hex, cmp_typ_vspec, cmp_typ_solidrev
-integer     ::  facing_t, facing_b, facing_n, facing_s, facing_e, facing_w, vld_cnvg
+integer     ::  vld_cnvg, bc_diag
 integer     ::  gma_T, gma_B, gma_N, gma_S, gma_E, gma_W, h_diag
 integer     ::  top_vf, bitw_8, forcing_bit, bitw_6, bitw_5, vbc_uwd, bitw_9, bitw_10
 
@@ -87,20 +88,20 @@ parameter ( bc_n_N    = 21 ) ! FB_Define.h BC_N_N
 parameter ( bc_n_S    = 20 ) ! FB_Define.h BC_N_S
 parameter ( bc_n_E    = 19 ) ! FB_Define.h BC_N_E
 parameter ( bc_n_W    = 18 ) ! FB_Define.h BC_N_W
-parameter ( bc_ndag_T = 17 ) ! FB_Define.h BC_NDAG_T
-parameter ( bc_ndag_B = 16 ) ! FB_Define.h BC_NDAG_B
-parameter ( bc_ndag_N = 15 ) ! FB_Define.h BC_NDAG_N
-parameter ( bc_ndag_S = 14 ) ! FB_Define.h BC_NDAG_S
-parameter ( bc_ndag_E = 13 ) ! FB_Define.h BC_NDAG_E
-parameter ( bc_ndag_W = 12 ) ! FB_Define.h BC_NDAG_W
-parameter ( bc_diag   =  9 ) ! FB_Define.h BC_DIAG
-parameter ( facing_t  =  8 ) ! FB_Define.h FACING_T
-parameter ( facing_b  =  7 ) ! FB_Define.h FACING_B
-parameter ( facing_n  =  6 ) ! FB_Define.h FACING_N
-parameter ( facing_s  =  5 ) ! FB_Define.h FACING_S
-parameter ( facing_e  =  4 ) ! FB_Define.h FACING_E
-parameter ( facing_w  =  3 ) ! FB_Define.h FACING_W
-parameter ( vld_cnvg  =  2 ) ! FB_Define.h VLD_CNVG
+parameter ( bc_dn_T   = 17 ) ! FB_Define.h BC_DN_T
+parameter ( bc_dn_B   = 16 ) ! FB_Define.h BC_DN_B
+parameter ( bc_dn_N   = 15 ) ! FB_Define.h BC_DN_N
+parameter ( bc_dn_S   = 14 ) ! FB_Define.h BC_DN_S
+parameter ( bc_dn_E   = 13 ) ! FB_Define.h BC_DN_E
+parameter ( bc_dn_W   = 12 ) ! FB_Define.h BC_DN_W
+parameter ( bc_ndag_T = 11 ) ! FB_Define.h BC_NDAG_T
+parameter ( bc_ndag_B = 10 ) ! FB_Define.h BC_NDAG_B
+parameter ( bc_ndag_N = 9  ) ! FB_Define.h BC_NDAG_N
+parameter ( bc_ndag_S = 8  ) ! FB_Define.h BC_NDAG_S
+parameter ( bc_ndag_E = 7  ) ! FB_Define.h BC_NDAG_E
+parameter ( bc_ndag_W = 6  ) ! FB_Define.h BC_NDAG_W
+parameter ( bc_diag   = 5  ) ! FB_Define.h BC_DIAG
+parameter ( vld_cnvg  = 2  ) ! FB_Define.h VLD_CNVG
 
 
 ! BCindex C

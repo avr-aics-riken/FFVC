@@ -150,7 +150,9 @@ void IP_Step::setup(int* bcd, Control* R, const int NoMedium, const MediumList* 
   int kx = size[2];
   int gd = guide;
   
-  REAL_TYPE dh = deltaX;
+  REAL_TYPE dx = pitch[0];
+  //REAL_TYPE dy = pitch[1];
+  REAL_TYPE dz = pitch[2];
   
   // ローカルな無次元位置
   REAL_TYPE ox, oz;
@@ -165,18 +167,18 @@ void IP_Step::setup(int* bcd, Control* R, const int NoMedium, const MediumList* 
   REAL_TYPE ht  = G_origin[2] + height/R->RefLength; // グローバルな無次元位置
 
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid, ox, oz, dh, len, ht) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid, ox, oz, dx, dz, len, ht) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        REAL_TYPE x = ox + 0.5*dh + dh*(i-1); // position of cell center
-        REAL_TYPE z = oz + 0.5*dh + dh*(k-1); // position of cell center
-        REAL_TYPE s = (len - x)/dh;
+        REAL_TYPE x = ox + 0.5*dx + dx*(i-1); // position of cell center
+        REAL_TYPE z = oz + 0.5*dz + dz*(k-1); // position of cell center
+        REAL_TYPE s = (len - x)/dx;
         
         if ( z <= ht )
         {
-          if ( (x <= len) && (len < x+dh) )
+          if ( (x <= len) && (len < x+dx) )
           {
             setBit5(bid[m], mid_solid, X_plus);
             int r = quantize9(s);
@@ -187,7 +189,7 @@ void IP_Step::setup(int* bcd, Control* R, const int NoMedium, const MediumList* 
             int rr = quantize9(1.0-s);
             setCut9(cut[m1], rr, X_minus);
           }
-          else if ( (x-dh < len) && (len < x) )
+          else if ( (x-dx < len) && (len < x) )
           {
             setBit5(bid[m], mid_solid, X_minus);
             int r = quantize9(-s);
@@ -204,18 +206,18 @@ void IP_Step::setup(int* bcd, Control* R, const int NoMedium, const MediumList* 
     }
   }
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid, ox, oz, dh, len, ht) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid, ox, oz, dx, dz, len, ht) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        REAL_TYPE x = ox + 0.5*dh + dh*(i-1); // position of cell center
-        REAL_TYPE z = oz + 0.5*dh + dh*(k-1); // position of cell center
-        REAL_TYPE c = (ht - z)/dh;
+        REAL_TYPE x = ox + 0.5*dx + dx*(i-1); // position of cell center
+        REAL_TYPE z = oz + 0.5*dz + dz*(k-1); // position of cell center
+        REAL_TYPE c = (ht - z)/dz;
         
         if ( x <= len )
         {
-          if ( (z <= ht) && (ht < z+dh) )
+          if ( (z <= ht) && (ht < z+dz) )
           {
             setBit5(bid[m], mid_solid, Z_plus);
             int r = quantize9(c);
@@ -226,7 +228,7 @@ void IP_Step::setup(int* bcd, Control* R, const int NoMedium, const MediumList* 
             int rr = quantize9(1.0-c);
             setCut9(cut[m1], rr, Z_minus);
           }
-          else if ( (z-dh < ht) && (ht < z) )
+          else if ( (z-dz < ht) && (ht < z) )
           {
             setBit5(bid[m], mid_solid, Z_minus);
             int r = quantize9(-c);
@@ -271,11 +273,11 @@ void IP_Step::setup(int* bcd, Control* R, const int NoMedium, const MediumList* 
     
     
     // Channel
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid, ht, oz, dh) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid, ht, oz, dz) schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         
-        REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+        REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dz;
         
         if ( z > ht )
         {

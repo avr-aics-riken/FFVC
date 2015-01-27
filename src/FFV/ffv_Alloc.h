@@ -100,10 +100,6 @@ public:
   REAL_TYPE** component_array; ///< コンポーネントワーク配列のアドレス管理
   REAL_TYPE *d_cvf; ///< [*] 体積率
   
-
-  // Naive実装の実験
-  REAL_TYPE *d_pni; ///< [*] 圧力Poissonの係数
-  
   
   // LES計算
   REAL_TYPE *d_vt;      ///< [*] 渦粘性係数
@@ -197,7 +193,6 @@ public:
     d_ap = NULL;
     d_ae = NULL;
     d_pvf = NULL;
-    d_pni = NULL;
     d_cvf = NULL;
     
     d_vt = NULL;
@@ -289,10 +284,6 @@ public:
   
   // 主計算部分に用いる配列のアロケーション
   void allocArray_Main(double &total, Control* C);
-  
-  
-  // Poissonのナイーブ実装試験
-  void allocArray_Naive(double &total);
   
   
   // PCG法に用いる配列のアロケーション

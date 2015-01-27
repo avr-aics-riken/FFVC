@@ -176,21 +176,21 @@
 #define BC_N_E     19
 #define BC_N_W     18
 
-#define BC_NDAG_T  17
-#define BC_NDAG_B  16
-#define BC_NDAG_N  15
-#define BC_NDAG_S  14
-#define BC_NDAG_E  13
-#define BC_NDAG_W  12
+#define BC_DN_T    17
+#define BC_DN_B    16
+#define BC_DN_N    15
+#define BC_DN_S    14
+#define BC_DN_E    13
+#define BC_DN_W    12
 
-#define BC_DIAG    9
+#define BC_NDAG_T  11
+#define BC_NDAG_B  10
+#define BC_NDAG_N  9
+#define BC_NDAG_S  8
+#define BC_NDAG_E  7
+#define BC_NDAG_W  6
+#define BC_DIAG    5
 
-#define FACING_T   8
-#define FACING_B   7
-#define FACING_N   6
-#define FACING_S   5
-#define FACING_E   4
-#define FACING_W   3
 #define VLD_CNVG   2
 
 // エンコードビット　C, bid

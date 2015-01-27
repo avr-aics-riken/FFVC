@@ -144,7 +144,6 @@ Iteration {
     NormType             = "RbyR0"
     Omega                = 1.1
     CommMode             = "async"
-    NaiveImplementation  = "off"
   }
 
   LinearSolver[@] {

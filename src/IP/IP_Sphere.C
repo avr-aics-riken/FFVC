@@ -26,7 +26,7 @@ using namespace Vec3class;
 
 // #################################################################
 // 交点の無次元距離を計算する
-REAL_TYPE IP_Sphere::cut_line(const Vec3r p, const int dir, const REAL_TYPE r, const REAL_TYPE dh)
+REAL_TYPE IP_Sphere::cut_line(const Vec3r p, const int dir, const REAL_TYPE r)
 {
   REAL_TYPE x, y, z, s;
   REAL_TYPE c;
@@ -43,37 +43,37 @@ REAL_TYPE IP_Sphere::cut_line(const Vec3r p, const int dir, const REAL_TYPE r, c
     case 1: // X-
       c = sqrtf(r*r - y*y - z*z);
       if ( x < 0.0 ) c *= -1.0;
-      s = fabs(c-x);
+      s = fabs(c-x) / pitch[0];
       break;
       
     case 2: // X+
       c = sqrtf(r*r - y*y - z*z);
       if ( x < 0.0 ) c *= -1.0;
-      s = fabs(c-x);
+      s = fabs(c-x) / pitch[0];
       break;
       
     case 3: // Y-
       c = sqrtf(r*r - x*x - z*z);
       if ( y < 0.0 ) c *= -1.0;
-      s = fabs(c-y);
+      s = fabs(c-y) / pitch[1];
       break;
       
     case 4: // Y+
       c = sqrtf(r*r - x*x - z*z);
       if ( y < 0.0 ) c *= -1.0;
-      s = fabs(c-y);
+      s = fabs(c-y) / pitch[1];
       break;
       
     case 5: // Z-
       c = sqrtf(r*r - x*x - y*y);
       if ( z < 0.0 ) c *= -1.0;
-      s = fabs(c-z);
+      s = fabs(c-z) / pitch[2];
       break;
       
     case 6: // Z+
       c = sqrtf(r*r - x*x - y*y);
       if ( z < 0.0 ) c *= -1.0;
-      s = fabs(c-z);
+      s = fabs(c-z) / pitch[2];
       break;
       
     default:
@@ -81,7 +81,7 @@ REAL_TYPE IP_Sphere::cut_line(const Vec3r p, const int dir, const REAL_TYPE r, c
       break;
   }
   
-  return s/dh;
+  return s;
 }
 
 
@@ -233,14 +233,15 @@ void IP_Sphere::setup(int* bcd, Control* R, const int NoMedium, const MediumList
   int mid_driver;       /// ドライバ部
   int mid_driver_face;  /// ドライバ流出面
   
-  REAL_TYPE ph = deltaX;
+  REAL_TYPE dx = pitch[0];
+  REAL_TYPE dy = pitch[1];
+  REAL_TYPE dz = pitch[2];
   REAL_TYPE rs = radius/R->RefLength;
   
   // ノードローカルの無次元値
   REAL_TYPE Lx = region[0];
   REAL_TYPE Ly = region[1];
   REAL_TYPE Lz = region[2];
-  REAL_TYPE dh = deltaX;
   
   Vec3r pch(pitch);        ///< セル幅
   Vec3r org(origin);       ///< 計算領域の基点
@@ -289,15 +290,15 @@ void IP_Sphere::setup(int* bcd, Control* R, const int NoMedium, const MediumList
       for (int i=box_st.x-2; i<=box_ed.x+2; i++) {
 
         base.assign((REAL_TYPE)i-0.5, (REAL_TYPE)j-0.5, (REAL_TYPE)k-0.5);
-        b = org + base*ph;
+        b = org + base*pch;
         
         p[0].assign(b.x   , b.y   , b.z   ); // p
-        p[1].assign(b.x-ph, b.y   , b.z   ); // w 
-        p[2].assign(b.x+ph, b.y   , b.z   ); // e
-        p[3].assign(b.x   , b.y-ph, b.z   ); // s
-        p[4].assign(b.x   , b.y+ph, b.z   ); // n
-        p[5].assign(b.x   , b.y   , b.z-ph); // b
-        p[6].assign(b.x   , b.y   , b.z+ph); // t
+        p[1].assign(b.x-dx, b.y   , b.z   ); // w
+        p[2].assign(b.x+dx, b.y   , b.z   ); // e
+        p[3].assign(b.x   , b.y-dy, b.z   ); // s
+        p[4].assign(b.x   , b.y+dy, b.z   ); // n
+        p[5].assign(b.x   , b.y   , b.z-dz); // b
+        p[6].assign(b.x   , b.y   , b.z+dz); // t
         
         // (0.0, 0.0, 0.0)が球の中心
         for (int l=0; l<7; l++) {
@@ -309,7 +310,7 @@ void IP_Sphere::setup(int* bcd, Control* R, const int NoMedium, const MediumList
         for (int l=1; l<=6; l++) {
           if ( lb[0]*lb[l] < 0.0 )
           {
-            REAL_TYPE s = cut_line(p[0], l, rs, ph);
+            REAL_TYPE s = cut_line(p[0], l, rs);
             size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
             int r = quantize9(s);
             setCut9(cut[m], r, l-1);
@@ -404,7 +405,7 @@ void IP_Sphere::setup(int* bcd, Control* R, const int NoMedium, const MediumList
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
           size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          x = ox + 0.5*dh + dh*(i-1);
+          x = ox + 0.5*dx + dx*(i-1);
           if ( x < len ) bcd[m] |= mid_driver;
         }
       }
@@ -433,8 +434,8 @@ void IP_Sphere::setup(int* bcd, Control* R, const int NoMedium, const MediumList
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        x = ox + 0.5*dh + dh*(i-1);
-        y = oy + 0.5*dh + dh*(j-1);
+        x = ox + 0.5*dx + dx*(i-1);
+        y = oy + 0.5*dy + dy*(j-1);
         if ( x < len )
         {
           bcd[m] |= mid_solid;

@@ -28,9 +28,10 @@ void IP_Jet::divJetInflow(REAL_TYPE* div, const int face, REAL_TYPE* vf, double&
 {
   // X_MINUS面の外部境界面のみ
   if ( nID[face] >= 0) return;
-  
-  // グローバル
-  REAL_TYPE dh = deltaX;
+
+  REAL_TYPE dx = pitch[0];
+  REAL_TYPE dy = pitch[1];
+  REAL_TYPE dz = pitch[2];
   
   // ノードローカル
   //REAL_TYPE ox = origin[0];
@@ -50,26 +51,26 @@ void IP_Jet::divJetInflow(REAL_TYPE* div, const int face, REAL_TYPE* vf, double&
     REAL_TYPE ro = r1o;
     REAL_TYPE u_in = q1 / a1;
     
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, ri, ro, dh, u_in) \
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ri, ro, u_in, dx, dy, dz) \
 schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         
-        REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
-        REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+        REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dy;
+        REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dz;
         
         REAL_TYPE r = sqrt(y*y + z*z);
         
         if ( (ri < r) && (r < ro) )
         {
           size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
-          div[m] -= u_in;
+          div[m] -= (u_in / dx);
           vf[_F_IDX_V3D(0, j, k, 0, ix, jx, kx, gd)] = u_in;
         }
       }
     }
     
-    flop += (double)jx * (double)kx * 19.0; // DP 31.0
+    flop += (double)jx * (double)kx * 37.0;
   }
   
   
@@ -80,26 +81,26 @@ schedule(static)
     REAL_TYPE ro = r2o;
     REAL_TYPE u_in = q2 / a2;
     
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, ri, ro, dh, u_in) \
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ri, ro, u_in, dx, dy, dz) \
 schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         
-        REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
-        REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+        REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dy;
+        REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dz;
         
         REAL_TYPE r = sqrt(y*y + z*z);
         
         if ( (ri < r) && (r < ro) )
         {
           size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
-          div[m] -= u_in;
+          div[m] -= (u_in / dx);
           vf[_F_IDX_V3D(0, j, k, 0, ix, jx, kx, gd)] = u_in;
         }
       }
     }
     
-    flop += (double)jx * (double)kx * 19.0; // DP 31.0
+    flop += (double)jx * (double)kx * 37.0;
   }
   
 }
@@ -116,9 +117,10 @@ void IP_Jet::vobc_pv_JetInflow(REAL_TYPE* wv,
   // X_MINUS面の外部境界面のみ
   if ( nID[face] >= 0) return;
   
-  // グローバル
-  REAL_TYPE dh = deltaX;
-  REAL_TYPE dh2= rei / (dh * dh);
+
+  REAL_TYPE dx = pitch[0];
+  REAL_TYPE dy = pitch[1];
+  REAL_TYPE dz = pitch[2];
   
   // ノードローカル
   REAL_TYPE oy = origin[1];
@@ -145,20 +147,22 @@ void IP_Jet::vobc_pv_JetInflow(REAL_TYPE* wv,
   REAL_TYPE omg_1  = omg1;
   REAL_TYPE omg_2  = omg2;
   
-#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, dh, dh2, uy, uz, \
-rin_1, rout_1, omg_1, uin_1, rin_2, rout_2, omg_2, uin_2) \
+#pragma omp parallel for firstprivate(i, ix, jx, kx, gd, uy, uz, \
+rin_1, rout_1, omg_1, uin_1, rin_2, rout_2, omg_2, uin_2, dx, dy, dz) \
 schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       
-      REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
-      REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+      REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dy;
+      REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dz;
       
       REAL_TYPE r = sqrt(y*y + z*z);
       
       size_t m0 = _F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd);
       size_t m1 = _F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd);
       size_t m2 = _F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd);
+      
+      flop += 28.0;
       
       if ( (rin_1 < r) && (r < rout_1) ) // Ring1
       {
@@ -181,9 +185,11 @@ schedule(static)
         REAL_TYPE fv = 0.5*(c*(vp+vr) - ac*ey);
         REAL_TYPE fw = 0.5*(c*(wp+wr) - ac*ez);
 
-        wv[m0] += (fu*dh - ex*dh2);
-        wv[m1] += (fv*dh - ey*dh2);
-        wv[m2] += (fw*dh - ez*dh2);
+        wv[m0] += (fu*dx - ex * rei / (dx * dx));
+        wv[m1] += (fv*dy - ey * rei / (dy * dy));
+        wv[m2] += (fw*dz - ez * rei / (dz * dz));
+        
+        flop += 61.0;
       }
       else if ( (rin_2 < r) && (r < rout_2) ) // Ring2
       {
@@ -206,18 +212,22 @@ schedule(static)
         REAL_TYPE fv = 0.5*(c*(vp+vr) - ac*ey);
         REAL_TYPE fw = 0.5*(c*(wp+wr) - ac*ez);
         
-        wv[m0] += (fu*dh - ex*dh2);
-        wv[m1] += (fv*dh - ey*dh2);
-        wv[m2] += (fw*dh - ez*dh2);
+        wv[m0] += (fu*dx - ex * rei / (dx * dx));
+        wv[m1] += (fv*dy - ey * rei / (dy * dy));
+        wv[m2] += (fw*dz - ez * rei / (dz * dz));
+        
+        flop += 61.0;
       }
       else // Wall
       {
-        wv[m1] += (uy - v0[m1]) * dh2 * 2.0;
-        wv[m2] += (uz - v0[m2]) * dh2 * 2.0;
+        wv[m1] += (uy - v0[m1]) * 2.0 * rei / (dy * dy);
+        wv[m2] += (uz - v0[m2]) * 2.0 * rei / (dz * dz);
+        
+        flop += 26.0;
       }
     }
   }
-  flop += (double)jx * (double)kx * 27.0; // DP 37.0
+
 }
 
 
@@ -229,8 +239,9 @@ void IP_Jet::vobcJetInflowGC(REAL_TYPE* v, const int face)
   // X_MINUS面の外部境界面のみ
   if ( nID[face] >= 0) return;
   
-  // グローバル
-  REAL_TYPE dh = deltaX;
+  //REAL_TYPE dx = pitch[0];
+  REAL_TYPE dy = pitch[1];
+  REAL_TYPE dz = pitch[2];
   
   // ノードローカル
   //REAL_TYPE ox = origin[0];
@@ -251,13 +262,13 @@ void IP_Jet::vobcJetInflowGC(REAL_TYPE* v, const int face)
     REAL_TYPE u_in = q1 / a1;
     REAL_TYPE omg = omg1;
     
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, ri, ro, omg, dh, u_in) \
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ri, ro, omg, u_in, dy, dz) \
 schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         
-        REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
-        REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+        REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dy;
+        REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dz;
         
         REAL_TYPE r = sqrt(y*y + z*z);
         
@@ -280,13 +291,13 @@ schedule(static)
     REAL_TYPE u_in = q2 / a2;
     REAL_TYPE omg = omg2;
     
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, ri, ro, omg, dh, u_in) \
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, ri, ro, omg, u_in, dy, dz) \
 schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         
-        REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
-        REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+        REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dy;
+        REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dz;
         
         REAL_TYPE r = sqrt(y*y + z*z);
         
@@ -608,7 +619,9 @@ void IP_Jet::setOBC(const int face, int* bcd, Control* R, REAL_TYPE* G_org, cons
   }
   
   
-  REAL_TYPE dh = deltaX;
+  //REAL_TYPE dx = pitch[0];
+  REAL_TYPE dy = pitch[1];
+  REAL_TYPE dz = pitch[2];
   
   // ノードローカル
   REAL_TYPE oy = origin[1];
@@ -657,13 +670,13 @@ schedule(static)
         REAL_TYPE ri = r1i;
         REAL_TYPE ro = r1o;
         
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid, ri, ro, oy, oz, dh) \
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid, ri, ro, oy, oz, dy, dz) \
 schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             
-            REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
-            REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+            REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dy;
+            REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dz;
             
             REAL_TYPE r = sqrt(y*y + z*z);
             
@@ -689,13 +702,13 @@ schedule(static)
         REAL_TYPE ri = r2i;
         REAL_TYPE ro = r2o;
         
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid, ri, ro, oy, oz, dh) \
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid, ri, ro, oy, oz, dy, dz) \
 schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             
-            REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dh;
-            REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+            REAL_TYPE y = oy + ( (REAL_TYPE)j-0.5 ) * dy;
+            REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dz;
             
             REAL_TYPE r = sqrt(y*y + z*z);
             

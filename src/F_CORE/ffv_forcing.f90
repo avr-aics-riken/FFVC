@@ -405,7 +405,7 @@
     integer                                                     ::  is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed, cz
     double precision                                            ::  flop
-    real                                                        ::  dt, dh, beta
+    real                                                        ::  dt, beta
     real                                                        ::  u_ref, v_ref, w_ref
     real                                                        ::  u_w, u_e, u_s, u_n, u_b, u_t, u_p
     real                                                        ::  v_w, v_e, v_s, v_n, v_b, v_t, v_p
@@ -427,7 +427,7 @@
     real, dimension(-1:cz(1)+2, -1:cz(2)+2, -1:cz(3)+2, 3)      ::  wk
     real, dimension(6)                                          ::  c
     real, dimension(0:3)                                        ::  v00
-    real, dimension(3)                                          ::  nv
+    real, dimension(3)                                          ::  nv, dh
     real, dimension(2)                                          ::  am
 
     u_ref = v00(1)

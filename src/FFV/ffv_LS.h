@@ -55,7 +55,6 @@ private:
   PerfMonitor* PM;   ///< PerfMonitor class
   int* bcp;          ///< BCindex P
   int* bcd;          ///< BCindex ID
-  REAL_TYPE* pni;    ///< coef fot naive implementation test
   
   REAL_TYPE* pcg_p;  ///< work for BiCGstab
   REAL_TYPE* pcg_p_; ///< work for BiCGstab
@@ -81,7 +80,6 @@ public:
     PM  = NULL;
     bcp = NULL;
     bcd = NULL;
-    pni = NULL;
     pcg_p  = NULL;
     pcg_p_ = NULL;
     pcg_r  = NULL;
@@ -210,7 +208,6 @@ public:
    * @param [in]  PM     PerfMonitorクラス
    * @param [in]  bcp    BCindex P
    * @param [in]  bcd    BCindex ID
-   * @param [in]  pni    array for naive implementation
    * @param [in]  pcg_p  array for BiCGstab
    * @param [in]  pcg_p_ array for BiCGstab
    * @param [in]  pcg_r  array for BiCGstab
@@ -233,7 +230,6 @@ public:
                   PerfMonitor* PM,
                   int* bcp,
                   int* bcd,
-                  REAL_TYPE* pni,
                   REAL_TYPE* pcg_p,
                   REAL_TYPE* pcg_p_,
                   REAL_TYPE* pcg_r,

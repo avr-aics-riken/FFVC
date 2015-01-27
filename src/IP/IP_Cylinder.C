@@ -27,7 +27,7 @@ using namespace Vec3class;
 
 // #################################################################
 // XY面内の交点の無次元距離を計算する
-REAL_TYPE IP_Cylinder::cut_line_2d(const Vec3r p, const int dir, const REAL_TYPE r, const REAL_TYPE px)
+REAL_TYPE IP_Cylinder::cut_line_2d(const Vec3r p, const int dir, const REAL_TYPE r)
 {
   REAL_TYPE x, y, s, c;
   
@@ -43,14 +43,14 @@ REAL_TYPE IP_Cylinder::cut_line_2d(const Vec3r p, const int dir, const REAL_TYPE
     case 2: // X+
       c = sqrtf(r*r - y*y);
       if ( x < 0.0 ) c *= -1.0;
-      s = fabs(c-x);
+      s = fabs(c-x) / pitch[0];
       break;
       
     case 3: // Y-
     case 4: // Y+
       c = sqrtf(r*r - x*x);
       if ( y < 0.0 ) c *= -1.0;
-      s = fabs(c-y);
+      s = fabs(c-y) / pitch[1];
       break;
       
     default:
@@ -58,7 +58,7 @@ REAL_TYPE IP_Cylinder::cut_line_2d(const Vec3r p, const int dir, const REAL_TYPE
       break;
   }
   
-  return s/px;
+  return s;
 }
 
 
@@ -602,7 +602,10 @@ void IP_Cylinder::setCircle(Control* R,
   Vec3r org(origin);     ///< ノードローカル基点座標の無次元値
 
   
-  REAL_TYPE ph = deltaX; ///< 格子幅（無次元）
+  REAL_TYPE dx = pitch[0];
+  REAL_TYPE dy = pitch[1];
+  REAL_TYPE dz = pitch[2];
+  
   REAL_TYPE cx = pos_x;  ///< 円柱の中心座標（無次元）
   REAL_TYPE cy = pos_y;  ///< 円柱の中心座標（無次元）
   REAL_TYPE rs = radius; ///< 円柱の半径（無次元）
@@ -635,7 +638,7 @@ void IP_Cylinder::setCircle(Control* R,
   
   if ( mode == dim_2d )
   {
-    ze = oz + region[2] + ph; // Z方向には全セルを対象, dhは安全係数
+    ze = oz + region[2] + dz; // Z方向には全セルを対象, dzは安全係数
   }
   else
   {
@@ -653,18 +656,18 @@ void IP_Cylinder::setCircle(Control* R,
     for (int j=box_st.y-1; j<=box_ed.y+1; j++) {
       for (int i=box_st.x-1; i<=box_ed.x+1; i++) {
         
-        REAL_TYPE z = org.z + 0.5*ph + ph*(REAL_TYPE)(k-1);
+        REAL_TYPE z = org.z + 0.5*dz + dz*(REAL_TYPE)(k-1);
         
         if ( z <= ze )
         {
           base.assign((REAL_TYPE)i-0.5, (REAL_TYPE)j-0.5, (REAL_TYPE)k-0.5);
-          b = org + base*ph;
+          b = org + base*pch;
           
           p[0].assign(b.x   , b.y   , b.z   ); // p
-          p[1].assign(b.x-ph, b.y   , b.z   ); // w
-          p[2].assign(b.x+ph, b.y   , b.z   ); // e
-          p[3].assign(b.x   , b.y-ph, b.z   ); // s
-          p[4].assign(b.x   , b.y+ph, b.z   ); // n
+          p[1].assign(b.x-dx, b.y   , b.z   ); // w
+          p[2].assign(b.x+dx, b.y   , b.z   ); // e
+          p[3].assign(b.x   , b.y-dy, b.z   ); // s
+          p[4].assign(b.x   , b.y+dy, b.z   ); // n
           
           // (cx, cy, *)が球の中心
           for (int l=0; l<5; l++) {
@@ -679,7 +682,7 @@ void IP_Cylinder::setCircle(Control* R,
           {
             if ( lb[0]*lb[l] < 0.0 )
             {
-              REAL_TYPE s = cut_line_2d(p[0], l, rs, ph);
+              REAL_TYPE s = cut_line_2d(p[0], l, rs);
               size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
               
               int r = quantize9(s);
@@ -727,15 +730,15 @@ void IP_Cylinder::setCircle(Control* R,
   
   
   // Z+方向
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_s, ox, oy, oz, ph, ze, rs, cx, cy) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_s, ox, oy, oz, dx, dy, dz, ze, rs, cx, cy) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        REAL_TYPE x = ox + 0.5*ph + ph*(i-1); // position of cell center
-        REAL_TYPE y = oy + 0.5*ph + ph*(j-1);
-        REAL_TYPE z = oz + 0.5*ph + ph*(k-1);
-        REAL_TYPE s = (ze - z)/ph;
+        REAL_TYPE x = ox + 0.5*dx + dx*(i-1); // position of cell center
+        REAL_TYPE y = oy + 0.5*dy + dy*(j-1);
+        REAL_TYPE z = oz + 0.5*dz + dz*(k-1);
+        REAL_TYPE s = (ze - z)/dz;
         
         REAL_TYPE xx = x - cx;
         REAL_TYPE yy = y - cy;
@@ -743,7 +746,7 @@ void IP_Cylinder::setCircle(Control* R,
         if ( (xx*xx + yy*yy) <= rs*rs )
         {
           
-          if ( (z <= ze) && (ze < z+ph) )
+          if ( (z <= ze) && (ze < z+dz) )
           {
             setBit5(bid[m], mid_s, Z_plus);
             int r = quantize9(s);
@@ -754,7 +757,7 @@ void IP_Cylinder::setCircle(Control* R,
             int rr = quantize9(1.0-s);
             setCut9(cut[m1], rr, Z_minus);
           }
-          else if ( (z-ph < ze) && (ze < z) )
+          else if ( (z-dz < ze) && (ze < z) )
           {
             setBit5(bid[m], mid_s, Z_minus);
             int r = quantize9(-s);
@@ -805,7 +808,9 @@ void IP_Cylinder::setRect(Control* R,
   int kx = size[2];
   int gd = guide;
   
-  REAL_TYPE dh = deltaX;
+  REAL_TYPE dx = pitch[0];
+  REAL_TYPE dy = pitch[1];
+  REAL_TYPE dz = pitch[2];
   
   int mid_s = mid_solid;
   
@@ -823,7 +828,7 @@ void IP_Cylinder::setRect(Control* R,
   
   if ( mode == dim_2d )
   {
-    ze = origin[2] + region[2] + dh; // Z方向には全セルを対象, dhは安全係数
+    ze = origin[2] + region[2] + dz; // Z方向には全セルを対象, dzは安全係数
   }
   else
   {
@@ -873,21 +878,21 @@ void IP_Cylinder::setRect(Control* R,
   
   
   // Y+ face of Rect
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_s, ox, oy, oz, dh, xs, xe, ye, ze) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_s, ox, oy, oz, dx, dy, dz, xs, xe, ye, ze) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        REAL_TYPE x = ox + 0.5*dh + dh*(i-1); // position of cell center
-        REAL_TYPE y = oy + 0.5*dh + dh*(j-1);
-        REAL_TYPE z = oz + 0.5*dh + dh*(k-1);
-        REAL_TYPE s = (ye - y)/dh;
+        REAL_TYPE x = ox + 0.5*dx + dx*(i-1); // position of cell center
+        REAL_TYPE y = oy + 0.5*dy + dy*(j-1);
+        REAL_TYPE z = oz + 0.5*dz + dz*(k-1);
+        REAL_TYPE s = (ye - y)/dy;
         
         if ( z <= ze )
         {
           if ( (xs <= x) && (x <= xe) )
           {
-            if ( (y <= ye) && (ye < y+dh) )
+            if ( (y <= ye) && (ye < y+dy) )
             {
               setBit5(bid[m], mid_s, Y_plus);
               int r = quantize9(s);
@@ -898,7 +903,7 @@ void IP_Cylinder::setRect(Control* R,
               int rr = quantize9(1.0-s);
               setCut9(cut[m1], rr, Y_minus);
             }
-            else if ( (y-dh < ye) && (ye < y) )
+            else if ( (y-dy < ye) && (ye < y) )
             {
               setBit5(bid[m], mid_s, Y_minus);
               int r = quantize9(-s);
@@ -917,21 +922,21 @@ void IP_Cylinder::setRect(Control* R,
   }
 
   // Y- face of Rect
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_s, ox, oy, oz, dh, xs, xe, ys, ze) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_s, ox, oy, oz, dx, dy, dz, xs, xe, ys, ze) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        REAL_TYPE x = ox + 0.5*dh + dh*(i-1); // position of cell center
-        REAL_TYPE y = oy + 0.5*dh + dh*(j-1);
-        REAL_TYPE z = oz + 0.5*dh + dh*(k-1);
-        REAL_TYPE s = (ys - y)/dh;
+        REAL_TYPE x = ox + 0.5*dx + dx*(i-1); // position of cell center
+        REAL_TYPE y = oy + 0.5*dy + dy*(j-1);
+        REAL_TYPE z = oz + 0.5*dz + dz*(k-1);
+        REAL_TYPE s = (ys - y)/dy;
         
         if ( z <= ze )
         {
           if ( (xs <= x) && (x <= xe) )
           {
-            if ( (y <= ys) && (ys < y+dh) )
+            if ( (y <= ys) && (ys < y+dy) )
             {
               setBit5(bid[m], mid_s, Y_plus);
               int r = quantize9(s);
@@ -942,7 +947,7 @@ void IP_Cylinder::setRect(Control* R,
               int rr = quantize9(1.0-s);
               setCut9(cut[m1], rr, Y_minus);
             }
-            else if ( (y-dh < ys) && (ys < y) )
+            else if ( (y-dy < ys) && (ys < y) )
             {
               setBit5(bid[m], mid_s, Y_minus);
               int r = quantize9(-s);
@@ -961,21 +966,21 @@ void IP_Cylinder::setRect(Control* R,
   }
 
   // X+ face of Rect
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_s, ox, oy, oz, dh, xe, ys, ye, ze) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_s, ox, oy, oz, dx, dy, dz, xe, ys, ye, ze) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        REAL_TYPE x = ox + 0.5*dh + dh*(i-1); // position of cell center
-        REAL_TYPE y = oy + 0.5*dh + dh*(j-1);
-        REAL_TYPE z = oz + 0.5*dh + dh*(k-1);
-        REAL_TYPE s = (xe - x)/dh;
+        REAL_TYPE x = ox + 0.5*dx + dx*(i-1); // position of cell center
+        REAL_TYPE y = oy + 0.5*dy + dy*(j-1);
+        REAL_TYPE z = oz + 0.5*dz + dz*(k-1);
+        REAL_TYPE s = (xe - x)/dx;
         
         if ( z <= ze )
         {
           if ( (ys <= y) && (y <= ye) )
           {
-            if ( (x <= xe) && (xe < x+dh) )
+            if ( (x <= xe) && (xe < x+dx) )
             {
               setBit5(bid[m], mid_s, X_plus);
               int r = quantize9(s);
@@ -986,7 +991,7 @@ void IP_Cylinder::setRect(Control* R,
               int rr = quantize9(1.0-s);
               setCut9(cut[m1], rr, X_minus);
             }
-            else if ( (x-dh < xe) && (xe < x) )
+            else if ( (x-dx < xe) && (xe < x) )
             {
               setBit5(bid[m], mid_s, X_minus);
               int r = quantize9(-s);
@@ -1005,21 +1010,21 @@ void IP_Cylinder::setRect(Control* R,
   }
 
   // X- face of Rect
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_s, ox, oy, oz, dh, xs, ys, ye, ze) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_s, ox, oy, oz, dx, dy, dz, xs, ys, ye, ze) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        REAL_TYPE x = ox + 0.5*dh + dh*(i-1); // position of cell center
-        REAL_TYPE y = oy + 0.5*dh + dh*(j-1);
-        REAL_TYPE z = oz + 0.5*dh + dh*(k-1);
-        REAL_TYPE s = (xs - x)/dh;
+        REAL_TYPE x = ox + 0.5*dx + dx*(i-1); // position of cell center
+        REAL_TYPE y = oy + 0.5*dy + dy*(j-1);
+        REAL_TYPE z = oz + 0.5*dz + dz*(k-1);
+        REAL_TYPE s = (xs - x)/dx;
         
         if ( z <= ze )
         {
           if ( (ys <= y) && (y <= ye) )
           {
-            if ( (x <= xs) && (xs < x+dh) )
+            if ( (x <= xs) && (xs < x+dx) )
             {
               setBit5(bid[m], mid_s, X_plus);
               int r = quantize9(s);
@@ -1030,7 +1035,7 @@ void IP_Cylinder::setRect(Control* R,
               int rr = quantize9(1.0-s);
               setCut9(cut[m1], rr, X_minus);
             }
-            else if ( (x-dh < xs) && (xs < x) )
+            else if ( (x-dx < xs) && (xs < x) )
             {
               setBit5(bid[m], mid_s, X_minus);
               int r = quantize9(-s);

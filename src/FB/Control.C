@@ -154,11 +154,11 @@ bool DTcntl::setScheme(const char* str, const double val)
 
 // #################################################################
 // 基本変数をコピー
-void DTcntl::set_Vars(const int m_kos, const int m_mode, const double m_dh, const double re, const double pe)
+void DTcntl::set_Vars(const int m_kos, const int m_mode, const double m_min_dx, const double re, const double pe)
 {
   KOS      = m_kos;
   mode     = m_mode;
-  dh       = m_dh;
+  min_dx   = m_min_dx;
   Reynolds = re;
   Peclet   = pe; 
 }
@@ -2204,7 +2204,9 @@ void Control::printParaConditions(FILE* fp, const MediumList* mat)
   fprintf(fp,"\tGravity                   [m/s^2]     : %12.5e\n", Gravity);
   fprintf(fp,"\n");
   
-  fprintf(fp,"\tSpacing                   [m] / [-]   : %12.5e / %12.5e\n", deltaX*RefLength, deltaX);
+  fprintf(fp,"\tSpacing         X-dir.    [m] / [-]   : %12.5e / %12.5e\n", pitchD[0], pitch[0]);
+  fprintf(fp,"\t                Y-dir.    [m] / [-]   : %12.5e / %12.5e\n", pitchD[1], pitch[1]);
+  fprintf(fp,"\t                Z-dir.    [m] / [-]   : %12.5e / %12.5e\n", pitchD[2], pitch[2]);
   fprintf(fp,"\tTime Scale                [sec]       : %12.5e\n", Tscale);
   fprintf(fp,"\n");
   
@@ -2649,8 +2651,9 @@ void Control::printSteerConditions(FILE* fp,
   
   
   // Time Increment
-  REAL_TYPE d_R = deltaX*deltaX*Reynolds/6.0; // 拡散数
-  REAL_TYPE d_P = deltaX*deltaX*Peclet/6.0;   // 拡散数
+  REAL_TYPE min_dx = std::min(pitch[0], std::min(pitch[1], pitch[2]));
+  REAL_TYPE d_R = min_dx*min_dx*Reynolds/6.0; // 拡散数
+  REAL_TYPE d_P = min_dx*min_dx*Peclet/6.0;   // 拡散数
   REAL_TYPE cfl = (REAL_TYPE)DT->get_CFL();
   switch ( DT->get_Scheme() ) 
   {
@@ -2658,7 +2661,7 @@ void Control::printSteerConditions(FILE* fp,
       fprintf(fp,"\t     Time Increment dt        :   %12.5e [sec] / %12.5e [-] : Direct ", dt*Tscale, dt);
       if ( isHeatProblem() )
       {
-        fprintf(fp,": Diff. Num. = %7.2e\n", dt/(deltaX*deltaX*Peclet));
+        fprintf(fp,": Diff. Num. = %7.2e\n", dt/(min_dx*min_dx*Peclet));
       }
       else
       {
@@ -3124,9 +3127,7 @@ void Control::setCmpParameters(MediumList* mat, CompoList* cmp, BoundaryOuter* B
   
 	
   // 発熱密度の計算(有次元) -- 発熱量と発熱密度
-  REAL_TYPE a, vol;
-  a = deltaX*RefLength;
-  vol = a*a*a;
+  REAL_TYPE vol = pitchD[0]*pitchD[1]*pitchD[2];
   
   for (int n=1; n<=NoCompo; n++)
   {

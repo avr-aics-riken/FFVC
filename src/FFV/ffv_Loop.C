@@ -249,7 +249,7 @@ int FFV::Loop(const unsigned step)
       if ( F->isVtk() )
       {
         int cs = CurrentStep;
-        output_vtk_(&cs, G_origin, G_division, G_size, &myRank, size, &pitch[0], &guide, d_v, d_p);
+        output_vtk_(&cs, G_origin, G_division, G_size, &myRank, size, pitch, &guide, d_v, d_p);
       }
     }
 

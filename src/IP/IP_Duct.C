@@ -199,7 +199,7 @@ void IP_Duct::setup(int* bcd, Control* R, const int NoMedium, const MediumList* 
   int mid_solid;        /// 固体
   int mid_driver;       /// ドライバ部
   int mid_driver_face;  /// ドライバ流出面
-  REAL_TYPE x, y, z, dh, r, len;
+  REAL_TYPE x, y, z, r, len;
   REAL_TYPE ox, oy, oz, Lx, Ly, Lz;
   
   // ローカルにコピー
@@ -217,9 +217,13 @@ void IP_Duct::setup(int* bcd, Control* R, const int NoMedium, const MediumList* 
   Lx = region[0];
   Ly = region[1];
   Lz = region[2];
-  dh = deltaX;
+
   r  = driver.diameter/R->RefLength * 0.5;
   len= driver.length/R->RefLength;
+  
+  REAL_TYPE dx = pitch[0];
+  REAL_TYPE dy = pitch[1];
+  REAL_TYPE dz = pitch[2];
   
   
   // 媒質設定
@@ -248,14 +252,14 @@ void IP_Duct::setup(int* bcd, Control* R, const int NoMedium, const MediumList* 
     switch (driver.direction) {
       case X_minus:
       case X_plus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid) \
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dy, dz, mid_fluid) \
 schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
               size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-              y = oy + 0.5*dh + dh*(j-1);
-              z = oz + 0.5*dh + dh*(k-1);
+              y = oy + 0.5*dy + dy*(j-1);
+              z = oz + 0.5*dz + dz*(k-1);
               if ( (y-r)*(y-r)+(z-r)*(z-r) <= r*r ) bcd[m] |= mid_fluid;
             }
           }
@@ -264,14 +268,14 @@ schedule(static)
         
       case Y_minus:
       case Y_plus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid) \
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dx, dz, mid_fluid) \
 schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
               size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-              x = ox + 0.5*dh + dh*(i-1);
-              z = oz + 0.5*dh + dh*(k-1);
+              x = ox + 0.5*dx + dx*(i-1);
+              z = oz + 0.5*dz + dz*(k-1);
               if ( (x-r)*(x-r)+(z-r)*(z-r) <= r*r ) bcd[m] |= mid_fluid;
             }
           }
@@ -280,14 +284,14 @@ schedule(static)
         
       case Z_minus:
       case Z_plus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid) \
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dx, dy, mid_fluid) \
 schedule(static)
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             for (int i=1; i<=ix; i++) {
               size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-              x = ox + 0.5*dh + dh*(i-1);
-              y = oy + 0.5*dh + dh*(j-1);
+              x = ox + 0.5*dx + dx*(i-1);
+              y = oy + 0.5*dy + dy*(j-1);
               if ( (x-r)*(x-r)+(y-r)*(y-r) <= r*r ) bcd[m] |= mid_fluid;
             }
           }
@@ -306,9 +310,9 @@ schedule(static)
             for (int j=1; j<=jx; j++) {
               for (int i=1; i<=ix; i++) {
                 size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-                x = ox + 0.5*dh + dh*(i-1);
-                y = oy + 0.5*dh + dh*(j-1);
-                z = oz + 0.5*dh + dh*(k-1);
+                x = ox + 0.5*dx + dx*(i-1);
+                y = oy + 0.5*dy + dy*(j-1);
+                z = oz + 0.5*dz + dz*(k-1);
                 if ( x < ox+len ) {
                   if ( driver.shape == id_circular ) {
                     if ( (y-r)*(y-r)+(z-r)*(z-r) <= r*r ) bcd[m] |= mid_driver; // 半径以内をドライバIDにする
@@ -329,9 +333,9 @@ schedule(static)
             for (int j=1; j<=jx; j++) {
               for (int i=1; i<=ix; i++) {
                 size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-                x = ox + 0.5*dh + dh*(i-1);
-                y = oy + 0.5*dh + dh*(j-1);
-                z = oz + 0.5*dh + dh*(k-1);
+                x = ox + 0.5*dx + dx*(i-1);
+                y = oy + 0.5*dy + dy*(j-1);
+                z = oz + 0.5*dz + dz*(k-1);
                 if ( x > ox+Lx-len ) {
                   if ( driver.shape == id_circular ) {
                     if ( (y-r)*(y-r)+(z-r)*(z-r) <= r*r ) bcd[m] |= mid_driver;
@@ -352,9 +356,9 @@ schedule(static)
             for (int j=1; j<=jx; j++) {
               for (int i=1; i<=ix; i++) {
                 size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-                x = ox + 0.5*dh + dh*(i-1);
-                y = oy + 0.5*dh + dh*(j-1);
-                z = oz + 0.5*dh + dh*(k-1);
+                x = ox + 0.5*dx + dx*(i-1);
+                y = oy + 0.5*dy + dy*(j-1);
+                z = oz + 0.5*dz + dz*(k-1);
                 if ( y < oy+len ) {
                   if ( driver.shape == id_circular ) {
                     if ( (x-r)*(x-r)+(z-r)*(z-r) <= r*r ) bcd[m] |= mid_driver;
@@ -375,9 +379,9 @@ schedule(static)
             for (int j=1; j<=jx; j++) {
               for (int i=1; i<=ix; i++) {
                 size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-                x = ox + 0.5*dh + dh*(i-1);
-                y = oy + 0.5*dh + dh*(j-1);
-                z = oz + 0.5*dh + dh*(k-1);
+                x = ox + 0.5*dx + dx*(i-1);
+                y = oy + 0.5*dy + dy*(j-1);
+                z = oz + 0.5*dz + dz*(k-1);
                 if ( y > oy+Ly-len ) {
                   if ( driver.shape == id_circular ) {
                     if ( (x-r)*(x-r)+(z-r)*(z-r) <= r*r ) bcd[m] |= mid_driver;
@@ -398,9 +402,9 @@ schedule(static)
             for (int j=1; j<=jx; j++) {
               for (int i=1; i<=ix; i++) {
                 size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-                x = ox + 0.5*dh + dh*(i-1);
-                y = oy + 0.5*dh + dh*(j-1);
-                z = oz + 0.5*dh + dh*(k-1);
+                x = ox + 0.5*dx + dx*(i-1);
+                y = oy + 0.5*dy + dy*(j-1);
+                z = oz + 0.5*dz + dz*(k-1);
                 if ( z < oz+len ) {
                   if ( driver.shape == id_circular ) {
                     if ( (x-r)*(x-r)+(y-r)*(y-r) <= r*r ) bcd[m] |= mid_driver;
@@ -421,9 +425,9 @@ schedule(static)
             for (int j=1; j<=jx; j++) {
               for (int i=1; i<=ix; i++) {
                 size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-                x = ox + 0.5*dh + dh*(i-1);
-                y = oy + 0.5*dh + dh*(j-1);
-                z = oz + 0.5*dh + dh*(k-1);
+                x = ox + 0.5*dx + dx*(i-1);
+                y = oy + 0.5*dy + dy*(j-1);
+                z = oz + 0.5*dz + dz*(k-1);
                 if ( z > oz+Lz-len ) {
                   if ( driver.shape == id_circular ) {
                     if ( (x-r)*(x-r)+(y-r)*(y-r) <= r*r ) bcd[m] |= mid_driver;

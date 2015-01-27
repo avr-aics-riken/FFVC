@@ -78,6 +78,10 @@ void SetBC::setControlVars(Control* Cref, const MediumList* mat, const Reference
   NoMedium  = Cref->NoMedium;
   //rho       = Cref->RefDensity;
   
+  S_x = pitch[1]*pitch[2];
+  S_y = pitch[0]*pitch[2];
+  S_z = pitch[0]*pitch[1];
+  
   if ( Cref->isHeatProblem() ) pei = Cref->getRcpPeclet();
 
   Dp1       = Cref->Domain_p1;

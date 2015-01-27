@@ -79,13 +79,11 @@ public:
    * @param [in]     src  単位変換前のデータ
    * @param [in]     sz   分割数
    * @param [in]     gc   ガイドセル数
-   * @param [in]     coef 係数
    */
   void cnv_Div(REAL_TYPE* dst,
                REAL_TYPE* src,
                int* sz,
-               int gc,
-               REAL_TYPE coef);
+               int gc);
   
   
   /** 
