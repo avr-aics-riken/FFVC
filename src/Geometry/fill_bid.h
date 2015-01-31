@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -53,7 +53,6 @@ if ( zp == 0 )
   int qb = getBit5(qq, 4);
   int qt = getBit5(qq, 5);
   
-  float* pos = &cut[ _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd) ];
   
   // 最頻値ID >> tg以外
   int sd = FBUtility::find_mode_id(tg, qw, qe, qs, qn, qb, qt, m_NoCompo);
@@ -212,6 +211,8 @@ if ( zp == 0 )
 
   
   /* ?
+   long long pos = cut[m_p];
+   
   if ( sd_flag > 0 )
   {
     setBitID(bcd[m_p], sd);

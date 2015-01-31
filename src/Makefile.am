@@ -5,10 +5,10 @@
 # Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
 # All rights reserved.
 #
-# Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo. 
+# Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
 # All rights reserved.
 #
-# Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+# Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 # All rights reserved. 
 #
 ###################################################################################
@@ -27,7 +27,6 @@ ffvc_CXXFLAGS = \
   -I./Geometry \
   @CDM_CFLAGS@ \
   @CPM_CFLAGS@ \
-  @CUT_CFLAGS@ \
   @PL_CFLAGS@ \
   @PM_CFLAGS@ \
   @TP_CFLAGS@ \
@@ -47,7 +46,6 @@ ffvc_LDADD = \
   -L./FB -lFB \
   @CDM_LDFLAGS@ \
   @CPM_LDFLAGS@ \
-  @CUT_LDFLAGS@ \
   @PL_LDFLAGS@ \
   @PM_LDFLAGS@ \
   @TP_LDFLAGS@ \

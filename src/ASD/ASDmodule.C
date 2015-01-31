@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -76,7 +76,7 @@ void ASD::evaluateASD(int argc, char **argv)
   }
 
   
-  getDomainInfo(&tpCntl, flag);
+  getDomainParameter(&tpCntl, flag);
   
   // サブドメイン分割数のみ指定された、自動分割の場合
   if (argc == 4)
@@ -442,7 +442,7 @@ void ASD::CalculateCut()
   
   // アロケート
   size_t size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
-  d_cut = new float[size_n_cell*6];
+  d_cut = new long long[size_n_cell*6];
   memset(d_cut, 0, sizeof(float)*size_n_cell*6);
   
   d_bid = new int[size_n_cell];
@@ -452,22 +452,11 @@ void ASD::CalculateCut()
   memset(d_bcd, 0, sizeof(int)*size_n_cell);
   
   
-  // Cutlibの配列は各方向(引数)のサイズ
-  cutPos = new CutPos32Array(n_cell); // 6*(float)
-  cutBid = new CutBid5Array (n_cell); // (int32_t)
-  
-  
-  // グリッド情報アクセッサクラス
-  GridAccessor* GRID = new Cell(cut_org, cut_dx);
-  
   
   // 交点計算
-  CalcCutInfo(GRID, PL, cutPos, cutBid);
+  //GM.quantizeCut(d_cut, d_bid, PL, PG);
+
   
-  
-  // カットとID情報をポイント
-  d_cut = (float*)cutPos->getDataPointer();
-  d_bid = (int*)cutBid->getDataPointer();
   
   
 #if 0
@@ -488,8 +477,7 @@ void ASD::CalculateCut()
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         
-        size_t mp = _F_IDX_S4DEX(0, i, j, k, 6, ix, jx, kx, gd);
-        size_t mb = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         int bd = d_bid[mb];
         
         int b0 = getBit5(bd, X_minus); // (bd >> 0)  & MASK_5;
@@ -502,12 +490,12 @@ void ASD::CalculateCut()
         //fprintf(fp, "%d %d %d %d %d %d : ", b0, b1, b2, b3, b4, b5);
         
         fprintf(fp, "%5d %5d %5d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n", i,j,k,
-                d_cut[mp+0], // x- w
-                d_cut[mp+1], // x+ e
-                d_cut[mp+2], // y- s
-                d_cut[mp+3], // y+ n
-                d_cut[mp+4], // z- b
-                d_cut[mp+5], // z+ t
+                d_cut[m], // x- w
+                d_cut[m], // x+ e
+                d_cut[m], // y- s
+                d_cut[m], // y+ n
+                d_cut[m], // z- b
+                d_cut[m], // z+ t
                 b0, b1, b2, b3, b4, b5);
         
       }
@@ -544,7 +532,8 @@ void ASD::fill(bool disp_flag, Geometry* GM)
   
   
   // 定義点上に交点がある場合の処理 >> カットするポリゴンのエントリ番号でフィルする
-  unsigned long fill_cut = GM->fillCutOnCellCenter(d_bcd, d_bid, d_cut, G_division);
+  int NoCompo = 1; // あとでやりなおし、テンポラリ
+  unsigned long fill_cut = GM->paintCutOnPoint(d_bcd, d_bid, d_cut, NoCompo, G_division);
   target_count -= fill_cut;
   
   if ( !disp_flag )
@@ -748,7 +737,7 @@ void ASD::findPolygon(const REAL_TYPE* px,
 // @brief グローバルな領域情報を取得
 // @param [in] tpCntl テキストパーサー
 // @param [in] flag   表示フラグ
-void ASD::getDomainInfo(TextParser* tp, bool flag)
+void ASD::getDomainParameter(TextParser* tp, bool flag)
 {
   if ( !tp ) Exit(0);
   

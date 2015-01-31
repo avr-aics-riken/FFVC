@@ -2,7 +2,7 @@
 //
 // FFV-C ASD module : Frontflow / violet Cartesian Active SubDomain
 //
-// Copyright (c) 2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2014-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################

@@ -7,10 +7,10 @@
 ! Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 ! All rights reserved.
 !
-! Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+! Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 ! All rights reserved.
 !
-! Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+! Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 ! All rights reserved.
 !
 !###################################################################################
@@ -418,7 +418,7 @@ end subroutine vobc_cc_copy
 !! @param [in]     nID    隣接ランク番号（nID[]<0の時外部境界面）
 !! @note 今のところ、トラクションフリー面は全て流体
 !<
-subroutine vobc_tfree_cc (v, sz, g, m_face, vf, nID)
+subroutine vobc_cc_tfree (v, sz, g, m_face, vf, nID)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, face, g, m_face
@@ -602,7 +602,7 @@ end select FACES
 
 
 return
-end subroutine vobc_tfree_cc
+end subroutine vobc_cc_tfree
 
 
 !> ********************************************************************
@@ -615,7 +615,7 @@ end subroutine vobc_tfree_cc
 !! ループは0~ixで回す．0から始めるのは，後半処理でスタガード位置の変数からセンターへ内挿するときに
 !! 参照する端点を含めるため．
 !<
-subroutine vobc_tfree_cf (vf, sz, g, m_face, nID)
+subroutine vobc_cf_tfree (vf, sz, g, m_face, nID)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, face, g, m_face
@@ -822,7 +822,7 @@ end select FACES
 
 
 return
-end subroutine vobc_tfree_cf
+end subroutine vobc_cf_tfree
 
 
 
@@ -831,6 +831,7 @@ end subroutine vobc_tfree_cf
 !! @param [in,out] div     速度の発散
 !! @param [in]     sz      配列長
 !! @param [in]     g       ガイドセル長
+!! @param [in]     dh      格子幅
 !! @param [in]     m_face  面番号
 !! @param [in]     bv      BCindex C
 !! @param [in]     vec     指定する速度ベクトル
@@ -838,13 +839,13 @@ end subroutine vobc_tfree_cf
 !! @note 固体部分は対象外とするのでループ中に判定あり
 !!       部分的な境界条件の実装のため、ガイドセル部のマスク情報を利用
 !<
-    subroutine vobc_div_drchlt (div, sz, g, m_face, bv, vec, nID)
+    subroutine vobc_div_drchlt (div, sz, g, dh, m_face, bv, vec, nID)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, g, ix, jx, kx, face, bvx, m_face
     integer, dimension(3)                                     ::  sz
     real                                                      ::  u_bc, v_bc, w_bc, a
-    real, dimension(3)                                        ::  vec
+    real, dimension(3)                                        ::  vec, dh
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
     integer, dimension(0:5)                                   ::  nID
@@ -856,9 +857,9 @@ end subroutine vobc_tfree_cf
     kx = sz(3)
     face = m_face
     
-    u_bc = vec(1)
-    v_bc = vec(2)
-    w_bc = vec(3)
+    u_bc = vec(1) / dh(1)
+    v_bc = vec(2) / dh(2)
+    w_bc = vec(3) / dh(3)
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, u_bc, v_bc, w_bc, face) &
@@ -987,10 +988,11 @@ integer, dimension(3)                                       ::  sz
 real                                                        ::  Ue, Uw, Un, Us, Ut, Ub
 real                                                        ::  Ve, Vw, Vn, Vs, Vt, Vb
 real                                                        ::  We, Ww, Wn, Ws, Wt, Wb
-real                                                        ::  dh, dt, c, v_cnv, up, vp, wp
+real                                                        ::  dt, v_cnv, up, vp, wp, cx, cy, cz
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  vc, v0
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
 integer, dimension(0:5)                                     ::  nID
+real, dimension(3)                                          ::  dh
 
 if ( nID(m_face) >= 0 ) return
 
@@ -1000,17 +1002,19 @@ kx = sz(3)
 gc = g
 face = m_face
 
-c = v_cnv*dt/dh
+cx = v_cnv * dt / dh(1)
+cy = v_cnv * dt / dh(2)
+cz = v_cnv * dt / dh(3)
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, gc, c, face) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, gc, cx, cy, cz, face) &
 !$OMP PRIVATE(bvx, up, vp, wp, i, j, k)
 
 FACES : select case (face)
 
 case (X_minus)
 
-if ( c>0.0 ) c=0.0
+if ( cx>0.0 ) cx=0.0
 
 
 !$OMP DO SCHEDULE(static) PRIVATE(Uw, Vw, Ww) COLLAPSE(2)
@@ -1023,9 +1027,9 @@ if ( (ibits(bvx, State, 1) == id_fluid) .and. (ibits(bvx, bc_face_W, bitw_5) /= 
   Vw = v0(0, j  ,k  ,2)
   Ww = v0(0, j  ,k  ,3)
 
-  up = Uw - c*(v0(1  ,j  ,k  ,1)-Uw)
-  vp = Vw - c*(v0(1  ,j  ,k  ,2)-Vw)
-  wp = Ww - c*(v0(1  ,j  ,k  ,3)-Ww)
+  up = Uw - cx*(v0(1  ,j  ,k  ,1)-Uw)
+  vp = Vw - cx*(v0(1  ,j  ,k  ,2)-Vw)
+  wp = Ww - cx*(v0(1  ,j  ,k  ,3)-Ww)
 
   do i=1-gc, 0
     vc(i, j, k, 1) = up
@@ -1044,7 +1048,7 @@ end do
 
 case (X_plus)
 
-if ( c<0.0 ) c=0.0
+if ( cx<0.0 ) cx=0.0
 
 
 !$OMP DO SCHEDULE(static) PRIVATE(Ue, Ve, We) COLLAPSE(2)
@@ -1057,9 +1061,9 @@ if ( (ibits(bvx, State, 1) == id_fluid) .and. (ibits(bvx, bc_face_E, bitw_5) /= 
   Ve = v0(ix+1,j  ,k  ,2)
   We = v0(ix+1,j  ,k  ,3)
 
-  up = Ue - c*(Ue-v0(ix  ,j  ,k  ,1))
-  vp = Ve - c*(Ve-v0(ix  ,j  ,k  ,2))
-  wp = We - c*(We-v0(ix  ,j  ,k  ,3))
+  up = Ue - cx*(Ue-v0(ix  ,j  ,k  ,1))
+  vp = Ve - cx*(Ve-v0(ix  ,j  ,k  ,2))
+  wp = We - cx*(We-v0(ix  ,j  ,k  ,3))
 
   do i=ix+1, ix+gc
     vc(i, j, k, 1) = up
@@ -1078,7 +1082,7 @@ end do
 
 case (Y_minus)
 
-if ( c>0.0 ) c=0.0
+if ( cy>0.0 ) cy=0.0
 
 
 !$OMP DO SCHEDULE(static) PRIVATE(Us, Vs, Ws) COLLAPSE(2)
@@ -1091,9 +1095,9 @@ if ( (ibits(bvx, State, 1) == id_fluid) .and. (ibits(bvx, bc_face_S, bitw_5) /= 
   Vs = v0(i, 0, k, 2)
   Ws = v0(i, 0, k, 3)
 
-  up = Us - c*(v0(i, 1, k, 1)-Us)
-  vp = Vs - c*(v0(i, 1, k, 2)-Vs)
-  wp = Ws - c*(v0(i, 1, k, 3)-Ws)
+  up = Us - cy*(v0(i, 1, k, 1)-Us)
+  vp = Vs - cy*(v0(i, 1, k, 2)-Vs)
+  wp = Ws - cy*(v0(i, 1, k, 3)-Ws)
 
   do j=1-gc, 0
     vc(i, j, k, 1) = up
@@ -1112,7 +1116,7 @@ end do
 
 case (Y_plus)
 
-if ( c<0.0 ) c=0.0
+if ( cy<0.0 ) cy=0.0
 
 
 !$OMP DO SCHEDULE(static) PRIVATE(Un, Vn, Wn) COLLAPSE(2)
@@ -1125,9 +1129,9 @@ if ( (ibits(bvx, State, 1) == id_fluid) .and. (ibits(bvx, bc_face_N, bitw_5) /= 
   Vn = v0(i  ,jx+1,k  ,2)
   Wn = v0(i  ,jx+1,k  ,3)
 
-  up = Un - c*(Un-v0(i  ,jx  ,k  ,1))
-  vp = Vn - c*(Vn-v0(i  ,jx  ,k  ,2))
-  wp = Wn - c*(Wn-v0(i  ,jx  ,k  ,3))
+  up = Un - cy*(Un-v0(i  ,jx  ,k  ,1))
+  vp = Vn - cy*(Vn-v0(i  ,jx  ,k  ,2))
+  wp = Wn - cy*(Wn-v0(i  ,jx  ,k  ,3))
 
   do j=jx+1, jx+gc
     vc(i, j, k, 1) = up
@@ -1146,7 +1150,7 @@ end do
 
 case (Z_minus)
 
-if ( c>0.0 ) c=0.0
+if ( cz>0.0 ) cz=0.0
 
 
 !$OMP DO SCHEDULE(static) PRIVATE(Ub, Vb, Wb) COLLAPSE(2)
@@ -1158,9 +1162,9 @@ if ( (ibits(bvx, State, 1) == id_fluid) .and. (ibits(bvx, bc_face_B, bitw_5) /= 
   Vb = v0(i  ,j  , 0,2)
   Wb = v0(i  ,j  , 0,3)
 
-  up = Ub - c*(v0(i  ,j  ,1  ,1)-Ub)
-  vp = Vb - c*(v0(i  ,j  ,1  ,2)-Vb)
-  wp = Wb - c*(v0(i  ,j  ,1  ,3)-Wb)
+  up = Ub - cz*(v0(i  ,j  ,1  ,1)-Ub)
+  vp = Vb - cz*(v0(i  ,j  ,1  ,2)-Vb)
+  wp = Wb - cz*(v0(i  ,j  ,1  ,3)-Wb)
 
   do k=1-gc,0
     vc(i, j, k, 1) = up
@@ -1179,7 +1183,7 @@ end do
 
 case (Z_plus)
 
-if ( c<0.0 ) c=0.0
+if ( cz<0.0 ) cz=0.0
 
 
 !$OMP DO SCHEDULE(static) PRIVATE(Ut, Vt, Wt) COLLAPSE(2)
@@ -1191,9 +1195,9 @@ if ( (ibits(bvx, State, 1) == id_fluid) .and. (ibits(bvx, bc_face_T, bitw_5) /= 
   Vt = v0(i  ,j  ,kx+1,2)
   Wt = v0(i  ,j  ,kx+1,3)
 
-  up = Ut - c*(Ut-v0(i  ,j  ,kx  ,1))
-  vp = Vt - c*(Vt-v0(i  ,j  ,kx  ,2))
-  wp = Wt - c*(Wt-v0(i  ,j  ,kx  ,3))
+  up = Ut - cz*(Ut-v0(i  ,j  ,kx  ,1))
+  vp = Vt - cz*(Vt-v0(i  ,j  ,kx  ,2))
+  wp = Wt - cz*(Wt-v0(i  ,j  ,kx  ,3))
 
   do k=kx+1,kx+gc
     vc(i, j, k, 1) = up

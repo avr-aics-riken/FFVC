@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -50,17 +50,10 @@ FFV::FFV()
   CM_H.rate     = 0.0;
   
   deltaT = 0.0;
-  poly_factor = 0.0;
   
   
   for (int i=0; i<3; i++) 
   {
-    G_size[i]= 0;
-    G_origin[i] = 0.0;
-    G_region[i] = 0.0;
-    poly_org[i] = 0.0;
-    poly_dx[i] = 0.0;
-    poly_gc[i] = 0;
     ensPeriodic[i] = 0;
   }
   
@@ -78,9 +71,6 @@ FFV::FFV()
   mat = NULL;
   cmp = NULL;
   paraMngr = NULL;
-
-  cutPos = NULL;
-  cutBid = NULL;
   
   
   // OBSTACLEの力の積算
@@ -132,7 +122,6 @@ void FFV::Averaging(double& flop)
 // 物体に働く力を計算し、各ランクから集めて積算する
 void FFV::calcForce(double& flop)
 {
-  REAL_TYPE dh = deltaX;
   int gd = guide;
   int st[3], ed[3];
   REAL_TYPE vec[3];
@@ -146,7 +135,7 @@ void FFV::calcForce(double& flop)
       int key = cmp[n].getMatodr();
 
       // 力の計算
-      force_compo_(vec, size, &gd, &key, d_p, d_bid, &dh, st, ed, &flop);
+      force_compo_(vec, size, &gd, &key, d_p, d_bid, pitch, st, ed, &flop);
       
       cmp_force_local[3*n+0] = vec[0];
       cmp_force_local[3*n+1] = vec[1];
@@ -212,12 +201,32 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
   
   obc = ptr;
   
-  REAL_TYPE ddh = deltaX * deltaX;
+  REAL_TYPE dS;
   REAL_TYPE u_sum, u_avr;
 
   
   for (int face=0; face<NOFACE; face++) 
   {
+    switch (face) {
+      case X_minus:
+      case X_plus:
+        dS = pitch[1]*pitch[2];
+        break;
+        
+      case Y_minus:
+      case Y_plus:
+        dS = pitch[0]*pitch[2];
+        break;
+        
+      case Z_minus:
+      case Z_plus:
+        dS = pitch[0]*pitch[1];
+        break;
+        
+      default:
+        break;
+    }
+    
     // 外部境界面でない場合にはゼロが戻る
     u_sum = 0.0;
     vobc_face_massflow_(&u_sum, size, &guide, &face, d_vf, d_cdf, nID);
@@ -249,7 +258,7 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
     if ( (R->Mode.Example == id_Jet) && (face==X_minus) )
     {
       R->V_Dface[face] = q[0]/q[1];  // 無次元平均流速
-      R->Q_Dface[face] = q[0] * ddh; // 無次元流量
+      R->Q_Dface[face] = q[0] * dS;  // 無次元流量
     }
     else // 標準
     {
@@ -262,7 +271,7 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
       u_avr = (ec != 0.0) ? u_sum / ec : 0.0;
       
       R->V_Dface[face] = u_avr;       // 無次元平均流速
-      R->Q_Dface[face] = u_sum * ddh; // 無次元流量
+      R->Q_Dface[face] = u_sum * dS;  // 無次元流量
     }
 
   }
@@ -423,14 +432,13 @@ void FFV::NormDiv(REAL_TYPE* div)
 {
   REAL_TYPE dv;
   double flop_count, tmp;
-  REAL_TYPE coef = 1.0/deltaX; /// 発散値を計算するための係数
 
   
   if ( DivC.divType == nrm_div_max )
   {
     TIMING_start("Norm_Div_max");
     flop_count=0.0;
-    norm_v_div_max_(&dv, size, &guide, div, &coef, d_bcp, &flop_count);
+    norm_v_div_max_(&dv, size, &guide, div, d_bcp, &flop_count);
     TIMING_stop("Norm_Div_max", flop_count);
     
     if ( numProc > 1 )
@@ -446,7 +454,7 @@ void FFV::NormDiv(REAL_TYPE* div)
   {
     TIMING_start("Norm_Div_L2");
     flop_count=0.0;
-    norm_v_div_l2_(&dv, size, &guide, div, &coef, d_bcp, &flop_count);
+    norm_v_div_l2_(&dv, size, &guide, div, d_bcp, &flop_count);
     TIMING_stop("Norm_Div_L2", flop_count);
     
     if ( numProc > 1 )
@@ -460,8 +468,7 @@ void FFV::NormDiv(REAL_TYPE* div)
     DivC.divergence = sqrt( tmp );
   }
   
-
-
+  
 }
 
 
@@ -552,14 +559,7 @@ void FFV::printIteratoinParameter(FILE* fp, LinearSolver* IC)
       break;
       
     case SOR2SMA:
-      if (IC->getNaive()==OFF)
-      {
-        fprintf(fp,"\t       Linear Solver          :   2-colored SOR SMA (Stride Memory Access, Bit compressed 1-decode)\n");
-      }
-      else
-      {
-        fprintf(fp,"\t       Linear Solver          :   2-colored SOR SMA (Stride Memory Access, Naive Implementation)\n");
-      }
+      fprintf(fp,"\t       Linear Solver          :   2-colored SOR SMA (Stride Memory Access, Bit compressed 1-decode)\n");
       break;
       
     case GMRES:
@@ -571,16 +571,8 @@ void FFV::printIteratoinParameter(FILE* fp, LinearSolver* IC)
       break;
       
     case BiCGSTAB:
-      if (IC->getNaive()==OFF)
-      {
-        fprintf(fp,"\t       Linear Solver          :   BiCGstab");
-        if ( IC->isPreconditioned() ) fprintf(fp," with Preconditioner\n");
-      }
-      else
-      {
-        fprintf(fp,"\t       Linear Solver          :   BiCGstab (Naive)");
-        if ( IC->isPreconditioned() ) fprintf(fp," with Preconditioner\n");
-      }
+      fprintf(fp,"\t       Linear Solver          :   BiCGstab");
+      if ( IC->isPreconditioned() ) fprintf(fp," with Preconditioner\n");
       break;
       
     default:
@@ -685,10 +677,10 @@ void FFV::set_timing_label()
   set_label("Write_Polygon_File",      PerfMonitor::CALC);
   // Polylib_Section
   
-  set_label("Cutlib_Section",          PerfMonitor::CALC, false);
+  set_label("Cut_Section",             PerfMonitor::CALC, false);
   set_label("Cut_Information",         PerfMonitor::CALC);
   set_label("Cut_Minimum_search",      PerfMonitor::CALC);
-  // Cutlib_Section
+  // Cut_Section
   
   set_label("Geometry_Section",        PerfMonitor::CALC, false);
   set_label("SeedFilling",             PerfMonitor::CALC);

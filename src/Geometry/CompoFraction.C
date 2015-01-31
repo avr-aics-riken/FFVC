@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -18,9 +18,6 @@
 //@author aics
 
 #include "CompoFraction.h"
-
-
-
 
 // #################################################################
 // 円筒領域のbboxを計算
@@ -44,15 +41,15 @@ REAL_TYPE CompoFraction::calcBboxCircle(Vec3r& mn, Vec3r& mx)
     if (shape == shape_cylinder)
     {
       q = rotate_inv(angle, r.assign(x, y, 0.0)) + center;
-      get_min(mn, q);
-      get_max(mx, q);
+      Geometry::get_min(mn, q);
+      Geometry::get_max(mx, q);
     }
 
     
     // 上面
     q = rotate_inv(angle, r.assign(x, y, depth)) + center;
-    get_min(mn, q);
-    get_max(mx, q);
+    Geometry::get_min(mn, q);
+    Geometry::get_max(mx, q);
   }
   
   // 投影面積
@@ -85,8 +82,8 @@ REAL_TYPE CompoFraction::calcBboxRect(Vec3r& mn, Vec3r& mx)
   
   for (int i=0; i<8; i++)
   {
-    get_min(mn, p[i]);
-    get_max(mx, p[i]);
+    Geometry::get_min(mn, p[i]);
+    Geometry::get_max(mx, p[i]);
   }
   
   // 投影面積
@@ -111,16 +108,11 @@ REAL_TYPE CompoFraction::calcBboxRect(Vec3r& mn, Vec3r& mx)
 int CompoFraction::CylinderPlane(const int st[],
                                  const int ed[],
                                  int* bid,
-                                 float* cut,
+                                 long long* cut,
                                  const REAL_TYPE pl[4],
                                  const int s_id,
                                  const int* Dsize)
 {
-  /* 内外判定：judgeCylinder()の戻り値が 1 のとき内側
-   * テストする2点が内側の場合には交点がない、それ以外をテスト
-   * 外側から内側に向かう線分に対して、交点距離とIDを設定
-   */
-  
   int ix, jx, kx, gd;
 
   ix = Dsize[0];
@@ -129,9 +121,6 @@ int CompoFraction::CylinderPlane(const int st[],
   gd = Dsize[3];
   
   Vec3r base, o, b;
-  Vec3r p[6];  // 隣接点の座標
-  Vec3r C;     // 交点座標
-  int mid_s = s_id;
   int count = 0;
   
   o  = org;
@@ -158,6 +147,7 @@ int CompoFraction::CylinderPlane(const int st[],
         if ( b.z < 0.0 || b.z > depth )
         {
           // 隣接点の座標値
+          Vec3r p[6];
           p[0] = shift_W(b, pch); // (-1, 0, 0)
           p[1] = shift_E(b, pch); // ( 1, 0, 0)
           p[2] = shift_S(b, pch); // ( 0,-1, 0)
@@ -165,92 +155,21 @@ int CompoFraction::CylinderPlane(const int st[],
           p[4] = shift_B(b, pch); // ( 0, 0,-1)
           p[5] = shift_T(b, pch); // ( 0, 0, 1)
           
-          REAL_TYPE t = 0.0; // tは基点からの距離
+          // テンポラリに保持
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          int bb = bid[m];
+          long long cc = cut[m];
           
-          // W
-          if ( (t = intersectLineByPlane(C, b, p[0], pl)) >= 0.0 )
-          {
-            if ( judgeCylider(C, true) )
-            {
-              setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, X_minus);
-              cut[_F_IDX_S4DEX(X_minus, i, j, k, 6, ix, jx, kx, gd)] = t;
-              
-              //setBit5(bid[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)], mid_s, X_plus);
-              //cut[_F_IDX_S4DEX(X_plus, i-1, j, k, 6, ix, jx, kx, gd)] = 1.0-t;
-              count++;
-            }
-          }
+          // 各方向の交点を評価、短い距離を記録する。新規記録の場合のみカウント
+          count += updateCutPlane(b, p[0], pl, cc, bb, X_minus, s_id);
+          count += updateCutPlane(b, p[1], pl, cc, bb, X_plus,  s_id);
+          count += updateCutPlane(b, p[2], pl, cc, bb, Y_minus, s_id);
+          count += updateCutPlane(b, p[3], pl, cc, bb, Y_plus,  s_id);
+          count += updateCutPlane(b, p[4], pl, cc, bb, Z_minus, s_id);
+          count += updateCutPlane(b, p[5], pl, cc, bb, Z_plus,  s_id);
           
-          // E
-          if ( (t = intersectLineByPlane(C, b, p[1], pl)) >= 0.0 )
-          {
-            if ( judgeCylider(C, true) )
-            {
-              setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, X_plus);
-              cut[_F_IDX_S4DEX(X_plus, i, j, k, 6, ix, jx, kx, gd)] = t;
-              
-              //setBit5(bid[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)], mid_s, X_minus);
-              //cut[_F_IDX_S4DEX(X_minus, i+1, j, k, 6, ix, jx, kx, gd)] = 1.0-t;
-              count++;
-            }
-          }
-          
-          // S
-          if ( (t = intersectLineByPlane(C, b, p[2], pl)) >= 0.0 )
-          {
-            if ( judgeCylider(C, true) )
-            {
-              setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, Y_minus);
-              cut[_F_IDX_S4DEX(Y_minus, i, j, k, 6, ix, jx, kx, gd)] = t;
-              
-              //setBit5(bid[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)], mid_s, Y_plus);
-              //cut[_F_IDX_S4DEX(Y_plus, i, j-1, k, 6, ix, jx, kx, gd)] = 1.0-t;
-              count++;
-            }
-          }
-          
-          // N
-          if ( (t = intersectLineByPlane(C, b, p[3], pl)) >= 0.0 )
-          {
-            if ( judgeCylider(C, true) )
-            {
-              setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, Y_plus);
-              cut[_F_IDX_S4DEX(Y_plus, i, j, k, 6, ix, jx, kx, gd)] = t;
-              
-              //setBit5(bid[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)], mid_s, Y_minus);
-              //cut[_F_IDX_S4DEX(Y_minus, i, j+1, k, 6, ix, jx, kx, gd)] = 1.0-t;
-              count++;
-            }
-          }
-          
-          // B
-          if ( (t = intersectLineByPlane(C, b, p[4], pl)) >= 0.0 )
-          {
-            if ( judgeCylider(C, true) )
-            {
-              setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, Z_minus);
-              cut[_F_IDX_S4DEX(Z_minus, i, j, k, 6, ix, jx, kx, gd)] = t;
-              
-              //setBit5(bid[_F_IDX_S3D(i, j, k-1, ix, jx, kx, gd)], mid_s, Z_plus);
-              //cut[_F_IDX_S4DEX(Z_plus, i, j, k-1, 6, ix, jx, kx, gd)] = 1.0-t;
-              count++;
-            }
-          }
-          
-          // T
-          if ( (t = intersectLineByPlane(C, b, p[5], pl)) >= 0.0 )
-          {
-            if ( judgeCylider(C, true) )
-            {
-              setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, Z_plus);
-              cut[_F_IDX_S4DEX(Z_plus, i, j, k, 6, ix, jx, kx, gd)] = t;
-              
-              //setBit5(bid[_F_IDX_S3D(i, j, k+1, ix, jx, kx, gd)], mid_s, Z_minus);
-              //cut[_F_IDX_S4DEX(Z_minus, i, j, k+1, 6, ix, jx, kx, gd)] = 1.0-t;
-              count++;
-            }
-          }
-          
+          bid[m] = bb;
+          cut[m] = cc;
         }
       }
     }
@@ -273,15 +192,10 @@ int CompoFraction::CylinderPlane(const int st[],
 int CompoFraction::CylinderSide(const int st[],
                                 const int ed[],
                                 int* bid,
-                                float* cut,
+                                long long* cut,
                                 const int s_id,
                                 const int* Dsize)
 {
-  /* 内外判定：judgeCylinder()の戻り値が 1 のとき内側
-   * テストする2点が内側の場合には交点がない、それ以外をテスト
-   * 外側から内側に向かう線分に対して、交点距離とIDを設定
-   */
-  
   int ix, jx, kx, gd;
   
   ix = Dsize[0];
@@ -290,9 +204,6 @@ int CompoFraction::CylinderSide(const int st[],
   gd = Dsize[3];
   
   Vec3r base, o, b;
-  Vec3r p[6];  // 隣接点の座標
-  Vec3r C;     // 交点座標
-  int mid_s = s_id;
   int count = 0;
   
   o  = org;
@@ -321,6 +232,7 @@ int CompoFraction::CylinderSide(const int st[],
         if ( b.x*b.x+b.y*b.y > r_2 )
         {
           // 隣接点の座標値
+          Vec3r p[6];
           p[0] = shift_W(b, pch); // (-1, 0, 0)
           p[1] = shift_E(b, pch); // ( 1, 0, 0)
           p[2] = shift_S(b, pch); // ( 0,-1, 0)
@@ -328,92 +240,23 @@ int CompoFraction::CylinderSide(const int st[],
           p[4] = shift_B(b, pch); // ( 0, 0,-1)
           p[5] = shift_T(b, pch); // ( 0, 0, 1)
           
-          REAL_TYPE t = 0.0; // tは基点からの距離
           
-          // W
-          if ( (t = intersectLineByCylinder(C, b, p[0])) >= 0.0 )
-          {
-            if ( judgeCylider(C, true) )
-            {
-              setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, X_minus);
-              cut[_F_IDX_S4DEX(X_minus, i, j, k, 6, ix, jx, kx, gd)] = t;
-              
-              //setBit5(bid[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)], mid_s, X_plus);
-              //cut[_F_IDX_S4DEX(X_plus, i-1, j, k, 6, ix, jx, kx, gd)] = 1.0-t;
-              count++;
-            }
-          }
+          // テンポラリに保持
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          int bb = bid[m];
+          long long cc = cut[m];
           
-          // E
-          if ( (t = intersectLineByCylinder(C, b, p[1])) >= 0.0 )
-          {
-            if ( judgeCylider(C, true) )
-            {
-              setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, X_plus);
-              cut[_F_IDX_S4DEX(X_plus, i, j, k, 6, ix, jx, kx, gd)] = t;
-              
-              //setBit5(bid[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)], mid_s, X_minus);
-              //cut[_F_IDX_S4DEX(X_minus, i+1, j, k, 6, ix, jx, kx, gd)] = 1.0-t;
-              count++;
-            }
-          }
           
-          // S
-          if ( (t = intersectLineByCylinder(C, b, p[2])) >= 0.0 )
-          {
-            if ( judgeCylider(C, true) )
-            {
-              setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, Y_minus);
-              cut[_F_IDX_S4DEX(Y_minus, i, j, k, 6, ix, jx, kx, gd)] = t;
-              
-              //setBit5(bid[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)], mid_s, Y_plus);
-              //cut[_F_IDX_S4DEX(Y_plus, i, j-1, k, 6, ix, jx, kx, gd)] = 1.0-t;
-              count++;
-            }
-          }
-          
-          // N
-          if ( (t = intersectLineByCylinder(C, b, p[3])) >= 0.0 )
-          {
-            if ( judgeCylider(C, true) )
-            {
-              setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, Y_plus);
-              cut[_F_IDX_S4DEX(Y_plus, i, j, k, 6, ix, jx, kx, gd)] = t;
-              
-              //setBit5(bid[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)], mid_s, Y_minus);
-              //cut[_F_IDX_S4DEX(Y_minus, i, j+1, k, 6, ix, jx, kx, gd)] = 1.0-t;
-              count++;
-            }
-          }
-          
-          // B
-          if ( (t = intersectLineByCylinder(C, b, p[4])) >= 0.0 )
-          {
-            if ( judgeCylider(C, true) )
-            {
-              setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, Z_minus);
-              cut[_F_IDX_S4DEX(Z_minus, i, j, k, 6, ix, jx, kx, gd)] = t;
-              
-              //setBit5(bid[_F_IDX_S3D(i, j, k-1, ix, jx, kx, gd)], mid_s, Z_plus);
-              //cut[_F_IDX_S4DEX(Z_plus, i, j, k-1, 6, ix, jx, kx, gd)] = 1.0-t;
-              count++;
-            }
-          }
-          
-          // T
-          if ( (t = intersectLineByCylinder(C, b, p[5])) >= 0.0 )
-          {
-            if ( judgeCylider(C, true) )
-            {
-              setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_s, Z_plus);
-              cut[_F_IDX_S4DEX(Z_plus, i, j, k, 6, ix, jx, kx, gd)] = t;
-              
-              //setBit5(bid[_F_IDX_S3D(i, j, k+1, ix, jx, kx, gd)], mid_s, Z_minus);
-              //cut[_F_IDX_S4DEX(Z_minus, i, j, k+1, 6, ix, jx, kx, gd)] = 1.0-t;
-              count++;
-            }
-          }
-          
+          // 各方向の交点を評価、短い距離を記録する。新規記録の場合のみカウント
+          count += updateCutCylinder(b, p[0], cc, bb, X_minus, s_id);
+          count += updateCutCylinder(b, p[1], cc, bb, X_plus,  s_id);
+          count += updateCutCylinder(b, p[2], cc, bb, Y_minus, s_id);
+          count += updateCutCylinder(b, p[3], cc, bb, Y_plus,  s_id);
+          count += updateCutCylinder(b, p[4], cc, bb, Z_minus, s_id);
+          count += updateCutCylinder(b, p[5], cc, bb, Z_plus,  s_id);
+
+          bid[m] = bb;
+          cut[m] = cc;
         }
         
       }
@@ -586,7 +429,7 @@ REAL_TYPE CompoFraction::getBboxArea(int* st, int* ed)
 bool CompoFraction::intersectCylinder(const int st[],
                                       const int ed[],
                                       int* bid,
-                                      float* cut,
+                                      long long* cut,
                                       const int tgt_id,
                                       const int* Dsize)
 {
@@ -685,7 +528,6 @@ REAL_TYPE CompoFraction::intersectLineByCylinder(Vec3r& X,
 }
 
 
-
 // #################################################################
 /**
  * @brief 平面と線分の交点を求める
@@ -705,6 +547,8 @@ REAL_TYPE CompoFraction::intersectLineByPlane(Vec3r& X, const Vec3r A, const Vec
   // 平面PL上の点P
   Vec3r P = n * PL[3];
   
+  //printf("(%f %f %f %f) (%f %f %f) (%f %f %f)\n", PL[0], PL[1], PL[2], PL[3], A.x, A.y, A.z, B.x, B.y, B.z);
+  
   // vectors
   Vec3r a(A.x-P.x, A.y-P.y, A.z-P.z);
   Vec3r b(B.x-P.x, B.y-P.y, B.z-P.z);
@@ -712,44 +556,27 @@ REAL_TYPE CompoFraction::intersectLineByPlane(Vec3r& X, const Vec3r A, const Vec
   // 平面法線と内積をとり交点があるかを符号から判別
   REAL_TYPE da = dot(a, n);
   REAL_TYPE db = dot(b, n);
-  REAL_TYPE abs_da = fabs(da);
-  REAL_TYPE abs_db = fabs(db);
-  
-  
-  // 平面上の場合の計算誤差を調整
-  if ( abs_da < ROUND_EPS )
-  {
-    abs_da = da = 0.0;
-  }
-  if ( abs_db < ROUND_EPS )
-  {
-    abs_db = db = 0.0;
-  }
-  
   REAL_TYPE r;
   
-  // 交差判定
-  if ( da == 0.0 && db == 0.0 )
-  {
-    r = -1.0; // 両端A, Bが平面PL上にあり、交点なし
-  }
-  else if ( (da >= 0.0 && db <= 0.0) || (da <= 0.0 && db >= 0.0) )
+  if ( da * db <= 0.0 )
   {
     // 比率を求める
+    REAL_TYPE abs_da = fabs(da);
+    REAL_TYPE abs_db = fabs(db);
     r = abs_da / ( abs_da + abs_db );
     
     // 交点を求める
     Vec3r ab(B.x-A.x, B.y-A.y, B.z-A.z);
     X = A + ab * r;
+    //printf("(%f %f %f) da=%f : %f db=%f : %f r=%f\n", n.x, n.y, n.z, da, abs_da, db, abs_db, r);
   }
   else
   {
-    r = -1.0; // 交差なし
+    r = -1.0;
   }
   
   return r;
 }
-
 
 
 // #################################################################

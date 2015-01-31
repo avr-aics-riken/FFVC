@@ -8,10 +8,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -42,18 +42,23 @@ public:
   
   int guide;           ///< ガイドセル数
   int G_division[3];   ///< プロセス分割数
-  REAL_TYPE pitch[3];  ///< 格子幅 (Non-dimensional)
-  REAL_TYPE deltaX;    ///< 等間隔格子の無次元格子幅
   
-  int size[3];           ///< 領域分割数 (Local, Non-dimensional)
-  REAL_TYPE origin[3];   ///< 領域基点   (Local, Non-dimensional)
-  REAL_TYPE region[3];   ///< 領域サイズ (Local, Non-dimensional)
+  REAL_TYPE pitch[3];     ///< 格子幅 (Non-dimensional)
+  REAL_TYPE pitchD[3];    ///< 格子幅 (有次元)
   
-  int G_size[3];         ///< 領域分割数 (Global, Non-dimensional)
-  REAL_TYPE G_origin[3]; ///< 領域基点   (Global, Non-dimensional)
-  REAL_TYPE G_region[3]; ///< 領域サイズ (Global, Non-dimensional)
+  int size[3];            ///< 領域分割数 (Local, Non-dimensional)
+  REAL_TYPE origin[3];    ///< 領域基点   (Local, Non-dimensional)
+  REAL_TYPE region[3];    ///< 領域サイズ (Local, Non-dimensional)
+  REAL_TYPE originD[3];   ///< 領域基点   (Local, 有次元)
+  REAL_TYPE regionD[3];   ///< 領域サイズ (Local, 有次元)
   
-  std::string HostName;  ///< ホスト名
+  int G_size[3];          ///< 領域分割数 (Global, Non-dimensional)
+  REAL_TYPE G_origin[3];  ///< 領域基点   (Global, Non-dimensional)
+  REAL_TYPE G_region[3];  ///< 領域サイズ (Global, Non-dimensional)
+  REAL_TYPE G_originD[3]; ///< 領域基点   (Global, 有次元)
+  REAL_TYPE G_regionD[3]; ///< 領域サイズ (Global, 有次元)
+  
+  std::string HostName;   ///< ホスト名
 
   
   /** コンストラクタ */
@@ -74,9 +79,13 @@ public:
       region[i]     = 0.0;
       G_origin[i]   = 0.0;
       G_region[i]   = 0.0;
+      pitchD[i]     = 0.0;
+      originD[i]    = 0.0;
+      regionD[i]    = 0.0;
+      G_originD[i]  = 0.0;
+      G_regionD[i]  = 0.0;
     }
     
-    deltaX = 0.0;
     guide = 0;
     paraMngr = NULL;
   }
@@ -118,9 +127,11 @@ public:
   /**
    * @brief 隣接情報と領域情報を設定する
    * @param [in] m_guide ガイドセル数
+   * @param [in] RefL    代表長
    * @note cpm_ParaManager::VoxelInit()のあとにコール
+   *       各パラメータは無次元値
    */
-  void setNeighborInfo(const int m_guide)
+  void setDomainInfo(const int m_guide, const REAL_TYPE RefL)
   {
     // guide cell
     guide = m_guide;
@@ -163,9 +174,9 @@ public:
     
     // 格子幅
     const double* m_pch = paraMngr->GetPitch();
-    pitch[0] = deltaX = (REAL_TYPE)m_pch[0];
-    pitch[1] = deltaX;
-    pitch[2] = deltaX;
+    pitch[0] = (REAL_TYPE)m_pch[0];
+    pitch[1] = (REAL_TYPE)m_pch[1];
+    pitch[2] = (REAL_TYPE)m_pch[2];
     
     // プロセス分割数
     const int* g_div = paraMngr->GetDivNum();
@@ -182,7 +193,18 @@ public:
     head[0] = hdx[0] + 1;
     head[1] = hdx[1] + 1;
     head[2] = hdx[2] + 1;
+    
+    // 無次元値をもとに有次元値を計算
+    for (int i=0; i<3; i++) {
+      pitchD[i]    = pitch[i]    * RefL;
+      originD[i]   = origin[i]   * RefL;
+      regionD[i]   = region[i]   * RefL;
+      G_originD[i] = G_origin[i] * RefL;
+      G_regionD[i] = G_region[i] * RefL;
+    }
+    
   }
+  
   
   // for Graph Ploter
   const char * _ss(const char *label, double *v, int n=3)

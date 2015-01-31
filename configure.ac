@@ -5,10 +5,10 @@
 # Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
 # All rights reserved.
 #
-# Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo. 
+# Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
 # All rights reserved.
 #
-# Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN. 
+# Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN. 
 # All rights reserved. 
 #
 ###################################################################################
@@ -17,7 +17,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.57])
-AC_INIT([FFVC], [2.0.3], [keno@riken.jp], [FFVC])
+AC_INIT([FFVC], [2.0.7], [keno@riken.jp], [FFVC])
 AM_INIT_AUTOMAKE()
 AC_CONFIG_SRCDIR([src/main.C])
 AC_CONFIG_HEADERS([config.h])
@@ -25,7 +25,7 @@ AC_CONFIG_HEADERS([config.h])
 #
 # revision No.
 #
-FFVC_REVISION="20141225_1300"
+FFVC_REVISION="20150131_1700"
 AC_SUBST(FFVC_REVISION)
 
 
@@ -282,26 +282,6 @@ if test x"$with_polylib" != x"none" ; then
 else
   echo "  Error: Polylib is not specified."
   echo "         Specify --with-polylib option."
-  exit 1
-fi
-
-
-
-#
-# Cutlib
-#
-AC_ARG_WITH(cut, [AC_HELP_STRING([--with-cut=dir],[Specify Cutlib install directory])], , with_cut=none)
-AC_SUBST(CUT_DIR)
-AC_SUBST(CUT_CFLAGS)
-AC_SUBST(CUT_LDFLAGS)
-
-if test x"$with_cut" != x"none" ; then
-  CUT_DIR=$with_cut;
-  CUT_CFLAGS=`$CUT_DIR/bin/cut-config --cflags`
-  CUT_LDFLAGS=`$CUT_DIR/bin/cut-config --libs`
-else
-  echo "  Error: Cutlib is not specified."
-  echo "         Specify --with-cut option."
   exit 1
 fi
 

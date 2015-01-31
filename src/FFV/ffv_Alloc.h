@@ -8,10 +8,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -23,37 +23,9 @@
  * @author aics
  */
 
-#include "cpm_ParaManager.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <string>
-#include <iostream>
-#include <fstream>
-
 #include "DomainInfo.h"
-#include "mydebug.h"
-#include "FBUtility.h"
-#include "Alloc.h"
 #include "Control.h"
 #include "ffv_Define.h"
-
-
-#ifndef _WIN32
-#include <unistd.h>
-#include <strings.h>
-#else
-#include "sph_win32_util.h"
-#endif
-#include <sys/types.h>
-
-#if defined(IA32_LINUX) || defined(IA64_LINUX) || defined(SGI_ALTIX)
-#include <sys/stat.h>
-#endif
-
-#ifdef MacOSX
-#include <sys/uio.h>
-#endif
 
 
 using namespace std;
@@ -62,6 +34,7 @@ class FALLOC : public DomainInfo {
 
 private:
   double array_size;
+  
   
 public:
   
@@ -103,8 +76,8 @@ public:
   REAL_TYPE *d_vrt; ///< [*] 渦度ベクトル
   
   // Polygon
-  float  *d_cut;    ///< [*] 距離情報
-  int    *d_bid;    ///< [*] BC
+  long long  *d_cut;    ///< [*] 距離情報
+  int        *d_bid;    ///< [*] BC
   
   
   // 平均値
@@ -126,10 +99,6 @@ public:
   // Components
   REAL_TYPE** component_array; ///< コンポーネントワーク配列のアドレス管理
   REAL_TYPE *d_cvf; ///< [*] 体積率
-  
-
-  // Naive実装の実験
-  REAL_TYPE *d_pni; ///< [*] 圧力Poissonの係数
   
   
   // LES計算
@@ -224,7 +193,6 @@ public:
     d_ap = NULL;
     d_ae = NULL;
     d_pvf = NULL;
-    d_pni = NULL;
     d_cvf = NULL;
     
     d_vt = NULL;
@@ -287,7 +255,7 @@ public:
   
   
   // カット情報の配列
-  void allocArray_Cut(double &total);
+  void allocArray_Cut(double &prep, double &total);
   
   
   // コンポーネントのワーク用配列のアロケート
@@ -316,10 +284,6 @@ public:
   
   // 主計算部分に用いる配列のアロケーション
   void allocArray_Main(double &total, Control* C);
-  
-  
-  // Poissonのナイーブ実装試験
-  void allocArray_Naive(double &total);
   
   
   // PCG法に用いる配列のアロケーション

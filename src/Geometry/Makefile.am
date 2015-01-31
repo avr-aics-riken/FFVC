@@ -5,10 +5,10 @@
 # Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
 # All rights reserved.
 #
-# Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo. 
+# Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
 # All rights reserved.
 #
-# Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+# Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 # All rights reserved. 
 #
 ###################################################################################
@@ -21,7 +21,6 @@ libGEOM_a_CXXFLAGS = \
   -I. \
   -I../FB \
   @CPM_CFLAGS@ \
-  @CUT_CFLAGS@ \
   @PL_CFLAGS@ \
   @TP_CFLAGS@ \
   @MPICH_CFLAGS@ \
@@ -32,7 +31,9 @@ libGEOM_a_SOURCES = \
   Geometry.h \
   CompoFraction.C \
   CompoFraction.h \
-  fill_bid.h
+  fill_bid_naive.h \
+  Glyph.C \
+  Glyph.h
 
-EXTRA_DIST = Makefile_hand depend.inc
+EXTRA_DIST = Makefile_hand depend.inc fill_bid.h
 

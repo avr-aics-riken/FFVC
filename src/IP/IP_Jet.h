@@ -8,10 +8,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -22,7 +22,7 @@
  * @author aics
  */
 
-#include "../FB/Intrinsic.h"
+#include "Intrinsic.h"
 #include "IP_Define.h"
 #include "FBUtility.h"
 
@@ -128,7 +128,7 @@ public:
                       REAL_TYPE* G_org,
                       const int NoMedium,
                       const MediumList* mat,
-                      float* cut,
+                      long long* cut,
                       int* bid);
   
   
@@ -136,10 +136,9 @@ public:
    * @brief Jetの流入境界条件による発散値の修正
    * @param [in,out] div   発散値
    * @param [in]     face  面番号
-   * @param [in,out] vf    セルフェイス速度
    * @param [in,out] flop  flop count
    */
-  void divJetInflow(REAL_TYPE* div, const int face, REAL_TYPE* vf, double& flop);
+  void divJetInflow(REAL_TYPE* div, const int face, double& flop);
   
   
   /**

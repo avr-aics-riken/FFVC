@@ -7,10 +7,10 @@
 ! Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 ! All rights reserved.
 !
-! Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+! Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 ! All rights reserved.
 !
-! Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+! Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 ! All rights reserved.
 !
 !###################################################################################
@@ -34,7 +34,7 @@
 !! @param [in]  bv       BCindex C
 !! @param [in]  bp       BCindex P
 !! @param [in]  v_mode   粘性項のモード (0=対流項のみ, 1=対流項と粘性項，2=粘性項は壁法則)
-!! @param [in]  cut      カット情報(float)
+!! @param [in]  cut      カット情報 int(8)
 !! @param [out] flop     浮動小数点演算数
 !<
     subroutine pvec_muscl_cds (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bv, bp, v_mode, cut, flop)

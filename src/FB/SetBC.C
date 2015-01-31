@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -77,6 +77,10 @@ void SetBC::setControlVars(Control* Cref, const MediumList* mat, const Reference
   NoCompo   = Cref->NoCompo;
   NoMedium  = Cref->NoMedium;
   //rho       = Cref->RefDensity;
+  
+  S_x = pitch[1]*pitch[2];
+  S_y = pitch[0]*pitch[2];
+  S_z = pitch[0]*pitch[1];
   
   if ( Cref->isHeatProblem() ) pei = Cref->getRcpPeclet();
 

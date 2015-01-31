@@ -8,10 +8,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -43,19 +43,17 @@
 #include "mydebug.h"
 #include "SubDomain.h"
 #include "Geometry.h"
+#include "PolyProperty.h"
 
 #include "TextParser.h"
 #include "Polylib.h"
 #include "MPIPolylib.h"
 
-#include "Cutlib.h"
-#include "GridAccessor/Cell.h"
 #include "Vec3.h"
 
 using namespace std;
 using namespace PolylibNS;
 using namespace ASubDomain;
-using namespace cutlib;
 using namespace Vec3class;
 
 class ASD : public DomainInfo {
@@ -85,13 +83,13 @@ private:
   int guide;
   int divPolicy;
   
-  // カット
-  CutPos32Array *cutPos;
-  CutBid5Array  *cutBid;
   
-  float  *d_cut; ///< 距離情報
+  long long *d_cut; ///< 距離情報
   int    *d_bid; ///< BC
   int    *d_bcd;
+  
+  PolygonProperty* PG;
+  Geometry GM;  ///< Geometry class
   
 public:
   
@@ -101,6 +99,7 @@ public:
     FillSeedDir=-1;
     guide = 1;
     divPolicy = -1;
+    PG = NULL;
     
     for (int i=0; i<3; i++)
     {
@@ -164,7 +163,7 @@ private:
   
   
   // グローバルな領域情報を取得
-  void getDomainInfo(TextParser* tpCntl, bool flag);
+  void getDomainParameter(TextParser* tpCntl, bool flag);
   
   
   // 幾何形状情報のロード

@@ -43,13 +43,12 @@ ASDmodule.o: ASDmodule.C ASDmodule.h ../FB/DomainInfo.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
- ../FB/FB_Define.h ../FB/mydebug.h SubDomain.h ../FB/VoxInfo.h ../FB/FBUtility.h \
- ../FB/Medium.h ../FB/Component.h ../FB/SetBC.h ../FB/BndOuter.h ../FB/Control.h \
- ../FB/CompoFraction.h /usr/local/FFV/Polylib/include/common/Vec3.h \
- ../FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
+ ../FB/FB_Define.h ../FB/mydebug.h SubDomain.h ../Geometry/Geometry.h \
+ ../FB/Medium.h ../FB/PolyProperty.h /usr/local/FFV/Polylib/include/common/Vec3.h \
+ ../FB/Component.h /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
- /usr/local/FFV/TextParser/include/tpVersion.h ../FB/IntervalManager.h \
- ../FB/Intrinsic.h /usr/local/FFV/Polylib/include/Polylib.h \
+ /usr/local/FFV/TextParser/include/tpVersion.h \
+ /usr/local/FFV/Polylib/include/Polylib.h \
  /usr/local/FFV/Polylib/include/polygons/Polygons.h \
  /usr/local/FFV/Polylib/include/common/PolylibStat.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
@@ -72,13 +71,4 @@ ASDmodule.o: ASDmodule.C ASDmodule.h ../FB/DomainInfo.h \
  /usr/local/FFV/Polylib/include/polygons/VertexList.h \
  /usr/local/FFV/Polylib/include/file_io/obj.h \
  /usr/local/FFV/Polylib/include/common/tt.h \
- /usr/local/FFV/Polylib/include/file_io/vtk.h \
- /usr/local/FFV/Cutlib/include/Cutlib.h \
- /usr/local/FFV/Cutlib/include/RepairPolygonData/RepairPolygonData.h \
- /usr/local/FFV/Cutlib/include/CutInfo/CutInfoArray.h \
- /usr/local/FFV/Cutlib/include/CutInfo/CutInfo.h \
- /usr/local/FFV/Cutlib/include/CutInfo/CutNormalArray.h \
- /usr/local/FFV/Cutlib/include/Cutlib.h \
- /usr/local/FFV/Cutlib/include/GridAccessor/GridAccessor.h \
- /usr/local/FFV/Cutlib/include/Version.h \
- /usr/local/FFV/Cutlib/include/GridAccessor/Cell.h
+ /usr/local/FFV/Polylib/include/file_io/vtk.h

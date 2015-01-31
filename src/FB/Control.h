@@ -8,10 +8,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -39,133 +39,6 @@ using namespace std;
 using namespace Vec3class;
 
 
-// #################################################################
-class PolygonProperty {
-  
-private:
-  int l_ntria;       ///< ローカルなポリゴン数
-  int g_ntria;       ///< グローバルなポリゴン数
-  int m_id;          ///< ID
-  REAL_TYPE l_area;  ///< ローカルな面積
-  REAL_TYPE g_area;  ///< グローバルな面積
-  string group;      ///< ポリゴングループ名
-  string material;   ///< Mediumtable[@]のalias
-  string bc;         ///< BCのラベル
-  Vec3r bx_min;      ///< Bboxの最小値
-  Vec3r bx_max;      ///< Bboxの最大値
-  
-public:
-  PolygonProperty() {
-    l_area = 0.0;
-    l_ntria= 0;
-    g_area = 0.0;
-    g_ntria= 0;
-  }
-  
-  ~PolygonProperty() {}
-  
-  string getGroup() const
-  {
-    return group;
-  }
-  
-  int getID() const
-  {
-    return m_id;
-  }
-  
-  string getMaterial() const
-  {
-    return material;
-  }
-  
-  string getBClabel() const
-  {
-    return bc;
-  }
-  
-  int getLntria() const
-  {
-    return l_ntria;
-  }
-  
-  REAL_TYPE getLarea() const
-  {
-    return l_area;
-  }
-  
-  int getGntria() const
-  {
-    return g_ntria;
-  }
-  
-  REAL_TYPE getGarea() const
-  {
-    return g_area;
-  }
-  
-  void setGroup(string key)
-  {
-    group = key;
-  }
-  
-  void setID(int key)
-  {
-    m_id = key;
-  }
-  
-  void setMaterial(string key)
-  {
-    material = key;
-  }
-  void setBClabel(string key)
-  {
-    bc = key;
-  }
-  
-  void setLntria(int val)
-  {
-    l_ntria = val;
-  }
-  
-  void setLarea(REAL_TYPE val)
-  {
-    l_area = val;
-  }
-  
-  void setGntria(int val)
-  {
-    g_ntria = val;
-  }
-  
-  void setGarea(REAL_TYPE val)
-  {
-    g_area = val;
-  }
-  
-  Vec3<REAL_TYPE> getBboxMax() const
-  {
-    return bx_max;
-  }
-  
-  Vec3<REAL_TYPE> getBboxMin() const
-  {
-    return bx_min;
-  }
-  
-  void setBboxMax(const Vec3<REAL_TYPE> bmax)
-  {
-    bx_max = bmax;
-  }
-  
-  void setBboxMin(const Vec3<REAL_TYPE> bmin)
-  {
-    bx_min = bmin;
-  }
-  
-};
-
-
 
 // #################################################################
 class DTcntl {
@@ -188,7 +61,7 @@ private:
   int mode;        ///< 入力パラメータの次元モード（無次元/有次元）
   double CFL;      ///< Δtの決定に使うCFLなど
   double deltaT;   ///< Δt（無次元）
-  double dh;       ///< 格子幅（無次元）
+  double min_dx;   ///< 最小格子幅（無次元）
   double Reynolds; ///< レイノルズ数
   double Peclet;   ///< ペクレ数
   
@@ -200,7 +73,7 @@ public:
     KOS = 0;
     mode = 0;
     deltaT = 0.0;
-    dh = Reynolds = Peclet = 0.0;
+    min_dx = Reynolds = Peclet = 0.0;
   }
   
   /**　デストラクタ */
@@ -232,7 +105,7 @@ public:
   double dtCFL(const double Uref) const 
   {
     double v = (Uref < 1.0) ? 1.0 : Uref; // 1.0 is non-dimensional reference velocity
-    return (dh*CFL / v);
+    return (min_dx*CFL / v);
   }
 
 
@@ -241,7 +114,7 @@ public:
    */
   double dtDFN(const double coef) const 
   { 
-    return coef * dh*dh/6.0; 
+    return coef * min_dx*min_dx/6.0;
   }
   
   
@@ -269,13 +142,13 @@ public:
   
   /**
    * @brief 基本変数をコピー
-   * @param [in] m_kos  ソルバーの種類
-   * @param [in] m_mode 次元モード
-   * @param [in] m_dh   無次元格子幅
-   * @param [in] re     レイノルズ数
-   * @param [in] pe     ペクレ数
+   * @param [in] m_kos     ソルバーの種類
+   * @param [in] m_mode    次元モード
+   * @param [in] m_min_dx  無次元最小格子幅
+   * @param [in] re        レイノルズ数
+   * @param [in] pe        ペクレ数
    */
-  void set_Vars(const int m_kos, const int m_mode, const double m_dh, const double re, const double pe);
+  void set_Vars(const int m_kos, const int m_mode, const double m_min_dx, const double re, const double pe);
 };
 
 
@@ -660,7 +533,6 @@ public:
   string ver_CDM;  ///< CDMlib
   string ver_PM;   ///< PMlib
   string ver_Poly; ///< Polylib
-  string ver_CUT;  ///< Cutlib
   
   
   /** コンストラクタ */
@@ -1008,16 +880,6 @@ public:
    */
   void printOuterArea(FILE* fp, unsigned long G_Fcell, unsigned long G_Acell, int* G_size);
   
-  
-  /**
-   * @brief グローバルな領域情報を表示する
-   * @param [in] fp      ファイルポインタ
-   * @param [in] G_size  グローバルな分割数
-   * @param [in] G_org   グローバルな領域基点
-   * @param [in] G_reg   グローバルな領域サイズ
-   * @param [in] pch     格子幅
-   */
-  void printGlobalDomain(FILE* fp, const int* G_size, const REAL_TYPE* G_org, const REAL_TYPE* G_reg, const REAL_TYPE* pch);
   
   
   /**

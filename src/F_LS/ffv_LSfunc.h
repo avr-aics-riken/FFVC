@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -32,7 +32,6 @@
 #define div_cnst_           DIV_CNST
 #define psor_               PSOR
 #define psor2sma_core_      PSOR2SMA_CORE
-#define psor2sma_naive_     PSOR2SMA_NAIVE
 #define sma_comm_           SMA_COMM
 #define sma_comm_wait_      SMA_COMM_WAIT
 #define cds_psor_           CDS_PSOR
@@ -50,8 +49,6 @@
 #define blas_calc_rk_        BLAS_CALC_RK
 #define blas_calc_r2_        BLAS_CALC_R2
 #define blas_calc_ax_        BLAS_CALC_AX
-#define blas_calc_r_naive_   BLAS_CALC_R_NAIVE
-#define blas_calc_ax_naive_  BLAS_CALC_AX_NAIVE
 
 
 #endif // _WIN32
@@ -65,6 +62,7 @@ extern "C" {
   void psor_ (REAL_TYPE* p,
               int* sz,
               int* g,
+              REAL_TYPE* dh,
               REAL_TYPE* omg,
               double* cnv,
               REAL_TYPE* b,
@@ -74,6 +72,7 @@ extern "C" {
   void psor2sma_core_ (REAL_TYPE* p,
                        int* sz,
                        int* g,
+                       REAL_TYPE* dh,
                        int* ip,
                        int* color,
                        REAL_TYPE* omg,
@@ -81,18 +80,6 @@ extern "C" {
                        REAL_TYPE* b,
                        int* bp,
                        double* flop);
-  
-  void psor2sma_naive_ (REAL_TYPE* p,
-                        int* sz,
-                        int* g,
-                        int* ip,
-                        int* color,
-                        REAL_TYPE* omg,
-                        double* cnv,
-                        REAL_TYPE* b,
-                        int* bp,
-                        REAL_TYPE* pn,
-                        double* flop);
   
   void sma_comm_      (REAL_TYPE* p,
                        int* sz,
@@ -172,7 +159,7 @@ extern "C" {
   
   void blas_calc_b_ (double* rhs,
                      REAL_TYPE* b,
-                     REAL_TYPE* s_0,
+                     REAL_TYPE* div,
                      int* bp,
                      int* sz,
                      int* g,
@@ -186,6 +173,7 @@ extern "C" {
                        int* bp,
                        int* sz,
                        int* g,
+                       REAL_TYPE* dh,
                        double* flop);
   
   void blas_calc_r2_  (double* res,
@@ -194,31 +182,16 @@ extern "C" {
                        int* bp,
                        int* sz,
                        int* g,
+                       REAL_TYPE* dh,
                        double* flop);
-  
-  void blas_calc_r_naive_(REAL_TYPE* r,
-                          REAL_TYPE* p,
-                          REAL_TYPE* b,
-                          int* bp,
-                          int* sz,
-                          int*g,
-                          REAL_TYPE* pn,
-                          double* flop);
   
   void blas_calc_ax_  (REAL_TYPE* ap,
                        REAL_TYPE* p,
                        int* bp,
                        int* sz,
                        int* g,
+                       REAL_TYPE* dh,
                        double* flop);
-  
-  void blas_calc_ax_naive_(REAL_TYPE* ap,
-                           REAL_TYPE* p,
-                           int* bp,
-                           int* sz,
-                           int* g,
-                           REAL_TYPE* pn,
-                           double* flop);
   
   //***********************************************************************************************
   // ffv_cg.f90

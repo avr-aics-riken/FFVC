@@ -7,10 +7,10 @@
 ! Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 ! All rights reserved.
 !
-! Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+! Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 ! All rights reserved.
 !
-! Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+! Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 ! All rights reserved.
 !
 !###################################################################################
@@ -45,11 +45,11 @@ integer                                                   ::  ix, jx, kx
 integer, dimension(3)                                     ::  sz
 double precision                                          ::  flop
 real                                                      ::  Up, Vp, Wp, Ur, Vr, Wr
-real                                                      ::  dh, dh1, dh2, EX, EY, EZ, rei
+real                                                      ::  EX, EY, EZ, rei, rx, ry, rz, dx2, dy2, dz2
 real                                                      ::  fu, fv, fw, c, ac, msk
 real                                                      ::  u_bc, v_bc, w_bc, m
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0, wv
-real, dimension(3)                                        ::  vec
+real, dimension(3)                                        ::  vec, dh
 integer, dimension(0:5)                                   ::  nID
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
 
@@ -58,23 +58,29 @@ if ( nID(m_face) >= 0 ) return
 ix = sz(1)
 jx = sz(2)
 kx = sz(3)
+
 face = m_face
 
-dh1= 1.0/dh
-dh2= rei*dh1*dh1
+rx = 1.0/dh(1)
+ry = 1.0/dh(2)
+rz = 1.0/dh(3)
+
+dx2 = rei * rx * rx
+dy2 = rei * ry * ry
+dz2 = rei * rz * rz
 
 ! u_bcは境界速度
 u_bc = vec(1)
 v_bc = vec(2)
 w_bc = vec(3)
 
-flop = flop + 13.0d0 ! DP 18 flop
+flop = flop + 30.0d0 ! DP 18 flop
 
 m = 0.0
 
 !$OMP PARALLEL REDUCTION(+:m) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, u_bc, v_bc, w_bc, face) &
-!$OMP FIRSTPRIVATE(dh1, dh2) &
+!$OMP FIRSTPRIVATE(rx, ry, rz, dx2, dy2, dz2) &
 !$OMP PRIVATE(Up, Vp, Wp, Ur, Vr, Wr) &
 !$OMP PRIVATE(fu, fv, fw, EX, EY, EZ, c, ac, msk) &
 !$OMP PRIVATE(i, j, k)
@@ -108,9 +114,9 @@ fw = 0.5*(c*(Wp+Wr) - ac*EZ)
 
 msk = real(ibits(bv(0,j,k), State, 1))
 
-wv(i,j,k,1) = wv(i,j,k,1) + ( fu*dh1 - EX*dh2 ) * msk
-wv(i,j,k,2) = wv(i,j,k,2) + ( fv*dh1 - EY*dh2 ) * msk
-wv(i,j,k,3) = wv(i,j,k,3) + ( fw*dh1 - EZ*dh2 ) * msk
+wv(i,j,k,1) = wv(i,j,k,1) + ( fu*rx - EX*dx2 ) * msk
+wv(i,j,k,2) = wv(i,j,k,2) + ( fv*rx - EY*dx2 ) * msk
+wv(i,j,k,3) = wv(i,j,k,3) + ( fw*rx - EZ*dx2 ) * msk
 m = m + 1.0
 endif
 end do
@@ -145,9 +151,9 @@ fw = 0.5*(c*(Wr+Wp) - ac*EZ)
 
 msk = real(ibits(bv(ix+1,j,k), State, 1))
 
-wv(i,j,k,1) = wv(i,j,k,1) + ( -fu*dh1 + EX*dh2 ) * msk
-wv(i,j,k,2) = wv(i,j,k,2) + ( -fv*dh1 + EY*dh2 ) * msk
-wv(i,j,k,3) = wv(i,j,k,3) + ( -fw*dh1 + EZ*dh2 ) * msk
+wv(i,j,k,1) = wv(i,j,k,1) + ( -fu*rx + EX*dx2 ) * msk
+wv(i,j,k,2) = wv(i,j,k,2) + ( -fv*rx + EY*dx2 ) * msk
+wv(i,j,k,3) = wv(i,j,k,3) + ( -fw*rx + EZ*dx2 ) * msk
 m = m + 1.0
 endif
 end do
@@ -182,9 +188,9 @@ fw = 0.5*(c*(Wp+Wr) - ac*EZ)
 
 msk = real(ibits(bv(i,0,k), State, 1))
 
-wv(i,j,k,1) = wv(i,j,k,1) + ( fu*dh1 - EX*dh2 ) * msk
-wv(i,j,k,2) = wv(i,j,k,2) + ( fv*dh1 - EY*dh2 ) * msk
-wv(i,j,k,3) = wv(i,j,k,3) + ( fw*dh1 - EZ*dh2 ) * msk
+wv(i,j,k,1) = wv(i,j,k,1) + ( fu*ry - EX*dy2 ) * msk
+wv(i,j,k,2) = wv(i,j,k,2) + ( fv*ry - EY*dy2 ) * msk
+wv(i,j,k,3) = wv(i,j,k,3) + ( fw*ry - EZ*dy2 ) * msk
 m = m + 1.0
 endif
 end do
@@ -219,9 +225,9 @@ fw = 0.5*(c*(Wr+Wp) - ac*EZ)
 
 msk = real(ibits(bv(i,jx+1,k), State, 1))
 
-wv(i,j,k,1) = wv(i,j,k,1) + ( -fu*dh1 + EX*dh2 ) * msk
-wv(i,j,k,2) = wv(i,j,k,2) + ( -fv*dh1 + EY*dh2 ) * msk
-wv(i,j,k,3) = wv(i,j,k,3) + ( -fw*dh1 + EZ*dh2 ) * msk
+wv(i,j,k,1) = wv(i,j,k,1) + ( -fu*ry + EX*dy2 ) * msk
+wv(i,j,k,2) = wv(i,j,k,2) + ( -fv*ry + EY*dy2 ) * msk
+wv(i,j,k,3) = wv(i,j,k,3) + ( -fw*ry + EZ*dy2 ) * msk
 m = m + 1.0
 endif
 end do
@@ -256,9 +262,9 @@ fw = 0.5*(c*(Wp+Wr) - ac*EZ)
 
 msk = real(ibits(bv(i,j,0), State, 1))
 
-wv(i,j,k,1) = wv(i,j,k,1) + ( fu*dh1 - EX*dh2 ) * msk
-wv(i,j,k,2) = wv(i,j,k,2) + ( fv*dh1 - EY*dh2 ) * msk
-wv(i,j,k,3) = wv(i,j,k,3) + ( fw*dh1 - EZ*dh2 ) * msk
+wv(i,j,k,1) = wv(i,j,k,1) + ( fu*rz - EX*dz2 ) * msk
+wv(i,j,k,2) = wv(i,j,k,2) + ( fv*rz - EY*dz2 ) * msk
+wv(i,j,k,3) = wv(i,j,k,3) + ( fw*rz - EZ*dz2 ) * msk
 m = m + 1.0
 endif
 end do
@@ -293,9 +299,9 @@ fw = 0.5*(c*(Wr+Wp) - ac*EZ)
 
 msk = real(ibits(bv(i,j,kx+1), State, 1))
 
-wv(i,j,k,1) = wv(i,j,k,1) + ( -fu*dh1 + EX*dh2 ) * msk
-wv(i,j,k,2) = wv(i,j,k,2) + ( -fv*dh1 + EY*dh2 ) * msk
-wv(i,j,k,3) = wv(i,j,k,3) + ( -fw*dh1 + EZ*dh2 ) * msk
+wv(i,j,k,1) = wv(i,j,k,1) + ( -fu*rz + EX*dz2 ) * msk
+wv(i,j,k,2) = wv(i,j,k,2) + ( -fv*rz + EY*dz2 ) * msk
+wv(i,j,k,3) = wv(i,j,k,3) + ( -fw*rz + EZ*dz2 ) * msk
 m = m + 1.0
 endif
 end do
@@ -342,10 +348,10 @@ integer                                                   ::  ix, jx, kx
 integer, dimension(3)                                     ::  sz
 double precision                                          ::  flop
 real                                                      ::  Up, Vp, Wp, gu, gv, gw
-real                                                      ::  dh, dh1, dh2, rei
+real                                                      ::  rei, rx, ry, rz, dx2, dy2, dz2
 real                                                      ::  u_bc, v_bc, w_bc, m, msk
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0, wv
-real, dimension(3)                                        ::  vec
+real, dimension(3)                                        ::  vec, dh
 integer, dimension(0:5)                                   ::  nID
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
 
@@ -356,8 +362,14 @@ jx = sz(2)
 kx = sz(3)
 face = m_face
 
-dh1= 1.0/dh
-dh2= rei*dh1
+rx = 1.0/dh(1)
+ry = 1.0/dh(2)
+rz = 1.0/dh(3)
+
+! FVMとは違うので注意
+dx2 = rei * rx
+dy2 = rei * ry
+dz2 = rei * rz
 
 ! u_bcは境界速度
 u_bc = vec(1)
@@ -369,7 +381,8 @@ flop = flop + 10.0d0 ! DP 18 flop
 m = 0.0
 
 !$OMP PARALLEL REDUCTION(+:m) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc, v_bc, w_bc, face, dh1, dh2) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc, v_bc, w_bc, face) &
+!$OMP FIRSTPRIVATE(rx, ry, rz, dx2, dy2, dz2) &
 !$OMP PRIVATE(Up, Vp, Wp, gu, gv, gw, msk) &
 !$OMP PRIVATE(i, j, k)
 
@@ -386,15 +399,15 @@ Up = v0(i,j,k,1)
 Vp = v0(i,j,k,2)
 Wp = v0(i,j,k,3)
 
-gu = 2.0 * (Up - u_bc) * dh1
-gv = 2.0 * (Vp - v_bc) * dh1
-gw = 2.0 * (Wp - w_bc) * dh1
+gu = 2.0 * (Up - u_bc) * rx
+gv = 2.0 * (Vp - v_bc) * rx
+gw = 2.0 * (Wp - w_bc) * rx
 
 msk = real(ibits(bv(0,j,k), State, 1))
 
-wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * u_bc * gu + gu * dh2 ) * msk
-wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * u_bc * gv + gv * dh2 ) * msk
-wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * u_bc * gw + gw * dh2 ) * msk
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * u_bc * gu + gu * dx2 ) * msk
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * u_bc * gv + gv * dx2 ) * msk
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * u_bc * gw + gw * dx2 ) * msk
 m = m + 1.0
 endif
 end do
@@ -413,15 +426,15 @@ Up = v0(i,j,k,1)
 Vp = v0(i,j,k,2)
 Wp = v0(i,j,k,3)
 
-gu = 2.0 * (u_bc - Up) * dh1
-gv = 2.0 * (v_bc - Vp) * dh1
-gw = 2.0 * (w_bc - Wp) * dh1
+gu = 2.0 * (u_bc - Up) * rx
+gv = 2.0 * (v_bc - Vp) * rx
+gw = 2.0 * (w_bc - Wp) * rx
 
 msk = real(ibits(bv(ix+1,j,k), State, 1))
 
-wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * u_bc * gu - gu * dh2 ) * msk
-wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * u_bc * gv - gv * dh2 ) * msk
-wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * u_bc * gw - gw * dh2 ) * msk
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * u_bc * gu - gu * dx2 ) * msk
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * u_bc * gv - gv * dx2 ) * msk
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * u_bc * gw - gw * dx2 ) * msk
 m = m + 1.0
 endif
 end do
@@ -440,15 +453,15 @@ Up = v0(i,j,k,1)
 Vp = v0(i,j,k,2)
 Wp = v0(i,j,k,3)
 
-gu = 2.0 * (Up - u_bc) * dh1
-gv = 2.0 * (Vp - v_bc) * dh1
-gw = 2.0 * (Wp - w_bc) * dh1
+gu = 2.0 * (Up - u_bc) * ry
+gv = 2.0 * (Vp - v_bc) * ry
+gw = 2.0 * (Wp - w_bc) * ry
 
 msk = real(ibits(bv(i,0,k), State, 1))
 
-wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * v_bc * gu + gu * dh2 ) * msk
-wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * v_bc * gv + gv * dh2 ) * msk
-wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * v_bc * gw + gw * dh2 ) * msk
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * v_bc * gu + gu * dy2 ) * msk
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * v_bc * gv + gv * dy2 ) * msk
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * v_bc * gw + gw * dy2 ) * msk
 m = m + 1.0
 endif
 end do
@@ -467,15 +480,15 @@ Up = v0(i,j,k,1)
 Vp = v0(i,j,k,2)
 Wp = v0(i,j,k,3)
 
-gu = 2.0 * (u_bc - Up) * dh1
-gv = 2.0 * (v_bc - Vp) * dh1
-gw = 2.0 * (w_bc - Wp) * dh1
+gu = 2.0 * (u_bc - Up) * ry
+gv = 2.0 * (v_bc - Vp) * ry
+gw = 2.0 * (w_bc - Wp) * ry
 
 msk = real(ibits(bv(i,jx+1,k), State, 1))
 
-wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * v_bc * gu - gu * dh2 ) * msk
-wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * v_bc * gv - gv * dh2 ) * msk
-wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * v_bc * gw - gw * dh2 ) * msk
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * v_bc * gu - gu * dy2 ) * msk
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * v_bc * gv - gv * dy2 ) * msk
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * v_bc * gw - gw * dy2 ) * msk
 m = m + 1.0
 endif
 end do
@@ -494,15 +507,15 @@ Up = v0(i,j,k,1)
 Vp = v0(i,j,k,2)
 Wp = v0(i,j,k,3)
 
-gu = 2.0 * (Up - u_bc) * dh1
-gv = 2.0 * (Vp - v_bc) * dh1
-gw = 2.0 * (Wp - w_bc) * dh1
+gu = 2.0 * (Up - u_bc) * rz
+gv = 2.0 * (Vp - v_bc) * rz
+gw = 2.0 * (Wp - w_bc) * rz
 
 msk = real(ibits(bv(i,j,0), State, 1))
 
-wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * w_bc * gu + gu * dh2 ) * msk
-wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * w_bc * gv + gv * dh2 ) * msk
-wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * w_bc * gw + gw * dh2 ) * msk
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * w_bc * gu + gu * dz2 ) * msk
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * w_bc * gv + gv * dz2 ) * msk
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * w_bc * gw + gw * dz2 ) * msk
 m = m + 1.0
 endif
 end do
@@ -521,15 +534,15 @@ Up = v0(i,j,k,1)
 Vp = v0(i,j,k,2)
 Wp = v0(i,j,k,3)
 
-gu = 2.0 * (u_bc - Up) * dh1
-gv = 2.0 * (v_bc - Vp) * dh1
-gw = 2.0 * (w_bc - Wp) * dh1
+gu = 2.0 * (u_bc - Up) * rz
+gv = 2.0 * (v_bc - Vp) * rz
+gw = 2.0 * (w_bc - Wp) * rz
 
 msk = real(ibits(bv(i,j,kx+1), State, 1))
 
-wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * w_bc * gu - gu * dh2 ) * msk
-wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * w_bc * gv - gv * dh2 ) * msk
-wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * w_bc * gw - gw * dh2 ) * msk
+wv(i,j,k,1) = wv(i,j,k,1) - ( 0.5 * w_bc * gu - gu * dz2 ) * msk
+wv(i,j,k,2) = wv(i,j,k,2) - ( 0.5 * w_bc * gv - gv * dz2 ) * msk
+wv(i,j,k,3) = wv(i,j,k,3) - ( 0.5 * w_bc * gw - gw * dz2 ) * msk
 m = m + 1.0
 endif
 end do
@@ -569,9 +582,9 @@ integer                                                   ::  ix, jx, kx
 integer, dimension(3)                                     ::  sz
 double precision                                          ::  flop, rix, rjx, rkx
 real                                                      ::  u_bc, v_bc, w_bc
-real                                                      ::  dh, dh1, dh2, rei
+real                                                      ::  rei, rx, ry, rz, dx2, dy2, dz2
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v0, wv
-real, dimension(3)                                        ::  vec
+real, dimension(3)                                        ::  vec, dh
 integer, dimension(0:5)                                   ::  nID
 
 if ( nID(m_face) >= 0 ) return
@@ -581,8 +594,13 @@ jx = sz(2)
 kx = sz(3)
 face = m_face
 
-dh1= 1.0/dh
-dh2= rei*dh1*dh1*2.0
+rx = 1.0/dh(1)
+ry = 1.0/dh(2)
+rz = 1.0/dh(3)
+
+dx2 = rei * rx * rx * 2.0
+dy2 = rei * ry * ry * 2.0
+dz2 = rei * rz * rz * 2.0
 
 u_bc = vec(1)
 v_bc = vec(2)
@@ -590,7 +608,7 @@ w_bc = vec(3)
 
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc, v_bc, w_bc, dh2, face) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc, v_bc, w_bc, face, dx2, dy2, dz2) &
 !$OMP PRIVATE(i, j, k)
 
 FACES : select case (face)
@@ -601,9 +619,9 @@ i = 1
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 do k=1,kx
 do j=1,jx
-! wv(i,j,k,1) = wv(i,j,k,1) + (u_bc - v0(i,j,k,1)) * dh2 ! du/dx = 0
-wv(i,j,k,2) = wv(i,j,k,2) + (v_bc - v0(i,j,k,2)) * dh2 ! dv/dx
-wv(i,j,k,3) = wv(i,j,k,3) + (w_bc - v0(i,j,k,3)) * dh2 ! dw/dx
+! wv(i,j,k,1) = wv(i,j,k,1) + (u_bc - v0(i,j,k,1)) * dh1 ! du/dx = 0
+wv(i,j,k,2) = wv(i,j,k,2) + (v_bc - v0(i,j,k,2)) * dx2 ! dv/dx
+wv(i,j,k,3) = wv(i,j,k,3) + (w_bc - v0(i,j,k,3)) * dx2 ! dw/dx
 end do
 end do
 !$OMP END DO
@@ -615,9 +633,9 @@ i = ix
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 do k=1,kx
 do j=1,jx
-! wv(i,j,k,1) = wv(i,j,k,1) + (u_bc - v0(i,j,k,1)) * dh2 ! du/dx = 0
-wv(i,j,k,2) = wv(i,j,k,2) + (v_bc - v0(i,j,k,2)) * dh2 ! dv/dx
-wv(i,j,k,3) = wv(i,j,k,3) + (w_bc - v0(i,j,k,3)) * dh2 ! dw/dx
+! wv(i,j,k,1) = wv(i,j,k,1) + (u_bc - v0(i,j,k,1)) * dh1 ! du/dx = 0
+wv(i,j,k,2) = wv(i,j,k,2) + (v_bc - v0(i,j,k,2)) * dx2 ! dv/dx
+wv(i,j,k,3) = wv(i,j,k,3) + (w_bc - v0(i,j,k,3)) * dx2 ! dw/dx
 end do
 end do
 !$OMP END DO
@@ -629,9 +647,9 @@ j = 1
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 do k=1,kx
 do i=1,ix
-wv(i,j,k,1) = wv(i,j,k,1) + (u_bc - v0(i,j,k,1)) * dh2 ! du/dy
+wv(i,j,k,1) = wv(i,j,k,1) + (u_bc - v0(i,j,k,1)) * dy2 ! du/dy
 ! wv(i,j,k,2) = wv(i,j,k,2) + (v_bc - v0(i,j,k,2)) * dh2 ! dv/dy = 0
-wv(i,j,k,3) = wv(i,j,k,3) + (w_bc - v0(i,j,k,3)) * dh2 ! dw/dy
+wv(i,j,k,3) = wv(i,j,k,3) + (w_bc - v0(i,j,k,3)) * dy2 ! dw/dy
 end do
 end do
 !$OMP END DO
@@ -643,9 +661,9 @@ j = jx
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 do k=1,kx
 do i=1,ix
-wv(i,j,k,1) = wv(i,j,k,1) + (u_bc - v0(i,j,k,1)) * dh2 ! du/dy
+wv(i,j,k,1) = wv(i,j,k,1) + (u_bc - v0(i,j,k,1)) * dy2 ! du/dy
 ! wv(i,j,k,2) = wv(i,j,k,2) + (v_bc - v0(i,j,k,2)) * dh2 ! dv/dy = 0
-wv(i,j,k,3) = wv(i,j,k,3) + (w_bc - v0(i,j,k,3)) * dh2 ! dw/dy
+wv(i,j,k,3) = wv(i,j,k,3) + (w_bc - v0(i,j,k,3)) * dy2 ! dw/dy
 end do
 end do
 !$OMP END DO
@@ -657,9 +675,9 @@ k = 1
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 do j=1,jx
 do i=1,ix
-wv(i,j,k,1) = wv(i,j,k,1) + (u_bc - v0(i,j,k,1)) * dh2 ! du/dz
-wv(i,j,k,2) = wv(i,j,k,2) + (v_bc - v0(i,j,k,2)) * dh2 ! dv/dz
-! wv(i,j,k,3) = wv(i,j,k,3) + (w_bc - v0(i,j,k,3)) * dh2 ! dw/dz = 0
+wv(i,j,k,1) = wv(i,j,k,1) + (u_bc - v0(i,j,k,1)) * dz2 ! du/dz
+wv(i,j,k,2) = wv(i,j,k,2) + (v_bc - v0(i,j,k,2)) * dz2 ! dv/dz
+! wv(i,j,k,3) = wv(i,j,k,3) + (w_bc - v0(i,j,k,3)) * dh3 ! dw/dz = 0
 end do
 end do
 !$OMP END DO
@@ -671,9 +689,9 @@ k = kx
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 do j=1,jx
 do i=1,ix
-wv(i,j,k,1) = wv(i,j,k,1) + (u_bc - v0(i,j,k,1)) * dh2 ! du/dz
-wv(i,j,k,2) = wv(i,j,k,2) + (v_bc - v0(i,j,k,2)) * dh2 ! dv/dz
-! wv(i,j,k,3) = wv(i,j,k,3) + (w_bc - v0(i,j,k,3)) * dh2 ! dw/dz = 0
+wv(i,j,k,1) = wv(i,j,k,1) + (u_bc - v0(i,j,k,1)) * dz2 ! du/dz
+wv(i,j,k,2) = wv(i,j,k,2) + (v_bc - v0(i,j,k,2)) * dz2 ! dv/dz
+! wv(i,j,k,3) = wv(i,j,k,3) + (w_bc - v0(i,j,k,3)) * dh3 ! dw/dz = 0
 end do
 end do
 !$OMP END DO

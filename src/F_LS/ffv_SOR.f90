@@ -7,10 +7,10 @@
 ! Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 ! All rights reserved.
 !
-! Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+! Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 ! All rights reserved.
 !
-! Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+! Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 ! All rights reserved.
 !
 !###################################################################################
@@ -26,6 +26,7 @@
 !! @param [in,out] p    圧力
 !! @param [in]     sz   配列長
 !! @param [in]     g    ガイドセル長
+!! @param [in]     dh   格子幅
 !! @param [in]     omg  加速係数
 !! @param [out]    cnv  収束判定値　修正量の自乗和と残差の自乗和、解ベクトルの自乗和
 !! @param [in]     b    RHS vector
@@ -33,76 +34,101 @@
 !! @param [out]    flop flop count
 !! @note Activeマスクの位置は，固体中のラプラス式を解くように，更新式にはかけず残差のみにする
 !<
-    subroutine psor (p, sz, g, omg, cnv, b, bp, flop)
-    implicit none
-    include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, g, idx
-    integer, dimension(3)                                     ::  sz
-    double precision                                          ::  flop, res, err, aa, xl2
-    real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
-    real                                                      ::  omg, dd, ss, dp, pp, d0, d1, d2, bb, de, pn
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
-    double precision, dimension(3)                            ::  cnv
+  subroutine psor (p, sz, g, dh, omg, cnv, b, bp, flop)
+  implicit none
+  include 'ffv_f_params.h'
+  integer                                                   ::  i, j, k, ix, jx, kx, g, idx, dsw
+  integer, dimension(3)                                     ::  sz
+  double precision                                          ::  flop, res, err, aa, xl2
+  real                                                      ::  omg, dd, ss, dp, pp, bb, de, pn
+  real                                                      ::  c_w, c_e, c_s, c_n, c_b, c_t
+  real                                                      ::  d_w, d_e, d_s, d_n, d_b, d_t
+  real                                                      ::  r_xx, r_xy, r_xz, r_x2, r_y2, r_z2
+  real, dimension(3)                                        ::  dh
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
+  integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
+  double precision, dimension(3)                            ::  cnv
 
-    ix = sz(1)
-    jx = sz(2)
-    kx = sz(3)
-		res = 0.0
-    err = 0.0
-    xl2 = 0.0
+  ix = sz(1)
+  jx = sz(2)
+  kx = sz(3)
+  res = 0.0
+  err = 0.0
+  xl2 = 0.0
 
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*39.0d0
-    ! flop = flop + dble(ix)*dble(jx)*dble(kx)*41.0d0 ! DP
+  r_xx = 1.0
+  r_xy = dh(1) / dh(2)
+  r_xz = dh(1) / dh(3)
+  r_x2 = r_xx * r_xx
+  r_y2 = r_xy * r_xy
+  r_z2 = r_xz * r_xz
+
+  flop = flop + dble(ix)*dble(jx)*dble(kx)*56.0d0 + 19.0d0
+
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:res) &
 !$OMP REDUCTION(+:err) &
 !$OMP REDUCTION(+:xl2) &
-!$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t) &
-!$OMP PRIVATE(idx, aa, d0, d1, d2, dd, pp, bb, ss, dp, de, pn) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, omg)
+!$OMP PRIVATE(c_w, c_e, c_s, c_n, c_b, c_t) &
+!$OMP PRIVATE(d_w, d_e, d_s, d_n, d_b, d_t) &
+!$OMP PRIVATE(dd, ss, dp, idx, aa, pp, bb, de, pn, dsw) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, omg) &
+!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 
-    do k=1,kx
-    do j=1,jx
-    do i=1,ix
-      idx = bp(i,j,k)
-      ndag_e = real(ibits(idx, bc_ndag_E, 1))  ! e, non-diagonal
-      ndag_w = real(ibits(idx, bc_ndag_W, 1))  ! w 
-      ndag_n = real(ibits(idx, bc_ndag_N, 1))  ! n
-      ndag_s = real(ibits(idx, bc_ndag_S, 1))  ! s
-      ndag_t = real(ibits(idx, bc_ndag_T, 1))  ! t
-      ndag_b = real(ibits(idx, bc_ndag_B, 1))  ! b
+  do k=1,kx
+  do j=1,jx
+  do i=1,ix
+    idx = bp(i,j,k)
 
-      aa = dble(ibits(idx, Active, 1))
+    c_w = real(ibits(idx, bc_ndag_W, 1))  ! w
+    c_e = real(ibits(idx, bc_ndag_E, 1))  ! e
+    c_s = real(ibits(idx, bc_ndag_S, 1))  ! s
+    c_n = real(ibits(idx, bc_ndag_N, 1))  ! n
+    c_b = real(ibits(idx, bc_ndag_B, 1))  ! b
+    c_t = real(ibits(idx, bc_ndag_T, 1))  ! t
 
-      d0 = real(ibits(idx, bc_diag + 0, 1))
-      d1 = real(ibits(idx, bc_diag + 1, 1))
-      d2 = real(ibits(idx, bc_diag + 2, 1))
-      dd = d2*4.0 + d1*2.0 + d0  ! diagonal
+    d_w = real(ibits(idx, bc_dn_W, 1))
+    d_e = real(ibits(idx, bc_dn_E, 1))
+    d_s = real(ibits(idx, bc_dn_S, 1))
+    d_n = real(ibits(idx, bc_dn_N, 1))
+    d_b = real(ibits(idx, bc_dn_B, 1))
+    d_t = real(ibits(idx, bc_dn_T, 1))
 
-      ! dd = real(ibits(idx, bc_diag, 3))  Kのコンパイラがよくなれば
-      pp = p(i,j,k)
-      bb = b(i,j,k)
-      ss = ndag_e * p(i+1,j  ,k  ) &
-         + ndag_w * p(i-1,j  ,k  ) &
-         + ndag_n * p(i  ,j+1,k  ) &
-         + ndag_s * p(i  ,j-1,k  ) &
-         + ndag_t * p(i  ,j  ,k+1) &
-         + ndag_b * p(i  ,j  ,k-1)
-      dp = ( (ss - bb)/dd - pp ) * omg
-      pn = pp + dp
-      p(i,j,k) = pn
+    dsw = ibits(idx, bc_diag, 1)
 
-      de  = bb - (ss - pn * dd)
-      res = res + dble(de*de) * aa
-      xl2 = xl2 + dble(pn*pn) * aa
-      err = err + dble(dp*dp) * aa
-    end do
-    end do
-    end do
+    dd = r_x2 * (c_w + c_e) &
+       + r_y2 * (c_s + c_n) &
+       + r_z2 * (c_b + c_t) &
+       + 2.0                &
+       *(r_x2 * (d_w + d_e) &
+       + r_y2 * (d_s + d_n) &
+       + r_z2 * (d_b + d_t) )
+
+    if ( dsw == 0 ) dd = 1.0 ! to avoid zero division
+
+    aa = dble(ibits(idx, Active, 1))
+
+    pp = p(i,j,k)
+    bb = b(i,j,k)
+
+    ss = r_x2 * ( c_e * p(i+1,j  ,k  ) + c_w * p(i-1,j  ,k  ) ) &
+       + r_y2 * ( c_n * p(i  ,j+1,k  ) + c_s * p(i  ,j-1,k  ) ) &
+       + r_z2 * ( c_t * p(i  ,j  ,k+1) + c_b * p(i  ,j  ,k-1) )
+
+    dp = ( (ss - bb)/dd - pp ) * omg
+    pn = pp + dp
+    p(i,j,k) = pn
+
+    de  = bb - (ss - pn * dd)
+    res = res + dble(de*de) * aa
+    xl2 = xl2 + dble(pn*pn) * aa
+    err = err + dble(dp*dp) * aa
+  end do
+  end do
+  end do
 !$OMP END DO
 !$OMP END PARALLEL
 
@@ -119,6 +145,7 @@
 !! @param [in,out] p     圧力
 !! @param [in]     sz    配列長
 !! @param [in]     g     ガイドセル長
+!! @param [in]     dh    格子幅
 !! @param [in]     ip    開始点インデクス
 !! @param [in]     color グループ番号
 !! @param [in]     omg   加速係数
@@ -128,14 +155,17 @@
 !! @param [out]    flop  浮動小数演算数
 !! @note resは積算
 !<
-subroutine psor2sma_core (p, sz, g, ip, color, omg, cnv, b, bp, flop)
+subroutine psor2sma_core (p, sz, g, dh, ip, color, omg, cnv, b, bp, flop)
 implicit none
 include 'ffv_f_params.h'
-integer                                                   ::  i, j, k, ix, jx, kx, g, idx
+integer                                                   ::  i, j, k, ix, jx, kx, g, idx, dsw
 integer, dimension(3)                                     ::  sz
 double precision                                          ::  flop, res, err, xl2, aa
-real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
-real                                                      ::  omg, dd, ss, dp, pp, d0, d1, d2, bb, de, pn
+real                                                      ::  omg, dd, ss, dp, pp, bb, de, pn
+real                                                      ::  c_w, c_e, c_s, c_n, c_b, c_t
+real                                                      ::  d_w, d_e, d_s, d_n, d_b, d_t
+real                                                      ::  r_xx, r_xy, r_xz, r_x2, r_y2, r_z2
+real, dimension(3)                                        ::  dh
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 integer                                                   ::  ip, color
@@ -149,16 +179,25 @@ err = 0.0
 res = 0.0
 xl2 = 0.0
 
-flop = flop + dble(ix)*dble(jx)*dble(kx) * 39.0d0 * 0.5d0
-! flop = flop + dble(ix)*dble(jx)*dble(kx) * 41.0d0 * 0.5d0 ! DP
+r_xx = 1.0
+r_xy = dh(1) / dh(2)
+r_xz = dh(1) / dh(3)
+r_x2 = r_xx * r_xx
+r_y2 = r_xy * r_xy
+r_z2 = r_xz * r_xz
+
+flop = flop + (dble(ix)*dble(jx)*dble(kx) * 56.0d0 +19.0d0 ) * 0.5d0
+
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:res) &
 !$OMP REDUCTION(+:err) &
 !$OMP REDUCTION(+:xl2) &
-!$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t) &
-!$OMP PRIVATE(idx, aa, d0, d1, d2, dd, pp, bb, ss, dp, de, pn) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, color, ip, omg)
+!$OMP PRIVATE(c_w, c_e, c_s, c_n, c_b, c_t) &
+!$OMP PRIVATE(d_w, d_e, d_s, d_n, d_b, d_t) &
+!$OMP PRIVATE(idx, dsw, aa, dd, pp, bb, ss, dp, de, pn) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, color, ip, omg) &
+!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 
@@ -167,29 +206,41 @@ do j=1,jx
 do i=1+mod(k+j+color+ip,2), ix, 2
   idx = bp(i,j,k)
 
-  ndag_e = real(ibits(idx, bc_ndag_E, 1))  ! e, non-diagonal
-  ndag_w = real(ibits(idx, bc_ndag_W, 1))  ! w
-  ndag_n = real(ibits(idx, bc_ndag_N, 1))  ! n
-  ndag_s = real(ibits(idx, bc_ndag_S, 1))  ! s
-  ndag_t = real(ibits(idx, bc_ndag_T, 1))  ! t
-  ndag_b = real(ibits(idx, bc_ndag_B, 1))  ! b
+  c_w = real(ibits(idx, bc_ndag_W, 1))  ! w
+  c_e = real(ibits(idx, bc_ndag_E, 1))  ! e
+  c_s = real(ibits(idx, bc_ndag_S, 1))  ! s
+  c_n = real(ibits(idx, bc_ndag_N, 1))  ! n
+  c_b = real(ibits(idx, bc_ndag_B, 1))  ! b
+  c_t = real(ibits(idx, bc_ndag_T, 1))  ! t
+
+  d_w = real(ibits(idx, bc_dn_W, 1))
+  d_e = real(ibits(idx, bc_dn_E, 1))
+  d_s = real(ibits(idx, bc_dn_S, 1))
+  d_n = real(ibits(idx, bc_dn_N, 1))
+  d_b = real(ibits(idx, bc_dn_B, 1))
+  d_t = real(ibits(idx, bc_dn_T, 1))
+
+  dsw = ibits(idx, bc_diag, 1)
+
+  dd = r_x2 * (c_w + c_e) &
+     + r_y2 * (c_s + c_n) &
+     + r_z2 * (c_b + c_t) &
+     + 2.0                &
+     *(r_x2 * (d_w + d_e) &
+     + r_y2 * (d_s + d_n) &
+     + r_z2 * (d_b + d_t) )
+
+  if ( dsw == 0 ) dd = 1.0 ! to avoid zero division
 
   aa = dble(ibits(idx, Active, 1))
 
-  d0 = real(ibits(idx, bc_diag + 0, 1))
-  d1 = real(ibits(idx, bc_diag + 1, 1))
-  d2 = real(ibits(idx, bc_diag + 2, 1))
-  dd = d2*4.0 + d1*2.0 + d0  ! diagonal
-  ! dd = real(ibits(idx, bc_diag, 3))  Kのコンパイラがよくなれば
-
   pp = p(i,j,k)
   bb = b(i,j,k)
-  ss = ndag_e * p(i+1,j  ,k  ) &
-     + ndag_w * p(i-1,j  ,k  ) &
-     + ndag_n * p(i  ,j+1,k  ) &
-     + ndag_s * p(i  ,j-1,k  ) &
-     + ndag_t * p(i  ,j  ,k+1) &
-     + ndag_b * p(i  ,j  ,k-1)
+
+  ss = r_x2 * ( c_e * p(i+1,j  ,k  ) + c_w * p(i-1,j  ,k  ) ) &
+     + r_y2 * ( c_n * p(i  ,j+1,k  ) + c_s * p(i  ,j-1,k  ) ) &
+     + r_z2 * ( c_t * p(i  ,j  ,k+1) + c_b * p(i  ,j  ,k-1) )
+
   dp = ( (ss - bb)/dd - pp ) * omg
   pn = pp + dp
   p(i,j,k) = pn
@@ -210,101 +261,6 @@ cnv(3) = cnv(3) + xl2
 
 return
 end subroutine psor2sma_core
-
-
-
-!> ********************************************************************
-!! @brief 2-colored SOR法 stride memory access Naive Imprementation
-!! @param [in,out] p     圧力
-!! @param [in]     sz    配列長
-!! @param [in]     g     ガイドセル長
-!! @param [in]     ip    開始点インデクス
-!! @param [in]     color グループ番号
-!! @param [in]     omg   加速係数
-!! @param [in,out] cnv   収束判定値　修正量の自乗和と残差の自乗和、解ベクトルの自乗和
-!! @param [in]     b     RHS vector
-!! @param [in]     bp    BCindex P
-!! @param [in]     pn    係数行列
-!! @param [out]    flop  浮動小数演算数
-!! @note resは積算
-!<
-  subroutine psor2sma_naive (p, sz, g, ip, color, omg, cnv, b, bp, pn, flop)
-  implicit none
-  include 'ffv_f_params.h'
-  integer                                                   ::  i, j, k, ix, jx, kx, g
-  integer, dimension(3)                                     ::  sz
-  double precision                                          ::  flop, res, err, xl2, aa
-  real                                                      ::  ndag_e, ndag_w, ndag_n, ndag_s, ndag_t, ndag_b
-  real                                                      ::  omg, dd, ss, dp, pp, bb, de, pnew
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 7) ::  pn
-  integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
-  integer                                                   ::  ip, color
-  double precision, dimension(3)                            ::  cnv
-
-  ix = sz(1)
-  jx = sz(2)
-  kx = sz(3)
-
-  err = 0.0
-  res = 0.0
-  xl2 = 0.0
-
-  flop = flop + dble(ix)*dble(jx)*dble(kx) * 34.0d0 * 0.5d0
-! flop = flop + dble(ix)*dble(jx)*dble(kx) * 41.0d0 * 0.5d0 ! DP
-
-!$OMP PARALLEL &
-!$OMP REDUCTION(+:res) &
-!$OMP REDUCTION(+:err) &
-!$OMP REDUCTION(+:xl2) &
-!$OMP PRIVATE(ndag_w, ndag_e, ndag_s, ndag_n, ndag_b, ndag_t) &
-!$OMP PRIVATE(dd, aa, pp, bb, ss, dp, de, pnew) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, color, ip, omg)
-
-!$OMP DO SCHEDULE(static) COLLAPSE(2)
-
-  do k=1,kx
-  do j=1,jx
-  do i=1+mod(k+j+color+ip,2), ix, 2
-
-    ndag_w = pn(i,j,k,1)  ! w
-    ndag_e = pn(i,j,k,2)  ! e, non-diagonal
-    ndag_s = pn(i,j,k,3)  ! s
-    ndag_n = pn(i,j,k,4)  ! n
-    ndag_b = pn(i,j,k,5)  ! b
-    ndag_t = pn(i,j,k,6)  ! t
-    dd     = pn(i,j,k,7)
-
-    aa = dble(ibits(bp(i,j,k), Active, 1))
-
-    pp = p(i,j,k)
-    bb = b(i,j,k)
-    ss = ndag_e * p(i+1,j  ,k  ) &
-       + ndag_w * p(i-1,j  ,k  ) &
-       + ndag_n * p(i  ,j+1,k  ) &
-       + ndag_s * p(i  ,j-1,k  ) &
-       + ndag_t * p(i  ,j  ,k+1) &
-       + ndag_b * p(i  ,j  ,k-1)
-    dp = ( (ss - bb)/dd - pp ) * omg
-    pnew = pp + dp
-    p(i,j,k) = pnew
-
-    de  = bb - (ss - pnew * dd)
-    res = res + dble(de*de) * aa
-    xl2 = xl2 + dble(pnew*pnew) * aa
-    err = err + dble(dp*dp) * aa
-  end do
-  end do
-  end do
-!$OMP END DO
-!$OMP END PARALLEL
-
-  cnv(1) = cnv(1) + err
-  cnv(2) = cnv(2) + res
-  cnv(3) = cnv(3) + xl2
-
-  return
-  end subroutine psor2sma_naive
 
 
 

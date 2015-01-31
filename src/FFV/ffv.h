@@ -8,10 +8,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -32,22 +32,28 @@
 #include <math.h>
 #include <float.h>
 
+// FB
 #include "omp.h"
 #include "ParseBC.h"
 #include "ParseMat.h"
 #include "VoxInfo.h"
-#include "CompoFraction.h"
+#include "PolyProperty.h"
 #include "History.h"
 #include "Monitor.h"
+
+// FFV
 #include "ffv_Version.h"
 #include "ffv_Define.h"
 #include "ffv_SetBC.h"
 #include "ffv_Ffunc.h"
 #include "ffv_LSfunc.h"
 #include "ffv_TerminateCtrl.h"
-#include "Glyph.h"
 #include "ffv_LS.h"
+
+// Geometry
 #include "Geometry.h"
+#include "Glyph.h"
+#include "CompoFraction.h"
 
 // FileIO class
 #include "ffv_sph.h"
@@ -78,10 +84,6 @@
 #include "Polylib.h"
 #include "MPIPolylib.h"
 
-// Cutlib
-#include "Cutlib.h"
-#include "GridAccessor/Cell.h"
-
 // CDMlib
 #include "cdm_DFI.h"
 
@@ -106,7 +108,6 @@
 using namespace std;
 using namespace pm_lib;
 using namespace PolylibNS;
-using namespace cutlib;
 
 
 class FFV : public FALLOC {
@@ -154,22 +155,12 @@ private:
   } ConvergenceMonitor;
   
   
-  // Polylibのサーチ用基準値
-  REAL_TYPE poly_org[3];
-  REAL_TYPE poly_dx[3];
-  unsigned poly_gc[3];
-  REAL_TYPE poly_factor;
-  
   // Polygon管理用
   PolygonProperty* PG;
   
   // 周期境界の方向
   int ensPeriodic[3];
 
-  
-  // カット
-  CutPos32Array *cutPos;
-  CutBid5Array  *cutBid;
   
   double *mat_tbl;    // Fortranでの多媒質対応ルーチンのため，rho, cp, lambdaの配列
   REAL_TYPE *vec_tbl; // Fortranでの速度境界条件参照用配列
@@ -293,7 +284,7 @@ private:
   
   
   // 交点情報の表示（デバッグ）
-  void displayCutInfo(float* cut, int* bid);
+  void displayCutInfo(const long long* cut, const int* bid);
   
   
   // メモリ使用量の表示
@@ -305,7 +296,7 @@ private:
   
   
   // 計算領域情報を設定する
-  void DomainInitialize(TextParser* tp_dom);
+  void DomainInitialize(const int div_type, TextParser* tp_dom);
   
   
   // BCIndexにビット情報をエンコードする
@@ -321,11 +312,11 @@ private:
   
   
   // Glyphを生成・出力
-  void generateGlyph(const float* cut, const int* bid, FILE* fp);
+  void generateGlyph(const long long* cut, const int* bid, FILE* fp);
   
   
-  // グローバルな領域情報を取得
-  int getDomainInfo(TextParser* tp_dom);
+  // グローバルな領域情報を取得し、無次元の領域基本パラメータを返す
+  int getDomainParameter(TextParser* tp_dom);
   
   
   // DIv反復のパラメータ
@@ -344,13 +335,16 @@ private:
   void identifyLinearSolver(TextParser* tpCntl);
   
   
+  //距離情報の初期化
+  void initCutInfo();
+  
+  
   // インターバルの初期化
   void initInterval();
   
   
   // 距離の最小値を求める
-  void minDistance(const float* cut, const int* bid, FILE* fp);
-  
+  void minDistance(const long long* cut, const int* bid, FILE* fp);
   
   
   /**
@@ -368,8 +362,8 @@ private:
   void printCriteria(FILE* fp);
   
   
-  // 読み込んだ領域情報のデバッグライト
-  void printDomainInfo();
+  // 全領域情報
+  void printGlobalDomain(FILE* fp);
   
   
   // 外部境界条件を読み込み，Controlクラスに保持する
@@ -418,10 +412,6 @@ private:
   
   // 時間積分幅や物理パラメータの設定
   void setParameters();
-  
-  
-  // IP用にカット領域をアロケートする
-  void setupCutInfo4IP(double& m_prep, double& m_total, FILE* fp);
   
   
   // パラメータのロードと計算領域を初期化し，並列モードを返す

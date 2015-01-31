@@ -8,10 +8,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -184,8 +184,6 @@ public:
    * @param [in]     tm     無次元時刻
    * @param [in]     C      Controlクラス
    * @param [in]     v00    基準速度
-   * @param [in,out] vf     セルフェイス速度 u^{n+1}
-   * @param [in,out] v      セルセンター速度 u^{n+1}
    * @param [in]     avr    平均値計算のテンポラリ値
    * @param [in]     flop   flop count
    * @note 外部境界面のdiv(u)の修正時に領域境界の流量などのモニタ値を計算し，BoundaryOuterクラスに保持 > 反復後にDomainMonitor()で集約
@@ -196,8 +194,6 @@ public:
                       double tm_d,
                       Control* C,
                       REAL_TYPE* v00,
-                      REAL_TYPE* vf,
-                      REAL_TYPE* v,
                       Gemini_R* avr,
                       double& flop);
   

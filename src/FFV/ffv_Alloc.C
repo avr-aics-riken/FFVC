@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -21,7 +21,35 @@
  */
 
 #include "ffv_Alloc.h"
+#include "mydebug.h"
+#include "FBUtility.h"
+#include "Alloc.h"
+#include <string.h>
 
+//#include <stdio.h>
+//#include <stdlib.h>
+
+//#include <string>
+//#include <iostream>
+//#include <fstream>
+
+/*
+#ifndef _WIN32
+#include <unistd.h>
+#include <strings.h>
+#else
+#include "sph_win32_util.h"
+#endif
+#include <sys/types.h>
+
+#if defined(IA32_LINUX) || defined(IA64_LINUX) || defined(SGI_ALTIX)
+#include <sys/stat.h>
+#endif
+
+#ifdef MacOSX
+#include <sys/uio.h>
+#endif
+ */
 
 // #################################################################
 /* @brief Adams-Bashforth法に用いる配列のアロケーション
@@ -105,13 +133,15 @@ void FALLOC::allocArray_CompoVF(double &prep, double &total)
  * @brief カット情報の配列
  * @param [in,out] total ソルバーに使用するメモリ量
  */
-void FALLOC::allocArray_Cut(double &total)
+void FALLOC::allocArray_Cut(double &prep, double &total)
 {
-  if ( !(d_cut = paraMngr->AllocFloatS4DEx(6, guide)) ) Exit(0);
-  total+= array_size * (double)sizeof(float) * 6.0;
+  if ( !(d_cut = Alloc::LLong_S3D(size, guide)) ) Exit(0);
+  prep  += array_size * (double)sizeof(long long);
+  total += array_size * (double)sizeof(long long);
   
-
-  if ( !(d_bid = paraMngr->AllocIntS3D(guide)) ) Exit(0);
+  
+  if ( !(d_bid = Alloc::Int_S3D(size, guide)) ) Exit(0);
+  prep  += array_size * (double)sizeof(int);
   total += array_size * (double)sizeof(int);
 }
 
@@ -353,17 +383,6 @@ void FALLOC::allocArray_Main(double &total, Control* C)
     if ( !(d_vrt = Alloc::Real_V3D(size, guide)) ) Exit(0);
     total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
   }
-}
-
-// #################################################################
-/**
- * @brief PoissonのNaiveな実装テスト
- * @param [in,out] total 使用するメモリ量
- */
-void FALLOC::allocArray_Naive(double &total)
-{
-  if ( !(d_pni = Alloc::Real_S4D(size, guide, 7)) ) Exit(0);
-  total+= array_size * (double)sizeof(REAL_TYPE) * 7.0;
 }
 
 

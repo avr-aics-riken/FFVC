@@ -8,10 +8,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -112,7 +112,7 @@ protected:
   
   int* bid;            ///< 境界ID
   int* bcd;            ///< BCindex B
-  float* cut;          ///< 交点情報
+  long long* cut;      ///< 交点情報
   
   FILE* fp;            ///< 出力ファイルポインタ
   
@@ -194,7 +194,7 @@ public:
                ReferenceVariables refVar,
                int* bid,
                int* bcd,
-               float* cut,
+               long long* cut,
                const int num_process,
                const int num_compo,
                double* m_mtbl) {

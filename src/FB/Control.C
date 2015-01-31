@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -154,11 +154,11 @@ bool DTcntl::setScheme(const char* str, const double val)
 
 // #################################################################
 // 基本変数をコピー
-void DTcntl::set_Vars(const int m_kos, const int m_mode, const double m_dh, const double re, const double pe)
+void DTcntl::set_Vars(const int m_kos, const int m_mode, const double m_min_dx, const double re, const double pe)
 {
   KOS      = m_kos;
   mode     = m_mode;
-  dh       = m_dh;
+  min_dx   = m_min_dx;
   Reynolds = re;
   Peclet   = pe; 
 }
@@ -2107,72 +2107,6 @@ void Control::printOuterArea(FILE* fp, unsigned long G_Fcell, unsigned long G_Ac
 }
 
 
-// #################################################################
-// グローバルな領域情報を表示する
-void Control::printGlobalDomain(FILE* fp, const int* G_size, const REAL_TYPE* G_org, const REAL_TYPE* G_reg, const REAL_TYPE* pch)
-{
-  REAL_TYPE PB=0.0, TB=0.0, GB=0.0, MB=0.0, KB=0.0, total=0.0;
-  KB = 1000.0;
-  MB = 1000.0*KB;
-  GB = 1000.0*MB;
-  TB = 1000.0*GB;
-  PB = 1000.0*TB;
-  
-  fprintf(fp,"\timax, jmax, kmax    = %13d %13d %13d     >> ", 
-          G_size[0], 
-          G_size[1], 
-          G_size[2]);
-
-  total = (REAL_TYPE)G_size[0] * (REAL_TYPE)G_size[1] * (REAL_TYPE)G_size[2];
-  
-  if ( total > PB ) {
-    fprintf (fp,"%6.2f (P cells)\n", total / PB);
-  }
-  else if ( total > TB ) {
-    fprintf (fp,"%6.2f (T cells)\n", total / TB);
-  }
-  else if ( total > GB ) {
-    fprintf (fp,"%6.2f (G cells)\n", total / GB);
-  }
-  else if ( total > MB ) {
-    fprintf (fp,"%6.2f (M cells)\n", total / MB);
-  }
-  else if ( total > KB ) {
-    fprintf (fp,"%6.2f (K cells)\n", total / KB);
-  }
-  else if ( total <= KB ){
-    fprintf (fp,"%6.2f (cells)\n", total);
-  }
-  fprintf(fp,"\n");
-  
-  fprintf(fp,"\t(dx, dy, dz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n",    
-          pch[0]*RefLength,
-          pch[1]*RefLength,
-          pch[2]*RefLength,
-          pch[0], 
-          pch[1], 
-          pch[2]);
-  
-  fprintf(fp,"\t(ox, oy, oz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n", 
-          G_org[0]*RefLength, 
-          G_org[1]*RefLength, 
-          G_org[2]*RefLength, 
-          G_org[0], 
-          G_org[1], 
-          G_org[2]);
-  
-  fprintf(fp,"\t(Lx, Ly, Lz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n", 
-          G_reg[0]*RefLength, 
-          G_reg[1]*RefLength, 
-          G_reg[2]*RefLength, 
-          G_reg[0], 
-          G_reg[1], 
-          G_reg[2]);
-  fprintf(fp,"\n");
-  
-  fflush(fp);
-}
-
 
 // #################################################################
 /**
@@ -2270,7 +2204,9 @@ void Control::printParaConditions(FILE* fp, const MediumList* mat)
   fprintf(fp,"\tGravity                   [m/s^2]     : %12.5e\n", Gravity);
   fprintf(fp,"\n");
   
-  fprintf(fp,"\tSpacing                   [m] / [-]   : %12.5e / %12.5e\n", deltaX*RefLength, deltaX);
+  fprintf(fp,"\tSpacing         X-dir.    [m] / [-]   : %12.5e / %12.5e\n", pitchD[0], pitch[0]);
+  fprintf(fp,"\t                Y-dir.    [m] / [-]   : %12.5e / %12.5e\n", pitchD[1], pitch[1]);
+  fprintf(fp,"\t                Z-dir.    [m] / [-]   : %12.5e / %12.5e\n", pitchD[2], pitch[2]);
   fprintf(fp,"\tTime Scale                [sec]       : %12.5e\n", Tscale);
   fprintf(fp,"\n");
   
@@ -2334,7 +2270,6 @@ void Control::printSteerConditions(FILE* fp,
   fprintf(fp,"\t     CPMlib     Version %s\n", ver_CPM.c_str());
   fprintf(fp,"\t     CDMlib     Version %s\n", ver_CDM.c_str());
   fprintf(fp,"\t     Polylib    Version %s\n", ver_Poly.c_str());
-  fprintf(fp,"\t     Cutlib     Version %s\n", ver_CUT.c_str());
   fprintf(fp,"\t     PMlib      Version %s\n", ver_PM.c_str());
   fprintf(fp,"\t     TextParser Version %s\n", ver_TP.c_str());
   fprintf(fp,"\n");
@@ -2716,8 +2651,9 @@ void Control::printSteerConditions(FILE* fp,
   
   
   // Time Increment
-  REAL_TYPE d_R = deltaX*deltaX*Reynolds/6.0; // 拡散数
-  REAL_TYPE d_P = deltaX*deltaX*Peclet/6.0;   // 拡散数
+  REAL_TYPE min_dx = std::min(pitch[0], std::min(pitch[1], pitch[2]));
+  REAL_TYPE d_R = min_dx*min_dx*Reynolds/6.0; // 拡散数
+  REAL_TYPE d_P = min_dx*min_dx*Peclet/6.0;   // 拡散数
   REAL_TYPE cfl = (REAL_TYPE)DT->get_CFL();
   switch ( DT->get_Scheme() ) 
   {
@@ -2725,7 +2661,7 @@ void Control::printSteerConditions(FILE* fp,
       fprintf(fp,"\t     Time Increment dt        :   %12.5e [sec] / %12.5e [-] : Direct ", dt*Tscale, dt);
       if ( isHeatProblem() )
       {
-        fprintf(fp,": Diff. Num. = %7.2e\n", dt/(deltaX*deltaX*Peclet));
+        fprintf(fp,": Diff. Num. = %7.2e\n", dt/(min_dx*min_dx*Peclet));
       }
       else
       {
@@ -3191,9 +3127,7 @@ void Control::setCmpParameters(MediumList* mat, CompoList* cmp, BoundaryOuter* B
   
 	
   // 発熱密度の計算(有次元) -- 発熱量と発熱密度
-  REAL_TYPE a, vol;
-  a = deltaX*RefLength;
-  vol = a*a*a;
+  REAL_TYPE vol = pitchD[0]*pitchD[1]*pitchD[2];
   
   for (int n=1; n<=NoCompo; n++)
   {

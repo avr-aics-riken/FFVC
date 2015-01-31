@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -31,7 +31,6 @@ void FFV::PS_Binary()
   double res=0.0;                      /// 残差
   
   REAL_TYPE dt = deltaT;               /// 時間積分幅
-  REAL_TYPE dh = (REAL_TYPE)deltaX;    /// 空間格子幅
   REAL_TYPE pei=C.getRcpPeclet();      /// ペクレ数の逆数
   REAL_TYPE coef = C.RefDensity * C.RefSpecificHeat * C.RefVelocity * C.RefLength;
   
@@ -70,7 +69,7 @@ void FFV::PS_Binary()
     TIMING_start("Thermal_Convection");
     flop = 0.0;
     int swt = 0; // 断熱壁
-    ps_muscl_(d_ws, size, &guide, &dh, &cnv_scheme, v00, d_v, d_ie0, d_bcp, d_cdf, d_bcd, &swt, &flop);
+    ps_muscl_(d_ws, size, &guide, pitch, &cnv_scheme, v00, d_v, d_ie0, d_bid, d_cdf, d_bcd, &swt, &flop);
     TIMING_stop("Thermal_Convection", flop);
 
 		// 対流フェイズの流束型境界条件
@@ -160,7 +159,7 @@ void FFV::PS_Binary()
     {
       h_mode = 1;
     }
-    ps_diff_ee_(d_ie, size, &guide, &res, &dh, &dt, d_qbc, d_bcd, d_ws, &C.NoCompo, mat_tbl, &h_mode, &flop);
+    ps_diff_ee_(d_ie, size, &guide, &res, pitch, &dt, d_qbc, d_bcd, d_ws, &C.NoCompo, mat_tbl, &h_mode, &flop);
     
     TIMING_stop("Thermal_Diff_EE", flop);
     

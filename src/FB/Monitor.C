@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -133,14 +133,14 @@ void MonitorList::clipLine(REAL_TYPE from[3], REAL_TYPE to[3])
     }
     else if (d.x > 0) {
       if (ed.x < r0.x || r1.x < st.x) throw OUT_OF_REGION2;
-      t_st = max(t_st, (r0.x-st.x)/d.x);
-      t_ed = min(t_ed, (r1.x-st.x)/d.x);
+      t_st = (std::max)(t_st, (r0.x-st.x)/d.x);
+      t_ed = (std::min)(t_ed, (r1.x-st.x)/d.x);
       dbg_pos = 1;
     }
     else if (d.x < 0) {
       if (st.x < r0.x || r1.x < ed.x) throw OUT_OF_REGION3;
-      t_st = max(t_st, (r1.x-st.x)/d.x);
-      t_ed = min(t_ed, (r0.x-st.x)/d.x);
+      t_st = (std::max)(t_st, (r1.x-st.x)/d.x);
+      t_ed = (std::min)(t_ed, (r0.x-st.x)/d.x);
       dbg_pos = 2;
     }
     
@@ -149,14 +149,14 @@ void MonitorList::clipLine(REAL_TYPE from[3], REAL_TYPE to[3])
     }
     else if (d.y > 0) {
       if (ed.y < r0.y || r1.y < st.y) throw OUT_OF_REGION5;
-      t_st = max(t_st, (r0.y-st.y)/d.y);
-      t_ed = min(t_ed, (r1.y-st.y)/d.y);
+      t_st = (std::max)(t_st, (r0.y-st.y)/d.y);
+      t_ed = (std::min)(t_ed, (r1.y-st.y)/d.y);
       dbg_pos = 3;
     }
     else if (d.y < 0) {
       if (st.y < r0.y || r1.y < ed.y) throw OUT_OF_REGION6;
-      t_st = max(t_st, (r1.y-st.y)/d.y);
-      t_ed = min(t_ed, (r0.y-st.y)/d.y);
+      t_st = (std::max)(t_st, (r1.y-st.y)/d.y);
+      t_ed = (std::min)(t_ed, (r0.y-st.y)/d.y);
       dbg_pos = 4;
     }
     
@@ -165,14 +165,14 @@ void MonitorList::clipLine(REAL_TYPE from[3], REAL_TYPE to[3])
     }
     else if (d.z > 0) {
       if (ed.z < r0.z || r1.z < st.z) throw OUT_OF_REGION8;
-      t_st = max(t_st, (r0.z-st.z)/d.z);
-      t_ed = min(t_ed, (r1.z-st.z)/d.z);
+      t_st = (std::max)(t_st, (r0.z-st.z)/d.z);
+      t_ed = (std::min)(t_ed, (r1.z-st.z)/d.z);
       dbg_pos = 5;
     }
     else if (d.z < 0) {
       if (st.z < r0.z || r1.z < ed.z) throw OUT_OF_REGION9;
-      t_st = max(t_st, (r1.z-st.z)/d.z);
-      t_ed = min(t_ed, (r0.z-st.z)/d.z);
+      t_st = (std::max)(t_st, (r1.z-st.z)/d.z);
+      t_ed = (std::min)(t_ed, (r0.z-st.z)/d.z);
       dbg_pos = 6;
     }
     
@@ -1136,7 +1136,7 @@ void MonitorList::getPlane(Monitor_Type mon_type,
   //matplotlib は、ｍ＝ｎが要求していますので、ここで、最大分割数を使用します。
   int m = (int)div_vec[0];
   int n = (int)div_vec[1];
-  int n_div = max(m, n);
+  int n_div = (std::max)(m, n);
   div_vec[0] = (REAL_TYPE) n_div;
   div_vec[1] = (REAL_TYPE) n_div;
   
@@ -1374,7 +1374,7 @@ void MonitorList::registVars(const string label, vector<string>& variables, cons
 // #################################################################
 /// 必要なパラメータのコピー
 void MonitorList::setControlVars(int* bid,
-                                 float* cut,
+                                 long long* cut,
                                  int* bcd,
                                  const REAL_TYPE refVelocity,
                                  const REAL_TYPE baseTemp,
@@ -1382,6 +1382,7 @@ void MonitorList::setControlVars(int* bid,
                                  const REAL_TYPE refDensity,
                                  const REAL_TYPE refLength,
                                  const REAL_TYPE basePrs,
+                                 const REAL_TYPE m_RefL,
                                  const int modePrecision,
                                  const int unitPrs,
                                  const int num_process,
@@ -1400,15 +1401,16 @@ void MonitorList::setControlVars(int* bid,
   this->org.x    = origin[0];
   this->org.y    = origin[1];
   this->org.z    = origin[2];
-  this->pch.x    = deltaX;
-  this->pch.y    = deltaX;
-  this->pch.z    = deltaX;
+  this->pch.x    = pitch[0];
+  this->pch.y    = pitch[1];
+  this->pch.z    = pitch[2];
   this->box.x    = region[0];
   this->box.y    = region[1];
   this->box.z    = region[2];
   this->num_process = num_process;
   this->NoCompo     = m_NoCompo;
   this->mtbl        = m_mtbl;
+  this->RefL     = m_RefL;
   
   refVar.refVelocity   = refVelocity;
   refVar.baseTemp      = baseTemp;
@@ -1447,7 +1449,7 @@ MonitorCompo* MonitorList::setLine(const char* str,
   MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process, NoCompo, mtbl);
   
   m->setRankInfo(paraMngr, procGrp);
-  m->setNeighborInfo(guide);
+  m->setDomainInfo(guide, RefL);
   m->setLine(str, variables, method, mode, from, to, nDivision, mon_type);
   
   monGroup.push_back(m);
@@ -1504,7 +1506,7 @@ MonitorCompo* MonitorList::setPointSet(const char* str,
   MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process, NoCompo, mtbl);
   
   m->setRankInfo(paraMngr, procGrp);
-  m->setNeighborInfo(guide);
+  m->setDomainInfo(guide, RefL);
   m->setPointSet(str, variables, method, mode, pointSet, mon_type);
   
   monGroup.push_back(m);
@@ -1535,7 +1537,7 @@ void MonitorList::setPolygon(const char* str,
   MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process, NoCompo, mtbl);
   
   m->setRankInfo(paraMngr, procGrp);
-  m->setNeighborInfo(guide);
+  m->setDomainInfo(guide, RefL);
   m->setPolygon(str, variables, method, mode, order, nv, mon_type);
   
   monGroup.push_back(m);
@@ -1569,7 +1571,7 @@ void MonitorList::setPrimitive(const char* str,
   MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process, NoCompo, mtbl);
 
   m->setRankInfo(paraMngr, procGrp);
-  m->setNeighborInfo(guide);
+  m->setDomainInfo(guide, RefL);
   m->setPrimitive(str, variables, method, mode, order, nv, mon_type);
   
   monGroup.push_back(m);

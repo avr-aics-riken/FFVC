@@ -6,10 +6,10 @@
  * Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
  * All rights reserved.
  *
- * Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo. 
+ * Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
  * All rights reserved.
  *
- * Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN. 
+ * Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN. 
  * All rights reserved.
  *
  */
@@ -24,7 +24,6 @@ SOFTWARE REQUIREMENT
 - Cartesian Data Management library
 - Performance monitor library
 - Polygon management library
-- Cut information library
 
 
 
@@ -62,9 +61,6 @@ Configure options:
 
  --with-cpm=CPMLIB_DIR
     Specify the directory path that is installed CPM library.
-
- --with-cut=CUTLIB_DIR
-    Specify the directory path that Cut information library is installed.
 
  --with-precision=(single|double)
     Specify the REAL macro by selecting single(4bytes) or double(8bytes). If this 
@@ -118,7 +114,6 @@ Here is examples.
       --prefix=/usr/local/FFV/FFVC \
       --with-cpm=/usr/local/FFV/CPMlib \
       --with-cdm=/usr/local/FFV/CDMlib \
-      --with-cut=/usr/local/FFV/Cutlib \
       --with-pm=/usr/local/FFV/PMlib \
       --with-polylib=/usr/local/FFV/Polylib \
       --with-parser=/usr/local/FFV/TextParser \
@@ -137,7 +132,6 @@ Here is examples.
       --prefix=/usr/local/FFV/FFVC \
       --with-cpm=/usr/local/FFV/CPMlib \
       --with-cdm=/usr/local/FFV/CDMlib \
-      --with-cut=/usr/local/FFV/Cutlib \
       --with-pm=/usr/local/FFV/PMlib \
       --with-polylib=/usr/local/FFV/Polylib \
       --with-parser=/usr/local/FFV/TextParser \
@@ -157,7 +151,6 @@ Here is examples.
       --prefix=/usr/local/FFV/FFVC \
       --with-cpm=/usr/local/FFV/CPMlib \
       --with-cdm=/usr/local/FFV/CDMlib \
-      --with-cut=/usr/local/FFV/Cutlib \
       --with-pm=/usr/local/FFV/PMlib \
       --with-polylib=/usr/local/FFV/Polylib \
       --with-parser=/usr/local/FFV/TextParser \
@@ -176,7 +169,6 @@ Here is examples.
       --prefix=/home/foo/FFVC \
       --with-cpm=/home/foo/CPMlib \
       --with-cdm=/home/foo/CDMlib \
-      --with-cut=/home/foo/Cutlib \
       --with-pm=/home/foo/PMlib \
       --with-polylib=/home/foo/Polylib \
       --with-parser=/home/foo/TextParser \

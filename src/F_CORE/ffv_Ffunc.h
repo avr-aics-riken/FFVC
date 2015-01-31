@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -61,8 +61,8 @@
 #define vobc_cc_copy_       VOBC_CC_COPY
 #define vobc_div_drchlt_    VOBC_DIV_DRCHLT
 #define vobc_cc_outflow_    VOBC_CC_OUTFLOW
-#define vobc_tfree_cc_      VOBC_TFREE_CC
-#define vobc_tfree_cf_      VOBC_TFREE_CF
+#define vobc_cc_tfree_      VOBC_CC_TFREE
+#define vobc_cf_tfree_      VOBC_CF_TFREE
 
 // ffv_vbc_outer_face.f90
 #define vobc_face_drchlt_   VOBC_FACE_DRCHLT
@@ -226,7 +226,7 @@ extern "C" {
                   REAL_TYPE* v00,
                   REAL_TYPE* v,
                   REAL_TYPE* ie,
-                  int* bp,
+                  int* bid,
                   int* cdf,
                   int* bh,
                   int* swt,
@@ -327,6 +327,7 @@ extern "C" {
   void div_ibc_drchlt_    (REAL_TYPE* div,
                            int* sz,
                            int* g,
+                           REAL_TYPE* dh,
                            int* st,
                            int* ed,
                            REAL_TYPE* v00,
@@ -342,6 +343,8 @@ extern "C" {
                            int* ed,
                            REAL_TYPE* v00,
                            REAL_TYPE* v_cnv,
+                           REAL_TYPE* dt,
+                           REAL_TYPE* dh,
                            int* bv,
                            int* odr,
                            REAL_TYPE* v0,
@@ -351,6 +354,7 @@ extern "C" {
   void div_ibc_oflow_vec_ (REAL_TYPE* div,
                            int* sz,
                            int* g,
+                           REAL_TYPE* dh,
                            int* st,
                            int* ed,
                            int* bv,
@@ -422,14 +426,14 @@ extern "C" {
                       REAL_TYPE* vc,
                       int* nID);
 
-  void vobc_tfree_cc_ (REAL_TYPE* v,
+  void vobc_cc_tfree_ (REAL_TYPE* v,
                        int* sz,
                        int* g,
                        int* m_face,
                        REAL_TYPE* vf,
                        int* nID);
   
-  void vobc_tfree_cf_ (REAL_TYPE* vf,
+  void vobc_cf_tfree_ (REAL_TYPE* vf,
                        int* sz,
                        int* g,
                        int* m_face,
@@ -440,6 +444,7 @@ extern "C" {
   void vobc_div_drchlt_ (REAL_TYPE* div,
                          int* sz,
                          int* g,
+                         REAL_TYPE* dh,
                          int* m_face,
                          int* bv,
                          REAL_TYPE* vec,
@@ -513,9 +518,10 @@ extern "C" {
   void divergence_cc_ (REAL_TYPE* dv,
                        int* sz,
                        int* g,
+                       REAL_TYPE* dh,
                        REAL_TYPE* vc,
                        int* bv,
-                       int* bp,
+                       int* bid,
                        double* flop);
   
   void eddy_viscosity_    (REAL_TYPE* vt,
@@ -548,7 +554,7 @@ extern "C" {
                            REAL_TYPE* v,
                            REAL_TYPE* vf,
                            int* bv,
-                           int* bp,
+                           int* bid,
                            REAL_TYPE* vcs_coef,
                            double* flop);
   
@@ -562,7 +568,7 @@ extern "C" {
                            REAL_TYPE* v,
                            REAL_TYPE* vf,
                            int* bv,
-                           int* bp,
+                           int* bid,
                            REAL_TYPE* vcs_coef,
                            double* flop);
   
@@ -590,6 +596,7 @@ extern "C" {
                      REAL_TYPE* p,
                      int* bp,
                      int* bv,
+                     int* bid,
                      double* flop,
                      int* c_scheme);
   
@@ -603,7 +610,7 @@ extern "C" {
                         REAL_TYPE* v,
                         REAL_TYPE* vf,
                         int* bv,
-                        int* bp,
+                        int* bid,
                         REAL_TYPE* vcs_coef,
                         REAL_TYPE* Cs,
                         int* imodel,
@@ -621,7 +628,7 @@ extern "C" {
                           REAL_TYPE* v,
                           REAL_TYPE* vf,
                           int* bv,
-                          int* bp,
+                          int* bid,
                           REAL_TYPE* vcs_coef,
                           REAL_TYPE* Cs,
                           int* imodel,
@@ -636,7 +643,6 @@ extern "C" {
                         int* sz,
                         int* g,
                         REAL_TYPE* div,
-                        REAL_TYPE* coef,
                         int* bp,
                         double* flop);
   
@@ -644,13 +650,35 @@ extern "C" {
                         int* sz,
                         int* g,
                         REAL_TYPE* div,
-                        REAL_TYPE* coef,
                         int* bp,
                         double* flop);
   
-  void helicity_          (REAL_TYPE* ht,    int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* v, int* bv, REAL_TYPE* v00, double* flop);
-  void i2vgt_             (REAL_TYPE* q,     int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* v, int* bv, REAL_TYPE* v00, double* flop);
-  void rot_v_             (REAL_TYPE* rot,   int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* v, int* bv, REAL_TYPE* v00, double* flop);
+  void helicity_ (REAL_TYPE* ht,
+                  int* sz, int* g,
+                  REAL_TYPE* dh,
+                  REAL_TYPE* v,
+                  int* bv,
+                  REAL_TYPE* v00,
+                  double* flop);
+  
+  void i2vgt_ (REAL_TYPE* q,
+               int* sz,
+               int* g,
+               REAL_TYPE* dh,
+               REAL_TYPE* v,
+               int* bv,
+               REAL_TYPE* v00,
+               double* flop);
+  
+  void rot_v_ (REAL_TYPE* rot,
+               int* sz,
+               int* g,
+               REAL_TYPE* dh,
+               REAL_TYPE* v,
+               int* bv,
+               REAL_TYPE* v00,
+               double* flop);
+  
   void find_vmax_         (REAL_TYPE* v_max, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* v, double* flop);
   void face_avr_sampling_ (REAL_TYPE* p, int* sz, int* g, int* face, REAL_TYPE* avr);
   void shift_pressure_    (REAL_TYPE* p, int* sz, int* g, REAL_TYPE* avr);
@@ -757,14 +785,14 @@ extern "C" {
                         int* bv,
                         int* bp,
                         int* v_mode,
-                        float* cut,
+                        long long* cut,
                         double* flop);
   
   void update_vec_cds_    (REAL_TYPE* v, REAL_TYPE* div, int* sz, int* g, REAL_TYPE* dt, REAL_TYPE* dh, REAL_TYPE* vc, REAL_TYPE* p,
-                           int* bp, int* bv, float* cut, REAL_TYPE* v00, double* flop);
-  void divergence_cds_    (REAL_TYPE* div, int* sz, int* g, REAL_TYPE* coef, REAL_TYPE* v, int* bv, float* cut, REAL_TYPE* v00, double* flop);
+                           int* bp, int* bv, long long* cut, REAL_TYPE* v00, double* flop);
+  void divergence_cds_    (REAL_TYPE* div, int* sz, int* g, REAL_TYPE* coef, REAL_TYPE* v, int* bv, long long* cut, REAL_TYPE* v00, double* flop);
   void force_cds_         (REAL_TYPE* force, int* sz, int* g, REAL_TYPE* p, int* bp, int* bid, int* id, REAL_TYPE* dh, double* flop);
-  void eddy_viscosity_cds_(REAL_TYPE* vt, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* re, REAL_TYPE* cs, REAL_TYPE* v, float* cut,
+  void eddy_viscosity_cds_(REAL_TYPE* vt, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* re, REAL_TYPE* cs, REAL_TYPE* v, long long* cut,
                            REAL_TYPE* vt_range, REAL_TYPE* yp_range, REAL_TYPE* v00, double* flop);
   
   

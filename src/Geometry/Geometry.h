@@ -7,10 +7,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -21,17 +21,15 @@
  * @author aics
  */
 
-#include "cpm_ParaManager.h"
-
-#include "FB_Define.h"
 #include "DomainInfo.h"
-#include "Control.h"
-
+#include "FB_Define.h"
+#include "Medium.h"
+#include "PolyProperty.h"
+#include "Component.h"
 #include "TextParser.h"
 
 #include "Polylib.h"
 #include "MPIPolylib.h"
-
 
 using namespace std;
 using namespace PolylibNS;
@@ -40,18 +38,13 @@ using namespace Vec3class;
 class Geometry : public DomainInfo {
   
 private:
-  
-  REAL_TYPE m_poly_org[3]; ///< ポリゴンの基点
-  REAL_TYPE m_poly_dx[3];  ///< ポリゴンのピッチ
-
   int NumSuvDiv;       ///< 再分割数
   int FillSeedDir;     ///< フィルのヒント {x_minux | x_plus |...}
   string FillMedium;   ///< フィルに使う媒質 -> int FillID
   string SeedMedium;   ///< ヒントに使う媒質 -> int SeedID
-  
+  unsigned temporary;
   
 public:
-  
   int FillID;          ///< フィル媒質ID
   int SeedID;          ///< フィルシード媒質ID
   int FillSuppress[3]; ///< PeriodicとSymmetricの外部境界面フィル抑制
@@ -66,10 +59,9 @@ public:
     SeedID = -1;
     NumSuvDiv = 0;
     FillSeedDir = -1;
+    temporary = 0;
     
     for (int i=0; i<3; i++) {
-      m_poly_org[i] = 0.0;
-      m_poly_dx[i] = 0.0;
       FillSuppress[i] = ON; // default is "fill"
     }
   }
@@ -79,29 +71,6 @@ public:
   
 
 private:
-  
-  // 点pの属するセルインデクスを求める
-  // @param [in]  pt 無次元座標
-  // @param [out] w  インデクス
-  void findIndex(const Vec3r pt, int* w) const
-  {
-    REAL_TYPE p[3], q[3];
-    p[0] = (REAL_TYPE)pt.x;
-    p[1] = (REAL_TYPE)pt.y;
-    p[2] = (REAL_TYPE)pt.z;
-    
-    q[0] = (p[0]-origin[0])/pitch[0];
-    q[1] = (p[1]-origin[1])/pitch[1];
-    q[2] = (p[2]-origin[2])/pitch[2];
-    
-    w[0] = (int)ceil(q[0]);
-    w[1] = (int)ceil(q[1]);
-    w[2] = (int)ceil(q[2]);
-  }
-  
-  
-  
-protected:
   
   // d_mid[]がtargetであるセルに対して、d_pvf[]に指定値valueを代入する
   unsigned long assignVF(const int target,
@@ -158,6 +127,26 @@ protected:
                             const int* Dsize=NULL);
   
   
+  // 点pの属するセルインデクスを求める
+  // @param [in]  pt 無次元座標
+  // @param [out] w  インデクス
+  inline void findIndex(const Vec3r pt, int* w) const
+  {
+    REAL_TYPE p[3], q[3];
+    p[0] = (REAL_TYPE)pt.x;
+    p[1] = (REAL_TYPE)pt.y;
+    p[2] = (REAL_TYPE)pt.z;
+    
+    q[0] = (p[0]-originD[0])/pitchD[0];
+    q[1] = (p[1]-originD[1])/pitchD[1];
+    q[2] = (p[2]-originD[2])/pitchD[2];
+    
+    w[0] = (int)ceil(q[0]);
+    w[1] = (int)ceil(q[1]);
+    w[2] = (int)ceil(q[2]);
+  }
+  
+  
   // list[]内の最頻値IDを求める
   int find_mode(const int m_sz,
                 const int* list,
@@ -177,6 +166,77 @@ protected:
   
   // フィルパラメータを取得
   void getFillParam();
+  
+  
+  // 交点が定義点にある場合の処理をした場合に、反対側のセルの状態を修正
+  unsigned long modifyCutOnPoint(int* bid, long long* cut, const int* bcd, const int* Dsize=NULL);
+  
+  
+  /**
+   * @brief インデックスを(1,0,0)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
+  inline Vec3r shift_E(const Vec3r index, const Vec3r h)
+  {
+    return Vec3r(index.x+h.x, index.y, index.z);
+  }
+  
+  
+  /**
+   * @brief インデックスを(-1,0,0)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
+  inline Vec3r shift_W(const Vec3r index, const Vec3r h)
+  {
+    return Vec3r(index.x-h.x, index.y, index.z  );
+  }
+  
+  
+  /**
+   * @brief インデックスを(0,1,0)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
+  inline Vec3r shift_N(const Vec3r index, const Vec3r h)
+  {
+    return Vec3r(index.x, index.y+h.y, index.z);
+  }
+  
+  
+  /**
+   * @brief インデックスを(0,-1,0)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
+  inline Vec3r shift_S(const Vec3r index, const Vec3r h)
+  {
+    return Vec3r(index.x, index.y-h.y, index.z);
+  }
+  
+  
+  /**
+   * @brief インデックスを(0,0,1)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
+  inline Vec3r shift_T(const Vec3r index, const Vec3r h)
+  {
+    return Vec3r(index.x, index.y, index.z+h.z);
+  }
+  
+  
+  /**
+   * @brief インデックスを(0,0,-1)シフト
+   * @param [in] index 元のインデクス
+   * @param [in] h     シフト幅
+   */
+  inline Vec3r shift_B(const Vec3r index, const Vec3r h)
+  {
+    return Vec3r(index.x, index.y, index.z-h.z);
+  }
+  
   
   
   // サブセルのペイント
@@ -211,14 +271,36 @@ protected:
                    const int m_NoCompo);
   
   
+  // ポリゴンと線分の交点計算
+  bool TriangleIntersect(const Vec3r ray_o,
+                         const Vec3r dir,
+                         const Vec3r v0,
+                         const Vec3r v1,
+                         const Vec3r v2,
+                         REAL_TYPE& pRetT,
+                         REAL_TYPE& pRetU,
+                         REAL_TYPE& pRetV);
+  
+  
+  // 交点情報をアップデート
+  unsigned updateCut(const Vec3r ray_o,
+                     const int dir,
+                     const Vec3r v0,
+                     const Vec3r v1,
+                     const Vec3r v2,
+                     long long& cut,
+                     int& bid,
+                     const int pid);
+  
+  
+  
+  
 public:
   
   // ポリゴングループの座標値からboxを計算する
   void calcBboxFromPolygonGroup(MPIPolylib* PL,
                                 PolygonProperty* PG,
-                                const int m_NoPolyGrp,
-                                const REAL_TYPE* poly_org,
-                                const REAL_TYPE* poly_dx);
+                                const int m_NoPolyGrp);
   
   
   // ガイドセルのIDをbcdからmidに転写
@@ -237,7 +319,7 @@ public:
             CompoList* cmp,
             MediumList* mat,
             int* d_bcd,
-            float* d_cut,
+            long long* d_cut,
             int* d_bid,
             const int m_NoCompo);
 
@@ -245,7 +327,7 @@ public:
   // カットID情報に基づく流体媒質のフィルを実行
   unsigned long fillByBid(int* bid,
                           int* bcd,
-                          float* cut,
+                          long long* cut,
                           const int tgt_id,
                           unsigned long& substituted,
                           const int m_NoCompo,
@@ -257,13 +339,6 @@ public:
                             const int fluid_id,
                             const int* bid,
                             const int* Dsize=NULL);
-  
-  
-  // 交点が定義点にある場合にそのポリゴンのエントリ番号でフィルする
-  unsigned long fillCutOnCellCenter(int* bcd,
-                                    const int* bid,
-                                    const float* cut,
-                                    const int* Dsize=NULL);
   
   
   // シード点をbcd[]にペイントする
@@ -278,17 +353,48 @@ public:
   void getFillParam(TextParser* tpCntl);
   
   
-  // FIllIDとSeedIDをセット
-  void setFillMedium(MediumList* mat, const int m_NoMedium);
+  /**
+   * @brief ベクトルの最小成分
+   * @param [in,out] mn 比較して小さい成分
+   * @param [in]     p  参照ベクトル
+   */
+  static inline void get_min(Vec3r& mn, const Vec3r p)
+  {
+    mn.x = (mn.x < p.x) ? mn.x : p.x;
+    mn.y = (mn.y < p.y) ? mn.y : p.y;
+    mn.z = (mn.z < p.z) ? mn.z : p.z;
+  }
   
   
-  // サブサンプリング
-  void SubSampling(FILE* fp,
-                   MediumList* mat,
-                   int* d_mid,
-                   REAL_TYPE* d_pvf,
+  /**
+   * @brief ベクトルの最大値成分
+   * @param [in,out] mx 比較して大きい成分
+   * @param [in]     p  参照ベクトル
+   */
+  static inline void get_max(Vec3r& mx, const Vec3r p)
+  {
+    mx.x = (mx.x > p.x) ? mx.x : p.x;
+    mx.y = (mx.y > p.y) ? mx.y : p.y;
+    mx.z = (mx.z > p.z) ? mx.z : p.z;
+  }
+  
+  
+  // 交点が定義点にある場合にそのポリゴンのエントリ番号でフィルする
+  unsigned long paintCutOnPoint(int* bcd,
+                                int* bid,
+                                long long* cut,
+                                const int m_NoCompo,
+                                const int* Dsize=NULL);
+  
+  
+  // 交点計算を行い、量子化
+  void quantizeCut(FILE* fp,
+                   long long* cut,
+                   int* bid,
+                   int* bcd,
+                   const int m_NoCompo,
                    MPIPolylib* PL,
-                   const int m_NoCompo);
+                   PolygonProperty* PG);
   
   
   // ポリゴンの水密化
@@ -301,6 +407,10 @@ public:
                    const int m_NoCompo);
   
   
+  // FIllIDとSeedIDをセット
+  void setFillMedium(MediumList* mat, const int m_NoMedium);
+  
+  
   // @brief 再分割数を設定
   // @param [in] num 再分割数
   void setSubDivision(int num)
@@ -308,6 +418,15 @@ public:
     if ( num < 1 ) Exit(0);
     NumSuvDiv = num;
   }
+  
+  
+  // サブサンプリング
+  void SubSampling(FILE* fp,
+                   MediumList* mat,
+                   int* d_mid,
+                   REAL_TYPE* d_pvf,
+                   MPIPolylib* PL,
+                   const int m_NoCompo);
 
 };
 

@@ -6,10 +6,10 @@
  * Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
  * All rights reserved.
  *
- * Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo. 
+ * Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
  * All rights reserved.
  *
- * Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN. 
+ * Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN. 
  * All rights reserved.
  *
  */
@@ -17,6 +17,45 @@
 
 REVISION HISTORY
 ================
+
+--------------------------
+2015-01-31
+r1583 bug fix in fill()
+- correction of pressure gradient : update_vec_()
+
+--------------------------
+2015-01-27
+r1582 Introduce flags for unisotropic Cartesian
+- expire naive implementation
+- expire facing_? flags and introduce bc_dn_? flags
+- divergence_cc => change calculation from sum_(u^*) to div(u^*)
+
+--------------------------
+2015-01-21
+r1581 bug fix in paintedCutOnPoint in Geometry.C
+
+r1580 modify cut index and related functions
+
+--------------------------
+2015-01-20
+r1579 expire polygon scaling, then Unit.Length is limited to "M" and "Non-dimensional"
+
+--------------------------
+2015-01-13
+r1578 Moller's algorithm for triangle-line intersection
+
+--------------------------
+2015-01-11
+r1577 flaging of long long int
+- modify methods in FB_Define.h related to long long flag
+- remove cutlib and replace functions in Geometry
+
+--------------------------
+2014-12-30
+r1576 branch compressed-cut, initial comit
+- d_cut : float >> long long
+- add fill_bit_naive.h
+- separate PolygonProperty class from Control.h
 
 --------------------------
 2014-12-25
@@ -50,7 +89,7 @@ r1569 ducky
 r1568 Introduce boundary conditions for Central scheme
  - pvec_ibc_specv_fdm_(), vobc_pv_specv_fdm_()
  - guide=2 is required for all cases owing to the implementation of traction free BC
- - vobc_tfree_cc_(), vobc_tfree_cf_()
+ - vobc_cc_tfree_(), vobc_cf_tfree_()
  - Introduce Geometry class
  - move findIDfromLabel() from Control to FBUtility
  - move variables related fill function from Control to Geometry
@@ -313,7 +352,7 @@ r1614 bug fix : restart by time [ver 1.7.1]
 
 r1613 Automatic decision of subdomain division [ver 1.7.0]
   - source refers CPMlib and FXgen
-  - bug fix : pitch check in getDomainInfo()
+  - bug fix : pitch check in getDomainParameter()
   - change abnormal termination >> isnan()
 
 --------------------------
@@ -560,7 +599,7 @@ r1032 modify for intel MPI [ver 1.4.2]
 2013-10-01
 
 r1031 expire SolidFromCut() [ver 1.4.1]
-  - getDomainInfo()で分割数の整合性チェックをROUND_EPSで判定
+  - getDomainParameter()で分割数の整合性チェックをROUND_EPSで判定
   - p_specific_heatの指定間違いを修正 >> ffv_SetBC.C
   - setBCinfo()でコンポーネントの指定温度を初期温度にコピー
   - SolidFromCut()でバイナリボクセルは作成しない >> 形状が変化する可能性有り

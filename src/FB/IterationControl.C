@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -39,7 +39,6 @@ void IterationCtl::copy(IterationCtl* src)
   LinearSolver = src->LinearSolver;
   LoopCount    = src->LoopCount;
   Sync         = src->Sync;
-  Naive        = src->Naive;
   alias        = src->alias;
   precondition = src->precondition;
   InnerItr     = src->InnerItr;
@@ -189,21 +188,6 @@ void IterationCtl::getParaSOR2(TextParser* tpCntl, const string base)
   else
   {
     Exit(0);
-  }
-  
-  // not mandatory
-  label = base + "/NaiveImplementation";
-  
-  if ( tpCntl->chkLabel(label) )
-  {
-    if ( !(tpCntl->getInspectedValue(label, str )) )
-    {
-      Exit(0);
-    }
-    else
-    {
-      if ( !strcasecmp(str.c_str(), "on") ) Naive = ON;
-    }
   }
   
 }

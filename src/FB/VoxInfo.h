@@ -8,10 +8,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -57,10 +57,6 @@ private:
   void copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const int m_id, const int m_dir);
   
   
-  // Naive実装に使う係数を保持
-  void copyCoefNaive(int* bx, REAL_TYPE* pn);
-  
-  
   // セルセンターのIDから対象セル数をカウントし，サブドメイン内にコンポーネントがあれば存在フラグを立てる
   unsigned long countCC (const int order, const int* bx, CompoList* cmp);
   
@@ -90,7 +86,7 @@ private:
   
   
   // 圧力のノイマン境界ビットをエンコードする（カット）
-  unsigned long encPbitN (int* bx, const int* bid, const float* cut, const bool convergence);
+  void encPbitN (int* bx, const int* bid, const long long* cut, const bool convergence);
   
   
   // 計算領域内部のコンポーネントの圧力境界条件フラグをbcp[]にエンコードする
@@ -99,8 +95,7 @@ private:
                             int* bcp,
                             const int* bid,
                             const REAL_TYPE* vec,
-                            const string condition,
-                            const int bc_dir);
+                            const string condition);
   
   
   // 外部境界に接するセルにおいて，bx[]に圧力境界条件keyに対応するビットフラグを設定する
@@ -122,25 +117,21 @@ private:
   unsigned long encVbitIBC (const int order,
                             int* cdf,
                             int* bp,
-                            const int* cut_id,
+                            int* bid,
                             const REAL_TYPE* vec,
-                            const int bc_dir,
-                            CompoList* cmp);
+                            CompoList* cmp,
+                            const int fill_id);
   
   
   unsigned long encVbitIBCrev (const int order,
                                int* cdf,
                                int* bp,
-                               const int* bid,
+                               int* bid,
                                CompoList* cmp);
   
   
   // cdf[]に境界条件のビット情報をエンコードする
-  void encVbitOBC (int face, int* cdf, string key, const bool enc_sw, string chk, int* bp, bool enc_uwd=false);
-  
-  
-  // MediumTable内の文字列格納番号を返す
-  int getMediumOrder(const MediumList* mat, const std::string key, const int m_NoMedium);
+  void encVbitOBC (int face, int* cdf, string key, const bool enc_sw, string chk, int* bid, bool enc_uwd=false);
   
   
   //@brief idxの第shiftビットをOFFにする
@@ -225,19 +216,6 @@ public:
   void dbg_chkBCIndex (const int* bcd, const int* cdf, const int* bcp, const char* fname);
   
   
-  /* @brief 交点が定義点にある場合の修正
-   * @param [in,out] bid        境界ID
-   * @param [in]     cut        カット情報
-   * @param [in]     fluid_id   フィルをする流体ID
-   * @param [in]     m_NoCompo  コンポーネント数
-   * @retval 置換されたセル数
-   */
-  unsigned long modifyCutOnCellCenter(int* bid,
-                                      const float* cut,
-                                      const int fluid_id,
-                                      const int m_NoCompo);
-  
-  
   /* @brief 領域境界のセルで境界方向にカットがある場合にガイドセルをそのIDで埋める
    * @param [in,out] bcd      BCindex B
    * @param [in]     bid      境界ID
@@ -297,7 +275,7 @@ public:
                    SetBC* BC,
                    const int kos,
                    CompoList* cmp,
-                   float* cut,
+                   long long* cut,
                    int* cut_id,
                    const int m_NoCompo);
   
@@ -311,21 +289,16 @@ public:
    * @param [in]     icls       Intrinsic class
    * @param [in]     cut        距離情報
    * @param [in]     bid        カットID情報
-   * @param [in]     naive      ナイーブ実装のON/OFF
-   * @param [out]    pni        Naive実装の係数
    * @param [in]     m_NoCompo  コンポーネント数
-   * @retval 表面セル数
    */
-  unsigned long setBCIndexP(int* bcd,
-                            int* bcp,
-                            SetBC* BC,
-                            CompoList* cmp,
-                            int icls,
-                            const float* cut,
-                            const int* bid,
-                            const int naive,
-                            REAL_TYPE* pni,
-                            const int m_NoCompo);
+  void setBCIndexP(int* bcd,
+                   int* bcp,
+                   SetBC* BC,
+                   CompoList* cmp,
+                   int icls,
+                   const long long* cut,
+                   const int* bid,
+                   const int m_NoCompo);
   
   
   /**
@@ -338,15 +311,19 @@ public:
    * @param [in]     cut        カット配列
    * @param [in]     cut_id     BID配列
    * @param [in]     m_NoCompo  コンポーネント数
+   * @param [in]     m_NoMedium 媒質数
+   * @param [in]     mat        MediumList
    */
   void setBCIndexV(int* cdf,
                    int* bp,
                    SetBC* BC,
                    CompoList* cmp,
                    int icls,
-                   float* cut,
+                   long long* cut,
                    int* cut_id,
-                   const int m_NoCompo);
+                   const int m_NoCompo,
+                   const int m_NoMedium,
+                   MediumList* mat);
   
   
   /**
@@ -387,7 +364,7 @@ public:
    * @param [in,out] cut   距離情報
    * @param [in,out] bid   カットID情報
    */
-  void setOBC (const int face, const int c_id, const char* str, int* bcd, float* cut, int* bid);
+  void setOBC (const int face, const int c_id, const char* str, int* bcd, long long* cut, int* bid);
   
 };
 

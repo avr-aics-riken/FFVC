@@ -1,4 +1,5 @@
-main.o: main.C FFV/ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
+main.o: main.C FFV/ffv.h FFV/ffv_Alloc.h ./FB/DomainInfo.h \
+ /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/CPMlib/include/cpm_Base.h \
  /usr/local/FFV/CPMlib/include/cpm_Define.h /opt/openmpi/include/mpi.h \
  /opt/openmpi/include/mpi_portable_platform.h \
@@ -41,26 +42,14 @@ main.o: main.C FFV/ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_inline.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndComm.h \
  /usr/local/FFV/CPMlib/include/inline/cpm_ParaManager_BndCommEx.h \
- FFV/../FB/DomainInfo.h FFV/../FB/FB_Define.h FFV/../FB/mydebug.h \
- FFV/../FB/FBUtility.h FFV/../FB/Medium.h FFV/../FB/Control.h \
- FFV/../FB/Component.h FFV/../FB/BndOuter.h FFV/../FB/CompoFraction.h \
- /usr/local/FFV/Polylib/include/common/Vec3.h FFV/../FB/IterationControl.h \
- /usr/local/FFV/TextParser/include/TextParser.h \
+ ./FB/FB_Define.h ./FB/mydebug.h ./FB/Control.h ./FB/Medium.h ./FB/Component.h \
+ ./FB/FBUtility.h ./FB/BndOuter.h /usr/local/FFV/Polylib/include/common/Vec3.h \
+ ./FB/IterationControl.h /usr/local/FFV/TextParser/include/TextParser.h \
  /usr/local/FFV/TextParser/include/TextParserCommon.h \
- /usr/local/FFV/TextParser/include/tpVersion.h FFV/../FB/IntervalManager.h \
- FFV/../FB/Alloc.h FFV/../FB/ParseBC.h FFV/../FB/Intrinsic.h FFV/../FB/ParseMat.h \
- FFV/../FB/VoxInfo.h FFV/../FB/SetBC.h FFV/../FB/History.h FFV/../FB/Monitor.h \
- FFV/../FB/MonCompo.h FFV/../FB/Sampling.h FFV/ffv_Version.h FFV/ffv_Define.h \
- FFV/ffv_SetBC.h FFV/../F_CORE/ffv_Ffunc.h FFV/../IP/IP_Jet.h \
- FFV/../IP/IP_Define.h FFV/../F_CORE/ffv_Ffunc.h FFV/../F_LS/ffv_LSfunc.h \
- FFV/ffv_TerminateCtrl.h FFV/../FB/Glyph.h FFV/../IP/IP_Duct.h \
- FFV/../IP/IP_PPLT2D.h FFV/../IP/IP_PMT.h FFV/../IP/IP_Rect.h FFV/../IP/IP_Step.h \
- FFV/../IP/IP_Cylinder.h FFV/../IP/IP_Sphere.h \
- /usr/local/FFV/PMlib/include/PerfMonitor.h \
- /usr/local/FFV/PMlib/include/PerfWatch.h \
- /usr/local/FFV/PMlib/include/pmlib_papi.h \
- /usr/local/FFV/PMlib/include/pmVersion.h \
- /usr/local/FFV/Polylib/include/Polylib.h \
+ /usr/local/FFV/TextParser/include/tpVersion.h ./FB/IntervalManager.h \
+ FFV/ffv_Define.h ./FB/ParseBC.h ./FB/Intrinsic.h ./FB/ParseMat.h ./FB/VoxInfo.h \
+ ./FB/SetBC.h ./Geometry/CompoFraction.h ./Geometry/Geometry.h \
+ ./FB/PolyProperty.h /usr/local/FFV/Polylib/include/Polylib.h \
  /usr/local/FFV/Polylib/include/polygons/Polygons.h \
  /usr/local/FFV/Polylib/include/common/PolylibStat.h \
  /usr/local/FFV/Polylib/include/common/PolylibCommon.h \
@@ -83,32 +72,44 @@ main.o: main.C FFV/ffv.h /usr/local/FFV/CPMlib/include/cpm_ParaManager.h \
  /usr/local/FFV/Polylib/include/polygons/VertexList.h \
  /usr/local/FFV/Polylib/include/file_io/obj.h \
  /usr/local/FFV/Polylib/include/common/tt.h \
- /usr/local/FFV/Polylib/include/file_io/vtk.h \
- /usr/local/FFV/Cutlib/include/Cutlib.h \
- /usr/local/FFV/Cutlib/include/RepairPolygonData/RepairPolygonData.h \
- /usr/local/FFV/Cutlib/include/CutInfo/CutInfoArray.h \
- /usr/local/FFV/Cutlib/include/CutInfo/CutInfo.h \
- /usr/local/FFV/Cutlib/include/CutInfo/CutNormalArray.h \
- /usr/local/FFV/Cutlib/include/Cutlib.h \
- /usr/local/FFV/Cutlib/include/GridAccessor/GridAccessor.h \
- /usr/local/FFV/Cutlib/include/Version.h \
- /usr/local/FFV/Cutlib/include/GridAccessor/Cell.h \
- /usr/local/FFV/CIOlib/include/cio_DFI.h \
- /usr/local/FFV/CIOlib/include/cio_Define.h \
- /usr/local/FFV/CIOlib/include/cio_Version.h \
- /usr/local/FFV/CIOlib/include/cio_PathUtil.h \
- /usr/local/FFV/CIOlib/include/cio_TextParser.h \
- /usr/local/FFV/CIOlib/include/cio_ActiveSubDomain.h \
- /usr/local/FFV/CIOlib/include/cio_endianUtil.h \
- /usr/local/FFV/CIOlib/include/cio_TypeArray.h \
- /usr/local/FFV/CIOlib/include/cio_Array.h \
- /usr/local/FFV/CIOlib/include/inline/cio_Array_inline.h \
- /usr/local/FFV/CIOlib/include/cio_FileInfo.h \
- /usr/local/FFV/CIOlib/include/cio_FilePath.h \
- /usr/local/FFV/CIOlib/include/cio_Unit.h \
- /usr/local/FFV/CIOlib/include/cio_TimeSlice.h \
- /usr/local/FFV/CIOlib/include/cio_Domain.h \
- /usr/local/FFV/CIOlib/include/cio_MPI.h \
- /usr/local/FFV/CIOlib/include/cio_Process.h \
- /usr/local/FFV/CIOlib/include/inline/cio_DFI_inline.h ASD/ASDmodule.h \
- ASD/SubDomain.h
+ /usr/local/FFV/Polylib/include/file_io/vtk.h ./FB/History.h ./FB/Monitor.h \
+ ./FB/MonCompo.h ./FB/Sampling.h FFV/ffv_Version.h FFV/ffv_SetBC.h \
+ ./F_CORE/ffv_Ffunc.h ./IP/IP_Jet.h ./IP/IP_Define.h ./F_CORE/ffv_Ffunc.h \
+ ./F_LS/ffv_LSfunc.h FFV/ffv_TerminateCtrl.h ./Geometry/Glyph.h FFV/ffv_LS.h \
+ ./F_CORE/ffv_Ffunc.h ./F_LS/ffv_LSfunc.h \
+ /usr/local/FFV/PMlib/include/PerfMonitor.h \
+ /usr/local/FFV/PMlib/include/PerfWatch.h \
+ /usr/local/FFV/PMlib/include/pmlib_papi.h \
+ /usr/local/FFV/PMlib/include/pmVersion.h ./FILE_IO/ffv_sph.h \
+ ./FILE_IO/ffv_io_base.h /usr/local/FFV/CDMlib/include/cdm_DFI.h \
+ /usr/local/FFV/CDMlib/include/cdm_Define.h \
+ /usr/local/FFV/CDMlib/include/cdm_Version.h \
+ /usr/local/FFV/CDMlib/include/cdm_PathUtil.h \
+ /usr/local/FFV/CDMlib/include/cdm_TextParser.h \
+ /usr/local/FFV/CDMlib/include/cdm_ActiveSubDomain.h \
+ /usr/local/FFV/CDMlib/include/cdm_endianUtil.h \
+ /usr/local/FFV/CDMlib/include/cdm_TypeArray.h \
+ /usr/local/FFV/CDMlib/include/cdm_Array.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_Array_inline.h \
+ /usr/local/FFV/CDMlib/include/cdm_FileInfo.h \
+ /usr/local/FFV/CDMlib/include/cdm_FilePath.h \
+ /usr/local/FFV/CDMlib/include/cdm_VisIt.h \
+ /usr/local/FFV/CDMlib/include/cdm_Unit.h \
+ /usr/local/FFV/CDMlib/include/cdm_TimeSlice.h \
+ /usr/local/FFV/CDMlib/include/cdm_Domain.h \
+ /usr/local/FFV/CDMlib/include/cdm_MPI.h \
+ /usr/local/FFV/CDMlib/include/cdm_Process.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_DFI_inline.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_SPH.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_BOV.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_BOV_inline.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_AVS.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_PLOT3D.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_Plot3d_inline.h \
+ /usr/local/FFV/CDMlib/include/cdm_DFI_VTK.h \
+ /usr/local/FFV/CDMlib/include/cdm_NonUniformDomain.h \
+ /usr/local/FFV/CDMlib/include/inline/cdm_NonUniformDomain_inline.h \
+ ./FILE_IO/ffv_plot3d.h ./IP/IP_Duct.h ./IP/IP_PPLT2D.h ./IP/IP_PMT.h \
+ ./IP/IP_Rect.h ./IP/IP_Step.h ./IP/IP_Cylinder.h ./IP/IP_Sphere.h \
+ ASD/ASDmodule.h ASD/SubDomain.h

@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -159,7 +159,6 @@ void LinearSolver::Initialize(Control* C,
                               PerfMonitor* PM,
                               int* bcp,
                               int* bcd,
-                              REAL_TYPE* pni,
                               REAL_TYPE* pcg_p,
                               REAL_TYPE* pcg_p_,
                               REAL_TYPE* pcg_r,
@@ -182,7 +181,6 @@ void LinearSolver::Initialize(Control* C,
   this->PM = PM;
   this->bcp = bcp;
   this->bcd = bcd;
-  this->pni = pni;
   this->pcg_p  = pcg_p;
   this->pcg_p_ = pcg_p_;
   this->pcg_r  = pcg_r;
@@ -226,7 +224,7 @@ int LinearSolver::PointSOR(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const 
     // 反復処理
     TIMING_start("Poisson_PSOR");
     flop_count = 0.0;
-    psor_(x, size, &guide, &omg, var, b, bcp, &flop_count);
+    psor_(x, size, &guide, pitch, &omg, var, b, bcp, &flop_count);
     TIMING_stop("Poisson_PSOR", flop_count);
     
     
@@ -315,14 +313,8 @@ int LinearSolver::SOR2_SMA(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const d
       
       TIMING_start("Poisson_SOR2_SMA");
       flop_count = 0.0; // 色間で積算しない
-      if ( getNaive()==OFF)
-      {
-        psor2sma_core_(x, size, &guide, &ip, &color, &omg, var, b, bcp, &flop_count);
-      }
-      else
-      {
-        psor2sma_naive_(x, size, &guide, &ip, &color, &omg, var, b, bcp, pni, &flop_count);
-      }
+      psor2sma_core_(x, size, &guide, pitch, &ip, &color, &omg, var, b, bcp, &flop_count);
+
       
       TIMING_stop("Poisson_SOR2_SMA", flop_count);
       
@@ -727,7 +719,7 @@ int LinearSolver::PointSOR_4th(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE* u_sum, REA
     // 反復処理
     TIMING_start("Poisson_PSOR");
     flop_count = 0.0;
-    psor_(x, size, &guide, &omg, var, w1, bcp, &flop_count);
+    psor_(x, size, &guide, pitch, &omg, var, w1, bcp, &flop_count);
     TIMING_stop("Poisson_PSOR", flop_count);
     
     
@@ -770,7 +762,7 @@ int LinearSolver::PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const
   
   TIMING_start("Blas_Residual");
   flop = 0.0;
-  blas_calc_rk_(pcg_r, x, b, bcp, size, &guide, &flop);
+  blas_calc_rk_(pcg_r, x, b, bcp, size, &guide, pitch, &flop);
   TIMING_stop("Blas_Residual", flop);
   
   SyncScalar(pcg_r, 1);
@@ -820,7 +812,7 @@ int LinearSolver::PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const
     
     TIMING_start("Blas_AX");
     flop = 0.0;
-    blas_calc_ax_(pcg_q, pcg_p_, bcp, size, &guide, &flop);
+    blas_calc_ax_(pcg_q, pcg_p_, bcp, size, &guide, pitch, &flop);
     TIMING_stop("Blas_AX", flop);
     
     alpha = rho / Fdot2(pcg_q, pcg_r0);
@@ -841,7 +833,7 @@ int LinearSolver::PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const
     
     TIMING_start("Blas_AX");
     flop = 0.0;
-    blas_calc_ax_(pcg_t_, pcg_s_, bcp, size, &guide, &flop);
+    blas_calc_ax_(pcg_t_, pcg_s_, bcp, size, &guide, pitch, &flop);
     TIMING_stop("Blas_AX", flop);
     
     omega = Fdot2(pcg_t_, pcg_s) / Fdot1(pcg_t_);

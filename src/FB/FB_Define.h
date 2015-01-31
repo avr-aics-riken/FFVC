@@ -8,10 +8,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -25,8 +25,10 @@
 
 #include "mydebug.h"
 #include <float.h>
+#include <math.h>
+#include <stdio.h>
 
-#define FB_VERS "1.5.2"
+#define FB_VERS "1.5.3"
 
 #define SINGLE_EPSILON 1.19e-7
 #define DOUBLE_EPSILON 2.22e-16
@@ -126,10 +128,13 @@
 
 
 // マスクのビット幅
-#define MASK_8     0xff // 8 bit幅
-#define MASK_6     0x3f // 6 bit幅
-#define MASK_5     0x1f // 5 bit幅
-#define CMP_BIT_W  32 // 5bit
+#define MASK_10    0x3ff // 10 bit幅
+#define MASK_9     0x1ff // 9 bit幅
+#define MASK_8     0xff  // 8 bit幅
+#define MASK_6     0x3f  // 6 bit幅
+#define MASK_5     0x1f  // 5 bit幅
+#define CMP_BIT_W  32    // 5bit
+#define QT_9       511   // 9bit幅の最大値
 
 
 // エンコードビット　共通
@@ -171,32 +176,36 @@
 #define BC_N_E     19
 #define BC_N_W     18
 
-#define BC_NDAG_T  17
-#define BC_NDAG_B  16
-#define BC_NDAG_N  15
-#define BC_NDAG_S  14
-#define BC_NDAG_E  13
-#define BC_NDAG_W  12
+#define BC_DN_T    17
+#define BC_DN_B    16
+#define BC_DN_N    15
+#define BC_DN_S    14
+#define BC_DN_E    13
+#define BC_DN_W    12
 
-#define BC_DIAG    9
+#define BC_NDAG_T  11
+#define BC_NDAG_B  10
+#define BC_NDAG_N  9
+#define BC_NDAG_S  8
+#define BC_NDAG_E  7
+#define BC_NDAG_W  6
+#define BC_DIAG    5
 
-#define FACING_T   8
-#define FACING_B   7
-#define FACING_N   6
-#define FACING_S   5
-#define FACING_E   4
-#define FACING_W   3
 #define VLD_CNVG   2
-#define VBC_UWD    1
 
-
-// エンコードビット　C
+// エンコードビット　C, bid
 #define BC_FACE_T  25
 #define BC_FACE_B  20
 #define BC_FACE_N  15
 #define BC_FACE_S  10
 #define BC_FACE_E  5
 #define BC_FACE_W  0
+
+// エンコードビット bid
+#define VBC_UWD 30
+
+// エンコードビット CUT
+#define TOP_CUT 6
 
 
 // Component Type
@@ -455,9 +464,7 @@ enum Unit_Pressure {
 /// 長さ単位
 enum Length_Unit {
   LTH_ND=0,
-  LTH_m,
-  LTH_cm,
-  LTH_mm
+  LTH_m
 };
 
 /// 同期モード
@@ -567,6 +574,32 @@ enum DIRection {
   Z_plus
 };
 
+/*
+ * @brief 9bit幅の量子化
+ * @param [in]  a  入力数値
+ */
+inline int quantize9(REAL_TYPE a)
+{
+  int s;
+  REAL_TYPE x = a * (REAL_TYPE)QT_9;
+  
+  if ( x > 0.0 )
+  {
+    s = (int)floor(x + 0.5);
+  }
+  else
+  {
+    s = (int)(-1.0 * floor(fabs(x) + 0.5));
+  }
+  
+  if (s<0 || QT_9<s)
+  {
+    printf("quantize error : out of range %f > %d\n", a, s);
+    exit(0);
+  }
+  
+  return s;
+}
 
 
 /*
@@ -588,8 +621,8 @@ inline int getBit5 (const int bid, const int dir)
  */
 inline void setBit5 (int& b, const int q, const int dir)
 {
-  b &= (~(0x1f << (dir*5)) ); // 対象5bitをゼロにする
-  b |= (q << (dir*5));        // 書き込む
+  b &= (~(MASK_5 << (dir*5)) ); // 対象5bitをゼロにする
+  b |= (q << (dir*5));          // 書き込む
 }
 
 
@@ -602,6 +635,99 @@ inline void setBitID (int& b, const int q)
 {
   b &= ( ~(0x1f) ); // 下位5bitをゼロにする
   b |= q;           // 書き込む
+}
+
+
+/*
+ * @brief cut indexから指定方向交点の有無を返す
+ * @param [in] c    cut index
+ * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+ * @retval 交点あり(1)、なし(0)
+ */
+inline int ensCut (const long long c, const int dir)
+{
+  long long a = 1;
+  return (int)((c >> dir) & a);
+}
+
+
+/*
+ * @brief 指定方向交点の有無と距離0のチェック
+ * @param [in] c    cut index
+ * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+ * @retval 交点があり、かつ、距離がゼロのとき1
+ */
+inline int chkZeroCut (const long long c, const int dir)
+{
+  // 各方向の10ビット
+  long long b = (c >> TOP_CUT) >> dir*9;
+  long long a = 1;
+  
+  // 交点の有無
+  int ens = (int)((c >> dir) & a);
+  
+  // 量子化した距離 9ビット幅
+  a = MASK_9;
+  int d = (int)(b & a);
+  
+  return ( ens & !d ) ? 1 : 0;
+}
+
+
+/*
+ * @brief cut indexから指定方向の量子化値をとりだす
+ * @param [in] c    cut index
+ * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+ */
+inline int getBit9 (const long long c, const int dir)
+{
+  long long a = MASK_9;
+  return (int)( ((c >> TOP_CUT) >> dir*9) & a );
+}
+
+
+/*
+ * @brief cut indexから指定方向の距離を取り出す
+ * @param [in] c    cut index
+ * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+ */
+inline REAL_TYPE getCut9 (const long long c, const int dir)
+{
+  long long a = MASK_9;
+  return (REAL_TYPE)( ((c >> TOP_CUT) >> dir*9) & a ) / (REAL_TYPE)QT_9;
+}
+
+
+/*
+ * @brief cut indexの値の設定（9bit幅の値と交点フラグ）
+ * @param [in,out] c   cut index
+ * @param [in]     q   9-bit幅の値
+ * @param [in]     dir 方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+ */
+inline void setCut9 (long long& c, const int q, const int dir)
+{
+  long long a = MASK_9;
+  long long b = q;
+  c &= ( ~( (a<<dir*9) << TOP_CUT) );  // 対象9bitをゼロにする
+  c |= ( (b<<dir*9) << TOP_CUT );      // 値を書き込む
+  a = 1;
+  c &= ( ~(a<<dir) );   // 交点フラグをクリア
+  c |= (a<<dir);        // 交点フラグをON
+}
+
+
+/*
+ * @brief cut indexを511で初期化
+ * @param [in,out] c   cut index
+ * @param [in]     dir 方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+ */
+inline void initBit9 (long long& c, const int dir)
+{
+  long long a = MASK_9;
+  const long long b = QT_9; // 511
+  
+  c &= ( ~( (a<<dir*9) << TOP_CUT) );  // 対象9bitをゼロにする
+  c |= ( (b<<dir*9) << TOP_CUT );      // 値を書き込む
 }
 
 

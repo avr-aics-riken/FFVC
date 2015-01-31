@@ -5,10 +5,10 @@
 # Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
 # All rights reserved.
 #
-# Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo. 
+# Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
 # All rights reserved.
 #
-# Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN. 
+# Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN. 
 # All rights reserved. 
 #
 ###################################################################################
@@ -23,7 +23,6 @@ CPM_DIR  = $(INSTALL_BASE)/CPMlib
 CDM_DIR  = $(INSTALL_BASE)/CDMlib
 TP_DIR   = $(INSTALL_BASE)/TextParser
 POLY_DIR = $(INSTALL_BASE)/Polylib
-CUT_DIR  = $(INSTALL_BASE)/Cutlib
 PM_DIR   = $(INSTALL_BASE)/PMlib
 FFVC_DIR = $(INSTALL_BASE)/FFVC
 
@@ -132,7 +131,7 @@ ifeq ($(ARCH),intel)
   RANLIB      = ranlib
   RM          = \rm -f
   MPI_DIR     = /opt/openmpi
-  OMP_FLAGS   = -openmp -par-report=3 -vec-report=2
+  OMP_FLAGS   = -openmp -qopt-report=5
   UDEF_OPT    =
   CC          = mpicc
   CFLAGS      = -O3
@@ -172,7 +171,6 @@ endif
 UDEF_INC_PATH=`$(TP_DIR)/bin/tp-config --cflags`  \
               `$(PM_DIR)/bin/pm-config --cflags` \
               `$(POLY_DIR)/bin/polylib-config --cflags` \
-              `$(CUT_DIR)/bin/cut-config --cflags` \
               `$(CPM_DIR)/bin/cpm-config --cflags` \
               `$(CDM_DIR)/bin/cdm-config --cflags` \
               -I. \
@@ -195,7 +193,6 @@ UDEF_LIB_PATH=-L$(MPI_DIR)/lib \
               `$(TP_DIR)/bin/tp-config --libs`  \
               `$(PM_DIR)/bin/pm-config --libs` \
               `$(POLY_DIR)/bin/polylib-config --libs` \
-              `$(CUT_DIR)/bin/cut-config --libs` \
               `$(CPM_DIR)/bin/cpm-config --libs` \
               `$(CDM_DIR)/bin/cdm-config --libs`
               

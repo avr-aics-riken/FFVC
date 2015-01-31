@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -26,10 +26,10 @@ using namespace Vec3class;
 
 // #################################################################
 // 交点の無次元距離を計算する
-float IP_Sphere::cut_line(const Vec3f p, const int dir, const float r, const float dh)
+REAL_TYPE IP_Sphere::cut_line(const Vec3r p, const int dir, const REAL_TYPE r)
 {
-  float x, y, z, s;
-  float c;
+  REAL_TYPE x, y, z, s;
+  REAL_TYPE c;
   
   x = p.x;
   y = p.y;
@@ -43,37 +43,37 @@ float IP_Sphere::cut_line(const Vec3f p, const int dir, const float r, const flo
     case 1: // X-
       c = sqrtf(r*r - y*y - z*z);
       if ( x < 0.0 ) c *= -1.0;
-      s = fabs(c-x);
+      s = fabs(c-x) / pitch[0];
       break;
       
     case 2: // X+
       c = sqrtf(r*r - y*y - z*z);
       if ( x < 0.0 ) c *= -1.0;
-      s = fabs(c-x);
+      s = fabs(c-x) / pitch[0];
       break;
       
     case 3: // Y-
       c = sqrtf(r*r - x*x - z*z);
       if ( y < 0.0 ) c *= -1.0;
-      s = fabs(c-y);
+      s = fabs(c-y) / pitch[1];
       break;
       
     case 4: // Y+
       c = sqrtf(r*r - x*x - z*z);
       if ( y < 0.0 ) c *= -1.0;
-      s = fabs(c-y);
+      s = fabs(c-y) / pitch[1];
       break;
       
     case 5: // Z-
       c = sqrtf(r*r - x*x - y*y);
       if ( z < 0.0 ) c *= -1.0;
-      s = fabs(c-z);
+      s = fabs(c-z) / pitch[2];
       break;
       
     case 6: // Z+
       c = sqrtf(r*r - x*x - y*y);
       if ( z < 0.0 ) c *= -1.0;
-      s = fabs(c-z);
+      s = fabs(c-z) / pitch[2];
       break;
       
     default:
@@ -81,7 +81,7 @@ float IP_Sphere::cut_line(const Vec3f p, const int dir, const float r, const flo
       break;
   }
   
-  return s/dh;
+  return s;
 }
 
 
@@ -89,9 +89,9 @@ float IP_Sphere::cut_line(const Vec3f p, const int dir, const float r, const flo
 // #################################################################
 //  点pの属するセルインデクスを求める
 // Fortran index
-Vec3i IP_Sphere::find_index(const Vec3f p, const Vec3f ol, const Vec3f pch)
+Vec3i IP_Sphere::find_index(const Vec3r p, const Vec3r ol, const Vec3r pch)
 {
-  Vec3f q = (p-ol)/pch;
+  Vec3r q = (p-ol)/pch;
   Vec3i idx( ceil(q.x), ceil(q.y), ceil(q.z) );
   
   int ix = size[0];
@@ -226,35 +226,29 @@ void IP_Sphere::printPara(FILE* fp, const Control* R)
 
 // #################################################################
 // 計算領域のセルIDとカット情報を設定する
-void IP_Sphere::setup(int* bcd, Control* R, const int NoMedium, const MediumList* mat, float* cut, int* bid)
+void IP_Sphere::setup(int* bcd, Control* R, const int NoMedium, const MediumList* mat, long long* cut, int* bid)
 {
   int mid_fluid;        /// 流体
   int mid_solid;        /// 固体
   int mid_driver;       /// ドライバ部
   int mid_driver_face;  /// ドライバ流出面
   
-  float ph = (float)deltaX;
-  float rs = (float)(radius/R->RefLength);
+  REAL_TYPE dx = pitch[0];
+  REAL_TYPE dy = pitch[1];
+  REAL_TYPE dz = pitch[2];
+  REAL_TYPE rs = radius/R->RefLength;
   
   // ノードローカルの無次元値
   REAL_TYPE Lx = region[0];
   REAL_TYPE Ly = region[1];
   REAL_TYPE Lz = region[2];
-  REAL_TYPE dh = deltaX;
   
-  Vec3f pch;        ///< セル幅
-  pch.x = (float)pitch[0];
-  pch.y = (float)pitch[1];
-  pch.z = (float)pitch[2];
-  
-  Vec3f org;        ///< 計算領域の基点
-  org.x = (float)origin[0];
-  org.y = (float)origin[1];
-  org.z = (float)origin[2];
+  Vec3r pch(pitch);        ///< セル幅
+  Vec3r org(origin);       ///< 計算領域の基点
   
   // 球のbbox
-  Vec3f box_min;    ///< Bounding boxの最小値
-  Vec3f box_max;    ///< Bounding boxの最大値
+  Vec3r box_min;    ///< Bounding boxの最小値
+  Vec3r box_max;    ///< Bounding boxの最大値
   Vec3i box_st;     ///< Bounding boxの始点インデクス
   Vec3i box_ed;     ///< Bounding boxの終点インデクス
   
@@ -286,25 +280,25 @@ void IP_Sphere::setup(int* bcd, Control* R, const int NoMedium, const MediumList
   
   
   // カット情報
-  Vec3f p[7];
-  Vec3f base, b;
-  float r_min=10.0, r_max=0.0;
-  float lb[7];
+  Vec3r p[7];
+  Vec3r base, b;
+  REAL_TYPE r_min=10.0, r_max=0.0;
+  REAL_TYPE lb[7];
   
   for (int k=box_st.z-2; k<=box_ed.z+2; k++) {
     for (int j=box_st.y-2; j<=box_ed.y+2; j++) {
       for (int i=box_st.x-2; i<=box_ed.x+2; i++) {
 
-        base.assign((float)i-0.5, (float)j-0.5, (float)k-0.5);
-        b = org + base*ph;
+        base.assign((REAL_TYPE)i-0.5, (REAL_TYPE)j-0.5, (REAL_TYPE)k-0.5);
+        b = org + base*pch;
         
         p[0].assign(b.x   , b.y   , b.z   ); // p
-        p[1].assign(b.x-ph, b.y   , b.z   ); // w 
-        p[2].assign(b.x+ph, b.y   , b.z   ); // e
-        p[3].assign(b.x   , b.y-ph, b.z   ); // s
-        p[4].assign(b.x   , b.y+ph, b.z   ); // n
-        p[5].assign(b.x   , b.y   , b.z-ph); // b
-        p[6].assign(b.x   , b.y   , b.z+ph); // t
+        p[1].assign(b.x-dx, b.y   , b.z   ); // w
+        p[2].assign(b.x+dx, b.y   , b.z   ); // e
+        p[3].assign(b.x   , b.y-dy, b.z   ); // s
+        p[4].assign(b.x   , b.y+dy, b.z   ); // n
+        p[5].assign(b.x   , b.y   , b.z-dz); // b
+        p[6].assign(b.x   , b.y   , b.z+dz); // t
         
         // (0.0, 0.0, 0.0)が球の中心
         for (int l=0; l<7; l++) {
@@ -312,50 +306,60 @@ void IP_Sphere::setup(int* bcd, Control* R, const int NoMedium, const MediumList
         }
         
         
-        // cut test
+        // cut test // 注意！　インデクスが1-6
         for (int l=1; l<=6; l++) {
           if ( lb[0]*lb[l] < 0.0 )
           {
-            float s = cut_line(p[0], l, rs, ph);
-            size_t m = _F_IDX_S4DEX(l-1, i, j, k, 6, ix, jx, kx, gd); // 注意！　インデクスが1-6
-            cut[m] = s;
-            setBit5(bid[_F_IDX_S3D(i, j, k, ix, jx, kx, gd)], mid_solid, l-1);
+            REAL_TYPE s = cut_line(p[0], l, rs);
+            size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            int r = quantize9(s);
+            setCut9(cut[m], r, l-1);
+            setBit5(bid[m], mid_solid, l-1);
+            
+            int rr = quantize9(1.0-s);
+            size_t m1;
             
             switch (l-1) {
               case X_minus:
-                setBit5(bid[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)], mid_solid, X_plus);
-                cut[_F_IDX_S4DEX(X_plus, i-1, j, k, 6, ix, jx, kx, gd)] = 1.0-s;
+                m1 = _F_IDX_S3D(i-1, j, k, ix, jx, kx, gd);
+                setBit5(bid[m1], mid_solid, X_plus);
+                setCut9(cut[m1], rr, X_plus);
                 break;
                 
               case X_plus:
-                setBit5(bid[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)], mid_solid, X_minus);
-                cut[_F_IDX_S4DEX(X_minus, i+1, j, k, 6, ix, jx, kx, gd)] = 1.0-s;
+                m1 = _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd);
+                setBit5(bid[m1], mid_solid, X_minus);
+                setCut9(cut[m1], rr, X_minus);
                 break;
                 
               case Y_minus:
-                setBit5(bid[_F_IDX_S3D(i, j-1, k, ix, jx, kx, gd)], mid_solid, Y_plus);
-                cut[_F_IDX_S4DEX(Y_plus, i, j-1, k, 6, ix, jx, kx, gd)] = 1.0-s;
+                m1 = _F_IDX_S3D(i, j-1, k, ix, jx, kx, gd);
+                setBit5(bid[m1], mid_solid, Y_plus);
+                setCut9(cut[m1], rr, Y_plus);
                 break;
                 
               case Y_plus:
-                setBit5(bid[_F_IDX_S3D(i, j+1, k, ix, jx, kx, gd)], mid_solid, Y_minus);
-                cut[_F_IDX_S4DEX(Y_minus, i, j+1, k, 6, ix, jx, kx, gd)] = 1.0-s;
+                m1 = _F_IDX_S3D(i, j+1, k, ix, jx, kx, gd);
+                setBit5(bid[m1], mid_solid, Y_minus);
+                setCut9(cut[m1], rr, Y_minus);
                 break;
                 
               case Z_minus:
-                setBit5(bid[_F_IDX_S3D(i, j, k-1, ix, jx, kx, gd)], mid_solid, Z_plus);
-                cut[_F_IDX_S4DEX(Z_plus, i, j, k-1, 6, ix, jx, kx, gd)] = 1.0-s;
+                m1 = _F_IDX_S3D(i, j, k-1, ix, jx, kx, gd);
+                setBit5(bid[m1], mid_solid, Z_plus);
+                setCut9(cut[m1], rr, Z_plus);;
                 break;
                 
               case Z_plus:
-                setBit5(bid[_F_IDX_S3D(i, j, k+1, ix, jx, kx, gd)], mid_solid, Z_minus);
-                cut[_F_IDX_S4DEX(Z_minus, i, j, k+1, 6, ix, jx, kx, gd)] = 1.0-s;
+                m1 = _F_IDX_S3D(i, j, k+1, ix, jx, kx, gd);
+                setBit5(bid[m1], mid_solid, Z_minus);
+                setCut9(cut[m1], rr, Z_minus);
                 break;
             }
             
             //printf("(%2d %2d %2d) %2d %d %f\n", i,j,k,mid_solid, l-1, s);
-            r_min = std::min(r_min, s);
-            r_max = std::max(r_max, s);
+            r_min = (std::min)(r_min, s);
+            r_max = (std::max)(r_max, s);
           }
         }
       }
@@ -401,7 +405,7 @@ void IP_Sphere::setup(int* bcd, Control* R, const int NoMedium, const MediumList
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
           size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          x = ox + 0.5*dh + dh*(i-1);
+          x = ox + 0.5*dx + dx*(i-1);
           if ( x < len ) bcd[m] |= mid_driver;
         }
       }
@@ -430,8 +434,8 @@ void IP_Sphere::setup(int* bcd, Control* R, const int NoMedium, const MediumList
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        x = ox + 0.5*dh + dh*(i-1);
-        y = oy + 0.5*dh + dh*(j-1);
+        x = ox + 0.5*dx + dx*(i-1);
+        y = oy + 0.5*dy + dy*(j-1);
         if ( x < len )
         {
           bcd[m] |= mid_solid;

@@ -9,15 +9,18 @@ Release Note
   Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
   All rights reserved.
 
-  Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+  Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
   All rights reserved.
 
-  Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+  Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
   All rights reserved.
   
   @author aics
 
 ****************************************************************************
+
+Ver 1.3.3    2014-12-29
+ - long long* cut
 
 Ver 1.3.2    2014-07-29
   - IP_Cylinderの2角柱/円柱実装

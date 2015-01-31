@@ -5,10 +5,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -123,7 +123,7 @@ void IP_Step::printPara(FILE* fp, const Control* R)
 
 // #################################################################
 // 計算領域のセルIDとカット情報を設定する
-void IP_Step::setup(int* bcd, Control* R, const int NoMedium, const MediumList* mat, float* cut, int* bid)
+void IP_Step::setup(int* bcd, Control* R, const int NoMedium, const MediumList* mat, long long* cut, int* bid)
 {
   int mid_fluid;        /// 流体
   int mid_solid;        /// 固体
@@ -150,7 +150,9 @@ void IP_Step::setup(int* bcd, Control* R, const int NoMedium, const MediumList* 
   int kx = size[2];
   int gd = guide;
   
-  REAL_TYPE dh = deltaX;
+  REAL_TYPE dx = pitch[0];
+  //REAL_TYPE dy = pitch[1];
+  REAL_TYPE dz = pitch[2];
   
   // ローカルな無次元位置
   REAL_TYPE ox, oz;
@@ -165,30 +167,38 @@ void IP_Step::setup(int* bcd, Control* R, const int NoMedium, const MediumList* 
   REAL_TYPE ht  = G_origin[2] + height/R->RefLength; // グローバルな無次元位置
 
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid, ox, oz, dh, len, ht) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid, ox, oz, dx, dz, len, ht) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        REAL_TYPE x = ox + 0.5*dh + dh*(i-1); // position of cell center
-        REAL_TYPE z = oz + 0.5*dh + dh*(k-1); // position of cell center
-        REAL_TYPE s = (len - x)/dh;
+        REAL_TYPE x = ox + 0.5*dx + dx*(i-1); // position of cell center
+        REAL_TYPE z = oz + 0.5*dz + dz*(k-1); // position of cell center
+        REAL_TYPE s = (len - x)/dx;
         
         if ( z <= ht )
         {
-          if ( (x <= len) && (len < x+dh) )
+          if ( (x <= len) && (len < x+dx) )
           {
             setBit5(bid[m], mid_solid, X_plus);
-            cut[_F_IDX_S4DEX(X_plus, i, j, k, 6, ix, jx, kx, gd)] = s;
-            setBit5(bid[_F_IDX_S3D(i+1, j, k, ix, jx, kx, gd)], mid_solid, X_minus);
-            cut[_F_IDX_S4DEX(X_minus, i+1, j, k, 6, ix, jx, kx, gd)] = 1.0-s;
+            int r = quantize9(s);
+            setCut9(cut[m], r, X_plus);
+            
+            size_t m1 = _F_IDX_S3D(i+1, j, k, ix, jx, kx, gd);
+            setBit5(bid[m1], mid_solid, X_minus);
+            int rr = quantize9(1.0-s);
+            setCut9(cut[m1], rr, X_minus);
           }
-          else if ( (x-dh < len) && (len < x) )
+          else if ( (x-dx < len) && (len < x) )
           {
             setBit5(bid[m], mid_solid, X_minus);
-            cut[_F_IDX_S4DEX(X_minus, i, j, k, 6, ix, jx, kx, gd)] = -s;
-            setBit5(bid[_F_IDX_S3D(i-1, j, k, ix, jx, kx, gd)], mid_solid, X_plus);
-            cut[_F_IDX_S4DEX(X_plus, i-1, j, k, 6, ix, jx, kx, gd)] = 1.0+s;
+            int r = quantize9(-s);
+            setCut9(cut[m], r, X_minus);
+            
+            size_t m1 = _F_IDX_S3D(i-1, j, k, ix, jx, kx, gd);
+            setBit5(bid[m1], mid_solid, X_plus);
+            int rr = quantize9(1.0+s);
+            setCut9(cut[m1], rr, X_plus);
           }
         }
 
@@ -196,30 +206,38 @@ void IP_Step::setup(int* bcd, Control* R, const int NoMedium, const MediumList* 
     }
   }
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid, ox, oz, dh, len, ht) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_solid, ox, oz, dx, dz, len, ht) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        REAL_TYPE x = ox + 0.5*dh + dh*(i-1); // position of cell center
-        REAL_TYPE z = oz + 0.5*dh + dh*(k-1); // position of cell center
-        REAL_TYPE c = (ht - z)/dh;
+        REAL_TYPE x = ox + 0.5*dx + dx*(i-1); // position of cell center
+        REAL_TYPE z = oz + 0.5*dz + dz*(k-1); // position of cell center
+        REAL_TYPE c = (ht - z)/dz;
         
         if ( x <= len )
         {
-          if ( (z <= ht) && (ht < z+dh) )
+          if ( (z <= ht) && (ht < z+dz) )
           {
             setBit5(bid[m], mid_solid, Z_plus);
-            cut[_F_IDX_S4DEX(Z_plus, i, j, k, 6, ix, jx, kx, gd)] = c;
-            setBit5(bid[_F_IDX_S3D(i, j, k+1, ix, jx, kx, gd)], mid_solid, Z_minus);
-            cut[_F_IDX_S4DEX(Z_minus, i, j, k+1, 6, ix, jx, kx, gd)] = 1.0-c;
+            int r = quantize9(c);
+            setCut9(cut[m], r, Z_plus);
+
+            size_t m1 = _F_IDX_S3D(i, j, k+1, ix, jx, kx, gd);
+            setBit5(bid[m1], mid_solid, Z_minus);
+            int rr = quantize9(1.0-c);
+            setCut9(cut[m1], rr, Z_minus);
           }
-          else if ( (z-dh < ht) && (ht < z) )
+          else if ( (z-dz < ht) && (ht < z) )
           {
             setBit5(bid[m], mid_solid, Z_minus);
-            cut[_F_IDX_S4DEX(Z_minus, i, j, k, 6, ix, jx, kx, gd)] = -c;
-            setBit5(bid[_F_IDX_S3D(i, j, k-1, ix, jx, kx, gd)], mid_solid, Z_plus);
-            cut[_F_IDX_S4DEX(Z_plus, i, j, k-1, 6, ix, jx, kx, gd)] = 1.0+c;
+            int r = quantize9(-c);
+            setCut9(cut[m], r, Z_minus);
+
+            size_t m1 = _F_IDX_S3D(i, j, k-1, ix, jx, kx, gd);
+            setBit5(bid[m1], mid_solid, Z_plus);
+            int rr = quantize9(1.0+c);
+            setCut9(cut[m1], rr, Z_plus);
           }
         }
         
@@ -244,32 +262,31 @@ void IP_Step::setup(int* bcd, Control* R, const int NoMedium, const MediumList* 
         setBitID(bcd[m], mid_solid);
         
         // 交点
-        size_t m1 = _F_IDX_S4DEX(X_minus, 1, j, k, 6, ix, jx, kx, gd);
-        cut[m1] = 0.5; /// 壁面までの距離
+        size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
+        int r = quantize9(0.5);
+        setCut9(cut[l], r, X_minus);
         
         // 境界ID
-        size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
         setBit5(bid[l], mid_solid, X_minus);
       }
     }
     
     
     // Channel
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid, ht, oz, dh) schedule(static)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_fluid, ht, oz, dz) schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         
-        REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dh;
+        REAL_TYPE z = oz + ( (REAL_TYPE)k-0.5 ) * dz;
         
         if ( z > ht )
         {
           size_t m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
           setBitID(bcd[m], mid_fluid);
           
-          size_t m1 = _F_IDX_S4DEX(X_minus, 1, j, k, 6, ix, jx, kx, gd);
-          cut[m1] = 1.0;
-          
           size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
+          int r = quantize9(1.0);
+          setCut9(cut[l], r, X_minus);
           setBit5(bid[l], 0, X_minus);
         }
       }

@@ -8,10 +8,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -37,6 +37,7 @@ protected:
   REAL_TYPE RefV, RefL, DiffTemp, BaseTemp, Peclet, Reynolds, rei, pei;
   REAL_TYPE Lbx[3], Rayleigh, Grashof, Prandtl;
   REAL_TYPE rho_0, cp_0, lambda_0;
+  REAL_TYPE S_x, S_y, S_z;
   
   int NoCompo;     ///< コンポーネント数
   int NoMedium;    ///< 媒質数
@@ -70,6 +71,7 @@ public:
     rho_0 = cp_0 = lambda_0 = BasePrs = 0.0;
     Peclet = Reynolds = Rayleigh = Grashof = Prandtl = 0.0;
     Example = Unit_Prs = NoCompo = NoMedium = 0;
+    S_x = S_y = S_z = 0.0;
     
     cmp = NULL;
     mat = NULL;

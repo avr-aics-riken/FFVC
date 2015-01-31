@@ -8,10 +8,10 @@
 // Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 // All rights reserved.
 //
-// Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo.
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -44,8 +44,6 @@ protected:
   REAL_TYPE RefSpecificHeat; ///< 代表比熱
   REAL_TYPE time;            ///< 時刻
   REAL_TYPE v_max;           ///< 速度成分の最大値
-  REAL_TYPE dhd;             ///< 有次元の格子幅
-  REAL_TYPE dh;              ///< 無次元の格子幅
   REAL_TYPE dynamic_p;       ///< 動圧
   REAL_TYPE base_mf;         ///< 流量の基準値
   int step;                  ///< ステップ数
@@ -73,10 +71,8 @@ public:
     RefSpecificHeat = Cref->RefSpecificHeat;
     Unit_Prs        = Cref->Unit.Prs;
     Unit_Log        = Cref->Unit.Log;
-    dh              = Cref->deltaX;
     NoCompo         = Cref->NoCompo;
     Tscale          = RefLength / RefVelocity;
-    dhd             = dh*RefLength;
     dynamic_p       = RefVelocity * RefVelocity * RefDensity;
     base_mf         = RefVelocity * RefLength * RefLength;
 

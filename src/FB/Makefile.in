@@ -21,10 +21,10 @@
 # Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
 # All rights reserved.
 #
-# Copyright (c) 2011-2014 Institute of Industrial Science, The University of Tokyo. 
+# Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
 # All rights reserved.
 #
-# Copyright (c) 2012-2014 Advanced Institute for Computational Science, RIKEN.
+# Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 # All rights reserved. 
 #
 ###################################################################################
@@ -147,7 +147,7 @@ am_libFB_a_OBJECTS = libFB_a-Alloc.$(OBJEXT) \
 	libFB_a-MonCompo.$(OBJEXT) libFB_a-Monitor.$(OBJEXT) \
 	libFB_a-ParseBC.$(OBJEXT) libFB_a-ParseMat.$(OBJEXT) \
 	libFB_a-Sampling.$(OBJEXT) libFB_a-SetBC.$(OBJEXT) \
-	libFB_a-VoxInfo.$(OBJEXT) libFB_a-Glyph.$(OBJEXT)
+	libFB_a-VoxInfo.$(OBJEXT)
 libFB_a_OBJECTS = $(am_libFB_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -239,9 +239,6 @@ CPM_DIR = @CPM_DIR@
 CPM_LDFLAGS = @CPM_LDFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
-CUT_CFLAGS = @CUT_CFLAGS@
-CUT_DIR = @CUT_DIR@
-CUT_LDFLAGS = @CUT_LDFLAGS@
 CXX = @CXX@
 CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
@@ -354,58 +351,57 @@ top_srcdir = @top_srcdir@
 noinst_lib_LIBRARIES = libFB.a
 noinst_libdir = ../lib
 libFB_a_CXXFLAGS = \
-  -I. \
-  -I../Geometry \
-  @CDM_CFLAGS@ \
-  @CPM_CFLAGS@ \
-  @PL_CFLAGS@ \
-  @TP_CFLAGS@ \
-  @MPICH_CFLAGS@ \
-  @REALOPT@
+-I. \
+-I../Geometry \
+@CDM_CFLAGS@ \
+@CPM_CFLAGS@ \
+@PL_CFLAGS@ \
+@TP_CFLAGS@ \
+@MPICH_CFLAGS@ \
+@REALOPT@
 
 libFB_a_SOURCES = \
-  Alloc.C \
-  Alloc.h \
-  BndOuter.C \
-  BndOuter.h \
-  Component.C \
-  Component.h \
-  Control.C \
-  Control.h \
-  DataHolder.C \
-  DataHolder.h \
-  DomainInfo.h \
-  FBUtility.C \
-  FBUtility.h \
-  FB_Define.h \
-  FindexS3D.h \
-  History.C \
-  History.h \
-  IntervalManager.h \
-  Intrinsic.C \
-  Intrinsic.h \
-  IterationControl.C \
-  IterationControl.h \
-  Medium.h \
-  MonCompo.C \
-  MonCompo.h \
-  Monitor.C \
-  Monitor.h \
-  ParseBC.C \
-  ParseBC.h \
-  ParseMat.C \
-  ParseMat.h \
-  Sampling.C \
-  Sampling.h \
-  SetBC.C \
-  SetBC.h \
-  VoxInfo.C \
-  VoxInfo.h \
-  ffv_f_params.h \
-  mydebug.h \
-  util_Path.h \
-  Glyph.C \
-  Glyph.h
+Alloc.C \
+Alloc.h \
+BndOuter.C \
+BndOuter.h \
+Component.C \
+Component.h \
+Control.C \
+Control.h \
+DataHolder.C \
+DataHolder.h \
+DomainInfo.h \
+FBUtility.C \
+FBUtility.h \
+FB_Define.h \
+FindexS3D.h \
+History.C \
+History.h \
+IntervalManager.h \
+Intrinsic.C \
+Intrinsic.h \
+IterationControl.C \
+IterationControl.h \
+Medium.h \
+MonCompo.C \
+MonCompo.h \
+Monitor.C \
+Monitor.h \
+ParseBC.C \
+ParseBC.h \
+ParseMat.C \
+ParseMat.h \
+PolyProperty.h \
+Sampling.C \
+Sampling.h \
+SetBC.C \
+SetBC.h \
+VoxInfo.C \
+VoxInfo.h \
+ffv_f_params.h \
+mydebug.h \
+util_Path.h
 
 EXTRA_DIST = Makefile_hand depend.inc ReleaseNote_FB.txt
 all: all-am
@@ -491,7 +487,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-Control.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-DataHolder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-FBUtility.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-Glyph.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-History.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-Intrinsic.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libFB_a-IterationControl.Po@am__quote@
@@ -740,20 +735,6 @@ libFB_a-VoxInfo.obj: VoxInfo.C
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='VoxInfo.C' object='libFB_a-VoxInfo.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -c -o libFB_a-VoxInfo.obj `if test -f 'VoxInfo.C'; then $(CYGPATH_W) 'VoxInfo.C'; else $(CYGPATH_W) '$(srcdir)/VoxInfo.C'; fi`
-
-libFB_a-Glyph.o: Glyph.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -MT libFB_a-Glyph.o -MD -MP -MF $(DEPDIR)/libFB_a-Glyph.Tpo -c -o libFB_a-Glyph.o `test -f 'Glyph.C' || echo '$(srcdir)/'`Glyph.C
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFB_a-Glyph.Tpo $(DEPDIR)/libFB_a-Glyph.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='Glyph.C' object='libFB_a-Glyph.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -c -o libFB_a-Glyph.o `test -f 'Glyph.C' || echo '$(srcdir)/'`Glyph.C
-
-libFB_a-Glyph.obj: Glyph.C
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -MT libFB_a-Glyph.obj -MD -MP -MF $(DEPDIR)/libFB_a-Glyph.Tpo -c -o libFB_a-Glyph.obj `if test -f 'Glyph.C'; then $(CYGPATH_W) 'Glyph.C'; else $(CYGPATH_W) '$(srcdir)/Glyph.C'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libFB_a-Glyph.Tpo $(DEPDIR)/libFB_a-Glyph.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='Glyph.C' object='libFB_a-Glyph.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libFB_a_CXXFLAGS) $(CXXFLAGS) -c -o libFB_a-Glyph.obj `if test -f 'Glyph.C'; then $(CYGPATH_W) 'Glyph.C'; else $(CYGPATH_W) '$(srcdir)/Glyph.C'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
