@@ -3125,7 +3125,7 @@ void FFV::setInitialCondition()
     
     
     // セルフェイスの設定　発散値は関係なし
-    BC.modDivergence(d_dv, d_cdf, CurrentTime, &C, v00, d_vf, d_v, m_buf, flop_task);
+    BC.modDivergence(d_dv, d_cdf, CurrentTime, &C, v00, m_buf, flop_task);
     
     
     
@@ -3170,7 +3170,7 @@ void FFV::setInitialCondition()
     BC.OuterVBC(d_v, d_vf, d_cdf, tm, &C, v00, ensPeriodic);
     
     // 流出境界の流出速度の算出
-    BC.modDivergence(d_ws, d_cdf, CurrentTime, &C, v00, d_vf, d_v, m_buf, flop_task);
+    BC.modDivergence(d_ws, d_cdf, CurrentTime, &C, v00, m_buf, flop_task);
 
     //if ( C.isHeatProblem() ) BC.InnerTBC_Periodic()
     

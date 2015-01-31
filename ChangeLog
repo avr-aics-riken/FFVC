@@ -19,6 +19,11 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-01-31
+r1583 bug fix in fill()
+- correction of pressure gradient : update_vec_()
+
+--------------------------
 2015-01-27
 r1582 Introduce flags for unisotropic Cartesian
 - expire naive implementation
@@ -84,7 +89,7 @@ r1569 ducky
 r1568 Introduce boundary conditions for Central scheme
  - pvec_ibc_specv_fdm_(), vobc_pv_specv_fdm_()
  - guide=2 is required for all cases owing to the implementation of traction free BC
- - vobc_tfree_cc_(), vobc_tfree_cf_()
+ - vobc_cc_tfree_(), vobc_cf_tfree_()
  - Introduce Geometry class
  - move findIDfromLabel() from Control to FBUtility
  - move variables related fill function from Control to Geometry

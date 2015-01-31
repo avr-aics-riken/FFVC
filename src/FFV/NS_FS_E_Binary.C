@@ -58,12 +58,12 @@ void FFV::NS_FS_E_Binary()
   // d_cdf Component Directional BC Flag
   // d_ie0  内部エネルギー t^n
   
-  // #### タイムステップ間で保持されるないテンポラリ ####
+  // #### タイムステップ間で保持されないテンポラリ ####
   // d_v0  セルセンタ速度 v^nの保持
   // d_vc  疑似速度ベクトル
   // d_wv  陰解法の時の疑似速度ベクトル，射影ステップの境界条件
   // d_p0  圧力 p^nの保持
-  // d_ws  Poissonのソース項0　速度境界を考慮
+  // d_ws  div{u}　速度境界を考慮
   // d_sq  Poissonのソース項1　反復毎に変化するソース項，摩擦速度，
   // d_b   反復の右辺ベクトル
   // d_cvf コンポーネントの体積率
@@ -322,17 +322,17 @@ void FFV::NS_FS_E_Binary()
 
   // 反復ソースの初期化
   //TIMING_start(tm_assign_const);
-  U.initS3D(d_sq, size, guide, zero);
+  //U.initS3D(d_sq, size, guide, zero);
   //TIMING_stop(tm_assign_const, 0.0);
   
   // Forcingコンポーネントによるソース項の寄与分
-  if ( C.EnsCompo.forcing == ON )
-  {
-    //TIMING_start(tm_force_src);
-    flop=0.0;
-    BC.mod_Psrc_Forcing(d_sq, d_v0, d_bcd, d_cvf, v00, component_array, flop);
-    //TIMING_stop(tm_force_src, flop);
-  }
+  //if ( C.EnsCompo.forcing == ON )
+  //{
+  //  //TIMING_start(tm_force_src);
+  //  flop=0.0;
+  //  BC.mod_Psrc_Forcing(d_sq, d_v0, d_bcd, d_cvf, v00, component_array, flop);
+  //  //TIMING_stop(tm_force_src, flop);
+  //}
   
   
   // 内部周期境界部分のディリクレソース項
@@ -341,7 +341,7 @@ void FFV::NS_FS_E_Binary()
   //TIMING_stop(tm_prdc_src, flop);
   
   
-  // 定数項bの自乗和　b_l2
+  // 定数項 b と自乗和 b_l2 の計算
   TIMING_start("Poisson_Src_Norm");
   b_l2 = 0.0;
   flop = 0.0;
@@ -445,7 +445,7 @@ void FFV::NS_FS_E_Binary()
     // 速度の流束形式の境界条件による発散値の修正
     TIMING_start("Projection_Velocity_BC");
     flop=0.0;
-    BC.modDivergence(d_dv, d_cdf, CurrentTime, &C, v00, d_vf, d_v, m_buf, flop);
+    BC.modDivergence(d_dv, d_cdf, CurrentTime, &C, v00, m_buf, flop);
     TIMING_stop("Projection_Velocity_BC", flop);
     
 
@@ -522,29 +522,29 @@ void FFV::NS_FS_E_Binary()
     }
     
     // 反復ソース項
-    if ( C.EnsCompo.forcing == ON )
-    {
-      TIMING_start("Forcing Source");
-      flop=0.0;
-      BC.mod_Psrc_Forcing(d_sq, d_v, d_bcd, d_cvf, v00, component_array, flop);
-      TIMING_stop("Forcing Source", flop);
+    //if ( C.EnsCompo.forcing == ON )
+    //{
+    //  TIMING_start("Forcing Source");
+    //  flop=0.0;
+    //  BC.mod_Psrc_Forcing(d_sq, d_v, d_bcd, d_cvf, v00, component_array, flop);
+    //  TIMING_stop("Forcing Source", flop);
       
-      TIMING_start("Poisson_Src_Norm");
-      b_l2 = 0.0;
-      flop = 0.0;
-      blas_calc_b_(&b_l2, d_b, d_ws, d_bcp, size, &guide, pitch, &dt, &flop);
-      TIMING_stop("Poisson_Src_Norm", flop);
+    //  TIMING_start("Poisson_Src_Norm");
+    //  b_l2 = 0.0;
+    //  flop = 0.0;
+    //  blas_calc_b_(&b_l2, d_b, d_ws, d_bcp, size, &guide, pitch, &dt, &flop);
+    //  TIMING_stop("Poisson_Src_Norm", flop);
       
-      if ( numProc > 1 )
-      {
-        TIMING_start("A_R_Poisson_Src_L2");
-        double m_tmp = b_l2;
-        if ( paraMngr->Allreduce(&m_tmp, &b_l2, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-        TIMING_stop("A_R_Poisson_Src_L2", 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
-      }
+    //  if ( numProc > 1 )
+    //  {
+    //    TIMING_start("A_R_Poisson_Src_L2");
+    //    double m_tmp = b_l2;
+    //    if ( paraMngr->Allreduce(&m_tmp, &b_l2, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    //    TIMING_stop("A_R_Poisson_Src_L2", 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
+    //  }
       
-      b_l2 = sqrt(b_l2);
-    }
+    //  b_l2 = sqrt(b_l2);
+    //}
     
     
     /* トラクションフリーの場合 >> not neccesarry
@@ -568,7 +568,7 @@ void FFV::NS_FS_E_Binary()
     
     
     
-    // \nabla {}^f u^{n+1})の計算
+    // \nabla {}^f u^{n+1})のノルム
     NormDiv(d_dv);
     
     

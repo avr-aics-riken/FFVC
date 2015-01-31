@@ -136,10 +136,9 @@ public:
    * @brief Jetの流入境界条件による発散値の修正
    * @param [in,out] div   発散値
    * @param [in]     face  面番号
-   * @param [in,out] vf    セルフェイス速度
    * @param [in,out] flop  flop count
    */
-  void divJetInflow(REAL_TYPE* div, const int face, REAL_TYPE* vf, double& flop);
+  void divJetInflow(REAL_TYPE* div, const int face, double& flop);
   
   
   /**

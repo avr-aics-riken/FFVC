@@ -24,7 +24,7 @@
 
 // #################################################################
 // Jetの流入境界条件による発散値の修正
-void IP_Jet::divJetInflow(REAL_TYPE* div, const int face, REAL_TYPE* vf, double& flop)
+void IP_Jet::divJetInflow(REAL_TYPE* div, const int face, double& flop)
 {
   // X_MINUS面の外部境界面のみ
   if ( nID[face] >= 0) return;
@@ -65,7 +65,7 @@ schedule(static)
         {
           size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
           div[m] -= (u_in / dx);
-          vf[_F_IDX_V3D(0, j, k, 0, ix, jx, kx, gd)] = u_in;
+          //vf[_F_IDX_V3D(0, j, k, 0, ix, jx, kx, gd)] = u_in;
         }
       }
     }
@@ -95,7 +95,7 @@ schedule(static)
         {
           size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
           div[m] -= (u_in / dx);
-          vf[_F_IDX_V3D(0, j, k, 0, ix, jx, kx, gd)] = u_in;
+          //vf[_F_IDX_V3D(0, j, k, 0, ix, jx, kx, gd)] = u_in;
         }
       }
     }

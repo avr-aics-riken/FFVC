@@ -418,7 +418,7 @@ end subroutine vobc_cc_copy
 !! @param [in]     nID    隣接ランク番号（nID[]<0の時外部境界面）
 !! @note 今のところ、トラクションフリー面は全て流体
 !<
-subroutine vobc_tfree_cc (v, sz, g, m_face, vf, nID)
+subroutine vobc_cc_tfree (v, sz, g, m_face, vf, nID)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, face, g, m_face
@@ -602,7 +602,7 @@ end select FACES
 
 
 return
-end subroutine vobc_tfree_cc
+end subroutine vobc_cc_tfree
 
 
 !> ********************************************************************
@@ -615,7 +615,7 @@ end subroutine vobc_tfree_cc
 !! ループは0~ixで回す．0から始めるのは，後半処理でスタガード位置の変数からセンターへ内挿するときに
 !! 参照する端点を含めるため．
 !<
-subroutine vobc_tfree_cf (vf, sz, g, m_face, nID)
+subroutine vobc_cf_tfree (vf, sz, g, m_face, nID)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, face, g, m_face
@@ -822,7 +822,7 @@ end select FACES
 
 
 return
-end subroutine vobc_tfree_cf
+end subroutine vobc_cf_tfree
 
 
 
@@ -1002,9 +1002,9 @@ kx = sz(3)
 gc = g
 face = m_face
 
-cx = v_cnv*dt/dh(1)
-cy = v_cnv*dt/dh(2)
-cz = v_cnv*dt/dh(3)
+cx = v_cnv * dt / dh(1)
+cy = v_cnv * dt / dh(2)
+cz = v_cnv * dt / dh(3)
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, gc, cx, cy, cz, face) &

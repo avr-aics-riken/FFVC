@@ -279,7 +279,7 @@ void SetBC3D::InnerPBCperiodic(REAL_TYPE* d_p, int* d_bcd)
 
 // #################################################################
 // 速度境界条件による速度の発散の修正ほか
-void SetBC3D::modDivergence(REAL_TYPE* dv, int* d_cdf, double tm, Control* C, REAL_TYPE* v00, REAL_TYPE* vf, REAL_TYPE* v, Gemini_R* avr, double& flop)
+void SetBC3D::modDivergence(REAL_TYPE* dv, int* d_cdf, double tm, Control* C, REAL_TYPE* v00, Gemini_R* avr, double& flop)
 {
   REAL_TYPE vec[3], dummy, ctr[3];
   int st[3], ed[3];
@@ -341,7 +341,7 @@ void SetBC3D::modDivergence(REAL_TYPE* dv, int* d_cdf, double tm, Control* C, RE
       case OBC_INTRINSIC:
         if ( C->Mode.Example == id_Jet )
         {
-          ((IP_Jet*)Ex)->divJetInflow(dv, face, vf, fcount);
+          ((IP_Jet*)Ex)->divJetInflow(dv, face, fcount);
         }
         break;
     }
@@ -681,7 +681,7 @@ void SetBC3D::modPsrcVBC(REAL_TYPE* dv, int* d_cdf, const double tm, Control* C,
       case OBC_INTRINSIC:
         if ( C->Mode.Example == id_Jet )
         {
-          ((IP_Jet*)Ex)->divJetInflow(dv, face, vf, flop);
+          ((IP_Jet*)Ex)->divJetInflow(dv, face, flop);
         }
         break;
         
@@ -788,13 +788,13 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_cdf, const double
     switch ( obc[face].getClass() )
     {
       case OBC_TRC_FREE:
-        vobc_tfree_cf_(d_vf, size, &gd, &face, nID);
+        vobc_cf_tfree_(d_vf, size, &gd, &face, nID);
         //if ( numProc > 1 )
         //{
         //  if ( paraMngr->BndCommV3D(d_vf, size[0], size[1], size[2], gd, gd) != CPM_SUCCESS ) Exit(0);
         //}
         
-        vobc_tfree_cc_(d_v, size, &gd, &face, d_vf, nID);
+        vobc_cc_tfree_(d_v, size, &gd, &face, d_vf, nID);
         if ( numProc > 1 )
         {
           if ( paraMngr->BndCommV3D(d_v, size[0], size[1], size[2], gd, gd) != CPM_SUCCESS ) Exit(0);

@@ -494,13 +494,6 @@ void Geometry::fill(FILE* fp,
   
   // 最初にフィル対象のセル数を求める
   unsigned long target_count = countCellB(d_bcd, 0);
-  
-  if ( numProc > 1 )
-  {
-    unsigned long tmp_fc = target_count;
-    if ( paraMngr->Allreduce(&tmp_fc, &target_count, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-  
 
   
   Hostonly_
@@ -509,7 +502,7 @@ void Geometry::fill(FILE* fp,
     fprintf(fp,"\tFill initialize -----\n\n");
     
     printf    ("\t\tTotal cell count       = %16ld\n", total_cell);
-    fprintf(fp,"\t\tTotal cel count        = %16ld\n", total_cell);
+    fprintf(fp,"\t\tTotal cell count       = %16ld\n", total_cell);
     
     printf    ("\t\tInitial target count   = %16ld\n", target_count);
     fprintf(fp,"\t\tInitial target count   = %16ld\n", target_count);

@@ -364,7 +364,7 @@ void FFV::NS_FS_E_CDS()
     // セルフェイス速度の境界条件による修正
     TIMING_start("Projection_Velocity_BC");
     flop=0.0;
-    BC.modDivergence(d_dv, d_cdf, CurrentTime, &C, v00, d_vf, d_v, m_buf, flop);
+    BC.modDivergence(d_dv, d_cdf, CurrentTime, &C, v00, m_buf, flop);
     TIMING_stop("Projection_Velocity_BC", flop);
 
     

@@ -1377,7 +1377,7 @@ end subroutine pvec_muscl_les
 !> ********************************************************************
 !! @brief 次ステップのセルセンター，フェイスの速度と発散値を更新
 !! @param [out] v    n+1時刻のセルセンター速度ベクトル
-!! @param [in]  vf   n+1時刻のセルフェイス速度ベクトル
+!! @param [out] vf   n+1時刻のセルフェイス速度ベクトル
 !! @param [out] div  div {u^{n+1}}
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
@@ -1397,14 +1397,15 @@ include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, g, bpx, bvx
 integer, dimension(3)                                     ::  sz
 double precision                                          ::  flop
-real                                                      ::  dt, actv, drx, dry, drz, rx, ry, rz
+real                                                      ::  dt, actv, rx, ry, rz
 real                                                      ::  pc, px, py, pz, pxw, pxe, pys, pyn, pzb, pzt
 real                                                      ::  Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0
 real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb
 real                                                      ::  Uef, Uwf, Vnf, Vsf, Wtf, Wbf
 real                                                      ::  c1, c2, c3, c4, c5, c6
 real                                                      ::  N_e, N_w, N_n, N_s, N_t, N_b
-real                                                      ::  D_e, D_w, D_n, D_s, D_t, D_b
+real                                                      ::  c_w, c_e, c_s, c_n, c_b, c_t
+real                                                      ::  d_w, d_e, d_s, d_n, d_b, d_t
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vc, vf
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div, p
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp, bv
@@ -1418,24 +1419,21 @@ rx = 1.0 / dh(1)
 ry = 1.0 / dh(2)
 rz = 1.0 / dh(3)
 
-drx = dt * rx
-dry = dt * ry
-drz = dt * rz
 
-
-flop = flop + dble(ix)*dble(jx)*dble(kx)*71.0 + 27.0d0
+flop = flop + dble(ix)*dble(jx)*dble(kx)*84.0 + 24.0d0
 
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(bpx, bvx, actv) &
 !$OMP PRIVATE(c1, c2, c3, c4, c5, c6) &
 !$OMP PRIVATE(N_e, N_w, N_n, N_s, N_t, N_b) &
-!$OMP PRIVATE(D_e, D_w, D_n, D_s, D_t, D_b) &
+!$OMP PRIVATE(c_w, c_e, c_s, c_n, c_b, c_t) &
+!$OMP PRIVATE(d_w, d_e, d_s, d_n, d_b, d_t) &
 !$OMP PRIVATE(Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0) &
 !$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
 !$OMP PRIVATE(Uef, Uwf, Vnf, Vsf, Wtf, Wbf) &
 !$OMP PRIVATE(pc, px, py, pz, pxw, pxe, pys, pyn, pzb, pzt) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, drx, dry, drz, rx, ry, rz)
+!$OMP FIRSTPRIVATE(ix, jx, kx, dt, rx, ry, rz)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 do k=1,kx
@@ -1461,13 +1459,21 @@ N_n = real(ibits(bpx, bc_n_N, 1))  ! n
 N_b = real(ibits(bpx, bc_n_B, 1))  ! b
 N_t = real(ibits(bpx, bc_n_T, 1))  ! t
 
-! Dirichlet(p=0)条件のとき 0.0
-D_w = real(ibits(bpx, bc_d_W, 1))  ! w
-D_e = real(ibits(bpx, bc_d_E, 1))  ! e
-D_s = real(ibits(bpx, bc_d_S, 1))  ! s
-D_n = real(ibits(bpx, bc_d_N, 1))  ! n
-D_b = real(ibits(bpx, bc_d_B, 1))  ! b
-D_t = real(ibits(bpx, bc_d_T, 1))  ! t
+! \phi^D \phi^N
+c_w = real(ibits(bpx, bc_ndag_W, 1))  ! w
+c_e = real(ibits(bpx, bc_ndag_E, 1))  ! e
+c_s = real(ibits(bpx, bc_ndag_S, 1))  ! s
+c_n = real(ibits(bpx, bc_ndag_N, 1))  ! n
+c_b = real(ibits(bpx, bc_ndag_B, 1))  ! b
+c_t = real(ibits(bpx, bc_ndag_T, 1))  ! t
+
+! (1 - \phi^D) \phi^N
+d_w = real(ibits(bpx, bc_dn_W, 1))
+d_e = real(ibits(bpx, bc_dn_E, 1))
+d_s = real(ibits(bpx, bc_dn_S, 1))
+d_n = real(ibits(bpx, bc_dn_N, 1))
+d_b = real(ibits(bpx, bc_dn_B, 1))
+d_t = real(ibits(bpx, bc_dn_T, 1))
 
 
 ! 疑似ベクトル
@@ -1483,12 +1489,12 @@ Wb0 = vc(i  ,j  ,k-1, 3)
 Wp0 = vc(i  ,j  ,k  , 3)
 Wt0 = vc(i  ,j  ,k+1, 3)
 
-Uw = 0.5*( Up0 + Uw0 )*N_w ! 18 flop
-Ue = 0.5*( Up0 + Ue0 )*N_e
-Vs = 0.5*( Vp0 + Vs0 )*N_s
-Vn = 0.5*( Vp0 + Vn0 )*N_n
-Wb = 0.5*( Wp0 + Wb0 )*N_b
-Wt = 0.5*( Wp0 + Wt0 )*N_t
+Uw = 0.5 * ( Up0 + Uw0 ) * N_w ! 18 flop
+Ue = 0.5 * ( Up0 + Ue0 ) * N_e
+Vs = 0.5 * ( Vp0 + Vs0 ) * N_s
+Vn = 0.5 * ( Vp0 + Vn0 ) * N_n
+Wb = 0.5 * ( Wp0 + Wb0 ) * N_b
+Wt = 0.5 * ( Wp0 + Wt0 ) * N_t
 
 ! c=0.0(VBC), 1.0(Fluid); VBCは内部と外部の両方
 if ( ibits(bvx, bc_face_W, bitw_5) /= 0 ) c1 = 0.0
@@ -1498,25 +1504,26 @@ if ( ibits(bvx, bc_face_N, bitw_5) /= 0 ) c4 = 0.0
 if ( ibits(bvx, bc_face_B, bitw_5) /= 0 ) c5 = 0.0
 if ( ibits(bvx, bc_face_T, bitw_5) /= 0 ) c6 = 0.0
 
-! 圧力勾配 18flop
-pc  = p(i,  j,  k  )
-pxw = (-p(i-1,j  ,k  )*D_w + pc) * N_w
-pxe = ( p(i+1,j  ,k  )*D_e - pc) * N_e
-pys = (-p(i  ,j-1,k  )*D_s + pc) * N_s
-pyn = ( p(i  ,j+1,k  )*D_n - pc) * N_n
-pzb = (-p(i  ,j  ,k-1)*D_b + pc) * N_b
-pzt = ( p(i  ,j  ,k+1)*D_t - pc) * N_t
-px = 0.5*(pxe + pxw)
-py = 0.5*(pyn + pys)
-pz = 0.5*(pzt + pzb)
 
-! セルフェイス VBCの寄与と壁面の影響は除外 18flop
-Uwf = (Uw - drx * pxw) * c1 * N_w
-Uef = (Ue - drx * pxe) * c2 * N_e
-Vsf = (Vs - dry * pys) * c3 * N_s
-Vnf = (Vn - dry * pyn) * c4 * N_n
-Wbf = (Wb - drz * pzb) * c5 * N_b
-Wtf = (Wt - drz * pzt) * c6 * N_t
+! 圧力勾配 24flop >> DirichletとNeumannの値を0としている
+pc  = p(i, j, k)
+pxw = rx * (-p(i-1,j  ,k  )*c_w + (c_w + 2.0*d_w) * pc )
+pxe = rx * ( p(i+1,j  ,k  )*c_e - (c_e + 2.0*d_e) * pc )
+pys = ry * (-p(i  ,j-1,k  )*c_s + (c_s + 2.0*d_s) * pc )
+pyn = ry * ( p(i  ,j+1,k  )*c_n - (c_n + 2.0*d_n) * pc )
+pzb = rz * (-p(i  ,j  ,k-1)*c_b + (c_b + 2.0*d_b) * pc )
+pzt = rz * ( p(i  ,j  ,k+1)*c_t - (c_t + 2.0*d_t) * pc )
+px = 0.5 * (pxe + pxw)
+py = 0.5 * (pyn + pys)
+pz = 0.5 * (pzt + pzb)
+
+! セルフェイス VBCの寄与と壁面の影響は除外 24flop
+Uwf = (Uw - dt * pxw) * c1 * N_w
+Uef = (Ue - dt * pxe) * c2 * N_e
+Vsf = (Vs - dt * pys) * c3 * N_s
+Vnf = (Vn - dt * pyn) * c4 * N_n
+Wbf = (Wb - dt * pzb) * c5 * N_b
+Wtf = (Wt - dt * pzt) * c6 * N_t
 
 ! i=1...ix >> vfは0...ixの範囲をカバーするので，通信不要
 vf(i-1,j  ,k  ,1) = Uwf
@@ -1526,12 +1533,12 @@ vf(i  ,j  ,k  ,2) = Vnf
 vf(i  ,j  ,k-1,3) = Wbf
 vf(i  ,j  ,k  ,3) = Wtf
 
-div(i,j,k) = ((Uef - Uwf) * rx + (Vnf - Vsf) * ry + (Wtf - Wbf) * rz) * actv ! 8flop
+div(i,j,k) = ((Uef - Uwf) * rx + (Vnf - Vsf) * ry + (Wtf - Wbf) * rz) * actv ! 9flop
 
 ! セルセンタの速度更新 9flop
-v(i,j,k,1) = ( Up0-px*drx ) * actv
-v(i,j,k,2) = ( Vp0-py*dry ) * actv
-v(i,j,k,3) = ( Wp0-pz*drz ) * actv
+v(i,j,k,1) = ( Up0 - dt * px ) * actv
+v(i,j,k,2) = ( Vp0 - dt * py ) * actv
+v(i,j,k,3) = ( Wp0 - dt * pz ) * actv
 
 end do
 end do
@@ -1858,7 +1865,7 @@ rx = 1.0/dh(1)
 ry = 1.0/dh(2)
 rz = 1.0/dh(3)
 
-flop  = flop + dble(ix)*dble(jx)*dble(kx)*33.0d0 + 18.0d0
+flop  = flop + dble(ix)*dble(jx)*dble(kx)*33.0d0 + 24.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(bvx, actv, bix) &

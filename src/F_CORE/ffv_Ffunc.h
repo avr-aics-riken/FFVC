@@ -61,8 +61,8 @@
 #define vobc_cc_copy_       VOBC_CC_COPY
 #define vobc_div_drchlt_    VOBC_DIV_DRCHLT
 #define vobc_cc_outflow_    VOBC_CC_OUTFLOW
-#define vobc_tfree_cc_      VOBC_TFREE_CC
-#define vobc_tfree_cf_      VOBC_TFREE_CF
+#define vobc_cc_tfree_      VOBC_CC_TFREE
+#define vobc_cf_tfree_      VOBC_CF_TFREE
 
 // ffv_vbc_outer_face.f90
 #define vobc_face_drchlt_   VOBC_FACE_DRCHLT
@@ -426,14 +426,14 @@ extern "C" {
                       REAL_TYPE* vc,
                       int* nID);
 
-  void vobc_tfree_cc_ (REAL_TYPE* v,
+  void vobc_cc_tfree_ (REAL_TYPE* v,
                        int* sz,
                        int* g,
                        int* m_face,
                        REAL_TYPE* vf,
                        int* nID);
   
-  void vobc_tfree_cf_ (REAL_TYPE* vf,
+  void vobc_cf_tfree_ (REAL_TYPE* vf,
                        int* sz,
                        int* g,
                        int* m_face,
