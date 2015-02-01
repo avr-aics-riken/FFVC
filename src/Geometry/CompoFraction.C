@@ -142,7 +142,6 @@ int CompoFraction::CylinderPlane(const int st[],
         base.assign((REAL_TYPE)i-0.5, (REAL_TYPE)j-0.5, (REAL_TYPE)k-0.5);
         b = o + base * pch;
         
-        
         // 基点bが円柱のz軸方向の外側にあることが条件
         if ( b.z < 0.0 || b.z > depth )
         {
@@ -410,6 +409,8 @@ REAL_TYPE CompoFraction::getBboxArea(int* st, int* ed)
   if ( ed[1] > size[1] ) ed[1] = size[1];
   if ( ed[2] > size[2] ) ed[2] = size[2];
   
+  //printf("min : %3d %3d %3d\n", st[0], st[1] ,st[2]);
+  //printf("max : %3d %3d %3d\n", ed[0], ed[1] ,ed[2]);
   // ここで得られたst[],ed[]の値は、VoxInfo.CのencVIBCrev()で書き換えられる
   
   return a;
@@ -451,7 +452,7 @@ bool CompoFraction::intersectCylinder(const int st[],
   }
   
   int m_sz[4] = {ix, jx, kx, gd};
-  
+
   
   int count = 0;
   
@@ -466,7 +467,7 @@ bool CompoFraction::intersectCylinder(const int st[],
   // 上面
   pl[3] = depth;
   count += CylinderPlane(st, ed, bid, cut, pl, tgt_id, m_sz);
-  
+
   
   if (shape == shape_cylinder)
   {
@@ -638,7 +639,7 @@ void CompoFraction::setShapeParam (const REAL_TYPE m_nv[3],
     Exit(0);
   }
   
-  printf("\tSolid Revolution : %s\n\n", (shape == shape_plate)? "PLATE":"CYLINDER");
+  printf("\n\tSolid Revolution : %s\n\n", (shape == shape_plate)? "PLATE":"CYLINDER");
 }
 
 

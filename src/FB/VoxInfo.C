@@ -2423,6 +2423,8 @@ unsigned long VoxInfo::encVbitIBCrev (const int order,
             
             int flag = 0;
             
+            //printf("%2d : %2d %2d %2d %2d %2d %2d\n", odr, id_w, id_e, id_s, id_n, id_b, id_t);
+            
             // X-
             if ( id_w == odr )
             {

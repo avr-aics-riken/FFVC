@@ -2722,8 +2722,9 @@ void FFV::setBCinfo()
  */
 void FFV::setComponentSR()
 {
-  // 有次元パラメータを渡す
-  CompoFraction CF(size, guide, myRank, pitchD, originD, 20);
+  // 注意！！
+  // ###   無次元パラメータを渡す  ###
+  CompoFraction CF(size, guide, myRank, pitch, origin, 20);
   
   for (int n=1; n<=C.NoCompo; n++)
   {
