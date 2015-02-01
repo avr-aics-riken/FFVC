@@ -50,7 +50,7 @@ BcTable {
 
 
 ConvectionTerm {
-  Scheme  = "O3MUSCL"
+  Scheme  = "O3muscl"
   Limiter = "minmod"
 }
 
@@ -97,25 +97,46 @@ IntrinsicExample {
 
 Iteration {
   LinearSolver[@] {
-    Alias                = "sor2_strict"
+    Alias                = "sor2"
     class                = "sor2sma"
-    MaxIteration         = 100
-    ConvergenceCriterion = 1.0e-2
-    NormType             = "RbyR0"
+    MaxIteration         = 50
+    ResidualCriterion    = 1.0e-4
+    ResidualNorm         = "RbyX"
+    ErrorNorm            = "DeltaXbyX"
     Omega                = 1.1
     CommMode             = "async"
+    NaiveImplementation  = "off"
   }
 
   LinearSolver[@] {
-    Alias                = "sor2_loose"
+    Alias                = "sor"
     class                = "sor"
-    MaxIteration         = 20
-    ConvergenceCriterion = 1.0e-2
-    NormType             = "RbyB"
+    MaxIteration         = 50
+    ResidualCriterion    = 1.0e-4
+    ResidualNorm         = "RbyX"
+    ErrorNorm            = "DeltaXbyX"
     Omega                = 1.1
   }
 
-  Pressure    = "sor2_strict"
+  LinearSolver[@] {
+    Alias                = "bicg"
+    class                = "bicgstab"
+    MaxIteration         = 100
+    ResidualCriterion    = 1.0e-4
+    ResidualNorm         = "RbyX"
+    ErrorNorm            = "DeltaXbyX"
+    Precondition         = "on"
+    InnerIteration       = 5
+    Omega                = 1.1
+    CommMode             = "async"
+    NaiveImplementation  = "off"
+  }
+
+  DivMaxIteration        = 100
+  DivCriterion           = 1.0e-4
+  DivNorm                = "max" // "L2"
+
+  Pressure    = "bicg"
   Velocity    = ""
   Temperature = "sor2_loose"   
 }
@@ -144,7 +165,7 @@ MediumTable {
 
 
 MonitorList {
-  Log             = "On"
+  Log             = "Off"
   OutputMode      = "gather"
   Sampling {
     TemporalType  = "step"
@@ -249,7 +270,6 @@ MonitorList {
 Output {
   Log {
     Base             = "On"
-    Iteration        = "Off"
     Profiling        = "On"
     WallInfo         = "Off"
     Console {
@@ -263,13 +283,9 @@ Output {
   }
 
   Data {
+    Format         = "sph"
+
     BasicVariables {
-      Format         = "sph"
-      TemporalType   = "time"
-      Interval       = 0.02
-    }
-    DerivedVariables {
-      Format         = "sph"
       TemporalType   = "step"
       Interval       = 100
 
@@ -280,17 +296,27 @@ Output {
     }
 
     StatisticalVariables {
-      Format        = "sph"
       TemporalType  = "step"
-      Interval      = 10
+      Interval      = 100
+
+      RMSvelocity       = "Off"
+      RMSmeanVelocity   = "Off"
     }
   }
     
   FormatOption {
     SPH {
-      GuideOut        = "Without"
+      GuideOut        = 2
       TimeSlice       = "off"
-      DirectoryPath   = "hoge_t1"
+      DirectoryPath   = "hoge"
+    }
+
+    PLOT3D {
+      GuideOut        = 2
+      TimeSlice       = "off"
+      DirectoryPath   = "hogep"
+      XYZfile         = "on"
+      IblankFile      = "on"
     }
   }
 }
@@ -331,9 +357,11 @@ StartCondition {
     Staging     = "off"
 
     DFIfiles {
-      Velocity    = "vel-t0.dfi"
-      Pressure    = "prs-t0.dfi"
-      Fvelocity   = "fvel-t0.dfi"
+      Velocity    = "vel.dfi"
+      Pressure    = "prs.dfi"
+      Fvelocity   = "fvel.dfi"
+      Instantaneous = "field.dfi"
+      Statistic     = "field_stat.dfi"
     }
   }
 
@@ -341,13 +369,20 @@ StartCondition {
     MassDensity = 1.0
     Pressure    = 0.0
     Velocity    = (0.0, 0.0, 0.0)
+
+    Perturbation {
+      DirectionOfChannelWall  = "Y"
+      ChannelWidth            = 1.0
+      BulkVelocity            = 0.3
+      TubulenceReynoldsNumber = 180.0
+    } 
   }
 }
 
 TimeControl {
   Acceleration {
     TemporalType     = "Time"
-    AcceleratingTime = 1.0
+    AcceleratingTime = 0.0
   }
 
   TimeStep {
@@ -356,14 +391,15 @@ TimeControl {
   }
 
   Session {
-    TemporalType   = "time"
+    TemporalType   = "step"
     Start          = 0    // 0 or 0.0の場合initial start
-    End            = 0.4
+    End            = 1000
+    //restartStep    = 31 
   }
 
   Statistic {
     TemporalType   = "step"
-    Start          = 0  // 指定区間の統計をとる．両方とも0のときoff
+    Start          = 0  // 指定区間の平均をとる．両方とも0のときoff
     End            = 0 
   }
 }
@@ -377,6 +413,8 @@ TreatmentOfWall {
 
 TurbulenceModeling {
   Model = "no"
+  Cs    = 0.2
+  InitialPerturbation = "off"
 }
 
 Unit {

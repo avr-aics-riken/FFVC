@@ -580,9 +580,7 @@ int FFV::FilterInitialize(int argc, char **argv)
   // Fill
   Hostonly_
   {
-    printf(    "\n----------\n\n");
     fprintf(fp,"\n----------\n\n");
-    printf(    "\t>> Fill\n\n");
     fprintf(fp,"\t>> Fill\n\n");
   }
   
@@ -609,11 +607,6 @@ int FFV::FilterInitialize(int argc, char **argv)
   // パラメータファイルから得られた内部BCコンポーネント数を表示
   Hostonly_
   {
-    printf("\n----------\n\n");
-    printf("\t>> Components\n\n");
-    C.printNoCompo(stdout);
-    printf("\n"); fflush(stdout);
-    
     fprintf(fp,"\n----------\n\n");
     fprintf(fp,"\t>> Components\n\n");
     C.printNoCompo(fp);

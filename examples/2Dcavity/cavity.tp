@@ -7,6 +7,9 @@ ApplicationControl {
 
 BcTable {
 
+  LocalBoundary {
+  }
+
   OuterBoundary {
       
     outerWall {
@@ -48,21 +51,19 @@ BcTable {
 
 
 ConvectionTerm {
-  Scheme  = "O3MUSCL"
+  Scheme  = "O2central"
   Limiter = "minmod"
 }
 
 
 DomainInfo {
   UnitOfLength   = "NonDimensional"
-  GlobalOrigin   = (-0.5, -0.5, -0.5   )
-  GlobalRegion   = (1.0,  1.0,  1.0    )
-  GlobalVoxel    = (64   , 64   , 3   )
+  GlobalOrigin   = (-0.5, -0.5, 0.0   )
+  GlobalRegion   = (1.0,  1.0,  1.5625e-02    )
+  GlobalVoxel    = (64   , 64   , 1   )
   
   //GlobalPitch    = (1.5625e-02, 1.5625e-02, 1.5625e-02)
   //GlobalDivision = (1    , 1    , 1    )
-
-  ActiveSubDomainFile = "hoge"
 
 }
 
@@ -70,9 +71,10 @@ DomainInfo {
 GeometryModel {
   Source                  = "rectangular"
   FillMedium              = "air"
-  HintOfFillSeedDirection = "no"
+  HintOfFillSeedDirection = "Xminus"
   HintOfFillSeedMedium    = "air"
   VoxelOutput             = "off"
+  OutputGlyph             = "off"
 }
 
 
@@ -95,27 +97,47 @@ IntrinsicExample {
 
 Iteration {
   LinearSolver[@] {
-    Alias                = "sor2_strict"
+    Alias                = "sor2"
     class                = "sor2sma"
-    MaxIteration         = 50
-    ConvergenceCriterion = 1.0e-4
-    NormType             = "RbyR0"
+    MaxIteration         = 20
+    ResidualCriterion    = 1.0e-4
+    ResidualNorm         = "RbyB"
+    ErrorNorm            = "DeltaXbyX"
+    Omega                = 1.1
+    CommMode             = "async"
+    NaiveImplementation  = "off"
+  }
+
+  LinearSolver[@] {
+    Alias                = "sor"
+    class                = "sor"
+    MaxIteration         = 20
+    ResidualCriterion    = 1.0e-3
+    ResidualNorm         = "RbyX"
+    ErrorNorm            = "DeltaXbyX"
+    Omega                = 1.1
+  }
+
+  LinearSolver[@] {
+    Alias                = "bicg"
+    class                = "bicgstab"
+    MaxIteration         = 100
+    ResidualCriterion    = 1.0e-6
+    ResidualNorm         = "RbyB"
+    ErrorNorm            = "DeltaXbyX"
+	Precondition         = "on"
+    InnerIteration       = 5
     Omega                = 1.1
     CommMode             = "async"
   }
 
-  LinearSolver[@] {
-    Alias                = "sor2_loose"
-    class                = "sor"
-    MaxIteration         = 20
-    ConvergenceCriterion = 1.0e-2
-    NormType             = "RbyB"
-    Omega                = 1.1
-  }
+  DivMaxIteration        = 100
+  DivCriterion           = 1.0e-4
+  DivNorm                = "max" // "L2"
 
-  Pressure    = "sor2_strict"
+  Pressure    = "bicg"
   Velocity    = ""
-  Temperature = "sor2_loose"   
+  Temperature = "sor2" 
 }
 
 
@@ -180,7 +202,6 @@ MonitorList {
 Output {
   Log {
     Base             = "On"
-    Iteration        = "Off"
     Profiling        = "On"
     WallInfo         = "Off"
     Console {
@@ -194,13 +215,9 @@ Output {
   }
 
   Data {
+    Format         = "sph"
+
     BasicVariables {
-      Format         = "sph"
-      TemporalType   = "time"
-      Interval       = 0.1
-    }
-    DerivedVariables {
-      Format         = "sph"
       TemporalType   = "step"
       Interval       = 100
 
@@ -208,20 +225,24 @@ Output {
       Helicity       = "Off"
       Vorticity      = "Off"
       Qcriterion     = "Off"
+      Divergence     = "On"
     }
 
     StatisticalVariables {
-      Format        = "sph"
-      TemporalType  = "step" // /TimeControl/Statistic/TemporalTypeでの指定と整合性をとる
-      Interval      = 10
+      TemporalType  = "step"
+      Interval      = 1.0
+
+      VelocityStat    = "On"
+      PressureStat    = "Off"
+      TemperatureStat = "Off"
     }
   }
     
   FormatOption {
     SPH {
-      GuideOut        = "Without"
+      GuideOut        = 2
       TimeSlice       = "off"
-      DirectoryPath   = "hoge"
+      DirectoryPath   = "2d"
     }
   }
 }
@@ -272,6 +293,13 @@ StartCondition {
     MassDensity = 1.0
     Pressure    = 0.0
     Velocity    = (0.0, 0.0, 0.0)
+
+    Perturbation {
+      DirectionOfChannelWall  = "Y"
+      ChannelWidth            = 1.0
+      BulkVelocity            = 1.0
+      TubulenceReynoldsNumber = 180.0
+    } 
   }
 }
 
@@ -287,14 +315,14 @@ TimeControl {
   }
 
   Session {
-    TemporalType   = "time"
+    TemporalType   = "step"
     Start          = 0    // 0 or 0.0の場合initial start
-    End            = 40
+    End            = 4000
   }
 
   Statistic {
     TemporalType   = "step"
-    Start          = 0  // 指定区間の統計をとる．両方とも0のときoff
+    Start          = 0  // 指定区間の平均をとる．両方とも0のときoff
     End            = 0 
   }
 }
@@ -308,6 +336,8 @@ TreatmentOfWall {
 
 TurbulenceModeling {
   Model = "no"
+  Cs    = 0.2
+  InitialPerturbation = "off"
 }
 
 Unit {

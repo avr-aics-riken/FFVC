@@ -19,6 +19,12 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-02-01
+r1584 correct id management of IP_Cylinder
+- update parameter files for intrinsic examples
+  >> 2Dcavity, 3Dcavity, 2Dcyl, Cylinder, LDC, PMT
+
+--------------------------
 2015-01-31
 r1583 bug fix in fill()
 - correction of pressure gradient : update_vec_()

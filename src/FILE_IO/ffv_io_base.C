@@ -429,6 +429,7 @@ void IO_BASE::getFIOparams()
     if ( tpCntl->getInspectedValue(label, str) )
     {
       if     ( !strcasecmp(str.c_str(), "on") )  IO_BCflag = ON;
+      else if( !strcasecmp(str.c_str(), "off") ) IO_BCflag = OFF;
       else
       {
         Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());

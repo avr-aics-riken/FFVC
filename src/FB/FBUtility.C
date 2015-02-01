@@ -268,6 +268,21 @@ int FBUtility::findIDfromLabel(const MediumList* mat, const int Nmax, const std:
 
 
 // #################################################################
+// CompoList中に登録されているtypeとkeyに対するIDを返す。発見できない場合はzero
+int FBUtility::findIDfromCmp(const CompoList* cmp, const int Nmax, const std::string key, const int type)
+{
+  std::string str = key;
+  
+  for (int i=1; i<=Nmax; i++)
+  {
+    if ( !strcasecmp(str.c_str(), cmp[i].getMedium().c_str()) && cmp[i].getType()==OBSTACLE ) return i;
+  }
+  
+  return 0;
+}
+
+
+// #################################################################
 /**
  * @brief S3D配列の初期化 (REAL_TYPE)
  * @param [out]    dst   出力

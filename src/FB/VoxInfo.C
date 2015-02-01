@@ -285,11 +285,11 @@ void VoxInfo::copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const
 /**
  * @brief セルセンターのIDから対象セル数をカウントし，サブドメイン内にコンポーネントがあれば存在フラグを立てる
  * @param [in]     order エンコードする格納順
- * @param [in]     bx    BCindex B/H
+ * @param [in]     bcd   BCindex B/H
  * @param [in,out] cmp   CompoList
  * @retval エンコードした個数
  */
-unsigned long VoxInfo::countCC (const int order, const int* bx, CompoList* cmp)
+unsigned long VoxInfo::countCC (const int order, const int* bcd, CompoList* cmp)
 {
   if ( order > 31 )
   {
@@ -323,7 +323,7 @@ unsigned long VoxInfo::countCC (const int order, const int* bx, CompoList* cmp)
       for (int i=1; i<=ix; i++) {
         
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        if ( DECODE_CMP( bx[m] )  == odr )
+        if ( DECODE_CMP( bcd[m] )  == odr )
         {
 #pragma omp critical
           {
@@ -369,21 +369,21 @@ unsigned long VoxInfo::countCC (const int order, const int* bx, CompoList* cmp)
 /**
  * @brief セルフェイスの境界IDから対象セル数をカウントし，サブドメイン内にコンポーネントがあれば存在フラグを立てる
  * @param [in]     key   MediumListのエントリ番号
- * @param [in]     bx    BCindex B/H
+ * @param [in]     bcd   BCindex B/H
  * @param [in]     bid   交点ID
  * @param [in,out] cmp   CompoList
  * @param [in]     attrb サーチオプション（"Fluid", "Solid", "Both"）
  * @retval エンコードした個数
  * @note 固体の交点IDをもつセルを対象とする
  */
-unsigned long VoxInfo::countCF(const int key, const int* bx, const int* bid, CompoList* cmp, const string attrb)
+unsigned long VoxInfo::countCF(const int key, const int* bcd, const int* bid, CompoList* cmp, const string attrb)
 {
 
   if ( key > 31 )
   {
     Hostonly_
     {
-      printf("Error : The encording order [%d] is greater than 31.\n", key);
+      printf("\nError : The encording order [%d] is greater than 31.\n", key);
       Exit(0);
     }
   }
@@ -421,8 +421,9 @@ unsigned long VoxInfo::countCF(const int key, const int* bx, const int* bid, Com
           int qb = getBit5(qq, 4);
           int qt = getBit5(qq, 5);
           int flag = 0;
+          //printf("%3d %3d %3d : odr=%d %2d : %2d %2d %2d %2d %2d %2d\n", i,j,k, odr, DECODE_CMP(bcd[m]), qw, qe, qs, qn, qb, qt);
           
-          if ( IS_FLUID(bx[m]) )
+          if ( IS_FLUID(bcd[m]) )
           {
             if ( qw == odr ) flag++;
             if ( qe == odr ) flag++;
@@ -430,7 +431,7 @@ unsigned long VoxInfo::countCF(const int key, const int* bx, const int* bid, Com
             if ( qn == odr ) flag++;
             if ( qb == odr ) flag++;
             if ( qt == odr ) flag++;
-            //printf("%d %d %d : %2d %2d %2d %2d %2d %2d\n", i,j,k,qw, qe, qs, qn, qb, qt);
+            
             
             if ( flag != 0 )
             {
@@ -466,7 +467,7 @@ unsigned long VoxInfo::countCF(const int key, const int* bx, const int* bid, Com
           int qt = getBit5(qq, 5);
           int flag = 0;
           
-          if ( !IS_FLUID(bx[m]) )
+          if ( !IS_FLUID(bcd[m]) )
           {
             if ( qw == odr ) flag++;
             if ( qe == odr ) flag++;
@@ -3092,7 +3093,7 @@ unsigned long VoxInfo::replaceIsolatedFcell(int* bcd, const int fluid_id, const 
 
 // #################################################################
 // bx[]に各境界条件の共通のビット情報をエンコードする
-void VoxInfo::setBCIndexBase (int* bx,
+void VoxInfo::setBCIndexBase (int* bcd,
                               const int* bid,
                               const MediumList* mat,
                               CompoList* cmp,
@@ -3112,14 +3113,14 @@ void VoxInfo::setBCIndexBase (int* bx,
   // セルの状態を流体としておく
   for (size_t m=0; m<nx; m++)
   {
-    bx[m] = onBit( bx[m], STATE_BIT );
+    bcd[m] = onBit( bcd[m], STATE_BIT );
   }
   
   
   // 状態のエンコード
   for (size_t m=0; m<nx; m++)
   {
-    int s = bx[m];
+    int s = bcd[m];
     int odr = DECODE_CMP(s);
     
     if ( mat[odr].getState() == FLUID )
@@ -3130,7 +3131,7 @@ void VoxInfo::setBCIndexBase (int* bx,
     {
       s = offBit( s, STATE_BIT );
     }
-    bx[m] = s;
+    bcd[m] = s;
   }
   
   
@@ -3139,7 +3140,7 @@ void VoxInfo::setBCIndexBase (int* bx,
   {
     if ( !strcasecmp(cmp[n].getBCstr().c_str(), "medium") )
     {
-      cmp[n].setElement( countCC(n, bx, &cmp[n]) );
+      cmp[n].setElement( countCC(n, bcd, &cmp[n]) );
     }
   }
   
@@ -3148,16 +3149,13 @@ void VoxInfo::setBCIndexBase (int* bx,
   {
     if ( cmp[n].getType() == OBSTACLE )
     {
-      int key = FBUtility::findIDfromLabel(mat, m_NoMedium, cmp[n].getMedium());
-
-      cmp[n].setElement( countCF(n, bx, bid, &cmp[n], "Fluid") );
-      cmp[n].setMatodr(key); // MediumListのエントリ番号、力の計算時に使用
+      cmp[n].setElement( countCF(n, bcd, bid, &cmp[n], "Fluid") );
     }
   }
 
   
   // BCIndexにそのセルが計算に有効(active)かどうかをエンコードする．KindOfSolverによって異なる
-  encActive(Lcell, Gcell, bx, KOS);
+  encActive(Lcell, Gcell, bcd, KOS);
   
 }
 
@@ -3165,7 +3163,7 @@ void VoxInfo::setBCIndexBase (int* bx,
 
 // #################################################################
 // 温度境界条件のビット情報をエンコードする
-void VoxInfo::setBCIndexH(int* cdf, int* bd, SetBC* BC, const int kos, CompoList* cmp, long long* cut, int* bid, const int m_NoCompo)
+void VoxInfo::setBCIndexH(int* cdf, int* bcd, SetBC* BC, const int kos, CompoList* cmp, long long* cut, int* bid, const int m_NoCompo)
 {
   int ix = size[0];
   int jx = size[1];
@@ -3179,7 +3177,7 @@ void VoxInfo::setBCIndexH(int* cdf, int* bd, SetBC* BC, const int kos, CompoList
     for (int j=0; j<=jx+1; j++) {
       for (int i=0; i<=ix+1; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        bd[m] |= ( 0x3f << ADIABATIC_W ); // 6bitまとめて初期化
+        bcd[m] |= ( 0x3f << ADIABATIC_W ); // 6bitまとめて初期化
       }
     }
   }
@@ -3190,11 +3188,11 @@ void VoxInfo::setBCIndexH(int* cdf, int* bd, SetBC* BC, const int kos, CompoList
   {
     case THERMAL_FLOW:
     case THERMAL_FLOW_NATURAL:
-      encAdiabatic(bd, "fluid", bid);
+      encAdiabatic(bcd, "fluid", bid);
       break;
       
     case SOLID_CONDUCTION:
-      encAdiabatic(bd, "solid", bid);
+      encAdiabatic(bcd, "solid", bid);
       break;
       
     case CONJUGATE_HT:
@@ -3217,16 +3215,16 @@ void VoxInfo::setBCIndexH(int* cdf, int* bd, SetBC* BC, const int kos, CompoList
       case OBC_WALL:
         if ( HT == ADIABATIC )
         {
-          encAdiabatic(bd, "outer-off", bid, face);
+          encAdiabatic(bcd, "outer-off", bid, face);
         }
         else // ほかの熱境界は断熱マスクを外す
         {
-          encAdiabatic(bd, "outer-on", bid, face);
+          encAdiabatic(bcd, "outer-on", bid, face);
         }
         break;
         
       case OBC_SYMMETRIC:
-        encAdiabatic(bd, "outer-off", bid, face);
+        encAdiabatic(bcd, "outer-off", bid, face);
         break;
     }
   }
@@ -3234,7 +3232,7 @@ void VoxInfo::setBCIndexH(int* cdf, int* bd, SetBC* BC, const int kos, CompoList
 
   
   // 内部
-  // bdの下位5ビットにはコンポーネントのエントリをエンコード
+  // bcdの下位5ビットにはコンポーネントのエントリをエンコード
   for (int n=1; n<=m_NoCompo; n++)
   {
     switch ( cmp[n].getType() )
@@ -3242,15 +3240,15 @@ void VoxInfo::setBCIndexH(int* cdf, int* bd, SetBC* BC, const int kos, CompoList
       case ADIABATIC:
         if ( (kos == THERMAL_FLOW) || (kos == THERMAL_FLOW_NATURAL) )
         {
-          cmp[n].setElement( encQface(n, bid, cdf, bd, false, FLUID, &cmp[n]) );
+          cmp[n].setElement( encQface(n, bid, cdf, bcd, false, FLUID, &cmp[n]) );
         }
         else if ( (kos == SOLID_CONDUCTION) )
         {
-          cmp[n].setElement( encQface(n, bid, cdf, bd, false, SOLID, &cmp[n]) );
+          cmp[n].setElement( encQface(n, bid, cdf, bcd, false, SOLID, &cmp[n]) );
         }
         else if ( (kos == CONJUGATE_HT) || (kos == CONJUGATE_HT_NATURAL) )
         {
-          cmp[n].setElement( encQface(n, bid, cdf, bd, false, ANY_STATE, &cmp[n]) );
+          cmp[n].setElement( encQface(n, bid, cdf, bcd, false, ANY_STATE, &cmp[n]) );
         }
         else
         {
@@ -3263,15 +3261,15 @@ void VoxInfo::setBCIndexH(int* cdf, int* bd, SetBC* BC, const int kos, CompoList
       case ISOTHERMAL:
         if ( (kos == THERMAL_FLOW) || (kos == THERMAL_FLOW_NATURAL) )
         {
-          cmp[n].setElement( encQface(n, bid, cdf, bd, true, FLUID, &cmp[n]) );
+          cmp[n].setElement( encQface(n, bid, cdf, bcd, true, FLUID, &cmp[n]) );
         }
         else if ( (kos == SOLID_CONDUCTION) )
         {
-          cmp[n].setElement( encQface(n, bid, cdf, bd, true, SOLID, &cmp[n]) );
+          cmp[n].setElement( encQface(n, bid, cdf, bcd, true, SOLID, &cmp[n]) );
         }
         else if ( (kos == CONJUGATE_HT) || (kos == CONJUGATE_HT_NATURAL) )
         {
-          cmp[n].setElement( encQface(n, bid, cdf, bd, true, ANY_STATE, &cmp[n]) );
+          cmp[n].setElement( encQface(n, bid, cdf, bcd, true, ANY_STATE, &cmp[n]) );
         }
         else
         {
@@ -3282,7 +3280,7 @@ void VoxInfo::setBCIndexH(int* cdf, int* bd, SetBC* BC, const int kos, CompoList
         
       case SPEC_VEL: // 要素数については，setBCIndexV()でカウントしているので，不要
       case OUTFLOW:
-        encQface(n, bid, cdf, bd, true, FLUID, &cmp[n]);
+        encQface(n, bid, cdf, bcd, true, FLUID, &cmp[n]);
         break;
         
         
@@ -3290,14 +3288,14 @@ void VoxInfo::setBCIndexH(int* cdf, int* bd, SetBC* BC, const int kos, CompoList
         switch ( cmp[n].getHtype() )
       {
           case HT_S:
-            cmp[n].setElement( encQface(n, bid, cdf, bd, true, ANY_STATE, &cmp[n]) );
+            cmp[n].setElement( encQface(n, bid, cdf, bcd, true, ANY_STATE, &cmp[n]) );
             break;
           
           case HT_SN:
           case HT_SF:
             if ( (kos == THERMAL_FLOW) || (kos == THERMAL_FLOW_NATURAL) )
             {
-              cmp[n].setElement( encQface(n, bid, cdf, bd, true, FLUID, &cmp[n]) );
+              cmp[n].setElement( encQface(n, bid, cdf, bcd, true, FLUID, &cmp[n]) );
             }
             else
             {
@@ -3316,7 +3314,7 @@ void VoxInfo::setBCIndexH(int* cdf, int* bd, SetBC* BC, const int kos, CompoList
       // Q BC at Volume; idのガイドセルチェックなし
       case HEAT_SRC:
       case CNST_TEMP:
-        cmp[n].setElement( countCC(n, bd, &cmp[n]) );
+        cmp[n].setElement( countCC(n, bcd, &cmp[n]) );
         break;
     }
     
@@ -3324,7 +3322,7 @@ void VoxInfo::setBCIndexH(int* cdf, int* bd, SetBC* BC, const int kos, CompoList
   
   
   // set gamma coef. for Heat BC
-  encHbit(cdf, bd);
+  encHbit(cdf, bcd);
   
 }
 

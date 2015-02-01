@@ -498,21 +498,9 @@ void Geometry::fill(FILE* fp,
   
   Hostonly_
   {
-    printf(    "\tFill initialize -----\n\n");
     fprintf(fp,"\tFill initialize -----\n\n");
-    
-    printf    ("\t\tTotal cell count       = %16ld\n", total_cell);
     fprintf(fp,"\t\tTotal cell count       = %16ld\n", total_cell);
-    
-    printf    ("\t\tInitial target count   = %16ld\n", target_count);
     fprintf(fp,"\t\tInitial target count   = %16ld\n", target_count);
-
-    printf(    "\n\tFill -----\n\n");
-    printf(    "\t\tFill medium of FLUID   : %s\n", mat[FillID].getAlias().c_str());
-    printf(    "\t\tHint of Seeding Dir.   : %s\n", FBUtility::getDirection(FillSeedDir).c_str());
-    printf(    "\t\tFill medium of SEED    : %s\n", mat[SeedID].getAlias().c_str());
-    printf(    "\t\tFill mode for each dir.: %d %d %d\n", FillSuppress[0], FillSuppress[1], FillSuppress[2]);
-
     fprintf(fp,"\n\tFill -----\n\n");
     fprintf(fp,"\t\tFill medium of FLUID   : %s\n", mat[FillID].getAlias().c_str());
     fprintf(fp,"\t\tHint of Seeding Dir.   : %s\n", FBUtility::getDirection(FillSeedDir).c_str());
@@ -538,7 +526,6 @@ void Geometry::fill(FILE* fp,
   {
     Hostonly_
     {
-      printf(    "No cells to paint\n");
       fprintf(fp,"No cells to paint\n");
     }
     Exit(0);
@@ -546,7 +533,6 @@ void Geometry::fill(FILE* fp,
   
   Hostonly_
   {
-    printf(    "\t\tPainted cells by hint  = %16ld\n", filled);
     fprintf(fp,"\t\tPainted cells by hint  = %16ld\n", filled);
   }
   
@@ -557,7 +543,6 @@ void Geometry::fill(FILE* fp,
   
   Hostonly_
   {
-    printf(    "\t\tRemaining target cells = %16ld\n\n", target_count);
     fprintf(fp,"\t\tRemaining target cells = %16ld\n\n", target_count);
   }
   
@@ -594,13 +579,9 @@ void Geometry::fill(FILE* fp,
   
   Hostonly_
   {
-    printf(    "\t\tBID Iteration          = %5d\n", c+1);
     fprintf(fp,"\t\tBID Iteration          = %5d\n", c+1);
-    printf(    "\t\t    Filled             = %16ld by '%s'\n", sum_filled, mat[SeedID].getAlias().c_str());
     fprintf(fp,"\t\t    Filled             = %16ld by '%s'\n", sum_filled, mat[SeedID].getAlias().c_str());
-    printf(    "\t\t    SOLID replaced     = %16ld\n", sum_replaced);
     fprintf(fp,"\t\t    SOLID replaced     = %16ld\n", sum_replaced);
-    printf(    "\t\t    Remaining cell     = %16ld\n\n", target_count);
     fprintf(fp,"\t\t    Remaining cell     = %16ld\n\n", target_count);
   }
   
@@ -619,7 +600,6 @@ void Geometry::fill(FILE* fp,
   {
     Hostonly_
     {
-      printf(    "\t\tNo Unpainted cell\n\n");
       fprintf(fp,"\t\tNo Unpainted cell\n\n");
     }
     Exit(0);
@@ -667,9 +647,7 @@ void Geometry::fill(FILE* fp,
   
   Hostonly_
   {
-    printf(    "\t\tFinal Filling Iteration= %5d\n", c+1);
     fprintf(fp,"\t\tFinal Filling Iteration= %5d\n", c+1);
-    printf(    "\t\t   Filled           = %16ld by %s\n\n", sum_replaced, (fill_mode==FLUID)?"FLUID":"SOLID");
     fprintf(fp,"\t\t   Filled           = %16ld by %s\n\n", sum_replaced, (fill_mode==FLUID)?"FLUID":"SOLID");
   }
   
@@ -682,7 +660,6 @@ void Geometry::fill(FILE* fp,
   {
     Hostonly_
     {
-      printf(    "\tFill operation is done, but still remains %ld unpainted cells.\n", upc);
       fprintf(fp,"\tFill operation is done, but still remains %ld unpainted cells.\n", upc);
     }
     Exit(0);
@@ -2224,7 +2201,7 @@ void Geometry::quantizeCut(FILE* fp,
     odr ++;
   }
   
-  printf("\tquantize cut = %d\n\n", count);
+  Hostonly_ fprintf(fp, "\tquantize cut = %d\n\n", count);
   
   delete pg_roots;
   
@@ -2235,22 +2212,20 @@ void Geometry::quantizeCut(FILE* fp,
     if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
   }
   
-  
+
   
   // 修正
   
   // 定義点上に交点がある場合の処理 >> カットするポリゴンのエントリ番号でフィルする
   unsigned long fill_cut = paintCutOnPoint(bcd, bid, cut, m_NoCompo);
-  
+
   unsigned long cm = modifyCutOnPoint(bid, cut, bcd);
-  
+
   Hostonly_
   {
     if ( fill_cut > 0 )
     {
-      printf(    "\n\tPaint cell which has cut on point       = %16ld\n", fill_cut);
       fprintf(fp,"\n\tPaint cell which has cut on point       = %16ld\n", fill_cut);
-      printf(      "\tModify neighbor cells owing to painting = %16ld\n", cm);
       fprintf(fp,  "\tModify neighbor cells owing to painting = %16ld\n", cm);
     }
   }

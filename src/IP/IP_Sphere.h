@@ -92,15 +92,24 @@ protected:
   
   
   /**
-   * @brief 計算領域のセルIDとカット情報を設定する
-   * @param [in,out] bcd      BCindex B
-   * @param [in]     R        Controlクラスのポインタ
+   * @brief 計算領域のセルIDを設定する
+   * @param [in,out] bcd   　　BCindex B
+   * @param [in]     R     　　Controlクラスのポインタ
    * @param [in]     NoMedium 媒質数
-   * @param [in]     mat      MediumListクラスのポインタ
-   * @param [in]     cut      交点情報
-   * @param [in]     bid      境界ID
+   * @param [in]     mat   　　MediumListクラスのポインタ
+   * @param [in]     NoCompo  コンポーネント数
+   * @param [in]     cmp      CompoListクラスのポインタ
+   * @param [out]    cut      カット情報
+   * @param [out]    bid      境界ID
    */
-  virtual void setup(int* bcd, Control* R, const int NoMedium, const MediumList* mat, long long* cut, int* bid);
+  virtual void setup(int* bcd,
+                     Control* R,
+                     const int NoMedium,
+                     const MediumList* mat,
+                     const int NoCompo,
+                     const CompoList* cmp,
+                     long long* cut,
+                     int* bid);
   
 };
 #endif // _IP_SHERE_H_
