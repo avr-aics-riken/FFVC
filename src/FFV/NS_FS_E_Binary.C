@@ -546,18 +546,7 @@ void FFV::NS_FS_E_Binary()
     //  b_l2 = sqrt(b_l2);
     //}
     
-    
-    /* トラクションフリーの場合 >> not neccesarry
-    if ( C.EnsCompo.tfree )
-    {
-      if ( numProc > 1 )
-      {
-        TIMING_start("Sync_Face_Velocity");
-        if ( paraMngr->BndCommV3D(d_vf, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-        TIMING_stop("Sync_Face_Velocity", face_comm_size*guide*3.0*sizeof(REAL_TYPE));
-      }
-    }
-     */
+
 
     
     // 速度境界条件　値を代入する境界条件
