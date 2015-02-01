@@ -7,13 +7,27 @@ ApplicationControl {
 
 BcTable {
 
+  LocalBoundary {
+
+    cyl_1 {
+      class             = "Obstacle"
+      Medium            = "fe1"
+    }
+
+    cyl_2 {
+      class             = "Obstacle"
+      Medium            = "fe2"
+    }
+
+  }
+
   OuterBoundary {
     
     inlet {
       class       = "SpecifiedVelocity"
       Profile     = "Constant"
       OrientationVector = (1.0, 0.0, 0.0)
-      velocity    = 3.0
+      velocity    = 1.0
       Medium      = "air"
       Temperature = 20
     }
@@ -21,7 +35,7 @@ BcTable {
     outlet {
       class        = "Outflow"
       Medium       = "air"
-      PressureType = "neumann"
+      PressureType = "dirichlet"
       PrsValue     = 0.0
     }
 
@@ -72,13 +86,11 @@ ConvectionTerm {
 DomainInfo {
   UnitOfLength   = "NonDimensional"
   GlobalOrigin   = (-10.0, -10.0, 0.0)
-  GlobalRegion   = (25.0,  20.0,  0.15    )
+  GlobalRegion   = (25.0,  20.0,  0.05    )
   //GlobalVoxel    = (64   , 64   , 3   )
   
   GlobalPitch    = (5.0e-02, 5.0e-02, 5.0e-02)
   //GlobalDivision = (1    , 1    , 1    )
-
-  ActiveSubDomainFile = ""
 
 }
 
@@ -88,8 +100,7 @@ GeometryModel {
   FillMedium              = "air"
   HintOfFillSeedDirection = "Xminus"
   HintOfFillSeedMedium    = "air"
-  VoxelOutput             = "svx"
-  FillDirectionControl    = ("fill", "fill", "suppress")
+  VoxelOutput             = "off"
   OutputGlyph             = "off"
 }
 
@@ -121,13 +132,13 @@ IntrinsicExample {
   
   Cylinder2 {
     UseCylinder = "yes"
-    Shape = "circular"
-    //LengthX = 0.4
-    //LengthY = 1.0
+    Shape = "rectangular" //"circular"
+    LengthX = 1.0
+    LengthY = 1.0
     //LengthZ = 0.0
-    Radius = 0.5
+    //Radius = 0.5
     PositionX = 2.0
-    PositionY = 1.0
+    PositionY = 0.0
     SolidMedium = "fe2"
   }
 
@@ -137,27 +148,47 @@ IntrinsicExample {
 
 Iteration {
   LinearSolver[@] {
-    Alias                = "sor2_strict"
+    Alias                = "sor2"
     class                = "sor2sma"
-    MaxIteration         = 50
-    ConvergenceCriterion = 1.0e-4
-    NormType             = "RbyR0"
+    MaxIteration         = 20
+    ResidualCriterion    = 1.0e-4
+    ResidualNorm         = "RbyB"
+    ErrorNorm            = "DeltaXbyX"
+    Omega                = 1.1
+    CommMode             = "async"
+    NaiveImplementation  = "off"
+  }
+
+  LinearSolver[@] {
+    Alias                = "sor"
+    class                = "sor"
+    MaxIteration         = 20
+    ResidualCriterion    = 1.0e-3
+    ResidualNorm         = "RbyX"
+    ErrorNorm            = "DeltaXbyX"
+    Omega                = 1.1
+  }
+
+  LinearSolver[@] {
+    Alias                = "bicg"
+    class                = "bicgstab"
+    MaxIteration         = 100
+    ResidualCriterion    = 1.0e-6
+    ResidualNorm         = "RbyB"
+    ErrorNorm            = "DeltaXbyX"
+	Precondition         = "on"
+    InnerIteration       = 5
     Omega                = 1.1
     CommMode             = "async"
   }
 
-  LinearSolver[@] {
-    Alias                = "sor2_loose"
-    class                = "sor"
-    MaxIteration         = 20
-    ConvergenceCriterion = 1.0e-2
-    NormType             = "RbyB"
-    Omega                = 1.1
-  }
+  DivMaxIteration        = 100
+  DivCriterion           = 1.0e-4
+  DivNorm                = "max" // "L2"
 
-  Pressure    = "sor2_strict"
+  Pressure    = "bicg"
   Velocity    = ""
-  Temperature = "sor2_loose"   
+  Temperature = "sor2"     
 }
 
 
@@ -229,7 +260,6 @@ MonitorList {
 Output {
   Log {
     Base             = "On"
-    Iteration        = "Off"
     Profiling        = "On"
     WallInfo         = "Off"
     Console {
@@ -243,34 +273,42 @@ Output {
   }
 
   Data {
+    Format         = "sph"
+
     BasicVariables {
-      Format         = "sph"
       TemporalType   = "time"
-      Interval       = 0.1
-    }
-    DerivedVariables {
-      Format         = "sph"
-      TemporalType   = "step"
-      Interval       = 100
+      Interval       = 1.0
 
       TotalPressure  = "Off"
       Helicity       = "Off"
       Vorticity      = "Off"
       Qcriterion     = "Off"
+      Divergence     = "Off"
     }
 
     StatisticalVariables {
-      Format        = "sph"
-      TemporalType  = "step"
-      Interval      = 10
+      TemporalType  = "time"
+      Interval      = 2.0
+
+      VelocityStat    = "On"
+      PressureStat    = "Off"
+      TemperatureStat = "Off"
     }
   }
     
   FormatOption {
     SPH {
-      GuideOut        = "Without"
+      GuideOut        = 2
       TimeSlice       = "off"
       DirectoryPath   = "hoge"
+    }
+
+    PLOT3D {
+      GuideOut        = 2
+      TimeSlice       = "off"
+      DirectoryPath   = "p3d"
+      XYZfile         = "on"
+      IblankFile      = "on"
     }
   }
 }
@@ -278,7 +316,7 @@ Output {
 
 Reference {
   Length        = 1.0
-  Velocity      = 3.0
+  Velocity      = 1.0
   BasePressure  = 0.0
   Medium        = "air"
   Temperature {
@@ -311,8 +349,8 @@ StartCondition {
     Staging     = "off"
 
     DFIfiles {
-      Velocity    = "vel0.dfi"
-      Pressure    = "prs0.dfi"
+      Velocity    = "vel.dfi"
+      Pressure    = "prs.dfi"
       Fvelocity   = "fvel.dfi"
     }
   }
@@ -320,14 +358,21 @@ StartCondition {
   InitialState {
     MassDensity = 1.0
     Pressure    = 0.0
-    Velocity    = (0.0, 0.0, 0.0)
+    Velocity    = (1.0, 0.0, 0.0)
+
+    Perturbation {
+      DirectionOfChannelWall  = "Y"
+      ChannelWidth            = 1.0
+      BulkVelocity            = 1.0
+      TubulenceReynoldsNumber = 180.0
+    } 
   }
 }
 
 TimeControl {
   Acceleration {
     TemporalType     = "Time"
-    AcceleratingTime = 1.0
+    AcceleratingTime = 0.0
   }
 
   TimeStep {
@@ -338,13 +383,13 @@ TimeControl {
   Session {
     TemporalType   = "time"
     Start          = 0    // 0 or 0.0の場合initial start
-    End            = 160
+    End            = 100.0
   }
 
   Statistic {
-    TemporalType   = "step"
-    Start          = 0  // 指定区間の統計をとる．両方とも0のときoff
-    End            = 0 
+    TemporalType   = "time"
+    Start          = 50  // 指定区間の平均をとる．両方とも0のときoff
+    End            = 100 
   }
 }
 
@@ -357,10 +402,13 @@ TreatmentOfWall {
 
 TurbulenceModeling {
   Model = "no"
+  Cs    = 0.2
+  InitialPerturbation = "off"
 }
 
+
 Unit {
-  UnitOfInputParameter  = "Dimensional"
-  UnitOfOutput          = "Dimensional"
+  UnitOfInputParameter  = "NonDimensional"
+  UnitOfOutput          = "NonDimensional"
   Pressure              = "Gauge"
 }

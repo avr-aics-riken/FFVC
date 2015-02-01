@@ -291,9 +291,7 @@ int FFV::Initialize(int argc, char **argv)
   // Fill
   Hostonly_
   {
-    printf(    "\n----------\n\n");
     fprintf(fp,"\n----------\n\n");
-    printf(    "\t>> Fill\n\n");
     fprintf(fp,"\t>> Fill\n\n");
   }
 
@@ -341,11 +339,6 @@ int FFV::Initialize(int argc, char **argv)
   // パラメータファイルから得られた内部BCコンポーネント数を表示
   Hostonly_
   {
-    printf("\n----------\n\n");
-    printf("\t>> Components\n\n");
-    C.printNoCompo(stdout);
-    printf("\n"); fflush(stdout);
-    
     fprintf(fp,"\n----------\n\n");
     fprintf(fp,"\t>> Components\n\n");
     C.printNoCompo(fp);
@@ -931,14 +924,6 @@ void FFV::createTable(FILE* fp)
     fprintf(fp,"\t----------------------\n");
     fprintf(fp,"\tNo. of Component = %3d\n", C.NoCompo);
     fprintf(fp,"\n");
-    
-    printf(    "\n----------\n\n");
-    printf(    "\n\t>> Tables\n\n");
-    printf(    "\tNo. of Medium    = %3d\n", C.NoMedium);
-    printf(    "\tNo. of LocalBC   = %3d\n", C.NoBC);
-    printf(    "\t----------------------\n");
-    printf(    "\tNo. of Component = %3d\n", C.NoCompo);
-    printf(    "\n");
   }
   
 }
@@ -1082,7 +1067,6 @@ void FFV::displayMemoryInfo(FILE* fp, double G_mem, double L_mem, const char* st
   
   Hostonly_
   {
-    FBUtility::MemoryRequirement(str, G_mem, L_mem, stdout);
     FBUtility::MemoryRequirement(str, G_mem, L_mem, fp);
   }
   
@@ -2370,7 +2354,6 @@ void FFV::minDistance(const long long* cut, const int* bid, FILE* fp)
   Hostonly_
   {
     fprintf(fp, "\n\tMinimum non-dimnensional distance       = %e\n\n", (REAL_TYPE)global_min/(REAL_TYPE)QT_9); // 9bit幅
-    printf     ("\n\tMinimum non-dimnensional distance       = %e\n\n", (REAL_TYPE)global_min/(REAL_TYPE)QT_9);
   }
 
 }
@@ -3252,9 +3235,7 @@ void FFV::setMediumList(FILE* fp)
 {
   Hostonly_
   {
-    printf(    "\n----------\n\n");
     fprintf(fp,"\n----------\n\n");
-    printf(    "\n\t>> Medium List\n\n");
     fprintf(fp,"\n\t>> Medium List\n\n");
   }
   
@@ -3272,7 +3253,6 @@ void FFV::setMediumList(FILE* fp)
   // 媒質テーブルの表示
   Hostonly_
   {
-    M.printMatList(stdout, mat);
     M.printMatList(fp, mat);
   }
 
@@ -3300,7 +3280,7 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
     case id_Step:
     case id_Cylinder:
     case id_Duct:
-      Ex->setup(d_bcd, &C, C.NoCompo, mat, d_cut, d_bid);
+      Ex->setup(d_bcd, &C, C.NoCompo, mat, C.NoCompo, cmp, d_cut, d_bid);
       break;
       
     default: // ほかのIntrinsic problems
@@ -3315,14 +3295,6 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
   V.paintSolidGC(d_bcd, d_bid, painted);
   
   Hostonly_ {
-    printf("\n\tPainted guide cell by cut\n");
-    printf("\t\t X minus = %10ld\n", painted[0]);
-    printf("\t\t X plus  = %10ld\n", painted[1]);
-    printf("\t\t Y minus = %10ld\n", painted[2]);
-    printf("\t\t Y plus  = %10ld\n", painted[3]);
-    printf("\t\t Z minus = %10ld\n", painted[4]);
-    printf("\t\t Z plus  = %10ld\n\n", painted[5]);
-    
     fprintf(fp, "\n\tPainted guide cell by cut\n");
     fprintf(fp, "\t\t X minus = %10ld\n", painted[0]);
     fprintf(fp, "\t\t X plus  = %10ld\n", painted[1]);
@@ -4095,7 +4067,7 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   
   TIMING_stop("Polylib_Section");
 
-  
+
   
   
 
@@ -4105,8 +4077,6 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   {
     fprintf(fp,"\n----------\n\n");
     fprintf(fp,"\t>> Calculate cut and quantize\n\n");
-    printf("\n----------\n\n");
-    printf("\t>> Calculate cut and quantize\n\n");
   }
 
   
@@ -4115,11 +4085,12 @@ void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
   GM.quantizeCut(fp, d_cut, d_bid, d_bcd, C.NoCompo, PL, PG);
   TIMING_stop("Cut_Information");
   
-  
+
   // カットの最小値
   TIMING_start("Cut_Minimum_search");
   minDistance(d_cut, d_bid, fp);
   TIMING_stop("Cut_Minimum_search");
+  
   
 #if 0
   displayCutInfo(d_cut, d_bid);

@@ -132,10 +132,9 @@ void FFV::calcForce(double& flop)
     if ( cmp[n].getType()==OBSTACLE || cmp[n].getType()==SOLIDREV )
     {
       cmp[n].getBbox(st, ed);
-      int key = cmp[n].getMatodr();
 
       // 力の計算
-      force_compo_(vec, size, &gd, &key, d_p, d_bid, pitch, st, ed, &flop);
+      force_compo_(vec, size, &gd, &n, d_p, d_bid, pitch, st, ed, &flop);
       
       cmp_force_local[3*n+0] = vec[0];
       cmp_force_local[3*n+1] = vec[1];

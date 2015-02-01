@@ -634,6 +634,7 @@ void IP_Cylinder::setCircle(Control* R,
   REAL_TYPE oz = origin[2];
   
   // グローバルな無次元座標
+  REAL_TYPE zs = oz;
   REAL_TYPE ze;
   
   if ( mode == dim_2d )
@@ -728,6 +729,8 @@ void IP_Cylinder::setCircle(Control* R,
     }
   }
   
+  if ( mode == dim_2d ) return;
+
   
   // Z+方向
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_s, ox, oy, oz, dx, dy, dz, ze, rs, cx, cy) schedule(static)
@@ -763,6 +766,53 @@ void IP_Cylinder::setCircle(Control* R,
             int r = quantize9(-s);
             setCut9(cut[m], r, Z_minus);
 
+            size_t m1 = _F_IDX_S3D(i, j, k-1, ix, jx, kx, gd);
+            setBit5(bid[m1], mid_s, Z_plus);
+            int rr = quantize9(1.0+s);
+            setCut9(cut[m1], rr, Z_plus);
+          }
+          
+        }
+        
+      }
+    }
+  }
+
+  
+  // Z-方向
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_s, ox, oy, oz, dx, dy, dz, zs, rs, cx, cy) schedule(static)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        REAL_TYPE x = ox + 0.5*dx + dx*(i-1); // position of cell center
+        REAL_TYPE y = oy + 0.5*dy + dy*(j-1);
+        REAL_TYPE z = oz + 0.5*dz + dz*(k-1);
+        REAL_TYPE s = (zs - z)/dz;
+        
+        REAL_TYPE xx = x - cx;
+        REAL_TYPE yy = y - cy;
+        
+        if ( (xx*xx + yy*yy) <= rs*rs )
+        {
+          
+          if ( (z <= zs) && (zs < z+dz) )
+          {
+            setBit5(bid[m], mid_s, Z_plus);
+            int r = quantize9(s);
+            setCut9(cut[m], r, Z_plus);
+            
+            size_t m1 = _F_IDX_S3D(i, j, k+1, ix, jx, kx, gd);
+            setBit5(bid[m1], mid_s, Z_minus);
+            int rr = quantize9(1.0-s);
+            setCut9(cut[m1], rr, Z_minus);
+          }
+          else if ( (z-dz < zs) && (zs < z) )
+          {
+            setBit5(bid[m], mid_s, Z_minus);
+            int r = quantize9(-s);
+            setCut9(cut[m], r, Z_minus);
+            
             size_t m1 = _F_IDX_S3D(i, j, k-1, ix, jx, kx, gd);
             setBit5(bid[m1], mid_s, Z_plus);
             int rr = quantize9(1.0+s);
@@ -824,15 +874,16 @@ void IP_Cylinder::setRect(Control* R,
   REAL_TYPE xe = pos_x + 0.5*len_x;
   REAL_TYPE ys = pos_y - 0.5*len_y;
   REAL_TYPE ye = pos_y + 0.5*len_y;
+  REAL_TYPE zs = oz;
   REAL_TYPE ze;
   
   if ( mode == dim_2d )
   {
-    ze = origin[2] + region[2] + dz; // Z方向には全セルを対象, dzは安全係数
+    ze = oz + region[2] + dz; // Z方向には全セルを対象, dzは安全係数
   }
   else
   {
-    ze = origin[2] + len_z; // Z-面からの距離
+    ze = oz + len_z; // Z-面からの距離
   }
   
 
@@ -1053,12 +1104,108 @@ void IP_Cylinder::setRect(Control* R,
     }
   }
   
+  if ( mode == dim_2d ) return;
+  
+  
+  // Z- face of Rect
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_s, ox, oy, oz, dx, dy, dz, xs, xe, ys, ye, zs) schedule(static)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        REAL_TYPE x = ox + 0.5*dx + dx*(i-1); // position of cell center
+        REAL_TYPE y = oy + 0.5*dy + dy*(j-1);
+        REAL_TYPE z = oz + 0.5*dz + dz*(k-1);
+        REAL_TYPE s = (zs - z)/dz;
+        
+        if ( ys <= y  &&  y <= ye  &&  xs <= x  &&  x <= xe )
+        {
+          {
+            if ( z <= zs  &&  zs < z+dz )
+            {
+              setBit5(bid[m], mid_s, Z_plus);
+              int r = quantize9(s);
+              setCut9(cut[m], r, Z_plus);
+              
+              size_t m1 = _F_IDX_S3D(i, j, k+1, ix, jx, kx, gd);
+              setBit5(bid[m1], mid_s, Z_minus);
+              int rr = quantize9(1.0-s);
+              setCut9(cut[m1], rr, Z_minus);
+            }
+            else if ( z-dz < zs  &&  zs < z )
+            {
+              setBit5(bid[m], mid_s, Z_minus);
+              int r = quantize9(-s);
+              setCut9(cut[m], r, Z_minus);
+              
+              size_t m1 = _F_IDX_S3D(i, j, k-1, ix, jx, kx, gd);
+              setBit5(bid[m1], mid_s, Z_plus);
+              int rr = quantize9(1.0+s);
+              setCut9(cut[m1], r, Z_plus);
+            }
+          }
+        }
+        
+      }
+    }
+  }
+  
+  // Z+ face of Rect
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, mid_s, ox, oy, oz, dx, dy, dz, xs, xe, ys, ye, ze) schedule(static)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        REAL_TYPE x = ox + 0.5*dx + dx*(i-1); // position of cell center
+        REAL_TYPE y = oy + 0.5*dy + dy*(j-1);
+        REAL_TYPE z = oz + 0.5*dz + dz*(k-1);
+        REAL_TYPE s = (ze - z)/dz;
+        
+        if ( ys <= y  &&  y <= ye  &&  xs <= x  &&  x <= xe )
+        {
+          {
+            if ( z <= ze  &&  ze < z+dz )
+            {
+              setBit5(bid[m], mid_s, Z_plus);
+              int r = quantize9(s);
+              setCut9(cut[m], r, Z_plus);
+              
+              size_t m1 = _F_IDX_S3D(i, j, k+1, ix, jx, kx, gd);
+              setBit5(bid[m1], mid_s, Z_minus);
+              int rr = quantize9(1.0-s);
+              setCut9(cut[m1], rr, Z_minus);
+            }
+            else if ( z-dz < ze  &&  ze < z )
+            {
+              setBit5(bid[m], mid_s, Z_minus);
+              int r = quantize9(-s);
+              setCut9(cut[m], r, Z_minus);
+              
+              size_t m1 = _F_IDX_S3D(i, j, k-1, ix, jx, kx, gd);
+              setBit5(bid[m1], mid_s, Z_plus);
+              int rr = quantize9(1.0+s);
+              setCut9(cut[m1], r, Z_plus);
+            }
+          }
+        }
+        
+      }
+    }
+  }
+
 }
 
 
 // #################################################################
 // Cylinderの計算領域のカット情報を設定する
-void IP_Cylinder::setup(int* bcd, Control* R, const int NoMedium, const MediumList* mat, long long* cut, int* bid)
+void IP_Cylinder::setup(int* bcd,
+                        Control* R,
+                        const int NoMedium,
+                        const MediumList* mat,
+                        const int NoCompo,
+                        const CompoList* cmp,
+                        long long* cut,
+                        int* bid)
 {
   int mid_fluid;        ///< 流体
   int mid_solid1;       ///< 固体1
@@ -1067,25 +1214,25 @@ void IP_Cylinder::setup(int* bcd, Control* R, const int NoMedium, const MediumLi
   // 流体
   if ( (mid_fluid = FBUtility::findIDfromLabel(mat, NoMedium, m_fluid)) == 0 )
   {
-    Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", m_fluid.c_str());
+    Hostonly_ printf("\n\tLabel '%s' is not listed in MediumList\n", m_fluid.c_str());
     Exit(0);
   }
   
   // 固体
   if (cyl1.ens==ON)
   {
-    if ( (mid_solid1 = FBUtility::findIDfromLabel(mat, NoMedium, cyl1.solid)) == 0 )
+    if ( (mid_solid1 = FBUtility::findIDfromCmp(cmp, NoCompo, cyl1.solid, OBSTACLE)) == 0 )
     {
-      Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", cyl1.solid.c_str());
+      Hostonly_ printf("\n\tLabel '%s' is not listed in CompoList\n", cyl1.solid.c_str());
       Exit(0);
     }
   }
   
   if (cyl2.ens==ON)
   {
-    if ( (mid_solid2 = FBUtility::findIDfromLabel(mat, NoMedium, cyl2.solid)) == 0 )
+    if ( (mid_solid2 = FBUtility::findIDfromCmp(cmp, NoCompo, cyl2.solid, OBSTACLE)) == 0 )
     {
-      Hostonly_ printf("\tLabel '%s' is not listed in MediumList\n", cyl2.solid.c_str());
+      Hostonly_ printf("\n\tLabel '%s' is not listed in CompoList\n", cyl2.solid.c_str());
       Exit(0);
     }
   }
@@ -1096,7 +1243,7 @@ void IP_Cylinder::setup(int* bcd, Control* R, const int NoMedium, const MediumLi
   {
     if ( NoMedium < 3 )
     {
-      Hostonly_ printf("\t The numbe of medium must be more than 3 for two cylinders\n");
+      Hostonly_ printf("\n\t The numbe of medium must be more than 3 for two cylinders\n");
       Exit(0);
     }
   }

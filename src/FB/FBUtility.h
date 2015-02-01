@@ -36,6 +36,7 @@
 
 #include "FB_Define.h"
 #include "Medium.h"
+#include "Component.h"
 
 #include "omp.h"
 
@@ -309,11 +310,22 @@ public:
   /** 
    * @brief MediumList中に登録されているkeyに対するIDを返す
    * @param [in] mat  MediumListクラス
-   * @param [in] Namx リストの最大数
+   * @param [in] Nmax リストの最大数
    * @param [in] key  探査するラベル
    * @return keyに対するIDを返す。発見できない場合はzero
    */
   static int findIDfromLabel(const MediumList* mat, const int Nmax, const std::string key);
+  
+  
+  /**
+   * @brief CompoList中に登録されているtypeとkeyに対するIDを返す
+   * @param [in] cmp  CompoListクラス
+   * @param [in] Nmax リストの最大数
+   * @param [in] key  探査するラベル
+   * @param [in] type 探査するタイプ
+   * @return IDを返す。発見できない場合はzero
+   */
+  static int findIDfromCmp(const CompoList* cmp, const int Nmax, const std::string key, const int type);
   
   
   // #################################################################

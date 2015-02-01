@@ -58,11 +58,11 @@ private:
   
   
   // セルセンターのIDから対象セル数をカウントし，サブドメイン内にコンポーネントがあれば存在フラグを立てる
-  unsigned long countCC (const int order, const int* bx, CompoList* cmp);
+  unsigned long countCC (const int order, const int* bcd, CompoList* cmp);
   
   
   // セルフェイスの交点IDから対象IDのセル数をカウントし，サブドメイン内にコンポーネントがあれば存在フラグを立てる
-  unsigned long countCF (const int key, const int* bx, const int* bid, CompoList* cmp, const string attrb);
+  unsigned long countCF (const int key, const int* bcd, const int* bid, CompoList* cmp, const string attrb);
   
   
   // 外部境界面の有効セル数をカウントする
@@ -238,7 +238,7 @@ public:
   
   /**
    * @brief bx[]に各境界条件の共通のビット情報をエンコードする
-   * @param [in,out] bx         BCindex B
+   * @param [in,out] bcd        BCindex B
    * @param [in]     bid        交点ID
    * @param [in]     mat        MediumList
    * @param [in,out] cmp        CompoList
@@ -248,7 +248,7 @@ public:
    * @param [in]     m_NoMedium 媒質数
    * @param [in]     m_NoCompo  コンポーネント数
    */
-  void setBCIndexBase(int* bx,
+  void setBCIndexBase(int* bcd,
                       const int* bid,
                       const MediumList* mat,
                       CompoList* cmp,
@@ -262,7 +262,7 @@ public:
   /**
    * @brief 温度境界条件のビット情報をエンコードする
    * @param [in,out] cdf        BCindex C
-   * @param [in,out] bd         BCindex B
+   * @param [in,out] bcd        BCindex B
    * @param [in]     BC         SetBCクラスのポインタ
    * @param [in]     kos        KindOfSolver
    * @param [in,out] cmp        CompoList
@@ -271,7 +271,7 @@ public:
    * @param [in]     m_NoCompo  コンポーネント数
    */
   void setBCIndexH(int* cdf,
-                   int* bd,
+                   int* bcd,
                    SetBC* BC,
                    const int kos,
                    CompoList* cmp,

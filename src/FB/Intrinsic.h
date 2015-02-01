@@ -154,6 +154,8 @@ public:
    * @param [in]     R        Controlクラスのポインタ
    * @param [in]     NoMedium 媒質数
    * @param [in]     mat      MediumListクラスのポインタ
+   * @param [in]     NoCompo  コンポーネント数
+   * @param [in]     cmp      CompoListクラスのポインタ
    * @param [in]     cut      交点情報
    * @param [in]     bid      境界ID
    */
@@ -161,6 +163,8 @@ public:
                      Control* R,
                      const int NoMedium,
                      const MediumList* mat,
+                     const int NoCompo,
+                     const CompoList* cmp,
                      long long* cut,
                      int* bid) {};
   
