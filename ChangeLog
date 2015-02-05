@@ -19,8 +19,12 @@ REVISION HISTORY
 ================
 
 --------------------------
-2015-02-01
+2015-02-05
+r1587
+- add printForceAvr()
 
+--------------------------
+2015-02-01
 r1586 correction of CompoFraction class
 - pass non-dimensional parameter
 

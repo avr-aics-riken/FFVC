@@ -352,6 +352,49 @@ void History::printCCNVtitle(const int* container, const Control* C)
 
 
 // #################################################################
+// 物体に働く力の平均値出力（コンポーネント毎）
+bool History::printForceAvr(const CompoList* cmp, const REAL_TYPE* frc)
+{
+  for (int n=1; n<=NoCompo; n++)
+  {
+    if ( cmp[n].getType()==OBSTACLE || cmp[n].getType()==SOLIDREV )
+    {
+      char fname[128];
+      sprintf( fname, "force_avr_%s.txt", cmp[n].getAlias().c_str() );
+      
+      FILE* fp;
+      
+      if ( !(fp=fopen(fname, "w")) )
+      {
+        stamped_printf("\tSorry, can't open '%s' file.\n", fname);
+        return false;
+      }
+      
+      if ( Unit_Log == DIMENSIONAL )
+      {
+        fprintf(fp, " AvrStep   AvrTime[sec]          F_x           F_y           F_z\n");
+      }
+      else
+      {
+        fprintf(fp, " AvrStep     AvrTime[-]          F_x           F_y           F_z\n");
+      }
+      
+      fprintf(fp, "%8d %14.6e %12.4e  %12.4e  %12.4e\n",
+              step,
+              printTime(),
+              printForce(frc[3*n+0]),
+              printForce(frc[3*n+1]),
+              printForce(frc[3*n+2])
+              );
+      
+      fclose(fp);
+    }
+  }
+  return true;
+}
+
+
+// #################################################################
 // 標準履歴の出力
 void History::printHistory(FILE* fp,
                            const double* rms,

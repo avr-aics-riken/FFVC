@@ -235,6 +235,14 @@ public:
   
   
   /**
+   * @brief 物体に働く力の平均値の出力（コンポーネント毎）
+   * @param [in] cmp CompoListクラスのポインタ
+   * @param [in] frc 積算された力
+   */
+  bool printForceAvr(const CompoList* cmp, const REAL_TYPE* frc);
+  
+  
+  /**
    * @brief 標準履歴の出力
    * @param [in] fp         出力ファイルポインタ
    * @param [in] rms        1タイムステップの変化量　（0-pressure, 1-velocity, 2-temperature)

@@ -393,10 +393,20 @@ int FFV::Loop(const unsigned step)
         TIMING_stop("History_out", 0.0);
       }
       
+      // 物体に作用する力の平均値
+      if ( C.Mode.Statistic == ON && C.Interval[Control::tg_statistic].isStarted(CurrentStep, CurrentTime) )
+      {
+        TIMING_start("History_out");
+        Hostonly_ H->printForceAvr(cmp, cmp_force_avr);
+        TIMING_stop("History_out", 0.0);
+      }
+      
+      
       // 流量収支履歴
       TIMING_start("History_out");
       Hostonly_ H->printHistoryDomfx(fp_d, &C, deltaT);
       TIMING_stop("History_out", 0.0);
+      
     }
     
     // 壁面履歴情報
