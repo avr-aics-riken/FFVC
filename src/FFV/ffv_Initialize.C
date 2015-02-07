@@ -149,7 +149,6 @@ int FFV::Initialize(int argc, char **argv)
   // パラメータの取得と計算領域の初期化，並列モードを返す
   // Polylibの基準値も設定
   std::string str_para = SetDomain(&tp_ffv);
-  stamped_printf("%e %e %e : %e %e %e\n", G_region[0], G_region[1], G_region[2], pitch[0], pitch[1], pitch[2]);
   
   // mat[], cmp[]の作成
   createTable(fp);
@@ -180,8 +179,7 @@ int FFV::Initialize(int argc, char **argv)
   
   // タイミング測定開始
   TIMING_start("Initialization_Section");
-  
-  stamped_printf("%e %e %e : %e %e %e\n", G_region[0], G_region[1], G_region[2], pitch[0], pitch[1], pitch[2]);
+
   
   // 前処理に用いるデータクラスのアロケート -----------------------------------------------------
   TIMING_start("Allocate_Arrays");
@@ -210,7 +208,7 @@ int FFV::Initialize(int argc, char **argv)
   // 回転体
   setComponentSR();
   
-  stamped_printf("%e %e %e : %e %e %e\n", G_region[0], G_region[1], G_region[2], pitch[0], pitch[1], pitch[2]);
+
   
   // 領域情報の表示
   Hostonly_

@@ -1748,7 +1748,7 @@ unsigned long Geometry::findPolygonInCell(int* d_mid, MPIPolylib* PL, PolygonPro
   
   if ( c != 0 )
   {
-    Hostonly_ stamped_printf("\tID=0 was found in water-tight fill process. : %d\n", c);
+    Hostonly_ stamped_printf("\tID=0 was found in water-tight fill process. : %ld\n", c);
     Exit(0);
   }
   

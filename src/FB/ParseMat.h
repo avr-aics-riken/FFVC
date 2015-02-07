@@ -22,6 +22,7 @@
  * @author aics
  */
 
+#include "mpi.h" // add header explicitly to avoid compile error for Intel MPI
 #include "FB_Define.h"
 #include "Medium.h"
 #include "Component.h"

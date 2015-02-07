@@ -20,6 +20,8 @@ REVISION HISTORY
 
 --------------------------
 2015-02-07
+r1589 insert mpi.h at first in ParseMat.h and CompoFraction.h
+
 r1588 change calculation policy from ceil to round off to get g_voxel in SD_getParameter()
 
 --------------------------
