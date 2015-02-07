@@ -466,7 +466,7 @@ int FFV::FilterInitialize(int argc, char **argv)
   identifyExample(fp);
   
   
-  //CAUTION: setupDomain() --> DomainInitialize(tpf); --> getDomainParameter() TextParserから
+  //CAUTION: setDomain() --> SD_Initialize(tpf); --> SD_getParameter() TextParserから
   //         /DomainInfo/ActiveSubDomainFile の値を取得しています、値がstr.empty()==true
   //         EXEC_MODE = ffvc_solver;
   
@@ -478,7 +478,7 @@ int FFV::FilterInitialize(int argc, char **argv)
   
   
   // パラメータの取得と計算領域の初期化，並列モードを返す
-  std::string str_para = setupDomain(&tp_ffv);
+  std::string str_para = SetDomain(&tp_ffv);
   
   
   // mat[], cmp[]の作成
@@ -526,7 +526,7 @@ int FFV::FilterInitialize(int argc, char **argv)
   
   // 各問題に応じてモデルを設定 >> Polylib
   // 外部境界面およびガイドセルのカットとIDの処理
-  setModel(PrepMemory, TotalMemory, fp);
+  SetModel(PrepMemory, TotalMemory, fp);
   
   
   

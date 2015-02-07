@@ -76,7 +76,7 @@ void ASD::evaluateASD(int argc, char **argv)
   }
 
   
-  getDomainParameter(&tpCntl, flag);
+  SD_getParameter(&tpCntl, flag);
   
   // サブドメイン分割数のみ指定された、自動分割の場合
   if (argc == 4)
@@ -737,7 +737,7 @@ void ASD::findPolygon(const REAL_TYPE* px,
 // @brief グローバルな領域情報を取得
 // @param [in] tpCntl テキストパーサー
 // @param [in] flag   表示フラグ
-void ASD::getDomainParameter(TextParser* tp, bool flag)
+void ASD::SD_getParameter(TextParser* tp, bool flag)
 {
   if ( !tp ) Exit(0);
   

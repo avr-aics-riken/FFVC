@@ -148,8 +148,8 @@ int FFV::Initialize(int argc, char **argv)
 
   // パラメータの取得と計算領域の初期化，並列モードを返す
   // Polylibの基準値も設定
-  std::string str_para = setupDomain(&tp_ffv);
-  
+  std::string str_para = SetDomain(&tp_ffv);
+  stamped_printf("%e %e %e : %e %e %e\n", G_region[0], G_region[1], G_region[2], pitch[0], pitch[1], pitch[2]);
   
   // mat[], cmp[]の作成
   createTable(fp);
@@ -181,7 +181,7 @@ int FFV::Initialize(int argc, char **argv)
   // タイミング測定開始
   TIMING_start("Initialization_Section");
   
-  
+  stamped_printf("%e %e %e : %e %e %e\n", G_region[0], G_region[1], G_region[2], pitch[0], pitch[1], pitch[2]);
   
   // 前処理に用いるデータクラスのアロケート -----------------------------------------------------
   TIMING_start("Allocate_Arrays");
@@ -204,13 +204,13 @@ int FFV::Initialize(int argc, char **argv)
   
   // 各問題に応じてモデルを設定 >> Polylib
   // 外部境界面およびガイドセルのカットとIDの処理
-  setModel(PrepMemory, TotalMemory, fp);
+  SetModel(PrepMemory, TotalMemory, fp);
 
 
   // 回転体
   setComponentSR();
   
-  
+  stamped_printf("%e %e %e : %e %e %e\n", G_region[0], G_region[1], G_region[2], pitch[0], pitch[1], pitch[2]);
   
   // 領域情報の表示
   Hostonly_
@@ -707,7 +707,7 @@ int FFV::Initialize(int argc, char **argv)
 
 
   // 反復法クラスの初期化
-  setupLinearSolvers(TotalMemory, &tp_ffv);
+  LS_initialize(TotalMemory, &tp_ffv);
   
   
   // 制御パラメータ，物理パラメータの表示
@@ -1137,103 +1137,6 @@ void FFV::displayParameters(FILE* fp)
     MO.printMonitorInfo(fp_mon, "sampling_info.txt", true);  // 詳細モード
     if ( fp_mon ) fclose(fp_mon);
   }
-}
-
-
-// #################################################################
-/* @brief 計算領域情報を設定する
- * @param [in] div_type 分割数モード
- * @param [in] tp_dom   TextParserクラス
- */
-void FFV::DomainInitialize(const int div_type, TextParser* tp_dom)
-{
-  // 袖通信の最大数
-  size_t Nvc  = (size_t)C.guide;
-  size_t Ncmp = 3; // 最大はベクトル3成分
-  
-  int m_sz[3]  = {G_size[0], G_size[1], G_size[2]};
-  int m_div[3] = {G_division[0], G_division[1], G_division[2]};
-  double m_org[3] = {(double)G_origin[0], (double)G_origin[1], (double)G_origin[2]};
-  double m_reg[3] = {(double)G_region[0], (double)G_region[1], (double)G_region[2]};
-  
-
-  
-  // 領域分割モードのパターン
-  //     分割指定(G_div指定)         domain.txt
-  // 1)  G_div指定なし |  G_orign + G_region + (pitch || G_voxel)
-  // 2)  G_div指定あり |  G_orign + G_region + (pitch || G_voxel)
-  // 3)  G_div指定なし |          + ActiveDomainInfo
-  // 4)  G_div指定あり |          + ActiveDomainInfo
-  
-  /* Policy
-   * G_regionは必須
-   * G_voxelとpitchでは，G_voxelが優先．両方が指定されている場合はエラー
-   * G_pitchが指定されており，割り切れない場合は，領域を拡大
-   *        G_voxel = (int)ceil(G_region/pitch)
-   *        G_region = pitch * G_voxel
-   */
-  
-  
-  // ノーマルモードとActive subdomainモードの切り替え
-  if ( EXEC_MODE == ffvc_solver )
-  {
-    // 分割数を元に分割する >> CPMlibの仕様
-    switch (div_type)
-    {
-      case 1: // 分割数が指示されている場合
-        if ( paraMngr->VoxelInit(m_div, m_sz, m_org, m_reg, Nvc, Ncmp) != CPM_SUCCESS )
-        {
-          cout << "Domain decomposition error : " << endl;
-          Exit(0);
-        }
-        break;
-        
-      case 2: // 分割数が指示されていない場
-        if ( paraMngr->VoxelInit(m_sz, m_org, m_reg, Nvc, Ncmp) != CPM_SUCCESS )
-        {
-          cout << "Domain decomposition error : " << endl;
-          Exit(0);
-        }
-        break;
-        
-      default:
-        Exit(0);
-        break;
-    }
-  }
-  else if ( EXEC_MODE == ffvc_solverAS )
-  {
-    if ( paraMngr->VoxelInit_Subdomain(m_div, m_sz, m_org, m_reg, active_fname, Nvc, Ncmp) != CPM_SUCCESS )
-    {
-      cout << "Domain decomposition error : " << endl;
-      Exit(0);
-    }
-  }
-  else
-  {
-    Exit(0);
-  }
-  
-  
-  // アドレスサイズのチェック
-  size_t n_cell[3];
-  
-  for ( int i=0; i<3; i++)
-  {
-    n_cell[i] = (size_t)(size[i] + 2*guide);  // 分割数+ガイドセル両側
-  }
-  
-  size_t size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
-  
-  if (size_n_cell*6  > UINT_MAX)
-  {
-    Hostonly_
-    {
-      stamped_printf("\n\tError : Product of size[]*6 exceeds UINT_MAX\n\n");
-    }
-    Exit(0);
-  }
-  
 }
 
 
@@ -1742,295 +1645,6 @@ void FFV::generateGlyph(const long long* cut, const int* bid, FILE* fp)
 
 
 
-// #################################################################
-/* @brief グローバルな領域情報を取得し、無次元の領域基本パラメータを返す
- * @param [in] tp_dom   TextParserクラス
- * @return 分割指示 (1-with / 2-without)
- * @note この関数では、pitch[], G_region[], G_origin[]を確定する
- */
-int FFV::getDomainParameter(TextParser* tp_dom)
-{
-  // 領域分割モードのパターン
-  //     分割指定(G_div指定)         domain.txt
-  // 1)  G_div指定なし |  G_orign + G_region + (G_pitch || G_voxel)
-  // 2)  G_div指定あり |  G_orign + G_region + (G_pitch || G_voxel)
-  // 3)  G_div指定なし |          + ActiveDomainInfo
-  // 4)  G_div指定あり |          + ActiveDomainInfo
-  
-  /* Policy
-   * G_regionは必須
-   * G_voxelとG_pitchでは，G_voxelが優先．両方が指定されている場合はエラー
-   * G_pitchが指定されており，割り切れない場合は，領域を拡大
-   *        G_voxel = (int)ceil(G_region/G_pitch)
-   *        G_region = G_pitch * G_voxel
-   */
-  
-  string label, str;
-  int div_type = 1; // 指定分割 => 1
-  
-  
-  // 長さの単位
-  label = "/DomainInfo/UnitOfLength";
-  
-  if ( !tp_dom->getInspectedValue(label, str) )
-  {
-		Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "NonDimensional") )  C.Unit.Length = LTH_ND;
-  else if( !strcasecmp(str.c_str(), "M") )               C.Unit.Length = LTH_m;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described at '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  
-  // G_origin　必須
-  label = "/DomainInfo/GlobalOrigin";
-  
-  if ( !tp_dom->getInspectedVector(label, G_origin, 3) )
-  {
-    cout << "ERROR : in parsing [" << label << "]" << endl;
-    Exit(0);
-  }
-  
-  
-  // G_region 必須
-  label = "/DomainInfo/GlobalRegion";
-  
-  if ( !tp_dom->getInspectedVector(label, G_region, 3) )
-  {
-    Hostonly_ cout << "ERROR : in parsing [" << label << "]" << endl;
-    Exit(0);
-  }
-  
-  if ( (G_region[0]>0.0) && (G_region[1]>0.0) && (G_region[2]>0.0) )
-  {
-    ; // skip
-  }
-  else
-  {
-    Hostonly_ cout << "ERROR : in parsing [" << label << "]" << endl;
-    Exit(0);
-  }
-  
-  // 排他チェックフラグ
-  bool g_flag = true;
-  bool p_flag = true;
-  
-  
-  // G_voxel
-  label = "/DomainInfo/GlobalVoxel";
-  
-  if ( !tp_dom->getInspectedVector(label, G_size, 3) ) g_flag = false;
-
-  
-  
-  // pitch
-  label = "/DomainInfo/GlobalPitch";
-  
-  if ( !tp_dom->getInspectedVector(label, pitch, 3) ) p_flag = false;
-  
-  
-  // 排他チェック
-  if ( !g_flag && !p_flag ) // 両方とも指定されていない
-  {
-    Hostonly_ cout << "\tNeither GlobalVoxel nor GlobalPitch is specified. You need to choose either parameter.\n" << endl;
-    Exit(0);
-  }
-  else if ( g_flag ) // G_voxelの指定がある >> G_voxelが優先
-  {
-    if ( g_flag )
-    {
-      if ( (G_size[0]>0) && (G_size[1]>0) && (G_size[2]>0) )
-      {
-        pitch[0] = G_region[0] / G_size[0];
-        pitch[1] = G_region[1] / G_size[1];
-        pitch[2] = G_region[2] / G_size[2];
-        
-        if ( Ex->mode == Intrinsic::dim_2d )
-        {
-          pitch[2] = pitch[0];
-          G_region[2] = (REAL_TYPE)G_size[2] * pitch[2];
-          G_origin[2] = -0.5 * pitch[2];
-        }
-        
-      }
-      else
-      {
-        Hostonly_ printf("ERROR : in parsing [%s] >> (%d, %d, %d)\n", label.c_str(), G_size[0], G_size[1], G_size[2] );
-        Exit(0);
-      }
-    }
-  }
-  else if ( !g_flag && p_flag ) // pitchのみ
-  {
-    if ( (pitch[0]>0.0) && (pitch[1]>0.0) && (pitch[2]>0.0) )
-    {
-      
-      // pitchを基準にして、全計算領域の分割数を計算する。切り上げ
-      G_size[0] = (int)ceil(G_region[0]/pitch[0]);
-      G_size[1] = (int)ceil(G_region[1]/pitch[1]);
-      G_size[2] = (int)ceil(G_region[2]/pitch[2]);
-      
-      // 再計算された全計算領域の分割数から、全計算領域の大きさを再計算
-      REAL_TYPE gr[3];
-      gr[0] = (REAL_TYPE)G_size[0] * pitch[0];
-      gr[1] = (REAL_TYPE)G_size[1] * pitch[1];
-      gr[2] = (REAL_TYPE)G_size[2] * pitch[2];
-      
-      // 整合性チェック
-      if ( Ex->mode == Intrinsic::dim_3d )
-      {
-        if ( (G_region[0]-gr[0]>ROUND_EPS) || (G_region[1]-gr[1]>ROUND_EPS) || (G_region[2]-gr[2]>ROUND_EPS) )
-        {
-          Hostonly_ {
-            printf("\tGlobal Region is modified due to maintain the consistency of domain parameters.\n\n");
-            printf("\t[%12.6e  %12.6e  %12.6e] >> [%12.6e  %12.6e  %12.6e]\n\n",
-                   G_region[0], G_region[1], G_region[2], gr[0], gr[1], gr[2]);
-          }
-          G_region[0] = gr[0];
-          G_region[1] = gr[1];
-          G_region[2] = gr[2];
-        }
-      }
-      else if ( Ex->mode == Intrinsic::dim_2d )
-      {
-        if ( (G_region[0]-gr[0]>ROUND_EPS) || (G_region[1]-gr[1]>ROUND_EPS) )
-        {
-          Hostonly_ {
-            printf("\tGlobal Region is modified due to maintain the consistency of domain parameters.\n\n");
-            printf("\t[%12.6e  %12.6e  %12.6e] >> [%12.6e  %12.6e  %12.6e]\n\n",
-                   G_region[0], G_region[1], G_region[2], gr[0], gr[1], gr[2]);
-          }
-          G_region[0] = gr[0];
-          G_region[1] = gr[1];
-          G_region[2] = gr[2];
-          G_origin[2] = -0.5 * pitch[2];
-        }
-      }
-      else
-      {
-        Exit(0);
-      }
-      
-    }
-    else // パラメータが無効の場合
-    {
-      Hostonly_ printf("ERROR : in parsing [%s] >> (%e, %e, %e)\n", label.c_str(), pitch[0], pitch[1], pitch[2] );
-      Exit(0);
-    }
-  }
-  else
-  {
-    Hostonly_ cout << "\tError : unknown\n" << endl;
-    Exit(0);
-  }
-  
-  
-  
-  
-  // 有次元の場合に無次元化する　paraMngr->VoxelInit()で計算する基本量
-  if (C.Unit.Param == DIMENSIONAL )
-  {
-    // 無次元化
-    for (int i=0; i<3; i++) {
-      pitch[i]    /= C.RefLength;
-      G_origin[i] /= C.RefLength;
-      G_region[i] /= C.RefLength;
-    }
-  }
-  
-  
-
-
-  // 2D check
-  if ( (Ex->mode == Intrinsic::dim_2d) && (G_size[2] != 1) )
-  {
-    Hostonly_ {
-      printf("\tError : In case of 2 dimensional problem, kmax must be 1 >> %d.\n", G_size[2]);
-      Exit(0);
-    }
-  }
-
-  
-  // 偶数のチェック
-  if ( Ex->even == ON )
-  {
-    if ( G_size[0]/2*2 != G_size[0] )
-    {
-      printf("\tDimension size must be even for x direction (%d %d %d)\n", G_size[0], G_size[1], G_size[2]);
-      Exit(0);
-    }
-    if ( G_size[1]/2*2 != G_size[1] )
-    {
-      printf("\tDimension size must be even for y direction (%d %d %d)\n", G_size[0], G_size[1], G_size[2]);
-      Exit(0);
-    }
-    if ( (Ex->mode == Intrinsic::dim_3d) && (G_size[2]/2*2 != G_size[2]) )
-    {
-      printf("\tDimension size must be even for z direction (%d %d %d)\n", G_size[0], G_size[1], G_size[2]);
-      Exit(0);
-    }
-  }
-  
-  
-  // G_division オプション
-  label = "/DomainInfo/GlobalDivision";
-  
-  if ( !tp_dom->getInspectedVector(label, G_division, 3) )
-  {
-    Hostonly_ cout << "\tAutomatic domain division is selected." << endl;
-    div_type = 2; // 自動分割
-  }
-  
-  // プロセス分割数が指定されている場合のチェック
-  if ( div_type == 1 )
-  {
-    if ( (G_division[0]>0) && (G_division[1]>0) && (G_division[2]>0) ) 
-    {
-      Hostonly_ printf("\tManual domain division is selected.\n");
-    }
-    else
-    {
-      Hostonly_ cout << "ERROR : in parsing [" << label << "]" << endl;
-      Exit(0);
-    }
-  }
-
-  
-  
-  // ActiveSubdomainファイル名の取得 >> ファイル名が指定されている場合はASモード
-  label = "/DomainInfo/ActiveSubDomainFile";
-  if ( tp_dom->chkLabel(label) )
-  {
-    if ( !tp_dom->getInspectedValue(label, str ) )
-    {
-      Hostonly_ cout << "\tNo option : in parsing [" << label << "]" << endl;
-      Exit(0);
-    }
-    else
-    {
-      if ( str.empty() == true )
-      {
-        EXEC_MODE = ffvc_solver;
-      }
-      else
-      {
-        active_fname = str;
-        EXEC_MODE = ffvc_solverAS;
-        Hostonly_ printf("\n\tActive subdomain mode\n");
-      }
-    }
-  }
-  
-  
-  return div_type;
-}
-
-
 
 // #################################################################
 // * @brief FielIO classの同定
@@ -2168,18 +1782,18 @@ void FFV::identifyLinearSolver(TextParser* tpCntl)
   {
     case Flow_FS_EE_EE:
     case Flow_FS_AB2:
-      setLinearSolver(tpCntl, ic_prs1, "/Iteration/Pressure");
+      LS_setParameter(tpCntl, ic_prs1, "/Iteration/Pressure");
       break;
       
     case Flow_FS_AB_CN:
-      setLinearSolver(tpCntl, ic_prs1, "/Iteration/Pressure");
-      setLinearSolver(tpCntl, ic_vel1, "/Iteration/Velocity");
+      LS_setParameter(tpCntl, ic_prs1, "/Iteration/Pressure");
+      LS_setParameter(tpCntl, ic_vel1, "/Iteration/Velocity");
       break;
       
     case Flow_FS_RK_CN:
-      setLinearSolver(tpCntl, ic_prs1, "/Iteration/Pressure");
-      setLinearSolver(tpCntl, ic_prs2, "/Iteration/Pressure2nd");
-      setLinearSolver(tpCntl, ic_vel1, "/Iteration/Velocity");
+      LS_setParameter(tpCntl, ic_prs1, "/Iteration/Pressure");
+      LS_setParameter(tpCntl, ic_prs2, "/Iteration/Pressure2nd");
+      LS_setParameter(tpCntl, ic_vel1, "/Iteration/Velocity");
       break;
       
     default:
@@ -2196,7 +1810,7 @@ void FFV::identifyLinearSolver(TextParser* tpCntl)
       break;
       
     case Heat_EE_EI:
-      setLinearSolver(tpCntl, ic_tmp1, "/Iteration/Temperature");
+      LS_setParameter(tpCntl, ic_tmp1, "/Iteration/Temperature");
       break;
       
     default:
@@ -2287,6 +1901,110 @@ void FFV::initInterval()
     {
       Hostonly_ printf("\t Error : initialize timing trigger [tg_sampled].\n");
       Exit(0);
+    }
+  }
+  
+}
+
+
+// #################################################################
+/**
+ * @brief 線形ソルバー関連の初期化
+ * @param [in,out] m_total  本計算用のメモリリサイズ
+ * @param [in]     tpCntl   テキストパーサーのツリーポインタ
+ */
+void FFV::LS_initialize(double& TotalMemory, TextParser* tpCntl)
+{
+  // communication buffer
+  switch (LS[ic_prs1].getLS())
+  {
+    case SOR2SMA:
+    case GMRES:
+    case PCG:
+    case BiCGSTAB:
+      allocate_SOR2SMA_buffer(TotalMemory);
+      break;
+  }
+  
+  
+  // extra arrays for Krylov subspace
+  switch (LS[ic_prs1].getLS())
+  {
+    case GMRES:
+      allocArray_Krylov(TotalMemory);
+      break;
+      
+    case PCG:
+      allocArray_PCG(TotalMemory);
+      break;
+      
+    case BiCGSTAB:
+      allocArray_BiCGstab(TotalMemory);
+      if ( LS[ic_prs1].isPreconditioned() )
+      {
+        allocArray_BiCGSTABwithPreconditioning(TotalMemory);
+      }
+      break;
+  }
+  
+  
+  // Initialize
+  
+  for (int i=0; i<ic_END; i++)
+  {
+    if ( LS[i].getLS() != 0)
+    {
+      LS[i].Initialize(&C,
+                       &BC,
+                       ModeTiming,
+                       face_comm_size,
+                       &PM,
+                       d_bcp,
+                       d_bcd,
+                       d_pcg_p,
+                       d_pcg_p_,
+                       d_pcg_r,
+                       d_pcg_r0,
+                       d_pcg_q,
+                       d_pcg_s,
+                       d_pcg_s_,
+                       d_pcg_t,
+                       d_pcg_t_,
+                       ensPeriodic,
+                       cf_sz,
+                       cf_x,
+                       cf_y,
+                       cf_z);
+    }
+  }
+  
+}
+
+
+// #################################################################
+/**
+ * @brief 線形ソルバを特定し，パラメータをセットする
+ * @param [in] tpCntl テキストパーサーのポインタ
+ * @param [in] odr    制御クラス配列の番号
+ * @param [in] label  探索ラベル
+ */
+void FFV::LS_setParameter(TextParser* tpCntl, const int odr, const string label)
+{
+  string str;
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    Hostonly_ printf("\tParsing error : No '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  //C.copyCriteria(dynamic_cast<IterationCtl*>(&LS[odr]), str);
+  
+  for (int i=0; i<C.NoBaseLS; i++)
+  {
+    if ( !strcasecmp( str.c_str(), C.Criteria[i].getAlias().c_str() ))
+    {
+      LS[odr].copy(&C.Criteria[i]);
     }
   }
   
@@ -3198,37 +2916,6 @@ void FFV::setInitialCondition()
 
 
 // #################################################################
-/**
- * @brief 線形ソルバを特定し，パラメータをセットする
- * @param [in] tpCntl テキストパーサーのポインタ
- * @param [in] odr    制御クラス配列の番号
- * @param [in] label  探索ラベル
- */
-void FFV::setLinearSolver(TextParser* tpCntl, const int odr, const string label)
-{
-  string str;
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-    Hostonly_ printf("\tParsing error : No '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  //C.copyCriteria(dynamic_cast<IterationCtl*>(&LS[odr]), str);
-  
-  for (int i=0; i<C.NoBaseLS; i++)
-  {
-    if ( !strcasecmp( str.c_str(), C.Criteria[i].getAlias().c_str() ))
-    {
-      LS[odr].copy(&C.Criteria[i]);
-    }
-  }
-  
-}
-
-
-
-// #################################################################
 /* @brief ParseMatクラスをセットアップし，媒質情報を入力ファイルから読み込み，媒質リストを作成する
  * @param [in] fp  ファイルポインタ
  */
@@ -3268,13 +2955,13 @@ void FFV::setMediumList(FILE* fp)
  * @param [in] TotalMemory ソルバー実行に必要なメモリ
  * @param [in] fp          ファイルポインタ
  */
-void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
+void FFV::SetModel(double& PrepMemory, double& TotalMemory, FILE* fp)
 {
   // 内部領域の交点と境界ID
   switch (C.Mode.Example)
   {
     case id_Polygon: // ユーザ例題
-      setupPolygon2CutInfo(PrepMemory, TotalMemory, fp);
+      SM_Polygon2Cut(PrepMemory, TotalMemory, fp);
       break;
       
     case id_Sphere:
@@ -3367,6 +3054,339 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
     if ( paraMngr->BndCommS3D(d_cut, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
   }
 
+}
+
+
+// #################################################################
+/* @brief 幾何形状情報を準備し，交点計算を行う
+ * @param [in,out] m_prep   前処理用のメモリサイズ
+ * @param [in,out] m_total  本計算用のメモリリサイズ
+ * @param [in]     fp       ファイルポインタ
+ */
+void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
+{
+  TIMING_start("Polylib_Section");
+  
+  
+  Hostonly_
+  {
+    fprintf(fp,"\n----------\n\n");
+    fprintf(fp,"\t>> Polylib configuration\n\n");
+    fprintf(fp,"\tfile name = %s\n\n", C.PolylibConfigName.c_str());
+    
+    printf("\n----------\n\n");
+    printf("\t>> Polylib configuration\n\n");
+    printf("\tfile name = %s\n\n", C.PolylibConfigName.c_str());
+  }
+  
+  
+  // Polylib: インスタンス取得
+  PL = MPIPolylib::get_instance();
+  
+  // Polylib: ポリゴングループのFactoryクラスを登録
+  //PL->set_factory( new MyPolygonGroupFactory() );
+  
+  // Polylib: 並列計算領域情報を設定 >> 有次元
+  unsigned  poly_gc[3] = {guide, guide, guide};
+  
+  
+  // 読み込むデータはオリジナルのまま >> Polylib管理のメソッドで検索などを行うため
+  poly_stat = PL->init_parallel_info(MPI_COMM_WORLD,
+                                     originD,           // 自ランクの基点座標
+                                     (unsigned*)size,   // 自ランクの分割数
+                                     poly_gc,           // ガイドセル数
+                                     pitchD             // 格子幅
+                                     );
+  if ( poly_stat != PLSTAT_OK )
+  {
+    Hostonly_
+    {
+      fprintf(fp,"\tRank [%6d]: p_polylib->init_parallel_info() failed.", myRank);
+      printf    ("\tRank [%6d]: p_polylib->init_parallel_info() failed.", myRank);
+    }
+    Exit(0);
+  }
+  
+  
+  
+  // Polylib: STLデータ読み込み
+  TIMING_start("Loading_Polygon_File");
+  
+  // ロード
+  poly_stat = PL->load_rank0( C.PolylibConfigName );
+  
+  if( poly_stat != PLSTAT_OK )
+  {
+    Hostonly_
+    {
+      printf    ("\tRank [%6d]: p_polylib->load_rank0() failed.", myRank);
+      fprintf(fp,"\tRank [%6d]: p_polylib->load_rank0() failed.", myRank);
+    }
+    Exit(0);
+  }
+  
+  TIMING_stop("Loading_Polygon_File");
+  
+  
+  
+  // 階層情報表示 debug brief hierarchy
+  // ##########
+#if 0
+  PL->show_group_hierarchy();
+  PL->show_group_hierarchy(fp);
+#endif
+  // ##########
+  
+  
+  // ポリゴン情報へのアクセス
+  vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
+  
+  
+  // Polygon Groupの数
+  C.num_of_polygrp = pg_roots->size();
+  
+  if ( (C.num_of_polygrp < 1) || (C.num_of_polygrp > C.NoCompo) )
+  {
+    printf("\tError : Number of polygon group must be greater than 1 and less than NoCompo.\n");
+    Exit(0);
+  }
+  
+  
+  Hostonly_
+  {
+    printf(     "\tNumber of Polygon Group = %d\n\n", C.num_of_polygrp);
+    fprintf(fp, "\tNumber of Polygon Group = %d\n\n", C.num_of_polygrp);
+    
+    printf(     "\t   Polygon Group Label       Medium Alias              Local BC      Element          Area\n");
+    printf(     "\t   ---------------------------------------------------------------------------------------\n");
+    fprintf(fp, "\t   Polygon Group Label       Medium Alias              Local BC      Element          Area\n");
+    fprintf(fp, "\t   ---------------------------------------------------------------------------------------\n");
+  }
+  
+  
+  // PolygonPropertyの配列
+  PG = new PolygonProperty[C.num_of_polygrp];
+  
+  
+  vector<PolygonGroup*>::iterator it;
+  
+  // ポリゴン情報の表示
+  int c = 0;
+  for (it = pg_roots->begin(); it != pg_roots->end(); it++)
+  {
+    std::string m_pg = (*it)->get_name();     // グループラベル
+    std::string m_mat = (*it)->get_label();   // 媒質ラベル
+    std::string m_bc = (*it)->get_type();     // 境界条件ラベル
+    int ntria= (*it)->get_group_num_tria();   // ローカルのポリゴン数
+    REAL_TYPE area = (*it)->get_group_area(); // ローカルのポリゴン面積
+    
+    PG[c].setLntria(ntria);
+    
+    
+    // mat[]の格納順を探す
+    int mat_id;
+    
+    for (int i=1; i<=C.NoCompo; i++)
+    {
+      if ( FBUtility::compare(m_pg, mat[i].getAlias()) )
+      {
+        mat_id = i;
+        break;
+      }
+    }
+    //printf("mat_id=%d\n", mat_id);
+    
+    // PolygonにIDを割り当てる
+    poly_stat = (*it)->set_all_exid_of_trias(mat_id);
+    
+    if ( poly_stat != PLSTAT_OK )
+    {
+      Hostonly_
+      {
+        printf(     "\tError : Polylib::set_all_exid_of_trias()\n");
+        fprintf(fp, "\tError : Polylib::set_all_exid_of_trias()\n");
+        Exit(0);
+      }
+    }
+    
+    
+    if ( numProc > 1 )
+    {
+      int tmp = ntria;
+      if ( paraMngr->Allreduce(&tmp, &ntria, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      
+      REAL_TYPE ta = area;
+      if ( paraMngr->Allreduce(&ta, &area, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    
+    // コンポーネント(BC+OBSTACLE)の面積を保持 >> @todo Polylibのバグ?で並列時に正しい値を返さない, ntriaとarea 暫定的処置
+    cmp[mat_id].area = area;
+    
+    PG[c].setID(mat_id);
+    PG[c].setGroup(m_pg);
+    PG[c].setBClabel(m_bc);
+    PG[c].setMaterial(m_mat);
+    PG[c].setGntria(ntria);
+    
+    
+    Hostonly_
+    {
+      printf(    "\t  %20s %18s  %20s %12d  %e\n", m_pg.c_str(),
+             m_mat.c_str(),
+             m_bc.c_str(),
+             ntria,
+             area);
+      fprintf(fp,"\t  %20s %18s  %20s %12d  %e\n", m_pg.c_str(),
+              m_mat.c_str(),
+              m_bc.c_str(),
+              ntria,
+              area);
+    }
+    
+    c++;
+    
+    // ########## show corrdinates and area
+#if 0
+    PL->show_group_info(m_pg); //debug
+#endif
+    // ##########
+    
+  }
+  
+  
+  delete pg_roots;
+  
+  Hostonly_
+  {
+    printf("\n");
+    fprintf(fp, "\n");
+  }
+  
+  
+  
+  // 使用メモリ量　基本クラスのみ
+  double poly_mem, G_poly_mem;
+  G_poly_mem = poly_mem = (double)PL->used_memory_size();
+  m_prep += poly_mem;
+  m_total+= poly_mem;
+  
+  displayMemoryInfo(fp, G_poly_mem, poly_mem, "Polygon");
+  
+  
+  // ポリゴンのBbox
+  GM.calcBboxFromPolygonGroup(PL, PG, C.num_of_polygrp);
+  
+  
+  // Triangle display >> Debug
+  // ##########
+#if 0
+  Vec3r m_min, m_max, t1(origin), t2(pitch), t3;
+  t3.assign((REAL_TYPE)size[0]*t2.x, (REAL_TYPE)size[1]*t2.y, (REAL_TYPE)size[2]*t2.z);
+  m_min = t1 - t2;      // 1層外側まで
+  m_max = t1 + t3 + t2; //
+  printf("min : %f %f %f\n", m_min.x, m_min.y, m_min.z);
+  printf("max : %f %f %f\n", m_max.x, m_max.y, m_max.z);
+  vector<Triangle*>* trias = PL->search_polygons("Ducky", m_min, m_max, false); // false; ポリゴンが一部でもかかる場合
+  
+  //Vec3r *p, nrl, n;
+  Vec3r n;
+  Vertex** p;
+  c=0;
+  vector<Triangle*>::iterator it3;
+  for (it3 = trias->begin(); it3 != trias->end(); it3++) {
+    p = (*it3)->get_vertex();
+    n = (*it3)->get_normal();
+    printf("%d : p0=(%6.3e %6.3e %6.3e)  p1=(%6.3e %6.3e %6.3e) p2=(%6.3e %6.3e %6.3e) n=(%6.3e %6.3e %6.3e)\n", c++,
+           (*(p[0]))[0], (*(p[0]))[1], (*(p[0]))[2],
+           (*(p[1]))[0], (*(p[1]))[1], (*(p[1]))[2],
+           (*(p[2]))[0], (*(p[2]))[1], (*(p[2]))[2],
+           n.x, n.y, n.z);
+  }
+  
+  delete trias;  //後始末
+#endif
+  
+  
+  // ##########
+  
+  
+  // Polylib: STLデータ書き出し
+  // DomainInfo/UnitOfLength={"mm", "cm"}のとき，"m"でスケーリングされたポリゴンが出力される
+  if ( C.Hide.GeomOutput == ON )
+  {
+    TIMING_start("Write_Polygon_File");
+    
+    unsigned poly_out_para = IO_DISTRIBUTE;
+    if ( (C.Parallelism == Control::Serial) || (C.Parallelism == Control::OpenMP) ) poly_out_para = IO_GATHER;
+    
+    string fname;
+    
+    if ( poly_out_para == IO_GATHER )
+    {
+      poly_stat = PL->save_rank0( &fname, "stl_b" );
+      
+      if ( poly_stat != PLSTAT_OK )
+      {
+        Hostonly_
+        {
+          printf("Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", myRank, fname.c_str());
+          fprintf(fp,"Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", myRank, fname.c_str());
+        }
+        Exit(0);
+      }
+    }
+    else
+    {
+      poly_stat = PL->save_parallel( &fname, "stl_b" );
+      
+      if ( poly_stat != PLSTAT_OK )
+      {
+        Hostonly_
+        {
+          printf("Rank [%d]: p_polylib->save_parallel() failed to write into '%s'.", myRank, fname.c_str());
+          fprintf(fp,"Rank [%d]: p_polylib->save_parallel() failed to write into '%s'.", myRank, fname.c_str());
+        }
+        Exit(0);
+      }
+    }
+    
+    TIMING_stop("Write_Polygon_File");
+  }
+  
+  TIMING_stop("Polylib_Section");
+  
+  
+  
+  
+  
+  TIMING_start("Cut_Section");
+  
+  Hostonly_
+  {
+    fprintf(fp,"\n----------\n\n");
+    fprintf(fp,"\t>> Calculate cut and quantize\n\n");
+  }
+  
+  
+  // 交点計算
+  TIMING_start("Cut_Information");
+  GM.quantizeCut(fp, d_cut, d_bid, d_bcd, C.NoCompo, PL, PG);
+  TIMING_stop("Cut_Information");
+  
+  
+  // カットの最小値
+  TIMING_start("Cut_Minimum_search");
+  minDistance(d_cut, d_bid, fp);
+  TIMING_stop("Cut_Minimum_search");
+  
+  
+#if 0
+  displayCutInfo(d_cut, d_bid);
+#endif
+  
+  TIMING_stop("Cut_Section");
+  
 }
 
 
@@ -3578,7 +3598,7 @@ void FFV::initCutInfo()
  * @param [in] tpf ffvのパラメータを保持するTextParserインスタンス
  * @retval 並列モードの文字列
  */
-string FFV::setupDomain(TextParser* tpf)
+string FFV::SetDomain(TextParser* tpf)
 {
   
   // ランク情報をセット >> 各クラスでランク情報メンバ変数を利用する前にセットすること
@@ -3615,17 +3635,17 @@ string FFV::setupDomain(TextParser* tpf)
   
   // メンバ変数にパラメータをロード : 分割指示 (divtype = 1-with / 2-without)
   // pitch[], G_region[], G_origin[]が確定する >> パラメータファイルで指定した値
-  int div_type = getDomainParameter(tpf);
+  int div_type = SD_getParameter(tpf);
   
   
   // 領域設定 計算領域全体のサイズ，並列計算時のローカルのサイズ，コンポーネントのサイズなどを設定
-  DomainInitialize(div_type, tpf);
+  SD_Initialize(div_type, tpf);
 
   
   // 各例題固有の領域パラメータを設定する
   Ex->setDomainParameter(&C, size, origin, region, pitch);
 
-  
+
   // 各クラスで領域情報を保持
   setDomainInfo      (C.guide, C.RefLength);
   C.setDomainInfo    (C.guide, C.RefLength);
@@ -3636,21 +3656,21 @@ string FFV::setupDomain(TextParser* tpf)
   MO.setDomainInfo   (C.guide, C.RefLength);
   F->setDomainInfo   (C.guide, C.RefLength);
   GM.setDomainInfo   (C.guide, C.RefLength);
+
   
   for (int i=0; i<ic_END; i++)
   {
     LS[i].setDomainInfo(C.guide, C.RefLength);
   }
-  
+
   
   
   // ファイルIOパラメータ << get1stParameter()でgetTurbulenceModel()を呼んだあと
   F->getFIOparams();
-  
+
   
   // 従属的なパラメータの取得
   C.get2ndParameter(&RF);
-  
   
 
   
@@ -3695,411 +3715,399 @@ string FFV::setupDomain(TextParser* tpf)
 }
 
 
-// #################################################################
-/**
- * @brief 線形ソルバー関連の初期化
- * @param [in,out] m_total  本計算用のメモリリサイズ
- * @param [in]     tpCntl   テキストパーサーのツリーポインタ
- */
-void FFV::setupLinearSolvers(double& TotalMemory, TextParser* tpCntl)
-{
-  // communication buffer
-  switch (LS[ic_prs1].getLS())
-  {
-    case SOR2SMA:
-    case GMRES:
-    case PCG:
-    case BiCGSTAB:
-      allocate_SOR2SMA_buffer(TotalMemory);
-      break;
-  }
-  
-  
-  // extra arrays for Krylov subspace
-  switch (LS[ic_prs1].getLS())
-  {
-    case GMRES:
-      allocArray_Krylov(TotalMemory);
-      break;
-      
-    case PCG:
-      allocArray_PCG(TotalMemory);
-      break;
-      
-    case BiCGSTAB:
-      allocArray_BiCGstab(TotalMemory);
-      if ( LS[ic_prs1].isPreconditioned() )
-      {
-        allocArray_BiCGSTABwithPreconditioning(TotalMemory);
-      }
-      break;
-  }
-  
-  
-  // Initialize
-  
-  for (int i=0; i<ic_END; i++)
-  {
-    if ( LS[i].getLS() != 0)
-    {
-      LS[i].Initialize(&C,
-                       &BC,
-                       ModeTiming,
-                       face_comm_size,
-                       &PM,
-                       d_bcp,
-                       d_bcd,
-                       d_pcg_p,
-                       d_pcg_p_,
-                       d_pcg_r,
-                       d_pcg_r0,
-                       d_pcg_q,
-                       d_pcg_s,
-                       d_pcg_s_,
-                       d_pcg_t,
-                       d_pcg_t_,
-                       ensPeriodic,
-                       cf_sz,
-                       cf_x,
-                       cf_y,
-                       cf_z);
-    }
-  }
-
-}
-
 
 // #################################################################
-/* @brief 幾何形状情報を準備し，交点計算を行う
- * @param [in,out] m_prep   前処理用のメモリサイズ
- * @param [in,out] m_total  本計算用のメモリリサイズ
- * @param [in]     fp       ファイルポインタ
+/* @brief グローバルな領域情報を取得し、無次元の領域基本パラメータを返す
+ * @param [in] tp_dom   TextParserクラス
+ * @return 分割指示 (1-with / 2-without)
+ * @note この関数では、pitch[], G_region[], G_origin[]を確定する
  */
-void FFV::setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp)
+int FFV::SD_getParameter(TextParser* tp_dom)
 {
-  TIMING_start("Polylib_Section");
+  // 領域分割モードのパターン
+  //     分割指定(G_div指定)         domain.txt
+  // 1)  G_div指定なし |  G_orign + G_region + (G_pitch || G_voxel)
+  // 2)  G_div指定あり |  G_orign + G_region + (G_pitch || G_voxel)
+  // 3)  G_div指定なし |          + ActiveDomainInfo
+  // 4)  G_div指定あり |          + ActiveDomainInfo
+  
+  /* Policy
+   * G_regionは必須
+   * G_voxelとG_pitchでは，G_voxelが優先．両方が指定されている場合はエラー
+   * G_pitchが指定されており，割り切れない場合は，領域を拡大
+   *        G_voxel = (int)ceil(G_region/G_pitch)
+   *        G_region = G_pitch * G_voxel
+   * 
+   * CPMlibに渡す場合にG_voxelモードにする
+   */
+  
+  string label, str;
+  int div_type = 1; // 指定分割 => 1
   
   
-  Hostonly_
+  // 長さの単位
+  label = "/DomainInfo/UnitOfLength";
+  
+  if ( !tp_dom->getInspectedValue(label, str) )
   {
-    fprintf(fp,"\n----------\n\n");
-    fprintf(fp,"\t>> Polylib configuration\n\n");
-    fprintf(fp,"\tfile name = %s\n\n", C.PolylibConfigName.c_str());
-    
-    printf("\n----------\n\n");
-    printf("\t>> Polylib configuration\n\n");
-    printf("\tfile name = %s\n\n", C.PolylibConfigName.c_str());
+    Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
+    Exit(0);
   }
   
-  
-  // Polylib: インスタンス取得
-  PL = MPIPolylib::get_instance();
-  
-  // Polylib: ポリゴングループのFactoryクラスを登録
-  //PL->set_factory( new MyPolygonGroupFactory() );
-  
-  // Polylib: 並列計算領域情報を設定 >> 有次元
-  unsigned  poly_gc[3] = {guide, guide, guide};
-
-  
-  // 読み込むデータはオリジナルのまま >> Polylib管理のメソッドで検索などを行うため
-  poly_stat = PL->init_parallel_info(MPI_COMM_WORLD,
-                                     originD,           // 自ランクの基点座標
-                                     (unsigned*)size,   // 自ランクの分割数
-                                     poly_gc,           // ガイドセル数
-                                     pitchD             // 格子幅
-                                     );
-  if ( poly_stat != PLSTAT_OK )
+  if     ( !strcasecmp(str.c_str(), "NonDimensional") )  C.Unit.Length = LTH_ND;
+  else if( !strcasecmp(str.c_str(), "M") )               C.Unit.Length = LTH_m;
+  else
   {
-    Hostonly_
-    {
-      fprintf(fp,"\tRank [%6d]: p_polylib->init_parallel_info() failed.", myRank);
-      printf    ("\tRank [%6d]: p_polylib->init_parallel_info() failed.", myRank);
-    }
+    Hostonly_ stamped_printf("\tInvalid keyword is described at '%s'\n", label.c_str());
     Exit(0);
   }
   
   
+  // G_origin　必須
+  label = "/DomainInfo/GlobalOrigin";
   
-  // Polylib: STLデータ読み込み
-  TIMING_start("Loading_Polygon_File");
-  
-  // ロード
-  poly_stat = PL->load_rank0( C.PolylibConfigName );
-  
-  if( poly_stat != PLSTAT_OK )
+  if ( !tp_dom->getInspectedVector(label, G_origin, 3) )
   {
-    Hostonly_
-    {
-      printf    ("\tRank [%6d]: p_polylib->load_rank0() failed.", myRank);
-      fprintf(fp,"\tRank [%6d]: p_polylib->load_rank0() failed.", myRank);
-    }
-    Exit(0);
-  }
-  
-  TIMING_stop("Loading_Polygon_File");
-  
-  
-  
-  // 階層情報表示 debug brief hierarchy
-// ##########
-#if 0
-  PL->show_group_hierarchy();
-  PL->show_group_hierarchy(fp);
-#endif
-// ##########
-  
-  
-  // ポリゴン情報へのアクセス
-  vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
-  
-  
-  // Polygon Groupの数
-  C.num_of_polygrp = pg_roots->size();
-  
-  if ( (C.num_of_polygrp < 1) || (C.num_of_polygrp > C.NoCompo) )
-  {
-    printf("\tError : Number of polygon group must be greater than 1 and less than NoCompo.\n");
+    cout << "ERROR : in parsing [" << label << "]" << endl;
     Exit(0);
   }
   
   
-  Hostonly_
+  // G_region 必須
+  label = "/DomainInfo/GlobalRegion";
+  
+  if ( !tp_dom->getInspectedVector(label, G_region, 3) )
   {
-    printf(     "\tNumber of Polygon Group = %d\n\n", C.num_of_polygrp);
-    fprintf(fp, "\tNumber of Polygon Group = %d\n\n", C.num_of_polygrp);
-    
-    printf(     "\t   Polygon Group Label       Medium Alias              Local BC      Element          Area\n");
-    printf(     "\t   ---------------------------------------------------------------------------------------\n");
-    fprintf(fp, "\t   Polygon Group Label       Medium Alias              Local BC      Element          Area\n");
-    fprintf(fp, "\t   ---------------------------------------------------------------------------------------\n");
+    Hostonly_ cout << "ERROR : in parsing [" << label << "]" << endl;
+    Exit(0);
   }
   
-  
-  // PolygonPropertyの配列
-  PG = new PolygonProperty[C.num_of_polygrp];
-  
-  
-  vector<PolygonGroup*>::iterator it;
-  
-  // ポリゴン情報の表示
-  int c = 0;
-  for (it = pg_roots->begin(); it != pg_roots->end(); it++)
+  if ( (G_region[0]>0.0) && (G_region[1]>0.0) && (G_region[2]>0.0) )
   {
-    std::string m_pg = (*it)->get_name();     // グループラベル
-    std::string m_mat = (*it)->get_label();   // 媒質ラベル
-    std::string m_bc = (*it)->get_type();     // 境界条件ラベル
-    int ntria= (*it)->get_group_num_tria();   // ローカルのポリゴン数
-    REAL_TYPE area = (*it)->get_group_area(); // ローカルのポリゴン面積
-    
-    PG[c].setLntria(ntria);
-
-    
-    // mat[]の格納順を探す
-    int mat_id;
-
-    for (int i=1; i<=C.NoCompo; i++)
+    ; // skip
+  }
+  else
+  {
+    Hostonly_ cout << "ERROR : in parsing [" << label << "]" << endl;
+    Exit(0);
+  }
+  
+  // 排他チェックフラグ
+  bool g_flag = true;
+  bool p_flag = true;
+  
+  
+  // G_voxel
+  label = "/DomainInfo/GlobalVoxel";
+  
+  if ( !tp_dom->getInspectedVector(label, G_size, 3) ) g_flag = false;
+  
+  
+  
+  // pitch
+  label = "/DomainInfo/GlobalPitch";
+  
+  if ( !tp_dom->getInspectedVector(label, pitch, 3) ) p_flag = false;
+  
+  
+  // 排他チェック
+  if ( !g_flag && !p_flag ) // 両方とも指定されていない
+  {
+    Hostonly_ cout << "\tNeither GlobalVoxel nor GlobalPitch is specified. You need to choose either parameter.\n" << endl;
+    Exit(0);
+  }
+  else if ( g_flag ) // G_voxelの指定がある >> G_voxelが優先
+  {
+    if ( g_flag )
     {
-      if ( FBUtility::compare(m_pg, mat[i].getAlias()) )
+      if ( (G_size[0]>0) && (G_size[1]>0) && (G_size[2]>0) )
       {
-        mat_id = i;
-        break;
-      }
-    }
-    //printf("mat_id=%d\n", mat_id);
-
-    // PolygonにIDを割り当てる
-    poly_stat = (*it)->set_all_exid_of_trias(mat_id);
-    
-    if ( poly_stat != PLSTAT_OK )
-    {
-      Hostonly_
-      {
-        printf(     "\tError : Polylib::set_all_exid_of_trias()\n");
-        fprintf(fp, "\tError : Polylib::set_all_exid_of_trias()\n");
-        Exit(0);
-      }
-    }
-    
-    
-    if ( numProc > 1 )
-    {
-      int tmp = ntria;
-      if ( paraMngr->Allreduce(&tmp, &ntria, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-      
-      REAL_TYPE ta = area;
-      if ( paraMngr->Allreduce(&ta, &area, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-    }
-
-    
-    // コンポーネント(BC+OBSTACLE)の面積を保持 >> @todo Polylibのバグ?で並列時に正しい値を返さない, ntriaとarea 暫定的処置
-    cmp[mat_id].area = area;
-    
-    PG[c].setID(mat_id);
-    PG[c].setGroup(m_pg);
-    PG[c].setBClabel(m_bc);
-    PG[c].setMaterial(m_mat);
-    PG[c].setGntria(ntria);
-    
-
-    Hostonly_
-    {
-      printf(    "\t  %20s %18s  %20s %12d  %e\n", m_pg.c_str(),
-                                                   m_mat.c_str(),
-                                                   m_bc.c_str(),
-                                                   ntria,
-                                                   area);
-      fprintf(fp,"\t  %20s %18s  %20s %12d  %e\n", m_pg.c_str(),
-                                                   m_mat.c_str(),
-                                                   m_bc.c_str(),
-                                                   ntria,
-                                                   area);
-    }
-
-    c++;
-    
-// ########## show corrdinates and area
-#if 0
-    PL->show_group_info(m_pg); //debug
-#endif
-// ##########
-    
-  }
-
-  
-  delete pg_roots;
-  
-  Hostonly_
-  {
-    printf("\n");
-    fprintf(fp, "\n");
-  }
-  
-  
-  
-  // 使用メモリ量　基本クラスのみ
-  double poly_mem, G_poly_mem;
-  G_poly_mem = poly_mem = (double)PL->used_memory_size();
-  m_prep += poly_mem;
-  m_total+= poly_mem;
-  
-  displayMemoryInfo(fp, G_poly_mem, poly_mem, "Polygon");
-
-  
-  // ポリゴンのBbox
-  GM.calcBboxFromPolygonGroup(PL, PG, C.num_of_polygrp);
-
-  
-  // Triangle display >> Debug
-// ##########
-#if 0
-  Vec3r m_min, m_max, t1(origin), t2(pitch), t3;
-  t3.assign((REAL_TYPE)size[0]*t2.x, (REAL_TYPE)size[1]*t2.y, (REAL_TYPE)size[2]*t2.z);
-  m_min = t1 - t2;      // 1層外側まで
-  m_max = t1 + t3 + t2; //
-  printf("min : %f %f %f\n", m_min.x, m_min.y, m_min.z);
-  printf("max : %f %f %f\n", m_max.x, m_max.y, m_max.z);
-  vector<Triangle*>* trias = PL->search_polygons("Ducky", m_min, m_max, false); // false; ポリゴンが一部でもかかる場合
-  
-  //Vec3r *p, nrl, n;
-  Vec3r n;
-  Vertex** p;
-  c=0;
-  vector<Triangle*>::iterator it3;
-  for (it3 = trias->begin(); it3 != trias->end(); it3++) {
-    p = (*it3)->get_vertex();
-    n = (*it3)->get_normal();
-    printf("%d : p0=(%6.3e %6.3e %6.3e)  p1=(%6.3e %6.3e %6.3e) p2=(%6.3e %6.3e %6.3e) n=(%6.3e %6.3e %6.3e)\n", c++,
-           (*(p[0]))[0], (*(p[0]))[1], (*(p[0]))[2],
-           (*(p[1]))[0], (*(p[1]))[1], (*(p[1]))[2],
-           (*(p[2]))[0], (*(p[2]))[1], (*(p[2]))[2],
-           n.x, n.y, n.z);
-  }
-  
-  delete trias;  //後始末
-#endif
-  
-  
-// ##########
-  
-  
-  // Polylib: STLデータ書き出し
-  // DomainInfo/UnitOfLength={"mm", "cm"}のとき，"m"でスケーリングされたポリゴンが出力される
-  if ( C.Hide.GeomOutput == ON )
-  {
-    TIMING_start("Write_Polygon_File");
-    
-    unsigned poly_out_para = IO_DISTRIBUTE;
-    if ( (C.Parallelism == Control::Serial) || (C.Parallelism == Control::OpenMP) ) poly_out_para = IO_GATHER;
-    
-    string fname;
-    
-    if ( poly_out_para == IO_GATHER )
-    {
-      poly_stat = PL->save_rank0( &fname, "stl_b" );
-
-      if ( poly_stat != PLSTAT_OK )
-      {
-        Hostonly_
+        pitch[0] = G_region[0] / G_size[0];
+        pitch[1] = G_region[1] / G_size[1];
+        pitch[2] = G_region[2] / G_size[2];
+        
+        if ( Ex->mode == Intrinsic::dim_2d )
         {
-          printf("Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", myRank, fname.c_str());
-          fprintf(fp,"Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", myRank, fname.c_str());
+          pitch[2] = pitch[0];
+          G_region[2] = (REAL_TYPE)G_size[2] * pitch[2];
+          G_origin[2] = -0.5 * pitch[2];
         }
+        
+      }
+      else
+      {
+        Hostonly_ printf("ERROR : in parsing [%s] >> (%d, %d, %d)\n", label.c_str(), G_size[0], G_size[1], G_size[2] );
         Exit(0);
       }
+    }
+  }
+  else if ( !g_flag && p_flag ) // pitchのみ
+  {
+    if ( (pitch[0]>0.0) && (pitch[1]>0.0) && (pitch[2]>0.0) )
+    {
+      
+      // pitchを基準にして、全計算領域の分割数を計算する。四捨五入
+      G_size[0] = (int)floor(G_region[0]/pitch[0] + 0.5);
+      G_size[1] = (int)floor(G_region[1]/pitch[1] + 0.5);
+      G_size[2] = (int)floor(G_region[2]/pitch[2] + 0.5);
+ 
+      
+      // 再計算された全計算領域の分割数から、全計算領域の大きさを再計算
+      double gr[3];
+      gr[0] = (double)G_size[0] * (double)pitch[0];
+      gr[1] = (double)G_size[1] * (double)pitch[1];
+      gr[2] = (double)G_size[2] * (double)pitch[2];
+      
+      // 整合性チェック
+      if ( Ex->mode == Intrinsic::dim_3d )
+      {
+        if ( (G_region[0]-gr[0]>ROUND_EPS) || (G_region[1]-gr[1]>ROUND_EPS) || (G_region[2]-gr[2]>ROUND_EPS) )
+        {
+          Hostonly_ {
+            printf("\tGlobal Region is modified due to maintain the consistency of domain parameters.\n\n");
+            printf("\t[%12.6e  %12.6e  %12.6e] >> [%12.6e  %12.6e  %12.6e]\n\n",
+                   G_region[0], G_region[1], G_region[2], gr[0], gr[1], gr[2]);
+          }
+          G_region[0] = gr[0];
+          G_region[1] = gr[1];
+          G_region[2] = gr[2];
+          Exit(0);
+        }
+      }
+      else if ( Ex->mode == Intrinsic::dim_2d )
+      {
+        if ( (G_region[0]-gr[0]>ROUND_EPS) || (G_region[1]-gr[1]>ROUND_EPS) )
+        {
+          Hostonly_ {
+            printf("\tGlobal Region is modified due to maintain the consistency of domain parameters.\n\n");
+            printf("\t[%12.6e  %12.6e  %12.6e] >> [%12.6e  %12.6e  %12.6e]\n\n",
+                   G_region[0], G_region[1], G_region[2], gr[0], gr[1], gr[2]);
+          }
+          G_region[0] = gr[0];
+          G_region[1] = gr[1];
+          G_region[2] = gr[2];
+          G_origin[2] = -0.5 * pitch[2];
+          Exit(0);
+        }
+      }
+      else
+      {
+        Exit(0);
+      }
+      
+    }
+    else // パラメータが無効の場合
+    {
+      Hostonly_ printf("ERROR : in parsing [%s] >> (%e, %e, %e)\n", label.c_str(), pitch[0], pitch[1], pitch[2] );
+      Exit(0);
+    }
+  }
+  else
+  {
+    Hostonly_ cout << "\tError : unknown\n" << endl;
+    Exit(0);
+  }
+  
+  
+  
+  
+  // 有次元の場合に無次元化する　paraMngr->VoxelInit()で計算する基本量
+  if (C.Unit.Param == DIMENSIONAL )
+  {
+    // 無次元化
+    for (int i=0; i<3; i++) {
+      pitch[i]    /= C.RefLength;
+      G_origin[i] /= C.RefLength;
+      G_region[i] /= C.RefLength;
+    }
+  }
+
+  
+  
+  // 2D check
+  if ( (Ex->mode == Intrinsic::dim_2d) && (G_size[2] != 1) )
+  {
+    Hostonly_ {
+      printf("\tError : In case of 2 dimensional problem, kmax must be 1 >> %d.\n", G_size[2]);
+      Exit(0);
+    }
+  }
+  
+  
+  // 偶数のチェック
+  if ( Ex->even == ON )
+  {
+    if ( G_size[0]/2*2 != G_size[0] )
+    {
+      printf("\tDimension size must be even for x direction (%d %d %d)\n", G_size[0], G_size[1], G_size[2]);
+      Exit(0);
+    }
+    if ( G_size[1]/2*2 != G_size[1] )
+    {
+      printf("\tDimension size must be even for y direction (%d %d %d)\n", G_size[0], G_size[1], G_size[2]);
+      Exit(0);
+    }
+    if ( (Ex->mode == Intrinsic::dim_3d) && (G_size[2]/2*2 != G_size[2]) )
+    {
+      printf("\tDimension size must be even for z direction (%d %d %d)\n", G_size[0], G_size[1], G_size[2]);
+      Exit(0);
+    }
+  }
+  
+  
+  // G_division オプション
+  label = "/DomainInfo/GlobalDivision";
+  
+  if ( !tp_dom->getInspectedVector(label, G_division, 3) )
+  {
+    Hostonly_ cout << "\tAutomatic domain division is selected." << endl;
+    div_type = 2; // 自動分割
+  }
+  
+  // プロセス分割数が指定されている場合のチェック
+  if ( div_type == 1 )
+  {
+    if ( (G_division[0]>0) && (G_division[1]>0) && (G_division[2]>0) )
+    {
+      Hostonly_ printf("\tManual domain division is selected.\n");
     }
     else
     {
-      poly_stat = PL->save_parallel( &fname, "stl_b" );
-      
-      if ( poly_stat != PLSTAT_OK )
+      Hostonly_ cout << "ERROR : in parsing [" << label << "]" << endl;
+      Exit(0);
+    }
+  }
+  
+  
+  
+  // ActiveSubdomainファイル名の取得 >> ファイル名が指定されている場合はASモード
+  label = "/DomainInfo/ActiveSubDomainFile";
+  if ( tp_dom->chkLabel(label) )
+  {
+    if ( !tp_dom->getInspectedValue(label, str ) )
+    {
+      Hostonly_ cout << "\tNo option : in parsing [" << label << "]" << endl;
+      Exit(0);
+    }
+    else
+    {
+      if ( str.empty() == true )
       {
-        Hostonly_
-        {
-          printf("Rank [%d]: p_polylib->save_parallel() failed to write into '%s'.", myRank, fname.c_str());
-          fprintf(fp,"Rank [%d]: p_polylib->save_parallel() failed to write into '%s'.", myRank, fname.c_str());
-        }
-        Exit(0);
+        EXEC_MODE = ffvc_solver;
+      }
+      else
+      {
+        active_fname = str;
+        EXEC_MODE = ffvc_solverAS;
+        Hostonly_ printf("\n\tActive subdomain mode\n");
       }
     }
-    
-    TIMING_stop("Write_Polygon_File");
   }
   
-  TIMING_stop("Polylib_Section");
+  
+  return div_type;
+}
 
 
+// #################################################################
+/* @brief 計算領域情報を設定する
+ * @param [in] div_type 分割数モード
+ * @param [in] tp_dom   TextParserクラス
+ */
+void FFV::SD_Initialize(const int div_type, TextParser* tp_dom)
+{
+  // 袖通信の最大数
+  size_t Nvc  = (size_t)C.guide;
+  size_t Ncmp = 3; // 最大はベクトル3成分
+  
+  int m_sz[3]  = {G_size[0], G_size[1], G_size[2]};
+  int m_div[3] = {G_division[0], G_division[1], G_division[2]};
+  double m_org[3] = {(double)G_origin[0], (double)G_origin[1], (double)G_origin[2]};
+  double m_reg[3] = {(double)G_region[0], (double)G_region[1], (double)G_region[2]};
   
   
-
-  TIMING_start("Cut_Section");
-
-  Hostonly_
+  
+  // 領域分割モードのパターン
+  //     分割指定(G_div指定)         domain.txt
+  // 1)  G_div指定なし |  G_orign + G_region + (pitch || G_voxel)
+  // 2)  G_div指定あり |  G_orign + G_region + (pitch || G_voxel)
+  // 3)  G_div指定なし |          + ActiveDomainInfo
+  // 4)  G_div指定あり |          + ActiveDomainInfo
+  
+  /* Policy
+   * G_regionは必須
+   * G_voxelとpitchでは，G_voxelが優先．両方が指定されている場合はエラー
+   * G_pitchが指定されており，割り切れない場合は，領域を拡大
+   *        G_voxel = (int)ceil(G_region/pitch)
+   *        G_region = pitch * G_voxel
+   */
+  
+  
+  // ノーマルモードとActive subdomainモードの切り替え
+  if ( EXEC_MODE == ffvc_solver )
   {
-    fprintf(fp,"\n----------\n\n");
-    fprintf(fp,"\t>> Calculate cut and quantize\n\n");
+    // 分割数を元に分割する >> CPMlibの仕様
+    switch (div_type)
+    {
+      case 1: // 分割数が指示されている場合
+        if ( paraMngr->VoxelInit(m_div, m_sz, m_org, m_reg, Nvc, Ncmp) != CPM_SUCCESS )
+        {
+          cout << "Domain decomposition error : " << endl;
+          Exit(0);
+        }
+        break;
+        
+      
+      case 2: // 分割数が指示されていない場合
+        if ( paraMngr->VoxelInit(m_sz, m_org, m_reg, Nvc, Ncmp) != CPM_SUCCESS )
+        {
+          cout << "Domain decomposition error : " << endl;
+          Exit(0);
+        }
+        break;
+        
+        
+      default:
+        Exit(0);
+        break;
+    }
   }
-
+  else if ( EXEC_MODE == ffvc_solverAS )
+  {
+    if ( paraMngr->VoxelInit_Subdomain(m_div, m_sz, m_org, m_reg, active_fname, Nvc, Ncmp) != CPM_SUCCESS )
+    {
+      cout << "Domain decomposition error : " << endl;
+      Exit(0);
+    }
+  }
+  else
+  {
+    Exit(0);
+  }
   
-  // 交点計算
-  TIMING_start("Cut_Information");
-  GM.quantizeCut(fp, d_cut, d_bid, d_bcd, C.NoCompo, PL, PG);
-  TIMING_stop("Cut_Information");
-  
-
-  // カットの最小値
-  TIMING_start("Cut_Minimum_search");
-  minDistance(d_cut, d_bid, fp);
-  TIMING_stop("Cut_Minimum_search");
   
   
-#if 0
-  displayCutInfo(d_cut, d_bid);
-#endif
+  // アドレスサイズのチェック
+  size_t n_cell[3];
   
-  TIMING_stop("Cut_Section");
+  for ( int i=0; i<3; i++)
+  {
+    n_cell[i] = (size_t)(size[i] + 2*guide);  // 分割数+ガイドセル両側
+  }
+  
+  size_t size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
+  
+  if (size_n_cell*6  > UINT_MAX)
+  {
+    Hostonly_
+    {
+      stamped_printf("\n\tError : Product of size[]*6 exceeds UINT_MAX\n\n");
+    }
+    Exit(0);
+  }
   
 }
+
 
 
 // #################################################################

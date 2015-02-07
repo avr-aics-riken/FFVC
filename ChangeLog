@@ -19,6 +19,10 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-02-07
+r1588 change calculation policy from ceil to round off to get g_voxel in SD_getParameter()
+
+--------------------------
 2015-02-05
 r1587
 - add printForceAvr()

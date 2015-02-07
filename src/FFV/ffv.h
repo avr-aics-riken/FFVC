@@ -295,10 +295,6 @@ private:
   void displayParameters(FILE* fp);
   
   
-  // 計算領域情報を設定する
-  void DomainInitialize(const int div_type, TextParser* tp_dom);
-  
-  
   // BCIndexにビット情報をエンコードする
   void encodeBCindex(FILE* fp);
   
@@ -315,11 +311,7 @@ private:
   void generateGlyph(const long long* cut, const int* bid, FILE* fp);
   
   
-  // グローバルな領域情報を取得し、無次元の領域基本パラメータを返す
-  int getDomainParameter(TextParser* tp_dom);
-  
-  
-  // DIv反復のパラメータ
+  // Div反復のパラメータ
   bool getParaDiv(TextParser* tpCntl);
   
   
@@ -341,6 +333,15 @@ private:
   
   // インターバルの初期化
   void initInterval();
+  
+  
+  
+  // 線形ソルバークラス関連の初期化
+  void LS_initialize(double& TotalMemory, TextParser* tpCntl);
+  
+  
+  // 線形ソルバを特定し，パラメータをセットする
+  void LS_setParameter(TextParser* tpCntl, const int odr, const string label);
   
   
   // 距離の最小値を求める
@@ -390,16 +391,8 @@ private:
   void setInitialCondition();
   
   
-  // 線形ソルバを特定し，パラメータをセットする
-  void setLinearSolver(TextParser* tpCntl, const int odr, const string label);
-  
-  
   // ParseMatクラスをセットアップし，媒質情報を入力ファイルから読み込み，媒質リストを作成する
   void setMediumList(FILE* fp);
-  
-  
-  // 各種例題のモデルをセットアップ
-  void setModel(double& PrepMemory, double& TotalMemory, FILE* fp);
   
   
   // MonitorListのセットアップ
@@ -415,16 +408,26 @@ private:
   
   
   // パラメータのロードと計算領域を初期化し，並列モードを返す
-  string setupDomain(TextParser* tpf);
+  string SetDomain(TextParser* tpf);
   
   
-  // 線形ソルバークラス関連の初期化
-  void setupLinearSolvers(double& TotalMemory, TextParser* tpCntl);
+  // グローバルな領域情報を取得し、無次元の領域基本パラメータを返す
+  int SD_getParameter(TextParser* tp_dom);
+  
+  
+  // 計算領域情報を設定する
+  void SD_Initialize(const int div_type, TextParser* tp_dom);
+  
+  
+  // 各種例題のモデルをセットアップ
+  void SetModel(double& PrepMemory, double& TotalMemory, FILE* fp);
   
   
   // 幾何形状情報を準備し，交点計算を行う
-  void setupPolygon2CutInfo(double& m_prep, double& m_total, FILE* fp);
+  void SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp);
   
+  
+
   
   
   /** ffv.C *******************************************************/
