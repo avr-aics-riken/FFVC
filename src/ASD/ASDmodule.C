@@ -562,7 +562,7 @@ void ASD::fill(bool disp_flag, Geometry* GM)
   }
   
   
-  filled = GM->fillSeedBcd(d_bcd, FillSeedDir, md_solid, d_bid, G_division);
+  filled = GM->fillSeedBcdOuter(d_bcd, FillSeedDir, md_solid, d_bid, G_division);
 
   
   if ( filled == 0 )
@@ -602,7 +602,7 @@ void ASD::fill(bool disp_flag, Geometry* GM)
     // SeedIDで指定された媒質でフィルする．FLUID/SOLIDの両方のケースがある
     unsigned long fs;
     int cs=1; // @todo 適当なので正しく動かない　修正の必要あり
-    filled = GM->fillByBid(d_bid, d_bcd, d_cut, md_solid, fs, cs, G_division);
+    //filled = GM->fillByBid(d_bcd, d_bid, d_cut, fs, cs, mat, G_division);
     replaced = fs;
     
     target_count -= filled;

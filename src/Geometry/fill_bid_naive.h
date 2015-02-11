@@ -15,7 +15,7 @@
 
 /**
  * @file   fill_bid_naive.h
- * @brief  bidによるフィルアルゴリズム、simpleな方法
+ * @brief  bidによるフィルアルゴリズム、simpleなフラッドフィル
  * @author aics
  */
 
@@ -54,11 +54,12 @@ if ( zp == 0 )
   
   // 各方向のテスト
   // 対象セルは，未評価セル(zp == 0) 
-  // 例えば、X-側からテストする場合は，X-側のセルがフィルを行うターゲットIDで既にペイントされている(zw == tg)
+  // 例えば、X-側からテストする場合は，X-側のセルがfill_modeのIDで既にペイントされている
   
   
   // フラッドフィル
   int tag = 0;
+  int tg;
   
   // mode_x==0の時には，X方向の領域境界でフィルしない
   if ( (sdw < 0) && (i == 1) && !mode_x )
@@ -67,7 +68,11 @@ if ( zp == 0 )
   }
   else
   {
-    if ( zw==tg && qw==0 ) tag++;
+    if ( mat[zw].getState()==fill_mode && qw==0 )
+    {
+      tg = zw;
+      tag++;
+    }
   }
   
   if ( (sde < 0) && (i == ix) && !mode_x )
@@ -76,7 +81,11 @@ if ( zp == 0 )
   }
   else
   {
-    if ( ze==tg && qe==0 ) tag++;
+    if ( mat[ze].getState()==fill_mode && qe==0 )
+    {
+      tg = ze;
+      tag++;
+    }
   }
   
   // mode_y==0の時には，Y方向の領域境界でフィルしない
@@ -86,7 +95,11 @@ if ( zp == 0 )
   }
   else
   {
-    if ( zs==tg && qs==0 ) tag++;
+    if ( mat[zs].getState()==fill_mode && qs==0 )
+    {
+      tg = zs;
+      tag++;
+    }
   }
   
   if ( (sdn < 0) && (j == jx) && !mode_y )
@@ -95,7 +108,11 @@ if ( zp == 0 )
   }
   else
   {
-    if ( zn==tg && qn==0 ) tag++;
+    if ( mat[zn].getState()==fill_mode && qn==0 )
+    {
+      tg = zn;
+      tag++;
+    }
   }
   
   // mode_z==0の時には，Z方向の領域境界でフィルしない
@@ -105,7 +122,11 @@ if ( zp == 0 )
   }
   else
   {
-    if ( zb==tg && qb==0 ) tag++;
+    if ( mat[zb].getState()==fill_mode && qb==0 )
+    {
+      tg = zb;
+      tag++;
+    }
   }
   
   if ( (sdt < 0) && (k == kx) && !mode_z )
@@ -114,7 +135,11 @@ if ( zp == 0 )
   }
   else
   {
-    if ( zt==tg && qt==0 ) tag++;
+    if ( mat[zt].getState()==fill_mode && qt==0 )
+    {
+      tg = zt;
+      tag++;
+    }
   }
   
 

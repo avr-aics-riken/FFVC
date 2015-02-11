@@ -37,12 +37,30 @@ using namespace Vec3class;
 
 class Geometry : public DomainInfo {
   
+public:
+  enum kind_fill_hint {
+    kind_outerface=1,
+    kind_point
+  };
+  
+  
 private:
   int NumSuvDiv;       ///< 再分割数
   int FillSeedDir;     ///< フィルのヒント {x_minux | x_plus |...}
-  string FillMedium;   ///< フィルに使う媒質 -> int FillID
   string SeedMedium;   ///< ヒントに使う媒質 -> int SeedID
   unsigned temporary;
+  int NoHint;
+  
+  typedef struct {
+    string identifier;
+    kind_fill_hint kind;
+    int dir;
+    string medium;
+    Vec3r point;
+  } KindFill;
+  
+  KindFill* fill_table;
+  
   
 public:
   int FillID;          ///< フィル媒質ID
@@ -60,10 +78,13 @@ public:
     NumSuvDiv = 0;
     FillSeedDir = -1;
     temporary = 0;
+    NoHint=0;
     
     for (int i=0; i<3; i++) {
       FillSuppress[i] = ON; // default is "fill"
     }
+    
+    fill_table = NULL;
   }
   
   /**　デストラクタ */
@@ -84,6 +105,13 @@ private:
                            const int m_id,
                            const bool painted=true,
                            const int* Dsize=NULL);
+  
+  
+  // セル数をカウント（デバッグ用）
+  unsigned long debug_countCellB(const int* bcd,
+                                 const int m_id,
+                                 const int* bid,
+                                 const int* Dsize);
   
   
   // 未ペイントセルをtargetでフィル
@@ -107,6 +135,16 @@ private:
   
   // 未ペイントセルを周囲のmidの固体最頻値でフィル
   unsigned long fillByModalSolid(int* mid, const int fluid_id, const int m_NoCompo);
+  
+  
+  // bid情報を元にフラッドフィル
+  void fill_connected(FILE* fp,
+                      int* d_bcd,
+                      const int* d_bid,
+                      const MediumList* mat,
+                      const int m_NoMedium,
+                      const int fill_mode,
+                      unsigned long& target_count);
   
   
   // サブセルのSolid部分の値を代入
@@ -164,12 +202,15 @@ private:
                                   const int m_NoCompo);
   
   
-  // フィルパラメータを取得
-  void getFillParam();
-  
-  
   // 交点が定義点にある場合の処理をした場合に、反対側のセルの状態を修正
   unsigned long modifyCutOnPoint(int* bid, long long* cut, const int* bcd, const int* Dsize=NULL);
+  
+  
+  // 6方向にカットのあるセルを交点媒質でフィルする
+  unsigned long replaceIsolatedCell(int* bcd,
+                                    const int* bid,
+                                    const int m_NoCompo,
+                                    const CompoList* cmp);
   
   
   /**
@@ -316,21 +357,19 @@ public:
   
   // フィル操作
   void fill(FILE* fp,
-            CompoList* cmp,
-            MediumList* mat,
             int* d_bcd,
-            long long* d_cut,
-            int* d_bid,
-            const int m_NoCompo);
+            const int* d_bid,
+            const int m_NoMedium,
+            const MediumList* mat,
+            const int m_NoCompo,
+            const CompoList* cmp);
 
   
-  // カットID情報に基づく流体媒質のフィルを実行
-  unsigned long fillByBid(int* bid,
-                          int* bcd,
-                          long long* cut,
-                          const int tgt_id,
-                          unsigned long& substituted,
-                          const int m_NoCompo,
+  // bid情報を元にフラッドフィル
+  unsigned long fillByBid(int* bcd,
+                          const int* bid,
+                          const MediumList* mat,
+                          const int mode,
                           const int* Dsize=NULL);
   
   
@@ -341,16 +380,23 @@ public:
                             const int* Dsize=NULL);
   
   
-  // シード点をbcd[]にペイントする
-  unsigned long fillSeedBcd(int* bcd,
-                            const int face,
-                            const int target,
-                            const int* bid,
-                            const int* Dsize=NULL);
+  // bcd[]の内部セルにシードIDをペイントする
+  unsigned long fillSeedBcdInner(int* bcd,
+                                 const Vec3r p,
+                                 const int target,
+                                 const int* bid,
+                                 const int* Dsize=NULL);
+  
+  // bcd[]の外層にシードIDをペイントする
+  unsigned long fillSeedBcdOuter(int* bcd,
+                                 const int face,
+                                 const int target,
+                                 const int* bid,
+                                 const int* Dsize=NULL);
   
   
   // フィルパラメータを取得
-  void getFillParam(TextParser* tpCntl);
+  void getFillParam(TextParser* tpCntl, FILE* fp);
   
   
   /**

@@ -1935,6 +1935,11 @@ void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp)
     cmp[m].setMedium(str);
     
     
+    // 媒質格納番号
+    int key = FBUtility::findIDfromLabel(mat, NoMedium, str);
+    cmp[m].setMatodr(key);
+    
+    
     // class
     label = label_leaf + "/Class";
     
@@ -2086,7 +2091,7 @@ void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp)
     // cmp[]のaliasをmat[]へコピーしておく
     mat[m].setAlias( cmp[m].getAlias() );
     
-    // cmp[]の状態を設定
+    // 状態を設定
     mat[m].setState(mat[odr].getState());
     cmp[m].setState(mat[odr].getState());
   }

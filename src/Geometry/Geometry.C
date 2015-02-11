@@ -446,41 +446,32 @@ unsigned long Geometry::countCellM(const int* mid, const int m_id, const bool pa
 
 // #################################################################
 /* @brief フィル操作
- * @param [in]      fp        ファイルポインタ
- * @param [in]      cmp       CompoList class
- * @param [in]      mat       MediumList
- * @param [in,out]  d_bcd     BCindex ID
- * @param [in]      d_cut     距離情報
- * @param [in]      d_bid     BC情報
- * @param [in]      m_NoCompo コンポーネント数
+ * @param [in]      fp         ファイルポインタ
+ * @param [in,out]  d_bcd      BCindex ID
+ * @param [in]      d_bid      交点ID情報
+ * @param [in]      m_NoMedium 媒質数
+ * @param [in]      mat        MediumList
+ * @param [in]      m_NoCompo  コンポーネント数
+ * @param [in]      cmp        CompoList
  */
 void Geometry::fill(FILE* fp,
-                    CompoList* cmp,
-                    MediumList* mat,
                     int* d_bcd,
-                    long long* d_cut,
-                    int* d_bid,
-                    const int m_NoCompo)
+                    const int* d_bid,
+                    const int m_NoMedium,
+                    const MediumList* mat,
+                    const int m_NoCompo,
+                    const CompoList* cmp)
 {
 
-  // フィル媒質のチェック
-  if ( cmp[FillID].getState() != FLUID )
-  {
-    Hostonly_ printf("\tSpecified Medium of filling fluid is not FLUID\n");
-    Exit(0);
-  }
+  /*
+   * 先に流体領域をフィルし、残った部分を固体領域としてフィルする
+   */
   
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
   
-  unsigned long replaced;     ///< 置換された数
-  unsigned long filled;       ///< FLUIDでフィルされた数
-  unsigned long sum_replaced; ///< 置換された数の合計
-  unsigned long sum_filled;   ///< FLUIDでフィルされた数の合計
-  
-
   
   // 全計算内部セル数
   unsigned long total_cell = (unsigned long)ix * (unsigned long)jx * (unsigned long)kx;
@@ -502,88 +493,11 @@ void Geometry::fill(FILE* fp,
     fprintf(fp,"\t\tTotal cell count       = %16ld\n", total_cell);
     fprintf(fp,"\t\tInitial target count   = %16ld\n", target_count);
     fprintf(fp,"\n\tFill -----\n\n");
-    fprintf(fp,"\t\tFill medium of FLUID   : %s\n", mat[FillID].getAlias().c_str());
-    fprintf(fp,"\t\tHint of Seeding Dir.   : %s\n", FBUtility::getDirection(FillSeedDir).c_str());
-    fprintf(fp,"\t\tFill medium of SEED    : %s\n", mat[SeedID].getAlias().c_str());
     fprintf(fp,"\t\tFill mode for each dir.: %d %d %d\n", FillSuppress[0], FillSuppress[1], FillSuppress[2]);
   }
   
-#if 0 // debug
-  return;
-#endif
-  
-  
-  
-  // ヒントの方向から
-  filled = fillSeedBcd(d_bcd, FillSeedDir, SeedID, d_bid);
-  
-  if ( numProc > 1 )
-  {
-    if ( paraMngr->BndCommS3D(d_bcd, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  if ( filled == 0 )
-  {
-    Hostonly_
-    {
-      fprintf(fp,"No cells to paint\n");
-    }
-    Exit(0);
-  }
-  
-  Hostonly_
-  {
-    fprintf(fp,"\t\tPainted cells by hint  = %16ld\n", filled);
-  }
-  
-  // ペイントされたシードセル数をターゲットから差し引く
-  target_count -= filled;
-  
-  
-  
-  Hostonly_
-  {
-    fprintf(fp,"\t\tRemaining target cells = %16ld\n\n", target_count);
-  }
-  
-  
-  // 隣接する流体セルと接続しており，かつ固体セルに挟まれていないセルのみペイントする
-  
-  int c=-1; // iteration
-  sum_replaced = 0;
-  sum_filled = 0;
-  
-  while (target_count > 0) {
-    
-    // SeedIDで指定された媒質でフィルする．FLUID/SOLIDの両方のケースがある
-    unsigned long fs;
-    filled = fillByBid(d_bid, d_bcd, d_cut, SeedID, fs, m_NoCompo);
-    replaced = fs;
-    
-    if ( numProc > 1 )
-    {
-      if ( paraMngr->BndCommS3D(d_cut, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->BndCommS3D(d_bcd, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->BndCommS3D(d_bid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
-    }
-    
-    target_count -= filled;
-    target_count -= replaced;
-    sum_filled   += filled;
-    sum_replaced += replaced;
-    
-    if ( filled <= 0 ) break; // フィル対象がなくなったら終了
-    c++;
-  }
-  
-  
-  Hostonly_
-  {
-    fprintf(fp,"\t\tBID Iteration          = %5d\n", c+1);
-    fprintf(fp,"\t\t    Filled             = %16ld by '%s'\n", sum_filled, mat[SeedID].getAlias().c_str());
-    fprintf(fp,"\t\t    SOLID replaced     = %16ld\n", sum_replaced);
-    fprintf(fp,"\t\t    Remaining cell     = %16ld\n\n", target_count);
-  }
+  // FLUIDでフィル
+  fill_connected(fp, d_bcd, d_bid, mat, m_NoMedium, FLUID, target_count);
   
   
   if ( target_count == 0 ) return;
@@ -591,7 +505,7 @@ void Geometry::fill(FILE* fp,
   
   
   
-  // 未ペイントのセルを最頻値IDでペイントする -------------------
+  // 未ペイントのセルをヒントのSOLIDでペイントする -------------------
   
   // 未ペイント（ID=0）のセルを検出
   unsigned long upc = countCellB(d_bcd, 0);
@@ -606,54 +520,19 @@ void Geometry::fill(FILE* fp,
   }
   
   
-  
-  // SeedMediumと反対の媒質に変更
-  c = -1;
-  sum_replaced = 0;
-  int fill_mode = -1;
-  if ( cmp[SeedID].getState() == FLUID )
-  {
-    fill_mode = SOLID;
-  }
-  else
-  {
-    fill_mode = FLUID;
-  }
-  
-  // 未ペイントのセルに対して、指定媒質でフィルする
-  while ( target_count > 0 ) {
-    
-    if ( fill_mode == SOLID )
-    {
-      replaced = fillByModalSolid(d_bcd, FillID, d_bid, m_NoCompo);
-    }
-    else
-    {
-      replaced = fillByFluid(d_bcd, FillID, d_bid);
-    }
-    
-    if ( numProc > 1 )
-    {
-      if ( paraMngr->BndCommS3D(d_bcd, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
-    }
-    
-    target_count -= replaced;
-    sum_replaced += replaced;
-    
-    if ( replaced <= 0 ) break;
-    c++;
-  }
-  
-  
-  Hostonly_
-  {
-    fprintf(fp,"\t\tFinal Filling Iteration= %5d\n", c+1);
-    fprintf(fp,"\t\t   Filled           = %16ld by %s\n\n", sum_replaced, (fill_mode==FLUID)?"FLUID":"SOLID");
-  }
+  // SOLIDでフィル
+  fill_connected(fp, d_bcd, d_bid, mat, m_NoMedium, SOLID, target_count);
   
 
   
-  // ID=0をカウント
+  // 未ペイント(ID=0)をカウント
+  upc = countCellB(d_bcd, 0);
+  
+  // 未ペイントセルがある場合は、全周カットの可能性
+  replaceIsolatedCell(d_bcd, d_bid, m_NoCompo, cmp);
+  
+  
+  // チェック
   upc = countCellB(d_bcd, 0);
   
   if ( upc != 0 )
@@ -663,6 +542,121 @@ void Geometry::fill(FILE* fp,
       fprintf(fp,"\tFill operation is done, but still remains %ld unpainted cells.\n", upc);
     }
     Exit(0);
+  }
+  
+}
+
+
+// #################################################################
+/* @brief 連続領域のフィル
+ * @param [in]      fp         ファイルポインタ
+ * @param [in,out]  d_bcd      BCindex ID
+ * @param [in]      d_bid      交点ID情報
+ * @param [in]      mat        MediumList
+ * @param [in]      m_NoMedium 媒質数
+ * @param [in]      fill_mode  フィルモード (SOLID | FLUID)
+ * @param [in,out]  target_count ペイント対象のセル数
+ */
+void Geometry::fill_connected(FILE* fp,
+                              int* d_bcd,
+                              const int* d_bid,
+                              const MediumList* mat,
+                              const int m_NoMedium,
+                              const int fill_mode,
+                              unsigned long& target_count)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  unsigned long filled;       ///< フィルされた数
+
+  
+  // 媒質のヒントを与える
+  for (int m=0; m<NoHint; m++)
+  {
+    // MediumListの格納番号
+    int key = FBUtility::findIDfromLabel(mat, m_NoMedium, fill_table[m].medium);
+    
+    if ( mat[key].getState() == fill_mode )
+    {
+      //printf("%d mat[%d] = %s\n", m, key, mat[key].getAlias().c_str());
+      
+      if ( fill_table[m].kind == kind_outerface )
+      {
+        filled = fillSeedBcdOuter(d_bcd, fill_table[m].dir, key, d_bid);
+      }
+      else
+      {
+        filled = fillSeedBcdInner(d_bcd, fill_table[m].point, key, d_bid);
+      }
+      
+    }
+  }
+  
+  
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->BndCommS3D(d_bcd, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  
+  if ( filled == 0 )
+  {
+    Hostonly_
+    {
+      fprintf(fp,"No cells painted by %s\n", (fill_mode==FLUID)?"FLUID":"SOLID");
+    }
+    Exit(0);
+  }
+  
+  Hostonly_
+  {
+    fprintf(fp,"\t\tPainted %s cells by hint       = %16ld\n", (fill_mode==FLUID)?"FLUID":"SOLID", filled);
+  }
+  
+  
+  // ペイントされたシードセル数をターゲットから差し引く
+  target_count -= filled;
+  
+  
+  Hostonly_
+  {
+    fprintf(fp,"\t\tRemaining cells to paint          = %16ld\n\n", target_count);
+  }
+  
+  
+  
+  // 隣接する流体セルと接続している場合に隣接IDでフィル
+  
+  int c=0;
+  unsigned long sum_filled = 0;   ///< フィルされた数の合計
+  
+  while (target_count > 0) {
+    
+    // 隣接の流体媒質でフィルする
+    filled = fillByBid(d_bcd, d_bid, mat, fill_mode);
+    
+    if ( numProc > 1 )
+    {
+      if ( paraMngr->BndCommS3D(d_bcd, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    target_count -= filled;
+    sum_filled   += filled;
+    
+    c++;
+    
+    if ( filled <= 0 ) break; // フィル対象がなくなったら終了
+  }
+  
+  
+  Hostonly_
+  {
+    fprintf(fp,"\t\tConnected fill Iteration          = %5d\n", c);
+    fprintf(fp,"\t\t               Filled by %s    = %16ld\n", (fill_mode==FLUID)?"FLUID":"SOLID", sum_filled);
+    fprintf(fp,"\t\t               Remaining cells    = %16ld\n\n", target_count);
   }
   
 }
@@ -786,22 +780,18 @@ unsigned long Geometry::fillByID(int* mid, const int target, const int* Dsize)
 
 // #################################################################
 /**
- * @brief 流体媒質のフィルをbid情報を元に実行
- * @param [in,out] bid         境界ID（5ビット幅x6方向）
+ * @brief bid情報を元にフラッドフィル
  * @param [in,out] bcd         BCindex B
- * @param [in,out] cut         カット情報
- * @param [in]     tgt_id      フィルするID
- * @param [out]    substituted 固体IDに置換された数
- * @param [in]     m_NoCompo   コンポーネント数
+ * @param [in]     bid         交点ID（5ビット幅x6方向）
+ * @param [in]     mat         MediumList
+ * @param [in]     mode        フィルモード (SOLID | FLUID)
  * @param [in]     Dsize       サイズ
  * @note Symmetric fillにより反復回数を減少
  */
-unsigned long Geometry::fillByBid(int* bid,
-                                  int* bcd,
-                                  long long* cut,
-                                  const int tgt_id,
-                                  unsigned long& substituted,
-                                  const int m_NoCompo,
+unsigned long Geometry::fillByBid(int* bcd,
+                                  const int* bid,
+                                  const MediumList* mat,
+                                  const int mode,
                                   const int* Dsize)
 {
   int ix, jx, kx, gd;
@@ -821,10 +811,6 @@ unsigned long Geometry::fillByBid(int* bid,
     gd = 1;
   }
   
-  int tg = tgt_id;
-  unsigned long filled   = 0; ///< 流体IDでペイントされた数
-  unsigned long replaced = 0; ///< 固体IDで置換された数
-  
   // 隣接サブドメインのランク番号
   int sdw = nID[X_minus];
   int sde = nID[X_plus];
@@ -837,9 +823,14 @@ unsigned long Geometry::fillByBid(int* bid,
   int mode_y = FillSuppress[1];
   int mode_z = FillSuppress[2];
   
+  unsigned long filled   = 0; ///< ペイントされた数
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, sdw, sde, sds, sdn, sdb, sdt, mode_x, mode_y, mode_z) \
-schedule(static) reduction(+:filled) reduction(+:replaced)
+  int fill_mode = mode;
+  
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, sdw, sde, sds, sdn, sdb, sdt) \
+                         firstprivate(mode_x, mode_y, mode_z, fill_mode) \
+schedule(static) reduction(+:filled)
   
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
@@ -852,8 +843,9 @@ schedule(static) reduction(+:filled) reduction(+:replaced)
   }
   
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, tg, sdw, sde, sds, sdn, sdb, sdt, mode_x, mode_y, mode_z) \
-schedule(static) reduction(+:filled) reduction(+:replaced)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, sdw, sde, sds, sdn, sdb, sdt) \
+                         firstprivate(mode_x, mode_y, mode_z, fill_mode) \
+schedule(static) reduction(+:filled)
   
   for (int k=kx; k>=1; k--) {
     for (int j=jx; j>=1; j--) {
@@ -869,12 +861,7 @@ schedule(static) reduction(+:filled) reduction(+:replaced)
   {
     unsigned long tmp = filled;
     if ( paraMngr->Allreduce(&tmp, &filled, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-    
-    tmp = replaced;
-    if ( paraMngr->Allreduce(&tmp, &replaced, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
-  
-  substituted = replaced;
   
   return filled;
 }
@@ -1233,10 +1220,64 @@ unsigned long Geometry::fillSubCellSolid(int* smd, REAL_TYPE* svf)
 }
 
 
+// #################################################################
+/**
+ * @brief bcd[]の内部セルにシードIDをペイントする
+ * @param [in,out] bcd    BCindex B
+ * @param [in]     p      座標値
+ * @param [in]     target ペイントするIDのエントリ
+ * @param [in]     bid    境界ID
+ * @param [in]     Dsize  サイズ
+ */
+unsigned long Geometry::fillSeedBcdInner(int* bcd, const Vec3r p, const int target, const int* bid, const int* Dsize)
+{
+  int ix, jx, kx, gd;
+  
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
+  
+  unsigned long c = 0;
+  
+  int w[3];
+  findIndex(p, w);
+  //printf("fill point : %d %d %d\n", w[0], w[1], w[2]);
+  
+  size_t m = _F_IDX_S3D(w[0], w[1], w[2], ix, jx, kx, gd);
+  int s = bid[m];
+  
+  // 対象セルの周囲にカットがなく，未ペイントのセルの場合
+  if ( !TEST_BC(s)  &&  DECODE_CMP(bcd[m]) == 0 )
+  {
+    setBitID(bcd[m], target);
+    c++;
+  }
+
+  
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = c;
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  return c;
+}
+
 
 // #################################################################
 /**
- * @brief シード点をbcd[]にペイントする
+ * @brief bcd[]の外層にシードIDをペイントする
  * @param [in,out] bcd    BCindex B
  * @param [in]     face   ヒント面
  * @param [in]     target ペイントするIDのエントリ
@@ -1245,7 +1286,7 @@ unsigned long Geometry::fillSubCellSolid(int* smd, REAL_TYPE* svf)
  * @note ヒントとして与えられた外部境界面に接するセルにおいて，確実に流体セルであるセルをフィルする
  *       もし，外部境界面以外に固体候補があれば、ぬれ面はフィルしない
  */
-unsigned long Geometry::fillSeedBcd(int* bcd, const int face, const int target, const int* bid, const int* Dsize)
+unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int target, const int* bid, const int* Dsize)
 {
   int ix, jx, kx, gd;
   
@@ -1764,52 +1805,128 @@ unsigned long Geometry::findPolygonInCell(int* d_mid, MPIPolylib* PL, PolygonPro
 /*
  * @brief フィルパラメータを取得
  * @param [in] tpCntl  TextParser
+ * @param [in] fp      file pointer to "cndition.txt"
  */
-void Geometry::getFillParam(TextParser* tpCntl)
+void Geometry::getFillParam(TextParser* tpCntl, FILE* fp)
 {
   string str;
-  string label;
+  string label_base, label_leaf, label;
   
-  // フィルの媒質指定
-  label = "/GeometryModel/FillMedium";
-  if ( !(tpCntl->getInspectedValue(label, str)) )
+  
+  label_base = "/FillHint";
+  if ( (NoHint = tpCntl->countLabels(label_base)) < 1 )
   {
-    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
-    Exit(0);
-  }
-  FillMedium = str;
-  
-  
-  // 流体セルのフィルの開始面指定
-  label = "/GeometryModel/HintOfFillSeedDirection";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid value in '%s'\n", label.c_str());
+    Hostonly_ printf("\tParsing error in '%s' : No labels\n", label_base.c_str());
     Exit(0);
   }
   
-  if     ( !strcasecmp(str.c_str(), "xminus" ) ) FillSeedDir = X_minus;
-  else if( !strcasecmp(str.c_str(), "xplus"  ) ) FillSeedDir = X_plus;
-  else if( !strcasecmp(str.c_str(), "yminus" ) ) FillSeedDir = Y_minus;
-  else if( !strcasecmp(str.c_str(), "yplus"  ) ) FillSeedDir = Y_plus;
-  else if( !strcasecmp(str.c_str(), "zminus" ) ) FillSeedDir = Z_minus;
-  else if( !strcasecmp(str.c_str(), "zplus"  ) ) FillSeedDir = Z_plus;
-  else
+  // フィルテーブルの作成
+  fill_table = new KindFill[NoHint];
+  
+  
+  for (int m=0; m<NoHint; m++)
   {
-    FillSeedDir = X_minus;
-    Hostonly_ printf("\tDefault 'X_minus' is set for Hint Of FillSeed direction\n");
+    if ( !(tpCntl->getNodeStr(label_base, m+1, str)) )
+    {
+      stamped_printf("\tParsing error : No Leaf Node \n");
+      Exit(0);
+    }
+    
+    fill_table[m].identifier = str;
+    
+    
+    label_leaf = label_base + "/" + str;
+    
+    label = label_leaf + "/kind";
+    if ( !(tpCntl->getInspectedValue(label, str )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : No '%s'\n", label.c_str());
+      Exit(0);
+    }
+    
+    
+    if ( !strcasecmp(str.c_str(), "outerface"))
+    {
+      fill_table[m].kind = kind_outerface;
+    }
+    else if ( !strcasecmp(str.c_str(), "point"))
+    {
+      fill_table[m].kind = kind_point;
+    }
+    else
+    {
+      Hostonly_ stamped_printf("\tError : Invalid keyword [%s]\n", str.c_str());
+      Exit(0);
+    }
+    
+    
+    if ( fill_table[m].kind == kind_outerface )
+    {
+      label = label_leaf + "/direction";
+      if ( !(tpCntl->getInspectedValue(label, str )) )
+      {
+        Hostonly_ stamped_printf("\tParsing error : No '%s'\n", label.c_str());
+        Exit(0);
+      }
+      if     ( !strcasecmp(str.c_str(), "xminus" ) ) fill_table[m].dir = X_minus;
+      else if( !strcasecmp(str.c_str(), "xplus"  ) ) fill_table[m].dir = X_plus;
+      else if( !strcasecmp(str.c_str(), "yminus" ) ) fill_table[m].dir = Y_minus;
+      else if( !strcasecmp(str.c_str(), "yplus"  ) ) fill_table[m].dir = Y_plus;
+      else if( !strcasecmp(str.c_str(), "zminus" ) ) fill_table[m].dir = Z_minus;
+      else if( !strcasecmp(str.c_str(), "zplus"  ) ) fill_table[m].dir = Z_plus;
+      else
+      {
+        fill_table[m].dir = X_minus;
+        Hostonly_ printf("\tDefault 'X_minus' is set for Hint Of FillSeed direction\n");
+      }
+    }
+    else
+    {
+      label = label_leaf + "/coordinate";
+
+      REAL_TYPE tmp[3];
+      if ( !tpCntl->getInspectedVector(label, tmp, 3) )
+      {
+        Hostonly_ stamped_printf("\tParsing error : No '%s'\n", label.c_str());
+        Exit(0);
+      }
+      Vec3r t(tmp);
+      fill_table[m].point = t;
+    }
+    
+    
+    label = label_leaf + "/Medium";
+    if ( !(tpCntl->getInspectedValue(label, str)) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : No '%s'\n", label.c_str());
+      Exit(0);
+    }
+    fill_table[m].medium = str;
+    
   }
   
   
-  // ヒントに使うフィルの媒質指定
-  label = "/GeometryModel/HintOfFillSeedMedium";
-  if ( !(tpCntl->getInspectedValue(label, str)) )
+  Hostonly_
   {
-    Hostonly_ printf("\tParsing error in '%s'\n", label.c_str());
-    Exit(0);
+    fprintf(fp,"\n----------\n");
+    fprintf(fp,"\n\t>> Fill Hint\n\n");
+    fprintf(fp,"\t No.        Kind       Medium   Direction / Coordinate\n");
+    fprintf(fp,"\t------------------------------------------------------------------------\n");
+    for (int m=0; m<NoHint; m++)
+    {
+      fprintf(fp,"\t%3d %12s %12s   ", m+1, (fill_table[m].kind == kind_outerface)?"OuterFace":"Point", fill_table[m].medium.c_str());
+      if (fill_table[m].kind == kind_outerface)
+      {
+        fprintf(fp,"Dir. = %s\n", FBUtility::getDirection(fill_table[m].dir).c_str());
+      }
+      else
+      {
+        fprintf(fp,"(%12.6e %12.6e %12.6e)\n", fill_table[m].point.x, fill_table[m].point.y, fill_table[m].point.z);
+      }
+    }
+    fprintf(fp,"\n----------\n");
   }
-  SeedMedium = str;
+  
   
   
   /* フィル方向制御 (NOT mandatory)
@@ -2233,6 +2350,71 @@ void Geometry::quantizeCut(FILE* fp,
 }
 
 
+// #################################################################
+/** 
+ * @brief 6方向にカットのあるセルを交点媒質でフィルする
+ * @param [in,out] bcd   BCindex
+ * @param [in]     bid   交点ID
+ * @param [in]
+ */
+unsigned long Geometry::replaceIsolatedCell(int* bcd,
+                                            const int* bid,
+                                            const int m_NoCompo,
+                                            const CompoList* cmp)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+
+  unsigned long replaced=0;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:replaced)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        
+        if ( DECODE_CMP(bcd[m]) == 0 )
+        {
+          int qq = bid[m];
+          int qw = getBit5(qq, 0);
+          int qe = getBit5(qq, 1);
+          int qs = getBit5(qq, 2);
+          int qn = getBit5(qq, 3);
+          int qb = getBit5(qq, 4);
+          int qt = getBit5(qq, 5);
+          
+          // 全隣接方向に交点がある場合
+          if ( qw * qe * qs * qn * qb * qt != 0 )
+          {
+            // 交点IDの最頻値
+            int sd = FBUtility::find_mode_id(qw, qe, qs, qn, qb, qt, m_NoCompo);
+            
+            // MediumListの格納番号
+            int key = cmp[sd].getMatodr();
+            //printf("%d %d %d : key id =%d\n", i,j,k,key);
+            
+            if ( key == 0 ) Exit(0);
+            setBitID(bcd[m], key);
+            replaced++;
+          }
+        }
+        
+      }
+    }
+  }
+  
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = replaced;
+    if ( paraMngr->Allreduce(&c_tmp, &replaced, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  return replaced;
+}
+
+
 
 // #################################################################
 /**
@@ -2242,25 +2424,30 @@ void Geometry::quantizeCut(FILE* fp,
  */
 void Geometry::setFillMedium(MediumList* mat, const int m_NoMedium)
 {
-  // FillMediumがMediumList中にあるかどうかをチェックし、FillIDを設定
-  if ( (FillID = FBUtility::findIDfromLabel(mat, m_NoMedium, FillMedium)) == 0 )
+  for (int m=0; m<NoHint; m++)
   {
-    Hostonly_
+    // FillMediumがMediumList中にあるかどうかをチェックし、FillIDを設定
+    if ( (FillID = FBUtility::findIDfromLabel(mat, m_NoMedium, fill_table[m].medium)) == 0 )
     {
-      printf("/ApplicationControl/FillMedium = \"%s\" is not listed in MediumTable.\n", FillMedium.c_str());
+      Hostonly_
+      {
+        printf("/FillHint/%s/Medium = \"%s\" is not listed in MediumTable.\n", fill_table[m].identifier.c_str(), fill_table[m].medium.c_str());
+      }
+      Exit(0);
     }
-    Exit(0);
-  }
-  
-  // SeedMediumがMediumList中にあるかどうかをチェックし、SeedIDを設定
-  if ( (SeedID = FBUtility::findIDfromLabel(mat, m_NoMedium, SeedMedium)) == 0 )
-  {
-    Hostonly_
+    
+    /* SeedMediumがMediumList中にあるかどうかをチェックし、SeedIDを設定
+    if ( (SeedID = FBUtility::findIDfromLabel(mat, m_NoMedium, SeedMedium)) == 0 )
     {
-      printf("/ApplicationControl/HintOfFillSeedMedium = \"%s\" is not listed in MediumTable.\n", SeedMedium.c_str());
+      Hostonly_
+      {
+        printf("/ApplicationControl/HintOfFillSeedMedium = \"%s\" is not listed in MediumTable.\n", SeedMedium.c_str());
+      }
+      Exit(0);
     }
-    Exit(0);
+     */
   }
+
 }
 
 
@@ -3694,4 +3881,82 @@ unsigned Geometry::updateCut(const Vec3r ray_o,
   }
   
   return count;
+}
+
+// #################################################################
+/**
+ * @brief セル数をカウント（デバッグ用）
+ * @param [in] bcd     BCindex B
+ * @param [in] m_id    検査するID
+ * @param [in] bid     交点ID
+ * @param [in] Dsize   サイズ
+ * @note painted : m_id以外のセル数をカウント(false), m_idのセル数をカウント(true)
+ */
+unsigned long Geometry::debug_countCellB(const int* bcd, const int m_id, const int* bid, const int* Dsize)
+{
+  int ix, jx, kx, gd;
+  
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
+  
+  unsigned long c=0;
+  int id = m_id;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, id) schedule(static) reduction(+:c)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        if ( DECODE_CMP(bcd[m]) == id )
+        {
+          size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
+          size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
+          size_t m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd);
+          size_t m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd);
+          size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
+          size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
+          int zp = DECODE_CMP( bcd[m] );
+          int zw = DECODE_CMP( bcd[m_w] );
+          int ze = DECODE_CMP( bcd[m_e] );
+          int zs = DECODE_CMP( bcd[m_s] );
+          int zn = DECODE_CMP( bcd[m_n] );
+          int zb = DECODE_CMP( bcd[m_b] );
+          int zt = DECODE_CMP( bcd[m_t] );
+          int qq = bid[m];
+          int qw = getBit5(qq, 0);
+          int qe = getBit5(qq, 1);
+          int qs = getBit5(qq, 2);
+          int qn = getBit5(qq, 3);
+          int qb = getBit5(qq, 4);
+          int qt = getBit5(qq, 5);
+          Hostonly_ printf("(%d %d %d) : bid %d %d %d %d %d %d : bcd %d %d %d %d %d %d %d\n",
+                           i,j,k,
+                           qw, qe, qs, qn, qb, qt,
+                           zp, zw, ze, zs, zn, zb, zt);
+          c++;
+        }
+      }
+    }
+  }
+  
+  
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = c;
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  return c;
 }

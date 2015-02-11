@@ -459,7 +459,7 @@ int FFV::FilterInitialize(int argc, char **argv)
   C.getGeometryModel();
  
   // フィルパラメータ
-  GM.getFillParam(&tp_ffv);
+  GM.getFillParam(&tp_ffv, fp);
   
   
   // Intrinsic classの同定

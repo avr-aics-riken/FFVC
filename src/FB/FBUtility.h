@@ -376,6 +376,54 @@ public:
   }
   
   
+  // #################################################################
+  /**
+   * @brief 隣接6方向の最頻値IDを求める
+   * @param [in] qw      w方向のID
+   * @param [in] qe      e方向のID
+   * @param [in] qs      s方向のID
+   * @param [in] qn      n方向のID
+   * @param [in] qb      b方向のID
+   * @param [in] qt      t方向のID
+   * @param [in] NoCompo コンポーネント数
+   * @note 候補なしの場合には、0が戻り値
+   */
+  static inline int find_mode_id (const int qw, const int qe, const int qs, const int qn, const int qb, const int qt, const int NoCompo)
+  {
+    unsigned key[CMP_BIT_W]; ///< ID毎の頻度 @note ffv_Initialize() >> fill()でif ( C.NoCompo+1 > CMP_BIT_W )をチェック
+    int val[6];              ///< ID
+    
+    memset(key, 0, sizeof(unsigned)*CMP_BIT_W);
+    
+    // 0 <= q <= Ncompo のはず
+    val[0] = qw;
+    val[1] = qe;
+    val[2] = qs;
+    val[3] = qn;
+    val[4] = qb;
+    val[5] = qt;
+    
+    
+    for (int l=0; l<6; l++) key[ val[l] ]++;
+    
+    
+    int mode = 0;
+    int z = 0;
+    
+    for (int l=NoCompo; l>=1; l--)
+    {
+      if ( key[l] > mode ) // 最大の頻度
+      {
+        mode = key[l];
+        z = l;
+      }
+    }
+    
+    return z;
+  }
+  
+  
+  
   /**
    * @brief dirの方向ラベルを返す
    * @param [in] dir 方向コード

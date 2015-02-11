@@ -139,7 +139,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // フィルパラメータ
-  GM.getFillParam(&tp_ffv);
+  GM.getFillParam(&tp_ffv, fp);
   
  
   // Intrinsic classの同定
@@ -294,7 +294,7 @@ int FFV::Initialize(int argc, char **argv)
   }
 
   TIMING_start("Fill");
-  GM.fill(fp, cmp, mat, d_bcd, d_cut, d_bid, C.NoCompo);
+  GM.fill(fp, d_bcd, d_bid, C.NoMedium, mat, C.NoCompo, cmp);
   TIMING_stop("Fill");
   
 #if 0
@@ -312,13 +312,8 @@ int FFV::Initialize(int argc, char **argv)
   }
    */
   F->writeSVX(d_bcd);
-    exit(0);
+    Exit(0);
 #endif
-
-  
-
-  // 全周カットのあるセルを固体セルIDで埋める > fill()で埋められているので不要．
-  // V.replaceIsolatedFcell(d_bcd, GM.FillID, d_bid);
   
   
   
@@ -432,24 +427,6 @@ int FFV::Initialize(int argc, char **argv)
   
   // 必要なパラメータをSetBC3Dクラスオブジェクトにコピーする >> setParameters()の後
   BC.setControlVars(&C, mat, &RF, Ex);
-  
-  
-// ##########
-#if 0
-  // チェックのため，全計算セルのBCIndexの内容を表示する
-  if ( !V.dbg_chkBCIndexP(bcd, bcp, "BCindex.txt") )
-  {
-    Hostonly_
-    {
-      stamped_printf("\tVoxInfo::DbgChkBCIndexP()\n");
-    }
-    return -1;
-  }
-#endif
-// ##########
-  
-
-  
 
   
   // set phase 
@@ -1160,11 +1137,6 @@ void FFV::encodeBCindex(FILE* fp)
   }
   
   BC.setBCIperiodic(d_bcd, ensPeriodic);
-
-  
-#if 0
-  V.dbg_chkBCIndex(d_bcd, d_cdf, d_bcp, "BCindexB.txt");
-#endif
   
   
   // STATEとACTIVEビットのコピー
@@ -1194,13 +1166,6 @@ void FFV::encodeBCindex(FILE* fp)
   // 内部領域のFluid, Solidのセル数を数える C.Wcell(Local), G_Wcell(global)
   V.countCellState(L_Wcell, G_Wcell, d_bcd, SOLID);
   V.countCellState(L_Fcell, G_Fcell, d_bcd, FLUID);
-  
-  
-// ########## DEBUG
-  //V.dbg_chkBCIndex(d_bcd, d_cdf, d_bcp, "BCindexP.txt");
-  //V.dbg_chkBCIndex(d_bcd, d_cdf, d_bcp, "BCindexH.txt");
-  //V.dbg_chkBCIndex(d_bcd, d_cdf, d_bcp, "BCindexC.txt");
-// ##########
   
   
   // エンコードされているエントリ番号のチェック 1<=order<=31
@@ -3152,12 +3117,12 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   
   Hostonly_
   {
-    printf(     "\tNumber of Polygon Group = %d\n\n", C.num_of_polygrp);
-    fprintf(fp, "\tNumber of Polygon Group = %d\n\n", C.num_of_polygrp);
+    printf(     "\n\tNumber of Polygon Group = %d\n\n", C.num_of_polygrp);
+    fprintf(fp, "\n\tNumber of Polygon Group = %d\n\n", C.num_of_polygrp);
     
-    printf(     "\t   Polygon Group Label       Medium Alias              Local BC      Element          Area\n");
+    printf(     "\t   Polygon Group Label       Medium Alias              Local BC     Polygons          Area\n");
     printf(     "\t   ---------------------------------------------------------------------------------------\n");
-    fprintf(fp, "\t   Polygon Group Label       Medium Alias              Local BC      Element          Area\n");
+    fprintf(fp, "\t   Polygon Group Label       Medium Alias              Local BC     Polygons          Area\n");
     fprintf(fp, "\t   ---------------------------------------------------------------------------------------\n");
   }
   

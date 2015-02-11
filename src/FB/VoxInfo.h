@@ -206,34 +206,12 @@ public:
   void countOpenAreaOfDomain (const int* bx, REAL_TYPE* OpenArea);
   
   
-  /**
-   * @brief BCindex を表示する（デバッグ用）
-   * @param [in] bcd   BCindex B
-   * @param [in] cdf   BCindex C
-   * @param [in] bcp   BCindex P
-   * @param [in] fname 出力用ファイル名
-   */
-  void dbg_chkBCIndex (const int* bcd, const int* cdf, const int* bcp, const char* fname);
-  
-  
   /* @brief 領域境界のセルで境界方向にカットがある場合にガイドセルをそのIDで埋める
    * @param [in,out] bcd      BCindex B
    * @param [in]     bid      境界ID
    * @param [out]    painted  各外部領域面でペイントされた個数
    */
   void paintSolidGC (int* bcd, const int* bid, unsigned long* painted);
-  
-  
-  /* @brief 孤立したゼロIDのセルを隣接セルIDで埋める
-   * @param [in,out] bcd        BCindex B
-   * @param [in]     fluid_id   フィルする流体ID
-   * @param [in]     bid        境界ID
-   * @param [in]     m_NoCompo  コンポーネント数
-   */
-  unsigned long replaceIsolatedFcell(int* bcd,
-                                     const int fluid_id,
-                                     const int* bid,
-                                     const int m_NoCompo);
   
   
   /**
