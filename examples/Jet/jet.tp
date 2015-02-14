@@ -74,11 +74,17 @@ DomainInfo {
 }
 
 
+FillHint {
+  outer {
+    kind      = "outerface"
+    direction = "Xminus"
+    medium    = "air"
+  }
+}
+
+
 GeometryModel {
   Source                  = "jet"
-  FillMedium              = "air"
-  HintOfFillSeedDirection = "xminus"
-  HintOfFillSeedMedium    = "air"
   VoxelOutput             = "svx"
 }
 

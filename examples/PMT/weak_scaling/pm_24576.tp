@@ -22,6 +22,15 @@ DomainInfo {
 }
 
 
+FillHint {
+  outer {
+    kind      = "outerface"
+    direction = "Xminus"
+    medium    = "air"
+  }
+}
+
+
 GoverningEquation {
   FlowEquation       = "Incompressible"
   HeatEquation       = "FlowOnly"
@@ -33,9 +42,6 @@ GoverningEquation {
 
 GeometryModel {
   Source = "PerformanceTest"
-  FillMedium          = "air"
-  HintOfFillSeedDirection = "no"
-  HintOfFillSeedMedium    = "air"
   VoxelOutput             = "off"
 }
 

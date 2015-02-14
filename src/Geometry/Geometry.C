@@ -496,6 +496,7 @@ void Geometry::fill(FILE* fp,
     fprintf(fp,"\t\tFill mode for each dir.: %d %d %d\n", FillSuppress[0], FillSuppress[1], FillSuppress[2]);
   }
   
+  
   // FLUIDでフィル
   fill_connected(fp, d_bcd, d_bid, mat, m_NoMedium, FLUID, target_count);
   
@@ -523,7 +524,7 @@ void Geometry::fill(FILE* fp,
   // SOLIDでフィル
   fill_connected(fp, d_bcd, d_bid, mat, m_NoMedium, SOLID, target_count);
   
-
+  
   
   // 未ペイント(ID=0)をカウント
   upc = countCellB(d_bcd, 0);
@@ -592,15 +593,21 @@ void Geometry::fill_connected(FILE* fp,
         filled = fillSeedBcdInner(d_bcd, fill_table[m].point, key, d_bid);
       }
       
+      if ( numProc > 1 )
+      {
+        unsigned long c_tmp = filled;
+        if ( paraMngr->Allreduce(&c_tmp, &filled, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      }
+      
     }
   }
   
-  
+
   if ( numProc > 1 )
   {
     if ( paraMngr->BndCommS3D(d_bcd, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
   }
-  
+
   
   if ( filled == 0 )
   {
@@ -1231,6 +1238,14 @@ unsigned long Geometry::fillSubCellSolid(int* smd, REAL_TYPE* svf)
  */
 unsigned long Geometry::fillSeedBcdInner(int* bcd, const Vec3r p, const int target, const int* bid, const int* Dsize)
 {
+  // 領域内チェック
+  if (p.x<origin[0] || p.x>origin[0]+region[0] ||
+      p.y<origin[1] || p.y>origin[1]+region[1] ||
+      p.z<origin[2] || p.z>origin[2]+region[2] ) {
+    return 0;
+  }
+  
+  
   int ix, jx, kx, gd;
   
   if ( !Dsize )
@@ -1252,7 +1267,7 @@ unsigned long Geometry::fillSeedBcdInner(int* bcd, const Vec3r p, const int targ
   
   int w[3];
   findIndex(p, w);
-  //printf("fill point : %d %d %d\n", w[0], w[1], w[2]);
+  //printf("fill point rank= %d : (%d %d %d) : (%f %f %f)\n", myRank, w[0], w[1], w[2], p.x, p.y, p.z);
   
   size_t m = _F_IDX_S3D(w[0], w[1], w[2], ix, jx, kx, gd);
   int s = bid[m];
@@ -1262,13 +1277,6 @@ unsigned long Geometry::fillSeedBcdInner(int* bcd, const Vec3r p, const int targ
   {
     setBitID(bcd[m], target);
     c++;
-  }
-
-  
-  if ( numProc > 1 )
-  {
-    unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
   
   return c;
@@ -1436,13 +1444,6 @@ unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int tar
       break;
       
   } // end of switch
-  
-  
-  if ( numProc > 1 )
-  {
-    unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
   
   return c;
 }
@@ -1806,8 +1807,10 @@ unsigned long Geometry::findPolygonInCell(int* d_mid, MPIPolylib* PL, PolygonPro
  * @brief フィルパラメータを取得
  * @param [in] tpCntl  TextParser
  * @param [in] fp      file pointer to "cndition.txt"
+ * @param [in] Unit    DIMENSIONAL | NON_DIMENSIONAL
+ * @param [in] RefL    代表長さ
  */
-void Geometry::getFillParam(TextParser* tpCntl, FILE* fp)
+void Geometry::getFillParam(TextParser* tpCntl, FILE* fp, const int Unit, const REAL_TYPE RefL)
 {
   string str;
   string label_base, label_leaf, label;
@@ -1890,6 +1893,16 @@ void Geometry::getFillParam(TextParser* tpCntl, FILE* fp)
         Hostonly_ stamped_printf("\tParsing error : No '%s'\n", label.c_str());
         Exit(0);
       }
+      
+      // 有次元の場合に無次元化する
+      if (Unit == DIMENSIONAL )
+      {
+        // 無次元化
+        for (int i=0; i<3; i++) {
+          tmp[i] /= RefL;
+        }
+      }
+      
       Vec3r t(tmp);
       fill_table[m].point = t;
     }
@@ -1910,7 +1923,7 @@ void Geometry::getFillParam(TextParser* tpCntl, FILE* fp)
   {
     fprintf(fp,"\n----------\n");
     fprintf(fp,"\n\t>> Fill Hint\n\n");
-    fprintf(fp,"\t No.        Kind       Medium   Direction / Coordinate\n");
+    fprintf(fp,"\t No.        Kind       Medium   Direction / Coordinate(ND)\n");
     fprintf(fp,"\t------------------------------------------------------------------------\n");
     for (int m=0; m<NoHint; m++)
     {

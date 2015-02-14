@@ -31,11 +31,16 @@ GoverningEquation {
 }
 
 
+FillHint {
+  outer {
+    kind      = "outerface"
+    direction = "Xminus"
+    medium    = "air"
+  }
+}
+
 GeometryModel {
   Source = "PerformanceTest"
-  FillMedium          = "air"
-  HintOfFillSeedDirection = "no"
-  HintOfFillSeedMedium    = "air"
   VoxelOutput             = "off"
 }
 

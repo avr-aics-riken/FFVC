@@ -139,7 +139,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // フィルパラメータ
-  GM.getFillParam(&tp_ffv, fp);
+  GM.getFillParam(&tp_ffv, fp, C.Unit.Param, C.RefLength);
   
  
   // Intrinsic classの同定
@@ -285,6 +285,7 @@ int FFV::Initialize(int argc, char **argv)
     TIMING_stop("SubSampling");
   }
   */
+  
   
   // Fill
   Hostonly_

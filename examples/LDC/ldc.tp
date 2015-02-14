@@ -57,11 +57,17 @@ DomainInfo {
 }
 
 
+FillHint {
+  outer {
+    kind      = "outerface"
+    direction = "Xminus"
+    medium    = "water"
+  }
+}
+
+
 GeometryModel {
   Source                  = "rectangular"
-  FillMedium              = "water"
-  HintOfFillSeedDirection = "xminus"
-  HintOfFillSeedMedium    = "water"
   VoxelOutput             = "off"
 }
 

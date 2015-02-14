@@ -68,11 +68,17 @@ DomainInfo {
 }
 
 
+FillHint {
+  outer {
+    kind      = "outerface"
+    direction = "Xminus"
+    medium    = "air"
+  }
+}
+
+
 GeometryModel {
   Source                  = "rectangular"
-  FillMedium              = "air"
-  HintOfFillSeedDirection = "Xminus"
-  HintOfFillSeedMedium    = "air"
   VoxelOutput             = "off"
   OutputGlyph             = "off"
 }

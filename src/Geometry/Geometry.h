@@ -396,7 +396,7 @@ public:
   
   
   // フィルパラメータを取得
-  void getFillParam(TextParser* tpCntl, FILE* fp);
+  void getFillParam(TextParser* tpCntl, FILE* fp, const int Unit, const REAL_TYPE RefL);
   
   
   /**
