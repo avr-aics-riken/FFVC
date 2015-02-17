@@ -2036,12 +2036,11 @@ unsigned long VoxInfo::encQface (const int order,
 
 // #################################################################
 /**
- * @brief cdf[]にVBCの境界条件に必要な情報をエンコードし，流入流出の場合にbp[]の隣接壁の方向フラグを除く．
+ * @brief cdf[]にVBCの境界条件に必要な情報をエンコード
  *        境界条件指定キーセルのSTATEを流体に変更する
  * @retval エンコードしたセル数
  * @param [in]     order    cmp[]のエントリ番号
  * @param [in,out] cdf      BCindex C
- * @param [in,out] bp       BCindex P
  * @param [in,out] bid      カット点ID
  * @param [in]     vec      法線ベクトル
  * @param [in,out] cmp      CompoList
@@ -2050,7 +2049,6 @@ unsigned long VoxInfo::encQface (const int order,
  */
 unsigned long VoxInfo::encVbitIBC (const int order,
                                    int* cdf,
-                                   int* bp,
                                    int* bid,
                                    const REAL_TYPE* vec,
                                    CompoList* cmp,
@@ -2090,7 +2088,6 @@ unsigned long VoxInfo::encVbitIBC (const int order,
         if ( TEST_BC(bd) ) // 6方向のうちいずれかにカットがある
         {
           int s = cdf[mp];
-          int q = bp[mp];
           
           if ( IS_FLUID(s) ) // 流体セルがテスト対象
           {
@@ -2179,7 +2176,6 @@ unsigned long VoxInfo::encVbitIBC (const int order,
             }
             
             cdf[mp]= s;
-            bp[mp] = q;
             bid[mp]= bd;
             
           } // if fluid
@@ -2245,19 +2241,17 @@ unsigned long VoxInfo::encVbitIBC (const int order,
 
 // #################################################################
 /**
- * @brief cdf[]にVBCの境界条件に必要な情報をエンコードし，流入流出の場合にbp[]の隣接壁の方向フラグを除く．
+ * @brief cdf[]にVBCの境界条件に必要な情報をエンコード
  *        境界条件指定キーセルのSTATEを流体に変更する
  * @retval エンコードしたセル数
  * @param [in]     order  cmp[]のエントリ番号
  * @param [in,out] cdf    BCindex C
- * @param [in,out] bp     BCindex P
  * @param [in,out] bid    カット点ID
  * @param [in,out] cmp    CompoList
  * @note 指定法線とセルのカット方向ベクトルの内積で判断，vspecとoutflowなのでbid[]のVBC_UWDにマスクビットを立てる
  */
 unsigned long VoxInfo::encVbitIBCrev (const int order,
                                       int* cdf,
-                                      int* bp,
                                       int* bid,
                                       CompoList* cmp)
 {
@@ -2288,7 +2282,6 @@ unsigned long VoxInfo::encVbitIBCrev (const int order,
         if ( TEST_BC(bd) ) // 6方向のうちいずれかにカットがある
         {
           int s = cdf[mp];
-          int q = bp[mp];
           
           if ( IS_FLUID(s) ) // 流体セルがテスト対象
           {
@@ -2373,7 +2366,6 @@ unsigned long VoxInfo::encVbitIBCrev (const int order,
             }
             
             cdf[mp]= s;
-            bp[mp] = q;
             bid[mp]= bd;
             
           } // if fluid
@@ -3300,7 +3292,6 @@ void VoxInfo::setBCIndexP(int* bcd,
 // #################################################################
 // cdf[]に境界条件のビット情報をエンコードする
 void VoxInfo::setBCIndexV(int* cdf,
-                          int* bp,
                           SetBC* BC,
                           CompoList* cmp,
                           int icls,
@@ -3381,11 +3372,11 @@ void VoxInfo::setBCIndexV(int* cdf,
     {
       case SPEC_VEL:
       case OUTFLOW:
-        cmp[n].setElement( encVbitIBC(n, cdf, bp, bid, vec, &cmp[n], m_solid_id) );
+        cmp[n].setElement( encVbitIBC(n, cdf, bid, vec, &cmp[n], m_solid_id) );
         break;
         
       case SOLIDREV:
-        cmp[n].setElement( encVbitIBCrev(n, cdf, bp, bid, &cmp[n]) );
+        cmp[n].setElement( encVbitIBCrev(n, cdf, bid, &cmp[n]) );
         break;
     }
   }

@@ -59,16 +59,26 @@ DomainInfo {
   GlobalPitch    = (0.2, 0.2, 0.2)
   
   //GlobalDivision = (1    , 1    , 1    )
+}
 
-  ActiveSubDomainFile = "hoge"
+
+FillHint {
+  outer {
+    kind      = "outerface"
+    direction = "Xminus"
+    medium    = "water"
+  }
+
+  in_rod {
+    kind       = "point"
+    coordinate = (0.5, 0.0, 0.0)
+    medium     = "virtualmetal"
+  }
 }
 
 
 GeometryModel {
   Source = "polylib.tp"
-  FillMedium = "water"
-  HintOfFillSeedDirection = "xminus"
-  HintOfFillSeedMedium = "water"
   VoxelOutput     = "svx"
 }
 
@@ -88,27 +98,46 @@ IntrinsicExample {
 
 Iteration {
   LinearSolver[@] {
-    Alias                = "sor2_moderate"
+    Alias                = "sor2"
     class                = "sor2sma"
     MaxIteration         = 50
-    ConvergenceCriterion = 1.0e-3
-    NormType             = "RbyR0"
+    ResidualCriterion    = 1.0e-4
+    ResidualNorm         = "RbyX"
+    ErrorNorm            = "DeltaXbyX"
     Omega                = 1.1
     CommMode             = "async"
   }
 
   LinearSolver[@] {
-    Alias                = "sor2_loose"
+    Alias                = "sor"
     class                = "sor"
-    MaxIteration         = 10
-    ConvergenceCriterion = 1.0e-2
-    NormType             = "RbyR0"
+    MaxIteration         = 100
+    ResidualCriterion    = 1.0e-4
+    ResidualNorm         = "RbyX"
+    ErrorNorm            = "DeltaXbyX"
     Omega                = 1.1
   }
 
-  Pressure    = "sor2_moderate"
+  LinearSolver[@] {
+    Alias                = "bicg"
+    class                = "bicgstab"
+    MaxIteration         = 100
+    ResidualCriterion    = 1.0e-4
+    ResidualNorm         = "RbyX"
+    ErrorNorm            = "DeltaXbyX"
+    Precondition         = "on"
+    InnerIteration       = 5
+    Omega                = 1.1
+    CommMode             = "async"
+  }
+
+  DivMaxIteration        = 100
+  DivCriterion           = 1.0e-4
+  DivNorm                = "max" // "L2"
+
+  Pressure    = "bicg"
   Velocity    = ""
-  Temperature = "sor2_loose"   
+  Temperature = "sor"    
 }
 
 
@@ -161,7 +190,6 @@ MonitorList {
 Output {
   Log {
     Base             = "On"
-    Iteration        = "Off"
     Profiling        = "On"
     WallInfo         = "Off"
     Console {
@@ -175,13 +203,9 @@ Output {
   }
 
   Data {
+    Format         = "sph"
+
     BasicVariables {
-      Format         = "sph"
-      TemporalType   = "step"
-      Interval       = 1
-    }
-    DerivedVariables {
-      Format         = "sph"
       TemporalType   = "step"
       Interval       = 10
 
@@ -192,17 +216,27 @@ Output {
     }
 
     StatisticalVariables {
-      Format        = "sph"
       TemporalType  = "step"
       Interval      = 100
+
+      RMSvelocity       = "Off"
+      RMSmeanVelocity   = "Off"
     }
   }
     
   FormatOption {
     SPH {
-      GuideOut        = "Without"
+      GuideOut        = 1
       TimeSlice       = "off"
       DirectoryPath   = "hoge"
+    }
+
+    PLOT3D {
+      GuideOut        = 1
+      TimeSlice       = "off"
+      DirectoryPath   = "hogep"
+      XYZfile         = "on"
+      IblankFile      = "on"
     }
   }
 }

@@ -69,7 +69,7 @@ void FFV::PS_Binary()
     TIMING_start("Thermal_Convection");
     flop = 0.0;
     int swt = 0; // 断熱壁
-    ps_muscl_(d_ws, size, &guide, pitch, &cnv_scheme, v00, d_v, d_ie0, d_bid, d_cdf, d_bcd, &swt, &flop);
+    ps_muscl_(d_ws, size, &guide, pitch, &cnv_scheme, v00, d_vf, d_ie0, d_bid, d_cdf, d_bcd, &swt, &flop);
     TIMING_stop("Thermal_Convection", flop);
 
 		// 対流フェイズの流束型境界条件
@@ -81,7 +81,7 @@ void FFV::PS_Binary()
     // 時間積分
     TIMING_start("Thermal_Convection_EE");
     flop = 0.0;
-    ps_ConvectionEE(d_ws, dt, d_bcd, d_ie0, flop);
+    ps_convection_ee_(d_ws, size, &guide, &dt, d_bcd, d_ie0, &flop);
     TIMING_stop("Thermal_Convection_EE", flop);
   }
   else // 熱伝導の場合，対流項の寄与分はないので前ステップの値
@@ -171,7 +171,7 @@ void FFV::PS_Binary()
     TIMING_stop("Thermal_Diff_Outer_BC", 0.0);
     
     
-    // 温度の同期
+    // 同期
     if ( numProc > 1 )
     {
       TIMING_start("Sync_Thermal");

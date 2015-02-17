@@ -116,7 +116,6 @@ private:
   // 境界条件指定キーセルのSTATEを流体に変更する
   unsigned long encVbitIBC (const int order,
                             int* cdf,
-                            int* bp,
                             int* bid,
                             const REAL_TYPE* vec,
                             CompoList* cmp,
@@ -125,7 +124,6 @@ private:
   
   unsigned long encVbitIBCrev (const int order,
                                int* cdf,
-                               int* bp,
                                int* bid,
                                CompoList* cmp);
   
@@ -282,7 +280,6 @@ public:
   /**
    * @brief cdf[]に境界条件のビット情報をエンコードする
    * @param [in,out] cdf        BCindex C
-   * @param [in,out] bp         BCindex P
    * @param [in]     BC         SetBCクラスのポインタ
    * @param [in]     cmp        CompoListクラスのポインタ
    * @param [in]     icls       Intrinsic class
@@ -293,7 +290,6 @@ public:
    * @param [in]     mat        MediumList
    */
   void setBCIndexV(int* cdf,
-                   int* bp,
                    SetBC* BC,
                    CompoList* cmp,
                    int icls,

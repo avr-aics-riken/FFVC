@@ -138,7 +138,7 @@ private:
   
   
   // bid情報を元にフラッドフィル
-  void fill_connected(FILE* fp,
+  bool fill_connected(FILE* fp,
                       int* d_bcd,
                       const int* d_bid,
                       const MediumList* mat,
@@ -200,6 +200,10 @@ private:
                                   MPIPolylib* PL,
                                   PolygonProperty* PG,
                                   const int m_NoCompo);
+  
+  
+  // 距離の最小値を求める
+  void minDistance(const long long* cut, const int* bid, FILE* fp);
   
   
   // 交点が定義点にある場合の処理をした場合に、反対側のセルの状態を修正
@@ -356,7 +360,7 @@ public:
   
   
   // フィル操作
-  void fill(FILE* fp,
+  bool fill(FILE* fp,
             int* d_bcd,
             const int* d_bid,
             const int m_NoMedium,

@@ -224,7 +224,7 @@ extern "C" {
                   REAL_TYPE* dh,
                   int* scheme,
                   REAL_TYPE* v00,
-                  REAL_TYPE* v,
+                  REAL_TYPE* vf,
                   REAL_TYPE* ie,
                   int* bid,
                   int* cdf,
@@ -241,6 +241,14 @@ extern "C" {
                      int* ncompo,
                      double* mtbl,
                      double* flop);
+  
+  void ps_convection_ee_ (REAL_TYPE* ie,
+                          int* sz,
+                          int* g,
+                          REAL_TYPE* dt,
+                          int* bd,
+                          REAL_TYPE* ie0,
+                          double* flop);
   
   void ps_diff_ee_ (REAL_TYPE* ie,
                     int* sz,

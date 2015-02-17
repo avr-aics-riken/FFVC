@@ -1,7 +1,7 @@
 
 ApplicationControl {
-  CheckParameter      = "Off"
   Operator            = "Kenji_Ono"
+  DebugDivergence     = "off"
 }
 
 BcTable {
@@ -57,16 +57,31 @@ DomainInfo {
   GlobalPitch    = (0.128, 0.128, 0.128)
   //GlobalDivision = (1    , 1    , 1    )
 
-  ActiveSubDomainFile = "hoge"
+  ActiveSubDomainFile = ""
+}
+
+
+FillHint {
+  outer {
+    kind      = "outerface"
+    direction = "Xminus"
+    medium    = "air"
+  }
+
+  in_sph {
+    kind       = "point"
+    coordinate = (0.0, 0.0, 0.0)
+    medium     = "fe"
+  }
+
 }
 
 
 GeometryModel {
   Source                  = "sphere"
-  FillMedium              = "air"
-  HintOfFillSeedDirection = "xminus"
-  HintOfFillSeedMedium    = "air"
-  VoxelOutput             = "off"
+  VoxelOutput             = "svx"
+  BCflagOutput            = "on"
+  OutputGlyph             = "off"
 }
 
 
@@ -89,27 +104,48 @@ IntrinsicExample {
 
 Iteration {
   LinearSolver[@] {
-    Alias                = "sor2_strict"
+    Alias                = "sor2"
     class                = "sor2sma"
     MaxIteration         = 50
-    ConvergenceCriterion = 1.0e-4
-    NormType             = "RbyR0"
+    ResidualCriterion    = 1.0e-4
+    ResidualNorm         = "RbyX"
+    ErrorNorm            = "DeltaXbyX"
     Omega                = 1.1
     CommMode             = "async"
+    NaiveImplementation  = "off"
   }
 
   LinearSolver[@] {
-    Alias                = "sor2_loose"
+    Alias                = "sor"
     class                = "sor"
-    MaxIteration         = 20
-    ConvergenceCriterion = 1.0e-2
-    NormType             = "RbyB"
+    MaxIteration         = 50
+    ResidualCriterion    = 1.0e-4
+    ResidualNorm         = "RbyX"
+    ErrorNorm            = "DeltaXbyX"
     Omega                = 1.1
   }
 
-  Pressure    = "sor2_strict"
+  LinearSolver[@] {
+    Alias                = "bicg"
+    class                = "bicgstab"
+    MaxIteration         = 100
+    ResidualCriterion    = 1.0e-4
+    ResidualNorm         = "RbyX"
+    ErrorNorm            = "DeltaXbyX"
+    Precondition         = "on"
+    InnerIteration       = 4
+    Omega                = 1.1
+    CommMode             = "async"
+    NaiveImplementation  = "off"
+  }
+
+  DivMaxIteration        = 50
+  DivCriterion           = 1.0e-4
+  DivNorm                = "max" // "L2"
+
+  Pressure    = "bicg"
   Velocity    = ""
-  Temperature = "sor2_loose"   
+  Temperature = "sor2_loose"    
 }
 
 
@@ -188,34 +224,40 @@ Output {
   }
 
   Data {
+    Format         = "sph"
+
     BasicVariables {
-      Format         = "sph"
-      TemporalType   = "step"
-      Interval       = 10
-    }
-    DerivedVariables {
-      Format         = "sph"
       TemporalType   = "step"
       Interval       = 100
 
       TotalPressure  = "Off"
       Helicity       = "Off"
       Vorticity      = "Off"
-      Qcriterion     = "On"
+      Qcriterion     = "Off"
     }
 
     StatisticalVariables {
-      Format        = "sph"
-      TemporalType  = "step" // /TimeControl/Statistic/TemporalTypeでの指定と整合性をとる
-      Interval      = 10
+      TemporalType  = "step"
+      Interval      = 100
+
+      RMSvelocity       = "Off"
+      RMSmeanVelocity   = "Off"
     }
   }
     
   FormatOption {
     SPH {
-      GuideOut        = "Without"
+      GuideOut        = 2
       TimeSlice       = "off"
       DirectoryPath   = "hoge"
+    }
+
+    PLOT3D {
+      GuideOut        = 2
+      TimeSlice       = "off"
+      DirectoryPath   = "hogep"
+      XYZfile         = "on"
+      IblankFile      = "on"
     }
   }
 }
@@ -286,7 +328,7 @@ TimeControl {
 
   Statistic {
     TemporalType   = "step"
-    Start          = 0  // 指定区間の統計をとる．両方とも0のときoff
+    Start          = 0  // 指定区間の平均をとる．両方とも0のときoff
     End            = 0 
   }
 }

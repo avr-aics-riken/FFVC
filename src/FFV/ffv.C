@@ -678,7 +678,6 @@ void FFV::set_timing_label()
   
   set_label("Cut_Section",             PerfMonitor::CALC, false);
   set_label("Cut_Information",         PerfMonitor::CALC);
-  set_label("Cut_Minimum_search",      PerfMonitor::CALC);
   // Cut_Section
   
   set_label("Geometry_Section",        PerfMonitor::CALC, false);

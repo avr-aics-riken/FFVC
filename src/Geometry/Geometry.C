@@ -454,7 +454,7 @@ unsigned long Geometry::countCellM(const int* mid, const int m_id, const bool pa
  * @param [in]      m_NoCompo  コンポーネント数
  * @param [in]      cmp        CompoList
  */
-void Geometry::fill(FILE* fp,
+bool Geometry::fill(FILE* fp,
                     int* d_bcd,
                     const int* d_bid,
                     const int m_NoMedium,
@@ -498,10 +498,10 @@ void Geometry::fill(FILE* fp,
   
   
   // FLUIDでフィル
-  fill_connected(fp, d_bcd, d_bid, mat, m_NoMedium, FLUID, target_count);
+  if ( !fill_connected(fp, d_bcd, d_bid, mat, m_NoMedium, FLUID, target_count) ) return false;
   
   
-  if ( target_count == 0 ) return;
+  if ( target_count == 0 ) return true;
   
   
   
@@ -540,11 +540,12 @@ void Geometry::fill(FILE* fp,
   {
     Hostonly_
     {
-      fprintf(fp,"\tFill operation is done, but still remains %ld unpainted cells.\n", upc);
+      fprintf(fp,"\n\tFill operation is done, but still remains %ld unpainted cells.\n\n", upc);
     }
-    Exit(0);
+    return false;
   }
   
+  return true;
 }
 
 
@@ -558,7 +559,7 @@ void Geometry::fill(FILE* fp,
  * @param [in]      fill_mode  フィルモード (SOLID | FLUID)
  * @param [in,out]  target_count ペイント対象のセル数
  */
-void Geometry::fill_connected(FILE* fp,
+bool Geometry::fill_connected(FILE* fp,
                               int* d_bcd,
                               const int* d_bid,
                               const MediumList* mat,
@@ -613,9 +614,9 @@ void Geometry::fill_connected(FILE* fp,
   {
     Hostonly_
     {
-      fprintf(fp,"No cells painted by %s\n", (fill_mode==FLUID)?"FLUID":"SOLID");
+      fprintf(fp,"\tNo cells painted by %s\n", (fill_mode==FLUID)?"FLUID":"SOLID");
     }
-    Exit(0);
+    return false;
   }
   
   Hostonly_
@@ -666,6 +667,7 @@ void Geometry::fill_connected(FILE* fp,
     fprintf(fp,"\t\t               Remaining cells    = %16ld\n\n", target_count);
   }
   
+  return true;
 }
 
 
@@ -1238,13 +1240,20 @@ unsigned long Geometry::fillSubCellSolid(int* smd, REAL_TYPE* svf)
  */
 unsigned long Geometry::fillSeedBcdInner(int* bcd, const Vec3r p, const int target, const int* bid, const int* Dsize)
 {
+  /*
+  printf("point= (%f, %f, %f) : region (%f %f %f)-(%f %f %f)\n",
+         p.x, p.y, p.z,
+         origin[0], origin[1], origin[2],
+         origin[0]+region[0], origin[1]+region[1], origin[2]+region[2]
+         );
+  */
+  
   // 領域内チェック
   if (p.x<origin[0] || p.x>origin[0]+region[0] ||
       p.y<origin[1] || p.y>origin[1]+region[1] ||
       p.z<origin[2] || p.z>origin[2]+region[2] ) {
     return 0;
   }
-  
   
   int ix, jx, kx, gd;
   
@@ -1272,8 +1281,9 @@ unsigned long Geometry::fillSeedBcdInner(int* bcd, const Vec3r p, const int targ
   size_t m = _F_IDX_S3D(w[0], w[1], w[2], ix, jx, kx, gd);
   int s = bid[m];
   
-  // 対象セルの周囲にカットがなく，未ペイントのセルの場合
-  if ( !TEST_BC(s)  &&  DECODE_CMP(bcd[m]) == 0 )
+  // 未ペイントのセルの場合
+  //if ( !TEST_BC(s)  &&  DECODE_CMP(bcd[m]) == 0 )
+  if ( DECODE_CMP(bcd[m]) == 0 )
   {
     setBitID(bcd[m], target);
     c++;
@@ -1924,17 +1934,17 @@ void Geometry::getFillParam(TextParser* tpCntl, FILE* fp, const int Unit, const 
     fprintf(fp,"\n----------\n");
     fprintf(fp,"\n\t>> Fill Hint\n\n");
     fprintf(fp,"\t No.        Kind       Medium   Direction / Coordinate(ND)\n");
-    fprintf(fp,"\t------------------------------------------------------------------------\n");
+    fprintf(fp,"\t--------------------------------------------------------------------------\n");
     for (int m=0; m<NoHint; m++)
     {
       fprintf(fp,"\t%3d %12s %12s   ", m+1, (fill_table[m].kind == kind_outerface)?"OuterFace":"Point", fill_table[m].medium.c_str());
       if (fill_table[m].kind == kind_outerface)
       {
-        fprintf(fp,"Dir. = %s\n", FBUtility::getDirection(fill_table[m].dir).c_str());
+        fprintf(fp,"Direction = %s\n", FBUtility::getDirection(fill_table[m].dir).c_str());
       }
       else
       {
-        fprintf(fp,"(%12.6e %12.6e %12.6e)\n", fill_table[m].point.x, fill_table[m].point.y, fill_table[m].point.z);
+        fprintf(fp,"(%12.6e, %12.6e, %12.6e)\n", fill_table[m].point.x, fill_table[m].point.y, fill_table[m].point.z);
       }
     }
     fprintf(fp,"\n----------\n");
@@ -1960,6 +1970,71 @@ void Geometry::getFillParam(TextParser* tpCntl, FILE* fp, const int Unit, const 
     }
   }
   */
+}
+
+
+// #################################################################
+/* @brief 距離の最小値を求める
+ * @param [in,out] cut カットの配列
+ * @param [in]     bid 境界IDの配列
+ * @param [in]     fp  file pointer
+ */
+void Geometry::minDistance(const long long* cut, const int* bid, FILE* fp)
+{
+  int global_min = 1024;
+  int local_min = 1024;
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+#pragma omp parallel firstprivate(ix, jx, kx, gd)
+  {
+    int th_min = 1024;
+    
+#pragma omp for schedule(static)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          int bd = bid[m];
+          
+          if ( TEST_BC(bd) ) // カットがあるか，IDによる判定
+          {
+            const long long c = cut[m];
+            
+            for (int n=0; n<6; n++)
+            {
+              th_min = (std::min)(th_min, getBit9(c, n));
+            }
+          }
+          
+        }
+      }
+    }
+    
+#pragma omp critical
+    {
+      local_min = (std::min)(local_min, th_min);
+    }
+  }
+  
+  global_min = local_min;
+  
+  
+  if ( numProc > 1 )
+  {
+    int tmp = global_min;
+    if ( paraMngr->Allreduce(&tmp, &global_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  Hostonly_
+  {
+    fprintf(fp, "\n\tMinimum non-dimnensional distance       = %e\n\n", (REAL_TYPE)global_min/(REAL_TYPE)QT_9); // 9bit幅
+  }
+  
 }
 
 
@@ -2359,6 +2434,9 @@ void Geometry::quantizeCut(FILE* fp,
       fprintf(fp,  "\tModify neighbor cells owing to painting = %16ld\n", cm);
     }
   }
+  
+  // 最小値カット
+  minDistance(cut, bid, fp);
   
 }
 

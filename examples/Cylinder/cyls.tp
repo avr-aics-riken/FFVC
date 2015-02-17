@@ -101,6 +101,18 @@ FillHint {
     direction = "Xminus"
     medium    = "air"
   }
+in_cyl1 {
+kind       = "point"
+coordinate = (0.0, 0.0, 0.2)
+medium     = "fe1"
+}
+
+in_cyl2 {
+kind       = "point"
+coordinate = (3.0, 0.0, 0.1)
+medium     = "fe2"
+}
+
 }
 
 

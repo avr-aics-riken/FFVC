@@ -295,7 +295,11 @@ int FFV::Initialize(int argc, char **argv)
   }
 
   TIMING_start("Fill");
-  GM.fill(fp, d_bcd, d_bid, C.NoMedium, mat, C.NoCompo, cmp);
+  if ( !GM.fill(fp, d_bcd, d_bid, C.NoMedium, mat, C.NoCompo, cmp) )
+  {
+    F->writeSVX(d_bcd);
+    Exit(0);
+  }
   TIMING_stop("Fill");
   
 #if 0
@@ -1154,7 +1158,7 @@ void FFV::encodeBCindex(FILE* fp)
   
   
   // 速度計算のビット情報をエンコードする -----
-  V.setBCIndexV(d_cdf, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid, C.NoCompo, C.NoMedium, mat);
+  V.setBCIndexV(d_cdf, &BC, cmp, C.Mode.Example, d_cut, d_bid, C.NoCompo, C.NoMedium, mat);
   
   
   
@@ -1972,72 +1976,6 @@ void FFV::LS_setParameter(TextParser* tpCntl, const int odr, const string label)
     }
   }
   
-}
-
-
-
-// #################################################################
-/* @brief 距離の最小値を求める
- * @param [in,out] cut カットの配列
- * @param [in]     bid 境界IDの配列
- * @param [in]     fp  file pointer
- */
-void FFV::minDistance(const long long* cut, const int* bid, FILE* fp)
-{
-  int global_min = 1024;
-  int local_min = 1024;
-  
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-  
-#pragma omp parallel firstprivate(ix, jx, kx, gd)
-  {
-    int th_min = 1024;
-    
-#pragma omp for schedule(static)
-    for (int k=1; k<=kx; k++) {
-      for (int j=1; j<=jx; j++) {
-        for (int i=1; i<=ix; i++) {
-          
-          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          int bd = bid[m];
-          
-          if ( TEST_BC(bd) ) // カットがあるか，IDによる判定
-          {
-            const long long c = cut[m];
-            
-            for (int n=0; n<6; n++)
-            {
-              th_min = (std::min)(th_min, getBit9(c, n));
-            }
-          }
-
-        }
-      }
-    }
-    
-#pragma omp critical
-    {
-      local_min = (std::min)(local_min, th_min);
-    }
-  }
-    
-  global_min = local_min;
-  
-  
-  if ( numProc > 1 )
-  {
-    int tmp = global_min;
-    if ( paraMngr->Allreduce(&tmp, &global_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  Hostonly_
-  {
-    fprintf(fp, "\n\tMinimum non-dimnensional distance       = %e\n\n", (REAL_TYPE)global_min/(REAL_TYPE)QT_9); // 9bit幅
-  }
-
 }
 
 
@@ -3339,12 +3277,6 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   TIMING_stop("Cut_Information");
   
   
-  // カットの最小値
-  TIMING_start("Cut_Minimum_search");
-  minDistance(d_cut, d_bid, fp);
-  TIMING_stop("Cut_Minimum_search");
-  
-  
 #if 0
   displayCutInfo(d_cut, d_bid);
 #endif
@@ -3835,7 +3767,6 @@ int FFV::SD_getParameter(TextParser* tp_dom)
           G_region[0] = gr[0];
           G_region[1] = gr[1];
           G_region[2] = gr[2];
-          Exit(0);
         }
       }
       else if ( Ex->mode == Intrinsic::dim_2d )
@@ -3851,7 +3782,6 @@ int FFV::SD_getParameter(TextParser* tp_dom)
           G_region[1] = gr[1];
           G_region[2] = gr[2];
           G_origin[2] = -0.5 * pitch[2];
-          Exit(0);
         }
       }
       else

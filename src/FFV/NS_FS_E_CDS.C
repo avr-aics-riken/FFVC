@@ -197,7 +197,7 @@ void FFV::NS_FS_E_CDS()
     TIMING_start("Pvec_Buoyancy");
     REAL_TYPE dgr = dt*C.Grashof*rei*rei;
     flop = 3.0;
-    Buoyancy(d_vc, dgr, d_ie0, d_bcd, flop);
+    ps_buoyancy_(d_vc, size, &guide, &dgr, d_ie0, d_bcd, &C.NoCompo, mat_tbl, &flop);
     TIMING_stop("Pvec_Buoyancy", flop);
   }
   
