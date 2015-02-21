@@ -126,11 +126,19 @@ private:
                           const int* Dsize=NULL);
   
   
+  // 未ペイントセルを周囲の交点IDの最頻値でフィル
+  unsigned long fillByModalCutID(int* bcd,
+                                 const int* bid,
+                                 const int m_NoCompo,
+                                 const CompoList* cmp);
+  
+  
   // 未ペイントセルを周囲のbidの固体最頻値でフィル
   unsigned long fillByModalSolid(int* bcd,
                                  const int fluid_id,
                                  const int* bid,
-                                 const int m_NoCompo);
+                                 const int m_NoCompo,
+                                 const CompoList* cmp);
   
   
   // 未ペイントセルを周囲のmidの固体最頻値でフィル
@@ -204,10 +212,6 @@ private:
   
   // 距離の最小値を求める
   void minDistance(const long long* cut, const int* bid, FILE* fp);
-  
-  
-  // 交点が定義点にある場合の処理をした場合に、反対側のセルの状態を修正
-  unsigned long modifyCutOnPoint(int* bid, long long* cut, const int* bcd, const int* Dsize=NULL);
   
   
   // 6方向にカットのあるセルを交点媒質でフィルする
@@ -430,11 +434,14 @@ public:
   
   
   // 交点が定義点にある場合にそのポリゴンのエントリ番号でフィルする
-  unsigned long paintCutOnPoint(int* bcd,
-                                int* bid,
-                                long long* cut,
-                                const int m_NoCompo,
-                                const int* Dsize=NULL);
+  void paintCutOnPoint(int* bcd,
+                       int* bid,
+                       long long* cut,
+                       const int m_NoCompo,
+                       const CompoList* cmp,
+                       unsigned long& fillcut,
+                       unsigned long& modopp,
+                       const int* Dsize=NULL);
   
   
   // 交点計算を行い、量子化
@@ -443,6 +450,7 @@ public:
                    int* bid,
                    int* bcd,
                    const int m_NoCompo,
+                   const CompoList* cmp,
                    MPIPolylib* PL,
                    PolygonProperty* PG);
   

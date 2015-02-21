@@ -1939,6 +1939,8 @@ void ParseBC::loadLocalBC(Control* C, MediumList* mat, CompoList* cmp)
     int key = FBUtility::findIDfromLabel(mat, NoMedium, str);
     cmp[m].setMatodr(key);
     
+    //printf("m=%d k=%d %s >> key=%d\n", m, k, str.c_str(), key);
+    
     
     // class
     label = label_leaf + "/Class";

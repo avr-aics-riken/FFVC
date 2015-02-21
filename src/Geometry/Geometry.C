@@ -492,6 +492,7 @@ bool Geometry::fill(FILE* fp,
     fprintf(fp,"\tFill initialize -----\n\n");
     fprintf(fp,"\t\tTotal cell count       = %16ld\n", total_cell);
     fprintf(fp,"\t\tInitial target count   = %16ld\n", target_count);
+    
     fprintf(fp,"\n\tFill -----\n\n");
     fprintf(fp,"\t\tFill mode for each dir.: %d %d %d\n", FillSuppress[0], FillSuppress[1], FillSuppress[2]);
   }
@@ -502,6 +503,20 @@ bool Geometry::fill(FILE* fp,
   
   
   if ( target_count == 0 ) return true;
+  
+  
+  
+  // 交点IDをもつ未ペイントのセルを、交点IDの媒質IDでペイントする -------------------
+  
+  unsigned long tmp = fillByModalCutID(d_bcd, d_bid, m_NoCompo, cmp);
+  
+  if ( tmp > 0 )
+  {
+    Hostonly_
+    {
+      fprintf(fp,"\t\tPainted by cut ID's medium  = %16ld\n", tmp);
+    }
+  }
   
   
   
@@ -522,15 +537,24 @@ bool Geometry::fill(FILE* fp,
   
   
   // SOLIDでフィル
-  fill_connected(fp, d_bcd, d_bid, mat, m_NoMedium, SOLID, target_count);
+  if ( !fill_connected(fp, d_bcd, d_bid, mat, m_NoMedium, SOLID, target_count) ) return false;
   
   
   
   // 未ペイント(ID=0)をカウント
   upc = countCellB(d_bcd, 0);
   
+  
   // 未ペイントセルがある場合は、全周カットの可能性
-  replaceIsolatedCell(d_bcd, d_bid, m_NoCompo, cmp);
+  tmp = replaceIsolatedCell(d_bcd, d_bid, m_NoCompo, cmp);
+  
+  if ( tmp > 0 )
+  {
+    Hostonly_
+    {
+      fprintf(fp,"\t\tReplaced isolated cell = %16ld\n", tmp);
+    }
+  }
   
   
   // チェック
@@ -558,6 +582,7 @@ bool Geometry::fill(FILE* fp,
  * @param [in]      m_NoMedium 媒質数
  * @param [in]      fill_mode  フィルモード (SOLID | FLUID)
  * @param [in,out]  target_count ペイント対象のセル数
+ * @retval success => true
  */
 bool Geometry::fill_connected(FILE* fp,
                               int* d_bcd,
@@ -714,7 +739,7 @@ unsigned long Geometry::fillByFluid(int* bcd, const int fluid_id, const int* bid
         // 対象セルが未ペイントの場合
         if ( dd == 0 )
         {
-          setBitID(bcd[m_p], fid);
+          setMediumID(bcd[m_p], fid);
           c++;
         }
       }
@@ -995,15 +1020,87 @@ schedule(static) reduction(+:filled) collapse(3)
 
 
 // #################################################################
+/* @brief 未ペイントセルを周囲の交点IDの最頻値の媒質でフィル
+ * @param [in,out] bcd       BCindex B
+ * @param [in]     bid       境界ID
+ * @param [in]     m_NoCompo コンポーネント数
+ * @param [in]     cmp       CompoList
+ * @retval 置換されたセル数
+ */
+unsigned long Geometry::fillByModalCutID(int* bcd,
+                                         const int* bid,
+                                         const int m_NoCompo,
+                                         const CompoList* cmp)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  unsigned long c = 0; /// painted count
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t m = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
+        
+        int qq = bid[m];
+        int qw = getBit5(qq, 0);
+        int qe = getBit5(qq, 1);
+        int qs = getBit5(qq, 2);
+        int qn = getBit5(qq, 3);
+        int qb = getBit5(qq, 4);
+        int qt = getBit5(qq, 5);
+        
+        // 対象セルが未ペイントの場合、かつ、交点をもつ場合
+        if ( DECODE_CMP(bcd[m]) == 0  &&  qw+qe+qs+qn+qb+qt > 0 )
+        {
+          // 交点IDの最頻値
+          int sd = FBUtility::find_mode_id(qw, qe, qs, qn, qb, qt, m_NoCompo);
+          if ( sd == 0 ) Exit(0); // 何かあるはず
+          
+          // 交点IDの媒質番号を得る
+          int key = cmp[sd].getMatodr();
+          if ( key == 0 )
+          {
+            printf("sd=%2d key=%2d : %2d %2d %2d %2d %2d %2d\n", sd, key, qw, qe, qs, qn, qb, qt);
+            Exit(0);
+          }
+
+          setMediumID(bcd[m], key);
+          c++;
+        }
+      }
+    }
+  }
+  
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = c;
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  return c;
+}
+
+
+// #################################################################
 /* @brief 未ペイントセルを周囲の媒質IDの固体最頻値でフィル
  * @param [in,out] bcd       BCindex B
  * @param [in]     fluid_id  キーとなる流体ID
  * @param [in]     bid       境界ID
  * @param [in]     m_NoCompo コンポーネント数
+ * @param [in]     cmp       CompoList
  * @retval 置換されたセル数
  * @note 周囲の媒質IDの固体最頻値がゼロの場合には，境界IDで代用
  */
-unsigned long Geometry::fillByModalSolid(int* bcd, const int fluid_id, const int* bid, const int m_NoCompo)
+unsigned long Geometry::fillByModalSolid(int* bcd,
+                                         const int fluid_id,
+                                         const int* bid,
+                                         const int m_NoCompo,
+                                         const CompoList* cmp)
 {
   int ix = size[0];
   int jx = size[1];
@@ -1040,6 +1137,7 @@ unsigned long Geometry::fillByModalSolid(int* bcd, const int fluid_id, const int
         if ( dd == 0 )
         {
           int sd = FBUtility::find_mode_id(fid, qw, qe, qs, qn, qb, qt, m_NoCompo);
+          int key = sd;
           
           // 周囲の媒質IDの固体最頻値がゼロの場合
           if ( sd == 0 )
@@ -1053,8 +1151,17 @@ unsigned long Geometry::fillByModalSolid(int* bcd, const int fluid_id, const int
             qt = getBit5(qq, 5);
             sd = FBUtility::find_mode_id(fid, qw, qe, qs, qn, qb, qt, m_NoCompo);
             if ( sd == 0 ) Exit(0); // 何かあるはず
+            
+            // 交点IDの媒質番号を得る
+            key = cmp[sd].getMatodr();
+            if ( key == 0 )
+            {
+              //printf("sd=%2d key=%2d : %2d %2d %2d %2d %2d %2d\n", sd, key, qw, qe, qs, qn, qb, qt);
+              Exit(0);
+            }
           }
-          setBitID(bcd[m_p], sd);
+
+          setMediumID(bcd[m_p], key);
           c++;
         }
       }
@@ -1285,7 +1392,7 @@ unsigned long Geometry::fillSeedBcdInner(int* bcd, const Vec3r p, const int targ
   //if ( !TEST_BC(s)  &&  DECODE_CMP(bcd[m]) == 0 )
   if ( DECODE_CMP(bcd[m]) == 0 )
   {
-    setBitID(bcd[m], target);
+    setMediumID(bcd[m], target);
     c++;
   }
   
@@ -1351,7 +1458,7 @@ unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int tar
             // 対象セルの周囲に指定方向以外にカットがなく，未ペイントのセルの場合
             if ( ((s & mx_w) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
-              setBitID(bcd[m], tg);
+              setMediumID(bcd[m], tg);
               c++;
             }
           }
@@ -1369,7 +1476,7 @@ unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int tar
             int s = bid[m];
             if ( ((s & mx_e) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
-              setBitID(bcd[m], tg);
+              setMediumID(bcd[m], tg);
               c++;
             }
           }
@@ -1388,7 +1495,7 @@ unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int tar
             
             if ( ((s & mx_s) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
-              setBitID(bcd[m], tg);
+              setMediumID(bcd[m], tg);
               c++;
             }
           }
@@ -1407,7 +1514,7 @@ unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int tar
             
             if ( ((s & mx_n) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
-              setBitID(bcd[m], tg);
+              setMediumID(bcd[m], tg);
               c++;
             }
           }
@@ -1426,7 +1533,7 @@ unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int tar
             
             if ( ((s & mx_b) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
-              setBitID(bcd[m], tg);
+              setMediumID(bcd[m], tg);
               c++;
             }
           }
@@ -1445,7 +1552,7 @@ unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int tar
             
             if ( ((s & mx_t) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
-              setBitID(bcd[m], tg);
+              setMediumID(bcd[m], tg);
               c++;
             }
           }
@@ -2038,126 +2145,29 @@ void Geometry::minDistance(const long long* cut, const int* bid, FILE* fp)
 }
 
 
-// #################################################################
-/**
- * @brief 交点が定義点にある場合の処理をした場合に、反対側のセルの状態を修正
- * @param [in,out] bid    境界ID（5ビット幅x6方向）
- * @param [in,out] cut    カット情報
- * @param [in]     bcd    セルID
- * @param [in]     Dsize  サイズ
- * @retval 修正されたセル数
- */
-unsigned long Geometry::modifyCutOnPoint(int* bid, long long* cut, const int* bcd, const int* Dsize)
-{
-  int ix, jx, kx, gd;
-  
-  if ( !Dsize )
-  {
-    ix = size[0];
-    jx = size[1];
-    kx = size[2];
-    gd = guide;
-  }
-  else // ASD module用
-  {
-    ix = Dsize[0];
-    jx = Dsize[1];
-    kx = Dsize[2];
-    gd = 1;
-  }
-  
-  unsigned long c = 0;
-  
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        
-        size_t m_p = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
-        size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
-        size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
-        size_t m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd);
-        size_t m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd);
-        size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
-        size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
-        
-        const int qq = bid[m_p];
-        const int bb = DECODE_CMP(bcd[m_p]);
-        const long long pos = cut[m_p];
-        
-        // 定義点上に交点があり、反対側のセルから見て交点がない場合
-        if ( chkZeroCut(pos, X_minus) > 0 && !ensCut(cut[m_w], X_plus) )
-        {
-          setBit5 (bid[m_w], bb,   X_plus);
-          setCut9(cut[m_w], QT_9, X_plus);
-          c++;
-        }
-        
-        if ( chkZeroCut(pos, X_plus) > 0  && !ensCut(cut[m_e], X_minus) )
-        {
-          setBit5 (bid[m_e], bb,   X_minus);
-          setCut9(cut[m_e], QT_9, X_minus);
-          c++;
-        }
-        
-        if ( chkZeroCut(pos, Y_minus) > 0 && !ensCut(cut[m_s], Y_plus) )
-        {
-          setBit5 (bid[m_s], bb,   Y_plus);
-          setCut9(cut[m_s], QT_9, Y_plus);
-          c++;
-        }
-        
-        if ( chkZeroCut(pos, Y_plus) > 0  && !ensCut(cut[m_n], Y_minus) )
-        {
-          setBit5 (bid[m_n], bb,   Y_minus);
-          setCut9(cut[m_n], QT_9, Y_minus);
-          c++;
-        }
-        
-        if ( chkZeroCut(pos, Z_minus) > 0 && !ensCut(cut[m_b], Z_plus) )
-        {
-          setBit5 (bid[m_b], bb,   Z_plus);
-          setCut9(cut[m_b], QT_9, Z_plus);
-          c++;
-        }
-        
-        if ( chkZeroCut(pos, Z_plus) > 0  && !ensCut(cut[m_t], Z_minus) )
-        {
-          setBit5 (bid[m_t], bb,   Z_minus);
-          setCut9(cut[m_t], QT_9, Z_minus);
-          c++;
-        }
-      }
-    }
-  }
-  
-  if ( numProc > 1 )
-  {
-    unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  if ( numProc > 1 )
-  {
-    if ( paraMngr->BndCommS3D(bid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  return c;
-}
-
 
 // #################################################################
 /**
- * @brief 交点が定義点にある場合にそのポリゴンのエントリ番号でフィルする
+ * @brief 交点が定義点にある場合にそのポリゴンの媒質IDでフィルし、反対側を修正する
  * @param [in,out] bcd       BCindex B
- * @param [in]     bid       境界ID（5ビット幅x6方向）
- * @param [in]     cut       カット情報
+ * @param [in,out] bid       境界ID（5ビット幅x6方向）
+ * @param [in,out] cut       カット情報
  * @param [in]     m_NoCompo コンポーネント数
+ * @param [in]     cmp       CompoList
+ * @param [out]    fillcut   定義点上の交点IDでフィルした数
+ * @param [out]    modopp    対向点の修正数
+
  * @param [in]     Dsize     サイズ
  * @retval フィルされたセル数
  */
-unsigned long Geometry::paintCutOnPoint(int* bcd, int* bid, long long* cut, const int m_NoCompo, const int* Dsize)
+void Geometry::paintCutOnPoint(int* bcd,
+                               int* bid,
+                               long long* cut,
+                               const int m_NoCompo,
+                               const CompoList* cmp,
+                               unsigned long& fillcut,
+                               unsigned long& modopp,
+                               const int* Dsize)
 {
   int ix, jx, kx, gd;
   
@@ -2176,9 +2186,10 @@ unsigned long Geometry::paintCutOnPoint(int* bcd, int* bid, long long* cut, cons
     gd = 1;
   }
   
-  unsigned long c = 0;
   
-//#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
+  unsigned long fc = 0;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:fc)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -2188,7 +2199,7 @@ unsigned long Geometry::paintCutOnPoint(int* bcd, int* bid, long long* cut, cons
         int qq = bid[m];
         long long pos = cut[m];
         
-        // どの方向かが、定義点上の場合（交点があり、かつ距離がゼロ）
+        // いずれかの方向が定義点上の場合（交点があり、かつ距離がゼロ）
         if ( chkZeroCut(pos, X_minus) ||
              chkZeroCut(pos, X_plus ) ||
              chkZeroCut(pos, Y_minus) ||
@@ -2196,6 +2207,7 @@ unsigned long Geometry::paintCutOnPoint(int* bcd, int* bid, long long* cut, cons
              chkZeroCut(pos, Z_minus) ||
              chkZeroCut(pos, Z_plus ) )
         {
+          // 交点IDの最頻値
           int sd = FBUtility::find_mode_id(FillID,
                                            getBit5(qq, X_minus),
                                            getBit5(qq, X_plus),
@@ -2223,8 +2235,16 @@ unsigned long Geometry::paintCutOnPoint(int* bcd, int* bid, long long* cut, cons
 #endif
           if ( sd == 0 ) Exit(0);
           
+          // 交点IDの媒質番号を得る
+          int key = cmp[sd].getMatodr();
+          if ( key == 0 )
+          {
+            //printf("sd=%2d key=%2d : %2d %2d %2d %2d %2d %2d\n", sd, key, qw, qe, qs, qn, qb, qt);
+            Exit(0);
+          }
+          
           // セルを固体にする
-          setBitID(bcd[m], sd);
+          setMediumID(bcd[m], key);
           
           
           // 6方向とも交点ゼロにする
@@ -2244,7 +2264,7 @@ unsigned long Geometry::paintCutOnPoint(int* bcd, int* bid, long long* cut, cons
           setBit5(qq, sd, Z_plus);
           bid[m] = qq;
           
-          c++;
+          fc++;
         }
         
       }
@@ -2253,17 +2273,104 @@ unsigned long Geometry::paintCutOnPoint(int* bcd, int* bid, long long* cut, cons
   
   if ( numProc > 1 )
   {
-    unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    unsigned long c_tmp = fc;
+    if ( paraMngr->Allreduce(&c_tmp, &fc, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
+  
+  fillcut = fc;
+  
   
   if ( numProc > 1 )
   {
     if ( paraMngr->BndCommS3D(bcd, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
     if ( paraMngr->BndCommS3D(bid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
   }
   
-  return c;
+
+  
+  
+  // 反対側の修正
+  fc = 0;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:fc)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t m_p = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
+        size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
+        size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
+        size_t m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd);
+        size_t m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd);
+        size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
+        size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
+        
+        const int qq = bid[m_p];
+        const int bb = DECODE_CMP(bcd[m_p]);
+        const long long pos = cut[m_p];
+        
+        // 定義点上に交点があり、反対側のセルから見て交点がない場合
+        if ( chkZeroCut(pos, X_minus) > 0 && !ensCut(cut[m_w], X_plus) )
+        {
+          setBit5 (bid[m_w], bb,   X_plus);
+          setCut9(cut[m_w], QT_9, X_plus);
+          fc++;
+        }
+        
+        if ( chkZeroCut(pos, X_plus) > 0  && !ensCut(cut[m_e], X_minus) )
+        {
+          setBit5 (bid[m_e], bb,   X_minus);
+          setCut9(cut[m_e], QT_9, X_minus);
+          fc++;
+        }
+        
+        if ( chkZeroCut(pos, Y_minus) > 0 && !ensCut(cut[m_s], Y_plus) )
+        {
+          setBit5 (bid[m_s], bb,   Y_plus);
+          setCut9(cut[m_s], QT_9, Y_plus);
+          fc++;
+        }
+        
+        if ( chkZeroCut(pos, Y_plus) > 0  && !ensCut(cut[m_n], Y_minus) )
+        {
+          setBit5 (bid[m_n], bb,   Y_minus);
+          setCut9(cut[m_n], QT_9, Y_minus);
+          fc++;
+        }
+        
+        if ( chkZeroCut(pos, Z_minus) > 0 && !ensCut(cut[m_b], Z_plus) )
+        {
+          setBit5 (bid[m_b], bb,   Z_plus);
+          setCut9(cut[m_b], QT_9, Z_plus);
+          fc++;
+        }
+        
+        if ( chkZeroCut(pos, Z_plus) > 0  && !ensCut(cut[m_t], Z_minus) )
+        {
+          setBit5 (bid[m_t], bb,   Z_minus);
+          setCut9(cut[m_t], QT_9, Z_minus);
+          fc++;
+        }
+      }
+    }
+  }
+  
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = fc;
+    if ( paraMngr->Allreduce(&c_tmp, &fc, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  modopp = fc;
+  
+  
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->BndCommS3D(bid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+  }
+  
 }
 
 
@@ -2276,6 +2383,7 @@ unsigned long Geometry::paintCutOnPoint(int* bcd, int* bid, long long* cut, cons
  * @param [out]    bid        交点ID
  * @param [in,out] bcd        セルID
  * @param [in]     m_NoCompo  コンポーネント数
+ * @param [in]     cmp        CompoList
  * @param [in]     PL         Polylibインスタンス
  * @param [in]     PG         PolygonPropertyクラス
  */
@@ -2284,6 +2392,7 @@ void Geometry::quantizeCut(FILE* fp,
                            int* bid,
                            int* bcd,
                            const int m_NoCompo,
+                           const CompoList* cmp,
                            MPIPolylib* PL,
                            PolygonProperty* PG)
 {
@@ -2369,6 +2478,7 @@ void Geometry::quantizeCut(FILE* fp,
                   
                   // Polygon ID
                   int poly_id = (*it2)->get_exid();
+
 #if 0
                   printf("[%3d %3d %3d] (%f %f %f), (%f %f %f), (%f %f %f)\n", i,j,k,
                          p[0].x, p[0].y, p[0].z,
@@ -2421,10 +2531,10 @@ void Geometry::quantizeCut(FILE* fp,
   
   // 修正
   
-  // 定義点上に交点がある場合の処理 >> カットするポリゴンのエントリ番号でフィルする
-  unsigned long fill_cut = paintCutOnPoint(bcd, bid, cut, m_NoCompo);
-
-  unsigned long cm = modifyCutOnPoint(bid, cut, bcd);
+  // 定義点上に交点がある場合の処理 >> カットするポリゴンの媒質番号でフィルする
+  unsigned long fill_cut, cm;
+  
+  paintCutOnPoint(bcd, bid, cut, m_NoCompo, cmp, fill_cut, cm);
 
   Hostonly_
   {
@@ -2443,10 +2553,11 @@ void Geometry::quantizeCut(FILE* fp,
 
 // #################################################################
 /** 
- * @brief 6方向にカットのあるセルを交点媒質でフィルする
- * @param [in,out] bcd   BCindex
- * @param [in]     bid   交点ID
- * @param [in]
+ * @brief 6方向にカットのあるセルを交点の媒質IDでフィルする
+ * @param [in,out] bcd       BCindex
+ * @param [in]     bid       交点ID
+ * @param [in]     m_NoCompo コンポーネント数
+ * @param [in]     cmp       CompoList
  */
 unsigned long Geometry::replaceIsolatedCell(int* bcd,
                                             const int* bid,
@@ -2481,13 +2592,14 @@ unsigned long Geometry::replaceIsolatedCell(int* bcd,
           {
             // 交点IDの最頻値
             int sd = FBUtility::find_mode_id(qw, qe, qs, qn, qb, qt, m_NoCompo);
+            if ( sd==0 ) Exit(0);
             
             // MediumListの格納番号
             int key = cmp[sd].getMatodr();
             //printf("%d %d %d : key id =%d\n", i,j,k,key);
             
             if ( key == 0 ) Exit(0);
-            setBitID(bcd[m], key);
+            setMediumID(bcd[m], key);
             replaced++;
           }
         }

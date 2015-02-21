@@ -2182,7 +2182,7 @@ void FFV::setBCinfo()
   
   
   // パラメータファイルをパースして，外部境界条件を保持する
-  B.loadOuterBC( BC.exportOBC(), mat, cmp, ensPeriodic);
+  B.loadOuterBC(BC.exportOBC(), mat, cmp, ensPeriodic);
   
   
   // パラメータファイルの情報を元にCompoListの情報を設定する
@@ -2879,10 +2879,10 @@ void FFV::SetModel(double& PrepMemory, double& TotalMemory, FILE* fp)
   
   
   
-  // 外部境界面に接するセルでカットがある場合はガイドセルに固体IDを付与
+  // 外部境界方向にカットがあるセルには、ガイドセルをCutIDの媒質でペイント
   unsigned long painted[6];
   
-  V.paintSolidGC(d_bcd, d_bid, painted);
+  V.paintCutIDonGC(d_bcd, d_bid, painted, cmp);
   
   Hostonly_ {
     fprintf(fp, "\n\tPainted guide cell by cut\n");
@@ -2896,7 +2896,9 @@ void FFV::SetModel(double& PrepMemory, double& TotalMemory, FILE* fp)
   
   
   
-  // 外部境界面の処理
+  // 外部境界面の処理　ここで外部境界面の交点距離と交点ID、媒質IDをセット
+  // >> paintCutIDonGC()で処理した内容が優先
+  
   for (int face=0; face<NOFACE; face++)
   {
     if( nID[face] >= 0 ) continue;
@@ -3273,7 +3275,7 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   
   // 交点計算
   TIMING_start("Cut_Information");
-  GM.quantizeCut(fp, d_cut, d_bid, d_bcd, C.NoCompo, PL, PG);
+  GM.quantizeCut(fp, d_cut, d_bid, d_bcd, C.NoCompo, cmp, PL, PG);
   TIMING_stop("Cut_Information");
   
   

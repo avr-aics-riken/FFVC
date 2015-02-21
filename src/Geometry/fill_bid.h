@@ -215,7 +215,7 @@ if ( zp == 0 )
    
   if ( sd_flag > 0 )
   {
-    setBitID(bcd[m_p], sd);
+    setMediumID(bcd[m_p], sd);
     
     for (int l=0; l<6; l++)
     {
@@ -292,7 +292,7 @@ if ( zp == 0 )
   {
     if ( (DECODE_CMP(bcd[m_p]) == 0) )
     {
-      setBitID(bcd[m_p], tg);
+      setMediumID(bcd[m_p], tg);
       filled++;
     }
   }

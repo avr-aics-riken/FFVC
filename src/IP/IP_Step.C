@@ -266,7 +266,7 @@ void IP_Step::setup(int* bcd,
         
         // 媒質エントリ
         size_t m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
-        setBitID(bcd[m], mid_solid);
+        setMediumID(bcd[m], mid_solid);
         
         // 交点
         size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
@@ -289,7 +289,7 @@ void IP_Step::setup(int* bcd,
         if ( z > ht )
         {
           size_t m = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
-          setBitID(bcd[m], mid_fluid);
+          setMediumID(bcd[m], mid_fluid);
           
           size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
           int r = quantize9(1.0);

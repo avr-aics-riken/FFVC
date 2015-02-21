@@ -147,7 +147,7 @@ if ( zp == 0 )
   {
     if ( (DECODE_CMP(bcd[m_p]) == 0) )
     {
-      setBitID(bcd[m_p], tg);
+      setMediumID(bcd[m_p], tg);
       filled++;
     }
   }

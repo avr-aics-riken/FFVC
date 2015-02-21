@@ -204,12 +204,13 @@ public:
   void countOpenAreaOfDomain (const int* bx, REAL_TYPE* OpenArea);
   
   
-  /* @brief 領域境界のセルで境界方向にカットがある場合にガイドセルをそのIDで埋める
+  /* @brief 外部境界方向にカットがあるセルにはガイドセルをCutIDの媒質でペイント
    * @param [in,out] bcd      BCindex B
    * @param [in]     bid      境界ID
    * @param [out]    painted  各外部領域面でペイントされた個数
+   * @param [in]     cmp      CompoList
    */
-  void paintSolidGC (int* bcd, const int* bid, unsigned long* painted);
+  void paintCutIDonGC (int* bcd, const int* bid, unsigned long* painted, const CompoList* cmp);
   
   
   /**

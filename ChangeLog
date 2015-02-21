@@ -19,6 +19,11 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-02-21
+r1593 setBit5ID() >> setMediumID()
+ - check Cylinder
+
+--------------------------
 2015-02-17
 r1592 modify passive scalar part for compressed cut
 - check 2Dcavity, 3Dcavity, 2Dcyl, Cylinder, LDC, PMT, SHC1D ,Jet, HeatedPlate、ThermalCavity
@@ -423,7 +428,7 @@ r1606 conjugate heat transfer [ver 1.6.4]
 
 r1605 fix bug related r1604 and improve fill [ver 1.6.3]
   - modify fill_bid.h
-  - add paintSolidGC (int* bcd, const int* bid)
+  - add paintCutIDonGC (int* bcd, const int* bid)
   - expire bin-script, ffvc-config
 
 --------------------------

@@ -275,7 +275,7 @@ int FBUtility::findIDfromCmp(const CompoList* cmp, const int Nmax, const std::st
   
   for (int i=1; i<=Nmax; i++)
   {
-    if ( !strcasecmp(str.c_str(), cmp[i].getMedium().c_str()) && cmp[i].getType()==OBSTACLE ) return i;
+    if ( !strcasecmp(str.c_str(), cmp[i].getMedium().c_str()) && cmp[i].getType()==type ) return i;
   }
   
   return 0;
