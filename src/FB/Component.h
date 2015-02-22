@@ -111,6 +111,12 @@ public:
     same_direction=1,
     opposite_direction
   };
+  
+  enum Kind_in_out
+  {
+    kind_inner=1,
+    kind_outer
+  };
 
   
 private:
@@ -142,6 +148,8 @@ private:
   std::string medium;    ///< Medium名
   
 public:
+  int kind_inout;           /// 内部と外部の種別
+  
   REAL_TYPE area;           ///< 断面積（有次元）
   REAL_TYPE nv[3];          ///< 法線方向ベクトル（流出方向）
   REAL_TYPE oc[3];          ///< 形状の中心座標（前面の中心位置）
@@ -168,6 +176,7 @@ public:
     phase = 0;
     heatmode = OFF;
     matodr = 0;
+    kind_inout = 0;
     
     for (int i=0; i<3; i++) {
       nv[i] = 0.0;

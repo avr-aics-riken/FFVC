@@ -459,6 +459,8 @@ public:
   int MarchingScheme;
   int NoBaseLS;       ///< リストアップされた線形ソルバーの数
   int NoBC;           ///< 境界条件数
+  int NoBCinner;      ///< 内部境界条件数
+  int NoBCouter;      ///< 外部境界条件数
   int NoCompo;        ///< コンポーネント数
   int NoMedium;       ///< 媒質数
   int NoMediumFluid;  ///< 流体の媒質数
@@ -548,6 +550,8 @@ public:
     MarchingScheme = 0;
     NoBaseLS = 0;
     NoBC = 0;
+    NoBCinner = 0;
+    NoBCouter = 0;
     NoCompo = 0;
     NoMedium = 0;
     NoMediumFluid = 0;

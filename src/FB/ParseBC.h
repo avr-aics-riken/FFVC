@@ -85,10 +85,6 @@ public:
   
 private:
   
-  // ラベルの重複を調べる
-  bool chkDuplicate(const int n, const string m_label);
-  
-  
   /**
    * @brief コンポーネントがグローバルに存在するかどうかを調べる
    * @param [in] label  テストするラベル
@@ -220,6 +216,10 @@ private:
   void getIbcSolidRev(const string label_base, const int n, CompoList* cmp);
   
   
+  // 内部のポリゴン境界のパラメータを取得する
+  void getIbcPolygon(const string label_base, const int n, CompoList* cmp);
+  
+  
   // HeatExchangerのパラメータを取得する
   void get_IBC_PrsLoss(const string label_base, const int n, CompoList* cmp);
   
@@ -272,10 +272,6 @@ private:
   int getVprofile(const string label_base);
   
   
-  // 内部境界条件のalias名に対するclassとmediumをpolylib.tpから取得する
-  void loadLocalBCfromPolylibFile(Control* C, const string obj_name, string& m_class, string& m_medium);
-  
-  
   // 外部境界面の反対方向を返す
   int oppositeDir(const int dir);
   
@@ -289,7 +285,7 @@ private:
   
   
   // 外部境界条件のキーワードを照合し，コードを登録する
-  void setKeywordOBC(const string keyword, const int m);
+  void setKeywordOBC(const string keyword, const int m, CompoList* cmp, const int n);
   
   
   
@@ -338,7 +334,6 @@ public:
    * @param [in] tp  TextParserクラスのポインタ
    */
   void importTP(TextParser* tp);
-
   
   
   /**
@@ -347,17 +342,7 @@ public:
    * @param [in,out]  mat   MediumList
    * @param [out]     cmp   CompoList
    */
-  void loadLocalBC(Control* C, MediumList* mat, CompoList* cmp);
-  
-  
-  /**
-   * @brief パラメータファイルをパースして，外部境界条件を取得，保持する
-   * @param [in,out] bc   BoundaryOuter
-   * @param [in]     mat  MediumList
-   * @param [out]    cmp  CompoList
-   * @param [in,out] ens  周期境界の方向
-   */
-  void loadOuterBC(BoundaryOuter* bc, const MediumList* mat, CompoList* cmp, int* ens);
+  void loadBCs(Control* C, MediumList* mat, CompoList* cmp);
   
   
   /**
@@ -396,6 +381,15 @@ public:
    * param [in] Cref Control class
    */
   void setControlVars(Control* Cref);
+  
+  
+  /**
+   * @brief 外部境界条件をbc[]に保持する
+   * @param [in,out] bc   BoundaryOuter
+   * @param [out]    cmp  CompoList
+   * @param [in,out] ens  周期境界の方向
+   */
+  void setOuterBC(BoundaryOuter* bc, CompoList* cmp, int* ens);
   
   
   /**

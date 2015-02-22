@@ -1023,7 +1023,7 @@ void Control::getNoOfComponent()
 
   
   // 境界条件数
-  label = "/BcTable/LocalBoundary";
+  label = "/BcTable/Boundary";
   
   if ( tpCntl->chkNode(label) )  //nodeがあれば
   {

@@ -53,6 +53,7 @@ std::string CompoList::getBCstr()
     else if ( h_type == HT_SN)      bc = "Heat Transfer type SN (Natural convection)";
     else if ( h_type == HT_SF)      bc = "Heat Transfer type SF (Forced convection)";
   }
+  else if ( type == OUTER_BC )      bc = "Outer BC";
   else                              bc = "Medium";
   
   return bc;

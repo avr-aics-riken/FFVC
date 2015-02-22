@@ -2181,12 +2181,13 @@ void FFV::setBCinfo()
   B.countMedium(&C, mat);
   
   
-  // パラメータファイルをパースして，外部境界条件を保持する
-  B.loadOuterBC(BC.exportOBC(), mat, cmp, ensPeriodic);
-  
-  
   // パラメータファイルの情報を元にCompoListの情報を設定する
-  B.loadLocalBC(&C, mat, cmp);
+  B.loadBCs(&C, mat, cmp);
+  
+  
+  // 外部境界条件をBCクラスに保持する
+  B.setOuterBC(BC.exportOBC(), cmp, ensPeriodic);
+  
   
   
 #if 0
