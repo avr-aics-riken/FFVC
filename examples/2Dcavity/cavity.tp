@@ -7,18 +7,17 @@ ApplicationControl {
 
 BcTable {
 
-  LocalBoundary {
-  }
-
-  OuterBoundary {
+  Boundary {
       
     outerWall {
+      kind     = "outer"
       class       = "Wall"
       Type        = "fixed"
       Medium      = "fe"
     }
 
     slideWall {
+      kind     = "outer"
       class       = "wall"
       Type        = "slide"
       Profile     = "Constant"
@@ -28,26 +27,30 @@ BcTable {
     }
 
     symmetric {
+      kind     = "outer"
       class       = "Symmetric"
       Medium      = "air"
     }
-    
+/*
     periodic {
+      kind     = "outer"
       class  = "periodic"
       mode   = "simplecopy"
     }
-
-    FaceBC {
-      Xminus = "outerWall"
-      Xplus  = "outerWall"
-      Yminus = "outerWall"
-      Yplus  = "slideWall"
-      Zminus = "symmetric"
-      Zplus  = "symmetric"
-    }
-
+*/
   }
+
+  OuterBC {
+    Xminus = "outerWall"
+    Xplus  = "outerWall"
+    Yminus = "outerWall"
+    Yplus  = "slideWall"
+    Zminus = "symmetric"
+    Zplus  = "symmetric"
+  }
+
 }
+
 
 
 ConvectionTerm {

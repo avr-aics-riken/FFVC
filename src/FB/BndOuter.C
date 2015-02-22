@@ -41,6 +41,7 @@ void BoundaryOuter::dataCopy(BoundaryOuter* src)
   var2      = src->var2;
   alias     = src->alias;
   p         = src->p;
+  ptr_cmp   = src->ptr_cmp;
 
   for (int i=0; i<3; i++)
   {

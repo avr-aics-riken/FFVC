@@ -6,43 +6,44 @@ ApplicationControl {
 
 BcTable {
 
-  LocalBoundary {
+  Boundary {
 
     Insulation {
-      class  = "adiabatic"
-      medium = "virtualmetal"
+      kind     = "inner"
+      class    = "adiabatic"
+      medium   = "virtualmetal"
     }
 
     Rod {
-      class = "HeatTransferS"
-      medium = "virtualmetal"
+      kind     = "inner"
+      class    = "HeatTransferS"
+      medium   = "virtualmetal"
       CoefOfHeatTransfer = 12.0
       BulkTemperature = 100.0
     }
 
     HeatedWall {
-      class = "IsoThermal"
-      medium = "virtualmetal"
+      kind     = "inner"
+      class    = "IsoThermal"
+      medium   = "virtualmetal"
       temperature = 200.0
     }
-  }
-
-  OuterBoundary {
       
     free {
+      kind           = "outer"
       class          = "tractionfree"
       ThermalOption  = "Adiabatic"
       Medium         = "water"
     }
+  }
       
-    FaceBC {
-      Xminus = "free"
-      Xplus  = "free"
-      Yminus = "free"
-      Yplus  = "free"
-      Zminus = "free"
-      Zplus  = "free"
-    }
+  OuterBC {
+    Xminus = "free"
+    Xplus  = "free"
+    Yminus = "free"
+    Yplus  = "free"
+    Zminus = "free"
+    Zplus  = "free"
   }
 }
 

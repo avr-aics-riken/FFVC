@@ -7,23 +7,22 @@ ApplicationControl {
 
 BcTable {
 
-  LocalBoundary {
+  Boundary {
 
     cyl_1 {
-      class             = "Obstacle"
-      Medium            = "fe1"
+      kind     = "inner"
+      class    = "Obstacle"
+      Medium   = "fe1"
     }
 
     cyl_2 {
-      class             = "Obstacle"
-      Medium            = "fe2"
+      kind     = "inner"
+      class    = "Obstacle"
+      Medium   = "fe2"
     }
-
-  }
-
-  OuterBoundary {
     
     inlet {
+      kind        = "outer"
       class       = "SpecifiedVelocity"
       Profile     = "Constant"
       OrientationVector = (1.0, 0.0, 0.0)
@@ -33,46 +32,27 @@ BcTable {
     }
 
     outlet {
+      kind        = "outer"
       class        = "Outflow"
       Medium       = "air"
       PressureType = "dirichlet"
       PrsValue     = 0.0
     }
 
-    outerWall {
-      class       = "Wall"
-      Type        = "fixed"
-      Medium      = "fe"
-    }
-
-    slideWall {
-      class       = "wall"
-      Type        = "slide"
-      Profile     = "Constant"
-      OrientationVector = (1.0, 0.0, 0.0)
-      Velocity    = 1.0
-      Medium      = "fe"
-    }
-
     symmetric {
+      kind        = "outer"
       class       = "Symmetric"
       Medium      = "air"
     }
-    
-    periodic {
-      class  = "periodic"
-      mode   = "simplecopy"
-    }
+  }
 
-    FaceBC {
-      Xminus = "inlet"
-      Xplus  = "outlet"
-      Yminus = "symmetric"
-      Yplus  = "symmetric"
-      Zminus = "symmetric"
-      Zplus  = "symmetric"
-    }
-
+  OuterBC {
+    Xminus = "inlet"
+    Xplus  = "outlet"
+    Yminus = "symmetric"
+    Yplus  = "symmetric"
+    Zminus = "symmetric"
+    Zplus  = "symmetric"
   }
 }
 
@@ -101,18 +81,18 @@ FillHint {
     direction = "Xminus"
     medium    = "air"
   }
-in_cyl1 {
-kind       = "point"
-coordinate = (0.0, 0.0, 0.2)
-medium     = "fe1"
-}
 
-in_cyl2 {
-kind       = "point"
-coordinate = (3.0, 0.0, 0.1)
-medium     = "fe2"
-}
+  in_cyl1 {
+    kind       = "point"
+    coordinate = (0.0, 0.0, 0.2)
+    medium     = "fe1"
+  }
 
+  in_cyl2 {
+    kind       = "point"
+    coordinate = (3.0, 0.0, 0.1)
+    medium     = "fe2"
+  }
 }
 
 

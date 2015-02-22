@@ -20,8 +20,10 @@ REVISION HISTORY
 
 --------------------------
 2015-02-22
-r1594 merge parsing of local and outer BCs
+r1595 bug fix and check intrinsic problems
+ - 2Dcavity, 3Dcavity, 2Dcyl, Cylinder, Jet, LDC, PMT, ThermalCavity, SHC1D
 
+r1594 merge parsing of local and outer BCs
 
 --------------------------
 2015-02-21
@@ -31,7 +33,7 @@ r1593 setBit5ID() >> setMediumID()
 --------------------------
 2015-02-17
 r1592 modify passive scalar part for compressed cut
-- check 2Dcavity, 3Dcavity, 2Dcyl, Cylinder, LDC, PMT, SHC1D ,Jet, HeatedPlate、ThermalCavity
+- check 2Dcavity, 3Dcavity, 2Dcyl, Cylinder, LDC, PMT, SHC1D ,Jet, HeatedPlate, ThermalCavity
 
 --------------------------
 2015-02-14

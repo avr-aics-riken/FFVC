@@ -7,23 +7,23 @@ ApplicationControl {
 
 BcTable {
 
-  LocalBoundary {
+  Boundary {
 
     cyl_1 {
-      class             = "Obstacle"
-      Medium            = "fe1"
+      kind     = "inner"
+      class    = "Obstacle"
+      Medium   = "fe1"
     }
 /*
     cyl_2 {
-      class             = "Obstacle"
-      Medium            = "fe2"
+      kind     = "inner"
+      class    = "Obstacle"
+      Medium   = "fe2"
     }
 */
-  }
-
-  OuterBoundary {
     
     inlet {
+      kind        = "outer"
       class       = "SpecifiedVelocity"
       Profile     = "Constant"
       OrientationVector = (1.0, 0.0, 0.0)
@@ -33,19 +33,28 @@ BcTable {
     }
 
     outlet {
+      kind         = "outer"
       class        = "Outflow"
       Medium       = "air"
       PressureType = "dirichlet"
       PrsValue     = 0.0
     }
 
+    symmetric {
+      kind        = "outer"
+      class       = "Symmetric"
+      Medium      = "air"
+    }
+/*
     outerWall {
+      kind        = "outer"
       class       = "Wall"
       Type        = "fixed"
       Medium      = "fe"
     }
 
     slideWall {
+      kind        = "outer"
       class       = "wall"
       Type        = "slide"
       Profile     = "Constant"
@@ -54,25 +63,21 @@ BcTable {
       Medium      = "fe"
     }
 
-    symmetric {
-      class       = "Symmetric"
-      Medium      = "air"
-    }
-    
     periodic {
+      kind   = "outer"
       class  = "periodic"
       mode   = "simplecopy"
     }
+*/
+  }
 
-    FaceBC {
-      Xminus = "inlet"
-      Xplus  = "outlet"
-      Yminus = "symmetric"
-      Yplus  = "symmetric"
-      Zminus = "symmetric"
-      Zplus  = "symmetric"
-    }
-
+  OuterBC {
+    Xminus = "inlet"
+    Xplus  = "outlet"
+    Yminus = "symmetric"
+    Yplus  = "symmetric"
+    Zminus = "symmetric"
+    Zplus  = "symmetric"
   }
 }
 

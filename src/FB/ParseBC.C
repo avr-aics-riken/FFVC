@@ -1908,7 +1908,7 @@ void ParseBC::loadBCs(Control* C, MediumList* mat, CompoList* cmp)
   label_base = "/BcTable/Boundary";
   
   
-  // ラベルの重複チェックと外部境界候補名のセット
+  /* ラベルの重複チェックと外部境界候補名のセット
   vector<string> nodes;
   
   // 直下のラベルを取得
@@ -1927,14 +1927,11 @@ void ParseBC::loadBCs(Control* C, MediumList* mat, CompoList* cmp)
         Exit(0);
       }
     }
-    
-    // 外部境界候補名のセット >> /BCtable/Boundaryにリストアップされた外部境界条件の順序で登録
-    BaseBc[m].setAlias(*it);
     m++;
   }
+  */
   
   int odr_outer = 0; // 外部境界条件の格納番号
-  
   
   // パラメータの読み込み
   for (int k=1; k<=NoBC; k++)
@@ -1961,6 +1958,9 @@ void ParseBC::loadBCs(Control* C, MediumList* mat, CompoList* cmp)
     {
       cmp[m].kind_inout = CompoList::kind_outer;
       odr_outer++;
+      
+      // 外部境界候補名のセット >> /BCtable/Boundaryにリストアップされた外部境界条件の順序で登録
+      BaseBc[odr_outer].setAlias( cmp[m].getAlias() );
     }
     
     
@@ -1979,7 +1979,9 @@ void ParseBC::loadBCs(Control* C, MediumList* mat, CompoList* cmp)
     }
     else
     {
-      setKeywordOBC(str, m, cmp, odr_outer);
+      cmp[m].setType(OUTER_BC);
+      BaseBc[odr_outer].setPtr2cmp(m);
+      setKeywordOBC(str, odr_outer);
     }
     
     
@@ -2112,6 +2114,55 @@ void ParseBC::loadBCs(Control* C, MediumList* mat, CompoList* cmp)
     }
 
   }
+  
+  
+  
+  // 外部境界のBaseBc[]と/BCtable/OuterBCのリストとの整合性チェック
+  
+  int* chklist = new int[NoBaseBC+1];
+  for (int i=0; i<=NoBaseBC; i++) chklist[i]=-1;
+  
+  // check
+  label_base = "/BcTable/OuterBC";
+  if ( !(tpCntl->chkNode(label_base)) )
+  {
+    Hostonly_ printf("\tParsing error : Missing '%s'\n", label_base.c_str());
+    Exit(0);
+  }
+  
+  int nnode = tpCntl->countLabels(label_base);
+  if ( nnode != NOFACE )
+  {
+    Hostonly_ printf("\tParsing error : OuterBC count != 6\n");
+    Exit(0);
+  }
+  
+  
+  for (int k=1; k<=NoBaseBC; k++)
+  {
+    for (int i=0; i<NOFACE; i++)
+    {
+      label = label_base + "/" + FBUtility::getDirStr(i);
+      if ( !tpCntl->getInspectedValue(label, str) ) Exit(0);
+      
+      if ( !strcasecmp(BaseBc[k].getAlias().c_str(), str.c_str()) )
+      {
+        chklist[k] = 1;
+      }
+    }
+  }
+
+  for (int k=1; k<=NoBaseBC; k++)
+  {
+    if ( chklist[k] !=1 )
+    {
+      Hostonly_ printf("\t Outer BC '%s' is not used.\n", BaseBc[k].getAlias().c_str());
+      Exit(0);
+    }
+  }
+  
+  if (chklist) delete [] chklist;
+  chklist= NULL;
   
   
   
@@ -2950,8 +3001,8 @@ void ParseBC::printCompoSummary(FILE* fp, CompoList* cmp, const int basicEq)
     }
     else // THERMAL
     {
-      fprintf(fp,"\t  No :   # of Faces/Cells       State   In/Out Init.Temp[C]                       Label : Class                                 Medium\n");
-      fprintf(fp,"\t------------------------------------------------------------------------------------------------------------------------------\n");
+      fprintf(fp,"\t  No :   # of Faces/Cells       State  In/Out  Init.Temp[C]                    Label : Class                                 Medium\n");
+      fprintf(fp,"\t--------------------------------------------------------------------------------------------------------------------------------------\n");
       
       for (int i=1; i<=NoCompo; i++)
       {
@@ -3375,36 +3426,18 @@ void ParseBC::setKeywordLBC(const string keyword, const int m, CompoList* cmp)
 /**
  * @brief 外部境界条件の照合を行う
  * @param [in]  keyword テストキーワード
- * @param [in]  m       コンポーネントの格納番号
- * @param [out] cmp     CompoList
  * @param [in]  n       BaseBcの格納番号
  */
-void ParseBC::setKeywordOBC(const string keyword, const int m, CompoList* cmp, const int n)
+void ParseBC::setKeywordOBC(const string keyword, const int n)
 {
-  if     ( FBUtility::compare(keyword, "Wall") ) {              cmp[m].setType(OUTER_BC);
-                                                                BaseBc[n].setClass(OBC_WALL);
-  }
-  else if( FBUtility::compare(keyword, "Outflow") ) {           cmp[m].setType(OUTER_BC);
-                                                                BaseBc[n].setClass(OBC_OUTFLOW);
-  }
-  else if( FBUtility::compare(keyword, "SpecifiedVelocity") ) { cmp[m].setType(OUTER_BC);
-                                                                BaseBc[n].setClass(OBC_SPEC_VEL);
-  }
-  else if( FBUtility::compare(keyword, "Symmetric") ) {         cmp[m].setType(OUTER_BC);
-                                                                BaseBc[n].setClass(OBC_SYMMETRIC);
-  }
-  else if( FBUtility::compare(keyword, "Periodic") ) {          cmp[m].setType(OUTER_BC);
-                                                                BaseBc[n].setClass(OBC_PERIODIC);
-  }
-  else if( FBUtility::compare(keyword, "TractionFree") ) {      cmp[m].setType(OUTER_BC);
-                                                                BaseBc[n].setClass(OBC_TRC_FREE);
-  }
-  else if( FBUtility::compare(keyword, "FarField") ) {          cmp[m].setType(OUTER_BC);
-                                                                BaseBc[n].setClass(OBC_FAR_FIELD);
-  }
-  else if( FBUtility::compare(keyword, "intrinsic") ) {         cmp[m].setType(OUTER_BC);
-                                                                BaseBc[n].setClass(OBC_INTRINSIC);
-  }
+  if     ( FBUtility::compare(keyword, "Wall") )              BaseBc[n].setClass(OBC_WALL);
+  else if( FBUtility::compare(keyword, "Outflow") )           BaseBc[n].setClass(OBC_OUTFLOW);
+  else if( FBUtility::compare(keyword, "SpecifiedVelocity") ) BaseBc[n].setClass(OBC_SPEC_VEL);
+  else if( FBUtility::compare(keyword, "Symmetric") )         BaseBc[n].setClass(OBC_SYMMETRIC);
+  else if( FBUtility::compare(keyword, "Periodic") )          BaseBc[n].setClass(OBC_PERIODIC);
+  else if( FBUtility::compare(keyword, "TractionFree") )      BaseBc[n].setClass(OBC_TRC_FREE);
+  else if( FBUtility::compare(keyword, "FarField") )          BaseBc[n].setClass(OBC_FAR_FIELD);
+  else if( FBUtility::compare(keyword, "intrinsic") )         BaseBc[n].setClass(OBC_INTRINSIC);
   else
   {
     Hostonly_ stamped_printf("\tParsing error : Invalid keyword is described '%s'\n", keyword.c_str());
@@ -3413,82 +3446,31 @@ void ParseBC::setKeywordOBC(const string keyword, const int m, CompoList* cmp, c
 }
 
 
-
 // #################################################################
 // 外部境界条件を取得，保持する
 void ParseBC::setOuterBC(BoundaryOuter* bc, CompoList* cmp, int* ensPrdc)
 {
   string label_base, label;
-  string str;
+  string str, dir;
   
   
   // 各フェイスに境界条件を設定する
   label_base = "/BcTable/OuterBC";
   
-  if ( !(tpCntl->chkNode(label_base)) )
-  {
-    Hostonly_ printf("\tParsing error : Missing '%s'\n", label_base.c_str());
-    Exit(0);
-  }
-  
-  // check
-  int nnode = tpCntl->countLabels(label_base);
-  if ( nnode != NOFACE )
-  {
-    Hostonly_ printf("\tParsing error : OuterBC count != 6\n");
-    Exit(0);
-  }
-  
   
   // 各面に与える境界条件番号を取得し，BaseBcから境界情報リストに内容をコピー
-  label = label_base + "/Xminus";
-  if ( !(tpCntl->getInspectedValue(label, str )) ) Exit(0);
-  if ( !findOBClist(str, X_minus, bc) )
-  {
-    Hostonly_ printf("\tParsing error : Alias cannot be found : OuterBC/Xminus\n");
-    Exit(0);
-  }
   
-  label = label_base + "/Xplus";
-  if ( !(tpCntl->getInspectedValue(label, str )) ) Exit(0);
-  if ( !findOBClist(str, X_plus, bc) )
+  for (int i=0; i<NOFACE; i++)
   {
-    Hostonly_ printf("\tParsing error : Alias cannot be found : OuterBC/Xplus\n");
-    Exit(0);
+    dir = FBUtility::getDirStr(i);
+    label = label_base + "/" + dir;
+    if ( !(tpCntl->getInspectedValue(label, str )) ) Exit(0);
+    if ( !findOBClist(str, i, bc) )
+    {
+      Hostonly_ printf("\tParsing error : Alias cannot be found : OuterBC/%s\n", dir.c_str());
+      Exit(0);
+    }
   }
-  
-  label = label_base + "/Yminus";
-  if ( !(tpCntl->getInspectedValue(label, str )) ) Exit(0);
-  if ( !findOBClist(str, Y_minus, bc) )
-  {
-    Hostonly_ printf("\tParsing error : Alias cannot be found : OuterBC/Yminus\n");
-    Exit(0);
-  }
-  
-  label = label_base + "/Yplus";
-  if ( !(tpCntl->getInspectedValue(label, str )) ) Exit(0);
-  if ( !findOBClist(str, Y_plus, bc) )
-  {
-    Hostonly_ printf("\tParsing error : Alias cannot be found : OuterBC/Yplus\n");
-    Exit(0);
-  }
-  
-  label = label_base + "/Zminus";
-  if ( !(tpCntl->getInspectedValue(label, str )) ) Exit(0);
-  if ( !findOBClist(str, Z_minus, bc) )
-  {
-    Hostonly_ printf("\tParsing error : Alias cannot be found : OuterBC/Zminus\n");
-    Exit(0);
-  }
-  
-  label = label_base + "/Zplus";
-  if ( !(tpCntl->getInspectedValue(label, str )) ) Exit(0);
-  if ( !findOBClist(str, Z_plus, bc) )
-  {
-    Hostonly_ printf("\tParsing error : Alias cannot be found : OuterBC/Zplus\n");
-    Exit(0);
-  }
-  
   
   
   // 周期境界条件の整合性のチェック

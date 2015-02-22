@@ -285,7 +285,7 @@ private:
   
   
   // 外部境界条件のキーワードを照合し，コードを登録する
-  void setKeywordOBC(const string keyword, const int m, CompoList* cmp, const int n);
+  void setKeywordOBC(const string keyword, const int n);
   
   
   

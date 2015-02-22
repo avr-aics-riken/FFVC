@@ -7,9 +7,10 @@ ApplicationControl {
 
 BcTable {
 
-  OuterBoundary {
+  Boundary {
       
     HeatWall {
+      kind          = "outer"
       class         = "Wall"
       Type          = "fixed"
       Medium        = "fe"
@@ -18,6 +19,7 @@ BcTable {
     }
 
     CoolWall {
+      kind        = "outer"
       class       = "Wall"
       Type        = "fixed"
       Medium      = "fe"
@@ -26,20 +28,21 @@ BcTable {
     }
 
     adiabaticWall {
+      kind        = "outer"
       class       = "Wall"
       Type        = "fixed"
       Medium      = "fe"
       ThermalOption = "adiabatic"
     }
+  }
 
-    FaceBC {
-      Xminus = "HeatWall"
-      Xplus  = "CoolWall"
-      Zminus = "adiabaticWall"
-      Zplus  = "adiabaticWall"
-      Yminus = "adiabaticWall"
-      Yplus  = "adiabaticWall"
-    }
+  OuterBC {
+    Xminus = "HeatWall"
+    Xplus  = "CoolWall"
+    Zminus = "adiabaticWall"
+    Zplus  = "adiabaticWall"
+    Yminus = "adiabaticWall"
+    Yplus  = "adiabaticWall"
   }
 }
 

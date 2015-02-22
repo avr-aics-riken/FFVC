@@ -7,26 +7,26 @@ ApplicationControl {
 
 BCTable {
 
-  LocalBoundary {
-  }
-
-  OuterBoundary {
-   
+  Boundary {
+/*
     outer_wall {
+      kind    = "outer"
       class   = "Wall"
       Type    = "fixed"
       Medium  = "fe"
     }
 
     inflow {
+      kind      = "outer"
       class     = "SpecifiedVelocity"
       Medium    = "air"
       Profile   = "Constant"
       OrientationVector = (1.0, 0.0, 0.0)
       velocity  = 27.8
     }
-
+*/
     outflow {
+      kind          = "outer"
       class         = "Outflow"
       Medium        = "air"
       PressureType  = "dirichlet"
@@ -34,23 +34,25 @@ BCTable {
     }
 
     tfree {
+      kind    = "outer"
       class   = "TractionFree"
       Medium  = "air"
     }
     
     jet {
+      kind   = "outer"
       class  = "intrinsic"
       Medium = "air"
     }
+  }
 
-    FaceBC {
-      Xminus = "jet"
-      Xplus  = "outflow"
-      Yminus = "tfree"
-      Yplus  = "tfree"
-      Zminus = "tfree"
-      Zplus  = "tfree"
-    }
+  OuterBC {
+    Xminus = "jet"
+    Xplus  = "outflow"
+    Yminus = "tfree"
+    Yplus  = "tfree"
+    Zminus = "tfree"
+    Zplus  = "tfree"
   }
 }
 
@@ -70,7 +72,6 @@ DomainInfo {
   GlobalVoxel    = (100   , 100   , 100   )
   //GlobalDivision = (1    , 1    , 4    )
 
-  ActiveSubDomainFile = "hoge"
 }
 
 
@@ -123,27 +124,47 @@ IntrinsicExample {
 
 Iteration {
   LinearSolver[@] {
-    Alias                = "sor2_moderate"
+    Alias                = "sor2"
     class                = "sor2sma"
-    MaxIteration         = 10
-    ConvergenceCriterion = 1.0e-2
-    NormType             = "RbyR0"
+    MaxIteration         = 20
+    ResidualCriterion    = 1.0e-4
+    ResidualNorm         = "RbyB"
+    ErrorNorm            = "DeltaXbyX"
+    Omega                = 1.1
+    CommMode             = "async"
+    NaiveImplementation  = "off"
+  }
+
+  LinearSolver[@] {
+    Alias                = "sor"
+    class                = "sor"
+    MaxIteration         = 20
+    ResidualCriterion    = 1.0e-3
+    ResidualNorm         = "RbyX"
+    ErrorNorm            = "DeltaXbyX"
+    Omega                = 1.1
+  }
+
+  LinearSolver[@] {
+    Alias                = "bicg"
+    class                = "bicgstab"
+    MaxIteration         = 100
+    ResidualCriterion    = 1.0e-6
+    ResidualNorm         = "RbyB"
+    ErrorNorm            = "DeltaXbyX"
+	Precondition         = "on"
+    InnerIteration       = 5
     Omega                = 1.1
     CommMode             = "async"
   }
 
-  LinearSolver[@] {
-    Alias                = "sor2_loose"
-    class                = "sor"
-    MaxIteration         = 10
-    ConvergenceCriterion = 1.0e-2
-    NormType             = "RbyR0"
-    Omega                = 1.1
-  }
+  DivMaxIteration        = 100
+  DivCriterion           = 1.0e-4
+  DivNorm                = "max" // "L2"
 
-  Pressure    = "sor2_moderate"
+  Pressure    = "bicg"
   Velocity    = ""
-  Temperature = "sor2_loose"   
+  Temperature = "sor2"   
 }
 
 
@@ -184,7 +205,6 @@ MonitorList {
 Output {
   Log {
     Base             = "On"
-    Iteration        = "Off"
     Profiling        = "On"
     WallInfo         = "Off"
     Console {
@@ -198,34 +218,42 @@ Output {
   }
 
   Data {
+    Format         = "sph"
+
     BasicVariables {
-      Format         = "sph"
-      TemporalType   = "step"
-      Interval       = 20
-    }
-    DerivedVariables {
-      Format         = "sph"
-      TemporalType   = "step"
-      Interval       = 20
+      TemporalType   = "time"
+      Interval       = 1.0
 
       TotalPressure  = "Off"
       Helicity       = "Off"
       Vorticity      = "Off"
       Qcriterion     = "On"
+      Divergence     = "Off"
     }
 
     StatisticalVariables {
-      Format        = "sph"
-      TemporalType  = "step"
-      Interval      = 100
+      TemporalType  = "time"
+      Interval      = 1.0
+
+      VelocityStat    = "On"
+      PressureStat    = "Off"
+      TemperatureStat = "Off"
     }
   }
     
   FormatOption {
     SPH {
-      GuideOut        = "Without"
+      GuideOut        = 2
       TimeSlice       = "off"
       DirectoryPath   = "hoge"
+    }
+
+    PLOT3D {
+      GuideOut        = 2
+      TimeSlice       = "off"
+      DirectoryPath   = "p3d"
+      XYZfile         = "on"
+      IblankFile      = "on"
     }
   }
 }

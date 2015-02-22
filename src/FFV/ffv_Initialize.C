@@ -302,24 +302,6 @@ int FFV::Initialize(int argc, char **argv)
   }
   TIMING_stop("Fill");
   
-#if 0
-  /*
-  for (int k=1; k<=size[2]; k++) {
-    for (int j=1; j<=size[1]; j++) {
-      for (int i=1; i<=size[0]; i++) {
-        size_t m = _F_IDX_S3D(i  , j  , k  , size[0], size[1], size[2], guide);
-        if ( DECODE_CMP(d_bcd[m]) == 0 )
-        {
-          printf("(%d %d %d) = %d\n", i,j,k, DECODE_CMP(d_bcd[m]) );
-        }
-      }
-    }
-  }
-   */
-  F->writeSVX(d_bcd);
-    Exit(0);
-#endif
-  
   
   
   // ∆tの決め方とKindOfSolverの組み合わせで無効なものをはねる
@@ -2880,7 +2862,7 @@ void FFV::SetModel(double& PrepMemory, double& TotalMemory, FILE* fp)
   
   
   
-  // 外部境界方向にカットがあるセルには、ガイドセルをCutIDの媒質でペイント
+  /* 外部境界方向にカットがあるセルには、ガイドセルをCutIDの媒質でペイント
   unsigned long painted[6];
   
   V.paintCutIDonGC(d_bcd, d_bid, painted, cmp);
@@ -2894,7 +2876,7 @@ void FFV::SetModel(double& PrepMemory, double& TotalMemory, FILE* fp)
     fprintf(fp, "\t\t Z minus = %10ld\n", painted[4]);
     fprintf(fp, "\t\t Z plus  = %10ld\n\n", painted[5]);
   }
-  
+  */
   
   
   // 外部境界面の処理　ここで外部境界面の交点距離と交点ID、媒質IDをセット
@@ -2907,7 +2889,7 @@ void FFV::SetModel(double& PrepMemory, double& TotalMemory, FILE* fp)
     BoundaryOuter* m_obc = BC.exportOBC(face);
     int id = m_obc->getGuideMedium();
     int cls= m_obc->getClass();
-    
+    int ptr_cmp = m_obc->getPtr2cmp();
     
     // 周期境界以外
     switch (cls)
@@ -2918,7 +2900,8 @@ void FFV::SetModel(double& PrepMemory, double& TotalMemory, FILE* fp)
           Hostonly_ printf("Specified medium in '%s' is not FLUID or not listed.\n", m_obc->getAlias().c_str());
           Exit(0);
         }
-        V.setOBC(face, id, "fluid", d_bcd, d_cut, d_bid);
+        ptr_cmp = 0; // FLUID
+        V.setOBC(face, id, ptr_cmp, "fluid", d_bcd, d_cut, d_bid);
         break;
         
       case OBC_WALL:
@@ -2927,7 +2910,7 @@ void FFV::SetModel(double& PrepMemory, double& TotalMemory, FILE* fp)
           Hostonly_ printf("Specified medium in '%s' is not SOLID or not listed.\n", m_obc->getAlias().c_str());
           Exit(0);
         }
-        V.setOBC(face, id, "solid", d_bcd, d_cut, d_bid);
+        V.setOBC(face, id, ptr_cmp, "solid", d_bcd, d_cut, d_bid);
         break;
         
       case OBC_INTRINSIC:
@@ -2941,7 +2924,8 @@ void FFV::SetModel(double& PrepMemory, double& TotalMemory, FILE* fp)
         if (mat[id].getState() != FLUID) {
           Exit(0);
         }
-        V.setOBC(face, id, "fluid", d_bcd, d_cut, d_bid);
+        ptr_cmp = 0; // FLUID
+        V.setOBC(face, id, ptr_cmp, "fluid", d_bcd, d_cut, d_bid);
         break;
     }
   }

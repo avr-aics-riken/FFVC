@@ -3580,7 +3580,7 @@ void VoxInfo::setOBCperiodic (int* bcd, const int* ens)
 
 // #################################################################
 // 外部境界の距離情報・境界ID・媒質エントリをセット
-void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd, long long* cut, int* bid)
+void VoxInfo::setOBC (const int face, const int c_id, const int ptr_cmp, const char* str, int* bcd, long long* cut, int* bid)
 {
   int ix = size[0];
   int jx = size[1];
@@ -3593,7 +3593,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const char* str, int* bcd,
   if ( !strcasecmp(str, "solid") )
   {
     pos = 0.5;
-    did = c_id;
+    did = ptr_cmp;
   }
   else // FLUID
   {

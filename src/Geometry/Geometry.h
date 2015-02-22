@@ -127,10 +127,11 @@ private:
   
   
   // 未ペイントセルを周囲の交点IDの最頻値でフィル
-  unsigned long fillByModalCutID(int* bcd,
-                                 const int* bid,
-                                 const int m_NoCompo,
-                                 const CompoList* cmp);
+  bool fillByModalCutID(int* bcd,
+                        const int* bid,
+                        const int m_NoCompo,
+                        const CompoList* cmp,
+                        unsigned long& replaced);
   
   
   // 未ペイントセルを周囲のbidの固体最頻値でフィル

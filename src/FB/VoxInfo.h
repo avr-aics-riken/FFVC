@@ -332,14 +332,15 @@ public:
   
   /**
    * @brief 外部境界の距離情報・境界ID・媒質エントリをセット
-   * @param [in]     face  外部境界面番号
-   * @param [in]     c_id  媒質IDエントリ番号
-   * @param [in]     str   "SOLID" or "FLUID"
-   * @param [in,out] bcd   BCindex B
-   * @param [in,out] cut   距離情報
-   * @param [in,out] bid   カットID情報
+   * @param [in]     face    外部境界面番号
+   * @param [in]     c_id    媒質IDエントリ番号
+   * @param [in]     ptr_cmp CompoListへのポインタ
+   * @param [in]     str     "SOLID" or "FLUID"
+   * @param [in,out] bcd     BCindex B
+   * @param [in,out] cut     距離情報
+   * @param [in,out] bid     カットID情報
    */
-  void setOBC (const int face, const int c_id, const char* str, int* bcd, long long* cut, int* bid);
+  void setOBC (const int face, const int c_id, const int ptr_cmp, const char* str, int* bcd, long long* cut, int* bid);
   
 };
 

@@ -7,15 +7,17 @@ ApplicationControl {
 
 BcTable {
 
-  OuterBoundary {
+  Boundary {
       
     outerWall {
+      kind        = "outer"
       class       = "Wall"
       Type        = "fixed"
       Medium      = "fe"
     }
 
     slideWall {
+      kind        = "outer"
       class       = "wall"
       Type        = "slide"
       Profile     = "Constant"
@@ -23,17 +25,15 @@ BcTable {
       Velocity    = 1.8e-2
       Medium      = "fe"
     }
-      
+  }
 
-    FaceBC {
-      Xminus = "outerWall"
-      Xplus  = "outerWall"
-      Yminus = "slideWall"
-      Yplus  = "outerWall"
-      Zminus = "outerWall"
-      Zplus  = "outerWall"
-    }
-
+  outerBC {
+    Xminus = "outerWall"
+    Xplus  = "outerWall"
+    Yminus = "slideWall"
+    Yplus  = "outerWall"
+    Zminus = "outerWall"
+    Zplus  = "outerWall"
   }
 
 }

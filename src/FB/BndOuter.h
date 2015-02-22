@@ -34,6 +34,7 @@ private:
   int drv_dir;       ///< ドライバーの方向
   int drv_lid;       ///< ドライバフェイスIDの位置
   int gc_medium;     ///< ガイドセルの媒質IDのエントリ番号
+  int ptr_cmp;       ///< CompoList[]へのポインタ
   int v_profile;     ///< 速度プロファイル（constant, harmonic, zero）
   int Face_mode;     ///< 周期境界のときの面の状況指定（upstream, downstream）
   int hType;         ///< 熱境界条件の種別
@@ -84,6 +85,7 @@ public:
     HTmode = gc_medium = Prdc_mode = Face_mode = 0;
     p = var1 = var2 = 0.0;
     valid_cell = 0;
+    ptr_cmp = 0;
 		for (int i=0; i<5; i++) ca[i] = cb[i] = 0.0;
     for (int i=0; i<3; i++) nv[i] = 0.0;
     for (int i=0; i<2; i++) dm[i]=0.0;
@@ -151,10 +153,12 @@ public:
     return Face_mode;
   }
   
+  
   int getGuideMedium() const
   { 
     return gc_medium; 
   }
+  
   
   REAL_TYPE getHeatflux() const
   {
@@ -167,20 +171,30 @@ public:
     return HTref; 
   }
   
+  
   int getHTmode() const
   { 
     return HTmode; 
   }
+  
   
   int getHtype() const
   { 
     return hType;
   }
   
+  
   int getPrdcMode() const
   { 
     return Prdc_mode;
   }
+  
+  
+  int getPtr2cmp() const
+  {
+    return ptr_cmp;
+  }
+  
   
   int get_pType() const 
   { 
@@ -198,10 +212,12 @@ public:
     return v_profile; 
   }
   
+  
   int getValidCell() const
   { 
     return valid_cell;
   }
+  
   
   int get_wallType() const
   {
@@ -311,6 +327,13 @@ public:
   void set_pType(int key)
   {
     pType  = key;
+  }
+  
+  
+  // @brief CompoListへのポインタをセット
+  void setPtr2cmp(int key)
+  {
+    ptr_cmp  = key;
   }
   
   

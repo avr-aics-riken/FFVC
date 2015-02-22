@@ -272,15 +272,17 @@ MediumTable {
 
 BcTable {
 
-  OuterBoundary {
+  Boundary {
       
     outerWall {
+      kind        = "outer"
       class       = "Wall"
       Type        = "fixed"
       Medium      = "fe"
     }
 
     slideWall {
+      kind        = "outer"
       class       = "wall"
       Type        = "slide"
       Profile     = "Constant"
@@ -288,18 +290,15 @@ BcTable {
       Velocity    = 1.0
       Medium      = "fe"
     }
-      
-
-    FaceBC {
-      Xminus = "outerWall"
-      Xplus  = "outerWall"
-      Yminus = "outerWall"
-      Yplus  = "outerWall"
-      Zminus = "outerWall"
-      Zplus  = "slideWall"
-    }
-
   }
 
+  outerBC {
+    Xminus = "outerWall"
+    Xplus  = "outerWall"
+    Yminus = "outerWall"
+    Yplus  = "outerWall"
+    Zminus = "outerWall"
+    Zplus  = "slideWall"
+  }
 }
 

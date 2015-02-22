@@ -7,17 +7,16 @@ ApplicationControl {
 
 BcTable {
 
-  LocalBoundary {
+  Boundary {
     plate {
-      class = "IsoThermal"
-      medium = "fe"
+      kind     = "inner"
+      class    = "IsoThermal"
+      medium   = "fe"
       Temperature = 50.0
     }
-  }
-
-  OuterBoundary {
       
     adiabaticWall {
+      kind          = "outer"
       class         = "Wall"
       Type          = "fixed"
       Medium        = "fe"
@@ -25,6 +24,7 @@ BcTable {
     }
 
     inlet {
+      kind        = "outer"
       class       = "SpecifiedVelocity"
       Profile     = "Constant"
       OrientationVector = (1.0, 0.0, 0.0)
@@ -34,30 +34,27 @@ BcTable {
     }
 
     outlet {
+      kind         = "outer"
       class        = "Outflow"
       Medium       = "air"
       PressureType = "dirichlet"
       PrsValue     = 0.0
     }
-    
-    periodic {
-      class  = "periodic"
-      mode   = "simplecopy"
-    }
 
     symmetry {
+      kind     = "outer"
       class    = "symmetric"
       Medium   = "air"
     }
+  }
 
-    FaceBC {
-      Xminus = "inlet"
-      Xplus  = "outlet"
-      Yminus = "adiabaticWall"
-      Yplus  = "adiabaticWall"
-      Zminus = "symmetry"
-      Zplus  = "symmetry"
-    }
+  OuterBC {
+    Xminus = "inlet"
+    Xplus  = "outlet"
+    Yminus = "adiabaticWall"
+    Yplus  = "adiabaticWall"
+    Zminus = "symmetry"
+    Zplus  = "symmetry"
   }
 }
 
