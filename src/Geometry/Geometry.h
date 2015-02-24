@@ -405,7 +405,12 @@ public:
   
   
   // フィルパラメータを取得
-  void getFillParam(TextParser* tpCntl, FILE* fp, const int Unit, const REAL_TYPE RefL);
+  void getFillParam(TextParser* tpCntl,
+                    FILE* fp,
+                    const int Unit,
+                    const REAL_TYPE RefL,
+                    const int m_NoMedium,
+                    const MediumList* mat);
   
   
   /**
@@ -464,10 +469,6 @@ public:
                    MPIPolylib* PL,
                    PolygonProperty* PG,
                    const int m_NoCompo);
-  
-  
-  // FIllIDとSeedIDをセット
-  void setFillMedium(MediumList* mat, const int m_NoMedium);
   
   
   // @brief 再分割数を設定

@@ -137,10 +137,6 @@ int FFV::Initialize(int argc, char **argv)
   // 計算モデルの入力ソース情報を取得
   C.getGeometryModel();
   
-  
-  // フィルパラメータ
-  GM.getFillParam(&tp_ffv, fp, C.Unit.Param, C.RefLength);
-  
  
   // Intrinsic classの同定
   identifyExample(fp);
@@ -157,6 +153,10 @@ int FFV::Initialize(int argc, char **argv)
   // 媒質情報をパラメータファイルから読み込み，媒質リストを作成する
   setMediumList(fp);
 
+  
+  // フィルパラメータ
+  GM.getFillParam(&tp_ffv, fp, C.Unit.Param, C.RefLength, C.NoMedium, mat);
+  
   
   V.setControlVars(Ex);
 
@@ -2195,8 +2195,6 @@ void FFV::setBCinfo()
     Exit(0);
   }
   
-  // FillID と SeedID をセット
-  GM.setFillMedium(mat, C.NoMedium);
   
   
   // 各軸方向のフィル抑止モード（Periodic, Symmetric時の対策）

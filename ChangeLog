@@ -19,6 +19,10 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-02-24
+r1596 modify fill medium
+
+--------------------------
 2015-02-22
 r1595 bug fix and check intrinsic problems
  - 2Dcavity, 3Dcavity, 2Dcyl, Cylinder, Jet, LDC, PMT, ThermalCavity, SHC1D

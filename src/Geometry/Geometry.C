@@ -465,6 +465,8 @@ bool Geometry::fill(FILE* fp,
 
   /*
    * 先に流体領域をフィルし、残った部分を固体領域としてフィルする
+   * d_bid[] <= cmp[]のオーダーインデクス
+   * d_bcd[] <= mat[]のオーダーインデクス
    */
   
   int ix = size[0];
@@ -519,11 +521,14 @@ bool Geometry::fill(FILE* fp,
     }
   }
   
+  target_count -= tmp;
+  
   if ( tmp > 0 )
   {
     Hostonly_
     {
-      fprintf(fp,"\t\tPainted by cut ID's medium  = %16ld\n", tmp);
+      fprintf(fp,"\t\tPainted by cut ID's medium        = %16ld\n", tmp);
+      fprintf(fp,"\t\t               Remaining cells    = %16ld\n\n", target_count);
     }
   }
   
@@ -662,14 +667,14 @@ bool Geometry::fill_connected(FILE* fp,
   
   
   
-  // 隣接する流体セルと接続している場合に隣接IDでフィル
+  // 隣接するセルと同じfill_mode属性で接続している場合に隣接IDでフィル
   
   int c=0;
   unsigned long sum_filled = 0;   ///< フィルされた数の合計
   
   while (target_count > 0) {
     
-    // 隣接の流体媒質でフィルする
+    // 隣接媒質でフィルする
     filled = fillByBid(d_bcd, d_bid, mat, fill_mode);
     
     if ( numProc > 1 )
@@ -1932,12 +1937,19 @@ unsigned long Geometry::findPolygonInCell(int* d_mid, MPIPolylib* PL, PolygonPro
 // #################################################################
 /*
  * @brief フィルパラメータを取得
- * @param [in] tpCntl  TextParser
- * @param [in] fp      file pointer to "cndition.txt"
- * @param [in] Unit    DIMENSIONAL | NON_DIMENSIONAL
- * @param [in] RefL    代表長さ
+ * @param [in] tpCntl       TextParser
+ * @param [in] fp           file pointer to "condition.txt"
+ * @param [in] Unit         DIMENSIONAL | NON_DIMENSIONAL
+ * @param [in] RefL         代表長さ
+ * @param [in] m_Nomedium   媒質数
+ * @param [in] mat          MediumList
  */
-void Geometry::getFillParam(TextParser* tpCntl, FILE* fp, const int Unit, const REAL_TYPE RefL)
+void Geometry::getFillParam(TextParser* tpCntl,
+                            FILE* fp,
+                            const int Unit,
+                            const REAL_TYPE RefL,
+                            const int m_NoMedium,
+                            const MediumList* mat)
 {
   string str;
   string label_base, label_leaf, label;
@@ -2065,6 +2077,23 @@ void Geometry::getFillParam(TextParser* tpCntl, FILE* fp, const int Unit, const 
       }
     }
     fprintf(fp,"\n----------\n");
+  }
+  
+  
+  // FillMediumがMediumList中にあるかどうかをチェック
+  for (int m=0; m<NoHint; m++)
+  {
+    
+    if ( FBUtility::findIDfromLabel(mat, m_NoMedium, fill_table[m].medium) == 0 )
+    {
+      Hostonly_
+      {
+        printf("/FillHint/%s/Medium = \"%s\" is not listed in MediumTable.\n",
+               fill_table[m].identifier.c_str(),
+               fill_table[m].medium.c_str());
+      }
+      Exit(0);
+    }
   }
   
   
@@ -2218,8 +2247,7 @@ void Geometry::paintCutOnPoint(int* bcd,
              chkZeroCut(pos, Z_plus ) )
         {
           // 交点IDの最頻値
-          int sd = FBUtility::find_mode_id(FillID,
-                                           getBit5(qq, X_minus),
+          int sd = FBUtility::find_mode_id(getBit5(qq, X_minus),
                                            getBit5(qq, X_plus),
                                            getBit5(qq, Y_minus),
                                            getBit5(qq, Y_plus),
@@ -2624,42 +2652,6 @@ unsigned long Geometry::replaceIsolatedCell(int* bcd,
   }
   
   return replaced;
-}
-
-
-
-// #################################################################
-/**
- * @brief FIllIDとSeedIDをセット
- * @param [in]   mat          MediumList
- * @param [in]   m_Nomedium   媒質数
- */
-void Geometry::setFillMedium(MediumList* mat, const int m_NoMedium)
-{
-  for (int m=0; m<NoHint; m++)
-  {
-    // FillMediumがMediumList中にあるかどうかをチェックし、FillIDを設定
-    if ( (FillID = FBUtility::findIDfromLabel(mat, m_NoMedium, fill_table[m].medium)) == 0 )
-    {
-      Hostonly_
-      {
-        printf("/FillHint/%s/Medium = \"%s\" is not listed in MediumTable.\n", fill_table[m].identifier.c_str(), fill_table[m].medium.c_str());
-      }
-      Exit(0);
-    }
-    
-    /* SeedMediumがMediumList中にあるかどうかをチェックし、SeedIDを設定
-    if ( (SeedID = FBUtility::findIDfromLabel(mat, m_NoMedium, SeedMedium)) == 0 )
-    {
-      Hostonly_
-      {
-        printf("/ApplicationControl/HintOfFillSeedMedium = \"%s\" is not listed in MediumTable.\n", SeedMedium.c_str());
-      }
-      Exit(0);
-    }
-     */
-  }
-
 }
 
 
