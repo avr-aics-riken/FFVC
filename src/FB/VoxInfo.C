@@ -3386,7 +3386,7 @@ void VoxInfo::setBCIndexV(int* cdf,
   {
     REAL_TYPE vec[3] = { cmp[n].nv[0], cmp[n].nv[1], cmp[n].nv[2] };
     
-    int m_solid_id = FBUtility::findIDfromLabel(mat, m_NoMedium, cmp[n].getMedium());
+    int m_solid_id = FBUtility::findIDfromLabel(mat, m_NoMedium, cmp[n].medium);
     
     switch ( cmp[n].getType() )
     {

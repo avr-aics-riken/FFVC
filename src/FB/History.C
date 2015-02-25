@@ -360,7 +360,7 @@ bool History::printForceAvr(const CompoList* cmp, const REAL_TYPE* frc)
     if ( cmp[n].getType()==OBSTACLE || cmp[n].getType()==SOLIDREV )
     {
       char fname[128];
-      sprintf( fname, "force_avr_%s.txt", cmp[n].getAlias().c_str() );
+      sprintf( fname, "force_avr_%s.txt", cmp[n].alias.c_str() );
       
       FILE* fp;
       
@@ -785,7 +785,7 @@ bool History::printHistoryForce(const CompoList* cmp, const REAL_TYPE* frc)
     if ( cmp[n].getType()==OBSTACLE || cmp[n].getType()==SOLIDREV )
     {
       char fname[128];
-      sprintf( fname, "history_force_%s.txt", cmp[n].getAlias().c_str() );
+      sprintf( fname, "history_force_%s.txt", cmp[n].alias.c_str() );
       
       FILE* fp;
       
@@ -819,7 +819,7 @@ bool History::printHistoryForceTitle(const CompoList* cmp)
     if ( cmp[n].getType()==OBSTACLE || cmp[n].getType()==SOLIDREV )
     {
       char fname[128];
-      sprintf( fname, "history_force_%s.txt", cmp[n].getAlias().c_str() );
+      sprintf( fname, "history_force_%s.txt", cmp[n].alias.c_str() );
       
       FILE* fp;
       
@@ -867,7 +867,7 @@ bool History::printCompoStatistics(const CompoList* cmp, const REAL_TYPE* frc)
     {
       fprintf(fp, "%5d %22s %12.4e  %12.4e  %12.4e\n",
               i,
-              cmp[i].getAlias().c_str(),
+              cmp[i].alias.c_str(),
               printForce(frc[3*i+0]),
               printForce(frc[3*i+1]),
               printForce(frc[3*i+2]) );

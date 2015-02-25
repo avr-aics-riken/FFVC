@@ -260,7 +260,7 @@ int FBUtility::findIDfromLabel(const MediumList* mat, const int Nmax, const std:
   
   for (int i=1; i<=Nmax; i++)
   {
-    if ( !strcasecmp(str.c_str(), mat[i].getAlias().c_str()) ) return i;
+    if ( !strcasecmp(str.c_str(), mat[i].alias.c_str()) ) return i;
   }
   
   return 0;
@@ -275,7 +275,7 @@ int FBUtility::findIDfromCmp(const CompoList* cmp, const int Nmax, const std::st
   
   for (int i=1; i<=Nmax; i++)
   {
-    if ( !strcasecmp(str.c_str(), cmp[i].getMedium().c_str()) && cmp[i].getType()==type ) return i;
+    if ( !strcasecmp(str.c_str(), cmp[i].medium.c_str()) && cmp[i].getType()==type ) return i;
   }
   
   return 0;

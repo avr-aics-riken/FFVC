@@ -524,9 +524,6 @@ public:
   IntervalManager Interval[tg_END];  ///< タイミング制御
   IterationCtl* Criteria;            ///< 反復解法の収束判定パラメータ
   
-  string PolylibConfigName;
-
-  
   string RefMedium;      ///< 参照媒質名 -> int RefMat
   string OperatorName;
   

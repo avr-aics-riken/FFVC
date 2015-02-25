@@ -1357,7 +1357,7 @@ void FFV::gatherDomainInfo()
         Hostonly_
         {
           fprintf(fp,"\t%3d %16s %7d %7d %7d %7d %7d %7d\n",
-                  n, cmp[n].getAlias().c_str(), st_buf[i*3], ed_buf[i*3], st_buf[i*3+1], ed_buf[i*3+1], st_buf[i*3+2], ed_buf[i*3+2]);
+                  n, cmp[n].alias.c_str(), st_buf[i*3], ed_buf[i*3], st_buf[i*3+1], ed_buf[i*3+1], st_buf[i*3+2], ed_buf[i*3+2]);
         }
       }
     }
@@ -1374,7 +1374,7 @@ void FFV::gatherDomainInfo()
           Hostonly_
           {
             fprintf(fp,"\t%3d %16s %7d %7d %7d %7d %7d %7d\n",
-                  n, cmp[n].getAlias().c_str(), st[0], ed[0], st[1], ed[1], st[2], ed[2]);
+                  n, cmp[n].alias.c_str(), st[0], ed[0], st[1], ed[1], st[2], ed[2]);
           }
         }
       }
@@ -2306,10 +2306,10 @@ void FFV::setBCinfo()
     {
       for (int j=1; j<=C.NoMedium; j++)
       {
-        if ( !strcasecmp(cmp[j].getAlias().c_str(), cmp[n].getMedium().c_str()) )
+        if ( !strcasecmp(cmp[j].alias.c_str(), cmp[n].medium.c_str()) )
         {
           cmp[n].setInitTemp( cmp[j].getInitTemp() );
-          //printf("init[%d] %f %s\n", n, cmp[n].getInitTemp(), cmp[n].getMedium().c_str());
+          //printf("init[%d] %f %s\n", n, cmp[n].getInitTemp(), cmp[n].medium.c_str());
         }
       }
     }
@@ -2895,7 +2895,7 @@ void FFV::SetModel(double& PrepMemory, double& TotalMemory, FILE* fp)
       case OBC_SYMMETRIC:
         if (mat[id].getState() != FLUID)
         {
-          Hostonly_ printf("Specified medium in '%s' is not FLUID or not listed.\n", m_obc->getAlias().c_str());
+          Hostonly_ printf("Specified medium in '%s' is not FLUID or not listed.\n", m_obc->alias.c_str());
           Exit(0);
         }
         ptr_cmp = 0; // FLUID
@@ -2905,7 +2905,7 @@ void FFV::SetModel(double& PrepMemory, double& TotalMemory, FILE* fp)
       case OBC_WALL:
         if (mat[id].getState() != SOLID)
         {
-          Hostonly_ printf("Specified medium in '%s' is not SOLID or not listed.\n", m_obc->getAlias().c_str());
+          Hostonly_ printf("Specified medium in '%s' is not SOLID or not listed.\n", m_obc->alias.c_str());
           Exit(0);
         }
         V.setOBC(face, id, ptr_cmp, "solid", d_bcd, d_cut, d_bid);
@@ -2959,11 +2959,20 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   {
     fprintf(fp,"\n----------\n\n");
     fprintf(fp,"\t>> Polylib configuration\n\n");
-    fprintf(fp,"\tfile name = %s\n\n", C.PolylibConfigName.c_str());
     
     printf("\n----------\n\n");
     printf("\t>> Polylib configuration\n\n");
-    printf("\tfile name = %s\n\n", C.PolylibConfigName.c_str());
+  }
+  
+  // Polylibファイルをテンポラリに出力
+  if ( !F->writePolylibFile(cmp) )
+  {
+    Hostonly_
+    {
+      fprintf(fp,"\tError : writing polylib.tp\n");
+      printf    ("\tError : writing polylib.tp\n");
+    }
+    Exit(0);
   }
   
   
@@ -2988,8 +2997,8 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   {
     Hostonly_
     {
-      fprintf(fp,"\tRank [%6d]: p_polylib->init_parallel_info() failed.", myRank);
-      printf    ("\tRank [%6d]: p_polylib->init_parallel_info() failed.", myRank);
+      fprintf(fp,"\tRank [%6d]: p_polylib->init_parallel_info() failed.\n", myRank);
+      printf    ("\tRank [%6d]: p_polylib->init_parallel_info() failed.\n", myRank);
     }
     Exit(0);
   }
@@ -3000,7 +3009,7 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   TIMING_start("Loading_Polygon_File");
   
   // ロード
-  poly_stat = PL->load_rank0( C.PolylibConfigName );
+  poly_stat = PL->load_rank0( "polylib.tp");
   
   if( poly_stat != PLSTAT_OK )
   {
@@ -3075,7 +3084,7 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
     
     for (int i=1; i<=C.NoCompo; i++)
     {
-      if ( FBUtility::compare(m_pg, mat[i].getAlias()) )
+      if ( FBUtility::compare(m_pg, mat[i].alias) )
       {
         mat_id = i;
         break;

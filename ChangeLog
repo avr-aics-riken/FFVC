@@ -19,6 +19,10 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-02-25
+r1597 generate polylib.tp file from boundary section
+
+--------------------------
 2015-02-24
 r1596 modify fill medium
 

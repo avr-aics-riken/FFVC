@@ -49,7 +49,7 @@ bool ParseMat::chkDuplicateLabel(const MediumList* mat, const int n, const std::
 {
 	for (int i=1; i<n; i++)
   {
-    if ( FBUtility::compare(mat[i].getAlias(), m_label) ) return false;
+    if ( FBUtility::compare(mat[i].alias, m_label) ) return false;
 	}
 	return true;
 }
@@ -122,7 +122,7 @@ void ParseMat::getMediumTable(const int m_NoMedium, MediumList* mat)
   for (vector<string>::iterator it = nodes.begin(); it != nodes.end(); it++)
   {
     if ( !chkDuplicateLabel(mat, m, *it) ) Exit(0);
-    mat[m].setAlias(*it);
+    mat[m].alias = (*it);
     m++;
   }
   
@@ -236,7 +236,7 @@ int ParseMat::missingMessage(const MediumList* mat, const int m, const int key)
 {
   printf("\tMissing keyword '%s'\t\tfor '%s'\t in %s phase\n", 
          MediumList::getPropertyName(key).c_str(),
-         mat[m].getAlias().c_str(),
+         mat[m].alias.c_str(),
          ( mat[m].getState() == SOLID ) ? "SOLID" : "FLUID" );
   return 1; 
 }
@@ -253,7 +253,7 @@ void ParseMat::printMatList(FILE* fp, const MediumList* mat)
   
   for (int n=1; n<=NoMedium; n++)
   {
-    fprintf(fp,"\t%4d : %16s\n", n, mat[n].getAlias().c_str() );
+    fprintf(fp,"\t%4d : %16s\n", n, mat[n].alias.c_str() );
     
     if ( mat[n].getState() == FLUID )
     {

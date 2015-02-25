@@ -555,7 +555,8 @@ void Control::getGeometryModel()
     Exit(0);
   }
   
-  if     ( FBUtility::compare(str, "ParallelPlate2D") )   Mode.Example = id_PPLT2D;
+  if     ( FBUtility::compare(str, "polygon") )           Mode.Example = id_Polygon;
+  else if( FBUtility::compare(str, "ParallelPlate2D") )   Mode.Example = id_PPLT2D;
   else if( FBUtility::compare(str, "Duct") )              Mode.Example = id_Duct;
   else if( FBUtility::compare(str, "PerformanceTest") )   Mode.Example = id_PMT;
   else if( FBUtility::compare(str, "Rectangular") )       Mode.Example = id_Rect;
@@ -565,8 +566,8 @@ void Control::getGeometryModel()
   else if( FBUtility::compare(str, "Jet") )               Mode.Example = id_Jet;
   else
   {
-    Mode.Example = id_Polygon;
-    PolylibConfigName = str;
+    Hostonly_ stamped_printf("\tError : Invalid source = '%s'\n", str.c_str());
+    Exit(0);
   }
   
   
@@ -2190,7 +2191,7 @@ void Control::printParaConditions(FILE* fp, const MediumList* mat)
   fprintf(fp,"\n----------\n\n");
   fprintf(fp,"\n\t>> Simulation Parameters\n\n");
   
-  fprintf(fp,"\tReference Medium                      :  %s\n", mat[RefMat].getAlias().c_str());
+  fprintf(fp,"\tReference Medium                      :  %s\n", mat[RefMat].alias.c_str());
   fprintf(fp,"\n");
   
   // Reference values

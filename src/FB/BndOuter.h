@@ -46,13 +46,15 @@ private:
   REAL_TYPE var1;    ///< 多目的用の変数(熱流束，熱伝達係数を共用するので排他的に使用)
   REAL_TYPE var2;    ///< 多目的用の変数(温度)
   REAL_TYPE dm[2];   ///< ローカルな計算領域境界面のモニタ値 コピー不要
-  std::string alias; ///< 別名
+  
   
 public: 
   REAL_TYPE nv[3];   ///< 法線
   REAL_TYPE ca[5];   ///< 係数
   REAL_TYPE cb[5];   ///< 係数
   REAL_TYPE p;       ///< ワーク
+  
+  std::string alias; ///< 別名
   
   /** 周期境界の方向 */
   enum periodic_dir 
@@ -114,12 +116,6 @@ public:
    * @param [in] src   BoundaryOuterクラス
    */
   void dataCopy (BoundaryOuter* src);
-  
-
-  std::string getAlias() const
-  {
-    return alias;
-  }
   
   
   int getClass() const
@@ -222,13 +218,6 @@ public:
   int get_wallType() const
   {
     return wallType;
-  }
-  
-  
-  // @brief aliasラベルを設定する
-  void setAlias(std::string key)
-  {
-    alias = key;
   }
   
   

@@ -974,6 +974,56 @@ int IO_BASE::writeCellID(const int out_gc)
 
 
 // #################################################################
+// polylibファイルをテンポラリに出力
+bool IO_BASE::writePolylibFile(CompoList* cmp)
+{
+  FILE* fp;
+  
+  if ( !(fp=fopen("polylib.tp", "w")) )
+  {
+    stamped_printf("\tSorry, can't open 'polylib.tp' file. Write failed.\n");
+    return false;
+  }
+  
+  fprintf(fp,"Polylib {\n");
+  
+  for (int k=1; k<=C->NoBC; k++)
+  {
+    int m = C->NoMedium + k;
+    
+    if (cmp[m].kind_inout==CompoList::kind_inner  &&  cmp[m].getType() != SOLIDREV)
+    {
+      const string str = cmp[m].getBCstr();
+      writePolylibGrp(fp, cmp[m].alias, cmp[m].filepath, cmp[m].medium, str);
+    }
+  }
+  
+  fprintf(fp,"}\n");
+  fclose(fp);
+  
+  return true;
+}
+
+
+// #################################################################
+// polylibファイルのグループ出力
+void IO_BASE::writePolylibGrp(FILE* fp,
+                              const string alias,
+                              const string filepath,
+                              const string medium,
+                              const string type)
+{
+  fprintf(fp,"  %s {\n", alias.c_str());
+  fprintf(fp,"    class_name = \"PolygonGroup\"\n");
+  fprintf(fp,"    filepath   = \"%s\"\n", filepath.c_str());
+  fprintf(fp,"    movable    = \"false\"\n");
+  fprintf(fp,"    label      = \"%s\"\n", medium.c_str());
+  fprintf(fp,"    type       = \"%s\"\n", type.c_str());
+  fprintf(fp,"  }\n\n");
+}
+
+
+// #################################################################
 // sphファイルの書き出し（内部領域のみ）
 void IO_BASE::writeRawSPH(const REAL_TYPE *vf,
                           const int* sz,

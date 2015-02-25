@@ -143,9 +143,7 @@ private:
   REAL_TYPE var3;        /// パラメータ保持 (Heat Density, Temperature)
   REAL_TYPE var_m;       /// モニタの値を保持
   REAL_TYPE temp_init;   /// 温度の初期値
-  
-  std::string alias;     ///< 局所境界条件の別名
-  std::string medium;    ///< Medium名
+
   
 public:
   int kind_inout;           /// 内部と外部の種別
@@ -161,6 +159,10 @@ public:
   REAL_TYPE ca[6];          ///< 係数セット a
   REAL_TYPE cb[6];          ///< 係数セット b
   REAL_TYPE f[3];           ///< 力の成分
+  
+  std::string alias;        ///< 局所境界条件の別名
+  std::string medium;       ///< Medium名
+  std::string filepath;     ///< ポリゴンのファイルパス名
   
   /** コンストラクタ */
   CompoList() {
@@ -199,15 +201,6 @@ public:
   
 public:
   
-  /**
-   * @brief ラベル名を返す
-   */
-  std::string getAlias() const
-  {
-    return alias;
-  }
-
-  
   int getAttrb() const
   {
     return attrb;
@@ -240,9 +233,7 @@ public:
   }
   
   
-  /**
-   * @brief BCのラベル名を返す
-   */
+  //@brief BCのラベル名を返す
   std::string getBCstr();
   
   
@@ -312,15 +303,6 @@ public:
   REAL_TYPE get_Massflow() const
   { 
     return var1; 
-  }
-  
-  
-  /**
-   * @brief 媒質名を返す
-   */
-  std::string getMedium() const
-  {
-    return medium;
   }
   
   
@@ -539,8 +521,6 @@ public:
     return false;
   }
   
-
-  void setAlias            (const std::string pnt);
   
   void setAttrb            (const int key);
   void setBClocation       (const int key);
@@ -625,8 +605,6 @@ public:
     matodr = key;
   }
   
-  
-  void setMedium           (const std::string pnt);
   
   // @brief モニター値を保持する
   void setMonitorValue (const REAL_TYPE var);

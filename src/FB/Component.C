@@ -60,14 +60,6 @@ std::string CompoList::getBCstr()
 }
 
 
-// #################################################################
-//@brief エイリアス名をセットする
-void CompoList::setAlias(const std::string pnt)
-{
-  alias = pnt;
-}
-
-
 
 // #################################################################
 //@brief attrbをセットする
@@ -183,15 +175,6 @@ void CompoList::setInitTemp(const REAL_TYPE key)
 void CompoList::set_Massflow(const REAL_TYPE var) 
 {
   var1 = var;
-}
-
-
-
-// #################################################################
-//@brief 媒質名をセットする
-void CompoList::setMedium(const std::string pnt)
-{
-  medium = pnt;
 }
 
 

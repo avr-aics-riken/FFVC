@@ -614,7 +614,6 @@ bool Geometry::fill_connected(FILE* fp,
     
     if ( mat[key].getState() == fill_mode )
     {
-      //printf("%d mat[%d] = %s\n", m, key, mat[key].getAlias().c_str());
       
       if ( fill_table[m].kind == kind_outerface )
       {
@@ -3471,8 +3470,8 @@ void Geometry::SubSampling(FILE* fp,
   
   Hostonly_
   {
-    printf    ("\t\tVolume fraction for Seed ID (%3.1f) = %16ld  (%s)\n", tmp, filled, mat[SeedID].getAlias().c_str());
-    fprintf(fp,"\t\tVolume fraction for Seed ID (%3.1f) = %16ld  (%s)\n", tmp, filled, mat[SeedID].getAlias().c_str());
+    printf    ("\t\tVolume fraction for Seed ID (%3.1f) = %16ld  (%s)\n", tmp, filled, mat[SeedID].alias.c_str());
+    fprintf(fp,"\t\tVolume fraction for Seed ID (%3.1f) = %16ld  (%s)\n", tmp, filled, mat[SeedID].alias.c_str());
   }
   
   /* Inner fill => FillID
@@ -3481,8 +3480,8 @@ void Geometry::SubSampling(FILE* fp,
   
   Hostonly_
   {
-    printf    ("\t\tVolume fraction for Fill ID (%3.1f) = %16ld  (%s)\n", tmp, filled, mat[FillID].getAlias().c_str());
-    fprintf(fp,"\t\tVolume fraction for Fill ID (%3.1f) = %16ld  (%s)\n", tmp, filled, mat[FillID].getAlias().c_str());
+    printf    ("\t\tVolume fraction for Fill ID (%3.1f) = %16ld  (%s)\n", tmp, filled, mat[FillID].alias.c_str());
+    fprintf(fp,"\t\tVolume fraction for Fill ID (%3.1f) = %16ld  (%s)\n", tmp, filled, mat[FillID].alias.c_str());
   }
   */
   
@@ -3754,8 +3753,8 @@ void Geometry::SeedFilling(FILE* fp,
     fprintf(fp,"\tHint of filling -----\n\n");
     printf(    "\t\tSeeding Dir.           : %s\n", FBUtility::getDirection(FillSeedDir).c_str());
     fprintf(fp,"\t\tSeeding Dir.           : %s\n", FBUtility::getDirection(FillSeedDir).c_str());
-    printf(    "\t\tFill medium of SEED    : %s (%d)\n", mat[SeedID].getAlias().c_str(), SeedID);
-    fprintf(fp,"\t\tFill medium of SEED    : %s (%d)\n", mat[SeedID].getAlias().c_str(), SeedID);
+    printf(    "\t\tFill medium of SEED    : %s (%d)\n", mat[SeedID].alias.c_str(), SeedID);
+    fprintf(fp,"\t\tFill medium of SEED    : %s (%d)\n", mat[SeedID].alias.c_str(), SeedID);
   }
   
   filled = fillSeedMid(d_mid, FillSeedDir, SeedID);
@@ -3779,8 +3778,8 @@ void Geometry::SeedFilling(FILE* fp,
   
   Hostonly_ // Up to here, d_mid={-1, Poly-IDs, SeedID}
   {
-    printf(    "\t\tPainted cells          = %16ld  (%s)\n", filled, mat[SeedID].getAlias().c_str());
-    fprintf(fp,"\t\tPainted cells          = %16ld  (%s)\n", filled, mat[SeedID].getAlias().c_str());
+    printf(    "\t\tPainted cells          = %16ld  (%s)\n", filled, mat[SeedID].alias.c_str());
+    fprintf(fp,"\t\tPainted cells          = %16ld  (%s)\n", filled, mat[SeedID].alias.c_str());
     printf(    "\t\tRemaining target cells = %16ld\n\n", target_count);
     fprintf(fp,"\t\tRemaining target cells = %16ld\n\n", target_count);
   }
@@ -3820,8 +3819,8 @@ void Geometry::SeedFilling(FILE* fp,
   {
     printf(    "\t\tIteration              = %5d\n", c);
     fprintf(fp,"\t\tIteration              = %5d\n", c);
-    printf(    "\t\t    Filled cells       = %16ld  (%s)\n", sum_filled, mat[SeedID].getAlias().c_str());
-    fprintf(fp,"\t\t    Filled cells       = %16ld  (%s)\n", sum_filled, mat[SeedID].getAlias().c_str());
+    printf(    "\t\t    Filled cells       = %16ld  (%s)\n", sum_filled, mat[SeedID].alias.c_str());
+    fprintf(fp,"\t\t    Filled cells       = %16ld  (%s)\n", sum_filled, mat[SeedID].alias.c_str());
     printf(    "\t\t    Remaining cells    = %16ld\n\n", target_count);
     fprintf(fp,"\t\t    Remaining cells    = %16ld\n\n", target_count);
   }
