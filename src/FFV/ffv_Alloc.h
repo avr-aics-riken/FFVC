@@ -82,8 +82,12 @@ public:
   
   // 平均値
   REAL_TYPE *d_ap;  ///< [*] 圧力（時間平均値）
-  REAL_TYPE *d_av;  ///< [*] 速度平均値
+  REAL_TYPE *d_av;  ///< [*] 速度 (時間平均値)
   REAL_TYPE *d_ae;  ///< [*] 内部エネルギー（時間平均値）
+//=====uzawa
+  REAL_TYPE *d_R_mean;     ///< レイノルズ応力テンソル (時間平均値)
+  REAL_TYPE *d_Prod_mean;  ///< レイノルズ応力生成テンソル (時間平均値)
+//=====uzawa
 
   
   // Adams-bashforth
@@ -111,6 +115,19 @@ public:
   REAL_TYPE *d_rms_mean_p; ///< [*] 圧力の時間平均変動強度
   REAL_TYPE *d_rms_t;      ///< [*] 温度の変動強度
   REAL_TYPE *d_rms_mean_t; ///< [*] 温度の時間平均変動強度
+//=====uzawa
+  REAL_TYPE *d_vp;         ///< 変動速度ベクトル
+  REAL_TYPE *d_R;          ///< レイノルズ応力テンソル
+  REAL_TYPE *d_gav;        ///< 平均速度勾配テンソル
+  REAL_TYPE *d_Prod;       ///< レイノルズ応力生成テンソル
+//=====uzawa
+
+
+//=====uzawa
+///< ワーク
+  REAL_TYPE *d_wk;         
+  REAL_TYPE *d_twk;
+//=====uzawa
   
   
   // 界面計算

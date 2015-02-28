@@ -137,6 +137,10 @@ int FFV::Initialize(int argc, char **argv)
   // 計算モデルの入力ソース情報を取得
   C.getGeometryModel();
   
+  
+  // フィルパラメータ
+  GM.getFillParam(&tp_ffv, fp, C.Unit.Param, C.RefLength);
+  
  
   // Intrinsic classの同定
   identifyExample(fp);
@@ -153,10 +157,6 @@ int FFV::Initialize(int argc, char **argv)
   // 媒質情報をパラメータファイルから読み込み，媒質リストを作成する
   setMediumList(fp);
 
-  
-  // フィルパラメータ
-  GM.getFillParam(&tp_ffv, fp, C.Unit.Param, C.RefLength, C.NoMedium, mat);
-  
   
   V.setControlVars(Ex);
 
@@ -295,12 +295,26 @@ int FFV::Initialize(int argc, char **argv)
   }
 
   TIMING_start("Fill");
-  if ( !GM.fill(fp, d_bcd, d_bid, C.NoMedium, mat, C.NoCompo, cmp) )
-  {
-    F->writeSVX(d_bcd);
-    Exit(0);
-  }
+  GM.fill(fp, d_bcd, d_bid, C.NoMedium, mat, C.NoCompo, cmp);
   TIMING_stop("Fill");
+  
+#if 0
+  /*
+  for (int k=1; k<=size[2]; k++) {
+    for (int j=1; j<=size[1]; j++) {
+      for (int i=1; i<=size[0]; i++) {
+        size_t m = _F_IDX_S3D(i  , j  , k  , size[0], size[1], size[2], guide);
+        if ( DECODE_CMP(d_bcd[m]) == 0 )
+        {
+          printf("(%d %d %d) = %d\n", i,j,k, DECODE_CMP(d_bcd[m]) );
+        }
+      }
+    }
+  }
+   */
+  F->writeSVX(d_bcd);
+    Exit(0);
+#endif
   
   
   
@@ -1140,7 +1154,7 @@ void FFV::encodeBCindex(FILE* fp)
   
   
   // 速度計算のビット情報をエンコードする -----
-  V.setBCIndexV(d_cdf, &BC, cmp, C.Mode.Example, d_cut, d_bid, C.NoCompo, C.NoMedium, mat);
+  V.setBCIndexV(d_cdf, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid, C.NoCompo, C.NoMedium, mat);
   
   
   
@@ -1357,7 +1371,7 @@ void FFV::gatherDomainInfo()
         Hostonly_
         {
           fprintf(fp,"\t%3d %16s %7d %7d %7d %7d %7d %7d\n",
-                  n, cmp[n].alias.c_str(), st_buf[i*3], ed_buf[i*3], st_buf[i*3+1], ed_buf[i*3+1], st_buf[i*3+2], ed_buf[i*3+2]);
+                  n, cmp[n].getAlias().c_str(), st_buf[i*3], ed_buf[i*3], st_buf[i*3+1], ed_buf[i*3+1], st_buf[i*3+2], ed_buf[i*3+2]);
         }
       }
     }
@@ -1374,7 +1388,7 @@ void FFV::gatherDomainInfo()
           Hostonly_
           {
             fprintf(fp,"\t%3d %16s %7d %7d %7d %7d %7d %7d\n",
-                  n, cmp[n].alias.c_str(), st[0], ed[0], st[1], ed[1], st[2], ed[2]);
+                  n, cmp[n].getAlias().c_str(), st[0], ed[0], st[1], ed[1], st[2], ed[2]);
           }
         }
       }
@@ -1963,6 +1977,72 @@ void FFV::LS_setParameter(TextParser* tpCntl, const int odr, const string label)
 
 
 // #################################################################
+/* @brief 距離の最小値を求める
+ * @param [in,out] cut カットの配列
+ * @param [in]     bid 境界IDの配列
+ * @param [in]     fp  file pointer
+ */
+void FFV::minDistance(const long long* cut, const int* bid, FILE* fp)
+{
+  int global_min = 1024;
+  int local_min = 1024;
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+#pragma omp parallel firstprivate(ix, jx, kx, gd)
+  {
+    int th_min = 1024;
+    
+#pragma omp for schedule(static)
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          
+          size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+          int bd = bid[m];
+          
+          if ( TEST_BC(bd) ) // カットがあるか，IDによる判定
+          {
+            const long long c = cut[m];
+            
+            for (int n=0; n<6; n++)
+            {
+              th_min = (std::min)(th_min, getBit9(c, n));
+            }
+          }
+
+        }
+      }
+    }
+    
+#pragma omp critical
+    {
+      local_min = (std::min)(local_min, th_min);
+    }
+  }
+    
+  global_min = local_min;
+  
+  
+  if ( numProc > 1 )
+  {
+    int tmp = global_min;
+    if ( paraMngr->Allreduce(&tmp, &global_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  Hostonly_
+  {
+    fprintf(fp, "\n\tMinimum non-dimnensional distance       = %e\n\n", (REAL_TYPE)global_min/(REAL_TYPE)QT_9); // 9bit幅
+  }
+
+}
+
+
+
+// #################################################################
 // 初期擾乱
 void FFV::perturbation()
 {
@@ -2163,13 +2243,12 @@ void FFV::setBCinfo()
   B.countMedium(&C, mat);
   
   
+  // パラメータファイルをパースして，外部境界条件を保持する
+  B.loadOuterBC( BC.exportOBC(), mat, cmp, ensPeriodic);
+  
+  
   // パラメータファイルの情報を元にCompoListの情報を設定する
-  B.loadBCs(&C, mat, cmp);
-  
-  
-  // 外部境界条件をBCクラスに保持する
-  B.setOuterBC(BC.exportOBC(), cmp, ensPeriodic);
-  
+  B.loadLocalBC(&C, mat, cmp);
   
   
 #if 0
@@ -2195,6 +2274,8 @@ void FFV::setBCinfo()
     Exit(0);
   }
   
+  // FillID と SeedID をセット
+  GM.setFillMedium(mat, C.NoMedium);
   
   
   // 各軸方向のフィル抑止モード（Periodic, Symmetric時の対策）
@@ -2306,10 +2387,10 @@ void FFV::setBCinfo()
     {
       for (int j=1; j<=C.NoMedium; j++)
       {
-        if ( !strcasecmp(cmp[j].alias.c_str(), cmp[n].medium.c_str()) )
+        if ( !strcasecmp(cmp[j].getAlias().c_str(), cmp[n].getMedium().c_str()) )
         {
           cmp[n].setInitTemp( cmp[j].getInitTemp() );
-          //printf("init[%d] %f %s\n", n, cmp[n].getInitTemp(), cmp[n].medium.c_str());
+          //printf("init[%d] %f %s\n", n, cmp[n].getInitTemp(), cmp[n].getMedium().c_str());
         }
       }
     }
@@ -2860,10 +2941,10 @@ void FFV::SetModel(double& PrepMemory, double& TotalMemory, FILE* fp)
   
   
   
-  /* 外部境界方向にカットがあるセルには、ガイドセルをCutIDの媒質でペイント
+  // 外部境界面に接するセルでカットがある場合はガイドセルに固体IDを付与
   unsigned long painted[6];
   
-  V.paintCutIDonGC(d_bcd, d_bid, painted, cmp);
+  V.paintSolidGC(d_bcd, d_bid, painted);
   
   Hostonly_ {
     fprintf(fp, "\n\tPainted guide cell by cut\n");
@@ -2874,12 +2955,10 @@ void FFV::SetModel(double& PrepMemory, double& TotalMemory, FILE* fp)
     fprintf(fp, "\t\t Z minus = %10ld\n", painted[4]);
     fprintf(fp, "\t\t Z plus  = %10ld\n\n", painted[5]);
   }
-  */
   
   
-  // 外部境界面の処理　ここで外部境界面の交点距離と交点ID、媒質IDをセット
-  // >> paintCutIDonGC()で処理した内容が優先
   
+  // 外部境界面の処理
   for (int face=0; face<NOFACE; face++)
   {
     if( nID[face] >= 0 ) continue;
@@ -2887,7 +2966,7 @@ void FFV::SetModel(double& PrepMemory, double& TotalMemory, FILE* fp)
     BoundaryOuter* m_obc = BC.exportOBC(face);
     int id = m_obc->getGuideMedium();
     int cls= m_obc->getClass();
-    int ptr_cmp = m_obc->getPtr2cmp();
+    
     
     // 周期境界以外
     switch (cls)
@@ -2895,20 +2974,19 @@ void FFV::SetModel(double& PrepMemory, double& TotalMemory, FILE* fp)
       case OBC_SYMMETRIC:
         if (mat[id].getState() != FLUID)
         {
-          Hostonly_ printf("Specified medium in '%s' is not FLUID or not listed.\n", m_obc->alias.c_str());
+          Hostonly_ printf("Specified medium in '%s' is not FLUID or not listed.\n", m_obc->getAlias().c_str());
           Exit(0);
         }
-        ptr_cmp = 0; // FLUID
-        V.setOBC(face, id, ptr_cmp, "fluid", d_bcd, d_cut, d_bid);
+        V.setOBC(face, id, "fluid", d_bcd, d_cut, d_bid);
         break;
         
       case OBC_WALL:
         if (mat[id].getState() != SOLID)
         {
-          Hostonly_ printf("Specified medium in '%s' is not SOLID or not listed.\n", m_obc->alias.c_str());
+          Hostonly_ printf("Specified medium in '%s' is not SOLID or not listed.\n", m_obc->getAlias().c_str());
           Exit(0);
         }
-        V.setOBC(face, id, ptr_cmp, "solid", d_bcd, d_cut, d_bid);
+        V.setOBC(face, id, "solid", d_bcd, d_cut, d_bid);
         break;
         
       case OBC_INTRINSIC:
@@ -2922,8 +3000,7 @@ void FFV::SetModel(double& PrepMemory, double& TotalMemory, FILE* fp)
         if (mat[id].getState() != FLUID) {
           Exit(0);
         }
-        ptr_cmp = 0; // FLUID
-        V.setOBC(face, id, ptr_cmp, "fluid", d_bcd, d_cut, d_bid);
+        V.setOBC(face, id, "fluid", d_bcd, d_cut, d_bid);
         break;
     }
   }
@@ -2959,20 +3036,11 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   {
     fprintf(fp,"\n----------\n\n");
     fprintf(fp,"\t>> Polylib configuration\n\n");
+    fprintf(fp,"\tfile name = %s\n\n", C.PolylibConfigName.c_str());
     
     printf("\n----------\n\n");
     printf("\t>> Polylib configuration\n\n");
-  }
-  
-  // Polylibファイルをテンポラリに出力
-  if ( !F->writePolylibFile(cmp) )
-  {
-    Hostonly_
-    {
-      fprintf(fp,"\tError : writing polylib.tp\n");
-      printf    ("\tError : writing polylib.tp\n");
-    }
-    Exit(0);
+    printf("\tfile name = %s\n\n", C.PolylibConfigName.c_str());
   }
   
   
@@ -2997,8 +3065,8 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   {
     Hostonly_
     {
-      fprintf(fp,"\tRank [%6d]: p_polylib->init_parallel_info() failed.\n", myRank);
-      printf    ("\tRank [%6d]: p_polylib->init_parallel_info() failed.\n", myRank);
+      fprintf(fp,"\tRank [%6d]: p_polylib->init_parallel_info() failed.", myRank);
+      printf    ("\tRank [%6d]: p_polylib->init_parallel_info() failed.", myRank);
     }
     Exit(0);
   }
@@ -3009,7 +3077,7 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   TIMING_start("Loading_Polygon_File");
   
   // ロード
-  poly_stat = PL->load_rank0( "polylib.tp");
+  poly_stat = PL->load_rank0( C.PolylibConfigName );
   
   if( poly_stat != PLSTAT_OK )
   {
@@ -3084,7 +3152,7 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
     
     for (int i=1; i<=C.NoCompo; i++)
     {
-      if ( FBUtility::compare(m_pg, mat[i].alias) )
+      if ( FBUtility::compare(m_pg, mat[i].getAlias()) )
       {
         mat_id = i;
         break;
@@ -3267,8 +3335,14 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   
   // 交点計算
   TIMING_start("Cut_Information");
-  GM.quantizeCut(fp, d_cut, d_bid, d_bcd, C.NoCompo, cmp, PL, PG);
+  GM.quantizeCut(fp, d_cut, d_bid, d_bcd, C.NoCompo, PL, PG);
   TIMING_stop("Cut_Information");
+  
+  
+  // カットの最小値
+  TIMING_start("Cut_Minimum_search");
+  minDistance(d_cut, d_bid, fp);
+  TIMING_stop("Cut_Minimum_search");
   
   
 #if 0
@@ -3761,6 +3835,7 @@ int FFV::SD_getParameter(TextParser* tp_dom)
           G_region[0] = gr[0];
           G_region[1] = gr[1];
           G_region[2] = gr[2];
+          Exit(0);
         }
       }
       else if ( Ex->mode == Intrinsic::dim_2d )
@@ -3776,6 +3851,7 @@ int FFV::SD_getParameter(TextParser* tp_dom)
           G_region[1] = gr[1];
           G_region[2] = gr[2];
           G_origin[2] = -0.5 * pitch[2];
+          Exit(0);
         }
       }
       else

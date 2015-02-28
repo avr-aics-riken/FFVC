@@ -246,6 +246,7 @@ void FFV::NS_FS_E_Binary()
     TIMING_start("Pvec_Buoyancy");
     REAL_TYPE dgr = dt*C.Grashof*rei*rei * v00[0];
     flop = 0.0;
+    //Buoyancy(d_vc, dgr, d_ie0, d_bcd, flop);
     ps_buoyancy_(d_vc, size, &guide, &dgr, d_ie0, d_bcd, &C.NoCompo, mat_tbl, &flop);
     TIMING_stop("Pvec_Buoyancy", flop);
   }
@@ -603,7 +604,14 @@ void FFV::NS_FS_E_Binary()
   TIMING_stop("Domain_Monitor");
   
   
+//=====uzawa
+if ( (CurrentStep % 100 == 0) || (CurrentStep == 1) )
+{
+   output_mean_((int*)&CurrentStep, G_origin, G_region, G_division, G_size, &myRank, size, pitch, &guide, d_av, d_rms_mean_v, d_R_mean, d_Prod_mean);
+};
+//=====uzawa
   
+
   /* 非同期にして隠す
   if (C.LES.Calc==ON) 
   {

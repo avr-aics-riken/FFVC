@@ -34,7 +34,6 @@ private:
   int drv_dir;       ///< ドライバーの方向
   int drv_lid;       ///< ドライバフェイスIDの位置
   int gc_medium;     ///< ガイドセルの媒質IDのエントリ番号
-  int ptr_cmp;       ///< CompoList[]へのポインタ
   int v_profile;     ///< 速度プロファイル（constant, harmonic, zero）
   int Face_mode;     ///< 周期境界のときの面の状況指定（upstream, downstream）
   int hType;         ///< 熱境界条件の種別
@@ -46,15 +45,13 @@ private:
   REAL_TYPE var1;    ///< 多目的用の変数(熱流束，熱伝達係数を共用するので排他的に使用)
   REAL_TYPE var2;    ///< 多目的用の変数(温度)
   REAL_TYPE dm[2];   ///< ローカルな計算領域境界面のモニタ値 コピー不要
-  
+  std::string alias; ///< 別名
   
 public: 
   REAL_TYPE nv[3];   ///< 法線
   REAL_TYPE ca[5];   ///< 係数
   REAL_TYPE cb[5];   ///< 係数
   REAL_TYPE p;       ///< ワーク
-  
-  std::string alias; ///< 別名
   
   /** 周期境界の方向 */
   enum periodic_dir 
@@ -87,7 +84,6 @@ public:
     HTmode = gc_medium = Prdc_mode = Face_mode = 0;
     p = var1 = var2 = 0.0;
     valid_cell = 0;
-    ptr_cmp = 0;
 		for (int i=0; i<5; i++) ca[i] = cb[i] = 0.0;
     for (int i=0; i<3; i++) nv[i] = 0.0;
     for (int i=0; i<2; i++) dm[i]=0.0;
@@ -116,6 +112,12 @@ public:
    * @param [in] src   BoundaryOuterクラス
    */
   void dataCopy (BoundaryOuter* src);
+  
+
+  std::string getAlias() const
+  {
+    return alias;
+  }
   
   
   int getClass() const
@@ -149,12 +151,10 @@ public:
     return Face_mode;
   }
   
-  
   int getGuideMedium() const
   { 
     return gc_medium; 
   }
-  
   
   REAL_TYPE getHeatflux() const
   {
@@ -167,30 +167,20 @@ public:
     return HTref; 
   }
   
-  
   int getHTmode() const
   { 
     return HTmode; 
   }
-  
   
   int getHtype() const
   { 
     return hType;
   }
   
-  
   int getPrdcMode() const
   { 
     return Prdc_mode;
   }
-  
-  
-  int getPtr2cmp() const
-  {
-    return ptr_cmp;
-  }
-  
   
   int get_pType() const 
   { 
@@ -208,16 +198,21 @@ public:
     return v_profile; 
   }
   
-  
   int getValidCell() const
   { 
     return valid_cell;
   }
   
-  
   int get_wallType() const
   {
     return wallType;
+  }
+  
+  
+  // @brief aliasラベルを設定する
+  void setAlias(std::string key)
+  {
+    alias = key;
   }
   
   
@@ -316,13 +311,6 @@ public:
   void set_pType(int key)
   {
     pType  = key;
-  }
-  
-  
-  // @brief CompoListへのポインタをセット
-  void setPtr2cmp(int key)
-  {
-    ptr_cmp  = key;
   }
   
   

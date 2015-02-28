@@ -224,7 +224,7 @@ extern "C" {
                   REAL_TYPE* dh,
                   int* scheme,
                   REAL_TYPE* v00,
-                  REAL_TYPE* vf,
+                  REAL_TYPE* v,
                   REAL_TYPE* ie,
                   int* bid,
                   int* cdf,
@@ -241,14 +241,6 @@ extern "C" {
                      int* ncompo,
                      double* mtbl,
                      double* flop);
-  
-  void ps_convection_ee_ (REAL_TYPE* ie,
-                          int* sz,
-                          int* g,
-                          REAL_TYPE* dt,
-                          int* bd,
-                          REAL_TYPE* ie0,
-                          double* flop);
   
   void ps_diff_ee_ (REAL_TYPE* ie,
                     int* sz,
@@ -722,19 +714,70 @@ extern "C" {
                    REAL_TYPE* p
                    );
   
-  void output_mean_(int* step,
-                    REAL_TYPE* G_origin,
-                    REAL_TYPE* G_region,
-                    int* G_division,
-                    int* G_size,
-                    int* myRank,
-                    int* sz,
-                    REAL_TYPE* dh,
-                    int* g,
-                    REAL_TYPE* av,
-                    REAL_TYPE* rms,
-                    REAL_TYPE* rmsmean
+//=====uzawa
+  void output_mean_ (int* step,
+                     REAL_TYPE* G_origin,
+                     REAL_TYPE* G_region,
+                     int* G_division,
+                     int* G_size,
+                     int* myRank,
+                     int* sz,
+                     REAL_TYPE* dh,
+                     int* g,
+                     REAL_TYPE* vmean,
+                     REAL_TYPE* rmsmean,
+                     REAL_TYPE* Rmean,
+                     REAL_TYPE* Prodmean
                     );
+
+  void vprime_ (REAL_TYPE* vp,
+               int* sz,
+               int* g,
+               REAL_TYPE* v,
+               REAL_TYPE* av,
+               double* flop);
+
+  void reynolds_stress_ (REAL_TYPE* R,
+                         int* sz,
+                         int* g,
+                         REAL_TYPE* vp,
+                         double* flop);
+
+  void gradv_ (REAL_TYPE* gv,
+               int* sz,
+               REAL_TYPE* dh,
+               int* g,
+               REAL_TYPE* v,
+               int* bv,
+               double* flop);
+
+  void inner_product_t_ (REAL_TYPE* C,
+                         REAL_TYPE* A,
+                         REAL_TYPE* B,
+                         int* sz,
+                         int* g,
+                         double* flop);
+
+  void transpose_t_ (REAL_TYPE* tA,
+                     REAL_TYPE* A,
+                     int* sz,
+                     int* g,
+                     double* flop);
+
+  void calc_production_rate_ (REAL_TYPE* P,
+                              REAL_TYPE* A,
+                              REAL_TYPE* B,
+                              int* sz,
+                              int* g,
+                              double* flop);
+
+  void average_t_ (REAL_TYPE* at,
+                   int* sz,
+                   int* g,
+                   REAL_TYPE* t,
+                   REAL_TYPE* nadd,
+                   double* flop);
+//=====uzawa
 
   void src_trnc_ (REAL_TYPE* rhs,
                   int* sz,

@@ -679,7 +679,7 @@ bool MonitorList::getMonitor(Control* C, CompoList* cmp)
       
       for (int k=1; k<=C->NoCompo; k++)
       {
-        if ( !strcasecmp( cmp[k].alias.c_str(), name.c_str()) )
+        if ( !strcasecmp( cmp[k].getAlias().c_str(), name.c_str()) )
         {
           odr = k;
           break;

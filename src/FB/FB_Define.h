@@ -115,6 +115,18 @@
 #define LOW_MACH    3
 
 
+// 外部境界条件
+#define OBC_MASK      31 // 外部境界と内部境界の識別子
+#define OBC_WALL      1
+#define OBC_SYMMETRIC 2
+#define OBC_OUTFLOW   3
+#define OBC_SPEC_VEL  4
+#define OBC_PERIODIC  5
+#define OBC_TRC_FREE  6
+#define OBC_FAR_FIELD 7
+#define OBC_INTRINSIC 8
+
+
 // マスクのビット幅
 #define MASK_10    0x3ff // 10 bit幅
 #define MASK_9     0x1ff // 9 bit幅
@@ -214,26 +226,12 @@
 #define PERIODIC     15
 #define MONITOR      16
 #define SOLIDREV     17
-#define OUTER_BC     18
 
 
 // 熱伝達係数のモード コンポーネントタイプと並列
 #define HT_S     21
 #define HT_SN    22
 #define HT_SF    23
-
-
-// 外部境界条件
-#define OBC_MASK      31 // 外部境界と内部境界の識別子
-#define OBC_WALL      1
-#define OBC_SYMMETRIC 2
-#define OBC_OUTFLOW   3
-#define OBC_SPEC_VEL  4
-#define OBC_PERIODIC  5
-#define OBC_TRC_FREE  6
-#define OBC_FAR_FIELD 7
-#define OBC_INTRINSIC 8
-
 
 // 圧力条件のタイプ
 #define P_GRAD_ZERO  1
@@ -629,11 +627,11 @@ inline void setBit5 (int& b, const int q, const int dir)
 
 
 /*
- * @brief 5bit幅の媒質IDの設定
+ * @brief 5bit幅のIDの設定
  * @param [in,out] b   int 変数
  * @param [in]     q   5-bit幅のID (1-31)
  */
-inline void setMediumID (int& b, const int q)
+inline void setBitID (int& b, const int q)
 {
   b &= ( ~(0x1f) ); // 下位5bitをゼロにする
   b |= q;           // 書き込む

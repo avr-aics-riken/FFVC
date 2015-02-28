@@ -533,8 +533,7 @@ void ASD::fill(bool disp_flag, Geometry* GM)
   
   // 定義点上に交点がある場合の処理 >> カットするポリゴンのエントリ番号でフィルする
   int NoCompo = 1; // あとでやりなおし、テンポラリ
-  unsigned long fill_cut, cm;
-  //GM->paintCutOnPoint(d_bcd, d_bid, d_cut, NoCompo, cmp, fill_cut, cm, G_division);
+  unsigned long fill_cut = GM->paintCutOnPoint(d_bcd, d_bid, d_cut, NoCompo, G_division);
   target_count -= fill_cut;
   
   if ( !disp_flag )

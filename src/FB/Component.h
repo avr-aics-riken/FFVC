@@ -111,12 +111,6 @@ public:
     same_direction=1,
     opposite_direction
   };
-  
-  enum Kind_in_out
-  {
-    kind_inner=1,
-    kind_outer
-  };
 
   
 private:
@@ -143,11 +137,11 @@ private:
   REAL_TYPE var3;        /// パラメータ保持 (Heat Density, Temperature)
   REAL_TYPE var_m;       /// モニタの値を保持
   REAL_TYPE temp_init;   /// 温度の初期値
-
+  
+  std::string alias;     ///< 局所境界条件の別名
+  std::string medium;    ///< Medium名
   
 public:
-  int kind_inout;           /// 内部と外部の種別
-  
   REAL_TYPE area;           ///< 断面積（有次元）
   REAL_TYPE nv[3];          ///< 法線方向ベクトル（流出方向）
   REAL_TYPE oc[3];          ///< 形状の中心座標（前面の中心位置）
@@ -159,10 +153,6 @@ public:
   REAL_TYPE ca[6];          ///< 係数セット a
   REAL_TYPE cb[6];          ///< 係数セット b
   REAL_TYPE f[3];           ///< 力の成分
-  
-  std::string alias;        ///< 局所境界条件の別名
-  std::string medium;       ///< Medium名
-  std::string filepath;     ///< ポリゴンのファイルパス名
   
   /** コンストラクタ */
   CompoList() {
@@ -178,7 +168,6 @@ public:
     phase = 0;
     heatmode = OFF;
     matodr = 0;
-    kind_inout = 0;
     
     for (int i=0; i<3; i++) {
       nv[i] = 0.0;
@@ -200,6 +189,15 @@ public:
   ~CompoList() {}
   
 public:
+  
+  /**
+   * @brief ラベル名を返す
+   */
+  std::string getAlias() const
+  {
+    return alias;
+  }
+
   
   int getAttrb() const
   {
@@ -233,7 +231,9 @@ public:
   }
   
   
-  //@brief BCのラベル名を返す
+  /**
+   * @brief BCのラベル名を返す
+   */
   std::string getBCstr();
   
   
@@ -303,6 +303,15 @@ public:
   REAL_TYPE get_Massflow() const
   { 
     return var1; 
+  }
+  
+  
+  /**
+   * @brief 媒質名を返す
+   */
+  std::string getMedium() const
+  {
+    return medium;
   }
   
   
@@ -521,6 +530,8 @@ public:
     return false;
   }
   
+
+  void setAlias            (const std::string pnt);
   
   void setAttrb            (const int key);
   void setBClocation       (const int key);
@@ -605,6 +616,8 @@ public:
     matodr = key;
   }
   
+  
+  void setMedium           (const std::string pnt);
   
   // @brief モニター値を保持する
   void setMonitorValue (const REAL_TYPE var);

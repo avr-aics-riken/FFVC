@@ -441,23 +441,6 @@ public:
     return face;
   }
   
-  /**
-   * @brief dirの方向ラベルを返す
-   * @param [in] dir 方向コード
-   * @return 方向ラベル
-   */
-  static string getDirStr(const int dir)
-  {
-    string face;
-    if      (dir == X_minus) face = "Xminus";
-    else if (dir == X_plus)  face = "Xplus";
-    else if (dir == Y_minus) face = "Yminus";
-    else if (dir == Y_plus)  face = "Yplus";
-    else if (dir == Z_minus) face = "Zminus";
-    else if (dir == Z_plus)  face = "Zplus";
-    return face;
-  }
-  
   
   // S3D配列の初期化 (REAL_TYPE)
   static void initS3D (REAL_TYPE* dst, const int* size, const int guide, const REAL_TYPE init);

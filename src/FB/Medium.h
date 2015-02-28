@@ -45,11 +45,10 @@ enum property_list
 class MediumList {
 private:
   int state;          ///< solid or fluid
-
+  std::string alias;  ///< ラベル
 
 public:
   REAL_TYPE P[property_END]; ///< プロパティリスト
-  std::string alias;         ///< ラベル
   
   MediumList() {
     state = -1;
@@ -58,6 +57,16 @@ public:
   ~MediumList() {}
   
 public:
+  
+  
+  /**
+   * @brief ラベルを取得
+   * @return 文字列
+   */
+  std::string getAlias() const
+  { 
+    return alias;
+  }
   
   
   /**
@@ -128,6 +137,16 @@ public:
   int getState() const
   {
     return state;
+  }
+  
+  
+  /**
+   * @brief ラベルをセット
+   * @param [in] key 文字列
+   */
+  void setAlias(const std::string key)
+  {
+    alias = key;
   }
   
   

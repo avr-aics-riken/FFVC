@@ -226,3 +226,51 @@ unsigned* Alloc::Uint_S3D(const int* sz, const int gc)
   
   return var;
 }
+
+
+
+//=====uzawa
+// #################################################################
+// データ領域をアロケートする（Antisymmetric Tensor:REAL_TYPE）
+REAL_TYPE* Alloc::Real_T3D(const int* sz, const int gc)
+{
+  if ( !sz ) return NULL;
+  
+  size_t dims[3], nx;
+  
+  dims[0] = (size_t)(sz[0] + 2*gc); 
+  dims[1] = (size_t)(sz[1] + 2*gc); 
+  dims[2] = (size_t)(sz[2] + 2*gc); 
+  
+  nx = dims[0] * dims[1] * dims[2] * 9;
+  
+  REAL_TYPE* var = new REAL_TYPE[nx];
+  
+  memset(var, 0, sizeof(REAL_TYPE)*nx);
+  
+  return var;
+}
+
+
+// #################################################################
+// データ領域をアロケートする（Symmetric Tensor:REAL_TYPE）
+REAL_TYPE* Alloc::Real_ST3D(const int* sz, const int gc)
+{
+  if ( !sz ) return NULL;
+  
+  size_t dims[3], nx;
+  
+  dims[0] = (size_t)(sz[0] + 2*gc); 
+  dims[1] = (size_t)(sz[1] + 2*gc); 
+  dims[2] = (size_t)(sz[2] + 2*gc); 
+  
+  nx = dims[0] * dims[1] * dims[2] * 6;
+  
+  REAL_TYPE* var = new REAL_TYPE[nx];
+  
+  memset(var, 0, sizeof(REAL_TYPE)*nx);
+  
+  return var;
+}
+//=====uzawa
+

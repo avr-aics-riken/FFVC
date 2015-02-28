@@ -1538,7 +1538,7 @@ void MonitorCompo::setPrimitive(const char* labelStr,
           buf[(offset+lp)*3+2] = org.z + (k - 0.5) * pch.z;
           lp++;
           
-          setMediumID(bcd[m], 0); // クリア
+          setBitID(bcd[m], 0); // クリア
         }
         
       }

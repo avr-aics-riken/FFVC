@@ -344,6 +344,10 @@ private:
   void LS_setParameter(TextParser* tpCntl, const int odr, const string label);
   
   
+  // 距離の最小値を求める
+  void minDistance(const long long* cut, const int* bid, FILE* fp);
+  
+  
   /**
    * @brief 初期擾乱
    * @note x方向の流れが主方向で、それに垂直なdir方向のチャネルを想定
@@ -469,6 +473,28 @@ private:
   
   /** ffv_Heat.C *******************************************************/
   
+  /**
+   * @brief 移流項のEuler陽解法による時間積分
+   * @param [in,out] ie_c    内部エネルギーの対流項の流束の和/部分段階
+   * @param [in]     delta_t 時間積分幅
+   * @param [in]     bd      BCindex B
+   * @param [in]     ie_0    nステップの内部エネルギー
+   * @param [in,out] flop    浮動小数演算数
+   * @note ie_c = ie_0 + dt/dh*sum_flux(n)
+   */
+  void ps_ConvectionEE(REAL_TYPE* ie_c, const REAL_TYPE delta_t, const int* bd, const REAL_TYPE* ie_0, double& flop);
+  
+  
+  /**
+   * @brief Boussinesq浮力項の計算
+   * @param [out]    v    速度
+   * @param [in]     dgr  係数
+   * @param [in]     t    温度
+   * @param [in]     bd   BCindex B
+   * @param [in,out] flop 浮動小数点演算数
+   */
+  void Buoyancy(REAL_TYPE* v, const REAL_TYPE dgr, const REAL_TYPE* t, const int* bd, double& flop);
+  
   
   /**
    * @brief 単媒質に対する熱伝導方程式を陰解法で解く
@@ -477,7 +503,19 @@ private:
    * @param [in]  r0       初期残差ベクトル
    */
   void ps_LS(LinearSolver* IC, const double rhs_nrm, const double r0);
-
+  
+  
+  /**
+   * @brief 単媒質に対する熱伝導方程式をEuler陽解法で解く
+   * @retval 拡散項の変化量Δθの絶対値
+   * @param [in,out] t    n+1時刻の温度場
+   * @param [in]     dt   時間積分幅
+   * @param [in]     qbc  境界条件熱流束
+   * @param [in]     bh   BCindex B
+   * @param [in]     ws   部分段階の温度
+   * @param [in,out] flop 浮動小数点演算数
+   */
+  REAL_TYPE ps_Diff_SM_EE(REAL_TYPE* t, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh, const REAL_TYPE* ws, double& flop);
   
   
   /**

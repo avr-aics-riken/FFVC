@@ -288,6 +288,9 @@ public:
     int StatVelocity;
     int StatPressure;
     int StatTemperature;
+//=====uzawa
+    int ReynoldsStress;
+//=====uzawa
   } Mode_set;
   
   /** 隠しパラメータ */
@@ -459,8 +462,6 @@ public:
   int MarchingScheme;
   int NoBaseLS;       ///< リストアップされた線形ソルバーの数
   int NoBC;           ///< 境界条件数
-  int NoBCinner;      ///< 内部境界条件数
-  int NoBCouter;      ///< 外部境界条件数
   int NoCompo;        ///< コンポーネント数
   int NoMedium;       ///< 媒質数
   int NoMediumFluid;  ///< 流体の媒質数
@@ -524,6 +525,9 @@ public:
   IntervalManager Interval[tg_END];  ///< タイミング制御
   IterationCtl* Criteria;            ///< 反復解法の収束判定パラメータ
   
+  string PolylibConfigName;
+
+  
   string RefMedium;      ///< 参照媒質名 -> int RefMat
   string OperatorName;
   
@@ -547,8 +551,6 @@ public:
     MarchingScheme = 0;
     NoBaseLS = 0;
     NoBC = 0;
-    NoBCinner = 0;
-    NoBCouter = 0;
     NoCompo = 0;
     NoMedium = 0;
     NoMediumFluid = 0;
@@ -607,7 +609,9 @@ public:
     Mode.StatVelocity = 0;
     Mode.StatPressure = 0;
     Mode.StatTemperature = 0;
-    
+//=====uzawa
+    Mode.ReynoldsStress = 0;
+//=====uzawa    
 
     LES.Calc=0;
     LES.Model=0;

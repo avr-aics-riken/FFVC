@@ -116,6 +116,7 @@ private:
   // 境界条件指定キーセルのSTATEを流体に変更する
   unsigned long encVbitIBC (const int order,
                             int* cdf,
+                            int* bp,
                             int* bid,
                             const REAL_TYPE* vec,
                             CompoList* cmp,
@@ -124,6 +125,7 @@ private:
   
   unsigned long encVbitIBCrev (const int order,
                                int* cdf,
+                               int* bp,
                                int* bid,
                                CompoList* cmp);
   
@@ -204,13 +206,12 @@ public:
   void countOpenAreaOfDomain (const int* bx, REAL_TYPE* OpenArea);
   
   
-  /* @brief 外部境界方向にカットがあるセルにはガイドセルをCutIDの媒質でペイント
+  /* @brief 領域境界のセルで境界方向にカットがある場合にガイドセルをそのIDで埋める
    * @param [in,out] bcd      BCindex B
    * @param [in]     bid      境界ID
    * @param [out]    painted  各外部領域面でペイントされた個数
-   * @param [in]     cmp      CompoList
    */
-  void paintCutIDonGC (int* bcd, const int* bid, unsigned long* painted, const CompoList* cmp);
+  void paintSolidGC (int* bcd, const int* bid, unsigned long* painted);
   
   
   /**
@@ -281,6 +282,7 @@ public:
   /**
    * @brief cdf[]に境界条件のビット情報をエンコードする
    * @param [in,out] cdf        BCindex C
+   * @param [in,out] bp         BCindex P
    * @param [in]     BC         SetBCクラスのポインタ
    * @param [in]     cmp        CompoListクラスのポインタ
    * @param [in]     icls       Intrinsic class
@@ -291,6 +293,7 @@ public:
    * @param [in]     mat        MediumList
    */
   void setBCIndexV(int* cdf,
+                   int* bp,
                    SetBC* BC,
                    CompoList* cmp,
                    int icls,
@@ -332,15 +335,14 @@ public:
   
   /**
    * @brief 外部境界の距離情報・境界ID・媒質エントリをセット
-   * @param [in]     face    外部境界面番号
-   * @param [in]     c_id    媒質IDエントリ番号
-   * @param [in]     ptr_cmp CompoListへのポインタ
-   * @param [in]     str     "SOLID" or "FLUID"
-   * @param [in,out] bcd     BCindex B
-   * @param [in,out] cut     距離情報
-   * @param [in,out] bid     カットID情報
+   * @param [in]     face  外部境界面番号
+   * @param [in]     c_id  媒質IDエントリ番号
+   * @param [in]     str   "SOLID" or "FLUID"
+   * @param [in,out] bcd   BCindex B
+   * @param [in,out] cut   距離情報
+   * @param [in,out] bid   カットID情報
    */
-  void setOBC (const int face, const int c_id, const int ptr_cmp, const char* str, int* bcd, long long* cut, int* bid);
+  void setOBC (const int face, const int c_id, const char* str, int* bcd, long long* cut, int* bid);
   
 };
 

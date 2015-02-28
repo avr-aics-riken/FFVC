@@ -63,6 +63,11 @@ public:
 
   static unsigned* Uint_S3D(const int* sz, const int gc);
 
+//=====uzawa
+  static REAL_TYPE* Real_T3D(const int* sz, const int gc);
+  static REAL_TYPE* Real_ST3D(const int* sz, const int gc);
+//=====uzawa
+
 };
 
 #endif // _FB_ALLOC_H_

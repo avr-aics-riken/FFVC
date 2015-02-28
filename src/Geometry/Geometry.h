@@ -126,20 +126,11 @@ private:
                           const int* Dsize=NULL);
   
   
-  // 未ペイントセルを周囲の交点IDの最頻値でフィル
-  bool fillByModalCutID(int* bcd,
-                        const int* bid,
-                        const int m_NoCompo,
-                        const CompoList* cmp,
-                        unsigned long& replaced);
-  
-  
   // 未ペイントセルを周囲のbidの固体最頻値でフィル
   unsigned long fillByModalSolid(int* bcd,
                                  const int fluid_id,
                                  const int* bid,
-                                 const int m_NoCompo,
-                                 const CompoList* cmp);
+                                 const int m_NoCompo);
   
   
   // 未ペイントセルを周囲のmidの固体最頻値でフィル
@@ -147,7 +138,7 @@ private:
   
   
   // bid情報を元にフラッドフィル
-  bool fill_connected(FILE* fp,
+  void fill_connected(FILE* fp,
                       int* d_bcd,
                       const int* d_bid,
                       const MediumList* mat,
@@ -211,8 +202,8 @@ private:
                                   const int m_NoCompo);
   
   
-  // 距離の最小値を求める
-  void minDistance(const long long* cut, const int* bid, FILE* fp);
+  // 交点が定義点にある場合の処理をした場合に、反対側のセルの状態を修正
+  unsigned long modifyCutOnPoint(int* bid, long long* cut, const int* bcd, const int* Dsize=NULL);
   
   
   // 6方向にカットのあるセルを交点媒質でフィルする
@@ -365,7 +356,7 @@ public:
   
   
   // フィル操作
-  bool fill(FILE* fp,
+  void fill(FILE* fp,
             int* d_bcd,
             const int* d_bid,
             const int m_NoMedium,
@@ -405,12 +396,7 @@ public:
   
   
   // フィルパラメータを取得
-  void getFillParam(TextParser* tpCntl,
-                    FILE* fp,
-                    const int Unit,
-                    const REAL_TYPE RefL,
-                    const int m_NoMedium,
-                    const MediumList* mat);
+  void getFillParam(TextParser* tpCntl, FILE* fp, const int Unit, const REAL_TYPE RefL);
   
   
   /**
@@ -440,14 +426,11 @@ public:
   
   
   // 交点が定義点にある場合にそのポリゴンのエントリ番号でフィルする
-  void paintCutOnPoint(int* bcd,
-                       int* bid,
-                       long long* cut,
-                       const int m_NoCompo,
-                       const CompoList* cmp,
-                       unsigned long& fillcut,
-                       unsigned long& modopp,
-                       const int* Dsize=NULL);
+  unsigned long paintCutOnPoint(int* bcd,
+                                int* bid,
+                                long long* cut,
+                                const int m_NoCompo,
+                                const int* Dsize=NULL);
   
   
   // 交点計算を行い、量子化
@@ -456,7 +439,6 @@ public:
                    int* bid,
                    int* bcd,
                    const int m_NoCompo,
-                   const CompoList* cmp,
                    MPIPolylib* PL,
                    PolygonProperty* PG);
   
@@ -469,6 +451,10 @@ public:
                    MPIPolylib* PL,
                    PolygonProperty* PG,
                    const int m_NoCompo);
+  
+  
+  // FIllIDとSeedIDをセット
+  void setFillMedium(MediumList* mat, const int m_NoMedium);
   
   
   // @brief 再分割数を設定

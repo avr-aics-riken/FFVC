@@ -33,6 +33,61 @@
 #include <sys/types.h>
 
 
+
+// #################################################################
+// 移流項のEuler陽解法による時間積分
+void FFV::ps_ConvectionEE(REAL_TYPE* ie_c, const REAL_TYPE delta_t, const int* bd, const REAL_TYPE* ie_0, double& flop)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  REAL_TYPE dt = delta_t;
+  
+  flop += (double)(ix*jx*kx)* 3.0;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dt) schedule(static)
+  
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        ie_c[m] = ie_0[m] + dt * ie_c[m] * GET_SHIFT_F(bd[m], STATE_BIT); // 対流項の評価は流動なので，状態を参照
+      }
+    }
+  }
+}
+
+
+
+// #################################################################
+// Boussinesq浮力項の計算
+void FFV::Buoyancy(REAL_TYPE* v, const REAL_TYPE dgr, const REAL_TYPE* t, const int* bd, double& flop)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  REAL_TYPE d = dgr;
+  
+  flop += (double)(ix*jx*kx)* 3.0;
+
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, d) schedule(static)
+  
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        size_t l = _F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd); // k方向が重力方向
+        v[l] += d * t[m]* GET_SHIFT_F(bd[m], STATE_BIT); // 対流項の計算なので，状態を参照
+      }
+    }
+  }
+}
+
+
+
 // #################################################################
 // 単媒質に対する熱伝導方程式を陰解法で解く
 void FFV::ps_LS(LinearSolver* IC, const double b_l2, const double r0_l2)
@@ -142,6 +197,93 @@ void FFV::ps_LS(LinearSolver* IC, const double b_l2, const double r0_l2)
       break;
   }
   
+}
+
+
+// #################################################################
+// 単媒質に対する熱伝導方程式をEuler陽解法で解く
+REAL_TYPE FFV::ps_Diff_SM_EE(REAL_TYPE* t, const REAL_TYPE dt, const REAL_TYPE* qbc, const int* bh, const REAL_TYPE* ws, double& flop)
+{
+  REAL_TYPE g_p, g_w, g_e, g_s, g_n, g_b, g_t;
+  REAL_TYPE t_p, t_w, t_e, t_s, t_n, t_b, t_t;
+  REAL_TYPE      a_w, a_e, a_s, a_n, a_b, a_t;
+  REAL_TYPE dth1, dth2, delta, res;
+  REAL_TYPE dh = (REAL_TYPE)pitch[0];    /// 空間格子幅
+  int s;
+  
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+
+  dth1 = dt/dh;
+  dth2 = dth1*C.getRcpPeclet()/dh;
+  res  = 0.0;
+  flop += (double)(ix*jx*kx)* 50.0;
+
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, dth1, dth2) \
+            private(t_p, t_w, t_e, t_s, t_n, t_b, t_t) \
+            private(g_p, g_w, g_e, g_s, g_n, g_b, g_t) \
+            private(a_w, a_e, a_s, a_n, a_b, a_t) \
+            private(s, delta) \
+            schedule(static) reduction(+:res)
+  
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        
+#include "../FB/FindexS3D.h"
+        
+        t_p = t[m_p];
+        t_w = t[m_w];
+        t_e = t[m_e];
+        t_s = t[m_s];
+        t_n = t[m_n];
+        t_b = t[m_b];
+        t_t = t[m_t];
+
+        s   = bh[m_p];
+        
+        g_w = GET_SHIFT_F(s, GMA_W); // gamma(BC)
+        g_e = GET_SHIFT_F(s, GMA_E);
+        g_s = GET_SHIFT_F(s, GMA_S);
+        g_n = GET_SHIFT_F(s, GMA_N);
+        g_b = GET_SHIFT_F(s, GMA_B);
+        g_t = GET_SHIFT_F(s, GMA_T);
+        
+        a_w = GET_SHIFT_F(s, ADIABATIC_W); // gamma(A)
+        a_e = GET_SHIFT_F(s, ADIABATIC_E);
+        a_s = GET_SHIFT_F(s, ADIABATIC_S);
+        a_n = GET_SHIFT_F(s, ADIABATIC_N);
+        a_b = GET_SHIFT_F(s, ADIABATIC_B);
+        a_t = GET_SHIFT_F(s, ADIABATIC_T);
+        
+        g_p = (REAL_TYPE)( (s>>H_DIAG) & 0x7 ); // 3bitを取り出す
+
+        delta = (dth2*( g_w * a_w * t_w  // west  
+                      + g_e * a_e * t_e  // east  
+                      + g_s * a_s * t_s  // south 
+                      + g_n * a_n * t_n  // north 
+                      + g_b * a_b * t_b  // bottom
+                      + g_t * a_t * t_t  // top   
+                      - g_p *       t_p
+                      )
+                - dth1*(-(1.0-g_w)*a_w * qbc[_F_IDX_V3DEX(0, i-1, j  , k  , ix, jx, kx, gd)]
+                        +(1.0-g_e)*a_e * qbc[_F_IDX_V3DEX(0, i  , j  , k  , ix, jx, kx, gd)]
+                        -(1.0-g_s)*a_s * qbc[_F_IDX_V3DEX(1, i  , j-1, k  , ix, jx, kx, gd)]
+                        +(1.0-g_n)*a_n * qbc[_F_IDX_V3DEX(1, i  , j  , k  , ix, jx, kx, gd)]
+                        -(1.0-g_b)*a_b * qbc[_F_IDX_V3DEX(2, i  , j  , k-1, ix, jx, kx, gd)]
+                        +(1.0-g_t)*a_t * qbc[_F_IDX_V3DEX(2, i  , j  , k  , ix, jx, kx, gd)]
+                        ) )* GET_SHIFT_F(s, ACTIVE_BIT);
+        t[m_p] = ws[m_p] + delta;
+        res += delta*delta;
+      }
+    }
+  }
+  
+  return res;
 }
 
 

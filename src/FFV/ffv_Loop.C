@@ -153,6 +153,39 @@ int FFV::Loop(const unsigned step)
       calc_rms_s_(d_rms_t, d_rms_mean_t, size, &guide, d_ws, d_ie0, &accum, &flop_count);
     }
     
+//=====uzawa
+    if ( C.Mode.ReynoldsStress == ON )
+    {
+      flop_count = 0.0;
+
+//    速度変動ベクトル
+      vprime_(d_vp, size, &guide, d_v, d_av, &flop_count);
+
+//    レイノルズ応力テンソル: R
+      reynolds_stress_(d_R, size, &guide, d_vp, &flop_count); 
+
+//--- (1):レイノルズ応力生成テンソルの計算 
+//    平均速度勾配テンソル: grad_Umean
+      gradv_(d_gav, size, pitch, &guide, d_av, d_bcd, &flop_count);
+
+//    R ・ grad_Umean
+      inner_product_t_(d_wk, d_R, d_gav, size, &guide, &flop_count);
+
+//    (R ・ grad_Umean)^T
+      transpose_t_(d_twk, d_wk, size, &guide, &flop_count);
+
+//    レイノルズ応力生成テンソル
+      calc_production_rate_(d_Prod, d_twk, d_wk, size, &guide, &flop_count);
+
+//    レイノルズ応力テンソル (時間平均値)
+      reynolds_stress_(d_R_mean, size, &guide, d_R, &flop_count); 
+
+//    レイノルズ応力生成テンソル (時間平均値)
+      average_t_(d_Prod_mean, size, &guide, d_Prod, &accum, &flop_count);
+    }
+//=====uzawa
+
+
     TIMING_stop("Turbulence Statistic", flop_count);
     
   }
@@ -249,7 +282,7 @@ int FFV::Loop(const unsigned step)
       if ( F->isVtk() )
       {
         int cs = CurrentStep;
-        output_vtk_(&cs, G_origin, G_division, G_size, &myRank, size, pitch, &guide, d_v, d_p);
+//        output_vtk_(&cs, G_origin, G_division, G_size, &myRank, size, pitch, &guide, d_v, d_p);
       }
     }
 

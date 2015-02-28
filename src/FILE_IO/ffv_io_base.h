@@ -42,7 +42,6 @@
 #include "FBUtility.h"
 #include "IntervalManager.h"
 #include "ffv_Define.h"
-#include "Component.h"
 
 #include "TextParser.h"
 
@@ -178,14 +177,6 @@ protected:
   
   // 固有パラメータの表示
   virtual void printSteerConditionsInherent(FILE* fp) {}
-  
-  
-  // polylibファイルのグループ出力
-  void writePolylibGrp(FILE* fp,
-                       const string alias,
-                       const string filepath,
-                       const string medium,
-                       const string type);
   
   
 public:
@@ -386,10 +377,6 @@ public:
    * @retval 配列を書き出す場合には-1, 同じ値の場合は-1でない値
    */
   int writeCellID(const int out_gc);
-  
-  
-  // polylibファイルをテンポラリに出力
-  bool writePolylibFile(CompoList* cmp);
   
   
   /**

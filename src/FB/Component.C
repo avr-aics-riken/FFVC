@@ -53,10 +53,17 @@ std::string CompoList::getBCstr()
     else if ( h_type == HT_SN)      bc = "Heat Transfer type SN (Natural convection)";
     else if ( h_type == HT_SF)      bc = "Heat Transfer type SF (Forced convection)";
   }
-  else if ( type == OUTER_BC )      bc = "Outer BC";
   else                              bc = "Medium";
   
   return bc;
+}
+
+
+// #################################################################
+//@brief エイリアス名をセットする
+void CompoList::setAlias(const std::string pnt)
+{
+  alias = pnt;
 }
 
 
@@ -175,6 +182,15 @@ void CompoList::setInitTemp(const REAL_TYPE key)
 void CompoList::set_Massflow(const REAL_TYPE var) 
 {
   var1 = var;
+}
+
+
+
+// #################################################################
+//@brief 媒質名をセットする
+void CompoList::setMedium(const std::string pnt)
+{
+  medium = pnt;
 }
 
 
