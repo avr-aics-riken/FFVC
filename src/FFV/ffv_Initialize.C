@@ -2878,7 +2878,6 @@ void FFV::SetModel(double& PrepMemory, double& TotalMemory, FILE* fp)
   
   
   // 外部境界面の処理　ここで外部境界面の交点距離と交点ID、媒質IDをセット
-  // >> paintCutIDonGC()で処理した内容が優先
   
   for (int face=0; face<NOFACE; face++)
   {
