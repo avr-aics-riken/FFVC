@@ -23,7 +23,8 @@
 
 
 // #################################################################
-//BCのラベル名を返す
+// BCのラベル名を返す
+// @see ParseBC::setKeywordLBC()
 std::string CompoList::getBCstr()
 {
   std::string bc;
@@ -56,6 +57,39 @@ std::string CompoList::getBCstr()
   else if ( type == OUTER_BC )      bc = "Outer BC";
   else                              bc = "Medium";
   
+  return bc;
+}
+
+
+// #################################################################
+// Polylibファイル用のBCのラベル名を返す
+// @see ParseBC::setKeywordLBC()
+std::string CompoList::getBCstr2Polylib()
+{
+  std::string bc;
+  
+  if      ( type == ADIABATIC )     bc = "Adiabatic";
+  else if ( type == HEATFLUX )      bc = "DirectHeatFlux";
+  else if ( type == TRANSFER )
+  {
+    if      ( h_type == HT_S )      bc = "HeatTransferS";
+    else if ( h_type == HT_SN)      bc = "HeatTransferSN";
+    else if ( h_type == HT_SF)      bc = "HeatTransferSF";
+  }
+  else if ( type == ISOTHERMAL )    bc = "Isothermal";
+  else if ( type == RADIANT )       bc = "Radiation";
+  else if ( type == SPEC_VEL)       bc = "SpecifiedVelocity";
+  else if ( type == OUTFLOW)        bc = "Outflow";
+  else if ( type == IBM_DF )        bc = "Forcing";
+  else if ( type == HEAT_SRC )      bc = "HeatSource";
+  else if ( type == CNST_TEMP )     bc = "SpecifiedTemperature";
+  else if ( type == HEX )           bc = "PressureLoss";
+  else if ( type == FAN )           bc = "Fan";
+  else if ( type == DARCY )         bc = "Darcy";
+  else if ( type == PERIODIC )      bc = "Periodic";
+  else if ( type == OBSTACLE )      bc = "Obstacle";
+  else if ( type == SOLIDREV )      bc = "SolidRevolution";
+
   return bc;
 }
 

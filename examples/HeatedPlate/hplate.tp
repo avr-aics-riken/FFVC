@@ -11,6 +11,7 @@ BcTable {
     plate {
       kind     = "inner"
       class    = "IsoThermal"
+      filepath = "./hplate.stl"
       medium   = "fe"
       Temperature = 50.0
     }
@@ -103,7 +104,7 @@ GoverningEquation {
 
 
 GeometryModel {
-  Source                  = "polylib.tp"
+  Source                  = "polygon"
   outputGlyph             = "on"
   VoxelOutput             = "svx"
 }

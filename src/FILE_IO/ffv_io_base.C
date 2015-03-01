@@ -993,7 +993,7 @@ bool IO_BASE::writePolylibFile(CompoList* cmp)
     
     if (cmp[m].kind_inout==CompoList::kind_inner  &&  cmp[m].getType() != SOLIDREV)
     {
-      const string str = cmp[m].getBCstr();
+      const string str = cmp[m].getBCstr2Polylib();
       writePolylibGrp(fp, cmp[m].alias, cmp[m].filepath, cmp[m].medium, str);
     }
   }

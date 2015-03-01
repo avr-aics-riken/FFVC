@@ -19,6 +19,11 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-03-01
+r1598 bug fix in fillSeedBcdInner(), getFillParam()
+- reference point must be dimensional, partially it was non-dimensional
+
+--------------------------
 2015-02-25
 r1597 generate polylib.tp file from boundary section
 
@@ -29,7 +34,7 @@ r1596 modify fill medium
 --------------------------
 2015-02-22
 r1595 bug fix and check intrinsic problems
- - 2Dcavity, 3Dcavity, 2Dcyl, Cylinder, Jet, LDC, PMT, ThermalCavity, SHC1D
+- 2Dcavity, 3Dcavity, 2Dcyl, Cylinder, Jet, LDC, PMT, ThermalCavity, SHC1D
 
 r1594 merge parsing of local and outer BCs
 

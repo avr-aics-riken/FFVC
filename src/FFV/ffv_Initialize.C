@@ -3050,9 +3050,6 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   
   Hostonly_
   {
-    printf(     "\n\tNumber of Polygon Group = %d\n\n", C.num_of_polygrp);
-    fprintf(fp, "\n\tNumber of Polygon Group = %d\n\n", C.num_of_polygrp);
-    
     printf(     "\t   Polygon Group Label       Medium Alias              Local BC     Polygons          Area\n");
     printf(     "\t   ---------------------------------------------------------------------------------------\n");
     fprintf(fp, "\t   Polygon Group Label       Medium Alias              Local BC     Polygons          Area\n");

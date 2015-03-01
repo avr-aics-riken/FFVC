@@ -12,6 +12,7 @@ BcTable {
       kind     = "inner"
       class    = "adiabatic"
       medium   = "virtualmetal"
+      filepath ="./x1.stla"
     }
 
     Rod {
@@ -20,6 +21,7 @@ BcTable {
       medium   = "virtualmetal"
       CoefOfHeatTransfer = 12.0
       BulkTemperature = 100.0
+      filepath ="./rectcyl.stla"
     }
 
     HeatedWall {
@@ -27,6 +29,7 @@ BcTable {
       class    = "IsoThermal"
       medium   = "virtualmetal"
       temperature = 200.0
+      filepath ="./x0.stla"
     }
       
     free {
@@ -79,7 +82,7 @@ FillHint {
 
 
 GeometryModel {
-  Source = "polylib.tp"
+  Source = "polygon"
   VoxelOutput     = "svx"
 }
 

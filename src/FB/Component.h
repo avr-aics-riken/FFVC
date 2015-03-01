@@ -233,8 +233,12 @@ public:
   }
   
   
-  //@brief BCのラベル名を返す
+  // @brief BCのラベル名を返す
   std::string getBCstr();
+  
+  
+  // @brief Polylib用にBCのラベル名を返す
+  std::string getBCstr2Polylib();
   
   
   //@brief コンポーネントのサイズを返す

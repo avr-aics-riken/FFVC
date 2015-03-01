@@ -56,7 +56,7 @@ private:
     kind_fill_hint kind;
     int dir;
     string medium;
-    Vec3r point;
+    REAL_TYPE point[3];  ///< 有次元座標
   } KindFill;
   
   KindFill* fill_table;
@@ -175,7 +175,7 @@ private:
   
   
   // 点pの属するセルインデクスを求める
-  // @param [in]  pt 無次元座標
+  // @param [in]  pt 有次元座標
   // @param [out] w  インデクス
   inline void findIndex(const Vec3r pt, int* w) const
   {
@@ -391,9 +391,8 @@ public:
   
   // bcd[]の内部セルにシードIDをペイントする
   unsigned long fillSeedBcdInner(int* bcd,
-                                 const Vec3r p,
+                                 const REAL_TYPE p[3],
                                  const int target,
-                                 const int* bid,
                                  const int* Dsize=NULL);
   
   // bcd[]の外層にシードIDをペイントする

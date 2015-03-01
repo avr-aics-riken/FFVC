@@ -79,6 +79,7 @@ void Geometry::calcBboxFromPolygonGroup(MPIPolylib* PL,
                                         PolygonProperty* PG,
                                         const int m_NoPolyGrp)
 {
+  // 有次元空間でサーチ
   Vec3r m_min;
   Vec3r m_max;
   Vec3r t1(originD);
@@ -621,13 +622,26 @@ bool Geometry::fill_connected(FILE* fp,
       }
       else
       {
-        filled = fillSeedBcdInner(d_bcd, fill_table[m].point, key, d_bid);
+        filled = fillSeedBcdInner(d_bcd, fill_table[m].point, key);
       }
       
       if ( numProc > 1 )
       {
         unsigned long c_tmp = filled;
         if ( paraMngr->Allreduce(&c_tmp, &filled, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      }
+  
+      // 内部点の場合にはfilled==1のはず
+      if ( fill_table[m].kind == kind_point )
+      {
+        if ( filled != 1 )
+        {
+          Hostonly_
+          {
+            fprintf(fp,"\tIn case of Inner Fill Hint, filled cell must be 1.\n");
+          }
+          Exit(0);
+        }
       }
       
     }
@@ -1354,27 +1368,30 @@ unsigned long Geometry::fillSubCellSolid(int* smd, REAL_TYPE* svf)
 /**
  * @brief bcd[]の内部セルにシードIDをペイントする
  * @param [in,out] bcd    BCindex B
- * @param [in]     p      座標値
+ * @param [in]     p      有次元座標値
  * @param [in]     target ペイントするIDのエントリ
- * @param [in]     bid    境界ID
  * @param [in]     Dsize  サイズ
  */
-unsigned long Geometry::fillSeedBcdInner(int* bcd, const Vec3r p, const int target, const int* bid, const int* Dsize)
+unsigned long Geometry::fillSeedBcdInner(int* bcd, const REAL_TYPE p[3], const int target, const int* Dsize)
 {
-  /*
-  printf("point= (%f, %f, %f) : region (%f %f %f)-(%f %f %f)\n",
-         p.x, p.y, p.z,
-         origin[0], origin[1], origin[2],
-         origin[0]+region[0], origin[1]+region[1], origin[2]+region[2]
-         );
-  */
   
-  // 領域内チェック
-  if (p.x<origin[0] || p.x>origin[0]+region[0] ||
-      p.y<origin[1] || p.y>origin[1]+region[1] ||
-      p.z<origin[2] || p.z>origin[2]+region[2] ) {
-    return 0;
+  unsigned long filled = 0;
+  
+  // 領域内でなければ、フィルしない
+  if (p[0]<originD[0] || p[0]>originD[0]+regionD[0] ||
+      p[1]<originD[1] || p[1]>originD[1]+regionD[1] ||
+      p[2]<originD[2] || p[2]>originD[2]+regionD[2] )
+  {
+    return filled;
   }
+  
+  /*
+  printf("\n\t\tfill point [rank=%5d] = (%f, %f, %f) : region (%f %f %f)-(%f %f %f)\n\n",
+          myRank, p[0], p[1], p[2],
+          originD[0], originD[1], originD[2],
+          originD[0]+regionD[0], originD[1]+regionD[1], originD[2]+regionD[2]
+          );
+  */
   
   int ix, jx, kx, gd;
   
@@ -1393,24 +1410,29 @@ unsigned long Geometry::fillSeedBcdInner(int* bcd, const Vec3r p, const int targ
     gd = 1;
   }
   
-  unsigned long c = 0;
-  
   int w[3];
   findIndex(p, w);
-  //printf("fill point rank= %d : (%d %d %d) : (%f %f %f)\n", myRank, w[0], w[1], w[2], p.x, p.y, p.z);
   
+  // 計算したインデクスが内部領域から外れる場合にはフィルしない
+  if (w[0]<1 || w[0]>ix||
+      w[1]<1 || w[1]>jx ||
+      w[2]<1 || w[2]>kx )
+  {
+    //printf("\trank=%d : %d %d %d\n", myRank, w[0], w[1], w[2]);
+    return filled;
+  }
+  
+
   size_t m = _F_IDX_S3D(w[0], w[1], w[2], ix, jx, kx, gd);
-  int s = bid[m];
   
   // 未ペイントのセルの場合
-  //if ( !TEST_BC(s)  &&  DECODE_CMP(bcd[m]) == 0 )
   if ( DECODE_CMP(bcd[m]) == 0 )
   {
     setMediumID(bcd[m], target);
-    c++;
+    filled = 1;
   }
   
-  return c;
+  return filled;
 }
 
 
@@ -2032,17 +2054,18 @@ void Geometry::getFillParam(TextParser* tpCntl,
         Exit(0);
       }
       
-      // 有次元の場合に無次元化する
-      if (Unit == DIMENSIONAL )
+      // 無次元の場合に有次元化する
+      if (Unit == NONDIMENSIONAL )
       {
-        // 無次元化
+        // 有次元化
         for (int i=0; i<3; i++) {
-          tmp[i] /= RefL;
+          tmp[i] *= RefL;
         }
       }
       
-      Vec3r t(tmp);
-      fill_table[m].point = t;
+      fill_table[m].point[0] = tmp[0];
+      fill_table[m].point[1] = tmp[1];
+      fill_table[m].point[2] = tmp[2];
     }
     
     
@@ -2072,7 +2095,7 @@ void Geometry::getFillParam(TextParser* tpCntl,
       }
       else
       {
-        fprintf(fp,"(%12.6e, %12.6e, %12.6e)\n", fill_table[m].point.x, fill_table[m].point.y, fill_table[m].point.z);
+        fprintf(fp,"(%12.6e, %12.6e, %12.6e)\n", fill_table[m].point[0], fill_table[m].point[1], fill_table[m].point[2]);
       }
     }
     fprintf(fp,"\n----------\n");

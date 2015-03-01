@@ -940,7 +940,6 @@ void ASD::setupPolygonASD(const string fname, bool flag)
   int num_of_polygrp = pg_roots->size();
  
    if ( !flag ) {
-     printf(     "\n\tNumber of Polygon Group = %d\n\n", num_of_polygrp);
      printf(     "\t   Polygon Group Label       Medium Alias              Local BC      Element          Area\n");
      printf(     "\t   ---------------------------------------------------------------------------------------\n");
    }

@@ -3405,6 +3405,7 @@ void ParseBC::setControlVars(Control* Cref)
  * @param [in]  keyword テストキーワード
  * @param [in]  m       コンポーネントの格納番号
  * @param [out] cmp     CompoList
+ * @see CompoList::getBCstr2Polylib()
  */
 void ParseBC::setKeywordLBC(const string keyword, const int m, CompoList* cmp)
 {
