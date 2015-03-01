@@ -308,12 +308,15 @@ void IO_BASE::getFIOparams()
         
         C->varState[var_RmsMeanV] = ON;
         C->NvarsAvr_plt3d += 3;
+        
+        C->Mode.ReynoldsStress = ON;
       }
       else if( !strcasecmp(str.c_str(), "off") )
       {
         C->Mode.StatVelocity = OFF;
         C->varState[var_RmsV] = OFF;
         C->varState[var_RmsMeanV] = OFF;
+        C->Mode.ReynoldsStress = OFF;
       }
       else
       {

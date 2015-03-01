@@ -288,6 +288,7 @@ public:
     int StatVelocity;
     int StatPressure;
     int StatTemperature;
+    int ReynoldsStress;
   } Mode_set;
   
   /** 隠しパラメータ */
@@ -607,7 +608,7 @@ public:
     Mode.StatVelocity = 0;
     Mode.StatPressure = 0;
     Mode.StatTemperature = 0;
-    
+    Mode.ReynoldsStress = 0;
 
     LES.Calc=0;
     LES.Model=0;

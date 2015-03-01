@@ -2604,7 +2604,7 @@ void Control::printSteerConditions(FILE* fp,
   fprintf(fp,"\t     Pressure                 :   %s\n", ( Mode.StatPressure == ON ) ? "Yes" : "No");
   fprintf(fp,"\t     Velocity                 :   %s\n", ( Mode.StatVelocity == ON ) ? "Yes" : "No");
   fprintf(fp,"\t     Temperature              :   %s\n", ( Mode.StatTemperature == ON ) ? "Yes" : "No");
-  
+  fprintf(fp,"\t     ReynoldsStress           :   %s\n", ( Mode.ReynoldsStress == ON ) ? "Yes" : "No");
   
 
   // 単位系 ------------------

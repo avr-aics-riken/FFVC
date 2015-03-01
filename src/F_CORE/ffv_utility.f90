@@ -1494,181 +1494,226 @@ end subroutine output_vtk
 
 
 !********************************************************************
-subroutine output_mean(step, G_origin, G_region, G_division, G_size, myRank, sz, dh, g, vmean, rms, rmsmean)
-implicit none
+subroutine output_mean(step, G_origin, G_region, G_division, G_size, myRank, sz, pitch, g, vmean, rmsmean, Rmean, Prodmean)
 integer                                                   :: step
-real, dimension(3)                                        :: G_origin, G_region, dh
+real, dimension(3)                                        :: G_origin, G_region
 integer, dimension(3)                                     :: G_division, G_size, sz
 integer                                                   :: g
-real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) :: vmean, rms, rmsmean
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) :: vmean, rmsmean
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 9) :: Rmean, Prodmean
 real, dimension(1:sz(2), 3)                               :: global_vmean, global_rmsmean
-integer                                                   :: ix, jx, kx, i, j, k, ip, jp, kp, ii, jj, kk, myRank
+real, dimension(1:sz(2), 9)                               :: global_Rmean, global_Prodmean
+integer                                                   :: ix, jx, kx, i, j, k, d, ip, jp, kp, ii, jj, kk, myRank
+real, dimension(3)                                        :: pitch
 real                                                      :: xc, yc, zc, ymean
-
-character fname1*128, fname2*128, fname3*128, fname4*128, fname5*128, fname6*128, fname7*128, fname8*128
+character fname1*128, fname2*128, fname3*128, fname4*128, fname5*128
+character fname6*128, fname7*128, fname8*128, fname9*128, fname10*128
 
 ix = sz(1)
 jx = sz(2)
 kx = sz(3)
 
 if ( step < 10 ) then
-write(fname1, "('umean_step',    i1.0, '.dat')"), step
-write(fname2, "('urmsmean_step', i1.0, '.dat')"), step
-write(fname3, "('vrmsmean_step', i1.0, '.dat')"), step
-write(fname4, "('wrmsmean_step', i1.0, '.dat')"), step
-write(fname5, "('global_umean_step', i1.0, '.dat')"), step
-write(fname6, "('global_urmsmean_step', i1.0, '.dat')"), step
-write(fname7, "('global_vrmsmean_step', i1.0, '.dat')"), step
-write(fname8, "('global_wrmsmean_step', i1.0, '.dat')"), step
+write(fname1, "('global_umean_step',    i1.0, '.dat')"), step
+write(fname2, "('global_urmsmean_step', i1.0, '.dat')"), step
+write(fname3, "('global_vrmsmean_step', i1.0, '.dat')"), step
+write(fname4, "('global_wrmsmean_step', i1.0, '.dat')"), step
+write(fname5, "('global_uumean_step',   i1.0, '.dat')"), step
+write(fname6, "('global_vvmean_step',   i1.0, '.dat')"), step
+write(fname7, "('global_wwmean_step',   i1.0, '.dat')"), step
+write(fname8, "('global_uvmean_step',   i1.0, '.dat')"), step
+write(fname9, "('global_P11mean_step',  i1.0, '.dat')"), step
 else if ( step < 100 ) then
-write(fname1, "('umean_step',    i2.0, '.dat')"), step
-write(fname2, "('urmsmean_step', i2.0, '.dat')"), step
-write(fname3, "('vrmsmean_step', i2.0, '.dat')"), step
-write(fname4, "('wrmsmean_step', i2.0, '.dat')"), step
-write(fname5, "('global_umean_step', i2.0, '.dat')"), step
-write(fname6, "('global_urmsmean_step', i2.0, '.dat')"), step
-write(fname7, "('global_vrmsmean_step', i2.0, '.dat')"), step
-write(fname8, "('global_wrmsmean_step', i2.0, '.dat')"), step
+write(fname1, "('global_umean_step',    i2.0, '.dat')"), step
+write(fname2, "('global_urmsmean_step', i2.0, '.dat')"), step
+write(fname3, "('global_vrmsmean_step', i2.0, '.dat')"), step
+write(fname4, "('global_wrmsmean_step', i2.0, '.dat')"), step
+write(fname5, "('global_uumean_step',   i2.0, '.dat')"), step
+write(fname6, "('global_vvmean_step',   i2.0, '.dat')"), step
+write(fname7, "('global_wwmean_step',   i2.0, '.dat')"), step
+write(fname8, "('global_uvmean_step',   i2.0, '.dat')"), step
+write(fname9, "('global_P11mean_step',  i2.0, '.dat')"), step
 else if ( step < 1000 ) then
-write(fname1, "('umean_step',    i3.0, '.dat')"), step
-write(fname2, "('urmsmean_step', i3.0, '.dat')"), step
-write(fname3, "('vrmsmean_step', i3.0, '.dat')"), step
-write(fname4, "('wrmsmean_step', i3.0, '.dat')"), step
-write(fname5, "('global_umean_step', i3.0, '.dat')"), step
-write(fname6, "('global_urmsmean_step', i3.0, '.dat')"), step
-write(fname7, "('global_vrmsmean_step', i3.0, '.dat')"), step
-write(fname8, "('global_wrmsmean_step', i3.0, '.dat')"), step
+write(fname1, "('global_umean_step',    i3.0, '.dat')"), step
+write(fname2, "('global_urmsmean_step', i3.0, '.dat')"), step
+write(fname3, "('global_vrmsmean_step', i3.0, '.dat')"), step
+write(fname4, "('global_wrmsmean_step', i3.0, '.dat')"), step
+write(fname5, "('global_uumean_step',   i3.0, '.dat')"), step
+write(fname6, "('global_vvmean_step',   i3.0, '.dat')"), step
+write(fname7, "('global_wwmean_step',   i3.0, '.dat')"), step
+write(fname8, "('global_uvmean_step',   i3.0, '.dat')"), step
+write(fname9, "('global_P11mean_step',  i3.0, '.dat')"), step
 else if ( step < 10000 ) then
-write(fname1, "('umean_step',    i4.0, '.dat')"), step
-write(fname2, "('urmsmean_step', i4.0, '.dat')"), step
-write(fname3, "('vrmsmean_step', i4.0, '.dat')"), step
-write(fname4, "('wrmsmean_step', i4.0, '.dat')"), step
-write(fname5, "('global_umean_step', i4.0, '.dat')"), step
-write(fname6, "('global_urmsmean_step', i4.0, '.dat')"), step
-write(fname7, "('global_vrmsmean_step', i4.0, '.dat')"), step
-write(fname8, "('global_wrmsmean_step', i4.0, '.dat')"), step
+write(fname1, "('global_umean_step',    i4.0, '.dat')"), step
+write(fname2, "('global_urmsmean_step', i4.0, '.dat')"), step
+write(fname3, "('global_vrmsmean_step', i4.0, '.dat')"), step
+write(fname4, "('global_wrmsmean_step', i4.0, '.dat')"), step
+write(fname5, "('global_uumean_step',   i4.0, '.dat')"), step
+write(fname6, "('global_vvmean_step',   i4.0, '.dat')"), step
+write(fname7, "('global_wwmean_step',   i4.0, '.dat')"), step
+write(fname8, "('global_uvmean_step',   i4.0, '.dat')"), step
+write(fname9, "('global_P11mean_step',  i4.0, '.dat')"), step
 else if ( step < 100000 ) then
-write(fname1, "('umean_step',    i5.0, '.dat')"), step
-write(fname2, "('urmsmean_step', i5.0, '.dat')"), step
-write(fname3, "('vrmsmean_step', i5.0, '.dat')"), step
-write(fname4, "('wrmsmean_step', i5.0, '.dat')"), step
-write(fname5, "('global_umean_step', i5.0, '.dat')"), step
-write(fname6, "('global_urmsmean_step', i5.0, '.dat')"), step
-write(fname7, "('global_vrmsmean_step', i5.0, '.dat')"), step
-write(fname8, "('global_wrmsmean_step', i5.0, '.dat')"), step
+write(fname1, "('global_umean_step',    i5.0, '.dat')"), step
+write(fname2, "('global_urmsmean_step', i5.0, '.dat')"), step
+write(fname3, "('global_vrmsmean_step', i5.0, '.dat')"), step
+write(fname4, "('global_wrmsmean_step', i5.0, '.dat')"), step
+write(fname5, "('global_uumean_step',   i5.0, '.dat')"), step
+write(fname6, "('global_vvmean_step',   i5.0, '.dat')"), step
+write(fname7, "('global_wwmean_step',   i5.0, '.dat')"), step
+write(fname8, "('global_uvmean_step',   i5.0, '.dat')"), step
+write(fname9, "('global_P11mean_step',  i5.0, '.dat')"), step
 else if ( step < 1000000 ) then
-write(fname1, "('umean_step',    i6.0, '.dat')"), step
-write(fname2, "('urmsmean_step', i6.0, '.dat')"), step
-write(fname3, "('vrmsmean_step', i6.0, '.dat')"), step
-write(fname4, "('wrmsmean_step', i6.0, '.dat')"), step
-write(fname5, "('global_umean_step', i6.0, '.dat')"), step
-write(fname6, "('global_urmsmean_step', i6.0, '.dat')"), step
-write(fname7, "('global_vrmsmean_step', i6.0, '.dat')"), step
-write(fname8, "('global_wrmsmean_step', i6.0, '.dat')"), step
+write(fname1, "('global_umean_step',    i6.0, '.dat')"), step
+write(fname2, "('global_urmsmean_step', i6.0, '.dat')"), step
+write(fname3, "('global_vrmsmean_step', i6.0, '.dat')"), step
+write(fname4, "('global_wrmsmean_step', i6.0, '.dat')"), step
+write(fname5, "('global_uumean_step',   i6.0, '.dat')"), step
+write(fname6, "('global_vvmean_step',   i6.0, '.dat')"), step
+write(fname7, "('global_wwmean_step',   i6.0, '.dat')"), step
+write(fname8, "('global_uvmean_step',   i6.0, '.dat')"), step
+write(fname9, "('global_P11mean_step',  i6.0, '.dat')"), step
+else if ( step < 10000000 ) then
+write(fname1, "('global_umean_step',    i7.0, '.dat')"), step
+write(fname2, "('global_urmsmean_step', i7.0, '.dat')"), step
+write(fname3, "('global_vrmsmean_step', i7.0, '.dat')"), step
+write(fname4, "('global_wrmsmean_step', i7.0, '.dat')"), step
+write(fname5, "('global_uumean_step',   i7.0, '.dat')"), step
+write(fname6, "('global_vvmean_step',   i7.0, '.dat')"), step
+write(fname7, "('global_wwmean_step',   i7.0, '.dat')"), step
+write(fname8, "('global_uvmean_step',   i7.0, '.dat')"), step
+write(fname9, "('global_P11mean_step',  i7.0, '.dat')"), step
 end if
 
 do j = 1, jx
-global_vmean(j, 1)   = 0.0d0
-global_vmean(j, 2)   = 0.0d0
-global_vmean(j, 3)   = 0.0d0
-global_rmsmean(j, 1) = 0.0d0
-global_rmsmean(j, 2) = 0.0d0
-global_rmsmean(j, 3) = 0.0d0
+do d = 1, 3
+global_vmean(j, d)   = 0.0d0
+global_rmsmean(j, d) = 0.0d0
+end do
+end do
+
+do j = 1, jx
+do d = 1, 9
+global_Rmean(j, d) = 0.0d0
+global_Prodmean(j, d) = 0.0d0
+end do
 end do
 
 do j = 1, jx
 do k = 1, kx
 do i = 1, ix
-global_vmean(j, 1)   = global_vmean(j, 1) + vmean(i, j, k, 1)
-global_vmean(j, 2)   = global_vmean(j, 2) + vmean(i, j, k, 2)
-global_vmean(j, 3)   = global_vmean(j, 3) + vmean(i, j, k, 3)
-global_rmsmean(j, 1) = global_rmsmean(j, 1) + rmsmean(i, j, k, 1)
-global_rmsmean(j, 2) = global_rmsmean(j, 2) + rmsmean(i, j, k, 2)
-global_rmsmean(j, 3) = global_rmsmean(j, 3) + rmsmean(i, j, k, 3)
+do d = 1, 3
+global_vmean(j, d)   = global_vmean(j, d)   + vmean(i, j, k, d)
+global_rmsmean(j, d) = global_rmsmean(j, d) + rmsmean(i, j, k, d)
 end do
 end do
-global_vmean(j, 1)   = global_vmean(j, 1)/(ix*kx)
-global_vmean(j, 2)   = global_vmean(j, 2)/(ix*kx)
-global_vmean(j, 3)   = global_vmean(j, 3)/(ix*kx)
-global_rmsmean(j, 1) = global_rmsmean(j, 1)/(ix*kx)
-global_rmsmean(j, 2) = global_rmsmean(j, 2)/(ix*kx)
-global_rmsmean(j, 3) = global_rmsmean(j, 3)/(ix*kx)
+end do
+end do
+
+do j = 1, jx
+do k = 1, kx
+do i = 1, ix
+do d = 1, 9
+global_Rmean(j, d)   = global_Rmean(j, d) + Rmean(i, j, k, d)
+global_Prodmean(j, d) = global_Prodmean(j, d) + Prodmean(i, j, k, d)
+end do
+end do
+end do
+end do
+
+do j = 1, jx
+do d = 1, 3
+global_vmean(j, d)   = global_vmean(j, d)/(ix*kx)
+global_rmsmean(j, d) = global_rmsmean(j, d)/(ix*kx)
+end do
+end do
+
+do j = 1, jx
+do d = 1, 9
+global_Rmean(j, d) = global_Rmean(j, d)/(ix*kx)
+global_Prodmean(j, d) = global_Prodmean(j, d)/(ix*kx)
+end do
 end do
 
 
 do kp = 1, kx
 do jp = 1, jx
 do ip = 1, ix
-kk = int(myRank/(G_division(1)*G_division(2)))
-jj = int((myRank - kk*G_division(1)*G_division(3))/G_division(1))
-ii = mod(myRank, G_division(1))
-k = kp + kk * int(G_size(3)/G_division(3))
+
+ii = 0
+jj = 0
+
+k = kp + myRank * int(G_size(3)/G_division(3))
 j = jp + jj * int(G_size(2)/G_division(2))
 i = ip + ii * int(G_size(1)/G_division(1))
-xc = G_origin(1) + (i - 0.5d0)*dh(1)
-yc = G_origin(2) + (j - 0.5d0)*dh(2)
-zc = G_origin(3) + (k - 0.5d0)*dh(3)
 
-if ( (abs(xc - G_region(1)/2.0d0) < dh(1)).and.(abs(yc - G_region(2)/2.0d0) < dh(2)) &
-.and.(abs(zc - G_region(3)/2.0d0) < dh(3)).and.(xc < G_region(1)/2.0d0) &
-.and.(yc < G_region(2)/2.0d0).and.(zc < G_region(3)/2.0d0) ) then
-open(10, file = fname1)
-open(11, file = fname2)
-open(12, file = fname3)
-open(13, file = fname4)
-open(20, file = "umean_latest.dat")
-open(21, file = "urmsmean_latest.dat")
-open(22, file = "vrmsmean_latest.dat")
-open(23, file = "wrmsmean_latest.dat")
+xc = G_origin(1) + (i - 0.5d0)*pitch(1)
+yc = G_origin(2) + (j - 0.5d0)*pitch(2)
+zc = G_origin(3) + (k - 0.5d0)*pitch(3)
+
+if ( (i == 1).and.(k == 1) ) then
+open(11, file = fname1)
+open(12, file = fname2)
+open(13, file = fname3)
+open(14, file = fname4)
+open(15, file = fname5)
+open(16, file = fname6)
+open(17, file = fname7)
+open(18, file = fname8)
+open(19, file = fname9)
+open(31, file = "global_umean_latest.dat")
+open(32, file = "global_urmsmean_latest.dat")
+open(33, file = "global_vrmsmean_latest.dat")
+open(34, file = "global_wrmsmean_latest.dat")
+open(35, file = "global_uumean_latest.dat")
+open(36, file = "global_vvmean_latest.dat")
+open(37, file = "global_wwmean_latest.dat")
+open(38, file = "global_uvmean_latest.dat")
+open(39, file = "global_P11mean_latest.dat")
+
 do jj = 1, jx
-ymean = G_origin(2) + (jj - 0.5d0)*dh(2)
-write(10, *) ymean, vmean(ip, jj, kp, 1)
-write(11, *) ymean, rmsmean(ip, jj, kp, 1)
-write(12, *) ymean, rmsmean(ip, jj, kp, 2)
-write(13, *) ymean, rmsmean(ip, jj, kp, 3)
-write(20, *) ymean, vmean(ip, jj, kp, 1)
-write(21, *) ymean, rmsmean(ip, jj, kp, 1)
-write(22, *) ymean, rmsmean(ip, jj, kp, 2)
-write(23, *) ymean, rmsmean(ip, jj, kp, 3)
+ymean = G_origin(2) + (jj - 0.5d0)*pitch(2)
+write(11, *) ymean, global_vmean(jj, 1)
+write(12, *) ymean, global_rmsmean(jj, 1)
+write(13, *) ymean, global_rmsmean(jj, 2)
+write(14, *) ymean, global_rmsmean(jj, 3)
+write(15, *) ymean, global_Rmean(jj, 1)
+write(16, *) ymean, global_Rmean(jj, 5)
+write(17, *) ymean, global_Rmean(jj, 9)
+write(18, *) ymean, global_Rmean(jj, 2)
+write(19, *) ymean, global_Prodmean(jj, 1)
+
+write(31, *) ymean, global_vmean(jj, 1)
+write(32, *) ymean, global_rmsmean(jj, 1)
+write(33, *) ymean, global_rmsmean(jj, 2)
+write(34, *) ymean, global_rmsmean(jj, 3)
+write(35, *) ymean, global_Rmean(jj, 1)
+write(36, *) ymean, global_Rmean(jj, 5)
+write(37, *) ymean, global_Rmean(jj, 9)
+write(38, *) ymean, global_Rmean(jj, 2)
+write(39, *) ymean, global_Prodmean(jj, 1)
 end do
-close(10)
+
 close(11)
 close(12)
 close(13)
-close(20)
-close(21)
-close(22)
-close(23)
-end if
-
-if ( (i == 1).and.(k == 1) ) then
-open(14, file = fname5)
-open(15, file = fname6)
-open(16, file = fname7)
-open(17, file = fname8)
-open(24, file = "global_umean_latest.dat")
-open(25, file = "global_urmsmean_latest.dat")
-open(26, file = "global_vrmsmean_latest.dat")
-open(27, file = "global_wrmsmean_latest.dat")
-do jj = 1, jx
-ymean = G_origin(2) + (jj - 0.5d0)*dh(2)
-write(14, *) ymean, global_vmean(jj, 1)
-write(15, *) ymean, global_rmsmean(jj, 1)
-write(16, *) ymean, global_rmsmean(jj, 2)
-write(17, *) ymean, global_rmsmean(jj, 3)
-write(24, *) ymean, global_vmean(jj, 1)
-write(25, *) ymean, global_rmsmean(jj, 1)
-write(26, *) ymean, global_rmsmean(jj, 2)
-write(27, *) ymean, global_rmsmean(jj, 3)
-end do
 close(14)
 close(15)
 close(16)
 close(17)
-close(24)
-close(25)
-close(26)
-close(27)
+close(18)
+close(19)
+
+close(31)
+close(32)
+close(33)
+close(34)
+close(35)
+close(36)
+close(37)
+close(38)
+close(39)
+
 end if
 
 end do
@@ -1678,3 +1723,492 @@ end do
 
 return
 end subroutine output_mean
+
+
+!> ********************************************************************
+!! @brief 変動速度を計算する
+!! @param [out]    vp      変動速度
+!! @param [in]     sz      配列長
+!! @param [in]     g       ガイドセル長
+!! @param [in]     v       速度
+!! @param [in]     av      速度の時間平均値
+!! @param [out]    flop    flop count
+!<
+subroutine vprime(vp, sz, g, v, av, flop)
+implicit none
+integer, dimension(3)                                     :: sz
+integer                                                   :: g
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) :: vp
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) :: v, av
+double precision                                          :: flop
+integer                                                   :: i, j, k, ix, jx, kx
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+flop = flop + dble(ix+2*g) * dble(jx+2*g) * dble(kx+2*g) * 45.0d0 + 9.0d0
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, g)
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k = 1, kx
+do j = 1, jx
+do i = 1, ix
+vp(i, j, k, 1) = v(i, j, k, 1) - av(i, j, k, 1)
+vp(i, j, k, 2) = v(i, j, k, 2) - av(i, j, k, 2)
+vp(i, j, k, 3) = v(i, j, k, 3) - av(i, j, k, 3)
+end do
+end do
+end do
+!$OMP END PARALLEL
+
+return
+end subroutine vprime
+
+
+
+
+!> ********************************************************************
+!! @param [out]    R       レイノルズ応力の瞬時値
+!! @param [in]     sz      配列長
+!! @param [in]     g       ガイドセル長
+!! @param [in]     vp      速度の瞬時値
+!! @param [out]    flop    flop count
+!!
+!!  u          ; 速度の瞬時値
+!!  \var{u}    ; 速度の時間平均値
+!!  u^{\prime} ; 速度の変動値 u - \var{u}
+!!  \var{u^{\prime}v^{\prime}} ; レイノルズ応力の瞬時値
+!<
+subroutine reynolds_stress(R, sz, g, vp, flop)
+implicit none
+include 'ffv_f_params.h'
+integer                                                   :: ix, jx, kx, i, j, k, g
+double precision                                          :: flop
+integer, dimension(3)                                     :: sz
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 9) :: R
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) :: vp
+real                                                      :: u1, u2, u3
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+flop = flop + dble(ix+2*g) * dble(jx+2*g) * dble(kx+2*g) * 45.0d0 + 9.0d0
+
+!$OMP PARALLEL &
+!$OMP PRIVATE(u1, u2, u3) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, g)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k = 1-g, kx+g
+do j = 1-g, jx+g
+do i = 1-g, ix+g
+
+u1 = vp(i, j, k, 1)
+u2 = vp(i, j, k, 2)
+u3 = vp(i, j, k, 3)
+
+! レイノルズ応力
+! (本来は対称テンソルだが、内積計算での場合分けの煩雑さを避けるため、
+! あえて非対称テンソルとして取り扱う。)
+R(i, j, k, 1) = u1 * u1
+R(i, j, k, 2) = u1 * u2
+R(i, j, k, 3) = u1 * u3
+R(i, j, k, 4) = R(i, j, k, 2)
+R(i, j, k, 5) = u2 * u2
+R(i, j, k, 6) = u2 * u3
+R(i, j, k, 7) = R(i, j, k, 3)
+R(i, j, k, 8) = R(i, j, k, 6)
+R(i, j, k, 9) = u3 * u3
+
+end do
+end do
+end do
+!$OMP END PARALLEL
+
+return
+end subroutine reynolds_stress
+
+
+
+
+!> ********************************************************************
+!! @brief 速度勾配テンソルの計算 (2次精度)
+!! @param [out] gv   速度勾配テンソル
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  v    セルセンター速度ベクトル
+!! @param [in]  bv   BCindex C
+!! @param [out] flop flop count
+!<
+subroutine gradv (gv, sz, dh, g, v, bv, flop)
+implicit none
+include 'ffv_f_params.h'
+integer                                                   ::  i, j, k, ix, jx, kx, g, idx
+real, dimension(3)                                        ::  dh
+double precision                                          ::  flop
+integer, dimension(3)                                     ::  sz
+integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
+real                                                      ::  actv, rx, ry, rz
+real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
+real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
+real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
+real                                                      ::  w_e, w_w, w_n, w_s, w_t, w_b, uq, vq, wq
+real                                                      ::  d11, d22, d33, d12, d13, d23
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 9) ::  gv
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+rx = 1.0 / (2.0*dh(1))
+ry = 1.0 / (2.0*dh(2))
+rz = 1.0 / (2.0*dh(3))
+
+!$OMP PARALLEL &
+!$OMP PRIVATE(idx, actv, uq, vq, wq) &
+!$OMP PRIVATE(Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1) &
+!$OMP PRIVATE(Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1) &
+!$OMP PRIVATE(Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1) &
+!$OMP PRIVATE(b_e1, b_w1, b_n1, b_s1, b_t1, b_b1) &
+!$OMP PRIVATE(w_e, w_w, w_n, w_s, w_t, w_b) &
+!$OMP PRIVATE(d11, d22, d33, d12, d13, d23) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, rx, ry, rz)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+
+do k=1,kx
+do j=1,jx
+do i=1,ix
+idx = bv(i,j,k)
+
+Ub1 = v(i  ,j  ,k-1, 1)
+Us1 = v(i  ,j-1,k  , 1)
+Uw1 = v(i-1,j  ,k  , 1)
+Up0 = v(i  ,j  ,k  , 1)
+Ue1 = v(i+1,j  ,k  , 1)
+Un1 = v(i  ,j+1,k  , 1)
+Ut1 = v(i  ,j  ,k+1, 1)
+
+Vb1 = v(i  ,j  ,k-1, 2)
+Vs1 = v(i  ,j-1,k  , 2)
+Vw1 = v(i-1,j  ,k  , 2)
+Vp0 = v(i  ,j  ,k  , 2)
+Ve1 = v(i+1,j  ,k  , 2)
+Vn1 = v(i  ,j+1,k  , 2)
+Vt1 = v(i  ,j  ,k+1, 2)
+
+Wb1 = v(i  ,j  ,k-1, 3)
+Ws1 = v(i  ,j-1,k  , 3)
+Ww1 = v(i-1,j  ,k  , 3)
+Wp0 = v(i  ,j  ,k  , 3)
+We1 = v(i+1,j  ,k  , 3)
+Wn1 = v(i  ,j+1,k  , 3)
+Wt1 = v(i  ,j  ,k+1, 3)
+
+! セル状態 (0-solid / 1-fluid) > 1 flop
+actv= real(ibits(idx, State, 1))
+
+b_w1= ibits(bv(i-1,j  ,k  ), State, 1)
+b_e1= ibits(bv(i+1,j  ,k  ), State, 1)
+b_s1= ibits(bv(i  ,j-1,k  ), State, 1)
+b_n1= ibits(bv(i  ,j+1,k  ), State, 1)
+b_b1= ibits(bv(i  ,j  ,k-1), State, 1)
+b_t1= ibits(bv(i  ,j  ,k+1), State, 1)
+
+! 隣接セルの状態で置換フラグをセット セル状態 (0-solid / 1-fluid) > 12 flop
+w_e = real(b_e1) * actv
+w_w = real(b_w1) * actv
+w_n = real(b_n1) * actv
+w_s = real(b_s1) * actv
+w_t = real(b_t1) * actv
+w_b = real(b_b1) * actv
+
+! セルセンターからの壁面修正速度 > 6 flop
+uq = -Up0
+vq = -Vp0
+wq = -Wp0
+
+! 壁面の場合の参照速度の修正
+if ( b_e1 == 0 ) then
+Ue1 = uq
+Ve1 = vq
+We1 = wq
+endif
+
+if ( b_w1 == 0 ) then
+Uw1 = uq
+Vw1 = vq
+Ww1 = wq
+end if
+
+if ( b_n1 == 0 ) then
+Un1 = uq
+Vn1 = vq
+Wn1 = wq
+end if
+
+if ( b_s1 == 0 ) then
+Us1 = uq
+Vs1 = vq
+Ws1 = wq
+end if
+
+if ( b_t1 == 0 ) then
+Ut1 = uq
+Vt1 = vq
+Wt1 = wq
+end if
+
+if ( b_b1 == 0 ) then
+Ub1 = uq
+Vb1 = vq
+Wb1 = wq
+end if
+
+gv(i, j, k, 1) = rx * ( Ue1 - Uw1 ) * actv
+gv(i, j, k, 2) = rx * ( Ve1 - Vw1 ) * actv
+gv(i, j, k, 3) = rx * ( We1 - Ww1 ) * actv
+gv(i, j, k, 4) = ry * ( Un1 - Us1 ) * actv
+gv(i, j, k, 5) = ry * ( Vn1 - Vs1 ) * actv
+gv(i, j, k, 6) = ry * ( Wn1 - Ws1 ) * actv
+gv(i, j, k, 7) = rz * ( Ut1 - Ub1 ) * actv
+gv(i, j, k, 8) = rz * ( Vt1 - Vb1 ) * actv
+gv(i, j, k, 9) = rz * ( Wt1 - Wb1 ) * actv
+
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine gradv
+
+
+
+
+!> ********************************************************************
+!! @brief テンソルの内積を計算する
+!! @param [out]    C    テンソルの内積 (C_jk = A_ij B_jk)
+!! @param [in]     A    テンソル (A_ij)
+!! @param [in]     B    テンソル (B_ij)
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [out]    flop flop count
+!<
+subroutine inner_product_t (C, A, B, sz, g, flop)
+implicit none
+integer                                                   ::  i, j, k, ix, jx, kx, g
+integer, dimension(3)                                     ::  sz
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 9) ::  A, B, C
+real                                                      ::  a11, a12, a13, a21, a22, a23, a31, a32, a33
+real                                                      ::  b11, b12, b13, b21, b22, b23, b31, b32, b33
+double precision                                          ::  flop
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+flop = flop + dble(ix)*dble(jx)*dble(kx)*45.0d0
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx)
+!$OMP DO SCHEDULE(static)
+
+do k = 1, kx
+do j = 1, jx
+do i = 1, ix
+a11 = A(i, j, k, 1)
+a12 = A(i, j, k, 2)
+a13 = A(i, j, k, 3)
+a21 = A(i, j, k, 4)
+a22 = A(i, j, k, 5)
+a23 = A(i, j, k, 6)
+a31 = A(i, j, k, 7)
+a32 = A(i, j, k, 8)
+a33 = A(i, j, k, 9)
+
+b11 = B(i, j, k, 1)
+b12 = B(i, j, k, 2)
+b13 = B(i, j, k, 3)
+b21 = B(i, j, k, 4)
+b22 = B(i, j, k, 5)
+b23 = B(i, j, k, 6)
+b31 = B(i, j, k, 7)
+b32 = B(i, j, k, 8)
+b33 = B(i, j, k, 9)
+
+C(i, j, k, 1) = a11*b11 + a12*b21 + a13*b31
+C(i, j, k, 2) = a11*b12 + a12*b22 + a13*b32
+C(i, j, k, 3) = a11*b13 + a12*b23 + a13*b33
+C(i, j, k, 4) = a21*b11 + a22*b21 + a23*b31
+C(i, j, k, 5) = a21*b12 + a22*b22 + a23*b32
+C(i, j, k, 6) = a21*b13 + a22*b23 + a23*b33
+C(i, j, k, 7) = a31*b11 + a32*b21 + a33*b31
+C(i, j, k, 8) = a31*b12 + a32*b22 + a33*b32
+C(i, j, k, 9) = a31*b13 + a32*b23 + a33*b33
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine inner_product_t
+
+
+
+
+!> ********************************************************************
+!! @brief 転置テンソルを作成する
+!! @param [out]    tA   転置テンソル (A_ji)
+!! @param [in]     A    テンソル (A_ij)
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [out]    flop flop count
+!<
+subroutine transpose_t (tA, A, sz, g, flop)
+implicit none
+integer                                                   ::  i, j, k, ix, jx, kx, g
+integer, dimension(3)                                     ::  sz
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 9) ::  A, tA
+double precision                                          ::  flop
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+flop = 0.0d0
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx)
+!$OMP DO SCHEDULE(static)
+
+do k = 1, kx
+do j = 1, jx
+do i = 1, ix
+tA(i, j, k, 1) = A(i, j, k, 1)
+tA(i, j, k, 2) = A(i, j, k, 4)
+tA(i, j, k, 3) = A(i, j, k, 7)
+tA(i, j, k, 4) = A(i, j, k, 2)
+tA(i, j, k, 5) = A(i, j, k, 5)
+tA(i, j, k, 6) = A(i, j, k, 8)
+tA(i, j, k, 7) = A(i, j, k, 3)
+tA(i, j, k, 8) = A(i, j, k, 6)
+tA(i, j, k, 9) = A(i, j, k, 9)
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine transpose_t
+
+
+
+!> ********************************************************************
+!! @brief レイノルズ応力生成率を計算する
+!! @param [out]    P    レイノルズ応力生成率 (P_ij = - A_ij - B_ij)
+!! @param [in]     A    テンソル (A_ij)
+!! @param [in]     B    テンソル (B_ij)
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [out]    flop flop count
+!<
+subroutine calc_production_rate (P, A, B, sz, g, flop)
+implicit none
+integer                                                   ::  i, j, k, ix, jx, kx, g
+integer, dimension(3)                                     ::  sz
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 9) ::  A, B, P
+double precision                                          ::  flop
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+flop = flop + dble(ix)*dble(jx)*dble(kx)*9.0d0
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx)
+!$OMP DO SCHEDULE(static)
+
+do k = 1, kx
+do j = 1, jx
+do i = 1, ix
+P(i, j, k, 1) = -A(i, j, k, 1) - B(i, j, k, 1)
+P(i, j, k, 2) = -A(i, j, k, 2) - B(i, j, k, 2)
+P(i, j, k, 3) = -A(i, j, k, 3) - B(i, j, k, 3)
+P(i, j, k, 4) = -A(i, j, k, 4) - B(i, j, k, 4)
+P(i, j, k, 5) = -A(i, j, k, 5) - B(i, j, k, 5)
+P(i, j, k, 6) = -A(i, j, k, 6) - B(i, j, k, 6)
+P(i, j, k, 7) = -A(i, j, k, 7) - B(i, j, k, 7)
+P(i, j, k, 8) = -A(i, j, k, 8) - B(i, j, k, 8)
+P(i, j, k, 9) = -A(i, j, k, 9) - B(i, j, k, 9)
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine calc_production_rate
+
+
+
+
+!> ********************************************************************
+!! @brief テンソルの時間平均値を加算する
+!! @param [in,out] at   平均値
+!! @param [in]     sz   配列長
+!! @param [in]     g    ガイドセル長
+!! @param [in]     t    テンソル値
+!! @param [in]     nadd 加算回数
+!! @param [in,out] flop 浮動小数演算数
+!<
+subroutine average_t (at, sz, g, t, nadd, flop)
+implicit none
+integer                                                   ::  i, j, k, ix, jx, kx, g
+integer, dimension(3)                                     ::  sz
+double precision                                          ::  flop
+real                                                      ::  nadd, val1, val2
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 9) ::  t, at
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+flop = flop + dble(ix)*dble(jx)*dble(kx)*27.0d0 + 9.0d0
+
+val2 = 1.0/nadd
+val1 = 1.0 - val2
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, val1, val2)
+
+!$OMP DO SCHEDULE(static)
+
+do k=1,kx
+do j=1,jx
+do i=1,ix
+at(i, j, k, 1) = val1 * at(i, j, k, 1) + val2 * t(i, j, k, 1)
+at(i, j, k, 2) = val1 * at(i, j, k, 2) + val2 * t(i, j, k, 2)
+at(i, j, k, 3) = val1 * at(i, j, k, 3) + val2 * t(i, j, k, 3)
+at(i, j, k, 4) = val1 * at(i, j, k, 4) + val2 * t(i, j, k, 4)
+at(i, j, k, 5) = val1 * at(i, j, k, 5) + val2 * t(i, j, k, 5)
+at(i, j, k, 6) = val1 * at(i, j, k, 6) + val2 * t(i, j, k, 6)
+at(i, j, k, 7) = val1 * at(i, j, k, 7) + val2 * t(i, j, k, 7)
+at(i, j, k, 8) = val1 * at(i, j, k, 8) + val2 * t(i, j, k, 8)
+at(i, j, k, 9) = val1 * at(i, j, k, 9) + val2 * t(i, j, k, 9)
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine average_t

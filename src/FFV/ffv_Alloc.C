@@ -300,6 +300,43 @@ void FALLOC::allocArray_Statistic(double &total, Control* C)
     total+= array_size * (double)sizeof(REAL_TYPE);
   }
 
+  
+  // Reynolds Stress
+  if ( C->Mode.ReynoldsStress == ON )
+  {
+    // d_vp (変動速度ベクトル)
+    if ( !(d_vp = Alloc::Real_V3D(size, guide)) ) Exit(0);
+    total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
+    
+    // d_R (レイノルズ応力テンソル)
+    if ( !(d_R = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 9.0;
+    
+    // d_R_mean (レイノルズ応力テンソル平均値)
+    if ( !(d_R_mean = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 9.0;
+    
+    // d_gav (平均速度勾配テンソル)
+    if ( !(d_gav = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 9.0;
+    
+    // d_wk (ワーク)
+    if ( !(d_wk = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 9.0;
+    
+    // d_twk (ワーク)
+    if ( !(d_twk = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 9.0;
+    
+    // d_Prod (レイノルズ応力テンソル生成率)
+    if ( !(d_Prod = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 9.0;
+    
+    // d_Prod_mean (レイノルズ応力テンソル生成率)
+    if ( !(d_Prod_mean = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 9.0;
+  }
+  
 }
 
 

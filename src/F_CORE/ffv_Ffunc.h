@@ -101,6 +101,14 @@
 #define calc_rms_v_         CALC_RMS_V
 #define calc_rms_s_         CALC_RMS_S
 #define output_vtk_         OUTPUT_VTK
+#define output_mean_        OUTPUT_MEAN
+#define vprime_             VPRIME
+#define reynolds_stress_    REYNOLDS_STRESS
+#define gradv_              GRADV
+#define inner_product_t_    INNER_PRODUCT_T
+#define transpose_t_        TRANSPOSE_T
+#define calc_production_rate_ CALC_PRODUCTION_RATE
+#define average_t_          AVERAGE_T
 #define perturbu_           PERTURBU
 #define generate_iblank_    GENERATE_IBLANK
 #define pack_scalar_        PACK_SCALAR
@@ -124,7 +132,6 @@
 #define force_cds_          FORCE_CDS
 
 
-// FB_util.f90
 #define fb_average_s_            FB_AVERAGE_S
 #define fb_average_v_            FB_AVERAGE_V
 #define fb_delta_s_              FB_DELTA_S
@@ -722,19 +729,68 @@ extern "C" {
                    REAL_TYPE* p
                    );
   
-  void output_mean_(int* step,
-                    REAL_TYPE* G_origin,
-                    REAL_TYPE* G_region,
-                    int* G_division,
-                    int* G_size,
-                    int* myRank,
-                    int* sz,
-                    REAL_TYPE* dh,
-                    int* g,
-                    REAL_TYPE* av,
-                    REAL_TYPE* rms,
-                    REAL_TYPE* rmsmean
-                    );
+  void output_mean_ (int* step,
+                     REAL_TYPE* G_origin,
+                     REAL_TYPE* G_region,
+                     int* G_division,
+                     int* G_size,
+                     int* myRank,
+                     int* sz,
+                     REAL_TYPE* dh,
+                     int* g,
+                     REAL_TYPE* vmean,
+                     REAL_TYPE* rmsmean,
+                     REAL_TYPE* Rmean,
+                     REAL_TYPE* Prodmean
+                     );
+  
+  void vprime_ (REAL_TYPE* vp,
+                int* sz,
+                int* g,
+                REAL_TYPE* v,
+                REAL_TYPE* av,
+                double* flop);
+  
+  void reynolds_stress_ (REAL_TYPE* R,
+                         int* sz,
+                         int* g,
+                         REAL_TYPE* vp,
+                         double* flop);
+  
+  void gradv_ (REAL_TYPE* gv,
+               int* sz,
+               REAL_TYPE* dh,
+               int* g,
+               REAL_TYPE* v,
+               int* bv,
+               double* flop);
+  
+  void inner_product_t_ (REAL_TYPE* C,
+                         REAL_TYPE* A,
+                         REAL_TYPE* B,
+                         int* sz,
+                         int* g,
+                         double* flop);
+  
+  void transpose_t_ (REAL_TYPE* tA,
+                     REAL_TYPE* A,
+                     int* sz,
+                     int* g,
+                     double* flop);
+  
+  void calc_production_rate_ (REAL_TYPE* P,
+                              REAL_TYPE* A,
+                              REAL_TYPE* B,
+                              int* sz,
+                              int* g,
+                              double* flop);
+  
+  void average_t_ (REAL_TYPE* at,
+                   int* sz,
+                   int* g,
+                   REAL_TYPE* t,
+                   REAL_TYPE* nadd,
+                   double* flop);
 
   void src_trnc_ (REAL_TYPE* rhs,
                   int* sz,

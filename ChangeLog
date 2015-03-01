@@ -20,6 +20,9 @@ REVISION HISTORY
 
 --------------------------
 2015-03-01
+r1599 import statistic code
+- confirm detail later
+
 r1598 bug fix in fillSeedBcdInner(), getFillParam()
 - reference point must be dimensional, partially it was non-dimensional
 

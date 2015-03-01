@@ -153,6 +153,37 @@ int FFV::Loop(const unsigned step)
       calc_rms_s_(d_rms_t, d_rms_mean_t, size, &guide, d_ws, d_ie0, &accum, &flop_count);
     }
     
+    
+    if ( C.Mode.ReynoldsStress == ON )
+    {
+      flop_count = 0.0;
+      
+      //    速度変動ベクトル
+      vprime_(d_vp, size, &guide, d_v, d_av, &flop_count);
+      
+      //    レイノルズ応力テンソル: R
+      reynolds_stress_(d_R, size, &guide, d_vp, &flop_count);
+      
+      //--- (1):レイノルズ応力生成テンソルの計算
+      //    平均速度勾配テンソル: grad_Umean
+      gradv_(d_gav, size, pitch, &guide, d_av, d_bcd, &flop_count);
+      
+      //    R ・ grad_Umean
+      inner_product_t_(d_wk, d_R, d_gav, size, &guide, &flop_count);
+      
+      //    (R ・ grad_Umean)^T
+      transpose_t_(d_twk, d_wk, size, &guide, &flop_count);
+      
+      //    レイノルズ応力生成テンソル
+      calc_production_rate_(d_Prod, d_twk, d_wk, size, &guide, &flop_count);
+      
+      //    レイノルズ応力テンソル (時間平均値)
+      reynolds_stress_(d_R_mean, size, &guide, d_R, &flop_count);
+      
+      //    レイノルズ応力生成テンソル (時間平均値)
+      average_t_(d_Prod_mean, size, &guide, d_Prod, &accum, &flop_count);
+    }
+    
     TIMING_stop("Turbulence Statistic", flop_count);
     
   }
@@ -284,9 +315,6 @@ int FFV::Loop(const unsigned step)
         F->OutputStatisticalVarables(CurrentStep, CurrentTime, CurrentStepStat, CurrentTimeStat, flop_count);
         TIMING_stop("File_Output", flop_count);
         
-        // special
-        //int cs = CurrentStep;
-        //output_mean_(&cs, G_origin, G_region, G_division, G_size, &myRank, size, &pitch[0], &guide, d_av, d_rms_v, d_rms_mean_v);
       }
       
       // 最終ステップ
@@ -303,6 +331,20 @@ int FFV::Loop(const unsigned step)
       }
     }
   }
+  
+  
+  // Turbulent statistics
+  if (C.Mode.ReynoldsStress == ON)
+  {
+    if ( (CurrentStep % 100 == 0) || (CurrentStep == 1) )
+    {
+      int cs = CurrentStep;
+      //output_mean_(&cs, G_origin, G_region, G_division, G_size, &myRank, size, &pitch[0], &guide, d_av, d_rms_v, d_rms_mean_v);
+      output_mean_(&cs, G_origin, G_region, G_division, G_size, &myRank, size, pitch, &guide, d_av, d_rms_mean_v, d_R_mean, d_Prod_mean);
+    }
+  }
+  
+  
   
   if (C.varState[var_TotalP] == ON )
   {
