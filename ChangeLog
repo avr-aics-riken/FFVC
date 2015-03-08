@@ -19,6 +19,12 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-03-08
+r1601 bug fix of loadBCs()
+- set dummy values for cmp[m].medium in case of Periodic
+- skip rading filepath for intrinsic problems
+
+--------------------------
 2015-03-01
 r1600 remove comment in Initialize
 

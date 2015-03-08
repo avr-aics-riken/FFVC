@@ -2007,6 +2007,11 @@ void ParseBC::loadBCs(Control* C, MediumList* mat, CompoList* cmp)
         BaseBc[odr_outer].setGuideMedium(key);
       }
     }
+    else // 周期境界のとき
+    {
+      cmp[m].medium = "period";
+      cmp[m].setMatodr(0); // dummy
+    }
     
     
     
@@ -2027,7 +2032,11 @@ void ParseBC::loadBCs(Control* C, MediumList* mat, CompoList* cmp)
       else if ( tp == SOLIDREV )      getIbcSolidRev(label_leaf, m, cmp);
       
       // ファイルパス
-      if (tp != SOLIDREV) // >> 回転体は内部生成でポリゴンは指定しない
+      if ( tp == SOLIDREV || C->Mode.Example != id_Polygon ) // >> 組み込み例題と回転体は内部生成でポリゴンは指定しない
+      {
+        ;
+      }
+      else
       {
         label = label_leaf + "/filepath";
         
@@ -2179,45 +2188,52 @@ void ParseBC::loadBCs(Control* C, MediumList* mat, CompoList* cmp)
   
   
   
-  // cmp[]の全要素で媒質情報を保持。この時点までは、媒質情報はcmp[]の媒質部分にしか入っていない
+  // cmp[]の全要素で媒質情報を保持。この時点までは、cmp[]の境界条件部分の媒質情報は空。媒質部分にしか入っていない
   for (int k=1; k<=NoBC; k++)
   {
     int m = NoMedium + k; // cmp[]のLBCのインデクス
-    
-    // 媒質ラベルからmat[]の格納番号のサーチ
     int odr = -1;
     
-    for (int i=1; i<=NoMedium; i++)
+    // 周期境界のときにはスキップ
+    if ( strcasecmp(cmp[m].medium.c_str(), "period") )
     {
-      if ( !strcasecmp( cmp[m].medium.c_str(), mat[i].alias.c_str()) )
+      // 媒質ラベルからmat[]の格納番号のサーチ
+      for (int i=1; i<=NoMedium; i++)
       {
-        odr = i;
-        break;
+        if ( !strcasecmp( cmp[m].medium.c_str(), mat[i].alias.c_str()) )
+        {
+          odr = i;
+          break;
+        }
+      }
+      
+      if ( (odr < 1) || (odr > NoMedium) )
+      {
+        Hostonly_ stamped_printf("\tSomthing wrong %d\n", odr);
+        Exit(0);
+      }
+      
+      // LocalBC分の媒質情報のコピー
+      if ( mat[odr].getState() == FLUID )
+      {
+        mat[m].P[p_density]              = mat[odr].P[p_density];
+        mat[m].P[p_kinematic_viscosity]  = mat[odr].P[p_kinematic_viscosity];
+        mat[m].P[p_viscosity]            = mat[odr].P[p_viscosity];
+        mat[m].P[p_thermal_conductivity] = mat[odr].P[p_thermal_conductivity];
+        mat[m].P[p_specific_heat]        = mat[odr].P[p_specific_heat];
+        mat[m].P[p_speed_of_sound]       = mat[odr].P[p_speed_of_sound];
+        mat[m].P[p_vol_expansion]        = mat[odr].P[p_vol_expansion];
+      }
+      else  // solid
+      {
+        mat[m].P[p_density]              = mat[odr].P[p_density];
+        mat[m].P[p_specific_heat]        = mat[odr].P[p_specific_heat];
+        mat[m].P[p_thermal_conductivity] = mat[odr].P[p_thermal_conductivity];
       }
     }
-    
-    if ( (odr < 1) || (odr > NoMedium) )
+    else
     {
-      Hostonly_ stamped_printf("\tSomthing wrong %d\n", odr);
-      Exit(0);
-    }
-    
-    // LocalBC分の媒質情報のコピー
-    if ( mat[odr].getState() == FLUID )
-    {
-      mat[m].P[p_density]              = mat[odr].P[p_density];
-      mat[m].P[p_kinematic_viscosity]  = mat[odr].P[p_kinematic_viscosity];
-      mat[m].P[p_viscosity]            = mat[odr].P[p_viscosity];
-      mat[m].P[p_thermal_conductivity] = mat[odr].P[p_thermal_conductivity];
-      mat[m].P[p_specific_heat]        = mat[odr].P[p_specific_heat];
-      mat[m].P[p_speed_of_sound]       = mat[odr].P[p_speed_of_sound];
-      mat[m].P[p_vol_expansion]        = mat[odr].P[p_vol_expansion];
-    }
-    else  // solid
-    {
-      mat[m].P[p_density]              = mat[odr].P[p_density];
-      mat[m].P[p_specific_heat]        = mat[odr].P[p_specific_heat];
-      mat[m].P[p_thermal_conductivity] = mat[odr].P[p_thermal_conductivity];
+      odr = 0; // dummy
     }
     
     // cmp[]のaliasをmat[]へコピーしておく
