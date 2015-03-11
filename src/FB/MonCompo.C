@@ -436,7 +436,7 @@ unsigned long MonitorCompo::clearMonitorCut()
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   return c;

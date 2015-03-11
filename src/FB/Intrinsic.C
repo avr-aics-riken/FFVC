@@ -87,7 +87,7 @@ void Intrinsic::writeSPH(const int *bcd, const Control* R)
   
   if ( paraMngr->IsParallel() )
   {
-    sprintf( fname, "model_%06d.sph", paraMngr->GetMyRankID() );
+    sprintf( fname, "model_%06d.sph", paraMngr->GetMyRankID(procGrp) );
   }
   else
   {
@@ -199,7 +199,7 @@ void Intrinsic::writeSVX(REAL_TYPE *vf, int *id, Control* R)
   char svx_fname[512];
 
   if ( paraMngr->IsParallel() ) {
-    sprintf( svx_fname, "example_%06d.svx", paraMngr->GetMyRankID() );
+    sprintf( svx_fname, "example_%06d.svx", paraMngr->GetMyRankID(procGrp) );
   } else {
     sprintf( svx_fname, "example.svx" );
   }
@@ -306,7 +306,7 @@ void Intrinsic::writeSVX(const int* bcd, Control* R)
   char svx_fname[512];
   
   if ( paraMngr->IsParallel() ) {
-    sprintf( svx_fname, "example_%06d.svx", paraMngr->GetMyRankID() );
+    sprintf( svx_fname, "example_%06d.svx", paraMngr->GetMyRankID(procGrp) );
   } else {
     sprintf( svx_fname, "example.svx" );
   }

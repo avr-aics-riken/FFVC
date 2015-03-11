@@ -147,10 +147,10 @@ void SPH::initFileOut(const int id_cell, const int id_bcf)
   
   if ( numProc > 1)
   {
-    const int* p_tail = paraMngr->GetVoxelTailIndex();
+    const int* p_tail = paraMngr->GetVoxelTailIndex(procGrp);
     for (int i=0; i<3; i++ ) cdm_tail[i]=p_tail[i]+1;
     
-    const int* p_div = paraMngr->GetDivNum();
+    const int* p_div = paraMngr->GetDivNum(procGrp);
     for (int i=0; i<3; i++ ) cdm_div[i] = p_div[i];
   }
   
@@ -833,10 +833,10 @@ void SPH::OutputStatisticalVarables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       min_tmp = f_min;
-      if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       max_tmp = f_max;
-      if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     minmax[0] = f_min;
@@ -845,7 +845,7 @@ void SPH::OutputStatisticalVarables(const unsigned m_CurrentStep,
     
     if ( !DFI_OUT_PRSA )
     {
-      printf("[%d] DFI_OUT_PRSA Pointer Error\n", paraMngr->GetMyRankID());
+      printf("[%d] DFI_OUT_PRSA Pointer Error\n", paraMngr->GetMyRankID(procGrp));
       Exit(-1);
     }
     
@@ -878,16 +878,16 @@ void SPH::OutputStatisticalVarables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
-      if ( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
-      if ( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     
     if ( !DFI_OUT_VELA )
     {
-      printf("[%d] DFI_OUT_VELA Pointer Error\n", paraMngr->GetMyRankID());
+      printf("[%d] DFI_OUT_VELA Pointer Error\n", paraMngr->GetMyRankID(procGrp));
       Exit(-1);
     }
     
@@ -929,10 +929,10 @@ void SPH::OutputStatisticalVarables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       min_tmp = f_min;
-      if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       max_tmp = f_max;
-      if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     minmax[0] = f_min;
@@ -940,7 +940,7 @@ void SPH::OutputStatisticalVarables(const unsigned m_CurrentStep,
     
     if ( !DFI_OUT_TEMPA )
     {
-      printf("[%d] DFI_OUT_TEMPA Pointer Error\n", paraMngr->GetMyRankID());
+      printf("[%d] DFI_OUT_TEMPA Pointer Error\n", paraMngr->GetMyRankID(procGrp));
       Exit(-1);
     }
     
@@ -1019,17 +1019,17 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       min_tmp = f_min;
-      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     minmax[0] = f_min;
     minmax[1] = f_max;
     
     if( !DFI_OUT_PRS )
     {
-      printf("[%d] DFI_OUT_PRS Pointer Error\n", paraMngr->GetMyRankID());
+      printf("[%d] DFI_OUT_PRS Pointer Error\n", paraMngr->GetMyRankID(procGrp));
       Exit(-1);
     }
     
@@ -1062,15 +1062,15 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
-      if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
-      if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     if ( !DFI_OUT_VEL )
     {
-      printf("[%d] DFI_OUT_VEL Pointer Error\n", paraMngr->GetMyRankID());
+      printf("[%d] DFI_OUT_VEL Pointer Error\n", paraMngr->GetMyRankID(procGrp));
       Exit(-1);
     }
     
@@ -1110,10 +1110,10 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
-      if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
-      if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     cdm_minmax[0] = vec_min[1]; ///<<< vec_u min
@@ -1155,17 +1155,17 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       min_tmp = f_min;
-      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     minmax[0] = f_min;
     minmax[1] = f_max;
     
     if ( !DFI_OUT_TEMP )
     {
-      printf("[%d] DFI_OUT_TEMP Pointer Error\n", paraMngr->GetMyRankID());
+      printf("[%d] DFI_OUT_TEMP Pointer Error\n", paraMngr->GetMyRankID(procGrp));
       Exit(-1);
     }
     
@@ -1206,17 +1206,17 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       min_tmp = f_min;
-      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     minmax[0] = f_min;
     minmax[1] = f_max;
     
     if ( !DFI_OUT_TP )
     {
-      printf("[%d] DFI_OUT_TP Pointer Error\n",paraMngr->GetMyRankID());
+      printf("[%d] DFI_OUT_TP Pointer Error\n",paraMngr->GetMyRankID(procGrp));
       Exit(-1);
     }
     
@@ -1253,15 +1253,15 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       REAL_TYPE vmin_tmp[4] = {vec_min[0], vec_min[1], vec_min[2], vec_min[3]};
-      if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(vmin_tmp, vec_min, 4, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       REAL_TYPE vmax_tmp[4] = {vec_max[0], vec_max[1], vec_max[2], vec_max[3]};
-      if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(vmax_tmp, vec_max, 4, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     if ( !DFI_OUT_VRT )
     {
-      printf("[%d] DFI_OUT_VRT Pointer Error\n", paraMngr->GetMyRankID());
+      printf("[%d] DFI_OUT_VRT Pointer Error\n", paraMngr->GetMyRankID(procGrp));
       Exit(-1);
     }
     
@@ -1306,17 +1306,17 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       min_tmp = f_min;
-      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     minmax[0] = f_min;
     minmax[1] = f_max;
     
     if ( !DFI_OUT_I2VGT )
     {
-      printf("[%d] DFI_OUT_I2VGT Pointer Error\n", paraMngr->GetMyRankID());
+      printf("[%d] DFI_OUT_I2VGT Pointer Error\n", paraMngr->GetMyRankID(procGrp));
       Exit(-1);
     }
     
@@ -1350,17 +1350,17 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       min_tmp = f_min;
-      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     minmax[0] = f_min;
     minmax[1] = f_max;
     
     if ( !DFI_OUT_HLT )
     {
-      printf("[%d] DFI_OUT_HLT Pointer Error\n", paraMngr->GetMyRankID());
+      printf("[%d] DFI_OUT_HLT Pointer Error\n", paraMngr->GetMyRankID(procGrp));
       Exit(-1);
     }
     
@@ -1391,17 +1391,17 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       min_tmp = f_min;
-      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     minmax[0] = f_min;
     minmax[1] = f_max;
     
     if( !DFI_OUT_DIV )
     {
-      printf("[%d] DFI_OUT_DIV Pointer Error\n", paraMngr->GetMyRankID());
+      printf("[%d] DFI_OUT_DIV Pointer Error\n", paraMngr->GetMyRankID(procGrp));
       Exit(-1);
     }
     
@@ -1496,7 +1496,7 @@ void SPH::RestartStatistic(FILE* fp,
   
   if ( numProc > 1)
   {
-    const int* m_div = paraMngr->GetDivNum();
+    const int* m_div = paraMngr->GetDivNum(procGrp);
     for (int i=0; i<3; i++ ) gdiv[i]=m_div[i];
   }
   
@@ -1655,7 +1655,7 @@ void SPH::RestartInstantaneous(FILE* fp,
   double f_dummy=0.0;
   
   
-  const int* m_div = paraMngr->GetDivNum();
+  const int* m_div = paraMngr->GetDivNum(procGrp);
   
   // 自身の領域終点インデクス
   int tail[3];
@@ -1795,7 +1795,7 @@ void SPH::Restart(FILE* fp, unsigned& m_CurrentStep, double& m_CurrentTime)
     
     if ( numProc > 1)
     {
-      const int* p_div = paraMngr->GetDivNum();
+      const int* p_div = paraMngr->GetDivNum(procGrp);
       for (int i=0; i<3; i++ ) gdiv[i]=p_div[i];
     }
     

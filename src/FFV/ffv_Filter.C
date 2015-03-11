@@ -318,8 +318,8 @@ int FFV::FilterGetArrayFromSph( cdm_DFI *dfi, cdm_Rank *rank, int step, REAL_TYP
   unsigned i_dummy=0;
   
   //計算空間の定義
-  const int *Gdiv = paraMngr->GetDivNum();
-  const int *Gvox = paraMngr->GetLocalVoxelSize();
+  const int *Gdiv = paraMngr->GetDivNum(procGrp);
+  const int *Gvox = paraMngr->GetLocalVoxelSize(procGrp);
   
   //読込み配列のサイズ
   int  ncomp=dfi->GetNumComponent();
@@ -503,7 +503,7 @@ int FFV::FilterInitialize(int argc, char **argv)
   {
     ModeTiming = ON;
     TIMING__ PM.initialize( PM_NUM_MAX );
-    TIMING__ PM.setRankInfo( paraMngr->GetMyRankID() );
+    TIMING__ PM.setRankInfo( paraMngr->GetMyRankID(procGrp) );
     TIMING__ PM.setParallelMode(str_para, C.num_thread, C.num_process);
     set_timing_label();
   }
@@ -681,9 +681,9 @@ int FFV::FilterInitialize(int argc, char **argv)
   // bcd/bcp/cdfの同期
   if ( numProc > 1 )
   {
-    if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->BndCommS3D(d_bcp, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->BndCommS3D(d_cdf, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, 1, procGrp) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_bcp, size[0], size[1], size[2], guide, 1, procGrp) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_cdf, size[0], size[1], size[2], guide, 1, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   

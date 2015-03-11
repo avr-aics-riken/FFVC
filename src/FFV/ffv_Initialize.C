@@ -174,7 +174,7 @@ int FFV::Initialize(int argc, char **argv)
   {
     ModeTiming = ON;
     TIMING__ PM.initialize( PM_NUM_MAX );
-    TIMING__ PM.setRankInfo( paraMngr->GetMyRankID() );
+    TIMING__ PM.setRankInfo( paraMngr->GetMyRankID(procGrp) );
     TIMING__ PM.setParallelMode(str_para, C.num_thread, C.num_process);
     set_timing_label();
   }
@@ -402,9 +402,9 @@ int FFV::Initialize(int argc, char **argv)
   // bcd/bcp/cdfの同期
   if ( numProc > 1 )
   {
-    if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->BndCommS3D(d_bcp, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->BndCommS3D(d_cdf, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, 1, procGrp) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_bcp, size[0], size[1], size[2], guide, 1, procGrp) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_cdf, size[0], size[1], size[2], guide, 1, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   
@@ -780,8 +780,8 @@ bool FFV::chkMediumConsistency()
   {
     int nms = nmSolid;
     int nmf = nmFluid;
-    paraMngr->Allreduce(&nms, &nmSolid, 1, MPI_SUM);
-    paraMngr->Allreduce(&nmf, &nmFluid, 1, MPI_SUM);
+    paraMngr->Allreduce(&nms, &nmSolid, 1, MPI_SUM, procGrp);
+    paraMngr->Allreduce(&nmf, &nmFluid, 1, MPI_SUM, procGrp);
   }
   
   if ( (nmFluid == 0) && (nmSolid == 0) )
@@ -992,8 +992,8 @@ void FFV::dispGlobalCompoInfo(FILE* fp)
       if ( numProc > 1 )
       {
         es = ( cmp[n].existLocal() ) ? 1 : 0;
-        if ( paraMngr->Gather(&es, 1, m_eArray, 1, 0) != CPM_SUCCESS ) Exit(0);
-        if ( paraMngr->Gather(&cgb[6*n], 6, m_gArray, 6, 0) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Gather(&es, 1, m_eArray, 1, 0, procGrp) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Gather(&cgb[6*n], 6, m_gArray, 6, 0, procGrp) != CPM_SUCCESS ) Exit(0);
         
         
         if (myRank == 0) // マスターノードのみ
@@ -1193,7 +1193,7 @@ void FFV::displayMemoryInfo(FILE* fp, double G_mem, double L_mem, const char* st
   if ( numProc > 1 )
   {
     double tmp_memory = G_mem;
-    if ( paraMngr->Allreduce(&tmp_memory, &G_mem, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&tmp_memory, &G_mem, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   Hostonly_
@@ -1283,7 +1283,7 @@ void FFV::encodeBCindex(FILE* fp)
   // @attention bx[]の同期が必要 >> 以下の処理で隣接セルを参照するため
   if ( numProc > 1 )
   {
-    if ( paraMngr->BndCommS3D(d_bcd, ix, jx, kx, gd, 1) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_bcd, ix, jx, kx, gd, 1, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   BC.setBCIperiodic(d_bcd, ensPeriodic);
@@ -1394,12 +1394,12 @@ void FFV::gatherDomainInfo()
   // 領域情報の収集
   if ( numProc > 1 )
   {
-    if ( paraMngr->Gather(size, 3, m_size, 3, 0) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->Gather(origin, 3, m_org, 3, 0) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->Gather(region, 3, m_reg, 3, 0) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->Gather(&L_Fcell, 1, bf_fcl, 1, 0) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->Gather(&L_Wcell, 1, bf_wcl, 1, 0) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->Gather(&L_Acell, 1, bf_acl, 1, 0) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Gather(size, 3, m_size, 3, 0, procGrp) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Gather(origin, 3, m_org, 3, 0, procGrp) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Gather(region, 3, m_reg, 3, 0, procGrp) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Gather(&L_Fcell, 1, bf_fcl, 1, 0, procGrp) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Gather(&L_Wcell, 1, bf_wcl, 1, 0, procGrp) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Gather(&L_Acell, 1, bf_acl, 1, 0, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   else // serial
   {
@@ -1433,7 +1433,7 @@ void FFV::gatherDomainInfo()
   
   if ( numProc > 1 )
   {
-    if ( paraMngr->Gather(&m_srf, 1, bf_srf, 1, 0) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Gather(&m_srf, 1, bf_srf, 1, 0, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   else 
   {
@@ -1514,8 +1514,8 @@ void FFV::gatherDomainInfo()
       {
         if ( !cmp[n].isKindMedium() )
         {
-          if( paraMngr->Gather(cmp[n].getBbox_st(), 3, st_buf, 3, 0) != CPM_SUCCESS ) Exit(0);
-          if( paraMngr->Gather(cmp[n].getBbox_ed(), 3, ed_buf, 3, 0) != CPM_SUCCESS ) Exit(0);
+          if( paraMngr->Gather(cmp[n].getBbox_st(), 3, st_buf, 3, 0, procGrp) != CPM_SUCCESS ) Exit(0);
+          if( paraMngr->Gather(cmp[n].getBbox_ed(), 3, ed_buf, 3, 0, procGrp) != CPM_SUCCESS ) Exit(0);
         }
         Hostonly_
         {
@@ -1682,7 +1682,7 @@ void FFV::generateGlyph(const long long* cut, const int* bid, FILE* fp, int* m_s
   if ( numProc > 1 )
   {
     unsigned tmp = global_cut;
-    if ( paraMngr->Allreduce(&tmp, &global_cut, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&tmp, &global_cut, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   Hostonly_
@@ -2841,7 +2841,7 @@ string FFV::setDomain(TextParser* tpf)
   if ( numProc > 1 )
   {
     double tmp = c;
-    if ( paraMngr->Allreduce(&tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   face_comm_size = c;
@@ -2953,13 +2953,13 @@ void FFV::setInitialCondition()
   // 初期解およびリスタート解の同期
   if ( numProc > 1 )
   {
-    if ( paraMngr->BndCommV3D(d_v,  size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->BndCommV3D(d_vf, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->BndCommS3D(d_p,  size[0], size[1], size[2], guide, 1    ) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommV3D(d_v,  size[0], size[1], size[2], guide, guide, procGrp) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommV3D(d_vf, size[0], size[1], size[2], guide, guide, procGrp) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_p,  size[0], size[1], size[2], guide, 1    , procGrp) != CPM_SUCCESS ) Exit(0);
     
     if ( C.isHeatProblem() ) 
     {
-      if ( paraMngr->BndCommS3D(d_p, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->BndCommS3D(d_p, size[0], size[1], size[2], guide, guide, procGrp) != CPM_SUCCESS ) Exit(0);
     }
   }
 
@@ -2970,7 +2970,7 @@ void FFV::setInitialCondition()
     
     if ( numProc > 1 )
     {
-      if ( paraMngr->BndCommS3D(d_vof, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->BndCommS3D(d_vof, size[0], size[1], size[2], guide, guide, procGrp) != CPM_SUCCESS ) Exit(0);
     }
   }
   
@@ -3115,9 +3115,9 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
   // ガイドセル同期
   if ( numProc > 1 )
   {
-    if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->BndCommS3D(d_cut, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, 1, procGrp) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, 1, procGrp) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_cut, size[0], size[1], size[2], guide, 1, procGrp) != CPM_SUCCESS ) Exit(0);
   }
 
 }
@@ -3200,7 +3200,7 @@ string FFV::setParallelism()
   // Serial or Parallel environment
   if( paraMngr->IsParallel() )
   {
-    C.num_process = paraMngr->GetNumRank();
+    C.num_process = paraMngr->GetNumRank(procGrp);
     
     if ( C.num_thread > 1 ) 
     {
@@ -3665,7 +3665,7 @@ void FFV::SD_Initialize(const int div_type, TextParser* tp_dom)
     switch (div_type)
     {
       case 1: // 分割数が指示されている場合
-        if ( paraMngr->VoxelInit(m_div, m_sz, m_org, m_reg, Nvc, Ncmp) != CPM_SUCCESS )
+        if ( paraMngr->VoxelInit(m_div, m_sz, m_org, m_reg, Nvc, Ncmp, DIV_COMM_SIZE, procGrp) != CPM_SUCCESS )
         {
           cout << "Domain decomposition error : " << endl;
           Exit(0);
@@ -3674,7 +3674,7 @@ void FFV::SD_Initialize(const int div_type, TextParser* tp_dom)
         
       
       case 2: // 分割数が指示されていない場合
-        if ( paraMngr->VoxelInit(m_sz, m_org, m_reg, Nvc, Ncmp) != CPM_SUCCESS )
+        if ( paraMngr->VoxelInit(m_sz, m_org, m_reg, Nvc, Ncmp, DIV_COMM_SIZE, procGrp) != CPM_SUCCESS )
         {
           cout << "Domain decomposition error : " << endl;
           Exit(0);
@@ -3689,7 +3689,7 @@ void FFV::SD_Initialize(const int div_type, TextParser* tp_dom)
   }
   else if ( EXEC_MODE == ffvc_solverAS )
   {
-    if ( paraMngr->VoxelInit_Subdomain(m_div, m_sz, m_org, m_reg, active_fname, Nvc, Ncmp) != CPM_SUCCESS )
+    if ( paraMngr->VoxelInit_Subdomain(m_div, m_sz, m_org, m_reg, active_fname, Nvc, Ncmp, procGrp) != CPM_SUCCESS )
     {
       cout << "Domain decomposition error : " << endl;
       Exit(0);
@@ -3885,10 +3885,10 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
     if ( numProc > 1 )
     {
       int tmp = ntria;
-      if ( paraMngr->Allreduce(&tmp, &ntria, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(&tmp, &ntria, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
       
       REAL_TYPE ta = area;
-      if ( paraMngr->Allreduce(&ta, &area, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(&ta, &area, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     

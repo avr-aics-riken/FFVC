@@ -574,7 +574,7 @@ public:
    */
   bool IsMaster() const
   {
-    return ( paraMngr->GetMyRankID() == 0 ) ? true : false;
+    return ( paraMngr->GetMyRankID(procGrp) == 0 ) ? true : false;
   }
   
   

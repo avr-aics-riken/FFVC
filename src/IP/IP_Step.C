@@ -255,7 +255,7 @@ void IP_Step::setup(int* bcd,
   // ステップ部のガイドセルの設定
   
   // 隣接ランクのIDを取得 nID[6]
-  const int* nID = paraMngr->GetNeighborRankID();
+  const int* nID = paraMngr->GetNeighborRankID(procGrp);
   
   if ( nID[X_minus] < 0 )
   {

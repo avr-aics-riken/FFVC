@@ -144,7 +144,7 @@ void FFV::calcForce(double& flop)
       // 集約
       if ( numProc > 1 )
       {
-        if ( paraMngr->Gather(vec, 3, buffer_force, 3, 0) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Gather(vec, 3, buffer_force, 3, 0, procGrp) != CPM_SUCCESS ) Exit(0);
       }
       else
       {
@@ -249,7 +249,7 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
     if ( numProc > 1 )
     {
       REAL_TYPE tmp[2] = {q[0], q[1]};
-      if ( paraMngr->Allreduce(tmp, q, 2, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(tmp, q, 2, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     
@@ -264,7 +264,7 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
       if ( numProc > 1 )
       {
         REAL_TYPE tmp_sum = u_sum;
-        if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
       }
       
       u_avr = (ec != 0.0) ? u_sum / ec : 0.0;
@@ -316,7 +316,7 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
     if ( numProc > 1 )
     {
       REAL_TYPE tmp[2] = {q[0], q[1]};
-      if ( paraMngr->Allreduce(tmp, q, 2, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(tmp, q, 2, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     
@@ -334,7 +334,7 @@ void FFV::DomainMonitor(BoundaryOuter* ptr, Control* R)
       if ( numProc > 1 )
       {
         REAL_TYPE tmp_sum = u_sum;
-        if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Allreduce(&tmp_sum, &u_sum, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
       }
       
       u_avr = (ec != 0.0) ? u_sum / ec : 0.0;
@@ -460,7 +460,7 @@ void FFV::NormDiv(REAL_TYPE* div, const REAL_TYPE dt)
     {
       TIMING_start("All_Reduce");
       REAL_TYPE tmp = dv;
-      if ( paraMngr->Allreduce(&tmp, &dv, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0); // 最大値
+      if ( paraMngr->Allreduce(&tmp, &dv, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0); // 最大値
       TIMING_stop("All_Reduce", 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
     }
     DivC.divergence = (double)dv;
@@ -490,7 +490,7 @@ void FFV::NormDiv(REAL_TYPE* div, const REAL_TYPE dt)
     {
       TIMING_start("All_Reduce");
       REAL_TYPE tmp = dv;
-      if ( paraMngr->Allreduce(&tmp, &dv, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0); // 自乗和
+      if ( paraMngr->Allreduce(&tmp, &dv, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0); // 自乗和
       TIMING_stop("All_Reduce", 2.0*numProc*sizeof(double));
     }
     tmp = (double)dv;

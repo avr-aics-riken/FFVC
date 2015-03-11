@@ -76,7 +76,7 @@ void FFV::ps_LS(LinearSolver* IC, const double b_l2, const double r0_l2)
       if ( numProc > 1 )
       {
         TIMING_start("Sync_Thermal_Update");
-        if ( paraMngr->BndCommS3D(d_ie, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->BndCommS3D(d_ie, size[0], size[1], size[2], guide, guide, procGrp) != CPM_SUCCESS ) Exit(0);
         TIMING_stop("Sync_Thermal_Update", face_comm_size*guide*sizeof(REAL_TYPE));
       }
       
@@ -87,7 +87,7 @@ void FFV::ps_LS(LinearSolver* IC, const double b_l2, const double r0_l2)
         REAL_TYPE tmp_wk[2], m_tmp[2];
         tmp_wk[0] = m_tmp[0] = res;
         tmp_wk[1] = m_tmp[1] = b2;
-        if ( paraMngr->Allreduce(tmp_wk, m_tmp, 2, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Allreduce(tmp_wk, m_tmp, 2, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
         TIMING_stop("A_R_Thermal_Diff_Res", 2.0*numProc*2.0*sizeof(REAL_TYPE) );
         
         res = sqrt( m_tmp[0] ); // 残差のRMS
@@ -112,7 +112,7 @@ void FFV::ps_LS(LinearSolver* IC, const double b_l2, const double r0_l2)
   {
     TIMING_start("All_Reduce");
     double m_tmp = res;
-    if ( paraMngr->Allreduce(&m_tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&m_tmp, &res, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
     TIMING_stop("All_Reduce", 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
   }
   

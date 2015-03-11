@@ -196,7 +196,7 @@ void FALLOC::allocArray_Forcing(double& m_prep, double& m_total, FILE* fp, Contr
   
   if ( numProc > 1 ) 
   {
-    paraMngr->Allreduce(&cmp_mem, &G_cmp_mem, 1, MPI_SUM);
+    paraMngr->Allreduce(&cmp_mem, &G_cmp_mem, 1, MPI_SUM, procGrp);
   }
   
   if ( C->EnsCompo.forcing )
