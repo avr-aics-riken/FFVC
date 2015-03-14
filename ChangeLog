@@ -19,6 +19,10 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-03-14
+r1602 update libraries
+
+--------------------------
 2015-03-08
 r1601 bug fix of loadBCs()
 - set dummy values for cmp[m].medium in case of Periodic
