@@ -102,6 +102,15 @@
 #define calc_rms_s_         CALC_RMS_S
 #define output_vtk_         OUTPUT_VTK
 #define output_mean_        OUTPUT_MEAN
+<<<<<<< HEAD
+//=====uzawa
+#define calc_reynolds_stress_     CALC_REYNOLDS_STRESS
+#define calc_production_rate_     CALC_PRODUCTION_RATE
+#define calc_dissipation_rate_    CALC_DISSIPATION_RATE
+#define calc_turb_transport_rate_ CALC_TURB_TRANSPORT_RATE
+#define calc_vel_pregrad_term_    CALC_VEL_PREGRAD_TERM
+//=====uzawa
+=======
 #define vprime_             VPRIME
 #define reynolds_stress_    REYNOLDS_STRESS
 #define gradv_              GRADV
@@ -109,6 +118,7 @@
 #define transpose_t_        TRANSPOSE_T
 #define calc_production_rate_ CALC_PRODUCTION_RATE
 #define average_t_          AVERAGE_T
+>>>>>>> origin/master
 #define perturbu_           PERTURBU
 #define generate_iblank_    GENERATE_IBLANK
 #define pack_scalar_        PACK_SCALAR
@@ -723,7 +733,13 @@ extern "C" {
                    int* G_size,
                    int* myRank,
                    int* sz,
+<<<<<<< HEAD
+                   REAL_TYPE* dx,
+                   REAL_TYPE* dy,
+                   REAL_TYPE* dz,
+=======
                    REAL_TYPE* dh,
+>>>>>>> origin/master
                    int* g,
                    REAL_TYPE* v,
                    REAL_TYPE* p
@@ -734,6 +750,84 @@ extern "C" {
                      REAL_TYPE* G_region,
                      int* G_division,
                      int* G_size,
+<<<<<<< HEAD
+                     int* sz,
+                     REAL_TYPE* dh,
+                     int* g,
+                     REAL_TYPE* v_ave,
+                     REAL_TYPE* rms_ave,
+                     REAL_TYPE* R_ave,
+                     REAL_TYPE* P_ave,
+                     REAL_TYPE* E_ave,
+                     REAL_TYPE* T_ave,
+                     REAL_TYPE* PI_ave
+                    );
+  
+//=====uzawa
+  void calc_reynolds_stress_ (REAL_TYPE* R,
+                              REAL_TYPE* R_ave,
+                              int* sz,
+                              int* g,
+                              REAL_TYPE* v,
+                              REAL_TYPE* v_ave,
+                              REAL_TYPE* nadd,
+                              double* flop);
+
+  void calc_production_rate_ (REAL_TYPE* P_ave,
+                              int* sz,
+                              REAL_TYPE* dh,
+                              int* g,
+                              REAL_TYPE* v_ave,
+                              REAL_TYPE* R,
+                              int* bv,
+                              REAL_TYPE* nadd,
+                              double* flop);
+
+  void calc_dissipation_rate_ (REAL_TYPE* E_ave,
+                              int* sz,
+                              REAL_TYPE* dh,
+                              int* g,
+                              REAL_TYPE* nu,
+                              REAL_TYPE* v,
+                              REAL_TYPE* v_ave,
+                              int* bv,
+                              REAL_TYPE* nadd,
+                              double* flop);
+
+  void calc_turb_transport_rate_ (REAL_TYPE* T_ave,
+                                  int* sz,
+                                  REAL_TYPE* dh,
+                                  int* g,
+                                  REAL_TYPE* v,
+                                  REAL_TYPE* v_ave,
+                                  REAL_TYPE* R,
+                                  int* bv,
+                                  REAL_TYPE* nadd,
+                                  double* flop);
+
+  void calc_vel_pregrad_term_ (REAL_TYPE* PI_ave,
+                               int* sz,
+                               REAL_TYPE* dh,
+                               int* g,
+                               REAL_TYPE* v,
+                               REAL_TYPE* v_ave,
+                               REAL_TYPE* p,
+                               REAL_TYPE* p_ave,
+                               int* bp,
+                               REAL_TYPE* nadd,
+                               double* flop);
+
+  void output_meand_ (int* step,
+                     REAL_TYPE* G_origin,
+                     REAL_TYPE* G_region,
+                     int* G_division,
+                     int* G_size,
+                     int* sz,
+                     REAL_TYPE* dh,
+                     int* g,
+                     REAL_TYPE* D_ave);
+//=====uzawa
+=======
                      int* myRank,
                      int* sz,
                      REAL_TYPE* dh,
@@ -791,6 +885,7 @@ extern "C" {
                    REAL_TYPE* t,
                    REAL_TYPE* nadd,
                    double* flop);
+>>>>>>> origin/master
 
   void src_trnc_ (REAL_TYPE* rhs,
                   int* sz,

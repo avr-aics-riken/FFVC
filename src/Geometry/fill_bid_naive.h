@@ -15,7 +15,11 @@
 
 /**
  * @file   fill_bid_naive.h
+<<<<<<< HEAD
+ * @brief  bidによるフィルアルゴリズム、simpleなフラッドフィル
+=======
  * @brief  bidによるフィルアルゴリズム、simpleなシードフィル
+>>>>>>> origin/master
  * @author aics
  */
 
