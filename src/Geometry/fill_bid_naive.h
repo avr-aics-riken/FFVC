@@ -15,7 +15,7 @@
 
 /**
  * @file   fill_bid_naive.h
- * @brief  bidによるフィルアルゴリズム、simpleなフラッドフィル
+ * @brief  bidによるフィルアルゴリズム、simpleなシードフィル
  * @author aics
  */
 
