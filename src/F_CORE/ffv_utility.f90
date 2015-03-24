@@ -1331,10 +1331,11 @@ return
 end subroutine write_plot3d
 
 
+
+
+
 !********************************************************************
-! [in]  v         セルセンター速度ベクトル（n-step）
-! [in]  vmean     セルセンター時間平均速度ベクトル（n-step）
-subroutine output_vtk(step, G_origin, G_division, G_size, myRank, sz, dh, g, v, p)
+subroutine output_vtk(step, G_origin, G_division, G_size, myRank, sz, dx, dy, dz, g, v, p)
 implicit none
 integer :: step
 real, dimension(3) ::  G_origin
@@ -1343,8 +1344,7 @@ integer :: g
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  p
 integer :: ix, jx, kx, i, j, k, myRank, ip, jp, kp, ii, jj, kk
-real,dimension(3) :: dh
-
+real :: dx, dy, dz
 character fname*128
 
 ix = sz(1)
@@ -1427,59 +1427,46 @@ write(10, "('v_vmean_p.vtk')")
 write(10, "('ASCII')")
 
 write(10, "('DATASET STRUCTURED_GRID')")
-write(10, "('DIMENSIONS ', 3(1x, i8))") ix+2*g, jx+2*g, kx+2*g
-write(10, "('POINTS ', i20, ' float')") (ix+2*g)*(jx+2*g)*(kx+2*g)
+write(10, "('DIMENSIONS ', 3(1x, i8))") ix, jx, kx
+write(10, "('POINTS ', i20, ' float')") ix*jx*kx
 
-do kp = 1-g, kx+g
-do jp = 1-g, jx+g
-do ip = 1-g, ix+g
-kk = int(myRank/(G_division(1)*G_division(2)))
-!jj = int((myRank - kk*G_division(1)*G_division(3))/G_division(1))
-!ii = mod(myRank, G_division(1))
-jj = 1
-ii = 1
+do kp = 1, kx
+do jp = 1, jx
+do ip = 1, ix
 
-k = kp + kk * int(G_size(3)/G_division(3))
+ii = 0
+jj = 0
+
+k = kp + myRank * int(G_size(3)/G_division(3))
 j = jp + jj * int(G_size(2)/G_division(2))
 i = ip + ii * int(G_size(1)/G_division(1))
 
-write(10, *) G_origin(1) + (i - 0.5d0)*dh(1),  &
-G_origin(2) + (j - 0.5d0)*dh(2),  &
-G_origin(3) + (k - 0.5d0)*dh(3)
+write(10, *) G_origin(1) + (i - 0.5d0)*dx,  &
+G_origin(2) + (j - 0.5d0)*dy,  &
+G_origin(3) + (k - 0.5d0)*dz
 end do
 end do
 end do
 
 
-write(10, "('POINT_DATA ', i9)") (ix+2*g)*(jx+2*g)*(kx+2*g)
+write(10, "('POINT_DATA ', i9)") ix*jx*kx
 
 ! velocity
 write(10, "('VECTORS velocity float')")
-do k = 1-g, kx+g
-do j = 1-g, jx+g
-do i = 1-g, ix+g
+do k = 1, kx
+do j = 1, jx
+do i = 1, ix
 write(10, *) v(i, j, k, 1), v(i, j, k, 2), v(i, j, k, 3)
 end do
 end do
 end do
 
-!       ! umean
-!       write(10, "('SCALARS umean float')")
-!       write(10, "('LOOKUP_TABLE default')")
-!       do k = 0, kx
-!          do j = 0, jx
-!             do i = 0, ix
-!                write(10, *) vmean(i, j, k, 1)
-!             end do
-!          end do
-!       end do
-
 ! pressure
 write(10, "('SCALARS pressure float')")
 write(10, "('LOOKUP_TABLE default')")
-do k = 1-g, kx+g
-do j = 1-g, jx+g
-do i = 1-g, ix+g
+do k = 1, kx
+do j = 1, jx
+do i = 1, ix
 write(10, *) p(i, j, k)
 end do
 end do
@@ -1493,335 +1480,70 @@ end subroutine output_vtk
 
 
 
-!********************************************************************
-subroutine output_mean(step, G_origin, G_region, G_division, G_size, myRank, sz, pitch, g, vmean, rmsmean, Rmean, Prodmean)
-integer                                                   :: step
-real, dimension(3)                                        :: G_origin, G_region
-integer, dimension(3)                                     :: G_division, G_size, sz
-integer                                                   :: g
-real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) :: vmean, rmsmean
-real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 9) :: Rmean, Prodmean
-real, dimension(1:sz(2), 3)                               :: global_vmean, global_rmsmean
-real, dimension(1:sz(2), 9)                               :: global_Rmean, global_Prodmean
-integer                                                   :: ix, jx, kx, i, j, k, d, ip, jp, kp, ii, jj, kk, myRank
-real, dimension(3)                                        :: pitch
-real                                                      :: xc, yc, zc, ymean
-character fname1*128, fname2*128, fname3*128, fname4*128, fname5*128
-character fname6*128, fname7*128, fname8*128, fname9*128, fname10*128
-
-ix = sz(1)
-jx = sz(2)
-kx = sz(3)
-
-if ( step < 10 ) then
-write(fname1, "('global_umean_step',    i1.0, '.dat')"), step
-write(fname2, "('global_urmsmean_step', i1.0, '.dat')"), step
-write(fname3, "('global_vrmsmean_step', i1.0, '.dat')"), step
-write(fname4, "('global_wrmsmean_step', i1.0, '.dat')"), step
-write(fname5, "('global_uumean_step',   i1.0, '.dat')"), step
-write(fname6, "('global_vvmean_step',   i1.0, '.dat')"), step
-write(fname7, "('global_wwmean_step',   i1.0, '.dat')"), step
-write(fname8, "('global_uvmean_step',   i1.0, '.dat')"), step
-write(fname9, "('global_P11mean_step',  i1.0, '.dat')"), step
-else if ( step < 100 ) then
-write(fname1, "('global_umean_step',    i2.0, '.dat')"), step
-write(fname2, "('global_urmsmean_step', i2.0, '.dat')"), step
-write(fname3, "('global_vrmsmean_step', i2.0, '.dat')"), step
-write(fname4, "('global_wrmsmean_step', i2.0, '.dat')"), step
-write(fname5, "('global_uumean_step',   i2.0, '.dat')"), step
-write(fname6, "('global_vvmean_step',   i2.0, '.dat')"), step
-write(fname7, "('global_wwmean_step',   i2.0, '.dat')"), step
-write(fname8, "('global_uvmean_step',   i2.0, '.dat')"), step
-write(fname9, "('global_P11mean_step',  i2.0, '.dat')"), step
-else if ( step < 1000 ) then
-write(fname1, "('global_umean_step',    i3.0, '.dat')"), step
-write(fname2, "('global_urmsmean_step', i3.0, '.dat')"), step
-write(fname3, "('global_vrmsmean_step', i3.0, '.dat')"), step
-write(fname4, "('global_wrmsmean_step', i3.0, '.dat')"), step
-write(fname5, "('global_uumean_step',   i3.0, '.dat')"), step
-write(fname6, "('global_vvmean_step',   i3.0, '.dat')"), step
-write(fname7, "('global_wwmean_step',   i3.0, '.dat')"), step
-write(fname8, "('global_uvmean_step',   i3.0, '.dat')"), step
-write(fname9, "('global_P11mean_step',  i3.0, '.dat')"), step
-else if ( step < 10000 ) then
-write(fname1, "('global_umean_step',    i4.0, '.dat')"), step
-write(fname2, "('global_urmsmean_step', i4.0, '.dat')"), step
-write(fname3, "('global_vrmsmean_step', i4.0, '.dat')"), step
-write(fname4, "('global_wrmsmean_step', i4.0, '.dat')"), step
-write(fname5, "('global_uumean_step',   i4.0, '.dat')"), step
-write(fname6, "('global_vvmean_step',   i4.0, '.dat')"), step
-write(fname7, "('global_wwmean_step',   i4.0, '.dat')"), step
-write(fname8, "('global_uvmean_step',   i4.0, '.dat')"), step
-write(fname9, "('global_P11mean_step',  i4.0, '.dat')"), step
-else if ( step < 100000 ) then
-write(fname1, "('global_umean_step',    i5.0, '.dat')"), step
-write(fname2, "('global_urmsmean_step', i5.0, '.dat')"), step
-write(fname3, "('global_vrmsmean_step', i5.0, '.dat')"), step
-write(fname4, "('global_wrmsmean_step', i5.0, '.dat')"), step
-write(fname5, "('global_uumean_step',   i5.0, '.dat')"), step
-write(fname6, "('global_vvmean_step',   i5.0, '.dat')"), step
-write(fname7, "('global_wwmean_step',   i5.0, '.dat')"), step
-write(fname8, "('global_uvmean_step',   i5.0, '.dat')"), step
-write(fname9, "('global_P11mean_step',  i5.0, '.dat')"), step
-else if ( step < 1000000 ) then
-write(fname1, "('global_umean_step',    i6.0, '.dat')"), step
-write(fname2, "('global_urmsmean_step', i6.0, '.dat')"), step
-write(fname3, "('global_vrmsmean_step', i6.0, '.dat')"), step
-write(fname4, "('global_wrmsmean_step', i6.0, '.dat')"), step
-write(fname5, "('global_uumean_step',   i6.0, '.dat')"), step
-write(fname6, "('global_vvmean_step',   i6.0, '.dat')"), step
-write(fname7, "('global_wwmean_step',   i6.0, '.dat')"), step
-write(fname8, "('global_uvmean_step',   i6.0, '.dat')"), step
-write(fname9, "('global_P11mean_step',  i6.0, '.dat')"), step
-else if ( step < 10000000 ) then
-write(fname1, "('global_umean_step',    i7.0, '.dat')"), step
-write(fname2, "('global_urmsmean_step', i7.0, '.dat')"), step
-write(fname3, "('global_vrmsmean_step', i7.0, '.dat')"), step
-write(fname4, "('global_wrmsmean_step', i7.0, '.dat')"), step
-write(fname5, "('global_uumean_step',   i7.0, '.dat')"), step
-write(fname6, "('global_vvmean_step',   i7.0, '.dat')"), step
-write(fname7, "('global_wwmean_step',   i7.0, '.dat')"), step
-write(fname8, "('global_uvmean_step',   i7.0, '.dat')"), step
-write(fname9, "('global_P11mean_step',  i7.0, '.dat')"), step
-end if
-
-do j = 1, jx
-do d = 1, 3
-global_vmean(j, d)   = 0.0d0
-global_rmsmean(j, d) = 0.0d0
-end do
-end do
-
-do j = 1, jx
-do d = 1, 9
-global_Rmean(j, d) = 0.0d0
-global_Prodmean(j, d) = 0.0d0
-end do
-end do
-
-do j = 1, jx
-do k = 1, kx
-do i = 1, ix
-do d = 1, 3
-global_vmean(j, d)   = global_vmean(j, d)   + vmean(i, j, k, d)
-global_rmsmean(j, d) = global_rmsmean(j, d) + rmsmean(i, j, k, d)
-end do
-end do
-end do
-end do
-
-do j = 1, jx
-do k = 1, kx
-do i = 1, ix
-do d = 1, 9
-global_Rmean(j, d)   = global_Rmean(j, d) + Rmean(i, j, k, d)
-global_Prodmean(j, d) = global_Prodmean(j, d) + Prodmean(i, j, k, d)
-end do
-end do
-end do
-end do
-
-do j = 1, jx
-do d = 1, 3
-global_vmean(j, d)   = global_vmean(j, d)/(ix*kx)
-global_rmsmean(j, d) = global_rmsmean(j, d)/(ix*kx)
-end do
-end do
-
-do j = 1, jx
-do d = 1, 9
-global_Rmean(j, d) = global_Rmean(j, d)/(ix*kx)
-global_Prodmean(j, d) = global_Prodmean(j, d)/(ix*kx)
-end do
-end do
-
-
-do kp = 1, kx
-do jp = 1, jx
-do ip = 1, ix
-
-ii = 0
-jj = 0
-
-k = kp + myRank * int(G_size(3)/G_division(3))
-j = jp + jj * int(G_size(2)/G_division(2))
-i = ip + ii * int(G_size(1)/G_division(1))
-
-xc = G_origin(1) + (i - 0.5d0)*pitch(1)
-yc = G_origin(2) + (j - 0.5d0)*pitch(2)
-zc = G_origin(3) + (k - 0.5d0)*pitch(3)
-
-if ( (i == 1).and.(k == 1) ) then
-open(11, file = fname1)
-open(12, file = fname2)
-open(13, file = fname3)
-open(14, file = fname4)
-open(15, file = fname5)
-open(16, file = fname6)
-open(17, file = fname7)
-open(18, file = fname8)
-open(19, file = fname9)
-open(31, file = "global_umean_latest.dat")
-open(32, file = "global_urmsmean_latest.dat")
-open(33, file = "global_vrmsmean_latest.dat")
-open(34, file = "global_wrmsmean_latest.dat")
-open(35, file = "global_uumean_latest.dat")
-open(36, file = "global_vvmean_latest.dat")
-open(37, file = "global_wwmean_latest.dat")
-open(38, file = "global_uvmean_latest.dat")
-open(39, file = "global_P11mean_latest.dat")
-
-do jj = 1, jx
-ymean = G_origin(2) + (jj - 0.5d0)*pitch(2)
-write(11, *) ymean, global_vmean(jj, 1)
-write(12, *) ymean, global_rmsmean(jj, 1)
-write(13, *) ymean, global_rmsmean(jj, 2)
-write(14, *) ymean, global_rmsmean(jj, 3)
-write(15, *) ymean, global_Rmean(jj, 1)
-write(16, *) ymean, global_Rmean(jj, 5)
-write(17, *) ymean, global_Rmean(jj, 9)
-write(18, *) ymean, global_Rmean(jj, 2)
-write(19, *) ymean, global_Prodmean(jj, 1)
-
-write(31, *) ymean, global_vmean(jj, 1)
-write(32, *) ymean, global_rmsmean(jj, 1)
-write(33, *) ymean, global_rmsmean(jj, 2)
-write(34, *) ymean, global_rmsmean(jj, 3)
-write(35, *) ymean, global_Rmean(jj, 1)
-write(36, *) ymean, global_Rmean(jj, 5)
-write(37, *) ymean, global_Rmean(jj, 9)
-write(38, *) ymean, global_Rmean(jj, 2)
-write(39, *) ymean, global_Prodmean(jj, 1)
-end do
-
-close(11)
-close(12)
-close(13)
-close(14)
-close(15)
-close(16)
-close(17)
-close(18)
-close(19)
-
-close(31)
-close(32)
-close(33)
-close(34)
-close(35)
-close(36)
-close(37)
-close(38)
-close(39)
-
-end if
-
-end do
-end do
-end do
-
-
-return
-end subroutine output_mean
-
 
 !> ********************************************************************
-!! @brief 変動速度を計算する
-!! @param [out]    vp      変動速度
-!! @param [in]     sz      配列長
-!! @param [in]     g       ガイドセル長
-!! @param [in]     v       速度
-!! @param [in]     av      速度の時間平均値
-!! @param [out]    flop    flop count
+!! @param [out]      R       レイノルズ応力テンソル
+!! @param [in, out]  R_ave   レイノルズ応力テンソル (時間平均値)
+!! @param [in]       sz      配列長
+!! @param [in]       g       ガイドセル長
+!! @param [in]       v       セルセンター速度ベクトル
+!! @param [in]       v_ave   セルセンター時間平均速度ベクトル
+!! @param [in]       nadd    加算回数
+!! @param [out]      flop    flop count
 !<
-subroutine vprime(vp, sz, g, v, av, flop)
-implicit none
-integer, dimension(3)                                     :: sz
-integer                                                   :: g
-real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) :: vp
-real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) :: v, av
-double precision                                          :: flop
-integer                                                   :: i, j, k, ix, jx, kx
-
-ix = sz(1)
-jx = sz(2)
-kx = sz(3)
-
-flop = flop + dble(ix+2*g) * dble(jx+2*g) * dble(kx+2*g) * 45.0d0 + 9.0d0
-
-!$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, g)
-!$OMP DO SCHEDULE(static) COLLAPSE(2)
-do k = 1, kx
-do j = 1, jx
-do i = 1, ix
-vp(i, j, k, 1) = v(i, j, k, 1) - av(i, j, k, 1)
-vp(i, j, k, 2) = v(i, j, k, 2) - av(i, j, k, 2)
-vp(i, j, k, 3) = v(i, j, k, 3) - av(i, j, k, 3)
-end do
-end do
-end do
-!$OMP END PARALLEL
-
-return
-end subroutine vprime
-
-
-
-
-!> ********************************************************************
-!! @param [out]    R       レイノルズ応力の瞬時値
-!! @param [in]     sz      配列長
-!! @param [in]     g       ガイドセル長
-!! @param [in]     vp      速度の瞬時値
-!! @param [out]    flop    flop count
-!!
-!!  u          ; 速度の瞬時値
-!!  \var{u}    ; 速度の時間平均値
-!!  u^{\prime} ; 速度の変動値 u - \var{u}
-!!  \var{u^{\prime}v^{\prime}} ; レイノルズ応力の瞬時値
-!<
-subroutine reynolds_stress(R, sz, g, vp, flop)
+subroutine calc_reynolds_stress(R, R_ave, sz, g, v, v_ave, nadd, flop)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   :: ix, jx, kx, i, j, k, g
-double precision                                          :: flop
 integer, dimension(3)                                     :: sz
-real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 9) :: R
-real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) :: vp
-real                                                      :: u1, u2, u3
+real, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) :: R, R_ave
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) :: v, v_ave
+real                                                      :: v1p, v2p, v3p
+real                                                      :: nadd, val1, val2
+double precision                                          :: flop
 
 ix = sz(1)
 jx = sz(2)
 kx = sz(3)
 
-flop = flop + dble(ix+2*g) * dble(jx+2*g) * dble(kx+2*g) * 45.0d0 + 9.0d0
+! 9 flop
+val2 = 1.0/nadd
+val1 = 1.0 - val2
+
+flop = flop + dble(ix+2*g) * dble(jx+2*g) * dble(kx+2*g) * 27.0d0 + 9.0d0
 
 !$OMP PARALLEL &
-!$OMP PRIVATE(u1, u2, u3) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, g)
+!$OMP PRIVATE(v1p, v2p, v3p) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, g, val1, val2)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 do k = 1-g, kx+g
 do j = 1-g, jx+g
 do i = 1-g, ix+g
 
-u1 = vp(i, j, k, 1)
-u2 = vp(i, j, k, 2)
-u3 = vp(i, j, k, 3)
+      ! 変動速度ベクトルのロード
+      ! 3 flop
+      v1p = v(i, j, k, 1) - v_ave(i, j, k, 1)
+      v2p = v(i, j, k, 2) - v_ave(i, j, k, 2)
+      v3p = v(i, j, k, 3) - v_ave(i, j, k, 3)
 
-! レイノルズ応力
-! (本来は対称テンソルだが、内積計算での場合分けの煩雑さを避けるため、
-! あえて非対称テンソルとして取り扱う。)
-R(i, j, k, 1) = u1 * u1
-R(i, j, k, 2) = u1 * u2
-R(i, j, k, 3) = u1 * u3
-R(i, j, k, 4) = R(i, j, k, 2)
-R(i, j, k, 5) = u2 * u2
-R(i, j, k, 6) = u2 * u3
-R(i, j, k, 7) = R(i, j, k, 3)
-R(i, j, k, 8) = R(i, j, k, 6)
-R(i, j, k, 9) = u3 * u3
+      ! レイノルズ応力テンソル
+      ! 6 flop
+      R(1, i, j, k) = v1p * v1p
+      R(2, i, j, k) = v1p * v2p
+      R(3, i, j, k) = v1p * v3p
+      R(4, i, j, k) = v2p * v2p
+      R(5, i, j, k) = v2p * v3p
+      R(6, i, j, k) = v3p * v3p
+
+      ! レイノルズ応力テンソル (時間平均値)
+      ! 18 flop
+      R_ave(1, i, j, k) = val1 * R_ave(1, i, j, k) + val2 * R(1, i, j, k)
+      R_ave(2, i, j, k) = val1 * R_ave(2, i, j, k) + val2 * R(2, i, j, k)
+      R_ave(3, i, j, k) = val1 * R_ave(3, i, j, k) + val2 * R(3, i, j, k)
+      R_ave(4, i, j, k) = val1 * R_ave(4, i, j, k) + val2 * R(4, i, j, k)
+      R_ave(5, i, j, k) = val1 * R_ave(5, i, j, k) + val2 * R(5, i, j, k)
+      R_ave(6, i, j, k) = val1 * R_ave(6, i, j, k) + val2 * R(6, i, j, k)
 
 end do
 end do
@@ -1829,44 +1551,64 @@ end do
 !$OMP END PARALLEL
 
 return
-end subroutine reynolds_stress
+end subroutine calc_reynolds_stress
+!> ********************************************************************
+
 
 
 
 
 !> ********************************************************************
-!! @brief 速度勾配テンソルの計算 (2次精度)
-!! @param [out] gv   速度勾配テンソル
-!! @param [in]  sz   配列長
-!! @param [in]  g    ガイドセル長
-!! @param [in]  v    セルセンター速度ベクトル
-!! @param [in]  bv   BCindex C
-!! @param [out] flop flop count
+!! @brief 生成項の計算
+!! @param [in, out]  P_ave  生成項 (時間平均値)
+!! @param [in]       sz     配列長
+!! @param [in]       dh     格子幅
+!! @param [in]       g      ガイドセル長
+!! @param [in]       v_ave  セルセンター時間平均速度ベクトル
+!! @param [in]       R      レイノルズ応力テンソル
+!! @param [in]       bv     BCindex C
+!! @param [in]       nadd   加算回数
+!! @param [out]      flop   flop count
 !<
-subroutine gradv (gv, sz, dh, g, v, bv, flop)
+subroutine calc_production_rate (P_ave, sz, dh, g, v_ave, R, bv, nadd, flop)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, g, idx
-real, dimension(3)                                        ::  dh
-double precision                                          ::  flop
 integer, dimension(3)                                     ::  sz
+real, dimension(3)                                        ::  dh
+real                                                      ::  R11, R12, R13, R21, R22, R23, R31, R32, R33
 integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
 real                                                      ::  actv, rx, ry, rz
 real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
 real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
 real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
 real                                                      ::  w_e, w_w, w_n, w_s, w_t, w_b, uq, vq, wq
-real                                                      ::  d11, d22, d33, d12, d13, d23
-real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
-real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 9) ::  gv
+real                                                      ::  gradU11, gradU12, gradU13
+real                                                      ::  gradU21, gradU22, gradU23
+real                                                      ::  gradU31, gradU32, gradU33
+real                                                      ::  P11_1, P12_1, P13_1, P22_1, P23_1, P33_1
+real                                                      ::  P21_1, P31_1, P32_1
+real                                                      ::  P11, P12, P13, P22, P23, P33
+real, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  P_ave, R
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v_ave
+real                                                      ::  nadd, val1, val2
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
+double precision                                          ::  flop
 
 ix = sz(1)
 jx = sz(2)
 kx = sz(3)
+
+! 27 flop
 rx = 1.0 / (2.0*dh(1))
 ry = 1.0 / (2.0*dh(2))
 rz = 1.0 / (2.0*dh(3))
+
+! 9 flop
+val2 = 1.0/nadd
+val1 = 1.0 - val2
+
+flop = flop + dble(ix)*dble(jx)*dble(kx)*133.0d0 + 36.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(idx, actv, uq, vq, wq) &
@@ -1875,280 +1617,159 @@ rz = 1.0 / (2.0*dh(3))
 !$OMP PRIVATE(Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1) &
 !$OMP PRIVATE(b_e1, b_w1, b_n1, b_s1, b_t1, b_b1) &
 !$OMP PRIVATE(w_e, w_w, w_n, w_s, w_t, w_b) &
-!$OMP PRIVATE(d11, d22, d33, d12, d13, d23) &
+!$OMP PRIVATE(R11, R12, R13, R22, R23, R33) &
+!$OMP PRIVATE(gradU11, gradU12, gradU13) &
+!$OMP PRIVATE(gradU21, gradU22, gradU23) &
+!$OMP PRIVATE(gradU31, gradU32, gradU33) &
+!$OMP PRIVATE(P11_1, P12_1, P13_1, P22_1, P23_1, P33_1) &
+!$OMP PRIVATE(P21_1, P31_1, P32_1) &
+!$OMP PRIVATE(P11, P12, P13, P22, P23, P33) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, rx, ry, rz)
-
-!$OMP DO SCHEDULE(static) COLLAPSE(2)
-
-do k=1,kx
-do j=1,jx
-do i=1,ix
-idx = bv(i,j,k)
-
-Ub1 = v(i  ,j  ,k-1, 1)
-Us1 = v(i  ,j-1,k  , 1)
-Uw1 = v(i-1,j  ,k  , 1)
-Up0 = v(i  ,j  ,k  , 1)
-Ue1 = v(i+1,j  ,k  , 1)
-Un1 = v(i  ,j+1,k  , 1)
-Ut1 = v(i  ,j  ,k+1, 1)
-
-Vb1 = v(i  ,j  ,k-1, 2)
-Vs1 = v(i  ,j-1,k  , 2)
-Vw1 = v(i-1,j  ,k  , 2)
-Vp0 = v(i  ,j  ,k  , 2)
-Ve1 = v(i+1,j  ,k  , 2)
-Vn1 = v(i  ,j+1,k  , 2)
-Vt1 = v(i  ,j  ,k+1, 2)
-
-Wb1 = v(i  ,j  ,k-1, 3)
-Ws1 = v(i  ,j-1,k  , 3)
-Ww1 = v(i-1,j  ,k  , 3)
-Wp0 = v(i  ,j  ,k  , 3)
-We1 = v(i+1,j  ,k  , 3)
-Wn1 = v(i  ,j+1,k  , 3)
-Wt1 = v(i  ,j  ,k+1, 3)
-
-! セル状態 (0-solid / 1-fluid) > 1 flop
-actv= real(ibits(idx, State, 1))
-
-b_w1= ibits(bv(i-1,j  ,k  ), State, 1)
-b_e1= ibits(bv(i+1,j  ,k  ), State, 1)
-b_s1= ibits(bv(i  ,j-1,k  ), State, 1)
-b_n1= ibits(bv(i  ,j+1,k  ), State, 1)
-b_b1= ibits(bv(i  ,j  ,k-1), State, 1)
-b_t1= ibits(bv(i  ,j  ,k+1), State, 1)
-
-! 隣接セルの状態で置換フラグをセット セル状態 (0-solid / 1-fluid) > 12 flop
-w_e = real(b_e1) * actv
-w_w = real(b_w1) * actv
-w_n = real(b_n1) * actv
-w_s = real(b_s1) * actv
-w_t = real(b_t1) * actv
-w_b = real(b_b1) * actv
-
-! セルセンターからの壁面修正速度 > 6 flop
-uq = -Up0
-vq = -Vp0
-wq = -Wp0
-
-! 壁面の場合の参照速度の修正
-if ( b_e1 == 0 ) then
-Ue1 = uq
-Ve1 = vq
-We1 = wq
-endif
-
-if ( b_w1 == 0 ) then
-Uw1 = uq
-Vw1 = vq
-Ww1 = wq
-end if
-
-if ( b_n1 == 0 ) then
-Un1 = uq
-Vn1 = vq
-Wn1 = wq
-end if
-
-if ( b_s1 == 0 ) then
-Us1 = uq
-Vs1 = vq
-Ws1 = wq
-end if
-
-if ( b_t1 == 0 ) then
-Ut1 = uq
-Vt1 = vq
-Wt1 = wq
-end if
-
-if ( b_b1 == 0 ) then
-Ub1 = uq
-Vb1 = vq
-Wb1 = wq
-end if
-
-gv(i, j, k, 1) = rx * ( Ue1 - Uw1 ) * actv
-gv(i, j, k, 2) = rx * ( Ve1 - Vw1 ) * actv
-gv(i, j, k, 3) = rx * ( We1 - Ww1 ) * actv
-gv(i, j, k, 4) = ry * ( Un1 - Us1 ) * actv
-gv(i, j, k, 5) = ry * ( Vn1 - Vs1 ) * actv
-gv(i, j, k, 6) = ry * ( Wn1 - Ws1 ) * actv
-gv(i, j, k, 7) = rz * ( Ut1 - Ub1 ) * actv
-gv(i, j, k, 8) = rz * ( Vt1 - Vb1 ) * actv
-gv(i, j, k, 9) = rz * ( Wt1 - Wb1 ) * actv
-
-end do
-end do
-end do
-!$OMP END DO
-!$OMP END PARALLEL
-
-return
-end subroutine gradv
-
-
-
-
-!> ********************************************************************
-!! @brief テンソルの内積を計算する
-!! @param [out]    C    テンソルの内積 (C_jk = A_ij B_jk)
-!! @param [in]     A    テンソル (A_ij)
-!! @param [in]     B    テンソル (B_ij)
-!! @param [in]     sz   配列長
-!! @param [in]     g    ガイドセル長
-!! @param [out]    flop flop count
-!<
-subroutine inner_product_t (C, A, B, sz, g, flop)
-implicit none
-integer                                                   ::  i, j, k, ix, jx, kx, g
-integer, dimension(3)                                     ::  sz
-real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 9) ::  A, B, C
-real                                                      ::  a11, a12, a13, a21, a22, a23, a31, a32, a33
-real                                                      ::  b11, b12, b13, b21, b22, b23, b31, b32, b33
-double precision                                          ::  flop
-
-ix = sz(1)
-jx = sz(2)
-kx = sz(3)
-
-flop = flop + dble(ix)*dble(jx)*dble(kx)*45.0d0
-
-!$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx)
 !$OMP DO SCHEDULE(static)
 
 do k = 1, kx
 do j = 1, jx
 do i = 1, ix
-a11 = A(i, j, k, 1)
-a12 = A(i, j, k, 2)
-a13 = A(i, j, k, 3)
-a21 = A(i, j, k, 4)
-a22 = A(i, j, k, 5)
-a23 = A(i, j, k, 6)
-a31 = A(i, j, k, 7)
-a32 = A(i, j, k, 8)
-a33 = A(i, j, k, 9)
 
-b11 = B(i, j, k, 1)
-b12 = B(i, j, k, 2)
-b13 = B(i, j, k, 3)
-b21 = B(i, j, k, 4)
-b22 = B(i, j, k, 5)
-b23 = B(i, j, k, 6)
-b31 = B(i, j, k, 7)
-b32 = B(i, j, k, 8)
-b33 = B(i, j, k, 9)
+      ! レイノルズ応力テンソル
+      R11 = R(1, i, j, k)
+      R12 = R(2, i, j, k)
+      R13 = R(3, i, j, k)
+      R21 = R12
+      R22 = R(4, i, j, k)
+      R23 = R(5, i, j, k)
+      R31 = R13
+      R32 = R23
+      R33 = R(6, i, j, k)
 
-C(i, j, k, 1) = a11*b11 + a12*b21 + a13*b31
-C(i, j, k, 2) = a11*b12 + a12*b22 + a13*b32
-C(i, j, k, 3) = a11*b13 + a12*b23 + a13*b33
-C(i, j, k, 4) = a21*b11 + a22*b21 + a23*b31
-C(i, j, k, 5) = a21*b12 + a22*b22 + a23*b32
-C(i, j, k, 6) = a21*b13 + a22*b23 + a23*b33
-C(i, j, k, 7) = a31*b11 + a32*b21 + a33*b31
-C(i, j, k, 8) = a31*b12 + a32*b22 + a33*b32
-C(i, j, k, 9) = a31*b13 + a32*b23 + a33*b33
-end do
-end do
-end do
-!$OMP END DO
-!$OMP END PARALLEL
+      idx = bv(i,j,k)
 
-return
-end subroutine inner_product_t
+      Ub1 = v_ave(i  ,j  ,k-1, 1)
+      Us1 = v_ave(i  ,j-1,k  , 1)
+      Uw1 = v_ave(i-1,j  ,k  , 1)
+      Up0 = v_ave(i  ,j  ,k  , 1)
+      Ue1 = v_ave(i+1,j  ,k  , 1)
+      Un1 = v_ave(i  ,j+1,k  , 1)
+      Ut1 = v_ave(i  ,j  ,k+1, 1)
 
+      Vb1 = v_ave(i  ,j  ,k-1, 2)
+      Vs1 = v_ave(i  ,j-1,k  , 2)
+      Vw1 = v_ave(i-1,j  ,k  , 2)
+      Vp0 = v_ave(i  ,j  ,k  , 2)
+      Ve1 = v_ave(i+1,j  ,k  , 2)
+      Vn1 = v_ave(i  ,j+1,k  , 2)
+      Vt1 = v_ave(i  ,j  ,k+1, 2)
 
+      Wb1 = v_ave(i  ,j  ,k-1, 3)
+      Ws1 = v_ave(i  ,j-1,k  , 3)
+      Ww1 = v_ave(i-1,j  ,k  , 3)
+      Wp0 = v_ave(i  ,j  ,k  , 3)
+      We1 = v_ave(i+1,j  ,k  , 3)
+      Wn1 = v_ave(i  ,j+1,k  , 3)
+      Wt1 = v_ave(i  ,j  ,k+1, 3)
 
+      ! セル状態 (0-solid / 1-fluid) > 1 flop
+      actv= real(ibits(idx, State, 1))
 
-!> ********************************************************************
-!! @brief 転置テンソルを作成する
-!! @param [out]    tA   転置テンソル (A_ji)
-!! @param [in]     A    テンソル (A_ij)
-!! @param [in]     sz   配列長
-!! @param [in]     g    ガイドセル長
-!! @param [out]    flop flop count
-!<
-subroutine transpose_t (tA, A, sz, g, flop)
-implicit none
-integer                                                   ::  i, j, k, ix, jx, kx, g
-integer, dimension(3)                                     ::  sz
-real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 9) ::  A, tA
-double precision                                          ::  flop
+      b_w1= ibits(bv(i-1,j  ,k  ), State, 1)
+      b_e1= ibits(bv(i+1,j  ,k  ), State, 1)
+      b_s1= ibits(bv(i  ,j-1,k  ), State, 1)
+      b_n1= ibits(bv(i  ,j+1,k  ), State, 1)
+      b_b1= ibits(bv(i  ,j  ,k-1), State, 1)
+      b_t1= ibits(bv(i  ,j  ,k+1), State, 1)
+      
+      ! 隣接セルの状態で置換フラグをセット セル状態 (0-solid / 1-fluid) > 12 flop
+      w_e = real(b_e1) * actv
+      w_w = real(b_w1) * actv
+      w_n = real(b_n1) * actv
+      w_s = real(b_s1) * actv
+      w_t = real(b_t1) * actv
+      w_b = real(b_b1) * actv
 
-ix = sz(1)
-jx = sz(2)
-kx = sz(3)
+      ! セルセンターからの壁面修正速度 > 6 flop
+      uq = -Up0
+      vq = -Vp0
+      wq = -Wp0
 
-flop = 0.0d0
+      ! 壁面の場合の参照速度の修正
+      if ( b_e1 == 0 ) then
+         Ue1 = uq
+         Ve1 = vq
+         We1 = wq
+      endif
 
-!$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx)
-!$OMP DO SCHEDULE(static)
+      if ( b_w1 == 0 ) then
+         Uw1 = uq
+         Vw1 = vq
+         Ww1 = wq
+      end if
 
-do k = 1, kx
-do j = 1, jx
-do i = 1, ix
-tA(i, j, k, 1) = A(i, j, k, 1)
-tA(i, j, k, 2) = A(i, j, k, 4)
-tA(i, j, k, 3) = A(i, j, k, 7)
-tA(i, j, k, 4) = A(i, j, k, 2)
-tA(i, j, k, 5) = A(i, j, k, 5)
-tA(i, j, k, 6) = A(i, j, k, 8)
-tA(i, j, k, 7) = A(i, j, k, 3)
-tA(i, j, k, 8) = A(i, j, k, 6)
-tA(i, j, k, 9) = A(i, j, k, 9)
-end do
-end do
-end do
-!$OMP END DO
-!$OMP END PARALLEL
+      if ( b_n1 == 0 ) then
+         Un1 = uq
+         Vn1 = vq
+         Wn1 = wq
+      end if
 
-return
-end subroutine transpose_t
+      if ( b_s1 == 0 ) then
+         Us1 = uq
+         Vs1 = vq
+         Ws1 = wq
+      end if
 
+      if ( b_t1 == 0 ) then
+         Ut1 = uq
+         Vt1 = vq
+         Wt1 = wq
+      end if
 
+      if ( b_b1 == 0 ) then
+         Ub1 = uq
+         Vb1 = vq
+         Wb1 = wq
+      end if
 
-!> ********************************************************************
-!! @brief レイノルズ応力生成率を計算する
-!! @param [out]    P    レイノルズ応力生成率 (P_ij = - A_ij - B_ij)
-!! @param [in]     A    テンソル (A_ij)
-!! @param [in]     B    テンソル (B_ij)
-!! @param [in]     sz   配列長
-!! @param [in]     g    ガイドセル長
-!! @param [out]    flop flop count
-!<
-subroutine calc_production_rate (P, A, B, sz, g, flop)
-implicit none
-integer                                                   ::  i, j, k, ix, jx, kx, g
-integer, dimension(3)                                     ::  sz
-real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 9) ::  A, B, P
-double precision                                          ::  flop
+      ! 平均速度勾配テンソル 
+      ! 27 flop
+      gradU11 = rx * ( Ue1 - Uw1 ) * actv
+      gradU12 = rx * ( Ve1 - Vw1 ) * actv
+      gradU13 = rx * ( We1 - Ww1 ) * actv
+      gradU21 = ry * ( Un1 - Us1 ) * actv
+      gradU22 = ry * ( Vn1 - Vs1 ) * actv
+      gradU23 = ry * ( Wn1 - Ws1 ) * actv
+      gradU31 = rz * ( Ut1 - Ub1 ) * actv
+      gradU32 = rz * ( Vt1 - Vb1 ) * actv
+      gradU33 = rz * ( Wt1 - Wb1 ) * actv
 
-ix = sz(1)
-jx = sz(2)
-kx = sz(3)
+      ! 生成項第一項
+      ! 45 flop
+      P11_1 = R11*gradU11 + R12*gradU21 + R13*gradU31
+      P12_1 = R11*gradU12 + R12*gradU22 + R13*gradU32
+      P13_1 = R11*gradU13 + R12*gradU23 + R13*gradU33
+      P21_1 = R21*gradU11 + R22*gradU21 + R23*gradU31
+      P22_1 = R21*gradU12 + R22*gradU22 + R23*gradU32
+      P23_1 = R21*gradU13 + R22*gradU23 + R23*gradU33
+      P31_1 = R31*gradU11 + R32*gradU21 + R33*gradU31
+      P32_1 = R31*gradU12 + R32*gradU22 + R33*gradU32
+      P33_1 = R31*gradU13 + R32*gradU23 + R33*gradU33
 
-flop = flop + dble(ix)*dble(jx)*dble(kx)*9.0d0
+      ! 生成項 (生成項第一項 + 第一項の転置項)
+      ! 24 flop
+      P11 = -( P11_1 + P11_1 ) * actv
+      P12 = -( P12_1 + P21_1 ) * actv
+      P13 = -( P13_1 + P31_1 ) * actv
+      P22 = -( P22_1 + P22_1 ) * actv
+      P23 = -( P23_1 + P32_1 ) * actv
+      P33 = -( P33_1 + P33_1 ) * actv
 
-!$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx)
-!$OMP DO SCHEDULE(static)
+      ! 生成項 (時間平均値)
+      ! 18 flop
+      P_ave(1, i, j, k) = val1 * P_ave(1, i, j, k) + val2 * P11
+      P_ave(2, i, j, k) = val1 * P_ave(2, i, j, k) + val2 * P12
+      P_ave(3, i, j, k) = val1 * P_ave(3, i, j, k) + val2 * P13
+      P_ave(4, i, j, k) = val1 * P_ave(4, i, j, k) + val2 * P22
+      P_ave(5, i, j, k) = val1 * P_ave(5, i, j, k) + val2 * P23
+      P_ave(6, i, j, k) = val1 * P_ave(6, i, j, k) + val2 * P33
 
-do k = 1, kx
-do j = 1, jx
-do i = 1, ix
-P(i, j, k, 1) = -A(i, j, k, 1) - B(i, j, k, 1)
-P(i, j, k, 2) = -A(i, j, k, 2) - B(i, j, k, 2)
-P(i, j, k, 3) = -A(i, j, k, 3) - B(i, j, k, 3)
-P(i, j, k, 4) = -A(i, j, k, 4) - B(i, j, k, 4)
-P(i, j, k, 5) = -A(i, j, k, 5) - B(i, j, k, 5)
-P(i, j, k, 6) = -A(i, j, k, 6) - B(i, j, k, 6)
-P(i, j, k, 7) = -A(i, j, k, 7) - B(i, j, k, 7)
-P(i, j, k, 8) = -A(i, j, k, 8) - B(i, j, k, 8)
-P(i, j, k, 9) = -A(i, j, k, 9) - B(i, j, k, 9)
 end do
 end do
 end do
@@ -2157,53 +1778,471 @@ end do
 
 return
 end subroutine calc_production_rate
+!> ********************************************************************
+
 
 
 
 
 !> ********************************************************************
-!! @brief テンソルの時間平均値を加算する
-!! @param [in,out] at   平均値
-!! @param [in]     sz   配列長
-!! @param [in]     g    ガイドセル長
-!! @param [in]     t    テンソル値
-!! @param [in]     nadd 加算回数
-!! @param [in,out] flop 浮動小数演算数
+!! @brief 散逸項の計算
+!! @param [out]  E_ave  散逸項 (時間平均値)
+!! @param [in]   sz     配列長
+!! @param [in]   dh     格子幅
+!! @param [in]   g      ガイドセル長
+!! @param [in]   nu     動粘性係数
+!! @param [in]   v      セルセンター速度ベクトル
+!! @param [in]   v_ave  セルセンター時間平均速度ベクトル
+!! @param [in]   bv     BCindex C
+!! @param [in]   nadd   加算回数
+!! @param [out]  flop   flop count
 !<
-subroutine average_t (at, sz, g, t, nadd, flop)
+subroutine calc_dissipation_rate (E_ave, sz, dh, g, nu, v, v_ave, bv, nadd, flop)
 implicit none
-integer                                                   ::  i, j, k, ix, jx, kx, g
+include 'ffv_f_params.h'
+integer                                                   ::  i, j, k, ix, jx, kx, g, idx
 integer, dimension(3)                                     ::  sz
+real, dimension(3)                                        ::  dh
+integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
+real                                                      ::  actv, rx, ry, rz
+real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
+real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
+real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
+real                                                      ::  w_e, w_w, w_n, w_s, w_t, w_b, uq, vq, wq
+real                                                      ::  gradU11, gradU12, gradU13
+real                                                      ::  gradU21, gradU22, gradU23
+real                                                      ::  gradU31, gradU32, gradU33
+real                                                      ::  gradUt11, gradUt12, gradUt13
+real                                                      ::  gradUt21, gradUt22, gradUt23
+real                                                      ::  gradUt31, gradUt32, gradUt33
+real                                                      ::  E11, E12, E13, E22, E23, E33
+real, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  E_ave
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, v_ave
+real                                                      ::  nadd, val1, val2, nu
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
 double precision                                          ::  flop
-real                                                      ::  nadd, val1, val2
-real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 9) ::  t, at
 
 ix = sz(1)
 jx = sz(2)
 kx = sz(3)
 
-flop = flop + dble(ix)*dble(jx)*dble(kx)*27.0d0 + 9.0d0
+! 27 flop
+rx = 1.0 / (2.0*dh(1))
+ry = 1.0 / (2.0*dh(2))
+rz = 1.0 / (2.0*dh(3))
 
+! 9 flop
 val2 = 1.0/nadd
 val1 = 1.0 - val2
 
-!$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, val1, val2)
+flop = flop + dble(ix)*dble(jx)*dble(kx)*131.0d0 + 36.0d0
 
+
+!$OMP PARALLEL &
+!$OMP PRIVATE(idx, actv, uq, vq, wq) &
+!$OMP PRIVATE(Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1) &
+!$OMP PRIVATE(Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1) &
+!$OMP PRIVATE(Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1) &
+!$OMP PRIVATE(b_e1, b_w1, b_n1, b_s1, b_t1, b_b1) &
+!$OMP PRIVATE(w_e, w_w, w_n, w_s, w_t, w_b) &
+!$OMP PRIVATE(gradU11, gradU12, gradU13) &
+!$OMP PRIVATE(gradU21, gradU22, gradU23) &
+!$OMP PRIVATE(gradU31, gradU32, gradU33) &
+!$OMP PRIVATE(gradUt11, gradUt12, gradUt13) &
+!$OMP PRIVATE(gradUt21, gradUt22, gradUt23) &
+!$OMP PRIVATE(gradUt31, gradUt32, gradUt33) &
+!$OMP PRIVATE(E11, E12, E13, E22, E23, E33) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, rx, ry, rz, nu)
 !$OMP DO SCHEDULE(static)
+
+do k = 1, kx
+do j = 1, jx
+do i = 1, ix
+      idx = bv(i,j,k)
+
+      ! 21 flop
+      Ub1 = v(i  ,j  ,k-1, 1) - v_ave(i  ,j  ,k-1, 1)
+      Us1 = v(i  ,j-1,k  , 1) - v_ave(i  ,j-1,k  , 1)
+      Uw1 = v(i-1,j  ,k  , 1) - v_ave(i-1,j  ,k  , 1)
+      Up0 = v(i  ,j  ,k  , 1) - v_ave(i  ,j  ,k  , 1)
+      Ue1 = v(i+1,j  ,k  , 1) - v_ave(i+1,j  ,k  , 1)
+      Un1 = v(i  ,j+1,k  , 1) - v_ave(i  ,j+1,k  , 1)
+      Ut1 = v(i  ,j  ,k+1, 1) - v_ave(i  ,j  ,k+1, 1)
+
+      Vb1 = v(i  ,j  ,k-1, 2) - v_ave(i  ,j  ,k-1, 2)
+      Vs1 = v(i  ,j-1,k  , 2) - v_ave(i  ,j-1,k  , 2)
+      Vw1 = v(i-1,j  ,k  , 2) - v_ave(i-1,j  ,k  , 2)
+      Vp0 = v(i  ,j  ,k  , 2) - v_ave(i  ,j  ,k  , 2)
+      Ve1 = v(i+1,j  ,k  , 2) - v_ave(i+1,j  ,k  , 2)
+      Vn1 = v(i  ,j+1,k  , 2) - v_ave(i  ,j+1,k  , 2)
+      Vt1 = v(i  ,j  ,k+1, 2) - v_ave(i  ,j  ,k+1, 2)
+
+      Wb1 = v(i  ,j  ,k-1, 3) - v_ave(i  ,j  ,k-1, 3)
+      Ws1 = v(i  ,j-1,k  , 3) - v_ave(i  ,j-1,k  , 3)
+      Ww1 = v(i-1,j  ,k  , 3) - v_ave(i-1,j  ,k  , 3)
+      Wp0 = v(i  ,j  ,k  , 3) - v_ave(i  ,j  ,k  , 3)
+      We1 = v(i+1,j  ,k  , 3) - v_ave(i+1,j  ,k  , 3)
+      Wn1 = v(i  ,j+1,k  , 3) - v_ave(i  ,j+1,k  , 3)
+      Wt1 = v(i  ,j  ,k+1, 3) - v_ave(i  ,j  ,k+1, 3)
+
+      ! セル状態 (0-solid / 1-fluid) > 1 flop
+      actv= real(ibits(idx, State, 1))
+
+      b_w1= ibits(bv(i-1,j  ,k  ), State, 1)
+      b_e1= ibits(bv(i+1,j  ,k  ), State, 1)
+      b_s1= ibits(bv(i  ,j-1,k  ), State, 1)
+      b_n1= ibits(bv(i  ,j+1,k  ), State, 1)
+      b_b1= ibits(bv(i  ,j  ,k-1), State, 1)
+      b_t1= ibits(bv(i  ,j  ,k+1), State, 1)
+      
+      ! 隣接セルの状態で置換フラグをセット セル状態 (0-solid / 1-fluid) > 12 flop
+      w_e = real(b_e1) * actv
+      w_w = real(b_w1) * actv
+      w_n = real(b_n1) * actv
+      w_s = real(b_s1) * actv
+      w_t = real(b_t1) * actv
+      w_b = real(b_b1) * actv
+
+      ! セルセンターからの壁面修正速度 > 6 flop
+      uq = -Up0
+      vq = -Vp0
+      wq = -Wp0
+
+      ! 壁面の場合の参照速度の修正
+      if ( b_e1 == 0 ) then
+         Ue1 = uq
+         Ve1 = vq
+         We1 = wq
+      endif
+
+      if ( b_w1 == 0 ) then
+         Uw1 = uq
+         Vw1 = vq
+         Ww1 = wq
+      end if
+
+      if ( b_n1 == 0 ) then
+         Un1 = uq
+         Vn1 = vq
+         Wn1 = wq
+      end if
+
+      if ( b_s1 == 0 ) then
+         Us1 = uq
+         Vs1 = vq
+         Ws1 = wq
+      end if
+
+      if ( b_t1 == 0 ) then
+         Ut1 = uq
+         Vt1 = vq
+         Wt1 = wq
+      end if
+
+      if ( b_b1 == 0 ) then
+         Ub1 = uq
+         Vb1 = vq
+         Wb1 = wq
+      end if
+
+      ! 速度変動勾配テンソル 
+      ! 27 flop
+      gradU11 = rx * ( Ue1 - Uw1 ) * actv
+      gradU12 = rx * ( Ve1 - Vw1 ) * actv
+      gradU13 = rx * ( We1 - Ww1 ) * actv
+      gradU21 = ry * ( Un1 - Us1 ) * actv
+      gradU22 = ry * ( Vn1 - Vs1 ) * actv
+      gradU23 = ry * ( Wn1 - Ws1 ) * actv
+      gradU31 = rz * ( Ut1 - Ub1 ) * actv
+      gradU32 = rz * ( Vt1 - Vb1 ) * actv
+      gradU33 = rz * ( Wt1 - Wb1 ) * actv
+
+      ! 速度変動勾配テンソルの転置
+      gradUt11 = gradU11
+      gradUt12 = gradU21
+      gradUt13 = gradU31
+      gradUt21 = gradU12
+      gradUt22 = gradU22
+      gradUt23 = gradU32
+      gradUt31 = gradU13
+      gradUt32 = gradU23
+      gradUt33 = gradU33
+
+      ! 散逸項
+      ! 48 flop
+      E11 = 2 * nu * ( gradUt11*gradU11 + gradUt12*gradU21 + gradUt13*gradU31 ) * actv
+      E12 = 2 * nu * ( gradUt11*gradU12 + gradUt12*gradU22 + gradUt13*gradU32 ) * actv
+      E13 = 2 * nu * ( gradUt11*gradU13 + gradUt12*gradU23 + gradUt13*gradU33 ) * actv
+      E22 = 2 * nu * ( gradUt21*gradU12 + gradUt22*gradU22 + gradUt23*gradU32 ) * actv
+      E23 = 2 * nu * ( gradUt21*gradU13 + gradUt22*gradU23 + gradUt23*gradU33 ) * actv
+      E33 = 2 * nu * ( gradUt31*gradU13 + gradUt32*gradU23 + gradUt33*gradU33 ) * actv
+
+      ! 散逸項 (時間平均値)
+      ! 18 flop
+      E_ave(1, i, j, k) = val1 * E_ave(1, i, j, k) + val2 * E11
+      E_ave(2, i, j, k) = val1 * E_ave(2, i, j, k) + val2 * E12
+      E_ave(3, i, j, k) = val1 * E_ave(3, i, j, k) + val2 * E13
+      E_ave(4, i, j, k) = val1 * E_ave(4, i, j, k) + val2 * E22
+      E_ave(5, i, j, k) = val1 * E_ave(5, i, j, k) + val2 * E23
+      E_ave(6, i, j, k) = val1 * E_ave(6, i, j, k) + val2 * E33
+
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+
+return
+end subroutine calc_dissipation_rate
+!> ********************************************************************
+
+
+
+
+
+!> ********************************************************************
+!! @brief 乱流拡散項の計算
+!! @param [in, out]  T_ave  乱流拡散項 (時間平均値)
+!! @param [in]       sz     配列長
+!! @param [in]       dh     格子幅
+!! @param [in]       g      ガイドセル長
+!! @param [in]       v      セルセンター速度ベクトル
+!! @param [in]       v_ave  セルセンター時間平均速度ベクトル
+!! @param [in]       R      レイノルズ応力テンソル
+!! @param [in]       bv     BCindex C
+!! @param [in]       nadd   加算回数
+!! @param [out]      flop   flop count
+!<
+subroutine calc_turb_transport_rate (T_ave, sz, dh, g, v, v_ave, R, bv, nadd, flop)
+implicit none
+include 'ffv_f_params.h'
+integer                                                   ::  i, j, k, ix, jx, kx, g, idx
+real, dimension(3)                                        ::  dh
+double precision                                          ::  flop
+integer, dimension(3)                                     ::  sz
+integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
+real                                                      ::  actv, rx, ry, rz
+real                                                      ::  v1p, v2p, v3p
+real                                                      ::  R11_p0, R12_p0, R13_p0, R22_p0, R23_p0, R33_p0
+real                                                      ::  R11_w1, R11_e1, R11_s1, R11_n1, R11_b1, R11_t1
+real                                                      ::  R12_w1, R12_e1, R12_s1, R12_n1, R12_b1, R12_t1
+real                                                      ::  R13_w1, R13_e1, R13_s1, R13_n1, R13_b1, R13_t1
+real                                                      ::  R22_w1, R22_e1, R22_s1, R22_n1, R22_b1, R22_t1
+real                                                      ::  R23_w1, R23_e1, R23_s1, R23_n1, R23_b1, R23_t1
+real                                                      ::  R33_w1, R33_e1, R33_s1, R33_n1, R33_b1, R33_t1
+real                                                      ::  T11, T12, T13, T22, T23, T33
+real                                                      ::  w_e, w_w, w_n, w_s, w_t, w_b, uq, vq, wq
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, v_ave
+real, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  R, T_ave
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
+real                                                      ::  nadd, val1, val2
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+! 27 flop
+rx = 1.0 / (2.0*dh(1))
+ry = 1.0 / (2.0*dh(2))
+rz = 1.0 / (2.0*dh(3))
+
+! 9 flop
+val2 = 1.0/nadd
+val1 = 1.0 - val2
+
+flop = flop + dble(ix)*dble(jx)*dble(kx)*118.0d0 + 36.0d0
+
+!$OMP PARALLEL &
+!$OMP PRIVATE(idx, actv, uq, vq, wq) &
+!$OMP PRIVATE(v1p, v2p, v3p) &
+!$OMP PRIVATE(R11_w1, R11_e1, R11_s1, R11_n1, R11_b1, R11_t1) &
+!$OMP PRIVATE(R12_w1, R12_e1, R12_s1, R12_n1, R12_b1, R12_t1) &
+!$OMP PRIVATE(R13_w1, R13_e1, R13_s1, R13_n1, R13_b1, R13_t1) &
+!$OMP PRIVATE(R22_w1, R22_e1, R22_s1, R22_n1, R22_b1, R22_t1) &
+!$OMP PRIVATE(R23_w1, R23_e1, R23_s1, R23_n1, R23_b1, R23_t1) &
+!$OMP PRIVATE(R33_w1, R33_e1, R33_s1, R33_n1, R33_b1, R33_t1) &
+!$OMP PRIVATE(b_e1, b_w1, b_n1, b_s1, b_t1, b_b1) &
+!$OMP PRIVATE(w_e, w_w, w_n, w_s, w_t, w_b) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, rx, ry, rz, val1, val2)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
 
 do k=1,kx
 do j=1,jx
 do i=1,ix
-at(i, j, k, 1) = val1 * at(i, j, k, 1) + val2 * t(i, j, k, 1)
-at(i, j, k, 2) = val1 * at(i, j, k, 2) + val2 * t(i, j, k, 2)
-at(i, j, k, 3) = val1 * at(i, j, k, 3) + val2 * t(i, j, k, 3)
-at(i, j, k, 4) = val1 * at(i, j, k, 4) + val2 * t(i, j, k, 4)
-at(i, j, k, 5) = val1 * at(i, j, k, 5) + val2 * t(i, j, k, 5)
-at(i, j, k, 6) = val1 * at(i, j, k, 6) + val2 * t(i, j, k, 6)
-at(i, j, k, 7) = val1 * at(i, j, k, 7) + val2 * t(i, j, k, 7)
-at(i, j, k, 8) = val1 * at(i, j, k, 8) + val2 * t(i, j, k, 8)
-at(i, j, k, 9) = val1 * at(i, j, k, 9) + val2 * t(i, j, k, 9)
+
+      idx = bv(i,j,k)
+
+      ! 変動速度ベクトル
+      ! 3 flop
+      v1p = v(i, j, k, 1) - v_ave(i, j, k, 1)
+      v2p = v(i, j, k, 2) - v_ave(i, j, k, 2)
+      v3p = v(i, j, k, 3) - v_ave(i, j, k, 3)
+
+      ! レイノルズ応力テンソル
+      R11_b1 = R(1, i,   j,   k-1)
+      R11_s1 = R(1, i,   j-1, k  )
+      R11_w1 = R(1, i-1, j,   k  )
+      R11_p0 = R(1, i,   j,   k  )
+      R11_e1 = R(1, i+1, j,   k  )
+      R11_n1 = R(1, i,   j+1, k  )
+      R11_t1 = R(1, i,   j,   k+1)
+
+      R12_b1 = R(2, i,   j,   k-1)
+      R12_s1 = R(2, i,   j-1, k  )
+      R12_w1 = R(2, i-1, j,   k  )
+      R12_p0 = R(2, i,   j,   k  )
+      R12_e1 = R(2, i+1, j,   k  )
+      R12_n1 = R(2, i,   j+1, k  )
+      R12_t1 = R(2, i,   j,   k+1)
+
+      R13_b1 = R(3, i,   j,   k-1)
+      R13_s1 = R(3, i,   j-1, k  )
+      R13_w1 = R(3, i-1, j,   k  )
+      R13_p0 = R(3, i,   j,   k  )
+      R13_e1 = R(3, i+1, j,   k  )
+      R13_n1 = R(3, i,   j+1, k  )
+      R13_t1 = R(3, i,   j,   k+1)
+
+      R22_b1 = R(4, i,   j,   k-1)
+      R22_s1 = R(4, i,   j-1, k  )
+      R22_w1 = R(4, i-1, j,   k  )
+      R22_p0 = R(4, i,   j,   k  )
+      R22_e1 = R(4, i+1, j,   k  )
+      R22_n1 = R(4, i,   j+1, k  )
+      R22_t1 = R(4, i,   j,   k+1)
+
+      R23_b1 = R(5, i,   j,   k-1)
+      R23_s1 = R(5, i,   j-1, k  )
+      R23_w1 = R(5, i-1, j,   k  )
+      R23_p0 = R(5, i,   j,   k  )
+      R23_e1 = R(5, i+1, j,   k  )
+      R23_n1 = R(5, i,   j+1, k  )
+      R23_t1 = R(5, i,   j,   k+1)
+
+      R33_b1 = R(6, i,   j,   k-1)
+      R33_s1 = R(6, i,   j-1, k  )
+      R33_w1 = R(6, i-1, j,   k  )
+      R33_p0 = R(6, i,   j,   k  )
+      R33_e1 = R(6, i+1, j,   k  )
+      R33_n1 = R(6, i,   j+1, k  )
+      R33_t1 = R(6, i,   j,   k+1)
+
+      ! セル状態 (0-solid / 1-fluid) > 1 flop
+      actv= real(ibits(idx, State, 1))
+      
+      b_w1= ibits(bv(i-1,j  ,k  ), State, 1)
+      b_e1= ibits(bv(i+1,j  ,k  ), State, 1)
+      b_s1= ibits(bv(i  ,j-1,k  ), State, 1)
+      b_n1= ibits(bv(i  ,j+1,k  ), State, 1)
+      b_b1= ibits(bv(i  ,j  ,k-1), State, 1)
+      b_t1= ibits(bv(i  ,j  ,k+1), State, 1)
+      
+      ! 隣接セルの状態で置換フラグをセット セル状態 (0-solid / 1-fluid) > 12 flop
+      w_e = real(b_e1) * actv
+      w_w = real(b_w1) * actv
+      w_n = real(b_n1) * actv
+      w_s = real(b_s1) * actv
+      w_t = real(b_t1) * actv
+      w_b = real(b_b1) * actv
+      
+      ! 壁面の場合の参照速度の修正
+      if ( b_e1 == 0 ) then
+        R11_e1 = -R11_p0
+        R12_e1 = -R12_p0
+        R13_e1 = -R13_p0
+        R22_e1 = -R22_p0
+        R23_e1 = -R23_p0
+        R33_e1 = -R33_p0
+      endif
+      
+      if ( b_w1 == 0 ) then
+        R11_w1 = -R11_p0
+        R12_w1 = -R12_p0
+        R13_w1 = -R13_p0
+        R22_w1 = -R22_p0
+        R23_w1 = -R23_p0
+        R33_w1 = -R33_p0
+      end if
+      
+      if ( b_n1 == 0 ) then
+        R11_n1 = -R11_p0
+        R12_n1 = -R12_p0
+        R13_n1 = -R13_p0
+        R22_n1 = -R22_p0
+        R23_n1 = -R23_p0
+        R33_n1 = -R33_p0
+      end if
+      
+      if ( b_s1 == 0 ) then
+        R11_s1 = -R11_p0
+        R12_s1 = -R12_p0
+        R13_s1 = -R13_p0
+        R22_s1 = -R22_p0
+        R23_s1 = -R23_p0
+        R33_s1 = -R33_p0
+      end if
+      
+      if ( b_t1 == 0 ) then
+        R11_t1 = -R11_p0
+        R12_t1 = -R12_p0
+        R13_t1 = -R13_p0
+        R22_t1 = -R22_p0
+        R23_t1 = -R23_p0
+        R33_t1 = -R33_p0
+      end if
+      
+      if ( b_b1 == 0 ) then
+        R11_b1 = -R11_p0
+        R12_b1 = -R12_p0
+        R13_b1 = -R13_p0
+        R22_b1 = -R22_p0
+        R23_b1 = -R23_p0
+        R33_b1 = -R33_p0
+      end if
+      
+      ! 乱流拡散項
+      ! 84 flop
+      T11 = - ( v1p * rx * (R11_e1 - R11_w1) &
+              + v2p * ry * (R11_n1 - R11_s1) &
+              + v3p * rz * (R11_t1 - R11_b1) &
+              ) * actv
+
+      T12 = - ( v1p * rx * (R12_e1 - R12_w1) &
+              + v2p * ry * (R12_n1 - R12_s1) &
+              + v3p * rz * (R12_t1 - R12_b1) &
+              ) * actv
+
+      T13 = - ( v1p * rx * (R13_e1 - R13_w1) &
+              + v2p * ry * (R13_n1 - R13_s1) &
+              + v3p * rz * (R13_t1 - R13_b1) &
+              ) * actv
+
+      T22 = - ( v1p * rx * (R22_e1 - R22_w1) &
+              + v2p * ry * (R22_n1 - R22_s1) &
+              + v3p * rz * (R22_t1 - R22_b1) &
+              ) * actv
+
+      T23 = - ( v1p * rx * (R23_e1 - R23_w1) &
+              + v2p * ry * (R23_n1 - R23_s1) &
+              + v3p * rz * (R23_t1 - R23_b1) &
+              ) * actv
+
+      T33 = - ( v1p * rx * (R33_e1 - R33_w1) &
+              + v2p * ry * (R33_n1 - R33_s1) &
+              + v3p * rz * (R33_t1 - R33_b1) &
+              ) * actv
+
+      ! 乱流拡散項 (時間平均値)
+      ! 18 flop
+      T_ave(1, i, j, k) = val1 * T_ave(1, i, j, k) + val2 * T11
+      T_ave(2, i, j, k) = val1 * T_ave(2, i, j, k) + val2 * T12
+      T_ave(3, i, j, k) = val1 * T_ave(3, i, j, k) + val2 * T13
+      T_ave(4, i, j, k) = val1 * T_ave(4, i, j, k) + val2 * T22
+      T_ave(5, i, j, k) = val1 * T_ave(5, i, j, k) + val2 * T23
+      T_ave(6, i, j, k) = val1 * T_ave(6, i, j, k) + val2 * T33
+
 end do
 end do
 end do
@@ -2211,4 +2250,177 @@ end do
 !$OMP END PARALLEL
 
 return
-end subroutine average_t
+end subroutine calc_turb_transport_rate
+!> ********************************************************************
+
+
+
+
+
+!> ********************************************************************
+!! @brief 速度圧力勾配相関項の計算
+!! @param [out]  PI_ave  散逸項 (時間平均値)
+!! @param [in]   sz      配列長
+!! @param [in]   dh      格子幅
+!! @param [in]   g       ガイドセル長
+!! @param [in]   v       セルセンター速度ベクトル
+!! @param [in]   v_ave   セルセンター時間平均速度ベクトル
+!! @param [in]   p       セルセンター圧力
+!! @param [in]   p_ave   セルセンター時間平均圧力
+!! @param [in]   bp      BCindex P
+!! @param [in]   nadd    加算回数
+!! @param [out]  flop    flop count
+!<
+subroutine calc_vel_pregrad_term (PI_ave, sz, dh, g, v, v_ave, p, p_ave, bp, nadd, flop)
+implicit none
+include 'ffv_f_params.h'
+integer                                                   ::  i, j, k, ix, jx, kx, g, idx
+integer, dimension(3)                                     ::  sz
+real, dimension(3)                                        ::  dh
+real                                                      ::  actv, rx, ry, rz
+real                                                      ::  v1p, v2p, v3p
+real                                                      ::  p0, pw1, pe1, ps1, pn1, pb1, pt1
+real                                                      ::  PI11, PI12, PI13, PI22, PI23, PI33
+real                                                      ::  ugradp11, ugradp12, ugradp13
+real                                                      ::  ugradp21, ugradp22, ugradp23
+real                                                      ::  ugradp31, ugradp32, ugradp33
+real                                                      ::  ugradpt11, ugradpt12, ugradpt13
+real                                                      ::  ugradpt21, ugradpt22, ugradpt23
+real                                                      ::  ugradpt31, ugradpt32, ugradpt33
+real, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  PI_ave
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, v_ave
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, p_ave
+real                                                      ::  nadd, val1, val2
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
+double precision                                          ::  flop
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+! 27 flop
+! rx = 1.0 / (2.0*dh(1))
+! ry = 1.0 / (2.0*dh(2))
+! rz = 1.0 / (2.0*dh(3))
+rx = 1.0 / (1.0*dh(1))
+ry = 1.0 / (1.0*dh(2))
+rz = 1.0 / (1.0*dh(3))
+
+! 9 flop
+val2 = 1.0/nadd
+val1 = 1.0 - val2
+
+flop = flop + dble(ix)*dble(jx)*dble(kx)*89.0d0 + 36.0d0
+
+!$OMP PARALLEL &
+!$OMP PRIVATE(idx, actv) &
+!$OMP PRIVATE(v1p, v2p, v3p) &
+!$OMP PRIVATE(p0, pw1, pe1, ps1, pn1, pb1, pt1) &
+!$OMP PRIVATE(PI11, PI12, PI13, PI22, PI23, PI33) &
+!$OMP PRIVATE(ugradp11, ugradp12, ugradp13) &
+!$OMP PRIVATE(ugradp21, ugradp22, ugradp23) &
+!$OMP PRIVATE(ugradp31, ugradp32, ugradp33) &
+!$OMP PRIVATE(ugradpt11, ugradpt12, ugradpt13) &
+!$OMP PRIVATE(ugradpt21, ugradpt22, ugradpt23) &
+!$OMP PRIVATE(ugradpt31, ugradpt32, ugradpt33) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, rx, ry, rz)
+!$OMP DO SCHEDULE(static)
+
+do k = 1, kx
+do j = 1, jx
+do i = 1, ix
+
+      ! セル状態 (0-solid / 1-fluid) > 1 flop
+      actv= real(ibits(bp(i,j,k), State, 1))
+
+      ! 変動速度ベクトル
+      ! 3 flop
+      v1p = v(i, j, k, 1) - v_ave(i, j, k, 1)
+      v2p = v(i, j, k, 2) - v_ave(i, j, k, 2)
+      v3p = v(i, j, k, 3) - v_ave(i, j, k, 3)
+
+      ! 変動圧力
+      ! 7 flop
+      p0  = p(i,   j,   k  ) - p_ave(i,   j,   k  )
+      pw1 = p(i-1, j,   k  ) - p_ave(i-1, j,   k  )
+      pe1 = p(i+1, j,   k  ) - p_ave(i+1, j,   k  )
+      ps1 = p(i,   j-1, k  ) - p_ave(i,   j-1, k  )
+      pn1 = p(i,   j+1, k  ) - p_ave(i,   j+1, k  )
+      pb1 = p(i,   j,   k-1) - p_ave(i,   j,   k-1)
+      pt1 = p(i,   j,   k+1) - p_ave(i,   j,   k+1)
+
+      ! 壁面の場合の参照速度の修正 (Neumann 条件)
+      if ( ibits(bp(i, j, k), bc_n_W, 1) == 0 ) pw1 = p0
+      if ( ibits(bp(i, j, k), bc_n_E, 1) == 0 ) pe1 = p0
+      if ( ibits(bp(i, j, k), bc_n_S, 1) == 0 ) ps1 = p0
+      if ( ibits(bp(i, j, k), bc_n_N, 1) == 0 ) pn1 = p0
+      if ( ibits(bp(i, j, k), bc_n_B, 1) == 0 ) pb1 = p0
+      if ( ibits(bp(i, j, k), bc_n_T, 1) == 0 ) pt1 = p0
+
+      ! 壁面の場合の参照速度の修正 (Dirichlet 条件)
+      if ( ibits(bp(i, j, k), bc_d_W, 1) == 0 ) pw1 = -p0
+      if ( ibits(bp(i, j, k), bc_d_E, 1) == 0 ) pe1 = -p0
+      if ( ibits(bp(i, j, k), bc_d_S, 1) == 0 ) ps1 = -p0
+      if ( ibits(bp(i, j, k), bc_d_N, 1) == 0 ) pn1 = -p0
+      if ( ibits(bp(i, j, k), bc_d_B, 1) == 0 ) pb1 = -p0
+      if ( ibits(bp(i, j, k), bc_d_T, 1) == 0 ) pt1 = -p0
+
+      ! 速度圧力勾配相関項 (第一項)
+      ! 36 flop
+!      ugradp11 = v1p * rx * ( pe1 - pw1 ) * actv
+!      ugradp12 = v1p * ry * ( pn1 - ps1 ) * actv
+!      ugradp13 = v1p * rz * ( pt1 - pb1 ) * actv
+!      ugradp21 = v2p * rx * ( pe1 - pw1 ) * actv
+!      ugradp22 = v2p * ry * ( pn1 - ps1 ) * actv
+!      ugradp23 = v2p * rz * ( pt1 - pb1 ) * actv
+!      ugradp31 = v3p * rx * ( pe1 - pw1 ) * actv
+!      ugradp32 = v3p * ry * ( pn1 - ps1 ) * actv
+!      ugradp33 = v3p * rz * ( pt1 - pb1 ) * actv
+      ugradp11 = v1p * rx * ( pe1 - p0 ) * actv
+      ugradp12 = v1p * ry * ( pn1 - p0 ) * actv
+      ugradp13 = v1p * rz * ( pt1 - p0 ) * actv
+      ugradp21 = v2p * rx * ( pe1 - p0 ) * actv
+      ugradp22 = v2p * ry * ( pn1 - p0 ) * actv
+      ugradp23 = v2p * rz * ( pt1 - p0 ) * actv
+      ugradp31 = v3p * rx * ( pe1 - p0 ) * actv
+      ugradp32 = v3p * ry * ( pn1 - p0 ) * actv
+      ugradp33 = v3p * rz * ( pt1 - p0 ) * actv
+
+      ! 第一項の転置
+      ugradpt11 = ugradp11
+      ugradpt12 = ugradp21
+      ugradpt13 = ugradp31
+      ugradpt21 = ugradp12
+      ugradpt22 = ugradp22
+      ugradpt23 = ugradp32
+      ugradpt31 = ugradp13
+      ugradpt32 = ugradp23
+      ugradpt33 = ugradp33
+
+      ! 速度圧力勾配相関項
+      ! 24 flop
+      PI11 = -( ugradp11 + ugradpt11 ) * actv
+      PI12 = -( ugradp12 + ugradpt12 ) * actv
+      PI13 = -( ugradp13 + ugradpt13 ) * actv
+      PI22 = -( ugradp22 + ugradpt22 ) * actv
+      PI23 = -( ugradp23 + ugradpt23 ) * actv
+      PI33 = -( ugradp33 + ugradpt33 ) * actv
+
+      ! 速度圧力勾配相関項 (時間平均値)
+      ! 18 flop
+      PI_ave(1, i, j, k) = val1 * PI_ave(1, i, j, k) + val2 * PI11
+      PI_ave(2, i, j, k) = val1 * PI_ave(2, i, j, k) + val2 * PI12
+      PI_ave(3, i, j, k) = val1 * PI_ave(3, i, j, k) + val2 * PI13
+      PI_ave(4, i, j, k) = val1 * PI_ave(4, i, j, k) + val2 * PI22
+      PI_ave(5, i, j, k) = val1 * PI_ave(5, i, j, k) + val2 * PI23
+      PI_ave(6, i, j, k) = val1 * PI_ave(6, i, j, k) + val2 * PI33
+
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine calc_vel_pregrad_term
+!> ********************************************************************
