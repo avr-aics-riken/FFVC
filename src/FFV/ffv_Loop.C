@@ -152,7 +152,6 @@ int FFV::Loop(const unsigned step)
       U.convArrayIE2Tmp(d_ie0, size, guide, d_ae, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, C.Unit.File, flop_count); // d_ie0はワーク
       calc_rms_s_(d_rms_t, d_rms_mean_t, size, &guide, d_ws, d_ie0, &accum, &flop_count);
     }
-<<<<<<< HEAD
         
     if ( C.Mode.ReynoldsStress == ON )
     {
@@ -174,42 +173,19 @@ int FFV::Loop(const unsigned step)
       // (4) 速度圧力勾配相関項 (時間平均値)
       calc_vel_pregrad_term_(d_aPI, size, pitch, &guide, d_v, d_av, d_p, d_ap, d_bcd, &accum, &flop_count);
 //=====uzawa
-=======
-    
-    
-    if ( C.Mode.ReynoldsStress == ON )
-    {
-      flop_count = 0.0;
-      
-      //    速度変動ベクトル
-      vprime_(d_vp, size, &guide, d_v, d_av, &flop_count);
-      
-      //    レイノルズ応力テンソル: R
-      reynolds_stress_(d_R, size, &guide, d_vp, &flop_count);
-      
-      //--- (1):レイノルズ応力生成テンソルの計算
-      //    平均速度勾配テンソル: grad_Umean
-      gradv_(d_gav, size, pitch, &guide, d_av, d_bcd, &flop_count);
-      
-      //    R ・ grad_Umean
-      inner_product_t_(d_wk, d_R, d_gav, size, &guide, &flop_count);
-      
-      //    (R ・ grad_Umean)^T
-      transpose_t_(d_twk, d_wk, size, &guide, &flop_count);
-      
-      //    レイノルズ応力生成テンソル
-      calc_production_rate_(d_Prod, d_twk, d_wk, size, &guide, &flop_count);
-      
-      //    レイノルズ応力テンソル (時間平均値)
-      reynolds_stress_(d_R_mean, size, &guide, d_R, &flop_count);
-      
-      //    レイノルズ応力生成テンソル (時間平均値)
-      average_t_(d_Prod_mean, size, &guide, d_Prod, &accum, &flop_count);
->>>>>>> origin/master
     }
     
     TIMING_stop("Turbulence Statistic", flop_count);
-    
+
+//=====uzawad
+      if ( (CurrentStep % 10000 == 0) || (CurrentStep == 1) )
+      {
+         Hostonly_
+         {
+            output_mean_((int*)&CurrentStep, G_origin, G_region, G_division, G_size, size, pitch, &guide, d_av, d_rms_mean_v, d_aR, d_aP, d_aE, d_aT, d_aPI);
+         };
+      };
+//=====uzawad    
   }
   
   
@@ -282,13 +258,8 @@ int FFV::Loop(const unsigned step)
   
   
   // 1ステップ後のモニタ処理 -------------------------------
-<<<<<<< HEAD
 
 
-=======
-  
-  
->>>>>>> origin/master
   // Historyクラスのタイムスタンプを更新
   H->updateTimeStamp(CurrentStep, (REAL_TYPE)CurrentTime, vMax);
   
@@ -308,13 +279,8 @@ int FFV::Loop(const unsigned step)
       
       if ( F->isVtk() )
       {
-<<<<<<< HEAD
 //        int cs = CurrentStep;
 //        output_vtk_(&cs, G_origin, G_division, G_size, &myRank, size, pitch, &guide, d_v, d_p);
-=======
-        int cs = CurrentStep;
-        output_vtk_(&cs, G_origin, G_division, G_size, &myRank, size, pitch, &guide, d_v, d_p);
->>>>>>> origin/master
       }
     }
 
@@ -365,23 +331,7 @@ int FFV::Loop(const unsigned step)
       }
     }
   }
-<<<<<<< HEAD
 
-=======
-  
-  
-  // Turbulent statistics
-  if (C.Mode.ReynoldsStress == ON)
-  {
-    if ( (CurrentStep % 100 == 0) || (CurrentStep == 1) )
-    {
-      int cs = CurrentStep;
-      //output_mean_(&cs, G_origin, G_region, G_division, G_size, &myRank, size, &pitch[0], &guide, d_av, d_rms_v, d_rms_mean_v);
-      output_mean_(&cs, G_origin, G_region, G_division, G_size, &myRank, size, pitch, &guide, d_av, d_rms_mean_v, d_R_mean, d_Prod_mean);
-    }
-  }
-  
->>>>>>> origin/master
   
   
   if (C.varState[var_TotalP] == ON )

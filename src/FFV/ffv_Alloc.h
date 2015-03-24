@@ -85,6 +85,7 @@ public:
   REAL_TYPE *d_av;         ///< [*] 速度（時間平均値）
   REAL_TYPE *d_ae;         ///< [*] 内部エネルギー（時間平均値）
 //=====uzawa
+  REAL_TYPE *d_R;          ///< [*] レイノルズ応力テンソル
   REAL_TYPE *d_aR;         ///< [*] レイノルズ応力テンソル (時間平均値)
   REAL_TYPE *d_aP;         ///< [*] 生成項 (時間平均値)
   REAL_TYPE *d_aE;         ///< [*] 散逸項 (時間平均値)
@@ -118,6 +119,7 @@ public:
   REAL_TYPE *d_rms_mean_p; ///< [*] 圧力の時間平均変動強度
   REAL_TYPE *d_rms_t;      ///< [*] 温度の変動強度
   REAL_TYPE *d_rms_mean_t; ///< [*] 温度の時間平均変動強度
+  
   
   // 界面計算
   REAL_TYPE *d_vof; ///< [*] VOF値
