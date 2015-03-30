@@ -223,7 +223,36 @@ public:
                                 double& m_CurrentTimeStat,
                                 double& flop);
   
-  
+
+  /**
+   * @brief // チャネル乱流統計量の出力
+   * @param [in]     d_av              速度 (時間平均値)            
+   * @param [in]     d_rms_mean_v      乱流強度 (時間平均値)            
+   * @param [in]     d_aR              レイノルズ応力 (時間平均値)            
+   * @param [in]     d_aP              生成項 (時間平均値)            
+   * @param [in]     d_aE              散逸項 (時間平均値)            
+   * @param [in]     d_aT              乱流拡散項 (時間平均値)            
+   * @param [in]     d_aPI             速度圧力勾配相関項 (時間平均値)            
+   * @param [in]     myRank            自ノードのランク番号 
+   * @param [in]     sz                領域サイズ (時間平均値)            
+   * @param [in]     CurrentStepStat   統計操作の積算ステップ数 (時間平均値)            
+   * @param [in]     dh                格子幅 (時間平均値)            
+   * @param [in]     g                 ガイドセル長 (時間平均値)            
+   * @param [in,out] flop              浮動小数点演算数
+   */
+  virtual void OutputMean(REAL_TYPE*         d_av,
+                          REAL_TYPE*         d_rms_mean_v,
+                          REAL_TYPE*         d_aR,
+                          REAL_TYPE*         d_aP,
+                          REAL_TYPE*         d_aE,
+                          REAL_TYPE*         d_aT,
+                          REAL_TYPE*         d_aPI,
+                          int                myRank,
+                          int*               sz,
+                          unsigned long int  CurrentStepStat,
+                          REAL_TYPE*         dh,
+                          int*               g,
+                          double&            flop);
 };
 
 #endif // _FFV_SPH_H_

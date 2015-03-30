@@ -304,37 +304,54 @@ void FALLOC::allocArray_Statistic(double &total, Control* C)
   // Reynolds Stress
   if ( C->Mode.ReynoldsStress == ON )
   {
-    // d_vp (変動速度ベクトル)
-    if ( !(d_vp = Alloc::Real_V3D(size, guide)) ) Exit(0);
-    total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
-    
-    // d_R (レイノルズ応力テンソル)
+    // レイノルズ応力テンソル
     if ( !(d_R = Alloc::Real_T3D(size, guide)) ) Exit(0);
-    total += array_size * (double)sizeof(REAL_TYPE) * 9.0;
-    
-    // d_R_mean (レイノルズ応力テンソル平均値)
-    if ( !(d_R_mean = Alloc::Real_T3D(size, guide)) ) Exit(0);
-    total += array_size * (double)sizeof(REAL_TYPE) * 9.0;
-    
-    // d_gav (平均速度勾配テンソル)
-    if ( !(d_gav = Alloc::Real_T3D(size, guide)) ) Exit(0);
-    total += array_size * (double)sizeof(REAL_TYPE) * 9.0;
-    
-    // d_wk (ワーク)
-    if ( !(d_wk = Alloc::Real_T3D(size, guide)) ) Exit(0);
-    total += array_size * (double)sizeof(REAL_TYPE) * 9.0;
-    
-    // d_twk (ワーク)
-    if ( !(d_twk = Alloc::Real_T3D(size, guide)) ) Exit(0);
-    total += array_size * (double)sizeof(REAL_TYPE) * 9.0;
-    
-    // d_Prod (レイノルズ応力テンソル生成率)
-    if ( !(d_Prod = Alloc::Real_T3D(size, guide)) ) Exit(0);
-    total += array_size * (double)sizeof(REAL_TYPE) * 9.0;
-    
-    // d_Prod_mean (レイノルズ応力テンソル生成率)
-    if ( !(d_Prod_mean = Alloc::Real_T3D(size, guide)) ) Exit(0);
-    total += array_size * (double)sizeof(REAL_TYPE) * 9.0;
+    total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
+
+    // レイノルズ応力テンソル (時間平均値)
+    if ( !(d_aR = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
+
+    // 生成項 (時間平均値)
+    if ( !(d_aP = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
+
+    // 散逸項 (時間平均値)
+    if ( !(d_aE = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
+
+    // 乱流拡散項 (時間平均値)
+    if ( !(d_aT = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
+
+    // 速度圧力勾配相関項 (時間平均値)
+    if ( !(d_aPI = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
+  }
+
+  // Channel Mean
+  if ( C->Mode.ChannelOutputMean == ON )
+  {
+    if ( !(d_av_mean = Alloc::Real_S3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 3.0;
+
+    if ( !(d_arms_mean = Alloc::Real_S3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 3.0;
+
+    if ( !(d_aR_mean = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
+
+    if ( !(d_aP_mean = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
+
+    if ( !(d_aE_mean = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
+
+    if ( !(d_aT_mean = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
+
+    if ( !(d_aPI_mean = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
   }
   
 }
