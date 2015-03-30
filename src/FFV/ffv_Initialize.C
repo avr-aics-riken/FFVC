@@ -513,7 +513,15 @@ int FFV::Initialize(int argc, char **argv)
                     d_cdf,
                     mat_tbl,
                     d_mid,
-                    d_io_buffer);
+                    d_io_buffer,
+                    d_av_mean,
+                    d_arms_mean,
+                    d_aR_mean,
+                    d_aP_mean,
+                    d_aE_mean,
+                    d_aT_mean,
+                    d_aPI_mean
+);
   
   F->getStartCondition();
   

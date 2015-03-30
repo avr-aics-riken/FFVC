@@ -328,6 +328,31 @@ void FALLOC::allocArray_Statistic(double &total, Control* C)
     if ( !(d_aPI = Alloc::Real_T3D(size, guide)) ) Exit(0);
     total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
   }
+
+  // Channel Mean
+  if ( C->Mode.ChannelOutputMean == ON )
+  {
+    if ( !(d_av_mean = Alloc::Real_S3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 3.0;
+
+    if ( !(d_arms_mean = Alloc::Real_S3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 3.0;
+
+    if ( !(d_aR_mean = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
+
+    if ( !(d_aP_mean = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
+
+    if ( !(d_aE_mean = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
+
+    if ( !(d_aT_mean = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
+
+    if ( !(d_aPI_mean = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
+  }
   
 }
 

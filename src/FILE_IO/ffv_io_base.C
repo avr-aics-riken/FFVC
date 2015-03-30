@@ -393,10 +393,31 @@ void IO_BASE::getFIOparams()
         }
       }
     }
-    
-  }
-  
 
+    label="/Output/Data/StatisticalVariables/ChannelOutputMean";
+    if ( tpCntl->chkLabel(label) )
+    {
+      if ( !(tpCntl->getInspectedValue(label, str )) )
+      {
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+        Exit(0);
+      }
+      
+      if ( !strcasecmp(str.c_str(), "on") )
+      {
+        C->Mode.ChannelOutputMean = ON;
+
+        int iter;
+        label="/Output/Data/StatisticalVariables/ChannelOutputIter";
+        if ( !(tpCntl->getInspectedValue(label, iter )) )
+        {
+          Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
+          Exit(0);
+        }
+        C->Mode.ChannelOutputIter = iter;
+      }
+    }
+  }
   
   
   // ボクセルファイル出力 (Hidden)
@@ -816,7 +837,15 @@ void IO_BASE::setVarPointers(REAL_TYPE* m_d_p,
                              int* m_d_cdf,
                              double* m_mat_tbl,
                              int* m_d_mid,
-                             REAL_TYPE* m_d_iob)
+                             REAL_TYPE* m_d_iob,
+                             REAL_TYPE* m_d_av_mean,
+                             REAL_TYPE* m_d_arms_mean,
+                             REAL_TYPE* m_d_aR_mean,
+                             REAL_TYPE* m_d_aP_mean,
+                             REAL_TYPE* m_d_aE_mean,
+                             REAL_TYPE* m_d_aT_mean,
+                             REAL_TYPE* m_d_aPI_mean
+)
 {
   d_p          = m_d_p;
   d_v          = m_d_v;
@@ -839,6 +868,13 @@ void IO_BASE::setVarPointers(REAL_TYPE* m_d_p,
   mat_tbl      = m_mat_tbl;
   d_mid        = m_d_mid;
   d_iobuf      = m_d_iob;
+  d_av_mean    = m_d_av_mean;
+  d_arms_mean  = m_d_arms_mean;
+  d_aR_mean    = m_d_aR_mean;
+  d_aP_mean    = m_d_aP_mean;
+  d_aE_mean    = m_d_aE_mean;
+  d_aT_mean    = m_d_aT_mean;
+  d_aPI_mean   = m_d_aPI_mean;
 }
 
 

@@ -2000,3 +2000,145 @@ void SPH::Restart(FILE* fp, unsigned& m_CurrentStep, double& m_CurrentTime)
   RestartInstantaneous(fp, m_CurrentStep, m_CurrentTime, flop_task);
 }
 
+
+
+
+
+// #################################################################
+// チャネル乱流統計量の出力
+void SPH::OutputMean(REAL_TYPE*         d_av,
+                     REAL_TYPE*         d_rms_mean_v,
+                     REAL_TYPE*         d_aR,
+                     REAL_TYPE*         d_aP,
+                     REAL_TYPE*         d_aE,
+                     REAL_TYPE*         d_aT,
+                     REAL_TYPE*         d_aPI,
+                     int                myRank,
+                     int*               sz,
+                     unsigned long int  CurrentStepStat,
+                     REAL_TYPE*         dh,
+                     int*               g,
+                     double&            flop)
+{
+   int i;
+   FILE *fp1, *fp2;
+   char str1[512], str2[512];
+
+   // 主流方向・スパン方向で平均化
+   averaging_xz_plane_(d_av_mean, d_arms_mean, d_aR_mean, d_aP_mean, d_aE_mean, d_aT_mean, d_aPI_mean, sz, g, d_av, d_rms_mean_v, d_aR, d_aP, d_aE, d_aT, d_aPI);
+
+   sprintf(str1, "channel_base_p%d_latest.txt", myRank);
+   fp1 = fopen(str1, "w");
+   fprintf(fp1, "# step, y, umean, vmean, wmean, urms, vrms, wrms, uvmean \n");
+   for(i = 0; i < sz[1]; i++)
+   {
+       fprintf(
+                  fp1, "%lu %f %e %e %e %e %e %e %e \n", 
+                  // 積算ステップ
+                  CurrentStepStat,
+                  // 壁面鉛直座標
+                  (i+0.5)*dh[1],
+                  // 平均速度
+                  d_av_mean[i*3],   d_av_mean[i*3+1],   d_av_mean[i*3+2], 
+                  // 乱流強度
+                  d_arms_mean[i*3], d_arms_mean[i*3+1], d_arms_mean[i*3+2],
+                  // レイノルズせん断応力
+                  d_aR_mean[i*6+1]
+             );
+   }
+   fclose(fp1);
+
+   sprintf(str1, "channel_reynolds_p%d_latest.txt", myRank);
+   fp1 = fopen(str1, "w");
+   fprintf(fp1, "# step, y, uu, uv, uw, vv, vw, ww \n");
+   for(i = 0; i < sz[1]; i++)
+   {
+       fprintf(
+                  fp1, "%lu %f %e %e %e %e %e %e \n", 
+                  // 積算ステップ
+                  CurrentStepStat,
+                  // 壁面鉛直座標
+                  (i+0.5)*dh[1],
+                  // レイノルズ応力
+                  d_aR_mean[i*6],   d_aR_mean[i*6+1], d_aR_mean[i*6+2], 
+                  d_aR_mean[i*6+3], d_aR_mean[i*6+4], d_aR_mean[i*6+5]
+             );
+   }
+   fclose(fp1);
+
+   sprintf(str1, "channel_budget_uu_p%d_latest.txt", myRank);
+   fp1 = fopen(str1, "w");
+   fprintf(fp1, "# step, y, Prod, Diss, Turb, PressGrad \n");
+   for(i = 0; i < sz[1]; i++)
+   {
+       fprintf(
+                  fp1, "%lu %f %e %e %e %e \n", 
+                  // 積算ステップ
+                  CurrentStepStat,
+                  // 壁面鉛直座標
+                  (i+0.5)*dh[1],
+                  // レイノルズ応力収支
+                  d_aP_mean[i*6], d_aE_mean[i*6], d_aT_mean[i*6], d_aPI_mean[i*6]
+             );
+   }
+   fclose(fp1);
+
+
+   sprintf(str2, "channel_base_p%d_step%lu.txt", myRank, CurrentStepStat);
+   fp2 = fopen(str2, "w");
+   fprintf(fp2, "# step, y, umean, vmean, wmean, urms, vrms, wrms, uvmean \n");
+   for(i = 0; i < sz[1]; i++)
+   {
+       fprintf(
+                  fp2, "%lu %f %e %e %e %e %e %e %e \n", 
+                  // 積算ステップ
+                  CurrentStepStat,
+                  // 壁面鉛直座標
+                  (i+0.5)*dh[1],
+                  // 平均速度
+                  d_av_mean[i*3],   d_av_mean[i*3+1],   d_av_mean[i*3+2], 
+                  // 乱流強度
+                  d_arms_mean[i*3], d_arms_mean[i*3+1], d_arms_mean[i*3+2],
+                  // レイノルズせん断応力
+                  d_aR_mean[i*6+1]
+             );
+   }
+   fclose(fp2);
+
+   sprintf(str2, "channel_reynolds_p%d_step%lu.txt", myRank, CurrentStepStat);
+   fp2 = fopen(str2, "w");
+   fprintf(fp2, "# step, y, uu, uv, uw, vv, vw, ww \n");
+   for(i = 0; i < sz[1]; i++)
+   {
+       fprintf(
+                  fp2, "%lu %f %e %e %e %e %e %e \n", 
+                  // 積算ステップ
+                  CurrentStepStat,
+                  // 壁面鉛直座標
+                  (i+0.5)*dh[1],
+                  // レイノルズ応力
+                  d_aR_mean[i*6],   d_aR_mean[i*6+1], d_aR_mean[i*6+2], 
+                  d_aR_mean[i*6+3], d_aR_mean[i*6+4], d_aR_mean[i*6+5]
+             );
+   }
+   fclose(fp2);
+
+   sprintf(str2, "channel_budget_uu_p%d_step%lu.txt", myRank, CurrentStepStat);
+   fp2 = fopen(str2, "w");
+   fprintf(fp2, "# step, y, Prod, Diss, Turb, PressGrad \n");
+   for(i = 0; i < sz[1]; i++)
+   {
+       fprintf(
+                  fp2, "%lu %f %e %e %e %e \n", 
+                  // 積算ステップ
+                  CurrentStepStat,
+                  // 壁面鉛直座標
+                  (i+0.5)*dh[1],
+                  // レイノルズ応力収支 (uu)
+                  d_aP_mean[i*6], d_aE_mean[i*6], d_aT_mean[i*6], d_aPI_mean[i*6]
+             );
+   }
+   fclose(fp2);
+
+}
+

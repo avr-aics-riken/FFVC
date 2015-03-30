@@ -1343,7 +1343,7 @@ integer, dimension(3) :: G_division, G_size, sz
 integer :: g
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  p
-integer :: ix, jx, kx, i, j, k, myRank, ip, jp, kp, ii, jj, kk
+integer :: ix, jx, kx, i, j, k, myRank, ip, jp, kp, ii, jj
 real :: dx, dy, dz
 character fname*128
 
@@ -2424,3 +2424,59 @@ end do
 return
 end subroutine calc_vel_pregrad_term
 !> ********************************************************************
+
+
+
+
+
+!********************************************************************
+subroutine averaging_xz_plane(vmean, rmsmean, Rmean, Pmean, Emean, Tmean, PImean, sz, g, v_ave, rms_ave, R_ave, P_ave, E_ave, T_ave, PI_ave)
+integer, dimension(3)                                     :: sz
+integer                                                   :: ix, jx, kx, i, j, k, g, d
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) :: v_ave, rms_ave
+real, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) :: R_ave, P_ave, E_ave, T_ave, PI_ave
+real, dimension(3, 1:sz(2))                               :: vmean, rmsmean
+real, dimension(6, 1:sz(2))                               :: Rmean, Pmean, Emean, Tmean, PImean 
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+
+do d = 1, 3
+   do j = 1, jx
+      vmean(d, j) = 0.0d0
+      rmsmean(d, j) = 0.0d0
+      do k = 2, kx-1
+         do i = 2, ix-1
+            vmean(d, j) = vmean(d, j) + v_ave(i, j, k, d)/(ix-2)/(kx-2)
+            rmsmean(d, j) = rmsmean(d, j) + rms_ave(i, j, k, d)/(ix-2)/(kx-2)
+         end do
+      end do
+   end do
+end do
+
+do d = 1, 6
+   do j = 1, jx
+      Rmean(d, j) = 0.0d0
+      Pmean(d, j) = 0.0d0
+      Emean(d, j) = 0.0d0
+      Tmean(d, j) = 0.0d0
+      PImean(d, j) = 0.0d0
+      do k = 2, kx-1
+         do i = 2, ix-1
+            Rmean(d, j) = Rmean(d, j) + R_ave(d, i, j, k)/(ix-2)/(kx-2)
+            Pmean(d, j) = Pmean(d, j) + P_ave(d, i, j, k)/(ix-2)/(kx-2)
+            Emean(d, j) = Emean(d, j) + E_ave(d, i, j, k)/(ix-2)/(kx-2)
+            Tmean(d, j) = Tmean(d, j) + T_ave(d, i, j, k)/(ix-2)/(kx-2)
+            PImean(d, j) = PImean(d, j) + PI_ave(d, i, j, k)/(ix-2)/(kx-2)
+         end do
+      end do
+   end do
+end do
+
+
+return
+end subroutine averaging_xz_plane
+
+

@@ -105,8 +105,14 @@ protected:
   int* d_cdf;              ///< BCindex C
   double* mat_tbl;         ///< material table
   int* d_mid;              ///< Iblankの実体
-  
-  
+  REAL_TYPE* d_av_mean;    ///< averaged 1D velocity
+  REAL_TYPE* d_arms_mean;  ///< velocity 1D rms mean
+  REAL_TYPE* d_aR_mean;    ///< averaged 1D Reynolds stress tensor
+  REAL_TYPE* d_aP_mean;    ///< averaged 1D production rate
+  REAL_TYPE* d_aE_mean;    ///< averaged 1D Dissipation rate 
+  REAL_TYPE* d_aT_mean;    ///< averaged 1D Turbulent transport rate 
+  REAL_TYPE* d_aPI_mean;   ///< averaged 1D velocity pressure-gradient term 
+
   // class pointer
   Control* C;
   ReferenceFrame* RF;
@@ -155,6 +161,13 @@ public:
     d_rms_mean_p = NULL;
     d_rms_mean_t = NULL;
     d_mid = NULL;
+    d_av_mean   = NULL;
+    d_arms_mean = NULL;
+    d_aR_mean   = NULL;
+    d_aP_mean   = NULL;
+    d_aE_mean   = NULL;
+    d_aT_mean   = NULL;
+    d_aPI_mean  = NULL;
   }
   
   
@@ -368,7 +381,15 @@ public:
                       int* m_d_cdf,
                       double* m_mat_tbl,
                       int* m_d_mid,
-                      REAL_TYPE* m_d_iob);
+                      REAL_TYPE* m_d_iob,
+                      REAL_TYPE* m_d_av_mean,
+                      REAL_TYPE* m_d_arms_mean,
+                      REAL_TYPE* m_d_aR_mean,
+                      REAL_TYPE* m_d_aP_mean,
+                      REAL_TYPE* m_d_aE_mean,
+                      REAL_TYPE* m_d_aT_mean,
+                      REAL_TYPE* m_d_aPI_mean
+);
   
   
   
@@ -426,7 +447,40 @@ public:
    * @retval 出力 >> true，指定フォーマットがSVXでない場合にはfalse
    */
   bool writeSVX(const int* bcd);
-  
+
+
+  /**
+   * @brief // チャネル乱流統計量の出力
+   * @param [in]     d_av              速度 (時間平均値)            
+   * @param [in]     d_rms_mean_v      乱流強度 (時間平均値)            
+   * @param [in]     d_aR              レイノルズ応力 (時間平均値)            
+   * @param [in]     d_aP              生成項 (時間平均値)            
+   * @param [in]     d_aE              散逸項 (時間平均値)            
+   * @param [in]     d_aT              乱流拡散項 (時間平均値)            
+   * @param [in]     d_aPI             速度圧力勾配相関項 (時間平均値)            
+   * @param [in]     myRank            自ノードのランク番号 
+   * @param [in]     sz                領域サイズ (時間平均値)            
+   * @param [in]     CurrentStepStat   統計操作の積算ステップ数 (時間平均値)            
+   * @param [in]     dh                格子幅 (時間平均値)            
+   * @param [in]     g                 ガイドセル長 (時間平均値)            
+   * @param [in,out] flop              浮動小数点演算数
+   */
+  virtual void OutputMean(REAL_TYPE*        d_av,        
+                          REAL_TYPE*        d_rms_mean_v,        
+                          REAL_TYPE*        d_aR,        
+                          REAL_TYPE*        d_aP,        
+                          REAL_TYPE*        d_aE,        
+                          REAL_TYPE*        d_aT,        
+                          REAL_TYPE*        d_aPI,        
+                          int               myRank,
+                          int*              sz,
+                          unsigned long int CurrentStepStat,
+                          REAL_TYPE*        dh,
+                          int*              g,
+                          double&           flop)
+ {
+  }
 };
+
 
 #endif // _FFV_IO_BASE_H_
