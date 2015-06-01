@@ -19,6 +19,17 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-06-01
+r1604 refine fill algorithm
+- remove fill_bid.h
+
+
+--------------------------
+2015-05-24
+r1603 modify isnan()
+- define ISNAN in FBdefine.h
+
+--------------------------
 2015-03-14
 r1602 update libraries
 

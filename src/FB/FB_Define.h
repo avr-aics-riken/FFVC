@@ -262,6 +262,13 @@
 #define SAMPLING_SOLID_ONLY 3 ///< 固体セルのみを対象
 
 
+// ISNAN macro >> isnan() is defined as macro in math.h. If isnan() is undefined, use std::isnan()
+#ifdef isnan
+#define ISNAN(_X) isnan(_X)
+#else
+#define ISNAN(_X) std::isnan(_X)
+#endif
+
 
 // 判定マクロ
 // BCindex aの状態が流体であればtrueを返す (uint a)

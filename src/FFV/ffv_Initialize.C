@@ -243,7 +243,7 @@ int FFV::Initialize(int argc, char **argv)
   U.initS3D(d_mid, size, guide, -1);
   
   
-  /* ポリゴンを入力とする場合のみ
+  /* 再考
   if ( C.Mode.Example == id_Polygon )
   {
     
@@ -295,9 +295,10 @@ int FFV::Initialize(int argc, char **argv)
   }
 
   TIMING_start("Fill");
-  if ( !GM.fill(fp, d_bcd, d_bid, C.NoMedium, mat, C.NoCompo, cmp) )
+  if ( !GM.fill(fp, d_bcd, d_bid, C.NoMedium, mat, C.NoCompo, cmp, d_mid) )
   {
     F->writeSVX(d_bcd);
+    //F->writeSVX(d_mid, true);
     Exit(0);
   }
   TIMING_stop("Fill");
@@ -3519,12 +3520,12 @@ string FFV::SetDomain(TextParser* tpf)
   if ( !Ex->getTP(&C, tpf) ) Exit(0);
 
   
-  // メンバ変数にパラメータをロード : 分割指示 (divtype = 1-with / 2-without)
+  // 領域分割パラメータをロード : 分割指示 (divtype = 1-with / 2-without)
   // pitch[], G_region[], G_origin[]が確定する >> パラメータファイルで指定した値
   int div_type = SD_getParameter(tpf);
   
   
-  // 領域設定 計算領域全体のサイズ，並列計算時のローカルのサイズ，コンポーネントのサイズなどを設定
+  // CPMlibの機能を用いて、計算領域分割情報を設定する
   SD_Initialize(div_type, tpf);
 
   

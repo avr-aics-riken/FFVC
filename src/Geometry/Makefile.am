@@ -35,5 +35,5 @@ libGEOM_a_SOURCES = \
   Glyph.C \
   Glyph.h
 
-EXTRA_DIST = Makefile_hand depend.inc fill_bid.h
+EXTRA_DIST = Makefile_hand depend.inc
 

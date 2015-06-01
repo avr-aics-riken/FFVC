@@ -539,7 +539,7 @@ void Control::getGeometryModel()
   string str;
   string label;
   
-  // ソース名を取得　文字列がIntrisicExampleでなければポリゴンファイル名と解釈
+  // ソース名を取得
   label = "/GeometryModel/Source";
   
   if ( !(tpCntl->getInspectedValue(label, str )) )

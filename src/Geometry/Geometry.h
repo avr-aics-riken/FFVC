@@ -27,13 +27,17 @@
 #include "PolyProperty.h"
 #include "Component.h"
 #include "TextParser.h"
+#include "Alloc.h"
 
 #include "Polylib.h"
 #include "MPIPolylib.h"
+#include <vector>
+#include <algorithm>
 
 using namespace std;
 using namespace PolylibNS;
 using namespace Vec3class;
+
 
 class Geometry : public DomainInfo {
   
@@ -87,11 +91,29 @@ public:
     fill_table = NULL;
   }
   
-  /**　デストラクタ */
+  /** デストラクタ */
   ~Geometry() {}
   
 
 private:
+  
+  /* @brief 重複の無いようにリストにラベルを追加する
+   * @param [in,out] tbl  ラベルリスト
+   * @param [in]     dd   検査するラベル
+   */
+  void addLabel2List(vector<int>& tbl, const int dd)
+  {
+    vector<int>::iterator it;
+    it = find(tbl.begin(), tbl.end(), dd);
+    
+    // labelTable内にddがないとき、末尾に追加
+    if ( it == tbl.end() ) tbl.push_back(dd);
+  }
+  
+  
+  // 各ノードのラベルのユニーク性を担保する
+  void assureUniqueLabel(vector<int> tbl, int* mid, const int* Dsize=NULL);
+  
   
   // d_mid[]がtargetであるセルに対して、d_pvf[]に指定値valueを代入する
   unsigned long assignVF(const int target,
@@ -136,14 +158,9 @@ private:
   
   // 未ペイントセルを周囲のbidの固体最頻値でフィル
   unsigned long fillByModalSolid(int* bcd,
-                                 const int fluid_id,
                                  const int* bid,
                                  const int m_NoCompo,
                                  const CompoList* cmp);
-  
-  
-  // 未ペイントセルを周囲のmidの固体最頻値でフィル
-  unsigned long fillByModalSolid(int* mid, const int fluid_id, const int m_NoCompo);
   
   
   // bid情報を元にフラッドフィル
@@ -160,6 +177,10 @@ private:
   unsigned long fillSubCellSolid(int* smd, REAL_TYPE* svf);
   
   
+  // 流体セルをマイナス値でワーク配列にコピー
+  unsigned long fillFluidRegion(int* mid, const int* bcd);
+  
+  
   // サブセルの未ペイントセルを周囲の媒質IDの固体最頻値でフィル
   unsigned long fillSubCellByModalSolid(int* smd,
                                         const int m_NoCompo,
@@ -172,6 +193,10 @@ private:
                             const int face,
                             const int target,
                             const int* Dsize=NULL);
+  
+  
+  // ペイント対象のセルを含むbboxを探す
+  unsigned long findBboxforSeeding(int* mid, int* bbox, const int* Dsize=NULL);
   
   
   // 点pの属するセルインデクスを求める
@@ -211,8 +236,46 @@ private:
                                   const int m_NoCompo);
   
   
+  // 固体領域をペイントするシードセルを探す
+  int findSeedCells(int* mid,
+                    const int* bbox,
+                    const int counter,
+                    const int* Dsize=NULL);
+  
+  
+
+  
+  
+  // 連結領域を同定する
+  bool identifyConnectRegion(int* mid,
+                             const int* bcd,
+                             const int* bid,
+                             const unsigned long paintable,
+                             const unsigned long filled_fluid,
+                             const int* Dsize=NULL);
+  
+  
+  // 各ラベルの接続リストを作成
+  int makeConnectList(vector< vector<int> >& cnct,
+                      vector<int>& label,
+                      const int* mid,
+                      const int* bid,
+                      const int* Dsize=NULL);
+  
+  
   // 距離の最小値を求める
   void minDistance(const long long* cut, const int* bid, FILE* fp);
+  
+  
+  // 固体領域をスレッド毎にIDでペイント
+  void paintSolidRegion(int* mid, const int* Dsize=NULL);
+  
+  
+  // 接続している領域を指定ラベルでペイント
+  void paintConnectedLabel(int* mid,
+                           const vector<int>& label,
+                           const int replace,
+                           const int* Dsize=NULL);
   
   
   // 6方向にカットのあるセルを交点媒質でフィルする
@@ -220,6 +283,13 @@ private:
                                     const int* bid,
                                     const int m_NoCompo,
                                     const CompoList* cmp);
+  
+  
+  // 探査しながらペイント
+  unsigned long searchPaint(int* mid,
+                            const int* bbox,
+                            const int* bid,
+                            const int* Dsize=NULL);
   
   
   /**
@@ -371,7 +441,8 @@ public:
             const int m_NoMedium,
             const MediumList* mat,
             const int m_NoCompo,
-            const CompoList* cmp);
+            const CompoList* cmp,
+            int* d_mid);
 
   
   // bid情報を元にフラッドフィル

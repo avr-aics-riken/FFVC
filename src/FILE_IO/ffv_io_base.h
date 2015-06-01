@@ -422,10 +422,11 @@ public:
   
   /**
    * @brief 例題のモデルをsvxフォーマットで出力する(ID)
-   * @param [in] bcd BCindex B
+   * @param [in] array d_bcd or d_mid
+   * @param [in] flag  false=>d_bcd, true=>d_mid
    * @retval 出力 >> true，指定フォーマットがSVXでない場合にはfalse
    */
-  bool writeSVX(const int* bcd);
+  bool writeSVX(const int* array, const bool flag=false);
   
 };
 

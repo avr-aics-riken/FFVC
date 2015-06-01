@@ -21,6 +21,7 @@
 
 #include "Geometry.h"
 #include "FBUtility.h"
+#include <limits.h>
 
 // #################################################################
 /* @brief d_mid[]がtargetであるセルに対して、d_pvf[]に指定値valueを代入する
@@ -65,6 +66,243 @@ unsigned long Geometry::assignVF(const int target, const REAL_TYPE value, const 
   }
   
   return c;
+}
+
+
+// #################################################################
+/**
+ * @brief 各ノードのラベルのユニーク性を担保する
+ * @param [in,out] tbl   ラベルリスト
+ * @param [in,out] mid   識別子配列
+ * @param [in]     Dsize 配列サイズ
+ */
+void Geometry::assureUniqueLabel(vector<int> tbl, int* mid, const int* Dsize)
+{
+  int ix, jx, kx, gd;
+  
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
+  
+  
+  // 各ランクでラベルのリストを作成 逐次実行
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        const int dd = mid[m];
+        if ( dd > 0 )
+        {
+          addLabel2List(tbl, dd);
+        }
+        
+      }
+    }
+  }
+  
+  // 確認
+  //for (vector<int>::iterator it=tbl.begin(); it != tbl.end(); ++it )
+  //{
+  //  fprintf(stderr, "%3d %3d\n", myRank, *it);
+  //}
+  
+  int LabelSize = (int)tbl.size();
+  //fprintf(stderr, "Rank = %6d : size = %d\n", myRank, LabelSize);
+  
+  
+  // ラベル数を集める
+  int* count = NULL;
+  if ( !(count = new int[numProc]) )   Exit(0);
+  for (int i=0; i<numProc; i++) count[i] = 0;
+  
+  // ラベル数の収集
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->Allgather(&LabelSize, 1, count, 1) != CPM_SUCCESS ) Exit(0);
+  }
+  else // serial
+  {
+    count[0] = LabelSize;
+  }
+  
+  /*
+  Hostonly_
+  {
+    printf("No of processes = %d\n", numProc);
+    for (int i=0; i<numProc; i++)
+    {
+      printf("Rank = %6d : size = %d\n", i, count[i]);
+    }
+    printf("\n");
+  }
+  */
+  
+  // 各ランクに割り振る開始ラベルを計算 >> accum[]に開始番号がはいる
+  int* accum = NULL;
+  if ( !(accum = new int[numProc]) )   Exit(0);
+  for (int i=0; i<numProc; i++) accum[i] = 0;
+  
+  
+  // 開始ランクを求める
+  int st = 0;
+  for (int i=0; i<numProc; i++)
+  {
+    // ラベルがあれば1
+    if (count[i] != 0)
+    {
+      st = i;
+      break;
+    }
+  }
+  
+  // Hostonly_ printf("start rank = %d\n\n", st);
+  
+  // エラーチェック
+  if ( st > numProc-1 )
+  {
+    Hostonly_
+    {
+      fprintf(stderr, "Error : Start rank of gathering label is greather than %d\n", numProc);
+    }
+    Exit(0);
+  }
+  
+  
+  // ラベルの積算開始は1
+  accum[st] = 1;
+
+  // 続いて、各プロセスの開始数をセット
+  for (int i=st+1; i<numProc; i++)
+  {
+    accum[i] = accum[i-1] + count[i-1];
+  }
+
+  /*
+  Hostonly_
+  {
+    for (int i=0; i<numProc; i++)
+    {
+      fprintf(stderr, "original >> rank=%5d : num. labels=%6d : begin=%6d\n", i, count[i], accum[i]);
+    }
+    printf("\n");
+  }
+  */
+  
+  // ワーク配列
+  int* wrk = NULL;
+  if ( !(wrk = Alloc::Int_S3D(size, guide)) ) Exit(0);
+  
+  
+  // 参照用コピー
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        wrk[m] = mid[m];
+        
+      }
+    }
+  }
+  
+  // ラベル変更テーブル
+  int* Dtable=NULL;
+  
+  // ラベルが存在する場合のみ実行
+  if ( LabelSize > 0 )
+  {
+    if ( !(Dtable = new int[LabelSize*2]) )   Exit(0);
+    for (int i=0; i<LabelSize*2; i++) Dtable[i]=0;
+    
+    // searchParint()で割り当てたラベル
+    int c = 0;
+    for (vector<int>::iterator it=tbl.begin(); it != tbl.end(); ++it )
+    {
+      Dtable[c*2] = *it;
+      c++;
+    }
+    
+    // 更新するラベル 各ランク内で昇順、全ランクを通して連続
+    for (int i=0; i<LabelSize; i++)
+    {
+      Dtable[i*2+1] = accum[myRank] + i;
+    }
+    
+    /* 確認
+    for (int i=0; i<LabelSize; i++)
+    {
+      fprintf(stderr, "replaced >> rank=%5d : from=%6d  to=%6d\n", myRank, Dtable[i*2], Dtable[i*2+1]);
+    }
+     */
+    
+    // ラベルのふり直し
+    for (int l=0; l<LabelSize; l++)
+    {
+      const int target = Dtable[l*2];
+      const int replace= Dtable[l*2+1];
+      
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, target, replace) schedule(static)
+      for (int k=1; k<=kx; k++) {
+        for (int j=1; j<=jx; j++) {
+          for (int i=1; i<=ix; i++) {
+            
+            size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            const int dd = wrk[m];
+            
+            if ( dd == target )
+            {
+              mid[m] = replace;
+            }
+            
+          }
+        }
+      }
+      
+    } // loop l
+    
+    // release
+    if ( wrk ) delete [] wrk; wrk=NULL;
+    
+    
+    
+    // ラベルのアップデート
+    vector<int> v;
+    
+    // 置換
+    for (int l=0; l<LabelSize; l++)
+    {
+      v.push_back( Dtable[l*2+1] );
+    }
+    
+    tbl.clear();
+    tbl.resize(v.size());
+    copy(v.begin(), v.end(), tbl.begin());
+    
+    /* 確認
+    for (vector<int>::iterator it=tbl.begin(); it != tbl.end(); ++it )
+    {
+      fprintf(stderr, ">>> %3d %3d\n", myRank, *it);
+    }
+     */
+  }
+  
+  
+  if( Dtable ) { delete [] Dtable; Dtable=NULL; }
+  if( count )  { delete [] count;  count=NULL; }
+  if( accum )  { delete [] accum;  accum=NULL; }
 }
 
 
@@ -377,6 +615,7 @@ unsigned long Geometry::countCellB(const int* bcd, const int m_id, const bool pa
 }
 
 
+
 // #################################################################
 /**
  * @brief セル数をカウント
@@ -454,6 +693,7 @@ unsigned long Geometry::countCellM(const int* mid, const int m_id, const bool pa
  * @param [in]      mat        MediumList
  * @param [in]      m_NoCompo  コンポーネント数
  * @param [in]      cmp        CompoList
+ * @param [in,out]  d_mid      work array
  */
 bool Geometry::fill(FILE* fp,
                     int* d_bcd,
@@ -461,7 +701,8 @@ bool Geometry::fill(FILE* fp,
                     const int m_NoMedium,
                     const MediumList* mat,
                     const int m_NoCompo,
-                    const CompoList* cmp)
+                    const CompoList* cmp,
+                    int* d_mid)
 {
 
   /*
@@ -486,7 +727,7 @@ bool Geometry::fill(FILE* fp,
   }
   
   
-  // 最初にフィル対象のセル数を求める
+  // フィル対象のセル数
   unsigned long target_count = countCellB(d_bcd, 0);
 
   
@@ -501,15 +742,21 @@ bool Geometry::fill(FILE* fp,
   }
   
   
-  // FLUIDでフィル
+  // FLUIDでフィル ---------------------
   if ( !fill_connected(fp, d_bcd, d_bid, mat, m_NoMedium, FLUID, target_count) ) return false;
   
   
   if ( target_count == 0 ) return true;
   
   
+  // 連結領域の同定 --------------------
+  if ( !identifyConnectRegion(d_mid, d_bcd, d_bid, target_count, total_cell-target_count) ) {
+    mark();
+    return false;
+  }
   
-  // 交点IDをもつ未ペイントのセルを、交点IDの媒質IDでペイントする -------------------
+  
+  // 交点IDをもつd_bcd[]の未ペイントのセルを、最頻値交点IDの媒質でペイントする -------------------
   
   unsigned long tmp;
   
@@ -540,13 +787,18 @@ bool Geometry::fill(FILE* fp,
   // 未ペイント（ID=0）のセルを検出
   unsigned long upc = countCellB(d_bcd, 0);
   
+  Hostonly_
+  {
+    fprintf(fp, "\tUnpainted cells after fillByModalCutID() = %ld\n", upc);
+  }
+  
   if ( upc == 0 ) return true;
   
   
   // SOLIDでフィル
-  if ( !fill_connected(fp, d_bcd, d_bid, mat, m_NoMedium, SOLID, target_count) ) return false;
+  //if ( !fill_connected(fp, d_bcd, d_bid, mat, m_NoMedium, SOLID, target_count) ) return false;
   
-  
+  fillByModalSolid(d_bcd, d_bid, m_NoCompo, cmp);
   
   // 未ペイント(ID=0)をカウント
   upc = countCellB(d_bcd, 0);
@@ -1117,7 +1369,6 @@ bool Geometry::fillByModalCutID(int* bcd,
 // #################################################################
 /* @brief 未ペイントセルを周囲の媒質IDの固体最頻値でフィル
  * @param [in,out] bcd       BCindex B
- * @param [in]     fluid_id  キーとなる流体ID
  * @param [in]     bid       境界ID
  * @param [in]     m_NoCompo コンポーネント数
  * @param [in]     cmp       CompoList
@@ -1125,7 +1376,6 @@ bool Geometry::fillByModalCutID(int* bcd,
  * @note 周囲の媒質IDの固体最頻値がゼロの場合には，境界IDで代用
  */
 unsigned long Geometry::fillByModalSolid(int* bcd,
-                                         const int fluid_id,
                                          const int* bid,
                                          const int m_NoCompo,
                                          const CompoList* cmp)
@@ -1135,10 +1385,9 @@ unsigned long Geometry::fillByModalSolid(int* bcd,
   int kx = size[2];
   int gd = guide;
   
-  int fid = fluid_id;
   unsigned long c = 0; /// painted count
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, fid) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -1164,7 +1413,7 @@ unsigned long Geometry::fillByModalSolid(int* bcd,
         // 対象セルが未ペイントの場合
         if ( dd == 0 )
         {
-          int sd = FBUtility::find_mode_id(fid, qw, qe, qs, qn, qb, qt, m_NoCompo);
+          int sd = FBUtility::find_mode_id(qw, qe, qs, qn, qb, qt, m_NoCompo);
           int key = sd;
           
           // 周囲の媒質IDの固体最頻値がゼロの場合
@@ -1177,7 +1426,7 @@ unsigned long Geometry::fillByModalSolid(int* bcd,
             qn = getBit5(qq, 3);
             qb = getBit5(qq, 4);
             qt = getBit5(qq, 5);
-            sd = FBUtility::find_mode_id(fid, qw, qe, qs, qn, qb, qt, m_NoCompo);
+            sd = FBUtility::find_mode_id(qw, qe, qs, qn, qb, qt, m_NoCompo);
             if ( sd == 0 ) Exit(0); // 何かあるはず
             
             // 交点IDの媒質番号を得る
@@ -1207,55 +1456,48 @@ unsigned long Geometry::fillByModalSolid(int* bcd,
 
 
 // #################################################################
-/* @brief 未ペイントセルを周囲の媒質IDの固体最頻値でフィル
- * @param [in,out] mid       識別子配列
- * @param [in]     fluid_id  フィルをする流体ID
- * @param [in]     m_NoCompo コンポーネント数
- * @retval 置換されたセル数
+/**
+ * @brief 流体セルをマイナス値でワーク配列にコピー
+ * @param [in,out] mid         work array
+ * @param [in]     bcd         BCindex B
+ * @note bcd[]には流体セルのIDが記録されている，それ以外はゼロ
+ * @retval 流体セルの個数
  */
-unsigned long Geometry::fillByModalSolid(int* mid, const int fluid_id, const int m_NoCompo)
+unsigned long Geometry::fillFluidRegion(int* mid, const int* bcd)
 {
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
   
-  int fid = fluid_id;
-  unsigned long c = 0; /// painted count
+  // zero initialize
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+  for (int k=1-gd; k<=kx+gd; k++) {
+    for (int j=1-gd; j<=jx+gd; j++) {
+      for (int i=1-gd; i<=ix+gd; i++) {
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        mid[m] = 0;
+      }
+    }
+  }
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, fid) schedule(static) reduction(+:c)
+  
+  unsigned long c=0;
+  
+  // 流体セルを-1でペイント
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         
-        size_t m_p = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
-        size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
-        size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
-        size_t m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd);
-        size_t m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd);
-        size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
-        size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         
-        int dd = mid[m_p];
-        
-        int qw = mid[m_w];
-        int qe = mid[m_e];
-        int qs = mid[m_s];
-        int qn = mid[m_n];
-        int qb = mid[m_b];
-        int qt = mid[m_t];
-        
-        
-        // 対象セルが未ペイントの場合
-        if ( dd == -1 )
+        if (DECODE_CMP( bcd[m] ) > 0)
         {
-          int sd = FBUtility::find_mode_id(fid, qw, qe, qs, qn, qb, qt, m_NoCompo);
-          
-          // 周囲の媒質IDの固体最頻値がゼロの場合
-          if ( sd == 0 ) Exit(0); // 何かあるはず
-          mid[m_p] = sd;
+          mid[m] = -1;
           c++;
         }
+        
       }
     }
   }
@@ -1603,6 +1845,7 @@ unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int tar
 
 
 
+
 // #################################################################
 /**
  * @brief シード点をmid[]にペイントする
@@ -1753,6 +1996,63 @@ unsigned long Geometry::fillSeedMid(int* mid, const int face, const int target, 
   {
     unsigned long c_tmp = c;
     if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  return c;
+}
+
+
+
+// #################################################################
+/**
+ * @brief ペイント対象のセル数をカバーするbboxを探す
+ * @param [in,out] mid      work array
+ * @param [out]    bbox     bounding box
+ * @param [in]     Dsize    サイズ
+ * @retval 対象セル数
+ * @note 各ランクで逐次実行
+ */
+unsigned long Geometry::findBboxforSeeding(int* mid, int* bbox, const int* Dsize)
+{
+  int ix, jx, kx, gd;
+  
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
+  
+  // ノードローカルの値
+  unsigned long c = 0;
+  
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        
+        if ( mid[m] == 0 )
+        {
+          c++;
+          if ( bbox[0] > i ) bbox[0] = i;
+          if ( bbox[1] < i ) bbox[1] = i;
+          if ( bbox[2] > j ) bbox[2] = j;
+          if ( bbox[3] < j ) bbox[3] = j;
+          if ( bbox[4] > k ) bbox[4] = k;
+          if ( bbox[5] < k ) bbox[5] = k;
+        }
+        
+      }
+    }
   }
   
   return c;
@@ -1956,6 +2256,77 @@ unsigned long Geometry::findPolygonInCell(int* d_mid, MPIPolylib* PL, PolygonPro
 
 
 // #################################################################
+/**
+ * @brief ペイントするシードセルを探す
+ * @param [in,out] mid      work array
+ * @param [in]     bbox     探索範囲
+ * @param [in]     counter  リピート数
+ * @param [in]     Dsize    サイズ
+ * @retval シードがあれば1
+ * @note ローカルノードに対するスレッド処理
+ */
+int Geometry::findSeedCells(int* mid,
+                            const int* bbox,
+                            const int counter,
+                            const int* Dsize)
+{
+  int ix, jx, kx, gd;
+  
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
+  
+  int ist = bbox[0];
+  int ied = bbox[1];
+  int jst = bbox[2];
+  int jed = bbox[3];
+  int kst = bbox[4];
+  int ked = bbox[5];
+  
+  // 最大スレッド数 * リピート数(counter=0~)で基点をつくる
+  int mt = omp_get_max_threads() * counter;
+  
+  int flag = 0;
+  int c = 0;
+  
+#pragma omp parallel for schedule(static) reduction(+:c) \
+firstprivate(ix, jx, kx, gd, mt, ist, ied, jst, jed, kst, ked, flag)
+  for (int k=kst; k<=ked; k++) {
+    for (int j=jst; j<=jed; j++) {
+      for (int i=ist; i<=ied; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        
+        // 未ペイントセルの場合
+        if ( mid[m]==0 && flag==0 )
+        {
+          mid[m] = mt + omp_get_thread_num() + 1;
+          flag = 1;
+          c++;
+        }
+        
+      }
+    }
+  }
+  
+  return c;
+}
+
+
+
+
+// #################################################################
 /*
  * @brief フィルパラメータを取得
  * @param [in] tpCntl       TextParser
@@ -2142,6 +2513,240 @@ void Geometry::getFillParam(TextParser* tpCntl,
 
 
 // #################################################################
+/**
+ * @brief 連結領域を同定する
+ * @param [in] mid          work array
+ * @param [in] bcd          BCindex B
+ * @param [in] bid          交点ID
+ * @param [in] paintable    固体領域でペイントすべきセル数
+ * @param [in] filled_fluid 流体でペイント済みの数
+ * @param [in] Dsize        配列サイズ
+ */
+bool Geometry::identifyConnectRegion(int* mid,
+                                     const int* bcd,
+                                     const int* bid,
+                                     const unsigned long paintable,
+                                     const unsigned long filled_fluid,
+                                     const int* Dsize)
+{
+  int ix, jx, kx, gd;
+  
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
+  
+  
+  // d_midをゼロで初期化し、流体領域を-1でペイント
+  if ( fillFluidRegion(mid, bcd) != filled_fluid )
+  {
+    Hostonly_
+    {
+      fprintf(stderr, "\tFilled cells of fluid is not consistent.\n");
+      return false;
+    }
+  }
+
+  
+  // シード点Bbox
+  int bbox[6];
+  bbox[0] = INT_MAX; // x-
+  bbox[1] = INT_MIN; // x+
+  bbox[2] = INT_MAX; // y-
+  bbox[3] = INT_MIN; // y+
+  bbox[4] = INT_MAX; // z-
+  bbox[5] = INT_MIN; // z+
+  
+  // 各ランク毎のempty cellの数
+  unsigned long nc = findBboxforSeeding(mid, bbox);
+  
+  //fprintf(stderr, "empty cell in rank [%6d] = %10ld : range = (%d - %d, %d - %d, %d - %d)\n",
+  //       myRank, nc, bbox[0], bbox[1], bbox[2], bbox[3], bbox[4], bbox[5]);
+  
+  
+  int counter = 0;
+
+  while ( nc > 0 )
+  {
+    // 未ペイントセルをペイントするユニークラベルを割り振る
+    int unique_id = (unsigned long)findSeedCells(mid, bbox, counter);
+    
+    nc -= unique_id;
+    
+    // 未ペイントセルをユニークラベルでペイントする
+    nc -= searchPaint(mid, bbox, bid);
+    
+    // fprintf(stderr, "\tIteration=%3d / Empty cell=%16ld / unique_id = %d\n", counter+1, nc, unique_id);
+    
+    counter++;
+    
+    if ( counter > 1000 )
+    {
+      Hostonly_ fprintf(stderr, "May be error: Fill iteration is greater than 1000\n");
+      return false;
+    }
+  }
+  
+  // この時点で、d_mid[]は全て非ゼロの値が入る。
+  // 流体部分は-1、それ以外がunique_id
+  // unique_idは各ランクでユニークであるが、全プロセスではユニークになっていない
+  
+  
+  // 各ランクのラベル保持コンテナ
+  vector<int> labelTable;
+  
+  while ( true )
+  {
+    // 各ランクのラベルをユニークに定める
+    assureUniqueLabel(labelTable, mid);
+    
+    if ( numProc > 1 )
+    {
+      if ( paraMngr->BndCommS3D(mid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    // 接続リスト
+    vector< vector<int> > cnnctTable;
+    cnnctTable.resize(labelTable.size()); // 接続リストの値をいれる大きさ
+    
+    
+    // 接続グラフを作成
+    if ( makeConnectList(cnnctTable, labelTable, mid, bid) == 0 ) break;
+    
+    
+    // 各ラベルの接続リストのうち、自ラベルも含めて最小値のラベルでペイント
+    for (int l=0; l<cnnctTable.size(); l++)
+    {
+      vector<int>::iterator itr_min;
+      itr_min = min_element(cnnctTable[l].begin(), cnnctTable[l].end());
+      const int tmp = *itr_min;                    // 接続リストの最小値
+      const int myl = labelTable[l];               // 自ラベル
+      const int lst_min = (myl > tmp) ? tmp : myl; // 最小値
+      
+      paintConnectedLabel(mid, cnnctTable[l], lst_min);
+      
+      if ( numProc > 1 )
+      {
+        if ( paraMngr->BndCommS3D(mid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+      }
+    }
+    
+  }
+  
+  
+  return true;
+}
+
+
+// #################################################################
+/**
+ * @brief 各ラベルの接続リストを作成
+ * @param [in,out] cnct   接続リスト
+ * @param [in,out] label  ラベルリスト
+ * @param [in]     mid    識別子配列
+ * @param [in]     bid    交点ID
+ * @param [in]     Dsize  配列サイズ
+ */
+int Geometry::makeConnectList(vector< vector<int> >& cnct,
+                              vector<int>& label,
+                              const int* mid,
+                              const int* bid,
+                              const int* Dsize)
+{
+  int ix, jx, kx, gd;
+  
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
+
+  
+  // 各ラベルについて、接続リストを作成
+  for (int l=0; l<cnct.size(); l++)
+  {
+    const int key = label[l];
+    
+    // serial loop
+    for (int k=1; k<=kx; k++) {
+      for (int j=1; j<=jx; j++) {
+        for (int i=1; i<=ix; i++) {
+          
+          size_t m_p = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
+          size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
+          size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
+          size_t m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd);
+          size_t m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd);
+          size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
+          size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
+          
+          int qq = bid[m_p];
+          
+          // 隣接セル方向に対する境界ID
+          int qw = getBit5(qq, 0);
+          int qe = getBit5(qq, 1);
+          int qs = getBit5(qq, 2);
+          int qn = getBit5(qq, 3);
+          int qb = getBit5(qq, 4);
+          int qt = getBit5(qq, 5);
+          
+          const int dd = mid[m_p];
+          
+          // SOLIDセルの場合
+          if ( dd > 0 )
+          {
+            int d_w = mid[m_w];
+            int d_e = mid[m_e];
+            int d_s = mid[m_s];
+            int d_n = mid[m_n];
+            int d_b = mid[m_b];
+            int d_t = mid[m_t];
+            
+            // テスト方向にカットがなく、自セルのラベルでない
+            if ( d_w != dd && qw==0 ) addLabel2List(cnct[l], d_w);
+            if ( d_e != dd && qe==0 ) addLabel2List(cnct[l], d_e);
+            if ( d_s != dd && qs==0 ) addLabel2List(cnct[l], d_s);
+            if ( d_n != dd && qn==0 ) addLabel2List(cnct[l], d_n);
+            if ( d_b != dd && qb==0 ) addLabel2List(cnct[l], d_b);
+            if ( d_t != dd && qt==0 ) addLabel2List(cnct[l], d_t);
+          }
+          
+        }
+      }
+    }
+  }
+  
+  int total=0;
+  
+  for (int l=0; l<cnct.size(); l++)
+  {
+    total += cnct[l].size();
+  }
+  
+  return total;
+}
+
+
+// #################################################################
 /* @brief 距離の最小値を求める
  * @param [in,out] cut カットの配列
  * @param [in]     bid 境界IDの配列
@@ -2175,7 +2780,8 @@ void Geometry::minDistance(const long long* cut, const int* bid, FILE* fp)
             
             for (int n=0; n<6; n++)
             {
-              th_min = (std::min)(th_min, getBit9(c, n));
+              int tmp = getBit9(c, n);
+              if ( (th_min > tmp) && tmp != 0) th_min = tmp;
             }
           }
           
@@ -2200,7 +2806,7 @@ void Geometry::minDistance(const long long* cut, const int* bid, FILE* fp)
   
   Hostonly_
   {
-    fprintf(fp, "\n\tMinimum non-dimnensional distance       = %e\n\n", (REAL_TYPE)global_min/(REAL_TYPE)QT_9); // 9bit幅
+    fprintf(fp, "\n\tMinimum non-dimensional distance except on a center = %e\n\n", (REAL_TYPE)global_min/(REAL_TYPE)QT_9); // 9bit幅
   }
   
 }
@@ -2430,6 +3036,59 @@ void Geometry::paintCutOnPoint(int* bcd,
     if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
   }
   
+}
+
+
+
+// #################################################################
+/* @brief 接続している領域を指定ラベルでペイント
+ * @param [in,out] mid      識別子配列
+ * @param [in]     label    ラベルリスト
+ * @param [in]     replace  置換するラベル
+ * @param [in]     Dsize    サイズ
+ */
+void Geometry::paintConnectedLabel(int* mid, const vector<int>& label, const int replace, const int* Dsize)
+{
+  int ix, jx, kx, gd;
+  
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
+
+  int lsize = label.size();
+  int* lbl = new int[lsize];
+  for (int l=0; l<lsize; l++) lbl[l] = label[l];
+  
+  int rep = replace;
+  
+#pragma omp parallel for schedule(static) firstprivate(ix, jx, kx, gd, lsize, rep)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        
+        for (int l=0; l<lsize; l++)
+        {
+          if ( lbl[l] == mid[m] ) mid[m] = rep;
+        }
+        
+      }
+    }
+  }
+  
+  if ( lbl ) delete [] lbl; lbl = NULL;
 }
 
 
@@ -2675,6 +3334,111 @@ unsigned long Geometry::replaceIsolatedCell(int* bcd,
   
   return replaced;
 }
+
+
+// #################################################################
+/* @brief 未ペイントセルをシードフィル
+ * @param [in,out] mid    識別子配列
+ * @param [in]     bbox   対象領域
+ * @param [in]     bid    交点ID
+ * @param [in]     Dsize  サイズ
+ * @retval 置換されたセル数
+ * @note findSeedCells()と同じスレッド処理を行うこと
+ */
+unsigned long Geometry::searchPaint(int* mid, const int* bbox, const int* bid, const int* Dsize)
+{
+  int ix, jx, kx, gd;
+  
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
+  
+  int ist = bbox[0];
+  int ied = bbox[1];
+  int jst = bbox[2];
+  int jed = bbox[3];
+  int kst = bbox[4];
+  int ked = bbox[5];
+  
+  unsigned long c = 0;
+  
+#pragma omp parallel for schedule(static) reduction(+:c)\
+            firstprivate(ix, jx, kx, gd, ist, ied, jst, jed, kst, ked)
+  for (int k=kst; k<=ked; k++) {
+    for (int j=jst; j<=jed; j++) {
+      for (int i=ist; i<=ied; i++) {
+        
+        size_t m_p = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
+        size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
+        size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
+        size_t m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd);
+        size_t m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd);
+        size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
+        size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
+        
+        int qq = bid[m_p];
+        int dd = 0;
+        
+        // 未ペイント
+        if ( mid[m_p] == 0 )
+        {
+          int d_w = mid[m_w];
+          int d_e = mid[m_e];
+          int d_s = mid[m_s];
+          int d_n = mid[m_n];
+          int d_b = mid[m_b];
+          int d_t = mid[m_t];
+          
+          if ( d_w != 0 && 0 == getBit5(qq, 0) )
+          {
+            dd = d_w;
+          }
+          else if ( d_e != 0 && 0 == getBit5(qq, 1) )
+          {
+            dd = d_e;
+          }
+          else if ( d_s != 0 && 0 == getBit5(qq, 2) )
+          {
+            dd = d_s;
+          }
+          else if ( d_n != 0 && 0 == getBit5(qq, 3) )
+          {
+            dd = d_n;
+          }
+          else if ( d_b != 0 && 0 == getBit5(qq, 4) )
+          {
+            dd = d_b;
+          }
+          else if ( d_t != 0 && 0 == getBit5(qq, 5) )
+          {
+            dd = d_t;
+          }
+        }
+        
+        if ( dd != 0 )
+        {
+          mid[m_p] = dd;
+          c++;
+        }
+        
+      }
+    }
+  }
+  
+  return c;
+}
+
 
 
 // #################################################################
@@ -3882,7 +4646,8 @@ void Geometry::SeedFilling(FILE* fp,
     
     while ( target_count > 0 ) {
       
-      replaced = fillByModalSolid(d_mid, FillID, m_NoCompo);
+      // @todo アルゴリズム再考
+      // replaced = fillByModalSolid(d_mid, FillID, m_NoCompo);
       
       if ( numProc > 1 )
       {

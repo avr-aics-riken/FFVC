@@ -239,9 +239,9 @@ int FFV::Loop(const unsigned step)
   }
   
   // 発散チェック
-  if ( isnan(rms_Var[var_Velocity])
-    || isnan(rms_Var[var_Pressure])
-    || isnan(DivC.divergence)
+  if ( ISNAN(rms_Var[var_Velocity])
+      || ISNAN(rms_Var[var_Pressure])
+      || ISNAN(DivC.divergence)
       )
   {
     isNormal = false;
@@ -249,7 +249,7 @@ int FFV::Loop(const unsigned step)
   
   if ( C.isHeatProblem() )
   {
-    if ( isnan(rms_Var[var_Temperature]) )
+    if ( ISNAN(rms_Var[var_Temperature]) )
     {
       isNormal = false;
     }

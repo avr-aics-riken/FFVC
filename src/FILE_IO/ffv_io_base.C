@@ -1302,7 +1302,7 @@ bool IO_BASE::writeSVX(REAL_TYPE *vf, int *id)
 
 // #################################################################
 // 例題のモデルをsvxフォーマットで出力する(ID)
-bool IO_BASE::writeSVX(const int* bcd)
+bool IO_BASE::writeSVX(const int* array, const bool flag)
 {
   if ( IO_Voxel != voxel_SVX ) return false;
   
@@ -1345,15 +1345,34 @@ bool IO_BASE::writeSVX(const int* bcd)
   
   int   *q = new int[nx];
   
-  for (int k=0; k<=(kmax+1); k++) {
-    for (int j=0; j<=(jmax+1); j++) {
-      for (int i=0; i<=(imax+1); i++) {
-        l = (size_t)(ix*jx*k + ix*j + i);
-        m = _F_IDX_S3D(i, j, k, imax, jmax, kmax, gd);
-        q[l] = DECODE_CMP(bcd[m]);
+  if ( !flag ) // d_bcd
+  {
+#pragma omp parallel for firstprivate(imax, jmax, kmax, gd, ix, jx) schedule(static)
+    for (int k=0; k<=(kmax+1); k++) {
+      for (int j=0; j<=(jmax+1); j++) {
+        for (int i=0; i<=(imax+1); i++) {
+          size_t l = (size_t)(ix*jx*k + ix*j + i);
+          size_t m = _F_IDX_S3D(i, j, k, imax, jmax, kmax, gd);
+          q[l] = DECODE_CMP(array[m]);
+        }
       }
     }
   }
+  else // d_mid
+  {
+#pragma omp parallel for firstprivate(imax, jmax, kmax, gd, ix, jx) schedule(static)
+    for (int k=0; k<=(kmax+1); k++) {
+      for (int j=0; j<=(jmax+1); j++) {
+        for (int i=0; i<=(imax+1); i++) {
+          size_t l = (size_t)(ix*jx*k + ix*j + i);
+          size_t m = _F_IDX_S3D(i, j, k, imax, jmax, kmax, gd);
+          q[l] = array[m];
+        }
+      }
+    }
+  }
+  
+
   
   // voxel size
   sz = sizeof(int)*3;

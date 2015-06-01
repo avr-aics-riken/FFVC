@@ -331,7 +331,7 @@ public:
   // #################################################################
   /**
    * @brief 隣接6方向の最頻値IDを求める（fid以外）
-   * @param [in] fid    流体のID
+   * @param [in] fid     流体のID
    * @param [in] qw      w方向のID
    * @param [in] qe      e方向のID
    * @param [in] qs      s方向のID

@@ -133,14 +133,14 @@ void FFV::PS_Binary()
   TIMING_stop("Thermal_Diff_OBC_Face", 0.0);
   
   
-  // 境界条件の熱流束の同期 >>　不要？
+  /* 境界条件の熱流束の同期 >> 不要？
   if ( numProc > 1 )
   {
     TIMING_start("Sync_Thermal_QBC");
     if ( paraMngr->BndCommS4DEx(d_qbc, 6, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
     TIMING_stop("Sync_Thermal_QBC", face_comm_size*6.0*guide*sizeof(REAL_TYPE)); // 6成分
   }
-
+  */
   
   
   if ( C.AlgorithmH == Heat_EE_EE ) // 陽的時間進行
