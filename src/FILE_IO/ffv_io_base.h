@@ -411,14 +411,6 @@ public:
                    const REAL_TYPE* ddx,
                    const int m_ModePrecision);
   
-  /**
-   * @brief 例題のモデルをsvxフォーマットで出力する(体積率とID)
-   * @param [in] vf 体積占有率
-   * @param [in] id ID情報
-   * @retval 出力 >> true，指定フォーマットがSVXでない場合にはfalse
-   */
-  bool writeSVX(REAL_TYPE *vf, int *id);
-  
   
   /**
    * @brief 例題のモデルをsvxフォーマットで出力する(ID)

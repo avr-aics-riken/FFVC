@@ -297,7 +297,8 @@ int FFV::Initialize(int argc, char **argv)
   TIMING_start("Fill");
   if ( !GM.fill(fp, d_bcd, d_bid, C.NoMedium, mat, C.NoCompo, cmp, d_mid) )
   {
-    F->writeSVX(d_bcd);
+    // debug
+    //F->writeSVX(d_bcd);
     //F->writeSVX(d_mid, true);
     Exit(0);
   }
@@ -608,28 +609,19 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // CellIDとBCflagの出力 (guide cell=0)
+  // 戻り値：全セルが同じ値cの場合にはcの値が戻り、異なるセルの値が存在する場合には-1
   int id_cell = F->writeCellID(0);
   int id_bcf  = F->writeBCflag(0);
-  
   
   // 出力ファイルの初期化
   F->initFileOut(id_cell, id_bcf);
   
   
-  // 指定のボクセルファイル出力が指定されている場合 true
-  if ( F->writeSVX(d_bcd) )
-  {
-    Hostonly_
-    {
-      fprintf(fp,"\tVoxel file 'example.svx' was written.\n");
-      printf(    "\tVoxel file 'example.svx' was written.\n");
-      fprintf(fp,"\n----------\n\n\n");
-      printf(    "\n----------\n\n\n");
-    }
-  }
+  // debug: obsolete format
+  F->writeSVX(d_bcd);
   
   
-  // IBLANK 出力後に　mid[]を解放する  ---------------------------
+  // IBLANK 出力後に mid[]を解放する  ---------------------------
   if ( d_mid ) delete [] d_mid;
   
   

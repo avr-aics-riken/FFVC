@@ -19,6 +19,13 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-06-04
+r1605 check fill algo.
+- ducky, cavity, BMW_M3, nasal(0.2, 0.4mm)
+- enable fileout of bvx format
+- remove obsolete svx output
+
+--------------------------
 2015-06-01
 r1604 refine fill algorithm
 - remove fill_bid.h
