@@ -3,13 +3,13 @@
  * Frontflow / violet Cartesian
  *
  *
- * Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
+ * Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
  * All rights reserved.
  *
- * Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
+ * Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
  * All rights reserved.
  *
- * Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN. 
+ * Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
  * All rights reserved.
  *
  */
@@ -18,6 +18,7 @@
 RELEASE
 =======
 
+Version 2.1.8    2015-06-06
 Version 2.1.7    2015-06-01
 Version 2.1.5    2015-03-01
 Version 2.1.4    2015-02-25

@@ -49,7 +49,7 @@ private:
 
 public:
   REAL_TYPE P[property_END]; ///< プロパティリスト
-  std::string alias;         ///< ラベル
+  std::string alias;         ///< 媒質ラベル
   
   MediumList() {
     state = -1;

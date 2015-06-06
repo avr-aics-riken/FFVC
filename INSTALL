@@ -27,22 +27,26 @@ SOFTWARE REQUIREMENT
 
 
 
+
 HOW TO BUILD
 ============
 
-1. with configure
-
 $ export FFV_HOME=hogehoge
-
-$ ./configure [options]
+$ cd BUILD_DIR
+$ ../configure [options]
 $ make
 $ make install
 
 
-It is strongly recommended to use wrapper compiler for convenience. For instance, if you
+It is strongly recommended to use wrapper compiler for your convenience. For instance,
                            ^^^^^^^^^^^^^^^^^^^^^^^
-want to compile with OpenMPI, compile OpenMPI library by a compiler you want to use before 
-install related libraries (See section 3).
+if you want to compile with OpenMPI, compile OpenMPI library by a compiler you want
+to use before install related libraries.
+
+Tips) OpenMPI compilation with Intel compiler
+
+  $ ./configure --prefix=/opt/openmpi CC=icc CFLAGS=-O3 CXX=icpc CXXFLAGS=-O3 \
+                F77=ifort FFLAGS=-O3 FC=ifort FCFLAGS=-O3
 
 
 
@@ -112,7 +116,7 @@ Here is examples.
 
 ## for OpenMPI compiled by INTEL compiler, wrapper compiler, openmp.
 
-  $ ./configure \
+  $ ../configure \
       --prefix=${FFV_HOME}/FFVC \
       --with-cpm=${FFV_HOME}/CPMlib \
       --with-cdm=${FFV_HOME}/CDMlib \
@@ -130,7 +134,7 @@ Here is examples.
 
 ## for OpenMPI compiled by INTEL compiler, double precision, openmp.
 
-  $ ./configure \
+  $ ../configure \
       --prefix=${FFV_HOME}/FFVC \
       --with-cpm=${FFV_HOME}/CPMlib \
       --with-cdm=${FFV_HOME}/CDMlib \
@@ -149,7 +153,7 @@ Here is examples.
 
 ## for GNU compiler
 
-  $ ./configure \
+  $ ../configure \
       --prefix=${FFV_HOME}/FFVC \
       --with-cpm=${FFV_HOME}/CPMlib \
       --with-cdm=${FFV_HOME}/CDMlib \
@@ -167,7 +171,7 @@ Here is examples.
 
 ## for K-computer
 
-  $ ./configure \
+  $ ../configure \
       --prefix=${FFV_HOME}/FFVC \
       --with-cpm=${FFV_HOME}/CPMlib \
       --with-cdm=${FFV_HOME}/CDMlib \
@@ -186,16 +190,11 @@ Here is examples.
 
 
 
-2. Hand compile
+Alternative Build
+=================
 
 If a provided configure does not work, use Makefile_hand to build this library. At first,
 edit a make_setting file to tell your machine environment.
 
-
-
-3. OpenMPI compile with Intel compiler
-
-$ ./configure --prefix=/opt/openmpi CC=icc CFLAGS=-O3 CXX=icpc CXXFLAGS=-O3 \
-       F77=ifort FFLAGS=-O3 FC=ifort FCFLAGS=-O3
 
 

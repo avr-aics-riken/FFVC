@@ -18,8 +18,8 @@ noinst_lib_LIBRARIES = libIP.a
 noinst_libdir = ../lib
 
 libIP_a_CXXFLAGS = \
-  -I. \
-  -I../FB \
+  -I$(top_srcdir)/src/FB \
+  -I$(top_srcdir)/src/IP \
   @CPM_CFLAGS@ \
   @PL_CFLAGS@ \
   @TP_CFLAGS@ \

@@ -18,8 +18,8 @@ noinst_lib_LIBRARIES = libFB.a
 noinst_libdir = ../lib
 
 libFB_a_CXXFLAGS = \
--I. \
--I../Geometry \
+-I$(top_srcdir)/src/FB \
+-I$(top_srcdir)/src/Geometry \
 @CDM_CFLAGS@ \
 @CPM_CFLAGS@ \
 @PL_CFLAGS@ \

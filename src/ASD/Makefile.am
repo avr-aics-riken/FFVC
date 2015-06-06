@@ -18,9 +18,9 @@ noinst_lib_LIBRARIES = libASD.a
 noinst_libdir = ../lib
 
 libASD_a_CXXFLAGS = \
-  -I. \
-  -I../FB \
-  -I../Geometry \
+  -I$(top_srcdir)/src/ASD \
+  -I$(top_srcdir)/src/FB \
+  -I$(top_srcdir)/src/Geometry \
   @CPM_CFLAGS@ \
   @PL_CFLAGS@ \
   @TP_CFLAGS@ \

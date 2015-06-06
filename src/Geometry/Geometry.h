@@ -184,6 +184,7 @@ private:
   // サブセルの未ペイントセルを周囲の媒質IDの固体最頻値でフィル
   unsigned long fillSubCellByModalSolid(int* smd,
                                         const int m_NoCompo,
+                                        const CompoList* cmp,
                                         REAL_TYPE* svf,
                                         const MediumList* mat);
   
@@ -388,7 +389,8 @@ private:
                    int* d_mid,
                    const MediumList* mat,
                    REAL_TYPE* d_pvf,
-                   const int m_NoCompo);
+                   const int m_NoCompo,
+                   const CompoList* cmp);
   
   
   // ポリゴンと線分の交点計算
@@ -556,7 +558,8 @@ public:
                    int* d_mid,
                    REAL_TYPE* d_pvf,
                    MPIPolylib* PL,
-                   const int m_NoCompo);
+                   const int m_NoCompo,
+                   const CompoList* cmp);
 
 };
 

@@ -18,8 +18,8 @@ noinst_lib_LIBRARIES = libFCORE.a
 noinst_libdir = ../lib
 
 libFCORE_a_FCFLAGS = \
-  -I. \
-  -I../FB \
+  -I$(top_srcdir)/src/F_CORE \
+  -I$(top_srcdir)/src/FB \
   @CPM_CFLAGS@ \
   @MPICH_CFLAGS@ \
   @FREALOPT@ 

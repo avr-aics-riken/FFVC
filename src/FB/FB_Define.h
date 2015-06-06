@@ -28,7 +28,7 @@
 #include <math.h>
 #include <stdio.h>
 
-#define FB_VERS "1.5.3"
+#define FB_VERS "1.5.4"
 
 #define SINGLE_EPSILON 1.19e-7
 #define DOUBLE_EPSILON 2.22e-16

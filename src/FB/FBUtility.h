@@ -331,7 +331,7 @@ public:
   // #################################################################
   /**
    * @brief 隣接6方向の最頻値IDを求める（fid以外）
-   * @param [in] fid     流体のID
+   * @param [in] cmp     CompoList class
    * @param [in] qw      w方向のID
    * @param [in] qe      e方向のID
    * @param [in] qs      s方向のID
@@ -341,7 +341,7 @@ public:
    * @param [in] NoCompo コンポーネント数
    * @note 候補なしの場合には、0が戻り値
    */
-  static inline int find_mode_id (const int fid, const int qw, const int qe, const int qs, const int qn, const int qb, const int qt, const int NoCompo)
+  static inline int find_mode_id (const CompoList* cmp, const int qw, const int qe, const int qs, const int qn, const int qb, const int qt, const int NoCompo)
   {
     unsigned key[CMP_BIT_W]; ///< ID毎の頻度 @note ffv_Initialize() >> fill()でif ( C.NoCompo+1 > CMP_BIT_W )をチェック
     int val[6];              ///< ID
@@ -365,7 +365,7 @@ public:
     
     for (int l=NoCompo; l>=1; l--)
     {
-      if ( (l != fid) && (key[l] > mode) ) // 流体IDでなく、最大の頻度
+      if ( (FLUID != cmp[l].getState()) && (key[l] > mode) ) // 流体IDでなく、最大の頻度
       {
         mode = key[l];
         z = l;

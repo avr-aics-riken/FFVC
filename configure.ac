@@ -16,16 +16,58 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
+
 AC_PREREQ([2.57])
-AC_INIT([FFVC], [2.1.7], [keno@riken.jp], [FFVC])
-AM_INIT_AUTOMAKE()
+AC_INIT([FFVC], [2.1.8], [keno@riken.jp], [FFVC])
+
+echo "----------------------------------------"
+echo "Running FFV-C Configure Script"
+echo "----------------------------------------"
+
 AC_CONFIG_SRCDIR([src/main.C])
+
+
+#
+# Specify directory for auxillary build tools (e.g., install-sh, config.sub, config.guess) and M4 files.
+#
+
+AC_CONFIG_AUX_DIR(config)
+
+
+#
+# To prevent the source codes from breaking, we suppress to do configure in the source directory.
+#
+
+if test -e configure.ac ; then
+echo "Please run configure from a separate build directory. It is not allowd to run configure in the source directory."
+echo "Pleaes try ..."
+echo " "
+echo "$ cd BUILD_DIR"
+echo "$ ../configure [options]"
+exit
+fi
+
+
+#
+# Configure should create config.h from config.h.in
+#
+
 AC_CONFIG_HEADERS([config.h])
+
+
+#
+# Use automake
+#
+
+AM_INIT_AUTOMAKE()
+
+
 
 #
 # revision No.
 #
-FFVC_REVISION="20150604_1800"
+
+FFVC_REVISION="20150606_1600"
 AC_SUBST(FFVC_REVISION)
 
 
@@ -40,12 +82,14 @@ FCFLAGS=$F90FLAGS
 #
 # compiler
 #
+
 AC_ARG_WITH(comp, [AC_HELP_STRING([--with-comp=(INTEL|FJ|GNU)],[Specify Compiler type])], , with_comp=none)
 
 
 #
 # REAL type
 #
+
 AC_ARG_WITH(precision, [AC_HELP_STRING([--with-precision=(single|double)],[Specify REAL type [single]])], , with_precision=single)
 AC_SUBST(REALOPT)
 AC_SUBST(FREALOPT)
@@ -354,3 +398,7 @@ AC_CONFIG_FILES([Makefile \
                 ])
 
 AC_OUTPUT
+
+echo "---------------------------------------------"
+echo "Finished Running FFV-C Configure Script"
+echo "---------------------------------------------"

@@ -18,8 +18,8 @@ noinst_lib_LIBRARIES = libFLS.a
 noinst_libdir = ../lib
 
 libFLS_a_FCFLAGS = \
-  -I. \
-  -I../FB \
+  -I$(top_srcdir)/src/F_LS \
+  -I$(top_srcdir)/src/FB \
   @CPM_CFLAGS@ \
   @MPICH_CFLAGS@ \
   @FREALOPT@ 

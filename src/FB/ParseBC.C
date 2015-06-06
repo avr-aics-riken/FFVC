@@ -1933,7 +1933,7 @@ void ParseBC::loadBCs(Control* C, MediumList* mat, CompoList* cmp)
   
   int odr_outer = 0; // 外部境界条件の格納番号
   
-  // パラメータの読み込み
+  // 境界条件パラメータの読み込み
   for (int k=1; k<=NoBC; k++)
   {
     int m = NoMedium + k;
@@ -1985,7 +1985,7 @@ void ParseBC::loadBCs(Control* C, MediumList* mat, CompoList* cmp)
     }
     
     
-    // 媒質名 外部境界が周期でない場合以外
+    // 媒質名 外部境界が周期でない場合以外、内部境界も含めて
     if ( BaseBc[odr_outer].getClass() != OBC_PERIODIC )
     {
       label = label_leaf + "/Medium";
@@ -2188,31 +2188,15 @@ void ParseBC::loadBCs(Control* C, MediumList* mat, CompoList* cmp)
   
   
   
-  // cmp[]の全要素で媒質情報を保持。この時点までは、cmp[]の境界条件部分の媒質情報は空。媒質部分にしか入っていない
+  // MediumTable, CompoList, BoundaryOuterの各クラスのテーブル相互関係の整合性をとる
   for (int k=1; k<=NoBC; k++)
   {
-    int m = NoMedium + k; // cmp[]のLBCのインデクス
-    int odr = -1;
+    int m = NoMedium + k; // cmp[]のBCのインデクス
+    int odr = cmp[m].getMatodr();
     
     // 周期境界のときにはスキップ
     if ( strcasecmp(cmp[m].medium.c_str(), "period") )
     {
-      // 媒質ラベルからmat[]の格納番号のサーチ
-      for (int i=1; i<=NoMedium; i++)
-      {
-        if ( !strcasecmp( cmp[m].medium.c_str(), mat[i].alias.c_str()) )
-        {
-          odr = i;
-          break;
-        }
-      }
-      
-      if ( (odr < 1) || (odr > NoMedium) )
-      {
-        Hostonly_ stamped_printf("\tSomthing wrong %d\n", odr);
-        Exit(0);
-      }
-      
       // LocalBC分の媒質情報のコピー
       if ( mat[odr].getState() == FLUID )
       {

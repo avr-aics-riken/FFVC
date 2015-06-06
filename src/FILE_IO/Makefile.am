@@ -18,11 +18,11 @@ noinst_lib_LIBRARIES = libFIO.a
 noinst_libdir = ../lib
 
 libFIO_a_CXXFLAGS = \
-  -I. \
-  -I../FB \
-  -I../F_CORE \
-  -I../F_LS \
-  -I../FFV \
+  -I$(top_srcdir)/src/FILE_IO \
+  -I$(top_srcdir)/src/FB \
+  -I$(top_srcdir)/src/F_CORE \
+  -I$(top_srcdir)/src/F_LS \
+  -I$(top_srcdir)/src/FFV \
   @CDM_CFLAGS@ \
   @CPM_CFLAGS@ \
   @PL_CFLAGS@ \

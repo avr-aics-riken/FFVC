@@ -93,7 +93,7 @@ public:
     for (int i=0; i<2; i++) dm[i]=0.0;
   }
   
-  /**　デストラクタ */
+  /** デストラクタ */
   ~BoundaryOuter() {}
   
   

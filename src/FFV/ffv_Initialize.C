@@ -817,7 +817,7 @@ void FFV::createTable(FILE* fp)
   
   
   // ポリゴンモデルの場合の局所境界条件数のチェック
-  if ( (C.Mode.Example == id_Polygon) && (C.NoBC == 0) )
+  if ( C.Mode.Example == id_Polygon  &&  C.NoBC == 0 )
   {
     Hostonly_{
       printf("Error : In case of using polygon model, at least one local boundary condition is required.\n");
@@ -2229,7 +2229,7 @@ void FFV::setBCinfo()
   B.setRefMediumProperty(C.RefDensity, C.RefSpecificHeat);
   
   
-  // 演算用のパラメータ配列にコピーし，無次元化　Fortranからアクセスできるように一次元配列
+  // 演算用のパラメータ配列にコピーし，無次元化、Fortranからアクセスできるように一次元配列
   REAL_TYPE lmd0 = C.RefDensity * C.RefSpecificHeat * C.RefVelocity * C.RefLength;
   
   for (int n=1; n<=C.NoCompo; n++)

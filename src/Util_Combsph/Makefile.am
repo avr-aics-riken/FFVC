@@ -16,8 +16,8 @@
 bin_PROGRAMS = combsph
 
 combsph_CXXFLAGS = \
-  -I. \
-  -I../FB \
+  -I$(top_srcdir)/Util_Combsph \
+  -I$(top_srcdir)/src/FB \
   @CDM_CFLAGS@ \
   @CPM_CFLAGS@ \
   @PM_CFLAGS@ \

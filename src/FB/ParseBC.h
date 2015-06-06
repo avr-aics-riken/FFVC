@@ -78,7 +78,7 @@ public:
     BaseBc = NULL;
   }
   
-  /**　デストラクタ */
+  /** デストラクタ */
   ~ParseBC() {
     if (BaseBc) delete [] BaseBc;
   }

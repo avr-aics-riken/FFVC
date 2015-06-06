@@ -19,6 +19,12 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-06-06
+r1606 introduce BUILD_DIR to keep source directory clean
+- Change to run configure
+- Change configure.ac
+
+--------------------------
 2015-06-04
 r1605 check fill algo.
 - ducky, cavity, BMW_M3, nasal(0.2, 0.4mm)

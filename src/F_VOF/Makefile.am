@@ -16,8 +16,8 @@
 lib_LIBRARIES = libFCORE.a
 
 libFCORE_a_FCFLAGS = \
-  -I. \
-  -I../FB \
+  -I$(top_srcdir)/src/F_VOF \
+  -I$(top_srcdir)/src/FB \
   @MPICH_CFLAGS@ \
   @FREALOPT@ 
 

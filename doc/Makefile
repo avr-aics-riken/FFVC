@@ -29,7 +29,7 @@
 #
 ###################################################################################
 
-
+VPATH = ../../doc
 am__is_gnu_make = { \
   if test -z '$(MAKELEVEL)'; then \
     false; \
@@ -181,12 +181,12 @@ ETAGS = etags
 CTAGS = ctags
 am__DIST_COMMON = $(srcdir)/Makefile.in
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = aclocal-1.15
+ACLOCAL = ${SHELL} /Daily/Development/SphDev/Module/FFVC/FFVC-2.1.7/config/missing aclocal-1.15
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 1
-AUTOCONF = autoconf
-AUTOHEADER = autoheader
-AUTOMAKE = automake-1.15
+AUTOCONF = ${SHELL} /Daily/Development/SphDev/Module/FFVC/FFVC-2.1.7/config/missing autoconf
+AUTOHEADER = ${SHELL} /Daily/Development/SphDev/Module/FFVC/FFVC-2.1.7/config/missing autoheader
+AUTOMAKE = ${SHELL} /Daily/Development/SphDev/Module/FFVC/FFVC-2.1.7/config/missing automake-1.15
 AWK = awk
 CC = mpicc
 CCDEPMODE = depmode=gcc3
@@ -219,7 +219,7 @@ FFVC_FC = mpif90
 FFVC_FC_LD = 
 FFVC_LDFLAGS = 
 FFVC_LIBS =  -lstdc++ -lifcore
-FFVC_REVISION = 20150604_1800
+FFVC_REVISION = 20150606_1600
 FREALOPT = 
 GREP = /usr/bin/grep
 INSTALL = /usr/local/bin/ginstall -c
@@ -231,7 +231,7 @@ LDFLAGS =
 LIBOBJS = 
 LIBS = 
 LTLIBOBJS = 
-MAKEINFO = makeinfo
+MAKEINFO = ${SHELL} /Daily/Development/SphDev/Module/FFVC/FFVC-2.1.7/config/missing makeinfo
 MAKE_SUB_DIRS = src/IP src/FB src/F_CORE src/F_LS src/FILE_IO src/ASD src/Geometry src/FFV src src/Util_Combsph doc
 MKDIR_P = /usr/local/bin/gmkdir -p
 MPICH_CFLAGS = 
@@ -243,10 +243,10 @@ OBJEXT = o
 PACKAGE = FFVC
 PACKAGE_BUGREPORT = keno@riken.jp
 PACKAGE_NAME = FFVC
-PACKAGE_STRING = FFVC 2.1.7
+PACKAGE_STRING = FFVC 2.1.8
 PACKAGE_TARNAME = FFVC
 PACKAGE_URL = 
-PACKAGE_VERSION = 2.1.7
+PACKAGE_VERSION = 2.1.8
 PATH_SEPARATOR = :
 PL_CFLAGS = -I/usr/local/FFV/Polylib/include -I/usr/local/FFV/Polylib/include/common
 PL_DIR = /usr/local/FFV/Polylib
@@ -262,11 +262,11 @@ STRIP =
 TP_CFLAGS = -I/usr/local/FFV/TextParser/include
 TP_DIR = /usr/local/FFV/TextParser
 TP_LDFLAGS = -L/usr/local/FFV/TextParser/lib -lTPmpi
-VERSION = 2.1.7
-abs_builddir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.1.7/doc
-abs_srcdir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.1.7/doc
-abs_top_builddir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.1.7
-abs_top_srcdir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.1.7
+VERSION = 2.1.8
+abs_builddir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.1.7/BUILD_DIR/doc
+abs_srcdir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.1.7/BUILD_DIR/../doc
+abs_top_builddir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.1.7/BUILD_DIR
+abs_top_srcdir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.1.7/BUILD_DIR/..
 ac_ct_CC = mpicc
 ac_ct_CXX = 
 ac_ct_F77 = ifort
@@ -288,7 +288,7 @@ host_alias =
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /Daily/Development/SphDev/Module/FFVC/FFVC-2.1.7/install-sh
+install_sh = ${SHELL} /Daily/Development/SphDev/Module/FFVC/FFVC-2.1.7/config/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -302,12 +302,12 @@ program_transform_name = s,x,x,
 psdir = ${docdir}
 sbindir = ${exec_prefix}/sbin
 sharedstatedir = ${prefix}/com
-srcdir = .
+srcdir = ../../doc
 sysconfdir = ${prefix}/etc
 target_alias = 
 top_build_prefix = ../
 top_builddir = ..
-top_srcdir = ..
+top_srcdir = ../..
 doc_includedir = $(prefix)/doc
 doc_include_HEADERS = \
     $(top_builddir)/doc/ffvc_ug.pdf \

@@ -18,8 +18,8 @@ noinst_lib_LIBRARIES = libGEOM.a
 noinst_libdir = ../lib
 
 libGEOM_a_CXXFLAGS = \
-  -I. \
-  -I../FB \
+  -I$(top_srcdir)/src/Geometry \
+  -I$(top_srcdir)/src/FB \
   @CPM_CFLAGS@ \
   @PL_CFLAGS@ \
   @TP_CFLAGS@ \

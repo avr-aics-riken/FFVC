@@ -1413,7 +1413,7 @@ unsigned long Geometry::fillByModalSolid(int* bcd,
         // 対象セルが未ペイントの場合
         if ( dd == 0 )
         {
-          int sd = FBUtility::find_mode_id(qw, qe, qs, qn, qb, qt, m_NoCompo);
+          int sd = FBUtility::find_mode_id(cmp, qw, qe, qs, qn, qb, qt, m_NoCompo);
           int key = sd;
           
           // 周囲の媒質IDの固体最頻値がゼロの場合
@@ -1426,7 +1426,7 @@ unsigned long Geometry::fillByModalSolid(int* bcd,
             qn = getBit5(qq, 3);
             qb = getBit5(qq, 4);
             qt = getBit5(qq, 5);
-            sd = FBUtility::find_mode_id(qw, qe, qs, qn, qb, qt, m_NoCompo);
+            sd = FBUtility::find_mode_id(cmp, qw, qe, qs, qn, qb, qt, m_NoCompo);
             if ( sd == 0 ) Exit(0); // 何かあるはず
             
             // 交点IDの媒質番号を得る
@@ -1517,10 +1517,12 @@ unsigned long Geometry::fillFluidRegion(int* mid, const int* bcd)
  * @param [in,out] mid       識別子配列
  * @param [in]     fluid_id  フィルをする流体ID
  * @param [in]     m_NoCompo コンポーネント数
+ * @param [in]     cmp
  * @retval 置換されたセル数
  */
 unsigned long Geometry::fillSubCellByModalSolid(int* smd,
                                                 const int m_NoCompo,
+                                                const CompoList* cmp,
                                                 REAL_TYPE* svf,
                                                 const MediumList* mat)
 {
@@ -1555,7 +1557,7 @@ unsigned long Geometry::fillSubCellByModalSolid(int* smd,
         // 対象セルが未ペイントの場合
         if ( dd == -1 )
         {
-          int sd = FBUtility::find_mode_id(fid, qw, qe, qs, qn, qb, qt, m_NoCompo);
+          int sd = FBUtility::find_mode_id(cmp, qw, qe, qs, qn, qb, qt, m_NoCompo);
           
           // 周囲の媒質IDの固体最頻値がゼロの場合
           if ( sd == 0 ) Exit(0); // 何かあるはず
@@ -3789,7 +3791,8 @@ void Geometry::SubDivision(REAL_TYPE* svf,
                            int* d_mid,
                            const MediumList* mat,
                            REAL_TYPE* d_pvf,
-                           const int m_NoCompo)
+                           const int m_NoCompo,
+                           const CompoList* cmp)
 {
   // 外縁部にポリゴンがない面を探す
   int face_flag = 0;
@@ -4152,7 +4155,7 @@ void Geometry::SubDivision(REAL_TYPE* svf,
     while (target_count > 0) {
       
       // 未ペイントで隣接セルがrefIDの場合、refID, refVfを代入
-      filled = fillSubCellByModalSolid(smd, m_NoCompo, svf, mat);
+      filled = fillSubCellByModalSolid(smd, m_NoCompo, cmp, svf, mat);
       
       target_count -= filled;
       c++;
@@ -4223,7 +4226,8 @@ void Geometry::SubSampling(FILE* fp,
                            int* d_mid,
                            REAL_TYPE* d_pvf,
                            MPIPolylib* PL,
-                           const int m_NoCompo)
+                           const int m_NoCompo,
+                           const CompoList* cmp)
 {
   unsigned long target_count = 0; ///< フィルの対象となるセル数
   unsigned long replaced = 0;     ///< 置換された数
@@ -4342,7 +4346,7 @@ void Geometry::SubSampling(FILE* fp,
             }
           } // Polygon Group
           
-          SubDivision(svf, smd, i, j, k, d_mid, mat, d_pvf, m_NoCompo);
+          SubDivision(svf, smd, i, j, k, d_mid, mat, d_pvf, m_NoCompo, cmp);
           
           delete pg_roots;
         }

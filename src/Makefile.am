@@ -16,15 +16,15 @@
 bin_PROGRAMS = ffvc
 
 ffvc_CXXFLAGS = \
-  -I. \
-  -I./FFV \
-  -I./F_CORE \
-  -I./F_LS \
-  -I./FILE_IO \
-  -I./ASD \
-  -I./IP \
-  -I./FB \
-  -I./Geometry \
+  -I$(top_srcdir)/src \
+  -I$(top_srcdir)/src/FFV \
+  -I$(top_srcdir)/src/F_CORE \
+  -I$(top_srcdir)/src/F_LS \
+  -I$(top_srcdir)/src/FILE_IO \
+  -I$(top_srcdir)/src/ASD \
+  -I$(top_srcdir)/src/IP \
+  -I$(top_srcdir)/src/FB \
+  -I$(top_srcdir)/src/Geometry \
   @CDM_CFLAGS@ \
   @CPM_CFLAGS@ \
   @PL_CFLAGS@ \

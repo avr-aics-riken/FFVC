@@ -19,13 +19,13 @@ noinst_libdir = ../lib
 
 
 libFFV_a_CXXFLAGS = \
-  -I. \
-  -I../F_CORE \
-  -I../F_LS \
-  -I../IP \
-  -I../FB \
-  -I../Geometry \
-  -I../FILE_IO \
+  -I$(top_srcdir)/src/FFV \
+  -I$(top_srcdir)/src/F_CORE \
+  -I$(top_srcdir)/src/F_LS \
+  -I$(top_srcdir)/src/IP \
+  -I$(top_srcdir)/src/FB \
+  -I$(top_srcdir)/src/Geometry \
+  -I$(top_srcdir)/src/FILE_IO \
   @CDM_CFLAGS@ \
   @CPM_CFLAGS@ \
   @PL_CFLAGS@ \
