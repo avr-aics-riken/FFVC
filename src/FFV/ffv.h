@@ -404,7 +404,7 @@ private:
   
   
   // パラメータのロードと計算領域を初期化し，並列モードを返す
-  string SetDomain(TextParser* tpf);
+  string setDomain(TextParser* tpf);
   
   
   // グローバルな領域情報を取得し、無次元の領域基本パラメータを返す
@@ -416,7 +416,7 @@ private:
   
   
   // 各種例題のモデルをセットアップ
-  void SetModel(double& PrepMemory, double& TotalMemory, FILE* fp);
+  void setModel(double& PrepMemory, double& TotalMemory, FILE* fp);
   
   
   // 幾何形状情報を準備し，交点計算を行う

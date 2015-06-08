@@ -157,10 +157,11 @@ private:
   
   
   // 未ペイントセルを周囲のbidの固体最頻値でフィル
-  unsigned long fillByModalSolid(int* bcd,
-                                 const int* bid,
-                                 const int m_NoCompo,
-                                 const CompoList* cmp);
+  bool fillByModalSolid(int* bcd,
+                        const int* bid,
+                        const int m_NoCompo,
+                        const CompoList* cmp,
+                        unsigned long& replaced);
   
   
   // bid情報を元にフラッドフィル
@@ -197,7 +198,7 @@ private:
   
   
   // ペイント対象のセルを含むbboxを探す
-  unsigned long findBboxforSeeding(int* mid, int* bbox, const int* Dsize=NULL);
+  unsigned long findBboxforSeeding(const int* mid, int* bbox, const int* Dsize=NULL);
   
   
   // 点pの属するセルインデクスを求める
@@ -237,23 +238,13 @@ private:
                                   const int m_NoCompo);
   
   
-  // 固体領域をペイントするシードセルを探す
-  int findSeedCells(int* mid,
-                    const int* bbox,
-                    const int counter,
-                    const int* Dsize=NULL);
-  
-  
-
-  
-  
   // 連結領域を同定する
-  bool identifyConnectRegion(int* mid,
-                             const int* bcd,
-                             const int* bid,
-                             const unsigned long paintable,
-                             const unsigned long filled_fluid,
-                             const int* Dsize=NULL);
+  bool identifyConnectedRegion(int* mid,
+                               const int* bcd,
+                               const int* bid,
+                               const unsigned long paintable,
+                               const unsigned long filled_fluid,
+                               const int* Dsize=NULL);
   
   
   // 各ラベルの接続リストを作成
@@ -286,11 +277,13 @@ private:
                                     const CompoList* cmp);
   
   
-  // 探査しながらペイント
-  unsigned long searchPaint(int* mid,
-                            const int* bbox,
-                            const int* bid,
-                            const int* Dsize=NULL);
+  // シードセルを探し、ペイント
+  void searchPaint(int* mid,
+                   const int* bbox,
+                   const int* bid,
+                   const int counter,
+                   unsigned long& target,
+                   const int* Dsize=NULL);
   
   
   /**

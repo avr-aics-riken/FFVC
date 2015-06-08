@@ -411,6 +411,8 @@ public:
                    const REAL_TYPE* ddx,
                    const int m_ModePrecision);
   
+  void writeRawSPH(const int *array);
+  
   
   /**
    * @brief 例題のモデルをsvxフォーマットで出力する(ID)

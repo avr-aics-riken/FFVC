@@ -1908,7 +1908,7 @@ void ParseBC::loadBCs(Control* C, MediumList* mat, CompoList* cmp)
   label_base = "/BcTable/Boundary";
   
   
-  /* ラベルの重複チェックと外部境界候補名のセット
+  // ラベルの重複チェックと外部境界候補名のセット
   vector<string> nodes;
   
   // 直下のラベルを取得
@@ -1929,7 +1929,7 @@ void ParseBC::loadBCs(Control* C, MediumList* mat, CompoList* cmp)
     }
     m++;
   }
-  */
+  
   
   int odr_outer = 0; // 外部境界条件の格納番号
   
@@ -2197,7 +2197,7 @@ void ParseBC::loadBCs(Control* C, MediumList* mat, CompoList* cmp)
     // 周期境界のときにはスキップ
     if ( strcasecmp(cmp[m].medium.c_str(), "period") )
     {
-      // LocalBC分の媒質情報のコピー
+      // 媒質情報のコピー
       if ( mat[odr].getState() == FLUID )
       {
         mat[m].P[p_density]              = mat[odr].P[p_density];

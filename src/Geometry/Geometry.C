@@ -277,6 +277,13 @@ void Geometry::assureUniqueLabel(vector<int> tbl, int* mid, const int* Dsize)
     if ( wrk ) delete [] wrk; wrk=NULL;
     
     
+    // SYNC
+    if ( numProc > 1 )
+    {
+      if ( paraMngr->BndCommS3D(mid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    
     
     // ラベルのアップデート
     vector<int> v;
@@ -744,16 +751,11 @@ bool Geometry::fill(FILE* fp,
   
   // FLUIDでフィル ---------------------
   if ( !fill_connected(fp, d_bcd, d_bid, mat, m_NoMedium, FLUID, target_count) ) return false;
-  
-  
+
+  // 対象セルがなければ終了
   if ( target_count == 0 ) return true;
   
   
-  // 連結領域の同定 --------------------
-  if ( !identifyConnectRegion(d_mid, d_bcd, d_bid, target_count, total_cell-target_count) ) {
-    mark();
-    return false;
-  }
   
   
   // 交点IDをもつd_bcd[]の未ペイントのセルを、最頻値交点IDの媒質でペイントする -------------------
@@ -792,13 +794,30 @@ bool Geometry::fill(FILE* fp,
     fprintf(fp, "\tUnpainted cells after fillByModalCutID() = %ld\n", upc);
   }
   
+  fflush(fp);
   if ( upc == 0 ) return true;
   
   
   // SOLIDでフィル
-  //if ( !fill_connected(fp, d_bcd, d_bid, mat, m_NoMedium, SOLID, target_count) ) return false;
+  if ( !fill_connected(fp, d_bcd, d_bid, mat, m_NoMedium, SOLID, target_count) ) return false;
   
-  fillByModalSolid(d_bcd, d_bid, m_NoCompo, cmp);
+  
+  if ( !fillByModalSolid(d_bcd, d_bid, m_NoCompo, cmp, tmp) )
+  {
+    Hostonly_
+    {
+      fprintf(fp, "\tFailed to perform fillByModalSolid()\n");
+      fflush(fp);
+      return false;
+    }
+  }
+  
+  
+  // 連結領域の同定 --------------------
+  //if ( !identifyConnectedRegion(d_mid, d_bcd, d_bid, target_count, total_cell-target_count) ) {
+  //  return false;
+  //}
+  
   
   // 未ペイント(ID=0)をカウント
   upc = countCellB(d_bcd, 0);
@@ -1351,7 +1370,7 @@ bool Geometry::fillByModalCutID(int* bcd,
     }
   }
   
-  if ( flag == 1 ) return false;
+  
   
   
   if ( numProc > 1 )
@@ -1361,6 +1380,8 @@ bool Geometry::fillByModalCutID(int* bcd,
   }
   
   replaced = c;
+  
+  if ( flag == 1 ) return false;
   
   return true;
 }
@@ -1372,22 +1393,26 @@ bool Geometry::fillByModalCutID(int* bcd,
  * @param [in]     bid       境界ID
  * @param [in]     m_NoCompo コンポーネント数
  * @param [in]     cmp       CompoList
- * @retval 置換されたセル数
+ * @param [out]    replaced  置換されたセル数
+ * @retval true -> success
  * @note 周囲の媒質IDの固体最頻値がゼロの場合には，境界IDで代用
  */
-unsigned long Geometry::fillByModalSolid(int* bcd,
-                                         const int* bid,
-                                         const int m_NoCompo,
-                                         const CompoList* cmp)
+bool Geometry::fillByModalSolid(int* bcd,
+                                const int* bid,
+                                const int m_NoCompo,
+                                const CompoList* cmp,
+                                unsigned long& replaced)
 {
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
   
+  int flag = -1;
+  
   unsigned long c = 0; /// painted count
   
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) shared(flag) schedule(static) reduction(+:c)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -1427,14 +1452,19 @@ unsigned long Geometry::fillByModalSolid(int* bcd,
             qb = getBit5(qq, 4);
             qt = getBit5(qq, 5);
             sd = FBUtility::find_mode_id(cmp, qw, qe, qs, qn, qb, qt, m_NoCompo);
-            if ( sd == 0 ) Exit(0); // 何かあるはず
-            
-            // 交点IDの媒質番号を得る
-            key = cmp[sd].getMatodr();
-            if ( key == 0 )
+            if ( sd == 0 )
             {
-              //printf("sd=%2d key=%2d : %2d %2d %2d %2d %2d %2d\n", sd, key, qw, qe, qs, qn, qb, qt);
-              Exit(0);
+              flag = 1;
+            }
+            else
+            {
+              // 交点IDの媒質番号を得る
+              key = cmp[sd].getMatodr();
+              if ( key == 0 )
+              {
+                printf("rank=%d : sd=%2d key=%2d : %2d %2d %2d %2d %2d %2d\n", myRank, sd, key, qw, qe, qs, qn, qb, qt);
+                flag = 1;
+              }
             }
           }
 
@@ -1445,13 +1475,18 @@ unsigned long Geometry::fillByModalSolid(int* bcd,
     }
   }
   
+  
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
     if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
   
-  return c;
+  replaced = c;
+  
+  if ( flag == 1 ) return false;
+  
+  return true;
 }
 
 
@@ -1506,7 +1541,10 @@ unsigned long Geometry::fillFluidRegion(int* mid, const int* bcd)
   {
     unsigned long c_tmp = c;
     if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    
+    if ( paraMngr->BndCommS3D(mid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
   }
+
   
   return c;
 }
@@ -2014,7 +2052,7 @@ unsigned long Geometry::fillSeedMid(int* mid, const int face, const int target, 
  * @retval 対象セル数
  * @note 各ランクで逐次実行
  */
-unsigned long Geometry::findBboxforSeeding(int* mid, int* bbox, const int* Dsize)
+unsigned long Geometry::findBboxforSeeding(const int* mid, int* bbox, const int* Dsize)
 {
   int ix, jx, kx, gd;
   
@@ -2055,6 +2093,13 @@ unsigned long Geometry::findBboxforSeeding(int* mid, int* bbox, const int* Dsize
         
       }
     }
+  }
+  
+  
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = c;
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
   
   return c;
@@ -2252,75 +2297,6 @@ unsigned long Geometry::findPolygonInCell(int* d_mid, MPIPolylib* PL, PolygonPro
   
   // count the number of replaced cells >> except ID=-1
   c = countCellM(d_mid, -1, false);
-  
-  return c;
-}
-
-
-// #################################################################
-/**
- * @brief ペイントするシードセルを探す
- * @param [in,out] mid      work array
- * @param [in]     bbox     探索範囲
- * @param [in]     counter  リピート数
- * @param [in]     Dsize    サイズ
- * @retval シードがあれば1
- * @note ローカルノードに対するスレッド処理
- */
-int Geometry::findSeedCells(int* mid,
-                            const int* bbox,
-                            const int counter,
-                            const int* Dsize)
-{
-  int ix, jx, kx, gd;
-  
-  if ( !Dsize )
-  {
-    ix = size[0];
-    jx = size[1];
-    kx = size[2];
-    gd = guide;
-  }
-  else // ASD module用
-  {
-    ix = Dsize[0];
-    jx = Dsize[1];
-    kx = Dsize[2];
-    gd = 1;
-  }
-  
-  int ist = bbox[0];
-  int ied = bbox[1];
-  int jst = bbox[2];
-  int jed = bbox[3];
-  int kst = bbox[4];
-  int ked = bbox[5];
-  
-  // 最大スレッド数 * リピート数(counter=0~)で基点をつくる
-  int mt = omp_get_max_threads() * counter;
-  
-  int flag = 0;
-  int c = 0;
-  
-#pragma omp parallel for schedule(static) reduction(+:c) \
-firstprivate(ix, jx, kx, gd, mt, ist, ied, jst, jed, kst, ked, flag)
-  for (int k=kst; k<=ked; k++) {
-    for (int j=jst; j<=jed; j++) {
-      for (int i=ist; i<=ied; i++) {
-        
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        
-        // 未ペイントセルの場合
-        if ( mid[m]==0 && flag==0 )
-        {
-          mid[m] = mt + omp_get_thread_num() + 1;
-          flag = 1;
-          c++;
-        }
-        
-      }
-    }
-  }
   
   return c;
 }
@@ -2524,12 +2500,12 @@ void Geometry::getFillParam(TextParser* tpCntl,
  * @param [in] filled_fluid 流体でペイント済みの数
  * @param [in] Dsize        配列サイズ
  */
-bool Geometry::identifyConnectRegion(int* mid,
-                                     const int* bcd,
-                                     const int* bid,
-                                     const unsigned long paintable,
-                                     const unsigned long filled_fluid,
-                                     const int* Dsize)
+bool Geometry::identifyConnectedRegion(int* mid,
+                                       const int* bcd,
+                                       const int* bid,
+                                       const unsigned long paintable,
+                                       const unsigned long filled_fluid,
+                                       const int* Dsize)
 {
   int ix, jx, kx, gd;
   
@@ -2561,6 +2537,7 @@ bool Geometry::identifyConnectRegion(int* mid,
 
   
   // シード点Bbox
+  // searchPaint()で対象範囲をスレッドで分割するため、bboxを使い効率的に処理する
   int bbox[6];
   bbox[0] = INT_MAX; // x-
   bbox[1] = INT_MIN; // x+
@@ -2569,26 +2546,24 @@ bool Geometry::identifyConnectRegion(int* mid,
   bbox[4] = INT_MAX; // z-
   bbox[5] = INT_MIN; // z+
   
-  // 各ランク毎のempty cellの数
-  unsigned long nc = findBboxforSeeding(mid, bbox);
   
-  //fprintf(stderr, "empty cell in rank [%6d] = %10ld : range = (%d - %d, %d - %d, %d - %d)\n",
-  //       myRank, nc, bbox[0], bbox[1], bbox[2], bbox[3], bbox[4], bbox[5]);
+  // 各ランク毎のempty cellの全プロセスの総数
+  unsigned long nc_global = findBboxforSeeding(mid, bbox);
+  
+  if ( nc_global != paintable ) {
+    fprintf(stderr,"\tThe number of cells to be processed does not agree : paintable=%ld nc_global=%ld\n",
+            paintable, nc_global);
+    return false;
+  }
+  
   
   
   int counter = 0;
 
-  while ( nc > 0 )
+  while ( nc_global > 0 )
   {
-    // 未ペイントセルをペイントするユニークラベルを割り振る
-    int unique_id = (unsigned long)findSeedCells(mid, bbox, counter);
-    
-    nc -= unique_id;
-    
-    // 未ペイントセルをユニークラベルでペイントする
-    nc -= searchPaint(mid, bbox, bid);
-    
-    // fprintf(stderr, "\tIteration=%3d / Empty cell=%16ld / unique_id = %d\n", counter+1, nc, unique_id);
+    // 未ペイントセルをペイントするユニークラベルを割り振り、フィルする
+    searchPaint(mid, bbox, bid, counter, nc_global);
     
     counter++;
     
@@ -2602,7 +2577,13 @@ bool Geometry::identifyConnectRegion(int* mid,
   // この時点で、d_mid[]は全て非ゼロの値が入る。
   // 流体部分は-1、それ以外がunique_id
   // unique_idは各ランクでユニークであるが、全プロセスではユニークになっていない
-  
+  unsigned long tmp = countCellM(mid, 0);
+  if ( tmp > 0 )
+  {
+    Hostonly_ printf("Array mid[] contains zero elements %d\n", tmp);
+    return false;
+  }
+
   
   // 各ランクのラベル保持コンテナ
   vector<int> labelTable;
@@ -2611,11 +2592,7 @@ bool Geometry::identifyConnectRegion(int* mid,
   {
     // 各ランクのラベルをユニークに定める
     assureUniqueLabel(labelTable, mid);
-    
-    if ( numProc > 1 )
-    {
-      if ( paraMngr->BndCommS3D(mid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
-    }
+
     
     // 接続リスト
     vector< vector<int> > cnnctTable;
@@ -2636,13 +2613,15 @@ bool Geometry::identifyConnectRegion(int* mid,
       const int lst_min = (myl > tmp) ? tmp : myl; // 最小値
       
       paintConnectedLabel(mid, cnnctTable[l], lst_min);
-      
-      if ( numProc > 1 )
-      {
-        if ( paraMngr->BndCommS3D(mid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
-      }
     }
     
+  }
+  
+  tmp = countCellM(mid, 0);
+  if ( tmp > 0 )
+  {
+    Hostonly_ printf("Array mid[] contains zero elements %d\n", tmp);
+    return false;
   }
   
   
@@ -3091,6 +3070,12 @@ void Geometry::paintConnectedLabel(int* mid, const vector<int>& label, const int
   }
   
   if ( lbl ) delete [] lbl; lbl = NULL;
+  
+  // SYNC
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->BndCommS3D(mid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+  }
 }
 
 
@@ -3339,15 +3324,20 @@ unsigned long Geometry::replaceIsolatedCell(int* bcd,
 
 
 // #################################################################
-/* @brief 未ペイントセルをシードフィル
- * @param [in,out] mid    識別子配列
- * @param [in]     bbox   対象領域
- * @param [in]     bid    交点ID
- * @param [in]     Dsize  サイズ
- * @retval 置換されたセル数
- * @note findSeedCells()と同じスレッド処理を行うこと
+/* @brief 未ペイントセルのシードを探し、フィルする
+ * @param [in,out] mid      識別子配列
+ * @param [in]     bbox     対象領域
+ * @param [in]     bid      交点ID
+ * @param [in]     counter  リピート数
+ * @param [in,out] target   ペイントするセル数（計算領域全体）
+ * @param [in]     Dsize    サイズ
  */
-unsigned long Geometry::searchPaint(int* mid, const int* bbox, const int* bid, const int* Dsize)
+void Geometry::searchPaint(int* mid,
+                           const int* bbox,
+                           const int* bid,
+                           const int counter,
+                           unsigned long& target,
+                           const int* Dsize)
 {
   int ix, jx, kx, gd;
   
@@ -3366,16 +3356,58 @@ unsigned long Geometry::searchPaint(int* mid, const int* bbox, const int* bid, c
     gd = 1;
   }
   
-  int ist = bbox[0];
-  int ied = bbox[1];
-  int jst = bbox[2];
-  int jed = bbox[3];
-  int kst = bbox[4];
-  int ked = bbox[5];
+  int ist = 1;  //bbox[0];
+  int ied = ix; //bbox[1];
+  int jst = 1;  //bbox[2];
+  int jed = jx; //bbox[3];
+  int kst = 1;  //bbox[4];
+  int ked = kx; //bbox[5];
+  
+  
+  // シードセルを蒔く
+  
+  // 最大スレッド数 * リピート数(counter=0~)で基点をつくる
+  int mt = omp_get_max_threads() * counter;
   
   unsigned long c = 0;
+  int flag = 0;
   
-#pragma omp parallel for schedule(static) reduction(+:c)\
+#pragma omp parallel for schedule(static) reduction(+:c) \
+firstprivate(ix, jx, kx, gd, mt, ist, ied, jst, jed, kst, ked, flag)
+  for (int k=kst; k<=ked; k++) {
+    for (int j=jst; j<=jed; j++) {
+      for (int i=ist; i<=ied; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        
+        // 未ペイントセルで各スレッドひとつだけ
+        if ( mid[m]==0 && flag==0 )
+        {
+          mid[m] = mt + omp_get_thread_num() + 1; // mt > 1
+          flag = 1;
+          c++;
+        }
+        
+      }
+    }
+  }
+  
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = c;
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    
+    if ( paraMngr->BndCommS3D(mid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  target -= c;
+  
+  
+  // シードセルからフィル
+  
+  c = 0;
+  
+#pragma omp parallel for schedule(static) reduction(+:c) \
             firstprivate(ix, jx, kx, gd, ist, ied, jst, jed, kst, ked)
   for (int k=kst; k<=ked; k++) {
     for (int j=jst; j<=jed; j++) {
@@ -3438,7 +3470,18 @@ unsigned long Geometry::searchPaint(int* mid, const int* bbox, const int* bid, c
     }
   }
   
-  return c;
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = c;
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    
+    if ( paraMngr->BndCommS3D(mid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  target -= c;
+  
+  Hostonly_ printf("Rank=%d itr=%4d uid=%d nc_global=%d\n", myRank, counter, c, target);
+  
 }
 
 

@@ -478,7 +478,7 @@ int FFV::FilterInitialize(int argc, char **argv)
   
   
   // パラメータの取得と計算領域の初期化，並列モードを返す
-  std::string str_para = SetDomain(&tp_ffv);
+  std::string str_para = setDomain(&tp_ffv);
   
   
   // mat[], cmp[]の作成
@@ -526,7 +526,7 @@ int FFV::FilterInitialize(int argc, char **argv)
   
   // 各問題に応じてモデルを設定 >> Polylib
   // 外部境界面およびガイドセルのカットとIDの処理
-  SetModel(PrepMemory, TotalMemory, fp);
+  setModel(PrepMemory, TotalMemory, fp);
   
   
   

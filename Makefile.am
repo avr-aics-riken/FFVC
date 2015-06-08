@@ -16,7 +16,7 @@
 
 SUBDIRS = @MAKE_SUB_DIRS@
 
-EXTRA_DIST     = LICENSE Makefile_hand doc doxygen examples src/F_VOF
+EXTRA_DIST     = LICENSE Makefile_hand doc doxygen examples src/F_VOF BUILD_DIR/.gitkeep
 dist_data_DATA = AUTHORS COPYING ChangeLog README LICENSE
 
 clean-local:

@@ -19,6 +19,11 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-06-08
+r1607 improve fill() algorithm
+- This fill algorithm can successfully generate a voxel model for Nasal2015 case.
+
+--------------------------
 2015-06-06
 r1606 introduce BUILD_DIR to keep source directory clean
 - Change to run configure

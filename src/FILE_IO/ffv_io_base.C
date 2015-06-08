@@ -1191,6 +1191,131 @@ void IO_BASE::writeRawSPH(const REAL_TYPE *vf,
 }
 
 
+// #################################################################
+// sphファイルの書き出し（内部領域のみ）
+void IO_BASE::writeRawSPH(const int *array)
+{
+  int pad, dType, stp, svType;
+  float ox, oy, oz, dx, dy, dz, tm;
+  long long szl[3], stpl;
+  
+  
+  char sph_fname[512];
+  
+  if ( paraMngr->IsParallel() )
+  {
+    sprintf( sph_fname, "field%010d.sph", paraMngr->GetMyRankID() );
+  }
+  else
+  {
+    sprintf( sph_fname, "field.sph" );
+  }
+  
+  ofstream ofs(sph_fname, ios::out | ios::binary);
+  if (!ofs)
+  {
+    printf("\tCan't open %s file\n", sph_fname);
+    Exit(0);
+  }
+  
+  // 出力ガイドセル数
+  int gc_out = 1;
+  
+  int imax = size[0];
+  int jmax = size[1];
+  int kmax = size[2];
+  int ix = size[0]+gc_out*2;
+  int jx = size[1]+gc_out*2;
+  int kx = size[2]+gc_out*2;
+  int gd = guide;
+  
+  size_t nx = ix * jx * kx;
+  
+  dx = (float)pitch[0]*C->RefLength;
+  dy = (float)pitch[1]*C->RefLength;
+  dz = (float)pitch[2]*C->RefLength;
+  ox = (float)origin[0]*C->RefLength - dx*gc_out; // シフト
+  oy = (float)origin[1]*C->RefLength - dy*gc_out;
+  oz = (float)origin[2]*C->RefLength - dz*gc_out;
+  
+  //printf("org: %f %f %f\n", ox, oy, oz);
+  //printf("dx : %f %f %f\n", dx, dy, dz);
+  
+  svType = kind_scalar;
+  
+  float *f = new float[nx];
+  
+  size_t m, l;
+  
+#pragma omp parallel for firstprivate(imax, jmax, kmax, gd, ix, jx) schedule(static)
+  for (int k=0; k<=(kmax+1); k++) {
+    for (int j=0; j<=(jmax+1); j++) {
+      for (int i=0; i<=(imax+1); i++) {
+        size_t l = (size_t)(ix*jx*k + ix*j + i);
+        size_t m = _F_IDX_S3D(i, j, k, imax, jmax, kmax, gd);
+        f[l] = array[m];
+      }
+    }
+  }
+  
+
+  
+  // data property
+  dType=1;
+  pad = sizeof(int)*2;
+  ofs.write( (char*)&pad, sizeof(int) );
+  ofs.write( (char*)&svType, sizeof(int) );
+  ofs.write( (char*)&dType, sizeof(int) );
+  ofs.write( (char*)&pad, sizeof(int) );
+  
+  // voxel size
+  pad = sizeof(int)*3;
+  ofs.write( (char*)&pad, sizeof(int) );
+  ofs.write( (char*)&ix, sizeof(int) );
+  ofs.write( (char*)&jx, sizeof(int) );
+  ofs.write( (char*)&kx, sizeof(int) );
+  ofs.write( (char*)&pad, sizeof(int) );
+
+  
+  // original point of domain
+    pad = sizeof(float)*3;
+    ofs.write( (char*)&pad, sizeof(int) );
+    ofs.write( (char*)&ox, sizeof(float) );
+    ofs.write( (char*)&oy, sizeof(float) );
+    ofs.write( (char*)&oz, sizeof(float) );
+    ofs.write( (char*)&pad, sizeof(int) );
+
+  
+  // pitch of voxel
+    pad = sizeof(float)*3;
+    ofs.write( (char*)&pad, sizeof(int) );
+    ofs.write( (char*)&dx, sizeof(float) );
+    ofs.write( (char*)&dy, sizeof(float) );
+    ofs.write( (char*)&dz, sizeof(float) );
+    ofs.write( (char*)&pad, sizeof(int) );
+
+  
+  // time stamp
+    stp = 0;
+    tm = 0.0;
+    pad = sizeof(int)+sizeof(float);
+    ofs.write( (char*)&pad, sizeof(int) );
+    ofs.write( (char*)&stp, sizeof(int) );
+    ofs.write( (char*)&tm, sizeof(float) );
+    ofs.write( (char*)&pad, sizeof(int) );
+  
+    pad = nx * sizeof(float);
+    ofs.write( (char*)&pad, sizeof(int) );
+    ofs.write( (char*)f,   pad );
+    ofs.write( (char*)&pad, sizeof(int) );
+  
+  ofs.close();
+  
+  if (f) { delete [] f; f=NULL; }
+}
+
+
+
 
 // #################################################################
 // 例題のモデルをsvxフォーマットで出力する(ID)

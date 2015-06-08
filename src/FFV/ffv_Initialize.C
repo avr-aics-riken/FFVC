@@ -144,7 +144,7 @@ int FFV::Initialize(int argc, char **argv)
 
   // パラメータの取得と計算領域の初期化，並列モードを返す
   // Polylibの基準値も設定
-  std::string str_para = SetDomain(&tp_ffv);
+  std::string str_para = setDomain(&tp_ffv);
   
   // mat[], cmp[]の作成
   createTable(fp);
@@ -161,7 +161,7 @@ int FFV::Initialize(int argc, char **argv)
   V.setControlVars(Ex);
 
   
-  // CompoListの設定，外部境界条件の読み込み保持
+  // CompoListの設定，境界条件の読み込み保持
   setBCinfo();
 
   
@@ -202,7 +202,7 @@ int FFV::Initialize(int argc, char **argv)
   
   // 各問題に応じてモデルを設定 >> Polylib
   // 外部境界面およびガイドセルのカットとIDの処理
-  SetModel(PrepMemory, TotalMemory, fp);
+  setModel(PrepMemory, TotalMemory, fp);
 
 
   // 回転体
@@ -237,10 +237,6 @@ int FFV::Initialize(int argc, char **argv)
   
   // サンプリング準備
   setMonitorList();
-  
-  
-  // d_midを初期化して識別子として利用
-  U.initS3D(d_mid, size, guide, -1);
   
   
   /* 再考
@@ -297,9 +293,10 @@ int FFV::Initialize(int argc, char **argv)
   TIMING_start("Fill");
   if ( !GM.fill(fp, d_bcd, d_bid, C.NoMedium, mat, C.NoCompo, cmp, d_mid) )
   {
-    // debug
+    // debug routine
     //F->writeSVX(d_bcd);
-    //F->writeSVX(d_mid, true);
+    //F->writeRawSPH(d_mid);
+    //F->writeSVX(d_mid);
     Exit(0);
   }
   TIMING_stop("Fill");
@@ -886,6 +883,166 @@ void FFV::createTable(FILE* fp)
 
 
 // #################################################################
+/* @brief コンポーネントのグローバルなBboxを求め，CompoListの情報を表示
+ * @param [in] fp file pointer
+ */
+void FFV::dispGlobalCompoInfo(FILE* fp)
+{
+  int st_i, st_j, st_k, ed_i, ed_j, ed_k;
+  int node_st_i, node_st_j, node_st_k;
+  int st[3], ed[3];
+  
+  
+  // グローバルインデクスの配列インスタンス
+  int* cgb = new int[6*(C.NoCompo+1)];
+  
+  for (int i=0; i<6*(C.NoCompo+1); i++) cgb[i] = 0;
+  
+  
+  
+  // ローカルインデクスからグローバルインデクスに変換
+  for (int m=1; m<=C.NoCompo; m++)
+  {
+    
+    if ( !cmp[m].existLocal() ) // コンポーネントが存在しないノードはゼロを代入
+    {
+      cgb[6*m+0] = 0;
+      cgb[6*m+1] = 0;
+      cgb[6*m+2] = 0;
+      cgb[6*m+3] = 0;
+      cgb[6*m+4] = 0;
+      cgb[6*m+5] = 0;
+    }
+    else // コンポーネントが存在する場合
+    {
+      cmp[m].getBbox(st, ed);
+      
+      st_i = st[0];
+      st_j = st[1];
+      st_k = st[2];
+      ed_i = ed[0];
+      ed_j = ed[1];
+      ed_k = ed[2];
+      
+      if ( numProc > 1 )
+      {
+        node_st_i = head[0];
+        node_st_j = head[1];
+        node_st_k = head[2];
+        
+        cgb[6*m+0] = node_st_i + st_i - 1;
+        cgb[6*m+1] = node_st_j + st_j - 1;
+        cgb[6*m+2] = node_st_k + st_k - 1;
+        cgb[6*m+3] = node_st_i + ed_i - 1;
+        cgb[6*m+4] = node_st_j + ed_j - 1;
+        cgb[6*m+5] = node_st_k + ed_k - 1;
+      }
+      else
+      {
+        cgb[6*m+0] = st_i;
+        cgb[6*m+1] = st_j;
+        cgb[6*m+2] = st_k;
+        cgb[6*m+3] = ed_i;
+        cgb[6*m+4] = ed_j;
+        cgb[6*m+5] = ed_k;
+      }
+      
+    }
+  }
+  
+  // 領域全体のbboxを求める
+  if ( numProc > 1 )
+  {
+    int* m_gArray = NULL;
+    int* m_eArray = NULL;
+    int array_size = 6*(C.NoCompo+1);
+    int st_x, st_y, st_z, ed_x, ed_y, ed_z, es;
+    
+    if ( !(m_gArray = new int[numProc*6]) ) Exit(0);
+    if ( !(m_eArray = new int[numProc]  ) ) Exit(0);
+    
+    for (int i=0; i<numProc*6; i++) m_gArray[i] = 0;
+    for (int i=0; i<numProc; i++) m_eArray[i] = 0;
+    
+    for (int n=1; n<=C.NoCompo; n++)
+    {
+      if ( numProc > 1 )
+      {
+        es = ( cmp[n].existLocal() ) ? 1 : 0;
+        if ( paraMngr->Gather(&es, 1, m_eArray, 1, 0) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Gather(&cgb[6*n], 6, m_gArray, 6, 0) != CPM_SUCCESS ) Exit(0);
+        
+        
+        if (myRank == 0) // マスターノードのみ
+        {
+          // 初期値
+          cgb[6*n+0] = 100000000;
+          cgb[6*n+1] = 100000000;
+          cgb[6*n+2] = 100000000;
+          cgb[6*n+3] = 0;
+          cgb[6*n+4] = 0;
+          cgb[6*n+5] = 0;
+          
+          for (int m=0; m<numProc; m++)
+          {
+            if ( m_eArray[m]==1 ) // コンポーネントの存在ランクのみを対象とする
+            {
+              st_x = m_gArray[6*m+0]; // 各ランクのコンポーネント存在範囲のインデクス
+              st_y = m_gArray[6*m+1];
+              st_z = m_gArray[6*m+2];
+              ed_x = m_gArray[6*m+3];
+              ed_y = m_gArray[6*m+4];
+              ed_z = m_gArray[6*m+5];
+              
+              if( st_x < cgb[6*n+0] ) { cgb[6*n+0] = st_x; } // 最大値と最小値を求める
+              if( st_y < cgb[6*n+1] ) { cgb[6*n+1] = st_y; }
+              if( st_z < cgb[6*n+2] ) { cgb[6*n+2] = st_z; }
+              if( ed_x > cgb[6*n+3] ) { cgb[6*n+3] = ed_x; }
+              if( ed_y > cgb[6*n+4] ) { cgb[6*n+4] = ed_y; }
+              if( ed_z > cgb[6*n+5] ) { cgb[6*n+5] = ed_z; }
+            }
+          }
+        }
+      }
+      
+    }
+    
+    // destroy
+    if (m_gArray)
+    {
+      delete[] m_gArray;
+      m_gArray = NULL;
+    }
+    
+    if (m_eArray)
+    {
+      delete[] m_eArray;
+      m_eArray = NULL;
+    }
+    
+  }
+  
+  
+  // CompoListの内容とセル数の情報を表示する
+  Hostonly_
+  {
+    printf(    "\n----------\n\n");
+    fprintf(fp,"\n----------\n\n");
+    printf(    "\t>> Component Information\n\n");
+    fprintf(fp,"\t>> Component Information\n\n");
+  }
+  
+  displayCompoInfo(cgb, fp);
+  
+  
+  if ( cgb ) { delete [] cgb; cgb=NULL; }
+  
+}
+
+
+
+
+// #################################################################
 /* @brief CompoListの情報を表示する
  * @param [in]  fp   ファイルポインタ
  */
@@ -1003,6 +1160,8 @@ void FFV::displayCutInfo(const long long* cut, const int* bid)
   fflush(fp);
   fclose(fp);
 }
+
+
 
 
 // #################################################################
@@ -1765,6 +1924,35 @@ void FFV::identifyLinearSolver(TextParser* tpCntl)
 
 
 // #################################################################
+/* @brief 距離情報の初期化
+ */
+void FFV::initCutInfo()
+{
+  size_t n_cell[3];
+  
+  for (int i=0; i<3; i++)
+  {
+    n_cell[i] = (size_t)(size[i] + 2*guide); // 分割数+ガイドセル
+  }
+  size_t size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
+  
+  
+  // 初期値のセット
+  for (size_t i=0; i<size_n_cell; i++)
+  {
+    for (int dir=0; dir<6; dir++)
+    {
+      initBit9(d_cut[i], dir);
+    }
+  }
+  
+}
+
+
+
+
+
+// #################################################################
 /* @brief インターバルの初期化
  */
 void FFV::initInterval()
@@ -2506,161 +2694,126 @@ void FFV::setComponentVF()
 
 
 // #################################################################
-/* @brief コンポーネントのグローバルなBboxを求め，CompoListの情報を表示
- * @param [in] fp file pointer
+/* @brief パラメータのロードと計算領域を初期化し，並列モードを返す
+ * @param [in] tpf ffvのパラメータを保持するTextParserインスタンス
+ * @retval 並列モードの文字列
  */
-void FFV::dispGlobalCompoInfo(FILE* fp)
+string FFV::setDomain(TextParser* tpf)
 {
-  int st_i, st_j, st_k, ed_i, ed_j, ed_k;
-  int node_st_i, node_st_j, node_st_k;
-  int st[3], ed[3];
   
+  // ランク情報をセット >> 各クラスでランク情報メンバ変数を利用する前にセットすること
+  C.setRankInfo    (paraMngr, procGrp);
+  B.setRankInfo    (paraMngr, procGrp);
+  V.setRankInfo    (paraMngr, procGrp);
+  BC.setRankInfo   (paraMngr, procGrp);
+  Ex->setRankInfo  (paraMngr, procGrp);
+  MO.setRankInfo   (paraMngr, procGrp);
+  F->setRankInfo   (paraMngr, procGrp);
+  GM.setRankInfo   (paraMngr, procGrp);
   
-  // グローバルインデクスの配列インスタンス
-  int* cgb = new int[6*(C.NoCompo+1)];
-  
-  for (int i=0; i<6*(C.NoCompo+1); i++) cgb[i] = 0;
-  
-
-  
-  // ローカルインデクスからグローバルインデクスに変換
-  for (int m=1; m<=C.NoCompo; m++) 
+  for (int i=0; i<ic_END; i++)
   {
-    
-    if ( !cmp[m].existLocal() ) // コンポーネントが存在しないノードはゼロを代入
-    {
-      cgb[6*m+0] = 0;
-      cgb[6*m+1] = 0;
-      cgb[6*m+2] = 0;
-      cgb[6*m+3] = 0;
-      cgb[6*m+4] = 0;
-      cgb[6*m+5] = 0;
-    }
-    else // コンポーネントが存在する場合
-    {
-      cmp[m].getBbox(st, ed);
-
-      st_i = st[0];
-      st_j = st[1];
-      st_k = st[2];
-      ed_i = ed[0];
-      ed_j = ed[1];
-      ed_k = ed[2];
+    LS[i].setRankInfo(paraMngr, procGrp);
+  }
+  
+  
+  // 並列モードの取得
+  string str = setParallelism();
+  
+  
+  // 最初のパラメータの取得 >> C.guide
+  C.get1stParameter(&DT);
+  
+  
+  // 代表パラメータをコピー
+  Ex->setRefParameter(&C);
+  
+  
+  // 例題クラス固有のパラメータを取得
+  if ( !Ex->getTP(&C, tpf) ) Exit(0);
+  
+  
+  // 領域分割パラメータをロード : 分割指示 (divtype = 1-with / 2-without)
+  // pitch[], G_region[], G_origin[]が確定する >> パラメータファイルで指定した値
+  int div_type = SD_getParameter(tpf);
+  
+  
+  // CPMlibの機能を用いて、計算領域分割情報を設定する
+  SD_Initialize(div_type, tpf);
+  
+  
+  // 各例題固有の領域パラメータを設定する
+  Ex->setDomainParameter(&C, size, origin, region, pitch);
+  
+  
+  // 各クラスで領域情報を保持
+  setDomainInfo      (C.guide, C.RefLength);
+  C.setDomainInfo    (C.guide, C.RefLength);
+  B.setDomainInfo    (C.guide, C.RefLength);
+  V.setDomainInfo    (C.guide, C.RefLength);
+  BC.setDomainInfo   (C.guide, C.RefLength);
+  Ex->setDomainInfo  (C.guide, C.RefLength);
+  MO.setDomainInfo   (C.guide, C.RefLength);
+  F->setDomainInfo   (C.guide, C.RefLength);
+  GM.setDomainInfo   (C.guide, C.RefLength);
+  
+  
+  for (int i=0; i<ic_END; i++)
+  {
+    LS[i].setDomainInfo(C.guide, C.RefLength);
+  }
+  
+  
+  
+  // ファイルIOパラメータ << get1stParameter()でgetTurbulenceModel()を呼んだあと
+  F->getFIOparams();
+  
+  
+  // 従属的なパラメータの取得
+  C.get2ndParameter(&RF);
+  
+  
+  
+  // 全ノードについて，ローカルノード1面・一層あたりの通信量の和（要素数）を計算
+  double c = 0.0;
+  
+  // 内部面のみをカウントする
+  for (int n=0; n<6; n++)
+  {
+    if ( nID[n] >= 0 ) {
       
-      if ( numProc > 1 ) 
+      switch (n)
       {
-        node_st_i = head[0];
-        node_st_j = head[1];
-        node_st_k = head[2];
-        
-        cgb[6*m+0] = node_st_i + st_i - 1;
-        cgb[6*m+1] = node_st_j + st_j - 1;
-        cgb[6*m+2] = node_st_k + st_k - 1;
-        cgb[6*m+3] = node_st_i + ed_i - 1;
-        cgb[6*m+4] = node_st_j + ed_j - 1;
-        cgb[6*m+5] = node_st_k + ed_k - 1;
-      } 
-      else 
-      {
-        cgb[6*m+0] = st_i;
-        cgb[6*m+1] = st_j;
-        cgb[6*m+2] = st_k;
-        cgb[6*m+3] = ed_i;
-        cgb[6*m+4] = ed_j;
-        cgb[6*m+5] = ed_k;
+        case X_minus:
+        case X_plus:
+          c += (double)(size[1]*size[2]);
+          break;
+          
+        case Y_minus:
+        case Y_plus:
+          c += (double)(size[0]*size[2]);
+          break;
+          
+        case Z_minus:
+        case Z_plus:
+          c += (double)(size[0]*size[1]);
+          break;
       }
-
     }
   }
   
-  // 領域全体のbboxを求める
   if ( numProc > 1 )
   {
-    int* m_gArray = NULL;
-    int* m_eArray = NULL;
-    int array_size = 6*(C.NoCompo+1);
-    int st_x, st_y, st_z, ed_x, ed_y, ed_z, es;
-    
-    if ( !(m_gArray = new int[numProc*6]) ) Exit(0);
-    if ( !(m_eArray = new int[numProc]  ) ) Exit(0);
-    
-    for (int i=0; i<numProc*6; i++) m_gArray[i] = 0;
-    for (int i=0; i<numProc; i++) m_eArray[i] = 0;
-    
-    for (int n=1; n<=C.NoCompo; n++)
-    {
-      if ( numProc > 1 )
-      {
-        es = ( cmp[n].existLocal() ) ? 1 : 0;
-        if ( paraMngr->Gather(&es, 1, m_eArray, 1, 0) != CPM_SUCCESS ) Exit(0);
-        if ( paraMngr->Gather(&cgb[6*n], 6, m_gArray, 6, 0) != CPM_SUCCESS ) Exit(0);
-        
-        
-        if (myRank == 0) // マスターノードのみ
-        {
-          // 初期値
-          cgb[6*n+0] = 100000000;
-          cgb[6*n+1] = 100000000;
-          cgb[6*n+2] = 100000000;
-          cgb[6*n+3] = 0;
-          cgb[6*n+4] = 0;
-          cgb[6*n+5] = 0;
-          
-          for (int m=0; m<numProc; m++)
-          {
-            if ( m_eArray[m]==1 ) // コンポーネントの存在ランクのみを対象とする
-            {
-              st_x = m_gArray[6*m+0]; // 各ランクのコンポーネント存在範囲のインデクス
-              st_y = m_gArray[6*m+1];
-              st_z = m_gArray[6*m+2];
-              ed_x = m_gArray[6*m+3];
-              ed_y = m_gArray[6*m+4];
-              ed_z = m_gArray[6*m+5];
-              
-              if( st_x < cgb[6*n+0] ) { cgb[6*n+0] = st_x; } // 最大値と最小値を求める
-              if( st_y < cgb[6*n+1] ) { cgb[6*n+1] = st_y; }
-              if( st_z < cgb[6*n+2] ) { cgb[6*n+2] = st_z; }
-              if( ed_x > cgb[6*n+3] ) { cgb[6*n+3] = ed_x; }
-              if( ed_y > cgb[6*n+4] ) { cgb[6*n+4] = ed_y; }
-              if( ed_z > cgb[6*n+5] ) { cgb[6*n+5] = ed_z; }
-            }
-          }
-        }
-      }
-    
-    }
-    
-    // destroy
-    if (m_gArray)
-    {
-      delete[] m_gArray;
-      m_gArray = NULL;
-    }
-    
-    if (m_eArray)
-    {
-      delete[] m_eArray;
-      m_eArray = NULL;
-    }
-    
-  }
-
-  
-  // CompoListの内容とセル数の情報を表示する
-  Hostonly_
-  {
-    printf(    "\n----------\n\n");
-    fprintf(fp,"\n----------\n\n");
-    printf(    "\t>> Component Information\n\n");
-    fprintf(fp,"\t>> Component Information\n\n");
+    double tmp = c;
+    if ( paraMngr->Allreduce(&tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
   }
   
-  displayCompoInfo(cgb, fp);
+  face_comm_size = c;
   
   
-  if ( cgb ) { delete [] cgb; cgb=NULL; }
-  
+  return str;
 }
+
 
 
 
@@ -2831,7 +2984,7 @@ void FFV::setMediumList(FILE* fp)
  * @param [in] TotalMemory ソルバー実行に必要なメモリ
  * @param [in] fp          ファイルポインタ
  */
-void FFV::SetModel(double& PrepMemory, double& TotalMemory, FILE* fp)
+void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
 {
   // 内部領域の交点と境界ID
   switch (C.Mode.Example)
@@ -2884,13 +3037,12 @@ void FFV::SetModel(double& PrepMemory, double& TotalMemory, FILE* fp)
     // 周期境界以外
     switch (cls)
     {
-      case OBC_SYMMETRIC:
+      case OBC_SYMMETRIC: // >> 対称条件は流体
         if (mat[id].getState() != FLUID)
         {
           Hostonly_ printf("Specified medium in '%s' is not FLUID or not listed.\n", m_obc->alias.c_str());
           Exit(0);
         }
-        ptr_cmp = 0; // FLUID
         V.setOBC(face, id, ptr_cmp, "fluid", d_bcd, d_cut, d_bid);
         break;
         
@@ -2914,7 +3066,6 @@ void FFV::SetModel(double& PrepMemory, double& TotalMemory, FILE* fp)
         if (mat[id].getState() != FLUID) {
           Exit(0);
         }
-        ptr_cmp = 0; // FLUID
         V.setOBC(face, id, ptr_cmp, "fluid", d_bcd, d_cut, d_bid);
         break;
     }
@@ -2935,338 +3086,6 @@ void FFV::SetModel(double& PrepMemory, double& TotalMemory, FILE* fp)
 
 }
 
-
-// #################################################################
-/* @brief 幾何形状情報を準備し，交点計算を行う
- * @param [in,out] m_prep   前処理用のメモリサイズ
- * @param [in,out] m_total  本計算用のメモリリサイズ
- * @param [in]     fp       ファイルポインタ
- */
-void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
-{
-  TIMING_start("Polylib_Section");
-  
-  
-  Hostonly_
-  {
-    fprintf(fp,"\n----------\n\n");
-    fprintf(fp,"\t>> Polylib configuration\n\n");
-    
-    printf("\n----------\n\n");
-    printf("\t>> Polylib configuration\n\n");
-  }
-  
-  // Polylibファイルをテンポラリに出力
-  if ( !F->writePolylibFile(cmp) )
-  {
-    Hostonly_
-    {
-      fprintf(fp,"\tError : writing polylib.tp\n");
-      printf    ("\tError : writing polylib.tp\n");
-    }
-    Exit(0);
-  }
-  
-  
-  // Polylib: インスタンス取得
-  PL = MPIPolylib::get_instance();
-  
-  // Polylib: ポリゴングループのFactoryクラスを登録
-  //PL->set_factory( new MyPolygonGroupFactory() );
-  
-  // Polylib: 並列計算領域情報を設定 >> 有次元
-  unsigned  poly_gc[3] = {guide, guide, guide};
-  
-  
-  // 読み込むデータはオリジナルのまま >> Polylib管理のメソッドで検索などを行うため
-  poly_stat = PL->init_parallel_info(MPI_COMM_WORLD,
-                                     originD,           // 自ランクの基点座標
-                                     (unsigned*)size,   // 自ランクの分割数
-                                     poly_gc,           // ガイドセル数
-                                     pitchD             // 格子幅
-                                     );
-  if ( poly_stat != PLSTAT_OK )
-  {
-    Hostonly_
-    {
-      fprintf(fp,"\tRank [%6d]: p_polylib->init_parallel_info() failed.\n", myRank);
-      printf    ("\tRank [%6d]: p_polylib->init_parallel_info() failed.\n", myRank);
-    }
-    Exit(0);
-  }
-  
-  
-  
-  // Polylib: STLデータ読み込み
-  TIMING_start("Loading_Polygon_File");
-  
-  // ロード
-  poly_stat = PL->load_rank0( "polylib.tp");
-  
-  if( poly_stat != PLSTAT_OK )
-  {
-    Hostonly_
-    {
-      printf    ("\tRank [%6d]: p_polylib->load_rank0() failed.", myRank);
-      fprintf(fp,"\tRank [%6d]: p_polylib->load_rank0() failed.", myRank);
-    }
-    Exit(0);
-  }
-  
-  TIMING_stop("Loading_Polygon_File");
-  
-  
-  
-  // 階層情報表示 debug brief hierarchy
-  // ##########
-#if 0
-  PL->show_group_hierarchy();
-  PL->show_group_hierarchy(fp);
-#endif
-  // ##########
-  
-  
-  // ポリゴン情報へのアクセス
-  vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
-  
-  
-  // Polygon Groupの数
-  C.num_of_polygrp = pg_roots->size();
-  
-  if ( (C.num_of_polygrp < 1) || (C.num_of_polygrp > C.NoCompo) )
-  {
-    printf("\tError : Number of polygon group must be greater than 1 and less than NoCompo.\n");
-    Exit(0);
-  }
-  
-  
-  Hostonly_
-  {
-    printf(     "\t   Polygon Group Label       Medium Alias              Local BC     Polygons          Area\n");
-    printf(     "\t   ---------------------------------------------------------------------------------------\n");
-    fprintf(fp, "\t   Polygon Group Label       Medium Alias              Local BC     Polygons          Area\n");
-    fprintf(fp, "\t   ---------------------------------------------------------------------------------------\n");
-  }
-  
-  
-  // PolygonPropertyの配列
-  PG = new PolygonProperty[C.num_of_polygrp];
-  
-  
-  vector<PolygonGroup*>::iterator it;
-  
-  // ポリゴン情報の表示
-  int c = 0;
-  for (it = pg_roots->begin(); it != pg_roots->end(); it++)
-  {
-    std::string m_pg = (*it)->get_name();     // グループラベル
-    std::string m_mat = (*it)->get_label();   // 媒質ラベル
-    std::string m_bc = (*it)->get_type();     // 境界条件ラベル
-    int ntria= (*it)->get_group_num_tria();   // ローカルのポリゴン数
-    REAL_TYPE area = (*it)->get_group_area(); // ローカルのポリゴン面積
-    
-    PG[c].setLntria(ntria);
-    
-    
-    // mat[]の格納順を探す
-    int mat_id;
-    
-    for (int i=1; i<=C.NoCompo; i++)
-    {
-      if ( FBUtility::compare(m_pg, mat[i].alias) )
-      {
-        mat_id = i;
-        break;
-      }
-    }
-    //printf("mat_id=%d\n", mat_id);
-    
-    // PolygonにIDを割り当てる
-    poly_stat = (*it)->set_all_exid_of_trias(mat_id);
-    
-    if ( poly_stat != PLSTAT_OK )
-    {
-      Hostonly_
-      {
-        printf(     "\tError : Polylib::set_all_exid_of_trias()\n");
-        fprintf(fp, "\tError : Polylib::set_all_exid_of_trias()\n");
-        Exit(0);
-      }
-    }
-    
-    
-    if ( numProc > 1 )
-    {
-      int tmp = ntria;
-      if ( paraMngr->Allreduce(&tmp, &ntria, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-      
-      REAL_TYPE ta = area;
-      if ( paraMngr->Allreduce(&ta, &area, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-    }
-    
-    
-    // コンポーネント(BC+OBSTACLE)の面積を保持 >> @todo Polylibのバグ?で並列時に正しい値を返さない, ntriaとarea 暫定的処置
-    cmp[mat_id].area = area;
-    
-    PG[c].setID(mat_id);
-    PG[c].setGroup(m_pg);
-    PG[c].setBClabel(m_bc);
-    PG[c].setMaterial(m_mat);
-    PG[c].setGntria(ntria);
-    
-    
-    Hostonly_
-    {
-      printf(    "\t  %20s %18s  %20s %12d  %e\n", m_pg.c_str(),
-             m_mat.c_str(),
-             m_bc.c_str(),
-             ntria,
-             area);
-      fprintf(fp,"\t  %20s %18s  %20s %12d  %e\n", m_pg.c_str(),
-              m_mat.c_str(),
-              m_bc.c_str(),
-              ntria,
-              area);
-    }
-    
-    c++;
-    
-    // ########## show corrdinates and area
-#if 0
-    PL->show_group_info(m_pg); //debug
-#endif
-    // ##########
-    
-  }
-  
-  
-  delete pg_roots;
-  
-  Hostonly_
-  {
-    printf("\n");
-    fprintf(fp, "\n");
-  }
-  
-  
-  
-  // 使用メモリ量　基本クラスのみ
-  double poly_mem, G_poly_mem;
-  G_poly_mem = poly_mem = (double)PL->used_memory_size();
-  m_prep += poly_mem;
-  m_total+= poly_mem;
-  
-  displayMemoryInfo(fp, G_poly_mem, poly_mem, "Polygon");
-  
-  
-  // ポリゴンのBbox
-  GM.calcBboxFromPolygonGroup(PL, PG, C.num_of_polygrp);
-  
-  
-  // Triangle display >> Debug
-  // ##########
-#if 0
-  Vec3r m_min, m_max, t1(origin), t2(pitch), t3;
-  t3.assign((REAL_TYPE)size[0]*t2.x, (REAL_TYPE)size[1]*t2.y, (REAL_TYPE)size[2]*t2.z);
-  m_min = t1 - t2;      // 1層外側まで
-  m_max = t1 + t3 + t2; //
-  printf("min : %f %f %f\n", m_min.x, m_min.y, m_min.z);
-  printf("max : %f %f %f\n", m_max.x, m_max.y, m_max.z);
-  vector<Triangle*>* trias = PL->search_polygons("Ducky", m_min, m_max, false); // false; ポリゴンが一部でもかかる場合
-  
-  //Vec3r *p, nrl, n;
-  Vec3r n;
-  Vertex** p;
-  c=0;
-  vector<Triangle*>::iterator it3;
-  for (it3 = trias->begin(); it3 != trias->end(); it3++) {
-    p = (*it3)->get_vertex();
-    n = (*it3)->get_normal();
-    printf("%d : p0=(%6.3e %6.3e %6.3e)  p1=(%6.3e %6.3e %6.3e) p2=(%6.3e %6.3e %6.3e) n=(%6.3e %6.3e %6.3e)\n", c++,
-           (*(p[0]))[0], (*(p[0]))[1], (*(p[0]))[2],
-           (*(p[1]))[0], (*(p[1]))[1], (*(p[1]))[2],
-           (*(p[2]))[0], (*(p[2]))[1], (*(p[2]))[2],
-           n.x, n.y, n.z);
-  }
-  
-  delete trias;  //後始末
-#endif
-  
-  
-  // ##########
-  
-  
-  // Polylib: STLデータ書き出し
-  // DomainInfo/UnitOfLength={"mm", "cm"}のとき，"m"でスケーリングされたポリゴンが出力される
-  if ( C.Hide.GeomOutput == ON )
-  {
-    TIMING_start("Write_Polygon_File");
-    
-    unsigned poly_out_para = IO_DISTRIBUTE;
-    if ( (C.Parallelism == Control::Serial) || (C.Parallelism == Control::OpenMP) ) poly_out_para = IO_GATHER;
-    
-    string fname;
-    
-    if ( poly_out_para == IO_GATHER )
-    {
-      poly_stat = PL->save_rank0( &fname, "stl_b" );
-      
-      if ( poly_stat != PLSTAT_OK )
-      {
-        Hostonly_
-        {
-          printf("Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", myRank, fname.c_str());
-          fprintf(fp,"Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", myRank, fname.c_str());
-        }
-        Exit(0);
-      }
-    }
-    else
-    {
-      poly_stat = PL->save_parallel( &fname, "stl_b" );
-      
-      if ( poly_stat != PLSTAT_OK )
-      {
-        Hostonly_
-        {
-          printf("Rank [%d]: p_polylib->save_parallel() failed to write into '%s'.", myRank, fname.c_str());
-          fprintf(fp,"Rank [%d]: p_polylib->save_parallel() failed to write into '%s'.", myRank, fname.c_str());
-        }
-        Exit(0);
-      }
-    }
-    
-    TIMING_stop("Write_Polygon_File");
-  }
-  
-  TIMING_stop("Polylib_Section");
-  
-  
-  
-  
-  
-  TIMING_start("Cut_Section");
-  
-  Hostonly_
-  {
-    fprintf(fp,"\n----------\n\n");
-    fprintf(fp,"\t>> Calculate cut and quantize\n\n");
-  }
-  
-  
-  // 交点計算
-  TIMING_start("Cut_Information");
-  GM.quantizeCut(fp, d_cut, d_bid, d_bcd, C.NoCompo, cmp, PL, PG);
-  TIMING_stop("Cut_Information");
-  
-  
-#if 0
-  displayCutInfo(d_cut, d_bid);
-#endif
-  
-  TIMING_stop("Cut_Section");
-  
-}
 
 
 
@@ -3446,152 +3265,35 @@ void FFV::setParameters()
 }
 
 
-// #################################################################
-/* @brief 距離情報の初期化
- */
-void FFV::initCutInfo()
-{
-  size_t n_cell[3];
-  
-  for (int i=0; i<3; i++) 
-  {
-    n_cell[i] = (size_t)(size[i] + 2*guide); // 分割数+ガイドセル
-  }
-  size_t size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
-  
-  
-  // 初期値のセット
-  for (size_t i=0; i<size_n_cell; i++)
-  {
-    for (int dir=0; dir<6; dir++)
-    {
-      initBit9(d_cut[i], dir);
-    }
-  }
-  
-}
-
 
 // #################################################################
-/* @brief パラメータのロードと計算領域を初期化し，並列モードを返す
- * @param [in] tpf ffvのパラメータを保持するTextParserインスタンス
- * @retval 並列モードの文字列
- */
-string FFV::SetDomain(TextParser* tpf)
+// VOF値を気体(0.0)と液体(1.0)で初期化
+void FFV::setVOF()
 {
+  size_t m;
+  int s, odr;
   
-  // ランク情報をセット >> 各クラスでランク情報メンバ変数を利用する前にセットすること
-  C.setRankInfo    (paraMngr, procGrp);
-  B.setRankInfo    (paraMngr, procGrp);
-  V.setRankInfo    (paraMngr, procGrp);
-  BC.setRankInfo   (paraMngr, procGrp);
-  Ex->setRankInfo  (paraMngr, procGrp);
-  MO.setRankInfo   (paraMngr, procGrp);
-  F->setRankInfo   (paraMngr, procGrp);
-  GM.setRankInfo   (paraMngr, procGrp);
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
   
-  for (int i=0; i<ic_END; i++)
-  {
-    LS[i].setRankInfo(paraMngr, procGrp);
-  }
-  
-  
-  // 並列モードの取得
-  string str = setParallelism();
-  
-  
-  // 最初のパラメータの取得 >> C.guide
-  C.get1stParameter(&DT);
-  
-
-  // 代表パラメータをコピー
-  Ex->setRefParameter(&C);
-
-  
-  // 例題クラス固有のパラメータを取得
-  if ( !Ex->getTP(&C, tpf) ) Exit(0);
-
-  
-  // 領域分割パラメータをロード : 分割指示 (divtype = 1-with / 2-without)
-  // pitch[], G_region[], G_origin[]が確定する >> パラメータファイルで指定した値
-  int div_type = SD_getParameter(tpf);
-  
-  
-  // CPMlibの機能を用いて、計算領域分割情報を設定する
-  SD_Initialize(div_type, tpf);
-
-  
-  // 各例題固有の領域パラメータを設定する
-  Ex->setDomainParameter(&C, size, origin, region, pitch);
-
-
-  // 各クラスで領域情報を保持
-  setDomainInfo      (C.guide, C.RefLength);
-  C.setDomainInfo    (C.guide, C.RefLength);
-  B.setDomainInfo    (C.guide, C.RefLength);
-  V.setDomainInfo    (C.guide, C.RefLength);
-  BC.setDomainInfo   (C.guide, C.RefLength);
-  Ex->setDomainInfo  (C.guide, C.RefLength);
-  MO.setDomainInfo   (C.guide, C.RefLength);
-  F->setDomainInfo   (C.guide, C.RefLength);
-  GM.setDomainInfo   (C.guide, C.RefLength);
-
-  
-  for (int i=0; i<ic_END; i++)
-  {
-    LS[i].setDomainInfo(C.guide, C.RefLength);
-  }
-
-  
-  
-  // ファイルIOパラメータ << get1stParameter()でgetTurbulenceModel()を呼んだあと
-  F->getFIOparams();
-
-  
-  // 従属的なパラメータの取得
-  C.get2ndParameter(&RF);
-  
-
-  
-  // 全ノードについて，ローカルノード1面・一層あたりの通信量の和（要素数）を計算
-  double c = 0.0;
-  
-  // 内部面のみをカウントする
-  for (int n=0; n<6; n++)
-  {
-    if ( nID[n] >= 0 ) {
-      
-      switch (n)
-      {
-        case X_minus:
-        case X_plus:
-          c += (double)(size[1]*size[2]);
-          break;
-          
-        case Y_minus:
-        case Y_plus:
-          c += (double)(size[0]*size[2]);
-          break;
-          
-        case Z_minus:
-        case Z_plus:
-          c += (double)(size[0]*size[1]);
-          break;
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        s = d_bcd[m];
+        odr = DECODE_CMP(s);
+        
+        if ( cmp[odr].getState() == FLUID )
+        {
+          d_vof[m] = ( cmp[odr].getPhase() == GAS ) ? 0.0 : 1.0;
+        }
       }
     }
   }
-  
-  if ( numProc > 1 )
-  {
-    double tmp = c;
-    if ( paraMngr->Allreduce(&tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  face_comm_size = c;
-  
-  
-  return str;
 }
+
 
 
 
@@ -3987,32 +3689,338 @@ void FFV::SD_Initialize(const int div_type, TextParser* tp_dom)
 
 
 
+
 // #################################################################
-// VOF値を気体(0.0)と液体(1.0)で初期化
-void FFV::setVOF()
+/* @brief 幾何形状情報を準備し，交点計算を行う
+ * @param [in,out] m_prep   前処理用のメモリサイズ
+ * @param [in,out] m_total  本計算用のメモリリサイズ
+ * @param [in]     fp       ファイルポインタ
+ */
+void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
 {
-  size_t m;
-  int s, odr;
+  TIMING_start("Polylib_Section");
   
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
   
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        s = d_bcd[m];
-        odr = DECODE_CMP(s);
-        
-        if ( cmp[odr].getState() == FLUID ) 
-        {
-          d_vof[m] = ( cmp[odr].getPhase() == GAS ) ? 0.0 : 1.0;
-        }
+  Hostonly_
+  {
+    fprintf(fp,"\n----------\n\n");
+    fprintf(fp,"\t>> Polylib configuration\n\n");
+    
+    printf("\n----------\n\n");
+    printf("\t>> Polylib configuration\n\n");
+  }
+  
+  // Polylibファイルをテンポラリに出力
+  if ( !F->writePolylibFile(cmp) )
+  {
+    Hostonly_
+    {
+      fprintf(fp,"\tError : writing polylib.tp\n");
+      printf    ("\tError : writing polylib.tp\n");
+    }
+    Exit(0);
+  }
+  
+  
+  // Polylib: インスタンス取得
+  PL = MPIPolylib::get_instance();
+  
+  // Polylib: ポリゴングループのFactoryクラスを登録
+  //PL->set_factory( new MyPolygonGroupFactory() );
+  
+  // Polylib: 並列計算領域情報を設定 >> 有次元
+  unsigned  poly_gc[3] = {guide, guide, guide};
+  
+  
+  // 読み込むデータはオリジナルのまま >> Polylib管理のメソッドで検索などを行うため
+  poly_stat = PL->init_parallel_info(MPI_COMM_WORLD,
+                                     originD,           // 自ランクの基点座標
+                                     (unsigned*)size,   // 自ランクの分割数
+                                     poly_gc,           // ガイドセル数
+                                     pitchD             // 格子幅
+                                     );
+  if ( poly_stat != PLSTAT_OK )
+  {
+    Hostonly_
+    {
+      fprintf(fp,"\tRank [%6d]: p_polylib->init_parallel_info() failed.\n", myRank);
+      printf    ("\tRank [%6d]: p_polylib->init_parallel_info() failed.\n", myRank);
+    }
+    Exit(0);
+  }
+  
+  
+  
+  // Polylib: STLデータ読み込み
+  TIMING_start("Loading_Polygon_File");
+  
+  // ロード
+  poly_stat = PL->load_rank0( "polylib.tp");
+  
+  if( poly_stat != PLSTAT_OK )
+  {
+    Hostonly_
+    {
+      printf    ("\tRank [%6d]: p_polylib->load_rank0() failed.", myRank);
+      fprintf(fp,"\tRank [%6d]: p_polylib->load_rank0() failed.", myRank);
+    }
+    Exit(0);
+  }
+  
+  TIMING_stop("Loading_Polygon_File");
+  
+  
+  
+  // 階層情報表示 debug brief hierarchy
+  // ##########
+#if 0
+  PL->show_group_hierarchy();
+  PL->show_group_hierarchy(fp);
+#endif
+  // ##########
+  
+  
+  // ポリゴン情報へのアクセス
+  vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
+  
+  
+  // Polygon Groupの数
+  C.num_of_polygrp = pg_roots->size();
+  
+  if ( (C.num_of_polygrp < 1) || (C.num_of_polygrp > C.NoCompo) )
+  {
+    printf("\tError : Number of polygon group must be greater than 1 and less than NoCompo.\n");
+    Exit(0);
+  }
+  
+  
+  Hostonly_
+  {
+    printf(     "\t   Polygon Group Label       Medium Alias              Local BC     Polygons          Area\n");
+    printf(     "\t   ---------------------------------------------------------------------------------------\n");
+    fprintf(fp, "\t   Polygon Group Label       Medium Alias              Local BC     Polygons          Area\n");
+    fprintf(fp, "\t   ---------------------------------------------------------------------------------------\n");
+  }
+  
+  
+  // PolygonPropertyの配列
+  PG = new PolygonProperty[C.num_of_polygrp];
+  
+  
+  vector<PolygonGroup*>::iterator it;
+  
+  // ポリゴンのグループラベルを照合し、mat[]の格納インデクスをIDとして割り当てる
+  int c = 0;
+  for (it = pg_roots->begin(); it != pg_roots->end(); it++)
+  {
+    std::string m_pg = (*it)->get_name();     // グループラベル
+    std::string m_mat = (*it)->get_label();   // 媒質ラベル
+    std::string m_bc = (*it)->get_type();     // 境界条件ラベル
+    int ntria= (*it)->get_group_num_tria();   // ローカルのポリゴン数
+    REAL_TYPE area = (*it)->get_group_area(); // ローカルのポリゴン面積
+    
+    // 各ランクの保持するポリゴン数を設定
+    PG[c].setLntria(ntria);
+    
+    
+    // mat[]の格納順を探す
+    int mat_id;
+    
+    for (int i=1; i<=C.NoCompo; i++)
+    {
+      if ( FBUtility::compare(m_pg, mat[i].alias) )
+      {
+        mat_id = i;
+        break;
       }
     }
+    //printf("mat_id=%d\n", mat_id);
+    
+    // PolygonにIDを割り当てる
+    poly_stat = (*it)->set_all_exid_of_trias(mat_id);
+    
+    if ( poly_stat != PLSTAT_OK )
+    {
+      Hostonly_
+      {
+        printf(     "\tError : Polylib::set_all_exid_of_trias()\n");
+        fprintf(fp, "\tError : Polylib::set_all_exid_of_trias()\n");
+        Exit(0);
+      }
+    }
+    
+    
+    if ( numProc > 1 )
+    {
+      int tmp = ntria;
+      if ( paraMngr->Allreduce(&tmp, &ntria, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      
+      REAL_TYPE ta = area;
+      if ( paraMngr->Allreduce(&ta, &area, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    }
+    
+    
+    // コンポーネント(BC+OBSTACLE)の面積を保持 >> @todo Polylibのバグ?で並列時に正しい値を返さない, ntriaとarea 暫定的処置
+    cmp[mat_id].area = area;
+    
+    PG[c].setID(mat_id);
+    PG[c].setGroup(m_pg);
+    PG[c].setBClabel(m_bc);
+    PG[c].setMaterial(m_mat);
+    PG[c].setGntria(ntria);
+    
+    
+    Hostonly_
+    {
+      printf(    "\t  %20s %18s  %20s %12d  %e\n", m_pg.c_str(),
+             m_mat.c_str(),
+             m_bc.c_str(),
+             ntria,
+             area);
+      fprintf(fp,"\t  %20s %18s  %20s %12d  %e\n", m_pg.c_str(),
+              m_mat.c_str(),
+              m_bc.c_str(),
+              ntria,
+              area);
+    }
+    
+    c++;
+    
+    // ########## show corrdinates and area
+#if 0
+    PL->show_group_info(m_pg); //debug
+#endif
+    // ##########
+    
   }
+  
+  
+  delete pg_roots;
+  
+  Hostonly_
+  {
+    printf("\n");
+    fprintf(fp, "\n");
+  }
+  
+  
+  
+  // 使用メモリ量　基本クラスのみ
+  double poly_mem, G_poly_mem;
+  G_poly_mem = poly_mem = (double)PL->used_memory_size();
+  m_prep += poly_mem;
+  m_total+= poly_mem;
+  
+  displayMemoryInfo(fp, G_poly_mem, poly_mem, "Polygon");
+  
+  
+  // ポリゴンのBbox
+  GM.calcBboxFromPolygonGroup(PL, PG, C.num_of_polygrp);
+  
+  
+  // Triangle display >> Debug
+  // ##########
+#if 0
+  Vec3r m_min, m_max, t1(origin), t2(pitch), t3;
+  t3.assign((REAL_TYPE)size[0]*t2.x, (REAL_TYPE)size[1]*t2.y, (REAL_TYPE)size[2]*t2.z);
+  m_min = t1 - t2;      // 1層外側まで
+  m_max = t1 + t3 + t2; //
+  printf("min : %f %f %f\n", m_min.x, m_min.y, m_min.z);
+  printf("max : %f %f %f\n", m_max.x, m_max.y, m_max.z);
+  vector<Triangle*>* trias = PL->search_polygons("Ducky", m_min, m_max, false); // false; ポリゴンが一部でもかかる場合
+  
+  //Vec3r *p, nrl, n;
+  Vec3r n;
+  Vertex** p;
+  c=0;
+  vector<Triangle*>::iterator it3;
+  for (it3 = trias->begin(); it3 != trias->end(); it3++) {
+    p = (*it3)->get_vertex();
+    n = (*it3)->get_normal();
+    printf("%d : p0=(%6.3e %6.3e %6.3e)  p1=(%6.3e %6.3e %6.3e) p2=(%6.3e %6.3e %6.3e) n=(%6.3e %6.3e %6.3e)\n", c++,
+           (*(p[0]))[0], (*(p[0]))[1], (*(p[0]))[2],
+           (*(p[1]))[0], (*(p[1]))[1], (*(p[1]))[2],
+           (*(p[2]))[0], (*(p[2]))[1], (*(p[2]))[2],
+           n.x, n.y, n.z);
+  }
+  
+  delete trias;  //後始末
+#endif
+  
+  
+  // ##########
+  
+  
+  // Polylib: STLデータ書き出し
+  // DomainInfo/UnitOfLength={"mm", "cm"}のとき，"m"でスケーリングされたポリゴンが出力される
+  if ( C.Hide.GeomOutput == ON )
+  {
+    TIMING_start("Write_Polygon_File");
+    
+    unsigned poly_out_para = IO_DISTRIBUTE;
+    if ( (C.Parallelism == Control::Serial) || (C.Parallelism == Control::OpenMP) ) poly_out_para = IO_GATHER;
+    
+    string fname;
+    
+    if ( poly_out_para == IO_GATHER )
+    {
+      poly_stat = PL->save_rank0( &fname, "stl_b" );
+      
+      if ( poly_stat != PLSTAT_OK )
+      {
+        Hostonly_
+        {
+          printf("Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", myRank, fname.c_str());
+          fprintf(fp,"Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", myRank, fname.c_str());
+        }
+        Exit(0);
+      }
+    }
+    else
+    {
+      poly_stat = PL->save_parallel( &fname, "stl_b" );
+      
+      if ( poly_stat != PLSTAT_OK )
+      {
+        Hostonly_
+        {
+          printf("Rank [%d]: p_polylib->save_parallel() failed to write into '%s'.", myRank, fname.c_str());
+          fprintf(fp,"Rank [%d]: p_polylib->save_parallel() failed to write into '%s'.", myRank, fname.c_str());
+        }
+        Exit(0);
+      }
+    }
+    
+    TIMING_stop("Write_Polygon_File");
+  }
+  
+  TIMING_stop("Polylib_Section");
+  
+  
+  
+  
+  
+  TIMING_start("Cut_Section");
+  
+  Hostonly_
+  {
+    fprintf(fp,"\n----------\n\n");
+    fprintf(fp,"\t>> Calculate cut and quantize\n\n");
+  }
+  
+  
+  // 交点計算
+  TIMING_start("Cut_Information");
+  GM.quantizeCut(fp, d_cut, d_bid, d_bcd, C.NoCompo, cmp, PL, PG);
+  TIMING_stop("Cut_Information");
+  
+  
+#if 0
+  displayCutInfo(d_cut, d_bid);
+#endif
+  
+  TIMING_stop("Cut_Section");
+  
 }
 
 
