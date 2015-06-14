@@ -63,10 +63,10 @@ public:
   
   /**
    * @brief 計算領域のセルIDを設定する
-   * @param [in,out] bcd   　　BCindex B
-   * @param [in]     R     　　Controlクラスのポインタ
+   * @param [in,out] bcd      BCindex B
+   * @param [in]     R        Controlクラスのポインタ
    * @param [in]     NoMedium 媒質数
-   * @param [in]     mat   　　MediumListクラスのポインタ
+   * @param [in]     mat      MediumListクラスのポインタ
    * @param [in]     NoCompo  コンポーネント数
    * @param [in]     cmp      CompoListクラスのポインタ
    * @param [out]    cut      カット情報
@@ -79,7 +79,7 @@ public:
                      const int NoCompo,
                      const CompoList* cmp,
                      long long* cut,
-                     int* bid);;
+                     int* bid);
 
 };
 #endif // _IP_STEP_H_

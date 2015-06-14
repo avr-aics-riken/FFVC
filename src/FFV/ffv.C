@@ -365,7 +365,6 @@ int FFV::MainLoop()
   C.Interval[Control::tg_derived].printInfo("tg_derived");
   C.Interval[Control::tg_accelra].printInfo("tg_accelra");
   C.Interval[Control::tg_sampled].printInfo("tg_sampled");
-  C.Interval[Control::tg_END].printInfo("tg_END");
   //<< Graph Ploter
   
   int ret = 1;

@@ -32,6 +32,7 @@ int FFV::FilterLoop()
   
   printf("\n\n\tData sampling....\n\n");
   
+  //>> Graph Ploter
   C.Interval[Control::tg_compute].printInfo("tg_compute");
   C.Interval[Control::tg_console].printInfo("tg_console");
   C.Interval[Control::tg_history].printInfo("tg_history");
@@ -40,7 +41,7 @@ int FFV::FilterLoop()
   C.Interval[Control::tg_derived].printInfo("tg_derived");
   C.Interval[Control::tg_accelra].printInfo("tg_accelra");
   C.Interval[Control::tg_sampled].printInfo("tg_sampled");
-  C.Interval[Control::tg_END].printInfo("tg_END");
+  //<< Graph Ploter
   
   //FFVのデータから取得できれば、ここでハードコードする必要がない。
   int interval = 32;

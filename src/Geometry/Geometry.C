@@ -251,8 +251,8 @@ void Geometry::assureUniqueLabel(vector<int> tbl, int* mid, const int* Dsize)
     // ラベルのふり直し
     for (int l=0; l<LabelSize; l++)
     {
-      const int target = Dtable[l*2];
-      const int replace= Dtable[l*2+1];
+      int target = Dtable[l*2];
+      int replace= Dtable[l*2+1];
       
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, target, replace) schedule(static)
       for (int k=1; k<=kx; k++) {
