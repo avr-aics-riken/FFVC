@@ -308,7 +308,7 @@ private:
   
   
   // Glyphを生成・出力
-  void generateGlyph(const long long* cut, const int* bid, FILE* fp);
+  void generateGlyph(const long long* cut, const int* bid, FILE* fp, int* m_st=NULL, int* m_ed=NULL);
   
   
   // Div反復のパラメータ

@@ -19,6 +19,14 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-06-18
+r1610 set state in Geometry::paintCutOnPoint()
+- move onBit()/offBit() from VoxInfo.h to FB_Define.h
+- add special BC polynomial6 for chiba-u
+- modify quantizeCut()
+- add range for Glyph
+
+--------------------------
 2015-06-14
 r1609 bug fix on Fujitsu sparc => Geometry.C L257
 - error: MainLoop() C.Interval[Control::tg_End].printInfo("tg_End") destroys array

@@ -65,6 +65,7 @@ public:
   {
     vel_constant,
     vel_harmonic,
+    vel_polynomial6,
     vel_zero
   };
   

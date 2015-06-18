@@ -450,6 +450,16 @@ int FFV::Initialize(int argc, char **argv)
   if ( C.Hide.GlyphOutput != OFF )
   {
     TIMING_start("Generate_Glyph");
+    /*
+    int st[3], ed[3];
+    st[0] = 145;
+    ed[0] = 147;
+    st[1] = 520;
+    ed[1] = 545;
+    st[2] = 230;
+    ed[2] = 253;
+    generateGlyph(d_cut, d_bid, fp, st, ed);
+     */
     generateGlyph(d_cut, d_bid, fp);
     TIMING_stop("Generate_Glyph");
   }
@@ -615,7 +625,7 @@ int FFV::Initialize(int argc, char **argv)
   
   
   // debug: obsolete format
-  F->writeSVX(d_bcd);
+  //F->writeSVX(d_bcd);
   
   
   // IBLANK 出力後に mid[]を解放する  ---------------------------
@@ -1605,11 +1615,13 @@ void FFV::gatherDomainInfo()
 
 // #################################################################
 /* @brief 交点情報のグリフを生成する
- * @param [in] cut カットの配列
- * @param [in] bid 境界IDの配列
- * @param [in] fp  file pointer
+ * @param [in] cut   カットの配列
+ * @param [in] bid   境界IDの配列
+ * @param [in] fp    file pointer
+ * @param [in] m_st  範囲指定　デバッグ用
+ * @param [in] m_ed  範囲指定　デバッグ用
  */
-void FFV::generateGlyph(const long long* cut, const int* bid, FILE* fp)
+void FFV::generateGlyph(const long long* cut, const int* bid, FILE* fp, int* m_st, int* m_ed)
 {
   int ix = size[0];
   int jx = size[1];
@@ -1621,10 +1633,31 @@ void FFV::generateGlyph(const long long* cut, const int* bid, FILE* fp)
   unsigned local_cut=0;   /// 担当プロセスのカット数
   unsigned g=0;
   
+  int st[3], ed[3];
+  
+  if ( m_st == NULL )
+  {
+    st[0] = 1;
+    st[1] = 1;
+    st[2] = 1;
+    ed[0] = ix;
+    ed[1] = jx;
+    ed[2] = kx;
+  }
+  else
+  {
+    st[0] = m_st[0];
+    st[1] = m_st[1];
+    st[2] = m_st[2];
+    ed[0] = m_ed[0];
+    ed[1] = m_ed[1];
+    ed[2] = m_ed[2];
+  }
+  
 
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
+  for (int k=st[2]; k<=ed[2]; k++) {
+    for (int j=st[1]; j<=ed[1]; j++) {
+      for (int i=st[0]; i<=ed[0]; i++) {
         
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         int qq = bid[m];
@@ -1653,8 +1686,8 @@ void FFV::generateGlyph(const long long* cut, const int* bid, FILE* fp)
   
   Hostonly_
   {
-    printf("\tNumber of Cut points = %u\n", global_cut);
-    fprintf(fp, "\tNumber of Cut points = %u\n", global_cut);
+    printf("\tGlyph : Number of Cut points = %u\n", global_cut);
+    fprintf(fp, "\tGlyph : Number of Cut points = %u\n", global_cut);
   }
   
   
@@ -1684,9 +1717,9 @@ void FFV::generateGlyph(const long long* cut, const int* bid, FILE* fp)
   // カット点毎にグリフのポリゴン要素を生成し，配列にストア
   Vec3i idx;
   
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
+  for (int k=st[2]; k<=ed[2]; k++) {
+    for (int j=st[1]; j<=ed[1]; j++) {
+      for (int i=st[0]; i<=ed[0]; i++) {
         
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         int qq = bid[m];

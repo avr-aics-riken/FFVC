@@ -132,20 +132,6 @@ private:
   void encVbitOBC (int face, int* cdf, string key, const bool enc_sw, string chk, int* bid, bool enc_uwd=false);
   
   
-  //@brief idxの第shiftビットをOFFにする
-  inline int offBit (int idx, const int shift)
-  {
-    return ( idx & (~(0x1<<shift)) );
-  }
-  
-  
-  //@brief idxの第shiftビットをONにする
-  inline int onBit (int idx, const int shift)
-  {
-    return ( idx | (0x1<<shift) );
-  }
-  
-  
   /*
    * @brief 5bit幅の値の設定
    * @param [in,out] b   int 変数

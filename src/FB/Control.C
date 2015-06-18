@@ -1979,7 +1979,11 @@ REAL_TYPE Control::getValueReal(const std::string label, TextParser* tpc)
 {
   REAL_TYPE df=0.0;
   
-  if ( !(tpc->getInspectedValue(label, df)) ) Exit(0);
+  if ( !(tpc->getInspectedValue(label, df)) )
+  {
+    stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
   
   return df;
 }
@@ -3200,10 +3204,17 @@ void Control::setCmpParameters(MediumList* mat, CompoList* cmp, BoundaryOuter* B
       {
         case OBC_WALL:
         case OBC_SPEC_VEL:
-          BO[n].ca[CompoList::amplitude] *= RefVelocity;
-          BO[n].ca[CompoList::frequency] *= (RefVelocity/RefLength);
-          //BO[n].ca[CompoList::initphase] radは有次元化不要
-          BO[n].ca[CompoList::bias]      *= RefVelocity;
+          if ( BO[n].get_V_Profile() == CompoList::vel_harmonic )
+          {
+            BO[n].ca[CompoList::amplitude] *= RefVelocity;
+            BO[n].ca[CompoList::frequency] *= (RefVelocity/RefLength);
+            //BO[n].ca[CompoList::initphase] radは有次元化不要
+            BO[n].ca[CompoList::bias]      *= RefVelocity;
+          }
+          else if ( BO[n].get_V_Profile() == CompoList::vel_polynomial6 )
+          {
+            for (int i=0; i<6; i++) BO[n].ca[i] *= RefVelocity;
+          }
           break;
           
         default:

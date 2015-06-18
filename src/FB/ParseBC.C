@@ -1756,7 +1756,7 @@ void ParseBC::get_Phase(CompoList* cmp)
 
 
 // #################################################################
-//@brief 外部境界の速度境界条件のタイプを取得し，返す
+//@brief 速度境界条件のタイプを取得し，返す
 int ParseBC::getVprofile(const string label_base)
 {
   string label, str;
@@ -1776,6 +1776,10 @@ int ParseBC::getVprofile(const string label_base)
   {
 		return CompoList::vel_harmonic;
   }
+  else if ( !strcasecmp("polynomial6", str.c_str()) )
+  {
+    return CompoList::vel_polynomial6;
+  }
   else
   {
 	  printf("\tParsing error : Invalid string value for '%s' : %s\n", label.c_str(), str.c_str());
@@ -1788,9 +1792,11 @@ int ParseBC::getVprofile(const string label_base)
 // #################################################################
 /**
  @brief 速度のパラメータを取得する
- @param label_base 
- @param ca 係数パラメータの配列
- @param policy 流量指定(true) or 速度指定(false) > 外部境界は速度のみ
+ @param [in]  label_base パースするラベルの基点
+ @param [in]  prof       速度プロファイルの番号{constant, harmonic, polynomial6, zero}
+ @param [out] ca         係数パラメータの配列
+ @param [in]  str        エラー表示の文字列
+ @param [in]  policy     流量指定(true) or 速度指定(false) > 外部境界は速度のみ
  @note 
  - 値は，Control::setParameters()で無次元化する
  - 速度プロファイルは単振動と一定値の場合で係数の保持パターンが異なる
@@ -1834,41 +1840,38 @@ void ParseBC::getVelocity(const string label_base, const int prof, REAL_TYPE* ca
   else if ( prof == CompoList::vel_harmonic)
   {
     label = label_base + "/Amplitude";
-    
-    if ( !(tpCntl->getInspectedValue(label, ct )) )
-    {
-      stamped_printf("\tParsing error : fail to get 'Amplitude' in '%s'\n", label_base.c_str());
-      Exit(0);
-    }
-    ca[CompoList::amplitude] = ct;
+    ca[CompoList::amplitude] = Control::getValueReal(label, tpCntl);
     
     label = label_base + "/Frequency";
-    
-    if ( !(tpCntl->getInspectedValue(label, ct )) )
-    {
-      stamped_printf("\tParsing error : fail to get 'Frequency' in '%s'\n", label_base.c_str());
-      Exit(0);
-    }
-    ca[CompoList::frequency] = ct;
+    ca[CompoList::frequency] = Control::getValueReal(label, tpCntl);
     
     label = label_base + "/InitialPhase";
-    
-    if ( !(tpCntl->getInspectedValue(label, ct )) )
-    {
-      stamped_printf("\tParsing error : fail to get 'InitialPhase' in '%s'\n", label_base.c_str());
-      Exit(0);
-    }
-    ca[CompoList::initphase] = ct;
+    ca[CompoList::initphase] = Control::getValueReal(label, tpCntl);
     
     
     label = label_base + "/ConstantBias";
+    ca[CompoList::bias] = Control::getValueReal(label, tpCntl);
     
-    if ( !(tpCntl->getInspectedValue(label, ct )) )
-    {
-      stamped_printf("\tParsing error : fail to get 'ConstantBias' in '%s'\n", label_base.c_str());
-      Exit(0);
-    }
-    ca[CompoList::bias] = ct;
+  }
+  else if ( prof == CompoList::vel_polynomial6 )
+  {
+    label = label_base + "/x^1";
+    ca[0] = Control::getValueReal(label, tpCntl);
+
+    label = label_base + "/x^2";
+    ca[1] = Control::getValueReal(label, tpCntl);
+    
+    label = label_base + "/x^3";
+    ca[2] = Control::getValueReal(label, tpCntl);
+    
+    label = label_base + "/x^4";
+    ca[3] = Control::getValueReal(label, tpCntl);
+    
+    label = label_base + "/x^5";
+    ca[4] = Control::getValueReal(label, tpCntl);
+    
+    label = label_base + "/x^6";
+    ca[5] = Control::getValueReal(label, tpCntl);
   }
   else
   {
@@ -2314,9 +2317,17 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         {
           fprintf(fp, "    Q[m^3/s]   Vel.[m/s]\n");
         }
-        else
+        else if ( cmp[n].get_V_Profile() == CompoList::vel_harmonic )
         {
           fprintf(fp, "    Q[m^3/s]   Amp.[m/s]   Freq.[Hz]  Phase[rad] Intcpt[m/s] Strauhal[-]\n");
+        }
+        else if ( cmp[n].get_V_Profile() == CompoList::vel_polynomial6 )
+        {
+          fprintf(fp, "         x^6         x^5         x^4         x^3         x^2         x^1\n");
+        }
+        else
+        {
+          Exit(0);
         }
       }
     }
@@ -2338,7 +2349,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         {
           fprintf(fp,"%11.3e %11.3e\n", cmp[n].ca[CompoList::bias]*cmp[n].area, cmp[n].ca[CompoList::bias] );
         }
-        else
+        else if ( cmp[n].get_V_Profile() == CompoList::vel_harmonic )
         {
           fprintf(fp,"%11.3e %11.3e %11.3e %11.3e %11.3e %11.4e\n",
                   cmp[n].ca[CompoList::amplitude]*cmp[n].area,
@@ -2347,6 +2358,20 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
                   cmp[n].ca[CompoList::initphase],
                   cmp[n].ca[CompoList::bias],
                   cmp[n].ca[CompoList::frequency]*RefLength/RefVelocity);
+        }
+        else if ( cmp[n].get_V_Profile() == CompoList::vel_polynomial6 )
+        {
+          fprintf(fp,"%11.4e %11.4e %11.4e %11.4e %11.4e %11.4e\n",
+                  cmp[n].ca[5],
+                  cmp[n].ca[4],
+                  cmp[n].ca[3],
+                  cmp[n].ca[2],
+                  cmp[n].ca[1],
+                  cmp[n].ca[0]);
+        }
+        else
+        {
+          Exit(0);
         }
       }
     }
@@ -3105,6 +3130,17 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
         fprintf(fp,"\t\t\t          phase   %12.6e [rad] / %12.6e [-]\n", ref->ca[2], ref->ca[2]);
         fprintf(fp,"\t\t\t          intcpt. %12.6e [m/s] / %12.6e [-]\n", ref->ca[3], ref->ca[3]/RefVelocity);
       }
+      else if ( ref->get_V_Profile() == CompoList::vel_polynomial6 )
+      {
+        fprintf(fp,"\t\t\tVelocity  Polynomial 6\n");
+        fprintf(fp,"\t\t\t          nrml vec. V(%10.3e, %10.3e, %10.3e) [-]\n", ref->nv[0], ref->nv[1], ref->nv[2]);
+        fprintf(fp,"\t\t\t          x^6     %12.6e [m/s] / %12.6e [-]\n", ref->ca[5], ref->ca[5]/RefVelocity);
+        fprintf(fp,"\t\t\t          x^5     %12.6e [m/s] / %12.6e [-]\n", ref->ca[4], ref->ca[4]/RefVelocity);
+        fprintf(fp,"\t\t\t          x^4     %12.6e [m/s] / %12.6e [-]\n", ref->ca[3], ref->ca[3]/RefVelocity);
+        fprintf(fp,"\t\t\t          x^3     %12.6e [m/s] / %12.6e [-]\n", ref->ca[2], ref->ca[2]/RefVelocity);
+        fprintf(fp,"\t\t\t          x^2     %12.6e [m/s] / %12.6e [-]\n", ref->ca[1], ref->ca[1]/RefVelocity);
+        fprintf(fp,"\t\t\t          x^1     %12.6e [m/s] / %12.6e [-]\n", ref->ca[0], ref->ca[0]/RefVelocity);
+      }
       else // vel_constant, vel_zero
       {
         c = ref->ca[CompoList::bias]; // 有次元値
@@ -3180,6 +3216,17 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
         fprintf(fp,"\t\t\t          freq.   %12.6e [Hz]  / %12.6e [-]\n", ref->ca[1], ref->ca[1]*RefLength/RefVelocity);
         fprintf(fp,"\t\t\t          phase   %12.6e [rad] / %12.6e [-]\n", ref->ca[2], ref->ca[2]);
         fprintf(fp,"\t\t\t          intcpt. %12.6e [m/s] / %12.6e [-]\n", ref->ca[3], ref->ca[3]/RefVelocity);
+      }
+      else if ( ref->get_V_Profile() == CompoList::vel_polynomial6 )
+      {
+        fprintf(fp,"\t\t\tVelocity  Polynomial 6\n");
+        fprintf(fp,"\t\t\t          nrml vec. V(%10.3e, %10.3e, %10.3e) [-]\n", ref->nv[0], ref->nv[1], ref->nv[2]);
+        fprintf(fp,"\t\t\t          x^6     %12.6e [m/s] / %12.6e [-]\n", ref->ca[5], ref->ca[5]/RefVelocity);
+        fprintf(fp,"\t\t\t          x^5     %12.6e [m/s] / %12.6e [-]\n", ref->ca[4], ref->ca[4]/RefVelocity);
+        fprintf(fp,"\t\t\t          x^4     %12.6e [m/s] / %12.6e [-]\n", ref->ca[3], ref->ca[3]/RefVelocity);
+        fprintf(fp,"\t\t\t          x^3     %12.6e [m/s] / %12.6e [-]\n", ref->ca[2], ref->ca[2]/RefVelocity);
+        fprintf(fp,"\t\t\t          x^2     %12.6e [m/s] / %12.6e [-]\n", ref->ca[1], ref->ca[1]/RefVelocity);
+        fprintf(fp,"\t\t\t          x^1     %12.6e [m/s] / %12.6e [-]\n", ref->ca[0], ref->ca[0]/RefVelocity);
       }
       else // vel_zero, vel_constant
       {

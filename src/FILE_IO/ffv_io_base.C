@@ -874,7 +874,7 @@ int IO_BASE::writeBCflag(const int out_gc)
         size_t m1 = _F_IDX_S3D(i, j, k, ix, jx, kx, gc);
         unsigned tmp = (unsigned)(d_cdf[m0] & 0x3fffffff);
         buf[m1] = tmp;
-        if ( tmp != val ) c++;
+        if ( tmp == val ) c++;
       }
     }
   }
@@ -882,8 +882,8 @@ int IO_BASE::writeBCflag(const int out_gc)
   bool ret = false;
   int ret_val;
   
-  // サブドメイン内が同じ値の時には、BCflag配列を書き出さない
-  if ( c>0 )
+  // サブドメイン内が同じ値の時(c==nx)には、BCflag配列を書き出さない
+  if ( c != nx )
   {
     ret = BVX_IO::Save_Block_BCflag(size, gc, bitWidth, rank, OutDirPath, buf, BVXcomp);
     if ( !ret )
@@ -929,7 +929,7 @@ int IO_BASE::writeCellID(const int out_gc)
   // unsignd char
   u8 *buf = new u8[nx];
   
-  // start index 下位5bitの値のみ
+  // start indexの値 下位5bitの値のみ
   u8 val = DECODE_CMP(d_bcd[ _F_IDX_S3D(1-gc, 1-gc, 1-gc, ix, jx, kx, gd) ]);
   int c=0;
   
@@ -941,7 +941,7 @@ int IO_BASE::writeCellID(const int out_gc)
         size_t m1 = _F_IDX_S3D(i, j, k, ix, jx, kx, gc);
         u8 tmp = DECODE_CMP(d_bcd[m0]);
         buf[m1] = tmp;
-        if ( tmp != val ) c++;
+        if ( tmp == val ) c++;
       }
     }
   }
@@ -949,8 +949,8 @@ int IO_BASE::writeCellID(const int out_gc)
   bool ret = false;
   int ret_val;
   
-  // サブドメイン内が同じ値の時(c=0)には、CellID配列を書き出さずに戻り値はval
-  if ( c>0 )
+  // サブドメイン内が全て同じ値の時(c==nx)には、CellID配列を書き出さずに戻り値はval
+  if ( c != nx )
   {
     ret = BVX_IO::Save_Block_CellID(size, gc, bitWidth, rank, OutDirPath, buf, BVXcomp);
     if ( !ret )

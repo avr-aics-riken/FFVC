@@ -268,7 +268,7 @@ private:
   void getVelocity(const string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy=false);
   
   
-  // 外部境界の速度境界条件のタイプを取得し，返す
+  // 速度境界条件のタイプを取得し，返す
   int getVprofile(const string label_base);
   
   

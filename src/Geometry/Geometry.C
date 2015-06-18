@@ -781,21 +781,13 @@ bool Geometry::fill(FILE* fp,
       fprintf(fp,"\t\t               Remaining cells    = %16ld\n\n", target_count);
     }
   }
-  
+  fflush(fp);
   
   
   // 未ペイントのセルをヒントのSOLIDでペイントする -------------------
   
   // 未ペイント（ID=0）のセルを検出
-  unsigned long upc = countCellB(d_bcd, 0);
-  
-  Hostonly_
-  {
-    fprintf(fp, "\tUnpainted cells after fillByModalCutID() = %ld\n", upc);
-  }
-  
-  fflush(fp);
-  if ( upc == 0 ) return true;
+  if ( countCellB(d_bcd, 0) == 0 ) return true;
   
   
   // SOLIDでフィル
@@ -817,10 +809,7 @@ bool Geometry::fill(FILE* fp,
   //if ( !identifyConnectedRegion(d_mid, d_bcd, d_bid, target_count, total_cell-target_count) ) {
   //  return false;
   //}
-  
-  
-  // 未ペイント(ID=0)をカウント
-  upc = countCellB(d_bcd, 0);
+
   
   
   // 未ペイントセルがある場合は、全周カットの可能性
@@ -836,7 +825,7 @@ bool Geometry::fill(FILE* fp,
   
   
   // チェック
-  upc = countCellB(d_bcd, 0);
+  unsigned long upc = countCellB(d_bcd, 0);
   
   if ( upc != 0 )
   {
@@ -875,7 +864,7 @@ bool Geometry::fill_connected(FILE* fp,
   int kx = size[2];
   int gd = guide;
   
-  unsigned long filled;       ///< フィルされた数
+  unsigned long filled=0;       ///< フィルされた数
 
   
   // 媒質のヒントを与える
@@ -925,14 +914,6 @@ bool Geometry::fill_connected(FILE* fp,
   }
 
   
-  if ( filled == 0 )
-  {
-    Hostonly_
-    {
-      fprintf(fp,"\tNo cells painted by %s\n", (fill_mode==FLUID)?"FLUID":"SOLID");
-    }
-    return false;
-  }
   
   Hostonly_
   {
@@ -2804,7 +2785,6 @@ void Geometry::minDistance(const long long* cut, const int* bid, FILE* fp)
  * @param [in]     cmp       CompoList
  * @param [out]    fillcut   定義点上の交点IDでフィルした数
  * @param [out]    modopp    対向点の修正数
-
  * @param [in]     Dsize     サイズ
  * @retval フィルされたセル数
  */
@@ -2842,7 +2822,7 @@ void Geometry::paintCutOnPoint(int* bcd,
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         
-        size_t m = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         
         int qq = bid[m];
         long long pos = cut[m];
@@ -2890,9 +2870,20 @@ void Geometry::paintCutOnPoint(int* bcd,
             Exit(0);
           }
           
-          // セルを固体にする
-          setMediumID(bcd[m], key);
+          // セル属性をエンコード
+          int s = bcd[m];
+          setMediumID(s, key);
           
+          // セルを固体にする
+          if ( cmp[key].getState() == FLUID ) // cmp[]はmat[]の代用
+          {
+            s = onBit( s, STATE_BIT );
+          }
+          else  // SOLID
+          {
+            s = offBit( s, STATE_BIT );
+          }
+          bcd[m] = s;
           
           // 6方向とも交点ゼロにする
           setCut9(pos, 0, X_minus);
@@ -2957,42 +2948,51 @@ void Geometry::paintCutOnPoint(int* bcd,
         const long long pos = cut[m_p];
         
         // 定義点上に交点があり、反対側のセルから見て交点がない場合
-        if ( chkZeroCut(pos, X_minus) > 0 && !ensCut(cut[m_w], X_plus) )
+        int ens = 0;
+        if ( chkZeroCut(pos, X_minus) ||
+             chkZeroCut(pos, X_plus ) ||
+             chkZeroCut(pos, Y_minus) ||
+             chkZeroCut(pos, Y_plus ) ||
+             chkZeroCut(pos, Z_minus) ||
+             chkZeroCut(pos, Z_plus ) ) ens = 1;
+        
+        
+        if ( ens == 1 && !ensCut(cut[m_w], X_plus) )
         {
           setBit5(bid[m_w], getBit5(qq, X_minus), X_plus);
           setCut9(cut[m_w], QT_9, X_plus);
           fc++;
         }
         
-        if ( chkZeroCut(pos, X_plus) > 0  && !ensCut(cut[m_e], X_minus) )
+        if ( ens == 1  && !ensCut(cut[m_e], X_minus) )
         {
           setBit5(bid[m_e], getBit5(qq, X_plus), X_minus);
           setCut9(cut[m_e], QT_9, X_minus);
           fc++;
         }
         
-        if ( chkZeroCut(pos, Y_minus) > 0 && !ensCut(cut[m_s], Y_plus) )
+        if ( ens == 1 && !ensCut(cut[m_s], Y_plus) )
         {
           setBit5(bid[m_s], getBit5(qq, Y_minus), Y_plus);
           setCut9(cut[m_s], QT_9, Y_plus);
           fc++;
         }
         
-        if ( chkZeroCut(pos, Y_plus) > 0  && !ensCut(cut[m_n], Y_minus) )
+        if ( ens == 1  && !ensCut(cut[m_n], Y_minus) )
         {
           setBit5(bid[m_n], getBit5(qq, Y_plus), Y_minus);
           setCut9(cut[m_n], QT_9, Y_minus);
           fc++;
         }
         
-        if ( chkZeroCut(pos, Z_minus) > 0 && !ensCut(cut[m_b], Z_plus) )
+        if ( ens == 1 && !ensCut(cut[m_b], Z_plus) )
         {
           setBit5(bid[m_b], getBit5(qq, Z_minus), Z_plus);
           setCut9(cut[m_b], QT_9, Z_plus);
           fc++;
         }
         
-        if ( chkZeroCut(pos, Z_plus) > 0  && !ensCut(cut[m_t], Z_minus) )
+        if ( ens == 1  && !ensCut(cut[m_t], Z_minus) )
         {
           setBit5(bid[m_t], getBit5(qq, Z_plus), Z_minus);
           setCut9(cut[m_t], QT_9, Z_minus);
@@ -3232,7 +3232,7 @@ void Geometry::quantizeCut(FILE* fp,
     if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
   }
   
-
+  
   
   // 修正
   
@@ -3243,7 +3243,7 @@ void Geometry::quantizeCut(FILE* fp,
 
   Hostonly_
   {
-    if ( fill_cut > 0 )
+    if ( fill_cut > 0  || cm > 0 )
     {
       fprintf(fp,"\n\tPaint cells which have cut on a center  = %16ld\n", fill_cut);
       fprintf(fp,  "\tModify neighbor cells owing to painting = %16ld\n", cm);

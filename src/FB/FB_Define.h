@@ -125,15 +125,15 @@
 #define QT_9       511   // 9bit幅の最大値
 
 
-// エンコードビット　共通
+// エンコードビット 共通
 #define ACTIVE_BIT 31
 #define STATE_BIT  30
 
-// エンコードビット　B
+// エンコードビット B
 #define FORCING_BIT   28 //  外力モデルの識別子
 #define TOP_VF        20 //  Volume Fractionの先頭ビット
 
-// エンコードビット　B : Heat part
+// エンコードビット B : Heat part
 #define ADIABATIC_T  19
 #define ADIABATIC_B  18
 #define ADIABATIC_N  17
@@ -149,7 +149,7 @@
 #define H_DIAG       5
 // 0-4 bitはコンポーネント番号
 
-// エンコードビット　P
+// エンコードビット P
 #define BC_D_T     29
 #define BC_D_B     28
 #define BC_D_N     27
@@ -181,7 +181,7 @@
 
 #define VLD_CNVG   2
 
-// エンコードビット　C, bid
+// エンコードビット C, bid
 #define BC_FACE_T  25
 #define BC_FACE_B  20
 #define BC_FACE_N  15
@@ -583,9 +583,27 @@ enum DIRection {
   Z_plus
 };
 
+
+//@brief idxの第shiftビットをOFFにする
+inline int offBit (int idx, const int shift)
+{
+  return ( idx & (~(0x1<<shift)) );
+}
+
+
+//@brief idxの第shiftビットをONにする
+inline int onBit (int idx, const int shift)
+{
+  return ( idx | (0x1<<shift) );
+}
+
+
 /*
  * @brief 9bit幅の量子化
  * @param [in]  a  入力数値
+ * @note -1/(2*511) < a < 1/(2*511)のとき、s=0
+ *       a= 1.0 --> s=511
+ *       0.0 <= a <= 1.0 を想定
  */
 inline int quantize9(REAL_TYPE a)
 {
@@ -668,18 +686,29 @@ inline int ensCut (const long long c, const int dir)
  */
 inline int chkZeroCut (const long long c, const int dir)
 {
-  // 各方向の10ビット
+  // 各方向の9ビット
   long long b = (c >> TOP_CUT) >> dir*9;
   long long a = 1;
-  
-  // 交点の有無
-  int ens = (int)((c >> dir) & a);
   
   // 量子化した距離 9ビット幅
   a = MASK_9;
   int d = (int)(b & a);
   
-  return ( ens & !d ) ? 1 : 0;
+  // 距離が記録されている
+  if ( d > 0 ) return 0;
+  
+  // 交点の有無
+  int ens = (int)((c >> dir) & a);
+  
+  // 距離ゼロ
+  if ( ens == 1 )
+  {
+    return 1; // 交点の記録あり
+  }
+  else
+  {
+    return 2; // 交点の記録なし
+  }
 }
 
 
