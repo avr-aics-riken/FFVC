@@ -20,6 +20,11 @@ REVISION HISTORY
 
 --------------------------
 2015-06-20
+r1612 replacing if-branch in psor_() and psor2sma_core_()
+- rm VLD_CNVG >> active_bit
+- modify encPbit(), encPbitN(), norm_v_div_l2_(), norm_v_div_max_()
+- replacing if-branch to mask combination in psor_(), psor2sma_core_()
+
 r1611 add ffvc-config
 - arrange Geometry.C
 

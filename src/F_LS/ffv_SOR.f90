@@ -37,10 +37,10 @@
   subroutine psor (p, sz, g, dh, omg, cnv, b, bp, flop)
   implicit none
   include 'ffv_f_params.h'
-  integer                                                   ::  i, j, k, ix, jx, kx, g, idx, dsw
+  integer                                                   ::  i, j, k, ix, jx, kx, g, idx
   integer, dimension(3)                                     ::  sz
   double precision                                          ::  flop, res, err, aa, xl2
-  real                                                      ::  omg, dd, ss, dp, pp, bb, de, pn
+  real                                                      ::  omg, dd, ss, dp, pp, bb, de, pn, dsw
   real                                                      ::  c_w, c_e, c_s, c_n, c_b, c_t
   real                                                      ::  d_w, d_e, d_s, d_n, d_b, d_t
   real                                                      ::  r_xx, r_xy, r_xz, r_x2, r_y2, r_z2
@@ -77,7 +77,6 @@
 !$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
-
   do k=1,kx
   do j=1,jx
   do i=1,ix
@@ -97,7 +96,7 @@
     d_b = real(ibits(idx, bc_dn_B, 1))
     d_t = real(ibits(idx, bc_dn_T, 1))
 
-    dsw = ibits(idx, bc_diag, 1)
+    dsw = real(ibits(idx, bc_diag, 1))
 
     dd = r_x2 * (c_w + c_e) &
        + r_y2 * (c_s + c_n) &
@@ -107,7 +106,7 @@
        + r_y2 * (d_s + d_n) &
        + r_z2 * (d_b + d_t) )
 
-    if ( dsw == 0 ) dd = 1.0 ! to avoid zero division
+    dd = dsw * dd + 1.0 - dsw
 
     aa = dble(ibits(idx, Active, 1))
 
@@ -158,10 +157,10 @@
 subroutine psor2sma_core (p, sz, g, dh, ip, color, omg, cnv, b, bp, flop)
 implicit none
 include 'ffv_f_params.h'
-integer                                                   ::  i, j, k, ix, jx, kx, g, idx, dsw
+integer                                                   ::  i, j, k, ix, jx, kx, g, idx
 integer, dimension(3)                                     ::  sz
 double precision                                          ::  flop, res, err, xl2, aa
-real                                                      ::  omg, dd, ss, dp, pp, bb, de, pn
+real                                                      ::  omg, dd, ss, dp, pp, bb, de, pn, dsw
 real                                                      ::  c_w, c_e, c_s, c_n, c_b, c_t
 real                                                      ::  d_w, d_e, d_s, d_n, d_b, d_t
 real                                                      ::  r_xx, r_xy, r_xz, r_x2, r_y2, r_z2
@@ -200,7 +199,6 @@ flop = flop + (dble(ix)*dble(jx)*dble(kx) * 56.0d0 +19.0d0 ) * 0.5d0
 !$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
-
 do k=1,kx
 do j=1,jx
 do i=1+mod(k+j+color+ip,2), ix, 2
@@ -220,7 +218,7 @@ do i=1+mod(k+j+color+ip,2), ix, 2
   d_b = real(ibits(idx, bc_dn_B, 1))
   d_t = real(ibits(idx, bc_dn_T, 1))
 
-  dsw = ibits(idx, bc_diag, 1)
+  dsw = real(ibits(idx, bc_diag, 1))
 
   dd = r_x2 * (c_w + c_e) &
      + r_y2 * (c_s + c_n) &
@@ -230,7 +228,7 @@ do i=1+mod(k+j+color+ip,2), ix, 2
      + r_y2 * (d_s + d_n) &
      + r_z2 * (d_b + d_t) )
 
-  if ( dsw == 0 ) dd = 1.0 ! to avoid zero division
+  dd = dsw * dd + 1.0 - dsw
 
   aa = dble(ibits(idx, Active, 1))
 

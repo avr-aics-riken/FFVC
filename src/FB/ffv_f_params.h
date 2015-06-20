@@ -31,7 +31,7 @@ integer     ::  X_plus, X_minus, Y_plus, Y_minus, Z_plus, Z_minus
 integer     ::  id_specvel, id_wall, id_symmetric, id_periodic
 integer     ::  obc_periodic, obc_outflow, obc_mask
 integer     ::  cmp_typ_outflow, cmp_typ_hex, cmp_typ_vspec, cmp_typ_solidrev
-integer     ::  vld_cnvg, bc_diag
+integer     ::  bc_diag
 integer     ::  gma_T, gma_B, gma_N, gma_S, gma_E, gma_W, h_diag
 integer     ::  top_vf, bitw_8, forcing_bit, bitw_6, bitw_5, vbc_uwd, bitw_9, bitw_10
 
@@ -101,7 +101,6 @@ parameter ( bc_ndag_S = 8  ) ! FB_Define.h BC_NDAG_S
 parameter ( bc_ndag_E = 7  ) ! FB_Define.h BC_NDAG_E
 parameter ( bc_ndag_W = 6  ) ! FB_Define.h BC_NDAG_W
 parameter ( bc_diag   = 5  ) ! FB_Define.h BC_DIAG
-parameter ( vld_cnvg  = 2  ) ! FB_Define.h VLD_CNVG
 
 
 ! BCindex C

@@ -1232,8 +1232,8 @@ void VoxInfo::encHbit (const int* cdf, int* bd)
 // #################################################################
 /**
  * @brief ディリクレ条件とノイマン条件の排他性をチェックし，反復行列の非対角要素/対角要素の係数をエンコードする
- * @param [in,out] bx     BCindex P
- * @param [in]     bid    カット点ID
+ * @param [in,out] bx          BCindex P
+ * @param [in]     bid         カット点ID
  * @note
    - ディリクレ条件とノイマン条件の排他性のチェック
    - 非対角要素と対角要素の係数をエンコードする > 初期値は1になっている
@@ -1332,7 +1332,7 @@ void VoxInfo::encPbit (int* bx, const int* bid)
         int d_t = BIT_SHIFT(s, BC_DN_T);
         int d_b = BIT_SHIFT(s, BC_DN_B);
         
-        // 対角項の係数
+        // 対角項の係数がゼロになるかどうかを判定
         int ss = s_w + s_e + s_s + s_n + s_b + s_t
                + d_w + d_e + d_s + d_n + d_b + d_t;
         
@@ -1373,6 +1373,7 @@ void VoxInfo::encPbit (int* bx, const int* bid)
     }
   }
 
+
 }
 
 
@@ -1384,7 +1385,6 @@ void VoxInfo::encPbit (int* bx, const int* bid)
  * @param [in]     bid         カット点のID情報
  * @param [in]     cut         距離情報
  * @param [in]     convergence カットのあるセルは収束判定をしないオプション（trueの時）
- * @retval 固体表面セル数
  * @note
  *   - 流体セルのうち，固体セルに隣接する面のノイマンフラグをゼロにする．ただし，内部領域のみ．
  *   - 固体セルに隣接する流体セルに方向フラグを付与する．全内部領域．
@@ -1431,9 +1431,7 @@ void VoxInfo::encPbitN (int* bx, const int* bid, const long long* cut, const boo
     }
   }
   
-  
-  
-  // 収束判定の有効フラグ
+  // 対角項のフラグセット
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
@@ -1443,20 +1441,25 @@ void VoxInfo::encPbitN (int* bx, const int* bid, const long long* cut, const boo
         
         if ( IS_FLUID( s ) )
         {
-          s = onBit(s, VLD_CNVG);
-          bx[m_p] = s; 
+          s = onBit(s, BC_DIAG);  // 1
         }
+        else
+        {
+          s = offBit(s, BC_DIAG); // 0
+        }
+        bx[m_p] = s;
       }
     }
   }
-
+  
+  
   unsigned long g=0;
   
   // カットのあるセルの収束判定をしないオプション
   if ( convergence )
   {
     g = 0;
-
+    
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:g)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
@@ -1476,7 +1479,7 @@ void VoxInfo::encPbitN (int* bx, const int* bid, const long long* cut, const boo
                 +chkZeroCut(pos, Z_minus)
                 +chkZeroCut(pos, Z_plus) > 0 )
             {
-              s = offBit(s, VLD_CNVG);    // Out of scope  @todo check
+              s = offBit(s, BC_DIAG);    // Out of scope  @todo check
               g++;
             }
             
@@ -3281,8 +3284,6 @@ void VoxInfo::setBCIndexP(int* bcd,
 
   // 全周Neumannフラグのセルと排他性をチェックし，反復行列の非対角要素/対角要素をエンコードする
   encPbit(bcp, bid);
-  
-  
   
 
 // ########## debug

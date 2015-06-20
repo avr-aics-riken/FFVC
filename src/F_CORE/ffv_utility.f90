@@ -55,7 +55,7 @@
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      r = div(i,j,k) * real(ibits(bp(i,j,k), vld_cnvg, 1)) ! 有効セルの場合 1.0
+      r = div(i,j,k) * real(ibits(bp(i,j,k), Active, 1)) ! FLUIDセルの場合 1.0
       ds = ds + r*r
     end do
     end do
@@ -101,7 +101,7 @@
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      r = div(i,j,k) * real(ibits(bp(i,j,k), vld_cnvg, 1)) ! 有効セルの場合 1.0
+      r = div(i,j,k) * real(ibits(bp(i,j,k), Active, 1)) ! FLUIDセルの場合 1.0
       ds = max(ds, abs(r) )
     end do
     end do

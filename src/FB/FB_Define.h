@@ -179,7 +179,6 @@
 #define BC_NDAG_W  6
 #define BC_DIAG    5
 
-#define VLD_CNVG   2
 
 // エンコードビット C, bid
 #define BC_FACE_T  25

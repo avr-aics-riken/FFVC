@@ -85,7 +85,7 @@ private:
   void encPbit (int* bx, const int* bid);
   
   
-  // 圧力のノイマン境界ビットをエンコードする（カット）
+  // 圧力のノイマン境界ビットをエンコードする
   void encPbitN (int* bx, const int* bid, const long long* cut, const bool convergence);
   
   

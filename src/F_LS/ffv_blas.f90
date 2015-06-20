@@ -218,11 +218,10 @@ flop = flop + dble(ix)*dble(jx)*dble(kx)*4.0d0 + 10.0d0
 !$OMP FIRSTPRIVATE(ix, jx, kx, c1)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
-
 do k=1,kx
 do j=1,jx
 do i=1,ix
-  d = c1 * div(i,j,k) * real(ibits(bp(i,j,k), Active, 1))
+  d = c1 * div(i,j,k) * real(ibits(bp(i,j,k), Active, 1)) ! SOLIDのときにはd=0
   b(i,j,k) = d ! \frac{dx^2}{\Delta t} \nabla u^*
   rhs = rhs + dble(d*d)
 end do
