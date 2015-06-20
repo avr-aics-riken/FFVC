@@ -746,10 +746,7 @@ int LinearSolver::PointSOR_4th(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE* u_sum, REA
 
 // #################################################################
 // PBiCBSTAB 収束判定は残差
-// @note 反復回数がマシンによって異なる現象がある．
-// Xeon E5では同じ反復回数になるのに対して，Core i7では反復回数が試行毎に異なる．
-// コンパイラは同じIntel(R) C++ Intel(R) 64 Compiler XE for applications running on Intel(R) 64, Version 15.0.0.077 Build 20140716
-// 内積のOpenMP並列のためか？？
+// @note 反復回数が試行毎に異なる　内積のOpenMP並列のため
 int LinearSolver::PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2)
 {
   double var[3];          /// 誤差, 残差, 解ベクトルのL2ノルム

@@ -148,14 +148,6 @@ private:
                           const int* Dsize=NULL);
   
   
-  // 未ペイントセルを周囲の交点IDの最頻値でフィル
-  bool fillByModalCutID(int* bcd,
-                        const int* bid,
-                        const int m_NoCompo,
-                        const CompoList* cmp,
-                        unsigned long& replaced);
-  
-  
   // 未ペイントセルを周囲のbidの固体最頻値でフィル
   bool fillByModalSolid(int* bcd,
                         const int* bid,
@@ -257,6 +249,14 @@ private:
   
   // 距離の最小値を求める
   void minDistance(const long long* cut, const int* bid, FILE* fp);
+  
+  
+  // 未ペイントセルを周囲の交点IDの最頻値でフィル
+  bool paintCellByModalCutID(int* bcd,
+                             const int* bid,
+                             const int m_NoCompo,
+                             const CompoList* cmp,
+                             unsigned long& replaced);
   
   
   // 固体領域をスレッド毎にIDでペイント

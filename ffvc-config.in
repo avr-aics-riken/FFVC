@@ -1,0 +1,69 @@
+#! /bin/sh
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+includedir=@includedir@
+libdir=@libdir@
+
+usage()
+{
+    cat <<EOF
+
+Usage: ffvc-config [OPTION]
+
+Known values for OPTION are:
+
+  --help      display this help and exit
+  --version   output version information
+
+EOF
+
+    exit $1
+}
+
+if test $# -eq 0; then
+    usage 1
+fi
+
+cflags=false
+libs=false
+
+while test $# -gt 0; do
+    case "$1" in
+    -*=*) optarg=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'` ;;
+    *) optarg= ;;
+    esac
+
+    case "$1" in
+    --version)
+cat <<EOF
+
+FFV-C : Frontflow / Violet Cartesian  Version : @VERSION@ : @FFVC_REVISION@
+
+Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
+All rights reserved.
+
+Copyright (c) 2011-2015 Institute of Industrial Science, University of Tokyo.
+All rights reserved.
+
+Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
+All rights reserved.
+
+EOF
+      exit 0
+      ;;
+
+    --help)
+      usage 0
+      ;;
+
+
+    *)
+      usage
+      exit 1
+      ;;
+    esac
+    shift
+done
+
+exit 0

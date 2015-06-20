@@ -3041,7 +3041,7 @@ fi
 # revision No.
 #
 
-FFVC_REVISION="20150618_1600"
+FFVC_REVISION="20150620_1300"
 
 
 
@@ -5893,7 +5893,7 @@ done
 
 
 
-ac_config_files="$ac_config_files Makefile doc/Makefile src/F_CORE/Makefile src/F_LS/Makefile src/FILE_IO/Makefile src/FB/Makefile src/IP/Makefile src/ASD/Makefile src/Geometry/Makefile src/FFV/Makefile src/Makefile src/Util_Combsph/Makefile src/FFV/ffv_Version.h"
+ac_config_files="$ac_config_files Makefile doc/Makefile src/F_CORE/Makefile src/F_LS/Makefile src/FILE_IO/Makefile src/FB/Makefile src/IP/Makefile src/ASD/Makefile src/Geometry/Makefile src/FFV/Makefile src/Makefile src/Util_Combsph/Makefile src/FFV/ffv_Version.h ffvc-config"
 
 
 cat >confcache <<\_ACEOF
@@ -6640,6 +6640,7 @@ do
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
     "src/Util_Combsph/Makefile") CONFIG_FILES="$CONFIG_FILES src/Util_Combsph/Makefile" ;;
     "src/FFV/ffv_Version.h") CONFIG_FILES="$CONFIG_FILES src/FFV/ffv_Version.h" ;;
+    "ffvc-config") CONFIG_FILES="$CONFIG_FILES ffvc-config" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
@@ -7366,6 +7367,8 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
+
+chmod +x ./ffvc-conf
 
 echo "---------------------------------------------"
 echo "Finished Running FFV-C Configure Script"

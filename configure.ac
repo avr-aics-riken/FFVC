@@ -67,7 +67,7 @@ AM_INIT_AUTOMAKE()
 # revision No.
 #
 
-FFVC_REVISION="20150618_1600"
+FFVC_REVISION="20150620_1300"
 AC_SUBST(FFVC_REVISION)
 
 
@@ -395,9 +395,12 @@ AC_CONFIG_FILES([Makefile \
                  src/Makefile \
                  src/Util_Combsph/Makefile \
                  src/FFV/ffv_Version.h \
+                 ffvc-config \
                 ])
 
 AC_OUTPUT
+
+chmod +x ./ffvc-conf
 
 echo "---------------------------------------------"
 echo "Finished Running FFV-C Configure Script"

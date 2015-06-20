@@ -19,6 +19,11 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-06-20
+r1611 add ffvc-config
+- arrange Geometry.C
+
+--------------------------
 2015-06-18
 r1610 set state in Geometry::paintCutOnPoint()
 - move onBit()/offBit() from VoxInfo.h to FB_Define.h
