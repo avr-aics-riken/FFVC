@@ -746,7 +746,7 @@ int LinearSolver::PointSOR_4th(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE* u_sum, REA
 
 // #################################################################
 // PBiCBSTAB 収束判定は残差
-// @note 反復回数が試行毎に異なる　内積のOpenMP並列のため
+// @note 反復回数が試行毎に異なる 内積のOpenMP並列のため
 int LinearSolver::PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2)
 {
   double var[3];          /// 誤差, 残差, 解ベクトルのL2ノルム

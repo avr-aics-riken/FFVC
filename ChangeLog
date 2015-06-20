@@ -20,6 +20,9 @@ REVISION HISTORY
 
 --------------------------
 2015-06-20
+r1613 modify bicg mask
+- remove mask from blas_calc_rk_() and blas_calc_ax_() to make stable
+
 r1612 replacing if-branch in psor_() and psor2sma_core_()
 - rm VLD_CNVG >> active_bit
 - modify encPbit(), encPbitN(), norm_v_div_l2_(), norm_v_div_max_()

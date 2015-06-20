@@ -124,6 +124,94 @@
 #define CMP_BIT_W  32    // 5bit
 #define QT_9       511   // 9bit幅の最大値
 
+/*
+ Bit   bcd[]           bid[]        bcp[]         cdf[]
+ 31    active          active       active        active
+ 30    state           state        state         state
+ 29                    +            BC_D_T        +
+ 28                    |            BC_D_B        |
+ 27                    |            BC_D_N        |
+ 26                    |            BC_D_S        |
+ 25                    + Z_plus     BC_D_E        + BC_FACE_T
+ 24                    +            BC_D_W        +
+ 23                    |            BC_N_T        |
+ 22                    |            BC_N_B        |
+ 21                    |            BC_N_N        |
+ 20                    + Z_minus    BC_N_S        + BC_FACE_B
+ 19                    +            BC_N_E        +
+ 18                    |            BC_N_W        |
+ 17                    |            BC_DN_T       |
+ 16                    |            BC_DN_B       |
+ 15                    + Y_plus     BC_DN_N       + BC_FACE_N
+ 14                    +            BC_DN_S       +
+ 13                    |            BC_DN_E       |
+ 12                    |            BC_DN_W       |
+ 11                    |            BC_NDAG_T     |
+ 10                    + Y_minus    BC_NDAG_B     + BC_FACE_S
+  9                    +            BC_NDAG_N     +
+  8                    |            BC_NDAG_S     |
+  7                    |            BC_NDAG_E     |
+  6                    |            BC_NDAG_W     |
+  5                    + X_plus     BC_DIAG       + BC_FACE_E
+  4  +                 +                          +
+  3  |                 |                          |
+  2  | cmp[]/mat[]     |                          |
+  1  |                 |                          |
+  0  +                 + X_minus                  + BC_FACE_W
+ 
+ 
+ Bit    cut[]
+ 64
+ 63
+ 62
+ 61
+ 60
+ 59   +
+  .   |
+  .
+  .   |
+ 51   + Z_plus
+ 50   +
+  .   |
+  .
+  .   |
+ 42   + Z_minus
+ 41   +
+  .   |
+  .
+  .   |
+ 33   + Y_plus
+ 32   +
+  .   |
+  .
+  .   |
+ 24   + Y_minus
+ 23   +
+  .   |
+  .
+  .   |
+ 15   + X_plus
+ 14   +
+ 13   |
+ 12   |
+ 11   |
+ 10   |
+  9   |
+  8   |
+  7   |
+  6   + X_minus => TOP_CUT
+  5   +          Z_plus
+  4   |          Z_minus
+  3   | Ens code Y_plus
+  2   |          Y_minus
+  1   |          X_plus
+  0   +          X_minus
+ 
+ */
+
+
+
+
 
 // エンコードビット 共通
 #define ACTIVE_BIT 31
@@ -149,7 +237,7 @@
 #define H_DIAG       5
 // 0-4 bitはコンポーネント番号
 
-// エンコードビット P
+// エンコードビット bcp[] for Poisson Eq
 #define BC_D_T     29
 #define BC_D_B     28
 #define BC_D_N     27
@@ -180,7 +268,7 @@
 #define BC_DIAG    5
 
 
-// エンコードビット C, bid
+// エンコードビット cdf[] for veclocity BC
 #define BC_FACE_T  25
 #define BC_FACE_B  20
 #define BC_FACE_N  15

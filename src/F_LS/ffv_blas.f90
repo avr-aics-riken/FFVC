@@ -399,7 +399,7 @@ subroutine blas_dot2(r, p, q, bp, sz, g, flop)
        + r_y2 * ( c_n * p(i  ,j+1,k  ) + c_s * p(i  ,j-1,k  ) ) &
        + r_z2 * ( c_t * p(i  ,j  ,k+1) + c_b * p(i  ,j  ,k-1) )
 
-		ap(i, j, k) = (ss - dd * p(i, j, k)) * real(ibits(idx, Active, 1))
+		ap(i, j, k) = ss - dd * p(i, j, k)
   end do
   end do
   end do
@@ -485,7 +485,7 @@ subroutine blas_dot2(r, p, q, bp, sz, g, flop)
        + r_y2 * ( c_n * p(i  ,j+1,k  ) + c_s * p(i  ,j-1,k  ) ) &
        + r_z2 * ( c_t * p(i  ,j  ,k+1) + c_b * p(i  ,j  ,k-1) )
 
-		r(i, j, k) = (b(i, j, k) - (ss - dd * p(i, j, k))) * real(ibits(idx, Active, 1))
+		r(i, j, k) = b(i, j, k) - (ss - dd * p(i, j, k))
   end do
   end do
   end do
