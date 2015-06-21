@@ -711,6 +711,14 @@ int FFV::Initialize(int argc, char **argv)
     }
     return 0;
 	}
+  
+  if ( C.Hide.DryRun == ON )
+  {
+    Hostonly_
+    {
+      printf(     "\n\t#############  DRY RUN for DEBUGGING BC  #############\n\n");
+    }
+  }
 
   return 1;
 }
@@ -2796,6 +2804,8 @@ string FFV::setDomain(TextParser* tpf)
     LS[i].setDomainInfo(C.guide, C.RefLength);
   }
   
+  // 境界条件のドライランの指定 >> F->getFIOparams()でパラメータを書き換えるので先にコール
+  C.getDryRun();
   
   
   // ファイルIOパラメータ << get1stParameter()でgetTurbulenceModel()を呼んだあと

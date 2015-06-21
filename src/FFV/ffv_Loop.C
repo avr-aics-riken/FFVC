@@ -72,27 +72,35 @@ int FFV::Loop(const unsigned step)
   {
     TIMING_start("Flow_Section");
     
-    switch (C.AlgorithmF) 
+    if ( C.Hide.DryRun == OFF )
     {
-      case Flow_FS_EE_EE:
-      case Flow_FS_AB2:
-      case Flow_FS_AB_CN:
-        if (C.Mode.ShapeAprx == BINARY)
-        {
-          NS_FS_E_Binary();
-        }
-        else if (C.Mode.ShapeAprx == CUT_INFO)
-        {
-          NS_FS_E_CDS();
-        }          
-        break;
-        
-      case Flow_FS_RK_CN:
-        break;
-        
-      default:
-        break;
+      switch (C.AlgorithmF)
+      {
+        case Flow_FS_EE_EE:
+        case Flow_FS_AB2:
+        case Flow_FS_AB_CN:
+          if (C.Mode.ShapeAprx == BINARY)
+          {
+            NS_FS_E_Binary();
+          }
+          else if (C.Mode.ShapeAprx == CUT_INFO)
+          {
+            NS_FS_E_CDS();
+          }
+          break;
+          
+        case Flow_FS_RK_CN:
+          break;
+          
+        default:
+          break;
+      }
     }
+    else
+    {
+      dryrunBC();
+    }
+    
     TIMING_stop("Flow_Section", 0.0);
   }
   

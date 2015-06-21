@@ -35,7 +35,7 @@ private:
   int drv_lid;       ///< ドライバフェイスIDの位置
   int gc_medium;     ///< ガイドセルの媒質IDのエントリ番号
   int ptr_cmp;       ///< CompoList[]へのポインタ
-  int v_profile;     ///< 速度プロファイル（constant, harmonic, zero）
+  int v_profile;     ///< 速度プロファイル（constant, harmonic, zero, polynomial6）
   int Face_mode;     ///< 周期境界のときの面の状況指定（upstream, downstream）
   int hType;         ///< 熱境界条件の種別
   int HTref;         ///< 熱伝達境界の参照モード(Bulk, Local)

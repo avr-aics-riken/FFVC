@@ -295,6 +295,10 @@ private:
   void displayParameters(FILE* fp);
   
   
+  // 境界条件のドライラン
+  void dryrunBC();
+  
+  
   // BCIndexにビット情報をエンコードする
   void encodeBCindex(FILE* fp);
   

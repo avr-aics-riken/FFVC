@@ -639,7 +639,7 @@ void ParseBC::getIbcSpecVel(const string label_base, const int n, CompoList* cmp
     Exit(0);
   }
   
-  // 速度指定タイプ
+  // 速度プロファイル zero, const, harmonic, polynomial6
   cmp[n].set_V_profile( getVprofile(label_base) );
   
   
@@ -1791,51 +1791,61 @@ int ParseBC::getVprofile(const string label_base)
 
 // #################################################################
 /**
- @brief 速度のパラメータを取得する
- @param [in]  label_base パースするラベルの基点
- @param [in]  prof       速度プロファイルの番号{constant, harmonic, polynomial6, zero}
- @param [out] ca         係数パラメータの配列
- @param [in]  str        エラー表示の文字列
- @param [in]  policy     流量指定(true) or 速度指定(false) > 外部境界は速度のみ
- @note 
- - 値は，Control::setParameters()で無次元化する
- - 速度プロファイルは単振動と一定値の場合で係数の保持パターンが異なる
- - 内部境界の場合には，流量指定と速度指定があるので分岐処理（未実装）
+ * @brief 速度のパラメータを取得する
+ * @param [in]  label_base パースするラベルの基点
+ * @param [in]  prof       速度プロファイルの番号{constant, harmonic, polynomial6, zero}
+ * @param [out] ca         係数パラメータの配列
+ * @param [in]  str        エラー表示の文字列
+ * @param [in]  policy     流量指定(true) or 速度指定(false) > 外部境界は速度のみ
+ * @note  パラメータは有次元値で保持
  */
 void ParseBC::getVelocity(const string label_base, const int prof, REAL_TYPE* ca, const char* str, const bool policy)
 {
   string label;
-  REAL_TYPE ct=0.0, vel;
+  REAL_TYPE ct=0.0;
   
   if ( prof == CompoList::vel_zero )
   {
-    ca[CompoList::amplitude] = 0.0;
-    ca[CompoList::frequency] = 0.0;
-    ca[CompoList::initphase] = 0.0;
-    ca[CompoList::bias]      = 0.0;
+    ca[CompoList::amplitude] = 0.0; // ca[0]
+    ca[CompoList::frequency] = 0.0; // ca[1]
+    ca[CompoList::initphase] = 0.0; // ca[2]
+    ca[CompoList::bias]      = 0.0; // ca[3]
   }
   else if ( prof == CompoList::vel_constant )
   {
-    label = label_base + "/Velocity";
-    
-    if ( !(tpCntl->getInspectedValue(label, ct )) )
+    if ( policy ) // 流量指定の場合
     {
-      stamped_printf("\tParsing error : Invalid value in '%s > Velocity'\n", str);
-      Exit(0);
-    }
-    if ( policy ) // 流量指定の場合 Boundaryの場合のみ
-    {
-      vel = ct; // 有次元でも無次元でも，モデルの断面積を計算して，後ほどパラメータ計算 >> Control::setParameters()
+      label = label_base + "/Massflow";
+      if ( !(tpCntl->getInspectedValue(label, ct )) )
+      {
+        stamped_printf("\tParsing error : Invalid value in '%s > Massflow'\n", str);
+        Exit(0);
+      }
     }
     else
     {
-      vel = ( Unit_Param == DIMENSIONAL ) ? ct : ct * RefVelocity;
+      label = label_base + "/Velocity";
+      if ( !(tpCntl->getInspectedValue(label, ct )) )
+      {
+        stamped_printf("\tParsing error : Invalid value in '%s > Velocity'\n", str);
+        Exit(0);
+      }
     }
     
-    ca[CompoList::amplitude] = 0.0;
-    ca[CompoList::frequency] = 0.0;
-    ca[CompoList::initphase] = 0.0;
-    ca[CompoList::bias]      = vel;
+    ca[0] = 0.0;
+    ca[1] = 0.0;
+    ca[2] = 0.0;
+    ca[3] = ct;
+    
+    if ( policy ) // 流量指定の場合
+    {
+      ca[3] = ( Unit_Param == DIMENSIONAL ) ? ca[3] : ca[3] * RefVelocity * RefLength * RefLength;
+    }
+    else
+    {
+      ca[3] = ( Unit_Param == DIMENSIONAL ) ? ca[3] : ca[3] * RefVelocity;
+    }
+    
   }
   else if ( prof == CompoList::vel_harmonic)
   {
@@ -1848,30 +1858,65 @@ void ParseBC::getVelocity(const string label_base, const int prof, REAL_TYPE* ca
     label = label_base + "/InitialPhase";
     ca[CompoList::initphase] = Control::getValueReal(label, tpCntl);
     
-    
     label = label_base + "/ConstantBias";
     ca[CompoList::bias] = Control::getValueReal(label, tpCntl);
+    
+    
+    if ( policy ) // 流量指定の場合
+    {
+      ca[0] = ( Unit_Param == DIMENSIONAL ) ? ca[0] : ca[0] * RefVelocity * RefLength * RefLength;
+      ca[1] = ( Unit_Param == DIMENSIONAL ) ? ca[1] : ca[1] * RefVelocity * RefLength * RefLength;
+      ca[2] = ( Unit_Param == DIMENSIONAL ) ? ca[2] : ca[2] * RefVelocity * RefLength * RefLength;
+      ca[3] = ( Unit_Param == DIMENSIONAL ) ? ca[3] : ca[3] * RefVelocity * RefLength * RefLength;
+    }
+    else
+    {
+      ca[0] = ( Unit_Param == DIMENSIONAL ) ? ca[0] : ca[0] * RefVelocity;
+      ca[1] = ( Unit_Param == DIMENSIONAL ) ? ca[1] : ca[1] * RefVelocity;
+      ca[2] = ( Unit_Param == DIMENSIONAL ) ? ca[2] : ca[2] * RefVelocity;
+      ca[3] = ( Unit_Param == DIMENSIONAL ) ? ca[3] : ca[3] * RefVelocity;
+    }
     
   }
   else if ( prof == CompoList::vel_polynomial6 )
   {
-    label = label_base + "/x^1";
+    label = label_base + "/c1";
     ca[0] = Control::getValueReal(label, tpCntl);
 
-    label = label_base + "/x^2";
+    label = label_base + "/c2";
     ca[1] = Control::getValueReal(label, tpCntl);
     
-    label = label_base + "/x^3";
+    label = label_base + "/c3";
     ca[2] = Control::getValueReal(label, tpCntl);
     
-    label = label_base + "/x^4";
+    label = label_base + "/c4";
     ca[3] = Control::getValueReal(label, tpCntl);
     
-    label = label_base + "/x^5";
+    label = label_base + "/c5";
     ca[4] = Control::getValueReal(label, tpCntl);
     
-    label = label_base + "/x^6";
+    label = label_base + "/c6";
     ca[5] = Control::getValueReal(label, tpCntl);
+    
+    if ( policy ) // 流量指定の場合
+    {
+      ca[0] = ( Unit_Param == DIMENSIONAL ) ? ca[0] : ca[0] * RefVelocity * RefLength * RefLength;
+      ca[1] = ( Unit_Param == DIMENSIONAL ) ? ca[1] : ca[1] * RefVelocity * RefLength * RefLength;
+      ca[2] = ( Unit_Param == DIMENSIONAL ) ? ca[2] : ca[2] * RefVelocity * RefLength * RefLength;
+      ca[3] = ( Unit_Param == DIMENSIONAL ) ? ca[3] : ca[3] * RefVelocity * RefLength * RefLength;
+      ca[4] = ( Unit_Param == DIMENSIONAL ) ? ca[4] : ca[4] * RefVelocity * RefLength * RefLength;
+      ca[5] = ( Unit_Param == DIMENSIONAL ) ? ca[5] : ca[5] * RefVelocity * RefLength * RefLength;
+    }
+    else
+    {
+      ca[0] = ( Unit_Param == DIMENSIONAL ) ? ca[0] : ca[0] * RefVelocity;
+      ca[1] = ( Unit_Param == DIMENSIONAL ) ? ca[1] : ca[1] * RefVelocity;
+      ca[2] = ( Unit_Param == DIMENSIONAL ) ? ca[2] : ca[2] * RefVelocity;
+      ca[3] = ( Unit_Param == DIMENSIONAL ) ? ca[3] : ca[3] * RefVelocity;
+      ca[4] = ( Unit_Param == DIMENSIONAL ) ? ca[4] : ca[4] * RefVelocity;
+      ca[5] = ( Unit_Param == DIMENSIONAL ) ? ca[5] : ca[5] * RefVelocity;
+    }
+    
   }
   else
   {
@@ -2296,10 +2341,12 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
     fprintf(fp, "\n\t[Specified_Velocity]\n");
     fprintf(fp, "\t no                    Label    i_st    i_ed    j_st    j_ed    k_st    k_ed   Area[m*m]    Elements\n");
     
+    
     for (int n=1; n<=NoCompo; n++)
     {
       if ( cmp[n].getType() == SPEC_VEL )
       {
+        // 1st line
         st = getCmpGbbox_st(n, gci);
         ed = getCmpGbbox_ed(n, gci);
         
@@ -2307,39 +2354,55 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
                 n, cmp[n].alias.c_str(),
                 st.x, ed.x, st.y, ed.y, st.z, ed.z,
                 cmp[n].area, cmp[n].getElement());
-        fprintf(fp, "\t                     vector_x    vector_y    vector_z   Direction");
         
+        // 2nd line
+        fprintf(fp, "\t                     vector_x    vector_y    vector_z   Direction\n");
+        fprintf(fp,"\t\t\t   %10.3e  %10.3e  %10.3e  %10s\n\n",
+                cmp[n].nv[0], cmp[n].nv[1], cmp[n].nv[2],
+                (cmp[n].getBClocation()==CompoList::same_direction) ? "In" : "Out");
+        
+        // 3rd line
         if ( cmp[n].get_V_Profile() == CompoList::vel_zero )
         {
           fprintf(fp, "\n");
         }
         else if ( cmp[n].get_V_Profile() == CompoList::vel_constant )
         {
-          fprintf(fp, "    Q[m^3/s]   Vel.[m/s]\n");
+          if (cmp[n].isPolicy_Massflow())
+          {
+            fprintf(fp, "\t                     Q[m^3/s]\n");
+          }
+          else
+          {
+            fprintf(fp, "\t                     Vel.[m/s]\n");
+          }
         }
         else if ( cmp[n].get_V_Profile() == CompoList::vel_harmonic )
         {
-          fprintf(fp, "    Q[m^3/s]   Amp.[m/s]   Freq.[Hz]  Phase[rad] Intcpt[m/s] Strauhal[-]\n");
+          if (cmp[n].isPolicy_Massflow())
+          {
+            fprintf(fp, "\t                     Amp.[m^3/s]    Freq.[Hz]   Phase[rad] Intcpt[m^3/s]  Strauhal[-]\n");
+          }
+          else
+          {
+            fprintf(fp, "\t                     Amp.[m/s]    Freq.[Hz]   Phase[rad]   Intcpt[m/s]  Strauhal[-]\n");
+          }
         }
         else if ( cmp[n].get_V_Profile() == CompoList::vel_polynomial6 )
         {
-          fprintf(fp, "         x^6         x^5         x^4         x^3         x^2         x^1\n");
+          if (cmp[n].isPolicy_Massflow())
+          {
+            fprintf(fp, "\t                     Q[m^3/s]:         c6           c5           c4           c3           c2           c1\n");
+          }
+          else
+          {
+            fprintf(fp, "\t                     V[m/s]  :         c6           c5           c4           c3           c2           c1\n");
+          }
         }
         else
         {
           Exit(0);
         }
-      }
-    }
-    
-    
-    for (int n=1; n<=NoCompo; n++)
-    {
-      if ( cmp[n].getType() == SPEC_VEL )
-      {
-        fprintf(fp,"\t\t\t   %10.3e  %10.3e  %10.3e  %10s ",
-                cmp[n].nv[0], cmp[n].nv[1], cmp[n].nv[2],
-                (cmp[n].getBClocation()==CompoList::same_direction) ? "In" : "Out");
         
         if ( cmp[n].get_V_Profile() == CompoList::vel_zero )
         {
@@ -2347,12 +2410,11 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         }
         else if ( cmp[n].get_V_Profile() == CompoList::vel_constant )
         {
-          fprintf(fp,"%11.3e %11.3e\n", cmp[n].ca[CompoList::bias]*cmp[n].area, cmp[n].ca[CompoList::bias] );
+          fprintf(fp,"\t                   %12.4e\n", cmp[n].ca[CompoList::bias] );
         }
         else if ( cmp[n].get_V_Profile() == CompoList::vel_harmonic )
         {
-          fprintf(fp,"%11.3e %11.3e %11.3e %11.3e %11.3e %11.4e\n",
-                  cmp[n].ca[CompoList::amplitude]*cmp[n].area,
+          fprintf(fp,"\t\t                     %12.4e %12.4e %12.4e  %12.4e %12.4e\n",
                   cmp[n].ca[CompoList::amplitude],
                   cmp[n].ca[CompoList::frequency],
                   cmp[n].ca[CompoList::initphase],
@@ -2361,7 +2423,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         }
         else if ( cmp[n].get_V_Profile() == CompoList::vel_polynomial6 )
         {
-          fprintf(fp,"%11.4e %11.4e %11.4e %11.4e %11.4e %11.4e\n",
+          fprintf(fp,"\t\t                     %12.4e %12.4e %12.4e %12.4e %12.4e %12.4e\n",
                   cmp[n].ca[5],
                   cmp[n].ca[4],
                   cmp[n].ca[3],
@@ -2373,8 +2435,10 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
         {
           Exit(0);
         }
+        
       }
     }
+    
     
     // with constant temperature
     if ( existComponent(SPEC_VEL, cmp) && HeatProblem )
@@ -2399,6 +2463,7 @@ void ParseBC::printCompo(FILE* fp, const int* gci, const MediumList* mat, CompoL
       fprintf(fp, "\n");
     }
   }
+  
   
   if ( existComponent(OUTFLOW, cmp) )
   {
@@ -3134,12 +3199,12 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
       {
         fprintf(fp,"\t\t\tVelocity  Polynomial 6\n");
         fprintf(fp,"\t\t\t          nrml vec. V(%10.3e, %10.3e, %10.3e) [-]\n", ref->nv[0], ref->nv[1], ref->nv[2]);
-        fprintf(fp,"\t\t\t          x^6     %12.6e [m/s] / %12.6e [-]\n", ref->ca[5], ref->ca[5]/RefVelocity);
-        fprintf(fp,"\t\t\t          x^5     %12.6e [m/s] / %12.6e [-]\n", ref->ca[4], ref->ca[4]/RefVelocity);
-        fprintf(fp,"\t\t\t          x^4     %12.6e [m/s] / %12.6e [-]\n", ref->ca[3], ref->ca[3]/RefVelocity);
-        fprintf(fp,"\t\t\t          x^3     %12.6e [m/s] / %12.6e [-]\n", ref->ca[2], ref->ca[2]/RefVelocity);
-        fprintf(fp,"\t\t\t          x^2     %12.6e [m/s] / %12.6e [-]\n", ref->ca[1], ref->ca[1]/RefVelocity);
-        fprintf(fp,"\t\t\t          x^1     %12.6e [m/s] / %12.6e [-]\n", ref->ca[0], ref->ca[0]/RefVelocity);
+        fprintf(fp,"\t\t\t           c6     %12.6e [m/s] / %12.6e [-]\n", ref->ca[5], ref->ca[5]/RefVelocity);
+        fprintf(fp,"\t\t\t           c5     %12.6e [m/s] / %12.6e [-]\n", ref->ca[4], ref->ca[4]/RefVelocity);
+        fprintf(fp,"\t\t\t           c4     %12.6e [m/s] / %12.6e [-]\n", ref->ca[3], ref->ca[3]/RefVelocity);
+        fprintf(fp,"\t\t\t           c3     %12.6e [m/s] / %12.6e [-]\n", ref->ca[2], ref->ca[2]/RefVelocity);
+        fprintf(fp,"\t\t\t           c2     %12.6e [m/s] / %12.6e [-]\n", ref->ca[1], ref->ca[1]/RefVelocity);
+        fprintf(fp,"\t\t\t           c1     %12.6e [m/s] / %12.6e [-]\n", ref->ca[0], ref->ca[0]/RefVelocity);
       }
       else // vel_constant, vel_zero
       {
@@ -3221,12 +3286,12 @@ void ParseBC::printOBC(FILE* fp, const BoundaryOuter* ref, const MediumList* mat
       {
         fprintf(fp,"\t\t\tVelocity  Polynomial 6\n");
         fprintf(fp,"\t\t\t          nrml vec. V(%10.3e, %10.3e, %10.3e) [-]\n", ref->nv[0], ref->nv[1], ref->nv[2]);
-        fprintf(fp,"\t\t\t          x^6     %12.6e [m/s] / %12.6e [-]\n", ref->ca[5], ref->ca[5]/RefVelocity);
-        fprintf(fp,"\t\t\t          x^5     %12.6e [m/s] / %12.6e [-]\n", ref->ca[4], ref->ca[4]/RefVelocity);
-        fprintf(fp,"\t\t\t          x^4     %12.6e [m/s] / %12.6e [-]\n", ref->ca[3], ref->ca[3]/RefVelocity);
-        fprintf(fp,"\t\t\t          x^3     %12.6e [m/s] / %12.6e [-]\n", ref->ca[2], ref->ca[2]/RefVelocity);
-        fprintf(fp,"\t\t\t          x^2     %12.6e [m/s] / %12.6e [-]\n", ref->ca[1], ref->ca[1]/RefVelocity);
-        fprintf(fp,"\t\t\t          x^1     %12.6e [m/s] / %12.6e [-]\n", ref->ca[0], ref->ca[0]/RefVelocity);
+        fprintf(fp,"\t\t\t           c6     %12.6e [m/s] / %12.6e [-]\n", ref->ca[5], ref->ca[5]/RefVelocity);
+        fprintf(fp,"\t\t\t           c5     %12.6e [m/s] / %12.6e [-]\n", ref->ca[4], ref->ca[4]/RefVelocity);
+        fprintf(fp,"\t\t\t           c4     %12.6e [m/s] / %12.6e [-]\n", ref->ca[3], ref->ca[3]/RefVelocity);
+        fprintf(fp,"\t\t\t           c3     %12.6e [m/s] / %12.6e [-]\n", ref->ca[2], ref->ca[2]/RefVelocity);
+        fprintf(fp,"\t\t\t           c2     %12.6e [m/s] / %12.6e [-]\n", ref->ca[1], ref->ca[1]/RefVelocity);
+        fprintf(fp,"\t\t\t           c1     %12.6e [m/s] / %12.6e [-]\n", ref->ca[0], ref->ca[0]/RefVelocity);
       }
       else // vel_zero, vel_constant
       {

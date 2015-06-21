@@ -215,7 +215,7 @@ int LinearSolver::PointSOR(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const 
   // b     RHS vector
   // bcp   ビットフラグ
   
-  for (lc=1; lc<=getMaxIteration(); lc++)
+  for (lc=1; lc<getMaxIteration(); lc++)
   {
     var[0] = 0.0; // 誤差
     var[1] = 0.0; // 残差
@@ -287,7 +287,7 @@ int LinearSolver::SOR2_SMA(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const d
   // d_bcp ビットフラグ
   
   
-  for (lc=1; lc<=itrMax; lc++)
+  for (lc=1; lc<itrMax; lc++)
   {
     // 2色のマルチカラー(Red&Black)のセットアップ
     

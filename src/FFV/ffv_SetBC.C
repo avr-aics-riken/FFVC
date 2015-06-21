@@ -131,13 +131,16 @@ void SetBC3D::extractAngularVel(const int n, REAL_TYPE* vec, REAL_TYPE* ctr, con
  * @brief コンポーネントの速度境界条件の成分を取り出す
  * @param [in]     n    コンポーネントのインデクス
  * @param [out]    vec  ベクトル成分
- * @param [in]     tm   時刻
+ * @param [in]     tm   無次元時刻
  * @param [in]     v00  無次元格子速度
+ * @retval 無次元速度
  */
 REAL_TYPE SetBC3D::extractVelLBC(const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE* v00)
 {
   REAL_TYPE vel;
   const REAL_TYPE c_pai = (REAL_TYPE)(2.0*asin(1.0));
+  bool policy = cmp[n].isPolicy_Massflow(); // true => Massflow
+  REAL_TYPE tm2 = (REAL_TYPE)tm * RefL/RefV;
   
   if ( cmp[n].get_V_Profile() == CompoList::vel_zero )
   {
@@ -145,24 +148,60 @@ REAL_TYPE SetBC3D::extractVelLBC(const int n, REAL_TYPE* vec, const double tm, c
   }
   else if ( cmp[n].get_V_Profile() == CompoList::vel_constant )
   {
-    vel = cmp[n].ca[CompoList::bias] / RefV * v00[0];
+    if ( policy )
+    {
+      vel = cmp[n].ca[CompoList::bias] / (RefV * RefL * RefL * cmp[n].area) * v00[0];
+    }
+    else
+    {
+      vel = cmp[n].ca[CompoList::bias] / RefV * v00[0];
+    }
   }
   else if ( cmp[n].get_V_Profile() == CompoList::vel_harmonic )
   {
-    REAL_TYPE a, b;
-    a = cmp[n].ca[CompoList::amplitude]/RefV; // non-dimensional velocity amplitude
-    b = 2.0*c_pai*cmp[n].ca[CompoList::frequency]* RefL/RefV * (REAL_TYPE)tm + cmp[n].ca[CompoList::initphase];
-    vel = ( a*sin(b) + cmp[n].ca[CompoList::bias]/RefV ) * v00[0];
+    if ( policy )
+    {
+      REAL_TYPE a, b, c;
+      a = cmp[n].ca[CompoList::amplitude];
+      b = 2.0 * c_pai * cmp[n].ca[CompoList::frequency] * tm2  + cmp[n].ca[CompoList::initphase];
+      c = cmp[n].ca[CompoList::bias];
+      vel = ( a * sin(b) + c ) / (RefV * RefL * RefL * cmp[n].area) * v00[0];
+    }
+    else
+    {
+      REAL_TYPE a, b, c;
+      a = cmp[n].ca[CompoList::amplitude];
+      b = 2.0 * c_pai * cmp[n].ca[CompoList::frequency] * tm2 + cmp[n].ca[CompoList::initphase];
+      c = cmp[n].ca[CompoList::bias];
+      vel = ( a * sin(b) + c )  / RefV * v00[0];
+
+      //a = obc[n].ca[CompoList::amplitude]/RefV; // non-dimensional velocity amplitude
+      //b = 2.0*c_pai*obc[n].ca[CompoList::frequency]* RefL/RefV * (REAL_TYPE)tm + obc[n].ca[CompoList::initphase];
+      //vel = ( a*sin(b) + obc[n].ca[CompoList::bias]/RefV ) * v00[0];
+    }
   }
   else if ( cmp[n].get_V_Profile() == CompoList::vel_polynomial6 )
   {
-    vel = tm * ( cmp[n].ca[0]
-        + tm * ( cmp[n].ca[1]
-        + tm * ( cmp[n].ca[2]
-        + tm * ( cmp[n].ca[3]
-        + tm * ( cmp[n].ca[4]
-        + tm * ( cmp[n].ca[5] ))))))
-        / RefV * v00[0];
+    if ( policy )
+    {
+      vel = tm2 * ( cmp[n].ca[0]
+          + tm2 * ( cmp[n].ca[1]
+          + tm2 * ( cmp[n].ca[2]
+          + tm2 * ( cmp[n].ca[3]
+          + tm2 * ( cmp[n].ca[4]
+          + tm2 * ( cmp[n].ca[5] ))))))
+       / (RefV * cmp[n].area) * v00[0];
+    }
+    else
+    {
+      vel = tm2 * ( cmp[n].ca[0]
+          + tm2 * ( cmp[n].ca[1]
+          + tm2 * ( cmp[n].ca[2]
+          + tm2 * ( cmp[n].ca[3]
+          + tm2 * ( cmp[n].ca[4]
+          + tm2 * ( cmp[n].ca[5] ))))))
+      / RefV * v00[0];
+    }
   }
   
   vec[0] = cmp[n].nv[0] * vel;
@@ -180,11 +219,13 @@ REAL_TYPE SetBC3D::extractVelLBC(const int n, REAL_TYPE* vec, const double tm, c
  * @param [out]    vec  ベクトル成分
  * @param [in]     tm   時刻
  * @param [in]     v00  格子速度
+ * @note OUter BCは速度規定のみ
  */
 REAL_TYPE SetBC3D::extractVelOBC(const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE* v00)
 {
   REAL_TYPE vel;
   const REAL_TYPE c_pai = (REAL_TYPE)(2.0*asin(1.0));
+  REAL_TYPE tm2 = (REAL_TYPE)tm * RefL/RefV;
   
   if ( obc[n].get_V_Profile() == CompoList::vel_zero )
   {
@@ -196,20 +237,25 @@ REAL_TYPE SetBC3D::extractVelOBC(const int n, REAL_TYPE* vec, const double tm, c
   }
   else if ( obc[n].get_V_Profile() == CompoList::vel_harmonic )
   {
-    REAL_TYPE a, b;
-    a = obc[n].ca[CompoList::amplitude]/RefV; // non-dimensional velocity amplitude
-    b = 2.0*c_pai*obc[n].ca[CompoList::frequency]* RefL/RefV * (REAL_TYPE)tm + obc[n].ca[CompoList::initphase];
-    vel = ( a*sin(b) + obc[n].ca[CompoList::bias]/RefV ) * v00[0];
+    REAL_TYPE a, b, c;
+    a = obc[n].ca[CompoList::amplitude];
+    b = 2.0 * c_pai * obc[n].ca[CompoList::frequency] * tm2 + obc[n].ca[CompoList::initphase];
+    c = obc[n].ca[CompoList::bias];
+    vel = ( a * sin(b) + c )  / RefV * v00[0];
+    
+    //a = obc[n].ca[CompoList::amplitude]/RefV; // non-dimensional velocity amplitude
+    //b = 2.0*c_pai*obc[n].ca[CompoList::frequency]* RefL/RefV * (REAL_TYPE)tm + obc[n].ca[CompoList::initphase];
+    //vel = ( a*sin(b) + obc[n].ca[CompoList::bias]/RefV ) * v00[0];
   }
   else if ( obc[n].get_V_Profile() == CompoList::vel_polynomial6 )
   {
-    vel = tm * ( obc[n].ca[0]
-        + tm * ( obc[n].ca[1]
-        + tm * ( obc[n].ca[2]
-        + tm * ( obc[n].ca[3]
-        + tm * ( obc[n].ca[4]
-        + tm * ( obc[n].ca[5] ))))))
-        / RefV * v00[0];
+    vel = tm2 * ( obc[n].ca[0]
+        + tm2 * ( obc[n].ca[1]
+        + tm2 * ( obc[n].ca[2]
+        + tm2 * ( obc[n].ca[3]
+        + tm2 * ( obc[n].ca[4]
+        + tm2 * ( obc[n].ca[5] ))))))
+    / RefV * v00[0];
   }
   
   vec[0] = obc[n].nv[0] * vel;

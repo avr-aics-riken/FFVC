@@ -122,9 +122,9 @@
     p(i,j,k) = pn
 
     de  = bb - (ss - pn * dd)
-    res = res + dble(de*de) * aa
-    xl2 = xl2 + dble(pn*pn) * aa
-    err = err + dble(dp*dp) * aa
+    res = res + dble(de*de) !* aa
+    xl2 = xl2 + dble(pn*pn) !* aa
+    err = err + dble(dp*dp) !* aa
   end do
   end do
   end do
@@ -244,9 +244,9 @@ do i=1+mod(k+j+color+ip,2), ix, 2
   p(i,j,k) = pn
 
   de  = bb - (ss - pn * dd)
-  res = res + dble(de*de) * aa
-  xl2 = xl2 + dble(pn*pn) * aa
-  err = err + dble(dp*dp) * aa
+  res = res + dble(de*de) !* aa
+  xl2 = xl2 + dble(pn*pn) !* aa
+  err = err + dble(dp*dp) !* aa
 end do
 end do
 end do

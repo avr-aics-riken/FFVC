@@ -530,6 +530,39 @@ void Control::getDriver()
   
 }
 
+// #################################################################
+/**
+ * @brief アプリケーションのDryRunパラメータを取得する
+ */
+void Control::getDryRun()
+{
+  string str;
+  string label;
+  
+  // 境界条件確認のためのドライラン >> void IO_BASE::getFIOparams()でファイル出力をオフにする
+  Hide.DryRun = OFF;
+  
+  label = "/ApplicationControl/DryrunBC";
+  
+  if ( tpCntl->chkLabel(label) )
+  {
+    if ( tpCntl->getInspectedValue(label, str) )
+    {
+      if     ( !strcasecmp(str.c_str(), "on") )  Hide.DryRun = ON;
+      else if( !strcasecmp(str.c_str(), "off") ) Hide.DryRun = OFF;
+      else
+      {
+        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+        Exit(0);
+      }
+    }
+    else
+    {
+      Exit(0);
+    }
+  }
+}
+
 
 
 // #################################################################
@@ -3096,7 +3129,7 @@ int Control::setExistComponent(CompoList* cmp, BoundaryOuter* OBC, int* g_obstac
 // コンポーネントと外部境界のパラメータを有次元に設定
 void Control::setCmpParameters(MediumList* mat, CompoList* cmp, BoundaryOuter* BO)
 {
-  // コンポーネントの指定速度
+  /* コンポーネントの指定速度
   for (int n=1; n<=NoCompo; n++)
   {
     if ( cmp[n].getType()==SPEC_VEL )
@@ -3105,7 +3138,7 @@ void Control::setCmpParameters(MediumList* mat, CompoList* cmp, BoundaryOuter* B
       {
 				if ( Unit.Param == DIMENSIONAL )
         {
-					cmp[n].set_Velocity( cmp[n].get_Massflow() / cmp[n].area );  // attenltion! Velocity and MassFlow use same variable
+					cmp[n].set_Velocity( cmp[n].get_Massflow() / cmp[n].area );
 				}
 				else
         {
@@ -3113,7 +3146,7 @@ void Control::setCmpParameters(MediumList* mat, CompoList* cmp, BoundaryOuter* B
 				}
 			}
       
-			// 流量指定のときのみ，ca[]に有次元速度パラメータを保存  >> 速度指定の場合には，parseBC::getXML_IBC_SpecVel()で設定済み
+			// 流量指定のときのみ，ca[]に有次元速度パラメータを保存  >> 速度指定の場合には，parseBC::getIbcSpecVel()で設定済み
       if ( cmp[n].isPolicy_Massflow() )
       {
         if ( Unit.Param != DIMENSIONAL )
@@ -3129,6 +3162,7 @@ void Control::setCmpParameters(MediumList* mat, CompoList* cmp, BoundaryOuter* B
       }
 		}
   }
+   */
   
 	
   // 発熱密度の計算(有次元) -- 発熱量と発熱密度

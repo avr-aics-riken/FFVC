@@ -298,6 +298,7 @@ public:
     int PM_Test;
     int GeomOutput;
     int GlyphOutput;
+    int DryRun;
   } Hidden_Parameter;
   
   
@@ -625,6 +626,7 @@ public:
     Hide.PM_Test = 0;
     Hide.GeomOutput = OFF;
     Hide.GlyphOutput = OFF;
+    Hide.DryRun = OFF;
     
     Unit.Param  = 0;
     Unit.Output = 0;
@@ -750,6 +752,10 @@ public:
    * @param [in] G_size 計算領域全体の分割数
    */
   REAL_TYPE getCellSize(const int* m_size);
+  
+  
+  // DryRun parameter
+  void getDryRun();
   
   
   // @brief 計算モデルの入力ソース情報を取得

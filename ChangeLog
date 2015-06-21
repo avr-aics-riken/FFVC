@@ -19,6 +19,13 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-06-21
+r1614 update polynomial6
+- introduce ffvc-config
+- introduce dryrunBC()
+- modify extractVelLBC() and related parts
+
+--------------------------
 2015-06-20
 r1613 modify bicg mask
 - remove mask from blas_calc_rk_() and blas_calc_ax_() to make stable

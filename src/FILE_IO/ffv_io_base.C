@@ -96,6 +96,14 @@ void IO_BASE::getFIOparams()
     }
   }
   
+  // DryRunBCが指定されているとき，ファイル出力間隔を無限大に設定
+  if ( C->Hide.DryRun == ON )
+  {
+    double ppp = 1.0e6;
+    C->Interval[Control::tg_basic].setInterval(ppp);
+    C->Interval[Control::tg_derived].setInterval(ppp);
+  }
+  
   
   switch ( Format )
   {

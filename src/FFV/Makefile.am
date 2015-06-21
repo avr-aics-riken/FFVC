@@ -53,7 +53,8 @@ libFFV_a_SOURCES = \
   ffv_SetBC.C \
   ffv_SetBC.h \
   ffv_TerminateCtrl.C \
-  ffv_TerminateCtrl.h
+  ffv_TerminateCtrl.h \
+  dryrunBC.C
 
 include_HEADERS = $(top_srcdir)/src/FFV/ffv_Version.h
 
