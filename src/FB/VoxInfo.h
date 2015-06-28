@@ -48,7 +48,7 @@ public:
     Ex = NULL;
   }
   
-  /**　デストラクタ */
+  /** デストラクタ */
   ~VoxInfo() {}
   
 private:

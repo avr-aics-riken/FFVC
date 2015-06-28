@@ -48,7 +48,7 @@ public:
     for (int i=0; i<property_END; i++) ChkList[i]=false;
   }
   
-  /**　デストラクタ */
+  /** デストラクタ */
   ~ParseMat() {}
   
 private:

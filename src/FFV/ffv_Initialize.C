@@ -164,6 +164,7 @@ int FFV::Initialize(int argc, char **argv)
   // CompoListの設定，境界条件の読み込み保持
   setBCinfo();
 
+  GM.setCompoPtr(C.NoCompo, cmp);
   
   
   // タイミング測定の初期化
@@ -232,6 +233,7 @@ int FFV::Initialize(int argc, char **argv)
   G_PrepMemory = PrepMemory;
   
   displayMemoryInfo(fp, G_PrepMemory, PrepMemory, "Preprocessor");
+  displayMemoryInfo(stdout, G_PrepMemory, PrepMemory, "Preprocessor");
   
 
   
@@ -291,12 +293,12 @@ int FFV::Initialize(int argc, char **argv)
   }
 
   TIMING_start("Fill");
-  if ( !GM.fill(fp, d_bcd, d_bid, C.NoMedium, mat, C.NoCompo, cmp, d_mid) )
+  if ( !GM.fill(fp, d_bcd, d_bid, d_mid) )
   {
     // debug routine
     //F->writeSVX(d_bcd);
     //F->writeRawSPH(d_mid);
-    //F->writeSVX(d_mid);
+    F->writeSVX(d_mid);
     Exit(0);
   }
   TIMING_stop("Fill");
@@ -3748,9 +3750,6 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   {
     fprintf(fp,"\n----------\n\n");
     fprintf(fp,"\t>> Polylib configuration\n\n");
-    
-    printf("\n----------\n\n");
-    printf("\t>> Polylib configuration\n\n");
   }
   
   // Polylibファイルをテンポラリに出力
@@ -3832,15 +3831,14 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   
   if ( (C.num_of_polygrp < 1) || (C.num_of_polygrp > C.NoCompo) )
   {
-    printf("\tError : Number of polygon group must be greater than 1 and less than NoCompo.\n");
+    printf (   "\tError : Number of polygon group must be greater than 1 and less than NoCompo.\n");
+    fprintf(fp,"\tError : Number of polygon group must be greater than 1 and less than NoCompo.\n");
     Exit(0);
   }
   
   
   Hostonly_
   {
-    printf(     "\t   Polygon Group Label       Medium Alias              Local BC     Polygons          Area\n");
-    printf(     "\t   ---------------------------------------------------------------------------------------\n");
     fprintf(fp, "\t   Polygon Group Label       Medium Alias              Local BC     Polygons          Area\n");
     fprintf(fp, "\t   ---------------------------------------------------------------------------------------\n");
   }
@@ -3915,11 +3913,6 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
     
     Hostonly_
     {
-      printf(    "\t  %20s %18s  %20s %12d  %e\n", m_pg.c_str(),
-             m_mat.c_str(),
-             m_bc.c_str(),
-             ntria,
-             area);
       fprintf(fp,"\t  %20s %18s  %20s %12d  %e\n", m_pg.c_str(),
               m_mat.c_str(),
               m_bc.c_str(),
@@ -3942,7 +3935,6 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   
   Hostonly_
   {
-    printf("\n");
     fprintf(fp, "\n");
   }
   
@@ -4013,7 +4005,7 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
       {
         Hostonly_
         {
-          printf("Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", myRank, fname.c_str());
+          printf(    "Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", myRank, fname.c_str());
           fprintf(fp,"Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", myRank, fname.c_str());
         }
         Exit(0);
@@ -4027,7 +4019,7 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
       {
         Hostonly_
         {
-          printf("Rank [%d]: p_polylib->save_parallel() failed to write into '%s'.", myRank, fname.c_str());
+          printf(    "Rank [%d]: p_polylib->save_parallel() failed to write into '%s'.", myRank, fname.c_str());
           fprintf(fp,"Rank [%d]: p_polylib->save_parallel() failed to write into '%s'.", myRank, fname.c_str());
         }
         Exit(0);
@@ -4054,7 +4046,7 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   
   // 交点計算
   TIMING_start("Cut_Information");
-  GM.quantizeCut(fp, d_cut, d_bid, d_bcd, C.NoCompo, cmp, PL, PG);
+  GM.quantizeCut(fp, d_cut, d_bid, d_bcd, PL, PG);
   TIMING_stop("Cut_Information");
   
   

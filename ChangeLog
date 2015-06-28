@@ -19,11 +19,18 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-06-28
+r1615 segmentation of multi-material
+- add *cmp and *mat in Geometry class
+- brush up algorithms in Geometry
+
+--------------------------
 2015-06-21
 r1614 update polynomial6
 - introduce ffvc-config
 - introduce dryrunBC()
 - modify extractVelLBC() and related parts
+- expire mask for residuals in psor_() and psor2sma_core_()
 
 --------------------------
 2015-06-20

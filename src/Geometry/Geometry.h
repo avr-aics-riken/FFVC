@@ -32,7 +32,6 @@
 #include "Polylib.h"
 #include "MPIPolylib.h"
 #include <vector>
-#include <algorithm>
 
 using namespace std;
 using namespace PolylibNS;
@@ -54,6 +53,8 @@ private:
   string SeedMedium;   ///< ヒントに使う媒質 -> int SeedID
   unsigned temporary;
   int NoHint;
+  int NoMedium;        ///< 媒質数
+  int NoCompo;         ///< コンポーネント数
   
   typedef struct {
     string identifier;
@@ -64,6 +65,9 @@ private:
   } KindFill;
   
   KindFill* fill_table;
+  
+  const MediumList* mat;
+  const CompoList* cmp;
   
   
 public:
@@ -82,13 +86,17 @@ public:
     NumSuvDiv = 0;
     FillSeedDir = -1;
     temporary = 0;
-    NoHint=0;
+    NoHint = 0;
+    NoMedium = 0;
+    NoCompo  = 0;
     
     for (int i=0; i<3; i++) {
       FillSuppress[i] = ON; // default is "fill"
     }
     
     fill_table = NULL;
+    mat = NULL;
+    cmp = NULL;
   }
   
   /** デストラクタ */
@@ -112,7 +120,11 @@ private:
   
   
   // 各ノードのラベルのユニーク性を担保する
-  void assureUniqueLabel(vector<int> tbl, int* mid, const int* Dsize=NULL);
+  void assureUniqueLabel(int* labelTop,
+                         int* labelsz,
+                         vector<int>& tbl,
+                         int* mid,
+                         const int* Dsize=NULL);
   
   
   // d_mid[]がtargetであるセルに対して、d_pvf[]に指定値valueを代入する
@@ -125,6 +137,7 @@ private:
   // mid[]内にあるm_idのセルを数える
   unsigned long countCellM(const int* mid,
                            const int m_id,
+                           const string mode,
                            const bool painted=true,
                            const int* Dsize=NULL);
   
@@ -133,7 +146,7 @@ private:
   unsigned long debug_countCellB(const int* bcd,
                                  const int m_id,
                                  const int* bid,
-                                 const int* Dsize);
+                                 const int* Dsize=NULL);
   
   
   // 未ペイントセルをtargetでフィル
@@ -151,19 +164,22 @@ private:
   // 未ペイントセルを周囲のbidの固体最頻値でフィル
   bool fillByModalSolid(int* bcd,
                         const int* bid,
-                        const int m_NoCompo,
-                        const CompoList* cmp,
                         unsigned long& replaced);
   
   
   // bid情報を元にフラッドフィル
-  bool fill_connected(FILE* fp,
-                      int* d_bcd,
-                      const int* d_bid,
-                      const MediumList* mat,
-                      const int m_NoMedium,
-                      const int fill_mode,
-                      unsigned long& target_count);
+  bool fillConnected(FILE* fp,
+                     int* d_bcd,
+                     const int* d_bid,
+                     const int fill_mode,
+                     unsigned long& target_count);
+  
+  
+  // 未ペイントセルをpaintIDで連結フィルする
+  unsigned long  fillConnected4ID(int* mid,
+                                  const int* bid,
+                                  const int paintID,
+                                  const int* Dsize=NULL);
   
   
   // サブセルのSolid部分の値を代入
@@ -175,11 +191,7 @@ private:
   
   
   // サブセルの未ペイントセルを周囲の媒質IDの固体最頻値でフィル
-  unsigned long fillSubCellByModalSolid(int* smd,
-                                        const int m_NoCompo,
-                                        const CompoList* cmp,
-                                        REAL_TYPE* svf,
-                                        const MediumList* mat);
+  unsigned long fillSubCellByModalSolid(int* smd, REAL_TYPE* svf);
   
   
   // シード点をmid[]にペイントする
@@ -213,77 +225,121 @@ private:
   }
   
   
+  // 未ペイントセルのシードセルをひとつ探す
+  bool findKeyCell(int* mid,
+                   const int counter,
+                   const int* Dsize=NULL);
+  
+  
   // list[]内の最頻値IDを求める
-  int find_mode(const int m_sz,
-                const int* list,
-                const int m_NoCompo);
+  int find_mode(const int m_sz, const int* list);
   
   
   // サブセル内の最頻値IDを求める
-  int find_mode_smd(const int* smd, const int m_NoCompo);
+  int find_mode_smd(const int* smd);
   
   
   // セルに含まれるポリゴンを探索し、d_midに記録
   unsigned long findPolygonInCell(int* d_mid,
                                   MPIPolylib* PL,
-                                  PolygonProperty* PG,
-                                  const int m_NoCompo);
+                                  PolygonProperty* PG);
+  
+  
+  // 各ランクの最頻値情報を集める
+  void gatherModes(vector<unsigned long>& mode);
+  
+                             
+  // 各ランクの接続ルール数の情報を集める
+  bool gatherRules(int* buffer,
+                   const int maxRule,
+                   const vector< vector<int> > cnct);
+  
+  
+  // ラベルを集める
+  bool gatherLabels(int* buffer,
+                    const int maxSize,
+                    const vector< vector<int> > cnct);
+  
+  
+  // ラベル情報集約のため、バッファサイズを計算する
+  int getNumBuffer(const vector< vector<int> > cnct);
   
   
   // 連結領域を同定する
   bool identifyConnectedRegion(int* mid,
-                               const int* bcd,
+                               int* bcd,
                                const int* bid,
                                const unsigned long paintable,
                                const unsigned long filled_fluid,
-                               const int* Dsize=NULL);
-  
+                               FILE* fp);
+
   
   // 各ラベルの接続リストを作成
-  int makeConnectList(vector< vector<int> >& cnct,
-                      vector<int>& label,
-                      const int* mid,
-                      const int* bid,
-                      const int* Dsize=NULL);
+  void makeConnectList(vector< vector<int> >& cnct,
+                       const int* ltop,
+                       const vector<int> localTbl,
+                       const int* mid,
+                       const int* bid,
+                       const int* Dsize=NULL);
+  
+  
+  // ラベルとmat[]インデクスの対応を決める
+  bool makeHistgramByModalCut(vector<int>& matIndex,
+                              const vector<int> labels,
+                              const int* mid,
+                              const int* bid,
+                              const int* Dsize=NULL);
+  
+  
+  // 全接続ルールを作成
+  bool makeWholeRules(vector< vector<int> >& connectRules,
+                      const int* labelSize,
+                      const int* pckdLabel,
+                      const int width_label,
+                      const int* pckdRules,
+                      const int width_rule,
+                      FILE* fp);
   
   
   // 距離の最小値を求める
   void minDistance(const long long* cut, const int* bid, FILE* fp);
   
   
-  // 未ペイントセルを周囲の交点IDの最頻値でフィル
-  bool paintCellByModalCutID(int* bcd,
-                             const int* bid,
-                             const int m_NoCompo,
-                             const CompoList* cmp,
-                             unsigned long& replaced);
-  
-  
   // 固体領域をスレッド毎にIDでペイント
   void paintSolidRegion(int* mid, const int* Dsize=NULL);
   
   
+  // 対応づけしたmat[]インデクスによりラベル部分をペイントする
+  void paintCellByUniqueLabel(int* bcd,
+                              const int* mid,
+                              const vector<int> labels,
+                              const vector<int> matIndex,
+                              const int* Dsize=NULL);
+  
+  
   // 接続している領域を指定ラベルでペイント
   void paintConnectedLabel(int* mid,
-                           const vector<int>& label,
-                           const int replace,
+                           const vector<int> labels,
+                           const vector< vector<int> > rules,
                            const int* Dsize=NULL);
   
   
+  // ラベルを縮約する
+  void reduceLabels(vector<int>& finalLabels,
+                    vector< vector<int> >& finalRules,
+                    vector< vector<int> > connectRules);
+  
+  
+  // ラベルを登録しながら、ルールを縮約する
+  void registerRule(vector< vector<int> >& finalRules,
+                    const int reg_keys,
+                    const int test_key,
+                    vector< vector<int> >& connectRules,
+                    vector<int>& valid);
+  
+  
   // 6方向にカットのあるセルを交点媒質でフィルする
-  unsigned long replaceIsolatedCell(int* bcd,
-                                    const int* bid,
-                                    const int m_NoCompo,
-                                    const CompoList* cmp);
-  
-  
-  // シードセルを探し、ペイント
-  void searchPaint(int* mid,
-                   const int* bbox,
-                   const int* bid,
-                   const int counter,
-                   unsigned long& target,
-                   const int* Dsize=NULL);
+  unsigned long replaceIsolatedCell(int* bcd, const int* bid, FILE* fp);
   
   
   /**
@@ -369,8 +425,7 @@ private:
                      const int kp,
                      const Vec3r pch,
                      const string m_pg,
-                     MPIPolylib* PL,
-                     const int m_NoCompo);
+                     MPIPolylib* PL);
   
   
   // sub-division
@@ -380,10 +435,7 @@ private:
                    const int jp,
                    const int kp,
                    int* d_mid,
-                   const MediumList* mat,
-                   REAL_TYPE* d_pvf,
-                   const int m_NoCompo,
-                   const CompoList* cmp);
+                   REAL_TYPE* d_pvf);
   
   
   // ポリゴンと線分の交点計算
@@ -433,17 +485,12 @@ public:
   bool fill(FILE* fp,
             int* d_bcd,
             const int* d_bid,
-            const int m_NoMedium,
-            const MediumList* mat,
-            const int m_NoCompo,
-            const CompoList* cmp,
             int* d_mid);
 
   
   // bid情報を元にフラッドフィル
   unsigned long fillByBid(int* bcd,
                           const int* bid,
-                          const MediumList* mat,
                           const int mode,
                           const int* Dsize=NULL);
   
@@ -475,7 +522,7 @@ public:
                     const int Unit,
                     const REAL_TYPE RefL,
                     const int m_NoMedium,
-                    const MediumList* mat);
+                    const MediumList* m_mat);
   
   
   /**
@@ -508,8 +555,6 @@ public:
   void paintCutOnPoint(int* bcd,
                        int* bid,
                        long long* cut,
-                       const int m_NoCompo,
-                       const CompoList* cmp,
                        unsigned long& fillcut,
                        unsigned long& modopp,
                        const int* Dsize=NULL);
@@ -520,20 +565,23 @@ public:
                    long long* cut,
                    int* bid,
                    int* bcd,
-                   const int m_NoCompo,
-                   const CompoList* cmp,
                    MPIPolylib* PL,
                    PolygonProperty* PG);
   
   
   // ポリゴンの水密化
   void SeedFilling(FILE* fp,
-                   CompoList* cmp,
-                   MediumList* mat,
                    int* d_mid,
                    MPIPolylib* PL,
-                   PolygonProperty* PG,
-                   const int m_NoCompo);
+                   PolygonProperty* PG);
+  
+  
+  // コンポーネント数をセット
+  void setCompoPtr(const int m_NoCompo, const CompoList* m_cmp)
+  {
+    NoCompo = m_NoCompo;
+    cmp = m_cmp;
+  }
   
   
   // @brief 再分割数を設定
@@ -547,12 +595,9 @@ public:
   
   // サブサンプリング
   void SubSampling(FILE* fp,
-                   MediumList* mat,
                    int* d_mid,
                    REAL_TYPE* d_pvf,
-                   MPIPolylib* PL,
-                   const int m_NoCompo,
-                   const CompoList* cmp);
+                   MPIPolylib* PL);
 
 };
 
