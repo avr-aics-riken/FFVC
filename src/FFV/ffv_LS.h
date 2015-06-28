@@ -249,12 +249,27 @@ public:
   /** 
    * @brief SOR法
    * @retval 反復数
-   * @param [in,out] x      解ベクトル
-   * @param [in]     b      RHS vector
-   * @param [in]     b_l2   L2 norm of b vector
-   * @param [in]     r0_l2  初期残差ベクトルのL2ノルム
+   * @param [in,out] x              解ベクトル
+   * @param [in]     b              RHS vector
+   * @param [in]     itrMax         反復最大値
+   * @param [in]     b_l2           L2 norm of b vector
+   * @param [in]     r0_l2          初期残差ベクトルのL2ノルム
+   * @param [in]     converge_check 収束判定を行う(true)
    */
-  int PointSOR(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2);
+  int PointSOR(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const double b_l2, const double r0_l2, bool converge_check=true);
+  
+  
+  /**
+   * @brief SSOR法
+   * @retval 反復数
+   * @param [in,out] x              解ベクトル
+   * @param [in]     b              RHS vector
+   * @param [in]     itrMax         反復最大値
+   * @param [in]     b_l2           L2 norm of b vector
+   * @param [in]     r0_l2          初期残差ベクトルのL2ノルム
+   * @param [in]     converge_check 収束判定を行う(true)
+   */
+  int PointSSOR(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const double b_l2, const double r0_l2, bool converge_check=true);
   
   
   /**

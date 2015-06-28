@@ -204,7 +204,7 @@ void LinearSolver::Initialize(Control* C,
 
 
 // #################################################################
-int LinearSolver::PointSOR(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2)
+int LinearSolver::PointSOR(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const double b_l2, const double r0_l2, bool converge_check)
 {
   double flop_count=0.0;          /// 浮動小数点演算数
   REAL_TYPE omg = getOmega();     /// 加速係数
@@ -215,7 +215,7 @@ int LinearSolver::PointSOR(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const 
   // b     RHS vector
   // bcp   ビットフラグ
   
-  for (lc=1; lc<getMaxIteration(); lc++)
+  for (lc=1; lc<itrMax; lc++)
   {
     var[0] = 0.0; // 誤差
     var[1] = 0.0; // 残差
@@ -240,7 +240,58 @@ int LinearSolver::PointSOR(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const 
     
     
     // 収束判定
-    if ( Fcheck(var, b_l2, r0_l2) == true ) break;
+    if ( converge_check )
+    {
+      if ( Fcheck(var, b_l2, r0_l2) == true ) break;
+    }
+    
+  }
+  
+  return lc;
+}
+
+
+// #################################################################
+int LinearSolver::PointSSOR(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const double b_l2, const double r0_l2, bool converge_check)
+{
+  double flop_count=0.0;          /// 浮動小数点演算数
+  REAL_TYPE omg = getOmega();     /// 加速係数
+  double var[3];                  /// 誤差、残差、解
+  int lc=0;                       /// ループカウント
+  
+  // x     圧力 p^{n+1}
+  // b     RHS vector
+  // bcp   ビットフラグ
+  
+  for (lc=1; lc<itrMax; lc++)
+  {
+    var[0] = 0.0; // 誤差
+    var[1] = 0.0; // 残差
+    var[2] = 0.0; // 解
+    
+    // 反復処理
+    TIMING_start("Poisson_PSSOR");
+    flop_count = 0.0;
+    pssor_(x, size, &guide, pitch, &omg, var, b, bcp, &flop_count);
+    TIMING_stop("Poisson_PSSOR", flop_count);
+    
+    
+    // 境界条件
+    TIMING_start("Poisson_BC");
+    BC->OuterPBC(x, ensPeriodic);
+    if ( C->EnsCompo.periodic == ON ) BC->InnerPBCperiodic(x, bcd);
+    TIMING_stop("Poisson_BC", 0.0);
+    
+    
+    // 同期処理
+    SyncScalar(x, 1);
+    
+    
+    // 収束判定
+    if ( converge_check )
+    {
+      if ( Fcheck(var, b_l2, r0_l2) == true ) break;
+    }
     
   }
   
@@ -268,6 +319,8 @@ void LinearSolver::Preconditioner(REAL_TYPE* x, REAL_TYPE* b)
   // 前処理
   // 境界条件処理が実行される場合には、要注意
   SOR2_SMA(x, b, lc_max, dummy, dummy, false);
+  //PointSOR(x, b, lc_max, dummy, dummy, false);
+  //PointSSOR(x, b, lc_max, dummy, dummy, false);
 }
 
 
@@ -313,7 +366,7 @@ int LinearSolver::SOR2_SMA(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const d
       
       TIMING_start("Poisson_SOR2_SMA");
       flop_count = 0.0; // 色間で積算しない
-      psor2sma_core_(x, size, &guide, pitch, &ip, &color, &omg, var, b, bcp, &flop_count);
+      psor2sma_(x, size, &guide, pitch, &ip, &color, &omg, var, b, bcp, &flop_count);
 
       
       TIMING_stop("Poisson_SOR2_SMA", flop_count);

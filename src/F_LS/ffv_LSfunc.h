@@ -29,12 +29,14 @@
 
 
 // ffv_poisson.f90
-#define div_cnst_           DIV_CNST
-#define psor_               PSOR
-#define psor2sma_core_      PSOR2SMA_CORE
-#define sma_comm_           SMA_COMM
-#define sma_comm_wait_      SMA_COMM_WAIT
-#define cds_psor_           CDS_PSOR
+#define div_cnst_       DIV_CNST
+#define psor_           PSOR
+#define pssor_          PSSOR
+#define psor2sma_       PSOR2SMA
+#define psor2sma_r_     PSOR2SMA_R
+#define sma_comm_       SMA_COMM
+#define sma_comm_wait_  SMA_COMM_WAIT
+#define cds_psor_       CDS_PSOR
 
 
 // ffv_blas.f90
@@ -69,17 +71,39 @@ extern "C" {
               int* bp,
               double* flop);
   
-  void psor2sma_core_ (REAL_TYPE* p,
-                       int* sz,
-                       int* g,
-                       REAL_TYPE* dh,
-                       int* ip,
-                       int* color,
-                       REAL_TYPE* omg,
-                       double* cnv,
-                       REAL_TYPE* b,
-                       int* bp,
-                       double* flop);
+  void pssor_ (REAL_TYPE* p,
+               int* sz,
+               int* g,
+               REAL_TYPE* dh,
+               REAL_TYPE* omg,
+               double* cnv,
+               REAL_TYPE* b,
+               int* bp,
+               double* flop);
+  
+  void psor2sma_ (REAL_TYPE* p,
+                  int* sz,
+                  int* g,
+                  REAL_TYPE* dh,
+                  int* ip,
+                  int* color,
+                  REAL_TYPE* omg,
+                  double* cnv,
+                  REAL_TYPE* b,
+                  int* bp,
+                  double* flop);
+  
+  void psor2sma_r_ (REAL_TYPE* p,
+                    int* sz,
+                    int* g,
+                    REAL_TYPE* dh,
+                    int* ip,
+                    int* color,
+                    REAL_TYPE* omg,
+                    double* cnv,
+                    REAL_TYPE* b,
+                    int* bp,
+                    double* flop);
   
   void sma_comm_      (REAL_TYPE* p,
                        int* sz,

@@ -404,7 +404,7 @@ void FFV::NS_FS_E_Binary()
     {
       case SOR:
         TIMING_start("Point_SOR");
-        if ( (loop_p += LSp->PointSOR(d_p, d_b, b_l2, res0_l2)) < 0 ) Exit(0);
+        if ( (loop_p += LSp->PointSOR(d_p, d_b, LSp->getMaxIteration(), b_l2, res0_l2)) < 0 ) Exit(0);
         TIMING_stop("Point_SOR");
         //if ( (loop_p += LSp->PointSOR_4th(d_p, d_b, d_ws, d_p0, d_sq, dt, dh, b_l2, res0_l2)) < 0 ) Exit(0);
         break;

@@ -810,6 +810,7 @@ void FFV::set_timing_label()
   set_label("Dot2",                    PerfMonitor::CALC);
   set_label("A_R_Dot",                 PerfMonitor::COMM);
   set_label("Poisson_PSOR",            PerfMonitor::CALC);
+  set_label("Poisson_PSSOR",           PerfMonitor::CALC);
   set_label("Poisson_BC",              PerfMonitor::CALC);
   set_label("Sync_Poisson",            PerfMonitor::COMM);
   set_label("Poisson_SOR2_SMA",        PerfMonitor::CALC);

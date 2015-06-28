@@ -1347,7 +1347,7 @@ void VoxInfo::encPbit (int* bx, const int* bid)
         }
         
         // チェック
-        if ( ss==0 && TEST_BIT(s,ACTIVE_BIT) )
+        if ( ss==0 ) //&& TEST_BIT(s,ACTIVE_BIT) )
         {
           int bd = bid[m];
           int id_w = getBit5(bd, 0);
@@ -1431,7 +1431,7 @@ void VoxInfo::encPbitN (int* bx, const int* bid, const long long* cut, const boo
     }
   }
   
-  // 対角項のフラグセット
+  /* 対角項のフラグセット
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
@@ -1451,7 +1451,7 @@ void VoxInfo::encPbitN (int* bx, const int* bid, const long long* cut, const boo
       }
     }
   }
-  
+  */
   
   unsigned long g=0;
   

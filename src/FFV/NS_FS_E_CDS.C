@@ -336,7 +336,7 @@ void FFV::NS_FS_E_CDS()
     switch (LSp->getLS())
     {
       case SOR:
-        LSp->PointSOR(d_p, d_b, rhs_nrm, res_init); // return x^{m+1} - x^m
+        LSp->PointSOR(d_p, d_b, LSp->getMaxIteration(), rhs_nrm, res_init); // return x^{m+1} - x^m
         break;
         
       case SOR2SMA:

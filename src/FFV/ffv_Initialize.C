@@ -437,7 +437,6 @@ int FFV::Initialize(int argc, char **argv)
   Hostonly_
   {
     fprintf(fp,"\n----------\n\n\n");
-    printf(    "\n----------\n\n\n");
   }
   
   
@@ -691,6 +690,7 @@ int FFV::Initialize(int argc, char **argv)
   G_TotalMemory = TotalMemory;
   
   displayMemoryInfo(fp, G_TotalMemory, TotalMemory, "Solver");
+  displayMemoryInfo(stdout, G_TotalMemory, TotalMemory, "Solver");
 
 
   
@@ -1046,9 +1046,7 @@ void FFV::dispGlobalCompoInfo(FILE* fp)
   // CompoListの内容とセル数の情報を表示する
   Hostonly_
   {
-    printf(    "\n----------\n\n");
     fprintf(fp,"\n----------\n\n");
-    printf(    "\t>> Component Information\n\n");
     fprintf(fp,"\t>> Component Information\n\n");
   }
   
@@ -1071,7 +1069,6 @@ void FFV::displayCompoInfo(const int* cgb, FILE* fp)
   // サマリー
   Hostonly_
   {
-    B.printCompoSummary(stdout, cmp, C.BasicEqs);
     B.printCompoSummary(fp, cmp, C.BasicEqs);
   }
   
@@ -1080,8 +1077,6 @@ void FFV::displayCompoInfo(const int* cgb, FILE* fp)
   // セル数の情報を表示する
   Hostonly_
   {
-    fprintf(stdout, "\tThis model includes %4d solid %s  [Solid cell ratio inside computational domain : %9.5f %%]\n\n",
-            C.NoMediumSolid, (C.NoMediumSolid>1) ? "IDs" : "ID", cr);
     fprintf(fp, "\tThis model includes %4d solid %s  [Solid cell ratio inside computational domain : %9.5f %%]\n\n", 
             C.NoMediumSolid, (C.NoMediumSolid>1) ? "IDs" : "ID", cr);
   }
@@ -1093,7 +1088,6 @@ void FFV::displayCompoInfo(const int* cgb, FILE* fp)
   {
     Hostonly_
     {
-      B.printCompo( stdout, cgb, mat, cmp, BC.exportOBC() );
       B.printCompo( fp,     cgb, mat, cmp, BC.exportOBC() );
     }
   }
@@ -1229,10 +1223,8 @@ void FFV::displayParameters(FILE* fp)
   F->printSteerConditions(stdout);
   F->printSteerConditions(fp);
   
-  C.printParaConditions(stdout, mat);
   C.printParaConditions(fp,     mat);
   
-  C.printInitValues(stdout, cmp);
   C.printInitValues(fp,     cmp);
 
   Ex->printPara(stdout, &C);
@@ -1240,18 +1232,14 @@ void FFV::displayParameters(FILE* fp)
   
   
   // 外部境界面の開口率を表示
-  C.printOuterArea(stdout, G_Fcell, G_Acell, G_size);
   C.printOuterArea(fp, G_Fcell, G_Acell, G_size);
   
   
   // 境界条件のリストと外部境界面のBC設定を表示
 
-  printf(    "\n----------\n\n");
   fprintf(fp,"\n----------\n\n");
-  printf(    "\t>> Outer Boundary Conditions\n\n");
   fprintf(fp,"\t>> Outer Boundary Conditions\n\n");
   
-  B.printFaceOBC(stdout, G_region, BC.exportOBC(), mat);
   B.printFaceOBC(fp, G_region, BC.exportOBC(), mat);
 
   
