@@ -164,6 +164,10 @@ public:
   void chkOrder (const int* bcd);
   
   
+  // フラグのチェック
+  void chkFlag(const int* bx, const int* bid, const long long* cut, const int* bcd);
+  
+  
   /**
    * @brief dst[]にsrc[]のstate, activeビットの情報をコピーする
    * @param [out] dst コピー先

@@ -155,8 +155,8 @@ int FFV::Initialize(int argc, char **argv)
 
   
   // フィルパラメータ
-  GM.getFillParam(&tp_ffv, fp, C.Unit.Param, C.RefLength, C.NoMedium, mat);
-  
+  GM.getFillParam(&tp_ffv, C.Unit.Param, C.RefLength, C.NoMedium, mat, fp);
+
   
   V.setControlVars(Ex);
 
@@ -164,6 +164,7 @@ int FFV::Initialize(int argc, char **argv)
   // CompoListの設定，境界条件の読み込み保持
   setBCinfo();
 
+  // コンポーネントポインタのコピー
   GM.setCompoPtr(C.NoCompo, cmp);
   
   
@@ -293,7 +294,7 @@ int FFV::Initialize(int argc, char **argv)
   }
 
   TIMING_start("Fill");
-  if ( !GM.fill(fp, d_bcd, d_bid, d_mid) )
+  if ( !GM.fill(d_bcd, d_bid, d_mid, d_cut) )
   {
     // debug routine
     //F->writeSVX(d_bcd);
@@ -366,6 +367,7 @@ int FFV::Initialize(int argc, char **argv)
   encodeBCindex(fp);
   TIMING_stop("Encode_BCindex");
 
+  V.chkFlag(d_bcp, d_bid, d_cut, d_bcd);
 
 
   // Polygonモニタの数をcmp[]にセット
@@ -4034,7 +4036,7 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   
   // 交点計算
   TIMING_start("Cut_Information");
-  GM.quantizeCut(fp, d_cut, d_bid, d_bcd, PL, PG);
+  GM.quantizeCut(d_cut, d_bid, d_bcd, PL, PG);
   TIMING_stop("Cut_Information");
   
   

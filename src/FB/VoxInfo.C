@@ -54,6 +54,87 @@ void VoxInfo::adjMediumPrdcInner(int* bcd, CompoList* cmp, const int m_NoCompo)
 
 
 // #################################################################
+/**
+ * @brief 圧力のノイマン境界ビットをエンコードする（カット）
+ * @param [in]  bx          BCindex P
+ * @param [in]  bid         カット点のID情報
+ * @param [in]  cut         距離情報
+ * @param [in]  bcd         d_bcd
+ */
+void VoxInfo::chkFlag(const int* bx, const int* bid, const long long* cut, const int* bcd)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  
+  // 対角項のフラグ
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m_p = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int s = bx[m_p];
+        
+        if ( !TEST_BIT(s, BC_DIAG) ) // false => zero divide
+        {
+          printf("rank %d : BC_DIAG %3d %3d %3d\n", myRank,i,j,k);
+        }
+      }
+    }
+  }
+  
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        
+        int key = DECODE_CMP(bcd[m]);
+        int qq = bid[m];
+        int qw = getBit5(qq, 0);
+        int qe = getBit5(qq, 1);
+        int qs = getBit5(qq, 2);
+        int qn = getBit5(qq, 3);
+        int qb = getBit5(qq, 4);
+        int qt = getBit5(qq, 5);
+        
+        // 全隣接方向に交点がある場合
+        if ( qw * qe * qs * qn * qb * qt != 0 )
+        {
+          printf("rank %d : (%3d %3d %3d) : id = %d\n", myRank, i,j,k,key);
+          
+          long long pos = cut[m];
+          printf("(%3d %3d %3d) %3d %3d %3d %3d %3d %3d : %d %d %d %d %d %d\n",
+                 i,j,k,
+                 getBit9(pos, 0),
+                 getBit9(pos, 1),
+                 getBit9(pos, 2),
+                 getBit9(pos, 3),
+                 getBit9(pos, 4),
+                 getBit9(pos, 5),
+                 ensCut(pos, X_minus),
+                 ensCut(pos, X_plus),
+                 ensCut(pos, Y_minus),
+                 ensCut(pos, Y_plus),
+                 ensCut(pos, Z_minus),
+                 ensCut(pos, Z_plus)
+                 );
+        }
+        
+      }
+    }
+  }
+
+  
+}
+
+
+
+
+// #################################################################
 // BCindex Bのエンコードを確認
 void VoxInfo::chkOrder (const int* bcd)
 {

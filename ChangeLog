@@ -19,6 +19,11 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-06-29
+r1617 setUncut9
+- add mergeSameSOlidCell()
+
+--------------------------
 2015-06-28
 r1616 ssor test
 - add core_psor.h, core_sor2sma.h

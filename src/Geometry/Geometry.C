@@ -120,18 +120,18 @@ void Geometry::assureUniqueLabel(int* labelTop, int* labelsz, vector<int>& tbl, 
   /* DEBUG
   for (vector<int>::iterator it=tbl.begin(); it != tbl.end(); ++it )
   {
-    fprintf(stderr, "%3d %3d vector\n", myRank, *it);
+    fprintf(fpc, "%3d %3d vector\n", myRank, *it);
   }
-  fprintf(stderr, "\n");
+  fprintf(sfpc, "\n");
   for (int i=0; i<tbl.size(); i++) {
-    fprintf(stderr, "%3d %3d v[]\n", myRank, tbl[i]);
+    fprintf(fpc, "%3d %3d v[]\n", myRank, tbl[i]);
   }
    */
   
   
   // 各ランクのラベルの数
   int LabelSize = (int)tbl.size();
-  //fprintf(stderr, "Rank = %6d : size = %d\n", myRank, LabelSize);
+  //fprintf(fpc, "Rank = %6d : size = %d\n", myRank, LabelSize);
   
   
   
@@ -180,7 +180,7 @@ void Geometry::assureUniqueLabel(int* labelTop, int* labelsz, vector<int>& tbl, 
   {
     Hostonly_
     {
-      fprintf(stderr, "Error : Start rank of gathering label is greather than %d\n", numProc);
+      fprintf(fpc, "Error : Start rank of gathering label is greather than %d\n", numProc);
     }
     Exit(0);
   }
@@ -200,7 +200,7 @@ void Geometry::assureUniqueLabel(int* labelTop, int* labelsz, vector<int>& tbl, 
   {
     for (int i=0; i<numProc; i++)
     {
-      fprintf(stderr, "original >> rank=%5d : num. labels=%6d : begin=%6d\n", i, labelsz[i], labelTop[i]);
+      fprintf(fpc, "original >> rank=%5d : num. labels=%6d : begin=%6d\n", i, labelsz[i], labelTop[i]);
     }
     printf("\n");
   }
@@ -223,7 +223,7 @@ void Geometry::assureUniqueLabel(int* labelTop, int* labelsz, vector<int>& tbl, 
       int target = *it;
       int replace= id + c;
       
-      //fprintf(stderr, "replaced >> rank=%5d : %d :from=%6d  to=%6d\n", myRank, c, target, replace);
+      //fprintf(fpc, "replaced >> rank=%5d : %d :from=%6d  to=%6d\n", myRank, c, target, replace);
       c++;
       
       // Paint
@@ -638,15 +638,15 @@ unsigned long Geometry::countCellM(const int* mid,
 
 // #################################################################
 /* @brief フィル操作
- * @param [in]      fp         ファイルポインタ
  * @param [in,out]  d_bcd      BCindex ID
- * @param [in]      d_bid      交点ID情報
+ * @param [in,out]  d_bid      交点ID情報
  * @param [in,out]  d_mid      work array
+ * @param [in,out]  d_cut      交点距離
  */
-bool Geometry::fill(FILE* fp,
-                    int* d_bcd,
-                    const int* d_bid,
-                    int* d_mid)
+bool Geometry::fill(int* d_bcd,
+                    int* d_bid,
+                    int* d_mid,
+                    long long* d_cut)
 {
 
   /*
@@ -677,17 +677,17 @@ bool Geometry::fill(FILE* fp,
   
   Hostonly_
   {
-    fprintf(fp,"\tFill initialize -----\n\n");
-    fprintf(fp,"\t\tTotal cell count       = %16ld\n", total_cell);
-    fprintf(fp,"\t\tInitial target count   = %16ld\n", target_count);
+    fprintf(fpc,"\tFill initialize -----\n\n");
+    fprintf(fpc,"\t\tTotal cell count       = %16ld\n", total_cell);
+    fprintf(fpc,"\t\tInitial target count   = %16ld\n", target_count);
     
-    fprintf(fp,"\n\tFill -----\n\n");
-    fprintf(fp,"\t\tFill mode for each dir.: %d %d %d\n", FillSuppress[0], FillSuppress[1], FillSuppress[2]);
+    fprintf(fpc,"\n\tFill -----\n\n");
+    fprintf(fpc,"\t\tFill mode for each dir.: %d %d %d\n", FillSuppress[0], FillSuppress[1], FillSuppress[2]);
   }
   
   
   // FLUIDでフィル ---------------------
-  if ( !fillConnected(fp, d_bcd, d_bid, FLUID, target_count) ) return false;
+  if ( !fillConnected(d_bcd, d_bid, FLUID, target_count) ) return false;
 
   // 対象セルがなければ終了
   if ( target_count == 0 ) return true;
@@ -696,43 +696,13 @@ bool Geometry::fill(FILE* fp,
   
   
   // 連結領域を同定し、ペイントする --------------------
-  if ( !identifyConnectedRegion(d_mid, d_bcd, d_bid, target_count, total_cell-target_count, fp) ) return false;
+  if ( !identifyConnectedRegion(d_mid, d_bcd, d_bid, target_count, total_cell-target_count) ) return false;
+
 
   
-  
-  
-  // 未ペイントのセルをヒントのSOLIDでペイントする -------------------
-  
-  // 未ペイント（ID=0）のセルを検出
-  target_count = countCellB(d_bcd, 0);
-  if ( target_count == 0 ) return true;
-  
-  Hostonly_
-  {
-    fprintf(fp,"\t\tStill unpainted cells    = %16ld\n\n", target_count);
-  }
-  
-  fflush(fp);
-  
-  
-  
-  // SOLIDで連結フィル
-  //if ( !fillConnected(fp, d_bcd, d_bid, SOLID, target_count) ) return false;
+  // 同種のセルでカットをもつ境界の修正
+  mergeSameSolidCell(d_bid, d_cut, d_bcd);
 
-  
-  
-  
-  // 未ペイントセルがある場合は、全周カットの可能性
-  unsigned long tmp = replaceIsolatedCell(d_bcd, d_bid, fp);
-  
-  if ( tmp > 0 )
-  {
-    Hostonly_
-    {
-      fprintf(fp,"\t\tReplaced isolated cell   = %16ld\n", tmp);
-    }
-  }
-  
   
   // チェック
   unsigned long upc = countCellB(d_bcd, 0);
@@ -741,7 +711,7 @@ bool Geometry::fill(FILE* fp,
   {
     Hostonly_
     {
-      fprintf(fp,"\n\tFill operation is done, but still remains %ld unpainted cells.\n\n", upc);
+      fprintf(fpc,"\n\tFill operation is done, but still remains %ld unpainted cells.\n\n", upc);
     }
     return false;
   }
@@ -752,15 +722,13 @@ bool Geometry::fill(FILE* fp,
 
 // #################################################################
 /* @brief 連続領域のフィル
- * @param [in]      fp         ファイルポインタ
- * @param [in,out]  d_bcd      BCindex ID
- * @param [in]      d_bid      交点ID情報
- * @param [in]      fill_mode  フィルモード (SOLID | FLUID)
+ * @param [in,out]  d_bcd        BCindex ID
+ * @param [in]      d_bid        交点ID情報
+ * @param [in]      fill_mode    フィルモード (SOLID | FLUID)
  * @param [in,out]  target_count ペイント対象のセル数
  * @retval success => true
  */
-bool Geometry::fillConnected(FILE* fp,
-                             int* d_bcd,
+bool Geometry::fillConnected(int* d_bcd,
                              const int* d_bid,
                              const int fill_mode,
                              unsigned long& target_count)
@@ -804,7 +772,7 @@ bool Geometry::fillConnected(FILE* fp,
         {
           Hostonly_
           {
-            fprintf(fp,"\tIn case of Inner Fill Hint, filled cell must be 1.\n");
+            fprintf(fpc,"\tIn case of Inner Fill Hint, filled cell must be 1.\n");
           }
           Exit(0);
         }
@@ -823,7 +791,7 @@ bool Geometry::fillConnected(FILE* fp,
   
   Hostonly_
   {
-    fprintf(fp,"\t\tPainted %s cells by hint       = %16ld\n", (fill_mode==FLUID)?"FLUID":"SOLID", filled);
+    fprintf(fpc,"\t\tPainted %s cells by hint       = %16ld\n", (fill_mode==FLUID)?"FLUID":"SOLID", filled);
   }
   
   
@@ -833,7 +801,7 @@ bool Geometry::fillConnected(FILE* fp,
   
   Hostonly_
   {
-    fprintf(fp,"\t\tRemaining cells to paint          = %16ld\n\n", target_count);
+    fprintf(fpc,"\t\tRemaining cells to paint          = %16ld\n\n", target_count);
   }
   
   
@@ -864,9 +832,9 @@ bool Geometry::fillConnected(FILE* fp,
   
   Hostonly_
   {
-    fprintf(fp,"\t\tConnected fill Iteration          = %5d\n", c);
-    fprintf(fp,"\t\t               Filled by %s    = %16ld\n", (fill_mode==FLUID)?"FLUID":"SOLID", sum_filled);
-    fprintf(fp,"\t\t               Remaining cells    = %16ld\n\n", target_count);
+    fprintf(fpc,"\t\tConnected fill Iteration          = %5d\n", c);
+    fprintf(fpc,"\t\t               Filled by %s    = %16ld\n", (fill_mode==FLUID)?"FLUID":"SOLID", sum_filled);
+    fprintf(fpc,"\t\t               Remaining cells    = %16ld\n\n", target_count);
   }
   
   return true;
@@ -1573,7 +1541,7 @@ bool Geometry::gatherLabels(int* buffer,
       c++;
     }
   }
-  if ( c > width_label ) { printf("rank= %d c= %d\n", myRank, c); return false; }
+  if ( c > width_label ) { fprintf(fpc, "rank= %d c= %d\n", myRank, c); return false; }
   
   
   // ラベル数の収集
@@ -1668,7 +1636,7 @@ bool Geometry::gatherRules(int* buffer,
   
   if ( cnct.size() > width_rule )
   {
-    printf("rank= %d rule= %d < %d\n", myRank, width_rule, cnct.size());
+    fprintf(fpc, "rank= %d rule= %d < %d\n", myRank, width_rule, cnct.size());
     return false;
   }
   
@@ -1699,21 +1667,24 @@ bool Geometry::gatherRules(int* buffer,
 /*
  * @brief フィルパラメータを取得
  * @param [in] tpCntl       TextParser
- * @param [in] fp           file pointer to "condition.txt"
  * @param [in] Unit         DIMENSIONAL | NON_DIMENSIONAL
  * @param [in] RefL         代表長さ
  * @param [in] m_Nomedium   媒質数
  * @param [in] m_mat        MediumList
+ * @param [in] m_fp         condition.txt
  */
 void Geometry::getFillParam(TextParser* tpCntl,
-                            FILE* fp,
                             const int Unit,
                             const REAL_TYPE RefL,
                             const int m_NoMedium,
-                            const MediumList* m_mat)
+                            const MediumList* m_mat,
+                            FILE* m_fp)
 {
   string str;
   string label_base, label_leaf, label;
+  
+  // ファイルポインタのコピー
+  fpc = m_fp;
   
   NoMedium = m_NoMedium;
   
@@ -1825,23 +1796,23 @@ void Geometry::getFillParam(TextParser* tpCntl,
   
   Hostonly_
   {
-    fprintf(fp,"\n----------\n");
-    fprintf(fp,"\n\t>> Fill Hint\n\n");
-    fprintf(fp,"\t No.        Kind       Medium   Direction / Coordinate(ND)\n");
-    fprintf(fp,"\t--------------------------------------------------------------------------\n");
+    fprintf(fpc,"\n----------\n");
+    fprintf(fpc,"\n\t>> Fill Hint\n\n");
+    fprintf(fpc,"\t No.        Kind       Medium   Direction / Coordinate(ND)\n");
+    fprintf(fpc,"\t--------------------------------------------------------------------------\n");
     for (int m=0; m<NoHint; m++)
     {
-      fprintf(fp,"\t%3d %12s %12s   ", m+1, (fill_table[m].kind == kind_outerface)?"OuterFace":"Point", fill_table[m].medium.c_str());
+      fprintf(fpc,"\t%3d %12s %12s   ", m+1, (fill_table[m].kind == kind_outerface)?"OuterFace":"Point", fill_table[m].medium.c_str());
       if (fill_table[m].kind == kind_outerface)
       {
-        fprintf(fp,"Direction = %s\n", FBUtility::getDirection(fill_table[m].dir).c_str());
+        fprintf(fpc,"Direction = %s\n", FBUtility::getDirection(fill_table[m].dir).c_str());
       }
       else
       {
-        fprintf(fp,"(%12.6e, %12.6e, %12.6e)\n", fill_table[m].point[0], fill_table[m].point[1], fill_table[m].point[2]);
+        fprintf(fpc,"(%12.6e, %12.6e, %12.6e)\n", fill_table[m].point[0], fill_table[m].point[1], fill_table[m].point[2]);
       }
     }
-    fprintf(fp,"\n----------\n");
+    fprintf(fpc,"\n----------\n");
   }
   
   
@@ -1921,14 +1892,12 @@ int Geometry::getNumBuffer(const vector< vector<int> > cnct)
  * @param [in] bid          交点ID
  * @param [in] paintable    固体領域でペイントすべきセル数
  * @param [in] filled_fluid 流体でペイント済みの数
- * @param [in] fp           ファイルポインタ
  */
 bool Geometry::identifyConnectedRegion(int* mid,
                                        int* bcd,
                                        const int* bid,
                                        const unsigned long paintable,
-                                       const unsigned long filled_fluid,
-                                       FILE* fp)
+                                       const unsigned long filled_fluid)
 {
   // mid[]をゼロで初期化し、流体領域を-1でペイント
   // 個々までの処理でbcd[]には流体セルのIDのみが記録されている，それ以外はゼロを仮定
@@ -1936,7 +1905,7 @@ bool Geometry::identifyConnectedRegion(int* mid,
   {
     Hostonly_
     {
-      fprintf(stderr, "\tFilled cells of fluid is not consistent.\n");
+      fprintf(fpc, "\tFilled cells of fluid is not consistent.\n");
       return false;
     }
   }
@@ -2096,8 +2065,7 @@ bool Geometry::identifyConnectedRegion(int* mid,
                        packedLabels,
                        width_label,
                        packedRules,
-                       width_rule,
-                       fp) ) return false;
+                       width_rule) ) return false;
   
   
   // 最終のラベルと接続ルール
@@ -2112,20 +2080,20 @@ bool Geometry::identifyConnectedRegion(int* mid,
   // DEBUG
   Hostonly_
   {
-    fprintf(fp, "\n ================\n");
-    fprintf(fp, "\n Reduced Labels\n\n");
-    fprintf(fp, "  key : values\n");
+    fprintf(fpc, "\n ================\n");
+    fprintf(fpc, "\n Reduced Labels\n\n");
+    fprintf(fpc, "  key : values\n");
     for (int i=0; i<finalRules.size(); i++) // ルール数
     {
-      fprintf(fp, " %4d :", finalLabels[i]);
+      fprintf(fpc, " %4d :", finalLabels[i]);
       
       for (int j=0; j<finalRules[i].size(); j++) // 各ルールの持つ要素数
       {
-        fprintf(fp, " %4d", finalRules[i][j]);
+        fprintf(fpc, " %4d", finalRules[i][j]);
       }
-      fprintf(fp, "\n");
+      fprintf(fpc, "\n");
     }
-    fprintf(fp, "\n ================\n\n");
+    fprintf(fpc, "\n ================\n\n");
   }
   
   
@@ -2142,7 +2110,7 @@ bool Geometry::identifyConnectedRegion(int* mid,
   {
     Hostonly_
     {
-      fprintf(fp, "\tFailed to perform makeHistgramByModalCut()\n");
+      fprintf(fpc, "\tFailed to perform makeHistgramByModalCut()\n");
       return false;
     }
   }
@@ -2364,7 +2332,7 @@ bool Geometry::makeHistgramByModalCut(vector<int>& matIndex,
     for (int i=0; i<NoMedium+1; i++) mode[i] = 0;
     
     int flag = 0;
-    //Hostonly_ printf("label[%d] = %d\n", l, target);
+    //Hostonly_ fprintf(fpc, "label[%d] = %d\n", l, target);
     
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, target, m_Medium) \
         schedule(static) reduction(+:flag)
@@ -2425,14 +2393,14 @@ bool Geometry::makeHistgramByModalCut(vector<int>& matIndex,
     
     if ( flag > 0 )
     {
-      printf("rank=%d flag=%d\n", myRank, flag);
+      fprintf(fpc, "rank=%d flag=%d\n", myRank, flag);
       return false;
     }
     
     
     /* DEBUG
-    Hostonly_ printf("          label : mode << LOCAL\n");
-    for (int i=1; i<=NoMedium; i++) printf("[rank=%d]  medium=%d %5d\n", myRank, i, mode[i]);
+    Hostonly_ fprintf(fpc, "          label : mode << LOCAL\n");
+    for (int i=1; i<=NoMedium; i++) fprintf(fpc,"[rank=%d]  medium=%d %5d\n", myRank, i, mode[i]);
     paraMngr->Barrier();
      */
     
@@ -2442,7 +2410,7 @@ bool Geometry::makeHistgramByModalCut(vector<int>& matIndex,
     /*
     for (int j=0; j<NoMedium+1; j++)
     {
-      Hostonly_ printf("%d : %ld\n", j, mode[j]);
+      Hostonly_ fprintf(fpc, "%d : %ld\n", j, mode[j]);
     }
      */
     
@@ -2460,7 +2428,7 @@ bool Geometry::makeHistgramByModalCut(vector<int>& matIndex,
     
     if ( loc < 0  ||  loc > NoMedium )
     {
-      printf("Out of range of max key = %d\n", loc);
+      fprintf(fpc, "Out of range of max key = %d\n", loc);
       return false;
     }
     
@@ -2470,8 +2438,8 @@ bool Geometry::makeHistgramByModalCut(vector<int>& matIndex,
     /* DEBUG
     Hostonly_
     {
-      printf("label : loc. of max : mode\n");
-      printf("%5d :        %4d : %ld\n", l, loc, mode[loc]);
+      fprintf(fpc, "label : loc. of max : mode\n");
+      fprintf(fpc, "%5d :        %4d : %ld\n", l, loc, mode[loc]);
     }
      */
 
@@ -2493,15 +2461,13 @@ bool Geometry::makeHistgramByModalCut(vector<int>& matIndex,
  * @param [in]     width_label  ラベル情報のバッファ幅
  * @param [in]     pckdRules    接続ルール数のリスト
  * @param [in]     width_rule   接続ルール数のバッファ幅
- * @param [in]     fp           ファイルポインタ
  */
 bool Geometry::makeWholeRules(vector< vector<int> >& connectRules,
                               const int* labelSize,
                               const int* pckdLabel,
                               const int width_label,
                               const int* pckdRules,
-                              const int width_rule,
-                              FILE* fp)
+                              const int width_rule)
 {
   // 接続ルールをコンテナに入れる
   int c = 0;
@@ -2519,7 +2485,7 @@ bool Geometry::makeWholeRules(vector< vector<int> >& connectRules,
         int elm = pckdLabel[ i * width_label + m ];
         if ( elm == 0 )
         {
-          printf("Zero element appears in constructing the whole connection rules at rank=%d #rule=%d > %dth\n", i, j, l);
+          fprintf(fpc, "Zero element appears in constructing the whole connection rules at rank=%d #rule=%d > %dth\n", i, j, l);
         }
         addLabel2List(connectRules[c], elm);
         m++;
@@ -2534,7 +2500,7 @@ bool Geometry::makeWholeRules(vector< vector<int> >& connectRules,
   if ( c != connectRules.size() )
   {
     Hostonly_ {
-      printf("Number of rules does not agree %d\n", c);
+      fprintf(fpc, "Number of rules does not agree %d\n", c);
       return false;
     }
   }
@@ -2576,20 +2542,20 @@ bool Geometry::makeWholeRules(vector< vector<int> >& connectRules,
   // DEBUG
   Hostonly_
   {
-    fprintf(fp, "\n ================\n");
-    fprintf(fp, "\n Connection Rules (ascending order)\n\n");
-    fprintf(fp, "  key  : values\n");
+    fprintf(fpc, "\n ================\n");
+    fprintf(fpc, "\n Connection Rules (ascending order)\n\n");
+    fprintf(fpc, "  key  : values\n");
     for (int i=0; i<connectRules.size(); i++) // ルール数
     {
-      fprintf(fp, " %4d :", i+1);
+      fprintf(fpc, " %4d :", i+1);
       
       for (int j=0; j<connectRules[i].size(); j++) // 各ルールの持つ要素数
       {
-        fprintf(fp, " %4d", connectRules[i][j]);
+        fprintf(fpc, " %4d", connectRules[i][j]);
       }
-      fprintf(fp, "\n");
+      fprintf(fpc, "\n");
     }
-    fprintf(fp, "\n ================\n\n");
+    fprintf(fpc, "\n ================\n\n");
   }
   
   return true;
@@ -2597,14 +2563,193 @@ bool Geometry::makeWholeRules(vector< vector<int> >& connectRules,
 
 
 
+// #################################################################
+/**
+ * @brief 同種のセルでカットをもつ境界の修正
+ * @param [in,out]  bid      カット点のID情報
+ * @param [in,out]  cut      距離情報
+ * @param [in]      bcd      d_bcd
+ * @param [in]      Dsize    サイズ
+ */
+void Geometry::mergeSameSolidCell(int* bid,
+                                  long long* cut,
+                                  const int* bcd,
+                                  const int* Dsize)
+{
+  int ix, jx, kx, gd;
+  
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
+  
+  
+  
+//#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+  
+#pragma omp single
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        
+        int zp = DECODE_CMP( bcd[m] );
+        
+        // SOLIDに対してチェック
+        if ( cmp[zp].getState() == SOLID ) // cmp[]はmat[]の代用
+        {
+          int qq = bid[m];
+          int qw = getBit5(qq, 0);
+          int qe = getBit5(qq, 1);
+          int qs = getBit5(qq, 2);
+          int qn = getBit5(qq, 3);
+          int qb = getBit5(qq, 4);
+          int qt = getBit5(qq, 5);
+          
+          long long pos = cut[m];
+          long long tmp = pos;
+          
+          size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
+          size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
+          size_t m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd);
+          size_t m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd);
+          size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
+          size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
+          
+          
+          int zw = DECODE_CMP( bcd[m_w] );
+          int ze = DECODE_CMP( bcd[m_e] );
+          int zs = DECODE_CMP( bcd[m_s] );
+          int zn = DECODE_CMP( bcd[m_n] );
+          int zb = DECODE_CMP( bcd[m_b] );
+          int zt = DECODE_CMP( bcd[m_t] );
+          
+          
+          // X-方向が同じ媒質でカットがある場合
+          if ( ensCut(pos, X_minus)  &&  zp == zw )
+          {
+            setUncut9(pos, X_minus);
+            setBit5(qq, 0, X_minus);
+            fprintf(fpc, "rank %d : (%3d %3d %3d) dir=%d id=%2d : %3d : %d >> %3d : %d\n",
+                   myRank,i,j,k,0,zp,
+                   getBit9(tmp, 0), ensCut(tmp, 0),
+                   getBit9(pos, 0), ensCut(pos, 0) );
+          }
+          
+          if ( ensCut(pos, X_plus)  &&  zp == ze )
+          {
+            setUncut9(pos, X_plus);
+            setBit5(qq, 0, X_plus);
+            fprintf(fpc, "rank %d : (%3d %3d %3d) dir=%d id=%2d : %3d : %d >> %3d : %d\n",
+                   myRank,i,j,k,1,zp,
+                   getBit9(tmp, 1), ensCut(tmp, 1),
+                   getBit9(pos, 1), ensCut(pos, 1) );
+          }
+          
+          if ( ensCut(pos, Y_minus)  &&  zp == zs )
+          {
+            setUncut9(pos, Y_minus);
+            setBit5(qq, 0, Y_minus);
+            fprintf(fpc, "rank %d : (%3d %3d %3d) dir=%d id=%2d : %3d : %d >> %3d : %d\n",
+                   myRank,i,j,k,2,zp,
+                   getBit9(tmp, 2), ensCut(tmp, 2),
+                   getBit9(pos, 2), ensCut(pos, 2) );
+          }
+          
+          if ( ensCut(pos, Y_plus)  &&  zp == zn )
+          {
+            setUncut9(pos, Y_plus);
+            setBit5(qq, 0, Y_plus);
+            fprintf(fpc, "rank %d : (%3d %3d %3d) dir=%d id=%2d : %3d : %d >> %3d : %d\n",
+                   myRank,i,j,k,3,zp,
+                   getBit9(tmp, 3), ensCut(tmp, 3),
+                   getBit9(pos, 3), ensCut(pos, 3) );
+          }
+          
+          if ( ensCut(pos, Z_minus)  &&  zp == zb )
+          {
+            setUncut9(pos, Z_minus);
+            setBit5(qq, 0, Z_minus);
+            fprintf(fpc, "rank %d : (%3d %3d %3d) dir=%d id=%2d : %3d : %d >> %3d : %d\n",
+                   myRank,i,j,k,4,zp,
+                   getBit9(tmp, 4), ensCut(tmp, 4),
+                   getBit9(pos, 4), ensCut(pos, 4) );
+          }
+          
+          if ( ensCut(pos, Z_plus)  &&  zp == zt )
+          {
+            setUncut9(pos, Z_plus);
+            setBit5(qq, 0, Z_plus);
+            fprintf(fpc, "rank %d : (%3d %3d %3d) dir=%d id=%2d : %3d : %d >> %3d : %d\n",
+                   myRank,i,j,k,5,zp,
+                   getBit9(tmp, 5), ensCut(tmp, 5),
+                   getBit9(pos, 5), ensCut(pos, 5) );
+          }
+          
+          cut[m] = pos;
+          bid[m] = qq;
+          
+          /* 全隣接方向に交点がある場合
+          if ( qw * qe * qs * qn * qb * qt != 0 )
+          {
+            
+            printf("rank %d : (%3d %3d %3d) id=%2d : %3d %3d %3d %3d %3d %3d : %d %d %d %d %d %d >> %3d %3d %3d %3d %3d %3d : %d %d %d %d %d %d\n",
+                   myRank,i,j,k,zp,
+                   getBit9(tmp, 0),
+                   getBit9(tmp, 1),
+                   getBit9(tmp, 2),
+                   getBit9(tmp, 3),
+                   getBit9(tmp, 4),
+                   getBit9(tmp, 5),
+                   ensCut(tmp, X_minus),
+                   ensCut(tmp, X_plus),
+                   ensCut(tmp, Y_minus),
+                   ensCut(tmp, Y_plus),
+                   ensCut(tmp, Z_minus),
+                   ensCut(tmp, Z_plus),
+                   getBit9(pos, 0),
+                   getBit9(pos, 1),
+                   getBit9(pos, 2),
+                   getBit9(pos, 3),
+                   getBit9(pos, 4),
+                   getBit9(pos, 5),
+                   ensCut(pos, X_minus),
+                   ensCut(pos, X_plus),
+                   ensCut(pos, Y_minus),
+                   ensCut(pos, Y_plus),
+                   ensCut(pos, Z_minus),
+                   ensCut(pos, Z_plus)
+                   );
+          } // Cut All
+          */
+          
+        } // SOLID
+        
+      }
+    }
+  }
+  
+}
+
+
 
 // #################################################################
 /* @brief 距離の最小値を求める
  * @param [in,out] cut カットの配列
  * @param [in]     bid 境界IDの配列
- * @param [in]     fp  file pointer
  */
-void Geometry::minDistance(const long long* cut, const int* bid, FILE* fp)
+void Geometry::minDistance(const long long* cut, const int* bid)
 {
   int global_min = 1024;
   int local_min = 1024;
@@ -2658,7 +2803,7 @@ void Geometry::minDistance(const long long* cut, const int* bid, FILE* fp)
   
   Hostonly_
   {
-    fprintf(fp, "\n\tMinimum non-dimensional distance except on a center = %e\n\n", (REAL_TYPE)global_min/(REAL_TYPE)QT_9); // 9bit幅
+    fprintf(fpc, "\n\tMinimum non-dimensional distance except on a center = %e\n\n", (REAL_TYPE)global_min/(REAL_TYPE)QT_9); // 9bit幅
   }
   
 }
@@ -2702,7 +2847,7 @@ void Geometry::paintCutOnPoint(int* bcd,
   
   
   unsigned long fc = 0;
-  
+  /*
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:fc)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
@@ -2713,6 +2858,47 @@ void Geometry::paintCutOnPoint(int* bcd,
         int qq = bid[m];
         long long pos = cut[m];
         
+        // 交点IDの最頻値
+        int sd = FBUtility::find_mode_id(getBit5(qq, X_minus),
+                                         getBit5(qq, X_plus),
+                                         getBit5(qq, Y_minus),
+                                         getBit5(qq, Y_plus),
+                                         getBit5(qq, Z_minus),
+                                         getBit5(qq, Z_plus),
+                                         NoCompo);
+        if ( sd == 0 ) Exit(0);
+        
+        // 交点IDの媒質番号を得る
+        int key = cmp[sd].getMatodr();
+        if ( key == 0 )
+        {
+          //printf("sd=%2d key=%2d : %2d %2d %2d %2d %2d %2d\n", sd, key, qw, qe, qs, qn, qb, qt);
+          Exit(0);
+        }
+        
+        
+        // x-方向が定義点上の場合（交点があり、かつ距離がゼロ）
+        if ( chkZeroCut(pos, X_minus) )
+        {
+#if 0
+          printf("(%3d %3d %3d) %3d : %d\n", i,j,k,getBit9(pos, X_minus) );
+#endif
+
+          // セル属性をエンコード
+          int s = bcd[m];
+          setMediumID(s, key);
+          
+          // セルを固体にする
+          if ( cmp[key].getState() == SOLID ) // cmp[]はmat[]の代用
+          {
+            s = offBit( s, STATE_BIT );
+          }
+          bcd[m] = s;
+          
+          fc++;
+        }
+        
+        
         // いずれかの方向が定義点上の場合（交点があり、かつ距離がゼロ）
         if ( chkZeroCut(pos, X_minus) ||
              chkZeroCut(pos, X_plus ) ||
@@ -2721,15 +2907,8 @@ void Geometry::paintCutOnPoint(int* bcd,
              chkZeroCut(pos, Z_minus) ||
              chkZeroCut(pos, Z_plus ) )
         {
-          // 交点IDの最頻値
-          int sd = FBUtility::find_mode_id(getBit5(qq, X_minus),
-                                           getBit5(qq, X_plus),
-                                           getBit5(qq, Y_minus),
-                                           getBit5(qq, Y_plus),
-                                           getBit5(qq, Z_minus),
-                                           getBit5(qq, Z_plus),
-                                           NoCompo);
-#if 0
+          
+#if 1
           printf("(%3d %3d %3d) %3d %3d %3d %3d %3d %3d : %d %d %d %d %d %d\n",
                  i,j,k,
                  getBit9(pos, 0),
@@ -2806,6 +2985,7 @@ void Geometry::paintCutOnPoint(int* bcd,
     if ( paraMngr->BndCommS3D(bid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
     if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
   }
+  */
   
 
   
@@ -2829,7 +3009,10 @@ void Geometry::paintCutOnPoint(int* bcd,
         const int qq = bid[m_p];
         const long long pos = cut[m_p];
         
+        
+        
         // 定義点上に交点があり、反対側のセルから見て交点がない場合
+        /*
         int ens = 0;
         if ( chkZeroCut(pos, X_minus) ||
              chkZeroCut(pos, X_plus ) ||
@@ -2837,44 +3020,44 @@ void Geometry::paintCutOnPoint(int* bcd,
              chkZeroCut(pos, Y_plus ) ||
              chkZeroCut(pos, Z_minus) ||
              chkZeroCut(pos, Z_plus ) ) ens = 1;
+        */
         
-        
-        if ( ens == 1 && !ensCut(cut[m_w], X_plus) )
+        if ( chkZeroCut(pos, X_minus)  &&  !ensCut(cut[m_w], X_plus) )
         {
           setBit5(bid[m_w], getBit5(qq, X_minus), X_plus);
           setCut9(cut[m_w], QT_9, X_plus);
           fc++;
         }
         
-        if ( ens == 1  && !ensCut(cut[m_e], X_minus) )
+        if ( chkZeroCut(pos, X_plus )  &&  !ensCut(cut[m_e], X_minus) )
         {
           setBit5(bid[m_e], getBit5(qq, X_plus), X_minus);
           setCut9(cut[m_e], QT_9, X_minus);
           fc++;
         }
         
-        if ( ens == 1 && !ensCut(cut[m_s], Y_plus) )
+        if ( chkZeroCut(pos, Y_minus)  &&  !ensCut(cut[m_s], Y_plus) )
         {
           setBit5(bid[m_s], getBit5(qq, Y_minus), Y_plus);
           setCut9(cut[m_s], QT_9, Y_plus);
           fc++;
         }
         
-        if ( ens == 1  && !ensCut(cut[m_n], Y_minus) )
+        if ( chkZeroCut(pos, Y_plus )  &&  !ensCut(cut[m_n], Y_minus) )
         {
           setBit5(bid[m_n], getBit5(qq, Y_plus), Y_minus);
           setCut9(cut[m_n], QT_9, Y_minus);
           fc++;
         }
         
-        if ( ens == 1 && !ensCut(cut[m_b], Z_plus) )
+        if ( chkZeroCut(pos, Z_minus)  &&  !ensCut(cut[m_b], Z_plus) )
         {
           setBit5(bid[m_b], getBit5(qq, Z_minus), Z_plus);
           setCut9(cut[m_b], QT_9, Z_plus);
           fc++;
         }
         
-        if ( ens == 1  && !ensCut(cut[m_t], Z_minus) )
+        if ( chkZeroCut(pos, Z_plus )  &&  !ensCut(cut[m_t], Z_minus) )
         {
           setBit5(bid[m_t], getBit5(qq, Z_plus), Z_minus);
           setCut9(cut[m_t], QT_9, Z_minus);
@@ -3041,24 +3224,36 @@ void Geometry::paintConnectedLabel(int* mid,
 // #################################################################
 /**
  * @brief 交点計算を行い、量子化する
- * @param [in]      fp        ファイルポインタ
- * @param [out]    cut        量子化した交点
- * @param [out]    bid        交点ID
- * @param [in,out] bcd        セルID
- * @param [in]     PL         Polylibインスタンス
- * @param [in]     PG         PolygonPropertyクラス
+ * @param [out]    cut      量子化した交点
+ * @param [out]    bid      交点ID
+ * @param [in,out] bcd      セルID
+ * @param [in]     PL       Polylibインスタンス
+ * @param [in]     PG       PolygonPropertyクラス
+ * @param [in]     Dsize    サイズ
  */
-void Geometry::quantizeCut(FILE* fp,
-                           long long* cut,
+void Geometry::quantizeCut(long long* cut,
                            int* bid,
                            int* bcd,
                            MPIPolylib* PL,
-                           PolygonProperty* PG)
+                           PolygonProperty* PG,
+                           const int* Dsize)
 {
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
+  int ix, jx, kx, gd;
+  
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
 
   
   Vec3r org(originD);
@@ -3175,7 +3370,7 @@ void Geometry::quantizeCut(FILE* fp,
     odr ++;
   }
   
-  Hostonly_ fprintf(fp, "\tquantize cut = %d\n\n", count);
+  Hostonly_ fprintf(fpc, "\tquantize cut = %d\n\n", count);
   
   delete pg_roots;
   
@@ -3191,7 +3386,7 @@ void Geometry::quantizeCut(FILE* fp,
   // 修正
   
   // 定義点上に交点がある場合の処理 >> カットするポリゴンの媒質番号でフィルする
-  unsigned long fill_cut, cm;
+  unsigned long fill_cut=0, cm=0;
   
   paintCutOnPoint(bcd, bid, cut, fill_cut, cm);
 
@@ -3199,13 +3394,13 @@ void Geometry::quantizeCut(FILE* fp,
   {
     if ( fill_cut > 0  || cm > 0 )
     {
-      fprintf(fp,"\n\tPaint cells which have cut on a center  = %16ld\n", fill_cut);
-      fprintf(fp,  "\tModify neighbor cells owing to painting = %16ld\n", cm);
+      fprintf(fpc,"\n\tPaint cells which have cut on a center  = %16ld\n", fill_cut);
+      fprintf(fpc,  "\tModify neighbor cells owing to painting = %16ld\n", cm);
     }
   }
   
   // 最小値カット
-  minDistance(cut, bid, fp);
+  minDistance(cut, bid);
   
 }
 
@@ -3261,7 +3456,7 @@ void Geometry::reduceLabels(vector<int>& finalLabels,
   {
     if ( valid[i] !=0 )
     {
-      Hostonly_ printf("Error : Valid flag[%d] = %d\n", i, valid[i]);
+      Hostonly_ fprintf(fpc, "Error : Valid flag[%d] = %d\n", i, valid[i]);
       Exit(0);
     }
   }
@@ -3329,70 +3524,6 @@ void Geometry::registerRule(vector< vector<int> >& finalRules,
   }
  
   valid[test_keyodr] = 0;
-}
-
-
-
-// #################################################################
-/** 
- * @brief 6方向にカットのあるセルを交点の媒質IDでフィルする
- * @param [in,out] bcd       BCindex
- * @param [in]     bid       交点ID
- * @param [in]     fp        condition.txt
- */
-unsigned long Geometry::replaceIsolatedCell(int* bcd, const int* bid, FILE* fp)
-{
-  int ix = size[0];
-  int jx = size[1];
-  int kx = size[2];
-  int gd = guide;
-
-  unsigned long replaced=0;
-  
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:replaced)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        
-        if ( DECODE_CMP(bcd[m]) == 0 )
-        {
-          int qq = bid[m];
-          int qw = getBit5(qq, 0);
-          int qe = getBit5(qq, 1);
-          int qs = getBit5(qq, 2);
-          int qn = getBit5(qq, 3);
-          int qb = getBit5(qq, 4);
-          int qt = getBit5(qq, 5);
-          
-          // 全隣接方向に交点がある場合
-          if ( qw * qe * qs * qn * qb * qt != 0 )
-          {
-            // 交点IDの最頻値
-            int sd = FBUtility::find_mode_id(qw, qe, qs, qn, qb, qt, NoCompo);
-            if ( sd==0 ) Exit(0);
-            
-            // MediumListの格納番号
-            int key = cmp[sd].getMatodr();
-            fprintf(fp, "rank %d : (%d %d %d) : key id =%d\n", myRank, i,j,k,key);
-            
-            if ( key == 0 ) Exit(0);
-            setMediumID(bcd[m], key);
-            replaced++;
-          }
-        }
-        
-      }
-    }
-  }
-  
-  if ( numProc > 1 )
-  {
-    unsigned long c_tmp = replaced;
-    if ( paraMngr->Allreduce(&c_tmp, &replaced, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  return replaced;
 }
 
 
@@ -4350,17 +4481,78 @@ int Geometry::find_mode_smd(const int* smd)
 
 
 
+// #################################################################
+/**
+ * @brief 6方向にカットのあるセルを交点の媒質IDでフィルする
+ * @param [in,out] bcd       BCindex
+ * @param [in]     bid       交点ID
+ */
+unsigned long Geometry::replaceIsolatedCell(int* bcd, const int* bid)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  unsigned long replaced=0;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:replaced)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        
+        if ( DECODE_CMP(bcd[m]) == 0 )
+        {
+          int qq = bid[m];
+          int qw = getBit5(qq, 0);
+          int qe = getBit5(qq, 1);
+          int qs = getBit5(qq, 2);
+          int qn = getBit5(qq, 3);
+          int qb = getBit5(qq, 4);
+          int qt = getBit5(qq, 5);
+          
+          // 全隣接方向に交点がある場合
+          if ( qw * qe * qs * qn * qb * qt != 0 )
+          {
+            // 交点IDの最頻値
+            int sd = FBUtility::find_mode_id(qw, qe, qs, qn, qb, qt, NoCompo);
+            if ( sd==0 ) Exit(0);
+            
+            // MediumListの格納番号
+            int key = cmp[sd].getMatodr();
+            printf("rank %d : (%d %d %d) : key id =%d\n", myRank, i,j,k,key);
+            
+            if ( key == 0 ) Exit(0);
+            setMediumID(bcd[m], key);
+            replaced++;
+          }
+        }
+        
+      }
+    }
+  }
+  
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = replaced;
+    if ( paraMngr->Allreduce(&c_tmp, &replaced, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  return replaced;
+}
+
+
+
 
 // #################################################################
 /* @brief シード点によるフィル
- * @param [in]  fp        ファイルポインタ
  * @param [in]  d_mid     識別子配列
  * @param [in]  PL        MPIPolylibのインスタンス
  * @param [in]  PG        PolygonPropertyクラス
  * @note ここまで、d_bcdにはsetMonitorList()でモニタIDが入っている
  */
-void Geometry::SeedFilling(FILE* fp,
-                           int* d_mid,
+void Geometry::SeedFilling(int* d_mid,
                            MPIPolylib* PL,
                            PolygonProperty* PG)
 {
@@ -4380,7 +4572,7 @@ void Geometry::SeedFilling(FILE* fp,
   // フィル媒質のチェック
   if ( cmp[FillID].getState() != FLUID )
   {
-    Hostonly_ printf("\tSpecified Medium of filling fluid is not FLUID\n");
+    Hostonly_ fprintf(fpc, "\tSpecified Medium of filling fluid is not FLUID\n");
     Exit(0);
   }
   
@@ -4400,16 +4592,14 @@ void Geometry::SeedFilling(FILE* fp,
   
   Hostonly_
   {
-    printf    ("\t\tInitial target count   = %16ld\n\n", target_count);
-    fprintf(fp,"\t\tInitial target count   = %16ld\n\n", target_count);
+    fprintf(fpc,"\t\tInitial target count   = %16ld\n\n", target_count);
   }
   
   
   // セルに含まれるポリゴンを探索し、d_midに記録
   Hostonly_
   {
-    printf(    "\t\tPaint cells that contain polygons -----\n");
-    fprintf(fp,"\t\tPaint cells that contain polygons -----\n");
+    fprintf(fpc,"\t\tPaint cells that contain polygons -----\n");
   }
   
   sum_replaced = findPolygonInCell(d_mid, PL, PG);
@@ -4424,10 +4614,8 @@ void Geometry::SeedFilling(FILE* fp,
   
   Hostonly_ // Up to here, d_mid={-1, Poly-IDs}
   {
-    printf    ("\t\t# of cells touch Polys = %16ld\n", sum_replaced);
-    fprintf(fp,"\t\t# of cells touch Polys = %16ld\n", sum_replaced);
-    printf(    "\t\tRemaining target cells = %16ld\n\n", target_count);
-    fprintf(fp,"\t\tRemaining target cells = %16ld\n\n", target_count);
+    fprintf(fpc,"\t\t# of cells touch Polys = %16ld\n", sum_replaced);
+    fprintf(fpc,"\t\tRemaining target cells = %16ld\n\n", target_count);
   }
   
   
@@ -4436,12 +4624,9 @@ void Geometry::SeedFilling(FILE* fp,
   // デフォルトのヒントはX-
   Hostonly_
   {
-    printf(    "\tHint of filling -----\n\n");
-    fprintf(fp,"\tHint of filling -----\n\n");
-    printf(    "\t\tSeeding Dir.           : %s\n", FBUtility::getDirection(FillSeedDir).c_str());
-    fprintf(fp,"\t\tSeeding Dir.           : %s\n", FBUtility::getDirection(FillSeedDir).c_str());
-    printf(    "\t\tFill medium of SEED    : %s (%d)\n", mat[SeedID].alias.c_str(), SeedID);
-    fprintf(fp,"\t\tFill medium of SEED    : %s (%d)\n", mat[SeedID].alias.c_str(), SeedID);
+    fprintf(fpc,"\tHint of filling -----\n\n");
+    fprintf(fpc,"\t\tSeeding Dir.           : %s\n", FBUtility::getDirection(FillSeedDir).c_str());
+    fprintf(fpc,"\t\tFill medium of SEED    : %s (%d)\n", mat[SeedID].alias.c_str(), SeedID);
   }
   
   filled = fillSeedMid(d_mid, FillSeedDir, SeedID);
@@ -4451,8 +4636,7 @@ void Geometry::SeedFilling(FILE* fp,
   {
     Hostonly_
     {
-      printf(    "No cells painted\n");
-      fprintf(fp,"No cells painted\n");
+      fprintf(fpc,"No cells painted\n");
     }
     Exit(0);
   }
@@ -4465,10 +4649,8 @@ void Geometry::SeedFilling(FILE* fp,
   
   Hostonly_ // Up to here, d_mid={-1, Poly-IDs, SeedID}
   {
-    printf(    "\t\tPainted cells          = %16ld  (%s)\n", filled, mat[SeedID].alias.c_str());
-    fprintf(fp,"\t\tPainted cells          = %16ld  (%s)\n", filled, mat[SeedID].alias.c_str());
-    printf(    "\t\tRemaining target cells = %16ld\n\n", target_count);
-    fprintf(fp,"\t\tRemaining target cells = %16ld\n\n", target_count);
+    fprintf(fpc,"\t\tPainted cells          = %16ld  (%s)\n", filled, mat[SeedID].alias.c_str());
+    fprintf(fpc,"\t\tRemaining target cells = %16ld\n\n", target_count);
   }
   
   
@@ -4477,8 +4659,7 @@ void Geometry::SeedFilling(FILE* fp,
   // 未ペイントのターゲットセル(d_mid==-1)を、SeedIDでペイントする
   Hostonly_
   {
-    printf(    "\tFill from outside by Seed ID -----\n\n");
-    fprintf(fp,"\tFill from outside by Seed ID -----\n\n");
+    fprintf(fpc,"\tFill from outside by Seed ID -----\n\n");
   }
   
   int c=0; // iteration
@@ -4504,12 +4685,9 @@ void Geometry::SeedFilling(FILE* fp,
   
   Hostonly_
   {
-    printf(    "\t\tIteration              = %5d\n", c);
-    fprintf(fp,"\t\tIteration              = %5d\n", c);
-    printf(    "\t\t    Filled cells       = %16ld  (%s)\n", sum_filled, mat[SeedID].alias.c_str());
-    fprintf(fp,"\t\t    Filled cells       = %16ld  (%s)\n", sum_filled, mat[SeedID].alias.c_str());
-    printf(    "\t\t    Remaining cells    = %16ld\n\n", target_count);
-    fprintf(fp,"\t\t    Remaining cells    = %16ld\n\n", target_count);
+    fprintf(fpc,"\t\tIteration              = %5d\n", c);;
+    fprintf(fpc,"\t\t    Filled cells       = %16ld  (%s)\n", sum_filled, mat[SeedID].alias.c_str());
+    fprintf(fpc,"\t\t    Remaining cells    = %16ld\n\n", target_count);
   }
   
   
@@ -4518,8 +4696,7 @@ void Geometry::SeedFilling(FILE* fp,
   {
     Hostonly_
     {
-      printf(    "\tFill cells, which are inside of objects -----\n\n");
-      fprintf(fp,"\tFill cells, which are inside of objects -----\n\n");
+      fprintf(fpc,"\tFill cells, which are inside of objects -----\n\n");
     }
     
     // 未ペイント（ID=-1）のセルを検出
@@ -4529,8 +4706,7 @@ void Geometry::SeedFilling(FILE* fp,
     {
       Hostonly_
       {
-        printf(    "\t\tUnpainted cell         = %16ld\n", upc);
-        fprintf(fp,"\t\tUnpainted cell         = %16ld\n", upc);
+        fprintf(fpc,"\t\tUnpainted cell         = %16ld\n", upc);
       }
     }
     
@@ -4563,10 +4739,8 @@ void Geometry::SeedFilling(FILE* fp,
     
     Hostonly_
     {
-      printf(    "\t\tIteration              = %5d\n", c);
-      fprintf(fp,"\t\tIteration              = %5d\n", c);
-      printf(    "\t\tFilled cells           = %16ld\n\n", sum_replaced);
-      fprintf(fp,"\t\tFilled cells           = %16ld\n\n", sum_replaced);
+      fprintf(fpc,"\t\tIteration              = %5d\n", c);
+      fprintf(fpc,"\t\tFilled cells           = %16ld\n\n", sum_replaced);
     }
     
     
@@ -4578,8 +4752,7 @@ void Geometry::SeedFilling(FILE* fp,
     {
       Hostonly_
       {
-        printf(    "\tFill operation is done, but still remains %ld unpainted cells.\n", upc);
-        fprintf(fp,"\tFill operation is done, but still remains %ld unpainted cells.\n", upc);
+        fprintf(fpc,"\tFill operation is done, but still remains %ld unpainted cells.\n", upc);
       }
       Exit(0);
     }
@@ -4922,13 +5095,11 @@ int Geometry::SubCellIncTest(REAL_TYPE* svf,
 
 // #################################################################
 /* @brief sub-sampling
- * @param [in]  fp        ファイルポインタ
  * @param [in]  d_mid     識別子配列
  * @param [out] d_pvf     体積率
  * @param [in]  PL        MPIPolylibのインスタンス
  */
-void Geometry::SubSampling(FILE* fp,
-                           int* d_mid,
+void Geometry::SubSampling(int* d_mid,
                            REAL_TYPE* d_pvf,
                            MPIPolylib* PL)
 {
@@ -4964,8 +5135,7 @@ void Geometry::SubSampling(FILE* fp,
   
   Hostonly_
   {
-    printf    ("\t\tVolume fraction for Seed ID (%3.1f) = %16ld  (%s)\n", tmp, filled, mat[SeedID].alias.c_str());
-    fprintf(fp,"\t\tVolume fraction for Seed ID (%3.1f) = %16ld  (%s)\n", tmp, filled, mat[SeedID].alias.c_str());
+    fprintf(fpc,"\t\tVolume fraction for Seed ID (%3.1f) = %16ld  (%s)\n", tmp, filled, mat[SeedID].alias.c_str());
   }
   
   /* Inner fill => FillID
@@ -4974,8 +5144,7 @@ void Geometry::SubSampling(FILE* fp,
    
    Hostonly_
    {
-   printf    ("\t\tVolume fraction for Fill ID (%3.1f) = %16ld  (%s)\n", tmp, filled, mat[FillID].alias.c_str());
-   fprintf(fp,"\t\tVolume fraction for Fill ID (%3.1f) = %16ld  (%s)\n", tmp, filled, mat[FillID].alias.c_str());
+   fprintf(fpc,"\t\tVolume fraction for Fill ID (%3.1f) = %16ld  (%s)\n", tmp, filled, mat[FillID].alias.c_str());
    }
    */
   

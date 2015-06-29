@@ -842,6 +842,24 @@ inline void setCut9 (long long& c, const int q, const int dir)
 
 
 /*
+ * @brief cut indexの値を連結状態に変更（9bit幅の値と交点フラグ）
+ * @param [in,out] c   cut index
+ * @param [in]     dir 方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+ */
+inline void setUncut9 (long long& c, const int dir)
+{
+  long long a = MASK_9;
+  long long b = QT_9;
+  c &= ( ~( (a<<dir*9) << TOP_CUT) );  // 対象9bitをゼロにする
+  c |= ( (b<<dir*9) << TOP_CUT );      // 値を書き込む
+  a = 1;
+  c &= ( ~(a<<dir) );   // 交点フラグをクリア
+  a = 0;
+  c |= (a<<dir);        // 交点フラグをOFF
+}
+
+
+/*
  * @brief cut indexを511で初期化
  * @param [in,out] c   cut index
  * @param [in]     dir 方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)

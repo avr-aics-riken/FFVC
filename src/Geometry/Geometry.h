@@ -68,6 +68,7 @@ private:
   
   const MediumList* mat;
   const CompoList* cmp;
+  FILE* fpc;            ///< condition.txtへのファイルポインタ
   
   
 public:
@@ -97,6 +98,7 @@ public:
     fill_table = NULL;
     mat = NULL;
     cmp = NULL;
+    fpc = NULL;
   }
   
   /** デストラクタ */
@@ -168,8 +170,7 @@ private:
   
   
   // bid情報を元にフラッドフィル
-  bool fillConnected(FILE* fp,
-                     int* d_bcd,
+  bool fillConnected(int* d_bcd,
                      const int* d_bid,
                      const int fill_mode,
                      unsigned long& target_count);
@@ -270,8 +271,7 @@ private:
                                int* bcd,
                                const int* bid,
                                const unsigned long paintable,
-                               const unsigned long filled_fluid,
-                               FILE* fp);
+                               const unsigned long filled_fluid);
 
   
   // 各ラベルの接続リストを作成
@@ -297,12 +297,18 @@ private:
                       const int* pckdLabel,
                       const int width_label,
                       const int* pckdRules,
-                      const int width_rule,
-                      FILE* fp);
+                      const int width_rule);
+  
+  
+  // 同種のセルでカットをもつ境界の修正
+  void mergeSameSolidCell(int* bid,
+                          long long* cut,
+                          const int* bcd,
+                          const int* Dsize=NULL);
   
   
   // 距離の最小値を求める
-  void minDistance(const long long* cut, const int* bid, FILE* fp);
+  void minDistance(const long long* cut, const int* bid);
   
   
   // 固体領域をスレッド毎にIDでペイント
@@ -339,7 +345,7 @@ private:
   
   
   // 6方向にカットのあるセルを交点媒質でフィルする
-  unsigned long replaceIsolatedCell(int* bcd, const int* bid, FILE* fp);
+  unsigned long replaceIsolatedCell(int* bcd, const int* bid);
   
   
   /**
@@ -482,10 +488,10 @@ public:
   
   
   // フィル操作
-  bool fill(FILE* fp,
-            int* d_bcd,
-            const int* d_bid,
-            int* d_mid);
+  bool fill(int* d_bcd,
+            int* d_bid,
+            int* d_mid,
+            long long* d_cut);
 
   
   // bid情報を元にフラッドフィル
@@ -518,11 +524,11 @@ public:
   
   // フィルパラメータを取得
   void getFillParam(TextParser* tpCntl,
-                    FILE* fp,
                     const int Unit,
                     const REAL_TYPE RefL,
                     const int m_NoMedium,
-                    const MediumList* m_mat);
+                    const MediumList* m_mat,
+                    FILE* m_fp);
   
   
   /**
@@ -561,17 +567,16 @@ public:
   
   
   // 交点計算を行い、量子化
-  void quantizeCut(FILE* fp,
-                   long long* cut,
+  void quantizeCut(long long* cut,
                    int* bid,
                    int* bcd,
                    MPIPolylib* PL,
-                   PolygonProperty* PG);
+                   PolygonProperty* PG,
+                   const int* Dsize=NULL);
   
   
   // ポリゴンの水密化
-  void SeedFilling(FILE* fp,
-                   int* d_mid,
+  void SeedFilling(int* d_mid,
                    MPIPolylib* PL,
                    PolygonProperty* PG);
   
@@ -594,8 +599,7 @@ public:
   
   
   // サブサンプリング
-  void SubSampling(FILE* fp,
-                   int* d_mid,
+  void SubSampling(int* d_mid,
                    REAL_TYPE* d_pvf,
                    MPIPolylib* PL);
 
