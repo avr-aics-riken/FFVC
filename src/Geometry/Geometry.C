@@ -701,7 +701,12 @@ bool Geometry::fill(int* d_bcd,
 
   
   // 同種のセルでカットをもつ境界の修正
-  mergeSameSolidCell(d_bid, d_cut, d_bcd);
+  unsigned modc = mergeSameSolidCell(d_bid, d_cut, d_bcd);
+  
+  Hostonly_
+  {
+    fprintf(fpc,"\t\tModified connectivity  = %16d\n", modc);
+  }
 
   
   // チェック
@@ -2571,10 +2576,10 @@ bool Geometry::makeWholeRules(vector< vector<int> >& connectRules,
  * @param [in]      bcd      d_bcd
  * @param [in]      Dsize    サイズ
  */
-void Geometry::mergeSameSolidCell(int* bid,
-                                  long long* cut,
-                                  const int* bcd,
-                                  const int* Dsize)
+unsigned Geometry::mergeSameSolidCell(int* bid,
+                                      long long* cut,
+                                      const int* bcd,
+                                      const int* Dsize)
 {
   int ix, jx, kx, gd;
   
@@ -2593,11 +2598,9 @@ void Geometry::mergeSameSolidCell(int* bid,
     gd = 1;
   }
   
+  unsigned fc = 0;
   
-  
-//#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
-  
-#pragma omp single
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -2641,98 +2644,70 @@ void Geometry::mergeSameSolidCell(int* bid,
           {
             setUncut9(pos, X_minus);
             setBit5(qq, 0, X_minus);
-            fprintf(fpc, "rank %d : (%3d %3d %3d) dir=%d id=%2d : %3d : %d >> %3d : %d\n",
-                   myRank,i,j,k,0,zp,
-                   getBit9(tmp, 0), ensCut(tmp, 0),
-                   getBit9(pos, 0), ensCut(pos, 0) );
+            fc++;
+            //fprintf(fpc, "rank %d : (%3d %3d %3d) dir=%d id=%2d : %3d : %d >> %3d : %d\n",
+            //       myRank,i,j,k,0,zp,
+            //       getBit9(tmp, 0), ensCut(tmp, 0),
+            //       getBit9(pos, 0), ensCut(pos, 0) );
           }
           
           if ( ensCut(pos, X_plus)  &&  zp == ze )
           {
             setUncut9(pos, X_plus);
             setBit5(qq, 0, X_plus);
-            fprintf(fpc, "rank %d : (%3d %3d %3d) dir=%d id=%2d : %3d : %d >> %3d : %d\n",
-                   myRank,i,j,k,1,zp,
-                   getBit9(tmp, 1), ensCut(tmp, 1),
-                   getBit9(pos, 1), ensCut(pos, 1) );
+            fc++;
+            //fprintf(fpc, "rank %d : (%3d %3d %3d) dir=%d id=%2d : %3d : %d >> %3d : %d\n",
+            //       myRank,i,j,k,1,zp,
+            //       getBit9(tmp, 1), ensCut(tmp, 1),
+            //       getBit9(pos, 1), ensCut(pos, 1) );
           }
           
           if ( ensCut(pos, Y_minus)  &&  zp == zs )
           {
             setUncut9(pos, Y_minus);
             setBit5(qq, 0, Y_minus);
-            fprintf(fpc, "rank %d : (%3d %3d %3d) dir=%d id=%2d : %3d : %d >> %3d : %d\n",
-                   myRank,i,j,k,2,zp,
-                   getBit9(tmp, 2), ensCut(tmp, 2),
-                   getBit9(pos, 2), ensCut(pos, 2) );
+            fc++;
+            //fprintf(fpc, "rank %d : (%3d %3d %3d) dir=%d id=%2d : %3d : %d >> %3d : %d\n",
+            //       myRank,i,j,k,2,zp,
+            //       getBit9(tmp, 2), ensCut(tmp, 2),
+            //       getBit9(pos, 2), ensCut(pos, 2) );
           }
           
           if ( ensCut(pos, Y_plus)  &&  zp == zn )
           {
             setUncut9(pos, Y_plus);
             setBit5(qq, 0, Y_plus);
-            fprintf(fpc, "rank %d : (%3d %3d %3d) dir=%d id=%2d : %3d : %d >> %3d : %d\n",
-                   myRank,i,j,k,3,zp,
-                   getBit9(tmp, 3), ensCut(tmp, 3),
-                   getBit9(pos, 3), ensCut(pos, 3) );
+            fc++;
+            //fprintf(fpc, "rank %d : (%3d %3d %3d) dir=%d id=%2d : %3d : %d >> %3d : %d\n",
+            //       myRank,i,j,k,3,zp,
+            //       getBit9(tmp, 3), ensCut(tmp, 3),
+            //       getBit9(pos, 3), ensCut(pos, 3) );
           }
           
           if ( ensCut(pos, Z_minus)  &&  zp == zb )
           {
             setUncut9(pos, Z_minus);
             setBit5(qq, 0, Z_minus);
-            fprintf(fpc, "rank %d : (%3d %3d %3d) dir=%d id=%2d : %3d : %d >> %3d : %d\n",
-                   myRank,i,j,k,4,zp,
-                   getBit9(tmp, 4), ensCut(tmp, 4),
-                   getBit9(pos, 4), ensCut(pos, 4) );
+            fc++;
+            //fprintf(fpc, "rank %d : (%3d %3d %3d) dir=%d id=%2d : %3d : %d >> %3d : %d\n",
+            //       myRank,i,j,k,4,zp,
+            //       getBit9(tmp, 4), ensCut(tmp, 4),
+            //       getBit9(pos, 4), ensCut(pos, 4) );
           }
           
           if ( ensCut(pos, Z_plus)  &&  zp == zt )
           {
             setUncut9(pos, Z_plus);
             setBit5(qq, 0, Z_plus);
-            fprintf(fpc, "rank %d : (%3d %3d %3d) dir=%d id=%2d : %3d : %d >> %3d : %d\n",
-                   myRank,i,j,k,5,zp,
-                   getBit9(tmp, 5), ensCut(tmp, 5),
-                   getBit9(pos, 5), ensCut(pos, 5) );
+            fc++;
+            //fprintf(fpc, "rank %d : (%3d %3d %3d) dir=%d id=%2d : %3d : %d >> %3d : %d\n",
+            //       myRank,i,j,k,5,zp,
+            //       getBit9(tmp, 5), ensCut(tmp, 5),
+            //       getBit9(pos, 5), ensCut(pos, 5) );
           }
           
           cut[m] = pos;
           bid[m] = qq;
-          
-          /* 全隣接方向に交点がある場合
-          if ( qw * qe * qs * qn * qb * qt != 0 )
-          {
-            
-            printf("rank %d : (%3d %3d %3d) id=%2d : %3d %3d %3d %3d %3d %3d : %d %d %d %d %d %d >> %3d %3d %3d %3d %3d %3d : %d %d %d %d %d %d\n",
-                   myRank,i,j,k,zp,
-                   getBit9(tmp, 0),
-                   getBit9(tmp, 1),
-                   getBit9(tmp, 2),
-                   getBit9(tmp, 3),
-                   getBit9(tmp, 4),
-                   getBit9(tmp, 5),
-                   ensCut(tmp, X_minus),
-                   ensCut(tmp, X_plus),
-                   ensCut(tmp, Y_minus),
-                   ensCut(tmp, Y_plus),
-                   ensCut(tmp, Z_minus),
-                   ensCut(tmp, Z_plus),
-                   getBit9(pos, 0),
-                   getBit9(pos, 1),
-                   getBit9(pos, 2),
-                   getBit9(pos, 3),
-                   getBit9(pos, 4),
-                   getBit9(pos, 5),
-                   ensCut(pos, X_minus),
-                   ensCut(pos, X_plus),
-                   ensCut(pos, Y_minus),
-                   ensCut(pos, Y_plus),
-                   ensCut(pos, Z_minus),
-                   ensCut(pos, Z_plus)
-                   );
-          } // Cut All
-          */
           
         } // SOLID
         
@@ -2740,6 +2715,13 @@ void Geometry::mergeSameSolidCell(int* bid,
     }
   }
   
+  if ( numProc > 1 )
+  {
+    unsigned c_tmp = fc;
+    if ( paraMngr->Allreduce(&c_tmp, &fc, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  return fc;
 }
 
 
@@ -2804,282 +2786,6 @@ void Geometry::minDistance(const long long* cut, const int* bid)
   Hostonly_
   {
     fprintf(fpc, "\n\tMinimum non-dimensional distance except on a center = %e\n\n", (REAL_TYPE)global_min/(REAL_TYPE)QT_9); // 9bit幅
-  }
-  
-}
-
-
-
-// #################################################################
-/**
- * @brief 交点が定義点にある場合にそのポリゴンの媒質IDでフィルし、反対側を修正する
- * @param [in,out] bcd       BCindex B
- * @param [in,out] bid       境界ID（5ビット幅x6方向）
- * @param [in,out] cut       カット情報
- * @param [out]    fillcut   定義点上の交点IDでフィルした数
- * @param [out]    modopp    対向点の修正数
- * @param [in]     Dsize     サイズ
- * @retval フィルされたセル数
- */
-void Geometry::paintCutOnPoint(int* bcd,
-                               int* bid,
-                               long long* cut,
-                               unsigned long& fillcut,
-                               unsigned long& modopp,
-                               const int* Dsize)
-{
-  int ix, jx, kx, gd;
-  
-  if ( !Dsize )
-  {
-    ix = size[0];
-    jx = size[1];
-    kx = size[2];
-    gd = guide;
-  }
-  else // ASD module用
-  {
-    ix = Dsize[0];
-    jx = Dsize[1];
-    kx = Dsize[2];
-    gd = 1;
-  }
-  
-  
-  unsigned long fc = 0;
-  /*
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:fc)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        
-        int qq = bid[m];
-        long long pos = cut[m];
-        
-        // 交点IDの最頻値
-        int sd = FBUtility::find_mode_id(getBit5(qq, X_minus),
-                                         getBit5(qq, X_plus),
-                                         getBit5(qq, Y_minus),
-                                         getBit5(qq, Y_plus),
-                                         getBit5(qq, Z_minus),
-                                         getBit5(qq, Z_plus),
-                                         NoCompo);
-        if ( sd == 0 ) Exit(0);
-        
-        // 交点IDの媒質番号を得る
-        int key = cmp[sd].getMatodr();
-        if ( key == 0 )
-        {
-          //printf("sd=%2d key=%2d : %2d %2d %2d %2d %2d %2d\n", sd, key, qw, qe, qs, qn, qb, qt);
-          Exit(0);
-        }
-        
-        
-        // x-方向が定義点上の場合（交点があり、かつ距離がゼロ）
-        if ( chkZeroCut(pos, X_minus) )
-        {
-#if 0
-          printf("(%3d %3d %3d) %3d : %d\n", i,j,k,getBit9(pos, X_minus) );
-#endif
-
-          // セル属性をエンコード
-          int s = bcd[m];
-          setMediumID(s, key);
-          
-          // セルを固体にする
-          if ( cmp[key].getState() == SOLID ) // cmp[]はmat[]の代用
-          {
-            s = offBit( s, STATE_BIT );
-          }
-          bcd[m] = s;
-          
-          fc++;
-        }
-        
-        
-        // いずれかの方向が定義点上の場合（交点があり、かつ距離がゼロ）
-        if ( chkZeroCut(pos, X_minus) ||
-             chkZeroCut(pos, X_plus ) ||
-             chkZeroCut(pos, Y_minus) ||
-             chkZeroCut(pos, Y_plus ) ||
-             chkZeroCut(pos, Z_minus) ||
-             chkZeroCut(pos, Z_plus ) )
-        {
-          
-#if 1
-          printf("(%3d %3d %3d) %3d %3d %3d %3d %3d %3d : %d %d %d %d %d %d\n",
-                 i,j,k,
-                 getBit9(pos, 0),
-                 getBit9(pos, 1),
-                 getBit9(pos, 2),
-                 getBit9(pos, 3),
-                 getBit9(pos, 4),
-                 getBit9(pos, 5),
-                 ensCut(pos, X_minus),
-                 ensCut(pos, X_plus),
-                 ensCut(pos, Y_minus),
-                 ensCut(pos, Y_plus),
-                 ensCut(pos, Z_minus),
-                 ensCut(pos, Z_plus)
-                 );
-#endif
-          if ( sd == 0 ) Exit(0);
-          
-          // 交点IDの媒質番号を得る
-          int key = cmp[sd].getMatodr();
-          if ( key == 0 )
-          {
-            //printf("sd=%2d key=%2d : %2d %2d %2d %2d %2d %2d\n", sd, key, qw, qe, qs, qn, qb, qt);
-            Exit(0);
-          }
-          
-          // セル属性をエンコード
-          int s = bcd[m];
-          setMediumID(s, key);
-          
-          // セルを固体にする
-          if ( cmp[key].getState() == SOLID ) // cmp[]はmat[]の代用
-          {
-            s = offBit( s, STATE_BIT );
-          }
-          bcd[m] = s;
-          
-          // 6方向とも交点ゼロにする
-          setCut9(pos, 0, X_minus);
-          setCut9(pos, 0, X_plus);
-          setCut9(pos, 0, Y_minus);
-          setCut9(pos, 0, Y_plus);
-          setCut9(pos, 0, Z_minus);
-          setCut9(pos, 0, Z_plus);
-          cut[m] = pos;
-          
-          setBit5(qq, sd, X_minus);
-          setBit5(qq, sd, X_plus);
-          setBit5(qq, sd, Y_minus);
-          setBit5(qq, sd, Y_plus);
-          setBit5(qq, sd, Z_minus);
-          setBit5(qq, sd, Z_plus);
-          bid[m] = qq;
-          
-          fc++;
-        }
-        
-      }
-    }
-  }
-  
-  if ( numProc > 1 )
-  {
-    unsigned long c_tmp = fc;
-    if ( paraMngr->Allreduce(&c_tmp, &fc, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  fillcut = fc;
-  
-  
-  if ( numProc > 1 )
-  {
-    if ( paraMngr->BndCommS3D(bcd, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->BndCommS3D(bid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
-  }
-  */
-  
-
-  
-  
-  // 反対側の修正
-  fc = 0;
-  
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:fc)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        
-        size_t m_p = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
-        size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
-        size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
-        size_t m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd);
-        size_t m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd);
-        size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
-        size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
-        
-        const int qq = bid[m_p];
-        const long long pos = cut[m_p];
-        
-        
-        
-        // 定義点上に交点があり、反対側のセルから見て交点がない場合
-        /*
-        int ens = 0;
-        if ( chkZeroCut(pos, X_minus) ||
-             chkZeroCut(pos, X_plus ) ||
-             chkZeroCut(pos, Y_minus) ||
-             chkZeroCut(pos, Y_plus ) ||
-             chkZeroCut(pos, Z_minus) ||
-             chkZeroCut(pos, Z_plus ) ) ens = 1;
-        */
-        
-        if ( chkZeroCut(pos, X_minus)  &&  !ensCut(cut[m_w], X_plus) )
-        {
-          setBit5(bid[m_w], getBit5(qq, X_minus), X_plus);
-          setCut9(cut[m_w], QT_9, X_plus);
-          fc++;
-        }
-        
-        if ( chkZeroCut(pos, X_plus )  &&  !ensCut(cut[m_e], X_minus) )
-        {
-          setBit5(bid[m_e], getBit5(qq, X_plus), X_minus);
-          setCut9(cut[m_e], QT_9, X_minus);
-          fc++;
-        }
-        
-        if ( chkZeroCut(pos, Y_minus)  &&  !ensCut(cut[m_s], Y_plus) )
-        {
-          setBit5(bid[m_s], getBit5(qq, Y_minus), Y_plus);
-          setCut9(cut[m_s], QT_9, Y_plus);
-          fc++;
-        }
-        
-        if ( chkZeroCut(pos, Y_plus )  &&  !ensCut(cut[m_n], Y_minus) )
-        {
-          setBit5(bid[m_n], getBit5(qq, Y_plus), Y_minus);
-          setCut9(cut[m_n], QT_9, Y_minus);
-          fc++;
-        }
-        
-        if ( chkZeroCut(pos, Z_minus)  &&  !ensCut(cut[m_b], Z_plus) )
-        {
-          setBit5(bid[m_b], getBit5(qq, Z_minus), Z_plus);
-          setCut9(cut[m_b], QT_9, Z_plus);
-          fc++;
-        }
-        
-        if ( chkZeroCut(pos, Z_plus )  &&  !ensCut(cut[m_t], Z_minus) )
-        {
-          setBit5(bid[m_t], getBit5(qq, Z_plus), Z_minus);
-          setCut9(cut[m_t], QT_9, Z_minus);
-          fc++;
-        }
-      }
-    }
-  }
-  
-  if ( numProc > 1 )
-  {
-    unsigned long c_tmp = fc;
-    if ( paraMngr->Allreduce(&c_tmp, &fc, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-  }
-  
-  modopp = fc;
-  
-  
-  if ( numProc > 1 )
-  {
-    if ( paraMngr->BndCommS3D(bid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
   }
   
 }
@@ -3383,7 +3089,7 @@ void Geometry::quantizeCut(long long* cut,
   
   
   
-  // 修正
+  /* 修正
   
   // 定義点上に交点がある場合の処理 >> カットするポリゴンの媒質番号でフィルする
   unsigned long fill_cut=0, cm=0;
@@ -3398,6 +3104,7 @@ void Geometry::quantizeCut(long long* cut,
       fprintf(fpc,  "\tModify neighbor cells owing to painting = %16ld\n", cm);
     }
   }
+   */
   
   // 最小値カット
   minDistance(cut, bid);
@@ -5755,5 +5462,269 @@ void Geometry::SubDivision(REAL_TYPE* svf,
 }
 
 
+// #################################################################
+/**
+ * @brief 交点が定義点にある場合にそのポリゴンの媒質IDでフィルし、反対側を修正する
+ * @param [in,out] bcd       BCindex B
+ * @param [in,out] bid       境界ID（5ビット幅x6方向）
+ * @param [in,out] cut       カット情報
+ * @param [out]    fillcut   定義点上の交点IDでフィルした数
+ * @param [out]    modopp    対向点の修正数
+ * @param [in]     Dsize     サイズ
+ * @retval フィルされたセル数
+ 
+void Geometry::paintCutOnPoint(int* bcd,
+                               int* bid,
+                               long long* cut,
+                               unsigned long& fillcut,
+                               unsigned long& modopp,
+                               const int* Dsize)
+{
+  int ix, jx, kx, gd;
+  
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
+  
+  
+  unsigned long fc = 0;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:fc)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        
+        int qq = bid[m];
+        long long pos = cut[m];
+        
+        // 交点IDの最頻値
+        int sd = FBUtility::find_mode_id(getBit5(qq, X_minus),
+                                         getBit5(qq, X_plus),
+                                         getBit5(qq, Y_minus),
+                                         getBit5(qq, Y_plus),
+                                         getBit5(qq, Z_minus),
+                                         getBit5(qq, Z_plus),
+                                         NoCompo);
+        if ( sd == 0 ) Exit(0);
+        
+        // 交点IDの媒質番号を得る
+        int key = cmp[sd].getMatodr();
+        if ( key == 0 )
+        {
+          //printf("sd=%2d key=%2d : %2d %2d %2d %2d %2d %2d\n", sd, key, qw, qe, qs, qn, qb, qt);
+          Exit(0);
+        }
+        
+        
+        // x-方向が定義点上の場合（交点があり、かつ距離がゼロ）
+        if ( chkZeroCut(pos, X_minus) )
+        {
+#if 0
+          printf("(%3d %3d %3d) %3d : %d\n", i,j,k,getBit9(pos, X_minus) );
+#endif
+          
+          // セル属性をエンコード
+          int s = bcd[m];
+          setMediumID(s, key);
+          
+          // セルを固体にする
+          if ( cmp[key].getState() == SOLID ) // cmp[]はmat[]の代用
+          {
+            s = offBit( s, STATE_BIT );
+          }
+          bcd[m] = s;
+          
+          fc++;
+        }
+        
+        
+        // いずれかの方向が定義点上の場合（交点があり、かつ距離がゼロ）
+        if ( chkZeroCut(pos, X_minus) ||
+            chkZeroCut(pos, X_plus ) ||
+            chkZeroCut(pos, Y_minus) ||
+            chkZeroCut(pos, Y_plus ) ||
+            chkZeroCut(pos, Z_minus) ||
+            chkZeroCut(pos, Z_plus ) )
+        {
+          
+#if 1
+          printf("(%3d %3d %3d) %3d %3d %3d %3d %3d %3d : %d %d %d %d %d %d\n",
+                 i,j,k,
+                 getBit9(pos, 0),
+                 getBit9(pos, 1),
+                 getBit9(pos, 2),
+                 getBit9(pos, 3),
+                 getBit9(pos, 4),
+                 getBit9(pos, 5),
+                 ensCut(pos, X_minus),
+                 ensCut(pos, X_plus),
+                 ensCut(pos, Y_minus),
+                 ensCut(pos, Y_plus),
+                 ensCut(pos, Z_minus),
+                 ensCut(pos, Z_plus)
+                 );
+#endif
+          if ( sd == 0 ) Exit(0);
+          
+          // 交点IDの媒質番号を得る
+          int key = cmp[sd].getMatodr();
+          if ( key == 0 )
+          {
+            //printf("sd=%2d key=%2d : %2d %2d %2d %2d %2d %2d\n", sd, key, qw, qe, qs, qn, qb, qt);
+            Exit(0);
+          }
+          
+          // セル属性をエンコード
+          int s = bcd[m];
+          setMediumID(s, key);
+          
+          // セルを固体にする
+          if ( cmp[key].getState() == SOLID ) // cmp[]はmat[]の代用
+          {
+            s = offBit( s, STATE_BIT );
+          }
+          bcd[m] = s;
+          
+          // 6方向とも交点ゼロにする
+          setCut9(pos, 0, X_minus);
+          setCut9(pos, 0, X_plus);
+          setCut9(pos, 0, Y_minus);
+          setCut9(pos, 0, Y_plus);
+          setCut9(pos, 0, Z_minus);
+          setCut9(pos, 0, Z_plus);
+          cut[m] = pos;
+          
+          setBit5(qq, sd, X_minus);
+          setBit5(qq, sd, X_plus);
+          setBit5(qq, sd, Y_minus);
+          setBit5(qq, sd, Y_plus);
+          setBit5(qq, sd, Z_minus);
+          setBit5(qq, sd, Z_plus);
+          bid[m] = qq;
+          
+          fc++;
+        }
+        
+      }
+    }
+  }
+  
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = fc;
+    if ( paraMngr->Allreduce(&c_tmp, &fc, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  fillcut = fc;
+  
+  
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->BndCommS3D(bcd, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(bid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  
+  
+  
+  
+  // 反対側の修正
+  fc = 0;
+  
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:fc)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        
+        size_t m_p = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
+        size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
+        size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
+        size_t m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd);
+        size_t m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd);
+        size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
+        size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
+        
+        const int qq = bid[m_p];
+        const long long pos = cut[m_p];
+        
+        
+        
+        // 定義点上に交点があり、反対側のセルから見て交点がない場合
+        
+        if ( chkZeroCut(pos, X_minus)  &&  !ensCut(cut[m_w], X_plus) )
+        {
+          setBit5(bid[m_w], getBit5(qq, X_minus), X_plus);
+          setCut9(cut[m_w], QT_9, X_plus);
+          fc++;
+        }
+        
+        if ( chkZeroCut(pos, X_plus )  &&  !ensCut(cut[m_e], X_minus) )
+        {
+          setBit5(bid[m_e], getBit5(qq, X_plus), X_minus);
+          setCut9(cut[m_e], QT_9, X_minus);
+          fc++;
+        }
+        
+        if ( chkZeroCut(pos, Y_minus)  &&  !ensCut(cut[m_s], Y_plus) )
+        {
+          setBit5(bid[m_s], getBit5(qq, Y_minus), Y_plus);
+          setCut9(cut[m_s], QT_9, Y_plus);
+          fc++;
+        }
+        
+        if ( chkZeroCut(pos, Y_plus )  &&  !ensCut(cut[m_n], Y_minus) )
+        {
+          setBit5(bid[m_n], getBit5(qq, Y_plus), Y_minus);
+          setCut9(cut[m_n], QT_9, Y_minus);
+          fc++;
+        }
+        
+        if ( chkZeroCut(pos, Z_minus)  &&  !ensCut(cut[m_b], Z_plus) )
+        {
+          setBit5(bid[m_b], getBit5(qq, Z_minus), Z_plus);
+          setCut9(cut[m_b], QT_9, Z_plus);
+          fc++;
+        }
+        
+        if ( chkZeroCut(pos, Z_plus )  &&  !ensCut(cut[m_t], Z_minus) )
+        {
+          setBit5(bid[m_t], getBit5(qq, Z_plus), Z_minus);
+          setCut9(cut[m_t], QT_9, Z_minus);
+          fc++;
+        }
+      }
+    }
+  }
+  
+  if ( numProc > 1 )
+  {
+    unsigned long c_tmp = fc;
+    if ( paraMngr->Allreduce(&c_tmp, &fc, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  modopp = fc;
+  
+  
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->BndCommS3D(bid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+  }
+  
+}
 
-
+*/

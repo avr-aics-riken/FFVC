@@ -19,9 +19,14 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-06-30
+r1618 suppress error message in mergeSameSolidCell()
+- expire paintCutOnPoint()
+
+--------------------------
 2015-06-29
 r1617 setUncut9
-- add mergeSameSOlidCell()
+- add mergeSameSolidCell()
 
 --------------------------
 2015-06-28

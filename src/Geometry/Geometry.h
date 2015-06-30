@@ -301,10 +301,10 @@ private:
   
   
   // 同種のセルでカットをもつ境界の修正
-  void mergeSameSolidCell(int* bid,
-                          long long* cut,
-                          const int* bcd,
-                          const int* Dsize=NULL);
+  unsigned mergeSameSolidCell(int* bid,
+                              long long* cut,
+                              const int* bcd,
+                              const int* Dsize=NULL);
   
   
   // 距離の最小値を求める
@@ -555,15 +555,6 @@ public:
     mx.y = (mx.y > p.y) ? mx.y : p.y;
     mx.z = (mx.z > p.z) ? mx.z : p.z;
   }
-  
-  
-  // 交点が定義点にある場合にそのポリゴンのエントリ番号でフィルする
-  void paintCutOnPoint(int* bcd,
-                       int* bid,
-                       long long* cut,
-                       unsigned long& fillcut,
-                       unsigned long& modopp,
-                       const int* Dsize=NULL);
   
   
   // 交点計算を行い、量子化
