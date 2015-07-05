@@ -2753,7 +2753,7 @@ void Geometry::minDistance(const long long* cut, const int* bid)
           size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
           int bd = bid[m];
           
-          if ( TEST_BC(bd) ) // カットがあるか，IDによる判定
+          if ( IS_CUT(bd) ) // カットがあるか，IDによる判定
           {
             const long long c = cut[m];
             

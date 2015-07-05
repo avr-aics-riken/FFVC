@@ -125,39 +125,39 @@
 #define QT_9       511   // 9bit幅の最大値
 
 /*
- Bit   bcd[]           bid[]        bcp[]         cdf[]
- 31    active          active       active        active
- 30    state           state        state         state
- 29                    +            BC_D_T        +
- 28                    |            BC_D_B        |
- 27                    |            BC_D_N        |
- 26                    |            BC_D_S        |
- 25                    + Z_plus     BC_D_E        + BC_FACE_T
- 24                    +            BC_D_W        +
- 23                    |            BC_N_T        |
- 22                    |            BC_N_B        |
- 21                    |            BC_N_N        |
- 20                    + Z_minus    BC_N_S        + BC_FACE_B
- 19                    +            BC_N_E        +
- 18                    |            BC_N_W        |
- 17                    |            BC_DN_T       |
- 16                    |            BC_DN_B       |
- 15                    + Y_plus     BC_DN_N       + BC_FACE_N
- 14                    +            BC_DN_S       +
- 13                    |            BC_DN_E       |
- 12                    |            BC_DN_W       |
- 11                    |            BC_NDAG_T     |
- 10                    + Y_minus    BC_NDAG_B     + BC_FACE_S
-  9                    +            BC_NDAG_N     +
-  8                    |            BC_NDAG_S     |
-  7                    |            BC_NDAG_E     |
-  6                    |            BC_NDAG_W     |
-  5                    + X_plus     BC_DIAG       + BC_FACE_E
-  4  +                 +                          +
-  3  |                 |                          |
-  2  | cmp[]/mat[]     |                          |
-  1  |                 |                          |
-  0  +                 + X_minus                  + BC_FACE_W
+ Bit   bcd[]            bid[]          bcp[]         cdf[]
+ 31    active           active         active        active
+ 30    state                           state         state
+ 29  + BC_D_T           +              BC_D_T        +
+ 28  | BC_D_B           |              BC_D_B        |
+ 27  | BC_D_N   VBC     |              BC_D_N        |
+ 26  | BC_D_S           |              BC_D_S        |
+ 25  | BC_D_E           + Z_plus       BC_D_E        + BC_FACE_T
+ 24  + BC_D_W           +              BC_D_W        +
+ 23                     |              BC_N_T        |
+ 22                     |              BC_N_B        |
+ 21                     |              BC_N_N        |
+ 20                     + Z_minus      BC_N_S        + BC_FACE_B
+ 19                     +              BC_N_E        +
+ 18                     |              BC_N_W        |
+ 17                     |              BC_DN_T       |
+ 16                     |              BC_DN_B       |
+ 15                     + Y_plus       BC_DN_N       + BC_FACE_N
+ 14                     +              BC_DN_S       +
+ 13                     |              BC_DN_E       |
+ 12                     |              BC_DN_W       |
+ 11                     |              BC_NDAG_T     |
+ 10                     + Y_minus      BC_NDAG_B     + BC_FACE_S
+  9                     +              BC_NDAG_N     +
+  8                     |              BC_NDAG_S     |
+  7                     |              BC_NDAG_E     |
+  6                     |              BC_NDAG_W     |
+  5                     + X_plus       BC_DIAG       + BC_FACE_E
+  4  +                  +                            +
+  3  |                  |                            |
+  2  | cmp[]/mat[]      |                            |
+  1  |                  |                            |
+  0  +                  + X_minus                    + BC_FACE_W
  
  
  Bit    cut[]
@@ -276,8 +276,6 @@
 #define BC_FACE_E  5
 #define BC_FACE_W  0
 
-// エンコードビット bid
-#define VBC_UWD 30
 
 // エンコードビット CUT
 #define TOP_CUT 6
@@ -380,7 +378,7 @@
 #define GET_FACE_BC(a,b) ( (a>>b) & MASK_5 )
 
 // 6面のいずれかにBCが設定されている場合，true
-#define TEST_BC(s) ( (s & 0x3fffffff) != 0 )
+#define IS_CUT(s) ( (s & 0x3fffffff) != 0 )
 
 
 /** 3次元インデクス(i,j,k) -> 1次元インデクス変換マクロ

@@ -33,14 +33,15 @@
 !! @param [in]  vf       セルフェイス速度ベクトル（n-step）
 !! @param [in]  bv       BCindex C
 !! @param [in]  bp       BCindex P
+!! @param [in]  bcd      BCindex B
 !! @param [in]  v_mode   粘性項のモード (0=対流項のみ, 1=対流項と粘性項，2=粘性項は壁法則)
 !! @param [in]  cut      カット情報 int(8)
 !! @param [out] flop     浮動小数点演算数
 !<
-    subroutine pvec_muscl_cds (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bv, bp, v_mode, cut, flop)
+    subroutine pvec_muscl_cds (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bv, bp, bcd, v_mode, cut, flop)
     implicit none
     include '../FB/ffv_f_params.h'
-    integer                                                     ::  i, j, k, ix, jx, kx, g, c_scheme, bpx, bvx, v_mode
+    integer                                                     ::  i, j, k, ix, jx, kx, g, c_scheme, bpx, bvx, v_mode, bdx
     integer, dimension(3)                                       ::  sz
     double precision                                            ::  flop
     real                                                        ::  dh, dh1, dh2, ck, cnv_u, cnv_v, cnv_w, b
@@ -64,7 +65,8 @@
     real                                                        ::  Vb1_t, Vb2_t, Vt1_t, Vt2_t
     real                                                        ::  We1_t, We2_t, Ww1_t, Ww2_t, Ws1_t, Ws2_t, Wn1_t, Wn2_t
     real                                                        ::  Wb1_t, Wb2_t, Wt1_t, Wt2_t
-    real                                                        ::  cw, ce, cs, cn, cb, ct
+    real                                                        ::  c_w1, c_e1, c_s1, c_n1, c_b1, c_t1
+real                                                        ::  c_w2, c_e2, c_s2, c_n2, c_b2, c_t2
     real                                                        ::  ww, we, ws, wn, wb, wt
     real                                                        ::  dw, de, ds, dn, db, dt, dww, dee, dss, dnn, dbb, dtt
     real                                                        ::  hw, he, hs, hn, hb, ht, hww, hee, hss, hnn, hbb, htt
@@ -84,10 +86,9 @@
     real                                                        ::  dv_e, dv_w, dv_s, dv_n, dv_b, dv_t
     real                                                        ::  dw_e, dw_w, dw_s, dw_n, dw_b, dw_t
 		real                                                        ::  EX, EY, EZ
-    real                                                        ::  lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, wv, vf
     real(4), dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)::  cut
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv, bp
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv, bp, bcd
     real, dimension(0:3)                                        ::  v00
     
     ix = sz(1)
@@ -136,8 +137,9 @@
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dh1, dh2, vcs, b, ck, ss_4, ss, cm1, cm2) &
 !$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2) &
-!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bpx) &
-!$OMP PRIVATE(cw, ce, cs, cn, cb, ct) &
+!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bpx, bdx) &
+!$OMP PRIVATE(c_w1, c_e1, c_s1, c_n1, c_b1, c_t1) &
+!$OMP PRIVATE(c_w2, c_e2, c_s2, c_n2, c_b2, c_t2) &
 !$OMP PRIVATE(ww, we, ws, wn, wb, wt) &
 !$OMP PRIVATE(dw, de, ds, dn, db, dt, dww, dee, dss, dnn, dbb, dtt) &
 !$OMP PRIVATE(hw, he, hs, hn, hb, ht, hww, hee, hss, hnn, hbb, htt) &
@@ -170,7 +172,7 @@
 !$OMP PRIVATE(du_e, du_w, du_s, du_n, du_b, du_t) &
 !$OMP PRIVATE(dv_e, dv_w, dv_s, dv_n, dv_b, dv_t) &
 !$OMP PRIVATE(dw_e, dw_w, dw_s, dw_n, dw_b, dw_t) &
-!$OMP PRIVATE(lmt_w, lmt_e, lmt_s, lmt_n, lmt_b, lmt_t, EX, EY, EZ)
+!$OMP PRIVATE(EX, EY, EZ)
 
 !$OMP DO SCHEDULE(static)
 
@@ -226,44 +228,27 @@
 
       bvx = bv(i,j,k)
       bpx = bp(i,j,k)
+      bdx = bcd(i,j,k)
 
-      ! 各面のVBCフラグ ibits() = 0(Normal) / others(BC) >> ce = 1.0(Normal) / 0.0(BC)
-      cw = 1.0
-      ce = 1.0
-      cs = 1.0
-      cn = 1.0
-      cb = 1.0
-      ct = 1.0
 
-      if ( ibits(bvx, bc_face_W, bitw_5) /= 0 ) cw = 0.0
-      if ( ibits(bvx, bc_face_E, bitw_5) /= 0 ) ce = 0.0
-      if ( ibits(bvx, bc_face_S, bitw_5) /= 0 ) cs = 0.0
-      if ( ibits(bvx, bc_face_N, bitw_5) /= 0 ) cn = 0.0
-      if ( ibits(bvx, bc_face_B, bitw_5) /= 0 ) cb = 0.0
-      if ( ibits(bvx, bc_face_T, bitw_5) /= 0 ) ct = 0.0
+! 各面のVBCフラグの有無 => flux mask
+! ibits() = 1(Normal) / 0(VBC)
+c_w1 = real( ibits(bdx, bc_d_W, 1) )
+c_e1 = real( ibits(bdx, bc_d_E, 1) )
+c_s1 = real( ibits(bdx, bc_d_S, 1) )
+c_n1 = real( ibits(bdx, bc_d_N, 1) )
+c_b1 = real( ibits(bdx, bc_d_B, 1) )
+c_t1 = real( ibits(bdx, bc_d_T, 1) )
 
-      ! 延びたステンシルの参照先がvspec, outflowである場合のスキームの破綻を回避，１次精度におとす
-      lmt_w = 1.0
-      lmt_e = 1.0
-      lmt_s = 1.0
-      lmt_n = 1.0
-      lmt_b = 1.0
-      lmt_t = 1.0
 
-      if ( (ibits(bv(i-1, j  , k  ), bc_face_W, bitw_5) /= 0) .and. (ibits(bp(i-1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_w = 0.0
-      if ( (ibits(bv(i+1, j  , k  ), bc_face_E, bitw_5) /= 0) .and. (ibits(bp(i+1, j  , k  ), vbc_uwd, 1) == 1) ) lmt_e = 0.0
-      if ( (ibits(bv(i  , j-1, k  ), bc_face_S, bitw_5) /= 0) .and. (ibits(bp(i  , j-1, k  ), vbc_uwd, 1) == 1) ) lmt_s = 0.0
-      if ( (ibits(bv(i  , j+1, k  ), bc_face_N, bitw_5) /= 0) .and. (ibits(bp(i  , j+1, k  ), vbc_uwd, 1) == 1) ) lmt_n = 0.0
-      if ( (ibits(bv(i  , j  , k-1), bc_face_B, bitw_5) /= 0) .and. (ibits(bp(i  , j  , k-1), vbc_uwd, 1) == 1) ) lmt_b = 0.0
-      if ( (ibits(bv(i  , j  , k+1), bc_face_T, bitw_5) /= 0) .and. (ibits(bp(i  , j  , k+1), vbc_uwd, 1) == 1) ) lmt_t = 0.0
-      
-      ! 外部境界条件の場合
-      if ( (i == 1)  .and. (ibits(bp(0   , j   , k   ), vbc_uwd, 1) == 1) ) lmt_w = 0.0
-      if ( (i == ix) .and. (ibits(bp(ix+1, j   , k   ), vbc_uwd, 1) == 1) ) lmt_e = 0.0
-      if ( (j == 1)  .and. (ibits(bp(i   , 0   , k   ), vbc_uwd, 1) == 1) ) lmt_s = 0.0
-      if ( (j == jx) .and. (ibits(bp(i   , jx+1, k   ), vbc_uwd, 1) == 1) ) lmt_n = 0.0
-      if ( (k == 1)  .and. (ibits(bp(i   , j   , 0   ), vbc_uwd, 1) == 1) ) lmt_b = 0.0
-      if ( (k == kx) .and. (ibits(bp(i   , j   , kx+1), vbc_uwd, 1) == 1) ) lmt_t = 0.0
+! ステンシルの参照先がvspec, outflowである場合のスキームの破綻を回避，１次精度におとすSW
+c_w2 = real( ibits(bcd(i-1, j  , k  ), bc_d_W, 1) )
+c_e2 = real( ibits(bcd(i+1, j  , k  ), bc_d_E, 1) )
+c_s2 = real( ibits(bcd(i  , j-1, k  ), bc_d_S, 1) )
+c_n2 = real( ibits(bcd(i  , j+1, k  ), bc_d_N, 1) )
+c_b2 = real( ibits(bcd(i  , j  , k-1), bc_d_B, 1) )
+c_t2 = real( ibits(bcd(i  , j  , k+1), bc_d_T, 1) )
+
       
       ! カット情報
 			dww= cut(1,i-1,j  ,k  ) ! d_{i-1}^-
@@ -441,12 +426,12 @@
       g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
       g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
 
-      Uer = Ue1 - (cm1 * g6 + cm2 * g5) * s4e * lmt_e
+      Uer = Ue1 - (cm1 * g6 + cm2 * g5) * s4e * c_e2
       Uel = Up0 + (cm1 * g3 + cm2 * g4) * s4e
       Uwr = Up0 - (cm1 * g4 + cm2 * g3) * s4w
-      Uwl = Uw1 + (cm1 * g1 + cm2 * g2) * s4w * lmt_w
-      cnv_u = 0.5 * (ufe * (Uer + Uel) - afe * (Uer - Uel)) * ce &
-            - 0.5 * (ufw * (Uwr + Uwl) - afw * (Uwr - Uwl)) * cw + cnv_u
+      Uwl = Uw1 + (cm1 * g1 + cm2 * g2) * s4w * c_w2
+      cnv_u = 0.5 * (ufe * (Uer + Uel) - afe * (Uer - Uel)) * c_e1 &
+            - 0.5 * (ufw * (Uwr + Uwl) - afw * (Uwr - Uwl)) * c_w1 + cnv_u
       
       dv4 = Ve2 - Ve1
       dv3 = Ve1 - Vp0
@@ -465,12 +450,12 @@
       g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
       g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
 
-      Ver = Ve1 - (cm1 * g6 + cm2 * g5) * s4e * lmt_e
+      Ver = Ve1 - (cm1 * g6 + cm2 * g5) * s4e * c_e2
       Vel = Vp0 + (cm1 * g3 + cm2 * g4) * s4e
       Vwr = Vp0 - (cm1 * g4 + cm2 * g3) * s4w
-      Vwl = Vw1 + (cm1 * g1 + cm2 * g2) * s4w * lmt_w
-      cnv_v = 0.5 * (ufe * (Ver + Vel) - afe * (Ver - Vel)) * ce &
-            - 0.5 * (ufw * (Vwr + Vwl) - afw * (Vwr - Vwl)) * cw + cnv_v
+      Vwl = Vw1 + (cm1 * g1 + cm2 * g2) * s4w * c_w2
+      cnv_v = 0.5 * (ufe * (Ver + Vel) - afe * (Ver - Vel)) * c_e1 &
+            - 0.5 * (ufw * (Vwr + Vwl) - afw * (Vwr - Vwl)) * c_w1 + cnv_v
             
       dv4 = We2 - We1
       dv3 = We1 - Wp0
@@ -489,12 +474,12 @@
       g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
       g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
 
-      Wer = We1 - (cm1 * g6 + cm2 * g5) * s4e * lmt_e
+      Wer = We1 - (cm1 * g6 + cm2 * g5) * s4e * c_e2
       Wel = Wp0 + (cm1 * g3 + cm2 * g4) * s4e
       Wwr = Wp0 - (cm1 * g4 + cm2 * g3) * s4w
-      Wwl = Ww1 + (cm1 * g1 + cm2 * g2) * s4w * lmt_w
-      cnv_w = 0.5 * (ufe * (Wer + Wel) - afe * (Wer - Wel)) * ce &
-            - 0.5 * (ufw * (Wwr + Wwl) - afw * (Wwr - Wwl)) * cw + cnv_w
+      Wwl = Ww1 + (cm1 * g1 + cm2 * g2) * s4w * c_w2
+      cnv_w = 0.5 * (ufe * (Wer + Wel) - afe * (Wer - Wel)) * c_e1 &
+            - 0.5 * (ufw * (Wwr + Wwl) - afw * (Wwr - Wwl)) * c_w1 + cnv_w
 			
       ! Y方向 ---------------------------------------
       
@@ -573,12 +558,12 @@
       g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
       g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
 
-      Unr = Un1 - (cm1 * g6 + cm2 * g5) * s4n * lmt_n
+      Unr = Un1 - (cm1 * g6 + cm2 * g5) * s4n * c_n2
       Unl = Up0 + (cm1 * g3 + cm2 * g4) * s4n
       Usr = Up0 - (cm1 * g4 + cm2 * g3) * s4s
-      Usl = Us1 + (cm1 * g1 + cm2 * g2) * s4s * lmt_s
-      cnv_u = 0.5 * (vfn * (Unr + Unl) - afn * (Unr - Unl)) * cn &
-            - 0.5 * (vfs * (Usr + Usl) - afs * (Usr - Usl)) * cs + cnv_u
+      Usl = Us1 + (cm1 * g1 + cm2 * g2) * s4s * c_s2
+      cnv_u = 0.5 * (vfn * (Unr + Unl) - afn * (Unr - Unl)) * c_n1 &
+            - 0.5 * (vfs * (Usr + Usl) - afs * (Usr - Usl)) * c_s1 + cnv_u
       
       dv4 = Vn2 - Vn1
       dv3 = Vn1 - Vp0
@@ -597,12 +582,12 @@
       g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
       g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
 
-      Vnr = Vn1 - (cm1 * g6 + cm2 * g5) * s4n * lmt_n
+      Vnr = Vn1 - (cm1 * g6 + cm2 * g5) * s4n * c_n2
       Vnl = Vp0 + (cm1 * g3 + cm2 * g4) * s4n
       Vsr = Vp0 - (cm1 * g4 + cm2 * g3) * s4s
-      Vsl = Vs1 + (cm1 * g1 + cm2 * g2) * s4s * lmt_s
-      cnv_v = 0.5 * (vfn * (Vnr + Vnl) - afn * (Vnr - Vnl)) * cn &
-            - 0.5 * (vfs * (Vsr + Vsl) - afs * (Vsr - Vsl)) * cs + cnv_v
+      Vsl = Vs1 + (cm1 * g1 + cm2 * g2) * s4s * c_s2
+      cnv_v = 0.5 * (vfn * (Vnr + Vnl) - afn * (Vnr - Vnl)) * c_n1 &
+            - 0.5 * (vfs * (Vsr + Vsl) - afs * (Vsr - Vsl)) * c_s1 + cnv_v
 
       dv4 = Wn2 - Wn1
       dv3 = Wn1 - Wp0
@@ -621,12 +606,12 @@
       g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
       g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
 
-      Wnr = Wn1 - (cm1 * g6 + cm2 * g5) * s4n * lmt_n
+      Wnr = Wn1 - (cm1 * g6 + cm2 * g5) * s4n * c_n2
       Wnl = Wp0 + (cm1 * g3 + cm2 * g4) * s4n
       Wsr = Wp0 - (cm1 * g4 + cm2 * g3) * s4s
-      Wsl = Ws1 + (cm1 * g1 + cm2 * g2) * s4s * lmt_s
-      cnv_w = 0.5 * (vfn * (Wnr + Wnl) - afn * (Wnr - Wnl)) * cn &
-            - 0.5 * (vfs * (Wsr + Wsl) - afs * (Wsr - Wsl)) * cs + cnv_w
+      Wsl = Ws1 + (cm1 * g1 + cm2 * g2) * s4s * c_s2
+      cnv_w = 0.5 * (vfn * (Wnr + Wnl) - afn * (Wnr - Wnl)) * c_n1 &
+            - 0.5 * (vfs * (Wsr + Wsl) - afs * (Wsr - Wsl)) * c_s1 + cnv_w
 			
       ! Z方向 ---------------------------------------
       
@@ -705,12 +690,12 @@ g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
 g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
 g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
 
-      Utr = Ut1 - (cm1 * g6 + cm2 * g5) * s4t * lmt_t
+      Utr = Ut1 - (cm1 * g6 + cm2 * g5) * s4t * c_t2
       Utl = Up0 + (cm1 * g3 + cm2 * g4) * s4t
       Ubr = Up0 - (cm1 * g4 + cm2 * g3) * s4b
-      Ubl = Ub1 + (cm1 * g1 + cm2 * g2) * s4b * lmt_b
-      cnv_u = 0.5 * (wft * (Utr + Utl) - aft * (Utr - Utl)) * ct &
-            - 0.5 * (wfb * (Ubr + Ubl) - afb * (Ubr - Ubl)) * cb + cnv_u
+      Ubl = Ub1 + (cm1 * g1 + cm2 * g2) * s4b * c_b2
+      cnv_u = 0.5 * (wft * (Utr + Utl) - aft * (Utr - Utl)) * c_t1 &
+            - 0.5 * (wfb * (Ubr + Ubl) - afb * (Ubr - Ubl)) * c_b1 + cnv_u
 
       dv4 = Vt2 - Vt1
       dv3 = Vt1 - Vp0
@@ -729,12 +714,12 @@ g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
 g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
 g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
 
-      Vtr = Vt1 - (cm1 * g6 + cm2 * g5) * s4t * lmt_t
+      Vtr = Vt1 - (cm1 * g6 + cm2 * g5) * s4t * c_t2
       Vtl = Vp0 + (cm1 * g3 + cm2 * g4) * s4t
       Vbr = Vp0 - (cm1 * g4 + cm2 * g3) * s4b
-      Vbl = Vb1 + (cm1 * g1 + cm2 * g2) * s4b * lmt_b
-      cnv_v = 0.5 * (wft * (Vtr + Vtl) - aft * (Vtr - Vtl)) * ct &
-            - 0.5 * (wfb * (Vbr + Vbl) - afb * (Vbr - Vbl)) * cb + cnv_v
+      Vbl = Vb1 + (cm1 * g1 + cm2 * g2) * s4b * c_b2
+      cnv_v = 0.5 * (wft * (Vtr + Vtl) - aft * (Vtr - Vtl)) * c_t1 &
+            - 0.5 * (wfb * (Vbr + Vbl) - afb * (Vbr - Vbl)) * c_b1 + cnv_v
 
       dv4 = Wt2 - Wt1
       dv3 = Wt1 - Wp0
@@ -753,12 +738,12 @@ g3 = s2 * max(0.0, min( abs(dv2), s2 * b * dv3))
 g2 = s2 * max(0.0, min( abs(dv2), s2 * b * dv1))
 g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
 
-      Wtr = Wt1 - (cm1 * g6 + cm2 * g5) * s4t * lmt_t
+      Wtr = Wt1 - (cm1 * g6 + cm2 * g5) * s4t * c_t2
       Wtl = Wp0 + (cm1 * g3 + cm2 * g4) * s4t
       Wbr = Wp0 - (cm1 * g4 + cm2 * g3) * s4b
-      Wbl = Wb1 + (cm1 * g1 + cm2 * g2) * s4b * lmt_b
-      cnv_w = 0.5 * (wft * (Wtr + Wtl) - aft * (Wtr - Wtl)) * ct &
-            - 0.5 * (wfb * (Wbr + Wbl) - afb * (Wbr - Wbl)) * cb + cnv_w
+      Wbl = Wb1 + (cm1 * g1 + cm2 * g2) * s4b * c_b2
+      cnv_w = 0.5 * (wft * (Wtr + Wtl) - aft * (Wtr - Wtl)) * c_t1 &
+            - 0.5 * (wfb * (Wbr + Wbl) - afb * (Wbr - Wbl)) * c_b1 + cnv_w
 
       
       ! 粘性項の計算  >  18 + 10*3 + 9 = 57 flop -----------------------------------------------
@@ -783,19 +768,19 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
       dw_t = ( Wt1 - Wp0 )
       dw_b = ( Wp0 - Wb1 )
       
-      Ex = ( (du_e * ce - du_w * cw)  &
-           + (du_n * cn - du_s * cs)  &
-           + (du_t * ct - du_b * cb)  &
+      Ex = ( (du_e * c_e1 - du_w * c_w1)  &
+           + (du_n * c_n1 - du_s * c_s1)  &
+           + (du_t * c_t1 - du_b * c_b1)  &
            ) * dh2
            
-      Ey = ( (dv_e * ce - dv_w * cw)  &
-           + (dv_n * cn - dv_s * cs)  &
-           + (dv_t * ct - dv_b * cb)  &
+      Ey = ( (dv_e * c_e1 - dv_w * c_w1)  &
+           + (dv_n * c_n1 - dv_s * c_s1)  &
+           + (dv_t * c_t1 - dv_b * c_b1)  &
            ) * dh2
            
-      Ez = ( (dw_e * ce - dw_w * cw)  &
-           + (dw_n * cn - dw_s * cs)  &
-           + (dw_t * ct - dw_b * cb)  &
+      Ez = ( (dw_e * c_e1 - dw_w * c_w1)  &
+           + (dw_n * c_n1 - dw_s * c_s1)  &
+           + (dw_t * c_t1 - dw_b * c_b1)  &
            ) * dh2
 			
       ! 対流項と粘性項の和
@@ -828,10 +813,10 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
 !! @param v00 参照速度
 !! @param[out] flop flop count
 !<
-    subroutine update_vec_cds (v, div, sz, g, delta_t, dh, vc, p, bp, bv, cut, v00, flop)
+    subroutine update_vec_cds (v, div, sz, g, delta_t, dh, vc, p, bp, bv, bcd, cut, v00, flop)
     implicit none
     include '../FB/ffv_f_params.h'
-    integer                                                     ::  i, j, k, ix, jx, kx, g, bpx, bvx
+    integer                                                     ::  i, j, k, ix, jx, kx, g, bpx, bvx, bdx
     integer, dimension(3)                                       ::  sz
     double precision                                            ::  flop
     real                                                        ::  dh, delta_t, dd, coef, actv, r_actv
@@ -849,14 +834,14 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
     real                                                        ::  ww, we, ws, wn, wb, wt
     real                                                        ::  qw, qe, qs, qn, qb, qt
     real                                                        ::  r_qw, r_qe, r_qs, r_qn, r_qb, r_qt
-    real                                                        ::  cw, ce, cs, cn, cb, ct
+    real                                                        ::  c_w1, c_e1, c_s1, c_n1, c_b1, c_t1
     real                                                        ::  hw, he, hs, hn, hb, ht
     real                                                        ::  N_e, N_w, N_n, N_s, N_t, N_b
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  p
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, vc
     real*4, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  cut
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bp, bv
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bp, bv, bcd
     real, dimension(0:3)                                        ::  v00
     
     ix = sz(1)
@@ -880,7 +865,7 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
 !$OMP PRIVATE(ww, we, ws, wn, wb, wt) &
 !$OMP PRIVATE(qw, qe, qs, qn, qb, qt) &
 !$OMP PRIVATE(r_qw, r_qe, r_qs, r_qn, r_qb, r_qt) &
-!$OMP PRIVATE(cw, ce, cs, cn, cb, ct) &
+!$OMP PRIVATE(c_w1, c_e1, c_s1, c_n1, c_b1, c_t1) &
 !$OMP PRIVATE(hw, he, hs, hn, hb, ht) &
 !$OMP PRIVATE(gpw_r, gpe_r, gps_r, gpn_r, gpb_r, gpt_r) &
 !$OMP PRIVATE(gpw_c, gpe_c, gps_c, gpn_c, gpb_c, gpt_c) &
@@ -898,7 +883,8 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
     do i=1,ix
       bpx = bp(i,j,k)
       bvx = bv(i,j,k)
-      actv = real(ibits(bvx, State, 1))
+      bdx = bcd(i,j,k)
+      actv = real(ibits(bdx, State, 1))
       r_actv = 1.0 - actv
       
       ! Neumann条件のとき，0.0
@@ -959,19 +945,19 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
       r_qt = 1.0 - qt
       
       ! c=0.0(VBC), 1.0(Fluid); VBCは内部と外部の両方
-      cw = 1.0
-      ce = 1.0
-      cs = 1.0
-      cn = 1.0
-      cb = 1.0
-      ct = 1.0
+      c_w1 = 1.0
+      c_e1 = 1.0
+      c_s1 = 1.0
+      c_n1 = 1.0
+      c_b1 = 1.0
+      c_t1 = 1.0
 
-      if ( ibits(bvx, bc_face_W, bitw_5) /= 0 ) cw = 0.0
-      if ( ibits(bvx, bc_face_E, bitw_5) /= 0 ) ce = 0.0
-      if ( ibits(bvx, bc_face_S, bitw_5) /= 0 ) cs = 0.0
-      if ( ibits(bvx, bc_face_N, bitw_5) /= 0 ) cn = 0.0
-      if ( ibits(bvx, bc_face_B, bitw_5) /= 0 ) cb = 0.0
-      if ( ibits(bvx, bc_face_T, bitw_5) /= 0 ) ct = 0.0
+      if ( ibits(bvx, bc_face_W, bitw_5) /= 0 ) c_w1 = 0.0
+      if ( ibits(bvx, bc_face_E, bitw_5) /= 0 ) c_e1 = 0.0
+      if ( ibits(bvx, bc_face_S, bitw_5) /= 0 ) c_s1 = 0.0
+      if ( ibits(bvx, bc_face_N, bitw_5) /= 0 ) c_n1 = 0.0
+      if ( ibits(bvx, bc_face_B, bitw_5) /= 0 ) c_b1 = 0.0
+      if ( ibits(bvx, bc_face_T, bitw_5) /= 0 ) c_t1 = 0.0
       
       hw = 1.0 / (dw + 0.5)
       he = 1.0 / (de + 0.5)
@@ -1043,12 +1029,12 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
       Wt_f = Wt_t * qt + r_qt * Wt_c
       
       ! 発散値 VBCの寄与は除外
-      div(i,j,k) = ((Ue_f - dd * gpe) * ce &
-                   -(Uw_f - dd * gpw) * cw &
-                   +(Vn_f - dd * gpn) * cn &
-                   -(Vs_f - dd * gps) * cs &
-                   +(Wt_f - dd * gpt) * ct &
-                   -(Wb_f - dd * gpb) * cb ) * coef * actv
+      div(i,j,k) = ((Ue_f - dd * gpe) * c_e1 &
+                   -(Uw_f - dd * gpw) * c_w1 &
+                   +(Vn_f - dd * gpn) * c_n1 &
+                   -(Vs_f - dd * gps) * c_s1 &
+                   +(Wt_f - dd * gpt) * c_t1 &
+                   -(Wb_f - dd * gpb) * c_b1 ) * coef * actv
       
       ! セルセンタの速度更新
       v(i,j,k,1) = ( Up0 - gpx * dd ) * actv + r_actv * u_ref
@@ -1076,10 +1062,10 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
 !! @param v00 参照速度
 !! @param[out] flop flop count
 !<
-    subroutine divergence_cds (div, sz, g, coef, v, bv, cut, v00, flop)
+    subroutine divergence_cds (div, sz, g, coef, v, bv, bcd, cut, v00, flop)
     implicit none
     include '../FB/ffv_f_params.h'
-    integer                                                     ::  i, j, k, ix, jx, kx, g, bvx
+    integer                                                     ::  i, j, k, ix, jx, kx, g, bvx, bdx
     integer, dimension(3)                                       ::  sz
     double precision                                            ::  flop
     real                                                        ::  Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0
@@ -1087,7 +1073,7 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
     real                                                        ::  Ue_r, Uw_r, Vn_r, Vs_r, Wt_r, Wb_r
     real                                                        ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
     real                                                        ::  Ue_c, Uw_c, Vn_c, Vs_c, Wt_c, Wb_c
-    real                                                        ::  cw, ce, cs, cn, cb, ct
+    real                                                        ::  c_w1, c_e1, c_s1, c_n1, c_b1, c_t1
     real                                                        ::  dw, de, ds, dn, db, dt
     real                                                        ::  hw, he, hs, hn, hb, ht
     real                                                        ::  ww, we, ws, wn, wb, wt
@@ -1097,7 +1083,7 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
     real*4, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  cut
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv, bcd
     real, dimension(0:3)                                        ::  v00
 
     ix = sz(1)
@@ -1112,13 +1098,13 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, coef, u_ref, v_ref, w_ref) &
-!$OMP PRIVATE(bvx, actv, r_actv) &
+!$OMP PRIVATE(bvx, actv, r_actv, bdx) &
 !$OMP PRIVATE(Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0) &
 !$OMP PRIVATE(dw, de, ds, dn, db, dt) &
 !$OMP PRIVATE(ww, we, ws, wn, wb, wt) &
 !$OMP PRIVATE(qw, qe, qs, qn, qb, qt) &
 !$OMP PRIVATE(r_qw, r_qe, r_qs, r_qn, r_qb, r_qt) &
-!$OMP PRIVATE(cw, ce, cs, cn, cb, ct) &
+!$OMP PRIVATE(c_w1, c_e1, c_s1, c_n1, c_b1, c_t1) &
 !$OMP PRIVATE(hw, he, hs, hn, hb, ht) &
 !$OMP PRIVATE(Ue_r, Uw_r, Vn_r, Vs_r, Wt_r, Wb_r) &
 !$OMP PRIVATE(Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t) &
@@ -1131,6 +1117,7 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
     do j=1,jx
     do i=1,ix
       bvx = bv(i,j,k)
+      bdx = bcd(i,j,k)
       actv= real(ibits(bvx, State, 1))
 
       Uw0 = v(i-1,j  ,k  , 1)
@@ -1182,19 +1169,19 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
       r_qt = 1.0 - qt
       
       ! 各面のVBCフラグ ibits() = 0(Normal) / others(BC) >> c = 1.0(Normal) / 0.0(BC)
-      cw = 1.0
-      ce = 1.0
-      cs = 1.0
-      cn = 1.0
-      cb = 1.0
-      ct = 1.0
+      c_w1 = 1.0
+      c_e1 = 1.0
+      c_s1 = 1.0
+      c_n1 = 1.0
+      c_b1 = 1.0
+      c_t1 = 1.0
 
-      if ( ibits(bvx, bc_face_W, bitw_5) /= 0 ) cw = 0.0
-      if ( ibits(bvx, bc_face_E, bitw_5) /= 0 ) ce = 0.0
-      if ( ibits(bvx, bc_face_S, bitw_5) /= 0 ) cs = 0.0
-      if ( ibits(bvx, bc_face_N, bitw_5) /= 0 ) cn = 0.0
-      if ( ibits(bvx, bc_face_B, bitw_5) /= 0 ) cb = 0.0
-      if ( ibits(bvx, bc_face_T, bitw_5) /= 0 ) ct = 0.0
+      if ( ibits(bvx, bc_face_W, bitw_5) /= 0 ) c_w1 = 0.0
+      if ( ibits(bvx, bc_face_E, bitw_5) /= 0 ) c_e1 = 0.0
+      if ( ibits(bvx, bc_face_S, bitw_5) /= 0 ) c_s1 = 0.0
+      if ( ibits(bvx, bc_face_N, bitw_5) /= 0 ) c_n1 = 0.0
+      if ( ibits(bvx, bc_face_B, bitw_5) /= 0 ) c_b1 = 0.0
+      if ( ibits(bvx, bc_face_T, bitw_5) /= 0 ) c_t1 = 0.0
       
       hw = 1.0 / (dw + 0.5)
       he = 1.0 / (de + 0.5)
@@ -1236,12 +1223,12 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
       Wt_f = Wt_t * qt + r_qt * Wt_c
       
       ! VBCの場合には寄与をキャンセル
-      div(i,j,k) = ( (Ue_f - u_ref) * ce  &
-                   - (Uw_f - u_ref) * cw  &
-                   + (Vn_f - v_ref) * cn  &
-                   - (Vs_f - v_ref) * cs  &
-                   + (Wt_f - w_ref) * ct  &
-                   - (Wb_f - w_ref) * cb ) * coef * actv
+      div(i,j,k) = ( (Ue_f - u_ref) * c_e1  &
+                   - (Uw_f - u_ref) * c_w1  &
+                   + (Vn_f - v_ref) * c_n1  &
+                   - (Vs_f - v_ref) * c_s1  &
+                   + (Wt_f - w_ref) * c_t1  &
+                   - (Wb_f - w_ref) * c_b1 ) * coef * actv
     end do
     end do
     end do

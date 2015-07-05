@@ -257,7 +257,7 @@ unsigned long MonitorCompo::clearMonitorCut()
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         int qq = bd[m];
         
-        if ( TEST_BC(qq) ) // 6面のいずれかにIDがある
+        if ( IS_CUT(qq) ) // 6面のいずれかにIDがある
         {
           long long pos = ct[m];
           
@@ -1250,7 +1250,7 @@ void MonitorCompo::setPolygon(const char* labelStr,
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         int bd = bid[m];
         
-        if ( TEST_BC(bd) ) // 6面のいずれかにIDがある
+        if ( IS_CUT(bd) ) // 6面のいずれかにIDがある
         {
           const long long pos = cut[m];
           
@@ -1324,7 +1324,7 @@ void MonitorCompo::setPolygon(const char* labelStr,
         float cy = 0.0;
         float cz = 0.0;
         
-        if ( TEST_BC(bd) ) // 6面のいずれかにIDがある
+        if ( IS_CUT(bd) ) // 6面のいずれかにIDがある
         {
           const long long pos = cut[m];
           

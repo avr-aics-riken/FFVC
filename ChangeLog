@@ -19,6 +19,12 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-07-05
+r1619 modify Vspec implementation
+- encVbitIBC(), encVbitIBCrev(), encVbitOBC()
+- expire VBC_UWD flag
+
+--------------------------
 2015-06-30
 r1618 suppress error message in mergeSameSolidCell()
 - expire paintCutOnPoint()

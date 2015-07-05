@@ -304,7 +304,7 @@ int FFV::Initialize(int argc, char **argv)
   }
   TIMING_stop("Fill");
   
-  
+  F->writeSVX(d_bcd);
   
   // ∆tの決め方とKindOfSolverの組み合わせで無効なものをはねる
   if ( !DT.chkDtSelect() )
@@ -1302,7 +1302,7 @@ void FFV::encodeBCindex(FILE* fp)
   
   
   // 速度計算のビット情報をエンコードする -----
-  V.setBCIndexV(d_cdf, &BC, cmp, C.Mode.Example, d_cut, d_bid, C.NoCompo, C.NoMedium, mat);
+  V.setBCIndexV(d_cdf, &BC, cmp, C.Mode.Example, d_cut, d_bid, d_bcd, C.NoCompo, C.NoMedium, mat);
   
   
   
@@ -1662,7 +1662,7 @@ void FFV::generateGlyph(const long long* cut, const int* bid, FILE* fp, int* m_s
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         int qq = bid[m];
         
-        if ( TEST_BC(qq) ) // カットがあるか，IDによる判定
+        if ( IS_CUT(qq) ) // カットがあるか，IDによる判定
         {
           if (getBit5(qq, 0) != 0) g++;
           if (getBit5(qq, 1) != 0) g++;
@@ -1724,7 +1724,7 @@ void FFV::generateGlyph(const long long* cut, const int* bid, FILE* fp, int* m_s
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         int qq = bid[m];
         
-        if ( TEST_BC(qq) ) // カットがあるか，IDによる判定
+        if ( IS_CUT(qq) ) // カットがあるか，IDによる判定
         {
           const long long pos = cut[m];
           

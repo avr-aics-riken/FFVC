@@ -117,19 +117,21 @@ private:
   unsigned long encVbitIBC (const int order,
                             int* cdf,
                             int* bid,
-                            const REAL_TYPE* vec,
+                            int* bcd,
                             CompoList* cmp,
-                            const int fill_id);
+                            const int solid_id);
   
   
   unsigned long encVbitIBCrev (const int order,
                                int* cdf,
                                int* bid,
-                               CompoList* cmp);
+                               int* bcd,
+                               CompoList* cmp,
+                               const int solid_id);
   
   
   // cdf[]に境界条件のビット情報をエンコードする
-  void encVbitOBC (int face, int* cdf, string key, const bool enc_sw, string chk, int* bid, bool enc_uwd=false);
+  void encVbitOBC (int face, int* cdf, string key, const bool enc_sw, string chk, int* bid, int* bcd);
   
   
   /*
@@ -275,7 +277,8 @@ public:
    * @param [in]     cmp        CompoListクラスのポインタ
    * @param [in]     icls       Intrinsic class
    * @param [in]     cut        カット配列
-   * @param [in]     cut_id     BID配列
+   * @param [in]     bid        BID配列
+   * @param [in]     bcd        BCindex B
    * @param [in]     m_NoCompo  コンポーネント数
    * @param [in]     m_NoMedium 媒質数
    * @param [in]     mat        MediumList
@@ -285,7 +288,8 @@ public:
                    CompoList* cmp,
                    int icls,
                    long long* cut,
-                   int* cut_id,
+                   int* bid,
+                   int* bcd,
                    const int m_NoCompo,
                    const int m_NoMedium,
                    MediumList* mat);

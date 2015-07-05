@@ -33,7 +33,7 @@ integer     ::  obc_periodic, obc_outflow, obc_mask
 integer     ::  cmp_typ_outflow, cmp_typ_hex, cmp_typ_vspec, cmp_typ_solidrev
 integer     ::  bc_diag
 integer     ::  gma_T, gma_B, gma_N, gma_S, gma_E, gma_W, h_diag
-integer     ::  top_vf, bitw_8, forcing_bit, bitw_6, bitw_5, vbc_uwd, bitw_9, bitw_10
+integer     ::  top_vf, bitw_8, forcing_bit, bitw_6, bitw_5, bitw_9, bitw_10
 
 parameter ( bc_mask30 = Z'3fffffff') ! 16進表記，VBCの6面(30bit)をまとめたマスク
 parameter ( bitw_10= 10) ! FB_Define.h MASK_10 10bit幅
@@ -110,9 +110,6 @@ parameter ( bc_face_N = 15 ) ! FB_Define.h BC_FACE_N
 parameter ( bc_face_S = 10 ) ! FB_Define.h BC_FACE_S
 parameter ( bc_face_E = 5  ) ! FB_Define.h BC_FACE_E
 parameter ( bc_face_W = 0  ) ! FB_Define.h BC_FACE_W
-
-! bid
-parameter ( vbc_uwd   = 30 ) ! FB_Define.h VBC_UWD
 
 
 ! 速度境界条件の種類
