@@ -96,14 +96,14 @@ void FFV::NS_FS_E_Binary()
           {
             TIMING_start("Pvec_MUSCL_LES");
             flop = 0.0;
-            pvec_muscl_les_ (d_vc, size, &guide, pitch, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bid, d_bcd, &one, &C.LES.Cs, &C.LES.Model, &C.RefKviscosity, &C.RefDensity, &flop);
+            pvec_muscl_les_ (d_vc, size, &guide, pitch, &cnv_scheme, v00, &rei, d_v0, d_vf, d_bid, d_bcd, &one, &C.LES.Cs, &C.LES.Model, &C.RefKviscosity, &C.RefDensity, &flop);
             TIMING_stop("Pvec_MUSCL_LES", flop);
           }
           else
           {
             TIMING_start("Pvec_MUSCL");
             flop = 0.0;
-            pvec_muscl_(d_vc, size, &guide, pitch, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bid, d_bcd, &one, &flop);
+            pvec_muscl_(d_vc, size, &guide, pitch, &cnv_scheme, v00, &rei, d_v0, d_vf, d_bid, d_bcd, &one, &flop);
             TIMING_stop("Pvec_MUSCL", flop);
           }
           break;
@@ -150,7 +150,7 @@ void FFV::NS_FS_E_Binary()
           {
             TIMING_start("Pvec_MUSCL");
             flop = 0.0;
-            pvec_muscl_(d_wv, size, &guide, pitch, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bid, d_bcd, &half, &flop);
+            pvec_muscl_(d_wv, size, &guide, pitch, &cnv_scheme, v00, &rei, d_v0, d_vf, d_bid, d_bcd, &half, &flop);
             TIMING_stop("Pvec_MUSCL", flop);
           }
           break;
@@ -229,6 +229,23 @@ void FFV::NS_FS_E_Binary()
       Exit(0);
   }
 
+  
+  
+  // 安定化
+  if (C.Stab.control == ON)
+  {
+    int ct = 0;
+    TIMING_start("Stabilize");
+    flop = 0.0;
+    stabilize_(d_vc, size, &guide, &dt, d_v0, d_bcd, &C.Stab.begin, &C.Stab.end, &C.Stab.penalty_number, &ct, &flop);
+    TIMING_stop("Stabilize", flop);
+    
+    int tmp = ct;
+    if ( paraMngr->Allreduce(&tmp, &ct, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    printf("stabilize = %d\n", ct);
+  }
+  
+  
 
   // FORCINGコンポーネントの疑似速度ベクトルの方向修正と力の加算
   if ( C.EnsCompo.forcing == ON ) 

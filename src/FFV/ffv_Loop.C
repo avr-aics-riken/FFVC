@@ -34,7 +34,7 @@ int FFV::Loop(const unsigned step)
   double avr_Var[3];       /// 平均値
   REAL_TYPE vMax=0.0;      /// 最大速度成分
   
-  bool isNormal=true;      /// 発散チェックフラグ
+  int isNormal = 0;        /// 発散チェックフラグ
 
   
   // Loop section
@@ -252,14 +252,14 @@ int FFV::Loop(const unsigned step)
       || ISNAN(DivC.divergence)
       )
   {
-    isNormal = false;
+    isNormal = 1;
   }
   
   if ( C.isHeatProblem() )
   {
     if ( ISNAN(rms_Var[var_Temperature]) )
     {
-      isNormal = false;
+      isNormal = 1;
     }
   }
   
@@ -472,7 +472,14 @@ int FFV::Loop(const unsigned step)
   
   
   // 発散時の打ち切り
-  if ( !isNormal )
+  if ( numProc > 1 )
+  {
+    int tmp = isNormal;
+    if ( paraMngr->Allreduce(&tmp, &isNormal, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  
+  if ( isNormal > 0 )
   {
     Hostonly_ {
       printf      ("\tForced termination : floating point exception\n");

@@ -828,7 +828,6 @@ unsigned long VoxInfo::countValidCellOBC (const int face, const int* cdf, const 
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
-  int sz[3] = {ix, jx, kx};
   int gd = guide;
   
   unsigned long g=0;
@@ -1049,7 +1048,7 @@ void VoxInfo::encAdiabatic (int* bd, const string target, const int* bid, int fa
   int kx = size[2];
   int gd = guide;
   
-  unsigned long g=0;
+
   
   if (!strcasecmp(target.c_str(), "fluid"))
   {
@@ -2160,9 +2159,9 @@ unsigned long VoxInfo::encVbitIBC (const int order,
   const REAL_TYPE sgn = (cmp->getBClocation() == CompoList::same_direction) ? 1.0 : -1.0;
   
   // 判定ベクトル
-  const REAL_TYPE nx = cmp->nv[0] * sgn;
-  const REAL_TYPE ny = cmp->nv[1] * sgn;
-  const REAL_TYPE nz = cmp->nv[2] * sgn;
+  REAL_TYPE nx = cmp->nv[0] * sgn;
+  REAL_TYPE ny = cmp->nv[1] * sgn;
+  REAL_TYPE nz = cmp->nv[2] * sgn;
 
 
   // 判定ベクトルnvとテストベクトルd（nv,d)<0 側に境界条件を与え、その反対方向には壁面条件とする
@@ -2374,16 +2373,8 @@ unsigned long VoxInfo::encVbitIBCrev (const int order,
   
   int sid = solid_id;
   
-  // 方向識別フラグ
-  const REAL_TYPE sgn = (cmp->getBClocation() == CompoList::same_direction) ? 1.0 : -1.0;
   
-  // 判定ベクトル
-  const REAL_TYPE nx = cmp->nv[0] * sgn;
-  const REAL_TYPE ny = cmp->nv[1] * sgn;
-  const REAL_TYPE nz = cmp->nv[2] * sgn;
-  
-  
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, odr, sid, nx, ny, nz) \
+#pragma omp parallel for firstprivate(ix, jx, kx, gd, odr, sid) \
         schedule(static) reduction(+:g)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
@@ -2614,7 +2605,6 @@ void VoxInfo::encVbitOBC (const int face, int* cdf, const string key, const bool
           size_t m = _F_IDX_S3D(ix,   j, k, ix, jx, kx, gd);
           size_t mt= _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd);
           
-          int s = cdf[m];
           int z = cdf[mt];
           int d = bcd[m];
           
@@ -2661,7 +2651,6 @@ void VoxInfo::encVbitOBC (const int face, int* cdf, const string key, const bool
           size_t m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
           size_t mt= _F_IDX_S3D(i, 0, k, ix, jx, kx, gd);
           
-          int s = cdf[m];
           int z = cdf[mt];
           int d = bcd[m];
           
@@ -2708,7 +2697,6 @@ void VoxInfo::encVbitOBC (const int face, int* cdf, const string key, const bool
           size_t m = _F_IDX_S3D(i, jx,   k, ix, jx, kx, gd);
           size_t mt= _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd);
           
-          int s = cdf[m];
           int z = cdf[mt];
           int d = bcd[m];
           
@@ -2755,7 +2743,6 @@ void VoxInfo::encVbitOBC (const int face, int* cdf, const string key, const bool
           size_t m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
           size_t mt= _F_IDX_S3D(i, j, 0, ix, jx, kx, gd);
           
-          int s = cdf[m];
           int z = cdf[mt];
           int d = bcd[m];
           
@@ -2802,7 +2789,6 @@ void VoxInfo::encVbitOBC (const int face, int* cdf, const string key, const bool
           size_t m = _F_IDX_S3D(i, j, kx,   ix, jx, kx, gd);
           size_t mt= _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd);
           
-          int s = cdf[m];
           int z = cdf[mt];
           int d = bcd[m];
           
@@ -3492,8 +3478,6 @@ void VoxInfo::setBCIndexV(int* cdf,
   
   
   // 内部境界のコンポーネントのエンコード
-  int m_dir;
-  
   for (int n=1; n<=m_NoCompo; n++)
   {
     int m_solid_id = FBUtility::findIDfromLabel(mat, m_NoMedium, cmp[n].medium);

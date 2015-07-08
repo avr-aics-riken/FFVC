@@ -31,16 +31,15 @@
 !! @param [in]  rei       レイノルズ数の逆数
 !! @param [in]  v         セルセンター速度ベクトル（n-step）
 !! @param [in]  vf        セルフェイス速度ベクトル（n-step）
-!! @param [in]  bv        BCindex C
 !! @param [in]  bid       Cut ID
 !! @param [in]  bcd       BCindex B
 !! @param [in]  vcs_coef  粘性項の係数（粘性項を計算しない場合には0.0）
 !! @param [out] flop      浮動小数点演算数
 !<
-subroutine pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bv, bid, bcd, vcs_coef, flop)
+subroutine pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bid, bcd, vcs_coef, flop)
 implicit none
 include 'ffv_f_params.h'
-integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, bix, bdx
+integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bix, bdx
 integer, dimension(3)                                     ::  sz
 double precision                                          ::  flop
 real                                                      ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
@@ -60,7 +59,7 @@ real                                                      ::  fu_r, fu_l, fv_r, 
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, wv, vf
 real, dimension(0:3)                                      ::  v00
 real, dimension(3)                                        ::  dh
-integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv, bid, bcd
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bid, bcd
 
 ix = sz(1)
 jx = sz(2)
@@ -113,7 +112,7 @@ flop = flop + dble(ix)*dble(jx)*dble(kx)*888.0d0 + 36.0d0
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, rx, ry, rz, rx2, ry2 ,rz2, vcs, b, ck, ss_4, ss, cm1, cm2) &
 !$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, rei) &
-!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bix, bdx, uq, vq, wq) &
+!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bix, bdx, uq, vq, wq) &
 !$OMP PRIVATE(Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2) &
 !$OMP PRIVATE(Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2) &
 !$OMP PRIVATE(Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2) &
@@ -178,7 +177,6 @@ Wn2 = v(i  ,j+2,k  , 3)
 Wt1 = v(i  ,j  ,k+1, 3)
 Wt2 = v(i  ,j  ,k+2, 3)
 
-bvx = bv(i,j,k)
 bix = bid(i,j,k)
 bdx = bcd(i,j,k)
 
@@ -632,7 +630,6 @@ end subroutine pvec_muscl
 !! @param [in]  rei       レイノルズ数の逆数
 !! @param [in]  v         セルセンター速度ベクトル（n-step）
 !! @param [in]  vf        セルフェイス速度ベクトル（n-step）
-!! @param [in]  bv        BCindex C
 !! @param [in]  bid       Cut ID
 !! @param [in]  bcd       BCindex B
 !! @param [in]  vcs_coef  粘性項の係数（粘性項を計算しない場合には0.0）
@@ -642,10 +639,10 @@ end subroutine pvec_muscl
 !! @param [in]  rho       密度
 !! @param [out] flop      浮動小数点演算数
 !<
-subroutine pvec_muscl_les (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bv, bid, bcd, vcs_coef, Cs, imodel, nu, rho, flop)
+subroutine pvec_muscl_les (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bid, bcd, vcs_coef, Cs, imodel, nu, rho, flop)
 implicit none
 include 'ffv_f_params.h'
-integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, bix, bdx
+integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bix, bdx
 integer, dimension(3)                                     ::  sz
 double precision                                          ::  flop
 real                                                      ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
@@ -665,7 +662,7 @@ real                                                      ::  fu_r, fu_l, fv_r, 
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, wv, vf
 real, dimension(0:3)                                      ::  v00
 real, dimension(3)                                        ::  dh
-integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv, bid, bcd
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bid, bcd
 integer                                                   ::  imodel
 real                                                      ::  Cs, nu, rho, Cw
 real                                                      ::  DUDX, DUDY, DUDZ
@@ -737,7 +734,7 @@ flop = flop + 36.0
 !$OMP REDUCTION(+:flop) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, rx, ry, rz, rx2, ry2 ,rz2, vcs, b, ck, ss_4, ss, cm1, cm2) &
 !$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, rei, dx, dy, dz) &
-!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bix, bdx, uq, vq, wq) &
+!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bix, bdx, uq, vq, wq) &
 !$OMP PRIVATE(Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2) &
 !$OMP PRIVATE(Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2) &
 !$OMP PRIVATE(Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2) &
@@ -810,7 +807,6 @@ Wn2 = v(i  ,j+2,k  , 3)
 Wt1 = v(i  ,j  ,k+1, 3)
 Wt2 = v(i  ,j  ,k+2, 3)
 
-bvx = bv(i,j,k)
 bix = bid(i,j,k)
 bdx = bcd(i,j,k)
 
@@ -3352,3 +3348,80 @@ end do
 
 return
 end subroutine src_2nd
+
+
+!> ********************************************************************
+!! @brief 安定化項
+!! @param [in,out] vc      疑似ベクトル
+!! @param [in]     sz      配列長
+!! @param [in]     g       ガイドセル長
+!! @param [in]     dt      時間積分幅
+!! @param [in]     v       速度ベクトル（n-step, collocated）
+!! @param [in]     bcd     BCindex B
+!! @param [in]     st      区間開始の速度
+!! @param [in]     ed      区間終了の速度
+!! @param [in]     penalty ペナルティ数
+!! @param [in]     count   修正数
+!! @param [in,out] flop    浮動小数点演算数
+!<
+subroutine stabilize (vc, sz, g, dt, v, bcd, st, ed, penalty, count, flop)
+implicit none
+include 'ffv_f_params.h'
+integer                                                   ::  i, j, k, ix, jx, kx, g, count
+integer, dimension(3)                                     ::  sz
+double precision                                          ::  flop
+real                                                      ::  actv, dt, st, ed, penalty, pai
+real                                                      ::  u1, v1, w1, uu, gma, df
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vc, v
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bcd
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+flop = flop + dble(ix)*dble(jx)*dble(kx)*42.0d0
+
+count = 0
+
+pai = 2.0 * asin(1.0)
+df = ed - st
+
+!$OMP PARALLEL &
+!$OMP REDUCTION(+:count) &
+!$OMP PRIVATE(actv, uu, u1, v1, w1, gma) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, dt, st, ed, penalty, df, pai)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1,kx
+do j=1,jx
+do i=1,ix
+
+u1 = v(i,j,k,1)
+v1 = v(i,j,k,2)
+w1 = v(i,j,k,3)
+uu = sqrt(u1*u1 + v1*v1 + w1*w1)
+
+if ( uu < st ) then
+  gma = 0.0
+else if ( uu > ed ) then
+  gma = penalty
+else
+  gma = 0.5 * (1.0 - cos(pai*(uu-st)/df) ) * penalty
+  count = count + 1
+end if
+
+actv = dt * real(ibits(bcd(i,j,k), State, 1))
+
+vc(i,j,k,1) = vc(i,j,k,1) - gma * v(i,j,k,1) * actv
+vc(i,j,k,2) = vc(i,j,k,2) - gma * v(i,j,k,2) * actv
+vc(i,j,k,3) = vc(i,j,k,3) - gma * v(i,j,k,3) * actv
+
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine stabilize
+

@@ -569,7 +569,6 @@ extern "C" {
                            REAL_TYPE* rei,
                            REAL_TYPE* v,
                            REAL_TYPE* vf,
-                           int* bv,
                            int* bid,
                            int* bcd,
                            REAL_TYPE* vcs_coef,
@@ -629,7 +628,6 @@ extern "C" {
                         REAL_TYPE* rei,
                         REAL_TYPE* v,
                         REAL_TYPE* vf,
-                        int* bv,
                         int* bid,
                         int* bcd,
                         REAL_TYPE* vcs_coef,
@@ -657,6 +655,18 @@ extern "C" {
                           REAL_TYPE* nu,
                           REAL_TYPE* rho,
                           double* flop);
+  
+  void stabilize_ (REAL_TYPE* vc,
+                   int* sz,
+                   int* g,
+                   REAL_TYPE* dt,
+                   REAL_TYPE* v,
+                   int* bcd,
+                   REAL_TYPE* st,
+                   REAL_TYPE* ed,
+                   REAL_TYPE* penalty,
+                   int* count,
+                   double* flop);
   
   
   //***********************************************************************************************

@@ -161,8 +161,9 @@ int FFV::Initialize(int argc, char **argv)
   V.setControlVars(Ex);
 
   
-  // CompoListの設定，境界条件の読み込み保持
+  // CompoListの設定、境界条件の読み込み保持、パラメータの無次元化
   setBCinfo();
+  
 
   // コンポーネントポインタのコピー
   GM.setCompoPtr(C.NoCompo, cmp);

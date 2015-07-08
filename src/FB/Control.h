@@ -362,6 +362,16 @@ public:
   } Driver_Def;
   
   
+  // 安定化のパラメータ
+  typedef struct
+  {
+    int control;
+    REAL_TYPE begin;
+    REAL_TYPE end;
+    REAL_TYPE penalty_number;
+  } Stability_Control;
+  
+  
   /** 偏微分方程式の型 */
   enum PDE_type 
    {
@@ -521,6 +531,7 @@ public:
   Unit_Def          Unit;
   Ens_of_Compo      EnsCompo;
   Driver_Def        drv;
+  Stability_Control Stab;
   
   // class
   IntervalManager Interval[tg_END];  ///< タイミング制御
@@ -627,6 +638,12 @@ public:
     Hide.GeomOutput = OFF;
     Hide.GlyphOutput = OFF;
     Hide.DryRun = OFF;
+    
+    
+    Stab.control = OFF;
+    Stab.begin = 0.0;
+    Stab.end   = 0.0;
+    Stab.penalty_number = 0.0;
     
     Unit.Param  = 0;
     Unit.Output = 0;

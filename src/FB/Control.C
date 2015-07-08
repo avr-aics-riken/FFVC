@@ -435,6 +435,78 @@ void Control::getApplicationControl()
     }
   }
   
+  
+  // 安定化のフラグ (Hidden)
+  label = "/ApplicationControl/StabilityControl/Control";
+  
+  if ( tpCntl->chkLabel(label) )
+  {
+    if ( tpCntl->getInspectedValue(label, str) )
+    {
+      if     ( !strcasecmp(str.c_str(), "On") )   Stab.control = ON;
+      else if( !strcasecmp(str.c_str(), "Off") )  Stab.control = OFF;
+      else
+      {
+        Hostonly_ printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+        Exit(0);
+      }
+    }
+    else
+    {
+      Exit(0);
+    }
+  }
+  
+  // 制御パラメータ >> 時刻パラメータを有次元で保持
+  if (Stab.control == ON)
+  {
+    double ct=0.0;
+    double ts = (double)RefLength / (double)RefVelocity;
+    
+    label = "/ApplicationControl/StabilityControl/Begin";
+    
+    if ( !(tpCntl->getInspectedValue(label, ct )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s\n", label.c_str());
+      Exit(0);
+    }
+    else
+    {
+      if ( Unit.Param == NONDIMENSIONAL )
+      {
+        Stab.begin = ct * ts;
+      }
+      else
+      {
+        Stab.begin = ct;
+      }
+    }
+    
+    
+    label = "/ApplicationControl/StabilityControl/End";
+    
+    if ( !(tpCntl->getInspectedValue(label, ct )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s\n", label.c_str());
+      Exit(0);
+    }
+    else
+    {
+      if ( Unit.Param == NONDIMENSIONAL )
+      {
+        Stab.end = ct * ts;
+      }
+      else
+      {
+        Stab.end = ct;
+      }
+    }
+    
+    // hard code
+    Stab.penalty_number = 1.0e3;
+  }
+  
+  
 }
 
 
@@ -3017,6 +3089,18 @@ void Control::printSteerConditions(FILE* fp,
   }
   
   
+  // Stability Control
+  if (Stab.control == ON)
+  {
+    double ts = (double)RefLength / (double)RefVelocity;
+    fprintf(fp,"\n\tStability Control\n");
+    fprintf(fp,"\t\tBegin velocity     [m/s] / [-]   : %12.5e / %12.5e\n", Stab.begin, Stab.begin/ts);
+    fprintf(fp,"\t\tEnd   velocity     [m]/s / [-]   : %12.5e / %12.5e\n", Stab.end, Stab.end/ts);
+    fprintf(fp,"\t\tPenalty value      [-]           : %12.5e\n", Stab.penalty_number);
+  }
+  
+  
+  
   // Hidden parameter -----------------
   
   if (Hide.Range_Limit == Range_Cutoff)
@@ -3457,7 +3541,7 @@ void Control::setRefParameters(MediumList* mat, ReferenceFrame* RF)
     g[2] /= (double)RefVelocity;
     RF->setGridVel(g);
   }
-
+  
 }
 
 

@@ -717,6 +717,7 @@ void FFV::set_timing_label()
   set_label("Pvec_Euler_Explicit",     PerfMonitor::CALC);
   set_label("Pvec_Adams_Bashforth",    PerfMonitor::CALC);
   set_label("Pvec_AB_CN",              PerfMonitor::CALC);
+  set_label("Stabilize",               PerfMonitor::CALC);
   set_label("Pvec_Forcing",            PerfMonitor::CALC);
   set_label("Pvec_Buoyancy",           PerfMonitor::CALC);
   set_label("Pvec_BC",                 PerfMonitor::CALC);
