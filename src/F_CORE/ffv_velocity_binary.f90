@@ -3358,8 +3358,8 @@ end subroutine src_2nd
 !! @param [in]     dt      時間積分幅
 !! @param [in]     v       速度ベクトル（n-step, collocated）
 !! @param [in]     bcd     BCindex B
-!! @param [in]     st      区間開始の速度
-!! @param [in]     ed      区間終了の速度
+!! @param [in]     st      区間開始の無次元速度
+!! @param [in]     ed      区間終了の無次元速度
 !! @param [in]     penalty ペナルティ数
 !! @param [in]     count   修正数
 !! @param [in,out] flop    浮動小数点演算数
@@ -3410,11 +3410,11 @@ else
   count = count + 1
 end if
 
-actv = dt * real(ibits(bcd(i,j,k), State, 1))
+actv = dt * real(ibits(bcd(i,j,k), State, 1)) * gma
 
-vc(i,j,k,1) = vc(i,j,k,1) - gma * v(i,j,k,1) * actv
-vc(i,j,k,2) = vc(i,j,k,2) - gma * v(i,j,k,2) * actv
-vc(i,j,k,3) = vc(i,j,k,3) - gma * v(i,j,k,3) * actv
+vc(i,j,k,1) = vc(i,j,k,1) - v(i,j,k,1) * actv
+vc(i,j,k,2) = vc(i,j,k,2) - v(i,j,k,2) * actv
+vc(i,j,k,3) = vc(i,j,k,3) - v(i,j,k,3) * actv
 
 end do
 end do

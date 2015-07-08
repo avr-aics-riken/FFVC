@@ -461,7 +461,6 @@ void Control::getApplicationControl()
   if (Stab.control == ON)
   {
     double ct=0.0;
-    double ts = (double)RefLength / (double)RefVelocity;
     
     label = "/ApplicationControl/StabilityControl/Begin";
     
@@ -474,7 +473,7 @@ void Control::getApplicationControl()
     {
       if ( Unit.Param == NONDIMENSIONAL )
       {
-        Stab.begin = ct * ts;
+        Stab.begin = ct * RefVelocity;
       }
       else
       {
@@ -494,7 +493,7 @@ void Control::getApplicationControl()
     {
       if ( Unit.Param == NONDIMENSIONAL )
       {
-        Stab.end = ct * ts;
+        Stab.end = ct * RefVelocity;
       }
       else
       {
@@ -3094,8 +3093,8 @@ void Control::printSteerConditions(FILE* fp,
   {
     double ts = (double)RefLength / (double)RefVelocity;
     fprintf(fp,"\n\tStability Control\n");
-    fprintf(fp,"\t\tBegin velocity     [m/s] / [-]   : %12.5e / %12.5e\n", Stab.begin, Stab.begin/ts);
-    fprintf(fp,"\t\tEnd   velocity     [m]/s / [-]   : %12.5e / %12.5e\n", Stab.end, Stab.end/ts);
+    fprintf(fp,"\t\tBegin velocity     [m/s] / [-]   : %12.5e / %12.5e\n", Stab.begin, Stab.begin/RefVelocity);
+    fprintf(fp,"\t\tEnd   velocity     [m/s] / [-]   : %12.5e / %12.5e\n", Stab.end, Stab.end/RefVelocity);
     fprintf(fp,"\t\tPenalty value      [-]           : %12.5e\n", Stab.penalty_number);
   }
   

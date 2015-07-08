@@ -20,7 +20,9 @@ REVISION HISTORY
 
 --------------------------
 2015-07-08
-r1620 add Strability Control function
+r1621 modify Stability Control
+
+r1620 add Stability Control function
 - gather isnan flag in Loop()
 
 --------------------------

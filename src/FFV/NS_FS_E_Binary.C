@@ -235,9 +235,12 @@ void FFV::NS_FS_E_Binary()
   if (C.Stab.control == ON)
   {
     int ct = 0;
+    REAL_TYPE st = C.Stab.begin / C.RefVelocity;
+    REAL_TYPE ed = C.Stab.end / C.RefVelocity;
+    
     TIMING_start("Stabilize");
     flop = 0.0;
-    stabilize_(d_vc, size, &guide, &dt, d_v0, d_bcd, &C.Stab.begin, &C.Stab.end, &C.Stab.penalty_number, &ct, &flop);
+    stabilize_(d_vc, size, &guide, &dt, d_v0, d_bcd, &st, &ed, &C.Stab.penalty_number, &ct, &flop);
     TIMING_stop("Stabilize", flop);
     
     int tmp = ct;
