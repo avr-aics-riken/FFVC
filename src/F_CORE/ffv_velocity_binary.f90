@@ -3358,22 +3358,24 @@ end subroutine src_2nd
 !! @param [in]     dt      時間積分幅
 !! @param [in]     v       速度ベクトル（n-step, collocated）
 !! @param [in]     bcd     BCindex B
+!! @param [in]     v00     参照速度
 !! @param [in]     st      区間開始の無次元速度
 !! @param [in]     ed      区間終了の無次元速度
 !! @param [in]     penalty ペナルティ数
 !! @param [in]     count   修正数
 !! @param [in,out] flop    浮動小数点演算数
 !<
-subroutine stabilize (vc, sz, g, dt, v, bcd, st, ed, penalty, count, flop)
+subroutine stabilize (vc, sz, g, dt, v, bcd, v00, st, ed, penalty, count, flop)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, g, count
 integer, dimension(3)                                     ::  sz
 double precision                                          ::  flop
 real                                                      ::  actv, dt, st, ed, penalty, pai
-real                                                      ::  u1, v1, w1, uu, gma, df
+real                                                      ::  u1, v1, w1, uu, gma, df, vref, s1, s2
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vc, v
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bcd
+real, dimension(0:3)                                      ::  v00
 
 ix = sz(1)
 jx = sz(2)
@@ -3383,13 +3385,17 @@ flop = flop + dble(ix)*dble(jx)*dble(kx)*42.0d0
 
 count = 0
 
+vref = v00(0)
+if ( vref == 0.0 ) vref=1.0
 pai = 2.0 * asin(1.0)
 df = ed - st
+s1 = st*vref
+s2 = ed*vref
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:count) &
 !$OMP PRIVATE(actv, uu, u1, v1, w1, gma) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, dt, st, ed, penalty, df, pai)
+!$OMP FIRSTPRIVATE(ix, jx, kx, dt, st, ed, penalty, df, pai, vref)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 do k=1,kx
@@ -3399,7 +3405,7 @@ do i=1,ix
 u1 = v(i,j,k,1)
 v1 = v(i,j,k,2)
 w1 = v(i,j,k,3)
-uu = sqrt(u1*u1 + v1*v1 + w1*w1)
+uu = sqrt(u1*u1 + v1*v1 + w1*w1) / vref
 
 if ( uu < st ) then
   gma = 0.0

@@ -662,6 +662,7 @@ extern "C" {
                    REAL_TYPE* dt,
                    REAL_TYPE* v,
                    int* bcd,
+                   REAL_TYPE* v00,
                    REAL_TYPE* st,
                    REAL_TYPE* ed,
                    REAL_TYPE* penalty,

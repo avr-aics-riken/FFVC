@@ -235,17 +235,21 @@ void FFV::NS_FS_E_Binary()
   if (C.Stab.control == ON)
   {
     int ct = 0;
-    REAL_TYPE st = C.Stab.begin / C.RefVelocity;
-    REAL_TYPE ed = C.Stab.end / C.RefVelocity;
+    REAL_TYPE st = C.Stab.begin;
+    REAL_TYPE ed = C.Stab.end;
+    REAL_TYPE pn = C.Stab.penalty_number;
     
     TIMING_start("Stabilize");
     flop = 0.0;
-    stabilize_(d_vc, size, &guide, &dt, d_v0, d_bcd, &st, &ed, &C.Stab.penalty_number, &ct, &flop);
+    stabilize_(d_vc, size, &guide, &dt, d_v0, d_bcd, v00, &st, &ed, &pn, &ct, &flop);
     TIMING_stop("Stabilize", flop);
     
-    int tmp = ct;
-    if ( paraMngr->Allreduce(&tmp, &ct, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
-    printf("stabilize = %d\n", ct);
+    if ( numProc > 1 )
+    {
+      int tmp = ct;
+      if ( paraMngr->Allreduce(&tmp, &ct, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    }
+    Hostonly_ printf("stabilize = %d\n", ct);
   }
   
   

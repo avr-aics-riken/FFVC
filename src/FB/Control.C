@@ -457,7 +457,7 @@ void Control::getApplicationControl()
     }
   }
   
-  // 制御パラメータ >> 時刻パラメータを有次元で保持
+  // 制御パラメータ >> パラメータは無次元で指定
   if (Stab.control == ON)
   {
     double ct=0.0;
@@ -471,14 +471,7 @@ void Control::getApplicationControl()
     }
     else
     {
-      if ( Unit.Param == NONDIMENSIONAL )
-      {
-        Stab.begin = ct * RefVelocity;
-      }
-      else
-      {
-        Stab.begin = ct;
-      }
+      Stab.begin = ct;
     }
     
     
@@ -491,14 +484,7 @@ void Control::getApplicationControl()
     }
     else
     {
-      if ( Unit.Param == NONDIMENSIONAL )
-      {
-        Stab.end = ct * RefVelocity;
-      }
-      else
-      {
-        Stab.end = ct;
-      }
+      Stab.end = ct;
     }
     
     // hard code
@@ -3093,9 +3079,9 @@ void Control::printSteerConditions(FILE* fp,
   {
     double ts = (double)RefLength / (double)RefVelocity;
     fprintf(fp,"\n\tStability Control\n");
-    fprintf(fp,"\t\tBegin velocity     [m/s] / [-]   : %12.5e / %12.5e\n", Stab.begin, Stab.begin/RefVelocity);
-    fprintf(fp,"\t\tEnd   velocity     [m/s] / [-]   : %12.5e / %12.5e\n", Stab.end, Stab.end/RefVelocity);
-    fprintf(fp,"\t\tPenalty value      [-]           : %12.5e\n", Stab.penalty_number);
+    fprintf(fp,"\t\tBegin velocity     [-]   : %12.5e / %12.5e\n", Stab.begin);
+    fprintf(fp,"\t\tEnd   velocity     [-]   : %12.5e / %12.5e\n", Stab.end);
+    fprintf(fp,"\t\tPenalty value      [-]   : %12.5e\n", Stab.penalty_number);
   }
   
   
