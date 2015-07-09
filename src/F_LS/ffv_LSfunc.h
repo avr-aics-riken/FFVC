@@ -204,7 +204,7 @@ extern "C" {
                         REAL_TYPE* dh,
                         REAL_TYPE* dt,
                         REAL_TYPE* p,
-                        REAL_TYPE* mach,
+                        REAL_TYPE* cm,
                         double* flop);
   
   void blas_calc_rk_  (REAL_TYPE* r,
@@ -214,6 +214,7 @@ extern "C" {
                        int* sz,
                        int* g,
                        REAL_TYPE* dh,
+                       REAL_TYPE* cm,
                        double* flop);
   
   void blas_calc_r2_  (double* res,
@@ -223,6 +224,7 @@ extern "C" {
                        int* sz,
                        int* g,
                        REAL_TYPE* dh,
+                       REAL_TYPE* cm,
                        double* flop);
   
   void blas_calc_ax_  (REAL_TYPE* ap,
@@ -231,6 +233,7 @@ extern "C" {
                        int* sz,
                        int* g,
                        REAL_TYPE* dh,
+                       REAL_TYPE* cm,
                        double* flop);
   
   //***********************************************************************************************

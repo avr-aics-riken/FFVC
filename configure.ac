@@ -18,7 +18,7 @@
 
 
 AC_PREREQ([2.57])
-AC_INIT([FFVC], [2.3.7], [keno@riken.jp], [FFVC])
+AC_INIT([FFVC], [2.3.8], [keno@riken.jp], [FFVC])
 
 echo "----------------------------------------"
 echo "Running FFV-C Configure Script"
@@ -67,7 +67,7 @@ AM_INIT_AUTOMAKE()
 # revision No.
 #
 
-FFVC_REVISION="20150709_1400"
+FFVC_REVISION="20150709_2000"
 AC_SUBST(FFVC_REVISION)
 
 

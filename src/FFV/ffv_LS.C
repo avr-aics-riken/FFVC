@@ -825,13 +825,16 @@ int LinearSolver::PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const REAL_TYPE dt, cons
   var[0] = var[1] = var[2] = 0.0;
   double flop = 0.0;
   
+  REAL_TYPE cs = pitch[0] * C->Mach / dt; /// Limited Compressibility   (dx*M/dt)
+  if ( C->BasicEqs == INCMP ) cs = 0.0;
+  
   TIMING_start("Blas_Clear");
   FBUtility::initS3D(pcg_q , size, guide, 0.0);
   TIMING_stop("Blas_Clear", 0.0, 8);
   
   TIMING_start("Blas_Residual");
   flop = 0.0;
-  blas_calc_rk_(pcg_r, x, b, bcp, size, &guide, pitch, &flop);
+  blas_calc_rk_(pcg_r, x, b, bcp, size, &guide, pitch, &cs, &flop);
   TIMING_stop("Blas_Residual", flop);
   
   SyncScalar(pcg_r, 1);
@@ -881,7 +884,7 @@ int LinearSolver::PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const REAL_TYPE dt, cons
     
     TIMING_start("Blas_AX");
     flop = 0.0;
-    blas_calc_ax_(pcg_q, pcg_p_, bcp, size, &guide, pitch, &flop);
+    blas_calc_ax_(pcg_q, pcg_p_, bcp, size, &guide, pitch, &cs, &flop);
     TIMING_stop("Blas_AX", flop);
     
     alpha = rho / Fdot2(pcg_q, pcg_r0);
@@ -902,7 +905,7 @@ int LinearSolver::PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const REAL_TYPE dt, cons
     
     TIMING_start("Blas_AX");
     flop = 0.0;
-    blas_calc_ax_(pcg_t_, pcg_s_, bcp, size, &guide, pitch, &flop);
+    blas_calc_ax_(pcg_t_, pcg_s_, bcp, size, &guide, pitch, &cs, &flop);
     TIMING_stop("Blas_AX", flop);
     
     omega = Fdot2(pcg_t_, pcg_s) / Fdot1(pcg_t_);

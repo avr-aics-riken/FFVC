@@ -27,8 +27,8 @@ void FFV::NS_FS_E_CDS()
 {
   // local variables
   double flop;                         /// 浮動小数演算数
-  double rhs_nrm = 0.0;                /// 反復解法での定数項ベクトルのノルム
-  double res_init = 0.0;               /// 反復解法での初期残差ベクトルのL2ノルム
+  double b_l2 = 0.0;                   /// 反復解法での定数項ベクトルのL2ノルム
+  double res0_l2 = 0.0;                /// 反復解法での初期残差ベクトルのL2ノルム
   
   REAL_TYPE dt = deltaT;               /// 時間積分幅
   REAL_TYPE dh = pitch[0];    /// 空間幅
@@ -40,6 +40,8 @@ void FFV::NS_FS_E_CDS()
   REAL_TYPE zero = 0.0;                /// 定数
   int cnv_scheme = C.CnvScheme;        /// 対流項スキーム
   
+  REAL_TYPE ltd_c = pitch[0] * C.Mach / dt; /// Limited Compressibility   (dx*M/dt)
+  if ( C.BasicEqs == INCMP ) ltd_c = 0.0;
   
   // 境界処理用
   Gemini_R* m_buf = new Gemini_R [C.NoCompo+1];
@@ -263,40 +265,59 @@ void FFV::NS_FS_E_CDS()
   //hogehoge
   
   // 定数項bの自乗和　b_l2
-  TIMING_start("Poisson_Src_Norm");
-  rhs_nrm = 0.0;
-  flop = 0.0;
-  blas_calc_b_(&rhs_nrm, d_b, d_ws, d_bcp, size, &guide, pitch, &dt, &flop);
-  TIMING_stop("Poisson_Src_Norm", flop);
+  if ( C.BasicEqs == INCMP )
+  {
+    TIMING_start("Poisson_Src_Norm");
+    b_l2 = 0.0;
+    flop = 0.0;
+    blas_calc_b_(&b_l2, d_b, d_ws, d_bcp, size, &guide, pitch, &dt, &flop);
+    TIMING_stop("Poisson_Src_Norm", flop);
+  }
+  else if ( C.BasicEqs == LTDCMP )
+  {
+    TIMING_start("Poisson_Src_Norm");
+    b_l2 = 0.0;
+    flop = 0.0;
+    blas_calc_b_lc_(&b_l2, d_b, d_ws, d_bcp, size, &guide, pitch, &dt, d_p0, &ltd_c, &flop);
+    TIMING_stop("Poisson_Src_Norm", flop);
+  }
+  else
+  {
+    Exit(0);
+  }
+  
   
   if ( numProc > 1 )
   {
     TIMING_start("A_R_Poisson_Src_L2");
-    double m_tmp = rhs_nrm;
-    if ( paraMngr->Allreduce(&m_tmp, &rhs_nrm, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    double m_tmp = b_l2;
+    if ( paraMngr->Allreduce(&m_tmp, &b_l2, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
     TIMING_stop("A_R_Poisson_Src_L2", 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
   }
   
-  rhs_nrm = sqrt(rhs_nrm);
+  // L2 norm of b vector
+  b_l2 = sqrt(b_l2);
+  
+  
   
   // Initial residual
   if ( LSp->getResType() == nrm_r_r0 )
   {
     TIMING_start("Poisson_Init_Res");
-    res_init = 0.0;
+    res0_l2 = 0.0;
     flop = 0.0;
-    blas_calc_r2_(&res_init, d_p, d_b, d_bcp, size, &guide, pitch, &flop);
+    blas_calc_r2_(&res0_l2, d_p, d_b, d_bcp, size, &guide, pitch, &ltd_c, &flop);
     TIMING_stop("Poisson_Init_Res", flop);
     
     if ( numProc > 1 )
     {
       TIMING_start("A_R_Poisson_Init_Res_L2");
-      double m_tmp = res_init;
-      if ( paraMngr->Allreduce(&m_tmp, &res_init, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      double m_tmp = res0_l2;
+      if ( paraMngr->Allreduce(&m_tmp, &res0_l2, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
       TIMING_stop("A_R_Poisson_Init_Res_L2", 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
     }
     
-    res_init = sqrt(res_init);
+    res0_l2 = sqrt(res0_l2);
   }
   
   TIMING_stop("Poisson__Source_Section");
@@ -336,11 +357,11 @@ void FFV::NS_FS_E_CDS()
     switch (LSp->getLS())
     {
       case SOR:
-        LSp->PointSOR(d_p, d_b, dt, LSp->getMaxIteration(), rhs_nrm, res_init); // return x^{m+1} - x^m
+        LSp->PointSOR(d_p, d_b, dt, LSp->getMaxIteration(), b_l2, res0_l2); // return x^{m+1} - x^m
         break;
         
       case SOR2SMA:
-        LSp->SOR2_SMA(d_p, d_b, dt, LSp->getMaxIteration(), rhs_nrm, res_init); // return x^{m+1} - x^m
+        LSp->SOR2_SMA(d_p, d_b, dt, LSp->getMaxIteration(), b_l2, res0_l2); // return x^{m+1} - x^m
         break;
         
       //case GMRES:

@@ -246,16 +246,16 @@ end subroutine blas_calc_b
 !! @param [in]  dh   格子幅
 !! @param [in]  dt   時間積分幅
 !! @param [in]  p    圧力p^n
-!! @param [in]  mach Mach数
+!! @param [in]  cm   Limited Compressibilityのときの係数
 !! @param [out] flop flop count
 !<
-subroutine blas_calc_b_lc (rhs, b, div, bp, sz, g, dh, dt, p, mach, flop)
+subroutine blas_calc_b_lc (rhs, b, div, bp, sz, g, dh, dt, p, cm, flop)
 implicit none
 include 'ffv_f_params.h'
 integer                                                     ::  i, j, k, ix, jx, kx, g
 integer, dimension(3)                                       ::  sz
 double precision                                            ::  flop, rhs
-real                                                        ::  dt, c1, d, dx, mach, c2, cs
+real                                                        ::  dt, c1, d, dx, cm, cf
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div, b, p
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bp
 real, dimension(3)                                          ::  dh
@@ -266,21 +266,20 @@ kx = sz(3)
 rhs = 0.0
 dx = dh(1)
 c1 = dx * dx / dt
-cs = dx / dt * mach
-c2 = cs * cs
+cf = cm * cm
 
-flop = flop + dble(ix)*dble(jx)*dble(kx)*6.0d0 + 19.0d0
+flop = flop + dble(ix)*dble(jx)*dble(kx)*6.0d0 + 10.0d0
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:rhs) &
 !$OMP PRIVATE(d) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, c1, c2)
+!$OMP FIRSTPRIVATE(ix, jx, kx, c1, cf)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 do k=1,kx
 do j=1,jx
 do i=1,ix
-d = ( c1 * div(i,j,k) -  c2 * p(i,j,k) ) * real(ibits(bp(i,j,k), Active, 1)) ! SOLIDのときにはd=0
+d = ( c1 * div(i,j,k) -  cf * p(i,j,k) ) * real(ibits(bp(i,j,k), Active, 1)) ! SOLIDのときにはd=0
 b(i,j,k) = d ! \frac{dx^2}{\Delta t} \nabla u^*
 rhs = rhs + dble(d*d)
 end do
@@ -393,16 +392,17 @@ subroutine blas_dot2(r, p, q, bp, sz, g, flop)
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル
 !! @param [in]  dh   格子幅
+!! @param [in]  cm   Limited Compressibilityのときの係数
 !! @param [out] flop flop count
 !<
-  subroutine blas_calc_ax(ap, p, bp, sz, g, dh, flop)
+  subroutine blas_calc_ax(ap, p, bp, sz, g, dh, cm, flop)
   implicit none
   include 'ffv_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, g, idx
   integer, dimension(3)                                     ::  sz
   real                                                      ::  c_w, c_e, c_s, c_n, c_b, c_t
   real                                                      ::  d_w, d_e, d_s, d_n, d_b, d_t
-  real                                                      ::  dd, ss
+  real                                                      ::  dd, ss, cm, cf
   real                                                      ::  r_xx, r_xy, r_xz, r_x2, r_y2, r_z2
   real, dimension(3)                                        ::  dh
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  ap, p
@@ -422,11 +422,13 @@ subroutine blas_dot2(r, p, q, bp, sz, g, flop)
   r_y2 = r_xy * r_xy
   r_z2 = r_xz * r_xz
 
+  cf = cm * cm
+
 !$OMP PARALLEL &
 !$OMP PRIVATE(c_w, c_e, c_s, c_n, c_b, c_t, dd, ss, idx) &
 !$OMP PRIVATE(d_w, d_e, d_s, d_n, d_b, d_t) &
 !$OMP FIRSTPRIVATE(ix, jx, kx) &
-!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2)
+!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2, cf)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
   do k=1,kx
@@ -453,7 +455,8 @@ subroutine blas_dot2(r, p, q, bp, sz, g, flop)
        + 2.0                &
        *(r_x2 * (d_w + d_e) &
        + r_y2 * (d_s + d_n) &
-       + r_z2 * (d_b + d_t) )
+       + r_z2 * (d_b + d_t) ) &
+       + cf
 
     ss = r_x2 * ( c_e * p(i+1,j  ,k  ) + c_w * p(i-1,j  ,k  ) ) &
        + r_y2 * ( c_n * p(i  ,j+1,k  ) + c_s * p(i  ,j-1,k  ) ) &
@@ -479,16 +482,17 @@ subroutine blas_dot2(r, p, q, bp, sz, g, flop)
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル
 !! @param [in]  dh   格子幅
+!! @param [in]  cm   Limited Compressibilityのときの係数
 !! @param [out] flop flop count
 !<
-  subroutine blas_calc_rk(r, p, b, bp, sz, g, dh, flop)
+  subroutine blas_calc_rk(r, p, b, bp, sz, g, dh, cm, flop)
   implicit none
   include 'ffv_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, g, idx
   integer, dimension(3)                                     ::  sz
   real                                                      ::  c_w, c_e, c_s, c_n, c_b, c_t
   real                                                      ::  d_w, d_e, d_s, d_n, d_b, d_t
-  real                                                      ::  dd, ss
+  real                                                      ::  dd, ss, cm, cf
   real                                                      ::  r_xx, r_xy, r_xz, r_x2, r_y2, r_z2
   real, dimension(3)                                        ::  dh
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  r, p, b
@@ -506,13 +510,15 @@ subroutine blas_dot2(r, p, q, bp, sz, g, flop)
   r_y2 = r_xy * r_xy
   r_z2 = r_xz * r_xz
 
-  flop = flop + dble(ix)*dble(jx)*dble(kx)*36.0d0 + 19.0d0
+  cf = cm * cm
+
+  flop = flop + dble(ix)*dble(jx)*dble(kx)*37.0d0 + 20.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(c_w, c_e, c_s, c_n, c_b, c_t, dd, ss, idx) &
 !$OMP PRIVATE(d_w, d_e, d_s, d_n, d_b, d_t) &
 !$OMP FIRSTPRIVATE(ix, jx, kx) &
-!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2)
+!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2, cf)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
   do k=1,kx
@@ -539,7 +545,8 @@ subroutine blas_dot2(r, p, q, bp, sz, g, flop)
        + 2.0                &
        *(r_x2 * (d_w + d_e) &
        + r_y2 * (d_s + d_n) &
-       + r_z2 * (d_b + d_t) )
+       + r_z2 * (d_b + d_t) ) &
+       + cf
 
     ss = r_x2 * ( c_e * p(i+1,j  ,k  ) + c_w * p(i-1,j  ,k  ) ) &
        + r_y2 * ( c_n * p(i  ,j+1,k  ) + c_s * p(i  ,j-1,k  ) ) &
@@ -565,9 +572,10 @@ subroutine blas_dot2(r, p, q, bp, sz, g, flop)
 !! @param [in]  sz   配列長
 !! @param [in]  g    ガイドセル長
 !! @param [in]  dh   格子幅
+!! @param [in]  cm   Limited Compressibilityのときの係数
 !! @param [out] flop flop count
 !<
-subroutine blas_calc_r2 (res, p, b, bp, sz, g, dh, flop)
+subroutine blas_calc_r2 (res, p, b, bp, sz, g, dh, cm, flop)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, g, idx
@@ -575,7 +583,7 @@ integer, dimension(3)                                     ::  sz
 double precision                                          ::  flop, res
 real                                                      ::  c_w, c_e, c_s, c_n, c_b, c_t
 real                                                      ::  d_w, d_e, d_s, d_n, d_b, d_t
-real                                                      ::  dd, ss, dp
+real                                                      ::  dd, ss, dp, cm, cf
 real                                                      ::  r_xx, r_xy, r_xz, r_x2, r_y2, r_z2
 real, dimension(3)                                        ::  dh
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
@@ -593,6 +601,8 @@ r_x2 = r_xx * r_xx
 r_y2 = r_xy * r_xy
 r_z2 = r_xz * r_xz
 
+cf = cm * cm
+
 flop = flop + dble(ix)*dble(jx)*dble(kx)*38.0d0 + 19.0d0
 
 !$OMP PARALLEL &
@@ -600,7 +610,7 @@ flop = flop + dble(ix)*dble(jx)*dble(kx)*38.0d0 + 19.0d0
 !$OMP PRIVATE(c_w, c_e, c_s, c_n, c_b, c_t, dd, ss, dp, idx) &
 !$OMP PRIVATE(d_w, d_e, d_s, d_n, d_b, d_t) &
 !$OMP FIRSTPRIVATE(ix, jx, kx) &
-!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2)
+!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2, cf)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 do k=1,kx
@@ -627,7 +637,8 @@ dd = r_x2 * (c_w + c_e) &
    + 2.0                &
    *(r_x2 * (d_w + d_e) &
    + r_y2 * (d_s + d_n) &
-   + r_z2 * (d_b + d_t) )
+   + r_z2 * (d_b + d_t) ) &
+   + cf
 
 ss = r_x2 * ( c_e * p(i+1,j  ,k  ) + c_w * p(i-1,j  ,k  ) ) &
    + r_y2 * ( c_n * p(i  ,j+1,k  ) + c_s * p(i  ,j-1,k  ) ) &

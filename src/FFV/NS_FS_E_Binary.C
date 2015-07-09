@@ -38,6 +38,9 @@ void FFV::NS_FS_E_Binary()
   REAL_TYPE zero = 0.0;                /// 定数
   int cnv_scheme = C.CnvScheme;        /// 対流項スキーム
   
+  REAL_TYPE ltd_c = pitch[0] * C.Mach / dt; /// Limited Compressibility   (dx*M/dt)
+  if ( C.BasicEqs == INCMP ) ltd_c = 0.0;
+  
 
   // 境界処理用
   Gemini_R* m_buf = new Gemini_R [C.NoCompo+1];
@@ -378,7 +381,7 @@ void FFV::NS_FS_E_Binary()
     TIMING_start("Poisson_Src_Norm");
     b_l2 = 0.0;
     flop = 0.0;
-    blas_calc_b_lc_(&b_l2, d_b, d_ws, d_bcp, size, &guide, pitch, &dt, d_p0, &C.Mach, &flop);
+    blas_calc_b_lc_(&b_l2, d_b, d_ws, d_bcp, size, &guide, pitch, &dt, d_p0, &ltd_c, &flop);
     TIMING_stop("Poisson_Src_Norm", flop);
   }
   else
@@ -407,7 +410,7 @@ void FFV::NS_FS_E_Binary()
     TIMING_start("Poisson_Init_Res");
     res0_l2 = 0.0;
     flop = 0.0;
-    blas_calc_r2_(&res0_l2, d_p, d_b, d_bcp, size, &guide, pitch, &flop);
+    blas_calc_r2_(&res0_l2, d_p, d_b, d_bcp, size, &guide, pitch, &ltd_c, &flop);
     TIMING_stop("Poisson_Init_Res", flop);
     
     if ( numProc > 1 )
