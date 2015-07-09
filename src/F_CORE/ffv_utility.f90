@@ -55,7 +55,7 @@
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      r = div(i,j,k) * real(ibits(bp(i,j,k), Active, 1)) ! FLUIDセルの場合 1.0
+      r = div(i,j,k) * real(ibits(bp(i,j,k), State, 1)) ! FLUIDセルの場合 1.0
       ds = ds + r*r
     end do
     end do
@@ -66,6 +66,59 @@
     return
     end subroutine norm_v_div_l2
 
+
+!> ********************************************************************
+!! @brief LCの有効セルに対する発散の自乗和を計算
+!! @param [out] ds   残差の自乗和
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  div  発散値のベース
+!! @param [in]  bp   BCindex P
+!! @param [in]  p    圧力 p^{n+1}
+!! @param [in]  p0   圧力 p^{n}
+!! @param [in]  cm   係数 mach^2/dt
+!! @param [out] flop flop count
+!<
+subroutine norm_v_div_l2_lc (ds, sz, g, div, bp, p, p0, cm, flop)
+implicit none
+include 'ffv_f_params.h'
+integer                                                   ::  i, j, k, ix, jx, kx, g
+integer, dimension(3)                                     ::  sz
+double precision                                          ::  flop
+real                                                      ::  ds, r, cm, cs
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div, p, p0
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+ds = 0.0
+
+cs = cm
+
+flop = flop + dble(ix)*dble(jx)*dble(kx)*6.0d0
+
+!$OMP PARALLEL &
+!$OMP PRIVATE(r) &
+!$OMP REDUCTION(+:ds) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, cs)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1,kx
+do j=1,jx
+do i=1,ix
+r = ( div(i,j,k)  + cs * (p(i,j,k) - p0(i,j,k)) ) * real(ibits(bp(i,j,k), State, 1)) ! FLUIDセルの場合 1.0
+ds = ds + r*r
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine norm_v_div_l2_lc
+
+
 !> ********************************************************************
 !! @brief 発散量の最大値を計算する
 !! @param [out] ds   最大値
@@ -75,22 +128,22 @@
 !! @param [in]  bp   BCindex P
 !! @param [out] flop flop count
 !<
-    subroutine norm_v_div_max (ds, sz, g, div, bp, flop)
-    implicit none
-    include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, g
-    integer, dimension(3)                                     ::  sz
-    double precision                                          ::  flop
-    real                                                      ::  ds, r
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
+subroutine norm_v_div_max (ds, sz, g, div, bp, flop)
+implicit none
+include 'ffv_f_params.h'
+integer                                                   ::  i, j, k, ix, jx, kx, g
+integer, dimension(3)                                     ::  sz
+double precision                                          ::  flop
+real                                                      ::  ds, r
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
-    ix = sz(1)
-    jx = sz(2)
-    kx = sz(3)
-    ds = 0.0
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+ds = 0.0
 
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*2.0d0
+flop = flop + dble(ix)*dble(jx)*dble(kx)*2.0d0
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(max:ds) &
@@ -98,10 +151,62 @@
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1,kx
+do j=1,jx
+do i=1,ix
+r = div(i,j,k) * real(ibits(bp(i,j,k), State, 1)) ! FLUIDセルの場合 1.0
+ds = max(ds, abs(r) )
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine norm_v_div_max
+
+
+!> ********************************************************************
+!! @brief LCの発散量の最大値を計算する
+!! @param [out] ds   最大値
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  div  発散値
+!! @param [in]  bp   BCindex P
+!! @param [in]  p    圧力 p^{n+1}
+!! @param [in]  p0   圧力 p^{n}
+!! @param [in]  cm   係数 mach^2/dt
+!! @param [out] flop flop count
+!<
+    subroutine norm_v_div_max_lc (ds, sz, g, div, bp, p, p0, cm, flop)
+    implicit none
+    include 'ffv_f_params.h'
+    integer                                                   ::  i, j, k, ix, jx, kx, g
+    integer, dimension(3)                                     ::  sz
+    double precision                                          ::  flop
+    real                                                      ::  ds, r, cm, cs
+    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div, p, p0
+    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
+
+    ix = sz(1)
+    jx = sz(2)
+    kx = sz(3)
+    ds = 0.0
+
+    cs = cm
+
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*6.0d0
+
+!$OMP PARALLEL &
+!$OMP REDUCTION(max:ds) &
+!$OMP PRIVATE(r) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, cs)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      r = div(i,j,k) * real(ibits(bp(i,j,k), Active, 1)) ! FLUIDセルの場合 1.0
+      r =  ( div(i,j,k)  + cs * (p(i,j,k) - p0(i,j,k)) )  * real(ibits(bp(i,j,k), State, 1)) ! FLUIDセルの場合 1.0
       ds = max(ds, abs(r) )
     end do
     end do
@@ -110,7 +215,7 @@
 !$OMP END PARALLEL
 
     return
-    end subroutine norm_v_div_max
+    end subroutine norm_v_div_max_lc
 
 
 !> ********************************************************************

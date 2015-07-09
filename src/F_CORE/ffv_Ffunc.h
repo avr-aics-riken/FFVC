@@ -679,12 +679,32 @@ extern "C" {
                         int* bp,
                         double* flop);
   
+  void norm_v_div_l2_lc_ (REAL_TYPE* ds,
+                          int* sz,
+                          int* g,
+                          REAL_TYPE* div,
+                          int* bp,
+                          REAL_TYPE* p,
+                          REAL_TYPE* p0,
+                          REAL_TYPE* cm,
+                          double* flop);
+  
   void norm_v_div_max_ (REAL_TYPE* ds,
                         int* sz,
                         int* g,
                         REAL_TYPE* div,
                         int* bp,
                         double* flop);
+  
+  void norm_v_div_max_lc_ (REAL_TYPE* ds,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* div,
+                           int* bp,
+                           REAL_TYPE* p,
+                           REAL_TYPE* p0,
+                           REAL_TYPE* cm,
+                           double* flop);
   
   void helicity_ (REAL_TYPE* ht,
                   int* sz, int* g,

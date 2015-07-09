@@ -234,6 +234,66 @@ return
 end subroutine blas_calc_b
 
 
+
+!> ********************************************************************
+!! @brief Limited compressibilityの圧力Poissonの定数項bの計算
+!! @param [out] rhs  右辺ベクトルbの自乗和
+!! @param [out] b    RHS vector b
+!! @param [in]  div  div {u^*}
+!! @param [in]  bp   BCindex P
+!! @param [in]  sz   配列長
+!! @param [in]  g    ガイドセル長
+!! @param [in]  dh   格子幅
+!! @param [in]  dt   時間積分幅
+!! @param [in]  p    圧力p^n
+!! @param [in]  mach Mach数
+!! @param [out] flop flop count
+!<
+subroutine blas_calc_b_lc (rhs, b, div, bp, sz, g, dh, dt, p, mach, flop)
+implicit none
+include 'ffv_f_params.h'
+integer                                                     ::  i, j, k, ix, jx, kx, g
+integer, dimension(3)                                       ::  sz
+double precision                                            ::  flop, rhs
+real                                                        ::  dt, c1, d, dx, mach, c2, cs
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div, b, p
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bp
+real, dimension(3)                                          ::  dh
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+rhs = 0.0
+dx = dh(1)
+c1 = dx * dx / dt
+cs = dx / dt * mach
+c2 = cs * cs
+
+flop = flop + dble(ix)*dble(jx)*dble(kx)*6.0d0 + 19.0d0
+
+!$OMP PARALLEL &
+!$OMP REDUCTION(+:rhs) &
+!$OMP PRIVATE(d) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, c1, c2)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1,kx
+do j=1,jx
+do i=1,ix
+d = ( c1 * div(i,j,k) -  c2 * p(i,j,k) ) * real(ibits(bp(i,j,k), Active, 1)) ! SOLIDのときにはd=0
+b(i,j,k) = d ! \frac{dx^2}{\Delta t} \nabla u^*
+rhs = rhs + dble(d*d)
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine blas_calc_b_lc
+
+
+
 !> ********************************************************************
 !! @brief DOT1
 !! @param [out] r    内積

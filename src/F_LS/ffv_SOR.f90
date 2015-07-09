@@ -31,10 +31,11 @@
 !! @param [out]    cnv  収束判定値　修正量の自乗和と残差の自乗和、解ベクトルの自乗和
 !! @param [in]     b    RHS vector
 !! @param [in]     bp   BCindex P
+!! @param [in]     cm   Limited Compressibilityのときの係数
 !! @param [out]    flop flop count
 !! @note Activeマスクの位置は，固体中のラプラス式を解くように，更新式にはかけず残差のみにする
 !<
-  subroutine psor (p, sz, g, dh, omg, cnv, b, bp, flop)
+  subroutine psor (p, sz, g, dh, omg, cnv, b, bp, cm, flop)
   implicit none
   include 'ffv_f_params.h'
   integer                                                   ::  i, j, k, ix, jx, kx, g, idx
@@ -44,6 +45,7 @@
   real                                                      ::  c_w, c_e, c_s, c_n, c_b, c_t
   real                                                      ::  d_w, d_e, d_s, d_n, d_b, d_t
   real                                                      ::  r_xx, r_xy, r_xz, r_x2, r_y2, r_z2
+  real                                                      ::  cm, cf
   real, dimension(3)                                        ::  dh
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
   integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
@@ -63,7 +65,9 @@
   r_y2 = r_xy * r_xy
   r_z2 = r_xz * r_xz
 
-  flop = flop + dble(ix)*dble(jx)*dble(kx)*56.0d0 + 19.0d0
+  cf = cm * cm
+
+  flop = flop + dble(ix)*dble(jx)*dble(kx)*57.0d0 + 20.0d0
 
 
 !$OMP PARALLEL &
@@ -74,7 +78,7 @@
 !$OMP PRIVATE(d_w, d_e, d_s, d_n, d_b, d_t) &
 !$OMP PRIVATE(dd, ss, dp, idx, aa, pp, bb, de, pn, dsw) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, omg) &
-!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2)
+!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2, cf)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
   do k=1,kx
@@ -107,10 +111,11 @@
 !! @param [out]    cnv  収束判定値　修正量の自乗和と残差の自乗和、解ベクトルの自乗和
 !! @param [in]     b    RHS vector
 !! @param [in]     bp   BCindex P
+!! @param [in]     cm   Limited Compressibilityのときの係数
 !! @param [out]    flop flop count
 !! @note Activeマスクの位置は，固体中のラプラス式を解くように，更新式にはかけず残差のみにする
 !<
-subroutine pssor (p, sz, g, dh, omg, cnv, b, bp, flop)
+subroutine pssor (p, sz, g, dh, omg, cnv, b, bp, cm, flop)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, g, idx
@@ -120,6 +125,7 @@ real                                                      ::  omg, dd, ss, dp, p
 real                                                      ::  c_w, c_e, c_s, c_n, c_b, c_t
 real                                                      ::  d_w, d_e, d_s, d_n, d_b, d_t
 real                                                      ::  r_xx, r_xy, r_xz, r_x2, r_y2, r_z2
+real                                                      ::  cm, cf
 real, dimension(3)                                        ::  dh
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
@@ -139,7 +145,9 @@ r_x2 = r_xx * r_xx
 r_y2 = r_xy * r_xy
 r_z2 = r_xz * r_xz
 
-flop = flop + dble(ix)*dble(jx)*dble(kx)*56.0d0 + 19.0d0
+cf = cm * cm
+
+flop = flop + dble(ix)*dble(jx)*dble(kx)*57.0d0 + 20.0d0
 
 
 !$OMP PARALLEL &
@@ -150,7 +158,7 @@ flop = flop + dble(ix)*dble(jx)*dble(kx)*56.0d0 + 19.0d0
 !$OMP PRIVATE(d_w, d_e, d_s, d_n, d_b, d_t) &
 !$OMP PRIVATE(dd, ss, dp, idx, aa, pp, bb, de, pn, dsw) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, omg) &
-!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2)
+!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2, cf)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 do k=1,kx
@@ -200,10 +208,11 @@ end subroutine pssor
 !! @param [in,out] cnv   収束判定値　修正量の自乗和と残差の自乗和、解ベクトルの自乗和
 !! @param [in]     b     RHS vector
 !! @param [in]     bp    BCindex P
+!! @param [in]     cm    Limited Compressibilityのときの係数
 !! @param [out]    flop  浮動小数演算数
 !! @note resは積算
 !<
-subroutine psor2sma (p, sz, g, dh, ip, color, omg, cnv, b, bp, flop)
+subroutine psor2sma (p, sz, g, dh, ip, color, omg, cnv, b, bp, cm, flop)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, g, idx
@@ -213,6 +222,7 @@ real                                                      ::  omg, dd, ss, dp, p
 real                                                      ::  c_w, c_e, c_s, c_n, c_b, c_t
 real                                                      ::  d_w, d_e, d_s, d_n, d_b, d_t
 real                                                      ::  r_xx, r_xy, r_xz, r_x2, r_y2, r_z2
+real                                                      ::  cm, cf
 real, dimension(3)                                        ::  dh
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
@@ -234,7 +244,9 @@ r_x2 = r_xx * r_xx
 r_y2 = r_xy * r_xy
 r_z2 = r_xz * r_xz
 
-flop = flop + (dble(ix)*dble(jx)*dble(kx) * 56.0d0 +19.0d0 ) * 0.5d0
+cf = cm * cm
+
+flop = flop + (dble(ix)*dble(jx)*dble(kx) * 57.0d0) * 0.5d0 + 20.0d0
 
 
 !$OMP PARALLEL &
@@ -245,14 +257,14 @@ flop = flop + (dble(ix)*dble(jx)*dble(kx) * 56.0d0 +19.0d0 ) * 0.5d0
 !$OMP PRIVATE(d_w, d_e, d_s, d_n, d_b, d_t) &
 !$OMP PRIVATE(idx, dsw, aa, dd, pp, bb, ss, dp, de, pn) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, color, ip, omg) &
-!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2)
+!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2, cf)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 do k=1,kx
 do j=1,jx
 do i=1+mod(k+j+color+ip,2), ix, 2
 
-include 'core_sor2sma.h'
+include 'core_psor.h'
 
 end do
 end do
@@ -280,10 +292,11 @@ end subroutine psor2sma
 !! @param [in,out] cnv   収束判定値　修正量の自乗和と残差の自乗和、解ベクトルの自乗和
 !! @param [in]     b     RHS vector
 !! @param [in]     bp    BCindex P
+!! @param [in]     cm    Limited Compressibilityのときの係数
 !! @param [out]    flop  浮動小数演算数
 !! @note resは積算
 !<
-subroutine psor2sma_r (p, sz, g, dh, ip, color, omg, cnv, b, bp, flop)
+subroutine psor2sma_r (p, sz, g, dh, ip, color, omg, cnv, b, bp, cm, flop)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, g, idx
@@ -293,6 +306,7 @@ real                                                      ::  omg, dd, ss, dp, p
 real                                                      ::  c_w, c_e, c_s, c_n, c_b, c_t
 real                                                      ::  d_w, d_e, d_s, d_n, d_b, d_t
 real                                                      ::  r_xx, r_xy, r_xz, r_x2, r_y2, r_z2
+real                                                      ::  cm, cf
 real, dimension(3)                                        ::  dh
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
@@ -314,7 +328,9 @@ r_x2 = r_xx * r_xx
 r_y2 = r_xy * r_xy
 r_z2 = r_xz * r_xz
 
-flop = flop + (dble(ix)*dble(jx)*dble(kx) * 56.0d0 +19.0d0 ) * 0.5d0
+cf = cm * cm
+
+flop = flop + (dble(ix)*dble(jx)*dble(kx) * 57.0d0 ) * 0.5d0  + 20.0d0
 
 
 !$OMP PARALLEL &
@@ -325,14 +341,14 @@ flop = flop + (dble(ix)*dble(jx)*dble(kx) * 56.0d0 +19.0d0 ) * 0.5d0
 !$OMP PRIVATE(d_w, d_e, d_s, d_n, d_b, d_t) &
 !$OMP PRIVATE(idx, dsw, aa, dd, pp, bb, ss, dp, de, pn) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, color, ip, omg) &
-!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2)
+!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2, cf)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 do k=kx,1,-1
 do j=jx,1,-1
 do i=ix,1+mod(k+j+color+ip,2), -2
 
-include 'core_sor2sma.h'
+include 'core_psor.h'
 
 end do
 end do

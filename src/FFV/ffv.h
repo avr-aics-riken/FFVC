@@ -445,7 +445,7 @@ private:
   
   
   // div(u)を計算する
-  void NormDiv(REAL_TYPE* div);
+  void NormDiv(REAL_TYPE* div, const REAL_TYPE dt);
   
   
   // タイミング測定区間にラベルを与えるラッパー

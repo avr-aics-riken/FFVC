@@ -425,19 +425,36 @@ int FFV::MainLoop()
 /**
  * @brief 発散値を計算する
  * @param [in] div  \sum{u}
+ * @param [in] dt   時間積分幅
  */
-void FFV::NormDiv(REAL_TYPE* div)
+void FFV::NormDiv(REAL_TYPE* div, const REAL_TYPE dt)
 {
   REAL_TYPE dv;
   double flop_count, tmp;
+  
+  REAL_TYPE cm = C.Mach * C.Mach / dt;
 
   
   if ( DivC.divType == nrm_div_max )
   {
-    TIMING_start("Norm_Div_max");
-    flop_count=0.0;
-    norm_v_div_max_(&dv, size, &guide, div, d_bcp, &flop_count);
-    TIMING_stop("Norm_Div_max", flop_count);
+    if ( C.BasicEqs == INCMP )
+    {
+      TIMING_start("Norm_Div_max");
+      flop_count=0.0;
+      norm_v_div_max_(&dv, size, &guide, div, d_bcp, &flop_count);
+      TIMING_stop("Norm_Div_max", flop_count);
+    }
+    else if ( C.BasicEqs == LTDCMP )
+    {
+      TIMING_start("Norm_Div_max");
+      flop_count=0.0;
+      norm_v_div_max_lc_(&dv, size, &guide, div, d_bcp, d_p, d_p0, &cm, &flop_count);
+      TIMING_stop("Norm_Div_max", flop_count);
+    }
+    else
+    {
+      Exit(0);
+    }
     
     if ( numProc > 1 )
     {
@@ -450,10 +467,24 @@ void FFV::NormDiv(REAL_TYPE* div)
   }
   else // nrm_div_l2
   {
-    TIMING_start("Norm_Div_L2");
-    flop_count=0.0;
-    norm_v_div_l2_(&dv, size, &guide, div, d_bcp, &flop_count);
-    TIMING_stop("Norm_Div_L2", flop_count);
+    if ( C.BasicEqs == INCMP )
+    {
+      TIMING_start("Norm_Div_L2");
+      flop_count=0.0;
+      norm_v_div_l2_(&dv, size, &guide, div, d_bcp, &flop_count);
+      TIMING_stop("Norm_Div_L2", flop_count);
+    }
+    else if ( C.BasicEqs == LTDCMP )
+    {
+      TIMING_start("Norm_Div_L2");
+      flop_count=0.0;
+      norm_v_div_l2_lc_(&dv, size, &guide, div, d_bcp, d_p, d_p0, &cm, &flop_count);
+      TIMING_stop("Norm_Div_L2", flop_count);
+    }
+    else
+    {
+      Exit(0);
+    }
     
     if ( numProc > 1 )
     {
@@ -471,6 +502,7 @@ void FFV::NormDiv(REAL_TYPE* div)
 
 
 
+// #################################################################
 void FFV::printCriteria(FILE* fp)
 {
   // Criteria ------------------

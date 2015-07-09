@@ -20,9 +20,7 @@
 !! @author aics
 !<
 
-! 56 flop
-
-
+! 57 flop
 
 idx = bp(i,j,k)
 
@@ -48,7 +46,8 @@ dd = r_x2 * (c_w + c_e) &
    + 2.0                &
    *(r_x2 * (d_w + d_e) &
    + r_y2 * (d_s + d_n) &
-   + r_z2 * (d_b + d_t) )
+   + r_z2 * (d_b + d_t) ) &
+   + cf
 
 dd = dsw * dd + 1.0 - dsw
 

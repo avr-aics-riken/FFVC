@@ -69,6 +69,7 @@ extern "C" {
               double* cnv,
               REAL_TYPE* b,
               int* bp,
+              REAL_TYPE* cm,
               double* flop);
   
   void pssor_ (REAL_TYPE* p,
@@ -79,6 +80,7 @@ extern "C" {
                double* cnv,
                REAL_TYPE* b,
                int* bp,
+               REAL_TYPE* cm,
                double* flop);
   
   void psor2sma_ (REAL_TYPE* p,
@@ -91,6 +93,7 @@ extern "C" {
                   double* cnv,
                   REAL_TYPE* b,
                   int* bp,
+                  REAL_TYPE* cm,
                   double* flop);
   
   void psor2sma_r_ (REAL_TYPE* p,
@@ -103,6 +106,7 @@ extern "C" {
                     double* cnv,
                     REAL_TYPE* b,
                     int* bp,
+                    REAL_TYPE* cm,
                     double* flop);
   
   void sma_comm_      (REAL_TYPE* p,
@@ -190,6 +194,18 @@ extern "C" {
                      REAL_TYPE* dh,
                      REAL_TYPE* dt,
                      double* flop);
+  
+  void blas_calc_b_lc_ (double* rhs,
+                        REAL_TYPE* b,
+                        REAL_TYPE* div,
+                        int* bp,
+                        int* sz,
+                        int* g,
+                        REAL_TYPE* dh,
+                        REAL_TYPE* dt,
+                        REAL_TYPE* p,
+                        REAL_TYPE* mach,
+                        double* flop);
   
   void blas_calc_rk_  (REAL_TYPE* r,
                        REAL_TYPE* p,

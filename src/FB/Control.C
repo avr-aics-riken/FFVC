@@ -488,7 +488,7 @@ void Control::getApplicationControl()
     }
     
     // hard code
-    Stab.penalty_number = 1.0e3;
+    Stab.penalty_number = 1.0e2;
   }
   
   
@@ -2297,6 +2297,7 @@ void Control::printParaConditions(FILE* fp, const MediumList* mat)
   fprintf(fp,"\tRef. Kinematic Viscosity  [m^2/s]     : %12.5e\n", RefKviscosity);
   fprintf(fp,"\tRef. Speed of Sound       [m/s]       : %12.5e\n", RefSoundSpeed);
   fprintf(fp,"\tGravity                   [m/s^2]     : %12.5e\n", Gravity);
+  fprintf(fp,"\tMach number               [-]         : %12.5e\n", Mach);
   fprintf(fp,"\n");
   
   fprintf(fp,"\tSpacing         X-dir.    [m] / [-]   : %12.5e / %12.5e\n", pitchD[0], pitch[0]);
@@ -3077,10 +3078,9 @@ void Control::printSteerConditions(FILE* fp,
   // Stability Control
   if (Stab.control == ON)
   {
-    double ts = (double)RefLength / (double)RefVelocity;
     fprintf(fp,"\n\tStability Control\n");
-    fprintf(fp,"\t\tBegin velocity     [-]   : %12.5e / %12.5e\n", Stab.begin);
-    fprintf(fp,"\t\tEnd   velocity     [-]   : %12.5e / %12.5e\n", Stab.end);
+    fprintf(fp,"\t\tBegin velocity     [-]   : %12.5e\n", Stab.begin);
+    fprintf(fp,"\t\tEnd   velocity     [-]   : %12.5e\n", Stab.end);
     fprintf(fp,"\t\tPenalty value      [-]   : %12.5e\n", Stab.penalty_number);
   }
   
@@ -3527,6 +3527,9 @@ void Control::setRefParameters(MediumList* mat, ReferenceFrame* RF)
     RF->setGridVel(g);
   }
   
+  
+  // Mach
+  Mach = RefVelocity / 340.0;
 }
 
 

@@ -204,12 +204,16 @@ void LinearSolver::Initialize(Control* C,
 
 
 // #################################################################
-int LinearSolver::PointSOR(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const double b_l2, const double r0_l2, bool converge_check)
+int LinearSolver::PointSOR(REAL_TYPE* x, REAL_TYPE* b, const REAL_TYPE dt, const int itrMax, const double b_l2, const double r0_l2, bool converge_check)
 {
   double flop_count=0.0;          /// 浮動小数点演算数
   REAL_TYPE omg = getOmega();     /// 加速係数
   double var[3];                  /// 誤差、残差、解
   int lc=0;                       /// ループカウント
+  
+  REAL_TYPE cs = pitch[0] * C->Mach / dt; /// Limited Compressibility   (dx*M/dt)
+
+  if ( C->BasicEqs == INCMP ) cs = 0.0;
   
   // x     圧力 p^{n+1}
   // b     RHS vector
@@ -224,7 +228,7 @@ int LinearSolver::PointSOR(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const d
     // 反復処理
     TIMING_start("Poisson_PSOR");
     flop_count = 0.0;
-    psor_(x, size, &guide, pitch, &omg, var, b, bcp, &flop_count);
+    psor_(x, size, &guide, pitch, &omg, var, b, bcp, &cs, &flop_count);
     TIMING_stop("Poisson_PSOR", flop_count);
     
     
@@ -252,12 +256,16 @@ int LinearSolver::PointSOR(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const d
 
 
 // #################################################################
-int LinearSolver::PointSSOR(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const double b_l2, const double r0_l2, bool converge_check)
+int LinearSolver::PointSSOR(REAL_TYPE* x, REAL_TYPE* b, const REAL_TYPE dt, const int itrMax, const double b_l2, const double r0_l2, bool converge_check)
 {
   double flop_count=0.0;          /// 浮動小数点演算数
   REAL_TYPE omg = getOmega();     /// 加速係数
   double var[3];                  /// 誤差、残差、解
   int lc=0;                       /// ループカウント
+  
+  REAL_TYPE cs = pitch[0] * C->Mach / dt; /// Limited Compressibility   (dx*M/dt)
+  
+  if ( C->BasicEqs == INCMP ) cs = 0.0;
   
   // x     圧力 p^{n+1}
   // b     RHS vector
@@ -272,7 +280,7 @@ int LinearSolver::PointSSOR(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const 
     // 反復処理
     TIMING_start("Poisson_PSSOR");
     flop_count = 0.0;
-    pssor_(x, size, &guide, pitch, &omg, var, b, bcp, &flop_count);
+    pssor_(x, size, &guide, pitch, &omg, var, b, bcp, &cs, &flop_count);
     TIMING_stop("Poisson_PSSOR", flop_count);
     
     
@@ -300,10 +308,14 @@ int LinearSolver::PointSSOR(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const 
 
 
 // #################################################################
-void LinearSolver::Preconditioner(REAL_TYPE* x, REAL_TYPE* b)
+void LinearSolver::Preconditioner(REAL_TYPE* x, REAL_TYPE* b, const REAL_TYPE dt)
 {
   
   double dummy = 1.0;
+  
+  REAL_TYPE cs = pitch[0] * C->Mach / dt; /// Limited Compressibility   (dx*M/dt)
+  
+  if ( C->BasicEqs == INCMP ) cs = 0.0;
   
   // 前処理なし(コピー)
   if ( !isPreconditioned() )
@@ -318,15 +330,15 @@ void LinearSolver::Preconditioner(REAL_TYPE* x, REAL_TYPE* b)
   
   // 前処理
   // 境界条件処理が実行される場合には、要注意
-  SOR2_SMA(x, b, lc_max, dummy, dummy, false);
-  //PointSOR(x, b, lc_max, dummy, dummy, false);
-  //PointSSOR(x, b, lc_max, dummy, dummy, false);
+  SOR2_SMA(x, b, dt, lc_max, dummy, dummy, false);
+  //PointSOR(x, b, dt, lc_max, dummy, dummy, false);
+  //PointSSOR(x, b, dt, lc_max, dummy, dummy, false);
 }
 
 
 
 // #################################################################
-int LinearSolver::SOR2_SMA(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const double b_l2, const double r0_l2, bool converge_check)
+int LinearSolver::SOR2_SMA(REAL_TYPE* x, REAL_TYPE* b, const REAL_TYPE dt, const int itrMax, const double b_l2, const double r0_l2, bool converge_check)
 {
   int ip;                         /// ローカルノードの基点(1,1,1)のカラーを示すインデクス
   /// ip=0 > R, ip=1 > B
@@ -334,6 +346,10 @@ int LinearSolver::SOR2_SMA(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const d
   REAL_TYPE omg = getOmega();     /// 加速係数
   double var[3];                  /// 誤差、残差、解
   int lc=0;                       /// ループカウント
+  
+  REAL_TYPE cs = pitch[0] * C->Mach / dt; /// Limited Compressibility   (dx*M/dt)
+  
+  if ( C->BasicEqs == INCMP ) cs = 0.0;
   
   // x     圧力 p^{n+1}
   // b     RHS vector
@@ -366,7 +382,7 @@ int LinearSolver::SOR2_SMA(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const d
       
       TIMING_start("Poisson_SOR2_SMA");
       flop_count = 0.0; // 色間で積算しない
-      psor2sma_(x, size, &guide, pitch, &ip, &color, &omg, var, b, bcp, &flop_count);
+      psor2sma_(x, size, &guide, pitch, &ip, &color, &omg, var, b, bcp, &cs, &flop_count);
 
       
       TIMING_stop("Poisson_SOR2_SMA", flop_count);
@@ -712,6 +728,9 @@ int LinearSolver::PointSOR_4th(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE* u_sum, REA
   int lc=0;                       /// ループカウント
   int c;
   
+  REAL_TYPE cs = pitch[0] * C->Mach / dt; /// Limited Compressibility   (dx*M/dt)
+  
+  if ( C->BasicEqs == INCMP ) cs = 0.0;
   
   // x  Pressure
   // b  src for Poisson
@@ -772,7 +791,7 @@ int LinearSolver::PointSOR_4th(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE* u_sum, REA
     // 反復処理
     TIMING_start("Poisson_PSOR");
     flop_count = 0.0;
-    psor_(x, size, &guide, pitch, &omg, var, w1, bcp, &flop_count);
+    psor_(x, size, &guide, pitch, &omg, var, w1, bcp, &cs, &flop_count);
     TIMING_stop("Poisson_PSOR", flop_count);
     
     
@@ -800,7 +819,7 @@ int LinearSolver::PointSOR_4th(REAL_TYPE* x, REAL_TYPE* b, REAL_TYPE* u_sum, REA
 // #################################################################
 // PBiCBSTAB 収束判定は残差
 // @note 反復回数が試行毎に異なる 内積のOpenMP並列のため
-int LinearSolver::PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2)
+int LinearSolver::PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const REAL_TYPE dt, const double b_l2, const double r0_l2)
 {
   double var[3];          /// 誤差, 残差, 解ベクトルのL2ノルム
   var[0] = var[1] = var[2] = 0.0;
@@ -858,7 +877,7 @@ int LinearSolver::PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const
     FBUtility::initS3D(pcg_p_, size, guide, 0.0);
     TIMING_stop("Blas_Clear");
     
-    Preconditioner(pcg_p_, pcg_p);
+    Preconditioner(pcg_p_, pcg_p, dt);
     
     TIMING_start("Blas_AX");
     flop = 0.0;
@@ -879,7 +898,7 @@ int LinearSolver::PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const
     FBUtility::initS3D(pcg_s_, size, guide, 0.0);
     TIMING_stop("Blas_Clear");
     
-    Preconditioner(pcg_s_, pcg_s);
+    Preconditioner(pcg_s_, pcg_s, dt);
     
     TIMING_start("Blas_AX");
     flop = 0.0;

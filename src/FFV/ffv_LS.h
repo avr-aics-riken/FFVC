@@ -139,10 +139,11 @@ protected:
   
   /**
    * @brief Preconditioner
-   * @param [in,out] x  解ベクトル
-   * @param [in]     b  RHS vector
+   * @param [in,out] x   解ベクトル
+   * @param [in]     b   RHS vector
+   * @param [in]     dt  時間積分幅
    */
-  void Preconditioner(REAL_TYPE* x, REAL_TYPE* b);
+  void Preconditioner(REAL_TYPE* x, REAL_TYPE* b, const REAL_TYPE dt);
   
   
   
@@ -251,12 +252,13 @@ public:
    * @retval 反復数
    * @param [in,out] x              解ベクトル
    * @param [in]     b              RHS vector
+   * @param [in]     dt             時間積分幅
    * @param [in]     itrMax         反復最大値
    * @param [in]     b_l2           L2 norm of b vector
    * @param [in]     r0_l2          初期残差ベクトルのL2ノルム
    * @param [in]     converge_check 収束判定を行う(true)
    */
-  int PointSOR(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const double b_l2, const double r0_l2, bool converge_check=true);
+  int PointSOR(REAL_TYPE* x, REAL_TYPE* b, const REAL_TYPE dt, const int itrMax, const double b_l2, const double r0_l2, bool converge_check=true);
   
   
   /**
@@ -264,12 +266,13 @@ public:
    * @retval 反復数
    * @param [in,out] x              解ベクトル
    * @param [in]     b              RHS vector
+   * @param [in]     dt             時間積分幅
    * @param [in]     itrMax         反復最大値
    * @param [in]     b_l2           L2 norm of b vector
    * @param [in]     r0_l2          初期残差ベクトルのL2ノルム
    * @param [in]     converge_check 収束判定を行う(true)
    */
-  int PointSSOR(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const double b_l2, const double r0_l2, bool converge_check=true);
+  int PointSSOR(REAL_TYPE* x, REAL_TYPE* b, const REAL_TYPE dt, const int itrMax, const double b_l2, const double r0_l2, bool converge_check=true);
   
   
   /**
@@ -306,12 +309,13 @@ public:
    * @retval 反復数
    * @param [in,out] x              解ベクトル
    * @param [in]     b              RHS vector
+   * @param [in]     dt             時間積分幅
    * @param [in]     itrMax         反復最大値
    * @param [in]     b_l2           L2 norm of b vector
    * @param [in]     r0_l2          初期残差ベクトルのL2ノルム
    * @param [in]     converge_check 収束判定を行う(true)
    */
-  int SOR2_SMA(REAL_TYPE* x, REAL_TYPE* b, const int itrMax, const double b_l2, const double r0_l2, bool converge_check=true);
+  int SOR2_SMA(REAL_TYPE* x, REAL_TYPE* b, const REAL_TYPE dt, const int itrMax, const double b_l2, const double r0_l2, bool converge_check=true);
   
 
   /**
@@ -319,10 +323,11 @@ public:
    * @retval 反復数
    * @param [in,out] x       解ベクトル
    * @param [in]     b       RHS vector
+   * @param [in]     dt      時間積分幅
    * @param [in]     b_l2    L2 norm of b vector
    * @param [in]     r0_l2   初期残差ベクトルのL2ノルム
    */
-  int PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const double b_l2, const double r0_l2);
+  int PBiCGstab(REAL_TYPE* x, REAL_TYPE* b, const REAL_TYPE dt, const double b_l2, const double r0_l2);
   
   
   /**

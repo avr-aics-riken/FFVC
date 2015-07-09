@@ -365,11 +365,27 @@ void FFV::NS_FS_E_Binary()
   
   
   // 定数項 b と自乗和 b_l2 の計算
-  TIMING_start("Poisson_Src_Norm");
-  b_l2 = 0.0;
-  flop = 0.0;
-  blas_calc_b_(&b_l2, d_b, d_ws, d_bcp, size, &guide, pitch, &dt, &flop);
-  TIMING_stop("Poisson_Src_Norm", flop);
+  if ( C.BasicEqs == INCMP )
+  {
+    TIMING_start("Poisson_Src_Norm");
+    b_l2 = 0.0;
+    flop = 0.0;
+    blas_calc_b_(&b_l2, d_b, d_ws, d_bcp, size, &guide, pitch, &dt, &flop);
+    TIMING_stop("Poisson_Src_Norm", flop);
+  }
+  else if ( C.BasicEqs == LTDCMP )
+  {
+    TIMING_start("Poisson_Src_Norm");
+    b_l2 = 0.0;
+    flop = 0.0;
+    blas_calc_b_lc_(&b_l2, d_b, d_ws, d_bcp, size, &guide, pitch, &dt, d_p0, &C.Mach, &flop);
+    TIMING_stop("Poisson_Src_Norm", flop);
+  }
+  else
+  {
+    Exit(0);
+  }
+
   
   
   if ( numProc > 1 )
@@ -385,7 +401,7 @@ void FFV::NS_FS_E_Binary()
   
   
   
-  // Initial residual
+  // Initial residual >> @todo Limited Compressibilityの対応
   if ( LSp->getResType() == nrm_r_r0 )
   {
     TIMING_start("Poisson_Init_Res");
@@ -428,14 +444,14 @@ void FFV::NS_FS_E_Binary()
     {
       case SOR:
         TIMING_start("Point_SOR");
-        if ( (loop_p += LSp->PointSOR(d_p, d_b, LSp->getMaxIteration(), b_l2, res0_l2)) < 0 ) Exit(0);
+        if ( (loop_p += LSp->PointSOR(d_p, d_b, dt, LSp->getMaxIteration(), b_l2, res0_l2)) < 0 ) Exit(0);
         TIMING_stop("Point_SOR");
         //if ( (loop_p += LSp->PointSOR_4th(d_p, d_b, d_ws, d_p0, d_sq, dt, dh, b_l2, res0_l2)) < 0 ) Exit(0);
         break;
         
       case SOR2SMA:
         TIMING_start("2-colored_SOR_stride");
-        if ( (loop_p += LSp->SOR2_SMA(d_p, d_b, LSp->getMaxIteration(), b_l2, res0_l2)) < 0 ) Exit(0);
+        if ( (loop_p += LSp->SOR2_SMA(d_p, d_b, dt, LSp->getMaxIteration(), b_l2, res0_l2)) < 0 ) Exit(0);
         TIMING_stop("2-colored_SOR_stride");
         break;
         
@@ -446,7 +462,7 @@ void FFV::NS_FS_E_Binary()
         
       case BiCGSTAB:
         TIMING_start("PBiCGstab");
-        if ( (loop_p += LSp->PBiCGstab(d_p, d_b, b_l2, res0_l2)) < 0 ) Exit(0);
+        if ( (loop_p += LSp->PBiCGstab(d_p, d_b, dt, b_l2, res0_l2)) < 0 ) Exit(0);
         TIMING_stop("PBiCGstab");
         break;
         
@@ -581,7 +597,7 @@ void FFV::NS_FS_E_Binary()
     
     
     // \nabla {}^f u^{n+1})のノルム
-    NormDiv(d_dv);
+    NormDiv(d_dv, dt);
     
     
     /* Forcingコンポーネントによる速度の方向修正(収束判定から除外)  >> TEST

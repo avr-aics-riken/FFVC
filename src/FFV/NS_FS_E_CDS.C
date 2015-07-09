@@ -336,11 +336,11 @@ void FFV::NS_FS_E_CDS()
     switch (LSp->getLS())
     {
       case SOR:
-        LSp->PointSOR(d_p, d_b, LSp->getMaxIteration(), rhs_nrm, res_init); // return x^{m+1} - x^m
+        LSp->PointSOR(d_p, d_b, dt, LSp->getMaxIteration(), rhs_nrm, res_init); // return x^{m+1} - x^m
         break;
         
       case SOR2SMA:
-        LSp->SOR2_SMA(d_p, d_b, LSp->getMaxIteration(), rhs_nrm, res_init); // return x^{m+1} - x^m
+        LSp->SOR2_SMA(d_p, d_b, dt, LSp->getMaxIteration(), rhs_nrm, res_init); // return x^{m+1} - x^m
         break;
         
       //case GMRES:
@@ -447,7 +447,7 @@ void FFV::NS_FS_E_CDS()
  
     
     // ノルムの計算
-    NormDiv(d_dv);
+    NormDiv(d_dv, dt);
     
     /* Forcingコンポーネントによる速度の方向修正(収束判定から除外)  >> TEST
      TIMING_start(tm_prj_frc_dir);
