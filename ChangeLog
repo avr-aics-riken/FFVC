@@ -19,6 +19,23 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-07-14
+r1627 update examples for latest parameters
+- included examples; 2Dcavity, 3Dcavity, 2Dcyl, Jet, LDC, PMT
+
+--------------------------
+2015-07-12
+r1626 change parameter orgnization
+- /Output
+- LimitedCompresibility
+- Preconditioner
+
+--------------------------
+2015-07-10
+r1625 change mask from d_cdf to b_bcd
+- update_vec(), update_vec4_(), divergence_cc_(), pvec_central_(), pvec_central_les_()
+
+--------------------------
 2015-07-09
 r1624 modify bicg
 

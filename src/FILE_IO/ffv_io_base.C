@@ -53,6 +53,45 @@ void IO_BASE::getFIOparams()
   }
   
   
+  // Output Directory_Path
+  label = "/Output/Data/DirectoryPath";
+  
+  if ( !(tpCntl->getInspectedValue(label, str)) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  // 指定が無ければ，空のまま
+  if ( !str.empty() )
+  {
+    OutDirPath = str;
+  }
+  
+  // TimeSlice option
+  label = "/Output/Data/TimeSlice";
+  
+  if ( !(tpCntl->getInspectedValue(label, str)) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  if ( !strcasecmp(str.c_str(), "on") )
+  {
+    Slice = ON;
+  }
+  else
+  {
+    Slice = OFF;
+  }
+  
+  // 1プロセスの場合にはランク番号がないので、タイムスライス毎のディレクトリは作らない
+  if ( (C->Parallelism == Control::Serial) || (C->Parallelism == Control::OpenMP) )
+  {
+    Slice = OFF;
+  }
+  
+  
   
   // 基本変数の瞬時値データ
   
@@ -433,24 +472,10 @@ void IO_BASE::getFIOparams()
   
   // BCflag出力 (Hidden)
   IO_BCflag = OFF;
-  label = "/GeometryModel/BCflagOutput";
   
-  if ( tpCntl->chkLabel(label) )
+  if ( IO_Voxel == voxel_BVX )
   {
-    if ( tpCntl->getInspectedValue(label, str) )
-    {
-      if     ( !strcasecmp(str.c_str(), "on") )  IO_BCflag = ON;
-      else if( !strcasecmp(str.c_str(), "off") ) IO_BCflag = OFF;
-      else
-      {
-        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-        Exit(0);
-      }
-    }
-    else
-    {
-      Exit(0);
-    }
+     IO_BCflag = ON;
   }
   
   
@@ -536,46 +561,6 @@ void IO_BASE::getFormatOption(const string form)
     Exit(0);
   }
   C->GuideOut = GuideOut = ct;
-
-  
-  // Output Directory_Path
-  label = dir + "/DirectoryPath";
-  
-  if ( !(tpCntl->getInspectedValue(label, str)) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    Exit(0);
-  }
-  // 指定が無ければ，空のまま
-  if ( !str.empty() )
-  {
-    OutDirPath = str;
-  }
-  
-  
-  // TimeSlice option
-  label = dir + "/TimeSlice";
-  
-  if ( !(tpCntl->getInspectedValue(label, str)) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    Exit(0);
-  }
-  
-  if ( !strcasecmp(str.c_str(), "on") )
-  {
-    Slice = ON;
-  }
-  else
-  {
-    Slice = OFF;
-  }
-  
-  // 1プロセスの場合にはランク番号がないので、タイムスライス毎のディレクトリは作らない
-  if ( (C->Parallelism == Control::Serial) || (C->Parallelism == Control::OpenMP) )
-  {
-    Slice = OFF;
-  }
   
 }
 
@@ -854,7 +839,7 @@ void IO_BASE::setVarPointers(REAL_TYPE* m_d_p,
 // BCflagをbvxで出力する
 int IO_BASE::writeBCflag(const int out_gc)
 {
-  if (IO_BCflag != ON) return true;
+  if (IO_BCflag != ON) return 0;
   
   unsigned bitWidth = 5;
   int rank = paraMngr->GetMyRankID();
@@ -888,7 +873,7 @@ int IO_BASE::writeBCflag(const int out_gc)
   }
   
   bool ret = false;
-  int ret_val;
+  int ret_val=0;
   
   // サブドメイン内が同じ値の時(c==nx)には、BCflag配列を書き出さない
   if ( c != nx )
@@ -921,7 +906,7 @@ int IO_BASE::writeBCflag(const int out_gc)
 // Cell IDをbvxで出力する
 int IO_BASE::writeCellID(const int out_gc)
 {
-  if (IO_Voxel != voxel_BVX) return true;
+  if (IO_Voxel != voxel_BVX) return 0;
   
   unsigned bitWidth = 5;
   int rank = paraMngr->GetMyRankID();
@@ -955,7 +940,7 @@ int IO_BASE::writeCellID(const int out_gc)
   }
   
   bool ret = false;
-  int ret_val;
+  int ret_val=0;
   
   // サブドメイン内が全て同じ値の時(c==nx)には、CellID配列を書き出さずに戻り値はval
   if ( c != nx )

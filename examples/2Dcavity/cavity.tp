@@ -17,27 +17,20 @@ BcTable {
     }
 
     slideWall {
-      kind     = "outer"
-      class       = "wall"
-      Type        = "slide"
-      Profile     = "Constant"
+      kind              = "outer"
+      class             = "wall"
+      Type              = "slide"
+      Profile           = "Constant"
       OrientationVector = (1.0, 0.0, 0.0)
-      Velocity    = 1.0
-      Medium      = "fe"
+      Velocity          = 1.0
+      Medium            = "fe"
     }
 
     symmetric {
-      kind     = "outer"
-      class       = "Symmetric"
-      Medium      = "air"
+      kind      = "outer"
+      class     = "Symmetric"
+      Medium    = "air"
     }
-/*
-    periodic {
-      kind     = "outer"
-      class  = "periodic"
-      mode   = "simplecopy"
-    }
-*/
   }
 
   OuterBC {
@@ -48,7 +41,6 @@ BcTable {
     Zminus = "symmetric"
     Zplus  = "symmetric"
   }
-
 }
 
 
@@ -67,7 +59,6 @@ DomainInfo {
   
   //GlobalPitch    = (1.5625e-02, 1.5625e-02, 1.5625e-02)
   //GlobalDivision = (1    , 1    , 1    )
-
 }
 
 
@@ -81,9 +72,7 @@ FillHint {
 
 
 GeometryModel {
-  Source                  = "rectangular"
-  VoxelOutput             = "off"
-  OutputGlyph             = "off"
+  Source   = "rectangular"
 }
 
 
@@ -131,10 +120,10 @@ Iteration {
     Alias                = "bicg"
     class                = "bicgstab"
     MaxIteration         = 100
-    ResidualCriterion    = 1.0e-6
-    ResidualNorm         = "RbyB"
+    ResidualCriterion    = 1.0e-4
+    ResidualNorm         = "RbyX"
     ErrorNorm            = "DeltaXbyX"
-	Precondition         = "on"
+    Preconditioner       = "sor2sma"
     InnerIteration       = 5
     Omega                = 1.1
     CommMode             = "async"
@@ -144,9 +133,9 @@ Iteration {
   DivCriterion           = 1.0e-4
   DivNorm                = "max" // "L2"
 
-  Pressure    = "bicg"
+  Pressure    = "sor"
   Velocity    = ""
-  Temperature = "sor2" 
+  Temperature = "" 
 }
 
 
@@ -224,7 +213,9 @@ Output {
   }
 
   Data {
-    Format         = "sph"
+    Format          = "sph"
+    TimeSlice       = "off"
+    DirectoryPath   = "hoge"
 
     BasicVariables {
       TemporalType   = "step"
@@ -238,8 +229,8 @@ Output {
     }
 
     StatisticalVariables {
-      TemporalType  = "step"
-      Interval      = 1.0
+      TemporalType    = "step"
+      Interval        = 1.0
 
       VelocityStat    = "On"
       PressureStat    = "Off"
@@ -249,9 +240,7 @@ Output {
     
   FormatOption {
     SPH {
-      GuideOut        = 2
-      TimeSlice       = "off"
-      DirectoryPath   = "2d"
+      GuideOut   = 2
     }
   }
 }

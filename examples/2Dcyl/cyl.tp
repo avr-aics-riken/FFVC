@@ -23,13 +23,13 @@ BcTable {
 */
     
     inlet {
-      kind        = "outer"
-      class       = "SpecifiedVelocity"
-      Profile     = "Constant"
+      kind              = "outer"
+      class             = "SpecifiedVelocity"
+      Profile           = "Constant"
       OrientationVector = (1.0, 0.0, 0.0)
-      velocity    = 1.0 //3.0e-2
-      Medium      = "air"
-      Temperature = 20
+      velocity          = 1.0 //3.0e-2
+      Medium            = "air"
+      Temperature       = 20
     }
 
     outlet {
@@ -52,23 +52,13 @@ BcTable {
       Type        = "fixed"
       Medium      = "fe"
     }
-
-    slideWall {
-      kind        = "outer"
-      class       = "wall"
-      Type        = "slide"
-      Profile     = "Constant"
-      OrientationVector = (1.0, 0.0, 0.0)
-      Velocity    = 1.0
-      Medium      = "fe"
-    }
-
+*/
     periodic {
       kind   = "outer"
       class  = "periodic"
       mode   = "simplecopy"
     }
-*/
+
   }
 
   OuterBC {
@@ -76,8 +66,8 @@ BcTable {
     Xplus  = "outlet"
     Yminus = "symmetric"
     Yplus  = "symmetric"
-    Zminus = "symmetric"
-    Zplus  = "symmetric"
+    Zminus = "periodic"
+    Zplus  = "periodic"
   }
 }
 
@@ -96,7 +86,6 @@ DomainInfo {
   
   GlobalPitch    = (5.0e-02, 5.0e-02, 5.0e-02)
   //GlobalDivision = (1    , 1    , 1    )
-
 }
 
 
@@ -106,12 +95,13 @@ FillHint {
     direction = "Xminus"
     medium    = "air"
   }
-
+/*
   in_cyl1 {
     kind       = "point"
     coordinate = (0.0, 0.0, 0.025)
     medium     = "fe1"
   }
+*/
 }
 
 
@@ -190,16 +180,16 @@ Iteration {
     Alias                = "bicg"
     class                = "bicgstab"
     MaxIteration         = 100
-    ResidualCriterion    = 1.0e-6
-    ResidualNorm         = "RbyB"
+    ResidualCriterion    = 1.0e-4
+    ResidualNorm         = "RbyX"
     ErrorNorm            = "DeltaXbyX"
-	Precondition         = "on"
+    Preconditioner       = "sor2sma"
     InnerIteration       = 5
     Omega                = 1.1
     CommMode             = "async"
   }
 
-  DivMaxIteration        = 100
+  DivMaxIteration        = 50
   DivCriterion           = 1.0e-4
   DivNorm                = "max" // "L2"
 
@@ -290,7 +280,9 @@ Output {
   }
 
   Data {
-    Format         = "sph"
+    Format          = "sph"
+    TimeSlice       = "off"
+    DirectoryPath   = "hoge"
 
     BasicVariables {
       TemporalType   = "time"
@@ -316,14 +308,9 @@ Output {
   FormatOption {
     SPH {
       GuideOut        = 2
-      TimeSlice       = "off"
-      DirectoryPath   = "2d"
     }
 
     PLOT3D {
-      GuideOut        = 2
-      TimeSlice       = "off"
-      DirectoryPath   = "p3d"
       XYZfile         = "on"
       IblankFile      = "on"
     }

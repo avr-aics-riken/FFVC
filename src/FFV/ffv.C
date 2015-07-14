@@ -580,10 +580,6 @@ void FFV::printIteratoinParameter(FILE* fp, LinearSolver* IC)
 {
   switch (IC->getLS())
   {
-    case JACOBI:
-      fprintf(fp,"\t       Linear Solver          :   Jacobi method\n");
-      break;
-      
     case SOR:
       fprintf(fp,"\t       Linear Solver          :   Point SOR method\n");
       break;
@@ -602,7 +598,10 @@ void FFV::printIteratoinParameter(FILE* fp, LinearSolver* IC)
       
     case BiCGSTAB:
       fprintf(fp,"\t       Linear Solver          :   BiCGstab");
-      if ( IC->isPreconditioned() ) fprintf(fp," with Preconditioner\n");
+      if ( IC->isPreconditioned() ) fprintf(fp," with Preconditioner ");
+      if      ( IC->getSmoother() == SOR )     fprintf(fp,"SOR\n");
+      else if ( IC->getSmoother() == SOR2SMA ) fprintf(fp,"SOR2SMA\n");
+      else fprintf(fp,"\n");
       break;
       
     default:
@@ -617,10 +616,6 @@ void FFV::printIteratoinParameter(FILE* fp, LinearSolver* IC)
   
   switch (IC->getLS())
   {
-    case JACOBI:
-      fprintf(fp,"\t       Coef. of Relaxation    :   %9.3e\n", IC->getOmega());
-      break;
-      
     case SOR:
       fprintf(fp,"\t       Coef. of Acceleration  :   %9.3e\n", IC->getOmega());
       break;

@@ -1337,10 +1337,10 @@ void Control::getSolverProperties()
     Exit(0);
   }
   
-  if     ( !strcasecmp(str.c_str(), "Incompressible" ) )        BasicEqs = INCMP;
-  else if( !strcasecmp(str.c_str(), "LimitedCompressible" ) )   BasicEqs = LTDCMP;
-  else if( !strcasecmp(str.c_str(), "Compressible" ) )          BasicEqs = CMPRSS;
-  else if( !strcasecmp(str.c_str(), "Incompressible2Phase" ) )  BasicEqs = INCMP_2PHASE;
+  if     ( !strcasecmp(str.c_str(), "Incompressible" ) )           BasicEqs = INCMP;
+  else if( !strcasecmp(str.c_str(), "LimitedCompressibility" ) )   BasicEqs = LTDCMP;
+  else if( !strcasecmp(str.c_str(), "Compressible" ) )             BasicEqs = CMPRSS;
+  else if( !strcasecmp(str.c_str(), "Incompressible2Phase" ) )     BasicEqs = INCMP_2PHASE;
   else
   {
     Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());

@@ -330,8 +330,15 @@ void LinearSolver::Preconditioner(REAL_TYPE* x, REAL_TYPE* b, const REAL_TYPE dt
   
   // 前処理
   // 境界条件処理が実行される場合には、要注意
-  SOR2_SMA(x, b, dt, lc_max, dummy, dummy, false);
-  //PointSOR(x, b, dt, lc_max, dummy, dummy, false);
+  if ( smoother == SOR2SMA )
+  {
+    SOR2_SMA(x, b, dt, lc_max, dummy, dummy, false);
+  }
+  else if ( smoother == SOR )
+  {
+    PointSOR(x, b, dt, lc_max, dummy, dummy, false);
+  }
+  
   //PointSSOR(x, b, dt, lc_max, dummy, dummy, false);
 }
 

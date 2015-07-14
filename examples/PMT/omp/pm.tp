@@ -42,7 +42,6 @@ GoverningEquation {
 
 GeometryModel {
   Source = "PerformanceTest"
-  VoxelOutput             = "off"
 }
 
 
@@ -64,7 +63,6 @@ Iteration {
     ErrorNorm            = "DeltaXbyX"
     Omega                = 1.1
     CommMode             = "async"
-    NaiveImplementation  = "off"
   }
 
   LinearSolver[@] {
@@ -84,20 +82,19 @@ Iteration {
     ResidualCriterion    = 1.0e-4
     ResidualNorm         = "RbyX"
     ErrorNorm            = "DeltaXbyX"
-    Precondition         = "on"
+    Preconditioner       = "sor2sma"
     InnerIteration       = 5
     Omega                = 1.1
     CommMode             = "async"
-    NaiveImplementation  = "off"
   }
 
-  DivMaxIteration        = 100
+  DivMaxIteration        = 20
   DivCriterion           = 1.0e-4
   DivNorm                = "max" // "L2"
 
   Pressure    = "bicg"
   Velocity    = ""
-  Temperature = "sor2_loose"   
+  Temperature = ""
 }
 
 
@@ -128,7 +125,9 @@ Output {
   }
 
   Data {
-    Format         = "sph"
+    Format          = "sph"
+    TimeSlice       = "off"
+    DirectoryPath   = "hoge"
 
     BasicVariables {
       TemporalType   = "step"
@@ -141,25 +140,21 @@ Output {
     }
 
     StatisticalVariables {
-      TemporalType  = "step"
-      Interval      = 100
+      TemporalType    = "step"
+      Interval        = 100
 
-      RMSvelocity       = "Off"
-      RMSmeanVelocity   = "Off"
+      VelocityStat    = "Off"
+      PressureStat    = "Off"
+      TemperatureStat = "Off"
     }
   }
     
   FormatOption {
     SPH {
       GuideOut        = 2
-      TimeSlice       = "off"
-      DirectoryPath   = "hoge"
     }
 
     PLOT3D {
-      GuideOut        = 2
-      TimeSlice       = "off"
-      DirectoryPath   = "hogep"
       XYZfile         = "on"
       IblankFile      = "on"
     }

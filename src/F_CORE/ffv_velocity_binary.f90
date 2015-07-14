@@ -1365,16 +1365,13 @@ end subroutine pvec_muscl_les
 !! @param [in]  vc   セルセンター疑似速度ベクトル
 !! @param [in]  p    圧力
 !! @param [in]  bp   BCindex P
-!! @param [in]  bv   BCindex C
 !! @param [in]  bcd  BCindex B
 !! @param [out] flop 浮動小数点演算数
-!! @note
-!!    - actvのマスクはSPEC_VEL/OUTFLOWの参照セルをマスクしないようにbvを使う
 !<
-subroutine update_vec (v, vf, div, sz, g, dt, dh, vc, p, bp, bv, bcd, flop)
+subroutine update_vec (v, vf, div, sz, g, dt, dh, vc, p, bp, bcd, flop)
 implicit none
 include 'ffv_f_params.h'
-integer                                                   ::  i, j, k, ix, jx, kx, g, bpx, bvx, bdx
+integer                                                   ::  i, j, k, ix, jx, kx, g, bpx, bdx
 integer, dimension(3)                                     ::  sz
 double precision                                          ::  flop
 real                                                      ::  dt, actv, rx, ry, rz
@@ -1388,7 +1385,7 @@ real                                                      ::  c_w, c_e, c_s, c_n
 real                                                      ::  d_w, d_e, d_s, d_n, d_b, d_t
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vc, vf
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div, p
-integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp, bv, bcd
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp, bcd
 real, dimension(3)                                        ::  dh
 
 ix = sz(1)
@@ -1404,7 +1401,7 @@ flop = flop + dble(ix)*dble(jx)*dble(kx)*84.0 + 24.0d0
 
 
 !$OMP PARALLEL &
-!$OMP PRIVATE(bpx, bvx, actv, bdx) &
+!$OMP PRIVATE(bpx, actv, bdx) &
 !$OMP PRIVATE(c1, c2, c3, c4, c5, c6) &
 !$OMP PRIVATE(N_e, N_w, N_n, N_s, N_t, N_b) &
 !$OMP PRIVATE(c_w, c_e, c_s, c_n, c_b, c_t) &
@@ -1420,7 +1417,6 @@ do k=1,kx
 do j=1,jx
 do i=1,ix
 bpx = bp(i,j,k)
-bvx = bv(i,j,k)
 bdx = bcd(i,j,k)
 actv = real(ibits(bdx, State,  1))
 
@@ -1541,18 +1537,15 @@ end subroutine update_vec
 !! @param [in]  vc       セルセンター疑似速度ベクトル
 !! @param [in]  p        圧力
 !! @param [in]  bp       BCindex P
-!! @param [in]  bv       BCindex C
 !! @param [in]  bid      Cut ID
 !! @param [in]  bcd      BCindex B
 !! @param [out] flop     浮動小数点演算数
 !! @param [in   c_scheme 対流項スキーム
-!! @note
-!!    - actvのマスクはSPEC_VEL/OUTFLOWの参照セルをマスクしないようにbvを使う
 !<
-subroutine update_vec4 (v, vf, div, sz, g, dt, dh, vc, p, bp, bv, bid, bcd, flop, c_scheme)
+subroutine update_vec4 (v, vf, div, sz, g, dt, dh, vc, p, bp, bid, bcd, flop, c_scheme)
 implicit none
 include 'ffv_f_params.h'
-integer                                                   ::  i, j, k, ix, jx, kx, g, bpx, bvx, c_scheme, bdx
+integer                                                   ::  i, j, k, ix, jx, kx, g, bpx, c_scheme, bdx
 integer, dimension(3)                                     ::  sz
 double precision                                          ::  flop
 real                                                      ::  c_w1, c_e1, c_s1, c_n1, c_b1, c_t1
@@ -1573,7 +1566,7 @@ real                                                      ::  dpx, dpy, dpz, dp_
 real                                                      ::  Uef, Uwf, Vnf, Vsf, Wtf, Wbf
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, vc, vf
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div, p
-integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp, bv, bid, bcd
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp, bid, bcd
 real, dimension(3)                                        ::  dh
 
 
@@ -1604,7 +1597,7 @@ drz = dt * rz
 flop = flop + dble(ix)*dble(jx)*dble(kx)*159.0 + 27.0d0
 
 !$OMP PARALLEL &
-!$OMP PRIVATE(bpx, bvx, actv, bdx) &
+!$OMP PRIVATE(bpx, actv, bdx) &
 !$OMP PRIVATE(c_w1, c_e1, c_s1, c_n1, c_b1, c_t1) &
 !$OMP PRIVATE(c_w2, c_e2, c_s2, c_n2, c_b2, c_t2) &
 !$OMP PRIVATE(N_e, N_w, N_n, N_s, N_t, N_b) &
@@ -1628,7 +1621,6 @@ do k=1,kx
 do j=1,jx
 do i=1,ix
 bpx = bp(i,j,k)
-bvx = bv(i,j,k)
 bdx = bcd(i,j,k)
 actv = real(ibits(bdx, State,  1))
 
@@ -1808,15 +1800,14 @@ end subroutine update_vec4
 !! @param [in]     g    ガイドセル長
 !! @param [in]     dh   格子幅
 !! @param [in]     vc   セルセンター疑似ベクトル
-!! @param [in]     bv   BCindex C
 !! @param [in]     bid  Cut ID
 !! @param [in]     bcd  BCindex B
 !! @param [in,out] flop 浮動小数点演算数
 !<
-subroutine divergence_cc (div, sz, g, dh, vc, bv, bid, bcd, flop)
+subroutine divergence_cc (div, sz, g, dh, vc, bid, bcd, flop)
 implicit none
 include 'ffv_f_params.h'
-integer                                                   ::  i, j, k, ix, jx, kx, g, bvx, bix, bdx
+integer                                                   ::  i, j, k, ix, jx, kx, g, bix, bdx
 integer, dimension(3)                                     ::  sz
 double precision                                          ::  flop
 real                                                      ::  Ue, Uw, Vn, Vs, Wt, Wb, actv, rx, ry, rz
@@ -1826,7 +1817,7 @@ real                                                      ::  b_w, b_e, b_s, b_n
 real, dimension(3)                                        ::  dh
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vc
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
-integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv, bid, bcd
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bid, bcd
 
 ix = sz(1)
 jx = sz(2)
@@ -1839,7 +1830,7 @@ rz = 1.0/dh(3)
 flop  = flop + dble(ix)*dble(jx)*dble(kx)*33.0d0 + 24.0d0
 
 !$OMP PARALLEL &
-!$OMP PRIVATE(bvx, actv, bix, bdx) &
+!$OMP PRIVATE(actv, bix, bdx) &
 !$OMP PRIVATE(b_w, b_e, b_s, b_n, b_b, b_t) &
 !$OMP PRIVATE(Ue, Uw, Vn, Vs, Wt, Wb) &
 !$OMP PRIVATE(Ue0, Uw0, Up0, Vn0, Vs0, Vp0, Wb0, Wt0, Wp0) &
@@ -1851,7 +1842,6 @@ flop  = flop + dble(ix)*dble(jx)*dble(kx)*33.0d0 + 24.0d0
 do k=1,kx
 do j=1,jx
 do i=1,ix
-bvx = bv(i,j,k)
 bix = bid(i,j,k)
 bdx = bcd(i,j,k)
 
@@ -2115,59 +2105,72 @@ w_ref = v00(3)
 
 !> ********************************************************************
 !! @brief Adams-Bashforth法による疑似ベクトルの時間積分
-!! @param[out] vc 疑似ベクトル
-!! @param sz 配列長
-!! @param g ガイドセル長
-!! @param dt 時間積分幅
-!! @param v 速度ベクトル（n-step, collocated）
-!! @param ab 前ステップの対流項（＋粘性項）の計算値
-!! @param bd BCindex B
-!! @param v00 参照速度
+!! @param [out] vc  疑似ベクトル
+!! @param [in]  sz  配列長
+!! @param [in]  g   ガイドセル長
+!! @param [in]  dt  時間積分幅
+!! @param [in]  v   速度ベクトル（n-step, collocated）
+!! @param [in]  ab  前ステップの対流項（＋粘性項）の計算値
+!! @param [in]  bd  BCindex B
+!! @param [in]  v00 参照速度
 !! @param[out] flop
-!! @note NOCHECK
 !<
-    subroutine ab2 (vc, sz, g, dt, v, ab, bd, v00, flop)
-    implicit none
-    include 'ffv_f_params.h'
-    integer                                                   ::  i, j, k, ix, jx, kx, g
-    integer, dimension(3)                                     ::  sz
-    double precision                                          ::  flop
-    real                                                      ::  actv, dt, ab_u, ab_v, ab_w, u_ref, v_ref, w_ref
-    real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vc, v, ab
-    real, dimension(0:3)                                      ::  v00
-    integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bd
-    
-    ix = sz(1)
-    jx = sz(2)
-    kx = sz(3)
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
-    flop = flop + dble(ix*jx*kx) * 27.0d0
-    
-    do k=1,kx
-    do j=1,jx
-    do i=1,ix
-      actv = real(ibits(bd(i,j,k), State, 1))
-      
-      ab_u = ab(i,j,k,1)
-      ab_v = ab(i,j,k,2)
-      ab_w = ab(i,j,k,3)
-      
-      ab(i,j,k,1) = vc(i,j,k,1)
-      ab(i,j,k,2) = vc(i,j,k,2)
-      ab(i,j,k,3) = vc(i,j,k,3)
+subroutine ab2 (vc, sz, g, dt, v, ab, bd, v00, flop)
+implicit none
+include 'ffv_f_params.h'
+integer                                                   ::  i, j, k, ix, jx, kx, g
+integer, dimension(3)                                     ::  sz
+double precision                                          ::  flop
+real                                                      ::  actv, dt, ab_u, ab_v, ab_w, u_ref, v_ref, w_ref
+real                                                      ::  cf, ra
+real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vc, v, ab
+real, dimension(0:3)                                      ::  v00
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bd
 
-      vc(i,j,k,1) = ( v(i,j,k,1) + dt*0.5*( 3.0*vc(i,j,k,1)-ab_u ) )* actv + (1.0-actv)*u_ref
-      vc(i,j,k,2) = ( v(i,j,k,2) + dt*0.5*( 3.0*vc(i,j,k,2)-ab_v ) )* actv + (1.0-actv)*v_ref
-      vc(i,j,k,3) = ( v(i,j,k,3) + dt*0.5*( 3.0*vc(i,j,k,3)-ab_w ) )* actv + (1.0-actv)*w_ref
-    end do
-    end do
-    end do
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+u_ref = v00(1)
+v_ref = v00(2)
+w_ref = v00(3)
 
-    return
-    end subroutine ab2
-    
+cf = 0.5 * dt
+
+flop = flop + dble(ix*jx*kx) * 20.0d0
+
+
+!$OMP PARALLEL &
+!$OMP FIRSTPRIVATE(ix, jx, kx, cf) &
+!$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref) &
+!$OMP PRIVATE(actv, ra, ab_u, ab_v, ab_w)
+
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
+do k=1,kx
+do j=1,jx
+do i=1,ix
+actv = real(ibits(bd(i,j,k), State, 1)) * cf
+ra = 1.0 - actv
+
+ab_u = ab(i,j,k,1)
+ab_v = ab(i,j,k,2)
+ab_w = ab(i,j,k,3)
+
+ab(i,j,k,1) = vc(i,j,k,1)
+ab(i,j,k,2) = vc(i,j,k,2)
+ab(i,j,k,3) = vc(i,j,k,3)
+
+vc(i,j,k,1) = ( v(i,j,k,1) + ( 3.0 * vc(i,j,k,1) - ab_u ) ) * actv + ra * u_ref
+vc(i,j,k,2) = ( v(i,j,k,2) + ( 3.0 * vc(i,j,k,2) - ab_v ) ) * actv + ra * v_ref
+vc(i,j,k,3) = ( v(i,j,k,3) + ( 3.0 * vc(i,j,k,3) - ab_w ) ) * actv + ra * w_ref
+end do
+end do
+end do
+!$OMP END DO
+!$OMP END PARALLEL
+
+return
+end subroutine ab2
+
 
 !> ********************************************************************
 !! @brief 対流項と粘性項の計算
@@ -2180,16 +2183,15 @@ w_ref = v00(3)
 !! @param [in]  rei       レイノルズ数の逆数
 !! @param [in]  v         セルセンター速度ベクトル（n-step）
 !! @param [in]  vf        セルフェイス速度ベクトル（n-step）
-!! @param [in]  bv        BCindex C
 !! @param [in]  bid       Cut ID
 !! @param [in]  bcd       BCindex B
 !! @param [in]  vcs_coef  粘性項の係数（粘性項を計算しない場合には0.0）
 !! @param [out] flop      浮動小数点演算数
 !<
-subroutine pvec_central (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bv, bid, bcd, vcs_coef, flop)
+subroutine pvec_central (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bid, bcd, vcs_coef, flop)
 implicit none
 include 'ffv_f_params.h'
-integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, bix, bdx
+integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bix, bdx
 integer, dimension(3)                                     ::  sz
 double precision                                          ::  flop
 real                                                      ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
@@ -2210,7 +2212,7 @@ real                                                      ::  fu_r, fu_l, fv_r, 
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, wv, vf
 real, dimension(0:3)                                      ::  v00
 real, dimension(3)                                        ::  dh
-integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv, bid, bcd
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bid, bcd
 
 ix = sz(1)
 jx = sz(2)
@@ -2256,7 +2258,7 @@ flop = flop + dble(ix)*dble(jx)*dble(kx)*375.0d0 + 46.0d0
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, rx, ry, rz, rx2, ry2 ,rz2, vcs, ss, c1, c2) &
 !$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, rei) &
-!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bix, bdx, uq, vq, wq, sw1, sw2) &
+!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bix, bdx, uq, vq, wq, sw1, sw2) &
 !$OMP PRIVATE(Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2) &
 !$OMP PRIVATE(Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2) &
 !$OMP PRIVATE(Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2) &
@@ -2324,7 +2326,6 @@ Wn2 = v(i  ,j+2,k  , 3)
 Wt1 = v(i  ,j  ,k+1, 3)
 Wt2 = v(i  ,j  ,k+2, 3)
 
-bvx = bv(i,j,k)
 bix = bid(i,j,k)
 bdx = bcd(i,j,k)
 
@@ -2612,7 +2613,6 @@ end subroutine pvec_central
 !! @param [in]  rei       レイノルズ数の逆数
 !! @param [in]  v         セルセンター速度ベクトル（n-step）
 !! @param [in]  vf        セルフェイス速度ベクトル（n-step）
-!! @param [in]  bv        BCindex C
 !! @param [in]  bid       Cut ID
 !! @param [in]  bcd       BCindex B
 !! @param [in]  vcs_coef  粘性項の係数（粘性項を計算しない場合には0.0）
@@ -2622,10 +2622,10 @@ end subroutine pvec_central
 !! @param [in]  rho       密度
 !! @param [out] flop      浮動小数点演算数
 !<
-subroutine pvec_central_les (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bv, bid, bcd, vcs_coef, Cs, imodel, nu, rho, flop)
+subroutine pvec_central_les (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bid, bcd, vcs_coef, Cs, imodel, nu, rho, flop)
 implicit none
 include 'ffv_f_params.h'
-integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bvx, bix, bdx
+integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bix, bdx
 integer, dimension(3)                                     ::  sz
 double precision                                          ::  flop
 real                                                      ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
@@ -2646,7 +2646,7 @@ real                                                      ::  fu_r, fu_l, fv_r, 
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, wv, vf
 real, dimension(0:3)                                      ::  v00
 real, dimension(3)                                        ::  dh
-integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv, bid, bcd
+integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bid, bcd
 integer                                                   ::  imodel
 real                                                      ::  Cs, nu, rho, Cw
 real                                                      ::  DUDX, DUDY, DUDZ
@@ -2711,7 +2711,7 @@ flop = flop + 46.0d0
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, rx, ry, rz, rx2, ry2 ,rz2, vcs, ss, c1, c2) &
 !$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, rei, dx, dy, dz) &
-!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bix, bdx, uq, vq, wq, sw1, sw2) &
+!$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bix, bdx, uq, vq, wq, sw1, sw2) &
 !$OMP PRIVATE(Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2) &
 !$OMP PRIVATE(Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2) &
 !$OMP PRIVATE(Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2) &
@@ -2787,7 +2787,6 @@ Wn2 = v(i  ,j+2,k  , 3)
 Wt1 = v(i  ,j  ,k+1, 3)
 Wt2 = v(i  ,j  ,k+2, 3)
 
-bvx = bv(i,j,k)
 bix = bid(i,j,k)
 bdx = bcd(i,j,k)
 

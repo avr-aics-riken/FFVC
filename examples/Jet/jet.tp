@@ -86,7 +86,7 @@ FillHint {
 
 GeometryModel {
   Source                  = "jet"
-  VoxelOutput             = "svx"
+  VoxelOutput             = "bvx"
 }
 
 
@@ -132,7 +132,6 @@ Iteration {
     ErrorNorm            = "DeltaXbyX"
     Omega                = 1.1
     CommMode             = "async"
-    NaiveImplementation  = "off"
   }
 
   LinearSolver[@] {
@@ -152,7 +151,7 @@ Iteration {
     ResidualCriterion    = 1.0e-6
     ResidualNorm         = "RbyB"
     ErrorNorm            = "DeltaXbyX"
-	Precondition         = "on"
+	Preconditioner       = "sor2sma"
     InnerIteration       = 5
     Omega                = 1.1
     CommMode             = "async"
@@ -218,24 +217,25 @@ Output {
   }
 
   Data {
-    Format         = "sph"
+    Format          = "sph"
+    TimeSlice       = "off"
+    DirectoryPath   = "hoge"
 
     BasicVariables {
-      TemporalType   = "time"
-      Interval       = 1.0
+      TemporalType   = "step"
+      Interval       = 100
 
       TotalPressure  = "Off"
       Helicity       = "Off"
       Vorticity      = "Off"
-      Qcriterion     = "On"
-      Divergence     = "Off"
+      Qcriterion     = "Off"
     }
 
     StatisticalVariables {
-      TemporalType  = "time"
-      Interval      = 1.0
+      TemporalType    = "step"
+      Interval        = 100
 
-      VelocityStat    = "On"
+      VelocityStat    = "Off"
       PressureStat    = "Off"
       TemperatureStat = "Off"
     }
@@ -244,14 +244,9 @@ Output {
   FormatOption {
     SPH {
       GuideOut        = 2
-      TimeSlice       = "off"
-      DirectoryPath   = "hoge"
     }
 
     PLOT3D {
-      GuideOut        = 2
-      TimeSlice       = "off"
-      DirectoryPath   = "p3d"
       XYZfile         = "on"
       IblankFile      = "on"
     }

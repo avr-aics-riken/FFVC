@@ -42,6 +42,7 @@ void IterationCtl::copy(IterationCtl* src)
   alias        = src->alias;
   precondition = src->precondition;
   InnerItr     = src->InnerItr;
+  smoother     = src->smoother;
 }
 
 
@@ -127,7 +128,7 @@ void IterationCtl::getParaBiCGSTAB(TextParser* tpCntl, const string base)
 {
   string str, label;
   
-  label = base + "/Precondition";
+  label = base + "/Preconditioner";
   
   if ( !tpCntl->chkLabel(label) )
   {
@@ -140,7 +141,24 @@ void IterationCtl::getParaBiCGSTAB(TextParser* tpCntl, const string base)
   }
   else
   {
-    if ( !strcasecmp(str.c_str(), "on") ) precondition = ON;
+    if      ( !strcasecmp(str.c_str(), "none") )
+    {
+      precondition = OFF;
+    }
+    else if ( !strcasecmp(str.c_str(), "sor") )
+    {
+      precondition = ON;
+      smoother = SOR;
+    }
+    else if ( !strcasecmp(str.c_str(), "sor2sma") )
+    {
+      precondition = ON;
+      smoother = SOR2SMA;
+    }
+    else
+    {
+      Exit(0);
+    }
   }
   
   if ( precondition == OFF ) return;

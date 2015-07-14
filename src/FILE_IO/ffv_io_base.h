@@ -375,7 +375,7 @@ public:
   /**
    * @brief BCflagの書き出し
    * @param [in] out_gc       出力するガイドセル数
-   * @retval 配列を書き出す場合には-1, 同じ値の場合は-1でない値
+   * @retval 配列を書き出す場合には-1, 同じ値の場合は-1でない値，0の場合はbvxが指定されていない場合
    */
   int writeBCflag(const int out_gc);
   
@@ -383,7 +383,7 @@ public:
   /**
    * @brief CellIDの書き出し
    * @param [in] out_gc       出力するガイドセル数
-   * @retval 配列を書き出す場合には-1, 同じ値の場合は-1でない値
+   * @retval 配列を書き出す場合には-1, 同じ値の場合は-1でない値，0の場合はbvxが指定されていない場合
    */
   int writeCellID(const int out_gc);
   

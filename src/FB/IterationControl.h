@@ -46,11 +46,13 @@ protected:
   int ResNorm;          ///< 残差ノルムの種類
   int MaxIteration;     ///< 最大反復数
   int LinearSolver;     ///< 線形ソルバーの種類
+  int smoother;         ///< 前処理法
   int LoopCount;        ///< 反復回数 （計算実行中に利用）
   int Sync;             ///< 同期モード (comm_sync, comm_async)
   int precondition;     ///< 前処理mode
   int InnerItr;         ///< 内部反復回数
   string alias;         ///< 別名
+  
   
 public:
   
@@ -69,6 +71,7 @@ public:
     omg = 0.0;
     Sync = -1;
     InnerItr = 0;
+    smoother = -1;
     
     eps_err = ( sizeof(REAL_TYPE) == 4 ) ? 4.0*SINGLE_EPSILON : 4.0*DOUBLE_EPSILON;
   }
@@ -198,6 +201,13 @@ public:
   double getResidual() const
   {
     return residual;
+  }
+  
+  
+  // @brief スムーザーの種類を返す
+  int getSmoother() const
+  {
+    return smoother;
   }
   
   

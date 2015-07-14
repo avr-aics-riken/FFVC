@@ -117,14 +117,14 @@ void FFV::NS_FS_E_Binary()
           {
             TIMING_start("Pvec_Central_LES");
             flop = 0.0;
-            pvec_central_les_(d_vc, size, &guide, pitch, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bid, d_bcd, &one, &C.LES.Cs, &C.LES.Model, &C.RefKviscosity, &C.RefDensity, &flop);
+            pvec_central_les_(d_vc, size, &guide, pitch, &cnv_scheme, v00, &rei, d_v0, d_vf, d_bid, d_bcd, &one, &C.LES.Cs, &C.LES.Model, &C.RefKviscosity, &C.RefDensity, &flop);
             TIMING_stop("Pvec_Central_LES", flop);
           }
           else
           {
             TIMING_start("Pvec_Central");
             flop = 0.0;
-            pvec_central_(d_vc, size, &guide, pitch, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bid, d_bcd, &one, &flop);
+            pvec_central_(d_vc, size, &guide, pitch, &cnv_scheme, v00, &rei, d_v0, d_vf, d_bid, d_bcd, &one, &flop);
             TIMING_stop("Pvec_Central", flop);
           }
           break;
@@ -171,7 +171,7 @@ void FFV::NS_FS_E_Binary()
           {
             TIMING_start("Pvec_Central");
             flop = 0.0;
-            pvec_central_(d_wv, size, &guide, pitch, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bid, d_bcd, &half, &flop);
+            pvec_central_(d_wv, size, &guide, pitch, &cnv_scheme, v00, &rei, d_v0, d_vf, d_bid, d_bcd, &half, &flop);
             TIMING_stop("Pvec_Central", flop);
           }
           break;
@@ -324,7 +324,7 @@ void FFV::NS_FS_E_Binary()
   // 非VBC面に対してのみ，セルセンターの値から div{u^*} を計算
   TIMING_start("Divergence_of_Pvec");
   flop = 0.0;
-  divergence_cc_(d_ws, size, &guide, pitch, d_vc, d_cdf, d_bid, d_bcd, &flop);
+  divergence_cc_(d_ws, size, &guide, pitch, d_vc, d_bid, d_bcd, &flop);
   TIMING_stop("Divergence_of_Pvec", flop);
   
   
@@ -479,8 +479,8 @@ void FFV::NS_FS_E_Binary()
     // スカラポテンシャルによる射影と速度の発散の計算 d_dvはdiv(u)のテンポラリ保持に利用
     TIMING_start("Projection_Velocity");
     flop = 0.0;
-    update_vec_(d_v, d_vf, d_dv, size, &guide, &dt, pitch, d_vc, d_p, d_bcp, d_cdf, d_bcd, &flop);
-    //update_vec4_(d_v, d_vf, d_dv, size, &guide, &dt, pitch, d_vc, d_p, d_bcp, d_cdf, d_bid, &flop, &cnv_scheme);
+    update_vec_(d_v, d_vf, d_dv, size, &guide, &dt, pitch, d_vc, d_p, d_bcp, d_bcd, &flop);
+    //update_vec4_(d_v, d_vf, d_dv, size, &guide, &dt, pitch, d_vc, d_p, d_bcp, d_bid, &flop, &cnv_scheme);
     TIMING_stop("Projection_Velocity", flop);
     
     

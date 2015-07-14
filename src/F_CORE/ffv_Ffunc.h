@@ -535,7 +535,6 @@ extern "C" {
                        int* g,
                        REAL_TYPE* dh,
                        REAL_TYPE* vc,
-                       int* bv,
                        int* bid,
                        int* bcd,
                        double* flop);
@@ -583,7 +582,6 @@ extern "C" {
                            REAL_TYPE* rei,
                            REAL_TYPE* v,
                            REAL_TYPE* vf,
-                           int* bv,
                            int* bid,
                            int* bcd,
                            REAL_TYPE* vcs_coef,
@@ -599,7 +597,6 @@ extern "C" {
                     REAL_TYPE* vc,
                     REAL_TYPE* p,
                     int* bp,
-                    int* bv,
                     int* bcd,
                     double* flop);
   
@@ -613,7 +610,6 @@ extern "C" {
                      REAL_TYPE* vc,
                      REAL_TYPE* p,
                      int* bp,
-                     int* bv,
                      int* bid,
                      int* bcd,
                      double* flop,
@@ -646,7 +642,6 @@ extern "C" {
                           REAL_TYPE* rei,
                           REAL_TYPE* v,
                           REAL_TYPE* vf,
-                          int* bv,
                           int* bid,
                           int* bcd,
                           REAL_TYPE* vcs_coef,
