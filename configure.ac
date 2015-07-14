@@ -400,7 +400,7 @@ AC_CONFIG_FILES([Makefile \
 
 AC_OUTPUT
 
-chmod +x ./ffvc-conf
+chmod +x ./ffvc-config
 
 echo "---------------------------------------------"
 echo "Finished Running FFV-C Configure Script"

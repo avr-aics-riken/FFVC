@@ -7368,7 +7368,7 @@ $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
 
-chmod +x ./ffvc-conf
+chmod +x ./ffvc-config
 
 echo "---------------------------------------------"
 echo "Finished Running FFV-C Configure Script"
