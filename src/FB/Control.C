@@ -353,10 +353,6 @@ void Control::get2ndParameter(ReferenceFrame* RF)
   
   // Reference frame information
   getReferenceFrame(RF);
-
-  
-  // 圧力ノイマン条件のタイプ >> get_Log()よりも先に
-  getWallType();
   
 
   getLog();
@@ -1926,25 +1922,22 @@ void Control::getTurbulenceModel()
   if      ( !strcasecmp(str.c_str(), "no") )
   {
     LES.Calc = OFF;
-  }
-  else if ( !strcasecmp(str.c_str(), "laminar") )
-  {
-    LES.Calc = OFF;
+    LES.Model = LES_no;
   }
   else if ( !strcasecmp(str.c_str(), "smagorinsky") )
   {
     LES.Calc = ON;
-    LES.Model = Smagorinsky;
+    LES.Model = LES_Smagorinsky;
   }
   else if ( !strcasecmp(str.c_str(), "csm") )
   {
     LES.Calc  = ON;
-    LES.Model = CSM;
+    LES.Model = LES_CSM;
   }
   else if ( !strcasecmp(str.c_str(), "wale") )
   {
     LES.Calc  = ON;
-    LES.Model = WALE;
+    LES.Model = LES_WALE;
   }
   else
   {
@@ -1954,8 +1947,9 @@ void Control::getTurbulenceModel()
   
   if ( LES.Calc == OFF ) return;
   
+  
   // スマゴリンスキーモデル
-  if ( LES.Model == Smagorinsky )
+  if ( LES.Model == LES_Smagorinsky )
   {
     // Cs係数
     label = "/TurbulenceModeling/Cs";
@@ -1965,19 +1959,43 @@ void Control::getTurbulenceModel()
       Exit(0);
     }
     LES.Cs = ct;
-    
-    /* damping factor
-    label="/TurbulenceModeling/DampingFactor";
-    if ( !(tpCntl->getInspectedValue(label, ct )) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-      Exit(0);
-    }
-    LES.damping_factor = ct;
-     */
-    
   }
   
+  // 壁面
+  label = "/TurbulenceModeling/VelocityProfile";
+  
+  if ( !(tpCntl->getInspectedValue(label, str)) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  if      ( !strcasecmp(str.c_str(), "slip") )
+  {
+    LES.VelocityProfile = Slip;
+  }
+  else if ( !strcasecmp(str.c_str(), "noslip") )
+  {
+    LES.VelocityProfile = No_Slip;
+  }
+  else if ( !strcasecmp(str.c_str(), "lawofwall") )
+  {
+    LES.VelocityProfile = Law_of_Wall;
+  }
+  else if ( !strcasecmp(str.c_str(), "vandriest") )
+  {
+    LES.VelocityProfile = Van_Driest;
+  }
+  else
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  
+  LES.damping_factor = 25.0;
+  
+  
+  // 初期擾乱
   label = "/TurbulenceModeling/InitialPerturbation";
   if ( !(tpCntl->getInspectedValue(label, str )) )
   {
@@ -2105,33 +2123,6 @@ bool Control::getVec2(const std::string label, REAL_TYPE* v, TextParser* tpc)
   
   return true;
 }
-
-
-// #################################################################
-//壁面上の扱いを指定する
-void Control::getWallType()
-{
-  string str;
-  string label;
-  
-  // 圧力のタイプ
-  label="/TreatmentOfWall/PressureGradient";
-  
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-	  Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
-	  Exit(0);
-  }
-  
-  if     ( !strcasecmp(str.c_str(), "GradZero") )   Mode.PrsNeuamnnType = P_GRAD_ZERO;
-  else if( !strcasecmp(str.c_str(), "GradNS") )     Mode.PrsNeuamnnType = P_GRAD_NS;
-  else
-  {
-    Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
-    Exit(0);
-  }
-}
-
 
 
 // #################################################################
@@ -2654,19 +2645,19 @@ void Control::printSteerConditions(FILE* fp,
   fprintf(fp, "\n\tTurbulence Modeling\n");
   switch (LES.Model)
   {
-    case no:
+    case LES_no:
       fprintf(fp,"\t     Model                    :   Nothing (DNS)\n");
       break;
       
-    case Smagorinsky:
-      fprintf(fp,"\t     Model                    :   Smagorinsky \n");
+    case LES_Smagorinsky:
+      fprintf(fp,"\t     Model                    :   Smagorinsky Cs=%f\n", LES.Cs);
       break;
       
-    case CSM:
+    case LES_CSM:
       fprintf(fp,"\t     Model                    :   Coherent Smagorinsky Model (CSM) \n");
       break;
       
-    case WALE:
+    case LES_WALE:
       fprintf(fp,"\t     Model                    :   Wall-Adapting Local Eddy-viscosity (WALE) \n");
       break;
       
@@ -2675,10 +2666,30 @@ void Control::printSteerConditions(FILE* fp,
       err = false;
   }
   
-  if (LES.Model == Smagorinsky )
+  
+  switch (LES.VelocityProfile)
   {
-    fprintf(fp,"\t     Cs                       :   %f \n", LES.Cs);
+    case No_Slip:
+      fprintf(fp,"\t     Velocity Profile         :   No Slip\n");
+      break;
+      
+    case Slip:
+      fprintf(fp,"\t     Velocity Profile         :   Slip\n");
+      break;
+      
+    case Van_Driest:
+      fprintf(fp,"\t     Velocity Profile         :   Van Driest function\n");
+      break;
+      
+    case Law_of_Wall:
+      fprintf(fp,"\t     Velocity Profile         :   Law of Wall\n");
+      break;
+      
+    default:
+      stamped_printf("Error: Turbulence Modeling section\n");
+      err = false;
   }
+  
   
   if ( LES.InitialPerturbation == ON )
   {

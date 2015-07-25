@@ -371,12 +371,6 @@ TimeControl {
 }
 
 
-TreatmentOfWall {
-  PressureGradient = "GradZero"
-  VelocityProfile  = "NoSlip"
-}
-
-
 TurbulenceModeling {
   Model = "no"
 }

@@ -309,6 +309,7 @@ public:
     int Model;
     int InitialPerturbation;
     int ChannelDir;
+    int VelocityProfile;
     REAL_TYPE Cs;
     REAL_TYPE damping_factor;
     REAL_TYPE BulkVelocity;
@@ -414,18 +415,19 @@ public:
   /** LES Model */
   enum LES_model 
   {
-    no=0,
-    Smagorinsky,
-    CSM,
-    WALE
+    LES_no=0,
+    LES_Smagorinsky,
+    LES_CSM,
+    LES_WALE
   };
   
   /** 壁面の扱い */
-  enum Wall_Condition 
+  enum Wall_Profile
   {
-    No_Slip, // 0
-    Slip,    // 1
-    Log_Law  // 2
+    No_Slip=0,   // 0
+    Slip,        // 1
+    Law_of_Wall, // 2
+    Van_Driest   // 3
   };
   
   
@@ -631,6 +633,7 @@ public:
     LES.BulkVelocity = 0.0;
     LES.ChannelWidth = 0.0;
     LES.TurbulentReynoldsNum = 0.0;
+    LES.VelocityProfile = 0;
 
     
     Hide.Range_Limit = 0;
@@ -730,10 +733,6 @@ protected:
   
   // 入力ファイルに記述するパラメータとファイルの有次元・無次元の指定を取得する
   void getUnit();
-  
-  
-  // 壁面上の扱いを指定する
-  void getWallType();
   
   
   

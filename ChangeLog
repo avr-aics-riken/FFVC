@@ -20,6 +20,11 @@ REVISION HISTORY
 
 --------------------------
 2015-07-25
+r1629 modify wall parameter
+- remove getWallType()
+- add /TurbulenceModeling/VelocityProfile
+- update included user guide
+
 r1628 use MPIPolylib::load_only_in_rank0() and distribute_only_from_rank0()
 - get accurate BC area
 
