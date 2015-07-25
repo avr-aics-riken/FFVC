@@ -1307,7 +1307,7 @@ end if
 !===============
 
 !----------- DNS
-if (imodel == 4) then
+if (imodel == 0) then
   nut = 0.0
 end if
 
@@ -3147,7 +3147,7 @@ nut = (Cw * (dx*dy*dz)**(1.0d0/3.0d0))* (Cw * (dx*dy*dz)**(1.0d0/3.0d0)) * (Sijd
 flop = flop + 213.0d0
 end if
 
-if (imodel == 4) then
+if (imodel == 0) then
 nut = 0.0
 end if
 

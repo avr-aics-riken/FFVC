@@ -127,7 +127,7 @@
 /*
  Bit   bcd[]            bid[]          bcp[]         cdf[]
  31    active           active         active        active
- 30    state                           state         state
+ 30    state            stete          state         state
  29  + BC_D_T           +              BC_D_T        +
  28  | BC_D_B           |              BC_D_B        |
  27  | BC_D_N   VBC     |              BC_D_N        |

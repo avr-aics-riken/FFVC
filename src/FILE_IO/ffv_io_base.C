@@ -355,15 +355,12 @@ void IO_BASE::getFIOparams()
         
         C->varState[var_RmsMeanV] = ON;
         C->NvarsAvr_plt3d += 3;
-        
-        C->Mode.ReynoldsStress = ON;
       }
       else if( !strcasecmp(str.c_str(), "off") )
       {
         C->Mode.StatVelocity = OFF;
         C->varState[var_RmsV] = OFF;
         C->varState[var_RmsMeanV] = OFF;
-        C->Mode.ReynoldsStress = OFF;
       }
       else
       {
@@ -404,6 +401,33 @@ void IO_BASE::getFIOparams()
         Exit(0);
       }
     }
+    
+    
+    // Statistic for Reynolds Stress
+    label="/Output/Data/StatisticalVariables/ReynoldsStress";
+    if ( tpCntl->chkLabel(label) )
+    {
+      if ( !(tpCntl->getInspectedValue(label, str )) )
+      {
+        Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+        Exit(0);
+      }
+      
+      if ( !strcasecmp(str.c_str(), "on") )
+      {
+        C->Mode.ReynoldsStress = ON;
+      }
+      else if( !strcasecmp(str.c_str(), "off") )
+      {
+        C->Mode.ReynoldsStress = OFF;
+      }
+      else
+      {
+        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+        Exit(0);
+      }
+    }
+    
     
     // Statistic for temperature
     if ( C->isHeatProblem() )

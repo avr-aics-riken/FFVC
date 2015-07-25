@@ -20,6 +20,9 @@ REVISION HISTORY
 
 --------------------------
 2015-07-25
+r1630 merge pull request #23 manually and bug fix
+- update user guide : Output statistics
+
 r1629 modify wall parameter
 - remove getWallType()
 - add /TurbulenceModeling/VelocityProfile

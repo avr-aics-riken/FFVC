@@ -1922,22 +1922,22 @@ void Control::getTurbulenceModel()
   if      ( !strcasecmp(str.c_str(), "no") )
   {
     LES.Calc = OFF;
-    LES.Model = LES_no;
+    LES.Model = LES_no; // 0
   }
   else if ( !strcasecmp(str.c_str(), "smagorinsky") )
   {
     LES.Calc = ON;
-    LES.Model = LES_Smagorinsky;
+    LES.Model = LES_Smagorinsky; // 1
   }
   else if ( !strcasecmp(str.c_str(), "csm") )
   {
     LES.Calc  = ON;
-    LES.Model = LES_CSM;
+    LES.Model = LES_CSM; // 2
   }
   else if ( !strcasecmp(str.c_str(), "wale") )
   {
     LES.Calc  = ON;
-    LES.Model = LES_WALE;
+    LES.Model = LES_WALE; // 3
   }
   else
   {

@@ -84,8 +84,6 @@ public:
   REAL_TYPE *d_ap;         ///< [*] 圧力（時間平均値）
   REAL_TYPE *d_av;         ///< [*] 速度（時間平均値）
   REAL_TYPE *d_ae;         ///< [*] 内部エネルギー（時間平均値）
-  REAL_TYPE *d_R_mean;     ///< [*] レイノルズ応力テンソル (時間平均値)
-  REAL_TYPE *d_Prod_mean;  ///< [*] レイノルズ応力生成テンソル (時間平均値)
 
   
   // Adams-bashforth
@@ -113,14 +111,15 @@ public:
   REAL_TYPE *d_rms_mean_p; ///< [*] 圧力の時間平均変動強度
   REAL_TYPE *d_rms_t;      ///< [*] 温度の変動強度
   REAL_TYPE *d_rms_mean_t; ///< [*] 温度の時間平均変動強度
-  REAL_TYPE *d_vp;         ///< [*] 変動速度ベクトル
-  REAL_TYPE *d_R;          ///< [*] レイノルズ応力テンソル
-  REAL_TYPE *d_gav;        ///< [*] 平均速度勾配テンソル
-  REAL_TYPE *d_Prod;       ///< [*] レイノルズ応力生成テンソル
+
   
-  // 統計計算のワーク
-  REAL_TYPE *d_wk;
-  REAL_TYPE *d_twk;
+  // 乱流統計量の詳細
+  REAL_TYPE *d_R;          ///< [*] レイノルズ応力テンソル
+  REAL_TYPE *d_aR;         ///< [*] レイノルズ応力テンソル (時間平均値)
+  REAL_TYPE *d_aP;         ///< [*] 生成項 (時間平均値)
+  REAL_TYPE *d_aE;         ///< [*] 散逸項 (時間平均値)
+  REAL_TYPE *d_aT;         ///< [*] 乱流拡散項 (時間平均値)
+  REAL_TYPE *d_aPI;        ///< [*] 速度圧力勾配相関項 (時間平均値)
   
   
   // 界面計算
@@ -213,16 +212,14 @@ public:
     d_rms_mean_p = NULL;
     d_rms_mean_t = NULL;
     
-    d_vp  = NULL;
+
     d_R   = NULL;
-    d_gav = NULL;
-    d_Prod= NULL;
+    d_aR  = NULL;
+    d_aP  = NULL;
+    d_aE  = NULL;
+    d_aT  = NULL;
+    d_aPI = NULL;
     
-    d_wk = NULL;
-    d_twk= NULL;
-    
-    d_R_mean = NULL;
-    d_Prod_mean = NULL;
     
     d_r_v = NULL;
     d_r_p = NULL;
