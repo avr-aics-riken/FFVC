@@ -904,6 +904,7 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_cdf, const double
       case OBC_WALL:
       case OBC_SPEC_VEL:
         extractVelOBC(face, vec, tm, v00);
+        //printf("vbc=%f %f %f\n", vec[0], vec[1], vec[2]);
         vobc_cc_drchlt_(d_v, size, &gd, &face, vec, nID);
         vobc_face_drchlt_(d_vf, size, &gd, &face, d_cdf, vec, nID);
         break;

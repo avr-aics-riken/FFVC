@@ -19,6 +19,11 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-07-25
+r1628 use MPIPolylib::load_only_in_rank0() and distribute_only_from_rank0()
+- get accurate BC area
+
+--------------------------
 2015-07-14
 r1627 update examples for latest parameters
 - included examples; 2Dcavity, 3Dcavity, 2Dcyl, Jet, LDC, PMT

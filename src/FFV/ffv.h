@@ -158,6 +158,7 @@ private:
   // Polygon管理用
   PolygonProperty* PG;
   
+  
   // 周期境界の方向
   int ensPeriodic[3];
 
@@ -421,6 +422,10 @@ private:
   
   // 各種例題のモデルをセットアップ
   void setModel(double& PrepMemory, double& TotalMemory, FILE* fp);
+  
+  
+  // 境界条件ポリゴンの正しい面積を保持する
+  void SM_getVspecArea(FILE* fp);
   
   
   // 幾何形状情報を準備し，交点計算を行う

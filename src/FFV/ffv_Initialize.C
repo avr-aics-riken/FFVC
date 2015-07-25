@@ -37,7 +37,6 @@ int FFV::Initialize(int argc, char **argv)
   double G_PrepMemory  = 0.0;  ///< 初期化に必要なメモリ量（グローバル）
   double tmp_memory    = 0.0;  ///< 計算に必要なメモリ量（グローバル）
   double flop_task     = 0.0;  ///< flops計算用
-
   
   
   // cpm_ParaManagerのポインタをセット
@@ -3724,6 +3723,75 @@ void FFV::SD_Initialize(const int div_type, TextParser* tp_dom)
 }
 
 
+// #################################################################
+/* @brief 境界条件ポリゴンの正しい面積を保持する
+ * @param [in]     fp       ファイルポインタ
+ * @note マスターのみで実行するメソッド
+ */
+void FFV::SM_getVspecArea(FILE* fp)
+{
+
+  // ポリゴン情報へのアクセス
+  vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
+  
+  // Polygon Groupの数
+  C.num_of_polygrp = pg_roots->size();
+  
+  if ( (C.num_of_polygrp < 1) || (C.num_of_polygrp > C.NoCompo) )
+  {
+    printf (   "\tError : Number of polygon group must be greater than 1 and less than NoCompo.\n");
+    fprintf(fp,"\tError : Number of polygon group must be greater than 1 and less than NoCompo.\n");
+    Exit(0);
+  }
+  
+  fprintf(fp, "\t<< MASTER PROCESS ONLY >>\n");
+  fprintf(fp, "\t   Polygon Group Label       Medium Alias              Local BC     Polygons          Area\n");
+  fprintf(fp, "\t   ---------------------------------------------------------------------------------------\n");
+  
+  
+  vector<PolygonGroup*>::iterator it;
+  
+  // ポリゴンのグループラベルを照合し、cmp[]の格納インデクスから境界条件を割り出す
+  for (it = pg_roots->begin(); it != pg_roots->end(); it++)
+  {
+    std::string m_pg = (*it)->get_name();     // グループラベル
+    std::string m_mat = (*it)->get_label();   // 媒質ラベル
+    std::string m_bc = (*it)->get_type();     // 境界条件ラベル
+    int ntria= (*it)->get_group_num_tria();   // ローカルのポリゴン数
+    REAL_TYPE area = (*it)->get_group_area(); // ローカルのポリゴン面積
+    
+    // cmp[]の格納順を探す
+    int c_id;
+    
+    for (int i=1; i<=C.NoCompo; i++)
+    {
+      if ( FBUtility::compare(m_pg, cmp[i].alias) )
+      {
+        c_id = i;
+        break;
+      }
+    }
+    
+    int typ = cmp[c_id].getType();
+    
+    if ( typ==SPEC_VEL || typ==OUTFLOW )
+    {
+      cmp[c_id].area = area;
+      fprintf(fp,"\t  %20s %18s  %20s %12d  %e\n",
+              m_pg.c_str(),
+              m_mat.c_str(),
+              m_bc.c_str(),
+              ntria,
+              area);
+    }
+  }
+  
+  delete pg_roots;
+  
+  fprintf(fp, "\n\n");
+}
+
+
 
 
 // #################################################################
@@ -3758,8 +3826,6 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   // Polylib: インスタンス取得
   PL = MPIPolylib::get_instance();
   
-  // Polylib: ポリゴングループのFactoryクラスを登録
-  //PL->set_factory( new MyPolygonGroupFactory() );
   
   // Polylib: 並列計算領域情報を設定 >> 有次元
   unsigned  poly_gc[3] = {guide, guide, guide};
@@ -3788,19 +3854,48 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   TIMING_start("Loading_Polygon_File");
   
   // ロード
-  poly_stat = PL->load_rank0( "polylib.tp");
+  //poly_stat = PL->load_rank0( "polylib.tp");
+  poly_stat = PL->load_only_in_rank0( "polylib.tp");
   
   if( poly_stat != PLSTAT_OK )
   {
     Hostonly_
     {
-      printf    ("\tRank [%6d]: p_polylib->load_rank0() failed.", myRank);
-      fprintf(fp,"\tRank [%6d]: p_polylib->load_rank0() failed.", myRank);
+      printf    ("\tRank [%6d]: p_polylib->load_only_in_rank0() failed.", myRank);
+      fprintf(fp,"\tRank [%6d]: p_polylib->load_only_in_rank0() failed.", myRank);
     }
     Exit(0);
   }
   
   TIMING_stop("Loading_Polygon_File");
+  
+  
+  
+  // 内部の速度境界条件を与えるポリゴンの面積をマスターランクのみで正しく求める
+  TIMING_start("Get_Accurate_BC_Area");
+  Hostonly_
+  {
+    SM_getVspecArea(fp);
+  }
+  TIMING_stop("Get_Accurate_BC_Area");
+  
+  
+  // 各ランクに分配
+  TIMING_start("Distributing_Polygon");
+  
+  poly_stat = PL->distribute_only_from_rank0();
+  
+  if( poly_stat != PLSTAT_OK )
+  {
+    Hostonly_
+    {
+      printf    ("\tRank [%6d]: p_polylib->distribute_only_from_rank0() failed.", myRank);
+      fprintf(fp,"\tRank [%6d]: p_polylib->distribute_only_from_rank0() failed.", myRank);
+    }
+    Exit(0);
+  }
+  
+  TIMING_stop("Distributing_Polygon");
   
   
   
@@ -3820,28 +3915,21 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   // Polygon Groupの数
   C.num_of_polygrp = pg_roots->size();
   
-  if ( (C.num_of_polygrp < 1) || (C.num_of_polygrp > C.NoCompo) )
-  {
-    printf (   "\tError : Number of polygon group must be greater than 1 and less than NoCompo.\n");
-    fprintf(fp,"\tError : Number of polygon group must be greater than 1 and less than NoCompo.\n");
-    Exit(0);
-  }
-  
-  
-  Hostonly_
-  {
-    fprintf(fp, "\t   Polygon Group Label       Medium Alias              Local BC     Polygons          Area\n");
-    fprintf(fp, "\t   ---------------------------------------------------------------------------------------\n");
-  }
+  if ( (C.num_of_polygrp < 1) || (C.num_of_polygrp > C.NoCompo) )  Exit(0);
   
   
   // PolygonPropertyの配列
   PG = new PolygonProperty[C.num_of_polygrp];
   
+  Hostonly_ {
+    fprintf(fp, "\t<< ALL PROCESSES >>\n");
+    fprintf(fp, "\t   Polygon Group Label       Medium Alias              Local BC     Polygons          Area\n");
+    fprintf(fp, "\t   ---------------------------------------------------------------------------------------\n");
+  }
   
   vector<PolygonGroup*>::iterator it;
   
-  // ポリゴンのグループラベルを照合し、mat[]の格納インデクスをIDとして割り当てる
+  // ポリゴンのグループラベルを照合し、cmp[]の格納インデクスをIDとして割り当てる
   int c = 0;
   for (it = pg_roots->begin(); it != pg_roots->end(); it++)
   {
@@ -3855,21 +3943,20 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
     PG[c].setLntria(ntria);
     
     
-    // mat[]の格納順を探す
-    int mat_id;
+    // cmp[]の格納順を探す
+    int c_id;
     
     for (int i=1; i<=C.NoCompo; i++)
     {
-      if ( FBUtility::compare(m_pg, mat[i].alias) )
+      if ( FBUtility::compare(m_pg, cmp[i].alias) )
       {
-        mat_id = i;
+        c_id = i;
         break;
       }
     }
-    //printf("mat_id=%d\n", mat_id);
     
     // PolygonにIDを割り当てる
-    poly_stat = (*it)->set_all_exid_of_trias(mat_id);
+    poly_stat = (*it)->set_all_exid_of_trias(c_id);
     
     if ( poly_stat != PLSTAT_OK )
     {
@@ -3892,10 +3979,12 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
     }
     
     
-    // コンポーネント(BC+OBSTACLE)の面積を保持 >> @todo Polylibのバグ?で並列時に正しい値を返さない, ntriaとarea 暫定的処置
-    cmp[mat_id].area = area;
+    // SPEC_VEL, OUTFLOW以外 >> SM_getVspecArea()
+    int typ = cmp[c_id].getType();
+    if ( typ!=SPEC_VEL && typ!=OUTFLOW )  cmp[c_id].area = area;
     
-    PG[c].setID(mat_id);
+    
+    PG[c].setID(c_id);
     PG[c].setGroup(m_pg);
     PG[c].setBClabel(m_bc);
     PG[c].setMaterial(m_mat);
@@ -3904,11 +3993,12 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
     
     Hostonly_
     {
-      fprintf(fp,"\t  %20s %18s  %20s %12d  %e\n", m_pg.c_str(),
+      fprintf(fp,"\t  %20s %18s  %20s %12d  %e\n",
+              m_pg.c_str(),
               m_mat.c_str(),
               m_bc.c_str(),
               ntria,
-              area);
+              cmp[c_id].area);
     }
     
     c++;

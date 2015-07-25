@@ -699,6 +699,8 @@ void FFV::set_timing_label()
   
   set_label("Polylib_Section",         PerfMonitor::CALC, false);
   set_label("Loading_Polygon_File",    PerfMonitor::CALC);
+  set_label("Get_Accurate_BC_Area",    PerfMonitor::CALC);
+  set_label("Distributing_Polygon",    PerfMonitor::COMM);
   set_label("Write_Polygon_File",      PerfMonitor::CALC);
   // Polylib_Section
   
