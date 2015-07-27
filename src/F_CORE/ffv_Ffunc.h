@@ -106,6 +106,7 @@
 #define calc_dissipation_rate_    CALC_DISSIPATION_RATE
 #define calc_turb_transport_rate_ CALC_TURB_TRANSPORT_RATE
 #define calc_vel_pregrad_term_    CALC_VEL_PREGRAD_TERM
+#define averaging_xz_plane_       AVERAGING_XZ_PLANE
 #define perturbu_           PERTURBU
 #define generate_iblank_    GENERATE_IBLANK
 #define pack_scalar_        PACK_SCALAR
@@ -816,6 +817,24 @@ extern "C" {
                                REAL_TYPE* nadd,
                                double* flop);
 
+  void averaging_xz_plane_ (REAL_TYPE* vmean,
+                            REAL_TYPE* rmsmean,
+                            REAL_TYPE* Rmean,
+                            REAL_TYPE* Pmean,
+                            REAL_TYPE* Emean,
+                            REAL_TYPE* Tmean,
+                            REAL_TYPE* PImean,
+                            int*       sz,
+                            int*       g,
+                            REAL_TYPE* v_ave,
+                            REAL_TYPE* rms_ave,
+                            REAL_TYPE* R_ave,
+                            REAL_TYPE* P_ave,
+                            REAL_TYPE* E_ave,
+                            REAL_TYPE* T_ave,
+                            REAL_TYPE* PI_ave,
+                            double* flop
+                            );
 
   void src_trnc_ (REAL_TYPE* rhs,
                   int* sz,

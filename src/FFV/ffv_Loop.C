@@ -180,6 +180,15 @@ int FFV::Loop(const unsigned step)
       
       // (4) 速度圧力勾配相関項 (時間平均値)
       calc_vel_pregrad_term_(d_aPI, size, pitch, &guide, d_v, d_av, d_p, d_ap, d_bcp, &accum, &flop_count);
+      
+      // (5) チャネル乱流統計量 (時間・主流方向・スパン方向平均値) の出力
+      if ( C.Mode.ChannelOutputMean == ON )
+      {
+        if ( (CurrentStepStat % C.Mode.ChannelOutputIter == 0) || (CurrentStep == 1) )
+        {
+          F->OutputMean(d_av, d_rms_mean_v, d_aR, d_aP, d_aE, d_aT, d_aPI, myRank, size, CurrentStepStat, pitch, &guide, flop_count);
+        }
+      };
     }
     
     TIMING_stop("Turbulence Statistic", flop_count);

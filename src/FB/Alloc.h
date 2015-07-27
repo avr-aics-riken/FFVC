@@ -65,11 +65,6 @@ public:
 
   static REAL_TYPE* Real_T3D(const int* sz, const int gc)
   {
-    return Real_S4D(sz, gc, 9);
-  }
-  
-  static REAL_TYPE* Real_ST3D(const int* sz, const int gc)
-  {
     return Real_S4D(sz, gc, 6);
   }
   

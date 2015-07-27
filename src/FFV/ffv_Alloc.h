@@ -121,6 +121,14 @@ public:
   REAL_TYPE *d_aT;         ///< [*] 乱流拡散項 (時間平均値)
   REAL_TYPE *d_aPI;        ///< [*] 速度圧力勾配相関項 (時間平均値)
   
+  REAL_TYPE *d_av_mean;    ///< [*] 速度（時間・主流方向・スパン方向平均値）
+  REAL_TYPE *d_arms_mean;  ///< [*] 乱流強度（時間・主流方向・スパン方向平均値）
+  REAL_TYPE *d_aR_mean;    ///< [*] レイノルズ応力テンソル (時間・主流方向・スパン方向平均値)
+  REAL_TYPE *d_aP_mean;    ///< [*] 生成項 (時間・主流方向・スパン方向平均値)
+  REAL_TYPE *d_aE_mean;    ///< [*] 散逸項 (時間・主流方向・スパン方向平均値)
+  REAL_TYPE *d_aT_mean;    ///< [*] 乱流拡散項 (時間・主流方向・スパン方向平均値)
+  REAL_TYPE *d_aPI_mean;   ///< [*] 速度圧力勾配相関項 (時間・主流方向・スパン方向平均値)
+  
   
   // 界面計算
   REAL_TYPE *d_vof; ///< [*] VOF値
@@ -219,6 +227,14 @@ public:
     d_aE  = NULL;
     d_aT  = NULL;
     d_aPI = NULL;
+    
+    d_av_mean   = NULL;
+    d_arms_mean = NULL;
+    d_aR_mean   = NULL;
+    d_aP_mean   = NULL;
+    d_aE_mean   = NULL;
+    d_aT_mean   = NULL;
+    d_aPI_mean  = NULL;
     
     
     d_r_v = NULL;

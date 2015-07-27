@@ -19,6 +19,10 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-07-26
+r1631 merge the rest of pull request #23
+
+--------------------------
 2015-07-25
 r1630 merge pull request #23 manually and bug fix
 - update user guide : Output statistics

@@ -289,6 +289,8 @@ public:
     int StatPressure;
     int StatTemperature;
     int ReynoldsStress;
+    int ChannelOutputIter;
+    int ChannelOutputMean;
   } Mode_set;
   
   /** 隠しパラメータ */
@@ -623,6 +625,8 @@ public:
     Mode.StatPressure = 0;
     Mode.StatTemperature = 0;
     Mode.ReynoldsStress = 0;
+    Mode.ChannelOutputIter = 0;
+    Mode.ChannelOutputMean = 0;
 
     LES.Calc=0;
     LES.Model=0;

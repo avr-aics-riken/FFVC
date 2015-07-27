@@ -3024,26 +3024,6 @@ void Control::printSteerConditions(FILE* fp,
     }
   }
   
-
-
-  // 壁面の扱い ------------------
-  fprintf(fp,"\n\tCondition of Wall\n");
-  fprintf(fp,"\t     No of surface            :   %ld\n", NoWallSurface);
-  switch (Mode.PrsNeuamnnType)
-  {
-    case P_GRAD_ZERO:
-      fprintf(fp,"\t     Pressure Gradient        :   Neumann Zero\n");
-      break;
-      
-    case P_GRAD_NS:
-      fprintf(fp,"\t     Pressure Gradient        :   Navier-Stokes\n");
-      break;
-      
-    default:
-      stamped_printf("Error: Wall treatment section\n");
-      err=false;
-      break;
-  }
   
   
   // 派生変数 ------------------
