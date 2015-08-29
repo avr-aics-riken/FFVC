@@ -239,7 +239,7 @@ void SPH::initFileOut(const int id_cell, const int id_bcf)
   
   // Pressure
   comp = 1;
-  DFI_OUT_PRS = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+  DFI_OUT_PRS = cdm_DFI::WriteInit(paraMngr->GetMPI_Comm(procGrp),
                                    cdm_DFI::Generate_DFI_Name(f_Pressure),
                                    path,
                                    f_Pressure,
@@ -277,13 +277,13 @@ void SPH::initFileOut(const int id_cell, const int id_bcf)
   DFI_OUT_PRS->AddUnit("Velocity", UnitV, (double)C->RefVelocity);
   DFI_OUT_PRS->AddUnit("Pressure", UnitP, (double)C->BasePrs, DiffPrs, true);
   
-  DFI_OUT_PRS->WriteProcDfiFile(MPI_COMM_WORLD, true, id_cell, id_bcf);
+  DFI_OUT_PRS->WriteProcDfiFile(paraMngr->GetMPI_Comm(procGrp), true, id_cell, id_bcf);
   
   
   
   // Velocity
   comp = 3;
-  DFI_OUT_VEL = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+  DFI_OUT_VEL = cdm_DFI::WriteInit(paraMngr->GetMPI_Comm(procGrp),
                                    cdm_DFI::Generate_DFI_Name(f_Velocity),
                                    path,
                                    f_Velocity,
@@ -324,7 +324,7 @@ void SPH::initFileOut(const int id_cell, const int id_bcf)
   
   // Fvelocity
   comp = 3;
-  DFI_OUT_FVEL = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+  DFI_OUT_FVEL = cdm_DFI::WriteInit(paraMngr->GetMPI_Comm(procGrp),
                                     cdm_DFI::Generate_DFI_Name(f_Fvelocity),
                                     path,
                                     f_Fvelocity,
@@ -367,7 +367,7 @@ void SPH::initFileOut(const int id_cell, const int id_bcf)
   if ( C->isHeatProblem() )
   {
     comp = 1;
-    DFI_OUT_TEMP = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+    DFI_OUT_TEMP = cdm_DFI::WriteInit(paraMngr->GetMPI_Comm(procGrp),
                                       cdm_DFI::Generate_DFI_Name(f_Temperature),
                                       path,
                                       f_Temperature,
@@ -414,7 +414,7 @@ void SPH::initFileOut(const int id_cell, const int id_bcf)
     
     // Pressure
     comp = 1;
-    DFI_OUT_PRSA = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+    DFI_OUT_PRSA = cdm_DFI::WriteInit(paraMngr->GetMPI_Comm(procGrp),
                                       cdm_DFI::Generate_DFI_Name(f_AvrPressure),
                                       path,
                                       f_AvrPressure,
@@ -455,7 +455,7 @@ void SPH::initFileOut(const int id_cell, const int id_bcf)
     
     // Velocity
     comp = 3;
-    DFI_OUT_VELA = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+    DFI_OUT_VELA = cdm_DFI::WriteInit(paraMngr->GetMPI_Comm(procGrp),
                                       cdm_DFI::Generate_DFI_Name(f_AvrVelocity),
                                       path,
                                       f_AvrVelocity,
@@ -498,7 +498,7 @@ void SPH::initFileOut(const int id_cell, const int id_bcf)
     if ( C->isHeatProblem() )
     {
       comp = 1;
-      DFI_OUT_TEMPA = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+      DFI_OUT_TEMPA = cdm_DFI::WriteInit(paraMngr->GetMPI_Comm(procGrp),
                                          cdm_DFI::Generate_DFI_Name(f_AvrTemperature),
                                          path,
                                          f_AvrTemperature,
@@ -546,7 +546,7 @@ void SPH::initFileOut(const int id_cell, const int id_bcf)
   if (C->varState[var_TotalP] == ON )
   {
     comp = 1;
-    DFI_OUT_TP = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+    DFI_OUT_TP = cdm_DFI::WriteInit(paraMngr->GetMPI_Comm(procGrp),
                                     cdm_DFI::Generate_DFI_Name(f_TotalP),
                                     path,
                                     f_TotalP,
@@ -590,7 +590,7 @@ void SPH::initFileOut(const int id_cell, const int id_bcf)
   if (C->varState[var_Vorticity] == ON )
   {
     comp = 3;
-    DFI_OUT_VRT = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+    DFI_OUT_VRT = cdm_DFI::WriteInit(paraMngr->GetMPI_Comm(procGrp),
                                      cdm_DFI::Generate_DFI_Name(f_Vorticity),
                                      path,
                                      f_Vorticity,
@@ -632,7 +632,7 @@ void SPH::initFileOut(const int id_cell, const int id_bcf)
   if ( C->varState[var_Qcr] == ON )
   {
     comp = 1;
-    DFI_OUT_I2VGT = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+    DFI_OUT_I2VGT = cdm_DFI::WriteInit(paraMngr->GetMPI_Comm(procGrp),
                                        cdm_DFI::Generate_DFI_Name(f_I2VGT),
                                        path,
                                        f_I2VGT,
@@ -676,7 +676,7 @@ void SPH::initFileOut(const int id_cell, const int id_bcf)
   if ( C->varState[var_Helicity] == ON )
   {
     comp = 1;
-    DFI_OUT_HLT = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+    DFI_OUT_HLT = cdm_DFI::WriteInit(paraMngr->GetMPI_Comm(procGrp),
                                      cdm_DFI::Generate_DFI_Name(f_Helicity),
                                      path,
                                      f_Helicity,
@@ -719,7 +719,7 @@ void SPH::initFileOut(const int id_cell, const int id_bcf)
   if ( C->varState[var_Div] == ON )
   {
     comp = 1;
-    DFI_OUT_DIV = cdm_DFI::WriteInit(MPI_COMM_WORLD,
+    DFI_OUT_DIV = cdm_DFI::WriteInit(paraMngr->GetMPI_Comm(procGrp),
                                      cdm_DFI::Generate_DFI_Name(f_DivDebug),
                                      path,
                                      f_DivDebug,
@@ -1508,10 +1508,10 @@ void SPH::RestartStatistic(FILE* fp,
   // Statistical dataの初期化
   if ( C->Mode.Statistic == ON && C->Interval[Control::tg_statistic].isStarted(m_CurrentStep, m_CurrentTime) )
   {
-    DFI_IN_PRSA = cdm_DFI::ReadInit(MPI_COMM_WORLD, f_dfi_in_prsa, G_size, gdiv, cdm_error);
+    DFI_IN_PRSA = cdm_DFI::ReadInit(paraMngr->GetMPI_Comm(procGrp), f_dfi_in_prsa, G_size, gdiv, cdm_error);
     if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
     
-    DFI_IN_VELA = cdm_DFI::ReadInit(MPI_COMM_WORLD, f_dfi_in_vela, G_size, gdiv, cdm_error);
+    DFI_IN_VELA = cdm_DFI::ReadInit(paraMngr->GetMPI_Comm(procGrp), f_dfi_in_vela, G_size, gdiv, cdm_error);
     if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
     
     if ( DFI_IN_PRSA == NULL || DFI_IN_VELA == NULL ) Exit(0);
@@ -1519,7 +1519,7 @@ void SPH::RestartStatistic(FILE* fp,
     
     if ( C->isHeatProblem() )
     {
-      DFI_IN_TEMPA = cdm_DFI::ReadInit(MPI_COMM_WORLD, f_dfi_in_tempa, G_size, gdiv, cdm_error);
+      DFI_IN_TEMPA = cdm_DFI::ReadInit(paraMngr->GetMPI_Comm(procGrp), f_dfi_in_tempa, G_size, gdiv, cdm_error);
       if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
       if ( DFI_IN_TEMPA == NULL ) Exit(0);
     }
@@ -1803,26 +1803,26 @@ void SPH::Restart(FILE* fp, unsigned& m_CurrentStep, double& m_CurrentTime)
     // Instantaneous dataの初期化
     
     // Pressure
-    DFI_IN_PRS = cdm_DFI::ReadInit(MPI_COMM_WORLD, f_dfi_in_prs, G_size, gdiv, cdm_error);
+    DFI_IN_PRS = cdm_DFI::ReadInit(paraMngr->GetMPI_Comm(procGrp), f_dfi_in_prs, G_size, gdiv, cdm_error);
     if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
     
     
     // Velocity
-    DFI_IN_VEL = cdm_DFI::ReadInit(MPI_COMM_WORLD, f_dfi_in_vel, G_size, gdiv, cdm_error);
+    DFI_IN_VEL = cdm_DFI::ReadInit(paraMngr->GetMPI_Comm(procGrp), f_dfi_in_vel, G_size, gdiv, cdm_error);
     if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
     
     if ( DFI_IN_PRS == NULL || DFI_IN_VEL == NULL ) Exit(0);
     
     
     // Fvelocity
-    DFI_IN_FVEL = cdm_DFI::ReadInit(MPI_COMM_WORLD, f_dfi_in_fvel, G_size, gdiv, cdm_error);
+    DFI_IN_FVEL = cdm_DFI::ReadInit(paraMngr->GetMPI_Comm(procGrp), f_dfi_in_fvel, G_size, gdiv, cdm_error);
     if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
     if ( DFI_IN_FVEL == NULL ) Exit(0);
     
     // Temperature
     if ( C->isHeatProblem() )
     {
-      DFI_IN_TEMP = cdm_DFI::ReadInit(MPI_COMM_WORLD, f_dfi_in_temp, G_size, gdiv, cdm_error);
+      DFI_IN_TEMP = cdm_DFI::ReadInit(paraMngr->GetMPI_Comm(procGrp), f_dfi_in_temp, G_size, gdiv, cdm_error);
       if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
       if ( DFI_IN_TEMP == NULL ) Exit(0);
     }
@@ -1851,10 +1851,10 @@ void SPH::Restart(FILE* fp, unsigned& m_CurrentStep, double& m_CurrentTime)
     /* Statistical dataの初期化
      if ( C->Mode.Statistic == ON && C->Interval[Control::tg_statistic].isStarted(CurrentStep, CurrentTime) )
      {
-     DFI_IN_PRSA = cdm_DFI::ReadInit(MPI_COMM_WORLD, C->f_dfi_in_prsa, G_size, gdiv, cdm_error);
+     DFI_IN_PRSA = cdm_DFI::ReadInit(paraMngr->GetMPI_Comm(procGrp), C->f_dfi_in_prsa, G_size, gdiv, cdm_error);
      if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
      
-     DFI_IN_VELA = cdm_DFI::ReadInit(MPI_COMM_WORLD, C->f_dfi_in_vela, G_size, gdiv, cdm_error);
+     DFI_IN_VELA = cdm_DFI::ReadInit(paraMngr->GetMPI_Comm(procGrp), C->f_dfi_in_vela, G_size, gdiv, cdm_error);
      if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
      
      if ( DFI_IN_PRSA == NULL || DFI_IN_VELA == NULL ) Exit(0);
@@ -1862,7 +1862,7 @@ void SPH::Restart(FILE* fp, unsigned& m_CurrentStep, double& m_CurrentTime)
      
      if ( C->isHeatProblem() )
      {
-     DFI_IN_TEMPA = cdm_DFI::ReadInit(MPI_COMM_WORLD, C->f_dfi_in_tempa, G_size, gdiv, cdm_error);
+     DFI_IN_TEMPA = cdm_DFI::ReadInit(paraMngr->GetMPI_Comm(procGrp), C->f_dfi_in_tempa, G_size, gdiv, cdm_error);
      if ( cdm_error != CDM::E_CDM_SUCCESS ) Exit(0);
      if ( DFI_IN_TEMPA == NULL ) Exit(0);
      }
