@@ -166,7 +166,7 @@ void VoxInfo::chkOrder (const int* bcd)
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   if ( c > 0 )
@@ -439,7 +439,7 @@ unsigned long VoxInfo::countCC (const int order, const int* bcd, CompoList* cmp)
   if ( numProc > 1 )
   {
     unsigned long tmp = g;
-    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   return g;
@@ -635,7 +635,7 @@ unsigned long VoxInfo::countCF(const int key, const int* bcd, const int* bid, Co
   if ( numProc > 1 )
   {
     unsigned long tmp = g;
-    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   return g;
@@ -680,7 +680,7 @@ void VoxInfo::countCellState (unsigned long& Lcell, unsigned long& Gcell, const 
   if ( numProc > 1 )
   {
     unsigned long c_tmp = g_cell;
-    if ( paraMngr->Allreduce(&c_tmp, &g_cell, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &g_cell, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   Gcell = g_cell;
@@ -808,7 +808,7 @@ void VoxInfo::countOpenAreaOfDomain (const int* bx, REAL_TYPE* OpenArea)
   {
     unsigned tmp[NOFACE];
     for (int i=0; i<NOFACE; i++) tmp[i] = m_area[i];
-    if ( paraMngr->Allreduce(tmp, m_area, NOFACE, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(tmp, m_area, NOFACE, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   for (int i=0; i<NOFACE; i++) OpenArea[i] = (REAL_TYPE)m_area[i];
@@ -920,7 +920,7 @@ unsigned long VoxInfo::countValidCellOBC (const int face, const int* cdf, const 
   if ( numProc > 1 )
   {
     unsigned long tmp = g;
-    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   return g;
@@ -1021,7 +1021,7 @@ void VoxInfo::encActive (unsigned long& Lcell, unsigned long& Gcell, int* bx, co
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   Gcell = c;
@@ -1572,7 +1572,7 @@ void VoxInfo::encPbitN (int* bx, const int* bid, const long long* cut, const boo
     if ( numProc > 1 )
     {
       unsigned long tmp = g;
-      if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     Hostonly_ printf("\tThe number of cells which are excluded to convergence judgement by cut = %ld\n\n", g);
@@ -1713,7 +1713,7 @@ schedule(static) reduction(+:g)
   if ( numProc > 1 )
   {
     unsigned long tmp = g;
-    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   return g;
@@ -2110,7 +2110,7 @@ unsigned long VoxInfo::encQface (const int order,
   if ( numProc > 1 )
   {
     unsigned long tmp = g;
-    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   return g;
@@ -2328,7 +2328,7 @@ unsigned long VoxInfo::encVbitIBC (const int order,
   if ( numProc > 1 )
   {
     unsigned long tmp = g;
-    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   return g;
@@ -2512,7 +2512,7 @@ unsigned long VoxInfo::encVbitIBCrev (const int order,
   if ( numProc > 1 )
   {
     unsigned long tmp = g;
-    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&tmp, &g, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   return g;
@@ -2868,7 +2868,7 @@ void VoxInfo::paintCutIDonGC (int* bcd, const int* bid, unsigned long* painted, 
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   painted[X_minus] = c;
   
@@ -2897,7 +2897,7 @@ void VoxInfo::paintCutIDonGC (int* bcd, const int* bid, unsigned long* painted, 
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   painted[X_plus] = c;
   
@@ -2926,7 +2926,7 @@ void VoxInfo::paintCutIDonGC (int* bcd, const int* bid, unsigned long* painted, 
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   painted[Y_minus] = c;
   
@@ -2955,7 +2955,7 @@ void VoxInfo::paintCutIDonGC (int* bcd, const int* bid, unsigned long* painted, 
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   painted[Y_plus] = c;
   
@@ -2984,7 +2984,7 @@ void VoxInfo::paintCutIDonGC (int* bcd, const int* bid, unsigned long* painted, 
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   painted[Z_minus] = c;
   
@@ -3013,7 +3013,7 @@ void VoxInfo::paintCutIDonGC (int* bcd, const int* bid, unsigned long* painted, 
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   painted[Z_plus] = c;
   
@@ -3566,22 +3566,22 @@ void VoxInfo::setOBCperiodic (int* bcd, const int* ens)
     // X方向
     if ( ens[0] == ON )
     {
-      if ( paraMngr->PeriodicCommS3D(bcd, ix, jx, kx, gd, 1, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->PeriodicCommS3D(bcd, ix, jx, kx, gd, 1, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(bcd, ix, jx, kx, gd, 1, X_DIR, PLUS2MINUS, procGrp) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(bcd, ix, jx, kx, gd, 1, X_DIR, MINUS2PLUS, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     // Y方向
     if ( ens[1] == ON )
     {
-      if ( paraMngr->PeriodicCommS3D(bcd, ix, jx, kx, gd, 1, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->PeriodicCommS3D(bcd, ix, jx, kx, gd, 1, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(bcd, ix, jx, kx, gd, 1, Y_DIR, PLUS2MINUS, procGrp) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(bcd, ix, jx, kx, gd, 1, Y_DIR, MINUS2PLUS, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     // Z方向
     if ( ens[2] == ON )
     {
-      if ( paraMngr->PeriodicCommS3D(bcd, ix, jx, kx, gd, 1, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->PeriodicCommS3D(bcd, ix, jx, kx, gd, 1, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(bcd, ix, jx, kx, gd, 1, Z_DIR, PLUS2MINUS, procGrp) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(bcd, ix, jx, kx, gd, 1, Z_DIR, MINUS2PLUS, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
   }

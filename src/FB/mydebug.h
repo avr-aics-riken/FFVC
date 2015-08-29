@@ -31,12 +31,12 @@
 #define Exit(x) \
 ((void)printf("exit at %s:%u\n", __FILE__, __LINE__), exit((x)))
 
-#define mark() printf("%s (%d) [%d]:\n",__FILE__, __LINE__, paraMngr->GetMyRankID())
+#define mark() printf("%s (%d) [%d]:\n",__FILE__, __LINE__, paraMngr->GetMyRankID(procGrp))
 
 #define stamped_printf printf("%s (%d):  ",__FILE__, __LINE__), printf
 #define stamped_fprintf fprintf(fp, "%s (%d):  ",__FILE__, __LINE__), fprintf
 
-#define Hostonly_ if(paraMngr->GetMyRankID()==0) 
+#define Hostonly_ if(paraMngr->GetMyRankID(procGrp)==0) 
 
 #define TIMING__ if ( ModeTiming == ON )
 

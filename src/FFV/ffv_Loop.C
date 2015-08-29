@@ -62,7 +62,7 @@ int FFV::Loop(const unsigned step)
   {
     TIMING_start("All_Reduce");
     REAL_TYPE vMax_tmp = vMax;
-    if ( paraMngr->Allreduce(&vMax_tmp, &vMax, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&vMax_tmp, &vMax, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     TIMING_stop( "All_Reduce", 2.0*numProc*sizeof(REAL_TYPE) ); // 双方向 x ノード数
   }
   
@@ -221,7 +221,7 @@ int FFV::Loop(const unsigned step)
       src[n+3] = avr_Var[n];
     }
     
-    if ( paraMngr->Allreduce(src, dst, 6, MPI_SUM) != CPM_SUCCESS) Exit(0); // 変数 x (平均値+変動値)
+    if ( paraMngr->Allreduce(src, dst, 6, MPI_SUM, procGrp) != CPM_SUCCESS) Exit(0); // 変数 x (平均値+変動値)
     
     for (int n=0; n<3; n++) {
       rms_Var[n] = dst[n];
@@ -463,7 +463,7 @@ int FFV::Loop(const unsigned step)
   if ( numProc > 1 )
   {
     int tmp = isNormal;
-    if ( paraMngr->Allreduce(&tmp, &isNormal, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&tmp, &isNormal, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   

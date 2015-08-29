@@ -111,7 +111,7 @@ void FFV::PS_Binary()
   if ( numProc > 1 )
   {
     TIMING_start("Sync_Thermal");
-    if ( paraMngr->BndCommS3D(d_ws, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_ws, size[0], size[1], size[2], guide, guide, procGrp) != CPM_SUCCESS ) Exit(0);
     TIMING_stop("Sync_Thermal", face_comm_size*guide*sizeof(REAL_TYPE));
   }
   
@@ -137,7 +137,7 @@ void FFV::PS_Binary()
   if ( numProc > 1 )
   {
     TIMING_start("Sync_Thermal_QBC");
-    if ( paraMngr->BndCommS4DEx(d_qbc, 6, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS4DEx(d_qbc, 6, size[0], size[1], size[2], guide, guide, procGrp) != CPM_SUCCESS ) Exit(0);
     TIMING_stop("Sync_Thermal_QBC", face_comm_size*6.0*guide*sizeof(REAL_TYPE)); // 6成分
   }
   */
@@ -175,7 +175,7 @@ void FFV::PS_Binary()
     if ( numProc > 1 )
     {
       TIMING_start("Sync_Thermal");
-      if ( paraMngr->BndCommS3D(d_ie, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->BndCommS3D(d_ie, size[0], size[1], size[2], guide, guide, procGrp) != CPM_SUCCESS ) Exit(0);
       TIMING_stop("Sync_Thermal", face_comm_size*guide*sizeof(REAL_TYPE));
     }
     
@@ -185,7 +185,7 @@ void FFV::PS_Binary()
     {
       TIMING_start("A_R_Thermal_Diff_Res");
       double tmp = res;
-      if ( paraMngr->Allreduce(&tmp, &res, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(&tmp, &res, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
       TIMING_stop("A_R_Thermal_Diff_Res", 2.0*numProc*sizeof(REAL_TYPE) ); // 双方向 x ノード数
     }
     LSt->setError( sqrt(res) ); // RMS

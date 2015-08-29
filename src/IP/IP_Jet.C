@@ -634,7 +634,7 @@ void IP_Jet::setOBC(const int face, int* bcd, Control* R, REAL_TYPE* G_org, cons
   
   
   // 隣接ランクのIDを取得 nID[6]
-  const int* nID = paraMngr->GetNeighborRankID();
+  const int* nID = paraMngr->GetNeighborRankID(procGrp);
   
   
   

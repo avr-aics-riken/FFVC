@@ -770,10 +770,10 @@ void IO_BASE::RestartDisplayMinmax(FILE* fp, double& flop)
   if ( numProc > 1 )
   {
     REAL_TYPE vmin_tmp[3] = {vec_min[0], vec_min[1], vec_min[2]};
-    if( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+    if( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
     
     REAL_TYPE vmax_tmp[3] = {vec_max[0], vec_max[1], vec_max[2]};
-    if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   Hostonly_ fprintf(stdout, "\t\tVelocity U      : min=%13.6e / max=%13.6e\n", vec_min[0], vec_max[0]);
@@ -790,10 +790,10 @@ void IO_BASE::RestartDisplayMinmax(FILE* fp, double& flop)
   if ( numProc > 1 )
   {
     REAL_TYPE vmin_tmp[3] = {vec_min[0], vec_min[1], vec_min[2]};
-    if( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+    if( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
     
     REAL_TYPE vmax_tmp[3] = {vec_max[0], vec_max[1], vec_max[2]};
-    if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   Hostonly_ fprintf(stdout, "\t\tFace Velocity U : min=%13.6e / max=%13.6e\n", vec_min[0], vec_max[0]);
@@ -810,10 +810,10 @@ void IO_BASE::RestartDisplayMinmax(FILE* fp, double& flop)
   if ( numProc > 1 )
   {
     REAL_TYPE min_tmp = f_min;
-    if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+    if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
     
     REAL_TYPE max_tmp = f_max;
-    if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   Hostonly_ fprintf(stdout, "\t\tPressure        : min=%13.6e / max=%13.6e\n", f_min, f_max);
@@ -828,10 +828,10 @@ void IO_BASE::RestartDisplayMinmax(FILE* fp, double& flop)
     if ( numProc > 1 )
     {
       REAL_TYPE min_tmp = f_min;
-      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       REAL_TYPE max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     Hostonly_ fprintf(stdout, "\t\tTemperature    : min=%13.6e / max=%13.6e\n", f_min, f_max);
@@ -913,7 +913,7 @@ int IO_BASE::writeBCflag(const int out_gc)
   if (IO_BCflag != ON) return 0;
   
   unsigned bitWidth = 5;
-  int rank = paraMngr->GetMyRankID();
+  int rank = paraMngr->GetMyRankID(procGrp);
   
   int ix = size[0];
   int jx = size[1];
@@ -980,7 +980,7 @@ int IO_BASE::writeCellID(const int out_gc)
   if (IO_Voxel != voxel_BVX) return 0;
   
   unsigned bitWidth = 5;
-  int rank = paraMngr->GetMyRankID();
+  int rank = paraMngr->GetMyRankID(procGrp);
   
   int ix = size[0];
   int jx = size[1];
@@ -1109,7 +1109,7 @@ void IO_BASE::writeRawSPH(const REAL_TYPE *vf,
   
   if ( paraMngr->IsParallel() )
   {
-    sprintf( sph_fname, "field%010d.sph", paraMngr->GetMyRankID() );
+    sprintf( sph_fname, "field%010d.sph", paraMngr->GetMyRankID(procGrp) );
   }
   else
   {
@@ -1268,7 +1268,7 @@ void IO_BASE::writeRawSPH(const int *array)
   
   if ( paraMngr->IsParallel() )
   {
-    sprintf( sph_fname, "field%010d.sph", paraMngr->GetMyRankID() );
+    sprintf( sph_fname, "field%010d.sph", paraMngr->GetMyRankID(procGrp) );
   }
   else
   {
@@ -1394,7 +1394,7 @@ bool IO_BASE::writeSVX(const int* array, const bool flag)
   char svx_fname[512];
   
   if ( paraMngr->IsParallel() ) {
-    sprintf( svx_fname, "example_%06d.svx", paraMngr->GetMyRankID() );
+    sprintf( svx_fname, "example_%06d.svx", paraMngr->GetMyRankID(procGrp) );
   } else {
     sprintf( svx_fname, "example.svx" );
   }

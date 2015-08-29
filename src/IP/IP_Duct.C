@@ -216,7 +216,7 @@ void IP_Duct::setup(int* bcd,
   int gd = guide;
   
   // 隣接ランクのIDを取得 nID[6]
-  const int* nID = paraMngr->GetNeighborRankID();
+  const int* nID = paraMngr->GetNeighborRankID(procGrp);
   
   ox = origin[0];
   oy = origin[1];

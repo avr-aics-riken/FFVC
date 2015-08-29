@@ -844,7 +844,7 @@ void SetBC3D::OuterTBCdiffusion(REAL_TYPE* d_qbc, REAL_TYPE* d_ie, const REAL_TY
     if ( numProc > 1 )
     {
       REAL_TYPE tmp = va;
-      if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
+      if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM, procGrp) != CPM_SUCCESS )
       {
         Hostonly_ printf("Allreduce Error\n");
         Exit(0);
@@ -883,13 +883,13 @@ void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_cdf, const double
         vobc_cf_tfree_(d_vf, size, &gd, &face, nID);
         //if ( numProc > 1 )
         //{
-        //  if ( paraMngr->BndCommV3D(d_vf, size[0], size[1], size[2], gd, gd) != CPM_SUCCESS ) Exit(0);
+        //  if ( paraMngr->BndCommV3D(d_vf, size[0], size[1], size[2], gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
         //}
         
         vobc_cc_tfree_(d_v, size, &gd, &face, d_vf, nID);
         if ( numProc > 1 )
         {
-          if ( paraMngr->BndCommV3D(d_v, size[0], size[1], size[2], gd, gd) != CPM_SUCCESS ) Exit(0);
+          if ( paraMngr->BndCommV3D(d_v, size[0], size[1], size[2], gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
         }
         break;
         
@@ -1021,22 +1021,22 @@ void SetBC3D::PobcPeriodicSimple(REAL_TYPE* d_p, const int* ens)
     // X方向
     if ( (ens[0] == ON) && (obc[X_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) )
     {
-      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, X_DIR, PLUS2MINUS, procGrp) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, X_DIR, MINUS2PLUS, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     // Y方向
     if ( (ens[1] == ON) && (obc[Y_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) )
     {
-      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Y_DIR, PLUS2MINUS, procGrp) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Y_DIR, MINUS2PLUS, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     // Z方向
     if ( (ens[2] == ON) && (obc[Z_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) )
     {
-      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Z_DIR, PLUS2MINUS, procGrp) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Z_DIR, MINUS2PLUS, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
   }
@@ -1134,7 +1134,7 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int* ens)
     // X方向
     if ( (ens[0] == ON) && (obc[X_minus].getPrdcMode() == BoundaryOuter::prdc_Directional) )
     {
-      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, X_DIR, PLUS2MINUS, procGrp) != CPM_SUCCESS ) Exit(0);
       if ( nID[X_minus] < 0 )
       {
         // 上流面か下流面かで，圧力差の方向を逆転する
@@ -1151,7 +1151,7 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int* ens)
       }
 
       
-      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, X_DIR, MINUS2PLUS, procGrp) != CPM_SUCCESS ) Exit(0);
       if ( nID[X_plus] < 0 )
       {
         pv = FBUtility::convPrsD2ND(obc[X_plus].p, BasePrs, rho_0, RefV, Unit_Prs);
@@ -1170,7 +1170,7 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int* ens)
     // Y方向
     if ( (ens[1] == ON) && (obc[Y_minus].getPrdcMode() == BoundaryOuter::prdc_Directional) )
     {
-      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Y_DIR, PLUS2MINUS, procGrp) != CPM_SUCCESS ) Exit(0);
       if ( nID[Y_minus] >= 0 )
       {
         pv = FBUtility::convPrsD2ND(obc[Y_minus].p, BasePrs, rho_0, RefV, Unit_Prs);
@@ -1185,7 +1185,7 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int* ens)
         }
       }
       
-      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Y_DIR, MINUS2PLUS, procGrp) != CPM_SUCCESS ) Exit(0);
       if ( nID[Y_plus] < 0 )
       {
         pv = FBUtility::convPrsD2ND(obc[Y_plus].p, BasePrs, rho_0, RefV, Unit_Prs);
@@ -1205,7 +1205,7 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int* ens)
     // Z方向
     if ( (ens[2] == ON) && (obc[Z_minus].getPrdcMode() == BoundaryOuter::prdc_Directional) )
     {
-      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Z_DIR, PLUS2MINUS, procGrp) != CPM_SUCCESS ) Exit(0);
       if ( nID[Z_minus] < 0 )
       {
         pv = FBUtility::convPrsD2ND(obc[Z_minus].p, BasePrs, rho_0, RefV, Unit_Prs);
@@ -1220,7 +1220,7 @@ void SetBC3D::PobcPeriodicDirectional(REAL_TYPE* d_p, const int* ens)
         }
       }
       
-      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_p, ix, jx, kx, gd, 1, Z_DIR, MINUS2PLUS, procGrp) != CPM_SUCCESS ) Exit(0);
       if ( nID[Z_plus] < 0 )
       {
         pv = FBUtility::convPrsD2ND(obc[Z_plus].p, BasePrs, rho_0, RefV, Unit_Prs);
@@ -1621,7 +1621,7 @@ REAL_TYPE SetBC3D::psIbcHeatflux(REAL_TYPE* d_qbc, const int* d_cdf, const int n
   if ( numProc > 1 )
   {
 		REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
+    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM, procGrp) != CPM_SUCCESS )
     {
       Hostonly_ printf("Allreduce Error\n");
       Exit(0);
@@ -1772,7 +1772,7 @@ schedule(static) reduction(+:va)
   if ( numProc > 1 )
   {
 		REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
+    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM, procGrp) != CPM_SUCCESS )
     {
       Hostonly_ printf("Allreduce Error\n");
       Exit(0);
@@ -1910,7 +1910,7 @@ schedule(static) reduction(+:va)
   if ( numProc > 1 )
   {
 		REAL_TYPE tmp = va;
-		if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+		if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
 	}
   
   return va;
@@ -2020,7 +2020,7 @@ REAL_TYPE SetBC3D::psIbcSpecVH (REAL_TYPE* d_ws, const int* d_cdf, const int n, 
   if ( numProc > 1 )
   {
 		REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
 	}
   
   return va;
@@ -2122,7 +2122,7 @@ schedule(static) reduction(+:va)
   if ( numProc > 1 )
   {
 		REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
 	}
   
   return va;
@@ -2225,7 +2225,7 @@ schedule(static) reduction(+:va)
   if ( numProc > 1 )
   {
     REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
+    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM, procGrp) != CPM_SUCCESS )
     {
       Hostonly_ printf("Allreduce Error\n");
       Exit(0);
@@ -2348,7 +2348,7 @@ schedule(static) reduction(+:va)
   if ( numProc > 1 )
   {
     REAL_TYPE tmp = va;
-    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   return va;
@@ -3456,22 +3456,22 @@ void SetBC3D::setBCIperiodic(int* d_bx, const int* ens)
     // X方向
     if ( ens[0] == ON )
     {
-      if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, X_DIR, PLUS2MINUS, procGrp) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, X_DIR, MINUS2PLUS, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     // Y方向
     if ( ens[1] == ON )
     {
-      if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, Y_DIR, PLUS2MINUS, procGrp) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, Y_DIR, MINUS2PLUS, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     // Z方向
     if ( ens[2] == ON )
     {
-      if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, Z_DIR, PLUS2MINUS, procGrp) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_bx, ix, jx, kx, gd, 1, Z_DIR, MINUS2PLUS, procGrp) != CPM_SUCCESS ) Exit(0);
     }
   } 
   else // 逐次処理
@@ -3700,7 +3700,7 @@ void SetBC3D::TBCconvection(REAL_TYPE* d_ws, const int* d_cdf, const REAL_TYPE* 
     if ( numProc > 1 )
     {
       REAL_TYPE tmp = va;
-      if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM) != CPM_SUCCESS )
+      if ( paraMngr->Allreduce(&tmp, &va, 1, MPI_SUM, procGrp) != CPM_SUCCESS )
       {
         Hostonly_ printf("Allreduce Error\n");
         Exit(0);
@@ -3755,8 +3755,8 @@ void SetBC3D::TobcPeriodicSimple(REAL_TYPE* d_ie, const int* ens)
         ( (obc[X_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) ||
           (obc[X_minus].getPrdcMode() == BoundaryOuter::prdc_Directional) ))
     {
-      if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, X_DIR, PLUS2MINUS, procGrp) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, X_DIR, MINUS2PLUS, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     // Y方向
@@ -3764,8 +3764,8 @@ void SetBC3D::TobcPeriodicSimple(REAL_TYPE* d_ie, const int* ens)
         ( (obc[Y_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) ||
           (obc[Y_minus].getPrdcMode() == BoundaryOuter::prdc_Directional) ))
     {
-      if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, Y_DIR, PLUS2MINUS, procGrp) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, Y_DIR, MINUS2PLUS, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     // Z方向
@@ -3773,8 +3773,8 @@ void SetBC3D::TobcPeriodicSimple(REAL_TYPE* d_ie, const int* ens)
         ( (obc[Z_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) ||
           (obc[Z_minus].getPrdcMode() == BoundaryOuter::prdc_Directional) ))
     {
-      if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, Z_DIR, PLUS2MINUS, procGrp) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommS3D(d_ie, ix, jx, kx, gd, gd, Z_DIR, MINUS2PLUS, procGrp) != CPM_SUCCESS ) Exit(0);
     }
   }
   else  // Serial
@@ -3874,8 +3874,8 @@ void SetBC3D::VobcPeriodicSimple(REAL_TYPE* d_v, const int* ens)
         ( (obc[X_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) ||
           (obc[X_minus].getPrdcMode() == BoundaryOuter::prdc_Directional)) )
     {
-      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, X_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, X_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, X_DIR, PLUS2MINUS, procGrp) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, X_DIR, MINUS2PLUS, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     // Y方向
@@ -3883,8 +3883,8 @@ void SetBC3D::VobcPeriodicSimple(REAL_TYPE* d_v, const int* ens)
         ( (obc[Y_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) ||
           (obc[Y_minus].getPrdcMode() == BoundaryOuter::prdc_Directional)) )
     {
-      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Y_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Y_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Y_DIR, PLUS2MINUS, procGrp) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Y_DIR, MINUS2PLUS, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     // Z方向
@@ -3892,8 +3892,8 @@ void SetBC3D::VobcPeriodicSimple(REAL_TYPE* d_v, const int* ens)
         ( (obc[Z_minus].getPrdcMode() == BoundaryOuter::prdc_Simple) ||
           (obc[Z_minus].getPrdcMode() == BoundaryOuter::prdc_Directional)) )
     {
-      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Z_DIR, PLUS2MINUS) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Z_DIR, MINUS2PLUS) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Z_DIR, PLUS2MINUS, procGrp) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->PeriodicCommV3D(d_v, ix, jx, kx, gd, gd, Z_DIR, MINUS2PLUS, procGrp) != CPM_SUCCESS ) Exit(0);
     }
   }
   else // Serial

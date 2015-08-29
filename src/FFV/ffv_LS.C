@@ -40,7 +40,7 @@ bool LinearSolver::Fcheck(double* var, const double b_l2, const double r0_l2)
       tmp[0] = var[0];
       tmp[1] = var[1];
       tmp[2] = var[2];
-      if ( paraMngr->Allreduce(tmp, var, 3, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(tmp, var, 3, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
       TIMING_stop("A_R_Convergence", 6.0*numProc*sizeof(double) ); // 双方向 x ノード数　x 3
     }
     
@@ -121,7 +121,7 @@ double LinearSolver::Fdot1(REAL_TYPE* x)
   {
     TIMING_start("A_R_Dot");
     double xy_tmp = xy;
-    if  ( paraMngr->Allreduce(&xy_tmp, &xy, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if  ( paraMngr->Allreduce(&xy_tmp, &xy, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
     TIMING_stop("A_R_Dot", 2.0*numProc*sizeof(double) );
   }
   
@@ -143,7 +143,7 @@ double LinearSolver::Fdot2(REAL_TYPE* x, REAL_TYPE* y)
   {
     TIMING_start("A_R_Dot");
     double xy_tmp = xy;
-    if  ( paraMngr->Allreduce(&xy_tmp, &xy, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if  ( paraMngr->Allreduce(&xy_tmp, &xy, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
     TIMING_stop("A_R_Dot", 2.0*numProc*sizeof(double) );
   }
   
@@ -409,7 +409,7 @@ int LinearSolver::SOR2_SMA(REAL_TYPE* x, REAL_TYPE* b, const REAL_TYPE dt, const
         
         if ( getSyncMode() == comm_sync )
         {
-          if ( paraMngr->BndCommS3D(x, size[0], size[1], size[2], guide, 1) != CPM_SUCCESS ) Exit(0); // 1 layer communication
+          if ( paraMngr->BndCommS3D(x, size[0], size[1], size[2], guide, 1, procGrp) != CPM_SUCCESS ) Exit(0); // 1 layer communication
         }
         else
         {
@@ -444,15 +444,15 @@ void LinearSolver::SyncScalar(REAL_TYPE* d_class, const int num_layer)
     
     if ( getSyncMode() == comm_sync )
     {
-      if ( paraMngr->BndCommS3D(d_class, size[0], size[1], size[2], guide, num_layer) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->BndCommS3D(d_class, size[0], size[1], size[2], guide, num_layer, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     else
     {
       MPI_Request req[12];
       for (int i=0; i<12; i++) req[i] = MPI_REQUEST_NULL;
       
-      if ( paraMngr->BndCommS3D_nowait(d_class, size[0], size[1], size[2], guide, num_layer, req ) != CPM_SUCCESS ) Exit(0);
-      if ( paraMngr->wait_BndCommS3D  (d_class, size[0], size[1], size[2], guide, num_layer, req ) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->BndCommS3D_nowait(d_class, size[0], size[1], size[2], guide, num_layer, req , procGrp) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->wait_BndCommS3D  (d_class, size[0], size[1], size[2], guide, num_layer, req , procGrp) != CPM_SUCCESS ) Exit(0);
     }
     TIMING_stop("Sync_Poisson", face_comm_size*(double)num_layer*sizeof(REAL_TYPE));
   }
@@ -533,7 +533,7 @@ void FFV::Fgmres(IterationCtl* IC, const double rhs_nrm, const double r0)
     if ( numProc > 1 )
     {
       double tmp = res_abs;
-      if ( paraMngr->Allreduce(&tmp, &res_abs, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(&tmp, &res_abs, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     TIMING_stop(tm_gmres_comm, 2.0*numProc*sizeof(double)); // 双方向 x ノード数
     
@@ -592,7 +592,7 @@ void FFV::Fgmres(IterationCtl* IC, const double rhs_nrm, const double r0)
         if ( numProc > 1 )
         {
           double tmp = al;
-          if ( paraMngr->Allreduce(&tmp, &al, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+          if ( paraMngr->Allreduce(&tmp, &al, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
         }
         TIMING_stop(tm_gmres_comm, 2.0*numProc*sizeof(double)); // 双方向 x ノード数
         
@@ -612,7 +612,7 @@ void FFV::Fgmres(IterationCtl* IC, const double rhs_nrm, const double r0)
       if ( numProc > 1 )
       {
         double tmp = al;
-        if ( paraMngr->Allreduce(&tmp, &al, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Allreduce(&tmp, &al, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
       }
       TIMING_stop(tm_gmres_comm, 2.0*numProc*sizeof(double)); // 双方向 x ノード数
       

@@ -215,7 +215,7 @@ void FFV::NS_FS_E_CDS()
   if ( numProc > 1 )
   {
     TIMING_start("Sync_Pvec");
-    if ( paraMngr->BndCommV3D(d_vc, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommV3D(d_vc, size[0], size[1], size[2], guide, guide, procGrp) != CPM_SUCCESS ) Exit(0);
     TIMING_stop("Sync_Pvec", face_comm_size*3.0*guide*sizeof(REAL_TYPE)); // ガイドセル数 x ベクトル
   }
   
@@ -291,7 +291,7 @@ void FFV::NS_FS_E_CDS()
   {
     TIMING_start("A_R_Poisson_Src_L2");
     double m_tmp = b_l2;
-    if ( paraMngr->Allreduce(&m_tmp, &b_l2, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&m_tmp, &b_l2, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
     TIMING_stop("A_R_Poisson_Src_L2", 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
   }
   
@@ -313,7 +313,7 @@ void FFV::NS_FS_E_CDS()
     {
       TIMING_start("A_R_Poisson_Init_Res_L2");
       double m_tmp = res0_l2;
-      if ( paraMngr->Allreduce(&m_tmp, &res0_l2, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(&m_tmp, &res0_l2, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
       TIMING_stop("A_R_Poisson_Init_Res_L2", 2.0*numProc*sizeof(double) ); // 双方向 x ノード数
     }
     
@@ -402,7 +402,7 @@ void FFV::NS_FS_E_CDS()
         }
         
         TIMING_start("A_R_Projection_VBC");
-        if ( paraMngr->Allreduce(m_snd, m_rcv, 2*(C.NoCompo+1), MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Allreduce(m_snd, m_rcv, 2*(C.NoCompo+1), MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
         TIMING_stop("A_R_Projection_VBC", 2.0*C.NoCompo*numProc*sizeof(REAL_TYPE)*2.0 ); // 双方向 x ノード数 x 変数
         
         for (int n=1; n<=C.NoCompo; n++)
@@ -439,7 +439,7 @@ void FFV::NS_FS_E_CDS()
         }
         
         TIMING_start("A_R_Projection_Forcing");
-        if ( paraMngr->Allreduce(m_snd, m_rcv, 2*(C.NoCompo+1), MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Allreduce(m_snd, m_rcv, 2*(C.NoCompo+1), MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
         TIMING_stop("A_R_Projection_Forcing", 2.0*(C.NoCompo+1)*numProc*sizeof(REAL_TYPE)*2.0);
         
         for (int n=1; n<=C.NoCompo; n++)
@@ -493,7 +493,7 @@ void FFV::NS_FS_E_CDS()
   if ( numProc > 1 )
   {
     TIMING_start("Sync_Velocity");
-    if ( paraMngr->BndCommV3D(d_v, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommV3D(d_v, size[0], size[1], size[2], guide, guide, procGrp) != CPM_SUCCESS ) Exit(0);
     TIMING_stop("Sync_Velocity", face_comm_size*guide*3.0*sizeof(REAL_TYPE));
   }
   
@@ -514,7 +514,7 @@ void FFV::NS_FS_E_CDS()
     if ( numProc > 1 )
     {
       TIMING_start(tm_LES_eddy_comm);
-      if ( paraMngr->BndCommS3D(d_vt, size[0], size[1], size[2], guide, guide) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->BndCommS3D(d_vt, size[0], size[1], size[2], guide, guide, procGrp) != CPM_SUCCESS ) Exit(0);
       TIMING_stop(tm_LES_eddy_comm, face_comm_size*guide*sizeof(REAL_TYPE));
     }
   }*/
