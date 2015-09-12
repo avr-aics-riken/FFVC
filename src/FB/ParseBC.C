@@ -1966,16 +1966,26 @@ void ParseBC::loadBCs(Control* C, MediumList* mat, CompoList* cmp)
   int m = 1;
   for (vector<string>::iterator it = nodes.begin(); it != nodes.end(); it++)
   {
-    // ラベル名の重複チェック
-    for (int i=0; i<m; i++)
+    // 外部境界条件だけを抽出
+    label_leaf = label_base + "/" + (*it);
+    label = label_leaf + "/kind";
+    
+    tpCntl->getInspectedValue(label, str);
+    
+    
+    if ( !strcasecmp( str.c_str(), "outer" ) )
     {
-      if ( BaseBc[i].alias == *it )
+      // ラベル名の重複チェック
+      for (int i=0; i<m; i++)
       {
-        Hostonly_ printf("\t Label duplication %s/%s\n", label_base.c_str(), (*it).c_str());
-        Exit(0);
+        if ( BaseBc[i].alias == *it )
+        {
+          Hostonly_ printf("\t Label duplication %s/%s\n", label_base.c_str(), (*it).c_str());
+          Exit(0);
+        }
       }
+      m++;
     }
-    m++;
   }
   
   

@@ -166,7 +166,7 @@ Here is examples.
       CXX=mpicxx \
       CXXFLAGS="-O3 -fopenmp" \
       F90=mpif90 \
-      F90FLAGS="-O3 -cpp -fopenmp -ffree-form"
+      F90FLAGS="-O3 -cpp -fopenmp -ffree-form --free-line-length-none"
 
 
 ## for K-computer

@@ -20,6 +20,8 @@ REVISION HISTORY
 
 --------------------------
 2015-09-12
+r1635 bugfix: check duplication in loadBCs()
+
 r1634 version 2.4.0
 - version 2.4.x => PMlib that corresponds to process group
 
