@@ -908,7 +908,7 @@ void ASD::setupPolygonASD(const string fname, bool flag)
   poly_org[1] = G_origin[1];
   poly_org[2] = G_origin[2];
    
-  poly_stat = PL->init_parallel_info(MPI_COMM_WORLD,
+  poly_stat = PL->init_parallel_info(paraMngr->GetMPI_Comm(procGrp),
                                      poly_org,         // 自ランクの基点座標
                                      (unsigned*)size,  // 自ランクの分割数
                                      poly_gc,          // ガイドセル数

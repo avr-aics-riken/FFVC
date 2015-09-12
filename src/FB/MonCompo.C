@@ -98,11 +98,11 @@ bool MonitorCompo::allReduceSum(REAL_TYPE* array, int n, REAL_TYPE* sendBuf)
   
   if( sizeof(REAL_TYPE) == 8 )
   {
-    if( MPI_Allreduce(sendBuf, array, n, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD) != MPI_SUCCESS ) return false;
+    if( MPI_Allreduce(sendBuf, array, n, MPI_DOUBLE, MPI_SUM, paraMngr->GetMPI_Comm(procGrp)) != MPI_SUCCESS ) return false;
   }
   else
   {
-    if( MPI_Allreduce(sendBuf, array, n, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD) != MPI_SUCCESS ) return false;
+    if( MPI_Allreduce(sendBuf, array, n, MPI_FLOAT, MPI_SUM, paraMngr->GetMPI_Comm(procGrp)) != MPI_SUCCESS ) return false;
   }
   
   return true;
@@ -133,12 +133,12 @@ bool MonitorCompo::allReduceSum(int* array, int n, unsigned long* sendBuf)
   if ( numProc <= 1 ) return true;
   
   //for (int i = 0; i < n; i++) sendBuf[i] = array[i];
-  //if ( MPI_Allreduce(sendBuf, array, n, MPI_INT, MPI_SUM, MPI_COMM_WORLD) != MPI_SUCCESS ) return false;
+  //if ( MPI_Allreduce(sendBuf, array, n, MPI_INT, MPI_SUM, GetMPI_Comm(procGrp)) != MPI_SUCCESS ) return false;
   
   // 一度ulongへキャストし、チェック
   unsigned long* recvBuf = new unsigned long[n];
   for (int i = 0; i < n; i++) sendBuf[i] = (unsigned long)array[i];
-  if ( MPI_Allreduce(sendBuf, recvBuf, n, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD) != MPI_SUCCESS ) return false;
+  if ( MPI_Allreduce(sendBuf, recvBuf, n, MPI_UNSIGNED_LONG, MPI_SUM, paraMngr->GetMPI_Comm(procGrp)) != MPI_SUCCESS ) return false;
   
   for (int i = 0; i < n; i++)
   {
@@ -436,7 +436,7 @@ unsigned long MonitorCompo::clearMonitorCut()
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   return c;
@@ -496,11 +496,11 @@ void MonitorCompo::gatherSampledScalar(REAL_TYPE* s, REAL_TYPE* sRecvBuf)
   {
     if ( sizeof(REAL_TYPE) == 8 )
     {
-      if( MPI_Gather(s, nPoint, MPI_DOUBLE, sRecvBuf, nPoint, MPI_DOUBLE, 0, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);
+      if( MPI_Gather(s, nPoint, MPI_DOUBLE, sRecvBuf, nPoint, MPI_DOUBLE, 0, paraMngr->GetMPI_Comm(procGrp)) != MPI_SUCCESS ) Exit(0);
     }
     else
     {
-      if( MPI_Gather(s, nPoint, MPI_FLOAT, sRecvBuf, nPoint, MPI_FLOAT, 0, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);
+      if( MPI_Gather(s, nPoint, MPI_FLOAT, sRecvBuf, nPoint, MPI_FLOAT, 0, paraMngr->GetMPI_Comm(procGrp)) != MPI_SUCCESS ) Exit(0);
     }
   }
   
@@ -550,11 +550,11 @@ void MonitorCompo::gatherSampledVector(Vec3r* v, REAL_TYPE* vSendBuf, REAL_TYPE*
   {
     if ( sizeof(REAL_TYPE) == 8 )
     {
-      if( MPI_Gather(vSendBuf, nPoint*3, MPI_DOUBLE, vRecvBuf, nPoint*3, MPI_DOUBLE, 0, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);
+      if( MPI_Gather(vSendBuf, nPoint*3, MPI_DOUBLE, vRecvBuf, nPoint*3, MPI_DOUBLE, 0, paraMngr->GetMPI_Comm(procGrp)) != MPI_SUCCESS ) Exit(0);
     }
     else
     {
-      if( MPI_Gather(vSendBuf, nPoint*3, MPI_FLOAT, vRecvBuf, nPoint*3, MPI_FLOAT, 0, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);
+      if( MPI_Gather(vSendBuf, nPoint*3, MPI_FLOAT, vRecvBuf, nPoint*3, MPI_FLOAT, 0, paraMngr->GetMPI_Comm(procGrp)) != MPI_SUCCESS ) Exit(0);
     }
   }
   
@@ -1631,7 +1631,7 @@ void MonitorCompo::setRankArray()
   // gather max rank number
   if ( numProc > 1 ) 
   {
-    if ( MPI_Allreduce(sendBuf, rank, nPoint, MPI_INT, MPI_MAX, MPI_COMM_WORLD) != MPI_SUCCESS ) Exit(0);
+    if ( MPI_Allreduce(sendBuf, rank, nPoint, MPI_INT, MPI_MAX, paraMngr->GetMPI_Comm(procGrp)) != MPI_SUCCESS ) Exit(0);
   }
   else 
   {

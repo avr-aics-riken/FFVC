@@ -176,7 +176,7 @@ int main( int argc, char **argv )
   init_end = cpm_Base::GetWTime();
   
   // シグナルハンドラの初期化
-  FFV_TerminateCtrl::initialize(); 
+  FFV_TerminateCtrl::initialize();
   
   
   

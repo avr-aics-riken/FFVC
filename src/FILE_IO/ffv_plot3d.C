@@ -49,7 +49,7 @@ void PLT3D::getRestartDFI()
     
     int ierror=0;
     
-    if ( (ierror = tp_index->read(f_dfi_in_ins)) != TP_NO_ERROR )
+    if ( (ierror = tp_index->read_local(f_dfi_in_ins)) != TP_NO_ERROR )
     {
       Hostonly_ stamped_printf("\tError at reading '%s' file : %d\n", f_dfi_in_ins.c_str(), ierror);
       Exit(0);
@@ -208,10 +208,10 @@ void PLT3D::initFileOut(const int id_cell, const int id_bcf)
   
   if ( numProc > 1)
   {
-    const int* p_tail = paraMngr->GetVoxelTailIndex();
+    const int* p_tail = paraMngr->GetVoxelTailIndex(procGrp);
     for (int i=0; i<3; i++ ) cdm_tail[i]=p_tail[i]+1;
     
-    const int* p_div = paraMngr->GetDivNum();
+    const int* p_div = paraMngr->GetDivNum(procGrp);
     for (int i=0; i<3; i++ ) cdm_div[i] = p_div[i];
   }
   
@@ -298,7 +298,7 @@ void PLT3D::initFileOut(const int id_cell, const int id_bcf)
   
   
   // 瞬時値と派生データ
-  DFI_OUT_INS = cdm_DFI::WriteInit(MPI_COMM_WORLD, ///<MPI コミュニケータ
+  DFI_OUT_INS = cdm_DFI::WriteInit(paraMngr->GetMPI_Comm(procGrp), ///<MPI コミュニケータ
                                    cdm_DFI::Generate_DFI_Name(f_dfi_out_ins), ///<dfi ファイル名
                                    path,          ///<出力ディレクトリ
                                    f_dfi_out_ins, ///<ベースファイル名
@@ -338,7 +338,7 @@ void PLT3D::initFileOut(const int id_cell, const int id_bcf)
   
   
   // Proc file
-  DFI_OUT_INS->WriteProcDfiFile(MPI_COMM_WORLD, true, id_cell, id_bcf);
+  DFI_OUT_INS->WriteProcDfiFile(paraMngr->GetMPI_Comm(procGrp), true, id_cell, id_bcf);
   
 
   
@@ -367,7 +367,7 @@ void PLT3D::initFileOut(const int id_cell, const int id_bcf)
   // 統計値
   if ( C->Mode.Statistic == ON )
   {
-    DFI_OUT_STAT = cdm_DFI::WriteInit(MPI_COMM_WORLD, ///< MPI コミュニケータ
+    DFI_OUT_STAT = cdm_DFI::WriteInit(paraMngr->GetMPI_Comm(procGrp), ///< MPI コミュニケータ
                                       cdm_DFI::Generate_DFI_Name(f_dfi_out_stat), ///<dfi ファイル名
                                       path,           ///< 出力ディレクトリ
                                       f_dfi_out_stat, ///< ベースファイル名
@@ -471,7 +471,7 @@ void PLT3D::OutputStatisticalVarables(const unsigned m_CurrentStep,
   
   if ( !DFI_OUT_STAT )
   {
-    printf("[%d] DFI_OUT_TEMPA Pointer Error\n", paraMngr->GetMyRankID());
+    printf("[%d] DFI_OUT_TEMPA Pointer Error\n", paraMngr->GetMyRankID(procGrp));
     Exit(-1);
   }
   
@@ -495,10 +495,10 @@ void PLT3D::OutputStatisticalVarables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       REAL_TYPE min_tmp = f_min;
-      if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       REAL_TYPE max_tmp = f_max;
-      if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     minmax[var++] = f_min;  ///<<< p min
@@ -518,10 +518,10 @@ void PLT3D::OutputStatisticalVarables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       REAL_TYPE vmin_tmp[3] = {vec_min[0], vec_min[1], vec_min[2]};
-      if ( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       REAL_TYPE vmax_tmp[3] = {vec_max[0], vec_max[1], vec_max[2]};
-      if ( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     minmax[var++] = vec_min[0]; ///<<< vec_u min
@@ -551,10 +551,10 @@ void PLT3D::OutputStatisticalVarables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       REAL_TYPE min_tmp = f_min;
-      if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       REAL_TYPE max_tmp = f_max;
-      if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     minmax[var++] = f_min; ///<<< t min
@@ -579,10 +579,10 @@ void PLT3D::OutputStatisticalVarables(const unsigned m_CurrentStep,
       if ( numProc > 1 )
       {
         REAL_TYPE vmin_tmp[3] = {vec_min[0], vec_min[1], vec_min[2]};
-        if( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+        if( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
         
         REAL_TYPE vmax_tmp[3] = {vec_max[0], vec_max[1], vec_max[2]};
-        if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+        if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
       }
       
       minmax[var++] = vec_min[0]; ///<<< vec_u min
@@ -608,10 +608,10 @@ void PLT3D::OutputStatisticalVarables(const unsigned m_CurrentStep,
       if ( numProc > 1 )
       {
         REAL_TYPE vmin_tmp[3] = {vec_min[0], vec_min[1], vec_min[2]};
-        if( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+        if( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
         
         REAL_TYPE vmax_tmp[3] = {vec_max[0], vec_max[1], vec_max[2]};
-        if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+        if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
       }
       
       minmax[var++] = vec_min[0]; ///<<< vec_u min
@@ -650,10 +650,10 @@ void PLT3D::OutputStatisticalVarables(const unsigned m_CurrentStep,
       if ( numProc > 1 )
       {
         REAL_TYPE min_tmp = f_min;
-        if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
         
         REAL_TYPE max_tmp = f_max;
-        if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
       }
       
       minmax[var++] = f_min;  ///<<< p min
@@ -682,10 +682,10 @@ void PLT3D::OutputStatisticalVarables(const unsigned m_CurrentStep,
       if ( numProc > 1 )
       {
         REAL_TYPE min_tmp = f_min;
-        if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
         
         REAL_TYPE max_tmp = f_max;
-        if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
       }
       
       minmax[var++] = f_min;  ///<<< p min
@@ -709,10 +709,10 @@ void PLT3D::OutputStatisticalVarables(const unsigned m_CurrentStep,
       if ( numProc > 1 )
       {
         REAL_TYPE min_tmp = f_min;
-        if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
         
         REAL_TYPE max_tmp = f_max;
-        if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
       }
       
       minmax[var++] = f_min; ///<<< t min
@@ -732,10 +732,10 @@ void PLT3D::OutputStatisticalVarables(const unsigned m_CurrentStep,
       if ( numProc > 1 )
       {
         REAL_TYPE min_tmp = f_min;
-        if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
         
         REAL_TYPE max_tmp = f_max;
-        if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
       }
       
       minmax[var++] = f_min; ///<<< t min
@@ -808,7 +808,7 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
   
   if( !DFI_OUT_INS )
   {
-    printf("[%d] DFI_OUT_INS Pointer Error\n", paraMngr->GetMyRankID());
+    printf("[%d] DFI_OUT_INS Pointer Error\n", paraMngr->GetMyRankID(procGrp));
     Exit(-1);
   }
   
@@ -835,10 +835,10 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       REAL_TYPE min_tmp = f_min;
-      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       REAL_TYPE max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     minmax[var++] = f_min; ///<<< p min
     minmax[var++] = f_max; ///<<< p max
@@ -858,10 +858,10 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       REAL_TYPE vmin_tmp[3] = {vec_min[0], vec_min[1], vec_min[2]};
-      if( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       REAL_TYPE vmax_tmp[3] = {vec_max[0], vec_max[1], vec_max[2]};
-      if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     minmax[var++] = vec_min[0]; ///<<< vec_u min
@@ -887,10 +887,10 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       REAL_TYPE vmin_tmp[3] = {vec_min[0], vec_min[1], vec_min[2]};
-      if( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       REAL_TYPE vmax_tmp[3] = {vec_max[0], vec_max[1], vec_max[2]};
-      if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     minmax[var++] = vec_min[0]; ///<<< vec_u min
@@ -918,10 +918,10 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       REAL_TYPE min_tmp = f_min;
-      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       REAL_TYPE max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     minmax[var++] = f_min;
     minmax[var++] = f_max;
@@ -950,10 +950,10 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       REAL_TYPE min_tmp = f_min;
-      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       REAL_TYPE max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     minmax[var++] = f_min;
     minmax[var++] = f_max;
@@ -978,10 +978,10 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       REAL_TYPE vmin_tmp[3] = {vec_min[0], vec_min[1], vec_min[2]};
-      if( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(vmin_tmp, vec_min, 3, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       REAL_TYPE vmax_tmp[3] = {vec_max[0], vec_max[1], vec_max[2]};
-      if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(vmax_tmp, vec_max, 3, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     minmax[var++] = vec_min[0]; ///<<< vec_u min
@@ -1008,10 +1008,10 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       REAL_TYPE min_tmp = f_min;
-      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       REAL_TYPE max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     minmax[var++] = f_min;
     minmax[var++] = f_max;
@@ -1031,10 +1031,10 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       REAL_TYPE min_tmp = f_min;
-      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       REAL_TYPE max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
 
     minmax[var++] = f_min;
@@ -1055,10 +1055,10 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
     if ( numProc > 1 )
     {
       REAL_TYPE min_tmp = f_min;
-      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&min_tmp, &f_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
       
       REAL_TYPE max_tmp = f_max;
-      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+      if( paraMngr->Allreduce(&max_tmp, &f_max, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
     }
 
     minmax[var++] = f_min;
@@ -1169,7 +1169,7 @@ void PLT3D::RestartStatistic(FILE* fp,
   
   if ( numProc > 1)
   {
-    const int* m_div = paraMngr->GetDivNum();
+    const int* m_div = paraMngr->GetDivNum(procGrp);
     for (int i=0; i<3; i++ ) gdiv[i]=m_div[i];
   }
   
@@ -1182,7 +1182,7 @@ void PLT3D::RestartStatistic(FILE* fp,
   if ( C->Mode.Statistic == ON && C->Interval[Control::tg_statistic].isStarted(m_CurrentStep, m_CurrentTime) )
   {
     // 読込み用インスタンスのポインタ取得
-    DFI_IN_STAT = cdm_DFI::ReadInit(MPI_COMM_WORLD,
+    DFI_IN_STAT = cdm_DFI::ReadInit(paraMngr->GetMPI_Comm(procGrp),
                                    f_dfi_in_stat,
                                    G_size,
                                    gdiv,
@@ -1396,7 +1396,7 @@ void PLT3D::RestartInstantaneous(FILE* fp,
   int gdiv[3] = {1, 1, 1};
   if ( numProc > 1)
   {
-    const int* m_div = paraMngr->GetDivNum();
+    const int* m_div = paraMngr->GetDivNum(procGrp);
     for (int i=0; i<3; i++ ) gdiv[i]=m_div[i];
   }
   
@@ -1577,14 +1577,14 @@ void PLT3D::Restart(FILE* fp, unsigned& m_CurrentStep, double& m_CurrentTime)
     
     if ( numProc > 1)
     {
-      const int* p_div = paraMngr->GetDivNum();
+      const int* p_div = paraMngr->GetDivNum(procGrp);
       for (int i=0; i<3; i++ ) gdiv[i]=p_div[i];
     }
     
     
     // Instantaneous dataの初期化
     
-    DFI_IN_INS = cdm_DFI::ReadInit(MPI_COMM_WORLD,
+    DFI_IN_INS = cdm_DFI::ReadInit(paraMngr->GetMPI_Comm(procGrp),
                                    f_dfi_in_ins,
                                    G_size,
                                    gdiv,

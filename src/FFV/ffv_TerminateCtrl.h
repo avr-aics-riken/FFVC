@@ -28,7 +28,8 @@ class FFV_TerminateCtrl
 {
 protected:
   /** コンストラクタ */
-  FFV_TerminateCtrl(){};
+  FFV_TerminateCtrl(){
+  };
 
   /** デストラクタ */
   ~FFV_TerminateCtrl(){};

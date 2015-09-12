@@ -19,7 +19,14 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-09-12
+r1634 version 2.4.0
+- version 2.4.x => PMlib that corresponds to process group
+
+--------------------------
 2015-07-27
+r1633 introduce process group
+
 r1632 update PMlib-4.0.1
 
 --------------------------

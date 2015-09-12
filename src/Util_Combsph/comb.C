@@ -605,7 +605,7 @@ void COMB::ReadDfiFiles()
   CDM::E_CDM_ERRORCODE ret = CDM::E_CDM_SUCCESS;
   for (it = dfi_name.begin(); it != dfi_name.end(); it++) {
     string fname=(*it).c_str();
-    cdm_DFI* dfi_in = cdm_DFI::ReadInit(MPI_COMM_WORLD,
+    cdm_DFI* dfi_in = cdm_DFI::ReadInit(paraMngr->GetMPI_Comm(procGrp),
                                         fname,
                                         tempg,
                                         tempd,

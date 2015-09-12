@@ -33,6 +33,7 @@ bool FFV_TerminateCtrl::m_ffvTerminateFlag;
 // シグナルハンドラの初期化
 void FFV_TerminateCtrl::initialize()
 {
+  
   // 中断フラグにfalseをセット
   FFV_TerminateCtrl::m_ffvTerminateFlag = false;
 

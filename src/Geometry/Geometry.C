@@ -64,7 +64,7 @@ unsigned long Geometry::assignVF(const int target, const REAL_TYPE value, const 
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   return c;
@@ -138,7 +138,7 @@ void Geometry::assureUniqueLabel(int* labelTop, int* labelsz, vector<int>& tbl, 
   // ラベル数の収集
   if ( numProc > 1 )
   {
-    if ( paraMngr->Allgather(&LabelSize, 1, labelsz, 1) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allgather(&LabelSize, 1, labelsz, 1, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   else // serial
   {
@@ -245,7 +245,7 @@ void Geometry::assureUniqueLabel(int* labelTop, int* labelsz, vector<int>& tbl, 
   // ガイドセルの情報交換 >> makeConnectList()
   if ( numProc > 1 )
   {
-    if ( paraMngr->BndCommS3D(mid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(mid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
   }
 }
 
@@ -552,7 +552,7 @@ unsigned long Geometry::countCellB(const int* bcd, const int m_id, const bool pa
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   return c;
@@ -627,7 +627,7 @@ unsigned long Geometry::countCellM(const int* mid,
     if ( numProc > 1 )
     {
       unsigned long c_tmp = c;
-      if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
     }
   }
   
@@ -667,7 +667,7 @@ bool Geometry::fill(int* d_bcd,
   if ( numProc > 1 )
   {
     unsigned long tmp_fc = total_cell;
-    if ( paraMngr->Allreduce(&tmp_fc, &total_cell, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&tmp_fc, &total_cell, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   
@@ -767,7 +767,7 @@ bool Geometry::fillConnected(int* d_bcd,
       if ( numProc > 1 )
       {
         unsigned long c_tmp = filled;
-        if ( paraMngr->Allreduce(&c_tmp, &filled, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->Allreduce(&c_tmp, &filled, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
       }
   
       // 内部点の場合にはfilled==1のはず
@@ -789,7 +789,7 @@ bool Geometry::fillConnected(int* d_bcd,
 
   if ( numProc > 1 )
   {
-    if ( paraMngr->BndCommS3D(d_bcd, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_bcd, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
   }
 
   
@@ -823,7 +823,7 @@ bool Geometry::fillConnected(int* d_bcd,
     
     if ( numProc > 1 )
     {
-      if ( paraMngr->BndCommS3D(d_bcd, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->BndCommS3D(d_bcd, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     target_count -= filled;
@@ -1005,7 +1005,7 @@ schedule(static) reduction(+:filled)
   if ( numProc > 1 )
   {
     unsigned long tmp = filled;
-    if ( paraMngr->Allreduce(&tmp, &filled, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&tmp, &filled, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   return filled;
@@ -1064,9 +1064,9 @@ unsigned long Geometry::fillFluidRegion(int* mid, const int* bcd)
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
     
-    if ( paraMngr->BndCommS3D(mid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(mid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
   }
 
   
@@ -1552,7 +1552,7 @@ bool Geometry::gatherLabels(int* buffer,
   // ラベル数の収集
   if ( numProc > 1 )
   {
-    if ( paraMngr->Allgather(wk, width_label, buffer, width_label) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allgather(wk, width_label, buffer, width_label, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   else // serial
   {
@@ -1593,7 +1593,7 @@ void Geometry::gatherModes(vector<unsigned long>& mode)
   // ラベル数の収集
   if ( numProc > 1 )
   {
-    if ( paraMngr->Allgather(wk, NoMedium+1, buffer, NoMedium+1) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allgather(wk, NoMedium+1, buffer, NoMedium+1, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   else // serial
   {
@@ -1653,7 +1653,7 @@ bool Geometry::gatherRules(int* buffer,
   
   if ( numProc > 1 )
   {
-    if ( paraMngr->Allgather(wk, width_rule, buffer, width_rule) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allgather(wk, width_rule, buffer, width_rule, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   else // serial
   {
@@ -1882,7 +1882,7 @@ int Geometry::getNumBuffer(const vector< vector<int> > cnct)
   if ( numProc > 1 )
   {
     int tmp = width_label;
-    if ( paraMngr->Allreduce(&tmp, &width_label, 1, MPI_MAX) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&tmp, &width_label, 1, MPI_MAX, procGrp) != CPM_SUCCESS ) Exit(0);
   }
 
   return width_label;
@@ -2393,7 +2393,7 @@ bool Geometry::makeHistgramByModalCut(vector<int>& matIndex,
     if ( numProc > 1 )
     {
       int c_tmp = flag;
-      if ( paraMngr->Allreduce(&c_tmp, &flag, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->Allreduce(&c_tmp, &flag, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     if ( flag > 0 )
@@ -2718,7 +2718,7 @@ unsigned Geometry::mergeSameSolidCell(int* bid,
   if ( numProc > 1 )
   {
     unsigned c_tmp = fc;
-    if ( paraMngr->Allreduce(&c_tmp, &fc, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &fc, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   return fc;
@@ -2780,7 +2780,7 @@ void Geometry::minDistance(const long long* cut, const int* bid)
   if ( numProc > 1 )
   {
     int tmp = global_min;
-    if ( paraMngr->Allreduce(&tmp, &global_min, 1, MPI_MIN) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&tmp, &global_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   Hostonly_
@@ -2848,7 +2848,7 @@ void Geometry::paintCellByUniqueLabel(int* bcd,
   // SYNC
   if ( numProc > 1 )
   {
-    if ( paraMngr->BndCommS3D(bcd, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(bcd, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
   }
 }
 
@@ -2921,7 +2921,7 @@ void Geometry::paintConnectedLabel(int* mid,
   // SYNC
   if ( numProc > 1 )
   {
-    if ( paraMngr->BndCommS3D(mid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(mid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
   }
 }
 
@@ -3083,8 +3083,8 @@ void Geometry::quantizeCut(long long* cut,
   
   if ( numProc > 1 )
   {
-    if ( paraMngr->BndCommS3D(bid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(bid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   
@@ -3493,7 +3493,7 @@ unsigned long Geometry::debug_countCellB(const int* bcd, const int m_id, const i
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   return c;
@@ -3551,7 +3551,7 @@ unsigned long Geometry::fillByFluid(int* bcd, const int fluid_id, const int* bid
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   return c;
@@ -3668,7 +3668,7 @@ schedule(static) reduction(+:filled) collapse(3)
   if ( numProc > 1 )
   {
     unsigned long tmp = filled;
-    if ( paraMngr->Allreduce(&tmp, &filled, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&tmp, &filled, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   return filled;
@@ -3763,7 +3763,7 @@ bool Geometry::fillByModalSolid(int* bcd,
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   replaced = c;
@@ -3823,7 +3823,7 @@ unsigned long Geometry::fillByID(int* mid, const int target, const int* Dsize)
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   return c;
@@ -3981,7 +3981,7 @@ unsigned long Geometry::fillSeedMid(int* mid, const int face, const int target, 
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   return c;
@@ -4135,7 +4135,7 @@ unsigned long Geometry::findBboxforSeeding(const int* mid, int* bbox, const int*
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
-    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   return c;
@@ -4243,7 +4243,7 @@ unsigned long Geometry::replaceIsolatedCell(int* bcd, const int* bid)
   if ( numProc > 1 )
   {
     unsigned long c_tmp = replaced;
-    if ( paraMngr->Allreduce(&c_tmp, &replaced, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &replaced, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   return replaced;
@@ -4291,7 +4291,7 @@ void Geometry::SeedFilling(int* d_mid,
   if ( numProc > 1 )
   {
     unsigned long tmp_fc = total_cell;
-    if ( paraMngr->Allreduce(&tmp_fc, &total_cell, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&tmp_fc, &total_cell, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   
@@ -4315,7 +4315,7 @@ void Geometry::SeedFilling(int* d_mid,
   
   if ( numProc > 1 )
   {
-    if ( paraMngr->BndCommS3D(d_mid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_mid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   
@@ -4350,7 +4350,7 @@ void Geometry::SeedFilling(int* d_mid,
   
   if ( numProc > 1 )
   {
-    if ( paraMngr->BndCommS3D(d_mid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_mid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   
@@ -4379,7 +4379,7 @@ void Geometry::SeedFilling(int* d_mid,
     
     if ( numProc > 1 )
     {
-      if ( paraMngr->BndCommS3D(d_mid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+      if ( paraMngr->BndCommS3D(d_mid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
     }
     
     target_count -= filled;
@@ -4434,7 +4434,7 @@ void Geometry::SeedFilling(int* d_mid,
       
       if ( numProc > 1 )
       {
-        if ( paraMngr->BndCommS3D(d_mid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+        if ( paraMngr->BndCommS3D(d_mid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
       }
       
       target_count -= replaced;
@@ -5625,7 +5625,7 @@ void Geometry::paintCutOnPoint(int* bcd,
   if ( numProc > 1 )
   {
     unsigned long c_tmp = fc;
-    if ( paraMngr->Allreduce(&c_tmp, &fc, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &fc, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   fillcut = fc;
@@ -5633,9 +5633,9 @@ void Geometry::paintCutOnPoint(int* bcd,
   
   if ( numProc > 1 )
   {
-    if ( paraMngr->BndCommS3D(bcd, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->BndCommS3D(bid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(bcd, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(bid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   
@@ -5713,7 +5713,7 @@ void Geometry::paintCutOnPoint(int* bcd,
   if ( numProc > 1 )
   {
     unsigned long c_tmp = fc;
-    if ( paraMngr->Allreduce(&c_tmp, &fc, 1, MPI_SUM) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->Allreduce(&c_tmp, &fc, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
   modopp = fc;
@@ -5721,8 +5721,8 @@ void Geometry::paintCutOnPoint(int* bcd,
   
   if ( numProc > 1 )
   {
-    if ( paraMngr->BndCommS3D(bid, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(bid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
   }
   
 }
