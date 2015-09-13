@@ -19,6 +19,10 @@ REVISION HISTORY
 ================
 
 --------------------------
+2015-09-13
+r1636 suppress check print
+
+--------------------------
 2015-09-12
 r1635 bugfix: check duplication in loadBCs()
 
