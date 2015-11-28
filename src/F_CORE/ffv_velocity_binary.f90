@@ -1265,7 +1265,7 @@ min_h  = min(yc, dy*jx - yc)
 DUDY_w = v(i, jx, k, 1) * (ry*2.0d0)
 tauw   = (nu * rho) * abs(DUDY_w)
 utau   = sqrt(tauw/rho)
-yp     = min_h * utau / nu
+yp     = min_h * utau * r_nu
 up     = Up0 / utau
 fs     = 1.0d0 - exp(-yp/26.0d0)
 nut = (Cs * fs * dy) * (Cs * fs * dy) * SSS
@@ -2140,7 +2140,7 @@ w_ref = v00(3)
 
 cf = 0.5 * dt
 
-flop = flop + dble(ix*jx*kx) * 20.0d0
+flop = flop + dble(ix*jx*kx) * 22.0d0
 
 
 !$OMP PARALLEL &
@@ -2152,7 +2152,7 @@ flop = flop + dble(ix*jx*kx) * 20.0d0
 do k=1,kx
 do j=1,jx
 do i=1,ix
-actv = real(ibits(bd(i,j,k), State, 1)) * cf
+actv = real(ibits(bd(i,j,k), State, 1))
 ra = 1.0 - actv
 
 ab_u = ab(i,j,k,1)
@@ -2163,9 +2163,9 @@ ab(i,j,k,1) = vc(i,j,k,1)
 ab(i,j,k,2) = vc(i,j,k,2)
 ab(i,j,k,3) = vc(i,j,k,3)
 
-vc(i,j,k,1) = ( v(i,j,k,1) + ( 3.0 * vc(i,j,k,1) - ab_u ) ) * actv + ra * u_ref
-vc(i,j,k,2) = ( v(i,j,k,2) + ( 3.0 * vc(i,j,k,2) - ab_v ) ) * actv + ra * v_ref
-vc(i,j,k,3) = ( v(i,j,k,3) + ( 3.0 * vc(i,j,k,3) - ab_w ) ) * actv + ra * w_ref
+vc(i,j,k,1) = ( v(i,j,k,1) + cf * ( 3.0 * vc(i,j,k,1) - ab_u ) ) * actv + ra * u_ref
+vc(i,j,k,2) = ( v(i,j,k,2) + cf * ( 3.0 * vc(i,j,k,2) - ab_v ) ) * actv + ra * v_ref
+vc(i,j,k,3) = ( v(i,j,k,3) + cf * ( 3.0 * vc(i,j,k,3) - ab_w ) ) * actv + ra * w_ref
 end do
 end do
 end do

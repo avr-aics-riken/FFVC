@@ -20,6 +20,8 @@ REVISION HISTORY
 
 --------------------------
 2015-11-28
+r1638 bug fix in ab2 routine
+
 r1637 --with-comp becomes essential
 - change configure.ac, INSTALL, and NEWS
 
