@@ -2,14 +2,14 @@
 #
 # FFV-C : Frontflow / violet Cartesian
 #
-# Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
+# Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 # All rights reserved.
 #
-# Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
+# Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 # All rights reserved.
 #
-# Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN. 
-# All rights reserved. 
+# Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
+# All rights reserved.
 #
 ###################################################################################
 #
@@ -18,7 +18,7 @@
 
 
 AC_PREREQ([2.57])
-AC_INIT([FFVC], [2.4.1], [keno@riken.jp], [FFVC])
+AC_INIT([FFVC], [2.4.2], [keno@riken.jp], [FFVC])
 
 echo "----------------------------------------"
 echo "Running FFV-C Configure Script"
@@ -28,7 +28,7 @@ AC_CONFIG_SRCDIR([src/main.C])
 
 
 #
-# Specify directory for auxillary build tools (e.g., install-sh, config.sub, config.guess) and M4 files.
+# Specify directory for auxiliary build tools (e.g., install-sh, config.sub, config.guess) and M4 files.
 #
 
 AC_CONFIG_AUX_DIR(config)
@@ -39,8 +39,8 @@ AC_CONFIG_AUX_DIR(config)
 #
 
 if test -e configure.ac ; then
-echo "Please run configure from a separate build directory. It is not allowd to run configure in the source directory."
-echo "Pleaes try ..."
+echo "Please run configure from a separate build directory. It is not allowed to run configure in the source directory."
+echo "Please try ..."
 echo " "
 echo "$ cd BUILD_DIR"
 echo "$ ../configure [options]"
@@ -67,7 +67,7 @@ AM_INIT_AUTOMAKE()
 # revision No.
 #
 
-FFVC_REVISION="20150913_1500"
+FFVC_REVISION="20151128_1430"
 AC_SUBST(FFVC_REVISION)
 
 
@@ -84,7 +84,9 @@ FCFLAGS=$F90FLAGS
 #
 
 AC_ARG_WITH(comp, [AC_HELP_STRING([--with-comp=(INTEL|FJ|GNU)],[Specify Compiler type])], , with_comp=none)
-
+if test x"$with_ompi" = x"none" ; then
+  AC_MSG_ERROR("ERROR: Kind of compiler is not specified!")
+fi
 
 #
 # REAL type
@@ -221,6 +223,8 @@ esac
 
 FFVC_LDFLAGS=""
 AC_SUBST(FFVC_LDFLAGS)
+
+
 
 
 #

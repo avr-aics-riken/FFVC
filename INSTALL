@@ -3,13 +3,13 @@
  * Frontflow / violet Cartesian
  *
  *
- * Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
+ * Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
  * All rights reserved.
  *
- * Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
+ * Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
  * All rights reserved.
  *
- * Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN. 
+ * Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
  * All rights reserved.
  *
  */
@@ -50,7 +50,8 @@ Tips) OpenMPI compilation with Intel compiler
 
 
 
-Configure options:
+Configure options
+-----------------
 
  --host=hostname
     Specify in case of cross-compilation.
@@ -62,26 +63,26 @@ Configure options:
     Specify the directory path that is installed CDM library.
 
  --with-comp=(INTEL|FJ|GNU)
-    If Intel compiler is used, choose INTEL, and if Fujitsu compiler, specify FJ. 
+    If Intel compiler is used, choose INTEL, and if Fujitsu compiler, specify FJ.
     This option is mandatory when using both compilers.
 
  --with-cpm=CPMLIB_DIR
     Specify the directory path that is installed CPM library.
 
  --with-precision=(single|double)
-    Specify the REAL macro by selecting single(4bytes) or double(8bytes). If this 
+    Specify the REAL macro by selecting single(4bytes) or double(8bytes). If this
     option is omitted, single precision will be applied.
 
  --with-ompi=OPENMPI_DIR
     If the OpenMPI library is used, specify the directory path that OpenMPI library is
-    installed. This option will be required to use a native compiler. Instead, if the 
+    installed. This option will be required to use a native compiler. Instead, if the
     wrapper compiler, e.g., mpicxx, is used to compile, this options can be eliminated.
 
  --with-parser=TEXTPARSER_PATH
     Specify the directory path that is installed TextParser library.
 
  --with-pm=PMLIB_DIR
-    Specify the directory path that Performance Monitor library is installed. This 
+    Specify the directory path that Performance Monitor library is installed. This
     option is required if only you need a performance report.
 
  --with-polylib=POLYLIB_DIR
@@ -111,82 +112,90 @@ Configure options:
 
 
 
-Here is examples.
+
+Configuration examples
+----------------------
+
+# INTEL compiler
+
+## MPI by a wrapper
+
+### Single precision
+$ ../configure \
+    --prefix=${FFV_HOME}/FFVC \
+    --with-cpm=${FFV_HOME}/CPMlib \
+    --with-cdm=${FFV_HOME}/CDMlib \
+    --with-pm=${FFV_HOME}/PMlib \
+    --with-polylib=${FFV_HOME}/Polylib \
+    --with-parser=${FFV_HOME}/TextParser \
+    --with-comp=INTEL \
+    CC=mpicc \
+    CFLAGS="-O3 -openmp" \
+    CXX=mpicxx \
+    CXXFLAGS="-O3 -openmp -qopt-report=5" \
+    F90=mpif90 \
+    F90FLAGS="-O3 -Warn unused -fpp -openmp -qopt-report=5"
 
 
-## for OpenMPI compiled by INTEL compiler, wrapper compiler, openmp.
-
-  $ ../configure \
-      --prefix=${FFV_HOME}/FFVC \
-      --with-cpm=${FFV_HOME}/CPMlib \
-      --with-cdm=${FFV_HOME}/CDMlib \
-      --with-pm=${FFV_HOME}/PMlib \
-      --with-polylib=${FFV_HOME}/Polylib \
-      --with-parser=${FFV_HOME}/TextParser \
-      --with-comp=INTEL \
-      CC=mpicc \
-      CFLAGS=-O3 \
-      CXX=mpicxx \
-      CXXFLAGS="-O3 -openmp -qopt-report=5" \
-      F90=mpif90 \
-      F90FLAGS="-O3 -Warn unused -fpp -openmp -qopt-report=5"
-
-
-## for OpenMPI compiled by INTEL compiler, double precision, openmp.
-
-  $ ../configure \
-      --prefix=${FFV_HOME}/FFVC \
-      --with-cpm=${FFV_HOME}/CPMlib \
-      --with-cdm=${FFV_HOME}/CDMlib \
-      --with-pm=${FFV_HOME}/PMlib \
-      --with-polylib=${FFV_HOME}/Polylib \
-      --with-parser=${FFV_HOME}/TextParser \
-      --with-comp=INTEL \
-      --with-precision=double \
-      CC=mpicc \
-      CFLAGS=-O3 \
-      CXX=mpicxx \
-      CXXFLAGS="-O3 -openmp -qopt-report=5" \
-      F90=mpif90 \
-      F90FLAGS="-O3 -Warn unused -fpp -openmp -qopt-report=5"
+### Double precision
+$ ../configure \
+    --prefix=${FFV_HOME}/FFVC \
+    --with-cpm=${FFV_HOME}/CPMlib \
+    --with-cdm=${FFV_HOME}/CDMlib \
+    --with-pm=${FFV_HOME}/PMlib \
+    --with-polylib=${FFV_HOME}/Polylib \
+    --with-parser=${FFV_HOME}/TextParser \
+    --with-comp=INTEL \
+    --with-precision=double \
+    CC=mpicc \
+    CFLAGS="-O3 -openmp" \
+    CXX=mpicxx \
+    CXXFLAGS="-O3 -openmp -qopt-report=5" \
+    F90=mpif90 \
+    F90FLAGS="-O3 -Warn unused -fpp -openmp -qopt-report=5"
 
 
-## for GNU compiler
 
-  $ ../configure \
-      --prefix=${FFV_HOME}/FFVC \
-      --with-cpm=${FFV_HOME}/CPMlib \
-      --with-cdm=${FFV_HOME}/CDMlib \
-      --with-pm=${FFV_HOME}/PMlib \
-      --with-polylib=${FFV_HOME}/Polylib \
-      --with-parser=${FFV_HOME}/TextParser \
-      --with-comp=GNU \
-      CC=mpicc \
-      CFLAGS=-O3 \
-      CXX=mpicxx \
-      CXXFLAGS="-O3 -fopenmp" \
-      F90=mpif90 \
-      F90FLAGS="-O3 -cpp -fopenmp -ffree-form --free-line-length-none"
+# GNU compiler
+
+## MPI by a wrapper
+$ ../configure \
+    --prefix=${FFV_HOME}/FFVC \
+    --with-cpm=${FFV_HOME}/CPMlib \
+    --with-cdm=${FFV_HOME}/CDMlib \
+    --with-pm=${FFV_HOME}/PMlib \
+    --with-polylib=${FFV_HOME}/Polylib \
+    --with-parser=${FFV_HOME}/TextParser \
+    --with-comp=GNU \
+    CC=mpicc \
+    CFLAGS="-O3 -fopenmp" \
+    CXX=mpicxx \
+    CXXFLAGS="-O3 -fopenmp" \
+    F90=mpif90 \
+    F90FLAGS="-O3 -cpp -fopenmp -ffree-form --free-line-length-none" \
+    LDFLAGS="-L/usr/local/gfortran/lib -lgfortran"
 
 
-## for K-computer
 
-  $ ../configure \
-      --prefix=${FFV_HOME}/FFVC \
-      --with-cpm=${FFV_HOME}/CPMlib \
-      --with-cdm=${FFV_HOME}/CDMlib \
-      --with-pm=${FFV_HOME}/PMlib \
-      --with-polylib=${FFV_HOME}/Polylib \
-      --with-parser=${FFV_HOME}/TextParser \
-      --with-comp=FJ \
-      --host=sparc64-unknown-linux-gnu \
-      CC=mpifccpx \
-      CFLAGS="-Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp -Nsrc" \
-      CXX=mpiFCCpx \
-      CXXFLAGS="-Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp,optmsg=2 -V -Nsrc"
-      F90=mpifrtpx \
-      F90FLAGS="-Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt" \
-      LDFLAGS="--linkfortran"
+# FUJITSU compiler / FX, K computer
+
+## On login node
+$ ../configure \
+    --prefix=${FFV_HOME}/FFVC \
+    --with-cpm=${FFV_HOME}/CPMlib \
+    --with-cdm=${FFV_HOME}/CDMlib \
+    --with-pm=${FFV_HOME}/PMlib \
+    --with-polylib=${FFV_HOME}/Polylib \
+    --with-parser=${FFV_HOME}/TextParser \
+    --with-comp=FJ \
+    --host=sparc64-unknown-linux-gnu \
+    CC=mpifccpx \
+    CFLAGS="-Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp -Nsrc" \
+    CXX=mpiFCCpx \
+    CXXFLAGS="-Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp,optmsg=2 -V -Nsrc"
+    F90=mpifrtpx \
+    F90FLAGS="-Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt" \
+    LDFLAGS="--linkfortran"
 
 
 
@@ -195,6 +204,3 @@ Alternative Build
 
 If a provided configure does not work, use Makefile_hand to build this library. At first,
 edit a make_setting file to tell your machine environment.
-
-
-

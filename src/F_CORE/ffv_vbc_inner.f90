@@ -287,6 +287,7 @@ flop = flop + 30.0d0 ! DP 15 flops
 
 m = 0.0
 
+
 !$OMP PARALLEL REDUCTION(+:m) &
 !$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_bc, v_bc, w_bc, odr) &
 !$OMP FIRSTPRIVATE(rx, ry, rz, dx2, dy2, dz2) &
@@ -309,12 +310,12 @@ m = 0.0
         cnv_u = 0.0
         cnv_v = 0.0
         cnv_w = 0.0
-        
+
         ! 変数のロード
         Up0 = v(i,j,k,1)
         Vp0 = v(i,j,k,2)
         Wp0 = v(i,j,k,3)
-      
+
         Uw1 = 0.0
         Ue1 = 0.0
         Us1 = 0.0
@@ -333,8 +334,8 @@ m = 0.0
         Wn1 = 0.0
         Wb1 = 0.0
         Wt1 = 0.0
-      
-        ! 内部境界のときの各面のBCフラグ ibits() = 0(Normal) / others(BC) >> c_e = 0.0(Normal) / 1.0(BC) 
+
+        ! 内部境界のときの各面のBCフラグ ibits() = 0(Normal) / others(BC) >> c_e = 0.0(Normal) / 1.0(BC)
         c_e = 0.0
         c_w = 0.0
         c_n = 0.0
@@ -347,7 +348,7 @@ m = 0.0
         if ( ibits(bvx, bc_face_S, bitw_5) == odr ) c_s = 1.0
         if ( ibits(bvx, bc_face_T, bitw_5) == odr ) c_t = 1.0
         if ( ibits(bvx, bc_face_B, bitw_5) == odr ) c_b = 1.0
-			
+
         ! X方向 ---------------------------------------
         if ( c_w == 1.0 ) then
           Uw1  = Up0
@@ -359,7 +360,7 @@ m = 0.0
           fv_l = cl*Vp0
           fw_l = cl*Wp0 ! 3 flops
         end if
-        
+
         if ( c_e == 1.0 ) then
           Ue1  = Up0
           Ve1  = Vp0
@@ -370,11 +371,11 @@ m = 0.0
           fv_r = cr*Vp0
           fw_r = cr*Wp0 ! 3 flops
         end if
-        
+
         cnv_u = cnv_u + fu_r*c_e - fu_l*c_w
         cnv_v = cnv_v + fv_r*c_e - fv_l*c_w
         cnv_w = cnv_w + fw_r*c_e - fw_l*c_w ! 12 flops
-			
+
         ! Y方向 ---------------------------------------
         if ( c_s == 1.0 ) then
           Us1  = Up0
@@ -386,7 +387,7 @@ m = 0.0
           fv_l = cl*Vp0
           fw_l = cl*Wp0
         end if
-        
+
         if ( c_n == 1.0 ) then
           Un1  = Up0
           Vn1  = Vp0
@@ -397,11 +398,11 @@ m = 0.0
           fv_r = cr*Vp0
           fw_r = cr*Wp0
         end if
-        
+
         cnv_u = cnv_u + fu_r*c_n - fu_l*c_s
         cnv_v = cnv_v + fv_r*c_n - fv_l*c_s
         cnv_w = cnv_w + fw_r*c_n - fw_l*c_s
-			
+
         ! Z方向 ---------------------------------------
         if ( c_b == 1.0 ) then
           Ub1  = Up0
@@ -424,11 +425,11 @@ m = 0.0
           fv_r = cr*Vp0
           fw_r = cr*Wp0
         end if
-        
+
         cnv_u = cnv_u + fu_r*c_t - fu_l*c_b
         cnv_v = cnv_v + fv_r*c_t - fv_l*c_b
         cnv_w = cnv_w + fw_r*c_t - fw_l*c_b
-      
+
         ! 粘性項
         EX = ( Ue1 - Up0 ) * c_e * dx2 &
            + ( Uw1 - Up0 ) * c_w * dx2 &
@@ -459,9 +460,10 @@ m = 0.0
     end do
     end do
     end do
-    
+
 !$OMP END DO
 !$OMP END PARALLEL
+
 
 ! loop :  (3+3+12)*3dir + 17*3 + 9 = 114 flops
 
@@ -544,6 +546,7 @@ m2 = 0.0
 
 flop = flop + 33.0d0 ! DP 18 flop
 
+
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:m1) &
 !$OMP REDUCTION(+:m2) &
@@ -557,7 +560,6 @@ flop = flop + 33.0d0 ! DP 18 flop
 !$OMP PRIVATE(fu_r, fu_l, fv_r, fv_l, fw_r, fw_l)
 
 !$OMP DO SCHEDULE(static)
-    
     do k=ks,ke
     do j=js,je
     do i=is,ie
@@ -567,7 +569,7 @@ flop = flop + 33.0d0 ! DP 18 flop
         cnv_u = 0.0
         cnv_v = 0.0
         cnv_w = 0.0
-        
+
         ! 変数のロード
         Up0 = v(i,j,k,1)
         Vp0 = v(i,j,k,2)
@@ -591,8 +593,8 @@ flop = flop + 33.0d0 ! DP 18 flop
         Wn1 = 0.0
         Wb1 = 0.0
         Wt1 = 0.0
-      
-        ! 内部境界のときの各面のBCフラグ ibits() = 0(Normal) / others(BC) >> c_e = 0.0(Normal) / 1.0(BC) 
+
+        ! 内部境界のときの各面のBCフラグ ibits() = 0(Normal) / others(BC) >> c_e = 0.0(Normal) / 1.0(BC)
         c_e = 0.0
         c_w = 0.0
         c_n = 0.0
@@ -606,7 +608,7 @@ flop = flop + 33.0d0 ! DP 18 flop
         if ( ibits(bvx, bc_face_T, bitw_5) == odr ) c_t = 1.0
         if ( ibits(bvx, bc_face_B, bitw_5) == odr ) c_b = 1.0
 
-      
+
         ! X方向 ---------------------------------------
         if ( c_w == 1.0 ) then
           Uw1  = u_bc_ref
@@ -619,7 +621,7 @@ flop = flop + 33.0d0 ! DP 18 flop
           fw_l = 0.5*(cl*(Wp0+Ww1) - acl*(Wp0-Ww1)) ! 18+1 flops
           m2 = m2 + 1.0
         end if
-        
+
         if ( c_e == 1.0 ) then
           Ue1  = u_bc_ref
           Ve1  = v_bc_ref
@@ -631,11 +633,11 @@ flop = flop + 33.0d0 ! DP 18 flop
           fw_r = 0.5*(cr*(We1+Wp0) - acr*(We1-Wp0)) ! 18+1 flops
           m2 = m2 + 1.0
         end if
-        
+
         cnv_u = cnv_u + fu_r*c_e - fu_l*c_w
         cnv_v = cnv_v + fv_r*c_e - fv_l*c_w
         cnv_w = cnv_w + fw_r*c_e - fw_l*c_w ! 12 flops
-			
+
         ! Y方向 ---------------------------------------
         if ( c_s == 1.0 ) then
           Us1  = u_bc_ref
@@ -648,7 +650,7 @@ flop = flop + 33.0d0 ! DP 18 flop
           fw_l = 0.5*(cl*(Wp0+Ws1) - acl*(Wp0-Ws1))
           m2 = m2 + 1.0
         end if
-        
+
         if ( c_n == 1.0 ) then
           Un1  = u_bc_ref
           Vn1  = v_bc_ref
@@ -660,11 +662,11 @@ flop = flop + 33.0d0 ! DP 18 flop
           fw_r = 0.5*(cr*(Wn1+Wp0) - acr*(Wn1-Wp0))
           m2 = m2 + 1.0
         end if
-        
+
         cnv_u = cnv_u + fu_r*c_n - fu_l*c_s
         cnv_v = cnv_v + fv_r*c_n - fv_l*c_s
         cnv_w = cnv_w + fw_r*c_n - fw_l*c_s
-			
+
         ! Z方向 ---------------------------------------
         if ( c_b == 1.0 ) then
           Ub1  = u_bc_ref
@@ -689,11 +691,11 @@ flop = flop + 33.0d0 ! DP 18 flop
           fw_r = 0.5*(cr*(Wt1+Wp0) - acr*(Wt1-Wp0))
           m2 = m2 + 1.0
         end if
-        
+
         cnv_u = cnv_u + fu_r*c_t - fu_l*c_b
         cnv_v = cnv_v + fv_r*c_t - fv_l*c_b
         cnv_w = cnv_w + fw_r*c_t - fw_l*c_b
-      
+
         ! 粘性項
         EX = ( Ue1 - Up0 ) * c_e * dx2 &
            + ( Uw1 - Up0 ) * c_w * dx2 &
@@ -720,7 +722,7 @@ flop = flop + 33.0d0 ! DP 18 flop
         wv(i,j,k,2) = wv(i,j,k,2) + ( -cnv_v * ry + EY )
         wv(i,j,k,3) = wv(i,j,k,3) + ( -cnv_w * rz + EZ ) ! 3*3 = 9 flops
         m1 = m1 + 1.0
-        
+
       endif
     end do
     end do
@@ -808,6 +810,7 @@ w_bc_ref = w_bc + w_ref
 m2 = 0.0
 
 flop = flop + 30.0d0
+
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:m2) &
@@ -915,8 +918,10 @@ endif
 end do
 end do
 end do
+
 !$OMP END DO
 !$OMP END PARALLEL
+
 
 flop = flop + m2*24.0
 
@@ -997,6 +1002,7 @@ m1 = 0.0
 m2 = 0.0
 
 flop = flop + 13.0d0 ! DP 18 flop
+
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:m1) &
@@ -1214,8 +1220,10 @@ endif
 end do
 end do
 end do
+
 !$OMP END DO
 !$OMP END PARALLEL
+
 
 ! loop :  (12*3 + 17*3 + 12)*m1 + 41*m2 = 99*m1 + 41*m2
 
@@ -1272,6 +1280,7 @@ ke = ed(3)
 m = dble( (ie-is+1)*(je-js+1)*(ke-ks+1) )
 flop = flop + m*6.0d0 + 27.0d0
 
+
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_bc_ref, v_bc_ref, w_bc_ref, odr, rx, ry, rz) &
 !$OMP PRIVATE(bvx, Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t)
@@ -1289,7 +1298,7 @@ flop = flop + m*6.0d0 + 27.0d0
         Vs_t = 0.0
         Wt_t = 0.0
         Wb_t = 0.0
-        
+
         if ( ibits(bvx, bc_face_W, bitw_5) == odr ) Uw_t = u_bc_ref
         if ( ibits(bvx, bc_face_E, bitw_5) == odr ) Ue_t = u_bc_ref
         if ( ibits(bvx, bc_face_S, bitw_5) == odr ) Vs_t = v_bc_ref
@@ -1303,7 +1312,8 @@ flop = flop + m*6.0d0 + 27.0d0
     end do
     end do
     end do
-    
+
+
 !$OMP END DO
 !$OMP END PARALLEL
 
@@ -1529,7 +1539,7 @@ end subroutine div_ibc_sldrev
     cf3 = cf * rz
 
     m = 0.0
-    
+
 !$OMP PARALLEL REDUCTION(+:m) &
 !$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_ref, v_ref, w_ref, odr) &
 !$OMP FIRSTPRIVATE(cf1, cf2, cf3, rx, ry, rz) &
@@ -1579,40 +1589,40 @@ end subroutine div_ibc_sldrev
         Vs_t = 0.0
         Wt_t = 0.0
         Wb_t = 0.0
-        
+
         ! X方向 ---------------------------------------
         if ( ibits(bvx, bc_face_W, bitw_5) == odr ) then
           !Uw = Ue + (Vn - Vs + Wt - Wb) ! 連続の式から流出面の速度を推定，これは移動座標系上の速度成分
           if ( cf1>0.0 ) cf1=0.0
           Uw_t = Uw - cf1*(Ue-Uw)
         endif
-        
+
         if ( ibits(bvx, bc_face_E, bitw_5) == odr ) then
           !Ue = Uw - (Vn - Vs + Wt - Wb)
           if ( cf1<0.0 ) cf1=0.0
           Ue_t = Ue - cf1*(Ue-Uw)
         endif
-        
+
         ! Y方向 ---------------------------------------
         if ( ibits(bvx, bc_face_S, bitw_5) == odr ) then
           !Vs = Vn + (Ue - Uw + Wt - Wb)
           if ( cf2>0.0 ) cf2=0.0
           Vs_t = Vs - cf2*(Vn-Vs)
         endif
-        
+
         if ( ibits(bvx, bc_face_N, bitw_5) == odr ) then
           !Vn = Vs - (Ue - Uw + Wt - Wb)
           if ( cf2<0.0 ) cf2=0.0
           Vn_t = Vn - cf2*(Vn-Vs)
         endif
-        
+
         ! Z方向 ---------------------------------------
         if ( ibits(bvx, bc_face_B, bitw_5) == odr ) then
           !Wb = Wt + (Ue - Uw + Vn - Vs)
           if ( cf3>0.0 ) cf3=0.0
           Wb_t = Wb - cf3*(Wt-Wb)
         endif
-        
+
         if ( ibits(bvx, bc_face_T, bitw_5) == odr ) then
           !Wt = Wb - (Ue - Uw + Vn - Vs)
           if ( cf3<0.0 ) cf3=0.0
@@ -1628,6 +1638,7 @@ end subroutine div_ibc_sldrev
     end do
     end do
     end do
+
 !$OMP END DO
 !$OMP END PARALLEL
 
@@ -1635,7 +1646,7 @@ end subroutine div_ibc_sldrev
 
     return
     end subroutine div_ibc_oflow_pvec
-    
+
 !> ********************************************************************
 !! @brief 内部流出境界条件によるn+1時刻の速度の発散の修正と流量の積算
 !! @param [in,out] div  速度の発散
@@ -1663,7 +1674,7 @@ end subroutine div_ibc_sldrev
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  div
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
     real, dimension(2)                                        ::  av
-    
+
     a1 = 0.0
     m = 0.0
 
@@ -1678,7 +1689,6 @@ end subroutine div_ibc_sldrev
     dy = dh(2)
     dz = dh(3)
 
-
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:a1) &
 !$OMP REDUCTION(+:m) &
@@ -1692,7 +1702,7 @@ end subroutine div_ibc_sldrev
       bvx = bv(i,j,k)
       if ( 0 /= iand(bvx, bc_mask30) ) then ! 6面のうちのどれか速度境界フラグが立っている場合
         dv = div(i,j,k)
-        
+
         if ( ibits(bvx, bc_face_W, bitw_5) == odr ) then ! u_w
           a1 = a1 + dv * dx
         endif
@@ -1700,19 +1710,19 @@ end subroutine div_ibc_sldrev
         if ( ibits(bvx, bc_face_E, bitw_5) == odr ) then ! u_e
           a1 = a1 - dv * dx
         endif
-        
+
         if ( ibits(bvx, bc_face_S, bitw_5) == odr ) then
           a1 = a1 + dv * dy
         endif
-        
+
         if ( ibits(bvx, bc_face_N, bitw_5) == odr ) then
           a1 = a1 - dv * dy
         endif
-        
+
         if ( ibits(bvx, bc_face_B, bitw_5) == odr ) then
           a1 = a1 + dv * dz
         endif
-        
+
         if ( ibits(bvx, bc_face_T, bitw_5) == odr ) then
           a1 = a1 - dv * dz
         endif
@@ -1723,8 +1733,10 @@ end subroutine div_ibc_sldrev
     end do
     end do
     end do
+
 !$OMP END DO
 !$OMP END PARALLEL
+
 
     av(1) = a1
     av(2) = m

@@ -2,14 +2,14 @@
 #
 # FFV-C : Frontflow / violet Cartesian
 #
-# Copyright (c) 2007-2011 VCAD System Research Program, RIKEN. 
+# Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
 # All rights reserved.
 #
-# Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
+# Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 # All rights reserved.
 #
 # Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
-# All rights reserved. 
+# All rights reserved.
 #
 ###################################################################################
 
@@ -22,7 +22,7 @@ libFCORE_a_FCFLAGS = \
   -I$(top_srcdir)/src/FB \
   @CPM_CFLAGS@ \
   @MPICH_CFLAGS@ \
-  @FREALOPT@ 
+  @FREALOPT@
 
 libFCORE_a_SOURCES = \
   ffv_Ffunc.h \

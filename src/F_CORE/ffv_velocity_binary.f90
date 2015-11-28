@@ -635,11 +635,11 @@ end subroutine pvec_muscl
 !! @param [in]  vcs_coef  粘性項の係数（粘性項を計算しない場合には0.0）
 !! @param [in]  Cs        定数CS
 !! @param [in]  imodel    乱流モデル
-!! @param [in]  nu        動粘性係数
+!! @param [in]  m_nu      動粘性係数
 !! @param [in]  rho       密度
 !! @param [out] flop      浮動小数点演算数
 !<
-subroutine pvec_muscl_les (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bid, bcd, vcs_coef, Cs, imodel, nu, rho, flop)
+subroutine pvec_muscl_les (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bid, bcd, vcs_coef, Cs, imodel, m_nu, rho, flop)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bix, bdx
@@ -664,7 +664,7 @@ real, dimension(0:3)                                      ::  v00
 real, dimension(3)                                        ::  dh
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bid, bcd
 integer                                                   ::  imodel
-real                                                      ::  Cs, nu, rho, Cw
+real                                                      ::  Cs, nu, rho, Cw, m_nu, r_nu
 real                                                      ::  DUDX, DUDY, DUDZ
 real                                                      ::  DVDX, DVDY, DVDZ
 real                                                      ::  DWDX, DWDY, DWDZ
@@ -695,6 +695,8 @@ rz2= rei * rz * rz
 
 EPS = 1.0d-10
 Cw  = 0.325d0
+nu  = m_nu
+r_nu= 1.0d0/nu
 
 ! vcs = 1.0 (Euler Explicit) / 0.5 (CN) / 0.0(No)
 vcs = vcs_coef
@@ -729,7 +731,6 @@ cm2 = 1.0 + ck
 
 flop = flop + 36.0
 
-
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:flop) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, rx, ry, rz, rx2, ry2 ,rz2, vcs, b, ck, ss_4, ss, cm1, cm2) &
@@ -746,7 +747,7 @@ flop = flop + 36.0
 !$OMP PRIVATE(Urr, Url, Ulr, Ull, Vrr, Vrl, Vlr, Vll, Wrr, Wrl, Wlr, Wll) &
 !$OMP PRIVATE(fu_r, fu_l, fv_r, fv_l, fw_r, fw_l) &
 !$OMP PRIVATE(EX, EY, EZ) &
-!$OMP FIRSTPRIVATE(imodel, EPS, Cs, nu, rho, Cw) &
+!$OMP FIRSTPRIVATE(imodel, EPS, Cs, nu, rho, Cw, r_nu) &
 !$OMP PRIVATE(DUDX, DUDY, DUDZ, DVDX, DVDY, DVDZ, DWDX, DWDY, DWDZ) &
 !$OMP PRIVATE(S11, S12, S13, S21, S22, S23, S31, S32, S33, SSS) &
 !$OMP PRIVATE(W11, W12, W13, W21, W22, W23, W31, W32, W33, WWW) &
@@ -1335,19 +1336,22 @@ EZ =   ( We1 - Wp0 ) * c_e1 * rx2 &
      - ( Wp0 - Wb1 ) * c_b1 * rz2
 
 
-! 対流項と粘性項の和 > (5+8)*3 = 39 flops
-wv(i, j, k, 1) = -cnv_u * rx + EX * ( 1.0d0 + nut/nu ) * vcs
-wv(i, j, k, 2) = -cnv_v * ry + EY * ( 1.0d0 + nut/nu ) * vcs
-wv(i, j, k, 3) = -cnv_w * rz + EZ * ( 1.0d0 + nut/nu ) * vcs
+! 対流項と粘性項の和 > 6*3 + 1 = 19 flops
+nut = nut * r_nu
+wv(i, j, k, 1) = -cnv_u * rx + EX * ( 1.0d0 + nut ) * vcs
+wv(i, j, k, 2) = -cnv_v * ry + EY * ( 1.0d0 + nut ) * vcs
+wv(i, j, k, 3) = -cnv_w * rz + EZ * ( 1.0d0 + nut ) * vcs
 
-! 24 + 3 + 3 * (14 + 78 * 3 + 12) + 27 + 28 + 34 + 69 + 39 = 1004
-flop = flop + 1004.0d0
+! 24 + 3 + 3 * (14 + 78 * 3 + 12) + 27 + 28 + 34 + 69 + 19 = 984
+flop = flop + 984.0d0
 
 end do
 end do
 end do
+
 !$OMP END DO
 !$OMP END PARALLEL
+
 
 return
 end subroutine pvec_muscl_les
@@ -2058,7 +2062,7 @@ w_ref = v00(3)
         Ut0= SQRT(Tw)
         YP = DIS*Ut0*RE
         Up1= Vmag
-        
+
         DO M=1,5
           Ut = Ut0 + (Up1-Ut0*(ALOG(YP)/0.4+5.5)) / (Up1/Ut0+1.0/0.4)
           IF (ABS(Ut-Ut0) <= 1.0E-6) exit
@@ -2066,7 +2070,7 @@ w_ref = v00(3)
           Ut0=Ut
           YP =DIS*Ut0*RE
         end do
-        
+
         fs = 1.0-exp(-YP/25.0)
         yp_range(1) = amin1(yp_range(1), YP)
         yp_range(2) = amax1(yp_range(2), YP)
@@ -2092,7 +2096,7 @@ w_ref = v00(3)
       VT(ix+1,j,k)=VT(ix,j,k)
     end do
     end do
- 
+
     do j=1,jx
     do i=1,ix
       VT(i,j,0   )=VT(i,j,1 )
@@ -3162,8 +3166,10 @@ flop = flop + 443.0d0
 end do
 end do
 end do
+
 !$OMP END DO
 !$OMP END PARALLEL
+
 
 return
 end subroutine pvec_central_les
@@ -3429,4 +3435,3 @@ end do
 
 return
 end subroutine stabilize
-

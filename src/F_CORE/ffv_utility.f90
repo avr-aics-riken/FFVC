@@ -266,7 +266,7 @@ end subroutine norm_v_div_max
     end do
 !$OMP END DO
 !$OMP END PARALLEL
-    
+
     v_max = max(vm1, vm2, vm3) ! maxss %xmm0, %xmm1, x 2 times > 2 flop
 
     return
@@ -362,17 +362,17 @@ end subroutine norm_v_div_max
       We1 = v(i+1,j  ,k  , 3)
       Wn1 = v(i  ,j+1,k  , 3)
       Wt1 = v(i  ,j  ,k+1, 3)
-      
+
       ! セル状態 (0-solid / 1-fluid) > 1 flop
       actv= real(ibits(idx, State, 1))
-      
+
       b_w1= ibits(bv(i-1,j  ,k  ), State, 1)
       b_e1= ibits(bv(i+1,j  ,k  ), State, 1)
       b_s1= ibits(bv(i  ,j-1,k  ), State, 1)
       b_n1= ibits(bv(i  ,j+1,k  ), State, 1)
       b_b1= ibits(bv(i  ,j  ,k-1), State, 1)
       b_t1= ibits(bv(i  ,j  ,k+1), State, 1)
-      
+
       ! 隣接セルの状態で置換フラグをセット セル状態 (0-solid / 1-fluid) > 12 flop
       w_e = real(b_e1) * actv
       w_w = real(b_w1) * actv
@@ -380,43 +380,43 @@ end subroutine norm_v_div_max
       w_s = real(b_s1) * actv
       w_t = real(b_t1) * actv
       w_b = real(b_b1) * actv
-      
+
       ! セルセンターからの壁面修正速度 > 6 flop
       uq = 2.0*u_ref - Up0
       vq = 2.0*v_ref - Vp0
       wq = 2.0*w_ref - Wp0
-      
+
       ! 壁面の場合の参照速度の修正
       if ( b_e1 == 0 ) then
         Ue1 = uq
         Ve1 = vq
         We1 = wq
       endif
-      
+
       if ( b_w1 == 0 ) then
         Uw1 = uq
         Vw1 = vq
         Ww1 = wq
       end if
-      
+
       if ( b_n1 == 0 ) then
         Un1 = uq
         Vn1 = vq
         Wn1 = wq
       end if
-      
+
       if ( b_s1 == 0 ) then
         Us1 = uq
         Vs1 = vq
         Ws1 = wq
       end if
-      
+
       if ( b_t1 == 0 ) then
         Ut1 = uq
         Vt1 = vq
         Wt1 = wq
       end if
-      
+
       if ( b_b1 == 0 ) then
         Ub1 = uq
         Vb1 = vq
@@ -430,18 +430,18 @@ end subroutine norm_v_div_max
       d12 = ry * (Un1-Us1) + rx * (Ve1-Vw1)
       d13 = rz * (Ut1-Ub1) + rx * (We1-Ww1)
       d23 = rz * (Vt1-Vb1) + ry * (Wn1-Ws1)
-      
+
       w12 = ry * (Un1-Us1) - rx * (Ve1-Vw1)
       w13 = rz * (Ut1-Ub1) - rx * (We1-Ww1)
       w23 = rz * (Vt1-Vb1) - ry * (Wn1-Ws1)
-      
+
       q11 = -d11*d11
       q22 = -d22*d22
       q33 = -d33*d33
       q12 = w12*w12 - d12*d12
       q13 = w13*w13 - d13*d13
       q23 = w23*w23 - d23*d23
-      
+
       q(i,j,k) = 0.5*( q11+q22+q33 + 2.0*(q12+q13+q23) ) * actv
     end do
     end do
@@ -487,7 +487,7 @@ end subroutine norm_v_div_max
     rx = 0.5 / dh(1)
     ry = 0.5 / dh(2)
     rz = 0.5 / dh(3)
-    
+
     ! 参照座標系の速度
     u_ref = v00(1)
     v_ref = v00(2)
@@ -536,17 +536,17 @@ end subroutine norm_v_div_max
       We1 = v(i+1,j  ,k  , 3)
       Wn1 = v(i  ,j+1,k  , 3)
       Wt1 = v(i  ,j  ,k+1, 3)
-      
+
       ! セル状態 (0-solid / 1-fluid) > 1 flop
       actv= real(ibits(idx, State, 1))
-      
+
       b_w1= ibits(bv(i-1,j  ,k  ), State, 1)
       b_e1= ibits(bv(i+1,j  ,k  ), State, 1)
       b_s1= ibits(bv(i  ,j-1,k  ), State, 1)
       b_n1= ibits(bv(i  ,j+1,k  ), State, 1)
       b_b1= ibits(bv(i  ,j  ,k-1), State, 1)
       b_t1= ibits(bv(i  ,j  ,k+1), State, 1)
-      
+
       ! 隣接セルの状態で置換フラグをセット セル状態 (0-solid / 1-fluid) > 12 flop
       w_e = real(b_e1) * actv
       w_w = real(b_w1) * actv
@@ -554,53 +554,53 @@ end subroutine norm_v_div_max
       w_s = real(b_s1) * actv
       w_t = real(b_t1) * actv
       w_b = real(b_b1) * actv
-      
+
       ! セルセンターからの壁面修正速度 > 6 flop
       uq = 2.0*u_ref - Up0
       vq = 2.0*v_ref - Vp0
       wq = 2.0*w_ref - Wp0
-      
+
       ! 壁面の場合の参照速度の修正
       if ( b_e1 == 0 ) then
         Ue1 = uq
         Ve1 = vq
         We1 = wq
       endif
-      
+
       if ( b_w1 == 0 ) then
         Uw1 = uq
         Vw1 = vq
         Ww1 = wq
       end if
-      
+
       if ( b_n1 == 0 ) then
         Un1 = uq
         Vn1 = vq
         Wn1 = wq
       end if
-      
+
       if ( b_s1 == 0 ) then
         Us1 = uq
         Vs1 = vq
         Ws1 = wq
       end if
-      
+
       if ( b_t1 == 0 ) then
         Ut1 = uq
         Vt1 = vq
         Wt1 = wq
       end if
-      
+
       if ( b_b1 == 0 ) then
         Ub1 = uq
         Vb1 = vq
         Wb1 = wq
       end if
-      
+
       r1 = ry * (Wn1-Ws1) - rz * (Vt1-Vb1) ! 12 flop
       r2 = rz * (Ut1-Ub1) - rx * (We1-Ww1)
       r3 = rx * (Ve1-Vw1) - ry * (Un1-Us1)
-      
+
       rot(i,j,k,1) = r1 * actv ! 3 flop
       rot(i,j,k,2) = r2 * actv
       rot(i,j,k,3) = r3 * actv
@@ -709,57 +709,57 @@ end subroutine norm_v_div_max
       b_n1= ibits(bv(i  ,j+1,k  ), State, 1)
       b_b1= ibits(bv(i  ,j  ,k-1), State, 1)
       b_t1= ibits(bv(i  ,j  ,k+1), State, 1)
-      
+
       ! セルセンターからの壁面修正速度 > 6 flop
       uq = 2.0*u_ref - Up0
       vq = 2.0*v_ref - Vp0
       wq = 2.0*w_ref - Wp0
-      
+
       ! 壁面の場合の参照速度の修正
       if ( b_e1 == 0 ) then
         Ue1 = uq
         Ve1 = vq
         We1 = wq
       endif
-      
+
       if ( b_w1 == 0 ) then
         Uw1 = uq
         Vw1 = vq
         Ww1 = wq
       end if
-      
+
       if ( b_n1 == 0 ) then
         Un1 = uq
         Vn1 = vq
         Wn1 = wq
       end if
-      
+
       if ( b_s1 == 0 ) then
         Us1 = uq
         Vs1 = vq
         Ws1 = wq
       end if
-      
+
       if ( b_t1 == 0 ) then
         Ut1 = uq
         Vt1 = vq
         Wt1 = wq
       end if
-      
+
       if ( b_b1 == 0 ) then
         Ub1 = uq
         Vb1 = vq
         Wb1 = wq
       end if
-      
+
       r1 = ry * (Wn1-Ws1) - rz * (Vt1-Vb1) ! 12 flop
       r2 = rz * (Ut1-Ub1) - rx * (We1-Ww1)
       r3 = rx * (Ve1-Vw1) - ry * (Un1-Us1)
-      
+
       u1 = Up0 - u_ref ! 3 flop
       u2 = Vp0 - v_ref
       u3 = Wp0 - w_ref
-      
+
       ht(i,j,k) = (u1*r1 + u2*r2 + u3*r3) * actv ! 6 flop
     end do
     end do
@@ -789,18 +789,18 @@ end subroutine norm_v_div_max
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    
+
     rix = real(jx)*real(kx)
     rjx = real(ix)*real(kx)
     rkx = real(ix)*real(jx)
-    
+
     avr = 0.0
 
 !$OMP PARALLEL REDUCTION(+:avr) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, face, rix, rjx, rkx)
 
     FACES : select case (face)
-    
+
     case (X_minus)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
@@ -812,8 +812,8 @@ end subroutine norm_v_div_max
 !$OMP END DO
 
       avr = avr / rix
-      
-      
+
+
     case (X_plus)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
@@ -825,8 +825,8 @@ end subroutine norm_v_div_max
 !$OMP END DO
 
       avr = avr / rix
-      
-      
+
+
     case (Y_minus)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
@@ -838,8 +838,8 @@ end subroutine norm_v_div_max
 !$OMP END DO
 
       avr = avr / rjx
-      
-      
+
+
     case (Y_plus)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
@@ -851,8 +851,8 @@ end subroutine norm_v_div_max
 !$OMP END DO
 
       avr = avr / rjx
-      
-      
+
+
     case (Z_minus)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
@@ -864,8 +864,8 @@ end subroutine norm_v_div_max
 !$OMP END DO
 
       avr = avr / rkx
-      
-    
+
+
     case (Z_plus)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
@@ -875,9 +875,9 @@ end subroutine norm_v_div_max
       end do
       end do
 !$OMP END DO
-      
+
       avr = avr / rkx
-      
+
     case default
     end select FACES
 
@@ -966,6 +966,7 @@ end subroutine norm_v_div_max
 
   flop = flop + dble(ie-is+1)*dble(je-js+1)*dble(ke-ks+1)*7.0d0 + 5.0d0
 
+
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:fx) &
 !$OMP REDUCTION(+:fy) &
@@ -974,8 +975,7 @@ end subroutine norm_v_div_max
 !$OMP PRIVATE(pp, bd) &
 !$OMP PRIVATE(idw, ide, ids, idn, idb, idt)
 
-!$OMP DO SCHEDULE(static) COLLAPSE(3)
-
+!$OMP DO SCHEDULE(static) COLLAPSE(2)
   do k=ks,ke
   do j=js,je
   do i=is,ie
@@ -1004,7 +1004,6 @@ end subroutine norm_v_div_max
   end do
   end do
   end do
-
 !$OMP END DO
 !$OMP END PARALLEL
 
@@ -2545,9 +2544,11 @@ tmp = 1.0/((ix-2)*(kx-2))
 flop = flop + 3.0d0 * dble(jx) * dble(kx-2)*dble(ix-2)*4.0d0 + 9.0d0 &
      + 6.0d0 * dble(jx) * dble(kx-2)*dble(ix-2)*10.0d0
 
+
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx)
 !$OMP DO SCHEDULE(static)
+
 do d = 1, 3
 do j = 1, jx
 vmean(d, j) = 0.0d0
@@ -2585,10 +2586,11 @@ end do
 end do
 end do
 end do
+
 !$OMP END DO
 !$OMP END PARALLEL
 
 
+
 return
 end subroutine averaging_xz_plane
-
