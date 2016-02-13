@@ -24,7 +24,7 @@
 # Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
 # All rights reserved.
 #
-# Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN. 
+# Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN. 
 # All rights reserved. 
 #
 ###################################################################################
@@ -181,18 +181,18 @@ ETAGS = etags
 CTAGS = ctags
 am__DIST_COMMON = $(srcdir)/Makefile.in
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = ${SHELL} /Daily/Development/SphDev/Module/FFVC/FFVC-2.4.2/config/missing aclocal-1.15
+ACLOCAL = ${SHELL} /Daily/Development/SphDev/Module/FFVC/FFVC-2.4.3/config/missing aclocal-1.15
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 1
-AUTOCONF = ${SHELL} /Daily/Development/SphDev/Module/FFVC/FFVC-2.4.2/config/missing autoconf
-AUTOHEADER = ${SHELL} /Daily/Development/SphDev/Module/FFVC/FFVC-2.4.2/config/missing autoheader
-AUTOMAKE = ${SHELL} /Daily/Development/SphDev/Module/FFVC/FFVC-2.4.2/config/missing automake-1.15
+AUTOCONF = ${SHELL} /Daily/Development/SphDev/Module/FFVC/FFVC-2.4.3/config/missing autoconf
+AUTOHEADER = ${SHELL} /Daily/Development/SphDev/Module/FFVC/FFVC-2.4.3/config/missing autoheader
+AUTOMAKE = ${SHELL} /Daily/Development/SphDev/Module/FFVC/FFVC-2.4.3/config/missing automake-1.15
 AWK = awk
 CC = mpicc
 CCDEPMODE = depmode=gcc3
-CDM_CFLAGS = -I/Users/keno/FFV/CDMlib/include -I/Users/keno/FFV/TextParser/include
+CDM_CFLAGS = -I/Users/keno/FFV/CDMlib/include -I/Users/keno/FFV/TextParser/include -D_WITH_NETCDF4_ -I/Users/keno/netcdf/include -I/Users/keno/HDF5/include
 CDM_DIR = /Users/keno/FFV/CDMlib
-CDM_LDFLAGS = -L/Users/keno/FFV/CDMlib/lib -lCDM -L/Users/keno/FFV/TextParser/lib -lTPmpi
+CDM_LDFLAGS = -L/Users/keno/FFV/CDMlib/lib -lCDM -L/Users/keno/FFV/TextParser/lib -lTPmpi -L/Users/keno/netcdf/lib -lnetcdf
 CFLAGS = -O3 -fopenmp
 CPM_CFLAGS = -I/Users/keno/FFV/CPMlib/include
 CPM_DIR = /Users/keno/FFV/CPMlib
@@ -219,7 +219,7 @@ FFVC_FC = mpif90
 FFVC_FC_LD = 
 FFVC_LDFLAGS = 
 FFVC_LIBS =  -lstdc++ -lgfortran
-FFVC_REVISION = 20151128_1900
+FFVC_REVISION = 20160204_1000
 FREALOPT = 
 GREP = /usr/bin/grep
 INSTALL = /opt/homebrew/bin/ginstall -c
@@ -231,7 +231,7 @@ LDFLAGS = -L/usr/local/gfortran/lib -lgfortran
 LIBOBJS = 
 LIBS = 
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /Daily/Development/SphDev/Module/FFVC/FFVC-2.4.2/config/missing makeinfo
+MAKEINFO = ${SHELL} /Daily/Development/SphDev/Module/FFVC/FFVC-2.4.3/config/missing makeinfo
 MAKE_SUB_DIRS = src/IP src/FB src/F_CORE src/F_LS src/FILE_IO src/ASD src/Geometry src/FFV src src/Util_Combsph doc
 MKDIR_P = /opt/homebrew/bin/gmkdir -p
 MPICH_CFLAGS = 
@@ -243,10 +243,10 @@ OBJEXT = o
 PACKAGE = FFVC
 PACKAGE_BUGREPORT = keno@riken.jp
 PACKAGE_NAME = FFVC
-PACKAGE_STRING = FFVC 2.4.3
+PACKAGE_STRING = FFVC 2.4.4
 PACKAGE_TARNAME = FFVC
 PACKAGE_URL = 
-PACKAGE_VERSION = 2.4.3
+PACKAGE_VERSION = 2.4.4
 PATH_SEPARATOR = :
 PL_CFLAGS = -I/Users/keno/FFV/Polylib/include -I/Users/keno/FFV/Polylib/include/common
 PL_DIR = /Users/keno/FFV/Polylib
@@ -262,11 +262,11 @@ STRIP =
 TP_CFLAGS = -I/Users/keno/FFV/TextParser/include
 TP_DIR = /Users/keno/FFV/TextParser
 TP_LDFLAGS = -L/Users/keno/FFV/TextParser/lib -lTPmpi
-VERSION = 2.4.3
-abs_builddir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.4.2/BUILD_DIR/doc
-abs_srcdir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.4.2/BUILD_DIR/../doc
-abs_top_builddir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.4.2/BUILD_DIR
-abs_top_srcdir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.4.2/BUILD_DIR/..
+VERSION = 2.4.4
+abs_builddir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.4.3/BUILD_DIR/doc
+abs_srcdir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.4.3/BUILD_DIR/../doc
+abs_top_builddir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.4.3/BUILD_DIR
+abs_top_srcdir = /Daily/Development/SphDev/Module/FFVC/FFVC-2.4.3/BUILD_DIR/..
 ac_ct_CC = mpicc
 ac_ct_CXX = 
 ac_ct_F77 = gfortran
@@ -288,7 +288,7 @@ host_alias =
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /Daily/Development/SphDev/Module/FFVC/FFVC-2.4.2/config/install-sh
+install_sh = ${SHELL} /Daily/Development/SphDev/Module/FFVC/FFVC-2.4.3/config/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale

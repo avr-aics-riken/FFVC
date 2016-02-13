@@ -8,7 +8,7 @@
 // Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -20,8 +20,8 @@
 #ifndef _FFVC_VERSION_H_
 #define _FFVC_VERSION_H_
 
-#define FFVC_VERSION_NO  "2.4.3"
-#define FFVC_REVISION    "20151128_1900"
+#define FFVC_VERSION_NO  "2.4.4"
+#define FFVC_REVISION    "20160204_1000"
 
 #endif /* _FFVC_VERSION_H_ */
 

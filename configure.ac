@@ -8,7 +8,7 @@
 # Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 # All rights reserved.
 #
-# Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
+# Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN.
 # All rights reserved.
 #
 ###################################################################################
@@ -18,7 +18,7 @@
 
 
 AC_PREREQ([2.57])
-AC_INIT([FFVC], [2.4.3], [keno@riken.jp], [FFVC])
+AC_INIT([FFVC], [2.4.4], [keno@riken.jp], [FFVC])
 
 echo "----------------------------------------"
 echo "Running FFV-C Configure Script"
@@ -67,7 +67,7 @@ AM_INIT_AUTOMAKE()
 # revision No.
 #
 
-FFVC_REVISION="20151128_1900"
+FFVC_REVISION="20160204_1000"
 AC_SUBST(FFVC_REVISION)
 
 
