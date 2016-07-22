@@ -10,7 +10,7 @@
 // Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -30,7 +30,9 @@
 #include "Alloc.h"
 
 #include "Polylib.h"
-#include "MPIPolylib.h"
+//fj>
+//#include "MPIPolylib.h"
+//fj<
 #include <vector>
 
 using namespace std;
@@ -242,7 +244,10 @@ private:
   
   // セルに含まれるポリゴンを探索し、d_midに記録
   unsigned long findPolygonInCell(int* d_mid,
-                                  MPIPolylib* PL,
+//fj>
+                                  //MPIPolylib* PL,
+                                  Polylib* PL,
+//fj<
                                   PolygonProperty* PG);
   
   
@@ -431,7 +436,10 @@ private:
                      const int kp,
                      const Vec3r pch,
                      const string m_pg,
-                     MPIPolylib* PL);
+//fj>
+                     //MPIPolylib* PL);
+                     Polylib* PL);
+//fj<
   
   
   // sub-division
@@ -471,7 +479,10 @@ private:
 public:
   
   // ポリゴングループの座標値からboxを計算する
-  void calcBboxFromPolygonGroup(MPIPolylib* PL,
+//fj>
+  //void calcBboxFromPolygonGroup(MPIPolylib* PL,
+  void calcBboxFromPolygonGroup(Polylib* PL,
+//fj<
                                 PolygonProperty* PG,
                                 const int m_NoPolyGrp);
   
@@ -561,14 +572,20 @@ public:
   void quantizeCut(long long* cut,
                    int* bid,
                    int* bcd,
-                   MPIPolylib* PL,
+//fj>
+                   //MPIPolylib* PL,
+                   Polylib* PL,
+//fj<
                    PolygonProperty* PG,
                    const int* Dsize=NULL);
   
   
   // ポリゴンの水密化
   void SeedFilling(int* d_mid,
-                   MPIPolylib* PL,
+//fj>
+                   //MPIPolylib* PL,
+                   Polylib* PL,
+//fj<
                    PolygonProperty* PG);
   
   
@@ -592,7 +609,10 @@ public:
   // サブサンプリング
   void SubSampling(int* d_mid,
                    REAL_TYPE* d_pvf,
-                   MPIPolylib* PL);
+//fj>
+                   //MPIPolylib* PL);
+                   Polylib* PL);
+//fj<
 
 };
 

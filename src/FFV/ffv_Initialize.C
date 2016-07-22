@@ -8,7 +8,7 @@
 // Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -1505,7 +1505,10 @@ void FFV::gatherDomainInfo()
     Hostonly_
     {
       fprintf(fp,"\nDomain %4d\n", i);
-      fprintf(fp,"\t ix, jx,  kx        [-] =  %13ld %13ld %13ld\n",  m_size[i*3], m_size[i*3+1], m_size[i*3+2]);
+//fj>
+      //fprintf(fp,"\t ix, jx,  kx        [-] =  %13ld %13ld %13ld\n",  m_size[i*3], m_size[i*3+1], m_size[i*3+2]);
+      fprintf(fp,"\t ix, jx,  kx        [-] =  %13d %13d %13d\n",  m_size[i*3], m_size[i*3+1], m_size[i*3+2]);
+//fj<
       fprintf(fp,"\t(ox, oy, oz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n", 
               m_org[i*3]*C.RefLength,  m_org[i*3+1]*C.RefLength,  m_org[i*3+2]*C.RefLength, m_org[i*3],  m_org[i*3+1],  m_org[i*3+2]);
       fprintf(fp,"\t(Lx, Ly, Lz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n", 
@@ -3730,6 +3733,8 @@ void FFV::SD_Initialize(const int div_type, TextParser* tp_dom)
 }
 
 
+//fj> del
+#if 0
 // #################################################################
 /* @brief 境界条件ポリゴンの正しい面積を保持する
  * @param [in]     fp       ファイルポインタ
@@ -3797,6 +3802,8 @@ void FFV::SM_getVspecArea(FILE* fp)
   
   fprintf(fp, "\n\n");
 }
+#endif
+//fj< del
 
 
 
@@ -3818,20 +3825,30 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
     fprintf(fp,"\t>> Polylib configuration\n\n");
   }
   
-  // Polylibファイルをテンポラリに出力
+  // Polylibファイル(polylib.tp)をテンポラリに出力
+  //     直ぐあとのload()で使用する
   if ( !F->writePolylibFile(cmp) )
   {
-    Hostonly_
-    {
-      fprintf(fp,"\tError : writing polylib.tp\n");
-      printf    ("\tError : writing polylib.tp\n");
-    }
-    Exit(0);
+//fj>
+    // writePolylibFile()は複数ランクで実行されるため
+    // ファイル競合の可能性がある。
+    // ファイルが共有される場合は、どこか一つのランクで
+    // 出力されれば良いのでここではエラーとしない
+    //Hostonly_
+    //{
+    //  fprintf(fp,"\tError : writing polylib.tp\n");
+    //  printf    ("\tError : writing polylib.tp\n");
+    //}
+    //Exit(0);
+//fj<
   }
   
   
   // Polylib: インスタンス取得
-  PL = MPIPolylib::get_instance();
+//fj>
+  //PL = MPIPolylib::get_instance();
+  PL = Polylib::get_instance();
+//fj<
   
   
   // Polylib: 並列計算領域情報を設定 >> 有次元
@@ -3861,15 +3878,23 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   TIMING_start("Loading_Polygon_File");
   
   // ロード
+  //    直ぐ上で書き出されたpolylib.tpファイルに従いポリゴンデータ読み出し
   //poly_stat = PL->load_rank0( "polylib.tp");
-  poly_stat = PL->load_only_in_rank0( "polylib.tp");
+//fj>
+  //poly_stat = PL->load_only_in_rank0( "polylib.tp");
+  poly_stat = PL->load( "polylib.tp" );
+//fj<
   
   if( poly_stat != PLSTAT_OK )
   {
     Hostonly_
     {
-      printf    ("\tRank [%6d]: p_polylib->load_only_in_rank0() failed.", myRank);
-      fprintf(fp,"\tRank [%6d]: p_polylib->load_only_in_rank0() failed.", myRank);
+//fj>
+      //printf    ("\tRank [%6d]: p_polylib->load_only_in_rank0() failed.", myRank);
+      //fprintf(fp,"\tRank [%6d]: p_polylib->load_only_in_rank0() failed.", myRank);
+      printf    ("\tRank [%6d]: p_polylib->load() failed.", myRank);
+      fprintf(fp,"\tRank [%6d]: p_polylib->load() failed.", myRank);
+//fj<
     }
     Exit(0);
   }
@@ -3877,7 +3902,8 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   TIMING_stop("Loading_Polygon_File");
   
   
-  
+//fj>
+#if 0  
   // 内部の速度境界条件を与えるポリゴンの面積をマスターランクのみで正しく求める
   TIMING_start("Get_Accurate_BC_Area");
   Hostonly_
@@ -3903,6 +3929,8 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   }
   
   TIMING_stop("Distributing_Polygon");
+#endif
+//fj<
   
   
   
@@ -3911,6 +3939,7 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
 #if 0
   PL->show_group_hierarchy();
   PL->show_group_hierarchy(fp);
+  PL->show_all_group_info();
 #endif
   // ##########
   
@@ -3941,13 +3970,26 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   for (it = pg_roots->begin(); it != pg_roots->end(); it++)
   {
     std::string m_pg = (*it)->get_name();     // グループラベル
-    std::string m_mat = (*it)->get_label();   // 媒質ラベル
-    std::string m_bc = (*it)->get_type();     // 境界条件ラベル
-    int ntria= (*it)->get_group_num_tria();   // ローカルのポリゴン数
-    REAL_TYPE area = (*it)->get_group_area(); // ローカルのポリゴン面積
+//fj>
+    //std::string m_mat = (*it)->get_label();   // 媒質ラベル
+    //std::string m_bc = (*it)->get_type();     // 境界条件ラベル
+    //int ntria= (*it)->get_group_num_tria();   // ローカルのポリゴン数
+    //REAL_TYPE area = (*it)->get_group_area(); // ローカルのポリゴン面積
+
+    string key_mat = "label";   // key 媒質ラベル
+    string key_bc  = "type";    // key 境界条件ラベル
+    string m_mat;    // 媒質ラベル
+    string m_bc;     // 境界条件ラベル
+    (*it)->get_atr( key_mat, m_mat );   
+    (*it)->get_atr( key_bc,  m_bc  );
+    int ntria_local = (*it)->get_group_num_tria();           // ローカルのポリゴン数
+    int ntria_global= (*it)->get_group_num_global_tria();    // グローバルのポリゴン数
+    REAL_TYPE area_global = (*it)->get_group_global_area();  // グローバルのポリゴン面積
     
     // 各ランクの保持するポリゴン数を設定
-    PG[c].setLntria(ntria);
+    //PG[c].setLntria(ntria);
+    PG[c].setLntria(ntria_local);
+//fj<
     
     
     // cmp[]の格納順を探す
@@ -3963,39 +4005,52 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
     }
     
     // PolygonにIDを割り当てる
-    poly_stat = (*it)->set_all_exid_of_trias(c_id);
-    
-    if ( poly_stat != PLSTAT_OK )
-    {
-      Hostonly_
-      {
-        printf(     "\tError : Polylib::set_all_exid_of_trias()\n");
-        fprintf(fp, "\tError : Polylib::set_all_exid_of_trias()\n");
-        Exit(0);
+//fj>
+    //poly_stat = (*it)->set_all_exid_of_trias(c_id);
+    //if ( poly_stat != PLSTAT_OK )
+    //{
+    //  Hostonly_
+    //  {
+    //    printf(     "\tError : Polylib::set_all_exid_of_trias()\n");
+    //    fprintf(fp, "\tError : Polylib::set_all_exid_of_trias()\n");
+    //    Exit(0);
+    //  }
+    //}
+
+    std::vector<Triangle*>* tri_list = (*it)->get_triangles();
+    if( tri_list != NULL ) {
+      for(int i=0; i<tri_list->size(); i++)  {
+        (*tri_list)[i]->set_exid( c_id );
       }
     }
+//fj<
     
     
-    if ( numProc > 1 )
-    {
-      int tmp = ntria;
-      if ( paraMngr->Allreduce(&tmp, &ntria, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
-      
-      REAL_TYPE ta = area;
-      if ( paraMngr->Allreduce(&ta, &area, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
-    }
-    
-    
-    // SPEC_VEL, OUTFLOW以外 >> SM_getVspecArea()
-    int typ = cmp[c_id].getType();
-    if ( typ!=SPEC_VEL && typ!=OUTFLOW )  cmp[c_id].area = area;
+//fj>
+    //if ( numProc > 1 )
+    //{
+    //  int tmp = ntria;
+    //  if ( paraMngr->Allreduce(&tmp, &ntria, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
+    //  
+    //  REAL_TYPE ta = area;
+    //  if ( paraMngr->Allreduce(&ta, &area, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
+    //}
+    //// SPEC_VEL, OUTFLOW以外 >> SM_getVspecArea()
+    //int typ = cmp[c_id].getType();
+    //if ( typ!=SPEC_VEL && typ!=OUTFLOW )  cmp[c_id].area = area;
+
+    cmp[c_id].area = area_global;
+//fj<
     
     
     PG[c].setID(c_id);
     PG[c].setGroup(m_pg);
     PG[c].setBClabel(m_bc);
     PG[c].setMaterial(m_mat);
-    PG[c].setGntria(ntria);
+//fj>
+    //PG[c].setGntria(ntria);
+    PG[c].setGntria(ntria_global);
+//fj<
     
     
     Hostonly_
@@ -4004,7 +4059,10 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
               m_pg.c_str(),
               m_mat.c_str(),
               m_bc.c_str(),
-              ntria,
+//fj>
+              //ntria,
+              ntria_global,
+//fj<
               cmp[c_id].area);
     }
     
@@ -4050,15 +4108,20 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
   m_max = t1 + t3 + t2; //
   printf("min : %f %f %f\n", m_min.x, m_min.y, m_min.z);
   printf("max : %f %f %f\n", m_max.x, m_max.y, m_max.z);
-  vector<Triangle*>* trias = PL->search_polygons("Ducky", m_min, m_max, false); // false; ポリゴンが一部でもかかる場合
+  //vector<Triangle*>* trias = PL->search_polygons("Ducky", m_min, m_max, false); // false; ポリゴンが一部でもかかる場合
+  vector<Triangle*> trias;
+  PL->search_polygons(trias, "Ducky", m_min, m_max, false); // false; ポリゴンが一部でもかかる場合
   
   //Vec3r *p, nrl, n;
   Vec3r n;
   Vertex** p;
   c=0;
   vector<Triangle*>::iterator it3;
-  for (it3 = trias->begin(); it3 != trias->end(); it3++) {
-    p = (*it3)->get_vertex();
+  //for (it3 = trias->begin(); it3 != trias->end(); it3++) {
+  //  p = (*it3)->get_vertex();
+  for (it3 = trias.begin(); it3 != trias.end(); it3++) {
+    //p = (*it3)->get_vertex();
+    p = (*it3)->get_vertexes();
     n = (*it3)->get_normal();
     printf("%d : p0=(%6.3e %6.3e %6.3e)  p1=(%6.3e %6.3e %6.3e) p2=(%6.3e %6.3e %6.3e) n=(%6.3e %6.3e %6.3e)\n", c++,
            (*(p[0]))[0], (*(p[0]))[1], (*(p[0]))[2],
@@ -4067,7 +4130,7 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
            n.x, n.y, n.z);
   }
   
-  delete trias;  //後始末
+  //delete trias;  //後始末
 #endif
   
   
@@ -4084,24 +4147,35 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
     if ( (C.Parallelism == Control::Serial) || (C.Parallelism == Control::OpenMP) ) poly_out_para = IO_GATHER;
     
     string fname;
+    string format = "stl_b";
     
     if ( poly_out_para == IO_GATHER )
     {
-      poly_stat = PL->save_rank0( &fname, "stl_b" );
+//fj>
+      //poly_stat = PL->save_rank0( &fname, "stl_b" );
+      poly_stat = PL->save( fname, format );
+//fj<
       
       if ( poly_stat != PLSTAT_OK )
       {
         Hostonly_
         {
-          printf(    "Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", myRank, fname.c_str());
-          fprintf(fp,"Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", myRank, fname.c_str());
+//fj>
+          //printf(    "Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", myRank, fname.c_str());
+          //fprintf(fp,"Rank [%d]: p_polylib->save_rank0() failed to write into '%s'.", myRank, fname.c_str());
+          printf(    "Rank [%d]: p_polylib->save() failed to write into '%s'.", myRank, fname.c_str());
+          fprintf(fp,"Rank [%d]: p_polylib->save() failed to write into '%s'.", myRank, fname.c_str());
+//fj<
         }
         Exit(0);
       }
     }
     else
     {
-      poly_stat = PL->save_parallel( &fname, "stl_b" );
+//fj>
+      //poly_stat = PL->save_parallel( &fname, "stl_b" );
+      poly_stat = PL->save_parallel( fname, format );
+//fj<
       
       if ( poly_stat != PLSTAT_OK )
       {

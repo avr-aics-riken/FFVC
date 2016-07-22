@@ -8,7 +8,7 @@
 # Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
 # All rights reserved.
 #
-# Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN.
+# Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 # All rights reserved. 
 #
 ###################################################################################
@@ -17,7 +17,10 @@ noinst_lib_LIBRARIES = libFB.a
 
 noinst_libdir = ../lib
 
+#fj>
+# add -DMPI_PL
 libFB_a_CXXFLAGS = \
+-DMPI_PL \
 -I$(top_srcdir)/src/FB \
 -I$(top_srcdir)/src/Geometry \
 @CDM_CFLAGS@ \
@@ -26,6 +29,7 @@ libFB_a_CXXFLAGS = \
 @TP_CFLAGS@ \
 @MPICH_CFLAGS@ \
 @REALOPT@
+#fj<
 
 libFB_a_SOURCES = \
 Alloc.C \

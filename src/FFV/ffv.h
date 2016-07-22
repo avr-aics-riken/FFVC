@@ -11,7 +11,7 @@
 // Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -82,7 +82,9 @@
 
 // Polylib
 #include "Polylib.h"
-#include "MPIPolylib.h"
+//fj>
+//#include "MPIPolylib.h"
+//fj<
 
 // CDMlib
 #include "cdm_DFI.h"
@@ -192,7 +194,10 @@ private:
   ParseBC B;                 ///< 境界条件のパースクラス
   SetBC3D BC;                ///< BCクラス
   History* H;                ///< 履歴クラス
-  MPIPolylib* PL;            ///< Polylibクラス
+//fj>
+  //MPIPolylib* PL;            ///< Polylibクラス
+  Polylib* PL;               ///< Polylibクラス
+//fj<
   POLYLIB_STAT poly_stat;    ///< Polylibの戻り値
   FBUtility U;               ///< ユーティリティクラス
   MonitorList MO;            ///< Monitorクラス
@@ -424,8 +429,10 @@ private:
   void setModel(double& PrepMemory, double& TotalMemory, FILE* fp);
   
   
-  // 境界条件ポリゴンの正しい面積を保持する
-  void SM_getVspecArea(FILE* fp);
+//fj>
+//  // 境界条件ポリゴンの正しい面積を保持する
+//  void SM_getVspecArea(FILE* fp);
+//fj<
   
   
   // 幾何形状情報を準備し，交点計算を行う
