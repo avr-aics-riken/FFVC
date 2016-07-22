@@ -8,7 +8,7 @@
 // Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -253,11 +253,14 @@ void Geometry::assureUniqueLabel(int* labelTop, int* labelsz, vector<int>& tbl, 
 
 // #################################################################
 /* @brief ポリゴングループの座標値からboxを計算する
- * @param [in]     PL         MPIPolylibのインスタンス
+ * @param [in]     PL         Polylibのインスタンス
  * @param [in,out] PG         PolygonPropertyクラス
  * @param [in]     NoPolyGrp  ポリゴングループ数
  */
-void Geometry::calcBboxFromPolygonGroup(MPIPolylib* PL,
+//fj>
+//void Geometry::calcBboxFromPolygonGroup(MPIPolylib* PL,
+void Geometry::calcBboxFromPolygonGroup(Polylib* PL,
+//fj<
                                         PolygonProperty* PG,
                                         const int m_NoPolyGrp)
 {
@@ -299,7 +302,11 @@ void Geometry::calcBboxFromPolygonGroup(MPIPolylib* PL,
     if ( ntria > 0 )
     {
       // false; ポリゴンが一部でもかかればピックアップ
-      vector<Triangle*>* trias = PL->search_polygons(m_pg, m_min, m_max, false);
+//fj>
+      //vector<Triangle*>* trias = PL->search_polygons(m_pg, m_min, m_max, false);
+      vector<Triangle*> trias;
+      PL->search_polygons(trias, m_pg, m_min, m_max, false);
+//fj<
       
       Vec3r *p;
       Vec3r bbox_min( 1.0e6,  1.0e6,  1.0e6);
@@ -307,13 +314,24 @@ void Geometry::calcBboxFromPolygonGroup(MPIPolylib* PL,
       unsigned c=0;
       vector<Triangle*>::iterator it2;
       
-      for (it2 = trias->begin(); it2 != trias->end(); it2++)
+//fj>
+      //for (it2 = trias->begin(); it2 != trias->end(); it2++)
+      for (it2 = trias.begin(); it2 != trias.end(); it2++)
+//fj<
       {
-        Vertex** org = (*it2)->get_vertex();
+//fj>
+        //Vertex** org = (*it2)->get_vertex();
+        //Vec3r p[3];
+        //p[0] = *(org[0]);
+        //p[1] = *(org[1]);
+        //p[2] = *(org[2]);
+
+        Vec3r* org = (*it2)->get_vertexes();
         Vec3r p[3];
-        p[0] = *(org[0]);
-        p[1] = *(org[1]);
-        p[2] = *(org[2]);
+        p[0] = org[0];
+        p[1] = org[1];
+        p[2] = org[2];
+//fj<
         
         get_min(bbox_min, p[0]);
         get_min(bbox_min, p[1]);
@@ -347,7 +365,9 @@ void Geometry::calcBboxFromPolygonGroup(MPIPolylib* PL,
              bbox_max.x, bbox_max.y, bbox_max.z);
 #endif
       
-      delete trias; // 後始末
+//fj>
+      //delete trias; // 後始末
+//fj<
     }
     else // ntria == 0
     {
@@ -1405,10 +1425,13 @@ int Geometry::find_mode(const int m_sz, const int* list)
 // #################################################################
 /* @brief セルに含まれるポリゴンを探索し、d_midに記録
  * @param [in,out] d_mid  識別子配列
- * @param [in]     PL     MPIPolylibのインスタンス
+ * @param [in]     PL     Polylibのインスタンス
  * @param [in]     PG     PolygonPropertyクラス
  */
-unsigned long Geometry::findPolygonInCell(int* d_mid, MPIPolylib* PL, PolygonProperty* PG)
+//fj>
+//unsigned long Geometry::findPolygonInCell(int* d_mid, MPIPolylib* PL, PolygonProperty* PG)
+unsigned long Geometry::findPolygonInCell(int* d_mid, Polylib* PL, PolygonProperty* PG)
+//fj<
 {
   int ix = size[0];
   int jx = size[1];
@@ -1424,7 +1447,12 @@ unsigned long Geometry::findPolygonInCell(int* d_mid, MPIPolylib* PL, PolygonPro
   for (it = pg_roots->begin(); it != pg_roots->end(); it++)
   {
     string m_pg = (*it)->get_name();     // グループラベル
-    string m_bc = (*it)->get_type();     // 境界条件ラベル
+//fj>
+    //string m_bc = (*it)->get_type();     // 境界条件ラベル
+    string key_bc  = "type";    // key 境界条件ラベル
+    string m_bc;     // 境界条件ラベル
+    (*it)->get_atr( key_bc,  m_bc  );
+//fj<
     int ntria = (*it)->get_group_num_tria();  // ローカルのポリゴン数
     
 #if 0
@@ -1461,8 +1489,13 @@ unsigned long Geometry::findPolygonInCell(int* d_mid, MPIPolylib* PL, PolygonPro
                            originD[1]+pitchD[1]*(REAL_TYPE)j,
                            originD[2]+pitchD[2]*(REAL_TYPE)k);     // セルBboxの対角座標
               
-              vector<Triangle*>* trias = PL->search_polygons(m_pg, bx_min, bx_max, false); // false; ポリゴンが一部でもかかる場合
-              int polys = trias->size();
+//fj>
+              //vector<Triangle*>* trias = PL->search_polygons(m_pg, bx_min, bx_max, false); // false; ポリゴンが一部でもかかる場合
+              //int polys = trias->size();
+              vector<Triangle*> trias;
+              PL->search_polygons(trias, m_pg, bx_min, bx_max, false); // false; ポリゴンが一部でもかかる場合
+              int polys = trias.size();
+//fj<
               
               if (polys>0)
               {
@@ -1471,7 +1504,10 @@ unsigned long Geometry::findPolygonInCell(int* d_mid, MPIPolylib* PL, PolygonPro
                 unsigned c=0;
                 vector<Triangle*>::iterator it2;
                 
-                for (it2 = trias->begin(); it2 != trias->end(); it2++)
+//fj>
+                //for (it2 = trias->begin(); it2 != trias->end(); it2++)
+                for (it2 = trias.begin(); it2 != trias.end(); it2++)
+//fj<
                 {
                   ary[c] = (*it2)->get_exid();
                   c++;
@@ -1487,7 +1523,9 @@ unsigned long Geometry::findPolygonInCell(int* d_mid, MPIPolylib* PL, PolygonPro
               }
               
               //後始末
-              delete trias;
+//fj>
+              //delete trias;
+//fj>
             }
           }
         }
@@ -2940,7 +2978,10 @@ void Geometry::paintConnectedLabel(int* mid,
 void Geometry::quantizeCut(long long* cut,
                            int* bid,
                            int* bcd,
-                           MPIPolylib* PL,
+//fj>
+                           //MPIPolylib* PL,
+                           Polylib* PL,
+//fj<
                            PolygonProperty* PG,
                            const int* Dsize)
 {
@@ -2976,7 +3017,12 @@ void Geometry::quantizeCut(long long* cut,
   for (it = pg_roots->begin(); it != pg_roots->end(); it++)
   {
     string m_pg = (*it)->get_name();     // グループラベル
-    string m_bc = (*it)->get_type();     // 境界条件ラベル
+//fj>
+    //string m_bc = (*it)->get_type();     // 境界条件ラベル
+    string key_bc  = "type";    // key 境界条件ラベル
+    string m_bc;     // 境界条件ラベル
+    (*it)->get_atr( key_bc,  m_bc  );
+//fj<
     
     // サブドメイン内にポリゴンが存在する場合のみ処理する
     int ntria = (*it)->get_group_num_tria();  // ローカルのポリゴン数
@@ -3020,21 +3066,36 @@ void Geometry::quantizeCut(long long* cut,
               Vec3r bx_max(ctr + pch * 1.01);
               
               
-              vector<Triangle*>* trias = PL->search_polygons(m_pg, bx_min, bx_max, false); // false; ポリゴンが一部でもかかる場合
-              int polys = trias->size();
+//fj>
+              //vector<Triangle*>* trias = PL->search_polygons(m_pg, bx_min, bx_max, false); // false; ポリゴンが一部でもかかる場合
+              //int polys = trias->size();
+              vector<Triangle*> trias;
+              PL->search_polygons(trias, m_pg, bx_min, bx_max, false); // false; ポリゴンが一部でもかかる場合
+              int polys = trias.size();
+//fj<
               
               
               if (polys>0)
               {
                 vector<Triangle*>::iterator it2;
                 
-                for (it2 = trias->begin(); it2 != trias->end(); it2++)
+//fj>
+                //for (it2 = trias->begin(); it2 != trias->end(); it2++)
+                //{
+                //  Vertex** tmp = (*it2)->get_vertex();
+                //  Vec3r p[3];
+                //  p[0] = *(tmp[0]);
+                //  p[1] = *(tmp[1]);
+                //  p[2] = *(tmp[2]);
+
+                for (it2 = trias.begin(); it2 != trias.end(); it2++)
                 {
-                  Vertex** tmp = (*it2)->get_vertex();
+                  Vec3r* tmp = (*it2)->get_vertexes();
                   Vec3r p[3];
-                  p[0] = *(tmp[0]);
-                  p[1] = *(tmp[1]);
-                  p[2] = *(tmp[2]);
+                  p[0] = tmp[0];
+                  p[1] = tmp[1];
+                  p[2] = tmp[2];
+//fj<
                   
                   // Polygon ID
                   int poly_id = (*it2)->get_exid();
@@ -3065,7 +3126,9 @@ void Geometry::quantizeCut(long long* cut,
               } // polys
               
               //後始末
-              delete trias;
+//fj>
+              //delete trias;
+//fj<
             }
           }
         } // for i,j,k
@@ -4255,12 +4318,15 @@ unsigned long Geometry::replaceIsolatedCell(int* bcd, const int* bid)
 // #################################################################
 /* @brief シード点によるフィル
  * @param [in]  d_mid     識別子配列
- * @param [in]  PL        MPIPolylibのインスタンス
+ * @param [in]  PL        Polylibのインスタンス
  * @param [in]  PG        PolygonPropertyクラス
  * @note ここまで、d_bcdにはsetMonitorList()でモニタIDが入っている
  */
 void Geometry::SeedFilling(int* d_mid,
-                           MPIPolylib* PL,
+//fj>
+                           //MPIPolylib* PL,
+                           Polylib* PL,
+//fj<
                            PolygonProperty* PG)
 {
   unsigned long target_count = 0; ///< フィルの対象となるセル数
@@ -4737,7 +4803,10 @@ int Geometry::SubCellIncTest(REAL_TYPE* svf,
                              const int kp,
                              const Vec3r pch,
                              const string m_pg,
-                             MPIPolylib* PL)
+//fj>
+                             //MPIPolylib* PL)
+                             Polylib* PL)
+//fj<
 {
   // プライマリセルの基点（有次元）
   Vec3r o(originD[0]+pitchD[0]*(REAL_TYPE)(ip-1),
@@ -4762,8 +4831,13 @@ int Geometry::SubCellIncTest(REAL_TYPE* svf,
                  o.y + pch.y * (REAL_TYPE)j,
                  o.z + pch.z * (REAL_TYPE)k);
         
-        vector<Triangle*>* trias = PL->search_polygons(m_pg, b1, b2, false); // false; ポリゴンが一部でもかかる場合
-        int polys = trias->size();
+//fj>
+        //vector<Triangle*>* trias = PL->search_polygons(m_pg, b1, b2, false); // false; ポリゴンが一部でもかかる場合
+        //int polys = trias->size();
+        vector<Triangle*> trias;
+        PL->search_polygons(trias, m_pg, b1, b2, false); // false; ポリゴンが一部でもかかる場合
+        int polys = trias.size();
+//fj<
         
         if (polys>0)
         {
@@ -4772,7 +4846,10 @@ int Geometry::SubCellIncTest(REAL_TYPE* svf,
           unsigned c=0;
           vector<Triangle*>::iterator it2;
           
-          for (it2 = trias->begin(); it2 != trias->end(); it2++)
+//fj>
+          //for (it2 = trias->begin(); it2 != trias->end(); it2++)
+          for (it2 = trias.begin(); it2 != trias.end(); it2++)
+//fj<
           {
             ary[c] = (*it2)->get_exid();
             c++;
@@ -4791,7 +4868,9 @@ int Geometry::SubCellIncTest(REAL_TYPE* svf,
           if ( ary ) delete [] ary;
         }
         
-        delete trias;
+//fj>
+        //delete trias;
+//fj<
       }
     }
   }
@@ -4804,11 +4883,13 @@ int Geometry::SubCellIncTest(REAL_TYPE* svf,
 /* @brief sub-sampling
  * @param [in]  d_mid     識別子配列
  * @param [out] d_pvf     体積率
- * @param [in]  PL        MPIPolylibのインスタンス
+ * @param [in]  PL        Polylibのインスタンス
  */
 void Geometry::SubSampling(int* d_mid,
                            REAL_TYPE* d_pvf,
-                           MPIPolylib* PL)
+//fj>
+                           Polylib* PL)
+//fj<
 {
   unsigned long target_count = 0; ///< フィルの対象となるセル数
   unsigned long replaced = 0;     ///< 置換された数
@@ -4907,7 +4988,12 @@ void Geometry::SubSampling(int* d_mid,
           for (it = pg_roots->begin(); it != pg_roots->end(); it++)
           {
             string m_pg = (*it)->get_name();          // グループラベル
-            string m_bc = (*it)->get_type();          // 境界条件ラベル
+//fj>
+            //string m_bc = (*it)->get_type();          // 境界条件ラベル
+            string key_bc  = "type";    // key 境界条件ラベル
+            string m_bc;     // 境界条件ラベル
+            (*it)->get_atr( key_bc,  m_bc  );
+//fj<
             int ntria = (*it)->get_group_num_tria();  // ローカルのポリゴン数
             
             // 対象ポリゴンがある場合のみ

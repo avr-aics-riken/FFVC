@@ -8,7 +8,7 @@
 // Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -176,7 +176,10 @@ void ASD::evaluateASD(int argc, char **argv)
     Exit(0);
   } 
   
-  PL = MPIPolylib::get_instance();
+//fj>
+  //PL = MPIPolylib::get_instance();
+  PL = Polylib::get_instance();
+//fj<
 
   
   setupPolygonASD(str, flag);
@@ -717,15 +720,22 @@ void ASD::findPolygon(const REAL_TYPE* px,
         Vec3r pos_max(px[i-1]+lx, py[j-1]+ly, pz[k-1]+lz);
         
         // false; ポリゴンが一部でもかかる場合
-        vector<Triangle*>* trias = PL->search_polygons(label, pos_min, pos_max, false);
-        int polys = trias->size();
+//fj>
+        //vector<Triangle*>* trias = PL->search_polygons(label, pos_min, pos_max, false);
+        //int polys = trias->size();
+        vector<Triangle*> trias;
+        PL->search_polygons( trias, label, pos_min, pos_max, false);
+        int polys = trias.size();
+//fj<
         
         if (polys>0) {
           size_t m = i-1 + (j-1) * dvx + (k-1) * dvx * dvy;
           sd[m] = 1; //Active
         }
         
-        delete trias;
+//fj>
+        //delete trias;
+//fj<
       }
     }
   }
@@ -915,11 +925,15 @@ void ASD::setupPolygonASD(const string fname, bool flag)
                                      poly_dx           // 格子幅
                                      );
    
-
-  poly_stat = PL->load_rank0( fname );
+//fj>
+  //poly_stat = PL->load_rank0( fname );
+  poly_stat = PL->load( fname );
+//fj<
  
   if ( poly_stat != PLSTAT_OK ) {
-    printf ("\tpolylib->load_rank0() failed.");
+//fj>
+    printf ("\tpolylib->load() failed.");
+//fj<
     Exit(0);
   }
  
@@ -953,22 +967,42 @@ void ASD::setupPolygonASD(const string fname, bool flag)
   for (it = pg_roots->begin(); it != pg_roots->end(); it++)
   {
     string m_pg = (*it)->get_name();     // グループラベル
-    string m_mat = (*it)->get_label();   // 媒質ラベル
-    string m_bc = (*it)->get_type();     // 境界条件ラベル
-    int ntria= (*it)->get_group_num_tria();   // ローカルのポリゴン数
-    REAL_TYPE area = (*it)->get_group_area(); // ローカルのポリゴン面積
+//fj>
+    //string m_mat = (*it)->get_label();   // 媒質ラベル
+    //string m_bc = (*it)->get_type();     // 境界条件ラベル
+    //int ntria= (*it)->get_group_num_tria();   // ローカルのポリゴン数
+    //REAL_TYPE area = (*it)->get_group_area(); // ローカルのポリゴン面積
+
+    string key_mat = "label";   // key 媒質ラベル
+    string key_bc  = "type";    // key 境界条件ラベル
+    string m_mat;    // 媒質ラベル
+    string m_bc;     // 境界条件ラベル
+    (*it)->get_atr( key_mat, m_mat );
+    (*it)->get_atr( key_bc,  m_bc  );
+    int ntria= (*it)->get_group_num_global_tria();   // グローバルのポリゴン数
+    REAL_TYPE area = (*it)->get_group_global_area(); // グローバルのポリゴン面積
+//fj<
     
     // PolygonにIDを割り当てる
-    poly_stat = (*it)->set_all_exid_of_trias(mat_id);
-    
-    if ( poly_stat != PLSTAT_OK )
-    {
-      if ( !flag )
-      {
-        printf(     "\tError : Polylib::set_all_exid_of_trias()\n");
-        Exit(0);
+//fj>
+    //poly_stat = (*it)->set_all_exid_of_trias(mat_id);
+    //if ( poly_stat != PLSTAT_OK )
+    //{
+    //  if ( !flag )
+    //  {
+    //    printf(     "\tError : Polylib::set_all_exid_of_trias()\n");
+    //    Exit(0);
+    //  }
+    //}
+
+    std::vector<Triangle*>* tri_list = (*it)->get_triangles();
+    if( tri_list != NULL ) {
+      for(int i=0; i<tri_list->size(); i++)  {
+        (*tri_list)[i]->set_exid( mat_id );
       }
     }
+//fj<
+    
     
     if ( !flag ) {
       printf("\t  %20s %18s  %20s %12d  %e\n",

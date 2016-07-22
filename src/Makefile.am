@@ -8,14 +8,17 @@
 # Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
 # All rights reserved.
 #
-# Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN.
+# Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 # All rights reserved. 
 #
 ###################################################################################
 
 bin_PROGRAMS = ffvc
 
+#fj>
+# add -DMPI_PL
 ffvc_CXXFLAGS = \
+  -DMPI_PL \
   -I$(top_srcdir)/src \
   -I$(top_srcdir)/src/FFV \
   -I$(top_srcdir)/src/F_CORE \
@@ -32,6 +35,7 @@ ffvc_CXXFLAGS = \
   @TP_CFLAGS@ \
   @MPICH_CFLAGS@ \
   @REALOPT@
+#fj<
 
 ffvc_SOURCES = main.C
 

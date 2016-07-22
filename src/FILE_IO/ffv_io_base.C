@@ -8,7 +8,7 @@
 // Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -1048,7 +1048,11 @@ bool IO_BASE::writePolylibFile(CompoList* cmp)
   
   if ( !(fp=fopen("polylib.tp", "w")) )
   {
-    stamped_printf("\tSorry, can't open 'polylib.tp' file. Write failed.\n");
+//fj>
+//  通常の処理でランク間のファイル競合が発生する可能性があるため
+//  メッセージ出力なしとする
+//    stamped_printf("\tSorry, can't open 'polylib.tp' file. Write failed.\n");
+//fj<
     return false;
   }
   
@@ -1081,11 +1085,17 @@ void IO_BASE::writePolylibGrp(FILE* fp,
                               const string type)
 {
   fprintf(fp,"  %s {\n", alias.c_str());
-  fprintf(fp,"    class_name = \"PolygonGroup\"\n");
+//fj>
+  //fprintf(fp,"    class_name = \"PolygonGroup\"\n");
   fprintf(fp,"    filepath   = \"%s\"\n", filepath.c_str());
   fprintf(fp,"    movable    = \"false\"\n");
-  fprintf(fp,"    label      = \"%s\"\n", medium.c_str());
-  fprintf(fp,"    type       = \"%s\"\n", type.c_str());
+  //fprintf(fp,"    label      = \"%s\"\n", medium.c_str());
+  //fprintf(fp,"    type       = \"%s\"\n", type.c_str());
+  fprintf(fp,"    UserAtr {\n");
+  fprintf(fp,"        label      = \"%s\"\n", medium.c_str());
+  fprintf(fp,"        type       = \"%s\"\n", type.c_str());
+  fprintf(fp,"    }\n");
+//fj<
   fprintf(fp,"  }\n\n");
 }
 

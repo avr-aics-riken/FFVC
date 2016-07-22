@@ -8,7 +8,7 @@
 # Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
 # All rights reserved.
 #
-# Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN.
+# Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 # All rights reserved. 
 #
 ###################################################################################
@@ -17,7 +17,10 @@ noinst_lib_LIBRARIES = libFIO.a
 
 noinst_libdir = ../lib
 
+#fj>
+# add -DMPI_PL
 libFIO_a_CXXFLAGS = \
+  -DMPI_PL \
   -I$(top_srcdir)/src/FILE_IO \
   -I$(top_srcdir)/src/FB \
   -I$(top_srcdir)/src/F_CORE \
@@ -30,6 +33,7 @@ libFIO_a_CXXFLAGS = \
   @PM_CFLAGS@ \
   @TP_CFLAGS@ \
   @REALOPT@
+#fj<
 
 
 libFIO_a_SOURCES = \

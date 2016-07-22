@@ -8,7 +8,7 @@
 # Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo. 
 # All rights reserved.
 #
-# Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN. 
+# Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN. 
 # All rights reserved. 
 #
 ###################################################################################
@@ -48,7 +48,10 @@ ifeq ($(ARCH),gnu)
   CC          = mpicc
   CFLAGS      = -O3
   CXX         = mpicxx
-  CXXFLAGS    = -O3 $(OMP_FLAGS)
+#fj>
+#  CXXFLAGS    = -O3 $(OMP_FLAGS)
+  CXXFLAGS    = -O3 $(OMP_FLAGS) -DMPI_PL
+#fj<
   FC          = mpif90
   FCFLAGS     = -O3 -ffree-form
   F90         = mpif90
@@ -77,7 +80,10 @@ ifeq ($(ARCH),fx)
   CC          =  mpifccpx
   CFLAGS      = -Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp -Nsrc
   CXX         = mpiFCCpx
-  CXXFLAGS    = -Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp,optmsg=2 -V -Nsrc
+#fj>
+#  CXXFLAGS    = -Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp,optmsg=2 -V -Nsrc
+  CXXFLAGS    = -Kfast,ocl,preex,simd=2,uxsimd,array_private,parallel,openmp,optmsg=2 -V -Nsrc -DMPI_PL
+#fj<
   FC          = mpifrtpx
   FCFLAGS     = -Cpp -Kfast,ocl,preex,simd=2,uxsimd,array_private,auto,parallel,openmp -Qt
   F90         = mpifrtpx
@@ -107,7 +113,10 @@ ifeq ($(ARCH),ibm)
   CC          = mpixlc_r
   CFLAGS      = -O3 -qarch=450d -qtune=450
   CXX         = mpixlcxx_r
-  CXXFLAGS    = -O3 -qarch=450d -qtune=450 $(OMP_FLAGS)
+#fj>
+#  CXXFLAGS    = -O3 -qarch=450d -qtune=450 $(OMP_FLAGS)
+  CXXFLAGS    = -O3 -qarch=450d -qtune=450 $(OMP_FLAGS)  -DMPI_PL
+#fj<
   FC          = mpixlf90_r
   FCFLAGS     = -O3 -qarch=450d -qtune=450 -qextname
   F90         = mpixlf90_r
@@ -136,7 +145,10 @@ ifeq ($(ARCH),intel)
   CC          = mpicc
   CFLAGS      = -O3
   CXX         = mpicxx
-  CXXFLAGS    = -O3 -qopt-report=5 $(OMP_FLAGS)
+#fj>
+#  CXXFLAGS    = -O3 -qopt-report=5 $(OMP_FLAGS)
+  CXXFLAGS    = -O3 -qopt-report=5 $(OMP_FLAGS) -DMPI_PL
+#fj<
 #  FC          = ifort
 #  FCFLAGS     = -O3
   F90         = mpif90

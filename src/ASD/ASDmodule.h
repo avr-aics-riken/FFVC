@@ -11,7 +11,7 @@
 // Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
 // All rights reserved.
 //
-// Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN.
+// Copyright (c) 2012-2015 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
 //##################################################################################
@@ -47,7 +47,9 @@
 
 #include "TextParser.h"
 #include "Polylib.h"
-#include "MPIPolylib.h"
+//fj>
+//#include "MPIPolylib.h"
+//fj<
 
 #include "Vec3.h"
 
@@ -77,7 +79,10 @@ private:
   string out_svx;   ///< SVX 形式出力 >> VXgen
   string out_sub;   ///< char形式出力 >> FXgen
   
-  MPIPolylib* PL;     ///< Polylibクラス
+//fj>
+  //MPIPolylib* PL;     ///< Polylibクラス
+  Polylib* PL;     ///< Polylibクラス
+//fj<
   
   int FillSeedDir;
   int guide;
