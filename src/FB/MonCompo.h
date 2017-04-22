@@ -16,7 +16,7 @@
 //
 //##################################################################################
 
-/** 
+/**
  * @file   MonCompo.h
  * @brief  FlowBase MonitorCompo class Header
  * @author aics
@@ -26,7 +26,7 @@
 #include "DomainInfo.h"
 #include <vector>
 #include <cassert>
-#include "Vec3.h"
+#include "common/Vec3.h" // defined in Polylib
 #include "Component.h"
 #include "Sampling.h"
 #include "FBUtility.h"
@@ -44,7 +44,7 @@ using namespace Vec3class;
  */
 class MonitorCompo : public DomainInfo {
 public:
-  
+
   /// PointSet要素用構造体
   struct MonitorPoint {
     Vec3r crd;          ///< モニタ点座標
@@ -52,7 +52,7 @@ public:
     MonitorPoint(const REAL_TYPE v[3], const char* str) : crd(v), label(str) {}
     ~MonitorPoint() {}
   };
-  
+
   /// 参照用パラメータ構造体
   struct ReferenceVariables {
     int modeUnitOutput;    /// 出力単位指定フラグ (有次元，無次元)
@@ -66,12 +66,12 @@ public:
     REAL_TYPE basePrs;     /// 基準圧力
     Vec3r v00;             /// 参照（座標系移動）速度
   };
-  
+
   // Graph Ploter
 public:
   std::vector<int> plane_grid_flags; ///< 平面断面のグリッドをサンプリングする際に、mｘｎ分割の際に、各格子点有効性flagの配列
   ///< plane_grid_flags.size() は, (m+1)*(n+2) です。
-  
+
   void setPlaneFlags( std::vector<int> *grid_glags )
   {
     if( grid_glags != NULL )
@@ -85,8 +85,8 @@ public:
     }
     return;
   }
-  
-  
+
+
 protected:
   int nPoint;                ///< モニタ点数(Local)
   bool variable[var_END];    ///< モニタ変数フラグ
@@ -96,9 +96,9 @@ protected:
   int mode;                  ///< サンプリングモード
   int num_process;           ///< プロセス数
   int polyID;                ///< PolygonモニタのエントリID
-  
+
   Sampling** mon;            ///< 「モニタ点毎のSampligクラスへのポインタ」の配列
-  
+
   Vec3r org;                 ///< ローカル基点座標
   Vec3r pch;                 ///< セル幅
   Vec3r box;                 ///< ローカル領域サイズ
@@ -107,20 +107,20 @@ protected:
   REAL_TYPE nv[3];           ///< 法線ベクトル
   REAL_TYPE val[var_END];    ///< サンプリング値
   int NoCompo;               ///< 物性テーブルの個数 >> 配列の大きさは[NoCompo+1]
-  
+
   ReferenceVariables refVar; ///< 参照用パラメータ変数
-  
+
   int* bid;            ///< 境界ID
   int* bcd;            ///< BCindex B
   long long* cut;      ///< 交点情報
-  
+
   FILE* fp;            ///< 出力ファイルポインタ
-  
+
   Vec3r* crd;          ///< モニタ点座標配列
   int* rank;           ///< モニタ点担当ランク番号配列
   string* comment;     ///< モニタ点コメント配列
   int* pointStatus;    ///< 不正モニタ点フラグ配列
-  
+
   Vec3r* vel;          ///< 速度サンプリング結果配列
   REAL_TYPE* prs;      ///< 圧力サンプリング結果配列
   REAL_TYPE* tmp;      ///< 温度サンプリング結果配列
@@ -134,7 +134,7 @@ protected:
   REAL_TYPE* tSource;  ///< 温度サンプリング元データ
   REAL_TYPE* vrSource; ///< 渦度サンプリング元データ
   double* mtbl;        ///< 物性テーブルへのポインタ
-  
+
   // Graph ploter
   REAL_TYPE m_Center[3];
   REAL_TYPE m_MainDir[3];
@@ -143,8 +143,8 @@ protected:
   REAL_TYPE m_Dim2[2];
   REAL_TYPE m_Div[2];
   Monitor_Type m_ObjType;
-  
-  
+
+
 public:
   /// デフォルトコンストラクタ
   MonitorCompo() {
@@ -168,11 +168,11 @@ public:
     bcd = NULL;
     cut = NULL;
     mtbl= NULL;
-    
+
     // Graph ploter
     setObjType(mon_UNKNOWN);
   }
-  
+
   /// コンストラクタ
   ///
   ///   @param [in] org,pch,box ローカル領域基点座標，セル幅，領域サイズ
@@ -211,7 +211,7 @@ public:
     comment = NULL;
     pointStatus = NULL;
     vSource = pSource = tSource = vrSource = NULL;
-    
+
     this->org = org;
     this->pch = pch;
     this->box = box;
@@ -225,7 +225,7 @@ public:
     this->NoCompo = num_compo;
     this->mtbl = m_mtbl;
   }
-  
+
   /// デストラクタ
   ~MonitorCompo() {
     if (crd) delete[] crd;
@@ -237,25 +237,25 @@ public:
     if (rank) delete[] rank;
     if (comment) delete[] comment;
     if (pointStatus) delete[] pointStatus;
-    
-    
+
+
     if (mon)
     {
       for (int i = 0; i < nPoint; i++)
       {
         if (mon[i]) delete mon[i];
       }
-      
+
       delete[] mon;
     }
   }
-  
+
   //>> Graph Ploter
   void setCylinderData(REAL_TYPE c[3], REAL_TYPE z[3], REAL_TYPE x[3], REAL_TYPE dim[3]);
   void setBoxData(REAL_TYPE c[3], REAL_TYPE z[3], REAL_TYPE x[3], REAL_TYPE dim[3]);
   void setPlaneData(REAL_TYPE c[3], REAL_TYPE z[3], REAL_TYPE x[3], REAL_TYPE dim[2], REAL_TYPE div[2] );
   void setObjType(Monitor_Type the_type){m_ObjType = the_type;}
-  
+
   //指定点　gp　は、指定された座標系内部のローカル座標を求める
   Vec3r localPt( Vec3r orig, Vec3r unit_z, Vec3r unit_x, Vec3r unit_y, Vec3r global_pt )
   {
@@ -265,7 +265,7 @@ public:
     //lp->setIt( vec*unitX, vec*unitY, vec*unitZ );
     return local_pt;
   }
-  
+
   //指定された座標系内部のローカル点　lp　のグローバル座標を求める
   Vec3r globalPt( Vec3r orig, Vec3r unit_z, Vec3r unit_x, Vec3r unit_y, Vec3r local_pt )
   {
@@ -273,12 +273,12 @@ public:
     return global_pt;
   }
   //<< Graph Ploter
-  
-  
+
+
   /// モニタ点の状態を調べ，不正モニタ点フラグ配列pointStatusを設定
   void checkMonitorPoints();
-  
-  
+
+
   /// モニタ点が指定領域内にあるかを判定
   ///
   ///   @param [in] m    モニタ点番号
@@ -301,29 +301,29 @@ public:
         stamped_printf("\trank=%d : no.=%d [%e %e %e] is out of region\n", myRank, m,
                        convCrd(crd[m].x), convCrd(crd[m].y), convCrd(crd[m].z));
       }
-      
+
       return false;
     }
-    
+
     return true;
   }
-  
-  
+
+
   ///セルモニタの場合の交点情報をクリアする
   unsigned long clearMonitorCut();
-  
-  
+
+
   /// 出力ファイルクローズ
   void closeFile();
-  
-  
+
+
   /// グループラベルを返す
   const char* getLabel() const
   {
     return label.c_str();
   }
-  
-  
+
+
   /// m番目のモニタ点を含むセルインデクスを返す
   Vec3i getSamplingCellIndex(int m) const
   {
@@ -334,44 +334,44 @@ public:
     index.z = int(c.z) + 1;
     return index;
   }
-  
-  
+
+
   /// エントリを返す
   int getPolyID() const
   {
     return polyID;
   }
-  
-  
+
+
   /// モニタ点数を返す
   int getSize() const
   {
     return nPoint;
   }
-  
-  
+
+
   /// モニタ変数の状態を返す
   bool getStateVariable(int var) const
   {
     return variable[var];
   }
-  
-  
+
+
   /// 登録タイプを返す
   Monitor_Type getType() const
   {
     return monitor_type;
   }
-  
-  
+
+
   /// 出力ファイルオープン
   ///
   ///    @param str ファイル名テンプレート
   ///    @param gathered true=gather出力/false=disutribute出力
   ///
   void openFile(const char* str, const bool gathered);
-  
-  
+
+
   /// モニタ結果出力(distribute)
   ///
   ///   @param [in] step サンプリング時の計算ステップ
@@ -383,8 +383,8 @@ public:
   {
     print(step, tm, false);
   }
-  
-  
+
+
   /// モニタ結果出力(gather)
   ///
   ///   @param [in] step サンプリング時の計算ステップ
@@ -395,31 +395,31 @@ public:
   void print_gather(const unsigned step, const double tm)
   {
     gatherSampled();
-    
+
     if (myRank == 0) print(step, tm, true);
   }
-  
-  
+
+
   /// モニタ情報を出力
   ///
   ///    @param [in] fp 出力ファイルポインタ
   ///    @param [in] no モニタグループ通し番号
   //
   void printInfo(FILE* fp, int no);
-  
-  
+
+
   /// 詳細サンプリング(Line, PointSet)
   void sampling();
-  
-  
+
+
   /// 平均値サンプリング
   ///
   ///   サンプリング結果を集計，領域での平均値を計算
   ///   速度は法線ベクトルとの内積をとる
   ///
   void samplingAverage();
-  
-  
+
+
   /// サンプリング元データの登録
   ///
   ///   @param [in] v  速度変数配列
@@ -433,47 +433,47 @@ public:
     pSource  = p;
     tSource  = t;
     vrSource = vr;
-    
-    
+
+
     if (variable[var_Velocity] && !vSource)
     {
       Hostonly_ stamped_printf("\tError : Null monitoring source for Velocity.\n");
       Exit(0);
     }
-    
+
     if (variable[var_Pressure] && !pSource)
     {
       Hostonly_ stamped_printf("\tError : Null monitoring source for Pressure.\n");
       Exit(0);
     }
-    
+
     if (variable[var_Temperature] && !tSource)
     {
       Hostonly_ stamped_printf("\tError : Null monitoring source for Temperature.\n");
       Exit(0);
     }
 
-    
+
     if (variable[var_Vorticity] && !vrSource)
     {
       Hostonly_ stamped_printf("\tError : Null monitoring source for Vorticity.\n");
       Exit(0);
     }
-    
+
     if (variable[var_TotalP] && !(vSource && pSource) )
     {
       Hostonly_ stamped_printf("\tError : Null monitoring source for Vorticity.\n");
       Exit(0);
     }
-    
+
     if (variable[var_Helicity] && !vSource )
     {
       Hostonly_ stamped_printf("\tError : Null monitoring source for Vorticity.\n");
       Exit(0);
     }
   }
-  
-  
+
+
   /// Line登録
   ///
   ///   @param [in] labelStr  ラベル文字列
@@ -493,8 +493,8 @@ public:
                const REAL_TYPE to[3],
                const int nDivision,
                Monitor_Type m_type);
-  
-  
+
+
   /// PointSet登録
   ///
   ///   @param [in] labelStr  ラベル文字列
@@ -511,7 +511,7 @@ public:
                    vector<MonitorPoint>& pointSet,
                    Monitor_Type m_type);
 
-  
+
   /// Polygon登録
   ///
   ///   @param [in] labelStr  ラベル文字列
@@ -529,8 +529,8 @@ public:
                   const int order,
                   const REAL_TYPE m_nv[3],
                   Monitor_Type m_type);
-  
-  
+
+
   /// Primitiveを登録し，bcd[]をゼロクリア
   ///
   ///   @param [in] labelStr  ラベル文字列
@@ -548,103 +548,103 @@ public:
                     const int order,
                     const REAL_TYPE m_nv[3],
                     Monitor_Type m_type);
-  
-  
-  
+
+
+
 protected:
-  
+
   /// モニタリング管理用配列の確保
   void allocArray();
-  
-  
+
+
   /// サンプリング値を格納する配列の確保
   void allocSamplingArray();
-  
-  
+
+
   /// Allreduceによる総和(実数配列上書き，work配列指定)
   bool allReduceSum(REAL_TYPE* array, int n, REAL_TYPE* sendBuf);
-  
-  
+
+
   /// Allreduceによる総和(実数配列上書き)
   bool allReduceSum(REAL_TYPE* array, int n);
-  
-  
+
+
   /// Allreduceによる総和(整数配列上書き，work配列指定)
   bool allReduceSum(int* array, int n, unsigned long* sendBuf);
-  
-  
+
+
   /// Allreduceによる総和(整数配列上書き)
   bool allReduceSum(int* array, int n);
-  
-  
+
+
   /// 指定されたモニタ領域内でスカラー変数を平均
   REAL_TYPE averageScalar(REAL_TYPE* s);
-  
-  
+
+
   /// 指定されたモニタ領域内でベクトル変数を平均
   Vec3r averageVector(Vec3r* v);
-  
-  
+
+
   /// 座標の単位変換
   REAL_TYPE convCrd(REAL_TYPE xyz) const
   {
     return ( (refVar.modeUnitOutput==DIMENSIONAL) ? xyz*refVar.refLength : xyz );
   }
-  
+
   /// 時間の単位変換
   double convTime(double tm) const
   {
     return ( (refVar.modeUnitOutput==DIMENSIONAL) ? tm*(double)refVar.refLength/(double)refVar.refVelocity : tm );
   }
-  
+
   /// 速度成分の単位変換
   REAL_TYPE convVel(REAL_TYPE vel) const
   {
     return ( (refVar.modeUnitOutput==DIMENSIONAL) ? vel*refVar.refVelocity : vel );
   }
-  
+
   /// 圧力の単位変換
   REAL_TYPE convPrs(REAL_TYPE prs) const
   {
     return ( (refVar.modeUnitOutput==DIMENSIONAL) ? FBUtility::convPrsND2D(prs, refVar.basePrs, refVar.refDensity, refVar.refVelocity, refVar.unitPrs) : prs );
   }
-  
+
   /// 温度の単位変換
   REAL_TYPE convTmp(REAL_TYPE tmp) const
   {
     return ( (refVar.modeUnitOutput==DIMENSIONAL) ? FBUtility::convTempND2D(tmp, refVar.baseTemp, refVar.diffTemp) : tmp);
   }
-  
+
   /// 全圧の単位変換
   REAL_TYPE convTP(REAL_TYPE tp) const
   {
     return ( (refVar.modeUnitOutput==DIMENSIONAL) ? tp * (refVar.refVelocity * refVar.refVelocity * refVar.refDensity) : tp );
   }
-  
+
   /// 渦度成分の単位変換
   REAL_TYPE convVor(REAL_TYPE vor) const
   {
     return ( (refVar.modeUnitOutput==DIMENSIONAL) ? vor*refVar.refVelocity/refVar.refLength : vor );
   }
-  
+
   /// Helicityの単位変換
   REAL_TYPE convHlt(REAL_TYPE hlt) const
   {
     return ( (refVar.modeUnitOutput==DIMENSIONAL) ? hlt*refVar.refVelocity*refVar.refVelocity/refVar.refLength : hlt );
   }
-  
+
   /// サンプリングした変数をノード0に集約
   void gatherSampled();
-  
-  
+
+
   /// サンプリングしたスカラー変数をノード0に集約
   ///
   ///   @param [in,out] s スカラー変数配列
   ///   @param  sRecvBuf  通信用work領域
   ///
   void gatherSampledScalar(REAL_TYPE* s, REAL_TYPE* sRecvBuf);
-  
-  
+
+
   /// サンプリングしたベクトル変数をノード0に集約
   ///
   ///   @param [in,out] v ベクトル変数配列
@@ -652,24 +652,24 @@ protected:
   ///
   void gatherSampledVector(Vec3r* v, REAL_TYPE* vSendBuf, REAL_TYPE* vRecvBuf);
 
-  
-  
+
+
   /// サンプリング方法文字列の取得
   string getMethodStr();
-  
-  
+
+
   /// サンプリングモード文字列の取得
   string getModeStr();
-  
-  
+
+
   /// モニタ点指定方法文字列の取得
   string getTypeStr();
-  
-  
+
+
   /// モニタ変数を結合した文字列の取得
   string getVarStr();
-  
-  
+
+
   /// モニタ結果出力
   ///
   ///   @param [in] step サンプリング時の計算ステップ
@@ -677,57 +677,57 @@ protected:
   ///   @param [in] gathered 出力モードフラグ(true=gather出力/false=disutribute出力)
   ///
   void print(unsigned step, double tm, bool gathered);
-  
-  
+
+
   /*
    * @brief 5bit幅の値の設定
    * @param [in,out] b   int 変数
    * @param [in]     q   5-bit幅のID (1-31)
    * @param [in]     dir 方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
-   
+
    */
   inline void setBit5 (int& b, const int q, const int dir)
   {
     b &= (~(0x1f << (dir*5)) ); // 対象5bitをゼロにする
     b |= (q << (dir*5));        // 書き込む
   }
-  
-  
+
+
   /// モニタ対象物理量の設定
   ///
   ///    @param [in] str モニタ対象物理量文字列
   ///
   void setMonitorVar(const char* str);
-  
-  
+
+
   /// 各モニタ点を担当するランク番号を配列rank[]にセット
   ///
   ///   @note 領域境界上のモニタ点は，ランク番号の大きい方の領域が担当
   ///
   void setRankArray();
-  
-  
+
+
   /// サンプリング方法の設定
   ///
   ///    @param [in] str サンプリング方法文字列
   ///
   void setSamplingMethod(const char* str);
-  
-  
+
+
   /// サンプリングモードの設定
   ///
   ///    @param [in] str サンプリングモード文字列
   ///
   void setSamplingMode(const char* str);
-  
-  
+
+
   /// モニタ結果出力ファイルにヘッダ部を出力
   ///
   ///   @param [in] gathered 出力モードフラグ(true=gather出力/false=disutribute出力)
   ///
   void writeHeader(bool gathered);
-  
-  
+
+
   /**
    * @brief mon_POLYGON, mon_BOX, mon_CYLINDERのヘッダー出力
    */

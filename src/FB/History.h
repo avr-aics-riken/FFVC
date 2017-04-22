@@ -16,7 +16,7 @@
 //
 //##################################################################################
 
-/** 
+/**
  * @file   History.h
  * @brief  FlowBase History class Header
  * @author aics
@@ -26,7 +26,7 @@
 #include "Control.h"
 #include "Component.h"
 #include "FBUtility.h"
-#include "Vec3.h"
+#include "common/Vec3.h" // defined in Polylib
 
 #define CCNV_MAX 20
 
@@ -50,17 +50,17 @@ protected:
   int Unit_Prs;              ///< 圧力基準モード
   int Unit_Log;              ///< ログ出力の単位
   int NoCompo;               ///< コンポネント数
-  
+
   // CCNVファイル名（固定）
   char ccnvfile[16];
-  
+
 public:
-  
+
   /** デフォルトコンストラクタ */
   History() {}
-  
+
   /** コンストラクタ */
-  History(const Control* Cref) 
+  History(const Control* Cref)
   {
     RefVelocity     = Cref->RefVelocity;
     BaseTemp        = Cref->BaseTemp;
@@ -79,16 +79,16 @@ public:
     time  = 0.0;
     v_max = 0.0;
     step  = 0;
-    
+
     // ファイル名（固定）
     memset(ccnvfile, 0, sizeof(char)*16);
     sprintf(ccnvfile, "ccnv.log");
   }
-  
+
   /**　デストラクタ */
   ~History() {}
-  
-  
+
+
 protected:
 
   /** @brief モードに対応する時刻を返す */
@@ -96,14 +96,14 @@ protected:
   {
     return ( (Unit_Log == DIMENSIONAL) ? time*Tscale : time );
   }
-  
+
 
   /** @brief モードに対応する速度最大値を返す */
   REAL_TYPE printVmax() const
   {
     return ( (Unit_Log == DIMENSIONAL) ? v_max*RefVelocity : v_max );
   }
-  
+
 
   /**
    * @brief モードに対応する長さを返す
@@ -113,9 +113,9 @@ protected:
   {
     return ( (Unit_Log == DIMENSIONAL) ? var*RefLength : var );
   }
-  
 
-  /** 
+
+  /**
    * @brief モードに対応する速度値を返す
    * @param [in] var  速度
    */
@@ -123,7 +123,7 @@ protected:
   {
     return ( (Unit_Log == DIMENSIONAL) ? var*RefVelocity : var );
   }
-  
+
 
   /**
    * @brief 圧力の次元変換
@@ -135,9 +135,9 @@ protected:
     const REAL_TYPE a = var * dynamic_p;
     return ( (Unit_Prs==Unit_Absolute) ? BasePrs+a : a );
   }
-  
 
-  /** 
+
+  /**
    * @brief 全圧の次元変換
    * @param [in] var  圧力
    */
@@ -145,7 +145,7 @@ protected:
   {
     return ( (Unit_Log == DIMENSIONAL) ? var*dynamic_p : var );
   }
-  
+
 
   /**
    * @brief 全圧の次元変換
@@ -155,9 +155,9 @@ protected:
   {
     return ( (Unit_Log == DIMENSIONAL) ? var*dynamic_p*RefLength*RefLength : var );
   }
-  
 
-  /** 
+
+  /**
    * @brief モードに対応する流量を返す
    * @param [in] var  流量
    */
@@ -165,9 +165,9 @@ protected:
   {
     return ( (Unit_Log == DIMENSIONAL) ? var*base_mf : var );
   }
-  
-  
-  /** 
+
+
+  /**
    * @brief モードに対応する温度を返す
    * @param [in] var  温度
    */
@@ -176,8 +176,8 @@ protected:
     if (Unit_Log != DIMENSIONAL) return var;
     return (BaseTemp + DiffTemp*var);
   }
-  
-  
+
+
 
   /**
    * @brief 無次元熱量の有次元化(面要素)
@@ -188,7 +188,7 @@ protected:
   {
     return ( (Unit_Log == DIMENSIONAL) ? var*RefDensity*RefSpecificHeat*DiffTemp*RefVelocity*RefLength*RefLength*RefLength : var );
   }
-  
+
 
   /**
    * @brief 無次元熱量の有次元化（体積要素）
@@ -199,9 +199,9 @@ protected:
   {
     return ( (Unit_Log == DIMENSIONAL) ? var*RefDensity*RefSpecificHeat*DiffTemp*RefLength*RefLength*RefLength : var );
   }
-  
 
-  /** 
+
+  /**
    * @brief モードに対応する熱流束を返す
    * @param [in] var  熱流束
    */
@@ -209,11 +209,11 @@ protected:
   {
     return ( (Unit_Log == DIMENSIONAL) ? var*RefVelocity : var );
   }
-  
-  
-  
+
+
+
 public:
-  
+
   /**
    * @brief 履歴のCCNVファイルへの出力
    * @param [in] rms        1タイムステップの変化量　（0-pressure, 1-velocity, 2-temperature)
@@ -224,24 +224,24 @@ public:
    * @param [in] stptm      1タイムステップの計算時間
    */
   void printCCNV(const double* rms, const double* avr, const double* container, const Control* C, const double divergence, const double stptm);
-  
-  
+
+
   /**
    * @brief CCNV履歴のヘッダ出力
    * @param [in] container Res, Errの型
    * @param [in] C         Controlクラスへのポインタ
    */
   void printCCNVtitle(const int* container, const Control* C);
-  
-  
+
+
   /**
    * @brief 物体に働く力の平均値の出力（コンポーネント毎）
    * @param [in] cmp CompoListクラスのポインタ
    * @param [in] frc 積算された力
    */
   bool printForceAvr(const CompoList* cmp, const REAL_TYPE* frc);
-  
-  
+
+
   /**
    * @brief 標準履歴の出力
    * @param [in] fp         出力ファイルポインタ
@@ -261,8 +261,8 @@ public:
                     const DivConvergence* DC,
                     const double stptm,
                     const bool disp);
-  
-  
+
+
   /**
    * @brief 反復過程の状況モニタのヘッダー出力
    * @param [in] fp        出力ファイルポインタ
@@ -272,8 +272,8 @@ public:
    * @param [in] disp      計算時間表示の有無
    */
   void printHistoryTitle(FILE* fp, const int* container, const Control* C, const DivConvergence* DC, const bool disp);
-  
-  
+
+
   /**
    * @brief コンポーネントモニタの履歴出力
    * @param [in] fp  出力ファイルポインタ
@@ -282,8 +282,8 @@ public:
    * @param [in] dt  無次元時間積分幅
    */
   void printHistoryCompo(FILE* fp, const CompoList* cmp, const Control* C, const REAL_TYPE dt);
-  
-  
+
+
   /**
    * @brief コンポーネントモニタのヘッダー出力
    * @param [in] fp  出力ファイルポインタ
@@ -291,8 +291,8 @@ public:
    * @param [in] C   Controlクラスへのポインタ
    */
   void printHistoryCompoTitle(FILE* fp, const CompoList* cmp, const Control* C);
-  
-  
+
+
   /**
    * @brief 計算領域の流束履歴の出力
    * @param [in] fp 出力ファイルポインタ
@@ -300,32 +300,32 @@ public:
    * @param [in] dt 無次元時間積分幅
    */
   void printHistoryDomfx(FILE* fp, const Control* C, const REAL_TYPE dt);
-  
-  
+
+
   /**
    * @brief 計算領域の流束履歴のヘッダー出力
    * @param [in] fp 出力ファイルポインタ
    * @param [in] C  コントロールクラス
    */
   void printHistoryDomfxTitle(FILE* fp, const Control* C);
-  
-  
+
+
   /**
    * @brief 物体に働く力の履歴の出力（コンポーネント毎）
    * @param [in] cmp CompoListクラスのポインタ
    * @param [in] frc 積算された力
    */
   bool printHistoryForce(const CompoList* cmp, const REAL_TYPE* frc);
-  
-  
+
+
   /**
    * @brief 物体に働く力の履歴のヘッダー出力（コンポーネント毎）
    * @param [in] cmp CompoListクラスのポインタ
    */
   bool printHistoryForceTitle(const CompoList* cmp);
-  
-  
-  
+
+
+
   /**
    * @brief 壁面履歴の出力
    * @param [in] fp        出力ファイルポインタ
@@ -333,15 +333,15 @@ public:
    * @param [in] range_Ut  摩擦速度の最小最大値
    */
   void printHistoryWall(FILE* fp, const REAL_TYPE* range_Yp, const REAL_TYPE* range_Ut);
-  
-  
+
+
   /**
    * @brief 壁面履歴のヘッダール出力
    * @param [in] fp        出力ファイルポインタ
    */
   void printHistoryWallTitle(FILE* fp);
-  
-  
+
+
   /**
    * @brief タイムスタンプの更新
    * @param [in] m_stp ステップ数
@@ -349,16 +349,16 @@ public:
    * @param [in] vMax  速度最大値成分
    */
   void updateTimeStamp(const int m_stp, const REAL_TYPE m_tm, const REAL_TYPE vMax);
-  
-  
+
+
   /**
    * @brief 物体に働く力の統計量を出力
    * @param [in] cmp CompoListクラスのポインタ
    * @param [in] frc 積算された力
    */
   bool printCompoStatistics(const CompoList* cmp, const REAL_TYPE* frc);
-  
-  
+
+
   /**
    * @brief 物体に働く力の統計量を読み込み
    * @param [in] fp  出力ファイルポインタ

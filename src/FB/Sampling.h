@@ -22,7 +22,7 @@
 
 #include <stdio.h>
 #include "FB_Define.h"
-#include "Vec3.h"
+#include "common/Vec3.h" // defined in Polylib
 
 
 using namespace Vec3class;
@@ -53,7 +53,7 @@ protected:
   Vec3r v00;        ///< 座標系移動速度
   int* bcd;         ///< BCindex B
   double *mtbl;     ///< 無次元物性値テーブル
-  
+
 public:
   /// ディフォルトコンストラクタ
   Sampling() {}
@@ -81,7 +81,7 @@ public:
            int* bcd,
            int num_compo,
            double* m_mtbl) {
-    
+
     this->mode = mode;
     this->size[0] = size[0];
     this->size[1] = size[1];
@@ -96,16 +96,16 @@ public:
     cIndex.x = (int)(c.x) + 1;
     cIndex.y = (int)(c.y) + 1;
     cIndex.z = (int)(c.z) + 1;
-    
+
     mtbl = NULL;
-    
+
     if ( !(mtbl = new double[3*(NoCompo+1)]) ) Exit(0);
-    
+
     for (int i=0; i<3*(NoCompo+1); i++)
     {
       mtbl[i] = m_mtbl[i];
     }
-  } 
+  }
 
   /// デストラクタ
   virtual ~Sampling() {
@@ -156,8 +156,8 @@ public:
   ///   @param [in] v サンプリング元速度配列
   ///
   virtual REAL_TYPE samplingHelicity(const REAL_TYPE* v) = 0;
-  
-  
+
+
 protected:
   /// 全圧を計算
   ///
@@ -176,8 +176,8 @@ protected:
   ///   @return Helicity
   ///
   REAL_TYPE calcHelicity(const REAL_TYPE* v, Vec3i index);
-  
-  
+
+
   /// 渦度を計算
   ///
   ///   @param [in] v 速度配列
@@ -245,7 +245,7 @@ protected:
     size_t m =_F_IDX_S3D(index.x, index.y, index.z, size[0], size[1], size[2], guide);
     return s[m];
   }
-  
+
   /// セルでの温度を内部エネルギーから取得
   ///
   ///    @param [in] s     内部エネルギー
@@ -270,17 +270,17 @@ protected:
     int jx = size[1];
     int kx = size[2];
     int gd = guide;
-    
+
     size_t m_x = _F_IDX_V3D(index.x, index.y, index.z, 0, ix, jx, kx, gd);
     size_t m_y = _F_IDX_V3D(index.x, index.y, index.z, 1, ix, jx, kx, gd);
     size_t m_z = _F_IDX_V3D(index.x, index.y, index.z, 2, ix, jx, kx, gd);
     vRet.x = v[m_x];
     vRet.y = v[m_y];
     vRet.z = v[m_z];
-    
+
     return vRet;
   }
-  
+
   /**
    @brief Linear interpolation
    @param [in] t target dividing point [0,1] normalized
@@ -291,7 +291,7 @@ protected:
   {
     return ( v[0]*(1.0-t) + v[1]*t );
   }
-  
+
   /**
    @brief Bilinear interpolation
    @param [in] t target dividing point [0,1][0,1] normalized
@@ -310,7 +310,7 @@ protected:
     r[1] = Linear( t[0], &v[2] );
     return ( Linear( t[1], r ) );
   }
-  
+
   /**
    @brief Trilinear interpolation
    @param [in] t target dividing point [0,1][0,1][0,1] normalized
@@ -349,7 +349,7 @@ protected:
   ///   @param [in] s サンプリング元スカラー変数配列
   ///
   REAL_TYPE samplingScalar(const REAL_TYPE* s);
-  
+
   /// 温度をサンプリング
   ///
   ///   @param [in] s サンプリング元内部エネルギー変数
@@ -415,7 +415,7 @@ public:
   ///   @param [in] v サンプリング元速度配列
   ///
   Vec3r samplingVorticity(const REAL_TYPE* v);
-  
+
   /// Helicityをサンプリング
   ///
   ///   @param [in] v サンプリング元速度配列
@@ -460,13 +460,13 @@ protected:
   ///   @param[in] s サンプリング元スカラー変数配列
   ///
   REAL_TYPE samplingScalar(const REAL_TYPE* s);
-  
+
   /// 温度をサンプリング
   ///
   ///   @param [in] s サンプリング元内部エネルギー変数
   ///
   REAL_TYPE samplingTemp(const REAL_TYPE* s);
-  
+
 
 public:
 
@@ -566,13 +566,13 @@ protected:
   ///   @param [in] s サンプリング元スカラー変数配列
   ///
   REAL_TYPE samplingScalar(const REAL_TYPE* s);
-  
+
   /// 温度をサンプリング
   ///
   ///   @param [in] s サンプリング元内部エネルギー変数
   ///
   REAL_TYPE samplingTemp(const REAL_TYPE* s);
-  
+
 
 public:
 
@@ -636,7 +636,7 @@ public:
   ///   @param [in] v サンプリング元速度配列
   ///
   Vec3r samplingVorticity(const REAL_TYPE* v);
-  
+
   /// Helicityをサンプリング
   ///
   ///   @param [in] v サンプリング元速度配列

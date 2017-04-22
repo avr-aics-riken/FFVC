@@ -21,7 +21,12 @@
 #ifndef __FFV_FILESYSTEM_UTIL_H__
 #define __FFV_FILESYSTEM_UTIL_H__
 
-#include "mpi.h"
+#ifndef DISABLE_MPI
+  #include "mpi.h" // add header explicitly to avoid compile error for Intel MPI
+#else
+  #include "cpm_mpistub.h"
+#endif
+
 #include <string>
 #include <stdlib.h>
 #include <string.h>
@@ -58,13 +63,13 @@ namespace BVX_IO {
 		}
 		return dir;
 	}
-	
+
 	/// pathから拡張子以前のファイル名を抜き出す
 	inline std::string GetFilePrefix(const std::string& path)
 	{
 		std::string cpath = ConvertPath(path);
 		std::string filename = cpath.substr(cpath.rfind("/")+1);
-		
+
 		return filename.substr(0, filename.rfind("."));
 	}
 
@@ -86,28 +91,28 @@ namespace BVX_IO {
 	/// ディレクトリ作成に失敗した場合、falseを返す
 	bool CreateDirectory(const std::string& path);
 
-  
+
   void CheckDir(std::string dirstr);
-  
-  
+
+
   //////////////////////////
   // from CDMlib
   //////////////////////////
-  
 
-  
+
+
   // A:などのドライブパスがあればtrue
   inline bool hasDrivePath(const std::string& path)
   {
     if ( path.size() < 2 ) return false;
-    
+
     char x = path[0];
     if ( ((x >= 'A' && x <= 'Z' ) || (x >= 'a' && x <= 'z')) && path[1] == ':' )
       return true;
     return false;
   }
-  
-  
+
+
   //
   inline std::string emitDrivePath(std::string& path)
   {
@@ -117,8 +122,8 @@ namespace BVX_IO {
     path = path.substr(2);
     return driveStr;
   }
-  
-  
+
+
   // デリミタを返す
   inline char getDelimCharPath()
   {
@@ -128,8 +133,8 @@ namespace BVX_IO {
     return '/';
 #endif
   }
-  
-  
+
+
   // true  : Absolute Path(絶対パス)
   // false : Relative Path(相対パス)
   inline bool isAbsolutePath(const std::string& path)
@@ -142,12 +147,12 @@ namespace BVX_IO {
     return (c1 == c2);
   }
 
-  
+
   inline std::string DirNamePath(const std::string& path, const char dc = getDelimCharPath())
   {
     char* name = strdup( path.c_str() );
     char* p = name;
-    
+
     for ( ; ; ++p ) {
       if ( ! *p ) {
         if ( p > name ) {
@@ -160,11 +165,11 @@ namespace BVX_IO {
       }
       if ( *p != dc ) break;
     }
-    
+
     for ( ; *p; ++p );
     while ( *--p == dc ) continue;
     *++p = '\0';
-    
+
     while ( --p >= name )
       if ( *p == dc ) break;
     ++p;
@@ -173,11 +178,11 @@ namespace BVX_IO {
       char rs[3] = {'.', dc, '\0'};
       return rs;
     }
-    
+
     while ( --p >= name )
       if ( *p != dc ) break;
     ++p;
-    
+
     *p = '\0';
     if( p == name ) {
       char rs[2] = {dc, '\0'};
@@ -187,7 +192,7 @@ namespace BVX_IO {
     {
       std::string s( name );
       free( name );
-      
+
       if( !isAbsolutePath(s) )
       {
         const char *q = s.c_str();
@@ -206,4 +211,3 @@ namespace BVX_IO {
 
 
 #endif // __FFV_FILESYSTEM_UTIL_H__
-

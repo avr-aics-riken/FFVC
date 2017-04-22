@@ -42,16 +42,16 @@ unsigned long Geometry::assignVF(const int target, const REAL_TYPE value, const 
 
   int tid = target;
   REAL_TYPE val = value;
-  
+
   unsigned long c = 0; /// painted count
-  
+
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, tid, val) schedule(static) reduction(+:c)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        
+
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        
+
         if ( d_mid[m] == tid )
         {
           d_pvf[m] = val;
@@ -60,13 +60,13 @@ unsigned long Geometry::assignVF(const int target, const REAL_TYPE value, const 
       }
     }
   }
-  
+
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
     if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
-  
+
   return c;
 }
 
@@ -83,7 +83,7 @@ unsigned long Geometry::assignVF(const int target, const REAL_TYPE value, const 
 void Geometry::assureUniqueLabel(int* labelTop, int* labelsz, vector<int>& tbl, int* mid, const int* Dsize)
 {
   int ix, jx, kx, gd;
-  
+
   if ( !Dsize )
   {
     ix = size[0];
@@ -98,25 +98,25 @@ void Geometry::assureUniqueLabel(int* labelTop, int* labelsz, vector<int>& tbl, 
     kx = Dsize[2];
     gd = 1;
   }
-  
-  
-  
+
+
+
   // 各ランクでラベルのリストを作成 逐次実行
 #pragma omp single
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        
+
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         const int dd = mid[m];
-        
+
         if ( dd > 0 ) addLabel2List(tbl, dd);
-        
+
       }
     }
   }
-  
-  
+
+
   /* DEBUG
   for (vector<int>::iterator it=tbl.begin(); it != tbl.end(); ++it )
   {
@@ -127,14 +127,14 @@ void Geometry::assureUniqueLabel(int* labelTop, int* labelsz, vector<int>& tbl, 
     fprintf(fpc, "%3d %3d v[]\n", myRank, tbl[i]);
   }
    */
-  
-  
+
+
   // 各ランクのラベルの数
   int LabelSize = (int)tbl.size();
   //fprintf(fpc, "Rank = %6d : size = %d\n", myRank, LabelSize);
-  
-  
-  
+
+
+
   // ラベル数の収集
   if ( numProc > 1 )
   {
@@ -144,7 +144,7 @@ void Geometry::assureUniqueLabel(int* labelTop, int* labelsz, vector<int>& tbl, 
   {
     labelsz[0] = LabelSize;
   }
-  
+
   /* DEBUG
   Hostonly_
   {
@@ -156,11 +156,11 @@ void Geometry::assureUniqueLabel(int* labelTop, int* labelsz, vector<int>& tbl, 
     printf("\n");
   }
   */
-  
-  
-  
+
+
+
   // 各ランクに割り振るラベルの開始番号を計算 >> labelTop[]に登録
-  
+
   // 開始ランクを求める >> ラベルがないランクをスキップ
   int st = 0;
   for (int i=0; i<numProc; i++)
@@ -172,9 +172,9 @@ void Geometry::assureUniqueLabel(int* labelTop, int* labelsz, vector<int>& tbl, 
       break;
     }
   }
-  
+
   // Hostonly_ printf("start rank = %d\n\n", st);
-  
+
   // エラーチェック
   if ( st > numProc-1 )
   {
@@ -184,8 +184,8 @@ void Geometry::assureUniqueLabel(int* labelTop, int* labelsz, vector<int>& tbl, 
     }
     Exit(0);
   }
-  
-  
+
+
   // ラベルの積算開始は1
   labelTop[st] = 1;
 
@@ -205,11 +205,11 @@ void Geometry::assureUniqueLabel(int* labelTop, int* labelsz, vector<int>& tbl, 
     printf("\n");
   }
   */
-  
+
 
   // ラベルの変更
   // 先頭ラベルから個数分だけインクリメント
-  
+
   // ラベルが存在する場合のみ実行
   if ( LabelSize > 0 )
   {
@@ -217,29 +217,29 @@ void Geometry::assureUniqueLabel(int* labelTop, int* labelsz, vector<int>& tbl, 
     // 各ランクの担当部分について、ラベルのふり直し
     int c = 0;
     int id= labelTop[myRank]; // 先頭のラベル
-    
+
     for (vector<int>::iterator it=tbl.begin(); it != tbl.end(); ++it )
     {
       int target = *it;
       int replace= id + c;
-      
+
       //fprintf(fpc, "replaced >> rank=%5d : %d :from=%6d  to=%6d\n", myRank, c, target, replace);
       c++;
-      
+
       // Paint
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, target, replace) schedule(static)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
-            
+
             size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
             if ( mid[m] == target ) mid[m] = replace;
           }
         }
       }
-      
+
     } // loop it
-    
+
   }
 
   // ガイドセルの情報交換 >> makeConnectList()
@@ -250,14 +250,14 @@ void Geometry::assureUniqueLabel(int* labelTop, int* labelsz, vector<int>& tbl, 
 }
 
 
-
+#ifdef DISABLE_MPI
 // #################################################################
 /* @brief ポリゴングループの座標値からboxを計算する
- * @param [in]     PL         MPIPolylibのインスタンス
+ * @param [in]     PL         Polylibのインスタンス
  * @param [in,out] PG         PolygonPropertyクラス
  * @param [in]     NoPolyGrp  ポリゴングループ数
  */
-void Geometry::calcBboxFromPolygonGroup(MPIPolylib* PL,
+void Geometry::calcBboxFromPolygonGroup(Polylib* PL,
                                         PolygonProperty* PG,
                                         const int m_NoPolyGrp)
 {
@@ -267,46 +267,46 @@ void Geometry::calcBboxFromPolygonGroup(MPIPolylib* PL,
   Vec3r t1(originD);
   Vec3r t2(pitchD);
   Vec3r t3;
-  
+
   t3.assign((REAL_TYPE)size[0]*t2.x, (REAL_TYPE)size[1]*t2.y, (REAL_TYPE)size[2]*t2.z);
-  
+
   // サブドメインの1層外側までをサーチ対象とする
   m_min = t1 - t2;
   m_max = t1 + t3 + t2;
-  
+
 #if 0 // debug
   printf("poly : %f %f %f\n", t1.x, t1.y, t1.z);
   printf("dx   : %f %f %f\n", t2.x, t2.y, t2.z);
   printf("Search area Bbox min : %f %f %f\n", m_min.x, m_min.y, m_min.z);
   printf("Search area Bbox max : %f %f %f\n", m_max.x, m_max.y, m_max.z);
 #endif
-  
 
-  
+
+
   // ポリゴン情報へのアクセス
   vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
   vector<PolygonGroup*>::iterator it;
-  
+
   // ポリゴングループのループ
   int m=0;
   for (it = pg_roots->begin(); it != pg_roots->end(); it++)
   {
-    
+
     std::string m_pg = (*it)->get_name();     // グループラベル
     int ntria = (*it)->get_group_num_tria();  // ローカルのポリゴン数
-    
+
     // 対象ポリゴンがある場合のみ
     if ( ntria > 0 )
     {
       // false; ポリゴンが一部でもかかればピックアップ
       vector<Triangle*>* trias = PL->search_polygons(m_pg, m_min, m_max, false);
-      
+
       Vec3r *p;
       Vec3r bbox_min( 1.0e6,  1.0e6,  1.0e6);
       Vec3r bbox_max(-1.0e6, -1.0e6, -1.0e6);
       unsigned c=0;
       vector<Triangle*>::iterator it2;
-      
+
       for (it2 = trias->begin(); it2 != trias->end(); it2++)
       {
         Vertex** org = (*it2)->get_vertex();
@@ -314,15 +314,15 @@ void Geometry::calcBboxFromPolygonGroup(MPIPolylib* PL,
         p[0] = *(org[0]);
         p[1] = *(org[1]);
         p[2] = *(org[2]);
-        
+
         get_min(bbox_min, p[0]);
         get_min(bbox_min, p[1]);
         get_min(bbox_min, p[2]);
-        
+
         get_max(bbox_max, p[0]);
         get_max(bbox_max, p[1]);
         get_max(bbox_max, p[2]);
-        
+
 #if 0
         /*
         printf("%d : p0=(%10.3e %10.3e %10.3e)  p1=(%10.3e %10.3e %10.3e) p2=(%10.3e %10.3e %10.3e) n=(%10.3e %10.3e %10.3e)\n", c++,
@@ -346,7 +346,7 @@ void Geometry::calcBboxFromPolygonGroup(MPIPolylib* PL,
              myRank, m_pg.c_str(), bbox_min.x, bbox_min.y, bbox_min.z,
              bbox_max.x, bbox_max.y, bbox_max.z);
 #endif
-      
+
       delete trias; // 後始末
     }
     else // ntria == 0
@@ -355,20 +355,20 @@ void Geometry::calcBboxFromPolygonGroup(MPIPolylib* PL,
       PG[m].setBboxMin(dummy);
       PG[m].setBboxMax(dummy);
     }
-    
+
     m++;
   }
-  
+
   //printf("R[%d] : (%10.3e %10.3e %10.3e) - (%10.3e %10.3e %10.3e)\n",
   //       myRank, originD[0], originD[1], originD[2],
   //       originD[0] + region[0], originD[1] + region[1], originD[2] + region[2]);
-  
+
   // 領域内に収まっているかどうかをチェック >> ポリゴンは少しでも触れれば対象となり、領域外にはみ出すことがある
   for (int i=0; i<m_NoPolyGrp; i++)
   {
     Vec3r b_min = PG[i].getBboxMin();
     Vec3r b_max = PG[i].getBboxMax();
-    
+
     REAL_TYPE f_min[3];
     REAL_TYPE f_max[3];
     f_min[0] = b_min.x;
@@ -377,34 +377,192 @@ void Geometry::calcBboxFromPolygonGroup(MPIPolylib* PL,
     f_max[0] = b_max.x;
     f_max[1] = b_max.y;
     f_max[2] = b_max.z;
-    
+
 #if 0
     printf("B[%d] %20s : (%10.3e %10.3e %10.3e) - (%10.3e %10.3e %10.3e)\n",
            myRank, PG[i].getGroup().c_str(), b_min.x, b_min.y, b_min.z,
            b_max.x, b_max.y, b_max.z);
 #endif
-    
+
     for (int q=0; q<3; q++)
     {
       if ( f_min[q] < originD[q] ) f_min[q] = originD[q];
       REAL_TYPE tmp = originD[q] + regionD[q];
       if ( f_max[q] > tmp ) f_max[q] = tmp;
     }
-    
+
     Vec3r rmin(f_min);
     Vec3r rmax(f_max);
-    
+
     PG[i].setBboxMin(rmin);
     PG[i].setBboxMax(rmax);
-    
+
 #if 0
     printf("A[%d] %20s : (%10.3e %10.3e %10.3e) - (%10.3e %10.3e %10.3e)\n",
            myRank, PG[i].getGroup().c_str(), rmin.x, rmin.y, rmin.z,
            rmax.x, rmax.y, rmax.z);
 #endif
   }
-  
+
 }
+
+
+#else // DISABLE_MPI
+// #################################################################
+/* @brief ポリゴングループの座標値からboxを計算する
+ * @param [in]     PL         MPIPolylibのインスタンス
+ * @param [in,out] PG         PolygonPropertyクラス
+ * @param [in]     NoPolyGrp  ポリゴングループ数
+ */
+void Geometry::calcBboxFromPolygonGroup(MPIPolylib* PL,
+                                        PolygonProperty* PG,
+                                        const int m_NoPolyGrp)
+{
+  // 有次元空間でサーチ
+  Vec3r m_min;
+  Vec3r m_max;
+  Vec3r t1(originD);
+  Vec3r t2(pitchD);
+  Vec3r t3;
+
+  t3.assign((REAL_TYPE)size[0]*t2.x, (REAL_TYPE)size[1]*t2.y, (REAL_TYPE)size[2]*t2.z);
+
+  // サブドメインの1層外側までをサーチ対象とする
+  m_min = t1 - t2;
+  m_max = t1 + t3 + t2;
+
+#if 0 // debug
+  printf("poly : %f %f %f\n", t1.x, t1.y, t1.z);
+  printf("dx   : %f %f %f\n", t2.x, t2.y, t2.z);
+  printf("Search area Bbox min : %f %f %f\n", m_min.x, m_min.y, m_min.z);
+  printf("Search area Bbox max : %f %f %f\n", m_max.x, m_max.y, m_max.z);
+#endif
+
+
+
+  // ポリゴン情報へのアクセス
+  vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
+  vector<PolygonGroup*>::iterator it;
+
+  // ポリゴングループのループ
+  int m=0;
+  for (it = pg_roots->begin(); it != pg_roots->end(); it++)
+  {
+
+    std::string m_pg = (*it)->get_name();     // グループラベル
+    int ntria = (*it)->get_group_num_tria();  // ローカルのポリゴン数
+
+    // 対象ポリゴンがある場合のみ
+    if ( ntria > 0 )
+    {
+      // false; ポリゴンが一部でもかかればピックアップ
+      vector<Triangle*>* trias = PL->search_polygons(m_pg, m_min, m_max, false);
+
+      Vec3r *p;
+      Vec3r bbox_min( 1.0e6,  1.0e6,  1.0e6);
+      Vec3r bbox_max(-1.0e6, -1.0e6, -1.0e6);
+      unsigned c=0;
+      vector<Triangle*>::iterator it2;
+
+      for (it2 = trias->begin(); it2 != trias->end(); it2++)
+      {
+        Vertex** org = (*it2)->get_vertex();
+        Vec3r p[3];
+        p[0] = *(org[0]);
+        p[1] = *(org[1]);
+        p[2] = *(org[2]);
+
+        get_min(bbox_min, p[0]);
+        get_min(bbox_min, p[1]);
+        get_min(bbox_min, p[2]);
+
+        get_max(bbox_max, p[0]);
+        get_max(bbox_max, p[1]);
+        get_max(bbox_max, p[2]);
+
+#if 0
+        /*
+        printf("%d : p0=(%10.3e %10.3e %10.3e)  p1=(%10.3e %10.3e %10.3e) p2=(%10.3e %10.3e %10.3e) n=(%10.3e %10.3e %10.3e)\n", c++,
+               p[0].x, p[0].y, p[0].z,
+               p[1].x, p[1].y, p[1].z,
+               p[2].x, p[2].y, p[2].z,
+               n.x, n.y, n.z);
+        */
+        printf("%d : p0=(%10.3e %10.3e %10.3e)  p1=(%10.3e %10.3e %10.3e) p2=(%10.3e %10.3e %10.3e)\n", c++,
+               p[0].x, p[0].y, p[0].z,
+               p[1].x, p[1].y, p[1].z,
+               p[2].x, p[2].y, p[2].z);
+#endif
+      }
+
+      PG[m].setBboxMin(bbox_min);
+      PG[m].setBboxMax(bbox_max);
+
+#if 0
+      printf("[%d] %20s : (%10.3e %10.3e %10.3e) - (%10.3e %10.3e %10.3e)\n",
+             myRank, m_pg.c_str(), bbox_min.x, bbox_min.y, bbox_min.z,
+             bbox_max.x, bbox_max.y, bbox_max.z);
+#endif
+
+      delete trias; // 後始末
+    }
+    else // ntria == 0
+    {
+      Vec3r dummy(0.0, 0.0, 0.0);
+      PG[m].setBboxMin(dummy);
+      PG[m].setBboxMax(dummy);
+    }
+
+    m++;
+  }
+
+  //printf("R[%d] : (%10.3e %10.3e %10.3e) - (%10.3e %10.3e %10.3e)\n",
+  //       myRank, originD[0], originD[1], originD[2],
+  //       originD[0] + region[0], originD[1] + region[1], originD[2] + region[2]);
+
+  // 領域内に収まっているかどうかをチェック >> ポリゴンは少しでも触れれば対象となり、領域外にはみ出すことがある
+  for (int i=0; i<m_NoPolyGrp; i++)
+  {
+    Vec3r b_min = PG[i].getBboxMin();
+    Vec3r b_max = PG[i].getBboxMax();
+
+    REAL_TYPE f_min[3];
+    REAL_TYPE f_max[3];
+    f_min[0] = b_min.x;
+    f_min[1] = b_min.y;
+    f_min[2] = b_min.z;
+    f_max[0] = b_max.x;
+    f_max[1] = b_max.y;
+    f_max[2] = b_max.z;
+
+#if 0
+    printf("B[%d] %20s : (%10.3e %10.3e %10.3e) - (%10.3e %10.3e %10.3e)\n",
+           myRank, PG[i].getGroup().c_str(), b_min.x, b_min.y, b_min.z,
+           b_max.x, b_max.y, b_max.z);
+#endif
+
+    for (int q=0; q<3; q++)
+    {
+      if ( f_min[q] < originD[q] ) f_min[q] = originD[q];
+      REAL_TYPE tmp = originD[q] + regionD[q];
+      if ( f_max[q] > tmp ) f_max[q] = tmp;
+    }
+
+    Vec3r rmin(f_min);
+    Vec3r rmax(f_max);
+
+    PG[i].setBboxMin(rmin);
+    PG[i].setBboxMax(rmax);
+
+#if 0
+    printf("A[%d] %20s : (%10.3e %10.3e %10.3e) - (%10.3e %10.3e %10.3e)\n",
+           myRank, PG[i].getGroup().c_str(), rmin.x, rmin.y, rmin.z,
+           rmax.x, rmax.y, rmax.z);
+#endif
+  }
+
+}
+#endif // DISABLE_MPI
 
 
 // #################################################################
@@ -420,8 +578,8 @@ void Geometry::copyIDonGuide(const int face, const int* bcd, int* mid)
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-  
-  
+
+
   switch (face)
   {
     case X_minus:
@@ -433,8 +591,8 @@ void Geometry::copyIDonGuide(const int face, const int* bcd, int* mid)
         }
       }
       break;
-      
-      
+
+
     case X_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
       for (int k=1; k<=kx; k++) {
@@ -444,8 +602,8 @@ void Geometry::copyIDonGuide(const int face, const int* bcd, int* mid)
         }
       }
       break;
-      
-      
+
+
     case Y_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
       for (int k=1; k<=kx; k++) {
@@ -455,8 +613,8 @@ void Geometry::copyIDonGuide(const int face, const int* bcd, int* mid)
         }
       }
       break;
-      
-      
+
+
     case Y_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
       for (int k=1; k<=kx; k++) {
@@ -466,8 +624,8 @@ void Geometry::copyIDonGuide(const int face, const int* bcd, int* mid)
         }
       }
       break;
-      
-      
+
+
     case Z_minus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
       for (int j=1; j<=jx; j++) {
@@ -477,7 +635,7 @@ void Geometry::copyIDonGuide(const int face, const int* bcd, int* mid)
         }
       }
       break;
-      
+
     case Z_plus:
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
       for (int j=1; j<=jx; j++) {
@@ -488,7 +646,7 @@ void Geometry::copyIDonGuide(const int face, const int* bcd, int* mid)
       }
       break;
   }
-  
+
 }
 
 
@@ -504,7 +662,7 @@ void Geometry::copyIDonGuide(const int face, const int* bcd, int* mid)
 unsigned long Geometry::countCellB(const int* bcd, const int m_id, const bool painted, const int* Dsize)
 {
   int ix, jx, kx, gd;
-  
+
   if ( !Dsize )
   {
     ix = size[0];
@@ -519,10 +677,10 @@ unsigned long Geometry::countCellB(const int* bcd, const int m_id, const bool pa
     kx = Dsize[2];
     gd = 1;
   }
-  
+
   unsigned long c=0;
   int id = m_id;
-  
+
   if ( painted )
   {
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, id) schedule(static) reduction(+:c)
@@ -547,14 +705,14 @@ unsigned long Geometry::countCellB(const int* bcd, const int m_id, const bool pa
       }
     }
   }
-  
-  
+
+
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
     if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
-  
+
   return c;
 }
 
@@ -577,7 +735,7 @@ unsigned long Geometry::countCellM(const int* mid,
                                    const int* Dsize)
 {
   int ix, jx, kx, gd;
-  
+
   if ( !Dsize )
   {
     ix = size[0];
@@ -592,10 +750,10 @@ unsigned long Geometry::countCellM(const int* mid,
     kx = Dsize[2];
     gd = 1;
   }
-  
+
   unsigned long c=0;
   int id = m_id;
-  
+
   if ( painted )
   {
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, id) schedule(static) reduction(+:c)
@@ -620,8 +778,8 @@ unsigned long Geometry::countCellM(const int* mid,
       }
     }
   }
-  
-  
+
+
   if ( !strcasecmp("global", mode.c_str()) )
   {
     if ( numProc > 1 )
@@ -630,7 +788,7 @@ unsigned long Geometry::countCellM(const int* mid,
       if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
     }
   }
-  
+
   return c;
 }
 
@@ -654,64 +812,64 @@ bool Geometry::fill(int* d_bcd,
    * d_bid[] <= cmp[]のオーダーインデクス
    * d_bcd[] <= mat[]のオーダーインデクス
    */
-  
+
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-  
-  
+
+
   // 全計算内部セル数
   unsigned long total_cell = (unsigned long)ix * (unsigned long)jx * (unsigned long)kx;
-  
+
   if ( numProc > 1 )
   {
     unsigned long tmp_fc = total_cell;
     if ( paraMngr->Allreduce(&tmp_fc, &total_cell, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
-  
-  
+
+
   // フィル対象のセル数
   unsigned long target_count = countCellB(d_bcd, 0);
 
-  
+
   Hostonly_
   {
     fprintf(fpc,"\tFill initialize -----\n\n");
     fprintf(fpc,"\t\tTotal cell count       = %16ld\n", total_cell);
     fprintf(fpc,"\t\tInitial target count   = %16ld\n", target_count);
-    
+
     fprintf(fpc,"\n\tFill -----\n\n");
     fprintf(fpc,"\t\tFill mode for each dir.: %d %d %d\n", FillSuppress[0], FillSuppress[1], FillSuppress[2]);
   }
-  
-  
+
+
   // FLUIDでフィル ---------------------
   if ( !fillConnected(d_bcd, d_bid, FLUID, target_count) ) return false;
 
   // 対象セルがなければ終了
   if ( target_count == 0 ) return true;
-  
-  
-  
-  
+
+
+
+
   // 連結領域を同定し、ペイントする --------------------
   if ( !identifyConnectedRegion(d_mid, d_bcd, d_bid, target_count, total_cell-target_count) ) return false;
 
 
-  
+
   // 同種のセルでカットをもつ境界の修正
   unsigned modc = mergeSameSolidCell(d_bid, d_cut, d_bcd);
-  
+
   Hostonly_
   {
     fprintf(fpc,"\t\tModified connectivity  = %16d\n", modc);
   }
 
-  
+
   // チェック
   unsigned long upc = countCellB(d_bcd, 0);
-  
+
   if ( upc != 0 )
   {
     Hostonly_
@@ -720,7 +878,7 @@ bool Geometry::fill(int* d_bcd,
     }
     return false;
   }
-  
+
   return true;
 }
 
@@ -742,19 +900,19 @@ bool Geometry::fillConnected(int* d_bcd,
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-  
+
   unsigned long filled=0;       ///< フィルされた数
 
-  
+
   // 媒質のヒントを与える
   for (int m=0; m<NoHint; m++)
   {
     // MediumListの格納番号
     int key = FBUtility::findIDfromLabel(mat, NoMedium, fill_table[m].medium);
-    
+
     if ( mat[key].getState() == fill_mode )
     {
-      
+
       if ( fill_table[m].kind == kind_outerface )
       {
         filled = fillSeedBcdOuter(d_bcd, fill_table[m].dir, key, d_bid);
@@ -763,13 +921,13 @@ bool Geometry::fillConnected(int* d_bcd,
       {
         filled = fillSeedBcdInner(d_bcd, fill_table[m].point, key);
       }
-      
+
       if ( numProc > 1 )
       {
         unsigned long c_tmp = filled;
         if ( paraMngr->Allreduce(&c_tmp, &filled, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
       }
-  
+
       // 内部点の場合にはfilled==1のはず
       if ( fill_table[m].kind == kind_point )
       {
@@ -782,66 +940,66 @@ bool Geometry::fillConnected(int* d_bcd,
           Exit(0);
         }
       }
-      
+
     }
   }
-  
+
 
   if ( numProc > 1 )
   {
     if ( paraMngr->BndCommS3D(d_bcd, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
   }
 
-  
-  
+
+
   Hostonly_
   {
     fprintf(fpc,"\t\tPainted %s cells by hint       = %16ld\n", (fill_mode==FLUID)?"FLUID":"SOLID", filled);
   }
-  
-  
+
+
   // ペイントされたシードセル数をターゲットから差し引く
   target_count -= filled;
-  
-  
+
+
   Hostonly_
   {
     fprintf(fpc,"\t\tRemaining cells to paint          = %16ld\n\n", target_count);
   }
-  
-  
-  
+
+
+
   // 隣接するセルと同じfill_mode属性で接続している場合に隣接IDでフィル
-  
+
   int c=0;
   unsigned long sum_filled = 0;   ///< フィルされた数の合計
-  
+
   while (target_count > 0) {
-    
+
     // 隣接媒質でフィルする
     filled = fillByBid(d_bcd, d_bid, fill_mode);
-    
+
     if ( numProc > 1 )
     {
       if ( paraMngr->BndCommS3D(d_bcd, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
     }
-    
+
     target_count -= filled;
     sum_filled   += filled;
-    
+
     c++;
-    
+
     if ( filled <= 0 ) break; // フィル対象がなくなったら終了
   }
-  
-  
+
+
   Hostonly_
   {
     fprintf(fpc,"\t\tConnected fill Iteration          = %5d\n", c);
     fprintf(fpc,"\t\t               Filled by %s    = %16ld\n", (fill_mode==FLUID)?"FLUID":"SOLID", sum_filled);
     fprintf(fpc,"\t\t               Remaining cells    = %16ld\n\n", target_count);
   }
-  
+
   return true;
 }
 
@@ -863,7 +1021,7 @@ unsigned long Geometry::fillConnected4ID(int* mid,
                                          const int* Dsize)
 {
   int ix, jx, kx, gd;
-  
+
   if ( !Dsize )
   {
     ix = size[0];
@@ -878,18 +1036,18 @@ unsigned long Geometry::fillConnected4ID(int* mid,
     kx = Dsize[2];
     gd = 1;
   }
-  
-  
-  
+
+
+
   // シードセルからフィル
   int pid = paintID;
   unsigned long c = 0;
-  
+
 #pragma omp single
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        
+
         size_t m_p = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
         size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
         size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
@@ -897,12 +1055,12 @@ unsigned long Geometry::fillConnected4ID(int* mid,
         size_t m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd);
         size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
         size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
-        
+
         // 未ペイント
         if ( mid[m_p] == 0 )
         {
           int qq = bid[m_p];
-          
+
           // 各方向がpaintIDで、かつ交点がないとき => 連結
           if ( ( mid[m_w] == pid && 0 == getBit5(qq, 0) ) ||
                ( mid[m_e] == pid && 0 == getBit5(qq, 1) ) ||
@@ -915,11 +1073,11 @@ unsigned long Geometry::fillConnected4ID(int* mid,
             c++;
           }
         }
-        
+
       }
     }
   }
-  
+
   return c;
 }
 
@@ -940,7 +1098,7 @@ unsigned long Geometry::fillByBid(int* bcd,
                                   const int* Dsize)
 {
   int ix, jx, kx, gd;
-  
+
   if ( !Dsize )
   {
     ix = size[0];
@@ -955,7 +1113,7 @@ unsigned long Geometry::fillByBid(int* bcd,
     kx = Dsize[2];
     gd = 1;
   }
-  
+
   // 隣接サブドメインのランク番号
   int sdw = nID[X_minus];
   int sde = nID[X_plus];
@@ -963,51 +1121,51 @@ unsigned long Geometry::fillByBid(int* bcd,
   int sdn = nID[Y_plus];
   int sdb = nID[Z_minus];
   int sdt = nID[Z_plus];
-  
+
   int mode_x = FillSuppress[0]; // if 0, suppress connectivity evaluation
   int mode_y = FillSuppress[1];
   int mode_z = FillSuppress[2];
-  
+
   unsigned long filled   = 0; ///< ペイントされた数
-  
+
   int fill_mode = mode;
-  
-  
+
+
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, sdw, sde, sds, sdn, sdb, sdt) \
                          firstprivate(mode_x, mode_y, mode_z, fill_mode) \
 schedule(static) reduction(+:filled)
-  
+
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        
+
 #include "fill_bid_naive.h"
-        
+
       }
     }
   }
-  
-  
+
+
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, sdw, sde, sds, sdn, sdb, sdt) \
                          firstprivate(mode_x, mode_y, mode_z, fill_mode) \
 schedule(static) reduction(+:filled)
-  
+
   for (int k=kx; k>=1; k--) {
     for (int j=jx; j>=1; j--) {
       for (int i=ix; i>=1; i--) {
-        
+
 #include "fill_bid_naive.h"
-        
+
       }
     }
   }
-  
+
   if ( numProc > 1 )
   {
     unsigned long tmp = filled;
     if ( paraMngr->Allreduce(&tmp, &filled, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
-  
+
   return filled;
 }
 
@@ -1028,7 +1186,7 @@ unsigned long Geometry::fillFluidRegion(int* mid, const int* bcd)
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-  
+
   // zero initialize
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
   for (int k=1-gd; k<=kx+gd; k++) {
@@ -1039,37 +1197,37 @@ unsigned long Geometry::fillFluidRegion(int* mid, const int* bcd)
       }
     }
   }
-  
-  
+
+
   unsigned long c=0;
-  
+
   // 流体セルを-1でペイント
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        
+
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        
+
         if (DECODE_CMP( bcd[m] ) > 0)
         {
           mid[m] = -1;
           c++;
         }
-        
+
       }
     }
   }
-  
+
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
     if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
-    
+
     if ( paraMngr->BndCommS3D(mid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
   }
 
-  
+
   return c;
 }
 
@@ -1084,9 +1242,9 @@ unsigned long Geometry::fillFluidRegion(int* mid, const int* bcd)
  */
 unsigned long Geometry::fillSeedBcdInner(int* bcd, const REAL_TYPE p[3], const int target, const int* Dsize)
 {
-  
+
   unsigned long filled = 0;
-  
+
   // 領域内でなければ、フィルしない
   if (p[0]<originD[0] || p[0]>originD[0]+regionD[0] ||
       p[1]<originD[1] || p[1]>originD[1]+regionD[1] ||
@@ -1094,7 +1252,7 @@ unsigned long Geometry::fillSeedBcdInner(int* bcd, const REAL_TYPE p[3], const i
   {
     return filled;
   }
-  
+
   /*
   printf("\n\t\tfill point [rank=%5d] = (%f, %f, %f) : region (%f %f %f)-(%f %f %f)\n\n",
           myRank, p[0], p[1], p[2],
@@ -1102,9 +1260,9 @@ unsigned long Geometry::fillSeedBcdInner(int* bcd, const REAL_TYPE p[3], const i
           originD[0]+regionD[0], originD[1]+regionD[1], originD[2]+regionD[2]
           );
   */
-  
+
   int ix, jx, kx, gd;
-  
+
   if ( !Dsize )
   {
     ix = size[0];
@@ -1119,10 +1277,10 @@ unsigned long Geometry::fillSeedBcdInner(int* bcd, const REAL_TYPE p[3], const i
     kx = Dsize[2];
     gd = 1;
   }
-  
+
   int w[3];
   findIndex(p, w);
-  
+
   // 計算したインデクスが内部領域から外れる場合にはフィルしない
   if (w[0]<1 || w[0]>ix||
       w[1]<1 || w[1]>jx ||
@@ -1131,17 +1289,17 @@ unsigned long Geometry::fillSeedBcdInner(int* bcd, const REAL_TYPE p[3], const i
     //printf("\trank=%d : %d %d %d\n", myRank, w[0], w[1], w[2]);
     return filled;
   }
-  
+
 
   size_t m = _F_IDX_S3D(w[0], w[1], w[2], ix, jx, kx, gd);
-  
+
   // 未ペイントのセルの場合
   if ( DECODE_CMP(bcd[m]) == 0 )
   {
     setMediumID(bcd[m], target);
     filled = 1;
   }
-  
+
   return filled;
 }
 
@@ -1160,7 +1318,7 @@ unsigned long Geometry::fillSeedBcdInner(int* bcd, const REAL_TYPE p[3], const i
 unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int target, const int* bid, const int* Dsize)
 {
   int ix, jx, kx, gd;
-  
+
   if ( !Dsize )
   {
     ix = size[0];
@@ -1175,11 +1333,11 @@ unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int tar
     kx = Dsize[2];
     gd = 1;
   }
-  
-  
+
+
   int tg = target;     ///< order of FLUID ID
   unsigned long c = 0;
-  
+
   // 各外部境界面以外のフェイスにカットがあるかどうかを検査するためのマスク
   unsigned mask0 = 0x3fffffff;
   unsigned mx_w  = mask0 & ( ~(0x1f << (X_minus*5)) );
@@ -1188,8 +1346,8 @@ unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int tar
   unsigned mx_n  = mask0 & ( ~(0x1f << (Y_plus *5)) );
   unsigned mx_b  = mask0 & ( ~(0x1f << (Z_minus*5)) );
   unsigned mx_t  = mask0 & ( ~(0x1f << (Z_plus *5)) );
-  
-  
+
+
   switch (face)
   {
     case X_minus:
@@ -1200,7 +1358,7 @@ unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int tar
           for (int j=1; j<=jx; j++) {
             size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
             int s = bid[m];
-            
+
             // 対象セルの周囲に指定方向以外にカットがなく，未ペイントのセルの場合
             if ( ((s & mx_w) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
@@ -1211,7 +1369,7 @@ unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int tar
         }
       }
       break;
-      
+
     case X_plus:
       if ( nID[face] < 0 )
       {
@@ -1229,7 +1387,7 @@ unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int tar
         }
       }
       break;
-      
+
     case Y_minus:
       if ( nID[face] < 0 )
       {
@@ -1238,7 +1396,7 @@ unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int tar
           for (int i=1; i<=ix; i++) {
             size_t m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
             int s = bid[m];
-            
+
             if ( ((s & mx_s) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
               setMediumID(bcd[m], tg);
@@ -1248,7 +1406,7 @@ unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int tar
         }
       }
       break;
-      
+
     case Y_plus:
       if ( nID[face] < 0 )
       {
@@ -1257,7 +1415,7 @@ unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int tar
           for (int i=1; i<=ix; i++) {
             size_t m = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
             int s = bid[m];
-            
+
             if ( ((s & mx_n) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
               setMediumID(bcd[m], tg);
@@ -1267,7 +1425,7 @@ unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int tar
         }
       }
       break;
-      
+
     case Z_minus:
       if ( nID[face] < 0 )
       {
@@ -1276,7 +1434,7 @@ unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int tar
           for (int i=1; i<=ix; i++) {
             size_t m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
             int s = bid[m];
-            
+
             if ( ((s & mx_b) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
               setMediumID(bcd[m], tg);
@@ -1286,7 +1444,7 @@ unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int tar
         }
       }
       break;
-      
+
     case Z_plus:
       if ( nID[face] < 0 )
       {
@@ -1295,7 +1453,7 @@ unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int tar
           for (int i=1; i<=ix; i++) {
             size_t m = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
             int s = bid[m];
-            
+
             if ( ((s & mx_t) == 0) && (DECODE_CMP(bcd[m]) == 0) )
             {
               setMediumID(bcd[m], tg);
@@ -1305,9 +1463,9 @@ unsigned long Geometry::fillSeedBcdOuter(int* bcd, const int face, const int tar
         }
       }
       break;
-      
+
   } // end of switch
-  
+
   return c;
 }
 
@@ -1325,7 +1483,7 @@ bool Geometry::findKeyCell(int* mid,
                            const int* Dsize)
 {
   int ix, jx, kx, gd;
-  
+
   if ( !Dsize )
   {
     ix = size[0];
@@ -1340,32 +1498,32 @@ bool Geometry::findKeyCell(int* mid,
     kx = Dsize[2];
     gd = 1;
   }
-  
+
   int id = label;
   int c = 0;
   int flag = 0;
-  
+
 #pragma omp single
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        
+
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        
+
         if ( mid[m]==0 && flag==0 )
         {
           mid[m] = id;
           flag = 1;
           c++;
         }
-        
+
       }
     }
   }
-  
+
   // シードセルがない => 全てのmid[] != 0
   if ( c == 0 ) return false;
-  
+
   return true;
 }
 
@@ -1381,14 +1539,14 @@ int Geometry::find_mode(const int m_sz, const int* list)
 {
   int key[CMP_BIT_W]; ///< ID毎の頻度 @note ffv_Initialize() >> fill()でif ( NoCompo+1 > CMP_BIT_W )をチェック
   memset(key, 0, sizeof(int)*CMP_BIT_W);
-  
-  
+
+
   for (int l=0; l<m_sz; l++) key[ list[l] ]++;
-  
-  
+
+
   int mode = 0; // サーチの初期値，IDの大きい方から
   int z = 0;    // 最頻値のID
-  
+
   for (int l=NoCompo; l>=1; l--)
   {
     if ( key[l] > mode )
@@ -1397,11 +1555,129 @@ int Geometry::find_mode(const int m_sz, const int* list)
       z = l;
     }
   }
-  
+
   return z;
 }
 
+#ifdef DISABLE_MPI
+// #################################################################
+/* @brief セルに含まれるポリゴンを探索し、d_midに記録
+ * @param [in,out] d_mid  識別子配列
+ * @param [in]     PL     Polylibのインスタンス
+ * @param [in]     PG     PolygonPropertyクラス
+ */
+unsigned long Geometry::findPolygonInCell(int* d_mid, Polylib* PL, PolygonProperty* PG)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
 
+
+  // ポリゴングループ毎にアクセス
+  vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
+  vector<PolygonGroup*>::iterator it;
+
+  int odr = 0;
+  for (it = pg_roots->begin(); it != pg_roots->end(); it++)
+  {
+    string m_pg = (*it)->get_name();     // グループラベル
+    string m_bc = (*it)->get_type();     // 境界条件ラベル
+    int ntria = (*it)->get_group_num_tria();  // ローカルのポリゴン数
+
+#if 0
+    Hostonly_ printf("\n%s : %s\n", m_pg.c_str(), m_bc.c_str() );
+#endif
+
+    printf("\n");
+
+    // 対象ポリゴンがある場合のみ
+    if ( ntria > 0 )
+    {
+      // Monitor属性のポリゴンはスキップ
+      if ( strcasecmp(m_bc.c_str(), "monitor"))
+      {
+        // ポリゴングループのインデクス
+        int wmin[3];
+        int wmax[3];
+        findIndex( PG[odr].getBboxMin(), wmin );
+        findIndex( PG[odr].getBboxMax(), wmax );
+
+#if 0
+        printf("\t\t[rank=%6d] (%4d %4d %4d) - (%4d %4d %4d) %s \n",
+               myRank, wmin[0], wmin[1], wmin[2], wmax[0], wmax[1], wmax[2], m_pg.c_str());
+#endif
+
+        for (int k=wmin[2]; k<=wmax[2]; k++) {
+          for (int j=wmin[1]; j<=wmax[1]; j++) {
+            for (int i=wmin[0]; i<=wmax[0]; i++) {
+
+              Vec3r bx_min(originD[0]+pitchD[0]*(REAL_TYPE)(i-1),
+                           originD[1]+pitchD[1]*(REAL_TYPE)(j-1),
+                           originD[2]+pitchD[2]*(REAL_TYPE)(k-1)); // セルBboxの対角座標
+              Vec3r bx_max(originD[0]+pitchD[0]*(REAL_TYPE)i,
+                           originD[1]+pitchD[1]*(REAL_TYPE)j,
+                           originD[2]+pitchD[2]*(REAL_TYPE)k);     // セルBboxの対角座標
+
+              vector<Triangle*>* trias = PL->search_polygons(m_pg, bx_min, bx_max, false); // false; ポリゴンが一部でもかかる場合
+              int polys = trias->size();
+
+              if (polys>0)
+              {
+                // IDの返却用の配列
+                int* ary = new int[polys];
+                unsigned c=0;
+                vector<Triangle*>::iterator it2;
+
+                for (it2 = trias->begin(); it2 != trias->end(); it2++)
+                {
+                  ary[c] = (*it2)->get_exid();
+                  c++;
+                }
+
+                int z = find_mode(polys, ary);
+                if ( z == 0 ) Exit(0);
+
+                size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+                d_mid[m] = z;
+
+                if ( ary ) delete [] ary;
+              }
+
+              //後始末
+              delete trias;
+            }
+          }
+        }
+
+      } // skip monitor
+    } // ntria
+
+    odr++;
+  }
+  printf("\n");
+
+  delete pg_roots;
+
+
+  // ID=0 をチェック
+  unsigned long c = countCellM(d_mid, 0, "global", true);
+
+  if ( c != 0 )
+  {
+    Hostonly_ stamped_printf("\tID=0 was found in water-tight fill process. : %ld\n", c);
+    Exit(0);
+  }
+
+
+  // count the number of replaced cells >> except ID=-1
+  c = countCellM(d_mid, -1, "global", false);
+
+  return c;
+}
+
+
+#else // DISABLE_MPI
 // #################################################################
 /* @brief セルに含まれるポリゴンを探索し、d_midに記録
  * @param [in,out] d_mid  識別子配列
@@ -1414,25 +1690,25 @@ unsigned long Geometry::findPolygonInCell(int* d_mid, MPIPolylib* PL, PolygonPro
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-  
-  
+
+
   // ポリゴングループ毎にアクセス
   vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
   vector<PolygonGroup*>::iterator it;
-  
+
   int odr = 0;
   for (it = pg_roots->begin(); it != pg_roots->end(); it++)
   {
     string m_pg = (*it)->get_name();     // グループラベル
     string m_bc = (*it)->get_type();     // 境界条件ラベル
     int ntria = (*it)->get_group_num_tria();  // ローカルのポリゴン数
-    
+
 #if 0
     Hostonly_ printf("\n%s : %s\n", m_pg.c_str(), m_bc.c_str() );
 #endif
-    
+
     printf("\n");
-    
+
     // 対象ポリゴンがある場合のみ
     if ( ntria > 0 )
     {
@@ -1444,79 +1720,81 @@ unsigned long Geometry::findPolygonInCell(int* d_mid, MPIPolylib* PL, PolygonPro
         int wmax[3];
         findIndex( PG[odr].getBboxMin(), wmin );
         findIndex( PG[odr].getBboxMax(), wmax );
-        
+
 #if 0
         printf("\t\t[rank=%6d] (%4d %4d %4d) - (%4d %4d %4d) %s \n",
                myRank, wmin[0], wmin[1], wmin[2], wmax[0], wmax[1], wmax[2], m_pg.c_str());
 #endif
-        
+
         for (int k=wmin[2]; k<=wmax[2]; k++) {
           for (int j=wmin[1]; j<=wmax[1]; j++) {
             for (int i=wmin[0]; i<=wmax[0]; i++) {
-              
+
               Vec3r bx_min(originD[0]+pitchD[0]*(REAL_TYPE)(i-1),
                            originD[1]+pitchD[1]*(REAL_TYPE)(j-1),
                            originD[2]+pitchD[2]*(REAL_TYPE)(k-1)); // セルBboxの対角座標
               Vec3r bx_max(originD[0]+pitchD[0]*(REAL_TYPE)i,
                            originD[1]+pitchD[1]*(REAL_TYPE)j,
                            originD[2]+pitchD[2]*(REAL_TYPE)k);     // セルBboxの対角座標
-              
+
               vector<Triangle*>* trias = PL->search_polygons(m_pg, bx_min, bx_max, false); // false; ポリゴンが一部でもかかる場合
               int polys = trias->size();
-              
+
               if (polys>0)
               {
                 // IDの返却用の配列
                 int* ary = new int[polys];
                 unsigned c=0;
                 vector<Triangle*>::iterator it2;
-                
+
                 for (it2 = trias->begin(); it2 != trias->end(); it2++)
                 {
                   ary[c] = (*it2)->get_exid();
                   c++;
                 }
-                
+
                 int z = find_mode(polys, ary);
                 if ( z == 0 ) Exit(0);
 
                 size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
                 d_mid[m] = z;
-                
+
                 if ( ary ) delete [] ary;
               }
-              
+
               //後始末
               delete trias;
             }
           }
         }
-        
+
       } // skip monitor
     } // ntria
-    
+
     odr++;
   }
   printf("\n");
-  
+
   delete pg_roots;
-  
-  
+
+
   // ID=0 をチェック
   unsigned long c = countCellM(d_mid, 0, "global", true);
-  
+
   if ( c != 0 )
   {
     Hostonly_ stamped_printf("\tID=0 was found in water-tight fill process. : %ld\n", c);
     Exit(0);
   }
-  
-  
+
+
   // count the number of replaced cells >> except ID=-1
   c = countCellM(d_mid, -1, "global", false);
-  
+
   return c;
 }
+#endif // DISABLE_MPI
+
 
 
 
@@ -1535,8 +1813,8 @@ bool Geometry::gatherLabels(int* buffer,
   int* wk = NULL;
   if ( !(wk = new int[width_label]) )  Exit(0);
   for (int i=0; i<width_label; i++) wk[i] = 0;
-  
-  
+
+
   int c = 0;
   for (int i=0; i<cnct.size(); i++) // ローカルランクがもつラベルの数
   {
@@ -1547,8 +1825,8 @@ bool Geometry::gatherLabels(int* buffer,
     }
   }
   if ( c > width_label ) { fprintf(fpc, "rank= %d c= %d\n", myRank, c); return false; }
-  
-  
+
+
   // ラベル数の収集
   if ( numProc > 1 )
   {
@@ -1558,9 +1836,9 @@ bool Geometry::gatherLabels(int* buffer,
   {
     for (int i=0; i< width_label; i++) buffer[i] = wk[i];
   }
-  
+
   if ( wk )  { delete [] wk; wk=NULL; }
-  
+
   return true;
 }
 
@@ -1577,19 +1855,19 @@ void Geometry::gatherModes(vector<unsigned long>& mode)
   unsigned long* wk = NULL;
   if ( !(wk = new unsigned long[NoMedium+1]) )  Exit(0);
   for (int i=0; i<NoMedium+1; i++) wk[i] = 0;
-  
-  
+
+
   unsigned long* buffer = NULL;
   if ( !(buffer = new unsigned long[ numProc*(NoMedium+1) ]) )   Exit(0);
   for (int i=0; i<numProc*(NoMedium+1); i++) buffer[i] = 0;
-  
+
   // copy
   for (int i=0; i<NoMedium+1; i++)
   {
     wk[i] = mode[i];
   }
-  
-  
+
+
   // ラベル数の収集
   if ( numProc > 1 )
   {
@@ -1599,11 +1877,11 @@ void Geometry::gatherModes(vector<unsigned long>& mode)
   {
     for (int i=0; i<NoMedium+1; i++) buffer[i] = wk[i];
   }
-  
-  
+
+
   // zero初期化
   for (int i=0; i<NoMedium+1; i++) mode[i] = 0;
-  
+
   // 全体の最頻値を求める
   for (int j=0; j<NoMedium+1; j++)
   {
@@ -1614,8 +1892,8 @@ void Geometry::gatherModes(vector<unsigned long>& mode)
     }
     mode[j] = c;
   }
-  
-  
+
+
   if ( wk )  { delete [] wk; wk=NULL; }
   if ( buffer )  { delete [] buffer; buffer=NULL; }
 
@@ -1638,19 +1916,19 @@ bool Geometry::gatherRules(int* buffer,
   int* wk = NULL;
   if ( !(wk = new int[width_rule]) )  Exit(0);
   for (int i=0; i<width_rule; i++) wk[i] = 0;
-  
+
   if ( cnct.size() > width_rule )
   {
     fprintf(fpc, "rank= %d rule= %d < %d\n", myRank, width_rule, cnct.size());
     return false;
   }
-  
+
   for (int i=0; i<cnct.size(); i++) // ローカルランクがもつルールの数
   {
     wk[i] = cnct[i].size();
   }
-  
-  
+
+
   if ( numProc > 1 )
   {
     if ( paraMngr->Allgather(wk, width_rule, buffer, width_rule, procGrp) != CPM_SUCCESS ) Exit(0);
@@ -1659,7 +1937,7 @@ bool Geometry::gatherRules(int* buffer,
   {
     for (int i=0; i< width_rule; i++) buffer[i] = wk[i];
   }
-  
+
   if ( wk )  { delete [] wk; wk=NULL; }
 
   return true;
@@ -1687,25 +1965,25 @@ void Geometry::getFillParam(TextParser* tpCntl,
 {
   string str;
   string label_base, label_leaf, label;
-  
+
   // ファイルポインタのコピー
   fpc = m_fp;
-  
+
   NoMedium = m_NoMedium;
-  
+
   mat = m_mat;
-  
+
   label_base = "/FillHint";
   if ( (NoHint = tpCntl->countLabels(label_base)) < 1 )
   {
     Hostonly_ printf("\tParsing error in '%s' : No labels\n", label_base.c_str());
     Exit(0);
   }
-  
+
   // フィルテーブルの作成
   fill_table = new KindFill[NoHint];
-  
-  
+
+
   for (int m=0; m<NoHint; m++)
   {
     if ( !(tpCntl->getNodeStr(label_base, m+1, str)) )
@@ -1713,20 +1991,20 @@ void Geometry::getFillParam(TextParser* tpCntl,
       stamped_printf("\tParsing error : No Leaf Node \n");
       Exit(0);
     }
-    
+
     fill_table[m].identifier = str;
-    
-    
+
+
     label_leaf = label_base + "/" + str;
-    
+
     label = label_leaf + "/kind";
     if ( !(tpCntl->getInspectedValue(label, str )) )
     {
       Hostonly_ stamped_printf("\tParsing error : No '%s'\n", label.c_str());
       Exit(0);
     }
-    
-    
+
+
     if ( !strcasecmp(str.c_str(), "outerface"))
     {
       fill_table[m].kind = kind_outerface;
@@ -1740,8 +2018,8 @@ void Geometry::getFillParam(TextParser* tpCntl,
       Hostonly_ stamped_printf("\tError : Invalid keyword [%s]\n", str.c_str());
       Exit(0);
     }
-    
-    
+
+
     if ( fill_table[m].kind == kind_outerface )
     {
       label = label_leaf + "/direction";
@@ -1772,7 +2050,7 @@ void Geometry::getFillParam(TextParser* tpCntl,
         Hostonly_ stamped_printf("\tParsing error : No '%s'\n", label.c_str());
         Exit(0);
       }
-      
+
       // 無次元の場合に有次元化する
       if (Unit == NONDIMENSIONAL )
       {
@@ -1781,13 +2059,13 @@ void Geometry::getFillParam(TextParser* tpCntl,
           tmp[i] *= RefL;
         }
       }
-      
+
       fill_table[m].point[0] = tmp[0];
       fill_table[m].point[1] = tmp[1];
       fill_table[m].point[2] = tmp[2];
     }
-    
-    
+
+
     label = label_leaf + "/Medium";
     if ( !(tpCntl->getInspectedValue(label, str)) )
     {
@@ -1795,10 +2073,10 @@ void Geometry::getFillParam(TextParser* tpCntl,
       Exit(0);
     }
     fill_table[m].medium = str;
-    
+
   }
-  
-  
+
+
   Hostonly_
   {
     fprintf(fpc,"\n----------\n");
@@ -1819,12 +2097,12 @@ void Geometry::getFillParam(TextParser* tpCntl,
     }
     fprintf(fpc,"\n----------\n");
   }
-  
-  
+
+
   // FillMediumがMediumList中にあるかどうかをチェック
   for (int m=0; m<NoHint; m++)
   {
-    
+
     if ( FBUtility::findIDfromLabel(mat, NoMedium, fill_table[m].medium) == 0 )
     {
       Hostonly_
@@ -1836,9 +2114,9 @@ void Geometry::getFillParam(TextParser* tpCntl,
       Exit(0);
     }
   }
-  
-  
-  
+
+
+
   /* フィル方向制御 (NOT mandatory)
   string dir[3];
   label = "/GeometryModel/FillDirectionControl";
@@ -1869,16 +2147,16 @@ void Geometry::getFillParam(TextParser* tpCntl,
 int Geometry::getNumBuffer(const vector< vector<int> > cnct)
 {
   int width_label = 0;
-  
+
   // 各ランク内の接続ルール要素の総和
   for (int i=0; i<cnct.size(); i++)
   {
     width_label += cnct[i].size();
   }
 
-  
+
   //printf("r=%d : No rule = %d : sep = %d : width_label=%d\n", myRank, cnct.size(), num_sep, width_label);
-  
+
   if ( numProc > 1 )
   {
     int tmp = width_label;
@@ -1914,71 +2192,71 @@ bool Geometry::identifyConnectedRegion(int* mid,
       return false;
     }
   }
-  
+
 
   // このセクションは、逐次モードで実行
-  
+
   int label = 1;
 
   while ( true )
   {
-    
+
     // 未ペイントセルのシードセルをひとつ探す、falseは all mid[] != 0 を意味する
     if ( !findKeyCell(mid, label) ) break;
-    
+
     // labelでペイントできなくなる（fillConnected4IDがゼロを返す）とbreak
     while ( true )
     {
       // 未ペイントセルをlabelで連結フィルする
       if ( fillConnected4ID(mid, bid, label) == 0 ) break;
     }
-    
+
     // この時点で、labelでペイントできるセルは全てペイントしたので、labelをインクリメント
     label++;
-    
-    
+
+
     // 全てペイントされているなら、終了
     if ( countCellM(mid, 0, "local") == 0 ) break;
   }
-  
-  
+
+
   // この時点で、mid[]の内点には全て非ゼロの値が入る
   // 流体部分は-1、それ以外がlabel
   // labelは各ランク内ではユニークであるが、ランク間では重複している
-  
-  
+
+
   // ラベルを整理する
-  
+
   // 各ランクのラベルリストの先頭
   int* labelTop = NULL;
   if ( !(labelTop = new int[numProc]) )   Exit(0);
   for (int i=0; i<numProc; i++) labelTop[i] = 0;
-  
-  
+
+
   // 各ランクのラベルの数 => 接続ルールの数
   int* labelSize = NULL;
   if ( !(labelSize = new int[numProc]) )   Exit(0);
   for (int i=0; i<numProc; i++) labelSize[i] = 0;
-  
-  
+
+
   // 各ランクのラベル保持コンテナ
   vector<int> local_Label;
-  
-  
+
+
   // 各ランクのラベルをユニークに定める
   assureUniqueLabel(labelTop, labelSize, local_Label, mid);
-  
 
-  
+
+
   // 接続リスト
   vector< vector<int> > cnnctTable;
   cnnctTable.resize( labelSize[myRank] ); // 各ランクの接続リストの値を保持するラベルの数
-  
-  
+
+
   // ローカルプロセスの接続ルールを作成
   makeConnectList(cnnctTable, labelTop, local_Label, mid, bid);
-  
-  
+
+
   /* DEBUG
   for (int i=0; i<cnnctTable.size(); i++)
   {
@@ -1989,18 +2267,18 @@ bool Geometry::identifyConnectedRegion(int* mid,
     }
   }
    */
-  
+
   // バッファ幅を決める => 各ランクでもつルールの要素数の最大値
   int width_label = getNumBuffer(cnnctTable);
 
-  
+
   // バッファ 要素（ラベル）を各ランク毎にパックして集める
   int* packedLabels = NULL;
   if ( !(packedLabels = new int[numProc*width_label]) )   Exit(0);
   for (int i=0; i<numProc*width_label; i++) packedLabels[i] = 0;
-  
-  
-  
+
+
+
   // ルール数バッファの幅
   int width_rule = 0;
   for (int i=0; i<numProc; i++)
@@ -2008,17 +2286,17 @@ bool Geometry::identifyConnectedRegion(int* mid,
     if (width_rule < labelSize[i]) width_rule = labelSize[i];
   }
   //Hostonly_ printf("max rule = %d\n", width_rule);
-  
-  
+
+
   // バッファ 要素数を各ランク毎にパックして集める
   int* packedRules = NULL;
   if ( !(packedRules = new int[numProc*width_rule]) )   Exit(0);
   for (int i=0; i<numProc*width_rule; i++) packedRules[i] = 0;
-  
-  
+
+
   // ラベル情報の集約 プロセス間で通信
   if ( !gatherLabels(packedLabels, width_label, cnnctTable) ) return false;
-  
+
   /* DEBUG
   Hostonly_ {
     printf("Labels\n");
@@ -2032,12 +2310,12 @@ bool Geometry::identifyConnectedRegion(int* mid,
   }
   paraMngr->Barrier();
    */
-  
-  
+
+
   // ルール数の集約 プロセス間で通信
   if ( !gatherRules(packedRules, width_rule, cnnctTable) ) return false;
-  
-  
+
+
   /* DEBUG
   Hostonly_ {
     printf("Num of Rules\n");
@@ -2052,18 +2330,18 @@ bool Geometry::identifyConnectedRegion(int* mid,
   paraMngr->Barrier();
    */
 
-  
+
   // 接続ルール数の総和
   int NumRules = 0;
   for (int i=0; i<numProc; i++) NumRules += labelSize[i];
   //printf("Num of rules = %d\n", NumRule);
-  
-  
+
+
   // 全ての接続ルール
   vector< vector<int> > connectRules;
   connectRules.resize(NumRules);
-  
-  
+
+
   // 全接続ルールを作成
   if ( !makeWholeRules(connectRules,
                        labelSize,
@@ -2071,17 +2349,17 @@ bool Geometry::identifyConnectedRegion(int* mid,
                        width_label,
                        packedRules,
                        width_rule) ) return false;
-  
-  
+
+
   // 最終のラベルと接続ルール
   vector<int> finalLabels;
   vector< vector<int> > finalRules;
-  
-  
+
+
   // ラベルを縮約
   reduceLabels(finalLabels, finalRules, connectRules);
-  
-  
+
+
   // DEBUG
   Hostonly_
   {
@@ -2091,7 +2369,7 @@ bool Geometry::identifyConnectedRegion(int* mid,
     for (int i=0; i<finalRules.size(); i++) // ルール数
     {
       fprintf(fpc, " %4d :", finalLabels[i]);
-      
+
       for (int j=0; j<finalRules[i].size(); j++) // 各ルールの持つ要素数
       {
         fprintf(fpc, " %4d", finalRules[i][j]);
@@ -2100,16 +2378,16 @@ bool Geometry::identifyConnectedRegion(int* mid,
     }
     fprintf(fpc, "\n ================\n\n");
   }
-  
-  
+
+
   // ユニークにラベリング
   paintConnectedLabel(mid, finalLabels, finalRules);
-  
-  
+
+
   // ラベルに対応するインデクス
   vector<int> matIndex(finalLabels.size(), 0);
-  
-  
+
+
   // ラベルとmat[]インデクスの対応を決める
   if ( !makeHistgramByModalCut(matIndex, finalLabels, mid, bid) )
   {
@@ -2119,19 +2397,19 @@ bool Geometry::identifyConnectedRegion(int* mid,
       return false;
     }
   }
-  
-  
+
+
   // 対応づけしたmat[]インデクスによりラベル部分をペイントする
   paintCellByUniqueLabel(bcd, mid, finalLabels, matIndex);
-  
-  
-  
+
+
+
   // cleanup
   if ( labelTop )     { delete [] labelTop;     labelTop     =NULL; }
   if ( labelSize )    { delete [] labelSize;    labelSize    =NULL; }
   if ( packedLabels ) { delete [] packedLabels; packedLabels =NULL; }
   if ( packedRules )  { delete [] packedRules;  packedRules  =NULL; }
-  
+
   return true;
 }
 
@@ -2155,7 +2433,7 @@ void Geometry::makeConnectList(vector< vector<int> >& cnct,
                                const int* Dsize)
 {
   int ix, jx, kx, gd;
-  
+
   if ( !Dsize )
   {
     ix = size[0];
@@ -2173,45 +2451,45 @@ void Geometry::makeConnectList(vector< vector<int> >& cnct,
 
   // 担当ランクの開始ラベル
   int st = ltop[myRank];
-  
+
   // 各ラベルについて、接続リストを作成
   // 各ランク内については、単連結領域毎にラベルが割り当てられているので、領域境界のみでリストを作成可能
   for (int l=0; l<cnct.size(); l++)
   {
     // 対象ラベル
     int id = st + l;
-    
-    
+
+
     // X-
 #pragma omp single
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
-        
+
         size_t m_p = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
         size_t m_w = _F_IDX_S3D(0, j, k, ix, jx, kx, gd);
-        
+
         const int dd  = mid[m_p];
         const int d_w = mid[m_w];
         const int qw  = getBit5(bid[m_p], 0);
-        
+
         // 対象ラベル、テスト方向にカットがなく、SOLIDラベルで、自ラベル（対象ラベル）でない
         if ( dd == id && qw==0 && d_w > 0 && d_w != id ) addLabel2List(cnct[l], d_w);
       }
     }
 
-  
+
     // X+
 #pragma omp single
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
-        
+
         size_t m_p = _F_IDX_S3D(ix  , j, k, ix, jx, kx, gd);
         size_t m_e = _F_IDX_S3D(ix+1, j, k, ix, jx, kx, gd);
-        
+
         const int dd  = mid[m_p];
         const int d_e = mid[m_e];
         const int qe  = getBit5(bid[m_p], 1);
-        
+
         if ( dd == id && qe==0 && d_e > 0 && d_e != id ) addLabel2List(cnct[l], d_e);
       }
     }
@@ -2221,71 +2499,71 @@ void Geometry::makeConnectList(vector< vector<int> >& cnct,
 #pragma omp single
     for (int k=1; k<=kx; k++) {
       for (int i=1; i<=ix; i++) {
-        
+
         size_t m_p = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
         size_t m_s = _F_IDX_S3D(i, 0, k, ix, jx, kx, gd);
-        
+
         const int dd  = mid[m_p];
         const int d_s = mid[m_s];
         const int qs  = getBit5(bid[m_p], 2);
-        
+
         if ( dd == id && qs==0 && d_s > 0 && d_s != id ) addLabel2List(cnct[l], d_s);
       }
     }
-    
+
 
     // Y+
 #pragma omp single
     for (int k=1; k<=kx; k++) {
       for (int i=1; i<=ix; i++) {
-        
+
         size_t m_p = _F_IDX_S3D(i, jx,   k, ix, jx, kx, gd);
         size_t m_n = _F_IDX_S3D(i, jx+1, k, ix, jx, kx, gd);
-        
+
         const int dd  = mid[m_p];
         const int d_n = mid[m_n];
         const int qn  = getBit5(bid[m_p], 3);
-        
+
         if ( dd == id && qn==0 && d_n > 0 && d_n != id ) addLabel2List(cnct[l], d_n);
       }
     }
-    
+
 
     // Z-
 #pragma omp single
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        
+
         size_t m_p = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
         size_t m_b = _F_IDX_S3D(i, j, 0, ix, jx, kx, gd);
-        
+
         const int dd  = mid[m_p];
         const int d_b = mid[m_b];
         const int qb  = getBit5(bid[m_p], 4);
-        
+
         if ( dd == id && qb==0 && d_b > 0 && d_b != id ) addLabel2List(cnct[l], d_b);
       }
     }
-    
-    
+
+
     // Z+
 #pragma omp single
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        
+
         size_t m_p = _F_IDX_S3D(i, j, kx,   ix, jx, kx, gd);
         size_t m_t = _F_IDX_S3D(i, j, kx+1, ix, jx, kx, gd);
-        
+
         const int dd  = mid[m_p];
         const int d_t = mid[m_t];
         const int qt  = getBit5(bid[m_p], 5);
-        
+
         if ( dd == id && qt==0 && d_t > 0 && d_t != id ) addLabel2List(cnct[l], d_t);
       }
     }
-    
+
   } // loop cnct
-  
+
 }
 
 
@@ -2306,7 +2584,7 @@ bool Geometry::makeHistgramByModalCut(vector<int>& matIndex,
                                       const int* Dsize)
 {
   int ix, jx, kx, gd;
-  
+
   if ( !Dsize )
   {
     ix = size[0];
@@ -2321,32 +2599,32 @@ bool Geometry::makeHistgramByModalCut(vector<int>& matIndex,
     kx = Dsize[2];
     gd = 1;
   }
-  
+
   // 頻度
   vector<unsigned long> mode(NoMedium+1, 0);
-  
-  int m_Medium = NoMedium;
-  
 
-  
+  int m_Medium = NoMedium;
+
+
+
   for (int l=0; l<labels.size(); l++)
   {
     int target = labels[l];
-    
+
     // 頻度積算をクリア
     for (int i=0; i<NoMedium+1; i++) mode[i] = 0;
-    
+
     int flag = 0;
     //Hostonly_ fprintf(fpc, "label[%d] = %d\n", l, target);
-    
+
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, target, m_Medium) \
         schedule(static) reduction(+:flag)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
-          
+
           size_t m = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
-          
+
           int qq = bid[m];
           int qw = getBit5(qq, 0);
           int qe = getBit5(qq, 1);
@@ -2354,14 +2632,14 @@ bool Geometry::makeHistgramByModalCut(vector<int>& matIndex,
           int qn = getBit5(qq, 3);
           int qb = getBit5(qq, 4);
           int qt = getBit5(qq, 5);
-          
+
           // 対象セルが対象ラベルの場合、かつ、交点をもつ場合
           if ( mid[m] == target  &&  qw+qe+qs+qn+qb+qt > 0 )
           {
             // 交点IDの最頻値
             int sd = FBUtility::find_mode_id(qw, qe, qs, qn, qb, qt, NoCompo);
             if ( sd == 0 ) flag = 1;
-            
+
             // 交点IDの媒質番号を得る
             int key = cmp[sd].getMatodr();
             if ( key == 0 )
@@ -2369,56 +2647,56 @@ bool Geometry::makeHistgramByModalCut(vector<int>& matIndex,
               printf("(%3d %3d %3d) sd=%2d key=%2d : %2d %2d %2d %2d %2d %2d\n", i,j,k,sd, key, qw, qe, qs, qn, qb, qt);
               flag++;
             }
-            
+
             if ( cmp[key].getState() == FLUID ) // mat[]代用
             {
               printf("Modal Cut is FLUID mat[%d] (%d, %d, %d)\n", key, i, j, k);
               flag++;
             }
-            
+
             if ( key < 1  ||  key > m_Medium )
             {
               printf("Out of range for mat[%d] at (%d, %d, %d)\n", key, i, j, k);
               flag++;
             }
-            
+
             mode[key]++;
           }
         }
       }
     } // OMP
-    
-    
+
+
     // error check
     if ( numProc > 1 )
     {
       int c_tmp = flag;
       if ( paraMngr->Allreduce(&c_tmp, &flag, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
     }
-    
+
     if ( flag > 0 )
     {
       fprintf(fpc, "rank=%d flag=%d\n", myRank, flag);
       return false;
     }
-    
-    
+
+
     /* DEBUG
     Hostonly_ fprintf(fpc, "          label : mode << LOCAL\n");
     for (int i=1; i<=NoMedium; i++) fprintf(fpc,"[rank=%d]  medium=%d %5d\n", myRank, i, mode[i]);
     paraMngr->Barrier();
      */
-    
+
     // 全プロセスで集約 >> modeに全プロセスでの最頻値が返る
     gatherModes(mode);
-    
+
     /*
     for (int j=0; j<NoMedium+1; j++)
     {
       Hostonly_ fprintf(fpc, "%d : %ld\n", j, mode[j]);
     }
      */
-    
+
     // 最大値のmat[]インデクス
     int loc = 0;
     unsigned long max_mode = 0;
@@ -2430,16 +2708,16 @@ bool Geometry::makeHistgramByModalCut(vector<int>& matIndex,
         loc = j;
       }
     }
-    
+
     if ( loc < 0  ||  loc > NoMedium )
     {
       fprintf(fpc, "Out of range of max key = %d\n", loc);
       return false;
     }
-    
+
     // インデクスの保存
     matIndex[l] = loc;
-    
+
     /* DEBUG
     Hostonly_
     {
@@ -2448,10 +2726,10 @@ bool Geometry::makeHistgramByModalCut(vector<int>& matIndex,
     }
      */
 
-    
+
   } // label
-  
-  
+
+
   return true;
 }
 
@@ -2480,11 +2758,11 @@ bool Geometry::makeWholeRules(vector< vector<int> >& connectRules,
   {
     // パックされているラベルをmでとりだす
     int m = 0;
-    
+
     for (int j=0; j<labelSize[i]; j++) // 各ランクのルール数
     {
       int sz = pckdRules[ i * width_rule + j ]; // 各ルールの持つ要素数
-      
+
       for (int l=0; l<sz; l++)
       {
         int elm = pckdLabel[ i * width_label + m ];
@@ -2495,12 +2773,12 @@ bool Geometry::makeWholeRules(vector< vector<int> >& connectRules,
         addLabel2List(connectRules[c], elm);
         m++;
       }
-      
+
       c++;
-      
+
     }
   }
-  
+
   // チェック
   if ( c != connectRules.size() )
   {
@@ -2509,41 +2787,41 @@ bool Geometry::makeWholeRules(vector< vector<int> >& connectRules,
       return false;
     }
   }
-  
-  
+
+
   // 昇順にならべる
   for (int i=0; i<connectRules.size(); i++)
   {
     sort(connectRules[i].begin(), connectRules[i].end());
   }
-  
+
   // 重複ルールの除去
   for (int i=0; i<connectRules.size(); i++)
   {
     int key = i+1;
-    
+
     // copy
     vector<int> wk;
-    
+
     for (int j=0; j<connectRules[i].size(); j++)
     {
       int lbl = connectRules[i][j];
-      
+
       // key>lblのときは重複しているので追加しない
       if (key < lbl) wk.push_back(lbl);
     }
-    
+
     // 入れ替え
     connectRules[i].clear();
-    
+
     for (int j=0; j<wk.size(); j++)
     {
       connectRules[i].push_back( wk[j] );
     }
   }
-  
-  
-  
+
+
+
   // DEBUG
   Hostonly_
   {
@@ -2553,7 +2831,7 @@ bool Geometry::makeWholeRules(vector< vector<int> >& connectRules,
     for (int i=0; i<connectRules.size(); i++) // ルール数
     {
       fprintf(fpc, " %4d :", i+1);
-      
+
       for (int j=0; j<connectRules[i].size(); j++) // 各ルールの持つ要素数
       {
         fprintf(fpc, " %4d", connectRules[i][j]);
@@ -2562,7 +2840,7 @@ bool Geometry::makeWholeRules(vector< vector<int> >& connectRules,
     }
     fprintf(fpc, "\n ================\n\n");
   }
-  
+
   return true;
 }
 
@@ -2582,7 +2860,7 @@ unsigned Geometry::mergeSameSolidCell(int* bid,
                                       const int* Dsize)
 {
   int ix, jx, kx, gd;
-  
+
   if ( !Dsize )
   {
     ix = size[0];
@@ -2597,18 +2875,18 @@ unsigned Geometry::mergeSameSolidCell(int* bid,
     kx = Dsize[2];
     gd = 1;
   }
-  
+
   unsigned fc = 0;
-  
+
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        
+
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        
+
         int zp = DECODE_CMP( bcd[m] );
-        
+
         // SOLIDに対してチェック
         if ( cmp[zp].getState() == SOLID ) // cmp[]はmat[]の代用
         {
@@ -2619,26 +2897,26 @@ unsigned Geometry::mergeSameSolidCell(int* bid,
           int qn = getBit5(qq, 3);
           int qb = getBit5(qq, 4);
           int qt = getBit5(qq, 5);
-          
+
           long long pos = cut[m];
           long long tmp = pos;
-          
+
           size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
           size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
           size_t m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd);
           size_t m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd);
           size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
           size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
-          
-          
+
+
           int zw = DECODE_CMP( bcd[m_w] );
           int ze = DECODE_CMP( bcd[m_e] );
           int zs = DECODE_CMP( bcd[m_s] );
           int zn = DECODE_CMP( bcd[m_n] );
           int zb = DECODE_CMP( bcd[m_b] );
           int zt = DECODE_CMP( bcd[m_t] );
-          
-          
+
+
           // X-方向が同じ媒質でカットがある場合
           if ( ensCut(pos, X_minus)  &&  zp == zw )
           {
@@ -2650,7 +2928,7 @@ unsigned Geometry::mergeSameSolidCell(int* bid,
             //       getBit9(tmp, 0), ensCut(tmp, 0),
             //       getBit9(pos, 0), ensCut(pos, 0) );
           }
-          
+
           if ( ensCut(pos, X_plus)  &&  zp == ze )
           {
             setUncut9(pos, X_plus);
@@ -2661,7 +2939,7 @@ unsigned Geometry::mergeSameSolidCell(int* bid,
             //       getBit9(tmp, 1), ensCut(tmp, 1),
             //       getBit9(pos, 1), ensCut(pos, 1) );
           }
-          
+
           if ( ensCut(pos, Y_minus)  &&  zp == zs )
           {
             setUncut9(pos, Y_minus);
@@ -2672,7 +2950,7 @@ unsigned Geometry::mergeSameSolidCell(int* bid,
             //       getBit9(tmp, 2), ensCut(tmp, 2),
             //       getBit9(pos, 2), ensCut(pos, 2) );
           }
-          
+
           if ( ensCut(pos, Y_plus)  &&  zp == zn )
           {
             setUncut9(pos, Y_plus);
@@ -2683,7 +2961,7 @@ unsigned Geometry::mergeSameSolidCell(int* bid,
             //       getBit9(tmp, 3), ensCut(tmp, 3),
             //       getBit9(pos, 3), ensCut(pos, 3) );
           }
-          
+
           if ( ensCut(pos, Z_minus)  &&  zp == zb )
           {
             setUncut9(pos, Z_minus);
@@ -2694,7 +2972,7 @@ unsigned Geometry::mergeSameSolidCell(int* bid,
             //       getBit9(tmp, 4), ensCut(tmp, 4),
             //       getBit9(pos, 4), ensCut(pos, 4) );
           }
-          
+
           if ( ensCut(pos, Z_plus)  &&  zp == zt )
           {
             setUncut9(pos, Z_plus);
@@ -2705,22 +2983,22 @@ unsigned Geometry::mergeSameSolidCell(int* bid,
             //       getBit9(tmp, 5), ensCut(tmp, 5),
             //       getBit9(pos, 5), ensCut(pos, 5) );
           }
-          
+
           cut[m] = pos;
           bid[m] = qq;
-          
+
         } // SOLID
-        
+
       }
     }
   }
-  
+
   if ( numProc > 1 )
   {
     unsigned c_tmp = fc;
     if ( paraMngr->Allreduce(&c_tmp, &fc, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
-  
+
   return fc;
 }
 
@@ -2735,59 +3013,59 @@ void Geometry::minDistance(const long long* cut, const int* bid)
 {
   int global_min = 1024;
   int local_min = 1024;
-  
+
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-  
+
 #pragma omp parallel firstprivate(ix, jx, kx, gd)
   {
     int th_min = 1024;
-    
+
 #pragma omp for schedule(static)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
-          
+
           size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
           int bd = bid[m];
-          
+
           if ( IS_CUT(bd) ) // カットがあるか，IDによる判定
           {
             const long long c = cut[m];
-            
+
             for (int n=0; n<6; n++)
             {
               int tmp = getBit9(c, n);
               if ( (th_min > tmp) && tmp != 0) th_min = tmp;
             }
           }
-          
+
         }
       }
     }
-    
+
 #pragma omp critical
     {
       local_min = (std::min)(local_min, th_min);
     }
   }
-  
+
   global_min = local_min;
-  
-  
+
+
   if ( numProc > 1 )
   {
     int tmp = global_min;
     if ( paraMngr->Allreduce(&tmp, &global_min, 1, MPI_MIN, procGrp) != CPM_SUCCESS ) Exit(0);
   }
-  
+
   Hostonly_
   {
     fprintf(fpc, "\n\tMinimum non-dimensional distance except on a center = %e\n\n", (REAL_TYPE)global_min/(REAL_TYPE)QT_9); // 9bit幅
   }
-  
+
 }
 
 
@@ -2807,7 +3085,7 @@ void Geometry::paintCellByUniqueLabel(int* bcd,
                                       const int* Dsize)
 {
   int ix, jx, kx, gd;
-  
+
   if ( !Dsize )
   {
     ix = size[0];
@@ -2822,29 +3100,29 @@ void Geometry::paintCellByUniqueLabel(int* bcd,
     kx = Dsize[2];
     gd = 1;
   }
-  
-  
+
+
   for (int l=0; l<labels.size(); l++)
   {
     int ref = labels[l];
     int pid = matIndex[l];
-    
+
 
 #pragma omp parallel for schedule(static) firstprivate(ix, jx, kx, gd, ref, pid)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
-          
+
           size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          
+
           if ( mid[m] == ref ) setMediumID(bcd[m], pid);
         }
       }
     }
 
   }
-  
-  
+
+
   // SYNC
   if ( numProc > 1 )
   {
@@ -2867,7 +3145,7 @@ void Geometry::paintConnectedLabel(int* mid,
                                    const int* Dsize)
 {
   int ix, jx, kx, gd;
-  
+
   if ( !Dsize )
   {
     ix = size[0];
@@ -2883,27 +3161,27 @@ void Geometry::paintConnectedLabel(int* mid,
     gd = 1;
   }
 
-  
+
   for (int l=0; l<rules.size(); l++)
   {
     int replace = labels[l];
-    
+
     for (int m=0; m<rules[l].size(); m++)
     {
       int target = rules[l][m];
-      
+
       //Hostonly_ printf("target = %d : to be replaced %d\n", target, replace);
-      
+
       unsigned long c = 0;
-      
+
 #pragma omp parallel for schedule(static) \
         firstprivate(ix, jx, kx, gd, target, replace) reduction(+:c)
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
-            
+
             size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-            
+
             if ( mid[m] == target )
             {
               mid[m] = replace;
@@ -2912,12 +3190,12 @@ void Geometry::paintConnectedLabel(int* mid,
           }
         }
       }
-      
+
       //printf("replaced[%3d] %12ld rank[%d]\n", target, c, myRank);
     }
   }
 
-  
+
   // SYNC
   if ( numProc > 1 )
   {
@@ -2926,7 +3204,194 @@ void Geometry::paintConnectedLabel(int* mid,
 }
 
 
+#ifdef DISABLE_MPI
+// #################################################################
+/**
+ * @brief 交点計算を行い、量子化する
+ * @param [out]    cut      量子化した交点
+ * @param [out]    bid      交点ID
+ * @param [in,out] bcd      セルID
+ * @param [in]     PL       Polylibインスタンス
+ * @param [in]     PG       PolygonPropertyクラス
+ * @param [in]     Dsize    サイズ
+ */
+void Geometry::quantizeCut(long long* cut,
+                           int* bid,
+                           int* bcd,
+                           Polylib* PL,
+                           PolygonProperty* PG,
+                           const int* Dsize)
+{
+  int ix, jx, kx, gd;
 
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
+
+
+  Vec3r org(originD);
+  Vec3r pch(pitchD);
+
+
+  // ポリゴン情報へのアクセス
+  vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
+  vector<PolygonGroup*>::iterator it;
+
+  // ポリゴングループのループ
+  int odr = 0;
+  unsigned count = 0;
+  for (it = pg_roots->begin(); it != pg_roots->end(); it++)
+  {
+    string m_pg = (*it)->get_name();     // グループラベル
+    string m_bc = (*it)->get_type();     // 境界条件ラベル
+
+    // サブドメイン内にポリゴンが存在する場合のみ処理する
+    int ntria = (*it)->get_group_num_tria();  // ローカルのポリゴン数
+
+    if ( ntria > 0 )
+    {
+      // Monitor属性のポリゴンはスキップ
+      if ( strcasecmp(m_bc.c_str(), "monitor"))
+      {
+        // ポリゴングループのインデクス
+        int wmin[3];
+        int wmax[3];
+        findIndex( PG[odr].getBboxMin(), wmin );
+        findIndex( PG[odr].getBboxMax(), wmax );
+
+        // 1層外側まで拡大
+        for (int i=0; i<3; i++)
+        {
+          wmin[i] -= 1;
+          wmax[i] += 1;
+        }
+
+#if 0
+        printf("\t\t[rank=%6d] (%4d %4d %4d) - (%4d %4d %4d) %s \n",
+               myRank, wmin[0], wmin[1], wmin[2], wmax[0], wmax[1], wmax[2], m_pg.c_str());
+#endif
+
+        // ポリゴングループの存在するbbox内のセルに対して交点計算
+        for (int k=wmin[2]; k<=wmax[2]; k++) {
+          for (int j=wmin[1]; j<=wmax[1]; j++) {
+            for (int i=wmin[0]; i<=wmax[0]; i++) {
+
+              // position of cell center
+              Vec3r base((REAL_TYPE)i-0.5, (REAL_TYPE)j-0.5, (REAL_TYPE)k-0.5);
+
+              // セルセンターを中心に2*pitchD[]の矩形領域
+              Vec3r ctr(org + base * pch);
+
+              // 1%マージンを与える
+              Vec3r bx_min(ctr - pch * 1.01);
+              Vec3r bx_max(ctr + pch * 1.01);
+
+
+              vector<Triangle*>* trias = PL->search_polygons(m_pg, bx_min, bx_max, false); // false; ポリゴンが一部でもかかる場合
+              int polys = trias->size();
+
+
+              if (polys>0)
+              {
+                vector<Triangle*>::iterator it2;
+
+                for (it2 = trias->begin(); it2 != trias->end(); it2++)
+                {
+                  Vertex** tmp = (*it2)->get_vertex();
+                  Vec3r p[3];
+                  p[0] = *(tmp[0]);
+                  p[1] = *(tmp[1]);
+                  p[2] = *(tmp[2]);
+
+                  // Polygon ID
+                  int poly_id = (*it2)->get_exid();
+
+#if 0
+                  printf("[%3d %3d %3d] (%f %f %f), (%f %f %f), (%f %f %f)\n", i,j,k,
+                         p[0].x, p[0].y, p[0].z,
+                         p[1].x, p[1].y, p[1].z,
+                         p[2].x, p[2].y, p[2].z);
+#endif
+
+                  size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+                  int bb = bid[m];
+                  long long cc = cut[m];
+
+                  // 各方向の交点を評価、短い距離を記録する。新規記録の場合のみカウント
+                  count += updateCut(ctr, X_minus, p[0], p[1], p[2], cc, bb, poly_id);
+                  count += updateCut(ctr, X_plus,  p[0], p[1], p[2], cc, bb, poly_id);
+                  count += updateCut(ctr, Y_minus, p[0], p[1], p[2], cc, bb, poly_id);
+                  count += updateCut(ctr, Y_plus,  p[0], p[1], p[2], cc, bb, poly_id);
+                  count += updateCut(ctr, Z_minus, p[0], p[1], p[2], cc, bb, poly_id);
+                  count += updateCut(ctr, Z_plus,  p[0], p[1], p[2], cc, bb, poly_id);
+
+                  bid[m] = bb;
+                  cut[m] = cc;
+                } // trias
+
+              } // polys
+
+              //後始末
+              delete trias;
+            }
+          }
+        } // for i,j,k
+
+      } // skip monitor
+    } // ntria
+
+    odr ++;
+  }
+
+  Hostonly_ fprintf(fpc, "\tquantize cut = %d\n\n", count);
+
+  delete pg_roots;
+
+
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->BndCommS3D(bid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
+  }
+
+
+
+  /* 修正
+
+  // 定義点上に交点がある場合の処理 >> カットするポリゴンの媒質番号でフィルする
+  unsigned long fill_cut=0, cm=0;
+
+  paintCutOnPoint(bcd, bid, cut, fill_cut, cm);
+
+  Hostonly_
+  {
+    if ( fill_cut > 0  || cm > 0 )
+    {
+      fprintf(fpc,"\n\tPaint cells which have cut on a center  = %16ld\n", fill_cut);
+      fprintf(fpc,  "\tModify neighbor cells owing to painting = %16ld\n", cm);
+    }
+  }
+   */
+
+  // 最小値カット
+  minDistance(cut, bid);
+
+}
+
+
+
+#else // DISABLE_MPI
 // #################################################################
 /**
  * @brief 交点計算を行い、量子化する
@@ -2945,7 +3410,7 @@ void Geometry::quantizeCut(long long* cut,
                            const int* Dsize)
 {
   int ix, jx, kx, gd;
-  
+
   if ( !Dsize )
   {
     ix = size[0];
@@ -2961,15 +3426,15 @@ void Geometry::quantizeCut(long long* cut,
     gd = 1;
   }
 
-  
+
   Vec3r org(originD);
   Vec3r pch(pitchD);
-  
-  
+
+
   // ポリゴン情報へのアクセス
   vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
   vector<PolygonGroup*>::iterator it;
-  
+
   // ポリゴングループのループ
   int odr = 0;
   unsigned count = 0;
@@ -2977,10 +3442,10 @@ void Geometry::quantizeCut(long long* cut,
   {
     string m_pg = (*it)->get_name();     // グループラベル
     string m_bc = (*it)->get_type();     // 境界条件ラベル
-    
+
     // サブドメイン内にポリゴンが存在する場合のみ処理する
     int ntria = (*it)->get_group_num_tria();  // ローカルのポリゴン数
-    
+
     if ( ntria > 0 )
     {
       // Monitor属性のポリゴンはスキップ
@@ -2991,43 +3456,43 @@ void Geometry::quantizeCut(long long* cut,
         int wmax[3];
         findIndex( PG[odr].getBboxMin(), wmin );
         findIndex( PG[odr].getBboxMax(), wmax );
-        
+
         // 1層外側まで拡大
         for (int i=0; i<3; i++)
         {
           wmin[i] -= 1;
           wmax[i] += 1;
         }
-        
+
 #if 0
         printf("\t\t[rank=%6d] (%4d %4d %4d) - (%4d %4d %4d) %s \n",
                myRank, wmin[0], wmin[1], wmin[2], wmax[0], wmax[1], wmax[2], m_pg.c_str());
 #endif
-        
+
         // ポリゴングループの存在するbbox内のセルに対して交点計算
         for (int k=wmin[2]; k<=wmax[2]; k++) {
           for (int j=wmin[1]; j<=wmax[1]; j++) {
             for (int i=wmin[0]; i<=wmax[0]; i++) {
-              
+
               // position of cell center
               Vec3r base((REAL_TYPE)i-0.5, (REAL_TYPE)j-0.5, (REAL_TYPE)k-0.5);
-              
+
               // セルセンターを中心に2*pitchD[]の矩形領域
               Vec3r ctr(org + base * pch);
-              
+
               // 1%マージンを与える
               Vec3r bx_min(ctr - pch * 1.01);
               Vec3r bx_max(ctr + pch * 1.01);
-              
-              
+
+
               vector<Triangle*>* trias = PL->search_polygons(m_pg, bx_min, bx_max, false); // false; ポリゴンが一部でもかかる場合
               int polys = trias->size();
-              
-              
+
+
               if (polys>0)
               {
                 vector<Triangle*>::iterator it2;
-                
+
                 for (it2 = trias->begin(); it2 != trias->end(); it2++)
                 {
                   Vertex** tmp = (*it2)->get_vertex();
@@ -3035,7 +3500,7 @@ void Geometry::quantizeCut(long long* cut,
                   p[0] = *(tmp[0]);
                   p[1] = *(tmp[1]);
                   p[2] = *(tmp[2]);
-                  
+
                   // Polygon ID
                   int poly_id = (*it2)->get_exid();
 
@@ -3049,7 +3514,7 @@ void Geometry::quantizeCut(long long* cut,
                   size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
                   int bb = bid[m];
                   long long cc = cut[m];
-                  
+
                   // 各方向の交点を評価、短い距離を記録する。新規記録の場合のみカウント
                   count += updateCut(ctr, X_minus, p[0], p[1], p[2], cc, bb, poly_id);
                   count += updateCut(ctr, X_plus,  p[0], p[1], p[2], cc, bb, poly_id);
@@ -3057,43 +3522,43 @@ void Geometry::quantizeCut(long long* cut,
                   count += updateCut(ctr, Y_plus,  p[0], p[1], p[2], cc, bb, poly_id);
                   count += updateCut(ctr, Z_minus, p[0], p[1], p[2], cc, bb, poly_id);
                   count += updateCut(ctr, Z_plus,  p[0], p[1], p[2], cc, bb, poly_id);
-                  
+
                   bid[m] = bb;
                   cut[m] = cc;
                 } // trias
-                
+
               } // polys
-              
+
               //後始末
               delete trias;
             }
           }
         } // for i,j,k
-        
+
       } // skip monitor
     } // ntria
-    
+
     odr ++;
   }
-  
+
   Hostonly_ fprintf(fpc, "\tquantize cut = %d\n\n", count);
-  
+
   delete pg_roots;
-  
-  
+
+
   if ( numProc > 1 )
   {
     if ( paraMngr->BndCommS3D(bid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
     if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
   }
-  
-  
-  
+
+
+
   /* 修正
-  
+
   // 定義点上に交点がある場合の処理 >> カットするポリゴンの媒質番号でフィルする
   unsigned long fill_cut=0, cm=0;
-  
+
   paintCutOnPoint(bcd, bid, cut, fill_cut, cm);
 
   Hostonly_
@@ -3105,11 +3570,12 @@ void Geometry::quantizeCut(long long* cut,
     }
   }
    */
-  
+
   // 最小値カット
   minDistance(cut, bid);
-  
+
 }
+#endif // DISABLE_MPI
 
 
 // #################################################################
@@ -3125,17 +3591,17 @@ void Geometry::reduceLabels(vector<int>& finalLabels,
 {
   // 接続ルールの総数
   int NumRules = connectRules.size();
-  
-  
+
+
   // Valid flag
   //      >0 -- テスト対象
   //     ==0 -- 非対象
   vector<int> valid(NumRules, 1);
 
   //for (int i=0; i<NumRules; i++) valid[i] = connectRules[i].size();
-  
+
   int no_of_keys = 0;
-  
+
   // マスターキーのループ
   for (int i=0; i<NumRules; i++)
   {
@@ -3144,19 +3610,19 @@ void Geometry::reduceLabels(vector<int>& finalLabels,
     if ( valid[i] > 0 )
     {
       no_of_keys++;
-      
+
       // 最終リストにラベルkeyを追加
       finalLabels.push_back(key);
 
       // key[i]に属するラベルを作成
       registerRule(finalRules, no_of_keys, i, connectRules, valid);
-      
+
       valid[i] = 0;
     } // valid
-    
+
   } // NumRules
-  
-  
+
+
   // チェック
   int c = 0;
   for (int i=0; i<NumRules; i++)
@@ -3167,13 +3633,13 @@ void Geometry::reduceLabels(vector<int>& finalLabels,
       Exit(0);
     }
   }
-  
+
   // 昇順ソート
   for (int i=0; i<finalRules.size(); i++)
   {
     sort( finalRules[i].begin(), finalRules[i].end() );
   }
-  
+
   // zero要素の処理
   for (int i=0; i<finalRules.size(); i++)
   {
@@ -3182,8 +3648,8 @@ void Geometry::reduceLabels(vector<int>& finalLabels,
       finalRules[i].push_back( finalLabels[i] );
     }
   }
-  
-  
+
+
 }
 
 
@@ -3203,23 +3669,23 @@ void Geometry::registerRule(vector< vector<int> >& finalRules,
                             vector<int>& valid)
 {
   if ( valid[test_keyodr] == 0 ) return;
-  
+
   const int key = test_keyodr + 1;
-  
+
   // 登録ルールfinalRulesの配列を確保
   if ( finalRules.size() != reg_keys ) { finalRules.resize(reg_keys); }
-  
+
   // test_keyのルールの各ラベル
   for (int j=0; j<connectRules[test_keyodr].size(); j++)
   {
     int lbl = connectRules[test_keyodr][j];
-    
+
     // lbl>0 で key<lblのときのみ、マスターキーにラベルを登録
     if (lbl > 0 && key < lbl)
     {
       addLabel2List( finalRules[reg_keys-1], lbl );
     }
-    
+
     // スキップモードに変更
     if (lbl > 0)
     {
@@ -3229,7 +3695,7 @@ void Geometry::registerRule(vector< vector<int> >& finalRules,
     // 再帰処理
     registerRule(finalRules, reg_keys, lbl-1, connectRules, valid);
   }
- 
+
   valid[test_keyodr] = 0;
 }
 
@@ -3262,19 +3728,19 @@ bool Geometry::TriangleIntersect(const Vec3r ray_o,
 {
   const REAL_TYPE m_eps = REAL_TYPE_EPSILON*2.0; //ROUND_EPS;
   Vec3r tvec, qvec;
-  
+
   Vec3r e1 = v1 - v0;
   Vec3r e2 = v2 - v0;
   Vec3r pvec = cross(dir, e2);
-  
+
   REAL_TYPE det = dot(e1, pvec);
-  
+
   if (det > m_eps)
   {
     tvec = ray_o - v0;
     u = dot(tvec, pvec);
     if (u < 0.0 || u > det) return false;
-    
+
     qvec = cross(tvec, e1);
     v = dot(dir, qvec);
     if (v < 0.0 || u + v > det) return false;
@@ -3284,25 +3750,25 @@ bool Geometry::TriangleIntersect(const Vec3r ray_o,
     tvec = ray_o - v0;
     u = dot(tvec, pvec);
     if (u > 0.0 || u < det) return false;
-    
+
     qvec = cross(tvec, e1);
     v = dot(dir, qvec);
     if (v > 0.0 || u + v < det) return false;
-    
+
   }
   else
   {
     return false;
   }
-  
+
   REAL_TYPE inv_det = 1.0 / det;
-  
+
   t = dot(e2, qvec);
-  
+
   t *= inv_det;
   u *= inv_det;
   v *= inv_det;
-  
+
   return true;
 }
 
@@ -3332,43 +3798,43 @@ unsigned Geometry::updateCut(const Vec3r ray_o,
   // 単位方向ベクトルと格子幅
   Vec3r d;
   REAL_TYPE pit;
-  
+
   switch (dir)
   {
     case X_minus:
       d.assign(-1.0, 0.0, 0.0);
       pit = pitchD[0];
       break;
-      
+
     case X_plus:
       d.assign(1.0, 0.0, 0.0);
       pit = pitchD[0];
       break;
-      
+
     case Y_minus:
       d.assign(0.0, -1.0, 0.0);
       pit = pitchD[1];
       break;
-      
+
     case Y_plus:
       d.assign(0.0, 1.0, 0.0);
       pit = pitchD[1];
       break;
-      
+
     case Z_minus:
       d.assign(0.0, 0.0, -1.0);
       pit = pitchD[2];
       break;
-      
+
     case Z_plus:
       d.assign(0.0, 0.0, 1.0);
       pit = pitchD[2];
       break;
   }
-  
+
   // カウンタ
   unsigned count = 0;
-  
+
   // 交点計算
   REAL_TYPE t, u, v;
   if ( !TriangleIntersect(ray_o, d, v0, v1, v2, t, u, v) ) return 0;
@@ -3377,7 +3843,7 @@ unsigned Geometry::updateCut(const Vec3r ray_o,
    px = d.x * t + ray_o.x;
    py = d.y * t + ray_o.y;
    pz = d.z * t + ray_o.z;
-   
+
    // 法線
    float fDat = 1.0 - u - v;
    n1 = n1 * fDat;
@@ -3389,16 +3855,16 @@ unsigned Geometry::updateCut(const Vec3r ray_o,
   // 格子幅で正規化
   REAL_TYPE tn = t / pit;
   //printf("t = %f\n", t);
-  
+
   if ( tn < 0.0 || 1.0 < tn ) return 0;
 
-  
+
   // 9bit幅の量子化
   int r = quantize9(tn);
-  
+
   bool record = false;
-  
-  
+
+
   // 交点が記録されていない場合 >> 新規記録
   if ( ensCut(cut, dir) == 0 )
   {
@@ -3409,15 +3875,15 @@ unsigned Geometry::updateCut(const Vec3r ray_o,
   {
     if ( r < getBit9(cut, dir)) record = true;
   }
-  
-  
+
+
   if ( record )
   {
     setBit5(bid, pid, dir);
     setCut9(cut, r, dir);
     //printf("%10.6f %6d dir=%d id=%d\n", tn, r, dir, pid);
   }
-  
+
   return count;
 }
 
@@ -3433,7 +3899,7 @@ unsigned Geometry::updateCut(const Vec3r ray_o,
 unsigned long Geometry::debug_countCellB(const int* bcd, const int m_id, const int* bid, const int* Dsize)
 {
   int ix, jx, kx, gd;
-  
+
   if ( !Dsize )
   {
     ix = size[0];
@@ -3448,10 +3914,10 @@ unsigned long Geometry::debug_countCellB(const int* bcd, const int m_id, const i
     kx = Dsize[2];
     gd = 1;
   }
-  
+
   unsigned long c=0;
   int id = m_id;
-  
+
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, id) schedule(static) reduction(+:c)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
@@ -3488,14 +3954,14 @@ unsigned long Geometry::debug_countCellB(const int* bcd, const int m_id, const i
       }
     }
   }
-  
-  
+
+
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
     if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
-  
+
   return c;
 }
 
@@ -3511,7 +3977,7 @@ unsigned long Geometry::debug_countCellB(const int* bcd, const int m_id, const i
 unsigned long Geometry::fillByFluid(int* bcd, const int fluid_id, const int* bid, const int* Dsize)
 {
   int ix, jx, kx, gd;
-  
+
   if ( !Dsize )
   {
     ix = size[0];
@@ -3526,18 +3992,18 @@ unsigned long Geometry::fillByFluid(int* bcd, const int fluid_id, const int* bid
     kx = Dsize[2];
     gd = 1;
   }
-  
+
   int fid = fluid_id;
   unsigned long c = 0; /// painted count
-  
+
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, fid) schedule(static) reduction(+:c)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        
+
         size_t m_p = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
         int dd = DECODE_CMP( bcd[m_p] );
-        
+
         // 対象セルが未ペイントの場合
         if ( dd == 0 )
         {
@@ -3547,13 +4013,13 @@ unsigned long Geometry::fillByFluid(int* bcd, const int fluid_id, const int* bid
       }
     }
   }
-  
+
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
     if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
-  
+
   return c;
 }
 
@@ -3568,7 +4034,7 @@ unsigned long Geometry::fillByFluid(int* bcd, const int fluid_id, const int* bid
 unsigned long Geometry::fillByMid(int* mid, const int tgt_id, const int* Dsize)
 {
   int ix, jx, kx, gd;
-  
+
   if ( !Dsize )
   {
     ix = size[0];
@@ -3583,21 +4049,21 @@ unsigned long Geometry::fillByMid(int* mid, const int tgt_id, const int* Dsize)
     kx = Dsize[2];
     gd = 1;
   }
-  
+
   int tg = tgt_id;
   unsigned long filled = 0; ///< tgt_idでペイントされた数
-  
-  
+
+
   // findPolygonInCell()により、既に、midにはポリゴンIDがストアされている
   // 検査対象セル{-1}の隣接6方向を見て、tgt_idと同じIDがあれば対象セルをtgt_idでペイント
-  
+
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) \
 schedule(static) reduction(+:filled) collapse(3)
-  
+
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        
+
         size_t m_p = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
         size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
         size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
@@ -3605,18 +4071,18 @@ schedule(static) reduction(+:filled) collapse(3)
         size_t m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd);
         size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
         size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
-        
+
         if ( mid[m_p] == -1 )
         {
           int ff = 0;
-          
+
           if ( mid[m_w] == tg ) ff++;
           if ( mid[m_e] == tg ) ff++;
           if ( mid[m_s] == tg ) ff++;
           if ( mid[m_n] == tg ) ff++;
           if ( mid[m_b] == tg ) ff++;
           if ( mid[m_t] == tg ) ff++;
-          
+
           if ( ff>0 )
           {
             mid[m_p] = tg;
@@ -3626,15 +4092,15 @@ schedule(static) reduction(+:filled) collapse(3)
       }
     }
   }
-  
-  
+
+
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, tg) \
 schedule(static) reduction(+:filled) collapse(3)
-  
+
   for (int k=kx; k>=1; k--) {
     for (int j=jx; j>=1; j--) {
       for (int i=ix; i>=1; i--) {
-        
+
         size_t m_p = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
         size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
         size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
@@ -3642,35 +4108,35 @@ schedule(static) reduction(+:filled) collapse(3)
         size_t m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd);
         size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
         size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
-        
+
         if ( mid[m_p] == -1 )
         {
           int ff = 0;
-          
+
           if ( mid[m_w] == tg ) ff++;
           if ( mid[m_e] == tg ) ff++;
           if ( mid[m_s] == tg ) ff++;
           if ( mid[m_n] == tg ) ff++;
           if ( mid[m_b] == tg ) ff++;
           if ( mid[m_t] == tg ) ff++;
-          
+
           if ( ff>0 )
           {
             mid[m_p] = tg;
             filled++;
           }
         }
-        
+
       }
     }
   }
-  
+
   if ( numProc > 1 )
   {
     unsigned long tmp = filled;
     if ( paraMngr->Allreduce(&tmp, &filled, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
-  
+
   return filled;
 }
 
@@ -3691,16 +4157,16 @@ bool Geometry::fillByModalSolid(int* bcd,
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-  
+
   int flag = -1;
-  
+
   unsigned long c = 0; /// painted count
-  
+
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) shared(flag) schedule(static) reduction(+:c)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        
+
         size_t m_p = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
         size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
         size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
@@ -3708,23 +4174,23 @@ bool Geometry::fillByModalSolid(int* bcd,
         size_t m_s = _F_IDX_S3D(i,   j-1, k,   ix, jx, kx, gd);
         size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
         size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
-        
+
         int dd = DECODE_CMP( bcd[m_p] );
-        
+
         int qw = DECODE_CMP( bcd[m_w] );
         int qe = DECODE_CMP( bcd[m_e] );
         int qs = DECODE_CMP( bcd[m_s] );
         int qn = DECODE_CMP( bcd[m_n] );
         int qb = DECODE_CMP( bcd[m_b] );
         int qt = DECODE_CMP( bcd[m_t] );
-        
-        
+
+
         // 対象セルが未ペイントの場合
         if ( dd == 0 )
         {
           int sd = FBUtility::find_mode_id(cmp, qw, qe, qs, qn, qb, qt, NoCompo);
           int key = sd;
-          
+
           // 周囲の媒質IDの固体最頻値がゼロの場合
           if ( sd == 0 )
           {
@@ -3751,25 +4217,25 @@ bool Geometry::fillByModalSolid(int* bcd,
               }
             }
           }
-          
+
           setMediumID(bcd[m_p], key);
           c++;
         }
       }
     }
   }
-  
-  
+
+
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
     if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
-  
+
   replaced = c;
-  
+
   if ( flag == 1 ) return false;
-  
+
   return true;
 }
 
@@ -3785,7 +4251,7 @@ bool Geometry::fillByModalSolid(int* bcd,
 unsigned long Geometry::fillByID(int* mid, const int target, const int* Dsize)
 {
   int ix, jx, kx, gd;
-  
+
   if ( !Dsize )
   {
     ix = size[0];
@@ -3800,17 +4266,17 @@ unsigned long Geometry::fillByID(int* mid, const int target, const int* Dsize)
     kx = Dsize[2];
     gd = 1;
   }
-  
+
   int fid = target;
   unsigned long c = 0; /// painted count
-  
+
 #pragma omp parallel for firstprivate(ix, jx, kx, gd, fid) schedule(static) reduction(+:c)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        
+
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        
+
         if ( mid[m] == -1 )
         {
           mid[m] = fid;
@@ -3819,13 +4285,13 @@ unsigned long Geometry::fillByID(int* mid, const int target, const int* Dsize)
       }
     }
   }
-  
+
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
     if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
-  
+
   return c;
 }
 
@@ -3844,7 +4310,7 @@ unsigned long Geometry::fillByID(int* mid, const int target, const int* Dsize)
 unsigned long Geometry::fillSeedMid(int* mid, const int face, const int target, const int* Dsize)
 {
   int ix, jx, kx, gd;
-  
+
   if ( !Dsize )
   {
     ix = size[0];
@@ -3859,12 +4325,12 @@ unsigned long Geometry::fillSeedMid(int* mid, const int face, const int target, 
     kx = Dsize[2];
     gd = 1;
   }
-  
-  
+
+
   int tg = target;
   unsigned long c = 0;
-  
-  
+
+
   switch (face)
   {
     case X_minus:
@@ -3874,7 +4340,7 @@ unsigned long Geometry::fillSeedMid(int* mid, const int face, const int target, 
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             size_t m = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
-            
+
             if ( mid[m] == -1 )
             {
               mid[m] = tg;
@@ -3884,7 +4350,7 @@ unsigned long Geometry::fillSeedMid(int* mid, const int face, const int target, 
         }
       }
       break;
-      
+
     case X_plus:
       if ( nID[face] < 0 )
       {
@@ -3892,7 +4358,7 @@ unsigned long Geometry::fillSeedMid(int* mid, const int face, const int target, 
         for (int k=1; k<=kx; k++) {
           for (int j=1; j<=jx; j++) {
             size_t m = _F_IDX_S3D(ix, j, k, ix, jx, kx, gd);
-            
+
             if ( mid[m] == -1 )
             {
               mid[m] = tg;
@@ -3902,7 +4368,7 @@ unsigned long Geometry::fillSeedMid(int* mid, const int face, const int target, 
         }
       }
       break;
-      
+
     case Y_minus:
       if ( nID[face] < 0 )
       {
@@ -3910,7 +4376,7 @@ unsigned long Geometry::fillSeedMid(int* mid, const int face, const int target, 
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
             size_t m = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
-            
+
             if ( mid[m] == -1 )
             {
               mid[m] = tg;
@@ -3920,7 +4386,7 @@ unsigned long Geometry::fillSeedMid(int* mid, const int face, const int target, 
         }
       }
       break;
-      
+
     case Y_plus:
       if ( nID[face] < 0 )
       {
@@ -3928,7 +4394,7 @@ unsigned long Geometry::fillSeedMid(int* mid, const int face, const int target, 
         for (int k=1; k<=kx; k++) {
           for (int i=1; i<=ix; i++) {
             size_t m = _F_IDX_S3D(i, jx, k, ix, jx, kx, gd);
-            
+
             if ( mid[m] == -1 )
             {
               mid[m] = tg;
@@ -3938,7 +4404,7 @@ unsigned long Geometry::fillSeedMid(int* mid, const int face, const int target, 
         }
       }
       break;
-      
+
     case Z_minus:
       if ( nID[face] < 0 )
       {
@@ -3946,7 +4412,7 @@ unsigned long Geometry::fillSeedMid(int* mid, const int face, const int target, 
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
             size_t m = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
-            
+
             if ( mid[m] == -1 )
             {
               mid[m] = tg;
@@ -3956,7 +4422,7 @@ unsigned long Geometry::fillSeedMid(int* mid, const int face, const int target, 
         }
       }
       break;
-      
+
     case Z_plus:
       if ( nID[face] < 0 )
       {
@@ -3964,7 +4430,7 @@ unsigned long Geometry::fillSeedMid(int* mid, const int face, const int target, 
         for (int j=1; j<=jx; j++) {
           for (int i=1; i<=ix; i++) {
             size_t m = _F_IDX_S3D(i, j, kx, ix, jx, kx, gd);
-            
+
             if ( mid[m] == -1 )
             {
               mid[m] = tg;
@@ -3974,16 +4440,16 @@ unsigned long Geometry::fillSeedMid(int* mid, const int face, const int target, 
         }
       }
       break;
-      
+
   } // end of switch
-  
-  
+
+
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
     if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
-  
+
   return c;
 }
 
@@ -4000,16 +4466,16 @@ unsigned long Geometry::fillSubCellSolid(int* smd, REAL_TYPE* svf)
 {
   int sd  = SeedID;
   int sdv = NumSuvDiv;
-  
+
   unsigned long c = 0; /// painted count
-  
+
 #pragma omp parallel for firstprivate(sdv, sd) schedule(static) reduction(+:c)
   for (int k=1; k<=sdv; k++) {
     for (int j=1; j<=sdv; j++) {
       for (int i=1; i<=sdv; i++) {
-        
+
         size_t m = _F_IDX_S3D(i  , j  , k  , sdv, sdv, sdv, 1);;
-        
+
         if ( smd[m] != sd )
         {
           if (smd[m] == -1) Exit(0);
@@ -4019,7 +4485,7 @@ unsigned long Geometry::fillSubCellSolid(int* smd, REAL_TYPE* svf)
       }
     }
   }
-  
+
   return c;
 }
 
@@ -4035,14 +4501,14 @@ unsigned long Geometry::fillSubCellByModalSolid(int* smd, REAL_TYPE* svf)
 {
   int sdv = NumSuvDiv;
   int fid = FillID;
-  
+
   unsigned long c = 0; /// painted count
-  
+
 #pragma omp parallel for firstprivate(sdv, fid) schedule(static) reduction(+:c)
   for (int k=1; k<=sdv; k++) {
     for (int j=1; j<=sdv; j++) {
       for (int i=1; i<=sdv; i++) {
-        
+
         size_t m_p = _F_IDX_S3D(i  , j  , k  , sdv, sdv, sdv, 1);
         size_t m_e = _F_IDX_S3D(i+1, j,   k,   sdv, sdv, sdv, 1);
         size_t m_w = _F_IDX_S3D(i-1, j,   k,   sdv, sdv, sdv, 1);
@@ -4050,22 +4516,22 @@ unsigned long Geometry::fillSubCellByModalSolid(int* smd, REAL_TYPE* svf)
         size_t m_s = _F_IDX_S3D(i,   j-1, k,   sdv, sdv, sdv, 1);
         size_t m_t = _F_IDX_S3D(i,   j,   k+1, sdv, sdv, sdv, 1);
         size_t m_b = _F_IDX_S3D(i,   j,   k-1, sdv, sdv, sdv, 1);
-        
+
         int dd = smd[m_p];
-        
+
         int qw = smd[m_w];
         int qe = smd[m_e];
         int qs = smd[m_s];
         int qn = smd[m_n];
         int qb = smd[m_b];
         int qt = smd[m_t];
-        
-        
+
+
         // 対象セルが未ペイントの場合
         if ( dd == -1 )
         {
           int sd = FBUtility::find_mode_id(cmp, qw, qe, qs, qn, qb, qt, NoCompo);
-          
+
           // 周囲の媒質IDの固体最頻値がゼロの場合
           if ( sd == 0 ) Exit(0); // 何かあるはず
           smd[m_p] = sd;
@@ -4075,7 +4541,7 @@ unsigned long Geometry::fillSubCellByModalSolid(int* smd, REAL_TYPE* svf)
       }
     }
   }
-  
+
   return c;
 }
 
@@ -4091,7 +4557,7 @@ unsigned long Geometry::fillSubCellByModalSolid(int* smd, REAL_TYPE* svf)
 unsigned long Geometry::findBboxforSeeding(const int* mid, int* bbox, const int* Dsize)
 {
   int ix, jx, kx, gd;
-  
+
   if ( !Dsize )
   {
     ix = size[0];
@@ -4106,16 +4572,16 @@ unsigned long Geometry::findBboxforSeeding(const int* mid, int* bbox, const int*
     kx = Dsize[2];
     gd = 1;
   }
-  
+
   // ノードローカルの値
   unsigned long c = 0;
-  
+
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        
+
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        
+
         if ( mid[m] == 0 )
         {
           c++;
@@ -4126,18 +4592,18 @@ unsigned long Geometry::findBboxforSeeding(const int* mid, int* bbox, const int*
           if ( bbox[4] > k ) bbox[4] = k;
           if ( bbox[5] < k ) bbox[5] = k;
         }
-        
+
       }
     }
   }
-  
-  
+
+
   if ( numProc > 1 )
   {
     unsigned long c_tmp = c;
     if ( paraMngr->Allreduce(&c_tmp, &c, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
-  
+
   return c;
 }
 
@@ -4154,9 +4620,9 @@ int Geometry::find_mode_smd(const int* smd)
 {
   int key[CMP_BIT_W]; ///< ID毎の頻度 @note ffv_Initialize() >> fill()でif ( NoCompo+1 > CMP_BIT_W )をチェック
   memset(key, 0, sizeof(int)*CMP_BIT_W);
-  
+
   int sdv = NumSuvDiv;
-  
+
   // smd[]は-1の可能性もある
 #pragma omp parallel for firstprivate(sdv) schedule(static) collapse(3)
   for (int k=1; k<=sdv; k++) {
@@ -4170,10 +4636,10 @@ int Geometry::find_mode_smd(const int* smd)
       }
     }
   }
-  
+
   int mode = 0; // サーチの初期値，IDの大きい方から
   int z = 0;    // 最頻値のID
-  
+
   for (int l=NoCompo; l>=1; l--)
   {
     if ( key[l] > mode )
@@ -4182,7 +4648,7 @@ int Geometry::find_mode_smd(const int* smd)
       z = l;
     }
   }
-  
+
   return z;
 }
 
@@ -4200,15 +4666,15 @@ unsigned long Geometry::replaceIsolatedCell(int* bcd, const int* bid)
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-  
+
   unsigned long replaced=0;
-  
+
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:replaced)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        
+
         if ( DECODE_CMP(bcd[m]) == 0 )
         {
           int qq = bid[m];
@@ -4218,40 +4684,257 @@ unsigned long Geometry::replaceIsolatedCell(int* bcd, const int* bid)
           int qn = getBit5(qq, 3);
           int qb = getBit5(qq, 4);
           int qt = getBit5(qq, 5);
-          
+
           // 全隣接方向に交点がある場合
           if ( qw * qe * qs * qn * qb * qt != 0 )
           {
             // 交点IDの最頻値
             int sd = FBUtility::find_mode_id(qw, qe, qs, qn, qb, qt, NoCompo);
             if ( sd==0 ) Exit(0);
-            
+
             // MediumListの格納番号
             int key = cmp[sd].getMatodr();
             printf("rank %d : (%d %d %d) : key id =%d\n", myRank, i,j,k,key);
-            
+
             if ( key == 0 ) Exit(0);
             setMediumID(bcd[m], key);
             replaced++;
           }
         }
-        
+
       }
     }
   }
-  
+
   if ( numProc > 1 )
   {
     unsigned long c_tmp = replaced;
     if ( paraMngr->Allreduce(&c_tmp, &replaced, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
-  
+
   return replaced;
 }
 
 
 
+#ifdef DISABLE_MPI
+// #################################################################
+/* @brief シード点によるフィル
+ * @param [in]  d_mid     識別子配列
+ * @param [in]  PL        MPIPolylibのインスタンス
+ * @param [in]  PG        PolygonPropertyクラス
+ * @note ここまで、d_bcdにはsetMonitorList()でモニタIDが入っている
+ */
+void Geometry::SeedFilling(int* d_mid,
+                           Polylib* PL,
+                           PolygonProperty* PG)
+{
+  unsigned long target_count = 0; ///< フィルの対象となるセル数
+  unsigned long replaced = 0;     ///< 置換された数
+  unsigned long filled = 0;       ///< FLUIDでフィルされた数
+  unsigned long sum_replaced = 0; ///< 置換された数の合計
+  unsigned long sum_filled = 0;   ///< FLUIDでフィルされた数の合計
 
+
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+
+
+  // フィル媒質のチェック
+  if ( cmp[FillID].getState() != FLUID )
+  {
+    Hostonly_ fprintf(fpc, "\tSpecified Medium of filling fluid is not FLUID\n");
+    Exit(0);
+  }
+
+
+  // 最初にフィル対象のセル数を求める >> 全計算内部セル数
+  unsigned long total_cell = (unsigned long)ix * (unsigned long)jx * (unsigned long)kx;
+
+
+  if ( numProc > 1 )
+  {
+    unsigned long tmp_fc = total_cell;
+    if ( paraMngr->Allreduce(&tmp_fc, &total_cell, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
+  }
+
+
+  target_count = total_cell;
+
+  Hostonly_
+  {
+    fprintf(fpc,"\t\tInitial target count   = %16ld\n\n", target_count);
+  }
+
+
+  // セルに含まれるポリゴンを探索し、d_midに記録
+  Hostonly_
+  {
+    fprintf(fpc,"\t\tPaint cells that contain polygons -----\n");
+  }
+
+  sum_replaced = findPolygonInCell(d_mid, PL, PG);
+
+  target_count -= sum_replaced;
+
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->BndCommS3D(d_mid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
+  }
+
+
+  Hostonly_ // Up to here, d_mid={-1, Poly-IDs}
+  {
+    fprintf(fpc,"\t\t# of cells touch Polys = %16ld\n", sum_replaced);
+    fprintf(fpc,"\t\tRemaining target cells = %16ld\n\n", target_count);
+  }
+
+
+
+
+  // デフォルトのヒントはX-
+  Hostonly_
+  {
+    fprintf(fpc,"\tHint of filling -----\n\n");
+    fprintf(fpc,"\t\tSeeding Dir.           : %s\n", FBUtility::getDirection(FillSeedDir).c_str());
+    fprintf(fpc,"\t\tFill medium of SEED    : %s (%d)\n", mat[SeedID].alias.c_str(), SeedID);
+  }
+
+  filled = fillSeedMid(d_mid, FillSeedDir, SeedID);
+  target_count -= filled;
+
+  if ( filled == 0 )
+  {
+    Hostonly_
+    {
+      fprintf(fpc,"No cells painted\n");
+    }
+    Exit(0);
+  }
+
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->BndCommS3D(d_mid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
+  }
+
+
+  Hostonly_ // Up to here, d_mid={-1, Poly-IDs, SeedID}
+  {
+    fprintf(fpc,"\t\tPainted cells          = %16ld  (%s)\n", filled, mat[SeedID].alias.c_str());
+    fprintf(fpc,"\t\tRemaining target cells = %16ld\n\n", target_count);
+  }
+
+
+
+
+  // 未ペイントのターゲットセル(d_mid==-1)を、SeedIDでペイントする
+  Hostonly_
+  {
+    fprintf(fpc,"\tFill from outside by Seed ID -----\n\n");
+  }
+
+  int c=0; // iteration
+  sum_filled = 0;
+
+  while (target_count > 0) {
+
+    // SeedIDで指定された媒質でフィルする
+    filled = fillByMid(d_mid, SeedID);
+
+    if ( numProc > 1 )
+    {
+      if ( paraMngr->BndCommS3D(d_mid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
+    }
+
+    target_count -= filled;
+    sum_filled   += filled;
+    c++;
+
+    if ( filled <= 0 ) break; // フィル対象がなくなったら終了
+  }
+
+
+  Hostonly_
+  {
+    fprintf(fpc,"\t\tIteration              = %5d\n", c);;
+    fprintf(fpc,"\t\t    Filled cells       = %16ld  (%s)\n", sum_filled, mat[SeedID].alias.c_str());
+    fprintf(fpc,"\t\t    Remaining cells    = %16ld\n\n", target_count);
+  }
+
+
+
+  if ( target_count != 0 )
+  {
+    Hostonly_
+    {
+      fprintf(fpc,"\tFill cells, which are inside of objects -----\n\n");
+    }
+
+    // 未ペイント（ID=-1）のセルを検出
+    unsigned long upc = countCellM(d_mid, -1, "global");
+
+    if ( upc > 0 )
+    {
+      Hostonly_
+      {
+        fprintf(fpc,"\t\tUnpainted cell         = %16ld\n", upc);
+      }
+    }
+
+    if ( target_count != upc )
+    {
+      Exit(0);
+    }
+
+
+    // 未ペイントのセルに対して、最頻値の媒質でフィルする
+    c = 0;
+    sum_replaced = 0;
+
+    while ( target_count > 0 ) {
+
+      // @todo アルゴリズム再考
+      // replaced = fillByModalSolid(d_mid, FillID);
+
+      if ( numProc > 1 )
+      {
+        if ( paraMngr->BndCommS3D(d_mid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
+      }
+
+      target_count -= replaced;
+      sum_replaced += replaced;
+      c++;
+
+      if ( replaced <= 0 ) break;
+    }
+
+    Hostonly_
+    {
+      fprintf(fpc,"\t\tIteration              = %5d\n", c);
+      fprintf(fpc,"\t\tFilled cells           = %16ld\n\n", sum_replaced);
+    }
+
+
+
+    // ID=-1をカウントしてチェック
+    upc = countCellM(d_mid, -1, "global");
+
+    if ( upc != 0 )
+    {
+      Hostonly_
+      {
+        fprintf(fpc,"\tFill operation is done, but still remains %ld unpainted cells.\n", upc);
+      }
+      Exit(0);
+    }
+  }
+
+}
+
+
+#else // DISABLE_MPI
 // #################################################################
 /* @brief シード点によるフィル
  * @param [in]  d_mid     識別子配列
@@ -4268,66 +4951,66 @@ void Geometry::SeedFilling(int* d_mid,
   unsigned long filled = 0;       ///< FLUIDでフィルされた数
   unsigned long sum_replaced = 0; ///< 置換された数の合計
   unsigned long sum_filled = 0;   ///< FLUIDでフィルされた数の合計
-  
-  
+
+
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-  
-  
+
+
   // フィル媒質のチェック
   if ( cmp[FillID].getState() != FLUID )
   {
     Hostonly_ fprintf(fpc, "\tSpecified Medium of filling fluid is not FLUID\n");
     Exit(0);
   }
-  
-  
+
+
   // 最初にフィル対象のセル数を求める >> 全計算内部セル数
   unsigned long total_cell = (unsigned long)ix * (unsigned long)jx * (unsigned long)kx;
-  
-  
+
+
   if ( numProc > 1 )
   {
     unsigned long tmp_fc = total_cell;
     if ( paraMngr->Allreduce(&tmp_fc, &total_cell, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
-  
-  
+
+
   target_count = total_cell;
-  
+
   Hostonly_
   {
     fprintf(fpc,"\t\tInitial target count   = %16ld\n\n", target_count);
   }
-  
-  
+
+
   // セルに含まれるポリゴンを探索し、d_midに記録
   Hostonly_
   {
     fprintf(fpc,"\t\tPaint cells that contain polygons -----\n");
   }
-  
+
   sum_replaced = findPolygonInCell(d_mid, PL, PG);
-  
+
   target_count -= sum_replaced;
-  
+
   if ( numProc > 1 )
   {
     if ( paraMngr->BndCommS3D(d_mid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
   }
-  
-  
+
+
   Hostonly_ // Up to here, d_mid={-1, Poly-IDs}
   {
     fprintf(fpc,"\t\t# of cells touch Polys = %16ld\n", sum_replaced);
     fprintf(fpc,"\t\tRemaining target cells = %16ld\n\n", target_count);
   }
-  
-  
-  
-  
+
+
+
+
   // デフォルトのヒントはX-
   Hostonly_
   {
@@ -4335,10 +5018,10 @@ void Geometry::SeedFilling(int* d_mid,
     fprintf(fpc,"\t\tSeeding Dir.           : %s\n", FBUtility::getDirection(FillSeedDir).c_str());
     fprintf(fpc,"\t\tFill medium of SEED    : %s (%d)\n", mat[SeedID].alias.c_str(), SeedID);
   }
-  
+
   filled = fillSeedMid(d_mid, FillSeedDir, SeedID);
   target_count -= filled;
-  
+
   if ( filled == 0 )
   {
     Hostonly_
@@ -4347,68 +5030,68 @@ void Geometry::SeedFilling(int* d_mid,
     }
     Exit(0);
   }
-  
+
   if ( numProc > 1 )
   {
     if ( paraMngr->BndCommS3D(d_mid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
   }
-  
-  
+
+
   Hostonly_ // Up to here, d_mid={-1, Poly-IDs, SeedID}
   {
     fprintf(fpc,"\t\tPainted cells          = %16ld  (%s)\n", filled, mat[SeedID].alias.c_str());
     fprintf(fpc,"\t\tRemaining target cells = %16ld\n\n", target_count);
   }
-  
-  
-  
-  
+
+
+
+
   // 未ペイントのターゲットセル(d_mid==-1)を、SeedIDでペイントする
   Hostonly_
   {
     fprintf(fpc,"\tFill from outside by Seed ID -----\n\n");
   }
-  
+
   int c=0; // iteration
   sum_filled = 0;
-  
+
   while (target_count > 0) {
-    
+
     // SeedIDで指定された媒質でフィルする
     filled = fillByMid(d_mid, SeedID);
-    
+
     if ( numProc > 1 )
     {
       if ( paraMngr->BndCommS3D(d_mid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
     }
-    
+
     target_count -= filled;
     sum_filled   += filled;
     c++;
-    
+
     if ( filled <= 0 ) break; // フィル対象がなくなったら終了
   }
-  
-  
+
+
   Hostonly_
   {
     fprintf(fpc,"\t\tIteration              = %5d\n", c);;
     fprintf(fpc,"\t\t    Filled cells       = %16ld  (%s)\n", sum_filled, mat[SeedID].alias.c_str());
     fprintf(fpc,"\t\t    Remaining cells    = %16ld\n\n", target_count);
   }
-  
-  
-  
+
+
+
   if ( target_count != 0 )
   {
     Hostonly_
     {
       fprintf(fpc,"\tFill cells, which are inside of objects -----\n\n");
     }
-    
+
     // 未ペイント（ID=-1）のセルを検出
     unsigned long upc = countCellM(d_mid, -1, "global");
-    
+
     if ( upc > 0 )
     {
       Hostonly_
@@ -4416,45 +5099,45 @@ void Geometry::SeedFilling(int* d_mid,
         fprintf(fpc,"\t\tUnpainted cell         = %16ld\n", upc);
       }
     }
-    
+
     if ( target_count != upc )
     {
       Exit(0);
     }
-    
-    
+
+
     // 未ペイントのセルに対して、最頻値の媒質でフィルする
     c = 0;
     sum_replaced = 0;
-    
+
     while ( target_count > 0 ) {
-      
+
       // @todo アルゴリズム再考
       // replaced = fillByModalSolid(d_mid, FillID);
-      
+
       if ( numProc > 1 )
       {
         if ( paraMngr->BndCommS3D(d_mid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
       }
-      
+
       target_count -= replaced;
       sum_replaced += replaced;
       c++;
-      
+
       if ( replaced <= 0 ) break;
     }
-    
+
     Hostonly_
     {
       fprintf(fpc,"\t\tIteration              = %5d\n", c);
       fprintf(fpc,"\t\tFilled cells           = %16ld\n\n", sum_replaced);
     }
-    
-    
-    
+
+
+
     // ID=-1をカウントしてチェック
     upc = countCellM(d_mid, -1, "global");
-    
+
     if ( upc != 0 )
     {
       Hostonly_
@@ -4464,9 +5147,9 @@ void Geometry::SeedFilling(int* d_mid,
       Exit(0);
     }
   }
-  
-}
 
+}
+#endif // DISABLE_MPI
 
 
 
@@ -4489,10 +5172,10 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
   int sdv = NumSuvDiv; // OpenMPのfirstprivateで使うためローカル変数にコピー
   int rD = refID;
   int rV = refVf;
-  
+
   if ( dir == X_minus )
   {
-    
+
 #pragma omp parallel for firstprivate(sdv, rD, rV) reduction(+:filled) schedule(static) collapse(3)
     for (int i=1; i<=sdv; i++) {
       for (int k=1; k<=sdv; k++) {
@@ -4504,7 +5187,7 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
           size_t m_s = _F_IDX_S3D(i,   j-1, k,   sdv, sdv, sdv, 1);
           size_t m_t = _F_IDX_S3D(i,   j,   k+1, sdv, sdv, sdv, 1);
           size_t m_b = _F_IDX_S3D(i,   j,   k-1, sdv, sdv, sdv, 1);
-          
+
           if ( smd[m_p] == -1 )
           {
             int ff = 0;
@@ -4514,7 +5197,7 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
             if ( smd[m_n] == rD ) ff++;
             if ( smd[m_b] == rD ) ff++;
             if ( smd[m_t] == rD ) ff++;
-            
+
             if ( ff>0 )
             {
               smd[m_p] = rD;
@@ -4525,11 +5208,11 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
         }
       }
     }
-    
+
   }
   else if ( dir == X_plus)
   {
-    
+
 #pragma omp parallel for firstprivate(sdv, rD, rV) reduction(+:filled) schedule(static) collapse(3)
     for (int i=sdv; i>=1; i--) {
       for (int k=1; k<=sdv; k++) {
@@ -4541,7 +5224,7 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
           size_t m_s = _F_IDX_S3D(i,   j-1, k,   sdv, sdv, sdv, 1);
           size_t m_t = _F_IDX_S3D(i,   j,   k+1, sdv, sdv, sdv, 1);
           size_t m_b = _F_IDX_S3D(i,   j,   k-1, sdv, sdv, sdv, 1);
-          
+
           if ( smd[m_p] == -1 )
           {
             int ff = 0;
@@ -4551,7 +5234,7 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
             if ( smd[m_n] == rD ) ff++;
             if ( smd[m_b] == rD ) ff++;
             if ( smd[m_t] == rD ) ff++;
-            
+
             if ( ff>0 )
             {
               smd[m_p] = rD;
@@ -4562,11 +5245,11 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
         }
       }
     }
-    
+
   }
   else if ( dir == Y_minus)
   {
-    
+
 #pragma omp parallel for firstprivate(sdv, rD, rV) reduction(+:filled) schedule(static) collapse(3)
     for (int j=1; j<=sdv; j++) {
       for (int k=1; k<=sdv; k++) {
@@ -4578,7 +5261,7 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
           size_t m_s = _F_IDX_S3D(i,   j-1, k,   sdv, sdv, sdv, 1);
           size_t m_t = _F_IDX_S3D(i,   j,   k+1, sdv, sdv, sdv, 1);
           size_t m_b = _F_IDX_S3D(i,   j,   k-1, sdv, sdv, sdv, 1);
-          
+
           if ( smd[m_p] == -1 )
           {
             int ff = 0;
@@ -4588,7 +5271,7 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
             if ( smd[m_n] == rD ) ff++;
             if ( smd[m_b] == rD ) ff++;
             if ( smd[m_t] == rD ) ff++;
-            
+
             if ( ff>0 )
             {
               smd[m_p] = rD;
@@ -4599,11 +5282,11 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
         }
       }
     }
-    
+
   }
   else if ( dir == Y_plus)
   {
-    
+
 #pragma omp parallel for firstprivate(sdv, rD, rV) reduction(+:filled) schedule(static) collapse(3)
     for (int j=sdv; j>=1; j--) {
       for (int k=1; k<=sdv; k++) {
@@ -4615,7 +5298,7 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
           size_t m_s = _F_IDX_S3D(i,   j-1, k,   sdv, sdv, sdv, 1);
           size_t m_t = _F_IDX_S3D(i,   j,   k+1, sdv, sdv, sdv, 1);
           size_t m_b = _F_IDX_S3D(i,   j,   k-1, sdv, sdv, sdv, 1);
-          
+
           if ( smd[m_p] == -1 )
           {
             int ff = 0;
@@ -4625,7 +5308,7 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
             if ( smd[m_n] == rD ) ff++;
             if ( smd[m_b] == rD ) ff++;
             if ( smd[m_t] == rD ) ff++;
-            
+
             if ( ff>0 )
             {
               smd[m_p] = rD;
@@ -4636,11 +5319,11 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
         }
       }
     }
-    
+
   }
   else if ( dir == Z_minus)
   {
-    
+
 #pragma omp parallel for firstprivate(sdv, rD, rV) reduction(+:filled) schedule(static) collapse(3)
     for (int k=1; k<=sdv; k++) {
       for (int j=1; j<=sdv; j++) {
@@ -4652,7 +5335,7 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
           size_t m_s = _F_IDX_S3D(i,   j-1, k,   sdv, sdv, sdv, 1);
           size_t m_t = _F_IDX_S3D(i,   j,   k+1, sdv, sdv, sdv, 1);
           size_t m_b = _F_IDX_S3D(i,   j,   k-1, sdv, sdv, sdv, 1);
-          
+
           if ( smd[m_p] == -1 )
           {
             int ff = 0;
@@ -4662,7 +5345,7 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
             if ( smd[m_n] == rD ) ff++;
             if ( smd[m_b] == rD ) ff++;
             if ( smd[m_t] == rD ) ff++;
-            
+
             if ( ff>0 )
             {
               smd[m_p] = rD;
@@ -4673,11 +5356,11 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
         }
       }
     }
-    
+
   }
   else if ( dir == Z_plus)
   {
-    
+
 #pragma omp parallel for firstprivate(sdv, rD, rV) reduction(+:filled) schedule(static) collapse(3)
     for (int k=sdv; k>=1; k--) {
       for (int j=1; j<=sdv; j++) {
@@ -4689,7 +5372,7 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
           size_t m_s = _F_IDX_S3D(i,   j-1, k,   sdv, sdv, sdv, 1);
           size_t m_t = _F_IDX_S3D(i,   j,   k+1, sdv, sdv, sdv, 1);
           size_t m_b = _F_IDX_S3D(i,   j,   k-1, sdv, sdv, sdv, 1);
-          
+
           if ( smd[m_p] == -1 )
           {
             int ff = 0;
@@ -4699,7 +5382,7 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
             if ( smd[m_n] == rD ) ff++;
             if ( smd[m_b] == rD ) ff++;
             if ( smd[m_t] == rD ) ff++;
-            
+
             if ( ff>0 )
             {
               smd[m_p] = rD;
@@ -4710,15 +5393,95 @@ int Geometry::SubCellFill(REAL_TYPE* svf,
         }
       }
     }
-    
+
   }
-  
+
   return filled;
 }
 
 
 
+#ifdef DISABLE_MPI
+// #################################################################
+/* @brief サブセルのポリゴン含有テスト
+ * @param [in,out] svf       サブセルの体積率
+ * @param [in,out] smd       サブセルID配列
+ * @param [in]     ip,jp,kp  プライマリセルインデクス
+ * @param [in]     pch       サブセルの格子幅
+ * @param [in]     m_pg      ポリゴングループ名
+ * @param [in]     PL        Polylibのインスタンス
+ * @retval ポリゴンを含むセル数
+ * @note 呼び出し元がスレッド並列の場合、single threadで実行
+ */
+int Geometry::SubCellIncTest(REAL_TYPE* svf,
+                             int* smd,
+                             const int ip,
+                             const int jp,
+                             const int kp,
+                             const Vec3r pch,
+                             const string m_pg,
+                             Polylib* PL)
+{
+  // プライマリセルの基点（有次元）
+  Vec3r o(originD[0]+pitchD[0]*(REAL_TYPE)(ip-1),
+          originD[1]+pitchD[1]*(REAL_TYPE)(jp-1),
+          originD[2]+pitchD[2]*(REAL_TYPE)(kp-1));
 
+  int pic = 0;
+
+  int sdv = NumSuvDiv; // OpenMPのfirstprivateで使うためローカル変数にコピー
+
+  // サブセルの体積率を評価（ポリゴンをもつサブセルのみ0.5）
+  for (int k=1; k<=sdv; k++) {
+    for (int j=1; j<=sdv; j++) {
+      for (int i=1; i<=sdv; i++) {
+
+        // サブセルのbbox
+        Vec3r b1(o.x + pch.x * (REAL_TYPE)(i-1),
+                 o.y + pch.y * (REAL_TYPE)(j-1),
+                 o.z + pch.z * (REAL_TYPE)(k-1));
+
+        Vec3r b2(o.x + pch.x * (REAL_TYPE)i,
+                 o.y + pch.y * (REAL_TYPE)j,
+                 o.z + pch.z * (REAL_TYPE)k);
+
+        vector<Triangle*>* trias = PL->search_polygons(m_pg, b1, b2, false); // false; ポリゴンが一部でもかかる場合
+        int polys = trias->size();
+
+        if (polys>0)
+        {
+          // IDの返却用の配列
+          int* ary = new int[polys];
+          unsigned c=0;
+          vector<Triangle*>::iterator it2;
+
+          for (it2 = trias->begin(); it2 != trias->end(); it2++)
+          {
+            ary[c] = (*it2)->get_exid();
+            c++;
+          }
+
+          int z = find_mode(polys, ary);
+          if ( z == 0 ) Exit(0);
+          size_t m = _F_IDX_S3D(i, j, k, sdv, sdv, sdv, 1);
+          svf[m] = 0.5;
+          smd[m] = z;
+          pic++;
+          //printf("(%3d %3d %3d) = %2d [ ", i,j,k, z);
+          //for (int l=0; l<polys; l++) printf("%d ", ary[l]);
+          //printf("]\n");
+
+          if ( ary ) delete [] ary;
+        }
+
+        delete trias;
+      }
+    }
+  }
+  return pic;
+}
+
+#else // DISABLE_MPI
 // #################################################################
 /* @brief サブセルのポリゴン含有テスト
  * @param [in,out] svf       サブセルの体積率
@@ -4743,41 +5506,41 @@ int Geometry::SubCellIncTest(REAL_TYPE* svf,
   Vec3r o(originD[0]+pitchD[0]*(REAL_TYPE)(ip-1),
           originD[1]+pitchD[1]*(REAL_TYPE)(jp-1),
           originD[2]+pitchD[2]*(REAL_TYPE)(kp-1));
-  
+
   int pic = 0;
-  
+
   int sdv = NumSuvDiv; // OpenMPのfirstprivateで使うためローカル変数にコピー
-  
+
   // サブセルの体積率を評価（ポリゴンをもつサブセルのみ0.5）
   for (int k=1; k<=sdv; k++) {
     for (int j=1; j<=sdv; j++) {
       for (int i=1; i<=sdv; i++) {
-        
+
         // サブセルのbbox
         Vec3r b1(o.x + pch.x * (REAL_TYPE)(i-1),
                  o.y + pch.y * (REAL_TYPE)(j-1),
                  o.z + pch.z * (REAL_TYPE)(k-1));
-        
+
         Vec3r b2(o.x + pch.x * (REAL_TYPE)i,
                  o.y + pch.y * (REAL_TYPE)j,
                  o.z + pch.z * (REAL_TYPE)k);
-        
+
         vector<Triangle*>* trias = PL->search_polygons(m_pg, b1, b2, false); // false; ポリゴンが一部でもかかる場合
         int polys = trias->size();
-        
+
         if (polys>0)
         {
           // IDの返却用の配列
           int* ary = new int[polys];
           unsigned c=0;
           vector<Triangle*>::iterator it2;
-          
+
           for (it2 = trias->begin(); it2 != trias->end(); it2++)
           {
             ary[c] = (*it2)->get_exid();
             c++;
           }
-          
+
           int z = find_mode(polys, ary);
           if ( z == 0 ) Exit(0);
           size_t m = _F_IDX_S3D(i, j, k, sdv, sdv, sdv, 1);
@@ -4787,19 +5550,249 @@ int Geometry::SubCellIncTest(REAL_TYPE* svf,
           //printf("(%3d %3d %3d) = %2d [ ", i,j,k, z);
           //for (int l=0; l<polys; l++) printf("%d ", ary[l]);
           //printf("]\n");
-          
+
           if ( ary ) delete [] ary;
         }
-        
+
         delete trias;
       }
     }
   }
   return pic;
 }
+#endif // DISABLE_MPI
 
 
 
+
+#ifdef DISABLE_MPI
+// #################################################################
+/* @brief sub-sampling
+ * @param [in]  d_mid     識別子配列
+ * @param [out] d_pvf     体積率
+ * @param [in]  PL        Polylibのインスタンス
+ */
+void Geometry::SubSampling(int* d_mid,
+                           REAL_TYPE* d_pvf,
+                           Polylib* PL)
+{
+  unsigned long target_count = 0; ///< フィルの対象となるセル数
+  unsigned long replaced = 0;     ///< 置換された数
+  unsigned long filled = 0;       ///< フィルされた数
+  unsigned long sum_replaced = 0; ///< 置換された数の合計
+  unsigned long sum_filled = 0;   ///< FLUIDでフィルされた数の合計
+
+
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+
+
+
+  // -1.0で初期化
+#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        d_pvf[m] = -1.0;
+      }
+    }
+  }
+
+  // SeedFillingで確定したセルに対応する体積率を代入初期化、それ以外は-1.0
+  // Outer fill => SeedID
+  REAL_TYPE tmp = (mat[SeedID].getState()==FLUID) ? 1.0 : 0.0;
+  filled = assignVF(SeedID, tmp, d_mid, d_pvf);
+
+  Hostonly_
+  {
+    fprintf(fpc,"\t\tVolume fraction for Seed ID (%3.1f) = %16ld  (%s)\n", tmp, filled, mat[SeedID].alias.c_str());
+  }
+
+  /* Inner fill => FillID
+   tmp = (mat[FillID].getState()==FLUID) ? 1.0 : 0.0;
+   filled = assignVF(FillID, tmp, d_mid, d_pvf);
+
+   Hostonly_
+   {
+   fprintf(fpc,"\t\tVolume fraction for Fill ID (%3.1f) = %16ld  (%s)\n", tmp, filled, mat[FillID].alias.c_str());
+   }
+   */
+
+
+
+  int sdv = NumSuvDiv; // OpenMPのfirstprivateで使うためローカル変数にコピー
+
+  // sub-cell work array
+  size_t nx = (sdv+2)*(sdv+2)*(sdv+2);
+  REAL_TYPE* svf = new REAL_TYPE [nx]; // guide cell is 1 for each dir.
+  int* smd = new int [nx];
+
+
+  // Poly IDsに対して、サブセルテスト
+  // SeedFilling()でd_midに確定したID(SeedID)が入っている
+  // この三重ループはスレッド化しない >> スレッド化する場合には、ループ内で呼び出しているメソッドをチェックすること
+  for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      for (int i=1; i<=ix; i++) {
+
+#pragma omp parallel for firstprivate(sdv) schedule(static) collapse(3)
+        for (int kk=0; kk<=sdv+1; kk++) {
+          for (int jj=0; jj<=sdv+1; jj++) {
+            for (int ii=0; ii<=sdv+1; ii++) {
+              size_t m = _F_IDX_S3D(ii, jj, kk, sdv, sdv, sdv, 1);
+              svf[m] = 0.0;
+              smd[m] = -1;
+            }
+          }
+        }
+
+        REAL_TYPE m_org[3], m_pit[3];
+
+        // サブセルのファイル出力ヘッダ
+        for (int l=0; l<3; l++) m_pit[l] = pitchD[l]/(REAL_TYPE)sdv;
+
+        m_org[0] = originD[0]+pitchD[0]*(REAL_TYPE)(i-1);
+        m_org[1] = originD[1]+pitchD[1]*(REAL_TYPE)(j-1);
+        m_org[2] = originD[2]+pitchD[2]*(REAL_TYPE)(k-1);
+
+
+
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        int q = d_mid[m];
+
+        // SeedID以外
+        if ( q != SeedID )
+        {
+          vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
+          vector<PolygonGroup*>::iterator it;
+
+          // ポリゴングループのループ
+          for (it = pg_roots->begin(); it != pg_roots->end(); it++)
+          {
+            string m_pg = (*it)->get_name();          // グループラベル
+            string m_bc = (*it)->get_type();          // 境界条件ラベル
+            int ntria = (*it)->get_group_num_tria();  // ローカルのポリゴン数
+
+            // 対象ポリゴンがある場合のみ
+            if ( ntria > 0 )
+            {
+              // Monitor属性のポリゴンはスキップ
+              if ( strcasecmp(m_bc.c_str(), "monitor"))
+              {
+                // サブセルのポリゴン含有テスト
+                // svfには、ポリゴンを持つサブセルに0.5が代入される
+                // smdには、そのサブセルに存在するポリゴンIDの最頻値
+                int cp = SubCellIncTest(svf, smd, i, j, k, m_pit, m_pg, PL);
+                //printf("%3d %3d %3d : %3d\n", i,j,k,cp);
+              }
+            }
+          } // Polygon Group
+
+          SubDivision(svf, smd, i, j, k, d_mid, d_pvf);
+
+          delete pg_roots;
+        }
+
+      }
+    }
+  }
+
+
+
+  /*
+   // ポリゴングループ毎に細分化テスト
+   vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
+   vector<PolygonGroup*>::iterator it;
+
+   // サブセルのポリゴン含有テスト
+   int odr = 0;
+   for (it = pg_roots->begin(); it != pg_roots->end(); it++)
+   {
+   std::string m_pg = (*it)->get_name();     // グループラベル
+   std::string m_bc = (*it)->get_type();     // 境界条件ラベル
+   int ntria = (*it)->get_group_num_tria();  // ローカルのポリゴン数
+
+   // 対象ポリゴンがある場合のみ
+   if ( ntria > 0 )
+   {
+   // Monitor属性のポリゴンはスキップ
+   if ( strcasecmp(m_bc.c_str(), "monitor"))
+   {
+   // ポリゴングループのBboxインデクス
+   int wmin[3];
+   int wmax[3];
+   findIndex( PG[odr].getBboxMin(), wmin );
+   findIndex( PG[odr].getBboxMax(), wmax );
+
+   //#pragma omp parallel for firstprivate(sdv) schedule(dynamic) reduction(+:c) collapse(3)
+   for (int k=wmin[2]; k<=wmax[2]; k++) {
+   for (int j=wmin[1]; j<=wmax[1]; j++) {
+   for (int i=wmin[0]; i<=wmax[0]; i++) {
+
+   int cp = SubCellIncTest(svf, smd, sdv, i, j, k, m_pg);
+   //if ( cp>0 ) printf("%3d %3d %3d : %3d\n", i,j,k,cp);
+   }
+   }
+   }
+
+   } // skip monitor
+   } // ntria
+
+   odr++;
+   }
+
+
+   //
+   odr = 0;
+   for (it = pg_roots->begin(); it != pg_roots->end(); it++)
+   {
+   std::string m_pg = (*it)->get_name();     // グループラベル
+   std::string m_bc = (*it)->get_type();     // 境界条件ラベル
+   int ntria = (*it)->get_group_num_tria();  // ローカルのポリゴン数
+
+   // 対象ポリゴンがある場合のみ
+   if ( ntria > 0 )
+   {
+   // Monitor属性のポリゴンはスキップ
+   if ( strcasecmp(m_bc.c_str(), "monitor"))
+   {
+   // ポリゴングループのBboxインデクス
+   int wmin[3];
+   int wmax[3];
+   findIndex( PG[odr].getBboxMin(), wmin );
+   findIndex( PG[odr].getBboxMax(), wmax );
+
+   //#pragma omp parallel for firstprivate(sdv) schedule(dynamic) collapse(3)
+   for (int k=wmin[2]; k<=wmax[2]; k++) {
+   for (int j=wmin[1]; j<=wmax[1]; j++) {
+   for (int i=wmin[0]; i<=wmax[0]; i++) {
+
+   SubDivision(svf, smd, sdv, i, j, k, m_pg);
+
+   }
+   }
+   }
+
+   } // skip monitor
+   } // ntria
+
+   odr++;
+   }
+
+   delete pg_roots;
+   */
+
+  if ( svf ) delete [] svf;
+  if ( smd ) delete [] smd;
+
+  //F->writeRawSPH(d_pvf, size, gd, 0, m_org, m_pit, sizeof(REAL_TYPE));
+
+}
+
+#else // DISABLE_MPI
 // #################################################################
 /* @brief sub-sampling
  * @param [in]  d_mid     識別子配列
@@ -4815,15 +5808,15 @@ void Geometry::SubSampling(int* d_mid,
   unsigned long filled = 0;       ///< フィルされた数
   unsigned long sum_replaced = 0; ///< 置換された数の合計
   unsigned long sum_filled = 0;   ///< FLUIDでフィルされた数の合計
-  
-  
+
+
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-  
-  
-  
+
+
+
   // -1.0で初期化
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
   for (int k=1; k<=kx; k++) {
@@ -4834,44 +5827,44 @@ void Geometry::SubSampling(int* d_mid,
       }
     }
   }
-  
+
   // SeedFillingで確定したセルに対応する体積率を代入初期化、それ以外は-1.0
   // Outer fill => SeedID
   REAL_TYPE tmp = (mat[SeedID].getState()==FLUID) ? 1.0 : 0.0;
   filled = assignVF(SeedID, tmp, d_mid, d_pvf);
-  
+
   Hostonly_
   {
     fprintf(fpc,"\t\tVolume fraction for Seed ID (%3.1f) = %16ld  (%s)\n", tmp, filled, mat[SeedID].alias.c_str());
   }
-  
+
   /* Inner fill => FillID
    tmp = (mat[FillID].getState()==FLUID) ? 1.0 : 0.0;
    filled = assignVF(FillID, tmp, d_mid, d_pvf);
-   
+
    Hostonly_
    {
    fprintf(fpc,"\t\tVolume fraction for Fill ID (%3.1f) = %16ld  (%s)\n", tmp, filled, mat[FillID].alias.c_str());
    }
    */
-  
-  
-  
+
+
+
   int sdv = NumSuvDiv; // OpenMPのfirstprivateで使うためローカル変数にコピー
-  
+
   // sub-cell work array
   size_t nx = (sdv+2)*(sdv+2)*(sdv+2);
   REAL_TYPE* svf = new REAL_TYPE [nx]; // guide cell is 1 for each dir.
   int* smd = new int [nx];
-  
-  
+
+
   // Poly IDsに対して、サブセルテスト
   // SeedFilling()でd_midに確定したID(SeedID)が入っている
   // この三重ループはスレッド化しない >> スレッド化する場合には、ループ内で呼び出しているメソッドをチェックすること
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        
+
 #pragma omp parallel for firstprivate(sdv) schedule(static) collapse(3)
         for (int kk=0; kk<=sdv+1; kk++) {
           for (int jj=0; jj<=sdv+1; jj++) {
@@ -4882,34 +5875,34 @@ void Geometry::SubSampling(int* d_mid,
             }
           }
         }
-        
+
         REAL_TYPE m_org[3], m_pit[3];
-        
+
         // サブセルのファイル出力ヘッダ
         for (int l=0; l<3; l++) m_pit[l] = pitchD[l]/(REAL_TYPE)sdv;
-        
+
         m_org[0] = originD[0]+pitchD[0]*(REAL_TYPE)(i-1);
         m_org[1] = originD[1]+pitchD[1]*(REAL_TYPE)(j-1);
         m_org[2] = originD[2]+pitchD[2]*(REAL_TYPE)(k-1);
-        
-        
-        
+
+
+
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
         int q = d_mid[m];
-        
+
         // SeedID以外
         if ( q != SeedID )
         {
           vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
           vector<PolygonGroup*>::iterator it;
-          
+
           // ポリゴングループのループ
           for (it = pg_roots->begin(); it != pg_roots->end(); it++)
           {
             string m_pg = (*it)->get_name();          // グループラベル
             string m_bc = (*it)->get_type();          // 境界条件ラベル
             int ntria = (*it)->get_group_num_tria();  // ローカルのポリゴン数
-            
+
             // 対象ポリゴンがある場合のみ
             if ( ntria > 0 )
             {
@@ -4924,23 +5917,23 @@ void Geometry::SubSampling(int* d_mid,
               }
             }
           } // Polygon Group
-          
+
           SubDivision(svf, smd, i, j, k, d_mid, d_pvf);
-          
+
           delete pg_roots;
         }
-        
+
       }
     }
   }
-  
-  
-  
+
+
+
   /*
    // ポリゴングループ毎に細分化テスト
    vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
    vector<PolygonGroup*>::iterator it;
-   
+
    // サブセルのポリゴン含有テスト
    int odr = 0;
    for (it = pg_roots->begin(); it != pg_roots->end(); it++)
@@ -4948,7 +5941,7 @@ void Geometry::SubSampling(int* d_mid,
    std::string m_pg = (*it)->get_name();     // グループラベル
    std::string m_bc = (*it)->get_type();     // 境界条件ラベル
    int ntria = (*it)->get_group_num_tria();  // ローカルのポリゴン数
-   
+
    // 対象ポリゴンがある場合のみ
    if ( ntria > 0 )
    {
@@ -4960,25 +5953,25 @@ void Geometry::SubSampling(int* d_mid,
    int wmax[3];
    findIndex( PG[odr].getBboxMin(), wmin );
    findIndex( PG[odr].getBboxMax(), wmax );
-   
+
    //#pragma omp parallel for firstprivate(sdv) schedule(dynamic) reduction(+:c) collapse(3)
    for (int k=wmin[2]; k<=wmax[2]; k++) {
    for (int j=wmin[1]; j<=wmax[1]; j++) {
    for (int i=wmin[0]; i<=wmax[0]; i++) {
-   
+
    int cp = SubCellIncTest(svf, smd, sdv, i, j, k, m_pg);
    //if ( cp>0 ) printf("%3d %3d %3d : %3d\n", i,j,k,cp);
    }
    }
    }
-   
+
    } // skip monitor
    } // ntria
-   
+
    odr++;
    }
-   
-   
+
+
    //
    odr = 0;
    for (it = pg_roots->begin(); it != pg_roots->end(); it++)
@@ -4986,7 +5979,7 @@ void Geometry::SubSampling(int* d_mid,
    std::string m_pg = (*it)->get_name();     // グループラベル
    std::string m_bc = (*it)->get_type();     // 境界条件ラベル
    int ntria = (*it)->get_group_num_tria();  // ローカルのポリゴン数
-   
+
    // 対象ポリゴンがある場合のみ
    if ( ntria > 0 )
    {
@@ -4998,33 +5991,34 @@ void Geometry::SubSampling(int* d_mid,
    int wmax[3];
    findIndex( PG[odr].getBboxMin(), wmin );
    findIndex( PG[odr].getBboxMax(), wmax );
-   
+
    //#pragma omp parallel for firstprivate(sdv) schedule(dynamic) collapse(3)
    for (int k=wmin[2]; k<=wmax[2]; k++) {
    for (int j=wmin[1]; j<=wmax[1]; j++) {
    for (int i=wmin[0]; i<=wmax[0]; i++) {
-   
+
    SubDivision(svf, smd, sdv, i, j, k, m_pg);
-   
+
    }
    }
    }
-   
+
    } // skip monitor
    } // ntria
-   
+
    odr++;
    }
-   
+
    delete pg_roots;
    */
-  
+
   if ( svf ) delete [] svf;
   if ( smd ) delete [] smd;
-  
+
   //F->writeRawSPH(d_pvf, size, gd, 0, m_org, m_pit, sizeof(REAL_TYPE));
-  
+
 }
+#endif // DISABLE_MPI
 
 
 
@@ -5047,18 +6041,18 @@ void Geometry::SubDivision(REAL_TYPE* svf,
 {
   // 外縁部にポリゴンがない面を探す
   int face_flag = 0;
-  
+
   int sdv = NumSuvDiv; // OpenMPのfirstprivateで使うためローカル変数にコピー
-  
+
   // SubCellIncTest()処理で、svfには、ポリゴンを持つサブセルに0.5が代入される
   // smdには、そのサブセルに存在するポリゴンIDの最頻値が代入されている
-  
+
   // セルの6面をについて、ポリゴンを含むセルがあるかどうかを調べる
   // 調べた方向にポリゴンを含むセルがない場合にface_flagに方向を示すビットをエンコードする
-  
+
   // X-
   int c = 0;
-  
+
 #pragma omp parallel for firstprivate(sdv) reduction(+:c) schedule(static) collapse(2)
   for (int k=1; k<=sdv; k++) {
     for (int j=1; j<=sdv; j++) {
@@ -5066,13 +6060,13 @@ void Geometry::SubDivision(REAL_TYPE* svf,
       if ( svf[m] > 0.0 ) c++; // ポリゴンを含むセルがある
     }
   }
-  
+
   printf("X- : %d\n", c);
   if (c==0) face_flag |= (0x1 << X_minus);
-  
+
   // X+
   c = 0;
-  
+
 #pragma omp parallel for firstprivate(sdv) reduction(+:c) schedule(static) collapse(2)
   for (int k=1; k<=sdv; k++) {
     for (int j=1; j<=sdv; j++) {
@@ -5082,10 +6076,10 @@ void Geometry::SubDivision(REAL_TYPE* svf,
   }
   printf("X+ : %d\n", c);
   if (c==0) face_flag |= (0x1 << X_plus);
-  
+
   // Y-
   c = 0;
-  
+
 #pragma omp parallel for firstprivate(sdv) reduction(+:c) schedule(static) collapse(2)
   for (int k=1; k<=sdv; k++) {
     for (int i=1; i<=sdv; i++) {
@@ -5095,10 +6089,10 @@ void Geometry::SubDivision(REAL_TYPE* svf,
   }
   printf("Y- : %d\n", c);
   if (c==0) face_flag |= (0x1 << Y_minus);
-  
+
   // Y+
   c = 0;
-  
+
 #pragma omp parallel for firstprivate(sdv) reduction(+:c) schedule(static) collapse(2)
   for (int k=1; k<=sdv; k++) {
     for (int i=1; i<=sdv; i++) {
@@ -5108,10 +6102,10 @@ void Geometry::SubDivision(REAL_TYPE* svf,
   }
   printf("Y+ : %d\n", c);
   if (c==0) face_flag |= (0x1 << Y_plus);
-  
+
   // Z-
   c = 0;
-  
+
 #pragma omp parallel for firstprivate(sdv) reduction(+:c) schedule(static) collapse(2)
   for (int j=1; j<=sdv; j++) {
     for (int i=1; i<=sdv; i++) {
@@ -5121,10 +6115,10 @@ void Geometry::SubDivision(REAL_TYPE* svf,
   }
   printf("Z- : %d\n", c);
   if (c==0) face_flag |= (0x1 << Z_minus);
-  
+
   // Z+
   c = 0;
-  
+
 #pragma omp parallel for firstprivate(sdv) reduction(+:c) schedule(static) collapse(2)
   for (int j=1; j<=sdv; j++) {
     for (int i=1; i<=sdv; i++) {
@@ -5134,29 +6128,29 @@ void Geometry::SubDivision(REAL_TYPE* svf,
   }
   printf("Z+ : %d\n", c);
   if (c==0) face_flag |= (0x1 << Z_plus);
-  
-  
-  
+
+
+
   // プライマリセルの隣接ID（確定済み）を参照
   // 確定済みのセルは、SeedFillingプロセスでSeedIDでペイントしたセル
   int refID = -1;
   int fillDir = -1;
-  
+
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-  
-  
+
+
   // code block
   {
     size_t m;
     int r;
-    
+
     // face_flagには空いた方向の面にビットフラグが設定されている
     // 外部境界面に接する場合には、空いている面側の参照すべきID(=r)がSeedIDでなく、
     // ガイドセルのIDとなる場合もある
-    
+
     if ( TEST_BIT(face_flag, X_minus) )
     {
       m = _F_IDX_S3D(ip-1, jp, kp, ix, jx, kx, gd);
@@ -5167,7 +6161,7 @@ void Geometry::SubDivision(REAL_TYPE* svf,
         fillDir = X_minus;
       }
     }
-    
+
     else if ( TEST_BIT(face_flag, X_plus) )
     {
       m = _F_IDX_S3D(ip+1, jp, kp, ix, jx, kx, gd);
@@ -5178,7 +6172,7 @@ void Geometry::SubDivision(REAL_TYPE* svf,
         fillDir = X_plus;
       }
     }
-    
+
     else if ( TEST_BIT(face_flag, Y_minus) )
     {
       m = _F_IDX_S3D(ip, jp-1, kp, ix, jx, kx, gd);
@@ -5189,7 +6183,7 @@ void Geometry::SubDivision(REAL_TYPE* svf,
         fillDir = Y_minus;
       }
     }
-    
+
     else if ( TEST_BIT(face_flag, Y_plus) )
     {
       m = _F_IDX_S3D(ip, jp+1, kp, ix, jx, kx, gd);
@@ -5200,7 +6194,7 @@ void Geometry::SubDivision(REAL_TYPE* svf,
         fillDir = Y_plus;
       }
     }
-    
+
     else if ( TEST_BIT(face_flag, Z_minus) )
     {
       m = _F_IDX_S3D(ip, jp, kp-1, ix, jx, kx, gd);
@@ -5211,7 +6205,7 @@ void Geometry::SubDivision(REAL_TYPE* svf,
         fillDir = Z_minus;
       }
     }
-    
+
     else if ( TEST_BIT(face_flag, Z_plus) )
     {
       m = _F_IDX_S3D(ip, jp, kp+1, ix, jx, kx, gd);
@@ -5222,16 +6216,16 @@ void Geometry::SubDivision(REAL_TYPE* svf,
         fillDir = Z_plus;
       }
     }
-    
-    
+
+
     Hostonly_
     {
       printf("\tP-cell (%3d %3d %3d) dir= %d  refID= %d : %d\n", ip, jp, kp, fillDir, refID, face_flag);
     }
-    
+
   }
-  
-  
+
+
   if (fillDir == -1)
   {
     int s = find_mode_smd(smd);
@@ -5247,13 +6241,13 @@ void Geometry::SubDivision(REAL_TYPE* svf,
   else
   {
     int target_count = sdv*sdv*sdv; ///< フィルの対象となるセル数
-    
+
     if (refID == -1) Exit(0);
-    
-    
+
+
     // 開始面をペイント
     c = 0;
-    
+
     if ( TEST_BIT(face_flag, X_minus) )
     {
 #pragma omp parallel for firstprivate(sdv, refID) reduction(+:c) schedule(static) collapse(2)
@@ -5265,7 +6259,7 @@ void Geometry::SubDivision(REAL_TYPE* svf,
             smd[m] = refID;
             c++;
           }
-          
+
           // カウントしない
           size_t m0 = _F_IDX_S3D(0, j, k, sdv, sdv, sdv, 1);
           if ( smd[m0] == -1 )
@@ -5275,7 +6269,7 @@ void Geometry::SubDivision(REAL_TYPE* svf,
         }
       }
     }
-    
+
     else if ( TEST_BIT(face_flag, X_plus) )
     {
 #pragma omp parallel for firstprivate(sdv, refID) reduction(+:c) schedule(static) collapse(2)
@@ -5287,7 +6281,7 @@ void Geometry::SubDivision(REAL_TYPE* svf,
             smd[m] = refID;
             c++;
           }
-          
+
           size_t m0 = _F_IDX_S3D(sdv+1, j, k, sdv, sdv, sdv, 1);
           if ( smd[m0] == -1 )
           {
@@ -5296,7 +6290,7 @@ void Geometry::SubDivision(REAL_TYPE* svf,
         }
       }
     }
-    
+
     else if ( TEST_BIT(face_flag, Y_minus) )
     {
 #pragma omp parallel for firstprivate(sdv, refID) reduction(+:c) schedule(static) collapse(2)
@@ -5308,7 +6302,7 @@ void Geometry::SubDivision(REAL_TYPE* svf,
             smd[m] = refID;
             c++;
           }
-          
+
           size_t m0 = _F_IDX_S3D(i, 0, k, sdv, sdv, sdv, 1);
           if ( smd[m0] == -1 )
           {
@@ -5317,7 +6311,7 @@ void Geometry::SubDivision(REAL_TYPE* svf,
         }
       }
     }
-    
+
     else if ( TEST_BIT(face_flag, Y_plus) )
     {
 #pragma omp parallel for firstprivate(sdv, refID) reduction(+:c) schedule(static) collapse(2)
@@ -5329,7 +6323,7 @@ void Geometry::SubDivision(REAL_TYPE* svf,
             smd[m] = refID;
             c++;
           }
-          
+
           size_t m0 = _F_IDX_S3D(i, sdv+1, k, sdv, sdv, sdv, 1);
           if ( smd[0] == -1 )
           {
@@ -5338,7 +6332,7 @@ void Geometry::SubDivision(REAL_TYPE* svf,
         }
       }
     }
-    
+
     else if ( TEST_BIT(face_flag, Z_minus) )
     {
 #pragma omp parallel for firstprivate(sdv, refID) reduction(+:c) schedule(static) collapse(2)
@@ -5350,7 +6344,7 @@ void Geometry::SubDivision(REAL_TYPE* svf,
             smd[m] = refID;
             c++;
           }
-          
+
           size_t m0 = _F_IDX_S3D(i, j, 0, sdv, sdv, sdv, 1);
           if ( smd[m0] == -1 )
           {
@@ -5359,7 +6353,7 @@ void Geometry::SubDivision(REAL_TYPE* svf,
         }
       }
     }
-    
+
     else if ( TEST_BIT(face_flag, Z_plus) )
     {
 #pragma omp parallel for firstprivate(sdv, refID) reduction(+:c) schedule(static) collapse(2)
@@ -5371,7 +6365,7 @@ void Geometry::SubDivision(REAL_TYPE* svf,
             smd[m] = refID;
             c++;
           }
-          
+
           size_t m0 = _F_IDX_S3D(i, j, sdv+1, sdv, sdv, sdv, 1);
           if ( smd[m0] == -1 )
           {
@@ -5380,44 +6374,44 @@ void Geometry::SubDivision(REAL_TYPE* svf,
         }
       }
     }
-    
+
     target_count -= c;
-    
+
     int filled = 0;       ///< フィルした数
     int sum_filled = 0;   ///< フィルした数の合計
     REAL_TYPE refVf = (mat[refID].getState()==FLUID) ? 1.0 : 0.0; ///< refIDの体積率
-    
+
     c = 0;
     while (target_count > 0) {
-      
+
       // 未ペイントで隣接セルがrefIDの場合、refID, refVfを代入
       filled = SubCellFill(svf, smd, fillDir, refID, refVf);
-      
+
       target_count -= filled;
       sum_filled   += filled;
       c++;
       printf("\titr=%3d %8d %8d %8d\n", c, filled, sum_filled, target_count);
-      
+
       if ( filled <= 0 ) break; // フィル対象がなくなったら、残りはPolyID
     }
-    
-    
+
+
     c = 0;
     while (target_count > 0) {
-      
+
       // 未ペイントで隣接セルがrefIDの場合、refID, refVfを代入
       filled = fillSubCellByModalSolid(smd, svf);
-      
+
       target_count -= filled;
       c++;
       printf("\titr=%3d %8d %8d\n", c, filled, target_count);
     }
-    
-    
-    
+
+
+
     // 未ペイント(-1)をチェック
     int flag = 0;
-    
+
 #pragma omp parallel for firstprivate(sdv) reduction(+:flag) schedule(static) collapse(3)
     for (int k=1; k<=sdv; k++) {
       for (int j=1; j<=sdv; j++) {
@@ -5427,7 +6421,7 @@ void Geometry::SubDivision(REAL_TYPE* svf,
         }
       }
     }
-    
+
     // 未ペイント部分がある場合 >> Solidが残り
     if ( flag > 0 )
     {
@@ -5438,12 +6432,12 @@ void Geometry::SubDivision(REAL_TYPE* svf,
       printf("\tfilled(%d) does not agree wtih #flag(%d)\n", filled, flag);
       Exit(0);
     }
-    
-    
-    
+
+
+
     // サブセルの体積率からプライマリセルの体積率を求める
     REAL_TYPE sff = 0.0;
-    
+
 #pragma omp parallel for firstprivate(sdv) reduction(+:sff) schedule(static) collapse(3)
     for (int k=1; k<=sdv; k++) {
       for (int j=1; j<=sdv; j++) {
@@ -5453,12 +6447,12 @@ void Geometry::SubDivision(REAL_TYPE* svf,
         }
       }
     }
-    
+
     REAL_TYPE ff = 1.0/(REAL_TYPE)(sdv*sdv*sdv);
     d_pvf[_F_IDX_S3D(ip, jp, kp, ix, jx, kx, gd)] = sff*ff;
-    
+
   }
-  
+
 }
 
 
@@ -5472,7 +6466,7 @@ void Geometry::SubDivision(REAL_TYPE* svf,
  * @param [out]    modopp    対向点の修正数
  * @param [in]     Dsize     サイズ
  * @retval フィルされたセル数
- 
+
 void Geometry::paintCutOnPoint(int* bcd,
                                int* bid,
                                long long* cut,
@@ -5481,7 +6475,7 @@ void Geometry::paintCutOnPoint(int* bcd,
                                const int* Dsize)
 {
   int ix, jx, kx, gd;
-  
+
   if ( !Dsize )
   {
     ix = size[0];
@@ -5496,20 +6490,20 @@ void Geometry::paintCutOnPoint(int* bcd,
     kx = Dsize[2];
     gd = 1;
   }
-  
-  
+
+
   unsigned long fc = 0;
-  
+
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:fc)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        
+
         size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        
+
         int qq = bid[m];
         long long pos = cut[m];
-        
+
         // 交点IDの最頻値
         int sd = FBUtility::find_mode_id(getBit5(qq, X_minus),
                                          getBit5(qq, X_plus),
@@ -5519,7 +6513,7 @@ void Geometry::paintCutOnPoint(int* bcd,
                                          getBit5(qq, Z_plus),
                                          NoCompo);
         if ( sd == 0 ) Exit(0);
-        
+
         // 交点IDの媒質番号を得る
         int key = cmp[sd].getMatodr();
         if ( key == 0 )
@@ -5527,30 +6521,30 @@ void Geometry::paintCutOnPoint(int* bcd,
           //printf("sd=%2d key=%2d : %2d %2d %2d %2d %2d %2d\n", sd, key, qw, qe, qs, qn, qb, qt);
           Exit(0);
         }
-        
-        
+
+
         // x-方向が定義点上の場合（交点があり、かつ距離がゼロ）
         if ( chkZeroCut(pos, X_minus) )
         {
 #if 0
           printf("(%3d %3d %3d) %3d : %d\n", i,j,k,getBit9(pos, X_minus) );
 #endif
-          
+
           // セル属性をエンコード
           int s = bcd[m];
           setMediumID(s, key);
-          
+
           // セルを固体にする
           if ( cmp[key].getState() == SOLID ) // cmp[]はmat[]の代用
           {
             s = offBit( s, STATE_BIT );
           }
           bcd[m] = s;
-          
+
           fc++;
         }
-        
-        
+
+
         // いずれかの方向が定義点上の場合（交点があり、かつ距離がゼロ）
         if ( chkZeroCut(pos, X_minus) ||
             chkZeroCut(pos, X_plus ) ||
@@ -5559,7 +6553,7 @@ void Geometry::paintCutOnPoint(int* bcd,
             chkZeroCut(pos, Z_minus) ||
             chkZeroCut(pos, Z_plus ) )
         {
-          
+
 #if 1
           printf("(%3d %3d %3d) %3d %3d %3d %3d %3d %3d : %d %d %d %d %d %d\n",
                  i,j,k,
@@ -5578,7 +6572,7 @@ void Geometry::paintCutOnPoint(int* bcd,
                  );
 #endif
           if ( sd == 0 ) Exit(0);
-          
+
           // 交点IDの媒質番号を得る
           int key = cmp[sd].getMatodr();
           if ( key == 0 )
@@ -5586,18 +6580,18 @@ void Geometry::paintCutOnPoint(int* bcd,
             //printf("sd=%2d key=%2d : %2d %2d %2d %2d %2d %2d\n", sd, key, qw, qe, qs, qn, qb, qt);
             Exit(0);
           }
-          
+
           // セル属性をエンコード
           int s = bcd[m];
           setMediumID(s, key);
-          
+
           // セルを固体にする
           if ( cmp[key].getState() == SOLID ) // cmp[]はmat[]の代用
           {
             s = offBit( s, STATE_BIT );
           }
           bcd[m] = s;
-          
+
           // 6方向とも交点ゼロにする
           setCut9(pos, 0, X_minus);
           setCut9(pos, 0, X_plus);
@@ -5606,7 +6600,7 @@ void Geometry::paintCutOnPoint(int* bcd,
           setCut9(pos, 0, Z_minus);
           setCut9(pos, 0, Z_plus);
           cut[m] = pos;
-          
+
           setBit5(qq, sd, X_minus);
           setBit5(qq, sd, X_plus);
           setBit5(qq, sd, Y_minus);
@@ -5614,42 +6608,42 @@ void Geometry::paintCutOnPoint(int* bcd,
           setBit5(qq, sd, Z_minus);
           setBit5(qq, sd, Z_plus);
           bid[m] = qq;
-          
+
           fc++;
         }
-        
+
       }
     }
   }
-  
+
   if ( numProc > 1 )
   {
     unsigned long c_tmp = fc;
     if ( paraMngr->Allreduce(&c_tmp, &fc, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
-  
+
   fillcut = fc;
-  
-  
+
+
   if ( numProc > 1 )
   {
     if ( paraMngr->BndCommS3D(bcd, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
     if ( paraMngr->BndCommS3D(bid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
     if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
   }
-  
-  
-  
-  
-  
+
+
+
+
+
   // 反対側の修正
   fc = 0;
-  
+
 #pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:fc)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
-        
+
         size_t m_p = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
         size_t m_w = _F_IDX_S3D(i-1, j,   k,   ix, jx, kx, gd);
         size_t m_e = _F_IDX_S3D(i+1, j,   k,   ix, jx, kx, gd);
@@ -5657,49 +6651,49 @@ void Geometry::paintCutOnPoint(int* bcd,
         size_t m_n = _F_IDX_S3D(i,   j+1, k,   ix, jx, kx, gd);
         size_t m_b = _F_IDX_S3D(i,   j,   k-1, ix, jx, kx, gd);
         size_t m_t = _F_IDX_S3D(i,   j,   k+1, ix, jx, kx, gd);
-        
+
         const int qq = bid[m_p];
         const long long pos = cut[m_p];
-        
-        
-        
+
+
+
         // 定義点上に交点があり、反対側のセルから見て交点がない場合
-        
+
         if ( chkZeroCut(pos, X_minus)  &&  !ensCut(cut[m_w], X_plus) )
         {
           setBit5(bid[m_w], getBit5(qq, X_minus), X_plus);
           setCut9(cut[m_w], QT_9, X_plus);
           fc++;
         }
-        
+
         if ( chkZeroCut(pos, X_plus )  &&  !ensCut(cut[m_e], X_minus) )
         {
           setBit5(bid[m_e], getBit5(qq, X_plus), X_minus);
           setCut9(cut[m_e], QT_9, X_minus);
           fc++;
         }
-        
+
         if ( chkZeroCut(pos, Y_minus)  &&  !ensCut(cut[m_s], Y_plus) )
         {
           setBit5(bid[m_s], getBit5(qq, Y_minus), Y_plus);
           setCut9(cut[m_s], QT_9, Y_plus);
           fc++;
         }
-        
+
         if ( chkZeroCut(pos, Y_plus )  &&  !ensCut(cut[m_n], Y_minus) )
         {
           setBit5(bid[m_n], getBit5(qq, Y_plus), Y_minus);
           setCut9(cut[m_n], QT_9, Y_minus);
           fc++;
         }
-        
+
         if ( chkZeroCut(pos, Z_minus)  &&  !ensCut(cut[m_b], Z_plus) )
         {
           setBit5(bid[m_b], getBit5(qq, Z_minus), Z_plus);
           setCut9(cut[m_b], QT_9, Z_plus);
           fc++;
         }
-        
+
         if ( chkZeroCut(pos, Z_plus )  &&  !ensCut(cut[m_t], Z_minus) )
         {
           setBit5(bid[m_t], getBit5(qq, Z_plus), Z_minus);
@@ -5709,22 +6703,22 @@ void Geometry::paintCutOnPoint(int* bcd,
       }
     }
   }
-  
+
   if ( numProc > 1 )
   {
     unsigned long c_tmp = fc;
     if ( paraMngr->Allreduce(&c_tmp, &fc, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
   }
-  
+
   modopp = fc;
-  
-  
+
+
   if ( numProc > 1 )
   {
     if ( paraMngr->BndCommS3D(bid, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
     if ( paraMngr->BndCommS3D(cut, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
   }
-  
+
 }
 
 */

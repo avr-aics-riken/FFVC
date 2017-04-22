@@ -21,7 +21,12 @@
 #ifndef __FFV_BLOCK_SAVER_H__
 #define __FFV_BLOCK_SAVER_H__
 
-#include "mpi.h"
+#ifndef DISABLE_MPI
+  #include "mpi.h" // add header explicitly to avoid compile error for Intel MPI
+#else
+  #include "cpm_mpistub.h"
+#endif
+
 #include <stdio.h>
 #include <string>
 
@@ -32,9 +37,9 @@
 #include "type.h"
 
 namespace BVX_IO {
-	
+
 	/// Blockファイル(CellID)の出力
-	/// 
+	///
 	/// @param [in] size      格子サイズ
 	/// @param [in] guide     ガイドセル
 	/// @param [in] bitWidth  量子化するビット幅
@@ -44,7 +49,7 @@ namespace BVX_IO {
 	/// @param [in] rle       RLE圧縮フラグ (trueの場合RLE圧縮を行う)
 	///
 	/// @return 成功した場合true, 失敗した場合false
-	/// 
+	///
   bool Save_Block_CellID(const int*            size,
                          const int             guide,
                          const unsigned        bitWidth,
@@ -52,8 +57,8 @@ namespace BVX_IO {
                          const std::string     outDir,
                          const unsigned char*  datas,
                          const bool            rle);
-  
-  
+
+
   /// Blockファイル(Scalar)の出力
   ///
   /// @param [in] size      格子サイズ
@@ -73,8 +78,7 @@ namespace BVX_IO {
                          const std::string     outDir,
                          const unsigned*       datas,
                          const bool            rle);
-	
+
 } // BVX_IO
 
 #endif // __FFV_BLOCK_SAVER_H__
-

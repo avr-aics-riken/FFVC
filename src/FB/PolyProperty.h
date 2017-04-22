@@ -24,7 +24,7 @@
 
 #include <string>
 #include "FB_Define.h"
-#include "Vec3.h"
+#include "common/Vec3.h" // defined in Polylib
 
 using namespace std;
 using namespace Vec3class;
@@ -32,7 +32,7 @@ using namespace Vec3class;
 
 // #################################################################
 class PolygonProperty {
-  
+
 private:
   int l_ntria;       ///< ローカルなポリゴン数
   int g_ntria;       ///< グローバルなポリゴン数
@@ -44,7 +44,7 @@ private:
   string bc;         ///< BCのラベル
   Vec3r bx_min;      ///< Bboxの最小値
   Vec3r bx_max;      ///< Bboxの最大値
-  
+
 public:
   PolygonProperty() {
     l_area = 0.0;
@@ -52,59 +52,59 @@ public:
     g_area = 0.0;
     g_ntria= 0;
   }
-  
+
   ~PolygonProperty() {}
-  
+
   string getGroup() const
   {
     return group;
   }
-  
+
   int getID() const
   {
     return m_id;
   }
-  
+
   string getMaterial() const
   {
     return material;
   }
-  
+
   string getBClabel() const
   {
     return bc;
   }
-  
+
   int getLntria() const
   {
     return l_ntria;
   }
-  
+
   REAL_TYPE getLarea() const
   {
     return l_area;
   }
-  
+
   int getGntria() const
   {
     return g_ntria;
   }
-  
+
   REAL_TYPE getGarea() const
   {
     return g_area;
   }
-  
+
   void setGroup(string key)
   {
     group = key;
   }
-  
+
   void setID(int key)
   {
     m_id = key;
   }
-  
+
   void setMaterial(string key)
   {
     material = key;
@@ -113,47 +113,47 @@ public:
   {
     bc = key;
   }
-  
+
   void setLntria(int val)
   {
     l_ntria = val;
   }
-  
+
   void setLarea(REAL_TYPE val)
   {
     l_area = val;
   }
-  
+
   void setGntria(int val)
   {
     g_ntria = val;
   }
-  
+
   void setGarea(REAL_TYPE val)
   {
     g_area = val;
   }
-  
+
   Vec3r getBboxMax() const
   {
     return bx_max;
   }
-  
+
   Vec3r getBboxMin() const
   {
     return bx_min;
   }
-  
+
   void setBboxMax(const Vec3r bmax)
   {
     bx_max = bmax;
   }
-  
+
   void setBboxMin(const Vec3r bmin)
   {
     bx_min = bmin;
   }
-  
+
 };
 
 #endif // _FB_POLYGRP_H_

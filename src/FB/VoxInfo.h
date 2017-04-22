@@ -16,7 +16,7 @@
 //
 //##################################################################################
 
-/** 
+/**
  * @file   VoxInfo.h
  * @brief  FlowBase VoxInfo class Header
  * @author aics
@@ -30,7 +30,7 @@
 #include "Medium.h"
 #include "SetBC.h"
 #include "BndOuter.h"
-#include "Vec3.h"
+#include "common/Vec3.h" // defined in Polylib
 #include "Intrinsic.h"
 #include "limits.h"
 #include "omp.h"
@@ -38,7 +38,7 @@
 using namespace Vec3class;
 
 class VoxInfo : public DomainInfo {
-  
+
 private:
   Intrinsic *Ex;       ///< 例題クラスのポインタ
 
@@ -47,48 +47,48 @@ public:
   VoxInfo() {
     Ex = NULL;
   }
-  
+
   /** デストラクタ */
   ~VoxInfo() {}
-  
+
 private:
-  
+
   // 外部境界に接するガイドセルのbcd[]にIDを内部周期境界からコピーする
   void copyIdPrdcInner (int* bcd, const int* m_st, const int* m_ed, const int m_id, const int m_dir);
-  
-  
+
+
   // セルセンターのIDから対象セル数をカウントし，サブドメイン内にコンポーネントがあれば存在フラグを立てる
   unsigned long countCC (const int order, const int* bcd, CompoList* cmp);
-  
-  
+
+
   // セルフェイスの交点IDから対象IDのセル数をカウントし，サブドメイン内にコンポーネントがあれば存在フラグを立てる
   unsigned long countCF (const int key, const int* bcd, const int* bid, CompoList* cmp, const string attrb);
-  
-  
+
+
   // 外部境界面の有効セル数をカウントする
   unsigned long countValidCellOBC (const int face, const int* cdf, const int typ);
 
-  
+
   // BCindexにそのセルが計算に有効(active)かどうかをエンコードする
   void encActive (unsigned long& Lcell, unsigned long& Gcell, int* bx, const int KOS);
-  
-  
+
+
   // 断熱マスクのエンコード
   void encAdiabatic (int* bd, const string target, const int* bid, int face=-1);
-  
-  
+
+
   // セルの各面を調べ，境界条件が設定されていれば，ビットをON
   void encHbit (const int* cdf, int* bd);
-  
-  
+
+
   // ディリクレ条件とノイマン条件の排他性をチェックし，反復行列の非対角要素/対角要素の係数をエンコードする
   void encPbit (int* bx, const int* bid);
-  
-  
+
+
   // 圧力のノイマン境界ビットをエンコードする
   void encPbitN (int* bx, const int* bid, const long long* cut, const bool convergence);
-  
-  
+
+
   // 計算領域内部のコンポーネントの圧力境界条件フラグをbcp[]にエンコードする
   unsigned long encPbitIBC (const int order,
                             int* bcd,
@@ -96,12 +96,12 @@ private:
                             const int* bid,
                             const REAL_TYPE* vec,
                             const string condition);
-  
-  
+
+
   // 外部境界に接するセルにおいて，bx[]に圧力境界条件keyに対応するビットフラグを設定する
   void encPbitOBC (int face, int* bx, string key, bool dir);
-  
-  
+
+
   // 熱境界条件のBCエントリをエンコードする
   unsigned long encQface (const int order,
                           const int* bid,
@@ -110,8 +110,8 @@ private:
                           const bool flag,
                           const int target,
                           CompoList* cmp);
-  
-  
+
+
   // cdf[]にVBCの境界条件に必要な情報をエンコードし，流入流出の場合にbp[]の隣接壁の方向フラグを除く
   // 境界条件指定キーセルのSTATEを流体に変更する
   unsigned long encVbitIBC (const int order,
@@ -120,20 +120,20 @@ private:
                             int* bcd,
                             CompoList* cmp,
                             const int solid_id);
-  
-  
+
+
   unsigned long encVbitIBCrev (const int order,
                                int* cdf,
                                int* bid,
                                int* bcd,
                                CompoList* cmp,
                                const int solid_id);
-  
-  
+
+
   // cdf[]に境界条件のビット情報をエンコードする
   void encVbitOBC (int face, int* cdf, string key, const bool enc_sw, string chk, int* bid, int* bcd);
-  
-  
+
+
   /*
    * @brief 5bit幅の値の設定
    * @param [in,out] b   int 変数
@@ -145,11 +145,11 @@ private:
     b &= (~(0x1f << sht) ); // 対象5bitをゼロにする
     b |= (q << sht);        // 書き込む
   }
-  
 
-  
+
+
 public:
-  
+
   /**
    * @brief 外部境界に接するガイドセルのbcd[]にIDをエンコードする（内部周期境界の場合）
    * @param [in,out] bcd        BCindex B
@@ -157,27 +157,27 @@ public:
    * @param [in]     m_NoCompo  コンポーネントの総数
    */
   void adjMediumPrdcInner(int* bcd, CompoList* cmp, const int m_NoCompo);
-  
-  
+
+
   /**
    * @brief BCindex Bのエンコードを確認
    * @param [in] bcd BCindex B
    */
   void chkOrder (const int* bcd);
-  
-  
+
+
   // フラグのチェック
   void chkFlag(const int* bx, const int* bid, const long long* cut, const int* bcd);
-  
-  
+
+
   /**
    * @brief dst[]にsrc[]のstate, activeビットの情報をコピーする
    * @param [out] dst コピー先
    * @param [in]  src コピー元
    */
   void copyBCIbase (int* dst, const int* src);
-  
-  
+
+
   /**
    * @brief セルの状態をカウントして，その個数をLcell, Gcellに保持する
    * @param [out] Lcell ノードローカルの値（戻り値）
@@ -186,16 +186,16 @@ public:
    * @param [in]  state カウントするセルの状態
    */
   void countCellState (unsigned long& Lcell, unsigned long& Gcell, const int* bx, const int state);
-  
-  
+
+
   /**
    @brief  計算領域の外部境界で外側1層と内側の両方が流体セル数の場合にカウントする
    @param [in]  bx       BCindex B
    @param [out] OpenArea 開口セル数
    */
   void countOpenAreaOfDomain (const int* bx, REAL_TYPE* OpenArea);
-  
-  
+
+
   /* @brief 外部境界方向にカットがあるセルにはガイドセルをCutIDの媒質でペイント
    * @param [in,out] bcd      BCindex B
    * @param [in]     bid      境界ID
@@ -203,8 +203,8 @@ public:
    * @param [in]     cmp      CompoList
    */
   void paintCutIDonGC (int* bcd, const int* bid, unsigned long* painted, const CompoList* cmp);
-  
-  
+
+
   /**
    * @brief bx[]に各境界条件の共通のビット情報をエンコードする
    * @param [in,out] bcd        BCindex B
@@ -226,8 +226,8 @@ public:
                       const int KOS,
                       const int m_NoMedium,
                       const int m_NoCompo);
-  
-  
+
+
   /**
    * @brief 温度境界条件のビット情報をエンコードする
    * @param [in,out] cdf        BCindex C
@@ -247,8 +247,8 @@ public:
                    long long* cut,
                    int* cut_id,
                    const int m_NoCompo);
-  
-  
+
+
   /**
    * @brief 圧力境界条件のビット情報をエンコードする
    * @param [in,out] bcd        BCindex B
@@ -268,8 +268,8 @@ public:
                    const long long* cut,
                    const int* bid,
                    const int m_NoCompo);
-  
-  
+
+
   /**
    * @brief cdf[]に境界条件のビット情報をエンコードする
    * @param [in,out] cdf        BCindex C
@@ -293,8 +293,8 @@ public:
                    const int m_NoCompo,
                    const int m_NoMedium,
                    MediumList* mat);
-  
-  
+
+
   /**
    * @brief bx[]のコンポーネントエントリを参照して体積率を計算し，圧力損失コンポーネントの場合にはビットを立てる
    * @param [in]     cmp        コンポーネントリスト
@@ -306,15 +306,15 @@ public:
                       int* bx,
                       const REAL_TYPE* vf,
                       const int m_NoCompo);
-  
-  
+
+
   /**
    * @brief コンポーネントの操作に必要な定数の設定
    * @param [in] ExRef      組み込み例題クラス
    */
   void setControlVars(Intrinsic* ExRef=NULL);
-  
-  
+
+
   /**
    * @brief 外部境界が周期境界の場合の距離情報・境界ID・媒質エントリをセット
    * @param [in,out] bcd       BCindex B
@@ -322,8 +322,8 @@ public:
    * @note 領域境界面は全て流体を想定
    */
   void setOBCperiodic (int* bcd, const int* ens);
-  
-  
+
+
   /**
    * @brief 外部境界の距離情報・境界ID・媒質エントリをセット
    * @param [in]     face    外部境界面番号
@@ -335,7 +335,7 @@ public:
    * @param [in,out] bid     カットID情報
    */
   void setOBC (const int face, const int c_id, const int ptr_cmp, const char* str, int* bcd, long long* cut, int* bid);
-  
+
 };
 
 #endif // _FB_BINVOX_H_

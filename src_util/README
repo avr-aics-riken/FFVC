@@ -1,0 +1,158 @@
+###################################################################################
+#
+# FFV-C : Frontflow / violet Cartesian
+#
+# Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
+# All rights reserved.
+#
+# Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
+# All rights reserved.
+#
+# Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN.
+# All rights reserved.
+#
+# Copyright (c) 2016-2017 Research Institute for Information Technology(RIIT),
+# Kyushu University.
+# All rights reserved.
+#
+###################################################################################
+
+##################
+
+このプログラムは，FFVで領域分割出力された計算結果ファイル（*.sph）に対して，次の二つの機能を提供します.
+1) sphファイルを1つにまとめたファイルを作成します．
+//2) sphファイルからPLOT3Dデータファイルを作成します．
+3) sphファイルからAVSデータファイルを作成します．
+
+
+
+
+##################
+コンパイル方法
+
+1) 単体でビルド
+環境変数の設定はsrc/FFV/make_settingを編集します．
+$ make
+
+
+2) FFVディレクトリから一括ビルド
+FFVディレクトリでffvcのコンパイルを行うと，combsphが生成されます．
+
+../../binの下にcombsphという実行ファイルが生成されます．
+
+
+
+
+
+##################
+利用方法
+
+$ combsph -f input_file
+
+combsphを-hオプションをつけて実行すると，usageが表示されます．
+実行後には，ログファイルとしてlog_comb.txtが出力されます．
+
+Usage: combsph <option> filename
+
+ Options:
+  -d dirname   : Specify output directory name (default : ./ )
+  -f filename  : Input file name
+  -h           : Show usage
+  -l log out   : print out logfile
+  -s thin out  : thin out option
+  -v verbose   : print more info
+
+
+■ -d オプション
+
+dirnameにはファイルを出力するディレクトリを指定します．
+-fオプションで指定した入力ファイルにディレクトリの指定がある場合はそちらが優先されます．
+
+■ -f オプション
+
+filenameには用意した入力ファイルの名前を記述します。
+入力ファイルは，FFVで利用するテキストパーサ形式で記述します．
+CombDataタグの下に読み込むdfiファイルのリストを記述します．
+出力フォーマットはout_formatで指定します．
+plot3dを指定した場合は、PLOT3Doptionsタグに必要な項目を記述する必要があります．
+
+■ -s オプション
+
+データを間引くためのオプションです。
+sphファイルを1つにまとめる場合、PLOT3Dに変換する場合ともに有効です．
+以下は -s 3 を指定した場合の間引きのイメージです．
+元のデータ      ○○○○○○○○○○○○...
+間引き後データ   ○●●○●●○●●○●●...
+
+※ sphファイルがfloatで記述されているとき、PLOT3Dオプションでreal_type="double"を選択しても、出力はfloatに変更されます．
+※ PLOT3Doptions/real_typeが指定されている場合、CombData/output_real_typeより優先されます．
+※ 精度の指定がない場合は読み込みsphファイルの精度に従います．
+※ 出力ディレクトリの指定がない場合はカレントディレクトリに出力します．
+
+
+
+以下に入力ファイルの例を示します．
+
+ファイル名：comb.tp
+入力例：
+ -----------
+
+  CombData{
+
+    //変換する出力ファイルの*.dfiファイルを記述
+    list[@]="prs.dfi"
+    list[@]="vel.dfi"
+
+    //ファイルフォーマットを指定
+    OutFormat="sph"
+    //OutFormat="avs"
+
+    //出力時の単精度・倍精度を指定
+    OutputRealType="float"
+
+    //出力データのディレクトリ指定
+    OutputDir="comb_out"
+
+  }
+
+  // Plot3dの場合のオプションを記述
+  PLOT3Doptions {
+    FileNameGrid    = "test"
+    FileNameFunc    = "test"
+    GridKind        = "multi_grid"
+    GridMobility    = "immovable"
+    StateOfTime     = "unsteady"
+    Dimension       = "3D"
+    //FormatType     = "formatted"
+    //FormatType     = "unformatted"
+    FormatType      = "binary"
+    DivideFunc      = "on" // divide_funcをonにすると項目ごとにファイルを分割して出力します
+    RealType        = "float" // PLOT3D出力の単精度・倍精度を指定します
+  }
+
+  AVSoptions {
+    FormatType      = "binary" // "binary"または"ascii"　
+                               // ディフォルト："binary"
+    DivideFunc      = "on"     // DivideFuncをonにするとパート(ヘッダー.fld，物理量.dat)ごとにファイル出力します．
+　　　　　　　　　　　　　　　 // ディフォルト："off"
+  }
+  // AVSoptionsタグを省略した場合はそれぞれのディフォルト値が有効になります．
+ -----------
+
+
+
+
+
+#######################
+History
+
+Ver 1.0.2   08 Oct. 2013
+  - InputDir（入力データのディレクトリ指定）削除
+    入力データのディレクトリはDFIファイルに従う
+  - 出力ファイルフォーマットにavsを追加
+
+Ver 1.0.1   17 Feb. 2013
+  - PLOT3D出力の様式変更への対応 >> ffv_PLOT3D.C/h
+
+Ver 1.0.0   2012
+  - prototype version

@@ -1,19 +1,25 @@
-//##################################################################################
-//
-// FFV-C : Frontflow / violet Cartesian
-//
-// Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
-// All rights reserved.
-//
-// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
-// All rights reserved.
-//
-// Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN.
-// All rights reserved.
-//
-//##################################################################################
+/*
+###################################################################################
+#
+# FFV-C : Frontflow / violet Cartesian
+#
+# Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
+# All rights reserved.
+#
+# Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
+# All rights reserved.
+#
+# Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN.
+# All rights reserved.
+#
+# Copyright (c) 2016-2017 Research Institute for Information Technology(RIIT),
+# Kyushu University.
+# All rights reserved.
+#
+###################################################################################
+*/
 
-/** 
+/**
  * @file   main.C
  * @brief  ffvのmain関数
  * @author aics
@@ -35,24 +41,24 @@ FILE* fp_hpcpf = NULL;
 int main( int argc, char **argv )
 {
   // Version info
-  
+
   if ( !strcasecmp(argv[1], "--version"))
   {
     printf("FFV-C : Frontflow / violet Cartesian  Version : %s : %s\n", FFVC_VERSION_NO, FFVC_REVISION);
     exit(0);
   }
-  
-  
+
+
   // タイミング用変数
   double init_str, init_end;
   double main_str, main_end;
   double post_str, post_end;
-  
+
   // classのインスタンス
   FFV ffv;
   ASD asd;
-  
-  
+
+
   // FFVCのモード
   if ( !strcasecmp(argv[1], "--filter") )
   {
@@ -67,8 +73,8 @@ int main( int argc, char **argv )
     ffv.EXEC_MODE = ffvc_solver; // ffv_Initialize() でffv_solver, ffv_solverASを選別
   }
 
-  
-  
+
+
   // 並列管理クラスのインスタンスと初期化
   // ここでMPI_Initも行う
 
@@ -80,9 +86,9 @@ int main( int argc, char **argv )
   {
     if ( !asd.importCPM(cpm_ParaManager::get_instance(argc, argv)) ) return 1;
   }
-  
-  
-  
+
+
+
   // 引数チェック
   bool usage_flag = true;
   if ( ffv.EXEC_MODE == ffvc_solver )
@@ -97,7 +103,7 @@ int main( int argc, char **argv )
   {
     if ( (argc != 3) && (argc != 4) && (argc != 6) ) usage_flag = false;
   }
-  
+
   if ( !usage_flag )
   {
     if ( ffv.IsMaster() )
@@ -110,7 +116,7 @@ int main( int argc, char **argv )
       printf("\n\t$ ffvc --asd hoge.tp 300     : command line mode with total number of division\n");
       printf("\n\t$ ffvc --asd hoge.tp 10 5 32 : command line mode with number of division for each direction\n");
     }
-    
+
     if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
     return 1;
   }
@@ -118,8 +124,8 @@ int main( int argc, char **argv )
   // ##################################################################
   // 初期化
   init_str = cpm_Base::GetWTime();
-  
-  
+
+
   // Open HPCPF_STATUS file
   if (cpm_ParaManager::get_instance()->GetMyRankID()==0)
   {
@@ -129,10 +135,10 @@ int main( int argc, char **argv )
       return 1;
     }
   }
-  
-  
+
+
   int init_ret;
-  
+
   if ( ffv.EXEC_MODE == ffvc_solver )
   {
     init_ret = ffv.Initialize(argc, argv);
@@ -144,10 +150,10 @@ int main( int argc, char **argv )
   else // ffvc_asd
   {
     asd.evaluateASD(argc, argv);
-    
+
     return 0;
   }
-  
+
   switch( init_ret )
   {
     case -1:
@@ -161,47 +167,47 @@ int main( int argc, char **argv )
       if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
       return 1;
       break;
-      
+
     case 1:
       // keep going on processing
       break;
-      
+
     default:
       if ( ffv.IsMaster() ) printf("\n\tSolver initialize error.\n\n");
       if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
       return 1;
       break;
   }
-  
+
   init_end = cpm_Base::GetWTime();
-  
+
   // シグナルハンドラの初期化
   FFV_TerminateCtrl::initialize();
-  
-  
-  
+
+
+
   // ##################################################################
   // タイムステップループ
   main_str = cpm_Base::GetWTime();
-  
+
   int loop_ret;
-  
+
   if ( ffv.EXEC_MODE == ffvc_solver )
   {
     loop_ret = ffv.MainLoop();
-    
+
     switch (loop_ret)
     {
       case -1:
         if ( ffv.IsMaster() ) printf("\n\tSolver error.\n\n");
         if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
         break;
-        
+
       case 0:
         if ( ffv.IsMaster() ) printf("\n\tSolver forced termination time-step loop.\n\n");
         if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
         break;
-        
+
       case 1:
         if ( ffv.IsMaster() ) printf("\n\tSolver finished.\n\n");
         if (cpm_ParaManager::get_instance()->GetMyRankID()==0) fprintf(fp_hpcpf, "status code = 0\n");
@@ -213,37 +219,37 @@ int main( int argc, char **argv )
     loop_ret = ffv.FilterLoop();
   }
 
-  
+
   main_end = cpm_Base::GetWTime();
 
-  
-  
+
+
   // ##################################################################
   // ポスト処理
   post_str = cpm_Base::GetWTime();
-  
+
   if( !ffv.Post() )
   {
     printf("solver post error.\n");
     if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
     return 1;
   }
-  
+
   post_end = cpm_Base::GetWTime();
 
-  if ( ffv.IsMaster() ) 
+  if ( ffv.IsMaster() )
   {
     double init = init_end - init_str;
     double main = main_end - main_str;
     double post = post_end - post_str;
-    
+
     printf("\n\n");
     printf("TIME : Solver Init  %10.3f sec.\n", init);
     printf("TIME : Solver Main  %10.3f sec.\n", main);
     printf("TIME : Solver Post  %10.3f sec.\n", post);
     printf("TIME : Solver Total %10.3f sec.\n", init+main+post);
   }
-  
+
   if ( loop_ret != 1 )
   {
     if (cpm_ParaManager::get_instance()->GetMyRankID()==0) hpcpf_status(1);
@@ -252,6 +258,6 @@ int main( int argc, char **argv )
 
   // Normal return code
   if (cpm_ParaManager::get_instance()->GetMyRankID()==0) fprintf(fp_hpcpf, "status code = 0\n");
-  
+
   return 0;
 }

@@ -1,17 +1,21 @@
-//##################################################################################
-//
-// Flow Base class
-//
-// Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
-// All rights reserved.
-//
-// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
-// All rights reserved.
-//
-// Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN.
-// All rights reserved.
-//
-//##################################################################################
+###################################################################################
+#
+# FFV-C : Frontflow / violet Cartesian
+#
+# Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
+# All rights reserved.
+#
+# Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
+# All rights reserved.
+#
+# Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN.
+# All rights reserved.
+#
+# Copyright (c) 2016-2017 Research Institute for Information Technology(RIIT),
+# Kyushu University.
+# All rights reserved.
+#
+###################################################################################
 
 
 RELEASE NOTE
@@ -53,10 +57,10 @@ Ver 1.4.5   2013-10-28
 Ver 1.4.4   2013-10-26
   - 温度のサンプリングを内部エネルギー変数から計算するように修正
   - サンプリングにHelicityを追加
-  
+
 Ver 1.4.3   2013-10-24
   - Monitorクラスの実装をCell_monitorを含むように変更
-  
+
 Ver 1.4.2   2013-10-18
   - Cell_Monitorを交点ベースに変更
 
@@ -68,7 +72,7 @@ Ver 1.4.0   2013-10-13
 
 Ver 1.3.9   2013-10-12
   - InterevalManagerクラスをCIOlibから移動
-  
+
 Ver 1.3.8   2013-10-11
   - PLOT3D関連のコードを削除
   - Interval_Manager >> cio_IOnterval_Mngrに置換
@@ -76,7 +80,7 @@ Ver 1.3.8   2013-10-11
 Ver 1.3.7   2013-10-05
   - PLOT3D出力はコンバータ対応に変更．ソースのコメントアウト PLOT3Dfunctions_20131005
   - dfi.h/C, dfiinfo.h/CをPLOT3Dディレクトリに移動
-  
+
 Ver 1.3.6   2013-10-02
   - Intel MPIではmpi.hをstdio.hの前にインクルードしないとエラーになるので対応
 
@@ -92,7 +96,7 @@ Ver 1.3.3   2013-07-28
 
 Ver 1.3.2   2013-07-22
   - 媒質テーブルはMedimutableの内容をそのまま保持する. MTITPを削除
-  
+
 Ver 1.3.1   2013-07-15
   - PorygonPropertyクラス
   - encVbit_Cut()
@@ -112,7 +116,7 @@ Ver 1.2.9   11 June 2013
 
 Ver 1.2.7    8 May  2013
   - リスタート時のインターバル不正のバグ修正
-  
+
 Ver 1.2.6   26 Apr. 2013
   - 周期境界のバグ修正
   - FaceVelocity出力オプション >> Mode.FaceV
@@ -130,7 +134,7 @@ Ver 1.2.2   31 Mar. 2013
       メンバ変数追加 >> mode, even
       setRefParameter()追加
       getExampleName()を削除し，printExample()にまとめる
-  
+
 Ver 1.1.7   17 Feb. 2013
   - PLOT3D出力の様式変更への対応 >> Control.C, dfi.C
   - 階層的なディレクトリ作成に対応 FBUtility::mkdirs()
@@ -148,7 +152,7 @@ Ver 1.1.0   25 Dec. 2012
   - fill_bid.hのバグ修正
   - Versionチェックなし
   - 丸め誤差を考慮したfloatの判定 (pos < 0.5) >> (pos-ROUND_EPS) < 0.5)
-  
+
 Ver 1.0.8   16 Nov. 2012
   - PLOT3D関連ファイルを別ディレクトリに移動
   - 反復解法に PCG, PBiCGSTAB, RBGSを追加
@@ -170,14 +174,14 @@ Ver 1.0.1   30 Sep. 2012
   - 温度パラメータの記述変更
   - LocalBoundaryの記述形式を変更
   - Polylib-2.1対応
-  
+
 Ver 0.9.6   25 Aug. 2012
   - CPMlib-1.0.6対応
   - REAL_TYPEの定義をFB_Define.hへ移す
   - domain.tpにlength_of_unitパラメータを導入
   - dfi対応
   - Parallel_Input/Outputパラメータを固定(IO_Distribute)へ変更
-  
+
 Ver 0.9.3  30 July 2012
   - plylib-2.1_Dev_b対応
   - PLOT3Dフォーマットテスト導入

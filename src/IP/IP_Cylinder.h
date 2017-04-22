@@ -16,7 +16,7 @@
 //
 //##################################################################################
 
-/** 
+/**
  * @file   IP_Cylinder.h
  * @brief  IP_Cylinder class Header
  * @author aics
@@ -24,7 +24,7 @@
 
 #include "Intrinsic.h"
 #include "IP_Define.h"
-#include "Vec3.h"
+#include "common/Vec3.h" // defined in Polylib
 #include "FBUtility.h"
 
 class CYL {
@@ -38,7 +38,7 @@ public:
   REAL_TYPE x;             ///< cylinderの中心位置座標
   REAL_TYPE y;             ///<
   std::string solid;       ///< 固体のラベル
-  
+
   CYL(){
     ens      = 0;
     shape    = 0;
@@ -55,7 +55,7 @@ public:
 
 class IP_Cylinder : public Intrinsic {
 protected:
-  
+
   REAL_TYPE drv_length;      ///< ドライバの長さ
   int drv_mode;              ///< ドライバのON/OFF
   std::string m_driver;      ///< ドライバ部分のラベル
@@ -64,7 +64,7 @@ protected:
   CYL cyl1;
   CYL cyl2;
 
-  
+
 public:
   /** コンストラクタ */
   IP_Cylinder(){
@@ -72,13 +72,13 @@ public:
     drv_mode = 0;
     drv_length = 0.0;
   }
-  
+
   /**　デストラクタ */
   ~IP_Cylinder() {}
 
 protected:
-  
-  
+
+
   /**
    * @brief 交点の無次元距離を計算する
    * @param [in] p   基点座標
@@ -87,8 +87,8 @@ protected:
    * @return 交点距離
    */
   REAL_TYPE cut_line_2d(const Vec3r p, const int dir, const REAL_TYPE r);
-  
-  
+
+
   /**
    * @brief 点pの属するセルインデクスを求める
    * @param [in] p   探索座標
@@ -97,8 +97,8 @@ protected:
    * @return cell index
    */
   Vec3i find_index(const Vec3r p, const Vec3r ol, const Vec3r pch);
-  
-  
+
+
   /**
    * @brief 円柱を設定
    * @param [in]     R     　　 Controlクラスのポインタ
@@ -118,8 +118,8 @@ protected:
                  const int mid_solid,
                  long long* cut,
                  int* bid);
-  
-  
+
+
   /**
    * @brief Rectangularを設定
    * @param [in]     R     　　 Controlクラスのポインタ
@@ -141,10 +141,10 @@ protected:
                const int mid_solid,
                long long* cut,
                int* bid);
-  
-  
+
+
 public:
-  
+
   /**
    * @brief Cylinderの個数を返す
    */
@@ -152,8 +152,8 @@ public:
   {
     return num_cyls;
   }
-  
-  
+
+
   /**
    * @brief パラメータをロード
    * @apram [in] R      Controlクラス
@@ -161,16 +161,16 @@ public:
    * @return true-成功, false-エラー
    */
   virtual bool getTP(Control* R, TextParser* tpCntl);
-  
-  
+
+
   /**
    * @brief パラメータの表示
    * @param [in] fp ファイルポインタ
    * @param [in] R  コントロールクラスのポインタ
    */
   virtual void printPara(FILE* fp, const Control* R);
-  
-  
+
+
   /**
    * @brief Cylinderの計算領域のセルIDを設定する
    * @param [in,out] bcd   　　BCindex B
@@ -190,6 +190,6 @@ public:
                      const CompoList* cmp,
                      long long* cut,
                      int* bid);
-  
+
 };
 #endif // _IP_CYL_H_
