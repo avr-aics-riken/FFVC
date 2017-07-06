@@ -74,8 +74,8 @@ set(CMAKE_BUILD_TYPE Release)
 
 
 #######
-set(PROJECT_VERSION "2.5.0")
-set(LIB_REVISION "20170422_2200")
+set(PROJECT_VERSION "2.5.2")
+set(LIB_REVISION "20170706_0900")
 #######
 
 
@@ -129,6 +129,13 @@ message( STATUS "CMAKE_Fortran_FLAGS   : "      ${CMAKE_Fortran_FLAGS})
 message( STATUS "MPI support           : "      ${with_MPI})
 message( STATUS "OpenMP support        : "      ${enable_OPENMP})
 message( STATUS "Type of floating point: "      ${real_type})
+message( STATUS "TextParser support    : "      ${with_TP})
+message( STATUS "PMlib support         : "      ${with_PM})
+message( STATUS "CPMlib support        : "      ${with_CPM})
+message( STATUS "Polylib support       : "      ${with_PL})
+message( STATUS "CDMlib support        : "      ${with_CDM})
+
+
 message(" ")
 
 

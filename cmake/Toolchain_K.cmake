@@ -37,9 +37,7 @@ else()
   endif()
 endif()
 
-set(CMAKE_FIND_ROOT_PATH /opt/FJSVfxlang/1.2.1)   # RIIT fx10, hayaka
-set(CMAKE_INCLUDE_PATH /opt/FJSVfxlang/1.2.1/include)
-set(CMAKE_LIBRARY_PATH /opt/FJSVfxlang/1.2.1/lib64)
+set(CMAKE_FIND_ROOT_PATH /opt/FJSVtclang/1.2.0)
 
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)

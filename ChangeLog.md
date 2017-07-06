@@ -9,7 +9,7 @@
 |:--|:--:|:--:|:--|
 |Intel / Intel 17.0.1 |x|ok(1)|Apple MacBook Pro 10.12.4|
 |Intel / GNU 6.2.0    |x|ok(1)|Apple MacBook Pro 10.12.4|
-|Fujitsu / fx10       |||
+|Fujitsu / fx10       |x|ok|Hayaka /opt/FJSVfxlang/1.2.1|
 |Fujitsu / fx100      |||
 |Fujitsu / K          |||
 
@@ -19,9 +19,21 @@
 ## REVISION HISTORY
 
 ---
+- 2017-07-06 Version 2.5.2
+  - set(CMAKE_FIND_ROOT_PATH /opt/FJSVtclang/1.2.0) in Toolchain_K.cmake
+
+
+---
+- 2017-04-22 Version 2.5.1
+  - fix cmake install
+  - fx10 compilation
+
+
+---
 - 2017-04-21 Version 2.5.0
   - Cmake version
   - serial version has a problem of ambiguous MPI_SUM to compile
+
 
 ---
 - 2016-02-04 Version 2.4.4
