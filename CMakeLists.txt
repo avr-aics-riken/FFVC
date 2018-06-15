@@ -74,8 +74,8 @@ set(CMAKE_BUILD_TYPE Release)
 
 
 #######
-set(PROJECT_VERSION "2.5.2")
-set(LIB_REVISION "20170706_0900")
+set(PROJECT_VERSION "2.5.3")
+set(LIB_REVISION "20170615_1900")
 #######
 
 
@@ -153,6 +153,22 @@ else()
     endif(MPI_CXX_FOUND)
   endif()
 endif()
+
+if(USE_F_TCS STREQUAL "YES")
+else()
+  if(with_MPI)
+    include(FindMPI)
+
+    if(MPI_CXX_FOUND)
+      message("MPI-CXX-CMP  : ${MPI_CXX_COMPILER}")
+      message("MPI-CXX-FLAGS: ${MPI_CXX_COMPILE_FLAGS}")
+      message("MPI-CXX-INC  : ${MPI_CXX_INCLUDE_PATH}")
+      message("MPI-LNK-FLAGS: ${MPI_CXX_LINK_FLAGS}")
+      message("MPI-LIBS     : ${MPI_CXX_LIBRARIES}")
+    endif(MPI_CXX_FOUND)
+  endif()
+endif()
+
 
 message(" ")
 message("PROJECT : FFVC " ${PROJECT_VERSION} " : " ${LIB_REVISION})

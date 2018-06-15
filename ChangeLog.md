@@ -10,13 +10,17 @@
 |Intel / Intel 17.0.1 |x|ok(1)|Apple MacBook Pro 10.12.4|
 |Intel / GNU 6.2.0    |x|ok(1)|Apple MacBook Pro 10.12.4|
 |Fujitsu / fx10       |x|ok|Hayaka /opt/FJSVfxlang/1.2.1|
-|Fujitsu / fx100      |||
-|Fujitsu / K          |||
+
 
 - (1) OpenMPI 1.10.4
 
 
 ## REVISION HISTORY
+
+---
+- 2018-06-15 Version 2.5.3
+  - intel_F_TCS
+  - ISNAN => isnan()
 
 ---
 - 2017-07-06 Version 2.5.2
@@ -118,63 +122,135 @@
 
 ---
 - 2015-07-09 Version 2.3.6
+  - modify bicg
+  - add Limited compressibility
+  - non-dim param for stability
+  - modify Stability Control
+  - add Stability Control function
+  - gather isnan flag in Loop()
+
 
 ---
 - 2015-07-05 Version 2.3.5
+  - modify Vspec implementation
+  - encVbitIBC(), encVbitIBCrev(), encVbitOBC()
+  - expire VBC_UWD flag
+
 
 ---
 - 2015-06-30 Version 2.3.4
+  - suppress error message in mergeSameSolidCell()
+  - expire paintCutOnPoint()
+
 
 ---
 - 2015-06-29 Version 2.3.3
+  - add mergeSameSolidCell()
+
 
 ---
 - 2015-06-28 Version 2.3.2
+  - add core_psor.h, core_sor2sma.h
+
 
 ---
 - 2015-06-28 Version 2.3.1
+  - add *cmp and *mat in Geometry class
+  - brush up algorithms in Geometry
+
 
 ---
 - 2015-06-21 Version 2.2.3
+- introduce ffvc-config
+- introduce dryrunBC()
+- modify extractVelLBC() and related parts
+- expire mask for residuals in psor_() and psor2sma_core_()
+
 
 ---
 - 2015-06-19 Version 2.2.2
+  - remove mask from blas_calc_rk_() and blas_calc_ax_() to make stable
+  - rm VLD_CNVG >> active_bit
+  - modify encPbit(), encPbitN(), norm_v_div_l2_(), norm_v_div_max_()
+  - replacing if-branch to mask combination in psor_(), psor2sma_core_()
+  - arrange Geometry.C
+  - move onBit()/offBit() from VoxInfo.h to FB_Define.h
+  - add special BC polynomial6 for chiba-u
+  - modify quantizeCut()
+  - add range for Glyph
+
 
 ---
 - 2015-06-14 Version 2.2.1
+  - error: MainLoop() C.Interval[Control::tg_End].printInfo("tg_End") destroys array
+
 
 ---
 - 2015-06-10 Version 2.2.0
+  - clean package
+
 
 ---
 - 2015-06-09 Version 2.1.9
+  - This fill algorithm can successfully generate a voxel model for Nasal2015 case.
+
 
 ---
 - 2015-06-06 Version 2.1.8
+  - Change to run configure
+  - Change configure.ac
+  - ducky, cavity, BMW_M3, nasal(0.2, 0.4mm)
+  - enable fileout of bvx format
+  - remove obsolete svx output
+
 
 ---
 - 2015-06-01 Version 2.1.7
+  - remove fill_bid.h
+
 
 ---
 - 2015-03-01 Version 2.1.5
+  - define ISNAN in FBdefine.h
+  - update libraries
+  - set dummy values for cmp[m].medium in case of Periodic
+  - skip rading filepath for intrinsic problems
+  - confirm detail later
+  - reference point must be dimensional, partially it was non-dimensional
+
 
 ---
 - 2015-02-25 Version 2.1.4
+  - generate polylib.tp file from boundary section
+  - modify fill medium
+
 
 ---
 - 2015-02-17 Version 2.1.3
+  - 2Dcavity, 3Dcavity, 2Dcyl, Cylinder, Jet, LDC, PMT, ThermalCavity, SHC1D
+  - check Cylinder
+  - check 2Dcavity, 3Dcavity, 2Dcyl, Cylinder, LDC, PMT, SHC1D ,Jet, HeatedPlate, ThermalCavity
+
 
 ---
-- 2015-02-07 Version 2.1.2
+- 2015-02-11 Version 2.1.2
+  - introduction of fill hint
+
 
 ---
 - 2015-02-11 Version 2.1.1
+  - introduction of fill hint
 
 ---
 - 2015-02-07 Version 2.1.0
+  - insert mpi.h at first in ParseMat.h and CompoFraction.h
+  - change calculation policy from ceil to round off to get g_voxel in SD_getParameter()
+
 
 -----
 - 2015-02-05 Version 2.0.9
+  - add printForceAvr()
+
 
 ---
 - 2015-02-01 Version 2.0.8
