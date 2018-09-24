@@ -43,6 +43,8 @@
 #
 #  -D with_PL=installed_directory
 #
+# -D with_PAPI=installed_directory or OFF
+#
 
 cmake_minimum_required(VERSION 2.6)
 
@@ -54,7 +56,7 @@ cmake_minimum_required(VERSION 2.6)
 option(with_MPI "Enable MPI" "ON")
 option(enable_OPENMP "Enable OpenMP" "ON")
 option(real_type "Type of floating point" "OFF")
-
+option(with_PAPI "Enable PAPI" "OFF")
 
 
 #######
@@ -81,8 +83,8 @@ cmake_policy(SET CMP0012 NEW)
 
 
 #######
-set(PROJECT_VERSION "2.5.4")
-set(LIB_REVISION "20170924_1800")
+set(PROJECT_VERSION "2.5.5")
+set(LIB_REVISION "20170924_2100")
 #######
 
 
@@ -138,6 +140,7 @@ message( STATUS "OpenMP support        : "      ${enable_OPENMP})
 message( STATUS "Type of floating point: "      ${real_type})
 message( STATUS "TextParser support    : "      ${with_TP})
 message( STATUS "PMlib support         : "      ${with_PM})
+message( STATUS "PAPI support          : "      ${with_PAPI})
 message( STATUS "CPMlib support        : "      ${with_CPM})
 message( STATUS "Polylib support       : "      ${with_PL})
 message( STATUS "CDMlib support        : "      ${with_CDM})
@@ -204,6 +207,17 @@ IF(with_PM)
 ELSE()
   MESSAGE("Error: can not find PMlib.")
 ENDIF()
+
+# PAPI
+if(with_PAPI STREQUAL "OFF")
+elseif(with_PAPI)
+  SET(PAPI_DIR "${with_PAPI}")
+  SET(PAPI_INC "${PAPI_DIR}/include")
+  SET(PAPI_LIB "${PAPI_DIR}/lib")
+else()
+  MESSAGE("Error: can not find PAPI")
+endif()
+
 
 # Polylib
 IF(with_PL)

@@ -100,6 +100,9 @@ $ sudo make install
 
 > Specify the directory path that CDMlib is installed.
 
+`-D with_PAPI=` *Installed_Directory*
+
+> Specify the directory path that PAPI is installed.
 
 ## Configure Examples
 
@@ -117,6 +120,7 @@ $ cmake -DINSTALL_DIR=${FFVC_HOME}/FFVC \
         -Dwith_MPI=yes \
         -Dwith_TP=${FFVC_HOME}/TextParser \
         -Dwith_PM=${FFVC_HOME}/PMlib \
+        -Dwith_PAPI=OFF \
         -Dwith_PL=${FFVC_HOME}/Polylib \
         -Dwith_CPM=${FFVC_HOME}/CPMlib \
         -Dwith_CDM=${FFVC_HOME}/CDMlib ..
@@ -137,6 +141,7 @@ $ cmake -DINSTALL_DIR=${FFVC_HOME}/FFVC \
         -Dwith_MPI=yes \
         -Dwith_TP=${FFVC_HOME}/TextParser \
         -Dwith_PM=${FFVC_HOME}/PMlib \
+        -Dwith_PAPI=OFF \
         -Dwith_PL=${FFVC_HOME}/Polylib \
         -Dwith_CPM=${FFVC_HOME}/CPMlib \
         -Dwith_CDM=${FFVC_HOME}/CDMlib ..
@@ -148,6 +153,7 @@ $ cmake -DINSTALL_DIR=${FFVC_HOME}/FFVC \
         -Dwith_MPI=yes \
         -Dwith_TP=${FFVC_HOME}/TextParser \
         -Dwith_PM=${FFVC_HOME}/PMlib \
+        -Dwith_PAPI=OFF \
         -Dwith_PL=${FFVC_HOME}/Polylib \
         -Dwith_CPM=${FFVC_HOME}/CPMlib \
         -Dwith_CDM=${FFVC_HOME}/CDMlib ..
@@ -159,6 +165,7 @@ $ cmake -DINSTALL_DIR=${FFVC_HOME}/FFVC \
         -Dwith_MPI=yes \
         -Dwith_TP=${FFVC_HOME}/TextParser \
         -Dwith_PM=${FFVC_HOME}/PMlib \
+        -Dwith_PAPI=OFF \
         -Dwith_PL=${FFVC_HOME}/Polylib \
         -Dwith_CPM=${FFVC_HOME}/CPMlib \
         -Dwith_CDM=${FFVC_HOME}/CDMlib ..

@@ -35,10 +35,11 @@ include_directories(
 )
 
 link_directories(
-#      ${TP_LIB}
-#      ${PM_LIB}
-#      ${CPM_LIB}
-#      ${CDM_LIB}
+       ${TP_LIB}
+       ${PL_LIB}
+       ${PM_LIB}
+       ${CPM_LIB}
+       ${CDM_LIB}
 )
 
 set(ffvc_files
