@@ -54,9 +54,9 @@ macro (AddOptimizeOption)
     set(CMAKE_Fortran_FLAGS "-O3 -Warn unused -fpp -qopt-report=5")
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "PGI")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fastsse -Mipa=fast,inline -O4 -Minfo=all")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fastsse -Mipa=fast,inline -O4 -Minfo=all")
-    set(CMAKE_Fortran_FLAGS "-fastsse -Mipa=fast,inline -O4 -Minfo=all")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fastsse -Mipa=fast,inline -O4 -Minfo=intensity,mp,vect -cpp=mm")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fastsse -Mipa=fast,inline -O4 -Minfo=intensity,mp,vect -cpp=mm")
+    set(CMAKE_Fortran_FLAGS "-fastsse -Mipa=fast,inline -O4 -Minfo=intensity,mp,vect -cpp=mm")
 
   else()
     message("using default option")
@@ -150,7 +150,7 @@ macro(precision)
       set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -CcdRR8")
 
     elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
-      set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fdefault-real-8")
+      set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fdefault-real-8 -fdefault-double-8")
 
     elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
       set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -r8")

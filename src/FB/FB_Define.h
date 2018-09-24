@@ -158,8 +158,8 @@
   2  | cmp[]/mat[]      |                            |
   1  |                  |                            |
   0  +                  + X_minus                    + BC_FACE_W
- 
- 
+
+
  Bit    cut[]
  64
  63
@@ -206,7 +206,7 @@
   2   |          Y_minus
   1   |          X_plus
   0   +          X_minus
- 
+
  */
 
 
@@ -650,7 +650,7 @@ enum Algorithm_Heat
 
 /// モニタ点指定タイプ型
 enum Monitor_Type {
-  mon_POINT_SET
+   mon_POINT_SET
   ,mon_LINE
   ,mon_CYLINDER
   ,mon_BOX
@@ -694,7 +694,7 @@ inline int quantize9(REAL_TYPE a)
 {
   int s;
   REAL_TYPE x = a * (REAL_TYPE)QT_9;
-  
+
   if ( x > 0.0 )
   {
     s = (int)floor(x + 0.5);
@@ -703,13 +703,13 @@ inline int quantize9(REAL_TYPE a)
   {
     s = (int)(-1.0 * floor(fabs(x) + 0.5));
   }
-  
+
   if (s<0 || QT_9<s)
   {
     printf("quantize error : out of range %f > %d\n", a, s);
     exit(0);
   }
-  
+
   return s;
 }
 
@@ -774,17 +774,17 @@ inline int chkZeroCut (const long long c, const int dir)
   // 各方向の9ビット
   long long b = (c >> TOP_CUT) >> dir*9;
   long long a = 1;
-  
+
   // 量子化した距離 9ビット幅
   a = MASK_9;
   int d = (int)(b & a);
-  
+
   // 距離が記録されている
   if ( d > 0 ) return 0;
-  
+
   // 交点の有無
   int ens = (int)((c >> dir) & a);
-  
+
   // 距離ゼロ
   if ( ens == 1 )
   {
@@ -866,7 +866,7 @@ inline void initBit9 (long long& c, const int dir)
 {
   long long a = MASK_9;
   const long long b = QT_9; // 511
-  
+
   c &= ( ~( (a<<dir*9) << TOP_CUT) );  // 対象9bitをゼロにする
   c |= ( (b<<dir*9) << TOP_CUT );      // 値を書き込む
 }

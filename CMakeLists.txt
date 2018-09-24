@@ -74,8 +74,15 @@ set(CMAKE_BUILD_TYPE Release)
 
 
 #######
-set(PROJECT_VERSION "2.5.3")
-set(LIB_REVISION "20170615_1900")
+# Policy setting
+#######
+
+cmake_policy(SET CMP0012 NEW)
+
+
+#######
+set(PROJECT_VERSION "2.5.4")
+set(LIB_REVISION "20170924_1800")
 #######
 
 

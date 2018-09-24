@@ -22,6 +22,7 @@
 ##
 
 macro (ffvc_package)
+set (CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS TRUE)
 include (InstallRequiredSystemLibraries)
 
 set (CPACK_PACKAGE_NAME "${PROJECT}")

@@ -29,7 +29,7 @@ bool FFV::Post()
   FILE* fp = NULL;
 
 
-  // 統計情報
+  /* 統計情報
   if (C.Mode.Statistic == ON)
   {
     Hostonly_
@@ -37,7 +37,7 @@ bool FFV::Post()
       if ( !H->printCompoStatistics(cmp, cmp_force_avr) ) Exit(0);
     }
   }
-
+  */
 
   TIMING__
   {
@@ -57,22 +57,29 @@ bool FFV::Post()
     PM.gather();
     TIMING_stop("Statistic", 0.0);
 
-    Hostonly_
-    {
-      // 結果出力(排他測定のみ)
-      PM.print(stdout, HostName, C.OperatorName);
-      PM.print(fp, HostName, C.OperatorName);
+    // 結果出力(排他測定のみ)
+    PM.print(stdout, HostName, C.OperatorName);
+    PM.print(fp, HostName, C.OperatorName);
 
-      // 結果出力(非排他測定も)
-      if ( C.Mode.Profiling == DETAIL)
+    // 結果出力(非排他測定も)
+    if ( C.Mode.Profiling == DETAIL)
+    {
+      PM.printDetail(stdout);
+      PM.printDetail(fp);
+      for (int i=0; i<numProc; i++)
       {
-        PM.printDetail(stdout);
-        PM.printDetail(fp);
-      }
-      
+	      PM.printThreads(stdout, i);
+        PM.printThreads(fp, i);
+	    }
+	    PM.printLegend(stdout);
+	    PM.printLegend(fp);
+    }
+
+    Hostonly_ {
+      fflush(fp);
       if ( !fp ) fclose(fp);
     }
-  }
+  } // TIMING__
 
 
   return true;
