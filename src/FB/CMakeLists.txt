@@ -36,6 +36,15 @@ link_directories(
       ${CDM_LIB}
 )
 
+IF(with_PAPI)
+  include_directories(${PAPI_INC})
+  link_directories(${PAPI_LIB})
+  # link static library
+  set(PAPI_STATIC_LIB ${PAPI_LIB}/libpapi.a
+                      ${PAPI_LIB}/libpfm.a
+                      )
+endif()
+
 set(ffvc_files
        Alloc.C
        BndOuter.C

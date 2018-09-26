@@ -78,7 +78,7 @@ endif()
 
 
 add_executable(${ffvc_target} ${ffvc_src})
-target_link_libraries(${ffvc_target} FFV FIO FCORE FLS ASD GEOM IP FB "${ffvc_libs}")
+target_link_libraries(${ffvc_target} FFV FIO FCORE FLS ASD GEOM IP FB)
 
 install(TARGETS ${ffvc_target} DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
