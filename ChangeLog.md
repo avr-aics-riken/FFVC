@@ -18,6 +18,11 @@
 ## REVISION HISTORY
 
 ---
+- 2018-09-26 Version 2.5.6
+  - checkOMPを陽に書く
+
+
+---
 - 2018-09-24 Version 2.5.5
   - PAPI support
 

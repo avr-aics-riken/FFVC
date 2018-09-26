@@ -65,11 +65,6 @@ link_directories(
 IF(with_PAPI)
   include_directories(${PAPI_INC})
   link_directories(${PAPI_LIB})
-  # link static library
-  set(PAPI_STATIC_LIB ${PM_LIB}/libpapi_ext.a
-                      ${PAPI_LIB}/libpapi.a
-                      ${PAPI_LIB}/libpfm.a
-                      )
 endif()
 
 
@@ -82,59 +77,8 @@ else()
 endif()
 
 
-if(with_MPI)
-  set(ffvc_libs "-lTPmpi -lPOLYmpi")
-
-  if(with_PM)
-    set(ffvc_libs "-lPMmpi ${ffvc_libs}")
-  endif()
-
-  if(with_CPM)
-    set(ffvc_libs "-lCPMmpi ${ffvc_libs}")
-  endif()
-
-  if(with_CDM)
-    set(ffvc_libs "-lCDMmpi ${ffvc_libs}")
-  endif()
-
-else()
-
-  set(ffvc_libs "-lTP -lPOLY")
-
-  if(with_PM)
-    set(ffvc_libs "-lPM ${ffvc_libs}")
-  endif()
-
-  if(with_CPM)
-    set(ffvc_libs "-lCPM ${ffvc_libs}")
-  endif()
-
-  if(with_CDM)
-    set(ffvc_libs "-lCDM ${ffvc_libs}")
-  endif()
-
-endif()
-
-
-if(with_PAPI)
-  if(TARGET_ARCH STREQUAL "FX100")
-  # on AICS FX100 static PAPI libs does not match the other system libs.
-  # so the following dynamic libs must be used. bonehead Fujitsu...
-    set(ffvc_libs "${ffvc_libs} -lpapi_ext -lpapi -lpfm")
-    ## target_link_libraries(example1 -lpapi_ext -Wl,'-lpapi,-lpfm')
-  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  ## GNU linker ld options are better passed using -Wl, rather than -B compiler phase option
-    set(ffvc_libs "${ffvc_libs} -lpapi_ext -lpapi -lpfm")
-    ## target_link_libraries(${rc_target} -lpapi_ext -Wl,'-Bstatic,-lpapi,-lpfm,-Bdynamic')
-  else()
-    ## Intel compiler
-    set(ffvc_libs "${ffvc_libs} -lpapi_ext -lpapi -lpfm")
-    ## target_link_libraries(${rc_target} ${PAPI_STATIC_LIB})
-  endif()
-endif()
-
 add_executable(${ffvc_target} ${ffvc_src})
-target_link_libraries(${ffvc_target} "${ffvc_libs}" FFV FIO FCORE FLS ASD GEOM IP FB)
+target_link_libraries(${ffvc_target} FFV FIO FCORE FLS ASD GEOM IP FB "${ffvc_libs}")
 
 install(TARGETS ${ffvc_target} DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 

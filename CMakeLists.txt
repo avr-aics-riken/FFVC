@@ -41,7 +41,7 @@
 #
 # -D with_CDM=installed_directory
 #
-#  -D with_PL=installed_directory
+# -D with_PL=installed_directory
 #
 # -D with_PAPI=installed_directory or OFF
 #
@@ -83,8 +83,8 @@ cmake_policy(SET CMP0012 NEW)
 
 
 #######
-set(PROJECT_VERSION "2.5.5")
-set(LIB_REVISION "20170924_2100")
+set(PROJECT_VERSION "2.5.6")
+set(LIB_REVISION "20170926_1500")
 #######
 
 
@@ -144,7 +144,6 @@ message( STATUS "PAPI support          : "      ${with_PAPI})
 message( STATUS "CPMlib support        : "      ${with_CPM})
 message( STATUS "Polylib support       : "      ${with_PL})
 message( STATUS "CDMlib support        : "      ${with_CDM})
-
 
 message(" ")
 

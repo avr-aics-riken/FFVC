@@ -56,6 +56,20 @@ else()
   SET(ffvc_libs "-lCDM -lCPM -lPOLY -lTP")
 endif()
 
+if(with_PAPI)
+  if(TARGET_ARCH STREQUAL "FX100")
+  # on AICS FX100 static PAPI libs does not match the other system libs.
+  # so the following dynamic libs must be used. bonehead Fujitsu...
+    set(ffvc_libs "${ffvc_libs} -lpapi_ext -lpapi -lpfm")
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  ## GNU linker ld options are better passed using -Wl, rather than -B compiler phase option
+    set(ffvc_libs "${ffvc_libs} -lpapi_ext ${PAPI_STATIC_LIB}")
+  else()
+    ## Intel compiler & others
+    set(ffvc_libs "${ffvc_libs} -lpapi_ext ${PAPI_STATIC_LIB}")
+  endif()
+endif()
+
 target_link_libraries(FIO "${ffvc_libs}")
 
 ###
