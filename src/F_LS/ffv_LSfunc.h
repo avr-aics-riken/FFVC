@@ -57,10 +57,10 @@
 
 
 extern "C" {
-  
+
   //***********************************************************************************************
   // ffv_poisson.f90
-  
+
   void psor_ (REAL_TYPE* p,
               int* sz,
               int* g,
@@ -71,7 +71,7 @@ extern "C" {
               int* bp,
               REAL_TYPE* cm,
               double* flop);
-  
+
   void pssor_ (REAL_TYPE* p,
                int* sz,
                int* g,
@@ -82,7 +82,7 @@ extern "C" {
                int* bp,
                REAL_TYPE* cm,
                double* flop);
-  
+
   void psor2sma_ (REAL_TYPE* p,
                   int* sz,
                   int* g,
@@ -95,7 +95,7 @@ extern "C" {
                   int* bp,
                   REAL_TYPE* cm,
                   double* flop);
-  
+
   void psor2sma_r_ (REAL_TYPE* p,
                     int* sz,
                     int* g,
@@ -108,7 +108,7 @@ extern "C" {
                     int* bp,
                     REAL_TYPE* cm,
                     double* flop);
-  
+
   void sma_comm_      (REAL_TYPE* p,
                        int* sz,
                        int* g,
@@ -120,7 +120,7 @@ extern "C" {
                        REAL_TYPE* cf_z,
                        int* key,
                        int* nID);
-  
+
   void sma_comm_wait_ (REAL_TYPE* p,
                        int* sz,
                        int* g,
@@ -131,18 +131,27 @@ extern "C" {
                        REAL_TYPE* cf_y,
                        REAL_TYPE* cf_z,
                        int* key);
-  
+
+  void write_mat_     (int* sz,
+                       REAL_TYPE* dh,
+                       int* bp,
+                       REAL_TYPE* cm);
+
+  void write_rhs_     (int* sz,
+                       REAL_TYPE* b,
+                       int* bp);
+
   //***********************************************************************************************
   // ffv_blas.f90
   void blas_clear_    (REAL_TYPE* x,
                        int* sz,
                        int* g);
-  
+
   void blas_copy_     (REAL_TYPE* dst,
                        REAL_TYPE* src,
                        int* sz,
                        int* g);
-  
+
   void blas_triad_    (REAL_TYPE* z,
                        REAL_TYPE* x,
                        REAL_TYPE* y,
@@ -150,7 +159,7 @@ extern "C" {
                        int* sz,
                        int* g,
                        double* flop);
-  
+
   void blas_bicg_1_ (REAL_TYPE* p,
                      REAL_TYPE* r,
                      REAL_TYPE* q,
@@ -159,7 +168,7 @@ extern "C" {
                      int* sz,
                      int* g,
                      double* flop);
-  
+
   void blas_bicg_2_   (REAL_TYPE* z,
                        REAL_TYPE* x,
                        REAL_TYPE* y,
@@ -168,15 +177,15 @@ extern "C" {
                        int* sz,
                        int* g,
                        double* flop);
-  
-  
+
+
   void blas_dot1_     (double* r,
                        REAL_TYPE* p,
                        int* bp,
                        int* sz,
                        int* g,
                        double* flop);
-  
+
   void blas_dot2_     (double* r,
                        REAL_TYPE* p,
                        REAL_TYPE* q,
@@ -184,7 +193,7 @@ extern "C" {
                        int* sz,
                        int* g,
                        double* flop);
-  
+
   void blas_calc_b_ (double* rhs,
                      REAL_TYPE* b,
                      REAL_TYPE* div,
@@ -194,7 +203,7 @@ extern "C" {
                      REAL_TYPE* dh,
                      REAL_TYPE* dt,
                      double* flop);
-  
+
   void blas_calc_b_lc_ (double* rhs,
                         REAL_TYPE* b,
                         REAL_TYPE* div,
@@ -206,7 +215,7 @@ extern "C" {
                         REAL_TYPE* p,
                         REAL_TYPE* cm,
                         double* flop);
-  
+
   void blas_calc_rk_  (REAL_TYPE* r,
                        REAL_TYPE* p,
                        REAL_TYPE* b,
@@ -216,7 +225,7 @@ extern "C" {
                        REAL_TYPE* dh,
                        REAL_TYPE* cm,
                        double* flop);
-  
+
   void blas_calc_r2_  (double* res,
                        REAL_TYPE* p,
                        REAL_TYPE* b,
@@ -226,7 +235,7 @@ extern "C" {
                        REAL_TYPE* dh,
                        REAL_TYPE* cm,
                        double* flop);
-  
+
   void blas_calc_ax_  (REAL_TYPE* ap,
                        REAL_TYPE* p,
                        int* bp,
@@ -235,10 +244,10 @@ extern "C" {
                        REAL_TYPE* dh,
                        REAL_TYPE* cm,
                        double* flop);
-  
+
   //***********************************************************************************************
   // ffv_cg.f90
-  
+
   void bicg_update_p_ (REAL_TYPE* p,
                        REAL_TYPE* r,
                        double* beta,
@@ -247,7 +256,7 @@ extern "C" {
                        int* sz,
                        int* g,
                        double* flop);
-  
+
   void bicg_update_x_ (REAL_TYPE* x,
                        double* alpha,
                        REAL_TYPE* p,
@@ -272,12 +281,12 @@ extern "C" {
   void ml_add_2_ (double* ac,     int* sz, int* g, REAL_TYPE* s3, double* flop);
   void ml_add_3_ (REAL_TYPE* s3,  int* sz, int* g, int* nc, double* s, REAL_TYPE* s4, int* lm, double* flop);
   void ml_add_4_ (REAL_TYPE* s3,  int* sz, int* g, int* nc, double* s, REAL_TYPE* s4, int* lm, double* flop);
-  
+
    // cds_poisson.f90
   void cds_psor_          (REAL_TYPE* p,   int* sz, int* g, REAL_TYPE* omg, REAL_TYPE* res, REAL_TYPE* div, REAL_TYPE* bnd, REAL_TYPE* cut,
                            REAL_TYPE* epsilon, int* para_key);
-  
-  
+
+
   //***********************************************************************************************
   // ffv_rc.f90
   void rc_calc_b_ (REAL_TYPE* bb, REAL_TYPE* pos_rhs, int* bp, int* sz, int* g, double* b_l2, double* flop);

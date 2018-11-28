@@ -301,6 +301,7 @@ public:
     int GeomOutput;
     int GlyphOutput;
     int DryRun;
+    int AXB;
   } Hidden_Parameter;
 
 
@@ -645,6 +646,7 @@ public:
     Hide.GeomOutput = OFF;
     Hide.GlyphOutput = OFF;
     Hide.DryRun = OFF;
+    Hide.AXB = OFF;
 
 
     Stab.control = OFF;
@@ -776,6 +778,11 @@ public:
 
   // DryRun parameter
   void getDryRun();
+
+
+  // 係数行列の書き出し
+  void getAXB();
+  bool isAXB() {return (Hide.AXB==ON)?true:false;}
 
 
   // @brief 計算モデルの入力ソース情報を取得

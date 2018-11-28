@@ -18,6 +18,11 @@
 ## REVISION HISTORY
 
 ---
+- 2018-11-06 Version 2.5.8
+  - AXBの係数書き出し
+
+
+---
 - 2018-09-27 Version 2.5.7
   - PAPIのリンク
 

@@ -68,4 +68,3 @@ de  = bb - (ss - pn * dd)
 res = res + dble(de*de) * aa
 xl2 = xl2 + dble(pn*pn) * aa
 err = err + dble(dp*dp) * aa
-

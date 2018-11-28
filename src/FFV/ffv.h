@@ -49,6 +49,7 @@
 #include "ffv_LSfunc.h"
 #include "ffv_TerminateCtrl.h"
 #include "ffv_LS.h"
+#include "ffv_mat.h"
 
 // Geometry
 #include "Geometry.h"
@@ -194,6 +195,7 @@ private:
   ParseBC B;                 ///< 境界条件のパースクラス
   SetBC3D BC;                ///< BCクラス
   History* H;                ///< 履歴クラス
+  matA A;                    ///< 係数行列出力クラス
 
   POLYLIB_STAT poly_stat;    ///< Polylibの戻り値
   FBUtility U;               ///< ユーティリティクラス

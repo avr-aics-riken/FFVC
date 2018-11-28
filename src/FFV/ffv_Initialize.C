@@ -2814,7 +2814,8 @@ string FFV::setDomain(TextParser* tpf)
   // 従属的なパラメータの取得
   C.get2ndParameter(&RF);
 
-
+  // 係数行列の書き出しモード
+  C.getAXB();
 
   // 全ノードについて，ローカルノード1面・一層あたりの通信量の和（要素数）を計算
   double c = 0.0;

@@ -387,7 +387,7 @@ end subroutine psor2sma_r
           !  0 : color 0 start is (1,1,1)
           !  1 : color 0 start is (2,1,1)
   integer, dimension(3)                                  ::  sz, cf_sz
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  p 
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  p
   real, dimension(cf_sz(1), 4)                           ::  cf_x
   real, dimension(cf_sz(2), 4)                           ::  cf_y
   real, dimension(cf_sz(3), 4)                           ::  cf_z
@@ -529,7 +529,7 @@ end subroutine psor2sma_r
 
   end subroutine sma_comm
 
- 
+
 !> ******************************************************************************
 !! @brief SOR2の非同期通信処理
 !! @param p 圧力
@@ -553,7 +553,7 @@ end subroutine psor2sma_r
           !  0 : color 0 start is (1,1,1)
           !  1 : color 0 start is (2,1,1)
   integer, dimension(3)                                  ::  sz, cf_sz
-  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  p 
+  real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  p
   real, dimension(cf_sz(1), 4)                           ::  cf_x
   real, dimension(cf_sz(2), 4)                           ::  cf_y
   real, dimension(cf_sz(3), 4)                           ::  cf_z
@@ -671,3 +671,137 @@ end subroutine psor2sma_r
   endif
 
 end subroutine sma_comm_wait
+
+
+!> ********************************************************************
+!! @brief 係数行列の出力
+!! @param [in]     sz   グローバル配列長
+!! @param [in]     dh   格子幅
+!! @param [in]     bp   BCindex P
+!! @param [in]     cm   Limited Compressibilityのときの係数
+!! @note Activeマスクの位置は，固体中のラプラス式を解くように，更新式にはかけず残差のみにする
+!<
+subroutine write_mat (sz, dh, bp, cm)
+implicit none
+include 'ffv_f_params.h'
+integer                                 ::  i, j, k, ix, jx, kx, idx
+integer                                 ::  m, mi, mj, mk, mx
+integer, dimension(3)                   ::  sz
+real                                    ::  dd, dsw
+real                                    ::  c_w, c_e, c_s, c_n, c_b, c_t
+real                                    ::  d_w, d_e, d_s, d_n, d_b, d_t
+real                                    ::  r_xx, r_xy, r_xz, r_x2, r_y2, r_z2
+real                                    ::  cm, cf
+real, dimension(3)                      ::  dh
+integer, dimension(sz(1), sz(2), sz(3)) ::  bp
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+r_xx = 1.0
+r_xy = dh(1) / dh(2)
+r_xz = dh(1) / dh(3)
+r_x2 = r_xx * r_xx
+r_y2 = r_xy * r_xy
+r_z2 = r_xz * r_xz
+cf = cm * cm
+
+OPEN(unit=1,FILE='matrix.txt', FORM='FORMATTED', STATUS='UNKNOWN')
+
+m = 1
+
+mi= 1
+mj= ix
+mk= ix*jx
+mx= ix*jx*kx
+
+do k=1,kx
+do j=1,jx
+do i=1,ix
+
+  idx = bp(i,j,k)
+
+  c_w = real(ibits(idx, bc_ndag_W, 1))  ! w
+  c_e = real(ibits(idx, bc_ndag_E, 1))  ! e
+  c_s = real(ibits(idx, bc_ndag_S, 1))  ! s
+  c_n = real(ibits(idx, bc_ndag_N, 1))  ! n
+  c_b = real(ibits(idx, bc_ndag_B, 1))  ! b
+  c_t = real(ibits(idx, bc_ndag_T, 1))  ! t
+
+  d_w = real(ibits(idx, bc_dn_W, 1))
+  d_e = real(ibits(idx, bc_dn_E, 1))
+  d_s = real(ibits(idx, bc_dn_S, 1))
+  d_n = real(ibits(idx, bc_dn_N, 1))
+  d_b = real(ibits(idx, bc_dn_B, 1))
+  d_t = real(ibits(idx, bc_dn_T, 1))
+
+  dsw = real(ibits(idx, bc_diag, 1))
+
+  dd = r_x2 * (c_w + c_e) &
+     + r_y2 * (c_s + c_n) &
+     + r_z2 * (c_b + c_t) &
+     + 2.0                &
+     *(r_x2 * (d_w + d_e) &
+     + r_y2 * (d_s + d_n) &
+     + r_z2 * (d_b + d_t) ) &
+     + cf
+
+  dd = dsw * dd + 1.0 - dsw
+
+  if (1 == ibits(idx, Active, 1)) then
+    if (m-mk>0) WRITE(1,'(I8,I8,F15.7)') m, m-mk, r_z2 * c_b  ! k-1
+    if (m-mj>0) WRITE(1,'(I8,I8,F15.7)') m, m-mj, r_y2 * c_s  ! j-1
+    if (m-mi>0) WRITE(1,'(I8,I8,F15.7)') m, m-mi, r_x2 * c_w  ! i-1
+    WRITE(1,'(I8,I8,F15.7)') m, m, dd  ! i
+    if (m+mi<=mx) WRITE(1,'(I8,I8,F15.7)') m, m+mi, r_x2 * c_e  ! i+1
+    if (m+mj<=mx) WRITE(1,'(I8,I8,F15.7)') m, m+mj, r_y2 * c_n  ! j+1
+    if (m+mk<=mx) WRITE(1,'(I8,I8,F15.7)') m, m+mk, r_z2 * c_t  ! k+1
+
+    m = m + 1
+  endif
+
+end do
+end do
+end do
+
+CLOSE(unit=1)
+
+return
+end subroutine write_mat
+
+
+!> ********************************************************************
+!! @brief 係数行列の出力
+!! @param [in]     sz   グローバル配列長
+!! @param [in]     b    RHS vector
+!! @param [in]     bp   BCindex P
+!! @note Activeマスクの位置は，固体中のラプラス式を解くように，更新式にはかけず残差のみにする
+!<
+subroutine write_rhs (sz, b, bp)
+implicit none
+include 'ffv_f_params.h'
+integer                                 ::  i, j, k, ix, jx, kx, idx
+integer, dimension(3)                   ::  sz
+real, dimension(sz(1), sz(2), sz(3))    ::  b
+integer, dimension(sz(1), sz(2), sz(3)) ::  bp
+
+ix = sz(1)
+jx = sz(2)
+kx = sz(3)
+
+OPEN(unit=1,FILE='rhs.txt', FORM='FORMATTED', STATUS='UNKNOWN')
+
+do k=1,kx
+do j=1,jx
+do i=1,ix
+  idx = bp(i,j,k)
+  if (1 == ibits(idx, Active, 1)) WRITE(1,'(F15.7)') b(i,j,k)
+end do
+end do
+end do
+
+CLOSE(unit=1)
+
+return
+end subroutine write_rhs

@@ -66,6 +66,7 @@ set(ffvc_files
        ffv_SetBC.C
        ffv_TerminateCtrl.C
        dryrunBC.C
+       ffv_mat.C
 )
 
 add_library(FFV STATIC ${ffvc_files})
