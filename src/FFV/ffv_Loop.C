@@ -20,6 +20,7 @@
  */
 
 #include "ffv.h"
+#include "FileSystemUtil.h"
 
 
 // タイムステップループの処理
@@ -168,7 +169,7 @@ int FFV::Loop(const unsigned step)
 
       // レイノルズ応力テンソル (瞬時値, 時間平均値)
       calc_reynolds_stress_(d_R, d_aR, size, &guide, d_v, d_av, &accum, &flop_count);
-
+      /*
       // (1) 生成項 (時間平均値)
       calc_production_rate_(d_aP, size, pitch, &guide, d_av, d_R, d_bid, &accum, &flop_count);
 
@@ -188,7 +189,7 @@ int FFV::Loop(const unsigned step)
         {
           F->OutputMean(d_av, d_rms_mean_v, d_aR, d_aP, d_aE, d_aT, d_aPI, myRank, size, CurrentStepStat, pitch, &guide, flop_count);
         }
-      };
+      }*/
     }
 
     TIMING_stop("Turbulence Statistic", flop_count);
@@ -323,6 +324,70 @@ int FFV::Loop(const unsigned step)
         F->OutputStatisticalVarables(CurrentStep, CurrentTime, CurrentStepStat, CurrentTimeStat, flop_count);
         TIMING_stop("File_Output", flop_count);
 
+        // レイノルズ応力
+        if (C.Mode.ReynoldsStress == ON)
+        {
+          char tmp_fname[100];
+          int stp  = (int)CurrentStep;
+          REAL_TYPE tm = (REAL_TYPE)CurrentTime;
+          int stp2 = (int)CurrentStepStat;
+          REAL_TYPE tm2 = (REAL_TYPE)CurrentTimeStat;
+          int rtype = (8 == sizeof(REAL_TYPE)) ? 2:1;
+          REAL_TYPE m_org[3]={(REAL_TYPE)origin[0], (REAL_TYPE)origin[1], (REAL_TYPE)origin[2]};
+          REAL_TYPE m_pch[3]={(REAL_TYPE)pitch[0], (REAL_TYPE)pitch[1], (REAL_TYPE)pitch[0]}; // cartesian
+
+          if ( !BVX_IO::CreateDirectory("Reynolds_Stress") ) Exit(0);
+
+          // 瞬時値
+          int c = 1;
+          sprintf( tmp_fname, "./Reynolds_Stress/tau_uu_%08d_%06d.sph", stp, myRank );
+          sph_write_tensor_(size, &guide, m_org, m_pch, &stp2, &tm2, d_R, &c, tmp_fname, &rtype);
+
+          sprintf( tmp_fname, "./Reynolds_Stress/tau_uv_%08d_%06d.sph", stp, myRank );
+          c= 2;
+          sph_write_tensor_(size, &guide, m_org, m_pch, &stp2, &tm2, d_R, &c, tmp_fname, &rtype);
+
+          sprintf( tmp_fname, "./Reynolds_Stress/tau_uw_%08d_%06d.sph", stp, myRank );
+          c= 3;
+          sph_write_tensor_(size, &guide, m_org, m_pch, &stp2, &tm2, d_R, &c, tmp_fname, &rtype);
+
+          sprintf( tmp_fname, "./Reynolds_Stress/tau_vv_%08d_%06d.sph", stp, myRank );
+          c= 4;
+          sph_write_tensor_(size, &guide, m_org, m_pch, &stp2, &tm2, d_R, &c, tmp_fname, &rtype);
+
+          sprintf( tmp_fname, "./Reynolds_Stress/tau_vw_%08d_%06d.sph", stp, myRank );
+          c= 5;
+          sph_write_tensor_(size, &guide, m_org, m_pch, &stp2, &tm2, d_R, &c, tmp_fname, &rtype);
+
+          sprintf( tmp_fname, "./Reynolds_Stress/tau_ww_%08d_%06d.sph", stp, myRank );
+          c= 6;
+          sph_write_tensor_(size, &guide, m_org, m_pch, &stp2, &tm2, d_R, &c, tmp_fname, &rtype);
+
+          // 平均値
+          c = 1;
+          sprintf( tmp_fname, "./Reynolds_Stress/tau_uu_a_%08d_%06d.sph", stp, myRank );
+          sph_write_tensor_(size, &guide, m_org, m_pch, &stp2, &tm2, d_aR, &c, tmp_fname, &rtype);
+
+          sprintf( tmp_fname, "./Reynolds_Stress/tau_uv_a_%08d_%06d.sph", stp, myRank );
+          c= 2;
+          sph_write_tensor_(size, &guide, m_org, m_pch, &stp2, &tm2, d_aR, &c, tmp_fname, &rtype);
+
+          sprintf( tmp_fname, "./Reynolds_Stress/tau_uw_a_%08d_%06d.sph", stp, myRank );
+          c= 3;
+          sph_write_tensor_(size, &guide, m_org, m_pch, &stp2, &tm2, d_aR, &c, tmp_fname, &rtype);
+
+          sprintf( tmp_fname, "./Reynolds_Stress/tau_vv_a_%08d_%06d.sph", stp, myRank );
+          c= 4;
+          sph_write_tensor_(size, &guide, m_org, m_pch, &stp2, &tm2, d_aR, &c, tmp_fname, &rtype);
+
+          sprintf( tmp_fname, "./Reynolds_Stress/tau_vw_a_%08d_%06d.sph", stp, myRank );
+          c= 5;
+          sph_write_tensor_(size, &guide, m_org, m_pch, &stp2, &tm2, d_aR, &c, tmp_fname, &rtype);
+
+          sprintf( tmp_fname, "./Reynolds_Stress/tau_ww_a_%08d_%06d.sph", stp, myRank );
+          c= 6;
+          sph_write_tensor_(size, &guide, m_org, m_pch, &stp2, &tm2, d_aR, &c, tmp_fname, &rtype);
+        }
       }
 
       // 最終ステップ
@@ -337,6 +402,7 @@ int FFV::Loop(const unsigned step)
           TIMING_stop("File_Output", flop_count);
         }
       }
+
     }
   }
 

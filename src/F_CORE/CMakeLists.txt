@@ -37,6 +37,7 @@ set(ffvc_files
        force.h
        ffv_velocity_cds.f90
        FB_util.f90
+       io_sph.f90
 )
 
 add_library(FCORE STATIC ${ffvc_files})

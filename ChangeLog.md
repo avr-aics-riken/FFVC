@@ -18,6 +18,13 @@
 ## REVISION HISTORY
 
 ---
+- 2018-11-27 Version 2.5.9
+  - 乱流統計量、レイノルズ応力のみ計算するオプションを有効化
+  - io_sph.f90を追加し、Reynolds_Stressディレクトリに直接出力
+  - DFIの制御なし
+
+
+---
 - 2018-11-06 Version 2.5.8
   - AXBの係数書き出し
 

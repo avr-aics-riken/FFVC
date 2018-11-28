@@ -313,7 +313,7 @@ void FALLOC::allocArray_Statistic(double &total, Control* C)
     if ( !(d_aR = Alloc::Real_T3D(size, guide)) ) Exit(0);
     total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
 
-    // 生成項 (時間平均値)
+    /* 生成項 (時間平均値)
     if ( !(d_aP = Alloc::Real_T3D(size, guide)) ) Exit(0);
     total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
 
@@ -328,9 +328,10 @@ void FALLOC::allocArray_Statistic(double &total, Control* C)
     // 速度圧力勾配相関項 (時間平均値)
     if ( !(d_aPI = Alloc::Real_T3D(size, guide)) ) Exit(0);
     total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
+    */
   }
 
-  // Channel Mean
+  /* Channel Mean
   if ( C->Mode.ChannelOutputMean == ON )
   {
     if ( !(d_av_mean = Alloc::Real_S3D(size, guide)) ) Exit(0);
@@ -353,7 +354,7 @@ void FALLOC::allocArray_Statistic(double &total, Control* C)
 
     if ( !(d_aPI_mean = Alloc::Real_T3D(size, guide)) ) Exit(0);
     total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
-  }
+  }*/
 
 }
 

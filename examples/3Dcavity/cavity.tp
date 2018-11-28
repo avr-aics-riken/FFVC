@@ -9,7 +9,7 @@ ApplicationControl {
 BcTable {
 
   Boundary {
-      
+
     outerWall {
       kind        = "outer"
       class       = "Wall"
@@ -34,7 +34,7 @@ BcTable {
       velocity    = 5.0
       Medium      = "air"
     }
-    
+
     periodic {
       class  = "periodic"
       mode   = "simplecopy"
@@ -63,7 +63,7 @@ DomainInfo {
   GlobalOrigin   = (-0.5, -0.5, -0.5   )
   GlobalRegion   = (1.0,  1.0,  1.0    )
   GlobalVoxel    = (64   , 64   , 64   )
-  
+
   //GlobalPitch    = (1.5625e-02, 1.5625e-02, 1.5625e-02)
   //GlobalDivision = (1    , 1    , 1    )
 }
@@ -88,7 +88,7 @@ GoverningEquation {
   HeatEquation       = "FlowOnly"
   Buoyancy           = "NoBuoyancy"
   TimeVariation      = "Unsteady"
-  PDEType            = "NavierStokes" 
+  PDEType            = "NavierStokes"
 }
 
 
@@ -141,7 +141,7 @@ Iteration {
 
   Pressure    = "sor2"
   Velocity    = ""
-  Temperature = ""   
+  Temperature = ""
 }
 
 
@@ -214,15 +214,15 @@ MonitorList {
     SamplingMode    = "Fluid"
     set[@] {
       Coordinate    = (0.2, 0.2, 0.2)
-      tag           = "p1" 
+      tag           = "p1"
     }
     set[@] {
       Coordinate    = (0.3, 0.3, 0.3)
-      tag           = "p2" 
+      tag           = "p2"
     }
     set[@] {
       Coordinate    = (0.4, 0.4, 0.4)
-      tag           = "p3" 
+      tag           = "p3"
     }
     Variables {
       pressure      = "on"
@@ -307,9 +307,10 @@ Output {
       VelocityStat    = "Off"
       PressureStat    = "Off"
       TemperatureStat = "Off"
+      ReynoldsStress  = "off"
     }
   }
-    
+
   FormatOption {
     SPH {
       GuideOut        = 2
@@ -376,7 +377,7 @@ StartCondition {
       ChannelWidth            = 1.0
       BulkVelocity            = 0.3
       TubulenceReynoldsNumber = 180.0
-    } 
+    }
   }
 }
 
@@ -395,13 +396,13 @@ TimeControl {
     TemporalType   = "step"
     Start          = 0    // 0 or 0.0の場合initial start
     End            = 1000
-    //restartStep    = 31 
+    //restartStep    = 31
   }
 
   Statistic {
     TemporalType   = "step"
     Start          = 0  // 指定区間の平均をとる．両方とも0のときoff
-    End            = 0 
+    End            = 0
   }
 }
 

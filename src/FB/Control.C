@@ -3087,6 +3087,10 @@ void Control::printSteerConditions(FILE* fp,
   fprintf(fp,"\t     RMS Mean of velocity     :   ");
   fprintf(fp, ( varState[var_RmsMeanV] == ON ) ? "ON\n" : "OFF\n");
 
+  // Reynolds Stress
+  fprintf(fp,"\t     Reynolds Stress          :   ");
+  fprintf(fp, ( Mode.ReynoldsStress == ON ) ? "ON\n" : "OFF\n");
+
 
   // Driver ------------------
   fprintf(fp, "\n\tDriver parameter\n");
