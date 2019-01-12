@@ -18,6 +18,10 @@
 ## REVISION HISTORY
 
 ---
+- 2019-1-12 Version 2.6.1
+  - under debugging
+
+---
 - 2019-1-11 Version 2.6.0
   - 粒子追跡クラス導入
 

@@ -147,8 +147,7 @@ protected:
 
 
   // @brief 粒子追跡パラメータ取得
-  bool getTPparam(const string label_leaf,
-                  const int odr);
+  bool getTPparam(const string label_leaf, int odr);
 
 
   /// @brief 座標値を無次元化する
@@ -163,11 +162,11 @@ protected:
 
   /// @brief 自領域内に存在するかどうかを判断
   /// @param [in] x  coordinate
-  bool inOwnRegion(const REAL_TYPE x[3])
+  bool inOwnRegion(const Vec3r p)
   {
-    if ( x[0]<origin[0] || x[0]>origin[0]+region[0]
-      || x[1]<origin[1] || x[1]>origin[1]+region[1]
-      || x[2]<origin[2] || x[2]>origin[2]+region[2] ) return false;
+    if ( p.x<origin[0] || p.x>origin[0]+region[0]
+      || p.y<origin[1] || p.y>origin[1]+region[1]
+      || p.z<origin[2] || p.z>origin[2]+region[2] ) return false;
     return true;
   }
 

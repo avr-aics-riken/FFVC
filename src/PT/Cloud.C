@@ -200,6 +200,7 @@ bool Cloud::tracking(const unsigned step, const double time)
 // @brief 初期設定
 bool Cloud::initCloud(FILE* fp)
 {
+
   if ( !setPTinfo() ) return false;
 
   if ( !determineUniqueID() ) return false;
@@ -245,7 +246,7 @@ bool Cloud::determineUniqueID()
   }
   gParticle = sum;
 
-  Hostonly_ printf("Global # of particles  = %ld\n", gParticle);
+  Hostonly_ printf("\tGlobal # of particles  = %ld\n", gParticle);
 
   // 各ランクのユニークIDの先頭番号
   unsigned* acc = new unsigned[numProc];
@@ -271,10 +272,8 @@ bool Cloud::determineUniqueID()
   }
 
 #ifdef PT_DEBUG
-  printf("rank=%d : nParticle=%d\n", nParticle);
+  printf("*\trank=%d : nParticle=%d\n", myRank, nParticle);
 #endif
-
-  Hostonly_ printf("gParticle=%d\n", gParticle);
 
 
   delete [] uid;
@@ -387,18 +386,19 @@ bool Cloud::setPTinfo()
 
 
   // EmitGrp[]の作成
-  nGrpEmit = nnode;
+  nGrpEmit = nlist;
   Egrp = new EmitGroup[nGrpEmit];
 
+#ifdef PT_DEBUG
+  Hostonly_ printf("*\tnGrpEmit=%d\n", nGrpEmit);
+#endif
 
   // IntervalManagerのインスタンス
   Interval = new IntervalManager[nGrpEmit];
 
-  for (int i=0; i<nGrpEmit; i++)
+  for (int j=0; j<nGrpEmit; j++)
   {
-    Interval[i].setMode(IntervalManager::By_step);
-    Interval[i].setStart(m_start);
-    //Interval[i].setLast(m_end);
+    Interval[j].setMode(IntervalManager::By_step);
   }
 
 
@@ -406,7 +406,8 @@ bool Cloud::setPTinfo()
   // リストの読み込み
   label_base = "/ParticleTracking";
 
-  for (int i=0; i<nGrpEmit; i++)
+  nlist=0;
+  for (int i=0; i<nnode; i++)
   {
     if ( !(tpCntl->getNodeStr(label_base, i+1, str)) )
     {
@@ -456,38 +457,48 @@ bool Cloud::setPTinfo()
     }
 
 
+    if ( !getTPparam(label_leaf, nlist) ) return false;
+
+
+    for (int j=0; j<nGrpEmit; j++)
+    {
+      Interval[j].setStart(m_start);
+    }
+
+
     // 順番に粒子IDとチャンクIDを付与
     // 粒子IDは各サブドメイン毎の仮のもの
     switch(mon_type)
     {
       case mon_POINT_SET:
-        Egrp[i].setType(mon_POINT_SET);
-        setPointset(label_leaf, i);
+        Egrp[nlist].setType(mon_POINT_SET);
+        setPointset(label_leaf, nlist);
         break;
 
       case mon_LINE:
-        Egrp[i].setType(mon_LINE);
-        setLine(label_leaf, i);
+        Egrp[nlist].setType(mon_LINE);
+        setLine(label_leaf, nlist);
         break;
 
       case mon_DISC:
-        Egrp[i].setType(mon_DISC);
-        setDisc(label_leaf, i);
+        Egrp[nlist].setType(mon_DISC);
+        setDisc(label_leaf, nlist);
         break;
 
       default:
         return false;
         break;
     }
-  }
+
+    nlist++;
+  } // nnode
 
 
-  for (int i=0; i<nGrpEmit; i++)
+  for (int j=0; j<nGrpEmit; j++)
   {
-    if ( !Interval[i].initTrigger(m_start,
-                                  (double)m_start * (double)dt,
-                                  (double)dt,
-                                  true) ) return false;
+    if ( !Interval[j].initTrigger(m_start,
+                                 (double)m_start * (double)dt,
+                                 (double)dt) ) return false;
   }
 
   nParticle = chunkList.size();
@@ -498,14 +509,14 @@ bool Cloud::setPTinfo()
 
 // #################################################################
 // @brief 粒子追跡パラメータ取得
-bool Cloud::getTPparam(const string label_leaf, const int odr)
+bool Cloud::getTPparam(const string label_leaf, int odr)
 {
   string str, label;
   double f_val=0.0;
 
 
   // 粒子出力
-  label = "/ParticleTracking/StartStep";
+  label = label_leaf + "/StartStep";
 
   if ( !(tpCntl->getInspectedValue(label, f_val )) )
   {
@@ -517,7 +528,7 @@ bool Cloud::getTPparam(const string label_leaf, const int odr)
     Egrp[odr].setStart( (int)f_val );
   }
 
-  label="/ParticleTracking/Interval";
+  label = label_leaf + "/Interval";
 
   if ( !(tpCntl->getInspectedValue(label, f_val )) )
   {
@@ -571,13 +582,10 @@ bool Cloud::getTPparam(const string label_leaf, const int odr)
  * @param [in]  odr        グループ登録インデクス
  * @note データは無次元化して保持
  */
-bool Cloud::setPointset(const string label_base,
-                        const int odr)
+bool Cloud::setPointset(const string label_base, const int odr)
 {
   char tmpstr[20];
   string str, label, label_leaf;
-
-  if ( !getTPparam(label_base, odr) ) return false;
 
   // PointSet個数のチェック
   int nnode=0;
@@ -665,15 +673,12 @@ bool Cloud::setPointset(const string label_base,
  * @param [in]  odr        グループ登録インデクス
  * @note データは無次元化して保持
  */
-bool Cloud::setLine(const string label_base,
-                    const int odr)
+bool Cloud::setLine(const string label_base, const int odr)
 {
   string str, label;
   REAL_TYPE v[3];
   int nDivision;
   REAL_TYPE from[3], to[3];
-
-  if ( !getTPparam(label_base, odr) ) return false;
 
   label = label_base + "/Division";
 
@@ -684,6 +689,8 @@ bool Cloud::setLine(const string label_base,
   }
   if ( nDivision == 0 ) return false;
 
+  Egrp[odr].nDiv = nDivision;
+
   // load parameter of 'from' and 'to'
   label = label_base + "/From";
 
@@ -693,9 +700,10 @@ bool Cloud::setLine(const string label_base,
     Hostonly_ stamped_printf("\tParsing error : fail to get 'From' in 'Line'\n");
     return false;
   }
-  from[0]=v[0];
-  from[1]=v[1];
-  from[2]=v[2];
+  Egrp[odr].from[0] = from[0]=v[0];
+  Egrp[odr].from[1] = from[1]=v[1];
+  Egrp[odr].from[2] = from[2]=v[2];
+
 
   // 入力パラメータの次元が有次元のとき，無次元化する
   if (unit == DIMENSIONAL) normalizeCord(from);
@@ -709,9 +717,9 @@ bool Cloud::setLine(const string label_base,
     Hostonly_ stamped_printf("\tParsing error : fail to get 'To' in 'Line'\n");
     return false;
   }
-  to[0]=v[0];
-  to[1]=v[1];
-  to[2]=v[2];
+  Egrp[odr].to[0] = to[0]=v[0];
+  Egrp[odr].to[1] = to[1]=v[1];
+  Egrp[odr].to[2] = to[2]=v[2];
 
   // 入力パラメータの次元が有次元のとき，無次元化する
   if (unit == DIMENSIONAL) normalizeCord(to);
@@ -731,10 +739,11 @@ bool Cloud::setLine(const string label_base,
   {
     Vec3r pos = st + dd * (REAL_TYPE)m;
 
+    //printf("r=%d  tgt = (%14.6e %14.6e %14.6e)\n", myRank, pos.x, pos.y, pos.z);
+
     // 自領域内であれば、初期開始点として追加
-    if ( inOwnRegion(v) )
+    if ( inOwnRegion(pos) )
     {
-      Vec3r pos(v);
       Chunk* m = new Chunk(pos, odr, 1);
       chunkList.push_back(m);
       Egrp[odr].incGroup();
@@ -751,14 +760,11 @@ bool Cloud::setLine(const string label_base,
  * @param [in]  odr        グループ登録インデクス
  * @note データは無次元化して保持
  */
-bool Cloud::setDisc(const string label_base,
-                    const int odr)
+bool Cloud::setDisc(const string label_base, const int odr)
 {
   string str, label;
   int nSample;
   REAL_TYPE cnt[3], nv[3], radius;
-
-  if ( !getTPparam(label_base, odr) ) return false;
 
   label=label_base+"/nSample";
 
@@ -768,6 +774,7 @@ bool Cloud::setDisc(const string label_base,
 	  return false;
   }
   if ( nSample <= 0 ) return false;
+  Egrp[odr].nSample = nSample;
 
   // load parameter of 'from' and 'to'
   label=label_base+"/center";
@@ -781,6 +788,10 @@ bool Cloud::setDisc(const string label_base,
   // 入力パラメータの次元が有次元のとき，無次元化する
   if (unit == DIMENSIONAL) normalizeCord(cnt);
 
+  Egrp[odr].center[0] = cnt[0];
+  Egrp[odr].center[1] = cnt[1];
+  Egrp[odr].center[2] = cnt[2];
+
 
   label=label_base+"/normal";
 
@@ -793,6 +804,10 @@ bool Cloud::setDisc(const string label_base,
   // 入力パラメータの次元が有次元のとき，無次元化する
   if (unit == DIMENSIONAL) normalizeCord(nv);
 
+  Egrp[odr].normal[0] = nv[0];
+  Egrp[odr].normal[1] = nv[1];
+  Egrp[odr].normal[2] = nv[2];
+
 
   label=label_base+"/radius";
 
@@ -802,6 +817,7 @@ bool Cloud::setDisc(const string label_base,
     return false;
   }
   if ( radius <= 0.0 ) return false;
+  Egrp[odr].radius = radius;
 
 
   // 点群の発生と登録
@@ -1014,7 +1030,7 @@ Vec3r Cloud::rotate_inv(const Vec3r p, const Vec3r u)
 void Cloud::displayParam(FILE* fp)
 {
   Hostonly_ {
-    fprintf(fp,"\t\tIntegration Method  : ");
+    fprintf(fp,"\tIntegration Method  : ");
     switch (scheme) {
       case pt_euler:
         fprintf(fp,"Euler\n");
@@ -1029,22 +1045,45 @@ void Cloud::displayParam(FILE* fp)
 
     for (int i=0; i<nGrpEmit; i++)
     {
-      fprintf(fp,"\t\tGroup          : %s\n",Egrp[i].getGrpName().c_str());
-      fprintf(fp,"\t\tType           : ");
+      fprintf(fp,"\n\tGroup               : %s\n",Egrp[i].getGrpName().c_str());
+      fprintf(fp,"\t\tStart step          : %d\n",Egrp[i].getStart());
+      fprintf(fp,"\t\tInterval            : %d\n",Egrp[i].getInterval());
+      fprintf(fp,"\t\tLife time           : %d\n",Egrp[i].getLife());
+      fprintf(fp,"\t\tType                : ");
       switch (Egrp[i].getType()) {
         case mon_POINT_SET:
-          fprintf(fp,"Pointset\n");
+          fprintf(fp,"\t\tPointset\n");
           break;
+
         case mon_LINE:
-          fprintf(fp,"Line\n");
+          fprintf(fp,"\t\tLine\n");
+          fprintf(fp,"\t\t# of division       : %d\n",Egrp[i].nDiv);
+          fprintf(fp,"\t\tFrom                : (%14.6e %14.6e %14.6e)\n",
+                                        Egrp[i].from[0],
+                                        Egrp[i].from[1],
+                                        Egrp[i].from[2]);
+          fprintf(fp,"\t\tTo                  : (%14.6e %14.6e %14.6e)\n",
+                                        Egrp[i].to[0],
+                                        Egrp[i].to[1],
+                                        Egrp[i].to[2]);
           break;
+
         case mon_DISC:
-          fprintf(fp,"Disc\n");
+          fprintf(fp,"\t\tDisc\n");
+          fprintf(fp,"\t\t# of Sample         : %d\n",Egrp[i].nSample);
+          fprintf(fp,"\t\tRadius              : %14.6e\n",Egrp[i].radius);
+          fprintf(fp,"\t\tCenter              : (%14.6e %14.6e %14.6e)\n",
+                                        Egrp[i].center[0],
+                                        Egrp[i].center[1],
+                                        Egrp[i].center[2]);
+          fprintf(fp,"\t\tNormal              : (%14.6e %14.6e %14.6e)\n",
+                                        Egrp[i].normal[0],
+                                        Egrp[i].normal[1],
+                                        Egrp[i].normal[2]);
           break;
       }
-      fprintf(fp,"\t\tStart step     : %d\n",Egrp[i].getStart());
-      fprintf(fp,"\t\tInterval       : %d\n",Egrp[i].getInterval());
-      fprintf(fp,"\t\tLife time      : %d\n",Egrp[i].getLife());
+
+      fprintf(fp,"\n");
     }
   }
 }

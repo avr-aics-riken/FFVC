@@ -707,6 +707,7 @@ int FFV::Initialize(int argc, char **argv)
     fprintf(fp,"\n----------\n\n");
     fprintf(stdout,"\n----------\n\n");
   }
+  fflush(stdout);
 
   if (C.Mode.ParticleTracking == ON) {
     TR = new Cloud(d_bcd,
@@ -756,6 +757,8 @@ int FFV::Initialize(int argc, char **argv)
     }
   }
 
+  fflush(stdout);
+  Hostonly_ fflush(fp);
 
   // 履歴出力準備
   prepHistoryOutput();

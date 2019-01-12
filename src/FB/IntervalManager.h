@@ -38,7 +38,7 @@
 
 class IntervalManager
 {
-  
+
 // enum
 public:
   /// モード
@@ -50,8 +50,8 @@ public:
   };
 
   unsigned restartStep; ///< By_time指定時のリスタートステップの指定。浮動小数点では誤差がでるための対応策。
-  
-  
+
+
 // メンバ変数
 protected:
   type_IO_spec m_mode; ///< 時制モード(noset:未定義、By_step:ステップ間隔指定、By_time:時刻間隔指定)
@@ -67,7 +67,7 @@ protected:
   double m_last_time;       ///< 最終時刻(By_timeのとき有効)
   double m_dt;              ///< 計算の時間間隔Δt
 
-  
+
 // メンバ関数
 public:
   /// コンストラクタ
@@ -91,7 +91,7 @@ public:
   {
   }
 
-  
+
   /*
    * @brief インターバル(ステップ)の取得
    * @retval インターバルステップ
@@ -101,7 +101,7 @@ public:
     return m_intvl_step;
   }
 
-  
+
   /*
    * @brief インターバル(時間)の取得
    * @retval インターバル時間
@@ -111,7 +111,7 @@ public:
     return m_intvl_time;
   }
 
-  
+
   /*
    * @brief 時制モードを取得
    * @retval 時制モード(noset:未定義、By_step:ステップ間隔指定、By_time:時刻間隔指定)
@@ -120,8 +120,8 @@ public:
   {
     return m_mode;
   }
-  
-  
+
+
   /*
    * @brief 終了ステップを取得
    * @retval 終了ステップ
@@ -130,8 +130,8 @@ public:
   {
     return m_last_step;
   }
-  
-  
+
+
   /*
    * @brief 終了時刻を取得
    * @retval 終了時刻
@@ -140,8 +140,8 @@ public:
   {
     return m_last_time;
   }
-  
-  
+
+
   /*
    * @brief 開始ステップを取得
    * @retval 開始ステップ
@@ -150,8 +150,8 @@ public:
   {
     return m_start_step;
   }
-  
-  
+
+
   /*
    * @brief 開始時刻を取得
    * @retval 開始時刻
@@ -160,8 +160,8 @@ public:
   {
     return m_start_time;
   }
-  
-  
+
+
   /*
    * @brief トリガーの初期化
    * @retval true-成功 / false-時制モードが指定されていない
@@ -173,19 +173,19 @@ public:
   bool initTrigger( const unsigned step, const double time, const double dt, bool d_flag=false )
   {
     m_dt = dt;
-    
+
     if( m_mode == By_step )
     {
       m_base_step = step;
-      
+
       if( d_flag )
       {
         unsigned next_step = calcNextStep(step);
         if( next_step == m_base_step ) next_step += m_intvl_step;
-        
+
         printf("IntervalManager : mode=By_step, base_step=%d, interval=%d, start=%d, first_step=%d"
                , m_base_step, m_intvl_step, m_start_step, next_step);
-        
+
         if( m_last_step > 0 )
         {
           printf(", last_step=%d\n", m_last_step);
@@ -199,11 +199,11 @@ public:
     else if( m_mode == By_time )
     {
       m_base_time = time;
-      
+
       if( d_flag )
       {
         double next_time = calcNextTime(time);
-        
+
         if( next_time == m_base_time ) next_time += m_intvl_time;
         printf("IntervalManager : mode=By_time, base_time=%e, delta_t=%e, interval=%e, start=%e, first_time=%e"
                , m_base_time, m_dt, m_intvl_time, m_start_time, next_time);
@@ -223,8 +223,8 @@ public:
     }
     return true;
   }
-  
-  
+
+
   /*
    * @brief 最終ステップ/時刻かどうか
    * @retval true-最終ステップ/時刻 / false-最終ステップ/時刻でない
@@ -245,8 +245,8 @@ public:
     }
     return false;
   }
-  
-  
+
+
   /*
    * @brief 開始しているかをチェック
    * @retval true-開始している / false-開始していない
@@ -265,8 +265,8 @@ public:
     }
     return false;
   }
-  
-  
+
+
   /*
    * @brief タイミングの評価
    * @retval true-出力タイミングである / false-出力タイミングではない
@@ -283,19 +283,19 @@ public:
     {
       return true;
     }
-    
+
     // nosetのときは必ずtrue(上位プログラムで判定しているものとする)
     if( m_mode == noset )
     {
       return true;
     }
-    
+
     // 開始しているか
     if( !isStarted(step, time) )
     {
       return false;
     }
-    
+
     // ステップ指定のとき
     if( m_mode == By_step )
     {
@@ -304,7 +304,7 @@ public:
       {
         return false;
       }
-      
+
       // 次の出力ステップかどうか
       if( step == calcNextStep( step ) )
       {
@@ -314,7 +314,7 @@ public:
         }
         return true;
       }
-      
+
       // 最終ステップかどうか
       if( isLast( step, time ) )
       {
@@ -333,10 +333,10 @@ public:
       {
         return false;
       }
-      
+
       // 次の出力時刻
       double next_time = calcNextTime( time );
-      
+
       // 次の出力時刻かどうか
       if( time <= next_time && next_time < time + m_dt )
       {
@@ -346,7 +346,7 @@ public:
         }
         return true;
       }
-      
+
       // 最終時刻かどうか
       if( isLast( step, time ) )
       {
@@ -359,8 +359,8 @@ public:
     }
     return false;
   }
-  
-  
+
+
   /*
    * @brief 時刻モードがステップのとき，インターバルの計算に使われる全ての時間を scale で無次元化する
    * @param [in] scale 無次元化の代表時間
@@ -378,8 +378,8 @@ public:
     normalizeDelteT(scale);
     return;
   }
-  
-  
+
+
   /*
    * @brief インターバル値のセット
    * @retval true-成功 / false-時制モードが指定されていない
@@ -401,8 +401,8 @@ public:
     }
     return true;
   }
-  
-  
+
+
   /*
    * @brief 最終ステップ/時刻のセット
    * @retval true-成功 / false-時制モードが指定されていない
@@ -425,7 +425,7 @@ public:
     return true;
   }
 
-  
+
   /*
    * @brief 時制モードをセット
    * @param [in] mode 時制モード(noset:未定義、By_step:ステップ間隔指定、By_time:時刻間隔指定)
@@ -434,8 +434,8 @@ public:
   {
     m_mode = mode;
   }
-  
-  
+
+
   /*
    * @brief 開始ステップ/時刻のセット
    * @retval true-成功 / false-時制モードが指定されていない
@@ -457,7 +457,7 @@ public:
     }
     return true;
   }
-  
+
   /*
    * @brief Graph Ploter用
    * @param [in] msg デバッグ出力用
@@ -476,10 +476,10 @@ public:
 
     return;
   }
-  
-  
+
+
 protected:
-  
+
   /*
    * @brief 次の出力ステップを計算
    * @retval 次の出力ステップ数
@@ -509,7 +509,7 @@ protected:
 
   /*
    * @brief 実数の余り(fortranのmodと同じ)
-   * @retval 剰余 
+   * @retval 剰余
    * @param [in] a 被除数
    * @param [in] b 除数
    */
@@ -518,7 +518,7 @@ protected:
     return a - int(a/b) * b;
   }
 
- 
+
   /*
    * @brief 基準時刻を scale で無次元化する
    * @param [in] scale 無次元化の代表時間
@@ -527,7 +527,7 @@ protected:
   {
     m_base_time /= scale;
   }
-  
+
   /*
    * @brief インターバルを scale で無次元化する
    * @param [in] scale 無次元化の代表時間
@@ -536,7 +536,7 @@ protected:
   {
     m_intvl_time /= scale;
   }
-  
+
   /*
    * @brief 開始時刻を scale で無次元化する
    * @param [in] scale 無次元化の代表時間
@@ -545,7 +545,7 @@ protected:
   {
     m_start_time /= scale;
   }
-  
+
   /*
    * @brief 終了時刻を scale で無次元化する
    * @param [in] scale 無次元化の代表時間
@@ -554,7 +554,7 @@ protected:
   {
     m_last_time /= scale;
   }
-  
+
   /*
    * @brief 計算の時間間隔Δtを scale で無次元化する
    * @param [in] scale 無次元化の代表時間
@@ -563,8 +563,7 @@ protected:
   {
     m_dt /= scale;
   }
-  
+
 };
 
 #endif  /* _FB_INTERVAL_MNGR_H_ */
-

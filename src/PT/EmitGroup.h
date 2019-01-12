@@ -25,6 +25,18 @@
  * @note
  */
 class EmitGroup {
+public:
+  // Line
+  int nDiv;            ///< 分割数
+  REAL_TYPE from[3];   ///< 線分
+  REAL_TYPE to[3];     ///< 線分
+
+  // displayCutInfo
+  int nSample;         ///< サンプル数
+  REAL_TYPE center[3]; ///< 円の中心座標
+  REAL_TYPE normal[3]; ///< 法線ベクトル
+  REAL_TYPE radius;    ///< 円の半径
+
 protected:
   int type;            ///< 開始点タイプ (Pointset, Line, Disc,..)
   int start;           ///< 開始時刻
@@ -33,6 +45,7 @@ protected:
   int ens;             ///< 自グループのチャンクの数
   std::string name;    ///< グループ名
 
+
 public:
   EmitGroup() {
     type = 0;
@@ -40,6 +53,15 @@ public:
     interval = 0;
     life = 0;
     ens = 0;
+    nDiv = 0;
+    nSample = 0;
+    radius = 0.0;
+    for (int i=0; i<3; i++) {
+      from[i] = 0.0;
+      to[i] = 0.0;
+      center[i]=0.0;
+      normal[i]=0.0;
+    }
   }
 
   ~EmitGroup() {}
