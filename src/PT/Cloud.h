@@ -27,6 +27,16 @@
 #include "TextParser.h"
 #include "EmitGroup.h"
 
+// FX10 profiler
+#if defined __K_FPCOLL
+#include "fjcoll.h"
+#elif defined __FX_FAPP
+#include "fj_tool/fjcoll.h"
+#endif
+
+#include "PerfMonitor.h"
+
+using namespace pm_lib;
 using namespace Vec3class;
 using std::vector;
 using std::string;
@@ -63,6 +73,8 @@ protected:
   PtComm PC;                 ///< 粒子通信クラス
   MPI_Request req[NDST*2];   ///< 非同期通信同期
 
+  PerfMonitor* PM;           ///< PerfMonitor class
+
 
 public:
   /// デフォルトコンストラクタ
@@ -73,7 +85,8 @@ public:
         const REAL_TYPE m_refLen,
         const int m_unit,
         const REAL_TYPE dt,
-        TextParser* m_tp)
+        TextParser* m_tp,
+        PerfMonitor* m_PM)
   {
     nParticle = 0;
     gParticle = 0;
@@ -88,6 +101,7 @@ public:
     this->unit       = m_unit;
     this->refLen     = m_refLen;
     this->tpCntl     = m_tp;
+    this->PM         = m_PM;
 
     // 初期値として、BUF_UNIT*粒子分を確保 > buf_max_lenで100単位で更新
     buf_max_len = BUF_UNIT;
@@ -122,10 +136,15 @@ public:
   bool fileout();
 
 
+  
 
 
+    
 protected:
-
+  
+  // @brief PMlib ラベル
+  void set_timing_label();
+    
   // @brief パラメータ表示
   void displayParam(FILE* fp);
 
@@ -222,6 +241,51 @@ protected:
 
   // @brief 回転ベクトルp(alpha, beta, gamma)に対して，-pでベクトルuを回転する
   Vec3r rotate_inv(const Vec3r p, const Vec3r u);
+
+
+  /**
+   * @brief タイミング測定開始
+   * @param [in] key ラベル
+   */
+  inline void TIMING_start(const string key)
+  {
+    // PMlib Intrinsic profiler
+    PT_TIMING__ PM->start(key);
+
+    const char* s_label = key.c_str();
+
+    // Venus FX profiler
+#if defined __K_FPCOLL
+    start_collection( s_label );
+#elif defined __FX_FAPP
+    fapp_start( s_label, 0, 0);
+#endif
+  }
+
+
+  /**
+   * @brief タイミング測定終了
+   * @param [in] key             ラベル
+   * @param [in] flopPerTask    「タスク」あたりの計算量/通信量(バイト) (ディフォルト0)
+   * @param [in] iterationCount  実行「タスク」数 (ディフォルト1)
+   */
+  inline void TIMING_stop(const string key, double flopPerTask=0.0, int iterationCount=1)
+  {
+    // Venus FX profiler
+    const char* s_label = key.c_str();
+
+#if defined __K_FPCOLL
+    stop_collection( s_label );
+#elif defined __FX_FAPP
+    fapp_stop( s_label, 0, 0);
+#endif
+
+    // PMlib Intrinsic profiler
+    PT_TIMING__ PM->stop(key, flopPerTask, (unsigned)iterationCount);
+  }
+
+
+
 };
 
 #endif // _PT_CLOUD_H_

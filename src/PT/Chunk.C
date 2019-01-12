@@ -98,7 +98,7 @@ bool Chunk::updatePosition(Tracking* tr,
     Vec3r p = (*itr).pos;
     Vec3i r;
     int c;
-    printf("p:(%14.6f %14.6f %14.6f)\n", p.x, p.y, p.z);
+    //printf("p:(%14.6f %14.6f %14.6f)\n", p.x, p.y, p.z);
 
     switch(scheme)
     {
@@ -116,7 +116,7 @@ bool Chunk::updatePosition(Tracking* tr,
       case pt_rk4:
         break;
     }
-printf("*p3\n");
+
     if (r.x == -2) {
       ; // nothing
     }
@@ -140,7 +140,7 @@ printf("*p3\n");
     if ( life < getBit26((*itr).bf) ) Inactivate((*itr).bf);
   }
 
-printf("*p4\n");
+
   // 送信バッファの最大値を保存
   // 行き先毎には異なるが、最大長で考えておく
   for (int i=0; i<NDST; i++) {

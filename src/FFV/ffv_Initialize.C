@@ -715,7 +715,8 @@ int FFV::Initialize(int argc, char **argv)
                    C.RefLength,
                    C.Unit.Param,
                    deltaT,
-                   &tp_ffv);
+                   &tp_ffv,
+                   &PM);
     Hostonly_ {
       fprintf(fp,"\n\tParticle Tracking  ON\n\n");
       fprintf(stdout,"\n\tParticle Tracking  ON\n\n");

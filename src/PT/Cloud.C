@@ -34,8 +34,12 @@
  */
 bool Cloud::migration()
 {
+  bool ret;
+    
   // マイグレーション対象でなければ戻る
   if ( !flag_migration ) return true;
+
+  TIMING_start("PT_Migration");
 
   // マイグレーション用に確保したバッファ領域の準備
   if (buf_updated) {
@@ -48,6 +52,7 @@ bool Cloud::migration()
 
 
   // マイグレーション候補を見つけ、行き先毎にパック
+  TIMING_start("PT_ParticlePacking");
   for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
   {
     (*itr)->packParticle(PC.ps_ptr(),
@@ -55,17 +60,28 @@ bool Cloud::migration()
                          buf_max_len,
                          PC.pInfo_ptr());
   }
+  TIMING_stop("PT_ParticlePacking");
 
   // 周囲のランクと通信し、経路と送受信データ数を確定
-  if ( !PC.establishCommPath() ) return false;
+  TIMING_start("PT_EstablishCommPath");
+  ret = PC.establishCommPath();
+  TIMING_stop("PT_EstablishCommPath");
+  if ( !ret ) return false;
 
   // データ本体の送受信
-  if ( !PC.commParticle() ) return false;
+  TIMING_start("PT_CommParticle");
+  ret = PC.commParticle();
+  TIMING_stop("PT_CommParticle");
+  if ( !ret ) return false;
 
 
   // アンパック
+  TIMING_start("PT_ParticleUnpacking");
   unpackParticle();
+  TIMING_stop("PT_ParticleUnpacking");
+  
 
+  TIMING_stop("PT_Migration");
 
   // マイグレーション終了
   flag_migration = false;
@@ -161,6 +177,8 @@ bool Cloud::tracking(const unsigned step, const double time)
 {
   int flag=0; // マイグレーション発生フラグ
   int len=0;  // 送受信バッファに必要な長さ
+  
+  TIMING_start("PT_Tracking");
 
   for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
   {
@@ -174,10 +192,9 @@ bool Cloud::tracking(const unsigned step, const double time)
     // 指定時刻が過ぎ、処理ステップになった場合
     if ( Interval[m].isStarted(step, time) && Interval[m].isTriggered(step, time) )
     {
-      mark();
       // 保持している粒子を積分し、マイグレーションと寿命判定
       if ( (*itr)->updatePosition(tr, scheme, Egrp[m].getLife(), dt, len) ) flag++;
-mark();
+
       // 登録した開始点から粒子を追加
       (*itr)->addParticle();
     }
@@ -193,6 +210,8 @@ mark();
       buf_updated = true;
     }
   }
+  
+  TIMING_stop("PT_Tracking");
 
   return true;
 }
@@ -218,6 +237,8 @@ bool Cloud::initCloud(FILE* fp)
                     bcd,
                     myRank);
 
+  set_timing_label();
+    
   return true;
 }
 
@@ -1089,4 +1110,21 @@ void Cloud::displayParam(FILE* fp)
       fprintf(fp,"\n");
     }
   }
+}
+
+
+
+// ################################################################
+// @brief タイミング測定区間にラベルを与える
+// @note ffv側で登録しているので、これはす未使用
+void Cloud::set_timing_label()
+{
+    /*
+  set_label("PT_Migration",         PerfMonitor::CALC, false);
+  set_label("PT_ParticlePacking",   PerfMonitor::CALC);
+  set_label("PT_EstablishCommPath", PerfMonitor::CALC);
+  set_label("PT_CommParticle",      PerfMonitor::CALC);
+  set_label("PT_ParticleUnpacking", PerfMonitor::CALC);
+  set_label("PT_Tracking",          PerfMonitor::CALC);
+     */
 }
