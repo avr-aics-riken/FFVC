@@ -169,13 +169,15 @@ bool Cloud::tracking(const unsigned step, const double time)
       printf("Error : grp number\n");
       return false;
     }
+    //printf("* chunklist grp = %d\n",m);
 
     // 指定時刻が過ぎ、処理ステップになった場合
     if ( Interval[m].isStarted(step, time) && Interval[m].isTriggered(step, time) )
     {
+      mark();
       // 保持している粒子を積分し、マイグレーションと寿命判定
       if ( (*itr)->updatePosition(tr, scheme, Egrp[m].getLife(), dt, len) ) flag++;
-
+mark();
       // 登録した開始点から粒子を追加
       (*itr)->addParticle();
     }
@@ -200,7 +202,6 @@ bool Cloud::tracking(const unsigned step, const double time)
 // @brief 初期設定
 bool Cloud::initCloud(FILE* fp)
 {
-
   if ( !setPTinfo() ) return false;
 
   if ( !determineUniqueID() ) return false;
@@ -209,11 +210,13 @@ bool Cloud::initCloud(FILE* fp)
   displayParam(fp);
 
   tr = new Tracking(size,
+                    guide,
                     origin,
                     region,
                     pitch,
                     vSource,
-                    bcd);
+                    bcd,
+                    myRank);
 
   return true;
 }

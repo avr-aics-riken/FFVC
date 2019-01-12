@@ -428,6 +428,10 @@ int FFV::Loop(const unsigned step)
   }
 
 
+  //#################################################
+  // 粒子追跡
+  TR->tracking(CurrentStep, CurrentTime);
+  //#################################################
 
   // 1 step elapse
   step_end = cpm_Base::GetWTime() - step_start;

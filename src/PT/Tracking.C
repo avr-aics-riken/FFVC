@@ -29,19 +29,23 @@
 // @retval 正-計算領域内の他ランク, 負-領域外(-1)、自領域(-2)
 Vec3i Tracking::integrate_Euler(Vec3r& p, const REAL_TYPE dt)
 {
+  //printf("[%d] p:(%14.6f %14.6f %14.6f)\n", myRank, p.x, p.y, p.z);
   // 予測値
   Vec3r q = Euler0(p, dt);
 
   // 格子幅より大きな移動の場合
   if (distance(q, p) > pch.length()) {
     // 積分幅を半分にして、2回やり直し
+
     q = Euler0(Euler0(p, 0.5*dt), 0.5*dt);
+
     Vec3i b = getBase(p);
     fprintf(stdout, "Retry at (%d, %d, %d)\n", b.x, b.y, b.z);
   }
   p = q;
   Vec3i dst(-2);
   if ( !inOwnRegion(q) ) dst = findRankDir(q);
+
   return dst;
 }
 
@@ -72,8 +76,11 @@ Vec3i Tracking::integrate_RK2(Vec3r& p, const REAL_TYPE dt)
 Vec3r Tracking::Euler0(Vec3r p, const REAL_TYPE dt)
 {
   Vec3r c = getRidx(p);
-  Vec3i base = getBase(c) ;
+  //printf("[%d] c = (%14.6f %14.6f %14.6f) \n", myRank, c.x, c.y, c.z);
+  Vec3i base = getBase(c);
+  //printf("[%d] base = (%d %d %d) \n", myRank, base.x, base.y, base.z);
   Vec3r coef = getCoef(c, base);
+  //printf("[%d] coef= (%14.6f %14.6f %14.6f) \n", myRank, coef.x, coef.y, coef.z);
   return p + dt * samplingV(coef, base);
 }
 

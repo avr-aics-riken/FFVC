@@ -31,6 +31,7 @@ protected:
   Vec3r reg;            ///< サブドメイン領域サイズ
   int size[3];          ///< サブドメインサイズ
   int gc;               ///< ガイドセル数
+  int myRank;
 
   REAL_TYPE* vSrc;      ///< 速度データ
   int* bcd;             ///< BCindex B
@@ -44,18 +45,22 @@ public:
     gc = 0;
     vSrc = NULL;
     bcd = NULL;
+    myRank = 0;
   }
 
-  Tracking(int m_sz[3],
-           REAL_TYPE m_org[3],
-           REAL_TYPE m_reg[3],
-           REAL_TYPE m_pch[3],
+  Tracking(const int m_sz[3],
+           const int m_gc,
+           const REAL_TYPE m_org[3],
+           const REAL_TYPE m_reg[3],
+           const REAL_TYPE m_pch[3],
            REAL_TYPE* m_Vsrc,
-           int* m_bcd)
+           int* m_bcd,
+           const int m_rank)
   {
     size[0] = m_sz[0];
     size[1] = m_sz[1];
     size[2] = m_sz[2];
+    gc = m_gc;
 
     org.x = m_org[0];
     org.y = m_org[1];
@@ -66,8 +71,15 @@ public:
     reg.z = m_reg[2];
 
     pch.x = m_pch[0];
-    pch.x = m_pch[1];
-    pch.x = m_pch[2];
+    pch.y = m_pch[1];
+    pch.z = m_pch[2];
+
+    myRank = m_rank;
+
+    //printf("[%d] sz  (%14d %14d %14d) \n", myRank, size[0], size[1], size[2]);
+    //printf("[%d] org (%14.6e %14.6e %14.6e) \n", myRank, org.x, org.y, org.z);
+    //printf("[%d] reg (%14.6e %14.6e %14.6e) \n", myRank, reg.x, reg.y, reg.z);
+    //printf("[%d] pch (%14.6e %14.6e %14.6e) \n", myRank, pch.x, pch.y, pch.z);
 
     vSrc = m_Vsrc;
     bcd = m_bcd;
@@ -203,12 +215,12 @@ protected:
    - v[7]; c[1,1,1]
    */
   template <typename T>
-  inline T Trilinear(REAL_TYPE t[3], T v[8]) const
+  inline T Trilinear(Vec3r t, T v[8]) const
   {
     T r[2];
-    r[0] = Bilinear( &t[0], &v[0] );
-    r[1] = Bilinear( &t[0], &v[4] );
-    return ( Linear( t[2], r ) );
+    r[0] = Bilinear( &t.x, &v[0] );
+    r[1] = Bilinear( &t.x, &v[4] );
+    return ( Linear( t.z, r ) );
   }
 
 
@@ -245,6 +257,7 @@ protected:
     size_t mx = _F_IDX_V3D(idx.x, idx.y, idx.z, 0, size[0], size[1], size[2], gc);
     size_t my = _F_IDX_V3D(idx.x, idx.y, idx.z, 1, size[0], size[1], size[2], gc);
     size_t mz = _F_IDX_V3D(idx.x, idx.y, idx.z, 2, size[0], size[1], size[2], gc);
+    //printf("[%d] %d %d %d : %d %d %d : %d\n", myRank, idx.x, idx.y, idx.z,size[0], size[1], size[2], gc);
     vRet.x = vSrc[mx];
     vRet.y = vSrc[my];
     vRet.z = vSrc[mz];
@@ -276,11 +289,12 @@ protected:
          !IS_FLUID(bcd[m5]) ||
          !IS_FLUID(bcd[m6]) ||
          !IS_FLUID(bcd[m7]) ) onBoundary = true; // ある
+    //printf("[%d] BC=%d : %d %d %d\n", myRank, onBoundary, i,j,k);
     return onBoundary;
   }
 
 
-  Vec3r samplingV(REAL_TYPE coef[3], const Vec3i base)
+  Vec3r samplingV(Vec3r coef, const Vec3i base)
   {
     if ( isBCell(base) ) return getVector(base);  // nearest
 
@@ -293,6 +307,7 @@ protected:
     r[5] = getVector(shift5(base));
     r[6] = getVector(shift6(base));
     r[7] = getVector(shift7(base));
+
     return Trilinear(coef, r);
   }
 

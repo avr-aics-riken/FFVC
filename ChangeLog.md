@@ -18,6 +18,7 @@
 ## REVISION HISTORY
 
 ---
+- 2019-1-12 Version 2.6.2
 - 2019-1-12 Version 2.6.1
   - under debugging
 
