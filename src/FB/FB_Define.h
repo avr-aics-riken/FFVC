@@ -656,6 +656,7 @@ enum Monitor_Type {
   ,mon_BOX
   ,mon_PLANE
   ,mon_POLYGON
+  ,mon_DISC
   ,mon_UNKNOWN
 };
 

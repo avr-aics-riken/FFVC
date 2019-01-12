@@ -24,6 +24,7 @@ include_directories(
        ${PROJECT_SOURCE_DIR}/src/F_CORE
        ${PROJECT_SOURCE_DIR}/src/F_LS
        ${PROJECT_SOURCE_DIR}/src/IP
+       ${PROJECT_SOURCE_DIR}/src/PT
        ${PROJECT_SOURCE_DIR}/src/Geometry
        ${PROJECT_SOURCE_DIR}/src/FILE_IO
        ${PROJECT_SOURCE_DIR}/src/FFV

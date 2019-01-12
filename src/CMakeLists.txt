@@ -26,7 +26,7 @@ add_subdirectory(FFV)
 add_subdirectory(FILE_IO)
 add_subdirectory(Geometry)
 add_subdirectory(IP)
-
+add_subdirectory(PT)
 
 include_directories(
        ${PROJECT_BINARY_DIR}/src/FFV       # ffv_Version.h
@@ -39,6 +39,7 @@ include_directories(
        ${PROJECT_SOURCE_DIR}/src/FILE_IO
        ${PROJECT_SOURCE_DIR}/src/Geometry
        ${PROJECT_SOURCE_DIR}/src/IP
+       ${PROJECT_SOURCE_DIR}/src/PT
        ${TP_INC}
        ${PM_INC}
        ${PL_INC}
@@ -55,6 +56,7 @@ link_directories(
        ${PROJECT_BINARY_DIR}/src/FILE_IO
        ${PROJECT_BINARY_DIR}/src/Geometry
        ${PROJECT_BINARY_DIR}/src/IP
+       ${PROJECT_BINARY_DIR}/src/PT
        ${TP_LIB}
        ${PM_LIB}
        ${PL_LIB}
@@ -78,7 +80,7 @@ endif()
 
 
 add_executable(${ffvc_target} ${ffvc_src})
-target_link_libraries(${ffvc_target} FFV FIO FCORE FLS ASD GEOM IP FB)
+target_link_libraries(${ffvc_target} FFV FIO FCORE FLS ASD GEOM IP PT FB)
 
 install(TARGETS ${ffvc_target} DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 

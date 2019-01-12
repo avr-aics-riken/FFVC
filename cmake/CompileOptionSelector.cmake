@@ -24,7 +24,7 @@
 
 macro (AddOptimizeOption)
   if (TARGET_ARCH STREQUAL "INTEL_F_TCS")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Kfast,parallel,optmsg=2 -V -Nsrc -Xg -Nfjcex")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Kfast,parallel,optmsg=2 -V -Nsrc -Xg -Nfjcex -std=c++11")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Kfast,parallel,optmsg=2 -V -Nsrc -Xg")
     set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Cpp -Kfast,parallel,optmsg=2 -V -Qt")
     # -Xg   : gcc compatible flag
@@ -42,7 +42,7 @@ macro (AddOptimizeOption)
     set(CMAKE_Fortran_FLAGS "-O3 -cpp -Wall --free-line-length-none")
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -xHOST -O3 -qopt-report=5 -DMPICH_IGNORE_CXX_SEEK")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -xHOST -O3 -qopt-report=5 -DMPICH_IGNORE_CXX_SEEK -std=c++11")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -xHOST -O3 -qopt-report=5")
     set(CMAKE_Fortran_FLAGS "-xHOST -O3 -Warn unused -fpp -qopt-report=5")
 

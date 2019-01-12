@@ -291,6 +291,7 @@ public:
     int ReynoldsStress;
     int ChannelOutputIter;
     int ChannelOutputMean;
+    int ParticleTracking;
   } Mode_set;
 
   /** 隠しパラメータ */
@@ -628,6 +629,7 @@ public:
     Mode.ReynoldsStress = 0;
     Mode.ChannelOutputIter = 0;
     Mode.ChannelOutputMean = 0;
+    Mode.ParticleTracking = 0;
 
     LES.Calc=0;
     LES.Model=0;
@@ -784,6 +786,8 @@ public:
   void getAXB();
   bool isAXB() {return (Hide.AXB==ON)?true:false;}
 
+  // 粒子追跡のオプション
+  void getParticleTracking();
 
   // @brief 計算モデルの入力ソース情報を取得
   void getGeometryModel();

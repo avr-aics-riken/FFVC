@@ -418,3 +418,54 @@ Unit {
   UnitOfOutput          = "nonDimensional"
   Pressure              = "Gauge"
 }
+
+ParticleTracking {
+  Tracking = "off"
+  Method   = "euler"
+
+
+  list[@] {
+    type       = "Line"
+    StartStep  = 0
+    Interval   = 10
+    label      = "grp1"
+    lifetime   = -1
+    Division   = 20
+    From       = (-0.01, 0.0, 0.02)
+    To         = (0.01, 0.0, 0.48)
+  }
+/*
+  list[@] {
+    type       = "pointset"
+    StartStep  = 0
+    Interval   = 10
+    label      = "grp2"
+    lifetime   = -1
+
+    set[@] {
+      Coordinate    = (0.2, 0.2, 0.2)
+      tag           = "p1"
+    }
+    set[@] {
+      Coordinate    = (0.3, 0.3, 0.3)
+      tag           = "p2"
+    }
+    set[@] {
+      Coordinate    = (0.4, 0.4, 0.4)
+      tag           = "p3"
+    }
+  }
+
+  list[@] {
+    type       = "Disc"
+    StartStep  = 0
+    Interval   = 10
+    label      = "grp3"
+    lifetime   = -1
+    center     = (0.5, 1.0, -0.3)
+    normal     = (-1.0, 0.0, 0.0)
+    radius     = 0.02
+    nSample    = 50
+  }
+*/
+}

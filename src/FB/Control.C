@@ -649,6 +649,37 @@ void Control::getAXB()
 
 
 // #################################################################
+/**
+ * @brief 粒子追跡オプション
+ */
+void Control::getParticleTracking()
+{
+  string str;
+  string label;
+
+  label = "/ParticleTracking/Tracking";
+
+  if ( tpCntl->chkLabel(label) )
+  {
+    if ( tpCntl->getInspectedValue(label, str) )
+    {
+      if     ( !strcasecmp(str.c_str(), "on") )  Mode.ParticleTracking = ON;
+      else if( !strcasecmp(str.c_str(), "off") ) Mode.ParticleTracking = OFF;
+      else
+      {
+        Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
+        Exit(0);
+      }
+    }
+    else
+    {
+      Exit(0);
+    }
+  }
+}
+
+
+// #################################################################
 // 計算モデルの入力ソース情報を取得
 void Control::getGeometryModel()
 {
@@ -3108,7 +3139,6 @@ void Control::printSteerConditions(FILE* fp,
     fprintf(fp,"\t\tEnd   velocity     [-]   : %12.5e\n", Stab.end);
     fprintf(fp,"\t\tPenalty value      [-]   : %12.5e\n", Stab.penalty_number);
   }
-
 
 
   // Hidden parameter -----------------

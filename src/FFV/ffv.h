@@ -107,6 +107,8 @@
 #include <sys/uio.h>
 #endif
 
+#include"Cloud.h"
+
 
 using namespace std;
 using namespace pm_lib;
@@ -196,6 +198,7 @@ private:
   SetBC3D BC;                ///< BCクラス
   History* H;                ///< 履歴クラス
   matA A;                    ///< 係数行列出力クラス
+  Cloud* TR;                 ///< 流星追跡管理クラス
 
   POLYLIB_STAT poly_stat;    ///< Polylibの戻り値
   FBUtility U;               ///< ユーティリティクラス

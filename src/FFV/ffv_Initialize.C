@@ -702,12 +702,37 @@ int FFV::Initialize(int argc, char **argv)
   displayMemoryInfo(stdout, G_TotalMemory, TotalMemory, "Solver");
 
 
+  // 粒子追跡 ------------------
+  Hostonly_ {
+    fprintf(fp,"\n----------\n\n");
+    fprintf(stdout,"\n----------\n\n");
+  }
 
-  // 履歴出力準備
-  prepHistoryOutput();
+  if (C.Mode.ParticleTracking == ON) {
+    TR = new Cloud(d_bcd,
+                   d_v,
+                   C.RefLength,
+                   C.Unit.Param,
+                   deltaT,
+                   &tp_ffv);
+    Hostonly_ {
+      fprintf(fp,"\n\tParticle Tracking  ON\n\n");
+      fprintf(stdout,"\n\tParticle Tracking  ON\n\n");
+    }
 
+    TR->importCPM(paraMngr);
+    TR->setRankInfo(paraMngr, procGrp);
+    TR->setDomainInfo(C.guide, C.RefLength);
+    TR->initCloud(fp);
 
-  Hostonly_ if ( fp ) fclose(fp);
+  }
+  else
+  {
+    Hostonly_ {
+      fprintf(fp,"\n\tParticle Tracking  OFF\n");
+      fprintf(stdout,"\n\tParticle Tracking  OFF\n");
+    }
+  }
 
 
   TIMING_stop("Initialization_Section");
@@ -730,6 +755,13 @@ int FFV::Initialize(int argc, char **argv)
       printf(     "\n\t#############  DRY RUN for DEBUGGING BC  #############\n\n");
     }
   }
+
+
+  // 履歴出力準備
+  prepHistoryOutput();
+
+
+  Hostonly_ if ( fp ) fclose(fp);
 
   return 1;
 }
@@ -2054,7 +2086,7 @@ void FFV::initInterval()
 
 
   // インターバルの初期化
-  double m_tm    = CurrentTime;  // 積算時間　Restart()で設定
+  double m_tm    = CurrentTime;  // 積算時間 Restart()で設定
   unsigned m_stp = CurrentStep;  // 積算ステップ数
 
   for (int i=Control::tg_compute; i<=Control::tg_accelra; i++)
@@ -2816,6 +2848,9 @@ string FFV::setDomain(TextParser* tpf)
 
   // 係数行列の書き出しモード
   C.getAXB();
+
+  // 粒子追跡
+  C.getParticleTracking();
 
   // 全ノードについて，ローカルノード1面・一層あたりの通信量の和（要素数）を計算
   double c = 0.0;

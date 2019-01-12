@@ -1,0 +1,1050 @@
+//##################################################################################
+//
+// Flow Base class
+//
+// Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
+// All rights reserved.
+//
+// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
+// All rights reserved.
+//
+// Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN.
+// All rights reserved.
+//
+// Copyright (c) 2016-2019 Research Institute for Information Technology, Kyushu university
+// All rights researved.
+//
+//##################################################################################
+
+/**
+ * @file   Cloud.C
+ * @brief  Cloud class
+ * @author riit
+ */
+
+#include "Cloud.h"
+
+/* #################################################################
+// @brief マイグレーション処理
+   @note 方針
+   - Chunk::updatePosition()で、マイグレーション候補にマーク、送信先毎の個数をカウント
+   - 送信バッファは周囲のランク26方向に対してvectorで管理、毎回利用直前にクリアして使う
+   - 粒子と情報をバッファに詰め込み、リストから削除、送信
+   - 受信し、アンパック、情報を修正
+ */
+bool Cloud::migration()
+{
+  // マイグレーション対象でなければ戻る
+  if ( !flag_migration ) return true;
+
+  // マイグレーション用に確保したバッファ領域の準備
+  if (buf_updated) {
+    PC.resizeSendBuffer(buf_max_len);
+    buf_updated = false;
+  }
+
+  // バッファサイズの更新がない場合は再初期化のみ
+  PC.initSendBuffer();
+
+
+  // マイグレーション候補を見つけ、行き先毎にパック
+  for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
+  {
+    (*itr)->packParticle(PC.ps_ptr(),
+                         PC.bs_ptr(),
+                         buf_max_len,
+                         PC.pInfo_ptr());
+  }
+
+  // 周囲のランクと通信し、経路と送受信データ数を確定
+  if ( !PC.establishCommPath() ) return false;
+
+  // データ本体の送受信
+  if ( !PC.commParticle() ) return false;
+
+
+  // アンパック
+  unpackParticle();
+
+
+  // マイグレーション終了
+  flag_migration = false;
+
+  return true;
+}
+
+
+// #################################################################
+// @brief 受信粒子のアンパック
+void Cloud::unpackParticle()
+{
+  int* pInfo = PC.pInfo_ptr();
+  REAL_TYPE* pr_buf = PC.pr_ptr();
+  int* br_buf = PC.br_ptr();
+  const int bsz = buf_max_len;
+
+
+  for (int i=0; i<NDST; i++)
+  {
+    const int gid = pInfo[4*i+1];   // グループID
+    const int pid = pInfo[4*i+2];   // 粒子ID
+    const int cnt = pInfo[4*i+3] ;  // 受信粒子数
+    int b;
+    Vec3r v;
+    particle p;
+
+    for (int j=0; j<cnt; j++)
+    {
+      v.x = pr_buf[bsz*i + 3*j+0];
+      v.y = pr_buf[bsz*i + 3*j+1];
+      v.z = pr_buf[bsz*i + 3*j+2];
+      b = br_buf[bsz*i + j];
+      Chunk::removeMigrate(b);
+
+      p.pos = v;
+      p.bf  = b;
+
+
+      // chunkList内で粒子IDをサーチし、存在しなければ、新たなチャンクを作る
+      int check=0;
+      for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
+      {
+        // IDがあれば、追加
+        if ( pid == (*itr)->getUid() ) {
+          (*itr)->addParticle(p);
+          check=1;
+          break;
+        }
+      }
+
+      // pidのチャンクが存在しない場合
+      if (check==0)
+      {
+        Chunk* m = new Chunk(p, gid, pid);
+        chunkList.push_back(m);
+        Egrp[gid].incGroup();
+      }
+
+    }
+  } // NDST-loop
+
+}
+
+
+// #################################################################
+// @brief 既に存在するグループIDの検索
+// @param [in] c   検索対象ID
+// @retval 存在すれば true
+bool Cloud::searchGrp(const int c)
+{
+  for (int i=0; i<nGrpEmit; i++)
+  {
+    if ( Egrp[i].isEns(c) ) return true;
+  }
+  return false;
+}
+
+
+// #################################################################
+// @brief ファイル出力
+bool Cloud::fileout()
+{
+  // 保持するチャンクを出力
+
+  // メタデータを出力
+}
+
+
+// #################################################################
+// @brief ランタイム
+bool Cloud::tracking(const unsigned step, const double time)
+{
+  int flag=0; // マイグレーション発生フラグ
+  int len=0;  // 送受信バッファに必要な長さ
+
+  for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
+  {
+    int m = (*itr)->getGrp();
+    if (m<0) {
+      printf("Error : grp number\n");
+      return false;
+    }
+
+    // 指定時刻が過ぎ、処理ステップになった場合
+    if ( Interval[m].isStarted(step, time) && Interval[m].isTriggered(step, time) )
+    {
+      // 保持している粒子を積分し、マイグレーションと寿命判定
+      if ( (*itr)->updatePosition(tr, scheme, Egrp[m].getLife(), dt, len) ) flag++;
+
+      // 登録した開始点から粒子を追加
+      (*itr)->addParticle();
+    }
+  }
+
+  // マイグレーションが発生する場合
+  if (flag>0) {
+    flag_migration = true;
+
+    // バッファ長の更新が必要な場合
+    if (buf_max_len < len) {
+      buf_max_len = (len / BUF_UNIT + 1) * BUF_UNIT;
+      buf_updated = true;
+    }
+  }
+
+  return true;
+}
+
+
+// #################################################################
+// @brief 初期設定
+bool Cloud::initCloud(FILE* fp)
+{
+  if ( !setPTinfo() ) return false;
+
+  if ( !determineUniqueID() ) return false;
+
+  displayParam(stdout);
+  displayParam(fp);
+
+  tr = new Tracking(size,
+                    origin,
+                    region,
+                    pitch,
+                    vSource,
+                    bcd);
+
+  return true;
+}
+
+
+// #################################################################
+// @brief 開始点のユニークIDを割り振る
+bool Cloud::determineUniqueID()
+{
+  unsigned* uid = new unsigned[numProc];
+  memset(uid, 0, sizeof(unsigned)*numProc);
+  unsigned sum=0;
+
+  if (numProc > 1)
+  {
+    unsigned sbuf = nParticle;
+    if ( MPI_SUCCESS != MPI_Allgather(&sbuf,
+                                      1,
+                                      MPI_UNSIGNED,
+                                      uid,
+                                      1,
+                                      MPI_UNSIGNED,
+                                      MPI_COMM_WORLD) ) return false;
+
+    for (int i=0; i<numProc; i++) sum += uid[i];
+  }
+  else
+  {
+    sum = nParticle;
+  }
+  gParticle = sum;
+
+  Hostonly_ printf("Global # of particles  = %ld\n", gParticle);
+
+  // 各ランクのユニークIDの先頭番号
+  unsigned* acc = new unsigned[numProc];
+
+  acc[0] = 0;
+  for (int i=1; i<numProc; i++)
+  {
+    acc[i] = acc[i-1] + uid[i-1];
+  }
+
+
+  // ユニークIDの振り直し
+  unsigned nc = 0;
+  for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
+  {
+    (*itr)->setUid(acc[myRank]+nc);
+    nc++;
+  }
+
+  if (nc != chunkList.size()) {
+    printf("chunkList size is not proper\n");
+    return false;
+  }
+
+#ifdef PT_DEBUG
+  printf("rank=%d : nParticle=%d\n", nParticle);
+#endif
+
+  Hostonly_ printf("gParticle=%d\n", gParticle);
+
+
+  delete [] uid;
+  delete [] acc;
+
+  return true;
+}
+
+
+// #################################################################
+// @brief 粒子追跡情報を取得し，chunkに保持する
+bool Cloud::setPTinfo()
+{
+  Monitor_Type mon_type;
+  string str, label;
+  string label_base, label_leaf;
+  string name;
+  double f_val=0.0;
+
+  /* 粒子出力  >>  FFVの制御部で記述
+  label = "/ParticleTracking/Tracking";
+
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    Hostonly_ stamped_printf("\tError : '%s'\n", label.c_str());
+    return false;
+  }
+  else
+  {
+    if ( !strcasecmp(str.c_str(), "on") ) tracking = ON;
+    if ( !strcasecmp(str.c_str(), "off")) tracking = OFF;
+  }
+  */
+
+  label_base = "/ParticleTracking";
+  label = label_base + "/method";
+
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing warning : No Label in '%s'\n", label.c_str());
+    return false;
+  }
+  if ( !strcasecmp(str.c_str(), "euler") ) {
+    scheme = pt_euler;
+  }
+  else if ( !strcasecmp(str.c_str(), "rk2") ) {
+    scheme = pt_rk2;
+  }
+  else if ( !strcasecmp(str.c_str(), "rk4") ) {
+    scheme = pt_rk4;
+  }
+  else {
+    Hostonly_ printf("Invalid particle tracking method\n");
+    return false;
+  }
+
+
+
+  // 粒子放出開始点の個数のチェック
+  int nnode=0;
+  int nlist=0;
+
+  nnode = tpCntl->countLabels(label_base);
+  if ( nnode == 0 )
+  {
+    stamped_printf("\tcountLabels --- %s\n", label_base.c_str());
+    return false;
+  }
+
+  for (int i=0; i<nnode; i++)
+  {
+    if ( !(tpCntl->getNodeStr(label_base, i+1, str)) )
+    {
+      printf("\tParsing error : No No List[@]\n");
+      return false;
+    }
+
+    if( strcasecmp(str.substr(0,4).c_str(), "List") ) continue;
+
+    nlist++;
+  }
+
+  if ( nlist==0 )
+  {
+    Hostonly_ stamped_printf("\tError : No start points. Please confirm 'ParticleTracking' in Input parameter file. \n");
+  }
+
+
+  // ソルバー計算ステップ情報の取得
+
+  // スタート
+  label = "/TimeControl/Session/Start";
+  if ( !(tpCntl->getInspectedValue(label, f_val )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    return false;
+  }
+  unsigned m_start = f_val;
+
+
+  /* 終了
+  label = "/TimeControl/Session/End";
+  if ( !(tpCntl->getInspectedValue(label, f_val )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    return false;
+  }
+  unsigned m_end = f_val;
+  */
+
+
+  // EmitGrp[]の作成
+  nGrpEmit = nnode;
+  Egrp = new EmitGroup[nGrpEmit];
+
+
+  // IntervalManagerのインスタンス
+  Interval = new IntervalManager[nGrpEmit];
+
+  for (int i=0; i<nGrpEmit; i++)
+  {
+    Interval[i].setMode(IntervalManager::By_step);
+    Interval[i].setStart(m_start);
+    //Interval[i].setLast(m_end);
+  }
+
+
+
+  // リストの読み込み
+  label_base = "/ParticleTracking";
+
+  for (int i=0; i<nGrpEmit; i++)
+  {
+    if ( !(tpCntl->getNodeStr(label_base, i+1, str)) )
+    {
+      printf("\tParsing error : No List[@]\n");
+      return false;
+    }
+    if( strcasecmp(str.substr(0,4).c_str(), "List") ) continue;
+
+
+    label_leaf = label_base + "/" + str;
+
+    // point distribution type
+    label = label_leaf + "/Type";
+
+    if ( !(tpCntl->getInspectedValue(label, str)) )
+    {
+      stamped_printf("\tParsing error : No entory '%s'\n", label.c_str());
+      return false;
+    }
+
+    if ( !strcasecmp(str.c_str(), "PointSet") )
+    {
+      mon_type = mon_POINT_SET;
+    }
+    else if ( !strcasecmp(str.c_str(), "Line") )
+    {
+      mon_type = mon_LINE;
+    }
+    /*
+    else if ( !strcasecmp(str.c_str(), "Cylinder") )
+    {
+      mon_type = mon_CYLINDER;
+    }
+    else if ( !strcasecmp(str.c_str(), "Box") )
+    {
+      mon_type = mon_BOX;
+    }
+    */
+    else if ( !strcasecmp(str.c_str(), "Disc") )
+    {
+      mon_type = mon_DISC;
+    }
+    else
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid keyword in label='%s', str=%s\n", label.c_str(), str.c_str());
+      return false;
+    }
+
+
+    // 順番に粒子IDとチャンクIDを付与
+    // 粒子IDは各サブドメイン毎の仮のもの
+    switch(mon_type)
+    {
+      case mon_POINT_SET:
+        Egrp[i].setType(mon_POINT_SET);
+        setPointset(label_leaf, i);
+        break;
+
+      case mon_LINE:
+        Egrp[i].setType(mon_LINE);
+        setLine(label_leaf, i);
+        break;
+
+      case mon_DISC:
+        Egrp[i].setType(mon_DISC);
+        setDisc(label_leaf, i);
+        break;
+
+      default:
+        return false;
+        break;
+    }
+  }
+
+
+  for (int i=0; i<nGrpEmit; i++)
+  {
+    if ( !Interval[i].initTrigger(m_start,
+                                  (double)m_start * (double)dt,
+                                  (double)dt,
+                                  true) ) return false;
+  }
+
+  nParticle = chunkList.size();
+
+  return true;
+}
+
+
+// #################################################################
+// @brief 粒子追跡パラメータ取得
+bool Cloud::getTPparam(const string label_leaf, const int odr)
+{
+  string str, label;
+  double f_val=0.0;
+
+
+  // 粒子出力
+  label = "/ParticleTracking/StartStep";
+
+  if ( !(tpCntl->getInspectedValue(label, f_val )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
+    return false;
+  }
+  else
+  {
+    Egrp[odr].setStart( (int)f_val );
+  }
+
+  label="/ParticleTracking/Interval";
+
+  if ( !(tpCntl->getInspectedValue(label, f_val )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    return false;
+  }
+  else
+  {
+    Egrp[odr].setInterval( (int)f_val );
+    Interval[odr].setInterval(f_val);
+  }
+
+  // Labelの取得
+  label = label_leaf + "/Label";
+
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing warning : No Label in '%s'\n", label.c_str());
+    return false;
+  }
+  else
+  {
+    Egrp[odr].setGrpName(str);
+  }
+
+
+  label =  label_leaf + "/lifetime";
+
+  if ( !(tpCntl->getInspectedValue(label, f_val )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : No lifetime\n");
+    return false;
+  }
+  else
+  {
+    int tmp = (int)f_val;
+    if (tmp > MAX_LIFE) {
+      Hostonly_ printf("Exceed MAX_LIFE\n");
+      return false;
+    }
+    Egrp[odr].setLife(tmp);
+  }
+
+  return true;
+}
+
+
+// #################################################################
+/**
+ * @brief 座標情報を取得し、chunkに保持(PointSet)
+ * @param [in]  odr        グループ登録インデクス
+ * @note データは無次元化して保持
+ */
+bool Cloud::setPointset(const string label_base,
+                        const int odr)
+{
+  char tmpstr[20];
+  string str, label, label_leaf;
+
+  if ( !getTPparam(label_base, odr) ) return false;
+
+  // PointSet個数のチェック
+  int nnode=0;
+  int nlist=0;
+
+  nnode = tpCntl->countLabels(label_base);
+
+  if ( nnode == 0 )
+  {
+    stamped_printf("\tcountLabels --- %s\n", label_base.c_str());
+    return false;
+  }
+
+  for (int i=0; i<nnode; i++)
+  {
+    if ( !(tpCntl->getNodeStr(label_base, i+1, str)) )
+    {
+      printf("\tParsing error : No node name\n");
+      return false;
+    }
+
+    if ( strcasecmp(str.substr(0,3).c_str(), "set") ) continue;
+    nlist++;
+  }
+
+  // PointSet取得
+  int pc=0;
+  for (int i=0; i<nnode; i++)
+  {
+    if ( !(tpCntl->getNodeStr(label_base, i+1, str)) )
+    {
+      printf("\tParsing error : No Elem name\n");
+      return false;
+    }
+
+    if ( strcasecmp(str.substr(0,3).c_str(), "set") ) continue;
+    pc++;
+
+    label_leaf = label_base + "/" + str;
+
+    // set coordinate
+    label = label_leaf + "/Coordinate";
+    REAL_TYPE v[3];
+    for (int n=0; n<3; n++) v[n]=0.0;
+
+    if ( !(tpCntl->getInspectedVector(label, v, 3 )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      return false;
+    }
+
+    // 入力パラメータの次元が有次元のとき，無次元化する
+    if (unit == DIMENSIONAL) normalizeCord(v);
+
+
+    // set tagの取得．ラベルなしでもエラーではない
+    label = label_leaf + "/tag";
+
+    if ( !(tpCntl->getInspectedValue(label, str)) )
+    {
+      Hostonly_ stamped_printf("\tParsing warning : No tag for '%s'\n", label.c_str());
+    }
+    if ( !strcasecmp(str.c_str(), "") )
+    {
+      sprintf(tmpstr, "point_%d", pc);
+      str = tmpstr;
+    }
+
+    // 自領域内であれば、初期開始点として追加
+    if ( inOwnRegion(v) )
+    {
+      Vec3r pos(v);
+      Chunk* m = new Chunk(pos, odr, 1);
+      chunkList.push_back(m);
+      Egrp[odr].incGroup();
+    }
+  }
+  return true;
+}
+
+
+// #################################################################
+/**
+ * @brief 開始座標情報を取得し、chunkに保持(Line)
+ * @param [in]  odr        グループ登録インデクス
+ * @note データは無次元化して保持
+ */
+bool Cloud::setLine(const string label_base,
+                    const int odr)
+{
+  string str, label;
+  REAL_TYPE v[3];
+  int nDivision;
+  REAL_TYPE from[3], to[3];
+
+  if ( !getTPparam(label_base, odr) ) return false;
+
+  label = label_base + "/Division";
+
+  if ( !(tpCntl->getInspectedValue(label, nDivision )) )
+  {
+	  Hostonly_ stamped_printf("\tParsing error : No Division\n");
+	  return false;
+  }
+  if ( nDivision == 0 ) return false;
+
+  // load parameter of 'from' and 'to'
+  label = label_base + "/From";
+
+  for (int n=0; n<3; n++) v[n]=0.0;
+  if ( !(tpCntl->getInspectedVector(label, v, 3 )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'From' in 'Line'\n");
+    return false;
+  }
+  from[0]=v[0];
+  from[1]=v[1];
+  from[2]=v[2];
+
+  // 入力パラメータの次元が有次元のとき，無次元化する
+  if (unit == DIMENSIONAL) normalizeCord(from);
+
+
+  label=label_base+"/To";
+
+  for (int n=0; n<3; n++) v[n]=0.0;
+  if ( !(tpCntl->getInspectedVector(label, v, 3 )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get 'To' in 'Line'\n");
+    return false;
+  }
+  to[0]=v[0];
+  to[1]=v[1];
+  to[2]=v[2];
+
+  // 入力パラメータの次元が有次元のとき，無次元化する
+  if (unit == DIMENSIONAL) normalizeCord(to);
+
+
+  // 点群の発生と登録
+
+  int npnt = nDivision + 1;
+  if (npnt < 2) return false;
+
+  Vec3r st(from);
+  Vec3r ed(to);
+  Vec3r dd = ed - st;
+  dd /= (REAL_TYPE)npnt - 1.0;
+
+  for (int m = 0; m < npnt; m++)
+  {
+    Vec3r pos = st + dd * (REAL_TYPE)m;
+
+    // 自領域内であれば、初期開始点として追加
+    if ( inOwnRegion(v) )
+    {
+      Vec3r pos(v);
+      Chunk* m = new Chunk(pos, odr, 1);
+      chunkList.push_back(m);
+      Egrp[odr].incGroup();
+    }
+  }
+  return true;
+}
+
+
+
+// #################################################################
+/**
+ * @brief 開始座標情報を取得し、chunkに保持(Disc)
+ * @param [in]  odr        グループ登録インデクス
+ * @note データは無次元化して保持
+ */
+bool Cloud::setDisc(const string label_base,
+                    const int odr)
+{
+  string str, label;
+  int nSample;
+  REAL_TYPE cnt[3], nv[3], radius;
+
+  if ( !getTPparam(label_base, odr) ) return false;
+
+  label=label_base+"/nSample";
+
+  if ( !(tpCntl->getInspectedValue(label, nSample )) )
+  {
+	  Hostonly_ stamped_printf("\tParsing error : No nSample\n");
+	  return false;
+  }
+  if ( nSample <= 0 ) return false;
+
+  // load parameter of 'from' and 'to'
+  label=label_base+"/center";
+
+  if ( !(tpCntl->getInspectedVector(label, cnt, 3 )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    return false;
+  }
+
+  // 入力パラメータの次元が有次元のとき，無次元化する
+  if (unit == DIMENSIONAL) normalizeCord(cnt);
+
+
+  label=label_base+"/normal";
+
+  if ( !(tpCntl->getInspectedVector(label, nv, 3 )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    return false;
+  }
+
+  // 入力パラメータの次元が有次元のとき，無次元化する
+  if (unit == DIMENSIONAL) normalizeCord(nv);
+
+
+  label=label_base+"/radius";
+
+  if ( !(tpCntl->getInspectedValue(label, radius )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : No Radius\n");
+    return false;
+  }
+  if ( radius <= 0.0 ) return false;
+
+
+  // 点群の発生と登録
+  samplingInCircle(cnt, nv, radius, nSample, odr);
+
+  return true;
+}
+
+
+// #################################################################
+/// @brief 半径r内のサンプリング
+/// @param [in]  cnt        中心座標
+/// @param [in]  nv         法線方向
+/// @param [in]  radius     半径
+/// @param [in]  nSample    サンプル数
+/// @param [in]  odr        グループ登録インデクス
+/// @note 指定半径より少し内側（98%）にする
+/// @url https://teramonagi.hatenablog.com/entry/20141113/1415839321
+void Cloud::samplingInCircle(const REAL_TYPE* cnt,
+                             const REAL_TYPE* nv,
+                             const REAL_TYPE radius,
+                             const int nSample,
+                             const int odr)
+{
+  REAL_TYPE theta, r, x, y;
+  double pi = 2.0*asin(1.0);
+  Vec3r q, t;
+  Vec3r center(cnt);
+  Vec3r normal(nv);
+
+  Vec3r angle = getAngle(normal);
+
+  for (int i=0; i<nSample; i++)
+  {
+    theta = mts(0.0, 2.0*pi);
+    r = sqrt( 2.0*mts(0.0, (double)radius) );
+
+    x = 0.98 * r * cos(theta);
+    y = 0.98 * r * sin(theta);
+
+    q = rotate_inv(angle, t.assign(x, y, 0.0)) + center;
+
+    if ( inOwnRegion(q) )
+    {
+      Vec3r pos(q);
+      Chunk* m = new Chunk(pos, odr, 1);
+      chunkList.push_back(m);
+      Egrp[odr].incGroup();
+    }
+  }
+}
+
+
+
+// #################################################################
+// 指定法線nvがz軸の方向ベクトルに向かう回転角を計算する
+// 回転の符号はz軸に向かう回転が右ねじ方向の場合を正にとる
+Vec3r Cloud::getAngle(Vec3r nv)
+{
+  REAL_TYPE alpha, beta, c, d, c_alp, c_bta;
+  REAL_TYPE eps = 1.0e-5, f_yz, f_xz;
+  Vec3r p, q, angle;
+  Vec3r z(0.0, 0.0, 1.0);
+  Vec3r dir;         ///< 矩形の方向規定の参照ベクトル
+
+  // 単位ベクトルnvがz軸の単位ベクトルと作る角度を返す
+  // yz面への射影
+  p.x = 0.0;
+  p.y = nv.y;
+  p.z = nv.z;
+  c = p.length();
+
+  if ( c != 0.0 )
+  {
+    c_alp = dot(z, p)/c;
+    d = acos( c_alp );
+    f_yz = c_alp+1.0;
+    alpha = (nv.y >= 0.0) ? d : -d; // alpahはx軸周りの回転角
+  }
+  else
+  {
+    alpha = 0.0; // yz面への射影ベクトルがゼロの場合には回転しない
+  }
+
+
+  // 参照ベクトルをalphaだけ回転して評価ベクトルを生成 > xz面への射影
+  q.assign(alpha, 0.0, 0.0);
+  p = rotate(q, nv);
+  c = p.length();
+
+  if ( c != 0.0 )
+  {
+    c_bta = dot(z, p)/c;
+    d = acos( c_bta );
+    f_xz = c_bta+1.0;
+    beta = (nv.x >= 0.0) ? -d : d; // betaはy軸まわりの回転角
+  }
+  else
+  {
+    beta = 0.0;
+  }
+
+  // pがz-方向の場合にだけ，y軸回りのみ回転させてz+方向にする
+  if ( (f_yz<eps) && (f_xz<eps) )
+  {
+    alpha = 0.0;
+    beta  = acos(-1.0);
+  }
+
+  angle.assign(alpha, beta, 0.0);
+
+
+  /* 矩形の場合，単位ベクトルdirが回転した後，x軸の単位ベクトルへ回転する角度を計算
+  if ( mon_type == mon_BOX )
+  {
+    REAL_TYPE c_gma, f_xy;
+    Vec3r x(1.0, 0.0, 0.0);
+
+    q = rotate(angle, dir); // 回転によりxy平面上に射影される > q.z=0.0
+    c = q.length();
+
+    if ( c != 0.0 )
+    {
+      c_gma = dot(x, q)/c;
+      d = acos( c_gma );
+      f_xy = c_gma+1.0;
+
+      if ( f_xy<eps )
+      {
+        angle.z = 2.0*asin(1.0); // 反対方向なのでπ
+      }
+      else
+      {
+        angle.z = (q.y >= 0.0) ? -d : d;
+      }
+    }
+    else
+    {
+      stamped_printf("\tInvalid Parameter of Heat exchanger : lateral vector is zero\n");
+      Exit(0);
+    }
+  }
+  */
+
+// ##########
+#if 0
+  stamped_printf("rotation angle = (%f %f %f)\n", angle.x, angle.y, angle.z);
+#endif
+// ##########
+
+}
+
+/**
+ * @brief 回転ベクトルp(alpha, beta, gamma)でベクトルuを回転する
+ * @param [in] p 回転角度
+ * @param [in] u 方向ベクトル
+ * @return 角度
+ * @note sin, cos = 5flop, dot=5flop, total 181flop
+ */
+Vec3r Cloud::rotate(const Vec3r p, const Vec3r u)
+{
+  Vec3r a, b, c;
+
+  // line vector expression
+  a.x =  cos(p.y)*cos(p.z);
+  a.y =  sin(p.x)*sin(p.y)*cos(p.z) - cos(p.x)*sin(p.z);
+  a.z =  cos(p.x)*sin(p.y)*cos(p.z) + sin(p.x)*sin(p.z);
+
+  b.x =  cos(p.y)*sin(p.z);
+  b.y =  sin(p.x)*sin(p.y)*sin(p.z) + cos(p.x)*cos(p.z);
+  b.z =  cos(p.x)*sin(p.y)*sin(p.z) - sin(p.x)*cos(p.z);
+
+  c.x = -sin(p.y);
+  c.y =  sin(p.x)*cos(p.y);
+  c.z =  cos(p.x)*cos(p.y);
+
+  return Vec3r( dot(a, u), dot(b, u), dot(c, u) );
+}
+
+
+/**
+ * @brief 回転ベクトルp(alpha, beta, gamma)に対して，-pでベクトルuを回転する
+ * @param [in] p 回転角度
+ * @param [in] u 方向ベクトル
+ * @return 角度
+ * @note sin, cos = 5flop, dot=5flop, total 181flop
+ */
+Vec3r Cloud::rotate_inv(const Vec3r p, const Vec3r u)
+{
+  Vec3r a, b, c;
+
+  // line vector expression
+  a.x =  cos(p.y)*cos(p.z);
+  a.y =  cos(p.y)*sin(p.z);
+  a.z = -sin(p.y);
+
+  b.x =  sin(p.x)*sin(p.y)*cos(p.z) - cos(p.x)*sin(p.z);
+  b.y =  sin(p.x)*sin(p.y)*sin(p.z) + cos(p.x)*cos(p.z);
+  b.z =  sin(p.x)*cos(p.y);
+
+  c.x =  cos(p.x)*sin(p.y)*cos(p.z) + sin(p.x)*sin(p.z);
+  c.y =  cos(p.x)*sin(p.y)*sin(p.z) - sin(p.x)*cos(p.z);
+  c.z =  cos(p.x)*cos(p.y);
+
+  return Vec3r( dot(a, u), dot(b, u), dot(c, u) );
+}
+
+
+// @brief パラメータ表示
+void Cloud::displayParam(FILE* fp)
+{
+  Hostonly_ {
+    fprintf(fp,"\t\tIntegration Method  : ");
+    switch (scheme) {
+      case pt_euler:
+        fprintf(fp,"Euler\n");
+        break;
+      case pt_rk2:
+        fprintf(fp,"RK2\n");
+        break;
+      case pt_rk4:
+        fprintf(fp,"RK4\n");
+        break;
+    }
+
+    for (int i=0; i<nGrpEmit; i++)
+    {
+      fprintf(fp,"\t\tGroup          : %s\n",Egrp[i].getGrpName().c_str());
+      fprintf(fp,"\t\tType           : ");
+      switch (Egrp[i].getType()) {
+        case mon_POINT_SET:
+          fprintf(fp,"Pointset\n");
+          break;
+        case mon_LINE:
+          fprintf(fp,"Line\n");
+          break;
+        case mon_DISC:
+          fprintf(fp,"Disc\n");
+          break;
+      }
+      fprintf(fp,"\t\tStart step     : %d\n",Egrp[i].getStart());
+      fprintf(fp,"\t\tInterval       : %d\n",Egrp[i].getInterval());
+      fprintf(fp,"\t\tLife time      : %d\n",Egrp[i].getLife());
+    }
+  }
+}
