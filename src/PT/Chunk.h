@@ -48,7 +48,11 @@ enum IntegrationScheme
 typedef struct {
   Vec3r pos;             ///< 粒子座標
   int bf;                ///< ビットフィールド
-} particle;              //   31 - active(1) / inactive(0)
+  Vec3r vel;             ///< 粒子の並進速度成分
+  int foo;               ///< padding 何かに利用可能
+} particle;
+                         //   ビットフィールド
+                         //   31 - active(1) / inactive(0)
                          //   30 - migrate (1) / stay (0)
                          //   25~29 移動先ランク(周囲の26方向)
                          //   24~0  放出後のライフカウント 0 ~ 33,554,431
@@ -60,6 +64,7 @@ protected:
   int uid;                 ///< 粒子の固有ID
   Vec3r origin;            ///< Chunkに割り振られた開始点（固定）
   int start_point;         ///< 初期の指定開始点(1) / マイグレート先(0)
+  int start_step;          ///< 放出開始ステップ
   list<particle> pchunk;   ///< 粒子チャンク
 
 public:
@@ -67,32 +72,39 @@ public:
     uid = 0;
     grp = -1;
     start_point = 0;
+    start_step = -1;
   }
 
   /// コンストラクタ 作成時
   // @param [in] pv     粒子座標
   // @param [in] gp     グループID
   // @param [in] st     開始点のとき1
-  Chunk(const Vec3r v, const int gp, const int st) {
+  // @param [in] stp    開始ステップ
+  Chunk(const Vec3r v, const int gp, const int st, const int stp) {
     particle p;
     p.pos = v;
-    p.bf = 0;
+    p.bf  = 0;
+    p.foo = 0;
+    p.vel.assign(0.0, 0.0, 0.0);
     Activate(p.bf);
     pchunk.push_back(p);
     grp = gp;
     origin = v;
     start_point = st;
+    start_step = stp;
   }
 
   /// コンストラクタ マイグレーション追加時
   // @param [in] pv     粒子座標
   // @param [in] gp     グループID
   // @param [in] pid    粒子ID
-  Chunk(particle p, const int gp, const int pid) {
+  // @param [in] stp    開始ステップ
+  Chunk(particle p, const int gp, const int pid, const int stp) {
     Activate(p.bf);
     pchunk.push_back(p);
     grp = gp;
     uid = pid;
+    start_step = stp;
   }
 
   ~Chunk() {}
@@ -105,7 +117,7 @@ public:
                       const int scheme,
                       const int life,
                       const REAL_TYPE dt,
-                      int& buf_len);
+                      int& max_particle);
 
 
   // @brief マイグレーションフラグの立っている粒子をパックし、リストから削除
@@ -116,7 +128,7 @@ public:
 
 
   // @brief pchunkに開始点から粒子を追加
-  void addParticle();
+  void addParticleFromOrigin();
 
 
   // @brief pchunkに粒子を追加
@@ -153,10 +165,14 @@ public:
 
 
   // @brief pchunkのサイズを返す
-  int getNpoints() const
+  unsigned getNpoints() const
   {
-    return (int)pchunk.size();
+    return (unsigned)pchunk.size();
   }
+  
+  
+  // @brief ascii output
+  void write_ascii(FILE* fp);
 
 
   // @brief ACTIVE_BITをOFF

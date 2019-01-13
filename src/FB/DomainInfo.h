@@ -178,8 +178,6 @@ public:
     pitch[1] = (REAL_TYPE)m_pch[1];
     pitch[2] = (REAL_TYPE)m_pch[2];
     
-    // プロセス分割数
-    const int* g_div = paraMngr->GetDivNum(procGrp);
     
     // 隣接情報
     const int* neighbour = paraMngr->GetNeighborRankID(procGrp);
@@ -203,6 +201,11 @@ public:
       G_regionD[i] = G_region[i] * RefL;
     }
     
+    // プロセス分割数
+    const int* g_div = paraMngr->GetDivNum(procGrp);
+    G_division[0] = g_div[0];
+    G_division[1] = g_div[1];
+    G_division[2] = g_div[2];
   }
   
   

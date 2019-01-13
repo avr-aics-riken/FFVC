@@ -31,7 +31,7 @@ public:
   REAL_TYPE from[3];   ///< 線分
   REAL_TYPE to[3];     ///< 線分
 
-  // displayCutInfo
+  // Disc
   int nSample;         ///< サンプル数
   REAL_TYPE center[3]; ///< 円の中心座標
   REAL_TYPE normal[3]; ///< 法線ベクトル

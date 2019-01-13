@@ -51,13 +51,11 @@ protected:
   EmitGroup* Egrp;           ///< 粒子の開始点グループ
   vector<Chunk*> chunkList;  ///< チャンクリスト
 
-  unsigned nParticle;        ///< 全粒子の数（ローカル）
-  unsigned gParticle;        ///< 全粒子の数（グローバル）
   int nGrpEmit;              ///< 開始点のグループ数 set[@]の数
   int scheme;                ///< 積分方法
   bool flag_migration;       ///< マイグレーション発生 true
   REAL_TYPE dt;              ///< 時間積分幅
-  unsigned buf_max_len;      ///< 送信用のバッファ長さの最大値 毎回異なる
+  unsigned buf_max_particle; ///< 送信用のバッファ長さ計算に使う粒子の最大数 毎回異なる
   bool buf_updated;          ///< バッファ長さが更新されたときtrue
 
   int unit;                  ///< 指定座標の記述単位 {DIMENSIONAL | NONDIMENSIONAL}
@@ -69,11 +67,16 @@ protected:
   IntervalManager* Interval; ///< タイミング制御
   TextParser* tpCntl;        ///< TextParser
   Tracking* tr;              ///< Tracking
-
   PtComm PC;                 ///< 粒子通信クラス
-  MPI_Request req[NDST*2];   ///< 非同期通信同期
-
   PerfMonitor* PM;           ///< PerfMonitor class
+  
+  int log_interval;          ///< log file out interval
+  int file_interval;         ///< log file out interval
+  int file_format;           ///< 0 - ascii, 1 - binary
+  FILE* fpl;                 ///< ログ出力用のファイルポインタ
+  int nCommParticle;         ///< マイグレーション時の送受信粒子数
+  unsigned nParticle;        ///< 全粒子の数（ローカル）
+  unsigned gParticle;        ///< 全粒子の数（グローバル）
 
 
 public:
@@ -94,6 +97,10 @@ public:
     scheme = -1;
     buf_updated = false;
     flag_migration = false;
+    nCommParticle = 0;
+    log_interval = 0;
+    file_interval = 0;
+    file_format = -1;
 
     this->dt         = dt;
     this->bcd        = m_bcd;
@@ -103,14 +110,15 @@ public:
     this->tpCntl     = m_tp;
     this->PM         = m_PM;
 
-    // 初期値として、BUF_UNIT*粒子分を確保 > buf_max_lenで100単位で更新
-    buf_max_len = BUF_UNIT;
+    // 初期値として、BUF_UNIT*粒子分を確保 > buf_max_particleで100単位で更新
+    buf_max_particle = BUF_UNIT;
   }
 
 
   /// デストラクタ
   ~Cloud() {
     delete [] Interval;
+    if (fpl) fclose(fpl);
   }
 
 
@@ -121,26 +129,24 @@ public:
   // @brief ランタイム
   bool tracking(const unsigned step, const double time);
 
-
-  /// チャンク数を返す
-  unsigned getChunkListSize() const {
-    return (unsigned)chunkList.size();
-  }
-
-
-  // @brief マイグレーション処理
-  bool migration();
-
-
-  // @brief ファイル出力
-  bool fileout();
-
-
   
-
+  
+  
 
     
 protected:
+  
+  // ascii output
+  bool write_ascii(const unsigned step);
+  
+  
+  // @brief ログ出力
+  void logging(const unsigned step);
+  
+  
+  // @brief マイグレーション処理
+  bool migration();
+  
   
   // @brief PMlib ラベル
   void set_timing_label();

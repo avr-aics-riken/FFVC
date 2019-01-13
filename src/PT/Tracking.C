@@ -16,6 +16,7 @@
 //
 //##################################################################################
 
+
 /**
  * @file   Tracking.C
  * @brief  Tracking class
@@ -24,6 +25,8 @@
 
 #include "Tracking.h"
 
+
+//#############################################################################
 // @brief Euler陽解法による経路積分
 // @param [in,out] p   粒子座標
 // @retval 正-計算領域内の他ランク, 負-領域外(-1)、自領域(-2)
@@ -50,6 +53,7 @@ Vec3i Tracking::integrate_Euler(Vec3r& p, const REAL_TYPE dt)
 }
 
 
+//#############################################################################
 // @brief RK2による経路積分
 // @param [in,out] p   粒子座標
 // @retval 正-計算領域内の他ランク, 負-領域外(-1)、自領域(-2)
@@ -72,6 +76,7 @@ Vec3i Tracking::integrate_RK2(Vec3r& p, const REAL_TYPE dt)
 }
 
 
+//#############################################################################
 // @brief Euler積分
 Vec3r Tracking::Euler0(Vec3r p, const REAL_TYPE dt)
 {
@@ -85,6 +90,7 @@ Vec3r Tracking::Euler0(Vec3r p, const REAL_TYPE dt)
 }
 
 
+//#############################################################################
 // @brief Euler積分の一部分
 Vec3r Tracking::Euler1(Vec3r p, const REAL_TYPE dt)
 {
@@ -95,6 +101,7 @@ Vec3r Tracking::Euler1(Vec3r p, const REAL_TYPE dt)
 }
 
 
+//#############################################################################
 // @brief RK2
 Vec3r Tracking::RK2(Vec3r p, const REAL_TYPE dt)
 {
@@ -104,6 +111,7 @@ Vec3r Tracking::RK2(Vec3r p, const REAL_TYPE dt)
 }
 
 
+//#############################################################################
 // @brief pの属するランクを探す 全領域外の判断も
 // @param [in] p  空間座標（ローカル）
 // @retval 正-計算領域内の他ランク, 負-領域外(-1)、自領域(-2)

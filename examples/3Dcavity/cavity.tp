@@ -420,14 +420,17 @@ Unit {
 }
 
 ParticleTracking {
-  Tracking = "off"
-  Method   = "euler"
+  Tracking      = "off"
+  Method        = "euler"
+  log_interval  = 1
+  file_interval = 10
+  file_format   = "ascii" // binary
 
 
   list[@] {
     type       = "Line"
     StartStep  = 0
-    Interval   = 10
+    Interval   = 1
     label      = "grp1"
     lifetime   = -1
     Division   = 20

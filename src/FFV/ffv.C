@@ -860,6 +860,8 @@ void FFV::set_timing_label()
   set_label("PT_CommParticle",         PerfMonitor::CALC);
   set_label("PT_ParticleUnpacking",    PerfMonitor::CALC);
   set_label("PT_Tracking",             PerfMonitor::CALC);
+  set_label("PT_Statistics",           PerfMonitor::CALC);
+  set_label("PT_fileIO",               PerfMonitor::CALC);
 }
 
 

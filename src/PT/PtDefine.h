@@ -14,6 +14,7 @@
 #define BUF_UNIT 100  // バッファ初期値と更新サイズ
 
 #define PT_DEBUG ON
+
 #define PT_TIMING__ if (1)
 
 #endif // _PT_DEFINE_H_

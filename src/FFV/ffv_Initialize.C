@@ -721,7 +721,7 @@ int FFV::Initialize(int argc, char **argv)
       fprintf(fp,"\n\tParticle Tracking  ON\n\n");
       fprintf(stdout,"\n\tParticle Tracking  ON\n\n");
     }
-
+      
     TR->importCPM(paraMngr);
     TR->setRankInfo(paraMngr, procGrp);
     TR->setDomainInfo(C.guide, C.RefLength);

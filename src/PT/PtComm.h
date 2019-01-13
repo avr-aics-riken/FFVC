@@ -29,7 +29,7 @@ using std::fill;
 
 
 class PtComm {
-private:
+protected:
   int neighbor[NDST];        ///< 隣接ランク番号
   int pInfo[NDST*4];         ///< 粒子+情報保持
                              ///< pInfo[27][m]
@@ -46,11 +46,15 @@ private:
 
   int G_div[3];              ///< 領域分割数
   int myRank;                ///< 自ランク番号
+  int numProc;               ///< プロセス数
   int Rmap[NDST];            ///< 3x3x3のランクマップ
+    
+  unsigned* nPart;           ///< 全ランクの粒子数
 
 #ifndef DISABLE_MPI
   MPI_Datatype data_type;    ///< float / doubleの切り替え
-  MPI_Request mpi_req[2*NDST];
+  MPI_Request reqR[2*NDST];
+  MPI_Request reqI[2*NDST];
 #endif
 
 
@@ -63,15 +67,17 @@ public:
       G_div[i] = 0;
     }
 
-    for (int i=0; i<NDST; i++) Rmap[i] = -1;
-
-    ps_buf = vector<REAL_TYPE>(3*BUF_UNIT*NDST, 0);
-    pr_buf = vector<REAL_TYPE>(3*BUF_UNIT*NDST, 0);
-    bs_buf = vector<int>(BUF_UNIT*NDST, 0);
-    br_buf = vector<int>(BUF_UNIT*NDST, 0);
+    ps_buf = vector<REAL_TYPE>(6*BUF_UNIT*NDST, 0);
+    pr_buf = vector<REAL_TYPE>(6*BUF_UNIT*NDST, 0);
+    bs_buf = vector<int>(2*BUF_UNIT*NDST, 0);
+    br_buf = vector<int>(2*BUF_UNIT*NDST, 0);
 
     memset(neighbor, -1, sizeof(int)*NDST);
-    memset(pInfo, 0, sizeof(unsigned)*NDST*2);
+    memset(pInfo, 0, sizeof(int)*NDST*4);
+    memset(is_buf, 0, sizeof(int)*NDST*3);
+    memset(ir_buf, 0, sizeof(int)*NDST*3);
+    memset(Rmap, -1, sizeof(int)*NDST);
+
 
 #ifndef DISABLE_MPI
     data_type = MPI_FLOAT;
@@ -80,13 +86,19 @@ public:
       data_type = MPI_DOUBLE;
     }
 
-    for (int i=0; i<2*NDST; i++)
-       mpi_req[i] = MPI_REQUEST_NULL;
+    for (int i=0; i<2*NDST; i++) {
+      reqR[i] = MPI_REQUEST_NULL;
+      reqI[i] = MPI_REQUEST_NULL;
+    }
 #endif
+    
+    nPart = NULL;
   }
 
   /** デストラクタ */
-  ~PtComm() {}
+  ~PtComm() {
+    if (nPart) delete [] nPart;
+  }
 
 
 public:
@@ -110,14 +122,20 @@ public:
   int* pInfo_ptr() {
     return pInfo;
   }
+  
+  unsigned* nPart_ptr() {
+    return nPart;
+  }
 
   void setPtComm(const int m_div[],
-                 const int m_rank)
+                 const int m_rank,
+                 const int m_np)
   {
     this->G_div[0]    = m_div[0];
     this->G_div[1]    = m_div[1];
     this->G_div[2]    = m_div[2];
     this->myRank      = m_rank;
+    this->numProc     = m_np;
 
     int ib = G_div[0];
     int jb = G_div[1];
@@ -139,15 +157,18 @@ public:
         //printf("%d %d %d : m=%d : rank=%d\n",i,j,k,m,Rmap[m]);
       }
     }}}
+    
+    nPart = new unsigned[numProc];
+    memset(nPart, 0, sizeof(unsigned)*numProc);
   }
 
 
   // @brief 送信バッファのリサイズと再初期化
   void resizeSendBuffer(const unsigned len) {
     ps_buf.clear();
-    ps_buf.resize(len*3*NDST); // 初期値がフィルされる
+    ps_buf.resize(len*6*NDST); // pos+vel=6要素　初期値がフィルされる
     bs_buf.clear();
-    bs_buf.resize(len*NDST);
+    bs_buf.resize(len*2*NDST); // b + foo = 2要素
   }
 
 
@@ -163,9 +184,17 @@ public:
 
 
   // @brief 粒子データの通信
-  bool commParticle();
+  bool commParticle(const unsigned buf_length);
 
 
+  // @brief 統計
+  bool Statistics(int& nCommP,
+                  const unsigned l_part,
+                  unsigned& g_part);
+  
+  
+  
+  
 private:
 
   int min1(int a, int b) const {
@@ -186,7 +215,16 @@ private:
                 MPI_Request req[2]);
 
 
-  // @brief 粒子データの送受信
+  // @brief 粒子データの送受信(REAL_TYPE)
+  bool SendRecvParticle(const int s_msg,
+                        const int r_msg,
+                        const int nID,
+                        REAL_TYPE* sbuf,
+                        REAL_TYPE* rbuf,
+                        MPI_Request req[2]);
+  
+  
+  // @brief 粒子データの送受信(int)
   bool SendRecvParticle(const int s_msg,
                         const int r_msg,
                         const int nID,
@@ -194,7 +232,7 @@ private:
                         int* rbuf,
                         MPI_Request req[2]);
 
-
+  
   // @brief 通信の確定
   bool waitComm(MPI_Request* req,
                 MPI_Status* stat);

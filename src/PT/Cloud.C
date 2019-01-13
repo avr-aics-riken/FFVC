@@ -1,16 +1,5 @@
 //##################################################################################
 //
-// Flow Base class
-//
-// Copyright (c) 2007-2011 VCAD System Research Program, RIKEN.
-// All rights reserved.
-//
-// Copyright (c) 2011-2015 Institute of Industrial Science, The University of Tokyo.
-// All rights reserved.
-//
-// Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN.
-// All rights reserved.
-//
 // Copyright (c) 2016-2019 Research Institute for Information Technology, Kyushu university
 // All rights researved.
 //
@@ -24,9 +13,138 @@
 
 #include "Cloud.h"
 
-/* #################################################################
+//#############################################################################
+// @brief ランタイム
+bool Cloud::tracking(const unsigned step, const double time)
+{
+  int flag=0; // マイグレーション発生フラグ
+  int max_part=0;  // 送受信バッファの計算に必要な送受信最大粒子数
+  bool ret;
+  
+  TIMING_start("PT_Tracking");
+  
+  for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
+  {
+    int m = (*itr)->getGrp();
+    if (m<0) {
+      printf("Error : grp number\n");
+      return false;
+    }
+    //printf("* chunklist grp = %d\n",m);
+    
+    // 指定時刻が過ぎ、処理ステップになった場合
+    if ( Interval[m].isStarted(step, time) && Interval[m].isTriggered(step, time) )
+    {
+      // 保持している粒子を積分し、マイグレーションと寿命判定
+      if ( (*itr)->updatePosition(tr, scheme, Egrp[m].getLife(), dt, max_part) ) flag++;
+      
+      // 登録した開始点から粒子を追加
+      (*itr)->addParticleFromOrigin();
+    }
+  }
+  
+  // マイグレーションが発生する場合
+  if (flag>0) {
+    flag_migration = true;
+    
+    // バッファ長の更新が必要な場合、バッファ計算用の粒子数はBUF_UNIT単位で確保
+    if (buf_max_particle < max_part) {
+      buf_max_particle = (max_part / BUF_UNIT + 1) * BUF_UNIT;
+      buf_updated = true;
+    }
+  }
+  
+  TIMING_stop("PT_Tracking");
+  
+  
+  TIMING_start("PT_Migration");
+  ret = migration();
+  TIMING_stop("PT_Migration");
+  if ( !ret ) return false;
+  
+  
+  
+  // 出力の場合
+  if ( ((step/log_interval)*log_interval == step ) ||
+       ((step/file_interval)*file_interval == step ) )
+  {
+    nParticle = 0;
+    for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr) {
+      nParticle += (unsigned)(*itr)->getNpoints();
+    }
+  }
+  
+  
+  // ログ出力
+  if ( (step/log_interval)*log_interval == step )
+  {
+    TIMING_start("PT_Statistics");
+    ret = PC.Statistics(nCommParticle, nParticle, gParticle);
+    Hostonly_ logging(step);
+    TIMING_stop("PT_Statistics");
+    if ( !ret ) return false;
+  }
+  
+  
+  // ファイル出力
+  if ( (step/file_interval)*file_interval == step )
+  {
+    TIMING_start("PT_fileIO");
+    ret = write_ascii(step);
+    TIMING_stop("PT_fileIO");
+    if ( !ret ) return false;
+  }
+  
+  
+  return true;
+}
+
+
+
+//#############################################################################
+// @brief 初期設定
+bool Cloud::initCloud(FILE* fp)
+{
+  if ( !setPTinfo() ) return false;
+  
+  if ( !determineUniqueID() ) return false;
+  
+  displayParam(stdout);
+  displayParam(fp);
+  
+  tr = new Tracking(size,
+                    guide,
+                    origin,
+                    region,
+                    pitch,
+                    vSource,
+                    bcd,
+                    myRank);
+  
+  // ログ出力
+  if (log_interval > 0) {
+    Hostonly_
+    {
+      if ( !(fpl=fopen("pt_log.txt", "w")) )
+      {
+        stamped_printf("\tSorry, can't open 'pt_log.txt' file. Write failed.\n");
+        return false;
+      }
+    }
+  }
+
+  // 通信クラスの設定
+  PC.setPtComm(G_division, myRank, numProc);
+
+  
+  return true;
+}
+
+
+
+//#############################################################################
 // @brief マイグレーション処理
-   @note 方針
+/* @note 方針
    - Chunk::updatePosition()で、マイグレーション候補にマーク、送信先毎の個数をカウント
    - 送信バッファは周囲のランク26方向に対してvectorで管理、毎回利用直前にクリアして使う
    - 粒子と情報をバッファに詰め込み、リストから削除、送信
@@ -39,11 +157,10 @@ bool Cloud::migration()
   // マイグレーション対象でなければ戻る
   if ( !flag_migration ) return true;
 
-  TIMING_start("PT_Migration");
 
   // マイグレーション用に確保したバッファ領域の準備
   if (buf_updated) {
-    PC.resizeSendBuffer(buf_max_len);
+    PC.resizeSendBuffer(buf_max_particle);
     buf_updated = false;
   }
 
@@ -57,7 +174,7 @@ bool Cloud::migration()
   {
     (*itr)->packParticle(PC.ps_ptr(),
                          PC.bs_ptr(),
-                         buf_max_len,
+                         buf_max_particle,
                          PC.pInfo_ptr());
   }
   TIMING_stop("PT_ParticlePacking");
@@ -70,7 +187,7 @@ bool Cloud::migration()
 
   // データ本体の送受信
   TIMING_start("PT_CommParticle");
-  ret = PC.commParticle();
+  ret = PC.commParticle(buf_max_particle);
   TIMING_stop("PT_CommParticle");
   if ( !ret ) return false;
 
@@ -81,8 +198,6 @@ bool Cloud::migration()
   TIMING_stop("PT_ParticleUnpacking");
   
 
-  TIMING_stop("PT_Migration");
-
   // マイグレーション終了
   flag_migration = false;
 
@@ -90,14 +205,14 @@ bool Cloud::migration()
 }
 
 
-// #################################################################
+//#############################################################################
 // @brief 受信粒子のアンパック
 void Cloud::unpackParticle()
 {
   int* pInfo = PC.pInfo_ptr();
   REAL_TYPE* pr_buf = PC.pr_ptr();
   int* br_buf = PC.br_ptr();
-  const int bsz = buf_max_len;
+  const int bsz = buf_max_particle;
 
 
   for (int i=0; i<NDST; i++)
@@ -105,20 +220,27 @@ void Cloud::unpackParticle()
     const int gid = pInfo[4*i+1];   // グループID
     const int pid = pInfo[4*i+2];   // 粒子ID
     const int cnt = pInfo[4*i+3] ;  // 受信粒子数
-    int b;
+    int b, foo;
+    Vec3r pos;
     Vec3r v;
     particle p;
 
     for (int j=0; j<cnt; j++)
     {
-      v.x = pr_buf[bsz*i + 3*j+0];
-      v.y = pr_buf[bsz*i + 3*j+1];
-      v.z = pr_buf[bsz*i + 3*j+2];
-      b = br_buf[bsz*i + j];
+      pos.x = pr_buf[bsz*i + 6*j+0];
+      pos.y = pr_buf[bsz*i + 6*j+1];
+      pos.z = pr_buf[bsz*i + 6*j+2];
+      v.x   = pr_buf[bsz*i + 6*j+3];
+      v.y   = pr_buf[bsz*i + 6*j+4];
+      v.z   = pr_buf[bsz*i + 6*j+5];
+      b     = br_buf[bsz*i + 2*j+0];
+      foo   = br_buf[bsz*i + 2*j+1];
       Chunk::removeMigrate(b);
 
-      p.pos = v;
+      p.pos = pos;
       p.bf  = b;
+      p.vel = v;
+      p.foo = foo;
 
 
       // chunkList内で粒子IDをサーチし、存在しなければ、新たなチャンクを作る
@@ -136,7 +258,7 @@ void Cloud::unpackParticle()
       // pidのチャンクが存在しない場合
       if (check==0)
       {
-        Chunk* m = new Chunk(p, gid, pid);
+        Chunk* m = new Chunk(p, gid, pid, Egrp[gid].getStart());
         chunkList.push_back(m);
         Egrp[gid].incGroup();
       }
@@ -147,7 +269,7 @@ void Cloud::unpackParticle()
 }
 
 
-// #################################################################
+//#############################################################################
 // @brief 既に存在するグループIDの検索
 // @param [in] c   検索対象ID
 // @retval 存在すれば true
@@ -161,89 +283,31 @@ bool Cloud::searchGrp(const int c)
 }
 
 
-// #################################################################
-// @brief ファイル出力
-bool Cloud::fileout()
+
+//#############################################################################
+// @brief ログ出力
+void Cloud::logging(const unsigned step)
 {
-  // 保持するチャンクを出力
-
-  // メタデータを出力
-}
-
-
-// #################################################################
-// @brief ランタイム
-bool Cloud::tracking(const unsigned step, const double time)
-{
-  int flag=0; // マイグレーション発生フラグ
-  int len=0;  // 送受信バッファに必要な長さ
+  // マイグレーションで移動した粒子数と全粒子数
+  fprintf(fpl, "step=%ld migrate=%d total=%ld\n", step, nCommParticle, gParticle);
   
-  TIMING_start("PT_Tracking");
-
-  for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
-  {
-    int m = (*itr)->getGrp();
-    if (m<0) {
-      printf("Error : grp number\n");
-      return false;
-    }
-    //printf("* chunklist grp = %d\n",m);
-
-    // 指定時刻が過ぎ、処理ステップになった場合
-    if ( Interval[m].isStarted(step, time) && Interval[m].isTriggered(step, time) )
-    {
-      // 保持している粒子を積分し、マイグレーションと寿命判定
-      if ( (*itr)->updatePosition(tr, scheme, Egrp[m].getLife(), dt, len) ) flag++;
-
-      // 登録した開始点から粒子を追加
-      (*itr)->addParticle();
-    }
+  // 各ランク毎の粒子数
+  for (int i=0; i<numProc; i++) {
+    fprintf(fpl, "%d ", i);
   }
-
-  // マイグレーションが発生する場合
-  if (flag>0) {
-    flag_migration = true;
-
-    // バッファ長の更新が必要な場合
-    if (buf_max_len < len) {
-      buf_max_len = (len / BUF_UNIT + 1) * BUF_UNIT;
-      buf_updated = true;
-    }
-  }
+  fprintf(fpl,"\n");
   
-  TIMING_stop("PT_Tracking");
-
-  return true;
+  unsigned* p = PC.nPart_ptr();
+  for (int i=0; i<numProc; i++) {
+    fprintf(fpl, "%ld ", p[i]);
+  }
+  fprintf(fpl,"\n");
+  
+  fflush(fpl);
 }
 
 
-// #################################################################
-// @brief 初期設定
-bool Cloud::initCloud(FILE* fp)
-{
-  if ( !setPTinfo() ) return false;
-
-  if ( !determineUniqueID() ) return false;
-
-  displayParam(stdout);
-  displayParam(fp);
-
-  tr = new Tracking(size,
-                    guide,
-                    origin,
-                    region,
-                    pitch,
-                    vSource,
-                    bcd,
-                    myRank);
-
-  set_timing_label();
-    
-  return true;
-}
-
-
-// #################################################################
+//#############################################################################
 // @brief 開始点のユニークIDを割り振る
 bool Cloud::determineUniqueID()
 {
@@ -307,7 +371,7 @@ bool Cloud::determineUniqueID()
 }
 
 
-// #################################################################
+//#############################################################################
 // @brief 粒子追跡情報を取得し，chunkに保持する
 bool Cloud::setPTinfo()
 {
@@ -353,7 +417,48 @@ bool Cloud::setPTinfo()
     Hostonly_ printf("Invalid particle tracking method\n");
     return false;
   }
+  
+  // ログ出力インターバル
+  label = label_base + "/log_interval";
+  
+  if ( !(tpCntl->getInspectedValue(label, f_val )) )
+  {
+    Hostonly_ stamped_printf("\tParsing warning : No Label in '%s'\n", label.c_str());
+    return false;
+  }
+  log_interval = (int)f_val;
 
+  
+  // ファイル出力インターバル
+  label = label_base + "/file_interval";
+  
+  if ( !(tpCntl->getInspectedValue(label, f_val )) )
+  {
+    Hostonly_ stamped_printf("\tParsing warning : No Label in '%s'\n", label.c_str());
+    return false;
+  }
+  file_interval = (int)f_val;
+  
+  
+  // ファイル出力フォーマット
+  label = label_base + "/file_format";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing warning : No Label in '%s'\n", label.c_str());
+    return false;
+  }
+  
+  if ( !strcasecmp(str.c_str(), "ascii") ) {
+    file_format = 0;
+  }
+  else if ( !strcasecmp(str.c_str(), "binary") ) {
+    file_format = 1;
+  }
+  else {
+    Hostonly_ printf("Invalid file format\n");
+    return false;
+  }
 
 
   // 粒子放出開始点の個数のチェック
@@ -531,7 +636,7 @@ bool Cloud::setPTinfo()
 }
 
 
-// #################################################################
+//#############################################################################
 // @brief 粒子追跡パラメータ取得
 bool Cloud::getTPparam(const string label_leaf, int odr)
 {
@@ -600,7 +705,7 @@ bool Cloud::getTPparam(const string label_leaf, int odr)
 }
 
 
-// #################################################################
+//#############################################################################
 /**
  * @brief 座標情報を取得し、chunkに保持(PointSet)
  * @param [in]  odr        グループ登録インデクス
@@ -682,7 +787,7 @@ bool Cloud::setPointset(const string label_base, const int odr)
     if ( inOwnRegion(v) )
     {
       Vec3r pos(v);
-      Chunk* m = new Chunk(pos, odr, 1);
+      Chunk* m = new Chunk(pos, odr, 1, Egrp[odr].getStart());
       chunkList.push_back(m);
       Egrp[odr].incGroup();
     }
@@ -691,7 +796,7 @@ bool Cloud::setPointset(const string label_base, const int odr)
 }
 
 
-// #################################################################
+//#############################################################################
 /**
  * @brief 開始座標情報を取得し、chunkに保持(Line)
  * @param [in]  odr        グループ登録インデクス
@@ -768,7 +873,7 @@ bool Cloud::setLine(const string label_base, const int odr)
     // 自領域内であれば、初期開始点として追加
     if ( inOwnRegion(pos) )
     {
-      Chunk* m = new Chunk(pos, odr, 1);
+      Chunk* m = new Chunk(pos, odr, 1, Egrp[odr].getStart());
       chunkList.push_back(m);
       Egrp[odr].incGroup();
     }
@@ -778,7 +883,7 @@ bool Cloud::setLine(const string label_base, const int odr)
 
 
 
-// #################################################################
+//#############################################################################
 /**
  * @brief 開始座標情報を取得し、chunkに保持(Disc)
  * @param [in]  odr        グループ登録インデクス
@@ -851,7 +956,7 @@ bool Cloud::setDisc(const string label_base, const int odr)
 }
 
 
-// #################################################################
+//#############################################################################
 /// @brief 半径r内のサンプリング
 /// @param [in]  cnt        中心座標
 /// @param [in]  nv         法線方向
@@ -887,7 +992,7 @@ void Cloud::samplingInCircle(const REAL_TYPE* cnt,
     if ( inOwnRegion(q) )
     {
       Vec3r pos(q);
-      Chunk* m = new Chunk(pos, odr, 1);
+      Chunk* m = new Chunk(pos, odr, 1, Egrp[odr].getStart());
       chunkList.push_back(m);
       Egrp[odr].incGroup();
     }
@@ -896,7 +1001,7 @@ void Cloud::samplingInCircle(const REAL_TYPE* cnt,
 
 
 
-// #################################################################
+//#############################################################################
 // 指定法線nvがz軸の方向ベクトルに向かう回転角を計算する
 // 回転の符号はz軸に向かう回転が右ねじ方向の場合を正にとる
 Vec3r Cloud::getAngle(Vec3r nv)
@@ -994,6 +1099,8 @@ Vec3r Cloud::getAngle(Vec3r nv)
 
 }
 
+
+//#############################################################################
 /**
  * @brief 回転ベクトルp(alpha, beta, gamma)でベクトルuを回転する
  * @param [in] p 回転角度
@@ -1022,6 +1129,7 @@ Vec3r Cloud::rotate(const Vec3r p, const Vec3r u)
 }
 
 
+//#############################################################################
 /**
  * @brief 回転ベクトルp(alpha, beta, gamma)に対して，-pでベクトルuを回転する
  * @param [in] p 回転角度
@@ -1050,6 +1158,7 @@ Vec3r Cloud::rotate_inv(const Vec3r p, const Vec3r u)
 }
 
 
+//#############################################################################
 // @brief パラメータ表示
 void Cloud::displayParam(FILE* fp)
 {
@@ -1114,9 +1223,9 @@ void Cloud::displayParam(FILE* fp)
 
 
 
-// ################################################################
+//#############################################################################
 // @brief タイミング測定区間にラベルを与える
-// @note ffv側で登録しているので、これはす未使用
+// @note ffv側で登録しているので、これは未使用
 void Cloud::set_timing_label()
 {
     /*
@@ -1127,4 +1236,36 @@ void Cloud::set_timing_label()
   set_label("PT_ParticleUnpacking", PerfMonitor::CALC);
   set_label("PT_Tracking",          PerfMonitor::CALC);
      */
+}
+
+
+//#############################################################################
+// @brief ascii output
+bool Cloud::write_ascii(const unsigned step)
+{
+  if (nParticle == 0) return true;
+  
+  FILE* fp;
+  char tmp_fname[30];
+  sprintf( tmp_fname, "pt_%08ld_%06d.npt", step, myRank );
+  
+  if ( !(fpl=fopen(tmp_fname, "w")) )
+  {
+    stamped_printf("\tSorry, can't open 'pt_log.txt' file. Write failed.\n");
+    return false;
+  }
+  
+  
+  fprintf(fp,"\n# step_time %ld %e\n", step, time);
+  fprintf(fp,"# total_particles %ld\n", nParticle);
+  fprintf(fp,"# no_of_chunks %d\n", (int)chunkList.size());
+  
+  int c=0;
+  for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
+  {
+    fprintf(fp,"# Chunk %d\n", c++);
+    (*itr)->write_ascii(fp);
+  }
+  
+  return true;
 }
