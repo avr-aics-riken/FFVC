@@ -96,46 +96,53 @@ bool Chunk::updatePosition(Tracking* tr,
     Vec3i r;
     int c;
     //printf("p:(%14.6f %14.6f %14.6f)\n", p.x, p.y, p.z);
-
-    switch(scheme)
+    
+    if ( IS_ACTIVE( (*itr).bf) )
     {
-      case pt_euler:
-        // 正 : 自領域外、マイグレーション
-        // -1 : 計算領域外
-        // -2 : 自領域内
-        r = tr->integrate_Euler(p, dt);
-        break;
-
-      case pt_rk2:
-        r = tr->integrate_RK2(p, dt);
-        break;
-
-      case pt_rk4:
-        break;
-    }
-
-    if (r.x == -2) {
-      ; // nothing
-    }
-    else if (r.x == -1 || r.y == -1 || r.z == -1) {
-      Inactivate( (*itr).bf ); // 停止
-    }
-    else {
-      stampMigrate((*itr).bf);         // マイグレーション候補
-      c = encMigrateDir((*itr).bf, r); // 移動先をエンコード
-      flag++;
-      pcnt[c]++;
-    }
-
-    // 粒子位置情報をアップデート
-    (*itr).pos = p;
-
-    // アクティブな粒子のみライフタイムをインクリメント
-    if ( IS_ACTIVE( (*itr).bf) ) (*itr).bf++;
-
-    // 指定値を過ぎたら停止 >> 削除するか？
-    if ( life < getBit26((*itr).bf) ) Inactivate((*itr).bf);
-  }
+      switch(scheme)
+      {
+        case pt_euler:
+          // 正 : 自領域外、マイグレーション
+          // -1 : 計算領域外
+          // -2 : 自領域内
+          r = tr->integrate_Euler(p, dt);
+          break;
+          
+        case pt_rk2:
+          r = tr->integrate_RK2(p, dt);
+          break;
+          
+        case pt_rk4:
+          break;
+      }
+      //printf("r= %d %d %d\n", r.x, r.y, r.z);
+      if (r.x == -2) {
+        ; // nothing
+      }
+      else if (r.x == -1 || r.y == -1 || r.z == -1) {
+        (*itr).bf = Inactivate( (*itr).bf ); // 停止
+      }
+      else {
+        (*itr).bf = stampMigrate( (*itr).bf );  // マイグレーション候補
+        c = encMigrateDir((*itr).bf, r);        // 移動先をエンコード
+        flag++;
+        pcnt[c]++;
+      }
+      
+      // 粒子位置情報をアップデート
+      (*itr).pos = p;
+      (*itr).bf++;
+      
+      // 寿命制御があるとき、指定値を過ぎたら停止 >> 削除するか？
+      if (life > 0)
+      {
+        if ( life < getBit26((*itr).bf) ) (*itr).bf = Inactivate( (*itr).bf );
+      }
+      
+      
+    } // IS_ACTIVE
+    
+  } // itr=pchunk
 
 
   // 送信要素の最大値を保存
@@ -163,7 +170,7 @@ void Chunk::addParticleFromOrigin()
   p.bf  = 0;
   p.foo = 0;
   p.vel.assign(0.0, 0.0, 0.0);
-  Activate(p.bf);
+  p.bf = Activate(p.bf);
   pchunk.push_front(p);
 }
 
@@ -173,7 +180,7 @@ void Chunk::addParticleFromOrigin()
 // @note ライフタイムはparticleが持っている値を継承
 void Chunk::addParticle(particle p)
 {
-  Activate(p.bf);
+  p.bf = Activate(p.bf);
   pchunk.push_back(p);
 }
 
@@ -187,7 +194,7 @@ void Chunk::write_ascii(FILE* fp)
   fprintf(fp,"# particle_id %d\n", uid);
   fprintf(fp,"# origin      %e %e %e\n", origin.x, origin.y, origin.z);
   fprintf(fp,"# start_point %d\n", start_point);
-  fprintf(fp,"# start_step  %d\n\n", start_step);
+  fprintf(fp,"# start_step  %d\n", start_step);
   
   for(auto itr = pchunk.begin(); itr != pchunk.end(); ++itr)
   {
@@ -195,11 +202,12 @@ void Chunk::write_ascii(FILE* fp)
     Vec3r v = (*itr).vel;
     int b   = (*itr).bf;
     fprintf(fp,"%d %e %e %e %d %e %e %e %d\n",
-               (b >> ACTIVE_BIT) & 0x1,
+               BIT_SHIFT(b, ACTIVE_BIT),
                p.x, p.y, p.z,
                getBit26(b),
                v.x, v.y, v.z,
                (*itr).foo
             );
   }
+  fprintf(fp,"\n");
 }

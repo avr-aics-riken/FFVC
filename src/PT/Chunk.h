@@ -86,7 +86,7 @@ public:
     p.bf  = 0;
     p.foo = 0;
     p.vel.assign(0.0, 0.0, 0.0);
-    Activate(p.bf);
+    p.bf = Activate(p.bf);
     pchunk.push_back(p);
     grp = gp;
     origin = v;
@@ -100,7 +100,7 @@ public:
   // @param [in] pid    粒子ID
   // @param [in] stp    開始ステップ
   Chunk(particle p, const int gp, const int pid, const int stp) {
-    Activate(p.bf);
+    p.bf = Activate(p.bf);
     pchunk.push_back(p);
     grp = gp;
     uid = pid;
@@ -176,9 +176,9 @@ public:
 
 
   // @brief ACTIVE_BITをOFF
-  static inline void removeMigrate(int& idx)
+  static inline int removeMigrate(int idx)
   {
-    idx & (~(0x1<<MIGRATE_BIT));
+    return ( idx & (~(0x1<<MIGRATE_BIT)) );
   }
 
 
@@ -229,7 +229,7 @@ protected:
    * @param [in,out] b   int 変数
    * @param [in]     q   26-bit幅の数
    */
-  void setBit26 (int& b, const int q)
+  inline int setBit26 (int& b, const int q)
   {
     if ( q > MAX_LIFE ) Exit(0);
     b &= ~MASK_26; // 対象26bitをゼロにする
@@ -238,23 +238,23 @@ protected:
 
 
   // @brief ACTIVE_BITをON
-  inline void Activate(int& idx)
+  inline int Activate(int idx)
   {
-    idx | (0x1<<ACTIVE_BIT);
+    return ( idx | (0x1<<ACTIVE_BIT) );
   }
 
 
   // @brief ACTIVE_BITをOFF
-  inline void Inactivate(int& idx)
+  inline int Inactivate(int idx)
   {
-    idx & (~(0x1<<ACTIVE_BIT));
+    return ( idx & (~(0x1<<ACTIVE_BIT)) );
   }
 
 
   // @brief MIGRATE_BITをON
-  inline void stampMigrate(int& idx)
+  inline int stampMigrate(int idx)
   {
-    idx | (0x1<<MIGRATE_BIT);
+    return ( idx | (0x1<<MIGRATE_BIT) );
   }
 
 };

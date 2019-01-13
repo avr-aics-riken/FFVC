@@ -235,7 +235,7 @@ void Cloud::unpackParticle()
       v.z   = pr_buf[bsz*i + 6*j+5];
       b     = br_buf[bsz*i + 2*j+0];
       foo   = br_buf[bsz*i + 2*j+1];
-      Chunk::removeMigrate(b);
+      b = Chunk::removeMigrate(b);
 
       p.pos = pos;
       p.bf  = b;
@@ -1249,7 +1249,7 @@ bool Cloud::write_ascii(const unsigned step)
   char tmp_fname[30];
   sprintf( tmp_fname, "pt_%08ld_%06d.npt", step, myRank );
   
-  if ( !(fpl=fopen(tmp_fname, "w")) )
+  if ( !(fp=fopen(tmp_fname, "w")) )
   {
     stamped_printf("\tSorry, can't open 'pt_log.txt' file. Write failed.\n");
     return false;
@@ -1263,9 +1263,11 @@ bool Cloud::write_ascii(const unsigned step)
   int c=0;
   for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
   {
-    fprintf(fp,"# Chunk %d\n", c++);
+    fprintf(fp,"\n# Chunk %d\n", c++);
     (*itr)->write_ascii(fp);
   }
+  
+  fclose(fp);
   
   return true;
 }

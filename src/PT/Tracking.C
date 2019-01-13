@@ -119,6 +119,7 @@ Vec3i Tracking::findRankDir(Vec3r p)
 {
   Vec3r o = org;
   Vec3r e = reg;
+  //printf("o %e %e %e / e %e %e %e / p %e %e %e\n",o.x, o.y, o.z, e.x, e.y, e.z, p.x, p.y, p.z);
 
   Vec3i d;
   if      (p.x < o.x)       d.x = -1;
