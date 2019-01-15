@@ -23,7 +23,6 @@
  * @attention このマクロを変更した場合には，対応するffv_f_param.hも変更すること
  */
 
-#include "mydebug.h"
 #include <float.h>
 #include <math.h>
 #include <stdio.h>
@@ -708,7 +707,6 @@ inline int quantize9(REAL_TYPE a)
   if (s<0 || QT_9<s)
   {
     printf("quantize error : out of range %f > %d\n", a, s);
-    exit(0);
   }
 
   return s;

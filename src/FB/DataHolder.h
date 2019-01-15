@@ -32,6 +32,7 @@
 #include "FB_Define.h"
 #include "TextParser.h"
 #include <stdarg.h> // for va_start()
+#include "mydebug.h"
 
 /* ------------- DataHolder -----------------------------------------*/
 

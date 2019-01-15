@@ -1,13 +1,10 @@
-/*
-###################################################################################
-#
-# CBrick
-#
-# Copyright (c) 2017-2018 Research Institute for Information Technology(RIIT),
-#                    Kyushu University.  All rights reserved.
-#
-####################################################################################
-*/
+
+//##################################################################################
+//
+// Copyright (c) 2019 Research Institute for Information Technology, Kyushu university
+// All rights researved.
+//
+//##################################################################################
 
 /*
  * @file   PtComm.C
@@ -328,11 +325,29 @@ bool PtComm::Statistics(int& nCommP,
                                  MPI_UNSIGNED,
                                  0,
                                  MPI_COMM_WORLD) ) return false;
+  
   unsigned sum2 = 0;
   for (int i=0; i<numProc; i++) {
     sum2 += nPart[i];
   }
   g_part = sum2;
+  
+  return true;
+}
+
+
+// @brief バッファ要素数を同期
+// @param [in,out]  npart  バッファ計算用の最大粒子数
+bool PtComm::migrateBuffer(unsigned& npart)
+{
+  // 最大バッファ要素数
+  unsigned tmp = npart;
+  if ( MPI_SUCCESS != MPI_Allreduce(&tmp,
+                                    &npart,
+                                    1,
+                                    MPI_UNSIGNED,
+                                    MPI_MAX,
+                                    MPI_COMM_WORLD) ) return false;
   
   return true;
 }

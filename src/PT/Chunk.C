@@ -31,6 +31,13 @@ void Chunk::packParticle(REAL_TYPE* ps_buf,
   // 毎回クリア
   int c[NDST] = {}; // 0
   memset(pInfo, 0, sizeof(int)*NDST*4);
+    
+    
+  // マイグレーション粒子がない場合には処理をスキップ
+  if ( mig ) return;
+
+    
+    
   int bsz6 = max_p * 6; // 6要素
   int bsz2 = max_p * 2; // 2要素
 
@@ -69,6 +76,9 @@ void Chunk::packParticle(REAL_TYPE* ps_buf,
       pchunk.erase(itr);
     }
   }
+    
+  // フラグをfalseに戻す
+  mig = false;
 
 }
 
@@ -80,19 +90,19 @@ void Chunk::packParticle(REAL_TYPE* ps_buf,
 // @param [in]  life         粒子寿命
 // @param [in]  dt           積分幅
 // @param [out] max_particle 送受信バッファの計算に必要な送受信よ粒子数の最大値
-// @retval マイグレーションが発生する場合にはtrue
-bool Chunk::updatePosition(Tracking* tr,
+void Chunk::updatePosition(Tracking* tr,
                            const int scheme,
                            const int life,
                            const REAL_TYPE dt,
                            int& max_particle)
 {
-  int flag=0;
   int pcnt[NDST] = {};  // 行き先毎の送信粒子数
+  int flag = 0;
 
   for(auto itr = pchunk.begin(); itr != pchunk.end(); ++itr)
   {
     Vec3r p = (*itr).pos;
+    Vec3r v = (*itr).vel;
     Vec3i r;
     int c;
     //printf("p:(%14.6f %14.6f %14.6f)\n", p.x, p.y, p.z);
@@ -105,11 +115,11 @@ bool Chunk::updatePosition(Tracking* tr,
           // 正 : 自領域外、マイグレーション
           // -1 : 計算領域外
           // -2 : 自領域内
-          r = tr->integrate_Euler(p, dt);
+          r = tr->integrate_Euler(p, v, dt);
           break;
           
         case pt_rk2:
-          r = tr->integrate_RK2(p, dt);
+          r = tr->integrate_RK2(p, v, dt);
           break;
           
         case pt_rk4:
@@ -125,8 +135,9 @@ bool Chunk::updatePosition(Tracking* tr,
       else {
         (*itr).bf = stampMigrate( (*itr).bf );  // マイグレーション候補
         c = encMigrateDir((*itr).bf, r);        // 移動先をエンコード
-        flag++;
         pcnt[c]++;
+        flag++;
+        //printf("migrate from %d > %d (%d %d %d)\n", myRank, c, r.x, r.y, r.z);
       }
       
       // 粒子位置情報をアップデート
@@ -139,9 +150,7 @@ bool Chunk::updatePosition(Tracking* tr,
         if ( life < getBit26((*itr).bf) ) (*itr).bf = Inactivate( (*itr).bf );
       }
       
-      
     } // IS_ACTIVE
-    
   } // itr=pchunk
 
 
@@ -152,17 +161,16 @@ bool Chunk::updatePosition(Tracking* tr,
       max_particle = pcnt[i];
     }
   }
-
-
-  if (flag > 0) return true;
-
-  return false;
+  
+  // packParticle()での番兵
+  if ( flag > 0 ) mig = true;
+  
 }
 
 
 //#############################################################################
 // @brief pchunkに開始点から粒子を追加
-// @note ライフタイムはゼロ
+// @note ライフカウントはゼロ
 void Chunk::addParticleFromOrigin()
 {
   particle p;
@@ -176,37 +184,26 @@ void Chunk::addParticleFromOrigin()
 
 
 //#############################################################################
-// @brief pchunkの終端に粒子を追加
-// @note ライフタイムはparticleが持っている値を継承
-void Chunk::addParticle(particle p)
-{
-  p.bf = Activate(p.bf);
-  pchunk.push_back(p);
-}
-
-
-//#############################################################################
 // @brief ascii format出力
 void Chunk::write_ascii(FILE* fp)
 {
-  fprintf(fp,"# particles   %d\n",(int)pchunk.size());
-  fprintf(fp,"# group_id    %d\n", grp);
-  fprintf(fp,"# particle_id %d\n", uid);
-  fprintf(fp,"# origin      %e %e %e\n", origin.x, origin.y, origin.z);
-  fprintf(fp,"# start_point %d\n", start_point);
-  fprintf(fp,"# start_step  %d\n", start_step);
+  fprintf(fp,"particles %d\n",(int)pchunk.size());
+  fprintf(fp,"group_id %d\n", grp);
+  fprintf(fp,"particle_id %d\n", uid);
+  fprintf(fp,"origin %e %e %e\n", origin.x, origin.y, origin.z);
+  fprintf(fp,"start_origin %d\n", startOrigin);
+  fprintf(fp,"start_emit %d\n", EmitStep);
   
   for(auto itr = pchunk.begin(); itr != pchunk.end(); ++itr)
   {
     Vec3r p = (*itr).pos;
     Vec3r v = (*itr).vel;
     int b   = (*itr).bf;
-    fprintf(fp,"%d %e %e %e %d %e %e %e %d\n",
+    fprintf(fp,"%d %e %e %e %d %e %e %e\n",
                BIT_SHIFT(b, ACTIVE_BIT),
                p.x, p.y, p.z,
                getBit26(b),
-               v.x, v.y, v.z,
-               (*itr).foo
+               v.x, v.y, v.z
             );
   }
   fprintf(fp,"\n");

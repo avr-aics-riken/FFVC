@@ -712,8 +712,6 @@ int FFV::Initialize(int argc, char **argv)
   if (C.Mode.ParticleTracking == ON) {
     TR = new Cloud(d_bcd,
                    d_v,
-                   C.RefLength,
-                   C.Unit.Param,
                    deltaT,
                    &tp_ffv,
                    &PM);

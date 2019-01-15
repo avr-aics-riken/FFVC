@@ -33,6 +33,7 @@
 #include "Component.h"
 #include "FBUtility.h"
 #include "TextParser.h"
+#include "mydebug.h"
 
 class  ParseMat {
 private:

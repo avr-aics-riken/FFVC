@@ -17,7 +17,6 @@
 // @brief ランタイム
 bool Cloud::tracking(const unsigned step, const double time)
 {
-  int flag=0; // マイグレーション発生フラグ
   int max_part=0;  // 送受信バッファの計算に必要な送受信最大粒子数
   bool ret;
   
@@ -36,32 +35,31 @@ bool Cloud::tracking(const unsigned step, const double time)
     if ( Interval[m].isStarted(step, time) && Interval[m].isTriggered(step, time) )
     {
       // 保持している粒子を積分し、マイグレーションと寿命判定
-      if ( (*itr)->updatePosition(tr, scheme, Egrp[m].getLife(), dt, max_part) ) flag++;
+      (*itr)->updatePosition(tr, scheme, Egrp[m].getLife(), dt, max_part);
       
       // 登録した開始点から粒子を追加
       (*itr)->addParticleFromOrigin();
     }
   }
   
-  // マイグレーションが発生する場合
-  if (flag>0) {
-    flag_migration = true;
-    
-    // バッファ長の更新が必要な場合、バッファ計算用の粒子数はBUF_UNIT単位で確保
-    if (buf_max_particle < max_part) {
-      buf_max_particle = (max_part / BUF_UNIT + 1) * BUF_UNIT;
-      buf_updated = true;
-    }
+  // バッファ長の更新が必要な場合、バッファ計算用の粒子数はBUF_UNIT単位で確保
+  if (buf_max_particle < max_part) {
+    buf_max_particle = (max_part / BUF_UNIT + 1) * BUF_UNIT;
+    buf_updated = true;
   }
   
+  // バッファ長を同期
+  ret = PC.migrateBuffer(buf_max_particle);
+
   TIMING_stop("PT_Tracking");
+  if ( !ret ) return false;
   
-  
+
   TIMING_start("PT_Migration");
   ret = migration();
   TIMING_stop("PT_Migration");
   if ( !ret ) return false;
-  
+
   
   
   // 出力の場合
@@ -91,6 +89,7 @@ bool Cloud::tracking(const unsigned step, const double time)
   {
     TIMING_start("PT_fileIO");
     ret = write_ascii(step);
+    write_filelist(step);
     TIMING_stop("PT_fileIO");
     if ( !ret ) return false;
   }
@@ -141,6 +140,35 @@ bool Cloud::initCloud(FILE* fp)
 }
 
 
+//#############################################################################
+// @brief tool用初期設定
+bool Cloud::initCloud()
+{
+  if ( !setPTinfo() ) return false;
+  
+  //if ( !determineUniqueID() ) return false;
+  
+  displayParam(stdout);
+  
+  tr = new Tracking(size,
+                    guide,
+                    origin,
+                    region,
+                    pitch,
+                    vSource,
+                    bcd,
+                    myRank);
+  
+  // 通信クラスの設定
+  PC.setPtComm(G_division, myRank, numProc);
+  
+  // Tool mode
+  ModeTOOL = true;
+  
+  return true;
+}
+
+
 
 //#############################################################################
 // @brief マイグレーション処理
@@ -153,10 +181,6 @@ bool Cloud::initCloud(FILE* fp)
 bool Cloud::migration()
 {
   bool ret;
-    
-  // マイグレーション対象でなければ戻る
-  if ( !flag_migration ) return true;
-
 
   // マイグレーション用に確保したバッファ領域の準備
   if (buf_updated) {
@@ -258,7 +282,7 @@ void Cloud::unpackParticle()
       // pidのチャンクが存在しない場合
       if (check==0)
       {
-        Chunk* m = new Chunk(p, gid, pid, Egrp[gid].getStart());
+        Chunk* m = new Chunk(p, gid, pid, Egrp[gid].getStart(), myRank);
         chunkList.push_back(m);
         Egrp[gid].incGroup();
       }
@@ -395,6 +419,37 @@ bool Cloud::setPTinfo()
     if ( !strcasecmp(str.c_str(), "off")) tracking = OFF;
   }
   */
+  
+  
+  // 入力パラメータの次元
+  label = "/unit/UnitOfInputParameter";
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing warning : No Label in '%s'\n", label.c_str());
+    return false;
+  }
+  if ( !strcasecmp(str.c_str(), "NONDIMENSIONAL") ) {
+    unit = NONDIMENSIONAL;
+  }
+  else if ( !strcasecmp(str.c_str(), "DIMENSIONAL") ) {
+    unit = DIMENSIONAL;
+  }
+  else {
+    Hostonly_ printf("Invalid unit\n");
+    return false;
+  }
+  
+  
+  // 代表長
+  label = "/reference/length";
+  if ( !(tpCntl->getInspectedValue(label, f_val )) )
+  {
+    Hostonly_ stamped_printf("\tParsing warning : No Label in '%s'\n", label.c_str());
+    return false;
+  }
+  refLen = (REAL_TYPE)f_val;
+  
+  
 
   label_base = "/ParticleTracking";
   label = label_base + "/method";
@@ -459,6 +514,7 @@ bool Cloud::setPTinfo()
     Hostonly_ printf("Invalid file format\n");
     return false;
   }
+  
 
 
   // 粒子放出開始点の個数のチェック
@@ -645,7 +701,7 @@ bool Cloud::getTPparam(const string label_leaf, int odr)
 
 
   // 粒子出力
-  label = label_leaf + "/StartStep";
+  label = label_leaf + "/StartEmit";
 
   if ( !(tpCntl->getInspectedValue(label, f_val )) )
   {
@@ -784,13 +840,16 @@ bool Cloud::setPointset(const string label_base, const int odr)
     }
 
     // 自領域内であれば、初期開始点として追加
-    if ( inOwnRegion(v) )
-    {
-      Vec3r pos(v);
-      Chunk* m = new Chunk(pos, odr, 1, Egrp[odr].getStart());
-      chunkList.push_back(m);
-      Egrp[odr].incGroup();
+    if ( !ModeTOOL ) {
+      if ( inOwnRegion(v) )
+      {
+        Vec3r pos(v);
+        Chunk* m = new Chunk(pos, odr, 1, Egrp[odr].getStart(), myRank);
+        chunkList.push_back(m);
+        Egrp[odr].incGroup();
+      }
     }
+    
   }
   return true;
 }
@@ -868,15 +927,18 @@ bool Cloud::setLine(const string label_base, const int odr)
   {
     Vec3r pos = st + dd * (REAL_TYPE)m;
 
-    //printf("r=%d  tgt = (%14.6e %14.6e %14.6e)\n", myRank, pos.x, pos.y, pos.z);
+    printf("[%d] %d  tgt = (%14.6e %14.6e %14.6e)\n", myRank, m, pos.x, pos.y, pos.z);
 
     // 自領域内であれば、初期開始点として追加
-    if ( inOwnRegion(pos) )
-    {
-      Chunk* m = new Chunk(pos, odr, 1, Egrp[odr].getStart());
-      chunkList.push_back(m);
-      Egrp[odr].incGroup();
+    if ( !ModeTOOL ) {
+      if ( inOwnRegion(pos) )
+      {
+        Chunk* m = new Chunk(pos, odr, 1, Egrp[odr].getStart(), myRank);
+        chunkList.push_back(m);
+        Egrp[odr].incGroup();
+      }
     }
+    
   }
   return true;
 }
@@ -989,12 +1051,14 @@ void Cloud::samplingInCircle(const REAL_TYPE* cnt,
 
     q = rotate_inv(angle, t.assign(x, y, 0.0)) + center;
 
-    if ( inOwnRegion(q) )
-    {
-      Vec3r pos(q);
-      Chunk* m = new Chunk(pos, odr, 1, Egrp[odr].getStart());
-      chunkList.push_back(m);
-      Egrp[odr].incGroup();
+    if ( !ModeTOOL ) {
+      if ( inOwnRegion(q) )
+      {
+        Vec3r pos(q);
+        Chunk* m = new Chunk(pos, odr, 1, Egrp[odr].getStart(), myRank);
+        chunkList.push_back(m);
+        Egrp[odr].incGroup();
+      }
     }
   }
 }
@@ -1246,8 +1310,8 @@ bool Cloud::write_ascii(const unsigned step)
   if (nParticle == 0) return true;
   
   FILE* fp;
-  char tmp_fname[30];
-  sprintf( tmp_fname, "pt_%08ld_%06d.npt", step, myRank );
+  char tmp_fname[50];
+  sprintf( tmp_fname, "Particle/pt_%08ld_%06d.npt", step, myRank );
   
   if ( !(fp=fopen(tmp_fname, "w")) )
   {
@@ -1267,6 +1331,30 @@ bool Cloud::write_ascii(const unsigned step)
     (*itr)->write_ascii(fp);
   }
   
+  fclose(fp);
+  
+  return true;
+}
+
+
+//#############################################################################
+// @brief meta file output
+bool Cloud::write_filelist(const unsigned step)
+{
+  if (nParticle == 0) return true;
+  
+  FILE* fp;
+  char tmp_fname[50];
+  sprintf( tmp_fname, "Particle/pt_files_%06d.lst", myRank );
+  
+  if ( !(fp=fopen(tmp_fname, "a")) )
+  {
+    stamped_printf("\tSorry, can't open 'pt_file_xxx.txt' file. Write failed.\n");
+    return false;
+  }
+  
+  sprintf( tmp_fname, "pt_%08ld_%06d.npt", step, myRank );
+  fprintf(fp,"%s\n", tmp_fname);
   fclose(fp);
   
   return true;

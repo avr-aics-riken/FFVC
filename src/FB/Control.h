@@ -34,6 +34,7 @@
 #include "IterationControl.h"
 #include "TextParser.h"
 #include "IntervalManager.h"
+#include "mydebug.h"
 
 using namespace std;
 using namespace Vec3class;

@@ -83,8 +83,8 @@ cmake_policy(SET CMP0012 NEW)
 
 
 #######
-set(PROJECT_VERSION "2.6.6")
-set(LIB_REVISION "20190113_1730")
+set(PROJECT_VERSION "2.6.7")
+set(LIB_REVISION "20190115_1600")
 #######
 
 
@@ -277,7 +277,7 @@ add_subdirectory(src)
 add_subdirectory(doc)
 add_subdirectory(examples)
 add_subdirectory(src_util)
-
+add_subdirectory(pt_tool)
 
 
 #######

@@ -4,10 +4,14 @@
 
 - 粒子データ送信　MPI_Type_create_struct
 - file format binary 
-- tool binary to scatter
 
 
 ## REVISION HISTORY
+
+---
+- 2019-1-15 Version 2.6.7
+  - 後処理のpythonコード > pt_tool
+  - mydebug.hをDomainInfo.hから削除し、他ヘッダへ書き込む
 
 ---
 - 2019-1-13 Version 2.6.6

@@ -100,6 +100,7 @@ public:
     if (nPart) delete [] nPart;
   }
 
+  
 
 public:
 
@@ -191,6 +192,10 @@ public:
   bool Statistics(int& nCommP,
                   const unsigned l_part,
                   unsigned& g_part);
+  
+  
+  // @brief バッファ要素数を同期
+  bool migrateBuffer(unsigned& var);
   
   
   

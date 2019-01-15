@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include "FB_Define.h"
 #include "common/Vec3.h" // defined in Polylib
-
+#include "mydebug.h"
 
 using namespace Vec3class;
 

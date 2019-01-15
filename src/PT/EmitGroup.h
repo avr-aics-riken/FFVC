@@ -15,7 +15,6 @@
  * @note
  */
 
-#include "mydebug.h"
 #include "PtDefine.h"
 #include <string.h>
 

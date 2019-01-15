@@ -50,29 +50,34 @@ typedef struct {
   int bf;                ///< ビットフィールド
   Vec3r vel;             ///< 粒子の並進速度成分
   int foo;               ///< padding 何かに利用可能
-} particle;
+} particle;              //   他に必要な情報はここにいれる
                          //   ビットフィールド
                          //   31 - active(1) / inactive(0)
                          //   30 - migrate (1) / stay (0)
                          //   25~29 移動先ランク(周囲の26方向)
                          //   24~0  放出後のライフカウント 0 ~ 33,554,431
+                         //         ライフカウントは放出回数、計算のステップ数ではない
 
-/// 粒子群
+
+/// 粒子塊　ストリークラインイメージ
 class Chunk {
 protected:
   int grp;                 ///< 管理用グループ番号Cloudから利用
-  int uid;                 ///< 粒子の固有ID
+  int uid;                 ///< 開始点の固有ID
   Vec3r origin;            ///< Chunkに割り振られた開始点（固定）
-  int start_point;         ///< 初期の指定開始点(1) / マイグレート先(0)
-  int start_step;          ///< 放出開始ステップ
+  int startOrigin;         ///< 初期の指定開始点のチャンク(1) / マイグレート先(0)
+  int EmitStep;            ///< 放出開始ステップ
+  int myRank;              ///< ランク番号
+  bool mig;                ///< マイグレーションフラグ
   list<particle> pchunk;   ///< 粒子チャンク
 
 public:
   Chunk() {
     uid = 0;
     grp = -1;
-    start_point = 0;
-    start_step = -1;
+    startOrigin = 0;
+    EmitStep = -1;
+    mig = false;
   }
 
   /// コンストラクタ 作成時
@@ -80,7 +85,12 @@ public:
   // @param [in] gp     グループID
   // @param [in] st     開始点のとき1
   // @param [in] stp    開始ステップ
-  Chunk(const Vec3r v, const int gp, const int st, const int stp) {
+  // @param [in] m_rank ランク番号
+  Chunk(const Vec3r v,
+        const int gp,
+        const int st,
+        const int stp,
+        const int m_rank) {
     particle p;
     p.pos = v;
     p.bf  = 0;
@@ -90,8 +100,10 @@ public:
     pchunk.push_back(p);
     grp = gp;
     origin = v;
-    start_point = st;
-    start_step = stp;
+    startOrigin = st;
+    EmitStep = stp;
+    myRank = m_rank;
+    mig = false;
   }
 
   /// コンストラクタ マイグレーション追加時
@@ -99,12 +111,20 @@ public:
   // @param [in] gp     グループID
   // @param [in] pid    粒子ID
   // @param [in] stp    開始ステップ
-  Chunk(particle p, const int gp, const int pid, const int stp) {
-    p.bf = Activate(p.bf);
+  // @param [in] m_rank ランク番号
+  Chunk(particle p,
+        const int gp,
+        int pid,
+        const int stp,
+        const int m_rank) {
+    //p.bf = Activate(p.bf);
     pchunk.push_back(p);
     grp = gp;
     uid = pid;
-    start_step = stp;
+    EmitStep = stp;
+    startOrigin = 0;
+    myRank = m_rank;
+    mig = false;
   }
 
   ~Chunk() {}
@@ -112,8 +132,7 @@ public:
 
 
   // @brief pchunkに保持している粒子を積分し、マイグレーションと寿命判定
-  // @retval マイグレーションが発生したら、trueを返す
-  bool updatePosition(Tracking* tr,
+  void updatePosition(Tracking* tr,
                       const int scheme,
                       const int life,
                       const REAL_TYPE dt,
@@ -131,8 +150,14 @@ public:
   void addParticleFromOrigin();
 
 
-  // @brief pchunkに粒子を追加
-  void addParticle(particle p);
+    
+  //#############################################################################
+  // @brief pchunkの終端に粒子を追加
+  // @note ライフカウントはparticleが持っている値を継承
+  void addParticle(particle p)
+  {
+    pchunk.push_back(p);
+  }
 
 
   // @brief 粒子IDをセットする
@@ -148,7 +173,7 @@ public:
 
   // @brief 開始点かどうか
   bool isOrigin() const {
-    return (start_point==1) ? true : false;
+    return (startOrigin==1) ? true : false;
   }
 
 
@@ -175,7 +200,7 @@ public:
   void write_ascii(FILE* fp);
 
 
-  // @brief ACTIVE_BITをOFF
+  // @brief MIGRATE_BITをOFF
   static inline int removeMigrate(int idx)
   {
     return ( idx & (~(0x1<<MIGRATE_BIT)) );
@@ -231,7 +256,7 @@ protected:
    */
   inline int setBit26 (int& b, const int q)
   {
-    if ( q > MAX_LIFE ) Exit(0);
+    if ( q > MAX_LIFE ) exit(0);
     b &= ~MASK_26; // 対象26bitをゼロにする
     b |= q;        // 書き込む
   }

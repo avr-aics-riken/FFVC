@@ -23,5 +23,6 @@
  */
 
 #define IP_VERS 135
+#include "mydebug.h"
 
 #endif // _IP_DEFINE_H_

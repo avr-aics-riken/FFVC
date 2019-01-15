@@ -198,7 +198,7 @@ private:
   SetBC3D BC;                ///< BCクラス
   History* H;                ///< 履歴クラス
   matA A;                    ///< 係数行列出力クラス
-  Cloud* TR;                 ///< 流星追跡管理クラス
+  Cloud* TR;                 ///< 粒子追跡管理クラス
 
   POLYLIB_STAT poly_stat;    ///< Polylibの戻り値
   FBUtility U;               ///< ユーティリティクラス

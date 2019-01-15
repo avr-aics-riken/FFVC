@@ -21,13 +21,12 @@
  */
 
 #include "ffv_Alloc.h"
-#include "mydebug.h"
 #include "FBUtility.h"
 #include "Alloc.h"
 #include <string.h>
 
 //#include <stdio.h>
-//#include <stdlib.h>
+#include <stdlib.h>
 
 //#include <string>
 //#include <iostream>
@@ -59,7 +58,7 @@
 void FALLOC::allocArray_AB2 (double &total)
 {
   // d_abf
-  if ( !(d_abf = Alloc::Real_V3D(size, guide)) ) Exit(0);
+  if ( !(d_abf = Alloc::Real_V3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
 }
 
@@ -72,17 +71,17 @@ void FALLOC::allocArray_AB2 (double &total)
 void FALLOC::allocArray_Average(double &total, Control* C)
 {
   // d_ap
-  if ( !(d_ap = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_ap = Alloc::Real_S3D(size, guide)) ) exit(0);
   total += array_size * (double)sizeof(REAL_TYPE);
 
   // d_av
-  if ( !(d_av = Alloc::Real_V3D(size, guide)) ) Exit(0);
+  if ( !(d_av = Alloc::Real_V3D(size, guide)) ) exit(0);
   total += array_size * (double)sizeof(REAL_TYPE) * 3.0;
 
   if ( C->isHeatProblem() )
   {
     // d_ae
-    if ( !(d_ae = Alloc::Real_S3D(size, guide)) ) Exit(0);
+    if ( !(d_ae = Alloc::Real_S3D(size, guide)) ) exit(0);
     total += array_size * (double)sizeof(REAL_TYPE);
   }
 }
@@ -97,18 +96,18 @@ void FALLOC::allocArray_Average(double &total, Control* C)
 void FALLOC::allocArray_CoarseMesh(const int* r_size, double &prep, const bool isHeat)
 {
   // d_r_p
-  if ( !(d_r_p = Alloc::Real_S3D(r_size, guide)) ) Exit(0);
+  if ( !(d_r_p = Alloc::Real_S3D(r_size, guide)) ) exit(0);
   prep += array_size * (double)sizeof(REAL_TYPE);
 
   // d_r_v
-  if ( !(d_r_v = Alloc::Real_V3D(r_size, guide)) ) Exit(0);
+  if ( !(d_r_v = Alloc::Real_V3D(r_size, guide)) ) exit(0);
   prep += array_size * (double)sizeof(REAL_TYPE) * 3.0;
 
 
   if ( isHeat )
   {
     // d_r_t
-    if ( !(d_r_t = Alloc::Real_S3D(r_size, guide)) ) Exit(0);
+    if ( !(d_r_t = Alloc::Real_S3D(r_size, guide)) ) exit(0);
     prep += array_size * (double)sizeof(REAL_TYPE);
 
   }
@@ -123,7 +122,7 @@ void FALLOC::allocArray_CoarseMesh(const int* r_size, double &prep, const bool i
  */
 void FALLOC::allocArray_CompoVF(double &prep, double &total)
 {
-  if ( !(d_cvf = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_cvf = Alloc::Real_S3D(size, guide)) ) exit(0);
   prep += array_size * (double)sizeof(REAL_TYPE);
   total+= array_size * (double)sizeof(REAL_TYPE);
 }
@@ -136,12 +135,12 @@ void FALLOC::allocArray_CompoVF(double &prep, double &total)
  */
 void FALLOC::allocArray_Cut(double &prep, double &total)
 {
-  if ( !(d_cut = Alloc::LLong_S3D(size, guide)) ) Exit(0);
+  if ( !(d_cut = Alloc::LLong_S3D(size, guide)) ) exit(0);
   prep  += array_size * (double)sizeof(long long);
   total += array_size * (double)sizeof(long long);
 
 
-  if ( !(d_bid = Alloc::Int_S3D(size, guide)) ) Exit(0);
+  if ( !(d_bid = Alloc::Int_S3D(size, guide)) ) exit(0);
   prep  += array_size * (double)sizeof(int);
   total += array_size * (double)sizeof(int);
 }
@@ -218,19 +217,19 @@ void FALLOC::allocArray_Forcing(double& m_prep, double& m_total, FILE* fp, Contr
  */
 void FALLOC::allocArray_Krylov(double &total)
 {
-  if ( !(d_wg = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_wg = Alloc::Real_S3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE);
 
 
-  if ( !(d_res = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_res = Alloc::Real_S3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE);
 
 
-  if ( !(d_vm = Alloc::Real_S4D(size, guide, FREQ_OF_RESTART+1)) ) Exit(0);
+  if ( !(d_vm = Alloc::Real_S4D(size, guide, FREQ_OF_RESTART+1)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE);
 
 
-  if ( !(d_zm = Alloc::Real_S4D(size, guide, FREQ_OF_RESTART+1)) ) Exit(0);
+  if ( !(d_zm = Alloc::Real_S4D(size, guide, FREQ_OF_RESTART+1)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE);
 
 }
@@ -244,7 +243,7 @@ void FALLOC::allocArray_Krylov(double &total)
  */
 void FALLOC::allocArray_Interface(double &total)
 {
-  if ( !(d_vof = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_vof = Alloc::Real_S3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE);
 
 }
@@ -257,7 +256,7 @@ void FALLOC::allocArray_Interface(double &total)
  */
 void FALLOC::allocArray_LES(double &total)
 {
-  if ( !(d_vt = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_vt = Alloc::Real_S3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE);
 }
 
@@ -272,10 +271,10 @@ void FALLOC::allocArray_Statistic(double &total, Control* C)
   // Velocity
   if ( C->Mode.StatVelocity == ON )
   {
-    if ( !(d_rms_v = Alloc::Real_V3D(size, guide)) ) Exit(0);
+    if ( !(d_rms_v = Alloc::Real_V3D(size, guide)) ) exit(0);
     total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
 
-    if ( !(d_rms_mean_v = Alloc::Real_V3D(size, guide)) ) Exit(0);
+    if ( !(d_rms_mean_v = Alloc::Real_V3D(size, guide)) ) exit(0);
     total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
   }
 
@@ -283,10 +282,10 @@ void FALLOC::allocArray_Statistic(double &total, Control* C)
   // Pressure
   if ( C->Mode.StatPressure == ON )
   {
-    if ( !(d_rms_p = Alloc::Real_S3D(size, guide)) ) Exit(0);
+    if ( !(d_rms_p = Alloc::Real_S3D(size, guide)) ) exit(0);
     total+= array_size * (double)sizeof(REAL_TYPE);
 
-    if ( !(d_rms_mean_p = Alloc::Real_S3D(size, guide)) ) Exit(0);
+    if ( !(d_rms_mean_p = Alloc::Real_S3D(size, guide)) ) exit(0);
     total+= array_size * (double)sizeof(REAL_TYPE);
   }
 
@@ -294,10 +293,10 @@ void FALLOC::allocArray_Statistic(double &total, Control* C)
   // Temperature
   if ( C->isHeatProblem() && C->Mode.StatTemperature==ON )
   {
-    if ( !(d_rms_t = Alloc::Real_S3D(size, guide)) ) Exit(0);
+    if ( !(d_rms_t = Alloc::Real_S3D(size, guide)) ) exit(0);
     total+= array_size * (double)sizeof(REAL_TYPE);
 
-    if ( !(d_rms_mean_t = Alloc::Real_S3D(size, guide)) ) Exit(0);
+    if ( !(d_rms_mean_t = Alloc::Real_S3D(size, guide)) ) exit(0);
     total+= array_size * (double)sizeof(REAL_TYPE);
   }
 
@@ -306,27 +305,27 @@ void FALLOC::allocArray_Statistic(double &total, Control* C)
   if ( C->Mode.ReynoldsStress == ON )
   {
     // レイノルズ応力テンソル
-    if ( !(d_R = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    if ( !(d_R = Alloc::Real_T3D(size, guide)) ) exit(0);
     total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
 
     // レイノルズ応力テンソル (時間平均値)
-    if ( !(d_aR = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    if ( !(d_aR = Alloc::Real_T3D(size, guide)) ) exit(0);
     total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
 
     /* 生成項 (時間平均値)
-    if ( !(d_aP = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    if ( !(d_aP = Alloc::Real_T3D(size, guide)) ) exit(0);
     total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
 
     // 散逸項 (時間平均値)
-    if ( !(d_aE = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    if ( !(d_aE = Alloc::Real_T3D(size, guide)) ) exit(0);
     total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
 
     // 乱流拡散項 (時間平均値)
-    if ( !(d_aT = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    if ( !(d_aT = Alloc::Real_T3D(size, guide)) ) exit(0);
     total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
 
     // 速度圧力勾配相関項 (時間平均値)
-    if ( !(d_aPI = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    if ( !(d_aPI = Alloc::Real_T3D(size, guide)) ) exit(0);
     total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
     */
   }
@@ -334,25 +333,25 @@ void FALLOC::allocArray_Statistic(double &total, Control* C)
   /* Channel Mean
   if ( C->Mode.ChannelOutputMean == ON )
   {
-    if ( !(d_av_mean = Alloc::Real_S3D(size, guide)) ) Exit(0);
+    if ( !(d_av_mean = Alloc::Real_S3D(size, guide)) ) exit(0);
     total += array_size * (double)sizeof(REAL_TYPE) * 3.0;
 
-    if ( !(d_arms_mean = Alloc::Real_S3D(size, guide)) ) Exit(0);
+    if ( !(d_arms_mean = Alloc::Real_S3D(size, guide)) ) exit(0);
     total += array_size * (double)sizeof(REAL_TYPE) * 3.0;
 
-    if ( !(d_aR_mean = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    if ( !(d_aR_mean = Alloc::Real_T3D(size, guide)) ) exit(0);
     total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
 
-    if ( !(d_aP_mean = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    if ( !(d_aP_mean = Alloc::Real_T3D(size, guide)) ) exit(0);
     total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
 
-    if ( !(d_aE_mean = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    if ( !(d_aE_mean = Alloc::Real_T3D(size, guide)) ) exit(0);
     total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
 
-    if ( !(d_aT_mean = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    if ( !(d_aT_mean = Alloc::Real_T3D(size, guide)) ) exit(0);
     total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
 
-    if ( !(d_aPI_mean = Alloc::Real_T3D(size, guide)) ) Exit(0);
+    if ( !(d_aPI_mean = Alloc::Real_T3D(size, guide)) ) exit(0);
     total += array_size * (double)sizeof(REAL_TYPE) * 6.0;
   }*/
 
@@ -367,29 +366,29 @@ void FALLOC::allocArray_Statistic(double &total, Control* C)
 void FALLOC::allocArray_Main(double &total, Control* C)
 {
   // [*] ステップ間でデータを保持
-  if ( !(d_v = Alloc::Real_V3D(size, guide)) ) Exit(0);
+  if ( !(d_v = Alloc::Real_V3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
 
 
-  if ( !(d_vf = Alloc::Real_V3D(size, guide)) ) Exit(0);
+  if ( !(d_vf = Alloc::Real_V3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
 
 
-  if ( !(d_p = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_p = Alloc::Real_S3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE);
 
 
-  if ( !(d_dv = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_dv = Alloc::Real_S3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE);
 
 
-  if ( !(d_wv = Alloc::Real_V3D(size, guide)) ) Exit(0);
+  if ( !(d_wv = Alloc::Real_V3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
 
 
   if ( C->isHeatProblem() )
   {
-    if ( !(d_ie = Alloc::Real_S3D(size, guide)) ) Exit(0);
+    if ( !(d_ie = Alloc::Real_S3D(size, guide)) ) exit(0);
     total+= array_size * (double)sizeof(REAL_TYPE);
   }
 
@@ -406,7 +405,7 @@ void FALLOC::allocArray_Main(double &total, Control* C)
     dnum = IO_BLOCK_SIZE_FLOW;
   }
 
-  if ( !(d_io_buffer = Alloc::Real_S4D(size, guide, dnum)) ) Exit(0);
+  if ( !(d_io_buffer = Alloc::Real_S4D(size, guide, dnum)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE) * (double)dnum;
 
 
@@ -436,7 +435,7 @@ void FALLOC::allocArray_Main(double &total, Control* C)
   // 渦度の出力指定がある，あるいは渦度関連のサンプリングがある場合にアロケート
   if ( C->varState[var_Vorticity] )
   {
-    if ( !(d_vrt = Alloc::Real_V3D(size, guide)) ) Exit(0);
+    if ( !(d_vrt = Alloc::Real_V3D(size, guide)) ) exit(0);
     total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
   }
 }
@@ -449,27 +448,27 @@ void FALLOC::allocArray_Main(double &total, Control* C)
  */
 void FALLOC::allocArray_BiCGstab(double &total)
 {
-  if ( !(d_pcg_r = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_pcg_r = Alloc::Real_S3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE);
 
 
-  if ( !(d_pcg_p = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_pcg_p = Alloc::Real_S3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE);
 
 
-  if ( !(d_pcg_r0 = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_pcg_r0 = Alloc::Real_S3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE);
 
 
-  if ( !(d_pcg_q = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_pcg_q = Alloc::Real_S3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE);
 
 
-  if ( !(d_pcg_s = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_pcg_s = Alloc::Real_S3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE);
 
 
-  if ( !(d_pcg_t = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_pcg_t = Alloc::Real_S3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE);
 }
 
@@ -481,13 +480,13 @@ void FALLOC::allocArray_BiCGstab(double &total)
  */
 void FALLOC::allocArray_BiCGSTABwithPreconditioning(double &total)
 {
-  if ( !(d_pcg_p_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_pcg_p_ = Alloc::Real_S3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE);
 
-	if ( !(d_pcg_s_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
+	if ( !(d_pcg_s_ = Alloc::Real_S3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE);
 
-  if ( !(d_pcg_t_ = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_pcg_t_ = Alloc::Real_S3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE);
 }
 
@@ -499,19 +498,19 @@ void FALLOC::allocArray_BiCGSTABwithPreconditioning(double &total)
  */
 void FALLOC::allocArray_PCG(double &total)
 {
-  if ( !(d_pcg_r = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_pcg_r = Alloc::Real_S3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE);
 
 
-  if ( !(d_pcg_p = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_pcg_p = Alloc::Real_S3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE);
 
 
-  if ( !(d_pcg_q = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_pcg_q = Alloc::Real_S3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE);
 
 
-  if ( !(d_pcg_z = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_pcg_z = Alloc::Real_S3D(size, guide)) ) exit(0);
   total+= array_size * (double)sizeof(REAL_TYPE);
 }
 
@@ -524,30 +523,30 @@ void FALLOC::allocArray_PCG(double &total)
  */
 void FALLOC::allocArray_Prep(double &prep, double &total)
 {
-  if ( !(d_ws = Alloc::Real_S3D(size, guide)) ) Exit(0);
+  if ( !(d_ws = Alloc::Real_S3D(size, guide)) ) exit(0);
   prep += array_size * (double)sizeof(REAL_TYPE);
   total+= array_size * (double)sizeof(REAL_TYPE);
 
 
-  if ( !(d_mid = Alloc::Int_S3D(size, guide)) ) Exit(0);
+  if ( !(d_mid = Alloc::Int_S3D(size, guide)) ) exit(0);
   prep += array_size * (double)sizeof(int);
 
 
-  if ( !(d_bcd = Alloc::Int_S3D(size, guide)) ) Exit(0);
-  prep += array_size * (double)sizeof(int);
-  total+= array_size * (double)sizeof(int);
-
-
-  if ( !(d_bcp = Alloc::Int_S3D(size, guide)) ) Exit(0);
+  if ( !(d_bcd = Alloc::Int_S3D(size, guide)) ) exit(0);
   prep += array_size * (double)sizeof(int);
   total+= array_size * (double)sizeof(int);
 
 
-  if ( !(d_cdf = Alloc::Int_S3D(size, guide)) ) Exit(0);
+  if ( !(d_bcp = Alloc::Int_S3D(size, guide)) ) exit(0);
   prep += array_size * (double)sizeof(int);
   total+= array_size * (double)sizeof(int);
 
-  if ( !(d_pvf = Alloc::Real_S3D(size, guide)) ) Exit(0);
+
+  if ( !(d_cdf = Alloc::Int_S3D(size, guide)) ) exit(0);
+  prep += array_size * (double)sizeof(int);
+  total+= array_size * (double)sizeof(int);
+
+  if ( !(d_pvf = Alloc::Real_S3D(size, guide)) ) exit(0);
   prep += array_size * (double)sizeof(REAL_TYPE);
   total+= array_size * (double)sizeof(REAL_TYPE);
 }
@@ -572,9 +571,9 @@ void FALLOC::allocate_SOR2SMA_buffer(double &total)
   size_t n2 = cf_sz[1]*4;
   size_t n3 = cf_sz[2]*4;
 
-  if( (cf_x = new REAL_TYPE[n1]) == NULL ) Exit(0);
-  if( (cf_y = new REAL_TYPE[n2]) == NULL ) Exit(0);
-  if( (cf_z = new REAL_TYPE[n3]) == NULL ) Exit(0);
+  if( (cf_x = new REAL_TYPE[n1]) == NULL ) exit(0);
+  if( (cf_y = new REAL_TYPE[n2]) == NULL ) exit(0);
+  if( (cf_z = new REAL_TYPE[n3]) == NULL ) exit(0);
 
   memset(cf_x, 0, sizeof(REAL_TYPE)*n1);
   memset(cf_y, 0, sizeof(REAL_TYPE)*n2);

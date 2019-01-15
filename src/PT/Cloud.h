@@ -57,6 +57,7 @@ protected:
   REAL_TYPE dt;              ///< 時間積分幅
   unsigned buf_max_particle; ///< 送信用のバッファ長さ計算に使う粒子の最大数 毎回異なる
   bool buf_updated;          ///< バッファ長さが更新されたときtrue
+  bool ModeTOOL;             ///< Toolとして使う場合true
 
   int unit;                  ///< 指定座標の記述単位 {DIMENSIONAL | NONDIMENSIONAL}
   REAL_TYPE refLen;          ///< 代表長さ
@@ -85,8 +86,6 @@ public:
 
   Cloud(int* m_bcd,
         REAL_TYPE* m_Vsrc,
-        const REAL_TYPE m_refLen,
-        const int m_unit,
         const REAL_TYPE dt,
         TextParser* m_tp,
         PerfMonitor* m_PM)
@@ -101,18 +100,45 @@ public:
     log_interval = 0;
     file_interval = 0;
     file_format = -1;
+    unit = NONDIMENSIONAL;
+    refLen = 0.0;
+    ModeTOOL = false;
 
     this->dt         = dt;
     this->bcd        = m_bcd;
     this->vSource    = m_Vsrc;
-    this->unit       = m_unit;
-    this->refLen     = m_refLen;
     this->tpCntl     = m_tp;
     this->PM         = m_PM;
 
     // 初期値として、BUF_UNIT*粒子分を確保 > buf_max_particleで100単位で更新
     buf_max_particle = BUF_UNIT;
   }
+  
+  // for tools
+  Cloud(TextParser* m_tp,
+        PerfMonitor* m_PM)
+  {
+    nParticle = 0;
+    gParticle = 0;
+    nGrpEmit = 0;
+    scheme = -1;
+    buf_updated = false;
+    flag_migration = false;
+    nCommParticle = 0;
+    log_interval = 0;
+    file_interval = 0;
+    file_format = -1;
+    dt = 0.0;
+    unit = NONDIMENSIONAL;
+    refLen = 0.0;
+    ModeTOOL = false;
+    
+    this->bcd        = NULL;
+    this->vSource    = NULL;
+    this->tpCntl     = m_tp;
+    this->PM         = m_PM;
+  }
+
 
 
   /// デストラクタ
@@ -124,6 +150,10 @@ public:
 
   // @brief 初期設定
   bool initCloud(FILE* fp);
+  
+  
+  // @brief tool用初期設定
+  bool initCloud();
 
 
   // @brief ランタイム
@@ -136,7 +166,11 @@ public:
     
 protected:
   
-  // ascii output
+  // @brief meta file output
+  bool write_filelist(const unsigned step);
+  
+  
+  // @brief ascii output
   bool write_ascii(const unsigned step);
   
   

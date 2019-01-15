@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <strings.h>
 #include "TextParser.h"
+#include "mydebug.h"
 
 using namespace std;
 

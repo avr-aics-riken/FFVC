@@ -24,6 +24,7 @@
 
 #include <string.h>
 #include "FB_Define.h"
+#include "mydebug.h"
 
 
 class Alloc {

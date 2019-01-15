@@ -94,16 +94,30 @@ public:
 
   // @brief Euler陽解法による経路積分、チェックあり
   // @param [in,out] p   粒子座標
+  // @param [out]    v   粒子並進速度
   // @param [in]     dt  時間積分幅
   // @retval 移動先のランク番号 自領域の場合-1
-  Vec3i integrate_Euler(Vec3r& p, const REAL_TYPE dt);
+  Vec3i integrate_Euler(Vec3r& p, Vec3r& v, const REAL_TYPE dt);
 
 
   // @brief RK2による経路積分
   // @param [in,out] p   粒子座標
+  // @param [out]    v   粒子並進速度
   // @param [in]     dt  時間積分幅
   // @retval 移動先のランク番号 自領域の場合-1
-  Vec3i integrate_RK2(Vec3r& p, const REAL_TYPE dt);
+  Vec3i integrate_RK2(Vec3r& p, Vec3r& v, const REAL_TYPE dt);
+    
+  
+  // @brief p点の速度をサンプリングする　境界セルではゼロ次の内挿
+  // @param [in] p   粒子座標
+  Vec3r getV(const Vec3r p)
+  {
+    Vec3r c = getRidx(p);
+    Vec3i base = getBase(c) ;
+    Vec3r coef = getCoef(c, base);
+    //printf("%f %f %f / %d %d %d / %e %e %e\n", p.x, p.y, p.z, base.x, base.y, base.z, samplingV(coef, base).x, samplingV(coef, base).y, samplingV(coef, base).z);
+    return samplingV(coef, base);
+  }
 
 
 protected:
@@ -310,29 +324,19 @@ protected:
 
     return Trilinear(coef, r);
   }
+    
 
   /// @brief 自領域内に存在するかどうかを判断
   /// @param [in] x  coordinate
-  /// @retval true 自領域内
+  /// @retval true 自領域内、座標値の大きい方は含めない
+  /// @note findRankDir()と同じ判断基準のこと
   bool inOwnRegion(const Vec3r p)
   {
-    if ( p.x < org.x || p.x > org.x + reg.x
-      || p.y < org.y || p.y > org.y + reg.y
-      || p.z < org.z || p.z > org.z + reg.z ) return false;
+    if ( p.x < org.x || p.x >= org.x + reg.x
+      || p.y < org.y || p.y >= org.y + reg.y
+      || p.z < org.z || p.z >= org.z + reg.z ) return false;
     return true;
   }
-
-
-  // @brief Euler陽解法による経路積分
-  // @param [in,out] p   粒子座標
-  // @param [in]     dt  時間積分幅
-  Vec3r Euler0(Vec3r p, const REAL_TYPE dt);
-
-
-  // @brief Euler陽解法の一部
-  // @param [in,out] p   粒子座標
-  // @param [in]     dt  時間積分幅
-  Vec3r Euler1(Vec3r p, const REAL_TYPE dt);
 
 
   // @brief Runge-Kutta 2 stage
