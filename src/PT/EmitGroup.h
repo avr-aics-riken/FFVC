@@ -39,6 +39,7 @@ public:
 protected:
   int type;            ///< 開始点タイプ (Pointset, Line, Disc,..)
   int start;           ///< 開始時刻
+  REAL_TYPE EmitOrg[3];///< 放出点座標
   int interval;        ///< インターバル
   int life;            ///< 寿命情報 -1 制御なし, 正数<MAX_LIFE未満
   int ens;             ///< 自グループのチャンクの数
@@ -60,6 +61,7 @@ public:
       to[i] = 0.0;
       center[i]=0.0;
       normal[i]=0.0;
+      EmitOrg[i]=0.0;
     }
   }
 
@@ -76,6 +78,20 @@ public:
   }
 
 
+  void setEmitOrg(const REAL_TYPE* m_org) {
+    EmitOrg[0] = m_org[0];
+    EmitOrg[1] = m_org[1];
+    EmitOrg[2] = m_org[2];
+  }
+  
+  
+  void getEmitOrg(REAL_TYPE* m_org) {
+    m_org[0] = EmitOrg[0];
+    m_org[1] = EmitOrg[1];
+    m_org[2] = EmitOrg[2];
+  }
+  
+  
   void setType(const int m_type) {
     type = m_type;
   }

@@ -16,6 +16,7 @@
 
 //#############################################################################
 // @brief 経路確定のための通信
+// @note 送受信情報を周囲の26方向と通信する
 bool PtComm::establishCommPath()
 {
   // Communication identifier
@@ -36,12 +37,17 @@ bool PtComm::establishCommPath()
 
   for (int i=0; i<NDST; i++)
   {
-    if ( i != myRank ) {
-      if ( !commInfo(&is_buf[3*i],
-                     &ir_buf[3*i],
-                     3,
-                     Rmap[i],
-                     &reqI[2*i]) ) return false;
+    int nID = Rmap[i];
+    
+    if ( nID >= 0 )
+    {
+      if ( i != myRank ) {
+        if ( !commInfo(&is_buf[3*i],
+                       &ir_buf[3*i],
+                       3,
+                       nID,
+                       &reqI[2*i]) ) return false;
+      }
     }
   }
 
@@ -50,9 +56,14 @@ bool PtComm::establishCommPath()
 
   for (int i=0; i<NDST; i++)
   {
-    if ( i != myRank ) {
-      if ( !waitComm( &reqI[2*i],
-                      &statI[2*i]) ) return false;
+    int nID = Rmap[i];
+    
+    if ( nID >= 0 )
+    {
+      if ( i != myRank ) {
+        if ( !waitCommInfo( &reqI[2*i],
+                           &statI[2*i]) ) return false;
+      }
     }
   }
 
@@ -63,6 +74,25 @@ bool PtComm::establishCommPath()
     pInfo[4*i+1] = ir_buf[3*i+1];  // グループID
     pInfo[4*i+2] = ir_buf[3*i+2];  // 粒子ID
     pInfo[4*i+3] = ir_buf[3*i+0];  // 受信粒子数
+  }
+  
+  
+  // 経路の確定 送受信があるランク方向のみ
+  memset(Cmap, 0, sizeof(int)*NDST*2);
+  
+  for (int i=0; i<NDST; i++)
+  {
+    int nID = Rmap[i];
+    
+    // 計算領域内のみ
+    if ( nID >= 0 )
+    {
+      // 送信フラグ
+      if ( pInfo[4*i+0] > 0 ) Cmap[2*i+0] = 1;
+      
+      // 受信フラグ
+      if ( pInfo[4*i+3] > 0 ) Cmap[2*i+1] = 1;
+    }
   }
   
   return true;
@@ -89,26 +119,23 @@ bool PtComm::commInfo(int* sbuf,
   int tag_r=0;
   int tag_s=0;
   
-  if ( nID >= 0 ) {
-    
-    // 近傍からの受信
-    if ( MPI_SUCCESS != MPI_Irecv(rbuf,
-                                  msz,
-                                  MPI_INT,
-                                  nID,
-                                  tag_r,
-                                  MPI_COMM_WORLD,
-                                  &req[1]) ) return false;
-    
-    // 近傍への送信
-    if ( MPI_SUCCESS != MPI_Isend(sbuf,
-                                  msz,
-                                  MPI_INT,
-                                  nID,
-                                  tag_s,
-                                  MPI_COMM_WORLD,
-                                  &req[0]) ) return false;
-  }
+  // 近傍からの受信
+  if ( MPI_SUCCESS != MPI_Irecv(rbuf,
+                                msz,
+                                MPI_INT,
+                                nID,
+                                tag_r,
+                                MPI_COMM_WORLD,
+                                &req[1]) ) return false;
+  
+  // 近傍への送信
+  if ( MPI_SUCCESS != MPI_Isend(sbuf,
+                                msz,
+                                MPI_INT,
+                                nID,
+                                tag_s,
+                                MPI_COMM_WORLD,
+                                &req[0]) ) return false;
   
   return true;
 }
@@ -145,23 +172,32 @@ bool PtComm::commParticle(const unsigned buf_max_particle)
     reqI[i] = MPI_REQUEST_NULL;
   }
   
-
+  int ofst6 = buf_max_particle * 6;  // pos, velの6要素
+  int ofst2 = buf_max_particle * 2;  // bf, fooの2要素
+  
   for (int i=0; i<NDST; i++)
   {
-    if ( i != myRank ) {
-      if ( !SendRecvParticle(pInfo[4*i+0]*6,  // 送信数
-                             pInfo[4*i+3]*6,  // 受信数
-                             Rmap[i],
-                             &ps_buf[buf_max_particle*6*i],
-                             &pr_buf[buf_max_particle*6*i],
-                             &reqR[2*i]) ) return false;
+    int nID = Rmap[i];
+    int ms = pInfo[4*i+0];
+    int mr = pInfo[4*i+3];
+    
+    if ( i != myRank )
+    {
+      if ( !SendRecvParticle(ms * 6,  // 送信数
+                             mr * 6,  // 受信数
+                             nID,
+                             &ps_buf[ofst6 * i],
+                             &pr_buf[ofst6 * i],
+                             &reqR[2*i],
+                             &Cmap[2*i]) ) return false;
       
-      if ( !SendRecvParticle(pInfo[4*i+0]*2,
-                             pInfo[4*i+3]*2,
-                             Rmap[i],
-                             &bs_buf[buf_max_particle*2*i],
-                             &br_buf[buf_max_particle*2*i],
-                             &reqI[2*i]) ) return false;
+      if ( !SendRecvParticle(ms * 2,
+                             mr * 2,
+                             nID,
+                             &bs_buf[ofst2 * i],
+                             &br_buf[ofst2 * i],
+                             &reqI[2*i],
+                             &Cmap[2*i]) ) return false;
     }
   }
 
@@ -171,11 +207,19 @@ bool PtComm::commParticle(const unsigned buf_max_particle)
 
   for (int i=0; i<NDST; i++)
   {
-    if ( i != myRank ) {
-      if ( !waitComm( &reqR[2*i],
-                     &statR[2*i]) ) return false;
-      if ( !waitComm( &reqI[2*i],
-                     &statI[2*i]) ) return false;
+    int mr = pInfo[4*i+3];
+    
+    if ( i != myRank )
+    {
+      if ( !waitCommPart( &reqR[2*i],
+                         &statR[2*i],
+                          &Cmap[2*i],
+                         mr * 6,
+                         &pr_buf[ofst6 * i]) ) return false;
+      
+      if ( !waitCommPart( &reqI[2*i],
+                         &statI[2*i],
+                          &Cmap[2*i]) ) return false;
     }
   }
 
@@ -194,6 +238,7 @@ bool PtComm::commParticle(const unsigned buf_max_particle)
  * @param [in]  sbuf  Send buffer to neighbor
  * @param [out] rbuf  Recieve buffer from neighbor
  * @param [out] req   Array of MPI request
+ * @param [in]  flag  送受信実行フラグ
  * @retval true-success, false-fail
  */
 bool PtComm::SendRecvParticle(const int s_msg,
@@ -201,13 +246,15 @@ bool PtComm::SendRecvParticle(const int s_msg,
                               const int nID,
                               REAL_TYPE* sbuf,
                               REAL_TYPE* rbuf,
-                              MPI_Request req[2])
+                              MPI_Request req[2],
+                              const int flag[2])
 {
   int tag_r=0;
   int tag_s=0;
+  
 
   // 近傍からの受信
-  if ( r_msg > 0 ) {
+  if ( flag[1] == 1 ) {
     if ( MPI_SUCCESS != MPI_Irecv(rbuf,
                                   r_msg,
                                   data_type,
@@ -218,7 +265,7 @@ bool PtComm::SendRecvParticle(const int s_msg,
   }
 
   // 近傍への送信
-  if ( s_msg > 0 ) {
+  if ( flag[0] == 1 ) {
     if ( MPI_SUCCESS != MPI_Isend(sbuf,
                                   s_msg,
                                   data_type,
@@ -226,6 +273,12 @@ bool PtComm::SendRecvParticle(const int s_msg,
                                   tag_s,
                                   MPI_COMM_WORLD,
                                   &req[0]) ) return false;
+#ifdef PT_DEBUG
+    // 送信内容を表示、受信内容はwaitAll後
+    printf("snd[%d] : ", myRank);
+    for (int i=0; i<s_msg; i++) printf("%f ", sbuf[i]);
+    printf("\n");
+#endif
   }
 
   return true;
@@ -241,6 +294,7 @@ bool PtComm::SendRecvParticle(const int s_msg,
  * @param [in]  sbuf  Send buffer to neighbor
  * @param [out] rbuf  Recieve buffer from neighbor
  * @param [out] req   Array of MPI request
+ * @param [in]  flag  送受信実行フラグ
  * @retval true-success, false-fail
  */
 bool PtComm::SendRecvParticle(const int s_msg,
@@ -248,13 +302,14 @@ bool PtComm::SendRecvParticle(const int s_msg,
                               const int nID,
                               int* sbuf,
                               int* rbuf,
-                              MPI_Request req[2])
+                              MPI_Request req[2],
+                              const int flag[2])
 {
   int tag_r=0;
   int tag_s=0;
   
   // 近傍からの受信
-  if ( r_msg > 0 ) {
+  if ( flag[1] == 1 ) {
     if ( MPI_SUCCESS != MPI_Irecv(rbuf,
                                   r_msg ,
                                   MPI_INT,
@@ -265,7 +320,7 @@ bool PtComm::SendRecvParticle(const int s_msg,
   }
   
   // 近傍への送信
-  if ( s_msg > 0 ) {
+  if ( flag[0] == 1 ) {
     if ( MPI_SUCCESS != MPI_Isend(sbuf,
                                   s_msg,
                                   MPI_INT,
@@ -280,12 +335,59 @@ bool PtComm::SendRecvParticle(const int s_msg,
 
 
 //#############################################################################
-// @brief 通信の確定
-bool PtComm::waitComm(MPI_Request* req,
-                      MPI_Status* stat)
+// @brief 粒子情報通信の確定
+bool PtComm::waitCommInfo(MPI_Request* req,
+                          MPI_Status* stat)
 {
   if ( MPI_SUCCESS != MPI_Waitall(2, req, stat) ) return false;
 
+  return true;
+}
+
+
+//#############################################################################
+// @brief 粒子データ通信の確定
+bool PtComm::waitCommPart(MPI_Request* req,
+                          MPI_Status* stat,
+                          const int flag[2],
+                          const int r_msg,
+                          REAL_TYPE* rbuf)
+{
+  // 近傍への送信
+  if ( flag[0] == 1 )
+  {
+    if ( MPI_SUCCESS != MPI_Waitall(1, &req[0], &stat[0]) ) return false;
+  }
+  // 近傍からの受信
+  if ( flag[1] == 1 )
+  {
+    if ( MPI_SUCCESS != MPI_Waitall(1, &req[1], &stat[1]) ) return false;
+#ifdef PT_DEBUG
+    //printf("rcv[%d] : ", myRank);
+    //for (int i=0; i<r_msg; i++) printf("%f ", rbuf[i]);
+    //printf("\n");
+#endif
+  }
+  
+  return true;
+}
+
+
+bool PtComm::waitCommPart(MPI_Request* req,
+                          MPI_Status* stat,
+                          const int flag[2])
+{
+  // 近傍への送信
+  if ( flag[0] == 1 )
+  {
+    if ( MPI_SUCCESS != MPI_Waitall(1, &req[0], &stat[0]) ) return false;
+  }
+  // 近傍からの受信
+  if ( flag[1] == 1 )
+  {
+    if ( MPI_SUCCESS != MPI_Waitall(1, &req[1], &stat[1]) ) return false;
+  }
+  
   return true;
 }
 

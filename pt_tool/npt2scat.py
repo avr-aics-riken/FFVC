@@ -93,7 +93,7 @@ def read_npt(fn):
                 gid = q
                 f2 += 1
 
-              q = getElem(elements, 'particle_id')
+              q = getElem(elements, 'emit_pnt_id')
               if q >= 0 :
                 pid = q
                 f2 += 1

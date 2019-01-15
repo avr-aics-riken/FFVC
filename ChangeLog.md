@@ -9,8 +9,15 @@
 ## REVISION HISTORY
 
 ---
+- 2019-1-15 Version 2.6.9
+  - PtComm::Cmap[NDST*2]
+  - Historyクラスのタイムスタンプ更新位置を後ろに変更
+  
+  
+---
 - 2019-1-15 Version 2.6.8
-  - particle.foo 
+  - particle.foo
+
 
 ---
 - 2019-1-15 Version 2.6.7

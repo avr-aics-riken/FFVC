@@ -64,11 +64,12 @@ class Chunk {
 protected:
   int grp;                 ///< 管理用グループ番号Cloudから利用
   int uid;                 ///< 開始点の固有ID
-  Vec3r origin;            ///< Chunkに割り振られた開始点（固定）
+  Vec3r EmitOrigin;        ///< Chunkに割り振られた開始点（固定）
   int startOrigin;         ///< 初期の指定開始点のチャンク(1) / マイグレート先(0)
   int EmitStep;            ///< 放出開始ステップ
   int myRank;              ///< ランク番号
-  bool mig;                ///< マイグレーションフラグ
+  int interval;            ///< 放出間隔 step
+  bool mig;                ///< マイグレーションフラグ true-あり, false-なし
   list<particle> pchunk;   ///< 粒子チャンク
 
 public:
@@ -77,20 +78,23 @@ public:
     grp = -1;
     startOrigin = 0;
     EmitStep = -1;
+    interval = 0;
     mig = false;
   }
 
   /// コンストラクタ 作成時
-  // @param [in] p      粒子座標
-  // @param [in] gp     グループID
-  // @param [in] st     オリジナル開始点のとき1
-  // @param [in] stp    開始ステップ
-  // @param [in] m_rank ランク番号
+  // @param [in] p       粒子座標
+  // @param [in] gp      グループID
+  // @param [in] st      オリジナル開始点のとき1
+  // @param [in] stp     開始ステップ
+  // @param [in] m_rank  ランク番号
+  // @param [in] m_intvl 放出間隔
   Chunk(const Vec3r v,
         const int gp,
         const int st,
         const int stp,
-        const int m_rank) {
+        const int m_rank,
+        const int m_intvl) {
     particle p;
     p.pos = v;
     p.bf  = 0;
@@ -99,30 +103,37 @@ public:
     p.bf = Activate(p.bf);
     pchunk.push_back(p);
     grp = gp;
-    origin = v;
+    EmitOrigin = v;
     startOrigin = st;
     EmitStep = stp;
     myRank = m_rank;
+    interval = m_intvl;
     mig = false;
   }
 
   /// コンストラクタ マイグレーション追加時
-  // @param [in] p      粒子座標
-  // @param [in] gp     グループID
-  // @param [in] pid    開始点ID
-  // @param [in] stp    放出開始ステップ
-  // @param [in] m_rank ランク番号
+  // @param [in] p       粒子座標
+  // @param [in] gp      グループID
+  // @param [in] pid     開始点ID
+  // @param [in] stp     放出開始ステップ
+  // @param [in] m_rank  ランク番号
+  // @param [in] m_intvl 放出間隔
+  // @param [in] m_org   放出座標
   Chunk(particle p,
         const int gp,
         int pid,
         const int stp,
-        const int m_rank) {
+        const int m_rank,
+        const int m_intvl,
+        const Vec3r m_org) {
     pchunk.push_back(p);
     grp = gp;
     uid = pid;
     EmitStep = stp;
     startOrigin = 0;
     myRank = m_rank;
+    interval = m_intvl;
+    EmitOrigin = m_org;
     mig = false;
   }
 

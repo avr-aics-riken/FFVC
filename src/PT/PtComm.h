@@ -48,6 +48,7 @@ protected:
   int myRank;                ///< 自ランク番号
   int numProc;               ///< プロセス数
   int Rmap[NDST];            ///< 3x3x3のランクマップ
+  int Cmap[NDST*2];          ///< 送受信対象 > 1
     
   unsigned* nPart;           ///< 全ランクの粒子数
 
@@ -77,6 +78,7 @@ public:
     memset(is_buf, 0, sizeof(int)*NDST*3);
     memset(ir_buf, 0, sizeof(int)*NDST*3);
     memset(Rmap, -1, sizeof(int)*NDST);
+    memset(Cmap, 0, sizeof(int)*NDST*2);
 
 
 #ifndef DISABLE_MPI
@@ -226,7 +228,8 @@ private:
                         const int nID,
                         REAL_TYPE* sbuf,
                         REAL_TYPE* rbuf,
-                        MPI_Request req[2]);
+                        MPI_Request req[2],
+                        const int flag[2]);
   
   
   // @brief 粒子データの送受信(int)
@@ -235,12 +238,24 @@ private:
                         const int nID,
                         int* sbuf,
                         int* rbuf,
-                        MPI_Request req[2]);
+                        MPI_Request req[2],
+                        const int flag[2]);
 
   
-  // @brief 通信の確定
-  bool waitComm(MPI_Request* req,
-                MPI_Status* stat);
+  // @brief 粒子情報通信の確定
+  bool waitCommInfo(MPI_Request* req,
+                    MPI_Status* stat);
+  
+  // @brief 粒子データ通信の確定
+  bool waitCommPart(MPI_Request* req,
+                    MPI_Status* stat,
+                    const int flag[2],
+                    const int r_msg,
+                    REAL_TYPE* rbuf);
+  
+  bool waitCommPart(MPI_Request* req,
+                    MPI_Status* stat,
+                    const int flag[2]);
 
 };
 

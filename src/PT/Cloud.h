@@ -150,10 +150,6 @@ public:
 
   // @brief 初期設定
   bool initCloud(FILE* fp);
-  
-  
-  // @brief tool用初期設定
-  bool initCloud();
 
 
   // @brief ランタイム

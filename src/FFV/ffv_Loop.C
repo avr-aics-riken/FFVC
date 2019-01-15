@@ -268,10 +268,6 @@ int FFV::Loop(const unsigned step)
   // 1ステップ後のモニタ処理 -------------------------------
 
 
-  // Historyクラスのタイムスタンプを更新
-  H->updateTimeStamp(CurrentStep, (REAL_TYPE)CurrentTime, vMax);
-
-
 
   // 瞬時値のデータ出力
 
@@ -448,6 +444,10 @@ int FFV::Loop(const unsigned step)
     container[3*i+1] = LS[ic_prs1].getResidual();
     container[3*i+2] = LS[ic_prs1].getError();
   }
+    
+    
+    // Historyクラスのタイムスタンプを更新
+    H->updateTimeStamp(CurrentStep, (REAL_TYPE)CurrentTime, vMax);
 
 
   // 基本履歴情報をコンソールに出力

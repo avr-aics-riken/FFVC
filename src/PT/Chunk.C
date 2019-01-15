@@ -31,10 +31,9 @@ void Chunk::packParticle(REAL_TYPE* ps_buf,
   // 毎回クリア
   int c[NDST] = {}; // 0
   memset(pInfo, 0, sizeof(int)*NDST*4);
-    
-    
+  
   // マイグレーション粒子がない場合には処理をスキップ
-  if ( mig ) return;
+  if ( !mig ) return;
 
     
     
@@ -57,6 +56,10 @@ void Chunk::packParticle(REAL_TYPE* ps_buf,
       bs_buf[bsz2*m + 2*c[m]+0] = b;
       bs_buf[bsz2*m + 2*c[m]+1] = (*itr).foo;
       c[m]++;
+      //printf("migrated %d to %d\n", c[m], m);
+      //printf("pack : %f %f %f %d %f %f %f %d\n",
+      //       (*itr).pos.x, (*itr).pos.y, (*itr).pos.z, b, (*itr).vel.x, (*itr).vel.y, (*itr).vel.z, (*itr).foo);
+
     }
   }
 
@@ -65,7 +68,7 @@ void Chunk::packParticle(REAL_TYPE* ps_buf,
   {
     pInfo[4*i + 0] = c[i];  // 送信粒子数
     pInfo[4*i + 1] = grp;   // グループID
-    pInfo[4*i + 2] = uid;   // 粒子ID
+    pInfo[4*i + 2] = uid;   // 開始点ID
   }
 
 
@@ -143,11 +146,12 @@ void Chunk::updatePosition(Tracking* tr,
       (*itr).pos = p;
       (*itr).vel = v;
       (*itr).bf++;
+      //printf("%f %f %f %d : %d %d %d\n", v.x, v.y, v.z, flag, r.x, r.y, r.z);
       
       // 寿命制御があるとき、指定値を過ぎたら停止 >> 削除するか？
       if (life > 0)
       {
-        if ( life < getBit26((*itr).bf) ) (*itr).bf = Inactivate( (*itr).bf );
+        if ( life < getBit26( (*itr).bf) ) (*itr).bf = Inactivate( (*itr).bf );
       }
       
     } // IS_ACTIVE
@@ -174,7 +178,7 @@ void Chunk::updatePosition(Tracking* tr,
 void Chunk::addParticleFromOrigin()
 {
   particle p;
-  p.pos = origin;
+  p.pos = EmitOrigin;
   p.bf  = 0;
   p.foo = 0;
   p.vel.assign(0.0, 0.0, 0.0);
@@ -189,8 +193,8 @@ void Chunk::write_ascii(FILE* fp)
 {
   fprintf(fp,"particles %d\n",(int)pchunk.size());
   fprintf(fp,"group_id %d\n", grp);
-  fprintf(fp,"particle_id %d\n", uid);
-  fprintf(fp,"origin %e %e %e\n", origin.x, origin.y, origin.z);
+  fprintf(fp,"emit_pnt_id %d\n", uid);
+  fprintf(fp,"emit_origin %e %e %e\n", EmitOrigin.x, EmitOrigin.y, EmitOrigin.z);
   fprintf(fp,"start_origin %d\n", startOrigin);
   fprintf(fp,"start_emit %d\n", EmitStep);
   

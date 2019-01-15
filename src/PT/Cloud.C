@@ -139,34 +139,6 @@ bool Cloud::initCloud(FILE* fp)
 }
 
 
-//#############################################################################
-// @brief tool用初期設定
-bool Cloud::initCloud()
-{
-  if ( !setPTinfo() ) return false;
-  
-  //if ( !determineUniqueID() ) return false;
-  
-  displayParam(stdout);
-  
-  tr = new Tracking(size,
-                    guide,
-                    origin,
-                    region,
-                    pitch,
-                    vSource,
-                    bcd,
-                    myRank);
-  
-  // 通信クラスの設定
-  PC.setPtComm(G_division, myRank, numProc);
-  
-  // Tool mode
-  ModeTOOL = true;
-  
-  return true;
-}
-
 
 
 //#############################################################################
@@ -265,7 +237,8 @@ void Cloud::unpackParticle()
       p.vel = v;
       foo++;        // マイグレーションの回数
       p.foo = foo;
-
+      //printf("unpack : %f %f %f %d %d %f %f %f %d\n",
+      //       pos.x, pos.y, pos.z, br_buf[bsz*i + 2*j+0], b, v.x, v.y, v.z, foo);
 
       // chunkList内で粒子IDをサーチし、存在しなければ、新たなチャンクを作る
       int check=0;
@@ -282,7 +255,17 @@ void Cloud::unpackParticle()
       // pidのチャンクが存在しない場合
       if (check==0)
       {
-        Chunk* m = new Chunk(p, gid, pid, Egrp[gid].getStart(), myRank);
+        REAL_TYPE v[3];
+        Egrp[gid].getEmitOrg(v);
+        Vec3r eo(v);
+        
+        Chunk* m = new Chunk(p,
+                             gid,
+                             pid,
+                             Egrp[gid].getStart(),
+                             myRank,
+                             Egrp[gid].getInterval(),
+                             eo);
         chunkList.push_back(m);
         Egrp[gid].incGroup();
       }
@@ -313,7 +296,7 @@ bool Cloud::searchGrp(const int c)
 void Cloud::logging(const unsigned step)
 {
   // マイグレーションで移動した粒子数と全粒子数
-  fprintf(fpl, "step %ld migrated %d\n", step, nCommParticle);
+  fprintf(fpl, "step %ld migrated %d total %ld\n", step, nCommParticle, gParticle);
   
   /*
   for (int i=0; i<numProc; i++) {
@@ -840,13 +823,21 @@ bool Cloud::setPointset(const string label_base, const int odr)
       sprintf(tmpstr, "point_%d", pc);
       str = tmpstr;
     }
+    
+    
+    Egrp[odr].setEmitOrg(v);
 
     // 自領域内であれば、初期開始点として追加
     if ( !ModeTOOL ) {
       if ( inOwnRegion(v) )
       {
         Vec3r pos(v);
-        Chunk* m = new Chunk(pos, odr, 1, Egrp[odr].getStart(), myRank);
+        Chunk* m = new Chunk(pos,
+                             odr,
+                             1,
+                             Egrp[odr].getStart(),
+                             myRank,
+                             Egrp[odr].getInterval());
         chunkList.push_back(m);
         Egrp[odr].incGroup();
       }
@@ -924,6 +915,9 @@ bool Cloud::setLine(const string label_base, const int odr)
   Vec3r ed(to);
   Vec3r dd = ed - st;
   dd /= (REAL_TYPE)npnt - 1.0;
+  
+  REAL_TYPE ooo[3] = {dd.x, dd.y, dd.z};
+  Egrp[odr].setEmitOrg(ooo);
 
   for (int m = 0; m < npnt; m++)
   {
@@ -935,7 +929,12 @@ bool Cloud::setLine(const string label_base, const int odr)
     if ( !ModeTOOL ) {
       if ( inOwnRegion(pos) )
       {
-        Chunk* m = new Chunk(pos, odr, 1, Egrp[odr].getStart(), myRank);
+        Chunk* m = new Chunk(pos,
+                             odr,
+                             1,
+                             Egrp[odr].getStart(),
+                             myRank,
+                             Egrp[odr].getInterval());
         chunkList.push_back(m);
         Egrp[odr].incGroup();
       }
@@ -1052,12 +1051,20 @@ void Cloud::samplingInCircle(const REAL_TYPE* cnt,
     y = 0.98 * r * sin(theta);
 
     q = rotate_inv(angle, t.assign(x, y, 0.0)) + center;
+    
+    REAL_TYPE ooo[3] = {q.x, q.y, q.z};
+    Egrp[odr].setEmitOrg(ooo);
 
     if ( !ModeTOOL ) {
       if ( inOwnRegion(q) )
       {
         Vec3r pos(q);
-        Chunk* m = new Chunk(pos, odr, 1, Egrp[odr].getStart(), myRank);
+        Chunk* m = new Chunk(pos,
+                             odr,
+                             1,
+                             Egrp[odr].getStart(),
+                             myRank,
+                             Egrp[odr].getInterval());
         chunkList.push_back(m);
         Egrp[odr].incGroup();
       }
