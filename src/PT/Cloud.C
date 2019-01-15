@@ -29,12 +29,11 @@ bool Cloud::tracking(const unsigned step, const double time)
       printf("Error : grp number\n");
       return false;
     }
-    //printf("* chunklist grp = %d\n",m);
     
     // 指定時刻が過ぎ、処理ステップになった場合
     if ( Interval[m].isStarted(step, time) && Interval[m].isTriggered(step, time) )
     {
-      // 保持している粒子を積分し、マイグレーションと寿命判定
+      // 保持している粒子を積分し、マイグレーション準備
       (*itr)->updatePosition(tr, scheme, Egrp[m].getLife(), dt, max_part);
       
       // 登録した開始点から粒子を追加
@@ -88,7 +87,7 @@ bool Cloud::tracking(const unsigned step, const double time)
   if ( (step/file_interval)*file_interval == step )
   {
     TIMING_start("PT_fileIO");
-    ret = write_ascii(step);
+    ret = write_ascii(step, time);
     write_filelist(step);
     TIMING_stop("PT_fileIO");
     if ( !ret ) return false;
@@ -238,12 +237,12 @@ void Cloud::unpackParticle()
   int* br_buf = PC.br_ptr();
   const int bsz = buf_max_particle;
 
-
   for (int i=0; i<NDST; i++)
   {
     const int gid = pInfo[4*i+1];   // グループID
     const int pid = pInfo[4*i+2];   // 粒子ID
     const int cnt = pInfo[4*i+3] ;  // 受信粒子数
+    
     int b, foo;
     Vec3r pos;
     Vec3r v;
@@ -264,6 +263,7 @@ void Cloud::unpackParticle()
       p.pos = pos;
       p.bf  = b;
       p.vel = v;
+      foo++;        // マイグレーションの回数
       p.foo = foo;
 
 
@@ -289,7 +289,7 @@ void Cloud::unpackParticle()
 
     }
   } // NDST-loop
-
+  
 }
 
 
@@ -313,14 +313,16 @@ bool Cloud::searchGrp(const int c)
 void Cloud::logging(const unsigned step)
 {
   // マイグレーションで移動した粒子数と全粒子数
-  fprintf(fpl, "step=%ld migrate=%d total=%ld\n", step, nCommParticle, gParticle);
+  fprintf(fpl, "step %ld migrated %d\n", step, nCommParticle);
   
-  // 各ランク毎の粒子数
+  /*
   for (int i=0; i<numProc; i++) {
     fprintf(fpl, "%d ", i);
   }
   fprintf(fpl,"\n");
+  */
   
+  // 各ランク毎の粒子数
   unsigned* p = PC.nPart_ptr();
   for (int i=0; i<numProc; i++) {
     fprintf(fpl, "%ld ", p[i]);
@@ -1305,7 +1307,7 @@ void Cloud::set_timing_label()
 
 //#############################################################################
 // @brief ascii output
-bool Cloud::write_ascii(const unsigned step)
+bool Cloud::write_ascii(const unsigned step, const double time)
 {
   if (nParticle == 0) return true;
   

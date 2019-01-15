@@ -9,6 +9,10 @@
 ## REVISION HISTORY
 
 ---
+- 2019-1-15 Version 2.6.8
+  - particle.foo 
+
+---
 - 2019-1-15 Version 2.6.7
   - 後処理のpythonコード > pt_tool
   - mydebug.hをDomainInfo.hから削除し、他ヘッダへ書き込む

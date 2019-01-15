@@ -119,7 +119,8 @@ def read_npt(fn):
                   u    = float(elements[5])
                   v    = float(elements[6])
                   w    = float(elements[7])
-                  a = [pid, life, x, y, z, actv, u, v, w, gid, startEmit]
+                  foo  =   int(elements[8])
+                  a = [pid, life, x, y, z, actv, u, v, w, gid, startEmit, foo]
 
                 if idx < np_all:
                   lst[idx] = a
@@ -203,8 +204,8 @@ def main():
 
 
   # 利用するリストの型で初期化しておく
-  #a = [pid, life, x, y, z, actv, u, v, w, gid, startEmit]
-  lst = [[-1, -1, 0.0, 0.0, 0.0, -1, 0.0, 0.0, 0.0, -1, -1] for j in range(np_all) ]
+  #a = [pid, life, x, y, z, actv, u, v, w, gid, startEmit, foo]
+  lst = [[-1, -1, 0.0, 0.0, 0.0, -1, 0.0, 0.0, 0.0, -1, -1, -1] for j in range(np_all) ]
 
 
   for i in range(0, nProc):

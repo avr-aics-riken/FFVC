@@ -87,7 +87,7 @@ void Chunk::packParticle(REAL_TYPE* ps_buf,
 // @brief pchunkに保持している粒子を積分し、マイグレーションと寿命判定
 // @param [in]  tr           Trackingクラスオブジェクトポインタ
 // @param [in]  scheme       積分方法の指定
-// @param [in]  life         粒子寿命
+// @param [in]  life         粒子生存カウント
 // @param [in]  dt           積分幅
 // @param [out] max_particle 送受信バッファの計算に必要な送受信よ粒子数の最大値
 void Chunk::updatePosition(Tracking* tr,
@@ -105,7 +105,6 @@ void Chunk::updatePosition(Tracking* tr,
     Vec3r v = (*itr).vel;
     Vec3i r;
     int c;
-    //printf("p:(%14.6f %14.6f %14.6f)\n", p.x, p.y, p.z);
     
     if ( IS_ACTIVE( (*itr).bf) )
     {
@@ -142,6 +141,7 @@ void Chunk::updatePosition(Tracking* tr,
       
       // 粒子位置情報をアップデート
       (*itr).pos = p;
+      (*itr).vel = v;
       (*itr).bf++;
       
       // 寿命制御があるとき、指定値を過ぎたら停止 >> 削除するか？
@@ -199,11 +199,13 @@ void Chunk::write_ascii(FILE* fp)
     Vec3r p = (*itr).pos;
     Vec3r v = (*itr).vel;
     int b   = (*itr).bf;
-    fprintf(fp,"%d %e %e %e %d %e %e %e\n",
+    int foo = (*itr).foo;
+    fprintf(fp,"%d %e %e %e %d %e %e %e %d\n",
                BIT_SHIFT(b, ACTIVE_BIT),
                p.x, p.y, p.z,
                getBit26(b),
-               v.x, v.y, v.z
+               v.x, v.y, v.z,
+               foo
             );
   }
   fprintf(fp,"\n");

@@ -49,7 +49,7 @@ typedef struct {
   Vec3r pos;             ///< 粒子座標
   int bf;                ///< ビットフィールド
   Vec3r vel;             ///< 粒子の並進速度成分
-  int foo;               ///< padding 何かに利用可能
+  int foo;               ///< padding とりあえずデバッグ用に使う
 } particle;              //   他に必要な情報はここにいれる
                          //   ビットフィールド
                          //   31 - active(1) / inactive(0)
@@ -81,9 +81,9 @@ public:
   }
 
   /// コンストラクタ 作成時
-  // @param [in] pv     粒子座標
+  // @param [in] p      粒子座標
   // @param [in] gp     グループID
-  // @param [in] st     開始点のとき1
+  // @param [in] st     オリジナル開始点のとき1
   // @param [in] stp    開始ステップ
   // @param [in] m_rank ランク番号
   Chunk(const Vec3r v,
@@ -107,17 +107,16 @@ public:
   }
 
   /// コンストラクタ マイグレーション追加時
-  // @param [in] pv     粒子座標
+  // @param [in] p      粒子座標
   // @param [in] gp     グループID
-  // @param [in] pid    粒子ID
-  // @param [in] stp    開始ステップ
+  // @param [in] pid    開始点ID
+  // @param [in] stp    放出開始ステップ
   // @param [in] m_rank ランク番号
   Chunk(particle p,
         const int gp,
         int pid,
         const int stp,
         const int m_rank) {
-    //p.bf = Activate(p.bf);
     pchunk.push_back(p);
     grp = gp;
     uid = pid;
@@ -150,8 +149,6 @@ public:
   void addParticleFromOrigin();
 
 
-    
-  //#############################################################################
   // @brief pchunkの終端に粒子を追加
   // @note ライフカウントはparticleが持っている値を継承
   void addParticle(particle p)

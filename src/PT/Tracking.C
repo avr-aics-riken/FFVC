@@ -25,6 +25,7 @@ Vec3i Tracking::integrate_Euler(Vec3r& p, Vec3r& v, const REAL_TYPE dt)
   //printf("[%d] p:(%14.6f %14.6f %14.6f)\n", myRank, p.x, p.y, p.z);
   // 予測値
   v = getV(p);
+  //printf("[%d] p:(%14.6f %14.6f %14.6f)\n", myRank, v.x, v.y, v.z);
   Vec3r q = p + dt * v;
 
   // 格子幅より大きな移動の場合

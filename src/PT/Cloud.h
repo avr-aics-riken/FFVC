@@ -171,7 +171,7 @@ protected:
   
   
   // @brief ascii output
-  bool write_ascii(const unsigned step);
+  bool write_ascii(const unsigned step, const double time);
   
   
   // @brief ログ出力
