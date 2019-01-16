@@ -36,7 +36,8 @@ void Chunk::packParticle(REAL_TYPE* ps_buf,
   if ( !mig ) return;
 
     
-    
+  // 周囲26方向のバッファの区切り
+  // バッファを長さmax_pで26領域に分け、各領域の先頭アドレスから使う
   int bsz6 = max_p * 6; // 6要素
   int bsz2 = max_p * 2; // 2要素
 
@@ -57,8 +58,8 @@ void Chunk::packParticle(REAL_TYPE* ps_buf,
       bs_buf[bsz2*m + 2*c[m]+1] = (*itr).foo;
       c[m]++;
       //printf("migrated %d to %d\n", c[m], m);
-      //printf("pack : %f %f %f %d %f %f %f %d\n",
-      //       (*itr).pos.x, (*itr).pos.y, (*itr).pos.z, b, (*itr).vel.x, (*itr).vel.y, (*itr).vel.z, (*itr).foo);
+      //printf("pack : %f %f %f %d %d %f %f %f %d\n",
+      //       (*itr).pos.x, (*itr).pos.y, (*itr).pos.z, b, getBit25(clrMigrateDir(b)), (*itr).vel.x, (*itr).vel.y, (*itr).vel.z, (*itr).foo);
 
     }
   }
@@ -93,11 +94,13 @@ void Chunk::packParticle(REAL_TYPE* ps_buf,
 // @param [in]  life         粒子生存カウント
 // @param [in]  dt           積分幅
 // @param [out] max_particle 送受信バッファの計算に必要な送受信よ粒子数の最大値
+// @param [in]  Rmap         3ｘ3の隣接ランクマップ
 void Chunk::updatePosition(Tracking* tr,
                            const int scheme,
                            const int life,
                            const REAL_TYPE dt,
-                           int& max_particle)
+                           int& max_particle,
+                           const int* Rmap)
 {
   int pcnt[NDST] = {};  // 行き先毎の送信粒子数
   int flag = 0;
@@ -114,9 +117,6 @@ void Chunk::updatePosition(Tracking* tr,
       switch(scheme)
       {
         case pt_euler:
-          // 正 : 自領域外、マイグレーション
-          // -1 : 計算領域外
-          // -2 : 自領域内
           r = tr->integrate_Euler(p, v, dt);
           break;
           
@@ -127,31 +127,43 @@ void Chunk::updatePosition(Tracking* tr,
         case pt_rk4:
           break;
       }
-      //printf("r= %d %d %d\n", r.x, r.y, r.z);
-      if (r.x == -2) {
-        ; // nothing
+
+      // d=[0,26], r = {-1, 0, +1}
+      int d = getMigrateDir(r);
+      
+      if (d == 13) // 自領域 nothing
+      {
+        ;
       }
-      else if (r.x == -1 || r.y == -1 || r.z == -1) {
+      else if (Rmap[d] == -1) // 計算領域外
+      {
         (*itr).bf = Inactivate( (*itr).bf ); // 停止
+        //printf("Out of region %d %d %d\n", r.x, r.y, r.z);
       }
-      else {
+      else // マイグレート
+      {
+        //printf("b = %d\n", (*itr).bf );
         (*itr).bf = stampMigrate( (*itr).bf );  // マイグレーション候補
+        //printf("stampMigrate(b) = %d\n", (*itr).bf );
         c = encMigrateDir((*itr).bf, r);        // 移動先をエンコード
+        //printf("encMigrateDir(b) = %d\n", (*itr).bf );
         pcnt[c]++;
         flag++;
         //printf("migrate from %d > %d (%d %d %d)\n", myRank, c, r.x, r.y, r.z);
       }
+
       
       // 粒子位置情報をアップデート
       (*itr).pos = p;
       (*itr).vel = v;
       (*itr).bf++;
+      //printf("inc(b) = %d\n", (*itr).bf );
       //printf("%f %f %f %d : %d %d %d\n", v.x, v.y, v.z, flag, r.x, r.y, r.z);
       
       // 寿命制御があるとき、指定値を過ぎたら停止 >> 削除するか？
       if (life > 0)
       {
-        if ( life < getBit26( (*itr).bf) ) (*itr).bf = Inactivate( (*itr).bf );
+        if ( life < getBit25( (*itr).bf) ) (*itr).bf = Inactivate( (*itr).bf );
       }
       
     } // IS_ACTIVE
@@ -207,7 +219,7 @@ void Chunk::write_ascii(FILE* fp)
     fprintf(fp,"%d %e %e %e %d %e %e %e %d\n",
                BIT_SHIFT(b, ACTIVE_BIT),
                p.x, p.y, p.z,
-               getBit26(b),
+               getBit25(b),
                v.x, v.y, v.z,
                foo
             );

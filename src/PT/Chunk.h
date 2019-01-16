@@ -25,7 +25,7 @@
 #include "Tracking.h"
 
 #define MAX_LIFE 33554431 // 2^{25}-1
-#define MASK_26  0x7ffffff // 26 bit幅
+#define MASK_25  0x1ffffff // 25 bit幅
 #define MIGRATE_BIT 30
 #define DST_BIT 25
 
@@ -118,14 +118,12 @@ public:
   // @param [in] stp     放出開始ステップ
   // @param [in] m_rank  ランク番号
   // @param [in] m_intvl 放出間隔
-  // @param [in] m_org   放出座標
   Chunk(particle p,
         const int gp,
         int pid,
         const int stp,
         const int m_rank,
-        const int m_intvl,
-        const Vec3r m_org) {
+        const int m_intvl) {
     pchunk.push_back(p);
     grp = gp;
     uid = pid;
@@ -133,7 +131,6 @@ public:
     startOrigin = 0;
     myRank = m_rank;
     interval = m_intvl;
-    EmitOrigin = m_org;
     mig = false;
   }
 
@@ -146,7 +143,8 @@ public:
                       const int scheme,
                       const int life,
                       const REAL_TYPE dt,
-                      int& max_particle);
+                      int& max_particle,
+                      const int* Rmap);
 
 
   // @brief マイグレーションフラグの立っている粒子をパックし、リストから削除
@@ -208,12 +206,23 @@ public:
   void write_ascii(FILE* fp);
 
 
-  // @brief MIGRATE_BITをOFF
-  static inline int removeMigrate(int idx)
+  // @brief MIGRATE_BITと方向をOFF
+  static inline int removeMigrate(const int b)
   {
-    return ( idx & (~(0x1<<MIGRATE_BIT)) );
+    int c = b;
+    c &= (~(0x2f << DST_BIT) ); // 対象6bitをゼロにする
+    return c;
   }
-
+  
+  
+  // @brief 25bit幅の正数をとりだす
+  // @param [in] b  int variable
+  static int getBit25 (const int b)
+  {
+    return ( b & MASK_25 );
+  }
+  
+  
 
 protected:
 
@@ -238,6 +247,14 @@ protected:
      b |= (m << DST_BIT);          // 書き込む
      return m;
   }
+  
+  
+  // @brief 方向 [0, 26] を返す
+  // @note 自領域は13
+  inline int getMigrateDir(const Vec3i d) const {
+    int m = d.z*3*3 + d.y*3 + d.x + 13;
+    return m;
+  }
 
 
   // @brief 方向をデコード
@@ -247,25 +264,13 @@ protected:
   }
 
 
-  /*
-   * @brief 26bitの正数をとりだす
-   * @param [in] b  int variable
-   */
-  int getBit26 (const int b) const
-  {
-    return ( b & MASK_26 );
-  }
-
-
-  /*
-   * @brief 26bit幅の値の設定
-   * @param [in,out] b   int 変数
-   * @param [in]     q   26-bit幅の数
-   */
-  inline int setBit26 (int& b, const int q)
+  // @brief 25bit幅の値の設定
+  // @param [in,out] b   int 変数
+  // @param [in]     q   25-bit幅の数
+  inline int setBit25 (int& b, const int q)
   {
     if ( q > MAX_LIFE ) exit(0);
-    b &= ~MASK_26; // 対象26bitをゼロにする
+    b &= ~MASK_25; // 対象25bitをゼロにする
     b |= q;        // 書き込む
   }
 

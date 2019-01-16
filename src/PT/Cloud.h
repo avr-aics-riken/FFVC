@@ -78,11 +78,15 @@ protected:
   int nCommParticle;         ///< マイグレーション時の送受信粒子数
   unsigned nParticle;        ///< 全粒子の数（ローカル）
   unsigned gParticle;        ///< 全粒子の数（グローバル）
+  
+  int* Rmap;                 ///< PtCommクラスで作成した3x3x3のランクマップへのポインタ
 
 
 public:
   /// デフォルトコンストラクタ
-  Cloud() {}
+  Cloud() {
+    Rmap = NULL;
+  }
 
   Cloud(int* m_bcd,
         REAL_TYPE* m_Vsrc,

@@ -34,7 +34,7 @@ bool Cloud::tracking(const unsigned step, const double time)
     if ( Interval[m].isStarted(step, time) && Interval[m].isTriggered(step, time) )
     {
       // 保持している粒子を積分し、マイグレーション準備
-      (*itr)->updatePosition(tr, scheme, Egrp[m].getLife(), dt, max_part);
+      (*itr)->updatePosition(tr, scheme, Egrp[m].getLife(), dt, max_part, Rmap);
       
       // 登録した開始点から粒子を追加
       (*itr)->addParticleFromOrigin();
@@ -132,7 +132,7 @@ bool Cloud::initCloud(FILE* fp)
   }
 
   // 通信クラスの設定
-  PC.setPtComm(G_division, myRank, numProc);
+  Rmap = PC.setPtComm(G_division, myRank, numProc);
 
   
   return true;
@@ -207,12 +207,15 @@ void Cloud::unpackParticle()
   int* pInfo = PC.pInfo_ptr();
   REAL_TYPE* pr_buf = PC.pr_ptr();
   int* br_buf = PC.br_ptr();
-  const int bsz = buf_max_particle;
+  
+  // 周囲26方向のバッファの区切り
+  const int bsz6 = buf_max_particle * 6; // 6要素
+  const int bsz2 = buf_max_particle * 2; // 2要素
 
   for (int i=0; i<NDST; i++)
   {
     const int gid = pInfo[4*i+1];   // グループID
-    const int pid = pInfo[4*i+2];   // 粒子ID
+    const int pid = pInfo[4*i+2];   // 開始点ID
     const int cnt = pInfo[4*i+3] ;  // 受信粒子数
     
     int b, foo;
@@ -220,57 +223,56 @@ void Cloud::unpackParticle()
     Vec3r v;
     particle p;
 
-    for (int j=0; j<cnt; j++)
+    if (cnt > 0)
     {
-      pos.x = pr_buf[bsz*i + 6*j+0];
-      pos.y = pr_buf[bsz*i + 6*j+1];
-      pos.z = pr_buf[bsz*i + 6*j+2];
-      v.x   = pr_buf[bsz*i + 6*j+3];
-      v.y   = pr_buf[bsz*i + 6*j+4];
-      v.z   = pr_buf[bsz*i + 6*j+5];
-      b     = br_buf[bsz*i + 2*j+0];
-      foo   = br_buf[bsz*i + 2*j+1];
-      b = Chunk::removeMigrate(b);
-
-      p.pos = pos;
-      p.bf  = b;
-      p.vel = v;
-      foo++;        // マイグレーションの回数
-      p.foo = foo;
-      //printf("unpack : %f %f %f %d %d %f %f %f %d\n",
-      //       pos.x, pos.y, pos.z, br_buf[bsz*i + 2*j+0], b, v.x, v.y, v.z, foo);
-
-      // chunkList内で粒子IDをサーチし、存在しなければ、新たなチャンクを作る
-      int check=0;
-      for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
+      for (int j=0; j<cnt; j++)
       {
-        // IDがあれば、追加
-        if ( pid == (*itr)->getUid() ) {
-          (*itr)->addParticle(p);
-          check=1;
-          break;
-        }
-      }
-
-      // pidのチャンクが存在しない場合
-      if (check==0)
-      {
-        REAL_TYPE v[3];
-        Egrp[gid].getEmitOrg(v);
-        Vec3r eo(v);
+        pos.x = pr_buf[bsz6*i + 6*j+0];
+        pos.y = pr_buf[bsz6*i + 6*j+1];
+        pos.z = pr_buf[bsz6*i + 6*j+2];
+        v.x   = pr_buf[bsz6*i + 6*j+3];
+        v.y   = pr_buf[bsz6*i + 6*j+4];
+        v.z   = pr_buf[bsz6*i + 6*j+5];
+        b     = br_buf[bsz2*i + 2*j+0];
+        foo   = br_buf[bsz2*i + 2*j+1];
+        b = Chunk::removeMigrate(b);
         
-        Chunk* m = new Chunk(p,
-                             gid,
-                             pid,
-                             Egrp[gid].getStart(),
-                             myRank,
-                             Egrp[gid].getInterval(),
-                             eo);
-        chunkList.push_back(m);
-        Egrp[gid].incGroup();
+        p.pos = pos;
+        p.bf  = b;
+        p.vel = v;
+        foo++;        // マイグレーションの回数
+        p.foo = foo;
+        //printf("unpack : %f %f %f %f %f %f %d %d %d\n",
+        //       pos.x, pos.y, pos.z, v.x, v.y, v.z, b, Chunk::getBit25(b), foo);
+        
+        // chunkList内で粒子IDをサーチし、存在しなければ、新たなチャンクを作る
+        int check=0;
+        for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
+        {
+          // IDがあれば、追加
+          if ( pid == (*itr)->getUid() ) {
+            (*itr)->addParticle(p);
+            check=1;
+            break;
+          }
+        }
+        
+        // pidのチャンクが存在しない場合
+        if (check==0)
+        {
+          Chunk* m = new Chunk(p,
+                               gid,
+                               pid,
+                               Egrp[gid].getStart(),
+                               myRank,
+                               Egrp[gid].getInterval());
+          chunkList.push_back(m);
+          Egrp[gid].incGroup();
+        }
+        
       }
+    } // cnt
 
-    }
   } // NDST-loop
   
 }
@@ -824,8 +826,6 @@ bool Cloud::setPointset(const string label_base, const int odr)
       str = tmpstr;
     }
     
-    
-    Egrp[odr].setEmitOrg(v);
 
     // 自領域内であれば、初期開始点として追加
     if ( !ModeTOOL ) {
@@ -916,14 +916,12 @@ bool Cloud::setLine(const string label_base, const int odr)
   Vec3r dd = ed - st;
   dd /= (REAL_TYPE)npnt - 1.0;
   
-  REAL_TYPE ooo[3] = {dd.x, dd.y, dd.z};
-  Egrp[odr].setEmitOrg(ooo);
 
   for (int m = 0; m < npnt; m++)
   {
     Vec3r pos = st + dd * (REAL_TYPE)m;
 
-    printf("[%d] %d  tgt = (%14.6e %14.6e %14.6e)\n", myRank, m, pos.x, pos.y, pos.z);
+    //printf("[%d] %d  tgt = (%14.6e %14.6e %14.6e)\n", myRank, m, pos.x, pos.y, pos.z);
 
     // 自領域内であれば、初期開始点として追加
     if ( !ModeTOOL ) {
@@ -1052,8 +1050,6 @@ void Cloud::samplingInCircle(const REAL_TYPE* cnt,
 
     q = rotate_inv(angle, t.assign(x, y, 0.0)) + center;
     
-    REAL_TYPE ooo[3] = {q.x, q.y, q.z};
-    Egrp[odr].setEmitOrg(ooo);
 
     if ( !ModeTOOL ) {
       if ( inOwnRegion(q) )

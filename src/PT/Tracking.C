@@ -38,7 +38,7 @@ Vec3i Tracking::integrate_Euler(Vec3r& p, Vec3r& v, const REAL_TYPE dt)
     fprintf(stdout, "Retry at (%d, %d, %d)\n", b.x, b.y, b.z);
   }
   p = q;
-  Vec3i dst(-2);
+  Vec3i dst(0);
   if ( !inOwnRegion(q) ) dst = findRankDir(q);
 
   return dst;
@@ -65,7 +65,7 @@ Vec3i Tracking::integrate_RK2(Vec3r& p, Vec3r& v, const REAL_TYPE dt)
     fprintf(stdout, "Retry at (%d, %d, %d)\n", b.x, b.y, b.z);
   }
   p = q;
-  Vec3i dst(-2);
+  Vec3i dst(0);
   if ( !inOwnRegion(q) ) dst = findRankDir(q);
   return dst;
 }
@@ -82,15 +82,14 @@ Vec3r Tracking::RK2(Vec3r p, const REAL_TYPE dt)
 
 
 //#############################################################################
-// @brief pの属するランクを探す 全領域外の判断も
+// @brief pの属する隣接ランクの方向を返す
 // @param [in] p  空間座標（ローカル）
-// @retval 正-計算領域内の他ランク, 負-領域外(-1)、自領域(-2)
+// @retval 隣接方向{-1, 0, 1}
 // @note inOwnRegion()と同じ判断基準のこと
 Vec3i Tracking::findRankDir(Vec3r p)
 {
   Vec3r o = org;
   Vec3r e = reg;
-  //printf("o %e %e %e / e %e %e %e / p %e %e %e\n",o.x, o.y, o.z, e.x, e.y, e.z, p.x, p.y, p.z);
 
   Vec3i d;
   if      (p.x < o.x)        d.x = -1;

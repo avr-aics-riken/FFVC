@@ -9,6 +9,12 @@
 ## REVISION HISTORY
 
 ---
+- 2019-1-16 Version 2.7.0
+  - setBit26 >> 25bit幅へ修正
+  - updatePosition()の領域外判定を変更
+
+
+---
 - 2019-1-15 Version 2.6.9
   - PtComm::Cmap[NDST*2]
   - Historyクラスのタイムスタンプ更新位置を後ろに変更

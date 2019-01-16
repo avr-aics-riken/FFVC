@@ -130,7 +130,9 @@ public:
     return nPart;
   }
 
-  void setPtComm(const int m_div[],
+  
+  // @note Rmapのポインタを返す
+  int* setPtComm(const int m_div[],
                  const int m_rank,
                  const int m_np)
   {
@@ -163,6 +165,8 @@ public:
     
     nPart = new unsigned[numProc];
     memset(nPart, 0, sizeof(unsigned)*numProc);
+    
+    return Rmap;
   }
 
 
@@ -246,16 +250,21 @@ private:
   bool waitCommInfo(MPI_Request* req,
                     MPI_Status* stat);
   
-  // @brief 粒子データ通信の確定
+  
+  // @brief 粒子データ通信の確定 (REAL_TYPE)
   bool waitCommPart(MPI_Request* req,
                     MPI_Status* stat,
                     const int flag[2],
                     const int r_msg,
                     REAL_TYPE* rbuf);
   
+  
+  // @brief 粒子データ通信の確定 (int)
   bool waitCommPart(MPI_Request* req,
                     MPI_Status* stat,
-                    const int flag[2]);
+                    const int flag[2],
+                    const int r_msg,
+                    int* rbuf);
 
 };
 

@@ -219,7 +219,9 @@ bool PtComm::commParticle(const unsigned buf_max_particle)
       
       if ( !waitCommPart( &reqI[2*i],
                          &statI[2*i],
-                          &Cmap[2*i]) ) return false;
+                          &Cmap[2*i],
+                         mr * 2,
+                         &br_buf[ofst2 * i]) ) return false;
     }
   }
 
@@ -275,9 +277,9 @@ bool PtComm::SendRecvParticle(const int s_msg,
                                   &req[0]) ) return false;
 #ifdef PT_DEBUG
     // 送信内容を表示、受信内容はwaitAll後
-    printf("snd[%d] : ", myRank);
-    for (int i=0; i<s_msg; i++) printf("%f ", sbuf[i]);
-    printf("\n");
+    //printf("snd[%d] : ", myRank);
+    //for (int i=0; i<s_msg; i++) printf("%f ", sbuf[i]);
+    //printf("\n");
 #endif
   }
 
@@ -328,6 +330,12 @@ bool PtComm::SendRecvParticle(const int s_msg,
                                   tag_s,
                                   MPI_COMM_WORLD,
                                   &req[0]) ) return false;
+#ifdef PT_DEBUG
+    // 送信内容を表示、受信内容はwaitAll後
+    //printf("snd[%d] : ", myRank);
+    //for (int i=0; i<s_msg; i++) printf("%d ", sbuf[i]);
+    //printf("\n");
+#endif
   }
   
   return true;
@@ -346,7 +354,7 @@ bool PtComm::waitCommInfo(MPI_Request* req,
 
 
 //#############################################################################
-// @brief 粒子データ通信の確定
+// @brief 粒子データ通信の確定 (REAL_TYPE)
 bool PtComm::waitCommPart(MPI_Request* req,
                           MPI_Status* stat,
                           const int flag[2],
@@ -373,9 +381,13 @@ bool PtComm::waitCommPart(MPI_Request* req,
 }
 
 
+//#############################################################################
+// @brief 粒子データ通信の確定 (int)
 bool PtComm::waitCommPart(MPI_Request* req,
                           MPI_Status* stat,
-                          const int flag[2])
+                          const int flag[2],
+                          const int r_msg,
+                          int* rbuf)
 {
   // 近傍への送信
   if ( flag[0] == 1 )
@@ -386,6 +398,11 @@ bool PtComm::waitCommPart(MPI_Request* req,
   if ( flag[1] == 1 )
   {
     if ( MPI_SUCCESS != MPI_Waitall(1, &req[1], &stat[1]) ) return false;
+#ifdef PT_DEBUG
+    //printf("rcv[%d] : ", myRank);
+    //for (int i=0; i<r_msg; i++) printf("%d ", rbuf[i]);
+    //printf("\n");
+#endif
   }
   
   return true;
