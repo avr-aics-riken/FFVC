@@ -9,6 +9,11 @@
 ## REVISION HISTORY
 
 ---
+- 2019-1-17 Version 2.7.1
+  - addParticle, if only original points
+
+
+---
 - 2019-1-16 Version 2.7.0
   - setBit26 >> 25bit幅へ修正
   - updatePosition()の領域外判定を変更

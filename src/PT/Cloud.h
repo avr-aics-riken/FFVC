@@ -80,6 +80,8 @@ protected:
   unsigned gParticle;        ///< 全粒子の数（グローバル）
   
   int* Rmap;                 ///< PtCommクラスで作成した3x3x3のランクマップへのポインタ
+    
+    int sumGP;
 
 
 public:
@@ -107,6 +109,7 @@ public:
     unit = NONDIMENSIONAL;
     refLen = 0.0;
     ModeTOOL = false;
+    sumGP = 0;
 
     this->dt         = dt;
     this->bcd        = m_bcd;
@@ -116,31 +119,6 @@ public:
 
     // 初期値として、BUF_UNIT*粒子分を確保 > buf_max_particleで100単位で更新
     buf_max_particle = BUF_UNIT;
-  }
-  
-  // for tools
-  Cloud(TextParser* m_tp,
-        PerfMonitor* m_PM)
-  {
-    nParticle = 0;
-    gParticle = 0;
-    nGrpEmit = 0;
-    scheme = -1;
-    buf_updated = false;
-    flag_migration = false;
-    nCommParticle = 0;
-    log_interval = 0;
-    file_interval = 0;
-    file_format = -1;
-    dt = 0.0;
-    unit = NONDIMENSIONAL;
-    refLen = 0.0;
-    ModeTOOL = false;
-    
-    this->bcd        = NULL;
-    this->vSource    = NULL;
-    this->tpCntl     = m_tp;
-    this->PM         = m_PM;
   }
 
 

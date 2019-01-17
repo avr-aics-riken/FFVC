@@ -36,7 +36,7 @@ bool Cloud::tracking(const unsigned step, const double time)
       // 保持している粒子を積分し、マイグレーション準備
       (*itr)->updatePosition(tr, scheme, Egrp[m].getLife(), dt, max_part, Rmap);
       
-      // 登録した開始点から粒子を追加
+      // 登録した開始点から粒子を追加（マイクレーション先は除く）
       (*itr)->addParticleFromOrigin();
     }
   }
@@ -77,7 +77,11 @@ bool Cloud::tracking(const unsigned step, const double time)
   {
     TIMING_start("PT_Statistics");
     ret = PC.Statistics(nCommParticle, nParticle, gParticle);
-    Hostonly_ logging(step);
+    Hostonly_ {
+      logging(step);
+      sumGP += gParticle;
+      printf("sumGP= %d\n",sumGP);
+    }
     TIMING_stop("PT_Statistics");
     if ( !ret ) return false;
   }

@@ -77,7 +77,7 @@ void Chunk::packParticle(REAL_TYPE* ps_buf,
   for(auto itr = pchunk.begin(); itr != pchunk.end(); ++itr)
   {
     if ( IS_MIGRATE( (*itr).bf) ) {
-      pchunk.erase(itr);
+      itr = pchunk.erase(itr);
     }
   }
     
@@ -186,16 +186,19 @@ void Chunk::updatePosition(Tracking* tr,
 
 //#############################################################################
 // @brief pchunkに開始点から粒子を追加
-// @note ライフカウントはゼロ
+// @note マイクレーション先は除く
 void Chunk::addParticleFromOrigin()
 {
-  particle p;
-  p.pos = EmitOrigin;
-  p.bf  = 0;
-  p.foo = 0;
-  p.vel.assign(0.0, 0.0, 0.0);
-  p.bf = Activate(p.bf);
-  pchunk.push_front(p);
+	if ( startOrigin == 1 )
+	{
+		particle p;
+		p.pos = EmitOrigin;
+		p.bf  = 0;
+		p.foo = 0;
+		p.vel.assign(0.0, 0.0, 0.0);
+		p.bf = Activate(p.bf);
+		pchunk.push_front(p);
+	}
 }
 
 

@@ -395,7 +395,7 @@ TimeControl {
   Session {
     TemporalType   = "step"
     Start          = 0    // 0 or 0.0の場合initial start
-    End            = 1000
+    End            = 50
     //restartStep    = 31
   }
 
@@ -423,24 +423,24 @@ ParticleTracking {
   Tracking      = "off"
   Method        = "euler"
   log_interval  = 1
-  file_interval = 10
+  file_interval = 1
   file_format   = "ascii" // binary
 
 
   list[@] {
     type       = "Line"
-    StartStep  = 0
+    StartEmit  = 0
     Interval   = 1
     label      = "grp1"
     lifetime   = -1
     Division   = 20
-    From       = (-0.01, 0.0, 0.02)
-    To         = (0.01, 0.0, 0.48)
+    From       = (0.01, -0.01, -0.49)
+    To         = (-0.01, 0.01, 0.49)
   }
 /*
   list[@] {
     type       = "pointset"
-    StartStep  = 0
+    StartEmit  = 0
     Interval   = 10
     label      = "grp2"
     lifetime   = -1
@@ -461,7 +461,7 @@ ParticleTracking {
 
   list[@] {
     type       = "Disc"
-    StartStep  = 0
+    StartEmit  = 0
     Interval   = 10
     label      = "grp3"
     lifetime   = -1
