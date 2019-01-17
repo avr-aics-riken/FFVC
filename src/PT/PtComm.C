@@ -455,6 +455,7 @@ bool PtComm::Statistics(int& nCommP,
 }
 
 
+//#############################################################################
 // @brief バッファ要素数を同期
 // @param [in,out]  npart  バッファ計算用の最大粒子数
 bool PtComm::migrateBuffer(unsigned& npart)

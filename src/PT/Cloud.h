@@ -52,12 +52,13 @@ protected:
   vector<Chunk*> chunkList;  ///< チャンクリスト
 
   int nGrpEmit;              ///< 開始点のグループ数 set[@]の数
+	unsigned nEmitParticle;    ///< 粒子放出点の数
+	unsigned nEmission;        ///< 粒子放出の回数
   int scheme;                ///< 積分方法
   bool flag_migration;       ///< マイグレーション発生 true
   REAL_TYPE dt;              ///< 時間積分幅
   unsigned buf_max_particle; ///< 送信用のバッファ長さ計算に使う粒子の最大数 毎回異なる
   bool buf_updated;          ///< バッファ長さが更新されたときtrue
-  bool ModeTOOL;             ///< Toolとして使う場合true
 
   int unit;                  ///< 指定座標の記述単位 {DIMENSIONAL | NONDIMENSIONAL}
   REAL_TYPE refLen;          ///< 代表長さ
@@ -80,8 +81,7 @@ protected:
   unsigned gParticle;        ///< 全粒子の数（グローバル）
   
   int* Rmap;                 ///< PtCommクラスで作成した3x3x3のランクマップへのポインタ
-    
-    int sumGP;
+
 
 
 public:
@@ -108,8 +108,8 @@ public:
     file_format = -1;
     unit = NONDIMENSIONAL;
     refLen = 0.0;
-    ModeTOOL = false;
-    sumGP = 0;
+		nEmitParticle = 0;
+		nEmission = 0;
 
     this->dt         = dt;
     this->bcd        = m_bcd;

@@ -9,6 +9,10 @@
 ## REVISION HISTORY
 
 ---
+- 2019-1-17 Version 2.7.2
+  - bug fix at list erase
+
+---
 - 2019-1-17 Version 2.7.1
   - addParticle, if only original points
 

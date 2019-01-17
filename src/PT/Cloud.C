@@ -40,6 +40,9 @@ bool Cloud::tracking(const unsigned step, const double time)
       (*itr)->addParticleFromOrigin();
     }
   }
+	
+	// 粒子放出回数
+	nEmission++;
   
   // バッファ長の更新が必要な場合、バッファ計算用の粒子数はBUF_UNIT単位で確保
   if (buf_max_particle < max_part) {
@@ -79,8 +82,6 @@ bool Cloud::tracking(const unsigned step, const double time)
     ret = PC.Statistics(nCommParticle, nParticle, gParticle);
     Hostonly_ {
       logging(step);
-      sumGP += gParticle;
-      printf("sumGP= %d\n",sumGP);
     }
     TIMING_stop("PT_Statistics");
     if ( !ret ) return false;
@@ -304,19 +305,16 @@ void Cloud::logging(const unsigned step)
   // マイグレーションで移動した粒子数と全粒子数
   fprintf(fpl, "step %ld migrated %d total %ld\n", step, nCommParticle, gParticle);
   
-  /*
-  for (int i=0; i<numProc; i++) {
-    fprintf(fpl, "%d ", i);
-  }
-  fprintf(fpl,"\n");
-  */
-  
   // 各ランク毎の粒子数
   unsigned* p = PC.nPart_ptr();
   for (int i=0; i<numProc; i++) {
     fprintf(fpl, "%ld ", p[i]);
   }
   fprintf(fpl,"\n");
+	
+	// Number of total particles
+	unsigned tp = nEmitParticle * (nEmission+1);
+	if (gParticle != tp) fprintf(fpl, "Number of particles must be %ld\n", tp);
   
   fflush(fpl);
 }
@@ -832,22 +830,24 @@ bool Cloud::setPointset(const string label_base, const int odr)
     
 
     // 自領域内であれば、初期開始点として追加
-    if ( !ModeTOOL ) {
-      if ( inOwnRegion(v) )
-      {
-        Vec3r pos(v);
-        Chunk* m = new Chunk(pos,
-                             odr,
-                             1,
-                             Egrp[odr].getStart(),
-                             myRank,
-                             Egrp[odr].getInterval());
-        chunkList.push_back(m);
-        Egrp[odr].incGroup();
-      }
-    }
+		if ( inOwnRegion(v) )
+		{
+			Vec3r pos(v);
+			Chunk* m = new Chunk(pos,
+													 odr,
+													 1,
+													 Egrp[odr].getStart(),
+													 myRank,
+													 Egrp[odr].getInterval());
+			chunkList.push_back(m);
+			Egrp[odr].incGroup();
+		}
     
   }
+	
+	// 放出点の合計
+	nEmitParticle += nnode;
+	
   return true;
 }
 
@@ -875,6 +875,9 @@ bool Cloud::setLine(const string label_base, const int odr)
   if ( nDivision == 0 ) return false;
 
   Egrp[odr].nDiv = nDivision;
+	
+	// 放出点の合計
+	nEmitParticle += nDivision + 1;
 
   // load parameter of 'from' and 'to'
   label = label_base + "/From";
@@ -928,19 +931,17 @@ bool Cloud::setLine(const string label_base, const int odr)
     //printf("[%d] %d  tgt = (%14.6e %14.6e %14.6e)\n", myRank, m, pos.x, pos.y, pos.z);
 
     // 自領域内であれば、初期開始点として追加
-    if ( !ModeTOOL ) {
-      if ( inOwnRegion(pos) )
-      {
-        Chunk* m = new Chunk(pos,
-                             odr,
-                             1,
-                             Egrp[odr].getStart(),
-                             myRank,
-                             Egrp[odr].getInterval());
-        chunkList.push_back(m);
-        Egrp[odr].incGroup();
-      }
-    }
+		if ( inOwnRegion(pos) )
+		{
+			Chunk* m = new Chunk(pos,
+													 odr,
+													 1,
+													 Egrp[odr].getStart(),
+													 myRank,
+													 Egrp[odr].getInterval());
+			chunkList.push_back(m);
+			Egrp[odr].incGroup();
+		}
     
   }
   return true;
@@ -969,6 +970,9 @@ bool Cloud::setDisc(const string label_base, const int odr)
   }
   if ( nSample <= 0 ) return false;
   Egrp[odr].nSample = nSample;
+	
+	// 放出点の合計
+	nEmitParticle += nSample;
 
   // load parameter of 'from' and 'to'
   label=label_base+"/center";
@@ -1055,20 +1059,18 @@ void Cloud::samplingInCircle(const REAL_TYPE* cnt,
     q = rotate_inv(angle, t.assign(x, y, 0.0)) + center;
     
 
-    if ( !ModeTOOL ) {
-      if ( inOwnRegion(q) )
-      {
-        Vec3r pos(q);
-        Chunk* m = new Chunk(pos,
-                             odr,
-                             1,
-                             Egrp[odr].getStart(),
-                             myRank,
-                             Egrp[odr].getInterval());
-        chunkList.push_back(m);
-        Egrp[odr].incGroup();
-      }
-    }
+		if ( inOwnRegion(q) )
+		{
+			Vec3r pos(q);
+			Chunk* m = new Chunk(pos,
+													 odr,
+													 1,
+													 Egrp[odr].getStart(),
+													 myRank,
+													 Egrp[odr].getInterval());
+			chunkList.push_back(m);
+			Egrp[odr].incGroup();
+		}
   }
 }
 
@@ -1288,6 +1290,8 @@ void Cloud::displayParam(FILE* fp)
                                         Egrp[i].normal[2]);
           break;
       }
+			
+			fprintf(fp, "\n\tTotal number of emission points : %ld\n", nEmitParticle);
 
       fprintf(fp,"\n");
     }

@@ -74,11 +74,16 @@ void Chunk::packParticle(REAL_TYPE* ps_buf,
 
 
   // 要素の削除
-  for(auto itr = pchunk.begin(); itr != pchunk.end(); ++itr)
+  for(auto itr = pchunk.begin(); itr != pchunk.end();)
   {
-    if ( IS_MIGRATE( (*itr).bf) ) {
+    if ( IS_MIGRATE( (*itr).bf) )
+		{
       itr = pchunk.erase(itr);
     }
+		else
+		{
+			++itr;
+		}
   }
     
   // フラグをfalseに戻す
