@@ -9,6 +9,10 @@
 ## REVISION HISTORY
 
 ---
+- 2019-1-18 Version 2.7.3
+  - npt2scat.py
+
+---
 - 2019-1-17 Version 2.7.2
   - bug fix at list erase
 
