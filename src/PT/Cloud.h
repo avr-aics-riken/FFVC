@@ -197,15 +197,16 @@ protected:
   }
 
 
-  /// @brief 自領域内に存在するかどうかを判断
+  /* // @brief 自領域内に存在するかどうかを判断
   /// @param [in] x  coordinate
   bool inOwnRegion(const Vec3r p)
   {
-    if ( p.x<origin[0] || p.x>origin[0]+region[0]
-      || p.y<origin[1] || p.y>origin[1]+region[1]
-      || p.z<origin[2] || p.z>origin[2]+region[2] ) return false;
+    if ( p.x < origin[0] || p.x >= origin[0]+region[0]
+      || p.y < origin[1] || p.y >= origin[1]+region[1]
+      || p.z < origin[2] || p.z >= origin[2]+region[2] ) return false;
     return true;
   }
+	*/
 
 
   /// @brief 開始座標情報を取得し、chunkに保持(Line)

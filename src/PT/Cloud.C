@@ -108,12 +108,7 @@ bool Cloud::tracking(const unsigned step, const double time)
 // @brief 初期設定
 bool Cloud::initCloud(FILE* fp)
 {
-  if ( !setPTinfo() ) return false;
-  
-  if ( !determineUniqueID() ) return false;
-  
-  displayParam(stdout);
-  displayParam(fp);
+
   
   tr = new Tracking(size,
                     guide,
@@ -123,7 +118,14 @@ bool Cloud::initCloud(FILE* fp)
                     vSource,
                     bcd,
                     myRank);
-  
+	
+	if ( !setPTinfo() ) return false;
+	
+	if ( !determineUniqueID() ) return false;
+	
+	displayParam(stdout);
+	displayParam(fp);
+	
   // ログ出力
   if (log_interval > 0) {
     Hostonly_
@@ -702,7 +704,7 @@ bool Cloud::getTPparam(const string label_leaf, int odr)
     Egrp[odr].setStart( (int)f_val );
   }
 
-  label = label_leaf + "/Interval";
+  label = label_leaf + "/EmitInterval";
 
   if ( !(tpCntl->getInspectedValue(label, f_val )) )
   {
@@ -830,7 +832,7 @@ bool Cloud::setPointset(const string label_base, const int odr)
     
 
     // 自領域内であれば、初期開始点として追加
-		if ( inOwnRegion(v) )
+		if ( tr->inOwnRegion(v) )
 		{
 			Vec3r pos(v);
 			Chunk* m = new Chunk(pos,
@@ -931,7 +933,7 @@ bool Cloud::setLine(const string label_base, const int odr)
     //printf("[%d] %d  tgt = (%14.6e %14.6e %14.6e)\n", myRank, m, pos.x, pos.y, pos.z);
 
     // 自領域内であれば、初期開始点として追加
-		if ( inOwnRegion(pos) )
+		if ( tr->inOwnRegion(pos) )
 		{
 			Chunk* m = new Chunk(pos,
 													 odr,
@@ -1059,7 +1061,7 @@ void Cloud::samplingInCircle(const REAL_TYPE* cnt,
     q = rotate_inv(angle, t.assign(x, y, 0.0)) + center;
     
 
-		if ( inOwnRegion(q) )
+		if ( tr->inOwnRegion(q) )
 		{
 			Vec3r pos(q);
 			Chunk* m = new Chunk(pos,
@@ -1255,7 +1257,7 @@ void Cloud::displayParam(FILE* fp)
     {
       fprintf(fp,"\n\tGroup               : %s\n",Egrp[i].getGrpName().c_str());
       fprintf(fp,"\t\tStart step          : %d\n",Egrp[i].getStart());
-      fprintf(fp,"\t\tInterval            : %d\n",Egrp[i].getInterval());
+      fprintf(fp,"\t\tEmitInterval        : %d\n",Egrp[i].getInterval());
       fprintf(fp,"\t\tLife time           : %d\n",Egrp[i].getLife());
       fprintf(fp,"\t\tType                : ");
       switch (Egrp[i].getType()) {

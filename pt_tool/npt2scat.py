@@ -11,14 +11,21 @@
 ##################################################################################
 
 
+import os
 import sys
 import os.path
 import getopt
 from operator import itemgetter
+import time
+import copy
 
 
 # Global
 lst = [[]]
+stepList = []
+rankList = []
+nparList = []
+
 idx =  0
 nPart = 0
 gid = 0
@@ -26,87 +33,65 @@ pid = 0
 f1 = 0
 f2 = 0
 f3 = 0
-np_all = 0
-part_sum = 0
-file_step = 0
-file_time = 0.0
+
+
 
 
 def usage():
 	print('Usage:')
 	print('       -h help')
-	print('       -n number of procs at calculation')
-	print('       -p number of start points')
+	print('       -n number of procs at calculation (mandarory)')
 	print('       -s start step')
 	print('       -e end step')
-	print('options marked * are mandatory')
 
 
 
-
-# nptファイルの中をパース
-def read_npt(fn):
-
-	with open(fn, 'r') as f:
-		for line in f:
-			elements = line.split(' ')
-
-			parse_1(elements)
-
-
-
-# parse 1st level
 def parse_1(elements):
-	global file_step, file_time, f1, f2
+	global f1, f2
 
 	q, w = getElem2(elements, 'step_time')
 
+	# f1は1ファイルにつき1回だけ1にする
 	if q >= 0:
-		file_step = q
-		file_time = w
 		f1 += 1
 		f2 = 0 # 初期化
 
 	if f1 == 1:
-		parse_2(elements)
+		read_chunk(elements)
 
-	
+	return w
 
 
-# parse 2nd level
-def parse_2(elements):
-	global f2, f3, nPart, gid, pid, part_sum
 
-	if f2 < 4:
+def read_chunk(elements):
+	global f2, f3, nPart, gid, pid
 
-		q = getElem(elements, 'particles')
-		if q >= 0:
-			nPart = q
-			part_sum += nPart
-			f2 += 1
+	q = getElem(elements, 'particles')
+	if q >= 0:
+		nPart = q
+		f2 += 1
 
-		q = getElem(elements, 'group_id')
-		if q >= 0:
-			gid = q
-			f2 += 1
+	q = getElem(elements, 'group_id')
+	if q >= 0:
+		gid = q
+		f2 += 1
 
-		q = getElem(elements, 'emit_pnt_id')
-		if q >= 0:
-			pid = q
-			f2 += 1
-			f3 = 0 # 初期化
+	q = getElem(elements, 'emit_pnt_id')
+	if q >= 0:
+		pid = q
+		f2 += 1
+		f3 = 0 # 初期化
 
-		if f2 == 3:
-			parse_3(elements)
+	if f2 == 3:
+		read_body(elements)
 
 
 
 
-# paese 3rd level
-def parse_3(elements):
-	global f1, f2, f3, idx, lst
+def read_body(elements):
+	global f2, f3, idx, lst
+	#print(elements)
 
-	# nPartだけ行を読む, +4はemit_pnt_id, emit_origin, stat_origin, start_emitの行を含む意味
 	if elements[0] == "1" or elements[0] == "0":
 		actv =   int(elements[0])
 		x    = float(elements[1])
@@ -117,13 +102,11 @@ def parse_3(elements):
 		v    = float(elements[6])
 		w    = float(elements[7])
 		foo  =   int(elements[8])
-		a = [x, y, z, life, u, v, w, pid]
 
-		# リスト要素があれば置換、なければ追加
-		if idx < np_all:
-			lst[idx] = a
-		else:
-			lst.append(a)
+		a = [x, y, z, life, u, v, w, pid, gid]
+
+		#print(idx)
+		lst[idx] = a
 
 		idx += 1
 		f3 += 1
@@ -155,24 +138,26 @@ def getElem(elements, key):
 
 # keyの値を抜き出す 2要素
 def getElem2(elements, key):
-  if key in elements:
-    return int(elements[elements.index(key)+1]), float(elements[elements.index(key)+2])
-  else:
-    return -1, -1.0
+	if key in elements:
+		return int(elements[elements.index(key)+1]), float(elements[elements.index(key)+2])
+	else:
+		return -1, -1.0
+
 
 
 
 # scatter formatで書き出し
-def write_scatter(fn):
+def write_scatter(fn, step, time):
 	with open(fn, mode='w') as f:
 
 		f.write('# Scatter format\n')
 		f.write('#\n')
-		f.write('#TS %d %f\n' % (file_step, file_time) )
+		f.write('#TS %d %f\n' % (step, time) )
 		f.write('#\n')
-		# 書き出しデータ数は8
+
+		# 書き出しデータ数は9
 		n = len(lst)
-		f.write('%d 8\n' % n)
+		f.write('%d 9\n' % n)
 
 		for i in range(n):
 
@@ -183,99 +168,184 @@ def write_scatter(fn):
 
 
 
+def makeParticleList(stp, rank):
+	global f1
+	
+	for w in rank:
+		fn = 'pt_' + str(stp).zfill(8) + '_' + str(w).zfill(6) + '.npt'
+
+		with open(fn, 'r') as f:
+
+			f1 = 0
+			for line in f:
+				elements = line.split(' ')
+				tm = parse_1(elements)
+
+	return tm
+
+
+
+
+# 粒子数を積算する
+def accumlateNumPart(fn):
+
+	with open(fn, 'r') as f:
+
+		ens = 0
+
+		for line in f:
+			elements = line.split(' ')
+
+			y = getElem(elements, 'total_particles')
+			if y > 0:
+				ens = 1
+				return y, ens
+
+
+
+# 粒子数リストを作成
+def scan_nPart():
+	
+	for stp in stepList:
+		q = stepList.index(stp)
+		r = rankList[q]
+
+		c = 0
+		for w in r:
+
+			fn = 'pt_' + str(stp).zfill(8) + '_' + str(w).zfill(6) + '.npt'
+			#print(fn)
+			q, w = accumlateNumPart(fn)
+			if w == 0:
+				print('File %s does not have \"total_particles\"' % fn)
+				sys.exit(0)
+			else:
+				c += q
+
+		
+		if len(nparList) == 0:
+			nparList.insert(0, c)
+		else:
+			nparList.append(c)
+
+	# check
+	#for x in nparList:
+	#	print(x)
+
+
 
 
 def main():
 
-	global lst, np_all, f1, idx
-	nProc = 0
-
-	# スクリプト名を除いたコマンドライン引数
-	argv = sys.argv[1:]
-	opts, args = getopt.getopt(argv, "e:n:hs:p:")
-
-	for name, value in opts:
-
-    
-		if name in ('-n'):
-			nProc = int(value)
-			print('Number of processes at calulation = %s' % value)
-    
-		elif name in ('-p'):
-			nEmit = int(value)
-			print('Number of start points = %s' % value)
-
-		elif name in ('-s'):
-			nStart = int(value)
-			print('start = %s' % value)
- 
-		elif name in ('-e'):
-			nEnd = int(value)
-			print('end = %s' % value)
- 
-		elif name in ('-h'):
-			usage()
-
-        
-	for arg in args:
-		print('Argument="%s"' % arg)
+	global npt_files, stepList, rankList, lst, idx
 
 
-	nStep = nEnd - nStart + 1
+	#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+	start = time.time()
+
+	# ディレクトリ直下にあるnptファイルのリストを作る
+	cdir = './'
+	flist = []
+	npt_files = []
+	for x in os.listdir(cdir):
+		if os.path.isfile(cdir + x):
+			flist.append(x)
+
+	for y in flist:
+		if (y[-4:] == '.npt'):
+			npt_files.append(y)
 
 
-	if nProc == 0 or nEmit == 0 or nStep == 0 :
-		usage()
-		sys.exit(0)
+	npt_files.sort()
+	#print('\n'.join(npt_files))
+	print('Number of files = %d\n' % len(npt_files))
 
 
+	# stepListにはステップ数
+	# ranklistにはあるステップで現れるランク番号を保存
+
+	a = []
+
+	for x in npt_files:
+		
+		# step
+		s = int(x[3:11])
+
+		# rank
+		r = int(x[12:18])
+
+		if len(stepList) == 0:
+			stepList.insert(0, s)
+			a.insert(0,r)
+			#print(a)
+			rankList.insert(0, a)
+			#print(rankList)
+
+		else:
+
+			if not s in stepList:
+				stepList.append(s)
+				del a[:]
+				a.insert(0, r)
+				rankList.append(a)
+
+			else:
+				t = stepList.index(s)
+				b = copy.deepcopy(rankList[t])
+				b.append(r)
+				rankList[t] = b
+				#print(s, rankList[t])
 
 
-	# 各ステップ毎にファイルを作成
-	for step in range(nStart, nEnd+1):
+	# check
+	#for x in stepList:
+	#	r = stepList.index(x)
+	#	print(stepList[r], rankList[r])	
+	#	if s > 100:
+	#		sys.exit(0)
 
-		np_all = nEmit * (step + 1)
 
-  	# 利用するリストの型で初期化しておく サイズは適当
-		# a = [x, y, z, life, u, v, w, pid]
-		lst = [[0.0, 0.0, 0.0, -1, 0.0, 0.0, 0.0,  -1] for j in range(np_all) ]
+	elapsed_time = time.time() - start
+	print ("make file list : {0}".format(elapsed_time) + " [sec]")
+	
 
-		s = str(step)
+	#>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+	start = time.time()
+
+	# 各ステップに表れる粒子数をnparListに保存
+	scan_nPart()
+
+	# 各ステップの粒子データをリストに登録しソート
+	for stp in stepList:
+		q = stepList.index(stp)
+		r = rankList[q]
+		print('processing %d' % stp)
+
+		# 利用するリストの型で必要数だけ初期化しておく
+		# a = [x, y, z, life, u, v, w, pid, gid]
+		n = nparList[q]
+		lst = [[0.0, 0.0, 0.0, -1, 0.0, 0.0, 0.0, -1, -1] for j in range(n) ]
+		#print('lst size = %d' % len(lst))
+
+		# lst[idx] のインデクス初期化
 		idx = 0
 
-		# プロセス数ループ
-		for rank in range(0, nProc):
-    
-			# ファイルリスト名を生成
-			r = str(rank)
-			fn = 'pt_' + s.zfill(8) + '_' + r.zfill(6) + '.npt'
-			print(fn)
+		tm = makeParticleList(stp, r)
 
-			f1 = 0
-
-			# ファイルが存在するならデータ読み込み
-			if os.path.exists(fn):
-				read_npt(fn)
-			else:
-				print('file %s does not exist' % fn)
-
-
-	
 		# 全ランクのデータを読み込み後、複合ソート  pidでソートし、次いでlifeでソートする
 		lst.sort(key=itemgetter(7,3))
 
-		#show()
 
 		# 書き出し
-		fn = 'streak_' + s.zfill(8) + '.scat'
-		write_scatter(fn)
+		fn = 'streak_' + str(stp).zfill(8) + '.scat'
+		write_scatter(fn, stp, tm)
 
-		print('length of list = %s' % len(lst))
-		print('sum of particles = %s' % part_sum)
+		# lstを削除
+		del lst[:]
 
-		# lstをクリア
-		lst.clear()
 
+	elapsed_time = time.time() - start
+	print ("scan files : {0}".format(elapsed_time) + " [sec]")
 
 
 

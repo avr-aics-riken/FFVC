@@ -143,7 +143,7 @@ void Chunk::updatePosition(Tracking* tr,
       else if (Rmap[d] == -1) // 計算領域外
       {
         (*itr).bf = Inactivate( (*itr).bf ); // 停止
-        //printf("Out of region %d %d %d\n", r.x, r.y, r.z);
+        printf("Out of region %d %d %d\n", r.x, r.y, r.z);
       }
       else // マイグレート
       {

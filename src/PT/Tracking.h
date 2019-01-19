@@ -119,6 +119,19 @@ public:
     return samplingV(coef, base);
   }
 
+	
+	/// @brief 自領域内に存在するかどうかを判断
+	/// @param [in] x  coordinate
+	/// @retval true 自領域内、座標値の大きい方は含めない
+	/// @note findRankDir()と同じ判断基準のこと
+	bool inOwnRegion(const Vec3r p)
+	{
+		if ( p.x < org.x || p.x >= org.x + reg.x
+			|| p.y < org.y || p.y >= org.y + reg.y
+			|| p.z < org.z || p.z >= org.z + reg.z ) return false;
+		return true;
+	}
+	
 
 protected:
 
@@ -323,19 +336,6 @@ protected:
     r[7] = getVector(shift7(base));
 
     return Trilinear(coef, r);
-  }
-    
-
-  /// @brief 自領域内に存在するかどうかを判断
-  /// @param [in] x  coordinate
-  /// @retval true 自領域内、座標値の大きい方は含めない
-  /// @note findRankDir()と同じ判断基準のこと
-  bool inOwnRegion(const Vec3r p)
-  {
-    if ( p.x < org.x || p.x >= org.x + reg.x
-      || p.y < org.y || p.y >= org.y + reg.y
-      || p.z < org.z || p.z >= org.z + reg.z ) return false;
-    return true;
   }
 
 

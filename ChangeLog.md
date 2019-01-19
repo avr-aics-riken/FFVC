@@ -9,6 +9,12 @@
 ## REVISION HISTORY
 
 ---
+- 2019-1-19 Version 2.7.4
+  - npt2scat.py >> deepcopy()
+  - npt2scat.py, add gid
+  - use only Tracking::isOwnRegion(), remove it from Cloud class
+
+---
 - 2019-1-18 Version 2.7.3
   - npt2scat.py
 

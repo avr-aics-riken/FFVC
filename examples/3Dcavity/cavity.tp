@@ -65,7 +65,7 @@ DomainInfo {
   GlobalVoxel    = (64   , 64   , 64   )
 
   //GlobalPitch    = (1.5625e-02, 1.5625e-02, 1.5625e-02)
-  //GlobalDivision = (1    , 1    , 1    )
+  //GlobalDivision = (2    , 1    , 1    )
 }
 
 
@@ -395,7 +395,7 @@ TimeControl {
   Session {
     TemporalType   = "step"
     Start          = 0    // 0 or 0.0の場合initial start
-    End            = 50
+    End            = 10000
     //restartStep    = 31
   }
 
@@ -420,27 +420,39 @@ Unit {
 }
 
 ParticleTracking {
-  Tracking      = "off"
+  Tracking      = "on"
   Method        = "euler"
   log_interval  = 1
-  file_interval = 1
+  file_interval = 5
   file_format   = "ascii" // binary
 
 
   list[@] {
-    type       = "Line"
-    StartEmit  = 0
-    Interval   = 1
-    label      = "grp1"
-    lifetime   = -1
-    Division   = 20
-    From       = (0.01, -0.01, -0.49)
-    To         = (-0.01, 0.01, 0.49)
+    type         = "Line"
+    StartEmit    = 0
+    EmitInterval = 5
+    label        = "grp1"
+    lifetime     = -1
+    Division     = 20
+    From         = (-0.49, -0.49, 0.49)
+    To           = (-0.49, 0.49, 0.49)
   }
+
+  list[@] {
+    type         = "Line"
+    StartEmit    = 0
+    EmitInterval = 5
+    label        = "grp2"
+    lifetime     = -1
+    Division     = 40
+    From         = (-0.1, 0.001, -0.49)
+    To           = (-0.1, 0.001, 0.49)
+  }
+
 /*
   list[@] {
     type       = "pointset"
-    StartEmit  = 0
+    StartStep  = 0
     Interval   = 10
     label      = "grp2"
     lifetime   = -1
@@ -461,7 +473,7 @@ ParticleTracking {
 
   list[@] {
     type       = "Disc"
-    StartEmit  = 0
+    StartStep  = 0
     Interval   = 10
     label      = "grp3"
     lifetime   = -1
