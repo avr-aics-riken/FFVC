@@ -26,6 +26,12 @@
 #include "PtComm.h"
 #include "TextParser.h"
 #include "EmitGroup.h"
+#include <stdlib.h>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 
 // FX10 profiler
 #if defined __K_FPCOLL
@@ -300,7 +306,8 @@ protected:
     PT_TIMING__ PM->stop(key, flopPerTask, (unsigned)iterationCount);
   }
 
-
+	// ディレクトリがなければ作成、既存なら何もしない（単一ディレクトリ）
+	bool c_mkdir(const char* path);
 
 };
 

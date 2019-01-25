@@ -1329,6 +1329,10 @@ bool Cloud::write_ascii(const unsigned step, const double time)
   
   FILE* fp;
   char tmp_fname[50];
+	
+	sprintf( tmp_fname, "Particle");
+	if ( !c_mkdir(tmp_fname) ) return false;
+	
   sprintf( tmp_fname, "Particle/pt_%08ld_%06d.npt", step, myRank );
   
   if ( !(fp=fopen(tmp_fname, "w")) )
@@ -1376,4 +1380,30 @@ bool Cloud::write_filelist(const unsigned step)
   fclose(fp);
   
   return true;
+}
+
+// #################################################################
+/**
+ * @brief ディレクトリがなければ作成、既存なら何もしない（単一ディレクトリ）
+ * @param [in] path ディレクトリパス
+ */
+bool Cloud::c_mkdir(const char* path)
+{
+	// 標準ライブラリ呼び出し
+	// パーミッションはumaskで指定
+	umask(022);
+	
+	int ret = mkdir(path, 0777); // rwx
+	
+	if ( 0 != ret )
+	{
+		// 既存以外のエラー
+		if ( EEXIST != errno )
+		{
+			printf( "\tError(errno)=[%s]\n", strerror(errno) );
+			return false;
+		}
+	}
+	
+	return true;
 }

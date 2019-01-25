@@ -9,6 +9,11 @@
 ## REVISION HISTORY
 
 ---
+- 2019-1-25 Version 2.7.8
+  - Cloud::c_mkdir()
+
+
+---
 - 2019-1-25 Version 2.7.7
   - disc random sampling
 
