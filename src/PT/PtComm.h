@@ -102,8 +102,9 @@ public:
     if (nPart) delete [] nPart;
   }
 
-  
-
+	
+	
+	// ######################
 public:
 
   REAL_TYPE* ps_ptr() {
@@ -208,8 +209,12 @@ public:
 	bool getSum(unsigned& var);
   
 	
+	// @brief 粒子座標のbroadcast
+	bool BcastParticles(const int msg, REAL_TYPE* buf);
 	
 	
+	
+	// ######################
 private:
 
   // @brief 通信経路確定のための事前情報の通信

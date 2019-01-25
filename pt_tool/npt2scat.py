@@ -140,9 +140,9 @@ def write_scatter(fn, step, time):
 		f.write('#TS %d %f\n' % (step, time) )
 		f.write('#\n')
 
-		# 書き出しデータ数は8
+		# 書き出しデータ数は8-3=5
 		n = len(lst)
-		f.write('%d 8\n' % n)
+		f.write('%d 5\n' % n)
 
 		for i in range(n):
 

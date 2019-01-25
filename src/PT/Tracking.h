@@ -79,11 +79,6 @@ public:
 
     myRank = m_rank;
 
-    //printf("[%d] sz  (%14d %14d %14d) \n", myRank, size[0], size[1], size[2]);
-    //printf("[%d] org (%14.6e %14.6e %14.6e) \n", myRank, org.x, org.y, org.z);
-    //printf("[%d] reg (%14.6e %14.6e %14.6e) \n", myRank, reg.x, reg.y, reg.z);
-    //printf("[%d] pch (%14.6e %14.6e %14.6e) \n", myRank, pch.x, pch.y, pch.z);
-
     vSrc = m_Vsrc;
     bcd = m_bcd;
 		bid = m_bid;
@@ -93,8 +88,9 @@ public:
   /// デストラクタ
   ~Tracking() {}
 
+	
+		// ######################
 public:
-
 
   // @brief Euler陽解法による経路積分、チェックあり
   // @param [in,out] p   粒子座標
@@ -112,18 +108,6 @@ public:
   // @param [in]     dt  時間積分幅
   // @retval 移動先のランク番号 自領域の場合-1
   Vec3i integrate_RK2(Vec3r& p, Vec3r& v, bool& wallFlag, const REAL_TYPE dt);
-    
-  
-  // @brief p点の速度をサンプリングする　境界セルではゼロ次の内挿
-  /* @param [in] p   粒子座標
-  Vec3r getV(const Vec3r p)
-  {
-    Vec3r c = getRidx(p);
-    Vec3i base = getBase(c) ;
-    Vec3r coef = getCoef(c, base);
-    //printf("%f %f %f / %d %d %d / %e %e %e\n", p.x, p.y, p.z, base.x, base.y, base.z, samplingV(coef, base).x, samplingV(coef, base).y, samplingV(coef, base).z);
-    return samplingV(coef, base);
-  }*/
 	
 	
 	// @brief p点の速度をサンプリングする　境界セルでは0.5がけ
@@ -145,6 +129,8 @@ public:
 	}
 	
 
+	
+	// ######################
 protected:
 
 	// @brief 壁を通過したかを簡易判定
@@ -191,8 +177,26 @@ protected:
     c.z = (int)((p.z - org.z) / pch.z) + 1;
     return c;
   }
+	
+	
+	// @brief Runge-Kutta 2 stage
+	// @param [in,out] p   粒子座標
+	// @param [in]     dt  時間積分幅
+	Vec3r RK2(Vec3r p, const REAL_TYPE dt);
 
-
+	
+	/// セルが流体セルかどうか調べる
+	///
+	///    @param[in] index セルインデックス
+	///
+	bool isFluid(Vec3i index) {
+		size_t m =_F_IDX_S3D(index.x, index.y, index.z, size[0], size[1], size[2], gc);
+		return IS_FLUID(bcd[m]);
+	}
+	
+	
+	
+/* OBSOLITE
   Vec3i shift1(Vec3i index) { return Vec3i(index.x+1, index.y  , index.z  ); }
   Vec3i shift2(Vec3i index) { return Vec3i(index.x  , index.y+1, index.z  ); }
   Vec3i shift3(Vec3i index) { return Vec3i(index.x+1, index.y+1, index.z  ); }
@@ -208,28 +212,27 @@ protected:
   Vec3i shift_zm(Vec3i index) { return Vec3i(index.x  , index.y  , index.z-1); }
   Vec3i shift_zp(Vec3i index) { return Vec3i(index.x  , index.y  , index.z+1); }
 
-
-  /**
-   @brief Linear interpolation
-   @param [in] t target dividing point [0,1] normalized
-   @param [in] v values
-   */
+ 
+	//brief Linear interpolation
+	//@param [in] t target dividing point [0,1] normalized
+	//@param [in] v values
+	 
   template <typename T>
   inline T Linear(REAL_TYPE t, T v[2]) const
   {
     return ( v[0]*(1.0-t) + v[1]*t );
   }
 
-  /**
-   @brief Bilinear interpolation
-   @param [in] t target dividing point [0,1][0,1] normalized
-   @param [in] v values
-   @note
+	 
+	//@brief Bilinear interpolation
+	//@param [in] t target dividing point [0,1][0,1] normalized
+	//@param [in] v values
+	//@note
    - v[0]; c[0,0]
    - v[1]; c[1,0]
    - v[2]; c[0,1]
    - v[3]; c[1,1]
-   */
+	 
   template <typename T>
   inline T Bilinear(REAL_TYPE t[2], T v[4]) const
   {
@@ -239,11 +242,11 @@ protected:
     return ( Linear( t[1], r ) );
   }
 
-  /**
-   @brief Trilinear interpolation
-   @param [in] t target dividing point [0,1][0,1][0,1] normalized
-   @param [in] v values
-   @note
+
+	//@brief Trilinear interpolation
+	//@param [in] t target dividing point [0,1][0,1][0,1] normalized
+	//@param [in] v values
+	//@note
    - v[0]; c[0,0,0]
    - v[1]; c[1,0,0]
    - v[2]; c[0,1,0]
@@ -252,7 +255,7 @@ protected:
    - v[5]; c[1,0,1]
    - v[6]; c[0,1,1]
    - v[7]; c[1,1,1]
-   */
+	 
   template <typename T>
   inline T Trilinear(Vec3r t, T v[8]) const
   {
@@ -260,16 +263,6 @@ protected:
     r[0] = Bilinear( &t.x, &v[0] );
     r[1] = Bilinear( &t.x, &v[4] );
     return ( Linear( t.z, r ) );
-  }
-
-
-  /// セルが流体セルかどうか調べる
-  ///
-  ///    @param[in] index セルインデックス
-  ///
-  bool isFluid(Vec3i index) {
-    size_t m =_F_IDX_S3D(index.x, index.y, index.z, size[0], size[1], size[2], gc);
-    return IS_FLUID(bcd[m]);
   }
 
 
@@ -283,8 +276,8 @@ protected:
     size_t m =_F_IDX_S3D(index.x, index.y, index.z, size[0], size[1], size[2], gc);
     return s[m];
   }
-
-
+	
+	
   /// セルでのベクトル値を取得
   ///
   ///    @param [in] idx セルインデックス
@@ -302,7 +295,7 @@ protected:
     vRet.z = vSrc[mz];
     return vRet;
   }
-
+ 
 
   // @brief 固体セルを含む場合trueを返す
   bool isBCell(const Vec3i base)
@@ -349,13 +342,7 @@ protected:
 
     return Trilinear(coef, r);
   }
-
-
-  // @brief Runge-Kutta 2 stage
-  // @param [in,out] p   粒子座標
-  // @param [in]     dt  時間積分幅
-  Vec3r RK2(Vec3r p, const REAL_TYPE dt);
-
+	*/
 
 };
 #endif // _PT_TRACKING_H_

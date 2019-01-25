@@ -137,6 +137,8 @@ public:
   }
 
 
+	// ######################
+	
   // @brief 初期設定
   bool initCloud(FILE* fp);
 
@@ -146,9 +148,8 @@ public:
 
   
   
-  
-
-    
+	
+	// ######################
 protected:
 	
 	unsigned getNparticle() {
@@ -238,7 +239,7 @@ protected:
 
 
   /// @brief 半径r内のサンプリング
-  void samplingInCircle(const REAL_TYPE* cnt,
+  bool samplingInCircle(const REAL_TYPE* cnt,
                         const REAL_TYPE* nv,
                         const REAL_TYPE radius,
                         const int nSample);

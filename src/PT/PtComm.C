@@ -486,3 +486,20 @@ bool PtComm::getSum(unsigned& var)
 	return true;
 }
 
+
+//#############################################################################
+/*
+ * @brief 粒子座標のbroadcast
+ * @param [in]  msg  送信カウント
+ * @param [in]  buf  Send/Recv buffer
+ * @retval true-success, false-fail
+ */
+bool PtComm::BcastParticles(const int msg, REAL_TYPE* buf)
+{
+	if (MPI_Bcast(buf, msg, data_type, 0, MPI_COMM_WORLD) != MPI_SUCCESS) {
+		return false;
+	}
+	
+	return true;
+}
+

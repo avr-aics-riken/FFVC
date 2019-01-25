@@ -8,6 +8,12 @@
 
 ## REVISION HISTORY
 
+
+---
+- 2019-1-25 Version 2.7.6
+  - Tracking :: comment out  obsolite interpolation methods
+  - disc sampling
+
 ---
 - 2019-1-25 Version 2.7.5
   - getV() update

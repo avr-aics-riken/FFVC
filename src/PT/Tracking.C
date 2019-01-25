@@ -22,13 +22,13 @@
 // @param [out]    wallFlag 壁を通り抜けた場合true
 // @param [in]     dt       積分幅
 // @retval 正-計算領域内の他ランク, 負-領域外(-1)、自領域(-2)
+// @note 流体計算のΔtの設定から格子幅より大きなトラベルはない
 Vec3i Tracking::integrate_Euler(Vec3r& p, Vec3r& v, bool& wallFlag, const REAL_TYPE dt)
 {
-  //printf("[%d] p:(%14.6f %14.6f %14.6f)\n", myRank, p.x, p.y, p.z);
   // 予測値
 	bool oflag=false;
   v = getV(p, oflag);
-  //printf("[%d] p:(%14.6f %14.6f %14.6f)\n", myRank, v.x, v.y, v.z);
+
   Vec3r q = p + dt * v;
 
   /* 格子幅より大きな移動の場合
@@ -70,15 +70,6 @@ Vec3i Tracking::integrate_RK2(Vec3r& p, Vec3r& v, bool& wallFlag, const REAL_TYP
 	v = getV(p, oflag);
   Vec3r q = p + 0.5f*dt * v;
   q = p + dt * getV(q, oflag);
-
-  /* 格子幅より大きな移動の場合
-  if (distance(q, p) > pch.length()) {
-    // 積分幅を半分にして、2回やり直し
-    q = RK2(RK2(p, 0.5*dt), 0.5*dt);
-    Vec3i b = getBase(p) ;
-    fprintf(stdout, "Retry at (%d, %d, %d)\n", b.x, b.y, b.z);
-  }
-	 */
 	
 	// 壁近傍の積分を行った場合
 	if (oflag)
@@ -190,8 +181,6 @@ Vec3r Tracking::getV(const Vec3r p, bool& of)
 			vp.y = 0.5 * vSrc[ _F_IDX_V3D(q.x, q.y , q.z , 1, ix, jx, kx, gc) ];
 			vp.z = 0.5 * vSrc[ _F_IDX_V3D(q.x, q.y , q.z , 2, ix, jx, kx, gc) ];
 			of = true;
-			//printf("a %f %f %f\n", vp.x, vp.y, vp.z);
-			//printf("%d %d %d : %d %d %d\n", i, j, k, q.x, q.y, q.z);
 		}
 		else // 交点のない全セル流体の場合、通常のtri-linear
 		{
@@ -248,19 +237,12 @@ Vec3r Tracking::getV(const Vec3r p, bool& of)
 					 +      xsi *(1.0-eta)*     zta * w6
 					 + (1.0-xsi)*     eta *     zta * w7
 					 +      xsi *     eta *     zta * w8;
-			//printf("b %d %d %d : %d %d %d\n", i, j, k, q.x, q.y, q.z);
-			//printf("%f %f %f %f %f %f %f %f\n", u1, u2, u3, u4, u5, u6, u7, u8);
 		}
 	}
 	// 固体の場合にはゼロを返す
 	else
 	{
 		vp.assign(0.0, 0.0, 0.0);
-		//printf("s %f %f %f\n", vp.x, vp.y, vp.z);
-	}
-	
-	if ( vp.length() == 0.0 ) {
-		printf("v=0 at %d %d %d\n", i,j,k);
 	}
 	
 	return vp;
@@ -271,7 +253,7 @@ Vec3r Tracking::getV(const Vec3r p, bool& of)
 // @brief 壁を通過したかを簡易判定
 // @param [in]  p   元の粒子座標
 // @param [in]  q   移動後の粒子座標
-// @retval true - 壁をお通り抜けた
+// @retval true - 壁を通り抜けた
 // @todo 本当は距離で判定する
 bool Tracking::chkWallPassing(const Vec3r p, const Vec3r q)
 {

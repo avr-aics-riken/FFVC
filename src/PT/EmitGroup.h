@@ -57,7 +57,10 @@ public:
 
   ~EmitGroup() {}
 
-  
+	
+	// ######################
+public:
+	
   void setGrpName(const std::string mm) {
     name = mm;
   }

@@ -133,7 +133,10 @@ public:
   ~Chunk() {}
 
 
-
+	
+	// ######################
+public:
+	
   // @brief pchunkに保持している粒子を積分し、マイグレーションと寿命判定
   void updatePosition(Tracking* tr,
                       const int scheme,
@@ -215,8 +218,10 @@ public:
     return ( b & MASK_25 );
   }
   
-  
-
+	
+	
+	
+	// ######################
 protected:
 
   // @brief 送り先ランク方向をエンコードする

@@ -998,42 +998,89 @@ bool Cloud::setDisc(const string label_base, const int odr)
 /// @param [in]  radius     半径
 /// @param [in]  nSample    サンプル数
 /// @note 指定半径より少し内側（98%）にする
+///       1) マスターが点群を発生
+///       2) 全ランクにbroadcast
+///       3) 各ランクで自領域のみ登録
 /// @url https://teramonagi.hatenablog.com/entry/20141113/1415839321
-void Cloud::samplingInCircle(const REAL_TYPE* cnt,
+bool Cloud::samplingInCircle(const REAL_TYPE* cnt,
                              const REAL_TYPE* nv,
                              const REAL_TYPE radius,
                              const int nSample)
 {
-  REAL_TYPE theta, r, x, y;
-  double pi = 2.0*asin(1.0);
-  Vec3r q, t;
-  Vec3r center(cnt);
-  Vec3r normal(nv);
-
-  Vec3r angle = getAngle(normal);
-
-  for (int i=0; i<nSample; i++)
-  {
-    theta = mts(0.0, 2.0*pi);
-    r = sqrt( 2.0*mts(0.0, (double)radius) );
-
-    x = 0.98 * r * cos(theta);
-    y = 0.98 * r * sin(theta);
-
-    q = rotate_inv(angle, t.assign(x, y, 0.0)) + center;
-    
-
-		if ( tr->inOwnRegion(q) )
+	// 送受信バッファ
+	REAL_TYPE* buf = new REAL_TYPE [3*nSample];
+	
+	// マスターランクで点群を発生
+	Hostonly_ {
+		REAL_TYPE theta, r, x, y;
+		double pi = 2.0*asin(1.0);
+		Vec3r q, t;
+		Vec3r center(cnt);
+		Vec3r normal(nv);
+		vector<Vec3r> sampled;
+		
+		
+		Vec3r angle = getAngle(normal);
+		printf("sampling %d\n",nSample);
+		
+		for (int i=0; i<nSample; i++)
 		{
-			Vec3r pos(q);
-			Chunk* m = new Chunk(pos,
+			theta = mts(0.0, 2.0*pi);
+			r = sqrt( 2.0 * mts(0.0, (double)(0.5*radius*radius)) ) * 0.98;
+			//r = mts(0.0, (double)radius) * 0.98;
+			
+			x = r * cos(theta);
+			y = r * sin(theta);
+			
+			//q = rotate_inv(angle, t.assign(x, y, 0.0)) + center;
+			q.x = x;
+			q.y = y;
+			q.z = 0.0;
+			
+			sampled.push_back(q);
+		}
+		
+		// バッファに詰める
+		int m = 0;
+		for(auto itr = sampled.begin(); itr != sampled.end(); ++itr)
+		{
+			buf[3*m+0] = (*itr).x;
+			buf[3*m+1] = (*itr).y;
+			buf[3*m+2] = (*itr).z;
+			m++;
+		}
+	} // Hostonly
+
+	
+	
+	// 全ランクに送る
+	if ( !PC.BcastParticles(3*nSample, buf) ) return false;
+	
+	
+	// バッファから取り出し、登録
+	for (int i=0; i<nSample; i++)
+	{
+		Vec3r p;
+		p.x = buf[3*i+0];
+		p.y = buf[3*i+1];
+		p.z = buf[3*i+2];
+		
+		if ( tr->inOwnRegion(p) )
+		{
+			Chunk* m = new Chunk(p,
 													 1,
 													 EmitStart,
 													 myRank,
 													 EmitInterval);
 			chunkList.push_back(m);
 		}
-  }
+	}
+	
+
+	delete [] buf;
+	buf = NULL;
+		
+	return false;
 }
 
 
@@ -1129,7 +1176,7 @@ Vec3r Cloud::getAngle(Vec3r nv)
   */
 
 // ##########
-#if 0
+#if 1
   stamped_printf("rotation angle = (%f %f %f)\n", angle.x, angle.y, angle.z);
 #endif
 // ##########
