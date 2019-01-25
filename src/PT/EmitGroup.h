@@ -38,20 +38,12 @@ public:
 
 protected:
   int type;            ///< 開始点タイプ (Pointset, Line, Disc,..)
-  int start;           ///< 開始時刻
-  int interval;        ///< インターバル
-  int life;            ///< 寿命情報 -1 制御なし, 正数<MAX_LIFE未満
-  int ens;             ///< 自グループのチャンクの数
   std::string name;    ///< グループ名
 
 
 public:
   EmitGroup() {
     type = 0;
-    start = 0;
-    interval = 0;
-    life = 0;
-    ens = 0;
     nDiv = 0;
     nSample = 0;
     radius = 0.0;
@@ -85,50 +77,6 @@ public:
     return type;
   }
 
-
-  void setInterval(const int m_intvl) {
-    interval = m_intvl;
-  }
-
-
-  int getInterval() const {
-    return interval;
-  }
-
-
-  void setStart(const int m_st) {
-    start = m_st;
-  }
-
-
-  int getStart() const {
-    return start;
-  }
-
-
-  void setLife(const int m_life) {
-    life = m_life;
-  }
-
-
-  int getLife() {
-    return life;
-  }
-
-
-  void incGroup() {
-    ens++;
-  }
-
-
-  void decGroup() {
-    ens--;
-  }
-
-
-  bool isEns(const int id) const {
-    return (ens > 0) ? true : false;
-  }
 };
 
 #endif // _PT_GROUP_H_

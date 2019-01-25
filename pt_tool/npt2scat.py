@@ -28,8 +28,6 @@ nparList = []
 
 idx =  0
 nPart = 0
-gid = 0
-pid = 0
 f1 = 0
 f2 = 0
 f3 = 0
@@ -40,9 +38,6 @@ f3 = 0
 def usage():
 	print('Usage:')
 	print('       -h help')
-	print('       -n number of procs at calculation (mandarory)')
-	print('       -s start step')
-	print('       -e end step')
 
 
 
@@ -64,25 +59,15 @@ def parse_1(elements):
 
 
 def read_chunk(elements):
-	global f2, f3, nPart, gid, pid
+	global f2, f3, nPart
 
 	q = getElem(elements, 'particles')
 	if q >= 0:
 		nPart = q
 		f2 += 1
-
-	q = getElem(elements, 'group_id')
-	if q >= 0:
-		gid = q
-		f2 += 1
-
-	q = getElem(elements, 'emit_pnt_id')
-	if q >= 0:
-		pid = q
-		f2 += 1
 		f3 = 0 # 初期化
 
-	if f2 == 3:
+	if f2 == 1:
 		read_body(elements)
 
 
@@ -101,9 +86,9 @@ def read_body(elements):
 		u    = float(elements[5])
 		v    = float(elements[6])
 		w    = float(elements[7])
-		foo  =   int(elements[8])
+		uid  =   int(elements[8])
 
-		a = [x, y, z, life, u, v, w, pid, gid]
+		a = [x, y, z, life, u, v, w, uid]
 
 		#print(idx)
 		lst[idx] = a
@@ -155,9 +140,9 @@ def write_scatter(fn, step, time):
 		f.write('#TS %d %f\n' % (step, time) )
 		f.write('#\n')
 
-		# 書き出しデータ数は9
+		# 書き出しデータ数は8
 		n = len(lst)
-		f.write('%d 9\n' % n)
+		f.write('%d 8\n' % n)
 
 		for i in range(n):
 
@@ -322,9 +307,9 @@ def main():
 		print('processing %d' % stp)
 
 		# 利用するリストの型で必要数だけ初期化しておく
-		# a = [x, y, z, life, u, v, w, pid, gid]
+		# a = [x, y, z, life, u, v, w, uid]
 		n = nparList[q]
-		lst = [[0.0, 0.0, 0.0, -1, 0.0, 0.0, 0.0, -1, -1] for j in range(n) ]
+		lst = [[0.0, 0.0, 0.0, -1, 0.0, 0.0, 0.0, -1] for j in range(n) ]
 		#print('lst size = %d' % len(lst))
 
 		# lst[idx] のインデクス初期化
@@ -332,7 +317,7 @@ def main():
 
 		tm = makeParticleList(stp, r)
 
-		# 全ランクのデータを読み込み後、複合ソート  pidでソートし、次いでlifeでソートする
+		# 全ランクのデータを読み込み後、複合ソート  uidでソートし、次いでlifeでソートする
 		lst.sort(key=itemgetter(7,3))
 
 

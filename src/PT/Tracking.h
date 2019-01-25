@@ -35,6 +35,7 @@ protected:
 
   REAL_TYPE* vSrc;      ///< 速度データ
   int* bcd;             ///< BCindex B
+	int* bid;             ///< Cut Index
 
 
 public:
@@ -45,6 +46,7 @@ public:
     gc = 0;
     vSrc = NULL;
     bcd = NULL;
+		bid = NULL;
     myRank = 0;
   }
 
@@ -55,6 +57,7 @@ public:
            const REAL_TYPE m_pch[3],
            REAL_TYPE* m_Vsrc,
            int* m_bcd,
+					 int* m_bid,
            const int m_rank)
   {
     size[0] = m_sz[0];
@@ -83,6 +86,7 @@ public:
 
     vSrc = m_Vsrc;
     bcd = m_bcd;
+		bid = m_bid;
   }
 
 
@@ -95,21 +99,23 @@ public:
   // @brief Euler陽解法による経路積分、チェックあり
   // @param [in,out] p   粒子座標
   // @param [out]    v   粒子並進速度
+	// @param [out]    wallFlag 壁を通り抜けた場合true
   // @param [in]     dt  時間積分幅
   // @retval 移動先のランク番号 自領域の場合-1
-  Vec3i integrate_Euler(Vec3r& p, Vec3r& v, const REAL_TYPE dt);
+  Vec3i integrate_Euler(Vec3r& p, Vec3r& v, bool& wallFlag, const REAL_TYPE dt);
 
 
   // @brief RK2による経路積分
   // @param [in,out] p   粒子座標
   // @param [out]    v   粒子並進速度
+	// @param [out]    wallFlag 壁を通り抜けた場合true
   // @param [in]     dt  時間積分幅
   // @retval 移動先のランク番号 自領域の場合-1
-  Vec3i integrate_RK2(Vec3r& p, Vec3r& v, const REAL_TYPE dt);
+  Vec3i integrate_RK2(Vec3r& p, Vec3r& v, bool& wallFlag, const REAL_TYPE dt);
     
   
   // @brief p点の速度をサンプリングする　境界セルではゼロ次の内挿
-  // @param [in] p   粒子座標
+  /* @param [in] p   粒子座標
   Vec3r getV(const Vec3r p)
   {
     Vec3r c = getRidx(p);
@@ -117,7 +123,13 @@ public:
     Vec3r coef = getCoef(c, base);
     //printf("%f %f %f / %d %d %d / %e %e %e\n", p.x, p.y, p.z, base.x, base.y, base.z, samplingV(coef, base).x, samplingV(coef, base).y, samplingV(coef, base).z);
     return samplingV(coef, base);
-  }
+  }*/
+	
+	
+	// @brief p点の速度をサンプリングする　境界セルでは0.5がけ
+	// @param [in]  p   粒子座標
+	// @param [out] of  判定フラグ
+	Vec3r getV(const Vec3r p, bool& of);
 
 	
 	/// @brief 自領域内に存在するかどうかを判断
@@ -135,9 +147,9 @@ public:
 
 protected:
 
-  // @brief ランクマップを作成 findRank()で利用
-  //bool makeRankMap();
-
+	// @brief 壁を通過したかを簡易判定
+	bool chkWallPassing(const Vec3r p, const Vec3r q);
+	
 
   // @brief pの属するランクを探す 全領域外の判断も
   // @param [in] p  空間座標

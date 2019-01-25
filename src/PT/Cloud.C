@@ -17,87 +17,105 @@
 // @brief ランタイム
 bool Cloud::tracking(const unsigned step, const double time)
 {
-  int max_part=0;  // 送受信バッファの計算に必要な送受信最大粒子数
   bool ret;
-  
-  TIMING_start("PT_Tracking");
-  
-  for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
-  {
-    int m = (*itr)->getGrp();
-    if (m<0) {
-      printf("Error : grp number\n");
-      return false;
-    }
-    
-    // 指定時刻が過ぎ、処理ステップになった場合
-    if ( Interval[m].isStarted(step, time) && Interval[m].isTriggered(step, time) )
-    {
-      // 保持している粒子を積分し、マイグレーション準備
-      (*itr)->updatePosition(tr, scheme, Egrp[m].getLife(), dt, max_part, Rmap);
-      
-      // 登録した開始点から粒子を追加（マイクレーション先は除く）
-      (*itr)->addParticleFromOrigin();
-    }
-  }
 	
-	// 粒子放出回数
-	nEmission++;
+	
+	// 指定時刻が過ぎ、処理ステップになった場合
+	if ( Interval.isStarted(step, time) && Interval.isTriggered(step, time) )
+	{
   
-  // バッファ長の更新が必要な場合、バッファ計算用の粒子数はBUF_UNIT単位で確保
-  if (buf_max_particle < max_part) {
-    buf_max_particle = (max_part / BUF_UNIT + 1) * BUF_UNIT;
-    buf_updated = true;
-  }
-  
-  // バッファ長を同期
-  ret = PC.migrateBuffer(buf_max_particle);
-
-  TIMING_stop("PT_Tracking");
-  if ( !ret ) return false;
-  
-
-  TIMING_start("PT_Migration");
-  ret = migration();
-  TIMING_stop("PT_Migration");
-  if ( !ret ) return false;
-
-  
-  
-  // 出力の場合
-  if ( ((step/log_interval)*log_interval == step ) ||
-       ((step/file_interval)*file_interval == step ) )
-  {
-    nParticle = 0;
-    for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr) {
-      nParticle += (unsigned)(*itr)->getNpoints();
-    }
-  }
-  
-  
-  // ログ出力
-  if ( (step/log_interval)*log_interval == step )
-  {
-    TIMING_start("PT_Statistics");
-    ret = PC.Statistics(nCommParticle, nParticle, gParticle);
-    Hostonly_ {
-      logging(step);
-    }
-    TIMING_stop("PT_Statistics");
-    if ( !ret ) return false;
-  }
-  
-  
-  // ファイル出力
-  if ( (step/file_interval)*file_interval == step )
-  {
-    TIMING_start("PT_fileIO");
-    ret = write_ascii(step, time);
-    write_filelist(step);
-    TIMING_stop("PT_fileIO");
-    if ( !ret ) return false;
-  }
-  
+		TIMING_start("PT_Tracking");
+		
+		for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
+		{
+			// 保持している粒子を積分し、マイグレーション準備
+			(*itr)->updatePosition(tr, scheme, EmitLife, dt, Rmap);
+			
+			// 登録した開始点から粒子を追加（マイグレーション先は除く）
+			(*itr)->addParticleFromOrigin();
+		}
+		
+		// 粒子放出回数
+		nEmission++;
+		
+		
+		// 送信方向毎に全チャンクの送信粒子数の和をとる
+		int* pInfo = PC.pInfo_ptr();
+		memset(pInfo, 0, sizeof(int)*NDST*2);
+		
+		for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
+		{
+			int* p = (*itr)->pSend_ptr();
+			
+			for (int i=0; i<NDST; i++)
+			{
+				pInfo[2*i] += p[i];
+			}
+		}
+		
+		
+		// 送信要素の最大値を保存
+		// 行き先毎には異なるが、最大数で考えておく
+		int max_particle = 0;
+		
+		for (int i=0; i<NDST; i++) {
+			if (max_particle < pInfo[2*i]) {
+				max_particle = pInfo[2*i];
+			}
+		}
+		
+		
+		// バッファ長の更新が必要な場合、バッファ計算用の粒子数はBUF_UNIT単位で確保
+		if (buf_max_particle < max_particle) {
+			buf_max_particle = (max_particle / BUF_UNIT + 1) * BUF_UNIT;
+			buf_updated = true;
+		}
+		
+		// バッファ長を同期
+		ret = PC.getMax(buf_max_particle);
+		
+		TIMING_stop("PT_Tracking");
+		if ( !ret ) return false;
+		
+		
+		// for check
+		//nParticle = getNparticle();
+		//gParticle = nParticle;
+		//ret = PC.getSum(gParticle);
+		//Hostonly_ printf("gParticle = %ld (before mig.)\n", gParticle);
+		
+		
+		TIMING_start("PT_Migration");
+		ret = migration();
+		TIMING_stop("PT_Migration");
+		if ( !ret ) return false;
+		
+		
+		nParticle = getNparticle();
+		gParticle = nParticle;
+		ret = PC.getSum(gParticle);
+		if ( !ret ) return false;
+		//Hostonly_ printf("gParticle = %ld (after mig.)\n", gParticle);
+		
+		
+		// ログ出力
+		TIMING_start("PT_Statistics");
+		ret = PC.Statistics(nCommParticle, nParticle, gParticle);
+		Hostonly_ {
+			logging(step);
+		}
+		TIMING_stop("PT_Statistics");
+		if ( !ret ) return false;
+		
+		
+		// ファイル出力
+		TIMING_start("PT_fileIO");
+		ret = write_ascii(step, time);
+		//write_filelist(step);
+		TIMING_stop("PT_fileIO");
+		if ( !ret ) return false;
+		
+	} // Interval
   
   return true;
 }
@@ -117,6 +135,7 @@ bool Cloud::initCloud(FILE* fp)
                     pitch,
                     vSource,
                     bcd,
+										bid,
                     myRank);
 	
 	if ( !setPTinfo() ) return false;
@@ -127,16 +146,14 @@ bool Cloud::initCloud(FILE* fp)
 	displayParam(fp);
 	
   // ログ出力
-  if (log_interval > 0) {
-    Hostonly_
-    {
-      if ( !(fpl=fopen("pt_log.txt", "w")) )
-      {
-        stamped_printf("\tSorry, can't open 'pt_log.txt' file. Write failed.\n");
-        return false;
-      }
-    }
-  }
+	Hostonly_
+	{
+		if ( !(fpl=fopen("pt_log.txt", "w")) )
+		{
+			stamped_printf("\tSorry, can't open 'pt_log.txt' file. Write failed.\n");
+			return false;
+		}
+	}
 
   // 通信クラスの設定
   Rmap = PC.setPtComm(G_division, myRank, numProc);
@@ -165,19 +182,23 @@ bool Cloud::migration()
     PC.resizeSendBuffer(buf_max_particle);
     buf_updated = false;
   }
+  else
+	{
+  	// バッファサイズの更新がない場合は再初期化のみ
+  	PC.initSendBuffer();
+	}
 
-  // バッファサイズの更新がない場合は再初期化のみ
-  PC.initSendBuffer();
 
-
-  // マイグレーション候補を見つけ、行き先毎にパック
+	
   TIMING_start("PT_ParticlePacking");
+	// 各チャンクのマイグレーション候補を見つけ、行き先毎にパック
+	int c[NDST]={0};
   for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
   {
     (*itr)->packParticle(PC.ps_ptr(),
                          PC.bs_ptr(),
-                         buf_max_particle,
-                         PC.pInfo_ptr());
+												 buf_max_particle,
+												 c);
   }
   TIMING_stop("PT_ParticlePacking");
 
@@ -218,17 +239,19 @@ void Cloud::unpackParticle()
   // 周囲26方向のバッファの区切り
   const int bsz6 = buf_max_particle * 6; // 6要素
   const int bsz2 = buf_max_particle * 2; // 2要素
+	
+	//int m_new=0;
+	//int m_add=0;
 
   for (int i=0; i<NDST; i++)
   {
-    const int gid = pInfo[4*i+1];   // グループID
-    const int pid = pInfo[4*i+2];   // 開始点ID
-    const int cnt = pInfo[4*i+3] ;  // 受信粒子数
+    const int cnt = pInfo[2*i+1] ;  // 受信粒子数
     
-    int b, foo;
+    int b, uid;
     Vec3r pos;
     Vec3r v;
     particle p;
+		
 
     if (cnt > 0)
     {
@@ -241,14 +264,13 @@ void Cloud::unpackParticle()
         v.y   = pr_buf[bsz6*i + 6*j+4];
         v.z   = pr_buf[bsz6*i + 6*j+5];
         b     = br_buf[bsz2*i + 2*j+0];
-        foo   = br_buf[bsz2*i + 2*j+1];
+        uid   = br_buf[bsz2*i + 2*j+1];
         b = Chunk::removeMigrate(b);
         
         p.pos = pos;
         p.bf  = b;
         p.vel = v;
-        foo++;        // マイグレーションの回数
-        p.foo = foo;
+        p.foo = uid;
         //printf("unpack : %f %f %f %f %f %f %d %d %d\n",
         //       pos.x, pos.y, pos.z, v.x, v.y, v.z, b, Chunk::getBit25(b), foo);
         
@@ -257,45 +279,32 @@ void Cloud::unpackParticle()
         for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
         {
           // IDがあれば、追加
-          if ( pid == (*itr)->getUid() ) {
+          if ( uid == (*itr)->getUid() ) {
             (*itr)->addParticle(p);
             check=1;
+						//m_add++;
             break;
           }
         }
         
-        // pidのチャンクが存在しない場合
+        // uidのチャンクが存在しない場合
         if (check==0)
         {
           Chunk* m = new Chunk(p,
-                               gid,
-                               pid,
-                               Egrp[gid].getStart(),
+                               EmitStart,
                                myRank,
-                               Egrp[gid].getInterval());
+                               EmitInterval);
           chunkList.push_back(m);
-          Egrp[gid].incGroup();
+					//m_new++;
         }
         
       }
     } // cnt
 
-  } // NDST-loop
+	} // NDST-loop
+	
+	//printf("[%d] : new=%d add=%d Chunk=%d\n", myRank, m_new, m_add, chunkList.size());
   
-}
-
-
-//#############################################################################
-// @brief 既に存在するグループIDの検索
-// @param [in] c   検索対象ID
-// @retval 存在すれば true
-bool Cloud::searchGrp(const int c)
-{
-  for (int i=0; i<nGrpEmit; i++)
-  {
-    if ( Egrp[i].isEns(c) ) return true;
-  }
-  return false;
 }
 
 
@@ -365,8 +374,12 @@ bool Cloud::determineUniqueID()
   unsigned nc = 0;
   for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
   {
-    (*itr)->setUid(acc[myRank]+nc);
+		int id = acc[myRank]+nc;
+		
+    (*itr)->setUid(id);
+		(*itr)->setPchunkUid(id);
     nc++;
+		
   }
 
   if (nc != chunkList.size()) {
@@ -464,27 +477,6 @@ bool Cloud::setPTinfo()
     return false;
   }
   
-  // ログ出力インターバル
-  label = label_base + "/log_interval";
-  
-  if ( !(tpCntl->getInspectedValue(label, f_val )) )
-  {
-    Hostonly_ stamped_printf("\tParsing warning : No Label in '%s'\n", label.c_str());
-    return false;
-  }
-  log_interval = (int)f_val;
-
-  
-  // ファイル出力インターバル
-  label = label_base + "/file_interval";
-  
-  if ( !(tpCntl->getInspectedValue(label, f_val )) )
-  {
-    Hostonly_ stamped_printf("\tParsing warning : No Label in '%s'\n", label.c_str());
-    return false;
-  }
-  file_interval = (int)f_val;
-  
   
   // ファイル出力フォーマット
   label = label_base + "/file_format";
@@ -505,10 +497,59 @@ bool Cloud::setPTinfo()
     Hostonly_ printf("Invalid file format\n");
     return false;
   }
-  
+	
+	
+	// 粒子出力
+	label = label_base + "/StartEmit";
+	
+	if ( !(tpCntl->getInspectedValue(label, f_val )) )
+	{
+		Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
+		return false;
+	}
+	else
+	{
+		EmitStart = (int)f_val;
+		Interval.setStart(EmitStart);
+	}
+	
+	
+	// インターバル
+	label = label_base + "/EmitInterval";
+	
+	if ( !(tpCntl->getInspectedValue(label, f_val )) )
+	{
+		Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+		return false;
+	}
+	else
+	{
+		EmitInterval = (int)f_val;
+		Interval.setInterval(EmitInterval);
+	}
 
+	
+	// 放出カウント
+	label =  label_base + "/EmitLife";
+	
+	if ( !(tpCntl->getInspectedValue(label, f_val )) )
+	{
+		Hostonly_ stamped_printf("\tParsing error : No lifetime\n");
+		return false;
+	}
+	else
+	{
+		int tmp = (int)f_val;
+		if (tmp > MAX_LIFE) {
+			Hostonly_ printf("Exceed MAX_LIFE\n");
+			return false;
+		}
+		EmitLife = tmp;
+	}
+	
+	
 
-  // 粒子放出開始点の個数のチェック
+  // 粒子放出開始グループ数のチェック
   int nnode=0;
   int nlist=0;
 
@@ -523,7 +564,7 @@ bool Cloud::setPTinfo()
   {
     if ( !(tpCntl->getNodeStr(label_base, i+1, str)) )
     {
-      printf("\tParsing error : No No List[@]\n");
+      printf("\tParsing error : No List[@]\n");
       return false;
     }
 
@@ -548,6 +589,10 @@ bool Cloud::setPTinfo()
     return false;
   }
   unsigned m_start = f_val;
+	
+	if ( !Interval.initTrigger(m_start,
+														 (double)m_start * (double)dt,
+														 (double)dt) ) return false;
 
 
   /* 終了
@@ -569,20 +614,12 @@ bool Cloud::setPTinfo()
   Hostonly_ printf("*\tnGrpEmit=%d\n", nGrpEmit);
 #endif
 
-  // IntervalManagerのインスタンス
-  Interval = new IntervalManager[nGrpEmit];
-
-  for (int j=0; j<nGrpEmit; j++)
-  {
-    Interval[j].setMode(IntervalManager::By_step);
-  }
-
 
 
   // リストの読み込み
   label_base = "/ParticleTracking";
 
-  nlist=0;
+  int odr =0;
   for (int i=0; i<nnode; i++)
   {
     if ( !(tpCntl->getNodeStr(label_base, i+1, str)) )
@@ -633,13 +670,19 @@ bool Cloud::setPTinfo()
     }
 
 
-    if ( !getTPparam(label_leaf, nlist) ) return false;
+		// Labelの取得
+		label = label_leaf + "/Label";
+		
+		if ( !(tpCntl->getInspectedValue(label, str )) )
+		{
+			Hostonly_ stamped_printf("\tParsing warning : No Label in '%s'\n", label.c_str());
+			return false;
+		}
+		else
+		{
+			Egrp[odr].setGrpName(str);
+		}
 
-
-    for (int j=0; j<nGrpEmit; j++)
-    {
-      Interval[j].setStart(m_start);
-    }
 
 
     // 順番に粒子IDとチャンクIDを付与
@@ -647,18 +690,18 @@ bool Cloud::setPTinfo()
     switch(mon_type)
     {
       case mon_POINT_SET:
-        Egrp[nlist].setType(mon_POINT_SET);
-        setPointset(label_leaf, nlist);
+        Egrp[odr].setType(mon_POINT_SET);
+        setPointset(label_leaf, odr);
         break;
 
       case mon_LINE:
-        Egrp[nlist].setType(mon_LINE);
-        setLine(label_leaf, nlist);
+        Egrp[odr].setType(mon_LINE);
+        setLine(label_leaf, odr);
         break;
 
       case mon_DISC:
-        Egrp[nlist].setType(mon_DISC);
-        setDisc(label_leaf, nlist);
+        Egrp[odr].setType(mon_DISC);
+        setDisc(label_leaf, odr);
         break;
 
       default:
@@ -666,90 +709,15 @@ bool Cloud::setPTinfo()
         break;
     }
 
-    nlist++;
+    odr++;
   } // nnode
 
 
-  for (int j=0; j<nGrpEmit; j++)
-  {
-    if ( !Interval[j].initTrigger(m_start,
-                                 (double)m_start * (double)dt,
-                                 (double)dt) ) return false;
-  }
-
-  nParticle = chunkList.size();
+  nParticle = getNparticle();
 
   return true;
 }
 
-
-//#############################################################################
-// @brief 粒子追跡パラメータ取得
-bool Cloud::getTPparam(const string label_leaf, int odr)
-{
-  string str, label;
-  double f_val=0.0;
-
-
-  // 粒子出力
-  label = label_leaf + "/StartEmit";
-
-  if ( !(tpCntl->getInspectedValue(label, f_val )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid string for '%s'\n", label.c_str());
-    return false;
-  }
-  else
-  {
-    Egrp[odr].setStart( (int)f_val );
-  }
-
-  label = label_leaf + "/EmitInterval";
-
-  if ( !(tpCntl->getInspectedValue(label, f_val )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-    return false;
-  }
-  else
-  {
-    Egrp[odr].setInterval( (int)f_val );
-    Interval[odr].setInterval(f_val);
-  }
-
-  // Labelの取得
-  label = label_leaf + "/Label";
-
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing warning : No Label in '%s'\n", label.c_str());
-    return false;
-  }
-  else
-  {
-    Egrp[odr].setGrpName(str);
-  }
-
-
-  label =  label_leaf + "/lifetime";
-
-  if ( !(tpCntl->getInspectedValue(label, f_val )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : No lifetime\n");
-    return false;
-  }
-  else
-  {
-    int tmp = (int)f_val;
-    if (tmp > MAX_LIFE) {
-      Hostonly_ printf("Exceed MAX_LIFE\n");
-      return false;
-    }
-    Egrp[odr].setLife(tmp);
-  }
-
-  return true;
-}
 
 
 //#############################################################################
@@ -836,13 +804,11 @@ bool Cloud::setPointset(const string label_base, const int odr)
 		{
 			Vec3r pos(v);
 			Chunk* m = new Chunk(pos,
-													 odr,
 													 1,
-													 Egrp[odr].getStart(),
+													 EmitStart,
 													 myRank,
-													 Egrp[odr].getInterval());
+													 EmitInterval);
 			chunkList.push_back(m);
-			Egrp[odr].incGroup();
 		}
     
   }
@@ -936,13 +902,11 @@ bool Cloud::setLine(const string label_base, const int odr)
 		if ( tr->inOwnRegion(pos) )
 		{
 			Chunk* m = new Chunk(pos,
-													 odr,
 													 1,
-													 Egrp[odr].getStart(),
+													 EmitStart,
 													 myRank,
-													 Egrp[odr].getInterval());
+													 EmitInterval);
 			chunkList.push_back(m);
-			Egrp[odr].incGroup();
 		}
     
   }
@@ -1021,7 +985,7 @@ bool Cloud::setDisc(const string label_base, const int odr)
 
 
   // 点群の発生と登録
-  samplingInCircle(cnt, nv, radius, nSample, odr);
+  samplingInCircle(cnt, nv, radius, nSample);
 
   return true;
 }
@@ -1033,14 +997,12 @@ bool Cloud::setDisc(const string label_base, const int odr)
 /// @param [in]  nv         法線方向
 /// @param [in]  radius     半径
 /// @param [in]  nSample    サンプル数
-/// @param [in]  odr        グループ登録インデクス
 /// @note 指定半径より少し内側（98%）にする
 /// @url https://teramonagi.hatenablog.com/entry/20141113/1415839321
 void Cloud::samplingInCircle(const REAL_TYPE* cnt,
                              const REAL_TYPE* nv,
                              const REAL_TYPE radius,
-                             const int nSample,
-                             const int odr)
+                             const int nSample)
 {
   REAL_TYPE theta, r, x, y;
   double pi = 2.0*asin(1.0);
@@ -1065,13 +1027,11 @@ void Cloud::samplingInCircle(const REAL_TYPE* cnt,
 		{
 			Vec3r pos(q);
 			Chunk* m = new Chunk(pos,
-													 odr,
 													 1,
-													 Egrp[odr].getStart(),
+													 EmitStart,
 													 myRank,
-													 Egrp[odr].getInterval());
+													 EmitInterval);
 			chunkList.push_back(m);
-			Egrp[odr].incGroup();
 		}
   }
 }
@@ -1252,13 +1212,14 @@ void Cloud::displayParam(FILE* fp)
         fprintf(fp,"RK4\n");
         break;
     }
+		
+		fprintf(fp,"\tStart step          : %d\n",EmitStart);
+		fprintf(fp,"\tEmitInterval        : %d\n",EmitInterval);
+		fprintf(fp,"\tLife time           : %d\n",EmitLife);
 
     for (int i=0; i<nGrpEmit; i++)
     {
       fprintf(fp,"\n\tGroup               : %s\n",Egrp[i].getGrpName().c_str());
-      fprintf(fp,"\t\tStart step          : %d\n",Egrp[i].getStart());
-      fprintf(fp,"\t\tEmitInterval        : %d\n",Egrp[i].getInterval());
-      fprintf(fp,"\t\tLife time           : %d\n",Egrp[i].getLife());
       fprintf(fp,"\t\tType                : ");
       switch (Egrp[i].getType()) {
         case mon_POINT_SET:
@@ -1292,12 +1253,11 @@ void Cloud::displayParam(FILE* fp)
                                         Egrp[i].normal[2]);
           break;
       }
-			
-			fprintf(fp, "\n\tTotal number of emission points : %ld\n", nEmitParticle);
-
-      fprintf(fp,"\n");
-    }
-  }
+    } // nGrpEmit
+		
+		fprintf(fp, "\n\tTotal number of emission points : %ld\n", nEmitParticle);
+		fprintf(fp,"\n");
+  } // Hostonly
 }
 
 

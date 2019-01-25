@@ -422,17 +422,15 @@ Unit {
 ParticleTracking {
   Tracking      = "on"
   Method        = "euler"
-  log_interval  = 1
-  file_interval = 5
+  StartEmit     = 0
+  EmitInterval  = 5
+  EmitLife      = -1
   file_format   = "ascii" // binary
 
 
   list[@] {
     type         = "Line"
-    StartEmit    = 0
-    EmitInterval = 5
     label        = "grp1"
-    lifetime     = -1
     Division     = 20
     From         = (-0.49, -0.49, 0.49)
     To           = (-0.49, 0.49, 0.49)
@@ -440,10 +438,7 @@ ParticleTracking {
 
   list[@] {
     type         = "Line"
-    StartEmit    = 0
-    EmitInterval = 5
     label        = "grp2"
-    lifetime     = -1
     Division     = 40
     From         = (-0.1, 0.001, -0.49)
     To           = (-0.1, 0.001, 0.49)

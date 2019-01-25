@@ -157,7 +157,7 @@ int FFV::Loop(const unsigned step)
     if ( C.Mode.StatTemperature == ON )
     {
       flop_count = 0.0;
-      U.convArrayIE2Tmp(d_ws,  size, guide, d_ie, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, C.Unit.File, flop_count);
+      U.convArrayIE2Tmp(d_ws, size, guide, d_ie, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, C.Unit.File, flop_count);
       U.convArrayIE2Tmp(d_ie0, size, guide, d_ae, d_bcd, mat_tbl, C.BaseTemp, C.DiffTemp, C.Unit.File, flop_count); // d_ie0はワーク
       calc_rms_s_(d_rms_t, d_rms_mean_t, size, &guide, d_ws, d_ie0, &accum, &flop_count);
     }

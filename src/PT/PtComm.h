@@ -29,28 +29,28 @@ using std::fill;
 
 
 class PtComm {
+public:
+	int pInfo[NDST*2];         ///< 粒子+情報保持
+														 ///< pInfo[27][m]
+														 ///<   m=0 送信粒子個数
+														 ///<   m=1 受信粒子個数
+	vector<REAL_TYPE> ps_buf;  ///< 粒子用送信バッファ
+	vector<REAL_TYPE> pr_buf;  ///< 粒子用受信バッファ
+	vector<int> bs_buf;        ///< bf用送信バッファ
+	vector<int> br_buf;        ///< bf用受信バッファ
+	int is_buf[NDST];          ///< 情報送信用バッファ
+	int ir_buf[NDST];          ///< 情報受信用バッファ
+	unsigned* nPart;           ///< 全ランクの粒子数
+	
+	
 protected:
   int neighbor[NDST];        ///< 隣接ランク番号
-  int pInfo[NDST*4];         ///< 粒子+情報保持
-                             ///< pInfo[27][m]
-                             ///<   m=0 送信粒子個数
-                             ///<   m=1 粒子グループ
-                             ///<   m-2 粒子ID
-                             ///<   m=3 受信粒子個数
-  vector<REAL_TYPE> ps_buf;  ///< 粒子用送信バッファ
-  vector<REAL_TYPE> pr_buf;  ///< 粒子用受信バッファ
-  vector<int> bs_buf;        ///< bf用送信バッファ
-  vector<int> br_buf;        ///< bf用受信バッファ
-  int is_buf[NDST*3];        ///< 情報送信用バッファ
-  int ir_buf[NDST*3];        ///< 情報受信用バッファ
-
   int G_div[3];              ///< 領域分割数
   int myRank;                ///< 自ランク番号
   int numProc;               ///< プロセス数
   int Rmap[NDST];            ///< 3x3x3のランクマップ
   int Cmap[NDST*2];          ///< 送受信対象 > 1
-    
-  unsigned* nPart;           ///< 全ランクの粒子数
+	
 
 #ifndef DISABLE_MPI
   MPI_Datatype data_type;    ///< float / doubleの切り替え
@@ -74,9 +74,9 @@ public:
     br_buf = vector<int>(2*BUF_UNIT*NDST, 0);
 
     memset(neighbor, -1, sizeof(int)*NDST);
-    memset(pInfo, 0, sizeof(int)*NDST*4);
-    memset(is_buf, 0, sizeof(int)*NDST*3);
-    memset(ir_buf, 0, sizeof(int)*NDST*3);
+    memset(pInfo,  0, sizeof(int)*NDST*2);
+    memset(is_buf, 0, sizeof(int)*NDST);
+    memset(ir_buf, 0, sizeof(int)*NDST);
     memset(Rmap, -1, sizeof(int)*NDST);
     memset(Cmap, 0, sizeof(int)*NDST*2);
 
@@ -200,23 +200,17 @@ public:
                   unsigned& g_part);
   
   
-  // @brief バッファ要素数を同期
-  bool migrateBuffer(unsigned& var);
+  // @brief 引数のご全ランクの最大数を求める
+  bool getMax(unsigned& var);
   
+	
+	// @brief 引数の和
+	bool getSum(unsigned& var);
   
-  
-  
+	
+	
+	
 private:
-
-  int min1(int a, int b) const {
-    return a > b ? b : a;
-  }
-
-
-  int max1(int a, int b) const {
-    return a > b ? a : b;
-  }
-
 
   // @brief 通信経路確定のための事前情報の通信
   bool commInfo(int* sbuf,

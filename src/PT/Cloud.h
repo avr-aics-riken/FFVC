@@ -54,6 +54,10 @@ protected:
   int nGrpEmit;              ///< 開始点のグループ数 set[@]の数
 	unsigned nEmitParticle;    ///< 粒子放出点の数
 	unsigned nEmission;        ///< 粒子放出の回数
+	int EmitStart;             ///< 開始時刻
+	int EmitInterval;          ///< インターバル
+	int EmitLife;              ///< 寿命情報 -1 制御なし, 正数<MAX_LIFE未満
+	
   int scheme;                ///< 積分方法
   bool flag_migration;       ///< マイグレーション発生 true
   REAL_TYPE dt;              ///< 時間積分幅
@@ -64,16 +68,15 @@ protected:
   REAL_TYPE refLen;          ///< 代表長さ
 
   int* bcd;                  ///< BCindex B
+	int* bid;                  ///< 境界条件ID
   REAL_TYPE* vSource;        ///< 速度サンプリング元データ
 
-  IntervalManager* Interval; ///< タイミング制御
+  IntervalManager Interval;  ///< タイミング制御
   TextParser* tpCntl;        ///< TextParser
   Tracking* tr;              ///< Tracking
   PtComm PC;                 ///< 粒子通信クラス
   PerfMonitor* PM;           ///< PerfMonitor class
-  
-  int log_interval;          ///< log file out interval
-  int file_interval;         ///< log file out interval
+	
   int file_format;           ///< 0 - ascii, 1 - binary
   FILE* fpl;                 ///< ログ出力用のファイルポインタ
   int nCommParticle;         ///< マイグレーション時の送受信粒子数
@@ -91,6 +94,7 @@ public:
   }
 
   Cloud(int* m_bcd,
+				int* m_bid,
         REAL_TYPE* m_Vsrc,
         const REAL_TYPE dt,
         TextParser* m_tp,
@@ -103,19 +107,23 @@ public:
     buf_updated = false;
     flag_migration = false;
     nCommParticle = 0;
-    log_interval = 0;
-    file_interval = 0;
     file_format = -1;
     unit = NONDIMENSIONAL;
     refLen = 0.0;
 		nEmitParticle = 0;
 		nEmission = 0;
+		EmitStart = 0;
+		EmitInterval = 0;
+		EmitLife = -1;
 
     this->dt         = dt;
     this->bcd        = m_bcd;
+		this->bid        = m_bid;
     this->vSource    = m_Vsrc;
     this->tpCntl     = m_tp;
     this->PM         = m_PM;
+		
+		Interval.setMode(IntervalManager::By_step);
 
     // 初期値として、BUF_UNIT*粒子分を確保 > buf_max_particleで100単位で更新
     buf_max_particle = BUF_UNIT;
@@ -125,7 +133,6 @@ public:
 
   /// デストラクタ
   ~Cloud() {
-    delete [] Interval;
     if (fpl) fclose(fpl);
   }
 
@@ -143,6 +150,15 @@ public:
 
     
 protected:
+	
+	unsigned getNparticle() {
+		unsigned tmp = 0;
+		for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr) {
+			tmp += (unsigned)(*itr)->getNpoints();
+		}
+		return tmp;
+	}
+	
   
   // @brief meta file output
   bool write_filelist(const unsigned step);
@@ -171,10 +187,6 @@ protected:
   void unpackParticle();
 
 
-  // @brief 既に存在するグループIDの検索
-  bool searchGrp(const int c);
-
-
   // @brief 開始点のユニークIDを割り振る
   bool determineUniqueID();
 
@@ -182,9 +194,6 @@ protected:
   /// @brief 粒子追跡情報を取得し，chunkに保持する
   bool setPTinfo();
 
-
-  // @brief 粒子追跡パラメータ取得
-  bool getTPparam(const string label_leaf, int odr);
 
 
   /// @brief 座標値を無次元化する
@@ -195,18 +204,6 @@ protected:
     x[1] /= refLen;
     x[2] /= refLen;
   }
-
-
-  /* // @brief 自領域内に存在するかどうかを判断
-  /// @param [in] x  coordinate
-  bool inOwnRegion(const Vec3r p)
-  {
-    if ( p.x < origin[0] || p.x >= origin[0]+region[0]
-      || p.y < origin[1] || p.y >= origin[1]+region[1]
-      || p.z < origin[2] || p.z >= origin[2]+region[2] ) return false;
-    return true;
-  }
-	*/
 
 
   /// @brief 開始座標情報を取得し、chunkに保持(Line)
@@ -244,8 +241,7 @@ protected:
   void samplingInCircle(const REAL_TYPE* cnt,
                         const REAL_TYPE* nv,
                         const REAL_TYPE radius,
-                        const int nSample,
-                        const int odr);
+                        const int nSample);
 
 
   /// @brief 指定法線nvがz軸の方向ベクトルに向かう回転角を計算する

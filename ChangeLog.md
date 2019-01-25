@@ -9,6 +9,12 @@
 ## REVISION HISTORY
 
 ---
+- 2019-1-25 Version 2.7.5
+  - getV() update
+  - life = -1
+
+
+---
 - 2019-1-19 Version 2.7.4
   - npt2scat.py >> deepcopy()
   - npt2scat.py, add gid

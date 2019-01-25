@@ -49,11 +49,11 @@ typedef struct {
   Vec3r pos;             ///< 粒子座標
   int bf;                ///< ビットフィールド
   Vec3r vel;             ///< 粒子の並進速度成分
-  int foo;               ///< padding とりあえずデバッグ用に使う
+  int foo;               ///< uid
 } particle;              //   他に必要な情報はここにいれる
                          //   ビットフィールド
                          //   31 - active(1) / inactive(0)
-                         //   30 - migrate (1) / stay (0)
+                         //   30 - MigrationFlagrate (1) / stay (0)
                          //   25~29 移動先ランク(周囲の26方向)
                          //   24~0  放出後のライフカウント 0 ~ 33,554,431
                          //         ライフカウントは放出回数、計算のステップ数ではない
@@ -61,36 +61,36 @@ typedef struct {
 
 /// 粒子塊　ストリークラインイメージ
 class Chunk {
+
 protected:
-  int grp;                 ///< 管理用グループ番号Cloudから利用
   int uid;                 ///< 開始点の固有ID
   Vec3r EmitOrigin;        ///< Chunkに割り振られた開始点（固定）
   int startOrigin;         ///< 初期の指定開始点のチャンク(1) / マイグレート先(0)
   int EmitStep;            ///< 放出開始ステップ
   int myRank;              ///< ランク番号
   int interval;            ///< 放出間隔 step
-  bool mig;                ///< マイグレーションフラグ true-あり, false-なし
+  bool MigrationFlag;      ///< マイグレーション true-あり, false-なし
   list<particle> pchunk;   ///< 粒子チャンク
+	int pSend[NDST];         ///< 各方向の送信粒子個数
+
 
 public:
   Chunk() {
     uid = 0;
-    grp = -1;
     startOrigin = 0;
     EmitStep = -1;
     interval = 0;
-    mig = false;
+    MigrationFlag = false;
+		memset(pSend, 0, sizeof(int)*NDST);
   }
 
   /// コンストラクタ 作成時
   // @param [in] p       粒子座標
-  // @param [in] gp      グループID
   // @param [in] st      オリジナル開始点のとき1
   // @param [in] stp     開始ステップ
   // @param [in] m_rank  ランク番号
   // @param [in] m_intvl 放出間隔
   Chunk(const Vec3r v,
-        const int gp,
         const int st,
         const int stp,
         const int m_rank,
@@ -102,36 +102,32 @@ public:
     p.vel.assign(0.0, 0.0, 0.0);
     p.bf = Activate(p.bf);
     pchunk.push_back(p);
-    grp = gp;
     EmitOrigin = v;
     startOrigin = st;
     EmitStep = stp;
     myRank = m_rank;
     interval = m_intvl;
-    mig = false;
+    MigrationFlag = false;
+		memset(pSend, 0, sizeof(int)*NDST);
   }
 
   /// コンストラクタ マイグレーション追加時
   // @param [in] p       粒子座標
-  // @param [in] gp      グループID
-  // @param [in] pid     開始点ID
   // @param [in] stp     放出開始ステップ
   // @param [in] m_rank  ランク番号
   // @param [in] m_intvl 放出間隔
   Chunk(particle p,
-        const int gp,
-        int pid,
         const int stp,
         const int m_rank,
         const int m_intvl) {
     pchunk.push_back(p);
-    grp = gp;
-    uid = pid;
+    uid = p.foo;
     EmitStep = stp;
     startOrigin = 0;
     myRank = m_rank;
     interval = m_intvl;
-    mig = false;
+    MigrationFlag = false;
+		memset(pSend, 0, sizeof(int)*NDST);
   }
 
   ~Chunk() {}
@@ -143,15 +139,14 @@ public:
                       const int scheme,
                       const int life,
                       const REAL_TYPE dt,
-                      int& max_particle,
                       const int* Rmap);
 
 
   // @brief マイグレーションフラグの立っている粒子をパックし、リストから削除
   void packParticle(REAL_TYPE* pbuf,
                     int* fbuf,
-                    const int bsz,
-                    int* pInfo);
+                    const int buf_size,
+										int* c);
 
 
   // @brief pchunkに開始点から粒子を追加
@@ -164,8 +159,18 @@ public:
   {
     	pchunk.push_back(p);
   }
-
-
+	
+	
+	// pchunkのuidをセットする
+	void setPchunkUid(const int m_uid);
+	
+	
+	// 送信粒子数配列
+	int* pSend_ptr() {
+		return pSend;
+	}
+	
+	
   // @brief 粒子IDをセットする
   void setUid(const int m_id) {
     uid = m_id;
@@ -180,18 +185,6 @@ public:
   // @brief 開始点かどうか
   bool isOrigin() const {
     return (startOrigin==1) ? true : false;
-  }
-
-
-  // @brief グループ番号をセットする
-  void setGrp(const int m_grp) {
-    grp = m_grp;
-  }
-
-
-  // @brief グループ番号を返す
-  int getGrp() const {
-    return grp;
   }
 
 

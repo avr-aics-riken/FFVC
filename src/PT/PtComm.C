@@ -23,15 +23,13 @@ bool PtComm::establishCommPath()
   for (int i=0; i<2*NDST; i++)
        reqI[i] = MPI_REQUEST_NULL;
 
-  memset(is_buf, 0, sizeof(int)*NDST*3);
-  memset(ir_buf, 0, sizeof(int)*NDST*3);
+  memset(is_buf, 0, sizeof(int)*NDST);
+  memset(ir_buf, 0, sizeof(int)*NDST);
 
 
   for (int i=0; i<NDST; i++)
   {
-    is_buf[3*i+0] = pInfo[4*i+0];  // 送信粒子数
-    is_buf[3*i+1] = pInfo[4*i+1];  // グループID
-    is_buf[3*i+2] = pInfo[4*i+2];  // 粒子ID
+    is_buf[i] = pInfo[2*i];  // 送信粒子数
   }
 
 
@@ -42,9 +40,9 @@ bool PtComm::establishCommPath()
     if ( nID >= 0 )
     {
       if ( i != myRank ) {
-        if ( !commInfo(&is_buf[3*i],
-                       &ir_buf[3*i],
-                       3,
+        if ( !commInfo(&is_buf[i],
+                       &ir_buf[i],
+                       1,
                        nID,
                        &reqI[2*i]) ) return false;
       }
@@ -68,12 +66,10 @@ bool PtComm::establishCommPath()
   }
 
 
-  // グループIDと粒子IDは上書き
+  // 受信粒子数
   for (int i=0; i<NDST; i++)
   {
-    pInfo[4*i+1] = ir_buf[3*i+1];  // グループID
-    pInfo[4*i+2] = ir_buf[3*i+2];  // 粒子ID
-    pInfo[4*i+3] = ir_buf[3*i+0];  // 受信粒子数
+    pInfo[2*i+1] = ir_buf[i];
   }
   
   
@@ -88,10 +84,10 @@ bool PtComm::establishCommPath()
     if ( nID >= 0 )
     {
       // 送信フラグ
-      if ( pInfo[4*i+0] > 0 ) Cmap[2*i+0] = 1;
+      if ( pInfo[2*i+0] > 0 ) Cmap[2*i+0] = 1;
       
       // 受信フラグ
-      if ( pInfo[4*i+3] > 0 ) Cmap[2*i+1] = 1;
+      if ( pInfo[2*i+1] > 0 ) Cmap[2*i+1] = 1;
     }
   }
   
@@ -178,8 +174,8 @@ bool PtComm::commParticle(const unsigned buf_max_particle)
   for (int i=0; i<NDST; i++)
   {
     int nID = Rmap[i];
-    int ms = pInfo[4*i+0];
-    int mr = pInfo[4*i+3];
+    int ms = pInfo[2*i+0];
+    int mr = pInfo[2*i+1];
     
     if ( i != myRank )
     {
@@ -207,7 +203,7 @@ bool PtComm::commParticle(const unsigned buf_max_particle)
 
   for (int i=0; i<NDST; i++)
   {
-    int mr = pInfo[4*i+3];
+    int mr = pInfo[2*i+1];
     
     if ( i != myRank )
     {
@@ -421,7 +417,7 @@ bool PtComm::Statistics(int& nCommP,
   int sum = 0;
   for (int i=0; i<NDST; i++)
   {
-    sum += pInfo[4*i+0] + pInfo[4*i+3]; // 送受信数
+    sum += pInfo[2*i+0] + pInfo[2*i+1]; // 送受信数
   }
   
   // 総受信数の総和
@@ -456,9 +452,9 @@ bool PtComm::Statistics(int& nCommP,
 
 
 //#############################################################################
-// @brief バッファ要素数を同期
+// @brief 最大数を求める
 // @param [in,out]  npart  バッファ計算用の最大粒子数
-bool PtComm::migrateBuffer(unsigned& npart)
+bool PtComm::getMax(unsigned& npart)
 {
   // 最大バッファ要素数
   unsigned tmp = npart;
@@ -471,3 +467,22 @@ bool PtComm::migrateBuffer(unsigned& npart)
   
   return true;
 }
+
+
+//#############################################################################
+// @brief 引数の和
+// @param [in,out]  var  和をトル変数
+bool PtComm::getSum(unsigned& var)
+{
+	// 最大バッファ要素数
+	unsigned tmp = var;
+	if ( MPI_SUCCESS != MPI_Allreduce(&tmp,
+																		&var,
+																		1,
+																		MPI_UNSIGNED,
+																		MPI_SUM,
+																		MPI_COMM_WORLD) ) return false;
+	
+	return true;
+}
+
