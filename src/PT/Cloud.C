@@ -1021,7 +1021,6 @@ bool Cloud::samplingInCircle(const REAL_TYPE* cnt,
 		
 		
 		Vec3r angle = getAngle(normal);
-		printf("sampling %d\n",nSample);
 		
 		for (int i=0; i<nSample; i++)
 		{
@@ -1031,11 +1030,7 @@ bool Cloud::samplingInCircle(const REAL_TYPE* cnt,
 			
 			x = r * cos(theta);
 			y = r * sin(theta);
-			
-			//q = rotate_inv(angle, t.assign(x, y, 0.0)) + center;
-			q.x = x;
-			q.y = y;
-			q.z = 0.0;
+			q = rotate_inv(angle, t.assign(x, y, 0.0)) + center;
 			
 			sampled.push_back(q);
 		}
@@ -1094,7 +1089,7 @@ Vec3r Cloud::getAngle(Vec3r nv)
   REAL_TYPE eps = 1.0e-5, f_yz, f_xz;
   Vec3r p, q, angle;
   Vec3r z(0.0, 0.0, 1.0);
-  Vec3r dir;         ///< 矩形の方向規定の参照ベクトル
+  //Vec3r dir;         ///< 矩形の方向規定の参照ベクトル
 
   // 単位ベクトルnvがz軸の単位ベクトルと作る角度を返す
   // yz面への射影
@@ -1176,11 +1171,12 @@ Vec3r Cloud::getAngle(Vec3r nv)
   */
 
 // ##########
-#if 1
+#if 0
   stamped_printf("rotation angle = (%f %f %f)\n", angle.x, angle.y, angle.z);
 #endif
 // ##########
 
+	return angle;
 }
 
 

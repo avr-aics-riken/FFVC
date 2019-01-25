@@ -8,6 +8,10 @@
 
 ## REVISION HISTORY
 
+---
+- 2019-1-25 Version 2.7.7
+  - disc random sampling
+
 
 ---
 - 2019-1-25 Version 2.7.6
