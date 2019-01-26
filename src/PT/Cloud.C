@@ -110,7 +110,14 @@ bool Cloud::tracking(const unsigned step, const double time)
 		
 		// ファイル出力
 		TIMING_start("PT_fileIO");
-		ret = write_ascii(step, time);
+		if ( file_format == 0 )
+		{
+			ret = write_ascii(step, time);
+		}
+		else
+		{
+			ret = write_binary(step, time);
+		}
 		//write_filelist(step);
 		TIMING_stop("PT_fileIO");
 		if ( !ret ) return false;
@@ -1382,11 +1389,10 @@ bool Cloud::write_filelist(const unsigned step)
   return true;
 }
 
+
 // #################################################################
-/**
- * @brief ディレクトリがなければ作成、既存なら何もしない（単一ディレクトリ）
- * @param [in] path ディレクトリパス
- */
+// @brief ディレクトリがなければ作成、既存なら何もしない（単一ディレクトリ）
+// @param [in] path ディレクトリパス
 bool Cloud::c_mkdir(const char* path)
 {
 	// 標準ライブラリ呼び出し
@@ -1404,6 +1410,45 @@ bool Cloud::c_mkdir(const char* path)
 			return false;
 		}
 	}
+	
+	return true;
+}
+
+
+// #################################################################
+bool Cloud::write_binary(const unsigned step, const double time)
+{
+	if (nParticle == 0) return true;
+	
+	char tmp_fname[50];
+	
+	sprintf( tmp_fname, "Particle");
+	if ( !c_mkdir(tmp_fname) ) return false;
+	
+	sprintf( tmp_fname, "Particle/pt_%08ld_%06d.bpt", step, myRank );
+	
+	std::ofstream ofs(tmp_fname, std::ios::out | std::ios::binary);
+	if (!ofs) {
+		printf("\tCan't open %s file\n", tmp_fname);
+		return false;
+	}
+	
+	unsigned stp = step;
+	double tm = time;
+	unsigned csz = (unsigned)chunkList.size();
+	
+	ofs.write((char*)&stp, sizeof(unsigned));
+	ofs.write((char*)&tm,	sizeof(double));
+	ofs.write((char*)&nParticle, sizeof(unsigned));
+	ofs.write((char*)&csz, sizeof(unsigned));
+	
+	
+	for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
+	{
+		(*itr)->write_binary(ofs);
+	}
+	
+	ofs.close();
 	
 	return true;
 }

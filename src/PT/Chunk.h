@@ -23,6 +23,8 @@
 #include "PtDefine.h"
 #include "EmitGroup.h"
 #include "Tracking.h"
+#include <iostream>
+#include <fstream>
 
 #define MAX_LIFE 33554431 // 2^{25}-1
 #define MASK_25  0x1ffffff // 25 bit幅
@@ -200,6 +202,10 @@ public:
   
   // @brief ascii output
   void write_ascii(FILE* fp);
+	
+	
+	// @brief binary format出力
+	void write_binary(std::ofstream &ofs);
 
 
   // @brief MIGRATE_BITと方向をOFF

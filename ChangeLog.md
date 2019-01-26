@@ -3,10 +3,16 @@
 ## TODO
 
 - 粒子データ送信　MPI_Type_create_struct
-- file format binary 
 
 
 ## REVISION HISTORY
+
+
+---
+- 2019-1-25 Version 2.7.9
+	- binary particle output
+	- bpt2scat.py
+
 
 ---
 - 2019-1-25 Version 2.7.8

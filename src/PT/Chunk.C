@@ -243,3 +243,39 @@ void Chunk::write_ascii(FILE* fp)
   }
   fprintf(fp,"\n");
 }
+
+
+//#############################################################################
+// @brief binary format出力
+void Chunk::write_binary(std::ofstream &ofs)
+{
+	unsigned n = (unsigned)pchunk.size();
+	unsigned est = (unsigned)EmitStep;
+	
+	ofs.write((char*)&n, sizeof(unsigned));
+	ofs.write((char*)&uid, sizeof(unsigned));
+	ofs.write((char*)&EmitOrigin.x, sizeof(REAL_TYPE));
+	ofs.write((char*)&EmitOrigin.y, sizeof(REAL_TYPE));
+	ofs.write((char*)&EmitOrigin.z, sizeof(REAL_TYPE));
+	ofs.write((char*)&est, sizeof(unsigned));
+	
+	for(auto itr = pchunk.begin(); itr != pchunk.end(); ++itr)
+	{
+		Vec3r p = (*itr).pos;
+		Vec3r v = (*itr).vel;
+		int b   = (*itr).bf;
+		int foo = (*itr).foo;
+		int actv= BIT_SHIFT(b, ACTIVE_BIT);
+		unsigned lc = getBit25(b);
+		
+		ofs.write((char*)&actv, sizeof(int));
+		ofs.write((char*)&p.x, sizeof(REAL_TYPE));
+		ofs.write((char*)&p.y, sizeof(REAL_TYPE));
+		ofs.write((char*)&p.z, sizeof(REAL_TYPE));
+		ofs.write((char*)&lc, sizeof(unsigned));
+		ofs.write((char*)&v.x, sizeof(REAL_TYPE));
+		ofs.write((char*)&v.y, sizeof(REAL_TYPE));
+		ofs.write((char*)&v.z, sizeof(REAL_TYPE));
+		ofs.write((char*)&foo, sizeof(int));
+	}
+}

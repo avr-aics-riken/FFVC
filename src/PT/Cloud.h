@@ -31,6 +31,9 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <iostream>
+#include <fstream>
+//#include <iomanip>
 
 
 // FX10 profiler
@@ -165,6 +168,10 @@ protected:
 		}
 		return tmp;
 	}
+	
+	
+	// @brief binary output
+	bool write_binary(const unsigned step, const double time);
 	
   
   // @brief meta file output
