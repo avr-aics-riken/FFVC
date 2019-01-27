@@ -37,31 +37,26 @@ bool PtComm::establishCommPath()
   {
     int nID = Rmap[i];
     
-    if ( nID >= 0 )
+    if ( nID >= 0 && i != 13 ) // myRank
     {
-      if ( i != myRank ) {
-        if ( !commInfo(&is_buf[i],
-                       &ir_buf[i],
-                       1,
-                       nID,
-                       &reqI[2*i]) ) return false;
-      }
+			if ( !commInfo(&is_buf[i],
+										 &ir_buf[i],
+										 1,
+										 nID,
+										 &reqI[2*i]) ) return false;
     }
   }
 
 
-  MPI_Status statI[NDST*2];
+  MPI_Status statI[2];
 
   for (int i=0; i<NDST; i++)
   {
     int nID = Rmap[i];
     
-    if ( nID >= 0 )
+    if ( nID >= 0 && i != 13 ) // myRank
     {
-      if ( i != myRank ) {
-        if ( !waitCommInfo( &reqI[2*i],
-                           &statI[2*i]) ) return false;
-      }
+			if ( !waitCommInfo( &reqI[2*i], statI) ) return false;
     }
   }
 
@@ -177,7 +172,7 @@ bool PtComm::commParticle(const unsigned buf_max_particle)
     int ms = pInfo[2*i+0];
     int mr = pInfo[2*i+1];
     
-    if ( i != myRank )
+    if ( i != 13 ) // myRank
     {
       if ( !SendRecvParticle(ms * 6,  // 送信数
                              mr * 6,  // 受信数
@@ -205,7 +200,7 @@ bool PtComm::commParticle(const unsigned buf_max_particle)
   {
     int mr = pInfo[2*i+1];
     
-    if ( i != myRank )
+    if ( i != 13 ) // myRank
     {
       if ( !waitCommPart( &reqR[2*i],
                          &statR[2*i],

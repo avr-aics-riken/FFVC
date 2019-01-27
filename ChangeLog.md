@@ -3,9 +3,15 @@
 ## TODO
 
 - 粒子データ送信　MPI_Type_create_struct
+- mkdir をCDMlibから移植
 
 
 ## REVISION HISTORY
+
+---
+- 2019-1-27 Version 2.8.0
+  - bug fix: PtComm.C  myRank => 13
+  - mark() in mydebug, from CPMlib:;getMyRank() to myRank
 
 
 ---

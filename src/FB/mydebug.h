@@ -31,7 +31,7 @@
 #define Exit(x) \
 ((void)printf("exit at %s:%u\n", __FILE__, __LINE__), exit((x)))
 
-#define mark() printf("%s (%d) [%d]:\n",__FILE__, __LINE__, paraMngr->GetMyRankID(procGrp))
+#define mark() printf("%s (%d) [%d]:\n",__FILE__, __LINE__, myRank)
 
 #define stamped_printf printf("%s (%d):  ",__FILE__, __LINE__), printf
 #define stamped_fprintf fprintf(fp, "%s (%d):  ",__FILE__, __LINE__), fprintf
