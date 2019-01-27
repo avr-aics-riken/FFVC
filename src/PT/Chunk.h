@@ -201,11 +201,11 @@ public:
   
   
   // @brief ascii output
-  void write_ascii(FILE* fp);
+  void write_ascii(FILE* fp, const REAL_TYPE refL, const REAL_TYPE refV);
 	
 	
 	// @brief binary format出力
-	void write_binary(std::ofstream &ofs);
+	void write_binary(std::ofstream &ofs, const REAL_TYPE refL, const REAL_TYPE refV);
 
 
   // @brief MIGRATE_BITと方向をOFF

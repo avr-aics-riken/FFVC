@@ -459,6 +459,16 @@ bool Cloud::setPTinfo()
     return false;
   }
   refLen = (REAL_TYPE)f_val;
+	
+	
+	// 代表速度
+	label = "/reference/velocity";
+	if ( !(tpCntl->getInspectedValue(label, f_val )) )
+	{
+		Hostonly_ stamped_printf("\tParsing warning : No Label in '%s'\n", label.c_str());
+		return false;
+	}
+	refVel = (REAL_TYPE)f_val;
   
   
 
@@ -1256,6 +1266,7 @@ void Cloud::displayParam(FILE* fp)
   Hostonly_ {
 		fprintf(fp,"\tDescribed unit      : %s\n", (unit==DIMENSIONAL) ? "DIMENSIONAL" : "NON-DIMENSIONAL");
 		fprintf(fp,"\tReference Length    : %e\n", refLen);
+		fprintf(fp,"\tReference Velocity  : %e\n", refVel);
     fprintf(fp,"\tIntegration Method  : ");
     switch (scheme) {
       case pt_euler:
@@ -1375,7 +1386,7 @@ bool Cloud::write_ascii(const unsigned step, const double time)
   for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
   {
     fprintf(fp,"\n# Chunk %d\n", c++);
-    (*itr)->write_ascii(fp);
+    (*itr)->write_ascii(fp, refLen, refVel);
   }
   
   fclose(fp);
@@ -1463,7 +1474,7 @@ bool Cloud::write_binary(const unsigned step, const double time)
 	
 	for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
 	{
-		(*itr)->write_binary(ofs);
+		(*itr)->write_binary(ofs, refLen, refVel);
 	}
 	
 	ofs.close();

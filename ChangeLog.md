@@ -9,8 +9,13 @@
 ## REVISION HISTORY
 
 ---
+- 2019-1-27 Version 2.8.2
+  - 粒子座標を有次元にして出力
+
+
+---
 - 2019-1-27 Version 2.8.1
-- bug fix: Cloud.C  obtained values in case of dimensional
+  - bug fix: Cloud.C  obtained values in case of dimensional
 
 
 ---

@@ -75,6 +75,7 @@ protected:
 
   int unit;                  ///< 指定座標の記述単位 {DIMENSIONAL | NONDIMENSIONAL}
   REAL_TYPE refLen;          ///< 代表長さ
+	REAL_TYPE refVel;          ///< 代表速度
 
   int* bcd;                  ///< BCindex B
 	int* bid;                  ///< 境界条件ID
@@ -119,6 +120,7 @@ public:
     file_format = -1;
     unit = NONDIMENSIONAL;
     refLen = 0.0;
+		refVel = 0.0;
 		nEmitParticle = 0;
 		nEmission = 0;
 		EmitStart = 0;

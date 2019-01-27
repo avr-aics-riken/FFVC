@@ -219,7 +219,7 @@ void Chunk::setPchunkUid(const int m_uid)
 
 //#############################################################################
 // @brief ascii format出力
-void Chunk::write_ascii(FILE* fp)
+void Chunk::write_ascii(FILE* fp, const REAL_TYPE refL, const REAL_TYPE refV)
 {
   fprintf(fp,"particles %d\n",(int)pchunk.size());
   fprintf(fp,"emit_pnt_id %d\n", uid);
@@ -235,9 +235,13 @@ void Chunk::write_ascii(FILE* fp)
     int foo = (*itr).foo;
     fprintf(fp,"%d %e %e %e %d %e %e %e %d\n",
                BIT_SHIFT(b, ACTIVE_BIT),
-               p.x, p.y, p.z,
+               p.x * refL,
+               p.y * refL,
+               p.z * refL,
                getBit25(b),
-               v.x, v.y, v.z,
+               v.x * refV,
+               v.y * refV,
+               v.z * refV,
                foo
             );
   }
@@ -247,7 +251,7 @@ void Chunk::write_ascii(FILE* fp)
 
 //#############################################################################
 // @brief binary format出力
-void Chunk::write_binary(std::ofstream &ofs)
+void Chunk::write_binary(std::ofstream &ofs, const REAL_TYPE refL, const REAL_TYPE refV)
 {
 	unsigned n = (unsigned)pchunk.size();
 	unsigned est = (unsigned)EmitStep;
@@ -261,10 +265,10 @@ void Chunk::write_binary(std::ofstream &ofs)
 	
 	for(auto itr = pchunk.begin(); itr != pchunk.end(); ++itr)
 	{
-		Vec3r p = (*itr).pos;
-		Vec3r v = (*itr).vel;
+		Vec3r p = (*itr).pos * refL;
+		Vec3r v = (*itr).vel * refV;
 		int b   = (*itr).bf;
-		int foo = (*itr).foo;
+		int uid = (*itr).foo;
 		int actv= BIT_SHIFT(b, ACTIVE_BIT);
 		unsigned lc = getBit25(b);
 		
@@ -276,6 +280,6 @@ void Chunk::write_binary(std::ofstream &ofs)
 		ofs.write((char*)&v.x, sizeof(REAL_TYPE));
 		ofs.write((char*)&v.y, sizeof(REAL_TYPE));
 		ofs.write((char*)&v.z, sizeof(REAL_TYPE));
-		ofs.write((char*)&foo, sizeof(int));
+		ofs.write((char*)&uid, sizeof(int));
 	}
 }
