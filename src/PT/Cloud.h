@@ -212,12 +212,23 @@ protected:
 
   /// @brief 座標値を無次元化する
   /// @param [in,out] x  coordinate
-  void normalizeCord(REAL_TYPE x[3])
+  void normalizeCord(REAL_TYPE* x)
   {
     x[0] /= refLen;
     x[1] /= refLen;
     x[2] /= refLen;
   }
+	
+	
+	/// @brief 単位ベクトル化
+	/// @param [in,out] x  coordinate
+	void getUnitVector(REAL_TYPE* x)
+	{
+		REAL_TYPE s = sqrt( x[0]*x[0] + x[1]*x[1] + x[2]*x[2]);
+		x[0] /= s;
+		x[1] /= s;
+		x[2] /= s;
+	}
 
 
   /// @brief 開始座標情報を取得し、chunkに保持(Line)

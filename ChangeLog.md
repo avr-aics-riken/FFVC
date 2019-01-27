@@ -9,6 +9,11 @@
 ## REVISION HISTORY
 
 ---
+- 2019-1-27 Version 2.8.1
+- bug fix: Cloud.C  obtained values in case of dimensional
+
+
+---
 - 2019-1-27 Version 2.8.0
   - bug fix: PtComm.C  myRank => 13
   - mark() in mydebug, from CPMlib:;getMyRank() to myRank

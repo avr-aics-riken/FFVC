@@ -947,7 +947,7 @@ bool Cloud::setDisc(const string label_base, const int odr)
 	// 放出点の合計
 	nEmitParticle += nSample;
 
-  // load parameter of 'from' and 'to'
+  // load parameter
   label=label_base+"/center";
 
   if ( !(tpCntl->getInspectedVector(label, cnt, 3 )) )
@@ -972,8 +972,8 @@ bool Cloud::setDisc(const string label_base, const int odr)
     return false;
   }
 
-  // 入力パラメータの次元が有次元のとき，無次元化する
-  if (unit == DIMENSIONAL) normalizeCord(nv);
+  // 単位ベクトル化
+  getUnitVector(nv);
 
   Egrp[odr].normal[0] = nv[0];
   Egrp[odr].normal[1] = nv[1];
@@ -988,6 +988,10 @@ bool Cloud::setDisc(const string label_base, const int odr)
     return false;
   }
   if ( radius <= 0.0 ) return false;
+	
+	// 入力パラメータの次元が有次元のとき，無次元化する
+	if (unit == DIMENSIONAL) radius /= refLen;
+
   Egrp[odr].radius = radius;
 
 
@@ -1250,6 +1254,8 @@ Vec3r Cloud::rotate_inv(const Vec3r p, const Vec3r u)
 void Cloud::displayParam(FILE* fp)
 {
   Hostonly_ {
+		fprintf(fp,"\tDescribed unit      : %s\n", (unit==DIMENSIONAL) ? "DIMENSIONAL" : "NON-DIMENSIONAL");
+		fprintf(fp,"\tReference Length    : %e\n", refLen);
     fprintf(fp,"\tIntegration Method  : ");
     switch (scheme) {
       case pt_euler:
@@ -1279,24 +1285,36 @@ void Cloud::displayParam(FILE* fp)
         case mon_LINE:
           fprintf(fp,"\t\tLine\n");
           fprintf(fp,"\t\t# of division       : %d\n",Egrp[i].nDiv);
-          fprintf(fp,"\t\tFrom                : (%14.6e %14.6e %14.6e)\n",
+          fprintf(fp,"\t\tFrom                : (%14.6e %14.6e %14.6e) / (%14.6e %14.6e %14.6e) [m]\n",
                                         Egrp[i].from[0],
                                         Egrp[i].from[1],
-                                        Egrp[i].from[2]);
-          fprintf(fp,"\t\tTo                  : (%14.6e %14.6e %14.6e)\n",
+                                        Egrp[i].from[2],
+                                        Egrp[i].from[0] * refLen,
+                                        Egrp[i].from[1] * refLen,
+                                        Egrp[i].from[2] * refLen
+                                        );
+          fprintf(fp,"\t\tTo                  : (%14.6e %14.6e %14.6e) / (%14.6e %14.6e %14.6e) [m]\n",
                                         Egrp[i].to[0],
                                         Egrp[i].to[1],
-                                        Egrp[i].to[2]);
+                                        Egrp[i].to[2],
+                                        Egrp[i].to[0] * refLen,
+                                        Egrp[i].to[1] * refLen,
+                                        Egrp[i].to[2] * refLen
+                                        );
           break;
 
         case mon_DISC:
           fprintf(fp,"\t\tDisc\n");
           fprintf(fp,"\t\t# of Sample         : %d\n",Egrp[i].nSample);
-          fprintf(fp,"\t\tRadius              : %14.6e\n",Egrp[i].radius);
-          fprintf(fp,"\t\tCenter              : (%14.6e %14.6e %14.6e)\n",
+          fprintf(fp,"\t\tRadius              : %14.6e / %14.6e [m]\n", Egrp[i].radius, Egrp[i].radius * refLen);
+          fprintf(fp,"\t\tCenter              : (%14.6e %14.6e %14.6e) / (%14.6e %14.6e %14.6e) [m]\n",
                                         Egrp[i].center[0],
                                         Egrp[i].center[1],
-                                        Egrp[i].center[2]);
+                                        Egrp[i].center[2],
+                                        Egrp[i].center[0] * refLen,
+                                        Egrp[i].center[1] * refLen,
+                                        Egrp[i].center[2] * refLen
+                                        );
           fprintf(fp,"\t\tNormal              : (%14.6e %14.6e %14.6e)\n",
                                         Egrp[i].normal[0],
                                         Egrp[i].normal[1],
