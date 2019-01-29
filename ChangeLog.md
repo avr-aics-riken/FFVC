@@ -9,6 +9,10 @@
 ## REVISION HISTORY
 
 ---
+- 2019-1-29 Version 2.8.4
+  - bug ffix : resizeSendBuffer(), initSendBuffer(), add pr, br
+
+---
 - 2019-1-28 Version 2.8.3
   - 粒子ファイルの時刻を有次元に変更
 

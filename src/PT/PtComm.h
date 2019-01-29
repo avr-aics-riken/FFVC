@@ -175,9 +175,14 @@ public:
   // @brief 送信バッファのリサイズと再初期化
   void resizeSendBuffer(const unsigned len) {
     ps_buf.clear();
-    ps_buf.resize(len*6*NDST); // pos+vel=6要素　初期値がフィルされる
-    bs_buf.clear();
-    bs_buf.resize(len*2*NDST); // b + foo = 2要素
+    ps_buf.resize(len*6*NDST); // pos+vel=6 elements, filled by init value
+		pr_buf.clear();
+		pr_buf.resize(len*6*NDST);
+		
+		bs_buf.clear();
+		bs_buf.resize(len*2*NDST); // b + foo = 2 elements
+    br_buf.clear();
+    br_buf.resize(len*2*NDST);
   }
 
 
@@ -185,6 +190,8 @@ public:
   void initSendBuffer() {
     fill(ps_buf.begin(), ps_buf.end(), 0);
     fill(bs_buf.begin(), bs_buf.end(), 0);
+		fill(pr_buf.begin(), pr_buf.end(), 0);
+		fill(br_buf.begin(), br_buf.end(), 0);
   }
 
 
