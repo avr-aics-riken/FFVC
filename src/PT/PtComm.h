@@ -172,7 +172,7 @@ public:
   }
 
 
-  // @brief 送信バッファのリサイズと再初期化
+  // @brief バッファのリサイズと再初期化
   void resizeSendBuffer(const unsigned len) {
     ps_buf.clear();
     ps_buf.resize(len*6*NDST); // pos+vel=6 elements, filled by init value
@@ -183,10 +183,11 @@ public:
 		bs_buf.resize(len*2*NDST); // b + foo = 2 elements
     br_buf.clear();
     br_buf.resize(len*2*NDST);
+		
   }
 
 
-  // @brief 送信バッファの再初期化
+  // @brief バッファの再初期化
   void initSendBuffer() {
     fill(ps_buf.begin(), ps_buf.end(), 0);
     fill(bs_buf.begin(), bs_buf.end(), 0);
@@ -209,7 +210,7 @@ public:
                   unsigned& g_part);
   
   
-  // @brief 引数のご全ランクの最大数を求める
+  // @brief 引数の全ランクの最大数を求める
   bool getMax(unsigned& var);
   
 	

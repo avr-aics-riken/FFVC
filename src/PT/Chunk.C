@@ -25,7 +25,7 @@
 // @note bszは毎回異なる
 void Chunk::packParticle(REAL_TYPE* ps_buf,
                          int* bs_buf,
-                         const int buf_size,
+                         const unsigned buf_size,
 												 int* c)
 {
   // マイグレーション粒子がない場合には処理をスキップ
@@ -35,8 +35,8 @@ void Chunk::packParticle(REAL_TYPE* ps_buf,
     
   // 周囲26方向のバッファの区切り
   // バッファを長さbuf_sizeで26領域に分け、各領域の先頭アドレスから使う
-  int bsz6 = buf_size * 6; // 6要素
-  int bsz2 = buf_size * 2; // 2要素
+  size_t bsz6 = buf_size * 6; // 6要素
+  size_t bsz2 = buf_size * 2; // 2要素
 
   // 粒子データのパック
   for(auto itr = pchunk.begin(); itr != pchunk.end(); ++itr)

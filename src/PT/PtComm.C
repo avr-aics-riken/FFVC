@@ -76,7 +76,7 @@ bool PtComm::establishCommPath()
     int nID = Rmap[i];
     
     // 計算領域内のみ
-    if ( nID >= 0 )
+    if ( nID >= 0 && i != 13 )
     {
       // 送信フラグ
       if ( pInfo[2*i+0] > 0 ) Cmap[2*i+0] = 1;
@@ -163,8 +163,8 @@ bool PtComm::commParticle(const unsigned buf_max_particle)
     reqI[i] = MPI_REQUEST_NULL;
   }
   
-  int ofst6 = buf_max_particle * 6;  // pos, velの6要素
-  int ofst2 = buf_max_particle * 2;  // bf, fooの2要素
+  size_t ofst6 = buf_max_particle * 6;  // pos, velの6要素
+  size_t ofst2 = buf_max_particle * 2;  // bf, fooの2要素
   
   for (int i=0; i<NDST; i++)
   {

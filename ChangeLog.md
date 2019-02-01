@@ -9,6 +9,19 @@
 ## REVISION HISTORY
 
 ---
+- 2019-2-1 Version 2.8.7
+  - tracking mode on 
+
+---
+- 2019-1-31 Version 2.8.6
+  - restart particle data
+
+
+---
+- 2019-1-30 Version 2.8.5
+  - debug particle buffer
+
+---
 - 2019-1-29 Version 2.8.4
   - bug ffix : resizeSendBuffer(), initSendBuffer(), add pr, br
 

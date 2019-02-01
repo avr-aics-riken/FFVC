@@ -87,11 +87,15 @@ protected:
   PtComm PC;                 ///< 粒子通信クラス
   PerfMonitor* PM;           ///< PerfMonitor class
 	
-  int file_format;           ///< 0 - ascii, 1 - binary
+  int out_format;            ///< 粒子出力ファイルフォーマット　0 - ascii, 1 - binary
   FILE* fpl;                 ///< ログ出力用のファイルポインタ
   int nCommParticle;         ///< マイグレーション時の送受信粒子数
   unsigned nParticle;        ///< 全粒子の数（ローカル）
   unsigned gParticle;        ///< 全粒子の数（グローバル）
+	int restartRankFlag;       ///< リスタート時に粒子データを読むランクのみ > 1, else 0
+	int restartFlag;           ///< リスタート指定時に1, else 0
+	int restartStep;           ///< リスタートステップ
+	int restartForm;           ///< リスタートファイルのフォーマット　0 - ascii, 1 - binary
   
   int* Rmap;                 ///< PtCommクラスで作成した3x3x3のランクマップへのポインタ
 
@@ -117,7 +121,7 @@ public:
     buf_updated = false;
     flag_migration = false;
     nCommParticle = 0;
-    file_format = -1;
+    out_format = -1;
     unit = NONDIMENSIONAL;
     refLen = 0.0;
 		refVel = 0.0;
@@ -126,6 +130,9 @@ public:
 		EmitStart = 0;
 		EmitInterval = 0;
 		EmitLife = -1;
+		restartRankFlag = 0;
+		restartFlag = 0;
+		restartStep = -1;
 
     this->dt         = dt;
     this->bcd        = m_bcd;
@@ -163,6 +170,16 @@ public:
 	// ######################
 protected:
 	
+	// @brief chunkを登録
+	// @param [in]  pos    座標ベクトル
+	void registChunk(Vec3r pos);
+	
+	
+	// @brieaf 粒子のchunkListへの追加
+	void addParticle2ChunkList(particle p);
+	
+	
+	// chunkListの登録粒子数を返す
 	unsigned getNparticle() {
 		unsigned tmp = 0;
 		for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr) {
@@ -170,6 +187,18 @@ protected:
 		}
 		return tmp;
 	}
+
+	
+	// @brieaf リスタート時の粒子データ読み込み(Binary)
+	bool readRestartParticleBinary();
+	
+	
+	// @brieaf リスタート時の粒子データ読み込み(Ascii)
+	bool readRestartParticleAscii();
+	
+	
+	// @brieaf リスタート時のランク番号情報
+	bool readRestartRank();
 	
 	
 	// @brief binary output

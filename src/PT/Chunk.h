@@ -92,18 +92,27 @@ public:
   // @param [in] stp     開始ステップ
   // @param [in] m_rank  ランク番号
   // @param [in] m_intvl 放出間隔
+	// @param [in] rflag   リスタートフラグ　リスタート時 false
+	// @note リスタート時 pchunkに登録しない
+	//       uidは登録する粒子個数が確定して、振り直す
   Chunk(const Vec3r v,
         const int st,
         const int stp,
         const int m_rank,
-        const int m_intvl) {
-    particle p;
-    p.pos = v;
-    p.bf  = 0;
-    p.foo = 0;
-    p.vel.assign(0.0, 0.0, 0.0);
-    p.bf = Activate(p.bf);
-    pchunk.push_back(p);
+        const int m_intvl,
+				bool rflag=true)
+	{
+		if ( rflag )
+		{
+			particle p;
+			p.pos = v;
+			p.bf  = 0;
+			p.foo = 0;
+			p.vel.assign(0.0, 0.0, 0.0);
+			p.bf = Activate(p.bf);
+			pchunk.push_back(p);
+		}
+		
     EmitOrigin = v;
     startOrigin = st;
     EmitStep = stp;
@@ -112,6 +121,7 @@ public:
     MigrationFlag = false;
 		memset(pSend, 0, sizeof(int)*NDST);
   }
+	
 
   /// コンストラクタ マイグレーション追加時
   // @param [in] p       粒子座標
@@ -150,7 +160,7 @@ public:
   // @brief マイグレーションフラグの立っている粒子をパックし、リストから削除
   void packParticle(REAL_TYPE* pbuf,
                     int* fbuf,
-                    const int buf_size,
+                    const unsigned buf_size,
 										int* c);
 
 
@@ -215,6 +225,13 @@ public:
     c &= (~(0x2f << DST_BIT) ); // 対象6bitをゼロにする
     return c;
   }
+	
+	
+	// @brief ACTIVE_BITをON
+	static inline int Activate(int idx)
+	{
+		return ( idx | (0x1<<ACTIVE_BIT) );
+	}
   
   
   // @brief 25bit幅の正数をとりだす
@@ -223,7 +240,15 @@ public:
   {
     return ( b & MASK_25 );
   }
-  
+	
+	
+	// @brief リスタート時に先頭の登録粒子のライフカウントを修正する
+	// @param [in] q  ライフカウント
+	void setLifeCount(const int q)
+	{
+		auto itr = pchunk.begin();
+		(*itr).bf = setBit25( (*itr).bf, q);
+	}
 	
 	
 	
@@ -269,20 +294,15 @@ protected:
 
 
   // @brief 25bit幅の値の設定
-  // @param [in,out] b   int 変数
+  // @param [in,out] c   int 変数
   // @param [in]     q   25-bit幅の数
-  inline int setBit25 (int& b, const int q)
+  inline int setBit25 (const int c, const int q)
   {
+		int b = c;
     if ( q > MAX_LIFE ) exit(0);
-    b &= ~MASK_25; // 対象25bitをゼロにする
-    b |= q;        // 書き込む
-  }
-
-
-  // @brief ACTIVE_BITをON
-  inline int Activate(int idx)
-  {
-    return ( idx | (0x1<<ACTIVE_BIT) );
+    b &= ~MASK_25;   // 対象25bitをゼロにする
+		b |= q;          // 書き込む
+    return b;
   }
 
 
