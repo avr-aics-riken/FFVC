@@ -9,6 +9,11 @@
 ## REVISION HISTORY
 
 ---
+- 2019-2-1 Version 2.8.8
+  - profiling progress
+  - particle emission modified
+
+---
 - 2019-2-1 Version 2.8.7
   - tracking mode on 
 

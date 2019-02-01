@@ -17,115 +17,131 @@
 // @brief ランタイム
 bool Cloud::tracking(const unsigned step, const double time)
 {
-  bool ret;
+  bool ret = true;
+	int mflag = 0;
 	
-	
+	nOutPart = 0;  // 領域外へ出た粒子数
+	nPasPart = 0;  // 壁を通過した粒子数
+
 	// 指定時刻が過ぎ、処理ステップになった場合
-	if ( Interval.isStarted(step, time) && Interval.isTriggered(step, time) )
+	if ( Interval.isStarted(step, time) )
 	{
   
 		TIMING_start("PT_Tracking");
-		
 		for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
 		{
 			// 保持している粒子を積分し、マイグレーション準備
-			(*itr)->updatePosition(tr, scheme, EmitLife, dt, Rmap);
+			if ( 1 == (*itr)->updatePosition(tr, scheme, EmitLife, dt, Rmap, nOutPart, nPasPart) ) mflag++;
 			
-			// 登録した開始点から粒子を追加（マイグレーション先は除く）
-			(*itr)->addParticleFromOrigin();
-		}
-		
-		// 粒子放出回数
-		nEmission++;
-		
-		
-		// 送信方向毎に全チャンクの送信粒子数の和をとる
-		int* pInfo = PC.pInfo_ptr();
-		memset(pInfo, 0, sizeof(int)*NDST*2);
-		
-		for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
-		{
-			int* p = (*itr)->pSend_ptr();
-			
-			for (int i=0; i<NDST; i++)
+			// 放出タイミングで、登録した開始点から粒子を追加（マイグレーション先は除く）
+			if ( Interval.isTriggered(step, time) )
 			{
-				pInfo[2*i] += p[i];
+				(*itr)->addParticleFromOrigin();
 			}
 		}
 		
+		// 粒子の放出回数
+		if ( Interval.isTriggered(step, time) ) nEmission++;
 		
-		// 送信要素の最大値を保存
-		// 行き先毎には異なるが、最大数で考えておく
-		unsigned max_particle = 0;
-		
-		for (int i=0; i<NDST; i++) {
-			unsigned p = (unsigned)pInfo[2*i];
-			if (max_particle < p) {
-				max_particle = p;
-			}
-		}
-		
-		
-		// バッファ長の更新が必要な場合、バッファ計算用の粒子数はBUF_UNIT単位で確保
-		if (buf_max_particle < max_particle) {
-			buf_max_particle = (max_particle / BUF_UNIT + 1) * BUF_UNIT;
-			buf_updated = true;
-		}
-		
-		// バッファ長を同期
-		ret = PC.getMax(buf_max_particle);
-		
-		Hostonly_ printf("buf_max_p= %ld\n", buf_max_particle);
-		
+		// 全プロセスで共有  最大値をとる => どれか１プロセスでもマイグレーションが発生
+		int tmp = mflag;
+		if ( MPI_SUCCESS != MPI_Allreduce(&tmp,
+																			&mflag,
+																			1,
+																			MPI_INT,
+																			MPI_MAX,
+																			MPI_COMM_WORLD) ) return false;
 		TIMING_stop("PT_Tracking");
-		if ( !ret ) return false;
-		
-		
-		// for check
-		//nParticle = getNparticle();
-		//gParticle = nParticle;
-		//ret = PC.getSum(gParticle);
-		//Hostonly_ printf("gParticle = %ld (before mig.)\n", gParticle);
 		
 		
 		TIMING_start("PT_Migration");
-		ret = migration();
+		// マイグレーションが生じる場合のみ
+		if ( mflag > 0 )
+		{
+			// 送信方向毎に全チャンクの送信粒子数の和をとる
+			int* pInfo = PC.pInfo_ptr();
+			memset(pInfo, 0, sizeof(int)*NDST*2);
+			
+			for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
+			{
+				int* p = (*itr)->pSend_ptr();
+				
+				for (int i=0; i<NDST; i++)
+				{
+					pInfo[2*i] += p[i];
+				}
+			}
+			
+			// 送信要素の最大値を保存  行き先毎には異なるが、最大数で考えておく
+			unsigned max_particle = 0;
+			
+			for (int i=0; i<NDST; i++) {
+				unsigned p = (unsigned)pInfo[2*i];
+				if (max_particle < p) {
+					max_particle = p;
+				}
+			}
+			
+			// バッファ長の更新が必要な場合、バッファ計算用の粒子数はBUF_UNIT単位で確保
+			if (buf_max_particle < max_particle)
+			{
+				buf_max_particle = (max_particle / BUF_UNIT + 1) * BUF_UNIT;
+				buf_updated = true;
+			}
+			
+			// バッファ長を同期
+			ret = PC.getMax(buf_max_particle);
+			if ( !ret ) return false;
+			
+			//Hostonly_ printf("buf_max_p= %ld\n", buf_max_particle);
+			
+			
+			// マイグレーション処理
+			ret = migration();
+
+		} // mflag
 		TIMING_stop("PT_Migration");
+		
 		if ( !ret ) return false;
 		
 		
-		nParticle = getNparticle();
-		gParticle = nParticle;
-		ret = PC.getSum(gParticle);
-		if ( !ret ) return false;
-		//Hostonly_ printf("gParticle = %ld (after mig.)\n", gParticle);
 		
-		
-		// ログ出力
-		TIMING_start("PT_Statistics");
-		ret = PC.Statistics(nCommParticle, nParticle, gParticle);
-		Hostonly_ {
-			logging(step);
-		}
-		TIMING_stop("PT_Statistics");
-		if ( !ret ) return false;
-		
-		
-		// ファイル出力
-		TIMING_start("PT_fileIO");
-		if ( out_format == 0 )
+		if ( Interval.isTriggered(step, time) )
 		{
-			ret = write_ascii(step, time);
+			// ログ出力
+			TIMING_start("PT_Statistics");
+			nParticle = getNparticle();
+			
+			ret = PC.Statistics(nCommParticle,
+													nParticle,
+													gParticle,
+													nOutPart,
+													nPasPart);
+			sleepParticle +=  nOutPart + nPasPart;
+			
+			Hostonly_
+			{
+				logging(step);
+			}
+			TIMING_stop("PT_Statistics");
+			if ( !ret ) return false;
+			
+			
+			// ファイル出力
+			TIMING_start("PT_fileIO");
+			if ( out_format == 0 )
+			{
+				ret = write_ascii(step, time);
+			}
+			else
+			{
+				ret = write_binary(step, time);
+			}
+			TIMING_stop("PT_fileIO");
+			if ( !ret ) return false;
 		}
-		else
-		{
-			ret = write_binary(step, time);
-		}
-		//write_filelist(step);
-		TIMING_stop("PT_fileIO");
-		if ( !ret ) return false;
 		
-	} // Interval
+	} // Interval.isStarted
   
   return true;
 }
@@ -243,10 +259,6 @@ bool Cloud::migration()
   TIMING_start("PT_ParticleUnpacking");
   unpackParticle();
   TIMING_stop("PT_ParticleUnpacking");
-  
-
-  // マイグレーション終了
-  flag_migration = false;
 
   return true;
 }
@@ -263,9 +275,6 @@ void Cloud::unpackParticle()
   // 周囲26方向のバッファの区切り
   size_t bsz6 = buf_max_particle * 6; // 6要素
   size_t bsz2 = buf_max_particle * 2; // 2要素
-	
-	//int m_new=0;
-	//int m_add=0;
 
   for (int i=0; i<NDST; i++)
   {
@@ -276,7 +285,6 @@ void Cloud::unpackParticle()
     Vec3r v;
     particle p;
 		
-
     if (cnt > 0 && i != 13 )
     {
       for (int j=0; j<cnt; j++)
@@ -294,16 +302,12 @@ void Cloud::unpackParticle()
         p.bf  = Chunk::removeMigrate(b);
         p.vel = v;
         p.foo = uid;
-        //printf("unpack : %f %f %f %f %f %f %d %d %d\n",
-        //       pos.x, pos.y, pos.z, v.x, v.y, v.z, b, Chunk::getBit25(b), foo);
 				
 				addParticle2ChunkList(p);
       }
     } // cnt
 
 	} // NDST-loop
-	
-	//printf("[%d] : new=%d add=%d Chunk=%d\n", myRank, m_new, m_add, chunkList.size());
   
 }
 
@@ -314,7 +318,8 @@ void Cloud::unpackParticle()
 void Cloud::logging(const unsigned step)
 {
   // マイグレーションで移動した粒子数と全粒子数
-  fprintf(fpl, "step %ld migrated %d total %ld\n", step, nCommParticle, gParticle);
+  fprintf(fpl, "step %ld migrated %d total %ld sleep %ld OutRegion %d PassWall %d\n",
+					step, nCommParticle, gParticle, sleepParticle, nOutPart, nPasPart);
   
   // 各ランク毎の粒子数
   unsigned* p = PC.nPart_ptr();
@@ -325,7 +330,7 @@ void Cloud::logging(const unsigned step)
 	
 	// Number of total particles
 	unsigned tp = nEmitParticle * (nEmission+1);
-	if (gParticle != tp) fprintf(fpl, "Number of particles must be %ld\n", tp);
+	if (gParticle != tp) fprintf(fpl, "Number of particles must be %ld %ld\n", tp, nEmission);
   
   fflush(fpl);
 }

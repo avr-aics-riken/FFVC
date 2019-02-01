@@ -139,6 +139,10 @@ private:
   unsigned CurrentStepStat;     ///< 統計操作の積算ステップ数（ケース）
   unsigned Session_CurrentStep; ///< セッションの現在のステップ
   unsigned Session_LastStep;    ///< セッションの終了ステップ数
+	
+	double exec_time_0;          ///< 実行時間モニタ用
+	double exec_time_1;          ///< 実行時間モニタ用
+	double exec_time_intvl;      ///< 実行時間モニタ用
 
   double face_comm_size;       ///< 全ノードについて，ローカルノード1面・一層あたりの通信量の和（要素数）
 

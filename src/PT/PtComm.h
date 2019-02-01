@@ -42,6 +42,7 @@ public:
 	int is_buf[NDST];          ///< 情報送信用バッファ
 	int ir_buf[NDST];          ///< 情報受信用バッファ
 	unsigned* nPart;           ///< 全ランクの粒子数
+	int Rmap[NDST];            ///< 3x3x3のランクマップ
 	
 	
 protected:
@@ -49,7 +50,6 @@ protected:
   int G_div[3];              ///< 領域分割数
   int myRank;                ///< 自ランク番号
   int numProc;               ///< プロセス数
-  int Rmap[NDST];            ///< 3x3x3のランクマップ
   int Cmap[NDST*2];          ///< 送受信対象 > 1
 	
 
@@ -207,7 +207,9 @@ public:
   // @brief 統計
   bool Statistics(int& nCommP,
                   const unsigned l_part,
-                  unsigned& g_part);
+                  unsigned& g_part,
+									int& nOut,
+									int& nPass);
   
   
   // @brief 引数の全ランクの最大数を求める

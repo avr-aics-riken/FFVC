@@ -428,7 +428,7 @@ int FFV::Loop(const unsigned step)
   // 粒子追跡
 	if (C.Mode.ParticleTracking == ON) {
   	TIMING_start("ParticleTracking_Section");
-  	TR->tracking(CurrentStep, CurrentTime*C.Tscale);
+		if ( !TR->tracking(CurrentStep, CurrentTime*C.Tscale) ) return -1;
   	TIMING_stop("ParticleTracking_Section", 0.0);
 	}
   //#################################################
@@ -531,6 +531,25 @@ int FFV::Loop(const unsigned step)
 
   TIMING_stop("Loop_Utility_Section", 0.0);
   TIMING_stop("Time_Step_Loop_Section", 0.0);
+	
+	
+	// 経過時間レポート １時間毎に書き出し
+	exec_time_1 = cpm_Base::GetWTime();
+	if (exec_time_1 - exec_time_0 > exec_time_intvl)
+	{
+		FILE* fpt;
+		char tmp_fname[80];
+		sprintf( tmp_fname, "prof_%08ld.txt", CurrentStep);
+		if ( !(fpt=fopen(tmp_fname, "w")) )
+		{
+			stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", tmp_fname);
+			return -1;
+		}
+		sprintf( tmp_fname, "%8ld steps", CurrentStep);
+		PM.printProgress(fpt, tmp_fname);
+		fclose(fpt);
+		exec_time_0 = exec_time_1;
+	}
 
 
   // 発散時の打ち切り

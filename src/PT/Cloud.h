@@ -56,6 +56,17 @@ using std::string;
  * @note
  */
 class Cloud : public DomainInfo {
+public:
+	unsigned nParticle;        ///< 全粒子の数（ローカル）
+	unsigned gParticle;        ///< 全粒子の数（グローバル）
+	unsigned sleepParticle;    ///< アクティブな全粒子数（グローバル）
+	int nOutPart;              ///< 領域外へ出た粒子数
+	int nPasPart;              ///< 壁を通過した粒子数
+	int nCommParticle;         ///< マイグレーション時の送受信粒子数
+	unsigned buf_max_particle; ///< 送信用のバッファ長さ計算に使う粒子の最大数 毎回異なる
+	int* Rmap;                 ///< PtCommクラスで作成した3x3x3のランクマップへのポインタ
+	
+	
 protected:
   EmitGroup* Egrp;           ///< 粒子の開始点グループ
   vector<Chunk*> chunkList;  ///< チャンクリスト
@@ -66,11 +77,8 @@ protected:
 	int EmitStart;             ///< 開始時刻
 	int EmitInterval;          ///< インターバル
 	int EmitLife;              ///< 寿命情報 -1 制御なし, 正数<MAX_LIFE未満
-	
   int scheme;                ///< 積分方法
-  bool flag_migration;       ///< マイグレーション発生 true
   REAL_TYPE dt;              ///< 時間積分幅
-  unsigned buf_max_particle; ///< 送信用のバッファ長さ計算に使う粒子の最大数 毎回異なる
   bool buf_updated;          ///< バッファ長さが更新されたときtrue
 
   int unit;                  ///< 指定座標の記述単位 {DIMENSIONAL | NONDIMENSIONAL}
@@ -86,18 +94,13 @@ protected:
   Tracking* tr;              ///< Tracking
   PtComm PC;                 ///< 粒子通信クラス
   PerfMonitor* PM;           ///< PerfMonitor class
-	
+
   int out_format;            ///< 粒子出力ファイルフォーマット　0 - ascii, 1 - binary
   FILE* fpl;                 ///< ログ出力用のファイルポインタ
-  int nCommParticle;         ///< マイグレーション時の送受信粒子数
-  unsigned nParticle;        ///< 全粒子の数（ローカル）
-  unsigned gParticle;        ///< 全粒子の数（グローバル）
 	int restartRankFlag;       ///< リスタート時に粒子データを読むランクのみ > 1, else 0
 	int restartFlag;           ///< リスタート指定時に1, else 0
 	int restartStep;           ///< リスタートステップ
 	int restartForm;           ///< リスタートファイルのフォーマット　0 - ascii, 1 - binary
-  
-  int* Rmap;                 ///< PtCommクラスで作成した3x3x3のランクマップへのポインタ
 
 
 
@@ -119,7 +122,6 @@ public:
     nGrpEmit = 0;
     scheme = -1;
     buf_updated = false;
-    flag_migration = false;
     nCommParticle = 0;
     out_format = -1;
     unit = NONDIMENSIONAL;
@@ -133,6 +135,9 @@ public:
 		restartRankFlag = 0;
 		restartFlag = 0;
 		restartStep = -1;
+		nOutPart = 0;
+		nPasPart = 0;
+		sleepParticle = 0;
 
     this->dt         = dt;
     this->bcd        = m_bcd;

@@ -31,6 +31,8 @@
  */
 int FFV::Initialize(int argc, char **argv)
 {
+	exec_time_0 = cpm_Base::GetWTime();
+	
   double TotalMemory   = 0.0;  ///< 計算に必要なメモリ量（ローカル）
   double PrepMemory    = 0.0;  ///< 初期化に必要なメモリ量（ローカル）
   double G_TotalMemory = 0.0;  ///< 計算に必要なメモリ量（グローバル）
@@ -135,6 +137,10 @@ int FFV::Initialize(int argc, char **argv)
 
   // 計算モデルの入力ソース情報を取得
   C.getGeometryModel();
+	
+	
+	// PM progress interval デフォルト　3600秒
+	C.getPMInterval();
 
 
   // Intrinsic classの同定
@@ -724,7 +730,8 @@ int FFV::Initialize(int argc, char **argv)
     TR->importCPM(paraMngr);
     TR->setRankInfo(paraMngr, procGrp);
     TR->setDomainInfo(C.guide, C.RefLength);
-    TR->initCloud(fp);
+		
+		if ( !TR->initCloud(fp) ) return 0;
 
   }
   else

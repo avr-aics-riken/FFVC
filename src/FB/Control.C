@@ -487,9 +487,27 @@ void Control::getApplicationControl()
     Stab.penalty_number = 1.0e2;
   }
 
-
 }
 
+
+// #################################################################
+// Permormance Monitorのプログレス出力間隔（秒）
+double Control::getPMInterval()
+{
+	string label;
+	double ct=0.0;
+	
+	label = "/ApplicationControl/PM_progress_interval";
+	
+	if ( tpCntl->getInspectedValue(label, ct ) )
+	{
+		if ( ct < 0.0 ) {
+			Hostonly_ stamped_printf("\tPM_progress_interval must be positive value.\n", label.c_str());
+			Exit(0);
+		}
+	}
+	return ct;
+}
 
 
 

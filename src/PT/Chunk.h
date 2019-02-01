@@ -150,11 +150,14 @@ public:
 public:
 	
   // @brief pchunkに保持している粒子を積分し、マイグレーションと寿命判定
-  void updatePosition(Tracking* tr,
+	// @ret マイグレーションがある場合 1, else 0
+  int updatePosition(Tracking* tr,
                       const int scheme,
                       const int life,
                       const REAL_TYPE dt,
-                      const int* Rmap);
+                      const int* Rmap,
+										  int& nOut,
+										  int& nPass);
 
 
   // @brief マイグレーションフラグの立っている粒子をパックし、リストから削除
