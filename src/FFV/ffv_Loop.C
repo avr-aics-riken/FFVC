@@ -426,9 +426,12 @@ int FFV::Loop(const unsigned step)
 
   //#################################################
   // 粒子追跡
-  TIMING_start("ParticleTracking_Section");
-  TR->tracking(CurrentStep, CurrentTime*C.Tscale);
-  TIMING_stop("ParticleTracking_Section", 0.0);
+  if (C.Mode.ParticleTracking == ON)
+  {
+    TIMING_start("ParticleTracking_Section");
+    if ( !TR->tracking(CurrentStep, CurrentTime*C.Tscale) ) return -1;
+    TIMING_stop("ParticleTracking_Section", 0.0);
+  }
   //#################################################
 
   // 1 step elapse

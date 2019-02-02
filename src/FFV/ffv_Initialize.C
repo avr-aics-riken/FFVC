@@ -717,7 +717,7 @@ int FFV::Initialize(int argc, char **argv)
 
   if (C.Mode.ParticleTracking == ON) {
     TR = new Cloud(d_bcd,
-									 d_bid,
+                   d_bid,
                    d_v,
                    deltaT,
                    &tp_ffv,
@@ -731,7 +731,7 @@ int FFV::Initialize(int argc, char **argv)
     TR->setRankInfo(paraMngr, procGrp);
     TR->setDomainInfo(C.guide, C.RefLength);
     TR->initCloud(fp);
-
+    if ( !TR->initCloud(fp) ) return 0;
   }
   else
   {
@@ -747,13 +747,13 @@ int FFV::Initialize(int argc, char **argv)
   // チェックモードの場合のコメント表示，前処理のみで中止---------------------------------------------------------
   if ( C.CheckParam == ON)
   {
-		Hostonly_
+    Hostonly_
     {
       printf(     "\n\tCheck mode --- Only pre-process\n\n");
       fprintf(fp, "\n\tCheck mode --- Only pre-process\n\n");
     }
     return 0;
-	}
+  }
 
   if ( C.Hide.DryRun == ON )
   {
