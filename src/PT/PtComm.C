@@ -21,46 +21,46 @@ bool PtComm::establishCommPath()
 {
   // Communication identifier
   for (int i=0; i<2*NDST; i++)
-       reqI[i] = MPI_REQUEST_NULL;
-
+    reqI[i] = MPI_REQUEST_NULL;
+  
   memset(is_buf, 0, sizeof(int)*NDST);
   memset(ir_buf, 0, sizeof(int)*NDST);
-
-
+  
+  
   for (int i=0; i<NDST; i++)
   {
     is_buf[i] = pInfo[2*i];  // 送信粒子数
   }
-
-
+  
+  
   for (int i=0; i<NDST; i++)
   {
     int nID = Rmap[i];
     
     if ( nID >= 0 && i != 13 ) // myRank
     {
-			if ( !commInfo(&is_buf[i],
-										 &ir_buf[i],
-										 1,
-										 nID,
-										 &reqI[2*i]) ) return false;
+      if ( !commInfo(&is_buf[i],
+                     &ir_buf[i],
+                     1,
+                     nID,
+                     &reqI[2*i]) ) return false;
     }
   }
-
-
+  
+  
   MPI_Status statI[2];
-
+  
   for (int i=0; i<NDST; i++)
   {
     int nID = Rmap[i];
     
     if ( nID >= 0 && i != 13 ) // myRank
     {
-			if ( !waitCommInfo( &reqI[2*i], statI) ) return false;
+      if ( !waitCommInfo( &reqI[2*i], statI) ) return false;
     }
   }
-
-
+  
+  
   // 受信粒子数
   for (int i=0; i<NDST; i++)
   {
@@ -133,25 +133,25 @@ bool PtComm::commInfo(int* sbuf,
 
 
 /*#############################################################################
-// @brief 送受信データ型を定義する
-// @note
-bool PtComm::defineDatatypes(const int i, const unsigned buf_length)
-{
-  int blockcount[2];
-  MPI_Datatype types[2];
-  MPI_Aint     displs[2];
-  MPI_Datatype packedSend;
-  
-  blockcount[0] = buf_length * 6; // pos + vel
-  blockcount[1] = buf_length * 2; // bf + foo
-  
-  types[0] = data_type;
-  types[1] = MPI_INT;
-  
-  MPI_Get_address(&ps_buf[buf_length*i], &displs[0]);
-  MPI_Get_address(&bs_buf[buf_length*i], &displs[1]);
-}
-*/
+ // @brief 送受信データ型を定義する
+ // @note
+ bool PtComm::defineDatatypes(const int i, const unsigned buf_length)
+ {
+ int blockcount[2];
+ MPI_Datatype types[2];
+ MPI_Aint     displs[2];
+ MPI_Datatype packedSend;
+ 
+ blockcount[0] = buf_length * 6; // pos + vel
+ blockcount[1] = buf_length * 2; // bf + foo
+ 
+ types[0] = data_type;
+ types[1] = MPI_INT;
+ 
+ MPI_Get_address(&ps_buf[buf_length*i], &displs[0]);
+ MPI_Get_address(&bs_buf[buf_length*i], &displs[1]);
+ }
+ */
 
 //#############################################################################
 // @brief 粒子データの通信
@@ -191,11 +191,11 @@ bool PtComm::commParticle(const unsigned buf_max_particle)
                              &Cmap[2*i]) ) return false;
     }
   }
-
-
+  
+  
   MPI_Status statR[NDST*2];
   MPI_Status statI[NDST*2];
-
+  
   for (int i=0; i<NDST; i++)
   {
     int mr = pInfo[2*i+1];
@@ -204,19 +204,19 @@ bool PtComm::commParticle(const unsigned buf_max_particle)
     {
       if ( !waitCommPart( &reqR[2*i],
                          &statR[2*i],
-                          &Cmap[2*i],
+                         &Cmap[2*i],
                          mr * 6,
                          &pr_buf[ofst6 * i]) ) return false;
       
       if ( !waitCommPart( &reqI[2*i],
                          &statI[2*i],
-                          &Cmap[2*i],
+                         &Cmap[2*i],
                          mr * 2,
                          &br_buf[ofst2 * i]) ) return false;
     }
   }
-
-
+  
+  
   return true;
 }
 
@@ -245,7 +245,7 @@ bool PtComm::SendRecvParticle(const int s_msg,
   int tag_r=0;
   int tag_s=0;
   
-
+  
   // 近傍からの受信
   if ( flag[1] == 1 ) {
     if ( MPI_SUCCESS != MPI_Irecv(rbuf,
@@ -256,7 +256,7 @@ bool PtComm::SendRecvParticle(const int s_msg,
                                   MPI_COMM_WORLD,
                                   &req[1]) ) return false;
   }
-
+  
   // 近傍への送信
   if ( flag[0] == 1 ) {
     if ( MPI_SUCCESS != MPI_Isend(sbuf,
@@ -273,7 +273,7 @@ bool PtComm::SendRecvParticle(const int s_msg,
     //printf("\n");
 #endif
   }
-
+  
   return true;
 }
 
@@ -339,7 +339,7 @@ bool PtComm::waitCommInfo(MPI_Request* req,
                           MPI_Status* stat)
 {
   if ( MPI_SUCCESS != MPI_Waitall(2, req, stat) ) return false;
-
+  
   return true;
 }
 
@@ -402,12 +402,16 @@ bool PtComm::waitCommPart(MPI_Request* req,
 
 //#############################################################################
 // @brief 統計
-// @param [out] nCommP   送受信する総粒子数（ランク0のみ）
-// @param [in]  l_part   自ランクのもつ全粒子数
-// @param [out] g_part   全粒子数（ランク0のみ）
+// @param [out]     nCommP   送受信する総粒子数（ランク0のみ）
+// @param [in]      l_part   自ランクのもつ全粒子数
+// @param [out]     g_part   全粒子数（ランク0のみ）
+// @param [in,out]  nOut     領域外へ出た粒子数
+// @param [in,out]  nPass    壁を通過した粒子数
 bool PtComm::Statistics(int& nCommP,
                         const unsigned l_part,
-                        unsigned& g_part)
+                        unsigned& g_part,
+                        int& nOut,
+                        int& nPass)
 {
   int sum = 0;
   for (int i=0; i<NDST; i++)
@@ -416,15 +420,18 @@ bool PtComm::Statistics(int& nCommP,
   }
   
   // 総受信数の総和
-  int tmp = sum;
-  if ( MPI_SUCCESS != MPI_Reduce(&tmp,
-                                 &sum,
-                                 1,
+  int tmp[3] = {sum, nOut, nPass};
+  int rcv[3];
+  if ( MPI_SUCCESS != MPI_Reduce(tmp,
+                                 rcv,
+                                 3,
                                  MPI_INT,
                                  MPI_SUM,
                                  0,
                                  MPI_COMM_WORLD) ) return false;
-  nCommP = sum / 2;
+  nCommP = rcv[0] / 2;
+  nOut = rcv[1];
+  nPass= rcv[2];
   
   unsigned tmp2 = l_part;
   if ( MPI_SUCCESS != MPI_Gather(&tmp2,
@@ -469,16 +476,16 @@ bool PtComm::getMax(unsigned& npart)
 // @param [in,out]  var  和をトル変数
 bool PtComm::getSum(unsigned& var)
 {
-	// 最大バッファ要素数
-	unsigned tmp = var;
-	if ( MPI_SUCCESS != MPI_Allreduce(&tmp,
-																		&var,
-																		1,
-																		MPI_UNSIGNED,
-																		MPI_SUM,
-																		MPI_COMM_WORLD) ) return false;
-	
-	return true;
+  // 最大バッファ要素数
+  unsigned tmp = var;
+  if ( MPI_SUCCESS != MPI_Allreduce(&tmp,
+                                    &var,
+                                    1,
+                                    MPI_UNSIGNED,
+                                    MPI_SUM,
+                                    MPI_COMM_WORLD) ) return false;
+  
+  return true;
 }
 
 
@@ -491,10 +498,9 @@ bool PtComm::getSum(unsigned& var)
  */
 bool PtComm::BcastParticles(const int msg, REAL_TYPE* buf)
 {
-	if (MPI_Bcast(buf, msg, data_type, 0, MPI_COMM_WORLD) != MPI_SUCCESS) {
-		return false;
-	}
-	
-	return true;
+  if (MPI_Bcast(buf, msg, data_type, 0, MPI_COMM_WORLD) != MPI_SUCCESS) {
+    return false;
+  }
+  
+  return true;
 }
-

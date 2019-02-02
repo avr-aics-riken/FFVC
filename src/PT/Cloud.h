@@ -56,55 +56,63 @@ using std::string;
  * @note
  */
 class Cloud : public DomainInfo {
+public:
+  unsigned nParticle;        ///< 全粒子の数（ローカル）
+  unsigned gParticle;        ///< 全粒子の数（グローバル）
+  unsigned sleepParticle;    ///< アクティブな全粒子数（グローバル）
+  int nOutPart;              ///< 領域外へ出た粒子数
+  int nPasPart;              ///< 壁を通過した粒子数
+  int nCommParticle;         ///< マイグレーション時の送受信粒子数
+  unsigned buf_max_particle; ///< 送信用のバッファ長さ計算に使う粒子の最大数 毎回異なる
+  int* Rmap;                 ///< PtCommクラスで作成した3x3x3のランクマップへのポインタ
+  
+  
 protected:
   EmitGroup* Egrp;           ///< 粒子の開始点グループ
   vector<Chunk*> chunkList;  ///< チャンクリスト
-
+  
   int nGrpEmit;              ///< 開始点のグループ数 set[@]の数
-	unsigned nEmitParticle;    ///< 粒子放出点の数
-	unsigned nEmission;        ///< 粒子放出の回数
-	int EmitStart;             ///< 開始時刻
-	int EmitInterval;          ///< インターバル
-	int EmitLife;              ///< 寿命情報 -1 制御なし, 正数<MAX_LIFE未満
-	
+  unsigned nEmitParticle;    ///< 粒子放出点の数
+  unsigned nEmission;        ///< 粒子放出の回数
+  int EmitStart;             ///< 開始時刻
+  int EmitInterval;          ///< 粒子放出インターバル
+  int OutInterval;           ///< 出力インターバル
+  int EmitLife;              ///< 寿命情報 -1 制御なし, 正数<MAX_LIFE未満
   int scheme;                ///< 積分方法
-  bool flag_migration;       ///< マイグレーション発生 true
   REAL_TYPE dt;              ///< 時間積分幅
-  unsigned buf_max_particle; ///< 送信用のバッファ長さ計算に使う粒子の最大数 毎回異なる
   bool buf_updated;          ///< バッファ長さが更新されたときtrue
-
+  
   int unit;                  ///< 指定座標の記述単位 {DIMENSIONAL | NONDIMENSIONAL}
   REAL_TYPE refLen;          ///< 代表長さ
-	REAL_TYPE refVel;          ///< 代表速度
-
+  REAL_TYPE refVel;          ///< 代表速度
+  
   int* bcd;                  ///< BCindex B
-	int* bid;                  ///< 境界条件ID
+  int* bid;                  ///< 境界条件ID
   REAL_TYPE* vSource;        ///< 速度サンプリング元データ
-
+  
   IntervalManager Interval;  ///< タイミング制御
   TextParser* tpCntl;        ///< TextParser
   Tracking* tr;              ///< Tracking
   PtComm PC;                 ///< 粒子通信クラス
   PerfMonitor* PM;           ///< PerfMonitor class
-	
-  int file_format;           ///< 0 - ascii, 1 - binary
-  FILE* fpl;                 ///< ログ出力用のファイルポインタ
-  int nCommParticle;         ///< マイグレーション時の送受信粒子数
-  unsigned nParticle;        ///< 全粒子の数（ローカル）
-  unsigned gParticle;        ///< 全粒子の数（グローバル）
   
-  int* Rmap;                 ///< PtCommクラスで作成した3x3x3のランクマップへのポインタ
-
-
-
+  int out_format;            ///< 粒子出力ファイルフォーマット　0 - ascii, 1 - binary
+  FILE* fpl;                 ///< ログ出力用のファイルポインタ
+  int restartRankFlag;       ///< リスタート時に粒子データを読むランクのみ > 1, else 0
+  int restartFlag;           ///< リスタート指定時に1, else 0
+  int restartStep;           ///< リスタートステップ
+  int restartForm;           ///< リスタートファイルのフォーマット　0 - ascii, 1 - binary
+  
+  
+  
 public:
   /// デフォルトコンストラクタ
   Cloud() {
     Rmap = NULL;
   }
-
+  
   Cloud(int* m_bcd,
-				int* m_bid,
+        int* m_bid,
         REAL_TYPE* m_Vsrc,
         const REAL_TYPE dt,
         TextParser* m_tp,
@@ -115,66 +123,94 @@ public:
     nGrpEmit = 0;
     scheme = -1;
     buf_updated = false;
-    flag_migration = false;
     nCommParticle = 0;
-    file_format = -1;
+    out_format = -1;
     unit = NONDIMENSIONAL;
     refLen = 0.0;
-		refVel = 0.0;
-		nEmitParticle = 0;
-		nEmission = 0;
-		EmitStart = 0;
-		EmitInterval = 0;
-		EmitLife = -1;
-
+    refVel = 0.0;
+    nEmitParticle = 0;
+    nEmission = 0;
+    EmitStart = 0;
+    EmitInterval = 0;
+    EmitLife = -1;
+    restartRankFlag = 0;
+    restartFlag = 0;
+    restartStep = -1;
+    nOutPart = 0;
+    nPasPart = 0;
+    sleepParticle = 0;
+    OutInterval = 0;
+    
     this->dt         = dt;
     this->bcd        = m_bcd;
-		this->bid        = m_bid;
+    this->bid        = m_bid;
     this->vSource    = m_Vsrc;
     this->tpCntl     = m_tp;
     this->PM         = m_PM;
-		
-		Interval.setMode(IntervalManager::By_step);
-
+    
+    Interval.setMode(IntervalManager::By_step);
+    
     // 初期値として、BUF_UNIT*粒子分を確保 > buf_max_particleで100単位で更新
     buf_max_particle = BUF_UNIT;
   }
-
-
-
+  
+  
+  
   /// デストラクタ
   ~Cloud() {
     if (fpl) fclose(fpl);
   }
-
-
-	// ######################
-	
+  
+  
+  // ######################
+  
   // @brief 初期設定
   bool initCloud(FILE* fp);
-
-
+  
+  
   // @brief ランタイム
   bool tracking(const unsigned step, const double time);
-
   
   
-	
-	// ######################
+  
+  
+  // ######################
 protected:
-	
-	unsigned getNparticle() {
-		unsigned tmp = 0;
-		for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr) {
-			tmp += (unsigned)(*itr)->getNpoints();
-		}
-		return tmp;
-	}
-	
-	
-	// @brief binary output
-	bool write_binary(const unsigned step, const double time);
-	
+  
+  // @brief chunkを登録
+  // @param [in]  pos    座標ベクトル
+  void registChunk(Vec3r pos);
+  
+  
+  // @brieaf 粒子のchunkListへの追加
+  void addParticle2ChunkList(particle p);
+  
+  
+  // chunkListの登録粒子数を返す
+  unsigned getNparticle() {
+    unsigned tmp = 0;
+    for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr) {
+      tmp += (unsigned)(*itr)->getNpoints();
+    }
+    return tmp;
+  }
+  
+  
+  // @brieaf リスタート時の粒子データ読み込み(Binary)
+  bool readRestartParticleBinary();
+  
+  
+  // @brieaf リスタート時の粒子データ読み込み(Ascii)
+  bool readRestartParticleAscii();
+  
+  
+  // @brieaf リスタート時のランク番号情報
+  bool readRestartRank();
+  
+  
+  // @brief binary output
+  bool write_binary(const unsigned step, const double time);
+  
   
   // @brief meta file output
   bool write_filelist(const unsigned step);
@@ -194,24 +230,24 @@ protected:
   
   // @brief PMlib ラベル
   void set_timing_label();
-    
+  
   // @brief パラメータ表示
   void displayParam(FILE* fp);
-
-
+  
+  
   // @brief 受信粒子のアンパック
   void unpackParticle();
-
-
+  
+  
   // @brief 開始点のユニークIDを割り振る
   bool determineUniqueID();
-
-
+  
+  
   /// @brief 粒子追跡情報を取得し，chunkに保持する
   bool setPTinfo();
-
-
-
+  
+  
+  
   /// @brief 座標値を無次元化する
   /// @param [in,out] x  coordinate
   void normalizeCord(REAL_TYPE* x)
@@ -220,34 +256,34 @@ protected:
     x[1] /= refLen;
     x[2] /= refLen;
   }
-	
-	
-	/// @brief 単位ベクトル化
-	/// @param [in,out] x  coordinate
-	void getUnitVector(REAL_TYPE* x)
-	{
-		REAL_TYPE s = sqrt( x[0]*x[0] + x[1]*x[1] + x[2]*x[2]);
-		x[0] /= s;
-		x[1] /= s;
-		x[2] /= s;
-	}
-
-
+  
+  
+  /// @brief 単位ベクトル化
+  /// @param [in,out] x  coordinate
+  void getUnitVector(REAL_TYPE* x)
+  {
+    REAL_TYPE s = sqrt( x[0]*x[0] + x[1]*x[1] + x[2]*x[2]);
+    x[0] /= s;
+    x[1] /= s;
+    x[2] /= s;
+  }
+  
+  
   /// @brief 開始座標情報を取得し、chunkに保持(Line)
   bool setLine(const string label_base,
                const int odr);
-
-
+  
+  
   /// @brief 座標情報を取得し、chunkに保持(PointSet)
   bool setPointset(const string label_base,
                    const int odr);
-
-
+  
+  
   /// @brief 開始座標情報を取得し、chunkに保持(Disc)
   bool setDisc(const string label_base,
                const int odr);
-
-
+  
+  
   /// @brief メルセンヌツイスタ
   /// @param [in]     st  下限
   /// @param [in]     ed  上限
@@ -256,35 +292,35 @@ protected:
   {
     std::random_device rnd;   // 非決定的な乱数生成器を生成
     std::mt19937 mt(rnd());   // メルセンヌ・ツイスタの32ビット版、引数は初期シード値
-
+    
     // [st, ed] 範囲の一様乱数
     std::uniform_real_distribution<> rand_s(st, ed);
-
+    
     return rand_s(mt);
   }
-
-
+  
+  
   /// @brief 半径r内のサンプリング
   bool samplingInCircle(const REAL_TYPE* cnt,
                         const REAL_TYPE* nv,
                         const REAL_TYPE radius,
                         const int nSample);
-
-
+  
+  
   /// @brief 指定法線nvがz軸の方向ベクトルに向かう回転角を計算する
   /// @param [in]  nv  指定法線
   /// @retval  回転角
   Vec3r getAngle(Vec3r nv);
-
-
+  
+  
   // @brief 回転ベクトルp(alpha, beta, gamma)でベクトルuを回転する
   Vec3r rotate(const Vec3r p, const Vec3r u);
-
-
+  
+  
   // @brief 回転ベクトルp(alpha, beta, gamma)に対して，-pでベクトルuを回転する
   Vec3r rotate_inv(const Vec3r p, const Vec3r u);
-
-
+  
+  
   /**
    * @brief タイミング測定開始
    * @param [in] key ラベル
@@ -293,9 +329,9 @@ protected:
   {
     // PMlib Intrinsic profiler
     PT_TIMING__ PM->start(key);
-
+    
     const char* s_label = key.c_str();
-
+    
     // Venus FX profiler
 #if defined __K_FPCOLL
     start_collection( s_label );
@@ -303,8 +339,8 @@ protected:
     fapp_start( s_label, 0, 0);
 #endif
   }
-
-
+  
+  
   /**
    * @brief タイミング測定終了
    * @param [in] key             ラベル
@@ -315,20 +351,20 @@ protected:
   {
     // Venus FX profiler
     const char* s_label = key.c_str();
-
+    
 #if defined __K_FPCOLL
     stop_collection( s_label );
 #elif defined __FX_FAPP
     fapp_stop( s_label, 0, 0);
 #endif
-
+    
     // PMlib Intrinsic profiler
     PT_TIMING__ PM->stop(key, flopPerTask, (unsigned)iterationCount);
   }
-
-	// ディレクトリがなければ作成、既存なら何もしない（単一ディレクトリ）
-	bool c_mkdir(const char* path);
-
+  
+  // ディレクトリがなければ作成、既存なら何もしない（単一ディレクトリ）
+  bool c_mkdir(const char* path);
+  
 };
 
 #endif // _PT_CLOUD_H_

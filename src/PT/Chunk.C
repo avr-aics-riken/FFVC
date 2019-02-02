@@ -26,12 +26,12 @@
 void Chunk::packParticle(REAL_TYPE* ps_buf,
                          int* bs_buf,
                          const unsigned buf_size,
-												 int* c)
+                         int* c)
 {
   // マイグレーション粒子がない場合には処理をスキップ
   if ( !MigrationFlag ) return;
 
-	// バッファには各チャンクのオフセット必要
+  // バッファには各チャンクのオフセット必要
     
   // 周囲26方向のバッファの区切り
   // バッファを長さbuf_sizeで26領域に分け、各領域の先頭アドレスから使う
@@ -43,17 +43,17 @@ void Chunk::packParticle(REAL_TYPE* ps_buf,
   {
     int b = (*itr).bf;
     int m = decMigrateDir(b); // m=[0,26]
-
+    
     if ( IS_MIGRATE(b) ) {
       ps_buf[bsz6*m + 6*c[m]+0] = (*itr).pos.x;
       ps_buf[bsz6*m + 6*c[m]+1] = (*itr).pos.y;
       ps_buf[bsz6*m + 6*c[m]+2] = (*itr).pos.z;
       ps_buf[bsz6*m + 6*c[m]+3] = (*itr).vel.x;
-			ps_buf[bsz6*m + 6*c[m]+4] = (*itr).vel.y;
+      ps_buf[bsz6*m + 6*c[m]+4] = (*itr).vel.y;
       ps_buf[bsz6*m + 6*c[m]+5] = (*itr).vel.z;
       bs_buf[bsz2*m + 2*c[m]+0] = b;
       bs_buf[bsz2*m + 2*c[m]+1] = (*itr).foo;
-			c[m]++;
+      c[m]++;
       //printf("migrated %d to %d\n", c[m], m);
       //printf("pack : %f %f %f %d %d %f %f %f %d\n",
       //       (*itr).pos.x, (*itr).pos.y, (*itr).pos.z, b, getBit25(clrMigrateDir(b)), (*itr).vel.x, (*itr).vel.y, (*itr).vel.z, (*itr).foo);
@@ -65,11 +65,11 @@ void Chunk::packParticle(REAL_TYPE* ps_buf,
   for(auto itr = pchunk.begin(); itr != pchunk.end();)
   {
     if ( IS_MIGRATE( (*itr).bf) )
-		{
+    {
       itr = pchunk.erase(itr);
-			continue;
+      continue;
     }
-		++itr;
+    ++itr;
   }
     
   // フラグをfalseに戻す
@@ -85,22 +85,26 @@ void Chunk::packParticle(REAL_TYPE* ps_buf,
 // @param [in]  life         粒子生存カウント
 // @param [in]  dt           積分幅
 // @param [in]  Rmap         3ｘ3の隣接ランクマップ
-void Chunk::updatePosition(Tracking* tr,
-                           const int scheme,
-                           const int life,
-                           const REAL_TYPE dt,
-                           const int* Rmap)
+// @param [out] nOut         領域外へ出た粒子数
+// @param [out] nPass        壁を通過した粒子数
+int Chunk::updatePosition(Tracking* tr,
+                          const int scheme,
+                          const int life,
+                          const REAL_TYPE dt,
+                          const int* Rmap,
+                          int& nOut,
+                          int& nPass)
 {
   int pcnt[NDST] = {0};  // 行き先毎の送信粒子数
   int flag = 0;
-
+  
   for(auto itr = pchunk.begin(); itr != pchunk.end(); ++itr)
   {
     Vec3r p = (*itr).pos;
     Vec3r v = (*itr).vel;
     Vec3i r;
     int c;
-		bool wallFlag = false;
+    bool wallFlag = false;
     
     if ( IS_ACTIVE( (*itr).bf) )
     {
@@ -117,7 +121,7 @@ void Chunk::updatePosition(Tracking* tr,
         case pt_rk4:
           break;
       }
-
+      
       // d=[0,26], r = {-1, 0, +1}
       int d = getMigrateDir(r);
       
@@ -128,11 +132,11 @@ void Chunk::updatePosition(Tracking* tr,
       else if (Rmap[d] == -1) // 計算領域外
       {
         (*itr).bf = Inactivate( (*itr).bf ); // 停止
-        printf("Out of region %d %d %d\n", r.x, r.y, r.z);
+        nOut++;
+        //printf("Out of region %d %d %d\n", r.x, r.y, r.z);
       }
       else // Migration
       {
-        //printf("b = %d\n", (*itr).bf );
         (*itr).bf = stampMigrate( (*itr).bf );  // マイグレーション候補
         //printf("stampMigrate(b) = %d\n", (*itr).bf );
         c = encMigrateDir((*itr).bf, r);        // 移動先をエンコード
@@ -141,14 +145,14 @@ void Chunk::updatePosition(Tracking* tr,
         flag++;
         //printf("migrate from %d > %d (%d %d %d)\n", myRank, c, r.x, r.y, r.z);
       }
-			
-			// 壁面を通過した場合
-			if (wallFlag)
-			{
-				(*itr).bf = Inactivate( (*itr).bf ); // 停止
-				printf("wall passing\n");
-			}
-
+      
+      // 壁面を通過した場合
+      if (wallFlag)
+      {
+        (*itr).bf = Inactivate( (*itr).bf ); // 停止
+        nPass++;
+      }
+      
       
       // 粒子位置情報をアップデート
       (*itr).pos = p;
@@ -161,28 +165,29 @@ void Chunk::updatePosition(Tracking* tr,
       if (life > 0)
       {
         if ( life < getBit25( (*itr).bf) )
-				{
-					(*itr).bf = Inactivate( (*itr).bf );
-					printf("life time\n");
-				}
+        {
+          (*itr).bf = Inactivate( (*itr).bf );
+          printf("life time\n");
+        }
       }
       
     } // IS_ACTIVE
   } // itr=pchunk
-
-	
-	// 行き先毎の送信粒子数
-	for (int i=0; i<NDST; i++)
-	{
-		pSend[i] = pcnt[i];
-	}
+  
+  
+  // 行き先毎の送信粒子数
+  for (int i=0; i<NDST; i++)
+  {
+    pSend[i] = pcnt[i];
+  }
   
   // packParticle()での番兵
-	if ( flag > 0 ) {
-		//printf("Migration [%d] %d\n", myRank, flag);
-		MigrationFlag = true;
-	}
+  if ( flag > 0 ) {
+    //printf("Migration [%d] %d\n", myRank, flag);
+    MigrationFlag = true;
+  }
   
+  return (MigrationFlag == true) ? 1 : 0;
 }
 
 

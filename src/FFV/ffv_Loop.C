@@ -530,8 +530,7 @@ int FFV::Loop(const unsigned step)
 
   }
 
-  TIMING_stop("Loop_Utility_Section", 0.0);
-  TIMING_stop("Time_Step_Loop_Section", 0.0);
+
 
 
   // 経過時間レポート １時間毎に書き出し　時間が微妙にずれることを考慮しマスターのみで判断
@@ -570,9 +569,12 @@ int FFV::Loop(const unsigned step)
     
     Hostonly_ fclose(fpt);
   }
-	
-	
-	
+
+  TIMING_stop("Loop_Utility_Section", 0.0);
+  TIMING_stop("Time_Step_Loop_Section", 0.0);
+  
+  
+
   // 発散時の打ち切り
   if ( numProc > 1 )
   {
