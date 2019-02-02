@@ -85,15 +85,11 @@ void Chunk::packParticle(REAL_TYPE* ps_buf,
 // @param [in]  life         粒子生存カウント
 // @param [in]  dt           積分幅
 // @param [in]  Rmap         3ｘ3の隣接ランクマップ
-// @param [out] nOut         領域外へ出た粒子数
-// @param [out] nPass        壁を通過した粒子数
-int Chunk::updatePosition(Tracking* tr,
+void Chunk::updatePosition(Tracking* tr,
                            const int scheme,
                            const int life,
                            const REAL_TYPE dt,
-                           const int* Rmap,
-													 int& nOut,
-													 int& nPass)
+                           const int* Rmap)
 {
   int pcnt[NDST] = {0};  // 行き先毎の送信粒子数
   int flag = 0;
@@ -132,11 +128,11 @@ int Chunk::updatePosition(Tracking* tr,
       else if (Rmap[d] == -1) // 計算領域外
       {
         (*itr).bf = Inactivate( (*itr).bf ); // 停止
-				nOut++;
-        //printf("Out of region %d %d %d\n", r.x, r.y, r.z);
+        printf("Out of region %d %d %d\n", r.x, r.y, r.z);
       }
       else // Migration
       {
+        //printf("b = %d\n", (*itr).bf );
         (*itr).bf = stampMigrate( (*itr).bf );  // マイグレーション候補
         //printf("stampMigrate(b) = %d\n", (*itr).bf );
         c = encMigrateDir((*itr).bf, r);        // 移動先をエンコード
@@ -150,7 +146,7 @@ int Chunk::updatePosition(Tracking* tr,
 			if (wallFlag)
 			{
 				(*itr).bf = Inactivate( (*itr).bf ); // 停止
-				nPass++;
+				printf("wall passing\n");
 			}
 
       
@@ -186,8 +182,7 @@ int Chunk::updatePosition(Tracking* tr,
 		//printf("Migration [%d] %d\n", myRank, flag);
 		MigrationFlag = true;
 	}
-	
-	return (MigrationFlag == true) ? 1 : 0;
+  
 }
 
 

@@ -402,16 +402,12 @@ bool PtComm::waitCommPart(MPI_Request* req,
 
 //#############################################################################
 // @brief 統計
-// @param [out]     nCommP   送受信する総粒子数（ランク0のみ）
-// @param [in]      l_part   自ランクのもつ全粒子数
-// @param [out]     g_part   全粒子数（ランク0のみ）
-// @param [in,out]  nOut     領域外へ出た粒子数
-// @param [in,out]  nPass    壁を通過した粒子数
+// @param [out] nCommP   送受信する総粒子数（ランク0のみ）
+// @param [in]  l_part   自ランクのもつ全粒子数
+// @param [out] g_part   全粒子数（ランク0のみ）
 bool PtComm::Statistics(int& nCommP,
                         const unsigned l_part,
-                        unsigned& g_part,
-												int& nOut,
-												int& nPass)
+                        unsigned& g_part)
 {
   int sum = 0;
   for (int i=0; i<NDST; i++)
@@ -420,18 +416,15 @@ bool PtComm::Statistics(int& nCommP,
   }
   
   // 総受信数の総和
-	int tmp[3] = {sum, nOut, nPass};
-	int rcv[3];
-  if ( MPI_SUCCESS != MPI_Reduce(tmp,
-                                 rcv,
-                                 3,
+  int tmp = sum;
+  if ( MPI_SUCCESS != MPI_Reduce(&tmp,
+                                 &sum,
+                                 1,
                                  MPI_INT,
                                  MPI_SUM,
                                  0,
                                  MPI_COMM_WORLD) ) return false;
-  nCommP = rcv[0] / 2;
-	nOut = rcv[1];
-	nPass= rcv[2];
+  nCommP = sum / 2;
   
   unsigned tmp2 = l_part;
   if ( MPI_SUCCESS != MPI_Gather(&tmp2,

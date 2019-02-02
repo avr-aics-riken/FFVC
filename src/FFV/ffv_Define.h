@@ -22,7 +22,7 @@
  * @author aics
  */
 
-#define TM_LABEL_MAX 40
+#define TM_LABEL_MAX 64
 
 
 // PLOT3DのときのIOバッファのブロックサイズ

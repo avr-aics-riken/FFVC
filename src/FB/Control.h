@@ -747,9 +747,6 @@ protected:
 
 
 public:
-	
-	// Permormance Monitorのプログレス出力間隔（秒）
-	double getPMInterval();
 
   /**
    * @brief 反復の収束判定パラメータをコピーする

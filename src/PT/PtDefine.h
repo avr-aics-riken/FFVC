@@ -11,7 +11,7 @@
 
 #define NDST 27 // 送受信数は26だが、マップと合わせている
 
-#define BUF_UNIT 100  // バッファ初期値と更新サイズ
+#define BUF_UNIT 10000  // バッファ初期値と更新サイズ
 
 // #define PT_DEBUG ON
 

@@ -50,10 +50,9 @@ FFV::FFV()
   CM_H.rate     = 0.0;
 
   deltaT = 0.0;
-	
-	exec_time_0 = 0.0;
-	exec_time_1 = 0.0;
-	exec_time_intvl = 3600.0;
+	exec_time_pm_0 = 0.0;
+	exec_time_pm_1 = 0.0;
+	exec_interval_pm = 3600.0;
 
 
   for (int i=0; i<3; i++)

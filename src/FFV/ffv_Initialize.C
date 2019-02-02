@@ -31,7 +31,8 @@
  */
 int FFV::Initialize(int argc, char **argv)
 {
-	exec_time_0 = cpm_Base::GetWTime();
+	exec_time_pm_0 = cpm_Base::GetWTime();
+	
 	
   double TotalMemory   = 0.0;  ///< 計算に必要なメモリ量（ローカル）
   double PrepMemory    = 0.0;  ///< 初期化に必要なメモリ量（ローカル）
@@ -137,11 +138,10 @@ int FFV::Initialize(int argc, char **argv)
 
   // 計算モデルの入力ソース情報を取得
   C.getGeometryModel();
-	
+
 	
 	// PM progress interval デフォルト　3600秒
-	C.getPMInterval();
-
+	getPMInterval(&tp_ffv);
 
   // Intrinsic classの同定
   identifyExample(fp);
@@ -730,8 +730,7 @@ int FFV::Initialize(int argc, char **argv)
     TR->importCPM(paraMngr);
     TR->setRankInfo(paraMngr, procGrp);
     TR->setDomainInfo(C.guide, C.RefLength);
-		
-		if ( !TR->initCloud(fp) ) return 0;
+    TR->initCloud(fp);
 
   }
   else
@@ -772,6 +771,9 @@ int FFV::Initialize(int argc, char **argv)
 
 
   Hostonly_ if ( fp ) fclose(fp);
+	
+
+	
 
   return 1;
 }
@@ -4190,4 +4192,26 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
 
   TIMING_stop("Cut_Section");
 
+}
+
+
+// #################################################################
+// Permormance Monitorのプログレス出力間隔（秒）
+void FFV::getPMInterval(TextParser* tpCntl)
+{
+	string label;
+	double ct=0.0;
+	
+	label = "/ApplicationControl/PM_progress_interval";
+	
+	//指定がなければでデフォルト 3600.0 sec
+	if ( tpCntl->getInspectedValue(label, ct ) )
+	{
+		if ( ct < 0.0 ) {
+			Hostonly_ stamped_printf("\tPM_progress_interval must be positive value.\n");
+			Exit(0);
+		}
+	}
+	
+	exec_interval_pm = ct;
 }

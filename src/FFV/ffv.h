@@ -139,14 +139,13 @@ private:
   unsigned CurrentStepStat;     ///< 統計操作の積算ステップ数（ケース）
   unsigned Session_CurrentStep; ///< セッションの現在のステップ
   unsigned Session_LastStep;    ///< セッションの終了ステップ数
-	
-	double exec_time_0;          ///< 実行時間モニタ用
-	double exec_time_1;          ///< 実行時間モニタ用
-	double exec_time_intvl;      ///< 実行時間モニタ用
 
   double face_comm_size;       ///< 全ノードについて，ローカルノード1面・一層あたりの通信量の和（要素数）
 
-  REAL_TYPE deltaT; ///< 時間積分幅（無次元）
+  REAL_TYPE deltaT;            ///< 時間積分幅（無次元）
+	double exec_time_pm_0;       ///< 実行時間モニタ用
+	double exec_time_pm_1;       ///< 実行時間モニタ用
+	double exec_interval_pm;     ///< 実行時間モニタ用
 
   int communication_mode; ///< synchronous, asynchronous
 
@@ -448,7 +447,9 @@ private:
   // 幾何形状情報を準備し，交点計算を行う
   void SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp);
 
-
+	
+	// Permormance Monitorのプログレス出力間隔（秒）
+	void getPMInterval(TextParser* tpCntl);
 
 
 

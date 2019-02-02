@@ -426,11 +426,9 @@ int FFV::Loop(const unsigned step)
 
   //#################################################
   // 粒子追跡
-	if (C.Mode.ParticleTracking == ON) {
-  	TIMING_start("ParticleTracking_Section");
-		if ( !TR->tracking(CurrentStep, CurrentTime*C.Tscale) ) return -1;
-  	TIMING_stop("ParticleTracking_Section", 0.0);
-	}
+  TIMING_start("ParticleTracking_Section");
+  TR->tracking(CurrentStep, CurrentTime*C.Tscale);
+  TIMING_stop("ParticleTracking_Section", 0.0);
   //#################################################
 
   // 1 step elapse
@@ -531,27 +529,47 @@ int FFV::Loop(const unsigned step)
 
   TIMING_stop("Loop_Utility_Section", 0.0);
   TIMING_stop("Time_Step_Loop_Section", 0.0);
-	
-	
-	// 経過時間レポート １時間毎に書き出し
-	exec_time_1 = cpm_Base::GetWTime();
-	if (exec_time_1 - exec_time_0 > exec_time_intvl)
-	{
-		FILE* fpt;
-		char tmp_fname[80];
-		sprintf( tmp_fname, "prof_%08ld.txt", CurrentStep);
-		if ( !(fpt=fopen(tmp_fname, "w")) )
-		{
-			stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", tmp_fname);
-			return -1;
-		}
-		sprintf( tmp_fname, "%8ld steps", CurrentStep);
-		PM.printProgress(fpt, tmp_fname);
-		fclose(fpt);
-		exec_time_0 = exec_time_1;
-	}
 
 
+  // 経過時間レポート １時間毎に書き出し　時間が微妙にずれることを考慮しマスターのみで判断
+  int ProgressPMtrigger = 0;
+  Hostonly_
+  {
+    exec_time_pm_1 = cpm_Base::GetWTime();
+    if (exec_time_pm_1 - exec_time_pm_0 > exec_interval_pm)
+    {
+      ProgressPMtrigger = true;
+      exec_time_pm_0 = exec_time_pm_1;
+    }
+  }
+  
+  if (MPI_Bcast(&ProgressPMtrigger, 1, MPI_INT, 0, MPI_COMM_WORLD) != MPI_SUCCESS) {
+    return false;
+  }
+  
+  
+  if ( ProgressPMtrigger == 1 )
+  {
+    FILE* fpt=NULL;
+    char tmp_fname[80];
+    sprintf( tmp_fname, "prof_%08ld.txt", CurrentStep);
+    
+    Hostonly_ {
+      if ( !(fpt=fopen(tmp_fname, "w")) )
+      {
+        stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", tmp_fname);
+        return -1;
+      }
+    }
+    
+    sprintf( tmp_fname, "%8ld steps", CurrentStep);
+    PM.printProgress(fpt, tmp_fname);
+    
+    Hostonly_ fclose(fpt);
+  }
+	
+	
+	
   // 発散時の打ち切り
   if ( numProc > 1 )
   {

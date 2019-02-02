@@ -8,23 +8,31 @@
 
 ## REVISION HISTORY
 
+
+---
+- 2019-2-2 Version 2.8.9
+  - 2.8.5以降でバグ発見、2.8.5に戻り、修正を確認しながら追加
+  - PMprogressの処理
+
+
 ---
 - 2019-2-1 Version 2.8.8
-  - profiling progress
-  - particle emission modified
+- profiling progress
+- particle emission modified
 
 ---
 - 2019-2-1 Version 2.8.7
-  - tracking mode on 
+- tracking mode on 
 
 ---
 - 2019-1-31 Version 2.8.6
-  - restart particle data
+- restart particle data
 
 
 ---
 - 2019-1-30 Version 2.8.5
-  - debug particle buffer
+- debug particle buffer
+
 
 ---
 - 2019-1-29 Version 2.8.4

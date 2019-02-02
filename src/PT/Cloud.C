@@ -17,131 +17,115 @@
 // @brief ランタイム
 bool Cloud::tracking(const unsigned step, const double time)
 {
-  bool ret = true;
-	int mflag = 0;
+  bool ret;
 	
-	nOutPart = 0;  // 領域外へ出た粒子数
-	nPasPart = 0;  // 壁を通過した粒子数
-
+	
 	// 指定時刻が過ぎ、処理ステップになった場合
-	if ( Interval.isStarted(step, time) )
+	if ( Interval.isStarted(step, time) && Interval.isTriggered(step, time) )
 	{
   
 		TIMING_start("PT_Tracking");
+		
 		for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
 		{
 			// 保持している粒子を積分し、マイグレーション準備
-			if ( 1 == (*itr)->updatePosition(tr, scheme, EmitLife, dt, Rmap, nOutPart, nPasPart) ) mflag++;
+			(*itr)->updatePosition(tr, scheme, EmitLife, dt, Rmap);
 			
-			// 放出タイミングで、登録した開始点から粒子を追加（マイグレーション先は除く）
-			if ( Interval.isTriggered(step, time) )
+			// 登録した開始点から粒子を追加（マイグレーション先は除く）
+			(*itr)->addParticleFromOrigin();
+		}
+		
+		// 粒子放出回数
+		nEmission++;
+		
+		
+		// 送信方向毎に全チャンクの送信粒子数の和をとる
+		int* pInfo = PC.pInfo_ptr();
+		memset(pInfo, 0, sizeof(int)*NDST*2);
+		
+		for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
+		{
+			int* p = (*itr)->pSend_ptr();
+			
+			for (int i=0; i<NDST; i++)
 			{
-				(*itr)->addParticleFromOrigin();
+				pInfo[2*i] += p[i];
 			}
 		}
 		
-		// 粒子の放出回数
-		if ( Interval.isTriggered(step, time) ) nEmission++;
 		
-		// 全プロセスで共有  最大値をとる => どれか１プロセスでもマイグレーションが発生
-		int tmp = mflag;
-		if ( MPI_SUCCESS != MPI_Allreduce(&tmp,
-																			&mflag,
-																			1,
-																			MPI_INT,
-																			MPI_MAX,
-																			MPI_COMM_WORLD) ) return false;
+		// 送信要素の最大値を保存
+		// 行き先毎には異なるが、最大数で考えておく
+		unsigned max_particle = 0;
+		
+		for (int i=0; i<NDST; i++) {
+			unsigned p = (unsigned)pInfo[2*i];
+			if (max_particle < p) {
+				max_particle = p;
+			}
+		}
+		
+		
+		// バッファ長の更新が必要な場合、バッファ計算用の粒子数はBUF_UNIT単位で確保
+		if (buf_max_particle < max_particle) {
+			buf_max_particle = (max_particle / BUF_UNIT + 1) * BUF_UNIT;
+			buf_updated = true;
+		}
+		
+		// バッファ長を同期
+		ret = PC.getMax(buf_max_particle);
+		
+		Hostonly_ printf("buf_max_p= %ld\n", buf_max_particle);
+		
 		TIMING_stop("PT_Tracking");
-		
-		
-		TIMING_start("PT_Migration");
-		// マイグレーションが生じる場合のみ
-		if ( mflag > 0 )
-		{
-			// 送信方向毎に全チャンクの送信粒子数の和をとる
-			int* pInfo = PC.pInfo_ptr();
-			memset(pInfo, 0, sizeof(int)*NDST*2);
-			
-			for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
-			{
-				int* p = (*itr)->pSend_ptr();
-				
-				for (int i=0; i<NDST; i++)
-				{
-					pInfo[2*i] += p[i];
-				}
-			}
-			
-			// 送信要素の最大値を保存  行き先毎には異なるが、最大数で考えておく
-			unsigned max_particle = 0;
-			
-			for (int i=0; i<NDST; i++) {
-				unsigned p = (unsigned)pInfo[2*i];
-				if (max_particle < p) {
-					max_particle = p;
-				}
-			}
-			
-			// バッファ長の更新が必要な場合、バッファ計算用の粒子数はBUF_UNIT単位で確保
-			if (buf_max_particle < max_particle)
-			{
-				buf_max_particle = (max_particle / BUF_UNIT + 1) * BUF_UNIT;
-				buf_updated = true;
-			}
-			
-			// バッファ長を同期
-			ret = PC.getMax(buf_max_particle);
-			if ( !ret ) return false;
-			
-			//Hostonly_ printf("buf_max_p= %ld\n", buf_max_particle);
-			
-			
-			// マイグレーション処理
-			ret = migration();
-
-		} // mflag
-		TIMING_stop("PT_Migration");
-		
 		if ( !ret ) return false;
 		
 		
+		// for check
+		//nParticle = getNparticle();
+		//gParticle = nParticle;
+		//ret = PC.getSum(gParticle);
+		//Hostonly_ printf("gParticle = %ld (before mig.)\n", gParticle);
 		
-		if ( Interval.isTriggered(step, time) )
-		{
-			// ログ出力
-			TIMING_start("PT_Statistics");
-			nParticle = getNparticle();
-			
-			ret = PC.Statistics(nCommParticle,
-													nParticle,
-													gParticle,
-													nOutPart,
-													nPasPart);
-			sleepParticle +=  nOutPart + nPasPart;
-			
-			Hostonly_
-			{
-				logging(step);
-			}
-			TIMING_stop("PT_Statistics");
-			if ( !ret ) return false;
-			
-			
-			// ファイル出力
-			TIMING_start("PT_fileIO");
-			if ( out_format == 0 )
-			{
-				ret = write_ascii(step, time);
-			}
-			else
-			{
-				ret = write_binary(step, time);
-			}
-			TIMING_stop("PT_fileIO");
-			if ( !ret ) return false;
+		
+		TIMING_start("PT_Migration");
+		ret = migration();
+		TIMING_stop("PT_Migration");
+		if ( !ret ) return false;
+		
+		
+		nParticle = getNparticle();
+		gParticle = nParticle;
+		ret = PC.getSum(gParticle);
+		if ( !ret ) return false;
+		//Hostonly_ printf("gParticle = %ld (after mig.)\n", gParticle);
+		
+		
+		// ログ出力
+		TIMING_start("PT_Statistics");
+		ret = PC.Statistics(nCommParticle, nParticle, gParticle);
+		Hostonly_ {
+			logging(step);
 		}
+		TIMING_stop("PT_Statistics");
+		if ( !ret ) return false;
 		
-	} // Interval.isStarted
+		
+		// ファイル出力
+		TIMING_start("PT_fileIO");
+		if ( file_format == 0 )
+		{
+			ret = write_ascii(step, time);
+		}
+		else
+		{
+			ret = write_binary(step, time);
+		}
+		//write_filelist(step);
+		TIMING_stop("PT_fileIO");
+		if ( !ret ) return false;
+		
+	} // Interval
   
   return true;
 }
@@ -152,6 +136,8 @@ bool Cloud::tracking(const unsigned step, const double time)
 // @brief 初期設定
 bool Cloud::initCloud(FILE* fp)
 {
+
+  
   tr = new Tracking(size,
                     guide,
                     origin,
@@ -168,22 +154,6 @@ bool Cloud::initCloud(FILE* fp)
 	
 	displayParam(stdout);
 	displayParam(fp);
-	
-	// リスタート時
-	if ( restartFlag == 1 )
-	{
-		// 粒子をもつランク番号情報
-		if ( !readRestartRank() ) return false;
-		
-		if ( restartForm == 0 ) // Ascii
-		{
-			if ( !readRestartParticleAscii() ) return  false;
-		}
-		else // Binary
-		{
-			if ( !readRestartParticleBinary() ) return  false;
-		}
-	}
 	
   // ログ出力
 	Hostonly_
@@ -259,6 +229,10 @@ bool Cloud::migration()
   TIMING_start("PT_ParticleUnpacking");
   unpackParticle();
   TIMING_stop("PT_ParticleUnpacking");
+  
+
+  // マイグレーション終了
+  flag_migration = false;
 
   return true;
 }
@@ -275,6 +249,9 @@ void Cloud::unpackParticle()
   // 周囲26方向のバッファの区切り
   size_t bsz6 = buf_max_particle * 6; // 6要素
   size_t bsz2 = buf_max_particle * 2; // 2要素
+	
+	//int m_new=0;
+	//int m_add=0;
 
   for (int i=0; i<NDST; i++)
   {
@@ -285,6 +262,7 @@ void Cloud::unpackParticle()
     Vec3r v;
     particle p;
 		
+
     if (cnt > 0 && i != 13 )
     {
       for (int j=0; j<cnt; j++)
@@ -297,17 +275,45 @@ void Cloud::unpackParticle()
         v.z   = pr_buf[bsz6*i + 6*j+5];
         b     = br_buf[bsz2*i + 2*j+0];
         uid   = br_buf[bsz2*i + 2*j+1];
+        b = Chunk::removeMigrate(b);
         
         p.pos = pos;
-        p.bf  = Chunk::removeMigrate(b);
+        p.bf  = b;
         p.vel = v;
         p.foo = uid;
-				
-				addParticle2ChunkList(p);
+        //printf("unpack : %f %f %f %f %f %f %d %d %d\n",
+        //       pos.x, pos.y, pos.z, v.x, v.y, v.z, b, Chunk::getBit25(b), foo);
+        
+        // chunkList内で粒子IDをサーチし、存在しなければ、新たなチャンクを作る
+        int check=0;
+        for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
+        {
+          // IDがあれば、追加
+          if ( uid == (*itr)->getUid() ) {
+            (*itr)->addParticle(p);
+            check=1;
+						//m_add++;
+            break;
+          }
+        }
+        
+        // uidのチャンクが存在しない場合
+        if (check==0)
+        {
+          Chunk* m = new Chunk(p,
+                               EmitStart,
+                               myRank,
+                               EmitInterval);
+          chunkList.push_back(m);
+					//m_new++;
+        }
+        
       }
     } // cnt
 
 	} // NDST-loop
+	
+	//printf("[%d] : new=%d add=%d Chunk=%d\n", myRank, m_new, m_add, chunkList.size());
   
 }
 
@@ -318,8 +324,7 @@ void Cloud::unpackParticle()
 void Cloud::logging(const unsigned step)
 {
   // マイグレーションで移動した粒子数と全粒子数
-  fprintf(fpl, "step %ld migrated %d total %ld sleep %ld OutRegion %d PassWall %d\n",
-					step, nCommParticle, gParticle, sleepParticle, nOutPart, nPasPart);
+  fprintf(fpl, "step %ld migrated %d total %ld\n", step, nCommParticle, gParticle);
   
   // 各ランク毎の粒子数
   unsigned* p = PC.nPart_ptr();
@@ -330,7 +335,7 @@ void Cloud::logging(const unsigned step)
 	
 	// Number of total particles
 	unsigned tp = nEmitParticle * (nEmission+1);
-	if (gParticle != tp) fprintf(fpl, "Number of particles must be %ld %ld\n", tp, nEmission);
+	if (gParticle != tp) fprintf(fpl, "Number of particles must be %ld\n", tp);
   
   fflush(fpl);
 }
@@ -503,10 +508,10 @@ bool Cloud::setPTinfo()
   }
   
   if ( !strcasecmp(str.c_str(), "ascii") ) {
-    out_format = 0;
+    file_format = 0;
   }
   else if ( !strcasecmp(str.c_str(), "binary") ) {
-    out_format = 1;
+    file_format = 1;
   }
   else {
     Hostonly_ printf("Invalid file format\n");
@@ -560,48 +565,6 @@ bool Cloud::setPTinfo()
 			return false;
 		}
 		EmitLife = tmp;
-	}
-	
-	
-	// リスタート
-	label = label_base + "/restart/step";
-	
-	if ( !(tpCntl->getInspectedValue(label, f_val )) )
-	{
-		Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-		return false;
-	}
-	else
-	{
-		restartStep = (int)f_val;
-	}
-	
-	if ( 0 != restartStep ) restartFlag = 1;
-		
-	
-	// リスタート粒子ファイルのフォーマット
-	label = label_base + "/restart/format";
-	
-	if ( !(tpCntl->getInspectedValue(label, str )) )
-	{
-		Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-		return false;
-	}
-	else
-	{
-		if ( !strcasecmp(str.c_str(), "ascii") )
-		{
-			restartForm = 0;
-		}
-		else if ( !strcasecmp(str.c_str(), "binary") )
-		{
-			restartForm = 1;
-		}
-		else
-		{
-			Hostonly_ stamped_printf("\tParsing error : invalid keyword '%s'\n", str.c_str());
-			return false;
-		}
 	}
 	
 	
@@ -855,30 +818,11 @@ bool Cloud::setPointset(const string label_base, const int odr)
       str = tmpstr;
     }
     
-		// registration
-		Vec3r pos(v);
-		registChunk(pos);
-  }
-	
-	// 放出点の合計
-	nEmitParticle += nnode;
-	
-  return true;
-}
 
-
-//#############################################################################
-/**
- * @brief chunkを登録
- * @param [in]  pos    座標ベクトル
- */
-void Cloud::registChunk(Vec3r pos)
-{
-	// 自領域内であれば、初期開始点として追加
-	if ( tr->inOwnRegion(pos) )
-	{
-		if (restartFlag == 0) // 初期計算時は座標値を登録
+    // 自領域内であれば、初期開始点として追加
+		if ( tr->inOwnRegion(v) )
 		{
+			Vec3r pos(v);
 			Chunk* m = new Chunk(pos,
 													 1,
 													 EmitStart,
@@ -886,18 +830,13 @@ void Cloud::registChunk(Vec3r pos)
 													 EmitInterval);
 			chunkList.push_back(m);
 		}
-		else // リスタート時は、座標点を登録しない、あとでリスタートファイルをロードする
-		{
-			Chunk* m = new Chunk(pos,
-													 1,
-													 EmitStart,
-													 myRank,
-													 EmitInterval,
-													 false);
-			chunkList.push_back(m);
-		}
-	}
+    
+  }
 	
+	// 放出点の合計
+	nEmitParticle += nnode;
+	
+  return true;
 }
 
 
@@ -976,7 +915,20 @@ bool Cloud::setLine(const string label_base, const int odr)
   for (int m = 0; m < npnt; m++)
   {
     Vec3r pos = st + dd * (REAL_TYPE)m;
-    registChunk(pos);
+
+    //printf("[%d] %d  tgt = (%14.6e %14.6e %14.6e)\n", myRank, m, pos.x, pos.y, pos.z);
+
+    // 自領域内であれば、初期開始点として追加
+		if ( tr->inOwnRegion(pos) )
+		{
+			Chunk* m = new Chunk(pos,
+													 1,
+													 EmitStart,
+													 myRank,
+													 EmitInterval);
+			chunkList.push_back(m);
+		}
+    
   }
   return true;
 }
@@ -1132,7 +1084,15 @@ bool Cloud::samplingInCircle(const REAL_TYPE* cnt,
 		p.y = buf[3*i+1];
 		p.z = buf[3*i+2];
 		
-		registChunk(p);
+		if ( tr->inOwnRegion(p) )
+		{
+			Chunk* m = new Chunk(p,
+													 1,
+													 EmitStart,
+													 myRank,
+													 EmitInterval);
+			chunkList.push_back(m);
+		}
 	}
 	
 
@@ -1378,12 +1338,6 @@ void Cloud::displayParam(FILE* fp)
     } // nGrpEmit
 		
 		fprintf(fp, "\n\tTotal number of emission points : %ld\n", nEmitParticle);
-		
-		if ( restartFlag == 1 )
-		{
-			fprintf(fp,"\n\tRestart from %d step\n", restartStep);
-		}
-		
 		fprintf(fp,"\n");
   } // Hostonly
 }
@@ -1425,7 +1379,8 @@ bool Cloud::write_ascii(const unsigned step, const double time)
     stamped_printf("\tSorry, can't open 'pt_log.txt' file. Write failed.\n");
     return false;
   }
-	
+  
+  
   fprintf(fp,"\n# step_time %ld %e\n", step, time);
   fprintf(fp,"# total_particles %ld\n", nParticle);
   fprintf(fp,"# no_of_chunks %d\n", (int)chunkList.size());
@@ -1493,7 +1448,6 @@ bool Cloud::c_mkdir(const char* path)
 
 
 // #################################################################
-// @brief binary output
 bool Cloud::write_binary(const unsigned step, const double time)
 {
 	if (nParticle == 0) return true;
@@ -1529,257 +1483,4 @@ bool Cloud::write_binary(const unsigned step, const double time)
 	ofs.close();
 	
 	return true;
-}
-
-
-// #################################################################
-// @brieaf リスタート時のランク番号情報
-bool Cloud::readRestartRank()
-{
-	int flag = 0;
-	char buf[20];
-	int num_rank=0;
-	int* rankno = NULL;
-	FILE* fp;
-	
-	Hostonly_
-	{
-		if ( !(fp=fopen("./Particle/rpt_rank.txt", "r")) )
-		{
-			printf("\tSorry, can't open 'rpt_rank.txt' file.\n");
-			flag = 1;
-		}
-	}
-	
-	int tmp = flag;
-	if ( MPI_SUCCESS != MPI_Allreduce(&tmp,
-																		&flag,
-																		1,
-																		MPI_INT,
-																		MPI_MAX,
-																		MPI_COMM_WORLD) ) return false;
-	
-	if ( flag == 1 ) return false;
-	
-	
-	Hostonly_ fscanf(fp, "%d %s", &num_rank, buf);
-	
-	if (MPI_Bcast(&num_rank, 1, MPI_INT, 0, MPI_COMM_WORLD) != MPI_SUCCESS) {
-		return false;
-	}
-	
-	if ( num_rank < 1 ) return false;
-	
-	
-	rankno = new int[num_rank];
-	
-	Hostonly_
-	{
-		for (int i=0; i<num_rank; i++)
-		{
-			fscanf(fp, "%d", &rankno[i]);
-			//printf("restart rank = %d\n", rankno[i]);
-		}
-		
-		fclose(fp);
-	}
-	
-	if (MPI_Bcast(rankno, num_rank, MPI_INT, 0, MPI_COMM_WORLD) != MPI_SUCCESS) {
-		return false;
-	}
-	
-	for (int i=0; i< num_rank; i++)
-	{
-		if ( rankno[i] == myRank ) restartRankFlag = 1;
-	}
-	
-	
-	if ( rankno ) {
-		delete [] rankno;
-		rankno = NULL;
-	}
-	
-	return true;
-}
-
-
-// #################################################################
-// @brieaf リスタート時の粒子データ読み込み(Ascii)
-bool Cloud::readRestartParticleAscii()
-{
-	int flag =  0;
-	char buf[20];
-	
-	if ( restartRankFlag == 1 )
-	{
-		FILE* fp;
-		char tmp_fname[80];
-		
-		sprintf( tmp_fname, "./Particle/pt_%08ld_%06d.npt", restartStep, myRank );
-		
-		if ( !(fp=fopen(tmp_fname, "r")) )
-		{
-			printf("\tSorry, can't open '%s' file.\n");
-			flag = 1;
-		}
-		
-		int step;
-		int npart;
-		float time;
-		int nchnk;
-		
-		if ( flag == 0 )
-		{
-			fscanf(fp, "%s %s %d %f", buf, buf, &step, &time);
-			fscanf(fp, "%s %s %d", buf, buf, &npart);
-			fscanf(fp, "%s %s %d", buf, buf, &nchnk);
-			//printf("[%d] step=%d time=%f npart=%d nchunk=%d\n", myRank, step, time, npart, nchnk);
-			
-			for (int j=0; j<nchnk; j++)
-			{
-				particle p;
-				Vec3r q, v, e;
-				int life, uid, np, dd, sorg, semit, ch;
-				
-				fscanf(fp, "%s %s %d", buf, buf, &ch);            // chunk no
-				fscanf(fp, "%s %d", buf, &np);                    // particle
-				fscanf(fp, "%s %d", buf, &dd);                    // emit_pnt_id
-				fscanf(fp, "%s %e %e %e", buf, &e.x, &e.y, &e.z); // emit_origin
-				fscanf(fp, "%s %d", buf, &sorg);                  // start_origin
-				fscanf(fp, "%s %d", buf, &semit);                 // start_emit
-				//printf("[%d] %d %d %e %e %e %d %d\n", myRank, ch, np, e.x, e.y, e.z, sorg, semit);
-				
-				for (int i=0; i<np; i++)
-				{
-					fscanf(fp, "%d %e %e %e %d %e %e %e %d",
-								 &dd, &q.x, &q.y, &q.z, &life, &v.x, &v.y, &v.z, &uid);
-					// lifeには前回の最後のライフカウントが入っている
-					//printf("[%d] %e %e %e %d %e %e %e %d\n", myRank, q.x, q.y, q.z, life, v.x, v.y, v.z, uid);
-					
-					p.pos = q;
-					p.bf  = Chunk::Activate(life);
-					p.vel = v;
-					p.foo = uid;
-					
-					addParticle2ChunkList(p);
-				}
-			}
-		}
-		
-		fclose(fp);
-		
-	} // restartRankFlag
-	
-	
-	int tmp = flag;
-	if ( MPI_SUCCESS != MPI_Allreduce(&tmp,
-																		&flag,
-																		1,
-																		MPI_INT,
-																		MPI_MAX,
-																		MPI_COMM_WORLD) ) return false;
-	
-	return ( flag == 0 ) ? true : false;
-}
-
-
-// #################################################################
-// @brieaf リスタート時の粒子データ読み込み(Binary)
-bool Cloud::readRestartParticleBinary()
-{
-	int flag =  0;
-	
-	if ( restartRankFlag == 1 )
-	{
-		FILE* fp;
-		char tmp_fname[80];
-		
-		sprintf( tmp_fname, "./Particle/restart_%08ld_%06d.brpt", restartStep, myRank );
-		
-		std::ifstream ifs(tmp_fname, std::ios::in | std::ios::binary);
-		if (!ifs) {
-			printf("\tCan't open %s file\n", tmp_fname);
-			flag = 1;
-		}
-		
-		unsigned step = 0;
-		unsigned npart = 0;
-		float time = 0.0;
-		particle p;
-		Vec3r q, v;
-		unsigned life, uid;
-		
-		if ( flag == 0 )
-		{
-			ifs.read((char*)&step, sizeof(unsigned));
-			ifs.read((char*)&time,	sizeof(float));
-			ifs.read((char*)&npart, sizeof(unsigned));
-			fscanf(fp, "%d", &step);
-			fscanf(fp, "%f", &time);
-			fscanf(fp, "%d", &npart);
-			
-			for (int i=0; i<npart; i++)
-			{
-				ifs.read((char*)&q.x,	sizeof(float));
-				ifs.read((char*)&q.y,	sizeof(float));
-				ifs.read((char*)&q.z,	sizeof(float));
-				ifs.read((char*)&life, sizeof(unsigned));
-				ifs.read((char*)&v.x,	sizeof(float));
-				ifs.read((char*)&v.y,	sizeof(float));
-				ifs.read((char*)&v.z,	sizeof(float));
-				ifs.read((char*)&uid, sizeof(unsigned));
-				
-				p.pos = q;
-				int b = (int)life;
-				p.bf  = Chunk::Activate(b);
-				p.vel = v;
-				p.foo = (int)uid;
-				
-				addParticle2ChunkList(p);
-			}
-		}
-		
-		ifs.close();
-		
-	} // restartRankFlag
-	
-	
-	int tmp = flag;
-	if ( MPI_SUCCESS != MPI_Allreduce(&tmp,
-																		&flag,
-																		1,
-																		MPI_INT,
-																		MPI_MAX,
-																		MPI_COMM_WORLD) ) return false;
-	
-	return ( flag == 0 ) ? true : false;
-}
-
-
-// #################################################################
-// @brieaf 粒子のchunkListへの追加
-void Cloud::addParticle2ChunkList(particle p)
-{
-	// chunkList内で粒子IDをサーチし、存在しなければ、新たなチャンクを作る
-	int check=0;
-	for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
-	{
-		// IDがあれば、追加
-		if ( p.foo == (*itr)->getUid() ) {
-			(*itr)->addParticle(p);
-			check=1;
-			break;
-		}
-	}
-	
-	// uidのチャンクが存在しない場合
-	if (check==0)
-	{
-		Chunk* m = new Chunk(p,
-												 EmitStart,
-												 myRank,
-												 EmitInterval);
-		chunkList.push_back(m);
-	}
-	
 }
