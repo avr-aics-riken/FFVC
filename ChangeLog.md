@@ -8,6 +8,9 @@
 
 ## REVISION HISTORY
 
+---
+- 2019-9-7 Version 2.9.2
+- RestartStatistic()で圧力と温度の平均値、有次元の場合の無次元化
 
 
 ---

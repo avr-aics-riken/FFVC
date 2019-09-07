@@ -4200,6 +4200,7 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
 void FFV::getPMInterval(TextParser* tpCntl)
 {
 	string label;
+  double ct0 = 3600.0;
 	double ct=0.0;
 	
 	label = "/ApplicationControl/PM_progress_interval";
@@ -4208,10 +4209,13 @@ void FFV::getPMInterval(TextParser* tpCntl)
 	if ( tpCntl->getInspectedValue(label, ct ) )
 	{
 		if ( ct < 0.0 ) {
-			Hostonly_ stamped_printf("\tPM_progress_interval must be positive value.\n");
-			Exit(0);
+			Hostonly_ stamped_printf("\tPM_progress_interval must be positive value. set 3600 sec.\n");
+      ct = ct0;
 		}
 	}
+  else {
+    ct = ct0;
+  }
 	
 	exec_interval_pm = ct;
 }

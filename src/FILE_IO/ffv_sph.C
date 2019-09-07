@@ -1559,6 +1559,21 @@ void SPH::RestartStatistic(FILE* fp,
 
   m_CurrentStepStat = step_stat;
   m_CurrentTimeStat = time_stat;
+  
+  
+  // 有次元の場合，無次元に変換する
+  if ( C->Unit.File == DIMENSIONAL )
+  {
+    REAL_TYPE bp = ( C->Unit.Prs == Unit_Absolute ) ? C->BasePrs : 0.0;
+    U.convArrayPrsD2ND(d_ap, size, guide, bp, C->RefDensity, C->RefVelocity, flop);
+  }
+  
+  Hostonly_ printf     ("\tAveraged Pressure has read :\tAveraged step=%d  time=%e [%s]\n",
+                        m_CurrentStepStat, m_CurrentTimeStat, (C->Unit.File == DIMENSIONAL)?"sec.":"-");
+  Hostonly_ fprintf(fp, "\tAveraged Pressure has read :\tAveraged step=%d  time=%e [%s]\n",
+                    m_CurrentStepStat, m_CurrentTimeStat, (C->Unit.File == DIMENSIONAL)?"sec.":"-");
+  
+  
 
   if ( DFI_IN_VELA->ReadData(d_wv,
                              m_RestartStep,
@@ -1580,7 +1595,7 @@ void SPH::RestartStatistic(FILE* fp,
 
   RF->copyV00(u0);
 
-
+  // indexの変換と無次元化
   fb_vin_nijk_(d_av, size, &guide, d_wv, u0, &refv, &flop);
 
   if ( (step_stat != m_CurrentStepStat) || (time_stat != m_CurrentTimeStat) ) // 圧力とちがう場合
@@ -1594,7 +1609,7 @@ void SPH::RestartStatistic(FILE* fp,
   // Temperature
   if ( C->isHeatProblem() )
   {
-    if ( DFI_IN_TEMPA->ReadData(d_ae,
+    if ( DFI_IN_TEMPA->ReadData(d_ws,
                                 m_RestartStep,
                                 guide,
                                 G_size,
@@ -1606,7 +1621,7 @@ void SPH::RestartStatistic(FILE* fp,
                                 step_stat,
                                 time_stat) != CDM::E_CDM_SUCCESS ) Exit(0);
 
-    if ( d_ae == NULL ) Exit(0);
+    if ( d_ws == NULL ) Exit(0);
 
     if ( (step_stat != m_CurrentStepStat) || (time_stat != m_CurrentTimeStat) )
     {
@@ -1614,6 +1629,8 @@ void SPH::RestartStatistic(FILE* fp,
       Hostonly_ fprintf(fp, "\n\tTime stamp is different between files\n");
       Exit(0);
     }
+    
+    U.convArrayTmp2IE(d_ae, size, guide, d_ws, d_bcd, mat_tbl, C->BaseTemp, C->DiffTemp, C->Unit.File, flop);
   }
 }
 
