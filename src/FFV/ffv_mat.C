@@ -16,21 +16,23 @@
 #include "ffv_mat.h"
 #include "ffv_LSfunc.h"
 
-bool matA::outArrayInt(int* src)
+// #################################################################
+bool matA::outArrayInt(int* src, const REAL_TYPE cs, char* fname)
 {
   if (!gatherArray(SndBfI, src, RcvBfI, g_bp, MPI_INT)) return false;
 
   Hostonly_
   {
-    REAL_TYPE cm=0.0; // incompressible
-    write_mat_(G_size, pitch, g_bp, &cm);
+    REAL_TYPE cm = cs;
+    write_mat_(G_size, pitch, g_bp, &cm, fname);
   }
 
   return true;
 }
 
 
-bool matA::outArrayReal(REAL_TYPE* src)
+// #################################################################
+bool matA::outArrayReal(REAL_TYPE* src, char* fname)
 {
   MPI_Datatype data_type;
   data_type = MPI_FLOAT;
@@ -43,7 +45,7 @@ bool matA::outArrayReal(REAL_TYPE* src)
 
   Hostonly_
   {
-    write_rhs_(G_size, g_rhs, g_bp);
+    write_rhs_(G_size, g_rhs, g_bp, fname);
   }
 
   return true;
@@ -94,6 +96,11 @@ bool matA::prep(double &memory)
                                    0,
                                    MPI_COMM_WORLD) ) return false;
 
+  }
+  else
+  {
+    sd_sz = size;
+    sd_hd = head;
   }
 
 

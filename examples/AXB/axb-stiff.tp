@@ -2,12 +2,15 @@
 ApplicationControl {
   CheckParameter = "off"
   DryRunBC       = "off"
-  Operator       = "Kenji_Ono"
+  Operator       = "keno"
 }
 
 AXB {
-  Func = "off"
+	func = "on"
+	interval  = 10
+	threshold = 2000
 }
+
 
 BcTable {
 
@@ -19,7 +22,7 @@ BcTable {
       Type        = "fixed"
       Medium      = "fe"
     }
-
+/*
     slideWall {
       kind              = "outer"
       class             = "wall"
@@ -29,6 +32,20 @@ BcTable {
       Velocity          = 1.0
       Medium            = "fe"
     }
+*/
+    CompWall {
+      kind              = "outer"
+      class             = "SpecifiedVelocity"
+      Profile           = "harmonic"
+      OrientationVector = (0.0, 0.0, -1.0)
+      Velocity          = 1.0
+      Amplitude         = 5.0
+      Frequency         = 2.0
+      InitialPhase      = 0.0
+      ConstantBias      = 0.0
+      Medium            = "air"
+    }
+    
 /*
     inlet_1 {
       class       = "SpecifiedVelocity"
@@ -50,7 +67,7 @@ BcTable {
     Yminus = "outerWall"
     Yplus  = "outerWall"
     Zminus = "outerWall"
-    Zplus  = "slideWall"
+    Zplus  = "compWall"
   }
 }
 
@@ -68,7 +85,7 @@ DomainInfo {
   GlobalVoxel    = (64   , 64   , 64   )
 
   //GlobalPitch    = (1.5625e-02, 1.5625e-02, 1.5625e-02)
-  //GlobalDivision = (2    , 1    , 1    )
+  //GlobalDivision = (1    , 1    , 1    )
 }
 
 
@@ -87,7 +104,8 @@ GeometryModel {
 
 
 GoverningEquation {
-  FlowEquation       = "Incompressible"
+  //FlowEquation       = "Incompressible"
+  FlowEquation       = "LimitedCompressibility"
   HeatEquation       = "FlowOnly"
   Buoyancy           = "NoBuoyancy"
   TimeVariation      = "Unsteady"
@@ -295,7 +313,7 @@ Output {
 
     BasicVariables {
       TemporalType   = "step"
-      Interval       = 100
+      Interval       = 20
 
       TotalPressure  = "Off"
       Helicity       = "Off"
@@ -310,7 +328,6 @@ Output {
       VelocityStat    = "Off"
       PressureStat    = "Off"
       TemperatureStat = "Off"
-      ReynoldsStress  = "off"
     }
   }
 
@@ -387,18 +404,18 @@ StartCondition {
 TimeControl {
   Acceleration {
     TemporalType     = "Time"
-    AcceleratingTime = 0.0
+    AcceleratingTime = 1.0
   }
 
   TimeStep {
     Mode           = "CFLReferenceVelocity"
-    DeltaT         = 0.2
+    DeltaT         = 0.1
   }
 
   Session {
     TemporalType   = "step"
     Start          = 0    // 0 or 0.0の場合initial start
-    End            = 10000
+    End            = 800
     //restartStep    = 31
   }
 
@@ -425,61 +442,24 @@ Unit {
 ParticleTracking {
   Tracking      = "off"
   Method        = "euler"
-  StartEmit     = 0
+  StartEmit     = 1000
   EmitInterval  = 5
+  OutInterval   = 50
   EmitLife      = -1
-  file_format   = "ascii" // binary
-  OutInterval   = 100
+  file_format   = "binary"
 
-
-  list[@] {
-    type         = "Line"
-    label        = "grp1"
-    Division     = 20
-    From         = (-0.49, -0.49, 0.49)
-    To           = (-0.49, 0.49, 0.49)
-  }
-
-  list[@] {
-    type         = "Line"
-    label        = "grp2"
-    Division     = 40
-    From         = (-0.1, 0.001, -0.49)
-    To           = (-0.1, 0.001, 0.49)
-  }
-
-/*
-  list[@] {
-    type       = "pointset"
-    StartStep  = 0
-    Interval   = 10
-    label      = "grp2"
-    lifetime   = -1
-
-    set[@] {
-      Coordinate    = (0.2, 0.2, 0.2)
-      tag           = "p1"
-    }
-    set[@] {
-      Coordinate    = (0.3, 0.3, 0.3)
-      tag           = "p2"
-    }
-    set[@] {
-      Coordinate    = (0.4, 0.4, 0.4)
-      tag           = "p3"
-    }
+  restart {
+    Step        = 0
+    Format      = "ascii"
   }
 
   list[@] {
     type       = "Disc"
-    StartStep  = 0
-    Interval   = 10
     label      = "grp3"
-    lifetime   = -1
-    center     = (0.5, 1.0, -0.3)
-    normal     = (-1.0, 0.0, 0.0)
-    radius     = 0.02
-    nSample    = 50
+    center     = (0.04, 0.01, 0.171166)
+    normal     = (1.0, 0.0, 0.0)
+    radius     = 0.005
+    nSample    = 500
   }
-*/
+
 }

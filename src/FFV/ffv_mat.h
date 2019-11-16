@@ -34,13 +34,14 @@ using namespace std;
 class matA : public DomainInfo {
 
 private:
+  bool exist;           ///< 初回のみを保証するフラグ
   int szRcvBf;          ///< 受信バッファのサイズ
   int szSndBf;          ///< 送信バッファのサイズ
   REAL_TYPE* SndBfR;    ///< 送信バッファ
   REAL_TYPE* RcvBfR;    ///< 受信バッファ
   int* SndBfI;          ///< 送信バッファ
   int* RcvBfI;          ///< 受信バッファ
-  int Maxlsz;            ///< ローカル配列の最大サイズ
+  int Maxlsz;           ///< ローカル配列の最大サイズ
 
   // ローカル
   int* l_bp;             ///< ビット行列
@@ -56,6 +57,7 @@ private:
 public:
   /** コンストラクタ */
   matA() {
+    exist = false;
     Maxlsz = 0;
     szSndBf = 0;
     szRcvBf = 0;
@@ -84,9 +86,17 @@ public:
 
   bool prep(double &memory);
 
-  bool outArrayInt(int* src);
+  bool outArrayInt(int* src, const REAL_TYPE cs, char* fname);
 
-  bool outArrayReal(REAL_TYPE* src);
+  bool outArrayReal(REAL_TYPE* src, char* fname);
+  
+  void existOn() {
+    exist = true;
+  }
+  
+  bool isExist() {
+    return exist;
+  }
 
 
 private:
@@ -175,7 +185,7 @@ private:
         for (int j=0; j<G_size[1]; j++) {
           for (int i=0; i<G_size[0]; i++) {
             T s = dst[k*G_size[0]*G_size[1] + j*G_size[0] + i];
-            if ( s != 0.0 ) printf("%d %d %d %e\n", i,j,k,s);
+            if ( s != 0.0 ) printf("%d %d %d %e\n", i,j,k,(double)s);
           }
         }
       }

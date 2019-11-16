@@ -3144,6 +3144,15 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
         }
         V.setOBC(face, id, ptr_cmp, "solid", d_bcd, d_cut, d_bid);
         break;
+        
+      case OBC_SPEC_VEL:
+        if (mat[id].getState() != FLUID)
+        {
+          Hostonly_ printf("Specified medium in '%s' is not SOLID or not listed.\n", m_obc->alias.c_str());
+          Exit(0);
+        }
+        V.setOBC(face, id, ptr_cmp, "fluid", d_bcd, d_cut, d_bid);
+        break;
 
       case OBC_INTRINSIC:
         Ex->setOBC(face, d_bcd, &C, G_origin, C.NoCompo, mat, d_cut, d_bid);

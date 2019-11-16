@@ -9,6 +9,23 @@
 ## REVISION HISTORY
 
 ---
+- 2019-11-14 Version 2.9.4 scheduled
+- Cloud class 総放出粒子数の制限
+- 粒子リスタート時に新規粒子放出の場合、ファイルが出力されない問題
+
+---
+- 2019-11-16 Version 2.9.3
+AXB 時系列吐き出し
+Control.C : AXBのパラメータロードと表示追加
+Control.h : struct AXB_param 追加
+NS_FS_E_Binary.C : axb 書き出し処理の場所を移動、タイミング処理追加
+ffv_Initialize.C : L3146 OBC_SPEC_VELを追加
+ffv_mat.C : ファイル名追加
+ffv_mat.h/C : exist flag追加
+ffv_SOR.f90 : ファイル名追加
+example/axb/axb-stiff.tp 追加
+
+---
 - 2019-9-7 Version 2.9.2
 - RestartStatistic()で圧力と温度の平均値、有次元の場合の無次元化
 
@@ -174,7 +191,14 @@
 ---
 - 2018-11-06 Version 2.5.8
   - AXBの係数書き出し
-
+    ffv_LSfunc.h
+    ffv_SOR.f90
+      write_mat_()
+      write_rhs_()
+  Control.C/h
+      getAXB()
+      isAXB()
+  ffv_mat.h/C
 
 ---
 - 2018-09-27 Version 2.5.7

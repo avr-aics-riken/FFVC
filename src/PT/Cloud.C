@@ -25,7 +25,6 @@ bool Cloud::tracking(const unsigned step, const double time)
   // 指定時刻が過ぎ、処理ステップになった場合
   if ( Interval.isStarted(step, time) )
   {
-    mark();
     TIMING_start("PT_Tracking");
     for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
     {
@@ -1432,7 +1431,7 @@ bool Cloud::write_ascii(const unsigned step, const double time)
   
   if ( !(fp=fopen(tmp_fname, "w")) )
   {
-    stamped_printf("\tSorry, can't open 'pt_log.txt' file. Write failed.\n");
+    stamped_printf("\tSorry, can't open '%s' file. Write failed.\n", tmp_fname);
     return false;
   }
   
@@ -1465,7 +1464,7 @@ bool Cloud::write_filelist(const unsigned step)
   
   if ( !(fp=fopen(tmp_fname, "a")) )
   {
-    stamped_printf("\tSorry, can't open 'pt_file_xxx.txt' file. Write failed.\n");
+    stamped_printf("\tSorry, can't open 'pt_files_xxx.txt' file. Write failed.\n");
     return false;
   }
   
@@ -1517,7 +1516,7 @@ bool Cloud::write_binary(const unsigned step, const double time)
   
   std::ofstream ofs(tmp_fname, std::ios::out | std::ios::binary);
   if (!ofs) {
-    printf("\tCan't open %s file\n", tmp_fname);
+    printf("\tCan't open '%s' file\n", tmp_fname);
     return false;
   }
   

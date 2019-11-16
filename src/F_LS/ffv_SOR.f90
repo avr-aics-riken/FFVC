@@ -679,9 +679,10 @@ end subroutine sma_comm_wait
 !! @param [in]     dh   格子幅
 !! @param [in]     bp   BCindex P
 !! @param [in]     cm   Limited Compressibilityのときの係数
+!! @param [in]     fname ファイル名
 !! @note Activeマスクの位置は，固体中のラプラス式を解くように，更新式にはかけず残差のみにする
 !<
-subroutine write_mat (sz, dh, bp, cm)
+subroutine write_mat (sz, dh, bp, cm, fname)
 implicit none
 include 'ffv_f_params.h'
 integer                                 ::  i, j, k, ix, jx, kx, idx
@@ -694,6 +695,7 @@ real                                    ::  r_xx, r_xy, r_xz, r_x2, r_y2, r_z2
 real                                    ::  cm, cf
 real, dimension(3)                      ::  dh
 integer, dimension(sz(1), sz(2), sz(3)) ::  bp
+character*80                            ::  fname
 
 ix = sz(1)
 jx = sz(2)
@@ -707,7 +709,7 @@ r_y2 = r_xy * r_xy
 r_z2 = r_xz * r_xz
 cf = cm * cm
 
-OPEN(unit=1,FILE='matrix.txt', FORM='FORMATTED', STATUS='UNKNOWN')
+OPEN(unit=1,FILE=fname, FORM='FORMATTED', STATUS='UNKNOWN')
 
 m = 1
 
@@ -776,21 +778,23 @@ end subroutine write_mat
 !! @param [in]     sz   グローバル配列長
 !! @param [in]     b    RHS vector
 !! @param [in]     bp   BCindex P
+!! @param [in]     fname ファイル名
 !! @note Activeマスクの位置は，固体中のラプラス式を解くように，更新式にはかけず残差のみにする
 !<
-subroutine write_rhs (sz, b, bp)
+subroutine write_rhs (sz, b, bp, fname)
 implicit none
 include 'ffv_f_params.h'
 integer                                 ::  i, j, k, ix, jx, kx, idx
 integer, dimension(3)                   ::  sz
 real, dimension(sz(1), sz(2), sz(3))    ::  b
 integer, dimension(sz(1), sz(2), sz(3)) ::  bp
+character*80                            ::  fname
 
 ix = sz(1)
 jx = sz(2)
 kx = sz(3)
 
-OPEN(unit=1,FILE='rhs.txt', FORM='FORMATTED', STATUS='UNKNOWN')
+OPEN(unit=1,FILE=fname, FORM='FORMATTED', STATUS='UNKNOWN')
 
 do k=1,kx
 do j=1,jx

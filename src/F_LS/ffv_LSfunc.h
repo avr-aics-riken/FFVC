@@ -135,11 +135,13 @@ extern "C" {
   void write_mat_     (int* sz,
                        REAL_TYPE* dh,
                        int* bp,
-                       REAL_TYPE* cm);
+                       REAL_TYPE* cm,
+                       char* fname);
 
   void write_rhs_     (int* sz,
                        REAL_TYPE* b,
-                       int* bp);
+                       int* bp,
+                       char* fname);
 
   //***********************************************************************************************
   // ffv_blas.f90

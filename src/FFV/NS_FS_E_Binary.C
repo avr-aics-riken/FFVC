@@ -429,30 +429,7 @@ void FFV::NS_FS_E_Binary()
   // <<< Poisson Source section
 
 
-  /////////////////////////////////////////
-  // 係数行列の書き出しモード
-  if (C.isAXB())
-  {
-    A.importCPM  (paraMngr);
-    A.setRankInfo(paraMngr, procGrp);
-    A.setDomainInfo(C.guide, C.RefLength);
-    double memory=0.0;
 
-    A.prep(memory);
-
-    double G_memory= memory;
-    displayMemoryInfo(stdout, G_memory, memory, "AXB");
-
-    //  係数行列
-    if ( !A.outArrayInt(d_bcp) ) exit(0);
-
-    // 右辺項
-    if ( !A.outArrayReal(d_b) ) exit(0);
-
-    Hostonly_ printf("matrix A and RHS are written.\n");
-    exit(0);
-  }
-  /////////////////////////////////////////
 
   // VP-Iteration
   // >>> Poisson Iteration section
@@ -498,7 +475,8 @@ void FFV::NS_FS_E_Binary()
         Exit(0);
         break;
     }
-
+    
+    
 
     // スカラポテンシャルによる射影と速度の発散の計算 d_dvはdiv(u)のテンポラリ保持に利用
     TIMING_start("Projection_Velocity");
@@ -640,8 +618,47 @@ void FFV::NS_FS_E_Binary()
     if ( DivC.divergence <= DivC.divEPS ) break;
   }
 
+  
+  /////////////////////////////////////////
+  // 係数行列の書き出しモード
+  if (C.isAXB())
+  {
+    // 初回のみ実行
+    if ( !A.isExist() ) {
+      A.importCPM  (paraMngr);
+      A.setRankInfo(paraMngr, procGrp);
+      A.setDomainInfo(C.guide, C.RefLength);
+      double memory=0.0;
 
-  // 総反復回数を代入
+      if ( !A.prep(memory) ) exit(0);
+
+      double G_memory= memory;
+      displayMemoryInfo(stdout, G_memory, memory, "AXB");
+      
+      // １回実行されたことを記憶
+      A.existOn();
+    }
+
+    if ( (CurrentStep/C.axb.interval)*C.axb.interval==CurrentStep ||
+        loop_p > C.axb.threshold)
+    {
+      char tmp_fname[80];
+      //  係数行列
+      sprintf( tmp_fname, "matrix_%08ld.txt", CurrentStep);
+      if ( !A.outArrayInt(d_bcp, ltd_c, tmp_fname) ) exit(0);
+
+      // 右辺項
+      sprintf( tmp_fname, "rhs_%08ld.txt", CurrentStep);
+      if ( !A.outArrayReal(d_b, tmp_fname) ) exit(0);
+
+      Hostonly_ printf("matrix A and RHS are written at %08ld step.\n", CurrentStep);
+    }
+
+  }
+  /////////////////////////////////////////
+
+  
+  // divergenceの反復回数を代入
   DivC.Iteration = loop_vp;
 
 

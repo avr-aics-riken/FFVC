@@ -625,15 +625,16 @@ void Control::getAXB()
 {
   string str;
   string label;
+  double ct=0.0;
 
-  label = "/ApplicationControl/AXB";
+  label = "/AXB/func";
 
   if ( tpCntl->chkLabel(label) )
   {
     if ( tpCntl->getInspectedValue(label, str) )
     {
-      if     ( !strcasecmp(str.c_str(), "on") )  Hide.AXB = ON;
-      else if( !strcasecmp(str.c_str(), "off") ) Hide.AXB = OFF;
+      if     ( !strcasecmp(str.c_str(), "on") )  axb.func = ON;
+      else if( !strcasecmp(str.c_str(), "off") ) axb.func = OFF;
       else
       {
         Hostonly_ stamped_printf("\tInvalid keyword is described for '%s'\n", label.c_str());
@@ -645,6 +646,25 @@ void Control::getAXB()
       Exit(0);
     }
   }
+  if (axb.func==OFF) return;
+  
+  label = "/AXB/interval";
+
+  if ( !(tpCntl->getInspectedValue(label, ct )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  axb.interval = (int)ct;
+  
+  label = "/AXB/threshold";
+
+  if ( !(tpCntl->getInspectedValue(label, ct )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
+    Exit(0);
+  }
+  axb.threshold = (int)ct;
 }
 
 
@@ -3146,6 +3166,16 @@ void Control::printSteerConditions(FILE* fp,
   if (Hide.Range_Limit == Range_Cutoff)
   {
     fprintf(fp,"\t     Variable Range           :   Limit value between [0,1] in normalized value\n");
+  }
+  
+  
+  // AXB -------------------
+  fprintf(fp,"\n\tOutput of coefficients Ax=b\n");
+  fprintf(fp,"\t\tOutput mode              : %s\n", (axb.func==OFF)?"OFF":"ON");
+  if (axb.func==ON)
+  {
+    fprintf(fp,"\t\tInterval                 : %8d\n", axb.interval);
+    fprintf(fp,"\t\tThreashold               : %8d\n", axb.threshold);
   }
 
   fflush(fp);

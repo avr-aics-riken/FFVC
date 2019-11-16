@@ -303,9 +303,15 @@ public:
     int GeomOutput;
     int GlyphOutput;
     int DryRun;
-    int AXB;
   } Hidden_Parameter;
 
+  // AXB係数書き出しオプション
+  typedef struct
+  {
+    int func;
+    int interval;
+    int threshold;
+  } AXB_param;
 
   /** LESパラメータ */
   typedef struct
@@ -539,6 +545,7 @@ public:
   Ens_of_Compo      EnsCompo;
   Driver_Def        drv;
   Stability_Control Stab;
+  AXB_param         axb;
 
   // class
   IntervalManager Interval[tg_END];  ///< タイミング制御
@@ -609,6 +616,10 @@ public:
     iv.Density     = 0.0;
     iv.Energy      = 0.0;
     iv.Pressure    = 0.0;
+    
+    axb.func = -1;
+    axb.interval = -1;
+    axb.threshold = -1;
 
     Mode.Statistic = 0;
     Mode.StatisticRestart = 0;
@@ -649,7 +660,6 @@ public:
     Hide.GeomOutput = OFF;
     Hide.GlyphOutput = OFF;
     Hide.DryRun = OFF;
-    Hide.AXB = OFF;
 
 
     Stab.control = OFF;
@@ -785,7 +795,7 @@ public:
 
   // 係数行列の書き出し
   void getAXB();
-  bool isAXB() {return (Hide.AXB==ON)?true:false;}
+  bool isAXB() {return (axb.func==ON)?true:false;}
 
   // 粒子追跡のオプション
   void getParticleTracking();
