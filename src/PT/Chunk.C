@@ -82,14 +82,14 @@ void Chunk::packParticle(REAL_TYPE* ps_buf,
 // @brief pchunkに保持している粒子を積分し、マイグレーションと寿命判定
 // @param [in]  tr           Trackingクラスオブジェクトポインタ
 // @param [in]  scheme       積分方法の指定
-// @param [in]  life         粒子生存カウント
+// @param [in]  lifeLimit    粒子生存上限 (-1のとき、制限無し）
 // @param [in]  dt           積分幅
 // @param [in]  Rmap         3ｘ3の隣接ランクマップ
 // @param [out] nOut         領域外へ出た粒子数
 // @param [out] nPass        壁を通過した粒子数
 int Chunk::updatePosition(Tracking* tr,
                           const int scheme,
-                          const int life,
+                          const int lifeLimit,
                           const REAL_TYPE dt,
                           const int* Rmap,
                           int& nOut,
@@ -162,12 +162,12 @@ int Chunk::updatePosition(Tracking* tr,
       //printf("%f %f %f %d : %d %d %d\n", v.x, v.y, v.z, flag, r.x, r.y, r.z);
       
       // 寿命制御があるとき、指定値を過ぎたら停止 >> 削除するか？
-      if (life > 0)
+      if (lifeLimit > 0)
       {
-        if ( life < getBit25( (*itr).bf) )
+        if ( lifeLimit < getBit25( (*itr).bf) )
         {
           (*itr).bf = Inactivate( (*itr).bf );
-          printf("life time\n");
+          printf("life time is over\n");
         }
       }
       
@@ -238,16 +238,16 @@ void Chunk::write_ascii(FILE* fp, const REAL_TYPE refL, const REAL_TYPE refV)
     Vec3r v = (*itr).vel;
     int b   = (*itr).bf;
     int foo = (*itr).foo;
-    fprintf(fp,"%d %e %e %e %d %e %e %e %d\n",
+    fprintf(fp,"%d %e %e %e %e %e %e %d %d\n",
                BIT_SHIFT(b, ACTIVE_BIT),
                p.x * refL,
                p.y * refL,
                p.z * refL,
-               getBit25(b),
                v.x * refV,
                v.y * refV,
                v.z * refV,
-               foo
+               foo,
+               getBit25(b)
             );
   }
   fprintf(fp,"\n");
@@ -273,18 +273,18 @@ void Chunk::write_binary(std::ofstream &ofs, const REAL_TYPE refL, const REAL_TY
 		Vec3r p = (*itr).pos * refL;
 		Vec3r v = (*itr).vel * refV;
 		int b   = (*itr).bf;
-		int uid = (*itr).foo;
+		int lid = (*itr).foo;
 		int actv= BIT_SHIFT(b, ACTIVE_BIT);
-		unsigned lc = getBit25(b);
+		int lc = getBit25(b);
 		
 		ofs.write((char*)&actv, sizeof(int));
 		ofs.write((char*)&p.x, sizeof(REAL_TYPE));
 		ofs.write((char*)&p.y, sizeof(REAL_TYPE));
 		ofs.write((char*)&p.z, sizeof(REAL_TYPE));
-		ofs.write((char*)&lc, sizeof(unsigned));
 		ofs.write((char*)&v.x, sizeof(REAL_TYPE));
 		ofs.write((char*)&v.y, sizeof(REAL_TYPE));
 		ofs.write((char*)&v.z, sizeof(REAL_TYPE));
-		ofs.write((char*)&uid, sizeof(int));
+		ofs.write((char*)&lid, sizeof(int));
+    ofs.write((char*)&lc, sizeof(int));
 	}
 }

@@ -37,7 +37,7 @@ macro (AddOptimizeOption)
      set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -Cpp -Kfast,ocl,preex,simd=2,array_private,parallel,optmsg=2 -V -Qt")
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -std=c++11")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -Wall")
     set(CMAKE_Fortran_FLAGS "-O3 -cpp -Wall --free-line-length-none")
 
@@ -47,7 +47,7 @@ macro (AddOptimizeOption)
     set(CMAKE_Fortran_FLAGS "-xHOST -O3 -Warn unused -fpp -qopt-report=5")
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "PGI")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fast -Mipa=fast,inline -O4 -Minfo=intensity,vect -cpp=mm")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fast -Mipa=fast,inline -O4 -Minfo=intensity,vect -cpp=mm -std=c++11")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fast -Mipa=fast,inline -O4 -Minfo=intensity,vect -cpp=mm")
     set(CMAKE_Fortran_FLAGS "-fast -Mipa=fast,inline -O4 -Minfo=intensity,vect -cpp=mm")
 

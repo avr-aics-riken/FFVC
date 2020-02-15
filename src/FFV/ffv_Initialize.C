@@ -335,7 +335,6 @@ int FFV::Initialize(int argc, char **argv)
 
 
 
-
   // 体積率コンポーネントの配列確保
   if ( C.EnsCompo.fraction )
   {
@@ -491,7 +490,6 @@ int FFV::Initialize(int argc, char **argv)
   }
 
 
-
 // ##########
 #if 0
   write_distance(cut);
@@ -633,8 +631,8 @@ int FFV::Initialize(int argc, char **argv)
 
   // CellIDとBCflagの出力 (guide cell=0)
   // 戻り値：全セルが同じ値cの場合にはcの値が戻り、異なるセルの値が存在する場合には-1
-  int id_cell = F->writeCellID(0);
-  int id_bcf  = F->writeBCflag(0);
+  int id_cell = 0; //F->writeCellID(0);
+  int id_bcf  = 0; //F->writeBCflag(0);
 
   // 出力ファイルの初期化
   F->initFileOut(id_cell, id_bcf);
@@ -708,6 +706,7 @@ int FFV::Initialize(int argc, char **argv)
   displayMemoryInfo(stdout, G_TotalMemory, TotalMemory, "Solver");
 
 
+
   // 粒子追跡 ------------------
   Hostonly_ {
     fprintf(fp,"\n----------\n\n");
@@ -730,7 +729,6 @@ int FFV::Initialize(int argc, char **argv)
     TR->importCPM(paraMngr);
     TR->setRankInfo(paraMngr, procGrp);
     TR->setDomainInfo(C.guide, C.RefLength);
-    TR->initCloud(fp);
     if ( !TR->initCloud(fp) ) return 0;
   }
   else
@@ -743,6 +741,7 @@ int FFV::Initialize(int argc, char **argv)
 
 
   TIMING_stop("Initialization_Section");
+
 
   // チェックモードの場合のコメント表示，前処理のみで中止---------------------------------------------------------
   if ( C.CheckParam == ON)
@@ -3016,6 +3015,7 @@ void FFV::setInitialCondition()
       if ( paraMngr->BndCommS3D(d_p, size[0], size[1], size[2], guide, guide, procGrp) != CPM_SUCCESS ) Exit(0);
     }
   }
+
 
   // VOF
   if ( C.BasicEqs == INCMP_2PHASE )

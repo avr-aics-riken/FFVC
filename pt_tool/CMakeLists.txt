@@ -8,6 +8,7 @@
 # Install files
 
 install(FILES
-        npt2scat.py
+        xpt2scat.py
+        scat2scab.py
         DESTINATION pt_tool
 )

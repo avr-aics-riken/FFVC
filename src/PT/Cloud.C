@@ -274,7 +274,7 @@ void Cloud::unpackParticle()
   {
     const int cnt = pInfo[2*i+1] ;  // 受信粒子数
     
-    int b, uid;
+    int b, lid;
     Vec3r pos;
     Vec3r v;
     particle p;
@@ -290,12 +290,12 @@ void Cloud::unpackParticle()
         v.y   = pr_buf[bsz6*i + 6*j+4];
         v.z   = pr_buf[bsz6*i + 6*j+5];
         b     = br_buf[bsz2*i + 2*j+0];
-        uid   = br_buf[bsz2*i + 2*j+1];
+        lid   = br_buf[bsz2*i + 2*j+1];
         
         p.pos = pos;
         p.bf  = Chunk::removeMigrate(b);
         p.vel = v;
-        p.foo = uid;
+        p.foo = lid;
         
         addParticle2ChunkList(p);
       }
@@ -1335,6 +1335,7 @@ void Cloud::displayParam(FILE* fp)
     fprintf(fp,"\tStart step          : %d\n",EmitStart);
     fprintf(fp,"\tEmitInterval        : %d\n",EmitInterval);
     fprintf(fp,"\tLife time           : %d\n",EmitLife);
+    fprintf(fp,"\tFile format         : %s\n", (out_format==0)? "ASCII":"BINARY");
     
     for (int i=0; i<nGrpEmit; i++)
     {
@@ -1628,7 +1629,7 @@ bool Cloud::readRestartParticleAscii()
     
     if ( !(fp=fopen(tmp_fname, "r")) )
     {
-      printf("\tSorry, can't open '%s' file.\n");
+      printf("\tSorry, can't open '%s' file.\n", tmp_fname);
       flag = 1;
     }
     
@@ -1648,7 +1649,8 @@ bool Cloud::readRestartParticleAscii()
       {
         particle p;
         Vec3r q, v, e;
-        int life, uid, np, dd, sorg, semit, ch;
+        int lid, np, dd, sorg, semit, ch;
+        int life;
         
         fscanf(fp, "%s %s %d", buf, buf, &ch);            // chunk no
         fscanf(fp, "%s %d", buf, &np);                    // particle
@@ -1660,15 +1662,15 @@ bool Cloud::readRestartParticleAscii()
         
         for (int i=0; i<np; i++)
         {
-          fscanf(fp, "%d %e %e %e %d %e %e %e %d",
-                 &dd, &q.x, &q.y, &q.z, &life, &v.x, &v.y, &v.z, &uid);
+          fscanf(fp, "%d %e %e %e %e %e %e %d %d",
+                 &dd, &q.x, &q.y, &q.z, &v.x, &v.y, &v.z, &lid, &life);
           // lifeには前回の最後のライフカウントが入っている
-          //printf("[%d] %e %e %e %d %e %e %e %d\n", myRank, q.x, q.y, q.z, life, v.x, v.y, v.z, uid);
+          //printf("[%d] %e %e %e %d %e %e %e %d\n", myRank, q.x, q.y, q.z, life, v.x, v.y, v.z, lid);
           
           p.pos = q;
           p.bf  = Chunk::Activate(life);
           p.vel = v;
-          p.foo = uid;
+          p.foo = lid;
           
           addParticle2ChunkList(p);
         }
@@ -1716,7 +1718,7 @@ bool Cloud::readRestartParticleBinary()
     float time = 0.0;
     particle p;
     Vec3r q, v;
-    unsigned life, uid;
+    int life, lid;
     
     if ( flag == 0 )
     {
@@ -1732,17 +1734,17 @@ bool Cloud::readRestartParticleBinary()
         ifs.read((char*)&q.x,  sizeof(float));
         ifs.read((char*)&q.y,  sizeof(float));
         ifs.read((char*)&q.z,  sizeof(float));
-        ifs.read((char*)&life, sizeof(unsigned));
         ifs.read((char*)&v.x,  sizeof(float));
         ifs.read((char*)&v.y,  sizeof(float));
         ifs.read((char*)&v.z,  sizeof(float));
-        ifs.read((char*)&uid, sizeof(unsigned));
+        ifs.read((char*)&lid,  sizeof(int));
+        ifs.read((char*)&life, sizeof(int));
         
         p.pos = q;
-        int b = (int)life;
+        int b = life;
         p.bf  = Chunk::Activate(b);
         p.vel = v;
-        p.foo = (int)uid;
+        p.foo = lid;
         
         addParticle2ChunkList(p);
       }

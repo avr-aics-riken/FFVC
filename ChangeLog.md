@@ -5,29 +5,54 @@
 - 粒子データ送信　MPI_Type_create_struct
 - mkdir をCDMlibから移植
 
+- Cloud class 総放出粒子数の制限
+- 粒子リスタート時に新規粒子放出の場合、ファイルが出力されない問題
+
 
 ## REVISION HISTORY
 
 ---
-- 2019-11-14 Version 2.9.4 scheduled
-- Cloud class 総放出粒子数の制限
-- 粒子リスタート時に新規粒子放出の場合、ファイルが出力されない問題
+- 2020-02-14 Version 2.9.4
+  - 粒子出力並び変更 [x,y,z,life,u,v,w,id] >> [x,y,z,u,v,w,id,life]
+  - type of life, lid >> int
+  - CompileOptionSelector.cmake : -std=c++11を追加
+  - ffv_Initialize.C : 実行時エラーのため、暫定処理
+  
+  		~~~
+		int id_cell = 0; //F->writeCellID(0);
+		int id_bcf  = 0; //F->writeBCflag(0);
+	   	~~~
 
+  - ffv_vbc_outer_face.f90 : OpenMPディレクティブの修正
+  	- Collapse(2)とPRIVATEの変数を削除
+
+  		~~~
+  		!$OMP PARALLEL &
+    	!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc, v_bc, w_bc, face) &
+    	!$OMP PRIVATE(a)
+    	!$OMP DO SCHEDULE(static) PRIVATE(j, k) COLLAPSE(2)
+    	>>>
+    	!$OMP PARALLEL
+    	!$OMP DO SCHEDULE(static) PRIVATE(j, k) 
+  		~~~
+  
+  - xpt2scat.py ver 1.4
+  
 ---
 - 2019-11-16 Version 2.9.3
-AXB 時系列吐き出し
-Control.C : AXBのパラメータロードと表示追加
-Control.h : struct AXB_param 追加
-NS_FS_E_Binary.C : axb 書き出し処理の場所を移動、タイミング処理追加
-ffv_Initialize.C : L3146 OBC_SPEC_VELを追加
-ffv_mat.C : ファイル名追加
-ffv_mat.h/C : exist flag追加
-ffv_SOR.f90 : ファイル名追加
-example/axb/axb-stiff.tp 追加
+  - AXB 時系列吐き出し
+  - Control.C : AXBのパラメータロードと表示追加
+  - Control.h : struct AXB_param 追加
+  - NS_FS_E_Binary.C : axb 書き出し処理の場所を移動、タイミング処理追加
+  - ffv_Initialize.C : L3146 OBC_SPEC_VELを追加
+  - ffv_mat.C : ファイル名追加
+  - ffv_mat.h/C : exist flag追加
+  - ffv_SOR.f90 : ファイル名追加
+  - example/axb/axb-stiff.tp 追加
 
 ---
 - 2019-9-7 Version 2.9.2
-- RestartStatistic()で圧力と温度の平均値、有次元の場合の無次元化
+  - RestartStatistic()で圧力と温度の平均値、有次元の場合の無次元化
 
 
 ---

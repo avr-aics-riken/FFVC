@@ -37,7 +37,7 @@ implicit none
 include 'ffv_f_params.h'
 integer                                                     ::  i, j, k, g, face, ix, jx, kx, m_face
 integer, dimension(3)                                       ::  sz
-real                                                        ::  u_bc, v_bc, w_bc, a
+real                                                        ::  u_bc, v_bc, w_bc
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  vf
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv
 real, dimension(3)                                          ::  vec
@@ -56,20 +56,17 @@ v_bc = vec(2)
 w_bc = vec(3)
 
 
-!$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_bc, v_bc, w_bc, face) &
-!$OMP PRIVATE(a)
+!$OMP PARALLEL
 
 FACES : select case (face)
 
 case (X_minus)
 
-!$OMP DO SCHEDULE(static) PRIVATE(j, k) COLLAPSE(2)
+!$OMP DO SCHEDULE(static) PRIVATE(j, k) 
 do k=1,kx
 do j=1,jx
 if ( ibits(bv(1, j, k), bc_face_W, bitw_5) == obc_mask ) then
-  a = u_bc * real(ibits(bv(0,j,k), State, 1)) * real(ibits(bv(1,j,k), State, 1))
-  vf(0, j, k, 1) = a
+  vf(0, j, k, 1) =  u_bc * real(ibits(bv(0,j,k), State, 1)) * real(ibits(bv(1,j,k), State, 1))
 endif
 end do
 end do
@@ -78,12 +75,11 @@ end do
 
 case (X_plus)
 
-!$OMP DO SCHEDULE(static) PRIVATE(j, k) COLLAPSE(2)
+!$OMP DO SCHEDULE(static) PRIVATE(j, k) 
 do k=1,kx
 do j=1,jx
 if ( ibits(bv(ix, j, k), bc_face_E, bitw_5) == obc_mask ) then
-  a = u_bc * real(ibits(bv(ix,j,k), State, 1)) * real(ibits(bv(ix+1,j,k), State, 1))
-  vf(ix, j, k, 1) = a
+  vf(ix, j, k, 1) = u_bc * real(ibits(bv(ix,j,k), State, 1)) * real(ibits(bv(ix+1,j,k), State, 1))
 endif
 end do
 end do
@@ -92,12 +88,11 @@ end do
 
 case (Y_minus)
 
-!$OMP DO SCHEDULE(static) PRIVATE(i, k) COLLAPSE(2)
+!$OMP DO SCHEDULE(static) PRIVATE(i, k) 
 do k=1,kx
 do i=1,ix
 if ( ibits(bv(i, 1, k), bc_face_S, bitw_5) == obc_mask ) then
-  a = v_bc * real(ibits(bv(i,0,k), State, 1)) * real(ibits(bv(i,1,k), State, 1))
-  vf(i, 0, k, 2) = a
+  vf(i, 0, k, 2) =  v_bc * real(ibits(bv(i,0,k), State, 1)) * real(ibits(bv(i,1,k), State, 1))
 endif
 end do
 end do
@@ -106,12 +101,11 @@ end do
 
 case (Y_plus)
 
-!$OMP DO SCHEDULE(static) PRIVATE(i, k) COLLAPSE(2)
+!$OMP DO SCHEDULE(static) PRIVATE(i, k)
 do k=1,kx
 do i=1,ix
 if ( ibits(bv(i, jx, k), bc_face_N, bitw_5) == obc_mask ) then
-  a = v_bc * real(ibits(bv(i,jx,k), State, 1)) * real(ibits(bv(i,jx+1,k), State, 1))
-  vf(i, jx, k, 2) = a
+  vf(i, jx, k, 2) =  v_bc * real(ibits(bv(i,jx,k), State, 1)) * real(ibits(bv(i,jx+1,k), State, 1))
 endif
 end do
 end do
@@ -120,12 +114,11 @@ end do
 
 case (Z_minus)
 
-!$OMP DO SCHEDULE(static) PRIVATE(i, j) COLLAPSE(2)
+!$OMP DO SCHEDULE(static) PRIVATE(i, j) 
 do j=1,jx
 do i=1,ix
 if ( ibits(bv(i, j ,1), bc_face_B, bitw_5) == obc_mask ) then
-  a = w_bc * real(ibits(bv(i,j,0), State, 1)) * real(ibits(bv(i,j,1), State, 1))
-  vf(i, j, 0, 3) = a
+  vf(i, j, 0, 3) =  w_bc * real(ibits(bv(i,j,0), State, 1)) * real(ibits(bv(i,j,1), State, 1))
 endif
 end do
 end do
@@ -134,12 +127,11 @@ end do
 
 case (Z_plus)
 
-!$OMP DO SCHEDULE(static) PRIVATE(i, j) COLLAPSE(2)
+!$OMP DO SCHEDULE(static) PRIVATE(i, j) 
 do j=1,jx
 do i=1,ix
 if ( ibits(bv(i, j, kx), bc_face_T, bitw_5) == obc_mask ) then
-  a = w_bc * real(ibits(bv(i,j,kx), State, 1)) * real(ibits(bv(i,j,kx+1), State, 1))
-  vf(i, j, kx, 3) = a
+  vf(i, j, kx, 3) =  w_bc * real(ibits(bv(i,j,kx), State, 1)) * real(ibits(bv(i,j,kx+1), State, 1))
 endif
 end do
 end do
@@ -186,16 +178,13 @@ face = m_face
 a = 0.0   ! sum
 
 
-!$OMP PARALLEL &
-!$OMP REDUCTION(+:a) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, face) &
-!$OMP PRIVATE(s)
+!$OMP PARALLEL REDUCTION(+:a)
 
 FACES : select case (face)
 
 case (X_minus)
 
-!$OMP DO SCHEDULE(static) PRIVATE(j, k) COLLAPSE(2)
+!$OMP DO SCHEDULE(static) PRIVATE(s,j, k)
 do k=1,kx
 do j=1,jx
   s = real(ibits(bv(0,j,k), State, 1)) * real(ibits(bv(1,j,k), State, 1))
@@ -207,7 +196,7 @@ end do
 
 case (X_plus)
 
-!$OMP DO SCHEDULE(static) PRIVATE(j, k) COLLAPSE(2)
+!$OMP DO SCHEDULE(static) PRIVATE(s,j, k)
 do k=1,kx
 do j=1,jx
   s = real(ibits(bv(ix,j,k), State, 1)) * real(ibits(bv(ix+1,j,k), State, 1))
@@ -219,7 +208,7 @@ end do
 
 case (Y_minus)
 
-!$OMP DO SCHEDULE(static) PRIVATE(i, k) COLLAPSE(2)
+!$OMP DO SCHEDULE(static) PRIVATE(s,i, k)
 do k=1,kx
 do i=1,ix
   s = real(ibits(bv(i,0,k), State, 1)) * real(ibits(bv(i,1,k), State, 1))
@@ -231,7 +220,7 @@ end do
 
 case (Y_plus)
 
-!$OMP DO SCHEDULE(static) PRIVATE(i, k) COLLAPSE(2)
+!$OMP DO SCHEDULE(static) PRIVATE(s,i, k)
 do k=1,kx
 do i=1,ix
   s = real(ibits(bv(i,jx,k), State, 1)) * real(ibits(bv(i,jx+1,k), State, 1))
@@ -243,7 +232,7 @@ end do
 
 case (Z_minus)
 
-!$OMP DO SCHEDULE(static) PRIVATE(i, j) COLLAPSE(2)
+!$OMP DO SCHEDULE(static) PRIVATE(s,i, j)
 do j=1,jx
 do i=1,ix
   s = real(ibits(bv(i,j,0), State, 1)) * real(ibits(bv(i,j,1), State, 1))
@@ -255,7 +244,7 @@ end do
 
 case (Z_plus)
 
-!$OMP DO SCHEDULE(static) PRIVATE(i, j) COLLAPSE(2)
+!$OMP DO SCHEDULE(static) PRIVATE(s,i, j)
 do j=1,jx
 do i=1,ix
   s = real(ibits(bv(i,j,kx), State, 1)) * real(ibits(bv(i,j,kx+1), State, 1))
