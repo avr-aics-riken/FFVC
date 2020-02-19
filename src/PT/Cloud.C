@@ -17,24 +17,29 @@
 // @brief ランタイム
 bool Cloud::tracking(const unsigned step, const double time)
 {
-  int mflag = 0;
-  
-  nOutPart = 0;  // 領域外へ出た粒子数
-  nPasPart = 0;  // 壁を通過した粒子数
-  
   // 指定時刻が過ぎ、処理ステップになった場合
   if ( Interval.isStarted(step, time) )
   {
+    int mflag = 0;
+    // 1ステップでの処理粒子数
+    int nOutPart = 0;     // 領域外へ出た粒子数
+    int nPassPart = 0;    // 壁を通過した粒子数
+    int nLimitPart = 0;   // 寿命が尽きた粒子数
+    int nClippedPart = 0; // クリップされた粒子数
+    int nCommPart = 0;    // マイグレーション粒子数
+    //
+    
     TIMING_start("PT_Tracking");
     for(auto itr = chunkList.begin(); itr != chunkList.end(); ++itr)
     {
       // 保持している粒子を積分し、マイグレーション準備
-      mflag += (*itr)->updatePosition(tr, scheme, EmitLife, dt, Rmap, nOutPart, nPasPart);
+      mflag += (*itr)->updatePosition(tr, scheme, EmitLife, dt, Rmap, nOutPart, nPassPart, nLimitPart,
+                                      nClippedPart, clip_dir, clip_val);
       
       // 放出タイミングで、登録した開始点から粒子を追加（マイグレーション先は除く）
       if ( Interval.isTriggered(step, time) )
       {
-        (*itr)->addParticleFromOrigin();
+        (*itr)->addParticleFromOrigin(tr, l_EmittedParticle);
       }
     }
     
@@ -99,32 +104,40 @@ bool Cloud::tracking(const unsigned step, const double time)
     } // mflag
     TIMING_stop("PT_Migration");
     
+    TIMING_start("PT_Statistics");
+    l_CurrentParticle = getNparticle();
+    
+    // nOutPart, nPasPart, nLimitPart, nClippedPart はローカルを渡し、グローバルが返る
+    if ( !PC.Statistics(nCommPart,
+                        nOutPart,
+                        nPassPart,
+                        nLimitPart,
+                        nClippedPart,
+                        l_CurrentParticle,
+                        g_CurrentParticle,
+                        l_EmittedParticle,
+                        g_EmittedParticle) ) return false;
+    
+    g_MigrateParticle += (unsigned)nCommPart;
+    g_OutParticle     += (unsigned)nOutPart;
+    g_WallParticle    += (unsigned)nPassPart;
+    g_LimitParticle   += (unsigned)nLimitPart;
+    g_ClippedParticle += (unsigned)nClippedPart;
+    g_DeletedParticle += (unsigned)(nOutPart + nLimitPart + nClippedPart);
+    TIMING_stop("PT_Statistics");
     
     // 出力
     if ( (step/OutInterval)*OutInterval == step )
     {
+      TIMING_start("PT_fileIO");
+      
       // ログ出力
-      TIMING_start("PT_Statistics");
-      nParticle = getNparticle();
-      
-      if ( !PC.Statistics(nCommParticle,
-                          nParticle,
-                          gParticle,
-                          nOutPart,
-                          nPasPart) ) return false;
-      
-      sleepParticle +=  nOutPart + nPasPart;
-      
       Hostonly_
       {
         logging(step);
       }
-      TIMING_stop("PT_Statistics");
-      
-      
-      
+
       // ファイル出力
-      TIMING_start("PT_fileIO");
       if ( out_format == 0 )
       {
         if ( !write_ascii(step, time) ) return false;
@@ -183,11 +196,23 @@ bool Cloud::initCloud(FILE* fp)
   // ログ出力
   Hostonly_
   {
-    if ( !(fpl=fopen("pt_log.txt", "w")) )
+    if ( !(fpl1=fopen("pt_log.txt", "w")) )
     {
       stamped_printf("\tSorry, can't open 'pt_log.txt' file. Write failed.\n");
       return false;
     }
+    fprintf(fpl1, "step  CurrentTotal  Migrated  Emitted  WallTrapped  Deleted  OutRegion  LifeOver  Clipped\n");
+            
+            
+    if ( !(fpl2=fopen("pt_rank_log.txt", "w")) )
+    {
+      stamped_printf("\tSorry, can't open 'pt_rank_log.txt' file. Write failed.\n");
+      return false;
+    }
+    for (int i=0; i<numProc; i++) {
+      fprintf(fpl2, "%d ", i);
+    }
+    fprintf(fpl2, "\n");
   }
   
   // 通信クラスの設定
@@ -312,21 +337,25 @@ void Cloud::unpackParticle()
 void Cloud::logging(const unsigned step)
 {
   // マイグレーションで移動した粒子数と全粒子数
-  fprintf(fpl, "step %ld migrated %d total %ld sleep %ld OutRegion %d PassWall %d\n",
-          step, nCommParticle, gParticle, sleepParticle, nOutPart, nPasPart);
+  fprintf(fpl1, "%ld  %ld  %ld  %ld  %ld  %ld  %ld  %ld  %ld\n",
+          step,
+          g_CurrentParticle,
+          g_MigrateParticle,
+          g_EmittedParticle,
+          g_WallParticle,
+          g_DeletedParticle,
+          g_OutParticle,
+          g_LimitParticle,
+          g_ClippedParticle);
+  fflush(fpl1);
   
   // 各ランク毎の粒子数
   unsigned* p = PC.nPart_ptr();
   for (int i=0; i<numProc; i++) {
-    fprintf(fpl, "%ld ", p[i]);
+    fprintf(fpl2, "%ld ", p[i]);
   }
-  fprintf(fpl,"\n");
-  
-  // Number of total particles
-  unsigned tp = nEmitParticle * (nEmission+1);
-  if (gParticle != tp) fprintf(fpl, "Number of particles must be %ld %ld\n", tp, nEmission);
-  
-  fflush(fpl);
+  fprintf(fpl2,"\n");
+  fflush(fpl2);
 }
 
 
@@ -340,7 +369,7 @@ bool Cloud::determineUniqueID()
   
   if (numProc > 1)
   {
-    unsigned sbuf = nParticle;
+    unsigned sbuf = l_CurrentParticle;
     if ( MPI_SUCCESS != MPI_Allgather(&sbuf,
                                       1,
                                       MPI_UNSIGNED,
@@ -353,11 +382,11 @@ bool Cloud::determineUniqueID()
   }
   else
   {
-    sum = nParticle;
+    sum = l_CurrentParticle;
   }
-  gParticle = sum;
+  g_CurrentParticle = sum;
   
-  Hostonly_ printf("\tGlobal # of particles  = %ld\n", gParticle);
+  Hostonly_ printf("\tGlobal # of particles  = %ld\n", g_CurrentParticle);
   
   // 各ランクのユニークIDの先頭番号
   unsigned* acc = new unsigned[numProc];
@@ -387,7 +416,7 @@ bool Cloud::determineUniqueID()
   }
   
 #ifdef PT_DEBUG
-  printf("*\trank=%d : nParticle=%d\n", myRank, nParticle);
+  printf("*\trank=%d : l_CurrentParticle=%d\n", myRank, l_CurrentParticle);
 #endif
   
   
@@ -614,6 +643,66 @@ bool Cloud::setPTinfo()
   }
   
   
+  // クリップラインの指定
+  label = label_base + "/clipline/direction";
+  
+  if ( !(tpCntl->getInspectedValue(label, str )) )
+  {
+    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+    return false;
+  }
+  else
+  {
+    if ( !strcasecmp(str.c_str(), "none") )
+    {
+      clip_dir = -1;
+    }
+    else if ( !strcasecmp(str.c_str(), "x_minus") )
+    {
+      clip_dir = X_minus;
+    }
+    else if ( !strcasecmp(str.c_str(), "x_plus") )
+    {
+      clip_dir = X_plus;
+    }
+    else if ( !strcasecmp(str.c_str(), "y_minus") )
+    {
+      clip_dir = Y_minus;
+    }
+    else if ( !strcasecmp(str.c_str(), "y_plus") )
+    {
+      clip_dir = Y_plus;
+    }
+    else if ( !strcasecmp(str.c_str(), "z_minus") )
+    {
+      clip_dir = Z_minus;
+    }
+    else if ( !strcasecmp(str.c_str(), "z_plus") )
+    {
+      clip_dir = Z_plus;
+    }
+    else
+    {
+      Hostonly_ stamped_printf("\tParsing error : invalid keyword '%s'\n", str.c_str());
+      return false;
+    }
+  }
+  
+  if ( clip_dir >= 0 ) {
+    label = label_base + "/clipline/threshold";
+    
+    if ( !(tpCntl->getInspectedValue(label, f_val )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
+      return false;
+    }
+    else
+    {
+      clip_val = (REAL_TYPE)f_val/refLen;  // 無次元
+    }
+  }
+
+  
   
   // 粒子放出開始グループ数のチェック
   int nnode=0;
@@ -679,7 +768,6 @@ bool Cloud::setPTinfo()
 #ifdef PT_DEBUG
   Hostonly_ printf("*\tnGrpEmit=%d\n", nGrpEmit);
 #endif
-  
   
   
   // リストの読み込み
@@ -779,7 +867,7 @@ bool Cloud::setPTinfo()
   } // nnode
   
   
-  nParticle = getNparticle();
+  l_CurrentParticle = getNparticle();
   
   return true;
 }
@@ -894,6 +982,7 @@ void Cloud::registChunk(Vec3r pos)
                            myRank,
                            EmitInterval);
       chunkList.push_back(m);
+      l_EmittedParticle++;
     }
     else // リスタート時は、座標点を登録しない、あとでリスタートファイルをロードする
     {
@@ -1336,6 +1425,34 @@ void Cloud::displayParam(FILE* fp)
     fprintf(fp,"\tEmitInterval        : %d\n",EmitInterval);
     fprintf(fp,"\tLife time           : %d\n",EmitLife);
     fprintf(fp,"\tFile format         : %s\n", (out_format==0)? "ASCII":"BINARY");
+    fprintf(fp,"\tClip line direction : ");
+    switch (clip_dir) {
+      case -1:
+        fprintf(fp,"None\n");
+        break;
+      case X_minus:
+        fprintf(fp,"X_MINUS %f [-] / %f [m]\n", clip_val, clip_val*refLen);
+        break;
+      case X_plus:
+        fprintf(fp,"X_PLUS %f [-] / %f [m]\n", clip_val, clip_val*refLen);
+        break;
+      case Y_minus:
+        fprintf(fp,"Y_MINUS %f [-] / %f [m]\n", clip_val, clip_val*refLen);
+        break;
+      case Y_plus:
+        fprintf(fp,"Y_PLUS %f [-] / %f [m]\n", clip_val, clip_val*refLen);
+        break;
+      case Z_minus:
+        fprintf(fp,"Z_MINUS %f [-] / %f [m]\n", clip_val, clip_val*refLen);
+        break;
+      case Z_plus:
+        fprintf(fp,"Z_PLUS %f [-] / %f [m]\n", clip_val, clip_val*refLen);
+        break;
+        
+      default:
+        break;
+    }
+
     
     for (int i=0; i<nGrpEmit; i++)
     {
@@ -1420,7 +1537,7 @@ void Cloud::set_timing_label()
 // @brief ascii output
 bool Cloud::write_ascii(const unsigned step, const double time)
 {
-  if (nParticle == 0) return true;
+  if (l_CurrentParticle == 0) return true;
   
   FILE* fp;
   char tmp_fname[50];
@@ -1437,7 +1554,7 @@ bool Cloud::write_ascii(const unsigned step, const double time)
   }
   
   fprintf(fp,"\n# step_time %ld %e\n", step, time);
-  fprintf(fp,"# total_particles %ld\n", nParticle);
+  fprintf(fp,"# total_particles %ld\n", l_CurrentParticle);
   fprintf(fp,"# no_of_chunks %d\n", (int)chunkList.size());
   
   int c=0;
@@ -1457,7 +1574,7 @@ bool Cloud::write_ascii(const unsigned step, const double time)
 // @brief meta file output
 bool Cloud::write_filelist(const unsigned step)
 {
-  if (nParticle == 0) return true;
+  if (l_CurrentParticle == 0) return true;
   
   FILE* fp;
   char tmp_fname[50];
@@ -1506,7 +1623,7 @@ bool Cloud::c_mkdir(const char* path)
 // @brief binary output
 bool Cloud::write_binary(const unsigned step, const double time)
 {
-  if (nParticle == 0) return true;
+  if (l_CurrentParticle == 0) return true;
   
   char tmp_fname[50];
   
@@ -1527,7 +1644,7 @@ bool Cloud::write_binary(const unsigned step, const double time)
   
   ofs.write((char*)&stp, sizeof(unsigned));
   ofs.write((char*)&tm,  sizeof(double));
-  ofs.write((char*)&nParticle, sizeof(unsigned));
+  ofs.write((char*)&l_CurrentParticle, sizeof(unsigned));
   ofs.write((char*)&csz, sizeof(unsigned));
   
   

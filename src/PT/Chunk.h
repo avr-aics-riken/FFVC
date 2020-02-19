@@ -157,7 +157,11 @@ public:
                      const REAL_TYPE dt,
                      const int* Rmap,
                      int& nOut,
-                     int& nPass);
+                     int& nPass,
+                     int& nLlimit,
+                     int& nClipped,
+                     const int clip_dir,
+                     const REAL_TYPE clip_val);
   
   
   // @brief マイグレーションフラグの立っている粒子をパックし、リストから削除
@@ -168,7 +172,7 @@ public:
   
   
   // @brief pchunkに開始点から粒子を追加
-  void addParticleFromOrigin();
+  void addParticleFromOrigin(Tracking* tr, unsigned& npart);
   
   
   // @brief pchunkの終端に粒子を追加

@@ -18,7 +18,7 @@
 //#############################################################################
 // @brief Euler陽解法による経路積分
 // @param [in,out] p        粒子座標
-// @param [out]    v        粒子並進速度
+// @param [in,out] v        粒子並進速度
 // @param [out]    wallFlag 壁を通り抜けた場合true
 // @param [in]     dt       積分幅
 // @retval 正-計算領域内の他ランク, 負-領域外(-1)、自領域(-2)
@@ -27,9 +27,11 @@ Vec3i Tracking::integrate_Euler(Vec3r& p, Vec3r& v, bool& wallFlag, const REAL_T
 {
   // 予測値
 	bool oflag=false;
+  Vec3r v0 = v;
   v = getV(p, oflag);
 
-  Vec3r q = p + dt * v;
+  Vec3r half = {0.5, 0.5, 0.5};
+  Vec3r q = p + dt * half*(v0 + v);
 
   /* 格子幅より大きな移動の場合
   if (distance(q, p) > pch.length()) {
@@ -125,7 +127,7 @@ Vec3i Tracking::findRankDir(Vec3r p)
 //#############################################################################
 // @brief p点の速度をサンプリングする　境界セルでは0.5がけ
 // @param [in]  p   粒子座標
-// @param [out] of  判定フラグ
+// @param [out] of  判定フラグ 交点があるときtrue
 // @todo 速度は壁からの距離にするとよいが
 Vec3r Tracking::getV(const Vec3r p, bool& of)
 {

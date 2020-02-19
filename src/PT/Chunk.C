@@ -87,21 +87,29 @@ void Chunk::packParticle(REAL_TYPE* ps_buf,
 // @param [in]  Rmap         3ｘ3の隣接ランクマップ
 // @param [out] nOut         領域外へ出た粒子数
 // @param [out] nPass        壁を通過した粒子数
+// @param [out] nLlimit      寿命が尽きた粒子数
+// @param [out] nClipped     クリップされた粒子数
+// @param [in]  clip_dir     クリップラインの方向
+// @param [in]  clip_val     クリップラインの値
 int Chunk::updatePosition(Tracking* tr,
                           const int scheme,
                           const int lifeLimit,
                           const REAL_TYPE dt,
                           const int* Rmap,
                           int& nOut,
-                          int& nPass)
+                          int& nPass,
+                          int& nLlimit,
+                          int& nClipped,
+                          const int clip_dir,
+                          const REAL_TYPE clip_val)
 {
   int pcnt[NDST] = {0};  // 行き先毎の送信粒子数
-  int flag = 0;
+  int flag = 0;          // マイグレーションが発生する場合 flag > 0
   
-  for(auto itr = pchunk.begin(); itr != pchunk.end(); ++itr)
+  for(auto itr = pchunk.begin(); itr != pchunk.end();)
   {
-    Vec3r p = (*itr).pos;
-    Vec3r v = (*itr).vel;
+    Vec3r p = (*itr).pos; // 前ステップの位置
+    Vec3r v = (*itr).vel; // 前ステップの粒子速度
     Vec3i r;
     int c;
     bool wallFlag = false;
@@ -110,6 +118,7 @@ int Chunk::updatePosition(Tracking* tr,
     {
       switch(scheme)
       {
+        // p, vはアップデートされて戻る
         case pt_euler:
           r = tr->integrate_Euler(p, v, wallFlag, dt);
           break;
@@ -131,9 +140,10 @@ int Chunk::updatePosition(Tracking* tr,
       }
       else if (Rmap[d] == -1) // 計算領域外
       {
-        (*itr).bf = Inactivate( (*itr).bf ); // 停止
+        //(*itr).bf = Inactivate( (*itr).bf ); // 停止
         nOut++;
-        //printf("Out of region %d %d %d\n", r.x, r.y, r.z);
+        itr = pchunk.erase(itr); // 要素を削除し、itr は次の要素を指す
+        //continue;
       }
       else // Migration
       {
@@ -149,8 +159,8 @@ int Chunk::updatePosition(Tracking* tr,
       // 壁面を通過した場合
       if (wallFlag)
       {
-        (*itr).bf = Inactivate( (*itr).bf ); // 停止
         nPass++;
+        (*itr).bf = Inactivate( (*itr).bf ); // 停止
       }
       
       
@@ -161,17 +171,65 @@ int Chunk::updatePosition(Tracking* tr,
       //printf("inc(b) = %d\n", (*itr).bf );
       //printf("%f %f %f %d : %d %d %d\n", v.x, v.y, v.z, flag, r.x, r.y, r.z);
       
-      // 寿命制御があるとき、指定値を過ぎたら停止 >> 削除するか？
+      // 寿命制御があるとき、指定値を過ぎたら停止 >> 削除
       if (lifeLimit > 0)
       {
         if ( lifeLimit < getBit25( (*itr).bf) )
         {
-          (*itr).bf = Inactivate( (*itr).bf );
-          printf("life time is over\n");
+          //(*itr).bf = Inactivate( (*itr).bf );
+          nLlimit++;
+          itr = pchunk.erase(itr); // 要素を削除
+          //continue;
         }
       }
       
+      // clipline
+      if (clip_dir > -1)
+      {
+        switch (clip_dir) {
+          case X_minus:
+            if ( p.x < clip_val ) {
+              nClipped++;
+              itr = pchunk.erase(itr);
+            }
+            break;
+          case X_plus:
+            if ( p.x > clip_val ) {
+              nClipped++;
+              itr = pchunk.erase(itr);
+            }
+            break;
+          case Y_minus:
+            if ( p.y < clip_val ) {
+              nClipped++;
+              itr = pchunk.erase(itr);
+            }
+            break;
+          case Y_plus:
+            if ( p.y > clip_val ) {
+              nClipped++;
+              itr = pchunk.erase(itr);
+            }
+            break;
+          case Z_minus:
+            if ( p.z < clip_val ) {
+              nClipped++;
+              itr = pchunk.erase(itr);
+            }
+            break;
+          case Z_plus:
+            if ( p.z > clip_val ) {
+              nClipped++;
+              itr = pchunk.erase(itr);
+            }
+            break;
+        }
+        //continue;
+      }
+      
     } // IS_ACTIVE
+    
+    ++itr;
   } // itr=pchunk
   
   
@@ -194,17 +252,20 @@ int Chunk::updatePosition(Tracking* tr,
 //#############################################################################
 // @brief pchunkに開始点から粒子を追加
 // @note マイクレーション先は除く
-void Chunk::addParticleFromOrigin()
+void Chunk::addParticleFromOrigin(Tracking* tr, unsigned& npart)
 {
+	bool flag;
+
 	if ( startOrigin == 1 )
 	{
 		particle p;
 		p.pos = EmitOrigin;
 		p.bf  = 0;
 		p.foo = uid;
-		p.vel.assign(0.0, 0.0, 0.0);
+		p.vel = tr->getV(EmitOrigin, flag); //.assign(0.0, 0.0, 0.0);
 		p.bf = Activate(p.bf);
 		pchunk.push_front(p);
+    npart++;
 	}
 }
 

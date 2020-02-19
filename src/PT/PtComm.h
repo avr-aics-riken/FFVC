@@ -206,10 +206,14 @@ public:
   
   // @brief 統計
   bool Statistics(int& nCommP,
+                  int& nOut,
+                  int& nPass,
+                  int& nLimit,
+                  int& nClipped,
                   const unsigned l_part,
                   unsigned& g_part,
-                  int& nOut,
-                  int& nPass);
+                  const unsigned l_emit,
+                  unsigned& g_emit);
   
   
   // @brief 引数の全ランクの最大数を求める

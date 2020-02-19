@@ -12,6 +12,12 @@
 ## REVISION HISTORY
 
 ---
+- 2020-02-15 Version 2.9.5
+  - 粒子出力にactive情報追加
+  - cliplineを導入、閾値を超えたら削除
+  
+  
+---
 - 2020-02-14 Version 2.9.4
   - 粒子出力並び変更 [x,y,z,life,u,v,w,id] >> [x,y,z,u,v,w,id,life]
   - type of life, lid >> int

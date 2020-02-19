@@ -57,14 +57,18 @@ using std::string;
  */
 class Cloud : public DomainInfo {
 public:
-  unsigned nParticle;        ///< 全粒子の数（ローカル）
-  unsigned gParticle;        ///< 全粒子の数（グローバル）
-  unsigned sleepParticle;    ///< アクティブな全粒子数（グローバル）
-  int nOutPart;              ///< 領域外へ出た粒子数
-  int nPasPart;              ///< 壁を通過した粒子数
-  int nCommParticle;         ///< マイグレーション時の送受信粒子数
-  unsigned buf_max_particle; ///< 送信用のバッファ長さ計算に使う粒子の最大数 毎回異なる
-  int* Rmap;                 ///< PtCommクラスで作成した3x3x3のランクマップへのポインタ
+  unsigned l_CurrentParticle; ///< 現在の全粒子の数（ローカル）
+  unsigned g_CurrentParticle; ///< 現在の全粒子の数（グローバル）
+  unsigned g_DeletedParticle; ///< 削除された全粒子数（グローバル）
+  unsigned g_EmittedParticle; ///< 放出された全粒子数（グローバル）
+  unsigned l_EmittedParticle; ///< 放出された全粒子数（ローカル）
+  unsigned g_OutParticle;     ///< 領域外へ出た粒子数（グローバル）
+  unsigned g_WallParticle;    ///< 壁を通過した粒子数（グローバル）>> 非アクティブ
+  unsigned g_LimitParticle;   ///< 寿命が尽きた粒子数（グローバル）
+  unsigned g_ClippedParticle; ///< クリップされた粒子数（グローバル）
+  unsigned g_MigrateParticle; ///< マイグレーション時の送受信粒子数
+  unsigned buf_max_particle;  ///< 送信用のバッファ長さ計算に使う粒子の最大数 毎回異なる
+  int* Rmap;                  ///< PtCommクラスで作成した3x3x3のランクマップへのポインタ
   
   
 protected:
@@ -81,6 +85,8 @@ protected:
   int scheme;                ///< 積分方法
   REAL_TYPE dt;              ///< 時間積分幅
   bool buf_updated;          ///< バッファ長さが更新されたときtrue
+  int clip_dir;              ///< クリップ処理の方向
+  REAL_TYPE clip_val;        ///< 座標
   
   int unit;                  ///< 指定座標の記述単位 {DIMENSIONAL | NONDIMENSIONAL}
   REAL_TYPE refLen;          ///< 代表長さ
@@ -97,7 +103,8 @@ protected:
   PerfMonitor* PM;           ///< PerfMonitor class
   
   int out_format;            ///< 粒子出力ファイルフォーマット　0 - ascii, 1 - binary
-  FILE* fpl;                 ///< ログ出力用のファイルポインタ
+  FILE* fpl1;                ///< ログ出力用のファイルポインタ
+  FILE* fpl2;                ///< ログ出力用のファイルポインタ
   int restartRankFlag;       ///< リスタート時に粒子データを読むランクのみ > 1, else 0
   int restartFlag;           ///< リスタート指定時に1, else 0
   int restartStep;           ///< リスタートステップ
@@ -118,12 +125,20 @@ public:
         TextParser* m_tp,
         PerfMonitor* m_PM)
   {
-    nParticle = 0;
-    gParticle = 0;
+    l_CurrentParticle = 0;
+    g_CurrentParticle = 0;
+    g_DeletedParticle = 0;
+    g_OutParticle = 0;
+    g_WallParticle = 0;
+    g_LimitParticle = 0;
+    g_ClippedParticle = 0;
+    g_EmittedParticle = 0;
+    l_EmittedParticle = 0;
+    g_MigrateParticle = 0;
+    
     nGrpEmit = 0;
     scheme = -1;
     buf_updated = false;
-    nCommParticle = 0;
     out_format = -1;
     unit = NONDIMENSIONAL;
     refLen = 0.0;
@@ -136,10 +151,11 @@ public:
     restartRankFlag = 0;
     restartFlag = 0;
     restartStep = -1;
-    nOutPart = 0;
-    nPasPart = 0;
-    sleepParticle = 0;
+    
     OutInterval = 0;
+    clip_dir = -1;
+    clip_val = 0.0;
+    
     
     this->dt         = dt;
     this->bcd        = m_bcd;
@@ -158,7 +174,8 @@ public:
   
   /// デストラクタ
   ~Cloud() {
-    if (fpl) fclose(fpl);
+    if (fpl1) fclose(fpl1);
+    if (fpl2) fclose(fpl2);
   }
   
   

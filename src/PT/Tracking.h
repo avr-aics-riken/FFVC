@@ -112,7 +112,7 @@ public:
 	
 	// @brief p点の速度をサンプリングする　境界セルでは0.5がけ
 	// @param [in]  p   粒子座標
-	// @param [out] of  判定フラグ
+	// @param [out] of  判定フラグ 交点があるときtrue
 	Vec3r getV(const Vec3r p, bool& of);
 
 	
