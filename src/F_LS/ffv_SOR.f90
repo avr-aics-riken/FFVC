@@ -44,7 +44,6 @@
   real                                                      ::  omg, dd, ss, dp, pp, bb, de, pn, dsw
   real                                                      ::  c_w, c_e, c_s, c_n, c_b, c_t
   real                                                      ::  d_w, d_e, d_s, d_n, d_b, d_t
-  real                                                      ::  r_xx, r_xy, r_xz, r_x2, r_y2, r_z2
   real                                                      ::  cm, cf
   real, dimension(3)                                        ::  dh
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
@@ -58,13 +57,6 @@
   err = 0.0
   xl2 = 0.0
 
-  r_xx = 1.0
-  r_xy = dh(1) / dh(2)
-  r_xz = dh(1) / dh(3)
-  r_x2 = r_xx * r_xx
-  r_y2 = r_xy * r_xy
-  r_z2 = r_xz * r_xz
-
   cf = cm * cm
 
   flop = flop + dble(ix)*dble(jx)*dble(kx)*57.0d0 + 20.0d0
@@ -76,9 +68,7 @@
 !$OMP REDUCTION(+:xl2) &
 !$OMP PRIVATE(c_w, c_e, c_s, c_n, c_b, c_t) &
 !$OMP PRIVATE(d_w, d_e, d_s, d_n, d_b, d_t) &
-!$OMP PRIVATE(dd, ss, dp, idx, aa, pp, bb, de, pn, dsw) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, omg) &
-!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2, cf)
+!$OMP PRIVATE(dd, ss, dp, idx, aa, pp, bb, de, pn, dsw)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
   do k=1,kx
@@ -124,7 +114,6 @@ double precision                                          ::  flop, res, err, aa
 real                                                      ::  omg, dd, ss, dp, pp, bb, de, pn, dsw
 real                                                      ::  c_w, c_e, c_s, c_n, c_b, c_t
 real                                                      ::  d_w, d_e, d_s, d_n, d_b, d_t
-real                                                      ::  r_xx, r_xy, r_xz, r_x2, r_y2, r_z2
 real                                                      ::  cm, cf
 real, dimension(3)                                        ::  dh
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
@@ -138,13 +127,6 @@ res = 0.0
 err = 0.0
 xl2 = 0.0
 
-r_xx = 1.0
-r_xy = dh(1) / dh(2)
-r_xz = dh(1) / dh(3)
-r_x2 = r_xx * r_xx
-r_y2 = r_xy * r_xy
-r_z2 = r_xz * r_xz
-
 cf = cm * cm
 
 flop = flop + dble(ix)*dble(jx)*dble(kx)*57.0d0 + 20.0d0
@@ -156,9 +138,7 @@ flop = flop + dble(ix)*dble(jx)*dble(kx)*57.0d0 + 20.0d0
 !$OMP REDUCTION(+:xl2) &
 !$OMP PRIVATE(c_w, c_e, c_s, c_n, c_b, c_t) &
 !$OMP PRIVATE(d_w, d_e, d_s, d_n, d_b, d_t) &
-!$OMP PRIVATE(dd, ss, dp, idx, aa, pp, bb, de, pn, dsw) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, omg) &
-!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2, cf)
+!$OMP PRIVATE(dd, ss, dp, idx, aa, pp, bb, de, pn, dsw)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 do k=1,kx
@@ -221,7 +201,6 @@ double precision                                          ::  flop, res, err, xl
 real                                                      ::  omg, dd, ss, dp, pp, bb, de, pn, dsw
 real                                                      ::  c_w, c_e, c_s, c_n, c_b, c_t
 real                                                      ::  d_w, d_e, d_s, d_n, d_b, d_t
-real                                                      ::  r_xx, r_xy, r_xz, r_x2, r_y2, r_z2
 real                                                      ::  cm, cf
 real, dimension(3)                                        ::  dh
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
@@ -237,13 +216,6 @@ err = 0.0
 res = 0.0
 xl2 = 0.0
 
-r_xx = 1.0
-r_xy = dh(1) / dh(2)
-r_xz = dh(1) / dh(3)
-r_x2 = r_xx * r_xx
-r_y2 = r_xy * r_xy
-r_z2 = r_xz * r_xz
-
 cf = cm * cm
 
 flop = flop + (dble(ix)*dble(jx)*dble(kx) * 57.0d0) * 0.5d0 + 20.0d0
@@ -255,9 +227,7 @@ flop = flop + (dble(ix)*dble(jx)*dble(kx) * 57.0d0) * 0.5d0 + 20.0d0
 !$OMP REDUCTION(+:xl2) &
 !$OMP PRIVATE(c_w, c_e, c_s, c_n, c_b, c_t) &
 !$OMP PRIVATE(d_w, d_e, d_s, d_n, d_b, d_t) &
-!$OMP PRIVATE(idx, dsw, aa, dd, pp, bb, ss, dp, de, pn) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, color, ip, omg) &
-!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2, cf)
+!$OMP PRIVATE(idx, dsw, aa, dd, pp, bb, ss, dp, de, pn)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 do k=1,kx
@@ -305,7 +275,6 @@ double precision                                          ::  flop, res, err, xl
 real                                                      ::  omg, dd, ss, dp, pp, bb, de, pn, dsw
 real                                                      ::  c_w, c_e, c_s, c_n, c_b, c_t
 real                                                      ::  d_w, d_e, d_s, d_n, d_b, d_t
-real                                                      ::  r_xx, r_xy, r_xz, r_x2, r_y2, r_z2
 real                                                      ::  cm, cf
 real, dimension(3)                                        ::  dh
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
@@ -321,13 +290,6 @@ err = 0.0
 res = 0.0
 xl2 = 0.0
 
-r_xx = 1.0
-r_xy = dh(1) / dh(2)
-r_xz = dh(1) / dh(3)
-r_x2 = r_xx * r_xx
-r_y2 = r_xy * r_xy
-r_z2 = r_xz * r_xz
-
 cf = cm * cm
 
 flop = flop + (dble(ix)*dble(jx)*dble(kx) * 57.0d0 ) * 0.5d0  + 20.0d0
@@ -339,9 +301,7 @@ flop = flop + (dble(ix)*dble(jx)*dble(kx) * 57.0d0 ) * 0.5d0  + 20.0d0
 !$OMP REDUCTION(+:xl2) &
 !$OMP PRIVATE(c_w, c_e, c_s, c_n, c_b, c_t) &
 !$OMP PRIVATE(d_w, d_e, d_s, d_n, d_b, d_t) &
-!$OMP PRIVATE(idx, dsw, aa, dd, pp, bb, ss, dp, de, pn) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, color, ip, omg) &
-!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2, cf)
+!$OMP PRIVATE(idx, dsw, aa, dd, pp, bb, ss, dp, de, pn)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 do k=kx,1,-1
@@ -691,7 +651,6 @@ integer, dimension(3)                   ::  sz
 real                                    ::  dd, dsw
 real                                    ::  c_w, c_e, c_s, c_n, c_b, c_t
 real                                    ::  d_w, d_e, d_s, d_n, d_b, d_t
-real                                    ::  r_xx, r_xy, r_xz, r_x2, r_y2, r_z2
 real                                    ::  cm, cf
 real, dimension(3)                      ::  dh
 integer, dimension(sz(1), sz(2), sz(3)) ::  bp
@@ -701,12 +660,6 @@ ix = sz(1)
 jx = sz(2)
 kx = sz(3)
 
-r_xx = 1.0
-r_xy = dh(1) / dh(2)
-r_xz = dh(1) / dh(3)
-r_x2 = r_xx * r_xx
-r_y2 = r_xy * r_xy
-r_z2 = r_xz * r_xz
 cf = cm * cm
 
 OPEN(unit=1,FILE=fname, FORM='FORMATTED', STATUS='UNKNOWN')
@@ -740,25 +693,25 @@ do i=1,ix
 
   dsw = real(ibits(idx, bc_diag, 1))
 
-  dd = r_x2 * (c_w + c_e) &
-     + r_y2 * (c_s + c_n) &
-     + r_z2 * (c_b + c_t) &
+  dd = c_w + c_e &
+     + c_s + c_n &
+     + c_b + c_t &
      + 2.0                &
-     *(r_x2 * (d_w + d_e) &
-     + r_y2 * (d_s + d_n) &
-     + r_z2 * (d_b + d_t) ) &
+     *(d_w + d_e &
+     + d_s + d_n &
+     + d_b + d_t ) &
      + cf
 
   dd = dsw * dd + 1.0 - dsw
 
   if (1 == ibits(idx, Active, 1)) then
-    if (m-mk>0) WRITE(1,'(I8,I8,F15.7)') m, m-mk, r_z2 * c_b  ! k-1
-    if (m-mj>0) WRITE(1,'(I8,I8,F15.7)') m, m-mj, r_y2 * c_s  ! j-1
-    if (m-mi>0) WRITE(1,'(I8,I8,F15.7)') m, m-mi, r_x2 * c_w  ! i-1
+    if (m-mk>0) WRITE(1,'(I8,I8,F15.7)') m, m-mk, c_b  ! k-1
+    if (m-mj>0) WRITE(1,'(I8,I8,F15.7)') m, m-mj, c_s  ! j-1
+    if (m-mi>0) WRITE(1,'(I8,I8,F15.7)') m, m-mi, c_w  ! i-1
     WRITE(1,'(I8,I8,F15.7)') m, m, dd  ! i
-    if (m+mi<=mx) WRITE(1,'(I8,I8,F15.7)') m, m+mi, r_x2 * c_e  ! i+1
-    if (m+mj<=mx) WRITE(1,'(I8,I8,F15.7)') m, m+mj, r_y2 * c_n  ! j+1
-    if (m+mk<=mx) WRITE(1,'(I8,I8,F15.7)') m, m+mk, r_z2 * c_t  ! k+1
+    if (m+mi<=mx) WRITE(1,'(I8,I8,F15.7)') m, m+mi, c_e  ! i+1
+    if (m+mj<=mx) WRITE(1,'(I8,I8,F15.7)') m, m+mj, c_n  ! j+1
+    if (m+mk<=mx) WRITE(1,'(I8,I8,F15.7)') m, m+mk, c_t  ! k+1
 
     m = m + 1
   endif

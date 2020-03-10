@@ -30,28 +30,23 @@
 !! @param bd BCindex B
 !! @param vf コンポーネントの体積率
 !! @param odr 速度境界条件のエントリ
-!! @param v00 参照速度
 !! @param nv 法線ベクトル
 !! @param[out] flop flop count
 !<
-    subroutine hex_dir (v, sz, g, st, ed, bd, vf, odr, v00, nv, flop)
+    subroutine hex_dir (v, sz, g, st, ed, bd, vf, odr, nv, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, idx, odr
     integer                                                     ::  is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed
     double precision                                            ::  flop
-    real                                                        ::  u_ref, v_ref, w_ref, es, bes
+    real                                                        ::  es, bes
     real                                                        ::  nx, ny, nz, b0, r_bt, uu, u1, u2, u3
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bd
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  vf
-    real, dimension(0:3)                                        ::  v00
     real, dimension(3)                                          ::  nv
 
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
     nx = nv(1)
     ny = nv(2)
     nz = nv(3)
@@ -64,7 +59,7 @@
     ke = ed(3)
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_ref, v_ref, w_ref, odr) &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, odr) &
 !$OMP FIRSTPRIVATE(nx, ny, nz) &
 !$OMP PRIVATE(idx, b0, es, bes, u1, u2, u3, r_bt, uu)
 !$OMP DO SCHEDULE(static)
@@ -80,15 +75,15 @@
       bes = b0*es ! 体積率とコンポーネントの両方でチェック
 
       ! 擬似速度の方向の強制
-      u1 = v(i,j,k,1) - u_ref
-      u2 = v(i,j,k,2) - v_ref
-      u3 = v(i,j,k,3) - w_ref
+      u1 = v(i,j,k,1)
+      u2 = v(i,j,k,2)
+      u3 = v(i,j,k,3)
       r_bt = 1.0 - bes
       uu = sqrt(u1*u1 + u2*u2 + u3*u3) * bes
 
-      v(i,j,k,1) = (r_bt*u1 + uu*nx) + u_ref
-      v(i,j,k,2) = (r_bt*u2 + uu*ny) + v_ref
-      v(i,j,k,3) = (r_bt*u3 + uu*nz) + w_ref
+      v(i,j,k,1) = (r_bt*u1 + uu*nx)
+      v(i,j,k,2) = (r_bt*u2 + uu*ny)
+      v(i,j,k,3) = (r_bt*u3 + uu*nz)
 
     end do
     end do
@@ -166,19 +161,17 @@
 !! @param [in]     wk   テンポラリのワークベクトル 速度ベクトル
 !! @param [in]     cz   コンポーネントの配列長
 !! @param [in]     odr  速度境界条件のエントリ
-!! @param [in]     v00  参照速度
 !! @param [in]     nv   法線ベクトル
 !! @param [in]     c    圧力損失部の係数
 !! @param [out]    flop flop count
 !<
-    subroutine hex_psrc (src, sz, g, st, ed, bd, vf, wk, cz, odr, v00, nv, c, flop)
+    subroutine hex_psrc (src, sz, g, st, ed, bd, vf, wk, cz, odr, nv, c, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, ii, jj, kk, idx, odr
     integer                                                     ::  is, ie, js, je, ks, ke
     integer, dimension(3)                                       ::  sz, st, ed, cz
     double precision                                            ::  flop
-    real                                                        ::  u_ref, v_ref, w_ref
     real                                                        ::  u_w, u_e, u_s, u_n, u_b, u_t, u_p
     real                                                        ::  v_w, v_e, v_s, v_n, v_b, v_t, v_p
     real                                                        ::  w_w, w_e, w_s, w_n, w_b, w_t, w_p
@@ -197,12 +190,8 @@
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  vf
     real, dimension(-1:cz(1)+2, -1:cz(2)+2, -1:cz(3)+2, 3)      ::  wk
     real, dimension(6)                                          ::  c
-    real, dimension(0:3)                                        ::  v00
     real, dimension(3)                                          ::  nv
 
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
     nx = nv(1)
     ny = nv(2)
     nz = nv(3)
@@ -220,7 +209,7 @@
     ke = ed(3)
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_ref, v_ref, w_ref, odr) &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, odr) &
 !$OMP FIRSTPRIVATE(nx, ny, nz, c1, c2, c3, c4, ep) &
 !$OMP PRIVATE(idx, pick, es, ii, jj, kk) &
 !$OMP PRIVATE(be, bw, bn, bs, bt, bb, b0) &
@@ -278,13 +267,12 @@
 !! @param vf コンポーネントの体積率
 !! @param v 速度ベクトル タイムレベルn
 !! @param odr 速度境界条件のエントリ
-!! @param v00 参照速度
 !! @param dt 時間積分幅
 !! @param nv 法線ベクトル
 !! @param c 圧力損失部の係数
 !! @param[out] flop flop count
 !<
-    subroutine hex_force_pvec (vc, sz, g, st, ed, bd, vf, v, odr, v00, dt, nv, c, flop)
+    subroutine hex_force_pvec (vc, sz, g, st, ed, bd, vf, v, odr, dt, nv, c, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, idx, odr
@@ -292,7 +280,7 @@
     integer, dimension(3)                                       ::  sz, st, ed
     double precision                                            ::  flop
     real                                                        ::  dt, cf
-    real                                                        ::  u_ref, v_ref, w_ref, es
+    real                                                        ::  es
     real                                                        ::  u_p, v_p, w_p, g_p, d_p, Fx_p, Fy_p, Fz_p
     real                                                        ::  nx, ny, nz, b0, d_b, r_bt, uu, u1, u2, u3
     real                                                        ::  c1, c2, c3, c4, ep, bes
@@ -300,12 +288,8 @@
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bd
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  vf
     real, dimension(6)                                          ::  c
-    real, dimension(0:3)                                        ::  v00
     real, dimension(3)                                          ::  nv
 
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
     nx = nv(1)
     ny = nv(2)
     nz = nv(3)
@@ -324,7 +308,7 @@
     ke = ed(3)
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_ref, v_ref, w_ref, odr, cf) &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, odr, cf) &
 !$OMP FIRSTPRIVATE(nx, ny, nz, c1, c2, c3, c4, ep) &
 !$OMP PRIVATE(idx, b0, d_b, u_p, v_p, w_p, g_p, d_p, Fx_p, Fy_p, Fz_p) &
 !$OMP PRIVATE(r_bt, uu, u1, u2, u3, es, bes)
@@ -341,9 +325,9 @@
       bes = b0*es ! 体積率とコンポーネントの両方でチェック
 
       ! 圧損による外力の計算(v^n)
-      u_p = v(i,j,k,1) - u_ref
-      v_p = v(i,j,k,2) - v_ref
-      w_p = v(i,j,k,3) - w_ref
+      u_p = v(i,j,k,1)
+      v_p = v(i,j,k,2)
+      w_p = v(i,j,k,3)
       g_p = sqrt(u_p*u_p + v_p*v_p + w_p*w_p)
       d_p = c1*g_p*g_p + c2*g_p + c3
       if (g_p < ep) d_p = c4*g_p*g_p
@@ -352,14 +336,14 @@
       Fz_p = -sign(1.0, w_p)*d_p*nz
 
       ! 擬似速度の方向の強制
-      u1 = vc(i,j,k,1) - u_ref
-      u2 = vc(i,j,k,2) - v_ref
-      u3 = vc(i,j,k,3) - w_ref
+      u1 = vc(i,j,k,1)
+      u2 = vc(i,j,k,2)
+      u3 = vc(i,j,k,3)
       r_bt = 1.0 - bes
       uu = sqrt(u1*u1 + u2*u2 + u3*u3) * bes
-      u1 = (r_bt*u1 + uu*nx) + u_ref
-      u2 = (r_bt*u2 + uu*ny) + v_ref
-      u3 = (r_bt*u3 + uu*nz) + w_ref
+      u1 = (r_bt*u1 + uu*nx)
+      u2 = (r_bt*u2 + uu*ny)
+      u3 = (r_bt*u3 + uu*nz)
 
       d_b = cf * bes
       vc(i,j,k,1) = u1 + d_b * Fx_p
@@ -390,7 +374,6 @@
 !! @param [in]     wk   テンポラリのワークベクトル 速度ベクトル (n+1,k)
 !! @param [in]     cz   コンポーネントの配列長
 !! @param [in]     odr  速度境界条件のエントリ
-!! @param [in]     v00  参照速度
 !! @param [in]     dt   時間積分幅
 !! @param [in]     dh   格子幅
 !! @param [in]     nv   法線ベクトル
@@ -398,7 +381,7 @@
 !! @param [in]     am   平均速度と圧損量
 !! @param [out]    flop flop count
 !<
-    subroutine hex_force_vec (v, div, sz, g, st, ed, bd, vf, wk, cz, odr, v00, dt, dh, nv, c, am, flop)
+    subroutine hex_force_vec (v, div, sz, g, st, ed, bd, vf, wk, cz, odr, dt, dh, nv, c, am, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                     ::  i, j, k, g, ii, jj, kk, idx, odr
@@ -406,7 +389,6 @@
     integer, dimension(3)                                       ::  sz, st, ed, cz
     double precision                                            ::  flop
     real                                                        ::  dt, beta
-    real                                                        ::  u_ref, v_ref, w_ref
     real                                                        ::  u_w, u_e, u_s, u_n, u_b, u_t, u_p
     real                                                        ::  v_w, v_e, v_s, v_n, v_b, v_t, v_p
     real                                                        ::  w_w, w_e, w_s, w_n, w_b, w_t, w_p
@@ -426,13 +408,9 @@
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  vf
     real, dimension(-1:cz(1)+2, -1:cz(2)+2, -1:cz(3)+2, 3)      ::  wk
     real, dimension(6)                                          ::  c
-    real, dimension(0:3)                                        ::  v00
     real, dimension(3)                                          ::  nv, dh
     real, dimension(2)                                          ::  am
 
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
     nx = nv(1)
     ny = nv(2)
     nz = nv(3)
@@ -455,7 +433,7 @@
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:am1) &
 !$OMP REDUCTION(+:am2) &
-!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, u_ref, v_ref, w_ref, odr, dt) &
+!$OMP FIRSTPRIVATE(is, ie, js, je, ks, ke, odr, dt) &
 !$OMP FIRSTPRIVATE(nx, ny, nz, c1, c2, c3, c4, ep) &
 !$OMP PRIVATE(idx, es, beta, pick, ii, jj, kk) &
 !$OMP PRIVATE(be, bw, bn, bs, bt, bb, b0) &

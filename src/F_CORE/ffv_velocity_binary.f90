@@ -27,7 +27,6 @@
 !! @param [in]  g         ガイドセル長
 !! @param [in]  dh        格子幅
 !! @param [in]  c_scheme  対流項スキームのモード（1-UWD, 3-MUSCL）
-!! @param [in]  v00       参照速度
 !! @param [in]  rei       レイノルズ数の逆数
 !! @param [in]  v         セルセンター速度ベクトル（n-step）
 !! @param [in]  vf        セルフェイス速度ベクトル（n-step）
@@ -36,7 +35,7 @@
 !! @param [in]  vcs_coef  粘性項の係数（粘性項を計算しない場合には0.0）
 !! @param [out] flop      浮動小数点演算数
 !<
-subroutine pvec_muscl (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bid, bcd, vcs_coef, flop)
+subroutine pvec_muscl (wv, sz, g, dh, c_scheme, rei, v, vf, bid, bcd, vcs_coef, flop)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bix, bdx
@@ -49,7 +48,6 @@ real                                                      ::  Up0, Ue1, Ue2, Uw1
 real                                                      ::  Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2
 real                                                      ::  Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2
 real                                                      ::  ck, vcs, vcs_coef, rx, ry, rz, rx2, ry2 ,rz2
-real                                                      ::  u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2
 real                                                      ::  c_e1, c_w1, c_n1, c_s1, c_t1, c_b1, cm1, cm2, ss_4
 real                                                      ::  c_e2, c_w2, c_n2, c_s2, c_t2, c_b2
 real                                                      ::  dv1, dv2, dv3, dv4, g1, g2, g3, g4, g5, g6, s1, s2, s3, s4, b
@@ -57,7 +55,6 @@ real                                                      ::  Urr, Url, Ulr, Ull
 real                                                      ::  cr, cl, acr, acl, cnv_u, cnv_v, cnv_w, EX, EY, EZ, rei
 real                                                      ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l, uq, vq, wq, ss
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, wv, vf
-real, dimension(0:3)                                      ::  v00
 real, dimension(3)                                        ::  dh
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bid, bcd
 
@@ -76,13 +73,6 @@ rz2 = rei * rz * rz
 ! vcs = 1.0 (Euler Explicit) / 0.5 (CN) / 0.0(No)
 vcs = vcs_coef
 
-! 参照座標系の速度
-u_ref = v00(1)
-v_ref = v00(2)
-w_ref = v00(3)
-u_ref2 = 2.0*u_ref
-v_ref2 = 2.0*v_ref
-w_ref2 = 2.0*w_ref
 
 ck = 0.0
 b  = 0.0
@@ -111,7 +101,7 @@ flop = flop + dble(ix)*dble(jx)*dble(kx)*888.0d0 + 36.0d0
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, rx, ry, rz, rx2, ry2 ,rz2, vcs, b, ck, ss_4, ss, cm1, cm2) &
-!$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, rei) &
+!$OMP FIRSTPRIVATE(rei) &
 !$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bix, bdx, uq, vq, wq) &
 !$OMP PRIVATE(Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2) &
 !$OMP PRIVATE(Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2) &
@@ -235,26 +225,26 @@ c_t2 = real( ibits(bcd(i  , j  , k+1), bc_d_T, 1) )
 
 
 ! 界面速度（スタガード位置） > 24 flops
-UPe = vf(i  , j  , k  ,1)*b_e1 + u_ref*(1.0-b_e1)
-UPw = vf(i-1, j  , k  ,1)*b_w1 + u_ref*(1.0-b_w1)
-VPn = vf(i  , j  , k  ,2)*b_n1 + v_ref*(1.0-b_n1)
-VPs = vf(i  , j-1, k  ,2)*b_s1 + v_ref*(1.0-b_s1)
-WPt = vf(i  , j  , k  ,3)*b_t1 + w_ref*(1.0-b_t1)
-WPb = vf(i  , j  , k-1,3)*b_b1 + w_ref*(1.0-b_b1)
+UPe = vf(i  , j  , k  ,1)*b_e1
+UPw = vf(i-1, j  , k  ,1)*b_w1
+VPn = vf(i  , j  , k  ,2)*b_n1
+VPs = vf(i  , j-1, k  ,2)*b_s1
+WPt = vf(i  , j  , k  ,3)*b_t1
+WPb = vf(i  , j  , k-1,3)*b_b1
 
 
 ! セルセンターからの壁面修正速度 > 3 flops
-uq = u_ref2 - Up0
-vq = v_ref2 - Vp0
-wq = w_ref2 - Wp0
+uq =  - Up0
+vq =  - Vp0
+wq =  - Wp0
 
 ! X方向 ---------------------------------------
 
 ! 速度指定の場合にMUSCLスキームの参照先として，固体内にテンポラリに与えた値を使う
 if ( (b_e2 == 0.0)  ) then  ! 7 flops
-Ue2 = u_ref2 - v(i+1,j  ,k  , 1)
-Ve2 = v_ref2 - v(i+1,j  ,k  , 2)
-We2 = w_ref2 - v(i+1,j  ,k  , 3)
+Ue2 =  - v(i+1,j  ,k  , 1)
+Ve2 =  - v(i+1,j  ,k  , 2)
+We2 =  - v(i+1,j  ,k  , 3)
 endif
 
 if ( b_e1 == 0.0 ) then
@@ -270,14 +260,14 @@ Ww1 = wq
 end if
 
 if ( (b_w2 == 0.0)  ) then ! 7 flops
-Uw2 = u_ref2 - v(i-1,j  ,k  , 1)
-Vw2 = v_ref2 - v(i-1,j  ,k  , 2)
-Ww2 = w_ref2 - v(i-1,j  ,k  , 3)
+Uw2 = - v(i-1,j  ,k  , 1)
+Vw2 = - v(i-1,j  ,k  , 2)
+Ww2 = - v(i-1,j  ,k  , 3)
 end if
 
 ! 流束　流体のみと固体壁の影響を含み，隣接セルが固体の場合にはマスクする
-cr  = UPe - u_ref
-cl  = UPw - u_ref
+cr  = UPe
+cl  = UPw
 acr = abs(cr)
 acl = abs(cl)
 
@@ -363,9 +353,9 @@ cnv_w = cnv_w + fw_r*c_e1 - fw_l*c_w1 ! > 4*3 = 12 flops
 ! Y方向 ---------------------------------------
 
 if ( (b_n2 == 0.0)  ) then
-Un2 = u_ref2 - v(i  ,j+1,k  , 1)
-Vn2 = v_ref2 - v(i  ,j+1,k  , 2)
-Wn2 = w_ref2 - v(i  ,j+1,k  , 3)
+Un2 = - v(i  ,j+1,k  , 1)
+Vn2 = - v(i  ,j+1,k  , 2)
+Wn2 = - v(i  ,j+1,k  , 3)
 endif
 
 if ( b_n1 == 0.0 ) then
@@ -381,14 +371,14 @@ Ws1 = wq
 endif
 
 if ( (b_s2 == 0.0)  ) then
-Us2 = u_ref2 - v(i  ,j-1,k  , 1)
-Vs2 = v_ref2 - v(i  ,j-1,k  , 2)
-Ws2 = w_ref2 - v(i  ,j-1,k  , 3)
+Us2 = - v(i  ,j-1,k  , 1)
+Vs2 = - v(i  ,j-1,k  , 2)
+Ws2 = - v(i  ,j-1,k  , 3)
 endif
 
 ! 流束　流体のみと固体壁の影響を含み，隣接セルが固体の場合にはマスクする
-cr  = VPn - v_ref
-cl  = VPs - v_ref
+cr  = VPn
+cl  = VPs
 acr = abs(cr)
 acl = abs(cl)
 
@@ -475,9 +465,9 @@ cnv_w = cnv_w + fw_r*c_n1 - fw_l*c_s1
 
 ! 壁面の場合の参照速度の修正
 if ( (b_t2 == 0.0)  ) then
-Ut2 = u_ref2 - v(i  ,j  ,k+1, 1)
-Vt2 = v_ref2 - v(i  ,j  ,k+1, 2)
-Wt2 = w_ref2 - v(i  ,j  ,k+1, 3)
+Ut2 = - v(i  ,j  ,k+1, 1)
+Vt2 = - v(i  ,j  ,k+1, 2)
+Wt2 = - v(i  ,j  ,k+1, 3)
 end if
 
 if ( b_t1 == 0.0 ) then
@@ -493,14 +483,14 @@ Wb1 = wq
 end if
 
 if ( (b_b2 == 0.0)  ) then
-Ub2 = u_ref2 - v(i  ,j  ,k-1, 1)
-Vb2 = v_ref2 - v(i  ,j  ,k-1, 2)
-Wb2 = w_ref2 - v(i  ,j  ,k-1, 3)
+Ub2 = - v(i  ,j  ,k-1, 1)
+Vb2 = - v(i  ,j  ,k-1, 2)
+Wb2 = - v(i  ,j  ,k-1, 3)
 end if
 
 ! 流束　流体のみと固体壁の影響を含み，隣接セルが固体の場合にはマスクする
-cr  = WPt - w_ref
-cl  = WPb - w_ref
+cr  = WPt
+cl  = WPb
 acr = abs(cr)
 acl = abs(cl)
 
@@ -626,7 +616,6 @@ end subroutine pvec_muscl
 !! @param [in]  g         ガイドセル長
 !! @param [in]  dh        格子幅
 !! @param [in]  c_scheme  対流項スキームのモード（1-UWD, 3-MUSCL）
-!! @param [in]  v00       参照速度
 !! @param [in]  rei       レイノルズ数の逆数
 !! @param [in]  v         セルセンター速度ベクトル（n-step）
 !! @param [in]  vf        セルフェイス速度ベクトル（n-step）
@@ -639,7 +628,7 @@ end subroutine pvec_muscl
 !! @param [in]  rho       密度
 !! @param [out] flop      浮動小数点演算数
 !<
-subroutine pvec_muscl_les (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bid, bcd, vcs_coef, Cs, imodel, m_nu, rho, flop)
+subroutine pvec_muscl_les (wv, sz, g, dh, c_scheme, rei, v, vf, bid, bcd, vcs_coef, Cs, imodel, m_nu, rho, flop)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bix, bdx
@@ -652,7 +641,6 @@ real                                                      ::  Up0, Ue1, Ue2, Uw1
 real                                                      ::  Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2
 real                                                      ::  Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2
 real                                                      ::  ck, vcs, vcs_coef, rx, ry, rz, rx2, ry2 ,rz2, dx, dy, dz
-real                                                      ::  u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2
 real                                                      ::  c_e1, c_w1, c_n1, c_s1, c_t1, c_b1, cm1, cm2, ss_4
 real                                                      ::  c_e2, c_w2, c_n2, c_s2, c_t2, c_b2
 real                                                      ::  dv1, dv2, dv3, dv4, g1, g2, g3, g4, g5, g6, s1, s2, s3, s4, b
@@ -660,7 +648,6 @@ real                                                      ::  Urr, Url, Ulr, Ull
 real                                                      ::  cr, cl, acr, acl, cnv_u, cnv_v, cnv_w, EX, EY, EZ, rei
 real                                                      ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l, uq, vq, wq, ss
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, wv, vf
-real, dimension(0:3)                                      ::  v00
 real, dimension(3)                                        ::  dh
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bid, bcd
 integer                                                   ::  imodel
@@ -701,14 +688,6 @@ r_nu= 1.0d0/nu
 ! vcs = 1.0 (Euler Explicit) / 0.5 (CN) / 0.0(No)
 vcs = vcs_coef
 
-! 参照座標系の速度
-u_ref = v00(1)
-v_ref = v00(2)
-w_ref = v00(3)
-u_ref2 = 2.0*u_ref
-v_ref2 = 2.0*v_ref
-w_ref2 = 2.0*w_ref
-
 ck = 0.0
 b  = 0.0
 ss = 1.0
@@ -734,7 +713,7 @@ flop = flop + 36.0
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:flop) &
 !$OMP FIRSTPRIVATE(ix, jx, kx, rx, ry, rz, rx2, ry2 ,rz2, vcs, b, ck, ss_4, ss, cm1, cm2) &
-!$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, rei, dx, dy, dz) &
+!$OMP FIRSTPRIVATE(rei, dx, dy, dz) &
 !$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bix, bdx, uq, vq, wq) &
 !$OMP PRIVATE(Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2) &
 !$OMP PRIVATE(Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2) &
@@ -865,26 +844,26 @@ c_t2 = real( ibits(bcd(i  , j  , k+1), bc_d_T, 1) )
 
 
 ! 界面速度（スタガード位置） > 24 flops
-UPe = vf(i  , j  , k  ,1)*b_e1 + u_ref*(1.0-b_e1)
-UPw = vf(i-1, j  , k  ,1)*b_w1 + u_ref*(1.0-b_w1)
-VPn = vf(i  , j  , k  ,2)*b_n1 + v_ref*(1.0-b_n1)
-VPs = vf(i  , j-1, k  ,2)*b_s1 + v_ref*(1.0-b_s1)
-WPt = vf(i  , j  , k  ,3)*b_t1 + w_ref*(1.0-b_t1)
-WPb = vf(i  , j  , k-1,3)*b_b1 + w_ref*(1.0-b_b1)
+UPe = vf(i  , j  , k  ,1)*b_e1
+UPw = vf(i-1, j  , k  ,1)*b_w1
+VPn = vf(i  , j  , k  ,2)*b_n1
+VPs = vf(i  , j-1, k  ,2)*b_s1
+WPt = vf(i  , j  , k  ,3)*b_t1
+WPb = vf(i  , j  , k-1,3)*b_b1
 
 
 ! セルセンターからの壁面修正速度 > 3 flops
-uq = u_ref2 - Up0
-vq = v_ref2 - Vp0
-wq = w_ref2 - Wp0
+uq = - Up0
+vq = - Vp0
+wq = - Wp0
 
 ! X方向 ---------------------------------------
 
 ! 速度指定の場合にMUSCLスキームの参照先として，固体内にテンポラリに与えた値を使う
 if ( (b_e2 == 0.0)  ) then  ! 7 flops
-Ue2 = u_ref2 - v(i+1,j  ,k  , 1)
-Ve2 = v_ref2 - v(i+1,j  ,k  , 2)
-We2 = w_ref2 - v(i+1,j  ,k  , 3)
+Ue2 = - v(i+1,j  ,k  , 1)
+Ve2 = - v(i+1,j  ,k  , 2)
+We2 = - v(i+1,j  ,k  , 3)
 endif
 
 if ( b_e1 == 0.0 ) then
@@ -900,14 +879,14 @@ Ww1 = wq
 end if
 
 if ( (b_w2 == 0.0)  ) then ! 7 flops
-Uw2 = u_ref2 - v(i-1,j  ,k  , 1)
-Vw2 = v_ref2 - v(i-1,j  ,k  , 2)
-Ww2 = w_ref2 - v(i-1,j  ,k  , 3)
+Uw2 = - v(i-1,j  ,k  , 1)
+Vw2 = - v(i-1,j  ,k  , 2)
+Ww2 = - v(i-1,j  ,k  , 3)
 end if
 
 ! 流束　流体のみと固体壁の影響を含み，隣接セルが固体の場合にはマスクする
-cr  = UPe - u_ref
-cl  = UPw - u_ref
+cr  = UPe
+cl  = UPw
 acr = abs(cr)
 acl = abs(cl)
 
@@ -991,9 +970,9 @@ cnv_w = cnv_w + fw_r*c_e1 - fw_l*c_w1 ! > 4*3 = 12 flops
 ! Y方向 ---------------------------------------
 
 if ( (b_n2 == 0.0)  ) then
-Un2 = u_ref2 - v(i  ,j+1,k  , 1)
-Vn2 = v_ref2 - v(i  ,j+1,k  , 2)
-Wn2 = w_ref2 - v(i  ,j+1,k  , 3)
+Un2 = - v(i  ,j+1,k  , 1)
+Vn2 = - v(i  ,j+1,k  , 2)
+Wn2 = - v(i  ,j+1,k  , 3)
 endif
 
 if ( b_n1 == 0.0 ) then
@@ -1009,14 +988,14 @@ Ws1 = wq
 endif
 
 if ( (b_s2 == 0.0)  ) then
-Us2 = u_ref2 - v(i  ,j-1,k  , 1)
-Vs2 = v_ref2 - v(i  ,j-1,k  , 2)
-Ws2 = w_ref2 - v(i  ,j-1,k  , 3)
+Us2 = - v(i  ,j-1,k  , 1)
+Vs2 = - v(i  ,j-1,k  , 2)
+Ws2 = - v(i  ,j-1,k  , 3)
 endif
 
 ! 流束　流体のみと固体壁の影響を含み，隣接セルが固体の場合にはマスクする
-cr  = VPn - v_ref
-cl  = VPs - v_ref
+cr  = VPn
+cl  = VPs
 acr = abs(cr)
 acl = abs(cl)
 
@@ -1101,9 +1080,9 @@ cnv_w = cnv_w + fw_r*c_n1 - fw_l*c_s1
 
 ! 壁面の場合の参照速度の修正
 if ( (b_t2 == 0.0)  ) then
-Ut2 = u_ref2 - v(i  ,j  ,k+1, 1)
-Vt2 = v_ref2 - v(i  ,j  ,k+1, 2)
-Wt2 = w_ref2 - v(i  ,j  ,k+1, 3)
+Ut2 = - v(i  ,j  ,k+1, 1)
+Vt2 = - v(i  ,j  ,k+1, 2)
+Wt2 = - v(i  ,j  ,k+1, 3)
 end if
 
 if ( b_t1 == 0.0 ) then
@@ -1119,14 +1098,14 @@ Wb1 = wq
 end if
 
 if ( (b_b2 == 0.0)  ) then
-Ub2 = u_ref2 - v(i  ,j  ,k-1, 1)
-Vb2 = v_ref2 - v(i  ,j  ,k-1, 2)
-Wb2 = w_ref2 - v(i  ,j  ,k-1, 3)
+Ub2 = - v(i  ,j  ,k-1, 1)
+Vb2 = - v(i  ,j  ,k-1, 2)
+Wb2 = - v(i  ,j  ,k-1, 3)
 end if
 
 ! 流束　流体のみと固体壁の影響を含み，隣接セルが固体の場合にはマスクする
-cr  = WPt - w_ref
-cl  = WPb - w_ref
+cr  = WPt
+cl  = WPb
 acr = abs(cr)
 acl = abs(cl)
 
@@ -1971,7 +1950,6 @@ end subroutine euler_explicit
 !! @param bx BC index for V
 !! @param vt_range 渦粘性係数の最小値と最大値
 !! @param yp_range Y+の最小値と最大値
-!! @param v00 参照速度
 !! @note
 !!    - vtmin, vtmax > vt_range(2)
 !!    - ypmin, ypmax > yp_range(2)
@@ -1979,7 +1957,7 @@ end subroutine euler_explicit
 !!    - 境界条件は必要か？
 !! @note NOCHECK
 !<
-subroutine eddy_viscosity (vt, sz, g, dh, re, cs, v, bx, vt_range, yp_range, v00)
+subroutine eddy_viscosity (vt, sz, g, dh, re, cs, v, bx, vt_range, yp_range)
 implicit none
 include 'ffv_f_params.h'
 integer                                                     ::  i, j, k, ix, jx, kx, g, m
@@ -1991,11 +1969,10 @@ real                                                        ::  DVDX, DVDY, DVDZ
 real                                                        ::  DWDX, DWDY, DWDZ
 real                                                        ::  d1, d2, ddd, c1, c2, c3, delta
 real                                                        ::  fs, aaa, Vmag, dis, tw, up1
-real                                                        ::  u_ref, v_ref, w_ref, u1, u2, u3
+real                                                        ::  u1, u2, u3
 real                                                        ::  dx, dy, dz, rx, ry, rz
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  vt
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
-real, dimension(0:3)                                        ::  v00
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bx
 real, dimension(3)                                          ::  dh
 
@@ -2017,10 +1994,6 @@ yp_range(1) =  1.0e6
 yp_range(2) = -1.0e6
 
 Delta = (dx*dy*dz)**(1.0/3.0)
-
-u_ref = v00(1)
-v_ref = v00(2)
-w_ref = v00(3)
 
     do k=1,kx
     do j=1,jx
@@ -2049,9 +2022,9 @@ w_ref = v00(3)
       !AAA= bx(i,j,k) * bx(i,j,k)   &
       !    *bx(i,j,k) * bx(i,j,k)   &
       !    *bx(i,j,k) * bx(i,j,k)
-      u1 = v(i,j,k,1) - u_ref
-      u2 = v(i,j,k,2) - v_ref
-      u3 = v(i,j,k,3) - w_ref
+      u1 = v(i,j,k,1)
+      u2 = v(i,j,k,2)
+      u3 = v(i,j,k,3)
       Vmag = SQRT(u1*u1 + u2*u2 + u3*u3)
 
       IF ( (AAA < 1.0) .AND. (Vmag >= 0.001) ) THEN
@@ -2116,27 +2089,22 @@ w_ref = v00(3)
 !! @param [in]  v   速度ベクトル（n-step, collocated）
 !! @param [in]  ab  前ステップの対流項（＋粘性項）の計算値
 !! @param [in]  bd  BCindex B
-!! @param [in]  v00 参照速度
 !! @param[out] flop
 !<
-subroutine ab2 (vc, sz, g, dt, v, ab, bd, v00, flop)
+subroutine ab2 (vc, sz, g, dt, v, ab, bd, flop)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, g
 integer, dimension(3)                                     ::  sz
 double precision                                          ::  flop
-real                                                      ::  actv, dt, ab_u, ab_v, ab_w, u_ref, v_ref, w_ref
+real                                                      ::  actv, dt, ab_u, ab_v, ab_w
 real                                                      ::  cf, ra
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vc, v, ab
-real, dimension(0:3)                                      ::  v00
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bd
 
 ix = sz(1)
 jx = sz(2)
 kx = sz(3)
-u_ref = v00(1)
-v_ref = v00(2)
-w_ref = v00(3)
 
 cf = 0.5 * dt
 
@@ -2145,7 +2113,6 @@ flop = flop + dble(ix*jx*kx) * 22.0d0
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, cf) &
-!$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref) &
 !$OMP PRIVATE(actv, ra, ab_u, ab_v, ab_w)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
@@ -2163,9 +2130,9 @@ ab(i,j,k,1) = vc(i,j,k,1)
 ab(i,j,k,2) = vc(i,j,k,2)
 ab(i,j,k,3) = vc(i,j,k,3)
 
-vc(i,j,k,1) = ( v(i,j,k,1) + cf * ( 3.0 * vc(i,j,k,1) - ab_u ) ) * actv + ra * u_ref
-vc(i,j,k,2) = ( v(i,j,k,2) + cf * ( 3.0 * vc(i,j,k,2) - ab_v ) ) * actv + ra * v_ref
-vc(i,j,k,3) = ( v(i,j,k,3) + cf * ( 3.0 * vc(i,j,k,3) - ab_w ) ) * actv + ra * w_ref
+vc(i,j,k,1) = ( v(i,j,k,1) + cf * ( 3.0 * vc(i,j,k,1) - ab_u ) ) * actv
+vc(i,j,k,2) = ( v(i,j,k,2) + cf * ( 3.0 * vc(i,j,k,2) - ab_v ) ) * actv
+vc(i,j,k,3) = ( v(i,j,k,3) + cf * ( 3.0 * vc(i,j,k,3) - ab_w ) ) * actv
 end do
 end do
 end do
@@ -2183,7 +2150,6 @@ end subroutine ab2
 !! @param [in]  g         ガイドセル長
 !! @param [in]  dh        格子幅
 !! @param [in]  c_scheme  対流項スキームのモード（2-Central_2nd, 4-Central_4th）
-!! @param [in]  v00       参照速度
 !! @param [in]  rei       レイノルズ数の逆数
 !! @param [in]  v         セルセンター速度ベクトル（n-step）
 !! @param [in]  vf        セルフェイス速度ベクトル（n-step）
@@ -2192,7 +2158,7 @@ end subroutine ab2
 !! @param [in]  vcs_coef  粘性項の係数（粘性項を計算しない場合には0.0）
 !! @param [out] flop      浮動小数点演算数
 !<
-subroutine pvec_central (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bid, bcd, vcs_coef, flop)
+subroutine pvec_central (wv, sz, g, dh, c_scheme, rei, v, vf, bid, bcd, vcs_coef, flop)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bix, bdx
@@ -2205,7 +2171,6 @@ real                                                      ::  Vp0, Ve1, Ve2, Vw1
 real                                                      ::  Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2
 real                                                      ::  UPe, UPw, VPn, VPs, WPt, WPb
 real                                                      ::  vcs, vcs_coef, ss, sw1, sw2, c1, c2
-real                                                      ::  u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2
 real                                                      ::  c_e1, c_w1, c_n1, c_s1, c_t1, c_b1
 real                                                      ::  c_e2, c_w2, c_n2, c_s2, c_t2, c_b2
 real                                                      ::  cnv_u, cnv_v, cnv_w, EX, EY, EZ, rei
@@ -2214,7 +2179,6 @@ real                                                      ::  ufr2, ufl2, vfr2, 
 real                                                      ::  ufr4, ufl4, vfr4, vfl4, wfr4, wfl4
 real                                                      ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, wv, vf
-real, dimension(0:3)                                      ::  v00
 real, dimension(3)                                        ::  dh
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bid, bcd
 
@@ -2247,21 +2211,13 @@ stop
 endif
 
 
-! 参照座標系の速度
-u_ref = v00(1)
-v_ref = v00(2)
-w_ref = v00(3)
-u_ref2 = 2.0*u_ref
-v_ref2 = 2.0*v_ref
-w_ref2 = 2.0*w_ref
-
 ! 24 + 3 + 3 * 106 + 21 + 9 = 375
 flop = flop + dble(ix)*dble(jx)*dble(kx)*375.0d0 + 46.0d0
 
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, rx, ry, rz, rx2, ry2 ,rz2, vcs, ss, c1, c2) &
-!$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, rei) &
+!$OMP FIRSTPRIVATE(rei) &
 !$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bix, bdx, uq, vq, wq, sw1, sw2) &
 !$OMP PRIVATE(Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2) &
 !$OMP PRIVATE(Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2) &
@@ -2387,25 +2343,25 @@ c_t2 = real( ibits(bcd(i  , j  , k+1), bc_d_T, 1) )
 
 
 ! 界面速度（スタガード位置） 24 flops
-UPe = vf(i  , j  , k  ,1)*b_e1 + u_ref*(1.0-b_e1)
-UPw = vf(i-1, j  , k  ,1)*b_w1 + u_ref*(1.0-b_w1)
-VPn = vf(i  , j  , k  ,2)*b_n1 + v_ref*(1.0-b_n1)
-VPs = vf(i  , j-1, k  ,2)*b_s1 + v_ref*(1.0-b_s1)
-WPt = vf(i  , j  , k  ,3)*b_t1 + w_ref*(1.0-b_t1)
-WPb = vf(i  , j  , k-1,3)*b_b1 + w_ref*(1.0-b_b1)
+UPe = vf(i  , j  , k  ,1)*b_e1
+UPw = vf(i-1, j  , k  ,1)*b_w1
+VPn = vf(i  , j  , k  ,2)*b_n1
+VPs = vf(i  , j-1, k  ,2)*b_s1
+WPt = vf(i  , j  , k  ,3)*b_t1
+WPb = vf(i  , j  , k-1,3)*b_b1
 
 ! セルセンターからの壁面修正速度 3 flops
-uq = u_ref2 - Up0
-vq = v_ref2 - Vp0
-wq = w_ref2 - Wp0
+uq = - Up0
+vq = - Vp0
+wq = - Wp0
 
 ! X方向 --------------------------------------- >> 6 + 4 + 20*3 + 21 + 15 = 106
 
 ! 速度指定の場合に参照先として，固体内にテンポラリに与えた値を使う   6flops
 if ( (b_e2 == 0.0)  ) then
-  Ue2 = u_ref2 - v(i+1,j  ,k  , 1)
-  Ve2 = v_ref2 - v(i+1,j  ,k  , 2)
-  We2 = w_ref2 - v(i+1,j  ,k  , 3)
+  Ue2 = - v(i+1,j  ,k  , 1)
+  Ve2 = - v(i+1,j  ,k  , 2)
+  We2 = - v(i+1,j  ,k  , 3)
 endif
 
 if ( b_e1 == 0.0 ) then
@@ -2421,9 +2377,9 @@ if ( b_w1 == 0.0 ) then
 end if
 
 if ( (b_w2 == 0.0)  ) then
-  Uw2 = u_ref2 - v(i-1,j  ,k  , 1)
-  Vw2 = v_ref2 - v(i-1,j  ,k  , 2)
-  Ww2 = w_ref2 - v(i-1,j  ,k  , 3)
+  Uw2 = - v(i-1,j  ,k  , 1)
+  Vw2 = - v(i-1,j  ,k  , 2)
+  Ww2 = - v(i-1,j  ,k  , 3)
 end if
 
 ! flux u \frac{\partial u}{\partial x}
@@ -2469,9 +2425,9 @@ EZ = EZ + (fw_r * c_e1 - fw_l * c_w1) * rx2
 ! Y方向 ---------------------------------------
 
 if ( (b_n2 == 0.0)  ) then
-  Un2 = u_ref2 - v(i  ,j+1,k  , 1)
-  Vn2 = v_ref2 - v(i  ,j+1,k  , 2)
-  Wn2 = w_ref2 - v(i  ,j+1,k  , 3)
+  Un2 = - v(i  ,j+1,k  , 1)
+  Vn2 = - v(i  ,j+1,k  , 2)
+  Wn2 = - v(i  ,j+1,k  , 3)
 endif
 
 if ( b_n1 == 0.0 ) then
@@ -2487,9 +2443,9 @@ if ( b_s1 == 0.0 ) then
 endif
 
 if ( (b_s2 == 0.0)  ) then
-  Us2 = u_ref2 - v(i  ,j-1,k  , 1)
-  Vs2 = v_ref2 - v(i  ,j-1,k  , 2)
-  Ws2 = w_ref2 - v(i  ,j-1,k  , 3)
+  Us2 = - v(i  ,j-1,k  , 1)
+  Vs2 = - v(i  ,j-1,k  , 2)
+  Ws2 = - v(i  ,j-1,k  , 3)
 endif
 
 ! flux
@@ -2533,9 +2489,9 @@ EZ = EZ + (fw_r * c_n1 - fw_l * c_s1) * ry2
 
 ! 壁面の場合の参照速度の修正
 if ( (b_t2 == 0.0)  ) then
-  Ut2 = u_ref2 - v(i  ,j  ,k+1, 1)
-  Vt2 = v_ref2 - v(i  ,j  ,k+1, 2)
-  Wt2 = w_ref2 - v(i  ,j  ,k+1, 3)
+  Ut2 = - v(i  ,j  ,k+1, 1)
+  Vt2 = - v(i  ,j  ,k+1, 2)
+  Wt2 = - v(i  ,j  ,k+1, 3)
 end if
 
 if ( b_t1 == 0.0 ) then
@@ -2551,9 +2507,9 @@ if ( b_b1 == 0.0 ) then
 end if
 
 if ( (b_b2 == 0.0)  ) then
-  Ub2 = u_ref2 - v(i  ,j  ,k-1, 1)
-  Vb2 = v_ref2 - v(i  ,j  ,k-1, 2)
-  Wb2 = w_ref2 - v(i  ,j  ,k-1, 3)
+  Ub2 = - v(i  ,j  ,k-1, 1)
+  Vb2 = - v(i  ,j  ,k-1, 2)
+  Wb2 = - v(i  ,j  ,k-1, 3)
 end if
 
 ! flux
@@ -2613,7 +2569,6 @@ end subroutine pvec_central
 !! @param [in]  g         ガイドセル長
 !! @param [in]  dh        格子幅
 !! @param [in]  c_scheme  対流項スキームのモード（2-Central_2nd, 4-Central_4th）
-!! @param [in]  v00       参照速度
 !! @param [in]  rei       レイノルズ数の逆数
 !! @param [in]  v         セルセンター速度ベクトル（n-step）
 !! @param [in]  vf        セルフェイス速度ベクトル（n-step）
@@ -2626,7 +2581,7 @@ end subroutine pvec_central
 !! @param [in]  rho       密度
 !! @param [out] flop      浮動小数点演算数
 !<
-subroutine pvec_central_les (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bid, bcd, vcs_coef, Cs, imodel, nu, rho, flop)
+subroutine pvec_central_les (wv, sz, g, dh, c_scheme, rei, v, vf, bid, bcd, vcs_coef, Cs, imodel, nu, rho, flop)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, g, c_scheme, bix, bdx
@@ -2639,7 +2594,6 @@ real                                                      ::  Vp0, Ve1, Ve2, Vw1
 real                                                      ::  Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2
 real                                                      ::  UPe, UPw, VPn, VPs, WPt, WPb
 real                                                      ::  vcs, vcs_coef, ss, sw1, sw2, c1, c2
-real                                                      ::  u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2
 real                                                      ::  c_e1, c_w1, c_n1, c_s1, c_t1, c_b1
 real                                                      ::  c_e2, c_w2, c_n2, c_s2, c_t2, c_b2
 real                                                      ::  cnv_u, cnv_v, cnv_w, EX, EY, EZ, rei
@@ -2648,7 +2602,6 @@ real                                                      ::  ufr2, ufl2, vfr2, 
 real                                                      ::  ufr4, ufl4, vfr4, vfl4, wfr4, wfl4
 real                                                      ::  fu_r, fu_l, fv_r, fv_l, fw_r, fw_l
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, wv, vf
-real, dimension(0:3)                                      ::  v00
 real, dimension(3)                                        ::  dh
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bid, bcd
 integer                                                   ::  imodel
@@ -2700,21 +2653,12 @@ stop
 endif
 
 
-! 参照座標系の速度
-u_ref = v00(1)
-v_ref = v00(2)
-w_ref = v00(3)
-u_ref2 = 2.0*u_ref
-v_ref2 = 2.0*v_ref
-w_ref2 = 2.0*w_ref
-
-
 flop = flop + 46.0d0
 
 
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, rx, ry, rz, rx2, ry2 ,rz2, vcs, ss, c1, c2) &
-!$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, rei, dx, dy, dz) &
+!$OMP FIRSTPRIVATE(rei, dx, dy, dz) &
 !$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bix, bdx, uq, vq, wq, sw1, sw2) &
 !$OMP PRIVATE(Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2) &
 !$OMP PRIVATE(Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2) &
@@ -2848,25 +2792,25 @@ c_t2 = real( ibits(bcd(i  , j  , k+1), bc_d_T, 1) )
 
 
 ! 界面速度（スタガード位置） 24 flops
-UPe = vf(i  , j  , k  ,1)*b_e1 + u_ref*(1.0-b_e1)
-UPw = vf(i-1, j  , k  ,1)*b_w1 + u_ref*(1.0-b_w1)
-VPn = vf(i  , j  , k  ,2)*b_n1 + v_ref*(1.0-b_n1)
-VPs = vf(i  , j-1, k  ,2)*b_s1 + v_ref*(1.0-b_s1)
-WPt = vf(i  , j  , k  ,3)*b_t1 + w_ref*(1.0-b_t1)
-WPb = vf(i  , j  , k-1,3)*b_b1 + w_ref*(1.0-b_b1)
+UPe = vf(i  , j  , k  ,1)*b_e1
+UPw = vf(i-1, j  , k  ,1)*b_w1
+VPn = vf(i  , j  , k  ,2)*b_n1
+VPs = vf(i  , j-1, k  ,2)*b_s1
+WPt = vf(i  , j  , k  ,3)*b_t1
+WPb = vf(i  , j  , k-1,3)*b_b1
 
 ! セルセンターからの壁面修正速度 3 flops
-uq = u_ref2 - Up0
-vq = v_ref2 - Vp0
-wq = w_ref2 - Wp0
+uq = - Up0
+vq = - Vp0
+wq = - Wp0
 
 ! X方向 ---------------------------------------
 
 ! 速度指定の場合に参照先として，固体内にテンポラリに与えた値を使う
 if ( (b_e2 == 0.0)  ) then
-Ue2 = u_ref2 - v(i+1,j  ,k  , 1)
-Ve2 = v_ref2 - v(i+1,j  ,k  , 2)
-We2 = w_ref2 - v(i+1,j  ,k  , 3)
+Ue2 = - v(i+1,j  ,k  , 1)
+Ve2 = - v(i+1,j  ,k  , 2)
+We2 = - v(i+1,j  ,k  , 3)
 endif
 
 if ( b_e1 == 0.0 ) then
@@ -2882,9 +2826,9 @@ Ww1 = wq
 end if
 
 if ( (b_w2 == 0.0)  ) then
-Uw2 = u_ref2 - v(i-1,j  ,k  , 1)
-Vw2 = v_ref2 - v(i-1,j  ,k  , 2)
-Ww2 = w_ref2 - v(i-1,j  ,k  , 3)
+Uw2 = - v(i-1,j  ,k  , 1)
+Vw2 = - v(i-1,j  ,k  , 2)
+Ww2 = - v(i-1,j  ,k  , 3)
 end if
 
 ! flux u \frac{\partial u}{\partial x}
@@ -2935,9 +2879,9 @@ EZ = EZ + (fw_r * c_e1 - fw_l * c_w1) * rx2
 ! Y方向 ---------------------------------------
 
 if ( (b_n2 == 0.0)  ) then
-Un2 = u_ref2 - v(i  ,j+1,k  , 1)
-Vn2 = v_ref2 - v(i  ,j+1,k  , 2)
-Wn2 = w_ref2 - v(i  ,j+1,k  , 3)
+Un2 = - v(i  ,j+1,k  , 1)
+Vn2 = - v(i  ,j+1,k  , 2)
+Wn2 = - v(i  ,j+1,k  , 3)
 endif
 
 if ( b_n1 == 0.0 ) then
@@ -2953,9 +2897,9 @@ Ws1 = wq
 endif
 
 if ( (b_s2 == 0.0)  ) then
-Us2 = u_ref2 - v(i  ,j-1,k  , 1)
-Vs2 = v_ref2 - v(i  ,j-1,k  , 2)
-Ws2 = w_ref2 - v(i  ,j-1,k  , 3)
+Us2 = - v(i  ,j-1,k  , 1)
+Vs2 = - v(i  ,j-1,k  , 2)
+Ws2 = - v(i  ,j-1,k  , 3)
 endif
 
 ! flux
@@ -3004,9 +2948,9 @@ EZ = EZ + (fw_r * c_n1 - fw_l * c_s1) * ry2
 
 ! 壁面の場合の参照速度の修正
 if ( (b_t2 == 0.0)  ) then
-Ut2 = u_ref2 - v(i  ,j  ,k+1, 1)
-Vt2 = v_ref2 - v(i  ,j  ,k+1, 2)
-Wt2 = w_ref2 - v(i  ,j  ,k+1, 3)
+Ut2 = - v(i  ,j  ,k+1, 1)
+Vt2 = - v(i  ,j  ,k+1, 2)
+Wt2 = - v(i  ,j  ,k+1, 3)
 end if
 
 if ( b_t1 == 0.0 ) then
@@ -3022,9 +2966,9 @@ Wb1 = wq
 end if
 
 if ( (b_b2 == 0.0)  ) then
-Ub2 = u_ref2 - v(i  ,j  ,k-1, 1)
-Vb2 = v_ref2 - v(i  ,j  ,k-1, 2)
-Wb2 = w_ref2 - v(i  ,j  ,k-1, 3)
+Ub2 = - v(i  ,j  ,k-1, 1)
+Vb2 = - v(i  ,j  ,k-1, 2)
+Wb2 = - v(i  ,j  ,k-1, 3)
 end if
 
 ! flux
@@ -3363,14 +3307,14 @@ end subroutine src_2nd
 !! @param [in]     dt      時間積分幅
 !! @param [in]     v       速度ベクトル（n-step, collocated）
 !! @param [in]     bcd     BCindex B
-!! @param [in]     v00     参照速度
+!! @param [in]     vref    参照速度の大きさ v00[0]
 !! @param [in]     st      区間開始の無次元速度
 !! @param [in]     ed      区間終了の無次元速度
 !! @param [in]     penalty ペナルティ数
 !! @param [in]     count   修正数
 !! @param [in,out] flop    浮動小数点演算数
 !<
-subroutine stabilize (vc, sz, g, dt, v, bcd, v00, st, ed, penalty, count, flop)
+subroutine stabilize (vc, sz, g, dt, v, bcd, vref, st, ed, penalty, count, flop)
 implicit none
 include 'ffv_f_params.h'
 integer                                                   ::  i, j, k, ix, jx, kx, g, count
@@ -3380,7 +3324,6 @@ real                                                      ::  actv, dt, st, ed, 
 real                                                      ::  u1, v1, w1, uu, gma, df, vref, s1, s2
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vc, v
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bcd
-real, dimension(0:3)                                      ::  v00
 
 ix = sz(1)
 jx = sz(2)
@@ -3390,7 +3333,6 @@ flop = flop + dble(ix)*dble(jx)*dble(kx)*42.0d0
 
 count = 0
 
-vref = v00(0)
 if ( vref == 0.0 ) vref=1.0
 pai = 2.0 * asin(1.0)
 df = ed - st

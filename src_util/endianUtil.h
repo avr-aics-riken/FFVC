@@ -26,11 +26,9 @@
 #include <stdio.h>
 #include <sys/types.h>
 // modify(Vsphere 1.6.0) start for vsphere_win at 2008/06/20 by @hira
-#ifndef _WIN32
+
 #include <unistd.h>           // for linux
-#else
-#include "sph_win32_util.h"   // for win32
-#endif
+
 // modify(Vsphere 1.6.0) end for vsphere_win at 2008/06/20 by @hira
 #include <iostream>
 #include <string>
@@ -43,10 +41,7 @@
 // modify(Vsphere 1.6.0) start for vsphere_win at 2008/06/20 by @hira
 //  inline bool BigEndianSys() {return (BYTE_ORDER != LITTLE_ENDIAN);}
 //  inline bool LittleEndianSys() {return (BYTE_ORDER == LITTLE_ENDIAN);}
-#ifdef _WIN32
-  inline bool BigEndianSys() {return false;}
-  inline bool LittleEndianSys() {return true;}
-#else
+
 // modify SPARC at 20110224 by @hira 
 #ifdef FUJITSU_FX1            // fx1
   inline bool BigEndianSys() {return true;}
@@ -56,8 +51,6 @@
   inline bool LittleEndianSys() {return (BYTE_ORDER == LITTLE_ENDIAN);}
 #endif
 
-#endif
-// modify(Vsphere 1.6.0) end for vsphere_win at 2008/06/20 by @hira
 
 #endif // SUPER_UX
 

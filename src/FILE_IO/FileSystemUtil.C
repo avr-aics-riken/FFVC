@@ -30,11 +30,7 @@
 #include <fstream>
 #include <errno.h>
 
-#ifndef _WIN32
 #include <dirent.h>
-#else
-#include "sph_win32_util.h"   // for win32
-#endif
 
 #include "cdm_DFI.h"
 
@@ -232,7 +228,6 @@ namespace BVX_IO {
   
   void CheckDir(std::string dirstr)
   {
-#ifndef _WIN32
       
     if( dirstr.size() == 0 ) {
       //printf("\toutput current directory\n");
@@ -263,28 +258,6 @@ namespace BVX_IO {
         Exit(0);
       }
     }
-    
-#else // for windows
-    
-    if( dirstr.size() == 0 ) {
-      printf("\toutput current directory\n");
-      return;
-    }
-    
-    // check to exist directory
-    if (IsDirExsist(dirstr)) {
-      // exist directory
-      return;
-    }
-    
-    // make directory
-    if(!CreateDirectory(dirstr.c_str()))
-    {
-      printf("\tCan't generate directory(%s).\n", dirstr.c_str());
-      Exit(0);
-    }
-    
-#endif  // _WIN32
     
     return;
   }

@@ -27,7 +27,6 @@
 !! @param [in]     g      ガイドセル長
 !! @param [in]     dh     格子幅
 !! @param [in]     scheme 対流項スキームのモード（1-UWD, 3-MUSCL）
-!! @param [in]     v00    参照速度
 !! @param [in]     vf     セルフェイス速度ベクトル（n+1 step）
 !! @param [in]     ie     内部エネルギー
 !! @param [in]     bid    Cut ID
@@ -36,7 +35,7 @@
 !! @param [in]     swt    固定壁の扱い（0-断熱，1-共役熱移動）
 !! @param [out]    flop   浮動小数点演算数
 !<
-subroutine ps_muscl (ws, sz, g, dh, scheme, v00, vf, ie, bid, cdf, bcd, swt, flop)
+subroutine ps_muscl (ws, sz, g, dh, scheme, vf, ie, bid, cdf, bcd, swt, flop)
 implicit none
 include '../FB/ffv_f_params.h'
 integer                                                     ::  i, j, k, ix, jx, kx, g, scheme, idx, swt, hdx, bix
@@ -46,7 +45,7 @@ integer, dimension(3)                                       ::  sz
 double precision                                            ::  flop
 real                                                        ::  UPe, UPw, VPn, VPs, WPt, WPb
 real                                                        ::  Fp0, Fe1, Fe2, Fw1, Fw2, Fs1, Fs2, Fn1, Fn2, Fb1, Fb2, Ft1, Ft2
-real                                                        ::  ck, u_ref, v_ref, w_ref, actv, rx, ry, rz
+real                                                        ::  ck, actv, rx
 real                                                        ::  c_e1, c_w1, c_n1, c_s1, c_t1, c_b1
 real                                                        ::  c_e2, c_w2, c_n2, c_s2, c_t2, c_b2
 real                                                        ::  a_e, a_w, a_n, a_s, a_t, a_b
@@ -55,7 +54,6 @@ real                                                        ::  Fr_r, Fr_l, Fl_r
 real                                                        ::  cr, cl, acr, acl, cnv, ss, b, cm1, cm2, ss_4
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  vf
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  ie, ws
-real, dimension(0:3)                                        ::  v00
 real, dimension(3)                                          ::  dh
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  cdf, bcd, bid
 
@@ -64,17 +62,10 @@ jx = sz(2)
 kx = sz(3)
 
 rx = 1.0/dh(1)
-ry = 1.0/dh(2)
-rz = 1.0/dh(3)
 
 ss = 1.0
 ck = 0.0
 b = 0.0
-
-! 参照座標系の速度
-u_ref = v00(1)
-v_ref = v00(2)
-w_ref = v00(3)
 
 if ( scheme == 1 ) then      !     1st order upwind
 ss = 0.0
@@ -93,7 +84,7 @@ flop = flop + dble(ix)*dble(jx)*dble(kx)*279.0d0 + 45.0d0
 
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, rx, ry, rz, ss, ck, b, u_ref, v_ref, w_ref, swt, cm1, cm2, ss_4) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, rx, ss, ck, b, swt, cm1, cm2, ss_4) &
 !$OMP PRIVATE(cnv, idx, hdx, bix, actv) &
 !$OMP PRIVATE(b_e1, b_w1, b_n1, b_s1, b_t1, b_b1, b_e2, b_w2, b_n2, b_s2, b_t2, b_b2, b_p) &
 !$OMP PRIVATE(Fp0, Fe1, Fe2, Fw1, Fw2, Fs1, Fs2, Fn1, Fn2, Fb1, Fb2, Ft1, Ft2) &
@@ -195,12 +186,12 @@ a_b = real(ibits(hdx, adbtc_B, 1))
 
 
 ! 界面速度（スタガード位置） > 24 flops
-UPe = vf(i  , j  , k  ,1)*b_e1 + u_ref*(1.0-b_e1)
-UPw = vf(i-1, j  , k  ,1)*b_w1 + u_ref*(1.0-b_w1)
-VPn = vf(i  , j  , k  ,2)*b_n1 + v_ref*(1.0-b_n1)
-VPs = vf(i  , j-1, k  ,2)*b_s1 + v_ref*(1.0-b_s1)
-WPt = vf(i  , j  , k  ,3)*b_t1 + w_ref*(1.0-b_t1)
-WPb = vf(i  , j  , k-1,3)*b_b1 + w_ref*(1.0-b_b1)
+UPe = vf(i  , j  , k  ,1)*b_e1
+UPw = vf(i-1, j  , k  ,1)*b_w1
+VPn = vf(i  , j  , k  ,2)*b_n1
+VPs = vf(i  , j-1, k  ,2)*b_s1
+WPt = vf(i  , j  , k  ,3)*b_t1
+WPb = vf(i  , j  , k-1,3)*b_b1
 
 
 ! X方向 --------------------------------------- >> 4 + 36 + 22 + 4 + 18 = 84
@@ -235,8 +226,8 @@ Fl_r = Fp0 - (cm1*g4+cm2*g3)*ss_4
 Fl_l = Fw1 + (cm1*g1+cm2*g2)*ss_4 * c_w2 ! 22 flop
 
 ! 流束　壁面上で速度ゼロ->対流熱流束がゼロになる >  4 flop
-cr  = UPe - u_ref
-cl  = UPw - u_ref
+cr  = UPe
+cl  = UPw
 acr = abs(cr)
 acl = abs(cl)
 
@@ -277,13 +268,13 @@ Fr_l = Fp0 + (cm1*g3+cm2*g4)*ss_4
 Fl_r = Fp0 - (cm1*g4+cm2*g3)*ss_4
 Fl_l = Fs1 + (cm1*g1+cm2*g2)*ss_4 * c_s2
 
-cr  = VPn - v_ref
-cl  = VPs - v_ref
+cr  = VPn
+cl  = VPs
 acr = abs(cr)
 acl = abs(cl)
 
 cnv = (0.5*(cr*(Fr_r+Fr_l) - acr*(Fr_r-Fr_l)) * c_n1 * a_n &
-    -  0.5*(cl*(Fl_r+Fl_l) - acl*(Fl_r-Fl_l)) * c_s1 * a_s ) * ry + cnv
+    -  0.5*(cl*(Fl_r+Fl_l) - acl*(Fl_r-Fl_l)) * c_s1 * a_s ) * rx + cnv
 
 
 
@@ -318,13 +309,13 @@ Fr_l = Fp0 + (cm1*g3+cm2*g4)*ss_4
 Fl_r = Fp0 - (cm1*g4+cm2*g3)*ss_4
 Fl_l = Fb1 + (cm1*g1+cm2*g2)*ss_4 * c_b2
 
-cr  = WPt - w_ref
-cl  = WPb - w_ref
+cr  = WPt
+cl  = WPb
 acr = abs(cr)
 acl = abs(cl)
 
 cnv = (0.5*(cr*(Fr_r+Fr_l) - acr*(Fr_r-Fr_l)) * c_t1 * a_t &
-    -  0.5*(cl*(Fl_r+Fl_l) - acl*(Fl_r-Fl_l)) * c_b1 * a_b ) * rz + cnv
+    -  0.5*(cl*(Fl_r+Fl_l) - acl*(Fl_r-Fl_l)) * c_b1 * a_b ) * rx + cnv
 
 ! ---------------------------------------
 ws(i,j,k) = -cnv * actv
@@ -463,7 +454,7 @@ integer                                                   ::  i, j, k, ix, jx, k
 integer                                                   ::  l_p, l_w, l_e, l_s, l_n, l_b, l_t
 integer, dimension(3)                                     ::  sz
 double precision                                          ::  flop, res, res_l2
-real                                                      ::  dt, delta, sw, rx, ry, rz, rx2, ry2, rz2
+real                                                      ::  dt, delta, sw, rx, rx2
 real                                                      ::  t_p, t_w, t_e, t_s, t_n, t_b, t_t
 real                                                      ::  g_w, g_e, g_s, g_n, g_b, g_t
 real                                                      ::  a_w, a_e, a_s, a_n, a_b, a_t
@@ -482,11 +473,7 @@ jx = sz(2)
 kx = sz(3)
 
 rx = 1.0/dh(1)
-ry = 1.0/dh(2)
-rz = 1.0/dh(3)
 rx2= rx*rx
-ry2= ry*ry
-rz2= rz*rz
 
 res  = 0.0
 
@@ -499,7 +486,7 @@ flop = flop + dble(ix)*dble(jx)*dble(kx)*193.0d0 + 27.0d0
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:res) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, dt, rx, ry, rz, rx2, ry2, rz2, hm) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, dt, rx, rx2, hm) &
 !$OMP PRIVATE(idx, delta, sw) &
 !$OMP PRIVATE(t_p, t_w, t_e, t_s, t_n, t_b, t_t) &
 !$OMP PRIVATE(g_w, g_e, g_s, g_n, g_b, g_t) &
@@ -584,15 +571,15 @@ tc_t = lmd_p * lmd_t / (lmd_p + lmd_t) * 2.0 ! (3+8)*6 = 66
 
 delta =(rx2*( c_w * tc_w * (t_w - t_p)  & ! west
             + c_e * tc_e * (t_e - t_p)) & ! east
-       +ry2*( c_s * tc_s * (t_s - t_p)  & ! south
+       +rx2*( c_s * tc_s * (t_s - t_p)  & ! south
             + c_n * tc_n * (t_n - t_p)) & ! north
-       +rz2*( c_b * tc_b * (t_b - t_p)  & ! bottom
+       +rx2*( c_b * tc_b * (t_b - t_p)  & ! bottom
             + c_t * tc_t * (t_t - t_p)) & ! top
        +rx*( (1.0 - g_w) * a_w * qbc(1, i, j, k)  & ! west   gamma
             -(1.0 - g_e) * a_e * qbc(2, i, j, k)) & ! east   gamma
-       +ry*( (1.0 - g_s) * a_s * qbc(3, i, j, k)  & ! south  gamma
+       +rx*( (1.0 - g_s) * a_s * qbc(3, i, j, k)  & ! south  gamma
             -(1.0 - g_n) * a_n * qbc(4, i, j, k)) & ! north  gamma
-       +rz*( (1.0 - g_b) * a_b * qbc(5, i, j, k)  & ! bottom gamma
+       +rx*( (1.0 - g_b) * a_b * qbc(5, i, j, k)  & ! bottom gamma
             +(1.0 - g_t) * a_t * qbc(6, i, j, k)) & ! top    gamma
        ) * sw ! 26 + 27 + 1 = 54
 ie(i,j,k) = ws(i,j,k) + delta * dt

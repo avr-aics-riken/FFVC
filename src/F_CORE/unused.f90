@@ -32,11 +32,10 @@
 !! @param bp BCindex P
 !! @param range_Yp Y+の最小値と最大値
 !! @param range_Ut 摩擦速度（無次元）の最小値と最大値
-!! @param v00 参照速度
 !! @param flop
 !! @note NOCHECK
 !<
-subroutine friction_velocity (ut, sz, g, dh, re, v, bp, range_Yp, range_Ut, v00, flop)
+subroutine friction_velocity (ut, sz, g, dh, re, v, bp, range_Yp, range_Ut, flop)
 implicit none
 include 'ffv_f_params.h'
 
@@ -46,10 +45,9 @@ double precision                                          ::  flop
 real, dimension(2)                                        ::  range_Yp, range_Ut, tmp_Max, tmp_Min, tmp
 real                                                      ::  dh, dd, dis, eps1, eps2, re
 real                                                      ::  T_w, U_t, U_t0, Yp, dut
-real                                                      ::  u_ref, v_ref, w_ref, u1, u2, u3, ug
+real                                                      ::  u1, u2, u3, ug
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  ut
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
-real, dimension(0:3)                                      ::  v00
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
 
 ix = sz(1)
@@ -65,9 +63,6 @@ tmp(2) = 0.0
 
 dd    = 2.0/(dh*re)
 dis   = 0.5*dh
-u_ref = v00(1)
-v_ref = v00(2)
-w_ref = v00(3)
 
 eps1 = 1.0e-3 ! 速度がeps1よりも小さい値のときには摩擦速度をゼロにする
 eps2 = 1.0e-3 ! 反復の収束判定閾値
@@ -79,9 +74,9 @@ do j=1,jx
 do i=1,ix
 bpx = bp(i,j,k)
 
-u1 = v(i,j,k,1) - u_ref
-u2 = v(i,j,k,2) - v_ref
-u3 = v(i,j,k,3) - w_ref
+u1 = v(i,j,k,1)
+u2 = v(i,j,k,2)
+u3 = v(i,j,k,3)
 ug = sqrt(u1*u1 + u2*u2 + u3*u3)
 U_t0 = 0.0
 

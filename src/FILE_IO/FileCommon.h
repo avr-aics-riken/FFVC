@@ -27,12 +27,7 @@
 
 #include "BitVoxel.h"
 
-#if defined(_WIN32)
-typedef __int64 int64_t;
-typedef unsigned __int64 uint64_t;
-#else
 #include <stdint.h>
-#endif
 
 /// Octreeファイルのエンディアン識別子 (OC01)
 #define OCTREE_FILE_IDENTIFIER    (('O' | ('C' << 8) | ('0' << 16) | ('1' << 24)))

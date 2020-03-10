@@ -21,21 +21,7 @@
 #ifndef __FFV_FILEIO_TYPE_H__
 #define __FFV_FILEIO_TYPE_H__
 
-
-#ifdef _WIN32
-
-typedef short          int16_t;
-typedef unsigned short uint16_t;
-typedef int            int32_t;
-typedef unsigned int   uint32_t;
-typedef long           int64_t;
-typedef unsigned long  uint64_t;
-
-#else  // _WIN32
-
 #include <stdint.h>
-
-#endif // _WIN32
 
 typedef bool          b8;   ///< 論理型
 typedef char          s8;   ///< 符号付き 8bit整数型

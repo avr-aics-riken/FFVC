@@ -127,11 +127,7 @@ namespace BVX_IO {
   // デリミタを返す
   inline char getDelimCharPath()
   {
-#ifdef WIN32
-    return '\\';
-#else
     return '/';
-#endif
   }
 
 

@@ -511,9 +511,9 @@ void PLT3D::OutputStatisticalVarables(const unsigned m_CurrentStep,
 
     
     // Velocity
-    fb_vout_ijkn_(d_wv, d_av, size, &guide, RF->getV00(), &unit_velocity, &flop);
+    fb_vout_ijkn_(d_wv, d_av, size, &guide, &unit_velocity, &flop);
     
-    fb_minmax_v_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wv, &flop);
+    fb_minmax_v_ (vec_min, vec_max, size, &guide, d_wv, &flop);
     
     if ( numProc > 1 )
     {
@@ -572,9 +572,9 @@ void PLT3D::OutputStatisticalVarables(const unsigned m_CurrentStep,
     // rms
     if (C->varState[var_RmsV] == ON )
     {
-      fb_vout_ijkn_(d_wv, d_rms_v, size, &guide, RF->getV00(), &unit_velocity, &flop);
+      fb_vout_ijkn_(d_wv, d_rms_v, size, &guide, &unit_velocity, &flop);
       
-      fb_minmax_v_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wv, &flop);
+      fb_minmax_v_ (vec_min, vec_max, size, &guide, d_wv, &flop);
       
       if ( numProc > 1 )
       {
@@ -601,9 +601,9 @@ void PLT3D::OutputStatisticalVarables(const unsigned m_CurrentStep,
     // rms mean
     if (C->varState[var_RmsMeanV] == ON )
     {
-      fb_vout_ijkn_(d_wv, d_rms_mean_v, size, &guide, RF->getV00(), &unit_velocity, &flop);
+      fb_vout_ijkn_(d_wv, d_rms_mean_v, size, &guide, &unit_velocity, &flop);
       
-      fb_minmax_v_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wv, &flop);
+      fb_minmax_v_ (vec_min, vec_max, size, &guide, d_wv, &flop);
       
       if ( numProc > 1 )
       {
@@ -851,9 +851,9 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
     
     
     // Velocity
-    fb_vout_ijkn_(d_wv, d_v, size, &guide, RF->getV00(), &unit_velocity, &flop);
+    fb_vout_ijkn_(d_wv, d_v, size, &guide, &unit_velocity, &flop);
     
-    fb_minmax_v_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wv, &flop);
+    fb_minmax_v_ (vec_min, vec_max, size, &guide,  d_wv, &flop);
     
     if ( numProc > 1 )
     {
@@ -880,9 +880,9 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
     
     
     // Face Velocity
-    fb_vout_ijkn_(d_wv, d_vf, size, &guide, RF->getV00(), &unit_velocity, &flop);
+    fb_vout_ijkn_(d_wv, d_vf, size, &guide, &unit_velocity, &flop);
     
-    fb_minmax_v_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wv, &flop);
+    fb_minmax_v_ (vec_min, vec_max, size, &guide,  d_wv, &flop);
     
     if ( numProc > 1 )
     {
@@ -937,7 +937,7 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
   // Total Pressure
   if (C->varState[var_TotalP] == ON )
   {
-    fb_totalp_ (d_ws, size, &guide, d_v, d_p, RF->getV00(), &flop);
+    fb_totalp_ (d_ws, size, &guide, d_v, d_p, &flop);
     
     // convert non-dimensional to dimensional, iff file is dimensional
     if (C->Unit.File == DIMENSIONAL)
@@ -966,14 +966,12 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
   // Vorticity
   if (C->varState[var_Vorticity] == ON )
   {
-    rot_v_ (d_wv, size, &guide, pitch, d_v, d_cdf, RF->getV00(), &flop);
+    rot_v_ (d_wv, size, &guide, pitch, d_v, d_cdf, &flop);
     
-    REAL_TYPE vz[3]; // dummy
-    vz[0] = vz[1] = vz[2] = 0.0;
     REAL_TYPE unit_vort = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity/C->RefLength : 1.0;
     
-    fb_vout_ijkn_(d_wv, d_wv, size, &guide, vz, &unit_vort, &flop);
-    fb_minmax_v_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wv, &flop);
+    fb_vout_ijkn_(d_wv, d_wv, size, &guide, &unit_vort, &flop);
+    fb_minmax_v_ (vec_min, vec_max, size, &guide, d_wv, &flop);
     
     if ( numProc > 1 )
     {
@@ -1001,7 +999,7 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
   // 2nd Invariant of Velocity Gradient Tensor 無次元で出力
   if (C->varState[var_Qcr] == ON )
   {
-    i2vgt_ (d_ws, size, &guide, pitch, d_v, d_cdf, RF->getV00(), &flop);
+    i2vgt_ (d_ws, size, &guide, pitch, d_v, d_cdf, &flop);
     
     fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
     
@@ -1024,7 +1022,7 @@ void PLT3D::OutputBasicVariables(const unsigned m_CurrentStep,
   // Helicity 無次元で出力
   if (C->varState[var_Helicity] == ON )
   {
-    helicity_ (d_ws, size, &guide, pitch, d_v, d_cdf, RF->getV00(), &flop);
+    helicity_ (d_ws, size, &guide, pitch, d_v, d_cdf, &flop);
     
     fb_minmax_s_ (&f_min, &f_max, size, &guide, d_ws, &flop);
     
@@ -1305,7 +1303,7 @@ void PLT3D::RestartStatistic(FILE* fp,
       unpack_vector_(d_av, size, &guide, &d_iobuf[size_InBuffer*block], &GuideIn);
       block += 3;
       
-      fb_vin_ijkn_(d_av, size, &guide, u0, &refv, &flop);
+      fb_vin_ijkn_(d_av, size, &guide, &refv, &flop);
     }
     
     // temperature
@@ -1326,7 +1324,7 @@ void PLT3D::RestartStatistic(FILE* fp,
       unpack_vector_(d_rms_mean_v, size, &guide, &d_iobuf[size_InBuffer*block], &GuideIn);
       block += 3;
 
-      fb_vin_ijkn_(d_rms_mean_v, size, &guide, u0, &refv, &flop);
+      fb_vin_ijkn_(d_rms_mean_v, size, &guide, &refv, &flop);
     }
     
     // rms mean P
@@ -1527,7 +1525,7 @@ void PLT3D::RestartInstantaneous(FILE* fp,
       unpack_vector_(d_v, size, &guide, &d_iobuf[size_InBuffer*block], &GuideIn);
       block += 3;
       
-      fb_vin_ijkn_(d_v, size, &guide, u0, &refv, &flop);
+      fb_vin_ijkn_(d_v, size, &guide, &refv, &flop);
     }
     
     // Fvelocity
@@ -1536,7 +1534,7 @@ void PLT3D::RestartInstantaneous(FILE* fp,
       unpack_vector_(d_vf, size, &guide, &d_iobuf[size_InBuffer*block], &GuideIn);
       block += 3;
 
-      fb_vin_ijkn_(d_vf, size, &guide, u0, &refv, &flop);
+      fb_vin_ijkn_(d_vf, size, &guide, &refv, &flop);
     }
     
     // Temperature

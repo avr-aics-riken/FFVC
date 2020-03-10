@@ -20,12 +20,11 @@
 !> @author keno, FSI Team, VCAD, RIKEN
 !<
 !  ***********************************************************
-!> @subroutine vof_uwd (f, sz, g, v00, dt, dh, v, q, bx, flop)
+!> @subroutine vof_uwd (f, sz, g, dt, dh, v, q, bx, flop)
 !! @brief VOFの移流を一次風上で計算
 !! @param[out] f VOF
 !! @param sz 配列長
 !! @param g ガイドセル長
-!! @param v00 参照速度
 !! @param dt 時間積分幅
 !! @param dh 格子幅
 !! @param v セルフェイスの速度ベクトル
@@ -33,7 +32,7 @@
 !! @param bx BC index for V
 !! @param[out] flop flop count
 !<
-    subroutine vof_uwd (f, sz, g, v00, dt, dh, v, q, bx, flop)
+    subroutine vof_uwd (f, sz, g, dt, dh, v, q, bx, flop)
     implicit none
     include '../FB/ffv_f_params.h'
     integer                                                   :: i, j, k, ix, jx, kx, g, idx
@@ -43,30 +42,25 @@
     real                                                      :: fc, fe, fw, fn, fs, ft, fb
     real                                                      :: bc, be, bw, bn, bs, bt, bb
     real                                                      :: re, rw, rn, rs, rt, rb
-    real                                                      :: u_ref, v_ref, w_ref
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) :: v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    :: f, q
-    real, dimension(0:3)                                      :: v00
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) :: bx
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
     dth= dt/dh
     flop = dble(ix*jx*kx)*75.0d0 + 1.0d0
 
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      ur = v(i  ,j  ,k  , 1) - u_ref
-      ul = v(i-1,j  ,k  , 1) - u_ref
-      vr = v(i  ,j  ,k  , 2) - v_ref
-      vl = v(i  ,j-1,k  , 2) - v_ref
-      wr = v(i  ,j  ,k  , 3) - w_ref
-      wl = v(i  ,j  ,k-1, 3) - w_ref
+      ur = v(i  ,j  ,k  , 1)
+      ul = v(i-1,j  ,k  , 1)
+      vr = v(i  ,j  ,k  , 2)
+      vl = v(i  ,j-1,k  , 2)
+      wr = v(i  ,j  ,k  , 3)
+      wl = v(i  ,j  ,k-1, 3)
       
       idx = bx(i,j,k)
       bc = real(ibits(idx, Active,    1))
@@ -115,19 +109,18 @@
     end subroutine vof_uwd
 
 !  *******************************************************************
-!> @subroutine c3d_vof_muscl (f, sz, g, v00, dt, dh, v, fn, bnd, flop)
+!> @subroutine c3d_vof_muscl (f, sz, g, dt, dh, v, fn, bnd, flop)
 !! @brief 温度のパッシブスカラ方程式の移流部分をMUSCL法で解く
 !! @param fx 対流流束
 !! @param sz 配列長
 !! @param g ガイドセル長
-!! @param v00 参照速度
 !! @param v 速度ベクトル
 !! @param t 温度
 !! @param bnd マスク
 !! @note
 !!    - リミター付き
 !<
-    subroutine c3d_vof_muscl (f, sz, g, v00, dt, dh, v, fn, bnd, flop)
+    subroutine c3d_vof_muscl (f, sz, g, dt, dh, v, fn, bnd, flop)
     implicit none
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
@@ -138,7 +131,6 @@
     real                                                      ::  dk1, dk2, dk3, sk1, sk2, sk3, sk4, gk1, gk2, gk3, gk4, tr3, tl3, c3
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  bnd, f, fn
-    real, dimension(0:3)                                      ::  v00
 
     ix = sz(1)
     jx = sz(2)
@@ -149,7 +141,7 @@
     do k=0,kx
     do j=0,jx
     do i=0,ix
-         c1 =v(i,j,k,1)-v00(1)
+         c1 =v(i,j,k,1)
          si1=bnd(i  ,j,k)*bnd(i-1,j,k)
          si2=bnd(i+1,j,k)*bnd(i  ,j,k)
          si3=bnd(i+2,j,k)*bnd(i+1,j,k)
@@ -168,7 +160,7 @@
          tr1=f(i+1,j  ,k  )-0.25*si2*((1.0-ck)*gi3+(1.0+ck)*gi4)
          fn(i,j,k)=0.5*(c1*(tr1+tl1)-abs(c1)*(tr1-tl1))
 
-         c2 =v(i,j,k,2)-v00(2)
+         c2 =v(i,j,k,2)
          sj1=bnd(i,j  ,k)*bnd(i,j-1,k)
          sj2=bnd(i,j+1,k)*bnd(i,j  ,k)
          sj3=bnd(i,j+2,k)*bnd(i,j+1,k)
@@ -187,7 +179,7 @@
          tr2=f(i  ,j+1,k  )-0.25*sj2*((1.0-ck)*gj3+(1.0+ck)*gj4)
          fn(i,j,k)=0.5*(c2*(tr2+tl2)-abs(c2)*(tr2-tl2))
 
-         c3 =v(i,j,k,3)-v00(3)
+         c3 =v(i,j,k,3)
          sk1=bnd(i,j,k  )*bnd(i,j,k-1)
          sk2=bnd(i,j,k+1)*bnd(i,j,k  )
          sk3=bnd(i,j,k+2)*bnd(i,j,k+1)

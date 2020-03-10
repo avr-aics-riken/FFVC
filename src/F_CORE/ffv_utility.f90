@@ -223,18 +223,16 @@ end subroutine norm_v_div_max
 !! @param [out] v_max 最大値
 !! @param [in]  sz    配列長
 !! @param [in]  g     ガイドセル長
-!! @param [in]  v00   参照速度
 !! @param [in]  v     速度ベクトル
 !! @param [out] flop  flop count
 !<
-    subroutine find_vmax (v_max, sz, g, v00, v, flop)
+    subroutine find_vmax (v_max, sz, g, v, flop)
     implicit none
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
-    real                                                      ::  vm1, vm2, vm3, v_max, vx, vy, vz
+    real                                                      ::  vm1, vm2, vm3, v_max
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
-    real, dimension(0:3)                                      ::  v00
 
     ix = sz(1)
     jx = sz(2)
@@ -242,25 +240,21 @@ end subroutine norm_v_div_max
     vm1 = 0.0
     vm2 = 0.0
     vm3 = 0.0
-    vx = v00(1)
-    vy = v00(2)
-    vz = v00(3)
     flop = flop + dble(ix)*dble(jx)*dble(kx)*9.0d0 + 2.0d0
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(max:vm1) &
 !$OMP REDUCTION(max:vm2) &
-!$OMP REDUCTION(max:vm3) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, vx, vy, vz)
+!$OMP REDUCTION(max:vm3)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      vm1 = max(vm1, abs(v(i,j,k,1)-vx ) )
-      vm2 = max(vm2, abs(v(i,j,k,2)-vy ) )
-      vm3 = max(vm3, abs(v(i,j,k,3)-vz ) )
+      vm1 = max(vm1, abs(v(i,j,k,1) ) )
+      vm2 = max(vm2, abs(v(i,j,k,2) ) )
+      vm3 = max(vm3, abs(v(i,j,k,3) ) )
     end do
     end do
     end do
@@ -281,17 +275,16 @@ end subroutine norm_v_div_max
 !! @param [in]  dh   格子幅
 !! @param [in]  v    セルセンター速度ベクトル
 !! @param [in]  bv   BCindex C
-!! @param [in]  v00  参照速度
 !! @param [out] flop 浮動小数点演算数
 !<
-    subroutine i2vgt (q, sz, g, dh, v, bv, v00, flop)
+    subroutine i2vgt (q, sz, g, dh, v, bv, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
     integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
-    real                                                      ::  u_ref, v_ref, w_ref, actv, rx, ry, rz
+    real                                                      ::  actv, rx, ry, rz
     real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
     real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
     real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
@@ -303,7 +296,6 @@ end subroutine norm_v_div_max
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  q
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
-    real, dimension(0:3)                                      ::  v00
 
     ix = sz(1)
     jx = sz(2)
@@ -311,11 +303,6 @@ end subroutine norm_v_div_max
     rx = 0.25 / dh(1)
     ry = 0.25 / dh(2)
     rz = 0.25 / dh(3)
-
-    ! 参照座標系の速度
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
 
     flop = flop + dble(ix)*dble(jx)*dble(kx)*78.0d0 + 24.0d0
 
@@ -330,7 +317,7 @@ end subroutine norm_v_div_max
 !$OMP PRIVATE(d11, d22, d33, d12, d13, d23) &
 !$OMP PRIVATE(w12, w13, w23) &
 !$OMP PRIVATE(q11, q22, q33, q12, q13, q23) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, rx, ry, rz)
+!$OMP FIRSTPRIVATE(ix, jx, kx, rx, ry, rz)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 
@@ -382,9 +369,9 @@ end subroutine norm_v_div_max
       w_b = real(b_b1) * actv
 
       ! セルセンターからの壁面修正速度 > 6 flop
-      uq = 2.0*u_ref - Up0
-      vq = 2.0*v_ref - Vp0
-      wq = 2.0*w_ref - Wp0
+      uq = - Up0
+      vq = - Vp0
+      wq = - Wp0
 
       ! 壁面の場合の参照速度の修正
       if ( b_e1 == 0 ) then
@@ -460,17 +447,16 @@ end subroutine norm_v_div_max
 !! @param [in]  dh   格子幅
 !! @param [in]  v    セルセンター速度ベクトル
 !! @param [in]  bv   BCindex C
-!! @param [in]  v00  参照速度
 !! @param [out] flop 浮動小数点演算数
 !<
-    subroutine rot_v (rot, sz, g, dh, v, bv, v00, flop)
+    subroutine rot_v (rot, sz, g, dh, v, bv, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
     integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
-    real                                                      ::  u_ref, v_ref, w_ref, actv, rx, ry, rz
+    real                                                      ::  actv, rx, ry, rz
     real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
     real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
     real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
@@ -479,7 +465,6 @@ end subroutine norm_v_div_max
     real, dimension(3)                                        ::  dh
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v, rot
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
-    real, dimension(0:3)                                      ::  v00
 
     ix = sz(1)
     jx = sz(2)
@@ -487,11 +472,6 @@ end subroutine norm_v_div_max
     rx = 0.5 / dh(1)
     ry = 0.5 / dh(2)
     rz = 0.5 / dh(3)
-
-    ! 参照座標系の速度
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
 
     flop = flop + dble(ix)*dble(jx)*dble(kx)*37.0d0 + 24.0d0
 
@@ -504,7 +484,7 @@ end subroutine norm_v_div_max
 !$OMP PRIVATE(b_e1, b_w1, b_n1, b_s1, b_t1, b_b1) &
 !$OMP PRIVATE(w_e, w_w, w_n, w_s, w_t, w_b) &
 !$OMP PRIVATE(r1, r2, r3) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, rx, ry, rz)
+!$OMP FIRSTPRIVATE(ix, jx, kx, rx, ry, rz)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 
@@ -556,9 +536,9 @@ end subroutine norm_v_div_max
       w_b = real(b_b1) * actv
 
       ! セルセンターからの壁面修正速度 > 6 flop
-      uq = 2.0*u_ref - Up0
-      vq = 2.0*v_ref - Vp0
-      wq = 2.0*w_ref - Wp0
+      uq = - Up0
+      vq = - Vp0
+      wq = - Wp0
 
       ! 壁面の場合の参照速度の修正
       if ( b_e1 == 0 ) then
@@ -621,17 +601,16 @@ end subroutine norm_v_div_max
 !! @param [in]  dh   格子幅
 !! @param [in]  v    セルセンター速度ベクトル
 !! @param [in]  bv   BCindex C
-!! @param [in]  v00  参照速度
 !! @param [out] flop flop count
 !<
-    subroutine helicity (ht, sz, g, dh, v, bv, v00, flop)
+    subroutine helicity (ht, sz, g, dh, v, bv, flop)
     implicit none
     include 'ffv_f_params.h'
     integer                                                   ::  i, j, k, ix, jx, kx, g, idx
     integer, dimension(3)                                     ::  sz
     double precision                                          ::  flop
     integer                                                   ::  b_e1, b_w1, b_n1, b_s1, b_t1, b_b1
-    real                                                      ::  u_ref, v_ref, w_ref, actv, rx, ry, rz
+    real                                                      ::  actv, rx, ry, rz
     real                                                      ::  Up0, Ue1, Uw1, Us1, Un1, Ub1, Ut1
     real                                                      ::  Vp0, Ve1, Vw1, Vs1, Vn1, Vb1, Vt1
     real                                                      ::  Wp0, We1, Ww1, Ws1, Wn1, Wb1, Wt1
@@ -641,7 +620,6 @@ end subroutine norm_v_div_max
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  ht
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bv
-    real, dimension(0:3)                                      ::  v00
 
     ix = sz(1)
     jx = sz(2)
@@ -651,12 +629,8 @@ end subroutine norm_v_div_max
     ry = 0.5 / dh(2)
     rz = 0.5 / dh(3)
 
-    ! 参照座標系の速度
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
 
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*43.0d0 + 24.0d0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*40.0d0 + 24.0d0
 
 
 !$OMP PARALLEL &
@@ -667,7 +641,7 @@ end subroutine norm_v_div_max
 !$OMP PRIVATE(b_e1, b_w1, b_n1, b_s1, b_t1, b_b1) &
 !$OMP PRIVATE(w_e, w_w, w_n, w_s, w_t, w_b) &
 !$OMP PRIVATE(r1, r2, r3, u1, u2, u3) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, rx, ry, rz)
+!$OMP FIRSTPRIVATE(ix, jx, kx, rx, ry, rz)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 
@@ -711,9 +685,9 @@ end subroutine norm_v_div_max
       b_t1= ibits(bv(i  ,j  ,k+1), State, 1)
 
       ! セルセンターからの壁面修正速度 > 6 flop
-      uq = 2.0*u_ref - Up0
-      vq = 2.0*v_ref - Vp0
-      wq = 2.0*w_ref - Wp0
+      uq = - Up0
+      vq = - Vp0
+      wq = - Wp0
 
       ! 壁面の場合の参照速度の修正
       if ( b_e1 == 0 ) then
@@ -756,9 +730,9 @@ end subroutine norm_v_div_max
       r2 = rz * (Ut1-Ub1) - rx * (We1-Ww1)
       r3 = rx * (Ve1-Vw1) - ry * (Un1-Us1)
 
-      u1 = Up0 - u_ref ! 3 flop
-      u2 = Vp0 - v_ref
-      u3 = Wp0 - w_ref
+      u1 = Up0
+      u2 = Vp0
+      u3 = Wp0
 
       ht(i,j,k) = (u1*r1 + u2*r2 + u3*r3) * actv ! 6 flop
     end do

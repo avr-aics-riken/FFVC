@@ -403,7 +403,6 @@ subroutine blas_dot2(r, p, q, bp, sz, g, flop)
   real                                                      ::  c_w, c_e, c_s, c_n, c_b, c_t
   real                                                      ::  d_w, d_e, d_s, d_n, d_b, d_t
   real                                                      ::  dd, ss, cm, cf
-  real                                                      ::  r_xx, r_xy, r_xz, r_x2, r_y2, r_z2
   real, dimension(3)                                        ::  dh
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  ap, p
   integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
@@ -415,20 +414,11 @@ subroutine blas_dot2(r, p, q, bp, sz, g, flop)
 
   flop = flop + dble(ix)*dble(jx)*dble(kx)*35.0d0 + 19.0d0
 
-  r_xx = 1.0
-  r_xy = dh(1) / dh(2)
-  r_xz = dh(1) / dh(3)
-  r_x2 = r_xx * r_xx
-  r_y2 = r_xy * r_xy
-  r_z2 = r_xz * r_xz
-
   cf = cm * cm
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(c_w, c_e, c_s, c_n, c_b, c_t, dd, ss, idx) &
-!$OMP PRIVATE(d_w, d_e, d_s, d_n, d_b, d_t) &
-!$OMP FIRSTPRIVATE(ix, jx, kx) &
-!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2, cf)
+!$OMP PRIVATE(d_w, d_e, d_s, d_n, d_b, d_t)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
   do k=1,kx
@@ -449,18 +439,18 @@ subroutine blas_dot2(r, p, q, bp, sz, g, flop)
     d_b = real(ibits(idx, bc_dn_B, 1))
     d_t = real(ibits(idx, bc_dn_T, 1))
 
-    dd = r_x2 * (c_w + c_e) &
-       + r_y2 * (c_s + c_n) &
-       + r_z2 * (c_b + c_t) &
-       + 2.0                &
-       *(r_x2 * (d_w + d_e) &
-       + r_y2 * (d_s + d_n) &
-       + r_z2 * (d_b + d_t) ) &
+    dd = c_w + c_e &
+       + c_s + c_n &
+       + c_b + c_t &
+       + 2.0       &
+       *(d_w + d_e &
+       + d_s + d_n &
+       + d_b + d_t ) &
        + cf
 
-    ss = r_x2 * ( c_e * p(i+1,j  ,k  ) + c_w * p(i-1,j  ,k  ) ) &
-       + r_y2 * ( c_n * p(i  ,j+1,k  ) + c_s * p(i  ,j-1,k  ) ) &
-       + r_z2 * ( c_t * p(i  ,j  ,k+1) + c_b * p(i  ,j  ,k-1) )
+    ss = c_e * p(i+1,j  ,k  ) + c_w * p(i-1,j  ,k  )  &
+       + c_n * p(i  ,j+1,k  ) + c_s * p(i  ,j-1,k  )  &
+       + c_t * p(i  ,j  ,k+1) + c_b * p(i  ,j  ,k-1)
 
 		ap(i, j, k) = ss - dd * p(i, j, k)
   end do
@@ -493,7 +483,6 @@ subroutine blas_dot2(r, p, q, bp, sz, g, flop)
   real                                                      ::  c_w, c_e, c_s, c_n, c_b, c_t
   real                                                      ::  d_w, d_e, d_s, d_n, d_b, d_t
   real                                                      ::  dd, ss, cm, cf
-  real                                                      ::  r_xx, r_xy, r_xz, r_x2, r_y2, r_z2
   real, dimension(3)                                        ::  dh
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  r, p, b
   integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
@@ -503,22 +492,13 @@ subroutine blas_dot2(r, p, q, bp, sz, g, flop)
   jx = sz(2)
   kx = sz(3)
 
-  r_xx = 1.0
-  r_xy = dh(1) / dh(2)
-  r_xz = dh(1) / dh(3)
-  r_x2 = r_xx * r_xx
-  r_y2 = r_xy * r_xy
-  r_z2 = r_xz * r_xz
-
   cf = cm * cm
 
   flop = flop + dble(ix)*dble(jx)*dble(kx)*37.0d0 + 20.0d0
 
 !$OMP PARALLEL &
 !$OMP PRIVATE(c_w, c_e, c_s, c_n, c_b, c_t, dd, ss, idx) &
-!$OMP PRIVATE(d_w, d_e, d_s, d_n, d_b, d_t) &
-!$OMP FIRSTPRIVATE(ix, jx, kx) &
-!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2, cf)
+!$OMP PRIVATE(d_w, d_e, d_s, d_n, d_b, d_t)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
   do k=1,kx
@@ -539,18 +519,18 @@ subroutine blas_dot2(r, p, q, bp, sz, g, flop)
     d_b = real(ibits(idx, bc_dn_B, 1))
     d_t = real(ibits(idx, bc_dn_T, 1))
 
-    dd = r_x2 * (c_w + c_e) &
-       + r_y2 * (c_s + c_n) &
-       + r_z2 * (c_b + c_t) &
-       + 2.0                &
-       *(r_x2 * (d_w + d_e) &
-       + r_y2 * (d_s + d_n) &
-       + r_z2 * (d_b + d_t) ) &
+    dd = c_w + c_e &
+       + c_s + c_n &
+       + c_b + c_t &
+       + 2.0       &
+       *(d_w + d_e &
+       + d_s + d_n &
+       + d_b + d_t ) &
        + cf
 
-    ss = r_x2 * ( c_e * p(i+1,j  ,k  ) + c_w * p(i-1,j  ,k  ) ) &
-       + r_y2 * ( c_n * p(i  ,j+1,k  ) + c_s * p(i  ,j-1,k  ) ) &
-       + r_z2 * ( c_t * p(i  ,j  ,k+1) + c_b * p(i  ,j  ,k-1) )
+    ss = c_e * p(i+1,j  ,k  ) + c_w * p(i-1,j  ,k  ) &
+       + c_n * p(i  ,j+1,k  ) + c_s * p(i  ,j-1,k  ) &
+       + c_t * p(i  ,j  ,k+1) + c_b * p(i  ,j  ,k-1)
 
 		r(i, j, k) = b(i, j, k) - (ss - dd * p(i, j, k))
   end do
@@ -584,7 +564,6 @@ double precision                                          ::  flop, res
 real                                                      ::  c_w, c_e, c_s, c_n, c_b, c_t
 real                                                      ::  d_w, d_e, d_s, d_n, d_b, d_t
 real                                                      ::  dd, ss, dp, cm, cf
-real                                                      ::  r_xx, r_xy, r_xz, r_x2, r_y2, r_z2
 real, dimension(3)                                        ::  dh
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, b
 integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  bp
@@ -594,13 +573,6 @@ jx = sz(2)
 kx = sz(3)
 res = 0.0
 
-r_xx = 1.0
-r_xy = dh(1) / dh(2)
-r_xz = dh(1) / dh(3)
-r_x2 = r_xx * r_xx
-r_y2 = r_xy * r_xy
-r_z2 = r_xz * r_xz
-
 cf = cm * cm
 
 flop = flop + dble(ix)*dble(jx)*dble(kx)*38.0d0 + 19.0d0
@@ -608,9 +580,7 @@ flop = flop + dble(ix)*dble(jx)*dble(kx)*38.0d0 + 19.0d0
 !$OMP PARALLEL &
 !$OMP REDUCTION(+:res) &
 !$OMP PRIVATE(c_w, c_e, c_s, c_n, c_b, c_t, dd, ss, dp, idx) &
-!$OMP PRIVATE(d_w, d_e, d_s, d_n, d_b, d_t) &
-!$OMP FIRSTPRIVATE(ix, jx, kx) &
-!$OMP FIRSTPRIVATE(r_x2, r_y2, r_z2, cf)
+!$OMP PRIVATE(d_w, d_e, d_s, d_n, d_b, d_t)
 
 !$OMP DO SCHEDULE(static) COLLAPSE(2)
 do k=1,kx
@@ -631,18 +601,18 @@ d_n = real(ibits(idx, bc_dn_N, 1))
 d_b = real(ibits(idx, bc_dn_B, 1))
 d_t = real(ibits(idx, bc_dn_T, 1))
 
-dd = r_x2 * (c_w + c_e) &
-   + r_y2 * (c_s + c_n) &
-   + r_z2 * (c_b + c_t) &
-   + 2.0                &
-   *(r_x2 * (d_w + d_e) &
-   + r_y2 * (d_s + d_n) &
-   + r_z2 * (d_b + d_t) ) &
+dd = c_w + c_e &
+   + c_s + c_n &
+   + c_b + c_t &
+   + 2.0       &
+   *(d_w + d_e &
+   + d_s + d_n &
+   + d_b + d_t ) &
    + cf
 
-ss = r_x2 * ( c_e * p(i+1,j  ,k  ) + c_w * p(i-1,j  ,k  ) ) &
-   + r_y2 * ( c_n * p(i  ,j+1,k  ) + c_s * p(i  ,j-1,k  ) ) &
-   + r_z2 * ( c_t * p(i  ,j  ,k+1) + c_b * p(i  ,j  ,k-1) )
+ss = c_e * p(i+1,j  ,k  ) + c_w * p(i-1,j  ,k  ) &
+   + c_n * p(i  ,j+1,k  ) + c_s * p(i  ,j-1,k  ) &
+   + c_t * p(i  ,j  ,k+1) + c_b * p(i  ,j  ,k-1)
 
 dp = ( b(i,j,k) - (ss - dd * p(i,j,k)) ) * real(ibits(idx, Active, 1))
 res = res + dble(dp*dp)

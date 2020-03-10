@@ -25,133 +25,6 @@
 #ifndef _FFV_F_FUNC_H_
 #define _FFV_F_FUNC_H_
 
-#ifdef _WIN32
-
-// ffv_forcing.f90
-#define hex_dir_            HEX_DIR
-#define force_keep_vec_     FORCE_KEEP_VEC
-#define hex_psrc_           HEX_PSRC
-#define hex_force_pvec_     HEX_FORCE_PVEC
-#define hex_force_vec_      HEX_FORCE_VEC
-
-
-// ffv_pbc.f90
-#define pobc_drchlt_        POBC_DRCHLT
-#define pobc_neumann_       POBC_NEUMANN
-
-
-// ffv_pscalar.f90
-#define ps_muscl_           PS_MUSCL
-#define ps_buoyancy_        PS_BUOYANCY
-#define ps_diff_ee_         PS_DIFF_EE
-#define hbc_drchlt_         HBC_DRCHLT
-
-// ffv_vbc_inner.f90
-#define perturb_u_y_        perturb_U_Y
-#define perturb_u_z_        perturb_U_Z
-#define pvec_ibc_specv_fvm_ PVEC_IBC_SPECV_FVM
-#define pvec_ibc_oflow_     PVEC_IBC_OFLOW
-#define div_ibc_drchlt_     DIV_IBC_DRCHLT
-#define div_ibc_oflow_pvec_ DIV_IBC_OFLOW_PVEC
-#define div_ibc_oflow_vec_  DIV_IBC_OFLOW_VEC
-
-// ffv_vbc_outer.f90
-#define vobc_cc_drchlt_     VOBC_CC_DRCHLT
-#define vobc_cc_neumann_    VOBC_CC_NEUMANN
-#define vobc_cc_copy_       VOBC_CC_COPY
-#define vobc_div_drchlt_    VOBC_DIV_DRCHLT
-#define vobc_cc_outflow_    VOBC_CC_OUTFLOW
-#define vobc_cc_tfree_      VOBC_CC_TFREE
-#define vobc_cf_tfree_      VOBC_CF_TFREE
-
-// ffv_vbc_outer_face.f90
-#define vobc_face_drchlt_   VOBC_FACE_DRCHLT
-#define vobc_face_massflow_ VOBC_FACE_MASSFLOW
-
-// ffv_vbc_outer_flux.f90
-#define vobc_pv_specv_fvm   VOBC_PV_SPECV_FVM
-#define vobc_pv_specv_fdm   VOBC_PV_SPECV_FDM
-#define vobc_pv_wall_       VOBC_PV_WALL
-
-// ffv_velocity_binary.f90
-#define ab2_                AB2
-#define divergence_cc_      DIVERGENCE_CC
-#define eddy_viscosity_     EDDY_VISCOSITY
-#define euler_explicit_     EULER_EXPLICIT
-#define friction_velocity_  FRICTION_VELOCITY
-#define pvec_muscl_         PVEC_MUSCL
-#define pvec_muscl_les_     PVEC_MUSCL_LES
-#define pvec_central_       PVEC_CENTRAL
-#define pvec_central_les_   PVEC_CENTRAL_LES
-#define update_vec_         UPDATE_VEC
-#define update_vec4_        UPDATE_VEC4
-#define update_face_vec_    UPDATA_FACE_VEC
-#define predict_face_vec_   PREDICT_FACE_VEC
-#define update_cc_vec_      UPDATE_CC_VEC
-#define update_p_           UPDATE_P
-
-// ffv_utility.f90
-#define norm_v_div_l2_      NORM_V_DIV_L2
-#define norm_v_div_max_     NORM_V_DIV_MAX
-#define helicity_           HELICITY
-#define i2vgt_              I2VGT
-#define rot_v_              ROT_V
-#define find_vmax_          FIND_VMAX
-#define force_compo_        FORCE_COMPO
-#define calc_rms_v_         CALC_RMS_V
-#define calc_rms_s_         CALC_RMS_S
-#define output_vtk_         OUTPUT_VTK
-#define calc_reynolds_stress_     CALC_REYNOLDS_STRESS
-#define calc_production_rate_     CALC_PRODUCTION_RATE
-#define calc_dissipation_rate_    CALC_DISSIPATION_RATE
-#define calc_turb_transport_rate_ CALC_TURB_TRANSPORT_RATE
-#define calc_vel_pregrad_term_    CALC_VEL_PREGRAD_TERM
-#define averaging_xz_plane_       AVERAGING_XZ_PLANE
-#define perturbu_           PERTURBU
-#define generate_iblank_    GENERATE_IBLANK
-#define pack_scalar_        PACK_SCALAR
-#define pack_vector_        PACK_VECTOR
-#define unpack_scalar_      UNPACK_SCALAR
-#define unpack_vector_      UNPACK_VECTOR
-#deifne write_plot3d_       WRITE_PLOT3D
-#deifne read_plot3d_        READ_PLOT3D
-
-#define cds_pvec_vibc_specv_    CDS_PVEC_VIBC_SPECV
-
-
-// c3d_vof.f90
-#define vof_uwd_                VOF_UWD
-#define vof_muscl_              VOF_MUSCL
-
-// cds_vector.f90
-#define pvec_muscl_cds_     PVEC_MUSCL_CDS
-#define update_vec_cds_     UPDATE_VEC_CDS
-#define divergence_cds_     DIVERGENCE_CDS
-#define force_cds_          FORCE_CDS
-
-
-#define fb_average_s_            FB_AVERAGE_S
-#define fb_average_v_            FB_AVERAGE_V
-#define fb_delta_s_              FB_DELTA_S
-#define fb_delta_v_              FB_DELTA_V
-#define fb_interp_coarse_s_      FB_INTERP_COARSE_S
-#define fb_interp_coarse_v_      FB_INTERP_COARSE_V
-#define fb_limit_scalar_         FB_LIMIT_SCALAR
-#define fb_minmax_s_             FB_MINMAX_S
-#define fb_minmax_v_             FB_MINMAX_V
-#define fb_minmax_vex_           FB_MINMAX_VEX
-#define fb_set_vector_           FB_SET_VECTOR
-#define fb_set_fvector_          FB_SET_FVECTOR
-#define fb_vin_nijk_             FB_VIN_NIJK
-#define fb_vin_ijkn_             FB_VIN_IJKN
-#define fb_vout_nijk_            FB_VOUT_NIJK
-#define fb_vout_ijkn_            FB_VOUT_IJKN
-#define fb_totalp_               FB_TOTALP
-
-
-
-#endif // _WIN32
-
 
 extern "C" {
   //***********************************************************************************************
@@ -171,7 +44,7 @@ extern "C" {
 
   //***********************************************************************************************
   // ffv_forcing.f90
-  void hex_dir_(REAL_TYPE* v, int* sz, int* g, int* st, int* ed, int* bd, REAL_TYPE* vf, int* odr, REAL_TYPE* v00, REAL_TYPE* nv, double* flop);
+  void hex_dir_(REAL_TYPE* v, int* sz, int* g, int* st, int* ed, int* bd, REAL_TYPE* vf, int* odr, REAL_TYPE* nv, double* flop);
   void force_keep_vec_(REAL_TYPE* wk, int* c_sz, int* st, int* ed, REAL_TYPE* v, int* sz, int* g);
 
   void hex_psrc_ (REAL_TYPE* src,
@@ -184,7 +57,6 @@ extern "C" {
                   REAL_TYPE* wk,
                   int* c_sz,
                   int* odr,
-                  REAL_TYPE* v00,
                   REAL_TYPE* nv,
                   REAL_TYPE* c,
                   double* flop);
@@ -198,7 +70,6 @@ extern "C" {
                         REAL_TYPE* vf,
                         REAL_TYPE* v,
                         int* odr,
-                        REAL_TYPE* v00,
                         REAL_TYPE* dt,
                         REAL_TYPE* nv,
                         REAL_TYPE* c,
@@ -215,7 +86,6 @@ extern "C" {
                        REAL_TYPE* wk,
                        int* c_sz,
                        int* odr,
-                       REAL_TYPE* v00,
                        REAL_TYPE* dt,
                        REAL_TYPE* dh,
                        REAL_TYPE* nv,
@@ -243,7 +113,6 @@ extern "C" {
                   int* g,
                   REAL_TYPE* dh,
                   int* scheme,
-                  REAL_TYPE* v00,
                   REAL_TYPE* vf,
                   REAL_TYPE* ie,
                   int* bid,
@@ -330,7 +199,6 @@ extern "C" {
                             int* st,
                             int* ed,
                             REAL_TYPE* dh,
-                            REAL_TYPE* v00,
                             REAL_TYPE* rei,
                             REAL_TYPE* v,
                             int* bv,
@@ -344,7 +212,6 @@ extern "C" {
                             int* st,
                             int* ed,
                             REAL_TYPE* dh,
-                            REAL_TYPE* v00,
                             REAL_TYPE* rei,
                             REAL_TYPE* v,
                             int* bv,
@@ -358,7 +225,6 @@ extern "C" {
                            REAL_TYPE* dh,
                            int* st,
                            int* ed,
-                           REAL_TYPE* v00,
                            int* bv,
                            int* odr,
                            REAL_TYPE* vec,
@@ -369,7 +235,6 @@ extern "C" {
                            int* g,
                            int* st,
                            int* ed,
-                           REAL_TYPE* v00,
                            REAL_TYPE* v_cnv,
                            REAL_TYPE* dt,
                            REAL_TYPE* dh,
@@ -411,7 +276,6 @@ extern "C" {
                         int* st,
                         int* ed,
                         REAL_TYPE* pch,
-                        REAL_TYPE* v00,
                         int* bv,
                         int* odr,
                         REAL_TYPE* vec,
@@ -541,7 +405,7 @@ extern "C" {
 
   //***********************************************************************************************
   // ffv_velocity_binary.f90
-  void ab2_               (REAL_TYPE* vc, int* sz, int* g, REAL_TYPE* dt, REAL_TYPE* v, REAL_TYPE* ab, int* bd, REAL_TYPE* v00, double* flop);
+  void ab2_ (REAL_TYPE* vc, int* sz, int* g, REAL_TYPE* dt, REAL_TYPE* v, REAL_TYPE* ab, int* bd, double* flop);
 
   void divergence_cc_ (REAL_TYPE* dv,
                        int* sz,
@@ -561,8 +425,7 @@ extern "C" {
                            REAL_TYPE* v,
                            int* bx,
                            REAL_TYPE* vt_range,
-                           REAL_TYPE* yp_range,
-                           REAL_TYPE* v00);
+                           REAL_TYPE* yp_range);
 
   void euler_explicit_    (REAL_TYPE* vc,
                            int* sz,
@@ -577,7 +440,6 @@ extern "C" {
                            int* g,
                            REAL_TYPE* dh,
                            int* c_scheme,
-                           REAL_TYPE* v00,
                            REAL_TYPE* rei,
                            REAL_TYPE* v,
                            REAL_TYPE* vf,
@@ -591,7 +453,6 @@ extern "C" {
                            int* g,
                            REAL_TYPE* dh,
                            int* c_scheme,
-                           REAL_TYPE* v00,
                            REAL_TYPE* rei,
                            REAL_TYPE* v,
                            REAL_TYPE* vf,
@@ -633,7 +494,6 @@ extern "C" {
                         int* g,
                         REAL_TYPE* dh,
                         int* c_scheme,
-                        REAL_TYPE* v00,
                         REAL_TYPE* rei,
                         REAL_TYPE* v,
                         REAL_TYPE* vf,
@@ -651,7 +511,6 @@ extern "C" {
                           int* g,
                           REAL_TYPE* dh,
                           int* c_scheme,
-                          REAL_TYPE* v00,
                           REAL_TYPE* rei,
                           REAL_TYPE* v,
                           REAL_TYPE* vf,
@@ -670,7 +529,7 @@ extern "C" {
                    REAL_TYPE* dt,
                    REAL_TYPE* v,
                    int* bcd,
-                   REAL_TYPE* v00,
+                   REAL_TYPE* vref,
                    REAL_TYPE* st,
                    REAL_TYPE* ed,
                    REAL_TYPE* penalty,
@@ -719,7 +578,6 @@ extern "C" {
                   REAL_TYPE* dh,
                   REAL_TYPE* v,
                   int* bv,
-                  REAL_TYPE* v00,
                   double* flop);
 
   void i2vgt_ (REAL_TYPE* q,
@@ -728,7 +586,6 @@ extern "C" {
                REAL_TYPE* dh,
                REAL_TYPE* v,
                int* bv,
-               REAL_TYPE* v00,
                double* flop);
 
   void rot_v_ (REAL_TYPE* rot,
@@ -737,10 +594,9 @@ extern "C" {
                REAL_TYPE* dh,
                REAL_TYPE* v,
                int* bv,
-               REAL_TYPE* v00,
                double* flop);
 
-  void find_vmax_         (REAL_TYPE* v_max, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* v, double* flop);
+  void find_vmax_         (REAL_TYPE* v_max, int* sz, int* g, REAL_TYPE* v, double* flop);
   void face_avr_sampling_ (REAL_TYPE* p, int* sz, int* g, int* face, REAL_TYPE* avr);
   void shift_pressure_    (REAL_TYPE* p, int* sz, int* g, REAL_TYPE* avr);
   void force_compo_       (REAL_TYPE* frc, int* sz, int* g, int* tgt, REAL_TYPE* p, int* bid, REAL_TYPE* dh, int* st, int* ed, double* flop);
@@ -889,11 +745,25 @@ extern "C" {
 
   //***********************************************************************************************
   // c3d_vof.f90
-  void vof_uwd_    (REAL_TYPE* f, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* dt, REAL_TYPE* dh, REAL_TYPE* v, REAL_TYPE* q, int* bx, double* flop);
-  void vof_muscl_  (REAL_TYPE* f, int* sz, int* g, REAL_TYPE* v00, REAL_TYPE* dt, REAL_TYPE* dh, REAL_TYPE* v, REAL_TYPE* q, int* bx, double* flop);
+  void vof_uwd_    (REAL_TYPE* f,
+                    int* sz,
+                    int* g,
+                    REAL_TYPE* dt,
+                    REAL_TYPE* dh,
+                    REAL_TYPE* v,
+                    REAL_TYPE* q,
+                    int* bx,
+                    double* flop);
 
-
-
+  void vof_muscl_  (REAL_TYPE* f,
+                    int* sz,
+                    int* g,
+                    REAL_TYPE* dt,
+                    REAL_TYPE* dh,
+                    REAL_TYPE* v,
+                    REAL_TYPE* q,
+                    int* bx,
+                    double* flop);
   //***********************************************************************************************
   // ffv_velocity_cds.f90
   void pvec_muscl_cds_ (REAL_TYPE* wv,
@@ -901,7 +771,6 @@ extern "C" {
                         int* g,
                         REAL_TYPE* dh,
                         int* c_scheme,
-                        REAL_TYPE* v00,
                         REAL_TYPE* rei,
                         REAL_TYPE* v,
                         REAL_TYPE* vf,
@@ -913,11 +782,21 @@ extern "C" {
                         double* flop);
 
   void update_vec_cds_    (REAL_TYPE* v, REAL_TYPE* div, int* sz, int* g, REAL_TYPE* dt, REAL_TYPE* dh, REAL_TYPE* vc, REAL_TYPE* p,
-                           int* bp, int* bv, int* bcd, long long* cut, REAL_TYPE* v00, double* flop);
-  void divergence_cds_    (REAL_TYPE* div, int* sz, int* g, REAL_TYPE* coef, REAL_TYPE* v, int* bv, int* bcd, long long* cut, REAL_TYPE* v00, double* flop);
+                           int* bp, int* bv, int* bcd, long long* cut, double* flop);
+  void divergence_cds_    (REAL_TYPE* div, int* sz, int* g, REAL_TYPE* coef, REAL_TYPE* v, int* bv, int* bcd, long long* cut, double* flop);
   void force_cds_         (REAL_TYPE* force, int* sz, int* g, REAL_TYPE* p, int* bp, int* bid, int* id, REAL_TYPE* dh, double* flop);
-  void eddy_viscosity_cds_(REAL_TYPE* vt, int* sz, int* g, REAL_TYPE* dh, REAL_TYPE* re, REAL_TYPE* cs, REAL_TYPE* v, long long* cut,
-                           REAL_TYPE* vt_range, REAL_TYPE* yp_range, REAL_TYPE* v00, double* flop);
+
+  void eddy_viscosity_cds_(REAL_TYPE* vt,
+                           int* sz,
+                           int* g,
+                           REAL_TYPE* dh,
+                           REAL_TYPE* re,
+                           REAL_TYPE* cs,
+                           REAL_TYPE* v,
+                           long long* cut,
+                           REAL_TYPE* vt_range,
+                           REAL_TYPE* yp_range,
+                           double* flop);
 
 
 
@@ -955,7 +834,6 @@ extern "C" {
                            REAL_TYPE* f_max,
                            int* sz,
                            int* g,
-                           REAL_TYPE* v00,
                            REAL_TYPE* v,
                            double* flop);
 
@@ -963,7 +841,6 @@ extern "C" {
                            REAL_TYPE* f_max,
                            int* sz,
                            int* g,
-                           REAL_TYPE* v00,
                            REAL_TYPE* v,
                            double* flop);
 
@@ -1024,7 +901,6 @@ extern "C" {
   void fb_vin_ijkn_       (REAL_TYPE* vo,
                            int* sz,
                            int* g,
-                           REAL_TYPE* v00,
                            REAL_TYPE* refv,
                            double* flop);
 
@@ -1032,7 +908,6 @@ extern "C" {
                            int* sz,
                            int* g,
                            REAL_TYPE* vi,
-                           REAL_TYPE* v00,
                            REAL_TYPE* refv,
                            double* flop);
 
@@ -1040,7 +915,6 @@ extern "C" {
                            REAL_TYPE* vin,
                            int* sz,
                            int* g,
-                           REAL_TYPE* v00,
                            REAL_TYPE* unit_v,
                            double* flop);
 
@@ -1049,7 +923,6 @@ extern "C" {
                            REAL_TYPE* vin,
                            int* sz,
                            int* g,
-                           REAL_TYPE* v00,
                            REAL_TYPE* unit_v,
                            double* flop);
 
@@ -1058,7 +931,6 @@ extern "C" {
                            int* g,
                            REAL_TYPE* v,
                            REAL_TYPE* p,
-                           REAL_TYPE* v00,
                            double* flop);
 
 }

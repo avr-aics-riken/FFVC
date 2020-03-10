@@ -870,8 +870,8 @@ void SPH::OutputStatisticalVarables(const unsigned m_CurrentStep,
     // Velocity
     REAL_TYPE unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
 
-    fb_vout_nijk_(d_wv, d_av, size, &guide, RF->getV00(), &unit_velocity, &flop); // 配列並びを変換
-    fb_minmax_vex_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wv, &flop);
+    fb_vout_nijk_(d_wv, d_av, size, &guide, &unit_velocity, &flop); // 配列並びを変換
+    fb_minmax_vex_ (vec_min, vec_max, size, &guide, d_wv, &flop);
 
 
 
@@ -1054,9 +1054,9 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
 
 
 
-    fb_vout_nijk_(d_wv, d_v, size, &guide, RF->getV00(), &unit_velocity, &flop);
+    fb_vout_nijk_(d_wv, d_v, size, &guide, &unit_velocity, &flop);
 
-    fb_minmax_vex_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wv, &flop);
+    fb_minmax_vex_ (vec_min, vec_max, size, &guide, d_wv, &flop);
 
 
     if ( numProc > 1 )
@@ -1103,8 +1103,8 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
 
     // Face Velocity
 
-    fb_vout_nijk_(d_wv, d_vf, size, &guide, RF->getV00(), &unit_velocity, &flop);
-    fb_minmax_vex_ (vec_min, vec_max, size, &guide, RF->getV00(), d_wv, &flop);
+    fb_vout_nijk_(d_wv, d_vf, size, &guide, &unit_velocity, &flop);
+    fb_minmax_vex_ (vec_min, vec_max, size, &guide, d_wv, &flop);
 
 
     if ( numProc > 1 )
@@ -1192,7 +1192,7 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
   // Total Pressure
   if (C->varState[var_TotalP] == ON )
   {
-    fb_totalp_ (d_ws, size, &guide, d_v, d_p, RF->getV00(), &flop);
+    fb_totalp_ (d_ws, size, &guide, d_v, d_p, &flop);
 
     // convert non-dimensional to dimensional, iff file is dimensional
     if (C->Unit.File == DIMENSIONAL)
@@ -1240,14 +1240,12 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
   // Vorticity
   if (C->varState[var_Vorticity] == ON )
   {
-    rot_v_(d_wv, size, &guide, pitch, d_v, d_cdf, RF->getV00(), &flop);
+    rot_v_(d_wv, size, &guide, pitch, d_v, d_cdf, &flop);
 
-    REAL_TYPE  vz[3];
-    vz[0] = vz[1] = vz[2] = 0.0;
     unit_velocity = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity/C->RefLength : 1.0;
 
-    fb_vout_nijk_(d_iobuf, d_wv, size, &guide, vz, &unit_velocity, &flop);
-    fb_minmax_vex_ (vec_min, vec_max, size, &guide, RF->getV00(), d_iobuf, &flop);
+    fb_vout_nijk_(d_iobuf, d_wv, size, &guide, &unit_velocity, &flop);
+    fb_minmax_vex_ (vec_min, vec_max, size, &guide, d_iobuf, &flop);
 
 
     if ( numProc > 1 )
@@ -1296,7 +1294,7 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
   // 2nd Invariant of Velocity Gradient Tensor
   if (C->varState[var_Qcr] == ON )
   {
-    i2vgt_ (d_iobuf, size, &guide, pitch, d_v, d_cdf, RF->getV00(), &flop);
+    i2vgt_ (d_iobuf, size, &guide, pitch, d_v, d_cdf, &flop);
 
     // 無次元で出力
     U.copyS3D(d_ws, size, guide, d_iobuf, scale);
@@ -1340,7 +1338,7 @@ void SPH::OutputBasicVariables(const unsigned m_CurrentStep,
   // Helicity
   if (C->varState[var_Helicity] == ON )
   {
-    helicity_(d_iobuf, size, &guide, pitch, d_v, d_cdf, RF->getV00(), &flop);
+    helicity_(d_iobuf, size, &guide, pitch, d_v, d_cdf, &flop);
 
     // 無次元で出力
     U.copyS3D(d_ws, size, guide, d_iobuf, scale);
@@ -1596,7 +1594,7 @@ void SPH::RestartStatistic(FILE* fp,
   RF->copyV00(u0);
 
   // indexの変換と無次元化
-  fb_vin_nijk_(d_av, size, &guide, d_wv, u0, &refv, &flop);
+  fb_vin_nijk_(d_av, size, &guide, d_wv, &refv, &flop);
 
   if ( (step_stat != m_CurrentStepStat) || (time_stat != m_CurrentTimeStat) ) // 圧力とちがう場合
   {
@@ -1752,7 +1750,7 @@ void SPH::RestartInstantaneous(FILE* fp,
   }
 
   // indexの変換と無次元化
-  fb_vin_nijk_(d_v, size, &guide, d_wv, u0, &refv, &flop);
+  fb_vin_nijk_(d_v, size, &guide, d_wv, &refv, &flop);
 
 
 

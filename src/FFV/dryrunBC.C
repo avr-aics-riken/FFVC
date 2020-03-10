@@ -379,7 +379,7 @@ void FFV::dryrunBC()
   {
     TIMING_start(tm_LES_eddy);
     flop = 0.0;
-    eddy_viscosity_(d_vt, size, &guide, &dh, &C.Reynolds, &C.LES.Cs, d_v, d_cdf, range_Ut, range_Yp, v00);
+    eddy_viscosity_(d_vt, size, &guide, &dh, &C.Reynolds, &C.LES.Cs, d_v, d_cdf, range_Ut, range_Yp);
     TIMING_stop(tm_LES_eddy, flop);
     
     if ( numProc > 1 ) 

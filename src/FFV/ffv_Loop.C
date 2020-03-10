@@ -56,7 +56,7 @@ int FFV::Loop(const unsigned step)
   // 速度成分の最大値
   TIMING_start("Search_Vmax");
   flop_count = 0.0;
-  find_vmax_(&vMax, size, &guide, v00, d_v, &flop_count);
+  find_vmax_(&vMax, size, &guide, d_v, &flop_count);
   TIMING_stop("Search_Vmax", flop_count);
 
   if ( numProc > 1 )
@@ -408,7 +408,7 @@ int FFV::Loop(const unsigned step)
   {
     TIMING_start("Total_Pressure");
     flop_count=0.0;
-    fb_totalp_ (d_p0, size, &guide, d_v, d_p, v00, &flop_count);
+    fb_totalp_ (d_p0, size, &guide, d_v, d_p, &flop_count);
     TIMING_stop("Total_Pressure", flop_count);
   }
 

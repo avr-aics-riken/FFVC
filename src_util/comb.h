@@ -36,11 +36,7 @@
 #include <fstream>
 #include <errno.h>
 
-#ifndef _WIN32
 #include <dirent.h>
-#else
-#include "sph_win32_util.h"   // for win32
-#endif
 
 #include "PerfMonitor.h"
 #include "cpm_ParaManager.h"

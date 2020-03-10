@@ -27,7 +27,6 @@
 !! @param [in]  g        ガイドセル長
 !! @param [in]  dh       格子幅
 !! @param [in]  c_scheme 対流項スキームのモード（1-UWD, 2-center 3-MUSCL）
-!! @param [in]  v00      参照速度
 !! @param [in]  rei      レイノルズ数の逆数
 !! @param [in]  v        速度ベクトル（n-step, collocated）
 !! @param [in]  vf       セルフェイス速度ベクトル（n-step）
@@ -38,14 +37,14 @@
 !! @param [in]  cut      カット情報 int(8)
 !! @param [out] flop     浮動小数点演算数
 !<
-    subroutine pvec_muscl_cds (wv, sz, g, dh, c_scheme, v00, rei, v, vf, bv, bp, bcd, v_mode, cut, flop)
+    subroutine pvec_muscl_cds (wv, sz, g, dh, c_scheme, rei, v, vf, bv, bp, bcd, v_mode, cut, flop)
     implicit none
     include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, c_scheme, bpx, bvx, v_mode, bdx
     integer, dimension(3)                                       ::  sz
     double precision                                            ::  flop
     real                                                        ::  dh, dh1, dh2, ck, cnv_u, cnv_v, cnv_w, b
-    real                                                        ::  u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2, rei, ss, vcs
+    real                                                        ::  rei, ss, vcs
     real                                                        ::  UPe, UPw, VPn, VPs, WPt, WPb
     real                                                        ::  Uw_r, Ue_r, Us_r, Un_r, Ub_r, Ut_r
     real                                                        ::  Vw_r, Ve_r, Vs_r, Vn_r, Vb_r, Vt_r
@@ -89,7 +88,6 @@ real                                                        ::  c_w2, c_e2, c_s2
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, wv, vf
     real(4), dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)::  cut
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv, bp, bcd
-    real, dimension(0:3)                                        ::  v00
     
     ix = sz(1)
     jx = sz(2)
@@ -104,14 +102,6 @@ real                                                        ::  c_w2, c_e2, c_s2
     else
       vcs = 1.0
     endif
-    
-    ! 参照座標系の速度
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
-    u_ref2 = 1.5*u_ref
-    v_ref2 = 1.5*v_ref
-    w_ref2 = 1.5*w_ref
     
 		ck = 0.0
     b  = 0.0
@@ -136,7 +126,6 @@ real                                                        ::  c_w2, c_e2, c_s2
     
 !$OMP PARALLEL &
 !$OMP FIRSTPRIVATE(ix, jx, kx, dh1, dh2, vcs, b, ck, ss_4, ss, cm1, cm2) &
-!$OMP FIRSTPRIVATE(u_ref, v_ref, w_ref, u_ref2, v_ref2, w_ref2) &
 !$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bvx, bpx, bdx) &
 !$OMP PRIVATE(c_w1, c_e1, c_s1, c_n1, c_b1, c_t1) &
 !$OMP PRIVATE(c_w2, c_e2, c_s2, c_n2, c_b2, c_t2) &
@@ -360,10 +349,10 @@ c_t2 = real( ibits(bcd(i  , j  , k+1), bc_d_T, 1) )
       We_t = 0.5 * (Wp0 + We1)
       
       ! セルフェイスの移流速度 >  20 flop
-      ! Uw_r = Uw_t * qw + r_qw * u_ref
-      ! Ue_r = Ue_t * qe + r_qe * u_ref
-      ! Uw_c = hw * ( ww * Ue_r + u_ref )
-      ! Ue_c = he * ( we * Uw_r + u_ref )
+      ! Uw_r = Uw_t * qw + r_qw
+      ! Ue_r = Ue_t * qe + r_qe
+      ! Uw_c = hw * ( ww * Ue_r )
+      ! Ue_c = he * ( we * Uw_r )
       
       Uw_c = hw * ww * Up0
       Ue_c = he * we * Up0
@@ -372,40 +361,40 @@ c_t2 = real( ibits(bcd(i  , j  , k+1), bc_d_T, 1) )
 
       ! カットがある場合の参照セルの値の計算  >  19*4=76 flop
       ! u_{i-1}
-      Uw1_t = (u_ref + rw * Up0) * hw ! (u_ref2 + rw * Ue_t) * hw
-      Vw1_t = (v_ref + rw * Vp0) * hw ! (v_ref2 + rw * Ve_t) * hw
-      Ww1_t = (w_ref + rw * Wp0) * hw ! (w_ref2 + rw * We_t) * hw
+      Uw1_t = (rw * Up0) * hw ! ( rw * Ue_t) * hw
+      Vw1_t = (rw * Vp0) * hw ! ( rw * Ve_t) * hw
+      Ww1_t = (rw * Wp0) * hw ! ( rw * We_t) * hw
       Uw1 = qw * Uw1 + r_qw * Uw1_t
       Vw1 = qw * Vw1 + r_qw * Vw1_t
       Ww1 = qw * Ww1 + r_qw * Ww1_t
       
       ! u_{i+1}
-      Ue1_t = (u_ref + re * Up0) * he ! (u_ref2 + re * Uw_t) * he
-      Ve1_t = (v_ref + re * Vp0) * he ! (v_ref2 + re * Vw_t) * he
-      We1_t = (w_ref + re * Wp0) * he ! (w_ref2 + re * Ww_t) * he
+      Ue1_t = (re * Up0) * he ! (re * Uw_t) * he
+      Ve1_t = (re * Vp0) * he ! (re * Vw_t) * he
+      We1_t = (re * Wp0) * he ! (re * Ww_t) * he
       Ue1 = qe * Ue1 + r_qe * Ue1_t
       Ve1 = qe * Ve1 + r_qe * Ve1_t
       We1 = qe * We1 + r_qe * We1_t
 
       ! u_{i-2}
-      Uw2_t = (u_ref + rww * Up0) * hww ! (u_ref2 + rww * Uw_t) * hww
-      Vw2_t = (v_ref + rww * Vp0) * hww ! (v_ref2 + rww * Vw_t) * hww
-      Ww2_t = (w_ref + rww * Wp0) * hww ! (w_ref2 + rww * Ww_t) * hww
+      Uw2_t = (rww * Up0) * hww ! (rww * Uw_t) * hww
+      Vw2_t = (rww * Vp0) * hww ! (rww * Vw_t) * hww
+      Ww2_t = (rww * Wp0) * hww ! (rww * Ww_t) * hww
       Uw2 = qww * Uw2 + r_qww * Uw2_t
       Vw2 = qww * Vw2 + r_qww * Vw2_t
       Ww2 = qww * Ww2 + r_qww * Ww2_t
 
       ! u_{i+2}
-      Ue2_t = (u_ref + ree * Up0) * hee ! (u_ref2 + ree * Ue_t) * hee
-      Ve2_t = (v_ref + ree * Vp0) * hee ! (v_ref2 + ree * Ve_t) * hee
-      We2_t = (w_ref + ree * Wp0) * hee ! (w_ref2 + ree * We_t) * hee
+      Ue2_t = (ree * Up0) * hee ! (ree * Ue_t) * hee
+      Ve2_t = (ree * Vp0) * hee ! (ree * Ve_t) * hee
+      We2_t = (ree * Wp0) * hee ! (ree * We_t) * hee
       Ue2 = qee * Ue2 + r_qee * Ue2_t
       Ve2 = qee * Ve2 + r_qee * Ve2_t
       We2 = qee * We2 + r_qee * We2_t
       
       ! 界面の左右の状態を計算  > 4 + (4+36+22+16)*3 = 238 flop
-      ufw  = UPw - u_ref
-      ufe  = UPe - u_ref
+      ufw  = UPw
+      ufe  = UPe
       afw = abs(ufw)
       afe = abs(ufe)
       
@@ -492,10 +481,10 @@ c_t2 = real( ibits(bcd(i  , j  , k+1), bc_d_T, 1) )
       Wn_t = 0.5 * (Wp0 + Wn1)
       
       ! セルフェイスの移流速度
-      ! Vs_r = Vs_t * qs + r_qs * v_ref
-      ! Vn_r = Vn_t * qn + r_qn * v_ref
-      ! Vs_c = hs * ( ws * Vn_r + v_ref )
-      ! Vn_c = hn * ( wn * Vs_r + v_ref )
+      ! Vs_r = Vs_t * qs
+      ! Vn_r = Vn_t * qn
+      ! Vs_c = hs * ( ws * Vn_r )
+      ! Vn_c = hn * ( wn * Vs_r )
       
       Vs_c = hs * ws * Vp0
       Vn_c = hn * wn * Vp0
@@ -504,40 +493,40 @@ c_t2 = real( ibits(bcd(i  , j  , k+1), bc_d_T, 1) )
       
       ! カットがある場合の参照セルの値の計算
       ! u_{j-1}
-      Us1_t = (u_ref + rs * Up0 ) * hs ! (u_ref2 + rs * Un_t ) * hs
-      Vs1_t = (v_ref + rs * Vp0 ) * hs ! (v_ref2 + rs * Vn_t ) * hs
-      Ws1_t = (w_ref + rs * Wp0 ) * hs ! (w_ref2 + rs * Wn_t ) * hs
+      Us1_t = (rs * Up0 ) * hs ! (rs * Un_t ) * hs
+      Vs1_t = (rs * Vp0 ) * hs ! (rs * Vn_t ) * hs
+      Ws1_t = (rs * Wp0 ) * hs ! (rs * Wn_t ) * hs
       Us1 = qs * Us1 + r_qs * Us1_t
       Vs1 = qs * Vs1 + r_qs * Vs1_t
       Ws1 = qs * Ws1 + r_qs * Ws1_t
       
       ! u_{j+1}
-      Un1_t = (u_ref + rn * Up0 ) * hn ! (u_ref2 + rn * Us_t ) * hn
-      Vn1_t = (v_ref + rn * Vp0 ) * hn ! (v_ref2 + rn * Vs_t ) * hn
-      Wn1_t = (w_ref + rn * Wp0 ) * hn ! (w_ref2 + rn * Ws_t ) * hn
+      Un1_t = (rn * Up0 ) * hn ! (rn * Us_t ) * hn
+      Vn1_t = (rn * Vp0 ) * hn ! (rn * Vs_t ) * hn
+      Wn1_t = (rn * Wp0 ) * hn ! (rn * Ws_t ) * hn
       Un1 = qn * Un1 + r_qn * Un1_t
       Vn1 = qn * Vn1 + r_qn * Vn1_t
       Wn1 = qn * Wn1 + r_qn * Wn1_t
     
       ! u_{j-2}
-      Us2_t = (u_ref + rss * Up0 ) * hss ! (u_ref2 + rss * Us_t ) * hss
-      Vs2_t = (v_ref + rss * Vp0 ) * hss ! (v_ref2 + rss * Vs_t ) * hss
-      Ws2_t = (w_ref + rss * Wp0 ) * hss ! (w_ref2 + rss * Ws_t ) * hss
+      Us2_t = (rss * Up0 ) * hss ! (rss * Us_t ) * hss
+      Vs2_t = (rss * Vp0 ) * hss ! (rss * Vs_t ) * hss
+      Ws2_t = (rss * Wp0 ) * hss ! (rss * Ws_t ) * hss
       Us2 = qss * Us2 + r_qss * Us2_t
       Vs2 = qss * Vs2 + r_qss * Vs2_t
       Ws2 = qss * Ws2 + r_qss * Ws2_t
 
       ! u_{j+2}
-      Un2_t = (u_ref + rnn * Up0 ) * hnn ! (u_ref2 + rnn * Un_t ) * hnn
-      Vn2_t = (v_ref + rnn * Vp0 ) * hnn ! (v_ref2 + rnn * Vn_t ) * hnn
-      Wn2_t = (w_ref + rnn * Wp0 ) * hnn ! (w_ref2 + rnn * Wn_t ) * hnn
+      Un2_t = (rnn * Up0 ) * hnn ! (rnn * Un_t ) * hnn
+      Vn2_t = (rnn * Vp0 ) * hnn ! (rnn * Vn_t ) * hnn
+      Wn2_t = (rnn * Wp0 ) * hnn ! (rnn * Wn_t ) * hnn
       Un2 = qnn * Un2 + r_qnn * Un2_t
       Vn2 = qnn * Vn2 + r_qnn * Vn2_t
       Wn2 = qnn * Wn2 + r_qnn * Wn2_t
       
       ! 界面の左右の状態を計算
-      vfs  = VPs - v_ref
-      vfn  = VPn - v_ref
+      vfs  = VPs
+      vfn  = VPn
       afs = abs(vfs)
       afn = abs(vfn)
       
@@ -624,10 +613,10 @@ c_t2 = real( ibits(bcd(i  , j  , k+1), bc_d_T, 1) )
       Wt_t = 0.5 * (Wp0 + Wt1)
       
       ! セルフェイスの移流速度
-      ! Wb_r = Wb_t * qb + r_qb * w_ref
-      ! Wt_r = Wt_t * qt + r_qt * w_ref
-      ! Wb_c = hb * ( wb * Wt_r + w_ref )
-      ! Wt_c = ht * ( wt * Wb_r + w_ref )
+      ! Wb_r = Wb_t * qb + r_qb
+      ! Wt_r = Wt_t * qt + r_qt
+      ! Wb_c = hb * ( wb * Wt_r )
+      ! Wt_c = ht * ( wt * Wb_r )
       
       Wb_c = hb * wb * Wp0
       Wt_c = ht * wt * Wp0
@@ -636,40 +625,40 @@ c_t2 = real( ibits(bcd(i  , j  , k+1), bc_d_T, 1) )
       
       ! カットがある場合の参照セルの値の計算
       ! u_{k-1}
-      Ub1_t = (u_ref + rb * Up0 ) * hb ! (u_ref2 + rb * Ut_t ) * hb
-      Vb1_t = (v_ref + rb * Vp0 ) * hb ! (v_ref2 + rb * Vt_t ) * hb
-      Wb1_t = (w_ref + rb * Wp0 ) * hb ! (w_ref2 + rb * Wt_t ) * hb
+      Ub1_t = (rb * Up0 ) * hb ! (rb * Ut_t ) * hb
+      Vb1_t = (rb * Vp0 ) * hb ! (rb * Vt_t ) * hb
+      Wb1_t = (rb * Wp0 ) * hb ! (rb * Wt_t ) * hb
       Ub1 = qb * Ub1 + r_qb * Ub1_t
       Vb1 = qb * Vb1 + r_qb * Vb1_t
       Wb1 = qb * Wb1 + r_qb * Wb1_t
       
       ! u_{k+1}
-      Ut1_t = (u_ref + rt * Up0 ) * ht ! (u_ref2 + rt * Ub_t ) * ht
-      Vt1_t = (v_ref + rt * Vp0 ) * ht ! (v_ref2 + rt * Vb_t ) * ht
-      Wt1_t = (w_ref + rt * Wp0 ) * ht ! (w_ref2 + rt * Wb_t ) * ht
+      Ut1_t = (rt * Up0 ) * ht ! (rt * Ub_t ) * ht
+      Vt1_t = (rt * Vp0 ) * ht ! (rt * Vb_t ) * ht
+      Wt1_t = (rt * Wp0 ) * ht ! (rt * Wb_t ) * ht
       Ut1 = qt * Ut1 + r_qt * Ut1_t
       Vt1 = qt * Vt1 + r_qt * Vt1_t
       Wt1 = qt * Wt1 + r_qt * Wt1_t
       
       ! u_{k-2}
-      Ub2_t = (u_ref + rbb * Up0 ) * hbb ! (u_ref2 + rbb * Ub_t ) * hbb
-      Vb2_t = (v_ref + rbb * Vp0 ) * hbb ! (v_ref2 + rbb * Vb_t ) * hbb
-      Wb2_t = (w_ref + rbb * Wp0 ) * hbb ! (w_ref2 + rbb * Wb_t ) * hbb
+      Ub2_t = (rbb * Up0 ) * hbb ! (rbb * Ub_t ) * hbb
+      Vb2_t = (rbb * Vp0 ) * hbb ! (rbb * Vb_t ) * hbb
+      Wb2_t = (rbb * Wp0 ) * hbb ! (rbb * Wb_t ) * hbb
       Ub2 = qbb * Ub2 + r_qbb * Ub2_t
       Vb2 = qbb * Vb2 + r_qbb * Vb2_t
       Wb2 = qbb * Wb2 + r_qbb * Wb2_t
 
       ! u_{k+2}
-      Ut2_t = (u_ref + rtt * Up0 ) * htt ! (u_ref2 + rtt * Ut_t ) * htt
-      Vt2_t = (v_ref + rtt * Vp0 ) * htt ! (v_ref2 + rtt * Vt_t ) * htt
-      Wt2_t = (w_ref + rtt * Wp0 ) * htt ! (w_ref2 + rtt * Wt_t ) * htt
+      Ut2_t = (rtt * Up0 ) * htt ! (rtt * Ut_t ) * htt
+      Vt2_t = (rtt * Vp0 ) * htt ! (rtt * Vt_t ) * htt
+      Wt2_t = (rtt * Wp0 ) * htt ! (rtt * Wt_t ) * htt
       Ut2 = qtt * Ut2 + r_qtt * Ut2_t
       Vt2 = qtt * Vt2 + r_qtt * Vt2_t
       Wt2 = qtt * Wt2 + r_qtt * Wt2_t
       
       ! 界面の左右の状態を計算
-      wfb  = WPb - w_ref
-      wft  = WPt - w_ref
+      wfb  = WPb
+      wft  = WPt
       afb = abs(wfb)
       aft = abs(wft)
 
@@ -810,10 +799,9 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
 !! @param bp BCindex P
 !! @param bv BCindex C
 !! @param cut カット情報(float)
-!! @param v00 参照速度
 !! @param[out] flop flop count
 !<
-    subroutine update_vec_cds (v, div, sz, g, delta_t, dh, vc, p, bp, bv, bcd, cut, v00, flop)
+    subroutine update_vec_cds (v, div, sz, g, delta_t, dh, vc, p, bp, bv, bcd, cut, flop)
     implicit none
     include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, bpx, bvx, bdx
@@ -824,7 +812,6 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
     real                                                        ::  gpw_r, gpe_r, gps_r, gpn_r, gpb_r, gpt_r
     real                                                        ::  gpw_c, gpe_c, gps_c, gpn_c, gpb_c, gpt_c
     real                                                        ::  gpw, gpe, gps, gpn, gpb, gpt
-    real                                                        ::  u_ref, v_ref, w_ref
     real                                                        ::  Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0
     real                                                        ::  Ue_f, Uw_f, Vn_f, Vs_f, Wt_f, Wb_f
     real                                                        ::  Ue_t, Uw_t, Vn_t, Vs_t, Wt_t, Wb_t
@@ -842,22 +829,18 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v, vc
     real*4, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  cut
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bp, bv, bcd
-    real, dimension(0:3)                                        ::  v00
     
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
     dd = delta_t/dh
     coef = dh/delta_t
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
     
     flop = flop + dble(ix) * dble(jx) * dble(kx) * 228.0d0 + 16.0d0
 
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, dd, u_ref, v_ref, w_ref, coef) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, dd, coef) &
 !$OMP PRIVATE(bpx, bvx, actv, r_actv) &
 !$OMP PRIVATE(N_e, N_w, N_n, N_s, N_t, N_b) &
 !$OMP PRIVATE(Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0) &
@@ -1005,20 +988,20 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
       Wt_t = 0.5 * (Wt0 + Wp0)
 
       ! reference side at cell face
-      ! Uw_r = Uw_t * qw + r_qw * u_ref
-      ! Ue_r = Ue_t * qe + r_qe * u_ref
-      ! Vs_r = Vs_t * qs + r_qs * v_ref
-      ! Vn_r = Vn_t * qn + r_qn * v_ref
-      ! Wb_r = Wb_t * qb + r_qb * w_ref
-      ! Wt_r = Wt_t * qt + r_qt * w_ref
+      ! Uw_r = Uw_t * qw + r_qw
+      ! Ue_r = Ue_t * qe + r_qe
+      ! Vs_r = Vs_t * qs + r_qs
+      ! Vn_r = Vn_t * qn + r_qn
+      ! Wb_r = Wb_t * qb + r_qb
+      ! Wt_r = Wt_t * qt + r_qt
       
       ! Correction of cell face velocity to be interpolated
-      Uw_c = ( ww * Up0 + 0.5 * u_ref ) / dw ! hw * ( ww * Ue_r + u_ref )
-      Ue_c = ( we * Up0 + 0.5 * u_ref ) / de ! he * ( we * Uw_r + u_ref )
-      Vs_c = ( ws * Vp0 + 0.5 * v_ref ) / ds ! hs * ( ws * Vn_r + v_ref )
-      Vn_c = ( wn * Vp0 + 0.5 * v_ref ) / dn ! hn * ( wn * Vs_r + v_ref )
-      Wb_c = ( wb * Wp0 + 0.5 * w_ref ) / db ! hb * ( wb * Wt_r + w_ref )
-      Wt_c = ( wt * Wp0 + 0.5 * w_ref ) / dt ! ht * ( wt * Wb_r + w_ref )
+      Uw_c = ( ww * Up0 ) / dw ! hw * ( ww * Ue_r )
+      Ue_c = ( we * Up0 ) / de ! he * ( we * Uw_r )
+      Vs_c = ( ws * Vp0 ) / ds ! hs * ( ws * Vn_r )
+      Vn_c = ( wn * Vp0 ) / dn ! hn * ( wn * Vs_r )
+      Wb_c = ( wb * Wp0 ) / db ! hb * ( wb * Wt_r )
+      Wt_c = ( wt * Wp0 ) / dt ! ht * ( wt * Wb_r )
       
       ! Cell face velocity
       Uw_f = Uw_t * qw + r_qw * Uw_c
@@ -1037,9 +1020,9 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
                    -(Wb_f - dd * gpb) * c_b1 ) * coef * actv
       
       ! セルセンタの速度更新
-      v(i,j,k,1) = ( Up0 - gpx * dd ) * actv + r_actv * u_ref
-      v(i,j,k,2) = ( Vp0 - gpy * dd ) * actv + r_actv * v_ref
-      v(i,j,k,3) = ( Wp0 - gpz * dd ) * actv + r_actv * w_ref
+      v(i,j,k,1) = ( Up0 - gpx * dd ) * actv
+      v(i,j,k,2) = ( Vp0 - gpy * dd ) * actv
+      v(i,j,k,3) = ( Wp0 - gpz * dd ) * actv
 
     end do
     end do
@@ -1059,10 +1042,9 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
 !! @param v 疑似ベクトル
 !! @param bv BCindex C
 !! @param cut カット情報(float)
-!! @param v00 参照速度
 !! @param[out] flop flop count
 !<
-    subroutine divergence_cds (div, sz, g, coef, v, bv, bcd, cut, v00, flop)
+    subroutine divergence_cds (div, sz, g, coef, v, bv, bcd, cut, flop)
     implicit none
     include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, bvx, bdx
@@ -1079,25 +1061,20 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
     real                                                        ::  ww, we, ws, wn, wb, wt
     real                                                        ::  qw, qe, qs, qn, qb, qt
     real                                                        ::  r_qw, r_qe, r_qs, r_qn, r_qb, r_qt
-    real                                                        ::  coef, actv, r_actv, u_ref, v_ref, w_ref
+    real                                                        ::  coef, actv, r_actv
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  div
     real*4, dimension(6, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  cut
     integer, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)   ::  bv, bcd
-    real, dimension(0:3)                                        ::  v00
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
     
     flop = flop + dble(ix) * dble(jx) * dble(kx) * 152.0d0
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, coef, u_ref, v_ref, w_ref) &
+!$OMP FIRSTPRIVATE(ix, jx, kx, coef) &
 !$OMP PRIVATE(bvx, actv, r_actv, bdx) &
 !$OMP PRIVATE(Ue0, Uw0, Vn0, Vs0, Wt0, Wb0, Up0, Vp0, Wp0) &
 !$OMP PRIVATE(dw, de, ds, dn, db, dt) &
@@ -1199,20 +1176,20 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
       Wt_t = 0.5 * (Wt0 + Wp0)
       
       ! reference side at cell face
-      ! Uw_r = Uw_t * qw + r_qw * u_ref
-      ! Ue_r = Ue_t * qe + r_qe * u_ref
-      ! Vs_r = Vs_t * qs + r_qs * v_ref
-      ! Vn_r = Vn_t * qn + r_qn * v_ref
-      ! Wb_r = Wb_t * qb + r_qb * w_ref
-      ! Wt_r = Wt_t * qt + r_qt * w_ref
+      ! Uw_r = Uw_t * qw
+      ! Ue_r = Ue_t * qe
+      ! Vs_r = Vs_t * qs
+      ! Vn_r = Vn_t * qn
+      ! Wb_r = Wb_t * qb
+      ! Wt_r = Wt_t * qt
       
       ! Correction of cell face velocity to be interpolated
-      Uw_c = ( ww * Up0 + 0.5 * u_ref ) / dw ! hw * ( ww * Ue_r + u_ref )
-      Ue_c = ( we * Up0 + 0.5 * u_ref ) / de ! he * ( we * Uw_r + u_ref )
-      Vs_c = ( ws * Vp0 + 0.5 * v_ref ) / ds ! hs * ( ws * Vn_r + v_ref )
-      Vn_c = ( wn * Vp0 + 0.5 * v_ref ) / dn ! hn * ( wn * Vs_r + v_ref )
-      Wb_c = ( wb * Wp0 + 0.5 * w_ref ) / db ! hb * ( wb * Wt_r + w_ref )
-      Wt_c = ( wt * Wp0 + 0.5 * w_ref ) / dt ! ht * ( wt * Wb_r + w_ref )
+      Uw_c = ( ww * Up0 ) / dw ! hw * ( ww * Ue_r )
+      Ue_c = ( we * Up0 ) / de ! he * ( we * Uw_r )
+      Vs_c = ( ws * Vp0 ) / ds ! hs * ( ws * Vn_r )
+      Vn_c = ( wn * Vp0 ) / dn ! hn * ( wn * Vs_r )
+      Wb_c = ( wb * Wp0 ) / db ! hb * ( wb * Wt_r )
+      Wt_c = ( wt * Wp0 ) / dt ! ht * ( wt * Wb_r )
 
       ! Cell face
       Uw_f = Uw_t * qw + r_qw * Uw_c
@@ -1223,12 +1200,12 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
       Wt_f = Wt_t * qt + r_qt * Wt_c
       
       ! VBCの場合には寄与をキャンセル
-      div(i,j,k) = ( (Ue_f - u_ref) * c_e1  &
-                   - (Uw_f - u_ref) * c_w1  &
-                   + (Vn_f - v_ref) * c_n1  &
-                   - (Vs_f - v_ref) * c_s1  &
-                   + (Wt_f - w_ref) * c_t1  &
-                   - (Wb_f - w_ref) * c_b1 ) * coef * actv
+      div(i,j,k) = ( Ue_f * c_e1  &
+                   - Uw_f * c_w1  &
+                   + Vn_f * c_n1  &
+                   - Vs_f * c_s1  &
+                   + Wt_f * c_t1  &
+                   - Wb_f * c_b1 ) * coef * actv
     end do
     end do
     end do
@@ -1250,14 +1227,13 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
 !! @param cut カット情報
 !! @param vt_range 渦粘性係数の最小値と最大値
 !! @param yp_range Y+の最小値と最大値
-!! @param v00 参照速度
 !! @note
 !!    - vtmin, vtmax > vt_range(2)
 !!    - ypmin, ypmax > yp_range(2)
 !! @todo
 !!    - 境界条件は必要か？
 !<
-    subroutine eddy_viscosity_cds (vt, sz, g, dh, re, cs, v, cut, vt_range, yp_range, v00, flop)
+    subroutine eddy_viscosity_cds (vt, sz, g, dh, re, cs, v, cut, vt_range, yp_range, flop)
     implicit none
     include '../FB/ffv_f_params.h'
     integer                                                     ::  i, j, k, ix, jx, kx, g, m
@@ -1270,10 +1246,9 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
     real                                                        ::  dwdx, dwdy, dwdz
     real                                                        ::  d1, d2, ddd, c1, c2, c3, delta, dd
     real                                                        ::  fs, aaa, Vmag, dis, tw, up1
-    real                                                        ::  u_ref, v_ref, w_ref, u1, u2, u3
+    real                                                        ::  u1, u2, u3
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)      ::  vt
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3)   ::  v
-    real, dimension(0:3)                                        ::  v00
     real, dimension(6, 1-g:sz(1)+1, 1-g:sz(2)+1, 1-g:sz(3)+1)   ::  cut
 
     ix = sz(1)
@@ -1285,9 +1260,6 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
     yp_range(2) = -1.0e6
     Delta = (dh*dh*dh)**(0.333)
     dd    = 0.5/dh
-    u_ref = v00(1)
-    v_ref = v00(2)
-    w_ref = v00(3)
 
     flop = flop + dble(ix) * dble(jx) * dble(kx) * 1.0d0
 
@@ -1318,9 +1290,9 @@ g1 = s1 * max(0.0, min( abs(dv1), s1 * b * dv2))
       AAA= cut(1,i,j,k) * cut(2,i,j,k)   &
           *cut(3,i,j,k) * cut(4,i,j,k)   &
           *cut(5,i,j,k) * cut(6,i,j,k)
-      u1 = v(i,j,k,1) - u_ref
-      u2 = v(i,j,k,2) - v_ref
-      u3 = v(i,j,k,3) - w_ref
+      u1 = v(i,j,k,1)
+      u2 = v(i,j,k,2)
+      u3 = v(i,j,k,3)
       Vmag = SQRT(u1*u1 + u2*u2 + u3*u3)
 
       IF ( (AAA < 1.0) .AND. (Vmag >= 0.001) ) THEN

@@ -40,13 +40,13 @@ d_t = real(ibits(idx, bc_dn_T, 1))
 
 dsw = real(ibits(idx, bc_diag, 1))
 
-dd = r_x2 * (c_w + c_e) &
-   + r_y2 * (c_s + c_n) &
-   + r_z2 * (c_b + c_t) &
-   + 2.0                &
-   *(r_x2 * (d_w + d_e) &
-   + r_y2 * (d_s + d_n) &
-   + r_z2 * (d_b + d_t) ) &
+dd = c_w + c_e &
+   + c_s + c_n &
+   + c_b + c_t &
+   + 2.0       &
+   *(d_w + d_e &
+   + d_s + d_n &
+   + d_b + d_t ) &
    + cf
 
 dd = dsw * dd + 1.0 - dsw
@@ -56,9 +56,9 @@ aa = dble(ibits(idx, Active, 1))
 pp = p(i,j,k)
 bb = b(i,j,k)
 
-ss = r_x2 * ( c_e * p(i+1,j  ,k  ) + c_w * p(i-1,j  ,k  ) ) &
-   + r_y2 * ( c_n * p(i  ,j+1,k  ) + c_s * p(i  ,j-1,k  ) ) &
-   + r_z2 * ( c_t * p(i  ,j  ,k+1) + c_b * p(i  ,j  ,k-1) )
+ss = c_e * p(i+1,j  ,k  ) + c_w * p(i-1,j  ,k  ) &
+   + c_n * p(i  ,j+1,k  ) + c_s * p(i  ,j-1,k  ) &
+   + c_t * p(i  ,j  ,k+1) + c_b * p(i  ,j  ,k-1)
 
 dp = ( (ss - bb)/dd - pp ) * omg
 pn = pp + dp

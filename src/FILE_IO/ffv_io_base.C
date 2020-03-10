@@ -765,7 +765,7 @@ void IO_BASE::RestartDisplayMinmax(FILE* fp, double& flop)
   REAL_TYPE f_min, f_max, vec_min[3], vec_max[3];
 
   // Velocity
-  fb_minmax_v_ (vec_min, vec_max, size, &guide, RF->getV00(), d_v, &flop); // allreduceすること
+  fb_minmax_v_ (vec_min, vec_max, size, &guide, d_v, &flop); // allreduceすること
 
   if ( numProc > 1 )
   {
@@ -785,7 +785,7 @@ void IO_BASE::RestartDisplayMinmax(FILE* fp, double& flop)
 
 
   // FVelocity
-  fb_minmax_v_ (vec_min, vec_max, size, &guide, RF->getV00(), d_vf, &flop); // allreduceすること
+  fb_minmax_v_ (vec_min, vec_max, size, &guide, d_vf, &flop); // allreduceすること
 
   if ( numProc > 1 )
   {

@@ -91,12 +91,8 @@
 #include "cdm_DFI.h"
 
 
-#ifndef _WIN32
 #include <unistd.h>
 #include <strings.h>
-#else
-#include "sph_win32_util.h"
-#endif
 #include <sys/types.h>
 
 #if defined(IA32_LINUX) || defined(IA64_LINUX) || defined(SGI_ALTIX)

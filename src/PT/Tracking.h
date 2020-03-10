@@ -169,7 +169,7 @@ protected:
   }
 
 
-  // @brief pを含むセルのインデクス（F)
+  // @brief pを含むセルのインデクス（F) << todo 見直し
   inline Vec3i getInCellF(const Vec3r p) {
     Vec3i c;
     c.x = (int)((p.x - org.x) / pch.x) + 1;

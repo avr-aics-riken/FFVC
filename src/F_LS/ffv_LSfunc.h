@@ -25,35 +25,6 @@
 #ifndef _FFV_LS_FUNC_H_
 #define _FFV_LS_FUNC_H_
 
-#ifdef _WIN32
-
-
-// ffv_poisson.f90
-#define div_cnst_       DIV_CNST
-#define psor_           PSOR
-#define pssor_          PSSOR
-#define psor2sma_       PSOR2SMA
-#define psor2sma_r_     PSOR2SMA_R
-#define sma_comm_       SMA_COMM
-#define sma_comm_wait_  SMA_COMM_WAIT
-#define cds_psor_       CDS_PSOR
-
-
-// ffv_blas.f90
-#define blas_clear_          BLAS_CLEAR
-#define blas_copy_           BLAS_COPY
-#define blas_triad_          BLAS_TRIAD
-#define blas_bicg_1_         BLAS_BICG_1
-#define blas_bicg_2_         BLAS_BICG_2
-#define blas_dot1_           BLAS_DOT1
-#define blas_dot2_           BLAS_DOT2
-#define blas_calc_b_         BLAS_CALC_B
-#define blas_calc_rk_        BLAS_CALC_RK
-#define blas_calc_r2_        BLAS_CALC_R2
-#define blas_calc_ax_        BLAS_CALC_AX
-
-
-#endif // _WIN32
 
 
 extern "C" {

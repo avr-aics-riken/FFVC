@@ -24,12 +24,8 @@
 #include <time.h>
 #include <fcntl.h>
 
-#ifndef _WIN32
 #include <unistd.h>
 #include <strings.h>
-#else
-#include "sph_win32_util.h"
-#endif
 #include <sys/types.h>
 
 

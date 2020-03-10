@@ -12,10 +12,18 @@
 ## REVISION HISTORY
 
 ---
-- 2020-02-15 Version 2.9.5
+- 2020-03-10 Version 3.0.0
+ - 参照速度v00を外す
+ - 等方格子に戻す
+ - WIN32対応削除
+
+---
+- 2020-02-17 Version 2.9.5
   - 粒子出力にactive情報追加
   - cliplineを導入、閾値を超えたら削除
-  
+  - Chunk::addParticleFromOrigin() >> (Tracking* tr), getV()を呼び出し、初期速度与える
+  - Tracking::integrate_Euler() 平均勾配（二次精度）の時間積分
+  - branch non-uniform-researve
   
 ---
 - 2020-02-14 Version 2.9.4

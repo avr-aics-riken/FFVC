@@ -581,51 +581,39 @@
 !! @param [in]     sz    配列長
 !! @param [in]     g     ガイドセル長
 !! @param [in]     vi    入力速度場
-!! @param [in]     v00   参照速度
 !! @param [in]     refv  代表速度
 !! @param [out]    flop  浮動小数演算数
-!! @note dst[] = src[]/refv + v00 有次元のときrefvは次元速度，無次元のとき1.0
+!! @note dst[] = src[]/refv 有次元のときrefvは次元速度，無次元のとき1.0
 !<
-  subroutine fb_vin_nijk (vo, sz, g, vi, v00, refv, flop)
+  subroutine fb_vin_nijk (vo, sz, g, vi, refv, flop)
   implicit none
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
-  real                                                      ::  u_ref, v_ref, w_ref, refv, rr
+  real                                                      ::  refv, rr
   double precision                                          ::  flop
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vo
   real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  vi
-  real, dimension(0:3)                                      ::  v00
 
   ix = sz(1)
   jx = sz(2)
   kx = sz(3)
-  
-  u_ref = v00(1)
-  v_ref = v00(2)
-  w_ref = v00(3)
   
   rr = 1.0/refv
   
   flop = flop + dble(ix)*dble(jx)*dble(kx)*9.0d0 + 8.0d0
 
 
-!$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, rr)
-
-!$OMP DO SCHEDULE(static)
-
+!$OMP PARALLEL DO SCHEDULE(static)
   do k=1,kx
   do j=1,jx
   do i=1,ix 
-    vo(i,j,k,1) = vi(1,i,j,k) * rr + u_ref
-    vo(i,j,k,2) = vi(2,i,j,k) * rr + v_ref
-    vo(i,j,k,3) = vi(3,i,j,k) * rr + w_ref
+    vo(i,j,k,1) = vi(1,i,j,k) * rr
+    vo(i,j,k,2) = vi(2,i,j,k) * rr
+    vo(i,j,k,3) = vi(3,i,j,k) * rr
   end do
   end do
   end do
-  
-!$OMP END DO
-!$OMP END PARALLEL
+!$OMP END PARALLEL DO
 
   return
   end subroutine fb_vin_nijk
@@ -636,50 +624,38 @@
 !! @param [in,out] vo    入力 > 変換されたベクトル
 !! @param [in]     sz    配列長
 !! @param [in]     g     ガイドセル長
-!! @param [in]     v00   参照速度
 !! @param [in]     refv  代表速度
 !! @param [out]    flop  浮動小数演算数
-!! @note dst[] = src[]/refv + v00 有次元のときrefvは次元速度，無次元のとき1.0
+!! @note dst[] = src[]/refv 有次元のときrefvは次元速度，無次元のとき1.0
 !<
-subroutine fb_vin_ijkn (vo, sz, g, v00, refv, flop)
+subroutine fb_vin_ijkn (vo, sz, g, refv, flop)
 implicit none
 integer                                                   ::  i, j, k, ix, jx, kx, g
 integer, dimension(3)                                     ::  sz
-real                                                      ::  u_ref, v_ref, w_ref, refv, rr
+real                                                      ::  refv, rr
 double precision                                          ::  flop
 real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vo
-real, dimension(0:3)                                      ::  v00
 
 ix = sz(1)
 jx = sz(2)
 kx = sz(3)
-
-u_ref = v00(1)
-v_ref = v00(2)
-w_ref = v00(3)
 
 rr = 1.0/refv
 
 flop = flop + dble(ix)*dble(jx)*dble(kx)*9.0d0 + 8.0d0
 
 
-!$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, rr)
-
-!$OMP DO SCHEDULE(static)
-
+!$OMP PARALLEL DO SCHEDULE(static)
 do k=1,kx
 do j=1,jx
 do i=1,ix
-vo(i,j,k,1) = vo(i,j,k,1) * rr + u_ref
-vo(i,j,k,2) = vo(i,j,k,2) * rr + v_ref
-vo(i,j,k,3) = vo(i,j,k,3) * rr + w_ref
+vo(i,j,k,1) = vo(i,j,k,1) * rr
+vo(i,j,k,2) = vo(i,j,k,2) * rr
+vo(i,j,k,3) = vo(i,j,k,3) * rr
 end do
 end do
 end do
-
-!$OMP END DO
-!$OMP END PARALLEL
+!$OMP END PARALLEL DO
 
 return
 end subroutine fb_vin_ijkn
@@ -692,51 +668,39 @@ end subroutine fb_vin_ijkn
 !! @param [in]  vin    変換前
 !! @param [in]  sz     配列長
 !! @param [in]  g      ガイドセル長
-!! @param [in]  v00    参照速度
 !! @param [in]  unit_v 無次元のとき1.0，有次元のとき代表速度(m/s)
 !! @param [out] flop   浮動小数演算数
-!! @note dst[] = ( src[] * stepAvr ) - v00
+!! @note dst[] = ( src[] * stepAvr )
 !<
-  subroutine fb_vout_nijk (vout, vin, sz, g, v00, unit_v, flop)
+  subroutine fb_vout_nijk (vout, vin, sz, g, unit_v, flop)
   implicit none
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
-  real                                                      ::  u_ref, v_ref, w_ref, unit_v, unit
+  real                                                      ::  unit_v, unit
   double precision                                          ::  flop
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vin
   real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  vout
-  real, dimension(0:3)                                      ::  v00
 
   ix = sz(1)
   jx = sz(2)
   kx = sz(3)
-  
-  u_ref = v00(1)
-  v_ref = v00(2)
-  w_ref = v00(3)
 
   unit = unit_v
   
   flop = flop + dble(ix)*dble(jx)*dble(kx)*9.0d0
 
 
-!$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, unit)
-
-!$OMP DO SCHEDULE(static)
-
+!$OMP PARALLEL DO SCHEDULE(static)
   do k=1,kx
   do j=1,jx
   do i=1,ix 
-    vout(1,i,j,k) = ( vin(i,j,k,1) - u_ref ) * unit
-    vout(2,i,j,k) = ( vin(i,j,k,2) - v_ref ) * unit
-    vout(3,i,j,k) = ( vin(i,j,k,3) - w_ref ) * unit
+    vout(1,i,j,k) = ( vin(i,j,k,1) ) * unit
+    vout(2,i,j,k) = ( vin(i,j,k,2) ) * unit
+    vout(3,i,j,k) = ( vin(i,j,k,3) ) * unit
   end do
   end do
   end do
-  
-!$OMP END DO
-!$OMP END PARALLEL
+!$OMP END PARALLEL DO
 
   return
   end subroutine fb_vout_nijk
@@ -747,50 +711,38 @@ end subroutine fb_vin_ijkn
 !! @param [in]  vin    変換前
 !! @param [in]  sz     配列長
 !! @param [in]  g      ガイドセル長
-!! @param [in]  v00    参照速度
 !! @param [in]  unit_v 無次元のとき1.0，有次元のとき代表速度(m/s)
 !! @param [out] flop   浮動小数演算数
-!! @note dst[] = ( src[] * stepAvr ) - v00
+!! @note dst[] = ( src[] * stepAvr )
 !<
-  subroutine fb_vout_ijkn (vout, vin, sz, g, v00, unit_v, flop)
+  subroutine fb_vout_ijkn (vout, vin, sz, g, unit_v, flop)
   implicit none
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
-  real                                                      ::  u_ref, v_ref, w_ref, unit_v, unit
+  real                                                      ::  unit_v, unit
   double precision                                          ::  flop
   real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  vin, vout
-  real, dimension(0:3)                                      ::  v00
 
   ix = sz(1)
   jx = sz(2)
   kx = sz(3)
-
-  u_ref = v00(1)
-  v_ref = v00(2)
-  w_ref = v00(3)
 
   unit = unit_v
 
   flop = flop + dble(ix)*dble(jx)*dble(kx)*9.0d0
 
 
-!$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, u_ref, v_ref, w_ref, unit)
-
-!$OMP DO SCHEDULE(static)
-
+!$OMP PARALLEL DO SCHEDULE(static)
   do k=1,kx
   do j=1,jx
   do i=1,ix
-    vout(i,j,k,1) = ( vin(i,j,k,1) - u_ref ) * unit
-    vout(i,j,k,2) = ( vin(i,j,k,2) - v_ref ) * unit
-    vout(i,j,k,3) = ( vin(i,j,k,3) - w_ref ) * unit
+    vout(i,j,k,1) = ( vin(i,j,k,1) ) * unit
+    vout(i,j,k,2) = ( vin(i,j,k,2) ) * unit
+    vout(i,j,k,3) = ( vin(i,j,k,3) ) * unit
   end do
   end do
   end do
-
-!$OMP END DO
-!$OMP END PARALLEL
+!$OMP END PARALLEL DO
 
   return
   end subroutine fb_vout_ijkn
@@ -1028,46 +980,36 @@ end subroutine fb_vin_ijkn
 !! @param [in]  g    ガイドセル長
 !! @param [in]  v    速度ベクトル
 !! @param [in]  p    圧力
-!! @param [in]  v00  参照速度
 !! @param [out] flop 浮動小数演算数
 !<
-    subroutine fb_totalp (tp, sz, g, v, p, v00, flop)
+    subroutine fb_totalp (tp, sz, g, v, p, flop)
     implicit none
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
-    real                                                      ::  u1, u2, u3, vx, vy, vz
+    real                                                      ::  u1, u2, u3
     double precision                                          ::  flop
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g)    ::  p, tp
-    real, dimension(0:3)                                      ::  v00
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    vx = v00(1)
-    vy = v00(2)
-    vz = v00(3)
 
-!$OMP PARALLEL &
-!$OMP PRIVATE(u1, u2, u3) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, vx, vy, vz)
 
-!$OMP DO SCHEDULE(static)
-
+!$OMP PARALLEL DO PRIVATE(u1, u2, u3)
     do k=1,kx
     do j=1,jx
     do i=1,ix
-      u1 = v(i,j,k,1) - vx
-      u2 = v(i,j,k,2) - vy
-      u3 = v(i,j,k,3) - vz
+      u1 = v(i,j,k,1)
+      u2 = v(i,j,k,2)
+      u3 = v(i,j,k,3)
       tp(i,j,k) = 0.5*(u1*u1 + u2*u2 + u3*u3) + p(i,j,k)
     end do
     end do
     end do
-!$OMP END DO
-!$OMP END PARALLEL
+!$OMP END PARALLEL DO
         
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*10.0d0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*7.0d0
     
     return
     end subroutine fb_totalp
@@ -1080,26 +1022,21 @@ end subroutine fb_vin_ijkn
 !! @param [out] v_max 最大値
 !! @param [in]  sz    配列長
 !! @param [in]  g     ガイドセル長
-!! @param [in]  v00   参照速度
 !! @param [in]  v     速度ベクトル
 !! @param [out] flop  浮動小数演算数
 !<
-    subroutine fb_minmax_v (v_min, v_max, sz, g, v00, v, flop)
+    subroutine fb_minmax_v (v_min, v_max, sz, g, v, flop)
     implicit none
     integer                                                   ::  i, j, k, ix, jx, kx, g
     integer, dimension(3)                                     ::  sz
-    real                                                      ::  u1, u2, u3, vx, vy, vz
+    real                                                      ::  u1, u2, u3
     real, dimension(1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g, 3) ::  v
-    real, dimension(0:3)                                      ::  v00
     real, dimension(3)                                        ::  v_min, v_max
     double precision                                          ::  flop
 
     ix = sz(1)
     jx = sz(2)
     kx = sz(3)
-    vx = v00(1)
-    vy = v00(2)
-    vz = v00(3)
     v_min(1) =  1.0e6
     v_min(2) =  1.0e6
     v_min(3) =  1.0e6
@@ -1107,23 +1044,22 @@ end subroutine fb_vin_ijkn
     v_max(2) = -1.0e6
     v_max(3) = -1.0e6
 
-    flop = flop + dble(ix)*dble(jx)*dble(kx)*9.0d0
+    flop = flop + dble(ix)*dble(jx)*dble(kx)*6.0d0
     ! flop = flop + real(ix)*real(jx)*real(kx)*30.0 ! DP
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(min:v_min) &
 !$OMP REDUCTION(max:v_max) &
-!$OMP PRIVATE(u1, u2, u3) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, vx, vy, vz)
+!$OMP PRIVATE(u1, u2, u3)
 
 !$OMP DO SCHEDULE(static)
 
     do k=1,kx
     do j=1,jx
     do i=1,ix
-			u1 = v(i,j,k,1)-vx
-			u2 = v(i,j,k,2)-vy
-			u3 = v(i,j,k,3)-vz
+			u1 = v(i,j,k,1)
+			u2 = v(i,j,k,2)
+			u3 = v(i,j,k,3)
       v_min(1) = min(v_min(1), u1)
       v_max(1) = max(v_max(1), u1)
       v_min(2) = min(v_min(2), u2)
@@ -1145,25 +1081,22 @@ end subroutine fb_vin_ijkn
 !! @param [out] v_max 最大値
 !! @param [in]  sz    配列長
 !! @param [in]  g     ガイドセル長
-!! @param [in]  v00   参照速度
 !! @param [in]  v     速度ベクトル
 !! @param [out] flop  浮動小数演算数
 !<
-  subroutine fb_minmax_vex (v_min, v_max, sz, g, v00, v, flop)
+  subroutine fb_minmax_vex (v_min, v_max, sz, g, v, flop)
   implicit none
   integer                                                   ::  i, j, k, ix, jx, kx, g
   integer, dimension(3)                                     ::  sz
-  real                                                      ::  u1, u2, u3, uu, vx, vy, vz
+  real                                                      ::  u1, u2, u3, uu
   real, dimension(3, 1-g:sz(1)+g, 1-g:sz(2)+g, 1-g:sz(3)+g) ::  v
-  real, dimension(0:3)                                      ::  v00, v_min, v_max
+  real, dimension(0:3)                                      ::  v_min, v_max
   double precision                                          ::  flop
 
   ix = sz(1)
   jx = sz(2)
   kx = sz(3)
-  vx = v00(1)
-  vy = v00(2)
-  vz = v00(3)
+
   v_min(0) =  1.0e6
   v_min(1) =  1.0e6
   v_min(2) =  1.0e6
@@ -1174,23 +1107,22 @@ end subroutine fb_vin_ijkn
   v_max(3) = -1.0e6
 
   ! 10 + sqrt*1 = 20 ! DP 30
-  flop = flop + real(ix)*real(jx)*real(kx)*26.0d0
+  flop = flop + real(ix)*real(jx)*real(kx)*23.0d0
   ! flop = flop + real(ix)*real(jx)*real(kx)*30.0 ! DP
 
 !$OMP PARALLEL &
 !$OMP REDUCTION(min:v_min) &
 !$OMP REDUCTION(max:v_max) &
-!$OMP PRIVATE(u1, u2, u3, uu) &
-!$OMP FIRSTPRIVATE(ix, jx, kx, vx, vy, vz)
+!$OMP PRIVATE(u1, u2, u3, uu)
 
 !$OMP DO SCHEDULE(static)
 
   do k=1,kx
   do j=1,jx
   do i=1,ix
-    u1 = v(1,i,j,k)-vx
-    u2 = v(2,i,j,k)-vy
-    u3 = v(3,i,j,k)-vz
+    u1 = v(1,i,j,k)
+    u2 = v(2,i,j,k)
+    u3 = v(3,i,j,k)
     uu = sqrt( u1*u1 + u2*u2 + u3*u3 )
     v_min(0) = min(v_min(0), uu)
     v_max(0) = max(v_max(0), uu)

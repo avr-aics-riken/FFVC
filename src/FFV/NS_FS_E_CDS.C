@@ -102,7 +102,7 @@ void FFV::NS_FS_E_CDS()
       {
         TIMING_start("Pvec_MUSCL");
         flop = 0.0;
-        pvec_muscl_cds_(d_vc, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bcp, d_bcd, &v_mode, d_cut, &flop);
+        pvec_muscl_cds_(d_vc, size, &guide, &dh, &cnv_scheme, &rei, d_v0, d_vf, d_cdf, d_bcp, d_bcd, &v_mode, d_cut, &flop);
         TIMING_stop("Pvec_MUSCL", flop);
       }
 
@@ -122,7 +122,7 @@ void FFV::NS_FS_E_CDS()
       {
         TIMING_start("Pvec_MUSCL");
         flop = 0.0;
-        pvec_muscl_cds_(d_wv, size, &guide, &dh, &cnv_scheme, v00, &rei, d_v0, d_vf, d_cdf, d_bcp, d_bcd, &v_mode, d_cut, &flop);
+        pvec_muscl_cds_(d_wv, size, &guide, &dh, &cnv_scheme, &rei, d_v0, d_vf, d_cdf, d_bcp, d_bcd, &v_mode, d_cut, &flop);
         TIMING_stop("Pvec_MUSCL", flop);
       }
       
@@ -156,7 +156,7 @@ void FFV::NS_FS_E_CDS()
       }
       else
       {
-        ab2_(d_vc, size, &guide, &dt, d_v0, d_abf, d_bcd, v00, &flop);
+        ab2_(d_vc, size, &guide, &dt, d_v0, d_abf, d_bcd, &flop);
       }
       TIMING_stop("Pvec_Adams_Bashforth", flop);
       break;
@@ -170,7 +170,7 @@ void FFV::NS_FS_E_CDS()
       }
       else
       {
-        ab2_(d_wv, size, &guide, &dt, d_v0, d_abf, d_bcd, v00, &flop);
+        ab2_(d_wv, size, &guide, &dt, d_v0, d_abf, d_bcd, &flop);
       }
       TIMING_stop("Pvec_AB_CN", flop);
       
@@ -249,7 +249,7 @@ void FFV::NS_FS_E_CDS()
   // 非VBC面に対してのみ，セルセンターの値から発散量を計算
   TIMING_start("Divergence_of_Pvec");
   flop = 0.0;
-  divergence_cds_(d_ws, size, &guide, &coef, d_vc, d_cdf, d_bcd, d_cut, v00, &flop);
+  divergence_cds_(d_ws, size, &guide, &coef, d_vc, d_cdf, d_bcd, d_cut, &flop);
   TIMING_stop("Divergence_of_Pvec", flop);
   
   
@@ -379,7 +379,7 @@ void FFV::NS_FS_E_CDS()
     // 速度のスカラポテンシャルによる射影と発散値 src1は，反復毎のソース項をワークとして利用
     TIMING_start("Projection_Velocity");
     flop = 0.0;
-    update_vec_cds_(d_v, d_dv, size, &guide, &dt, &dh, d_vc, d_p, d_bcp, d_cdf, d_bcd, d_cut, v00, &flop);
+    update_vec_cds_(d_v, d_dv, size, &guide, &dt, &dh, d_vc, d_p, d_bcp, d_cdf, d_bcd, d_cut, &flop);
     TIMING_stop("Projection_Velocity", flop);
     
     // セルフェイス速度の境界条件による修正
@@ -508,7 +508,7 @@ void FFV::NS_FS_E_CDS()
   {
     TIMING_start(tm_LES_eddy);
     flop = 0.0;
-    eddy_viscosity_(d_vt, size, &guide, &dh, &C.Reynolds, &C.LES.Cs, d_v, d_cdf, range_Ut, range_Yp, v00);
+    eddy_viscosity_(d_vt, size, &guide, &dh, &C.Reynolds, &C.LES.Cs, d_v, d_cdf, range_Ut, range_Yp);
     TIMING_stop(tm_LES_eddy, flop);
     
     if ( numProc > 1 )

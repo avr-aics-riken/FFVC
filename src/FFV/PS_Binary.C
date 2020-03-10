@@ -69,7 +69,7 @@ void FFV::PS_Binary()
     TIMING_start("Thermal_Convection");
     flop = 0.0;
     int swt = 0; // 断熱壁
-    ps_muscl_(d_ws, size, &guide, pitch, &cnv_scheme, v00, d_vf, d_ie0, d_bid, d_cdf, d_bcd, &swt, &flop);
+    ps_muscl_(d_ws, size, &guide, pitch, &cnv_scheme, d_vf, d_ie0, d_bid, d_cdf, d_bcd, &swt, &flop);
     TIMING_stop("Thermal_Convection", flop);
 
 		// 対流フェイズの流束型境界条件
