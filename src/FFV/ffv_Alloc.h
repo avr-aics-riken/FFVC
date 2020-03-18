@@ -70,6 +70,9 @@ public:
   REAL_TYPE *d_ie0; ///<     内部エネルギー（1ステップ前）
   REAL_TYPE *d_qbc; ///<     熱BC flux保持
   // << file IO用のバッファと共用
+  
+  REAL_TYPE *d_sdf; ///<    符号付き距離関数
+  int *d_nrm;       ///<    法線情報
 
 
   // 渦度関連オプション
@@ -233,7 +236,9 @@ public:
     d_aE_mean   = NULL;
     d_aT_mean   = NULL;
     d_aPI_mean  = NULL;
-
+    
+    d_sdf = NULL;
+    d_nrm = NULL;
 
     d_r_v = NULL;
     d_r_p = NULL;

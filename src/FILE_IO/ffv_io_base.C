@@ -1091,17 +1091,20 @@ void IO_BASE::writePolylibGrp(FILE* fp,
 
 
 // #################################################################
-// sphファイルの書き出し（内部領域のみ）
+// sphファイルの書き出し（全領域）
 void IO_BASE::writeRawSPH(const REAL_TYPE *vf,
                           const int* sz,
                           const int gc,
                           const int gc_out,
+                          const int svType,
                           const REAL_TYPE* org,
                           const REAL_TYPE* ddx,
-                          const int m_ModePrecision)
+                          const int m_ModePrecision,
+                          const std::string fn,
+                          const bool cflag)
 {
-  int pad, dType, stp, svType;
-  REAL_TYPE ox, oy, oz, dx, dy, dz, tm;
+  int pad, dType, stp;
+  REAL_TYPE ox, oy, oz, dx, dy, dz, tm, ofst;
   long long szl[3], stpl;
 
 
@@ -1109,11 +1112,11 @@ void IO_BASE::writeRawSPH(const REAL_TYPE *vf,
 
   if ( paraMngr->IsParallel() )
   {
-    sprintf( sph_fname, "field%010d.sph", paraMngr->GetMyRankID(procGrp) );
+    sprintf( sph_fname, "%s%010d.sph", fn.c_str(), paraMngr->GetMyRankID(procGrp) );
   }
   else
   {
-    sprintf( sph_fname, "field.sph" );
+    sprintf( sph_fname, "%s.sph", fn.c_str() );
   }
 
   ofstream ofs(sph_fname, ios::out | ios::binary);
@@ -1130,17 +1133,21 @@ void IO_BASE::writeRawSPH(const REAL_TYPE *vf,
   int gd = gc;
 
   size_t nx = m_sz[0] * m_sz[1] * m_sz[2];
+  if (svType == 2) nx *= 3;
 
-  ox = org[0]-ddx[0]*(REAL_TYPE)gc_out;
-  oy = org[1]-ddx[1]*(REAL_TYPE)gc_out;
-  oz = org[2]-ddx[2]*(REAL_TYPE)gc_out;
+  
+  ofst = 0.0;
+  if (cflag) ofst = 0.5;
+
+  ox = org[0]-ddx[0]*((REAL_TYPE)gc_out - ofst);
+  oy = org[1]-ddx[1]*((REAL_TYPE)gc_out - ofst);
+  oz = org[2]-ddx[2]*((REAL_TYPE)gc_out - ofst);
   dx = ddx[0];
   dy = ddx[1];
   dz = ddx[2];
   //printf("org: %f %f %f\n", ox, oy, oz);
   //printf("dx : %f %f %f\n", dx, dy, dz);
 
-  svType = kind_scalar;
   if ( sizeof(REAL_TYPE) == sizeof(double) )
   {
     for (int i=0; i<3; i++)   szl[i] = (long long)m_sz[i];
@@ -1150,15 +1157,33 @@ void IO_BASE::writeRawSPH(const REAL_TYPE *vf,
 
   size_t m, l;
 
-  for (int k=1; k<=m_sz[2]; k++) {
-    for (int j=1; j<=m_sz[1]; j++) {
-      for (int i=1; i<=m_sz[0]; i++) {
-        l = _F_IDX_S3D(i, j, k, m_sz[0], m_sz[1], m_sz[2], gc_out);
-        m = _F_IDX_S3D(i, j, k, m_sz[0], m_sz[1], m_sz[2], gd);
-        f[l] = (REAL_TYPE)vf[m];
+  if ( svType == 1)
+  {
+    for (int k=1; k<=sz[2]; k++) {
+      for (int j=1; j<=sz[1]; j++) {
+        for (int i=1; i<=sz[0]; i++) {
+          l = _F_IDX_S3D(i, j, k, sz[0], sz[1], sz[2], gc_out);
+          m = _F_IDX_S3D(i, j, k, sz[0], sz[1], sz[2], gd);
+          f[l] = (REAL_TYPE)vf[m];
+        }
       }
     }
   }
+  else
+  {
+    for (int p=0; p<3; p++) {
+      for (int k=1; k<=sz[2]; k++) {
+        for (int j=1; j<=sz[1]; j++) {
+          for (int i=1; i<=sz[0]; i++) {
+            l = _F_IDX_V3DEX(p, i, j, k, sz[0], sz[1], sz[2], gc_out);
+            m = _F_IDX_V3D(i, j, k, p, sz[0], sz[1], sz[2], gd);
+            f[l] = (REAL_TYPE)vf[m];
+          }
+        }
+      }
+    }
+  }
+  
 
   // data property
   ( m_ModePrecision == sizeof(float) ) ? dType=1 : dType=2;
@@ -1243,6 +1268,13 @@ void IO_BASE::writeRawSPH(const REAL_TYPE *vf,
   }
 
   if (svType == kind_scalar) {
+    int pad = (m_ModePrecision == sizeof(float)) ? nx * sizeof(float) : nx * sizeof(double);
+    ofs.write( (char*)&pad, sizeof(int) );
+    ofs.write( (char*)f,   pad );
+    ofs.write( (char*)&pad, sizeof(int) );
+  }
+  else
+  {
     int pad = (m_ModePrecision == sizeof(float)) ? nx * sizeof(float) : nx * sizeof(double);
     ofs.write( (char*)&pad, sizeof(int) );
     ofs.write( (char*)f,   pad );

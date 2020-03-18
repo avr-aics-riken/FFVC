@@ -32,8 +32,7 @@
 int FFV::Initialize(int argc, char **argv)
 {
 	exec_time_pm_0 = cpm_Base::GetWTime();
-	
-	
+  
   double TotalMemory   = 0.0;  ///< 計算に必要なメモリ量（ローカル）
   double PrepMemory    = 0.0;  ///< 初期化に必要なメモリ量（ローカル）
   double G_TotalMemory = 0.0;  ///< 計算に必要なメモリ量（グローバル）
@@ -197,7 +196,7 @@ int FFV::Initialize(int argc, char **argv)
   setArraySize();
   allocArray_Prep(PrepMemory, TotalMemory);
 
-  // カット情報保持領域
+  // カット情報保持領域 ,SDF
   allocArray_Cut(PrepMemory, TotalMemory);
   initCutInfo();
 
@@ -2659,7 +2658,7 @@ void FFV::setComponentSR()
           pit[i] *= C.RefLength;
         }
       }
-      writeRawSPH(cvf, size, guide, 0, org, pit, sizeof(REAL_TYPE));
+      writeRawSPH(cvf, size, guide, 0, org, pit, sizeof(REAL_TYPE), "field");
 #endif
       // ##########
     }
@@ -2765,7 +2764,7 @@ void FFV::setComponentVF()
           pit[i] *= C.RefLength;
         }
       }
-      writeRawSPH(cvf, size, guide, 0, org, pit, sizeof(REAL_TYPE));
+      writeRawSPH(cvf, size, guide, 0, org, pit, sizeof(REAL_TYPE), "cvf");
 #endif
       // ##########
     }
@@ -3081,6 +3080,7 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
   {
     case id_Polygon: // ユーザ例題
       SM_Polygon2Cut(PrepMemory, TotalMemory, fp);
+      if ( !SM_genSDF(fp) ) exit(0);
       break;
 
     case id_Sphere:
@@ -3244,7 +3244,7 @@ void FFV::setMonitorList()
       pit[i] *= C.RefLength;
     }
   }
-  writeRawSPH(d_bcd, size, guide, 0, org, pit, sizeof(REAL_TYPE));
+  writeRawSPH(d_bcd, size, guide, 0, org, pit, sizeof(REAL_TYPE), "field");
 #endif
   // ##########
 }
@@ -4227,4 +4227,70 @@ void FFV::getPMInterval(TextParser* tpCntl)
   }
 	
 	exec_interval_pm = ct;
+}
+
+
+// #################################################################
+/* @brief ポリゴンからSDFを作成
+ * @param [in]     fp       ファイルポインタ
+ */
+bool FFV::SM_genSDF(FILE* fp)
+{
+  TIMING_start("SDF_Section");
+
+  int ix, jx, kx, gd;
+  int svType;
+  
+  ix = size[0];
+  jx = size[1];
+  kx = size[2];
+  gd = guide;
+  
+  Vec3r org(originD);
+  Vec3r pch(pitchD);
+
+  // ポリゴンからSDFを作成 > 5dh幅でトリム
+  GM.polygon2sdf(d_sdf, PL, d_nrm);
+  
+  
+  // SDFのレイヤーマーチング　bcpはワーク
+  if ( !GM.marchingSDF(d_sdf, d_ws, d_nrm, d_bcp, d_wv) )
+  {
+    TIMING_stop("SDF_Section");
+    return false;
+  }
+  
+
+  /*
+  F->writeRawSPH(d_bcp);
+  
+  svType = 1; // scalar
+  F->writeRawSPH(d_ws, size, guide, 0, svType, org, pch, sizeof(REAL_TYPE), "layer", true); // cflag=true
+  
+  F->writeRawSPH(d_sdf, size, guide, 0, svType, org, pch, sizeof(REAL_TYPE), "sdf", true); // cflag=true
+  
+  svType = 2; // vector
+  GM.getNVfromIdx(d_nrm, d_wv);
+  F->writeRawSPH(d_wv, size, guide, 0, svType, org, pch, sizeof(REAL_TYPE), "nrm", true); // cflag=true
+  */
+  
+  // 最小値を通信するように考える
+  if ( numProc > 1 )
+  {
+    if ( paraMngr->BndCommS3D(d_sdf, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
+  }
+
+ 
+  
+  // クリア
+  size_t size_n_cell = (ix+2*gd) * (jx+2*gd) * (kx+2*gd);
+  
+#pragma omp parallel for
+    for (size_t i=0; i<size_n_cell; i++) {
+      d_bcp[i] = 0;
+    }
+  
+   TIMING_stop("SDF_Section");
+  
+  return true;
 }

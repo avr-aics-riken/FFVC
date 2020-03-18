@@ -139,6 +139,14 @@ void FALLOC::allocArray_Cut(double &prep, double &total)
   if ( !(d_bid = Alloc::Int_S3D(size, guide)) ) exit(0);
   prep  += array_size * (double)sizeof(int);
   total += array_size * (double)sizeof(int);
+  
+  if ( !(d_sdf = Alloc::Real_S3D(size, guide)) ) exit(0);
+  prep += array_size * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
+  
+  if ( !(d_nrm = Alloc::Int_S3D(size, guide)) ) exit(0);
+  prep += array_size * (double)sizeof(REAL_TYPE);
+  total+= array_size * (double)sizeof(REAL_TYPE);
 }
 
 
@@ -378,10 +386,6 @@ void FALLOC::allocArray_Main(double &total, Control* C)
   total+= array_size * (double)sizeof(REAL_TYPE);
 
 
-  if ( !(d_wv = Alloc::Real_V3D(size, guide)) ) exit(0);
-  total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
-
-
   if ( C->isHeatProblem() )
   {
     if ( !(d_ie = Alloc::Real_S3D(size, guide)) ) exit(0);
@@ -425,7 +429,6 @@ void FALLOC::allocArray_Main(double &total, Control* C)
     d_ie0= &d_io_buffer[nx*9];
     d_qbc= &d_io_buffer[nx*10];
   }
-
 
 
   // 渦度の出力指定がある，あるいは渦度関連のサンプリングがある場合にアロケート
@@ -545,6 +548,11 @@ void FALLOC::allocArray_Prep(double &prep, double &total)
   if ( !(d_pvf = Alloc::Real_S3D(size, guide)) ) exit(0);
   prep += array_size * (double)sizeof(REAL_TYPE);
   total+= array_size * (double)sizeof(REAL_TYPE);
+  
+  if ( !(d_wv = Alloc::Real_V3D(size, guide)) ) exit(0);
+  prep += array_size * (double)sizeof(REAL_TYPE) * 3.0;
+  total+= array_size * (double)sizeof(REAL_TYPE) * 3.0;
+  
 }
 
 

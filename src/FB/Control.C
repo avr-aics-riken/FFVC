@@ -648,23 +648,32 @@ void Control::getAXB()
   }
   if (axb.func==OFF) return;
   
+  
   label = "/AXB/interval";
 
-  if ( !(tpCntl->getInspectedValue(label, ct )) )
+  if ( tpCntl->chkLabel(label) )
   {
-    Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
-    Exit(0);
+    if ( !(tpCntl->getInspectedValue(label, ct )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
+      Exit(0);
+    }
+    axb.interval = (int)ct;
   }
-  axb.interval = (int)ct;
+  
   
   label = "/AXB/threshold";
 
-  if ( !(tpCntl->getInspectedValue(label, ct )) )
+  if ( tpCntl->chkLabel(label) )
   {
-    Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
-    Exit(0);
+    if ( !(tpCntl->getInspectedValue(label, ct )) )
+    {
+      Hostonly_ stamped_printf("\tParsing error : Invalid float value for '%s'\n", label.c_str());
+      Exit(0);
+    }
+    axb.threshold = (int)ct;
   }
-  axb.threshold = (int)ct;
+  
 }
 
 

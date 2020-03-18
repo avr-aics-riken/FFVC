@@ -34,7 +34,7 @@ void Glyph::generateVertex(const Vec3i idx, const long long pos, const int dir, 
   
   b.assign((float)idx.x-0.5, (float)idx.y-0.5, (float)idx.z-0.5);
   c = org + b * pch;
-  float r = (float)getCut9(pos, dir);
+  float r = getCut9(pos, dir);
   
   if ( X_minus == dir )
   {

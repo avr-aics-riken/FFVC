@@ -287,19 +287,19 @@ unsigned long MonitorCompo::clearMonitorCut()
           
           int flag = 0;
           
-          REAL_TYPE p_xm = getCut9(pos, X_minus);
-          REAL_TYPE p_xp = getCut9(pos, X_plus);
-          REAL_TYPE p_ym = getCut9(pos, Y_minus);
-          REAL_TYPE p_yp = getCut9(pos, Y_plus);
-          REAL_TYPE p_zm = getCut9(pos, Z_minus);
-          REAL_TYPE p_zp = getCut9(pos, Z_plus);
+          REAL_TYPE p_xm = (REAL_TYPE)getCut9(pos, X_minus);
+          REAL_TYPE p_xp = (REAL_TYPE)getCut9(pos, X_plus);
+          REAL_TYPE p_ym = (REAL_TYPE)getCut9(pos, Y_minus);
+          REAL_TYPE p_yp = (REAL_TYPE)getCut9(pos, Y_plus);
+          REAL_TYPE p_zm = (REAL_TYPE)getCut9(pos, Z_minus);
+          REAL_TYPE p_zp = (REAL_TYPE)getCut9(pos, Z_plus);
           
           int r1 = quantize9(1.0);
           
           // X-
           if ( (p_xm <= 0.5) && (qw == odr) )
           {
-            REAL_TYPE dd = 1.0 - getCut9(ct[m_w], X_plus);
+            float dd = 1.0 - (REAL_TYPE)getCut9(ct[m_w], X_plus);
             
             if ( (fabs(dd-p_xm) < ROUND_EPS) && ( qw == rw ) ) // 流体にする
             {
@@ -322,7 +322,7 @@ unsigned long MonitorCompo::clearMonitorCut()
           // X+
           if ( (p_xp <= 0.5) && (qe == odr) )
           {
-            REAL_TYPE dd = 1.0 - getCut9(ct[m_e], X_minus);
+            float dd = 1.0 - (REAL_TYPE)getCut9(ct[m_e], X_minus);
             
             if ( (fabs(dd-p_xp) < ROUND_EPS) && ( qe == re ) )
             {
@@ -343,7 +343,7 @@ unsigned long MonitorCompo::clearMonitorCut()
           // Y-
           if ( (p_ym <= 0.5) && (qs == odr) )
           {
-            REAL_TYPE dd = 1.0 - getCut9(ct[m_s], Y_plus);
+            float dd = 1.0 - (REAL_TYPE)getCut9(ct[m_s], Y_plus);
             
             if ( (fabs(dd-p_ym) < ROUND_EPS) && ( qs == rs ) )
             {
@@ -364,7 +364,7 @@ unsigned long MonitorCompo::clearMonitorCut()
           // Y+
           if ( (p_yp <= 0.5) && (qn == odr) )
           {
-            REAL_TYPE dd = 1.0 - getCut9(ct[m_n], Y_minus);
+            float dd = 1.0 - (REAL_TYPE)getCut9(ct[m_n], Y_minus);
             
             if ( (fabs(dd-p_yp) < ROUND_EPS) && ( qn == rn ) )
             {
@@ -385,7 +385,7 @@ unsigned long MonitorCompo::clearMonitorCut()
           // Z-
           if ( (p_zm <= 0.5) && (qb == odr) )
           {
-            REAL_TYPE dd = 1.0 - getCut9(ct[m_b], Z_plus);
+            float dd = 1.0 - (REAL_TYPE)getCut9(ct[m_b], Z_plus);
             
             if ( (fabs(dd-p_zm) < ROUND_EPS) && ( qb == rb ) )
             {
@@ -406,7 +406,7 @@ unsigned long MonitorCompo::clearMonitorCut()
           // Z+
           if ( (p_zp <= 0.5) && (qt == odr) )
           {
-            REAL_TYPE dd = 1.0 - getCut9(ct[m_t], Z_minus);
+            float dd = 1.0 - (REAL_TYPE)getCut9(ct[m_t], Z_minus);
             
             if ( (fabs(dd-p_zp) < ROUND_EPS) && ( qt == rt ) )
             {
@@ -1332,7 +1332,7 @@ void MonitorCompo::setPolygon(const char* labelStr,
           {
             int d = (bd >> i*5) & MASK_5;
             
-            REAL_TYPE pp = getCut9(pos, i);
+            REAL_TYPE pp = (REAL_TYPE)getCut9(pos, i);
             
             if ( (pp <= 0.5) && (d == odr) ) // セル内部に存在する
             {

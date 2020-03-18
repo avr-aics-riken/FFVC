@@ -711,6 +711,11 @@ void FFV::set_timing_label()
   set_label("Cut_Information",         PerfMonitor::CALC);
   // Cut_Section
 
+  
+  set_label("SDF_Section",             PerfMonitor::CALC, false);
+  
+  
+  
   set_label("Geometry_Section",        PerfMonitor::CALC, false);
   set_label("SeedFilling",             PerfMonitor::CALC);
   set_label("SubSampling",             PerfMonitor::CALC);

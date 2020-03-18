@@ -497,7 +497,7 @@ protected:
     Vec3r X;
 
     // 交点計算
-    REAL_TYPE t = intersectLineByCylinder(X, A, B);
+    float t = intersectLineByCylinder(X, A, B);
 
     // 9bit幅の量子化
     int r = quantize9(t);
@@ -560,7 +560,7 @@ protected:
     Vec3r X;
 
     // 交点計算
-    REAL_TYPE t = intersectLineByPlane(X, A, B, pl);
+    float t = intersectLineByPlane(X, A, B, pl);
 
     if ( t < 0.0 || 1.0 < t ) return 0;
 

@@ -3704,14 +3704,14 @@ void Geometry::registerRule(vector< vector<int> >& finalRules,
 // #################################################################
 /**
  * @brief ポリゴンと線分の交点計算
- * @param [in]   ray_o      レイの開始点
- * @param [in]   dir        レイの方向ベクトル（単位ベクトル）
+ * @param [in]   ray_o   レイの開始点
+ * @param [in]   dir       レイの方向ベクトル（単位ベクトル）
  * @param [in]   v0         ポリゴンの頂点
  * @param [in]   v1         ポリゴンの頂点
  * @param [in]   v2         ポリゴンの頂点
- * @param [out]  pRetT      交点距離
- * @param [out]  pRetU      交点情報
- * @param [out]  pRetV      交点情報
+ * @param [out]  t           交点距離
+ * @param [out]  u           交点情報
+ * @param [out]  v           交点情報
  * @retval true -> 交点あり
  * @note Tomas Möller and Ben Trumbore.
          Journal of Graphics Tools, 2(1):21--28, 1997.
@@ -3726,51 +3726,50 @@ bool Geometry::TriangleIntersect(const Vec3r ray_o,
                                  REAL_TYPE& u,
                                  REAL_TYPE& v)
 {
-  const REAL_TYPE m_eps = REAL_TYPE_EPSILON*2.0; //ROUND_EPS;
-  Vec3r tvec, qvec;
+  // 微小な定数([Möller97] での値)
+  const REAL_TYPE kEpsilon = 1.0e-6f;
 
   Vec3r e1 = v1 - v0;
   Vec3r e2 = v2 - v0;
-  Vec3r pvec = cross(dir, e2);
 
-  REAL_TYPE det = dot(e1, pvec);
+  Vec3r alpha = cross(dir, e2);
+  REAL_TYPE det = dot(e1, alpha);
 
-  if (det > m_eps)
-  {
-    tvec = ray_o - v0;
-    u = dot(tvec, pvec);
-    if (u < 0.0 || u > det) return false;
-
-    qvec = cross(tvec, e1);
-    v = dot(dir, qvec);
-    if (v < 0.0 || u + v > det) return false;
-  }
-  else if (det < -m_eps)
-  {
-    tvec = ray_o - v0;
-    u = dot(tvec, pvec);
-    if (u > 0.0 || u < det) return false;
-
-    qvec = cross(tvec, e1);
-    v = dot(dir, qvec);
-    if (v > 0.0 || u + v < det) return false;
-
-  }
-  else
+  // 三角形に対して、レイが平行に入射するような場合 det = 0 となる
+  // det が小さすぎると 1/det が大きくなりすぎて数値的に不安定になるので
+  // det ≈ 0 の場合は交差しないこととする
+  if (-kEpsilon < det && det < kEpsilon)
   {
     return false;
   }
 
-  REAL_TYPE inv_det = 1.0 / det;
+  REAL_TYPE invDet = 1.0f / det;
+  Vec3r r = ray_o - v0;
+  
+  // u が 0 <= u <= 1 を満たしているかを調べる。
+  u = dot(alpha, r) * invDet;
+  if (u < 0.0f || u > 1.0f) {
+      return false;
+  }
 
-  t = dot(e2, qvec);
+  Vec3r beta = cross(r, e1);
 
-  t *= inv_det;
-  u *= inv_det;
-  v *= inv_det;
+  // v が 0 <= v <= 1 かつ u + v <= 1 を満たすことを調べる。
+  // すなわち、v が 0 <= v <= 1 - u をみたしているかを調べればOK。
+  v = dot(dir, beta) * invDet;
+  if (v < 0.0f || u + v > 1.0f) {
+      return false;
+  }
+
+  // t が 0 <= t を満たすことを調べる。
+  t = dot(e2, beta) * invDet;
+  if (t < 0.0f) {
+      return false;
+  }
 
   return true;
 }
+
 
 
 /**
@@ -3836,7 +3835,7 @@ unsigned Geometry::updateCut(const Vec3r ray_o,
   unsigned count = 0;
 
   // 交点計算
-  REAL_TYPE t, u, v;
+  float t, u, v;
   if ( !TriangleIntersect(ray_o, d, v0, v1, v2, t, u, v) ) return 0;
 
   /* 交点 >> 必要な場合に使う
@@ -3853,7 +3852,7 @@ unsigned Geometry::updateCut(const Vec3r ray_o,
    */
 
   // 格子幅で正規化
-  REAL_TYPE tn = t / pit;
+  float tn = t / pit;
   //printf("t = %f\n", t);
 
   if ( tn < 0.0 || 1.0 < tn ) return 0;
@@ -5788,7 +5787,7 @@ void Geometry::SubSampling(int* d_mid,
   if ( svf ) delete [] svf;
   if ( smd ) delete [] smd;
 
-  //F->writeRawSPH(d_pvf, size, gd, 0, m_org, m_pit, sizeof(REAL_TYPE));
+  //F->writeRawSPH(d_pvf, size, gd, 0, m_org, m_pit, sizeof(REAL_TYPE), "field");
 
 }
 
@@ -6015,7 +6014,7 @@ void Geometry::SubSampling(int* d_mid,
   if ( svf ) delete [] svf;
   if ( smd ) delete [] smd;
 
-  //F->writeRawSPH(d_pvf, size, gd, 0, m_org, m_pit, sizeof(REAL_TYPE));
+  //F->writeRawSPH(d_pvf, size, gd, 0, m_org, m_pit, sizeof(REAL_TYPE), "field");
 
 }
 #endif // DISABLE_MPI
@@ -6457,7 +6456,847 @@ void Geometry::SubDivision(REAL_TYPE* svf,
 
 
 // #################################################################
-/**
+/*
+ * @brief ポリゴンからsdfに距離を転写し初期情報を作成
+ * @param [in,out] sdf   SDF
+ * @param [in]     PL    Polylibインスタンス
+ * @param [out]    nrm   法線
+ * @param [in]     Dsize サイズ
+ * @note nrmのSTATEビットをSDFの初期化マスクとして使う
+ */
+void Geometry::polygon2sdf(REAL_TYPE* sdf,
+                           MPIPolylib* PL,
+                           int* nrm,
+                           const int* Dsize)
+{
+  int ix, jx, kx, gd;
+
+  if ( !Dsize )
+  {
+    ix = size[0];
+    jx = size[1];
+    kx = size[2];
+    gd = guide;
+  }
+  else // ASD module用
+  {
+    ix = Dsize[0];
+    jx = Dsize[1];
+    kx = Dsize[2];
+    gd = 1;
+  }
+
+  // SDFの初期値 >> FLT_MAX
+  size_t size_n_cell = (ix+2*gd) * (jx+2*gd) * (kx+2*gd);
+
+#pragma omp parallel for
+  for (size_t i=0; i<size_n_cell; i++) {
+    sdf[i] = FLT_MAX;
+  }
+  
+  // PWN format出力
+#if 0 // 法線チェック
+  vector<Vec3r> xyz;
+  vector<Vec3r> nv;
+#endif
+  
+  // 有次元空間でサーチ
+  Vec3r bx_min;
+  Vec3r bx_max;
+  Vec3r org(originD);
+  Vec3r pch(pitchD);
+  Vec3r t3;
+  t3.assign((REAL_TYPE)size[0]*pch.x, (REAL_TYPE)size[1]*pch.y, (REAL_TYPE)size[2]*pch.z);
+  
+  // サブドメインの2層外側（ガイドセル分）までをサーチ対象とする
+  bx_min = org - pch - pch;
+  bx_max = org + t3 + pch + pch;
+  
+  // 無次元距離の基準 格子幅
+  REAL_TYPE dh = pitch[0];
+  
+  // SDFの幅
+  REAL_TYPE bnd = 6.0;
+
+  // ポリゴン情報へのアクセス
+  vector<PolygonGroup*>* pg_roots = PL->get_root_groups();
+  vector<PolygonGroup*>::iterator it;
+
+  int odr = 0;
+  unsigned count = 0;
+
+  // ポリゴングループのループ
+  for (it = pg_roots->begin(); it != pg_roots->end(); it++)
+  {
+    string m_pg = (*it)->get_name();     // グループラベル
+    string m_bc = (*it)->get_type();     // 境界条件ラベル
+    int ntria = (*it)->get_group_num_tria();  // ローカルのポリゴン数
+
+    // ポリゴンが存在しなければ，スキップ
+    if ( ntria == 0 ) continue;
+
+    // Monitor属性のポリゴンはスキップ
+    if ( !strcasecmp(m_bc.c_str(), "monitor")) continue;
+    
+    vector<Triangle*>* trias = PL->search_polygons(m_pg, bx_min, bx_max, false); // false; ポリゴンが一部でもかかる場合
+            
+    // ポリゴンがなければ，スキップ
+    if ( trias->size() == 0 ) continue;
+    
+    
+    vector<Triangle*>::iterator it2;
+                
+    // ポリゴングループに含まれるパッチへのアクセス
+    for (it2 = trias->begin(); it2 != trias->end(); it2++)
+    {
+      Vertex** tmp = (*it2)->get_vertex();
+      Vec3r p[3];
+      p[0] = *(tmp[0]);
+      p[1] = *(tmp[1]);
+      p[2] = *(tmp[2]);
+        
+      // 対象パッチ一つのb-box
+      Vec3r bbox_min(FLT_MAX);
+      Vec3r bbox_max(-FLT_MAX);
+      
+      for (int i=0; i<3; i++) get_min(bbox_min, p[i]);
+      for (int i=0; i<3; i++) get_max(bbox_max, p[i]);
+      
+      // SDFの初期値を与える格子点をポリゴンb-boxから片側5点分に設定
+      Vec3r s_min(bbox_min.x-pch.x*bnd,
+                  bbox_min.y-pch.y*bnd,
+                  bbox_min.z-pch.z*bnd);
+      Vec3r s_max(bbox_max.x+pch.x*bnd,
+                  bbox_max.y+pch.y*bnd,
+                  bbox_max.z+pch.z*bnd);
+      
+      // インデクス範囲（セルセンタ位置）
+      Vec3r tt;
+      tt = (s_min-org)/pch;
+      Vec3i ids( (int)(tt.x+0.5), (int)(tt.y+0.5), (int)(tt.z+0.5) );
+      
+      tt = (s_max-org)/pch;
+      Vec3i ide( (int)(tt.x+0.5)+1, (int)(tt.y+0.5)+1, (int)(tt.z+0.5)+1 );
+      
+      //printf("%3d %3d %3d : %3d %3d %3d\n", ids.x, ids.y, ids.z, ide.x, ide.y, ide.z);
+      
+      // 範囲チェック - 仮想セル2層
+      if (ids.x < -1) ids.x = -1;
+      if (ids.y < -1) ids.y = -1;
+      if (ids.z < -1) ids.z = -1;
+      if (ide.x > ix+2) ide.x = ix+2;
+      if (ide.y > jx+2) ide.y = jx+2;
+      if (ide.z > kx+2) ide.z = kx+2;
+      
+      Vec3r e1 = p[1] - p[0];
+      Vec3r e2 = p[2] - p[0];
+      Vec3r w = cross(e1, e2);
+      
+      // 対象範囲をテスト
+      for (int k=ids.z; k<=ide.z; k++) {
+      for (int j=ids.y; j<=ide.y; j++) {
+      for (int i=ids.x; i<=ide.x; i++) {
+        
+        // d ベクトルを求める
+        Vec3r oi( (REAL_TYPE)i-0.5, (REAL_TYPE)j-0.5, (REAL_TYPE)k-0.5 );
+        Vec3r o( org + pch * oi );
+        Vec3r s = p[0] - o;
+        // 本来はcos(\theta)の符号で判断だが，内積の符号で代用 / ( s.length() * w.length() );
+        Vec3r d = (dot(s, w) < 0) ? -w : w;
+        d.normalize();
+        
+        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+        
+        // 交点判定 qは無次元距離
+        REAL_TYPE t, u, v, q;
+        
+        if ( TriangleIntersect(o, d, p[0], p[1], p[2], t, u, v) )
+        {
+          // 三角形内部
+          q = t / dh;
+          if (sdf[m] > q)
+          {
+            sdf[m] = q;
+            // ポリゴンから流体側への法線
+            setNrm9(nrm[m], -d);
+#if 0 // 法線チェック
+            nv.push_back(-d);
+            xyz.push_back(o);
+#endif
+          }
+        }
+        else
+        {
+          // 三角形外部
+          int c;
+          REAL_TYPE ds[3];
+          ds[0] = distance(o, p[0]);
+          ds[1] = distance(o, p[1]);
+          ds[2] = distance(o, p[2]);
+          c = (ds[1] < ds[2]) ? 1 : 2;
+          if (ds[0] < ds[c]) c=0;
+          t = ds[c];
+          q = t / dh;
+          if (sdf[m] > q)
+          {
+            sdf[m] = q;
+            d = o-p[c];
+            d.normalize();
+            setNrm9(nrm[m], d);
+#if 0 // 法線チェック
+            nv.push_back(d);
+            xyz.push_back(o);
+#endif
+          }
+        }
+        
+        // SDFを記録したセルのSTATE_BITを立てる
+        nrm[m] = onBit (nrm[m], STATE_BIT);
+      }}}
+
+    } // it2
+
+    //後始末
+    delete trias;
+
+  } // it
+
+  delete pg_roots;
+
+  
+  if ( numProc > 1 )
+  {
+    // 最小値を通信するように考える
+    if ( paraMngr->BndCommS3D(sdf, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
+    
+    // こちらは普通の同期
+    if ( paraMngr->BndCommS3D(nrm, ix, jx, kx, gd, gd, procGrp) != CPM_SUCCESS ) Exit(0);
+  }
+  
+  
+  // 5*dhの幅でトリム
+  REAL_TYPE delta = 5.0 * dh;
+  
+#pragma omp parallel for
+  for (int k=1; k<=kx; k++) {
+  for (int j=1; j<=jx; j++) {
+  for (int i=1; i<=ix; i++) {
+    size_t mp = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
+    if (sdf[mp] > delta)
+    {
+      sdf[mp] = FLT_MAX;
+      nrm[mp] = offBit (nrm[mp], STATE_BIT);
+    }
+  }}}
+  
+  
+  
+  
+#if 0 // 法線チェック
+    FILE* fp = NULL;
+    if ( !(fp=fopen("normal.pwn", "w")) )
+    {
+      stamped_printf("\tSorry, can't open 'normal.pwn' file. Write failed.\n");
+      exit(0);
+    }
+  
+    fprintf(fp,"%d\n", xyz.size());
+    for (vector<Vec3r>::iterator it=xyz.begin(); it != xyz.end(); ++it )
+    {
+      fprintf(fp,"%f %f %f\n", (*it).x, (*it).y, (*it).z);
+    }
+    for (vector<Vec3r>::iterator it=nv.begin(); it != nv.end(); ++it )
+    {
+      fprintf(fp,"%f %f %f\n", (*it).x, (*it).y, (*it).z);
+    }
+
+  if ( fp ) fclose(fp);
+#endif
+
+}
+
+
+// #################################################################
+/*
+ * @brief レイヤーmarchingによるSDFの作成
+ * @param [in,out] fn   SDF
+ * @param [in]     fo   ワーク
+ * @param [in]     nrm  法線
+ * @param [in]     wk   ワーク
+ * @param [in]     fv   ワーク
+ */
+bool Geometry::marchingSDF(REAL_TYPE* fn, REAL_TYPE* fo, int* nrm, int* wk, REAL_TYPE* fv)
+{
+  int num_layer = 0;
+  
+  printf("SDF marching\n\n");
+  
+  
+  // 1. フロントをサーチし，フロントレイヤー番号を記録
+  
+  if ( -1 == (num_layer = generateLayer(wk, nrm)) ) return false;
+  
+  printf("Number of layers = %d\n\n", num_layer);
+  
+  
+  // 2. ポリゴンから直接法線を計算していない部分について，法線を計算
+  
+  // fo[]にスムージング前の初期値を入れる
+  setLayerInit(fn, fo, nrm, wk);
+  
+  // 非マスク部分のレイヤー場を平滑化
+  printf("Layer smoothing\n");
+  smoothingScalar(nrm, fo);
+  
+  // 平滑化したレイヤー場から法線を計算（非マスク部分）
+  estimateNV(nrm, fo);
+  
+  // 非マスク部の法線を平滑化
+  smoothingNV(nrm, fv);
+  
+  // 3. フロントのレイヤー順に距離場を計算
+  
+  tracingSDF(fn, nrm, wk, num_layer);
+
+
+
+  return true;
+}
+
+
+// #################################################################
+/*
+ * @brief レイヤーの初期値
+ * @param [in,out] fn   SDF
+ * @param [in]     fo   ワーク
+ * @param [in]     nrm  法線
+ * @param [in]     wk   ワーク
+ */
+void Geometry::setLayerInit(REAL_TYPE* fn, REAL_TYPE* fo, const int* nrm, const int* wk)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  REAL_TYPE h = pitch[0];
+  size_t size_n_cell = (ix+2*gd) * (jx+2*gd) * (kx+2*gd);
+  
+  // 初期化されていないセルをゼロにする
+#pragma omp parallel for
+  for (size_t i=0; i<size_n_cell; i++) {
+    if ( !TEST_BIT(nrm[i], STATE_BIT) ) fn[i] = 0.0;
+  }
+  
+  // floatにコピー
+#pragma omp parallel for
+  for (size_t i=0; i<size_n_cell; i++) {
+    fo[i] = (REAL_TYPE)wk[i]*h;
+  }
+
+}
+
+
+
+// #################################################################
+/*
+ * @brief 法線のスムージング
+ * @param [in]     nrm  法線
+ * @param [in,out] fv   ワーク
+ */
+void Geometry::smoothingNV(int* nrm, REAL_TYPE* fv)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  size_t sn = (ix+2*gd) * (jx+2*gd) * (kx+2*gd);
+  
+  // fv[]に法線をコピー
+  getNVfromIdx(nrm, fv);
+  
+  // nv.x
+  printf("NV.x smoothing\n");
+  smoothingScalar(nrm, &fv[0]);
+  
+  // nv.y
+  printf("NV.y smoothing\n");
+  smoothingScalar(nrm, &fv[sn]);
+  
+  // nv.z
+  printf("NV.z smoothing\n");
+  smoothingScalar(nrm, &fv[sn*2]);
+  
+  
+  // nrmへのストア
+      
+#pragma omp parallel for
+  for (int k=1; k<=kx; k++) {
+  for (int j=1; j<=jx; j++) {
+  for (int i=1; i<=ix; i++) {
+    size_t mp = _F_IDX_S3D(i, j, k,    ix, jx, kx, gd);
+    size_t m0 = _F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd);
+    size_t m1 = _F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd);
+    size_t m2 = _F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd);
+      
+    Vec3r nv(fv[m0], fv[m1], fv[m2]);
+    nv.normalize();
+    setNrm9(nrm[mp], nv);
+  }}}
+}
+
+
+// #################################################################
+/*
+ * @brief レイヤー場のスムージング
+ * @param [in]     nrm  法線
+ * @param [in,out] fo   ワーク
+ */
+void Geometry::smoothingScalar(int* nrm, REAL_TYPE* fo)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  int Itrmax = 500;
+  const REAL_TYPE eps = 1.0e-6;
+  REAL_TYPE tr = 0.0;
+  
+  // トレース
+#pragma omp parallel for reduction(+:tr)
+  for (int k=1; k<=kx; k++) {
+  for (int j=1; j<=jx; j++) {
+  for (int i=1; i<=ix; i++) {
+    size_t mp = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
+    REAL_TYPE b = GET_SHIFT_F(nrm[mp], STATE_BIT);
+    
+    tr += fabs(fo[mp])*(1.0-b);
+  }}}
+  
+  
+  //printf(" Itr.     Res.\n");
+  
+  int l;
+  REAL_TYPE res;
+  
+  for (l=1; l<=Itrmax; l++)
+  {
+    res = 0.0;
+
+    // BC
+#pragma omp parallel for
+    for (int j=1; j<=jx; j++) {
+    for (int i=1; i<=ix; i++) {
+      size_t m1 = _F_IDX_S3D(i  , j  , 1   , ix, jx, kx, gd);
+      size_t m2 = _F_IDX_S3D(i  , j  , kx  , ix, jx, kx, gd);
+      size_t mt = _F_IDX_S3D(i  , j  , kx+1, ix, jx, kx, gd);
+      size_t mb = _F_IDX_S3D(i  , j  , 0   , ix, jx, kx, gd);
+      fo[mt] = fo[m2];
+      fo[mb] = fo[m1];
+    }}
+         
+#pragma omp parallel for
+    for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+      size_t m1 = _F_IDX_S3D(1   , j  , k  , ix, jx, kx, gd);
+      size_t m2 = _F_IDX_S3D(ix  , j  , k  , ix, jx, kx, gd);
+      size_t me = _F_IDX_S3D(ix+1, j  , k  , ix, jx, kx, gd);
+      size_t mw = _F_IDX_S3D(0   , j  , k  , ix, jx, kx, gd);
+      fo[me] = fo[m2];
+      fo[mw] = fo[m1];
+    }}
+          
+#pragma omp parallel for
+    for (int k=1; k<=kx; k++) {
+    for (int i=1; i<=ix; i++) {
+      size_t m1 = _F_IDX_S3D(i  , 1   , k  , ix, jx, kx, gd);
+      size_t m2 = _F_IDX_S3D(i  , jx  , k  , ix, jx, kx, gd);
+      size_t mn = _F_IDX_S3D(i  , jx+1, k  , ix, jx, kx, gd);
+      size_t ms = _F_IDX_S3D(i  , 0   , k  , ix, jx, kx, gd);
+      fo[mn] = fo[m2];
+      fo[ms] = fo[m1];
+    }}
+    
+#pragma omp parallel for reduction(+:res)
+    for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+    for (int i=1; i<=ix; i++) {
+      size_t mp = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
+      size_t me = _F_IDX_S3D(i+1, j  , k  , ix, jx, kx, gd);
+      size_t mw = _F_IDX_S3D(i-1, j  , k  , ix, jx, kx, gd);
+      size_t mn = _F_IDX_S3D(i  , j+1, k  , ix, jx, kx, gd);
+      size_t ms = _F_IDX_S3D(i  , j-1, k  , ix, jx, kx, gd);
+      size_t mt = _F_IDX_S3D(i  , j  , k+1, ix, jx, kx, gd);
+      size_t mb = _F_IDX_S3D(i  , j  , k-1, ix, jx, kx, gd);
+      
+      REAL_TYPE b = GET_SHIFT_F(nrm[mp], STATE_BIT);
+      REAL_TYPE s = (fo[me]+fo[mw]+fo[mn]
+                    +fo[ms]+fo[mt]+fo[mb]) / 6.0;
+      REAL_TYPE ds = (s - fo[mp])*(1.0-b);
+      fo[mp] += ds;
+      res += ds*ds;
+    }}}
+    
+    REAL_TYPE rr = sqrt(res)/tr;
+    //printf("%5d %e\n", l, rr);
+    if ( rr < eps )
+    {
+      break;
+    }
+  } // iteration loop
+  
+  printf("\tIteration %4d : res=%e\n", l, sqrt(res)/tr);
+  
+}
+
+
+
+// #################################################################
+/*
+ * @brief レイヤーの生成
+ * @param [in,out]   wk   ワーク
+ * @param [in]       nrm  法線
+ */
+int Geometry::generateLayer(int* wk, const int* nrm)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  int lx = std::max( ix, std::max(jx, kx))*5;
+  int q = 0;
+  size_t size_n_cell = (ix+2*gd) * (jx+2*gd) * (kx+2*gd);
+  
+  // -1で初期化
+#pragma omp parallel for
+  for (size_t i=0; i<size_n_cell; i++) {
+    wk[i] = -1;
+  }
+  
+  
+  // ポリゴンから法線を直接転写した点は0を設定
+#pragma omp parallel for
+  for (int k=1; k<=kx; k++) {
+  for (int j=1; j<=jx; j++) {
+  for (int i=1; i<=ix; i++) {
+    size_t mp = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+    if ( TEST_BIT(nrm[mp], STATE_BIT) ) wk[mp] = 0;
+  }}}
+  
+  
+  
+  // フロントを追跡し，レイヤーを同定
+  for (int layer=1; layer<=lx; layer++)
+  {
+    int a = 0;
+    
+#pragma omp parallel for reduction(+:q) reduction(+:a)
+    for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+    for (int i=1; i<=ix; i++) {
+      size_t mp = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
+      size_t me = _F_IDX_S3D(i+1, j  , k  , ix, jx, kx, gd);
+      size_t mw = _F_IDX_S3D(i-1, j  , k  , ix, jx, kx, gd);
+      size_t mn = _F_IDX_S3D(i  , j+1, k  , ix, jx, kx, gd);
+      size_t ms = _F_IDX_S3D(i  , j-1, k  , ix, jx, kx, gd);
+      size_t mt = _F_IDX_S3D(i  , j  , k+1, ix, jx, kx, gd);
+      size_t mb = _F_IDX_S3D(i  , j  , k-1, ix, jx, kx, gd);
+      
+      int c = 0;
+      int tgt = layer-1;
+      
+      if ( wk[mp] == -1 )
+      {
+        if ( wk[me] == tgt ) {
+          c++;
+        }
+        if ( wk[mw] == tgt ) {
+          c++;
+        }
+        if ( wk[mn] == tgt ) {
+          c++;
+        }
+        if ( wk[ms] == tgt ) {
+          c++;
+        }
+        if ( wk[mt] == tgt ) {
+          c++;
+        }
+        if ( wk[mb] == tgt ) {
+          c++;
+        }
+        
+        if (c>0) {
+          wk[mp] = layer;
+          q++;
+        }
+        else {
+          a++;
+        }
+      }
+
+    }}}
+    
+    if (a == ix*jx*kx) break;
+  } // layer
+  
+  // 最大レイヤー数
+  int num_layer = 0;
+  
+  for (int k=1; k<=kx; k++) {
+  for (int j=1; j<=jx; j++) {
+  for (int i=1; i<=ix; i++) {
+    size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+    if (wk[m] > num_layer) num_layer = wk[m];
+  }}}
+  
+  if (num_layer > lx) {
+    stamped_printf("Number of layer is greater than IterationMax\n");
+    return -1;
+  }
+  
+  // check
+  for (int k=1; k<=kx; k++) {
+  for (int j=1; j<=jx; j++) {
+  for (int i=1; i<=ix; i++) {
+    size_t mp = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
+    if (wk[mp] == -1)
+    {
+      stamped_printf("still unprocessed point (%d %d %d)\n", i,j,k);
+      return -1;
+    }
+  }}}
+  
+  return num_layer;
+}
+
+
+// #################################################################
+/*
+ * @brief 法線の推定
+ * @param [in,out] nrm  法線
+ * @param [in]     fo   レイヤー
+ */
+void Geometry::estimateNV(int* nrm, const REAL_TYPE* fo)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  const REAL_TYPE eps = 1.0e-5;
+  
+#pragma omp parallel for
+  for (int k=1; k<=kx; k++) {
+  for (int j=1; j<=jx; j++) {
+  for (int i=1; i<=ix; i++) {
+    size_t mp = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
+    size_t me = _F_IDX_S3D(i+1, j  , k  , ix, jx, kx, gd);
+    size_t mw = _F_IDX_S3D(i-1, j  , k  , ix, jx, kx, gd);
+    size_t mn = _F_IDX_S3D(i  , j+1, k  , ix, jx, kx, gd);
+    size_t ms = _F_IDX_S3D(i  , j-1, k  , ix, jx, kx, gd);
+    size_t mt = _F_IDX_S3D(i  , j  , k+1, ix, jx, kx, gd);
+    size_t mb = _F_IDX_S3D(i  , j  , k-1, ix, jx, kx, gd);
+
+    // 非マスク部分のみ
+    if ( 0 == BIT_SHIFT(nrm[mp], STATE_BIT) )
+    {
+      REAL_TYPE px = fo[me] - fo[mw];
+      REAL_TYPE py = fo[mn] - fo[ms];
+      REAL_TYPE pz = fo[mt] - fo[mb];
+      REAL_TYPE u  = px / (fabs(px) + eps);
+      REAL_TYPE v  = py / (fabs(py) + eps);
+      REAL_TYPE w  = pz / (fabs(pz) + eps);
+
+      Vec3r nv(u, v, w);
+      nv.normalize();
+      setNrm9(nrm[mp], nv);
+    }
+
+  }}}
+
+}
+
+
+// #################################################################
+/*
+ * @brief SDFのレイヤー方向へのマーチング
+ * @param [in,out] fn     SDF
+ * @param [in]     nrm    法線
+ * @param [in]     wk     レイヤー配列
+ * @param [in]     nLayer レイヤー数
+ * @note 最大10回の積分を想定
+ *       |u|~1なのでu.x~1, u.x*dh がほぼ1格子幅分の移動量
+ *       数回積分する程度
+ */
+void Geometry::tracingSDF(REAL_TYPE* fn, int* nrm, const int* wk, const int nLayer)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  REAL_TYPE dt0 = 0.5;
+
+  // 計算空間座標で考える
+  printf("Tracing distance\n");
+  int q=0;
+    
+  for (int l=1; l<=nLayer; l++)
+  {
+    q=0;
+#pragma omp parallel for reduction(+:q)
+    for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+    for (int i=1; i<=ix; i++) {
+      size_t mp = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+            
+      if (wk[mp] == l )
+      {
+        Vec3r nv = getNrm9( nrm[mp] );
+        nv.normalize();
+        
+        Vec3r o( (REAL_TYPE)i, (REAL_TYPE)j, (REAL_TYPE)k );
+
+        REAL_TYPE d;
+        bool flag;
+        int itr;
+        
+        // -nv方向に10回テスト
+        for (itr=1; itr<=30; itr++)
+        {
+          flag = false;
+          REAL_TYPE dt = (REAL_TYPE)itr * dt0;
+          if ( (flag=getDistance(d, o, -nv, nrm, fn, dt, itr)) ) {
+            fn[mp] = d;
+            nrm[mp] = onBit(nrm[mp], STATE_BIT);
+            break;
+          }
+        }
+        if ( !flag ) q++;
+      }
+    }}}
+    
+    if ( q>0 ) {
+      stamped_printf("A ray does not reach a full-cube\n");
+      printf("Consider to change Itr.\n");
+      exit(-1);
+    }
+  } // nLayer
+
+}
+
+// #################################################################
+/*
+ * @brief 開始座標点oからn方向へ移動した点のSDF値とその距離の和
+ * @param [out] ds  距離
+ * @param [in]  o   開始座標点
+ * @param [in]  n   法線
+ * @param [in]  nrm ビット配列
+ * @param [in]  f   SDF
+ * @param [in]  dt  積分幅
+ */
+bool Geometry::getDistance(REAL_TYPE& ds,
+                           const Vec3r o,
+                           const Vec3r n,
+                           const int* nrm,
+                           const REAL_TYPE* f,
+                           const REAL_TYPE dt,
+                           const int c)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  REAL_TYPE dh = pitch[0];
+  
+  Vec3r d(n.x*dt, n.y*dt, n.z*dt);
+  Vec3r p = o + d;
+  
+  // 点pが属するセルセンタインデクスの基点
+  int i = (int)(p.x);
+  int j = (int)(p.y);
+  int k = (int)(p.z);
+  
+  REAL_TYPE xgi = o.x - (REAL_TYPE)i + d.x;
+  REAL_TYPE eta = o.y - (REAL_TYPE)j + d.y;
+  REAL_TYPE zta = o.z - (REAL_TYPE)k + d.z;
+  //printf("%2d : %3d %3d %3d %f %f %f\n", c,i,j,k,d.x,d.y,d.z);
+  
+  size_t m0 = _F_IDX_S3D(i  , j  , k  , ix, jx, kx, gd);
+  size_t m1 = _F_IDX_S3D(i+1, j  , k  , ix, jx, kx, gd);
+  size_t m2 = _F_IDX_S3D(i  , j+1, k  , ix, jx, kx, gd);
+  size_t m3 = _F_IDX_S3D(i+1, j+1, k  , ix, jx, kx, gd);
+  size_t m4 = _F_IDX_S3D(i  , j  , k+1, ix, jx, kx, gd);
+  size_t m5 = _F_IDX_S3D(i+1, j  , k+1, ix, jx, kx, gd);
+  size_t m6 = _F_IDX_S3D(i  , j+1, k+1, ix, jx, kx, gd);
+  size_t m7 = _F_IDX_S3D(i+1, j+1, k+1, ix, jx, kx, gd);
+  
+  REAL_TYPE s;
+  
+  // 全ての点のSDF値がポリゴンから直接計算されている
+  if (  (TEST_BIT(nrm[m0], STATE_BIT)
+      && TEST_BIT(nrm[m1], STATE_BIT)
+      && TEST_BIT(nrm[m2], STATE_BIT)
+      && TEST_BIT(nrm[m3], STATE_BIT)
+      && TEST_BIT(nrm[m4], STATE_BIT)
+      && TEST_BIT(nrm[m5], STATE_BIT)
+      && TEST_BIT(nrm[m6], STATE_BIT)
+      && TEST_BIT(nrm[m7], STATE_BIT)) )
+  {
+    s = (1.0-xgi)*(1.0-eta)*(1.0-zta)* f[m0]
+      +      xgi *(1.0-eta)*(1.0-zta)* f[m1]
+      + (1.0-xgi)*     eta *(1.0-zta)* f[m2]
+      +      xgi *     eta *(1.0-zta)* f[m3]
+      + (1.0-xgi)*(1.0-eta)*     zta * f[m4]
+      +      xgi *(1.0-eta)*     zta * f[m5]
+      + (1.0-xgi)*     eta *     zta * f[m6]
+      +      xgi *     eta *     zta * f[m7];
+    ds = s+d.length()*dh;
+    return true;
+  }
+  
+  return false;
+}
+
+
+
+// #################################################################
+/*
+ * @brief 法線の推定
+ * @param [in]     nrm  法線
+ * @param [out]    f    ワーク
+ */
+void Geometry::getNVfromIdx(const int* nrm, REAL_TYPE* f)
+{
+  int ix = size[0];
+  int jx = size[1];
+  int kx = size[2];
+  int gd = guide;
+  
+  for (int l=0; l<3; l++) {
+    
+#pragma omp parallel for
+    for (int k=1; k<=kx; k++) {
+    for (int j=1; j<=jx; j++) {
+    for (int i=1; i<=ix; i++) {
+      size_t mp = _F_IDX_S3D(i, j, k,    ix, jx, kx, gd);
+      size_t m0 = _F_IDX_V3D(i, j, k, 0, ix, jx, kx, gd);
+      size_t m1 = _F_IDX_V3D(i, j, k, 1, ix, jx, kx, gd);
+      size_t m2 = _F_IDX_V3D(i, j, k, 2, ix, jx, kx, gd);
+      
+      Vec3r nv = getNrm9(nrm[mp]);
+      nv.normalize();
+      f[m0] = nv.x;
+      f[m1] = nv.y;
+      f[m2] = nv.z;
+    }}}
+  }
+  
+  return;
+}
+
+
+// #################################################################
+/*
  * @brief 交点が定義点にある場合にそのポリゴンの媒質IDでフィルし、反対側を修正する
  * @param [in,out] bcd       BCindex B
  * @param [in,out] bid       境界ID（5ビット幅x6方向）

@@ -579,7 +579,91 @@ public:
     mx.z = (mx.z > p.z) ? mx.z : p.z;
   }
 
+  /* @brief nrmから指定方向の量子化値をとりだす
+   * @param [in] n    nrm
+   * @note 符号はマイナスの場合，符号ビットが立つ
+   */
+  inline Vec3r getNrm9 (const int n)
+  {
+    Vec3r v;
+    
+    v.x = (REAL_TYPE)getQuantized9(  n        & MASK_9);
+    v.y = (REAL_TYPE)getQuantized9( (n >> 10) & MASK_9);
+    v.z = (REAL_TYPE)getQuantized9( (n >> 20) & MASK_9);
+    if (TEST_BIT(n, 9)) v.x = -v.x;
+    if (TEST_BIT(n,19)) v.y = -v.y;
+    if (TEST_BIT(n,29)) v.z = -v.z;
+    
+    return v;
+  }
 
+
+  /*
+   * @brief 9bit幅の値の設定
+   * @param [in,out] b   int 変数
+   * @param [in]     v   法線の値
+   */
+  inline void setNrm9 (int& b, const Vec3r v)
+  {
+    b &= (~(MASK_30) ); // 対象30bitをゼロにする
+    b |= ( quantize9( fabs(v.x) ) <<  0);          // 書き込む
+    b |= ( quantize9( fabs(v.y) ) << 10);
+    b |= ( quantize9( fabs(v.z) ) << 20);
+    
+    // 符号 マイナスのときに該当ビットを立てる
+    if (v.x < 0.0)  b |= (0x1<<9);
+    if (v.y < 0.0)  b |= (0x1<<19);
+    if (v.z < 0.0)  b |= (0x1<<29);
+  }
+  
+  /*
+   * @brief 法線のコピー
+   * @param [out] dst   コピー先
+   * @param [in]  src   コピー元
+   */
+  inline void cpyNrm9 (int& dst, const int src)
+  {
+    dst &= (~(MASK_30) ); // 対象30bitをゼロにする
+    int s = src & MASK_30;
+    dst |= s;          // 書き込む
+  }
+  
+  
+  
+  // SDF
+  void polygon2sdf(REAL_TYPE* sdf,
+                   MPIPolylib* PL,
+                   int* nrm,
+                   const int* Dsize=NULL);
+
+  bool marchingSDF(REAL_TYPE* fn, REAL_TYPE* fo, int* nrm, int* wk, REAL_TYPE* fv);
+  
+  void estimateNV(int* nrm, const REAL_TYPE* fo);
+  
+  void smoothingNV(int* nrm, REAL_TYPE* fv);
+  
+  void tracingSDF(REAL_TYPE* fn,
+                  int* nrm,
+                  const int* wk,
+                  const int nLayer);
+  
+  void getNVfromIdx(const int* nrm, REAL_TYPE* f);
+  
+  void setLayerInit(REAL_TYPE* fn, REAL_TYPE* fo, const int* nrm, const int* wk);
+  
+  void smoothingScalar(int* nrm, REAL_TYPE* fo);
+  
+  int generateLayer(int* wk, const int* nrm);
+  
+  bool getDistance(REAL_TYPE& ds,
+                   const Vec3r o,
+                   const Vec3r n,
+                   const int* nrm,
+                   const REAL_TYPE* f,
+                   const REAL_TYPE dt,
+                   const int c);
+  
+  
   // 交点計算を行い、量子化
 #ifndef DISABLE_MPI
   void quantizeCut(long long* cut,
@@ -596,6 +680,7 @@ public:
                    PolygonProperty* PG,
                    const int* Dsize=NULL);
 #endif
+  
 
   // ポリゴンの水密化
 #ifndef DISABLE_MPI

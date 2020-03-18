@@ -16,7 +16,7 @@
 //
 //##################################################################################
 
-/**
+/*
  * @file   FB_Define.h
  * @brief  FlowBase Definition Header
  * @author aics
@@ -31,6 +31,8 @@
 
 #define SINGLE_EPSILON 1.19e-7
 #define DOUBLE_EPSILON 2.22e-16
+
+#define DELTA_QT (1.0/511.0)
 
 /** 実数型の指定
  * - デフォルトでは、REAL_TYPE=float
@@ -115,6 +117,7 @@
 
 
 // マスクのビット幅
+#define MASK_30    0x3fffffff // 30 bit幅
 #define MASK_10    0x3ff // 10 bit幅
 #define MASK_9     0x1ff // 9 bit幅
 #define MASK_8     0xff  // 8 bit幅
@@ -179,32 +182,40 @@
   .   |
   .
   .   |
- 33   + Y_plus
+ 33   + Y_plus                 nrm[]
  32   +
-  .   |
-  .
-  .   |
- 24   + Y_minus
- 23   +
-  .   |
-  .
-  .   |
- 15   + X_plus
- 14   +
- 13   |
- 12   |
- 11   |
- 10   |
-  9   |
-  8   |
-  7   |
-  6   + X_minus => TOP_CUT
-  5   +          Z_plus
-  4   |          Z_minus
-  3   | Ens code Y_plus
-  2   |          Y_minus
-  1   |          X_plus
-  0   +          X_minus
+ 31   |                        +
+ 30   |                        | Initialized (STATE_BIT)
+ 29   |                        + Z_nrm_Sign
+ 28   |                        |
+ 27   |                        |
+ 26   |                        |
+ 25   |                        |
+ 24   + Y_minus                |
+ 23   +                        |
+ 22   |                        |
+ 21   |                        |
+ 20   |                        + Z_nrm
+ 19   |                        + Y_nrm_Sign
+ 18   |                        |
+ 17   |                        |
+ 16   |                        |
+ 15   + X_plus                 |
+ 14   +                        |
+ 13   |                        |
+ 12   |                        |
+ 11   |                        |
+ 10   |                        + Y_nrm
+  9   |                        + X_nrm_Sign
+  8   |                        |
+  7   |                        |
+  6   + X_minus => TOP_CUT     |
+  5   +          Z_plus        |
+  4   |          Z_minus       |
+  3   | Ens code Y_plus        |
+  2   |          Y_minus       |
+  1   |          X_plus        |
+  0   +          X_minus       + X_nrm
 
  */
 
@@ -686,30 +697,17 @@ inline int onBit (int idx, const int shift)
 /*
  * @brief 9bit幅の量子化
  * @param [in]  a  入力数値
- * @note -1/(2*511) < a < 1/(2*511)のとき、s=0
- *       a= 1.0 --> s=511
- *       0.0 <= a <= 1.0 を想定
  */
-inline int quantize9(REAL_TYPE a)
+inline int quantize9(float a)
 {
-  int s;
-  REAL_TYPE x = a * (REAL_TYPE)QT_9;
-
-  if ( x > 0.0 )
-  {
-    s = (int)floor(x + 0.5);
-  }
-  else
-  {
-    s = (int)(-1.0 * floor(fabs(x) + 0.5));
-  }
-
-  if (s<0 || QT_9<s)
-  {
-    printf("quantize error : out of range %f > %d\n", a, s);
-  }
+  int s = (int)((a + 0.5*DELTA_QT) / DELTA_QT);
 
   return s;
+}
+
+inline float getQuantized9(const int d)
+{
+  return (float)d*DELTA_QT;
 }
 
 
@@ -735,6 +733,7 @@ inline void setBit5 (int& b, const int q, const int dir)
   b &= (~(MASK_5 << (dir*5)) ); // 対象5bitをゼロにする
   b |= (q << (dir*5));          // 書き込む
 }
+
 
 
 /*
@@ -813,10 +812,10 @@ inline int getBit9 (const long long c, const int dir)
  * @param [in] c    cut index
  * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
  */
-inline REAL_TYPE getCut9 (const long long c, const int dir)
+inline float getCut9 (const long long c, const int dir)
 {
   long long a = MASK_9;
-  return (REAL_TYPE)( ((c >> TOP_CUT) >> dir*9) & a ) / (REAL_TYPE)QT_9;
+  return (float)( ((c >> TOP_CUT) >> dir*9) & a ) / (float)QT_9;
 }
 
 

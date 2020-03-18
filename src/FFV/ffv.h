@@ -444,6 +444,9 @@ private:
   void SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp);
 
 	
+  // SDFの作成
+  bool SM_genSDF(FILE* fp);
+  
 	// Permormance Monitorのプログレス出力間隔（秒）
 	void getPMInterval(TextParser* tpCntl);
 

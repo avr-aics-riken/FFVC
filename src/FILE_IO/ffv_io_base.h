@@ -416,7 +416,7 @@ public:
   bool writePolylibFile(CompoList* cmp);
   
   
-  /**
+  /*
    * @brief sphファイルの書き出し（内部領域のみ）
    * @param [in] vf               スカラデータ
    * @param [in] sz               配列サイズ
@@ -425,15 +425,20 @@ public:
    * @param [in] org              基点
    * @param [in] ddx              ピッチ
    * @param [in] m_ModePrecision  浮動小数点の精度
+   * @param [in] fn               ファイル名
+   * @param [in] cflag            セルセンター出力時 true
    * @note 標記上，long 対応になっているが，ファイルフォーマットとの対応を確認のこと
    */
   void writeRawSPH(const REAL_TYPE *vf,
                    const int* sz,
                    const int gc,
                    const int gc_out,
+                   const int svType,
                    const REAL_TYPE* org,
                    const REAL_TYPE* ddx,
-                   const int m_ModePrecision);
+                   const int m_ModePrecision,
+                   const std::string fn,
+                   const bool cflag=false);
   
   void writeRawSPH(const int *array);
   

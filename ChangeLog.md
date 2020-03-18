@@ -4,13 +4,20 @@
 
 - 粒子データ送信　MPI_Type_create_struct
 - mkdir をCDMlibから移植
-
 - Cloud class 総放出粒子数の制限
 - 粒子リスタート時に新規粒子放出の場合、ファイルが出力されない問題
+- SDFの隣接間通信でminをとる
+- BCに応じて外部境界面の距離情報を導入する
 
 
 ## REVISION HISTORY
 
+---
+- 2020-03-18 Version 3.1.0
+ - Geometry::TriangleIntersect()を変更
+ - quantize9(), getQuantized9()を修正・追加
+ - SDF関係の処理を追加
+ 
 ---
 - 2020-03-10 Version 3.0.0
  - 参照速度v00を外す
