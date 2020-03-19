@@ -207,9 +207,21 @@ int FFV::Initialize(int argc, char **argv)
   TIMING_start("Voxel_Prep_Section");
 
 
-  // 各問題に応じてモデルを設定 >> Polylib
+  // 各問題に応じてモデルを設定 >> Polylib  //////////////////////////////////////////////
   // 外部境界面およびガイドセルのカットとIDの処理
   setModel(PrepMemory, TotalMemory, fp);
+  
+  
+  
+  // SDFの作成 //////////////////////////////////////////////
+  
+  if (C.Mode.Example == id_Polygon)
+  {
+    if ( !SM_genSDF(fp) ) Exit(0);
+  }
+
+  
+  
 
 
   // 回転体
@@ -470,6 +482,8 @@ int FFV::Initialize(int argc, char **argv)
     generateGlyph(d_cut, d_bid, fp);
     TIMING_stop("Generate_Glyph");
   }
+  
+  
 
 
   TIMING_stop("Voxel_Prep_Section");
@@ -3080,7 +3094,6 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
   {
     case id_Polygon: // ユーザ例題
       SM_Polygon2Cut(PrepMemory, TotalMemory, fp);
-      if ( !SM_genSDF(fp) ) exit(0);
       break;
 
     case id_Sphere:
@@ -4232,7 +4245,7 @@ void FFV::getPMInterval(TextParser* tpCntl)
 
 // #################################################################
 /* @brief ポリゴンからSDFを作成
- * @param [in]     fp       ファイルポインタ
+ * @param [in]  fp       ファイルポインタ
  */
 bool FFV::SM_genSDF(FILE* fp)
 {
@@ -4246,11 +4259,35 @@ bool FFV::SM_genSDF(FILE* fp)
   kx = size[2];
   gd = guide;
   
+  // 計算空間で5格子分
+  REAL_TYPE delta = 5.0;
+  
   Vec3r org(originD);
   Vec3r pch(pitchD);
+  
+  
+  // 境界条件フラグ
+  int oflag[6] = {0};
+  
+  for (int face=0; face<NOFACE; face++)
+  {
+    if( nID[face] >= 0 ) continue;
 
-  // ポリゴンからSDFを作成 > 5dh幅でトリム
+    // 固体面のみ
+    BoundaryOuter* m_obc = BC.exportOBC(face);
+    if (m_obc->getClass() == OBC_WALL) oflag[face] = 1;
+  }
+  
+
+  // ポリゴンからSDFを作成
   GM.polygon2sdf(d_sdf, PL, d_nrm);
+  
+  // 外部境界条件の距離導入
+  GM.outerSDF(d_sdf, d_nrm, oflag);
+  
+  // 5dh幅でトリム
+  GM.trimNarrowBand(d_sdf, d_nrm, delta);
+  
   
   
   // SDFのレイヤーマーチング　bcpはワーク
@@ -4261,18 +4298,19 @@ bool FFV::SM_genSDF(FILE* fp)
   }
   
 
-  /*
+#if 1
   F->writeRawSPH(d_bcp);
   
   svType = 1; // scalar
   F->writeRawSPH(d_ws, size, guide, 0, svType, org, pch, sizeof(REAL_TYPE), "layer", true); // cflag=true
+  
   
   F->writeRawSPH(d_sdf, size, guide, 0, svType, org, pch, sizeof(REAL_TYPE), "sdf", true); // cflag=true
   
   svType = 2; // vector
   GM.getNVfromIdx(d_nrm, d_wv);
   F->writeRawSPH(d_wv, size, guide, 0, svType, org, pch, sizeof(REAL_TYPE), "nrm", true); // cflag=true
-  */
+#endif
   
   // 最小値を通信するように考える
   if ( numProc > 1 )

@@ -36,6 +36,8 @@
 
 #include <vector>
 
+#define SEARCH_WIDTH 6
+
 using namespace std;
 using namespace PolylibNS;
 using namespace Vec3class;
@@ -72,6 +74,8 @@ private:
   const MediumList* mat;
   const CompoList* cmp;
   FILE* fpc;            ///< condition.txtへのファイルポインタ
+  
+  REAL_TYPE RefL; ///< 参照長さ
 
 
 public:
@@ -93,6 +97,7 @@ public:
     NoHint = 0;
     NoMedium = 0;
     NoCompo  = 0;
+    RefL = 0.0;
 
     for (int i=0; i<3; i++) {
       FillSuppress[i] = ON; // default is "fill"
@@ -548,7 +553,7 @@ public:
   // フィルパラメータを取得
   void getFillParam(TextParser* tpCntl,
                     const int Unit,
-                    const REAL_TYPE RefL,
+                    const REAL_TYPE m_RefL,
                     const int m_NoMedium,
                     const MediumList* m_mat,
                     FILE* m_fp);
@@ -616,6 +621,7 @@ public:
     if (v.z < 0.0)  b |= (0x1<<29);
   }
   
+  
   /*
    * @brief 法線のコピー
    * @param [out] dst   コピー先
@@ -636,16 +642,17 @@ public:
                    int* nrm,
                    const int* Dsize=NULL);
 
+  void outerSDF(REAL_TYPE* sdf, int* nrm, const int* oflag);
+  
+  void trimNarrowBand(REAL_TYPE* sdf, int* nrm, const REAL_TYPE delta);
+  
   bool marchingSDF(REAL_TYPE* fn, REAL_TYPE* fo, int* nrm, int* wk, REAL_TYPE* fv);
   
   void estimateNV(int* nrm, const REAL_TYPE* fo);
   
   void smoothingNV(int* nrm, REAL_TYPE* fv);
   
-  void tracingSDF(REAL_TYPE* fn,
-                  int* nrm,
-                  const int* wk,
-                  const int nLayer);
+  void tracingSDF(REAL_TYPE* fn, int* nrm, const int* wk, const int nLayer);
   
   void getNVfromIdx(const int* nrm, REAL_TYPE* f);
   
@@ -655,13 +662,56 @@ public:
   
   int generateLayer(int* wk, const int* nrm);
   
-  bool getDistance(REAL_TYPE& ds,
-                   const Vec3r o,
+  bool getDistance(const Vec3r o,
                    const Vec3r n,
                    const int* nrm,
                    const REAL_TYPE* f,
-                   const REAL_TYPE dt,
-                   const int c);
+                   REAL_TYPE& ds,
+                   REAL_TYPE& s,
+                   Vec3r& p,
+                   Vec3r& v);
+  
+  inline REAL_TYPE getInterp(const Vec3r g, const REAL_TYPE* f)
+  {
+    return (1.0-g.x)*(1.0-g.y)*(1.0-g.z)* f[0]
+         +      g.x *(1.0-g.y)*(1.0-g.z)* f[1]
+         + (1.0-g.x)*     g.y *(1.0-g.z)* f[2]
+         +      g.x *     g.y *(1.0-g.z)* f[3]
+         + (1.0-g.x)*(1.0-g.y)*     g.z * f[4]
+         +      g.x *(1.0-g.y)*     g.z * f[5]
+         + (1.0-g.x)*     g.y *     g.z * f[6]
+         +      g.x *     g.y *     g.z * f[7];
+  }
+  
+  inline Vec3r getInterp(const Vec3r g, const Vec3r* f)
+  {
+    Vec3r r;
+    r.x = (1.0-g.x)*(1.0-g.y)*(1.0-g.z)* f[0].x
+        +      g.x *(1.0-g.y)*(1.0-g.z)* f[1].x
+        + (1.0-g.x)*     g.y *(1.0-g.z)* f[2].x
+        +      g.x *     g.y *(1.0-g.z)* f[3].x
+        + (1.0-g.x)*(1.0-g.y)*     g.z * f[4].x
+        +      g.x *(1.0-g.y)*     g.z * f[5].x
+        + (1.0-g.x)*     g.y *     g.z * f[6].x
+        +      g.x *     g.y *     g.z * f[7].x;
+    r.y = (1.0-g.x)*(1.0-g.y)*(1.0-g.z)* f[0].y
+        +      g.x *(1.0-g.y)*(1.0-g.z)* f[1].y
+        + (1.0-g.x)*     g.y *(1.0-g.z)* f[2].y
+        +      g.x *     g.y *(1.0-g.z)* f[3].y
+        + (1.0-g.x)*(1.0-g.y)*     g.z * f[4].y
+        +      g.x *(1.0-g.y)*     g.z * f[5].y
+        + (1.0-g.x)*     g.y *     g.z * f[6].y
+        +      g.x *     g.y *     g.z * f[7].y;
+    r.z = (1.0-g.x)*(1.0-g.y)*(1.0-g.z)* f[0].z
+        +      g.x *(1.0-g.y)*(1.0-g.z)* f[1].z
+        + (1.0-g.x)*     g.y *(1.0-g.z)* f[2].z
+        +      g.x *     g.y *(1.0-g.z)* f[3].z
+        + (1.0-g.x)*(1.0-g.y)*     g.z * f[4].z
+        +      g.x *(1.0-g.y)*     g.z * f[5].z
+        + (1.0-g.x)*     g.y *     g.z * f[6].z
+        +      g.x *     g.y *     g.z * f[7].z;
+    return r;
+  }
   
   
   // 交点計算を行い、量子化

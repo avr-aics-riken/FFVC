@@ -7,11 +7,14 @@
 - Cloud class 総放出粒子数の制限
 - 粒子リスタート時に新規粒子放出の場合、ファイルが出力されない問題
 - SDFの隣接間通信でminをとる
-- BCに応じて外部境界面の距離情報を導入する
 
 
 ## REVISION HISTORY
 
+---
+- 2020-03-19 Version 3.1.2
+  - 外部境界条件の壁からの距離を導入
+  
 ---
 - 2020-03-18 Version 3.1.0
  - Geometry::TriangleIntersect()を変更
