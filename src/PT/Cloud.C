@@ -1639,11 +1639,11 @@ bool Cloud::write_binary(const unsigned step, const double time)
   }
   
   unsigned stp = step;
-  double tm = time;
+  float tm = time;
   unsigned csz = (unsigned)chunkList.size();
   
   ofs.write((char*)&stp, sizeof(unsigned));
-  ofs.write((char*)&tm,  sizeof(double));
+  ofs.write((char*)&tm,  sizeof(float));
   ofs.write((char*)&l_CurrentParticle, sizeof(unsigned));
   ofs.write((char*)&csz, sizeof(unsigned));
   

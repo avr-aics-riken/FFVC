@@ -113,36 +113,6 @@ int* Alloc::Int_S3D(const int* sz, const int gc)
 
 
 // #################################################################
-// データ領域をアロケートする（Scalar:long long）
-long long* Alloc::LLong_S3D(const int* sz, const int gc)
-{
-  if ( !sz ) return NULL;
-  
-  
-  // long long のチェック
-  if ( sizeof(long long) != 8 )
-  {
-    printf("Size of long long is not 8 Byte\n");
-    exit(0);
-  }
-  
-  size_t dims[3], nx;
-  
-  dims[0] = (size_t)(sz[0] + 2*gc);
-  dims[1] = (size_t)(sz[1] + 2*gc);
-  dims[2] = (size_t)(sz[2] + 2*gc);
-  
-  nx = dims[0] * dims[1] * dims[2];
-  
-  long long* var = new long long[nx];
-  
-  memset(var, 0, sizeof(long long)*nx);
-  
-  return var;
-}
-
-
-// #################################################################
 // データ領域をアロケートする（Scalar:REAL_TYPE）
 REAL_TYPE* Alloc::Real_S3D(const int* sz, const int gc)
 {

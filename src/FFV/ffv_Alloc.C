@@ -131,9 +131,10 @@ void FALLOC::allocArray_CompoVF(double &prep, double &total)
  */
 void FALLOC::allocArray_Cut(double &prep, double &total)
 {
-  if ( !(d_cut = Alloc::LLong_S3D(size, guide)) ) exit(0);
-  prep  += array_size * (double)sizeof(long long);
-  total += array_size * (double)sizeof(long long);
+  if ( !(d_cutL = Alloc::Int_S3D(size, guide)) ) exit(0);
+  if ( !(d_cutU = Alloc::Int_S3D(size, guide)) ) exit(0);
+  prep  += array_size * (double)sizeof(int)*2;
+  total += array_size * (double)sizeof(int)*2;
 
 
   if ( !(d_bid = Alloc::Int_S3D(size, guide)) ) exit(0);

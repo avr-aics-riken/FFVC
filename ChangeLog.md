@@ -12,6 +12,15 @@
 ## REVISION HISTORY
 
 ---
+- 2020-04-03 Version 3.2.0
+  - CUT インデクス 各方向9+1bitに修正 TOP_CUT廃止
+  - 交点の参照点実装
+  - d_cutをlong long からint x 2に修正．gccでは64bit変数の右シフトが不定
+  - Geometryクラスを整理
+  - FillHint/Outer/Kindを廃止。 ourterfaceのみ
+  - Glyph > unusedへ
+
+---
 - 2020-03-19 Version 3.1.2
   - 外部境界条件の壁からの距離を導入
   

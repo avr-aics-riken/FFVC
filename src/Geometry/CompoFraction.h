@@ -140,7 +140,8 @@ protected:
   int CylinderPlane(const int st[],
                     const int ed[],
                     int* bid,
-                    long long* cut,
+                    int* cutL,
+                    int* cutU,
                     const REAL_TYPE pl[4],
                     const int s_id,
                     const int* Dsize);
@@ -158,7 +159,8 @@ protected:
   int CylinderSide(const int st[],
                    const int ed[],
                    int* bid,
-                   long long* cut,
+                   int* cutL,
+                   int* cutU,
                    const int s_id,
                    const int* Dsize);
 
@@ -481,7 +483,8 @@ protected:
    */
   inline unsigned updateCutCylinder(const Vec3r A,
                                     const Vec3r B,
-                                    long long& cut,
+                                    int& cutL,
+                                    int& cutU,
                                     int& bid,
                                     const int dir,
                                     const int pid)
@@ -507,22 +510,23 @@ protected:
     if ( 0.0 <= t && judgeCylider(X, true) )
     {
       // 交点が記録されていない場合 >> 新規記録
-      if ( ensCut(cut, dir) == 0 )
+      int e = (dir<3) ? ensCutL(cutL, dir) : ensCutU(cutU, dir);
+      if ( e == 0 )
       {
         record = true;
         count = 1;
       }
       else // 交点が既に記録されている場合 >> 短い方を記録
       {
-        if ( r < getBit9(cut, dir)) record = true;
+        int b = (dir<3) ? getBitL9(cutL, dir) : getBitU9(cutU, dir);
+        if ( r < b ) record = true;
       }
     }
 
     if ( record )
     {
       setBit5(bid, pid, dir);
-      setCut9(cut, r, dir);
-      //printf("%10.6f %6d dir=%d\n", t,r,dir);
+      (dir<3) ? setCutL9(cutL, r, dir) : setCutU9(cutU, r, dir);
     }
 
     return count;
@@ -544,7 +548,8 @@ protected:
   unsigned updateCutPlane(const Vec3r A,
                           const Vec3r B,
                           const REAL_TYPE pl[4],
-                          long long& cut,
+                          int& cutL,
+                          int& cutU,
                           int& bid,
                           const int dir,
                           const int pid)
@@ -573,22 +578,23 @@ protected:
     if ( 0.0 <= t && t <= 1.0 && judgeCylider(X, true) )
     {
       // 交点が記録されていない場合 >> 新規記録
-      if ( ensCut(cut, dir) == 0 )
+      int e = (dir<3) ? ensCutL(cutL, dir) : ensCutU(cutU, dir);
+      if ( e == 0 )
       {
         record = true;
         count = 1;
       }
       else // 交点が既に記録されている場合 >> 短い方を記録
       {
-        if ( r < getBit9(cut, dir)) record = true;
+        int b = (dir<3) ? getBitL9(cutL, dir) : getBitU9(cutU, dir);
+        if ( r < b ) record = true;
       }
     }
 
     if ( record )
     {
       setBit5(bid, pid, dir);
-      setCut9(cut, r, dir);
-      //printf("%10.6f %6d dir=%d %d %d\n", t,r,dir, getBit5(bid, dir), getBit9(cut, dir));
+      (dir<3) ? setCutL9(cutL, r, dir) : setCutU9(cutU, r, dir);
     }
 
     return count;
@@ -624,7 +630,8 @@ public:
   bool intersectCylinder(const int st[],
                          const int ed[],
                          int* bid,
-                         long long* cut,
+                         int* cutL,
+                         int* cutU,
                          const int tgt_id,
                          const int* Dsize=NULL);
 

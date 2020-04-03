@@ -113,7 +113,8 @@ protected:
 
   int* bid;            ///< 境界ID
   int* bcd;            ///< BCindex B
-  long long* cut;      ///< 交点情報
+  int* cutL;           ///< 交点情報
+  int* cutU;           ///< 交点情報
 
   FILE* fp;            ///< 出力ファイルポインタ
 
@@ -167,7 +168,8 @@ public:
     vSource = pSource = tSource = vrSource = NULL;
     bid = NULL;
     bcd = NULL;
-    cut = NULL;
+    cutL = NULL;
+    cutU = NULL;
     mtbl= NULL;
 
     // Graph ploter
@@ -195,7 +197,8 @@ public:
                ReferenceVariables refVar,
                int* bid,
                int* bcd,
-               long long* cut,
+               int* cut_l,
+               int* cut_u,
                const int num_process,
                const int num_compo,
                double* m_mtbl) {
@@ -221,7 +224,8 @@ public:
     this->refVar = refVar;
     this->bid = bid;
     this->bcd = bcd;
-    this->cut = cut;
+    this->cutL = cut_l;
+    this->cutU = cut_u;
     this->num_process = num_process;
     this->NoCompo = num_compo;
     this->mtbl = m_mtbl;

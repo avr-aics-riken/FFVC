@@ -55,22 +55,22 @@ void VoxInfo::adjMediumPrdcInner(int* bcd, CompoList* cmp, const int m_NoCompo)
 
 // #################################################################
 /**
- * @brief 圧力のノイマン境界ビットをエンコードする（カット）
+ * @brief フラグのチェック
  * @param [in]  bx          BCindex P
  * @param [in]  bid         カット点のID情報
  * @param [in]  cut         距離情報
  * @param [in]  bcd         d_bcd
  */
-void VoxInfo::chkFlag(const int* bx, const int* bid, const long long* cut, const int* bcd)
+void VoxInfo::chkFlag(const int* bx, const int* bid, const int* cut_l, const int* cut_u, const int* bcd)
 {
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
-  
+
   
   // 対角項のフラグ
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+#pragma omp parallel for
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -84,51 +84,7 @@ void VoxInfo::chkFlag(const int* bx, const int* bid, const long long* cut, const
       }
     }
   }
-  
-  
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
-  for (int k=1; k<=kx; k++) {
-    for (int j=1; j<=jx; j++) {
-      for (int i=1; i<=ix; i++) {
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        
-        int key = DECODE_CMP(bcd[m]);
-        int qq = bid[m];
-        int qw = getBit5(qq, 0);
-        int qe = getBit5(qq, 1);
-        int qs = getBit5(qq, 2);
-        int qn = getBit5(qq, 3);
-        int qb = getBit5(qq, 4);
-        int qt = getBit5(qq, 5);
-        
-        // 全隣接方向に交点がある場合
-        if ( qw * qe * qs * qn * qb * qt != 0 )
-        {
-          printf("rank %d : (%3d %3d %3d) : id = %d\n", myRank, i,j,k,key);
-          
-          long long pos = cut[m];
-          printf("(%3d %3d %3d) %3d %3d %3d %3d %3d %3d : %d %d %d %d %d %d\n",
-                 i,j,k,
-                 getBit9(pos, 0),
-                 getBit9(pos, 1),
-                 getBit9(pos, 2),
-                 getBit9(pos, 3),
-                 getBit9(pos, 4),
-                 getBit9(pos, 5),
-                 ensCut(pos, X_minus),
-                 ensCut(pos, X_plus),
-                 ensCut(pos, Y_minus),
-                 ensCut(pos, Y_plus),
-                 ensCut(pos, Z_minus),
-                 ensCut(pos, Z_plus)
-                 );
-        }
-        
-      }
-    }
-  }
 
-  
 }
 
 
@@ -145,7 +101,7 @@ void VoxInfo::chkOrder (const int* bcd)
   unsigned long c=0;
   
   // 内部領域
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
+#pragma omp parallel for reduction(+:c)
   for (int k=1; k<=kx; k++) {
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
@@ -187,7 +143,7 @@ void VoxInfo::copyBCIbase (int* dst, const int* src)
   int gd = guide;
   
   // 30, 31ビットのみコピー
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+#pragma omp parallel for
   for (int k=1-gd; k<=kx+gd; k++) {
     for (int j=1-gd; j<=jx+gd; j++) {
       for (int i=1-gd; i<=ix+gd; i++) {
@@ -1470,7 +1426,7 @@ void VoxInfo::encPbit (int* bx, const int* bid)
  *   - 固体セルに隣接する流体セルに方向フラグを付与する．全内部領域．
  *   - 収束判定の有効フラグをカット情報からエンコードする
  */
-void VoxInfo::encPbitN (int* bx, const int* bid, const long long* cut, const bool convergence)
+void VoxInfo::encPbitN (int* bx, const int* bid, const int* cut_l, const int* cut_u, const bool convergence)
 {
   int ix = size[0];
   int jx = size[1];
@@ -1549,15 +1505,16 @@ void VoxInfo::encPbitN (int* bx, const int* bid, const long long* cut, const boo
           
           if ( IS_FLUID( s ) )
           {
-            const long long pos = cut[m];
+            const int pos_l = cut_l[m];
+            const int pos_u = cut_u[m];
             
             // いずれかの方向で交点が定義点上の場合
-            if ( chkZeroCut(pos, X_minus)
-                +chkZeroCut(pos, X_plus)
-                +chkZeroCut(pos, Y_minus)
-                +chkZeroCut(pos, Y_plus)
-                +chkZeroCut(pos, Z_minus)
-                +chkZeroCut(pos, Z_plus) > 0 )
+            if ( chkZeroCut(pos_l, X_minus)
+                +chkZeroCut(pos_l, X_plus)
+                +chkZeroCut(pos_l, Y_minus)
+                +chkZeroCut(pos_u, Y_plus)
+                +chkZeroCut(pos_u, Z_minus)
+                +chkZeroCut(pos_u, Z_plus) > 0 )
             {
               s = offBit(s, BC_DIAG);    // Out of scope  @todo check
               g++;
@@ -2847,7 +2804,7 @@ void VoxInfo::paintCutIDonGC (int* bcd, const int* bid, unsigned long* painted, 
   c = 0;
   if ( nID[X_minus] < 0 )
   {
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
+#pragma omp parallel for reduction(+:c)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         size_t m1 = _F_IDX_S3D(1, j, k, ix, jx, kx, gd);
@@ -2877,7 +2834,7 @@ void VoxInfo::paintCutIDonGC (int* bcd, const int* bid, unsigned long* painted, 
   c = 0;
   if ( nID[X_plus] < 0 )
   {
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
+#pragma omp parallel for reduction(+:c)
     for (int k=1; k<=kx; k++) {
       for (int j=1; j<=jx; j++) {
         size_t m1 = _F_IDX_S3D(ix  , j, k, ix, jx, kx, gd);
@@ -2906,7 +2863,7 @@ void VoxInfo::paintCutIDonGC (int* bcd, const int* bid, unsigned long* painted, 
   c = 0;
   if ( nID[Y_minus] < 0 )
   {
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
+#pragma omp parallel for reduction(+:c)
     for (int k=1; k<=kx; k++) {
       for (int i=1; i<=ix; i++) {
         size_t m1 = _F_IDX_S3D(i, 1, k, ix, jx, kx, gd);
@@ -2935,7 +2892,7 @@ void VoxInfo::paintCutIDonGC (int* bcd, const int* bid, unsigned long* painted, 
   c = 0;
   if ( nID[Y_plus] < 0 )
   {
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
+#pragma omp parallel for reduction(+:c)
     for (int k=1; k<=kx; k++) {
       for (int i=1; i<=ix; i++) {
         size_t m1 = _F_IDX_S3D(i, jx,   k, ix, jx, kx, gd);
@@ -2964,7 +2921,7 @@ void VoxInfo::paintCutIDonGC (int* bcd, const int* bid, unsigned long* painted, 
   c = 0;
   if ( nID[Z_minus] < 0 )
   {
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
+#pragma omp parallel for reduction(+:c)
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m1 = _F_IDX_S3D(i, j, 1, ix, jx, kx, gd);
@@ -2993,7 +2950,7 @@ void VoxInfo::paintCutIDonGC (int* bcd, const int* bid, unsigned long* painted, 
   c = 0;
   if ( nID[Z_plus] < 0 )
   {
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static) reduction(+:c)
+#pragma omp parallel for reduction(+:c)
     for (int j=1; j<=jx; j++) {
       for (int i=1; i<=ix; i++) {
         size_t m1 = _F_IDX_S3D(i, j, kx,   ix, jx, kx, gd);
@@ -3107,7 +3064,7 @@ void VoxInfo::setBCIndexBase (int* bcd,
 
 // #################################################################
 // 温度境界条件のビット情報をエンコードする
-void VoxInfo::setBCIndexH(int* cdf, int* bcd, SetBC* BC, const int kos, CompoList* cmp, long long* cut, int* bid, const int m_NoCompo)
+void VoxInfo::setBCIndexH(int* cdf, int* bcd, SetBC* BC, const int kos, CompoList* cmp, int* cut_l, int* cut_u, int* bid, const int m_NoCompo)
 {
   int ix = size[0];
   int jx = size[1];
@@ -3278,7 +3235,8 @@ void VoxInfo::setBCIndexP(int* bcd,
                           SetBC* BC,
                           CompoList* cmp,
                           int icls,
-                          const long long* cut,
+                          const int* cut_l,
+                          const int* cut_u,
                           const int* bid,
                           const int m_NoCompo)
 {
@@ -3301,7 +3259,7 @@ void VoxInfo::setBCIndexP(int* bcd,
 
   
   // 計算領域内の壁面のNeumannBCのマスク処理と固体に隣接するFセルに方向フラグをエンコード
-  encPbitN(bcp, bid, cut, false);
+  encPbitN(bcp, bid, cut_l, cut_u, false);
   
 
   
@@ -3412,7 +3370,8 @@ void VoxInfo::setBCIndexV(int* cdf,
                           SetBC* BC,
                           CompoList* cmp,
                           int icls,
-                          long long* cut,
+                          int* cut_l,
+                          int* cut_u,
                           int* bid,
                           int* bcd,
                           const int m_NoCompo,
@@ -3674,7 +3633,7 @@ void VoxInfo::setOBCperiodic (int* bcd, const int* ens)
 
 // #################################################################
 // 外部境界の距離情報・境界ID・媒質エントリをセット
-void VoxInfo::setOBC (const int face, const int c_id, const int ptr_cmp, const char* str, int* bcd, long long* cut, int* bid)
+void VoxInfo::setOBC (const int face, const int c_id, const int ptr_cmp, const char* str, int* bcd, int* cut_l, int* cut_u, int* bid)
 {
   int ix = size[0];
   int jx = size[1];
@@ -3701,7 +3660,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const int ptr_cmp, const c
   switch (face)
   {
     case X_minus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, tgt, did) schedule(static)
+#pragma omp parallel for
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
           
@@ -3712,7 +3671,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const int ptr_cmp, const c
             size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
             setBit5(bid[l], did, X_minus);
             setMediumID(bcd[m], tgt);
-            setCut9(cut[l], quantize9(pos), X_minus);
+            setCutL9(cut_l[l], quantize9(pos), X_minus);
           }
         }
       }
@@ -3720,7 +3679,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const int ptr_cmp, const c
       
       
     case X_plus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, tgt, did) schedule(static)
+#pragma omp parallel for
       for (int k=1; k<=kx; k++) {
         for (int j=1; j<=jx; j++) {
           
@@ -3731,7 +3690,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const int ptr_cmp, const c
             size_t l = _F_IDX_S3D(ix  , j  , k  , ix, jx, kx, gd);
             setBit5(bid[l], did, X_plus);
             setMediumID(bcd[m], tgt);
-            setCut9(cut[l], quantize9(pos), X_plus);
+            setCutL9(cut_l[l], quantize9(pos), X_plus);
           }
         }
       }
@@ -3739,7 +3698,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const int ptr_cmp, const c
       
       
     case Y_minus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, tgt, did) schedule(static)
+#pragma omp parallel for
       for (int k=1; k<=kx; k++) {
         for (int i=1; i<=ix; i++) {
           
@@ -3750,7 +3709,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const int ptr_cmp, const c
             size_t l = _F_IDX_S3D(i  , 1  , k  , ix, jx, kx, gd);
             setBit5(bid[l], did, Y_minus);
             setMediumID(bcd[m], tgt);
-            setCut9(cut[l], quantize9(pos), Y_minus);
+            setCutL9(cut_l[l], quantize9(pos), Y_minus);
           }
         }
       }
@@ -3758,7 +3717,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const int ptr_cmp, const c
       
       
     case Y_plus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, tgt, did) schedule(static)
+#pragma omp parallel for
       for (int k=1; k<=kx; k++) {
         for (int i=1; i<=ix; i++) {
           
@@ -3769,7 +3728,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const int ptr_cmp, const c
             size_t l = _F_IDX_S3D(i  , jx  , k  , ix, jx, kx, gd);
             setBit5(bid[l], did, Y_plus);
             setMediumID(bcd[m], tgt);
-            setCut9(cut[l], quantize9(pos), Y_plus);
+            setCutU9(cut_u[l], quantize9(pos), Y_plus);
           }
         }
       }
@@ -3777,7 +3736,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const int ptr_cmp, const c
       
       
     case Z_minus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, tgt, did) schedule(static)
+#pragma omp parallel for
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
           
@@ -3788,14 +3747,14 @@ void VoxInfo::setOBC (const int face, const int c_id, const int ptr_cmp, const c
             size_t l = _F_IDX_S3D(i  , j  , 1  , ix, jx, kx, gd);
             setBit5(bid[l], did, Z_minus);
             setMediumID(bcd[m], tgt);
-            setCut9(cut[l], quantize9(pos), Z_minus);
+            setCutU9(cut_u[l], quantize9(pos), Z_minus);
           }
         }
       }
       break;
       
     case Z_plus:
-#pragma omp parallel for firstprivate(ix, jx, kx, gd, pos, tgt, did) schedule(static)
+#pragma omp parallel for
       for (int j=1; j<=jx; j++) {
         for (int i=1; i<=ix; i++) {
           
@@ -3806,7 +3765,7 @@ void VoxInfo::setOBC (const int face, const int c_id, const int ptr_cmp, const c
             size_t l = _F_IDX_S3D(i  , j  , kx  , ix, jx, kx, gd);
             setBit5(bid[l], did, Z_plus);
             setMediumID(bcd[m], tgt);
-            setCut9(cut[l], quantize9(pos), Z_plus);
+            setCutU9(cut_u[l], quantize9(pos), Z_plus);
           }
         }
       }

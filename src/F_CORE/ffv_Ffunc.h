@@ -764,6 +764,8 @@ extern "C" {
                     REAL_TYPE* q,
                     int* bx,
                     double* flop);
+
+
   //***********************************************************************************************
   // ffv_velocity_cds.f90
   void pvec_muscl_cds_ (REAL_TYPE* wv,
@@ -778,13 +780,45 @@ extern "C" {
                         int* bp,
                         int* bcd,
                         int* v_mode,
-                        long long* cut,
+                        int* cut_l,
+                        int* cut_u,
                         double* flop);
 
-  void update_vec_cds_    (REAL_TYPE* v, REAL_TYPE* div, int* sz, int* g, REAL_TYPE* dt, REAL_TYPE* dh, REAL_TYPE* vc, REAL_TYPE* p,
-                           int* bp, int* bv, int* bcd, long long* cut, double* flop);
-  void divergence_cds_    (REAL_TYPE* div, int* sz, int* g, REAL_TYPE* coef, REAL_TYPE* v, int* bv, int* bcd, long long* cut, double* flop);
-  void force_cds_         (REAL_TYPE* force, int* sz, int* g, REAL_TYPE* p, int* bp, int* bid, int* id, REAL_TYPE* dh, double* flop);
+  void update_vec_cds_ (REAL_TYPE* v,
+                        REAL_TYPE* div,
+                        int* sz,
+                        int* g,
+                        REAL_TYPE* dt,
+                        REAL_TYPE* dh,
+                        REAL_TYPE* vc,
+                        REAL_TYPE* p,
+                        int* bp,
+                        int* bv,
+                        int* bcd,
+                        int* cut_l,
+                        int* cut_u,
+                        double* flop);
+
+  void divergence_cds_ (REAL_TYPE* div,
+                        int* sz,
+                        int* g,
+                        REAL_TYPE* coef,
+                        REAL_TYPE* v,
+                        int* bv,
+                        int* bcd,
+                        int* cut_l,
+                        int* cut_u,
+                        double* flop);
+
+  void force_cds_ (REAL_TYPE* force,
+                   int* sz,
+                   int* g,
+                   REAL_TYPE* p,
+                   int* bp,
+                   int* bid,
+                   int* id,
+                   REAL_TYPE* dh,
+                   double* flop);
 
   void eddy_viscosity_cds_(REAL_TYPE* vt,
                            int* sz,
@@ -793,7 +827,8 @@ extern "C" {
                            REAL_TYPE* re,
                            REAL_TYPE* cs,
                            REAL_TYPE* v,
-                           long long* cut,
+                           int* cut_l,
+                           int* cut_u,
                            REAL_TYPE* vt_range,
                            REAL_TYPE* yp_range,
                            double* flop);

@@ -47,7 +47,7 @@ real                                                      ::  UPe, UPw, VPn, VPs
 real                                                      ::  Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2
 real                                                      ::  Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2
 real                                                      ::  Wp0, We1, We2, Ww1, Ww2, Ws1, Ws2, Wn1, Wn2, Wb1, Wb2, Wt1, Wt2
-real                                                      ::  ck, vcs, vcs_coef, rx, ry, rz, rx2, ry2 ,rz2
+real                                                      ::  ck, vcs, vcs_coef, rx, rx2
 real                                                      ::  c_e1, c_w1, c_n1, c_s1, c_t1, c_b1, cm1, cm2, ss_4
 real                                                      ::  c_e2, c_w2, c_n2, c_s2, c_t2, c_b2
 real                                                      ::  dv1, dv2, dv3, dv4, g1, g2, g3, g4, g5, g6, s1, s2, s3, s4, b
@@ -63,15 +63,11 @@ jx = sz(2)
 kx = sz(3)
 
 rx = 1.0/dh(1)
-ry = 1.0/dh(2)
-rz = 1.0/dh(3)
-
 rx2 = rei * rx * rx
-ry2 = rei * ry * ry
-rz2 = rei * rz * rz
+
 
 ! vcs = 1.0 (Euler Explicit) / 0.5 (CN) / 0.0(No)
-vcs = vcs_coef
+vcs = vcs_coef * rx2
 
 
 ck = 0.0
@@ -79,10 +75,10 @@ b  = 0.0
 ss = 1.0
 
 if ( c_scheme == 1 ) then      !     1st order upwind
-ss = 0.0
+  ss = 0.0
 else if ( c_scheme == 3 ) then !     3rd order MUSCL
-ck = 1.0/3.0
-b  = (3.0-ck)/(1.0-ck)
+  ck = 1.0/3.0
+  b  = (3.0-ck)/(1.0-ck)
 else
 write(*,*) 'out of scheme selection'
 stop
@@ -100,8 +96,6 @@ flop = flop + dble(ix)*dble(jx)*dble(kx)*888.0d0 + 36.0d0
 
 
 !$OMP PARALLEL &
-!$OMP FIRSTPRIVATE(ix, jx, kx, rx, ry, rz, rx2, ry2 ,rz2, vcs, b, ck, ss_4, ss, cm1, cm2) &
-!$OMP FIRSTPRIVATE(rei) &
 !$OMP PRIVATE(cnv_u, cnv_v, cnv_w, bix, bdx, uq, vq, wq) &
 !$OMP PRIVATE(Up0, Ue1, Ue2, Uw1, Uw2, Us1, Us2, Un1, Un2, Ub1, Ub2, Ut1, Ut2) &
 !$OMP PRIVATE(Vp0, Ve1, Ve2, Vw1, Vw2, Vs1, Vs2, Vn1, Vn2, Vb1, Vb2, Vt1, Vt2) &
@@ -574,31 +568,31 @@ cnv_w = cnv_w + fw_r*c_t1 - fw_l*c_b1
 
 
 ! 粘性項の計算　セル界面の剪断力を計算し，必要に応じて置換する 23*3 = 69 flops
-EX =  ( Ue1 - Up0 ) * c_e1 * rx2 &
-    - ( Up0 - Uw1 ) * c_w1 * rx2 &
-    + ( Un1 - Up0 ) * c_n1 * ry2 &
-    - ( Up0 - Us1 ) * c_s1 * ry2 &
-    + ( Ut1 - Up0 ) * c_t1 * rz2 &
-    - ( Up0 - Ub1 ) * c_b1 * rz2
+EX =  ( Ue1 - Up0 ) * c_e1 &
+    - ( Up0 - Uw1 ) * c_w1 &
+    + ( Un1 - Up0 ) * c_n1 &
+    - ( Up0 - Us1 ) * c_s1 &
+    + ( Ut1 - Up0 ) * c_t1 &
+    - ( Up0 - Ub1 ) * c_b1
 
-EY =  ( Ve1 - Vp0 ) * c_e1 * rx2 &
-    - ( Vp0 - Vw1 ) * c_w1 * rx2 &
-    + ( Vn1 - Vp0 ) * c_n1 * ry2 &
-    - ( Vp0 - Vs1 ) * c_s1 * ry2 &
-    + ( Vt1 - Vp0 ) * c_t1 * rz2 &
-    - ( Vp0 - Vb1 ) * c_b1 * rz2
+EY =  ( Ve1 - Vp0 ) * c_e1 &
+    - ( Vp0 - Vw1 ) * c_w1 &
+    + ( Vn1 - Vp0 ) * c_n1 &
+    - ( Vp0 - Vs1 ) * c_s1 &
+    + ( Vt1 - Vp0 ) * c_t1 &
+    - ( Vp0 - Vb1 ) * c_b1
 
-EZ =  ( We1 - Wp0 ) * c_e1 * rx2 &
-    - ( Wp0 - Ww1 ) * c_w1 * rx2 &
-    + ( Wn1 - Wp0 ) * c_n1 * ry2 &
-    - ( Wp0 - Ws1 ) * c_s1 * ry2 &
-    + ( Wt1 - Wp0 ) * c_t1 * rz2 &
-    - ( Wp0 - Wb1 ) * c_b1 * rz2
+EZ =  ( We1 - Wp0 ) * c_e1 &
+    - ( Wp0 - Ww1 ) * c_w1 &
+    + ( Wn1 - Wp0 ) * c_n1 &
+    - ( Wp0 - Ws1 ) * c_s1 &
+    + ( Wt1 - Wp0 ) * c_t1 &
+    - ( Wp0 - Wb1 ) * c_b1
 
 ! 対流項と粘性項の和 > 4*3 = 12 flops
 wv(i,j,k,1) = -cnv_u * rx + EX*vcs
-wv(i,j,k,2) = -cnv_v * ry + EY*vcs
-wv(i,j,k,3) = -cnv_w * rz + EZ*vcs
+wv(i,j,k,2) = -cnv_v * rx + EY*vcs
+wv(i,j,k,3) = -cnv_w * rx + EZ*vcs
 end do
 end do
 end do

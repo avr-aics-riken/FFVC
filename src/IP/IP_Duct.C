@@ -199,7 +199,8 @@ void IP_Duct::setup(int* bcd,
                     const MediumList* mat,
                     const int NoCompo,
                     const CompoList* cmp,
-                    long long* cut,
+                    int* cutL,
+                    int* cutU,
                     int* bid)
 {
   int mid_fluid;        /// 流体

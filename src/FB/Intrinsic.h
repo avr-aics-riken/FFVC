@@ -136,7 +136,8 @@ public:
                       REAL_TYPE* G_org,
                       const int NoMedium,
                       const MediumList* mat,
-                      long long* cut,
+                      int* cut_l,
+                      int* cut_u,
                       int* bid) {};
   
   
@@ -165,7 +166,8 @@ public:
                      const MediumList* mat,
                      const int NoCompo,
                      const CompoList* cmp,
-                     long long* cut,
+                     int* cut_l,
+                     int* cut_u,
                      int* bid) {};
   
   

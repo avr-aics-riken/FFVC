@@ -55,7 +55,8 @@ protected:
   Vec3r g_box;           ///< グローバル領域サイズ
   int* bid;              ///< 境界ID
   int* bcd;              ///< BCindex B
-  long long* cut;        ///< 交点情報
+  int* cutL;             ///< 交点情報
+  int* cutU;             ///< 交点情報
   TextParser* tpCntl;    ///< テキストパーサへのポインタ
   REAL_TYPE area;        ///< 断面積 [m^2]
   int NoCompo;           ///< 物性テーブルの個数 >> 配列の大きさは[NoCompo+1]
@@ -210,7 +211,8 @@ public:
   ///   @param [in] m_mtbl         物性テーブル
   ///
   void setControlVars(int* bid,
-                      long long* cut,
+                      int* cut_l,
+                      int* cut_u,
                       int* bcd,
                       const REAL_TYPE refVelocity,
                       const REAL_TYPE baseTemp,

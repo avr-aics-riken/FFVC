@@ -121,7 +121,7 @@ public:
    * @param [in] dir    方向
    * @param [in] m_bid  (i,j,k)の境界ID
    */
-  void generateVertex(const Vec3i idx, const long long pos, const int dir, const int m_bid);
+  void generateVertex(const Vec3i idx, const int pos, const int dir, const int m_bid);
 
 
   /**

@@ -90,6 +90,10 @@ FFV::FFV()
   DivC.divType = 0;
   DivC.divEPS = 0.0;
   DivC.divergence = 0.0;
+  
+  num_probes = 0;
+  probe_cf = NULL;
+  probe_d  = NULL;
 }
 
 
@@ -717,8 +721,7 @@ void FFV::set_timing_label()
   
   
   set_label("Geometry_Section",        PerfMonitor::CALC, false);
-  set_label("SeedFilling",             PerfMonitor::CALC);
-  set_label("SubSampling",             PerfMonitor::CALC);
+
   set_label("Fill",                    PerfMonitor::CALC);
   // Geometry_Section
 
@@ -727,10 +730,10 @@ void FFV::set_timing_label()
   set_label("Compo_Fraction",          PerfMonitor::CALC);
 
   set_label("Encode_BCindex",          PerfMonitor::CALC);
+  set_label("Search_CutRef",           PerfMonitor::CALC);
 
   set_label("Gather_DomainInfo",       PerfMonitor::CALC);
 
-  set_label("Generate_Glyph",          PerfMonitor::CALC);
 
   // Voxel_Prep_Section
   // Initialization_Section

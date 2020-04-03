@@ -24,6 +24,7 @@
 #include <algorithm>
 
 
+
 // #################################################################
 /* @brief 初期化格子生成、ビットフラグ処理ほか
  * @param [in] argc  main関数の引数の個数
@@ -207,11 +208,12 @@ int FFV::Initialize(int argc, char **argv)
   TIMING_start("Voxel_Prep_Section");
 
 
+  Hostonly_ printf("\n----------\n");
   // 各問題に応じてモデルを設定 >> Polylib  //////////////////////////////////////////////
   // 外部境界面およびガイドセルのカットとIDの処理
   setModel(PrepMemory, TotalMemory, fp);
   
-  
+  Hostonly_ printf("\n----------\n");
   
   // SDFの作成 //////////////////////////////////////////////
   
@@ -220,12 +222,12 @@ int FFV::Initialize(int argc, char **argv)
     if ( !SM_genSDF(fp) ) Exit(0);
   }
 
-  
+  Hostonly_ printf("\n----------\n");
   
 
 
   // 回転体
-  setComponentSR();
+  //setComponentSR();
 
 
 
@@ -259,48 +261,6 @@ int FFV::Initialize(int argc, char **argv)
   setMonitorList();
 
 
-  /* 再考
-  if ( C.Mode.Example == id_Polygon )
-  {
-
-    // ガイドセルのIDをd_midに転写
-    for (int face=0; face<NOFACE; face++)
-    {
-      if( nID[face] >= 0 ) continue;
-
-      GM.copyIDonGuide(face, d_bcd, d_mid);
-    }
-
-
-    // Fill by Seed >> d_mid={-1, SeedID}
-    Hostonly_
-    {
-      printf(    "\n----------\n\n");
-      fprintf(fp,"\n----------\n\n");
-      printf(    "\t>> Seed Filling Process\n\n");
-      fprintf(fp,"\t>> Seed Filling Process\n\n");
-    }
-
-    TIMING_start("SeedFilling");
-    GM.SeedFilling(fp, cmp, mat, d_mid, PL, PG, C.NoCompo);
-    TIMING_stop("SeedFilling");
-
-    //F->writeSVX(d_mid);
-
-    // Sub-sampling
-    Hostonly_
-    {
-      printf(    "\n----------\n\n");
-      fprintf(fp,"\n----------\n\n");
-      printf(    "\t>> Sub-sampling Process\n\n");
-      fprintf(fp,"\t>> Sub-sampling Process\n\n");
-    }
-
-    TIMING_start("SubSampling");
-    GM.SubSampling(fp, mat, d_mid, d_pvf, PL, C.NoCompo);
-    TIMING_stop("SubSampling");
-  }
-  */
 
 
   // Fill
@@ -310,18 +270,21 @@ int FFV::Initialize(int argc, char **argv)
     fprintf(fp,"\t>> Fill\n\n");
   }
 
+  
+  // 交点計算によりcutL/Uに距離，bidに交点IDが入っている
   TIMING_start("Fill");
-  if ( !GM.fill(d_bcd, d_bid, d_mid, d_cut) )
+  if ( !GM.fillbyCut(d_bcd, d_bid, d_mid, d_cutL, d_cutU) )
   {
     // debug routine
     //F->writeSVX(d_bcd);
     //F->writeRawSPH(d_mid);
-    F->writeSVX(d_mid);
+    //F->writeSVX(d_mid);
     Exit(0);
   }
   TIMING_stop("Fill");
+   
 
-  F->writeSVX(d_bcd);
+  //F->writeSVX(d_bcd);
 
   // ∆tの決め方とKindOfSolverの組み合わせで無効なものをはねる
   if ( !DT.chkDtSelect() )
@@ -378,15 +341,49 @@ int FFV::Initialize(int argc, char **argv)
 
 
 
-  // BCIndexにビット情報をエンコードとコンポーネントインデクスの再構築
+  // BCIndexにビット情報をエンコードとコンポーネントインデクスの再構築 ///////////////////////////
   TIMING_start("Encode_BCindex");
   encodeBCindex(fp);
   TIMING_stop("Encode_BCindex");
+  
+  
+  
+  
+  // カット点の法線方向参照点の探索 ////////////////////////////////////////////////////////
+  TIMING_start("Search_CutRef");
+  if (C.Mode.ShapeAprx == CUT_INFO)
+  {
+    printf("Find normal on Cut\n");
+    
+    // 自領域の大きさを設定
+    GM.set_my_region();
+    
+    // trueのとき、内部のみデバッグ
+    if ( -1 == (num_probes = GM.getRefPointOnCut(d_cutL, d_cutU, PL, d_bcp, true)) ) return -1;
+    
+    printf("Number of probes = %d\n", num_probes);
+    
+    // メモリ確保
+    probe_cf = new REAL_TYPE[num_probes*3];
+    probe_d  = new REAL_TYPE[num_probes];
+    
+    GM.sortProbe(probe_cf, probe_d);
+    
+    // DEBUG
+#if 1
+      //generateCutPWN(d_cutL, d_cutU, true); // true => innerのみ
+      GM.writeProbe();
+#endif
+  }
+  TIMING_stop("Search_CutRef");
+  
 
-  V.chkFlag(d_bcp, d_bid, d_cut, d_bcd);
+  // BC_DIAGフラグのチェック
+  V.chkFlag(d_bcp, d_bid, d_cutL, d_cutU, d_bcd);
 
 
-  // Polygonモニタの数をcmp[]にセット
+  
+  // Polygonモニタの数をcmp[]にセット   //////////////////////////////////////////////////
   if ( C.SamplingMode )
   {
     MO.setMonitorNpoint(cmp, C.NoCompo);
@@ -464,24 +461,6 @@ int FFV::Initialize(int argc, char **argv)
   gatherDomainInfo();
   TIMING_stop("Gather_DomainInfo");
 
-
-  // 交点のグリフを出力
-  if ( C.Hide.GlyphOutput != OFF )
-  {
-    TIMING_start("Generate_Glyph");
-    /*
-    int st[3], ed[3];
-    st[0] = 145;
-    ed[0] = 147;
-    st[1] = 520;
-    ed[1] = 545;
-    st[2] = 230;
-    ed[2] = 253;
-    generateGlyph(d_cut, d_bid, fp, st, ed);
-     */
-    generateGlyph(d_cut, d_bid, fp);
-    TIMING_stop("Generate_Glyph");
-  }
   
   
 
@@ -1190,7 +1169,7 @@ void FFV::displayCompoInfo(const int* cgb, FILE* fp)
  * @param [in,out] cut カット情報の配列
  * @param [in]     bid カット情報の配列
  */
-void FFV::displayCutInfo(const long long* cut, const int* bid)
+void FFV::displayCutInfo(const int* cut_l, const int* cut_u, const int* bid)
 {
 
   int ix = size[0];
@@ -1220,16 +1199,17 @@ void FFV::displayCutInfo(const long long* cut, const int* bid)
         const int b4 = getBit5(bd, Z_minus); // (bd >> 20) & MASK_5;
         const int b5 = getBit5(bd, Z_plus);  // (bd >> 25) & MASK_5;
 
-        long long pos = cut[m];
+        int posL = cut_l[m];
+        int posU = cut_u[m];
 
         fprintf(fp, "%5d %5d %5d : %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %d %d %d %d %d %d\n",
                 i,j,k,
-                getCut9(pos, X_minus),
-                getCut9(pos, X_plus),
-                getCut9(pos, Y_minus),
-                getCut9(pos, Y_plus),
-                getCut9(pos, Z_minus),
-                getCut9(pos, Z_plus),
+                getCutL9(posL, X_minus),
+                getCutL9(posL, X_plus),
+                getCutL9(posL, Y_minus),
+                getCutU9(posU, Y_plus),
+                getCutU9(posU, Z_minus),
+                getCutU9(posU, Z_plus),
                 b0, b1, b2, b3, b4, b5);
 
       }
@@ -1359,20 +1339,20 @@ void FFV::encodeBCindex(FILE* fp)
 
 
   // 圧力計算のビット情報をエンコードする -----
-  V.setBCIndexP(d_bcd, d_bcp, &BC, cmp, C.Mode.Example, d_cut, d_bid, C.NoCompo);
+  V.setBCIndexP(d_bcd, d_bcp, &BC, cmp, C.Mode.Example, d_cutL, d_cutU, d_bid, C.NoCompo);
 
 
 
 
   // 速度計算のビット情報をエンコードする -----
-  V.setBCIndexV(d_cdf, &BC, cmp, C.Mode.Example, d_cut, d_bid, d_bcd, C.NoCompo, C.NoMedium, mat);
+  V.setBCIndexV(d_cdf, &BC, cmp, C.Mode.Example, d_cutL, d_cutU, d_bid, d_bcd, C.NoCompo, C.NoMedium, mat);
 
 
 
   // 温度計算のビット情報をエンコードする -----
   if ( C.isHeatProblem() )
   {
-    V.setBCIndexH(d_cdf, d_bcd, &BC, C.KindOfSolver, cmp, d_cut, d_bid, C.NoCompo);
+    V.setBCIndexH(d_cdf, d_bcd, &BC, C.KindOfSolver, cmp, d_cutL, d_cutU, d_bid, C.NoCompo);
   }
 
   // 内部領域のFluid, Solidのセル数を数える C.Wcell(Local), G_Wcell(global)
@@ -1404,7 +1384,7 @@ void FFV::fixedParameters()
 
   // 定数
   C.Gravity =9.8; // gravity acceleration
-  GM.setSubDivision(20);
+  //GM.setSubDivision(20);
 
 }
 
@@ -1561,7 +1541,7 @@ void FFV::gatherDomainInfo()
     Hostonly_
     {
       fprintf(fp,"\nDomain %4d\n", i);
-      fprintf(fp,"\t ix, jx,  kx        [-] =  %13ld %13ld %13ld\n",  m_size[i*3], m_size[i*3+1], m_size[i*3+2]);
+      fprintf(fp,"\t ix, jx,  kx        [-] =  %13d %13d %13d\n",  m_size[i*3], m_size[i*3+1], m_size[i*3+2]);
       fprintf(fp,"\t(ox, oy, oz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n",
               m_org[i*3]*C.RefLength,  m_org[i*3+1]*C.RefLength,  m_org[i*3+2]*C.RefLength, m_org[i*3],  m_org[i*3+1],  m_org[i*3+2]);
       fprintf(fp,"\t(Lx, Ly, Lz)  [m] / [-] = (%13.6e %13.6e %13.6e)  /  (%13.6e %13.6e %13.6e)\n",
@@ -1677,169 +1657,101 @@ void FFV::gatherDomainInfo()
 
 
 // #################################################################
-/* @brief 交点情報のグリフを生成する
- * @param [in] cut   カットの配列
- * @param [in] bid   境界IDの配列
- * @param [in] fp    file pointer
- * @param [in] m_st  範囲指定　デバッグ用
- * @param [in] m_ed  範囲指定　デバッグ用
+/* @brief 交点の法線付き点群を生成する
+ * @param [in] cut    カットの配列
+ * @param [in] inner  trueのとき内部領域のみ
  */
-void FFV::generateGlyph(const long long* cut, const int* bid, FILE* fp, int* m_st, int* m_ed)
+void FFV::generateCutPWN(const int* cutL, const int* cutU, bool inner)
 {
   int ix = size[0];
   int jx = size[1];
   int kx = size[2];
   int gd = guide;
 
-  // 交点の総数を求める
-  unsigned global_cut=0;  /// 全カット数
-  unsigned local_cut=0;   /// 担当プロセスのカット数
-  unsigned g=0;
+  vector<Vec3r> xyz;
+  vector<Vec3r> nv;
+  
+  Vec3r org(originD);
+  Vec3r pch(pitchD);
+  
+  REAL_TYPE dh = pitchD[0];
+  Vec3r nvc(0.0);
+  
+  int is, js, ks, ie, je, ke;
 
-  int st[3], ed[3];
-
-  if ( m_st == NULL )
-  {
-    st[0] = 1;
-    st[1] = 1;
-    st[2] = 1;
-    ed[0] = ix;
-    ed[1] = jx;
-    ed[2] = kx;
-  }
-  else
-  {
-    st[0] = m_st[0];
-    st[1] = m_st[1];
-    st[2] = m_st[2];
-    ed[0] = m_ed[0];
-    ed[1] = m_ed[1];
-    ed[2] = m_ed[2];
-  }
-
-
-  for (int k=st[2]; k<=ed[2]; k++) {
-    for (int j=st[1]; j<=ed[1]; j++) {
-      for (int i=st[0]; i<=ed[0]; i++) {
-
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        int qq = bid[m];
-
-        if ( IS_CUT(qq) ) // カットがあるか，IDによる判定
-        {
-          if (getBit5(qq, 0) != 0) g++;
-          if (getBit5(qq, 1) != 0) g++;
-          if (getBit5(qq, 2) != 0) g++;
-          if (getBit5(qq, 3) != 0) g++;
-          if (getBit5(qq, 4) != 0) g++;
-          if (getBit5(qq, 5) != 0) g++;
-        }
-
+  is = js = ks = (inner)?2:1;
+  ie = (inner)?ix-1:ix;
+  je = (inner)?jx-1:jx;
+  ke = (inner)?kx-1:kx;
+  
+  
+  for (int k=ks; k<=ke; k++) {
+  for (int j=js; j<=je; j++) {
+  for (int i=is; i<=ie; i++) {
+    
+    Vec3r oi( (REAL_TYPE)i-0.5, (REAL_TYPE)j-0.5, (REAL_TYPE)k-0.5 );
+    Vec3r o( org + oi * pch );
+    
+    size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+    int posL = cutL[m];
+    int posU = cutU[m];
+    
+    for (int dir=0; dir<3; dir++)
+    {
+      if ( 1==ensCutL(posL, dir) )
+      {
+        REAL_TYPE r = getCutL9(posL, dir);
+        Vec3r d = Geometry::getDirVec(dir) * (r*dh);
+        xyz.push_back(o+d);
+        nv.push_back(nvc);
       }
     }
-  }
-
-  global_cut = local_cut = g;
-
-  if ( numProc > 1 )
-  {
-    unsigned tmp = global_cut;
-    if ( paraMngr->Allreduce(&tmp, &global_cut, 1, MPI_SUM, procGrp) != CPM_SUCCESS ) Exit(0);
-  }
-
-  Hostonly_
-  {
-    printf("\tGlyph : Number of Cut points = %u\n", global_cut);
-    fprintf(fp, "\tGlyph : Number of Cut points = %u\n", global_cut);
-  }
-
-
-  // 格子幅（有次元）
-  float m_pch[3] = {
-    (float)pitch[0]*C.RefLength,
-    (float)pitch[1]*C.RefLength,
-    (float)pitch[2]*C.RefLength
-  };
-
-  // サブドメインの起点座標（有次元）
-  float m_org[3] = {
-    (float)origin[0]*C.RefLength,
-    (float)origin[1]*C.RefLength,
-    (float)origin[2]*C.RefLength
-  };
-
-
-  // ポリゴンをストアする配列を確保
-  Glyph glyph(m_pch, m_org, local_cut, myRank);
-
-
-  // グリフの生成モード
-  bool inner_only = false;
-  if (C.Hide.GlyphOutput == 2) inner_only=true;
-
-  // カット点毎にグリフのポリゴン要素を生成し，配列にストア
-  Vec3i idx;
-
-  for (int k=st[2]; k<=ed[2]; k++) {
-    for (int j=st[1]; j<=ed[1]; j++) {
-      for (int i=st[0]; i<=ed[0]; i++) {
-
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        int qq = bid[m];
-
-        if ( IS_CUT(qq) ) // カットがあるか，IDによる判定
-        {
-          const long long pos = cut[m];
-
-          idx.assign(i, j, k);
-
-          if ( inner_only )
-          {
-            if (i != 1 )
-            {
-              if (getBit5(qq, 0) != 0) glyph.generateVertex(idx, pos, X_minus, qq);
-            }
-            if ( i != ix )
-            {
-              if (getBit5(qq, 1) != 0) glyph.generateVertex(idx, pos, X_plus, qq);
-            }
-            if ( j != 1 )
-            {
-              if (getBit5(qq, 2) != 0) glyph.generateVertex(idx, pos, Y_minus, qq);
-            }
-            if ( j != jx )
-            {
-              if (getBit5(qq, 3) != 0) glyph.generateVertex(idx, pos, Y_plus, qq);
-            }
-            if ( k != 1 )
-            {
-              if (getBit5(qq, 4) != 0) glyph.generateVertex(idx, pos, Z_minus, qq);
-            }
-            if ( k != kx )
-            {
-              if (getBit5(qq, 5) != 0) glyph.generateVertex(idx, pos, Z_plus, qq);
-            }
-          }
-          else
-          {
-            if (getBit5(qq, 0) != 0) glyph.generateVertex(idx, pos, X_minus, qq);
-            if (getBit5(qq, 1) != 0) glyph.generateVertex(idx, pos, X_plus , qq);
-            if (getBit5(qq, 2) != 0) glyph.generateVertex(idx, pos, Y_minus, qq);
-            if (getBit5(qq, 3) != 0) glyph.generateVertex(idx, pos, Y_plus , qq);
-            if (getBit5(qq, 4) != 0) glyph.generateVertex(idx, pos, Z_minus, qq);
-            if (getBit5(qq, 5) != 0) glyph.generateVertex(idx, pos, Z_plus , qq);
-          }
-        }
-
+    for (int dir=3; dir<6; dir++)
+    {
+      if ( 1==ensCutU(posU, dir) )
+      {
+        REAL_TYPE r = getCutU9(posU, dir);
+        Vec3r d = Geometry::getDirVec(dir) * (r*dh);
+        xyz.push_back(o+d);
+        nv.push_back(nvc);
       }
     }
+    
+  }}}
+  
+
+  std::ofstream ofs("cut.scab", std::ios::out | std::ios::binary);
+  if (!ofs) {
+    printf("\tCan't open 'cut.scab' file\n");
+    return;
   }
-
-
-  // ポリゴンの出力
-  glyph.writeBinary("CutGlyph");
-
+  
+  unsigned stp = 0;
+  double tm = 0.0;
+  unsigned csz = (unsigned)xyz.size();
+  unsigned nvar = 3;
+  
+  ofs.write((char*)&stp, sizeof(unsigned));
+  ofs.write((char*)&tm,  sizeof(float));
+  ofs.write((char*)&csz, sizeof(unsigned));
+  ofs.write((char*)&nvar, sizeof(unsigned));
+  
+  for (int i=0; i<csz; i++)
+  {
+    ofs.write((char*)&xyz[i].x, sizeof(float));
+    ofs.write((char*)&xyz[i].y, sizeof(float));
+    ofs.write((char*)&xyz[i].z, sizeof(float));
+    ofs.write((char*)&nv[i].x, sizeof(float));
+    ofs.write((char*)&nv[i].y, sizeof(float));
+    ofs.write((char*)&nv[i].z, sizeof(float));
+  }
+  
+  ofs.close();
+  
+  
 }
+
+
 
 
 
@@ -2033,13 +1945,16 @@ void FFV::initCutInfo()
   size_t size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
 
 
-  // 初期値のセット
+  // 初期値のセット 9ビット幅の1.0(511)で初期化
   for (size_t i=0; i<size_n_cell; i++)
   {
-    for (int dir=0; dir<6; dir++)
-    {
-      initBit9(d_cut[i], dir);
-    }
+    initBitL9(d_cutL[i], 0);
+    initBitL9(d_cutL[i], 1);
+    initBitL9(d_cutL[i], 2);
+    
+    initBitU9(d_cutU[i], 3);
+    initBitU9(d_cutU[i], 4);
+    initBitU9(d_cutU[i], 5);
   }
 
 }
@@ -2649,7 +2564,7 @@ void FFV::setComponentSR()
 
       // 交点計算
       flop = 0.0;
-      CF.intersectCylinder(f_st, f_ed, d_bid, d_cut, n);
+      CF.intersectCylinder(f_st, f_ed, d_bid, d_cutL, d_cutU, n);
 
 
       // ########## 確認のための出力
@@ -3100,7 +3015,7 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
     case id_Step:
     case id_Cylinder:
     case id_Duct:
-      Ex->setup(d_bcd, &C, C.NoCompo, mat, C.NoCompo, cmp, d_cut, d_bid);
+      Ex->setup(d_bcd, &C, C.NoCompo, mat, C.NoCompo, cmp, d_cutL, d_cutU, d_bid);
       break;
 
     default: // ほかのIntrinsic problems
@@ -3146,7 +3061,7 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
           Hostonly_ printf("Specified medium in '%s' is not FLUID or not listed.\n", m_obc->alias.c_str());
           Exit(0);
         }
-        V.setOBC(face, id, ptr_cmp, "fluid", d_bcd, d_cut, d_bid);
+        V.setOBC(face, id, ptr_cmp, "fluid", d_bcd, d_cutL, d_cutU, d_bid);
         break;
 
       case OBC_WALL:
@@ -3155,7 +3070,7 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
           Hostonly_ printf("Specified medium in '%s' is not SOLID or not listed.\n", m_obc->alias.c_str());
           Exit(0);
         }
-        V.setOBC(face, id, ptr_cmp, "solid", d_bcd, d_cut, d_bid);
+        V.setOBC(face, id, ptr_cmp, "solid", d_bcd, d_cutL, d_cutU, d_bid);
         break;
         
       case OBC_SPEC_VEL:
@@ -3164,11 +3079,11 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
           Hostonly_ printf("Specified medium in '%s' is not SOLID or not listed.\n", m_obc->alias.c_str());
           Exit(0);
         }
-        V.setOBC(face, id, ptr_cmp, "fluid", d_bcd, d_cut, d_bid);
+        V.setOBC(face, id, ptr_cmp, "fluid", d_bcd, d_cutL, d_cutU, d_bid);
         break;
 
       case OBC_INTRINSIC:
-        Ex->setOBC(face, d_bcd, &C, G_origin, C.NoCompo, mat, d_cut, d_bid);
+        Ex->setOBC(face, d_bcd, &C, G_origin, C.NoCompo, mat, d_cutL, d_cutU, d_bid);
         break;
 
       case OBC_PERIODIC: // nothing
@@ -3178,7 +3093,7 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
         if (mat[id].getState() != FLUID) {
           Exit(0);
         }
-        V.setOBC(face, id, ptr_cmp, "fluid", d_bcd, d_cut, d_bid);
+        V.setOBC(face, id, ptr_cmp, "fluid", d_bcd, d_cutL, d_cutU, d_bid);
         break;
     }
   }
@@ -3193,7 +3108,8 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
   {
     if ( paraMngr->BndCommS3D(d_bcd, size[0], size[1], size[2], guide, 1, procGrp) != CPM_SUCCESS ) Exit(0);
     if ( paraMngr->BndCommS3D(d_bid, size[0], size[1], size[2], guide, 1, procGrp) != CPM_SUCCESS ) Exit(0);
-    if ( paraMngr->BndCommS3D(d_cut, size[0], size[1], size[2], guide, 1, procGrp) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_cutL, size[0], size[1], size[2], guide, 1, procGrp) != CPM_SUCCESS ) Exit(0);
+    if ( paraMngr->BndCommS3D(d_cutU, size[0], size[1], size[2], guide, 1, procGrp) != CPM_SUCCESS ) Exit(0);
   }
 
 }
@@ -3208,7 +3124,8 @@ void FFV::setModel(double& PrepMemory, double& TotalMemory, FILE* fp)
 void FFV::setMonitorList()
 {
   MO.setControlVars(d_bid,
-                    d_cut,
+                    d_cutL,
+                    d_cutU,
                     d_bcd,
                     C.RefVelocity,
                     C.BaseTemp,
@@ -4204,12 +4121,12 @@ void FFV::SM_Polygon2Cut(double& m_prep, double& m_total, FILE* fp)
 
   // 交点計算
   TIMING_start("Cut_Information");
-  GM.quantizeCut(d_cut, d_bid, d_bcd, PL, PG);
+  GM.quantizeCut(d_cutL, d_cutU, d_bid, PL, PG);
   TIMING_stop("Cut_Information");
 
 
 #if 0
-  displayCutInfo(d_cut, d_bid);
+  displayCutInfo(d_cutL, d_cutU, d_bid);
 #endif
 
   TIMING_stop("Cut_Section");

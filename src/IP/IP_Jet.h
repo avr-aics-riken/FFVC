@@ -128,7 +128,8 @@ public:
                       REAL_TYPE* G_org,
                       const int NoMedium,
                       const MediumList* mat,
-                      long long* cut,
+                      int* cutL,
+                      int* cutU,
                       int* bid);
   
   

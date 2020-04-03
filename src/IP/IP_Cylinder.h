@@ -116,7 +116,8 @@ protected:
                  const REAL_TYPE radius,
                  const REAL_TYPE len_z,
                  const int mid_solid,
-                 long long* cut,
+                 int* cutL,
+                 int* cutU,
                  int* bid);
 
 
@@ -139,7 +140,8 @@ protected:
                const REAL_TYPE len_y,
                const REAL_TYPE len_z,
                const int mid_solid,
-               long long* cut,
+               int* cutL,
+               int* cutU,
                int* bid);
 
 
@@ -188,7 +190,8 @@ public:
                      const MediumList* mat,
                      const int NoCompo,
                      const CompoList* cmp,
-                     long long* cut,
+                     int* cutL,
+                     int* cutU,
                      int* bid);
 
 };

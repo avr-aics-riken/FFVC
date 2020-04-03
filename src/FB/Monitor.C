@@ -1374,7 +1374,8 @@ void MonitorList::registVars(const string label, vector<string>& variables, cons
 // #################################################################
 /// 必要なパラメータのコピー
 void MonitorList::setControlVars(int* bid,
-                                 long long* cut,
+                                 int* cut_l,
+                                 int* cut_u,
                                  int* bcd,
                                  const REAL_TYPE refVelocity,
                                  const REAL_TYPE baseTemp,
@@ -1391,7 +1392,8 @@ void MonitorList::setControlVars(int* bid,
 {
   this->bid      = bid;
   this->bcd      = bcd;
-  this->cut      = cut;
+  this->cutL     = cut_l;
+  this->cutU     = cut_u;
   this->g_org.x  = G_origin[0];
   this->g_org.y  = G_origin[1];
   this->g_org.z  = G_origin[2];
@@ -1446,7 +1448,7 @@ MonitorCompo* MonitorList::setLine(const char* str,
 {
   clipLine(from, to);
   
-  MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process, NoCompo, mtbl);
+  MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cutL, cutU, num_process, NoCompo, mtbl);
   
   m->setRankInfo(paraMngr, procGrp);
   m->setDomainInfo(guide, RefL);
@@ -1503,7 +1505,7 @@ MonitorCompo* MonitorList::setPointSet(const char* str,
   
   if( n_pts <= 0 ) return NULL;
   
-  MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process, NoCompo, mtbl);
+  MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cutL, cutU, num_process, NoCompo, mtbl);
   
   m->setRankInfo(paraMngr, procGrp);
   m->setDomainInfo(guide, RefL);
@@ -1534,7 +1536,7 @@ void MonitorList::setPolygon(const char* str,
                              const REAL_TYPE nv[3],
                              Monitor_Type mon_type)
 {
-  MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process, NoCompo, mtbl);
+  MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cutL, cutU, num_process, NoCompo, mtbl);
   
   m->setRankInfo(paraMngr, procGrp);
   m->setDomainInfo(guide, RefL);
@@ -1568,7 +1570,7 @@ void MonitorList::setPrimitive(const char* str,
                                const REAL_TYPE nv[3],
                                Monitor_Type mon_type)
 {
-  MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cut, num_process, NoCompo, mtbl);
+  MonitorCompo* m = new MonitorCompo(org, pch, box, g_org, g_box, refVar, bid, bcd, cutL, cutU, num_process, NoCompo, mtbl);
 
   m->setRankInfo(paraMngr, procGrp);
   m->setDomainInfo(guide, RefL);

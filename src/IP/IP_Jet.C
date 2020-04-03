@@ -600,7 +600,7 @@ void IP_Jet::printPara(FILE* fp, const Control* R)
 
 // #################################################################
 // 外部境界の設定
-void IP_Jet::setOBC(const int face, int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, long long* cut, int*bid)
+void IP_Jet::setOBC(const int face, int* bcd, Control* R, REAL_TYPE* G_org, const int NoMedium, const MediumList* mat, int* cutL, int* cutU, int*bid)
 {
   int mid_fluid;        /// 流体
   int mid_solid;        /// 固体  
@@ -656,7 +656,7 @@ schedule(static)
           // 交点
           size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
           int r = quantize9(0.5); /// 壁面までの距離
-          setCut9(cut[l], r, X_minus);
+          setCutL9(cutL[l], r, X_minus);
           
           // 境界ID
           setBit5(bid[l], mid_solid, X_minus);
@@ -687,7 +687,7 @@ schedule(static)
               
               size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
               int r = quantize9(1.0);
-              setCut9(cut[l], r, X_minus);
+              setCutL9(cutL[l], r, X_minus);
               setBit5(bid[l], 0, X_minus);
             }
             
@@ -719,7 +719,7 @@ schedule(static)
               
               size_t l = _F_IDX_S3D(1  , j  , k  , ix, jx, kx, gd);
               int r = quantize9(1.0);
-              setCut9(cut[l], r, X_minus);
+              setCutL9(cutL[l], r, X_minus);
               setBit5(bid[l], 0, X_minus);
             }
             

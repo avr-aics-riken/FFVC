@@ -86,7 +86,7 @@ private:
 
 
   // 圧力のノイマン境界ビットをエンコードする
-  void encPbitN (int* bx, const int* bid, const long long* cut, const bool convergence);
+  void encPbitN (int* bx, const int* bid, const int* cut_l, const int* cut_u, const bool convergence);
 
 
   // 計算領域内部のコンポーネントの圧力境界条件フラグをbcp[]にエンコードする
@@ -167,7 +167,7 @@ public:
 
 
   // フラグのチェック
-  void chkFlag(const int* bx, const int* bid, const long long* cut, const int* bcd);
+  void chkFlag(const int* bx, const int* bid, const int* cut_l, const int* cut_u, const int* bcd);
 
 
   /**
@@ -244,7 +244,8 @@ public:
                    SetBC* BC,
                    const int kos,
                    CompoList* cmp,
-                   long long* cut,
+                   int* cut_l,
+                   int* cut_u,
                    int* cut_id,
                    const int m_NoCompo);
 
@@ -265,7 +266,8 @@ public:
                    SetBC* BC,
                    CompoList* cmp,
                    int icls,
-                   const long long* cut,
+                   const int* cut_l,
+                   const int* cut_u,
                    const int* bid,
                    const int m_NoCompo);
 
@@ -287,7 +289,8 @@ public:
                    SetBC* BC,
                    CompoList* cmp,
                    int icls,
-                   long long* cut,
+                   int* cut_l,
+                   int* cut_u,
                    int* bid,
                    int* bcd,
                    const int m_NoCompo,
@@ -334,7 +337,14 @@ public:
    * @param [in,out] cut     距離情報
    * @param [in,out] bid     カットID情報
    */
-  void setOBC (const int face, const int c_id, const int ptr_cmp, const char* str, int* bcd, long long* cut, int* bid);
+  void setOBC (const int face,
+               const int c_id,
+               const int ptr_cmp,
+               const char* str,
+               int* bcd,
+               int* cut_l,
+               int* cut_u,
+               int* bid);
 
 };
 

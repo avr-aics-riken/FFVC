@@ -162,65 +162,42 @@
   0  +                  + X_minus                    + BC_FACE_W
 
 
- Bit    cut[]
- 64
- 63
- 62
- 61
- 60
- 59   +
-  .   |
-  .
-  .   |
- 51   + Z_plus
- 50   +
-  .   |
-  .
-  .   |
- 42   + Z_minus
- 41   +
-  .   |
-  .
-  .   |
- 33   + Y_plus                 nrm[]
- 32   +
- 31   |                        +
- 30   |                        | Initialized (STATE_BIT)
- 29   |                        + Z_nrm_Sign
- 28   |                        |
- 27   |                        |
- 26   |                        |
- 25   |                        |
- 24   + Y_minus                |
- 23   +                        |
- 22   |                        |
- 21   |                        |
- 20   |                        + Z_nrm
- 19   |                        + Y_nrm_Sign
- 18   |                        |
- 17   |                        |
- 16   |                        |
- 15   + X_plus                 |
- 14   +                        |
- 13   |                        |
- 12   |                        |
- 11   |                        |
- 10   |                        + Y_nrm
-  9   |                        + X_nrm_Sign
-  8   |                        |
-  7   |                        |
-  6   + X_minus => TOP_CUT     |
-  5   +          Z_plus        |
-  4   |          Z_minus       |
-  3   | Ens code Y_plus        |
-  2   |          Y_minus       |
-  1   |          X_plus        |
-  0   +          X_minus       + X_nrm
+ 
+Bit    cut_l[]             cut_u[]             nrm[]
+ 31
+ 30     STATE_BIT            STATE_BIT          Initialized (STATE_BIT)
+ 29   + Ens Y_minus        + Ens Z_plus         + Z_nrm_Sign
+ 28   |                    |                    |
+ 27   |                    |                    |
+ 26   |                    |                    |
+ 25   |                    |                    |
+ 24   |                    |                    |
+ 23   |                    |                    |
+ 22   |                    |                    |
+ 21   |                    |                    |
+ 20   + Y_minus(2)         + Z_plus(5)          + Z_nrm
+ 19   + Ens X_plus         + Ens Z_minus        + Y_nrm_Sign
+ 18   |                    |                    |
+ 17   |                    |                    |
+ 16   |                    |                    |
+ 15   |                    |                    |
+ 14   |                    |                    |
+ 13   |                    |                    |
+ 12   |                    |                    |
+ 11   |                    |                    |
+ 10   + X_plus(1)          + Z_minus(4)         + Y_nrm
+  9   + Ens X_minus        + Ens Y_plus         + X_nrm_Sign
+  8   |                    |                    |
+  7   |                    |                    |
+  6   |                    |                    |
+  5   |                    |                    |
+  4   |                    |                    |
+  3   |                    |                    |
+  2   |                    |                    |
+  1   |                    |                    |
+  0   + X_minus(0)         + Y_plus(3)          + X_nrm
 
  */
-
-
-
 
 
 // エンコードビット 共通
@@ -285,10 +262,6 @@
 #define BC_FACE_S  10
 #define BC_FACE_E  5
 #define BC_FACE_W  0
-
-
-// エンコードビット CUT
-#define TOP_CUT 6
 
 
 // Component Type
@@ -718,7 +691,7 @@ inline float getQuantized9(const int d)
  */
 inline int getBit5 (const int bid, const int dir)
 {
-  return ( (bid >> dir*5) & MASK_5 );
+  return ( bid >> (dir*5) & MASK_5 );
 }
 
 
@@ -750,123 +723,175 @@ inline void setMediumID (int& b, const int q)
 
 /*
  * @brief cut indexから指定方向交点の有無を返す
- * @param [in] c    cut index
+ * @param [in] cl   cut lower index
  * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
  * @retval 交点あり(1)、なし(0)
  */
-inline int ensCut (const long long c, const int dir)
+inline int ensCutL(const int cl, const int dir)
 {
-  long long a = 1;
-  return (int)((c >> dir) & a);
+  return cl >> (dir*10+9) & 0x1;
 }
 
-
 /*
- * @brief 指定方向交点の有無と距離0のチェック
- * @param [in] c    cut index
+ * @brief cut indexから指定方向交点の有無を返す
+ * @param [in] cu   cut upper index
  * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
- * @retval 交点があり、かつ、距離がゼロのとき1
+ * @retval 交点あり(1)、なし(0)
  */
-inline int chkZeroCut (const long long c, const int dir)
+inline int ensCutU(const int cu, const int dir)
 {
-  // 各方向の9ビット
-  long long b = (c >> TOP_CUT) >> dir*9;
-  long long a = 1;
-
-  // 量子化した距離 9ビット幅
-  a = MASK_9;
-  int d = (int)(b & a);
-
-  // 距離が記録されている
-  if ( d > 0 ) return 0;
-
-  // 交点の有無
-  int ens = (int)((c >> dir) & a);
-
-  // 距離ゼロ
-  if ( ens == 1 )
-  {
-    return 1; // 交点の記録あり
-  }
-  else
-  {
-    return 2; // 交点の記録なし
-  }
+  return cu >> ((dir-3)*10+9) & 0x1;
 }
 
 
 /*
  * @brief cut indexから指定方向の量子化値をとりだす
- * @param [in] c    cut index
+ * @param [in] cl   cut lower index
  * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
  */
-inline int getBit9 (const long long c, const int dir)
+inline int getBitL9(const int cl, const int dir)
 {
-  long long a = MASK_9;
-  return (int)( ((c >> TOP_CUT) >> dir*9) & a );
+  return cl >> (dir*10) & MASK_9;
 }
+
+/*
+ * @brief cut indexから指定方向の量子化値をとりだす
+ * @param [in] cu   cut upper index
+ * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+ */
+inline int getBitU9(const int cu, const int dir)
+{
+  return cu >> ((dir-3)*10) & MASK_9;
+}
+
+
+
+/*
+ * @brief 指定方向交点の有無と距離0のチェック
+ * @param [in] c    cut lower index
+ * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+ * @retval 交点があり、かつ、距離がゼロのとき1
+ */
+inline int chkZeroCut(const int c, const int dir)
+{
+  // 量子化した距離 9ビット幅
+  int d = (dir<3) ? getBitL9(c, dir) : getBitU9(c, dir);
+
+  // 距離が記録されている
+  if ( d > 0 ) return 0;
+
+  // 距離ゼロ
+  int e = (dir<3) ? ensCutL(c, dir) : ensCutU(c, dir);
+  
+  return (e == 1) ? 1 : 2; // 交点の記録あり(1) , なし(2)
+}
+
 
 
 /*
  * @brief cut indexから指定方向の距離を取り出す
- * @param [in] c    cut index
+ * @param [in] cl   cut lower index
  * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
  */
-inline float getCut9 (const long long c, const int dir)
+inline float getCutL9(const int cl, const int dir)
 {
-  long long a = MASK_9;
-  return (float)( ((c >> TOP_CUT) >> dir*9) & a ) / (float)QT_9;
+  return getQuantized9( cl >> (dir*10) & MASK_9 );
 }
+
+/*
+ * @brief cut indexから指定方向の距離を取り出す
+ * @param [in] cu   cut upper index
+ * @param [in] dir  方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+ */
+inline float getCutU9(const int cu, const int dir)
+{
+  return getQuantized9( cu >> ((dir-3)*10) & MASK_9 );
+}
+
 
 
 /*
  * @brief cut indexの値の設定（9bit幅の値と交点フラグ）
- * @param [in,out] c   cut index
+ * @param [in,out] cl   cut lower index
  * @param [in]     q   9-bit幅の値
  * @param [in]     dir 方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
  */
-inline void setCut9 (long long& c, const int q, const int dir)
+inline void setCutL9(int& cl, const int q, const int dir)
 {
-  long long a = MASK_9;
-  long long b = q;
-  c &= ( ~( (a<<dir*9) << TOP_CUT) );  // 対象9bitをゼロにする
-  c |= ( (b<<dir*9) << TOP_CUT );      // 値を書き込む
-  a = 1;
-  c &= ( ~(a<<dir) );   // 交点フラグをクリア
-  c |= (a<<dir);        // 交点フラグをON
+  int d = dir*10;
+  cl &= ( ~(MASK_10 << d) );  // 対象10bitをゼロにする
+  cl |= ( q<<d );             // 値を書き込む
+  cl |= ( 0x1<<(d+9) );       // 交点フラグをON
 }
+
+/*
+ * @brief cut indexの値の設定（9bit幅の値と交点フラグ）
+ * @param [in,out] cl   cut lower index
+ * @param [in,out] cu   cut upper index
+ * @param [in]     q   9-bit幅の値
+ * @param [in]     dir 方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+ */
+inline void setCutU9(int& cu, const int q, const int dir)
+{
+  int d = (dir-3)*10;
+  cu &= ( ~(MASK_10 << d) );  // 対象10bitをゼロにする
+  cu |= ( q<<d );             // 値を書き込む
+  cu |= ( 0x1<<(d+9) );       // 交点フラグをON
+}
+
 
 
 /*
  * @brief cut indexの値を連結状態に変更（9bit幅の値と交点フラグ）
- * @param [in,out] c   cut index
+ * @param [in,out] cl   cut lower index
  * @param [in]     dir 方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
  */
-inline void setUncut9 (long long& c, const int dir)
+inline void setUncutL9(int& cl, const int dir)
 {
-  long long a = MASK_9;
-  long long b = QT_9;
-  c &= ( ~( (a<<dir*9) << TOP_CUT) );  // 対象9bitをゼロにする
-  c |= ( (b<<dir*9) << TOP_CUT );      // 値を書き込む
-  a = 1;
-  c &= ( ~(a<<dir) );   // 交点フラグをクリア
-  a = 0;
-  c |= (a<<dir);        // 交点フラグをOFF
+  int d = dir*10;
+  cl &= ( ~(MASK_10<<d) ); // 対象10bitをゼロにする
+  cl |= ( QT_9<<d );       // 最大値を書き込む
+  cl &= ( ~(0x1<<(d+9)) ); // 交点フラグをクリア
+}
+
+/*
+ * @brief cut indexの値を連結状態に変更（9bit幅の値と交点フラグ）
+ * @param [in,out] cu   cut upper index
+ * @param [in]     dir 方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+ */
+inline void setUncutU9(int& cu, const int dir)
+{
+  int d = (dir-3)*10;
+  cu &= ( ~(MASK_10<<d) ); // 対象10bitをゼロにする
+  cu |= ( QT_9<<d );       // 最大値を書き込む
+  cu &= ( ~(0x1<<(d+9)) ); // 交点フラグをクリア
+}
+
+
+
+/*
+ * @brief cut indexを511で初期化
+ * @param [in,out] cl   cut lower index
+ * @param [in]     dir 方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
+ */
+inline void initBitL9(int& cl, const int dir)
+{
+  int d = dir*10;
+  cl &= ( ~( MASK_9<<d) );  // 対象9bitをゼロにする
+  cl |= ( QT_9<<d );        // 値を書き込む
 }
 
 
 /*
  * @brief cut indexを511で初期化
- * @param [in,out] c   cut index
+ * @param [in,out] cu   cut upper index
  * @param [in]     dir 方向コード (w/X_MINUS=0, e/X_PLUS=1, s/2, n/3, b/4, t/5)
  */
-inline void initBit9 (long long& c, const int dir)
+inline void initBitU9(int& cu, const int dir)
 {
-  long long a = MASK_9;
-  const long long b = QT_9; // 511
-
-  c &= ( ~( (a<<dir*9) << TOP_CUT) );  // 対象9bitをゼロにする
-  c |= ( (b<<dir*9) << TOP_CUT );      // 値を書き込む
+  int d = (dir-3)*10;
+  cu &= ( ~( MASK_9<<d) );  // 対象9bitをゼロにする
+  cu |= ( QT_9<<d );        // 値を書き込む
 }
 
 

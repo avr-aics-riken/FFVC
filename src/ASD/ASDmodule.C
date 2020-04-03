@@ -445,7 +445,7 @@ void ASD::CalculateCut()
 
   // アロケート
   size_t size_n_cell = n_cell[0] * n_cell[1] * n_cell[2];
-  d_cut = new long long[size_n_cell*6];
+  d_cut = new int[size_n_cell*6];
   memset(d_cut, 0, sizeof(float)*size_n_cell*6);
 
   d_bid = new int[size_n_cell];
@@ -550,8 +550,6 @@ void ASD::fill(bool disp_flag, Geometry* GM)
   }
 
 
-  //int FillSuppress[3] = {1, 1, 1};
-
 
   if ( !disp_flag )
   {
@@ -559,14 +557,10 @@ void ASD::fill(bool disp_flag, Geometry* GM)
     printf(    "\t\tFilling Fluid Medium   : Solid\n");
     printf(    "\t\tFill Seed Medium       : Solid\n");
     printf(    "\t\tFill Seed Direction    : %d\n", FillSeedDir);
-    //printf(    "\t\tFill Control (X, Y, Z) : (%s, %s, %s)\n\n",
-    //       ( !FillSuppress[0] ) ? "Suppress" : "Fill",
-    //       ( !FillSuppress[1] ) ? "Suppress" : "Fill",
-    //       ( !FillSuppress[2] ) ? "Suppress" : "Fill");
   }
 
 
-  filled = GM->fillSeedBcdOuter(d_bcd, FillSeedDir, md_solid, d_bid, G_division);
+  //filled = GM->fillSeedBcdOuter(d_bcd, FillSeedDir, md_solid, d_bid, G_division);
 
 
   if ( filled == 0 )
@@ -606,7 +600,6 @@ void ASD::fill(bool disp_flag, Geometry* GM)
     // SeedIDで指定された媒質でフィルする．FLUID/SOLIDの両方のケースがある
     unsigned long fs;
     int cs=1; // @todo 適当なので正しく動かない　修正の必要あり
-    //filled = GM->fillByBid(d_bcd, d_bid, d_cut, fs, cs, mat, G_division);
     replaced = fs;
 
     target_count -= filled;
@@ -661,7 +654,7 @@ void ASD::fill(bool disp_flag, Geometry* GM)
   // 未ペイントのセルに対して、指定媒質でフィルする
   while ( target_count > 0 ) {
 
-    replaced = GM->fillByFluid(d_bcd, md_fluid, d_bid, G_division);
+    //replaced = GM->fillByFluid(d_bcd, md_fluid, d_bid, G_division);
 
     target_count -= replaced;
     sum_replaced += replaced;

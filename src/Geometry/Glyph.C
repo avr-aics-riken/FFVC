@@ -23,7 +23,7 @@
 
 // #################################################################
 // グリフ作成のための頂点を生成
-void Glyph::generateVertex(const Vec3i idx, const long long pos, const int dir, const int m_bid)
+void Glyph::generateVertex(const Vec3i idx, const int pos, const int dir, const int m_bid)
 {
   Vec3f b;     // セルセンターのシフトインデクス
   Vec3f c;     // セルセンター座標
@@ -34,7 +34,7 @@ void Glyph::generateVertex(const Vec3i idx, const long long pos, const int dir, 
   
   b.assign((float)idx.x-0.5, (float)idx.y-0.5, (float)idx.z-0.5);
   c = org + b * pch;
-  float r = getCut9(pos, dir);
+  float r = (dir<3) ? getCutL9(pos, dir) : getCutU9(pos, dir);
   
   if ( X_minus == dir )
   {

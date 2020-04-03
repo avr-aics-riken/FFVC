@@ -53,7 +53,6 @@
 
 // Geometry
 #include "Geometry.h"
-#include "Glyph.h"
 #include "CompoFraction.h"
 
 // FileIO class
@@ -221,6 +220,11 @@ private:
   int order_of_PM_key;      ///< PMlib用の登録番号カウンタ < PM_NUM_MAX
 
   string active_fname;      ///< Active subdomainのファイル名
+  
+  
+  int num_probes;         ///< プローブの数
+  REAL_TYPE* probe_cf;    ///< 交点の法線方向参照点の内挿係数
+  REAL_TYPE* probe_d;     ///< 交点の法線方向参照点への距離
 
 
 
@@ -297,7 +301,7 @@ private:
 
 
   // 交点情報の表示（デバッグ）
-  void displayCutInfo(const long long* cut, const int* bid);
+  void displayCutInfo(const int* cutL, const int* cutU, const int* bid);
 
 
   // メモリ使用量の表示
@@ -322,10 +326,9 @@ private:
 
   // 並列処理時の各ノードの分割数を集めてファイルに保存する
   void gatherDomainInfo();
-
-
-  // Glyphを生成・出力
-  void generateGlyph(const long long* cut, const int* bid, FILE* fp, int* m_st=NULL, int* m_ed=NULL);
+  
+  
+  void generateCutPWN(const int* cutL, const int* cutU, bool inner=false);
 
 
   // Div反復のパラメータ

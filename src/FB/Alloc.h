@@ -54,8 +54,6 @@ public:
   
   static int* Int_S3D(const int* sz, const int gc);
   
-  static long long* LLong_S3D(const int* sz, const int gc);
-  
 	static REAL_TYPE* Real_S3D(const int* sz, const int gc);
   
   static REAL_TYPE* Real_S4D(const int* sz, const int gc, const int dnum);

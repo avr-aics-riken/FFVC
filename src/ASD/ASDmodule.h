@@ -90,7 +90,7 @@ private:
   int divPolicy;
 
 
-  long long *d_cut; ///< 距離情報
+  int    *d_cut; ///< 距離情報
   int    *d_bid; ///< BC
   int    *d_bcd;
 

@@ -108,7 +108,8 @@ REAL_TYPE CompoFraction::calcBboxRect(Vec3r& mn, Vec3r& mx)
 int CompoFraction::CylinderPlane(const int st[],
                                  const int ed[],
                                  int* bid,
-                                 long long* cut,
+                                 int* cutL,
+                                 int* cutU,
                                  const REAL_TYPE pl[4],
                                  const int s_id,
                                  const int* Dsize)
@@ -156,19 +157,21 @@ int CompoFraction::CylinderPlane(const int st[],
           
           // テンポラリに保持
           size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-          int bb = bid[m];
-          long long cc = cut[m];
+          int bb  = bid[m];
+          int ccL = cutL[m];
+          int ccU = cutU[m];
           
           // 各方向の交点を評価、短い距離を記録する。新規記録の場合のみカウント
-          count += updateCutPlane(b, p[0], pl, cc, bb, X_minus, s_id);
-          count += updateCutPlane(b, p[1], pl, cc, bb, X_plus,  s_id);
-          count += updateCutPlane(b, p[2], pl, cc, bb, Y_minus, s_id);
-          count += updateCutPlane(b, p[3], pl, cc, bb, Y_plus,  s_id);
-          count += updateCutPlane(b, p[4], pl, cc, bb, Z_minus, s_id);
-          count += updateCutPlane(b, p[5], pl, cc, bb, Z_plus,  s_id);
+          count += updateCutPlane(b, p[0], pl, ccL, ccU, bb, X_minus, s_id);
+          count += updateCutPlane(b, p[1], pl, ccL, ccU, bb, X_plus,  s_id);
+          count += updateCutPlane(b, p[2], pl, ccL, ccU, bb, Y_minus, s_id);
+          count += updateCutPlane(b, p[3], pl, ccL, ccU, bb, Y_plus,  s_id);
+          count += updateCutPlane(b, p[4], pl, ccL, ccU, bb, Z_minus, s_id);
+          count += updateCutPlane(b, p[5], pl, ccL, ccU, bb, Z_plus,  s_id);
           
           bid[m] = bb;
-          cut[m] = cc;
+          cutL[m] = ccL;
+          cutU[m] = ccU;
         }
       }
     }
@@ -191,7 +194,8 @@ int CompoFraction::CylinderPlane(const int st[],
 int CompoFraction::CylinderSide(const int st[],
                                 const int ed[],
                                 int* bid,
-                                long long* cut,
+                                int* cutL,
+                                int* cutU,
                                 const int s_id,
                                 const int* Dsize)
 {
@@ -243,19 +247,20 @@ int CompoFraction::CylinderSide(const int st[],
           // テンポラリに保持
           size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
           int bb = bid[m];
-          long long cc = cut[m];
-          
+          int ccL = cutL[m];
+          int ccU = cutU[m];
           
           // 各方向の交点を評価、短い距離を記録する。新規記録の場合のみカウント
-          count += updateCutCylinder(b, p[0], cc, bb, X_minus, s_id);
-          count += updateCutCylinder(b, p[1], cc, bb, X_plus,  s_id);
-          count += updateCutCylinder(b, p[2], cc, bb, Y_minus, s_id);
-          count += updateCutCylinder(b, p[3], cc, bb, Y_plus,  s_id);
-          count += updateCutCylinder(b, p[4], cc, bb, Z_minus, s_id);
-          count += updateCutCylinder(b, p[5], cc, bb, Z_plus,  s_id);
+          count += updateCutCylinder(b, p[0], ccL, ccU, bb, X_minus, s_id);
+          count += updateCutCylinder(b, p[1], ccL, ccU, bb, X_plus,  s_id);
+          count += updateCutCylinder(b, p[2], ccL, ccU, bb, Y_minus, s_id);
+          count += updateCutCylinder(b, p[3], ccL, ccU, bb, Y_plus,  s_id);
+          count += updateCutCylinder(b, p[4], ccL, ccU, bb, Z_minus, s_id);
+          count += updateCutCylinder(b, p[5], ccL, ccU, bb, Z_plus,  s_id);
 
           bid[m] = bb;
-          cut[m] = cc;
+          cutL[m] = ccL;
+          cutU[m] = ccU;
         }
         
       }
@@ -430,7 +435,8 @@ REAL_TYPE CompoFraction::getBboxArea(int* st, int* ed)
 bool CompoFraction::intersectCylinder(const int st[],
                                       const int ed[],
                                       int* bid,
-                                      long long* cut,
+                                      int* cutL,
+                                      int* cutU,
                                       const int tgt_id,
                                       const int* Dsize)
 {
@@ -466,17 +472,17 @@ bool CompoFraction::intersectCylinder(const int st[],
   
   // 上面
   pl[3] = depth;
-  count += CylinderPlane(st, ed, bid, cut, pl, tgt_id, m_sz);
+  count += CylinderPlane(st, ed, bid, cutL, cutU, pl, tgt_id, m_sz);
 
   
   if (shape == shape_cylinder)
   {
     // 下面
     pl[3] = 0.0;
-    count += CylinderPlane(st, ed, bid, cut, pl, tgt_id, m_sz);
+    count += CylinderPlane(st, ed, bid, cutL, cutU, pl, tgt_id, m_sz);
     
     // 側面
-    count += CylinderSide(st, ed, bid, cut, tgt_id, m_sz);
+    count += CylinderSide(st, ed, bid, cutL, cutU, tgt_id, m_sz);
   }
   
   return true;

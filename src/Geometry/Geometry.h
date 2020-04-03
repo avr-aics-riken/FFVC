@@ -37,20 +37,41 @@
 #include <vector>
 
 #define SEARCH_WIDTH 6
+#define DIST_AB 2.0
 
 using namespace std;
 using namespace PolylibNS;
 using namespace Vec3class;
 
 
+// 交点の法線方向探索結果を整列するためのテンポラリデータを格納
+
+struct cut_probe {
+  REAL_TYPE dist; // 距離
+  Vec3r refp;     // 参照点
+  Vec3r cp;       // 交点
+  Vec3r nv;       // 交点からの法線
+};
+  
+
+// 比較関数
+static bool cmp_dist(const cut_probe& a, const cut_probe& b) {
+  return a.dist < b.dist;
+}
+static bool cmp_i(const cut_probe& a, const cut_probe& b) {
+  return a.refp.x < b.refp.x;
+}
+static bool cmp_j(const cut_probe& a, const cut_probe& b) {
+  return a.refp.y < b.refp.y;
+}
+static bool cmp_k(const cut_probe& a, const cut_probe& b) {
+  return a.refp.z < b.refp.z;
+}
+
+
+
+
 class Geometry : public DomainInfo {
-
-public:
-  enum kind_fill_hint {
-    kind_outerface=1,
-    kind_point
-  };
-
 
 private:
   int NumSuvDiv;       ///< 再分割数
@@ -60,13 +81,14 @@ private:
   int NoHint;
   int NoMedium;        ///< 媒質数
   int NoCompo;         ///< コンポーネント数
+  
+  Vec3r my_reg_min;    ///<  自領域の最小値　参照点チェック用
+  Vec3r my_reg_max;    ///<  自領域の最大値
 
   typedef struct {
     string identifier;
-    kind_fill_hint kind;
     int dir;
     string medium;
-    REAL_TYPE point[3];  ///< 有次元座標
   } KindFill;
 
   KindFill* fill_table;
@@ -75,7 +97,11 @@ private:
   const CompoList* cmp;
   FILE* fpc;            ///< condition.txtへのファイルポインタ
   
-  REAL_TYPE RefL; ///< 参照長さ
+  // 各ランクごとのデータ保持
+  vector<cut_probe> prb;    ///< 交点の参照座標と距離
+  
+  // debug
+  vector<cut_probe> prb_dbg;
 
 
 public:
@@ -97,7 +123,6 @@ public:
     NoHint = 0;
     NoMedium = 0;
     NoCompo  = 0;
-    RefL = 0.0;
 
     for (int i=0; i<3; i++) {
       FillSuppress[i] = ON; // default is "fill"
@@ -136,14 +161,7 @@ private:
                          int* mid,
                          const int* Dsize=NULL);
 
-
-  // d_mid[]がtargetであるセルに対して、d_pvf[]に指定値valueを代入する
-  unsigned long assignVF(const int target,
-                         const REAL_TYPE value,
-                         const int* d_mid,
-                         REAL_TYPE* d_pvf);
-
-
+  
   // mid[]内にあるm_idのセルを数える
   unsigned long countCellM(const int* mid,
                            const int m_id,
@@ -151,31 +169,20 @@ private:
                            const bool painted=true,
                            const int* Dsize=NULL);
 
-
-  // セル数をカウント（デバッグ用）
-  unsigned long debug_countCellB(const int* bcd,
-                                 const int m_id,
-                                 const int* bid,
-                                 const int* Dsize=NULL);
-
-
-  // 未ペイントセルをtargetでフィル
-  unsigned long fillByID(int* mid,
-                         const int target,
-                         const int* Dsize=NULL);
-
-
-  // 流体媒質のフィルをbid情報を元に実行
-  unsigned long fillByMid(int* mid,
-                          const int tgt_id,
+  
+  // bid情報を元にフラッドフィル
+  unsigned long fillbyBid(int* bcd,
+                          const int* bid,
+                          const int mode,
                           const int* Dsize=NULL);
-
-
-  // 未ペイントセルを周囲のbidの固体最頻値でフィル
-  bool fillByModalSolid(int* bcd,
-                        const int* bid,
-                        unsigned long& replaced);
-
+  
+  
+  // 未ペイントセルをFLUIDでフィル
+  unsigned long fillByFluid(int* bcd,
+                            const int fluid_id,
+                            const int* bid,
+                            const int* Dsize=NULL);
+  
 
   // bid情報を元にフラッドフィル
   bool fillConnected(int* d_bcd,
@@ -184,35 +191,16 @@ private:
                      unsigned long& target_count);
 
 
-  // 未ペイントセルをpaintIDで連結フィルする
-  unsigned long  fillConnected4ID(int* mid,
-                                  const int* bid,
-                                  const int paintID,
-                                  const int* Dsize=NULL);
-
-
-  // サブセルのSolid部分の値を代入
-  unsigned long fillSubCellSolid(int* smd, REAL_TYPE* svf);
-
-
   // 流体セルをマイナス値でワーク配列にコピー
   unsigned long fillFluidRegion(int* mid, const int* bcd);
 
 
-  // サブセルの未ペイントセルを周囲の媒質IDの固体最頻値でフィル
-  unsigned long fillSubCellByModalSolid(int* smd, REAL_TYPE* svf);
-
-
-  // シード点をmid[]にペイントする
-  unsigned long fillSeedMid(int* mid,
-                            const int face,
-                            const int target,
-                            const int* Dsize=NULL);
-
-
-  // ペイント対象のセルを含むbboxを探す
-  unsigned long findBboxforSeeding(const int* mid, int* bbox, const int* Dsize=NULL);
-
+  // bcd[]の外層にシードIDをペイントする
+  unsigned long fillSeedBcdOuter(int* bcd,
+                                 const int face,
+                                 const int target,
+                                 const int* bid,
+                                 const int* Dsize=NULL);
 
   // 点pの属するセルインデクスを求める
   // @param [in]  pt 有次元座標
@@ -244,20 +232,6 @@ private:
   int find_mode(const int m_sz, const int* list);
 
 
-  // サブセル内の最頻値IDを求める
-  int find_mode_smd(const int* smd);
-
-
-  // セルに含まれるポリゴンを探索し、d_midに記録
-#ifndef DISABLE_MPI
-  unsigned long findPolygonInCell(int* d_mid,
-                                  MPIPolylib* PL,
-                                  PolygonProperty* PG);
-#else
-  unsigned long findPolygonInCell(int* d_mid,
-                                  Polylib* PL,
-                                  PolygonProperty* PG);
-#endif
 
   // 各ランクの最頻値情報を集める
   void gatherModes(vector<unsigned long>& mode);
@@ -315,17 +289,17 @@ private:
 
   // 同種のセルでカットをもつ境界の修正
   unsigned mergeSameSolidCell(int* bid,
-                              long long* cut,
+                              int* cutL,
+                              int* cutU,
                               const int* bcd,
                               const int* Dsize=NULL);
 
 
   // 距離の最小値を求める
-  void minDistance(const long long* cut, const int* bid);
+  void minDistance(const int* cutL, const int* cutU, const int* bid);
 
 
-  // 固体領域をスレッド毎にIDでペイント
-  void paintSolidRegion(int* mid, const int* Dsize=NULL);
+  
 
 
   // 対応づけしたmat[]インデクスによりラベル部分をペイントする
@@ -343,6 +317,10 @@ private:
                            const int* Dsize=NULL);
 
 
+  // 6方向にカットのあるセルをSOLIDに変更
+  void paintIsolatedCell(int* bid, int*cutL, int* cutU);
+  
+  
   // ラベルを縮約する
   void reduceLabels(vector<int>& finalLabels,
                     vector< vector<int> >& finalRules,
@@ -355,116 +333,6 @@ private:
                     const int test_key,
                     vector< vector<int> >& connectRules,
                     vector<int>& valid);
-
-
-  // 6方向にカットのあるセルを交点媒質でフィルする
-  unsigned long replaceIsolatedCell(int* bcd, const int* bid);
-
-
-  /**
-   * @brief インデックスを(1,0,0)シフト
-   * @param [in] index 元のインデクス
-   * @param [in] h     シフト幅
-   */
-  inline Vec3r shift_E(const Vec3r index, const Vec3r h)
-  {
-    return Vec3r(index.x+h.x, index.y, index.z);
-  }
-
-
-  /**
-   * @brief インデックスを(-1,0,0)シフト
-   * @param [in] index 元のインデクス
-   * @param [in] h     シフト幅
-   */
-  inline Vec3r shift_W(const Vec3r index, const Vec3r h)
-  {
-    return Vec3r(index.x-h.x, index.y, index.z  );
-  }
-
-
-  /**
-   * @brief インデックスを(0,1,0)シフト
-   * @param [in] index 元のインデクス
-   * @param [in] h     シフト幅
-   */
-  inline Vec3r shift_N(const Vec3r index, const Vec3r h)
-  {
-    return Vec3r(index.x, index.y+h.y, index.z);
-  }
-
-
-  /**
-   * @brief インデックスを(0,-1,0)シフト
-   * @param [in] index 元のインデクス
-   * @param [in] h     シフト幅
-   */
-  inline Vec3r shift_S(const Vec3r index, const Vec3r h)
-  {
-    return Vec3r(index.x, index.y-h.y, index.z);
-  }
-
-
-  /**
-   * @brief インデックスを(0,0,1)シフト
-   * @param [in] index 元のインデクス
-   * @param [in] h     シフト幅
-   */
-  inline Vec3r shift_T(const Vec3r index, const Vec3r h)
-  {
-    return Vec3r(index.x, index.y, index.z+h.z);
-  }
-
-
-  /**
-   * @brief インデックスを(0,0,-1)シフト
-   * @param [in] index 元のインデクス
-   * @param [in] h     シフト幅
-   */
-  inline Vec3r shift_B(const Vec3r index, const Vec3r h)
-  {
-    return Vec3r(index.x, index.y, index.z-h.z);
-  }
-
-
-
-  // サブセルのペイント
-  int SubCellFill(REAL_TYPE* svf,
-                  int* smd,
-                  const int dir,
-                  const int refID,
-                  const REAL_TYPE refVf);
-
-
-  // サブセルのポリゴン含有テスト
-#ifndef DISABLE_MPI
-  int SubCellIncTest(REAL_TYPE* svf,
-                     int* smd,
-                     const int ip,
-                     const int jp,
-                     const int kp,
-                     const Vec3r pch,
-                     const string m_pg,
-                     MPIPolylib* PL);
-#else
-int SubCellIncTest(REAL_TYPE* svf,
-                   int* smd,
-                   const int ip,
-                   const int jp,
-                   const int kp,
-                   const Vec3r pch,
-                   const string m_pg,
-                   Polylib* PL);
-#endif
-
-  // sub-division
-  void SubDivision(REAL_TYPE* svf,
-                   int* smd,
-                   const int ip,
-                   const int jp,
-                   const int kp,
-                   int* d_mid,
-                   REAL_TYPE* d_pvf);
 
 
   // ポリゴンと線分の交点計算
@@ -484,106 +352,158 @@ int SubCellIncTest(REAL_TYPE* svf,
                      const Vec3r v0,
                      const Vec3r v1,
                      const Vec3r v2,
-                     long long& cut,
+                     int& cutL,
+                     int& cutU,
                      int& bid,
                      const int pid);
 
+  // 未ペイントセルをpaintIDで連結フィルする
+  unsigned long  fillConnected4ID(int* mid,
+                                  const int* bid,
+                                  const int paintID,
+                                  const int* Dsize=NULL);
+  
+  
 
-
-
-public:
-
-  // ポリゴングループの座標値からboxを計算する
-#ifndef DISABLE_MPI
-  void calcBboxFromPolygonGroup(MPIPolylib* PL,
-                                PolygonProperty* PG,
-                                const int m_NoPolyGrp);
-#else
-  void calcBboxFromPolygonGroup(Polylib* PL,
-                                PolygonProperty* PG,
-                                const int m_NoPolyGrp);
-#endif
-
-  // ガイドセルのIDをbcdからmidに転写
-  void copyIDonGuide(const int face, const int* bcd, int* mid);
-
-
-  // bcd[]内にあるm_idのセルを数える
-  unsigned long countCellB(const int* bcd,
-                           const int m_id,
-                           const bool painted=true,
-                           const int* Dsize=NULL);
-
-
-  // フィル操作
-  bool fill(int* d_bcd,
-            int* d_bid,
-            int* d_mid,
-            long long* d_cut);
-
-
-  // bid情報を元にフラッドフィル
-  unsigned long fillByBid(int* bcd,
-                          const int* bid,
-                          const int mode,
-                          const int* Dsize=NULL);
-
-
-  // 未ペイントセルをFLUIDでフィル
-  unsigned long fillByFluid(int* bcd,
-                            const int fluid_id,
-                            const int* bid,
-                            const int* Dsize=NULL);
-
-
-  // bcd[]の内部セルにシードIDをペイントする
-  unsigned long fillSeedBcdInner(int* bcd,
-                                 const REAL_TYPE p[3],
-                                 const int target,
-                                 const int* Dsize=NULL);
-
-  // bcd[]の外層にシードIDをペイントする
-  unsigned long fillSeedBcdOuter(int* bcd,
-                                 const int face,
-                                 const int target,
-                                 const int* bid,
-                                 const int* Dsize=NULL);
-
-
-  // フィルパラメータを取得
-  void getFillParam(TextParser* tpCntl,
-                    const int Unit,
-                    const REAL_TYPE m_RefL,
-                    const int m_NoMedium,
-                    const MediumList* m_mat,
-                    FILE* m_fp);
-
-
-  /**
-   * @brief ベクトルの最小成分
-   * @param [in,out] mn 比較して小さい成分
-   * @param [in]     p  参照ベクトル
-   */
-  static inline void get_min(Vec3r& mn, const Vec3r p)
+  // @brief 参照点の計算領域内のチェック
+  // @param [in]   p   参照点の計算空間座標
+  inline bool check_region(const Vec3r p)
   {
-    mn.x = (mn.x < p.x) ? mn.x : p.x;
-    mn.y = (mn.y < p.y) ? mn.y : p.y;
-    mn.z = (mn.z < p.z) ? mn.z : p.z;
+    if ( p.x < my_reg_min.x || p.x > my_reg_max.x
+      || p.y < my_reg_min.y || p.y > my_reg_max.y
+      || p.z < my_reg_min.z || p.z > my_reg_max.z ) return false;
+
+    return true;
   }
-
-
-  /**
-   * @brief ベクトルの最大値成分
-   * @param [in,out] mx 比較して大きい成分
-   * @param [in]     p  参照ベクトル
-   */
-  static inline void get_max(Vec3r& mx, const Vec3r p)
+  
+  // @brief インデクスの範囲チェック
+  inline bool check_index_region(const Vec3r t) {
+    int i = (int)t.x;
+    int j = (int)t.y;
+    int k = (int)t.z;
+    if ( i<0 || i>size[0]+1 || j<0 || j>size[1]+1 || k<0 || k>size[2]+1 ) return false;
+    return true;
+  }
+  
+  
+  // SDF
+  
+  void estimateNV(int* nrm, const REAL_TYPE* fo);
+  
+  void smoothingNV(int* nrm, REAL_TYPE* fv);
+  
+  void tracingSDF(REAL_TYPE* fn, int* nrm, const int* wk, const int nLayer);
+  
+  void setLayerInit(REAL_TYPE* fn, REAL_TYPE* fo, const int* nrm, const int* wk);
+  
+  void smoothingScalar(int* nrm, REAL_TYPE* fo, const string str);
+  
+  int generateLayer(int* wk, const int* nrm);
+  
+  bool getDistance(const Vec3r o,
+                   const Vec3r n,
+                   const int* nrm,
+                   const REAL_TYPE* f,
+                   REAL_TYPE& ds,
+                   REAL_TYPE& s,
+                   Vec3r& p,
+                   Vec3r& v);
+  
+  inline REAL_TYPE getInterp(const Vec3r g, const REAL_TYPE* f)
   {
-    mx.x = (mx.x > p.x) ? mx.x : p.x;
-    mx.y = (mx.y > p.y) ? mx.y : p.y;
-    mx.z = (mx.z > p.z) ? mx.z : p.z;
+    return (1.0-g.x)*(1.0-g.y)*(1.0-g.z)* f[0]
+         +      g.x *(1.0-g.y)*(1.0-g.z)* f[1]
+         + (1.0-g.x)*     g.y *(1.0-g.z)* f[2]
+         +      g.x *     g.y *(1.0-g.z)* f[3]
+         + (1.0-g.x)*(1.0-g.y)*     g.z * f[4]
+         +      g.x *(1.0-g.y)*     g.z * f[5]
+         + (1.0-g.x)*     g.y *     g.z * f[6]
+         +      g.x *     g.y *     g.z * f[7];
   }
+  
+  inline Vec3r getInterp(const Vec3r g, const Vec3r f[8])
+  {
+    Vec3r r;
+    r.x = (1.0-g.x)*(1.0-g.y)*(1.0-g.z)* f[0].x
+        +      g.x *(1.0-g.y)*(1.0-g.z)* f[1].x
+        + (1.0-g.x)*     g.y *(1.0-g.z)* f[2].x
+        +      g.x *     g.y *(1.0-g.z)* f[3].x
+        + (1.0-g.x)*(1.0-g.y)*     g.z * f[4].x
+        +      g.x *(1.0-g.y)*     g.z * f[5].x
+        + (1.0-g.x)*     g.y *     g.z * f[6].x
+        +      g.x *     g.y *     g.z * f[7].x;
+    r.y = (1.0-g.x)*(1.0-g.y)*(1.0-g.z)* f[0].y
+        +      g.x *(1.0-g.y)*(1.0-g.z)* f[1].y
+        + (1.0-g.x)*     g.y *(1.0-g.z)* f[2].y
+        +      g.x *     g.y *(1.0-g.z)* f[3].y
+        + (1.0-g.x)*(1.0-g.y)*     g.z * f[4].y
+        +      g.x *(1.0-g.y)*     g.z * f[5].y
+        + (1.0-g.x)*     g.y *     g.z * f[6].y
+        +      g.x *     g.y *     g.z * f[7].y;
+    r.z = (1.0-g.x)*(1.0-g.y)*(1.0-g.z)* f[0].z
+        +      g.x *(1.0-g.y)*(1.0-g.z)* f[1].z
+        + (1.0-g.x)*     g.y *(1.0-g.z)* f[2].z
+        +      g.x *     g.y *(1.0-g.z)* f[3].z
+        + (1.0-g.x)*(1.0-g.y)*     g.z * f[4].z
+        +      g.x *(1.0-g.y)*     g.z * f[5].z
+        + (1.0-g.x)*     g.y *     g.z * f[6].z
+        +      g.x *     g.y *     g.z * f[7].z;
+    return r;
+  }
+  
+  
+  // 参照点補間
+  void getBboxCutDir(const int i,
+                     const int j,
+                     const int k,
+                     const int dir,
+                     const REAL_TYPE dh,
+                     Vec3r& bx_min,
+                     Vec3r& bx_max);
+  
+  bool getNV4CalculatedCut(vector<Triangle*>* trias,
+                           const Vec3r ray_o,
+                           const int dir,
+                           const Vec3r d,
+                           const REAL_TYPE dh,
+                           const int rc,
+                           Vec3r& nv);
+  
+  bool getMinRefPoint(const Vec3r o,
+                      const int dir,
+                      const Vec3r d,
+                      const Vec3r nv,
+                      const REAL_TYPE r,
+                      const int* cutL,
+                      const int* cutU,
+                      cut_probe& cpr,
+                      cut_probe& nonref);
+  
+  bool divideLineByPlane(const Vec3r o,
+                         const Vec3r d,
+                         const Vec3r a,
+                         const Vec3r b,
+                         REAL_TYPE& r);
+  
+  bool decideInterp(const Vec3r o,
+                    const Vec3r aa,
+                    const Vec3r bb,
+                    const Vec3r nv,
+                    const int face,
+                    const int* cutL,
+                    const int* cutU,
+                    cut_probe& cpr);
+  
+  
+  inline Vec3r floorVec(Vec3r p) {
+    Vec3r q( (int)p.x, (int)p.y, (int)p.z );
+    return q;
+  }
+  
 
+  
+  bool judgeInterp(const Vec3r p, const int dir, const int* cutL, const int* cutU);
+  
   /* @brief nrmから指定方向の量子化値をとりだす
    * @param [in] n    nrm
    * @note 符号はマイナスの場合，符号ビットが立つ
@@ -634,116 +554,121 @@ public:
     dst |= s;          // 書き込む
   }
   
-  
-  
-  // SDF
-  void polygon2sdf(REAL_TYPE* sdf,
-                   MPIPolylib* PL,
-                   int* nrm,
-                   const int* Dsize=NULL);
 
-  void outerSDF(REAL_TYPE* sdf, int* nrm, const int* oflag);
+
   
-  void trimNarrowBand(REAL_TYPE* sdf, int* nrm, const REAL_TYPE delta);
   
-  bool marchingSDF(REAL_TYPE* fn, REAL_TYPE* fo, int* nrm, int* wk, REAL_TYPE* fv);
   
-  void estimateNV(int* nrm, const REAL_TYPE* fo);
+// #################################################################################################
+public:
   
-  void smoothingNV(int* nrm, REAL_TYPE* fv);
+  static Vec3r getDirVec(const int dir);
   
-  void tracingSDF(REAL_TYPE* fn, int* nrm, const int* wk, const int nLayer);
-  
-  void getNVfromIdx(const int* nrm, REAL_TYPE* f);
-  
-  void setLayerInit(REAL_TYPE* fn, REAL_TYPE* fo, const int* nrm, const int* wk);
-  
-  void smoothingScalar(int* nrm, REAL_TYPE* fo);
-  
-  int generateLayer(int* wk, const int* nrm);
-  
-  bool getDistance(const Vec3r o,
-                   const Vec3r n,
-                   const int* nrm,
-                   const REAL_TYPE* f,
-                   REAL_TYPE& ds,
-                   REAL_TYPE& s,
-                   Vec3r& p,
-                   Vec3r& v);
-  
-  inline REAL_TYPE getInterp(const Vec3r g, const REAL_TYPE* f)
+  /**
+   * @brief ベクトルの最小成分
+   * @param [in,out] mn 比較して小さい成分
+   * @param [in]     p  参照ベクトル
+   */
+  static inline void get_min(Vec3r& mn, const Vec3r p)
   {
-    return (1.0-g.x)*(1.0-g.y)*(1.0-g.z)* f[0]
-         +      g.x *(1.0-g.y)*(1.0-g.z)* f[1]
-         + (1.0-g.x)*     g.y *(1.0-g.z)* f[2]
-         +      g.x *     g.y *(1.0-g.z)* f[3]
-         + (1.0-g.x)*(1.0-g.y)*     g.z * f[4]
-         +      g.x *(1.0-g.y)*     g.z * f[5]
-         + (1.0-g.x)*     g.y *     g.z * f[6]
-         +      g.x *     g.y *     g.z * f[7];
+    mn.x = (mn.x < p.x) ? mn.x : p.x;
+    mn.y = (mn.y < p.y) ? mn.y : p.y;
+    mn.z = (mn.z < p.z) ? mn.z : p.z;
   }
-  
-  inline Vec3r getInterp(const Vec3r g, const Vec3r* f)
+
+
+  /**
+   * @brief ベクトルの最大値成分
+   * @param [in,out] mx 比較して大きい成分
+   * @param [in]     p  参照ベクトル
+   */
+  static inline void get_max(Vec3r& mx, const Vec3r p)
   {
-    Vec3r r;
-    r.x = (1.0-g.x)*(1.0-g.y)*(1.0-g.z)* f[0].x
-        +      g.x *(1.0-g.y)*(1.0-g.z)* f[1].x
-        + (1.0-g.x)*     g.y *(1.0-g.z)* f[2].x
-        +      g.x *     g.y *(1.0-g.z)* f[3].x
-        + (1.0-g.x)*(1.0-g.y)*     g.z * f[4].x
-        +      g.x *(1.0-g.y)*     g.z * f[5].x
-        + (1.0-g.x)*     g.y *     g.z * f[6].x
-        +      g.x *     g.y *     g.z * f[7].x;
-    r.y = (1.0-g.x)*(1.0-g.y)*(1.0-g.z)* f[0].y
-        +      g.x *(1.0-g.y)*(1.0-g.z)* f[1].y
-        + (1.0-g.x)*     g.y *(1.0-g.z)* f[2].y
-        +      g.x *     g.y *(1.0-g.z)* f[3].y
-        + (1.0-g.x)*(1.0-g.y)*     g.z * f[4].y
-        +      g.x *(1.0-g.y)*     g.z * f[5].y
-        + (1.0-g.x)*     g.y *     g.z * f[6].y
-        +      g.x *     g.y *     g.z * f[7].y;
-    r.z = (1.0-g.x)*(1.0-g.y)*(1.0-g.z)* f[0].z
-        +      g.x *(1.0-g.y)*(1.0-g.z)* f[1].z
-        + (1.0-g.x)*     g.y *(1.0-g.z)* f[2].z
-        +      g.x *     g.y *(1.0-g.z)* f[3].z
-        + (1.0-g.x)*(1.0-g.y)*     g.z * f[4].z
-        +      g.x *(1.0-g.y)*     g.z * f[5].z
-        + (1.0-g.x)*     g.y *     g.z * f[6].z
-        +      g.x *     g.y *     g.z * f[7].z;
-    return r;
+    mx.x = (mx.x > p.x) ? mx.x : p.x;
+    mx.y = (mx.y > p.y) ? mx.y : p.y;
+    mx.z = (mx.z > p.z) ? mx.z : p.z;
   }
   
   
-  // 交点計算を行い、量子化
-#ifndef DISABLE_MPI
-  void quantizeCut(long long* cut,
-                   int* bid,
-                   int* bcd,
-                   MPIPolylib* PL,
-                   PolygonProperty* PG,
-                   const int* Dsize=NULL);
-#else
-  void quantizeCut(long long* cut,
-                   int* bid,
-                   int* bcd,
-                   Polylib* PL,
-                   PolygonProperty* PG,
-                   const int* Dsize=NULL);
-#endif
+  
+  
+  // 参照点チェック用に自領域の大きさを設定
+  void set_my_region()
+  {
+    // デフォルトサイズは計算領域内のランクを想定し、袖領域の1層外側まで
+    my_reg_min.assign(0.0, 0.0, 0.0);
+    my_reg_max.assign((REAL_TYPE)size[0] + 1.0,
+                      (REAL_TYPE)size[1] + 1.0,
+                      (REAL_TYPE)size[2] + 1.0);
+    
+    // 外部境界面は計算領域内
+    if ( nID[X_minus] < 0 ) my_reg_min.x += 1.0;
+    if ( nID[X_plus]  < 0 ) my_reg_max.x -= 1.0;
+    if ( nID[Y_minus] < 0 ) my_reg_min.y += 1.0;
+    if ( nID[Y_plus]  < 0 ) my_reg_max.y -= 1.0;
+    if ( nID[Z_minus] < 0 ) my_reg_min.z += 1.0;
+    if ( nID[Z_plus]  < 0 ) my_reg_max.z -= 1.0;
+    
+    //printf("%f %f %f : %f %f %f\n", my_reg_min.x, my_reg_min.y, my_reg_min.z, my_reg_max.x, my_reg_max.y, my_reg_max.z);
+  }
+  
+    // ポリゴングループの座標値からboxを計算する
+  #ifndef DISABLE_MPI
+    void calcBboxFromPolygonGroup(MPIPolylib* PL,
+                                  PolygonProperty* PG,
+                                  const int m_NoPolyGrp);
+  #else
+    void calcBboxFromPolygonGroup(Polylib* PL,
+                                  PolygonProperty* PG,
+                                  const int m_NoPolyGrp);
+  #endif
   
 
-  // ポリゴンの水密化
-#ifndef DISABLE_MPI
-  void SeedFilling(int* d_mid,
-                   MPIPolylib* PL,
-                   PolygonProperty* PG);
-#else
-  void SeedFilling(int* d_mid,
-                   Polylib* PL,
-                   PolygonProperty* PG);
-#endif
+  // bcd[]内にあるm_idのセルを数える
+  unsigned long countCellB(const int* bcd,
+                           const int m_id,
+                           const bool painted=true,
+                           const int* Dsize=NULL);
+  
+  // フィル操作
+  bool fillbyCut(int* d_bcd,
+                 int* d_bid,
+                 int* d_mid,
+                 int* d_cutL,
+                 int* d_cutU);
 
-  // コンポーネント数をセット
+
+  // フィルパラメータを取得
+  void getFillParam(TextParser* tpCntl,
+                    const int Unit,
+                    const REAL_TYPE m_RefL,
+                    const int m_NoMedium,
+                    const MediumList* m_mat,
+                    FILE* m_fp);
+
+
+  
+    // 交点計算を行い、量子化
+  #ifndef DISABLE_MPI
+    void quantizeCut(int* cutL,
+                     int* cutU,
+                     int* bid,
+                     MPIPolylib* PL,
+                     PolygonProperty* PG,
+                     const int* Dsize=NULL);
+  #else
+    void quantizeCut(int* cutL,
+                     int* cutU,
+                     int* bid,
+                     Polylib* PL,
+                     PolygonProperty* PG,
+                     const int* Dsize=NULL);
+  #endif
+    
+
+
+
+    // コンポーネント数をセット
   void setCompoPtr(const int m_NoCompo, const CompoList* m_cmp)
   {
     NoCompo = m_NoCompo;
@@ -751,25 +676,35 @@ public:
   }
 
 
-  // @brief 再分割数を設定
-  // @param [in] num 再分割数
-  void setSubDivision(int num)
-  {
-    if ( num < 1 ) Exit(0);
-    NumSuvDiv = num;
-  }
 
+  
+  // SDF
+  void polygon2sdf(REAL_TYPE* sdf,
+                   MPIPolylib* PL,
+                   int* nrm,
+                   const int* Dsize=NULL);
+  
+  void outerSDF(REAL_TYPE* sdf, int* nrm, const int* oflag);
+  
+  void trimNarrowBand(REAL_TYPE* sdf, int* nrm, const REAL_TYPE delta);
+  
+  bool marchingSDF(REAL_TYPE* fn, REAL_TYPE* fo, int* nrm, int* wk, REAL_TYPE* fv);
+  
+  void getNVfromIdx(const int* nrm, REAL_TYPE* f);
+  
+  
+  
+  // 参照点補間
+  int getRefPointOnCut(const int* cutL,
+                       const int* cutU,
+                       MPIPolylib* PL,
+                       int* bx,
+                       bool inner=false);
+  
+  
+  void writeProbe();
 
-  // サブサンプリング
-#ifndef DISABLE_MPI
-  void SubSampling(int* d_mid,
-                   REAL_TYPE* d_pvf,
-                   MPIPolylib* PL);
-#else
-  void SubSampling(int* d_mid,
-                   REAL_TYPE* d_pvf,
-                   Polylib* PL);
-#endif
+  void sortProbe(REAL_TYPE* cf, REAL_TYPE* ds);
+  
 };
-
 #endif // _FFV_GEOM_H_

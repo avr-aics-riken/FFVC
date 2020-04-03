@@ -36,7 +36,6 @@ link_directories(
 set(ffvc_files
        Geometry.C
        CompoFraction.C
-       Glyph.C
 )
 
 add_library(GEOM STATIC ${ffvc_files})

@@ -108,7 +108,8 @@ protected:
                      const MediumList* mat,
                      const int NoCompo,
                      const CompoList* cmp,
-                     long long* cut,
+                     int* cutL,
+                     int* cutU,
                      int* bid);
 
 };

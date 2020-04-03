@@ -79,8 +79,9 @@ public:
   REAL_TYPE *d_vrt; ///< [*] 渦度ベクトル
 
   // Polygon
-  long long  *d_cut;    ///< [*] 距離情報
-  int        *d_bid;    ///< [*] BC
+  int  *d_cutL;    ///< [*] 距離情報 x_minus, x_plus, y_minus
+  int  *d_cutU;    ///< [*] 距離情報 y_plus, z_minus, z_plus
+  int  *d_bid;     ///< [*] BC
 
 
   // 平均値
@@ -264,8 +265,9 @@ public:
     d_pcg_t_ = NULL;
 
 
-    d_cut = NULL;
-    d_bid = NULL;
+    d_cutU = NULL;
+    d_cutL = NULL;
+    d_bid  = NULL;
 
     component_array = NULL;
   };
