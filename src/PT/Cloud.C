@@ -1,11 +1,11 @@
 //##################################################################################
 //
-// Copyright (c) 2016-2019 Research Institute for Information Technology, Kyushu university
+// Copyright (c) 2016-2020 Research Institute for Information Technology, Kyushu university
 // All rights researved.
 //
 //##################################################################################
 
-/**
+/*
  * @file   Cloud.C
  * @brief  Cloud class
  * @author riit

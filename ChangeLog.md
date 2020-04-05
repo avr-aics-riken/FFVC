@@ -12,6 +12,10 @@
 ## REVISION HISTORY
 
 ---
+- 2020-04-03 Version 3.2.1
+  - Copyright 2020 at RIIT
+  
+---
 - 2020-04-03 Version 3.2.0
   - CUT インデクス 各方向9+1bitに修正 TOP_CUT廃止
   - 交点の参照点実装

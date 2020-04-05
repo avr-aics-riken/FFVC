@@ -9,6 +9,9 @@
 ! Copyright (C) 2015-2018 Advanced Institute for Computational Science, RIKEN.
 ! All rights reserved.
 !
+! Copyright (c) 2016-2020 Research Institute for Information Research, Kyushu University.
+! All rights reserved.
+!
 !##################################################################################
 
 

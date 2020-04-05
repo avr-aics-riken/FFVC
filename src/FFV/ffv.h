@@ -14,6 +14,9 @@
 // Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
+// Copyright (c) 2016-2020 Research Institute for Information Research, Kyushu University.
+// All rights reserved.
+//
 //##################################################################################
 //
 // 以下のマクロはcpm_Define.hで定義されている
@@ -22,7 +25,7 @@
 //   X_DIR, Y_DIR, Z_DIR
 //   PLUS2MINUS, MINUS2PLUS, BOTH
 
-/**
+/*
  * @file   ffv.h
  * @brief  FFV Class Header
  * @author aics

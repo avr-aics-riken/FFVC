@@ -13,9 +13,12 @@
 // Copyright (c) 2012-2016 Advanced Institute for Computational Science, RIKEN.
 // All rights reserved.
 //
+// Copyright (c) 2016-2020 Research Institute for Information Research, Kyushu University.
+// All rights reserved.
+//
 //##################################################################################
 
-/**
+/*
  * @file   ffv_LS.h
  * @brief  LS Class header
  * @author aics

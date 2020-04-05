@@ -1,12 +1,12 @@
 //##################################################################################
 //
-// Copyright (c) 2019 Research Institute for Information Technology, Kyushu university
+// Copyright (c) 2019-2020 Research Institute for Information Technology, Kyushu university
 // All rights researved.
 //
 //##################################################################################
 
 
-/**
+/*
  * @file   Tracking.C
  * @brief  Tracking class
  * @author riit
