@@ -60,13 +60,13 @@ void SetBC::importCMP_MAT(CompoList* m_CMP, MediumList* m_MAT)
 
 // #################################################################
 // クラスに必要な変数のコピー
-void SetBC::setControlVars(Control* Cref, const MediumList* mat, const ReferenceFrame* RF, Intrinsic* ExRef)
+void SetBC::setControlVars(Control* Cref, const MediumList* mat, double& m_ta, Intrinsic* ExRef)
 {
   Reynolds  = Cref->Reynolds;
   rei       = Cref->getRcpReynolds();
   Peclet    = Cref->Peclet;
   Example   = Cref->Mode.Example;
-  accel     = (REAL_TYPE)RF->getAccel();
+  accel     = m_ta;
   mach      = Cref->Mach;
   RefV      = Cref->RefVelocity;
   RefL      = Cref->RefLength;

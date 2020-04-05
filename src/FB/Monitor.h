@@ -252,11 +252,6 @@ public:
   void setMonitorNpoint(CompoList* cmp, const int NoCompo);
 
 
-  /// 参照速度のコピー
-  ///   @param [in] v00 座標系移動速度
-  void setV00(REAL_TYPE v00[4]);
-
-
 
 
 

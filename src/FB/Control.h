@@ -156,113 +156,6 @@ public:
 };
 
 
-// #################################################################
-class ReferenceFrame {
-
-protected:
-  int Frame;            ///< 参照座標系
-  double TimeAccel;     ///< 加速時間（無次元）
-  REAL_TYPE v00[4];     ///< 参照速度（無次元
-  REAL_TYPE GridVel[3]; ///< 座標系の移動速度（無次元）
-
-public:
-  /** 参照系の定義 */
-  enum frame_type
-  {
-    frm_static,
-    frm_translation,
-    frm_rotation
-  };
-
-  /** コンストラクタ */
-  ReferenceFrame()
-  {
-    Frame     = 0;
-    TimeAccel = 0.0;
-    v00[0] = v00[1] = v00[2] = v00[3] = 0.0;
-    GridVel[0] = GridVel[1] = GridVel[2] = 0.0;
-  }
-
-  /**　デストラクタ */
-  ~ReferenceFrame() {}
-
-
-  /**
-   * @brief 加速時間をセット
-   * @param [in] m_timeAccel 無次元の加速時間
-   */
-  void setAccel(const double m_timeAccel);
-
-
-  /**
-   * @brief 参照フレームの種類をセットする
-   * @param [in] m_frame 参照フレームの種類
-   */
-  void setFrame(const int m_frame);
-
-
-  /**
-   * @brief 格子速度成分の単位方向ベクトルをセットする
-   * @param [in] m_Gvel 格子速度成分の単位方向ベクトル
-   */
-  void setGridVel(const REAL_TYPE* m_Gvel);
-
-
-  /**
-   * @brief 参照速度を設定する
-   * @param [in] time 時刻（無次元）
-   * @param [in] init フラグ
-   */
-  void setV00(const double time, const bool init=false);
-
-
-  /**
-   * @brief Frameを返す
-   */
-  int getFrame() const
-  {
-    return Frame;
-  }
-
-
-  /**
-   * @brief 加速時間を返す
-   */
-  double getAccel() const
-  {
-    return TimeAccel;
-  }
-
-
-  /**
-   * @brief v00のアドレスを返す
-   */
-  REAL_TYPE* getV00()
-  {
-    return v00;
-  }
-
-
-  /**
-   * @brief v00をコピーする
-   * @param [out] m_v0 コピー元
-   */
-  void copyV00(REAL_TYPE* m_v0)
-  {
-    for (int i=0; i<4; i++) m_v0[i] = v00[i];
-  }
-
-
-  /**
-   * @brief GridVelocityをコピーする
-   * @param [out] m_gv 格子速度
-   */
-  void copyGridVel(REAL_TYPE* m_gv)
-  {
-    for (int i=0; i<3; i++) m_gv[i] = GridVel[i];
-  }
-};
-
 
 
 // #################################################################
@@ -733,10 +626,6 @@ protected:
   void getReference();
 
 
-  // 参照座標系を取得する
-  void getReferenceFrame(ReferenceFrame* RF);
-
-
   // ソルバーの種類を特定するパラメータを取得
   void getShapeApproximation();
 
@@ -782,7 +671,7 @@ public:
 
 
   // 制御，計算パラメータ群の取得
-  void get2ndParameter(ReferenceFrame* RF);
+  void get2ndParameter();
 
 
   /**
@@ -880,7 +769,7 @@ public:
   //@brief 熱問題かどうかを返す
   bool isHeatProblem() const
   {
-    return ( ( KindOfSolver != FLOW_ONLY ) ? true : false );
+    return ( ( KindOfSolver != COLD_FLOW ) ? true : false );
   }
 
 
@@ -914,14 +803,11 @@ public:
   void printParaConditions(FILE* fp, const MediumList* mat);
 
 
-  /**
+  /*
    * @brief 制御パラメータSTEERの表示
    * @param [in] DT  DTcntl
-   * @param [in] RF  ReferenceFrame
    */
-  void printSteerConditions(FILE* fp,
-                            const DTcntl* DT,
-                            const ReferenceFrame* RF);
+  void printSteerConditions(FILE* fp, const DTcntl* DT);
 
 
   /**
@@ -974,7 +860,7 @@ public:
    * - 自然対流　　有次元　（代表長さ，代表速度，温度差，体膨張係数，重力加速度，動粘性係数，温度拡散係数）
    * - 固体熱伝導　有次元　（代表長さ，温度拡散係数)
    */
-  void setRefParameters(MediumList* mat, ReferenceFrame* RF);
+  void setRefParameters(MediumList* mat);
 
 
   /**

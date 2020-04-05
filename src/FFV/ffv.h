@@ -147,7 +147,8 @@ private:
 
   int communication_mode; ///< synchronous, asynchronous
 
-  REAL_TYPE v00[4];      ///< 参照速度
+  double TimeAccel;      ///< 加速時間（無次元）
+  REAL_TYPE v00;         ///< 参照速度
   REAL_TYPE range_Ut[2]; ///<
   REAL_TYPE range_Yp[2]; ///<
 
@@ -190,7 +191,6 @@ private:
   DTcntl DT;                 ///< 時間制御クラス
   ParseMat M;                ///< 媒質パラメータ管理クラス
   Intrinsic* Ex;             ///< pointer to a base class
-  ReferenceFrame RF;         ///< 参照座標系クラス
   MediumList* mat;           ///< 媒質リスト
   CompoList* cmp;            ///< コンポーネントリスト
   PerfMonitor PM;            ///< 性能モニタクラス
@@ -283,6 +283,28 @@ private:
   }
 
 
+  // #################################################################
+  // 参照速度を計算する
+  void setV00(const double time, const bool init=false)
+  {
+    if (init == true)
+    {
+      v00 = 1.0;
+    }
+    else
+    {
+      if ( TimeAccel == 0.0 )
+      {
+        v00 = 1.0;
+      }
+      else
+      {
+        const double c_pai = (double)(2.0*asin(1.0));
+        v00 = 0.5*(1.0-cos(c_pai*time/(TimeAccel)));
+        if ( time > (TimeAccel) ) v00 = 1.0;
+      }
+    }
+  }
 
 
   /** ffv_Initialize.C *******************************************************/

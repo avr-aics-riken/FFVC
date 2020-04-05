@@ -1274,9 +1274,6 @@ void PLT3D::RestartStatistic(FILE* fp,
   
   
   REAL_TYPE refv = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
-  REAL_TYPE u0[4];
-  
-  RF->copyV00(u0);
   
   REAL_TYPE bp = ( C->Unit.Prs == Unit_Absolute ) ? C->BasePrs : 0.0;
   
@@ -1492,13 +1489,8 @@ void PLT3D::RestartInstantaneous(FILE* fp,
   m_CurrentStep = m_RestartStep;
   m_CurrentTime = r_time;
   
-  // v00[]に値をセット
-  RF->setV00(r_time);
-  
   
   REAL_TYPE refv = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity  : 1.0;
-  REAL_TYPE u0[4];
-  RF->copyV00(u0);
   
   
   
@@ -1676,11 +1668,6 @@ void PLT3D::Restart(FILE* fp, unsigned& m_CurrentStep, double& m_CurrentTime)
   {
     m_CurrentStep = 0;
     m_CurrentTime = 0.0;
-    
-    // V00の値のセット．モードがONの場合はV00[0]=1.0に設定，そうでなければtmに応じた値
-    if ( C->CheckParam == ON ) RF->setV00(m_CurrentTime, true);
-    else                       RF->setV00(m_CurrentTime);
-    
     return;
   }
   

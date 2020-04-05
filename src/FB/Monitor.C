@@ -48,11 +48,11 @@ bool MonitorList::checkConsistency(const int KOS)
   // 利用しない変数のサンプリングは中止
   switch (KOS)
   {
-    case FLOW_ONLY:
+    case COLD_FLOW:
       if ( count[var_Temperature]>0 )
       {
         Hostonly_{
-          printf("\tError : Temperature is not able to sample in 'FLOW_ONLY' mode\n");
+          printf("\tError : Temperature is not able to sample in 'COLD_FLOW' mode\n");
         }
         return false;
       }
@@ -1580,17 +1580,4 @@ void MonitorList::setPrimitive(const char* str,
   m->setPrimitive(str, variables, method, mode, order, nv, mon_type);
   
   monGroup.push_back(m);
-}
-
-
-
-// #################################################################
-/// 参照速度のコピー
-///   @param [in] v00 参照（座標系移動）速度
-///
-void MonitorList::setV00(REAL_TYPE v00[4])
-{
-  refVar.v00.x = v00[1];
-  refVar.v00.y = v00[2];
-  refVar.v00.z = v00[3];
 }

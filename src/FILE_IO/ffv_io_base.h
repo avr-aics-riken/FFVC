@@ -120,7 +120,6 @@ protected:
   
   // class pointer
   Control* C;
-  ReferenceFrame* RF;
   TextParser* tpCntl;
   
   // Utility class
@@ -250,18 +249,16 @@ public:
   void getStartCondition();
   
   
-  /**
+  /*
    * @brief 外部クラスのポインタを受け取る
    * @param [in]  tp     TextParser class
-   * @param [in]  m_RF   ReeferenceFrame class
    * @param [in]  m_C    Control class
    */
-  void importExtClass(TextParser* tp, ReferenceFrame* m_RF, Control* m_C)
+  void importExtClass(TextParser* tp, Control* m_C)
   {
-    if ( !tp || !m_RF || !m_C ) Exit(0);
+    if ( !tp || !m_C ) Exit(0);
     
     tpCntl = tp;
-    RF = m_RF;
     C = m_C;
   }
   
@@ -345,7 +342,7 @@ public:
   
   
   
-  /**
+  /*
    * @brief リスタート時の瞬時値ファイル読み込み
    * @param [in]  fp             ファイルポインタ
    * @param [out] m_CurrentStep  CurrentStep

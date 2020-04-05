@@ -157,7 +157,7 @@ private:
   virtual void getInherentOption();
   
   
-  /**
+  /*
    * @brief リスタート時の瞬時値ファイル読み込み
    * @param [in]  fp             ファイルポインタ
    * @param [out] m_CurrentStep  CurrentStep

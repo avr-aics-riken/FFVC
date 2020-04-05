@@ -100,7 +100,7 @@
 #define FREQ_OF_RESTART 15 // リスタート周期
 
 // KindOfSolver
-#define FLOW_ONLY               0
+#define COLD_FLOW               0
 #define THERMAL_FLOW            1
 #define THERMAL_FLOW_NATURAL    2
 #define CONJUGATE_HT            3

@@ -45,14 +45,14 @@ public:
 protected:
   
   // コンポーネントの角速度成分を取り出す
-  void extractAngularVel(const int n, REAL_TYPE* vec, REAL_TYPE* ctr, const double tm, const REAL_TYPE* v00);
+  void extractAngularVel(const int n, REAL_TYPE* vec, REAL_TYPE* ctr, const double tm, const REAL_TYPE v00);
   
   // コンポーネントの速度境界条件の成分を取り出す
-  REAL_TYPE extractVelLBC (const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE* v00);
+  REAL_TYPE extractVelLBC (const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE v00);
   
   
   // 外部境界条件の速度境界条件の成分を取り出す
-  REAL_TYPE extractVelOBC (const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE* v00);
+  REAL_TYPE extractVelOBC (const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE v00);
   
   
   // 温度一定の境界条件
@@ -72,7 +72,7 @@ protected:
   
   
   // 内部領域のOutflowの境界条件処理
-  REAL_TYPE psIbcOutflow (REAL_TYPE* d_ws, const int* d_cdf, const int n, const REAL_TYPE* d_v, const REAL_TYPE* d_ie, const REAL_TYPE* v00);
+  REAL_TYPE psIbcOutflow (REAL_TYPE* d_ws, const int* d_cdf, const int n, const REAL_TYPE* d_v, const REAL_TYPE* d_ie, const REAL_TYPE v00);
   
   
   // 内部領域の速度と温度の指定境界条件
@@ -92,7 +92,7 @@ protected:
   
   
   // 外部領域のOutflow, In_out, TractionFreeの境界条件処理
-  REAL_TYPE psObcFree (REAL_TYPE* d_ws, const int* d_bcd, const int face, const REAL_TYPE* d_vf, const REAL_TYPE* d_ie, const REAL_TYPE* v00);
+  REAL_TYPE psObcFree (REAL_TYPE* d_ws, const int* d_bcd, const int face, const REAL_TYPE* d_vf, const REAL_TYPE* d_ie, const REAL_TYPE v00);
   
   
   // 外部領域の熱流束指定の境界条件処理
@@ -116,10 +116,10 @@ protected:
   
   
   // 外部領域の速度指定の境界条件処理
-  REAL_TYPE psObcSpecVH (REAL_TYPE* d_ws, const int* d_cdf, const int face, const double tm, const REAL_TYPE* v00);
+  REAL_TYPE psObcSpecVH (REAL_TYPE* d_ws, const int* d_cdf, const int face, const double tm, const REAL_TYPE v00);
   
   
-  void Pibc_Prdc                (REAL_TYPE* d_p, int* st, int* ed, int* d_bcd, int odr, int dir, REAL_TYPE pv);
+  void Pibc_Prdc (REAL_TYPE* d_p, int* st, int* ed, int* d_bcd, int odr, int dir, REAL_TYPE pv);
   
   
   // 圧力の外部周期境界条件（圧力差）
@@ -180,7 +180,7 @@ public:
   void InnerVBCperiodic (REAL_TYPE* d_v, int* d_bd);
   
   
-  /**
+  /*
    * @brief 速度境界条件による速度の発散の修正ほか
    * @param [in,out] dv     \sum{u}
    * @param [in]     d_cdf  BCindex C
@@ -196,15 +196,15 @@ public:
                       int* d_cdf,
                       double tm_d,
                       Control* C,
-                      REAL_TYPE* v00,
+                      REAL_TYPE v00,
                       Gemini_R* avr,
                       double& flop);
   
   
-  void mod_Dir_Forcing (REAL_TYPE* d_v, int* d_bd, REAL_TYPE* d_cvf, REAL_TYPE* v00, double& flop);
+  void mod_Dir_Forcing (REAL_TYPE* d_v, int* d_bd, REAL_TYPE* d_cvf, REAL_TYPE v00, double& flop);
   
   
-  /**
+  /*
    * @brief 速度境界条件によるPoisosn式のソース項の修正
    * @param [in,out] dv    \sum{u^*}
    * @param [in]     d_cdf BCindex C
@@ -221,7 +221,7 @@ public:
                    int* d_cdf,
                    const double tm,
                    Control* C,
-                   REAL_TYPE* v00,
+                   REAL_TYPE v00,
                    REAL_TYPE* vf,
                    REAL_TYPE* vc,
                    REAL_TYPE* v0,
@@ -229,7 +229,7 @@ public:
                    double& flop);
   
   
-  /**
+  /*
    @brief 圧力損失部によるPoisosn式のソース項の修正とワーク用の速度を保持
    @param [in,out] s_1     Poisson方程式の反復ソース項
    @param [in]     v       速度ベクトル
@@ -243,12 +243,12 @@ public:
                          REAL_TYPE* v,
                          int* bd,
                          REAL_TYPE* cvf,
-                         REAL_TYPE* v00,
+                         REAL_TYPE v00,
                          REAL_TYPE** c_array,
                          double& flop);
   
   
-  /**
+  /*
    * @brief 速度境界条件による流束の修正
    * @param [in,out] wv     疑似速度ベクトル u^*
    * @param [in]     v      セルセンター速度ベクトル u^n
@@ -263,12 +263,12 @@ public:
                     int* d_cdf,
                     const double tm,
                     Control* C,
-                    REAL_TYPE* v00,
+                    REAL_TYPE v00,
                     double& flop);
   
-  void mod_Pvec_Forcing (REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, REAL_TYPE* d_cvf, REAL_TYPE* v00, REAL_TYPE dt, double& flop);
+  void mod_Pvec_Forcing (REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, REAL_TYPE* d_cvf, REAL_TYPE v00, REAL_TYPE dt, double& flop);
   
-  /**
+  /*
    * @brief 圧力損失部によるセルセンタ速度の修正と速度の発散値の修正
    * @param [in,out] v          セルセンターの速度
    * @param [in]     bd         BCindex B
@@ -286,7 +286,7 @@ public:
                          REAL_TYPE* cvf,
                          REAL_TYPE* dv,
                          REAL_TYPE dt,
-                         REAL_TYPE* v00,
+                         REAL_TYPE v00,
                          Gemini_R* am,
                          REAL_TYPE** c_array,
                          double& flop);
@@ -322,7 +322,7 @@ public:
   void OuterTBCperiodic (REAL_TYPE* d_ie, const int* ens);
   
   
-  /**
+  /*
    * @brief 速度の外部境界条件処理（Div反復内で値を指定する境界条件）
    * @param [in,out] d_v   セルセンター速度ベクトル v^{n+1}
    * @param [in]     d_vf  セルフェイス速度ベクトル v^{n+1}
@@ -337,7 +337,7 @@ public:
                  int* d_cdf,
                  const double tm,
                  Control* C,
-                 REAL_TYPE* v00,
+                 REAL_TYPE v00,
                  const int* ens);
   
   
@@ -380,7 +380,7 @@ public:
   REAL_TYPE setDirectForcing (REAL_TYPE* d_v, int* d_bx, int n, REAL_TYPE v00);
   
   
-  /**
+  /*
    * @brief 対流項計算時の流束型の温度の外部境界条件処理
    * @param [in,out] d_ws  温度の増分
    * @param [in]     d_cdf BCindex C
@@ -391,7 +391,7 @@ public:
    * @param [in]     v00   参照速度
    * @note 無次元熱量はvalに保存
    */
-  void TBCconvection (REAL_TYPE* d_ws, const int* d_cdf, const REAL_TYPE* d_vf, const REAL_TYPE* d_ie0, const double tm, Control* C, const REAL_TYPE* v00);
+  void TBCconvection (REAL_TYPE* d_ws, const int* d_cdf, const REAL_TYPE* d_vf, const REAL_TYPE* d_ie0, const double tm, Control* C, const REAL_TYPE v00);
 };
 
 #endif // _FFV_SETBC_H_

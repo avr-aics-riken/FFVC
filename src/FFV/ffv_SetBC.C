@@ -114,11 +114,11 @@ void SetBC3D::checkDriver(FILE* fp)
  * @param [out]    vec  ベクトル成分
  * @param [out]    ctr  中心座標
  * @param [in]     tm   時刻
- * @param [in]     v00  格子速度
+ * @param [in]     v00  参照速度
  */
-void SetBC3D::extractAngularVel(const int n, REAL_TYPE* vec, REAL_TYPE* ctr, const double tm, const REAL_TYPE* v00)
+void SetBC3D::extractAngularVel(const int n, REAL_TYPE* vec, REAL_TYPE* ctr, const double tm, const REAL_TYPE v00)
 {
-  REAL_TYPE omg = cmp[n].ca[0] * RefL / RefV * (REAL_TYPE)tm * v00[0]; // [rad]
+  REAL_TYPE omg = cmp[n].ca[0] * RefL / RefV * (REAL_TYPE)tm * v00; // [rad]
   vec[0] = cmp[n].nv[0] * omg; // normal vector x angular velocity
   vec[1] = cmp[n].nv[1] * omg;
   vec[2] = cmp[n].nv[2] * omg;
@@ -135,10 +135,10 @@ void SetBC3D::extractAngularVel(const int n, REAL_TYPE* vec, REAL_TYPE* ctr, con
  * @param [in]     n    コンポーネントのインデクス
  * @param [out]    vec  ベクトル成分
  * @param [in]     tm   無次元時刻
- * @param [in]     v00  無次元格子速度
+ * @param [in]     v00  無次元参照速度
  * @retval 無次元速度
  */
-REAL_TYPE SetBC3D::extractVelLBC(const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE* v00)
+REAL_TYPE SetBC3D::extractVelLBC(const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE v00)
 {
   REAL_TYPE vel;
   const REAL_TYPE c_pai = (REAL_TYPE)(2.0*asin(1.0));
@@ -153,11 +153,11 @@ REAL_TYPE SetBC3D::extractVelLBC(const int n, REAL_TYPE* vec, const double tm, c
   {
     if ( policy )
     {
-      vel = cmp[n].ca[CompoList::bias] / (RefV * RefL * RefL * cmp[n].area) * v00[0];
+      vel = cmp[n].ca[CompoList::bias] / (RefV * RefL * RefL * cmp[n].area) * v00;
     }
     else
     {
-      vel = cmp[n].ca[CompoList::bias] / RefV * v00[0];
+      vel = cmp[n].ca[CompoList::bias] / RefV * v00;
     }
   }
   else if ( cmp[n].get_V_Profile() == CompoList::vel_harmonic )
@@ -168,7 +168,7 @@ REAL_TYPE SetBC3D::extractVelLBC(const int n, REAL_TYPE* vec, const double tm, c
       a = cmp[n].ca[CompoList::amplitude];
       b = 2.0 * c_pai * cmp[n].ca[CompoList::frequency] * tm2  + cmp[n].ca[CompoList::initphase];
       c = cmp[n].ca[CompoList::bias];
-      vel = ( a * sin(b) + c ) / (RefV * RefL * RefL * cmp[n].area) * v00[0];
+      vel = ( a * sin(b) + c ) / (RefV * RefL * RefL * cmp[n].area) * v00;
     }
     else
     {
@@ -176,11 +176,11 @@ REAL_TYPE SetBC3D::extractVelLBC(const int n, REAL_TYPE* vec, const double tm, c
       a = cmp[n].ca[CompoList::amplitude];
       b = 2.0 * c_pai * cmp[n].ca[CompoList::frequency] * tm2 + cmp[n].ca[CompoList::initphase];
       c = cmp[n].ca[CompoList::bias];
-      vel = ( a * sin(b) + c )  / RefV * v00[0];
+      vel = ( a * sin(b) + c )  / RefV * v00;
 
       //a = obc[n].ca[CompoList::amplitude]/RefV; // non-dimensional velocity amplitude
       //b = 2.0*c_pai*obc[n].ca[CompoList::frequency]* RefL/RefV * (REAL_TYPE)tm + obc[n].ca[CompoList::initphase];
-      //vel = ( a*sin(b) + obc[n].ca[CompoList::bias]/RefV ) * v00[0];
+      //vel = ( a*sin(b) + obc[n].ca[CompoList::bias]/RefV ) * v00;
     }
   }
   else if ( cmp[n].get_V_Profile() == CompoList::vel_polynomial6 )
@@ -193,7 +193,7 @@ REAL_TYPE SetBC3D::extractVelLBC(const int n, REAL_TYPE* vec, const double tm, c
           + tm2 * ( cmp[n].ca[3]
           + tm2 * ( cmp[n].ca[4]
           + tm2 * ( cmp[n].ca[5] ))))))
-       / (RefV * cmp[n].area) * v00[0];
+       / (RefV * cmp[n].area) * v00;
     }
     else
     {
@@ -203,7 +203,7 @@ REAL_TYPE SetBC3D::extractVelLBC(const int n, REAL_TYPE* vec, const double tm, c
           + tm2 * ( cmp[n].ca[3]
           + tm2 * ( cmp[n].ca[4]
           + tm2 * ( cmp[n].ca[5] ))))))
-      / RefV * v00[0];
+      / RefV * v00;
     }
   }
   
@@ -224,7 +224,7 @@ REAL_TYPE SetBC3D::extractVelLBC(const int n, REAL_TYPE* vec, const double tm, c
  * @param [in]     v00  格子速度
  * @note OUter BCは速度規定のみ
  */
-REAL_TYPE SetBC3D::extractVelOBC(const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE* v00)
+REAL_TYPE SetBC3D::extractVelOBC(const int n, REAL_TYPE* vec, const double tm, const REAL_TYPE v00)
 {
   REAL_TYPE vel;
   const REAL_TYPE c_pai = (REAL_TYPE)(2.0*asin(1.0));
@@ -236,7 +236,7 @@ REAL_TYPE SetBC3D::extractVelOBC(const int n, REAL_TYPE* vec, const double tm, c
   }
   else if ( obc[n].get_V_Profile() == CompoList::vel_constant )
   {
-    vel = obc[n].ca[CompoList::bias] / RefV * v00[0];
+    vel = obc[n].ca[CompoList::bias] / RefV * v00;
   }
   else if ( obc[n].get_V_Profile() == CompoList::vel_harmonic )
   {
@@ -244,11 +244,11 @@ REAL_TYPE SetBC3D::extractVelOBC(const int n, REAL_TYPE* vec, const double tm, c
     a = obc[n].ca[CompoList::amplitude];
     b = 2.0 * c_pai * obc[n].ca[CompoList::frequency] * tm2 + obc[n].ca[CompoList::initphase];
     c = obc[n].ca[CompoList::bias];
-    vel = ( a * sin(b) + c )  / RefV * v00[0];
+    vel = ( a * sin(b) + c )  / RefV * v00;
     
     //a = obc[n].ca[CompoList::amplitude]/RefV; // non-dimensional velocity amplitude
     //b = 2.0*c_pai*obc[n].ca[CompoList::frequency]* RefL/RefV * (REAL_TYPE)tm + obc[n].ca[CompoList::initphase];
-    //vel = ( a*sin(b) + obc[n].ca[CompoList::bias]/RefV ) * v00[0];
+    //vel = ( a*sin(b) + obc[n].ca[CompoList::bias]/RefV ) * v00;
   }
   else if ( obc[n].get_V_Profile() == CompoList::vel_polynomial6 )
   {
@@ -258,7 +258,7 @@ REAL_TYPE SetBC3D::extractVelOBC(const int n, REAL_TYPE* vec, const double tm, c
         + tm2 * ( obc[n].ca[3]
         + tm2 * ( obc[n].ca[4]
         + tm2 * ( obc[n].ca[5] ))))))
-    / RefV * v00[0];
+    / RefV * v00;
   }
   
   vec[0] = obc[n].nv[0] * vel;
@@ -374,7 +374,7 @@ void SetBC3D::InnerPBCperiodic(REAL_TYPE* d_p, int* d_bcd)
 
 // #################################################################
 // 速度境界条件による速度の発散の修正ほか
-void SetBC3D::modDivergence(REAL_TYPE* dv, int* d_cdf, double tm, Control* C, REAL_TYPE* v00, Gemini_R* avr, double& flop)
+void SetBC3D::modDivergence(REAL_TYPE* dv, int* d_cdf, double tm, Control* C, REAL_TYPE v00, Gemini_R* avr, double& flop)
 {
   REAL_TYPE vec[3], dummy, ctr[3];
   int st[3], ed[3];
@@ -448,7 +448,7 @@ void SetBC3D::modDivergence(REAL_TYPE* dv, int* d_cdf, double tm, Control* C, RE
 
 
 // #################################################################
-/**
+/*
  @brief 圧力損失部による速度の方向修正
  @param[in,out] v 速度
  @param bd BCindex B
@@ -456,7 +456,7 @@ void SetBC3D::modDivergence(REAL_TYPE* dv, int* d_cdf, double tm, Control* C, RE
  @param v00 参照速度
  @param[out] flop
  */
-void SetBC3D::mod_Dir_Forcing(REAL_TYPE* d_v, int* d_bd, REAL_TYPE* d_cvf, REAL_TYPE* v00, double &flop)
+void SetBC3D::mod_Dir_Forcing(REAL_TYPE* d_v, int* d_bd, REAL_TYPE* d_cvf, REAL_TYPE v00, double &flop)
 {
   int st[3], ed[3];
   REAL_TYPE vec[3];
@@ -504,7 +504,7 @@ void SetBC3D::mod_Dir_Forcing(REAL_TYPE* d_v, int* d_bd, REAL_TYPE* d_cvf, REAL_
  @param [in]     dt   時間積分幅
  @param [in,out] flop 浮動小数点演算数
  */
-void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, REAL_TYPE* d_cvf, REAL_TYPE* v00, REAL_TYPE dt, double &flop)
+void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, REAL_TYPE* d_cvf, REAL_TYPE v00, REAL_TYPE dt, double &flop)
 {
   int st[3], ed[3];
   REAL_TYPE vec[3];
@@ -541,7 +541,7 @@ void SetBC3D::mod_Pvec_Forcing(REAL_TYPE* d_vc, REAL_TYPE* d_v, int* d_bd, REAL_
 
 // #################################################################
 // 圧力損失部によるPoisosn式のソース項の修正とワーク用の速度を保持
-void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* s_1, REAL_TYPE* v, int* bd, REAL_TYPE* cvf, REAL_TYPE* v00, REAL_TYPE** c_array, double &flop)
+void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* s_1, REAL_TYPE* v, int* bd, REAL_TYPE* cvf, REAL_TYPE v00, REAL_TYPE** c_array, double &flop)
 {
   int st[3], ed[3], csz[3];
   REAL_TYPE vec[3];
@@ -585,7 +585,7 @@ void SetBC3D::mod_Psrc_Forcing(REAL_TYPE* s_1, REAL_TYPE* v, int* bd, REAL_TYPE*
 // #################################################################
 // 圧力損失部によるセルセンタ速度の修正と速度の発散値の修正
 // am[]のインデクスに注意 (Fortran <-> C)
-void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, int* bd, REAL_TYPE* cvf, REAL_TYPE* dv, REAL_TYPE dt, REAL_TYPE* v00, Gemini_R* am, REAL_TYPE** c_array, double &flop)
+void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, int* bd, REAL_TYPE* cvf, REAL_TYPE* dv, REAL_TYPE dt, REAL_TYPE v00, Gemini_R* am, REAL_TYPE** c_array, double &flop)
 {
   int st[3], ed[3], csz[3];
   REAL_TYPE vec[3];
@@ -630,7 +630,7 @@ void SetBC3D::mod_Vdiv_Forcing(REAL_TYPE* v, int* bd, REAL_TYPE* cvf, REAL_TYPE*
 
 // #################################################################
 // 速度境界条件による流束の修正
-void SetBC3D::modPvecFlux(REAL_TYPE* wv, REAL_TYPE* v, int* d_cdf, const double tm, Control* C, REAL_TYPE* v00, double& flop)
+void SetBC3D::modPvecFlux(REAL_TYPE* wv, REAL_TYPE* v, int* d_cdf, const double tm, Control* C, REAL_TYPE v00, double& flop)
 {
   REAL_TYPE vec[3], dummy, ctr[3];
   int st[3], ed[3];
@@ -719,7 +719,7 @@ void SetBC3D::modPvecFlux(REAL_TYPE* wv, REAL_TYPE* v, int* d_cdf, const double 
 
 // #################################################################
 // 速度境界条件によるPoisosn式のソース項の修正
-void SetBC3D::modPsrcVBC(REAL_TYPE* dv, int* d_cdf, const double tm, Control* C, REAL_TYPE* v00, REAL_TYPE* vf, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE dt, double &flop)
+void SetBC3D::modPsrcVBC(REAL_TYPE* dv, int* d_cdf, const double tm, Control* C, REAL_TYPE v00, REAL_TYPE* vf, REAL_TYPE* vc, REAL_TYPE* v0, REAL_TYPE dt, double &flop)
 {
   int st[3], ed[3];
   REAL_TYPE vec[3], vel, ctr[3];
@@ -870,7 +870,7 @@ void SetBC3D::OuterTBCperiodic(REAL_TYPE* d_ie, const int* ens)
 
 // #################################################################
 // 速度の外部境界条件処理（Div反復内で値を指定する境界条件）
-void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_cdf, const double tm, Control* C, REAL_TYPE* v00, const int* ens)
+void SetBC3D::OuterVBC(REAL_TYPE* d_v, REAL_TYPE* d_vf, int* d_cdf, const double tm, Control* C, REAL_TYPE v00, const int* ens)
 {
   REAL_TYPE vec[3];
   int gd = guide;
@@ -1465,7 +1465,7 @@ void SetBC3D::Pibc_Prdc(REAL_TYPE* d_p, int* st, int* ed, int* d_bx, int odr, in
 
 
 // #################################################################
-/**
+/*
  @brief 内部領域の速度のディリクレ境界をセットする
  @param v 速度ベクトル
  @param bx BCindex
@@ -1801,7 +1801,7 @@ schedule(static) reduction(+:va)
    - モニタ量の熱量va(W)は系に対する流入量なので，基準温度に対する熱量
    - @todo 流出速度はモニター値を利用
  */
-REAL_TYPE SetBC3D::psIbcOutflow (REAL_TYPE* d_ws, const int* d_cdf, const int n, const REAL_TYPE* d_v, const REAL_TYPE* d_ie, const REAL_TYPE* v00)
+REAL_TYPE SetBC3D::psIbcOutflow (REAL_TYPE* d_ws, const int* d_cdf, const int n, const REAL_TYPE* d_v, const REAL_TYPE* d_ie, const REAL_TYPE v00)
 {
   int ix = size[0];
   int jx = size[1];
@@ -2367,7 +2367,7 @@ schedule(static) reduction(+:va)
  * @param [in]     v00   参照速度
  * @note モニタ量の熱量 va は系に対する流入量なので，基準温度に対する熱量
  */
-REAL_TYPE SetBC3D::psObcFree(REAL_TYPE* d_ws, const int* d_bcd, const int face, const REAL_TYPE* d_vf, const REAL_TYPE* d_ie, const REAL_TYPE* v00)
+REAL_TYPE SetBC3D::psObcFree(REAL_TYPE* d_ws, const int* d_bcd, const int face, const REAL_TYPE* d_vf, const REAL_TYPE* d_ie, const REAL_TYPE v00)
 {
   if ( nID[face] >= 0 ) return 0.0;
   
@@ -3279,7 +3279,7 @@ REAL_TYPE SetBC3D::psObcIsoThermal(REAL_TYPE* d_qbc, const int face, const int* 
  * @param [in]     v00   基準速度
  * @note モニタ量の熱量 va は系に対する流入量なので，基準温度に対する熱量
  */
-REAL_TYPE SetBC3D::psObcSpecVH(REAL_TYPE* d_ws, const int* d_cdf, const int face, const double tm, const REAL_TYPE* v00)
+REAL_TYPE SetBC3D::psObcSpecVH(REAL_TYPE* d_ws, const int* d_cdf, const int face, const double tm, const REAL_TYPE v00)
 {
   if ( nID[face] >= 0 ) return 0.0;
   
@@ -3666,7 +3666,7 @@ void SetBC3D::mod_Vis_CN(REAL_TYPE* vc, REAL_TYPE* wv, REAL_TYPE cf, int* bx, RE
 
 // #################################################################
 // 対流項計算時の流束型の境界条件処理
-void SetBC3D::TBCconvection(REAL_TYPE* d_ws, const int* d_cdf, const REAL_TYPE* d_vf, const REAL_TYPE* d_ie0, const double tm, Control* C, const REAL_TYPE* v00)
+void SetBC3D::TBCconvection(REAL_TYPE* d_ws, const int* d_cdf, const REAL_TYPE* d_vf, const REAL_TYPE* d_ie0, const double tm, Control* C, const REAL_TYPE v00)
 {
   REAL_TYPE vec[3];
   REAL_TYPE dummy;
@@ -3712,7 +3712,7 @@ void SetBC3D::TBCconvection(REAL_TYPE* d_ws, const int* d_cdf, const REAL_TYPE* 
     {
       case SPEC_VEL:
         dummy = extractVelLBC(n, vec, tm, v00);
-        cmp[n].setMonitorValue( psIbcSpecVH(d_ws, d_cdf, n, v00[0], vec) );
+        cmp[n].setMonitorValue( psIbcSpecVH(d_ws, d_cdf, n, v00, vec) );
         break;
         
       case OUTFLOW:

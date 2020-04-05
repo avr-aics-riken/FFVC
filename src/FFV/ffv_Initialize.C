@@ -98,7 +98,7 @@ int FFV::Initialize(int argc, char **argv)
 
 
   F->importCPM(paraMngr);
-  F->importExtClass(&tp_ffv, &RF, &C);
+  F->importExtClass(&tp_ffv, &C);
 
 
 
@@ -274,7 +274,7 @@ int FFV::Initialize(int argc, char **argv)
   }
 
   
-  // 交点計算によりcutL/Uに距離，bidに交点IDが入っている
+  // 交点計算によりcutL/Uに距離，bidに交点のポリゴンIDが入っている
   TIMING_start("Fill");
   if ( !GM.fillbyCut(d_bcd, d_bid, d_mid, d_cutL, d_cutU) )
   {
@@ -286,7 +286,7 @@ int FFV::Initialize(int argc, char **argv)
   }
   TIMING_stop("Fill");
    
-
+  F->writeRawSPH(d_mid);
   //F->writeSVX(d_bcd);
 
   // ∆tの決め方とKindOfSolverの組み合わせで無効なものをはねる
@@ -432,7 +432,7 @@ int FFV::Initialize(int argc, char **argv)
 
 
   // 必要なパラメータをSetBC3Dクラスオブジェクトにコピーする >> setParameters()の後
-  BC.setControlVars(&C, mat, &RF, Ex);
+  BC.setControlVars(&C, mat, TimeAccel, Ex);
 
 
   // set phase
@@ -552,6 +552,7 @@ int FFV::Initialize(int argc, char **argv)
   // リスタートモードの選択と瞬時値のリスタート
   TIMING_start("Restart_Process");
   F->Restart(fp, CurrentStep, CurrentTime);
+  setV00(CurrentTime);
   TIMING_stop("Restart_Process");
 
 
@@ -836,7 +837,7 @@ bool FFV::chkMediumConsistency()
 
   switch (C.KindOfSolver)
   {
-    case FLOW_ONLY:
+    case COLD_FLOW:
     case THERMAL_FLOW:
     case THERMAL_FLOW_NATURAL:
 
@@ -1145,7 +1146,7 @@ void FFV::displayCompoInfo(const int* cgb, FILE* fp)
   {
     if ( cmp[n].getType() == HT_SN )
     {
-      if ( (C.KindOfSolver == FLOW_ONLY) || (C.KindOfSolver == THERMAL_FLOW) || (C.KindOfSolver == SOLID_CONDUCTION) )
+      if ( (C.KindOfSolver == COLD_FLOW) || (C.KindOfSolver == THERMAL_FLOW) || (C.KindOfSolver == SOLID_CONDUCTION) )
       {
         Hostonly_ printf("\tInconsistent parameters of combination between Kind of Solver and Heat Transfer type SN. Check QBCF\n");
         fflush(stdout);
@@ -1154,7 +1155,7 @@ void FFV::displayCompoInfo(const int* cgb, FILE* fp)
     }
     if ( cmp[n].getType() == HT_SF )
     {
-      if ( (C.KindOfSolver == FLOW_ONLY) || (C.KindOfSolver == THERMAL_FLOW_NATURAL) || (C.KindOfSolver == SOLID_CONDUCTION) )
+      if ( (C.KindOfSolver == COLD_FLOW) || (C.KindOfSolver == THERMAL_FLOW_NATURAL) || (C.KindOfSolver == SOLID_CONDUCTION) )
       {
         Hostonly_ printf("\tInconsistent parameters of combination between Kind of Solver and Heat Transfer type SF. Check QBCF\n");
         fflush(stdout);
@@ -1262,8 +1263,8 @@ void FFV::displayMemoryInfo(FILE* fp, double G_mem, double L_mem, const char* st
 void FFV::displayParameters(FILE* fp)
 {
 
-  C.printSteerConditions(stdout, &DT, &RF);
-  C.printSteerConditions(fp,     &DT, &RF);
+  C.printSteerConditions(stdout, &DT);
+  C.printSteerConditions(fp,     &DT);
 
   printCriteria(stdout);
   printCriteria(fp);
@@ -2022,8 +2023,7 @@ void FFV::initInterval()
     }
   }
 
-  // Reference frame
-  RF.setAccel( C.Interval[Control::tg_accelra].getIntervalTime() );
+  TimeAccel = C.Interval[Control::tg_accelra].getIntervalTime();
 
 
 
@@ -2424,7 +2424,7 @@ void FFV::setBCinfo()
 
 
   // 無次元パラメータの設定
-  C.setRefParameters(mat, &RF);
+  C.setRefParameters(mat);
 
 
   // パラメータの無次元化（正規化）に必要な参照物理量の設定
@@ -2590,7 +2590,7 @@ void FFV::setComponentSR()
           pit[i] *= C.RefLength;
         }
       }
-      writeRawSPH(cvf, size, guide, 0, org, pit, sizeof(REAL_TYPE), "field");
+      writeRawSPH(cvf, size, guide, 0, org, pit, sizeof(REAL_TYPE), "cSR_field");
 #endif
       // ##########
     }
@@ -2696,7 +2696,7 @@ void FFV::setComponentVF()
           pit[i] *= C.RefLength;
         }
       }
-      writeRawSPH(cvf, size, guide, 0, org, pit, sizeof(REAL_TYPE), "cvf");
+      writeRawSPH(cvf, size, guide, 0, org, pit, sizeof(REAL_TYPE), "cVF_field");
 #endif
       // ##########
     }
@@ -2786,7 +2786,7 @@ string FFV::setDomain(TextParser* tpf)
 
 
   // 従属的なパラメータの取得
-  C.get2ndParameter(&RF);
+  C.get2ndParameter();
 
   // 係数行列の書き出しモード
   C.getAXB();
@@ -3177,7 +3177,7 @@ void FFV::setMonitorList()
       pit[i] *= C.RefLength;
     }
   }
-  writeRawSPH(d_bcd, size, guide, 0, org, pit, sizeof(REAL_TYPE), "field");
+  writeRawSPH(d_bcd, size, guide, 0, org, pit, sizeof(REAL_TYPE), "mon_field");
 #endif
   // ##########
 }
@@ -4169,6 +4169,7 @@ void FFV::getPMInterval(TextParser* tpCntl)
  */
 bool FFV::SM_genSDF(FILE* fp)
 {
+#define SDF_DEBUG 0
   TIMING_start("SDF_Section");
 
   int ix, jx, kx, gd;
@@ -4218,7 +4219,7 @@ bool FFV::SM_genSDF(FILE* fp)
   }
   
 
-#if 1
+#if SDF_DEBUG
   F->writeRawSPH(d_bcp);
   
   svType = 1; // scalar

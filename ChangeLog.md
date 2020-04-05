@@ -12,6 +12,11 @@
 ## REVISION HISTORY
 
 ---
+- 2020-04-05 Version 3.2.2
+  - FLOW_ONLY >> COLD_FLOW
+  - ReferenceFrameクラスを廃止
+  - 参照速度v00[4] >> v00[1]=v00
+---
 - 2020-04-03 Version 3.2.1
   - Copyright 2020 at RIIT
   

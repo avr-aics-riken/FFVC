@@ -908,7 +908,7 @@ void VoxInfo::encActive (unsigned long& Lcell, unsigned long& Gcell, int* bx, co
   
   switch ( KOS )
   {
-    case FLOW_ONLY:
+    case COLD_FLOW:
     case THERMAL_FLOW:
     case THERMAL_FLOW_NATURAL:
       
@@ -1899,7 +1899,7 @@ void VoxInfo::encPbitOBC (const int face, int* bx, const string key, const bool 
 
 
 // #################################################################
-/**
+/*
  * @brief 熱境界条件のBCエントリをエンコードする
  * @retval エンコードしたセル数
  * @param [in]     order  CompoListのエントリ
@@ -3026,17 +3026,13 @@ void VoxInfo::setBCIndexBase (int* bcd,
   
   
   // bcd[]の24-29 bitめの対象6bitを1にする
-#pragma omp parallel for firstprivate(ix, jx, kx, gd) schedule(static)
+#pragma omp parallel for
   for (int k=1-gd; k<=kx+gd; k++) {
-    for (int j=1-gd; j<=jx+gd; j++) {
-      for (int i=1-gd; i<=ix+gd; i++) {
-        
-        size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-        
-        bcd[m] |= ( MASK_6 << BC_D_W );
-      }
-    }
-  }
+  for (int j=1-gd; j<=jx+gd; j++) {
+  for (int i=1-gd; i<=ix+gd; i++) {
+    size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+    bcd[m] |= ( MASK_6 << BC_D_W );
+  }}}
   
   
   // サブドメイン内に媒質コンポーネントがあれば存在フラグを立て，セル数を保持

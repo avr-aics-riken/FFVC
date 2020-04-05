@@ -247,7 +247,7 @@ void FFV::NS_FS_E_Binary()
 
     TIMING_start("Stabilize");
     flop = 0.0;
-    stabilize_(d_vc, size, &guide, &dt, d_v0, d_bcd, &v00[0], &st, &ed, &pn, &ct, &flop);
+    stabilize_(d_vc, size, &guide, &dt, d_v0, d_bcd, &v00, &st, &ed, &pn, &ct, &flop);
     TIMING_stop("Stabilize", flop);
 
     if ( numProc > 1 )
@@ -274,7 +274,7 @@ void FFV::NS_FS_E_Binary()
   if ( C.isHeatProblem() && (C.Mode.Buoyancy == BOUSSINESQ) )
   {
     TIMING_start("Pvec_Buoyancy");
-    REAL_TYPE dgr = dt*C.Grashof*rei*rei * v00[0];
+    REAL_TYPE dgr = dt*C.Grashof*rei*rei * v00;
     flop = 0.0;
     ps_buoyancy_(d_vc, size, &guide, &dgr, d_ie0, d_bcd, &C.NoCompo, mat_tbl, &flop);
     TIMING_stop("Pvec_Buoyancy", flop);

@@ -38,7 +38,7 @@ void History::printCCNV(const double* rms, const double* avr, const double* cont
   data[c++] = (double)printTime();
   
   
-  if ( (C->KindOfSolver==FLOW_ONLY) ||
+  if ( (C->KindOfSolver==COLD_FLOW) ||
        (C->KindOfSolver==THERMAL_FLOW) ||
        (C->KindOfSolver==THERMAL_FLOW_NATURAL) ||
        (C->KindOfSolver==CONJUGATE_HT) ||
@@ -182,7 +182,7 @@ void History::printCCNVtitle(const int* container, const Control* C)
   for (int i=0; i<CCNV_MAX-2; i++) memset(y_title[i], 0, sizeof(char)*128);
   int c=0;
   
-  if ( (C->KindOfSolver==FLOW_ONLY) ||
+  if ( (C->KindOfSolver==COLD_FLOW) ||
        (C->KindOfSolver==THERMAL_FLOW) ||
        (C->KindOfSolver==THERMAL_FLOW_NATURAL) ||
        (C->KindOfSolver==CONJUGATE_HT) ||
@@ -410,7 +410,7 @@ void History::printHistory(FILE* fp,
 {
   fprintf(fp, "%8d %14.6e", step, printTime());
   
-  if ( (C->KindOfSolver==FLOW_ONLY) ||
+  if ( (C->KindOfSolver==COLD_FLOW) ||
       ( C->KindOfSolver==THERMAL_FLOW) ||
       ( C->KindOfSolver==THERMAL_FLOW_NATURAL) ||
       ( C->KindOfSolver==CONJUGATE_HT) ||
@@ -491,7 +491,7 @@ void History::printHistoryTitle(FILE* fp, const int* container, const Control* C
     fprintf(fp, "    step        time[-]");
   }
   
-  if ( (C->KindOfSolver == FLOW_ONLY) ||
+  if ( (C->KindOfSolver == COLD_FLOW) ||
       ( C->KindOfSolver == THERMAL_FLOW) ||
       ( C->KindOfSolver == THERMAL_FLOW_NATURAL) ||
       ( C->KindOfSolver == CONJUGATE_HT) ||

@@ -30,7 +30,7 @@
 bool DTcntl::chkDtSelect()
 {
   switch (KOS) {
-    case FLOW_ONLY:
+    case COLD_FLOW:
     case THERMAL_FLOW:
     case THERMAL_FLOW_NATURAL:
     case CONJUGATE_HT:
@@ -77,7 +77,7 @@ int DTcntl::set_DT(const double vRef)
     case dt_cfl_dfn_ref_v:
       switch (KOS)
     {
-        case FLOW_ONLY:
+        case COLD_FLOW:
           dtC = dtCFL( vRef );
           dtD = dtDFN( Reynolds );
           deltaT = (dtC > dtD) ? dtD : dtC;
@@ -164,82 +164,6 @@ void DTcntl::set_Vars(const int m_kos, const int m_mode, const double m_min_dx, 
   min_dx   = m_min_dx;
   Reynolds = re;
   Peclet   = pe;
-}
-
-
-
-
-
-
-
-// #################################################################
-// 加速時間をセットする
-void ReferenceFrame::setAccel(const double m_timeAccel)
-{
-  TimeAccel = m_timeAccel;
-}
-
-
-// #################################################################
-// 参照フレームの種類をセットする
-void ReferenceFrame::setFrame(const int m_frame)
-{
-  Frame = m_frame;
-}
-
-
-// #################################################################
-// 格子速度成分の単位方向ベクトルをセットする
-void ReferenceFrame::setGridVel(const REAL_TYPE* m_Gvel)
-{
-  GridVel[0] = m_Gvel[0];
-  GridVel[1] = m_Gvel[1];
-  GridVel[2] = m_Gvel[2];
-}
-
-
-// #################################################################
-// 参照速度を計算する
-void ReferenceFrame::setV00(const double time, const bool init)
-{
-  if (init == true)
-  {
-    v00[0]=1.0;
-  }
-  else
-  {
-    if ( TimeAccel == 0.0 )
-    {
-      v00[0] = 1.0;
-    }
-    else
-    {
-      const double c_pai = (double)(2.0*asin(1.0));
-      v00[0] = 0.5*(1.0-cos(c_pai*time/(TimeAccel)));
-      if ( time > (TimeAccel) ) v00[0] = 1.0;
-    }
-  }
-
-  REAL_TYPE u0 = v00[0];
-
-  switch (Frame)
-  {
-    case frm_static:
-      v00[1] = 0.0;
-      v00[2] = 0.0;
-      v00[3] = 0.0;
-      break;
-
-    case frm_translation:
-      v00[1] = u0*GridVel[0];  // v0x
-      v00[2] = u0*GridVel[1];  // v0y
-      v00[3] = u0*GridVel[2];  // v0z
-      break;
-
-    case frm_rotation:
-      break;
-  }
-
 }
 
 
@@ -342,20 +266,16 @@ void Control::get1stParameter(DTcntl* DT)
 
 
 // #################################################################
-/**
+/*
  * @brief 制御，計算パラメータ群の取得
- * @param [in] RF  ReferenceFrameクラス
  */
-void Control::get2ndParameter(ReferenceFrame* RF)
+void Control::get2ndParameter()
 {
   // パラメータを取得する
   if ( Unit.Param == NONDIMENSIONAL )
   {
-    if ( KindOfSolver == FLOW_ONLY ) getDimensionlessParameter();
+    if ( KindOfSolver == COLD_FLOW ) getDimensionlessParameter();
   }
-
-  // Reference frame information
-  getReferenceFrame(RF);
 
 
   getLog();
@@ -1321,51 +1241,6 @@ void Control::getReference()
 
 
 // #################################################################
-/**
- * @brief 参照座標系を取得する
- * @todo 回転は未
- */
-void Control::getReferenceFrame(ReferenceFrame* RF)
-{
-  string str;
-  string label;
-
-  label="/ReferenceFrame/Mode";
-
-  if ( !(tpCntl->getInspectedValue(label, str )) )
-  {
-    Hostonly_ stamped_printf("\tParsing error : fail to get '%s'\n", label.c_str());
-	  Exit(0);
-  }
-
-  if     ( !strcasecmp(str.c_str(), "stationary") )
-  {
-    RF->setFrame(ReferenceFrame::frm_static);
-  }
-  else if( !strcasecmp(str.c_str(), "translational") )
-  {
-    RF->setFrame(ReferenceFrame::frm_translation);
-
-    REAL_TYPE xyz[3];
-    for (int n=0; n<3; n++) xyz[n]=0.0;
-
-    if( tpCntl->getInspectedVector(label, xyz, 3) )
-    {
-      Hostonly_ stamped_printf("\tParsing error : Invalid values for '%s'\n", label.c_str());
-      Exit(0);
-    }
-    RF->setGridVel(xyz);
-  }
-  else
-  {
-    Hostonly_ stamped_printf("\tParsing error : Invalid keyword for '%s'\n", label.c_str());
-    Exit(0);
-  }
-}
-
-
-
-// #################################################################
 // @brief ソルバーの種類を特定するパラメータを取得する
 // @note ガイドセルの値に影響
 void Control::getShapeApproximation()
@@ -1495,7 +1370,7 @@ void Control::getSolverProperties()
   }
 
 
-  // ソルバーの種類（FLOW_ONLY / THERMAL_FLOW / THERMAL_FLOW_NATURAL / CONJUGATE_HT / CONJUGATE_HT_NATURAL / SOLID_CONDUCTION）と浮力モード
+  // ソルバーの種類（COLD_FLOW / THERMAL_FLOW / THERMAL_FLOW_NATURAL / CONJUGATE_HT / CONJUGATE_HT_NATURAL / SOLID_CONDUCTION）と浮力モード
   label="/GoverningEquation/HeatEquation";
 
   if ( !(tpCntl->getInspectedValue(label, str )) )
@@ -1504,9 +1379,9 @@ void Control::getSolverProperties()
 	  Exit(0);
   }
 
-  if     ( !strcasecmp(str.c_str(), "FlowOnly" ) )
+  if     ( !strcasecmp(str.c_str(), "ColdFlow" ) )
   {
-    KindOfSolver = FLOW_ONLY;
+    KindOfSolver = COLD_FLOW;
     varState[var_Velocity]    = true;
     varState[var_Fvelocity]   = true;
     varState[var_Pressure]    = true;
@@ -2430,9 +2305,7 @@ void Control::printParaConditions(FILE* fp, const MediumList* mat)
 
 // #################################################################
 // 制御パラメータSTEERの表示
-void Control::printSteerConditions(FILE* fp,
-                                   const DTcntl* DT,
-                                   const ReferenceFrame* RF)
+void Control::printSteerConditions(FILE* fp, const DTcntl* DT)
 {
   if ( !fp )
   {
@@ -2463,7 +2336,7 @@ void Control::printSteerConditions(FILE* fp,
   // Basic Equation and PDE
 	switch (KindOfSolver)
   {
-    case FLOW_ONLY:
+    case COLD_FLOW:
     case THERMAL_FLOW:
     case THERMAL_FLOW_NATURAL:
     case CONJUGATE_HT:
@@ -2492,7 +2365,7 @@ void Control::printSteerConditions(FILE* fp,
 			switch (Mode.PDE) {
 				case PDE_EULER:
 					fprintf(fp,"PDE_EULER Equations\n");
-					if  ( !((KindOfSolver == FLOW_ONLY) || (KindOfSolver == THERMAL_FLOW) || (KindOfSolver == THERMAL_FLOW_NATURAL)) )
+					if  ( !((KindOfSolver == COLD_FLOW) || (KindOfSolver == THERMAL_FLOW) || (KindOfSolver == THERMAL_FLOW_NATURAL)) )
           {
 						fprintf(fp,"\tInvalid combination with Conjugate Heat Transfer nor Solid Conduction\n");
 						err=false;
@@ -2557,9 +2430,9 @@ void Control::printSteerConditions(FILE* fp,
   }
 
   // Kind Of Solver
-  if (KindOfSolver==FLOW_ONLY)
+  if (KindOfSolver==COLD_FLOW)
   {
-    fprintf(fp,"\t     Kind of Solver           :   Flow Only (Non Heat)\n");
+    fprintf(fp,"\t     Kind of Solver           :   Cold Flow (Flow only)\n");
   }
   else if ( (KindOfSolver==THERMAL_FLOW) && (Mode.Buoyancy==NO_BUOYANCY) )
   {
@@ -2705,33 +2578,6 @@ void Control::printSteerConditions(FILE* fp,
 				err=false;
 		}
 	}
-
-  // Reference Frame
-  switch (RF->getFrame())
-  {
-    case ReferenceFrame::frm_static:
-      fprintf(fp,"\t     Reference Frame          :   Stationary\n");
-      break;
-
-    case ReferenceFrame::frm_translation:
-      if (Unit.Param==DIMENSIONAL)
-      {
-        fprintf(fp,"\t     Reference Frame          :   Translational (%12.4e, %12.4e, %12.4e) [m/s]\n", GridVel[0]*RefVelocity, GridVel[1]*RefVelocity, GridVel[2]*RefVelocity);
-      }
-      else
-      {
-        fprintf(fp,"\t     Reference Frame          :   Translational (%12.4e, %12.4e, %12.4e) [-]\n", GridVel[0], GridVel[1], GridVel[2]);
-      }
-      break;
-
-    case ReferenceFrame::frm_rotation:
-      fprintf(fp,"\t     Reference Frame          :   Rotational\n");
-      break;
-
-    default:
-      stamped_printf("Error: Reference frame section\n");
-      err=false;
-  }
 
 
   // 乱流モデル ------------------
@@ -3482,7 +3328,7 @@ void Control::setCmpParameters(MediumList* mat, CompoList* cmp, BoundaryOuter* B
  * - 自然対流　　有次元　（代表長さ，代表速度，温度差，体膨張係数，重力加速度，動粘性係数，温度拡散係数）
  * - 固体熱伝導　有次元　（代表長さ，温度拡散係数)
  */
-void Control::setRefParameters(MediumList* mat, ReferenceFrame* RF)
+void Control::setRefParameters(MediumList* mat)
 {
   REAL_TYPE rho, nyu, cp, lambda, beta, snd_spd=0.0;
   REAL_TYPE c1, c2, c3;
@@ -3528,7 +3374,7 @@ void Control::setRefParameters(MediumList* mat, ReferenceFrame* RF)
 			Exit(0);
     }
   }
-  else if (KindOfSolver == FLOW_ONLY)
+  else if (KindOfSolver == COLD_FLOW)
   {
     if (Unit.Param == DIMENSIONAL)
     {
@@ -3611,18 +3457,6 @@ void Control::setRefParameters(MediumList* mat, ReferenceFrame* RF)
 
   // タイミングパラメータの無次元化
   Tscale = (double)RefLength / (double)RefVelocity;
-
-
-  // 参照速度の無次元化
-  if ( Unit.Param == DIMENSIONAL )
-  {
-    REAL_TYPE g[3];
-    RF->copyGridVel(g);
-    g[0] /= (double)RefVelocity;
-    g[1] /= (double)RefVelocity;
-    g[2] /= (double)RefVelocity;
-    RF->setGridVel(g);
-  }
 
 
   // Mach

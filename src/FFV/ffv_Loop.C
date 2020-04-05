@@ -49,12 +49,9 @@ int FFV::Loop(const unsigned step)
   CurrentStep++;
 
 
-  // 参照座標速度をv00に保持する
-  RF.setV00(CurrentTime);
-  RF.copyV00(v00);
+  // 参照速度をv00に保持する
+  setV00(CurrentTime);
 
-  // モニタークラスに参照速度を渡す
-  if (C.SamplingMode == ON) MO.setV00(v00);
 
   // 速度成分の最大値
   TIMING_start("Search_Vmax");

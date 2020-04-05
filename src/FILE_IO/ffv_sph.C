@@ -1592,9 +1592,6 @@ void SPH::RestartStatistic(FILE* fp,
 
   REAL_TYPE refv = (C->Unit.File == DIMENSIONAL) ? C->RefVelocity : 1.0;
   REAL_TYPE scale = (REAL_TYPE)step_stat;
-  REAL_TYPE u0[4];
-
-  RF->copyV00(u0);
 
   // indexの変換と無次元化
   fb_vin_nijk_(d_av, size, &guide, d_wv, &refv, &flop);
@@ -1713,9 +1710,6 @@ void SPH::RestartInstantaneous(FILE* fp,
   m_CurrentStep = m_RestartStep;
   m_CurrentTime = time;
 
-  // v00[]に値をセット
-  RF->setV00(time);
-
 
   if ( DFI_IN_VEL->ReadData(d_wv,
                             m_RestartStep,
@@ -1732,8 +1726,6 @@ void SPH::RestartInstantaneous(FILE* fp,
   if( d_wv == NULL ) Exit(0);
 
   REAL_TYPE refv = (C->Unit.File == DIMENSIONAL) ? refV : 1.0;
-  REAL_TYPE u0[4];
-  RF->copyV00(u0);
 
 
   Hostonly_ printf     ("\tVelocity has read :\tstep=%d  time=%e [%s]\n",
@@ -1975,11 +1967,6 @@ void SPH::Restart(FILE* fp, unsigned& m_CurrentStep, double& m_CurrentTime)
   {
     m_CurrentStep = 0;
     m_CurrentTime = 0.0;
-
-    // V00の値のセット．モードがONの場合はV00[0]=1.0に設定，そうでなければtmに応じた値
-    if ( C->CheckParam == ON ) RF->setV00(m_CurrentTime, true);
-    else                       RF->setV00(m_CurrentTime);
-
     return;
   }
 

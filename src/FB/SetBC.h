@@ -110,14 +110,14 @@ public:
 	REAL_TYPE getVrefOut (const REAL_TYPE tm);
   
   
-  /**
+  /*
    * @brief クラスに必要な変数のコピー
    * @param [in,out] Cref       Controlクラス
    * @param [in]     mat        MediumListクラス
-   * @param [in]     RF         ReferenceFrameクラス
+   * @param [in]     m_ta       timeAccel
    * @param [in,out] ExRef      Intrinsicクラス
    */
-  void setControlVars(Control* Cref, const MediumList* mat, const ReferenceFrame* RF, Intrinsic* ExRef);
+  void setControlVars(Control* Cref, const MediumList* mat, double& m_ta, Intrinsic* ExRef);
   
   
   /**

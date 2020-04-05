@@ -48,13 +48,13 @@ void ParseBC::checkList(const MediumList* mat, const CompoList* cmp)
 // KOSと境界条件数の整合性をチェックする 
 void ParseBC::chkBCconsistency(const int kos, const CompoList* cmp)
 {
-  if (kos == FLOW_ONLY) 
+  if (kos == COLD_FLOW) 
   {
     for (int n=1; n<=NoCompo; n++)
     {
       if ( cmp[n].isHeatMode() )
       {
-        Hostonly_ stamped_printf("\t'KindOfSolver' is FLOW_ONLY, but '/BCtable/Boundary' has heat boundary condition.\n");
+        Hostonly_ stamped_printf("\t'KindOfSolver' is COLD_FLOW, but '/BCtable/Boundary' has heat boundary condition.\n");
         Exit(0);
       }
     }
@@ -2115,9 +2115,9 @@ void ParseBC::loadBCs(Control* C, MediumList* mat, CompoList* cmp)
       {
         cmp[m].setHeatmode(ON);
         
-        if ( C->KindOfSolver == FLOW_ONLY )
+        if ( C->KindOfSolver == COLD_FLOW )
         {
-          Hostonly_ stamped_printf("Parse Error : Heat BC is not allowed on FLOWONLY mode.\n");
+          Hostonly_ stamped_printf("Parse Error : Heat BC is not allowed on COLDFLOW mode.\n");
           Exit(0);
         }
         
@@ -3087,7 +3087,7 @@ void ParseBC::printCompoSummary(FILE* fp, CompoList* cmp, const int basicEq)
   }
   else
   {
-    if ( KindOfSolver == FLOW_ONLY )
+    if ( KindOfSolver == COLD_FLOW )
     {
       fprintf(fp,"\t  No :   # of Faces/Cells       State  In/Out                   Label : Class                                 Medium\n");
       fprintf(fp,"\t------------------------------------------------------------------------------------------------------------------------------\n");
