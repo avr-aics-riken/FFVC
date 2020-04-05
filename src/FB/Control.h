@@ -513,7 +513,7 @@ public:
     iv.Energy      = 0.0;
     iv.Pressure    = 0.0;
     
-    axb.func = -1;
+    axb.func = 0;
     axb.interval = -1;
     axb.threshold = -1;
 

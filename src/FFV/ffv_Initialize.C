@@ -1339,7 +1339,8 @@ void FFV::encodeBCindex(FILE* fp)
   V.copyBCIbase(d_bcp, d_bcd);
   V.copyBCIbase(d_cdf, d_bcd);
   V.copyBCIbase(d_bid, d_bcd);
-
+  V.copyBCIbase(d_cutL, d_bcd);
+  V.copyBCIbase(d_cutU, d_bcd);
 
 
   // 圧力計算のビット情報をエンコードする -----
@@ -1705,7 +1706,9 @@ void FFV::generateCutPWN(const int* cutL, const int* cutU, bool inner)
       if ( 1==ensCutL(posL, dir) )
       {
         REAL_TYPE r = getCutL9(posL, dir);
-        Vec3r d = Geometry::getDirVec(dir) * (r*dh);
+        Vec3r d;
+        Geometry::getDirVec(d, dir);
+        d *= (r*dh);
         xyz.push_back(o+d);
         nv.push_back(nvc);
       }
@@ -1715,7 +1718,8 @@ void FFV::generateCutPWN(const int* cutL, const int* cutU, bool inner)
       if ( 1==ensCutU(posU, dir) )
       {
         REAL_TYPE r = getCutU9(posU, dir);
-        Vec3r d = Geometry::getDirVec(dir) * (r*dh);
+        Vec3r d;
+        d *= (r*dh);
         xyz.push_back(o+d);
         nv.push_back(nvc);
       }
@@ -1751,8 +1755,6 @@ void FFV::generateCutPWN(const int* cutL, const int* cutU, bool inner)
   }
   
   ofs.close();
-  
-  
 }
 
 

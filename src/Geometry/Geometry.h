@@ -565,7 +565,7 @@ private:
 // #################################################################################################
 public:
   
-  static Vec3r getDirVec(const int dir);
+  static void getDirVec(Vec3r& d, const int dir);
   
   /**
    * @brief ベクトルの最小成分

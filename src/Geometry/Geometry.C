@@ -3299,7 +3299,8 @@ unsigned Geometry::updateCut(const Vec3r ray_o,
                              const int pid)
 {
   // 単位方向ベクトルと格子幅
-  Vec3r d = getDirVec(dir);
+  Vec3r d;
+  getDirVec(d, dir);
   REAL_TYPE pit= pitchD[0];
 
   // カウンタ
@@ -4533,6 +4534,13 @@ int Geometry::getRefPointOnCut(const int* cutL,
   for (int j=js; j<=je; j++) {
   for (int i=is; i<=ie; i++) {
     
+    size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
+    int posL = cutL[m];
+    int posU = cutU[m];
+    
+    // FLUIDのセルのみが対象
+    if ( !IS_FLUID(posL) ) continue;
+    
     // oは有次元の(i,j,k)のセルセンター座標値
     Vec3r oi( (REAL_TYPE)i-0.5, (REAL_TYPE)j-0.5, (REAL_TYPE)k-0.5 );
     Vec3r o( org + oi * pch );
@@ -4541,10 +4549,6 @@ int Geometry::getRefPointOnCut(const int* cutL,
     Vec3r bx_min(o - pch * 0.1);
     Vec3r bx_max(o + pch * 0.1);
     
-    size_t m = _F_IDX_S3D(i, j, k, ix, jx, kx, gd);
-    int posL = cutL[m];
-    int posU = cutU[m];
-    
     
     for (int dir=0; dir<6; dir++)
     {
@@ -4552,7 +4556,8 @@ int Geometry::getRefPointOnCut(const int* cutL,
       int rc = (dir<3) ? getBitL9(posL, dir) : getBitU9(posU, dir);
       
       // dir方向の単位ベクトル
-      Vec3r dvec = getDirVec(dir);
+      Vec3r dvec;
+      getDirVec(dvec, dir);
       
       // 交点の参照点と距離 （戻り値受け取り ）
       cut_probe cpr, nonref;
@@ -4814,10 +4819,8 @@ bool Geometry::getNV4CalculatedCut(vector<Triangle*>* trias,
  * @brief 方向ベクトルを返す
  * @param [in]     dir     テスト方向
  */
-Vec3r Geometry::getDirVec(const int dir)
+void Geometry::getDirVec(Vec3r& d, const int dir)
 {
-  Vec3r d;
-  
   switch (dir)
   {
     case X_minus:
@@ -4844,8 +4847,6 @@ Vec3r Geometry::getDirVec(const int dir)
       d.assign(0.0, 0.0, 1.0);
       break;
   }
-  
-  return d;
 }
 
 
@@ -4940,7 +4941,10 @@ bool Geometry::decideInterp(const Vec3r o,
   REAL_TYPE ratio;
   
   // 平面と線分に交点があれば処理
-  if ( divideLineByPlane(o, getDirVec(face), aa, bb, ratio) ) {
+  Vec3r d;
+  getDirVec(d, face);
+  
+  if ( divideLineByPlane(o, d, aa, bb, ratio) ) {
     REAL_TYPE f = ratio*DIST_AB;
     Vec3r rp = aa + nv*f;
     

@@ -11,11 +11,18 @@
 
 ## REVISION HISTORY
 
+
+---
+- 2020-04-05 Version 3.2.3
+  - fillbyCut()によりSOLIDをフィル、FLUIDセルに対してのみprobeを計算
+  - getDirVec()の戻り値不定の修正
+  
 ---
 - 2020-04-05 Version 3.2.2
   - FLOW_ONLY >> COLD_FLOW
   - ReferenceFrameクラスを廃止
   - 参照速度v00[4] >> v00[1]=v00
+  
 ---
 - 2020-04-03 Version 3.2.1
   - Copyright 2020 at RIIT

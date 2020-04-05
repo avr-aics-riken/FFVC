@@ -3029,7 +3029,7 @@ void Control::printSteerConditions(FILE* fp, const DTcntl* DT)
   
   // AXB -------------------
   fprintf(fp,"\n\tOutput of coefficients Ax=b\n");
-  fprintf(fp,"\t\tOutput mode              : %s\n", (axb.func==OFF)?"OFF":"ON");
+  fprintf(fp,"\t\tOutput mode              : %s\n", (axb.func==ON)?"ON":"OFF");
   if (axb.func==ON)
   {
     fprintf(fp,"\t\tInterval                 : %8d\n", axb.interval);
